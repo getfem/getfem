@@ -28,7 +28,7 @@ The method integrate the partial differential equation
 on the time intervall :math:`[0, dt]`.
 
 The method used is of Galerkin-Characteristic kind. It is a very simple version 
-which is inconditionnally stable but rather dissipative. See [ZI-TA1989]_ and also the Freefem++ documentation on convect 
+which is inconditionnally stable but rather dissipative. See [ZT1989]_ and also the Freefem++ documentation on convect 
 command.
 
 The defined method works only if ``mf`` is a pure Lagrange finite element method 

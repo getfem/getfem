@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -27,64 +27,120 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION gf_util(operation, [,args])
+/*@GFDOC
+  Performs various operations which do not fit elsewhere.
+@*/
 
-  Performs various operations which do not fit elsewhere..
 
-  * gf_util('save matrix', string FMT, string FILENAME, spmat A);
 
-  Exports a sparse matrix into the file named FILENAME, using
-  Harwell-Boeing (FMT='hb') or Matrix-Market (FMT='mm') formatting.
 
-  * A = gf_util('load matrix', string FMT, string FILENAME);
+// Object for the declaration of a new sub-command.
 
-  Imports a sparse matrix from a file.
+struct sub_gf_util : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out) = 0;
+};
 
-  @FUNC ::UTIL('trace level')
+typedef boost::intrusive_ptr<sub_gf_util> psub_command;
 
-  @FUNC ::UTIL('warning level')
-MLABCOM*/
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
 
-void gf_util(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 1) {
-    THROW_BADARG("Wrong number of input arguments");
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_util {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out)			\
+      { dummy_func(in); dummy_func(out); code }				\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+
+
+
+
+void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+
+  if (subc_tab.size() == 0) {
+
+
+    /*@FUNC ('save matrix', @str FMT, @str FILENAME, @mat A)
+    Exports a sparse matrix into the file named FILENAME, using
+    Harwell-Boeing (FMT='hb') or Matrix-Market (FMT='mm') formatting. @*/
+    sub_command
+      ("save matrix", 3, 3, 0, 0,
+       std::string fmt = in.pop().to_string();
+       int ifmt;
+       if (cmd_strmatch(fmt, "hb") || cmd_strmatch(fmt, "harwell-boeing")) ifmt = 0;
+       else if (cmd_strmatch(fmt, "mm") || cmd_strmatch(fmt, "matrix-market")) ifmt = 1;
+       else THROW_BADARG("unknown sparse matrix file-format : " << fmt);
+       std::string fname = in.pop().to_string();
+       if (!in.front().is_complex()) {
+	 gf_real_sparse_csc_const_ref H;  in.pop().to_sparse(H);
+	 gmm::csc_matrix<double> cscH; gmm::copy(H,cscH);
+	 if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
+	 else           gmm::MatrixMarket_save(fname.c_str(), cscH);
+       } else {
+	 gf_cplx_sparse_csc_const_ref H;  in.pop().to_sparse(H);
+	 gmm::csc_matrix<complex_type> cscH; gmm::copy(H,cscH);
+	 if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
+	 else           gmm::MatrixMarket_save(fname.c_str(), cscH);
+       }
+
+       );
+
+
+    /*@FUNC A = ('load matrix', @str FMT, @str FILENAME)
+     Imports a sparse matrix from a file. @*/
+    sub_command
+      ("load matrix", 2, 2, 1, 1,
+       spmat_load(in, out, mexarg_out::USE_NATIVE_SPARSE);
+       );
+
+
+    /*@FUNC ('trace level', @int level)
+      Set the verbosity of some getfem++ routines.
+
+      Typically the messages printed by the model bricks, 0 means no
+      trace message (default is 3).@*/
+    sub_command
+      ("trace level", 1, 1, 0, 0,
+       gmm::set_traces_level(in.pop().to_integer(0, 100));
+       );
+
+
+    /*@FUNC ('warning level', @int level)
+      Filter the less important warnings displayed by getfem.
+
+      0 means no warnings, default level is 3.@*/
+    sub_command
+      ("warning level", 1, 1, 0, 0,
+       gmm::set_warning_level(in.pop().to_integer(0, 100));
+       );
+
   }
-  std::string cmd = in.pop().to_string();
 
-  if (check_cmd(cmd, "save matrix", in, out, 3, 3, 0, 0)) {
-    std::string fmt = in.pop().to_string();
-    int ifmt;
-    if (cmd_strmatch(fmt, "hb") || cmd_strmatch(fmt, "harwell-boeing")) ifmt = 0;
-    else if (cmd_strmatch(fmt, "mm") || cmd_strmatch(fmt, "matrix-market")) ifmt = 1;
-    else THROW_BADARG("unknown sparse matrix file-format : " << fmt);
-    std::string fname = in.pop().to_string();
-    if (!in.front().is_complex()) {
-      gf_real_sparse_csc_const_ref H;  in.pop().to_sparse(H);
-      gmm::csc_matrix<double> cscH; gmm::copy(H,cscH);
-      if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
-      else           gmm::MatrixMarket_save(fname.c_str(), cscH);
-    } else {
-      gf_cplx_sparse_csc_const_ref H;  in.pop().to_sparse(H);
-      gmm::csc_matrix<complex_type> cscH; gmm::copy(H,cscH);
-      if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), cscH);
-      else           gmm::MatrixMarket_save(fname.c_str(), cscH);
-    }
-  } else if (check_cmd(cmd, "load matrix", in, out, 2, 2, 1, 1)) {
-    spmat_load(in, out, mexarg_out::USE_NATIVE_SPARSE);
-  } else if (check_cmd(cmd, "trace level", in, out, 1, 1, 0, 0)) {
-    /*@FUNC ::UTIL('trace level',@int level)
-    Set the verbosity of some getfem++ routines.
 
-    Typically the messages printed by the model bricks, 0 means no
-    trace message (default is 3).@*/
-    gmm::set_traces_level(in.pop().to_integer(0, 100));
-  } else if (check_cmd(cmd, "warning level", in, out, 1, 1, 0, 0)) {
-    /*@FUNC ::UTIL('warning level',@int level)
-    Filter the less important warnings displayed by getfem.
+  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
 
-    0 means no warnings, default level is 3.@*/
-    gmm::set_warning_level(in.pop().to_integer(0, 100));
-  } else bad_cmd(cmd);
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out);
+  }
+  else bad_cmd(init_cmd);
+
 }

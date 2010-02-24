@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -73,6 +73,7 @@ void gf_asm(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_compute(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_util(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_exit(getfemint::mexargs_in&, getfemint::mexargs_out&) { exit(0); }
 
 namespace getfemint {
   std::stringstream *global_pinfomsg = 0;
@@ -110,82 +111,100 @@ namespace getfemint {
   }
 }
 
+typedef void (* psub_command)(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+
 
 extern "C"
 char* getfem_interface_main(int config_id, const char *function,
-                            int nb_in_args,
-                            const gfi_array *in_args[],
-                            int *nb_out_args,
-                            gfi_array ***pout_args, char **pinfomsg, int scilab_flag)
-{
+                            int nb_in_args, const gfi_array *in_args[],
+                            int *nb_out_args, gfi_array ***pout_args,
+			    char **pinfomsg, int scilab_flag) {
+
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+
+  if (subc_tab.size() == 0) {
+    subc_tab["workspace"] = gf_workspace;
+    subc_tab["delete"] = gf_delete;
+    subc_tab["undelete"] = gf_undelete;
+    subc_tab["eltm"] = gf_eltm;
+    subc_tab["geotrans"] = gf_geotrans;
+    subc_tab["geotrans_get"] = gf_geotrans_get;
+    subc_tab["integ"] = gf_integ;
+    subc_tab["integ_get"] = gf_integ_get;
+    subc_tab["global_function"] = gf_global_function;
+    subc_tab["global_function_get"] = gf_global_function_get;
+    subc_tab["fem"] = gf_fem;
+    subc_tab["fem_get"] = gf_fem_get;
+    subc_tab["cvstruct_get"] = gf_cvstruct_get;
+    subc_tab["mesh"] = gf_mesh;
+    subc_tab["mesh_get"] = gf_mesh_get;
+    subc_tab["mesh_set"] = gf_mesh_set;
+    subc_tab["mesh_fem"] = gf_mesh_fem;
+    subc_tab["mesh_fem_get"] = gf_mesh_fem_get;
+    subc_tab["mesh_fem_set"] = gf_mesh_fem_set;
+    subc_tab["mesh_im"] = gf_mesh_im;
+    subc_tab["mesh_im_get"] = gf_mesh_im_get;
+    subc_tab["mesh_im_set"] = gf_mesh_im_set;
+    subc_tab["mdbrick"] = gf_mdbrick;
+    subc_tab["mdbrick_get"] = gf_mdbrick_get;
+    subc_tab["mdbrick_set"] = gf_mdbrick_set;
+    subc_tab["mdstate"] = gf_mdstate;
+    subc_tab["mdstate_get"] = gf_mdstate_get;
+    subc_tab["mdstate_set"] = gf_mdstate_set;
+    subc_tab["model"] = gf_model;
+    subc_tab["model_get"] = gf_model_get;
+    subc_tab["model_set"] = gf_model_set;
+    subc_tab["slice"] = gf_slice;
+    subc_tab["slice_get"] = gf_slice_get;
+    subc_tab["slice_set"] = gf_slice_set;
+    subc_tab["levelset"] = gf_levelset;
+    subc_tab["levelset_get"] = gf_levelset_get;
+    subc_tab["levelset_set"] = gf_levelset_set;
+    subc_tab["mesh_levelset"] = gf_mesh_levelset;
+    subc_tab["mesh_levelset_get"] = gf_mesh_levelset_get;
+    subc_tab["mesh_levelset_set"] = gf_mesh_levelset_set;
+    subc_tab["asm"] = gf_asm;
+    subc_tab["compute"] = gf_compute;
+    subc_tab["precond"] = gf_precond;
+    subc_tab["precond_get"] = gf_precond_get;
+    subc_tab["spmat"] = gf_spmat;
+    subc_tab["spmat_get"] = gf_spmat_get;
+    subc_tab["spmat_set"] = gf_spmat_set;
+    subc_tab["linsolve"] = gf_linsolve;
+    subc_tab["util"] = gf_util;
+    subc_tab["exit"] = gf_exit;
+  }
+
+
   std::stringstream info;
   getfemint::global_pinfomsg = &info;
   *pinfomsg = 0; *pout_args = 0;
-  //cout << "getfem_matlab_main(" << function << ", inarg=" << nb_in_args << ", outarg=" << *nb_out_args << ")\n";
-  //for (int i=0; i < nb_in_args; ++i) { cout << "  inarg[" << i << "]=";gfi_array_print((gfi_array*)in_args[i]); cout << "\n"; }
+  // cout << "getfem_matlab_main(" << function << ", inarg=" << nb_in_args
+  //      << ", outarg=" << *nb_out_args << ")\n";
+  //  for (int i=0; i < nb_in_args; ++i) {
+  //     cout << "  inarg[" << i << "]=";
+  //     gfi_array_print((gfi_array*)in_args[i]); cout << "\n";
+  //  }
   try {
     static getfemint::config *conf[3];
-    if (!conf[config_id]) conf[config_id] = new getfemint::config((gfi_interface_type)config_id);
+    if (!conf[config_id])
+      conf[config_id] = new getfemint::config((gfi_interface_type)config_id);
     conf[config_id]->current_function_ = function;
     config::set_current_config(conf[config_id]);
     mexargs_in in(nb_in_args, in_args, false);
     mexargs_out out(*nb_out_args);
     out.set_scilab(bool(scilab_flag));
-    if (strcmp(function, "workspace")==0) gf_workspace(in,out);
-    else if (strcmp(function, "delete")==0) gf_delete(in,out);
-    else if (strcmp(function, "undelete")==0) gf_undelete(in,out);
-    else if (strcmp(function, "eltm")==0) gf_eltm(in,out);
-    else if (strcmp(function, "geotrans")==0) gf_geotrans(in,out);
-    else if (strcmp(function, "geotrans_get")==0) gf_geotrans_get(in,out);
-    else if (strcmp(function, "integ")==0) gf_integ(in,out);
-    else if (strcmp(function, "integ_get")==0) gf_integ_get(in,out);
-    else if (strcmp(function, "global_function")==0) gf_global_function(in,out);
-    else if (strcmp(function, "global_function_get")==0) gf_global_function_get(in,out);
-    else if (strcmp(function, "fem")==0) gf_fem(in,out);
-    else if (strcmp(function, "fem_get")==0) gf_fem_get(in,out);
-    else if (strcmp(function, "cvstruct_get")==0) gf_cvstruct_get(in,out);
-    else if (strcmp(function, "mesh")==0) gf_mesh(in,out);
-    else if (strcmp(function, "mesh_get")==0) gf_mesh_get(in,out);
-    else if (strcmp(function, "mesh_set")==0) gf_mesh_set(in,out);
-    else if (strcmp(function, "mesh_fem")==0) gf_mesh_fem(in,out);
-    else if (strcmp(function, "mesh_fem_get")==0) gf_mesh_fem_get(in,out);
-    else if (strcmp(function, "mesh_fem_set")==0) gf_mesh_fem_set(in,out);
-    else if (strcmp(function, "mesh_im")==0) gf_mesh_im(in,out);
-    else if (strcmp(function, "mesh_im_get")==0) gf_mesh_im_get(in,out);
-    else if (strcmp(function, "mesh_im_set")==0) gf_mesh_im_set(in,out);
-    else if (strcmp(function, "mdbrick")==0) gf_mdbrick(in,out);
-    else if (strcmp(function, "mdbrick_get")==0) gf_mdbrick_get(in,out);
-    else if (strcmp(function, "mdbrick_set")==0) gf_mdbrick_set(in,out);
-    else if (strcmp(function, "mdstate")==0) gf_mdstate(in,out);
-    else if (strcmp(function, "mdstate_get")==0) gf_mdstate_get(in,out);
-    else if (strcmp(function, "mdstate_set")==0) gf_mdstate_set(in,out);
-    else if (strcmp(function, "model")==0) gf_model(in,out);
-    else if (strcmp(function, "model_get")==0) gf_model_get(in,out);
-    else if (strcmp(function, "model_set")==0) gf_model_set(in,out);
-    else if (strcmp(function, "slice")==0) gf_slice(in,out);
-    else if (strcmp(function, "slice_get")==0) gf_slice_get(in,out);
-    else if (strcmp(function, "slice_set")==0) gf_slice_set(in,out);
-    else if (strcmp(function, "levelset")==0) gf_levelset(in,out);
-    else if (strcmp(function, "levelset_get")==0) gf_levelset_get(in,out);
-    else if (strcmp(function, "levelset_set")==0) gf_levelset_set(in,out);
-    else if (strcmp(function, "mesh_levelset")==0) gf_mesh_levelset(in,out);
-    else if (strcmp(function, "mesh_levelset_get")==0) gf_mesh_levelset_get(in,out);
-    else if (strcmp(function, "mesh_levelset_set")==0) gf_mesh_levelset_set(in,out);
-    else if (strcmp(function, "asm")==0) gf_asm(in,out);
-    else if (strcmp(function, "compute")==0) gf_compute(in,out);
-    else if (strcmp(function, "precond")==0) gf_precond(in,out);
-    else if (strcmp(function, "precond_get")==0) gf_precond_get(in,out);
-    else if (strcmp(function, "spmat")==0) gf_spmat(in,out);
-    else if (strcmp(function, "spmat_get")==0) gf_spmat_get(in,out);
-    else if (strcmp(function, "spmat_set")==0) gf_spmat_set(in,out);
-    else if (strcmp(function, "linsolve")==0) gf_linsolve(in,out);
-    else if (strcmp(function, "util")==0) gf_util(in,out);
-    else if (strcmp(function, "exit")==0) exit(0);
+
+    SUBC_TAB::iterator it = subc_tab.find(function);
+    if (it != subc_tab.end()) {
+      it->second(in, out);
+    }
     else {
       GMM_THROW(getfemint_bad_arg, "unknown function: " << function);
     }
 
-    *pout_args = (gfi_array**)gfi_calloc(out.args().size(), sizeof(gfi_array*));
+    *pout_args = (gfi_array**)gfi_calloc(out.args().size(),sizeof(gfi_array*));
     if (!*pout_args) GMM_THROW(getfemint_error, "memory exhausted..");
     out.set_okay(1);
     *nb_out_args = int(out.args().size());

@@ -56,27 +56,31 @@
 namespace getfemint {
   /* associate the class ID found in the matlab structures referencing
      getfem object to a class name which coincides with the class name
-     given by matlab to the structure (hum..) */
+     given by matlab to the structure.
+     
+     IMPORTANT: Should correspond to the getfemint_class_id in gfi_array.h
+                In particular, it should be in alphabetic order.
+  */
   const char *name_of_getfemint_class_id(unsigned cid) {
     static const char *cname[GETFEMINT_NB_CLASS] = {
+      "gfCvStruct",
+      "gfEltm",
+      "gfFem",
+      "gfGeoTrans",
+      "gfGlobalFunction",
+      "gfInteg",
+      "gfLevelSet",
+      "gfMdBrick",
+      "gfMdState",
       "gfMesh",
       "gfMeshFem",
       "gfMeshIm",
-      "gfMdBrick",
-      "gfMdState",
+      "gfMeshLevelSet",
       "gfModel",
-      "gfGeoTrans",
-      "gfFem",
-      "gfInteg",
-      "gfEltm",
-      "gfCvStruct",
-      "gfPoly",
+      "gfPrecond",
       "gfSlice",
       "gfSpmat",
-      "gfPrecond",
-      "gfLevelSet",
-      "gfMeshLevelSet",
-      "gfGlobalFunction"
+      "gfPoly"
     };
 
     if (cid >= GETFEMINT_NB_CLASS) return "not_a_getfem_class";
@@ -1295,7 +1299,7 @@ namespace getfemint {
   std::string cmd_normalize(const std::string& a) {
     std::string b = a;
     for (size_type i = 0; i < b.size(); ++i) {
-      b[i] = toupper(b[i]);
+      b[i] = char(toupper(b[i]));
       if (b[i] == '_' || b[i] == '-') b[i] = ' ';
     }
     return b;

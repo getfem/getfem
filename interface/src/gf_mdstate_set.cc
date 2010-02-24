@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Y. Renard, J. Pommier.
+// Copyright (C) 2001-2010 Y. Renard, J. Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -30,20 +30,9 @@
 using namespace getfemint;
 
 
-/*MLABCOM
-
-  FUNCTION M = gf_mdstate_set(cmd, [, args])
+/*@GFDOC
   Modify a model state object.
-
-  @SET MDSTATE:SET('compute_reduced_system')
-  @SET MDSTATE:SET('compute_reduced_residual')
-  @SET MDSTATE:SET('compute_residual')
-  @SET MDSTATE:SET('compute_tangent_matrix')
-  @SET MDSTATE:SET('state')
-  @SET MDSTATE:SET('clear')
-
-  $Id$
-MLABCOM*/
+@*/
 
 void gf_mdstate_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
@@ -53,17 +42,17 @@ void gf_mdstate_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfemint_mdstate *md  = in.pop().to_getfemint_mdstate(true);
   std::string cmd        = in.pop().to_string();
   if (check_cmd(cmd, "compute_reduced_system", in, out, 0, 0, 0, 0)) {
-    /*@SET MDSTATE:SET('compute_reduced_system')
+    /*@SET ('compute_reduced_system')
     Compute the reduced system from the tangent matrix and constraints.@*/
     if (!md->is_complex()) md->real_mdstate().compute_reduced_system();
     else                   md->cplx_mdstate().compute_reduced_system();
   } else if (check_cmd(cmd, "compute_reduced_residual", in, out, 0, 0, 0, 0)) {
-    /*@SET MDSTATE:SET('compute_reduced_residual')
+    /*@SET ('compute_reduced_residual')
     Compute the reduced residual from the residual and constraints.@*/
     if (!md->is_complex()) md->real_mdstate().compute_reduced_residual();
     else                   md->cplx_mdstate().compute_reduced_residual();
   } else if (check_cmd(cmd, "compute_residual", in, out, 1, 1, 0, 0)) {
-    /*@SET MDSTATE:SET('compute_residual',@mdbrick B)
+    /*@SET ('compute_residual', @tmdbrick B)
     Compute the residual for the brick `B`.@*/
     getfemint_mdbrick *b = in.pop().to_getfemint_mdbrick();
     if (md->is_complex() != b->is_complex())
@@ -72,7 +61,7 @@ void gf_mdstate_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
          b->real_mdbrick().compute_residual(md->real_mdstate());
     else b->cplx_mdbrick().compute_residual(md->cplx_mdstate());
   } else if (check_cmd(cmd, "compute_tangent_matrix", in, out, 1, 1, 0, 0)) {
-    /*@SET MDSTATE:SET('compute_tangent_matrix',@mdbrick B)
+    /*@SET ('compute_tangent_matrix', @tmdbrick B)
     Update the tangent matrix from the brick `B`.@*/
     getfemint_mdbrick *b = in.pop().to_getfemint_mdbrick();
     if (md->is_complex() != b->is_complex())
@@ -81,7 +70,7 @@ void gf_mdstate_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
          b->real_mdbrick().compute_tangent_matrix(md->real_mdstate());
     else b->cplx_mdbrick().compute_tangent_matrix(md->cplx_mdstate());
   } else if (check_cmd(cmd, "state", in, out, 1, 1, 0, 0)) {
-    /*@SET MDSTATE:SET('state',@vec U)
+    /*@SET ('state', @vec U)
     Update the internal state with the vector `U`.@*/
     if (!md->is_complex()) {
       darray st = in.pop().to_darray(-1);
@@ -91,7 +80,7 @@ void gf_mdstate_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       md->cplx_mdstate().state().assign(st.begin(), st.end());
     }
   } else if (check_cmd(cmd, "clear", in, out, 0, 0, 0, 1)) {
-    /*@SET MDSTATE:SET('clear')
+    /*@SET ('clear')
     Clear the model state.@*/
     md->clear();
   } else bad_cmd(cmd);

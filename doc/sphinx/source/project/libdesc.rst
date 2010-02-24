@@ -413,8 +413,8 @@ This is clear that the event management still have to be tested and improved to
 have a fully reactive system.
 
 
-Matlab and Python interfaces
-----------------------------
+Python, Scilab and Matlab interfaces
+------------------------------------
 
 A simplified interface of |gf| is provided, so that it is possible to use getfem
 in other languages.
@@ -521,16 +521,111 @@ Here is a list of the various files, with a short description:
   during compilation. Its source file is :file:`getfem.base.py`, it contains just 
   the list of classes, and for each class the names of the member functions.
 
-Adding a new function to the getfem interface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If one want to add a new function ``gf_mesh_get(m, "foobar", ...)``, then the
+
+Objects, methods and functions of the interface 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+The main concepts manipulated by the interface are a limited number of objects
+(Fem, Mesh, MeshFem, Model .), the associated methods and some functions defined on these objects.
+
+A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separetaly for each part (Python, Scilab, Matlab).
+
+The following rules have to be respected :
+
+* An object have to be defined by three files on the interface
+
+  - :file:`gf_objectname.cc` : contains the constructors of the object
+
+  - :file:`gf_objectname_get.cc` : contains the methods which only get some information about the object.
+
+  - :file:`gf_objectname_set.cc` : contains the methods which transform the object.
+
+* A list of function is defined by only one file :file:`gf_commandname.cc`
+
+
+
+How to document an object, a method or a function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In each file, the commentary between tags /*@GFDOC and @*/ is added to the documentation to the object or command. Specific documentation for each sub-command should be placed between the tags /*@SET('sub-command-name', .) and @*/ for 
+for the set methods, /*@GET('sub-command-name', .) and @*/ for the get methods and /*@FUNC('sub-command-name', .) and @*/ for the functions. (/*@RDATTR a changer en GET ?)
+
+On fait reference a une autre fonction par
+OBJ:INIT, OBJ:GET, OBJ:SET ou ::FUNCTION  
+
+--> Attention, il faut definir le format des fonctions pour qu'il soit dechiffrable et le transmettre a l'interface python par example
++ type des parametres .
+La "declaration de fonction" doit tenir sur une seule ligne a l'exclusion de tout autre chose
+
+A l'interieur, globalement, c'est la syntaxe rst qui doit predominer. Les formules mathematiques sont mise sous la forme   :math:`f(x)`
+
+
+
+En python, si une commande set a le meme nom qu'une commande get, il doit etre accole un 'set_' au nom de la commande set.
+(en matlab ?)
+
+
+On peut ajouter des tags specifiques pour ajouter a l'interface scilab/matlab/python des parties de doc ou de commande pour regler les cas penibles (eval, MLABEXT, .)  -> les tags specifiques sont @MATLAB{} @PYTHON{} et @SCILAB{}
+
+On peut faire reference a une autre commande dans la doc en mettant
+nom_objet:get (ou set) ou ::nom_commande en majuscule .
+suivant le langae destination, la syntaxe doit etre adaptee pour mettre la bonne commande (voir ce qui se passe en matlab)
+
+Liste des types d'arguments pre-definis :
+        d = string.replace(d, '@CELL',   '')
+        d = string.replace(d, '@imat',   'imat')
+        d = string.replace(d, '@ivec',   'ivec')
+        d = string.replace(d, '@cvec',   'vec')
+        d = string.replace(d, '@dcvec',  'vec')
+        d = string.replace(d, '@dvec',   'vec')
+        d = string.replace(d, '@vec',    'vec')
+        d = string.replace(d, '@dmat',   'mat')
+        d = string.replace(d, '@mat',    'mat')
+        d = string.replace(d, '@str',    'str')
+        d = string.replace(d, '@int',    'int')
+        d = string.replace(d, '@bool',   'bool')
+        d = string.replace(d, '@real',   'real')
+        d = string.replace(d, '@scalar', 'scalar')
+        d = string.replace(d, '@list',   'list')
+- @tobj : ou obj est un objet de l'interface.
+- @ivec : vecteur d'entiers
+- @dvec : vecteur de doubles
+- @cdvec : vecteur de complexe double doubles (a verif)
+- @dmat : matrice de doubles
+- @str  : chaine de caracteres
+- @int  : entier
+
+      # Authorized abbreviations
+        d = string.replace(d, '@tmf',    'mesh_fem')
+        d = string.replace(d, '@tbrick', 'mdbrick')
+        d = string.replace(d, '@tstate', 'mdstate')
+        d = string.replace(d, '@tgt',    'geotrans')
+        d = string.replace(d, '@tgf',    'global_function')
+        d = string.replace(d, '@tmls',   'mesh_levelset')
+        d = string.replace(d, '@tls',    'levelset')
+        d = string.replace(d, '@tsl',    'slice')
+        d = string.replace(d, '@tsp',    'spmat')
+        d = string.replace(d, '@tpre',   'precond')
+
+Supprimer les <Par> (ou les gerer ?)
+
+transformer les MESHFEM en MESH_FEM, les MEHSLEVELSET aussi
+
+ATTENTION aux virgules dans les declaration de variables : les macros n'apprecient pas.
+
+Attention au format de declaration des arguments. Python, ne comprends que des choses simples sinon il capitule (*args). Les trucs simples sont f(i, j), f(i[, j]). Les f({i|j}) ou f(i[, j[, k]]) sont transformes en *args.
+
+Adding a new function or object method to the getfem interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If one want to add a new function ``gf_mesh_get(m, "foobar", .)``, then the
 main file to modify is :file:`gf_mesh_get.cc`. Remember to check every argument
-passed to the function in order to make sure that the user cannot crash matlab or
-python when using that function.
+passed to the function in order to make sure that the user cannot crash matlab or python when using that function.
 
 Do not forget to add documentation for that function: in :file:`gf_mesh_get.cc`,
-this is the documentation that appears in the matlab help files (that is when on
+this is the documentation that appears in the matlab/scilab/python help files (that is when on
 type "``help gf_mesh_get``" at the matlab prompt), and in the getfem_python
 autogenerated documentation. In order to have "foobar" as a member function of
 the python |py_m| class, it is necessary to add it in the ``getfem.base.py``
@@ -539,8 +634,31 @@ file. It is also necessary to add documentation in the
 documentation available. It is still very matlab oriented, and a little bit
 redundant with the documentation embedded in :file:`gf_mesh_get.cc`.
 
-Adding a new class to the getfem interface
 
++ fonction specifiques a une seule interface 
+LANGAGEEXT et LANGAGEFUNC (ou GET, SET, INIT)
+examples : gf_compute, gf_mesh_fem_get .
+
++ pour un example de code (attention a etre compatible tout langage) le :: puis le decalage comme en rst standard.
+
++ regle python pour deux methodes get et set ayant un nom identique ...->  set_
+
+Adding a new class to the getfem interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ajout dans pseudo_funcions dans 'Makefile.am' de src
+
+
+ + ajout de la fonction dans getfem_interface.cc 
+(du style void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out); )
+
+ + get('char')    -> sauvegarde d'un objet
+ + get('display') -> affichage d'un objet
+ + constructeur 'from string'
+
+REMAINING-TODOLIST : completer l'approche Objet de Matlab en ajoutant automatiquement les sous-commandes dans le fichier subsref.m (d'autant plus qu'avec l'analyse pour Python, on devrait avoir tout le necessaire). Il y avait un embrion non automatique pour gfMesh, gfMeshFem, gfMeshIm, gfSlice, gfSpmat (voir les fichiers dans anciennes versions). Avec la version actuelle, les get sont a peu pres instancies, il manque les set.
 
 Perspectives
 ^^^^^^^^^^^^
+
+

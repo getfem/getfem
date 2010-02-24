@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009 Luis Saavedra.
+// Copyright (C) 2009-2010 Luis Saavedra.
 //
 // This file is a part of GETFEM++
 //
@@ -24,59 +24,139 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION I = gf_global_function_get(GF, ...)
+/*@GFDOC
     General function for querying information about global_function objects.
+@*/
 
-  $Id$
-MLABCOM*/
 
-void gf_global_function_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) THROW_BADARG("Wrong number of input arguments");
+// Object for the declaration of a new sub-command.
 
-  getfem::abstract_xy_function *paf = in.pop().to_global_function();
+struct sub_gf_globfunc_get : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out,
+		   getfem::abstract_xy_function *paf) = 0;
+};
 
-  std::string cmd = in.pop().to_string();
-  if (check_cmd(cmd, "val", in, out, 0, 1, 0, 1)) {
-    /*@GET VALs = GLOBALFUNCTION:GET('val',@mat PTs)
-    Return `val` function evaluation in `PTs` (column points).@*/
-    darray P = in.pop().to_darray(2,-1);// warning: 2 = paf->nd;
-    darray V = out.pop().create_darray_h(P.getn());
+typedef boost::intrusive_ptr<sub_gf_globfunc_get> psub_command;
 
-    for (unsigned i=0; i < unsigned(P.getn()); i++) {
-      V[i] = paf->val(P(0,i),P(1,i));
-    }
-  } else if (check_cmd(cmd, "grad", in, out, 0, 1, 0, 1)) {
-    /*@GET GRADs = GLOBALFUNCTION:GET('grad',@mat PTs)
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
+
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_globfunc_get {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out,			\
+		       getfem::abstract_xy_function *paf)		\
+      { dummy_func(in); dummy_func(out); dummy_func(paf); code }	\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+
+void gf_global_function_get(getfemint::mexargs_in& m_in,
+			    getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+
+  if (subc_tab.size() == 0) {
+  
+    /*@GET VALs = ('val',@mat PTs)
+      Return `val` function evaluation in `PTs` (column points).@*/
+    sub_command
+      ("val", 0, 1, 0, 1,
+       darray P = in.pop().to_darray(2,-1);// warning: 2 = paf->nd;
+       darray V = out.pop().create_darray_h(P.getn());
+
+       for (unsigned i=0; i < unsigned(P.getn()); i++) {
+	 V[i] = paf->val(P(0,i),P(1,i));
+       }
+       );
+
+    
+    /*@GET GRADs = ('grad',@mat PTs)
     Return `grad` function evaluation in `PTs` (column points).
 
     On return, each column of `GRADs` is of the
     form [Gx,Gy].@*/
+    sub_command
+      ("grad", 0, 1, 0, 1,
+       darray P = in.pop().to_darray(2,-1);// warning: 2 = paf->nd;
+       darray G = out.pop().create_darray(2,P.getn());// warning: 2 = paf->nd;
+       
+       for (unsigned i=0; i < unsigned(P.getn()); i++) {
+	 getfem::base_small_vector g = paf->grad(P(0,i),P(1,i));
+	 G(0,i) = g[0];
+	 G(1,i) = g[1];
+       }
+       );
 
-    darray P = in.pop().to_darray(2,-1);// warning: 2 = paf->nd;
-    darray G = out.pop().create_darray(2,P.getn());// warning: 2 = paf->nd;
 
-    for (unsigned i=0; i < unsigned(P.getn()); i++) {
-      getfem::base_small_vector g = paf->grad(P(0,i),P(1,i));
-      G(0,i) = g[0];
-      G(1,i) = g[1];
-    }
-  } else if (check_cmd(cmd, "hess", in, out, 0, 1, 0, 1)) {
-    /*@GET HESSs = GLOBALFUNCTION:GET('hess',@mat PTs)
+    /*@GET HESSs = ('hess',@mat PTs)
     Return `hess` function evaluation in `PTs` (column points).
 
     On return, each column of `HESSs` is of the
     form [Hxx,Hxy,Hyx,Hyy].@*/
-    darray P = in.pop().to_darray(2,-1);// warning: 2 = paf->nd;
-    darray H = out.pop().create_darray(4,P.getn());// warning: 4 = (paf->nd)*(paf->nd);
+    sub_command
+      ("hess", 0, 1, 0, 1,
+       darray P = in.pop().to_darray(2,-1); // warning: 2 = paf->nd;
+       darray H = out.pop().create_darray(4,P.getn()); // warning: 4 = (paf->nd)*(paf->nd);
 
-    for (unsigned i=0; i < unsigned(P.getn()); i++) {
-      getfem::base_matrix h = paf->hess(P(0,i),P(1,i));
-      H(0,i) = h(0,0);
-      H(1,i) = h(0,1);
-      H(2,i) = h(1,0);
-      H(3,i) = h(1,1);
-    }
-  } else bad_cmd(cmd);
+       for (unsigned i=0; i < unsigned(P.getn()); i++) {
+	 getfem::base_matrix h = paf->hess(P(0,i),P(1,i));
+	 H(0,i) = h(0,0);
+	 H(1,i) = h(0,1);
+	 H(2,i) = h(1,0);
+	 H(3,i) = h(1,1);
+       }
+       );
+  
+
+    /*@GET s = ('char')
+      Output a (unique) string representation of the @tglobal_function.
+
+      This can be used to perform comparisons between two
+      different @tglobal_function objects.
+      This function is to be completed.
+      @*/
+    sub_command
+      ("char", 0, 0, 0, 1,
+       GMM_ASSERT1(false, "Sorry, function to be done");
+       // std::string s = ...;
+       // out.pop().from_string(s.c_str());
+       );
+
+
+    /*@GET ('display')
+      displays a short summary for a @tglobal_function object.@*/
+    sub_command
+      ("display", 0, 0, 0, 0,
+       infomsg() << "gfGlobalFunction object\n";
+       );
+
+
+  }
+
+
+
+  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
+
+  getfem::abstract_xy_function *paf = m_in.pop().to_global_function();
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out, paf);
+  }
+  else bad_cmd(init_cmd);
+
 }

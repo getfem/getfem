@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Julien Pommier.
+// Copyright (C) 2006-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -26,28 +26,53 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION I = gf_mesh_levelset_get(MLS, ...)
-    General function for modification of MESHLEVELSET objects.
+/*@GFDOC
+  General function for modification of @tmesh_levelset objects.
+@*/
 
-  @SET MESHLEVELSET:SET('add')
-  @SET MESHLEVELSET:SET('sup')
-  @SET MESHLEVELSET:SET('adapt')
 
-  $Id$
-MLABCOM*/
 
-void gf_mesh_levelset_set(getfemint::mexargs_in& in,
-                          getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
-  getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset(true);
-  getfem::mesh_level_set &mls = gmls->mesh_levelset();
-  std::string cmd = in.pop().to_string();
-  if (check_cmd(cmd, "add", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHLEVELSET:SET('add',@tls ls)
+
+// Object for the declaration of a new sub-command.
+
+struct sub_gf_lset_set : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out,
+		   getfemint_mesh_levelset *gmls,
+		   getfem::mesh_level_set &mls) = 0;
+};
+
+typedef boost::intrusive_ptr<sub_gf_lset_set> psub_command;
+
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
+
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_lset_set {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out,			\
+		       getfemint_mesh_levelset *gmls,			\
+		       getfem::mesh_level_set &mls)			\
+      { dummy_func(in); dummy_func(out);  dummy_func(gmls); code }	\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+
+
+void gf_mesh_levelset_set(getfemint::mexargs_in& m_in,
+                          getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+
+  if (subc_tab.size() == 0) {
+
+    /*@SET ('add', @tls ls)
     Add a link to the @tls `ls`.
 
     Only a reference is kept, no copy is done. In order to indicate
@@ -55,28 +80,61 @@ void gf_mesh_levelset_set(getfemint::mexargs_in& in,
     method, where `ls` is an @tls object. An arbitrary number of
     @tls can be added.
 
-    **WARNING**<par>
+    **WARNING**
 
     The @tmesh of `ls` and the linked @tmesh must be the same.@*/
-    getfemint_levelset *gls = in.pop().to_getfemint_levelset();
-    if (&mls.linked_mesh() != &gls->levelset().get_mesh_fem().linked_mesh())
-      THROW_BADARG("The meshes of the levelset and the mesh_levelset "
-                   "are not the same!");
-    mls.add_level_set(gls->levelset());
-    workspace().set_dependance(gmls, gls);
-  } else if (check_cmd(cmd, "sup", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHLEVELSET:SET('sup', @tls ls)
+    sub_command
+      ("add", 1, 1, 0, 0,
+       getfemint_levelset *gls = in.pop().to_getfemint_levelset();
+       if (&mls.linked_mesh() != &gls->levelset().get_mesh_fem().linked_mesh())
+	 THROW_BADARG("The meshes of the levelset and the mesh_levelset "
+		      "are not the same!");
+       mls.add_level_set(gls->levelset());
+       workspace().set_dependance(gmls, gls);
+       );
+
+
+    /*@SET ('sup', @tls ls)
     Remove a link to the @tls `ls`.@*/
-    getfemint_levelset *gls = in.pop().to_getfemint_levelset();
-    mls.sup_level_set(gls->levelset());
-    workspace().sup_dependance(gmls, gls);
-  } else if (check_cmd(cmd, "adapt", in, out, 0, 0, 0, 0)) {
-    /*@SET MESHLEVELSET:SET('adapt')
+    sub_command
+      ("sup", 1, 1, 0, 0,
+       getfemint_levelset *gls = in.pop().to_getfemint_levelset();
+       mls.sup_level_set(gls->levelset());
+       workspace().sup_dependance(gmls, gls);
+       );
+
+
+    /*@SET ('adapt')
     Do all the work (cut the convexes with the levelsets).
 
     To initialice the @tmls object or to actualize it when the
     value of any levelset function is modified, one has to call
     this method.@*/
-    mls.adapt();
-  } else bad_cmd(cmd);
+    sub_command
+      ("adapt", 0, 0, 0, 0,
+       mls.adapt();
+       );
+
+  }
+
+
+  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
+  
+  getfemint_mesh_levelset *gmls = m_in.pop().to_getfemint_mesh_levelset(true);
+  getfem::mesh_level_set &mls = gmls->mesh_levelset();
+ 
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out, gmls, mls);
+  }
+  else bad_cmd(init_cmd);
+
+
+
 }

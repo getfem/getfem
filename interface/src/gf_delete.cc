@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Yves Renard.
+// Copyright (C) 2001-2010 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -24,25 +24,12 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION gf_delete(I,[J,K,...])
- 
-    Delete an existing getfem object from memory (mesh, mesh_fem,
-    etc.). I should be a descriptor given by gf_mesh(),
-    gf_mesh_im(), gf_slice() etc.
+/*@GFDOC
+  Delete an existing getfem object from memory (mesh, mesh_fem, etc.).
 
-    Note that if another object uses I, then object I will be deleted only
-    when both have been asked for deletion.
-
-    Only objects listed in the output of gf_workspace('stats') can be
-    deleted (for example gf_fem objects cannot be destroyed).
-
-    You may also use gf_workspace('clear all') to erase everything at
-    once.
-
- SEE ALSO:
-    gf_workspace,gf_mesh, gf_mesh_fem.
- MLABCOM*/
+  SEE ALSO:
+    gf_workspace, gf_mesh, gf_mesh_fem.
+ @*/
 
 void gf_delete(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
@@ -53,6 +40,21 @@ void gf_delete(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   
   while (in.remaining()) {
     id_type id;
+    /*@FUNC ('.list', I[, J, K,...])
+      
+      I should be a descriptor given by gf_mesh(),
+      gf_mesh_im(), gf_slice() etc.
+      
+      Note that if another object uses I, then object I will be deleted only
+      when both have been asked for deletion.
+      
+      Only objects listed in the output of gf_workspace('stats') can be
+      deleted (for example gf_fem objects cannot be destroyed).
+      
+      You may also use gf_workspace('clear all') to erase everything at
+      once.
+      @*/
+    
     if (in.front().is_object_id()) {
       id_type cid; in.pop().to_object_id(&id,&cid);
       /*if (is_static_object(id, cid)) {
@@ -64,7 +66,8 @@ void gf_delete(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     } else if (in.front().is_integer()) {
       id = in.pop().to_integer();
     }
-    if (getfemint::workspace().object(id)) { /* throw an exeption if object not found */
+    if (getfemint::workspace().object(id)) {
+      /* throw an exeption if object not found */
       getfemint::workspace().delete_object(id);
     } else {
       GFI_WARNING("ouuups strange");

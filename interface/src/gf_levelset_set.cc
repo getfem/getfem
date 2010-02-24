@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Julien Pommier.
+// Copyright (C) 2006-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -25,16 +25,9 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION I = gf_levelset_set(LS, ...)
-    General function for modification of LEVELSET objects.
-
-  @SET LEVELSET:SET('values')
-  @SET LEVELSET:SET('simplify')
-
-  $Id$
-
-MLABCOM*/
+/*@GFDOC
+  General function for modification of LEVELSET objects.
+@*/
 
 void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
@@ -45,7 +38,7 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::level_set &ls = gls->levelset();
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "values", in, out, 1, 2, 0, 0)) {
-    /*@SET LEVELSET:SET('values',{@mat v1|@str func_1}[, @mat v2|@str func_2])
+    /*@SET ('values', {@mat v1|@str func_1}[, @mat v2|@str func_2])
     Set values of the vector of dof for the level-set functions.
 
     Set the primary function with the vector of dof `v1` (or the expression
@@ -90,7 +83,7 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       }
     }
   } else if (check_cmd(cmd, "simplify", in, out, 0, 1, 0, 0)) {
-    /*@SET LEVELSET:SET('simplify'[@scalar eps=0.01])
+    /*@SET ('simplify'[, @scalar eps=0.01])
     Simplify dof of level-set optionally with the parameter `eps`.@*/
     if (in.remaining()==0) ls.simplify();
     else{

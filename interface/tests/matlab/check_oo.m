@@ -15,7 +15,7 @@ function check_oo(iverbose,idebug)
   assert('m1.nbpts==0');
   assert('m1.dim==1');
   p=[0 1 0 1.1; 0 0 1 1]; t = [1 2 3 0; 2 3 4 0]'; 
-  m2=gf_mesh('pt2D',p,t); 
+  m2=gf_mesh('pt2D',p,t);
   m2=gfMesh(m2);
   assert('isa(m2,''gfMesh'')');
   m3=gfMesh('empty',3);
@@ -59,7 +59,7 @@ function check_oo(iverbose,idebug)
   assert('mf1.mesh.nbcvs==40');
   assert('mf1.nbdof==162');
   s=char(mf1);
-  assert('numel(s)>2000');
+  assert('numel(s)>1700');
   gt=mf1.mesh.geotrans(3);
   cvs=mf1.mesh.cvstruct(1);
   fem=mf1.fem(2:3);

@@ -53,7 +53,7 @@ a set of FEM::
   >> mf = gf_mesh_fem(m,1); % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
   >> gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
-The first instruction builds a new |mlab_mf| object, the second argument
+The first instruction builds a new |mf| object, the second argument
 specifies that this object will be used to interpolate scalar fields (since the
 unknown is a scalar field). The second instruction assigns the :math:`Q^2` FEM to
 every convex (each basis function is a polynomial of degree 4, remember that
@@ -125,7 +125,7 @@ integer #id::
 Here we find the faces of the convexes which are on the boundary of the mesh
 (i.e. the faces which are not shared by two convexes).
 
-.. remark::
+ Remark:
 
    we could have used ``gf_mesh_get(m, 'OuTEr_faCes')``, as the interface is
    case-insensitive, and whitespaces can be replaced by underscores.
@@ -175,7 +175,7 @@ Next we add a Dirichlet condition on the domain boundary::
 Here the number ``42`` is the region number to which the dirichlet condition is
 applied. The ``'penalized'`` says that the Dirichlet condition should be imposed
 via a penalization technique. Other ways are possible (augmented system, direct
-elimination). A |mlab_mf| argument is also required, as the Dirichlet condition
+elimination). A |mf| argument is also required, as the Dirichlet condition
 :math:`u=r` is imposed in a weak form :math:`\int_\Gamma u(x)v(x) = \int_\Gamma
 r(x)v(x) \forall v` where :math:`v` is taken in the space of multipliers given by
 here by ``mf``.
@@ -186,12 +186,12 @@ change this to :math:`u=(x-.5)^2+(y-.5)^2+x/5-y/3`::
   >> R=gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
   >> gf_mdbrick_set(b1, 'param', 'R', mf, R);
 
-.. remark::
+ Remark:
 
    the polynomial expression was interpolated on ``mf``. It is possible only if
-   ``mf`` is of Lagrange type. In this first example we use the same |mlab_mf|
+   ``mf`` is of Lagrange type. In this first example we use the same |mf|
    for the unknown and for the data such as ``R``, but in the general case,
-   ``mf`` won't be Lagrangian and another (Lagrangian) |mlab_mf| will be used for
+   ``mf`` won't be Lagrangian and another (Lagrangian) |mf| will be used for
    the description of Dirichlet conditions, source terms etc.
 
 A "model state" variable is created, and the solver is launched::
@@ -313,7 +313,7 @@ Other examples
 Using Matlab Object-Oriented features
 -------------------------------------
 
-The basic functions of the |gfm| toolbox do not use any advanced |mlab| features
+The basic functions of the |gf| toolbox do not use any advanced |mlab| features
 (except that the handles to getfem objects are stored in a small |mlab|
 structure). But the toolbox comes with a set of |Mlab| objects, which encapsulate 
 the handles and make them look as real |mlab| objects. The aim is not to provide

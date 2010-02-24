@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2009 Luis Saavedra, Yves Renard.
+# Copyright (C) 2009-2010 Luis Saavedra, Yves Renard.
 #
 # This file is a part of GetFEM++
 #
@@ -102,7 +102,6 @@ Ue = Ue.T.reshape(1,8)
 
 # Model in action:
 md = gf.Model('real')
-
 md.add_fem_variable('u', mf_u)
 
 # data
@@ -123,21 +122,23 @@ md.solve()
 
 U = md.variable('u')
 
+
+
 # export to pos
 cut_mesh = mls.cut_mesh();
-mfv = gf.MeshFem(cut_mesh,2)
-mfv.set_classical_discontinuous_fem(2,0.001)
+mfv = gf.MeshFem(cut_mesh, 2)
+mfv.set_classical_discontinuous_fem(2, 0.001)
 mf_ue.set_qdim(2)
 
-V  = gf.compute_interpolate_on(mf_u,U,mfv)
-Ve = gf.compute_interpolate_on(mf_ue,Ue,mfv)
+V  = gf.compute_interpolate_on(mf_u, U, mfv)
+Ve = gf.compute_interpolate_on(mf_ue, Ue, mfv)
 
 mfvm = gf.MeshFem(cut_mesh);
-mfvm.set_classical_discontinuous_fem(2,0.001);
+mfvm.set_classical_discontinuous_fem(2, 0.001);
 md.add_initialized_fem_data('u_cut', mfv, V);
 VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u_cut', 'lambda', 'mu', mfvm);
 
-mfv.export_to_pos('crack.pos',V,'V',Ve,'Ve',mfvm,VM,'Von Mises')
+mfv.export_to_pos('crack.pos', V, 'V', Ve, 'Ve', mfvm, VM, 'Von Mises')
 
 print 'You can view the solution with (for example):'
 print 'gmsh crack.pos'

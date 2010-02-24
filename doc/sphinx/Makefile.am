@@ -19,6 +19,8 @@ ALLSPHINXOPTS   = -b $(BUILDER) -d build/doctrees $(PAPEROPT_$(PAPER)) \
 
 .PHONY: help checkout update build html htmlhelp clean latex linkcheck dist
 
+all: html
+
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  view      to view standalone HTML files"
@@ -65,9 +67,9 @@ images:
 	-cd $(srcdir)/source/project/images/; make png
 
 
-build: checkout images
+build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst checkout images
 	mkdir -p build/$(BUILDER) build/doctrees
-	$(SPHINXBUILD) $(ALLSPHINXOPTS)
+	export PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
 
 view:
@@ -121,6 +123,14 @@ dist:
 	cp build/latex/docs-pdf.tar.gz $(DIST)/getfem-$(DISTVERSION)-docs-pdf-letter.tar.gz
 
 	mv $(DIST)/* $(DESTINATION) # move to destination
+
+$(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/interface/bin/extract_doc
+	$(top_srcdir)/interface/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
+
+$(srcdir)/source/python/api.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/interface/bin/extract_doc
+	$(top_srcdir)/interface/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/api.rst || (rm -f $(srcdir)/source/python/api.rst; /bin/false )
+
+
 
 htmlupload: html
 	-mv build/html sphinxdoc

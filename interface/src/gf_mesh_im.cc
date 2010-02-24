@@ -30,136 +30,203 @@ using namespace getfemint;
 
 void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in);
 
-/*MLABCOM
-  FUNCTION MIM = gf_mesh_im(...)
+/*@GFDOC
+  This object represent an integration method defined on a whole mesh
+  (an potentialy on its boundaries).
+ @*/
 
-  General constructor for @tmim object (integration methods on a mesh).
 
-  * gf_mesh_im(mesh m[{integ im|int im_degree}])
+// Object for the declaration of a new sub-command.
 
-  Return a getfem handle to the newly created @tmim object. For
-  convenience, optional arguments ('im' or 'im_degree') can be provided,
-  in that case a call to gf_mesh_im_set(mim, 'integ', ..) is issued with
-  these arguments.
+typedef  getfemint_mesh_im *pgetfemint_mesh_im;
 
-  @INIT MESHIM:INIT('load')
-  @INIT MESHIM:INIT('from string')
-  @INIT MESHIM:INIT('clone')
-  @INIT MESHIM:INIT('levelset')
+struct sub_gf_mim : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out,
+		   getfemint_mesh *mm, pgetfemint_mesh_im &mim) = 0;
+};
 
-  $Id$
-MLABCOM*/
+typedef boost::intrusive_ptr<sub_gf_mim> psub_command;
 
-void gf_mesh_im(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
-  getfemint_mesh *mm = NULL;
-  getfemint_mesh_im *mim = NULL;
-  if (in.front().is_string()) {
-    std::string cmd = in.pop().to_string();
-    if (check_cmd(cmd, "load", in, out, 1, 2, 0, 1)) {
-      /*@INIT MESHIM:INIT('load', @str fname[, @tmesh m])
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
+
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_mim {					\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out,			\
+		       getfemint_mesh *mm, pgetfemint_mesh_im &mim)	\
+      { dummy_func(in); dummy_func(out); dummy_func(mm); code }		\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+
+
+void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+
+  if (subc_tab.size() == 0) {
+
+    
+    /*@INIT ('load', @str fname[, @tmesh m])
       Load a @tmim from a file.
-
+      
       If the mesh `m` is not supplied (this kind of file does not store
       the mesh), then it is read from the file and its descriptor is
       returned as the second output argument.@*/
-      std::string fname = in.pop().to_string();
-      if (in.remaining()) mm = in.pop().to_getfemint_mesh();
-      else {
-        getfem::mesh *m = new getfem::mesh();
-        m->read_from_file(fname);
-        mm = getfemint_mesh::get_from(m);
-      }
-      mim = getfemint_mesh_im::new_from(mm);
-      mim->mesh_im().read_from_file(fname);
-    } else if (check_cmd(cmd, "from string", in, out, 1, 2, 0, 1)) {
-      /*@INIT MESHIM:INIT('from string', @str s[, mesh M])
+    sub_command
+      ("load", 1, 2, 0, 1,
+       std::string fname = in.pop().to_string();
+       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+       else {
+	 getfem::mesh *m = new getfem::mesh();
+	 m->read_from_file(fname);
+	 mm = getfemint_mesh::get_from(m);
+       }
+       mim = getfemint_mesh_im::new_from(mm);
+       mim->mesh_im().read_from_file(fname);
+       );
+    
+    
+    /*@INIT ('from string', @str s[, mesh M])
       Create a @tmim object from its string description.
+      
+      See also MESH_IM:GET('char')@*/
+    sub_command
+      ("from string", 1, 2, 0, 1,
+       std::stringstream ss(in.pop().to_string());
+       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
+       else {
+	 getfem::mesh *m = new getfem::mesh();
+	 m->read_from_file(ss);
+	 mm = getfemint_mesh::get_from(m);
+       }
+       mim = getfemint_mesh_im::new_from(mm);
+       mim->mesh_im().read_from_file(ss);
+       );
 
-      See also MESHIM:GET('char')@*/
-      std::stringstream ss(in.pop().to_string());
-      if (in.remaining()) mm = in.pop().to_getfemint_mesh();
-      else {
-        getfem::mesh *m = new getfem::mesh();
-        m->read_from_file(ss);
-        mm = getfemint_mesh::get_from(m);
-      }
-      mim = getfemint_mesh_im::new_from(mm);
-      mim->mesh_im().read_from_file(ss);
-    } else if (check_cmd(cmd, "clone", in, out, 1, 1, 0, 1)) {
-      /*@INIT MESHIM:INIT('clone', @tmim mim2)
+
+    /*@INIT ('clone', @tmim mim2)
       Create a copy of a @tmim.@*/
-      getfemint_mesh_im *mim2 = in.pop().to_getfemint_mesh_im();
-      mm = object_to_mesh(workspace().object(mim2->linked_mesh_id()));
-      mim = getfemint_mesh_im::new_from(mm);
-      std::stringstream ss; /* not very elegant ! */
-      mim2->mesh_im().write_to_file(ss);
-      mim->mesh_im().read_from_file(ss);
-    } else if (check_cmd(cmd, "levelset", in, out, 3, 5, 0, 1)) {
-      /*@INIT MESHIM:INIT('levelset', @tmls mls, @str where, @tinteg im[, @tinteg im_tip[, @tinteg im_set]])
+    sub_command
+      ("clone", 1, 1, 0, 1,
+       getfemint_mesh_im *mim2 = in.pop().to_getfemint_mesh_im();
+       mm = object_to_mesh(workspace().object(mim2->linked_mesh_id()));
+       mim = getfemint_mesh_im::new_from(mm);
+       std::stringstream ss; /* not very elegant ! */
+       mim2->mesh_im().write_to_file(ss);
+       mim->mesh_im().read_from_file(ss);
+       );
+
+
+    /*@INIT ('levelset', @tmls mls, @str where, @tinteg im[, @tinteg im_tip[, @tinteg im_set]])
       Build an integration method conformal to a partition defined
       implicitely by a levelset.
-
+      
       The `where` argument define the domain of integration with
       respect to the levelset, it has to be chosen among 'ALL',
       'INSIDE', 'OUTSIDE' and 'BOUNDARY'.@*/
-      getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
-      std::string swhere = in.pop().to_string();
-      getfem::pintegration_method pim  = in.pop().to_integration_method();
-      getfem::pintegration_method pim2 = 0;
-      getfem::pintegration_method pim3 = 0;
-      if (in.remaining()) pim2 = in.pop().to_integration_method();
-      if (in.remaining()) pim3 = in.pop().to_integration_method();
-      int where = 0;
-      std::string csg_description;
-      if (cmd_strmatch(swhere, "all"))
-        where = getfem::mesh_im_level_set::INTEGRATE_ALL;
-      else {
-        const char *slst[] = {"inside", "outside", "boundary", "all"};
-        for (unsigned i=0; i < 4; ++i) {
-          if (cmd_strmatchn(swhere, slst[i], unsigned(strlen(slst[i])))) {
-            csg_description.assign(swhere.begin() + strlen(slst[i]), swhere.end());
-            if (i == 0)      where = getfem::mesh_im_level_set::INTEGRATE_INSIDE;
-            else if (i == 1) where = getfem::mesh_im_level_set::INTEGRATE_OUTSIDE;
-            else if (i == 2) where = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
-            else if (i == 3) where = getfem::mesh_im_level_set::INTEGRATE_ALL;
-          }
-        }
-      }
-      if (where == 0) {
-        THROW_BADARG("expecting 'inside', 'outside', 'boundary' or 'all'");
-      }
-      if (pim->type() != getfem::IM_APPROX) {
-        THROW_BADARG("expecting an approximate integration method");
-      }
+    sub_command
+      ("levelset", 3, 5, 0, 1,
+       getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
+       std::string swhere = in.pop().to_string();
+       getfem::pintegration_method pim  = in.pop().to_integration_method();
+       getfem::pintegration_method pim2 = 0;
+       getfem::pintegration_method pim3 = 0;
+       if (in.remaining()) pim2 = in.pop().to_integration_method();
+       if (in.remaining()) pim3 = in.pop().to_integration_method();
+       int where = 0;
+       std::string csg_description;
+       if (cmd_strmatch(swhere, "all"))
+ 	 where = getfem::mesh_im_level_set::INTEGRATE_ALL;
+       else {
+	 const char *slst[4];
+	 slst[0] = "inside";
+	 slst[1] = "outside";
+	 slst[2] = "boundary";
+	 slst[3] = "all";
+ 	 for (unsigned i=0; i < 4; ++i) {
+ 	   if (cmd_strmatchn(swhere, slst[i], unsigned(strlen(slst[i])))) {
+ 	     csg_description.assign(swhere.begin() + strlen(slst[i]),
+				    swhere.end());
+ 	     if (i == 0)
+	       where = getfem::mesh_im_level_set::INTEGRATE_INSIDE;
+ 	     else if (i == 1)
+	       where = getfem::mesh_im_level_set::INTEGRATE_OUTSIDE;
+ 	     else if (i == 2)
+	       where = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
+ 	     else if (i == 3)
+	       where = getfem::mesh_im_level_set::INTEGRATE_ALL;
+ 	   }
+	 }
+       }
+       if (where == 0) {
+ 	 THROW_BADARG("expecting 'inside', 'outside', 'boundary' or 'all'");
+       }
+       if (pim->type() != getfem::IM_APPROX) {
+ 	 THROW_BADARG("expecting an approximate integration method");
+       }
+       
+       getfem::mesh_im_level_set *mimls =
+       new getfem::mesh_im_level_set(gmls->mesh_levelset(),
+ 				     where, pim, pim2);
+       if (pim3)
+	 mimls->set_integration_method(mimls->linked_mesh().convex_index(),
+				       pim3);
+       else
+	 mimls->set_integration_method(mimls->linked_mesh().convex_index(), 1);
+       if (csg_description.size()) {
+ 	 mimls->set_level_set_boolean_operations(csg_description);
+       }
+       mim = getfemint_mesh_im::get_from(mimls);
+       mimls->adapt();
+       workspace().set_dependance(mim, gmls);
+       );
+    
+  }
 
-      getfem::mesh_im_level_set *mimls =
-        new getfem::mesh_im_level_set(gmls->mesh_levelset(),
-                                      where, pim, pim2);
-      if (pim3) mimls->set_integration_method(mimls->linked_mesh().convex_index(), pim3);
-      else mimls->set_integration_method(mimls->linked_mesh().convex_index(), 1);
-      if (csg_description.size()) {
-        mimls->set_level_set_boolean_operations(csg_description);
-      }
-      mim = getfemint_mesh_im::get_from(mimls);
-      mimls->adapt();
-      workspace().set_dependance(mim, gmls);
-    } else bad_cmd(cmd);
+
+  if (m_in.narg() < 1) THROW_BADARG("Wrong number of input arguments");
+  getfemint_mesh *mm = NULL;
+  getfemint_mesh_im *mim = NULL;
+  if (m_in.front().is_string()) {
+
+    std::string init_cmd   = m_in.pop().to_string();
+    std::string cmd        = cmd_normalize(init_cmd);
+    
+    
+    SUBC_TAB::iterator it = subc_tab.find(cmd);
+    if (it != subc_tab.end()) {
+      check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+		it->second->arg_in_max, it->second->arg_out_min,
+		it->second->arg_out_max);
+      it->second->run(m_in, m_out, mm, mim);
+    }
+    else bad_cmd(init_cmd);
+
   } else {
-    /*@INIT MESHIM:INIT('.mesh',@tmesh m, [{@tinteg im|int im_degree}])
+    /*@INIT ('.mesh', @tmesh m, [{@tinteg im|int im_degree}])
     Build a new @tmim object.
 
     For convenience, optional arguments (`im` or `im_degree`) can be
     provided, in that case a call to MeshIm.integ() is issued with
     these arguments.@*/
-    if (!out.narg_in_range(1, 1)) THROW_BADARG("Wrong number of output arguments");
-    mm = in.pop().to_getfemint_mesh();
+    if (!m_out.narg_in_range(1, 1))
+      THROW_BADARG("Wrong number of output arguments");
+    mm = m_in.pop().to_getfemint_mesh();
     mim = getfemint_mesh_im::new_from(mm);
-    if (in.remaining()) {
-      gf_mesh_im_set_integ(&mim->mesh_im(), in);
+    if (m_in.remaining()) {
+      gf_mesh_im_set_integ(&mim->mesh_im(), m_in);
     }
-    if (in.remaining()) THROW_BADARG("Wrong number of input arguments");
+    if (m_in.remaining()) THROW_BADARG("Wrong number of input arguments");
   }
-  out.pop().from_object_id(mim->get_id(), MESHIM_CLASS_ID);
+
+  m_out.pop().from_object_id(mim->get_id(), MESHIM_CLASS_ID);
 }

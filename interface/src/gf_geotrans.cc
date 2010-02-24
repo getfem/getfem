@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -24,27 +24,28 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION I = gf_geotrans(name)
-    @TEXT GEOTRANS:INIT('GEOTRANS_init')
-MLABCOM*/
+/*@GFDOC
+   The geometric transformation must be used when you are building
+   a custom mesh convex by convex (see the add_convex() function of
+   @tmesh): it also defines the kind of convex (triangle,
+   hexahedron, prism, etc..)
+  @*/
 
-/*@TEXT GEOTRANS:INIT('GEOTRANS_init')
-@tgt = GEOTRANS:INIT(@str name)<Par>
+/*@INIT @tgt = ('.name', @str name)
 
-The name argument contains the specification of the geometric<par>
-transformation as a string, which may be:<Par>
+The name argument contains the specification of the geometric
+transformation as a string, which may be:
 
-* GT_PK(n,k)<par>
-   Transformation on simplexes, dim `n`, degree `k`.<par>
-* GT_QK(n,k)<par>
-   Transformation on parallelepipeds, dim `n`, degree `k`.<par>
-* GT_PRISM(n,k)<par>
-   Transformation on prisms, dim `n`, degree `k`.<par>
-* GT_PRODUCT(A,B)<par>
-   Tensorial product of two transformations.<par>
-* GT_LINEAR_PRODUCT(A,B)<par>
-   Linear tensorial product of two transformations
+  - GT_PK(n,k)
+    Transformation on simplexes, dim `n`, degree `k`.
+  - GT_QK(n,k)
+    Transformation on parallelepipeds, dim `n`, degree `k`.
+  - GT_PRISM(n,k)
+    Transformation on prisms, dim `n`, degree `k`.
+  - GT_PRODUCT(A,B)
+    Tensorial product of two transformations.
+  - GT_LINEAR_PRODUCT(A,B)
+    Linear tensorial product of two transformations
 @*/
 
 void gf_geotrans(getfemint::mexargs_in& in, getfemint::mexargs_out& out)

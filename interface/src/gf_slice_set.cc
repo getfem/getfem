@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -27,16 +27,9 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-
-  FUNCTION [...] = gf_slice_set(sl, operation)
-
+/*@GFDOC
   Edition of mesh slices.
-
-  @SET SLICE:SET('pts')
-
-  $Id$
-MLABCOM*/
+@*/
 
 
 void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -48,7 +41,7 @@ void gf_slice_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfem::stored_mesh_slice *sl = &mi_sl->mesh_slice();
   std::string cmd                  = in.pop().to_string();
   if (check_cmd(cmd, "pts", in, out, 1, 1, 0, 0)) {
-    /*@SET SLICE:SET('pts',@dmat P)
+    /*@SET ('pts', @dmat P)
     Replace the points of the slice.
 
     The new points `P` are stored in the columns the matrix. Note that

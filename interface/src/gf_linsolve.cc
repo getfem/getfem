@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -32,7 +32,8 @@ typedef enum { GMM_GMRES, GMM_CG, GMM_BICGSTAB /*, GMM_QMR*/ } iterative_gmm_sol
 
 template <typename T> static void
 iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
-		    getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
+		    getfemint::mexargs_in& in,
+		     getfemint::mexargs_out& out, T) {
   garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
   garray<T> x = out.pop().create_array_v(int(gsp.nrows()), T());
 
@@ -94,58 +95,120 @@ superlu_solver(gsparse &gsp,
     out.pop().from_scalar(rcond ? 1./rcond : 0.);
 }
 
-/*MLABCOM
-  FUNCTION F=gf_linsolve(args)
+/*@GFDOC
+  Various linear system solvers.
+@*/
 
-  @FUNC ::LINSOLVE('gmres')
-  @FUNC ::LINSOLVE('cg')
-  @FUNC ::LINSOLVE('bicgstab')
-  @FUNC ::LINSOLVE('lu')
-  @FUNC ::LINSOLVE('superlu')
-MLABCOM*/
 
-void gf_linsolve(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 1) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
+// Object for the declaration of a new sub-command.
 
-  std::string cmd = in.pop().to_string();
+struct sub_gf_linsolve : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out) = 0;
+};
 
-  if (check_cmd(cmd, "gmres", in, out, 2, 30, 0, 1)) {
-    /*@FUNC X = ::LINSOLVE('gmres',@tsp M, @vec b[, @int restart][, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
+typedef boost::intrusive_ptr<sub_gf_linsolve> psub_command;
+
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
+
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_linsolve {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out)			\
+      { dummy_func(in); dummy_func(out); code }				\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+
+void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+
+  if (subc_tab.size() == 0) {
+
+
+    /*@FUNC X = ('gmres', @tsp M, @vec b[, @int restart][, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
     Solve `M.X = b` with the generalized minimum residuals method.
 
     Optionally using `P` as preconditioner. The default value of the
     restart parameter is 50.@*/
-    iterative_gmm_solver(GMM_GMRES, in, out);
-  } else if (check_cmd(cmd, "cg", in, out, 2, 30, 0, 1)) {
-    /*@FUNC X = ::LINSOLVE('cg',@tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
+    sub_command
+      ("gmres", 2, 30, 0, 1,
+       iterative_gmm_solver(GMM_GMRES, in, out);
+       );
+
+
+    /*@FUNC X = ('cg', @tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
     Solve `M.X = b` with the conjugated gradient method.
 
     Optionally using `P` as preconditioner.@*/
-    iterative_gmm_solver(GMM_CG, in, out);
-  } else if (check_cmd(cmd, "bicgstab", in, out, 2, 30, 0, 1)) {
-    /*@FUNC X = ::LINSOLVE('bicgstab',@tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
+    sub_command
+      ("cg", 2, 30, 0, 1,
+       iterative_gmm_solver(GMM_CG, in, out);
+       );
+
+
+    /*@FUNC X = ('bicgstab', @tsp M, @vec b [, @tpre P][,'noisy'][,'res', r][,'maxiter', n])
     Solve `M.X = b` with the bi-conjugated gradient stabilized method.
 
     Optionally using `P` as a preconditioner.@*/
-    iterative_gmm_solver(GMM_BICGSTAB, in, out);
-    /*} else if (check_cmd(cmd, "qmr", in, out, 0, 1, 0, 1)) {
-      iterative_gmm_solver(GMM_QMR, in, out);*/
-  } else if (check_cmd(cmd, "lu", in, out, 2, 2, 0, 1) ||
-	     check_cmd(cmd, "superlu", in, out, 2, 2, 0, 1)) {
-    /*@FUNC @CELL{U, cond} = ::LINSOLVE('lu',@tsp M, @vec b)
-    Alias for ::LINSOLVE('superlu',...)@*/
-    /*@FUNC @CELL{U, cond} = ::LINSOLVE('superlu',@tsp M, @vec b)
+    sub_command
+      ("bicgstab", 2, 30, 0, 1,
+       iterative_gmm_solver(GMM_BICGSTAB, in, out);
+       );
+
+
+    /*@FUNC @CELL{U, cond} = ('lu', @tsp M, @vec b)
+      Alias for ::LINSOLVE('superlu',...)@*/
+    sub_command
+      ("lu", 2, 2, 0, 1,
+       dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+       gsparse &gsp = *pgsp;
+       if (!gsp.is_complex() && in.front().is_complex())
+	 THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+       if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
+       else                  superlu_solver(gsp, in, out, scalar_type());
+       );
+
+
+    /*@FUNC @CELL{U, cond} = ('superlu', @tsp M, @vec b)
     Solve `M.U = b` apply the SuperLU solver (sparse LU factorization).
 
     The condition number estimate `cond` is returned with the solution `U`.@*/
-    dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
-    gsparse &gsp = *pgsp;
-    if (!gsp.is_complex() && in.front().is_complex())
-      THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
-    if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
-    else                  superlu_solver(gsp, in, out, scalar_type());
-  } else bad_cmd(cmd);
+    sub_command
+      ("superlu", 2, 2, 0, 1,
+       dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+       gsparse &gsp = *pgsp;
+       if (!gsp.is_complex() && in.front().is_complex())
+	 THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+       if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
+       else                  superlu_solver(gsp, in, out, scalar_type());
+       );
+
+  }
+
+
+
+  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
+
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out);
+  }
+  else bad_cmd(init_cmd);
+
 }

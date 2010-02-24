@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Y. Renard, J. Pommier.
+// Copyright (C) 2001-2010 Y. Renard, J. Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -31,28 +31,9 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-
-  FUNCTION M = gf_mdbrick_get(cmd, [, args])
+/*@GFDOC
   Get information from a brick, or launch the solver.
-
-  @RDATTR MDBRICK:GET('nbdof')
-  @RDATTR MDBRICK:GET('dim')
-  @RDATTR MDBRICK:GET('is_linear')
-  @RDATTR MDBRICK:GET('is_symmetric')
-  @RDATTR MDBRICK:GET('is_coercive')
-  @RDATTR MDBRICK:GET('is_complex')
-  @GET MDBRICK:GET('mixed_variables')
-  @RDATTR MDBRICK:GET('subclass')
-  @GET MDBRICK:GET('param_list')
-  @GET MDBRICK:GET('param')
-  @GET MDBRICK:GET('solve')
-  @GET MDBRICK:GET('von mises')
-  @GET MDBRICK:GET('tresca')
-  @GET MDBRICK:GET('memsize')
-
-  $Id$
-MLABCOM*/
+@*/
 void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 2) {
@@ -63,50 +44,50 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (check_cmd(cmd, "typename", in, out, 0, 0, 0, 1)) {
     out.pop().from_string(typeid(b->mdbrick()).name());
   } else if (check_cmd(cmd, "nbdof", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR n = MDBRICK:GET('nbdof')
+    /*@RDATTR n = ('nbdof')
     Get the total number of dof of the current problem.
 
     This is the sum of the brick specific dof plus the dof of the
     parent bricks.@*/
     out.pop().from_integer(int(b->mdbrick().nb_dof()));
   } else if (check_cmd(cmd, "dim", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR d = MDBRICK:GET('dim')
+    /*@RDATTR d = ('dim')
     Get the dimension of the main mesh (2 for a 2D mesh, etc).@*/
     out.pop().from_integer(b->mdbrick().dim());
   } else if (check_cmd(cmd, "nb_constraints", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR n = MDBRICK:GET('nb_constraints')
+    /*@RDATTR n = ('nb_constraints')
     Get the total number of dof constraints of the current problem.
 
     This is the sum of the brick specific dof constraints plus the
     dof constraints of the parent bricks.@*/
     out.pop().from_integer(int(b->mdbrick().nb_constraints()));
   } else if (check_cmd(cmd, "is_linear", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR b = MDBRICK:GET('is_linear')
+    /*@RDATTR b = ('is_linear')
     Return true if the problem is linear.@*/
     out.pop().from_integer(b->mdbrick().is_linear());
   } else if (check_cmd(cmd, "is_symmetric", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR b = MDBRICK:GET('is_symmetric')
+    /*@RDATTR b = ('is_symmetric')
     Return true if the problem is symmetric.@*/
     out.pop().from_integer(b->mdbrick().is_symmetric());
   } else if (check_cmd(cmd, "is_coercive", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR b = MDBRICK:GET('is_coercive')
+    /*@RDATTR b = ('is_coercive')
     Return true if the problem is coercive.@*/
     out.pop().from_integer(b->mdbrick().is_coercive());
   } else if (check_cmd(cmd, "is_complex", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR b = MDBRICK:GET('is_complex')
+    /*@RDATTR b = ('is_complex')
     Return true if the problem uses complex numbers.@*/
     out.pop().from_integer(b->is_complex());
   } else if (check_cmd(cmd, "mixed_variables", in, out, 0, 0, 0, 1)) {
-    /*@GET I = MDBRICK:GET('mixed_variables')
+    /*@GET I = ('mixed_variables')
     Identify the indices of mixed variables (typically the pressure,
     etc.) in the tangent matrix.@*/
     out.pop().from_bit_vector(b->mdbrick().mixed_variables());
   } else if (check_cmd(cmd, "subclass", in, out, 0, 0, 0, 1)) {
-    /*@RDATTR MDBRICK:GET('subclass')
+    /*@RDATTR ('subclass')
     Get the typename of the brick.@*/
     out.pop().from_string(b->sub_class().c_str());
   } else if (check_cmd(cmd, "param_list", in, out, 0, 0, 0, 1)) {
-    /*@GET MDBRICK:GET('param_list')
+    /*@GET ('param_list')
     Get the list of parameters names.
 
     Each brick embeds a number of parameters (the Lame coefficients
@@ -121,7 +102,7 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     for ( ; it != ite; ++it) lst.push_back(it->first);
     out.pop().from_string_container(lst);
   } else if (check_cmd(cmd, "param", in, out, 1, 2, 0, 1)) {
-    /*@GET MDBRICK:GET('param',@str parameter_name)
+    /*@GET ('param', @str parameter_name)
     Get the parameter value.
 
     When the parameter has been assigned a specific @tmf, it is returned
@@ -159,26 +140,26 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     //check_sub_class(b, "mdBrick:ScalarElliptic");
     //out.pop().from_vector(b->cast<getfem::mdbrick_scalar_elliptic<real_model_state> >().get_coeff());
   } else if (check_cmd(cmd, "solve", in, out, 1, -1, 0, 0)) {
-    /*@GET MDBRICK:GET('solve',@tstate mds[,...])
+    /*@GET ('solve',@tstate mds[,...])
     Run the standard getfem solver.
 
     Note that you should be able to use your own solver if you want
     (it is possible to obtain the tangent matrix and its right hand
-    side with the MDSTATE:GET('tangent matrix') etc.).<Par>
+    side with the MDSTATE:GET('tangent matrix') etc.).
 
-    Various options can be specified:<Par>
+    Various options can be specified:
 
-    - 'noisy' or 'very noisy'<par>
-       the solver will display some information showing the progress<par>
-       (residual values etc.).<par>
-    - 'max_iter', NIT<par>
-       set the maximum iterations numbers.<par>
-    - 'max_res', RES<par>
-       set the target residual value.<par>
-    - 'lsolver', SOLVERNAME<par>
-       select explicitely the solver used for the linear systems (the<par>
-       default value is 'auto', which lets getfem choose itself).<par>
-       Possible values are 'superlu', 'mumps' (if supported),<par>
+    - 'noisy' or 'very noisy'
+       the solver will display some information showing the progress
+       (residual values etc.).
+    - 'max_iter', NIT
+       set the maximum iterations numbers.
+    - 'max_res', RES
+       set the target residual value.
+    - 'lsolver', SOLVERNAME
+       select explicitely the solver used for the linear systems (the
+       default value is 'auto', which lets getfem choose itself).
+       Possible values are 'superlu', 'mumps' (if supported),
        'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.@*/
     getfemint_mdstate *md = in.pop().to_getfemint_mdstate();
     if (b->is_complex() != md->is_complex())
@@ -212,9 +193,8 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
 
 
-  } else if (check_cmd(cmd, "von mises", in, out, 2, 2, 0, 1) ||
-	     check_cmd(cmd, "tresca"   , in, out, 2, 2, 0, 1)) {
-    /*@GET VM = MDBRICK:GET('von mises',@tstate mds, @tmf mfvm)
+  } else if (check_cmd(cmd, "von mises", in, out, 2, 2, 0, 1)) {
+    /*@GET VM = ('von mises', @tstate mds, @tmf mfvm)
     Compute the Von Mises stress on the @tmf `mfvm`.
 
     Only available on bricks where it has a meaning: linearized
@@ -222,7 +202,40 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     it is not the "real" Von Mises (which should take into account
     the 'plane stress' or 'plane strain' aspect), but a pure 2D Von
     Mises.@*/
-    /*@GET T = MDBRICK:GET('tresca',@tstate mds, @tmf mft)
+    bool tresca = cmd_strmatch(cmd, "tresca");
+    getfemint_mdstate *mds = in.pop().to_getfemint_mdstate();
+    const getfem::mesh_fem &mf_vm = *in.pop().to_const_mesh_fem();
+    darray w = out.pop().create_darray_h(unsigned(mf_vm.nb_dof()));
+    bool ok = false;
+    if (!ok) {
+      getfem::mdbrick_isotropic_linearized_elasticity<real_model_state> *bb =
+	b->cast0<getfem::mdbrick_isotropic_linearized_elasticity<real_model_state> >();
+      if (bb) {
+	bb->compute_Von_Mises_or_Tresca(mds->real_mdstate(), mf_vm, w, tresca);
+	ok = true;
+      }
+    }
+    if (!ok) {
+      getfem::mdbrick_nonlinear_elasticity<real_model_state> *bb =
+	b->cast0<getfem::mdbrick_nonlinear_elasticity<real_model_state> >();
+      if (bb) {
+	bb->compute_Von_Mises_or_Tresca(mds->real_mdstate(), mf_vm, w, tresca);
+	ok = true;
+      }
+    }
+    if (!ok) {
+      getfem::mdbrick_plasticity<real_model_state> *bb =
+	b->cast0<getfem::mdbrick_plasticity<real_model_state> >();
+      if (bb) {
+	bb->compute_constraints(mds->real_mdstate());
+	bb->compute_Von_Mises_or_Tresca(mf_vm, w, tresca);
+	ok = true;
+      }
+    }
+    if (!ok)
+      THROW_BADARG("this brick cannot compute " << cmd << "!");
+  } else if (check_cmd(cmd, "tresca", in, out, 2, 2, 0, 1)) {
+    /*@GET T = ('tresca', @tstate mds, @tmf mft)
     Compute the Tresca stress criterion on the @tmf `mft`.
 
     Only available on bricks where it has a meaning: linearized
@@ -260,9 +273,40 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (!ok)
       THROW_BADARG("this brick cannot compute " << cmd << "!");
   } else if (check_cmd(cmd, "memsize", in, out, 0, 0, 0, 1)) {
-    /*@GET z = MDBRICK:GET('memsize')
+    /*@GET z = ('memsize')
     Return the amount of memory (in bytes) used by the model brick.@*/
     out.pop().from_integer(int(b->memsize()));
+  } else if (check_cmd(cmd, "char", in, out, 0, 0, 0, 1)) {
+    /*@GET s = ('char')
+      Output a (unique) string representation of the @tmdbrick.
+
+      This can be used to perform comparisons between two
+      different @tmdbrick objects.
+      This function is to be completed.
+      @*/
+    GMM_ASSERT1(false, "Sorry, function to be done");
+    // std::string s = ...;
+    // out.pop().from_string(s.c_str());
+  } else if (check_cmd(cmd, "display", in, out, 0, 0, 0, 0)) {
+    /*@GET ('display')
+      displays a short summary for a @tmdbrick.@*/
+    infomsg() << "gfMdBrick object\n";
+//   s = sprintf(['gfMdBrick object: ID=%u [%d bytes], dim=%d, '...
+// 	       'nb_dof=%d, nb_constraints=%d, nb_mixed=%d,\n'...
+// 	       '  is_complex=%d,is_linear=%d,is_coercive=%d,'...
+// 	       'is_symmetric=%d'],double(b.id),...
+// 	       gf_mdbrick_get(b,'memsize'), gf_mdbrick_get(b, 'dim'),... 
+// 	       gf_mdbrick_get(b, 'nbdof'), gf_mdbrick_get(b, 'nb_constraints'), ...
+// 	       numel(gf_mdbrick_get(b, 'mixed_variables')), gf_mdbrick_get(b, 'is_complex'),...
+// 	       gf_mdbrick_get(b, 'is_linear'), gf_mdbrick_get(b, 'is_coercive'), ...
+// 	       gf_mdbrick_get(b, 'is_symmetric'));
+	       
+//   disp(s);
+//   disp(sprintf(' subclass: %s', gf_mdbrick_get(b, 'subclass'))); 
+//   l = gf_mdbrick_get(b, 'param_list');
+//   if (numel(l)),
+//     s = ''; for il=1:numel(l), s = [s  ' '  l{il}]; end;
+//     disp(sprintf(' parameters:     %s', s)); 
   } else bad_cmd(cmd);
   if (in.remaining()) THROW_BADARG("too many arguments!");
 }

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -53,15 +53,10 @@ print_poly(bgeot::base_poly *pp) {
   mexPrintf("\n");
 }
 
-/*MLABCOM
-  FUNCTION gf_poly(operation, poly [,args])
-
+/*@GFDOC
+  @ARGS{@tpoly P}
   Performs various operations on the polynom POLY.
-
-  * gf_poly('print', p)
-  Prints the content of P.
-
-MLABCOM*/
+@*/
 
 void gf_poly(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
@@ -72,13 +67,18 @@ void gf_poly(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   bgeot::base_poly *pp = in.pop().to_poly();
 
   if (check_cmd(cmd, "print", in, out, 0, 0, 0, 0)) {
+    /*@FUNC ('print')
+      Prints the content of P.
+      @*/
     print_poly(pp);
   } else if (check_cmd(cmd, "product", in, out, 0, 0, 0, 0)) {
-    mexPrintf("todo!\n");
+    /*@FUNC ('product')
+      To be done ... !
+    @*/
+    mexPrintf("to be done!\n");
   } else bad_cmd(cmd);
 }
 
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
-{
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
   catch_errors(nlhs, plhs, nrhs, prhs, gf_poly, "gf_poly");
 }

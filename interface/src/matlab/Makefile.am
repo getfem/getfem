@@ -1,70 +1,27 @@
-SUBDIRS = @gfCvStruct @gfEltm @gfFem @gfGeoTrans @gfInteg @gfMesh @gfMeshFem @gfMeshIm @gfSpmat @gfPrecond @gfSlice @gfMdBrick @gfMdState @gfModel @gfLevelSet @gfMeshLevelSet @gfGlobalFunction private
+SUBDIRS = private
 
 RPC_INC_DIR=@RPC_INC_DIR@
 
-PSEUDO_MFUNCTIONS = \
-	gf_util.cc \
-	gf_cvstruct_get.cc \
-	gf_geotrans.cc \
-	gf_geotrans_get.cc \
-	gf_compute.cc \
-	gf_mesh_fem.cc \
-	gf_mesh_fem_set.cc \
-	gf_mesh_fem_get.cc \
-	gf_mesh_im.cc \
-	gf_mesh_im_set.cc \
-	gf_mesh_im_get.cc \
-	gf_eltm.cc \
-	gf_mesh.cc \
-	gf_mesh_set.cc \
-	gf_mesh_get.cc \
-	gf_mdbrick.cc \
-	gf_mdbrick_get.cc \
-	gf_mdbrick_set.cc \
-	gf_mdstate.cc \
-	gf_mdstate_get.cc \
-	gf_mdstate_set.cc \
-	gf_model.cc \
-	gf_model_get.cc \
-	gf_model_set.cc \
-	gf_slice.cc \
-	gf_slice_get.cc \
-	gf_slice_set.cc \
-	gf_levelset.cc \
-	gf_levelset_get.cc \
-	gf_levelset_set.cc \
-	gf_mesh_levelset.cc \
-	gf_mesh_levelset_get.cc \
-	gf_mesh_levelset_set.cc \
-	gf_precond.cc \
-	gf_precond_get.cc \
-	gf_linsolve.cc \
-	gf_spmat.cc \
-	gf_spmat_set.cc \
-	gf_spmat_get.cc \
-	gf_asm.cc \
-	gf_fem.cc \
-	gf_fem_get.cc \
-	gf_integ.cc \
-	gf_integ_get.cc \
-	gf_workspace.cc \
-	gf_global_function.cc \
-	gf_delete.cc
+PSEUDO_MFUNCTIONS=$(shell ls $(srcdir)/../gf_*.cc)
+PSEUDO_MFUNCTIONS_LOC=$(shell cd $(srcdir)/.. && ls gf_*.cc)
+AUTO_M_FILES = $(PSEUDO_MFUNCTIONS_LOC:.cc=.m)
 
-AUTO_M_FILES = $(PSEUDO_MFUNCTIONS:.cc=.m)
-$(AUTO_M_FILES): @srcdir@/../../bin/extract_mdoc
+# $(warning PSEUDO_MFUNCTIONS= $(PSEUDO_MFUNCTIONS))
 
-EXTRA_DIST = gfm_rpc_mexint.c gfm_mex.c gfm_common.c gfm_common.h $(M_FILES) $(AUTO_M_FILES)
 
-all: $(AUTO_M_FILES) gf_matlab@MATLAB_COM_EXT@
+
+gf_mesh.m : $(PSEUDO_MFUNCTIONS) @srcdir@/../../bin/extract_doc
+	@srcdir@/../../bin/extract_doc @srcdir@/.. matlab-com || (rm -f gf_mesh.m; /bin/false )
+
+
+EXTRA_DIST = gfm_rpc_mexint.c gfm_mex.c gfm_common.c gfm_common.h $(M_FILES)
+
+all: gf_mesh.m gf_matlab@MATLAB_COM_EXT@
 
 MEX=@MEX@
 RPC_LIB = @RPC_LIB@
 GNUMEX=@top_srcdir@/gnumex
 GNUMEXOPTS=@top_srcdir@/gnumex.opts
-
-#gfi_array.c: ../gfi_array.c
-#	ln -s ../gfi_array.c .
 
 GETFEM_LIB_LA = ../../../src/libgetfem.la
 GETFEM_STATIC_LIB = ../../../src/.libs/libgetfem.a @LIBS@
@@ -106,7 +63,6 @@ endif
 # -largeArrayDims
 
 M_FILES = \
-	Contents.m \
 	gf_asm_pdetoolbc.m \
 	gf_compute_Q1grid_interp.m \
 	gf_mesh_fem_get_eval.m \
@@ -118,19 +74,31 @@ M_FILES = \
 	gf_colormap.m \
 	gfObject.m
 
-#$(AUTO_M_FILES): $(PSEUDO_MFUNCTIONS:%.cc=../%.cc)
 
-.NOTPARALLEL: $(AUTO_M_FILES) $(M_FILES)
+.NOTPARALLEL: $(M_FILES)
 
-%.m: ../%.cc
-	@@srcdir@/../../bin/extract_mdoc $<
+#%.m: ../%.cc
+#	@@srcdir@/../../bin/extract_mdoc $<
 
 clean-m-files:
-	@echo "cleaning generated m-files"
+	@echo "cleaning auto generated m-files and directories"
 	rm -f $(AUTO_M_FILES)
+	rm -fr \@gf* 
 
-clean-local: #clean-m-files
+clean-local: clean-m-files
 	rm -f gf_matlab@MATLAB_COM_EXT@
 
 toolboxdir=@TOOLBOXDIR@
-toolbox_SCRIPTS=gf_matlab@MATLAB_COM_EXT@ $(AUTO_M_FILES) $(M_FILES)
+
+install:
+	$(mkinstalldirs) $(toolboxdir)/
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/ *.m
+	@INSTALL@ -D -m 644 -t $(toolboxdir)/ $(srcdir)/*.m
+	@list='$(shell ls -d @gf*)'; for p in $$list; do \
+	  $(mkinstalldirs) $(toolboxdir)/$$p; \
+	  @INSTALL@ -D -m 644 -t $(toolboxdir)/$$p $$p/*.m; \
+	done
+	@INSTALL@ -D -m 744 -t $(toolboxdir)/ gf_matlab@MATLAB_COM_EXT@
+
+uninstall:
+	rm -fr $(toolboxdir)

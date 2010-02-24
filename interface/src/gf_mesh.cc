@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Julien Pommier.
+// Copyright (C) 2005-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -60,9 +60,6 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
 		"gf_mesh('cartesian')\nfor point " << i <<
 		", the index is " << id_pt << endl);
     }
-    /*    if (i == grid_npoints-1) {
-      cerr << "nb de pts ajoutes: " << grid_npoints << " id dernier =" << id_pt << endl;
-      }*/
   }
 
 
@@ -289,137 +286,215 @@ ptND_mesh(getfem::mesh *mesh, bool is2D, getfemint::mexargs_in &in)
   }
 }
 
-/*MLABCOM
 
-  FUNCTION M = gf_mesh([operation [, args]])
-  General constructor for mesh object. Returns a getfem handle to the
-  newly created mesh object. Note that for recent (> 6.0) versions of
+// Object for the declaration of a new sub-command.
+
+struct sub_gf_mesh : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out,
+		   getfem::mesh *pmesh) = 0;
+};
+
+typedef boost::intrusive_ptr<sub_gf_mesh> psub_command;
+
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
+
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_mesh {					\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out,			\
+		       getfem::mesh *pmesh)				\
+      { dummy_func(in); dummy_func(out); code }				\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+/*@GFDOC
+  This object is able to store any element in any dimension even
+  if you mix elements with different dimensions.
+  @MATLAB{
+  Note that for recent (> 6.0) versions of
   matlab, you should replace the calls to 'gf_mesh' with 'gfMesh'
   (this will instruct Matlab to consider the getfem mesh as a regular
-  matlab object that can be manipulated with get() and set() methods).
+  matlab object that can be manipulated with get() and set() methods).}
+@*/
 
-
-  @INIT MESH:INIT ('empty')
-  @INIT MESH:INIT ('cartesian')
-  @INIT MESH:INIT ('regular simplices')
-  @INIT MESH:INIT ('triangles grid')
-  @INIT MESH:INIT ('curved')
-  @INIT MESH:INIT ('prismatic')
-  @INIT MESH:INIT ('pt2D')
-
-  @INIT MESH:INIT ('ptND')
-  @INIT MESH:INIT ('load')
-  @INIT MESH:INIT ('from string')
-  @INIT MESH:INIT ('import')
-  @INIT MESH:INIT ('clone')
-
-  $Id$
-MLABCOM*/
-void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  getfemint_mesh *mi_mesh =
-    getfemint_mesh::get_from(new getfem::mesh);
-  out.pop().from_object_id(mi_mesh->get_id(), MESH_CLASS_ID);
-  getfem::mesh *pmesh = &mi_mesh->mesh();
-
-
-  if (in.narg() < 1) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
-  std::string cmd    = in.pop().to_string();
-  if (check_cmd(cmd, "empty", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('empty', @int dim)
+void gf_mesh(getfemint::mexargs_in& m_in,
+	     getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+  
+  if (subc_tab.size() == 0) {
+    
+    /*@INIT M = ('empty', @int dim)
     Create a new empty mesh.@*/
-    size_type dim = in.pop().to_integer(1,255);
-    getfem::base_node pt(dim);
-    /* just to initialize the dimension of the mesh
-       (this is not very nice, i know) */
-    pmesh->sup_point(pmesh->add_point(pt));
-  } else if (check_cmd(cmd, "cartesian", in, out, 1, 32, 0, 1)) {
-    /*@INIT M = MESH:INIT('cartesian', @dvec X[, @dvec Y[, @dvec Z,..]])
-    Build quickly a regular mesh of quadrangles, cubes, etc.@*/
-    cartesian_mesh(pmesh, in);
-  } else if (check_cmd(cmd, "triangles grid", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('triangles grid', @dvec X, @dvec Y)
-    Build quickly a regular mesh of triangles.
+    sub_command
+      ("empty", 1, 1, 0, 1,
+       size_type dim = in.pop().to_integer(1,255);
+       getfem::base_node pt(dim);
+       /* just to initialize the dimension of the mesh
+	  (this is not very nice, i know) */
+       pmesh->sup_point(pmesh->add_point(pt));
+       );
 
-    This is a very limited and somehow deprecated function (See also
-    ``MESH:INIT('ptND')``, ``MESH:INIT('regular simplices')`` and
-    ``MESH:INIT('cartesian')``).@*/
-    triangles_grid_mesh(pmesh, in);
-  } else if (check_cmd(cmd, "regular simplices", in, out, 1, 32, 0, 1)) {
-    /*@INIT M = MESH:INIT('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
+
+    /*@INIT M = ('cartesian', @dvec X[, @dvec Y[, @dvec Z,..]])
+      Build quickly a regular mesh of quadrangles, cubes, etc.@*/
+    sub_command
+      ("cartesian", 1, 32, 0, 1,
+       cartesian_mesh(pmesh, in);
+       );
+
+
+    /*@INIT M = ('triangles grid', @dvec X, @dvec Y)
+      Build quickly a regular mesh of triangles.
+      
+      This is a very limited and somehow deprecated function (See also
+      ``MESH:INIT('ptND')``, ``MESH:INIT('regular simplices')`` and
+      ``MESH:INIT('cartesian')``).@*/
+    sub_command
+      ("triangles grid", 2, 2, 0, 1,
+       triangles_grid_mesh(pmesh, in);
+       );
+
+
+    /*@INIT M = ('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
     Mesh a n-dimensionnal parallelepipeded with simplices (triangles, tetrahedrons etc) .
 
     The optional degree may be used to build meshes with non linear
     geometric transformations.@*/
-    regular_simplices_mesh(pmesh, in);
-  } else if (check_cmd(cmd, "curved", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('curved', @tmesh m0, @dvec F)
+    sub_command
+      ("regular simplices", 1, 32, 0, 1,
+       regular_simplices_mesh(pmesh, in);
+       );
+
+
+    /*@INIT M = ('curved', @tmesh m0, @dvec F)
     Build a curved (n+1)-dimensions mesh from a n-dimensions mesh `m0`.
 
     The points of the new mesh have one additional coordinate, given by
     the vector `F`. This can be used to obtain meshes for shells. `m0`
     may be a @tmf object, in that case its linked mesh will be used.@*/
-    curved_mesh(pmesh, in);
-  } else if (check_cmd(cmd, "prismatic", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('prismatic', @tmesh m0, @int NLAY)
+    sub_command
+      ("curved", 2, 2, 0, 1,
+       curved_mesh(pmesh, in);
+       );
+
+
+    /*@INIT M = ('prismatic', @tmesh m0, @int NLAY)
     Extrude a prismatic @tmesh `M` from a @tmesh `m0`.
 
     In the additional dimension there are `NLAY` layers of elements
     built from ``0`` to ``1``.@*/
-    prismatic_mesh(pmesh, in);
-  } else if (check_cmd(cmd, "pt2D", in, out, 2, 3, 0, 1)) {
-    /*@INIT M = MESH:INIT('pt2D', @dmat P, @ivec T[, @int n])
+    sub_command
+      ("prismatic", 2, 2, 0, 1,
+       prismatic_mesh(pmesh, in);
+       );
+
+
+    /*@INIT M = ('pt2D', @dmat P, @ivec T[, @int n])
     Build a mesh from a 2D triangulation.
 
     Each column of `P` contains a point coordinate, and each column
     of `T` contains the point indices of a triangle. `n` is optional
     and is a zone number. If `n` is specified then only the zone
     number `n` is converted (in that case, `T` is expected to have
-    4 rows, the fourth containing these zone numbers).@MATLAB{<Par>
+    4 rows, the fourth containing these zone numbers).
+
+    @MATLAB{
     Can be used to Convert a "pdetool" triangulation exported in
     variables P and T into a GETFEM mesh.}@*/
-    ptND_mesh(pmesh, true, in);
-  } else if (check_cmd(cmd, "ptND", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('ptND', @dmat P, @imat T)
+    sub_command
+      ("pt2D", 2, 3, 0, 1,
+       ptND_mesh(pmesh, true, in);
+       );
+
+
+    /*@INIT M = ('ptND', @dmat P, @imat T)
     Build a mesh from a N-dimensional "triangulation".
 
     Similar function to 'pt2D', for building simplexes meshes from a
     triangulation given in `T`, and a list of points given in `P`. The
     dimension of the mesh will be the number of rows of `P`, and the
     dimension of the simplexes will be the number of rows of `T`.@*/
-    ptND_mesh(pmesh, 0, in);
-  } else if (check_cmd(cmd, "load", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('load', @str filename)
-    Load a mesh from a GETFEM++ ascii mesh file.
+    sub_command
+      ("ptND", 2, 2, 0, 1,
+       ptND_mesh(pmesh, 0, in);
+       );
 
-    See also MESH:GET('save',filename).@*/
-    std::string fname = in.pop().to_string();
-    pmesh->read_from_file(fname);
-  } else if (check_cmd(cmd, "from string", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('from string', @str s)
-    Load a mesh from a string description.
 
-    For example, a string returned by ``MESH:GET('char')``.@*/
-    std::stringstream ss(in.pop().to_string());
-    pmesh->read_from_file(ss);
-  } else if (check_cmd(cmd, "import", in, out, 2, 2, 0, 1)) {
-    /*@INIT M = MESH:INIT('import', @str format, @str filename)
+    /*@INIT M = ('load', @str filename)
+      Load a mesh from a GETFEM++ ascii mesh file.
+      
+      See also MESH:GET('save', @str filename).@*/
+    sub_command
+      ("load", 1, 1, 0, 1,
+       std::string fname = in.pop().to_string();
+       pmesh->read_from_file(fname);
+       );
+
+
+    /*@INIT M = ('from string', @str s)
+      Load a mesh from a string description.
+      
+      For example, a string returned by ``MESH:GET('char')``.@*/
+    sub_command
+      ("from string", 1, 1, 0, 1,
+       std::stringstream ss(in.pop().to_string());
+       pmesh->read_from_file(ss);
+       );
+
+
+    /*@INIT M = ('import', @str format, @str filename)
     Import a mesh.
 
-    `format` may be:<Par>
+    `format` may be:
 
-    - 'gmsh' for a mesh created with `Gmsh`_<par>
-    - 'gid' for a mesh created with `GiD`_<par>
-    - 'am_fmt' for a mesh created with `EMC2`_@*/
-    std::string fmt = in.pop().to_string();
-    std::string fname = in.pop().to_string();
-    getfem::import_mesh(fname, fmt, *pmesh);
-  } else if (check_cmd(cmd, "clone", in, out, 1, 1, 0, 1)) {
-    /*@INIT M = MESH:INIT('clone', @tmesh m2)
-    Create a copy of a mesh.@*/
-    const getfem::mesh *m2 = in.pop().to_const_mesh();
-    pmesh->copy_from(*m2);
-  } else bad_cmd(cmd);
+    - 'gmsh' for a mesh created with `Gmsh`
+    - 'gid' for a mesh created with `GiD`
+    - 'am_fmt' for a mesh created with `EMC2`@*/
+    sub_command
+      ("import", 2, 2, 0, 1,
+       std::string fmt = in.pop().to_string();
+       std::string fname = in.pop().to_string();
+       getfem::import_mesh(fname, fmt, *pmesh);
+       );
+
+
+    /*@INIT M = ('clone', @tmesh m2)
+      Create a copy of a mesh.@*/
+    sub_command
+      ("clone", 1, 1, 0, 1,
+       const getfem::mesh *m2 = in.pop().to_const_mesh();
+       pmesh->copy_from(*m2);
+       );
+
+  }
+
+
+  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
+   
+  getfemint_mesh *mi_mesh =
+    getfemint_mesh::get_from(new getfem::mesh);
+  m_out.pop().from_object_id(mi_mesh->get_id(), MESH_CLASS_ID);
+  getfem::mesh *pmesh = &mi_mesh->mesh();
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out, pmesh);
+  }
+  else bad_cmd(init_cmd);
+
 }

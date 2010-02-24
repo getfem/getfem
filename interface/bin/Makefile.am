@@ -1,1 +1,1 @@
-EXTRA_DIST = extract_mdoc extract_pydoc
+EXTRA_DIST = extract_doc

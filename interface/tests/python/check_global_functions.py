@@ -28,9 +28,11 @@
 """
 import numpy as np
 import getfem as gf
+import os
 
 # mesh fem to export
-m = gf.Mesh('import','gmsh','quad.msh')
+m = gf.Mesh('triangles grid', [-1, -0.5, 0, 0.5, 1], [-1, -0.5, 0, 0.5, 1])
+# m = gf.Mesh('import','gmsh','quad.msh')
 mf = gf.MeshFem(m)
 mf.set_fem(gf.Fem('FEM_PK(2,1)'))
 PTs = mf.basic_dof_nodes()
@@ -72,7 +74,7 @@ mf.export_to_pos('check_global_functions14.pos',co2(PTs),'cutoff  1')
 mf.export_to_pos('check_global_functions15.pos',co3(PTs),'cutoff  2')
 
 # parser:
-if gf.getfem_var('muParser') == '1':
+if gf.getfem_env('muParser') == '1':
  p0 = gf.GlobalFunction('parser','0')
  p1 = gf.GlobalFunction('parser','1')
  p2 = gf.GlobalFunction('parser','2')
@@ -109,3 +111,6 @@ ad2 = ck2+ck3
 mf.export_to_pos('check_global_functions31.pos',ad0(PTs),'ck0+ck1')
 mf.export_to_pos('check_global_functions32.pos',ad1(PTs),'ck1+ck2')
 mf.export_to_pos('check_global_functions33.pos',ad2(PTs),'ck2+ck3')
+
+for i in range(34):
+  os.remove("check_global_functions%i.pos" % i);

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Julien Pommier.
+// Copyright (C) 2005-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -104,46 +104,23 @@ getfem::constraints_type get_constraints_type(mexargs_in &in) {
 
 #define SET_BRICK(class_, name_, args_)	SET_BRICK2(class_,name_,args_,args_)
 
-/*MLABCOM
-
-  FUNCTION M = gf_mdbrick(brick_name, [, args])
-  General constructor for mdbrick object. Returns a getfem handle to the newly
-  created object.
+/*@GFCOM
+  A model brick is basically an object which modifies a global tangent
+  matrix and its associated right hand side. Typical modifications are
+  insertion of the stiffness matrix for the problem considered (linear
+  elasticity, laplacian, ...), handling of a set of contraints, Dirichlet
+  condition, addition of a source term to the right hand side, etc. The
+  global tangent matrix and its right hand side are stored in a @tmdstate
+  object.
+  
+  This object is now deprecated and replaced by the @tmodel object.
 
   Many of the bricks take a "numfem" optional parameter, which
   is the meshfem number in the stack of parent bricks (by default
   numfem=0, i.e. it refers to the first meshfem in the stack of
   bricks).
 
-  @INIT MDBRICK:INIT ('constraint')
-  @INIT MDBRICK:INIT ('dirichlet')
-  @INIT MDBRICK:INIT ('dirichlet on normal component')
-  @INIT MDBRICK:INIT ('dirichlet on normal derivative')
-  @INIT MDBRICK:INIT ('generalized dirichlet')
-  @INIT MDBRICK:INIT ('source term')
-  @INIT MDBRICK:INIT ('normal source term')
-  @INIT MDBRICK:INIT ('normal derivative source term')
-  @INIT MDBRICK:INIT ('neumann KirchhoffLove source term')
-  @INIT MDBRICK:INIT ('qu term')
-  @INIT MDBRICK:INIT ('mass matrix')
-  @INIT MDBRICK:INIT ('generic elliptic')
-  @INIT MDBRICK:INIT ('helmholtz')
-  @INIT MDBRICK:INIT ('isotropic linearized elasticity')
-  @INIT MDBRICK:INIT ('linear incompressibility term')
-  @INIT MDBRICK:INIT ('nonlinear elasticity')
-  @INIT MDBRICK:INIT ('nonlinear elasticity incompressibility term')
-  @INIT MDBRICK:INIT ('small deformations plasticity')
-  @INIT MDBRICK:INIT ('dynamic')
-  @INIT MDBRICK:INIT ('navier stokes')
-  @INIT MDBRICK:INIT ('bilaplacian')
-  @INIT MDBRICK:INIT ('isotropic_linearized_plate')
-  @INIT MDBRICK:INIT ('mixed_isotropic_linearized_plate')
-  @INIT MDBRICK:INIT ('plate_source_term')
-  @INIT MDBRICK:INIT ('plate_simple_support')
-  @INIT MDBRICK:INIT ('plate_clamped_support')
-  @INIT MDBRICK:INIT ('plate_closing')
-  $Id$
-MLABCOM*/
+@*/
 void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) {
@@ -153,13 +130,13 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfemint_mdbrick *b = new getfemint_mdbrick();
   out.pop().from_object_id(workspace().push_object(b), MDBRICK_CLASS_ID);
   if (check_cmd(cmd, "constraint", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('constraint', @tbrick pb, @str CTYPE[, @int nfem])
+    /*@INIT B = ('constraint', @tbrick pb, @str CTYPE[, @int nfem])
     Build a generic constraint brick.
 
     It may be useful in some situations, such as the Stokes problem
     where the pressure is defined modulo a constant. In such a
     situation, this brick can be used to add an additional constraint
-    on the pressure value.<par>
+    on the pressure value.
     `CTYPE` has to be chosen among 'augmented', 'penalized', and
     'eliminated'. The constraint can be specified with
     MDBRICK:SET('constraints'). Note that Dirichlet bricks (except
@@ -174,7 +151,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), num_fem));
     b->set_constraints_type(ctype);
   } else if (check_cmd(cmd, "dirichlet", in, out, 4, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('dirichlet', @tbrick pb, @int bnum, @tmf mf_m, @str CTYPE[, @int nfem])
+    /*@INIT B = ('dirichlet', @tbrick pb, @int bnum, @tmf mf_m, @str CTYPE[, @int nfem])
     Build a Dirichlet condition brick which impose the value of a field along a mesh boundary.
 
     The `bnum` parameter selects on which mesh region the Dirichlet
@@ -194,7 +171,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), bound, mf_mult, num_fem));
     b->set_constraints_type(ctype);
   } else if (check_cmd(cmd, "dirichlet on normal component", in, out, 4, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('dirichlet on normal component', @tbrick pb, @int bnum, @tmf mf_m, @str CTYPE[, @int nfem])
+    /*@INIT B = ('dirichlet on normal component', @tbrick pb, @int bnum, @tmf mf_m, @str CTYPE[, @int nfem])
     Build a Dirichlet condition brick which imposes the value of the normal component of a vector field.@*/
     getfemint_mdbrick &parent = pop_mdbrick(in, b);
     bool is_complex = parent.is_complex();
@@ -209,7 +186,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     b->set_constraints_type(ctype);
   } else if (check_cmd(cmd, "dirichlet on normal derivative",
 		       in, out, 4, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('dirichlet on normal derivative', @tbrick pb, @int bnum, @tmf mf_m, @str CTYPE[, @int nfem])
+    /*@INIT B = ('dirichlet on normal derivative', @tbrick pb, @int bnum, @tmf mf_m, @str CTYPE[, @int nfem])
     Build a Dirichlet condition brick which imposes the value of the normal derivative of the unknown.@*/
     getfemint_mdbrick &parent = pop_mdbrick(in, b);
     //bool is_complex = parent.is_complex();
@@ -222,7 +199,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		(parent.real_mdbrick(), bound, mf_mult, num_fem));
     b->set_constraints_type(ctype);
   } else if (check_cmd(cmd, "generalized dirichlet", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('generalized dirichlet', @tbrick pb, @int bnum[, @int nfem])
+    /*@INIT B = ('generalized dirichlet', @tbrick pb, @int bnum[, @int nfem])
     This is the "old" Dirichlet brick of getfem.
 
     This brick can be used to impose general Dirichlet conditions
@@ -237,7 +214,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), bound, num_fem));
 
   } else if (check_cmd(cmd, "source term", in, out, 1, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('source term', @tbrick pb[, @int bnum=-1[, @int nfem]])
+    /*@INIT B = ('source term', @tbrick pb[, @int bnum=-1[, @int nfem]])
     Add a boundary or volumic source term ( \int B.v ).
 
     If `bnum` is omitted (or set to -1) , the brick adds a volumic
@@ -261,7 +238,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), mf_d,
 		cplx_model_state::vector_type(n), bound, num_fem));
   } else if (check_cmd(cmd, "normal source term", in, out, 2, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('normal source term', @tbrick pb, @int bnum[, @int nfem])
+    /*@INIT B = ('normal source term', @tbrick pb, @int bnum[, @int nfem])
     Add a boundary source term ( \int (Bn).v ).
 
     The source term is imposed on the mesh region `bnum` (which of course
@@ -287,7 +264,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), mf_d,
 		cplx_model_state::vector_type(n), bound, num_fem));
   } else if (check_cmd(cmd, "normal derivative source term", in, out, 2, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('normal derivative source term', @tbrick parent, @int bnum[, @int nfem])
+    /*@INIT B = ('normal derivative source term', @tbrick parent, @int bnum[, @int nfem])
     Add a boundary source term ( \int (\partial_n B).v ).
 
     The source term is imposed on the mesh region `bnum`. Use
@@ -307,7 +284,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), mf_d,
 		cplx_model_state::vector_type(n), bound, num_fem));
   } else if (check_cmd(cmd, "neumann Kirchhoff-Love source term", in, out, 2, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('neumann KirchhoffLove source term', @tbrick pb, @int bnum[, @int nfem])
+    /*@INIT B = ('neumann KirchhoffLove source term', @tbrick pb, @int bnum[, @int nfem])
     Add a boundary source term for neumann Kirchhoff-Love plate problems.
 
     Should be used with the Kirchhoff-Love flavour of the bilaplacian
@@ -325,7 +302,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		real_model_state::vector_type(mdim*mf_d.nb_dof()),
 		bound, num_fem));
   } else if (check_cmd(cmd, "qu term", in, out, 1, 4, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('qu term', @tbrick pb[, @int bnum[, @int nfem]])
+    /*@INIT B = ('qu term', @tbrick pb[, @int bnum[, @int nfem]])
     Update the tangent matrix with a \int (Qu).v term.
 
     The Q(x) parameter is a matrix field of size qdim x qdim. An example
@@ -348,7 +325,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.cplx_mdbrick(), cQ, bound, num_fem));
 
   } else if (check_cmd(cmd, "mass matrix", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('mass matrix', @tmim mim, @tmf mf_u[, 'real'|'complex'])
+    /*@INIT B = ('mass matrix', @tmim mim, @tmf mf_u[, 'real'|'complex'])
     Build a mass-matrix brick.@*/
     getfem::mesh_im &mim = pop_mesh_im(in, b);
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);
@@ -358,10 +335,10 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     SET_BRICK(mdbrick_mass_matrix, "MassMatrix", (mim, mf_u));
 
   } else if (check_cmd(cmd, "generic elliptic", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('generic elliptic', @tmim mim, @tmf mfu[, 'scalar'|'matrix'|'tensor'][, 'real'|'complex'])
+    /*@INIT B = ('generic elliptic', @tmim mim, @tmf mfu[, 'scalar'|'matrix'|'tensor'][, 'real'|'complex'])
     Setup a generic elliptic problem.
 
-    a(x)*grad(U).grad(V)<Par>
+    a(x)*grad(U).grad(V)
 
     The brick parameter `a` may be a scalar field, a matrix field, or
     a tensor field (default is scalar).@*/
@@ -385,7 +362,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       if (cmd_strmatch(s, "tensor")) bb->set_coeff_dimension(4);
     }
   } else if (check_cmd(cmd, "helmholtz", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('helmholtz', @tmim mim, @tmf mfu[, 'real'|'complex'])
+    /*@INIT B = ('helmholtz', @tmim mim, @tmf mfu[, 'real'|'complex'])
     Setup a Helmholtz problem.
 
     The brick has one parameter, 'wave_number'.@*/
@@ -394,7 +371,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     bool is_complex = get_complexity(in, true);
     SET_BRICK(mdbrick_Helmholtz, "Helmholtz", (mim, mf_u));
   } else if (check_cmd(cmd, "isotropic linearized elasticity", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('isotropic linearized elasticity', @tmim mim, @tmf mfu)
+    /*@INIT B = ('isotropic linearized elasticity', @tmim mim, @tmf mfu)
     Setup a linear elasticity problem.
 
     The brick has two scalar parameter, 'lambda' and 'mu' (the Lame
@@ -405,7 +382,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		"IsotropicLinearizedElasticity", (mim, mf_u));
 
   } else if (check_cmd(cmd, "linear incompressibility term", in, out, 2, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('linear incompressibility term', @tbrick pb, @tmf mfp[, @int nfem])
+    /*@INIT B = ('linear incompressibility term', @tbrick pb, @tmf mfp[, @int nfem])
     Add an incompressibily constraint (div u = 0).@*/
     getfemint_mdbrick &parent = pop_mdbrick(in, b);
     bool is_complex = parent.is_complex();
@@ -416,14 +393,14 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.real_mdbrick(), mf_p, num_fem),
 	       (parent.cplx_mdbrick(), mf_p, num_fem));
   } else if (check_cmd(cmd, "nonlinear elasticity", in, out, 3, -1, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('nonlinear elasticity', @tmim mim, @tmf mfu, @str law)
-    Setup a nonlinear elasticity (large deformations) problem.<Par>
+    /*@INIT B = ('nonlinear elasticity', @tmim mim, @tmf mfu, @str law)
+    Setup a nonlinear elasticity (large deformations) problem.
 
-    The material `law` can be chosen among:<par>
-     - 'SaintVenant Kirchhoff'<par>
-        Linearized material law.<par>
-     - 'Mooney Rivlin'<par>
-        To be used with the nonlinear incompressibily term.<par>
+    The material `law` can be chosen among:
+     - 'SaintVenant Kirchhoff'
+        Linearized material law.
+     - 'Mooney Rivlin'
+        To be used with the nonlinear incompressibily term.
      - 'Ciarlet Geymonat'@*/
     getfem::mesh_im &mim = pop_mesh_im(in, b);
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);
@@ -439,7 +416,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		"NonlinearElasticity", (law, mim, mf_u, P));
     // b->hyperelastic_law = l; /* won't leak .. */
   } else if (check_cmd(cmd, "nonlinear elasticity incompressibility term", in, out, 2, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('nonlinear elasticity incompressibility term', @tbrick pb, @tmf mfp[, @int nfem])
+    /*@INIT B = ('nonlinear elasticity incompressibility term', @tbrick pb, @tmf mfp[, @int nfem])
     Add an incompressibily constraint to a large strain elasticity problem.@*/
     getfemint_mdbrick &parent = pop_mdbrick(in, b);
     getfem::mesh_fem &mf_p = pop_mesh_fem(in, b);
@@ -450,7 +427,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		"NonlinearIncompressibilityTerm",
 		(parent.real_mdbrick(), mf_p, num_fem));
   } else if (check_cmd(cmd, "small deformations plasticity", in, out, 3, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('small deformations plasticity', @tmim mim, @tmf mfu, @scalar THRESHOLD)
+    /*@INIT B = ('small deformations plasticity', @tmim mim, @tmf mfu, @scalar THRESHOLD)
     Setup a plasticity problem (with small deformations).
 
     The `THRESHOLD` parameter is the maximum value of the Von Mises
@@ -464,8 +441,8 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		(mim, mf_u, 100, 40, stress_threshold,
 		 *b->plasticity_stress_projection));
   } else if (check_cmd(cmd, "dynamic", in, out, 2, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('dynamic', @tbrick pb, @scalar rho[, @int numfem])
-    Dynamic brick. This brick is not ready.@*/
+    /*@INIT B = ('dynamic', @tbrick pb, @scalar rho[, @int numfem])
+    Dynamic brick. This brick is not fully working.@*/
     getfemint_mdbrick &parent = pop_mdbrick(in, b);
     bool is_complex = parent.is_complex();
     scalar_type rho = in.pop().to_scalar();
@@ -474,7 +451,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	       (parent.real_mdbrick(),rho,num_fem),
 	       (parent.cplx_mdbrick(),rho,num_fem));
   } else if (check_cmd(cmd, "bilaplacian", in, out, 2, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('bilaplacian', @tmim mim, @tmf mfu[, 'Kirchhoff-Love'])
+    /*@INIT B = ('bilaplacian', @tmim mim, @tmf mfu[, 'Kirchhoff-Love'])
     Setup a bilaplacian problem.
 
     If the 'Kirchhoff-Love' option is specified, the Kirchhoff-Love
@@ -495,7 +472,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		"Bilaplacian",
 		(mim, mf_u, use_KL));
   } else if (check_cmd(cmd, "navier stokes", in, out, 4, 4, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('navier stokes', @tmim mim, @tmf mfu, @tmf mfp)
+    /*@INIT B = ('navier stokes', @tmim mim, @tmf mfu, @tmf mfp)
     Setup a Navier-Stokes problem (this brick is not ready, do not use it).@*/
     getfem::mesh_im &mim = pop_mesh_im(in, b);
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);
@@ -504,7 +481,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     SET_BRICK_R(mdbrick_navier_stokes, "IncompressibleNavierStokes",
 		(mim, mf_u, mf_p, nu));
   } else if (check_cmd(cmd, "isotropic_linearized_plate", in, out, 6, 6, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('isotropic_linearized_plate', @tmim mim, @tmim mims, @tmf mfut, @tmf mfu3, @tmf mftheta, @scalar eps)
+    /*@INIT B = ('isotropic_linearized_plate', @tmim mim, @tmim mims, @tmf mfut, @tmf mfu3, @tmf mftheta, @scalar eps)
     Setup a linear plate model brick.
 
     For moderately thick plates, using the Reissner-Mindlin model.
@@ -528,7 +505,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     SET_BRICK_R(mdbrick_isotropic_linearized_plate, "IsotropicLinearizedPlate",
 		(mim, mim_subint, mf_ut, mf_u3, mf_theta, 100., 40., epsilon));
   } else if (check_cmd(cmd, "mixed_isotropic_linearized_plate", in, out, 5, 5, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('mixed_isotropic_linearized_plate', @tmim mim, @tmf mfut, @tmf mfu3, @tmf mftheta, @scalar eps)
+    /*@INIT B = ('mixed_isotropic_linearized_plate', @tmim mim, @tmf mfut, @tmf mfu3, @tmf mftheta, @scalar eps)
     Setup a mixed linear plate model brick.
 
     For thin plates, using Kirchhoff-Love model. For a non-mixed version,
@@ -542,7 +519,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		(mim, mf_ut, mf_u3, mf_theta, 100., 40., epsilon));
 
   } else if (check_cmd(cmd, "plate_source_term", in, out, 1, 3, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('plate_source_term', @tbrick pb[, @int bnum=-1[, @int nfem]])
+    /*@INIT B = ('plate_source_term', @tbrick pb[, @int bnum=-1[, @int nfem]])
     Add a boundary or a volumic source term to a plate problem.
 
     This brick has two parameters: "B" is the displacement (ut and u3)
@@ -562,7 +539,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		 bound, num_fem));
 
   } else if (check_cmd(cmd, "plate_simple_support", in, out, 3, 4, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('plate_simple_support', @tbrick pb, @int bnum, @str CTYPE[, @int nfem])
+    /*@INIT B = ('plate_simple_support', @tbrick pb, @int bnum, @str CTYPE[, @int nfem])
     Add a "simple support" boundary condition to a plate problem.
 
     Homogeneous Dirichlet condition on the displacement, free rotation.
@@ -576,7 +553,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 		(parent.real_mdbrick(), bound, num_fem, ctype));
 
   } else if (check_cmd(cmd, "plate_clamped_support", in, out, 3, 4, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('plate_clamped_support', @tbrick pb, @int bnum, @str CTYPE[, @int nfem])
+    /*@INIT B = ('plate_clamped_support', @tbrick pb, @int bnum, @str CTYPE[, @int nfem])
     Add a "clamped support" boundary condition to a plate problem.
 
     Homogeneous Dirichlet condition on the displacement and on the
@@ -589,7 +566,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     SET_BRICK_R(mdbrick_plate_clamped_support, "PlateClampedSupport",
 		(parent.real_mdbrick(), bound, num_fem, ctype));
   } else if (check_cmd(cmd, "plate_closing", in, out, 1, 2, 0, 1)) {
-    /*@INIT B = MDBRICK:INIT('plate_closing', @tbrick pb[, @int nfem])
+    /*@INIT B = ('plate_closing', @tbrick pb[, @int nfem])
     Add a free edges condition for the mixed plate model brick.
 
     This brick is required when the mixed linearized plate brick is

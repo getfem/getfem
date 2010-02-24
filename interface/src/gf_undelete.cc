@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009 Luis Saavedra.
+// Copyright (C) 2009-2010 Luis Saavedra.
 //
 // This file is a part of GetFEM++
 //
@@ -24,18 +24,13 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-  FUNCTION gf_undelete(I,[J,K,...])
+/*@GFDOC
 
-    Undelete an existing getfem object from memory (mesh, mesh_fem,
-    etc.). I should be a descriptor given by gf_mesh(), gf_mesh_im(),
-    gf_slice() etc.
+    Undelete an existing getfem object from memory (mesh, mesh_fem, etc.). 
 
  SEE ALSO:
-    gf_workspace,gf_delete.
-
-    $Id$
- MLABCOM*/
+    gf_workspace, gf_delete.
+ @*/
 
 void gf_undelete(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
@@ -44,20 +39,26 @@ void gf_undelete(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (!out.narg_in_range(0,0))
     THROW_BADARG("No output argument needed.");
 
+  /*@FUNC ('.list', I[, J, K,...])
+    
+    I should be a descriptor given by gf_mesh(), gf_mesh_im(),
+    gf_slice() etc.
+  @*/
   while (in.remaining()) {
     id_type id;
     if (in.front().is_object_id()) {
       id_type cid; in.pop().to_object_id(&id,&cid);
       /*if (is_static_object(id, cid)) {
 	THROW_BADARG("sorry, this object of type " <<
-		     name_of_getfemint_class_id(cid) <<
+	             name_of_getfemint_class_id(cid) <<
 		     " is static, i.e. it can't be deleted");
       }
       */
     } else if (in.front().is_integer()) {
       id = in.pop().to_integer();
     }
-    if (getfemint::workspace().object(id)) { /* throw an exeption if object not found */
+    if (getfemint::workspace().object(id)) {
+      /* throw an exeption if object not found */
       getfemint::workspace().undelete_object(id);
     } else {
       GFI_WARNING("ouuups strange");

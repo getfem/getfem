@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2009 Yves Renard.
+// Copyright (C) 2009-2010 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -33,24 +33,16 @@
 using namespace getfemint;
 
 
-/*MLABCOM
-
-  FUNCTION M = gf_model('complex' | 'real')
-  General constructor for model objects. Return a getfem handle to the newly
-  created object.
-
-  ``Model'' variables store the variables and the state data and the
+/*@GFDOC
+  @tmodel variables store the variables and the state data and the
   description of a model. This includes the global tangent matrix, the
   right hand side and the constraints. There are two kinds of models, the
-  ``real'' and the ``complex'' models.
+  `real` and the `complex` models.
 
-  ``Model'' object is the evolution for Getfem++ 4.0 of the "MdState"
+  @tmodel object is the evolution for Getfem++ 4.0 of the @tmdstate
   object.
 
-  @INIT MODEL:INIT ('real')
-  @INIT MODEL:INIT ('complex')
-
-MLABCOM*/
+@*/
 void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) THROW_BADARG( "Wrong number of input arguments");
@@ -61,11 +53,11 @@ void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.front().is_string()) {
     std::string cmd = in.pop().to_string();
     if (check_cmd(cmd, "real", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS = MODEL:INIT('real')
+      /*@INIT MDS = ('real')
       Build a model for real unknowns.@*/
       md->set(new getfem::model(false));
     } else if (check_cmd(cmd, "complex", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS = MODEL:INIT('complex')
+      /*@INIT MDS = ('complex')
       Build a model for complex unknowns.@*/
       md->set(new getfem::model(true));
     } else bad_cmd(cmd);

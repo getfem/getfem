@@ -176,7 +176,7 @@ namespace getfem {
 
   /** 
      Describe an adaptable integration method linked to a mesh cut by at
-     least two level sets on the intersection of two leve sets.
+     least two level sets on the intersection of two level sets.
   */
   class mesh_im_cross_level_set : public mesh_im {
   protected :

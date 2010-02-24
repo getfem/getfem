@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Julien Pommier.
+// Copyright (C) 2005-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -34,26 +34,16 @@
 using namespace getfemint;
 
 
-/*MLABCOM
+/*@GFDOC
+  A model state is an object which store the state data for a chain of
+  model bricks. This includes the global tangent matrix, the right hand
+  side and the constraints.
 
-  FUNCTION M = gf_mdstate('complex' | 'real')
-  General constructor for mdstate objects. Return a getfem handle to the newly
-  created object.
+  This object is now deprecated and replaced by the @tmodel object.
 
-  ``Model State'' variables store the state data for a set of model
-  bricks. This includes the global tangent matrix, the right hand side
-  and the constraints. There are two sorts of model states, the
-  ``real'' and the ``complex'' models states.
-
-  * MDS=gf_model_state(mdbrick B)
-  Build a modelstate for the brick B (selects the real or
-  complex state from the complexity of B).
-
-  @INIT MDSTATE:INIT ('real')
-  @INIT MDSTATE:INIT ('complex')
-
-  $Id$
-MLABCOM*/
+  There are two sorts of model states, the `real` and the `complex`
+  models states.
+ @*/
 void gf_mdstate(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) {
@@ -67,16 +57,16 @@ void gf_mdstate(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.front().is_string()) {
     std::string cmd    = in.pop().to_string();
     if (check_cmd(cmd, "real", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS = MDSTATE:INIT('real')
+      /*@INIT MDS = ('real')
       Build a model state for real unknowns.@*/
       md->set(new real_model_state);
     } else if (check_cmd(cmd, "complex", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS = MDSTATE:INIT('complex')
+      /*@INIT MDS = ('complex')
       Build a model state for complex unknowns.@*/
       md->set(new cplx_model_state);
     } else bad_cmd(cmd);
   } else if (in.front().is_mdbrick()) {
-    /*@INIT MDS = MDSTATE:INIT('.mdbrick',@tbrick B)
+    /*@INIT MDS = ('.mdbrick', @tmdbrick B)
     Build a modelstate for the brick `B`.
 
     Selects the real or complex state from the complexity of `B`.@*/

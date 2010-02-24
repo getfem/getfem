@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2008 Y. Renard, J. Pommier.
+// Copyright (C) 2001-2010 Y. Renard, J. Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -49,18 +49,9 @@ to_constraints_brick(getfemint_mdbrick *b, complex_type) {
 }
 
 
-/*MLABCOM
-
-  FUNCTION M = gf_mdbrick_set(cmd, [, args])
+/*@GFDOC
   Modify a model brick object.
-
-  @SET MDBRICK:SET('param')
-  @SET MDBRICK:SET('constraints')
-  @SET MDBRICK:SET('constraints_rhs')
-  @SET MDBRICK:SET('penalization_epsilon')
-
-  $Id$
-MLABCOM*/
+@*/
 void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 2) {
@@ -69,13 +60,13 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   getfemint_mdbrick *b   = in.pop().to_getfemint_mdbrick(true);
   std::string cmd        = in.pop().to_string();
   if (check_cmd(cmd, "param", in, out, 2, 3, 0, 0)) {
-    /*@SET MDBRICK:SET('param',@str name,{@tmf mf,V | V})
+    /*@SET ('param', @str name, {@tmf mf,V | V})
     Change the value of a brick parameter.
 
     `name` is the name of the parameter. `V` should contain the
     new parameter value (vector or float). If a @tmf is given,
     `V` should hold the field values over that @tmf (i.e. its
-    last dimension should be MESHFEM:GET('nbdof') or 1 for
+    last dimension should be MESH_FEM:GET('nbdof') or 1 for
     constant field).@*/
     std::string pname = in.pop().to_string();
     for (unsigned i=0; i < pname.size(); ++i)
@@ -146,7 +137,7 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (cp) cp->set(*mf, cw);
     else    rp->set(*mf, rw);
   } else if (check_cmd(cmd, "penalization_epsilon", in, out, 1, 1, 0, 0)) {
-    /*@SET MDBRICK:SET('penalization_epsilon',@scalar eps)
+    /*@SET ('penalization_epsilon', @scalar eps)
     Change the penalization coefficient of a constraint brick.
 
     This is only applicable to the bricks which inherit from the
@@ -164,7 +155,7 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     else
       to_constraints_brick(b, complex_type())->set_penalization_parameter(eps);
   } else if (check_cmd(cmd, "constraints", in, out, 2, 2, 0, 0)) {
-    /*@SET MDBRICK:SET('constraints',@mat H, @vec R)
+    /*@SET ('constraints', @mat H, @vec R)
     Set the constraints imposed by a constraint brick.
 
     This is only applicable to the bricks which inherit from the
@@ -199,7 +190,7 @@ void gf_mdbrick_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       to_constraints_brick(b, complex_type())->set_constraints(C, rhs);
     }
   } else if (check_cmd(cmd, "constraints_rhs", in, out, 1, 1, 0, 0)) {
-    /*@SET MDBRICK:SET('constraints_rhs',@mat H, @vec R)
+    /*@SET ('constraints_rhs', @mat H, @vec R)
     Set the right hand side of the constraints imposed by a constraint brick.
 
     This is only applicable to the bricks which inherit from the

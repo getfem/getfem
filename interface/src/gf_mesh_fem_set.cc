@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2009 Julien Pommier.
+// Copyright (C) 2006-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -84,114 +84,181 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
   }
 }
 
-/*MLABCOM
-  FUNCTION [x] = gf_mesh_fem_set(meshfem MF, operation [, args])
-
+/*@GFDOC
   General function for modifying mesh_fem objects.
+  @*/
 
-  @SET MESHFEM:SET('fem')
-  @SET MESHFEM:SET('classical fem')
-  @SET MESHFEM:SET('classical discontinuous fem')
-  @SET MESHFEM:SET('qdim')
-  @SET MESHFEM:SET('reduction')
-  @SET MESHFEM:SET('reduction matrices')
-  @SET MESHFEM:SET('dof partition')
-  @SET MESHFEM:SET('set partial')
 
-  $Id$
-MLABCOM*/
 
-void gf_mesh_fem_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
 
-  getfem::mesh_fem *mf = in.pop().to_mesh_fem();
-  std::string cmd        = in.pop().to_string();
-  if (check_cmd(cmd, "fem", in, out, 1, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('fem',@tfem f[, @ivec CVids])
-    Set the Finite Element Method.
 
-    Assign a FEM `f` to all convexes whose #ids are listed in `CVids`.
-    If `CVids` is not given, the integration is assigned to all convexes.
+// Object for the declaration of a new sub-command.
 
-    See the help of FEM:INIT to obtain a list of available FEM methods.@*/
-    set_fem(mf, in);
-  } else if (check_cmd(cmd, "classical fem", in, out, 1, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('classical fem',@int k[, @ivec CVids])
+struct sub_gf_mf_set : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out,
+		   getfem::mesh_fem *mf) = 0;
+};
+
+typedef boost::intrusive_ptr<sub_gf_mf_set> psub_command;
+
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
+
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_mf_set {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out,			\
+		       getfem::mesh_fem *mf)				\
+      { dummy_func(in); dummy_func(out); code }				\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
+
+
+
+void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
+		     getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+  
+  if (subc_tab.size() == 0) {
+
+    
+    /*@SET ('fem', @tfem f[, @ivec CVids])
+      Set the Finite Element Method.
+      
+      Assign a FEM `f` to all convexes whose #ids are listed in `CVids`.
+      If `CVids` is not given, the integration is assigned to all convexes.
+      
+      See the help of FEM:INIT to obtain a list of available FEM methods.@*/
+    sub_command
+      ("fem", 1, 2, 0, 0,
+       set_fem(mf, in);
+       );
+
+
+    /*@SET ('classical fem', @int k[, @ivec CVids])
     Assign a classical (Lagrange polynomial) fem of order `k` to the @tmf.
 
     Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.@*/
-    set_classical_fem(mf, in, false);
-  } else if (check_cmd(cmd, "classical discontinuous fem", in, out,
-                       1, 3, 0, 0)) {
-    /*@SET MESHFEM:SET('classical discontinuous fem',@int K[, @tscalar alpha[, @ivec CVIDX]])
+    sub_command
+      ("classical fem", 1, 2, 0, 0,
+       set_classical_fem(mf, in, false);
+       );
+
+
+    /*@SET ('classical discontinuous fem', @int K[, @tscalar alpha[, @ivec CVIDX]])
     Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
 
-    Similar to MESHFEM:SET('classical fem') except that
+    Similar to MESH_FEM:SET('classical fem') except that
     FEM_PK_DISCONTINUOUS is used. Param `alpha` the node inset,
     0 <= alpha < 1, where 0 implies usual dof nodes, greater values
     move the nodes toward the center of gravity, and 1 means that all
     degrees of freedom collapse on the center of gravity.@*/
-    set_classical_fem(mf, in, true);
-  } else if (check_cmd(cmd, "qdim", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHFEM:SET('qdim',@int Q)
-    Change the `Q` dimension of the field that is interpolated by the @tmf.
+    sub_command
+      ("classical discontinuous fem", 1, 3, 0, 0,
+       set_classical_fem(mf, in, true);
+       );
 
-    `Q = 1` means that the @tmf describes a scalar field, `Q = N` means
-    that the @tmf describes a vector field of dimension N.@*/
-    size_type q_dim = in.pop().to_integer(1,255);
-    mf->set_qdim(dim_type(q_dim));
-  } else if (check_cmd(cmd, "reduction matrices", in, out, 2, 2, 0, 0)) {
-    /*@SET MESHFEM:SET('reduction matrices',@mat R,@mat E)
-    Set the reduction and extension matrices and valid their use.@*/
-    dal::shared_ptr<gsparse> R = in.pop().to_sparse();
-    dal::shared_ptr<gsparse> E = in.pop().to_sparse();
-    if (R->is_complex() || E->is_complex())
-      THROW_BADARG("Reduction and extension matrices should be real matrices");
-    if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::CSCMAT)
-      mf->set_reduction_matrices(R->real_csc(), E->real_csc());
-    else if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::WSCMAT)
-      mf->set_reduction_matrices(R->real_csc(), E->real_wsc());
-    else if (R->storage()==gsparse::WSCMAT && E->storage()==gsparse::CSCMAT)
-      mf->set_reduction_matrices(R->real_wsc(), E->real_csc());
-    else if (R->storage()==gsparse::WSCMAT && E->storage()==gsparse::WSCMAT)
-      mf->set_reduction_matrices(R->real_wsc(), E->real_wsc());
-    else
-      THROW_BADARG("Reduction and extension matrices should be "
-                   "sparse matrices");
-  } else if (check_cmd(cmd, "reduction", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHFEM:SET('reduction',@int s)
-    Set or unset the use of the reduction/extension matrices.@*/
-    size_type s = in.pop().to_integer(0,255);
-    mf->set_reduction(s != size_type(0));
-  } else if (check_cmd(cmd, "dof partition", in, out, 1, 1, 0, 0)) {
-    /*@SET MESHFEM:SET('dof partition',@ivec DOFP)
+
+    /*@SET ('qdim', @int Q)
+      Change the `Q` dimension of the field that is interpolated by the @tmf.
+      
+      `Q = 1` means that the @tmf describes a scalar field, `Q = N` means
+      that the @tmf describes a vector field of dimension N.@*/
+    sub_command
+      ("qdim", 1, 1, 0, 0,
+       size_type q_dim = in.pop().to_integer(1,255);
+       mf->set_qdim(dim_type(q_dim));
+       );
+
+
+    /*@SET ('reduction matrices', @mat R, @mat E)
+      Set the reduction and extension matrices and valid their use.@*/
+    sub_command
+      ("reduction matrices", 2, 2, 0, 0,
+       dal::shared_ptr<gsparse> R = in.pop().to_sparse();
+       dal::shared_ptr<gsparse> E = in.pop().to_sparse();
+       if (R->is_complex() || E->is_complex())
+	 THROW_BADARG("Reduction and extension matrices should be real matrices");
+       if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::CSCMAT)
+	 mf->set_reduction_matrices(R->real_csc(), E->real_csc());
+       else if (R->storage()==gsparse::CSCMAT && E->storage()==gsparse::WSCMAT)
+	 mf->set_reduction_matrices(R->real_csc(), E->real_wsc());
+       else if (R->storage()==gsparse::WSCMAT && E->storage()==gsparse::CSCMAT)
+	 mf->set_reduction_matrices(R->real_wsc(), E->real_csc());
+       else if (R->storage()==gsparse::WSCMAT && E->storage()==gsparse::WSCMAT)
+	 mf->set_reduction_matrices(R->real_wsc(), E->real_wsc());
+       else
+	 THROW_BADARG("Reduction and extension matrices should be "
+		      "sparse matrices");
+       );
+
+
+    /*@SET ('reduction', @int s)
+      Set or unset the use of the reduction/extension matrices.@*/
+    sub_command
+      ("reduction", 1, 1, 0, 0,
+       size_type s = in.pop().to_integer(0,255);
+       mf->set_reduction(s != size_type(0));
+       );
+
+
+    /*@SET ('dof partition', @ivec DOFP)
     Change the 'dof_partition' array.
 
     `DOFP` is a vector holding a integer value for each convex of the @tmf.
-    See MESHFEM:GET('dof partition') for a description of "dof partition".@*/
-    iarray v =
-      in.pop().to_iarray(int(mf->linked_mesh().convex_index().last_true()+1));
-    for (unsigned i=0; i < v.size(); ++i)
-      mf->set_dof_partition(i, v[i]);
-  } else if (check_cmd(cmd, "set partial", in, out, 1, 2, 0, 0)) {
-      /*@SET MESHFEM:SET('set partial', @ivec DOFs[,@ivec RCVs])
+    See MESH_FEM:GET('dof partition') for a description of "dof partition".@*/
+    sub_command
+      ("dof partition", 1, 1, 0, 0,
+       iarray v =
+       in.pop().to_iarray(int(mf->linked_mesh().convex_index().last_true()+1));
+       for (unsigned i=0; i < v.size(); ++i)
+	 mf->set_dof_partition(i, v[i]);
+       );
+
+
+    /*@SET ('set partial', @ivec DOFs[, @ivec RCVs])
       Can only be applied to a partial @tmf. Change the subset of the
       degrees of freedom of `mf`.
 
       If `RCVs` is given, no FEM will be put on the convexes listed
       in `RCVs`.@*/
-      dal::bit_vector doflst = in.pop().to_bit_vector();
-      dal::bit_vector rcvlst;
-      if (in.remaining()) rcvlst = in.pop().to_bit_vector();
-
-      getfem::partial_mesh_fem *ppmf
-	= dynamic_cast<getfem::partial_mesh_fem *>(mf);
-      if (!ppmf) THROW_BADARG("The command 'set partial' can only be "
+    sub_command
+      ("set partial", 1, 2, 0, 0,
+       dal::bit_vector doflst = in.pop().to_bit_vector();
+       dal::bit_vector rcvlst;
+       if (in.remaining()) rcvlst = in.pop().to_bit_vector();
+       
+       getfem::partial_mesh_fem *ppmf
+       = dynamic_cast<getfem::partial_mesh_fem *>(mf);
+       if (!ppmf) THROW_BADARG("The command 'set partial' can only be "
 			      "applied to a partial mesh_fem object");
-      ppmf->adapt(doflst, rcvlst);
+       ppmf->adapt(doflst, rcvlst);
+       );
 
-  } else bad_cmd(cmd);
+  }
+
+
+  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
+
+  getfem::mesh_fem *mf   = m_in.pop().to_mesh_fem();
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out, mf);
+  }
+  else bad_cmd(init_cmd);
+
 }

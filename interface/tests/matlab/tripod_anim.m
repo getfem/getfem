@@ -1,7 +1,7 @@
 % You should run demo_tripod first ...
-%m=gf_mesh('import','gid','../meshes/tripod.GiD.msh');
-%mfu=gfMeshFem('from string', smfu, m);
-%mfdu=gfMeshFem('from string', smfdu, m);
+m=gf_mesh('import','gid','../meshes/tripod.GiD.msh');
+% mfu=gfMeshFem('from string', smfu, m);
+% mfdu=gfMeshFem('from string', smfdu, m);
 
 %gf_plot_mesh(m,'cvlst',gf_mesh_get(m,'outer
 %faces'),'curved','on','edges_color',[1 0 0]); hold on;

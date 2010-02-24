@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2005-2008 Julien Pommier.
+// Copyright (C) 2005-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -26,8 +26,7 @@
 
 using namespace getfemint;
 
-/*MLABCOM
-   FUNCTION LS = gf_levelset(...)
+/*@GFDOC
 
    The level-set object is represented by a primary level-set and
    optionally a secondary level-set used to represent fractures
@@ -40,16 +39,13 @@ using namespace getfemint;
    system. This package is widely available. It computes convex hull
    and delaunay triangulations in arbitrary dimension.
 
-   @INIT LEVELSET:INIT('.mesh')
-
-   $Id$
-MLABCOM*/
+@*/
 
 void gf_levelset(
 getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   getfemint_levelset *gls = NULL;
   if (check_cmd("LevelSet", "LevelSet", in, out, 2, 4, 0, 1)) {
-    /*@INIT LS = LEVELSET:INIT('.mesh',@tmesh m, @int d[, @str 'ws'| @str func_1[, @str func_2 | @str 'ws']])
+    /*@INIT LS = ('.mesh',@tmesh m, @int d[, @str 'ws'| @str func_1[, @str func_2 | @str 'ws']])
     Create a @tls object on a @tmesh represented by a primary function
     (and optional secondary function, both) defined on a lagrange @tmf
     of degree `d`.

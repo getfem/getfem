@@ -648,7 +648,7 @@ AC_ARG_ENABLE(python,
    yes) usepython=YES ;;
    no)  usepython=NO ;;
    *) AC_MSG_ERROR([bad value ${enableval} for --enable-python]) ;;
- esac],[usepython=NO])
+ esac],[usepython=YES])
 
 if test "$usematlab" != NO; then
   AC_CHECK_PROGS(MEX, mex)
@@ -873,23 +873,6 @@ AC_CONFIG_FILES(\
 	interface/bin/Makefile \
 	interface/src/Makefile \
 	interface/src/matlab/Makefile \
-	interface/src/matlab/@gfCvStruct/Makefile \
-	interface/src/matlab/@gfEltm/Makefile \
-	interface/src/matlab/@gfFem/Makefile \
-	interface/src/matlab/@gfGeoTrans/Makefile \
-	interface/src/matlab/@gfInteg/Makefile \
-	interface/src/matlab/@gfMesh/Makefile \
-	interface/src/matlab/@gfMeshFem/Makefile \
-	interface/src/matlab/@gfSlice/Makefile \
-	interface/src/matlab/@gfMeshIm/Makefile \
-	interface/src/matlab/@gfSpmat/Makefile \
-	interface/src/matlab/@gfPrecond/Makefile \
-	interface/src/matlab/@gfMdBrick/Makefile \
-	interface/src/matlab/@gfMdState/Makefile \
-	interface/src/matlab/@gfModel/Makefile \
-	interface/src/matlab/@gfLevelSet/Makefile \
-	interface/src/matlab/@gfMeshLevelSet/Makefile \
-	interface/src/matlab/@gfGlobalFunction/Makefile \
 	interface/src/matlab/private/Makefile \
 	interface/src/python/Makefile \
 	interface/src/python/setup.py \

@@ -25,7 +25,7 @@ One has
    \right)|\ dx'.
 
 
-Denoting $J_{\tau}(x')$ the jacobian
+Denoting :math:`J_{\tau}(x')` the jacobian
 
 .. math::
 

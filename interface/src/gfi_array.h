@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 
  This file is a part of GETFEM++
 
@@ -40,26 +40,29 @@
 #  endif
 #endif
 
-/* remember to update also the list in getfem.base.py !! */
-typedef enum { MESH_CLASS_ID,
-               MESHFEM_CLASS_ID,
+/* This is very important that the following classes respects the
+   alphabetic order. The order have to be the same than in getfem.py !!!
+   Do not forget to modify also 'name_of_getfemint_class_id' in getfemint.cc
+*/
+typedef enum { CVSTRUCT_CLASS_ID,
+	       ELTM_CLASS_ID,
+	       FEM_CLASS_ID,
+	       GEOTRANS_CLASS_ID,
+	       GLOBAL_FUNCTION_CLASS_ID,
+	       INTEG_CLASS_ID,
+	       LEVELSET_CLASS_ID,
+	       MDBRICK_CLASS_ID,
+	       MDSTATE_CLASS_ID,
+	       MESH_CLASS_ID,
+	       MESHFEM_CLASS_ID,
                MESHIM_CLASS_ID,
-               MDBRICK_CLASS_ID,
-               MDSTATE_CLASS_ID,
-               MODEL_CLASS_ID,
-               GEOTRANS_CLASS_ID,
-               FEM_CLASS_ID,
-               INTEG_CLASS_ID,
-               ELTM_CLASS_ID,
-               CVSTRUCT_CLASS_ID,
-               POLY_CLASS_ID,
-               SLICE_CLASS_ID,
-               GSPARSE_CLASS_ID,
-               PRECOND_CLASS_ID,
-               LEVELSET_CLASS_ID,
                MESH_LEVELSET_CLASS_ID,
-               GLOBAL_FUNCTION_CLASS_ID,
-               GETFEMINT_NB_CLASS } getfemint_class_id;
+               MODEL_CLASS_ID,
+               PRECOND_CLASS_ID,
+	       SLICE_CLASS_ID,
+	       GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order */
+               POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
+	       GETFEMINT_NB_CLASS } getfemint_class_id;
 
 #ifdef __cplusplus
 extern "C" {

@@ -9,3 +9,6 @@ getfem-users@gna.org), and we'll be glad to correct the problem.
 .. acks::
 
    * Luis Saavedra
+   * Julien Pommier
+   * Yves Renard
+

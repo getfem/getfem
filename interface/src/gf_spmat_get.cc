@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2006-2010 Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -33,7 +33,8 @@ void copydiags(const MAT &M, const std::vector<size_type> &v,
   for (unsigned ii=0; ii < v.size(); ++ii) {
     int d = int(v[ii]), i,j;
     if (d < 0) { i = -d; j = 0; } else { i = 0; j = d; }
-    cout << "m=" << m << "n=" << n << ", d=" << d << ", i=" << i << ", j=" << j << "\n";
+    cout << "m=" << m << "n=" << n << ", d=" << d << ", i=" << i
+	 << ", j=" << j << "\n";
     for (; i < int(m) && j < int(n); ++i,++j)
       w(i,ii) = M(i,j);
   }
@@ -142,150 +143,256 @@ gf_spmat_get_Dirichlet_nullspace(gsparse &H, getfemint::mexargs_in& in, getfemin
   out.pop().from_dcvector(Ud);
 }
 
-/*MLABCOM
-  FUNCTION [...]=gf_spmat_get(M, args)
-
+/*@GFCOM
   General getfem sparse matrix inquiry function. M might also be a
   native matlab sparse matrix.
+@*/
 
-  @GET SPMAT:GET('size')
-  @GET SPMAT:GET('nnz')
-  @GET SPMAT:GET('is_complex')
-  @GET SPMAT:GET('storage')
-  @GET SPMAT:GET('full')
-  @GET SPMAT:GET('mult')
-  @GET SPMAT:GET('tmult')
-  @GET SPMAT:GET('diag')
-  @GET SPMAT:GET('csc_ind')
-  @GET SPMAT:GET('csc_val')
-  @GET SPMAT:GET('dirichlet nullspace')
-  @GET SPMAT:GET('info')
-  @GET SPMAT:GET('save')
-MLABCOM*/
 
-void gf_spmat_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
-{
-  if (in.narg() < 2) {
-    THROW_BADARG( "Wrong number of input arguments");
-  }
-  dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
-  gsparse &gsp = *pgsp;
 
-  std::string cmd = in.pop().to_string();
 
-  if (check_cmd(cmd, "nnz", in, out, 0, 0, 0, 1)) {
-    /*@GET n = SPMAT:GET('nnz')
-    Return the number of non-null values stored in the sparse matrix.@*/
-    out.pop().from_integer(int(gsp.nnz()));
-  } else if (check_cmd(cmd, "full", in, out, 0, 2, 0, 1)) {
-    /*@GET Sm = SPMAT:GET('full'[, @list I[, @list J]])
-    Return a full (sub-)matrix.
+// Object for the declaration of a new sub-command.
 
-    The optional arguments `I` and `J`, are the sub-intervals for the
-    rows and columns that are to be extracted.@*/
-    if (gsp.is_complex()) gf_spmat_get_full(gsp, in, out, complex_type());
-    else gf_spmat_get_full(gsp, in,out,scalar_type());
-  } else if (check_cmd(cmd, "mult", in, out, 1, 1, 0, 1)) {
-    /*@GET MV = SPMAT:GET('mult',@vec V)
-    Product of the sparse matrix `M` with a vector `V`.
+struct sub_gf_spmat_get : virtual public dal::static_stored_object {
+  int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
+  virtual void run(getfemint::mexargs_in& in,
+		   getfemint::mexargs_out& out,
+		   dal::shared_ptr<gsparse> &pgsp, gsparse &gsp) = 0;
+};
 
-    For matrix-matrix multiplications, see SPMAT:INIT('mult').@*/
-    if (!gsp.is_complex())
-      gf_spmat_mult_or_tmult(gsp, in, out, false, scalar_type());
-    else gf_spmat_mult_or_tmult(gsp, in, out, false, complex_type());
-  } else if (check_cmd(cmd, "tmult", in, out, 1, 1, 0, 1)) {
-    /*@GET MtV = SPMAT:GET('tmult',@vec V)
-    Product of `M` transposed (conjugated if `M` is complex) with the vector `V`.@*/
-    if (!gsp.is_complex())
-      gf_spmat_mult_or_tmult(gsp, in, out, true, scalar_type());
-    else gf_spmat_mult_or_tmult(gsp, in, out, true, complex_type());
-  } else if (check_cmd(cmd, "diag", in, out, 0, 1, 0, 1)) {
-    /*@GET D = SPMAT:GET('diag'[, @list E])
-    Return the diagonal of `M` as a vector.
+typedef boost::intrusive_ptr<sub_gf_spmat_get> psub_command;
 
-    If `E` is used, return the sub-diagonals whose ranks are given in E.@*/
-    if (!gsp.is_complex())
-      gf_spmat_get_diag(gsp, in, out, scalar_type());
-    else gf_spmat_get_diag(gsp, in, out, complex_type());
-  } else if (check_cmd(cmd, "storage", in, out, 0, 0, 0, 1)) {
-    /*@GET s = SPMAT:GET('storage')
-    Return the storage type currently used for the matrix.
+// Function to avoid warning in macro with unused arguments.
+template <typename T> static inline void dummy_func(T &) {}
 
-    The storage is returned as a string, either 'CSC' or 'WSC'.@*/
-    out.pop().from_string(gsp.name());
-  } else if (check_cmd(cmd, "size", in, out, 0, 0, 0, 1)) {
-    /*@GET @CELL{ni,nj} = SPMAT:GET('size')
-    Return a vector where `ni` and `nj` are the dimensions of the matrix.@*/
-    iarray sz = out.pop().create_iarray_h(2);
-    sz[0] = int(gsp.nrows());
-    sz[1] = int(gsp.ncols());
-  } else if (check_cmd(cmd, "is_complex", in, out, 0, 0, 0, 1)) {
-    /*@GET b = SPMAT:GET('is_complex')
-    Return 1 if the matrix contains complex values.@*/
-    out.pop().from_integer(gsp.is_complex());
-  } else if (check_cmd(cmd, "csc_ind", in, out, 0, 0, 0, 2)) {
-    /*@GET @CELL{JC, IR} = SPMAT:GET('csc_ind')
-    Return the two usual index arrays of CSC storage.
+#define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
+    struct subc : public sub_gf_spmat_get {				\
+      virtual void run(getfemint::mexargs_in& in,			\
+		       getfemint::mexargs_out& out,			\
+		       dal::shared_ptr<gsparse> &pgsp, gsparse &gsp)	\
+      { dummy_func(in); dummy_func(out); dummy_func(pgsp);		\
+	dummy_func(gsp); code }						\
+    };									\
+    psub_command psubc = new subc;					\
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
+    subc_tab[cmd_normalize(name)] = psubc;				\
+  }                           
 
-    If `M` is not stored as a CSC matrix, it is converted into CSC.@*/
-    gsp.to_csc();
-    if (!gsp.is_complex()) gf_spmat_get_data(gsp.csc(scalar_type()),  out, 0);
-    else                   gf_spmat_get_data(gsp.csc(complex_type()), out, 0);
-  } else if (check_cmd(cmd, "csc_val", in, out, 0, 0, 0, 1)) {
-    /*@GET V = SPMAT:GET('csc_val')
-    Return the array of values of all non-zero entries of `M`.
 
-    If `M` is not stored as a CSC matrix, it is converted into CSC.@*/
-    gsp.to_csc();
-    if (!gsp.is_complex()) gf_spmat_get_data(gsp.csc(scalar_type()),  out, 1);
-    else                   gf_spmat_get_data(gsp.csc(complex_type()), out, 1);
-  } else if (check_cmd(cmd, "dirichlet nullspace", in, out, 1, 1, 2, 2)) {
-    /*@GET @CELL{N, U0} = SPMAT:GET('dirichlet nullspace',@vec R)
+
+void gf_spmat_get(getfemint::mexargs_in& m_in,
+		  getfemint::mexargs_out& m_out) {
+  typedef std::map<std::string, psub_command > SUBC_TAB;
+  static SUBC_TAB subc_tab;
+  
+  if (subc_tab.size() == 0) {
+  
+
+    /*@GET n = ('nnz')
+      Return the number of non-null values stored in the sparse matrix.@*/
+    sub_command
+      ("nnz", 0, 0, 0, 1,
+       out.pop().from_integer(int(gsp.nnz()));
+       );
+
+
+    /*@GET Sm = ('full'[, @list I[, @list J]])
+      Return a full (sub-)matrix.
+      
+      The optional arguments `I` and `J`, are the sub-intervals for the
+      rows and columns that are to be extracted.@*/
+    sub_command
+      ("full", 0, 2, 0, 1,
+       if (gsp.is_complex()) gf_spmat_get_full(gsp, in, out, complex_type());
+       else gf_spmat_get_full(gsp, in,out,scalar_type());
+       );
+
+
+    /*@GET MV = ('mult', @vec V)
+      Product of the sparse matrix `M` with a vector `V`.
+      
+      For matrix-matrix multiplications, see SPMAT:INIT('mult').@*/
+    sub_command
+      ("mult", 1, 1, 0, 1,
+       if (!gsp.is_complex())
+	 gf_spmat_mult_or_tmult(gsp, in, out, false, scalar_type());
+       else gf_spmat_mult_or_tmult(gsp, in, out, false, complex_type());
+       );
+
+
+    /*@GET MtV =('tmult', @vec V)
+      Product of `M` transposed (conjugated if `M` is complex) with the
+      vector `V`.@*/
+    sub_command
+      ("tmult", 1, 1, 0, 1,
+       if (!gsp.is_complex())
+	 gf_spmat_mult_or_tmult(gsp, in, out, true, scalar_type());
+       else gf_spmat_mult_or_tmult(gsp, in, out, true, complex_type());
+       );
+
+
+    /*@GET D = ('diag'[, @list E])
+      Return the diagonal of `M` as a vector.
+      
+      If `E` is used, return the sub-diagonals whose ranks are given in E.@*/
+    sub_command
+      ("diag", 0, 1, 0, 1,
+       if (!gsp.is_complex())
+	 gf_spmat_get_diag(gsp, in, out, scalar_type());
+       else gf_spmat_get_diag(gsp, in, out, complex_type());
+       );
+
+
+    /*@GET s = ('storage')
+      Return the storage type currently used for the matrix.
+      
+      The storage is returned as a string, either 'CSC' or 'WSC'.@*/
+    sub_command
+      ("storage", 0, 0, 0, 1,
+       out.pop().from_string(gsp.name());
+       );
+
+
+    /*@GET @CELL{ni,nj} = ('size')
+      Return a vector where `ni` and `nj` are the dimensions of the matrix.@*/
+    sub_command
+      ("size", 0, 0, 0, 1,
+       iarray sz = out.pop().create_iarray_h(2);
+       sz[0] = int(gsp.nrows());
+       sz[1] = int(gsp.ncols());
+       );
+
+
+    /*@GET b = ('is_complex')
+      Return 1 if the matrix contains complex values.@*/
+    sub_command
+      ("is_complex", 0, 0, 0, 1,
+       out.pop().from_integer(gsp.is_complex());
+       );
+
+
+    /*@GET @CELL{JC, IR} = ('csc_ind')
+      Return the two usual index arrays of CSC storage.
+      
+      If `M` is not stored as a CSC matrix, it is converted into CSC.@*/
+    sub_command
+      ("csc_ind", 0, 0, 0, 2,
+       gsp.to_csc();
+       if (!gsp.is_complex())
+	 gf_spmat_get_data(gsp.csc(scalar_type()),  out, 0);
+       else
+	 gf_spmat_get_data(gsp.csc(complex_type()), out, 0);
+       );
+
+    
+    /*@GET V = ('csc_val')
+      Return the array of values of all non-zero entries of `M`.
+      
+      If `M` is not stored as a CSC matrix, it is converted into CSC.@*/
+    sub_command
+      ("csc_val", 0, 0, 0, 1,
+       gsp.to_csc();
+       if (!gsp.is_complex())
+	 gf_spmat_get_data(gsp.csc(scalar_type()),  out, 1);
+       else
+	 gf_spmat_get_data(gsp.csc(complex_type()), out, 1);
+       );
+
+
+    /*@GET @CELL{N, U0} = ('dirichlet nullspace', @vec R)
     Solve the dirichlet conditions `M.U=R`.
 
     A solution `U0` which has a minimum L2-norm is returned, with a
     sparse matrix `N` containing an orthogonal basis of the kernel of
     the (assembled) constraints matrix `M` (hence, the PDE linear system
-    should be solved on this subspace): the initial problem<Par>
+    should be solved on this subspace): the initial problem
 
-    `K.U = B` with constraints `M.U = R`<Par>
+    `K.U = B` with constraints `M.U = R`
 
-    is replaced by<Par>
+    is replaced by
 
     `(N'.K.N).UU = N'.B` with `U = N.UU + U0`@*/
-    if (pgsp->is_complex())
-      gf_spmat_get_Dirichlet_nullspace(*pgsp, in, out, complex_type());
-    else
-      gf_spmat_get_Dirichlet_nullspace(*pgsp, in, out, scalar_type());
-  } else if (check_cmd(cmd, "info", in, out, 0, 1)) {
-    /*@GET s = SPMAT:GET('info')
-    Return a string contains a short summary on the sparse matrix (dimensions, filling, ...).@*/
-    std::stringstream ss;
-    size_type ncc = gsp.nrows()*gsp.ncols();
-    ss << gsp.nrows() << "x" << gsp.ncols() << " "
+    sub_command
+      ("dirichlet nullspace", 1, 1, 2, 2,
+       if (pgsp->is_complex())
+	 gf_spmat_get_Dirichlet_nullspace(*pgsp, in, out, complex_type());
+       else
+	 gf_spmat_get_Dirichlet_nullspace(*pgsp, in, out, scalar_type());
+       );
+
+
+    /*@GET ('save', @str format, @str filename)
+      Export the sparse matrix.
+
+      the format of the file may be 'hb' for Harwell-Boeing, or 'mm'
+      for Matrix-Market.@*/
+    sub_command
+      ("save", 2, 2, 0, 0,
+       std::string fmt = in.pop().to_string();
+       int ifmt;
+       if (cmd_strmatch(fmt, "hb") || cmd_strmatch(fmt, "harwell-boeing")) ifmt = 0;
+       else if (cmd_strmatch(fmt, "mm") || cmd_strmatch(fmt, "matrix-market")) ifmt = 1;
+       else THROW_BADARG("unknown sparse matrix file-format : " << fmt);
+       std::string fname = in.pop().to_string();
+       gsp.to_csc();
+       if (!gsp.is_complex()) {
+	 if (ifmt == 0)
+	   gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(scalar_type()));
+	 else
+           gmm::MatrixMarket_save(fname.c_str(), gsp.csc(scalar_type()));
+       } else {
+	 if (ifmt == 0)
+	   gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(complex_type()));
+	 else
+           gmm::MatrixMarket_save(fname.c_str(), gsp.csc(complex_type()));
+       }
+       );
+
+
+    /*@GET s = ('char')
+      Output a (unique) string representation of the @tspmat.
+
+      This can be used to perform comparisons between two
+      different @tspmat objects.
+      This function is to be completed.
+      @*/
+    sub_command
+      ("char", 0, 0, 0, 1,
+       GMM_ASSERT1(false, "Sorry, function to be done");
+       // std::string s = ...;
+       // out.pop().from_string(s.c_str());
+       );
+
+
+    /*@GET ('display')
+      displays a short summary for a @tspmat object.@*/
+    sub_command
+      ("display", 0, 0, 0, 0,
+       size_type ncc = gsp.nrows()*gsp.ncols();
+       infomsg() << gsp.nrows() << "x" << gsp.ncols() << " "
        << (gsp.is_complex() ? "COMPLEX" : "REAL") << " " << gsp.name()
        << ", NNZ=" << gsp.nnz() << " (filling="
        << 100.*double(gsp.nnz())/(double(ncc == 0 ? 1 : ncc)) << "%)";
-    out.pop().from_string(ss.str().c_str());
-  } else if (check_cmd(cmd, "save", in, out, 2, 2, 0, 0)) {
-    /*@GET SPMAT:GET('save',@str format, @str filename)
-    Export the sparse matrix.
+       );
 
-    the format of the file may be 'hb' for Harwell-Boeing, or 'mm'
-    for Matrix-Market.@*/
-    std::string fmt = in.pop().to_string();
-    int ifmt;
-    if (cmd_strmatch(fmt, "hb") || cmd_strmatch(fmt, "harwell-boeing")) ifmt = 0;
-    else if (cmd_strmatch(fmt, "mm") || cmd_strmatch(fmt, "matrix-market")) ifmt = 1;
-    else THROW_BADARG("unknown sparse matrix file-format : " << fmt);
-    std::string fname = in.pop().to_string();
-    gsp.to_csc();
-    if (!gsp.is_complex()) {
-      if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(scalar_type()));
-      else           gmm::MatrixMarket_save(fname.c_str(), gsp.csc(scalar_type()));
-    } else {
-      if (ifmt == 0) gmm::Harwell_Boeing_save(fname.c_str(), gsp.csc(complex_type()));
-      else           gmm::MatrixMarket_save(fname.c_str(), gsp.csc(complex_type()));
-    }
-  } else bad_cmd(cmd);
+  }
+
+  if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
+
+  dal::shared_ptr<gsparse> pgsp = m_in.pop().to_sparse();
+  gsparse &gsp = *pgsp;
+  std::string init_cmd   = m_in.pop().to_string();
+  std::string cmd        = cmd_normalize(init_cmd);
+
+  
+  SUBC_TAB::iterator it = subc_tab.find(cmd);
+  if (it != subc_tab.end()) {
+    check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
+	      it->second->arg_in_max, it->second->arg_out_min,
+	      it->second->arg_out_max);
+    it->second->run(m_in, m_out, pgsp, gsp);
+  }
+  else bad_cmd(init_cmd);
+
 }

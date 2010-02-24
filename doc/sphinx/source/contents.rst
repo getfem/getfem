@@ -3,6 +3,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 .. toctree::
+   :maxdepth: 3
+
 
    project/index.rst
    userdoc/index.rst

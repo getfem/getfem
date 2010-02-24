@@ -88,7 +88,7 @@ templates_path = ['.templates']
 
 # If true, keep warnings as “system message” paragraphs in the built
 # documents.
-#keep_warnings = False
+keep_warnings = True
 
 # A list of prefixes that are ignored for sorting the module index.
 modindex_common_prefix = ['getfem']

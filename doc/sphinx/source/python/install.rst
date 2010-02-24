@@ -46,38 +46,39 @@ Download sources
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
-The latest stable release of |gf| is `getfem++-3.1.tar.gz
-<http://download.gna.org/getfem/stable/getfem++-3.1.tar.gz>`_.
+The latest stable release of |gf| is getfem++-|version|.tar.gz
 
- * download package::
+.. <http://download.gna.org/getfem/stable/getfem++-|version|.tar.gz>
 
-     wget http://download.gna.org/getfem/stable/getfem++-3.1.tar.gz
+* download package:
 
- * unpack::
+   wget http://download.gna.org/getfem/stable/getfem++-|version|.tar.gz
 
-     tar xzf getfem++-3.1.tar.gz
+* unpack:
 
- * and go to the root directory of getfem::
+   tar xzf getfem++-|version|.tar.gz
+
+* and go to the root directory of getfem:
      
-     cd getfem++-3.1
+   cd getfem++-|version|
 
 The latest unstable releases is:
 
- * checkout over SVN protocol (TCP 3690)::
+* checkout over SVN protocol (TCP 3690)::
 
-     svn co svn://svn.gna.org/svn/getfem/trunk getfem
+   svn co svn://svn.gna.org/svn/getfem/trunk getfem
 
- * or checkout over HTTP protocol (TCP 80)::
+* or checkout over HTTP protocol (TCP 80)::
 
-     svn co http://svn.gna.org/svn/getfem/trunk getfem
+   svn co http://svn.gna.org/svn/getfem/trunk getfem
 
- * go to the root directory of getfem::
+* go to the root directory of getfem::
 
-     cd getfem/getfem++
+   cd getfem/getfem++
  
- * and run ``autogen.sh`` script::
+* and run ``autogen.sh`` script::
 
-     bash autogen.sh
+   bash autogen.sh
 
 Compilling
 ^^^^^^^^^^
