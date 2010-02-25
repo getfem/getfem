@@ -252,7 +252,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
       d += r[(j+1):]
       i = d.find(m)
 
-  if (langage == 'matlab'):
+  if (langage == 'matlab' or langage == 'scilab'):
     for o in objects:
       [r, I] = StandardObjectName(o)
       # transforme OBJET:INIT en gf_objet
@@ -296,51 +296,6 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = string.replace(d, '@tsl',    'slice')
     d = string.replace(d, '@tsp',    'spmat')
     d = string.replace(d, '@tpre',   'precond')
-
-##  elif (langage == 'python' and option == 'notype'):
-##    for o in objects:
-##      [oname, I] = StandardObjectName(o)
-##      # transforme OBJET:INIT en gf_objet
-##      d = string.replace(d, o.upper()+':INIT',oname)
-##      # transforme OBJET:GET(...) en gf_objet_get(O, ...)
-##      d = string.replace(d, o.upper()+':GET(', oname+'.get(')
-##      d = string.replace(d, o.upper()+':SET(', oname+'.set(')
-##      d = string.replace(d, '@t'+o, '')
-
-##    for c in commands:
-##      d = string.replace(d, '::'+c.upper(),'gf_'+c)
-
-##    d = CellToTuples(d);
-##    d = string.replace(d, '@imat',   '')
-##    d = string.replace(d, '@ivec',   '')
-##    d = string.replace(d, '@cvec',   '')
-##    d = string.replace(d, '@dcvec',  '')
-##    d = string.replace(d, '@dvec',   '')
-##    d = string.replace(d, '@vec',    '')
-##    d = string.replace(d, '@dmat',   '')
-##    d = string.replace(d, '@mat',    '')
-##    d = string.replace(d, '@str',    '')
-##    d = string.replace(d, '@int',    '')
-##    d = string.replace(d, '@bool',   '')
-##    d = string.replace(d, '@real',   '')
-##    d = string.replace(d, '@scalar', '')
-##    d = string.replace(d, '@list',   '')
-
-##    # Objects with no mfiles
-##    d = string.replace(d, '@tpoly',  '')
-
-##    # Authorized abbreviations
-##    d = string.replace(d, '@tmf',    '')
-##    d = string.replace(d, '@tbrick', '')
-##    d = string.replace(d, '@tstate', '')
-##    d = string.replace(d, '@tgt',    '')
-##    d = string.replace(d, '@mim',    '')
-##    d = string.replace(d, '@tgf',    '')
-##    d = string.replace(d, '@tmls',   '')
-##    d = string.replace(d, '@tls',    '')
-##    d = string.replace(d, '@tsl',    '')
-##    d = string.replace(d, '@tsp',    '')
-##    d = string.replace(d, '@tpre',   '')
 
   elif (langage == 'python'):
     d = string.replace(d, '\\', '\\\\')
@@ -974,6 +929,103 @@ elif (option == 'matlab-doc'):
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     
         fl.close()
+
+
+#######################################################################
+#
+#
+#
+# Option scilab
+#      Extract the scilab documentation for commands in rst format
+#
+#
+#
+#######################################################################
+
+elif (option == 'scilab'):
+
+  langage = 'scilab'
+  
+  allc = sorted(objects+commands)
+  for o in allc:
+    for ext in ['', '_get', '_set']:
+      src_dir = directory + '/gf_' + o + ext + '.cc'
+      [r, initiale] = StandardObjectName(o)
+      if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
+
+        mfile = open('gf_'+o+ext+'.rst', 'w')
+        
+        mfile.write('gf_' + o + ext+'\n')
+        mfile.write('-------------------------------------------\n\n')
+        mfile.write('Synopsis\n')
+        mfile.write('++++++++\n')
+        mfile.write('::\n\n')
+        [gdoc, args] = ExtractGlobalDoc(src_dir);
+        if (args != ''):
+          args = FilterDoc(args, langage, objects, commands) + ', '
+        if (ext == ''):
+          firstarg = '(' + args
+        else:
+          firstarg = '(' + o + ' ' + initiale +', '
+        fl = open(src_dir)
+        doc = '';
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        while (ok):
+          params = FilterDoc(params, langage, objects, commands)
+          if (ret != ''):
+            ret = FilterDoc(ret, langage, objects, commands)
+            ret += ' = '
+          if (mname[0] != '.'):
+            mname = '\'' + mname + '\''
+          else:
+            mname = ''
+            params = params[1:].strip()
+          mfile.write('  ' + ret + 'gf_'+o+ext+firstarg+mname + params+')\n')
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+
+        fl.close()
+        mfile.write('\nDescription :\n')
+        mfile.write('+++++++++++++\n\n')
+        if ((o in set_objects) and (ext == '')):
+          mfile.write('General constructor for ' + o + ' objects.\n\n')
+        gdoc = FilterDoc(gdoc, langage, objects, commands)
+        mfile.write(gdoc)
+        mfile.write('\n\nCommand list :\n')
+        mfile.write('++++++++++++++\n\n')
+        fl = open(src_dir)
+        doc = '';
+        [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+        while (ok):
+          params = FilterDoc(params, langage, objects, commands)
+          if (ret != ''):
+            ret = FilterDoc(ret, langage, objects, commands)
+            ret += ' = '
+          if (mname[0] != '.'):
+            mname = '\'' + mname + '\''
+          else:
+            mname = ''
+            params = params[1:].strip()
+          mfile.write('\n  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``\n\n')
+          doc = FilterDoc(doc, langage, objects, commands)
+          nbspace = -1
+          for l in doc.split('\n'):
+            if (nbspace == -1 and len(l.strip()) > 0):
+              for i in range(len(l)):
+                nbspace = i
+                if (not l[i].isspace()): break
+            
+            if (nbspace > 0):
+              l = l[:nbspace-1].strip() + l[nbspace:]
+            if (nbspace >= 0):
+              mfile.write('    ' + l + '\n')
+          mfile.write('\n')
+          [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
+    
+        fl.close()
+        mfile.close()
+
+
+
 
 
 #######################################################################

@@ -19,7 +19,6 @@ ALLSPHINXOPTS   = -b $(BUILDER) -d build/doctrees $(PAPEROPT_$(PAPER)) \
 
 .PHONY: help checkout update build html htmlhelp clean latex linkcheck dist
 
-all: html
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -69,7 +68,7 @@ images:
 
 build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst checkout images
 	mkdir -p build/$(BUILDER) build/doctrees
-	export PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
+	PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
 
 view:
@@ -124,11 +123,11 @@ dist:
 
 	mv $(DIST)/* $(DESTINATION) # move to destination
 
-$(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/interface/bin/extract_doc
-	$(top_srcdir)/interface/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
+$(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
+	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
 
-$(srcdir)/source/python/api.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/interface/bin/extract_doc
-	$(top_srcdir)/interface/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/api.rst || (rm -f $(srcdir)/source/python/api.rst; /bin/false )
+$(srcdir)/source/python/api.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
+	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/api.rst || (rm -f $(srcdir)/source/python/api.rst; /bin/false )
 
 
 

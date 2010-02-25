@@ -870,7 +870,6 @@ AC_CONFIG_FILES(\
 	contrib/static_contact_gears/Makefile \
 	bin/Makefile \
 	interface/Makefile \
-	interface/bin/Makefile \
 	interface/src/Makefile \
 	interface/src/matlab/Makefile \
 	interface/src/matlab/private/Makefile \
