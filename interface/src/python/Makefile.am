@@ -14,8 +14,8 @@ PSEUDO_MFUNCTIONS=$(shell ls @srcdir@/../gf_*.cc)
 
 # $(warning PSEUDO_MFUNCTIONS= $(PSEUDO_MFUNCTIONS))
 
-getfem.py: $(PSEUDO_MFUNCTIONS) @srcdir@/../../bin/extract_doc
-	$(top_srcdir)/interface/bin/extract_doc $(srcdir)/.. python-com > getfem.py || ( rm getfem.py ; /bin/false )
+getfem.py: $(PSEUDO_MFUNCTIONS) $(top_srcdir)/bin/extract_doc
+	$(top_srcdir)/bin/extract_doc $(srcdir)/.. python-com > getfem.py || ( rm getfem.py ; /bin/false )
 
 clean: clean-am
 	rm -f getfem.py _getfem.so
