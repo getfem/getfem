@@ -226,10 +226,15 @@ namespace getfem {
 
   dim_type mesh_fem::basic_dof_qdim(size_type d) const {
     context_check(); if (!dof_enumeration_made) enumerate_dof();
-    size_type cv = first_convex_of_basic_dof(d);
-    GMM_ASSERT1(cv != size_type(-1), "Inexistent dof");
-    size_type tdim = f_elems[cv]->target_dim();
-    return dim_type(dof_structure.ind_in_convex_of_point(cv, d) % (Qdim/tdim));
+    for (size_type i = d; i != d - Qdim && i != size_type(-1); --i) {
+      size_type cv = dof_structure.first_convex_of_point(i);   
+      if (cv != size_type(-1)) { 
+	size_type tdim = f_elems[cv]->target_dim();
+	return dim_type((d-i) / tdim);
+      }
+    }
+    GMM_ASSERT1(false, "Inexistent dof");
+    return 0;
   }
 
   size_type mesh_fem::first_convex_of_basic_dof(size_type d) const {
