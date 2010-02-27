@@ -1,6 +1,4 @@
 
-IM_METHODS=$(shell ls $(top_srcdir)/cubature/*.IM)
-
 all : getfem_im_list.h
 check : getfem_im_list.h
 

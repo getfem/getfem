@@ -10,11 +10,9 @@ nodist_gfpyexec_PYTHON = _getfem.so
 
 EXTRA_DIST = getfem_python.c
 
-PSEUDO_MFUNCTIONS=$(shell ls @srcdir@/../gf_*.cc)
+# $(warning PSEUDO_FUNCTIONS= $(PSEUDO_FUNCTIONS))
 
-# $(warning PSEUDO_MFUNCTIONS= $(PSEUDO_MFUNCTIONS))
-
-getfem.py: $(PSEUDO_MFUNCTIONS) $(top_srcdir)/bin/extract_doc
+getfem.py: @PSEUDO_FUNCTIONS@ $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(srcdir)/.. python-com > getfem.py || ( rm getfem.py ; /bin/false )
 
 clean: clean-am

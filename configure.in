@@ -628,6 +628,13 @@ dnl -----------------------------------------------
 dnl MATLAB Interface
 dnl -----------------------------------------------
 
+# list of pseud functions
+PSEUDO_FUNCTIONS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_loc`
+PSEUDO_FUNCTIONS=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_gen`
+MATLAB_OBJ_DIRS=`$srcdir/bin/extract_doc $srcdir/interface/src mobj_dirs`
+AC_SUBST(PSEUDO_FUNCTIONS)
+AC_SUBST(PSEUDO_FUNCTIONS_LOC)
+AC_SUBST(MATLAB_OBJ_DIRS)
 
 AC_ARG_ENABLE(matlab,
  [AS_HELP_STRING([--enable-matlab],[turn on/off matlab support])],
@@ -842,6 +849,11 @@ fi
 dnl -----------------------------------------------
 dnl sorties
 dnl -----------------------------------------------
+
+IM_METHODS=`$srcdir/bin/extract_doc $srcdir/interface/src cubature`
+AC_SUBST(IM_METHODS)
+
+
 AC_CONFIG_FILES(\
 	Makefile \
 	m4/Makefile \

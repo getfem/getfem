@@ -2,15 +2,14 @@ SUBDIRS = private
 
 RPC_INC_DIR=@RPC_INC_DIR@
 
-PSEUDO_MFUNCTIONS=$(shell ls $(srcdir)/../gf_*.cc)
-PSEUDO_MFUNCTIONS_LOC=$(shell cd $(srcdir)/.. && ls gf_*.cc)
-AUTO_M_FILES = $(PSEUDO_MFUNCTIONS_LOC:.cc=.m)
 
-# $(warning PSEUDO_MFUNCTIONS= $(PSEUDO_MFUNCTIONS))
+AUTO_M_FILES = $(PSEUDO_FUNCTIONS_LOC:.cc=.m)
 
+# $(warning PSEUDO_FUNCTIONS= $(PSEUDO_FUNCTIONS))
 
 
-gf_mesh.m : $(PSEUDO_MFUNCTIONS) $(top_srcdir)/bin/extract_doc
+
+gf_mesh.m : @PSEUDO_FUNCTIONS@ $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc @srcdir@/.. matlab-com || (rm -f gf_mesh.m; /bin/false )
 
 
@@ -77,9 +76,6 @@ M_FILES = \
 
 .NOTPARALLEL: $(M_FILES)
 
-#%.m: ../%.cc
-#	@@srcdir@/../../bin/extract_mdoc $<
-
 clean-m-files:
 	@echo "cleaning auto generated m-files and directories"
 	rm -f $(AUTO_M_FILES)
@@ -94,7 +90,7 @@ install:
 	$(mkinstalldirs) $(toolboxdir)/
 	@INSTALL@ -D -m 644 -t $(toolboxdir)/ *.m
 	@INSTALL@ -D -m 644 -t $(toolboxdir)/ $(srcdir)/*.m
-	@list='$(shell ls -d @gf*)'; for p in $$list; do \
+	@list='$(MATLAB_OBJ_DIRS)'; for p in $$list; do \
 	  $(mkinstalldirs) $(toolboxdir)/$$p; \
 	  @INSTALL@ -D -m 644 -t $(toolboxdir)/$$p $$p/*.m; \
 	done

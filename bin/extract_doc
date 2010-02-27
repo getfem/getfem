@@ -479,6 +479,38 @@ set_commands = commands
 objects = sorted(objects, cmpobj)
 commands = sorted(commands, cmpobj)
 
+if (option == 'pseudo_loc'):
+
+    fl = os.popen('cd ' + directory + ' && ls gf_*.cc')
+
+    for l in fl:
+        l = l.strip()
+        sys.stdout.write(l+' ')
+        
+elif (option == 'pseudo_gen'):
+
+    directory_abs=os.path.abspath(directory)
+    fl = os.popen('ls ' + directory_abs+'/gf_*.cc')
+
+    for l in fl:
+        l = l.strip()
+        sys.stdout.write(l+' ')
+
+elif (option == 'mobj_dirs'):
+
+    for o in objects:
+        [oname, initiale] = StandardObjectName(o)
+        sys.stdout.write('@gf'+oname+' ')
+
+elif (option == 'cubature'):
+    directory_abs=os.path.abspath(directory+'/../../cubature')
+    fl = os.popen('ls ' + directory_abs+'/*.IM')
+
+    for l in fl:
+        l = l.strip()
+        sys.stdout.write(l+' ')
+
+
 #######################################################################
 #
 #
@@ -491,7 +523,7 @@ commands = sorted(commands, cmpobj)
 #
 #######################################################################
 
-if (option == 'matlab-com'):
+elif (option == 'matlab-com'):
 
   langage = 'matlab'
 
@@ -586,7 +618,6 @@ if (option == 'matlab-com'):
           sub_com.add(mname)
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
         fl.close()
-  print set_replace
 
   # Build directory and files for Matlab OO-commands
   for o in objects:
