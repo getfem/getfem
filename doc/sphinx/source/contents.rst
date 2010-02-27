@@ -8,6 +8,7 @@
 
    project/index.rst
    userdoc/index.rst
+   gmm/index.rst
 
    matlab/index.rst
    python/index.rst
