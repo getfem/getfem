@@ -6,7 +6,7 @@ Copyright
 
 |gf| and this documentation is:
 
-Copyright © 2000-2009 |authors|.
+Copyright © 2000-2010 |authors|.
 
 
 -------

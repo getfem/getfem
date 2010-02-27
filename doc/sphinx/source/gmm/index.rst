@@ -2,6 +2,10 @@
 
 .. include:: ../replaces.txt
 
+.. figure:: images/gmmlogo.png
+   :align: center
+   :width: 300pt
+
 .. _gmm:
 
 Gmm++ Library

@@ -4,6 +4,10 @@
 
 .. highlightlang:: c++
 
+.. figure:: images/gmmlogo.png
+   :align: center
+   :width: 300pt
+
 .. _gmm-denseqr:
 
 Dense QR factorisation, eigenvalues and eigenvectors

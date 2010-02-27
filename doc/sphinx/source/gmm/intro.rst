@@ -4,6 +4,11 @@
 
 .. highlightlang:: c++
 
+
+.. figure:: images/gmmlogo.png
+   :align: center
+   :width: 300pt
+
 .. _gmm-intro:
 
 Introduction

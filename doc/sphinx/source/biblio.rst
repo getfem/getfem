@@ -36,10 +36,10 @@ References
 
 .. [HI-RE2010] Hild P., Renard Y. Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics. To appear in Numer. Math.
 
-.. [nedelec1991] J.-C. Nedelec, *Notions sur les techniques d'éléments finis*, 
+.. [nedelec1991] J.-C. Nedelec. *Notions sur les techniques d'éléments finis*, 
    Ellipses, SMAI, Mathématiques & Applications n°7, (1991).
 
-.. [SCHADD] L. F. { Pavarino}. *Domain decomposition algorithms for the p-version finite element method for elliptic problems*, Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
+.. [SCHADD] L.F. Pavarino. *Domain decomposition algorithms for the p-version finite element method for elliptic problems*, Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
 
 
 .. [remacle2002] J-F. Remacle, M. Shephard, *An algorithm oriented database*, 

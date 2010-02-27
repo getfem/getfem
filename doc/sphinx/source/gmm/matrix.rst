@@ -4,6 +4,10 @@
 
 .. highlightlang:: c++
 
+.. figure:: images/gmmlogo.png
+   :align: center
+   :width: 300pt
+
 .. _gmm-matrix:
 
 Matrix and Vector type provided by |gmm|
