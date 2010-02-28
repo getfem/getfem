@@ -8,7 +8,7 @@
 History and License
 *******************
 
-Copyright |copy| 2000-2009 |authors|.
+Copyright |copy| 2000-2010 |authors|.
 The program |gf| is free software; you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation; version 2.1 of the License.

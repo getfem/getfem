@@ -62,9 +62,12 @@ Functions
 * ``gf_mdstate`` : create a ("model state") |mlab_ms| object.
 * ``gf_mdstate_get`` : retrieve information from a |mlab_ms| object.
 * ``gf_mdstate_set`` : modify a |mlab_ms| object.
-* ``gf_model`` : create a ("model") |mlab_mo| object.
+* ``gf_model`` : create a |mlab_mo| object.
 * ``gf_model_get`` : retrieve information from a |mlab_mo| object.
 * ``gf_model_set`` : modify a |mlab_mo| object.
+* ``gf_global_function`` : create a gfGlobalFunction object.
+* ``gf_model_get`` : retrieve information from a gfGlobalFunction object.
+* ``gf_model_set`` : modify a GlobalFunction object.
 * ``gf_plot_mesh`` : plotting of mesh.
 * ``gf_plot`` : plotting of 2D and 3D fields.
 * ``gf_plot_1D`` : plotting of 1D fields.

@@ -11,3 +11,5 @@ SciLab Interface
    :maxdepth: 2
 
    intro
+   scilabgf
+   cmdref

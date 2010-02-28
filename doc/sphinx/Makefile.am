@@ -64,9 +64,11 @@ update: checkout
 images:
 	-cd $(srcdir)/source/userdoc/images/; make png
 	-cd $(srcdir)/source/project/images/; make png
+	-cd $(srcdir)/source/matlab/images/; make png
+	-cd $(srcdir)/source/scilab/images/; make png
 
 
-build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst checkout images
+build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst $(srcdir)/source/scilab/cmdref.rst checkout images
 	mkdir -p build/$(BUILDER) build/doctrees
 	PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
@@ -125,6 +127,9 @@ dist:
 
 $(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
+
+$(srcdir)/source/scilab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
+	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc > $(srcdir)/source/scilab/cmdref.rst || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
 
 $(srcdir)/source/python/api.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/api.rst || (rm -f $(srcdir)/source/python/api.rst; /bin/false )
