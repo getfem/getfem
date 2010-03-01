@@ -134,75 +134,66 @@ The array ``border`` has two rows, on the first row is a convex number, on the
 second row is a face number (which is local to the convex, there is no global
 numbering of faces). Then this set of faces is assigned to the region number 42.
 
-At this point, we just have to stack some model bricks and run the solver to get
-the solution! The ":envvar:`model bricks`" are created with the ``gf_mdbrick``
-(or ``gfMdBrick``) constructor. A model brick is basically an object which
-modifies a global linear system (tangent matrix for non-linear problems) and its
+At this point, we just have to desribe the model and run the solver to get
+the solution! The ":envvar:`model`" is created with the ``gf_model``
+(or ``gfModel``) constructor. A model is basically an object which
+build a global linear system (tangent matrix for non-linear problems) and its
 associated right hand side.  Typical modifications are insertion of the stiffness
 matrix for the problem considered (linear elasticity, laplacian, etc), handling
 of a set of contraints, Dirichlet condition, addition of a source term to the
-right hand side etc. The global tangent matrix and its right hand side are stored
-in a ":envvar:`model state`" structure, created with the ``gf_mdstate``
-constructor.
+right hand side etc. The global tangent matrix and its right hand side are stored in the ":envvar:`model`" structure.
 
-Let us build a problem with an easy solution: :math:`u=x(x-1)y(y-1)+x^5`, then we
-have :math:`\Delta u=2(x^2+y^2)-2(x+y)+20x^3` (the FEM won't be able to catch the
-exact solution since we use a :math:`Q^2` method).
+Let us build a problem with an easy solution: :math:`u=x(x-1)y(y-1)+x^5`, then we have :math:`\Delta u=2(x^2+y^2)-2(x+y)+20x^3` (the FEM won't be able to catch the exact solution since we use a :math:`Q^2` method).
 
-We start with a "generic elliptic" brick, which handles :math:`-div(A\nabla u) =
-\ldots` problems, where :math:`A` can be a scalar field, a matrix field, or an
-order 4 tensor field. By default, :math:`A=1`::
+We start with an empty real model::
 
-  >> b0=gf_mdbrick('generic elliptic',mim,mf);
+  >> md=gf_model('real');
 
-Each brick embeds a number of parameter fields. In the case of the generic
-elliptic brick, there is only one parameter field, the :math:`A(x)` coefficient
-in :math:`-div(A\nabla u)= \ldots`. It is possible to view the list of parameters
-of the brick with::
+(a model is either ``'real'`` or ``'complex'``). And we declare that ``u`` is an unknown of the system on the finite element method `mf` by::
 
-  >> gf_mdbrick_get(b0, 'param list');
-  ans =
-      'A'
+  >> gf_model_set(md, 'add fem variable', 'u', mf);
 
-  >> gf_mdbrick_get(b0, 'param', 'A');
-  ans =
-       1
+Now, we add a "generic elliptic" brick, which handles :math:`-div(A\nabla u) = \ldots` problems, where :math:`A` can be a scalar field, a matrix field, or an order 4 tensor field. By default, :math:`A=1`. We add it on our main variable ``u`` with::
+
+  >> gf_model_set(md, 'add Laplacian brick', mim, 'u');
+
 
 Next we add a Dirichlet condition on the domain boundary::
 
-  >> b1=gf_mdbrick('dirichlet',b0,42,mf,'penalized');
+  >> Uexact = gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
+  >> gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
+  >> gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
-Here the number ``42`` is the region number to which the dirichlet condition is
-applied. The ``'penalized'`` says that the Dirichlet condition should be imposed
-via a penalization technique. Other ways are possible (augmented system, direct
-elimination). A |mf| argument is also required, as the Dirichlet condition
-:math:`u=r` is imposed in a weak form :math:`\int_\Gamma u(x)v(x) = \int_\Gamma
-r(x)v(x) \forall v` where :math:`v` is taken in the space of multipliers given by
+
+The two first lines defines a data of the model which represents the value of the Dirichlet condition. The third one add a Dirichlet condition to the variable ``u`` on the boundary number ``42``. The dirichlet condition is imposed with lagrange multipliers. Another possibility is to use a penalization. A |mf| argument is also required, as the Dirichlet condition
+:math:`u=r` is imposed in a weak form :math:`\int_\Gamma u(x)v(x) = \int_\Gamma r(x)v(x) ~ \forall v` where :math:`v` is taken in the space of multipliers given by
 here by ``mf``.
 
-By default, the Dirichlet brick imposes :math:`u=0` on the specified boundary. We
-change this to :math:`u=(x-.5)^2+(y-.5)^2+x/5-y/3`::
-
-  >> R=gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
-  >> gf_mdbrick_set(b1, 'param', 'R', mf, R);
 
  Remark:
 
-   the polynomial expression was interpolated on ``mf``. It is possible only if
-   ``mf`` is of Lagrange type. In this first example we use the same |mf|
-   for the unknown and for the data such as ``R``, but in the general case,
-   ``mf`` won't be Lagrangian and another (Lagrangian) |mf| will be used for
-   the description of Dirichlet conditions, source terms etc.
+   the polynomial expression was interpolated on ``mf``. It is possible
+   only if ``mf`` is of Lagrange type. In this first example we use
+   the same |mf| for the unknown and for the data such as ``R``, but
+   in the general case, ``mf`` won't be Lagrangian and another
+   (Lagrangian) |mf| will be used for the description of Dirichlet
+   conditions, source terms etc.
 
-A "model state" variable is created, and the solver is launched::
+A source term can be added with the following lines::
 
-  >> mds=gf_mdstate('real');
-  >> gf_mdbrick_get(b1, 'solve', mds);
+  >> F = gf_mesh_fem_get(mf, 'eval', { '2(x^2+y^2)-2(x+y)+20x^3' });
+  >> gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
+  >> gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
-The model state now contains the solution (as well as other things, such as the
+It only remains now to launch the solver. The linear system is assembled and solve with the instruction::
+
+  >> gf_model_get(md, 'solve');
+
+The model now contains the solution (as well as other things, such as the
 linear system which was solved). It is extracted, a display into a |mlab| figure::
 
-  >> U=gf_mdstate_get(mds, 'state');
+
+  >> U = gf_model_get(md, 'variable', 'u');
   >> gf_plot(mf, U, 'mesh','on');
 
 

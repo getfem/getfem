@@ -1,19 +1,17 @@
-.. $Id$
+.. $Id: mlabgf.rst 3327 2009-11-04 16:42:35Z lsaavedr $
 
 .. include:: ../replaces.txt
 
 .. highlightlang:: matlab
 
-.. _mlab-mlabgf:
+.. _scilab-gf:
 
 |gfm| organization
 =====================
 
 The |gfm| toolbox is just a convenient interface to the |gf| library: you must
-have a working |gf| installed on your computer. This toolbox provides a big
-:envvar:`mex-file` (c++ binary callable from |mlab|) and some additional
-``m-files`` (documentation and extra-functionalities). All the functions of |gfm|
-are prefixed by ``gf_`` (hence typing ``gf_`` at the |mlab| prompt and then
+have a working |gf| installed on your computer. All the functions of |gfm|
+are prefixed by ``gf_`` (hence typing ``gf_`` at the |sci| prompt and then
 pressing the ``<tab>`` key is a quick way to obtain the list of getfem
 functions).
 
@@ -88,6 +86,7 @@ important objects.
 
    |gfm| objects hierarchy.
 
+
 * :envvar:`gfGeoTrans`: geometric transformations (defines the shape/position of
   the convexes), created with ``gf_geotrans``
 * :envvar:`gfGlobalFunction`: represent a global function for the enrichment of finite element methods.
@@ -121,13 +120,13 @@ are not cleared when a::
 
   >> clear all
 
-is issued at the |mlab| prompt, but instead the function::
+is issued at the |sci| prompt, but instead the function::
 
   >> gf_workspace('clear all')
 
 should be used. The various |gfm| object can be accessed via *handles* (or
-*descriptors*), which are just |mlab| structures containing 32-bits integer
-identifiers to the real objects. Hence the |mlab| command::
+*descriptors*), which are just |sci| structures containing 32-bits integer
+identifiers to the real objects. Hence the |sci| command::
 
   >> whos
 
