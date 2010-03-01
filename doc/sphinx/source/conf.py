@@ -198,6 +198,7 @@ html_static_path = ['.static']
 # template names.
 html_additional_pages = {
     'download': 'download.html',
+    'gmm': 'gmm.html',
     'index': 'indexcontent.html',
 }
 
