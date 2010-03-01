@@ -966,14 +966,14 @@ elif (option == 'matlab-doc'):
 #
 #
 #
-# Option scilab-com
+# Option scilab-doc
 #      Extract the scilab documentation for each command in rst format
 #
 #
 #
 #######################################################################
 
-elif (option == 'scilab'):
+elif (option == 'scilab-doc'):
 
   langage = 'scilab'
   
