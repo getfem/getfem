@@ -42,14 +42,14 @@ The installation of the Getfem++ Matlab toolbox requires :
 obligation to use the same compiler as the one with which matlab was compiled.
 
 Hence you just have to compile getfem++ with 
-./configure CXX=mycompiler --unable-matlab --disable-shared
+./configure CXX=mycompiler --enable-matlab --disable-shared
 
 Remark: the OpenGL renderer of matlab displays some artifacts with getfem 3D graphics.
 You should change it for the zbuffer one with set(gcf, 'renderer', 'zbuffer').
 
 Quick Install:
 
-( tar xzvf getfem++-3.x.tar.gz && cd getfem++-3.x && ./configure --disable-shared --unable-matlab && make check )
+( tar xzvf getfem++-4.x.x.tar.gz && cd getfem++-4.x.x && ./configure --disable-shared --enable-matlab && make check )
 
 ----------------------------------------------------------------------
 Detailed Installation process (if quick install does not work..) 

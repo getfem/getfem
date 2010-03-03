@@ -896,8 +896,8 @@ elif (option == 'matlab-doc'):
         print 'gf_' + o + ext
         print '-------------------------------------------'
         print ''
-        print 'Synopsis'
-        print '++++++++'
+        print '**Synopsis**'
+        print ''
         print '::'
         print ''
         [gdoc, args] = ExtractGlobalDoc(src_dir);
@@ -925,16 +925,16 @@ elif (option == 'matlab-doc'):
 
         fl.close()
         print ''
-        print 'Description :'
-        print '+++++++++++++'
+        print '**Description :**'
+        print ''
         print ''
         if ((o in set_objects) and (ext == '')):
           print 'General constructor for ' + o + ' objects.\n'
         gdoc = FilterDoc(gdoc, langage, objects, commands)
         print gdoc
         print ''
-        print 'Command list :'
-        print '++++++++++++++'
+        print '**Command list :**'
+        print ''
         print ''
         fl = open(src_dir)
         doc = '';
@@ -1068,8 +1068,8 @@ elif (option == 'scilab-com'):
 #
 #
 #
-# Option matlab-doc
-#      Extract the matlab documentation for commands in rst format
+# Option scilab-doc
+#      Extract the scilab documentation for commands in rst format
 #
 #
 #
@@ -1077,7 +1077,7 @@ elif (option == 'scilab-com'):
 
 elif (option == 'scilab-doc'):
 
-  langage = 'matlab'
+  langage = 'scilab'
   
   print '.. Automatically generated file, do not edit it.'
   print '.. If some modification are necessary, please modify'
@@ -1142,8 +1142,8 @@ elif (option == 'scilab-doc'):
         print 'gf_' + o + ext
         print '-------------------------------------------'
         print ''
-        print 'Synopsis'
-        print '++++++++'
+        print '**Synopsis**'
+        print ''
         print '::'
         print ''
         [gdoc, args] = ExtractGlobalDoc(src_dir);
@@ -1171,16 +1171,16 @@ elif (option == 'scilab-doc'):
 
         fl.close()
         print ''
-        print 'Description :'
-        print '+++++++++++++'
+        print '**Description :**'
+        print ''
         print ''
         if ((o in set_objects) and (ext == '')):
           print 'General constructor for ' + o + ' objects.\n'
         gdoc = FilterDoc(gdoc, langage, objects, commands)
         print gdoc
         print ''
-        print 'Command list :'
-        print '++++++++++++++'
+        print '**Command list :**'
+        print ''
         print ''
         fl = open(src_dir)
         doc = '';
