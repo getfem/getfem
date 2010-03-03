@@ -1,22 +1,18 @@
             <h3>Download</h3>
             <p><a href="{{ pathto('download') }}">Download {{ project }} </a></p>
-	    <h3>Docs for other versions</h3>
+	    <h3>Main documentations</h3>
 	    <ul>
-              {# XXX: many of these should probably be merged in the main docs #}
-	      <li><a href="http://download.gna.org/getfem/doc/getfemuser-1.7.pdf">Basic User documentation for getfem++-1.7</a></li>
-	      <li><a href="http://download.gna.org/getfem/doc/getfem_matlab-1.7.pdf">Matlab Interface, v1.7</a></li>
-	      <li><a href="http://download.gna.org/getfem/doc/gmmuser-1.7.pdf">GMM user guide, v1.7</a></li>
+              
+	      <li><a href="{{ pathto('userdoc/index') }}">Getfem++ Basic User documentation</a></li>
+              <li><a href="{{ pathto('python/index') }}">Python Interface</a></li>
+	      <li><a href="{{ pathto('matlab/index') }}">Matlab Interface</a></li>
+	      <li><a href="{{ pathto('scilab/index') }}">Scilab Interface</a></li>
+	      <li><a href="{{ pathto('gmm/index') }}"> Gmm++</a></li>
+	      <li><a href="{{ pathto('project/index') }}"> Getfem++ project</a></li>
             </ul>
 
             <h3>Other resources</h3>
             <ul>
-              {# XXX: many of these should probably be merged in the main docs #}
-              <li><a href="http://download.gna.org/getfem/doc/getfem_project.pdf">Getfem++ project documentation</a></li>
-              <li><a href="http://download.gna.org/getfem/doc/getfemuser.pdf">Basic User documentation</a></li>
-              <li><a href="http://download.gna.org/getfem/doc/gmmuser.pdf">GMM user guide</a></li>
-              <li><a href="http://download.gna.org/getfem/doc/getfem_matlab.pdf">Matlab Interface</a></li>
-              <li><a href="http://home.gna.org/getfem/getfempython.html">Python Interface notes</a></li>
-              <li><a href="http://download.gna.org/getfem/doc/getfem_python_reference.html">Python Interface reference</a></li>
               <li><a href="http://home.gna.org/getfem/getfem_faq.html">FAQs</a></li>
               <li><a href="https://gna.org">Hosted by GNA! </a></li>
               {# <img src="{{ pathto('_static/hostedbygna.png', 1) }}" alt="" style="vertical-align: middle; margin-top: -1px"/> #}

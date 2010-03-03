@@ -1,7 +1,7 @@
 .. include:: ../replaces.txt
 
 ****************************
-  What's New in |gf| 4.0.0
+  What's New in |gf| 4.0
 ****************************
 
 This is a major update to |gf|. The main changes is the introduction
