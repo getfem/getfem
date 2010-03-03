@@ -851,6 +851,7 @@ dnl sorties
 dnl -----------------------------------------------
 
 IM_METHODS=`$srcdir/bin/extract_doc $srcdir/interface/src cubature`
+IM_METHODS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src cubature_loc`
 AC_SUBST(IM_METHODS)
 
 

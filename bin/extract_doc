@@ -510,6 +510,14 @@ elif (option == 'cubature'):
         l = l.strip()
         sys.stdout.write(l+' ')
 
+elif (option == 'cubature_loc'):
+    directory_abs=os.path.abspath(directory+'/../../cubature')
+    fl = os.popen('cd ' + directory_abs + ' && ls *.IM')
+
+    for l in fl:
+        l = l.strip()
+        sys.stdout.write(l+' ')
+
 
 #######################################################################
 #

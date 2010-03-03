@@ -26,8 +26,8 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh
-m=gfMesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-% m=gfMesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+% m=gfMesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+m=gfMesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gfMesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 
 d = gf_mesh_get(m, 'dim');
