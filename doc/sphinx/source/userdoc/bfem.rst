@@ -132,20 +132,20 @@ The |mf| can call directly these functions via::
 
 Some other methods:
 
-.. cfunction:: mf.convex_index()
+.. function:: mf.convex_index()
 
    Set of indexes (a |dal_bv|) on which a finite element method is defined.
 
-.. cfunction:: mf.linked_mesh()
+.. function:: mf.linked_mesh()
 
    gives a reference to the linked mesh.
 
-.. cfunction:: mf.fem_of_element(i)
+.. function:: mf.fem_of_element(i)
 
    gives a descriptor on the finite element method defined on element of index
    ``i`` (does not take into account the qdim nor the optional reduction).
 
-.. cfunction:: mf.clear()
+.. function:: mf.clear()
 
    Clears the structure, no finite element method is still defined.
 
@@ -195,50 +195,50 @@ the one of the |mf| object have to match. To sum it up,
 At this level are defined the basic degrees of freedom. Some methods of the
 |gf_mf| allows to obtain information on the basic dofs:
 
-.. cfunction:: mf.nb_basic_dof_of_element(i)
+.. function:: mf.nb_basic_dof_of_element(i)
 
    gives the number of basic degrees of freedom on the element of index ``i``.
 
-.. cfunction:: mf.ind_basic_dof_of_element(i)
+.. function:: mf.ind_basic_dof_of_element(i)
 
    gives a container (an array) with all the global indexes of the basic degrees
    of freedom of element of index ``i``.
 
-.. cfunction:: mf.point_of_basic_dof(i, j)
+.. function:: mf.point_of_basic_dof(i, j)
 
    gives a ``bgeot::base_node`` which represents the point associated with the
    basic dof of local index ``j`` on element of index ``i``.
 
-.. cfunction:: mf.point_of_basic_dof(j)
+.. function:: mf.point_of_basic_dof(j)
 
    gives a ``bgeot::base_node`` which represents the point associated with the
    basic dof of global index ``j``.
 
-.. cfunction:: mf.reference_point_of_basic_dof(i, j)
+.. function:: mf.reference_point_of_basic_dof(i, j)
 
    gives a ``bgeot::base_node`` which represents the point associated with the
    basic dof of local index ``j`` on element of index ``i`` in the coordinates of
    the reference element.
 
-.. cfunction:: mf.first_convex_of_basic_dof(j)
+.. function:: mf.first_convex_of_basic_dof(j)
 
    gives the index of the first element on which the basic degree of freedom of
    global index ``j`` is defined.
 
-.. cfunction:: mf.nb_basic_dof()
+.. function:: mf.nb_basic_dof()
 
    gives the total number of different basic degrees of freedom.
 
-.. cfunction:: mf.get_qdim()
+.. function:: mf.get_qdim()
 
    gives the target dimension ``Q``.
 
-.. cfunction:: mf.basic_dof_on_region(i)
+.. function:: mf.basic_dof_on_region(i)
 
    Return a |dal_bv| which represents the indices of basic dof which are in the
    set of convexes or the set of faces of index ``i`` (see the |gf_m| object).
 
-.. cfunction:: mf.dof_on_region(i)
+.. function:: mf.dof_on_region(i)
 
    Return a |dal_bv| which represents the indices of dof which are in the set of
    convexes or the set of faces of index ``i`` (see the |gf_m| object). For a
@@ -261,36 +261,36 @@ sparse. Otherwise, each assembled matrix will be plain !
 
 A natural condition is that :math:`RE = I` where :math:`I` is the identity matrix.
 
-.. cfunction:: mf.nb_dof()
+.. function:: mf.nb_dof()
 
    gives the total number of different degrees of freedom. If the optional
    reduction is used, this will be the number of columns of the reduction matrix.
    Otherwise it will return the number of basic degrees of freedom.
 
-.. cfunction:: mf.is_reduced()
+.. function:: mf.is_reduced()
 
    return a boolean. True if the reduction is used.
 
-.. cfunction:: mf.reduction_matrix()
+.. function:: mf.reduction_matrix()
 
    return a const reference to the reduction matrix :math:`R`.
 
-.. cfunction:: mf.extension_matrix()
+.. function:: mf.extension_matrix()
 
    return a const reference to the extension matrix :math:`E`.
 
-.. cfunction:: mf.set_reduction_matrices(R, E)
+.. function:: mf.set_reduction_matrices(R, E)
 
    Set the reduction and extension matrices to ``R`` and ``E`` and validate their
    use.
 
-.. cfunction:: mf.set_reduction(b)
+.. function:: mf.set_reduction(b)
 
    Where :math:`b` is a boolean. Cancel the reduction if :math:`b` is false and
    validate it if ``b`` is true. If ``b`` is true, the extension and reduction
    matrices have to be set previously.
 
-.. cfunction:: mf.reduce_to_basic_dof(idof)
+.. function:: mf.reduce_to_basic_dof(idof)
 
    Set the reduction and extension matrices corresponding to keep only the basic
    dofs present in ``idof``. The parameter ``idof`` is either a |dal_bv| or a

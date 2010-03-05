@@ -134,19 +134,19 @@ Methods of the |mim| object
 Once an integration method is defined on a mesh, it is possible to obtain
 information on it with the following methods (the list is not exhaustive).
 
-.. cfunction:: mim.convex_index()
+.. function:: mim.convex_index()
 
    Set of indexes (a |dal_bv|) on which an integration method is defined.
 
-.. cfunction:: mim.linked_mesh()
+.. function:: mim.linked_mesh()
 
    Gives a reference to the linked mesh.
 
-.. cfunction:: mim.int_method_of_element(i)
+.. function:: mim.int_method_of_element(i)
 
    Gives a descriptor on the integration method defined on element of index ``i``.
 
-.. cfunction:: mim.clear()
+.. function:: mim.clear()
 
    Clear the structure. There are no further integration method defined on the
    mesh.

@@ -76,10 +76,10 @@ Objects
 -------
 
 Various "objects" can be manipulated by the |gfm| toolbox, see fig. 
-:ref:`malb-fig-hierarchy`. The MESH and MESHFEM objects are the two most 
+:ref:`scilab-fig-hierarchy`. The MESH and MESHFEM objects are the two most 
 important objects.
 
-.. _malb-fig-hierarchy:
+.. _scilab-fig-hierarchy:
 .. figure:: images/hierarchy.png
    :width: 250pt
    :align: center

@@ -29,7 +29,7 @@ A small number of "pseudo-properties" are also defined on these objects, for
 example if ``m`` is a ``gfMesh`` object, you can use directly ``m.nbpts`` instead
 of ``get(m, 'nbpts')``.
 
-As an example,::
+As an example::
 
   % classical creation of a mesh object
   >> m=gf_mesh('load', 'many_element.mesh_fem')

@@ -8,7 +8,7 @@
    :align: center
    :width: 300pt
 
-.. _gmm-misc:
+.. _gmm-blas:
 
 Basic linear algebra operations
 ========================================

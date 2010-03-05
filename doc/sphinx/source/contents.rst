@@ -22,3 +22,7 @@
    bugs.rst
    copyright.rst
    license.rst
+   screenshots/shots.rst
+   screenshots/tripod_source.rst
+   screenshots/stokes-source.rst
+   screenshots/helmholtz_source.rst

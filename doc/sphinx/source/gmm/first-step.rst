@@ -14,7 +14,6 @@
 First steps with |gmm|
 ============================
 
-\section{First steps with |gmm|}
 
 How can I invert a matrix ?
 ---------------------------
