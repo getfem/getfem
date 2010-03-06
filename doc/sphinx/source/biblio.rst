@@ -6,9 +6,6 @@ References
 ----------
 
 
-
-
-
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser, *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, (1983).
 
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen. *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
@@ -46,8 +43,9 @@ References
    Int. J. Num. Meth. Engng. 58 (2003), 349-374.
 
 
-.. [so-se-do2004] P. Solin, K. Segeth, I. Dolezel, *Higher-Order Finite Element 
-   Methods*, Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
+.. [so-se-do2004] P. Solin, K. Segeth, I. Dolezel, *Higher-Order Finite
+   Element Methods*, Chapman and Hall/CRC, Studies in advanced mathematics,
+   2004.
 
-
-
+.. [ZT1989] Zienkiewicz and Taylor "The finite element method" 5th edition
+    volume 3 : Fluids Dynamics, section 2.6 

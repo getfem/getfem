@@ -24,7 +24,7 @@ refinements (see [bank1983]_).
 .. _ud-fig-refine:
 .. figure:: images/getfemuserrefine.png
    :align: center
-   :width: 300pt
+
 
    exemple of Bank refinement in 2D
 

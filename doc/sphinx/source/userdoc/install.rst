@@ -21,10 +21,11 @@ Requirements
 
 * If you want to build |py| |gfi|, it requires the python
   developpement files (python.h etc.) to be available (package
-  ``python-all-dev`` in debian distribution), and also the |np|
-  package to be installed (package ``python-numpy`` in debian
+  ``python-all-dev`` in debian distribution), and also the |np| and |sp|
+  packages to be installed (package ``python-numpy`` and ``python-scipy``
+  in debian
   distribution). In case of troubles with a non-|gnu| compiler,
-  gcc/g++ (>= 3.0) should be a safe solution (package
+  gcc/g++ (>= 4.1) should be a safe solution (package
   ``build-essential`` in debian distribution).
 
 * If you want mesh generation, it requires the package qhull
@@ -132,5 +133,5 @@ Note that there are other options to the configure script. A
 ``--enable-matlab``, ``--enable-python`` and ``--enable-scilab``
 to build the |gfi|.
 
-More specific instruccions can be found in the README\* files of the
+More specific instructions can be found in the README\* files of the
 distribution.

@@ -81,7 +81,6 @@ important objects.
 
 .. _scilab-fig-hierarchy:
 .. figure:: images/hierarchy.png
-   :width: 250pt
    :align: center
 
    |gfm| objects hierarchy.

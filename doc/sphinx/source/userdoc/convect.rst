@@ -46,4 +46,3 @@ should not be too large.
 
 Note that this method can be used to solve convection dominant problems coupling it with a splitting scheme.
 
-.. [ZT1989] Zienkiewicz and Taylor "The finite element method" 5th edition volume 3 : Fluids Dynamics, section 2.6 

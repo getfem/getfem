@@ -16,7 +16,7 @@ Please see the `GMM++ user documentation
 Note that |gf| includes (since release 1.7) its own version of |sLU| 3.0 (see
 `SuperLU web site <http://crd.lbl.gov/~xiaoye/SuperLU>`_) hence a direct sparse
 solver is available out of the box. Note that an option of the ``./configure``
-file allow to disable the included version of |sLU| in order to use a
+file allows to disable the included version of |sLU| in order to use a
 pre-installed version.
 
 A small interface to |mumps| is also provided (see `MUMPS web1

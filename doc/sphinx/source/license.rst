@@ -8,14 +8,8 @@
 History and License
 *******************
 
-Copyright |copy| 2000-2010 |authors|.
-The program |gf| is free software; you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation; version 2.1 of the License.
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-You should have received a copy of the GNU  Lesser General Public License
-along with this program; if not, write to the Free Software Foundation,
-Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+Getfem was born during the thesis of Yves Renard (1994-1998, the first files dating from 1995). The real bases of Getfem (assembly in any dimension, separation of geometric transformations, finite element methods and cubature methods) date from 1999. However, Getfem did not take the size it is now without the collaboration between Julien Pommier and Yves Renard began in 2001. The major contributions of Julien Pommier is generic assembly and Matlab and Python interfaces. Early versions distributed in 1992 already contain these components. Since then, Getfem grows thanks to various collaborations and external contributions.
+
+
+.. include:: license.txt
+

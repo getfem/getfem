@@ -212,11 +212,11 @@ html_use_index = False
 #html_split_index = False
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+html_copy_source = False
 
 # If true (and html_copy_source is true as well), links to the reST sources
 # will be added to the sidebar.
-#html_show_sourcelink = True
+html_show_sourcelink = False
 
 # If nonempty, an OpenSearch description file will be output, and all pages
 # will contain a <link> tag referring to it.  The value of this option must

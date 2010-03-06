@@ -20,7 +20,6 @@ where ``"name of method"`` is a string to be choosen among the existing methods.
 .. _ud-fig-symbols:
 .. figure:: images/getfemlistsymbols.png
    :align: center
-   :width: 450pt
 
    Symbols representing degree of freedom types
 
@@ -36,7 +35,6 @@ node is the so-called Lagrange grid. Figures :ref:`ud-fig-segmentpk`,
 .. _ud-fig-segmentpk:
 .. figure:: images/getfemlistsegmentPk.png
    :align: center
-   :width: 300pt
 
    Examples of classical :math:`P_K` Lagrange elements on a segment
 

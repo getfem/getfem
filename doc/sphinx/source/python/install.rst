@@ -29,9 +29,9 @@ Requirements
 ^^^^^^^^^^^^
 
 It requires the python developpement files (python.h etc.) to be available
-(package `python-all-dev` in debian distribution), and also the numpy
-package to be installed (package `python-numpy` in debian distribution).
-In case of troubles with a non-GNU compiler, gcc/g++ (>= 3.0) should be a
+(package `python-all-dev` in debian distribution), and also the numpy and scipy
+packages to be installed (package `python-numpy` and `python-scipy` in debian distribution).
+In case of troubles with a non-GNU compiler, gcc/g++ (>= 4.1) should be a
 safe solution (package `build-essential` in debian distribution).
 
 If you want mesh generation, it requires the package qhull installed on

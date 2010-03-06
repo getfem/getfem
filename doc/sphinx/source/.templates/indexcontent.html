@@ -1,9 +1,13 @@
-{% extends "defindex.html" %}
-{% block tables %}
+{% extends "layout.html" %}
+{% set title = 'GetFEM++ Homepage' %}
+{% set dlbase = 'dist' %}
+{% block body %}
 
-<p class="biglink">
-         <a class="biglink" href="{{ pathto("screenshots/shots") }}">Screenshots</a><br/>
-         <span class="linkdescr"></p>
+<META NAME="Keywords" CONTENT=" finite element library, finite element package, finite element software, finite elements">
+
+<div style="text-align:center;"><img src="{{ pathto('_static/logogetfem.png', 1) }}" alt="the Getfem++ logo"><br/> An open-source finite element library </div>
+
+    
 
   <p><strong>Parts of the documentation:</strong></p>
   <table class="contentstable" align="center"><tr>
@@ -12,14 +16,14 @@
          <a class="biglink" href="{{ pathto("whatsnew/" + version) }}">What's new in GetFEM++ {{ version }}?</a><br/>
          <span class="linkdescr">or <a href="{{ pathto("whatsnew/index") }}">all "What's new" documents</a> since 1.0</span></span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("project/index") }}">What is GetFEM++?</a><br/>
-         <span class="linkdescr">Description of the project</span></p>
-      <p class="biglink">
          <a class="biglink" href="{{ pathto("userdoc/index") }}">Using the Library</a><br/>
          <span class="linkdescr">Short User Documentation</span></p>
       <p class="biglink">
          <a class="biglink" href="http://download.gna.org/getfem/doc/getfem_reference/index.html">Library Reference</a><br/>
          <span class="linkdescr">keep this under your pillow</span></p>
+      <p class="biglink">
+         <a class="biglink" href="{{ pathto("project/index") }}">Developper's guide</a><br/>
+         <span class="linkdescr">Description of the project</span></p>
       <p class="biglink">
          <a class="biglink" href="{{ pathto("download") }}">Download</a><br/>
          <span class="linkdescr">Download {{ project }} </span></p>
@@ -37,7 +41,7 @@
          <a class="biglink" href="{{ pathto("documenting/index") }}">Documenting</a><br/>
          <span class="linkdescr">guide for documentation authors</span></p>
       <p class="biglink">
-         <a class="biglink" href="{{ pathto("gmm") }}">Gmm++</a><br/>
+         <a class="biglink" href="{{ pathto("gmm") }}">Gmm++ template matrix library</a><br/>
          <span class="linkdescr">What is Gmm++?</span></p>
     </td></tr>
   </table>
@@ -67,5 +71,52 @@
       <p class="biglink"><a class="biglink" href="{{ pathto("copyright") }}">Copyright</a></p>
     </td></tr>
   </table>
+
+
+    <p><strong>What is Getfem++</strong></p>
+
+<p>Getfem++ is basically a generic C++ finite element library which aims to offer the widest range of finite element methods and elementary matrix computations for the approximation of linear or non-linear problems, possibly in hybrid form and possibly coupled. The dimension of the problem is arbitrary and may be a parameter of the problem. Getfem++ offers a description of models in the form of bricks whose objective is to enable reusability of the approximations made. The system of bricks, now mature, is used to assemble components such as standard models (elasticity in small and large deformations, Helmholtz problem, scalar elliptic problem ...) to components representing the boundary conditions (Neumann, Dirichlet, Fourier-Robin, contact, friction...), also to components representing constraints (incompressibility, removing rigid motions ...) and to coupling components for coupled models.</p>
+
+<p>Two strong points of Getfem++ are structural mechanics (in particular contact mechanics) and taking into account discontinuities by fictitious domain methods of XFEM type (eg cracking).</p>
+
+<p>It is proposed three interfaces (with Scilab, Matlab and Python) that allow to use of the main features of the software without the need of C++ programming and allowing graphical post-processing.</p>
+
+<p>Getfem++ offers a complete separation between the integration methods (exact or approximated), geometric transformations (linear or not) and finite element methods of arbitrary degree. The library can help to write more integrated finite element codes in relieving the basic technical calculations.</p>
+
+<p>Examples of families of finite elements available are: Pk on simplices of arbitrary degree and dimension, Qk on parallelepipeds, P1, P2 with bubble functions, Hermite elements, Argyris element, HCT and FVS, elements with hierarchical basis (for multigrid methods for instance), discontinuous Pk and Qk, XFEM methods, vector elements (RT0, Nedelec) ...</p>
+
+<p>The addition of a new finite element method is relatively easy. A description on the reference element must be provided (in most cases it is the description of the basic functions and nothing more). Extensions are provided to describe Hermite elements, piecewise polynomial or non-polynomial elements, vector elements and XFEM.</p>
+
+<p>The library also includes the usual tools for finite elements such as assembly procedures for classical PDEs, interpolation methods, the calculation of norms, mesh operations (including automatic refinement), management of boundary conditions, post-treatment with a tool to make arbitrary cuts ...</p>
+
+<p>Getfem++ can be used to construct very generic finite element codes, where finite element methods, integration methods and the dimension of the problem are the parameters that can be changed very easily. This allows a wide range of experiments. Many examples are provided.</p>
+
+<p>Getfem++ has no meshing capabilities (with the exception of the regular mesh generation and also a small attempt not yet usable). It is therefore necessary to import meshes. The formats currently supported are GID, GMSH and EMC2.</p>
+
+
+    <p><strong>Gmm++</strong></p>
+
+    <p>
+      Getfem++ includes a <a href="gmm/index.html" title="Generic Matrix Methods">generic matrix template</a> library inspired by <a
+      href="http://www.osl.iu.edu/research/mtl/" title="Matrix Template Library">MTL</a> and <a
+      href="http://www.osl.iu.edu/research/itl/" title="Iterative Template Library">ITL</a>.  
+    </p>
+      
+    
+    <p><strong>Awards</strong></p>
+      
+      Getfem++ has been awarded by the second price at the
+      <a href="http://www.tropheesdulibre2007.org/"> "Trophees du Libre 2007"</a> in the category of scientific softwares.
+
+  <p><strong>Getfem++ in action:</strong></p>
+  <table class="contentstable" align="center"><tr>
+  <td width="50%">
+<p class="biglink">
+         <a class="biglink" href="{{ pathto("screenshots/shots") }}">Screenshots</a><br/>
+         <span class="linkdescr"></p>
+   </td></tr>
+  </table>
+
+
 
 {% endblock %}

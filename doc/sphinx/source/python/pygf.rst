@@ -85,7 +85,6 @@ The general organization of the python-interface is the following:
     +----------------------------+-------------------------------+
 
 .. figure:: images/hierarchy.png
-   :width: 250pt
    :align: center
 
    python-getfem interface objects hierarchy.

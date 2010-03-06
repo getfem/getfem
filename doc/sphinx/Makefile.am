@@ -69,6 +69,7 @@ images:
 
 
 build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst $(srcdir)/source/scilab/cmdref.rst checkout images
+	rm -fr build
 	mkdir -p build/$(BUILDER) build/doctrees
 	PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo

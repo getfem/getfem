@@ -54,7 +54,6 @@ numbers.
 .. _ud-fig-syslin:
 .. figure:: images/getfemuserlinearsys.png
    :align: center
-   :width: 300pt
 
    The (tangent) linear system
 
@@ -349,7 +348,6 @@ global linear system can be viewed in Fig. :ref:`ud-fig-syslinDir`. The matrix
 .. _ud-fig-syslinDir:
 .. figure:: images/getfemuserlinsysDir.png
    :align: center
-   :width: 300pt
 
    Contributions of the simple Dirchlet brick
 
