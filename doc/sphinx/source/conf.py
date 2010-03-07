@@ -246,12 +246,18 @@ htmlhelp_basename = 'getfem' + release.replace('.', '')
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
 latex_documents = [
-#    ('python/index', 'python.tex',
-#     'Python Interface', 'Luis Saavedra', 'manual', False),
-    ('userdoc/index', 'userdoc.tex',
+    ('python/index', 'python_interface.tex',
+     'Python Interface', 'Luis Saavedra', 'manual', False),
+    ('matlab/index', 'matlab_interface.tex',
+     'Matlab Interface', _stdauthor, 'manual', False),
+    ('scilab/index', 'scilab_interface.tex',
+     'Scilab Interface', _stdauthor, 'manual', False),
+    ('userdoc/index', 'getfem_userdoc.tex',
      'Short User Documentation', _stdauthor, 'manual', False),
-#    ('project/index', 'project.tex',
-#     'Description of the Project', _stdauthor, 'manual', False),
+    ('project/index', 'getfem_project.tex',
+     'Description of the Project', _stdauthor, 'manual', False),
+    ('gmm/index', 'gmm_userdoc.tex',
+     'Gmm++ user documentation', 'Yves Renard', 'manual', False),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

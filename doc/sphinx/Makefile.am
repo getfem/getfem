@@ -31,6 +31,7 @@ help:
 	@echo "  changes   to make an overview over all changed/added/deprecated items"
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  dist      to create a \"dist\" directory with archived docs for download"
+	@echo "  upload    to make HTML and LATEX docs and upload it to gna.org"
 
 checkout:
 	@if [ ! -d tools ]; then \
@@ -69,7 +70,8 @@ images:
 
 
 build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst $(srcdir)/source/scilab/cmdref.rst checkout images
-	rm -fr build
+	rm -fr build/$(BUILDER)/_images
+	rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees
 	PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
@@ -88,6 +90,7 @@ htmlhelp: build
 
 latex: BUILDER = latex
 latex: build
+	(cd build/latex && make all-pdf)
 	@echo "Build finished; the LaTeX files are in build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
 	      "run these through (pdf)latex."
@@ -136,7 +139,19 @@ $(srcdir)/source/python/api.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/api.rst || (rm -f $(srcdir)/source/python/api.rst; /bin/false )
 
 
+upload:
+	make html
+	-mv build/html homepage
+	../../bin/upload_html --delete homepage
+	rm -fr sphinxdoc
+	make latex
+	-mv build/latex/*.pdf .
+	../../bin/upload_documentation --delete scilab_interface.pdf
+	../../bin/upload_documentation --delete python_interface.pdf
+	../../bin/upload_documentation --delete matlab_interface.pdf
+	../../bin/upload_documentation --delete getfem_userdoc.pdf
+	../../bin/upload_documentation --delete getfem_project.pdf
+	../../bin/upload_documentation --delete gmm_userdoc.pdf
+	rm -fr *.pdf
+	rm -fr build
 
-htmlupload: html
-	-mv build/html sphinxdoc
-	../../bin/upload_documentation sphinxdoc

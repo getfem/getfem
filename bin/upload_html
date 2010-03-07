@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Copyright (C) 1998-2009 Yves Renard
+#
+# This file is a part of GETFEM++
+#
+# Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+# under  the  terms  of the  GNU  Lesser General Public License as published
+# by  the  Free Software Foundation;  either version 2.1 of the License,  or
+# (at your option) any later version.
+# This program  is  distributed  in  the  hope  that it will be useful,  but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+# You  should  have received a copy of the GNU Lesser General Public License
+# along  with  this program;  if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+
+function die {
+    echo "ERROR: $1";
+    exit 1
+}
+
+
+do_delete=0
+do_mrproper=0
+
+where="html"
+
+me=$(whoami)
+while test "$#" -gt 0; do
+  case $1 in
+    --mrproper)
+        do_mrproper=1
+        ;;
+    --delete)
+        do_delete=1;
+        ;;
+    -*)
+        die "wrong option: $1";
+        ;;
+    *)
+        f=$1;
+        ;;
+  esac
+  shift
+done
+
+options=""
+if [ "$do_delete" != 0 ]; then
+  options="$options --delete"
+fi
+
+if [ "$do_mrproper" != 0 ]; then
+  mkdir -p /tmp/toto00
+  cd /tmp/toto00 || die "arg"
+  rsync --delete -avr --rsh="ssh" "." "$me@download.gna.org:/upload/getfem/$where/"
+  rm -rf /tmp/toto00
+fi
+
+if [ "$f" != "" ]; then
+  echo "uploading directory $f to download.gna.org:/upload/getfem/$where/"
+  chmod -R a+rw $f
+  rsync $options -avr --rsh="ssh" "$f" "$me@download.gna.org:/upload/getfem/$where/"
+fi
