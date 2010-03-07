@@ -88,13 +88,13 @@ toolboxdir=@TOOLBOXDIR@
 
 install:
 	$(mkinstalldirs) $(toolboxdir)/
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/ *.m
-	@INSTALL@ -D -m 644 -t $(toolboxdir)/ $(srcdir)/*.m
+	@INSTALL@ -m 644 -t $(toolboxdir)/ *.m
+	@INSTALL@ -m 644 -t $(toolboxdir)/ $(srcdir)/*.m
 	@list='$(MATLAB_OBJ_DIRS)'; for p in $$list; do \
 	  $(mkinstalldirs) $(toolboxdir)/$$p; \
-	  @INSTALL@ -D -m 644 -t $(toolboxdir)/$$p $$p/*.m; \
+	  @INSTALL@ -m 644 -t $(toolboxdir)/$$p $$p/*.m; \
 	done
-	@INSTALL@ -D -m 744 -t $(toolboxdir)/ gf_matlab@MATLAB_COM_EXT@
+	@INSTALL@ -m 744 -t $(toolboxdir)/ gf_matlab@MATLAB_COM_EXT@
 
 uninstall:
 	rm -fr $(toolboxdir)

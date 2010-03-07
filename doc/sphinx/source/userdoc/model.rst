@@ -4,6 +4,8 @@
 
 .. highlightlang:: c++
 
+.. index:: models, model bricks
+
 .. _ud-model:
 
 =====================

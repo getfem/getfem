@@ -4,6 +4,8 @@
 
 .. highlightlang:: c++
 
+.. index:: asm, generic assemnly
+
 .. _ud-gasm:
 
 Compute arbitrary elementary matrices - generic assembly procedures

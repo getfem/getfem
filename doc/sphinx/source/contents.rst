@@ -27,3 +27,5 @@
    screenshots/tripod_source.rst
    screenshots/stokes-source.rst
    screenshots/helmholtz_source.rst
+
+   genindex

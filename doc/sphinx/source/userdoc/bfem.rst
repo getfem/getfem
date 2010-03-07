@@ -4,10 +4,13 @@
 
 .. highlightlang:: c++
 
+.. index:: fem, mesh, mesh_fem
+
 .. _ud-bfem:
 
 Build a finite element method on a mesh
 =======================================
+
 
 The object |gf_mf| defined in :file:`getfem/getfem_mesh_fem.h` is designed to
 describe a finite element method on a whole mesh, i.e. to describe the finite
