@@ -231,30 +231,35 @@ namespace getfem {
 
     scalar_type res = 0;
     switch(l){
+   
+  /* First order enrichement displacement field (linear elasticity) */    
+      
       case 0 : res = sqrt(r)*sin2; break;
       case 1 : res = sqrt(r)*cos2; break;
       case 2 : res = sin2*y/sqrt(r); break;
       case 3 : res = cos2*y/sqrt(r); break;
-  /*Enrichissemnt secent order en u */
+  
+  /* Second order enrichement of displacement field (linear elasticity) */
+      
       case 4 : res = sqrt(r)*r*sin2; break;
       case 5 : res = sqrt(r)*r*cos2; break;
-      //case 6 : res = sqrt(r)*y*sin2; break;
-      //case 7 : res = sqrt(r)*y*cos2; break;
-     // case 6 : res = 2*sin2*x*y/sqrt(r); break;
-      //case 7 : res = 2*cos2*x*y/sqrt(r); break;
       case 6 : res = sin2*cos2*cos2*r*sqrt(r); break;
       case 7 : res = cos2*cos2*cos2*r*sqrt(r); break;
-    /* Ces deux fonctions représentes l'enrichissement du champs de pression en élasticité incompressible en formulation mixte ...
-     */
+  
+   /* First order enrichement of pressure field (linear elasticity) mixed formulation */
 
       case 8 : res = -sin2/sqrt(r); break;
       case 9 : res = cos2/sqrt(r); break;
 
-  /*Enrichissemnt secent order en p */
+  /* Second order enrichement of pressure field (linear elasticity) mixed formulation */
 
       case 10 : res = sin2*sqrt(r); break; // cos2*cos2
       case 11 : res = cos2*sqrt(r); break;
 
+  /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
+
+      case 12 : res = r*sin2*sin2; break; 
+      case 13 : res = sqrt(r)*sin2; break; 
     default: GMM_ASSERT2(false, "arg");
     }
     return res;
@@ -277,7 +282,8 @@ namespace getfem {
 
     base_small_vector res(2);
     switch(l){
-     case 0 :
+ /* First order enrichement displacement field (linear elasticity) */
+    case 0 :
       res[0] = -sin2/(2*sqrt(r));
       res[1] = cos2/(2*sqrt(r));
       break;
@@ -293,6 +299,8 @@ namespace getfem {
       res[0] = -cos2*cos2*sin2*((4*cos2*cos2) - 3.)/sqrt(r);
       res[1] = cos2*((4*cos2*cos2*cos2*cos2) + 2. - (5*cos2*cos2))/sqrt(r);
       break;
+ /* Second order enrichement of displacement field (linear elasticity) */   
+    
     case 4 :
       res[0] = sin2 *((4*cos2*cos2)-3.)*sqrt(r)/2.;
       res[1] = cos2*(5. - (4*cos2*cos2))*sqrt(r)/2. ;
@@ -301,22 +309,7 @@ namespace getfem {
       res[0] = cos2*((4*cos2*cos2)-1.)*sqrt(r)/2.;
       res[1] = sin2*((4*cos2*cos2)+1.)*sqrt(r)/2. ;
       break;
-   /* case 6 :
-      res[0] = -cos2*(1- cos2*cos2)*sqrt(r);
-      res[1] = sin2*(1 + cos2*cos2)*sqrt(r) ;
-      break;*/
-   /* case 7 :
-      res[0] = sin2*cos2*cos2*sqrt(r);
-      res[1] = cos2 *(2 - cos2*cos2)*sqrt(r) ;
-      break; */
-   /* case 6 :
-      res[0] = 2*cos2*(1- cos2*cos2)*((6*cos2*cos2)-(8* cos2*cos2*cos2*cos2)+1)*sqrt(r);
-      res[1] = 2*(2*cos2*cos2-1)*sin2*(1-(3*cos2*cos2)+(4*cos2*cos2*cos2*cos2))*sqrt(r);
-      break; */
-   /* case 7 :
-      res[0] = 2*sin2*cos2*cos2*((10*cos2*cos2)-(8*cos2*cos2*cos2*cos2)-1)*sqrt(r);
-      res[1] = 2*cos2*(2*cos2*cos2-1)*((4*cos2*cos2*cos2*cos2)-(5*cos2*cos2)+2)*sqrt(r);
-      break;*/
+   
     case 6 :
       res[0] = sin2*cos2*cos2*sqrt(r)/2.;
       res[1] = cos2*(2. - (cos2*cos2))*sqrt(r)/2.;
@@ -325,8 +318,9 @@ namespace getfem {
       res[0] = 3*cos2*cos2*cos2*sqrt(r)/2.;
       res[1] = 3*sin2*cos2*cos2*sqrt(r)/2.;
       break;
-    /* Ces deux fonctions repr�sentes l'enrichissement du champs de pression en     * �lasticit� incompressible en formulation mixte ...
-     */
+    
+  /* First order enrichement of pressure field (linear elasticity) mixed formulation */
+
     case 8 :
       res[0] =sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r);
       res[1] =-cos2*((4*cos2*cos2)-3.)/(2*sqrt(r)*r);
@@ -335,6 +329,8 @@ namespace getfem {
       res[0] =-cos2*((2*cos2*cos2) - 3.)/(2*sqrt(r)*r);
       res[1] =-sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r);
       break;
+ /* Second order enrichement of pressure field (linear elasticity) mixed formulation */
+  
     case 10 :
       res[0] = -sin2/(2*sqrt(r));
       res[1] =  cos2/(2*sqrt(r));
@@ -342,6 +338,15 @@ namespace getfem {
     case 11 :
       res[0] = cos2/(2*sqrt(r));
       res[1] = sin2/(2*sqrt(r));
+      break;
+ /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
+    case 12 :
+      res[0] = sin2*sin2;
+      res[1] = 0.5*cos2*sin2;
+      break;
+    case 13 :
+      res[0] = -sin2/(2*sqrt(r));
+      res[1] = cos2/(2*sqrt(r));
       break;
     default: GMM_ASSERT2(false, "oups");
     }
