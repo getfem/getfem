@@ -6,9 +6,6 @@ PNGFIGS=$(FIGS:.fig=.png)
 
 .SUFFIXES: .fig .eps .png
 
-%.fig:
-	-cp ../../../../getfem_project/$(@) ./
-
 .fig.eps:
 	../../../../../bin/fig2eps $(@:.eps=.fig)
 

@@ -20,7 +20,7 @@ should be used, as well as the Sphinx build system.
 
 If you're interested in contributing to GetFEM++'s documentation, there's no
 need to write reStructuredText if you're not so inclined; plain text
-contributions are more than welcome as well.
+contributions are more than welcome as well. The main documentations are in the directory ``doc/sphinx/source`` of the project. A part of the documentation is automatic and comes from the sources of the project. This is in particular the case for the documentations of the interface commands which are located in the ``interface/src/gf_*.cc`` files.
 
 .. toctree::
 

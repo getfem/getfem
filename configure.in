@@ -807,7 +807,7 @@ AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
 
 if test x$usepython = xYES; then
   echo "Building with python support (use --enable-python=no to disable it)"
-  echo "You will need the python-numpy package."
+  echo "You will need the python-numpy and python-scipy packages."
 dnl  AM_PATH_PYTHON(2.2)
   AC_PYTHON_DEVEL
 fi
@@ -964,7 +964,7 @@ fi
 echo "---------------------------------------"
 echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
-echo "  building PYTHON interface: $usepython (requires numpy)"
+echo "  building PYTHON interface: $usepython (requires numpy and scipy)"
 echo "  building SCILAB interface: $usescilab"
 echo "---------------------------------------"
 
