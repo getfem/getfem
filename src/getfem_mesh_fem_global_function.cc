@@ -259,11 +259,18 @@ namespace getfem {
   /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
 
       case 12 : res = r*sin2*sin2; break; 
-      case 13 : res = sqrt(r)*sin2; break; 
+      case 13 : res = sqrt(r)*sin2; break;
+
+/* First order enrichement of pressure field (nonlinear elasticity)  */
+
+      case 14 : res = sin2/r; break; 
+      case 15 : res = cos2/r; break;
+ 
     default: GMM_ASSERT2(false, "arg");
     }
     return res;
   }
+
 
   base_small_vector
   crack_singular_xy_function::grad(scalar_type x, scalar_type y) const {
@@ -329,8 +336,8 @@ namespace getfem {
       res[0] =-cos2*((2*cos2*cos2) - 3.)/(2*sqrt(r)*r);
       res[1] =-sin2*((4*cos2*cos2)-1.)/(2*sqrt(r)*r);
       break;
+
  /* Second order enrichement of pressure field (linear elasticity) mixed formulation */
-  
     case 10 :
       res[0] = -sin2/(2*sqrt(r));
       res[1] =  cos2/(2*sqrt(r));
@@ -339,7 +346,9 @@ namespace getfem {
       res[0] = cos2/(2*sqrt(r));
       res[1] = sin2/(2*sqrt(r));
       break;
+    
  /* First order enrichement of displacement field (nonlinear elasticity)[Rodney Stephenson Journal of elasticity VOL.12 No. 1, January 1982] */
+
     case 12 :
       res[0] = sin2*sin2;
       res[1] = 0.5*cos2*sin2;
@@ -348,6 +357,20 @@ namespace getfem {
       res[0] = -sin2/(2*sqrt(r));
       res[1] = cos2/(2*sqrt(r));
       break;
+
+/* First order enrichement of pressure field (****Nonlinear elasticity*****)  */
+
+
+    case 14 :
+      res[0] = -sin2/r;
+      res[1] = cos2/(2*r);
+      break;
+    case 15 :
+      res[0] = -cos2/r;
+      res[1] = -sin2/(2*r);
+      break;
+
+
     default: GMM_ASSERT2(false, "oups");
     }
     return res;
