@@ -30,7 +30,7 @@
 
 /*! @mainpage Getfem++ reference documentation.
 
-  <center><img src="../getfem_project/logo_getfem_small.png"></center>
+  <center><img src="http://download.gna.org/getfem/html/homepage/_static/logo_getfem_small.png"></center>
  
   @section intro Introduction
  
