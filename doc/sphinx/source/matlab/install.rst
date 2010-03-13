@@ -22,7 +22,7 @@ non-GNU compiler, gcc/g++ (>= 4.1) should be a safe solution.
      mandatory option when building |gf| and |gfi| (and any static library linked
      to them) is the ``--with-pic`` option of their ``./configure`` script.
 
-   * you should have use the --enable-matlab option to configure the |gf| sources (i.e. ./configure--enable-matlab ...)
+   * you should have use the --enable-matlab option to configure the |gf| sources (i.e. ./configure --enable-matlab ...)
 
 You may also use ``--with-toolbox-dir=toolbox_dir`` to change the default toolbox installation directory (``gfdest_dir/getfem_toolbox``). Use ``./configure --help`` for more options.
 
@@ -52,5 +52,23 @@ The last step is to add the path to the toolbox in the matlab path:
   (``export MATLABPATH=toolbox_dir`` for example).
 * you can put ``addpath('toolbox_dir')`` to your ``$HOME/matlab/startup.m``
 
+A very classical problem at this step is the incompatibility of the C and C++ libraries used by Matlab. Matlab is distributed with its own libc and libstdc++ libraries. An error message of the following type occurs when one tries to use a command of the interface::
+
+  /usr/local/matlab14-SP3/bin/glnxa64/../../sys/os/??/libgcc_s.so.1:
+  version `GCC_?.?' not found (required by .../gf_matlab.mex??).
+
+In order to fix this problem one has to enforce Matlab to load the C and C++ libraries of the system. There is two possibilities to do this. The most radical is to delete the C and C++ libraries distributed along with Matlab (if you have administrator privileges ...!) for instance with::
+
+  rm /usr/local/matlab14-SP3/sys/os/??/libgcc_s.so.1
+  rm /usr/local/matlab14-SP3/sys/os/??/libstdc++_s.so.6
+
+The second possibility is to set the variable LDPRELOAD before launching Matlab for instance with (depending on the system)::
+
+  LD_PRELOAD=/usr/lib/libgcc_s.so:/usr/lib/libstdc++.so.6 matlab
+
 More specific instructions can be found in the ``README*`` files of the
 distribution.
+
+In particular, instruction for the installation on Mac OS can be found here :ref:`_mlab-install_mac`.
+
+A few precompiled versions of the Matlab interface are available on the download page of |gf|.

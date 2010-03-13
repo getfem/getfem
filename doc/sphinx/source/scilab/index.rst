@@ -11,5 +11,6 @@ SciLab Interface
    :maxdepth: 2
 
    intro
+   install
    scilabgf
    cmdref

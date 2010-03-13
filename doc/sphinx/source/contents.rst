@@ -11,6 +11,7 @@
    gmm/index.rst
 
    matlab/index.rst
+   matlab/install_on_mac.rst
    python/index.rst
    scilab/index.rst
 
