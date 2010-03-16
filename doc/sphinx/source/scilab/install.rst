@@ -4,7 +4,7 @@
 
 .. highlightlang:: bash
 
-.. _mlab-install:
+.. _scilab-install:
 
 Installation 
 ============

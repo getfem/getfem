@@ -69,6 +69,6 @@ The second possibility is to set the variable LDPRELOAD before launching Matlab 
 More specific instructions can be found in the ``README*`` files of the
 distribution.
 
-In particular, instruction for the installation on Mac OS can be found here :ref:`_mlab-install_mac`.
+In particular, instruction for the installation on Mac OS can be found here :ref:`mlab-install_mac`.
 
 A few precompiled versions of the Matlab interface are available on the download page of |gf|.
