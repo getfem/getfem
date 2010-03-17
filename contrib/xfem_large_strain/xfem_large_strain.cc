@@ -234,7 +234,7 @@ void crack_problem::init(void) {
   mesh.translation(tt); 
   
   cracktip.resize(2); // Coordonn�e du fond de fissure
-  cracktip[0] = 0.5;
+  cracktip[0] = 0.9;
   cracktip[1] = 0.;
 
   scalar_type refinement_radius;

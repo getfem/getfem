@@ -1,10 +1,10 @@
 % addpath ~/source++/getfem++/contrib/xfem_contact/
 
 gf_workspace('clear all');
-mf = gfMeshFem('load', 'xfem_dirichlet_ls.mf');
+mf = gf_mesh_fem('load', 'xfem_dirichlet_ls.mf');
 lsU = -load('xfem_dirichlet_ls.U')';
 
-nn=4 % 0 : plot the exported mf
+nn=5 % 0 : plot the exported mf
      % 1 : 
      % 2 : 
      % 3 : 
@@ -66,14 +66,14 @@ elseif nn==2 || nn==3,
   end;
 elseif nn==4,
   disp('plotting the lagrange multipliers on the dirichlet boundary');
-  sll=gfSlice('load','xfem_dirichlet.sll');
+  sll=gf_Slice('load','xfem_dirichlet.sll');
   slL=load('xfem_dirichlet.slL')';
   P0=gf_slice_get(sll, 'pts');
   [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color',[.3 .3 .3]);
   hold on;
   gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*0.05]);
   [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5);
-  sl=gfSlice('load','xfem_dirichlet.sl');
+  sl=gf_Slice('load','xfem_dirichlet.sl');
   gf_plot_slice(sl,'mesh','on');
   
   npt = size(P0, 2);
@@ -106,23 +106,23 @@ elseif nn==6,
 
   % Without stabilization, FEM_RHS = 'FEM_PK(2,3)'; LEVEL_SET_DEGREE = 2;
   H    = [1/320   1/160  1/80   1/40  1/20  1/10  1/5];
-  % P1/P0 Non stabilisé
+  % P1/P0 Non stabilisï¿½
   L2_1 = [2.74    7.4    11.7   26    48.9  70    82 ];
   H1_1 = [15.28   24     31     44    59.5  77    89 ];
   L2C_1= [41700   31300  18300  9560  5000  6620  323];
-  % P1+/P0 Non stabilisé
+  % P1+/P0 Non stabilisï¿½
   L2_2 = [0.021   0.083  0.31   1.0   5.5   14    29];
   H1_2 = [1.73    3.5    6.89   13.4  28    48    64];
   L2C_2= [435     1320   659    384   868   230   92];
-  % P2/P1 Non stabilisé
+  % P2/P1 Non stabilisï¿½
   L2_3 = [0.0011  0.0016 0.0049 0.038 0.43  4     12];
   H1_3 = [0.017   0.05   0.204  0.773 2.9   11    32];
   L2C_3= [0.23    0.89   0.798  1.78  4.5   10    38];
-  % Q1/Q0 Non stabilisé
+  % Q1/Q0 Non stabilisï¿½
   L2_4 = [0.018   0.066  0.24   0.95  3.5   10    38];
   H1_4 = [1.55    3.1    6.12   12    23    43    70];
   L2C_4= [12.42   10.5   3.70   6.36  13.7  45    44];
-  % Q2/Q1 Non stabilisé
+  % Q2/Q1 Non stabilisï¿½
   L2_5 = [0.0059  0.013  0.031  0.11  0.41  5     11];
   H1_5 = [0.037   0.11   0.19   0.68  2.10  7.3   24];
   L2C_5= [1.07    1.03   1.06   2.79  4.3   5.9   21];
@@ -220,23 +220,23 @@ elseif nn==6,
   % With BB stabilization, gamma0 = 0.1, FEM_RHS = 'FEM_PK(2,3)';
   % LEVEL_SET_DEGREE = 2;
   H    = [1/320     1/160   1/80   1/40  1/20  1/10  1/5];
-  % P1/P0 stabilisé
+  % P1/P0 stabilisï¿½
   L2_1 = [0.022     0.086   0.34   1.3   5.2   16    41];
   H1_1 = [2.0       3.7     7.3    14    28    50    74];
   L2C_1= [5.8       4.2     9      16    35    59    57];
-  % P1+/P0 stabilisé
+  % P1+/P0 stabilisï¿½
   L2_2 = [0.02      0.078   0.30   1.14  4.5   19    51];
   H1_2 = [1.73      3.4     6.7    13    26    80    62];
   L2C_2= [1.81      4.14    5.4    9     28    60    38];
-  % P2/P1 stabilisé
+  % P2/P1 stabilisï¿½
   L2_3 = [0.000062  0.0005  0.0037 0.033 0.34  2.44  9.9];
   H1_3 = [0.012     0.054   0.58   1.12  3.26  10.5  33];
   L2C_3= [0.017     0.061   1      1.03  1.93  6.3   19];
-  % Q1/Q0 stabilisé
+  % Q1/Q0 stabilisï¿½
   L2_4 = [0.014     0.05    0.22   0.87  3.23  9.9   23];
   H1_4 = [1.65      3.10    6.14   12.08 23.43 44    69];
   L2C_4= [0.9       1.63    2.82   6.55  15.19 34    33];
-  % Q2/Q1 stabilisé
+  % Q2/Q1 stabilisï¿½
   L2_5 = [0.000035  0.00033 0.0029 0.018 0.13  1.1   17];
   H1_5 = [0.0093    0.051   0.15   0.58  1.9   6.9   65];
   L2C_5= [0.019     0.079   0.17   0.38  0.8   4.2   17];
@@ -450,8 +450,8 @@ end;
 % Pour mettre des fontes plus grosses.
 % une commande
 % get(findobj, 'type')
-% renseigne sur les type d'objets à chercher.
-% ensuite on recupère les handles par
+% renseigne sur les type d'objets ï¿½ chercher.
+% ensuite on recupï¿½re les handles par
 % axesobj = findobj('type', 'axes')
 % par exemple, puis on peut faire
 % set(axesobj, 'fontunits', 'points');

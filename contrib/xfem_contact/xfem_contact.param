@@ -3,12 +3,12 @@
 % parameters for program xfem_contact                                     %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-QUAD = 0;
+QUAD = 1;
 N = 2;
 RADIUS = 0.5;              % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
                            % defining the level set.
-SIGNORINI = 0;             % 1 = Signorini, 0 = Dirichlet.
+SIGNORINI = 1;             % 1 = Signorini, 0 = Dirichlet.
 			   
 OK = 0;
 

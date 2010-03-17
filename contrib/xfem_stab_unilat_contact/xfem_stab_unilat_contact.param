@@ -1,28 +1,30 @@
 %-*- mat-lab -*- (enables emacs matlab mode)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parameters for program crack                                            %
+% parameters for    unilateral_contact_problem                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-MU = 10.0;	        % Lam%G�%@ coefficient.
-dgr = 1;                % degree of enrichment in u
-dgrp = 1;                % degree of enrichment in p
-
+MU = 10.0;	         % Lame coefficient.
+Lamda=10.0               % Lame coefficient.
+dgr = 1;                 % degree of enrichment in u
+CONTACT_GAMMA0=0.01;     % Stabilization parameter for contact condition
+R=0.2;                   % Augmented parameter
+STABILIZED_PROBLEM =0;   % stabilized_problem or not
 QUAD = 0;
 
-BIMATERIAL = 0;         % 1 : To enable the bimaterial case
+%BIMATERIAL = 0;         % 1 : To enable the bimaterial case
 
-if BIMATERIAL
-  MU_UP = 10.0;	
-  MU_DOWN = 1.0;
-end
+%%if BIMATERIAL
+  %%MU_UP = 10.0;	
+  %%MU_DOWN = 1.0;
+%%end
 
 REFINEMENT_RADIUS = 0.;  % REF: 0.4;  % 0 for no refinement
 REFINEMENT_PROCESS = 0;  % nb of desired refinement steps
 
 REFERENCE_TEST =0 ;   % 1 to compute a reference solution exported into files
 ERROR_TO_REF_SOL =1; % 1 to compute errors wrt the reference solution
-INF_SUP_COMP = 1;   % Compute or not the inf_sup condition
+%INF_SUP_COMP = 1;   % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
@@ -37,7 +39,7 @@ if (~QUAD)
   %FEM_TYPE = 'FEM_PK(2,1)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
-  FEM_TYPE_P = 'FEM_PK(2,1)'; 
+  FEM_TYPE_CONT = 'FEM_PK(2,1)'; 
   MORTAR_FEM_TYPE = FEM_TYPE;
 else
   % MESH_TYPE = 'GT_LINEAR_QK(2)';
@@ -49,7 +51,7 @@ else
   MORTAR_FEM_TYPE = FEM_TYPE;
 end;
 
-FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,4,0.0001)'; % Discontinuous P1 for triangles
+FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,4,0.0001)'; % Discontinuous P4 for triangles
 
 MIXED_PRESSURE=1;       % Mixed version or not.
 DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
