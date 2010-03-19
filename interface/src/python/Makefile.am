@@ -5,7 +5,7 @@ INCLUDES = $(PYTHON_CPPFLAGS) -I@srcdir@ -I@srcdir@/..
 gfpythondir=$(pythondir)/getfem
 gfpyexecdir=$(pyexecdir)/getfem
 
-gfpython_PYTHON = getfem.py
+gfpython_PYTHON = getfem.py __init__.py
 nodist_gfpyexec_PYTHON = _getfem.so
 
 EXTRA_DIST = getfem_python.c
