@@ -1446,7 +1446,7 @@ namespace getfem {
   //  elastic bodies.
   //=========================================================================
 
-  size_type add_bilateral_contact_brick
+  size_type add_unilateral_contact_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
@@ -1514,7 +1514,7 @@ namespace getfem {
   //  elastic bodies.
   //=========================================================================
 
-  size_type add_bilateral_contact_with_friction_brick
+  size_type add_unilateral_contact_with_friction_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, std::string &multname_t,

@@ -81,7 +81,7 @@ void elastostatic_contact_problem::init(void) {
 
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
-					       "Name of integration method");
+                                               "Name of integration method");
   /* First step : import the mesh */
   std::string meshname_1 = PARAM.string_value("MESHNAME_GEAR1",
                                               "Mesh filename for the 1st gear");
@@ -182,7 +182,7 @@ void elastostatic_contact_problem::init(void) {
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
   mf_u.set_finite_element(pf_u);
   GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
-		                << "For this problem you need a lagrange FEM.");
+                                << "For this problem you need a lagrange FEM.");
 
   getfem::pintegration_method ppi = getfem::int_method_descriptor(INTEGRATION);
   mim.set_integration_method(ppi);
@@ -222,12 +222,12 @@ bool elastostatic_contact_problem::solve() {
     (dataname_r, mu * (3*lambda + 2*mu) / (lambda + mu) );  // r ~= Young modulus
   std::string multname_n, multname_t;
   if (frictionless) {
-    getfem::add_bilateral_contact_brick
+    getfem::add_unilateral_contact_brick
       (md, mim, varname_u, multname_n, dataname_r, cb_rgs1, cb_rgs2);
   } else {
     std::string dataname_frict_coeff="friction_coefficient";
     md.add_initialized_scalar_data(dataname_frict_coeff, frict_coeff);
-    getfem::add_bilateral_contact_with_friction_brick
+    getfem::add_unilateral_contact_with_friction_brick
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_frict_coeff, cb_rgs1, cb_rgs2);
   }
