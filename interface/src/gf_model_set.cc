@@ -46,8 +46,8 @@ using namespace getfemint;
 struct sub_gf_md_set : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfemint_model *md) = 0;
+                   getfemint::mexargs_out& out,
+                   getfemint_model *md) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_md_set> psub_command;
@@ -56,21 +56,21 @@ typedef boost::intrusive_ptr<sub_gf_md_set> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_md_set {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfemint_model *md)				\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_md_set {                                \
+      virtual void run(getfemint::mexargs_in& in,                       \
+                       getfemint::mexargs_out& out,                     \
+                       getfemint_model *md)                             \
+      { dummy_func(in); dummy_func(out); code }                         \
+    };                                                                  \
+    psub_command psubc = new subc;                                      \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
+    subc_tab[cmd_normalize(name)] = psubc;                              \
   }                           
 
 
 void gf_model_set(getfemint::mexargs_in& m_in,
-		  getfemint::mexargs_out& m_out) {
+                  getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -171,13 +171,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 std::vector<double> V(st.begin(), st.end());
-	 md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+         md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
-	 md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+         md->model().add_initialized_fem_data(name, gfi_mf->mesh_fem(), V);
        }
        workspace().set_dependance(md, gfi_mf);
        );
@@ -204,13 +204,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("add initialized data", 2, 2, 0, 0,
        std::string name = in.pop().to_string();
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 std::vector<double> V(st.begin(), st.end());
-	 md->model().add_initialized_fixed_size_data(name, V);
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+         md->model().add_initialized_fixed_size_data(name, V);
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
-	 md->model().add_initialized_fixed_size_data(name, V);
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+         md->model().add_initialized_fixed_size_data(name, V);
        }
        );
 
@@ -223,23 +223,23 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("variable", 2, 3, 0, 0,
        std::string name = in.pop().to_string();
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 size_type niter = 0;
-	 if (in.remaining())
-	   niter = in.pop().to_integer(0,10) - config::base_index();
-	 GMM_ASSERT1(st.size()==md->model().real_variable(name, niter).size(),
-		     "Bad size in assigment");
-	 md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
+         darray st = in.pop().to_darray();
+         size_type niter = 0;
+         if (in.remaining())
+           niter = in.pop().to_integer(0,10) - config::base_index();
+         GMM_ASSERT1(st.size()==md->model().real_variable(name, niter).size(),
+                     "Bad size in assigment");
+         md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
        } else {
-	 carray st = in.pop().to_carray();
-	 size_type niter = 0;
-	 if (in.remaining())
-	   niter = in.pop().to_integer(0,10) - config::base_index();
-	 GMM_ASSERT1(st.size() == md->model().complex_variable(name,
-							       niter).size(),
-		     "Bad size in assigment");
-	 md->model().set_complex_variable(name, niter).assign(st.begin(),
-							      st.end());
+         carray st = in.pop().to_carray();
+         size_type niter = 0;
+         if (in.remaining())
+           niter = in.pop().to_integer(0,10) - config::base_index();
+         GMM_ASSERT1(st.size() == md->model().complex_variable(name,
+                                                               niter).size(),
+                     "Bad size in assigment");
+         md->model().set_complex_variable(name, niter).assign(st.begin(),
+                                                              st.end());
        }
        );
 
@@ -251,15 +251,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("to variables", 1, 1, 0, 0,
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray(-1);
-	 std::vector<double> V;
-	 V.assign(st.begin(), st.end());
-	 md->model().to_variables(V);
+         darray st = in.pop().to_darray(-1);
+         std::vector<double> V;
+         V.assign(st.begin(), st.end());
+         md->model().to_variables(V);
        } else {
-	 carray st = in.pop().to_carray(-1);
-	 std::vector<std::complex<double> > V;
-	 V.assign(st.begin(), st.end());
-	 md->model().to_variables(V);
+         carray st = in.pop().to_carray(-1);
+         std::vector<std::complex<double> > V;
+         V.assign(st.begin(), st.end());
+         md->model().to_variables(V);
        }
        );
 
@@ -312,7 +312,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_generic_elliptic_brick(md->model(), gfi_mim->mesh_im(),
-					    varname, dataname, region)
+                                            varname, dataname, region)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -338,7 +338,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) directdataname = in.pop().to_string();
        size_type ind
        = getfem::add_source_term_brick(md->model(), gfi_mim->mesh_im(),
-				 varname, dataname, region, directdataname)
+                                 varname, dataname, region, directdataname)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -361,7 +361,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = in.pop().to_integer();
        size_type ind
        = getfem::add_normal_source_term_brick(md->model(), gfi_mim->mesh_im(),
-					      varname, dataname, region)
+                                              varname, dataname, region)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -395,14 +395,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfemint_mesh_fem *gfi_mf = 0;
        mexarg_in argin = in.pop();
        if (argin.is_integer()) {
-	 degree = argin.to_integer();
-	 version = 1;
+         degree = argin.to_integer();
+         version = 1;
        } else if (argin.is_string()) {
-	 multname = argin.to_string();
-	 version = 2;
+         multname = argin.to_string();
+         version = 2;
        } else {
-	 gfi_mf = argin.to_getfemint_mesh_fem();
-	 version = 3;
+         gfi_mf = argin.to_getfemint_mesh_fem();
+         version = 3;
        }
        size_type region = in.pop().to_integer();
        std::string dataname;
@@ -410,15 +410,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        switch(version) {
        case 1:  ind += getfem::add_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname);
-	 break;
+           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname);
+         break;
        case 2:  ind += getfem::add_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname);
-	 break;
+           (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname);
+         break;
        case 3:  ind += getfem::add_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname);
-	 workspace().set_dependance(md, gfi_mf);
-	 break;
+           (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname);
+         workspace().set_dependance(md, gfi_mf);
+         break;
        }
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -481,14 +481,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        getfemint_mesh_fem *gfi_mf = 0;
        mexarg_in argin = in.pop();
        if (argin.is_integer()) {
-	 degree = argin.to_integer();
-	 version = 1;
+         degree = argin.to_integer();
+         version = 1;
        } else if (argin.is_string()) {
-	 multname = argin.to_string();
-	 version = 2;
+         multname = argin.to_string();
+         version = 2;
        } else {
-	 gfi_mf = argin.to_getfemint_mesh_fem();
-	 version = 3;
+         gfi_mf = argin.to_getfemint_mesh_fem();
+         version = 3;
        }
        size_type region = in.pop().to_integer();
        std::string dataname = in.pop().to_string();
@@ -496,15 +496,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        switch(version) {
        case 1:  ind += getfem::add_generalized_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname, Hname);
-	 break;
+           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname, Hname);
+         break;
        case 2:  ind += getfem::add_generalized_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname, Hname);
-	 break;
+           (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname, Hname);
+         break;
        case 3:  ind += getfem::add_generalized_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname, Hname);
-	 workspace().set_dependance(md, gfi_mf);
-	 break;
+           (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname, Hname);
+         workspace().set_dependance(md, gfi_mf);
+         break;
        }
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -537,7 +537,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        ind += getfem::add_generalized_Dirichlet_condition_with_penalization
        (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
-	dataname, Hname);
+        dataname, Hname);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -569,7 +569,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_Helmholtz_brick(md->model(), gfi_mim->mesh_im(),
-				     varname, dataname, region)
+                                     varname, dataname, region)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -592,7 +592,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_Fourier_Robin_brick(md->model(), gfi_mim->mesh_im(),
-					 varname,dataname, region)
+                                         varname,dataname, region)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -612,37 +612,37 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string multname = in.pop().to_string();
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
        if (B->is_complex() && !md->is_complex())
-	 THROW_BADARG("Complex constraint for a real model");
+         THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
-	 THROW_BADARG("Real constraint for a complex model");
+         THROW_BADARG("Real constraint for a complex model");
        
        size_type ind
        = getfem::add_constraint_with_multipliers(md->model(),varname,multname);
        
        if (md->is_complex()) {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        } else {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
        
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 std::vector<double> V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        }
 
        out.pop().from_integer(int(ind + config::base_index()));
@@ -664,37 +664,37 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        double coeff = in.pop().to_scalar();
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
        if (B->is_complex() && !md->is_complex())
-	 THROW_BADARG("Complex constraint for a real model");
+         THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
-	 THROW_BADARG("Real constraint for a complex model");
+         THROW_BADARG("Real constraint for a complex model");
        
        size_type ind
        = getfem::add_constraint_with_penalization(md->model(), varname, coeff);
        
        if (md->is_complex()) {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        } else {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
        
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 std::vector<double> V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        }
        
        out.pop().from_integer(int(ind + config::base_index()));
@@ -721,31 +721,31 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        bool iscoercive = false;
        if (in.remaining()) issymmetric = (in.pop().to_integer(0,1) != 1);
        if (!issymmetric && in.remaining())
-	 iscoercive = (in.pop().to_integer(0,1) != 1);
+         iscoercive = (in.pop().to_integer(0,1) != 1);
        
        size_type ind
        = getfem::add_explicit_matrix(md->model(), varname1, varname2,
-				     issymmetric, iscoercive);
+                                     issymmetric, iscoercive);
        
        if (B->is_complex() && !md->is_complex())
-	 THROW_BADARG("Complex constraint for a real model");
+         THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
-	 THROW_BADARG("Real constraint for a complex model");
+         THROW_BADARG("Real constraint for a complex model");
        
        if (md->is_complex()) {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        } else {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
        
        out.pop().from_integer(int(ind + config::base_index()));
@@ -765,13 +765,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        = getfem::add_explicit_rhs(md->model(), varname);
        
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 std::vector<double> V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        }
        
        out.pop().from_integer(int(ind + config::base_index()));
@@ -788,24 +788,24 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
        
        if (B->is_complex() && !md->is_complex())
-	 THROW_BADARG("Complex constraint for a real model");
+         THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
-	 THROW_BADARG("Real constraint for a complex model");
+         THROW_BADARG("Real constraint for a complex model");
        
        if (md->is_complex()) {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->cplx_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        } else {
-	 if (B->storage()==gsparse::CSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
-	 else if (B->storage()==gsparse::WSCMAT)
-	   getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
-	 else
-	   THROW_BADARG("Constraint matrix should be a sparse matrix");
+         if (B->storage()==gsparse::CSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_csc());
+         else if (B->storage()==gsparse::WSCMAT)
+           getfem::set_private_data_matrix(md->model(), ind, B->real_wsc());
+         else
+           THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
        );
 
@@ -819,13 +819,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = in.pop().to_integer();
        
        if (!md->is_complex()) {
-	 darray st = in.pop().to_darray();
-	 std::vector<double> V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        } else {
-	 carray st = in.pop().to_carray();
-	 std::vector<std::complex<double> > V(st.begin(), st.end());
-	 getfem::set_private_data_rhs(md->model(), ind, V);
+         carray st = in.pop().to_carray();
+         std::vector<std::complex<double> > V(st.begin(), st.end());
+         getfem::set_private_data_rhs(md->model(), ind, V);
        }
        );
 
@@ -901,7 +901,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index() +
        add_nonlinear_elasticity_brick
        (md->model(), gfi_mim->mesh_im(), varname,
-	abstract_hyperelastic_law_from_name(lawname), dataname, region);
+        abstract_hyperelastic_law_from_name(lawname), dataname, region);
        
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -1059,16 +1059,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       conjugate gradient.@*/
      sub_command
        ("velocity update for Newmark scheme", 6, 6, 0,0,
-	size_type id2dt2 = in.pop().to_integer();
-	std::string varnameU = in.pop().to_string();
-	std::string varnameV = in.pop().to_string();
-	std::string varnamedt = in.pop().to_string();
-	std::string varnametwobeta = in.pop().to_string();
-	std::string varnamegamma = in.pop().to_string();
-	velocity_update_for_Newmark_scheme
-	(md->model(), id2dt2, varnameU, varnameV, varnamedt,
-	 varnametwobeta, varnamegamma);
-	);
+        size_type id2dt2 = in.pop().to_integer();
+        std::string varnameU = in.pop().to_string();
+        std::string varnameV = in.pop().to_string();
+        std::string varnamedt = in.pop().to_string();
+        std::string varnametwobeta = in.pop().to_string();
+        std::string varnamegamma = in.pop().to_string();
+        velocity_update_for_Newmark_scheme
+        (md->model(), id2dt2, varnameU, varnameV, varnamedt,
+         varnametwobeta, varnamegamma);
+        );
 
 
      /*@SET ('disable bricks', @ivec bricks_indices)
@@ -1076,28 +1076,28 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        building of the tangent linear system).@*/
      sub_command
        ("disable bricks", 1, 1, 0, 0,
-	dal::bit_vector bv = in.pop().to_bit_vector();
-	for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
-	  md->model().disable_brick(ii);
-	);
+        dal::bit_vector bv = in.pop().to_bit_vector();
+        for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
+          md->model().disable_brick(ii);
+        );
 
 
     /*@SET ('unable bricks', @ivec bricks_indices)
     Unable a disabled brick.@*/
      sub_command
        ("unable bricks", 1, 1, 0, 0,
-	dal::bit_vector bv = in.pop().to_bit_vector();
-	for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
-	  md->model().unable_brick(ii);
-	);
+        dal::bit_vector bv = in.pop().to_bit_vector();
+        for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
+          md->model().unable_brick(ii);
+        );
 
 
     /*@SET ('first iter')
     To be executed before the first iteration of a time integration scheme.@*/
      sub_command
        ("first iter", 0, 0, 0, 0,
-	md->model().first_iter();
-	);
+        md->model().first_iter();
+        );
 
 
     /*@SET ('next iter')
@@ -1105,8 +1105,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       integration scheme.@*/
      sub_command
        ("next iter", 0, 0, 0, 0,
-	md->model().next_iter();
-	);
+        md->model().next_iter();
+        );
 
 
     /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int symmetrized]])
@@ -1138,100 +1138,100 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     cannot be symmetrized). @*/
      sub_command
        ("add basic contact brick", 4, 10, 0, 1,
-	
-	bool friction = false;
-	
-	std::string varname_u = in.pop().to_string();
-	std::string multname_n = in.pop().to_string();
-	std::string dataname_r = in.pop().to_string();
-	std::string multname_t; std::string friction_coeff;
-	
-	mexarg_in argin = in.pop();
-	if (argin.is_string()) {
-	  friction = true;
-	  multname_t = dataname_r;
-	  dataname_r = argin.to_string();
-	  argin = in.pop();
-	}
-	
-	dal::shared_ptr<gsparse> BN = argin.to_sparse();
-	if (BN->is_complex()) THROW_BADARG("Complex matrix not allowed");
-	dal::shared_ptr<gsparse> BT;
-	if (friction) {
-	  BT = in.pop().to_sparse();
-	  if (BT->is_complex()) THROW_BADARG("Complex matrix not allowed");
-	  friction_coeff = in.pop().to_string();
-	}
-	
-	std::string dataname_gap;
-	dataname_gap = in.pop().to_string();
-	std::string dataname_alpha;
-	if (in.remaining()) dataname_alpha = in.pop().to_string();
-	bool symmetrized = false;
-	if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
-	
-	getfem::CONTACT_B_MATRIX BBN;
-	getfem::CONTACT_B_MATRIX BBT;
-	if (BN->storage()==gsparse::CSCMAT) {
-	  gmm::resize(BBN, gmm::mat_nrows(BN->real_csc()),
-		      gmm::mat_ncols(BN->real_csc()));
-	  gmm::copy(BN->real_csc(), BBN);
-	}
-	else if (BN->storage()==gsparse::WSCMAT) {
-	  gmm::resize(BBN, gmm::mat_nrows(BN->real_wsc()),
-		      gmm::mat_ncols(BN->real_wsc()));
-	  gmm::copy(BN->real_wsc(), BBN);
-	}
-	else THROW_BADARG("Matrix BN should be a sparse matrix");
-	
-	if (friction) {
-	  if (BT->storage()==gsparse::CSCMAT) {
-	    gmm::resize(BBT, gmm::mat_nrows(BT->real_csc()),
-			gmm::mat_ncols(BT->real_csc()));
-	    gmm::copy(BT->real_csc(), BBT);
-	  }
-	  else if (BT->storage()==gsparse::WSCMAT) {
-	    gmm::resize(BBT, gmm::mat_nrows(BT->real_wsc()),
-			gmm::mat_ncols(BT->real_wsc()));
-	    gmm::copy(BT->real_wsc(), BBT);
-	  }
-	  else THROW_BADARG("Matrix BT should be a sparse matrix");
-	}
-	
-	size_type ind;
-	if (friction) {
-	  ind = getfem::add_basic_contact_with_friction_brick
-	    (md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
-	     friction_coeff, dataname_gap, dataname_alpha, symmetrized);
-	} else {
-	  ind = getfem::add_basic_contact_brick
-	    (md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,
-	     dataname_alpha, symmetrized);
-	}
-	
-	out.pop().from_integer(int(ind + config::base_index()));
-	);
+        
+        bool friction = false;
+        
+        std::string varname_u = in.pop().to_string();
+        std::string multname_n = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        std::string multname_t; std::string friction_coeff;
+        
+        mexarg_in argin = in.pop();
+        if (argin.is_string()) {
+          friction = true;
+          multname_t = dataname_r;
+          dataname_r = argin.to_string();
+          argin = in.pop();
+        }
+        
+        dal::shared_ptr<gsparse> BN = argin.to_sparse();
+        if (BN->is_complex()) THROW_BADARG("Complex matrix not allowed");
+        dal::shared_ptr<gsparse> BT;
+        if (friction) {
+          BT = in.pop().to_sparse();
+          if (BT->is_complex()) THROW_BADARG("Complex matrix not allowed");
+          friction_coeff = in.pop().to_string();
+        }
+        
+        std::string dataname_gap;
+        dataname_gap = in.pop().to_string();
+        std::string dataname_alpha;
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        bool symmetrized = false;
+        if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+        
+        getfem::CONTACT_B_MATRIX BBN;
+        getfem::CONTACT_B_MATRIX BBT;
+        if (BN->storage()==gsparse::CSCMAT) {
+          gmm::resize(BBN, gmm::mat_nrows(BN->real_csc()),
+                      gmm::mat_ncols(BN->real_csc()));
+          gmm::copy(BN->real_csc(), BBN);
+        }
+        else if (BN->storage()==gsparse::WSCMAT) {
+          gmm::resize(BBN, gmm::mat_nrows(BN->real_wsc()),
+                      gmm::mat_ncols(BN->real_wsc()));
+          gmm::copy(BN->real_wsc(), BBN);
+        }
+        else THROW_BADARG("Matrix BN should be a sparse matrix");
+        
+        if (friction) {
+          if (BT->storage()==gsparse::CSCMAT) {
+            gmm::resize(BBT, gmm::mat_nrows(BT->real_csc()),
+                        gmm::mat_ncols(BT->real_csc()));
+            gmm::copy(BT->real_csc(), BBT);
+          }
+          else if (BT->storage()==gsparse::WSCMAT) {
+            gmm::resize(BBT, gmm::mat_nrows(BT->real_wsc()),
+                        gmm::mat_ncols(BT->real_wsc()));
+            gmm::copy(BT->real_wsc(), BBT);
+          }
+          else THROW_BADARG("Matrix BT should be a sparse matrix");
+        }
+        
+        size_type ind;
+        if (friction) {
+          ind = getfem::add_basic_contact_with_friction_brick
+            (md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
+             friction_coeff, dataname_gap, dataname_alpha, symmetrized);
+        } else {
+          ind = getfem::add_basic_contact_brick
+            (md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,
+             dataname_alpha, symmetrized);
+        }
+        
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
 
 
     /*@SET ('contact brick set BN', @int indbrick, @tspmat BN)
     Can be used to set the BN matrix of a basic contact/friction brick. @*/
      sub_command
        ("contact brick set BN", 2, 2, 0, 0,
-	size_type ind = in.pop().to_integer();
-	dal::shared_ptr<gsparse> B = in.pop().to_sparse();
-	
-	if (B->is_complex())
-	  THROW_BADARG("BN should be a real matrix");
-	
-	if (B->storage()==gsparse::CSCMAT)
-	  gmm::copy(B->real_csc(),
-		    getfem::contact_brick_set_BN(md->model(), ind));
-	else if (B->storage()==gsparse::WSCMAT)
-	  gmm::copy(B->real_wsc(),
-		    getfem::contact_brick_set_BN(md->model(), ind));
-	else
-	  THROW_BADARG("BN should be a sparse matrix");
-	);
+        size_type ind = in.pop().to_integer();
+        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+        
+        if (B->is_complex())
+          THROW_BADARG("BN should be a real matrix");
+        
+        if (B->storage()==gsparse::CSCMAT)
+          gmm::copy(B->real_csc(),
+                    getfem::contact_brick_set_BN(md->model(), ind));
+        else if (B->storage()==gsparse::WSCMAT)
+          gmm::copy(B->real_wsc(),
+                    getfem::contact_brick_set_BN(md->model(), ind));
+        else
+          THROW_BADARG("BN should be a sparse matrix");
+        );
 
 
     /*@SET ('contact brick set BT', @int indbrick, @tspmat BT)
@@ -1239,22 +1239,22 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       friction brick. @*/
      sub_command
        ("contact brick set BT", 2, 2, 0, 0,
-	size_type ind = in.pop().to_integer();
-	dal::shared_ptr<gsparse> B = in.pop().to_sparse();
-	
-	if (B->is_complex())
-	  THROW_BADARG("BT should be a real matrix");
-	
-	if (B->storage()==gsparse::CSCMAT)
-	  gmm::copy(B->real_csc(), getfem::contact_brick_set_BT(md->model(), ind));
-	else if (B->storage()==gsparse::WSCMAT)
-	  gmm::copy(B->real_wsc(), getfem::contact_brick_set_BT(md->model(), ind));
-	else
-	  THROW_BADARG("BT should be a sparse matrix");
-	);
+        size_type ind = in.pop().to_integer();
+        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
+        
+        if (B->is_complex())
+          THROW_BADARG("BT should be a real matrix");
+        
+        if (B->storage()==gsparse::CSCMAT)
+          gmm::copy(B->real_csc(), getfem::contact_brick_set_BT(md->model(), ind));
+        else if (B->storage()==gsparse::WSCMAT)
+          gmm::copy(B->real_wsc(), getfem::contact_brick_set_BT(md->model(), ind));
+        else
+          THROW_BADARG("BT should be a sparse matrix");
+        );
 
 
-    /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle, [,  @int symmetrized])
+    /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int symmetrized])
     
     Add a contact with or without friction condition with a rigid obstacle
     to the model. The condition is applied on the variable `varname_u`
@@ -1278,46 +1278,136 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     representing the friction coefficient on each contact node. The
     parameter `symmetrized` indicates that the symmetry of the tangent
     matrix will be kept or not. Basically, this brick compute the matrix BN
-    and the vectors gap and alpha and call the basic contact brick. @*/
+    and the vectors gap and alpha and calls the basic contact brick. @*/
      sub_command
        ("add contact with rigid obstacle brick", 6, 9, 0, 1,
-	
-	bool friction = false;
-	
-	getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-	std::string varname_u = in.pop().to_string();
-	std::string multname_n = in.pop().to_string();
-	std::string dataname_r = in.pop().to_string();
-	std::string multname_t;  std::string dataname_fr;
-	
-	mexarg_in argin = in.pop();
-	if (argin.is_string()) {
-	  friction = true;
-	  multname_t = dataname_r;
-	  dataname_r = argin.to_string();
-	  dataname_fr = in.pop().to_string();
-	  argin = in.pop();
-	}
-	
-	size_type region = argin.to_integer();
-	std::string obstacle = in.pop().to_string();
-	bool symmetrized = false;
-	if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
-	
-	size_type ind;
-	
-	if (friction)
-	  ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
-	    (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-	     multname_t, dataname_r, dataname_fr, region, obstacle,
-	     symmetrized);
-	else
-	  ind = getfem::add_contact_with_rigid_obstacle_brick
-	    (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-	     dataname_r, region, obstacle, symmetrized);
-	workspace().set_dependance(md, gfi_mim);
-	out.pop().from_integer(int(ind + config::base_index()));
-	);
+        
+        bool friction = false;
+        
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string multname_n = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        std::string multname_t;  std::string dataname_fr;
+        
+        mexarg_in argin = in.pop();
+        if (argin.is_string()) {
+          friction = true;
+          multname_t = dataname_r;
+          dataname_r = argin.to_string();
+          dataname_fr = in.pop().to_string();
+          argin = in.pop();
+        }
+        
+        size_type region = argin.to_integer();
+        std::string obstacle = in.pop().to_string();
+        bool symmetrized = false;
+        if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+        
+        size_type ind;
+        
+        if (friction)
+          ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
+            (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+             multname_t, dataname_r, dataname_fr, region, obstacle,
+             symmetrized);
+        else
+          ind = getfem::add_contact_with_rigid_obstacle_brick
+            (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+             dataname_r, region, obstacle, symmetrized);
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+
+    /*@SET ind = ('add bilateral contact brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int symmetrized])
+    
+    Add a contact with or without friction condition between two faces of
+    one or two elastic bodies. The condition is applied on the variable
+    `varname_u1` or the variables `varname_u1` and `varname_u2` depending
+    if a single or two distinct displacement fields are given. Integers
+    `rg1` and `rg2` represent the regions expected to come in contact with
+    each other. In the single displacement variable case the regions defined
+    in both `rg1` and `rg2` refer to the variable `varname_u1`. In the case
+    of two displacement variables, `rg1` refers to `varname_u1` and `rg2`
+    refers to `varname_u2`. `multname_n` should be a fixed size variable
+    whose size is the number of degrees of freedom on those regions among
+    the ones defined in `rg1` and `rg2` which are characterized as "slaves".
+    It represents the contact equivalent nodal normal forces. `multname_t`
+    should be a fixed size variable whose size corresponds to the size of
+    `multname_n` multiplied by qdim - 1 . It represents the contact
+    equivalent nodal tangent (frictional) forces. The augmentation parameter
+    `r` should be chosen in a range of acceptabe values (close to the Young
+    modulus of the elastic body, see Getfem user documentation). The
+    friction coefficient stored in the parameter `fr` is either a single
+    value or a vector of the same size as `multname_n`. The optional
+    parameters `slave1` and `slave2` declare if the regions defined in `rg1`
+    and `rg2` are correspondingly considered as "slaves". By default
+    `slave1` is true and `slave2` is false, i.e. `rg1` contains the slave
+    surfaces, while 'rg2' the master surfaces. Preferrably only one of
+    `slave1` and `slave2` is set to true. The parameter `symmetrized`
+    indicates that the symmetry of the tangent matrix will be kept or not.
+    Basically, this brick computes the matrices BN and BT and the vectors
+    gap and alpha and calls the basic contact brick. @*/
+     sub_command
+       ("add bilateral contact brick", 6, 13, 0, 1,
+
+        bool two_variables = true;
+        bool friction = false;
+
+        getfemint_mesh_im *gfi_mim1;
+        getfemint_mesh_im *gfi_mim2;
+        std::string varname_u1;
+        std::string varname_u2;
+        bool slave1=true; bool slave2=false; bool symmetrized=false;
+
+        gfi_mim1 = in.pop().to_getfemint_mesh_im();
+        mexarg_in argin = in.pop();
+        if (argin.is_string()) {
+          two_variables = false;
+          gfi_mim2 = gfi_mim1;
+          varname_u1 = argin.to_string();
+          varname_u2 = varname_u1;
+        } else {
+          gfi_mim2 = argin.to_getfemint_mesh_im();
+          varname_u1 = in.pop().to_string();
+          varname_u2 = in.pop().to_string();
+        }
+        std::string multname_n = in.pop().to_string();
+        std::string multname_t;
+        std::string dataname_r = in.pop().to_string();
+        std::string dataname_fr;
+        argin = in.pop();
+        if (!argin.is_integer()) {
+          friction = true;
+          multname_t = dataname_r;
+          dataname_r = in.pop().to_string();
+          dataname_fr = in.pop().to_string();
+          argin = in.pop();
+        }
+        std::vector<size_type> vrg1(1,argin.to_integer());
+        std::vector<size_type> vrg2(1,in.pop().to_integer());
+        if (in.remaining()) slave1 = (in.pop().to_integer(0,1)) != 0;
+        if (in.remaining()) slave2 = (in.pop().to_integer(0,1)) != 0;
+        if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+
+        size_type ind;
+        if (friction)
+          ind = getfem::add_bilateral_contact_brick
+            (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
+             varname_u1, varname_u2, multname_n, dataname_r,
+             vrg1, vrg2, slave1, slave2, symmetrized);
+        else
+          ind = getfem::add_bilateral_contact_with_friction_brick
+            (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
+             varname_u1, varname_u2, multname_n, multname_t,
+             dataname_r, dataname_fr,
+             vrg1, vrg2, slave1, slave2, symmetrized);
+        workspace().set_dependance(md, gfi_mim1);
+        if (two_variables)
+          workspace().set_dependance(md, gfi_mim2);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
 
   }
  
@@ -1331,12 +1421,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, md);
   }
   else bad_cmd(init_cmd);
-
-
 
 }

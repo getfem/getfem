@@ -222,12 +222,12 @@ bool elastostatic_contact_problem::solve() {
     (dataname_r, mu * (3*lambda + 2*mu) / (lambda + mu) );  // r ~= Young modulus
   std::string multname_n, multname_t;
   if (frictionless) {
-    getfem::add_frictionless_contact_brick
+    getfem::add_bilateral_contact_brick
       (md, mim, varname_u, multname_n, dataname_r, cb_rgs1, cb_rgs2);
   } else {
     std::string dataname_frict_coeff="friction_coefficient";
     md.add_initialized_scalar_data(dataname_frict_coeff, frict_coeff);
-    getfem::add_contact_with_friction_brick
+    getfem::add_bilateral_contact_with_friction_brick
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_frict_coeff, cb_rgs1, cb_rgs2);
   }
