@@ -90,4 +90,7 @@
 .. _GiD: http://gid.cimne.upc.es
 .. _EMC2: http://www-rocq1.inria.fr/gamma/cdrom/www/emc2/eng.htm
 .. _Python: http://www.python.org
-.. _mathworks-oo: http://www.mathworks.com/products/matlab/object_oriented_programming.html
+.. _mathworks-oo: http://www.mathworks.com/products/matlab/object_oriented_programming.htm
+.. |gnufreedoc| replace:: GNU Free Documentation License
+.. _gnufreedoc: http://www.gnu.org/licenses/fdl.html
+

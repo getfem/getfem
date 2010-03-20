@@ -344,7 +344,7 @@ namespace getfem {
       else if (bgeot::casecmp(selemtype, "prisma")==0) { eltype = PRISM; }
       else if (bgeot::casecmp(selemtype, "hexahedra")==0) { eltype = HEX; }
       else GMM_ASSERT1(false, "unknown element type '"<< selemtype << "'");
-      assert(!f.eof());
+      GMM_ASSERT1(!f.eof(), "File ended before coordinates");
       f >> bgeot::skip("COORDINATES");
       if (!nodes_done) {
 	dal::dynamic_array<base_node> gid_nodes;
