@@ -1392,7 +1392,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
 
         size_type ind;
-        if (friction)
+        if (!friction)
           ind = getfem::add_unilateral_contact_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, dataname_r,
