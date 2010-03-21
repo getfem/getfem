@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2006-2009 Julien Pommier.
+ Copyright (C) 2006-2010 Julien Pommier.
 
  This file is a part of GETFEM++
 
@@ -210,17 +210,18 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
     } break;
 #endif
   }
-  mwSize *pm;
-  int k,kkk,dmlen;
-  t->dim.dim_len = mxGetNumberOfDimensions(mx);
-  dmlen=t->dim.dim_len;
-  pm=(mwSize *)mxGetDimensions(mx);
-  t->dim.dim_val = (u_int*)mxCalloc(dmlen,sizeof(int));
-  
-  for (k=0; k <dmlen; ++k) 
-  {   
-   kkk=(int)pm[k];   
-   t->dim.dim_val[k]=kkk;
+  {
+    mwSize *pm;
+    int k,kkk,dmlen;
+    t->dim.dim_len = mxGetNumberOfDimensions(mx);
+    dmlen=t->dim.dim_len;
+    pm=(mwSize *)mxGetDimensions(mx);
+    t->dim.dim_val = (u_int*)mxCalloc(dmlen,sizeof(int));
+    
+    for (k=0; k <dmlen; ++k) {   
+      kkk=(int)pm[k];   
+      t->dim.dim_val[k]=kkk;
+    }
   }
   return 0;
 }
@@ -228,7 +229,6 @@ mxarray_to_gfi_array(const mxArray *mx, gfi_array *t)
 mxArray*
 gfi_array_to_mxarray(gfi_array *t) {
   mxArray *m;
-  assert(t);
 
   /* Matlab represent scalars as an array of size one */
   /* while gfi_array represents "scalar" values with 0-dimension array */
@@ -242,6 +242,8 @@ gfi_array_to_mxarray(gfi_array *t) {
   /****************** dimensions array in mwSize */  
   ndim2=ndim;
   dim2=mxCalloc(ndim,sizeof(mwSize));
+
+  assert(t);
    
   for (ij=0;ij<ndim;ij++)
    {
@@ -317,10 +319,10 @@ gfi_array_to_mxarray(gfi_array *t) {
     case GFI_SPARSE: {
         
      /****************** Ir treatement */
-      assert(ndim == 2);
       int i;
       mwIndex d1,d2,nnz;
       mwIndex *pr2;
+      assert(t);
       
       d1=t->dim.dim_val[0];
       d2=t->dim.dim_val[1];

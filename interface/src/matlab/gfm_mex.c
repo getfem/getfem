@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2006-2006 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
 
  This file is a part of GETFEM++
 
@@ -24,7 +24,7 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
+/* #include <unistd.h> */
 #include "mex.h"
 #include "gfm_common.h"
 #include "getfem_interface.h"
