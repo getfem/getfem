@@ -27,8 +27,7 @@ help:
 	@echo "  htmlhelp  to make HTML files and a HTML help project"
 	@echo "  htmlview  to make and view standalone HTML files"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
-	@echo "  alldoc    to make pdfLaTeX and HTML files, you can set PAPER=a4 or PAPER=letter"
-	@echo "  changes   to make an overview over all changed/added/deprecated items"
+	@echo "  pdf       to make pdfLaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  linkcheck to check all external links for integrity"
 	@echo "  dist      to create a \"dist\" directory with archived docs for download"
 	@echo "  upload    to make HTML and LATEX docs and upload it to gna.org"
@@ -90,10 +89,14 @@ htmlhelp: build
 
 latex: BUILDER = latex
 latex: build
-	(cd build/latex && make all-pdf)
 	@echo "Build finished; the LaTeX files are in build/latex."
 	@echo "Run \`make all-pdf' or \`make all-ps' in that directory to" \
 	      "run these through (pdf)latex."
+
+pdf: BUILDER = latex
+pdf: build
+	(cd build/latex && make all-pdf)
+	@echo "Build finished; the pdfLaTeX files are in build/latex."
 
 linkcheck: BUILDER = linkcheck
 linkcheck: build
@@ -150,7 +153,7 @@ upload:
 	gzip -9 getfem-$(DISTVERSION)-docs-html.tar
 	$(top_srcdir)/bin/upload_documentation --delete getfem-$(DISTVERSION)-docs-html.tar.gz
 	rm -fr getfem-$(DISTVERSION)-docs-html *.tar.gz
-	make latex
+	make pdf
 	-mv build/latex/*.pdf .
 	$(top_srcdir)/bin/upload_documentation --delete scilab_interface.pdf
 	$(top_srcdir)/bin/upload_documentation --delete python_interface.pdf
@@ -160,4 +163,3 @@ upload:
 	$(top_srcdir)/bin/upload_documentation --delete gmm_userdoc.pdf
 	rm -fr *.pdf
 	rm -fr build
-

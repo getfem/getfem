@@ -1,4 +1,4 @@
-.. $Id: index.rst 3327 2009-11-04 16:42:35Z lsaavedr $
+.. $Id$
 
 .. include:: ../replaces.txt
 

@@ -69,6 +69,7 @@ the description of a face and the eventual reference to a more basic description
 .. _dp-fig-elem:
 .. figure:: images/getfemelemelem.png
    :align: center
+   :scale: 60
 
    usual elements
 
@@ -141,6 +142,7 @@ Geometric transformations
 .. _dp-fig-transgeo:
 .. figure:: images/getfemtransgeo.png
    :align: center
+   :scale: 60
 
    geometric transformation
 

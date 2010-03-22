@@ -116,6 +116,7 @@ it is important to respect the order shown in :ref:`ud-fig-elem`.
 .. _ud-fig-elem:
 .. figure:: images/getfemuserelem.png
    :align: center
+   :width: 12cm
 
    vertex numeration for usual elements
 
@@ -412,6 +413,7 @@ The numeration of faces on usual elements is given in figure :ref:`ud-fig-elemf`
 .. _ud-fig-elemf:
 .. figure:: images/getfemuserelemf.png
    :align: center
+   :width: 12cm
 
    faces numeration for usual elements
 

@@ -12,6 +12,7 @@ MatLab Interface
 
    intro
    install
+   install_on_mac
    pre
    mlabgf
    examples

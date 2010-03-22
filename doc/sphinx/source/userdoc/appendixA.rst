@@ -9,6 +9,72 @@
 Appendix A. Finite element method list
 ======================================
 
+  .. list-table:: Symbols representing degree of freedom types
+     :widths: 30 30 30
+     :header-rows: 0
+     :class: figure
+
+     * - .. image:: images/getfemlistsymbols00.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols01.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols02.png
+            :align: center
+            :scale: 50
+     * - Value of the function at the node.
+       - Value of the gradient along of the first coordinate.
+       - Value of the gradient along of the second coordinate.
+     * - .. image:: images/getfemlistsymbols03.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols04.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols05.png
+            :align: center
+            :scale: 50
+     * - Value of the gradient along of the thrid coordinate for 3D elements.
+       - Value of the whole gradient at the node.
+       - Value of the normal derivative to a face.
+     * - .. image:: images/getfemlistsymbols06.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols07.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols08.png
+            :align: center
+            :scale: 50
+     * - Value of the second derivative along the first coordinate (twice).
+       - Value of the second derivative along the second coordinate (twice).
+       - Value of the second cross derivative in 2D or second derivative
+         along the thrid coordinate (twice) in 3D.
+     * - .. image:: images/getfemlistsymbols09.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols10.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols11.png
+            :align: center
+            :scale: 50
+     * - Value of the whole second derivative (hessian) at the node.
+       - Scalar product with a certain vector (for instance an edge) for a
+         vectorial elements.
+       - Scalar product with the normal to a face for a vectorial elements.
+     * - .. image:: images/getfemlistsymbols12.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistsymbols13.png
+            :align: center
+            :scale: 50
+       -
+     * - Bubble function on an element or a face, to be specified.
+       - Lagrange hierarchical d.o.f. value at the node in a space of details.
+       -
+
 Let us recall that all finite element methods defined in |gf| are declared in the
 file ``getfem_fem.h`` and that a descriptor on a finite element method is obtained
 thanks to the function::
@@ -17,330 +83,358 @@ thanks to the function::
 
 where ``"name of method"`` is a string to be choosen among the existing methods.
 
-.. _ud-fig-symbols:
-.. figure:: images/getfemlistsymbols.png
-   :align: center
-
-   Symbols representing degree of freedom types
-
 
 Classical :math:`P_K` Lagrange elements on simplices
 ----------------------------------------------------
 
-It is possible to define a classical :math:`P_K` Lagrange element of arbitrary 
-dimension and arbitrary degree. Each degree of freedom of such an element 
-corresponds to the value of the function on a corresponding node. The grid of 
-node is the so-called Lagrange grid. Figures :ref:`ud-fig-segmentpk`,
-
 .. _ud-fig-segmentpk:
 .. figure:: images/getfemlistsegmentPk.png
    :align: center
+   :scale: 60
 
    Examples of classical :math:`P_K` Lagrange elements on a segment
 
-.. _ud-fig-trianglepk:
-.. tabularcolumns:: cc
-.. csv-table:: Examples of classical :math:`P_K` Lagrange elements on a triangle.
-   :class: figure
-   :widths: 2, 2
-   :delim: &
+It is possible to define a classical :math:`P_K` Lagrange element of arbitrary
+dimension and arbitrary degree. Each degree of freedom of such an element
+corresponds to the value of the function on a corresponding node. The grid of
+node is the so-called Lagrange grid. Figures :ref:`ud-fig-segmentpk`.
 
-   .. image:: images/getfemlisttriangleP1.png & .. image:: images/getfemlisttriangleP2.png
-   :math:`P_1`, 3 d.o.f., :math:`C^0` & :math:`P_2` element, 6 d.o.f., :math:`C^0`
-   .. image:: images/getfemlisttriangleP3.png & .. image:: images/getfemlisttriangleP6.png
-   :math:`P_3`, 10 d.o.f., :math:`C^0` & :math:`P_6` element, 28 d.o.f., :math:`C^0`
+  .. _ud-fig-trianglepk:
+  .. list-table:: Examples of classical :math:`P_K` Lagrange elements on a triangle.
+     :widths: 30 30
+     :header-rows: 0
+     :class: figure
 
+     * - .. image:: images/getfemlisttriangleP1.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlisttriangleP2.png
+            :align: center
+            :scale: 50
+     * - :math:`P_1`, 3 d.o.f., :math:`C^0`
+       - :math:`P_2` element, 6 d.o.f., :math:`C^0`
+     * - .. image:: images/getfemlisttriangleP3.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlisttriangleP6.png
+            :align: center
+            :scale: 50
+     * - :math:`P_3`, 10 d.o.f., :math:`C^0`
+       - :math:`P_6` element, 28 d.o.f., :math:`C^0`
 
-The number of degrees of freedom for a classical :math:`P_K` Lagrange element of dimension :math:`P` and degree :math:`K` is :math:`\Frac{(P+K)!}{P!K!}`. For instance, in dimension 2 (:math:`P = 2`), this value is :math:`\Frac{(K+1) (K+2)}{2}` and in dimension 3 (:math:`P = 3`), it is :math:`\Frac{(K+1) (K+2) (K+3)}{6}`.
+The number of degrees of freedom for a classical :math:`P_K` Lagrange element of
+dimension :math:`P` and degree :math:`K` is :math:`\Frac{(P+K)!}{P!K!}`. For
+instance, in dimension 2 (:math:`P = 2`), this value is :math:`\Frac{(K+1)
+(K+2)}{2}` and in dimension 3 (:math:`P = 3`), it is :math:`\Frac{(K+1) (K+2)
+(K+3)}{6}`.
 
-.. _ud-fig-tetrahedronpk:
-.. tabularcolumns:: cc
-.. csv-table:: Examples of classical :math:`P_K` Lagrange elements on a tetrahedron.
-   :class: figure
-   :widths: 2, 2
-   :delim: &
+  .. _ud-fig-tetrahedronpk:
+  .. list-table:: Examples of classical :math:`P_K` Lagrange elements on a tetrahedron.
+     :widths: 30 30
+     :header-rows: 0
+     :class: figure
 
-   .. image:: images/getfemlisttetrahedronP1.png & .. image:: images/getfemlisttetrahedronP2.png
-   :math:`P_1` element, 4 d.o.f., :math:`C^0` & :math:`P_2` element, 10 d.o.f., :math:`C^0`
-   .. image:: images/getfemlisttetrahedronP4.png &
-   :math:`P_4` element, 35 d.o.f., :math:`C^0` &
+     * - .. image:: images/getfemlisttetrahedronP1.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlisttetrahedronP2.png
+            :align: center
+            :scale: 50
+     * - :math:`P_1` element, 4 d.o.f., :math:`C^0`
+       - :math:`P_2` element, 10 d.o.f., :math:`C^0`
+     * - .. image:: images/getfemlisttetrahedronP4.png
+            :align: center
+            :scale: 50
+       -
+     * - :math:`P_4` element, 35 d.o.f., :math:`C^0`
+       -
 
-
-The particular way used in |gf| to numerate the nodes are also shown in figures :ref:`segment<ud-fig-segmentpk>`, :ref:`triangle<ud-fig-trianglepk>` and :ref:`tetrahedron<ud-fig-tetrahedronpk>`. Using another numeration, let
+The particular way used in |gf| to numerate the nodes are also shown in figures
+:ref:`segment<ud-fig-segmentpk>`, :ref:`triangle<ud-fig-trianglepk>` and
+:ref:`tetrahedron<ud-fig-tetrahedronpk>`. Using another numeration, let
 
 .. math::
-  
+
   i_0, i_1, ... i_P,
 
 be somme indices such that
 
 .. math::
-  
+
   0 \leq i_0, i_1, ... i_P \leq K, \ \mbox{ and } \ \sum_{n = 0}^{P} i_n = K.
 
 Then, the coordinate of a node can be computed as
 
 .. math::
-  
+
    a_{i_0, i_1, ... i_P} = \sum_{n = 0}^{P} \Frac{i_n}{K}S_n, \ \ \mbox{ for } K \neq 0,
 
-where :math:`S_0, S_1, ... S_N` are the vertices of the simplex (for :math:`K = 0` the particular choice :math:`a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P} \Frac{1}{P+1}S_n` has been chosen).
-Then each base function, corresponding of each node :math:`a_{i_0, i_1, ... i_P}` is defined by
+where :math:`S_0, S_1, ... S_N` are the vertices of the simplex (for :math:`K = 0`
+the particular choice :math:`a_{0, 0, ... 0} = \ds \sum_{n = 0}^{P}
+\Frac{1}{P+1}S_n` has been chosen). Then each base function, corresponding of each
+node :math:`a_{i_0, i_1, ... i_P}` is defined by
 
 .. math::
-  
+
   \phi_{i_0, i_1, ... i_P} = \prod_{n = 0}^{P} \prod_{j=0}^{i_n-1} \left(\Frac{K \lambda_n - j}{j+1}\right).
 
-where :math:`\lambda_n` are the barycentric coordinates, i.e. the polynomials of degree 1 whose value is :math:`1` on the vertex :math:`S_n` and whose value is :math:`0` on other vertices. On the reference element, one has
+where :math:`\lambda_n` are the barycentric coordinates, i.e. the polynomials of
+degree 1 whose value is :math:`1` on the vertex :math:`S_n` and whose value is
+:math:`0` on other vertices. On the reference element, one has
 
 .. math::
-  
+
   \lambda_n = x_n, \ \ 0 \leq n < P,
 
 
 .. math::
-  
+
   \lambda_P = 1 - x_0 - x_1 - ... - x_{P-1}.
 
-When between two elements of the same degrees (even with different dimensions), the d.o.f. of a common face are linked, the element is of class :math:`C^0`. This means that the global polynomial is continuous. If you try to link elements of different degrees, you will get some trouble with the unlinked d.o.f. This is not automatically supported by |gf|, so you will have to support it (add constraints on these d.o.f.).
+When between two elements of the same degrees (even with different dimensions),
+the d.o.f. of a common face are linked, the element is of class :math:`C^0`. This
+means that the global polynomial is continuous. If you try to link elements of
+different degrees, you will get some trouble with the unlinked d.o.f. This is not
+automatically supported by |gf|, so you will have to support it (add constraints
+on these d.o.f.).
 
-For some applications (computation of a gradient for instance) one may not want the d.o.f. of a common face to be linked. This is why there are two versions of the classical :math:`P_K` Lagrange element.
+For some applications (computation of a gradient for instance) one may not want
+the d.o.f. of a common face to be linked. This is why there are two versions of
+the classical :math:`P_K` Lagrange element.
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+  .. list-table:: Classical :math:`P_K` Lagrange element ``"FEM_PK(P, K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Classical :math:`P_K` Lagrange element
-   * - ``"FEM_PK(P, K)"``
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - :math:`K`, :math:`0 \leq K \leq 255`
+       - :math:`P`, :math:`~ 1 \leq P \leq 255`
+       - :math:`\Frac{(K+P)!}{K! P!}`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+:math:`.\\`
 
-   * - :math:`K`, :math:`0 \leq K \leq 255`
-     - :math:`P`, :math:`~ 1 \leq P \leq 255`
-     - :math:`\Frac{(K+P)!}{K! P!}`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
+  .. list-table:: Discontinuous :math:`P_K` Lagrange element ``"FEM_PK_DISCONTINUOUS(P, K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. math::
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   \;
+     * - :math:`K`, :math:`0 \leq K \leq 255`
+       - :math:`P`, :math:`~ 1 \leq P \leq 255`
+       - :math:`\Frac{(K+P)!}{K! P!}`
+       - discontinuous
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
-
-   * - Discontinuous :math:`P_K` Lagrange element
-   * - ``"FEM_PK_DISCONTINUOUS(P, K)"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`K`, :math:`0 \leq K \leq 255`
-     - :math:`P`, :math:`~ 1 \leq P \leq 255`
-     - :math:`\Frac{(K+P)!}{K! P!}`
-     - discontinuous
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
-
-Even though Lagrange elements are defined for arbitrary degrees, to choose a high degree can be problematic for a large number of applications due to the "noisy" caracteristic of the lagrange basis. These elements are recommended for the basic interpolation but for p.d.e. applications elements with hierarchical basis are preferable (see the corresponding section).
+Even though Lagrange elements are defined for arbitrary degrees, to choose a high
+degree can be problematic for a large number of applications due to the "noisy"
+caracteristic of the lagrange basis. These elements are recommended for the basic
+interpolation but for p.d.e. applications elements with hierarchical basis are
+preferable (see the corresponding section).
 
 Classical Lagrange elements on other geometries
 -----------------------------------------------
 
-Classical Lagrange elements on parallelepipeds or prisms are obtained as tensor product of Lagrange elements on simplices. When two elements are defined, one on a dimension :math:`P^1` and the other in dimension :math:`P^2`, one obtains the base functions of the tensorial product (on the reference element) as
+Classical Lagrange elements on parallelepipeds or prisms are obtained as tensor
+product of Lagrange elements on simplices. When two elements are defined, one on a
+dimension :math:`P^1` and the other in dimension :math:`P^2`, one obtains the base
+functions of the tensorial product (on the reference element) as
 
 .. math::
-  
+
   \phi'_{ij}(x,y) = \phi'^1_i(x) \phi'^2_j(y), ~~ x \in \Reel^{P^1}, y \in  \Reel^{P^2},
 
-where :math:`\phi'^1_i` and :math:`\phi'^2_i` are respectively the base functions of the first and second element.
+where :math:`\phi'^1_i` and :math:`\phi'^2_i` are respectively the base functions
+of the first and second element.
 
+  .. _ud-fig-prodpkdeux:
+  .. list-table:: Examples of classical :math:`Q_K` Lagrange elements in dimension 2.
+     :widths: 30 30
+     :header-rows: 0
+     :class: figure
 
-.. _ud-fig-prodpkdeux:
-.. tabularcolumns:: cc
-.. csv-table:: Examples of classical :math:`Q_K` Lagrange elements in dimension 2.
-   :class: figure
-   :widths: 2, 2
-   :delim: &
+     * - .. image:: images/getfemlistquadQ1.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistquadQ3.png
+            :align: center
+            :scale: 50
+     * - :math:`Q_1` element, 4 d.o.f., :math:`C^0`
+       - :math:`Q_3` element, 16 d.o.f., :math:`C^0`
 
-   .. image:: images/getfemlistquadQ1.png & .. image:: images/getfemlistquadQ3.png
-   :math:`Q_1` element, 4 d.o.f., :math:`C^0` & :math:`Q_3` element, 16 d.o.f., :math:`C^0`
+The :math:`Q_K` element on a parallelepiped of dimension :math:`P` is obtained as
+the tensorial product of :math:`P` classical :math:`P_K` elements on the segment.
+Examples in dimension 2 are shown in figure :ref:`dimension 2<ud-fig-prodpkdeux>`
+and in dimension 3 in figure :ref:`dimension 3<ud-fig-prodpktrois>`.
 
+A prism in dimension :math:`P > 1` is the direct product of a simplex of dimension
+:math:`P-1` with a segment. The :math:`P_K \otimes P_K` element on this prism is
+the tensorial product of the classical :math:`P_K` element on a simplex of
+dimension :math:`P-1` with the classical :math:`P_K` element on a segment. For
+:math:`P=2` this coincide with a parallelepiped. Examples in dimension :math:`3`
+are shown in figure :ref:`dimension 3<ud-fig-prodpktrois>`. This is also possible
+not to have the same degree on each dimension. An example is shown on figure
+:ref:`dimension 3, prism<ud-fig-prism_P2_p1>`.
 
-The :math:`Q_K` element on a parallelepiped of dimension :math:`P` is obtained as the tensorial product of :math:`P` classical :math:`P_K` elements on the segment. Examples in dimension 2 are shown in figure :ref:`dimension 2<ud-fig-prodpkdeux>` and in dimension 3 in figure :ref:`dimension 3<ud-fig-prodpktrois>`.
+  .. _ud-fig-prodpktrois:
+  .. list-table:: Examples of classical Lagrange elements in dimension 3.
+     :widths: 30 30
+     :header-rows: 0
+     :class: figure
 
-A prism in dimension :math:`P > 1` is the direct product of a simplex of dimension :math:`P-1` with a segment. The :math:`P_K \otimes P_K` element on this prism is the tensorial product of the classical :math:`P_K` element on a simplex of dimension :math:`P-1` with the classical :math:`P_K` element on a segment. For :math:`P=2` this coincide with a parallelepiped. Examples in dimension :math:`3` are shown in figure :ref:`dimension 3<ud-fig-prodpktrois>`. This is also possible not to have the same degree on each dimension. An example is shown on figure :ref:`dimension 3, prism<ud-fig-prism_P2_p1>`.
+     * - .. image:: images/getfemlistcubeQ1.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistcubeQ3.png
+            :align: center
+            :scale: 50
+     * - :math:`Q_1` element, 8 d.o.f., :math:`C^0`
+       - :math:`Q_3` element, 64 d.o.f., :math:`C^0`
+     * - .. image:: images/getfemlistprismP1.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlistprismP3.png
+            :align: center
+            :scale: 50
+     * - :math:`P_1 \otimes P_1` element, 6 d.o.f., :math:`C^0`
+       - :math:`P_3 \otimes P_3` element, 40 d.o.f., :math:`C^0`
 
-.. _ud-fig-prodpktrois:
-.. tabularcolumns:: cc
-.. csv-table:: Examples of classical Lagrange elements in dimension 3.
-   :class: figure
-   :widths: 2, 2
-   :delim: &
-
-   .. image:: images/getfemlistcubeQ1.png & .. image:: images/getfemlistcubeQ3.png
-   :math:`Q_1` element, 8 d.o.f., :math:`C^0` & :math:`Q_3` element, 64 d.o.f., :math:`C^0`
-   .. image:: images/getfemlistprismP1.png & .. image:: images/getfemlistprismP3.png
-   :math:`P_1 \otimes P_1` element, 6 d.o.f., :math:`C^0` & :math:`P_3 \otimes P_3` element, 40 d.o.f., :math:`C^0`
-
+:math:`.\\`
 
 .. _ud-fig-prism_P2_p1:
 .. figure:: images/getfemlistprismP2P1.png
    :align: center
+   :scale: 60
 
    :math:`P_2 \otimes P_1` Lagrange element on a prism, 12 d.o.f., :math:`C^0`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - :math:`Q_K` Lagrange element on parallelepipeds
-   * - ``"FEM_QK(P, K)"``
+  .. list-table:: . :math:`Q_K` Lagrange element on parallelepipeds ``"FEM_QK(P, K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`KP`, :math:`0 \leq K \leq 255`
+       - :math:`P`, :math:`~ 1 \leq P \leq 255`
+       - :math:`(K+1)^P`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-   * - :math:`KP`, :math:`0 \leq K \leq 255`
-     - :math:`P`, :math:`~ 1 \leq P \leq 255`
-     - :math:`(K+1)^P`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
+:math:`.\\`
 
-.. math::
+  .. list-table:: . :math:`P_K \otimes P_K` Lagrange element on prisms ``"FEM_PK_PRISM(P, K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   \;
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - :math:`2K`, :math:`0 \leq K \leq 255`
+       - :math:`P`, :math:`~ 2 \leq P \leq 255`
+       - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-   * - :math:`P_K \otimes P_K` Lagrange element on prisms
-   * - ``"FEM_PK_PRISM(P, K)"``
+:math:`.\\`
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+  .. list-table:: . :math:`P_{K_1} \otimes P_{K_2}` Lagrange element on prisms ``"FEM_PRODUCT(FEM_PK(P-1, K1), FEM_PK(1, K2))"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - :math:`2K`, :math:`0 \leq K \leq 255`
-     - :math:`P`, :math:`~ 2 \leq P \leq 255`
-     - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
+     * - :math:`K_1+K_2`, :math:`0 \leq K_1,K_2 \leq 255`
+       - :math:`P`, :math:`~ 2 \leq P \leq 255`
+       - :math:`(K_2+1)` :math:`\times~\Frac{(K_1+P-1)!}{K_1! (P-1)!}`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-.. math::
-
-   \;
-
-.. list-table::
-   :widths: 10
-   :header-rows: 1
-
-   * - :math:`P_{K_1} \otimes P_{K_2}` Lagrange element on prisms
-   * - ``"FEM_PRODUCT(FEM_PK(P-1, :math:`K_1`), FEM_PK(1, :math:`K_2`))"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`K_1+K_2`, :math:`0 \leq K_1,K_2 \leq 255`
-     - :math:`P`, :math:`~ 2 \leq P \leq 255`
-     - :math:`(K_2+1)` :math:`\times~\Frac{(K_1+P-1)!}{K_1! (P-1)!}`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
-
+:math:`.\\`
 
 .. figure:: images/getfemlistquad8.png
    :align: center
+   :scale: 60
 
    Incomplete :math:`Q_2` element, 8 d.o.f., :math:`C^0`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Incomplete :math:`Q_2` Lagrange element on quadrilateral (Quad 8 serendipity element)
-   * - ``"FEM_INCOMPLETE_Q2"``
+  .. list-table:: Incomplete :math:`Q_2` Lagrange element on quadrilateral (Quad 8 serendipity element) ``"FEM_INCOMPLETE_Q2"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - 3
-     - 2
-     - 8
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
+     * - 3
+       - 2
+       - 8
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
 
 Elements with hierarchical basis
 --------------------------------
 
-The idea behind hierarchical basis is the description of the solution at different level: a rough level, a more refined level ... In the same discretisation some degrees of freedom represent the rough description, some other the more rafined and so on. This corresponds to imbricated spaces of discretisation. The hierarchical basis contains a basis of each of these spaces (this is not the case in classical Lagrange elements when the mesh is refined).
+The idea behind hierarchical basis is the description of the solution at different
+level: a rough level, a more refined level ... In the same discretisation some
+degrees of freedom represent the rough description, some other the more rafined
+and so on. This corresponds to imbricated spaces of discretisation. The
+hierarchical basis contains a basis of each of these spaces (this is not the case
+in classical Lagrange elements when the mesh is refined).
 
-Among the advantages, the condition number of  rigidity matrices can be greatly improved, it allows local raffinement and a resolution with a multigrid approach.
+Among the advantages, the condition number of rigidity matrices can be greatly
+improved, it allows local raffinement and a resolution with a multigrid approach.
 
 Hiercarchical elements with respect to the degree
 +++++++++++++++++++++++++++++++++++++++++++++++++
@@ -348,143 +442,123 @@ Hiercarchical elements with respect to the degree
 .. _ud-fig-seg_hier:
 .. figure:: images/getfemlistsegmenthier.png
    :align: center
+   :scale: 60
 
    :math:`P_K` Hierarchical element on a segment, :math:`C^0`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - :math:`P_{K}` Classical Lagrange element on simplices but with a hierarchical basis with respect to the degree
-   * - ``"FEM_PK_HIERARCHICAL(P,K)"``
+  .. list-table:: . :math:`P_{K}` Classical Lagrange element on simplices but with a hierarchical basis with respect to the degree ``"FEM_PK_HIERARCHICAL(P,K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`K`, :math:`0 \leq K\leq 255`
+       - :math:`P`, :math:`~ 1 \leq P \leq 255`
+       - :math:`\Frac{(K+P)!}{K! P!}`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-   * - :math:`K`, :math:`0 \leq K\leq 255`
-     - :math:`P`, :math:`~ 1 \leq P \leq 255`
-     - :math:`\Frac{(K+P)!}{K! P!}`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
+:math:`.\\`
 
-.. math::
+  .. list-table:: . :math:`Q_{K}` Classical Lagrange element on parallelepipeds but with a hierarchical basis with respect to the degree ``"FEM_QK_HIERARCHICAL(P,K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   \;
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - :math:`K`, :math:`0 \leq K\leq 255`
+       - :math:`P`, :math:`~ 1 \leq P \leq 255`
+       - :math:`(K+1)^P`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-   * - :math:`Q_{K}` Classical Lagrange element on parallelepipeds but with a hierarchical basis with respect to the degree
-   * - ``"FEM_QK_HIERARCHICAL(P,K)"``
+:math:`.\\`
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+  .. list-table:: . :math:`P_{K}` Classical Lagrange element on prisms but with a hierarchical basis with respect to the degree ``"FEM_PK_PRISM_HIERARCHICAL(P,K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - :math:`K`, :math:`0 \leq K\leq 255`
-     - :math:`P`, :math:`~ 1 \leq P \leq 255`
-     - :math:`(K+1)^P`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
+     * - :math:`K`, :math:`0 \leq K\leq 255`
+       - :math:`P`, :math:`~ 2 \leq P \leq 255`
+       - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - Yes
 
-.. math::
+some particular choices: :math:`P_4` will be built with the basis of the
+:math:`P_1`, the additional basis of the :math:`P_2` then the additionnal basis of
+the :math:`P_4`.
 
-   \;
-
-.. list-table::
-   :widths: 10
-   :header-rows: 1
-
-   * - :math:`P_{K}` Classical Lagrange element on prisms but with a hierarchical basis with respect to the degree
-   * - ``"FEM_PK_PRISM_HIERARCHICAL(P,K)"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`K`, :math:`0 \leq K\leq 255`
-     - :math:`P`, :math:`~ 2 \leq P \leq 255`
-     - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - Yes
-
-
-some particular choices: :math:`P_4` will be built with the basis of the :math:`P_1`, the additional basis of the :math:`P_2` then the additionnal basis of the :math:`P_4`.
-
-:math:`P_6` will be built  with the basis of the :math:`P_1`, the additional basis of the :math:`P_2` then the additionnal basis of the :math:`P_6` (not with the basis of the :math:`P_1`, 
-the additional basis of the :math:`P_3` then the additionnal basis of the :math:`P_6`, it is possible to build the latter with ``"FEM_GEN_HIERARCHICAL(a,b)"``)
+:math:`P_6` will be built with the basis of the :math:`P_1`, the additional basis
+:of the :math:`P_2` then the additionnal basis of the :math:`P_6` (not with the
+:basis of the :math:`P_1`, the additional basis of the :math:`P_3` then the
+:additionnal basis of the :math:`P_6`, it is possible to build the latter with
+:``"FEM_GEN_HIERARCHICAL(a,b)"``)
 
 Composite elements
 ++++++++++++++++++
 
-The principal interest of the composite elements is to build hierarchical elements. But this tool can also be used to build piecewise polynomial elements.
+The principal interest of the composite elements is to build hierarchical
+elements. But this tool can also be used to build piecewise polynomial elements.
 
 .. _ud-fig-triangle_comp:
 .. figure:: images/getfemlisttriangleP1comp.png
    :align: center
+   :scale: 60
 
    composite element ``"FEM_STRUCTURED_COMPOSITE(FEM_PK(2,1), 3)"``
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Composition of a finite element method on a element with ``S`` subdivisions
-   * - ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``
+  .. list-table:: Composition of a finite element method on a element with ``S`` subdivisions ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - degree of FEM1
-     - dimension of FEM1
-     - variable
-     - variable
-     - No (:math:`Q = 1`)
-     - If ``FEM1`` is
-     - piecewise
+     * - degree of FEM1
+       - dimension of FEM1
+       - variable
+       - variable
+       - No (:math:`Q = 1`)
+       - If ``FEM1`` is
+       - piecewise
 
 It is important to use a corresponding composite integration method.
+
 
 Hierarchical composite elements
 +++++++++++++++++++++++++++++++
@@ -492,69 +566,56 @@ Hierarchical composite elements
 .. _ud-fig-triangle_compdeux:
 .. figure:: images/getfemlisttriangleP1comphier.png
    :align: center
+   :scale: 60
 
    hierarchical composite element ``"FEM_PK_HIERARCHICAL_COMPOSITE(2,1,3)"``
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Hierarchical composition of a :math:`P_K` finite element method on a simplex with ``S`` subdivisions
-   * - ``"FEM_PK_HIERARCHICAL_COMPOSITE(P,K,S)"``
+  .. list-table:: Hierarchical composition of a :math:`P_K` finite element method on a simplex with ``S`` subdivisions ``"FEM_PK_HIERARCHICAL_COMPOSITE(P,K,S)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`K`
+       - :math:`P`
+       - :math:`\Frac{(SK+P)!}{(SK)! P!}`
+       - variable
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - piecewise
 
-   * - :math:`K`
-     - :math:`P`
-     - :math:`\Frac{(SK+P)!}{(SK)! P!}`
-     - variable
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - piecewise
+:math:`.\\`
 
+  .. list-table:: Hierarchical composition of a hierarchical :math:`P_K` finite element method on a simplex with ``S`` subdivisions ``"FEM_PK_FULL_HIERARCHICAL_COMPOSITE(P,K,S)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. math::
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   \;
+     * - :math:`K`
+       - :math:`P`
+       - :math:`\Frac{(SK+P)!}{(SK)! P!}`
+       - variable
+       - No (:math:`Q = 1`)
+       - Yes (:math:`M = Id`)
+       - piecewise
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
-
-   * - Hierarchical composition of a hierarchical :math:`P_K` finite element method on a simplex with ``S`` subdivisions
-   * - ``"FEM_PK_FULL_HIERARCHICAL_COMPOSITE(P,K,S)"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`K`
-     - :math:`P`
-     - :math:`\Frac{(SK+P)!}{(SK)! P!}`
-     - variable
-     - No (:math:`Q = 1`)
-     - Yes (:math:`M = Id`)
-     - piecewise
-
-Other constructions are possible thanks to ``"FEM_GEN_HIERARCHICAL(FEM1, FEM2)"`` and ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``.
+Other constructions are possible thanks to ``"FEM_GEN_HIERARCHICAL(FEM1, FEM2)"``
+and ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``.
 
 It is important to use a corresponding composite integration method.
 
@@ -568,67 +629,54 @@ Raviart-Thomas of lowest order elements
 .. _ud-fig-triangle_comptrois:
 .. figure:: images/getfemlistRT0.png
    :align: center
+   :scale: 60
 
    RT0 elements in dimension two and three. (P+1 dof, H(div))
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Raviart-Thomas of lowest order element on simplices
-   * - ``"FEM_RT0(P)"``
+  .. list-table:: Raviart-Thomas of lowest order element on simplices ``"FEM_RT0(P)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`1`
+       - :math:`P`
+       - :math:`P+1`
+       - H(div)
+       - Yes (:math:`Q = P`)
+       - No
+       - Yes
 
-   * - :math:`1`
-     - :math:`P`
-     - :math:`P+1`
-     - H(div)
-     - Yes (:math:`Q = P`)
-     - No
-     - Yes
+:math:`.\\`
 
+  .. list-table:: Raviart-Thomas of lowest order element on parallelepipeds (quadrilaterals, hexahedrals) ``"FEM_RT0Q(P)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. math::
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   \;
+     * - :math:`1`
+       - :math:`P`
+       - :math:`2P`
+       - H(div)
+       - Yes (:math:`Q = P`)
+       - No
+       - Yes
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
-
-   * - Raviart-Thomas of lowest order element on parallelepipeds (quadrilaterals, hexahedrals)
-   * - ``"FEM_RT0Q(P)"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`1`
-     - :math:`P`
-     - :math:`2P`
-     - H(div)
-     - Yes (:math:`Q = P`)
-     - No
-     - Yes
 
 Nedelec (or Whitney) edge elements
 ++++++++++++++++++++++++++++++++++
@@ -636,77 +684,72 @@ Nedelec (or Whitney) edge elements
 .. _ud-fig-triangle_compquatre:
 .. figure:: images/getfemlistnedelec.png
    :align: center
+   :scale: 60
 
    Nedelec edge elements in dimension two and three. (P(P+1)/2 dof, H(rot))
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Nedelec (or Whitney) edge element
-   * - ``"FEM_NEDELEC(P)"``
+  .. list-table:: Nedelec (or Whitney) edge element `"FEM_NEDELEC(P)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`1`
+       - :math:`P`
+       - :math:`P(P+1)/2`
+       - H(rot)
+       - Yes (:math:`Q = P`)
+       - No
+       - Yes
 
-   * - :math:`1`
-     - :math:`P`
-     - :math:`P(P+1)/2`
-     - H(rot)
-     - Yes (:math:`Q = P`)
-     - No
-     - Yes
 
 Specific elements in dimension 1
 --------------------------------
 
+
 GaussLobatto element
 ++++++++++++++++++++
 
-The 1D GaussLobatto :math:`P_K` element is similar to the classical :math:`P_K` fem on the segment, but
-the nodes are given by the Gauss-Lobatto-Legendre quadrature rule of
-order :math:`2K-1`. This FEM is known to lead to better conditioned linear
-systems, and can be used with the correspounding quadrature to perform
-mass-lumping (on segments or parallelepipeds).
+The 1D GaussLobatto :math:`P_K` element is similar to the classical :math:`P_K`
+fem on the segment, but the nodes are given by the Gauss-Lobatto-Legendre
+quadrature rule of order :math:`2K-1`. This FEM is known to lead to better
+conditioned linear systems, and can be used with the correspounding quadrature to
+perform mass-lumping (on segments or parallelepipeds).
 
-The polynomials coefficients have been pre-computed with Maple (they require the inversion of an ill-conditionned system), hence they are only available for the following values of :math:`K`: :math:`1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 24, 32`. Note that for :math:`K=1` and :math:`K=2`, this is the classical :math:`P1` and :math:`P2` fem.
+The polynomials coefficients have been pre-computed with Maple (they require the
+inversion of an ill-conditionned system), hence they are only available for the
+following values of :math:`K`: :math:`1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+14, 16, 24, 32`. Note that for :math:`K=1` and :math:`K=2`, this is the classical
+:math:`P1` and :math:`P2` fem.
 
+  .. list-table:: GaussLobatto :math:`P_K` element on the segment ``"FEM_PK_GAUSSLOBATTO1D(K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - GaussLobatto :math:`P_K` element on the segment
-   * - ``"FEM_PK_GAUSSLOBATTO1D(K)"``
+     * - :math:`K`
+       - :math:`1`
+       - :math:`K+1`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`K`
-     - :math:`1`
-     - :math:`K+1`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
 
 Hermite element
 +++++++++++++++
@@ -714,47 +757,43 @@ Hermite element
 .. _ud-fig-segment_hermite:
 .. figure:: images/getfemlistsegmenthermite.png
    :align: center
+   :scale: 60
 
    :math:`P_3` Hermite element on a segment, 4 d.o.f., :math:`C^1`
 
 Base functions on the reference element
 
 .. math::
-  
+
   \begin{array}{ll}
     \varphi'_0 = (2x+1)(x-1)^2,&\ \ \ \varphi'_1 = x(x-1)^2, \\
-    \varphi'_2 = x^2(3-2x),& \ \ \ \varphi'_3 = x^2(x - 1). 
+    \varphi'_2 = x^2(3-2x),& \ \ \ \varphi'_3 = x^2(x - 1).
   \end{array}
 
-This element is close to be :math:`\tau`-equivalent but it is not. On the real element the value of the gradient on vertices will be multiplied by the gradient of the geometric transformation. The matrix :math:`M` is not equal to identity but is still diagonal.
+This element is close to be :math:`\tau`-equivalent but it is not. On the real
+element the value of the gradient on vertices will be multiplied by the gradient
+of the geometric transformation. The matrix :math:`M` is not equal to identity but
+is still diagonal.
 
+  .. list-table:: Hermite element on the segment ``"FEM_HERMITE(1)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Hermite element on the segment
-   * - ``"FEM_HERMITE(1)"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`1`
-     - :math:`4`
-     - :math:`C^1`
-     - No (:math:`Q = 1`)
-     - No
-     - Yes
+     * - :math:`3`
+       - :math:`1`
+       - :math:`4`
+       - :math:`C^1`
+       - No (:math:`Q = 1`)
+       - No
+       - Yes
 
 
 Lagrange element with an additional bubble function
@@ -763,180 +802,169 @@ Lagrange element with an additional bubble function
 .. _ud-fig-segment_bubble:
 .. figure:: images/getfemlistsegmentbubble.png
    :align: center
+   :scale: 60
 
    :math:`P_1` Lagrange element on a segment with additional internal bubble function, 3 d.o.f., :math:`C^0`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Lagrange :math:`P_1` element with an additional internal bubble function
-   * - ``"FEM_PK_WITH_CUBIC_BUBBLE(1, 1)"``
+  .. list-table:: Lagrange :math:`P_1` element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(1, 1)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`2`
+       - :math:`1`
+       - :math:`3`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-   * - :math:`2`
-     - :math:`1`
-     - :math:`3`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
 
 Specific elements in dimension 2
 --------------------------------
 
+
 Elements with additional bubble functions
 +++++++++++++++++++++++++++++++++++++++++
 
-.. _ud-fig-triangle_p1_bubble:
-.. tabularcolumns:: cc
-.. csv-table:: Lagrange element on a triangle with additional internal bubble function
-   :class: figure
-   :widths: 2, 2
-   :delim: &
+  .. _ud-fig-triangle_p1_bubble:
+  .. list-table:: Lagrange element on a triangle with additional internal bubble function
+     :widths: 30 30
+     :header-rows: 0
+     :class: figure
 
-   .. image:: images/getfemlisttriangleP1bubble.png & .. image:: images/getfemlisttriangleP2bubble.png
-   :math:`P_1` with additional bubble function, 4 d.o.f., :math:`C^0` & :math:`P_2` with additional bubble function, 7 d.o.f., :math:`C^0`
-   .. image:: images/getfemlisttetrahedronP4.png &
-   :math:`P_4` element, 35 d.o.f., :math:`C^0` &
+     * - .. image:: images/getfemlisttriangleP1bubble.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlisttriangleP2bubble.png
+            :align: center
+            :scale: 50
+     * - :math:`P_1` with additional bubble function, 4 d.o.f., :math:`C^0`
+       - :math:`P_2` with additional bubble function, 7 d.o.f., :math:`C^0`
 
+:math:`.\\`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+  .. list-table:: Lagrange :math:`P_1` or :math:`P_2` element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(2, K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Lagrange :math:`P_1` or :math:`P_2` element with an additional internal bubble function
-   * - ``"FEM_PK_WITH_CUBIC_BUBBLE(2, K)"``
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - :math:`3`
+       - :math:`2`
+       - :math:`4` or :math:`7`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`2`
-     - :math:`4` or :math:`7`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
+:math:`.\\`
 
 .. _ud-fig-triangle_p1_bubblepie:
 .. figure:: images/getfemlisttriangleP1linbubble.png
    :align: center
+   :scale: 60
 
    :math:`P_1` Lagrange element on a triangle with additional internal piecewise linear bubble function
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Lagrange :math:`P_1` with an additional internal piecewise linear bubble function
-   * - ``"FEM_P1_PIECEWISE_LINEAR_BUBBLE"``
+  .. list-table:: Lagrange :math:`P_1` with an additional internal piecewise linear bubble function ``"FEM_P1_PIECEWISE_LINEAR_BUBBLE"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`1`
+       - :math:`2`
+       - :math:`4` or :math:`7`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Piecewise
 
-   * - :math:`1`
-     - :math:`2`
-     - :math:`4` or :math:`7`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Piecewise
+:math:`.\\`
 
 .. _ud-fig-triangle_p1_bubble_face:
 .. figure:: images/getfemlisttriangleP1bubbleface.png
    :align: center
+   :scale: 60
 
    :math:`P_1` Lagrange element on a triangle with additional bubble function on face 0, 4 d.o.f., :math:`C^0`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - Lagrange :math:`P_1` element with an additional bubble function on face 0
-   * - ``"FEM_P1_BUBBLE_FACE(2)"``
+  .. list-table:: Lagrange :math:`P_1` element with an additional bubble function on face 0 ``"FEM_P1_BUBBLE_FACE(2)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`2`
+       - :math:`2`
+       - :math:`4`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-   * - :math:`2`
-     - :math:`2`
-     - :math:`4`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
+:math:`.\\`
 
 .. _ud-fig-triangle_p1_p2_face:
 .. figure:: images/getfemlisttriangleP1withP2face.png
    :align: center
+   :scale: 60
 
    :math:`P_1` Lagrange element on a triangle with additional d.o.f on face 0, 4 d.o.f., :math:`C^0`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - :math:`P_1` Lagrange element on a triangle with additional d.o.f on face 0
-   * - ``"FEM_P1_BUBBLE_FACE_LAG"``
+  .. list-table:: . :math:`P_1` Lagrange element on a triangle with additional d.o.f on face 0 ``"FEM_P1_BUBBLE_FACE_LAG"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`2`
-     - :math:`2`
-     - :math:`4`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
+     * - :math:`2`
+       - :math:`2`
+       - :math:`4`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
 
 Non-conforming :math:`P_1` element
@@ -945,35 +973,32 @@ Non-conforming :math:`P_1` element
 .. _ud-fig-triangle_non_conforming:
 .. figure:: images/getfemlisttriangleP1nonconforming.png
    :align: center
+   :scale: 60
 
    :math:`P_1` non-conforming element on a triangle, 3 d.o.f., discontinuous
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+:math:`.\\`
 
-   * - :math:`P_1` non-conforming element on a triangle
-   * - ``"FEM_P1_NONCONFORMING"``
+  .. list-table:: . :math:`P_1` non-conforming element on a triangle ``"FEM_P1_NONCONFORMING"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
+     * - :math:`1`
+       - :math:`2`
+       - :math:`3`
+       - :math:`discontinuous`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-   * - :math:`1`
-     - :math:`2`
-     - :math:`3`
-     - :math:`discontinuous`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
 
 Hermite element
 +++++++++++++++
@@ -981,13 +1006,14 @@ Hermite element
 .. _ud-fig-triangle_hermite:
 .. figure:: images/getfemlisttrianglehermite.png
    :align: center
+   :scale: 60
 
    Hermite element on a triangle, :math:`P_3`, 10 d.o.f., :math:`C^0`
 
 Base functions on the reference element:
 
 .. math::
-  
+
   \begin{array}{ll}
   \varphi'_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\varphi'_0(0,0) = 1), \\
   \varphi'_1 = x(1-x-y)(1-x-2y), & (\partial_x\varphi'_1(0,0) = 1), \\
@@ -1001,35 +1027,32 @@ Base functions on the reference element:
   \varphi'_9 = 27xy(1-x-y), & (\varphi'_9(1/3,1/3) = 1), \\
   \end{array}
 
-This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to identity). On the real element linear combinations of :math:`\varphi'_4` and :math:`\varphi'_7` are used to match the gradient on the corresponding vertex. Idem for the two couples (:math:`\varphi'_5`, :math:`\varphi'_8`) and  (:math:`\varphi'_6`, :math:`\varphi'_9`) for the two other vertices.  
+This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
+identity). On the real element linear combinations of :math:`\varphi'_4` and
+:math:`\varphi'_7` are used to match the gradient on the corresponding vertex.
+Idem for the two couples (:math:`\varphi'_5`, :math:`\varphi'_8`) and
+(:math:`\varphi'_6`, :math:`\varphi'_9`) for the two other vertices.
 
+  .. list-table:: Hermite element on a triangle ``"FEM_HERMITE(2)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Hermite element on a triangle
-   * - ``"FEM_HERMITE(2)"``
+     * - :math:`3`
+       - :math:`2`
+       - :math:`10`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - No
+       - Yes
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`2`
-     - :math:`10`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - No
-     - Yes
 
 Morley element
 ++++++++++++++
@@ -1037,38 +1060,34 @@ Morley element
 .. _ud-fig-triangle_morley:
 .. figure:: images/getfemlistmorley.png
    :align: center
+   :scale: 60
 
    triangle Morley element, :math:`P_2`, 6 d.o.f., :math:`C^0`
 
 
-This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to identity). In particular, it can be used for non-conforming discretization of fourth order problems, despite the fact that it is not :math:`{\cal C}^0`.
+This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
+identity). In particular, it can be used for non-conforming discretization of
+fourth order problems, despite the fact that it is not :math:`{\cal C}^0`.
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+  .. list-table:: Morley element on a triangle ``"FEM_MORLEY"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Morley element on a triangle
-   * - ``"FEM_MORLEY"``
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`2`
-     - :math:`2`
-     - :math:`6`
-     - discontinuous
-     - No (:math:`Q = 1`)
-     - No
-     - Yes
+     * - :math:`2`
+       - :math:`2`
+       - :math:`6`
+       - discontinuous
+       - No (:math:`Q = 1`)
+       - No
+       - Yes
 
 
 Argyris element
@@ -1077,13 +1096,14 @@ Argyris element
 .. _ud-fig-argyris:
 .. figure:: images/getfemlistargyris.png
    :align: center
+   :scale: 60
 
    Argyris element, :math:`P_5`, 21 d.o.f., :math:`C^1`
 
 The base functions on the reference element are:
 
 .. math::
-  
+
   \begin{array}{ll}
   \varphi'_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\varphi'_0(0,0) = 1), \\
   \varphi'_{1}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\varphi'_1(0,0) = 1),\\
@@ -1108,35 +1128,32 @@ The base functions on the reference element are:
   \varphi'_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\varphi'_{20}(0.5,0) = 1),\\
   \end{array}
 
-This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to identity). On the real element linear combinations of the transformed base functions :math:`\varphi'_i` are used to match the gradient, the second derivatives and the normal derivatives on the faces. Note that the use of the matrix  :math:`M` allows to define Argyris element even with nonlinear geometric transformations (for instance to treat curved boundaries).
+This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
+identity). On the real element linear combinations of the transformed base
+functions :math:`\varphi'_i` are used to match the gradient, the second
+derivatives and the normal derivatives on the faces. Note that the use of the
+matrix :math:`M` allows to define Argyris element even with nonlinear geometric
+transformations (for instance to treat curved boundaries).
 
+  .. list-table:: Argyris element on a triangle ``"FEM_ARGYRIS"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Argyris element on a triangle
-   * - ``"FEM_ARGYRIS"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`5`
-     - :math:`2`
-     - :math:`21`
-     - :math:`C^1`
-     - No (:math:`Q = 1`)
-     - No
-     - Yes
+     * - :math:`5`
+       - :math:`2`
+       - :math:`21`
+       - :math:`C^1`
+       - No (:math:`Q = 1`)
+       - No
+       - Yes
 
 
 Hsieh-Clough-Tocher element
@@ -1145,233 +1162,225 @@ Hsieh-Clough-Tocher element
 .. _ud-fig-HCT_tr:
 .. figure:: images/getfemlistHCT.png
    :align: center
+   :scale: 60
 
    Hsieh-Clough-Tocher (HCT) element, :math:`P_3`, 12 d.o.f., :math:`C^1`
 
 
-This element is not :math:`\tau`-equivalent. This is a composite element. Polynomial of degree 3 on each of the three sub-triangles (see figure :ref:`ud-fig-HCT_tr` and \cite{ciarlet1978}). It is strongly advised to use a ``"IM_HCT_COMPOSITE"`` integration method with this finite element. The numeration of the dof is the following: 0, 3 and 6 for the lagrange dof on the first second and third vertex respectively; 1, 4, 7 for the derivative with respects to the first variable; 2, 5, 8 for the derivative with respects to the second variable and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.
+This element is not :math:`\tau`-equivalent. This is a composite element.
+Polynomial of degree 3 on each of the three sub-triangles (see figure
+:ref:`ud-fig-HCT_tr` and \cite{ciarlet1978}). It is strongly advised to use a
+``"IM_HCT_COMPOSITE"`` integration method with this finite element. The numeration
+of the dof is the following: 0, 3 and 6 for the lagrange dof on the first second
+and third vertex respectively; 1, 4, 7 for the derivative with respects to the
+first variable; 2, 5, 8 for the derivative with respects to the second variable
+and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.
 
+  .. list-table:: HCT element on a triangle ``"FEM_HCT_TRIANGLE"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - HCT element on a triangle
-   * - ``"FEM_HCT_TRIANGLE"``
+     * - :math:`3`
+       - :math:`2`
+       - :math:`12`
+       - :math:`C^1`
+       - No (:math:`Q = 1`)
+       - No
+       - piecewise
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`2`
-     - :math:`12`
-     - :math:`C^1`
-     - No (:math:`Q = 1`)
-     - No
-     - piecewise
+:math:`.\\`
 
 .. _ud-fig-reduced_HCT_tr:
 .. figure:: images/getfemlistreducedHCT.png
    :align: center
+   :scale: 60
 
    Reduced Hsieh-Clough-Tocher (reduced HCT) element, :math:`P_3`, 9 d.o.f., :math:`C^1`
 
-This element exists also in its reduced form, where the normal derivatives are assumed to be polynomial of degree one on each edge (see figure :ref:`ud-fig-reduced_HCT_tr`)
+This element exists also in its reduced form, where the normal derivatives are
+assumed to be polynomial of degree one on each edge (see figure
+:ref:`ud-fig-reduced_HCT_tr`)
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+  .. list-table:: Reduced HCT element on a triangle ``"FEM_REDUCED_HCT_TRIANGLE"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Reduced HCT element on a triangle
-   * - ``"FEM_REDUCED_HCT_TRIANGLE"``
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`2`
-     - :math:`9`
-     - :math:`C^1`
-     - No (:math:`Q = 1`)
-     - No
-     - piecewise
+     * - :math:`3`
+       - :math:`2`
+       - :math:`9`
+       - :math:`C^1`
+       - No (:math:`Q = 1`)
+       - No
+       - piecewise
 
 
 A composite :math:`C^1` element on quadrilaterals
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
-
 .. _ud-fig-QC1_tr:
 .. figure:: images/getfemlistquadc1composite.png
    :align: center
+   :scale: 60
 
    Composite element on quadrilaterals, piecewise :math:`P_3`, 16 d.o.f., :math:`C^1`
 
 
-This element is not :math:`\tau`-equivalent. This is a composite element. Polynomial of degree 3 on each of the four sub-triangles (see figure :ref:`ud-fig-QC1_tr`). At least on the reference element it corresponds to the Fraeijs de Veubeke-Sander element (see \cite{ciarlet1978}). It is strongly advised to use a ``"IM_QUADC1_COMPOSITE"`` integration method with this finite element.
+This element is not :math:`\tau`-equivalent. This is a composite element.
+Polynomial of degree 3 on each of the four sub-triangles (see figure
+:ref:`ud-fig-QC1_tr`). At least on the reference element it corresponds to the
+Fraeijs de Veubeke-Sander element (see \cite{ciarlet1978}). It is strongly advised
+to use a ``"IM_QUADC1_COMPOSITE"`` integration method with this finite element.
 
+  .. list-table:: . :math:`C^1` composite element on a quadrilateral (FVS) ``"FEM_QUADC1_COMPOSITE"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - :math:`C^1` composite element on a quadrilateral (FVS)
-   * - ``"FEM_QUADC1_COMPOSITE"``
+     * - :math:`3`
+       - :math:`2`
+       - :math:`16`
+       - :math:`C^1`
+       - No (:math:`Q = 1`)
+       - No
+       - piecewise
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`2`
-     - :math:`16`
-     - :math:`C^1`
-     - No (:math:`Q = 1`)
-     - No
-     - piecewise
+:math:`.\\`
 
 .. _ud-fig-reduced_QC1_tr:
 .. figure:: images/getfemlistreducedquadc1composite.png
    :align: center
+   :scale: 60
 
    Reduced composite element on quadrilaterals, piecewise :math:`P_3`, 12 d.o.f., :math:`C^1`
 
 
+This element exists also in its reduced form, where the normal derivatives are
+assumed to be polynomial of degree one on each edge (see figure
+:ref:`ud-fig-reduced_QC1_tr`)
 
-This element exists also in its reduced form, where the normal derivatives are assumed to be polynomial of degree one on each edge (see figure :ref:`ud-fig-reduced_QC1_tr`)
+  .. list-table:: Reduced :math:`C^1` composite element on a quadrilateral (reduced FVS) ``"FEM_REDUCED_QUADC1_COMPOSITE"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - Reduced :math:`C^1` composite element on a quadrilateral (reduced FVS)
-   * - ``"FEM_REDUCED_QUADC1_COMPOSITE"``
-
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`2`
-     - :math:`12`
-     - :math:`C^1`
-     - No (:math:`Q = 1`)
-     - No
-     - piecewise
+     * - :math:`3`
+       - :math:`2`
+       - :math:`12`
+       - :math:`C^1`
+       - No (:math:`Q = 1`)
+       - No
+       - piecewise
 
 
 Specific elements in dimension 3
 --------------------------------
 
+
 Elements with additional bubble functions
 +++++++++++++++++++++++++++++++++++++++++
 
+  .. _ud-fig-tetrahedron_p1_bubble:
+  .. list-table:: Lagrange element on a tetrahedron with additional internal bubble function
+     :widths: 30 30 30
+     :header-rows: 0
+     :class: figure
 
-.. _ud-fig-tetrahedron_p1_bubble:
-.. tabularcolumns:: ccc
-.. csv-table:: Lagrange element on a tetrahedron with additional internal bubble function
-   :class: figure
-   :widths: 2, 2, 2
-   :delim: &
+     * - .. image:: images/getfemlisttetrahedronP1bubble.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlisttetrahedronP2bubble.png
+            :align: center
+            :scale: 50
+       - .. image:: images/getfemlisttetrahedronP3bubble.png
+            :align: center
+            :scale: 50
+     * - :math:`P_1` with additional bubble function, 5 d.o.f., :math:`C^0`
+       - :math:`P_2` with additional bubble function, 11 d.o.f., :math:`C^0`
+       - :math:`P_3` with additional bubble function, 21 d.o.f., :math:`C^0`
 
-   .. image:: images/getfemlisttetrahedronP1bubble.png & .. image:: images/getfemlisttetrahedronP2bubble.png & .. image:: images/getfemlisttetrahedronP3bubble.png
-   :math:`P_1` with additional bubble function, 5 d.o.f., :math:`C^0` & :math:`P_2` with additional bubble function, 11 d.o.f., :math:`C^0` & :math:`P_3` with additional bubble function, 21 d.o.f., :math:`C^0`
+:math:`.\\`
 
+  .. list-table:: . :math:`P_K` Lagrange element with an additional internal bubble function ``"FEM_PK_WITH_CUBIC_BUBBLE(3, K)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-   * - :math:`P_K` Lagrange element with an additional internal bubble function
-   * - ``"FEM_PK_WITH_CUBIC_BUBBLE(3, K)"``
+     * - :math:`4`
+       - :math:`3`
+       - :math:`5`, :math:`11` or :math:`21`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`4`
-     - :math:`3`
-     - :math:`5`, :math:`11` or :math:`21`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
+:math:`.\\`
 
 .. _ud-fig-tetrahedron_p1_bubble_face:
 .. figure:: images/getfemlisttetrahedronP1bubbleface.png
    :align: center
+   :scale: 60
 
    :math:`P_1` Lagrange element on a tetrahedron with additional bubble function on face 0, 5 d.o.f., :math:`C^0`
 
+:math:`.\\`
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+  .. list-table:: Lagrange :math:`P_1` element with an additional bubble function on face 0 ``"FEM_P1_BUBBLE_FACE(3)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Lagrange :math:`P_1` element with an additional bubble function on face 0
-   * - ``"FEM_P1_BUBBLE_FACE(3)"``
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
+     * - :math:`3`
+       - :math:`3`
+       - :math:`5`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - Yes
+       - Yes
 
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`3`
-     - :math:`5`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - Yes
-     - Yes
 
 Hermite element
 +++++++++++++++
@@ -1379,13 +1388,14 @@ Hermite element
 .. _ud-fig-tetrahedron_hermite:
 .. figure:: images/getfemlisttetrahedronhermite.png
    :align: center
+   :scale: 60
 
    Hermite element on a tetrahedron, :math:`P_3`, 20 d.o.f., :math:`C^0`
 
 Base functions on the reference element:
 
 .. math::
-  
+
   \begin{array}{ll}
   \varphi'_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
   ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\varphi'_0(0,0,0) = 1),\\
@@ -1410,31 +1420,27 @@ Base functions on the reference element:
   \varphi'_{19}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\varphi'_{19}(1/3,1/3,0) = 1),\\
   \end{array}
 
-This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to identity). On the real element linear combinations of :math:`\varphi'_8`, :math:`\varphi'_{12}` and :math:`\varphi'_{16}` are used to match the gradient on the corresponding vertex. Idem on the orther vertices. 
+This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
+identity). On the real element linear combinations of :math:`\varphi'_8`,
+:math:`\varphi'_{12}` and :math:`\varphi'_{16}` are used to match the gradient on
+the corresponding vertex. Idem on the orther vertices.
 
-.. list-table::
-   :widths: 10
-   :header-rows: 1
+  .. list-table:: Hermite element on a tetrahedron ``"FEM_HERMITE(3)"``
+     :widths: 10 10 10 10 10 10 10
+     :header-rows: 1
 
-   * - Hermite element on a tetrahedron
-   * - ``"FEM_HERMITE(3)"``
+     * - degree
+       - dimension
+       - d.o.f. number
+       - class
+       - vectorial
+       - :math:`\tau`-equivalent
+       - Polynomial
 
-.. list-table::
-   :widths: 10 10 10 10 10 10 10
-   :header-rows: 1
-
-   * - Degree
-     - dimension
-     - d.o.f. number
-     - class
-     - vectorial
-     - :math:`\tau`-equivalent
-     - Polynomial
-
-   * - :math:`3`
-     - :math:`3`
-     - :math:`20`
-     - :math:`C^0`
-     - No (:math:`Q = 1`)
-     - No
-     - Yes
+     * - :math:`3`
+       - :math:`3`
+       - :math:`20`
+       - :math:`C^0`
+       - No (:math:`Q = 1`)
+       - No
+       - Yes

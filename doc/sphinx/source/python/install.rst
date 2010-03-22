@@ -46,17 +46,15 @@ Download sources
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
-The latest stable release of |gf| is getfem++-|version|.tar.gz
-
-.. <http://download.gna.org/getfem/stable/getfem++-|version|.tar.gz>
+The latest stable release of |gf| is getfem++-|version|tar.gz
 
 * download package:
 
-   wget http://download.gna.org/getfem/stable/getfem++-|version|.tar.gz
+   wget http://download.gna.org/getfem/stable/getfem++-|version|tar.gz
 
 * unpack:
 
-   tar xzf getfem++-|version|.tar.gz
+   tar xzf getfem++-|version|tar.gz
 
 * and go to the root directory of getfem:
      

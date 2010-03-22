@@ -10,7 +10,7 @@ PNGFIGS=$(FIGS:.fig=.png)
 	../../../../../bin/fig2eps $(@:.eps=.fig)
 
 .eps.png:
-	convert -density 80x80 $(@:.png=.eps) $@
+	convert $(@:.png=.eps) $@
 
 png: $(PNGFIGS)
 
@@ -20,3 +20,4 @@ clean:
 	-rm -rf *.aux
 	-rm -rf *.dvi
 	-rm -rf *.log
+	-rm -rf *.bak

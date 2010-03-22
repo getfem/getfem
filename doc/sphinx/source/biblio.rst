@@ -1,6 +1,6 @@
 .. $Id$
 
-.. REFERENCES
+.. _REFERENCES:
 
 References
 ----------

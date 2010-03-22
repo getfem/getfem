@@ -82,6 +82,7 @@ in section :ref:`dp-libdesc`.
 .. _dp-fig-diagram:
 .. figure:: images/diagram.png
    :align: center
+   :scale: 80
 
    Diagram of |gf| library
 

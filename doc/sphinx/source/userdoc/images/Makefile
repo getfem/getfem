@@ -33,7 +33,20 @@ FIGS=getfemlistargyris.fig                   \
      getfemlistsegmenthermite.fig            \
      getfemlistsegmenthier.fig               \
      getfemlistsegmentPk.fig                 \
-     getfemlistsymbols.fig                   \
+     getfemlistsymbols00.fig                 \
+     getfemlistsymbols01.fig                 \
+     getfemlistsymbols02.fig                 \
+     getfemlistsymbols03.fig                 \
+     getfemlistsymbols04.fig                 \
+     getfemlistsymbols05.fig                 \
+     getfemlistsymbols06.fig                 \
+     getfemlistsymbols07.fig                 \
+     getfemlistsymbols08.fig                 \
+     getfemlistsymbols09.fig                 \
+     getfemlistsymbols10.fig                 \
+     getfemlistsymbols11.fig                 \
+     getfemlistsymbols12.fig                 \
+     getfemlistsymbols13.fig                 \
      getfemlisttetrahedronhermite.fig        \
      getfemlisttetrahedronP1bubbleface.fig   \
      getfemlisttetrahedronP1bubble.fig       \
@@ -64,29 +77,24 @@ FIGS=getfemlistargyris.fig                   \
 
 
 PNGFIGS=$(FIGS:.fig=.png)
+EPSFIGS=$(FIGS:.fig=.eps)
 
 .SUFFIXES: .fig .eps .png
 
 .fig.eps:
 	../../../../../bin/fig2eps $(@:.eps=.fig)
 
+#.fig.png:
+#	fig2dev -Lpng -m1.0 -S4 -b5 $(@:.png=.fig) > $@
+
+#.eps.png:
+#	convert -units PixelsPerInch -density 300 -depth 1 -colors 5 $(@:.png=.eps) $@
 .eps.png:
-	convert -density 100x100 $(@:.png=.eps) $@
-
-getfemlisttriangleP1.png: getfemlisttriangleP1.eps
-	convert getfemlisttriangleP1.eps getfemlisttriangleP1.png
-
-getfemlisttriangleP2.png: getfemlisttriangleP2.eps
-	convert getfemlisttriangleP2.eps getfemlisttriangleP2.png
-
-getfemlisttriangleP3.png: getfemlisttriangleP3.eps
-	convert getfemlisttriangleP3.eps getfemlisttriangleP3.png
-
-getfemlisttriangleP6.png: getfemlisttriangleP6.eps
-	convert getfemlisttriangleP6.eps getfemlisttriangleP6.png
-
+	convert $(@:.png=.eps) $@
 
 png: $(PNGFIGS)
+
+eps: $(EPSFIGS)
 
 clean:
 	-rm -rf *.eps
@@ -94,3 +102,4 @@ clean:
 	-rm -rf *.aux
 	-rm -rf *.dvi
 	-rm -rf *.log
+	-rm -rf *.bak

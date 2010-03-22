@@ -1,5 +1,5 @@
 
-.. $Id: install.rst 3481 2010-03-01 14:53:29Z renard $
+.. $Id$
 
 .. include:: ../replaces.txt
 

@@ -26,9 +26,16 @@
 
   $Id$
 """
+try:
+  import getfem as gf
+except ImportError:
+  import sys
+  sys.path.append('../../src/python/')
+  import getfem as gf
+else:
+  print "module getfem not found!"
 
 import numpy as np
-import getfem as gf
 import math
 
 # Parameters:  ######################
