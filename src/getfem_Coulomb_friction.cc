@@ -532,21 +532,24 @@ namespace getfem {
 
   struct Coulomb_friction_brick : public virtual_brick {
 
-    mutable CONTACT_B_MATRIX BN1, BT1;
-    mutable CONTACT_B_MATRIX BN2, BT2;
-    mutable CONTACT_B_MATRIX BBN1, BBT1;
-    mutable CONTACT_B_MATRIX BBN2, BBT2;
+    mutable CONTACT_B_MATRIX BN1, BT1, BN2, BT2;
+    mutable CONTACT_B_MATRIX DN, DDN; // For Hughes stabilization
+    mutable CONTACT_B_MATRIX BBN1, BBT1, BBN2, BBT2;
     mutable model_real_plain_vector gap, threshold, friction_coeff, alpha;
     mutable model_real_plain_vector RLN, RLT; 
     mutable scalar_type r, gamma;
     mutable bool is_init;
     bool Tresca_version, symmetrized, contact_only;
     bool really_stationary, friction_dynamic_term;
-    bool two_variables;
+    bool two_variables, Hughes_stabilized;
 
     void init_BBN_BBT(void) const {
       gmm::resize(BBN1, gmm::mat_nrows(BN1), gmm::mat_ncols(BN1));
       gmm::copy(BN1, BBN1);
+      if (Hughes_stabilized) {
+	gmm::resize(DDN, gmm::mat_nrows(DN), gmm::mat_ncols(DN));
+	gmm::copy(DN, DDN);
+      }
       if (two_variables) {
         gmm::resize(BBN2, gmm::mat_nrows(BN2), gmm::mat_ncols(BN2));
         gmm::copy(BN2, BBN2);
@@ -563,6 +566,7 @@ namespace getfem {
       size_type d = gmm::mat_nrows(BT1)/nbc;
       for (size_type i = 0; i < nbc; ++i) {
         gmm::scale(gmm::mat_row(BBN1, i), alpha[i]);
+	if (Hughes_stabilized) gmm::scale(gmm::mat_row(DDN, i), alpha[i]);
         if (two_variables)
           gmm::scale(gmm::mat_row(BBN2, i), alpha[i]);
         if (!contact_only)
@@ -588,6 +592,8 @@ namespace getfem {
       for (size_type i = 0; i < gmm::mat_nrows(BN1); ++i) RLN[i] *= alpha[i];
       gmm::add(lambda_n, RLN);
       gmm::mult_add(BBN1, gmm::scaled(u1, -r), RLN);
+      if (Hughes_stabilized)
+	gmm::mult_add(DDN, gmm::scaled(lambda_n, r), RLN);
       if (two_variables) gmm::mult_add(BBN2, gmm::scaled(u2, -r), RLN);
       if (!contact_only) {
         gmm::copy(lambda_t, RLT);
@@ -662,7 +668,16 @@ namespace getfem {
             if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
             T_n_n(i, i) = -vt1/r;
           }
+	  else {
+	    if (Hughes_stabilized)
+	      gmm::copy(gmm::mat_row(DDN, i), gmm::mat_col(T_n_n, i));
+	  }
         }
+	if (Hughes_stabilized) {
+	  model_real_sparse_matrix aux(gmm::mat_nrows(T_n_n), gmm::mat_nrows(T_n_n));
+	  gmm::copy(gmm::transposed(T_n_n), aux);
+	  gmm::copy(aux, T_n_n);
+	}
         gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
         if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
 
@@ -892,6 +907,12 @@ namespace getfem {
       is_init = false;
     }
 
+    void set_DN(CONTACT_B_MATRIX &DN_) {
+      gmm::resize(DN, gmm::mat_nrows(DN_), gmm::mat_ncols(DN_));
+      gmm::copy(DN_, DN);
+      is_init = false;
+    }
+
     void set_BT1(CONTACT_B_MATRIX &BT1_) {
       gmm::resize(BT1, gmm::mat_nrows(BT1_), gmm::mat_ncols(BT1_));
       gmm::copy(BT1_, BT1);
@@ -899,8 +920,10 @@ namespace getfem {
     }
 
     CONTACT_B_MATRIX &get_BN1(void) { return BN1; }
+    CONTACT_B_MATRIX &get_DN(void) { return DN; }
     CONTACT_B_MATRIX &get_BT1(void) { return BT1; }
     const CONTACT_B_MATRIX &get_BN1(void) const { return BN1; }
+    const CONTACT_B_MATRIX &get_DN(void) const { return DN; }
     const CONTACT_B_MATRIX &get_BT1(void) const { return BT1; }
 
 
@@ -916,7 +939,19 @@ namespace getfem {
     GMM_ASSERT1(p, "Wrong type of brick");
     return p->get_BN1();
   }
-
+  
+  //function to acces to DN
+CONTACT_B_MATRIX &contact_brick_set_DN
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    Coulomb_friction_brick *p = dynamic_cast<Coulomb_friction_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->get_DN();
+  }
+  
+ 
   CONTACT_B_MATRIX &contact_brick_set_BT
   (model &md, size_type indbrick) {
     pbrick pbr = md.brick_pointer(indbrick);
@@ -926,7 +961,7 @@ namespace getfem {
     GMM_ASSERT1(p, "Wrong type of brick");
     return p->get_BT1();
   }
-  
+
   //=========================================================================
   //  Add a frictionless contact condition with BN, r, alpha given.  
   //=========================================================================
@@ -940,6 +975,47 @@ namespace getfem {
     pbr_->set_BN1(BN);
     pbrick pbr = pbr_;
 
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+    tl.push_back(model::term_description(varname_u, multname_n, false));
+    tl.push_back(model::term_description(multname_n, varname_u, false));
+    tl.push_back(model::term_description(multname_n, multname_n, false));
+    model::varnamelist dl(1, dataname_r);
+
+    if (dataname_gap.size() == 0) {
+      dataname_gap = md.new_name("contact_gap_on_" + varname_u);
+      md.add_initialized_fixed_size_data
+        (dataname_gap, model_real_plain_vector(1, scalar_type(0)));
+    }
+    dl.push_back(dataname_gap);
+    
+    if (dataname_alpha.size() == 0) {
+      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
+      md.add_initialized_fixed_size_data
+        (dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
+    }
+    dl.push_back(dataname_alpha);
+
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(multname_n);
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+  
+
+  //========================================================================= 
+  //Add Hughes stabilized frictionless contact condition with BN, r, alpha given
+  //=========================================================================
+  
+ size_type add_Hughes_stab_basic_contact_brick
+  (model &md, const std::string &varname_u, const std::string &multname_n,
+   const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
+   std::string dataname_gap, std::string dataname_alpha,
+   bool symmetrized) {
+    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,true);
+    pbr_->set_BN1(BN);
+    pbr_->set_DN(DN);
+    pbrick pbr = pbr_;
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
     tl.push_back(model::term_description(varname_u, multname_n, false));
