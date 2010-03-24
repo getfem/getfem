@@ -44,7 +44,7 @@ get_integ_of_convexes(const getfem::mesh_im& mim, mexargs_in& in, mexargs_out& o
   out.return_packed_obj_ids(ids, INTEG_CLASS_ID);
 }
 
-/*GFDOC
+/*@GFDOC
   General function extracting information from mesh_im objects.
   @*/
 

@@ -25,26 +25,25 @@
 using namespace getfemint;
 
 /*@GFDOC
-   The geometric transformation must be used when you are building
-   a custom mesh convex by convex (see the add_convex() function of
-   @tmesh): it also defines the kind of convex (triangle,
-   hexahedron, prism, etc..)
+   The geometric transformation must be used when you are building a custom
+   mesh convex by convex (see the add_convex() function of @tmesh): it also
+   defines the kind of convex (triangle, hexahedron, prism, etc..)
   @*/
 
-/*@INIT @tgt = ('.name', @str name)
+/*@INIT GT = ('.name', @str name)
 
-The name argument contains the specification of the geometric
-transformation as a string, which may be:
+The name argument contains the specification of the geometric transformation
+as a string, which may be:
 
-  - GT_PK(n,k)
+  - GT_PK(n,k) :
     Transformation on simplexes, dim `n`, degree `k`.
-  - GT_QK(n,k)
+  - GT_QK(n,k) :
     Transformation on parallelepipeds, dim `n`, degree `k`.
-  - GT_PRISM(n,k)
+  - GT_PRISM(n,k) :
     Transformation on prisms, dim `n`, degree `k`.
-  - GT_PRODUCT(A,B)
+  - GT_PRODUCT(A,B) :
     Tensorial product of two transformations.
-  - GT_LINEAR_PRODUCT(A,B)
+  - GT_LINEAR_PRODUCT(@tgt gt1,@tgt gt2) :
     Linear tensorial product of two transformations
 @*/
 

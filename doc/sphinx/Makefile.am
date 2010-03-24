@@ -65,6 +65,7 @@ images:
 	-cd $(srcdir)/source/userdoc/images/; make png
 	-cd $(srcdir)/source/project/images/; make png
 	-cd $(srcdir)/source/matlab/images/; make png
+	-cd $(srcdir)/source/python/images/; make png
 	-cd $(srcdir)/source/scilab/images/; make png
 
 
@@ -109,6 +110,11 @@ htmlview: html
 clean:
 	-rm -rf build/
 	-rm -rf html/
+	-cd $(srcdir)/source/userdoc/images/; make clean
+	-cd $(srcdir)/source/project/images/; make clean
+	-cd $(srcdir)/source/matlab/images/; make clean
+	-cd $(srcdir)/source/python/images/; make clean
+	-cd $(srcdir)/source/scilab/images/; make clean
 
 dist: DIST = build/dist
 dist: DESTINATION = build/html/dist/

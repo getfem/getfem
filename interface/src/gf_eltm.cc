@@ -26,13 +26,13 @@
 using namespace getfemint;
 
 /*@GFDOC
-  This object represents a type of elementary matrix.
-  In order to obtain a numerical value of theses matrices, see MESH_IM:GET('eltm').
 
-  If you have very particular assembling needs, or if you just want to
-  check the content of an elementary matrix, this function might be
-  useful. But the generic assembly abilities of ::ASM(...) should
-  suit most needs.
+  This object represents a type of elementary matrix. In order to obtain a
+  numerical value of theses matrices, see MESH_IM:GET('eltm').
+
+  If you have very particular assembling needs, or if you just want to check
+  the content of an elementary matrix, this function might be useful. But
+  the generic assembly abilities of ::ASM(...) should suit most needs.
 @*/
 
 
@@ -74,8 +74,8 @@ void gf_eltm(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     pme = getfem::mat_elem_grad_geotrans(true);
   } else if (check_cmd(cmd, "product", in, out, 2, 2, 0, 1)) {
     /*@INIT E = ('product', @teltm A, @teltm B)
-      return a descriptor for the integration of the tensorial product
-      of elementary matrices `A` and `B`.@*/
+      return a descriptor for the integration of the tensorial product of
+      elementary matrices `A` and `B`.@*/
     getfem::pmat_elem_type  m1 = in.pop().to_mat_elem_type();
     getfem::pmat_elem_type  m2 = in.pop().to_mat_elem_type();
     pme = getfem::mat_elem_product(m1,m2);

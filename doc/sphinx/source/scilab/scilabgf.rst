@@ -60,9 +60,9 @@ Functions
 * ``gf_mdstate`` : create a ("model state") |mlab_ms| object.
 * ``gf_mdstate_get`` : retrieve information from a |mlab_ms| object.
 * ``gf_mdstate_set`` : modify a |mlab_ms| object.
-* ``gf_model`` : create a |mlab_mo| object.
-* ``gf_model_get`` : retrieve information from a |mlab_mo| object.
-* ``gf_model_set`` : modify a |mlab_mo| object.
+* ``gf_model`` : create a |mlab_md| object.
+* ``gf_model_get`` : retrieve information from a |mlab_md| object.
+* ``gf_model_set`` : modify a |mlab_md| object.
 * ``gf_global_function`` : create a gfGlobalFunction object.
 * ``gf_model_get`` : retrieve information from a gfGlobalFunction object.
 * ``gf_model_set`` : modify a GlobalFunction object.

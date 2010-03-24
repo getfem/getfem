@@ -86,6 +86,7 @@ The general organization of the python-interface is the following:
 
 .. figure:: images/hierarchy.png
    :align: center
+   :scale: 75
 
    python-getfem interface objects hierarchy.
 
@@ -99,6 +100,11 @@ The general organization of the python-interface is the following:
 
   Descriptor for geometric transformations objects (defines the shape/position
   of the convexes).
+
+.. class:: Mesh(self, *args)
+
+  Descriptor for mesh structure (nodes, convexes, geometric transformations for
+  each convex).
 
 .. class:: Fem(self, fem_name)
 
@@ -121,15 +127,23 @@ The general organization of the python-interface is the following:
   Descriptor for object linked to a mesh, where each convex has been assigned
   an integration method.
 
-.. class:: MdBrick(self, *args)
+.. class:: Model(self, *args)
 
-  Descriptor for *model brick* object, an abstraction of a part of solver (for
-  example, the part which build the tangent matrix, the part which handles the
-  dirichlet conditions, etc.). These objects are stacked to build a complete
-  solver for a wide variety of problems (they typically use a number of
-  |py_mf|, |py_mim| etc.).
+  Descriptor for *model* object, holds the global data, variables and
+  description of a model. Evolution of *model state* and *model brick*
+  object for 4.0 version of |gf|.
 
 .. class:: MdState(self, *args)
 
   Descriptor for *model state* object, holds the global data for a stack of
-  |py_mbr| (global tangent matrix, right hand side etc.).
+  |py_mbr| (global tangent matrix, right hand side etc.). **Deprecated**
+  since 4.0 version of |gf|, see *model* object.
+
+.. class:: MdBrick(self, *args)
+ 
+  Descriptor for *model brick* object, an abstraction of a part of solver (for
+  example, the part which build the tangent matrix, the part which handles the
+  dirichlet conditions, etc.). These objects are stacked to build a complete
+  solver for a wide variety of problems (they typically use a number of
+  |py_mf|, |py_mim| etc.). **Deprecated** since 4.0 version of |gf|, see
+  *model* object.

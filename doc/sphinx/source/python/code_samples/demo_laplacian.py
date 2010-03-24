@@ -68,37 +68,38 @@ m.set_region(left, fleft)
 m.set_region(right, fright)
 
 # interpolate the exact solution (assuming mfu is a Lagrange fem)
-G = mfu.eval('x[1]*(x[1]-1)*x[0]*(x[0]-1)+x[0]*x[0]*x[0]*x[0]*x[0]')
+g = mfu.eval('x[1]*(x[1]-1)*x[0]*(x[0]-1)+x[0]*x[0]*x[0]*x[0]*x[0]')
 
 # interpolate the source terms (assuming mfrhs is a Lagrange fem)
-F = mfrhs.eval('-(2*(x[0]*x[0]+x[1]*x[1])-2*x[0]-2*x[1]+20*x[0]*x[0]*x[0])')
-H = mfrhs.eval('[x[1]*(x[1]-1)*(2*x[0]-1) + 5*x[0]*x[0]*x[0]*x[0], x[0]*(x[0]-1)*(2*x[1]-1)]')
+f = mfrhs.eval('-(2*(x[0]*x[0]+x[1]*x[1])-2*x[0]-2*x[1]+20*x[0]*x[0]*x[0])')
+h = mfrhs.eval('[x[1]*(x[1]-1)*(2*x[0]-1) + 5*x[0]*x[0]*x[0]*x[0], x[0]*(x[0]-1)*(2*x[1]-1)]')
 
 # model
 md = gf.Model('real')
 
 # add variable and data to model
 md.add_fem_variable('u', mfu)              # main unknown
-md.add_initialized_fem_data('F', mfrhs, F) # volumic source term
-md.add_initialized_fem_data('G', mfrhs, G) # Dirichlet condition
-md.add_initialized_fem_data('H', mfrhs, H) # Neumann condition
+md.add_initialized_fem_data('f', mfrhs, f) # volumic source term
+md.add_initialized_fem_data('g', mfrhs, g) # Dirichlet condition
+md.add_initialized_fem_data('h', mfrhs, h) # Neumann condition
 
 # bricked the problem
 md.add_Laplacian_brick(mim, 'u')                             # laplacian term on u
-md.add_source_term_brick(mim, 'u', 'F')                      # volumic source term
-md.add_normal_source_term_brick(mim, 'u', 'H', [down,right]) # Neumann condition
+md.add_source_term_brick(mim, 'u', 'f')                      # volumic source term
+md.add_normal_source_term_brick(mim, 'u', 'h', down)         # Neumann condition
+md.add_normal_source_term_brick(mim, 'u', 'h', left)         # Neumann condition
 
-if (Dirichlet_with_multipliers): # Dirichlet condition on the top
-  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, [top], 'G')
+# Dirichlet condition on the top
+if (Dirichlet_with_multipliers):
+  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, top, 'g')
 else:
-  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient, [top], 'G')
+  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient, top, 'g')
 
 # Dirichlet condition on the right
-# Two Dirichlet brick in order to test the multiplier selection in the intersection.
 if (Dirichlet_with_multipliers):
-  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, [right], 'G')
+  md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, right, 'g')
 else:
-  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient, [right], 'G')
+  md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient, right, 'g')
 
 # md.listvar()
 # md.listbricks()
@@ -107,9 +108,9 @@ else:
 md.solve()
 
 # main unknown
-U = md.variable('u')
-L2error = gf.compute(mfu, U-Ue, 'L2 norm', mim)
-H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
+u  = md.variable('u')
+L2error = gf.compute(mfu, u-g, 'L2 norm', mim)
+H1error = gf.compute(mfu, u-g, 'H1 norm', mim)
 
 if (H1error > 1e-3):
     print 'Error in L2 norm : ', L2error
@@ -117,5 +118,5 @@ if (H1error > 1e-3):
     print 'Error too large !'
 
 # export data
-mfu.export_to_pos('sol.pos', Ue,'Exact solution',
-                              U,'Computed solution')
+mfu.export_to_pos('sol.pos', g,'Exact solution',
+                             u,'Computed solution')

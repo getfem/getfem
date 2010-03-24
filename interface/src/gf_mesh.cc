@@ -312,28 +312,28 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+  }
 
 
 /*@GFDOC
-  This object is able to store any element in any dimension even
-  if you mix elements with different dimensions.
-  @MATLAB{
-  Note that for recent (> 6.0) versions of
-  matlab, you should replace the calls to 'gf_mesh' with 'gfMesh'
-  (this will instruct Matlab to consider the getfem mesh as a regular
-  matlab object that can be manipulated with get() and set() methods).}
+  This object is able to store any element in any dimension even if you mix
+  elements with different dimensions.
+
+  @MATLAB{Note that for recent (> 6.0) versions of matlab, you should
+  replace the calls to 'gf_mesh' with 'gfMesh' (this will instruct Matlab to
+  consider the getfem mesh as a regular matlab object that can be
+  manipulated with get() and set() methods).}
 @*/
 
 void gf_mesh(getfemint::mexargs_in& m_in,
 	     getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
-  
+
   if (subc_tab.size() == 0) {
-    
+
     /*@INIT M = ('empty', @int dim)
-    Create a new empty mesh.@*/
+      Create a new empty mesh.@*/
     sub_command
       ("empty", 1, 1, 0, 1,
        size_type dim = in.pop().to_integer(1,255);
@@ -354,7 +354,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
     /*@INIT M = ('triangles grid', @dvec X, @dvec Y)
       Build quickly a regular mesh of triangles.
-      
+
       This is a very limited and somehow deprecated function (See also
       ``MESH:INIT('ptND')``, ``MESH:INIT('regular simplices')`` and
       ``MESH:INIT('cartesian')``).@*/
@@ -365,51 +365,51 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('regular simplices', @dvec X[, @dvec Y[, @dvec Z,...]]['degree', @int k]['noised'])
-    Mesh a n-dimensionnal parallelepipeded with simplices (triangles, tetrahedrons etc) .
+      Mesh a n-dimensionnal parallelepipeded with simplices (triangles,
+      tetrahedrons etc) .
 
-    The optional degree may be used to build meshes with non linear
-    geometric transformations.@*/
+      The optional degree may be used to build meshes with non linear
+      geometric transformations.@*/
     sub_command
       ("regular simplices", 1, 32, 0, 1,
        regular_simplices_mesh(pmesh, in);
        );
 
 
-    /*@INIT M = ('curved', @tmesh m0, @dvec F)
-    Build a curved (n+1)-dimensions mesh from a n-dimensions mesh `m0`.
+    /*@INIT M = ('curved', @tmesh m, @dvec F)
+      Build a curved (n+1)-dimensions mesh from a n-dimensions mesh `m`.
 
-    The points of the new mesh have one additional coordinate, given by
-    the vector `F`. This can be used to obtain meshes for shells. `m0`
-    may be a @tmf object, in that case its linked mesh will be used.@*/
+      The points of the new mesh have one additional coordinate, given by
+      the vector `F`. This can be used to obtain meshes for shells. `m` may
+      be a @tmf object, in that case its linked mesh will be used.@*/
     sub_command
       ("curved", 2, 2, 0, 1,
        curved_mesh(pmesh, in);
        );
 
 
-    /*@INIT M = ('prismatic', @tmesh m0, @int NLAY)
-    Extrude a prismatic @tmesh `M` from a @tmesh `m0`.
+    /*@INIT M = ('prismatic', @tmesh m, @int nl)
+      Extrude a prismatic @tmesh `M` from a @tmesh `m`.
 
-    In the additional dimension there are `NLAY` layers of elements
-    built from ``0`` to ``1``.@*/
+      In the additional dimension there are `nl` layers of elements built
+      from ``0`` to ``1``.@*/
     sub_command
       ("prismatic", 2, 2, 0, 1,
        prismatic_mesh(pmesh, in);
        );
 
 
-    /*@INIT M = ('pt2D', @dmat P, @ivec T[, @int n])
-    Build a mesh from a 2D triangulation.
+    /*@INIT M = ('pt2D', @dmat P, @imat T[, @int n])
+      Build a mesh from a 2D triangulation.
 
-    Each column of `P` contains a point coordinate, and each column
-    of `T` contains the point indices of a triangle. `n` is optional
-    and is a zone number. If `n` is specified then only the zone
-    number `n` is converted (in that case, `T` is expected to have
-    4 rows, the fourth containing these zone numbers).
+      Each column of `P` contains a point coordinate, and each column of `T`
+      contains the point indices of a triangle. `n` is optional and is a
+      zone number. If `n` is specified then only the zone number `n` is
+      converted (in that case, `T` is expected to have 4 rows, the fourth
+      containing these zone numbers).
 
-    @MATLAB{
-    Can be used to Convert a "pdetool" triangulation exported in
-    variables P and T into a GETFEM mesh.}@*/
+      @MATLAB{Can be used to Convert a "pdetool" triangulation exported in
+      variables P and T into a GETFEM mesh.}@*/
     sub_command
       ("pt2D", 2, 3, 0, 1,
        ptND_mesh(pmesh, true, in);
@@ -417,12 +417,12 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('ptND', @dmat P, @imat T)
-    Build a mesh from a N-dimensional "triangulation".
+      Build a mesh from a n-dimensional "triangulation".
 
-    Similar function to 'pt2D', for building simplexes meshes from a
-    triangulation given in `T`, and a list of points given in `P`. The
-    dimension of the mesh will be the number of rows of `P`, and the
-    dimension of the simplexes will be the number of rows of `T`.@*/
+      Similar function to 'pt2D', for building simplexes meshes from a
+      triangulation given in `T`, and a list of points given in `P`. The
+      dimension of the mesh will be the number of rows of `P`, and the
+      dimension of the simplexes will be the number of rows of `T`.@*/
     sub_command
       ("ptND", 2, 2, 0, 1,
        ptND_mesh(pmesh, 0, in);
@@ -430,9 +430,9 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('load', @str filename)
-      Load a mesh from a GETFEM++ ascii mesh file.
-      
-      See also MESH:GET('save', @str filename).@*/
+      Load a mesh from a getfem++ ascii mesh file.
+
+      See also ``MESH:GET('save', @str filename)``.@*/
     sub_command
       ("load", 1, 1, 0, 1,
        std::string fname = in.pop().to_string();
@@ -442,7 +442,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
     /*@INIT M = ('from string', @str s)
       Load a mesh from a string description.
-      
+
       For example, a string returned by ``MESH:GET('char')``.@*/
     sub_command
       ("from string", 1, 1, 0, 1,
@@ -452,13 +452,13 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
     /*@INIT M = ('import', @str format, @str filename)
-    Import a mesh.
+      Import a mesh.
 
-    `format` may be:
+      `format` may be:
 
-    - 'gmsh' for a mesh created with `Gmsh`
-    - 'gid' for a mesh created with `GiD`
-    - 'am_fmt' for a mesh created with `EMC2`@*/
+      - 'gmsh' for a mesh created with `Gmsh`
+      - 'gid' for a mesh created with `GiD`
+      - 'am_fmt' for a mesh created with `EMC2`@*/
     sub_command
       ("import", 2, 2, 0, 1,
        std::string fmt = in.pop().to_string();
@@ -479,7 +479,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
 
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
-   
+
   getfemint_mesh *mi_mesh =
     getfemint_mesh::get_from(new getfem::mesh);
   m_out.pop().from_object_id(mi_mesh->get_id(), MESH_CLASS_ID);
@@ -487,7 +487,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,

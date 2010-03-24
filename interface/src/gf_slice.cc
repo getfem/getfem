@@ -292,166 +292,91 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
 
 /*@GFDOC
   Creation of a mesh slice. Mesh slices are very similar to a
-  P1-discontinuous mesh_fem on which interpolation is very fast. The
-  slice is built from a mesh object, and a description of the slicing
-  operation, for example,
+  P1-discontinuous @tmf on which interpolation is very fast. The slice is
+  built from a mesh object, and a description of the slicing operation, for
+  example::
 
-  sl = SLICE:INIT(@CELL{'planar',+1,@MATLAB{[0;0],[1;0]}@SCILAB{[0;0],[1;0]}@PYTHON{[[0],[0]],[[0],[1]]}}, m, 5)@MATLAB{;}@SCILAB{;}
+    sl = SLICE:INIT(@CELL{'planar',+1,@MATLAB{[0;0],[1;0]}@SCILAB{[0;0],[1;0]}@PYTHON{[[0],[0]],[[0],[1]]}}, m, 5)@MATLAB{;}@SCILAB{;}
 
   cuts the original mesh with the half space {y>0}. Each convex of the
-  original mesh m is simplexified (for example a quadrangle is
-  splitted into 2 triangles), and each simplex is refined 5 times.
+  original @tmesh `m` is simplexified (for example a quadrangle is splitted
+  into 2 triangles), and each simplex is refined 5 times.
 
   Slicing operations can be:
-   - cutting with a plane, a sphere or a cylinder
-   - intersection or union of slices
-   - isovalues surfaces/volumes
-   - "points", "streamlines" (see below)
 
-  If the first argument is a @tmf `mf` instead of a @tmesh, and if it
-  is followed by a `mf`-field `U`@MATLAB{ (with size(U,1) == MESH_FEM:GET('nbdof'))},
-  then the deformation `U` will be applied to the mesh before the
-  slicing operation.
+  * cutting with a plane, a sphere or a cylinder
+  * intersection or union of slices
+  * isovalues surfaces/volumes
+  * "points", "streamlines" (see below)
+
+  If the first argument is a @tmf `mf` instead of a @tmesh, and if it is
+  followed by a `mf`-field `u`@MATLAB{ (with size(u,1) ==
+  MESH_FEM:GET('nbdof'))}, then the deformation `u` will be applied to the
+  mesh before the slicing operation.
 
   The first argument can also be a slice.
-
-  Slicing operations:
-  Always specifiy them between braces (i.e. in a cell array).  The
-  first argument is the name of the operation, followed the slicing
-  options.
-
-
-  - {'none'}
-
-  Does not cut the mesh.
-
-  - {'planar', orient, p, n}
-
-  Planar cut. p and n define a half-space, p being a point belong to
-  the boundary of the half-space, and n being its normal. If orient is
-  equal to -1 (resp. 0, +1), then the slicing operation will cut the
-  mesh with the "interior" (resp. "boundary", "exterior") of the
-  half-space. Orient may also be set to +2 which means that the mesh
-  will be sliced, but both the outer and inner parts will be kept.
-
-  - {'ball', orient, c, r}
-
-  Cut with a ball of center c and radius r.
-
-  - {'cylinder', orient, p1, p2, r}
-
-  Cut with a cylinder whose axis is the line (p1,p2) and whose radius
-  is r.
-
-  - {'isovalues',orient, mesh_fem MF, vec U, scalar V}
-
-  Cut using the isosurface of the field U (defined on the mesh_fem
-  MF). The result is the set {x such that U(x) <= V} or {x such that
-  U(x) == V} or {x such that U(x) <= V} depending on the value of
-  ORIENT.
-
-  - {'boundary'[, SLICEOP]}
-
-  Return the boundary of the result of SLICEOP, where SLICEOP is any
-  slicing operation. If SLICEOP is not specified, then the whole mesh
-  is considered (i.e. it is equivalent to {'boundary',{'none'}}).
-
-  - {'explode', coef}
-
-  Build an 'exploded' view of the mesh: each convex is shrinked (0 <
-  coef <= 1). In the case of 3D convexes, only their faces are kept.
-
-  - {'union', SLICEOP1, SLICEOP2}
-  - {'intersection', SLICEOP1, SLICEOP2}
-  - {'comp', SLICEOP}
-  - {'diff', SLICEOP1, SLICEOP2}
-
-  Boolean operations: returns the union,intersection,complementary or
-  difference of slicing operations.
-
-  - {'mesh', MESH}
-
-  Build a slice which is the intersection of the sliced mesh with
-  another mesh. The slice is such that all of its simplexes are
-  stricly contained into a convex of each mesh.
-
-  EXAMPLE:
-
-  sl = gf_slice({intersection',{'planar',+1,[0;0;0],[0;0;1]},...
-                {'isovalues',-1,mf2,U2,0}},mf,U,5);
-
-  view the convex quality of a 2D or 3D mesh m:
-
-  gf_plot_slice(gfSlice({'explode', 0.7}, m, 2), 'convex_data',...
-                gf_mesh_get(m,'quality'));
-
-
-  SPECIAL SLICES:
-
-  There are also some special calls to gf_slice:
-
-  - gf_slice('streamlines',mf, U, mat SEEDS)
-
-  compute streamlines of the (vector) field U, with seed points given
-  by the columns of SEEDS.
-
-  - gf_slice('points', m, mat PTS)
-
-  return the "slice" composed of points given by the columns of PTS
-  (useful for interpolation on a given set of sparse points, see
-  gf_compute(mf,U,'interpolate on',sl).
-
-  - gf_slice('load', filename [,m])
-
-  load the slice (and its linked_mesh if it is not given as an
-  argument) from a text file.
-
 @*/
 
 /*@INIT sl = ('.op',sliceop, {@tsl sl|{@tmesh m| @tmf mf, vec U}, int refine}[, @mat CVfids])
-  Create a @sl using `sliceop` operation.
+  Create a @tsl using `sliceop` operation.
 
-  `sliceop` operation is specified with @MATLAB{Matlab CELL arrays (i.e. with braces)}@SCILAB{Scilab CELL arrays (i.e. with braces)}
-  @PYTHON{Tuple or List, do not forget the extra parentheses!}. The first element is
-  the name of the operation, followed the slicing options:
+  `sliceop` operation is specified with @MATLAB{Matlab CELL arrays (i.e.
+  with braces)}@SCILAB{Scilab CELL arrays (i.e. with braces)} @PYTHON{Tuple
+  or List, do not forget the extra parentheses!}. The first element is the
+  name of the operation, followed the slicing options:
 
-  - @CELL{'none'}
-      Does not cut the mesh.
-  - @CELL{'planar', @int orient, @vec p, @vec n}
-      Planar cut. `p` and `n` define a half-space, `p` being a point belong
-      to the boundary of the half-space, and `n` being its normal. If
-      `orient` is equal to -1 (resp. 0, +1), then the slicing operation
-      will cut the mesh with the "interior" (resp. "boundary", "exterior")
-      of the half-space. `orient` may also be set to +2 which means that
-      the mesh will be sliced, but both the outer and inner parts will be
-      kept.
-  - @CELL{'ball', @int orient, @vec c, @scalar r}
-      Cut with a ball of center `c` and radius `r`.
-  - @CELL{'cylinder', @int orient, @vec p1, @vec p2, @scalar r}
-      Cut with a cylinder whose axis is the line `(p1,p2)` and whose
-      radius is `r`.
-  - @CELL{'isovalues', @int orient, @tmf mf, @vec U, @scalar V}
-      Cut using the isosurface of the field `U` (defined on the @tmf `mf`).
-      The result is the set `{x such that U(x) <= V}` or `{x such that
-      U(x)=V}` or `{x such that U(x) >= V}` depending on the value of
-      `orient`.
-  - @CELL{'boundary'[, SLICEOP]}
-      Return the boundary of the result of SLICEOP, where SLICEOP is any
-      slicing operation. If SLICEOP is not specified, then the whole mesh
-      is considered (i.e. it is equivalent to @CELL{'boundary',{'none'}}).
-  - @CELL{'explode', @mat Coef}
-      Build an 'exploded' view of the mesh: each convex is shrinked (0 <
-      Coef <= 1). In the case of 3D convexes, only their faces are kept.
-  - @CELL{'union', SLICEOP1, SLICEOP2}
-  - @CELL{'intersection', SLICEOP1, SLICEOP2}
-  - @CELL{'diff', SLICEOP1, SLICEOP2}
-  - @CELL{'comp', SLICEOP}
-      Boolean operations: returns the union,intersection, difference or
-      complementary of slicing operations.
-  - @CELL{'mesh', @tmesh m}
-      Build a slice which is the intersection of the sliced mesh with
-      another mesh. The slice is such that all of its simplexes are
-      stricly contained into a convex of each mesh.
+  * @CELL{'none'} :
+    Does not cut the mesh.
+
+  * @CELL{'planar', @int orient, @vec p, @vec n} :
+    Planar cut. `p` and `n` define a half-space, `p` being a point belong to
+    the boundary of the half-space, and `n` being its normal. If `orient` is
+    equal to -1 (resp. 0, +1), then the slicing operation will cut the mesh
+    with the "interior" (resp. "boundary", "exterior") of the half-space.
+    `orient` may also be set to +2 which means that the mesh will be sliced,
+    but both the outer and inner parts will be kept.
+
+  * @CELL{'ball', @int orient, @vec c, @scalar r} :
+    Cut with a ball of center `c` and radius `r`.
+
+  * @CELL{'cylinder', @int orient, @vec p1, @vec p2, @scalar r} :
+    Cut with a cylinder whose axis is the line `(p1, p2)` and whose radius
+    is `r`.
+
+  * @CELL{'isovalues', @int orient, @tmf mf, @vec U, @scalar s} :
+    Cut using the isosurface of the field `U` (defined on the @tmf `mf`).
+    The result is the set `{x such that `U`(x) <= `s`}` or `{x such that
+    `U`(x)=`s`}` or `{x such that `U`(x) >= `s`}` depending on the value of
+    `orient`.
+
+  * @CELL{'boundary'[, SLICEOP]} :
+    Return the boundary of the result of SLICEOP, where SLICEOP is any
+    slicing operation. If SLICEOP is not specified, then the whole mesh is
+    considered (i.e. it is equivalent to @CELL{'boundary',{'none'}}).
+
+  * @CELL{'explode', @mat Coef} :
+    Build an 'exploded' view of the mesh: each convex is shrinked (0 <
+    `Coef` <= 1). In the case of 3D convexes, only their faces are kept.
+
+  * @CELL{'union', SLICEOP1, SLICEOP2} :
+    Returns the union of slicing operations.
+
+  * @CELL{'intersection', SLICEOP1, SLICEOP2} :
+    Returns the intersection of slicing operations, for example::
+
+      sl = SLICE:INIT(@CELL{intersection',@CELL{'planar',+1,@MATLAB{[0;0;0],[0;0;1]}@SCILAB{[0;0;0],[0;0;1]}@PYTHON{[[0],[0],[0]],[[0],[0],[1]]}},
+                                 @CELL{'isovalues',-1,mf2,u2,0}},mf,u,5)
+
+  * @CELL{'comp', SLICEOP} :
+    Returns the complementary of slicing operations.
+
+  * @CELL{'diff', SLICEOP1, SLICEOP2} :
+    Returns the difference of slicing operations.
+
+  * @CELL{'mesh', @tmesh m} :
+    Build a slice which is the intersection of the sliced mesh with another
+    mesh. The slice is such that all of its simplexes are stricly contained
+    into a convex of each mesh.
 @*/
 
 void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
@@ -528,9 +453,9 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     /* "special" slices are handle here.. */
     std::string cmd = in.pop().to_string();
     if (check_cmd(cmd, "streamlines", in, 3, 3)) {
-    /*@INIT sl = ('streamlines', @tmf mf, @mat U, @dmat Seeds)
-      Compute streamlines of the (vector) field `U`, with seed points
-      given by the columns of `Seeds`.@*/
+    /*@INIT sl = ('streamlines', @tmf mf, @mat U, @dmat S)
+      Compute streamlines of the (vector) field `U`, with seed points given
+      by the columns of `S`.@*/
       const getfem::mesh_fem *mf = in.front().to_const_mesh_fem();
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
       darray U = in.pop().to_darray(int(mf->nb_dof()));
@@ -542,9 +467,9 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       pstored.reset(new getfem::mesh_slice_streamline(&mfU, seeds, true, true));
     } else if (check_cmd(cmd, "points", in, 2, 2)) {
     /*@INIT sl = ('points', @tmesh m, @dmat Pts)
-      Return the "slice" composed of points given by the columns of
-      `Pts` (useful for interpolation on a given set of sparse points,
-      see ::COMPUTE('interpolate on',sl).@*/
+      Return the "slice" composed of points given by the columns of `Pts`
+      (useful for interpolation on a given set of sparse points, see
+      ``::COMPUTE('interpolate on',sl)``.@*/
       id_type id; in.pop().to_const_mesh(id); mm = object_to_mesh(workspace().object(id));
       pstored.reset(new getfem::stored_mesh_slice());
       getfem::mesh_slicer slicer(mm->mesh());
@@ -557,8 +482,8 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       slicer.exec(N);
     } else if (check_cmd(cmd, "load", in, 1, 2)) {
     /*@INIT sl = ('load', @str filename[, @tmesh m])
-      Load the slice (and its linked mesh if it is not given as an
-      argument) from a text file.@*/
+      Load the slice (and its linked mesh if it is not given as an argument)
+      from a text file.@*/
       std::string fname = in.pop().to_string();
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
@@ -576,4 +501,3 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   out.pop().from_object_id(workspace().push_object(mms), SLICE_CLASS_ID);
   workspace().set_dependance(mms, mm);
 }
-

@@ -28,16 +28,17 @@ using namespace getfemint;
 
 /*@GFDOC
 
-   The level-set object is represented by a primary level-set and
-   optionally a secondary level-set used to represent fractures
-   (if p(x) is the primary level-set function and s(x) is the secondary
-   level-set, the crack is defined by p(x)=0 and s(x)<=0: the role of
-   the secondary is to determine the crack front/tip).
+   The level-set object is represented by a primary level-set and optionally
+   a secondary level-set used to represent fractures (if p(x) is the primary
+   level-set function and s(x) is the secondary level-set, the crack is
+   defined by p(x)=0 and s(x)<=0: the role of the secondary is to determine
+   the crack front/tip).
 
-   **IMPORTANT:**
-   All tools listed below need the package qhull installed on your
-   system. This package is widely available. It computes convex hull
-   and delaunay triangulations in arbitrary dimension.
+   .. note::
+
+      All tools listed below need the package qhull installed on your
+      system. This package is widely available. It computes convex hull and
+      delaunay triangulations in arbitrary dimension.
 
 @*/
 
@@ -45,15 +46,16 @@ void gf_levelset(
 getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   getfemint_levelset *gls = NULL;
   if (check_cmd("LevelSet", "LevelSet", in, out, 2, 4, 0, 1)) {
-    /*@INIT LS = ('.mesh',@tmesh m, @int d[, @str 'ws'| @str func_1[, @str func_2 | @str 'ws']])
-    Create a @tls object on a @tmesh represented by a primary function
-    (and optional secondary function, both) defined on a lagrange @tmf
-    of degree `d`.
-    If `ws` (with secondary) is set; this levelset is represented by a
-    primary function and a secondary function. If `func_1` is set; the
-    primary function is defined by that expression. If `func_2` is set;
-    this levelset is represented by a primary function and a secondary
-    function defined by these expressions.@*/
+    /*@INIT LS = ('.mesh',@tmesh m, @int d[, @str 'ws'| @str f1[, @str f2 | @str 'ws']])
+      Create a @tls object on a @tmesh represented by a primary function
+      (and optional secondary function, both) defined on a lagrange @tmf of
+      degree `d`.
+
+      If `ws` (with secondary) is set; this levelset is represented by a
+      primary function and a secondary function. If `f1` is set; the primary
+      function is defined by that expression. If `f2` is set; this levelset
+      is represented by a primary function and a secondary function defined
+      by these expressions. @*/
     getfemint_mesh *mm = in.pop().to_getfemint_mesh();
     size_type degree = in.pop().to_integer(1, 20);
 

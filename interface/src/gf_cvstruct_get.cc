@@ -27,9 +27,9 @@ using namespace getfemint;
 /*@GFDOC
   General function for querying information about convex_structure objects.
 
-  The convex structures are internal structures of getfem++. They do
-  not contain points positions. These structures are recursive, since
-  the faces of a convex structures are convex structures.
+  The convex structures are internal structures of getfem++. They do not
+  contain points positions. These structures are recursive, since the faces
+  of a convex structures are convex structures.
 @*/
 
 
@@ -59,7 +59,7 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+  }
 
 
 
@@ -78,8 +78,8 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
       ("nbpts", 0, 0, 0, 1,
        out.pop().from_scalar(cs->nb_points());
        );
-    
-    
+
+
     /*@RDATTR d = ('dim')
       Get the dimension of the convex structure.@*/
     sub_command
@@ -147,7 +147,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,

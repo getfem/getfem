@@ -35,14 +35,13 @@ using namespace getfemint;
 
 /*@GFDOC
   @tmodel variables store the variables and the state data and the
-  description of a model. This includes the global tangent matrix, the
-  right hand side and the constraints. There are two kinds of models, the
-  `real` and the `complex` models.
+  description of a model. This includes the global tangent matrix, the right
+  hand side and the constraints. There are two kinds of models, the `real`
+  and the `complex` models.
 
-  @tmodel object is the evolution for Getfem++ 4.0 of the @tmdstate
-  object.
-
+  @tmodel object is the evolution for getfem++ 4.0 of the @tmdstate object.
 @*/
+
 void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) THROW_BADARG( "Wrong number of input arguments");
@@ -53,11 +52,11 @@ void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
   if (in.front().is_string()) {
     std::string cmd = in.pop().to_string();
     if (check_cmd(cmd, "real", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS = ('real')
+      /*@INIT MD = ('real')
       Build a model for real unknowns.@*/
       md->set(new getfem::model(false));
     } else if (check_cmd(cmd, "complex", in, out, 0, 0, 0, 1)) {
-      /*@INIT MDS = ('complex')
+      /*@INIT MD = ('complex')
       Build a model for complex unknowns.@*/
       md->set(new getfem::model(true));
     } else bad_cmd(cmd);

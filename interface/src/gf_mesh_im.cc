@@ -31,9 +31,9 @@ using namespace getfemint;
 void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in);
 
 /*@GFDOC
-  This object represent an integration method defined on a whole mesh
-  (an potentialy on its boundaries).
- @*/
+  This object represent an integration method defined on a whole mesh (an 
+  potentialy on its boundaries).
+@*/
 
 
 // Object for the declaration of a new sub-command.
@@ -63,7 +63,7 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+  }
 
 
 
@@ -74,13 +74,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (subc_tab.size() == 0) {
 
-    
-    /*@INIT ('load', @str fname[, @tmesh m])
+
+    /*@INIT MIM = ('load', @str fname[, @tmesh m])
       Load a @tmim from a file.
-      
-      If the mesh `m` is not supplied (this kind of file does not store
-      the mesh), then it is read from the file and its descriptor is
-      returned as the second output argument.@*/
+
+      If the mesh `m` is not supplied (this kind of file does not store the
+      mesh), then it is read from the file and its descriptor is returned as
+      the second output argument.@*/
     sub_command
       ("load", 1, 2, 0, 1,
        std::string fname = in.pop().to_string();
@@ -93,12 +93,12 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        mim = getfemint_mesh_im::new_from(mm);
        mim->mesh_im().read_from_file(fname);
        );
-    
-    
-    /*@INIT ('from string', @str s[, mesh M])
+
+
+    /*@INIT MIM = ('from string', @str s[, @tmesh m])
       Create a @tmim object from its string description.
-      
-      See also MESH_IM:GET('char')@*/
+
+      See also ``MESH_IM:GET('char')``@*/
     sub_command
       ("from string", 1, 2, 0, 1,
        std::stringstream ss(in.pop().to_string());
@@ -113,7 +113,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@INIT ('clone', @tmim mim2)
+    /*@INIT MIM = ('clone', @tmim mim)
       Create a copy of a @tmim.@*/
     sub_command
       ("clone", 1, 1, 0, 1,
@@ -126,13 +126,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@INIT ('levelset', @tmls mls, @str where, @tinteg im[, @tinteg im_tip[, @tinteg im_set]])
+    /*@INIT MIM = ('levelset', @tmls mls, @str where, @tinteg im[, @tinteg im_tip[, @tinteg im_set]])
       Build an integration method conformal to a partition defined
       implicitely by a levelset.
-      
-      The `where` argument define the domain of integration with
-      respect to the levelset, it has to be chosen among 'ALL',
-      'INSIDE', 'OUTSIDE' and 'BOUNDARY'.@*/
+
+      The `where` argument define the domain of integration with respect to
+      the levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and
+      'BOUNDARY'.@*/
     sub_command
       ("levelset", 3, 5, 0, 1,
        getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
@@ -173,7 +173,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        if (pim->type() != getfem::IM_APPROX) {
  	 THROW_BADARG("expecting an approximate integration method");
        }
-       
+
        getfem::mesh_im_level_set *mimls =
        new getfem::mesh_im_level_set(gmls->mesh_levelset(),
  				     where, pim, pim2);
@@ -189,7 +189,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        mimls->adapt();
        workspace().set_dependance(mim, gmls);
        );
-    
+
   }
 
 
@@ -200,8 +200,8 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     std::string init_cmd   = m_in.pop().to_string();
     std::string cmd        = cmd_normalize(init_cmd);
-    
-    
+
+
     SUBC_TAB::iterator it = subc_tab.find(cmd);
     if (it != subc_tab.end()) {
       check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
@@ -212,12 +212,12 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     else bad_cmd(init_cmd);
 
   } else {
-    /*@INIT ('.mesh', @tmesh m, [{@tinteg im|int im_degree}])
-    Build a new @tmim object.
+    /*@INIT MIM = ('.mesh', @tmesh m, [{@tinteg im|int im_degree}])
+      Build a new @tmim object.
 
-    For convenience, optional arguments (`im` or `im_degree`) can be
-    provided, in that case a call to MeshIm.integ() is issued with
-    these arguments.@*/
+      For convenience, optional arguments (`im` or `im_degree`) can be
+      provided, in that case a call to ``MESH_IM:GET('integ')`` is issued
+      with these arguments.@*/
     if (!m_out.narg_in_range(1, 1))
       THROW_BADARG("Wrong number of output arguments");
     mm = m_in.pop().to_getfemint_mesh();

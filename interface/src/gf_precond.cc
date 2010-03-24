@@ -104,8 +104,8 @@ precond_spmat(getfemint_gsparse *gsp, mexargs_out& out) {
 }
 
 /*@GFDOC
-  The preconditioners may store REAL or COMPLEX values. They accept
-  getfem sparse matrices and Matlab sparse matrices.
+  The preconditioners may store REAL or COMPLEX values. They accept getfem
+  sparse matrices and Matlab sparse matrices.
 @*/
 
 
@@ -132,7 +132,7 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+  }
 
 
 
@@ -142,24 +142,24 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   if (subc_tab.size() == 0) {
 
-    
-    /*@INIT ('identity')
-      Create a REAL identity precondioner. @*/
+
+    /*@INIT PC = ('identity')
+      Create a REAL identity precondioner.@*/
     sub_command
       ("identity", 0, 0, 0, 1,
        precond_new(out, scalar_type());
        );
 
-    /*@INIT ('cidentity')
-      Create a COMPLEX identity precondioner. @*/
+    /*@INIT PC = ('cidentity')
+      Create a COMPLEX identity precondioner.@*/
     sub_command
       ("cidentity", 0, 0, 0, 1,
        precond_new(out, complex_type());
        );
 
 
-    /*@INIT ('diagonal', @dcvec D)
-   Create a diagonal precondioner. @*/
+    /*@INIT PC = ('diagonal', @dcvec D)
+      Create a diagonal precondioner.@*/
     sub_command
       ("diagonal", 1, 1, 0, 1,
        dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
@@ -168,10 +168,10 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@INIT ('ildlt', @tsp m)
-      Create an ILDLT (Cholesky) preconditioner for the (symmetric)
-      sparse matrix `m`. This preconditioner has the same sparsity
-      pattern than `m` (no fill-in).  @*/
+    /*@INIT PC = ('ildlt', @tsp m)
+      Create an ILDLT (Cholesky) preconditioner for the (symmetric) sparse
+      matrix `m`. This preconditioner has the same sparsity pattern than `m`
+      (no fill-in).@*/
     sub_command
       ("ildlt", 1, 1, 0, 1,
        dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
@@ -180,7 +180,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@INIT ('ilu', @tsp m)
+    /*@INIT PC = ('ilu', @tsp m)
       Create an ILU (Incomplete LU) preconditioner for the sparse
       matrix `m`. This preconditioner has the same sparsity pattern
       than `m` (no fill-in).  @*/
@@ -192,11 +192,11 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else                 precond_ilu(*M, out, scalar_type());
        );
 
-    /*@INIT ('ildltt', @tsp m[, @int fillin[, @scalar threshold]])
-      Create an ILDLT (Cholesky with filling) preconditioner for the
+    /*@INIT PC = ('ildltt', @tsp m[, @int fillin[, @scalar threshold]])
+      Create an ILDLTT (Cholesky with filling) preconditioner for the
       (symmetric) sparse matrix `m`. The preconditioner may add at most
-      `fillin` additional non-zero entries on each line. The default
-      value for `fillin` is 10, and the default threshold is1e-7. @*/
+      `fillin` additional non-zero entries on each line. The default value
+      for `fillin` is 10, and the default threshold is1e-7.@*/
     sub_command
       ("ildltt", 1, 3, 0, 1,
        dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
@@ -207,11 +207,11 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else                 precond_ildltt(*M, additional_fillin, threshold, out, scalar_type());
        );
 
-    /*@INIT ('ilut', @tsp m[, @int fillin[, @scalar threshold]])
+    /*@INIT PC = ('ilut', @tsp m[, @int fillin[, @scalar threshold]])
       Create an ILUT (Incomplete LU with filling) preconditioner for the
       sparse matrix `m`. The preconditioner may add at most `fillin`
       additional non-zero entries on each line. The default value for
-      `fillin` is 10, and the default threshold is 1e-7. @*/
+      `fillin` is 10, and the default threshold is 1e-7.@*/
     sub_command
       ("ilut", 1, 3, 0, 1,
        dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
@@ -222,11 +222,11 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else                 precond_ilut(*M, additional_fillin, threshold, out, scalar_type());
        );
 
-    /*@INIT ('superlu', @tsp m)
-      Uses SuperLU to build an exact factorization of the sparse matrix
-      `m`. This preconditioner is only available if the getfem-interface
-      was built with SuperLU support. Note that LU factorization is likely
-      to eat all your memory for 3D problems. @*/
+    /*@INIT PC = ('superlu', @tsp m)
+      Uses SuperLU to build an exact factorization of the sparse matrix `m`.
+      This preconditioner is only available if the getfem-interface was
+      built with SuperLU support. Note that LU factorization is likely to
+      eat all your memory for 3D problems.@*/
     sub_command
       ("superlu", 1, 1, 0, 1,
        dal::shared_ptr<gsparse> M = in.pop().to_sparse(); M->to_csc();
@@ -234,8 +234,8 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else                 precond_superlu(*M, out, scalar_type());
        );
 
-    /*@INIT ('spmat', @tsp M)
-      Preconditionner given explicitely by a sparse matrix. @*/
+    /*@INIT PC = ('spmat', @tsp m)
+      Preconditionner given explicitely by a sparse matrix.@*/
     sub_command
       ("spmat", 1, 1, 0, 1,
        getfemint_gsparse *ggsp = 0;
@@ -263,7 +263,7 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
@@ -272,6 +272,5 @@ void gf_precond(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     it->second->run(m_in, m_out);
   }
   else bad_cmd(init_cmd);
-
 
 }

@@ -397,11 +397,12 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     Setup a nonlinear elasticity (large deformations) problem.
 
     The material `law` can be chosen among:
-     - 'SaintVenant Kirchhoff'
-        Linearized material law.
-     - 'Mooney Rivlin'
-        To be used with the nonlinear incompressibily term.
-     - 'Ciarlet Geymonat'@*/
+
+    - 'SaintVenant Kirchhoff' :
+      Linearized material law.
+    - 'Mooney Rivlin' :
+      To be used with the nonlinear incompressibily term.
+    - 'Ciarlet Geymonat'@*/
     getfem::mesh_im &mim = pop_mesh_im(in, b);
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);
     std::string lawname = in.pop().to_string();

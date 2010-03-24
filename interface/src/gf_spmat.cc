@@ -120,21 +120,24 @@ void load_spmat(mexargs_in& in, gsparse &gsp) {
 }
 
 /*@GFDOC
-Create a new sparse matrix in Getfem format.@MATLAB{(i.e. sparse matrices which are stored in the getfem workspace, not the matlab sparse matrices).}
-These sparse matrix can be stored as CSC (compressed column sparse), which
-is the format used by Matlab, or they can be stored as WSC (internal format
-to getfem). The CSC matrices are not writable (it would be very inefficient),
-but they are optimized for multiplication with vectors, and memory usage.
-The WSC are writable, they are very fast with respect to random read/write
-operation. However their memory overhead is higher than CSC matrices, and
-they are a little bit slower for matrix-vector multiplications.
+  Create a new sparse matrix in getfem++ format@MATLAB{(, i.e. sparse
+  matrices which are stored in the getfem workspace, not the matlab sparse
+  matrices)}. These sparse matrix can be stored as CSC (compressed column
+  sparse), which is the format used by Matlab, or they can be stored as WSC
+  (internal format to getfem). The CSC matrices are not writable (it would
+  be very inefficient), but they are optimized for multiplication with
+  vectors, and memory usage. The WSC are writable, they are very fast with
+  respect to random read/write operation. However their memory overhead is
+  higher than CSC matrices, and they are a little bit slower for
+  matrix-vector multiplications.
 
-By default, all newly created matrices are build as WSC matrices. This can
-be changed later with SPMAT:SET('to_csc',...), or may be changed automatically
-by getfem (for example ::LINSOLVE() converts the matrices to CSC).
+  By default, all newly created matrices are build as WSC matrices. This can
+  be changed later with ``SPMAT:SET('to_csc',...)``, or may be changed
+  automatically by getfem (for example ``::LINSOLVE()`` converts the
+  matrices to CSC).
 
-The matrices may store REAL or COMPLEX values.
-  @*/
+  The matrices may store REAL or COMPLEX values.
+@*/
 
 
 
@@ -161,7 +164,7 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+  }
 
 
 
@@ -175,9 +178,9 @@ void gf_spmat(getfemint::mexargs_in& m_in,
   if (subc_tab.size() == 0) {
 
 
-    /*@INIT ('empty', @int m [, @int n])
-     Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
-     `m x n`. If `n` is omitted, the matrix dimension is `m x m`. @*/
+    /*@INIT SM = ('empty', @int m [, @int n])
+      Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
+      `m x n`. If `n` is omitted, the matrix dimension is `m x m`.@*/
     sub_command
       ("empty", 1, 2, 0, 1,
        size_type m = in.pop().to_integer(1,INT_MAX); size_type  n = m;
@@ -185,14 +188,16 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        gsp.allocate(m, n, gsparse::WSCMAT, gsparse::REAL);
        );
 
-    /*@INIT ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J]])
-     Duplicate a matrix K (which might be a @tsp@MATLAB{ or a native matlab
-     sparse matrix}). If (index) `I` and/or `J` are given, the matrix will
-     be a submatrix of `K`. For example:
-     @MATLAB{M = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
-     @SCILAB{M = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
-     @PYTHON{M = SPMAT:INIT('copy', SPMAT:INIT('empty',50,50), range(40), [6, 7, 8, 3, 10])}
-     will return a 40x5 matrix. @*/
+    /*@INIT SM = ('copy', @mat K [, @PYTHON{@list} I [, @PYTHON{@list} J]])
+      Duplicate a matrix `K` (which might be a @tsp@MATLAB{ or a native matlab
+      sparse matrix}). If index `I` and/or `J` are given, the matrix will
+      be a submatrix of `K`. For example::
+
+        @MATLAB{m = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
+        @SCILAB{m = SPMAT:INIT('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])}
+        @PYTHON{m = SPMAT:INIT('copy', SPMAT:INIT('empty',50,50), range(40), [6, 7, 8, 3, 10])}
+
+      will return a 40x5 matrix.@*/
     sub_command
       ("copy", 1, 3, 0, 1,
        dal::shared_ptr<gsparse> A = in.pop().to_sparse();
@@ -203,8 +208,8 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        }
        );
 
-     /*@INIT ('identity', @int n)
-     Create a `n x n` identity matrix. @*/
+     /*@INIT SM = ('identity', @int n)
+       Create a `n x n` identity matrix.@*/
     sub_command
       ("identity", 1, 1, 0, 1,
        size_type n = in.pop().to_integer(1, INT_MAX);
@@ -213,16 +218,16 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        );
 
 
-     /*@INIT ('mult', @tspmat A, @tspmat B)
-     Create a sparse matrix as the product of the sparse matrices `A` and
-     `B`. It requires that `A` and `B` be both real or both complex, you
-     may have to use SPMAT:SET('to_complex') @*/
+     /*@INIT SM = ('mult', @tspmat A, @tspmat B)
+       Create a sparse matrix as the product of the sparse matrices `A` and
+       `B`. It requires that `A` and `B` be both real or both complex, you
+       may have to use ``SPMAT:SET('to_complex')`` @*/
     sub_command
       ("mult", 2, 2, 0, 1,
        dal::shared_ptr<gsparse> A = in.pop().to_sparse();
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
        size_type m = A->nrows(); size_type n = B->ncols();
-       
+
        if (A->is_complex() != B->is_complex())
 	 THROW_BADARG("cannot multiply a complex matrix with a real one, use to_complex()");
        if (!A->is_complex()) gsp.real_wsc(new gsparse::t_wscmat_r(m,n));
@@ -252,14 +257,14 @@ void gf_spmat(getfemint::mexargs_in& m_in,
 		&& B->storage() == gsparse::WSCMAT) {
 	 if (!A->is_complex())
 	   gmm::mult(A->real_wsc(),B->real_wsc(), gsp.real_wsc());
-	 else  
+	 else
 	   gmm::mult(A->cplx_wsc(),B->cplx_wsc(), gsp.cplx_wsc());
        } else THROW_INTERNAL_ERROR;
        );
 
-     /*@INIT ('add', @tspmat A, @tspmat B)
-     Create a sparse matrix as the sum of the sparse matrices `A` and
-     `B`. Adding a real matrix with a complex matrix is possible. @*/
+     /*@INIT SM = ('add', @tspmat A, @tspmat B)
+       Create a sparse matrix as the sum of the sparse matrices `A` and `B`.
+       Adding a real matrix with a complex matrix is possible.@*/
     sub_command
       ("add", 2, 2, 0, 1,
        dal::shared_ptr<gsparse> A = in.pop().to_sparse();
@@ -279,18 +284,18 @@ void gf_spmat(getfemint::mexargs_in& m_in,
        }
        );
 
-     /*@INIT ('diag', @dmat D [, @ivec E [, @int n [,@int m]]])
-     Create a diagonal matrix. If `E` is given, `D` might be a matrix
-     and each column of `E` will contain the sub-diagonal number that
-     will be filled with the corresponding column of `D`. @*/
+     /*@INIT SM = ('diag', @dmat D [, @ivec E [, @int n [,@int m]]])
+       Create a diagonal matrix. If `E` is given, `D` might be a matrix and
+       each column of `E` will contain the sub-diagonal number that will be
+       filled with the corresponding column of `D`.@*/
     sub_command
       ("diag", 1, 4, 0, 1,
        spmat_set_diag(gsp, in, true);
        );
 
-    /*@INIT ('load','hb'|'harwell-boeing'|'mm'|'matrix-market', @str filename)
-      Read a sparse matrix from an Harwell-Boeing or a Matrix-Market file.
-      @MATLAB{See also ::UTIL('load matrix').} @*/
+    /*@INIT SM = ('load','hb'|'harwell-boeing'|'mm'|'matrix-market', @str filename)
+      Read a sparse matrix from an Harwell-Boeing or a Matrix-Market file
+      @MATLAB{See also ``::UTIL('load matrix')``}.@*/
     sub_command
       ("load", 2, 2, 1, 1,
        load_spmat(in, gsp);
@@ -305,7 +310,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
@@ -332,7 +337,7 @@ void gf_spmat(getfemint::mexargs_in& m_in,
     return Spmat('add',self,other.__neg__())
   def __mul__(self, other):
     """Multiplication of a Spmat with another Spmat or a vector or a scalar.
- 
+
        The result is another Spmat object.
     """
     if isinstance(other,numbers.Number):

@@ -30,14 +30,13 @@ using namespace getfemint;
 /*@GFDOC
   Global function object is represented by three functions:
 
-   * The global function `val`.
-   * The global function gradient `grad`.
-   * The global function Hessian `hess`.
-  
-  this type of function is used as local and global enrichment
-  function. The global function Hessian is an optional parameter
-  (only for fourth order derivative problems).
-  @*/
+   * The function `val`.
+   * The function gradient `grad`.
+   * The function Hessian `hess`.
+
+  this type of function is used as local and global enrichment function. The
+  global function Hessian is an optional parameter (only for fourth order
+  derivative problems). @*/
 
 
 // Object for the declaration of a new sub-command.
@@ -67,7 +66,7 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
     subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+  }
 
 
 
@@ -109,7 +108,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
 
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
     /*@INIT GF = ('parser', @str val[, @str grad[, @str hess]])
-    Create a global function from strings `val`, `grad` and `hess`.@*/
+      Create a global function from strings `val`, `grad` and `hess`.@*/
     sub_command
       ("parser", 1, 3, 0, 1,
        std::string sval = in.pop().to_string();
@@ -117,7 +116,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        std::string shess = "0;0;0;0;";
        if (in.remaining() && in.front().is_string()) sgrad = in.pop().to_string();
        if (in.remaining() && in.front().is_string()) shess = in.pop().to_string();
-       
+
        getfem::abstract_xy_function *parser = new getfem::parser_xy_function(sval,sgrad,shess);
        ggf = getfemint_global_function::get_from(parser);
        );
@@ -136,8 +135,8 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@INIT GF = ('add', @tgf F, @tgf G)
-    Create a add of two global functions.@*/
+    /*@INIT GF = ('add', @tgf gf1, @tgf gf2)
+      Create a add of two global functions.@*/
     sub_command
       ("add", 2, 2, 0, 1,
        getfem::abstract_xy_function *af1 = in.pop().to_global_function();
@@ -157,7 +156,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,

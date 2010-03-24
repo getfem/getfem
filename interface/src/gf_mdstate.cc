@@ -35,15 +35,15 @@ using namespace getfemint;
 
 
 /*@GFDOC
-  A model state is an object which store the state data for a chain of
-  model bricks. This includes the global tangent matrix, the right hand
-  side and the constraints.
+  A model state is an object which store the state data for a chain of model
+  bricks. This includes the global tangent matrix, the right hand side and
+  the constraints.
 
   This object is now deprecated and replaced by the @tmodel object.
 
-  There are two sorts of model states, the `real` and the `complex`
-  models states.
- @*/
+  There are two sorts of model states, the `real` and the `complex` models
+  states.
+@*/
 void gf_mdstate(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 {
   if (in.narg() < 1) {
@@ -58,18 +58,18 @@ void gf_mdstate(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     std::string cmd    = in.pop().to_string();
     if (check_cmd(cmd, "real", in, out, 0, 0, 0, 1)) {
       /*@INIT MDS = ('real')
-      Build a model state for real unknowns.@*/
+        Build a model state for real unknowns.@*/
       md->set(new real_model_state);
     } else if (check_cmd(cmd, "complex", in, out, 0, 0, 0, 1)) {
       /*@INIT MDS = ('complex')
-      Build a model state for complex unknowns.@*/
+        Build a model state for complex unknowns.@*/
       md->set(new cplx_model_state);
     } else bad_cmd(cmd);
   } else if (in.front().is_mdbrick()) {
     /*@INIT MDS = ('.mdbrick', @tmdbrick B)
-    Build a modelstate for the brick `B`.
+      Build a modelstate for the brick `B`.
 
-    Selects the real or complex state from the complexity of `B`.@*/
+      Selects the real or complex state from the complexity of `B`.@*/
     getfemint_mdbrick *b = in.pop().to_getfemint_mdbrick();
     if (!b->is_complex())
       md->set(new real_model_state(b->real_mdbrick()));
