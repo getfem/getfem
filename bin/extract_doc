@@ -238,7 +238,7 @@ def StandardObjectName(o):
 
 def FilterDoc(d, langage, objects, commands, set_replace = set()):
 
-  markup = ['@MATLAB{', '@PYTHON{', '@SCILAB']
+  markup = ['@MATLAB{', '@PYTHON{', '@SCILAB{']
   mmarkup = '@' + langage.upper() + '{'
 
   for m in markup:
