@@ -229,9 +229,12 @@ namespace getfem {
         for (size_type i=0; i < cv_nb_nodes; ++i) {
           size_type j;
           f >> j;
-          ci.nodes[i] = msh_node_2_getfem_node[j];
-          GMM_ASSERT1(ci.nodes[i] != size_type(-1), "Invalid node ID " << j
-                      << " in gmsh convex " << (ci.id + 1));
+	  std::map<size_type, size_type>::iterator
+	    it = msh_node_2_getfem_node.find(j);
+          GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
+		      "Invalid node ID " << j << " in gmsh convex "
+		      << (ci.id + 1));
+	  ci.nodes[i] = it->second;
         }
         ci.set_pgt();
         // Reordering nodes for certain elements (should be completed ?)
@@ -450,9 +453,11 @@ namespace getfem {
         for (size_type i=0; i < nnode; ++i) {
           size_type j;
           s >> j;
-          cv_nodes[i] = msh_node_2_getfem_node[j];
-          GMM_ASSERT1(cv_nodes[i] != size_type(-1), "Invalid node ID " << j
-                      << " in GiD mesh convex num " << cv_id);
+	  std::map<size_type, size_type>::iterator
+	    it = msh_node_2_getfem_node.find(j);
+          GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
+		      "Invalid node ID " << j << " in GiD convex " << cv_id);
+	  cv_nodes[i] = it->second;
         }
         getfem_cv_nodes.resize(nnode);
         for (size_type i=0; i < nnode; ++i) {
