@@ -38,38 +38,38 @@ namespace getfem {
     void set_pgt() {
       switch (type) {
       case 1: { /* LINE */
-	pgt = bgeot::simplex_geotrans(1,1);
+        pgt = bgeot::simplex_geotrans(1,1);
       } break;
       case 2: { /* TRIANGLE */
-	pgt = bgeot::simplex_geotrans(2,1);
+        pgt = bgeot::simplex_geotrans(2,1);
       } break;
       case 3: { /* QUADRANGLE */
-	pgt = bgeot::parallelepiped_geotrans(2,1);
+        pgt = bgeot::parallelepiped_geotrans(2,1);
       } break;
       case 4: { /* TETRAHEDRON */
-	pgt = bgeot::simplex_geotrans(3,1);
+        pgt = bgeot::simplex_geotrans(3,1);
       } break;
       case 5: { /* HEXAHEDRON */
-	pgt = bgeot::parallelepiped_geotrans(3,1);
+        pgt = bgeot::parallelepiped_geotrans(3,1);
       } break;
       case 6: { /* PRISM */
-	pgt = bgeot::prism_geotrans(3,1);
+        pgt = bgeot::prism_geotrans(3,1);
       } break;
       case 7: { /* PYRAMID */
-	GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
+        GMM_ASSERT1(false, "sorry pyramidal elements not yet supported.");
       } break;
       case 8: { /* 2ND ORDER LINE */
-	pgt = bgeot::simplex_geotrans(1,2);
+        pgt = bgeot::simplex_geotrans(1,2);
       } break;
       case 9: { /* 2ND ORDER TRIANGLE */
-	pgt = bgeot::simplex_geotrans(2,2);
+        pgt = bgeot::simplex_geotrans(2,2);
       } break;
       case 15: { /* POINT */
-	GMM_WARNING2("ignoring point element");
+        GMM_WARNING2("ignoring point element");
       } break;
       default: { /* UNKNOWN .. */
-	/* higher order elements : to be done .. */
-	GMM_ASSERT1(false, "the gmsh element type "<< type <<"is unknown..");
+        /* higher order elements : to be done .. */
+        GMM_ASSERT1(false, "the gmsh element type "<< type <<"is unknown..");
       } break;
       }
     }
@@ -78,39 +78,39 @@ namespace getfem {
       /* Especially for the gmsh file format version 2.*/
       switch (type) {
       case 1: { /* LINE */
-	nodes.resize(2);
+        nodes.resize(2);
       } break;
       case 2: { /* TRIANGLE */
-	nodes.resize(3);
+        nodes.resize(3);
       } break;
       case 3: { /* QUADRANGLE */
-	nodes.resize(4);
+        nodes.resize(4);
       } break;
       case 4: { /* TETRAHEDRON */
-	nodes.resize(4);
+        nodes.resize(4);
       } break;
       case 5: { /* HEXAHEDRON */
-	nodes.resize(8);
+        nodes.resize(8);
       } break;
       case 6: { /* PRISM */
-	nodes.resize(6);
+        nodes.resize(6);
       } break;
       case 7: { /* PYRAMID */
-	GMM_ASSERT1(false,
-		    "sorry pyramidal convexes not done for the moment..");
+        GMM_ASSERT1(false,
+                    "sorry pyramidal convexes not done for the moment..");
       } break;
       case 8: { /* 2ND ORDER LINE */
-	nodes.resize(3);
+        nodes.resize(3);
       } break;
       case 9: { /* 2ND ORDER TRIANGLE */
-	nodes.resize(6);
+        nodes.resize(6);
       } break;
       case 15: { /* POINT */
-	GMM_WARNING2("ignoring point element");
+        GMM_WARNING2("ignoring point element");
       } break;
       default: { /* UNKNOWN .. */
-	/* higher order elements : to be done .. */
-	GMM_ASSERT1(false, "the gmsh element type " << type << "is unknown..");
+        /* higher order elements : to be done .. */
+        GMM_ASSERT1(false, "the gmsh element type " << type << "is unknown..");
       } break;
       }
     }
@@ -168,12 +168,12 @@ namespace getfem {
     size_type nb_node;
     f >> nb_node;
     //cerr << "reading nodes..[nb=" << nb_node << "]\n";
-    dal::dynamic_tree_sorted<size_type> msh_node_2_getfem_node;
+    std::map<size_type, size_type> msh_node_2_getfem_node;
     for (size_type node_cnt=0; node_cnt < nb_node; ++node_cnt) {
       size_type node_id;
       base_node n(3); n[0]=n[1]=n[2]=0.0;
       f >> node_id >> n[0] >> n[1] >> n[2];
-      msh_node_2_getfem_node.add_to_index(m.add_point(n), node_id);
+      msh_node_2_getfem_node[node_id] = m.add_point(n);
     }
 
     if (version == 2)
@@ -195,18 +195,18 @@ namespace getfem {
       unsigned dummy, cv_nb_nodes;
 
       if (version == 2) { /* Format version 2 */
-	unsigned nbtags, mesh_part;
-	f >> id >> type >> nbtags;
-	if (nbtags == 0 || nbtags > 3)
-	  GMM_ASSERT1(false, "Number of tags " << nbtags
-		      << " is not managed.");
+        unsigned nbtags, mesh_part;
+        f >> id >> type >> nbtags;
+        if (nbtags == 0 || nbtags > 3)
+          GMM_ASSERT1(false, "Number of tags " << nbtags
+                      << " is not managed.");
 
-	f >> region;
+        f >> region;
         if (nbtags > 1) f >> dummy;
         if (nbtags > 2) f >> mesh_part;
       }
       else
-	f >> id >> type >> region >> dummy >> cv_nb_nodes;
+        f >> id >> type >> region >> dummy >> cv_nb_nodes;
 
       id--; /* gmsh numbering starts at 1 */
       if (type == 15) { // just a node
@@ -217,65 +217,65 @@ namespace getfem {
         gmsh_cv_info &ci = cvlst.back();
         ci.id = id; ci.type = type; ci.region = region;
 
-	if (version == 2) { /* For version 2 */
-	  ci.set_nb_nodes();
-	  cv_nb_nodes = unsigned(ci.nodes.size());
-	}
-	else
-	  ci.nodes.resize(cv_nb_nodes);
+        if (version == 2) { /* For version 2 */
+          ci.set_nb_nodes();
+          cv_nb_nodes = unsigned(ci.nodes.size());
+        }
+        else
+          ci.nodes.resize(cv_nb_nodes);
 
-	// cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
+        // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
 
         for (size_type i=0; i < cv_nb_nodes; ++i) {
           size_type j;
           f >> j;
-          ci.nodes[i] = msh_node_2_getfem_node.search(j);
+          ci.nodes[i] = msh_node_2_getfem_node[j];
           GMM_ASSERT1(ci.nodes[i] != size_type(-1), "Invalid node ID " << j
-                      << " in gmsh convex " << ci.id);
+                      << " in gmsh convex " << (ci.id + 1));
         }
         ci.set_pgt();
-	// Reordering nodes for certain elements (should be completed ?)
-	switch(ci.type) {
-	case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
-	case 5 : { /* First order hexaedron */
-	  std::vector<size_type> tmp_nodes(8);
-	  tmp_nodes[0] = ci.nodes[0]; 
-	  tmp_nodes[1] = ci.nodes[1];
-	  tmp_nodes[2] = ci.nodes[3]; 
-	  tmp_nodes[3] = ci.nodes[2];
-	  tmp_nodes[4] = ci.nodes[4]; 
-	  tmp_nodes[5] = ci.nodes[5];
-	  tmp_nodes[6] = ci.nodes[7]; 
-	  tmp_nodes[7] = ci.nodes[6];
-	  ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-	    ci.nodes[2] = tmp_nodes[2];
-	  ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-	    ci.nodes[5] = tmp_nodes[5];
-	  ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7];
-	}
-	  break;
-	case 8 : { /* Second order line */
-	  std::vector<size_type> tmp_nodes(3);
-	  tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
-	  tmp_nodes[2] = ci.nodes[1];
+        // Reordering nodes for certain elements (should be completed ?)
+        switch(ci.type) {
+        case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
+        case 5 : { /* First order hexaedron */
+          std::vector<size_type> tmp_nodes(8);
+          tmp_nodes[0] = ci.nodes[0]; 
+          tmp_nodes[1] = ci.nodes[1];
+          tmp_nodes[2] = ci.nodes[3]; 
+          tmp_nodes[3] = ci.nodes[2];
+          tmp_nodes[4] = ci.nodes[4]; 
+          tmp_nodes[5] = ci.nodes[5];
+          tmp_nodes[6] = ci.nodes[7]; 
+          tmp_nodes[7] = ci.nodes[6];
+          ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+            ci.nodes[2] = tmp_nodes[2];
+          ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+            ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7];
+        }
+          break;
+        case 8 : { /* Second order line */
+          std::vector<size_type> tmp_nodes(3);
+          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
+          tmp_nodes[2] = ci.nodes[1];
 
-	  ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
-	  ci.nodes[2] = tmp_nodes[2];
-	}
-	  break;
-	case 9 : /* Second order triangle */
-	  std::vector<size_type> tmp_nodes(6);
-	  tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
-	    tmp_nodes[2] = ci.nodes[1];
-	  tmp_nodes[3] = ci.nodes[5], tmp_nodes[4] = ci.nodes[4],
-	    tmp_nodes[5] = ci.nodes[2];
+          ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+          ci.nodes[2] = tmp_nodes[2];
+        }
+          break;
+        case 9 : /* Second order triangle */
+          std::vector<size_type> tmp_nodes(6);
+          tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
+            tmp_nodes[2] = ci.nodes[1];
+          tmp_nodes[3] = ci.nodes[5], tmp_nodes[4] = ci.nodes[4],
+            tmp_nodes[5] = ci.nodes[2];
 
-	  ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-	    ci.nodes[2] = tmp_nodes[2];
-	  ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-	    ci.nodes[5] = tmp_nodes[5];
-	  break;
-	}
+          ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+            ci.nodes[2] = tmp_nodes[2];
+          ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+            ci.nodes[5] = tmp_nodes[5];
+          break;
+        }
       }
     }
     nb_cv = cvlst.size();
@@ -283,34 +283,34 @@ namespace getfem {
       std::sort(cvlst.begin(), cvlst.end());
       unsigned N = cvlst.front().pgt->dim();
       for (size_type cv=0; cv < nb_cv; ++cv) {
-	bool cvok = false;
-	gmsh_cv_info &ci = cvlst[cv];
-	//cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
-	//     << " region: " << ci.region << "\n";
-	if (ci.pgt->dim() == N) {
-	  size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
-	  m.region(ci.region).add(ic);
-	} else if (ci.pgt->dim() == N-1) {
-	  bgeot::mesh_structure::ind_cv_ct ct =
-	    m.convex_to_point(ci.nodes[0]);
-	  for (bgeot::mesh_structure::ind_cv_ct::const_iterator
-		 it = ct.begin(); it != ct.end(); ++it) {
-	    for (unsigned face=0;
-		 face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-	      if (m.is_convex_face_having_points(*it,face,
-						 short_type(ci.nodes.size()),
-						 ci.nodes.begin())) {
-		m.region(ci.region).add(*it,face);
-		cvok = true;
-	      }
-	    }
-	  }
-	  if (!cvok)
-	    GMM_WARNING2("face not found ... " << endl);
-	}
-	if (!cvok)
-	  GMM_WARNING2("gmsh import ignored a convex of type "
-		       << bgeot::name_of_geometric_trans(ci.pgt));
+        bool cvok = false;
+        gmsh_cv_info &ci = cvlst[cv];
+        //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
+        //     << " region: " << ci.region << "\n";
+        if (ci.pgt->dim() == N) {
+          size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
+          m.region(ci.region).add(ic);
+        } else if (ci.pgt->dim() == N-1) {
+          bgeot::mesh_structure::ind_cv_ct ct =
+            m.convex_to_point(ci.nodes[0]);
+          for (bgeot::mesh_structure::ind_cv_ct::const_iterator
+                 it = ct.begin(); it != ct.end(); ++it) {
+            for (unsigned face=0;
+                 face < m.structure_of_convex(*it)->nb_faces(); ++face) {
+              if (m.is_convex_face_having_points(*it,face,
+                                                 short_type(ci.nodes.size()),
+                                                 ci.nodes.begin())) {
+                m.region(ci.region).add(*it,face);
+                cvok = true;
+              }
+            }
+          }
+          if (!cvok)
+            GMM_WARNING2("face not found ... " << endl);
+        }
+        if (!cvok)
+          GMM_WARNING2("gmsh import ignored a convex of type "
+                       << bgeot::name_of_geometric_trans(ci.pgt));
       }
     }
     maybe_remove_last_dimension(m);
@@ -326,7 +326,7 @@ namespace getfem {
     size_type dim;
     enum { LIN,TRI,QUAD,TETR, PRISM, HEX,BADELTYPE } eltype=BADELTYPE;
     size_type nnode = 0;
-    dal::dynamic_tree_sorted<size_type> msh_node_2_getfem_node;
+    std::map<size_type, size_type> msh_node_2_getfem_node;
     std::vector<size_type> cv_nodes, getfem_cv_nodes;
     bool nodes_done = false;
     do {
@@ -334,9 +334,9 @@ namespace getfem {
       if (f.eof() || !bgeot::read_until(f, "MESH")) break;
       std::string selemtype;
       f >> bgeot::skip("DIMENSION") >> dim
-	>> bgeot::skip("ELEMTYPE") >> std::ws
-	>> selemtype
-	>> bgeot::skip("NNODE") >> nnode;
+        >> bgeot::skip("ELEMTYPE") >> std::ws
+        >> selemtype
+        >> bgeot::skip("NNODE") >> nnode;
       if (bgeot::casecmp(selemtype, "linear")==0) { eltype = LIN;  }
       else if (bgeot::casecmp(selemtype, "triangle")==0) { eltype = TRI; }
       else if (bgeot::casecmp(selemtype, "quadrilateral")==0) { eltype = QUAD; }
@@ -347,40 +347,40 @@ namespace getfem {
       GMM_ASSERT1(!f.eof(), "File ended before coordinates");
       f >> bgeot::skip("COORDINATES");
       if (!nodes_done) {
-	dal::dynamic_array<base_node> gid_nodes;
-	dal::bit_vector gid_nodes_used;
-	do {
-	  //cerr << "reading coordinates " << std::streamoff(f.tellg()) << "\n";
-	  std::string ls;
-	  f >> std::ws;
-	  std::getline(f,ls);
-	  if (bgeot::casecmp(ls, "END COORDINATES", 15)==0) break;
-	  std::stringstream s; s << ls;
-	  size_type id;
-	  s >> id;
+        dal::dynamic_array<base_node> gid_nodes;
+        dal::bit_vector gid_nodes_used;
+        do {
+          //cerr << "reading coordinates " << std::streamoff(f.tellg()) << "\n";
+          std::string ls;
+          f >> std::ws;
+          std::getline(f,ls);
+          if (bgeot::casecmp(ls, "END COORDINATES", 15)==0) break;
+          std::stringstream s; s << ls;
+          size_type id;
+          s >> id;
 
-	  gid_nodes[id].resize(dim); gid_nodes_used.add(id);
-	  for (size_type i=0; i < dim; ++i) s >> gid_nodes[id][i];
-	  //cerr << "ppoint " << id << ", " << n << endl;
-	} while (true);
+          gid_nodes[id].resize(dim); gid_nodes_used.add(id);
+          for (size_type i=0; i < dim; ++i) s >> gid_nodes[id][i];
+          //cerr << "ppoint " << id << ", " << n << endl;
+        } while (true);
 
-	GMM_ASSERT1(gid_nodes_used.card() != 0, "no nodes in the mesh!");
+        GMM_ASSERT1(gid_nodes_used.card() != 0, "no nodes in the mesh!");
 
-	/* suppression of unused dimensions */
-	std::vector<bool> direction_useless(3,true);
-	base_node first_pt = gid_nodes[gid_nodes_used.first()];
-	for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
+        /* suppression of unused dimensions */
+        std::vector<bool> direction_useless(3,true);
+        base_node first_pt = gid_nodes[gid_nodes_used.first()];
+        for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
           for (size_type j=0; j < first_pt.size(); ++j) {
             if (direction_useless[j] && (gmm::abs(gid_nodes[ip][j]-first_pt[j]) > 1e-13))
               direction_useless[j] = false;
           }
-	}
-	size_type dim2=0;
-	for (size_type j=0; j < dim; ++j) if (!direction_useless[j]) dim2++;
-	for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
+        }
+        size_type dim2=0;
+        for (size_type j=0; j < dim; ++j) if (!direction_useless[j]) dim2++;
+        for (dal::bv_visitor ip(gid_nodes_used); !ip.finished(); ++ip) {
           base_node n(dim2);
           for (size_type j=0, cnt=0; j < dim; ++j) if (!direction_useless[j]) n[cnt++]=gid_nodes[ip][j];
-          msh_node_2_getfem_node.add_to_index(m.add_point(n), ip);
+          msh_node_2_getfem_node[ip] = m.add_point(n);
         }
       }
 
@@ -391,78 +391,78 @@ namespace getfem {
       //cerr << "reading elements " << std::streamoff(f.tellg()) << "\n";
       switch (eltype) {
       case LIN: {
-	if (nnode == 2) pgt = bgeot::simplex_geotrans(1,1);
-	else if (nnode == 3) {
-	  pgt = bgeot::simplex_geotrans(1,2); // A VERIFIER TOUT CA
-	  std::swap(order[1],order[2]);
-	}
+        if (nnode == 2) pgt = bgeot::simplex_geotrans(1,1);
+        else if (nnode == 3) {
+          pgt = bgeot::simplex_geotrans(1,2); // A VERIFIER TOUT CA
+          std::swap(order[1],order[2]);
+        }
       } break;
       case TRI: {
-	if (nnode == 3) pgt = bgeot::simplex_geotrans(2,1);
-	else if (nnode == 6) { // validé
-	  static size_type lorder[6] = {0,3,1,5,4,2};
-	  pgt = bgeot::simplex_geotrans(2,2);
-	  std::copy(lorder,lorder+nnode,order.begin());
-	}
+        if (nnode == 3) pgt = bgeot::simplex_geotrans(2,1);
+        else if (nnode == 6) { // validé
+          static size_type lorder[6] = {0,3,1,5,4,2};
+          pgt = bgeot::simplex_geotrans(2,2);
+          std::copy(lorder,lorder+nnode,order.begin());
+        }
       } break;
       case QUAD: {
-	if (nnode == 4) pgt = bgeot::parallelepiped_geotrans(2,1);
-	else if (nnode == 9) {
-	  static size_type lorder[9] = {0,4,1, 7,8,5, 3,6,2};
-	  pgt = bgeot::parallelepiped_geotrans(2,2);
-	  std::copy(lorder,lorder+nnode,order.begin());
-	}
+        if (nnode == 4) pgt = bgeot::parallelepiped_geotrans(2,1);
+        else if (nnode == 9) {
+          static size_type lorder[9] = {0,4,1, 7,8,5, 3,6,2};
+          pgt = bgeot::parallelepiped_geotrans(2,2);
+          std::copy(lorder,lorder+nnode,order.begin());
+        }
       } break;
       case TETR: {
-	if (nnode == 4) pgt = bgeot::simplex_geotrans(3,1);
-	else if (nnode == 10) { // validé
-	  static size_type lorder[10] = {0,4,1, 7,8, 3, 6, 5, 9, 2};
-	  pgt = bgeot::simplex_geotrans(3,2);
-	  std::copy(lorder,lorder+nnode,order.begin());
-	}
+        if (nnode == 4) pgt = bgeot::simplex_geotrans(3,1);
+        else if (nnode == 10) { // validé
+          static size_type lorder[10] = {0,4,1, 7,8, 3, 6, 5, 9, 2};
+          pgt = bgeot::simplex_geotrans(3,2);
+          std::copy(lorder,lorder+nnode,order.begin());
+        }
       } break;
       case PRISM: {
-	if (nnode == 6) pgt = bgeot::prism_geotrans(3,1);
+        if (nnode == 6) pgt = bgeot::prism_geotrans(3,1);
       } break;
       case HEX: {
-	if (nnode == 8) pgt = bgeot::parallelepiped_geotrans(3,1);
-	else if (nnode == 27) {
-	  static size_type lorder[27] = {0,8,1, 12,21,13, 4,16,5,
-					 11,20,9, 22,26,24, 19,25,17,
-					 3,10,2, 15,23,14, 7,18,6};
-	  pgt = bgeot::parallelepiped_geotrans(3,2);
-	  std::copy(lorder,lorder+nnode,order.begin());
-	}
+        if (nnode == 8) pgt = bgeot::parallelepiped_geotrans(3,1);
+        else if (nnode == 27) {
+          static size_type lorder[27] = {0,8,1, 12,21,13, 4,16,5,
+                                         11,20,9, 22,26,24, 19,25,17,
+                                         3,10,2, 15,23,14, 7,18,6};
+          pgt = bgeot::parallelepiped_geotrans(3,2);
+          std::copy(lorder,lorder+nnode,order.begin());
+        }
       } break;
       default: GMM_ASSERT1(false, ""); break;
       }
       GMM_ASSERT1(pgt != NULL, "unknown element type " << selemtype
-		  << " with " << nnode << "nodes");
+                  << " with " << nnode << "nodes");
       do {
-	std::string ls;
-	f >> std::ws;
-	std::getline(f,ls);
-	if (bgeot::casecmp(ls, "END ELEMENTS", 12)==0) break;
-	std::stringstream s; s << ls;
-	size_type cv_id;
-	s >> cv_id;
-	cv_nodes.resize(nnode);
-	for (size_type i=0; i < nnode; ++i) {
-	  size_type j;
-	  s >> j;
-	  cv_nodes[i] = msh_node_2_getfem_node.search(j);
-	  GMM_ASSERT1(cv_nodes[i] != size_type(-1), "Invalid node ID " << j
-		      << " in GiD mesh convex num " << cv_id);
-	}
-	getfem_cv_nodes.resize(nnode);
-	for (size_type i=0; i < nnode; ++i) {
-	  getfem_cv_nodes[i] = cv_nodes[order[i]];
-	}
-	//cerr << "elt " << cv_id << ", " << getfem_cv_nodes << endl;
+        std::string ls;
+        f >> std::ws;
+        std::getline(f,ls);
+        if (bgeot::casecmp(ls, "END ELEMENTS", 12)==0) break;
+        std::stringstream s; s << ls;
+        size_type cv_id;
+        s >> cv_id;
+        cv_nodes.resize(nnode);
+        for (size_type i=0; i < nnode; ++i) {
+          size_type j;
+          s >> j;
+          cv_nodes[i] = msh_node_2_getfem_node[j];
+          GMM_ASSERT1(cv_nodes[i] != size_type(-1), "Invalid node ID " << j
+                      << " in GiD mesh convex num " << cv_id);
+        }
+        getfem_cv_nodes.resize(nnode);
+        for (size_type i=0; i < nnode; ++i) {
+          getfem_cv_nodes[i] = cv_nodes[order[i]];
+        }
+        //cerr << "elt " << cv_id << ", " << getfem_cv_nodes << endl;
 
-	// envisager la "simplification" quand on a une transfo non
-	// lineaire mais que la destination est lineaire
-	m.add_convex(pgt, getfem_cv_nodes.begin());
+        // envisager la "simplification" quand on a une transfo non
+        // lineaire mais que la destination est lineaire
+        m.add_convex(pgt, getfem_cv_nodes.begin());
       } while (true);
     } while (!f.eof());
   }
@@ -544,12 +544,12 @@ namespace getfem {
   }
 
   void import_mesh(const std::string& filename, const std::string& format,
-		   mesh& m) {
+                   mesh& m) {
     m.clear();
     try {
 
       if (bgeot::casecmp(format,"structured")==0)
-	{ regular_mesh(m, filename); return; }
+        { regular_mesh(m, filename); return; }
 
       std::ifstream f(filename.c_str());
       GMM_ASSERT1(f.good(), "can't open file " << filename);
@@ -565,12 +565,12 @@ namespace getfem {
     catch (std::ios_base::failure& exc) {
       m.clear();
       GMM_ASSERT1(false, "error while importing " << format
-		  << " mesh file \"" << filename << "\" : " << exc.what());
+                  << " mesh file \"" << filename << "\" : " << exc.what());
     }
   }
 
   void import_mesh(std::ifstream& f, const std::string& format,
-		   mesh& m) {
+                   mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_msh_file(f,m);
     else if (bgeot::casecmp(format,"gmshv2")==0)/* deprecate */
@@ -582,7 +582,7 @@ namespace getfem {
     else if (bgeot::casecmp(format,"emc2_mesh")==0)
       import_emc2_mesh_file(f,m);
     else GMM_ASSERT1(false, "cannot import "
-		     << format << " mesh type : unknown mesh type");
+                     << format << " mesh type : unknown mesh type");
   }
 
   void import_mesh(const std::string& filename, mesh& msh) {
