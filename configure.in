@@ -394,7 +394,7 @@ echo "Configuration of SuperLU done"
 
 if test "$MUMPS_CFLAGS" -o "$MUMPS_LIBS"; then
   echo "You are using MUMPS!"
-  MUMPS_CFLAGS="$MUMPS_CFLAGS -DGMM_USES_MUMPS"
+  CPPFLAGS="$CPPFLAGS -DGMM_USES_MUMPS"
   AC_SUBST(MUMPS_CFLAGS)
   AC_SUBST(MUMPS_LIBS)
 fi
