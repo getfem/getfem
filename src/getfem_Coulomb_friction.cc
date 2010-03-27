@@ -547,8 +547,8 @@ namespace getfem {
       gmm::resize(BBN1, gmm::mat_nrows(BN1), gmm::mat_ncols(BN1));
       gmm::copy(BN1, BBN1);
       if (Hughes_stabilized) {
-	gmm::resize(DDN, gmm::mat_nrows(DN), gmm::mat_ncols(DN));
-	gmm::copy(DN, DDN);
+        gmm::resize(DDN, gmm::mat_nrows(DN), gmm::mat_ncols(DN));
+        gmm::copy(DN, DDN);
       }
       if (two_variables) {
         gmm::resize(BBN2, gmm::mat_nrows(BN2), gmm::mat_ncols(BN2));
@@ -566,7 +566,7 @@ namespace getfem {
       size_type d = gmm::mat_nrows(BT1)/nbc;
       for (size_type i = 0; i < nbc; ++i) {
         gmm::scale(gmm::mat_row(BBN1, i), alpha[i]);
-	if (Hughes_stabilized) gmm::scale(gmm::mat_row(DDN, i), alpha[i]);
+        if (Hughes_stabilized) gmm::scale(gmm::mat_row(DDN, i), alpha[i]);
         if (two_variables)
           gmm::scale(gmm::mat_row(BBN2, i), alpha[i]);
         if (!contact_only)
@@ -593,7 +593,7 @@ namespace getfem {
       gmm::add(lambda_n, RLN);
       gmm::mult_add(BBN1, gmm::scaled(u1, -r), RLN);
       if (Hughes_stabilized)
-	gmm::mult_add(DDN, gmm::scaled(lambda_n, r), RLN);
+        gmm::mult_add(DDN, gmm::scaled(lambda_n, r), RLN);
       if (two_variables) gmm::mult_add(BBN2, gmm::scaled(u2, -r), RLN);
       if (!contact_only) {
         gmm::copy(lambda_t, RLT);
@@ -668,16 +668,16 @@ namespace getfem {
             if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
             T_n_n(i, i) = -vt1/r;
           }
-	  else {
-	    if (Hughes_stabilized)
-	      gmm::copy(gmm::mat_row(DDN, i), gmm::mat_col(T_n_n, i));
-	  }
+          else {
+            if (Hughes_stabilized)
+              gmm::copy(gmm::mat_row(DDN, i), gmm::mat_col(T_n_n, i));
+          }
         }
-	if (Hughes_stabilized) {
-	  model_real_sparse_matrix aux(gmm::mat_nrows(T_n_n), gmm::mat_nrows(T_n_n));
-	  gmm::copy(gmm::transposed(T_n_n), aux);
-	  gmm::copy(aux, T_n_n);
-	}
+        if (Hughes_stabilized) {
+          model_real_sparse_matrix aux(gmm::mat_nrows(T_n_n), gmm::mat_nrows(T_n_n));
+          gmm::copy(gmm::transposed(T_n_n), aux);
+          gmm::copy(aux, T_n_n);
+        }
         gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
         if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
 
@@ -885,14 +885,16 @@ namespace getfem {
     }
 
     Coulomb_friction_brick(bool symmetrized_, bool contact_only_,
-                           bool two_variables_=false) {
+                           bool two_variables_=false,
+                           bool Hughes_stabilized_=false) {
       symmetrized = symmetrized_;
       contact_only = contact_only_;
       is_init = false;
       Tresca_version = false;   // for future version ...
       really_stationary = false;   // for future version ...
       friction_dynamic_term = false;  // for future version ...
-      two_variables = two_variables_;  // for future version ...
+      two_variables = two_variables_;
+      Hughes_stabilized = Hughes_stabilized_;
       set_flags("Coulomb friction brick", false /* is linear*/,
                 /* is symmetric */
                 symmetrized && (contact_only || Tresca_version),
@@ -900,7 +902,6 @@ namespace getfem {
                 false /* is complex */);
     }
 
-    
     void set_BN1(CONTACT_B_MATRIX &BN1_) {
       gmm::resize(BN1, gmm::mat_nrows(BN1_), gmm::mat_ncols(BN1_));
       gmm::copy(BN1_, BN1);
@@ -925,7 +926,6 @@ namespace getfem {
     const CONTACT_B_MATRIX &get_BN1(void) const { return BN1; }
     const CONTACT_B_MATRIX &get_DN(void) const { return DN; }
     const CONTACT_B_MATRIX &get_BT1(void) const { return BT1; }
-
 
   };
 

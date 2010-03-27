@@ -57,15 +57,13 @@ namespace getfem {
       (see Getfem user documentation). The parameter `symmetrized` indicates
       that the symmetry of the tangent matrix will be kept or not. 
   */
-  
-  
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap = "", std::string dataname_alpha = "",
    bool symmetrized = false);
-   
-   
+
+
 /** Add Hughes stabilized frictionless contact condition to the model. If U 
     is the vector of degrees of freedom on which the unilateral constraint is applied, 
     and Lambda the multiplier Vector of contact force.Then Hughes stabilizedfrictionless
@@ -78,13 +76,13 @@ namespace getfem {
     parameter for the augmentation parameter. The parameter `symmetrized` indicates that 
     a part of the symmetry of the tangent matrix will be kept or not
   */
-   
    size_type add_Hughes_stab_basic_contact_brick
-  (model &md, const std::string &varname_u, const std::string &multname_n,
-   const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
-   std::string dataname_gap="", std::string dataname_alpha="",
-   bool symmetrized=false);
-   
+   (model &md, const std::string &varname_u, const std::string &multname_n,
+    const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
+    std::string dataname_gap="", std::string dataname_alpha="",
+    bool symmetrized=false);
+
+
   /** Add a contact with friction condition to the model. If U is the vector
       of degrees of freedom on which the condition is applied,
       the matrix `BN` have to be such that the contact condition is defined
