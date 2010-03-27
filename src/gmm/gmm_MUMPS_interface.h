@@ -72,19 +72,19 @@ namespace gmm {
     
     template <typename L> void store(const L& l, size_type i) {
        typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
-	 ite = vect_const_end(l);
+         ite = vect_const_end(l);
        for (; it != ite; ++it)
-	 { irn.push_back(i + 1); jcn.push_back(it.index() + 1); a.push_back(*it); }
+         { irn.push_back(i + 1); jcn.push_back(it.index() + 1); a.push_back(*it); }
     }
 
     template <typename L> void build_from(const L& l, row_major) {
       for (size_type i = 0; i < mat_nrows(l); ++i)
-	store(mat_const_row(l, i), i);
+        store(mat_const_row(l, i), i);
     }
 
     template <typename L> void build_from(const L& l, col_major) {
       for (size_type i = 0; i < mat_ncols(l); ++i)
-	store(mat_const_col(l, i), i);
+        store(mat_const_col(l, i), i);
       irn.swap(jcn);
     }
 
@@ -92,7 +92,7 @@ namespace gmm {
       size_type nz = nnz(A);
       irn.reserve(nz); jcn.reserve(nz); a.reserve(nz);
       build_from(A,  typename principal_orientation_type<typename
-	       linalg_traits<L>::sub_orientation>::potype());
+               linalg_traits<L>::sub_orientation>::potype());
     }
   };
 
@@ -180,24 +180,26 @@ namespace gmm {
     id.job = 6;
     
     id.ICNTL(14) += 40; /* small boost to the workspace size as we have encountered some problem
-			   who did not fit in the default settings of mumps.. 
-			   by default, ICNTL(14) = 15 or 20
-		       */
+                           who did not fit in the default settings of mumps.. 
+                           by default, ICNTL(14) = 15 or 20
+                       */
     //cout << "ICNTL(14): " << id.ICNTL(14) << "\n";
+
+    id.ICNTL(22) = 1;   /* enables out-of-core support */
 
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
-	case -6 : case -10 :
-	  GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
-	case -13 :
-	  GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+        case -6 : case -10 :
+          GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
+        case -13 :
+          GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
         case -9:
-	  GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
-		      << ", increase ICNTL(14)");
-	default :
-	  GMM_ASSERT1(false, "Solve with MUMPS failed with error "
-		      << id.INFO(1));
+          GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
+                      << ", increase ICNTL(14)");
+        default :
+          GMM_ASSERT1(false, "Solve with MUMPS failed with error "
+                      << id.INFO(1));
       }
     }
 
@@ -218,7 +220,7 @@ namespace gmm {
    */
   template <typename MAT, typename VECTX, typename VECTB>
   void MUMPS_distributed_matrix_solve(const MAT &A, const VECTX &X_,
-				      const VECTB &B) {
+                                      const VECTB &B) {
     VECTX &X = const_cast<VECTX &>(X_);
 
     typedef typename linalg_traits<MAT>::value_type T;
@@ -272,14 +274,14 @@ namespace gmm {
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
       case -6 : case -10 :
-	GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
+        GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
       case -13:
-	GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+        GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
       case -9:
-	GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
-		    << ", increase ICNTL(14)");
+        GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
+                    << ", increase ICNTL(14)");
       default :
-	GMM_ASSERT1(false, "Solve with MUMPS failed with error " <<id.INFO(1));
+        GMM_ASSERT1(false, "Solve with MUMPS failed with error " <<id.INFO(1));
       }
     }
 
