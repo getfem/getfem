@@ -223,7 +223,7 @@ struct unilateral_contact_problem {
   getfem::mesh_fem_product mf_product;
   getfem::mesh_fem_sum mf_u_sum;
   
-  getfem::mesh_fem mf_pre_cont; /* mesh_fem for the contact multiplier     */
+  getfem::mesh_fem mf_contt; /* mesh_fem for the contact multiplier     */
   getfem::mesh_fem_level_set mfls_cont;   /* mesh_fem for the multiplier contact enriched with H.   */
   getfem::mesh_fem_sum mf_cont_sum;
   
@@ -233,9 +233,9 @@ struct unilateral_contact_problem {
   
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   getfem::mesh_fem& mf_cont() { return mf_cont_sum; }
-  getfem::mesh_fem_level_set& mfls_uu() { return mfls_u; }
-  getfem::mesh_fem_level_set& mfls_ccont() { return mfls_cont; }
-  
+  getfem::mesh_fem& mf_pre_uu() { return mf_pre_u; }
+
+ 
   scalar_type mu, lambda;    /* Lame coeff                   */
   
   int dgr ;          /* Order of enrichement for u */
@@ -271,13 +271,13 @@ struct unilateral_contact_problem {
   
   bool solve(plain_vector &U, plain_vector &LAMBDA);
   void init(void);
-  unilateral_contact_problem(void) : ls(mesh, 1, true), mls(mesh), mls_bound(mesh), mim(mls), mimbound(mls_bound),
+  unilateral_contact_problem(void) : ls(mesh, 1, true), mls(mesh), mls_bound(mesh), mim(mls),
 		                     mf_pre_u(mesh), mf_mult_dir(mesh), mf_mult_cont(mesh),
 				     mfls_u(mls, mf_pre_u),
 				     mf_sing_u(mesh),
 				     mf_partition_of_unity(mesh),
 				     mf_product(mf_partition_of_unity, mf_sing_u),
-				     mf_u_sum(mesh), mf_pre_cont(mesh), mfls_cont(mls, mf_pre_cont), 				      
+				     mf_u_sum(mesh), mf_contt(mesh), mfls_cont(mls, mf_contt), 				      
 				     mf_cont_sum(mesh),
 				     /*mf_pe(mesh),*/ mf_rhs(mesh)
   {}
@@ -334,11 +334,13 @@ void  unilateral_contact_problem::init(void) {
   
   enrichment_option = enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
 							     "Enrichment option"));
-  cout << "MESH_TYPE="      << MESH_TYPE         << "\n";
-  cout << "FEM_TYPE="       << FEM_TYPE          << "\n";
-  cout << "FEM_TYPE_CONT="  << FEM_TYPE_CONT     << "\n";
-  cout << "INTEGRATION="    << INTEGRATION       << "\n";
-  
+  cout << "MESH_TYPE="               << MESH_TYPE                 << "\n";
+  cout << "FEM_TYPE="                << FEM_TYPE                  << "\n";
+  cout << "FEM_TYPE_CONT="           << FEM_TYPE_CONT             << "\n";
+  cout << "INTEGRATION="             << INTEGRATION               << "\n";
+  cout << " SIMPLEX_INTEGRATION="    << SIMPLEX_INTEGRATION        << "\n";
+  cout << "SINGULAR_INTEGRATION="    << SINGULAR_INTEGRATION      << "\n";
+
   
   dgr = int(PARAM.int_value("dgr", "Enrichement order ofu"));
   
@@ -348,14 +350,7 @@ void  unilateral_contact_problem::init(void) {
   mu    = PARAM.real_value("MU", "Lame coefficient mu"); 
   lambda =PARAM.real_value("Lamda", "Lame coefficient lambda");
   
-  // if (bimaterial == 1){
-  //   mu_up = PARAM.real_value("MU_UP", "Lame coefficient mu"); 
-  // mu_down = PARAM.real_value("MU_DOWN", "Lame coefficient mu"); 
-  //Lambda_up=PARAM.real_value("LAMBDA_UP", "Lame coefficient Lambda_up");
-  //Lambda_down=PARAM.real_value("LAMBDA_DOWN", "Lame coefficient Lambda_down");
-  // }
-  
-
+ 
   /* First step : build the mesh */
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
@@ -448,14 +443,13 @@ void  unilateral_contact_problem::init(void) {
   /*******************************************************************************/
   // Integration method on the boudary
   
+  mls_bound.add_level_set(ls);
   
   int intbound = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
-  mimbound.set_integration_method(intbound, ppi);
-  mimbound.set_simplex_im(simp_ppi, sing_ppi);
-  // mimbound(mls, intbound, getfem::int_method_descriptor(SIMPLEX_INTEGRATION));
-  // mimbound.set_integration_method(mesh.convex_index(),
-  //				      getfem::int_method_descriptor(INTEGRATION);
-  mimbound.adapt();
+  mimbound.init_with_mls(mls_bound, intbound, simp_ppi, sing_ppi);
+  mimbound.set_integration_method(mesh.convex_index(), ppi);
+ 
+
   
   
   stabilized_problem =
@@ -465,7 +459,7 @@ void  unilateral_contact_problem::init(void) {
   // if ( stabilized_problem ) {
   //getfem::pfem pf_mult_cont = getfem::fem_descriptor(FEM_TYPE_CONT);
   
-  mf_pre_cont.set_finite_element(mesh.convex_index(), pf_mult_cont);
+  mf_contt.set_finite_element(mesh.convex_index(), pf_mult_cont);
   mf_mult_cont.set_finite_element(mesh.convex_index(), pf_mult_cont);
   
   
@@ -550,7 +544,9 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   ls.touch();
   
   mls.adapt();
+  mls_bound.adapt();
   mim.adapt();
+  mimbound.adapt();
   mfls_u.adapt();
   mfls_cont.adapt();
   
@@ -612,8 +608,8 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
 		     " enriched dofs for the crack tip");
       mf_product.set_enrichment(enriched_dofs);
       mf_u_sum.set_mesh_fems(mf_product, mfls_u);
-      // mf_product_cont.set_enrichment(enriched_dofs);
-      mf_cont_sum.set_mesh_fems( mfls_cont);
+      //      mf_product_cont.set_enrichment(enriched_dofs);
+      mf_cont_sum.set_mesh_fems(mf_contt);
     }
     break;
 
@@ -625,13 +621,13 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
       else
 	cout<<"Using Polynomial Cutoff..."<<endl;
       mf_u_sum.set_mesh_fems(mf_sing_u, mfls_u);
-      mf_cont_sum.set_mesh_fems(mfls_cont);
+      mf_cont_sum.set_mesh_fems(mf_contt);
     } break;
     
   case NO_ENRICHMENT:
     {
       mf_u_sum.set_mesh_fems(mfls_u);
-      mf_cont_sum.set_mesh_fems(mfls_cont);
+      mf_cont_sum.set_mesh_fems(mf_contt);
     } break;
     
   }// end switch
@@ -642,19 +638,25 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   /************************************************************************************/
   std::set<size_type> cols;
   cols.clear(); 
-  sparse_matrix BRBB(mf_u().nb_basic_dof(), mf_cont().nb_basic_dof());
-  asm_mass_matrix_mixed_term(BRBB, mimbound, mf_u(), mf_cont(), ls);
+  sparse_matrix BRBB(mf_pre_uu().nb_dof(), mf_cont().nb_dof());
+  // asm_mass_matrix_mixed_term(BRBB, mimbound, mf_pre_uu(), mf_cont(), ls);
+  mf_u().set_qdim(1);
+  asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
+  // cout << "BRBB " << BRBB << endl;
+  
   cout << "Selecting dofs for the multiplier" << endl;
   cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
   gmm::range_basis(BRBB, cols);
   mf_cont().reduce_to_basic_dof(cols);
+  mf_u().set_qdim(dim_type(N));
   
   size_type nb_dof = mf_u().nb_dof();
   cout << "nb_dof = " << nb_dof << endl;
   
   size_type nb_dof_cont = mf_cont().nb_dof();
-  cout << "nb_dof_cont = " << nb_dof_cont << endl;
-  
+  cout << "nb_dof_cont.... = " << nb_dof_cont << endl;
+  cout << "nb_basic_dof_cont.... = " <<mf_cont().nb_basic_dof() << endl;
+
   U.resize(nb_dof);
   LAMBDA.resize(nb_dof_cont);
   
@@ -747,28 +749,31 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   // Defining the Neumann condition right hand side.
   
   std::vector<scalar_type> F(nb_dof_rhs * N * N);
-  
+  std::vector<scalar_type> FF(nb_dof_rhs * N * N);
+
   // Neumann condition brick.
   
   //down side
   for(size_type i = 0; i < F.size(); i=i+N*N)
-    for(size_type j = 0; j < N; ++j) F[i+j+j*N] = 1.;
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] = 1.;FF[i+j+j*N] = -1.;};
   
   
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+
   getfem::add_normal_source_term_brick
     (model, mim, "u", "NeumannData", NEUMANN1_BOUNDARY_NUM);
   getfem::add_normal_source_term_brick
     (model, mim, "u", "NeumannData", NEUMANN2_BOUNDARY_NUM);
+  model.add_initialized_fem_data("NeumannData1", mf_rhs, FF);
   getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN3_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData1", NEUMANN3_BOUNDARY_NUM);
   getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN4_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData1", NEUMANN4_BOUNDARY_NUM);
   
   
   
-  
-  GMM_ASSERT1(N==2, "To be corrected for 3D computation");
+  cout<<"kill rigid motion"<<endl;
+  GMM_ASSERT1(N==2, "To be corrected for 2D computation");
   sparse_matrix BB(3, mf_u().nb_dof());
   BB(0, icorner1) = 1.0;
   BB(1, icorner1+1) = 1.0;
@@ -776,7 +781,6 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   size_type size(3);
   std::vector<scalar_type> LRH(size);
   model.add_fixed_size_variable("dir", size);
-
   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
   
   // Generic solve.
@@ -790,39 +794,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   gmm::resize(LAMBDA, mf_cont().nb_dof());
   gmm::copy(model.real_variable("Lambda"), LAMBDA);
   
-  //  Exporting reference solution  
-  
-  if (reference_test) {
-    cout << "Exporting reference solution...";
-    // dal::bit_vector blocked_dof = mf_u().basic_dof_on_region(5);
-    getfem::mesh_fem mf_refined(mesh, dim_type(N));
-    // mls.global_cut_mesh(mf_refined)
 
-
-    std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
-    mf_refined.set_finite_element(mesh.convex_index(),
-				  getfem::fem_descriptor(FEM_DISC));
-    
-    plain_vector W(mf_refined.nb_dof());
-    //plain_vector W(mfls_uu().nb_dof());
-    getfem::interpolation(mf_u(), mf_refined, U, W);
-    // getfem::interpolation(mf_u(), mfls_uu(), U, W);
-    
-    
-    mf_refined.write_to_file(datafilename + "_refined_test.meshfem_refined", true);
-    // mfls_uu().write_to_file(datafilename + "_refined_test.meshfem_refined", true);
-    gmm::vecsave(datafilename + "_refined_test.U_refined", W);
-    
-    
-    mf_refined.set_qdim(1);
-    plain_vector PP(mf_refined.nb_dof());
-    getfem::interpolation(mf_cont(), mf_refined, LAMBDA, PP);
-    mf_refined.write_to_file(datafilename + "_refined_test.cont_meshfem_refined", true);
-    gmm::vecsave(datafilename + "_refined_test.cont_refined", PP);
-    
-    cout << "done" << endl;
-  }//end reference_test
-  
   return (iter.converged());
   
   
@@ -849,11 +821,19 @@ int main(int argc, char *argv[]) {
   p.PARAM.read_command_line(argc, argv);
   p.init();
   p.mesh.write_to_file(p.datafilename + ".mesh");
+
   
   plain_vector U, Lambda;
   if (!p.solve(U, Lambda)) GMM_ASSERT1(false,"Solve has failed");
 
-  cout << "Saving the solution" << endl;
+  bgeot::md_param PARAM1;
+  PARAM1.read_command_line(argc, argv);
+  std::string INTEGRATION1 = PARAM1.string_value("INTEGRATION",
+						 "Name of integration method");
+  std::string SIMPLEX_INTEGRATION1 = PARAM1.string_value("SIMPLEX_INTEGRATION",
+							 "Name of simplex integration method");
+  std::string SINGULAR_INTEGRATION1 = PARAM1.string_value("SINGULAR_INTEGRATION","Name of singular integration method");
+
   getfem::mesh mcut;
   p.mls.global_cut_mesh(mcut);
   unsigned Q = p.mf_u().get_qdim();
@@ -901,58 +881,63 @@ int main(int argc, char *argv[]) {
     slicer.exec(nrefine, getfem::mesh_region::all_convexes());
   }
 
-//  if (p.reference_test) {
-//     cout << "Exporting reference solution...";
-//     // dal::bit_vector blocked_dof = mf_u().basic_dof_on_region(5);
-//     getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
-   
 
-
-//     //  std::string FEM_DISC = PARAM.string_value("FEM_DISC","fem disc ");
-//     //mf_refined.set_finite_element(mesh.convex_index(),
-//     //			  getfem::fem_descriptor(FEM_DISC));
-    
-//     plain_vector W(mf_refined.nb_dof());
-//     getfem::interpolation(p.mf_u(), mf_refined, U, W);
-       
-    
-//     mf_refined.write_to_file(p.datafilename + "_refined_test.meshfem_refined", true);
-//     gmm::vecsave(p.datafilename + "_refined_test.U_refined", W);
-    
-    
-//     mf_refined.set_qdim(1);
-//     plain_vector PP(mf_refined.nb_dof());
-//     getfem::interpolation(p.mf_cont(), mf_refined, Lambda, PP);
-//     mf_refined.write_to_file(p.datafilename + "_refined_test.cont_meshfem_refined", true);
-//     gmm::vecsave(p.datafilename + "_refined_test.cont_refined", PP);
-    
-//     cout << "done" << endl;
-//   }//end reference_test
 
 
 
 
   //save desplacement
-
- getfem::mesh_fem mf(mcut, dim_type(Q));
-  mf.set_classical_discontinuous_finite_element(2, 1E-7);
-  plain_vector V(mf.nb_dof());
-  getfem::interpolation(p.mf_u(), mf, U, V);
+  if (p.reference_test) {
+    cout << "Saving the reference desplacement" << endl;
+    getfem::mesh_fem mf(mcut_refined, dim_type(Q));
+    mf.set_classical_discontinuous_finite_element(2, 1E-7);
+    plain_vector V(mf.nb_dof());
+    getfem::interpolation(p.mf_u(), mf, U, V);
+    
+   mf.write_to_file(p.datafilename + ".meshfem_refined", true);
+   gmm::vecsave(p.datafilename + ".U_refined", V);
+   
+   //Save contact multiplier
+   cout << "Saving the reference contact multiplier" << endl;
+   
+   getfem::mesh_fem mf_cont(mcut_refined, 1);
+   mf_cont.set_classical_discontinuous_finite_element(2, 1E-7);
+   plain_vector PP(mf_cont.nb_dof());
+   
+   getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);
   
-  mf.write_to_file(p.datafilename + ".meshfem", true);
-  gmm::vecsave(p.datafilename + ".U", V);
-
-  //Save contact multiplier
-
- getfem::mesh_fem mf_cont(mcut);
-  mf_cont.set_classical_discontinuous_finite_element(2, 1E-7);
-  plain_vector PP(mf_cont.nb_dof());
+   mf_cont.write_to_file(p.datafilename + ".cont_meshfem_refined", true);
+   gmm::vecsave(p.datafilename + ".Cont_refined", PP);
+   p.mf_cont().write_to_file(p.datafilename + ".contt_meshfem", true);
+   gmm::vecsave(p.datafilename + ".Contt", Lambda);
+   
+  }else{
+    cout << "Saving the solution" << endl;
+    cout << "Saving desplacement" << endl;
+    getfem::mesh_fem mf(mcut, dim_type(Q));
+    mf.set_classical_discontinuous_finite_element(2, 1E-7);
+    plain_vector V(mf.nb_dof());
+    getfem::interpolation(p.mf_u(), mf, U, V);
+    
+    mf.write_to_file(p.datafilename + ".meshfem", true);
+    gmm::vecsave(p.datafilename + ".U", V);
+    
+    //Save contact multiplier
+    cout << "Saving contact multiplier" << endl;
+    
+    getfem::mesh_fem mf_cont(mcut, 1);
+    mf_cont.set_classical_discontinuous_finite_element(2, 1E-7);
+    plain_vector PP(mf_cont.nb_dof());
+    
+    getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);
+    
+    mf_cont.write_to_file(p.datafilename + ".cont_meshfem", true);
+    gmm::vecsave(p.datafilename + ".Cont", PP);
+    p.mf_cont().write_to_file(p.datafilename + ".contt_meshfem", true);
+    gmm::vecsave(p.datafilename + ".Contt", Lambda);   
+  }
   
-  getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);
   
-  mf_cont.write_to_file(p.datafilename + ".cont_meshfem", true);
-  gmm::vecsave(p.datafilename + ".Cont", PP);
-
   //Compute error 
 
  if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
@@ -979,6 +964,41 @@ int main(int argc, char *argv[]) {
    ref_mf_cont.read_from_file(REFERENCE_MF_cont);
    plain_vector ref_cont(ref_mf_cont.nb_dof());
    gmm::vecload(REFERENCE_cont, ref_cont);
+  
+
+   getfem::level_set ls(ref_m_cont, 1, true);
+
+  
+
+   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
+     ls.values(0)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
+     ls.values(1)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
+   }
+   ls.touch();
+   getfem::mesh_level_set mls(ref_m);
+   getfem::mesh_level_set mls_cont(ref_m_cont);
+   mls.add_level_set(ls);
+   mls_cont.add_level_set(ls);
+   mls.adapt();
+   mls_cont.adapt();
+  
+   //int intbound = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
+   //mimbound.init_with_mls(mls, intbound, simp_ppi, sing_ppi);
+   //mimbound.set_integration_method(mesh.convex_index(), ppi);
+
+   getfem::mesh_im_level_set mimm(mls);
+   mimm.set_integration_method(ref_m.convex_index(),
+			       getfem::int_method_descriptor(INTEGRATION1));
+   mimm.set_simplex_im(getfem::int_method_descriptor(SIMPLEX_INTEGRATION1), 
+		       getfem::int_method_descriptor(SINGULAR_INTEGRATION1));
+   
+   // Integration methods on the boudary
+   int intboundd = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
+   getfem::mesh_im_level_set mimboundd(mls_cont, intboundd,
+				       getfem::int_method_descriptor(SIMPLEX_INTEGRATION1));
+   mimboundd.set_integration_method(ref_m_cont.convex_index(),
+				    getfem::int_method_descriptor(INTEGRATION1));
+   mimboundd.adapt();
    
    //Interpolation of  U on a reference mesh 
    getfem::mesh_im ref_mim(ref_m);
@@ -993,20 +1013,19 @@ int main(int argc, char *argv[]) {
    plain_vector interp_U_error(ref_mf.nb_dof());
    gmm::add(interp_U, gmm::scaled(ref_U, -1.), interp_U_error);
    gmm::vecsave(p.datafilename+".U_map_error", interp_U_error);
-   
+      
    cout << "To ref L2 ERROR on U:"
-	<< getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
+   	<< getfem::asm_L2_dist(mimm, ref_mf, interp_U,
 			       ref_mf, ref_U) << endl;
    
    cout << "To ref H1 ERROR on U:"
-	<< getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
+	<< getfem::asm_H1_dist(mimm, ref_mf, interp_U,
 			       ref_mf, ref_U) << endl;
    gmm::add(gmm::scaled(interp_U, -1.), ref_U);
    gmm::vecsave(p.datafilename + ".diff_ref", ref_U);
    
    //Interpolation of  Lambda on a reference mesh 
    
-   getfem::mesh_im ref_mim_cont(ref_m_cont);
    plain_vector interp_cont(ref_mf_cont.nb_dof());
    getfem::interpolation(p.mf_cont(), ref_mf_cont, Lambda, interp_cont);
    
@@ -1015,7 +1034,7 @@ int main(int argc, char *argv[]) {
    gmm::vecsave(p.datafilename+".cont_map_error", interp_cont_error);
    
    cout << "To ref L2 ERROR on P:"
-	<< getfem::asm_L2_dist(ref_mim_cont, ref_mf_cont, interp_cont,
+	<< getfem::asm_L2_dist(mimboundd, ref_mf_cont, interp_cont,
 			       ref_mf_cont, ref_cont) << endl;
    
   
