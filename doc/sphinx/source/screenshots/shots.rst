@@ -192,3 +192,18 @@ images correspond to a 3D case.
 .. |im-shape4| image:: images/shape4.*
 
 .. centered:: |im-shape3| |im-shape4|
+
+3D planetary gears
+------------------
+
+This image comes from the application developped by Konstantinos Poulios 
+which is freely available at |link23|_. Is is based on |gf| and is intended to be a tool for easy, almost automatic, creation and calculation of gear transmissions.
+
+
+.. |link23| replace:: http://sourceforge.net/projects/gggears/
+.. _link23: http://sourceforge.net/projects/gggears/
+
+.. |im-gear| image:: images/gear.*
+.. _im-gear: ../_static/gear.png
+
+.. centered:: |im-gear|_
