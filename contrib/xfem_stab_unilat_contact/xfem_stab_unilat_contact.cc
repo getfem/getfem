@@ -157,12 +157,15 @@ void asm_mass_matrix_mixed_term
   assem.push_nonlinear_term(&nterm);
   
   
-  
+  gmm::clear(RM);
   ls.set_shift(1e-7);
   assem.assembly(rg);
+  gmm::scale(RM, scalar_type(-1));
   ls.set_shift(-1e-7);
   assem.assembly(rg);
   ls.set_shift(0.);
+  cout << "RM = " << RM << endl;
+
 }
 
 /***********************************************/
@@ -232,7 +235,7 @@ struct unilateral_contact_problem {
   
   
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
-  getfem::mesh_fem& mf_cont() { return mf_cont_sum; }
+  getfem::mesh_fem& mf_cont() { return mf_contt; }
   getfem::mesh_fem& mf_pre_uu() { return mf_pre_u; }
 
  
@@ -585,9 +588,6 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   mf_sing_u.set_functions(vfunc);
   
-  //vfunc_p.resize(2);
-  // mf_sing_p.set_functions(vfunc_p);  
-  
   switch (enrichment_option) {
     
   case FIXED_ZONE :
@@ -706,11 +706,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   getfem::CONTACT_B_MATRIX MA(nb_dof_cont, nb_dof_cont);
   
-  ls.set_shift(1e-7);
   getfem::asm_mass_matrix(MA, mimbound, mf_cont());
-  ls.set_shift(-1e-7);
-  getfem::asm_mass_matrix(MA, mimbound, mf_cont());
-  ls.set_shift(0.);
   gmm::scale(MA, -cont_gamma0 * h);
   
 
@@ -755,20 +751,20 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   //down side
   for(size_type i = 0; i < F.size(); i=i+N*N)
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] = 1.;FF[i+j+j*N] = -1.;};
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =-1.;FF[i+j+j*N] = 1.;}
   
   
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
 
   getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN1_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData", NEUMANN4_BOUNDARY_NUM);
   getfem::add_normal_source_term_brick
     (model, mim, "u", "NeumannData", NEUMANN2_BOUNDARY_NUM);
   model.add_initialized_fem_data("NeumannData1", mf_rhs, FF);
   getfem::add_normal_source_term_brick
     (model, mim, "u", "NeumannData1", NEUMANN3_BOUNDARY_NUM);
   getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData1", NEUMANN4_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData1", NEUMANN1_BOUNDARY_NUM);
   
   
   
