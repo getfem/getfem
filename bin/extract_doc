@@ -1599,7 +1599,7 @@ def generic_destructor(self, destructible=True):
 #
 #
 # Option python-doc
-#    Build the file api.rst
+#    Build the file cmdref.rst
 #
 #
 #

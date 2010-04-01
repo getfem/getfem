@@ -1,10 +1,11 @@
 .. $Id$
+
 .. include:: ../replaces.txt
 
-.. _contents:
+.. _py:
 
 |py| Interface
-==============
+##############
 
 .. toctree::
    :maxdepth: 2
@@ -15,4 +16,4 @@
    pygf
    examples
    howtos
-   api
+   cmdref

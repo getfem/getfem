@@ -4,7 +4,7 @@
 
 .. _mlab:
 
-MatLab Interface
+|mlab| Interface
 ################
 
 .. toctree::

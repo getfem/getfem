@@ -1,12 +1,13 @@
 Index: tools/sphinx/writers/latex.py
 ===================================================================
---- tools/sphinx/writers/latex.py	(revisión: 75546)
+--- tools/sphinx/writers/latex.py	(revisión: 79559)
 +++ tools/sphinx/writers/latex.py	(copia de trabajo)
-@@ -430,6 +430,7 @@
+@@ -464,7 +464,7 @@
+         d.type = d.cls = d.name = d.params = ''
      def depart_desc_signature(self, node):
          d = self.descstack[-1]
-         d.cls = d.cls.rstrip('.')
+-        d.cls = d.cls.rstrip('.')
 +        d.cls = d.cls.rstrip(':')
          if node.parent['desctype'] != 'describe' and node['ids']:
-             hyper = '\\hypertarget{%s}{}' % node['ids'][0]
+             hyper = '\\hypertarget{%s}{}' % self.idescape(node['ids'][0])
          else:

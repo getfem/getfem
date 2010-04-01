@@ -14,14 +14,16 @@ Examples
 A step-by-step basic example
 ----------------------------
 
-This example shows the basic usage of getfem, on the über-canonical problem above
-all others: solving the :envvar:`Laplacian`, :math:`\Delta u+f=0` on a square,
-with the Dirichlet condition :math:`u=g(x)` on the domain boundary.
+This example shows the basic usage of getfem, on the über-canonical problem above 
+all others: solving the :envvar:`Laplacian`, :math:`-\Delta u = f` on a square, 
+with the Dirichlet condition :math:`u = g(x)` on the domain boundary. You can find 
+the **m-file** of this example under the name **demo_step_by_step.m** in the 
+directory ``interface/tests/matlab/`` of the |gf| distribution.
 
-The first step is to **create a mesh**. Since |gf| does not come with its own
-mesher, one has to rely on an external mesher (see ``gf_mesh('import')``), or use
-very simple meshes.  For this example, we just consider a regular
-mesh\index{cartesian mesh} whose nodes are
+The first step is to **create a mesh**. Since |gf| does not come with its own 
+mesher, one has to rely on an external mesher (see ``gf_mesh('import', string 
+FORMAT, string FILENAME))``), or use very simple meshes.  For this example, we 
+just consider a regular mesh\index{cartesian mesh} whose nodes are 
 :math:`\{x_{i=0\ldots10,j=0..10}=(i/10,j/10)\}`::
 
   >> % creation of a simple cartesian mesh
@@ -30,36 +32,37 @@ mesh\index{cartesian mesh} whose nodes are
        id: 0
       cid: 0
 
-If you try to look at the value of ``m``, you'll notice that it appears to be a
-structure containing two integers. The first one is its identifier, the second
-one is its class-id, i.e. an identifier of its type. This small structure is just
-an "handle" or "descriptor" to the real object, which is stored in the |gf|
-memory and cannot be represented via |Mlab| data structures. Anyway, you can
-still inspect the |gf| objects via the command ``gf_workspace('stats')``.
+If you try to look at the value of ``m``, you'll notice that it appears to be a 
+structure containing two integers. The first one is its identifier, the second one 
+is its class-id, i.e. an identifier of its type. This small structure is just an 
+"handle" or "descriptor" to the real object, which is stored in the |gf| memory 
+and cannot be represented via |Mlab| data structures. Anyway, you can still 
+inspect the |gf| objects via the command ``gf_workspace('stats')``.
 
-Now we can try to have a **look at the mesh**, with its vertices numbering and
-the convexes numbering::
+Now we can try to have a **look at the mesh**, with its vertices numbering and the 
+convexes numbering::
 
   >> % we enable vertices and convexes labels
   >> gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
 
-As you can see, the mesh is regular, and the numbering of its nodes and convexes
-is also regular (this is guaranteed for cartesian meshes, but do not hope a
+As you can see, the mesh is regular, and the numbering of its nodes and convexes 
+is also regular (this is guaranteed for cartesian meshes, but do not hope a 
 similar numbering for the degrees of freedom).
 
-The next step is to **create a mesh_fem object**. This one links a mesh with 
-a set of FEM::
+The next step is to **create a mesh_fem object**. This one links a mesh with a set 
+of FEM::
 
-  >> mf = gf_mesh_fem(m,1); % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
+  >> % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
+  >> mf = gf_mesh_fem(m,1);
   >> gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
-The first instruction builds a new |mf| object, the second argument
-specifies that this object will be used to interpolate scalar fields (since the
-unknown is a scalar field). The second instruction assigns the :math:`Q^2` FEM to
-every convex (each basis function is a polynomial of degree 4, remember that
+The first instruction builds a new |mlab_mf| object, the second argument specifies 
+that this object will be used to interpolate scalar fields (since the unknown 
+:math:`u` is a scalar field). The second instruction assigns the :math:`Q^2` FEM 
+to every convex (each basis function is a polynomial of degree 4, remember that
 :math:`P^k\Rightarrow` polynomials of degree :math:`k`, while 
-:math:`Q^k\Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a
-polynomial FEM, you can view the expression of its basis functions on the
+:math:`Q^k\Rightarrow` polynomials of degree :math:`2k`). As :math:`Q^2` is a 
+polynomial FEM, you can view the expression of its basis functions on the 
 reference convex::
 
   >> gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str');
@@ -74,11 +77,11 @@ reference convex::
       '-4*x*y + 4*x^2*y + 8*x*y^2 - 8*x^2*y^2'
       'x*y - 2*x^2*y - 2*x*y^2 + 4*x^2*y^2'
 
-It is also possible to make use of the "object oriented" features of matlab. As
-you may have noticed, when a class "foo" is provided by the |gfi|, it is build
-with the function ``gf_foo``, and manipulated with the functions ``gf_foo_get``
-and ``gf_foo_set``. But (with matlab 6.x and better) you may also create the
-object with the ``gfFoo`` constructor , and manipulated with the ``get(..)`` and
+It is also possible to make use of the "object oriented" features of |mlab|. As 
+you may have noticed, when a class "foo" is provided by the |gfi|, it is build 
+with the function ``gf_foo``, and manipulated with the functions ``gf_foo_get`` 
+and ``gf_foo_set``. But (with matlab 6.x and better) you may also create the 
+object with the ``gfFoo`` constructor , and manipulated with the ``get(..)`` and 
 ``set(..)`` methods. For example, the previous steps could have been::
 
   >> gfFem('FEM_QK(2,2)');
@@ -98,19 +101,19 @@ Now, in order to perform numerical integrations on ``mf``, we need to **build a
 mesh_im object**::
 
   >> % assign the same integration method on all convexes
-  >> mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
+  >> mim = gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
 
-The integration method will be used to compute the various integrals on each
-element: here we choose to perform exact computations (no :envvar:`quadrature
-formula`), which is possible since the geometric transformation of these convexes
-from the reference convex is linear (this is true for all simplices, and this is
-also true for the parallelepipeds of our regular mesh, but it is not true for
-general quadrangles), and the chosen FEM is polynomial. Hence it is possible to
-analytically integrate every basis function/product of basis
-functions/gradients/etc. There are many alternative FEM methods and integration
+The integration method will be used to compute the various integrals on each 
+element: here we choose to perform exact computations (no :envvar:`quadrature 
+formula`), which is possible since the geometric transformation of these convexes 
+from the reference convex is linear (this is true for all simplices, and this is 
+also true for the parallelepipeds of our regular mesh, but it is not true for 
+general quadrangles), and the chosen FEM is polynomial. Hence it is possible to 
+analytically integrate every basis function/product of basis 
+functions/gradients/etc. There are many alternative FEM methods and integration 
 methods (see :ref:`ud`).
 
-Note however that in the general case, approximate integration methods are a
+Note however that in the general case, approximate integration methods are a 
 better choice than exact integration methods.
 
 Now we have to **find the** ":envvar:`boundary`" **of the domain**, in order to 
@@ -118,83 +121,104 @@ set a Dirichlet condition. A mesh object has the ability to store some sets of
 convexes and convex faces. These sets (called "regions") are accessed via an 
 integer #id::
 
+  >> % detect the border of the mesh
   >> border = gf_mesh_get(m,'outer faces');
-  >> gf_mesh_set(m, 'region', 42, border); % create the region #42
+  >> % mark it as boundary #42
+  >> gf_mesh_set(m, 'region', 42, border);
   >> gf_plot_mesh(m, 'regions', [42]); % the boundary edges appears in red
 
-Here we find the faces of the convexes which are on the boundary of the mesh
-(i.e. the faces which are not shared by two convexes).
+Here we find the faces of the convexes which are on the boundary of the mesh (i.e. 
+the faces which are not shared by two convexes).
 
  Remark:
 
    we could have used ``gf_mesh_get(m, 'OuTEr_faCes')``, as the interface is
    case-insensitive, and whitespaces can be replaced by underscores.
 
-The array ``border`` has two rows, on the first row is a convex number, on the
-second row is a face number (which is local to the convex, there is no global
+The array ``border`` has two rows, on the first row is a convex number, on the 
+second row is a face number (which is local to the convex, there is no global 
 numbering of faces). Then this set of faces is assigned to the region number 42.
 
-At this point, we just have to desribe the model and run the solver to get
-the solution! The ":envvar:`model`" is created with the ``gf_model``
-(or ``gfModel``) constructor. A model is basically an object which
-build a global linear system (tangent matrix for non-linear problems) and its
-associated right hand side.  Typical modifications are insertion of the stiffness
-matrix for the problem considered (linear elasticity, laplacian, etc), handling
-of a set of contraints, Dirichlet condition, addition of a source term to the
-right hand side etc. The global tangent matrix and its right hand side are stored in the ":envvar:`model`" structure.
+At this point, we just have to desribe the model and run the solver to get the 
+solution! The ":envvar:`model`" is created with the ``gf_model`` (or ``gfModel``) 
+constructor. A model is basically an object which build a global linear system 
+(tangent matrix for non-linear problems) and its associated right hand side.  
+Typical modifications are insertion of the stiffness matrix for the problem 
+considered (linear elasticity, laplacian, etc), handling of a set of contraints, 
+Dirichlet condition, addition of a source term to the right hand side etc. The 
+global tangent matrix and its right hand side are stored in the ":envvar:`model`" 
+structure.
 
-Let us build a problem with an easy solution: :math:`u=x(x-1)y(y-1)+x^5`, then we have :math:`\Delta u=2(x^2+y^2)-2(x+y)+20x^3` (the FEM won't be able to catch the exact solution since we use a :math:`Q^2` method).
+Let us build a problem with an easy solution: :math:`u=x(x-1)y(y-1)+x^5`, then we 
+have :math:`\Delta u=2(x^2+y^2)-2(x+y)+20x^3` (the FEM won't be able to catch the 
+exact solution since we use a :math:`Q^2` method).
 
 We start with an empty real model::
 
-  >> md=gf_model('real');
+  >> % empty real model
+  >> md = gf_model('real');
 
-(a model is either ``'real'`` or ``'complex'``). And we declare that ``u`` is an unknown of the system on the finite element method `mf` by::
+(a model is either ``'real'`` or ``'complex'``). And we declare that ``u`` is an 
+unknown of the system on the finite element method `mf` by::
 
+  >> % declare that "u" is an unknown of the system
+  >> % on the finite element method `mf`
   >> gf_model_set(md, 'add fem variable', 'u', mf);
 
-Now, we add a "generic elliptic" brick, which handles :math:`-div(A\nabla u) = \ldots` problems, where :math:`A` can be a scalar field, a matrix field, or an order 4 tensor field. By default, :math:`A=1`. We add it on our main variable ``u`` with::
+Now, we add a "generic elliptic" brick, which handles :math:`-\nabla\cdot(A:\nabla 
+u) = \ldots` problems, where :math:`A` can be a scalar field, a matrix field, or 
+an order 4 tensor field. By default, :math:`A=1`. We add it on our main variable 
+``u`` with::
 
+  >> % add generic elliptic brick on "u"
   >> gf_model_set(md, 'add Laplacian brick', mim, 'u');
 
 
 Next we add a Dirichlet condition on the domain boundary::
 
+  >> % add Dirichlet condition
   >> Uexact = gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
   >> gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
   >> gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
 
-The two first lines defines a data of the model which represents the value of the Dirichlet condition. The third one add a Dirichlet condition to the variable ``u`` on the boundary number ``42``. The dirichlet condition is imposed with lagrange multipliers. Another possibility is to use a penalization. A |mf| argument is also required, as the Dirichlet condition
-:math:`u=r` is imposed in a weak form :math:`\int_\Gamma u(x)v(x) = \int_\Gamma r(x)v(x) ~ \forall v` where :math:`v` is taken in the space of multipliers given by
-here by ``mf``.
+The two first lines defines a data of the model which represents the value of the 
+Dirichlet condition. The third one add a Dirichlet condition to the variable ``u`` 
+on the boundary number ``42``. The dirichlet condition is imposed with lagrange 
+multipliers. Another possibility is to use a penalization. A |mlab_mf| argument is 
+also required, as the Dirichlet condition :math:`u=g` is imposed in a weak form 
+:math:`\int_\Gamma u(x)v(x) = \int_\Gamma g(x)v(x) ~ \forall v` where :math:`v` is 
+taken in the space of multipliers given by here by ``mf``.
 
 
- Remark:
+.. topic:: Remark:
 
-   the polynomial expression was interpolated on ``mf``. It is possible
-   only if ``mf`` is of Lagrange type. In this first example we use
-   the same |mf| for the unknown and for the data such as ``R``, but
-   in the general case, ``mf`` won't be Lagrangian and another
-   (Lagrangian) |mf| will be used for the description of Dirichlet
-   conditions, source terms etc.
+   the polynomial expression was interpolated on ``mf``. It is possible only if 
+   ``mf`` is of Lagrange type. In this first example we use the same |mlab_mf| for 
+   the unknown and for the data such as ``g``, but in the general case, ``mf`` 
+   won't be Lagrangian and another (Lagrangian) |mf| will be used for the 
+   description of Dirichlet conditions, source terms etc.
 
 A source term can be added with the following lines::
 
-  >> F = gf_mesh_fem_get(mf, 'eval', { '2(x^2+y^2)-2(x+y)+20x^3' });
-  >> gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
+  >> % add source term
+  >> f = gf_mesh_fem_get(mf, 'eval', { '2(x^2+y^2)-2(x+y)+20x^3' });
+  >> gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, f);
   >> gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
-It only remains now to launch the solver. The linear system is assembled and solve with the instruction::
+It only remains now to launch the solver. The linear system is assembled and solve 
+with the instruction::
 
+  >> % solve the linear system
   >> gf_model_get(md, 'solve');
 
-The model now contains the solution (as well as other things, such as the
-linear system which was solved). It is extracted, a display into a |mlab| figure::
+The model now contains the solution (as well as other things, such as the linear 
+system which was solved). It is extracted, a display into a |mlab| figure::
 
-
-  >> U = gf_model_get(md, 'variable', 'u');
-  >> gf_plot(mf, U, 'mesh','on');
+  >> % extracted solution
+  >> u = gf_model_get(md, 'variable', 'u');
+  >> % display
+  >> gf_plot(mf, u, 'mesh','on');
 
 
 Another Laplacian with exact solution

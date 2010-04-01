@@ -3,7 +3,7 @@
 
 # You can set these variables from the command line.
 PYTHON        = python
-SVNROOT       = http://svn.python.org/projects
+SPHINXROOT    = http://svn.python.org/projects
 SPHINXOPTS    =
 SPHINXBUILD   = $(PYTHON) tools/sphinx-build.py
 PAPER         =
@@ -17,41 +17,40 @@ PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -b $(BUILDER) -d build/doctrees $(PAPEROPT_$(PAPER)) \
                   $(SPHINXOPTS) $(SOURCES) build/$(BUILDER)
 
-.PHONY: help checkout update build html htmlhelp clean latex linkcheck dist
+.PHONY: help checkout update images build view html htmlview htmlhelp latex pdf linkcheck clean upload
 
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
 	@echo "  view      to view standalone HTML files"
 	@echo "  html      to make standalone HTML files"
-	@echo "  htmlhelp  to make HTML files and a HTML help project"
 	@echo "  htmlview  to make and view standalone HTML files"
+	@echo "  htmlhelp  to make HTML files and a HTML help project"
 	@echo "  latex     to make LaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  pdf       to make pdfLaTeX files, you can set PAPER=a4 or PAPER=letter"
 	@echo "  linkcheck to check all external links for integrity"
-	@echo "  dist      to create a \"dist\" directory with archived docs for download"
 	@echo "  upload    to make HTML and LATEX docs and upload it to gna.org"
 
 checkout:
 	@if [ ! -d tools ]; then \
 	  echo "Checking out tools..."; \
-	  svn checkout $(SVNROOT)/python/trunk/Doc/tools tools; \
+	  svn checkout $(SPHINXROOT)/python/trunk/Doc/tools tools; \
 	fi
 	@if [ ! -d tools/sphinx ]; then \
 	  echo "Checking out Sphinx..."; \
-	  svn checkout $(SVNROOT)/doctools/trunk/sphinx tools/sphinx; \
+	  svn checkout $(SPHINXROOT)/external/Sphinx-0.6.5/sphinx tools/sphinx; \
 	fi
 	@if [ ! -d tools/docutils ]; then \
 	  echo "Checking out Docutils..."; \
-	  svn checkout $(SVNROOT)/external/docutils-0.5/docutils tools/docutils; \
+	  svn checkout $(SPHINXROOT)/external/docutils-0.6/docutils tools/docutils; \
 	fi
 	@if [ ! -d tools/jinja2 ]; then \
 	  echo "Checking out Jinja..."; \
-	  svn checkout $(SVNROOT)/external/Jinja-2.1.1/jinja2 tools/jinja2; \
+	  svn checkout $(SPHINXROOT)/external/Jinja-2.3.1/jinja2 tools/jinja2; \
 	fi
 	@if [ ! -d tools/pygments ]; then \
 	  echo "Checking out Pygments..."; \
-	  svn checkout $(SVNROOT)/external/Pygments-0.11.1/pygments tools/pygments; \
+	  svn checkout $(SPHINXROOT)/external/Pygments-1.3.1/pygments tools/pygments; \
 	fi
 
 update: checkout
@@ -68,8 +67,7 @@ images:
 	-cd $(srcdir)/source/python/images/; make png
 	-cd $(srcdir)/source/scilab/images/; make png
 
-
-build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/api.rst $(srcdir)/source/scilab/cmdref.rst checkout images
+build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/cmdref.rst $(srcdir)/source/scilab/cmdref.rst checkout images
 	rm -fr build/$(BUILDER)/_images
 	rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees
@@ -82,6 +80,9 @@ view:
 html: BUILDER = html
 html: build
 	@echo "Build finished. The HTML pages are in build/html."
+
+htmlview: html
+	$(PYTHON) -c "import webbrowser; webbrowser.open('build/html/index.html')"
 
 htmlhelp: BUILDER = htmlhelp
 htmlhelp: build
@@ -104,9 +105,6 @@ linkcheck: build
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in build/$(BUILDER)/output.txt."
 
-htmlview: html
-	$(PYTHON) -c "import webbrowser; webbrowser.open('build/html/index.html')"
-
 clean:
 	-rm -rf build/
 	-rm -rf html/
@@ -116,37 +114,14 @@ clean:
 	-cd $(srcdir)/source/python/images/; make clean
 	-cd $(srcdir)/source/scilab/images/; make clean
 
-dist: DIST = build/dist
-dist: DESTINATION = build/html/dist/
-dist:
-	-rm -rf $(DIST)
-	-rm -rf $(DESTINATION)
-	mkdir -p $(DIST)
-	mkdir -p $(DESTINATION)
-
-	make html # archive the HTML
-	cp -pPR build/html $(DIST)/getfem-$(DISTVERSION)-docs-html
-	tar -C $(DIST) -cf $(DIST)/getfem-$(DISTVERSION)-docs-html.tar getfem-$(DISTVERSION)-docs-html
-	gzip -9 $(DIST)/getfem-$(DISTVERSION)-docs-html.tar
-	rm -rf $(DIST)/getfem-$(DISTVERSION)-docs-html
-
-	rm -rf build/latex # archive the letter latex
-	make latex PAPER=letter
-	(cd build/latex; make clean && make all-pdf && make FMT=pdf tar)
-	gzip -9 build/latex/docs-pdf.tar
-	cp build/latex/docs-pdf.tar.gz $(DIST)/getfem-$(DISTVERSION)-docs-pdf-letter.tar.gz
-
-	mv $(DIST)/* $(DESTINATION) # move to destination
-
 $(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
 
 $(srcdir)/source/scilab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc > $(srcdir)/source/scilab/cmdref.rst || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
 
-$(srcdir)/source/python/api.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/api.rst || (rm -f $(srcdir)/source/python/api.rst; /bin/false )
-
+$(srcdir)/source/python/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
+	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/cmdref.rst || (rm -f $(srcdir)/source/python/cmdref.rst; /bin/false )
 
 upload:
 	make html
