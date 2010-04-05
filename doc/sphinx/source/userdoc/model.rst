@@ -1421,7 +1421,7 @@ Given an augmentation parameter :math:`r`, the contact and friction conditions c
 where :math:`P_K` is the projection on the convex :math:`K` and :math:`{\mathscr B}(-{\mathscr F}\lambda_N^i)` is the ball of center :math:`0` and radius :math:`-{\mathscr F}\lambda_N^i`.
 These expressions will be used to perform a semi-smooth Newton method.
 
-Suppose now that you approximate a linerized elasticity problem submitted to contact with friction. Then, if :math:`U` is the vector of unknown for the displacement you will be able to express the matrices :math:`B_N` and :math:`B_T` such that
+Suppose now that you approximate a linerized elasticity problem submitted to contact with friction. Then, if :math:`U` is the vector of the unknown for the displacement you will be able to express the matrices :math:`B_N` and :math:`B_T` such that
 
 .. math::
 
@@ -1456,7 +1456,7 @@ Weak nodal contact condition
 
 The direct nodal condition may have some drawback : locking phenomena, overconstraint. It is in fact often more stable and for the same accuracy to use multiplier of reduced order compared to the displacement (the direct nodal contact condition correspond more or less to a multiplier described on the same finite element method than the displacement).
 
-Let :math:`\varphi_i` be the shapes functions of the finite element describing the displacement and $\psi_i$ be the shape functions of a finite element describing a multiplier on the contact boundary :math:`\Gamma_c`. It is assumed that the set of admissible multiplier describing the normal stress will be
+Let :math:`\varphi_i` be the shapes functions of the finite element describing the displacement and :math:`\psi_i` be the shape functions of a finite element describing a multiplier on the contact boundary :math:`\Gamma_c`. It is assumed that the set of admissible multiplier describing the normal stress will be
 
 .. math::
 
@@ -1468,11 +1468,11 @@ where :math:`a_i`, :math:`~~i=1..N_c` are the finite element nodes corresponding
 
   \int_{\Gamma_c} (\mu_N^h - \lambda_N^h) u_N d\Gamma \le 0 ~~ \forall \mu_N^h \in \Lambda_N^h. 
 
-In that case, the component $\lambda_N^i$ is a contact stress (:math:`N/m^2`) and the matrix :math:`B_N` can be written
+In that case, the component :math:`\lambda_N^i` is a contact stress (:math:`N/m^2`) and the matrix :math:`B_N` can be written
 
 .. math::
 
-  (B_N)_{ij} = \int_{\Gamma_c} psi_i \varphi_j d\Gamma.
+  (B_N)_{ij} = \int_{\Gamma_c} \psi_i \varphi_j d\Gamma.
 
 The matrix :math:`B_T` can also be written in a similar way. The friction condition can be written in a weak form
 
