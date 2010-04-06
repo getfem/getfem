@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2000-2008 Yves Renard
+// Copyright (C) 2000-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -501,10 +501,9 @@ namespace getfem {
 		       const mesh_region &rg = mesh_region::all_convexes()) {
     const char *st;
     if (mf.get_qdim() == 1)
-      st = "F=data(1); V(#1)+=comp(Base(#1)).F(1);";
+      st = "F=data(1); V(#1)+=comp(Base(#1))(:).F(i);";
     else
-      st = "F=data(qdim(#1));"
-	"V(#1)+=comp(vBase(#1))(:,i).F(i);";
+      st = "F=data(qdim(#1)); V(#1)+=comp(vBase(#1))(:,i).F(i);";
     
     asm_real_or_complex_1_param(const_cast<VECT1 &>(B),mim,mf,mf,F,rg,st);
   }
@@ -1071,9 +1070,9 @@ namespace getfem {
 				      const mesh_region &rg) {
     generic_assembly assem("Kr=data$1(1); Ki=data$2(1);"
 			   "m = comp(Base(#1).Base(#1)); "
-			   "M$1(#1,#1)+=sym(m(:,:).Kr(1) - "
+			   "M$1(#1,#1)+=sym(m(:,:).Kr(j) - "
 			   "comp(Grad(#1).Grad(#1))(:,i,:,i));"
-			   "M$2(#1,#1)+=sym(m(:,:).Ki(1));");
+			   "M$2(#1,#1)+=sym(m(:,:).Ki(j));");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_data(K_squaredr);
@@ -1090,7 +1089,7 @@ namespace getfem {
 				      const mesh_region &rg) {
     generic_assembly assem("K=data(1);"
 			   "m = comp(Base(#1).Base(#1)); "
-			   "M$1(#1,#1)+=sym(m(:,:).K(1) - "
+			   "M$1(#1,#1)+=sym(m(:,:).K(j) - "
 			   "comp(Grad(#1).Grad(#1))(:,i,:,i));");
     assem.push_mi(mim);
     assem.push_mf(mf_u);

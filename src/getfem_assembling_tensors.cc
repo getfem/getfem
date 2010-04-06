@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2009 Julien Pommier
+// Copyright (C) 2003-2010 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -150,7 +150,7 @@ namespace getfem {
 	tensor_shape ts(child(n).ranges());
 	tensor_ranges rn(child(n).ranges());
 	const std::string &s = red[n].second;
-	assert(rn.size() == s.size());
+	GMM_ASSERT1(rn.size() == s.size(), "Wrong size !");
 	for (unsigned i=0; i < rn.size(); ++i)
 	  if (s[i] != ' ') {
 	    size_type p = s.find(s[i]);
