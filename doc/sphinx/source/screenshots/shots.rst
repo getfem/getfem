@@ -197,7 +197,7 @@ images correspond to a 3D case.
 ------------------
 
 This image comes from the application developped by Konstantinos Poulios 
-which is freely available at |link23|_. Is is based on |gf| and is intended to be a tool for easy, almost automatic, creation and calculation of gear transmissions.
+which is freely available at |link23|_. It is based on |gf| and is intended to be a tool for easy, almost automatic, creation and calculation of gear transmissions.
 
 
 .. |link23| replace:: http://sourceforge.net/projects/gggears/
