@@ -62,9 +62,9 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 typedef gmm::row_matrix<sparse_vector> sparse_row_matrix;
 
-
-/* level set unit normal */
-
+/******************************************************************************/
+/* level set unit normal *                                                    */
+/******************************************************************************/
 template<typename VECT1> class level_set_unit_normal 
   : public getfem::nonlinear_elem_term {
   const getfem::mesh_fem &mf;
@@ -94,9 +94,9 @@ public:
   }
 };
 
-/***********************************/
-/* asembling stabilised mixed term */
-/***********************************/
+/**********************************************************************************/
+/* asembling stabilised mixed term                                                */
+/**********************************************************************************/
 
 template<class MAT>
 void asm_stabilization_mixed_term
@@ -125,7 +125,7 @@ void asm_stabilization_mixed_term
   assem.push_nonlinear_term(&nterm);
   
   
-  
+  gmm::clear(RM); 
   ls.set_shift(1e-7);
   assem.assembly(rg);
   ls.set_shift(-1e-7);
@@ -133,9 +133,9 @@ void asm_stabilization_mixed_term
   ls.set_shift(0.);
 }
 
-/******************************************/
-/* asembling masse matrix for  mixed term */
-/******************************************/
+/**************************************************************************************/
+/* asembling masse matrix for  mixed term                                             */
+/**************************************************************************************/
 
 template<class MAT>
 void asm_mass_matrix_mixed_term
@@ -164,13 +164,13 @@ void asm_mass_matrix_mixed_term
   ls.set_shift(-1e-7);
   assem.assembly(rg);
   ls.set_shift(0.);
-  cout << "RM = " << RM << endl;
+  // cout << "RM = " << RM << endl;
 
 }
 
-/***********************************************/
-/* asembling stabilization symetric term       */
-/***********************************************/
+/******************************************************************************************/
+/* asembling stabilization symetric term                                                  */
+/******************************************************************************************/
 
 template<class MAT>
 void asm_stabilization_symm_term
@@ -198,7 +198,8 @@ void asm_stabilization_symm_term
   assem.push_data(MU);
   assem.push_mat(RM);
   assem.push_nonlinear_term(&nterm);
-  
+
+  gmm::clear(RM);
   ls.set_shift(1e-7);
   assem.assembly(rg);
   ls.set_shift(-1e-7);
@@ -207,7 +208,7 @@ void asm_stabilization_symm_term
 }
 
 /**************************************************************************/
-/*structure of unilateral contact proble                                  */
+/*structure of unilateral contact problem                                 */
 /**************************************************************************/
 
 struct unilateral_contact_problem {
@@ -217,8 +218,7 @@ struct unilateral_contact_problem {
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::mesh_level_set mls, mls_bound;       /* two meshs level set                    */
   getfem::mesh_im_level_set mim, mimbound;    /* the integration methods.              */
-  getfem::mesh_fem mf_pre_u;
-  getfem::mesh_fem mf_mult_dir, mf_mult_cont;
+  getfem::mesh_fem mf_pre_u, mf_dir;
   getfem::mesh_fem_level_set mfls_u;
   getfem::mesh_fem_global_function mf_sing_u;
   
@@ -237,8 +237,8 @@ struct unilateral_contact_problem {
   getfem::mesh_fem& mf_u() { return mf_u_sum; }
   getfem::mesh_fem& mf_cont() { return mf_contt; }
   getfem::mesh_fem& mf_pre_uu() { return mf_pre_u; }
-
- 
+  
+  
   scalar_type mu, lambda;    /* Lame coeff                   */
   
   int dgr ;          /* Order of enrichement for u */
@@ -247,13 +247,8 @@ struct unilateral_contact_problem {
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   
   
-  int bimaterial;           /* For bimaterial interface unilateral contact problem */
-  
-  double lambda_up, lambda_down, mu_up, mu_down;  /*Lame coeff for bimaterial case*/
-  
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool stabilized_problem;
-  unsigned dir_with_mult;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
   size_type cutoff_func;
@@ -275,7 +270,7 @@ struct unilateral_contact_problem {
   bool solve(plain_vector &U, plain_vector &LAMBDA);
   void init(void);
   unilateral_contact_problem(void) : ls(mesh, 1, true), mls(mesh), mls_bound(mesh), mim(mls),
-		                     mf_pre_u(mesh), mf_mult_dir(mesh), mf_mult_cont(mesh),
+		                     mf_pre_u(mesh), mf_dir(mesh),
 				     mfls_u(mls, mf_pre_u),
 				     mf_sing_u(mesh),
 				     mf_partition_of_unity(mesh),
@@ -285,7 +280,7 @@ struct unilateral_contact_problem {
 				     /*mf_pe(mesh),*/ mf_rhs(mesh)
   {}
 
-};
+};//end structure of unilateral contact problem          
 
 
 std::string name_of_dof(getfem::pdof_description dof) {
@@ -324,7 +319,9 @@ std::string name_of_dof(getfem::pdof_description dof) {
   return s;
 }
 
-
+/****************************************************************************************************/
+/*Initialisation of unilateral contact problem                                                      */
+/****************************************************************************************************/
 void  unilateral_contact_problem::init(void) {
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
@@ -347,8 +344,6 @@ void  unilateral_contact_problem::init(void) {
   
   dgr = int(PARAM.int_value("dgr", "Enrichement order ofu"));
   
-  
-  //  bimaterial = int(PARAM.int_value("BIMATERIAL", "bimaterial interface crack"));
   
   mu    = PARAM.real_value("MU", "Lame coefficient mu"); 
   lambda =PARAM.real_value("Lamda", "Lame coefficient lambda");
@@ -439,15 +434,13 @@ void  unilateral_contact_problem::init(void) {
   
   mim.set_simplex_im(simp_ppi, sing_ppi);
   mf_pre_u.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult_dir.set_finite_element(mesh.convex_index(), pf_u);
-  mf_mult_dir.set_qdim(dim_type(N));
+  mf_dir.set_finite_element(mesh.convex_index(), pf_u);
+  mf_dir.set_qdim(dim_type(N));
   mf_partition_of_unity.set_classical_finite_element(1);
   
-  /*******************************************************************************/
   // Integration method on the boudary
   
   mls_bound.add_level_set(ls);
-  
   int intbound = getfem::mesh_im_level_set::INTEGRATE_BOUNDARY;
   mimbound.init_with_mls(mls_bound, intbound, simp_ppi, sing_ppi);
   mimbound.set_integration_method(mesh.convex_index(), ppi);
@@ -457,18 +450,15 @@ void  unilateral_contact_problem::init(void) {
   
   stabilized_problem =
     (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
-  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSION",
-					   "Version of Dirichlet"));
-  // if ( stabilized_problem ) {
-  //getfem::pfem pf_mult_cont = getfem::fem_descriptor(FEM_TYPE_CONT);
+
   
   mf_contt.set_finite_element(mesh.convex_index(), pf_mult_cont);
-  mf_mult_cont.set_finite_element(mesh.convex_index(), pf_mult_cont);
   
   
   
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
+
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
   if (data_fem_name.size() == 0) {
     GMM_ASSERT1(pf_u->is_lagrange(), "You are using a non-lagrange FEM. "
@@ -499,7 +489,9 @@ void  unilateral_contact_problem::init(void) {
 }//end intialisation
 
 
-/*****************************************************************/
+/****************************************************************************************************/
+/*Defining level set function                                                                       */
+/****************************************************************************************************/
 
 base_small_vector ls_function(const base_node P, int num = 0) {
   scalar_type x = P[0], y = P[1], x0=0, y0=0, phi, ll;
@@ -531,9 +523,9 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   return res;
 }//end ls_function
 
-/*************************************************************************************/
-/*     solv  unilateral_contact_problem                                                                              */
-/*************************************************************************************/
+/************************************************************************************************/
+/*     solv  unilateral_contact_problem                                                         */
+/************************************************************************************************/
 
 bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -578,12 +570,9 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
 					 cutoff_radius, 
 					 cutoff_radius1,cutoff_radius0);
 	s  = new getfem::product_of_xy_functions(*s, *c);
-        
-      }
+       }
       vfunc[i]=getfem::global_function_on_level_set(ls, *s);           
     }
-
-           
   }
   
   mf_sing_u.set_functions(vfunc);
@@ -633,17 +622,16 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   }// end switch
   
   
-  /************************************************************************************/
+  /*..................................................................................*/
   /* Range_basis call                                                                 */
-  /************************************************************************************/
+  /*..................................................................................*/
+
   std::set<size_type> cols;
   cols.clear(); 
   sparse_matrix BRBB(mf_pre_uu().nb_dof(), mf_cont().nb_dof());
-  // asm_mass_matrix_mixed_term(BRBB, mimbound, mf_pre_uu(), mf_cont(), ls);
   mf_u().set_qdim(1);
   asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
   // cout << "BRBB " << BRBB << endl;
-  
   cout << "Selecting dofs for the multiplier" << endl;
   cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
   gmm::range_basis(BRBB, cols);
@@ -652,7 +640,6 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   size_type nb_dof = mf_u().nb_dof();
   cout << "nb_dof = " << nb_dof << endl;
-  
   size_type nb_dof_cont = mf_cont().nb_dof();
   cout << "nb_dof_cont.... = " << nb_dof_cont << endl;
   cout << "nb_basic_dof_cont.... = " <<mf_cont().nb_basic_dof() << endl;
@@ -661,8 +648,9 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   LAMBDA.resize(nb_dof_cont);
   
 
-  // find the dofs on the upper right and lower right corners
-  
+  // Find the dofs on the upper right and lower right corners
+  cout << "Find the dofs on the upper right and lower right corners" << endl;
+
   scalar_type d1 = 1.0, d2 = 1.0;
   size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
   base_node corner1 = base_node(1.0, -0.5);
@@ -679,37 +667,38 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
 	      "Upper right or lower right corners not found d1 = "
 	      << d1 << " d2 = " << d2);
   
-  // assembling mixed term for contact problem
+  // Assembling mixed term for contact problem
   
   getfem::CONTACT_B_MATRIX BN(nb_dof_cont, nb_dof);
-
+  
   asm_mass_matrix_mixed_term(BN, mimbound, mf_u(), mf_cont(), ls);
   
-  
-  // assembling stabilized mixed term for contact problem
-  
   getfem::CONTACT_B_MATRIX CA(nb_dof_cont, nb_dof);
-  asm_stabilization_mixed_term(CA, mimbound, mf_u(), mf_cont(), ls, lambda, mu);
-  gmm::scale(CA, -cont_gamma0 * h);
+  // Assembling stabilized mixed term for contact problem
+  if (stabilized_problem) {
+    cout<< "Assembling stabilized mixed term for contact problem"<<endl;
+    asm_stabilization_mixed_term(CA, mimbound, mf_u(), mf_cont(), ls, lambda, mu);
+    gmm::scale(CA, -cont_gamma0 * h);
+  }
   
-  
-  // assembling symetrique term for stabilized contact problem
-  
+  // Assembling symetrique term for stabilized contact problem
   
   sparse_matrix KA(nb_dof, nb_dof);
+  if (stabilized_problem) {
+    cout<<"Assembling symetrique term for stabilized contact problem"<<endl;
+    asm_stabilization_symm_term(KA, mimbound, mf_u(), ls, lambda, mu);
+    gmm::scale(KA, -cont_gamma0 * h);
+  }
   
-  asm_stabilization_symm_term(KA, mimbound, mf_u(), ls, lambda, mu);
-  gmm::scale(KA, -cont_gamma0 * h);
-  
-  
-  //assembling mass term for stabilized problem
+  //Assembling mass term for stabilized problem
   
   getfem::CONTACT_B_MATRIX MA(nb_dof_cont, nb_dof_cont);
+  if (stabilized_problem) {
+    cout<<"Assembling mass term for stabilized problem"<<endl;
+    getfem::asm_mass_matrix(MA, mimbound, mf_cont());
+    gmm::scale(MA, cont_gamma0 * h);
+  }
   
-  getfem::asm_mass_matrix(MA, mimbound, mf_cont());
-  gmm::scale(MA, -cont_gamma0 * h);
-  
-
   
   getfem::model model;
   
@@ -717,19 +706,19 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   model.add_fem_variable("u", mf_u());
   model.add_fem_variable("Lambda", mf_cont()); // Adding contact variable
   
-
+  
   // Linearized elasticity brick.
   model.add_initialized_scalar_data("lambda", lambda);
   model.add_initialized_scalar_data("mu", mu);
   getfem::add_isotropic_linearized_elasticity_brick
     (model, mim, "u", "lambda", "mu");
-  model.add_initialized_scalar_data("augmentation_parameter", R);
-  
+  // model.add_initialized_scalar_data("augmentation_parameter", R);
+   model.add_initialized_scalar_data
+     ("augmentation_parameter", mu * (3*lambda + 2*mu) / (h*(lambda + mu)) );  // r ~= Young modulus
   
   
   
   if (stabilized_problem) {
-    
     getfem::add_explicit_matrix(model, "u", "u", KA);
     // Defining the contact condition.
     gmm::add(CA, BN); 
@@ -746,38 +735,54 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   std::vector<scalar_type> F(nb_dof_rhs * N * N);
   std::vector<scalar_type> FF(nb_dof_rhs * N * N);
-
+  
   // Neumann condition brick.
   
-  //down side
-  for(size_type i = 0; i < F.size(); i=i+N*N)
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =-1.;FF[i+j+j*N] = 1.;}
-  
-  
-  model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+  for(size_type i = 0; i < F.size(); i=i+N*N) {
+    base_node pt = mf_rhs.point_of_basic_dof(i / (N*N));
+    scalar_type coeff = pt[1] > 0. ? -1 : 1;
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
 
-  getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN4_BOUNDARY_NUM);
-  getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN2_BOUNDARY_NUM);
-  model.add_initialized_fem_data("NeumannData1", mf_rhs, FF);
-  getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData1", NEUMANN3_BOUNDARY_NUM);
-  getfem::add_normal_source_term_brick
-    (model, mim, "u", "NeumannData1", NEUMANN1_BOUNDARY_NUM);
+  }
   
+  cout <<"Applied  Neumann condition"<< endl;
+   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+   model.add_initialized_fem_data("NeumannData1", mf_rhs, FF);
+//    getfem::add_normal_source_term_brick
+//      (model, mim, "u", "NeumannData1", NEUMANN4_BOUNDARY_NUM);
+   getfem::add_normal_source_term_brick
+     (model, mim, "u", "NeumannData", NEUMANN3_BOUNDARY_NUM);
+//    getfem::add_normal_source_term_brick
+//      (model, mim, "u", "NeumannData1", NEUMANN2_BOUNDARY_NUM);
+   getfem::add_normal_source_term_brick
+     (model, mim, "u", "NeumannData", NEUMANN1_BOUNDARY_NUM);
   
-  
-  cout<<"kill rigid motion"<<endl;
-  GMM_ASSERT1(N==2, "To be corrected for 2D computation");
-  sparse_matrix BB(3, mf_u().nb_dof());
-  BB(0, icorner1) = 1.0;
-  BB(1, icorner1+1) = 1.0;
-  BB(2, icorner2) = 1.0;
-  size_type size(3);
-  std::vector<scalar_type> LRH(size);
-  model.add_fixed_size_variable("dir", size);
-  getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+
+  std::vector<scalar_type> FFF(mf_rhs.nb_dof()*N, 0.0);
+  for(size_type i = 0; i < FFF.size(); i+=N){ 
+    base_node pt = mf_rhs.point_of_basic_dof(i/N);
+    FFF[i+1]= 0.5*cos(pt[0]*2.*M_PI) * (pt[1] > 0 ? -0.1 : 1.);
+  }
+  model.add_initialized_fem_data("VolumicForce", mf_rhs, FFF);
+  getfem::add_source_term_brick(model, mim, "u",  "VolumicForce");
+
+
+ //  std::vector<scalar_type> FFF(mf_rhs.nb_dof()*N);
+//   for(size_type i = 0; i <FFF.size(); i++){ FFF[i]=0;}
+//   model.add_initialized_fem_data("DirichletData", mf_rhs, FFF);
+//   getfem::add_Dirichlet_condition_with_multipliers
+//     (model, mim, "u", mf_dir,  NEUMANN4_BOUNDARY_NUM, "DirichletData");
+
+   cout<<"kill rigid motion"<<endl;
+   GMM_ASSERT1(N==2, "To be corrected for 2D computation");
+   sparse_matrix BB(3, mf_u().nb_dof());
+   BB(0, icorner1) = 1.0;
+   BB(1, icorner1+1) = 1.0;
+   BB(2, icorner2) = 1.0;
+   size_type size(3);
+   std::vector<scalar_type> LRH(size);
+   model.add_fixed_size_variable("dir", size);
+   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
   
   // Generic solve.
 
