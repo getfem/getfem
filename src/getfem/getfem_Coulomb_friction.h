@@ -61,26 +61,7 @@ namespace getfem {
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap = "", std::string dataname_alpha = "",
-   bool symmetrized = false);
-
-
-/** Add Hughes stabilized frictionless contact condition to the model. If U 
-    is the vector of degrees of freedom on which the unilateral constraint is applied, 
-    and Lambda the multiplier Vector of contact force.Then Hughes stabilizedfrictionless
-    contact condition is difined by the matrix `BN` and 'DN' have to be such that this
-    condition is defined by $B_N U - DN Lambda \le 0$. where 'DN' is the masse matrix 
-    relative to stabilzed term.
-    The augmentation parameter `r` should be chosen in a range of acceptabe values. 
-    `dataname_gap` is an optional parameter representing the initial gap. It can be
-    a single value or a vector of value. `dataname_alpha` is an optional homogenization 
-    parameter for the augmentation parameter. The parameter `symmetrized` indicates that 
-    a part of the symmetry of the tangent matrix will be kept or not
-  */
-   size_type add_Hughes_stab_basic_contact_brick
-   (model &md, const std::string &varname_u, const std::string &multname_n,
-    const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
-    std::string dataname_gap="", std::string dataname_alpha="",
-    bool symmetrized=false);
+   bool symmetrized = false, bool Hughes_stabilized = false);
 
 
   /** Add a contact with friction condition to the model. If U is the vector
@@ -112,7 +93,7 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff, 
    std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized) ;
+   bool symmetrized, bool Hughes_stabilized = false) ;
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */
@@ -125,6 +106,32 @@ namespace getfem {
   /** Can be used to change the matrix BT of a basic contact/friction brick
    */
   CONTACT_B_MATRIX &contact_brick_set_BT(model &md, size_type indbrick);
+
+/** Add Hughes stabilized frictionless contact condition to the model. If U 
+    is the vector of degrees of freedom on which the unilateral constraint is applied, 
+    and Lambda the multiplier Vector of contact force.Then Hughes stabilizedfrictionless
+    contact condition is difined by the matrix `BN` and 'DN' have to be such that this
+    condition is defined by $B_N U - DN Lambda \le 0$. where 'DN' is the masse matrix 
+    relative to stabilzed term.
+    The augmentation parameter `r` should be chosen in a range of acceptabe values. 
+    `dataname_gap` is an optional parameter representing the initial gap. It can be
+    a single value or a vector of value. `dataname_alpha` is an optional homogenization 
+    parameter for the augmentation parameter. The parameter `symmetrized` indicates that 
+    a part of the symmetry of the tangent matrix will be kept or not
+  */
+   inline size_type add_Hughes_stab_basic_contact_brick
+   (model &md, const std::string &varname_u, const std::string &multname_n,
+    const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
+    std::string dataname_gap="", std::string dataname_alpha="",
+    bool symmetrized=false) {
+
+    size_type indbrick = add_basic_contact_brick
+      (md, varname_u, multname_n, dataname_r, BN,
+       dataname_gap, dataname_alpha, symmetrized, true);
+    gmm::copy(DN, contact_brick_set_DN(md, indbrick));
+    return indbrick;
+   }
+
 
   /** Add a frictionless contact condition with a rigid obstacle
       to the model. The condition is applied on the variable `varname_u`

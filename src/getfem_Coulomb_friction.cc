@@ -939,9 +939,9 @@ namespace getfem {
     GMM_ASSERT1(p, "Wrong type of brick");
     return p->get_BN1();
   }
-  
-  //function to acces to DN
-CONTACT_B_MATRIX &contact_brick_set_DN
+
+
+  CONTACT_B_MATRIX &contact_brick_set_DN
   (model &md, size_type indbrick) {
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
@@ -950,8 +950,8 @@ CONTACT_B_MATRIX &contact_brick_set_DN
     GMM_ASSERT1(p, "Wrong type of brick");
     return p->get_DN();
   }
-  
- 
+
+
   CONTACT_B_MATRIX &contact_brick_set_BT
   (model &md, size_type indbrick) {
     pbrick pbr = md.brick_pointer(indbrick);
@@ -962,6 +962,7 @@ CONTACT_B_MATRIX &contact_brick_set_DN
     return p->get_BT1();
   }
 
+
   //=========================================================================
   //  Add a frictionless contact condition with BN, r, alpha given.  
   //=========================================================================
@@ -970,8 +971,9 @@ CONTACT_B_MATRIX &contact_brick_set_DN
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized) {
-    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,true);
+   bool symmetrized, bool Hughes_stabilized) {
+    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized, true, false,
+                                                            Hughes_stabilized);
     pbr_->set_BN1(BN);
     pbrick pbr = pbr_;
 
@@ -1003,46 +1005,6 @@ CONTACT_B_MATRIX &contact_brick_set_DN
   }
   
 
-  //========================================================================= 
-  //Add Hughes stabilized frictionless contact condition with BN, r, alpha given
-  //=========================================================================
-  
- size_type add_Hughes_stab_basic_contact_brick
-  (model &md, const std::string &varname_u, const std::string &multname_n,
-   const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
-   std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized) {
-    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,true);
-    pbr_->set_BN1(BN);
-    pbr_->set_DN(DN);
-    pbrick pbr = pbr_;
-    model::termlist tl;
-    tl.push_back(model::term_description(varname_u, varname_u, false));
-    tl.push_back(model::term_description(varname_u, multname_n, false));
-    tl.push_back(model::term_description(multname_n, varname_u, false));
-    tl.push_back(model::term_description(multname_n, multname_n, false));
-    model::varnamelist dl(1, dataname_r);
-
-    if (dataname_gap.size() == 0) {
-      dataname_gap = md.new_name("contact_gap_on_" + varname_u);
-      md.add_initialized_fixed_size_data
-        (dataname_gap, model_real_plain_vector(1, scalar_type(0)));
-    }
-    dl.push_back(dataname_gap);
-    
-    if (dataname_alpha.size() == 0) {
-      dataname_alpha = md.new_name("contact_parameter_alpha_on_"+ multname_n);
-      md.add_initialized_fixed_size_data
-        (dataname_alpha, model_real_plain_vector(1, scalar_type(1)));
-    }
-    dl.push_back(dataname_alpha);
-
-    model::varnamelist vl(1, varname_u);
-    vl.push_back(multname_n);
-    
-    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
-  }
-  
   //=========================================================================
   //  Add a contact with friction condition with BN, r, alpha given.  
   //=========================================================================
@@ -1053,8 +1015,9 @@ CONTACT_B_MATRIX &contact_brick_set_DN
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff, 
    std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized) {
-    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized,false);
+   bool symmetrized, bool Hughes_stabilized) {
+    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized, false, false,
+                                                            Hughes_stabilized);
     pbr_->set_BN1(BN);
     pbr_->set_BT1(BT);
     pbrick pbr = pbr_;
@@ -1083,7 +1046,6 @@ CONTACT_B_MATRIX &contact_brick_set_DN
     }
     dl.push_back(dataname_alpha);
     dl.push_back(dataname_friction_coeff);
-
 
     model::varnamelist vl(1, varname_u);
     vl.push_back(multname_n);
