@@ -450,7 +450,7 @@ This is done by the call of the |mo| object method::
 
 The method return the index of the brick in the model. The call of this method is
 rather complex because it can be adapted to many situations. The construction of a
-new brick should be accompagned to the definition of a function that add the new
+new brick should be accompagned to the definition of a function that adds the new
 brick to the model calling this method and more simple to use.
 
 For instance, for the simple Laplacian brick described above, this function can be
@@ -487,7 +487,7 @@ In this case, the matrix term is added in the rows corresponding to the variable
 ``varname1`` and the columns corresponding to the variable ``varname2``. The
 boolean being the third parameter is to declare if the term is symmetric or not.
 If it is symmetric and if the two variables are different then the assembly
-procedure add the corresponding term AND its transpose. The number of terms is
+procedure adds the corresponding term AND its transpose. The number of terms is
 arbitrary. For each term declared, the brick have to fill the corresponding right
 hand side vector (parameter ``vecl`` of ``asm_real_tangent_terms`` above) or/and
 the matrix term (parameter ``matl`` of ``asm_real_tangent_terms``) depending on
@@ -525,7 +525,7 @@ transpose will be added.
 Generic elliptic brick
 ----------------------
 
-This brick add an elliptic term on a variable of a model.  The shape of the
+This brick adds an elliptic term on a variable of a model.  The shape of the
 elliptic term depends both on the variable and a given coefficient. This
 corresponds to a term:
 
@@ -699,7 +699,7 @@ constant matrix.::
 Source term bricks (and Neumann condition)
 ------------------------------------------
 
-This brick add a source term, i.e. a term which occurs only in the right hand side
+This brick adds a source term, i.e. a term which occurs only in the right hand side
 of the linear (tangent) system build by the model. If :math:`f` denotes the value
 of the source term, the weak form of such a term is
 
@@ -896,7 +896,7 @@ The function::
 
   getfem::add_explicit_rhs(md, varname, L);
 
-add a brick which just add the vector ``L`` to the right hand side of the tangent
+adds a brick which just add the vector ``L`` to the right hand side of the tangent
 system relatively to the variable ``varname``. The given vector should have the
 same size as the variable ``varname``. The value of the vector can by changed by
 the command::
@@ -1398,7 +1398,7 @@ where :math:`\lambda_N^i` is the equivalent nodal contact force on :math:`a_i` a
 
   \|\lambda_T^i\| \le -{\mathscr F} \lambda_N^i,
 
-  \lambda_T^i = {\mathscr F} \lambda_N^i \frac{\dot{u}_T}{\|\dot{u}_T\|} ~~~ \text{ si } \dot{u}_T \ne 0,
+  \lambda_T^i = {\mathscr F} \lambda_N^i \frac{\dot{u}_T}{\|\dot{u}_T\|} ~~~ \text{ when } \dot{u}_T \ne 0,
 
 where :math:`\dot{u}_T` is the relative slip velocity, :math:`{\mathscr F}` is the friction coefficient and :math:`\lambda_T^i` the equivalent nodal friction force on :math:`a_i`. The friction condition can be summarized by the inclusion
 
@@ -1454,7 +1454,7 @@ where :math:`\Gamma_c` is the contact boundary, :math:`\varphi_i` is the displac
 Weak nodal contact condition
 ++++++++++++++++++++++++++++
 
-The direct nodal condition may have some drawback : locking phenomena, overconstraint. It is in fact often more stable and for the same accuracy to use multiplier of reduced order compared to the displacement (the direct nodal contact condition correspond more or less to a multiplier described on the same finite element method than the displacement).
+The direct nodal condition may have some drawback : locking phenomena, overconstraint. It is in fact often more stable and for the same accuracy to use multiplier of reduced order compared to the displacement (the direct nodal contact condition corresponds more or less to a multiplier described on the same finite element method than the displacement).
 
 Let :math:`\varphi_i` be the shapes functions of the finite element describing the displacement and :math:`\psi_i` be the shape functions of a finite element describing a multiplier on the contact boundary :math:`\Gamma_c`. It is assumed that the set of admissible multiplier describing the normal stress will be
 
@@ -1466,7 +1466,7 @@ where :math:`a_i`, :math:`~~i=1..N_c` are the finite element nodes corresponding
 
 .. math::
 
-  \int_{\Gamma_c} (\mu_N^h - \lambda_N^h) u_N d\Gamma \le 0 ~~ \forall \mu_N^h \in \Lambda_N^h. 
+  \int_{\Gamma_c} (\mu_N^h - \lambda_N^h) (u_N - \text{gap}) d\Gamma \ge 0 ~~ \forall \mu_N^h \in \Lambda_N^h. 
 
 In that case, the component :math:`\lambda_N^i` is a contact stress (:math:`N/m^2`) and the matrix :math:`B_N` can be written
 
@@ -1478,7 +1478,7 @@ The matrix :math:`B_T` can also be written in a similar way. The friction condit
 
 .. math::
 
-  \int_{\Gamma_c} (\mu_T^h - \lambda_T^h) \dot{u}_T d\Gamma \le 0 ~~ \forall \mu_T^h \in \Lambda_T^h({\mathscr F}\lambda_N^h),
+  \int_{\Gamma_c} (\mu_T^h - \lambda_T^h) \dot{u}_T d\Gamma \ge 0 ~~ \forall \mu_T^h \in \Lambda_T^h({\mathscr F}\lambda_N^h),
 
 where :math:`\Lambda_T^h({\mathscr F}\lambda_N^h)` is the disrete set of admissible friction stress.
 
@@ -1517,7 +1517,7 @@ In order to add a frictionless contact brick you call the model object method::
      getfem::add_basic_contact_brick
           (md, varname_u, multname_n, dataname_r, BN,dataname_gap , dataname_alpha, symmetrized );
 
-This function add a frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, the matrix :math:`B_N` have to be such that this condition is defined by :math:`B_N U \le 0`. The constraint is prescribed thank to a multiplier ``multname_n`` whose dimension should be equal to the number of lines of :math:`B_N`. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptabe values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter ``symmetrized`` indicates that the symmetry of the tangent matrix will be kept or not. 
+This function adds a frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, the matrix :math:`B_N` have to be such that this condition is defined by :math:`B_N U \le 0`. The constraint is prescribed thank to a multiplier ``multname_n`` whose dimension should be equal to the number of lines of :math:`B_N`. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptabe values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter ``symmetrized`` indicates that the symmetry of the tangent matrix will be kept or not. 
 Note that is possible to change the basic contact matrix :math:`BN` by use::
 
      getfem::contact_brick_set_BN(md, indbrick);
@@ -1530,7 +1530,7 @@ In order to add a Hughes stabilized frictionless contact brick you call the mode
       getfem::add_Hughes_stab_basic_contact_brick
           (md, varname_u, multname_n, dataname_r, BN, DN, dataname_gap, dataname_alpha, symmetrized);
 
-This function add a Hughes stabilized frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, and :math:`\lambda` the multiplier Vector of contact force. Then Hughes stabilizedfrictionless contact condition is difined by the matrix :math:`BN` and :math:`DN` have to be such that this condition is defined by :math:`B_N U - D_N \lambda \le 0`. Where :math:`DN` is the masse matrix relative to stabilzed term. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptabe values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter ``symmetrized`` indicates that the symmetry of the tangent matrix will be kept or not. 
+This function adds a Hughes stabilized frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, and :math:`\lambda` the multiplier Vector of contact force. Then Hughes stabilizedfrictionless contact condition is difined by the matrix :math:`BN` and :math:`DN` have to be such that this condition is defined by :math:`B_N U - D_N \lambda \le 0`. Where :math:`DN` is the masse matrix relative to stabilzed term. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptabe values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter ``symmetrized`` indicates that the symmetry of the tangent matrix will be kept or not. 
 Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughes stabilised term. You can change it with::
 
       getfem::contact_brick_set_DN(md, indbrick);
