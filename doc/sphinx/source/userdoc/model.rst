@@ -677,21 +677,21 @@ to :math:`H`. This data can be a matrix field described on a scalar fem or a
 constant matrix.::
 
 
-  add_Dirichlet_condition_with_multipliers(md, mim, varname,
+  add_generalized_Dirichlet_condition_with_multipliers(md, mim, varname,
                                            multname, region,
                                            dataname, Hname);
 
 
-  add_Dirichlet_condition_with_multipliers(md, mim, varname,
+  add_generalized_Dirichlet_condition_with_multipliers(md, mim, varname,
                                            mf_mult, region,
                                            dataname, Hname);
 
-  add_Dirichlet_condition_with_multipliers(md, mim, varname,
+  add_generalized_Dirichlet_condition_with_multipliers(md, mim, varname,
                                            degree, region,
                                            dataname, Hname);
 
 
-  add_Dirichlet_condition_with_penalization(md, mim, varname,
+  add_generalized_Dirichlet_condition_with_penalization(md, mim, varname,
                                             penalization_coeff, region,
                                             dataname, Hname);
 
