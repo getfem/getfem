@@ -1136,8 +1136,13 @@ namespace gmm {
   template<typename VEC> static void vecload(std::string fname,
 					     const VEC& V_) {
     VEC &V(const_cast<VEC&>(V_));
-    std::ifstream f(fname.c_str()); f.imbue(std::locale("C"));
-    for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i]; 
+    std::ifstream f(fname.c_str());
+    GMM_ASSERT1(!(f.fail()), "Bad file name");
+    f.imbue(std::locale("C"));
+    for (size_type i=0; i < gmm::vect_size(V); ++i) {
+      GMM_ASSERT1(!(f.eof()), "File too short");
+      f >> V[i];
+    } 
   }
 }
 
