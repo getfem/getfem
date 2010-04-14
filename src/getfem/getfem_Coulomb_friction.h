@@ -128,6 +128,8 @@ namespace getfem {
     size_type indbrick = add_basic_contact_brick
       (md, varname_u, multname_n, dataname_r, BN,
        dataname_gap, dataname_alpha, symmetrized, true);
+    gmm::resize(contact_brick_set_DN(md, indbrick),
+		gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
     return indbrick;
    }

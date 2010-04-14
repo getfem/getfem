@@ -438,7 +438,7 @@ namespace getfem {
         base_node master_node = cn_m->mf->point_of_basic_dof(cn_m->dof);
         base_node un_sel(3), proj_node_sel(3), proj_node_ref_sel(3);
         scalar_type is_in_min = 1e5;  //FIXME
-        size_type cv_sel, fc_sel;
+        size_type cv_sel = 0, fc_sel = 0;
         std::vector<size_type>::iterator cv;
         std::vector<short_type>::iterator fc;
         for (cv = cn_m->cvs.begin(), fc = cn_m->fcs.begin();
