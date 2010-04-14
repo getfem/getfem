@@ -744,7 +744,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
     for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
 
   }
-  
+
   cout <<"Applied  Neumann condition"<< endl;
    model.add_initialized_fem_data("NeumannData", mf_rhs, F);
    model.add_initialized_fem_data("NeumannData1", mf_rhs, FF);
@@ -761,7 +761,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   std::vector<scalar_type> FFF(mf_rhs.nb_dof()*N, 0.0);
   for(size_type i = 0; i < FFF.size(); i+=N){ 
     base_node pt = mf_rhs.point_of_basic_dof(i/N);
-    FFF[i+1]= 0.5*cos(pt[0]*2.*M_PI) * (pt[1] > 0 ? -0.1 : 1.);
+    FFF[i+1]=0.5*cos(pt[0]*2.*M_PI) * (pt[1] > 0 ? -0.1 : 1.);
   }
   model.add_initialized_fem_data("VolumicForce", mf_rhs, FFF);
   getfem::add_source_term_brick(model, mim, "u",  "VolumicForce");
@@ -908,9 +908,9 @@ int main(int argc, char *argv[]) {
    getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);
   
    mf_cont.write_to_file(p.datafilename + ".cont_meshfem_refined", true);
-   gmm::vecsave(p.datafilename + ".Cont_refined", PP);
+   gmm::vecsave(p.datafilename + ".cont_refined", PP);
    p.mf_cont().write_to_file(p.datafilename + ".contt_meshfem", true);
-   gmm::vecsave(p.datafilename + ".Contt", Lambda);
+   gmm::vecsave(p.datafilename + ".contt", Lambda);
    
   }else{
     cout << "Saving the solution" << endl;
@@ -933,9 +933,9 @@ int main(int argc, char *argv[]) {
     getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);
     
     mf_cont.write_to_file(p.datafilename + ".cont_meshfem", true);
-    gmm::vecsave(p.datafilename + ".Cont", PP);
+    gmm::vecsave(p.datafilename + ".cont", PP);
     p.mf_cont().write_to_file(p.datafilename + ".contt_meshfem", true);
-    gmm::vecsave(p.datafilename + ".Contt", Lambda);   
+    gmm::vecsave(p.datafilename + ".contt", Lambda);   
   }
   
   
