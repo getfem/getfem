@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2009 Yves Renard
+// Copyright (C) 2009-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -399,7 +399,7 @@ namespace gmm {
       
       columns.clear();
       for (size_type i = 0; i < nc; ++i)
-	if (norms[i] >= norm_max*R(EPS)) { 
+	if (norms[i] > norm_max*R(EPS)) { 
 	  columns.insert(i);
 	  nnzs[nnz_eps(mat_col(B, i), R(EPS) * norms[i])].insert(i);
 	}
@@ -414,8 +414,6 @@ namespace gmm {
     size_type sizesm[7] = {125, 200, 350, 550, 800, 1100, 1500}, actsize;
     for (int k = 0; k < 7; ++k) {
       size_type nc_r = columns.size();
-      // cout << "begin small range basis with " << columns.size()
-      //	   << " columns, sizesm =  " << sizesm[k] <<  endl;
       std::set<size_type> c1, cres;
       actsize = sizesm[k];
       for (std::set<size_type>::iterator it = columns.begin();
@@ -438,7 +436,6 @@ namespace gmm {
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
 
-    // cout << "begin global range basis with " << columns.size() <<  endl;
     if (columns.size() > std::max(size_type(500), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
@@ -463,10 +460,10 @@ namespace gmm {
     an independent set of linear constraints.
 
     The algorithm is optimized for two cases :
-       - when the (not trivial) kernel is small. An iterativ algorithm
+       - when the (non trivial) kernel is small. An iterativ algorithm
          based on Lanczos method is applied
-       - when the (not trivial) kernel is large and most of the dependencies
-         can be detected locally. An block Gram-Schmidt is applied first then
+       - when the (non trivial) kernel is large and most of the dependencies
+         can be detected locally. A block Gram-Schmidt is applied first then
          a restarted Lanczos method when the remaining kernel is greatly
          smaller.
     The restarted Lanczos method could be improved or replaced by a block

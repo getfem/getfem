@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard, Julien Pommier.
+// Copyright (C) 2009-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -246,6 +246,12 @@ int main(int argc, char *argv[]) {
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+
+  std::set<size_type> columns;
+  sparse_matrix_type B(0,10);
+  gmm::range_basis(gmm::transposed(B), columns);
+  GMM_ASSERT1(columns.size() == 0, "Wrong behavior of range_basis !");
 
   laplacian_problem p;
   p.PARAM.read_command_line(argc, argv);
