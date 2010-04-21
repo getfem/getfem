@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2000-2008 Yves Renard
+// Copyright (C) 2000-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -163,9 +163,15 @@ namespace getfem {
 	params(AHL_.nb_params()), E(N, N), Sigma(N, N), gradU(NFem, N),
 	tt(N, N, N, N), sizes_(NFem, N, NFem, N),
 	version(version_) {
-      if (version == 1) sizes_.resize(2);
+      switch (version) {
+      case 0 : break; // tangent term
+      case 1 : sizes_.resize(2); break; // rhs
+      case 2 : sizes_.resize(1); sizes_[0] = 1; break; // strain energy
+      }
+
       mf.extend_vector(U_, U);
-      if (gmm::vect_size(PARAMS) == AHL_.nb_params()) gmm::copy(PARAMS, params);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
     }
     const bgeot::multi_index &sizes() const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
@@ -177,10 +183,16 @@ namespace getfem {
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       gmm::mult(gmm::transposed(gradU), gradU, E);
       gmm::add(gmm::sub_matrix(gradU, gmm::sub_interval(0,N),
-			       gmm::sub_interval(0,N)),E);
-      gmm::add(gmm::sub_matrix(gmm::transposed(gradU),
-			       gmm::sub_interval(0,N),gmm::sub_interval(0,N)),E);
+			       gmm::sub_interval(0,N)), E);
+      gmm::add(gmm::sub_matrix(gmm::transposed(gradU), gmm::sub_interval(0,N),
+			       gmm::sub_interval(0,N)), E);
       gmm::scale(E, scalar_type(0.5));
+
+      if (version == 2) {
+	t[0] = AHL.strain_energy(E, params);
+	return;
+      }
+
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)+= scalar_type(1);
 
@@ -293,6 +305,45 @@ namespace getfem {
   int levi_civita(int i,int j,int k);
 
 
+  /**@ingroup asm
+   */
+  template<typename VECT2, typename VECT3> 
+  scalar_type asm_elastic_strain_energy
+  (const mesh_im &mim, const getfem::mesh_fem &mf,
+   const VECT2 &U, const getfem::mesh_fem *mf_data, const VECT3 &PARAMS,
+   const abstract_hyperelastic_law &AHL,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+ 
+    GMM_ASSERT1(mf.get_qdim() >= mf.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_term<VECT2, VECT3>
+      nterm(mf, U, mf_data, PARAMS, AHL, 2);
+    std::vector<scalar_type> V(1);
+
+    getfem::generic_assembly assem;
+    if (mf_data)
+      assem.set("V() += comp(NonLin(#1,#2))");
+    else
+      assem.set("V() += comp(NonLin(#1))");
+    
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    if (mf_data) assem.push_mf(*mf_data);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(V);
+    assem.assembly(rg);
+
+    return V[0];
+  }
+
+
+
+
+
+
+
+
 
   /* ******************************************************************** */
   /*		Mixed nonlinear incompressibility assembly procedure      */
@@ -393,12 +444,11 @@ namespace getfem {
   /**@ingroup asm
    */
   template<typename VECT1, typename VECT2, typename VECT3> 
-  void asm_nonlinear_incomp_rhs(const VECT1 &R_U_, const VECT1 &R_P_, 
-				const mesh_im &mim,
-				const getfem::mesh_fem &mf_u,
-				const getfem::mesh_fem &mf_p,
-				const VECT2 &U, const VECT3 &P,
-				const mesh_region &rg = mesh_region::all_convexes()) {
+  void asm_nonlinear_incomp_rhs
+  (const VECT1 &R_U_, const VECT1 &R_P_, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, const getfem::mesh_fem &mf_p,
+   const VECT2 &U, const VECT3 &P,
+   const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R_U = const_cast<VECT1 &>(R_U_);
     VECT1 &R_P = const_cast<VECT1 &>(R_P_);
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
@@ -424,7 +474,6 @@ namespace getfem {
     assem.push_data(P);
     assem.assembly(rg);
   }
-
 
 
 
@@ -480,9 +529,18 @@ namespace getfem {
 
 
 
+
+
+
+
+
+
+
+
+
   //===========================================================================
   //
-  //  Bricks for the old brick system
+  //  Bricks for the old brick system (DEPRECATED)
   //
   //===========================================================================
 

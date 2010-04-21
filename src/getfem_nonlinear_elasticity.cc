@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2000-2008 Yves Renard
+// Copyright (C) 2000-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -332,6 +332,33 @@ namespace getfem {
 
     }
 
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &dl,
+						  const model::mimlist &mims,
+						  model::real_matlist &,
+						  model::real_veclist &,
+						  model::real_veclist &,
+						  size_type region) const {
+
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+
+      const mesh_fem *mf_params = md.pmesh_fem_of_variable(dl[0]);
+      const model_real_plain_vector &params = md.real_variable(dl[0]);
+      const mesh_im &mim = *mims[0];
+
+      size_type sl = gmm::vect_size(params);
+      if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
+      GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for "
+		  "the nonlinear constitutive elastic law");
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      return asm_elastic_strain_energy(mim,mf_u,u,mf_params,params,AHL,rg);
+    }
+
     nonlinear_elasticity_brick(const abstract_hyperelastic_law &AHL_)
       : AHL(AHL_) {
       set_flags("Nonlinear elasticity brick", false /* is linear*/,
@@ -491,9 +518,9 @@ namespace getfem {
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
-      GMM_TRACE2("Stokes term assembly");
-      gmm::clear(matl[0]);
-      asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
+//       GMM_TRACE2("Stokes term assembly");
+//       gmm::clear(matl[0]);
+//       asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
 
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
@@ -508,6 +535,30 @@ namespace getfem {
 	gmm::scale(vecl[1], scalar_type(-1));
       }
 
+    }
+
+
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &mims,
+						  model::real_matlist &,
+						  model::real_veclist &,
+						  model::real_veclist &,
+						  size_type region) const {
+      // Corresponds to (1-det(grad(phi))^2 (squared residual with respect
+      // to the pressure).
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const model_real_plain_vector &p = md.real_variable(vl[1]);
+      const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      std::vector<scalar_type> R_U(mf_u.nb_dof()), R_P(mf_p.nb_dof());
+      asm_nonlinear_incomp_rhs(R_U, R_P, mim, mf_u, mf_p, u, p, rg);
+      return gmm::vect_norm2_sqr(R_P)*scalar_type(1e20); // FIXME : is it ok ?
     }
 
     nonlinear_incompressibility_brick(void) {

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2009 Yves Renard
+// Copyright (C) 2009-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -802,28 +802,53 @@ namespace getfem {
     if (is_complex()) {
       if (version & BUILD_MATRIX) gmm::clear(cTM);
       if (version & BUILD_RHS) gmm::clear(crhs);
+      if (version & BUILD_PSEUDO_POTENTIAL) pseudo_potential_ = scalar_type(0);
     }
     else {
       if (version & BUILD_MATRIX) gmm::clear(rTM);
       if (version & BUILD_RHS) gmm::clear(rrhs);
+      if (version & BUILD_PSEUDO_POTENTIAL) pseudo_potential_ = scalar_type(0);
     }
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
-      brick_description &brick = bricks[ib];
 
+      brick_description &brick = bricks[ib];
       update_brick(ib, version);
 
       bool cplx = is_complex() && brick.pbr->is_complex();
       
+      scalar_type coeff0 = scalar_type(1);
+      if (brick.pdispatch) coeff0 = brick.matrix_coeff;
+
+      if (version & BUILD_PSEUDO_POTENTIAL) {
+
+	scalar_type pseudop = scalar_type(0);
+	if (cplx)
+	  pseudop = brick.pbr->asm_complex_pseudo_potential
+	    (*this, ib, brick.vlist, brick.dlist, brick.mims, brick.cmatlist,
+	     brick.cveclist[0], brick.cveclist_sym[0], brick.region);
+	else
+	  pseudop = brick.pbr->asm_real_pseudo_potential
+	    (*this, ib, brick.vlist, brick.dlist, brick.mims, brick.rmatlist,
+	     brick.rveclist[0], brick.rveclist_sym[0], brick.region);
+	
+	pseudo_potential_ += pseudop * coeff0;
+
+	GMM_ASSERT1(!(brick.pdispatch),
+		    "Pseudo potential not supported by brick dispatcher, sorry");
+
+      }
+
       // Assembly of terms
+      
       for (size_type j = 0; j < brick.tlist.size(); ++j) {
 	term_description &term = brick.tlist[j];
 	gmm::sub_interval I1 = variables[term.var1].I;
 	gmm::sub_interval I2(0,0);
 	if (term.is_matrix_term) I2 = variables[term.var2].I;
 
-	scalar_type coeff0 = scalar_type(1);
-	if (brick.pdispatch) coeff0 = brick.matrix_coeff;
+	
+	
 
 	if (cplx) {
 	  if (term.is_matrix_term && (version & BUILD_MATRIX)) {
@@ -1134,6 +1159,31 @@ namespace getfem {
 		    "Bad format generic elliptic brick coefficient");
     }
 
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::real_matlist &matl,
+						  model::real_veclist &,
+						  model::real_veclist &,
+						  size_type) const {
+      const model_real_plain_vector &U = md.real_variable(vl[0]);
+      return gmm::vect_sp(matl[0], U, U) / scalar_type(2);
+    }
+
+    virtual scalar_type asm_complex_tangent_terms(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::complex_matlist &matl,
+						  model::complex_veclist &,
+						  model::complex_veclist &,
+						  size_type) const {
+      const model_complex_plain_vector &U = md.complex_variable(vl[0]);
+      return gmm::abs(gmm::vect_hp(matl[0], U, U)) / scalar_type(2);
+    }
+
+
     virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
@@ -1295,6 +1345,18 @@ namespace getfem {
 
     }
 
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::real_matlist &,
+						  model::real_veclist &vecl,
+						  model::real_veclist &,
+						  size_type) const {
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      return -gmm::vect_sp(vecl[0], u);
+    }
+
     virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
@@ -1332,6 +1394,19 @@ namespace getfem {
       if (dl.size() > 1) gmm::add(md.complex_variable(dl[1]), vecl[0]);
 
     }
+
+    virtual scalar_type asm_complex_pseudo_potential(const model &md,size_type,
+						 const model::varnamelist &vl,
+						 const model::varnamelist &,
+						 const model::mimlist &,
+						 model::complex_matlist &,
+						 model::complex_veclist &vecl,
+						 model::complex_veclist &,
+						 size_type) const {
+      const model_complex_plain_vector &u = md.complex_variable(vl[0]);
+      return -gmm::real(gmm::vect_hp(vecl[0], u)); /* ? */
+    }
+
 
     source_term_brick(void) {
       set_flags("Source term", true /* is linear*/,
@@ -2395,6 +2470,19 @@ namespace getfem {
       }
     }
 
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::real_matlist &matl,
+						  model::real_veclist &,
+						  model::real_veclist &,
+						  size_type) const {
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      return gmm::vect_sp(matl[0], u, u) / scalar_type(2);
+    }
+
+
     iso_lin_elasticity_brick(void) {
       set_flags("isotropic linearized elasticity", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
@@ -2599,6 +2687,18 @@ namespace getfem {
       }
     }
 
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::real_matlist &matl,
+						  model::real_veclist &,
+						  model::real_veclist &,
+						  size_type) const {
+      const model_real_plain_vector &U = md.real_variable(vl[0]);
+      return gmm::vect_sp(matl[0], U, U) / scalar_type(2);
+    }
+
     virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
@@ -2641,6 +2741,19 @@ namespace getfem {
 	if (dl.size()) gmm::scale(matl[0], (*rho)[0]);
       }
     }
+
+    virtual scalar_type asm_complex_pseudo_potential(const model &md,size_type,
+						  const model::varnamelist &vl,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::complex_matlist &matl,
+						  model::complex_veclist &,
+						  model::complex_veclist &,
+						  size_type) const {
+      const model_complex_plain_vector &U = md.complex_variable(vl[0]);
+      return gmm::real(gmm::vect_hp(matl[0], U, U) / scalar_type(2));
+    }
+
 
     mass_brick(void) {
       set_flags("Mass brick", true /* is linear*/,

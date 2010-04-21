@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2009 Yves Renard
+// Copyright (C) 2009-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -106,6 +106,7 @@ namespace getfem {
     mutable model_complex_sparse_matrix cTM; // tangent matrix, complex version
     mutable model_real_plain_vector rrhs;
     mutable model_complex_plain_vector crhs;
+    mutable scalar_type pseudo_potential_;
     mutable bool act_size_to_be_done;
     dim_type leading_dim;
 
@@ -216,10 +217,11 @@ namespace getfem {
 			 BUILD_ALL = 3,
 			 BUILD_ON_DATA_CHANGE = 4,
                          BUILD_WITH_COMPLETE_RHS = 8,
-                         BUILD_COMPLETE_RHS = 9 };
+                         BUILD_COMPLETE_RHS = 9,
+			 BUILD_PSEUDO_POTENTIAL = 16
+                       };
 
   private :
-
 
     // rmatlist and cmatlist could be csc_matrix vectors to reduced the
     // amount of memory (but this should add a supplementary copy).
@@ -236,16 +238,18 @@ namespace getfem {
       size_type region;         // Optional region size_type(-1) for all.
       mutable model_real_plain_vector coeffs;
       mutable scalar_type matrix_coeff;
-      mutable real_matlist rmatlist; // Matrices the brick have to fill in
-                                     // (real version).
+      mutable real_matlist rmatlist;    // Matrices the brick have to fill in
+                                        // (real version).
       mutable std::vector<real_veclist> rveclist; // Rhs the brick have to 
-                                                  // fill in (real version).
-      mutable std::vector<real_veclist> rveclist_sym; // additional rhs for symmetric terms (real version).
+                                        // fill in (real version).
+      mutable std::vector<real_veclist> rveclist_sym; // additional rhs for
+                                        //  symmetric terms (real version).
       mutable complex_matlist cmatlist; // Matrices the brick have to fill in
-      // (complex version).
+                                        // (complex version).
       mutable std::vector<complex_veclist> cveclist; // Rhs the brick have to
-                                              // fill in (complex version).
-      mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs for symmetric terms (real version).
+                                        // fill in (complex version).
+      mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs
+                                        // for symmetric terms (real version).
       
       brick_description(pbrick p, const varnamelist &vl,
 			const varnamelist &dl, const termlist &tl,
@@ -527,6 +531,12 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return rrhs;
     }
+
+    /** Gives the access to the pseudo potential. It has to be computed first
+	by the call of assembly(model::BUILD_PSEUDO_POTENTIAL); */
+    scalar_type pseudo_potential(void) const {
+      return pseudo_potential_;
+    }
     
     /** Gives the access to the right hand side of the tangent linear system.
 	For the complex version. */
@@ -792,6 +802,34 @@ namespace getfem {
 					   model::complex_veclist &,
 					   size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
+
+
+    virtual scalar_type asm_real_pseudo_potential(const model &, size_type,
+						  const model::varnamelist &,
+						  const model::varnamelist &,
+						  const model::mimlist &,
+						  model::real_matlist &,
+						  model::real_veclist &,
+						  model::real_veclist &,
+						  size_type) const {
+      GMM_WARNING1("Brick " << name << " has no contribution to the "
+		   << "pseudo potential !");
+      return scalar_type(0);
+    }
+    
+    virtual scalar_type asm_complex_pseudo_potential(const model &, size_type,
+						     const model::varnamelist&,
+						     const model::varnamelist&,
+						     const model::mimlist &,
+						     model::complex_matlist &,
+						     model::complex_veclist &,
+						     model::complex_veclist &,
+						     size_type) const { 
+      GMM_WARNING1("Brick " << name << " has no contribution to the "
+		   << "pseudo potential !");
+      return scalar_type(0);
+    }
+    
     
   };
 

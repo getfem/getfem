@@ -243,14 +243,21 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        select explicitely the solver used for the linear systems (the
        default value is 'auto', which lets getfem choose itself).
        Possible values are 'superlu', 'mumps' (if supported),
-       'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.@*/
+       'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
+    - 'with pseudo potential'
+      for nonlinear problems, the criterion of the line search will
+      be a pseudo potential instead of the residual. Still experimental since
+      not all bricks define a pseudo potential. @*/
     sub_command
       ("solve", 0, 7, 0, 0,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
+       bool with_pseudo_pot = false;
        while (in.remaining() && in.front().is_string()) {
 	 std::string opt = in.pop().to_string();
 	 if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
+	 else if (cmd_strmatch(opt, "with pseudo potential"))
+	   with_pseudo_pot = true;
 	 else if (cmd_strmatch(opt, "very noisy") ||
 		  cmd_strmatch(opt, "very_noisy")) iter.set_noisy(2);
 	 else if (cmd_strmatch(opt, "max_iter")) {
@@ -270,11 +277,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (!md->model().is_complex()) {
 	 getfem::standard_solve(md->model(), iter,
 				getfem::rselect_linear_solver(md->model(),
-							      lsolver), ls);
+							      lsolver),
+				ls, with_pseudo_pot);
        } else {
 	 getfem::standard_solve(md->model(), iter,
 				getfem::cselect_linear_solver(md->model(),
-							      lsolver), ls);
+							      lsolver),
+				ls, with_pseudo_pot);
        }
        );
 

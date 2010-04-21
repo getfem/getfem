@@ -1,6 +1,6 @@
 % Matlab GetFEM++ interface
 %
-% Copyright (C) 2009 Yves Renard.
+% Copyright (C) 2009-2010 Yves Renard.
 %
 % This file is a part of GetFEM++
 %
@@ -156,7 +156,7 @@ end
 
 % Solve the problem
 
-gf_model_get(md, 'solve', 'max_res', 1E-7, 'very noisy', 'max_iter', 100);
+gf_model_get(md, 'solve', 'max_res', 1E-7, 'very noisy', 'max_iter', 100); % , 'with pseudo potential');
 
 
 U = gf_model_get(md, 'variable', 'u');

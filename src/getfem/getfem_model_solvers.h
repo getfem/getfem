@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Yves Renard
+// Copyright (C) 2004-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -333,19 +333,24 @@ namespace getfem {
   */
   void standard_solve(model &md, gmm::iteration &iter,
 		      rmodel_plsolver_type lsolver,
-		      gmm::abstract_newton_line_search &ls);
+		      gmm::abstract_newton_line_search &ls,
+		      bool with_pseudo_potential = false);
 
   void standard_solve(model &md, gmm::iteration &iter,
 		      cmodel_plsolver_type lsolver,
-		      gmm::abstract_newton_line_search &ls);
+		      gmm::abstract_newton_line_search &ls,
+		      bool with_pseudo_potential = false);
   
   void standard_solve(model &md, gmm::iteration &iter,
-		      rmodel_plsolver_type lsolver);
+		      rmodel_plsolver_type lsolver,
+		      bool with_pseudo_potential = false);
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      cmodel_plsolver_type lsolver);
+		      cmodel_plsolver_type lsolver,
+		      bool with_pseudo_potential = false);
 
-  void standard_solve(model &md, gmm::iteration &iter);
+  void standard_solve(model &md, gmm::iteration &iter,
+		      bool with_pseudo_potential = false);
 
 
 }
