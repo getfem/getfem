@@ -205,12 +205,12 @@ model.add_source_term_brick(mim_1, 'u_1', 'neumann_1', RG_NEUMANN_1)
 model.add_mass_brick(mim_1, 'u_1')
 
 model.add_initialized_data( 'r', Mu * (3*Lambda + 2*Mu) / (Lambda + Mu) )
-model.add_unilateral_contact_brick(mim_1, mim_p1, 'u_1', 'u_p1', 'lambda_1_p1_n', 'r', RG_CONTACT_1_p1, RG_CONTACT_p1_1)
-model.add_unilateral_contact_brick(mim_p1, mim_2, 'u_p1', 'u_2', 'lambda_p1_2_n', 'r', RG_CONTACT_p1_2, RG_CONTACT_2_p1)
-model.add_unilateral_contact_brick(mim_1, mim_p2, 'u_1', 'u_p2', 'lambda_1_p2_n', 'r', RG_CONTACT_1_p2, RG_CONTACT_p2_1)
-model.add_unilateral_contact_brick(mim_p2, mim_2, 'u_p2', 'u_2', 'lambda_p2_2_n', 'r', RG_CONTACT_p2_2, RG_CONTACT_2_p2)
-model.add_unilateral_contact_brick(mim_1, mim_p3, 'u_1', 'u_p3', 'lambda_1_p3_n', 'r', RG_CONTACT_1_p3, RG_CONTACT_p3_1)
-model.add_unilateral_contact_brick(mim_p3, mim_2, 'u_p3', 'u_2', 'lambda_p3_2_n', 'r', RG_CONTACT_p3_2, RG_CONTACT_2_p3)
+model.add_nonmatching_meshes_contact_brick(mim_1, mim_p1, 'u_1', 'u_p1', 'lambda_1_p1_n', 'r', RG_CONTACT_1_p1, RG_CONTACT_p1_1)
+model.add_nonmatching_meshes_contact_brick(mim_p1, mim_2, 'u_p1', 'u_2', 'lambda_p1_2_n', 'r', RG_CONTACT_p1_2, RG_CONTACT_2_p1)
+model.add_nonmatching_meshes_contact_brick(mim_1, mim_p2, 'u_1', 'u_p2', 'lambda_1_p2_n', 'r', RG_CONTACT_1_p2, RG_CONTACT_p2_1)
+model.add_nonmatching_meshes_contact_brick(mim_p2, mim_2, 'u_p2', 'u_2', 'lambda_p2_2_n', 'r', RG_CONTACT_p2_2, RG_CONTACT_2_p2)
+model.add_nonmatching_meshes_contact_brick(mim_1, mim_p3, 'u_1', 'u_p3', 'lambda_1_p3_n', 'r', RG_CONTACT_1_p3, RG_CONTACT_p3_1)
+model.add_nonmatching_meshes_contact_brick(mim_p3, mim_2, 'u_p3', 'u_2', 'lambda_p3_2_n', 'r', RG_CONTACT_p3_2, RG_CONTACT_2_p3)
 
 nbc = size(mfu_p1.basic_dof_on_region(RG_CONTACT_p1)) / qdim
 model.add_variable('lambda_p1', nbc)
@@ -243,22 +243,17 @@ VM_p2 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p2', 'lambda',
 U_p3 = model.variable('u_p3')
 VM_p3 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p3', 'lambda', 'mu', mfrhs_p3)
 
-sl_1 = Slice(('none',), mfu_1, degree)
-sl_1.export_to_vtk('static_contact_planetary_1.vtk', 'ascii',
-                   mfrhs_1,  VM_1, 'Von Mises Stress', mfu_1, U_1, 'Displacement')
+mfu_1.export_to_vtk('static_contact_planetary_1.vtk', 'ascii',
+                    mfrhs_1,  VM_1, 'Von Mises Stress', mfu_1, U_1, 'Displacement')
 
-sl_2 = Slice(('none',), mfu_2, degree)
-sl_2.export_to_vtk('static_contact_planetary_2.vtk', 'ascii',
-                   mfrhs_2,  VM_2, 'Von Mises Stress', mfu_2, U_2, 'Displacement')
+mfu_2.export_to_vtk('static_contact_planetary_2.vtk', 'ascii',
+                    mfrhs_2,  VM_2, 'Von Mises Stress', mfu_2, U_2, 'Displacement')
 
-sl_p1 = Slice(('none',), mfu_p1, degree)
-sl_p1.export_to_vtk('static_contact_planetary_p1.vtk', 'ascii',
-                    mfrhs_p1,  VM_p1, 'Von Mises Stress', mfu_p1, U_p1, 'Displacement')
+mfu_p1.export_to_vtk('static_contact_planetary_p1.vtk', 'ascii',
+                     mfrhs_p1,  VM_p1, 'Von Mises Stress', mfu_p1, U_p1, 'Displacement')
 
-sl_p2 = Slice(('none',), mfu_p2, degree)
-sl_p2.export_to_vtk('static_contact_planetary_p2.vtk', 'ascii',
-                    mfrhs_p2,  VM_p2, 'Von Mises Stress', mfu_p2, U_p2, 'Displacement')
+mfu_p2.export_to_vtk('static_contact_planetary_p2.vtk', 'ascii',
+                     mfrhs_p2,  VM_p2, 'Von Mises Stress', mfu_p2, U_p2, 'Displacement')
 
-sl_p3 = Slice(('none',), mfu_p3, degree)
-sl_p3.export_to_vtk('static_contact_planetary_p3.vtk', 'ascii',
-                    mfrhs_p3,  VM_p3, 'Von Mises Stress', mfu_p3, U_p3, 'Displacement')
+mfu_p3.export_to_vtk('static_contact_planetary_p3.vtk', 'ascii',
+                     mfrhs_p3,  VM_p3, 'Von Mises Stress', mfu_p3, U_p3, 'Displacement')
