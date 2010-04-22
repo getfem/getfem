@@ -1445,7 +1445,6 @@ namespace getfem {
           for (size_type j = 0; j < Pmin.size(); ++j)
             l = std::max(l, gmm::abs(Pmax[j] - Pmin[j]));
         }
-        CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
         gmm::resize(alpha, nbc);
         size_type mult_id = 0;
         for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
@@ -1454,6 +1453,7 @@ namespace getfem {
               size_type rg = swap ? rg2[it] : rg1[it];
               const mesh_fem &mf_u = swap ? mf_u2 : mf_u1;
               const mesh_im &mim = swap ? mim2 : mim1;
+              CONTACT_B_MATRIX MM(mf_u.nb_dof(), mf_u.nb_dof());
               asm_mass_matrix(MM, mim, mf_u, rg);
               size_type qdim = mf_u.get_qdim();
               dal::bit_vector rg_dofs = mf_u.basic_dof_on_region(rg);
