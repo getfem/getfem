@@ -213,3 +213,42 @@ operates.
      script, and exit.
 
 `configure' also accepts some other, not widely useful, options.
+
+
+
+
+
+
+Compiling getfem++ on Mac OS X
+==============================
+
+It needs a prior installation of gcc and g++. You can check whether you have these by issuing the following commands in a Terminal window:
+which gcc
+which g++
+
+In principle, if they are present on your machine, you will get
+/usr/bin/gcc
+/usr/bin/g++
+
+If this is not the case you have to install these via Xcode:
+http://developer.apple.com/technologies/xcode.html
+
+Once you are sure that gcc and g++ are present, you need gmm++: see the site
+http://download.gna.org/getfem/html/homepage/gmm.html
+However in order to install gmm++ on your machine, once the corresponding directory has been created by unzipping the source files, you have to go to that unzipped directory and then issue the command ./configure with the following options:
+./configure CC="gcc -arch i386" CXX="g++ -arch i386" CPP="gcc -E" CXXCPP="g++ -E"
+
+ Here we are assuming that you are on an Intel i386 machine: for ppc machines change the
+-arch i386
+option to
+-arch ppc
+
+After this, in order to compile getfem++ you need a current version where in the source files "uint" has ben changed to "unsigned int" (in principle this is done in the most recent stable version). For instance you can download such a version at
+http://math.univ-lyon1.fr/~renard/temp/getfem-4.0.tar.gz
+
+Then you have to to go to that unzipped directory and say in your Terminal window (for architectures other than Intel i386 see above):
+./configure CC="gcc -arch i386" CXX="g++ -arch i386" CPP="gcc -E" CXXCPP="g++ -E"
+
+Once this step is done without getting an error message, then you issue successively the commands
+make
+make install
