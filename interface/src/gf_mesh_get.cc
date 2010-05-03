@@ -822,7 +822,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET A = ('convex area'[, @ivec CVIDs])
-    Return an estimation of the area of each convex.@*/
+    Return an estimate of the area of each convex.@*/
     sub_command
       ("convex area", 0, 1, 0, 1,
        dal::bit_vector bv;
@@ -832,6 +832,19 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        size_type cnt = 0;
        for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
 	 w[cnt] = pmesh->convex_area_estimate(cv);
+       );
+
+    /*@GET A = ('convex radius'[, @ivec CVIDs])
+    Return an estimate of the radius of each convex.@*/
+    sub_command
+      ("convex area", 0, 1, 0, 1,
+       dal::bit_vector bv;
+       if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
+       else bv = pmesh->convex_index();
+       darray w = out.pop().create_darray_h(unsigned(bv.card()));
+       size_type cnt = 0;
+       for (dal::bv_visitor cv(bv); !cv.finished(); ++cv, ++cnt)
+	 w[cnt] = pmesh->convex_radius_estimate(cv);
        );
 
 
