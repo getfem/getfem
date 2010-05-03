@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2009 Yves Renard
+// Copyright (C) 2001-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -455,7 +455,7 @@ namespace getfem {
       if (dof_untouched)
 	*dof_untouched = dof_done;
       else
-	GMM_WARNING2("WARNING : in interpolation (different meshes),"
+	GMM_WARNING2("in interpolation (different meshes),"
 		     << dof_done.card() << " dof of target mesh_fem have "
 		     << " been missed\nmissing dofs : " << dof_done);
     }
