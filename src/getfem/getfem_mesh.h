@@ -391,6 +391,8 @@ namespace getfem {
     scalar_type convex_radius_estimate(size_type ic) const;
     /** Return an estimate of the convex smallest dimension. @see getfem::convex_radius_estimate */
     scalar_type minimal_convex_radius_estimate() const;
+    /** Return an estimate of the convex largest dimension. @see getfem::convex_radius_estimate */
+    scalar_type maximal_convex_radius_estimate() const;
     /** Apply the given translation to each mesh node. */
     void translation(const base_small_vector &);
     /** apply the given matrix transformation to each mesh node. */

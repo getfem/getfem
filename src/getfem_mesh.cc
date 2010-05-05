@@ -363,6 +363,15 @@ namespace getfem {
     }
     return r;
   }
+  
+  scalar_type mesh::maximal_convex_radius_estimate() const {
+    if (convex_index().empty()) return 1;
+    scalar_type r = convex_radius_estimate(convex_index().first_true());
+    for (dal::bv_visitor cv(convex_index()); !cv.finished(); ++cv) {
+      r = std::max(r, convex_radius_estimate(cv));
+    }
+    return r;
+  }
 
   void mesh::copy_from(const mesh& m) {
     clear();
