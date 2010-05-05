@@ -123,7 +123,7 @@ gf_spmat_get_data(gmm::csc_matrix_ref<const T*, const unsigned int *, const unsi
     }
   } else {
     garray<T> w = out.pop().create_array_h(unsigned(nz), T());
-    for (unsigned i=0; i < M.nc+1; ++i) { w[i] = M.pr[i]; }
+    for (unsigned i=0; i < unsigned(nz); ++i) { w[i] = M.pr[i]; }
   }
 }
 
