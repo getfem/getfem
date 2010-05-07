@@ -1445,7 +1445,7 @@ namespace getfem {
           for (size_type j = 0; j < Pmin.size(); ++j)
             l = std::max(l, gmm::abs(Pmax[j] - Pmin[j]));
         }
-        CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
+        
         gmm::resize(alpha, nbc);
         size_type mult_id = 0;
         for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
@@ -1454,6 +1454,7 @@ namespace getfem {
               size_type rg = swap ? rg2[it] : rg1[it];
               const mesh_fem &mf_u = swap ? mf_u2 : mf_u1;
               const mesh_im &mim = swap ? mim2 : mim1;
+	      CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
               asm_mass_matrix(MM, mim, mf_u, rg);
               size_type qdim = mf_u.get_qdim();
               dal::bit_vector rg_dofs = mf_u.basic_dof_on_region(rg);
@@ -1484,7 +1485,7 @@ namespace getfem {
   //  elastic bodies.
   //=========================================================================
 
-  size_type add_unilateral_contact_brick
+  size_type add_nonmatching_meshes_contact_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
@@ -1513,7 +1514,10 @@ namespace getfem {
 
     if (multname_n.size() == 0)
       multname_n = md.new_name("contact_multiplier");
-    // FIXME: Assert multname_n is not defined already in md
+    else 	     
+       GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0, 	 
+                   "The given name for the multiplier is alraedy reserved in the model");
+		   
     md.add_fixed_size_variable(multname_n, nbc);
 
     model::termlist tl;
@@ -1552,7 +1556,7 @@ namespace getfem {
   //  elastic bodies.
   //=========================================================================
 
-  size_type add_unilateral_contact_with_friction_brick
+  size_type add_nonmatching_meshes_contact_with_friction_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, std::string &multname_t,
@@ -1582,11 +1586,15 @@ namespace getfem {
 
     if (multname_n.size() == 0)
       multname_n = md.new_name("contact_normal_multiplier");
-    // FIXME: Assert multname_n is not defined already in md
+    else
+      GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0, 	 
+                   "The given name for the multiplier is alraedy reserved in the model");
     md.add_fixed_size_variable(multname_n, nbc);
     if (multname_t.size() == 0)
       multname_t = md.new_name("contact_tangent_multiplier");
-    // FIXME: Assert multname_t is not defined already in md
+    else
+      GMM_ASSERT1(multname_t.compare(md.new_name(multname_t)) == 0, 	 
+                   "The given name for the multiplier is alraedy reserved in the model");
     md.add_fixed_size_variable(multname_t, nbc * (mf_u1.get_qdim() - 1) ); // ??
 
     model::termlist tl;
