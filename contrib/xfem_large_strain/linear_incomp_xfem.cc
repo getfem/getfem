@@ -667,7 +667,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   
   //down side
   for(size_type i = 1; i < F.size(); i=i+N) F[i] = 1;
-  for(size_type i = 0; i < F.size(); i=i+2) F[i] = 1;
+  for(size_type i = 0; i < F.size(); i=i+N) F[i] = 1;
   
   getfem::mdbrick_source_term<> NEUMANN1(*pINCOMP, mf_rhs, F,
 					 NEUMANN1_BOUNDARY_NUM);

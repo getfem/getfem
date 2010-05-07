@@ -7,13 +7,13 @@ NX=40;
 ls_degree = 2;
 
 
-m=gfMesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
+m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
 %m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
-ls=gfLevelSet(m, ls_degree);
-ls2=gfLevelSet(m, ls_degree, 'with_secondary');
+ls=gf_levelset(m, ls_degree);
+ls2=gf_LevelSet(m, ls_degree, 'with_secondary');
 
-mf_ls=gfObject(get(ls, 'mf'));
-mf_ls2=gfObject(get(ls2, 'mf'));
+mf_ls=gfObject(gf_levelset_get(ls, 'mf'));
+mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));
 
 P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);

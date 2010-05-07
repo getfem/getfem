@@ -13,7 +13,7 @@ P3 = 200E6;   	        % Third elastic coefficient.
 MU = 5;
 LAMBDA = 11500;   	% Lamé coefficient.
 
-LAW = 3;     % 0 : SaintVenant-Kirchhoff
+LAW = 2;     % 0 : SaintVenant-Kirchhoff
              % 1 : SaintVenant-Kirchhoff+incompressibility
              % 2 : Ciarlet-Geymonat
              % 3 : Mooney-Rivlin (+incompressibility)

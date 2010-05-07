@@ -241,7 +241,7 @@ struct unilateral_contact_problem {
   
   scalar_type mu, lambda;    /* Lame coeff                   */
   
-  int dgr ;          /* Order of enrichement for u */
+  int dgr, strmesh ;          /* Order of enrichement for u */
   
   
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
@@ -323,7 +323,7 @@ std::string name_of_dof(getfem::pdof_description dof) {
 /*Initialisation of unilateral contact problem                                                      */
 /****************************************************************************************************/
 void  unilateral_contact_problem::init(void) {
-  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string FEM_TYPE_CONT  = PARAM.string_value("FEM_TYPE_cont","FEM name mult contact viriable");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
@@ -350,21 +350,29 @@ void  unilateral_contact_problem::init(void) {
   
  
   /* First step : build the mesh */
+ strmesh=PARAM.int_value("strmesh", "Structured mesh or not");
+  
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
+  if (strmesh) {
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Nomber of space steps "));
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
   base_small_vector tt(N); tt[1] = -0.5;
   mesh.translation(tt); 
-  
+  cout<<"Creting mesh done"<<endl;     
+
   cracktip.resize(2); // Cordinate of cracktip
   cracktip[0] = 0.5;
   cracktip[1] = 0.;
-  
+  }else{
+  std::string MESH_FILE = PARAM.string_value("MESH_FILE","Mesh file");
+  mesh.read_from_file(MESH_FILE);
+  cout<<"Import non-conforming mesh"<<":"<<MESH_FILE <<endl;     
+  }
   scalar_type refinement_radius;
   refinement_radius
     = PARAM.real_value("REFINEMENT_RADIUS", "Refinement Radius");
@@ -391,8 +399,8 @@ void  unilateral_contact_problem::init(void) {
   }
   
   mesh.write_to_file("toto.mesh");
-  
-  h = mesh.minimal_convex_radius_estimate();
+
+  h = mesh.maximal_convex_radius_estimate();
   cout << "h = " << h << endl;
   
   cont_gamma0 = PARAM.real_value("CONTACT_GAMMA0",
@@ -675,6 +683,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   getfem::CONTACT_B_MATRIX CA(nb_dof_cont, nb_dof);
   // Assembling stabilized mixed term for contact problem
+//cont_gamma0=cont_gamma/h;
   if (stabilized_problem) {
     cout<< "Assembling stabilized mixed term for contact problem"<<endl;
     asm_stabilization_mixed_term(CA, mimbound, mf_u(), mf_cont(), ls, lambda, mu);
@@ -712,9 +721,9 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   model.add_initialized_scalar_data("mu", mu);
   getfem::add_isotropic_linearized_elasticity_brick
     (model, mim, "u", "lambda", "mu");
-  // model.add_initialized_scalar_data("augmentation_parameter", R);
-   model.add_initialized_scalar_data
-     ("augmentation_parameter", mu * (3*lambda + 2*mu) / (h*(lambda + mu)) );  // r ~= Young modulus
+   model.add_initialized_scalar_data("augmentation_parameter", 1/h);
+   // model.add_initialized_scalar_data
+   //("augmentation_parameter", mu * (3*lambda + 2*mu) / (h*(lambda + mu)) );  // r ~= Young modulus
   
   
   
@@ -740,9 +749,11 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   for(size_type i = 0; i < F.size(); i=i+N*N) {
     base_node pt = mf_rhs.point_of_basic_dof(i / (N*N));
-    scalar_type coeff = pt[1] > 0. ? -1 : 1;
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.02;}
 
+    // scalar_type coeff = pt[1] > 0. ? -1 : 1;
+    // for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
+    
   }
 
   cout <<"Applied  Neumann condition"<< endl;
@@ -761,7 +772,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   std::vector<scalar_type> FFF(mf_rhs.nb_dof()*N, 0.0);
   for(size_type i = 0; i < FFF.size(); i+=N){ 
     base_node pt = mf_rhs.point_of_basic_dof(i/N);
-    FFF[i+1]=0.5*cos(pt[0]*2.*M_PI) * (pt[1] > 0 ? -0.1 : 1.);
+    FFF[i+1]=3.5*cos(pt[0]*2.*M_PI) * pt[1]*pt[0]*(1-pt[0]) ;
   }
   model.add_initialized_fem_data("VolumicForce", mf_rhs, FFF);
   getfem::add_source_term_brick(model, mim, "u",  "VolumicForce");
@@ -891,7 +902,7 @@ int main(int argc, char *argv[]) {
   if (p.reference_test) {
     cout << "Saving the reference desplacement" << endl;
     getfem::mesh_fem mf(mcut_refined, dim_type(Q));
-    mf.set_classical_discontinuous_finite_element(2, 1E-7);
+    mf.set_classical_discontinuous_finite_element(2, 1E-5);
     plain_vector V(mf.nb_dof());
     getfem::interpolation(p.mf_u(), mf, U, V);
     
@@ -902,7 +913,7 @@ int main(int argc, char *argv[]) {
    cout << "Saving the reference contact multiplier" << endl;
    
    getfem::mesh_fem mf_cont(mcut_refined, 1);
-   mf_cont.set_classical_discontinuous_finite_element(2, 1E-7);
+   mf_cont.set_classical_discontinuous_finite_element(2, 1E-5);
    plain_vector PP(mf_cont.nb_dof());
    
    getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);
@@ -916,7 +927,7 @@ int main(int argc, char *argv[]) {
     cout << "Saving the solution" << endl;
     cout << "Saving desplacement" << endl;
     getfem::mesh_fem mf(mcut, dim_type(Q));
-    mf.set_classical_discontinuous_finite_element(2, 1E-7);
+    mf.set_classical_discontinuous_finite_element(2, 1E-5);
     plain_vector V(mf.nb_dof());
     getfem::interpolation(p.mf_u(), mf, U, V);
     
@@ -927,7 +938,7 @@ int main(int argc, char *argv[]) {
     cout << "Saving contact multiplier" << endl;
     
     getfem::mesh_fem mf_cont(mcut, 1);
-    mf_cont.set_classical_discontinuous_finite_element(2, 1E-7);
+    mf_cont.set_classical_discontinuous_finite_element(2, 1E-5);
     plain_vector PP(mf_cont.nb_dof());
     
     getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PP);

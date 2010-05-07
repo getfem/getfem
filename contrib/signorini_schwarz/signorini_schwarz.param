@@ -25,13 +25,13 @@ NX = 200;       % Nombre de pas d'espace.
 NXCOARSE = 20;  % Nombre de pas d'espace pour le coarse mesh.
 USECOARSE = 1;  
 
-RESIDU = 1E-7;  % Test d'arret pour la methode iterative
-OPTION = 2;     % Option de resolution (0 = defaut)
+RESIDU = 1E-6;  % Test d'arret pour la methode iterative
+OPTION = 4;     % Option de resolution (0 = defaut)
 		%     1 = Elements de Taylor-Hood.
 		%     2 = Probleme lineaire, sans contact.
 	 	%     4 = Contact en moyenne pour P2 en 2D ou Taylor-Hood 2D.
 		%    16 = Elements P1 non-conformes.
-SOLVER = 0;     % 0 = C.G. lineaire non preconditionné
+SOLVER = 1;     % 0 = C.G. lineaire non preconditionné
 		% 1 = C.G. sous contrainte
 		% 2 = Superlu lineaire
 		% 3 = Schwarz additif avec CG global et Superlu local

@@ -27,8 +27,8 @@ clear all;
 
 % Import the mesh
 % m=gfMesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-m=gfMesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
-% m=gfMesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
+%m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+ m=gf_Mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 
 d = gf_mesh_get(m, 'dim');
 
@@ -38,7 +38,7 @@ lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
 friction_coeff = 0.2; % coefficient of friction
 r = 5;       % Augmentation parameter
-version = 4; % 1 : frictionless contact and the basic contact brick
+version = 1; % 1 : frictionless contact and the basic contact brick
              % 2 : contact with 'static' friction and the basic contact brick
              % 3 : frictionless contact and the contact with a
              %     rigid obstacle brick
@@ -65,13 +65,13 @@ pause(0.1);
 
 
 % Finite element methods
-mfu=gfMeshFem(m, d);
+mfu=gf_Mesh_Fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', 2);
-mfd=gfMeshFem(m, 1);
+mfd=gf_Mesh_Fem(m, 1);
 gf_mesh_fem_set(mfd, 'classical fem', 1);
-mfvm=gfMeshFem(m, 1);
+mfvm=gf_Mesh_Fem(m, 1);
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
-mim=gfMeshIm(m, 4);
+mim=gf_Mesh_Im(m, 4);
 
 
 % Volumic density of force

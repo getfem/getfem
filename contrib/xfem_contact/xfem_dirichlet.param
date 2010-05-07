@@ -3,7 +3,7 @@
 % parameters for program xfem_dirichlet                                   %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-QUAD = 0;
+QUAD = 1;
 N = 2;
 RADIUS = 0.47;             % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
@@ -17,7 +17,7 @@ DIRICHLET_GAMMA0 = 0.1;  % Barbosa Hughes stabilization parameter
 OK = 0;
 
 if (N == 1) 
-  MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0;NSUBDIV=[10]';
+  MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0;NSUBDIV=[3]';
   IM = 'IM_GAUSS1D(6)';     % Integration method.
   IM_SIMPLEX = IM;          % Integration method on sub-triangles.
   FEM = 'FEM_PK(1,1)';      % Finite element method for the unknown.
@@ -27,7 +27,7 @@ if (N == 1)
 end;
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[320,320]';
+  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[32,32]';
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
   FEM = 'FEM_QK(2,1)';      % Finite element method for the unknown.
@@ -38,7 +38,7 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[80,80]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[3,3]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';

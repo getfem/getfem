@@ -7,10 +7,10 @@
 MU = 1.0;	         % Lame coefficient.
 Lamda=1.0               % Lame coefficient.
 dgr = 2;                 % degree of enrichment in u
-CONTACT_GAMMA0 = 0.00001;   % Stabilization parameter for contact condition
-R=1;                   % Augmented parameter
-STABILIZED_PROBLEM =0;   % stabilized_problem or not
-QUAD = 0;
+CONTACT_GAMMA0 = 0.1;   % Stabilization parameter for contact condition
+R=1;                     % Augmented parameter
+STABILIZED_PROBLEM =1;   % stabilized_problem or not
+strmesh =0;
 
 
 
@@ -19,35 +19,36 @@ QUAD = 0;
   %%MU_DOWN = 1.0;
 %%end
 
-REFINEMENT_RADIUS = 0.4;  % REF: 0.4;  % 0 for no refinement
-REFINEMENT_PROCESS =2;  % nb of desired refinement steps
+REFINEMENT_RADIUS = 0.;  % REF: 0.4;  % 0 for no refinement
+REFINEMENT_PROCESS = 0; % nb of desired refinement steps
 
-REFERENCE_TEST =1;   % 1 to compute a reference solution exported into files
-ERROR_TO_REF_SOL =0; % 1 to compute errors wrt the reference solution
+REFERENCE_TEST =0;   % 1 to compute a reference solution exported into files
+ERROR_TO_REF_SOL =1; % 1 to compute errors wrt the reference solution
 %INF_SUP_COMP = 0;   % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 160;                % space step.
+NX = 10;                % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
-if (~QUAD)
+if (strmesh)
    MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
  % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-  FEM_TYPE = 'FEM_PK(2,2);
+ FEM_TYPE = 'FEM_PK(2,1);
   %FEM_TYPE = 'FEM_PK(2,1)';  % PK element %REF: P3
-  DATA_FEM_TYPE = 'FEM_PK(2,2)';
+  DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   FEM_TYPE_cont = 'FEM_PK(2,1)'; 
 else
-  % MESH_TYPE = 'GT_LINEAR_QK(2)';
-  MESH_TYPE = 'GT_QK(2, 1)';
-  FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
-  DATA_FEM_TYPE = 'FEM_QK(2,1)';
-  INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 1), 5)';
-  FEM_TYPE_cont = 'FEM_QK(2,1)'; 
-  MORTAR_FEM_TYPE = FEM_TYPE;
+ MESH_FILE='toto6.mesh'
+ MESH_TYPE = 'GT_PK(2,2)';         % linear triangles
+ % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+ FEM_TYPE = 'FEM_PK(2,1);
+  %FEM_TYPE = 'FEM_PK(2,2)';  % PK element %REF: P3
+  DATA_FEM_TYPE = 'FEM_PK(2,1)';
+  INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
+  FEM_TYPE_cont = 'FEM_PK(2,1)'; 
 end;
 
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,4,0.0001)'; % Discontinuous P4 for triangles
@@ -70,7 +71,7 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 % GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 0 ; % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 2 ; % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone			
 		        % 2 = global functions with cutoff
 			
