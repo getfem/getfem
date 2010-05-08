@@ -15,7 +15,7 @@ PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
 RHO = 1e-6;     	% "realistic" density for steel
 
 T = 0.02;
-DT = 1e-5;              % Time step
+DT = 1e-6;              % Time step
 
  
 
@@ -25,7 +25,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
 NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-RESIDUAL = 1E-8;     	% residu for Newton.
+RESIDUAL = 3E-7;     	% residu for Newton.
 
 NOISY = 1;
 
@@ -41,12 +41,12 @@ THETA = 0.5;
 BETA = 0.5;             % Newmark scheme parameter in [0, 1]
 GAMMA= 0.5;             % Newmark scheme parameter in [1/2, 1]
 RESTIT = 0.6;           % Restitution coefficient for Paoli-Schatzman scheme
-NOCONTACT_MASS = 2;     % 0 : Normal mass matrix
+NOCONTACT_MASS = 1;     % 0 : Normal mass matrix
                         % 1 : Suppress the mass of contact nodes
                         % 2 : Suppress the mass of contact nodes in y direction
 PERIODICITY=0;          % Periodic condition
 DT_ADAPT = 0;           % Time step adaptation regarding the energy
-R = 1.0;                % Augmentation parameter
+R = 0.1;                % Augmentation parameter
 
 DIRICHLET = 0;
 DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet

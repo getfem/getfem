@@ -2350,7 +2350,7 @@ namespace getfem {
       gmm::mult(gmm::transposed(C), gmm::scaled(L, -1), vM0); gmm::add(F, vM0);
 
 
-      /* force the symmetricity */
+      /* enforce the symmetry */
       gmm::copy(vM0, F);
       for (size_type j=0, ii=0; j < gmm::mat_ncols(M0); ++j) {
 	for (size_type ir=0; ir < M0.jc[j+1] - M0.jc[j]; ++ir, ++ii) {
@@ -2366,9 +2366,9 @@ namespace getfem {
 
       /* write back the mass matrix */
 
-      // for (unsigned k=0; k < Qdim; ++k) {
-      for (unsigned k=0; k < 1; ++k)
+      for (unsigned k=0; k < Qdim; ++k)
 	if (!only_vert_sup || k == Qdim-1) {
+	  cout << "write back for " << k << endl;
 	  gmm::sub_slice IND(k, nn, Qdim);
 	  gmm::copy(M0, gmm::sub_matrix(M_, IND, IND));
 	}
