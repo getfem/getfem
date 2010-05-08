@@ -2227,6 +2227,7 @@ namespace getfem {
     size_type num_fem;
     value_type Mcoef, Kcoef;
     std::set<size_type> boundary_sup;
+    bool only_vert_sup; // Uggly
     bool M_uptodate;
 
     virtual void proper_update(void) {
@@ -2286,7 +2287,7 @@ namespace getfem {
 
     /* valid only for lagrange FEMs */
     void redistribute_mass(const dal::bit_vector &redistributed_dof) {
-      GMM_ASSERT1(mf_u->is_reduced(), "To be adapted");
+      GMM_ASSERT1(!mf_u->is_reduced(), "To be adapted");
       size_type N = mf_u->linked_mesh().dim();
       size_type Qdim = mf_u->get_qdim();
       size_type nn = mf_u->nb_dof() / Qdim;
@@ -2365,10 +2366,12 @@ namespace getfem {
 
       /* write back the mass matrix */
 
-      for (unsigned k=0; k < Qdim; ++k) {
-	gmm::sub_slice IND(k, nn, Qdim);
-	gmm::copy(M0, gmm::sub_matrix(M_, IND, IND));
-      }
+      // for (unsigned k=0; k < Qdim; ++k) {
+      for (unsigned k=0; k < 1; ++k)
+	if (!only_vert_sup || k == Qdim-1) {
+	  gmm::sub_slice IND(k, nn, Qdim);
+	  gmm::copy(M0, gmm::sub_matrix(M_, IND, IND));
+	}
 
       /* some sanity checks */
       for (unsigned i=0; i < gmm::mat_nrows(M0); ++i) {
@@ -2447,7 +2450,8 @@ namespace getfem {
       this->force_update();
     }
 
-    void no_mass_on_boundary(size_type b) {
+    void no_mass_on_boundary(size_type b, bool only_vert_sup_ = false) {
+      only_vert_sup = only_vert_sup_;
       if (boundary_sup.find(b) == boundary_sup.end()) {
 	boundary_sup.insert(b);
 	this->force_update();

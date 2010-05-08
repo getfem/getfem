@@ -267,6 +267,7 @@ void friction_problem::stationary(plain_vector &U0, plain_vector &LN,
 	  }
       }
   }
+ 
   gmm::resize(F, gmm::mat_nrows(BP)); gmm::clear(F);
   getfem::mdbrick_constraint<> PERIODIC(FRICTION);
   PERIODIC.set_constraints(BP, F);
@@ -402,7 +403,8 @@ void friction_problem::solve(void) {
   getfem::mdbrick_dynamic<> DYNAMIC(FRICTION, rho);
   sparse_matrix MM(mf_u.nb_dof(), mf_u.nb_dof());
   gmm::copy(DYNAMIC.get_M(), MM);
-  if (nocontact_mass) DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY);
+  if (nocontact_mass)
+    DYNAMIC.no_mass_on_boundary(CONTACT_BOUNDARY, nocontact_mass == 2);
 
   // Eventual periodic condition (lagrange element only).
   GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
@@ -508,15 +510,7 @@ void friction_problem::solve(void) {
     exp->serie_add_object("vonmisessteps");
   }
   
-  std::ofstream fileout1("time", std::ios::out);   
-//  std::ofstream fileout2("nrj", std::ios::out);
-//   std::ofstream fileout3("vts", std::ios::out);
-  std::ofstream fileout4("FN0", std::ios::out);
-//   std::ofstream fileout5("depl", std::ios::out);
-//   std::ofstream fileout6("kenetic_nrj", std::ios::out);
-//   std::ofstream fileout7("elastic_nrj", std::ios::out);
-//   std::ofstream fileout8("potential_nrj", std::ios::out);  
-
+  std::ofstream fileout((datafilename + ".data").c_str(), std::ios::out);   
  
   scalar_type Einit = (0.5*gmm::vect_sp(ELAS.get_K(), U0, U0)
 		       + 0.5 * gmm::vect_sp(DYNAMIC.get_M(), V0, V0)
@@ -531,7 +525,9 @@ void friction_problem::solve(void) {
       gmm::add(gmm::scaled(U0, a), gmm::scaled(V0, dt*a), U1);
       gmm::mult(DYNAMIC.get_M(), U1, DF);
       gmm::add(gmm::scaled(MA0, (1.-theta)/theta), DF);
-      gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, -dt*(1.-theta)), WT);
+      gmm::add(gmm::scaled(U0, -1.), gmm::scaled(V0, dt*(theta-1.)), WT);
+      GMM_WARNING1("Something wrong for the friction with the theta-method. "
+		   "Do not use with friction (increasing energy).");
       gmm::clear(WN);
       break;
     case 1 :
@@ -799,17 +795,14 @@ void friction_problem::solve(void) {
 // 	cout << "rho/rr " << rho/rr <<"\n\n";
 // 	cout << "LLN1 = " <<  LLN1[ref_dof+N-1] <<  "\n\n";
 
-	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof,N)), UU1);
-	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof,N)), VV1);
+	gmm::copy(gmm::sub_vector(U1, gmm::sub_interval(ref_dof, N)), UU1);
+	gmm::copy(gmm::sub_vector(V1, gmm::sub_interval(ref_dof, N)), VV1);
 
- 	fileout1 << t << "\n";
-//	fileout2 << J1   << "\n";	
-// 	fileout3 << VV1[N-1] << "\n";
- 	fileout4 << -LLN1[ref_dof+N-1] << "\n";
-// 	fileout5 << UU1[N-1] << "\n";
-// 	fileout6 << kenetic_nrj   << "\n";		
-// 	fileout7 << elastic_nrj   << "\n";	
-// 	fileout8 << potential_nrj  << "\n";	      
+ 	fileout << t << "\t";
+	fileout << J1   << "\t";	       // Total energy
+	fileout << J_friction1  << "\t";       // Energy dissipated by friction
+ 	fileout << -LLN1[ref_dof+N-1] << "\t"; // contact pressure at A
+ 	fileout << UU1[N-1] << "\n";           // normal displacement at A
 
 	exp->write_point_data(mf_u, U0);
 	exp->serie_add_object("deformationsteps");
