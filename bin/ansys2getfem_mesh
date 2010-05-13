@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+# -*- python -*-
+#
+# Copyright (C) 2004-2010 Yves Renard.
+#                                                       
+# This file is a part of GETFEM++                                         
+#                                                                         
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# under  the  terms  of the  GNU  Lesser General Public License as published
+# by  the  Free Software Foundation;  either version 2.1 of the License,  or
+# (at your option) any later version.
+# This program  is  distributed  in  the  hope  that it will be useful,  but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+# You  should  have received a copy of the GNU Lesser General Public License
+# along  with  this program;  if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+############################################################################
+
+
+import re
+import string
+import os
+import textwrap
+import sys
+
+
+# Works for a quadratic 2D mesh. 
+
+if (len(sys.argv) != 4):
+    raise SystemExit, 'Format : ansys2getfem_mesh nodes elements mesh_name'
+
+nodes = sys.argv[1]
+elements = sys.argv[2]
+getfem_file = sys.argv[3]
+
+mesh_file = open(getfem_file, 'w');
+nfile = open(nodes);
+efile = open(elements);
+
+mesh_file.write("% GETFEM MESH FILE\n");
+mesh_file.write("% FROM ANSYS FILE\n\n");
+
+
+
+#
+# read node file and produces node list for getfem mesh.
+#
+
+mesh_file.write("BEGIN POINTS LIST\n\n");
+
+for l in nfile:
+    v = l.split();
+    if (len(v) == 4):
+#      if (float(v[1]) == float(0) and  float(v[2]) == float(0) and int(v[0]) < 100):
+#          v[1] = '1.000000E-7';
+      mesh_file.write("POINT  " + v[0] + "  " + v[1] + "  " + v[2] + "\n");
+
+mesh_file.write("\nEND POINTS LIST\n\n\n\n");
+
+
+#
+# read element file and produces element list for getfem mesh.
+#
+
+mesh_file.write("BEGIN MESH STRUCTURE DESCRIPTION\n\n");
+
+for l in efile:
+    v = l.split();
+    if (len(v) == 13):
+      mesh_file.write("CONVEX  " + v[0] + "   'GT_PK(2,2)'   " + v[5] + "  " + v[9] + "  " + v[6]  + "  " + v[12] + "  " + v[10] + "  " + v[7] + "\n");
+
+mesh_file.write("\nEND MESH STRUCTURE DESCRIPTION\n\n");
+
