@@ -129,7 +129,7 @@ namespace getfem {
       (md, varname_u, multname_n, dataname_r, BN,
        dataname_gap, dataname_alpha, symmetrized, true);
     gmm::resize(contact_brick_set_DN(md, indbrick),
-		gmm::mat_nrows(DN), gmm::mat_ncols(DN));
+                gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
     return indbrick;
    }
@@ -206,7 +206,7 @@ namespace getfem {
       The optional parameters `slave1` and `slave2` declare if the regions
       defined in `rg1` and `rg2` are correspondingly considered as "slaves".
       By default `slave1` is true and `slave2` is false, i.e. `rg1` contains
-      the slave surfaces, while 'rg2' the master surfaces. Preferrably only
+      the slave surfaces, while 'rg2' the master surfaces. Preferably only
       one of `slave1` and `slave2` is set to true. The parameter `symmetrized`
       indicates that the symmetry of the tangent matrix will be kept or not.
       Basically, this brick computes the matrix BN and the vectors gap and
@@ -281,7 +281,7 @@ namespace getfem {
       parameters `slave1` and `slave2` declare if the regions defined in `rg1`
       and `rg2` are correspondingly considered as "slaves". By default `slave1`
       is true and `slave2` is false, i.e. `rg1` contains the slave surfaces,
-      while 'rg2' the master surfaces. Preferrably only one of `slave1` and
+      while 'rg2' the master surfaces. Preferably only one of `slave1` and
       `slave2` is set to true. The parameter `symmetrized` indicates that the
       symmetry of the tangent matrix will be kept or not.
       Basically, this brick computes the matrices BN and BT as well the vectors

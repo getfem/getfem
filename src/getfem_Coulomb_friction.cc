@@ -1003,7 +1003,7 @@ namespace getfem {
     
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
   }
-  
+
 
   //=========================================================================
   //  Add a contact with friction condition with BN, r, alpha given.  
@@ -1445,7 +1445,6 @@ namespace getfem {
           for (size_type j = 0; j < Pmin.size(); ++j)
             l = std::max(l, gmm::abs(Pmax[j] - Pmin[j]));
         }
-        
         gmm::resize(alpha, nbc);
         size_type mult_id = 0;
         for (size_type it = 0; it < rg1.size() && it < rg2.size(); ++it) {
@@ -1454,7 +1453,7 @@ namespace getfem {
               size_type rg = swap ? rg2[it] : rg1[it];
               const mesh_fem &mf_u = swap ? mf_u2 : mf_u1;
               const mesh_im &mim = swap ? mim2 : mim1;
-	      CONTACT_B_MATRIX MM(mf_u1.nb_dof(), mf_u1.nb_dof());
+              CONTACT_B_MATRIX MM(mf_u.nb_dof(), mf_u.nb_dof());
               asm_mass_matrix(MM, mim, mf_u, rg);
               size_type qdim = mf_u.get_qdim();
               dal::bit_vector rg_dofs = mf_u.basic_dof_on_region(rg);
@@ -1514,10 +1513,9 @@ namespace getfem {
 
     if (multname_n.size() == 0)
       multname_n = md.new_name("contact_multiplier");
-    else 	     
-       GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0, 	 
-                   "The given name for the multiplier is alraedy reserved in the model");
-		   
+    else
+      GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0,
+                  "The given name for the multiplier is alraedy reserved in the model");
     md.add_fixed_size_variable(multname_n, nbc);
 
     model::termlist tl;
@@ -1587,14 +1585,14 @@ namespace getfem {
     if (multname_n.size() == 0)
       multname_n = md.new_name("contact_normal_multiplier");
     else
-      GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0, 	 
-                   "The given name for the multiplier is alraedy reserved in the model");
+      GMM_ASSERT1(multname_n.compare(md.new_name(multname_n)) == 0,
+                  "The given name for the multiplier is alraedy reserved in the model");
     md.add_fixed_size_variable(multname_n, nbc);
     if (multname_t.size() == 0)
       multname_t = md.new_name("contact_tangent_multiplier");
     else
-      GMM_ASSERT1(multname_t.compare(md.new_name(multname_t)) == 0, 	 
-                   "The given name for the multiplier is alraedy reserved in the model");
+      GMM_ASSERT1(multname_t.compare(md.new_name(multname_t)) == 0,
+                  "The given name for the multiplier is alraedy reserved in the model");
     md.add_fixed_size_variable(multname_t, nbc * (mf_u1.get_qdim() - 1) ); // ??
 
     model::termlist tl;
