@@ -48,7 +48,7 @@ method can be retrieved with::
 
   std::string im_name = getfem::name_of_int_method(ppi);
 
-A non exhautive list (see :ref:`ud-appendixb` or
+A non exhaustive list (see :ref:`ud-appendixb` or
 :file:`getfem/getfem_integration.h` for exhaustive lists) of integration methods
 is given below.
 
@@ -112,7 +112,7 @@ Examples of approximated integration methods:
     of the ``"FEM_QK(2,3)"`` finite element! Since its base function are tensorial
     product of 1D polynomials of degree 3, one would need to use ``"IM_QUAD(7)"``
     (6 is not available). Hence ``"IM_GAUSS_PARALLELEPIPED(2,k)"`` should always
-    be prefered over ``"IM_QUAD(2*k)"`` since it has less integration points.
+    be preferred over ``"IM_QUAD(2*k)"`` since it has less integration points.
 
 An alternative way to obtain integration methods::
 

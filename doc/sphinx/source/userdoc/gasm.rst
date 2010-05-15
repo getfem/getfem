@@ -158,8 +158,8 @@ case. From this tensor, one evaluates
 permutations, and finally the expression is reduced against the hook tensor.
 
 
-availaible operations inside the ``comp`` command
--------------------------------------------------
+available operations inside the ``comp`` command
+------------------------------------------------
 
 * ``Base(#i)``: evaluate the value of the base functions of the *ith* |mf|
 

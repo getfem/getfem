@@ -17,7 +17,7 @@ element method on another mesh and/or another Lagrange finite element method::
 
 where ``mf1`` is a variable of type |gf_mf| and describes the finite element 
 method on which the source field ``U`` is defined, ``mf2`` is the finite element 
-method on which ``U`` will be interpolated. ``extrapolation`` is a optional 
+method on which ``U`` will be interpolated. ``extrapolation`` is an optional 
 parameter. The values are ``0`` not to allow the extrapolation, ``1`` for an 
 extrapolation of the exterior points near the boundary and ``1`` for the 
 extrapolation of all exterior points (could be expensive).

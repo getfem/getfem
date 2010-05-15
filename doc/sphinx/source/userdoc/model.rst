@@ -12,20 +12,20 @@
 The model description
 =====================
 
-This part is a work in progress for |gf| 4.0. The model description of |gf| allows
+The model description of |gf| allows
 to quickly build some fem applications on complex linear or nonlinear PDE coupled
 models. The principle is to propose predefined bricks which can be assembled to
 describe a complex situation. A brick can describe either an equation (Poisson
 equation, linear elasticity ...) or a boundary condition (Dirichlet, Neumann ...)
 or any relation between two variables. Once a brick is written, it is possible to
 use it in very different situations. This allows a reusability of the produced
-code and the possibility of a growing library of bricks. An effort as been made in
+code and the possibility of a growing library of bricks. An effort has been made in
 order to facilitate as much as possible the definition of a new brick. A brick is
 mainly defined by its contribution in the tangent linear system to be solved.
 
 This model description is an evolution of the model bricks of previous versions of
 |gf|. Compared to the old system, it is more flexible, more general, allows the
-coupling of model (multiphysics) in a easier way and facilitate the writing of new
+coupling of model (multiphysics) in a easier way and facilitates the writing of new
 components. It also facilitate the write of time integration schemes for evolving
 PDEs.
 
@@ -42,14 +42,13 @@ globally describe a PDE model. It mainly contains two lists: a list of variables
 objects) and a list of bricks. The role of the |mo| object is to coordinate the
 module and make them produce a linear system of equations. If the model is
 linear, this will simply be the linear system of equation on the corresponding
-dofs. If the model is nonlinear, this will be the tangent linear system. There is
-two versions of the |mo| object: a real one and complex one.
+dofs. If the model is nonlinear, this will be the tangent linear system. There are two versions of the |mo| object: a real one and complex one.
 
 The declaration of a model object is done by::
 
   getfem::model md(complex_version = false);
 
-The parameter of the constructor is a boolean which sets if the model deals with
+The parameter of the constructor is a boolean which determines whether the model deals with
 complex number or real numbers. The default is false for a model dealing with real
 numbers.
 
@@ -62,28 +61,27 @@ numbers.
 
 There are different kinds of variables/data in the model. The variables are the 
 unknown of the model. They will be (generally) computed by solving the (tangent) 
-linear system build by the model. Generally, the model will have several 
-variables. Each variable as a certain size (number of degrees of freedom) and the 
+linear system built by the model. Generally, the model will have several 
+variables. Each variable has a certain size (number of degrees of freedom) and the 
 different variables are sorted in alphanumeric order to form the global unknown 
 (:math:`U` in Fig. :ref:`ud-fig-syslin`). Each variable will be associated to an 
 interval :math:`I = [n_1, n_2]` which will represent the degrees of freedom 
-indices correspondig to this variable in the global system. The model stores also 
-some data (in the same format than the variables). The difference between data 
-and variables is that a data is not an unknown of the model. The value of the 
+indices corresponding to this variable in the global system. The model stores also 
+some data (in the same format as the variables). The difference between data 
+and variables is that data is not an unknown of the model. The value of the 
 data should be provided. In some cases (nonlinear models) some variables can be 
-considered as some data for certain terms. Variables and data are of two kind. 
+considered as some data for certain terms. Variables and data are of two kinds. 
 They can have a fixed size, or they can depend on a finite element method (be the 
 d.o.f. of a finite element method).
 
-For instance, in the situation described in Fig. :ref:`ud-fig-syslin`, there is 
-four variables in the model, namely :math:`X, Y, V` and :math:`W`. The role of 
+For instance, in the situation described in Fig. :ref:`ud-fig-syslin`, there are four variables in the model, namely :math:`X, Y, V` and :math:`W`. The role of 
 the model object will be to assemble the linear system, i.e. to fill the sub 
 matrices corresponding to each variable (:math:`R_{X,X}, R_{Y,Y}, R_{V,V}`, and 
 :math:`R_{W,W}`) and the coupling terms between two variables (:math:`R_{X,Y}, 
 R_{X,V}, R_{W,V}, \cdots`). This different contributions will be given by the 
 different bricks added to the model.
 
-The main usefull methods on a |mo| object are
+The main useful methods on a |mo| object are
 
 .. cfunction:: m.is_complex()
 
@@ -182,19 +180,19 @@ The |br| object
 ---------------
 
 A model brick is an object which is supposed to represent a part of a model. It
-aims to represent some integral terms in a weak formulation of a pde model. The
-model object will contain a list of brick. All the terms described by the brick
+aims to represent some integral terms in a weak formulation of a PDE model. The
+model object will contain a list of bricks. All the terms described by the brick
 will be finally assembled to build the linear system to be solved (the tangent
 linear system for a nonlinear problem). For instance if a term :math:`\Delta u` is
 present on the pde model (Laplacian of :math:`u`) then the weak formulation will
 contain the term :math:`\int_{\Omega}\nabla u\cdot\nabla v\ dx`, where :math:`v`
 is the test function corresponding to :math:`u`. Then the role of the
-correspponding brick is to assemble the term :math:`\int_{\Omega}\nabla\varphi_i
+corresponding brick is to assemble the term :math:`\int_{\Omega}\nabla\varphi_i
 \cdot\nabla\varphi_j\ dx`, where :math:`\varphi_i` and :math:`\varphi_j` are the
 shape functions of the finite element method describing :math:`u`. This term will
 be added by the model object to the global linear system on a diagonal block
 corresponding to the variable :math:`u`. The only role of the brick is thus to
-call the corresponding assembly procedure when the model object ask for it. The
+call the corresponding assembly procedure when the model object asks for it. The
 construction of a brick for such a linear term is thus very simple.
 
 Basically, the brick object will derive from the object ``virtual_brick`` defined
@@ -207,16 +205,16 @@ How to build a new brick
 ------------------------
 
 According to the spirit in which the brick has been designed, a brick should avoid
-as much as possible to store additional data. The parameter of a brick should be
-contained in the variable and data of the model. For instance, the parameter of a
+as much as possible to store additional data. The parameters of a brick should be
+contained in the variable and data of the model. For instance, the parameters of a
 linear elasticity brick are the elasticity coefficient. This coefficients have to
-be some data of the model. When the brick is called by the model obejct, a list of
+be some data of the model. When the brick is called by the model object, a list of
 variables and data is given to the brick. The great majority of the predefined
 bricks do not store any data. This allows to instantiate such a bricks only once.
 
 An example of a brick corresponding to the laplacian term is the following (other
 examples can be found in the file :file:`getfem_models.cc` which contains the
-very standards bricks)::
+very standard bricks)::
 
   struct my_Laplacian_brick: public getfem::virtual_brick {
 
@@ -318,15 +316,15 @@ and the |mim| object in the list of integrations methods. Finally, the lines::
 
 call a standard assembly procedure for the Laplacian term defined in the file
 :file:`getfem/getfem_assembling.h`. The clear method is necessary because
-although it is guaranteed that the matrices in ``matl`` have the good sizes they
+although it is guaranteed that the matrices in ``matl`` have good sizes they
 maybe not cleared before the call of ``asm_real_tangent_terms``.
 
-Note that this simple brick have only one term and is linear. In the case of a
+Note that this simple brick has only one term and is linear. In the case of a
 linear birck, either the matrix or the right hand side vector have to be filled
 but not both the two. Depending on the declaration of the term. See below the
-integration of the birck to the model.
+integration of the brick to the model.
 
-Le us see now a second example of a simple brick which prescribe a Dirichlet
+Let us see now a second example of a simple brick which prescribes a Dirichlet
 condition thanks to the use of a Lagrange multiplier. The Dirichlet condition is
 of the form
 
@@ -342,18 +340,18 @@ to this condition prescribed with a Lagrange multiplier are
 
    \int_{\Gamma} u \mu\ d\Gamma = \int_{\Gamma} u_D \mu\ d\Gamma, \forall \mu \in M,
 
-where :math:`M` is a appropriate multiplier space. The contributions to the 
+where :math:`M` is an appropriate multiplier space. The contributions to the 
 global linear system can be viewed in Fig. :ref:`ud-fig-syslinDir`. The matrix 
 :math:`B` is the "mass matrix" between the finite element space of the variable 
 :math:`u` and the finite element space of the multiplier :math:`\mu`. 
-:math:`L_{u}` is the right end side corresponding to the data :math:`u_D`.
+:math:`L_{u}` is the right hand side corresponding to the data :math:`u_D`.
 
 .. _ud-fig-syslinDir:
 .. figure:: images/getfemuserlinsysDir.png
    :align: center
    :width: 7cm
 
-   Contributions of the simple Dirchlet brick
+   Contributions of the simple Dirichlet brick
 
 The brick can be defined as follows::
 
@@ -398,7 +396,7 @@ The brick can be defined as follows::
     }
   };
 
-This brick has again only one term but define both the matrix and the right hand
+This brick has again only one term but defines both the matrix and the right hand
 side parts. Two variables are concerned, the primal variable on which the
 Dirichlet condition is prescribed, and the multiplier variable which should be
 defined on a mesh region corresponding to a boundary (it should be added to the
@@ -412,7 +410,7 @@ The lines::
 
 allow to have the access to the value of the data corresponding to the right hand
 side of the Dirichlet condition and to the |mf| on which this data is defined. If
-the data is constant (no derscribe on a fem) then ``mf_data`` is a null pointer.
+the data is constant (not described on a fem) then ``mf_data`` is a null pointer.
 
 The lines::
 
@@ -448,7 +446,7 @@ This is done by the call of the |mo| object method::
                      const getfem::model::mimlist &mims,
                      size_t region);
 
-The method return the index of the brick in the model. The call of this method is
+The method returns the index of the brick in the model. The call of this method is
 rather complex because it can be adapted to many situations. The construction of a
 new brick should be accompagned to the definition of a function that adds the new
 brick to the model calling this method and more simple to use.
@@ -485,10 +483,10 @@ to be added to the list by::
 
 In this case, the matrix term is added in the rows corresponding to the variable
 ``varname1`` and the columns corresponding to the variable ``varname2``. The
-boolean being the third parameter is to declare if the term is symmetric or not.
+boolean being the third parameter is to declare whether the term is symmetric or not.
 If it is symmetric and if the two variables are different then the assembly
 procedure adds the corresponding term AND its transpose. The number of terms is
-arbitrary. For each term declared, the brick have to fill the corresponding right
+arbitrary. For each term declared, the brick has to fill the corresponding right
 hand side vector (parameter ``vecl`` of ``asm_real_tangent_terms`` above) or/and
 the matrix term (parameter ``matl`` of ``asm_real_tangent_terms``) depending on
 the declaration of the term. Note that for nonlinear bricks, both the matrix and
@@ -496,7 +494,7 @@ the right hand side vectors have to be filled. For linear bricks, if the right
 hand side is filled for a term declared to be a matrix term, it is IGNORED.
 
 The variable names and the data names are given in two separate arrays because the
-dependence of the brick is not the same in both cases. A linear term have to be
+dependence of the brick is not the same in both cases. A linear term has to be
 recomputed if the value of a data is changed but not if the value of a variable is
 changed.
 
@@ -543,7 +541,7 @@ FEM. Of course, when the coefficient is a tensor described on a finite element
 method (a tensor field) the corresponding data can be a huge vector. The
 components of the matrix/tensor have to be stored with the fortran order
 (columnwise) in the data vector corresponding to the coefficient (compatibility
-with blas). The symmetry and coercivity of the given matrix/tensor is not verified
+with BLAS). The symmetry and coercivity of the given matrix/tensor is not verified
 (but assumed).
 
 This brick can be added to a model ``md`` thanks to two functions. The first one
@@ -555,7 +553,7 @@ that adds an elliptic term relatively to the variable ``varname`` of the model
 with a constant coefficient equal to :math:`1` (a Laplacian term). This
 corresponds to the Laplace operator. ``mim`` is the integration method which will
 be used to compute the term. ``region`` is an optional region number. If it is
-ommited, it is assumed that the term will be computed on the whole mesh. The
+omitted, it is assumed that the term will be computed on the whole mesh. The
 result of the function is the brick index in the model.
 
 The second function is::
@@ -609,7 +607,7 @@ is::
 adding a Dirichlet condition on ``varname`` thanks to a multiplier variable
 ``multname`` on the mesh region ``region`` (which should be a boundary). The value
 of the variable on that boundary is described by the data ``dataname`` which
-should be previously defined in the model. If the data is ommitted, the Dirichlet
+should be previously defined in the model. If the data is omitted, the Dirichlet
 condition is assumed to be an homogeneous one (vanishing variable on the
 boundary). The data can be constant or described on a FEM. It can also be scalar
 or vector valued, depending on the variable. The variable ``multname`` should be
@@ -629,8 +627,8 @@ very similar::
                                            degree, region,
                                            dataname = std::string());
 
-The parameter ``mf_mult`` is replaced by a integer ``degree`` indicating that the
-multiplier will be build on a classical finite element method of that degree.
+The parameter ``mf_mult`` is replaced by an integer ``degree`` indicating that the
+multiplier will be built on a classical finite element method of that degree.
 
 Note, that in all the cases, when a variable is added by the method
 ``add_multiplier`` of the model object, the |mf| will be filtered (thank to a
@@ -755,8 +753,7 @@ where ``md`` is the model object and ``iter`` is an iteration object from |gmm|.
 See also the next section for an example of use.
 
 Note that |sLU| is used by default on "small" problems. You can also link
-|mumps| with |gf| (see section :ref:`ud-linalg`) and used the parallele
-version.
+|mumps| with |gf| (see section :ref:`ud-linalg`) and used the parallel version.
 
 
 Example of a complete Poisson problem
@@ -776,7 +773,7 @@ the problem::
   using bgeot::base_small_vector;
   // Exact solution. Allows an interpolation for the Dirichlet condition.
   scalar_type sol_u(const base_node &x) { return sin(x[0]+x[1]); }
-  // Righ hand side. Allows an interpolation for the source term.
+  // Right hand side. Allows an interpolation for the source term.
   scalar_type sol_f(const base_node &x) { return 2*sin(x[0]+x[1]); }
   // Gradient of the solution. Allows an interpolation for the Neumann term.
   base_small_vector sol_grad(const base_node &x)
@@ -787,7 +784,7 @@ the problem::
     // ... definition of a mesh
     // ... definition of a finite element method mf_u
     // ... definition of a finite element method mf_rhs
-    // ... definition of a integration method mim
+    // ... definition of an integration method mim
     // ... definition of boundaries NEUMANN_BOUNDARY_NUM
     //                        and DIRICHLET_BOUNDARY_NUM
 
@@ -1088,8 +1085,7 @@ The function which adds this brick to a model is::
 where ``dataname_rho`` is an optional data of the model representing the density
 :math:`\rho`. If it is omitted, the density is assumed to be equal to one.
 
-Note that for time integrations scheme, there exist specific bricks for the
-discretisation of time derivatives.
+Note that for time integration schemes, there exist specific bricks for the discretization of time derivatives.
 
 
 The time dispatchers: integration of transient problems
@@ -1105,9 +1101,9 @@ derivative term (:math:`\partial u / \partial t` or :math:`\partial^2 u / \parti
 t^2` for instance). For this, a number of tools are available in |gf| to help the 
 construction of a time dispatcher. Mainly they are the two following:
 
-* The variables can be duplicated to take into account the differents version 
+* The variables can be duplicated to take into account the different versions 
   corresponding to each time iteration. For instance, for simplest time 
-  integration scheme, two versions :math:`U^n` and :math:`U^{n+1}` of a variable 
+  integration schemes, two versions :math:`U^n` and :math:`U^{n+1}` of a variable 
   :math:`U` are stored. The addition of a variable :math:`u` with two versions can 
   be done with the method of the model object::
 
@@ -1237,11 +1233,10 @@ This brick represents a second order time derivative like :math:`\rho \partial^2
 / \partial t^2`. The problem with such a term is that the :math:`\theta`-method 
 should be applied both on :math:`u` and :math:`\partial u / \partial t` which 
 means that :math:`\partial u / \partial t` is a natural unknown of the problem. 
-The easiest way is then to add the time derivative of the variable :math:`u` has a 
-independent variables of the model (a drawback, of course, is that one has twice 
+The easiest way is then to add the time derivative of the variable :math:`u` has an independent variables of the model (a drawback, of course, is that one has twice 
 as much unknowns). This Basic second order time derivative brick does not apply 
 this strategy. The time derivative :math:`\partial u / \partial t` is considered 
-as a data which is updated at a post-traitment stage (in some cases, this strategy 
+as a data which is updated at a post-treatment stage (in some cases, this strategy 
 cannot be applied if the time derivative appears to be a required unknown of the 
 model).
 
@@ -1351,8 +1346,8 @@ where :math:`V` represents the time derivative of :math:`U`.
 The implementation of the Newmark scheme proposed is not optimal and should be 
 adapted. It can be optained using the basic second order time derivative brick 
 (see :math:`\theta`-method) and the :math:`\theta`-method time dispatcher used 
-with :math:`\theta = 2\beta`. Additionaly, one has to use the following function 
-which compute the time derivative of the variable as a post-computation::
+with :math:`\theta = 2\beta`. Additionally, one has to use the following function 
+which computes the time derivative of the variable as a post-computation::
 
   getfem::velocity_update_for_Newmark_scheme
       (model, id2dt2, varname, dataname_V, dataname_dt, dataname_alpha);
@@ -1364,7 +1359,7 @@ in the test program ``tests/wave_equation.cc``).
 This implementation of the Newmark-scheme is not optimal since the latter function 
 inverts the mass matrix to compute the time derivative using a conjugate gradient. 
 This linear system solve could be avoided by keeping the multiplication of the 
-mass matrix with the time derivative as a data, with an addaptation of the time 
+mass matrix with the time derivative as a data, with an adaptation of the time 
 derivative brick.
 
 

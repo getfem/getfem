@@ -35,7 +35,7 @@ on a lagrange fem of a certain degree on a mesh. The constructor to define a new
   getfem::level_set ls(mesh, degree = 1, with_secondary = false);
 
 where ``mesh`` is a valid mesh of type |gf_m|, ``degree`` is the degree of the
-polynomials (1 is the defaule value), and ``with_secondary`` is a boolean whose
+polynomials (1 is the default value), and ``with_secondary`` is a boolean whose
 default value is false. The secondary level-set is used to represent fractures (if
 :math:`p(x)` is the primary levelset function and :math:`s(x)` is the secondary
 levelset function, the crack is defined by :math:`p(x) = 0` and :math:`s(x) \leq
@@ -54,7 +54,7 @@ Mesh cut by level-sets
 ----------------------
 
 In order to compute adapted integration methods and finite element methods to
-represent a field which is discontinuous accross a level-set, a certain number of
+represent a field which is discontinuous across a level-set, a certain number of
 pre-computations have to be done at the mesh level. The file
 :file:`getfem/getfem_mesh_level_set.h` defines the object |gf_mls| which handles
 these pre-computations. The constructor of this object is the following::
@@ -113,7 +113,7 @@ Discontinuous field across some level-sets
 ------------------------------------------
 
 The object |gf_mfls| is defined in the file
-:file:`getfem/getfem_mesh_fem_level_set.h`. It is derivated from |gf_mf| object
+:file:`getfem/getfem_mesh_fem_level_set.h`. It is derived from |gf_mf| object
 and can be used in the same way. It defines a finite element method with
 discontinuity across the level-sets (it can deal with an arbitrary number of
 level-sets). The constructor is the following::

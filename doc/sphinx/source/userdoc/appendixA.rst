@@ -427,16 +427,16 @@ Elements with hierarchical basis
 --------------------------------
 
 The idea behind hierarchical basis is the description of the solution at different
-level: a rough level, a more refined level ... In the same discretisation some
+level: a rough level, a more refined level ... In the same discretization some
 degrees of freedom represent the rough description, some other the more rafined
-and so on. This corresponds to imbricated spaces of discretisation. The
+and so on. This corresponds to imbricated spaces of discretization. The
 hierarchical basis contains a basis of each of these spaces (this is not the case
 in classical Lagrange elements when the mesh is refined).
 
 Among the advantages, the condition number of rigidity matrices can be greatly
 improved, it allows local raffinement and a resolution with a multigrid approach.
 
-Hiercarchical elements with respect to the degree
+Hierarchical elements with respect to the degree
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
 .. _ud-fig-seg_hier:
@@ -513,13 +513,12 @@ Hiercarchical elements with respect to the degree
        - Yes
 
 some particular choices: :math:`P_4` will be built with the basis of the
-:math:`P_1`, the additional basis of the :math:`P_2` then the additionnal basis of
-the :math:`P_4`.
+:math:`P_1`, the additional basis of the :math:`P_2` then the additional basis of the :math:`P_4`.
 
 :math:`P_6` will be built with the basis of the :math:`P_1`, the additional basis
-:of the :math:`P_2` then the additionnal basis of the :math:`P_6` (not with the
+:of the :math:`P_2` then the additional basis of the :math:`P_6` (not with the
 :basis of the :math:`P_1`, the additional basis of the :math:`P_3` then the
-:additionnal basis of the :math:`P_6`, it is possible to build the latter with
+:additional basis of the :math:`P_6`, it is possible to build the latter with
 :``"FEM_GEN_HIERARCHICAL(a,b)"``)
 
 Composite elements
@@ -537,7 +536,7 @@ elements. But this tool can also be used to build piecewise polynomial elements.
 
 :math:`.\\`
 
-  .. list-table:: Composition of a finite element method on a element with ``S`` subdivisions ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``
+  .. list-table:: Composition of a finite element method on an element with ``S`` subdivisions ``"FEM_STRUCTURED_COMPOSITE(FEM1, S)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 
@@ -721,11 +720,11 @@ GaussLobatto element
 The 1D GaussLobatto :math:`P_K` element is similar to the classical :math:`P_K`
 fem on the segment, but the nodes are given by the Gauss-Lobatto-Legendre
 quadrature rule of order :math:`2K-1`. This FEM is known to lead to better
-conditioned linear systems, and can be used with the correspounding quadrature to
+conditioned linear systems, and can be used with the corresponding quadrature to
 perform mass-lumping (on segments or parallelepipeds).
 
 The polynomials coefficients have been pre-computed with Maple (they require the
-inversion of an ill-conditionned system), hence they are only available for the
+inversion of an ill-conditioned system), hence they are only available for the
 following values of :math:`K`: :math:`1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
 14, 16, 24, 32`. Note that for :math:`K=1` and :math:`K=2`, this is the classical
 :math:`P1` and :math:`P2` fem.
@@ -1423,7 +1422,7 @@ Base functions on the reference element:
 This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
 identity). On the real element linear combinations of :math:`\varphi'_8`,
 :math:`\varphi'_{12}` and :math:`\varphi'_{16}` are used to match the gradient on
-the corresponding vertex. Idem on the orther vertices.
+the corresponding vertex. Idem on the other vertices.
 
   .. list-table:: Hermite element on a tetrahedron ``"FEM_HERMITE(3)"``
      :widths: 10 10 10 10 10 10 10

@@ -85,7 +85,7 @@ the method::
   void mesh_fem::set_auto_add(pfem pf);
 
 which defines the default finite element method which will be automatically added
-on new elements of the mesh (this is very usefull, for instance, when a refinement
+on new elements of the mesh (this is very useful, for instance, when a refinement
 of the mesh is performed).
 
 Descriptors for finite element methods and integration methods are available
@@ -98,7 +98,7 @@ method can be retrieved thanks to the following functions::
 
   std::string femname = getfem::name_of_fem(pf);
 
-A non exhautive list (see :ref:`ud-appendixa` or :file:`getfem/getfem_fem.h` for
+A non exhaustive list (see :ref:`ud-appendixa` or :file:`getfem/getfem_fem.h` for
 exhaustive lists) of finite element methods is given by:
 
 * ``"FEM_PK(n,k)"``: Classical :math:`P_K` methods on simplexes of dimension ``n``
@@ -180,7 +180,7 @@ target dimension :math:`Q`.
 
 If the target dimension :math:`Q` is set to a value different of :math:`1`, the
 scalar FEMs (such as :math:`P_k` fems etc.) are automatically "vectorized" from
-the |mf| object point of vue, i.e. each scalar degree of freedom appears :math:`Q`
+the |mf| object point of view, i.e. each scalar degree of freedom appears :math:`Q`
 times in order to represent the :math:`Q` components of the vector field. If an
 intrinsically vectorial element is used, the target dimension of the ``fem`` and
 the one of the |mf| object have to match. To sum it up,
@@ -247,7 +247,7 @@ At this level are defined the basic degrees of freedom. Some methods of the
    convexes or the set of faces of index ``i`` (see the |gf_m| object). For a
    reduced mesh_fem, a dof is lying on a region if its potential corresponding
    shape function is nonzero on this region. The extension matrix is used to make
-   the correspondance between basic and reduced dofs.
+   the correspondence between basic and reduced dofs.
 
 
 Third level: the optional linear transformation (or reduction)

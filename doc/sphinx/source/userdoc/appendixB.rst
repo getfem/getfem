@@ -18,7 +18,7 @@ A descriptor on an integration method is given by the function::
 
   ppi = getfem::int_method_descriptor("name of method");
 
-where ``"name of method"`` is a string to be choosen among the existing methods.
+where ``"name of method"`` is a string to be chosen among the existing methods.
 
 The program ``integration`` located in the ``tests`` directory lists and checks
 the degree of each integration method.
@@ -646,7 +646,7 @@ Direct product of integration methods
 -------------------------------------
 
 You can use ``"IM_PRODUCT(IM1, IM2)"`` to produce integration methods on
-quadrilateral or prisms. It gives the direct product of two integration mathods.
+quadrilateral or prisms. It gives the direct product of two integration methods.
 For instance ``"IM_GAUSS_PARALLELEPIPED(2,k)"`` is an alias for
 ``"IM_PRODUCT(IM_GAUSS1D(2,k),IM_GAUSS1D(2,k))"`` and can be use instead of the
 ``"IM_QUAD"`` integrations.

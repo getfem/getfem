@@ -26,7 +26,7 @@ refinements (see [bank1983]_).
    :align: center
    :width: 7cm
 
-   exemple of Bank refinement in 2D
+   Example of Bank refinement in 2D
 
 Mesh refinement is most of the time coupled with an *a posteriori* error
 estimate. A basic error estimate is available in the file

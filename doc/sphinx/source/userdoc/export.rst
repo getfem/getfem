@@ -154,7 +154,7 @@ right choice, but for P2, P3, non linear transformation etc, it is better to ref
 each convex of the original mesh during the slicing operation. This allows an
 accurate representation of any finite element field onto a very simple structure
 (linear segment/triangles/tetrahedrons with P1 discontinuous data on them) which is
-what most vizualisation programs (gmsh, mayavi, opendx, matlab, etc.) expect.
+what most visualization programs (gmsh, mayavi, opendx, matlab, etc.) expect.
 
 Example of use (cut the boundary of a mesh ``m`` with a half-space, and save the
 result into a |smsl|)::
@@ -169,9 +169,7 @@ result into a |smsl|)::
   int nrefine = 3;
   slicer.exec(nrefine);
 
-In order to build a |gf_smsl| object during the slicing operation, the
-``stored_mesh_slice::build()`` method is often more convenient than using
-explicitely the ``slicer_build_stored_mesh_slice`` slicer::
+In order to build a |gf_smsl| object during the slicing operation, the ``stored_mesh_slice::build()`` method is often more convenient than using explicitly the ``slicer_build_stored_mesh_slice`` slicer::
 
   getfem::stored_mesh_slice sl;
   sl.build(m, getfem::slicer_boundary(m),
