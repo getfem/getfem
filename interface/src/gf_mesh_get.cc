@@ -837,7 +837,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     /*@GET A = ('convex radius'[, @ivec CVIDs])
     Return an estimate of the radius of each convex.@*/
     sub_command
-      ("convex area", 0, 1, 0, 1,
+      ("convex radius", 0, 1, 0, 1,
        dal::bit_vector bv;
        if (in.remaining()) bv = in.pop().to_bit_vector(&pmesh->convex_index());
        else bv = pmesh->convex_index();
