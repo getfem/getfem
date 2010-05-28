@@ -1453,7 +1453,7 @@ namespace getfem {
     if (!(pgt->is_linear())) gmm::mult(G, pgp->grad(3), K);
     if (N == 1) M(3, 3) = K(0,0);
     else M(3, 3) = gmm::mat_euclidean_norm(K)
-      * gmm::sgn(gmm::vect_sp(gmm::mat_row(K, 0), r));
+      * gmm::sgn(gmm::vect_sp(gmm::mat_col(K, 0), r));
   }
 
   // Hermite element on the segment. when the real element lies in
