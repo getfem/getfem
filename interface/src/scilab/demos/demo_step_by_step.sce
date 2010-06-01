@@ -53,6 +53,6 @@ gf_mdbrick_get(b1,'solve',mds);
 sol = gf_mdstate_get(mds,'state');
 
 // export computed solution
-gf_mesh_fem_get(mf,'export_to_pos','sol.pos',sol,'Computed solution');
+gf_mesh_fem_get(mf,'export_to_pos', path + '/sol.pos',sol,'Computed solution');
 
 printf('demo step_by_step terminated\n');
