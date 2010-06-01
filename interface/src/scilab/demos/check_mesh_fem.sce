@@ -216,8 +216,6 @@ m = gf_mesh_fem_get(mf2,'linked_mesh');
 oo = gf_mesh_get(mf2,'outer faces');
 oo = oo(:,find(oo(2,:)~=0));
 gf_mesh_set(m,'boundary',51,oo);
-printf('\n\n\nDEBUG\n\n\n');
-disp(typeof(oo))
 o = gf_mesh_get(m,'boundary',51);
 assert('size(o)==size(oo) & sum(sum(o))==sum(sum(oo))');
 o = gf_mesh_get(mf2,'boundary',1);
