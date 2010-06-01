@@ -1,5 +1,12 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_tripod_anim.sce');
+
+printf('demo tripod_anim started\n');
+
 // You should run demo_tripod first ...
-//m    = gf_mesh('import','gid','data/tripod.GiD.msh');
+//m    = gf_mesh('import','gid', path + '/data/tripod.GiD.msh');
 //mfu  = gf_mesh_fem('from string', smfu, m);
 //mfdu = gf_mesh_fem('from string', smfdu, m);
 
@@ -54,11 +61,11 @@ for r=6:4:60
   // convert -delay 50 -loop 0 wave*.png animatewave.gif
   // To produce the animated gif image.
   // Convert is an ImageMagick tool.
-  xs2png(h.figure_id,sprintf('tripod%02d.png',Index));
+  xs2png(h.figure_id, path + sprintf('/tripod%02d.png',Index));
   
   Index = Index + 1;
   pr   = r;
   haut = haut + 24;
 end
 
-
+printf('demo tripod_anim terminated\n');

@@ -1,6 +1,5 @@
-// Matlab GetFEM++ interface
-//
 // Copyright (C) 2009 Alassane SY, Yves Renard.
+// Copyright (C) 2010 Yann Collette.
 //
 // This file is a part of GetFEM++
 //
@@ -23,8 +22,13 @@
 //  also a good example of use of GetFEM++.
 //
 
-stacksize('max');
 lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_topological_optimization.sce');
+
+printf('demo topological_optimization started\n');
+
 gf_workspace('clear all');
 
 // parameters
@@ -92,7 +96,7 @@ while(1)
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
 
-  clf(h);
+  clf();
   drawlater;
   subplot(2,1,1);
   gf_plot(mf, U);
@@ -130,7 +134,7 @@ while(1)
   title('Topological gradient');
   colorbar(min(G),max(G));
   drawnow;
-  xs2png(h.figure_id,sprintf('topological_opt%03d.png',Index));
+  xs2png(h.figure_id, path + sprintf('/topological_opt%03d.png',Index));
   Index = Index + 1;
   sleep(10);
 
@@ -151,3 +155,4 @@ while(1)
   ULS = min(ULS, ((x - xc).^2 + (y - yc).^2) - R^2);
 end
  
+printf('demo topological_optimization terminated\n');

@@ -1,8 +1,15 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_stokes_3D_tank.sce');
+
+printf('demo stokes_3D_tank started\n');
+
+gf_workspace('clear all');
+
 disp('3D stokes demonstration on a quadratic mesh');
 
 compute = input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
-
-gf_workspace('clear all');
 
 viscosity = 10;
 
@@ -10,7 +17,7 @@ R1  = list(list('9-(y.^2+(z-6.0).^2)'),list(0),list(0));
 R2  = list(list('9-(y.^2+(z-6.0).^2)'),list(0),list(0));
 R4  = list(list(0),list(0),list(0));
 
-m = gf_mesh('import','GiD','data/tank_quadratic_2500.GiD.msh');
+m = gf_mesh('import','GiD',path + 'data/tank_quadratic_2500.GiD.msh');
 mfu = gf_mesh_fem(m,3);
 mfp = gf_mesh_fem(m,1);
 mfd = gf_mesh_fem(m,1);
@@ -67,11 +74,12 @@ if (compute) then
   U = gf_model_get(md, 'variable', 'u');
   P = gf_model_get(md, 'variable', 'p');
   
-  save('demo_stokes_3D_tank_UP.mat',U,P);
+  save(path + '/demo_stokes_3D_tank_UP.mat',U,P);
   disp('[the solution has been saved in ''demo_stokes_3D_tank_UP.mat'']');
 else
-  load('demo_stokes_3D_tank_UP.mat');
+  load(path + '/demo_stokes_3D_tank_UP.mat');
 end
 
 disp('Got a solution, now you can call demo_stokes_3D_tank_draw to generate graphics');
 
+printf('demo stokes_3D_tank terminated\n');

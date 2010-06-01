@@ -1,10 +1,12 @@
-disp('This demo use levelset to impose (weakly) a Dirichlet condition on an');
-disp('implicit boundary defined by the zero of the levelset');
-
 lines(0);
 stacksize('max');
 
-//clear all;
+path = get_absolute_file_path('demo_fictitious_domains.sce');
+
+printf('demo fictitious domains started\n');
+
+disp('This demo use levelset to impose (weakly) a Dirichlet condition on an');
+disp('implicit boundary defined by the zero of the levelset');
 
 gf_workspace('clear all');
 
@@ -133,3 +135,4 @@ plot([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)],'b-');
 colorbar(min(U),max(U));
 drawnow;
 
+printf('demo fictitious domains terminated\n');

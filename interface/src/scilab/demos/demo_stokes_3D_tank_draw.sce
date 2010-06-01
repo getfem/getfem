@@ -1,4 +1,7 @@
 lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_stokes_3D_tank_draw.sce');
 
 if (exists('U')~=1 | exists('P') ~= 1) then
   error('run demo_stokes_3D_tank2 first');
@@ -38,7 +41,6 @@ drawlater;
 gf_plot_slice(sl,'mesh_faces','on','mesh','on','data',sqrt(sum(Usl.^2,1)),'mesh_slice_edges','off');
 drawnow;
 
-
 sl2 = gf_slice(list('boundary',list('planar',+1,[0;0;0],[0;1;0])),m,6,_setdiff(all_faces',TOPfaces','rows')');
 drawlater;
 gf_plot_slice(sl2,'mesh_faces','off','mesh','on','pcolor','off');
@@ -59,3 +61,5 @@ title('Demo Stockes Tank 3D');
 drawnow;
 
 h.color_map = c;
+
+printf('demo stokes_3D_tank_draw terminated\n');

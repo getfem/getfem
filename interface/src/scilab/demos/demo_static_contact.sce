@@ -1,6 +1,5 @@
-// Matlab GetFEM++ interface
-//
 // Copyright (C) 2009 Yves Renard.
+// Copyright (C) 2009-2010 Yann Collette.
 //
 // This file is a part of GetFEM++
 //
@@ -22,13 +21,19 @@
 // a good example of use of GetFEM++.
 //
 
-gf_workspace('clear all');
+lines(0);
 stacksize('max');
 
+path = get_absolute_file_path('demo_static_contact.sce');
+
+printf('demo static_contact started\n');
+
+gf_workspace('clear all');
+
 // Import the mesh
-//m = gf_mesh('load', 'data/disc_P2_h1.mesh');
-//m = gf_mesh('load', 'data/disc_P2_h2.mesh');
-m = gf_mesh('load', 'data/disc_P2_h0.5.mesh');
+//m = gf_mesh('load', path + '/data/disc_P2_h1.mesh');
+m = gf_mesh('load', path + '/data/disc_P2_h2.mesh');
+//m = gf_mesh('load', path + '/data/disc_P2_h0.5.mesh');
 
 d = gf_mesh_get(m, 'dim');
 
@@ -182,3 +187,5 @@ title('Deformed configuration (not really a small deformation of course ...)');
 colorbar(min(VM),max(VM));
 drawnow;
 sleep(100);
+
+printf('demo static_contact terminated\n');

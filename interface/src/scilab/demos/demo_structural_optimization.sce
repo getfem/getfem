@@ -1,6 +1,5 @@
-// Matlab GetFEM++ interface
-//
 // Copyright (C) 2009 Alassane SY, Yves Renard.
+// Copyright (C) 2009-2010 Yann Collette.
 //
 // This file is a part of GetFEM++
 //
@@ -24,6 +23,12 @@
 //
 
 lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_structural_optimization.sce');
+
+printf('demo structural_optimization started\n');
+
 gf_workspace('clear all');
 
 Do_Plot = %T;
@@ -57,13 +62,13 @@ else
 end
 
 // Mesh definition
-// m=gf_mesh('cartesian', -1:(1/NY):1, -.5:(1/NY):.5);
+// m = gf_mesh('cartesian', -1:(1/NY):1, -.5:(1/NY):.5);
 if (N == 2) then
-  m=gf_mesh('regular simplices', -1:(1/NY):1, -.5:(1/NY):.5);
+  m = gf_mesh('regular simplices', -1:(1/NY):1, -.5:(1/NY):.5);
 else
-  m=gf_mesh('regular simplices', -1:(1/NY):1, -.5:(1/NY):.5, -.5:(1/NY):.5);
+  m = gf_mesh('regular simplices', -1:(1/NY):1, -.5:(1/NY):.5, -.5:(1/NY):.5);
 end
-pts =  gf_mesh_get(m, 'pts');
+pts = gf_mesh_get(m, 'pts');
 
 // Find the boundary GammaD and GammaN
 pidleft = find((abs(pts(1, :)+1.0) < 1E-7));
@@ -81,14 +86,14 @@ GAMMAN   = 3;
 gf_mesh_set(m, 'region', GAMMAN, fidright);
 
 // Definition of the finite element methods
-_ls  = gf_levelset(m, ls_degree);
+_ls = gf_levelset(m, ls_degree);
 mls = gf_mesh_levelset(m);
 gf_mesh_levelset_set(mls, 'add', _ls);
 mf_ls = gf_levelset_get(_ls, 'mf');
 if (N == 2) then
-  mimls=gf_mesh_im(m, gf_integ('IM_TRIANGLE(4)'));
+  mimls = gf_mesh_im(m, gf_integ('IM_TRIANGLE(4)'));
 else
-  mimls=gf_mesh_im(m, gf_integ('IM_TETRAHEDRON(5)'));   
+  mimls = gf_mesh_im(m, gf_integ('IM_TETRAHEDRON(5)'));   
 end
 mf_basic = gf_mesh_fem(m, N);
 gf_mesh_fem_set(mf_basic,'fem',gf_fem(sprintf('FEM_PK(%d,%d)', N, k)));
@@ -218,7 +223,7 @@ for niter = 1:MaxIter
           2*(lambda-mu)*(lambda+mu)*(DU(1,1,:) + DU(2,2,:)).^2));
   else
      GT = -%pi*( (lambda+2*mu) / (mu*(9*lambda+14*mu)) * (20*mu*GF1 + ...
-        2*(3*lambda-2*mu)*(lambda+mu)*(DU(1,1,:) + DU(2,2,:) + DU(3,3,:)).^2));
+          2*(3*lambda-2*mu)*(lambda+mu)*(DU(1,1,:) + DU(2,2,:) + DU(3,3,:)).^2));
   end
   GT = matrix(GT, 1, size(GT, 3)) + threshold_topo;
   
@@ -345,7 +350,6 @@ for niter = 1:MaxIter
     end
   end
 
-
   if (DEBUG & mod(niter, NBDRAW) == 0) & Do_Plot then
     drawlater;
     subplot(NG,1,2);
@@ -403,3 +407,5 @@ for niter = 1:MaxIter
   gf_workspace('pop');
   disp(sprintf('this iteration took %g minutes', (timer()-ti)/60));
 end
+
+printf('demo structural_optimization terminated\n');

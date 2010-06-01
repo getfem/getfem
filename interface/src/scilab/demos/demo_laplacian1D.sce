@@ -1,3 +1,8 @@
+lines(0);
+path = get_absolute_file_path('demo_laplacian1D.sce');
+
+printf('demo laplacian1D started\n');
+
 // clears every getfem object 
 
 gf_workspace('clear all');
@@ -39,7 +44,7 @@ b2 = gf_mdbrick('source term',b1);
 gf_util('trace level', 0); // do not clutter the output with boring messages
 gf_util('warning level', 0);
 
-scf();
+h = scf();
 
 for j=1:3
   if (j==1) then
@@ -76,8 +81,8 @@ for j=1:3
     gf_mesh_fem_set(mfd,'fem',fem_d);
     gf_mesh_im_set(mim, 'integ', im);
  
-//YC:    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_u)));
-//YC:    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_f)));
+//    gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_u)));
+//    gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get(mfd, 'eval', list(expr_f)));
     
     gf_mdbrick_set(b1, 'param', 'R', mfd, gf_mesh_fem_get_eval(mfd, list(list(expr_u))));
     gf_mdbrick_set(b2, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(list(expr_f))));
@@ -102,3 +107,4 @@ for j=1:3
   end
 end
 
+printf('demo laplacian1D terminated\n');

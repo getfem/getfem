@@ -1,6 +1,13 @@
 // Simple demo of a wave equation solved with transient bricks
 // trace on;
 
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_wave_equation.sce');
+
+printf('demo wave_equation started\n');
+
 gf_workspace('clear all');
 
 m = gf_mesh('cartesian',[0:.2:1],[0:.2:1]);
@@ -8,6 +15,7 @@ m = gf_mesh('cartesian',[0:.2:1],[0:.2:1]);
 
 // create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
+
 // assign the Q2 fem to all convexes of the mesh_fem,
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
 
@@ -16,6 +24,7 @@ mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 
 // detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
+
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
 
@@ -28,7 +37,7 @@ transient_bricks = [gf_model_set(md, 'add Laplacian brick', mim, 'u')];
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
 
 // transient part.
-T     = 15.0;
+T     = 1.0; // For a good animation, choose 15 here (the computation is quite long then)
 dt    = 0.025;
 theta = 0.5;
 gf_model_set(md, 'add fem data', 'v', mf, 1, 2);
@@ -70,8 +79,9 @@ for t=0:dt:T
   drawnow;
   sleep(100);
 
-  xs2png(h.figure_id,sprintf('waveeq%03d.png',Index));
+  xs2png(h.figure_id, path + sprintf('/waveeq%03d.png',Index));
   Index = Index + 1;
   gf_model_set(md, 'next iter');
 end
 
+printf('demo wave_equation terminated\n');

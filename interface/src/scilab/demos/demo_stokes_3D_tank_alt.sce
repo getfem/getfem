@@ -1,11 +1,18 @@
 // old example, which uses the deprecated gf_solve function
 // see demo_stokes_3D_tank.m for a "modern" version
 
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_stokes_3D_tank_alt.sce');
+
+gf_workspace('clear all');
+
+printf('demo stokes_3D_tank_alt started\n');
+
 disp('3D stokes demonstration on a quadratic mesh -- 512MB of memory needed for the solve!!');
 
 compute = input('  1:compute the solution\n  0:load a previously computed solution\n ? ');
-
-gf_workspace('clear all');
 
 global verbosity; verbosity=1;
 
@@ -34,7 +41,7 @@ pde = add_empty_bound(pde);
 pde('bound')($)('type') = 'Dirichlet';
 pde('bound')($)('R')    = list(list(0,0,0));
 
-m = gf_mesh('import','GiD','data/tank_quadratic_2500.GiD.msh');
+m = gf_mesh('import','GiD', path + '/data/tank_quadratic_2500.GiD.msh');
 mfulag   = gf_mesh_fem(m,3);
 
 pde('mf_u') = [];
@@ -85,11 +92,11 @@ if (compute) then
   
   disp(sprintf('solve done in %.2f sec', toc));
   
-  save('demo_stokes_3D_tank_UP.mat',U,P);
+  save(path + '/demo_stokes_3D_tank_UP.mat',U,P);
   
   disp('[the solution has been saved in ''demo_stokes_3D_tank_UP.mat'']');
 else
-  load('demo_stokes_3D_tank_UP.mat');
+  load(path + '/demo_stokes_3D_tank_UP.mat');
 end
 
 mfu = pde('mf_u');
@@ -98,3 +105,4 @@ mfd = pde('mf_d');
 
 disp('Got a solution, now you can call demo_stokes_3D_tank_draw to generate graphics');
 
+printf('demo stokes_3D_tank_alt terminated\n');

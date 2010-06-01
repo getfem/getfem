@@ -2,6 +2,13 @@
 // In this example, the refinement will focus on the
 // transition between the Dirichlet and the Neumann boundary.
 
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_refine.sce');
+
+printf('demo refine started\n');
+
 gf_workspace('clear all');
 
 //clear all; clf;
@@ -82,8 +89,8 @@ for step=1:8
     opt = list(); 
   end
 
-  clf();
   drawlater;
+  clf();
   subplot(2,1,1);
   gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U, 'deformation_mf',mfu,'refine', 4, 'deformation_scale',1, opt(:)); 
   colorbar(min(U),max(U)); 
@@ -100,10 +107,11 @@ for step=1:8
   h.color_map = jetcolormap(255);
   drawnow;
 
-  disp('enter ''resume'' to continue'); pause;
+  sleep(1000);
   
   Index = find(ERR > 1e-3);
   gf_mesh_set(m, 'refine', Index);
   gf_mesh_set(m, 'optimize structure');
 end
 
+printf('demo refine terminated\n');

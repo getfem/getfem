@@ -1,19 +1,21 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_tripod.sce');
+
 disp('This demo is an adaption of the original tripod demo')
 disp('which uses the new ''brick'' framework of getfem')
 disp('The code is shorter, faster and much more powerful')
 disp('You can easily switch between linear/non linear')
 disp('compressible/incompressible elasticity!')
 
-lines(0);
-stacksize('max');
-
 linear = 1;
 incompressible = 0;
 
-//gf_workspace('clear all');
+gf_workspace('clear all');
 
 // import the mesh
-m   = gf_mesh('import','gid','data/tripod.GiD.msh');
+m   = gf_mesh('import','gid', path + '/data/tripod.GiD.msh');
 mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
 mfd = gf_mesh_fem(m,1);     // scalar mesh_fem, for data fields.
 
@@ -27,7 +29,7 @@ gf_mesh_fem_set(mfu,'fem',gf_fem('FEM_PK(3,2)'));
 gf_mesh_fem_set(mfd,'fem',gf_fem('FEM_PK(3,0)'));
 
 // display some informations about the mesh
-printf('\0nbcvs=%d, nbpts=%d, nbdof=%d\n',gf_mesh_get(m,'nbcvs'), gf_mesh_get(m,'nbpts'),gf_mesh_fem_get(mfu,'nbdof'));
+printf('nbcvs=%d, nbpts=%d, nbdof=%d\n',gf_mesh_get(m,'nbcvs'), gf_mesh_get(m,'nbpts'),gf_mesh_fem_get(mfu,'nbdof'));
 
 P = gf_mesh_get(m,'pts'); // get list of mesh points coordinates
 pidtop = find(abs(P(2,:)-13)<1e-6); // find those on top of the object
@@ -108,7 +110,7 @@ U = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
 disp('plotting ... can also take some minutes!');
 
-h = gcf();
+h = scf();
 h.color_map = jetcolormap(255); //gf_colormap('tripod');
 
 // we plot the von mises on the deformed object, in superposition
@@ -130,8 +132,10 @@ a.box = 'off';
 a.axes_visible = 'off';
 drawnow;
 
-// the von mises stress is exported into a VTK file
-// (which can be viewed with 'mayavi -d tripod.vtk -m BandedSurfaceMap')
-// see http://mayavi.sourceforge.net/
-gf_mesh_fem_get(mfdu,'export to vtk','tripod.vtk','ascii',VM,'vm')
+printf('the von mises stress is exported into a VTK file\n');
+printf('(which can be viewed with ''mayavi -d tripod.vtk -m BandedSurfaceMap'')\n');
+printf('see http://mayavi.sourceforge.net/');
 
+gf_mesh_fem_get(mfdu,'export to vtk', path + '/tripod.vtk','ascii',VM,'vm')
+
+printf('demo tripod terminated\n');

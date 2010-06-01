@@ -2,6 +2,11 @@
 // solve the linear elasticity problem with a mortar join on 
 // the interface between the two areas
 
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_mortar.sce');
+
 gf_workspace('clear all'); 
 
 NX     = 9;
@@ -58,8 +63,8 @@ disp('This is the mortar interface (enter ''resume'' to continue)'); pause;
 
 indm = gf_mesh_fem_get(mfm, 'basic dof on region', MORTAR_BOUNDARY_OUT);
 expr = 'M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i)';
-M    =   gf_asm('boundary', MORTAR_BOUNDARY_IN , expr, mim, mfm, mfu);
-M    = M-gf_asm('boundary', MORTAR_BOUNDARY_OUT, expr, mim, mfm, mfu);
+M    = gf_asm('boundary', MORTAR_BOUNDARY_IN , expr, mim, mfm, mfu);
+M    = M - gf_asm('boundary', MORTAR_BOUNDARY_OUT, expr, mim, mfm, mfu);
 M    = M(indm, :);
 
 md = gf_model('real');
@@ -87,3 +92,4 @@ drawnow;
 
 // caxis([0 500]);
 
+printf('demo mortar terminated\n');

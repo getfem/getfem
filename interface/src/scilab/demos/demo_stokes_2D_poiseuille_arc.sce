@@ -1,9 +1,15 @@
 // this example uses the "old" gf_solve instead of the bricks framework..
 
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_stokes_2D_poiseuille_arc.sce');
+
+printf('demo stokes_2D_poiseuille_arc started\n');
+
 gf_workspace('clear all');
 
 disp('2D stokes demonstration on a quadratic mesh');
-
 
 pde = init_pde();
 
@@ -26,7 +32,7 @@ pde('bound')($)('type') = 'Dirichlet';
 pde('bound')($)('R')    = list(list(0,0));
 pde('bound')($)('H')    = [];
 
-//m = gf_mesh('import','GiD','tube_2D_spline.GiD.msh');
+//m = gf_mesh('import','GiD', path + '/data/tube_2D_spline.GiD.msh');
 
 Ku=3; Kp=1;
 Nt=8; Nr=4;
@@ -120,3 +126,5 @@ gf_plot(pde('mf_p'),P(:)');
 title('Quiver plot zoomed');
 h.color_map = jetcolormap(255);
 drawnow;
+
+printf('demo stokes_2D_poiseuille_arc terminated\n');

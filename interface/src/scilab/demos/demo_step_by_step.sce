@@ -1,3 +1,12 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_step_by_step.sce');
+
+printf('demo step_by_step started\n');
+
+gf_workspace('clear all');
+
 // creation of a simple cartesian mesh
 m = gf_mesh('cartesian', 0:0.1:1.1, 0:0.1:1.1);
 
@@ -45,3 +54,5 @@ sol = gf_mdstate_get(mds,'state');
 
 // export computed solution
 gf_mesh_fem_get(mf,'export_to_pos','sol.pos',sol,'Computed solution');
+
+printf('demo step_by_step terminated\n');

@@ -1,7 +1,14 @@
 // this example uses the "old" gf_solve instead of the bricks
 // framework..
 
+lines(0);
+stacksize('max');
+
 gf_workspace('clear all');
+
+path = get_absolute_file_path('demo_stokes_2D_tube.sce');
+
+printf('demo stokes_2D_tube started\n');
 
 disp('2D stokes demonstration on a quadratic mesh');
 
@@ -26,7 +33,7 @@ pde('bound')($)('type') = 'Dirichlet';
 pde('bound')($)('R')    = list(list(0,0));
 pde('bound')($)('H')    = [];
 
-m = gf_mesh('import','GiD','data/tube_2D_spline.GiD.msh');
+m = gf_mesh('import','GiD', path + '/data/tube_2D_spline.GiD.msh');
 
 mfulag = gf_mesh_fem(m,2);
 
@@ -93,3 +100,5 @@ gf_plot(pde('mf_p'),P(:)');
 colorbar(min(Ul),max(Ul));
 title('Quiver plot zoomed');
 drawnow;
+
+printf('demo stokes_2D_tube terminated\n');

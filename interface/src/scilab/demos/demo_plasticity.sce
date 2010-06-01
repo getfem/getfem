@@ -1,3 +1,8 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_plasticity.sce');
+
 L = 100;
 H = 20;
 
@@ -52,8 +57,8 @@ for step=1:nbstep
   VM = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
   max(abs(VM))
 
-  clf();
   drawlater;
+  clf();
   subplot(2,1,1);
   gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mfu,'refine', 4, 'deformation_scale',1); 
   colorbar(min(U),max(U));
@@ -69,3 +74,4 @@ for step=1:nbstep
   sleep(1000);
 end
 
+printf('demo plasticity terminated\n');

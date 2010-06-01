@@ -1,6 +1,13 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_nonlinear_elasticity_anim.sce');
+
+printf('demo nonlinear_elasticity_anim\n');
+
 // replay all the computations of demo_nonlinear_elasticity.sci
 
-load demo_nonlinear_elasticity_U.mat
+load(path + '/demo_nonlinear_elasticity_U.mat');
 
 nbstep = size(UU,1);
 m    = gf_mesh('from string', m_char);
@@ -9,6 +16,8 @@ mfdu = gf_mesh_fem('from string',mfdu_char,m);
 
 sl = gf_slice(list('boundary'), m, 16, gf_mesh_get(m,'outer faces'));
 P0 = gf_slice_get(sl,'pts');
+
+h = scf();
 
 for step=1:1:nbstep
   U  = UU(step,:);
@@ -20,6 +29,7 @@ for step=1:1:nbstep
   gf_slice_set(sl,'pts', P0+slU);
   
   drawlater;
+  clf();
   gf_plot_slice(sl, 'data', slVM, 'mesh_edges','on', 'mesh','on'); 
   drawnow;
 
@@ -34,6 +44,7 @@ for step=1:1:nbstep
 //  camup;
 //  camlight; 
 //  axis off;
-  xs2png(gcf, sprintf('torsion%03d',step));
+  xs2png(gcf, path + sprintf('/torsion%03d',step));
 end
 
+printf('demo nonlinear_elasticity_anim terminated\n');

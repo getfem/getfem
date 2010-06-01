@@ -1,7 +1,14 @@
+lines(0);
+stacksize('max');
+
+printf('demo nonlinear_elasticity started\n');
+
 clear pde;
 
+path = get_absolute_file_path('demo_nonlinear_elasticity.sce');
+
 // Load the axrot_matrix macro
-exec axrot_matrix.sci;
+exec(path + 'axrot_matrix.sci');
 
 gf_workspace('clear all');
 
@@ -18,9 +25,9 @@ incompressible = 1
 if 0 then
   h = 20
   // import the mesh
-  //m=gf_mesh('load', 'ladder.mesh');
-  //m=gf_mesh('load', 'ladder_1500.mesh');
-  m = gf_mesh('load', 'holed_bar.mesh');
+  //m = gf_mesh('load', path + '/data/ladder.mesh');
+  //m = gf_mesh('load', path + '/data/ladder_1500.mesh');
+  m = gf_mesh('load', path + '/data/holed_bar.mesh');
   gf_mesh_set(m, 'transform', [1 0 0; 0 0 1; 0 1 0]);
   mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
   mfd = gf_mesh_fem(m,1);     // scalar mesh_fem
@@ -100,12 +107,14 @@ if (reload == 0) then
   VVM    = [];
   nbstep = 40
 else
-  load 'demo_nonlinear_elasticity_U.mat';
+  load(path + '/demo_nonlinear_elasticity_U.mat');
   nb_step = size(UU,1);
 end
 P = gf_mesh_fem_get(mfd, 'basic dof_nodes');
 r = sqrt(P(1 ,:).^2 + P(3, :).^2);
 theta = atan(P(3,:),P(1,:));
+
+scf();
 
 for step=1:nbstep
   w = 3*step/nbstep;
@@ -153,16 +162,16 @@ for step=1:nbstep
     VM  = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
     UU  = [UU;U]; 
     VVM = [VVM;VM];
-    save('demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char);
+    save(path + '/demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char);
   else
     U  = UU(step,:);
     VM = VVM(step,:);
   end
   disp(sprintf('step %d/%d : |U| = %g',step,nbstep,norm(U)));
 
+  drawlater;
   clf();
   h_graph = gcf();
-  drawlater;
   h_graph.color_map = jetcolormap(255);
   gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8);
   colorbar(min(U),max(U));
@@ -177,9 +186,10 @@ for step=1:nbstep
 //  axis off;
   sleep(1000); 
   // save a picture..
-  xs2png(h_graph.figure_id,sprintf('torsion%03d.png',step));
+  xs2png(h_graph.figure_id, path + sprintf('/torsion%03d.png',step));
 end
   
 disp('end of computations, you can now replay the animation with')
 disp('exec demo_nonlinear_elasticity_anim.sce;')
 
+printf('demo nonlinear_elasticity terminated\n');

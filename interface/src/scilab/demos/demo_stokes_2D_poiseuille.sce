@@ -3,6 +3,10 @@
 lines(0);
 stacksize('max');
 
+path = get_absolute_file_path('demo_stokes_2D_poiseuille.sce');
+
+printf('demo stokes_2D_poiseuille started\n');
+
 gf_workspace('clear all');
 
 disp('validation for 2D stokes with rectangular elements : Poiseuille flow with cartesian mesh');
@@ -65,3 +69,4 @@ disp('Note that the dirichlet condition was described on a P1 fem');
 disp('(visible on the deformed mesh: on boundaries, the deformation');
 disp('is linear, hence there is a small error on the computed solution.');
 
+printf('demo stokes_2D_poiseuille terminated\n');

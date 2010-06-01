@@ -3,13 +3,17 @@ disp('This demo does not use the model bricks introduced with getfem 2.0')
 disp('instead it show how the linear system is built with direct calls')
 disp('to the assembly routines.')
 
-stacksize('max');
 lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_tripod_alt.sce');
 
 gf_workspace('clear all');
 
+printf('demo tripod_alt started\n');
+
 // import the mesh
-m   = gf_mesh('import','gid','data/tripod.GiD.msh');
+m   = gf_mesh('import','gid', path + '/data/tripod.GiD.msh');
 mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
 mfd = gf_mesh_fem(m,1);     // scalar mesh_fem
 
@@ -42,7 +46,7 @@ lambda = E*nu/((1+nu)*(1-2*nu));
 mu     = E/(2*(1+nu));
 nbd    = gf_mesh_fem_get(mfd, 'nbdof');
 F = gf_asm('boundary_source', 1, mim, mfu, mfd, repmat([0;-10;0],1,nbd));
-K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd)); // Long ici. Transfert matlab sparse vers scilab sparse ?
+K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd));
 
 // handle Dirichlet condition
 [H,R]  = gf_asm('dirichlet', 2, mim, mfu, mfd, ones(1,1,nbd) .*. eye(3,3), zeros(3, nbd));
@@ -132,3 +136,4 @@ a.z_label.visible = 'off';
 colorbar(min(VM),max(VM));
 drawnow;
 
+printf('demo tripod_alt terminated\n');

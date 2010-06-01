@@ -1,3 +1,10 @@
+lines(0);
+stacksize('max');
+
+path = get_absolute_file_path('demo_plate.sce');
+
+printf('demo plate started\n');
+
 // Plate problem test.
 
 NX        = 10.0;
@@ -65,12 +72,14 @@ ut = U(1:nut); // YC: nut+1 ?
 u3 = U(nut+1:(nut+nu3));
 th = U((nut+nu3)+1:(nut+nu3+nth));
 sl = gf_slice(list('none'), mfu3, 4);
-gf_slice_get(sl,'export_to_vtk','plate.vtk', mfu3, u3, 'Displacement');
-gf_slice_get(sl,'export_to_pos','plate.pos', mfu3, u3,'Displacement');
+gf_slice_get(sl,'export_to_vtk', path + '/plate.vtk', mfu3, u3, 'Displacement');
+gf_slice_get(sl,'export_to_pos', path + '/plate.pos', mfu3, u3,'Displacement');
 
 printf('You can view the solution with (for example):\n');
-printf('mayavi -d ./plate.vtk -f WarpScalar -m BandedSurfaceMap\n');
+printf('mayavi -d %s/plate.vtk -f WarpScalar -m BandedSurfaceMap\n', path);
 printf('or\n');
-printf('mayavi2 -d plate.vtk -f WarpScalar -m Surface\n');
+printf('mayavi2 -d %s/plate.vtk -f WarpScalar -m Surface\n', path);
 printf('or\n');
-printf('gmsh plate.pos\n');
+printf('gmsh %s/plate.pos\n', path);
+
+printf('demo plate terminated\n');

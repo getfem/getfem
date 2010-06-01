@@ -1,6 +1,6 @@
 // ====================================================================
 // Yann COLLETTE
-// Copyright 2009
+// Copyright 2009-2010
 // This file is released into the public domain
 // ====================================================================
 demopath = get_absolute_file_path("sci_getfem.dem.gateway.sce");
@@ -16,6 +16,7 @@ subdemolist = ["Bilaplacian",              "demo_bilaplacian.sce"; ..
 	       "Plasticity",               "demo_plasticity.sce"; ..
 	       "Plate",                    "demo_plate.sce"; ..
 	       "Refine",                   "demo_refine.sce"; ..
+	       "Static Contact",           "demo_static_contact.sce"; ..
 	       "Step by Step",             "demo_step_by_step.sce"; ..
 	       "Stokes 2D Poiseuille Arc", "demo_stokes_2D_poiseuille_arc.sce"; ..
 	       "Stokes 2D Poiseuille",     "demo_stokes_2D_poiseuille.sce"; ..

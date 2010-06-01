@@ -1,7 +1,11 @@
-gf_workspace('clear all');
-
 lines(0);
 stacksize('max');
+
+path = get_absolute_file_path('demo_wave2D_alt.sce');
+
+printf('demo wave2D_alt\n');
+
+gf_workspace('clear all');
 
 disp('2D scalar wave equation (helmholtz) demonstration');
 disp('Helmholtz is not handled (for the moment) by gf_solve');
@@ -178,3 +182,4 @@ colorbar(min(real(Ud)),max(real(Ud)));
 h.color_map = jetcolormap(255);
 drawnow;
 
+printf('demo wave2D_alt terminated\n');

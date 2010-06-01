@@ -3,9 +3,12 @@ stacksize('max');
 
 gf_workspace('clear all');
 
+printf("demo bilaplacian started\n");
+
 N  = 2;
 NX = 5;
 NY = 5;
+
 //m = gf_mesh('regular simplices',0:1/NX:1, 0:1/NY:1);
 m = gf_mesh('cartesian',0:1/NX:1, 0:1/NY:1);
 
@@ -107,3 +110,5 @@ disp(sprintf('H2 norm of the solution: %g', gf_compute(mfu,U,'H2 norm', mim)));
 
 //disp(sprintf('H1 norm of the error: %g', gf_compute(mfd,err,'H1 norm', mim)));
 //disp(sprintf('H2 norm of the error: %g', gf_compute(mfd,err,'H2 norm', mim)));
+
+printf("demo bilaplacian terminated\n");

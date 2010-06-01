@@ -1,7 +1,11 @@
-gf_workspace('clear all');
-
 lines(0);
 stacksize('max');
+
+path = get_absolute_file_path('demo_wave2D.sce');
+
+printf('demo wave2D started\n');
+
+gf_workspace('clear all');
 
 disp('2D scalar wave equation (helmholtz) demonstration');
 disp(' we present three approaches for the solution of the helmholtz problem')
@@ -29,6 +33,7 @@ else
 end
 
 disp(sprintf('using %s P%d FEM with geometric transformations of degree %d',s,PK,gt_order));
+
 if (load_the_mesh) then
   disp('the mesh is loaded from a file, gt_order ignored');
 end
@@ -60,7 +65,7 @@ if load_the_mesh == 0 then
   mim = gf_mesh_im(m, g_integ(sIM));
 else
   // the mesh is loaded
-  m = gf_mesh('import','gid','data/holed_disc_with_quadratic_2D_triangles.msh');
+  m = gf_mesh('import','gid',path + 'data/holed_disc_with_quadratic_2D_triangles.msh');
   if (use_hierarchical) then
     // hierarchical basis improve the condition number
     // of the final linear system
@@ -158,7 +163,7 @@ end
 
 Ud = gf_compute(mfu,U,'interpolate on',mfd);
 
-h = scf(1); 
+h = scf(); 
 h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfu,imag(U(:)'),'mesh','on','refine',32,'contour',0); 
@@ -166,7 +171,7 @@ colorbar(min(imag(U)),max(imag(U)));
 h.color_map = jetcolormap(255);
 drawnow;
 
-h = scf(2); 
+h = scf(); 
 h.color_map = jetcolormap(255);
 drawlater;
 gf_plot(mfd,abs(Ud(:)'),'mesh','on','refine',24,'contour',0.5); 
@@ -209,10 +214,12 @@ disp(sprintf('rel error ||Uex-U||_inf=%g',max(abs(Ud-Uex))/max(abs(Uex))));
 disp(sprintf('rel error ||Uex-U||_L2=%g', gf_compute(mfd,Uex-Ud,'L2 norm',mim)/gf_compute(mfd,Uex,'L2 norm',mim)));
 disp(sprintf('rel error ||Uex-U||_H1=%g', gf_compute(mfd,Uex-Ud,'H1 norm',mim)/gf_compute(mfd,Uex,'H1 norm',mim)));
 
-h = scf(3);
+h = scf();
 h.color_map = jetcolormap(255);
 // adjust the 'refine' parameter to enhance the quality of the picture
 drawlater;
 gf_plot(mfu,real(U(:)'),'mesh','on','refine',8);
 h.color_map = jetcolormap(255);
 drawnow;
+
+printf('demo wave2D terminated\n');
