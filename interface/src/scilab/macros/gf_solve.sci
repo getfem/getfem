@@ -26,9 +26,6 @@ if (typeof(z)=='list') then
   end
   z = tmp(:);
 end
-printf('here\n');
-disp(z)
-printf('here\n');
 pde('asm')(dname) = gf_mesh_fem_get_eval(mf, z); // YC: pb ici quand z est numeric ...
 endfunction
 
@@ -178,15 +175,11 @@ else
     if (is_dirichlet) then
       assert_field(pde('bound')(bnum),'R');
       if (do_R | do_H) then
-        printf('here 1\n');
         disp(list(pde('bound')(bnum)('R')(:)))
         vR = gf_mesh_fem_get_eval(pde('mf_d'), list(list(pde('bound')(bnum)('R')(:))));
-        disp(size(vR))
         if (~isempty(pde('bound')(bnum)('H'))) then
-          printf('here 2\n');
           disp(list(pde('bound')(bnum)('H')(:)))
           vH = gf_mesh_fem_get_eval(pde('mf_d'), list(list(pde('bound')(bnum)('H')(:))));
-          disp(size(vH))
         else 
           //h = num2cell(eye(q_dim,q_dim));  // YC: numtocell a changer
 //          h = list();
@@ -198,10 +191,8 @@ else
 //            end
 //          end
 //          clear tmp;
-          printf('here 3\n');
           h = eye(q_dim, q_dim);
           vH = gf_mesh_fem_get_eval(pde('mf_d'), h(:)); 
-          disp(size(vH))
         end
         //           Matlab  Scilab
         // vR:      2 * 102  2 * 102
