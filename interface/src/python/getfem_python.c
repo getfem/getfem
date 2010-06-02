@@ -590,7 +590,9 @@ call_getfem_(PyObject *self, PyObject *args, int in__init__)
   in = build_gfi_array_list(&gc, args, &function_name, &in_cnt);
   if (in) {
     //fprintf(stdout,"  -> function = %s\n", function_name);
+    Py_BEGIN_ALLOW_THREADS;
     errmsg = getfem_interface_main(PYTHON_INTERFACE, function_name, in_cnt, in, &out_cnt, &out, &infomsg,0);
+    Py_END_ALLOW_THREADS;
     if (infomsg) {
       printf("message from gf_%s follow:\n%s\n", function_name, infomsg); fflush(stdout);
     }
