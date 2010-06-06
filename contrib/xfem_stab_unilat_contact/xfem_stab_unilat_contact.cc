@@ -636,15 +636,16 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
 
   std::set<size_type> cols;
   cols.clear(); 
-  sparse_matrix BRBB(mf_pre_uu().nb_dof(), mf_cont().nb_dof());
-  mf_u().set_qdim(1);
-  asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
+  sparse_matrix BRBB(mf_cont().nb_dof(), mf_cont().nb_dof());
+ // mf_u().set_qdim(1);
+ // asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
+  asm_mass_matrix(BRBB, mimbound, mf_cont(), mf_cont());
   // cout << "BRBB " << BRBB << endl;
   cout << "Selecting dofs for the multiplier" << endl;
   cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
   gmm::range_basis(BRBB, cols);
   mf_cont().reduce_to_basic_dof(cols);
-  mf_u().set_qdim(dim_type(N));
+  //mf_u().set_qdim(dim_type(N));
   
   size_type nb_dof = mf_u().nb_dof();
   cout << "nb_dof = " << nb_dof << endl;
@@ -749,7 +750,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   for(size_type i = 0; i < F.size(); i=i+N*N) {
     base_node pt = mf_rhs.point_of_basic_dof(i / (N*N));
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.02;}
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.2;}
 
     // scalar_type coeff = pt[1] > 0. ? -1 : 1;
     // for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
@@ -893,7 +894,70 @@ int main(int argc, char *argv[]) {
     slicer.exec(nrefine, getfem::mesh_region::all_convexes());
   }
 
+if (1) { 
 
+    getfem::mesh_fem mf(mcut, dim_type(Q));
+    mf.set_classical_discontinuous_finite_element(2, 1E-5);
+    plain_vector VV(mf.nb_dof());
+    getfem::interpolation(p.mf_u(), mf, U, VV);
+
+   getfem::mesh_fem mf_cont(mcut, 1);
+   mf_cont.set_classical_discontinuous_finite_element(2, 1E-5);
+   plain_vector PPP(mf_cont.nb_dof());
+   getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PPP);
+
+
+
+  getfem::level_set ls(mcut, 1, true);
+   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
+     ls.values(0)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
+     ls.values(1)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
+   }
+   ls.touch();
+
+  const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
+ lsmf.write_to_file("xfem_stab_unilat_contact_ls.mf", true);
+  gmm::vecsave("xfem_stab_unilat_contact_ls.U", ls.values());
+
+
+
+
+    cout << "saving the slice solution for matlab\n";
+    getfem::stored_mesh_slice sl, sl0,sll;
+    
+    
+    getfem::mesh_slicer slicer1(mf.linked_mesh());
+   getfem::slicer_build_stored_mesh_slice sbuild(sl);
+ //   getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf,VV);
+ //   getfem::slicer_isovalues iso(mfU, 0.0, 0);
+   getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
+    
+   slicer1.push_back_action(sbuild);  // full slice in sl
+ //  slicer1.push_back_action(iso);     // extract isosurface 0
+   slicer1.push_back_action(sbuild0); // store it into sl0
+   slicer1.exec(nrefine, mf.convex_index());
+    
+    getfem::mesh_slicer slicer2(mf.linked_mesh());
+    getfem::mesh_slice_cv_dof_data<plain_vector> 
+      mfL(ls.get_mesh_fem(), ls.values());
+    getfem::slicer_isovalues iso2(mfL, 0.0, 0);
+    getfem::slicer_build_stored_mesh_slice sbuildl(sll);
+    slicer2.push_back_action(iso2);     // extract isosurface 0
+    slicer2.push_back_action(sbuildl); // store it into sl0
+    slicer2.exec(nrefine, mf.convex_index());
+    
+   sl.write_to_file("xfem_stab_unilat_contact.sl", true);
+    sl0.write_to_file("xfem_stab_unilat_contact.sl0", true);
+    sll.write_to_file("xfem_stab_unilat_contact.sll", true);
+   plain_vector LL(sll.nb_points()); 
+ //  gmm::scale(PP, 0.005);
+   sll.interpolate(mf_cont, PPP, LL);
+   gmm::vecsave("xfem_stab_unilat_contact.slL", LL);
+//    plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
+//    sl.interpolate(mf, V, UU);
+//    gmm::vecsave("xfem_stab_unilat_contact.slU", UU);
+    
+  } 	  
 
 
 
@@ -946,7 +1010,8 @@ int main(int argc, char *argv[]) {
     mf_cont.write_to_file(p.datafilename + ".cont_meshfem", true);
     gmm::vecsave(p.datafilename + ".cont", PP);
     p.mf_cont().write_to_file(p.datafilename + ".contt_meshfem", true);
-    gmm::vecsave(p.datafilename + ".contt", Lambda);   
+    gmm::vecsave(p.datafilename + ".contt", Lambda); 
+
   }
   
   
@@ -1049,10 +1114,10 @@ int main(int argc, char *argv[]) {
 	<< getfem::asm_L2_dist(mimboundd, ref_mf_cont, interp_cont,
 			       ref_mf_cont, ref_cont) << endl;
    
-  
+
    
  }
- 
+
   return 0; 
 
   
