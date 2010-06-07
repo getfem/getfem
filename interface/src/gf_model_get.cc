@@ -201,11 +201,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET ('assembly'[, @str option])
       Assembly of the tangent system taking into account the terms
       from all bricks. `option`, if specified, should be 'build_all',
-      'build_rhs' or 'build_matrix'. The default is to build the whole
+      'build_rhs', 'build_matrix' or 'pseudo_potential' (in that case,
+      the pseudo_potential is returned).
+      The default is to build the whole
       tangent linear system (matrix and rhs). This function is usefull
       to solve your problem with you own solver. @*/
     sub_command
-      ("assembly", 0, 1, 0, 0,
+      ("assembly", 0, 1, 0, 1,
        std::string option = "build_all";
        if (in.remaining()) option = in.pop().to_string();
        getfem::model::build_version version = getfem::model::BUILD_ALL;
@@ -218,8 +220,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        else if (cmd_strmatch(option, "build matrix") ||
 		cmd_strmatch(option, "build_matrix"))
 	 version = getfem::model::BUILD_MATRIX;
+       else if (cmd_strmatch(option, "pseudo potential") ||
+		cmd_strmatch(option, "pseudo_potential"))
+	 version = getfem::model::BUILD_PSEUDO_POTENTIAL;
        else THROW_BADARG("bad option: " << option);
        md->model().assembly(version);
+       if (version == getfem::model::BUILD_PSEUDO_POTENTIAL)
+	 out.pop().from_scalar(md->model().pseudo_potential());
        );
 
 
