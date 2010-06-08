@@ -23,26 +23,57 @@
 %  also a good example of use of GetFEM++.
 %
 
+
+
+
+
 clear all;
 gf_workspace('clear all');
 
 % parameters
-initial_holes = 1;     % Pre-existing holes or not.
-NY = 40;               % Number of elements in y direction
+
+TEST_CASE = 2 % 0 : 2D, initial holes, shape gradient only
+              % 1 : 2D, no initial hole, coupling with topological gradient
+              % 2 : 3D, initial holes, shape gradient only
+              % 3 : 3D, no initial hole, coupling with topological gradient
+
+switch TEST_CASE
+  case 0,
+    N = 2;
+    initial_holes = 1;
+  case 1,
+    N = 2;
+    initial_holes = 0;
+  case 2,
+    N = 3;
+    initial_holes = 1;
+  case 3,
+    N = 3;
+    initial_holes = 0;
+end
 
 k = 1;                 % Degree of the finite element method for u
-N = 2;                 % Dimension of the mesh (2 or 3).
 lambda = 1;            % Lame coefficient
 mu = 1;                % Lame coefficient
-hole_radius = max(0.03, 2./NY);  % Hole radius for topological optimization
+
 if (N == 2)
-  CF = k*NY/40.;       % Correction factor. Usefull ?
+  NY = 160              % Number of elements in y direction
+  level_set_rate = 0.4 / NY;
+  reinitialisation_time = 0.005;
+  % CF = k*sqrt(NY/20);
+  threshold_shape = 0.90; % CF * 0.8;
+  threshold_topo  = 0; % CF * 0.45;
+  NBDRAW = 10;            % Draw solution each NBDRAW iterations
 else
-  CF = k*NY/8.;        % Correction factor. Usefull ?
-end
-threshold_shape = CF * 0.9;
-threshold_topo  = CF * 0.2;
-NBDRAW = 5;            % Draw solution each NBDRAW iterations
+  NY = 20
+  level_set_rate = 0.4 / NY;
+  reinitialisation_time = 0.005;
+  % CF = k*sqrt(NY/8);  
+  threshold_shape = 2.5; % CF * 0.8;
+  threshold_topo  = 0; % CF * 0.45;
+  NBDRAW = 5;            % Draw solution each NBDRAW iterations
+end;
+hole_radius = max(0.03, 2./NY);  % Hole radius for topological optimization
 ls_degree = 1;         % Degree of the level-set. Should be one for the moment.
 DEBUG = 0;
 if (DEBUG)
@@ -149,7 +180,7 @@ gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
 %             mim, 'u', 1, GAMMAD);
 gf_model_set(md,'add Dirichlet condition with penalization', mim, ...
       'u', 1E5, GAMMAD);
-gf_model_set(md, 'add initialized data', 'penalty_param', [1E-7]);          
+gf_model_set(md, 'add initialized data', 'penalty_param', [1E-8]);          
 gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
@@ -157,7 +188,7 @@ gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
 
 
 % Optimization loop
-for niter = 1:100000
+for niter = 1:400
   ti = cputime;
   gf_workspace('push');
 
@@ -222,7 +253,7 @@ for niter = 1:100000
   % Extension of the gradient into the hole. Too rough ?
   GF(ind) = GF(ind) * 0;
   % Threshold on the gradient
-  GF = min(GF, 1.1*threshold_shape);
+  GF = min(GF, 2*threshold_shape);
   ind = find(D < maxD/1.2);
   GT(ind) = GT(ind) * 0 - 20;
 
@@ -265,6 +296,7 @@ for niter = 1:100000
       title('Shape gradient on the remaining volume');
       pause(0.3);
     end
+    print(gcf,'-dpng','-r450', sprintf('demo_structural_opt%dD_%d', N, niter));
   end
 
   [val, i] = max(GT);
@@ -290,7 +322,7 @@ for niter = 1:100000
   Fdisc = gf_asm('volumic source', mimls, mf_ls, mf_g, GF);
   % Vcont = Mcontls \ Fdisc;
   Vcont = cgs(Mcontls, Fdisc, 1e-8, 100000, RMcontls);
-  ULS = ULS - Vcont' * 0.005;
+  ULS = ULS - Vcont' * level_set_rate;
 
 
   % Evolution of the level-set thank to shape derivative.
@@ -329,7 +361,7 @@ for niter = 1:100000
   end;
    
   % Re-initialization of the level-set
-  dt = 0.01; NT = 4; ddt = dt / NT;
+  dt = reinitialisation_time; NT = 10; ddt = dt / NT;
   ULS0 = ULS;
   for t = ddt:ddt:dt
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
@@ -346,6 +378,7 @@ for niter = 1:100000
     end;
   
     gf_compute(mf_ls, ULS, 'convect', mf_cont, W, ddt, 1, 'unchanged');
+
     ULS = ULS + ddt * sign(ULS0);
   end;
 

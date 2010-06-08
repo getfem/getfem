@@ -43,9 +43,7 @@
 #include "getfem_assembling_tensors.h"
 #include "getfem_derivatives.h"
 #include "getfem_interpolation.h"
-
-
-#include "../gmm/gmm_dense_qr.h"
+#include "gmm/gmm_dense_qr.h"
 
 namespace getfem {
 
@@ -195,6 +193,33 @@ namespace getfem {
       }
     VM_projection(size_type flag_hyp_ = 0) : abstract_constraints_projection (flag_hyp_) {}
   };
+
+
+
+  //===========================================================================
+  //
+  //  Bricks
+  //
+  //===========================================================================
+
+
+  /** Commentaire adapté ...
+
+
+  */
+  size_type add_plasticity_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &datalambda, const std::string &datamu,
+   const std::string &datathreshold, const std::string &datasigma,
+   size_type region = size_type(-1));
+
+
+  //===========================================================================
+  //
+  //  Bricks for the old brick system (DEPRECATED)
+  //
+  //===========================================================================
+
   
   /** Compute the projection of D*e + sigma_bar_ on a Gauss point. */
   class plasticity_projection : public nonlinear_elem_term {

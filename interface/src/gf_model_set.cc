@@ -32,6 +32,7 @@
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_Coulomb_friction.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
+#include <getfem/getfem_plasticity.h>
 
 using namespace getfemint;
 
@@ -906,6 +907,28 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
+
+    /*@SET ind = ('add plasticity brick', @tmim mim, @str varname, @str constitutive_law, @str dataname[, @int region])
+    To be filled ... .@*/
+    sub_command
+      ("add plasticity brick", 6, 7, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string datalambda = in.pop().to_string();
+       std::string datamu = in.pop().to_string();
+       std::string datathreshold = in.pop().to_string();
+       std::string datasigma = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind = config::base_index() +
+       add_plasticity_brick
+       (md->model(), gfi_mim->mesh_im(), varname, datalambda, datamu,
+	datathreshold, datasigma, region);
+       
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
 
     /*@SET ind = ('add nonlinear incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region])
     Add an nonlinear incompressibility condition on `variable` (for large
