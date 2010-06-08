@@ -28,18 +28,25 @@
 //
 //===========================================================================
 
-/**@file getfem_plasticity.h
-   @author  Marc ODUNLAMI, Rémi DELMAS
-   @date June 10, 2004.
-   @brief Plasticity model brick.
+/**@file getfem_nonlinear_elasticity.h
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>,
+   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Amandine Cottaz
+   @date June 2, 2010.
+   @brief Plasticty bricks.
 */
-
-#ifndef GETFEM_PLASTICITY__
-#define GETFEM_PLASTICITY__
+#ifndef GETFEM_PLASTICITY_H__
+#define GETFEM_PLASTICITY_H__
 
 #include "getfem_modeling.h"
-#include "gmm/gmm_dense_qr.h"
+#include "getfem_models.h"
+#include "getfem_assembling_tensors.h"
+#include "getfem_derivatives.h"
+#include "getfem_interpolation.h"
 
+
+#include "../gmm/gmm_dense_qr.h"
+#if 0
 namespace getfem {
 
   /** Abstract projection of a stress tensor onto a set of admissible
@@ -196,6 +203,7 @@ namespace getfem {
     size_type N;
     const mesh_im &mim;
     const mesh_fem &mf;
+    const mesh_fem &mf_sigma;
     const mesh_fem &mf_data;
     std::vector<scalar_type> U;
     std::vector<scalar_type> stress_threshold;
@@ -223,6 +231,7 @@ namespace getfem {
     // constructor
     plasticity_projection(const mesh_im &mim_,
 			  const mesh_fem &mf_,
+			  const mesh_fem &mf_sigma_,
 			  const mesh_fem &mf_data_,
 			  const std::vector<scalar_type> &U_, 
 			  const std::vector<scalar_type> &stress_threshold_, 
@@ -234,7 +243,7 @@ namespace getfem {
 			  const size_type flag_proj_,
 			  const bool fill_sigma) :
       params(3), N(mf_.linked_mesh().dim()), mim(mim_),
-      mf(mf_), mf_data(mf_data_),
+      mf(mf_), mf_sigma(mf_sigma_), mf_data(mf_data_),
       U(mf_.nb_basic_dof()),  stress_threshold(mf_data_.nb_basic_dof()),
       lambda(mf_data_.nb_basic_dof()), mu(mf_data_.nb_basic_dof()),
       sizes_(N, N, N, N), t_proj(t_proj_),
@@ -281,11 +290,11 @@ namespace getfem {
       // to the number of integration points on the convexe. Seems that
       // this is rarely needed. 
       if (sigma_bar_[cv].size() == 0){
-	size_type nbgausspt = mim.int_method_of_element(cv)
+	size_type nb_interp_pt = mim.int_method_of_element(cv)
 	  ->approx_method()->nb_points_on_convex();
-	sigma_bar_[cv].resize(N*N*nbgausspt);
+	sigma_bar_[cv].resize(N*N*nb_interp_pt);
 	gmm::clear(sigma_bar_[cv]);
-	saved_proj_[cv].resize(N*N*nbgausspt);
+	saved_proj_[cv].resize(N*N*nb_interp_pt);
 	gmm::clear(saved_proj_[cv]);
       }
 
@@ -344,17 +353,20 @@ namespace getfem {
   */
   template<typename VECT> 
   void asm_rhs_for_plasticity
-  (VECT &V, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mfdata,
+  (VECT &V, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_sigma, const mesh_fem &mfdata, const MAT &SIGMA,
    nonlinear_elem_term *plast,
    const mesh_region &rg = mesh_region::all_convexes()) {
     GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
-    generic_assembly assem("t=comp(NonLin(#1,#2).vGrad(#1));"
+    generic_assembly assem("sigma=data(#1);"
+			   "t=sigma(:,j).comp(Base(#2).vGrad(#1))(j,:,:,:);"
 			   "e=(t{:,:,:,4,5}+t{:,:,:,5,4})/2;"
 			   "V(#1) += e(i,j,:,i,j)");
     assem.push_mi(mim);
     assem.push_mf(mf);
+    assem.push_mf(mf_sigma);
     assem.push_mf(mfdata);
+    assem.push_data(SIGMA);
     assem.push_nonlinear_term(plast);
     assem.push_vec(V);
     assem.assembly(rg);
@@ -366,7 +378,7 @@ namespace getfem {
   */
   template<typename MAT,typename VECT> 
   void asm_lhs_for_plasticity
-  (MAT &H, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mfdata,
+  (MAT &H, const mesh_im &mim, const mesh_fem &mf, const mesh_fem &mf_sigma, const mesh_fem &mfdata,
    const VECT &LAMBDA, const VECT &MU, nonlinear_elem_term *gradplast,
    const mesh_region &rg = mesh_region::all_convexes()) {
     GMM_ASSERT1(mf.get_qdim() == mf.linked_mesh().dim(),
@@ -387,6 +399,7 @@ namespace getfem {
     // comp()  to be optimized !!
     assem.push_mi(mim);
     assem.push_mf(mf);
+    assem.push_mf(mf_sigma);
     assem.push_mf(mfdata);
     assem.push_data(LAMBDA);
     assem.push_data(MU);
@@ -396,7 +409,7 @@ namespace getfem {
   }
 
 
-
+/*
   class pseudo_fem_on_gauss_point : public virtual_fem {
     papprox_integration pai;
   public:
@@ -408,7 +421,7 @@ namespace getfem {
       dim_ = cvr->structure()->dim();
       is_equiv = real_element_defined = true;
       is_polycomp = is_pol = false; is_lag = true;
-      es_degree = 5; /* well .. */
+      es_degree = 5; 
       ntarget_dim = 1;
       init_cvs_node();
 
@@ -447,20 +460,21 @@ namespace getfem {
 
 
   DAL_SIMPLE_KEY(special_int_gauss_pt_fem_key, pfem);
-
+*/
   /* not good, shoud be accessible via fem_descriptor in getfem_fem */
-  inline pfem gauss_points_pseudo_fem(pintegration_method pim) {
+ /* inline pfem gauss_points_pseudo_fem(pintegration_method pim) {
     pfem pf = new pseudo_fem_on_gauss_point(pim);
     special_int_gauss_pt_fem_key *psi = new special_int_gauss_pt_fem_key(pf);
     dal::add_stored_object(psi, pf);
     return pf;
   }
-
+*/
   /* ******************************************************************** */
   /*		Plasticity bricks.                                        */
   /* ******************************************************************** */  
+
+
 # define MDBRICK_SMALL_DEF_PLASTICITY 556433
-  
 
 
 
@@ -478,6 +492,7 @@ namespace getfem {
 
       const mesh_im &mim;
       const mesh_fem &mf_u;
+      const mesh_fem &mf_sigma;
       mdbrick_parameter<VECTOR> lambda_, mu_;
       mdbrick_parameter<VECTOR> stress_threshold_;
 
@@ -509,7 +524,7 @@ namespace getfem {
 	gmm::sub_interval SUBU(this->first_index(), mf_u.nb_dof());
 	return gmm::sub_vector(MS.state(), SUBU);
       }
-      
+    
       /** get the stress on each gauss point (of each convex of the mesh) */
       void get_proj(std::vector<std::vector<scalar_type> > &p) {
 	gmm::resize(p, gmm::vect_size(saved_proj));
@@ -524,7 +539,7 @@ namespace getfem {
       template <class VECTVM>
       void compute_Von_Mises_or_Tresca(const mesh_fem &mf_vm, 
 				       VECTVM &VMM, bool tresca) {
-	std::vector<scalar_type> VM(mf_vm.nb_basic_dof());
+/*	std::vector<scalar_type> VM(mf_vm.nb_basic_dof());
 	pintegration_method pim = 0;
 	pfem pf_vm_old = 0;
 	bgeot::pgeometric_trans pgt_old = 0;
@@ -537,10 +552,10 @@ namespace getfem {
 	  bgeot::pgeometric_trans pgt = mim.linked_mesh().trans_of_convex(cv);
 	  if (mim.int_method_of_element(cv) != pim ||
 	      pf_vm != pf_vm_old || 
-	      pgt != pgt_old) {
-	    /* build the L2 projection matrix of the von mises given
+	      pgt != pgt_old) {  */
+	    /** build the L2 projection matrix of the von mises given
 	       on gauss point onto the mf_vm mesh_fem */
-	    pim  = mim.int_method_of_element(cv);
+/*	    pim  = mim.int_method_of_element(cv);
 	    pf_u = gauss_points_pseudo_fem(pim);
 	    pmat_elem_type pme1 = 
 	      mat_elem_product(mat_elem_base(pf_vm),mat_elem_base(pf_vm));
@@ -569,15 +584,15 @@ namespace getfem {
 	      for (unsigned j=0; j < N; ++j) {
 		sigma(i,j) = saved_proj.at(cv)[ii*N*N + j*N + i];
 	      }
-	    if (!tresca) {
-	      /* von mises: 1/2 deviator(sigma):deviator(sigma) */
-	      scalar_type s = gmm::mat_trace(sigma)/scalar_type(N);
+	    if (!tresca) { */
+	      /** von mises: 1/2 deviator(sigma):deviator(sigma) */
+	/*      scalar_type s = gmm::mat_trace(sigma)/scalar_type(N);
 	      for (unsigned i=0; i < N; ++i)
 		sigma(i,i) -= s;
 	      uvm[ii] = gmm::mat_euclidean_norm(sigma);
 	    } else {
-	      /* else compute the tresca criterion */
-	      gmm::symmetric_qr_algorithm(sigma, eig);
+	*/      /* else compute the tresca criterion */
+	/*      gmm::symmetric_qr_algorithm(sigma, eig);
 	      std::sort(eig.begin(), eig.end());
 	      uvm[ii] = eig.back() - eig.front();
 	    }
@@ -587,22 +602,21 @@ namespace getfem {
 	    VM[mf_vm.ind_basic_dof_of_element(cv)[i]] = lvm[i];
 	  }
 	}
-	mf_vm.reduce_vector(VM, VMM);
+	mf_vm.reduce_vector(VM, VMM);*/
       }
       
-      virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					     size_type) {
+      virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0, size_type) {
 	gmm::sub_interval SUBI(i0, mf_u.nb_dof());      
 	T_MATRIX K(mf_u.nb_dof(), mf_u.nb_dof());
 
-	plasticity_projection gradproj(mim, mf_u, lambda_.mf(), MS.state(),
+	plasticity_projection gradproj(mim, mf_u, mf_sigma, lambda_.mf(), MS.state(),
 				       stress_threshold_.get(), lambda_.get(),
 				       mu_.get(), &t_proj,
 				       sigma_bar, saved_proj, 1, false);
 	
-	/* Calculate the actual matrix */
+	/** Calculate the actual matrix */
 	GMM_TRACE2("Assembling plasticity tangent matrix");
-	asm_lhs_for_plasticity(K, mim, mf_u, lambda_.mf(), lambda_.get(),
+	asm_lhs_for_plasticity(K, mim, mf_u, mf_sigma, lambda_.mf(), lambda_.get(),
 			       mu_.get(), &gradproj);
 	gmm::copy(K, gmm::sub_matrix(MS.tangent_matrix(), SUBI));
       }
@@ -610,29 +624,29 @@ namespace getfem {
       virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
 	gmm::sub_interval SUBI(i0, mf_u.nb_dof());        
 	VECTOR K(mf_u.nb_dof());
-	plasticity_projection proj(mim, mf_u, lambda_.mf(), MS.state(),
+	plasticity_projection proj(mim, mf_u, mf_sigma, lambda_.mf(), MS.state(),
 				   stress_threshold_.get(),
 				   lambda_.get(), mu_.get(), &t_proj, sigma_bar,
 				   saved_proj, 0, false);
 	
-	/* Calculate the actual vector */
+	/** Calculate the actual vector */
 	GMM_TRACE2("Assembling plasticity rhs");
-	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
+	asm_rhs_for_plasticity(K, mim, mf_u, mf_sigma, lambda_.mf(), &proj);
 	gmm::copy(K, gmm::sub_vector(MS.residual(), SUBI));
-      }
+     }
       
       void compute_constraints(MODEL_STATE &MS) {
 	VECTOR K(mf_u.nb_dof());
 	
-	plasticity_projection proj(mim, mf_u, lambda_.mf(), MS.state(),
+	plasticity_projection proj(mim, mf_u, mf_sigma, lambda_.mf(), MS.state(),
 				   stress_threshold_.get(),
 				   lambda_.get(), mu_.get(), &t_proj, sigma_bar,
 				   saved_proj, 0, true);
-	
-	/* Calculate the actual vector */
+
+	/** Calculate the actual vector */
 	GMM_TRACE2("Assembling plasticity rhs");
-	asm_rhs_for_plasticity(K, mim, mf_u, lambda_.mf(), &proj);
-      }
+	asm_rhs_for_plasticity(K, mim, mf_u, mf_sigma, lambda_.mf(), &proj);
+     }
 
       /** constructor for a homogeneous material.
 	  (non homogeneous lamba, mu and stress threshold can be set afterwards).
@@ -642,11 +656,11 @@ namespace getfem {
 	  @param stress_th the stress threshold
 	  @param t_proj the projection object (projection on the admissible constraints set).
       */
-      mdbrick_plasticity(const mesh_im &mim_, const mesh_fem &mf_u_,
+      mdbrick_plasticity(const mesh_im &mim_, const mesh_fem &mf_u_, const mesh_fem &mf_sigma_,
 			 value_type lambdai, value_type mui,
 			 value_type stress_th,
 			 const abstract_constraints_projection &t_proj_) 
-	: mim(mim_), mf_u(mf_u_), lambda_("lambda", mf_u_.linked_mesh(), this),
+	: mim(mim_), mf_u(mf_u_), mf_sigma(mf_sigma_), lambda_("lambda", mf_u_.linked_mesh(), this),
 	  mu_("mu", mf_u_.linked_mesh(), this),
 	  stress_threshold_("stress_threshold", mf_u_.linked_mesh(), this),
 	  t_proj(t_proj_) {
@@ -663,4 +677,5 @@ namespace getfem {
 
 } /* namespace getfem */
 
+#endif
 #endif
