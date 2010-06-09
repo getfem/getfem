@@ -32,13 +32,51 @@ printf('demo structural_optimization started\n');
 gf_workspace('clear all');
 
 Do_Plot = %T;
+
 // parameters
-initial_holes   = 1;    // Pre-existing holes or not.
-NY              = 20;   // Number of elements in y direction
+
+TEST_CASE = 0; // 0 : 2D, initial holes, shape gradient only
+               // 1 : 2D, no initial hole, coupling with topological gradient
+               // 2 : 3D, initial holes, shape gradient only
+               // 3 : 3D, no initial hole, coupling with topological gradient
+
+select TEST_CASE
+  case 0 then
+    N = 2;
+    initial_holes = 1;
+  case 1 then
+    N = 2;
+    initial_holes = 0;
+  case 2 then
+    N = 3;
+    initial_holes = 1;
+  case 3 then
+    N = 3;
+    initial_holes = 0;
+end
+
 k               = 1;    // Degree of the finite element method for u
-N               = 2;    // Dimension of the mesh (2 or 3).
 lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
+
+if (N == 2) then
+  NY = 20;             // Number of elements in y direction
+  level_set_rate = 0.4 / NY;
+  reinitialisation_time = 0.005;
+  // CF = k*sqrt(NY/20);
+  threshold_shape = 0.90; // CF * 0.8;
+  threshold_topo  = 0;    // CF * 0.45;
+  NBDRAW = 10;            // Draw solution each NBDRAW iterations
+else
+  NY = 20;
+  level_set_rate = 0.4 / NY;
+  reinitialisation_time = 0.005;
+  // CF = k*sqrt(NY/8);  
+  threshold_shape = 2.5; // CF * 0.8;
+  threshold_topo  = 0;   // CF * 0.45;
+  NBDRAW = 5;            // Draw solution each NBDRAW iterations
+end
+
 hole_radius     = max(0.03,2/NY); // Hole radius for topological optimization
 cg_eps          = 1e-8;
 cg_iter         = 100000;
@@ -163,7 +201,7 @@ gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add initialized data', 'mu', [mu]);
 gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
-gf_model_set(md, 'add initialized data', 'penalty_param', [1E-7]);          
+gf_model_set(md, 'add initialized data', 'penalty_param', [1E-8]);
 gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 // gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 1, GAMMAD);
 gf_model_set(md,'add Dirichlet condition with penalization', mim, 'u', 1E5, GAMMAD);
@@ -237,7 +275,7 @@ for niter = 1:MaxIter
   GF(ind) = GF(ind) * 0;
 
   // Threshold on the gradient
-  GF      = min(GF, 1.1*threshold_shape);
+  GF      = min(GF, 2*threshold_shape);
   ind     = find(D < maxD/1.2);
   GT(ind) = GT(ind) * 0 - 20;
 
@@ -303,7 +341,7 @@ for niter = 1:MaxIter
   //Vcont = Mcontls \ Fdisc;
   Vcont = sp_cgs(Mcontls, Fdisc, cg_eps, cg_iter, RMcontls);
   //Vcont = sp_cgne(Mcontls, Fdisc, cg_eps, cg_iter,RMcontls);
-  ULS = ULS - Vcont' * 0.005;
+  ULS = ULS - Vcont' * level_set_rate;
 
   // Evolution of the level-set thank to shape derivative.
   // Hamilton-Jacobi equation. Less stable.
@@ -365,7 +403,7 @@ for niter = 1:MaxIter
   end
    
   // Re-initialization of the level-set
-  dt = 0.01; NT = 4; ddt = dt / NT;
+  dt = reinitialisation_time; NT = 10; ddt = dt / NT;
   ULS0 = ULS; 
   for t = ddt:ddt:dt
     DLS = gf_compute(mf_ls, ULS, 'gradient', mf_g);
