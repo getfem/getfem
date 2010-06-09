@@ -18,6 +18,7 @@ sl = gf_slice(list('boundary'), m, 16, gf_mesh_get(m,'outer faces'));
 P0 = gf_slice_get(sl,'pts');
 
 h = scf();
+h.color_map = jetcolormap(255);
 
 for step=1:1:nbstep
   U  = UU(step,:);
@@ -44,7 +45,7 @@ for step=1:1:nbstep
 //  camup;
 //  camlight; 
 //  axis off;
-  xs2png(gcf, path + sprintf('/torsion%03d',step));
+  xs2png(h.figure_id, path + sprintf('/torsion%03d.png',step));
 end
 
 printf('demo nonlinear_elasticity_anim terminated\n');
