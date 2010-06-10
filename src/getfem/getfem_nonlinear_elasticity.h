@@ -323,9 +323,9 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     if (mf_data)
-      assem.set("V() += comp(NonLin(#1,#2))");
+      assem.set("V() += comp(NonLin(#1,#2))(i)");
     else
-      assem.set("V() += comp(NonLin(#1))");
+      assem.set("V() += comp(NonLin(#1))(i)");
     
     assem.push_mi(mim);
     assem.push_mf(mf);
