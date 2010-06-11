@@ -37,6 +37,7 @@ check_PROGRAMS =                 \
 	schwarz_additive         \
 	$(optprogs)              \
 	plasticity               \
+	plasticity_old_brick     \
 	dynamic_friction         \
 	bilaplacian		 \
 	heat_equation            \
@@ -83,6 +84,7 @@ test_range_basis_SOURCES = test_range_basis.cc
 test_norm_SOURCES = test_norm.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
+plasticity_old_brick_SOURCES = plasticity_old_brick.cc
 if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
@@ -131,6 +133,7 @@ TESTS = \
 	$(top_srcdir)/tests/nonlinear_membrane.pl      \
 	$(top_srcdir)/tests/dynamic_friction.pl        \
 	$(top_srcdir)/tests/plasticity.pl              \
+	$(top_srcdir)/tests/plasticity_old_brick.pl    \
 	$(top_srcdir)/tests/helmholtz.pl               \
 	$(top_srcdir)/tests/schwarz_additive.pl        \
 	$(top_srcdir)/tests/bilaplacian.pl    	       \
@@ -183,6 +186,9 @@ EXTRA_DIST =                               			\
 	dynamic_friction.param             			\
 	dynamic_friction.net               			\
 	plasticity.pl                      			\
+	plasticity_old_brick.pl                			\
+	plasticity.param                      			\
+	plasticity_old_brick.param             			\
 	nonlinear_elastostatic.param       			\
 	test_interpolated_fem.param        			\
 	geo_trans_inv.param                			\

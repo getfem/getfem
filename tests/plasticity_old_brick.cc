@@ -64,7 +64,6 @@ struct plasticity_problem {
   getfem::mesh mesh;         /* the mesh */
   getfem::mesh_im  mim;      /* integration methods.                         */
   getfem::mesh_fem mf_u;     /* main mesh_fem, for the elastostatic solution */
-  getfem::mesh_fem mf_sigma; /* main mesh_fem, for the elastostatic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
 
@@ -79,7 +78,7 @@ struct plasticity_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  plasticity_problem(void) : mim(mesh), mf_u(mesh), mf_sigma(mesh), mf_rhs(mesh) {}
+  plasticity_problem(void) : mim(mesh), mf_u(mesh), mf_rhs(mesh) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -89,7 +88,6 @@ void plasticity_problem::init(void)
 {
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  std::string FEM_TYPE_SIGMA = PARAM.string_value("FEM_TYPE_SIGMA","FEM name");
   std::string INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
@@ -136,7 +134,6 @@ void plasticity_problem::init(void)
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
   lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
   mf_u.set_qdim(bgeot::dim_type(N));
-  mf_sigma.set_qdim(bgeot::dim_type(N*N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -146,13 +143,6 @@ void plasticity_problem::init(void)
 
   mim.set_integration_method(mesh.convex_index(), ppi);
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
-
-  /* set the finite element on the mf_sigma */
-  getfem::pfem pf_sigma = 
-    getfem::fem_descriptor(FEM_TYPE_SIGMA);
-  mf_sigma.set_finite_element(mesh.convex_index(), pf_sigma);
-
-
   
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
@@ -200,91 +190,84 @@ bool plasticity_problem::solve(plain_vector &U) {
   size_type N = mesh.dim();
 
 
-
-
-  getfem::model model;
-
-  // Main unknown of the problem.
-  model.add_fem_variable("u", mf_u, 2);
-
-  
-  model.add_initialized_scalar_data("lambda", lambda);
-  model.add_initialized_scalar_data("mu", mu);
-  model.add_initialized_scalar_data("s", stress_threshold);
-  model.add_fem_data("sigma", mf_sigma, bgeot::dim_type(N*N), 2);
-  add_plasticity_brick(model, mim, "u", "lambda", "mu", "s", "sigma");
-
-
   plain_vector F(nb_dof_rhs * N);
-  model.add_initialized_fem_data("NeumannData", mf_rhs, F);
-  getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
+  getfem::VM_projection proj(flag_hyp);
+  getfem::mdbrick_plasticity<> PLAS(mim, mf_u, lambda, mu, stress_threshold, proj);
+  
+  // Neumann condition brick
+  getfem::mdbrick_source_term<> NEUMANN(PLAS, mf_rhs, F,NEUMANN_BOUNDARY_NUM);
+  // Dirichlet condition brick.
+  getfem::mdbrick_Dirichlet<> final_model(NEUMANN, DIRICHLET_BOUNDARY_NUM);
+  final_model.rhs().set(mf_rhs, F);
 
+  getfem::standard_model_state MS(final_model);
 
-  model.add_initialized_fem_data("DirichletData", mf_rhs, F);
-  getfem::add_Dirichlet_condition_with_multipliers
-    (model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+  const size_type Nb_t=1;
+  scalar_type t[Nb_t]={0.5};
 
+  std::string uname(datafilename+".U");
+  std::ofstream f0(uname.c_str()); f0.precision(16);
+  f0 << "\n";
+  f0.close();
 
+  std::string sname(datafilename+".sigmabar");
+  std::ofstream s0(sname.c_str()); f0.precision(16);
+  s0 << "\n";
+  s0.close();
 
-
-
-
-  // getfem::standard_model_state MS(final_model);
-
-  const size_type Nb_t = 1;
-
-  for (size_type nb = 0; nb < Nb_t; ++nb) {
-
-    scalar_type t = scalar_type(nb+1) * 0.5;
+  for (size_type nb = 0; nb < Nb_t;++nb) {
 
     // Defining the Neumann condition right hand side.
     base_small_vector v(N);
     v[N-1] = -PARAM.real_value("FORCE");
-    gmm::scale(v,t);
+    gmm::scale(v,t[nb]);
     
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(v, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
 
-    gmm::copy(F, model.set_real_variable("NeumannData"));
+    NEUMANN.source_term().set(F);
     
     // Generic solve.
-    cout << "Number of variables : " << model.nb_dof() << endl;
+    cout << "Number of variables : " << final_model.nb_dof() << endl;
 
     gmm::iteration iter(residual, 2, 40000);
-    getfem::standard_solve(model, iter);
+    getfem::standard_solve(MS, final_model, iter);
 
-    // ?? PLAS.compute_constraints(MS);
+    PLAS.compute_constraints(MS);
     
     // Get the solution and save it
-    gmm::copy(model.real_variable("u"), U);
-    
+    gmm::copy(PLAS.get_solution(MS), U);
+    std::ofstream f(uname.c_str(),std::ios_base::app); f.precision(16);
+    f << t[nb] << "\n";
+    for(size_type i=0;i<gmm::vect_size(U);++i) 
+      f <<U[i] <<" " ;  
+    f<<"\n";
 
- //    //Get sigma_bar (remaining constraints) and save it
-//     PLAS.get_proj(sigma_b);
+    //Get sigma_bar (remaining constraints) and save it
+    PLAS.get_proj(sigma_b);
     
-//     std::ofstream s(sname.c_str(),std::ios_base::app); s.precision(16);
-//     size_type nb_elts;
-//     size_type nb_cv = gmm::vect_size(sigma_b);
-//     s << "\n";
-//     for (size_type cv=0;cv<nb_cv;++cv){
-//       nb_elts = gmm::vect_size(sigma_b[cv]);
-//       for(size_type i=0;i<nb_elts;++i) s <<sigma_b[cv][i] <<" ";
-//     }      
+    std::ofstream s(sname.c_str(),std::ios_base::app); s.precision(16);
+    size_type nb_elts;
+    size_type nb_cv = gmm::vect_size(sigma_b);
+    s << "\n";
+    for (size_type cv=0;cv<nb_cv;++cv){
+      nb_elts = gmm::vect_size(sigma_b[cv]);
+      for(size_type i=0;i<nb_elts;++i) s <<sigma_b[cv][i] <<" ";
+    }      
     
   }
 
-//   getfem::mesh_fem mf_vm(mesh);
-//   mf_vm.set_classical_discontinuous_finite_element(2);
-//   getfem::base_vector VM(mf_vm.nb_dof());
-//   PLAS.compute_Von_Mises_or_Tresca(mf_vm, VM, false);
-//   getfem::vtk_export exp(datafilename + ".vtk");
-//   exp.exporting(mf_vm);
-//   exp.write_point_data(mf_vm,VM, "Von Mises stress");
-//   exp.write_point_data(mf_u, U, "displacement");
-//   cout << "export done, you can view the data file with (for example)\n"
-//     "mayavi -d " << datafilename << ".vtk -f "
-// 	"WarpVector -m BandedSurfaceMap -m Outline\n";
+  getfem::mesh_fem mf_vm(mesh);
+  mf_vm.set_classical_discontinuous_finite_element(2);
+  getfem::base_vector VM(mf_vm.nb_dof());
+  PLAS.compute_Von_Mises_or_Tresca(mf_vm, VM, false);
+  getfem::vtk_export exp(datafilename + ".vtk");
+  exp.exporting(mf_vm);
+  exp.write_point_data(mf_vm,VM, "Von Mises stress");
+  exp.write_point_data(mf_u, U, "displacement");
+  cout << "export done, you can view the data file with (for example)\n"
+    "mayavi -d " << datafilename << ".vtk -f "
+	"WarpVector -m BandedSurfaceMap -m Outline\n";
 
   return true;
 }

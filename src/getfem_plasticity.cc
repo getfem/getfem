@@ -35,7 +35,7 @@ namespace getfem {
     const mesh_im &mim;
     const mesh_fem &mf_u;
     const mesh_fem &mf_sigma;
-    const mesh_fem &mf_data;
+    const mesh_fem *mf_data;
     std::vector<scalar_type> U_n;
     std::vector<scalar_type> U_np1;
     std::vector<scalar_type> Sigma_n;
@@ -64,7 +64,7 @@ namespace getfem {
     plasticity_nonlinear_term(const mesh_im &mim_,
 			  const mesh_fem &mf_u_,
 			  const mesh_fem &mf_sigma_,
-			  const mesh_fem &mf_data_,
+			  const mesh_fem *mf_data_,
 			  const std::vector<scalar_type> &U_n_, 
 			  const std::vector<scalar_type> &U_np1_,
 			  const std::vector<scalar_type> &Sigma_n_, 
@@ -74,21 +74,32 @@ namespace getfem {
 			  const std::vector<scalar_type> &mu_, 
 			  const abstract_constraints_projection  &t_proj_,
 			  const size_type flag_proj_) :
-      params(3), N(mf_data_.linked_mesh().dim()), mim(mim_),
+      params(3), N(mf_u_.linked_mesh().dim()), mim(mim_),
       mf_u(mf_u_), mf_sigma(mf_sigma_), mf_data(mf_data_),
-      U_n(mf_u_.nb_basic_dof()), U_np1(mf_u_.nb_basic_dof()), Sigma_n(mf_sigma_.nb_basic_dof()), Sigma_np1(mf_sigma_.nb_basic_dof()),  threshold(mf_data_.nb_basic_dof()), lambda(mf_data_.nb_basic_dof()), mu(mf_data_.nb_basic_dof()),
-      sizes_(N, N, N, N), t_proj(t_proj_),
+      U_n(mf_u_.nb_basic_dof()), U_np1(mf_u_.nb_basic_dof()), Sigma_n(mf_sigma_.nb_basic_dof()), Sigma_np1(mf_sigma_.nb_basic_dof()), sizes_(N, N, N, N), t_proj(t_proj_),
       flag_proj(flag_proj_) {
-    
-	GMM_TRACE2("Building the plasticity non linear term");
 
-      mf_u.extend_vector(gmm::sub_vector(U_n_, gmm::sub_interval(0,  				mf_u_.nb_dof())), U_n);
-      mf_u.extend_vector(gmm::sub_vector(U_np1_, gmm::sub_interval(0, 				mf_u_.nb_dof())), U_np1);
-      mf_sigma.extend_vector(gmm::sub_vector(Sigma_n_, 					gmm::sub_interval(0, mf_sigma_.nb_dof())),Sigma_n);
-      mf_sigma.extend_vector(gmm::sub_vector(Sigma_np1_, 			       gmm::sub_interval(0,mf_sigma_.nb_dof())),Sigma_np1);
-      mf_data.extend_vector(threshold_, threshold);
-      mf_data.extend_vector(lambda_, lambda);
-      mf_data.extend_vector(mu_, mu);
+      GMM_TRACE2("Building the plasticity non linear term");
+	
+      if (mf_data_) {
+	gmm::resize(mu, mf_data_->nb_basic_dof());
+	gmm::resize(lambda, mf_data_->nb_basic_dof());
+	gmm::resize(threshold, mf_data_->nb_basic_dof());
+	
+	mf_u.extend_vector(gmm::sub_vector(U_n_, gmm::sub_interval(0,  				mf_u_.nb_dof())), U_n);
+	mf_u.extend_vector(gmm::sub_vector(U_np1_, gmm::sub_interval(0, 				mf_u_.nb_dof())), U_np1);
+	mf_sigma.extend_vector(gmm::sub_vector(Sigma_n_, 					gmm::sub_interval(0, mf_sigma_.nb_dof())),Sigma_n);
+	mf_sigma.extend_vector(gmm::sub_vector(Sigma_np1_, 			       gmm::sub_interval(0,mf_sigma_.nb_dof())),Sigma_np1);
+	mf_data->extend_vector(threshold_, threshold);
+	mf_data->extend_vector(lambda_, lambda);
+	mf_data->extend_vector(mu_, mu);
+	
+      } else {
+	gmm::resize(mu, 1); mu[0]  =  mu_[0];
+	gmm::resize(lambda, 1); lambda[0]  =  lambda_[0];
+	gmm::resize(threshold, 1); threshold[0] =  threshold_[0];
+
+      }
   
    //   fill_sigma_bar = fill_sigma;   /* always false during resolution, */
       /*                      true when called from compute_constraints */
@@ -115,29 +126,32 @@ namespace getfem {
 
       if (cv != previous_cv) {
 
-
-     // we take the value of the data on the basic dof of element cv
-	coeff.resize(mf_data.nb_basic_dof_of_element(cv)*3);
-	for(size_type i = 0; i< mf_data.nb_basic_dof_of_element(cv); ++i) {
-		coeff[i*3] = 						      lambda[mf_data.ind_basic_dof_of_element(cv)[i]]; 
-		coeff[i*3+1] = 						      mu[mf_data.ind_basic_dof_of_element(cv)[i]];
-		coeff[i*3+2] = 						      threshold[mf_data.ind_basic_dof_of_element(cv)[i]];
-	}
-
-	bgeot::pgeometric_trans   						pgt=mf_data.linked_mesh().trans_of_convex(cv);
-	pfem pf_data = mf_data.fem_of_element(cv);
+	bgeot::pgeometric_trans
+	  pgt=mf_data->linked_mesh().trans_of_convex(cv);
+	pfem pf_data = mf_data->fem_of_element(cv);
 	base_matrix G;
 	bgeot::vectors_to_base_matrix
-		(G, mf_data.linked_mesh().points_of_convex(cv));
+		(G, mf_data->linked_mesh().points_of_convex(cv));
 	fem_precomp_pool fppool;
 	pfem_precomp pfp = fppool(pf_data, pf->node_tab(cv));
 
-      	fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+      	fem_interpolation_context ctx2(pgt,pfp,size_type(-1), G, cv,
 				    size_type(-1));
-	dim_type qdim = mf_data.get_qdim();
+	dim_type qdim = mf_data->get_qdim();
+	
 
+     // we take the value of the data on the basic dof of element cv
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*3);
+	for(size_type i = 0; i< mf_data->nb_basic_dof_of_element(cv); ++i) {
+		coeff[i*3] = 						      lambda[mf_data->ind_basic_dof_of_element(cv)[i]]; 
+		coeff[i*3+1] = 						      mu[mf_data->ind_basic_dof_of_element(cv)[i]];
+		coeff[i*3+2] = 						      threshold[mf_data->ind_basic_dof_of_element(cv)[i]];
+	}
+
+	
 	// we take the interpolation of the data on the dof of the element
-        pf_data->interpolation(ctx, coeff, params, qdim);
+	// ctx2.set_ii(i);
+        pf_data->interpolation(ctx2, coeff, params, qdim);
 
 
 
@@ -164,8 +178,8 @@ namespace getfem {
 	base_matrix grad_u_np1(N,N);
 
 	// we take the interpolation of the grad on the basic dof of the element
-        pf_u->interpolation_grad(ctx, &coeff[0], grad_u_n, qdim_u);
-	pf_u->interpolation_grad(ctx, &coeff[1], grad_u_np1, qdim_u);
+        pf_u->interpolation_grad(ctx_u, &coeff[0], grad_u_n, qdim_u);
+	pf_u->interpolation_grad(ctx_u, &coeff[1], grad_u_np1, qdim_u);
 
    // Compute sigma_hat = D*esp_np1 - D*eps_n + sigma_n
 	base_matrix sigma_hat(N,N);
@@ -226,7 +240,7 @@ namespace getfem {
 	GMM_TRACE2("Assembling the plasticity rhs");
 
   plasticity_nonlinear_term plast(mim, mf_u, mf_sigma,
-			  mf_data, u_n, u_np1,
+			  &mf_data, u_n, u_np1,
 			  sigma_n, sigma_np1, threshold, lambda, mu, 
 			  t_proj, flag_proj);
 
@@ -268,7 +282,7 @@ namespace getfem {
 	GMM_TRACE2("Assembling the plasticity tangent matrix");
 
     plasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma,
-			  mf_data, u_n, u_np1,
+			  &mf_data, u_n, u_np1,
 			  sigma_n, sigma_np1, threshold, lambda, mu, 
 			  t_proj, flag_proj);
 

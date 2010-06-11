@@ -93,7 +93,7 @@ set(md, 'add source term brick', mim, 'u', 'VolumicData',2);
 
 
 % Solve the system
-%get(md,'solve');% 'solve', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
+get(md,'solve');% 'solve', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
 
 % Extract the solution
 %u = get(md, 'variable', 'u', 1);
