@@ -91,6 +91,7 @@ namespace getfem {
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
 				     size_type flag_proj)  const {
+	GMM_TRACE2("Entering into do_projection function")
 	
 	/* be sure that flag_proj has a correct value */
 	GMM_ASSERT1(flag_proj == 0 || flag_proj ==1,

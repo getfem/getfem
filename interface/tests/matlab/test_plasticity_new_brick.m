@@ -85,11 +85,11 @@ set(md, 'add plasticity brick', mim, 'u', 'lambda', 'mu', 'von_mises_threshold',
 % Add homogeneous Dirichlet condition to u on the the left hand side of the domain
 %u_Dir = get(mf_u, 'eval', 0);
 %set(md, 'add initialized fem data', 'DirichletData', mf_u, u_Dir);
-set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
+set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u);
 
 % Add a source term to the system
 set(md,'add initialized fem data', 'VolumicData', mf_data, get(mf_data, 'eval',{f(1,1);f(2,1)}));
-set(md, 'add source term brick', mim, 'u', 'VolumicData',2);
+set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
 
 % Solve the system
