@@ -17,17 +17,19 @@ QUAD = 0;
 %Ogden mu=4.225E05			   
 %Mooney-Rivlin c1=0.4375*mu c2=0.0625*mu
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Mooney-Rivlin.
-%
-%W(F)=C_10(I_1-3)+C_01(I_2-3)
-%For rubbers the Numerical Value are
-%C_10=0.183 MPa.
-%C_01=0.0034 MPa.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-P1 =0.183  ;	        % First elastic coefficient.%
-P2 = 0.0034;   	        % Second elastic coefficient.%
-P3 = 0;   	        % Third elastic coefficient.%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Mooney-Rivlin.                           %  
+%                                         %%%%%%%%%%%
+%W(F)=C_10(I_1-3)+C_01(I_2-3)                       %  
+%For rubbers the Numerical Value are                %
+%C_10=0.183 MPa.                                    %
+%C_01=0.0034 MPa.                                   %    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+P1 = 1.83 ;	        % First elastic coefficient.%
+P2 = 0.034 ;   	        % Second elastic coefficient.%
+P3 = 0 ;   	        % Third elastic coefficient.%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Hyperelastic law                          %
@@ -45,9 +47,20 @@ if BIMATERIAL
   MU_UP = 10.0;	
   MU_DOWN = 1.0;
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Newton_versions                           %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-REFINEMENT_RADIUS = 0;  % REF: 0.4;  % 0 for no refinement
-REFINEMENT_PROCESS = 0;  % nb of desired refinement steps
+newton_version = 2     % 1 for simplest_newton_line_search
+                       % 2 for default_newton_line_search 
+    		       % 3 for systematic_newton_line_search 	
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Hyperelastic law                          %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+REFINEMENT_RADIUS = 0 ;  % REF: 0.4;  % 0 for no refinement
+REFINEMENT_PROCESS = 0 ;  % nb of desired refinement steps
 
 REFERENCE_TEST = 0;   % 1 to compute a reference solution exported into files
 ERROR_TO_REF_SOL = 1; % 1 to compute errors wrt the reference solution
@@ -55,19 +68,21 @@ INF_SUP_COMP = 0; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 100;	        % space step.
-MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-AMP_LOAD = 1;
+NX = 80;	        % space step.
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh.
+AMP_LOAD_X = 0.01;      % Load in X direction. 
+AMP_LOAD_Y = 0.01;      % Load in Y direction.
 nb_step  = 5;
 NOISY = 0;
+stnst = 0; % 1 Applying load progressively (don't work) 
 
 if (~QUAD)
   MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
- % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-  FEM_TYPE = 'FEM_PK(2, 2)';  % PK element %REF: P3
+  FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+ %FEM_TYPE = 'FEM_PK(2,2)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
-  FEM_TYPE_P = 'FEM_PK(2,0)'; 
+  FEM_TYPE_P = 'FEM_PK(2,1)'; 
   MORTAR_FEM_TYPE = FEM_TYPE;
 else
   % MESH_TYPE = 'GT_LINEAR_QK(2)';
@@ -99,7 +114,7 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 % GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 0 ; % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 1 ; % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff
@@ -126,6 +141,7 @@ SPIDER_BIMAT_ENRICHMENT = 0;  % 0 for a sqrt spider enrichment
 RESIDUAL = 1E-9;     	% residual for iterative methods if any.
 MAXITER = 500;
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'xfem_large_strain';     % Root of data files.
+ROOTFILENAME = 'NX10_20enrichi_P1P1B_0.5load';     % Root of data files.
 VTK_EXPORT = 0 % 2 export solution to a .vtk file ?
+
 

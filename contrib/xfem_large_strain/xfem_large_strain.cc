@@ -88,7 +88,7 @@ struct crack_problem {
   getfem::mesh_fem_product mf_product_p;
   getfem::mesh_fem_sum mf_p_sum;
 
-  scalar_type pr1, pr2, pr3, AMP_LOAD,nb_step;   /* elastic coefficients,Amplitude of load, number of step loadings*/
+  scalar_type pr1, pr2, pr3, AMP_LOAD_X, AMP_LOAD_Y,nb_step;   /* elastic coefficients,Amplitude of load, number of step loadings*/
 
   base_small_vector cracktip;
 
@@ -212,22 +212,33 @@ void crack_problem::init(void) {
 
   enrichment_option = enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
 							     "Enrichment option"));
+ 
+ /* Affichage */
+
   cout << "MESH_TYPE=" << MESH_TYPE << "\n";
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
+  cout << "FFEM_TYPE_P  =" << FEM_TYPE_P <<"\n";  
   cout << "INTEGRATION=" << INTEGRATION << "\n";
   pr1 = PARAM.real_value("P1", "First Elastic coefficient");
   pr2 = PARAM.real_value("P2", "Second Elastic coefficient");
   pr3 = PARAM.real_value("P3", "Third Elastic coefficient");
-  AMP_LOAD = PARAM.real_value("AMP_LOAD", "Amp load");
+  AMP_LOAD_X = PARAM.real_value("AMP_LOAD_X", "Amp load x");
+  AMP_LOAD_Y = PARAM.real_value("AMP_LOAD_Y", "Amp load y");
   nb_step  = PARAM.real_value("nb_step", "nb_step");
   reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test"));
- 
+  cout << "AMP_LOAD_X = " << AMP_LOAD_X << "\n";
+  cout << "AMP_LOAD_Y = " << AMP_LOAD_Y << "\n";
+  
   /* First step : build the mesh */
+ 
   bgeot::pgeometric_trans pgt =  bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	    PARAM.int_value("NX", "Nomber of space steps "));
+
+  long int  NX_aff=PARAM.int_value("NX", "Nomber of space steps ");
+  cout << "Number of space step NX= " << NX_aff << "\n";
   getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			    PARAM.int_value("MESH_NOISED") != 0);
   base_small_vector tt(N); tt[1] = -0.5;
@@ -238,11 +249,11 @@ void crack_problem::init(void) {
   cracktip[1] = 0.;
 
   scalar_type refinement_radius;
-  refinement_radius
-    = PARAM.real_value("REFINEMENT_RADIUS", "Refinement Radius");
+  refinement_radius = PARAM.real_value("REFINEMENT_RADIUS", "Refinement Radius");
+  cout << "refinement_radius= " << refinement_radius << "\n";
   size_type refinement_process;
-  refinement_process
-    = PARAM.int_value("REFINEMENT_PROCESS", "Refinement process");
+  refinement_process = PARAM.int_value("REFINEMENT_PROCESS", "Refinement process");
+  cout << "refinement_process= " << refinement_process << "\n";
   
   if (refinement_radius > 0) {
     for (size_type ref = 0; ref < refinement_process; ++ref){
@@ -453,6 +464,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
+  size_type newton_version = PARAM.int_value("newton_version");
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
@@ -473,14 +485,14 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   cout << "Setting up the singular functions for the enrichment\n";
 
   std::vector<getfem::pglobal_function> vfunc(2);
-  //std::vector<getfem::pglobal_function> vfunc_p(2);
+  std::vector<getfem::pglobal_function> vfunc_p(2);
   if (!load_global_fun) {
   std::cout << "Using default singular functions\n";
     for (unsigned i = 0; i < vfunc.size(); ++i){
       /* use the singularity */
-      
+     
       getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i+6);
+	new getfem::crack_singular_xy_function(i+12);
       
       if (enrichment_option != FIXED_ZONE && 
 	  enrichment_option != GLOBAL_WITH_MORTAR) {
@@ -496,25 +508,24 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
       vfunc[i]=getfem::global_function_on_level_set(ls, *s);           
     }
 
-//     for (unsigned i = 0; i < vfunc_p.size() ;++i){
-//       /* use the singularity */
+     for (unsigned i = 0; i < vfunc_p.size() ;++i){
+       /* use the singularity */
       
-//       getfem::abstract_xy_function *sp = 
-// 	new getfem::crack_singular_xy_function(i+8);
-      
-//       if (enrichment_option != FIXED_ZONE && 
-// 	  enrichment_option != GLOBAL_WITH_MORTAR) {
-// 	/* use the product of the singularity function
-// 	   with a cutoff */
-// 	getfem::abstract_xy_function *cp = 
-// 	  new getfem::cutoff_xy_function(int(cutoff_func),
-// 					 cutoff_radius, 
-// 					 cutoff_radius1,cutoff_radius0);
-// 	sp  = new getfem::product_of_xy_functions(*sp, *cp);
+       getfem::abstract_xy_function *sp = 
+ 	new getfem::crack_singular_xy_function(i+14);      
+       if (enrichment_option != FIXED_ZONE && 
+ 	  enrichment_option != GLOBAL_WITH_MORTAR) {
+ 	/* use the product of the singularity function
+ 	   with a cutoff */
+ 	getfem::abstract_xy_function *cp = 
+	  new getfem::cutoff_xy_function(int(cutoff_func),
+ 					 cutoff_radius, 
+ 					 cutoff_radius1,cutoff_radius0);
+ 	sp  = new getfem::product_of_xy_functions(*sp, *cp);
         
-//       }
-//       vfunc_p[i]=getfem::global_function_on_level_set(ls, *sp);           
-//    }
+       }
+       vfunc_p[i]=getfem::global_function_on_level_set(ls, *sp);           
+    }
   } else {
     cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U <<" and " << GLOBAL_FUNCTION_P << "\n";
     getfem::mesh *m = new getfem::mesh(); 
@@ -566,7 +577,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   }
   
   mf_sing_u.set_functions(vfunc);
-//mf_sing_p.set_functions(vfunc_p);  
+  mf_sing_p.set_functions(vfunc_p);  
 
   if (enrichment_option == SPIDER_FEM_ALONE || 
       enrichment_option == SPIDER_FEM_ENRICHMENT) {
@@ -750,38 +761,48 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     default: GMM_ASSERT1(false, "no such law");
   }
 
- pr.resize(pl->nb_params());
- getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
+  pr.resize(pl->nb_params());
+  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
 
- getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
+  getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
 
   // Defining the Neumann condition right hand side.
-  plain_vector F(nb_dof_rhs * N);
-
+  plain_vector F_Neumann1(nb_dof_rhs * N);
+  plain_vector F_Neumann2(nb_dof_rhs * N);
+  plain_vector F_Neumann3(nb_dof_rhs * N);
+  plain_vector F_Neumann4(nb_dof_rhs * N);
   // Neumann condition brick.
   
   // down side
-  for(size_type i = 1; i < F.size(); i=i+N) F[i] = AMP_LOAD;
-  for(size_type i = 0; i < F.size(); i=i+N) F[i] = AMP_LOAD;
+  for(size_type i = 0; i < F_Neumann1.size(); i=i+N) F_Neumann1[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann1.size(); i=i+N) F_Neumann1[i] = AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann2.size(); i=i+N) F_Neumann2[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann2.size(); i=i+N) F_Neumann2[i] = AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann3.size(); i=i+N) F_Neumann3[i] = -AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann3.size(); i=i+N) F_Neumann3[i] = -AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann4.size(); i=i+N) F_Neumann4[i] = -AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann4.size(); i=i+N) F_Neumann4[i] = -AMP_LOAD_Y;
   
-  getfem::mdbrick_source_term<> NEUMANN1(INCOMP, mf_rhs, F,
+  getfem::mdbrick_source_term<> NEUMANN1(INCOMP, mf_rhs, F_Neumann1,
 					 NEUMANN1_BOUNDARY_NUM);
-  getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F,
+  getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F_Neumann2,
 					 NEUMANN2_BOUNDARY_NUM);
-  gmm::scale(F, -1.0);
-  getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F,
+  //gmm::scale(F, -1.0);
+  
+  getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F_Neumann3,
 					 NEUMANN3_BOUNDARY_NUM);
-  getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F,
+  getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F_Neumann4,
 					 NEUMANN4_BOUNDARY_NUM);
   
 
   getfem::mdbrick_constraint<> KILL_RIGID_MOTIONS(NEUMANN4);
   GMM_ASSERT1(N==2, "To be corrected for 3D computation");
-  sparse_matrix BB(3, mf_u().nb_dof());
+  sparse_matrix BB(4, mf_u().nb_dof());
   BB(0, icorner1) = 1.0;
   BB(1, icorner1+1) = 1.0;
   BB(2, icorner2) = 1.0;
-  KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
+  BB(3, icorner2+1) = 1.0;
+  KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(4));
   KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
   // Dirichlet condition brick.
@@ -809,28 +830,33 @@ if (stnst==1) {
     cout << "By step amigoo###################################<<<<<>>>>>>######" << endl;
     cout << "Nb de Step " << nb_step <<endl;     
 for (int step = 0; step < nb_step; ++step) {
-   plain_vector DF(F);
+  //plain_vector DF(F);
 
-    gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
-     NEUMANN4.source_term().set(DF);
+  //gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
+  //NEUMANN4.source_term().set(DF);
 
        /************************************/
        /* increment  imposed displacement  */
        /************************************/ 
      
-     KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
+  //KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
 
     /********************************************************/
     /* let the default non-linear solve (Newton) do its job */
     /********************************************************/ 
 
     cout << "step " << step << ", number of variables : " << final_model->nb_dof() << endl;
-    cout << "DF " << DF <<  endl;
+    //cout << "DF " << DF <<  endl;
 
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
                           maxit ? maxit : 40000);
-    gmm::default_newton_line_search lnrs;
-    getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), lnrs);
+    
+    // gmm::abstract_newton_line_search alnrs;
+    // gmm::simplest_newton_line_search silnrs;
+    gmm::default_newton_line_search dlnrs;
+    // gmm::systematic_newton_line_search sylnrs;
+    
+    getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
 
     pl->reset_unvalid_flag();
     final_model->compute_residual(MS);
@@ -849,9 +875,38 @@ for (int step = 0; step < nb_step; ++step) {
  /****************/
 iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
 			  maxit ? maxit : 40000);
-    gmm::default_newton_line_search lnrs;
-    getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), lnrs);
+    
+    
+ // gmm::abstract_newton_line_search alnrs;
+    gmm::simplest_newton_line_search silnrs;
+    gmm::default_newton_line_search dlnrs;
+    gmm::systematic_newton_line_search sylnrs;
+    
+    switch (newton_version){
+    
+ // case 0: getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), alnrs);
+    case 1:{
+      getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), silnrs);
+      cout << "============================ " << endl;
+      cout << "=:simplest_newton_line_search= " << endl;
+      cout << "============================ " << endl;
+    }break;
+    case 2:{
+      getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
+      cout << "============================ " << endl;
+      cout << "=default_newton_line_search= " << endl;
+      cout << "============================ " << endl;
+    }break;
+    
 
+    case 3: {
+      getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), sylnrs);
+      cout << "=============================== " << endl;
+      cout << "=systematic_newton_line_search= " << endl;
+      cout << "=============================== " << endl;
+    }break;
+    default: GMM_ASSERT1(false, "No such newton");
+    }
     pl->reset_unvalid_flag();
     final_model->compute_residual(MS);
     if (pl->get_unvalid_flag()) 
@@ -968,27 +1023,27 @@ int main(int argc, char *argv[]) {
   getfem::mesh mcut;
   p.mls.global_cut_mesh(mcut);
   unsigned Q = p.mf_u().get_qdim();
+  
   getfem::mesh_fem mf(mcut, dim_type(Q));
   mf.set_classical_discontinuous_finite_element(2, 1E-7);
+  
   plain_vector V(mf.nb_dof());
   getfem::interpolation(p.mf_u(), mf, U, V);
-  
   mf.write_to_file(p.datafilename + ".meshfem", true);
   gmm::vecsave(p.datafilename + ".U", V);
   
   getfem::mesh_fem mf_p(mcut);
   mf_p.set_classical_discontinuous_finite_element(2, 1E-7);
+  
   plain_vector PP(mf_p.nb_dof());
-  
   getfem::interpolation(p.mf_pe(), mf_p, P, PP);
-  
   mf_p.write_to_file(p.datafilename + ".p_meshfem", true);
   gmm::vecsave(p.datafilename + ".P", PP);
       
   cout << "Interpolating solution for the drawing" << endl;
   getfem::stored_mesh_slice sl;
   getfem::mesh mcut_refined;
-  getfem::mesh mcut_refined_p;
+  //getfem::mesh mcut_refined_p;
   
   unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
   if (NX < 6) nn = 24;
@@ -1032,16 +1087,19 @@ int main(int argc, char *argv[]) {
   mim_refined.set_integration_method(getfem::int_method_descriptor
 				     ("IM_TRIANGLE(6)"));
   
+  // getfem::mesh_im mim_refined_p(mcut_refined_p); 
+  // mim_refined.set_integration_method(getfem::int_method_descriptor
+  //				     ("IM_TRIANGLE(6)"));  
   mcut.write_to_file(p.datafilename + ".meshvm");
   
   getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
   mf_refined.set_classical_discontinuous_finite_element(2,0.001);
   plain_vector W(mf_refined.nb_dof());
   
-  getfem::mesh_fem mf_refined_p(mcut_refined_p, dim_type(Q));
-  mf_refined_p.set_classical_discontinuous_finite_element(2,0.001);
-  plain_vector PPW(mf_refined_p.nb_dof());
-  getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
+  //getfem::mesh_fem mf_refined_p(mcut_refined_p, dim_type(Q));
+  //mf_refined_p.set_classical_discontinuous_finite_element(2,0.001);
+  //plain_vector PPW(mf_refined.nb_dof());
+  //getfem::interpolation(p.mf_pe(), mf_refined, P, PPW);
   
   getfem::interpolation(p.mf_u(), mf_refined, U, W);
   mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
@@ -1049,25 +1107,33 @@ int main(int argc, char *argv[]) {
   
 
   
- getfem::mesh_fem mf_vm(mcut_refined,  1);
+  getfem::mesh_fem mf_vm(mcut_refined,  1);
   mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
   plain_vector Vm(mf_vm.nb_dof());
  
   cout << "compute Von_mises" << endl;
   getfem::interpolation_von_mises(mf_refined, mf_vm, W, Vm);
-  getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
+  
   gmm::vecsave(p.datafilename + ".VM",Vm);
   mf_vm.write_to_file(p.datafilename + ".meshfemvm", true); 
   
   if (p.PARAM.int_value("VTK_EXPORT")) {
+    
     getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
+    getfem::mesh_fem mf_refined_p(mcut_refined, 1);
+
     mf_refined_vm.set_classical_discontinuous_finite_element(2, 0.001);
+    mf_refined_p.set_classical_discontinuous_finite_element(2, 0.001);
+
     cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
+    
     plain_vector VM(mf_refined_vm.nb_dof());
-    
+    plain_vector PPW(mf_refined_p.nb_dof());
+   
     cout << "computing von mises\n";
-    getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
     
+    getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
+    getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
     plain_vector D(mf_refined_vm.nb_dof() * Q), 
       DN(mf_refined_vm.nb_dof());
     
@@ -1098,10 +1164,11 @@ int main(int argc, char *argv[]) {
     
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
-    std::string REFERENCE_MF = "xfem_large_strain_refined_test160we.meshfem_refined";
-    std::string REFERENCE_U = "xfem_large_strain_refined_test160we.U_refined";
-    std::string REFERENCE_MFP = "xfem_large_strain_refined_test160we.p_meshfem_refined";
-    std::string REFERENCE_P = "xfem_large_strain_refined_test160we.P_refined";
+    
+    std::string REFERENCE_MF = "Solution_160_ref_raffine_P1BP1.meshfem";
+    std::string REFERENCE_U = "Solution_160_ref_raffine_P1BP1.U";
+    std::string REFERENCE_MFP = "Solution_160_ref_raffine_P1BP1.p_meshfem";
+    std::string REFERENCE_P = "Solution_160_ref_raffine_P1BP1.P";
     
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
