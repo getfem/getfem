@@ -68,7 +68,7 @@ INF_SUP_COMP = 0; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 80;	        % space step.
+NX = 20;	        % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh.
 AMP_LOAD_X = 0.01;      % Load in X direction. 
 AMP_LOAD_Y = 0.01;      % Load in Y direction.

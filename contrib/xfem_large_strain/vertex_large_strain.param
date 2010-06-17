@@ -1,0 +1,74 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program nonlinear elastostatic problem                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% pde parameters :	        				      %%%%%
+LX = .5;		% size in X.
+LY = 1.0;	        % size in Y.
+LZ = 2.0;		% size in Z.
+P1 = 100.;	        % First elastic coefficient.
+P2 = 10.;   	        % Second elastic coefficient.
+P3 = -1.4;   	        % Third elastic coefficient.
+LAW = 2;     % 0 : SaintVenant-Kirchhoff
+             % 1 : SaintVenant-Kirchhoff+incompressibility
+             % 2 : Ciarlet-Geymonat
+             % 3 : Mooney-Rivlin (+incompressibility)
+
+FORCEX = 0;          % Amplitude of the external force
+FORCEY = -0.050;
+FORCEZ = 0;
+TORSION = 2.65; %3.14;
+EXTENSION = 0.0;
+%%%%%   discretisation parameters  :                     	      %%%%%
+MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+%MESH_TYPE = 'GT_QK(3,1)'; % linear rectangles
+%MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
+NX = 2;            	          % space step.
+NZ = 5;
+
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
+
+FEM_TYPE = 'FEM_PK(2,2)';  % P1 for triangles
+%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 1)';
+%FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(3, 2)';
+%FEM_TYPE = 'FEM_QK(3,1)';  % Q1 fem for quadrangles
+%FEM_TYPE = 'FEM_PRODUCT(FEM_PK(2,1),FEM_PK(1,1))'; % tensorial product of FEM for prisms
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL(2,2)'; % Hierarchical PK on simplexes
+%FEM_TYPE = 'FEM_PK_HIERARCHICAL_COMPOSITE(2,1,2)'; % Hierarchical PK with s divisions
+
+FEM_TYPE_P = 'FEM_PK(2,1)';  % P1 for triangles
+%FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(3,1)';  % Discontinuous P1 for triangles
+
+% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
+%DATA_FEM_TYPE = 'FEM_PK(2,1)';
+DATA_FEM_TYPE = 'FEM_PK(2,2)'
+
+
+%INTEGRATION = 'IM_TETRAHEDRON(6)'
+INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
+                               % to degree 6 on triangles
+%INTEGRATION = 'IM_EXACT_SIMPLEX(2)'; % exact integration on triangles
+%INTEGRATION = 'IM_NC(2,6)';     % newton-cotes of degree 6 on triangles
+%INTEGRATION = 'IM_NC_PARALLELEPIPED(2,6)'; % newton-cotes, degree 6,
+                                          % quadrangles
+%INTEGRATION = 'IM_NC_PRISM(3,12)'; % newton-cotes, degree 12, prims
+%INTEGRATION = 'IM_GAUSS1D(10)'; % Gauss-Legendre integration on the
+                               % segment of order 10
+%INTEGRATION = 'IM_GAUSSLOBATTO1D(10)'; % Gauss-Lobatto-Legendre
+                                      % integration on the segment
+                                      % of order 10
+%INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,5)'; % Product of two
+                                              % IM_GAUSS1D(10) (for
+                                              % quadrangles)
+%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(5), 3)';
+%INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
+
+RESIDUAL = 1E-6;     	% residu for iterative solvers.
+MAXITER = 500;
+DIRICHLET_VERSION=0;
+NBSTEP = 5;
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
+VTK_EXPORT = 1 % export solution to a .vtk file ?
+NOISY=2 
