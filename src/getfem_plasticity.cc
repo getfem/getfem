@@ -44,7 +44,7 @@ namespace getfem {
     std::vector<scalar_type> U_np1;
     std::vector<scalar_type> threshold, lambda, mu;  
     bgeot::multi_index sizes_;
-    const abstract_constraints_projection **t_proj;
+    const abstract_constraints_projection &t_proj;
     fem_precomp_pool fppool;
     std::vector<scalar_type> stored_proj;
  
@@ -70,13 +70,14 @@ namespace getfem {
 	     	  const std::vector<scalar_type> &threshold_, 
 	      	  const std::vector<scalar_type> &lambda_,
 	       	  const std::vector<scalar_type> &mu_, 
-	       	  const abstract_constraints_projection  *t_proj_,
+	       	  const abstract_constraints_projection  &t_proj_,
 		  const size_type flag_proj_, bool write_sigma_np1_)
       : mim(mim_), mf_u(mf_u_), mf_sigma(mf_sigma_), Sigma_n(Sigma_n_),
-	Sigma_np1(Sigma_np1_), t_proj(&t_proj_), flag_proj(flag_proj_),
+	Sigma_np1(Sigma_np1_), t_proj(t_proj_), flag_proj(flag_proj_),
 	write_sigma_np1(write_sigma_np1_) {
       GMM_TRACE2("Building the plasticity non linear term");
-      
+      cout << "t_proj flag_hyp debut nonlinear term = " << t_proj.flag_hyp << endl;
+
       params = base_vector(3); 
       N = mf_u_.linked_mesh().dim();
       coeff_precalc = base_vector(N*N*N*N);
@@ -125,6 +126,8 @@ namespace getfem {
 			 bgeot::base_tensor &t){ 
 
       GMM_TRACE2("Computing the plasticity");
+      cout << "t_proj flag_hyp debut compute = " << t_proj.flag_hyp << endl;
+
 
       size_type cv = ctx.convex_num();//index of current element
       size_type qdim = mf_u.get_qdim();
@@ -259,8 +262,13 @@ namespace getfem {
 	  base_matrix proj;
 	  // cout<<*t_proj<<endl;
 
-	  // VM_projection pproj(0);
-	  (*t_proj)->do_projection(sigma_hat,params[2],proj,flag_proj);
+	  VM_projection pproj(0);
+
+	  cout << "Adress of t_proj " << &t_proj << endl;
+	  cout << "t_proj flag_hyp = " << t_proj.flag_hyp << endl;
+	  // cout << "t_proj.do_projection " << &(t_proj.do_projection) << endl;
+
+	  t_proj.do_projection(sigma_hat,params[2],proj,flag_proj);
 
 	  cout<<"here ok"<<endl;
 	   std::copy(proj.begin(), proj.end(),
@@ -318,18 +326,19 @@ namespace getfem {
 			   const VECT &lambda, 
 			   const VECT &mu, 
 			   const VECT &threshold, 
-        const abstract_constraints_projection  *t_proj,
+        const abstract_constraints_projection  &t_proj,
 			   bool write_sigma_np1,
 	const mesh_region &rg = mesh_region::all_convexes()) {
 
 
+    cout << "t_proj flag_hyp debut asm_rhs = " << t_proj.flag_hyp << endl;
 
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
     GMM_TRACE2("Assembling the plasticity rhs");
     
-    if(&(t_proj) == NULL)
+    if(&t_proj == NULL)
 	cout<<"pb ds plast asm rhs $$$$$$$$$$$$$$$$$"<<endl;
 
     plasticity_nonlinear_term plast(mim, mf_u, mf_sigma,
@@ -381,7 +390,7 @@ namespace getfem {
 				     const VECT &lambda, 
 				     const VECT &mu, 
 				     const VECT &threshold, 
-        const abstract_constraints_projection *t_proj,
+        const abstract_constraints_projection &t_proj,
         const mesh_region &rg = mesh_region::all_convexes()) {
 
 
@@ -390,9 +399,6 @@ namespace getfem {
 		"wrong qdim for the mesh_fem");
 
     GMM_TRACE2("Assembling the plasticity tangent matrix");
-
-    if(t_proj == NULL)
-	cout<<"pb ds plast asm tangent $$$$$$$$$$$$$$$$$"<<endl;
 
     plasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma,
 					&mf_data, u_n, u_np1,
@@ -438,7 +444,7 @@ namespace getfem {
 
   struct plasticity_brick : public virtual_brick {
 
-	const abstract_constraints_projection  &t_proj;
+    const abstract_constraints_projection  &t_proj;
 	
 
     virtual void asm_real_tangent_terms(const model &md, 
@@ -451,6 +457,8 @@ namespace getfem {
                                 model::real_veclist &,
                                 size_type region,
                                 build_version version) const {
+
+      cout << "t_proj flag_hyp debut asm_real = " << t_proj.flag_hyp << endl;
 
 
       GMM_ASSERT1(mims.size() == 1,
@@ -505,14 +513,14 @@ namespace getfem {
 	gmm::clear(matl[0]);
 	asm_plasticity_tangent_matrix
   		(matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
-  		 u_np1, sigma_n, lambda, mu, threshold, &t_proj, region);
+  		 u_np1, sigma_n, lambda, mu, threshold, t_proj, region);
       }
 
       if (version & model::BUILD_RHS) {
 	asm_plasticity_rhs
   		(vecl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
   		 u_np1, sigma_n, (model_real_plain_vector *)(0), 
-  		 lambda, mu, threshold, &t_proj, false, region);
+  		 lambda, mu, threshold, t_proj, false, region);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
 
@@ -521,7 +529,11 @@ namespace getfem {
 
 
 
-    plasticity_brick(const abstract_constraints_projection &t_proj_):t_proj(t_proj_){;
+    plasticity_brick(const abstract_constraints_projection &t_proj_)
+      : t_proj(t_proj_){
+
+      cout << "t_proj_ flag_hyp brick = " << t_proj_.flag_hyp << endl;
+      cout << "t_proj flag_hyp brick = " << t_proj.flag_hyp << endl;
 
       set_flags("Plasticity brick", false /* is linear*/,
             true /* is symmetric */, false /* is coercive */,
@@ -535,7 +547,7 @@ namespace getfem {
   //  Add a plasticity brick
   //=========================================================================
 
-  size_type add_plasticity_brick (model &md, 
+  size_type add_plasticity_brick(model &md, 
 		            const mesh_im &mim, 
 			    const std::string &varname,
 			    const std::string &datalambda,
@@ -544,13 +556,12 @@ namespace getfem {
 			    const std::string &datasigma,
 			    size_type region) {
 
-    VM_projection proj(0);
+    static VM_projection proj(0);
 
-    // cout<<proj<<endl;
+    cout << "Adress of t_proj " << &proj << endl;
+    cout << "t_proj flag_hyp = " << proj.flag_hyp << endl;
+
     pbrick pbr = new plasticity_brick(proj);
-    
-    if(&proj == NULL)
-	cout<<"pb ds plast constr $$$$$$$$$$$$$$$$$"<<endl;
 
     model::termlist tl;
     tl.push_back(model::term_description
@@ -566,7 +577,6 @@ namespace getfem {
 
     return md.add_brick(pbr, vl, dl, tl, 
 			model::mimlist(1,&mim), region);
-    GMM_TRACE2("End of adding the plasticity brick");
   }
 
 }  /* end of namespace getfem.  */

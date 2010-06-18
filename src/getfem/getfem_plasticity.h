@@ -51,7 +51,7 @@ namespace getfem {
       stress tensors.
   */
   class abstract_constraints_projection  {
-  protected : 
+  public : 
     size_type flag_hyp;
     
   public :
