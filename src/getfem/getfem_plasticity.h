@@ -63,7 +63,7 @@ namespace getfem {
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
 				     size_type flag_proj) const = 0;
-    abstract_constraints_projection (size_type flag_hyp_ = 0) : flag_hyp(flag_hyp_) {}
+    abstract_constraints_projection (size_type flag_hyp_ = 0) : flag_hyp(flag_hyp_) {GMM_TRACE2("Entering into abstract_contraints_projection constructor");}
     virtual ~abstract_constraints_projection () {}
   };
 

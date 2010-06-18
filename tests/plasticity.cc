@@ -364,8 +364,10 @@ int main(int argc, char *argv[]) {
   plain_vector U(p.mf_u.nb_dof());
   if (!p.solve(U)) GMM_ASSERT1(false, "Solve has failed");
   GMM_TRACE2("solve ok");
+  vecsave(p.datafilename + ".U", U);
+
   cout << "Resultats dans fichier : "
-       <<p.datafilename<<".* \n";
+       <<p.datafilename<<".U \n";
   p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
   scalar_type t[2]={p.mu,p.lambda};
   vecsave(p.datafilename+".coef", 

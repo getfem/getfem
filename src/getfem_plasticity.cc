@@ -44,7 +44,7 @@ namespace getfem {
     std::vector<scalar_type> U_np1;
     std::vector<scalar_type> threshold, lambda, mu;  
     bgeot::multi_index sizes_;
-    const abstract_constraints_projection  &t_proj;
+    const abstract_constraints_projection **t_proj;
     fem_precomp_pool fppool;
     std::vector<scalar_type> stored_proj;
  
@@ -55,7 +55,6 @@ namespace getfem {
 
   
   public:  
-
 
 
 
@@ -71,16 +70,16 @@ namespace getfem {
 	     	  const std::vector<scalar_type> &threshold_, 
 	      	  const std::vector<scalar_type> &lambda_,
 	       	  const std::vector<scalar_type> &mu_, 
-	       	  const abstract_constraints_projection  &t_proj_,
+	       	  const abstract_constraints_projection  *t_proj_,
 		  const size_type flag_proj_, bool write_sigma_np1_)
       : mim(mim_), mf_u(mf_u_), mf_sigma(mf_sigma_), Sigma_n(Sigma_n_),
-	Sigma_np1(Sigma_np1_), t_proj(t_proj_), flag_proj(flag_proj_),
+	Sigma_np1(Sigma_np1_), t_proj(&t_proj_), flag_proj(flag_proj_),
 	write_sigma_np1(write_sigma_np1_) {
       GMM_TRACE2("Building the plasticity non linear term");
       
-
       params = base_vector(3); 
       N = mf_u_.linked_mesh().dim();
+      coeff_precalc = base_vector(N*N*N*N);
       gmm::resize(U_n, mf_u_.nb_basic_dof());
       gmm::resize(U_np1, mf_u_.nb_basic_dof());
       sizes_ = bgeot::multi_index(N, N, N, N);
@@ -201,7 +200,7 @@ namespace getfem {
 	    mf_u.nb_basic_dof_of_element(cv); // = 12
 	  
 	  
-	  // Definition of the coeff u_n and u_np1
+	  // Definition of the coeff for u_n and u_np1
 	  
 	  coeff_u_n.resize(cvnbdof_u);
 	  coeff_u_np1.resize(cvnbdof_u);
@@ -230,8 +229,6 @@ namespace getfem {
 	  pf_u->interpolation_grad(ctx_u, coeff_u_n, G_u_n, dim_type(qdim));
 	  pf_u->interpolation_grad(ctx_u, coeff_u_np1, G_u_np1,
 				   dim_type(qdim));
-	 
-	  cout<<"nbd sigma : "<<nbd_sigma<<endl;
 	  
 	  GMM_TRACE2("non previous");
 	  
@@ -257,15 +254,17 @@ namespace getfem {
 	    }
 	  }
 	  
-	  //cout<<"sigma_hat(2,0) = "<<sigma_hat(2,0)<<endl;
 	  GMM_TRACE2("End of computing sigma_hat");
 	
 	  base_matrix proj;
-	
-	  t_proj.do_projection(sigma_hat, params[2], proj, flag_proj);
+	  // cout<<*t_proj<<endl;
 
-	  std::copy(proj.begin(), proj.end(),
-		    stored_proj.begin() + proj.size() * ii);
+	  // VM_projection pproj(0);
+	  (*t_proj)->do_projection(sigma_hat,params[2],proj,flag_proj);
+
+	  cout<<"here ok"<<endl;
+	   std::copy(proj.begin(), proj.end(),
+	      stored_proj.begin() + proj.size() * ii);
 	
 	  if (flag_proj == 0 && write_sigma_np1) {
 	  
@@ -282,14 +281,14 @@ namespace getfem {
 	}
 	previous_cv = cv;
       }
-  
+      coeff_precalc.resize(size_proj);
       pf_sigma->interpolation(ctx, stored_proj, coeff_precalc,
 			      dim_type(size_proj));
       
       t.adjust_sizes(sizes_);
-
-      /* copy the result into the tensor returned t */
-      std::copy(coeff_precalc.begin(), coeff_precalc.end(), t.begin());
+      
+      /*  copy the result into the tensor returned t */
+       std::copy(coeff_precalc.begin(), coeff_precalc.end(), t.begin());
 
 
       //==================================================
@@ -319,7 +318,7 @@ namespace getfem {
 			   const VECT &lambda, 
 			   const VECT &mu, 
 			   const VECT &threshold, 
-        const abstract_constraints_projection  &t_proj,
+        const abstract_constraints_projection  *t_proj,
 			   bool write_sigma_np1,
 	const mesh_region &rg = mesh_region::all_convexes()) {
 
@@ -329,6 +328,9 @@ namespace getfem {
 		"wrong qdim for the mesh_fem");
 
     GMM_TRACE2("Assembling the plasticity rhs");
+    
+    if(&(t_proj) == NULL)
+	cout<<"pb ds plast asm rhs $$$$$$$$$$$$$$$$$"<<endl;
 
     plasticity_nonlinear_term plast(mim, mf_u, mf_sigma,
 				    &mf_data, u_n, u_np1,
@@ -379,7 +381,7 @@ namespace getfem {
 				     const VECT &lambda, 
 				     const VECT &mu, 
 				     const VECT &threshold, 
-        const abstract_constraints_projection &t_proj,
+        const abstract_constraints_projection *t_proj,
         const mesh_region &rg = mesh_region::all_convexes()) {
 
 
@@ -389,6 +391,8 @@ namespace getfem {
 
     GMM_TRACE2("Assembling the plasticity tangent matrix");
 
+    if(t_proj == NULL)
+	cout<<"pb ds plast asm tangent $$$$$$$$$$$$$$$$$"<<endl;
 
     plasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma,
 					&mf_data, u_n, u_np1,
@@ -493,19 +497,22 @@ namespace getfem {
 		  "Works only for pure Lagrange fems");
 	
       const mesh_im &mim = *mims[0];
+      
+      if(&(t_proj) == NULL)
+	cout<<"pb ds asm tangent term $$$$$$$$$$$$$$$$$"<<endl;
 
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
 	asm_plasticity_tangent_matrix
   		(matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
-  		 u_np1, sigma_n, lambda, mu, threshold, t_proj, region);
+  		 u_np1, sigma_n, lambda, mu, threshold, &t_proj, region);
       }
 
       if (version & model::BUILD_RHS) {
 	asm_plasticity_rhs
   		(vecl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
   		 u_np1, sigma_n, (model_real_plain_vector *)(0), 
-  		 lambda, mu, threshold, t_proj, false, region);
+  		 lambda, mu, threshold, &t_proj, false, region);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
 
@@ -514,7 +521,7 @@ namespace getfem {
 
 
 
-    plasticity_brick(const abstract_constraints_projection &t_proj_):t_proj(t_proj_){
+    plasticity_brick(const abstract_constraints_projection &t_proj_):t_proj(t_proj_){;
 
       set_flags("Plasticity brick", false /* is linear*/,
             true /* is symmetric */, false /* is coercive */,
@@ -538,7 +545,12 @@ namespace getfem {
 			    size_type region) {
 
     VM_projection proj(0);
+
+    // cout<<proj<<endl;
     pbrick pbr = new plasticity_brick(proj);
+    
+    if(&proj == NULL)
+	cout<<"pb ds plast constr $$$$$$$$$$$$$$$$$"<<endl;
 
     model::termlist tl;
     tl.push_back(model::term_description
@@ -550,10 +562,11 @@ namespace getfem {
     model::varnamelist vl(1, varname);
 	
 
-    GMM_TRACE2("End of adding the plasticity brick");
+    
 
     return md.add_brick(pbr, vl, dl, tl, 
 			model::mimlist(1,&mim), region);
+    GMM_TRACE2("End of adding the plasticity brick");
   }
 
 }  /* end of namespace getfem.  */
