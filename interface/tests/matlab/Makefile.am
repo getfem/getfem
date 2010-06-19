@@ -41,6 +41,7 @@ EXTRA_DIST= \
 	demo_stokes_3D_tank_alt.m \
 	demo_stokes_3D_tank_draw.m \
 	demo_tripod.m \
+	demo_convection_rotating_cavity.m \
 	demo_tripod_alt.m \
 	demo_tripod_slice_anim.m \
 	demo_fictitious_domains.m \
