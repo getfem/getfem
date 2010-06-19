@@ -27,6 +27,8 @@ gf_workspace('clear all');
 K0 = 2;  % degree for u
 K1 = 2;  % degree for v
 NX = 10;
+scheme = 1; % 0 = Implicit Euler
+            % 1 = midpoint
 
 %m = gf_mesh('cartesian', 0:1/NX:1, 0:1/NX:1);
 m = gf_mesh('triangles grid', 0:1/NX:1, 0:1/NX:1);
@@ -77,11 +79,19 @@ end
 
 % Initial data
 U0 = (gf_mesh_fem_get(mf_u, 'eval', {'exp(-100*((x-0.5).^2+(y-0.25).^2))'}))';
-
+U00 = U0;
+if (scheme == 1)
+  V0 = -((B') \ (K' * U0));
+end
 
 % Time steps
-dt = 0.01;
-C2 = C * (-dt);
+NT = 200;
+dt = 2*pi/NT;
+if (scheme == 0)
+  C2 = C * (-dt);
+elseif (scheme == 1)
+  C2 = C * (-dt)/2;
+end
 M = [K' B' BD'; B C2 sparse(nbdofv, nbd); BD sparse(nbd, nbdofv) sparse(nbd, nbd)];
 ndraw = 10;
 idraw = 10;
@@ -89,7 +99,8 @@ idraw = 10;
 
 for t = 0:dt:2*pi
 
-  if (ndraw == idraw)
+  if ((ndraw == idraw) || (t >= 2*pi-1e-8))
+    figure(1);
     gf_plot(mf_u , U0', 'mesh', 'on', 'contour', .1:.1:2);
     caxis([0 1]);
     colorbar;
@@ -99,18 +110,26 @@ for t = 0:dt:2*pi
   
   idraw = idraw + 1;
 
-  V0 = B*U0;
-  X0 = [zeros(nbdofu,1); V0; zeros(nbd,1);];
+  if (scheme == 0)
+    X0 = [zeros(nbdofu,1); (B*U0); zeros(nbd,1);];
+  elseif (scheme == 1)
+    X0 = [(-B'*V0-K'*U0); (B*U0+(C*V0)*dt/2); zeros(nbd,1);];
+  end
 
   X1 = M\X0;
 
   U1 = X1(1:nbdofu);
   V1 = X1((nbdofu+1):(nbdofu+nbdofv));
 
-  U0 = U1;
+  U0 = U1; V0 = V1;
   
 end
 
+
+figure(2);
+gf_plot(mf_u , U00', 'mesh', 'on', 'contour', .1:.1:2);
+caxis([0 1]);
+colorbar;
 
 
 
