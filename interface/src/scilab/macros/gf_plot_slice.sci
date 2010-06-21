@@ -519,9 +519,9 @@ if (qdim == 2) then
   deltaUmax = max(U(:,qlst),'c') - min(U(:,qlst),'c');
   deltaP    = max(P(:,qlst),'c') - min(P(:,qlst),'c');
   nx(1:2:$) = P(1,qlst);
-  nx(2:2:$) = P(1,qlst) + 0.025 * deltaP(1) .* U(1,qlst) / norm(deltaUmax);
+  nx(2:2:$) = P(1,qlst) + 0.025 * deltaP(1) .* U(1,qlst) / max(%eps,norm(deltaUmax));
   ny(1:2:$) = P(2,qlst);
-  ny(2:2:$) = P(2,qlst) + 0.025 * deltaP(2) .* U(2,qlst) / norm(deltaUmax);
+  ny(2:2:$) = P(2,qlst) + 0.025 * deltaP(2) .* U(2,qlst) / max(%eps,norm(deltaUmax));
   xarrows(nx,ny);
   a = gca();
   a.data_bounds = [min(P,'c')';max(P,'c')'];
