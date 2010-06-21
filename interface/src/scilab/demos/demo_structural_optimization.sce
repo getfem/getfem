@@ -35,7 +35,7 @@ Do_Plot = %T;
 
 // parameters
 
-TEST_CASE = 0; // 0 : 2D, initial holes, shape gradient only
+TEST_CASE = 1; // 0 : 2D, initial holes, shape gradient only
                // 1 : 2D, no initial hole, coupling with topological gradient
                // 2 : 3D, initial holes, shape gradient only
                // 3 : 3D, no initial hole, coupling with topological gradient
@@ -60,7 +60,7 @@ lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
 
 if (N == 2) then
-  NY = 20;             // Number of elements in y direction
+  NY = 50;             // Number of elements in y direction
   level_set_rate = 0.4 / NY;
   reinitialisation_time = 0.005;
   // CF = k*sqrt(NY/20);
