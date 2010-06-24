@@ -7,10 +7,10 @@
 MU = 1.0;	          % Lame coefficient.
 Lamda=1.0                 % Lame coefficient.
 dgr = 2;                  % degree of enrichment in u
-CONTACT_GAMMA0 = 0.0001;  % Stabilization parameter for contact condition
+CONTACT_GAMMA0 = 0.01;  % Stabilization parameter for contact condition
 R=1;                      % Augmented parameter
 STABILIZED_PROBLEM =1;    % stabilized_problem or not
-strmesh =1;
+strmesh =0;
 
 
 
@@ -28,7 +28,7 @@ ERROR_TO_REF_SOL =1; % 1 to compute errors wrt the reference solution
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 10;                % space step.
+NX = 60;                % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
@@ -41,14 +41,14 @@ if (strmesh)
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   FEM_TYPE_cont = 'FEM_PK(2,2)'; 
 else
- MESH_FILE='toto6.mesh'
+ MESH_FILE='toto60.mesh'
  MESH_TYPE = 'GT_PK(2,2)';         % linear triangles
  % FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
  FEM_TYPE = 'FEM_PK(2,1);
   %FEM_TYPE = 'FEM_PK(2,2)';  % PK element %REF: P3
   DATA_FEM_TYPE = 'FEM_PK(2,1)';
   INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
-  FEM_TYPE_cont = 'FEM_PK(2,1)'; 
+  FEM_TYPE_cont = 'FEM_PK(2,2)'; 
 end;
 
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,4,0.0001)'; % Discontinuous P4 for triangles

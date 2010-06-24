@@ -686,6 +686,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   // Assembling stabilized mixed term for contact problem
 //cont_gamma0=cont_gamma/h;
   if (stabilized_problem) {
+    cout<<"Cont_gamma0="<< cont_gamma0 <<endl;
     cout<< "Assembling stabilized mixed term for contact problem"<<endl;
     asm_stabilization_mixed_term(CA, mimbound, mf_u(), mf_cont(), ls, lambda, mu);
     gmm::scale(CA, -cont_gamma0 * h);
@@ -750,7 +751,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   
   for(size_type i = 0; i < F.size(); i=i+N*N) {
     base_node pt = mf_rhs.point_of_basic_dof(i / (N*N));
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.2;}
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.02;}
 
     // scalar_type coeff = pt[1] > 0. ? -1 : 1;
     // for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}

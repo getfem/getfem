@@ -34,6 +34,6 @@ disp('plotting the lagrange multipliers on the dirichlet boundary');
   set(gcf,'color','white');
   axis on;
   view(3);
-  camzoom(1.6);
+  camzoom(1.2);
   axis([0    1   -0.500    0.5000 1 1]);
   % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
