@@ -803,6 +803,10 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   cout << "Solving..." << endl;
   iter.init();
   getfem::standard_solve(model, iter);
+
+
+  gmm::Harwell_Boeing_save("toto.hb", model.real_tangent_matrix());
+
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(model.real_variable("u"), U);
   gmm::resize(LAMBDA, mf_cont().nb_dof());

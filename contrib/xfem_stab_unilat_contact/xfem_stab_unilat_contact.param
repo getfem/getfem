@@ -10,7 +10,7 @@ dgr = 2;                  % degree of enrichment in u
 CONTACT_GAMMA0 = 0.01;  % Stabilization parameter for contact condition
 R=1;                      % Augmented parameter
 STABILIZED_PROBLEM =1;    % stabilized_problem or not
-strmesh =0;
+strmesh = 1;
 
 
 
@@ -28,7 +28,7 @@ ERROR_TO_REF_SOL =1; % 1 to compute errors wrt the reference solution
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 60;                % space step.
+NX = 5;                % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
 
 
