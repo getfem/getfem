@@ -624,7 +624,7 @@ namespace getfem {
       GMM_ASSERT1(matl.size() == nbt,
                   "Wrong number of terms for the contact brick");
 
-      const scalar_type vt1(1);
+      const scalar_type vt1 = scalar_type(1);
       size_type nbc = gmm::mat_nrows(BN1);
       size_type d = gmm::mat_nrows(BT1)/nbc;
 
@@ -667,6 +667,7 @@ namespace getfem {
             gmm::clear(gmm::mat_col(T_u1_n, i));
             if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
             T_n_n(i, i) = -vt1/r;
+	    cout << "r = " << r << endl;
           }
           else {
             if (Hughes_stabilized)
@@ -677,6 +678,7 @@ namespace getfem {
           model_real_sparse_matrix aux(gmm::mat_nrows(T_n_n), gmm::mat_nrows(T_n_n));
           gmm::copy(gmm::transposed(T_n_n), aux);
           gmm::copy(aux, T_n_n);
+	  cout << "T_n_n = " << T_n_n << endl;
         }
         gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
         if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
