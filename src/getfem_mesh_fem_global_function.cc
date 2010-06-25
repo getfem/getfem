@@ -147,6 +147,90 @@ namespace getfem {
 
 
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
+
+  parser_xy_function::parser_xy_function(const std::string &sval,
+					 const std::string &sgrad,
+					 const std::string &shess) {
+    /* se obtiene el gradiente */
+    std::string auxG(sgrad);
+    unsigned token[4];
+    for (unsigned i=0,j=0; i<auxG.size() && j<4; ++i){
+      if (auxG[i]==';') {
+	token[j++] = i;
+	auxG[i] = '\0';
+      }
+    }
+    std::string sXgrad(auxG.substr(0,token[0]));
+    std::string sYgrad(auxG.substr(token[0]+1,token[1]-token[0]));
+    
+    /* se obtiene el hessiano */
+    std::string auxH(shess);
+    for (unsigned i=0,j=0; i<auxH.size() && j<4; ++i){
+      if (auxH[i]==';') {
+	token[j++] = i;
+	auxH[i] = '\0';
+      }
+    }
+    std::string sXXhess(auxH.substr(0,token[0]));
+    std::string sXYhess(auxH.substr(token[0]+1,token[1]-token[0]));
+    std::string sYXhess(auxH.substr(token[1]+1,token[2]-token[1]));
+    std::string sYYhess(auxH.substr(token[2]+1,token[3]-token[2]));
+    
+    var.resize(4);
+
+    try {
+      /* pval */
+      pval.DefineVar("x", &var[0]);
+      pval.DefineVar("y", &var[1]);
+      pval.DefineVar("r", &var[2]);
+      pval.DefineVar("theta", &var[3]);
+      pval.SetExpr(sval);
+      /* pXgrad */
+      pXgrad.DefineVar("x", &var[0]);
+      pXgrad.DefineVar("y", &var[1]);
+      pXgrad.DefineVar("r", &var[2]);
+      pXgrad.DefineVar("theta", &var[3]);
+      pXgrad.SetExpr(sXgrad);
+      /* pYgrad */
+      pYgrad.DefineVar("x", &var[0]);
+      pYgrad.DefineVar("y", &var[1]);
+      pYgrad.DefineVar("r", &var[2]);
+      pYgrad.DefineVar("theta", &var[3]);
+      pYgrad.SetExpr(sYgrad);
+      /* pXXhess */
+      pXXhess.DefineVar("x", &var[0]);
+      pXXhess.DefineVar("y", &var[1]);
+      pXXhess.DefineVar("r", &var[2]);
+      pXXhess.DefineVar("theta", &var[3]);
+      pXXhess.SetExpr(sXXhess);
+      /* pXYhess */
+      pXYhess.DefineVar("x", &var[0]);
+      pXYhess.DefineVar("y", &var[1]);
+      pXYhess.DefineVar("r", &var[2]);
+      pXYhess.DefineVar("theta", &var[3]);
+      pXYhess.SetExpr(sXYhess);
+      /* pYXhess */
+      pYXhess.DefineVar("x", &var[0]);
+      pYXhess.DefineVar("y", &var[1]);
+      pYXhess.DefineVar("r", &var[2]);
+      pYXhess.DefineVar("theta", &var[3]);
+      pYXhess.SetExpr(sYXhess);
+      /* pYYhess */
+      pYYhess.DefineVar("x", &var[0]);
+      pYYhess.DefineVar("y", &var[1]);
+      pYYhess.DefineVar("r", &var[2]);
+      pYYhess.DefineVar("theta", &var[3]);
+      pYYhess.SetExpr(sYYhess);
+    } catch (mu::Parser::exception_type &e) {
+      std::cerr << "Message  : " << e.GetMsg() << std::endl;
+      std::cerr << "Formula  : " << e.GetExpr() << std::endl;
+      std::cerr << "Token    : " << e.GetToken() << std::endl;
+      std::cerr << "Position : " << e.GetPos() << std::endl;
+      std::cerr << "Errc     : " << e.GetCode() << std::endl;
+      GMM_ASSERT1(false, "Error in math expression.")
+	}
+  }
+  
   scalar_type
   parser_xy_function::val(scalar_type x, scalar_type y) const {
     var[0] = double(x);                   // x

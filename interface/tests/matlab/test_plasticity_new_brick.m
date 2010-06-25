@@ -36,8 +36,8 @@ mim=gfMeshIm(m);  set(mim, 'integ',gfInteg('IM_TRIANGLE(6)')); % Gauss methods o
 
 % Define used MeshFem
 mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
-mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
-mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK(2,0)'));
+mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_err=gfMeshFem(m); set(mf_err, 'fem',gfFem('FEM_PK(2,0)'));
 mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 % Find the border of the domain
@@ -62,7 +62,7 @@ md = gfModel('real');
 
 % Declare that u is the unknown of the system on mf_u
 % 2 is the number of version of the data stored, for the time integration scheme 
-set(md, 'add fem variable', 'u', mf_u, 2); 
+set(md, 'add fem variable', 'u', mf_u, 2);
 %set(md, 'variable', 'u', u_n, 1);
 
 % Declare that lambda is a data of the system on mf_data
@@ -76,12 +76,12 @@ set(md, 'add initialized data', 'von_mises_threshold', von_mises_threshold);
 
 % Declare that sigma is a data of the system on mf_sigma
 % 2 is the number of version of the data stored, for the time integration scheme
-set(md, 'add fem data', 'sigma', mf_sigma, 4, 2);
+set(md, 'add fem data', 'sigma', mf_sigma);
 % Try to set an initial value to sigma
 %set(md, 'variable', 'sigma', sigma_n*ones(1, nbd_sigma), 1);
 
 % Add plasticity brick on u
-set(md, 'add plasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
 
 % Add homogeneous Dirichlet condition to u on the the left hand side of the domain
 %u_Dir = get(mf_u, 'eval', 0);
@@ -108,7 +108,7 @@ for step=1:nbstep,
     end
     
     
-    sigma0n = get(md, 'variable', 'sigma', 1);
+    % sigma0n = get(md, 'variable', 'sigma', 1);
     sigma0n1 = get(md, 'variable', 'sigma', 0);
     % Solve the system
     get(md, 'solve', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
@@ -116,8 +116,7 @@ for step=1:nbstep,
     % Extract the displacement solution
     U = get(md, 'variable', 'u', 0);
     Un = get(md, 'variable', 'u', 1);
-    U = U(1:get(mf_u, 'nbdof'));
-    sigma1n = get(md, 'variable', 'sigma', 1);
+    % sigma1n = get(md, 'variable', 'sigma', 1);
     sigma1n1 = get(md, 'variable', 'sigma', 0);
 
     T = get(md, 'tangent_matrix');
@@ -128,7 +127,7 @@ for step=1:nbstep,
     get(md, 'compute plasticity constraints', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
     
     % Extract final sigma_np1
-    sigma2n = get(md, 'variable', 'sigma', 1);
+    % sigma2n = get(md, 'variable', 'sigma', 1);
     sigma2n1 = get(md, 'variable', 'sigma', 0);
     
     fprintf('============================================');
@@ -156,6 +155,7 @@ for step=1:nbstep,
     %nu = get(mf_u, 'nbdof');
     %ns = get(mf_sigma, 'nbdof');
     pause;
+
 end;
 
 

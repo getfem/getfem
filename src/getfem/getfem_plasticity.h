@@ -208,7 +208,7 @@ namespace getfem {
 
 
   */
-  size_type add_plasticity_brick
+  size_type add_elastoplasticity_brick
   (model &md, const mesh_im &mim,const abstract_constraints_projection &ACP, 
    const std::string &varname,
    const std::string &datalambda, const std::string &datamu,

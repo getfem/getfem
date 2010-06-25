@@ -911,7 +911,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add plasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
     To be filled ... .@*/
     sub_command
-      ("add plasticity brick", 7, 8, 0, 1,
+      ("add elastoplasticity brick", 7, 8, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string projname = in.pop().to_string();
        std::string varname = in.pop().to_string();
@@ -924,7 +924,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        // getfem::VM_projection proj(0);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
-       add_plasticity_brick
+       add_elastoplasticity_brick
        (md->model(), gfi_mim->mesh_im(),
         abstract_constraints_projection_from_name(projname), 
 	varname, datalambda, datamu,

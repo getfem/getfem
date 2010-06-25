@@ -487,7 +487,7 @@ namespace getfem {
       // const model_real_plain_vector &sigma_np1 = 
       // md.real_variable(dl[3], 0);
       const model_real_plain_vector &sigma_n = 
-	md.real_variable(dl[3], 1);
+	md.real_variable(dl[3]);
       const mesh_fem &mf_sigma = 
 	*(md.pmesh_fem_of_variable(dl[3]));
       GMM_ASSERT1(!(mf_sigma.is_reduced()),
@@ -545,15 +545,15 @@ namespace getfem {
   //  Add a plasticity brick
   //=========================================================================
 
-  size_type add_plasticity_brick(model &md, 
-				 const mesh_im &mim, 
-				 const abstract_constraints_projection &ACP,
-				 const std::string &varname,
-				 const std::string &datalambda,
-				 const std::string &datamu,
-				 const std::string &datathreshold, 
-				 const std::string &datasigma,
-				 size_type region) {
+  size_type add_elastoplasticity_brick(model &md, 
+				       const mesh_im &mim, 
+				       const abstract_constraints_projection &ACP,
+				       const std::string &varname,
+				       const std::string &datalambda,
+				       const std::string &datamu,
+				       const std::string &datathreshold, 
+				       const std::string &datasigma,
+				       size_type region) {
 
     //static VM_projection ACP(0);
     pbrick pbr = new plasticity_brick(ACP);
@@ -596,8 +596,8 @@ namespace getfem {
     
     const model_real_plain_vector &u_np1 = 
       md.real_variable(varname, 0);
-    const model_real_plain_vector &u_n = 
-      md.real_variable(varname, 1);
+    model_real_plain_vector &u_n = 
+      md.set_real_variable(varname, 1);
     const mesh_fem &mf_u = 
       *(md.pmesh_fem_of_variable(varname));
     
@@ -610,13 +610,13 @@ namespace getfem {
     const mesh_fem *mf_data = 
       md.pmesh_fem_of_variable(datalambda);
     const model_real_plain_vector &sigma_n = 
-      md.real_variable(datasigma, 1);
+      md.real_variable(datasigma);
     const mesh_fem &mf_sigma = 
       *(md.pmesh_fem_of_variable(datasigma));
 
-    std::vector<scalar_type> sigma_np1;
-    gmm::resize(sigma_np1, gmm::vect_size(sigma_n));
+    unsigned N = unsigned(mf_sigma.linked_mesh().dim());
 
+    std::vector<scalar_type> sigma_np1(mf_sigma.nb_dof()*N*N/mf_sigma.get_qdim());
 
     std::vector<scalar_type> V(mf_u.nb_dof());
     
@@ -625,15 +625,11 @@ namespace getfem {
       (V, mim, mf_u, mf_sigma, *mf_data, u_n,
        u_np1, sigma_n, &sigma_np1, 
        lambda, mu, threshold, ACP, true);
+    
+    gmm::copy(sigma_np1, md.set_real_variable(datasigma));
 
-    
-    gmm::resize(md.set_real_variable(datasigma, 0), mf_sigma.nb_basic_dof());
-    gmm::resize(sigma_np1, mf_sigma.nb_basic_dof());
-    
-    gmm::copy(sigma_np1, md.set_real_variable(datasigma, 0));
- 
-    
-    // GMM_TRACE2("End fo computing and saving the sigma_np1 constraint");
+
+    gmm::copy(u_np1, u_n);
      
   }
 
@@ -679,33 +675,43 @@ namespace getfem {
     unsigned N = unsigned(mf_sigma.linked_mesh().dim());
  
 
+    GMM_ASSERT1(mf_vm.get_qdim() == 1,
+		"Target dimension of mf_vm should be 1");
 
     // dimension of the unknown
-    unsigned NFem = unsigned(sqrt(mf_sigma.get_qdim())); // ie: 2 in 2D, 3 in 3D
+    // unsigned NFem = unsigned(sqrt(mf_sigma.get_qdim())); // ie: 2 in 2D, 3 in 3D
+    // cout << "Nfem = " << NFem << endl;
 
+    base_matrix sigma(N, N), Id(N, N);
 
-    base_matrix sigma(NFem,NFem), Id(NFem, NFem);
-
-    base_vector eig(NFem), sigma_vm(mf_vm.nb_basic_dof()*NFem*N);
+    base_vector eig(N);
+    base_vector sigma_vm(mf_vm.nb_dof()*N*N);
 
     gmm::copy(gmm::identity_matrix(), Id);
 
 
     /* we interpolate sigma_np1 on mf_vm only if the mesh_fem are different*/
+    cout << "befor interpolation" << endl;
+    cout << "nbdof sigma" << gmm::vect_size(sigma_np1) << endl;
+    cout << "nbdof sigma" << mf_sigma.nb_dof() << endl;
+    cout << "nbdof sigma" << int(mf_sigma.get_qdim()) << endl;
+    cout << "nbdof vm" << mf_vm.nb_dof() << endl;
     interpolation(mf_sigma, mf_vm, sigma_np1, sigma_vm);
+    cout << "after interpolation" << endl;
 
     // for each dof we compute the Von Mises or Tresca stress
     for (size_type ii = 0; ii < mf_vm.nb_dof(); ++ii) {
 
       /* we retrieve the matrix sigma_vm on this dof */
-      std::copy(sigma_vm.begin()+ii*NFem*N, sigma_vm.begin()+(ii+1)*NFem*N,sigma.begin());
+      std::copy(sigma_vm.begin()+ii*N*N, sigma_vm.begin()+(ii+1)*N*N,
+		sigma.begin());
       
       if (!tresca) {
 	/* von mises: norm(deviator(sigma)) */
-	gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / NFem), sigma);
+	gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma);
 	
 	/* von mises stress=sqrt(3/2)* norm(sigma) */
-	VM[ii] = sqrt(3.0/2)*gmm::mat_euclidean_norm(sigma);
+	VM[ii] = sqrt(3.0/2.)*gmm::mat_euclidean_norm(sigma);
       } else {
 	/* else compute the tresca criterion */
 	gmm::symmetric_qr_algorithm(sigma, eig);
