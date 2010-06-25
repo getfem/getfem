@@ -45,7 +45,7 @@ function res=check_solve(iverbose,idebug)
 
   % norm tests
   l2m = gf_compute(mf_comp,Uex,'L2 norm',pde.mim);
-  assert('abs(l2m-.4)<1e-10');
+  gfassert('abs(l2m-.4)<1e-10');
   disp(sprintf('L2 norm %f',l2m));
   l2err = gf_compute(mf_comp,Uex-Uco,'L2 norm',pde.mim);
   disp(sprintf('L2 err %f', l2err));
@@ -53,14 +53,14 @@ function res=check_solve(iverbose,idebug)
   disp(sprintf('H1 err %f', h1err));
   disp(sprintf('done in %.2f sec.',toc));
   %gf_plot(mf_comp,Uex-Uco,'norm'); colorbar;
-  assert('abs(l2err)<0.016'); % 0.015926
-  assert('abs(h1err)<0.0665'); % 0.066215
+  gfassert('abs(l2err)<0.016'); % 0.015926
+  gfassert('abs(h1err)<0.0665'); % 0.066215
   
   [Uq,Iq,mfq]=gf_compute(pde.mf_u, U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
   [XX,YY]=meshgrid(0:.05:4.8,0.:0.05:1);  XX=XX'; YY=YY';
   UU=-YY.*(YY-1);
-  assert('max(max(abs(UU-squeeze(Uq(1,:,:))))) < 0.01001');
-  assert('max(max(abs(Uq(2,:,:)))) < 0.0030');
+  gfassert('max(max(abs(UU-squeeze(Uq(1,:,:))))) < 0.01001');
+  gfassert('max(max(abs(Uq(2,:,:)))) < 0.0030');
   
   %gradient check
   mtri=gf_mesh('triangles grid',[0 .2 .4 .8 1:.3:4.8],[0:.2:.6 .9 1]);
@@ -73,7 +73,7 @@ function res=check_solve(iverbose,idebug)
   dof=gf_mesh_fem_get(mf_DU, 'basic dof nodes'); Xc=dof(1,1:2:end); Yc=dof(2,1:2:end);
   DUex=[1-2*Yc; zeros(1,numel(Xc))]; DUex=DUex(:)';
   diff=norm(DUex-DU(2,:));
-  assert('diff>4.62 & diff<4.64');
+  gfassert('diff>4.62 & diff<4.64');
   
   % yes the error on the derivative is quite big. This is because we interpolated
   % U on mf_DU which is piecewise linear
@@ -82,7 +82,7 @@ function res=check_solve(iverbose,idebug)
   %subplot(3,1,2); gf_plot(mf_DU, DUex,'mesh','x'); colorbar;
   %subplot(3,1,3); gf_plot(mf_DU, DUex-DU(2,:),'mesh','x'); colorbar;    
   d2=gf_compute(mf_DU,DUex-DU(2,:),'L2 norm',mim2);
-  assert('d2>0.28 & d2 < 0.29'); % 0.2866
+  gfassert('d2>0.28 & d2 < 0.29'); % 0.2866
   
   %gradient of vector fields
   DU2 = gf_compute(mf_DU, [UU;2*UU;3*UU], 'gradient', mf_DU);
@@ -90,5 +90,5 @@ function res=check_solve(iverbose,idebug)
   d(1:10)
   DU2(1:10)
   
-  assert('max(abs(DU2(:)-d(:))) < 2e-15');
+  gfassert('max(abs(DU2(:)-d(:))) < 2e-15');
   

@@ -32,7 +32,7 @@ gf_workspace('clear all');
 
 % parameters
 
-TEST_CASE = 1 % 0 : 2D, initial holes, shape gradient only
+TEST_CASE = 2 % 0 : 2D, initial holes, shape gradient only
               % 1 : 2D, no initial hole, coupling with topological gradient
               % 2 : 3D, initial holes, shape gradient only
               % 3 : 3D, no initial hole, coupling with topological gradient
@@ -67,18 +67,20 @@ if (N == 2)
     threshold_topo  = 0;
   end
   penalty_param = 1E-6;
+  nbiter = 400;
   NBDRAW = 20;            % Draw solution each NBDRAW iterations
 else
-  NY = 20
-  level_set_rate = 0.1 / NY;
+  NY = 30
+  level_set_rate = 0.015 / NY;
   reinitialisation_time = 0.005;
-  threshold_shape = 2.6;
+  threshold_shape = 13.5;
   if (TEST_CASE == 3)
-    threshold_topo = 2.75;
+    threshold_topo = 2.6;
   else
     threshold_topo = 0;
   end
   penalty_param = 1E-6;
+  nbiter = 400;
   NBDRAW = 5;            % Draw solution each NBDRAW iterations
 end;
 hole_radius = max(0.03, 2./NY);  % Hole radius for topological optimization
@@ -196,7 +198,7 @@ gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
 
 
 % Optimization loop
-for niter = 1:400
+for niter = 1:nbiter
   ti = cputime;
   gf_workspace('push');
 

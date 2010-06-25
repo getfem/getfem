@@ -1,4 +1,4 @@
-function assert(sx)
+function gfassert(sx)
   global gverbose;
   global gdebug;
   x = evalin('caller',sx);

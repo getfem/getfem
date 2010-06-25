@@ -20,20 +20,20 @@ function check_slices(iverbose,idebug)
   U=gf_mesh_fem_get(mf,'eval', {'x.*x + y.*y'});
   sl=gf_slice({'planar',0,[.5;0],[1;0]},m,3);
   pp=gf_slice_get(sl,'pts');
-  assert('abs(pp(1,:)-.5)<1e-15');
+  gfassert('abs(pp(1,:)-.5)<1e-15');
   sl2=gf_slice('points',m,pp(:,1:3));
   pp2=gf_slice_get(sl2,'pts');
-  assert('abs(pp2(1,:)-.5)<1e-15');
+  gfassert('abs(pp2(1,:)-.5)<1e-15');
   
 %  n=8;sl=gf_slice(m,{'isovalues',-1,mf,U,0.25},n);
   sl=gf_slice({'isovalues',-1,mf,U,16.0},m,4);
 %  gf_plot_slice(sl,'mesh','on','data',gf_compute(mf,U,'interpolate on',sl)); colorbar;
   pp=gf_slice_get(sl,'pts');
-  assert('max(sqrt(sum(pp.^2,1)))<4.0000001');
+  gfassert('max(sqrt(sum(pp.^2,1)))<4.0000001');
   
   sl=gf_slice({'isovalues',0,mf,U,9.0},m,7);
   pp=gf_slice_get(sl,'pts');
-  assert('max(abs(3-sqrt(sum(pp.^2,1))))<0.0015');
+  gfassert('max(abs(3-sqrt(sum(pp.^2,1))))<0.0015');
 
   
 
@@ -41,4 +41,4 @@ function check_slices(iverbose,idebug)
   m2=gf_mesh('cartesian',[-N:(N/5):N]+.1,[-N:(N/7):N]+.1);
   sl=gf_slice({'mesh',m2},m,3);%gf_plot_slice(sl,'mesh_faces','on');
   a=gf_slice_get(sl,'area') - 1.9*1.9;
-  assert('a < 1e-10');
+  gfassert('a < 1e-10');

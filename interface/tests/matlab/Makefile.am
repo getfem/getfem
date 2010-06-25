@@ -53,7 +53,7 @@ EXTRA_DIST= \
 	tripod_anim.m \
 	tutorial1.m \
 	\
-	private/assert.m \
+	private/gfassert.m \
 	private/asserterr.m
 
 TESTS_ENVIRONMENT = \
