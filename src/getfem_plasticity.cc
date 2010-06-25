@@ -76,7 +76,7 @@ namespace getfem {
 	Sigma_np1(Sigma_np1_), t_proj(t_proj_), flag_proj(flag_proj_),
 	write_sigma_np1(write_sigma_np1_) {
       GMM_TRACE2("Building the plasticity non linear term");
-      cout << "t_proj flag_hyp debut nonlinear term = " << t_proj.flag_hyp << endl;
+      //      cout << "t_proj flag_hyp debut nonlinear term = " << t_proj.flag_hyp << endl;
 
       params = base_vector(3); 
       N = mf_u_.linked_mesh().dim();
@@ -126,7 +126,7 @@ namespace getfem {
 			 bgeot::base_tensor &t){ 
 
       GMM_TRACE2("Computing the plasticity");
-      cout << "t_proj flag_hyp debut compute = " << t_proj.flag_hyp << endl;
+      // cout << "t_proj flag_hyp debut compute = " << t_proj.flag_hyp << endl;
 
 
       size_type cv = ctx.convex_num();//index of current element
@@ -264,8 +264,8 @@ namespace getfem {
 
 	  VM_projection pproj(0);
 
-	  cout << "Adress of t_proj " << &t_proj << endl;
-	  cout << "t_proj flag_hyp = " << t_proj.flag_hyp << endl;
+	  // cout << "Adress of t_proj " << &t_proj << endl;
+	  // cout << "t_proj flag_hyp = " << t_proj.flag_hyp << endl;
 	  // cout << "t_proj.do_projection " << &(t_proj.do_projection) << endl;
 
 	  t_proj.do_projection(sigma_hat,params[2],proj,flag_proj);
@@ -331,7 +331,7 @@ namespace getfem {
 	const mesh_region &rg = mesh_region::all_convexes()) {
 
 
-    cout << "t_proj flag_hyp debut asm_rhs = " << t_proj.flag_hyp << endl;
+    // cout << "t_proj flag_hyp debut asm_rhs = " << t_proj.flag_hyp << endl;
 
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
@@ -458,7 +458,7 @@ namespace getfem {
                                 size_type region,
                                 build_version version) const {
 
-      cout << "t_proj flag_hyp debut asm_real = " << t_proj.flag_hyp << endl;
+      // cout << "t_proj flag_hyp debut asm_real = " << t_proj.flag_hyp << endl;
 
 
       GMM_ASSERT1(mims.size() == 1,
@@ -532,8 +532,8 @@ namespace getfem {
     plasticity_brick(const abstract_constraints_projection &t_proj_)
       : t_proj(t_proj_){
 
-      cout << "t_proj_ flag_hyp brick = " << t_proj_.flag_hyp << endl;
-      cout << "t_proj flag_hyp brick = " << t_proj.flag_hyp << endl;
+      // cout << "t_proj_ flag_hyp brick = " << t_proj_.flag_hyp << endl;
+      // cout << "t_proj flag_hyp brick = " << t_proj.flag_hyp << endl;
 
       set_flags("Plasticity brick", false /* is linear*/,
             true /* is symmetric */, false /* is coercive */,
@@ -558,8 +558,8 @@ namespace getfem {
 
     static VM_projection proj(0);
 
-    cout << "Adress of t_proj " << &proj << endl;
-    cout << "t_proj flag_hyp = " << proj.flag_hyp << endl;
+    // cout << "Adress of t_proj " << &proj << endl;
+    // cout << "t_proj flag_hyp = " << proj.flag_hyp << endl;
 
     pbrick pbr = new plasticity_brick(proj);
 
