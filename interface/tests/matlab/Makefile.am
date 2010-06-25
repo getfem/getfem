@@ -50,6 +50,7 @@ EXTRA_DIST= \
 	demo_wave2D_alt.m \
 	demo_wave_equation.m \
 	test_argyris.m \
+	test_plasticity_new_brick.m \
 	tripod_anim.m \
 	tutorial1.m \
 	\

@@ -38,6 +38,10 @@ namespace getfem {
   class abstract_hyperelastic_law;
 }
 
+namespace getfem {
+  class abstract_constraints_projection;
+}
+
 namespace getfemint {
   typedef getfem::convex_face convex_face;
   typedef getfem::convex_face_ct convex_face_ct;
@@ -68,6 +72,10 @@ namespace getfemint {
 			       const getfem::mesh_fem *pmf, const darray& U);
   
   const getfem::abstract_hyperelastic_law &abstract_hyperelastic_law_from_name(const std::string &lawname);
+
+
+  const getfem::abstract_constraints_projection &abstract_constraints_projection_from_name(const std::string &projname);
+
 
   class interruptible_iteration : public gmm::iteration {
   public:

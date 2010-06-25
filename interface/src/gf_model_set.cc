@@ -908,22 +908,28 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add plasticity brick', @tmim mim, @str varname, @str constitutive_law, @str dataname[, @int region])
+    /*@SET ind = ('add plasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
     To be filled ... .@*/
     sub_command
-      ("add plasticity brick", 6, 7, 0, 1,
+      ("add plasticity brick", 7, 8, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string projname = in.pop().to_string();
        std::string varname = in.pop().to_string();
        std::string datalambda = in.pop().to_string();
        std::string datamu = in.pop().to_string();
        std::string datathreshold = in.pop().to_string();
        std::string datasigma = in.pop().to_string();
        size_type region = size_type(-1);
+
+       // getfem::VM_projection proj(0);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_plasticity_brick
-       (md->model(), gfi_mim->mesh_im(), varname, datalambda, datamu,
-	datathreshold, datasigma, region);
+       (md->model(), gfi_mim->mesh_im(),
+        abstract_constraints_projection_from_name(projname), 
+	varname, datalambda, datamu,
+	datathreshold, datasigma,
+	region);
        
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));

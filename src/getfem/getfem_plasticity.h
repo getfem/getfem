@@ -63,7 +63,7 @@ namespace getfem {
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
 				     size_type flag_proj) const = 0;
-    abstract_constraints_projection (size_type flag_hyp_ = 0) : flag_hyp(flag_hyp_) {GMM_TRACE2("Entering into abstract_contraints_projection constructor");}
+    abstract_constraints_projection (size_type flag_hyp_ = 0) : flag_hyp(flag_hyp_) {}
     virtual ~abstract_constraints_projection () {}
   };
 
@@ -91,7 +91,6 @@ namespace getfem {
 				     scalar_type stress_threshold,
 				     base_matrix& proj,
 				     size_type flag_proj)  const {
-	GMM_TRACE2("Entering into do_projection function")
 	
 	/* be sure that flag_proj has a correct value */
 	GMM_ASSERT1(flag_proj == 0 || flag_proj ==1,
@@ -197,6 +196,7 @@ namespace getfem {
 
 
 
+
   //===========================================================================
   //
   //  Bricks
@@ -209,10 +209,33 @@ namespace getfem {
 
   */
   size_type add_plasticity_brick
-  (model &md, const mesh_im &mim, const std::string &varname,
+  (model &md, const mesh_im &mim,const abstract_constraints_projection &ACP, 
+   const std::string &varname,
    const std::string &datalambda, const std::string &datamu,
    const std::string &datathreshold, const std::string &datasigma,
    size_type region = size_type(-1));
+
+
+
+  void write_sigma(model &md,
+		   const mesh_im &mim,
+		   const std::string &varname,
+		   const abstract_constraints_projection &ACP,
+		   const std::string &datalambda,
+		   const std::string &datamu, 
+		   const std::string &datathreshold, 
+		   const std::string &datasigma);
+
+
+  void compute_plasticity_Von_Mises_or_Tresca
+  (model &md,  
+   const std::string & datasigma,
+   const mesh_fem &mf_vm,
+   model_real_plain_vector &VM,
+   bool tresca);
+
+
+
 
 
   //===========================================================================

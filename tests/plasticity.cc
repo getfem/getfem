@@ -59,8 +59,7 @@ template<typename VEC> static void vecsave(
        for (size_type i=0; i < V.size(); ++i) 
 	 f << V[i] << "\n"; 
 }
-
-
+ 
 
 
 /*
@@ -82,7 +81,7 @@ struct plasticity_problem {
 
   scalar_type stress_threshold;
   size_type flag_hyp;
-  std::vector<std::vector<scalar_type> > sigma_b;
+  //std::vector<scalar_type> sigma_np1;
 
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -206,7 +205,6 @@ void plasticity_problem::init(void)
   } else {
     mf_rhs.set_finite_element(mesh.convex_index(), 
 		getfem::fem_descriptor(data_fem_name));
-    GMM_TRACE2("On rentre ici pourtant : ou pas !!!!!!");
   }
 
 
@@ -267,8 +265,18 @@ bool plasticity_problem::solve(plain_vector &U) {
 
   model.add_fem_data("sigma", mf_sigma, 
 		     bgeot::dim_type(N*N), 2);
-  add_plasticity_brick(model, mim, "u", "lambda", "mu", 
-		       "s", "sigma");
+
+
+
+  /* choose the projection type */
+  getfem::abstract_constraints_projection *proj = 0;
+  proj = new getfem::VM_projection(0);
+
+  size_type ind = add_plasticity_brick(model, mim, *proj, 
+				       "u", "lambda", "mu", 
+				       "s", "sigma");
+
+
 
 
   plain_vector F(nb_dof_rhs * N);
@@ -313,8 +321,18 @@ bool plasticity_problem::solve(plain_vector &U) {
     gmm::iteration iter(residual, 2, 40000);
     getfem::standard_solve(model, iter);
 
-    // ?? PLAS.compute_constraints(MS);
+    // PLAS.compute_constraints(MS); 
+
+
+    //compute and save sigma_np1
+    getfem::mesh_fem *mf_data=0;
     
+
+    getfem::write_sigma(model, mim, "u", *proj, "lambda", "mu", "s", "sigma");
+     
+
+    
+
     // Get the solution and save it
     gmm::copy(model.real_variable("u"), U);
     
@@ -333,17 +351,23 @@ bool plasticity_problem::solve(plain_vector &U) {
     
   }
 
-//   getfem::mesh_fem mf_vm(mesh);
-//   mf_vm.set_classical_discontinuous_finite_element(2);
-//   getfem::base_vector VM(mf_vm.nb_dof());
-//   PLAS.compute_Von_Mises_or_Tresca(mf_vm, VM, false);
-//   getfem::vtk_export exp(datafilename + ".vtk");
-//   exp.exporting(mf_vm);
-//   exp.write_point_data(mf_vm,VM, "Von Mises stress");
-//   exp.write_point_data(mf_u, U, "displacement");
-//   cout << "export done, you can view the data file with (for example)\n"
-//     "mayavi -d " << datafilename << ".vtk -f "
-// 	"WarpVector -m BandedSurfaceMap -m Outline\n";
+   getfem::mesh_fem mf_vm(mesh);
+   mf_vm.set_classical_discontinuous_finite_element(1);
+   getfem::base_vector VM(mf_vm.nb_dof());
+
+
+   getfem::compute_plasticity_Von_Mises_or_Tresca
+     (model, "sigma", mf_vm, VM, false);
+
+
+
+   getfem::vtk_export exp(datafilename + ".vtk");
+   exp.exporting(mf_vm);
+   exp.write_point_data(mf_vm,VM, "Von Mises stress");
+   exp.write_point_data(mf_u, U, "displacement");
+   cout << "export done, you can view the data file with (for example)\n"
+     "mayavi -d " << datafilename << ".vtk -f "
+ 	"WarpVector -m BandedSurfaceMap -m Outline\n";
 
   return true;
 }

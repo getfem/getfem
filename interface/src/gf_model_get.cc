@@ -29,6 +29,7 @@
 #include <getfem/getfem_model_solvers.h>
 #include <getfemint_mdbrick.h>
 #include <getfemint_mesh_fem.h>
+#include <getfemint_mesh_im.h>
 
 using namespace getfemint;
 
@@ -347,9 +348,59 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        
        getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_Von_Mises_or_Tresca
-       (md->model(), varname, abstract_hyperelastic_law_from_name(lawname),
+       (md->model(), varname, 
+	abstract_hyperelastic_law_from_name(lawname),
 	dataname, gfi_mf->mesh_fem(), VMM, tresca);
        out.pop().from_dcvector(VMM);
+       );
+
+
+
+ /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
+      Compute on `mf_vm` the Von-Mises stress or the Tresca stress of a field
+      for plasticity.
+      `datasigma` is a vector of parameters for the constitutive law.  
+      `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). @*/
+    sub_command
+      ("compute plasticity Von Mises or Tresca", 2, 3, 0, 1,
+       std::string datasigma = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       std::string stresca = "Von Mises";
+       if (in.remaining()) stresca = in.pop().to_string();
+       bool tresca = false;
+       if (cmd_strmatch(stresca, "Von Mises") ||
+	   cmd_strmatch(stresca, "Von_Mises"))
+	 tresca = false;
+       else if (cmd_strmatch(stresca, "Tresca"))
+	 tresca = true;
+       else THROW_BADARG("bad option \'version\': " << stresca);
+       
+       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::compute_plasticity_Von_Mises_or_Tresca
+       (md->model(), datasigma, gfi_mf->mesh_fem(), VMM, tresca);
+       out.pop().from_dcvector(VMM);
+       );
+
+
+
+
+        /*@GET ('compute plasticity constraints', @tmim mim, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
+      Compute and save the stress constraint sigma for other iterations. @*/
+    sub_command
+      ("compute plasticity constraints", 7, 7, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string projname = in.pop().to_string();
+       std::string datalambda = in.pop().to_string();
+       std::string datamu = in.pop().to_string();
+       std::string datathreshold = in.pop().to_string();
+       std::string datasigma = in.pop().to_string();
+      
+       getfem::write_sigma
+	 (md->model(), gfi_mim->mesh_im(), varname,
+	  abstract_constraints_projection_from_name(projname), 
+	  datalambda, datamu, datathreshold, datasigma);
+
        );
 
 

@@ -29,6 +29,7 @@
 #include <getfemint_misc.h>
 #include <getfem/getfem_mesh_fem.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
+#include <getfem/getfem_plasticity.h>
 #include <algorithm>
 
 namespace getfemint {
@@ -713,6 +714,24 @@ namespace getfemint {
 		 "or Ciarlet Geymonat");
     return SVK_AHL;
   }
+
+
+  const getfem::abstract_constraints_projection &abstract_constraints_projection_from_name(const std::string &projname) {
+
+    static getfem::VM_projection VM_proj(0);
+
+    if (cmd_strmatch(projname, "Von Mises") ||
+	cmd_strmatch(projname, "VM")) return VM_proj;
+    
+    THROW_BADARG(projname <<
+		 " is not the name of a known constraints projection. \\"
+		 "Valid names are: Von mises or VM");
+  
+    return VM_proj;
+
+  }
+
+  
 
 
   /*
