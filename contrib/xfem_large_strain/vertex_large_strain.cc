@@ -39,7 +39,7 @@
 #include "getfem/getfem_spider_fem.h"
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "getfem/getfem_superlu.h"
-#include "getfem_nonlinear_elasoptim.h"
+#include "getfem_nonlinear_elastoptim.h"
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
 
@@ -64,7 +64,9 @@ typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 /**************************************************************************/
+/*                                                                        */
 /*  Structure for the crack problem.                                      */
+/*                                                                        */
 /**************************************************************************/
 
 struct crack_problem {
@@ -72,7 +74,7 @@ struct crack_problem {
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN1_BOUNDARY_NUM = 1, NEUMANN2_BOUNDARY_NUM=2, NEUMANN3_BOUNDARY_NUM=3, NEUMANN4_BOUNDARY_NUM=4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
   getfem::mesh mesh;  /* the mesh */
   getfem::level_set ls;      /* The two level sets defining the crack.       */
-  getfem::mesh_level_set mls;       /* the integration methods.              */
+  getfem::mesh_level_set mls;       /* the integration methods for cutted element.    */
   getfem::mesh_im_level_set mim;    /* the integration methods.              */
   getfem::mesh_fem mf_pre_u, mf_pre_mortar;
   getfem::mesh_fem mf_mult, mf_mult_p;
@@ -89,7 +91,7 @@ struct crack_problem {
   getfem::mesh_fem_product mf_product_p;
   getfem::mesh_fem_sum mf_p_sum;
 
-  scalar_type pr1, pr2, pr3, AMP_LOAD_X, AMP_LOAD_Y,nb_step;   /* elastic coefficients,Amplitude of load, number of step loadings*/
+  scalar_type pr1, pr2, pr3, AMP_LOAD_X, AMP_LOAD_Y, nb_step;   /* elastic coefficients,Amplitude of load, number of step loadings*/
 
   base_small_vector cracktip;
 
@@ -198,7 +200,7 @@ std::string name_of_dof(getfem::pdof_description dof) {
 }
 
 
-/* Read parameters from the .param file, build the mesh, set finite element
+ /* Read parameters from the .param file, build the mesh, set finite element
  * and integration methods and selects the boundaries.
  */
 void crack_problem::init(void) {
@@ -465,7 +467,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
-  size_type newton_version = PARAM.int_value("newton_version");
+  //size_type newton_version = PARAM.int_value("newton_version");
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
@@ -733,9 +735,10 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     }
   }
   
-
-  // find the dofs on the upper right and lower right corners
-
+  ///////////////////////////////////////////////////////////////
+  // find the dofs on the upper right and lower right corners  //
+  ///////////////////////////////////////////////////////////////
+  cout << "Find the dofs on the upper right and lower right corners" << endl;
   scalar_type d1 = 1.0, d2 = 1.0;
   size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
   base_node corner1 = base_node(1.0, -0.5);
@@ -751,21 +754,53 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   GMM_ASSERT1(((d1 < 1E-8) && (d2 < 1E-8)),
 	      "Upper right or lower right corners not found d1 = "
 	      << d1 << " d2 = " << d2);
-  // Nonlinear-elasticity brick.
 
+  /***********************************************/
+  /*                                             */   
+  /* Add Nonlinear-elasticity brick.             */
+  /*                                             */
+  /***********************************************/
   // Choose the material law.
  
- getfem::abstract_hyperelastic_law *pl = 0;
-  switch (law_num) {
-    case 0: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
-    case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
-    default: GMM_ASSERT1(false, "no such law");
-  }
+ //  getfem::abstract_hyperelastic_law *pl = 0;
+ //     switch (law_num) {
+ //       case 0: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
+ //       case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
+ //       case 3: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
+ //       default: GMM_ASSERT1(false, "no such law");
+ //     }
 
-  pr.resize(pl->nb_params());
-  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
+  // if (mixed_pressure) 
+  //   cout << "Number of dof for P: " << mf_pe.nb_dof() << endl;
+  //   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
+  //pr.resize(pl->nb_params());
+  
+  getfem::model model;
+  size_type alpha,beta;
+  model.add_fem_variable("u", mf_u());
+  model.add_fixed_size_variable("alpha", alpha);
+  model.add_fixed_size_variable("beta", beta);
+  
+  model.add_initialized_fixed_size_data("Mooney_Riv_coefficient", pr);
+  
+  getfem::add_nonlinear_elasticity_brick( model, mim, "u", getfem::Mooney_Rivlin_hyperelastic_law(),"Mooney_Riv_coefficient");
+  // Incompressibility
+  if (mixed_pressure) {
+    model.add_fem_variable("p", mf_pe());
+    getfem::add_nonlinear_incompressibility(model, mim, "u" , "p", size_type(-1));
+    }
+  // Add nonlinear elasticity optimazition brick
 
-  getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
+  add_nonlinear_elasticity_optim_brick(model, mim, "u" , "p","alpha","beta",getfem::Mooney_Rivlin_hyperelastic_law(),"Mooney_Riv_coefficient","ls_crack",ls);
+
+ //  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
+ //   getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
+
+
+
+
+
+
 
   // Defining the Neumann condition right hand side.
   plain_vector F_Neumann1(nb_dof_rhs * N);
@@ -773,8 +808,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   plain_vector F_Neumann3(nb_dof_rhs * N);
   plain_vector F_Neumann4(nb_dof_rhs * N);
   // Neumann condition brick.
-  
-  // down side
+   
   for(size_type i = 0; i < F_Neumann1.size(); i=i+N) F_Neumann1[i] = AMP_LOAD_X;
   for(size_type i = 1; i < F_Neumann1.size(); i=i+N) F_Neumann1[i] = AMP_LOAD_Y;
   for(size_type i = 0; i < F_Neumann2.size(); i=i+N) F_Neumann2[i] = AMP_LOAD_X;
@@ -783,55 +817,71 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   for(size_type i = 1; i < F_Neumann3.size(); i=i+N) F_Neumann3[i] = -AMP_LOAD_Y;
   for(size_type i = 0; i < F_Neumann4.size(); i=i+N) F_Neumann4[i] = -AMP_LOAD_X;
   for(size_type i = 1; i < F_Neumann4.size(); i=i+N) F_Neumann4[i] = -AMP_LOAD_Y;
-  
-  getfem::mdbrick_source_term<> NEUMANN1(INCOMP, mf_rhs, F_Neumann1,
-					 NEUMANN1_BOUNDARY_NUM);
-  getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F_Neumann2,
-					 NEUMANN2_BOUNDARY_NUM);
-  //gmm::scale(F, -1.0);
-  
-  getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F_Neumann3,
-					 NEUMANN3_BOUNDARY_NUM);
-  getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F_Neumann4,
-					 NEUMANN4_BOUNDARY_NUM);
-  
+   
+   model.add_initialized_fem_data("NeumannData1", mf_rhs,F_Neumann1 );
+  getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData1", NEUMANN1_BOUNDARY_NUM);
 
-  getfem::mdbrick_constraint<> KILL_RIGID_MOTIONS(NEUMANN4);
+   model.add_initialized_fem_data("NeumannData2", mf_rhs,F_Neumann2 );
+  getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData2", NEUMANN2_BOUNDARY_NUM);
+
+   model.add_initialized_fem_data("NeumannData3", mf_rhs,F_Neumann3 );
+   getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData3", NEUMANN3_BOUNDARY_NUM);
+
+   model.add_initialized_fem_data("NeumannData4", mf_rhs,F_Neumann3 );
+   getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData4", NEUMANN4_BOUNDARY_NUM);
+   
+  
+  //  getfem::mdbrick_source_term<> NEUMANN1(INCOMP, mf_rhs, F_Neumann1, NEUMANN1_BOUNDARY_NUM);
+  //  getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F_Neumann2, NEUMANN2_BOUNDARY_NUM);
+  //  gmm::scale(F, -1.0);
+  //  getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F_Neumann3, NEUMANN3_BOUNDARY_NUM);
+  //  getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F_Neumann4, NEUMANN4_BOUNDARY_NUM);
+  //  getfem::mdbrick_constraint<> KILL_RIGID_MOTIONS(NEUMANN4);
+
   GMM_ASSERT1(N==2, "To be corrected for 3D computation");
   sparse_matrix BB(4, mf_u().nb_dof());
   BB(0, icorner1) = 1.0;
   BB(1, icorner1+1) = 1.0;
   BB(2, icorner2) = 1.0;
   BB(3, icorner2+1) = 1.0;
-  KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(4));
-  KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
+   size_type size(3);
+   std::vector<scalar_type> LRH(size);
+   model.add_fixed_size_variable("dir", size);
+   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+   
+   // KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(4));
+   // KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> DIRICHLET (KILL_RIGID_MOTIONS, DIRICHLET_BOUNDARY_NUM, mf_mult);
+   // Dirichlet condition brick.
+   // getfem::mdbrick_Dirichlet<> DIRICHLET (KILL_RIGID_MOTIONS, DIRICHLET_BOUNDARY_NUM, mf_mult);
     
- DIRICHLET.set_constraints_type(getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
+   // DIRICHLET.set_constraints_type(getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
 
- getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
+   // getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
 
 /*************************************/
 /*       Generic solve.              */
 /*************************************/
 
-  getfem::standard_model_state MS(*final_model);
-  size_type maxit = PARAM.int_value("MAXITER"); 
-  gmm::iteration iter;
+   // getfem::standard_model_state MS(*final_model);
+   // size_type maxit = PARAM.int_value("MAXITER"); 
+   // gmm::iteration iter;
   
-  size_type stnst = PARAM.int_value("stnst");
+   //size_type stnst = PARAM.int_value("stnst");
   
-if (stnst==1) {
+  //if (stnst==1) {
  
-/********************/
- /* Step loading     */
- /********************/
-    cout << "By step amigoo###################################<<<<<>>>>>>######" << endl;
-    cout << "Nb de Step " << nb_step <<endl;     
-for (int step = 0; step < nb_step; ++step) {
-  //plain_vector DF(F);
+ /**********************/
+ /*   Step loading     */
+ /**********************/
+  // cout << "By step amigoo###################################<<<<<>>>>>>######" << endl;
+  // cout << "Nb de Step " << nb_step <<endl;     
+  // for (int step = 0; step < nb_step; ++step) {
+  // plain_vector DF(F);
 
   //gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
   //NEUMANN4.source_term().set(DF);
@@ -846,103 +896,125 @@ for (int step = 0; step < nb_step; ++step) {
     /* let the default non-linear solve (Newton) do its job */
     /********************************************************/ 
 
-    cout << "step " << step << ", number of variables : " << final_model->nb_dof() << endl;
-    //cout << "DF " << DF <<  endl;
+    // cout << "step " << step << ", number of variables : " << final_model->nb_dof() << endl;
+    // cout << "DF " << DF <<  endl;
 
-    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
-                          maxit ? maxit : 40000);
+    // iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")), maxit ? maxit : 40000);
     
     // gmm::abstract_newton_line_search alnrs;
     // gmm::simplest_newton_line_search silnrs;
-    gmm::default_newton_line_search dlnrs;
+    // gmm::default_newton_line_search dlnrs;
     // gmm::systematic_newton_line_search sylnrs;
     
-    getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
+    // getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
 
-    pl->reset_unvalid_flag();
-    final_model->compute_residual(MS);
-    if (pl->get_unvalid_flag())
-      GMM_WARNING1("The solution is not completely valid, the determinant "
-                   "of the transformation is negative on "
-                   << pl->get_unvalid_flag() << " gauss points");
+    // pl->reset_unvalid_flag();
+    //   final_model->compute_residual(MS);
+    // if (pl->get_unvalid_flag())
+    //  GMM_WARNING1("The solution is not completely valid, the determinant "
+    //               "of the transformation is negative on "
+    //               << pl->get_unvalid_flag() << " gauss points");
 
-    }   
+  //}   
 
-  }
-  else{
- cout << "Resolution direct =============D=I=R=E=C=T====================> " << endl;
+  //}
+  //else{
+  //cout << "Resolution direct =============D=I=R=E=C=T====================> " << endl;
  /****************/
  /*Sans iteration*/
  /****************/
-iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
-			  maxit ? maxit : 40000);
+ // iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
+// 			  maxit ? maxit : 40000);
     
     
- // gmm::abstract_newton_line_search alnrs;
-    gmm::simplest_newton_line_search silnrs;
-    gmm::default_newton_line_search dlnrs;
-    gmm::systematic_newton_line_search sylnrs;
+//  // gmm::abstract_newton_line_search alnrs;
+//     gmm::simplest_newton_line_search silnrs;
+//     gmm::default_newton_line_search dlnrs;
+//     gmm::systematic_newton_line_search sylnrs;
     
-    switch (newton_version){
+//     switch (newton_version){
     
- // case 0: getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), alnrs);
-    case 1:{
-      getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), silnrs);
-      cout << "============================ " << endl;
-      cout << "=:simplest_newton_line_search= " << endl;
-      cout << "============================ " << endl;
-    }break;
-    case 2:{
-      getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
-      cout << "============================ " << endl;
-      cout << "=default_newton_line_search= " << endl;
-      cout << "============================ " << endl;
-    }break;
+//  // case 0: getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), alnrs);
+//     case 1:{
+//       getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), silnrs);
+//       cout << "============================ " << endl;
+//       cout << "=:simplest_newton_line_search= " << endl;
+//       cout << "============================ " << endl;
+//     }break;
+//     case 2:{
+//       getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
+//       cout << "============================ " << endl;
+//       cout << "=default_newton_line_search= " << endl;
+//       cout << "============================ " << endl;
+//     }break;
     
 
-    case 3: {
-      getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), sylnrs);
-      cout << "=============================== " << endl;
-      cout << "=systematic_newton_line_search= " << endl;
-      cout << "=============================== " << endl;
-    }break;
-    default: GMM_ASSERT1(false, "No such newton");
-    }
-    pl->reset_unvalid_flag();
-    final_model->compute_residual(MS);
-    if (pl->get_unvalid_flag()) 
-      GMM_WARNING1("The solution is not completely valid, the determinant "
-		   "of the transformation is negative on "
-		   << pl->get_unvalid_flag() << " gauss points");
-  }
+//     case 3: {
+//       getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), sylnrs);
+//       cout << "=============================== " << endl;
+//       cout << "=systematic_newton_line_search= " << endl;
+//       cout << "=============================== " << endl;
+//     }break;
+//     default: GMM_ASSERT1(false, "No such newton");
+//     }
+//     pl->reset_unvalid_flag();
+//     final_model->compute_residual(MS);
+//     if (pl->get_unvalid_flag()) 
+//       GMM_WARNING1("The solution is not completely valid, the determinant "
+// 		   "of the transformation is negative on "
+// 		   << pl->get_unvalid_flag() << " gauss points");
+//   }
+  gmm::iteration iter(residual, 1, 40000);
+  cout << "Solving..." << endl;
+  iter.init();
+  getfem::standard_solve(model, iter);
+  gmm::resize(U, mf_u().nb_dof());
+  gmm::copy(model.real_variable("u"), U);
+
+
+
+//  /*************************************/
+//  /*  Computation of the inf-sup bound */ 
+//  /*************************************/
+
+   // if (PARAM.int_value("INF_SUP_COMP") && mixed_pressure) {
+    
+//      cout << "Sparse matrices computation for the test of inf-sup condition"
+//  	 << endl;
+
+//     sparse_matrix Mis(mf_pe().nb_dof(), mf_pe().nb_dof());
+//     sparse_matrix Sis(mf_u().nb_dof(), mf_u().nb_dof());
+//     sparse_matrix Bis(mf_pe().nb_dof(),mf_u().nb_dof());
+//     getfem::asm_mass_matrix(Mis, mim, mf_pe());
+//     getfem::asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(Sis, mim, mf_u());
+//     getfem::asm_mass_matrix(Sis, mim, mf_u());    
+//     cout << "Inf-sup condition test" << endl;
+//     INCOMP.get_B(MS,Bis);
+//     scalar_type lambda = smallest_eigen_value(Bis, Mis, Sis);
+//     cout << "The inf-sup test gives " << lambda << endl;
+//   }
+
+   
+//   gmm::iteration iter(residual, 1, 40000);
+//   cout << "Solving..." << endl;
+//   iter.init();
+//   getfem::standard_solve(model, iter);
+//   gmm::resize(U, mf_u().nb_dof());
+//   gmm::copy(model.real_variable("u"), U);
+ 
+ 
   
 
- /*************************************/
- /*  Computation of the inf-sup bound */ 
- /*************************************/
+  return (iter.converged());
 
-  if (PARAM.int_value("INF_SUP_COMP") && mixed_pressure) {
+
+
+
+  // Solution extraction
     
-    cout << "Sparse matrices computation for the test of inf-sup condition"
-	 << endl;
-
-    sparse_matrix Mis(mf_pe().nb_dof(), mf_pe().nb_dof());
-    sparse_matrix Sis(mf_u().nb_dof(), mf_u().nb_dof());
-    sparse_matrix Bis(mf_pe().nb_dof(),mf_u().nb_dof());
-    getfem::asm_mass_matrix(Mis, mim, mf_pe());
-    getfem::asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(Sis, mim, mf_u());
-    getfem::asm_mass_matrix(Sis, mim, mf_u());    
-    cout << "Inf-sup condition test" << endl;
-    INCOMP.get_B(MS,Bis);
-    scalar_type lambda = smallest_eigen_value(Bis, Mis, Sis);
-    cout << "The inf-sup test gives " << lambda << endl;
-  }
-
-     // Solution extraction
-    
-    gmm::copy(ELAS.get_solution(MS), U);
-    gmm::copy(INCOMP.get_pressure(MS), P);
-    return (iter.converged());
+  //   gmm::copy(ELAS.get_solution(MS), U);
+//     gmm::copy(INCOMP.get_pressure(MS), P);
+//     return (iter.converged());
 
       
       
