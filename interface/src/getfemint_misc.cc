@@ -716,6 +716,8 @@ namespace getfemint {
   }
 
 
+
+  /** This function return the right projection type chosen which could only be for the moment the Von Mises projection. */
   const getfem::abstract_constraints_projection &abstract_constraints_projection_from_name(const std::string &projname) {
 
     static getfem::VM_projection VM_proj(0);

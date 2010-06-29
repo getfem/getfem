@@ -1,23 +1,30 @@
 // -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
+//===================================================================
 //
 // Copyright (C) 2000-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// Getfem++  is  free software;  
+// you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License 
+// as published
+// by  the  Free Software Foundation;  
+// either version 2.1 of the License,  or
 // (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// This program  is  distributed  in  the  hope  that it will be 
+// useful,  but WITHOUT ANY WARRANTY; 
+// without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  
+// See the GNU Lesser General Public
 // License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
+// You  should  have received a copy of 
+// the GNU Lesser General Public License
+// along  with  this program;  
+// if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-//===========================================================================
+//===================================================================
 
 
 #include "getfem/getfem_models.h"
@@ -28,11 +35,10 @@
 namespace getfem {
 
 
-
-
   /** Compute the projection of D*e + sigma_bar_ 
       on the dof of sigma. */
   class plasticity_nonlinear_term : public nonlinear_elem_term {
+    
   protected:
     base_vector params;
     base_vector coeff_precalc;
@@ -50,36 +56,31 @@ namespace getfem {
     const abstract_constraints_projection &t_proj;
     fem_precomp_pool fppool;
     std::vector<scalar_type> stored_proj;
- 
     const size_type flag_proj;
     bool write_sigma_np1;
-
-//    bool fill_sigma_bar;
 
   
   public:  
 
 
-
     // constructor
     plasticity_nonlinear_term(const mesh_im &mim_,
-	          const mesh_fem &mf_u_,
-	          const mesh_fem &mf_sigma_,
-	          const mesh_fem *mf_data_,
-	          const std::vector<scalar_type> &U_n_, 
-	          const std::vector<scalar_type> &U_np1_,
-	          const std::vector<scalar_type> &Sigma_n_, 
-		  std::vector<scalar_type> *Sigma_np1_, 
-	     	  const std::vector<scalar_type> &threshold_, 
-	      	  const std::vector<scalar_type> &lambda_,
-	       	  const std::vector<scalar_type> &mu_, 
-	       	  const abstract_constraints_projection  &t_proj_,
-		  const size_type flag_proj_, bool write_sigma_np1_)
-
-      : mim(mim_), mf_u(mf_u_), mf_sigma(mf_sigma_), 
-	Sigma_n(Sigma_n_), Sigma_np1(Sigma_np1_), t_proj(t_proj_), 
-	flag_proj(flag_proj_),write_sigma_np1(write_sigma_np1_) {
-      // GMM_TRACE2("Building the plasticity non linear term");
+       	    const mesh_fem &mf_u_,
+            const mesh_fem &mf_sigma_,
+            const mesh_fem *mf_data_,
+            const std::vector<scalar_type> &U_n_, 
+	    const std::vector<scalar_type> &U_np1_,
+            const std::vector<scalar_type> &Sigma_n_, 
+            std::vector<scalar_type> *Sigma_np1_, 
+            const std::vector<scalar_type> &threshold_, 
+            const std::vector<scalar_type> &lambda_,
+            const std::vector<scalar_type> &mu_, 
+            const abstract_constraints_projection  &t_proj_,
+            const size_type flag_proj_, bool write_sigma_np1_) : 
+      mim(mim_), mf_u(mf_u_), mf_sigma(mf_sigma_), 
+      Sigma_n(Sigma_n_), Sigma_np1(Sigma_np1_), t_proj(t_proj_), 
+      flag_proj(flag_proj_),write_sigma_np1(write_sigma_np1_) {
+      
 
       params = base_vector(3); 
       N = mf_u_.linked_mesh().dim();
@@ -90,11 +91,14 @@ namespace getfem {
 
       sizes_ = bgeot::multi_index(N, N, N, N);
       mf_u.extend_vector(gmm::sub_vector
-			 (U_n_, gmm::sub_interval(0,mf_u_.nb_dof())), U_n);
+			 (U_n_, gmm::sub_interval
+			  (0,mf_u_.nb_dof())), U_n);
       mf_u.extend_vector(gmm::sub_vector
-			 (U_np1_, gmm::sub_interval(0,mf_u_.nb_dof())), U_np1);
+			 (U_np1_, gmm::sub_interval
+			  (0,mf_u_.nb_dof())), U_np1);
       mf_sigma.extend_vector(gmm::sub_vector
-			 (Sigma_n_, gmm::sub_interval(0,mf_sigma_.nb_dof())), Sigma_n);
+			     (Sigma_n_, gmm::sub_interval
+			      (0,mf_sigma_.nb_dof())), Sigma_n);
       
 
       if (mf_data_ != NULL) {
@@ -113,63 +117,71 @@ namespace getfem {
 	gmm::resize(threshold, 1); 
 	threshold[0] =  threshold_[0];
 	mf_data = mf_data_;
-
+	
       }
 
-      GMM_ASSERT1(mf_u.get_qdim() == N, "wrong qdim for the mesh_fem");      
+      GMM_ASSERT1(mf_u.get_qdim() == N, 
+		  "wrong qdim for the mesh_fem"); 
+      
       if (flag_proj==0) sizes_.resize(2);
 
+      // used to know if the current element is different 
+      // than the previous one and so if a new computation 
+      // is necessary or not.
       previous_cv = size_type(-1);
-      //  GMM_TRACE2("End of building the plasticity non linear term");
+      
     }
+
 
 
     const bgeot::multi_index &sizes() const { return sizes_; }
 
 
 
-    // compute() method from nonlinear_elem, gives on output the tensor
+    // method from nonlinear_elem_term, 
+    // gives on output the tensor
     virtual void compute(fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t){ 
-
-      // GMM_TRACE2("Computing the plasticity");
-
+      
       size_type cv = ctx.convex_num();//index of current element
       size_type qdim = mf_u.get_qdim();
       size_type qdim_sigma = mf_sigma.get_qdim();
-      // size_type qqdim_sigma = gmm::vect_size(Sigma_n) / mf_sigma.nb_dof();
       pfem pf_sigma = ctx.pf();
       size_type nbd_sigma = pf_sigma->nb_dof(cv);
+      
       GMM_ASSERT1(pf_sigma->is_lagrange(),
 		  "Sorry, works only for Lagrange fems");
-      size_type size_proj = qdim * qdim * (flag_proj == 1 ? qdim * qdim : 1);
+      
+      // size_proj is different if we compute the projection 
+      // or the gradient of the projection
+      size_type size_proj = qdim * qdim * 
+	(flag_proj == 1 ? qdim * qdim : 1);
 
+      // if the current element is different than the previous one
       if(previous_cv != cv) {
-	//GMM_TRACE2("previous");
 
 	stored_proj.resize(nbd_sigma * size_proj);
 	base_matrix G;
 	bgeot::vectors_to_base_matrix
 	  (G, mf_u.linked_mesh().points_of_convex(cv));
 	bgeot::pgeometric_trans pgt=
-	    mf_u.linked_mesh().trans_of_convex(cv);
+	  mf_u.linked_mesh().trans_of_convex(cv);
 
 	fem_interpolation_context ctx_data;
 	pfem pf_data;
 	base_vector coeff_data;
 
+	// if the Lame coefficient are vector fields
 	if (mf_data) {
-
-	  //GMM_TRACE2("data");
 	 
 	  pf_data = mf_data->fem_of_element(cv); 
 	  size_type nbd_data = pf_data->nb_dof(cv);
 	  coeff_data.resize(nbd_data*3);
 
-	  // Definition of the coeff of Lame
-
+	  // Definition of the Lame coeff
 	  mesh_fem::ind_dof_ct::const_iterator itdof
 	    = mf_data->ind_basic_dof_of_element(cv).begin();
+
 	  for (size_type k = 0; k < nbd_data; ++k, ++itdof) {
 	    coeff_data[k*3] = lambda[*itdof];
 	    coeff_data[k*3+1] = mu[*itdof];
@@ -183,17 +195,20 @@ namespace getfem {
 	    fppool(pf_data, pf_sigma->node_tab(cv));
 	  ctx_data = fem_interpolation_context
 	    (pgt,pfp_data,size_type(-1), G, cv,size_type(-1));
+
 	} else {
-	  //GMM_TRACE2("non data");
 	  
 	  params[0] = lambda[0];
 	  params[1] = mu[0];
 	  params[2] = threshold[0];
+
 	}
 
 
+	// for each dof of the current element
 	for (size_type ii = 0; ii < nbd_sigma; ++ii) {
 
+	  // interpolation of the data on sigma dof
 	  if (mf_data) {
 	    ctx_data.set_ii(ii);
 	    pf_data->interpolation(ctx_data, coeff_data, params, 3);
@@ -202,14 +217,11 @@ namespace getfem {
 	  std::vector<scalar_type> coeff_u_n, coeff_u_np1;
 	  
 	  pfem pf_u = mf_u.fem_of_element(cv);
-	  // size_type nbd_u = pf_u->nb_dof(cv); // = 6
-	  
 	  size_type cvnbdof_u = 
-	      mf_u.nb_basic_dof_of_element(cv); // = 12
+	      mf_u.nb_basic_dof_of_element(cv); 
 	  
 	  
-	  // Definition of the coeff for u_n and u_np1
-	  
+	  // Definition of the coeff for u_n and u_np1	  
 	  coeff_u_n.resize(cvnbdof_u);
 	  coeff_u_np1.resize(cvnbdof_u);
 	  mesh_fem::ind_dof_ct::const_iterator itdof
@@ -217,30 +229,33 @@ namespace getfem {
 	  for (size_type k = 0; k < cvnbdof_u; ++k, ++itdof) {
 	    coeff_u_n[k] = U_n[*itdof];
 	    coeff_u_np1[k] = U_np1[*itdof];
-	    }
+	  }
 	  
 	  base_matrix G_u_n(qdim, qdim), G_u_np1(qdim, qdim);
-	  
 	  pfem_precomp pfp_u = fppool(pf_u, pf_sigma->node_tab(cv));
-	  
 	  fem_interpolation_context ctx_u
 	    (pgt,pfp_u,size_type(-1), G, cv,size_type(-1));
 	    
-	  
+	  // interpolation of the gradient of u_n and u_np1 
+	  // on sigma dof
 	  ctx_u.set_ii(ii);
-	  
-	  pf_u->interpolation_grad(ctx_u, coeff_u_n, G_u_n, dim_type(qdim));
-	  pf_u->interpolation_grad(ctx_u, coeff_u_np1, G_u_np1,
-				   dim_type(qdim));
+	  pf_u->interpolation_grad
+	    (ctx_u, coeff_u_n, G_u_n, dim_type(qdim));
+	  pf_u->interpolation_grad
+	    (ctx_u, coeff_u_np1, G_u_np1, dim_type(qdim));
 	  
 	  // Compute sigma_hat = D*esp_np1 - D*eps_n + sigma_n
+	  // where D represent the elastic stiffness tensor
 	  base_matrix sigma_hat(qdim, qdim);
 	    
-	    
-	  // Compute lambda*tr(esp_n) and lambda*tr(esp_np1)
-	  scalar_type ltrace_eps_n =  params[0]*gmm::mat_trace(G_u_n);
-	  scalar_type ltrace_eps_np1 = params[0]*gmm::mat_trace(G_u_np1);
 	  
+	  // Compute lambda*tr(esp_n) and lambda*tr(esp_np1)
+	  scalar_type ltrace_eps_n 
+	    =  params[0]*gmm::mat_trace(G_u_n);
+	  scalar_type ltrace_eps_np1 
+	    = params[0]*gmm::mat_trace(G_u_np1);
+	  
+	  // Compute sigma_hat
 	  size_type idof_sigma
 	    = mf_sigma.ind_basic_dof_of_element(cv)[ii*qdim_sigma];
 	  for(dim_type i = 0; i < qdim; ++i) {
@@ -253,84 +268,75 @@ namespace getfem {
 	    }
 	  }
 	    
-	  //GMM_TRACE2("End of computing sigma_hat");
 	  
 	  base_matrix proj;
 
+	  // Compute the projection or its grad
 	  t_proj.do_projection(sigma_hat,params[2],proj,flag_proj);
 	  
+	  // Retrieve the projection or its grad
 	  std::copy(proj.begin(), proj.end(),
 		    stored_proj.begin() + proj.size() * ii);
 	  
+	  // Retrieve the new stress constraints values
+	  // used only by the function 'write_sigma(...)'
 	  if (flag_proj == 0 && write_sigma_np1) {
 	    
-	    //GMM_TRACE2("End of computing projection");
 	    for(dim_type i = 0; i < qdim; ++i){
 	      for(dim_type j = 0; j < qdim; ++j){
-		
 		(*Sigma_np1)[idof_sigma + j*qdim + i] = proj(i,j);
 	      }
 	    }
-	    //GMM_TRACE2("End of computing Sigma_np1");
 	  }
- 
 	}
+	// upload previous_cv
 	previous_cv = cv;
       }
+
+      // interpolation of the projection on sigma dof
       coeff_precalc.resize(size_proj);
       pf_sigma->interpolation(ctx, stored_proj, coeff_precalc,
 			      dim_type(size_proj));
       
       t.adjust_sizes(sizes_);
       
-      /*  copy the result into the tensor returned t */
-      std::copy(coeff_precalc.begin(), coeff_precalc.end(), t.begin());
-
-
-      //==================================================
-      //==================================================
-
-       // GMM_TRACE2("End of computing the plasticity");
+      // copy the result into the tensor returned t
+      std::copy(coeff_precalc.begin(), coeff_precalc.end(), 
+		t.begin());
 
     }
 
-
-
-
-
-
-
-
-
 };
+
+
+
+
 
   /** 
      Right hand side vector for plasticity 
       @ingroup asm
   */
-
   template<typename VECT> 
   void asm_plasticity_rhs (VECT &V, 
-			   const mesh_im &mim, 
-			   const mesh_fem &mf_u, 
-			   const mesh_fem &mf_sigma, 
-			   const mesh_fem &mf_data, 
-			   const VECT &u_n,
-			   const VECT &u_np1, 
-			   const VECT &sigma_n, 
-			   VECT *sigma_np1, 
-			   const VECT &lambda, 
-			   const VECT &mu, 
-			   const VECT &threshold, 
+	const mesh_im &mim, 
+	const mesh_fem &mf_u, 
+	const mesh_fem &mf_sigma, 
+	const mesh_fem &mf_data, 
+	const VECT &u_n,
+	const VECT &u_np1, 
+	const VECT &sigma_n, 
+	VECT *sigma_np1, 
+	const VECT &lambda, 
+	const VECT &mu, 
+	const VECT &threshold, 
         const abstract_constraints_projection  &t_proj,
-			   bool write_sigma_np1,
+	bool write_sigma_np1,
 	const mesh_region &rg = mesh_region::all_convexes()) {
 
 
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
-    // GMM_TRACE2("Assembling the plasticity rhs");
 
     plasticity_nonlinear_term plast(mim, mf_u, mf_sigma,
 				    &mf_data, u_n, u_np1,
@@ -338,32 +344,23 @@ namespace getfem {
 				    threshold, lambda, mu, 
 				    t_proj, 0, write_sigma_np1);
 
-    //GMM_TRACE2("Assembling the plasticity rhs : end of building plast");
-
-
-
-//     generic_assembly assem("t=comp(NonLin(#2).vGrad(#1));"
-// 			   "e=(t{:,:,:,4,5}+t{:,:,:,5,4})/2;"
-// 			   "V(#1) += e(i,j,:,i,j)");
 
     generic_assembly assem("V(#1) + =comp(NonLin(#2).vGrad(#1))(i,j,:,i,j);");
 
-    // GMM_TRACE2("Assembling the plasticity rhs : end of assembling");
-
+ 
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
-//  if (&(mf_data)!=NULL)
-//       assem.push_mf(mf_data);
     assem.push_nonlinear_term(&plast);
     assem.push_vec(V);
     assem.assembly(rg);
 
 
-
-    // GMM_TRACE2("End of assembling the plasticity rhs");
   }
   
+
+
+
 
   /** 
       Tangent matrix for plasticity
@@ -371,25 +368,22 @@ namespace getfem {
   */
   template<typename MAT,typename VECT> 
   void asm_plasticity_tangent_matrix(MAT &H, 
-				     const mesh_im &mim, 
-				     const mesh_fem &mf_u, 
-				     const mesh_fem &mf_sigma,
-				     const mesh_fem &mf_data, 
-				     const VECT &u_n,
-				     const VECT &u_np1, 
-				     const VECT &sigma_n, 
-				     const VECT &lambda, 
-				     const VECT &mu, 
-				     const VECT &threshold, 
+	const mesh_im &mim, 
+	const mesh_fem &mf_u, 
+	const mesh_fem &mf_sigma,
+	const mesh_fem &mf_data, 
+	const VECT &u_n,
+	const VECT &u_np1, 
+	const VECT &sigma_n, 
+	const VECT &lambda, 
+	const VECT &mu, 
+	const VECT &threshold, 
         const abstract_constraints_projection &t_proj,
         const mesh_region &rg = mesh_region::all_convexes()) {
 
 
-
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
-
-    //GMM_TRACE2("Assembling the plasticity tangent matrix");
 
     plasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma,
 					&mf_data, u_n, u_np1,
@@ -400,16 +394,18 @@ namespace getfem {
     generic_assembly assem;
 
     if (&(mf_data)!=NULL) {
+
       assem.set("lambda=data$1(#2); mu=data$2(#2);"
 		"t=comp(NonLin(#2).vGrad(#1).vGrad(#1).Base(#2))(i,j,:,:,:,:,:,:,i,j,:);"
 		"M(#1,#1)+=  sym(t(k,l,:,l,k,:,m).mu(m)+t(k,l,:,k,l,:,m).mu(m)+t(k,k,:,l,l,:,m).lambda(m))");
-
+      
     } else {
+      
       assem.set("lambda=data$1(1); mu=data$2(1);"
 		"t=comp(NonLin(#2).vGrad(#1).vGrad(#1))(i,j,:,:,:,:,:,:,i,j);"
 		"M(#1,#1)+= sym(t(k,l,:,l,k,:).mu(1)+t(k,l,:,k,l,:).mu(1)+t(k,k,:,l,l,:).lambda(1))");
     }
-
+    
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_sigma);
@@ -420,49 +416,45 @@ namespace getfem {
     assem.push_nonlinear_term(&gradplast);
     assem.push_mat(H);
     assem.assembly(rg);
-
-    //GMM_TRACE2("End of assembling the plasticity tangent matrix");
-
+    
   }
 
 
 
-  //=========================================================================
+  //=================================================================
   //
   //  Plasticity Brick
   //
-  //=========================================================================
+  //=================================================================
 
   struct plasticity_brick : public virtual_brick {
-
+    
     const abstract_constraints_projection  &t_proj;
 	
 
     virtual void asm_real_tangent_terms(const model &md, 
-			        size_type /* ib */,
-                                const model::varnamelist &vl,
-                                const model::varnamelist &dl,
-                                const model::mimlist &mims,
-				model::real_matlist &matl,   
-				model::real_veclist &vecl,
-                                model::real_veclist &,
-                                size_type region,
-                                build_version version) const {
+					size_type /* ib */,
+					const model::varnamelist &vl,
+					const model::varnamelist &dl,
+					const model::mimlist &mims,
+					model::real_matlist &matl,   
+					model::real_veclist &vecl,
+					model::real_veclist &,
+					size_type region,
+					build_version version)const {
 
 
       GMM_ASSERT1(mims.size() == 1,
 		  "Plasticity brick need a single mesh_im");
       GMM_ASSERT1(vl.size() == 1,
-		  "Plasticity brick need one variable"); /** vl[0] = u */
+		  "Plasticity brick need one variable"); 
+      /** vl[0] = u */
+      
       GMM_ASSERT1(dl.size() == 4,
 		  "Wrong number of data for plasticity brick, "
                   << dl.size() << " should be 4.");
       GMM_ASSERT1(matl.size() == 1,  "Wrong number of terms for "
 		  "plasticity brick");
-
-
-      // GMM_TRACE2("Assembling the tangent terms");
-
 
 
       const model_real_plain_vector &u_np1 = 
@@ -481,11 +473,6 @@ namespace getfem {
       const mesh_fem *mf_data = 
 	md.pmesh_fem_of_variable(dl[0]);
 
-
-      // ...
-
-      // const model_real_plain_vector &sigma_np1 = 
-      // md.real_variable(dl[3], 0);
       const model_real_plain_vector &sigma_n = 
 	md.real_variable(dl[3]);
       const mesh_fem &mf_sigma = 
@@ -498,23 +485,18 @@ namespace getfem {
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
 	asm_plasticity_tangent_matrix
-  		(matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
-  		 u_np1, sigma_n, lambda, mu, threshold, t_proj, region);
+	  (matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
+	   u_np1, sigma_n, lambda, mu, threshold, t_proj, region);
       }
-
+      
       if (version & model::BUILD_RHS) {
 	asm_plasticity_rhs
-  		(vecl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
-  		 u_np1, sigma_n, (model_real_plain_vector *)(0), 
-  		 lambda, mu, threshold, t_proj, false, region);
+	  (vecl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
+	   u_np1, sigma_n, (model_real_plain_vector *)(0), 
+	   lambda, mu, threshold, t_proj, false, region);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
 
-
-     
-
-
-      // GMM_TRACE2("End of assembling the tangent terms");
     }
 
 
@@ -524,12 +506,9 @@ namespace getfem {
       : t_proj(t_proj_){
 
       set_flags("Plasticity brick", false /* is linear*/,
-            true /* is symmetric */, false /* is coercive */,
-	    true /* is real */, false /* is complex */);
-      //GMM_TRACE2("End of creating the plasticity brick");
+		true /* is symmetric */, false /* is coercive */,
+		true /* is real */, false /* is complex */);
     }
-
-    
 
   };
   
@@ -538,24 +517,20 @@ namespace getfem {
 
 
 
-
-
-
-  //=========================================================================
+  //=================================================================
   //  Add a plasticity brick
-  //=========================================================================
+  //=================================================================
 
   size_type add_elastoplasticity_brick(model &md, 
-				       const mesh_im &mim, 
-				       const abstract_constraints_projection &ACP,
-				       const std::string &varname,
-				       const std::string &datalambda,
-				       const std::string &datamu,
-				       const std::string &datathreshold, 
-				       const std::string &datasigma,
-				       size_type region) {
+	const mesh_im &mim, 
+	const abstract_constraints_projection &ACP,
+	const std::string &varname,
+	const std::string &datalambda,
+	const std::string &datamu,
+	const std::string &datathreshold, 
+	const std::string &datasigma,
+	size_type region) {
 
-    //static VM_projection ACP(0);
     pbrick pbr = new plasticity_brick(ACP);
     
     model::termlist tl;
@@ -566,10 +541,7 @@ namespace getfem {
     dl.push_back(datathreshold); 
     dl.push_back(datasigma);
     model::varnamelist vl(1, varname);
-	
-
     
-
     return md.add_brick(pbr, vl, dl, tl, 
 			model::mimlist(1,&mim), region);
   }
@@ -578,9 +550,9 @@ namespace getfem {
 
 
 
-  //=========================================================================
-  //    Sigma_np1 computation and saved  
-  //=========================================================================
+  //=================================================================
+  //  New stress constraints values computation and saved  
+  //=================================================================
   
   
   void write_sigma(model &md, 
@@ -591,8 +563,6 @@ namespace getfem {
 		   const std::string &datamu, 
 		   const std::string &datathreshold, 
 		   const std::string &datasigma) {
-
-
     
     const model_real_plain_vector &u_np1 = 
       md.real_variable(varname, 0);
@@ -609,48 +579,43 @@ namespace getfem {
       md.real_variable(datathreshold);
     const mesh_fem *mf_data = 
       md.pmesh_fem_of_variable(datalambda);
+
     const model_real_plain_vector &sigma_n = 
       md.real_variable(datasigma);
     const mesh_fem &mf_sigma = 
       *(md.pmesh_fem_of_variable(datasigma));
-
+    
     unsigned N = unsigned(mf_sigma.linked_mesh().dim());
 
-    std::vector<scalar_type> sigma_np1(mf_sigma.nb_dof()*N*N/mf_sigma.get_qdim());
+    std::vector<scalar_type> sigma_np1
+      (mf_sigma.nb_dof()*N*N/mf_sigma.get_qdim());
 
     std::vector<scalar_type> V(mf_u.nb_dof());
-    
-    // GMM_TRACE2("Computing and saving the sigma_np1 constraint"); 
+     
     asm_plasticity_rhs
       (V, mim, mf_u, mf_sigma, *mf_data, u_n,
        u_np1, sigma_n, &sigma_np1, 
        lambda, mu, threshold, ACP, true);
     
+    // upload sigma and u : u_np1 -> u_n, sigma_np1 -> sigma_n 
+    // be carefull to use this function 
+    // only if the computation is over
     gmm::copy(sigma_np1, md.set_real_variable(datasigma));
-
-
     gmm::copy(u_np1, u_n);
-     
+    
   }
 
 
 
-
-
-
-   //=========================================================================
-  //  Von Mises or Tresca stress computation.  
-  //=========================================================================
+  //=================================================================
+  //  Von Mises or Tresca stress computation for plasticity 
+  //=================================================================
 
   void compute_plasticity_Von_Mises_or_Tresca(model &md, 
-					      const std::string &datasigma,
-					      const mesh_fem &mf_vm,
-					      model_real_plain_vector &VM,
-					      bool tresca) {
-
-
-    GMM_TRACE2("Computing Von Mises or Tresca stress");
-
+	const std::string &datasigma,
+	const mesh_fem &mf_vm,
+	model_real_plain_vector &VM,
+	bool tresca) {
 
     GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
 		"The vector has not the good size");
@@ -658,47 +623,22 @@ namespace getfem {
     const model_real_plain_vector &sigma_np1 = 
       md.real_variable(datasigma, 0);
     const mesh_fem &mf_sigma = 
-     *(md.pmesh_fem_of_variable(datasigma));
-
-
-//     std::vector<scalar_type> sigma_np1;
-//     gmm::resize(sigma_np1, mf_sigma.nb_dof());
+      *(md.pmesh_fem_of_variable(datasigma));
     
-    
-
-//     write_sigma(mim, mf_u, mf_sigma, *mf_data, 
-// 		u_n, u_np1, sigma_n, lambda, 
-// 		mu, threshold, ACP, &sigma_np1);
-
- 
     // dimension of the finite element used
     unsigned N = unsigned(mf_sigma.linked_mesh().dim());
- 
-
+    
     GMM_ASSERT1(mf_vm.get_qdim() == 1,
 		"Target dimension of mf_vm should be 1");
 
-    // dimension of the unknown
-    // unsigned NFem = unsigned(sqrt(mf_sigma.get_qdim())); // ie: 2 in 2D, 3 in 3D
-    // cout << "Nfem = " << NFem << endl;
-
     base_matrix sigma(N, N), Id(N, N);
-
     base_vector eig(N);
     base_vector sigma_vm(mf_vm.nb_dof()*N*N);
 
     gmm::copy(gmm::identity_matrix(), Id);
 
-
-    /* we interpolate sigma_np1 on mf_vm only if the mesh_fem are different*/
-    cout << "befor interpolation" << endl;
-    cout << "nbdof sigma" << gmm::vect_size(sigma_np1) << endl;
-    cout << "nbdof sigma" << mf_sigma.nb_dof() << endl;
-    cout << "nbdof sigma" << int(mf_sigma.get_qdim()) << endl;
-    cout << "nbdof vm" << mf_vm.nb_dof() << endl;
     interpolation(mf_sigma, mf_vm, sigma_np1, sigma_vm);
-    cout << "after interpolation" << endl;
-
+    
     // for each dof we compute the Von Mises or Tresca stress
     for (size_type ii = 0; ii < mf_vm.nb_dof(); ++ii) {
 
@@ -721,6 +661,6 @@ namespace getfem {
     }
   }
   
-
+  
 }  /* end of namespace getfem.  */
 
