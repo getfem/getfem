@@ -531,6 +531,81 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   return res;
 }//end ls_function
 
+
+
+/****************************************************************************************************/
+/*Inf-Sup condition                                                                                 */
+/****************************************************************************************************/
+
+struct matrix_G {
+  
+  const sparse_matrix &B;
+  const sparse_matrix &S;
+  mutable plain_vector W1, W2;
+  
+  gmm::SuperLU_factor<scalar_type> SLUF;
+
+  matrix_G(const sparse_matrix &BB, const sparse_matrix &SS)
+    : B(BB), S(SS), W1(gmm::mat_nrows(SS)), W2(gmm::mat_nrows(SS)) {
+    SLUF.build_with(SS);
+  }
+  
+};
+
+
+
+template <typename vector1, typename vector2>
+void mult(const matrix_G &G, const vector1 &X, vector2 &Y) {
+  gmm::mult(gmm::transposed(G.B), X, G.W1);
+  // gmm::iteration it(1E-6, 0);
+  // gmm::cg(G.S, G.W2, G.W1,  gmm::identity_matrix(), it);
+  G.SLUF.solve(G.W2, G.W1);
+  gmm::mult(G.B, G.W2, Y);
+}
+
+
+
+template <typename vector1, typename vector2>
+void mult(const matrix_G &G, const vector1 &X, const vector2 &b, vector2 &Y)
+{ mult(G, X, Y); gmm::add(b, Y); }
+
+scalar_type smallest_eigen_value(const sparse_matrix &B,
+				 const sparse_matrix &M,
+				 const sparse_matrix &S) {
+  
+  size_type n = gmm::mat_nrows(M);
+  scalar_type lambda;
+  plain_vector V(n), W(n), V2(n);
+  gmm::fill_random(V2);
+  matrix_G G(B, S);
+  
+  do {
+    gmm::copy(V2, V);
+    gmm::scale(V, 1./gmm::vect_norm2(V));
+    gmm::mult(M, V, W);
+    
+    gmm::iteration it(1E-3, 0);
+    gmm::cg(G, V2, W,  gmm::identity_matrix(), it);    
+    lambda = gmm::vect_norm2(V2);
+    
+    //  compute the Rayleigh quotient
+    //     mult(G, V2, W);
+    //     scalar_type lambda2 = gmm::vect_sp(V2, W);
+    //     gmm::mult(M, V2, W);
+    //     lambda2 /= gmm::vect_sp(V2, W);
+    //     cout << "lambda2 = " << sqrt(lambda2) << endl;
+    
+    cout << "lambda = " << sqrt(1./lambda) << endl;
+    cout << "residu = " << gmm::vect_dist2(V2, gmm::scaled(V, lambda)) << endl;
+    
+  } while (gmm::vect_dist2(V2, gmm::scaled(V, lambda)) > 1E-3);
+  
+  return sqrt(1./lambda);
+
+}
+
+
+
 /************************************************************************************************/
 /*     solv  unilateral_contact_problem                                                         */
 /************************************************************************************************/
@@ -798,6 +873,24 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA) {
   std::vector<scalar_type> LRH(size);
   model.add_fixed_size_variable("dir", size);
   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+
+  //classical inf-sup condition
+
+   if (PARAM.int_value("INF_SUP_COMP")) {
+    
+    cout << "Sparse matrices computation for the test of inf-sup condition"
+	 << endl;
+
+    sparse_matrix Sis(nb_dof, nb_dof);
+    sparse_matrix Mis(nb_dof_cont, nb_dof);
+    getfem::asm_mass_matrix(Sis, mim, mf_u());
+    gmm::copy(BN, Mis);
+    cout << "Inf-sup condition test" << endl;
+    scalar_type lllambda = smallest_eigen_value(Mis, KA, Sis);
+    cout << "The inf-sup test gives " << lllambda << endl;
+  }
+
+
   
   // Generic solve.
 
@@ -863,7 +956,7 @@ int main(int argc, char *argv[]) {
   
   //construction of mesh refined
   
-  getfem::stored_mesh_slice sl;
+  // getfem::stored_mesh_slice slr;
   getfem::mesh mcut_refined;
   
   unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
