@@ -62,7 +62,7 @@ elasnl = gf_mdbrick('nonlinear elasticity',mim, mfq, 'Ciarlet Geymonat');
 rms = gf_mdstate('real');
 cms = gf_mdstate(helm);
 foo=gf_mdstate_get(cms,'is_complex'); 
-assert('foo==1');
+gfassert('foo==1');
 gf_mdbrick_set(helm, 'param', 'wave_number', 2);
 wv = gf_mdbrick_get(helm, 'param', 'wave_number');
 gf_mdbrick_set(mass, 'param', 'rho', mf, 0.1*ones(gf_mesh_fem_get(mf, 'nbdof'),1));

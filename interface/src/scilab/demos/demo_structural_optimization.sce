@@ -64,23 +64,29 @@ if (N == 2) then
   level_set_rate = 0.4 / NY;
   reinitialisation_time = 0.005;
   // CF = k*sqrt(NY/20);
-  threshold_shape = 0.90; // CF * 0.8;
-  threshold_topo  = 0;    // CF * 0.45;
+  threshold_shape = 0.90;
+  threshold_topo  = 0;
+  nbiter = 400;
   NBDRAW = 10;            // Draw solution each NBDRAW iterations
 else
-  NY = 20;
-  level_set_rate = 0.4 / NY;
+  NY = 30;
+  level_set_rate = 0.015 / NY;
   reinitialisation_time = 0.005;
   // CF = k*sqrt(NY/8);  
-  threshold_shape = 2.5; // CF * 0.8;
-  threshold_topo  = 0;   // CF * 0.45;
+  threshold_shape = 13.5;
+  if (TEST_CASE == 3) then
+    threshold_topo = 2.6;
+  else
+    threshold_topo = 0;
+  end
+  penalty_param = 1E-6;
+  nbiter = 400;
   NBDRAW = 5;            // Draw solution each NBDRAW iterations
 end
 
 hole_radius     = max(0.03,2/NY); // Hole radius for topological optimization
 cg_eps          = 1e-8;
 cg_iter         = 100000;
-MaxIter         = 100000;
 
 if (N == 2) then
   CF = k*NY/40.; // Correction factor. Usefull ?
@@ -209,7 +215,7 @@ gf_model_set(md, 'add initialized fem data', 'Force', mf_basic, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
 
 // Optimization loop
-for niter = 1:MaxIter
+for niter = 1:nbiter
   ti = timer();
   gf_workspace('push');
 
