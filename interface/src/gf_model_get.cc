@@ -257,11 +257,14 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       be a pseudo potential instead of the residual. Still experimental since
       not all bricks define a pseudo potential. @*/
     sub_command
-      ("solve", 0, 9, 0, 0,
+      ("solve", 0, 15, 0, 0,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
        std::string lsearch = "default";
        bool with_pseudo_pot = false;
+       scalar_type alpha_mult = 0.5;
+       scalar_type alpha_min = 1.0/1000.0;
+       scalar_type alpha_max_ratio = 6.0/5.0;
        while (in.remaining() && in.front().is_string()) {
 	 std::string opt = in.pop().to_string();
 	 if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
@@ -281,18 +284,30 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	 } else if (cmd_strmatch(opt, "lsearch")) {
 	   if (in.remaining()) lsearch = in.pop().to_string();
 	   else THROW_BADARG("missing line search name for " << opt);
+	 } else if (cmd_strmatch(opt, "alpha mult")) {
+	   if (in.remaining()) alpha_mult = in.pop().to_scalar();
+	   else THROW_BADARG("missing line search name for " << opt);
+	 } else if (cmd_strmatch(opt, "alpha min")) {
+	   if (in.remaining()) alpha_min = in.pop().to_scalar();
+	   else THROW_BADARG("missing line search name for " << opt);
+	 } else if (cmd_strmatch(opt, "alpha max ratio")) {
+	   if (in.remaining()) alpha_max_ratio = in.pop().to_scalar();
+	   else THROW_BADARG("missing line search name for " << opt);
 	 } else THROW_BADARG("bad option: " << opt);
        }
        
+       gmm::default_newton_line_search default_ls(size_type(-1), alpha_mult);
+       gmm::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
+       gmm::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
 
        gmm::abstract_newton_line_search *ls = 0;
 
        if (lsearch == "default")
-	 ls = new gmm::default_newton_line_search;
+	 ls = &default_ls;
        else if (lsearch == "simplest")
-	 ls = new gmm::simplest_newton_line_search;
+	 ls = &simplest_ls;
        else //lsearch == "systematic"
-	 ls = new gmm::systematic_newton_line_search;
+	 ls = &systematic_ls;
 
 
        if (!md->model().is_complex()) {
@@ -401,7 +416,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       'mim' is the integration method to use for the computation.
       'varname' is the main variable of the problem.
       'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
-      'datalambda' and 'datamu' are the Lamé coefficients of the material.
+      'datalambda' and 'datamu' are the Lame coefficients of the material.
       'datasigma' is a vector which will contains the new stress constraints values.@*/
     sub_command
       ("compute plasticity constraints", 7, 7, 0, 1,

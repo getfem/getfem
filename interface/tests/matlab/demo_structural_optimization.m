@@ -71,9 +71,9 @@ if (N == 2)
   NBDRAW = 20;            % Draw solution each NBDRAW iterations
 else
   NY = 30
-  level_set_rate = 0.015 / NY;
+  level_set_rate = 0.03 / NY;
   reinitialisation_time = 0.005;
-  threshold_shape = 13.5;
+  threshold_shape = 13.25;
   if (TEST_CASE == 3)
     threshold_topo = 2.6;
   else
@@ -163,7 +163,7 @@ P=get(mf_ls, 'basic dof nodes');
 if (N == 2)
   F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '-(abs(y) < 0.05)'});
 else
-  F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '0', '-6*(abs(y) < 0.05).*(abs(z) < 0.05)'});
+  F = gf_mesh_fem_get(mf_basic, 'eval', {'0', '0', '-20*(abs(y) < 0.05).*(abs(z) < 0.05)'});
 end;
 
 % Model definition

@@ -55,7 +55,6 @@ numbers.
 .. _ud-fig-syslin:
 .. figure:: images/getfemuserlinearsys.png
    :align: center
-   :width: 7cm
 
    The (tangent) linear system
 

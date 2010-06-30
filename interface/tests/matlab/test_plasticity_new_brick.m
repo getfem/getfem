@@ -26,14 +26,14 @@ m = gfMesh('triangles grid', [0:4:L], [0:2:H]);
 gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
 
 % Define used MeshIm
-mim=gfMeshIm(m);  set(mim, 'integ',gfInteg('IM_TRIANGLE(6)')); % Gauss methods on triangles
+mim=gfMeshIm(m);  set(mim, 'integ', gfInteg('IM_TRIANGLE(6)')); % Gauss methods on triangles
 
 % Define used MeshFem
-mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
+mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
 mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
-mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
+mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_err=gfMeshFem(m); set(mf_err, 'fem',gfFem('FEM_PK(2,0)'));
-mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
+mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 % Find the border of the domain
 P=get(m, 'pts');
 pidleft=find(abs(P(1,:))<1e-6); % Retrieve index of points which x near to 0
@@ -53,8 +53,8 @@ lambda(CVtop) = 84605; % Iron
 mu(CVbottom) = 80769; %Stell
 mu(CVtop) = 77839; % Iron
 %mu(CV) = 77839;
-von_mises_threshold(CVbottom) = 5000;
-von_mises_threshold(CVtop) = 7000;
+von_mises_threshold(CVbottom) = 7000;
+von_mises_threshold(CVtop) = 9000;
 
 % Assign boundary numbers
 set(m,'boundary',1,fleft); % for Dirichlet condition
@@ -104,7 +104,7 @@ for step=1:nbstep,
     end
 
     % Solve the system
-    get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
+    get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest',  'alpha min', 0.8, 'very noisy', 'max_iter', 100, 'max_res', 1e-6);
 
     % Retrieve the solution U
     U = get(md, 'variable', 'u', 0);
