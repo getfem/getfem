@@ -90,7 +90,7 @@ for step=1:nbstep,
     end
     
     % Solve the system
-    get(md, 'solve','lsolver', 'superlu', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
+    get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
 
     % Retrieve the solution U
     U = get(md, 'variable', 'u', 0);

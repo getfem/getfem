@@ -263,6 +263,9 @@ bool plasticity_problem::solve(plain_vector &U) {
   // Main unknown of the problem.
   model.add_fem_variable("u", mf_u, 2);
 
+
+  // for this example we take lambda, mu and stressthreshold 
+  // scalar so mf_data = 0
   model.add_initialized_scalar_data("lambda", lambda);
   model.add_initialized_scalar_data("mu", mu);
   model.add_initialized_scalar_data("s", stress_threshold);
@@ -274,8 +277,8 @@ bool plasticity_problem::solve(plain_vector &U) {
   proj = new getfem::VM_projection(0);
 
   size_type ind = add_elastoplasticity_brick(model, mim, *proj, 
-				       "u", "lambda", "mu", 
-				       "s", "sigma");
+					     "u", "lambda", "mu", 
+					     "s", "sigma");
   
   plain_vector F(nb_dof_rhs * N);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
@@ -287,16 +290,27 @@ bool plasticity_problem::solve(plain_vector &U) {
     (model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, 
      "DirichletData");
 
-  const size_type Nb_t = 1;
+  const size_type Nb_t = 19;
+  std::vector<scalar_type> T(19);
+  T[0] = 0; T[1] = 0.9032; T[2] = 1; T[3] = 1.1; T[4] = 1.3;
+  T[5] = 1.5; T[6] = 1.7; T[7] = 1.74; T[8] = 1.7; T[9] = 1.5;
+  T[10] = 1.3; T[11] = 1.1; T[12] = 1; T[13] = 0.9032; T[14] = 0.7;
+  T[15] = 0.5; T[16] = 0.3; T[17] = 0.1; T[18] = 0;
 
+
+  getfem::mesh_fem mf_vm(mesh);
+  mf_vm.set_classical_discontinuous_finite_element(1);
+  getfem::base_vector VM(mf_vm.nb_dof());
+  
   for (size_type nb = 0; nb < Nb_t; ++nb) {
+    cout<<"=============iteration number : "<<nb<<"=========="<<endl;
    
-    scalar_type t = scalar_type(nb+1) * 0.5;
+    scalar_type t = T[nb];
     
     // Defining the Neumann condition right hand side.
     base_small_vector v(N);
     v[N-1] = -PARAM.real_value("FORCE");
-    gmm::scale(v,t);
+    gmm::scale(v,t); 
     
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(v, gmm::sub_vector
@@ -308,8 +322,10 @@ bool plasticity_problem::solve(plain_vector &U) {
     cout << "Number of variables : " 
 	 << model.nb_dof() << endl;
 
+    gmm::simplest_newton_line_search ls;
+
     gmm::iteration iter(residual, 2, 40000);
-    getfem::standard_solve(model, iter);
+    getfem::standard_solve(model, iter, getfem::rselect_linear_solver(model, "superlu"), ls);
  
     //compute and save sigma_np1
     getfem::mesh_fem *mf_data=0;
@@ -319,20 +335,17 @@ bool plasticity_problem::solve(plain_vector &U) {
     // Get the solution and save it
     gmm::copy(model.real_variable("u"), U);
     
+ 
+    getfem::compute_plasticity_Von_Mises_or_Tresca
+      (model, "sigma", mf_vm, VM, false);
+    
+    getfem::vtk_export exp(datafilename+"["+(char)nb+"]" + ".vtk");
+    exp.exporting(mf_vm);
+    exp.write_point_data(mf_vm,VM, "Von Mises stress");
+    exp.write_point_data(mf_u, U, "displacement");
+       
   }
 
-  getfem::mesh_fem mf_vm(mesh);
-  mf_vm.set_classical_discontinuous_finite_element(1);
-  getfem::base_vector VM(mf_vm.nb_dof());
-  
-
-  getfem::compute_plasticity_Von_Mises_or_Tresca
-    (model, "sigma", mf_vm, VM, false);
-
-  getfem::vtk_export exp(datafilename + ".vtk");
-  exp.exporting(mf_vm);
-  exp.write_point_data(mf_vm,VM, "Von Mises stress");
-  exp.write_point_data(mf_u, U, "displacement");
   cout << "export done, you can view the data file with "
     "(for example)\n"
     "mayavi -d " << datafilename << ".vtk -f "

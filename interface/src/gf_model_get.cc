@@ -257,9 +257,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       be a pseudo potential instead of the residual. Still experimental since
       not all bricks define a pseudo potential. @*/
     sub_command
-      ("solve", 0, 7, 0, 0,
+      ("solve", 0, 9, 0, 0,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
+       std::string lsearch = "default";
        bool with_pseudo_pot = false;
        while (in.remaining() && in.front().is_string()) {
 	 std::string opt = in.pop().to_string();
@@ -277,21 +278,33 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	 } else if (cmd_strmatch(opt, "lsolver")) {
 	   if (in.remaining()) lsolver = in.pop().to_string();
 	   else THROW_BADARG("missing solver name for " << opt);
+	 } else if (cmd_strmatch(opt, "lsearch")) {
+	   if (in.remaining()) lsearch = in.pop().to_string();
+	   else THROW_BADARG("missing line search name for " << opt);
 	 } else THROW_BADARG("bad option: " << opt);
        }
        
-       gmm::default_newton_line_search ls;
-       
+
+       gmm::abstract_newton_line_search *ls = 0;
+
+       if (lsearch == "default")
+	 ls = new gmm::default_newton_line_search;
+       else if (lsearch == "simplest")
+	 ls = new gmm::simplest_newton_line_search;
+       else //lsearch == "systematic"
+	 ls = new gmm::systematic_newton_line_search;
+
+
        if (!md->model().is_complex()) {
 	 getfem::standard_solve(md->model(), iter,
 				getfem::rselect_linear_solver(md->model(),
 							      lsolver),
-				ls, with_pseudo_pot);
+				*ls, with_pseudo_pot);
        } else {
 	 getfem::standard_solve(md->model(), iter,
 				getfem::cselect_linear_solver(md->model(),
 							      lsolver),
-				ls, with_pseudo_pot);
+				*ls, with_pseudo_pot);
        }
        );
 
