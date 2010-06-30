@@ -90,7 +90,8 @@ struct plasticity_problem {
 				for the elastoplastic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side 
 				(f(x),..)   */
-  scalar_type lambda, mu;    /* Lamé coefficients.*/
+  scalar_type lambdaB, lambdaT, muB, muT;    /* Lamé coefficients.*/
+
   scalar_type residual; /* max residual for the iterative solvers */
   scalar_type stress_threshold;
   size_type flag_hyp;
@@ -181,9 +182,12 @@ void plasticity_problem::init(void) {
       (mesh.convex_index().first_true());
   }
 
-  mu = PARAM.real_value("MU", "Lamé coefficient mu");
-  lambda = PARAM.real_value("LAMBDA", 
-			    "Lamé coefficient lambda");
+  muB = PARAM.real_value("MUB", "Lamé coefficient muB");
+  muT = PARAM.real_value("MUT", "Lamé coefficient muT");
+  lambdaB = PARAM.real_value("LAMBDAB", 
+			    "Lamé coefficient lambdaB");
+  lambdaT = PARAM.real_value("LAMBDAT", 
+			     "Lamé coefficient lambdaT");
   mf_u.set_qdim(bgeot::dim_type(N));
   mf_sigma.set_qdim(bgeot::dim_type(N*N));
 
@@ -263,12 +267,24 @@ bool plasticity_problem::solve(plain_vector &U) {
   // Main unknown of the problem.
   model.add_fem_variable("u", mf_u, 2);
 
-
+  plain_vector lambdaV(nb_dof_rhs), sV(nb_dof_rhs);
+  plain_vector muV(nb_dof_rhs);
+  for(size_type i = 0; i<(nb_dof_rhs/2)-1; ++i) {
+    lambdaV[i] = lambdaB;
+    muV[i] = muB;
+    sV[i] = stress_threshold;
+  }
+  for(size_type i = (nb_dof_rhs/2)-1; i<nb_dof_rhs; ++i) {
+    lambdaV[i] = lambdaT;
+    muV[i] = muT;
+    sV[i] = stress_threshold;
+  }
+  
   // for this example we take lambda, mu and stressthreshold 
   // scalar so mf_data = 0
-  model.add_initialized_scalar_data("lambda", lambda);
-  model.add_initialized_scalar_data("mu", mu);
-  model.add_initialized_scalar_data("s", stress_threshold);
+  model.add_initialized_fem_data("lambda",mf_rhs, lambdaV);
+  model.add_initialized_fem_data("mu",mf_rhs, muV);
+  model.add_initialized_fem_data("s", mf_rhs, sV);
 
   model.add_fem_data("sigma", mf_sigma);
 
@@ -377,7 +393,7 @@ int main(int argc, char *argv[]) {
   cout << "Resultats dans fichier : "
        <<p.datafilename<<".U \n";
   p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
-  scalar_type t[2]={p.mu,p.lambda};
+  scalar_type t[2]={p.muB,p.lambdaB};
   vecsave(p.datafilename+".coef", 
 	  std::vector<scalar_type>(t, t+2));    
   

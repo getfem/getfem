@@ -15,9 +15,7 @@ clc
 % Initialize used data
 L = 100;
 H = 20;
-lambda = 121150;
-mu = 80769;
-von_mises_threshold = 7000;
+
 f = [0 -330]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
 
@@ -32,16 +30,31 @@ mim=gfMeshIm(m);  set(mim, 'integ',gfInteg('IM_TRIANGLE(6)')); % Gauss methods o
 
 % Define used MeshFem
 mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
-mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK(2,0)'));
+mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_err=gfMeshFem(m); set(mf_err, 'fem',gfFem('FEM_PK(2,0)'));
-mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 % Find the border of the domain
 P=get(m, 'pts');
-pidleft=find(abs(P(1,:))<1e-6);
-pidright=find(abs(P(1,:) - L)<1e-6);
+pidleft=find(abs(P(1,:))<1e-6); % Retrieve index of points which x near to 0
+pidright=find(abs(P(1,:) - L)<1e-6); % Retrieve index of points which x near to L
 fleft =get(m,'faces from pid',pidleft); 
 fright=get(m,'faces from pid',pidright);
+
+% Decomposed the mesh into 2 regions with different values of Lamé coeff
+CV = get(m, 'cvid');
+CVbottom = find(CV <= 250); % Retrieve index of convex located at the bottom
+CVtop = find(CV > 250); % Retrieve index of convex located at the top
+
+% Definition of Lame coeff
+lambda(CVbottom) = 121150; % Stell
+lambda(CVtop) = 84605; % Iron
+%lambda(CV) = 84605;
+mu(CVbottom) = 80769; %Stell
+mu(CVtop) = 77839; % Iron
+%mu(CV) = 77839;
+von_mises_threshold(CVbottom) = 5000;
+von_mises_threshold(CVtop) = 7000;
 
 % Assign boundary numbers
 set(m,'boundary',1,fleft); % for Dirichlet condition
@@ -55,13 +68,13 @@ md = gfModel('real');
 set(md, 'add fem variable', 'u', mf_u, 2);
 
 % Declare that lambda is a data of the system on mf_data
-set(md, 'add initialized data', 'lambda', lambda);
+set(md, 'add initialized fem data', 'lambda', mf_data, lambda);
 
 % Declare that mu is a data of the system on mf_data
-set(md, 'add initialized data', 'mu', mu);
+set(md, 'add initialized fem data', 'mu', mf_data, mu);
 
 % Declare that von_mises_threshold is a data of the system on mf_data
-set(md, 'add initialized data', 'von_mises_threshold', von_mises_threshold);
+set(md, 'add initialized fem data', 'von_mises_threshold', mf_data, von_mises_threshold);
 
 % Declare that sigma is a data of the system on mf_sigma
 % 2 is the number of version of the data stored, for the time integration scheme
@@ -83,12 +96,13 @@ VM=zeros(1,get(mf_vm, 'nbdof'));
 nbstep = size(t,2);
 
 dd = get(mf_err, 'basic dof from cvid');
+figure(2)
 
 for step=1:nbstep,
     if step > 1
         set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1);f(2,1)*t(step)}));
     end
-    
+
     % Solve the system
     get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
 

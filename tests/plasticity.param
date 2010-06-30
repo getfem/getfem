@@ -6,8 +6,12 @@
 LX =100;   %100;   % size in X in mm.        %2.0; %1.0;		
 LY =20; %20;   % size in Y in mm.        %0.5; %1.0;	       
 LZ =20;   % size in Z in mm.        %0.5;
-MU = 80769.; % Lamé coefficient in N/mm^2.	      % 385 Lamé coefficient.
-LAMBDA = 121150.;  % Lamé coefficient in N/mm^2.      % 330 pour plane_stress, 577 pour plain_strain et 3D.
+MUB = 80769.; % Lamé coefficient in N/mm^2.	      % 385 Lamé coefficient.
+LAMBDAB = 121150.;  % Lamé coefficient in N/mm^2.      % 330 pour plane_stress, 577 pour plain_strain et 3D.
+
+LAMBDAT = 84605.;
+MUT = 77839.;
+
 INCLINE = 0;            % Incline of the mesh.
 
 %%%%%   discretisation parameters  :                     	      %%%%%
@@ -29,7 +33,7 @@ MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 
 %FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
-FEM_TYPE = 'FEM_PK(2,1)'; % P2 for triangles
+FEM_TYPE = 'FEM_PK(2,1)'; % P1 for triangles
 %FEM_TYPE = 'FEM_PK(2,3)'; % P3 for triangles
 %FEM_TYPE = 'FEM_PK(2,4)'; % P4 for triangles
 %FEM_TYPE = 'FEM_PK(3,2)';  % P2 for tetrahedrons 
@@ -37,9 +41,9 @@ FEM_TYPE = 'FEM_PK(2,1)'; % P2 for triangles
 %FEM_TYPE = 'FEM_QK(2,1)';  % Q1 fem for quadrangles
 %FEM_TYPE = 'FEM_QK(2,2)';
 
-FEM_TYPE_SIGMA = 'FEM_PK_DISCONTINUOUS(2,1)'; 
+FEM_TYPE_SIGMA = 'FEM_PK_DISCONTINUOUS(2,0)'; 
 
-DATA_FEM_TYPE = '';
+DATA_FEM_TYPE = 'FEM_PK_DISCONTINUOUS(2,0)';
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 %DATA_FEM_TYPE = 'FEM_PK(2,1)';
 

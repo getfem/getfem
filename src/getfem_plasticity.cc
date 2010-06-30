@@ -81,7 +81,6 @@ namespace getfem {
       Sigma_n(Sigma_n_), Sigma_np1(Sigma_np1_), t_proj(t_proj_), 
       flag_proj(flag_proj_),write_sigma_np1(write_sigma_np1_) {
       
-
       params = base_vector(3); 
       N = mf_u_.linked_mesh().dim();
       coeff_precalc = base_vector(N*N*N*N);
@@ -105,11 +104,11 @@ namespace getfem {
 	gmm::resize(mu, mf_data_->nb_basic_dof());
 	gmm::resize(lambda, mf_data_->nb_basic_dof());
 	gmm::resize(threshold, mf_data_->nb_basic_dof());
-	
+	mf_data = mf_data_;
 	mf_data->extend_vector(threshold_, threshold);
 	mf_data->extend_vector(lambda_, lambda);
 	mf_data->extend_vector(mu_, mu);
-	mf_data = mf_data_;
+
 	
       } else {
 	gmm::resize(mu, 1); mu[0]  =  mu_[0];
@@ -119,7 +118,6 @@ namespace getfem {
 	mf_data = mf_data_;
 	
       }
-
       GMM_ASSERT1(mf_u.get_qdim() == N, 
 		  "wrong qdim for the mesh_fem"); 
       
@@ -129,7 +127,7 @@ namespace getfem {
       // than the previous one and so if a new computation 
       // is necessary or not.
       previous_cv = size_type(-1);
-      
+
     }
 
 
@@ -142,7 +140,6 @@ namespace getfem {
     // gives on output the tensor
     virtual void compute(fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t){ 
-      
       size_type cv = ctx.convex_num();//index of current element
       size_type qdim = mf_u.get_qdim();
       size_type qdim_sigma = mf_sigma.get_qdim();
@@ -187,7 +184,6 @@ namespace getfem {
 	    coeff_data[k*3+1] = mu[*itdof];
 	    coeff_data[k*3+2] = threshold[*itdof];
 	  } 
-
 	  GMM_ASSERT1(pf_data->target_dim() == 1,
 		      "won't interpolate on a vector FEM... ");
 
@@ -203,7 +199,6 @@ namespace getfem {
 	  params[2] = threshold[0];
 
 	}
-
 
 	// for each dof of the current element
 	for (size_type ii = 0; ii < nbd_sigma; ++ii) {
@@ -333,7 +328,6 @@ namespace getfem {
 	bool write_sigma_np1,
 	const mesh_region &rg = mesh_region::all_convexes()) {
 
-
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
@@ -395,8 +389,8 @@ namespace getfem {
 
     if (&(mf_data)!=NULL) {
 
-      assem.set("lambda=data$1(#2); mu=data$2(#2);"
-		"t=comp(NonLin(#2).vGrad(#1).vGrad(#1).Base(#2))(i,j,:,:,:,:,:,:,i,j,:);"
+      assem.set("lambda=data$1(#3); mu=data$2(#3);"
+		"t=comp(NonLin(#2).vGrad(#1).vGrad(#1).Base(#3))(i,j,:,:,:,:,:,:,i,j,:);"
 		"M(#1,#1)+=  sym(t(k,l,:,l,k,:,m).mu(m)+t(k,l,:,k,l,:,m).mu(m)+t(k,k,:,l,l,:,m).lambda(m))");
       
     } else {
@@ -504,7 +498,6 @@ namespace getfem {
 
     plasticity_brick(const abstract_constraints_projection &t_proj_)
       : t_proj(t_proj_){
-
       set_flags("Plasticity brick", false /* is linear*/,
 		true /* is symmetric */, false /* is coercive */,
 		true /* is real */, false /* is complex */);
@@ -530,7 +523,6 @@ namespace getfem {
 	const std::string &datathreshold, 
 	const std::string &datasigma,
 	size_type region) {
-
     pbrick pbr = new plasticity_brick(ACP);
     
     model::termlist tl;
@@ -563,7 +555,8 @@ namespace getfem {
 		   const std::string &datamu, 
 		   const std::string &datathreshold, 
 		   const std::string &datasigma) {
-    
+   
+
     const model_real_plain_vector &u_np1 = 
       md.real_variable(varname, 0);
     model_real_plain_vector &u_n = 
@@ -616,6 +609,7 @@ namespace getfem {
 	const mesh_fem &mf_vm,
 	model_real_plain_vector &VM,
 	bool tresca) {
+;
 
     GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
 		"The vector has not the good size");
