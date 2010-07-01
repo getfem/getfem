@@ -533,7 +533,7 @@ namespace getfem {
   struct Coulomb_friction_brick : public virtual_brick {
 
     mutable CONTACT_B_MATRIX BN1, BT1, BN2, BT2;
-    mutable CONTACT_B_MATRIX DN, DDN; // For Hughes stabilization
+    mutable CONTACT_B_MATRIX DN, DDN, DT, DDT; // For Hughes stabilization
     mutable CONTACT_B_MATRIX BBN1, BBT1, BBN2, BBT2;
     mutable model_real_plain_vector gap, threshold, friction_coeff, alpha;
     mutable model_real_plain_vector RLN, RLT; 
@@ -555,6 +555,10 @@ namespace getfem {
         gmm::copy(BN2, BBN2);
       }
       if (!contact_only) {
+	if (Hughes_stabilized) {
+	  gmm::resize(DDT, gmm::mat_nrows(DT), gmm::mat_ncols(DT));
+	  gmm::copy(DT, DDT);
+	}
         gmm::resize(BBT1, gmm::mat_nrows(BT1), gmm::mat_ncols(BT1));
         gmm::copy(BT1, BBT1);
         if (two_variables) {
@@ -571,6 +575,8 @@ namespace getfem {
           gmm::scale(gmm::mat_row(BBN2, i), alpha[i]);
         if (!contact_only)
           for (size_type k = 0; k < d; ++k) {
+	    if (Hughes_stabilized)
+	      gmm::scale(gmm::mat_row(DDT, d*i+k), alpha[i]);
             gmm::scale(gmm::mat_row(BBT1, d*i+k), alpha[i]);
             if (two_variables)
               gmm::scale(gmm::mat_row(BBT2, d*i+k), alpha[i]);
@@ -606,6 +612,8 @@ namespace getfem {
           gmm::mult_add(BBT1, gmm::scaled(u1, -r), RLT);
           if (two_variables) gmm::mult_add(BBT2, gmm::scaled(u2, -r), RLT);
         }
+	if (Hughes_stabilized)
+	  gmm::mult_add(DDT, gmm::scaled(lambda_t, -r), RLT);
       }
     }
 
@@ -709,8 +717,22 @@ namespace getfem {
                 T_t_n(i*d+k, i) = - friction_coeff[i] * vg[k] / r;
             }
             for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
-            gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
+            if (Hughes_stabilized) {
+	      for (size_type k = 0; k < d; ++k)
+		for (size_type l = 0; l < d; ++l) {
+		  gmm::add(gmm::scaled(gmm::mat_row(DDT, d*i+l), -pg(k,l)),
+			   gmm::mat_col(T_t_t, d*i+k));
+		  T_t_t(d*i+l, d*i+k) += pg(k,l) / r;
+		}
+	    } else
+	      gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
+
           }
+	  if (Hughes_stabilized) {
+	    model_real_sparse_matrix aux(gmm::mat_nrows(T_t_t), gmm::mat_nrows(T_t_t));
+	    gmm::copy(gmm::transposed(T_t_t), aux);
+	    gmm::copy(aux, T_t_t);
+	  }
           gmm::copy(gmm::transposed(T_u1_t), T_t_u1);
           if (two_variables) gmm::copy(gmm::transposed(T_u2_t), T_t_u2);
         }
@@ -914,6 +936,12 @@ namespace getfem {
       is_init = false;
     }
 
+    void set_DT(CONTACT_B_MATRIX &DT_) {
+      gmm::resize(DT, gmm::mat_nrows(DT_), gmm::mat_ncols(DT_));
+      gmm::copy(DT_, DT);
+      is_init = false;
+    }
+
     void set_BT1(CONTACT_B_MATRIX &BT1_) {
       gmm::resize(BT1, gmm::mat_nrows(BT1_), gmm::mat_ncols(BT1_));
       gmm::copy(BT1_, BT1);
@@ -922,6 +950,7 @@ namespace getfem {
 
     CONTACT_B_MATRIX &get_BN1(void) { return BN1; }
     CONTACT_B_MATRIX &get_DN(void) { return DN; }
+    CONTACT_B_MATRIX &get_DT(void) { return DT; }
     CONTACT_B_MATRIX &get_BT1(void) { return BT1; }
     const CONTACT_B_MATRIX &get_BN1(void) const { return BN1; }
     const CONTACT_B_MATRIX &get_DN(void) const { return DN; }
@@ -949,6 +978,16 @@ namespace getfem {
       (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
     return p->get_DN();
+  }
+
+  CONTACT_B_MATRIX &contact_brick_set_DT
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    Coulomb_friction_brick *p = dynamic_cast<Coulomb_friction_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->get_DT();
   }
 
 
