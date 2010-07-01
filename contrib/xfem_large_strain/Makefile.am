@@ -1,11 +1,10 @@
 # SUBDIRS = 
 
-check_PROGRAMS = xfem_large_strain linear_incomp_xfem vertex_large_strain getfem_nonlinear_elasoptim
-
+check_PROGRAMS = xfem_large_strain linear_incomp_xfem vertex_large_strain 
 CLEANFILES = 
 
 xfem_large_strain_SOURCES = xfem_large_strain.cc
-getfem_nonlinear_elasoptim_SOURCES = getfem_nonlinear_elasoptim.cc getfem_nonlinear_elasoptim.h
+getfem_nonlinear_elastoptim_SOURCES = getfem_nonlinear_elastoptim.h
 linear_incomp_xfem_SOURCES = linear_incomp_xfem.cc
 vertex_large_strain_SOURCES = vertex_large_strain.cc
 SUPLDFLAGS = @SUPLDFLAGS@
