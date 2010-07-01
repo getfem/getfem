@@ -20,7 +20,7 @@ libdirs  = [l[2:] for l in cclibopts if l.startswith("-L")]
 libdirs += [l for l in cclibopts if not l.startswith("-")]
 
 libnames += ['getfemint','stdc++','m']
-libdirs += ['../.libs']
+libdirs = ['../.libs', '../../../src/.libs'] + libdirs
 for i in range(0,len(libdirs)):
     if (os.path.isfile(libdirs[i])):
         libfile=os.path.splitext(os.path.basename(libdirs[i]))[0]
@@ -46,7 +46,7 @@ getfemmod = Extension('_getfem',
 
 setup (name = 'getfem-interface',
        license='LGPL',
-       version = '1.0',
+       version = '4.0',
        maintainer="Julien Pommier",
        maintainer_email="julien.pommier@insa-toulouse.fr",
        description = "This is the getfem-python-interface module",
