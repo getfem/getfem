@@ -229,12 +229,12 @@ namespace getfem {
 
   //=================================================================
   //
-  //  Plasticity Brick
+  //  Elastoplasticity Brick
   //
   //=================================================================
 
 
-  /**  Add a nonlinear plasticity term to the model for small 
+  /**  Add a nonlinear elastoplasticity term to the model for small 
        deformations with respect to the variable `varname`. 
        Note that the constitutive lawtype of projection 
        to be used is described by `ACP` which should not be 
@@ -274,28 +274,46 @@ namespace getfem {
       'datathreshold' is the elasticity threshold of the material,
       'datasigma' is the vector which will contains the new 
       computed values. */
-  void write_sigma(model &md,
-		   const mesh_im &mim,
-		   const std::string &varname,
-		   const abstract_constraints_projection &ACP,
-		   const std::string &datalambda,
-		   const std::string &datamu, 
-		   const std::string &datathreshold, 
-		   const std::string &datasigma);
+  void elastoplasticity_next_iter(model &md, 
+				  const mesh_im &mim,
+				  const std::string &varname,
+				  const abstract_constraints_projection &ACP,
+				  const std::string &datalambda,
+				  const std::string &datamu, 
+				  const std::string &datathreshold, 
+				  const std::string &datasigma);
 
 
   /** This function compute on mf_vm the Von Mises or Tresca stress 
-      of a field for plasticity and return it into the verctor VM. 
+      of a field for elastoplasticity and return it into the vector VM. 
       Note that 'datasigma' should be the vector containing the new 
       stress constraints values, ie after a load or an unload 
       of the material. If 'tresca' = 'true', the Tresca stress will 
       be computed, otherwise it will be the Von Mises one.*/
-  void compute_plasticity_Von_Mises_or_Tresca
+  void compute_elastoplasticity_Von_Mises_or_Tresca
   (model &md,  
    const std::string & datasigma,
    const mesh_fem &mf_vm,
    model_real_plain_vector &VM,
    bool tresca);
+
+
+
+  /** This function compute on mf_pl the plastic part that could appears
+      and return it into the vector plast. 
+      Note that 'datasigma' should be the vector containing the new 
+      stress constraints values, ie after a load or an unload 
+      of the material. */
+  void compute_plastic_part(model &md, 
+			    const mesh_im &mim,
+			    const mesh_fem &mf_pl,
+			    const std::string &varname,
+			    const abstract_constraints_projection &ACP,
+			    const std::string &datalambda,
+			    const std::string &datamu, 
+			    const std::string &datathreshold, 
+			    const std::string &datasigma,
+			    model_real_plain_vector &plast);
 
 
 

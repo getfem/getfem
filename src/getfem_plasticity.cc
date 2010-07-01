@@ -37,7 +37,7 @@ namespace getfem {
 
   /** Compute the projection of D*e + sigma_bar_ 
       on the dof of sigma. */
-  class plasticity_nonlinear_term : public nonlinear_elem_term {
+  class elastoplasticity_nonlinear_term : public nonlinear_elem_term {
     
   protected:
     base_vector params;
@@ -54,17 +54,20 @@ namespace getfem {
     std::vector<scalar_type> threshold, lambda, mu;  
     bgeot::multi_index sizes_;
     const abstract_constraints_projection &t_proj;
+    std::vector<scalar_type> *saved_plast;
     fem_precomp_pool fppool;
     std::vector<scalar_type> stored_proj;
     const size_type flag_proj;
     bool write_sigma_np1;
+    bool write_plast;
+    
 
   
   public:  
 
 
     // constructor
-    plasticity_nonlinear_term(const mesh_im &mim_,
+    elastoplasticity_nonlinear_term(const mesh_im &mim_,
        	    const mesh_fem &mf_u_,
             const mesh_fem &mf_sigma_,
             const mesh_fem *mf_data_,
@@ -75,11 +78,14 @@ namespace getfem {
             const std::vector<scalar_type> &threshold_, 
             const std::vector<scalar_type> &lambda_,
             const std::vector<scalar_type> &mu_, 
-            const abstract_constraints_projection  &t_proj_,
-            const size_type flag_proj_, bool write_sigma_np1_) : 
+	    const abstract_constraints_projection  &t_proj_,
+	    std::vector<scalar_type> *saved_plast_,
+	    const size_type flag_proj_, bool write_sigma_np1_, 
+	    bool write_plast_) : 
       mim(mim_), mf_u(mf_u_), mf_sigma(mf_sigma_), 
-      Sigma_n(Sigma_n_), Sigma_np1(Sigma_np1_), t_proj(t_proj_), 
-      flag_proj(flag_proj_),write_sigma_np1(write_sigma_np1_) {
+      Sigma_n(Sigma_n_), Sigma_np1(Sigma_np1_),
+      t_proj(t_proj_), saved_plast(saved_plast_), flag_proj(flag_proj_),
+      write_sigma_np1(write_sigma_np1_), write_plast(write_plast_) {
       
       params = base_vector(3); 
       N = mf_u_.linked_mesh().dim();
@@ -283,6 +289,19 @@ namespace getfem {
 	      }
 	    }
 	  }
+
+	  // Compute the plastic part
+	  if (flag_proj == 0 && write_plast) {
+	    
+	    for(dim_type i = 0; i < qdim; ++i){
+	      for(dim_type j = 0; j < qdim; ++j){
+		(*saved_plast)[idof_sigma + j*qdim +i] =
+		  proj(i,j) - params[1]*(G_u_np1(i,j) + G_u_np1(j,i));
+		if (i==j)
+		  (*saved_plast)[idof_sigma + j*qdim +i] -= ltrace_eps_np1;
+	      }
+	    }
+	  }
 	}
 	// upload previous_cv
 	previous_cv = cv;
@@ -308,11 +327,11 @@ namespace getfem {
 
 
   /** 
-     Right hand side vector for plasticity 
+     Right hand side vector for elastoplasticity 
       @ingroup asm
   */
   template<typename VECT> 
-  void asm_plasticity_rhs (VECT &V, 
+  void asm_elastoplasticity_rhs (VECT &V, 
 	const mesh_im &mim, 
 	const mesh_fem &mf_u, 
 	const mesh_fem &mf_sigma, 
@@ -325,18 +344,21 @@ namespace getfem {
 	const VECT &mu, 
 	const VECT &threshold, 
         const abstract_constraints_projection  &t_proj,
+	VECT *saved_plast,
 	bool write_sigma_np1,
+	bool write_plast,
 	const mesh_region &rg = mesh_region::all_convexes()) {
 
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
 
-    plasticity_nonlinear_term plast(mim, mf_u, mf_sigma,
-				    &mf_data, u_n, u_np1,
-				    sigma_n, sigma_np1, 
-				    threshold, lambda, mu, 
-				    t_proj, 0, write_sigma_np1);
+    elastoplasticity_nonlinear_term plast(mim, mf_u, mf_sigma,
+					  &mf_data, u_n, u_np1,
+					  sigma_n, sigma_np1, 
+					  threshold, lambda, mu, 
+					  t_proj, saved_plast, 0, 
+					  write_sigma_np1, write_plast);
 
 
     generic_assembly assem("V(#1) + =comp(NonLin(#2).vGrad(#1))(i,j,:,i,j);");
@@ -357,11 +379,11 @@ namespace getfem {
 
 
   /** 
-      Tangent matrix for plasticity
+      Tangent matrix for elastoplasticity
       @ingroup asm
   */
   template<typename MAT,typename VECT> 
-  void asm_plasticity_tangent_matrix(MAT &H, 
+  void asm_elastoplasticity_tangent_matrix(MAT &H, 
 	const mesh_im &mim, 
 	const mesh_fem &mf_u, 
 	const mesh_fem &mf_sigma,
@@ -379,11 +401,11 @@ namespace getfem {
     GMM_ASSERT1(mf_u.get_qdim() == mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
-    plasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma,
+    elastoplasticity_nonlinear_term gradplast(mim, mf_u, mf_sigma,
 					&mf_data, u_n, u_np1,
 					sigma_n, 0, 
 					threshold, lambda, mu,
-					t_proj, 1, false);
+					      t_proj, 0, 1, false, false);
 
     generic_assembly assem;
 
@@ -417,11 +439,11 @@ namespace getfem {
 
   //=================================================================
   //
-  //  Plasticity Brick
+  //  Elastoplasticity Brick
   //
   //=================================================================
 
-  struct plasticity_brick : public virtual_brick {
+  struct elastoplasticity_brick : public virtual_brick {
     
     const abstract_constraints_projection  &t_proj;
 	
@@ -439,16 +461,16 @@ namespace getfem {
 
 
       GMM_ASSERT1(mims.size() == 1,
-		  "Plasticity brick need a single mesh_im");
+		  "Elastoplasticity brick need a single mesh_im");
       GMM_ASSERT1(vl.size() == 1,
-		  "Plasticity brick need one variable"); 
+		  "Elastoplasticity brick need one variable"); 
       /** vl[0] = u */
       
       GMM_ASSERT1(dl.size() == 4,
-		  "Wrong number of data for plasticity brick, "
+		  "Wrong number of data for elastoplasticity brick, "
                   << dl.size() << " should be 4.");
       GMM_ASSERT1(matl.size() == 1,  "Wrong number of terms for "
-		  "plasticity brick");
+		  "elastoplasticity brick");
 
 
       const model_real_plain_vector &u_np1 = 
@@ -478,16 +500,17 @@ namespace getfem {
 
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
-	asm_plasticity_tangent_matrix
+	asm_elastoplasticity_tangent_matrix
 	  (matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
 	   u_np1, sigma_n, lambda, mu, threshold, t_proj, region);
       }
       
       if (version & model::BUILD_RHS) {
-	asm_plasticity_rhs
+	asm_elastoplasticity_rhs
 	  (vecl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
 	   u_np1, sigma_n, (model_real_plain_vector *)(0), 
-	   lambda, mu, threshold, t_proj, false, region);
+	   lambda, mu, threshold, t_proj, (model_real_plain_vector *)(0),
+	   false, false, region);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
 
@@ -496,9 +519,9 @@ namespace getfem {
 
 
 
-    plasticity_brick(const abstract_constraints_projection &t_proj_)
+    elastoplasticity_brick(const abstract_constraints_projection &t_proj_)
       : t_proj(t_proj_){
-      set_flags("Plasticity brick", false /* is linear*/,
+      set_flags("Elastoplasticity brick", false /* is linear*/,
 		true /* is symmetric */, false /* is coercive */,
 		true /* is real */, false /* is complex */);
     }
@@ -511,7 +534,7 @@ namespace getfem {
 
 
   //=================================================================
-  //  Add a plasticity brick
+  //  Add a elastoplasticity brick
   //=================================================================
 
   size_type add_elastoplasticity_brick(model &md, 
@@ -523,7 +546,7 @@ namespace getfem {
 	const std::string &datathreshold, 
 	const std::string &datasigma,
 	size_type region) {
-    pbrick pbr = new plasticity_brick(ACP);
+    pbrick pbr = new elastoplasticity_brick(ACP);
     
     model::termlist tl;
     tl.push_back(model::term_description
@@ -547,7 +570,7 @@ namespace getfem {
   //=================================================================
   
   
-  void write_sigma(model &md, 
+  void elastoplasticity_next_iter(model &md, 
 		   const mesh_im &mim,
 		   const std::string &varname,
 		   const abstract_constraints_projection &ACP,
@@ -571,7 +594,7 @@ namespace getfem {
     const model_real_plain_vector &threshold = 
       md.real_variable(datathreshold);
     const mesh_fem *mf_data = 
-      md.pmesh_fem_of_variable(datalambda);
+    md.pmesh_fem_of_variable(datalambda);
 
     const model_real_plain_vector &sigma_n = 
       md.real_variable(datasigma);
@@ -584,32 +607,32 @@ namespace getfem {
       (mf_sigma.nb_dof()*N*N/mf_sigma.get_qdim());
 
     std::vector<scalar_type> V(mf_u.nb_dof());
-     
-    asm_plasticity_rhs
+
+    asm_elastoplasticity_rhs
       (V, mim, mf_u, mf_sigma, *mf_data, u_n,
        u_np1, sigma_n, &sigma_np1, 
-       lambda, mu, threshold, ACP, true);
+       lambda, mu, threshold, ACP, (model_real_plain_vector *)(0), true, false);
     
     // upload sigma and u : u_np1 -> u_n, sigma_np1 -> sigma_n 
     // be carefull to use this function 
     // only if the computation is over
     gmm::copy(sigma_np1, md.set_real_variable(datasigma));
     gmm::copy(u_np1, u_n);
-    
+
+ 
   }
 
 
 
   //=================================================================
-  //  Von Mises or Tresca stress computation for plasticity 
+  //  Von Mises or Tresca stress computation for elastoplasticity 
   //=================================================================
 
-  void compute_plasticity_Von_Mises_or_Tresca(model &md, 
+  void compute_elastoplasticity_Von_Mises_or_Tresca(model &md, 
 	const std::string &datasigma,
 	const mesh_fem &mf_vm,
 	model_real_plain_vector &VM,
 	bool tresca) {
-;
 
     GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
 		"The vector has not the good size");
@@ -655,6 +678,87 @@ namespace getfem {
     }
   }
   
+
+
+  //=================================================================
+  //  Compute the plastic part  
+  //=================================================================
+  
+
+  void compute_plastic_part(model &md, 
+		   const mesh_im &mim,
+		   const mesh_fem &mf_pl,
+		   const std::string &varname,
+		   const abstract_constraints_projection &ACP,
+		   const std::string &datalambda,
+		   const std::string &datamu, 
+		   const std::string &datathreshold, 
+		   const std::string &datasigma,
+		   model_real_plain_vector &plast) {
+   
+
+    const model_real_plain_vector &u_np1 = 
+      md.real_variable(varname, 0);
+    model_real_plain_vector &u_n = 
+      md.set_real_variable(varname, 1);
+    const mesh_fem &mf_u = 
+      *(md.pmesh_fem_of_variable(varname));
+    
+    const model_real_plain_vector &lambda = 
+      md.real_variable(datalambda);
+    const model_real_plain_vector &mu = 
+      md.real_variable(datamu);
+    const model_real_plain_vector &threshold = 
+      md.real_variable(datathreshold);
+    const mesh_fem *mf_data = 
+      md.pmesh_fem_of_variable(datalambda);
+
+    const model_real_plain_vector &sigma_n = 
+      md.real_variable(datasigma);
+    const mesh_fem &mf_sigma = 
+      *(md.pmesh_fem_of_variable(datasigma));
+    
+    unsigned N = unsigned(mf_sigma.linked_mesh().dim());
+
+
+    std::vector<scalar_type> V(mf_u.nb_dof());
+    std::vector<scalar_type> saved_plast(mf_sigma.nb_dof());
+
+    asm_elastoplasticity_rhs
+      (V, mim, mf_u, mf_sigma, *mf_data, u_n,
+       u_np1, sigma_n, (model_real_plain_vector *)(0), 
+       lambda, mu, threshold, ACP, &saved_plast, false, true);
+ 
+
+    /* Retrieve and save the plastic part */
+    GMM_ASSERT1(gmm::vect_size(plast) == mf_pl.nb_dof(),
+		"The vector has not the good size");
+    
+    GMM_ASSERT1(mf_pl.get_qdim() == 1,
+		"Target dimension of mf_vm should be 1");
+
+    base_matrix plast_tmp(N, N), Id(N, N);
+    base_vector eig(N);
+    base_vector saved_pl(mf_pl.nb_dof()*N*N);
+
+    gmm::copy(gmm::identity_matrix(), Id);
+
+    interpolation(mf_sigma, mf_pl, saved_plast, saved_pl);
+       
+    // for each dof we compute the norm of the plastic part
+    for (size_type ii = 0; ii < mf_pl.nb_dof(); ++ii) {
+
+      /* we retrieve the matrix sigma_vm on this dof */
+      std::copy(saved_pl.begin()+ii*N*N, saved_pl.begin()+(ii+1)*N*N,
+		plast_tmp.begin());
+      
+      plast[ii] = gmm::mat_euclidean_norm(plast_tmp);
+      
+    }
+ 
+  }
+
+
   
 }  /* end of namespace getfem.  */
 

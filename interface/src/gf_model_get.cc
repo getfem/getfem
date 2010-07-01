@@ -384,12 +384,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
 
- /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
+    /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.  
       `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).@*/
     sub_command
-      ("compute plasticity Von Mises or Tresca", 2, 3, 0, 1,
+      ("compute elastoplasticity Von Mises or Tresca", 2, 3, 0, 1,
        std::string datasigma = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        std::string stresca = "Von Mises";
@@ -403,7 +403,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        else THROW_BADARG("bad option \'version\': " << stresca);
        
        getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
-       getfem::compute_plasticity_Von_Mises_or_Tresca
+       getfem::compute_elastoplasticity_Von_Mises_or_Tresca
        (md->model(), datasigma, gfi_mf->mesh_fem(), VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
@@ -419,21 +419,47 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       'datalambda' and 'datamu' are the Lame coefficients of the material.
       'datasigma' is a vector which will contains the new stress constraints values.@*/
     sub_command
-      ("compute plasticity constraints", 7, 7, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+      ("elastoplasticity next iter", 7, 7, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();;
        std::string varname = in.pop().to_string();
        std::string projname = in.pop().to_string();
        std::string datalambda = in.pop().to_string();
        std::string datamu = in.pop().to_string();
        std::string datathreshold = in.pop().to_string();
        std::string datasigma = in.pop().to_string();
+
       
-       getfem::write_sigma
-	 (md->model(), gfi_mim->mesh_im(), varname,
+       getfem::elastoplasticity_next_iter
+       (md->model(), gfi_mim->mesh_im(), varname,
 	  abstract_constraints_projection_from_name(projname), 
 	  datalambda, datamu, datathreshold, datasigma);
-
        );
+
+
+
+    
+    /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma) )
+      Compute on `mf_pl` the plastic part and return it into the vector V.
+      `datasigma` is a vector which contains the stress constraints values supported by the mesh.@*/
+     sub_command
+      ("compute plastic part", 8, 8, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();;
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       std::string varname = in.pop().to_string();
+       std::string projname = in.pop().to_string();
+       std::string datalambda = in.pop().to_string();
+       std::string datamu = in.pop().to_string();
+       std::string datathreshold = in.pop().to_string();
+       std::string datasigma = in.pop().to_string();
+
+       getfem::model_real_plain_vector plast((gfi_mf->mesh_fem()).nb_dof());
+       getfem::compute_plastic_part
+       (md->model(), gfi_mim->mesh_im(),  gfi_mf->mesh_fem(), varname,
+	  abstract_constraints_projection_from_name(projname), 
+	datalambda, datamu, datathreshold, datasigma, plast);
+       out.pop().from_dcvector(plast);
+       ); 
+
 
 
     /*@GET M = ('matrix term', @int ind_brick, @int ind_term)

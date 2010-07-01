@@ -908,8 +908,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    /*@SET ind = ('add plasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
-    Add a nonlinear plasticity term to the model relatively to the variable 'varname'. 'projname' is the type of projection that we want to use. For the moment, only the Von Mises projection is computing that we could entering 'VM' or 'Von Mises'.
+    /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
+    Add a nonlinear elastoplastic term to the model relatively to the variable 'varname'. 'projname' is the type of projection that we want to use. For the moment, only the Von Mises projection is computing that we could entering 'VM' or 'Von Mises'.
     'datalambda', 'datamu' are the Lamé coefficients of the studied material.
     'datathreshold' is the elasticity threshold.
     'datasigma' is the variable representing the constraints on the material.

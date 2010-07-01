@@ -77,7 +77,7 @@ static void vecsave( std::string fname, const VEC& V) {
 // structure for the elastoplastic problem
 //=================================================================
 
-struct plasticity_problem {
+struct elastoplasticity_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, 
 	 NEUMANN_BOUNDARY_NUM = 1};
@@ -90,7 +90,7 @@ struct plasticity_problem {
 				for the elastoplastic solution */
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side 
 				(f(x),..)   */
-  scalar_type lambdaB, lambdaT, muB, muT;    /* Lamé coefficients.*/
+  scalar_type lambda, mu; // lambdaB, lambdaT, muB, muT;    /* Lamé coefficients.*/
 
   scalar_type residual; /* max residual for the iterative solvers */
   scalar_type stress_threshold;
@@ -101,7 +101,7 @@ struct plasticity_problem {
   bool solve(plain_vector &U);
   void init(void);
 
-  plasticity_problem(void) : mim(mesh), mf_u(mesh), 
+  elastoplasticity_problem(void) : mim(mesh), mf_u(mesh), 
 			     mf_sigma(mesh), mf_rhs(mesh) {}
 
 };
@@ -113,7 +113,7 @@ struct plasticity_problem {
    set finite element and integration methods 
    and selects the boundaries.
 */
-void plasticity_problem::init(void) {
+void elastoplasticity_problem::init(void) {
 
   std::string MESH_TYPE = 
     PARAM.string_value("MESH_TYPE","Mesh type ");
@@ -182,12 +182,13 @@ void plasticity_problem::init(void) {
       (mesh.convex_index().first_true());
   }
 
-  muB = PARAM.real_value("MUB", "Lamé coefficient muB");
-  muT = PARAM.real_value("MUT", "Lamé coefficient muT");
+  mu = PARAM.real_value("MU", "Lamé coefficient mu");
+  /*  muT = PARAM.real_value("MUT", "Lamé coefficient muT");
   lambdaB = PARAM.real_value("LAMBDAB", 
 			    "Lamé coefficient lambdaB");
-  lambdaT = PARAM.real_value("LAMBDAT", 
-			     "Lamé coefficient lambdaT");
+  */
+  lambda = PARAM.real_value("LAMBDA", 
+			     "Lamé coefficient lambda");
   mf_u.set_qdim(bgeot::dim_type(N));
   mf_sigma.set_qdim(bgeot::dim_type(N*N));
 
@@ -258,7 +259,7 @@ void plasticity_problem::init(void) {
 // Model.                                                           
 //==================================================================
 
-bool plasticity_problem::solve(plain_vector &U) {
+bool elastoplasticity_problem::solve(plain_vector &U) {
 
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
@@ -267,6 +268,7 @@ bool plasticity_problem::solve(plain_vector &U) {
   // Main unknown of the problem.
   model.add_fem_variable("u", mf_u, 2);
 
+  /*
   plain_vector lambdaV(nb_dof_rhs), sV(nb_dof_rhs);
   plain_vector muV(nb_dof_rhs);
   for(size_type i = 0; i<(nb_dof_rhs/2)-1; ++i) {
@@ -279,12 +281,13 @@ bool plasticity_problem::solve(plain_vector &U) {
     muV[i] = muT;
     sV[i] = stress_threshold;
   }
-  
+  */
+
   // for this example we take lambda, mu and stressthreshold 
   // scalar so mf_data = 0
-  model.add_initialized_fem_data("lambda",mf_rhs, lambdaV);
-  model.add_initialized_fem_data("mu",mf_rhs, muV);
-  model.add_initialized_fem_data("s", mf_rhs, sV);
+  model.add_initialized_scalar_data("lambda",lambda);
+  model.add_initialized_scalar_data("mu",mu);
+  model.add_initialized_scalar_data("s", stress_threshold);
 
   model.add_fem_data("sigma", mf_sigma);
 
@@ -317,6 +320,7 @@ bool plasticity_problem::solve(plain_vector &U) {
   getfem::mesh_fem mf_vm(mesh);
   mf_vm.set_classical_discontinuous_finite_element(1);
   getfem::base_vector VM(mf_vm.nb_dof());
+  getfem::base_vector plast(mf_vm.nb_dof());
   
   for (size_type nb = 0; nb < Nb_t; ++nb) {
     cout<<"=============iteration number : "<<nb<<"=========="<<endl;
@@ -331,7 +335,7 @@ bool plasticity_problem::solve(plain_vector &U) {
     for (size_type i = 0; i < nb_dof_rhs; ++i)
       gmm::copy(v, gmm::sub_vector
 		(F, gmm::sub_interval(i*N, N)));
-
+    
     gmm::copy(F, model.set_real_variable("NeumannData"));
     
     // Generic solve.
@@ -345,14 +349,14 @@ bool plasticity_problem::solve(plain_vector &U) {
  
     //compute and save sigma_np1
     getfem::mesh_fem *mf_data=0;
-    getfem::write_sigma(model, mim, "u", *proj, 
+    getfem::elastoplasticity_next_iter(model, mim, "u", *proj, 
 			"lambda", "mu", "s", "sigma");
     
     // Get the solution and save it
     gmm::copy(model.real_variable("u"), U);
     
  
-    getfem::compute_plasticity_Von_Mises_or_Tresca
+    getfem::compute_elastoplasticity_Von_Mises_or_Tresca
       (model, "sigma", mf_vm, VM, false);
     
     getfem::vtk_export exp(datafilename+"["+(char)nb+"]" + ".vtk");
@@ -383,7 +387,7 @@ int main(int argc, char *argv[]) {
   FE_ENABLE_EXCEPT;        
   // Enable floating point exception for Nan.
    
-  plasticity_problem p;
+  elastoplasticity_problem p;
   p.PARAM.read_command_line(argc, argv);
   p.init();
   p.mesh.write_to_file(p.datafilename + ".mesh");
@@ -393,7 +397,7 @@ int main(int argc, char *argv[]) {
   cout << "Resultats dans fichier : "
        <<p.datafilename<<".U \n";
   p.mf_u.write_to_file(p.datafilename + ".meshfem",true);
-  scalar_type t[2]={p.muB,p.lambdaB};
+  scalar_type t[2]={p.mu,p.lambda};
   vecsave(p.datafilename+".coef", 
 	  std::vector<scalar_type>(t, t+2));    
   

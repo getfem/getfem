@@ -34,6 +34,8 @@ mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_err=gfMeshFem(m); set(mf_err, 'fem',gfFem('FEM_PK(2,0)'));
 mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_pl = gfMeshFem(m); set(mf_pl, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+
 % Find the border of the domain
 P=get(m, 'pts');
 pidleft=find(abs(P(1,:))<1e-6); % Retrieve index of points which x near to 0
@@ -54,7 +56,7 @@ mu(CVbottom) = 80769; %Stell
 mu(CVtop) = 77839; % Iron
 %mu(CV) = 77839;
 von_mises_threshold(CVbottom) = 7000;
-von_mises_threshold(CVtop) = 9000;
+von_mises_threshold(CVtop) = 8000;
 
 % Assign boundary numbers
 set(m,'boundary',1,fleft); % for Dirichlet condition
@@ -96,7 +98,6 @@ VM=zeros(1,get(mf_vm, 'nbdof'));
 nbstep = size(t,2);
 
 dd = get(mf_err, 'basic dof from cvid');
-figure(2)
 
 for step=1:nbstep,
     if step > 1
@@ -111,12 +112,14 @@ for step=1:nbstep,
     
     % Compute new plasticity constraints used to compute 
     % the Von Mises or Tresca stress
-    get(md, 'compute plasticity constraints', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+    get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+    plast = get(md, 'compute plastic part', mim, mf_pl, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       
     % Compute Von Mises or Tresca stress
-    VM = get(md, 'compute plasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
+    VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
     max(abs(VM));
   
+    figure(2)
     subplot(2,1,1);
     gf_plot(mf_vm,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); 
     colorbar;
@@ -131,7 +134,14 @@ for step=1:nbstep,
     colorbar;
     title('Error estimate');
 
-    pause;
+    figure(3)
+    gf_plot(mf_pl,plast,'deformed_mesh','on', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); 
+    colorbar;
+    caxis([0 10000]);
+    n = t(step);
+    title(['Plastification for t = ', num2str(n)]);
+    
+    pause(1);
 
 end;
 
