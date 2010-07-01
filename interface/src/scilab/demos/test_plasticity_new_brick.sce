@@ -31,18 +31,33 @@ drawnow;
 mim = gf_mesh_im(m);  gf_mesh_im_set(mim, 'integ', gf_integ('IM_TRIANGLE(6)')); // Gauss methods on triangles
 
 // Define used MeshFem
-mf_u     = gf_mesh_fem(m,2); gf_mesh_fem_set(mf_u,     'fem', gf_fem('FEM_PK(2,1)'));
-mf_data  = gf_mesh_fem(m);   gf_mesh_fem_set(mf_data,  'fem', gf_fem('FEM_PK(2,0)'));
-mf_sigma = gf_mesh_fem(m,4); gf_mesh_fem_set(mf_sigma, 'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,0)'));
+mf_u     = gf_mesh_fem(m,2); gf_mesh_fem_set(mf_u,     'fem', gf_fem('FEM_PK(2,2)'));
+mf_data  = gf_mesh_fem(m);   gf_mesh_fem_set(mf_data,  'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,0)'));
+mf_sigma = gf_mesh_fem(m,4); gf_mesh_fem_set(mf_sigma, 'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_err   = gf_mesh_fem(m);   gf_mesh_fem_set(mf_err,   'fem', gf_fem('FEM_PK(2,0)'));
 mf_vm    = gf_mesh_fem(m);   gf_mesh_fem_set(mf_vm,    'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
 
 // Find the border of the domain
 P = gf_mesh_get(m, 'pts');
-pidleft  = find(abs(P(1,:))<1e-6);
-pidright = find(abs(P(1,:) - L)<1e-6);
+pidleft  = find(abs(P(1,:))<1e-6); // Retrieve index of points which x near to 0
+pidright = find(abs(P(1,:) - L)<1e-6); // Retrieve index of points which x near to L
 fleft    = gf_mesh_get(m, 'faces from pid', pidleft); 
 fright   = gf_mesh_get(m, 'faces from pid', pidright);
+
+// Decomposed the mesh into 2 regions with different values of Lamé coeff
+CV       = gf_mesh_get(m, 'cvid');
+CVbottom = find(CV <= 250); // Retrieve index of convex located at the bottom
+CVtop    = find(CV > 250);  // Retrieve index of convex located at the top
+
+// Definition of Lame coeff
+lambda(CVbottom) = 121150; // Stell
+lambda(CVtop)    = 84605;  // Iron
+//lambda(CV) = 84605;
+mu(CVbottom) = 80769; // Stell
+mu(CVtop)    = 77839; // Iron
+//mu(CV) = 77839;
+von_mises_threshold(CVbottom) = 7000;
+von_mises_threshold(CVtop)    = 9000;
 
 // Assign boundary numbers
 gf_mesh_set(m,'boundary',1,fleft);  // for Dirichlet condition
@@ -56,13 +71,13 @@ md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf_u, 2); 
 
 // Declare that lambda is a data of the system on mf_data
-gf_model_set(md, 'add initialized data', 'lambda', lambda);
+gf_model_set(md, 'add initialized fem data', 'lambda', mf_data, lambda);
 
 // Declare that mu is a data of the system on mf_data
-gf_model_set(md, 'add initialized data', 'mu', mu);
+gf_model_set(md, 'add initialized fem data', 'mu', mf_data, mu);
 
 // Declare that von_mises_threshold is a data of the system on mf_data
-gf_model_set(md, 'add initialized data', 'von_mises_threshold', von_mises_threshold);
+gf_model_set(md, 'add initialized fem data', 'von_mises_threshold', mf_data, von_mises_threshold);
 
 // Declare that sigma is a data of the system on mf_sigma
 // 2 is the number of version of the data stored, for the time integration scheme
@@ -93,7 +108,7 @@ for step=1:nbstep,
   end
 
   // Solve the system
-  gf_model_get(md, 'solve', 'lsolver', 'superlu', 'very noisy', 'max_iter', 1000, 'max_res', 1e-6);
+  gf_model_get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest',  'alpha min', 0.8, 'very noisy', 'max_iter', 100, 'max_res', 1e-6);
 
   // Retrieve the solution U
   U = gf_model_get(md, 'variable', 'u', 0);

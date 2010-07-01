@@ -60,20 +60,22 @@ lambda          = 1;    // Lame coefficient
 mu              = 1;    // Lame coefficient
 
 if (N == 2) then
-  NY = 50;             // Number of elements in y direction
+  NY = 40;             // Number of elements in y direction
   level_set_rate = 0.4 / NY;
   reinitialisation_time = 0.005;
-  // CF = k*sqrt(NY/20);
   threshold_shape = 0.90;
-  threshold_topo  = 0;
+  if (TEST_CASE == 1) then
+    threshold_topo = 1.3;
+  else
+    threshold_topo = 0;
+  end
   nbiter = 400;
-  NBDRAW = 10;            // Draw solution each NBDRAW iterations
+  NBDRAW = 20;            // Draw solution each NBDRAW iterations
 else
   NY = 30;
-  level_set_rate = 0.015 / NY;
+  level_set_rate = 0.03 / NY;
   reinitialisation_time = 0.005;
-  // CF = k*sqrt(NY/8);  
-  threshold_shape = 13.5;
+  threshold_shape = 13.25;
   if (TEST_CASE == 3) then
     threshold_topo = 2.6;
   else
@@ -176,7 +178,7 @@ P = gf_mesh_fem_get(mf_ls, 'basic dof nodes');
 if (N == 2) then
   F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '-1.0*(abs(y) < 0.05)')));
 else
-  F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '0', '-6*(abs(y) < 0.05).*(abs(z) < 0.05)')));
+  F = gf_mesh_fem_get_eval(mf_basic, list(list('0', '0', '-20*(abs(y) < 0.05).*(abs(z) < 0.05)')));
 end
 
 if Do_Plot then
