@@ -380,9 +380,9 @@ namespace getfem {
       gmm::add(Sigma, gmm::transposed(Sigma), Ealpha);
       gmm::scale(Ealpha, 0.5);
 
-      // The term sigma:dE/dalpha
+      // The term sigmadE/dalpha
       AHL.sigma(E, Sigma, params);
-      t[0] = mat_euclidean_sp(Sigma, Ealpha);
+      gmm::mult(Ealpha, Sigma, tt);
 
       // The term pJF^{-T}:d(grad U)/d(alpha)
       gmm::lu_inverse(gradU);
