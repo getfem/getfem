@@ -36,6 +36,7 @@ mf_data  = gf_mesh_fem(m);   gf_mesh_fem_set(mf_data,  'fem', gf_fem('FEM_PK_DIS
 mf_sigma = gf_mesh_fem(m,4); gf_mesh_fem_set(mf_sigma, 'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_err   = gf_mesh_fem(m);   gf_mesh_fem_set(mf_err,   'fem', gf_fem('FEM_PK(2,0)'));
 mf_vm    = gf_mesh_fem(m);   gf_mesh_fem_set(mf_vm,    'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_pl    = gf_mesh_fem(m);   gf_mesh_fem_set(mf_pl,    'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
 
 // Find the border of the domain
 P = gf_mesh_get(m, 'pts');
@@ -57,7 +58,7 @@ mu(CVbottom) = 80769; // Stell
 mu(CVtop)    = 77839; // Iron
 //mu(CV) = 77839;
 von_mises_threshold(CVbottom) = 7000;
-von_mises_threshold(CVtop)    = 9000;
+von_mises_threshold(CVtop)    = 8000;
 
 // Assign boundary numbers
 gf_mesh_set(m,'boundary',1,fleft);  // for Dirichlet condition
@@ -102,6 +103,9 @@ dd = gf_mesh_fem_get(mf_err, 'basic dof from cvid');
 h_graph_2 = scf();
 h_graph_2.color_map = jetcolormap(256);
 
+h_graph_3 = scf();
+h_graph_3.color_map = jetcolormap(256);
+
 for step=1:nbstep,
   if step > 1 then
     gf_model_set(md, 'variable', 'VolumicData', gf_mesh_fem_get_eval(mf_data, list(list(f(1,1)),list(f(2,1)*t(step)))));
@@ -115,13 +119,15 @@ for step=1:nbstep,
     
   // Compute new plasticity constraints used to compute 
   // the Von Mises or Tresca stress
-  gf_model_get(md, 'compute plasticity constraints', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+  gf_model_get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+  plast = gf_model_get(md, 'compute plastic part', mim, mf_pl, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       
   // Compute Von Mises or Tresca stress
-  VM = gf_model_get(md, 'compute plasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
+  VM = gf_model_get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
   
+  scf(h_graph_2);
   drawlater;
-  clf();
+  clf(h_graph_2);
   subplot(2,1,1);
   gf_plot(mf_vm,VM,'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mf_u, 'refine', 4, 'deformation_scale',1); 
   colorbar(min(VM),max(VM));
@@ -136,6 +142,15 @@ for step=1:nbstep,
   gf_plot(mf_err, E, 'mesh','on', 'refine', 1); 
   colorbar(min(E),max(E));
   title('Error estimate');
+  drawnow;
+
+  scf(h_graph_3);
+  drawlater;
+  clf(h_graph_3);
+  gf_plot(mf_pl,plast,'deformed_mesh','on', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); 
+  colorbar(min(plast),max(plast));
+  n = t(step);
+  title(['Plastification for t = ', string(n)]);
   drawnow;
 
   sleep(1000);
