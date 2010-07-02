@@ -909,11 +909,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
     /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
-    Add a nonlinear elastoplastic term to the model relatively to the variable 'varname'. 'projname' is the type of projection that we want to use. For the moment, only the Von Mises projection is computing that we could entering 'VM' or 'Von Mises'.
-    'datalambda', 'datamu' are the Lamé coefficients of the studied material.
-    'datathreshold' is the elasticity threshold.
-    'datasigma' is the variable representing the constraints on the material.
-    'region' is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh.
+    Add a nonlinear elastoplastic term to the model relatively to the variable `varname`, in small deformations, for an isotropic material and for a quasistatic model. 'projname' is the type of projection that we want to use. For the moment, only the Von Mises projection is computing that we could entering 'VM' or 'Von Mises'.
+    `datasigma` is the variable representing the constraints on the material.
+    Be carefull that `varname` and `datasigma` are composed of two iterates for the time scheme needed for the Newton algorithm used. Moreover, the finite element method on which `varname` is described is an K ordered mesh_fem, the `datasigma` one have to be at least an K-1 ordered mesh_fem. 
+    `datalambda` and `datamu` are the Lamé coefficients of the studied material.
+    `datathreshold` is the plasticity threshold of the material.
+    The three last variable could be constants or described on the same finite element method.
+    `region` is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh.
     Return the brick index in the model.@*/
     sub_command
       ("add elastoplasticity brick", 7, 8, 0, 1,

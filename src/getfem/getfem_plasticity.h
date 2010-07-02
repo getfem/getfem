@@ -235,20 +235,26 @@ namespace getfem {
 
 
   /**  Add a nonlinear elastoplasticity term to the model for small 
-       deformations with respect to the variable `varname`. 
+       deformations and an isotropic material, with respect 
+       to the variable `varname`. 
        Note that the constitutive lawtype of projection 
        to be used is described by `ACP` which should not be 
        freed since the model is used. 
-       `datalambda` and 'datamu' describe the Lamé coeffcients 
+       `datalambda` and `datamu` describe the Lamé coeffcients 
        of the studied material. Could be scalar or vectors field 
        described on a finite element method.
-       'datathreshold' represents the elasticity thershold 
+       `datathreshold` represents the elasticity threshold 
        of the material. It could be a scalar or a vector field 
        described on the same finite element method as 
        the Lamé coefficients.
-       'datasigma' represent the stress constraints values 
+       `datasigma` represent the stress constraints values 
        supported by the material. It should be a vector field 
        described on a finite elemnt method.
+       Note that `varname` and `datasigma` have to be composed 
+       of two iterate for the time scheme needed for the 
+       Newton algorithm used. Moreover, if `varname` is described 
+       onto a K ordered mesh_fem, `datasigma` have to be described 
+       at least onto a K-1 ordered msh_fem.
   */
   size_type add_elastoplasticity_brick
   (model &md, 
@@ -265,14 +271,14 @@ namespace getfem {
 
   /** This function permits to compute the new stress constraints 
       values supported by the material after a load or an unload. 
-      'varname' is the main unknown of the problem 
+      `varname` is the main unknown of the problem 
       (the displacement), 
-      'ACP' is the type of projection to be used that could only be 
-      'Von Mises' for the moment,
-      'datalambda' and 'datamu' are the Lamé coefficients 
+      `ACP` is the type of projection to be used that could only be 
+      `Von Mises` for the moment,
+      `datalambda` and `datamu` are the Lamé coefficients 
       of the material,
-      'datathreshold' is the elasticity threshold of the material,
-      'datasigma' is the vector which will contains the new 
+      `datathreshold` is the elasticity threshold of the material,
+      `datasigma` is the vector which will contains the new 
       computed values. */
   void elastoplasticity_next_iter(model &md, 
 				  const mesh_im &mim,
@@ -286,9 +292,9 @@ namespace getfem {
 
   /** This function compute on mf_vm the Von Mises or Tresca stress 
       of a field for elastoplasticity and return it into the vector VM. 
-      Note that 'datasigma' should be the vector containing the new 
+      Note that `datasigma` should be the vector containing the new 
       stress constraints values, ie after a load or an unload 
-      of the material. If 'tresca' = 'true', the Tresca stress will 
+      of the material. If `tresca` = 'true', the Tresca stress will 
       be computed, otherwise it will be the Von Mises one.*/
   void compute_elastoplasticity_Von_Mises_or_Tresca
   (model &md,  
@@ -299,9 +305,9 @@ namespace getfem {
 
 
 
-  /** This function compute on mf_pl the plastic part that could appears
-      and return it into the vector plast. 
-      Note that 'datasigma' should be the vector containing the new 
+  /** This function compute on mf_pl the plastic part, that could appears
+      after a load and an unload, into the vector `plast`. 
+      Note that `datasigma` should be the vector containing the new 
       stress constraints values, ie after a load or an unload 
       of the material. */
   void compute_plastic_part(model &md, 

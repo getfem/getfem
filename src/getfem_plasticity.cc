@@ -566,7 +566,9 @@ namespace getfem {
 
 
   //=================================================================
-  //  New stress constraints values computation and saved  
+  //  New stress constraints values computation and saved 
+  //  Update of u and sigma on time iterates :
+  //  u_np1 -> u_n         sigma_np1 -> sigma_n
   //=================================================================
   
   
@@ -748,7 +750,7 @@ namespace getfem {
     // for each dof we compute the norm of the plastic part
     for (size_type ii = 0; ii < mf_pl.nb_dof(); ++ii) {
 
-      /* we retrieve the matrix sigma_vm on this dof */
+      /* we retrieve the matrix sigma_pl on this dof */
       std::copy(saved_pl.begin()+ii*N*N, saved_pl.begin()+(ii+1)*N*N,
 		plast_tmp.begin());
       

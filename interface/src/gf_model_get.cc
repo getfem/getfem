@@ -252,6 +252,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        default value is 'auto', which lets getfem choose itself).
        Possible values are 'superlu', 'mumps' (if supported),
        'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
+    - 'lsearch', @str LINE_SEARCH_NAME
+       select explicitely the line search method used for the linear systems (the
+       default value is 'default').
+       Possible values are 'simplest', 'systematic'.
     - 'with pseudo potential'
       for nonlinear problems, the criterion of the line search will
       be a pseudo potential instead of the residual. Still experimental since
