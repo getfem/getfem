@@ -30,14 +30,14 @@ if 0,
   gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,2)'));
 else
   N1=1; N2=4; h=20
-  m=gf_Mesh('cartesian',(0:N1)/N1 - .5, (0:N2)/N2*h, ((0:N1)/N1 - .5)*3);
-  mfu=gf_Mesh_Fem(m,3);     % mesh-fem supporting a 3D-vector field
-  mfd=gf_Mesh_Fem(m,1);     % scalar mesh_fem
+  m=gf_mesh('cartesian',(0:N1)/N1 - .5, (0:N2)/N2*h, ((0:N1)/N1 - .5)*3);
+  mfu=gf_mesh_fem(m,3);     % mesh-fem supporting a 3D-vector field
+  mfd=gf_mesh_fem(m,1);     % scalar mesh_fem
   % the mesh_im stores the integration methods for each tetrahedron
-  mim=gf_Mesh_Im(m,gf_Integ('IM_GAUSS_PARALLELEPIPED(3,6)'));
+  mim=gf_mesh_im(m,gf_Integ('IM_GAUSS_PARALLELEPIPED(3,6)'));
   % we choose a P2 fem for the main unknown
   gf_mesh_fem_set(mfu, 'fem',gf_Fem('FEM_QK(3,2)'));
-  mfdu=gf_Mesh_Fem(m,1);
+  mfdu=gf_mesh_fem(m,1);
   % the material is homogeneous, hence we use a P0 fem for the data
   gf_mesh_fem_set(mfd,'fem',gf_fem('FEM_QK(3,1)'));
   % the P2 fem is not derivable across elements, hence we use a discontinuous
@@ -164,7 +164,7 @@ for step=1:nbstep,
     end
     if (new_bricks)
       gf_model_set(md, 'variable', 'DirichletData', R);
-      gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+      gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
       U = gf_model_get(md, 'variable', 'u');
       VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     else
