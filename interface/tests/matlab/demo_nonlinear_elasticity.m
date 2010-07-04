@@ -4,6 +4,7 @@ gf_workspace('clear all');
 % set a custom colormap
 r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
 
+new_bricks = 1; % new brick system or old one.
 
 incompressible = 1
 
@@ -68,21 +69,44 @@ gf_mesh_set(m,'boundary',2,fbot);
 gf_mesh_set(m,'boundary',3,[ftop fbot]);
 
 
-
-if ~incompressible,
-  b0=gfMdBrick('nonlinear_elasticity', mim, mfu, 'Ciarlet Geymonat');
-  b1=b0;
-  set(b1, 'param', 'params', [1;1;-1.4]);
-else
-  b0=gf_MdBrick('nonlinear_elasticity', mim, mfu, 'Mooney Rivlin');
-  mfp = gf_Mesh_Fem(m,1); 
-  gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
-  b1=gf_MdBrick('nonlinear_elasticity_incompressibility_term',b0,mfp);
+lawname = 'Ciarlet Geymonat';
+params = [1;1;-1.4];
+if (incompressible)
+    lawname = 'Mooney Rivlin';
+    params = [1;1];
 end
-%b2=gfMdBrick('dirichlet', b1, 2);
-b3=gf_MdBrick('dirichlet', b1, 3, mfu, 'penalized');
 
-mds=gf_MdState(b3)
+if (new_bricks)
+  md=gf_model('real');
+  gf_model_set(md, 'add fem variable', 'u', mfu);
+  gf_model_set(md,'add_initialized_data','params', params);
+  gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+  if (incompressible)
+    mfp = gf_Mesh_Fem(m,1); 
+    gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+    gf_model_set(md, 'add fem variable', 'p', mfp);
+    gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p')
+  end
+ 
+  gf_model_set(md, 'add fem data', 'DirichletData', mfd, 3);
+  gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', 1e10, 3, 'DirichletData');
+  
+else
+  if ~incompressible,
+    b0=gfMdBrick('nonlinear_elasticity', mim, mfu, lawname);
+    b1=b0;
+    set(b1, 'param', 'params', params);
+  else
+    b0=gf_MdBrick('nonlinear_elasticity', mim, mfu, lawname);
+    mfp = gf_Mesh_Fem(m,1); 
+    gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+    b1=gf_MdBrick('nonlinear_elasticity_incompressibility_term',b0,mfp);
+  end
+  %b2=gfMdBrick('dirichlet', b1, 2);
+  b3=gf_MdBrick('dirichlet', b1, 3, mfu, 'penalized');
+
+  mds=gf_MdState(b3)
+end
 
 VM=zeros(1,gf_mesh_fem_get(mfdu,'nbdof'));
 
@@ -138,10 +162,17 @@ for step=1:nbstep,
       ro = RB1*RB2*[P(:,i);1];
       R(:, i) = ro(1:3) - P(:,i);
     end
-    gf_MdBrick_set(b3, 'param', 'R', mfd, R);
-    gf_MdBrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
-    U=gf_MdState_get(mds, 'state'); U=U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-    VM = gf_MdBrick_get(b0, 'von mises', mds, mfdu);
+    if (new_bricks)
+      gf_model_set(md, 'variable', 'DirichletData', R);
+      gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+      U = gf_model_get(md, 'variable', 'u');
+      VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
+    else
+      gf_MdBrick_set(b3, 'param', 'R', mfd, R);
+      gf_MdBrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+      U=gf_MdState_get(mds, 'state'); U=U(1:gf_mesh_fem_get(mfu, 'nbdof'));
+      VM = gf_MdBrick_get(b0, 'von mises', mds, mfdu);
+    end
     UU = [UU;U]; 
     VVM = [VVM;VM];
     save demo_nonlinear_elasticity_U.mat UU VVM m_char mfu_char mfdu_char;

@@ -167,6 +167,7 @@ namespace getfem {
       case 0 : break; // tangent term
       case 1 : sizes_.resize(2); break; // rhs
       case 2 : sizes_.resize(1); sizes_[0] = 1; break; // strain energy
+      case 3 : sizes_.resize(2); break; // Id + grad(u)
       }
 
       mf.extend_vector(U_, U);
@@ -181,6 +182,13 @@ namespace getfem {
       gmm::copy(gmm::sub_vector
 		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
+      if (version == 3) {
+	for (size_type n = 0; n < NFem; ++n)
+	  for (size_type m = 0; m < N; ++m)
+	    t(n,m) = gradU(n,m) + ((n == m) ? 1.0 : 0.0);
+	return;
+      }
+
       gmm::mult(gmm::transposed(gradU), gradU, E);
       gmm::add(gmm::sub_matrix(gradU, gmm::sub_interval(0,N),
 			       gmm::sub_interval(0,N)), E);
@@ -256,6 +264,8 @@ namespace getfem {
 
     elasticity_nonlinear_term<VECT1, VECT2>
       nterm(mf, U, mf_data, PARAMS, AHL, 0);
+    elasticity_nonlinear_term<VECT1, VECT2>
+      nterm2(mf, U, mf_data, PARAMS, AHL, 0);
 
     getfem::generic_assembly assem;
     if (mf_data)
@@ -266,6 +276,7 @@ namespace getfem {
     assem.push_mf(mf);
     if (mf_data) assem.push_mf(*mf_data);
     assem.push_nonlinear_term(&nterm);
+    assem.push_nonlinear_term(&nterm2);
     assem.push_mat(K);
     assem.assembly(rg);
   }
