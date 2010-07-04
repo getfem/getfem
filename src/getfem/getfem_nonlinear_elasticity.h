@@ -264,8 +264,8 @@ namespace getfem {
 
     elasticity_nonlinear_term<VECT1, VECT2>
       nterm(mf, U, mf_data, PARAMS, AHL, 0);
-    elasticity_nonlinear_term<VECT1, VECT2>
-      nterm2(mf, U, mf_data, PARAMS, AHL, 0);
+    // elasticity_nonlinear_term<VECT1, VECT2>
+    //  nterm2(mf, U, mf_data, PARAMS, AHL, 0);
 
     getfem::generic_assembly assem;
     if (mf_data)
@@ -276,7 +276,7 @@ namespace getfem {
     assem.push_mf(mf);
     if (mf_data) assem.push_mf(*mf_data);
     assem.push_nonlinear_term(&nterm);
-    assem.push_nonlinear_term(&nterm2);
+    // assem.push_nonlinear_term(&nterm2);
     assem.push_mat(K);
     assem.assembly(rg);
   }

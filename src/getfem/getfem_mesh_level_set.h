@@ -141,7 +141,7 @@ namespace getfem {
       GMM_ASSERT1(false, "You cannot call this function for uncut convexes");
     }
     // detect the intersection of two or more level sets and the convexes
-    // where the intersection occurs. To be  alled after adapt.
+    // where the intersection occurs. To be called after adapt.
     void find_level_set_potential_intersections
     (std::vector<size_type> &icv, std::vector<dal::bit_vector> &ils);
     

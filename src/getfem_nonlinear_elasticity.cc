@@ -497,7 +497,7 @@ namespace getfem {
 					const model::mimlist &mims,
 					model::real_matlist &matl,
 					model::real_veclist &vecl,
-					model::real_veclist &,
+					model::real_veclist &veclsym,
 					size_type region,
 					build_version version) const {
       
@@ -518,10 +518,6 @@ namespace getfem {
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
-//       GMM_TRACE2("Stokes term assembly");
-//       gmm::clear(matl[0]);
-//       asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
-
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
 	gmm::clear(matl[1]);
@@ -530,11 +526,10 @@ namespace getfem {
       }
 
       if (version & model::BUILD_RHS) {
-	asm_nonlinear_incomp_rhs(vecl[0], vecl[1], mim, mf_u, mf_p, u, p, rg);
+	asm_nonlinear_incomp_rhs(vecl[0], veclsym[1], mim, mf_u, mf_p,u,p, rg);
 	gmm::scale(vecl[0], scalar_type(-1));
-	gmm::scale(vecl[1], scalar_type(-1));
+	gmm::scale(veclsym[1], scalar_type(-1));
       }
-
     }
 
 
@@ -577,7 +572,7 @@ namespace getfem {
     pbrick pbr = new nonlinear_incompressibility_brick();
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
-    tl.push_back(model::term_description(multname, varname, true));
+    tl.push_back(model::term_description(varname, multname, true));
     model::varnamelist vl(1, varname);
     vl.push_back(multname);
     model::varnamelist dl;
