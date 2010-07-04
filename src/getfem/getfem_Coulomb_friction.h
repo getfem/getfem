@@ -103,6 +103,10 @@ namespace getfem {
    */
   CONTACT_B_MATRIX &contact_brick_set_DN(model &md, size_type indbrick);
 
+ /** Can be used to change the matrix DT of a basic contact/friction brick
+   */
+  CONTACT_B_MATRIX &contact_brick_set_DT(model &md, size_type indbrick);
+
   /** Can be used to change the matrix BT of a basic contact/friction brick
    */
   CONTACT_B_MATRIX &contact_brick_set_BT(model &md, size_type indbrick);
@@ -132,7 +136,53 @@ namespace getfem {
                 gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
     return indbrick;
-   }
+   } 
+
+  /**  Add Hughes stabilized friction contact condition to the model. If U is the vector
+      of degrees of freedom on which the condition is applied,
+      the matrix `BN` have to be such that the contact condition is defined
+      by $B_N U+DN Lambda \le 0$ (where 'DN' is the masse matrix 
+      relative to stabilzed term) and `BT` have to be such that the relative tangential
+      displacement is $B_T U$. The matrix `BT` should have as many rows as
+      `BN` multiplied b $d-1$ where $d$ is the domain dimension.
+      The contact condition is prescribed thank to a multiplier
+      `multname_n` whose dimension should be equal to the number of rows of
+      `BN` and the friction condition by a mutliplier `multname_t` whise size
+      should be the number of rows of `BT`.
+      The parameter `dataname_friction_coeff` describe the friction
+      coefficient. It could be a scalar or a vector describing the
+      coefficient on each contact condition. 
+      The augmentation parameter
+      `r` should be chosen in a range of acceptabe values
+      (see Getfem user documentation). `dataname_gap` is an
+      optional parameter representing the initial gap. It can be a single value
+      or a vector of value. `dataname_alpha` is an optional homogenization
+      parameter for the augmentation parameter
+      (see Getfem user documentation). The parameter `symmetrized` indicates
+      that a part of the symmetry of the tangent matrix will be kept or not
+      (except for the coupling bewteen contact and friction). 
+   **/
+  inline size_type add_Hughes_stab_friction_contact_brick
+  (model &md, const std::string &varname_u, const std::string &multname_n,
+   const std::string &multname_t, const std::string &dataname_r,
+   CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT, CONTACT_B_MATRIX &DN,CONTACT_B_MATRIX &DT,
+   std::string dataname_friction_coeff, 
+   std::string dataname_gap="", std::string dataname_alpha="",
+   bool symmetrized=false){
+  
+    size_type indbrick =add_basic_contact_with_friction_brick
+      (md, varname_u, multname_n, multname_t, dataname_r, BN, BT,
+       dataname_friction_coeff, dataname_gap, dataname_alpha, symmetrized, true);
+    gmm::resize(contact_brick_set_DN(md, indbrick),
+		gmm::mat_nrows(DN), gmm::mat_ncols(DN));
+    gmm::copy(DN, contact_brick_set_DN(md, indbrick));
+    
+    gmm::resize(contact_brick_set_DT(md, indbrick),
+		gmm::mat_nrows(DT), gmm::mat_ncols(DT));
+    gmm::copy(DT, contact_brick_set_DT(md, indbrick));
+    return indbrick;
+  } 
+
 
 
   /** Add a frictionless contact condition with a rigid obstacle
