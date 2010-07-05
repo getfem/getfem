@@ -528,11 +528,11 @@ MUMPS_LIBS=""
 if test "x$acx_mumps_ok" = "xno"; then
   AC_ARG_ENABLE(mumps,
    [AS_HELP_STRING([--enable-mumps],[enable the use of the MUMPS library (Direct parallel LU solver)])],
-   [ if test "x$enableval" = "xyes" ; then usemumps="yes"; fi], [usemumps="test"])
+   [ if test "x$enableval" = "xyes" ; then usemumps="yes"; fi], [usemumps="no"])
   MUMPS_LIBS=""
 
   if test "x$usemumps" = "xno"; then
-    echo "Building with MUMPS explicitly disabled";
+    echo "Building with MUMPS disabled";
   else
     AC_CHECK_LIB(dmumps, dmumps_c)
     AC_CHECK_HEADERS(dmumps_c.h, [usemumps="yes"],
@@ -671,7 +671,7 @@ if test "$MPI_CFLAGS" -o "$MPI_LIBS"; then
  ----------> Please add the path to libmetis.a to the MPI_LIBS variable.])
   fi
   AC_SUBST(MPI_LIBS)
-  AC_SUBST(MPI_CLAGS)
+  AC_SUBST(MPI_CFLAGS)
 fi
 
 
