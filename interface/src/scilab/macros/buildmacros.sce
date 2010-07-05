@@ -1,9 +1,12 @@
 // ====================================================================
 // Yann COLLETTE
-// Copyright 2009
+// Copyright 2009-2010
 // This file is released into the public domain
 // ====================================================================
 
-tbx_build_macros(TOOLBOX_NAME, get_absolute_file_path('buildmacros.sce'));
+path = get_absolute_file_path('buildmacros.sce');
 
-clear tbx_build_macros;
+genlib('sci_getfemlib',path,%f,%t);
+genlib('sci_getfemoverloadlib',path + filesep() + 'overload',%f,%t);
+
+clear path;
