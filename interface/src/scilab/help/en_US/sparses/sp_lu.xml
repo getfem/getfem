@@ -95,7 +95,7 @@
       <member><link linkend="sp_cgs">sp_cgs</link></member>
       <member><link linkend="sp_cgne">sp_sgne</link></member>
       <member><link linkend="sp_gmres">sp_gmres</link></member>
-      <member><link linkend="sp_mcgr">sp_mcgr</link></member>
+      <member><link linkend="sp_mgcr">sp_mgcr</link></member>
       <member><link linkend="sp_chsolve">sp_chsolve</link></member>
       <member><link linkend="sp_lusolve">sp_lusolve</link></member>
     </simplelist>
