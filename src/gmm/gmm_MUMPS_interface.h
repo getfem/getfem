@@ -34,7 +34,7 @@
    @date December 8, 2005.
    @brief Interface with MUMPS (LU direct solver for sparse matrices).
 */
-#if defined(GMM_USES_MUMPS)
+#if defined(GMM_USES_MUMPS) || defined(HAVE_DMUMPS_C_H)
 
 #ifndef GMM_MUMPS_INTERFACE_H
 #define GMM_MUMPS_INTERFACE_H

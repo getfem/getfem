@@ -81,7 +81,7 @@ AC_LANG_SAVE
  AC_LANG([C++])
  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 template<class T> class A        { public : int f () const { return 1; } };
-template<class T> class A<T*>    { public:  int f () const { return 0; } };]], [[
+template<class T> class A<T*>    { public : int f () const { return 0; } };]], [[
 A<float*> a; return a.f();]])],[ac_cv_cxx_partial_specialization_syntax=yes],[ac_cv_cxx_partial_specialization_syntax=no])
  AC_LANG_POP([])
 ])
@@ -392,13 +392,6 @@ AC_SUBST([SUPERLU_LIBS])
 AM_CONDITIONAL(USEBLASLITE, test x$HAVE_VENDOR_BLAS = x0)
 echo "Configuration of SuperLU done"
 
-if test "$MUMPS_CFLAGS" -o "$MUMPS_LIBS"; then
-  echo "You are using MUMPS!"
-  CPPFLAGS="$CPPFLAGS -DGMM_USES_MUMPS"
-  AC_SUBST(MUMPS_CFLAGS)
-  AC_SUBST(MUMPS_LIBS)
-fi
-
 dnl -----------------------------QD TESTS--------------------------------
 AC_ARG_WITH(qd-lib-dir,
         [AS_HELP_STRING([--with-qd-lib-dir],[directory in which the libqd.a can be found])],
@@ -510,6 +503,141 @@ AM_CONDITIONAL(MUPARSER, test x$usemuparser = xyes)
 AC_SUBST([MUPARSER_LIBS])
 echo "Configuration of muParser done"
 dnl ---------------------------END OF MUPARSER TEST--------------------------
+
+dnl ------------------------------MUMPS------------------------------
+
+acx_mumps_ok=no
+
+AC_ARG_WITH(mumps,
+        [AS_HELP_STRING([--with-mumps=<lib>],[use MUMPS library <lib>])])
+case $with_mumps in
+        yes | "") ;;
+        no) acx_mumps_ok=disable ;;
+        -* | */* | *.a | *.so | *.so.* | *.o| builtin) MUMPS_LIBS="$with_mumps" ;;
+        *) MUMPS_LIBS="-l$with_mumps" ;;
+esac
+
+AC_ARG_WITH(mumps-include-dir,
+        [AS_HELP_STRING([--with-mumps-include-dir],[directory in which the dmumps.h header can be found])],
+	MUMPSINC="-I$withval", MUMPSINC="-I$GFPREFIX/include")
+CPPFLAGS="$CPPFLAGS $MUMPSINC"
+
+dnl ------------------------------MUMPS TEST------------------------------
+usemumps="no"
+MUMPS_LIBS=""
+if test "x$acx_mumps_ok" = "xno"; then
+  AC_ARG_ENABLE(mumps,
+   [AS_HELP_STRING([--enable-mumps],[enable the use of the MUMPS library (Direct parallel LU solver)])],
+   [ if test "x$enableval" = "xyes" ; then usemumps="yes"; fi], [usemumps="test"])
+  MUMPS_LIBS=""
+
+  if test "x$usemumps" = "xno"; then
+    echo "Building with MUMPS explicitly disabled";
+  else
+    AC_CHECK_LIB(dmumps, dmumps_c)
+    AC_CHECK_HEADERS(dmumps_c.h, [usemumps="yes"],
+      [ 
+        AC_MSG_ERROR([header file dmumps_c.h not found. Use --enable-mumps=no flag]);
+        usemumps="no"
+      ])
+
+    if test "x$usemumps" = "xyes"; then
+      MUMPS_LIBS="-ldmumps -lzmumps"
+    fi;
+    echo "Building with MUMPS (use --enable-mumps=no to disable it)"
+  fi;
+fi;
+
+AM_CONDITIONAL(MUMPS, test x$usemumps = xyes)
+AC_SUBST([MUMPS_LIBS])
+echo "Configuration of MUMPS done"
+
+dnl ---------------------------END OF MUMPS TEST--------------------------
+
+
+
+dnl ---------------------------PARA LEVEL--------------------------
+
+paralevel=0
+AC_ARG_ENABLE(paralevel,
+   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version fo Getfem (use MPI and METIS)])],
+   [ case $enableval in
+        yes | "") paralevel=2;;
+        no) ;;
+        *) paralevel=$enableval ;;
+     esac
+])
+
+if test $paralevel -ge 1; then
+  CPPFLAGS="$CPPFLAGS -DGETFEM_PARA_LEVEL=$paralevel"
+fi;
+
+dnl ---------------------------END OF PARA LEVEL--------------------------
+
+
+dnl ---------------------------METIS--------------------------
+
+usemetis="no"
+METIS_LIBS=""
+
+if test $paralevel -ge 2; then
+  usemetis="yes"
+  METIS_LIBS=""
+  AC_CHECK_LIB(metis, SelectQueueOneWay)
+dnl  AC_CHECK_HEADERS(metis.h, [usemetis="yes"],
+dnl    [ 
+dnl      AC_MSG_ERROR([header file metis.h not found]);
+dnl      usemetis="no"
+dnl    ])
+
+  if test "x$usemetis" = "xyes"; then
+    METIS_LIBS="-lmetis"
+  fi;
+  echo "Building with METIS (use --enable-metis=no to disable it)"
+fi;
+
+AM_CONDITIONAL(METIS, test x$usemetis = xyes)
+AC_SUBST([METIS_LIBS])
+
+
+dnl ---------------------------END OF METIS--------------------------
+
+
+dnl ---------------------------MPI--------------------------
+
+usempi="no"
+MPI_LIBS=""
+
+if test $paralevel -ge 2; then
+  usempi="yes"
+  MPI_LIBS=""
+  AC_CHECK_LIB(mpich, MPI_Test)
+  AC_CHECK_LIB(mpichcxx, MPI_Test)
+  AC_CHECK_HEADERS(mpi/mpi.h, [usempi="yes"],
+   [ 
+     AC_CHECK_HEADERS(mpi.h, [usempi="yes"],
+     [
+       AC_CHECK_HEADERS(mpich2/mpi.h, [usempi="yes"],
+       [
+         if test "x$usempi" = "xyes"; then
+     	   AC_MSG_ERROR([header file mpi.h not found.]);
+	   usempi="no"
+   	 fi;
+       ])
+     ])
+   ])
+  if test "x$usempi" = "xyes"; then
+    MPI_LIBS="-lmpich -lmpichcxx"
+  fi;
+  echo "Building with MPI (use --enable-mpi=no to disable it)"
+fi;
+
+AM_CONDITIONAL(MPI, test x$usempi = xyes)
+AC_SUBST([MPI_LIBS])
+
+
+dnl ---------------------------END OF MPI--------------------------
+
 
 dnl ------------------------------LAPACK TEST--------------------------------
 

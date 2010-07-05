@@ -940,9 +940,21 @@ namespace gmm
   /* ******************************************************************** */
 
 #ifdef GMM_USES_MPI
-#include <mpi.h>
- 
-namespace gmm { 
+
+// Problem : GETFEM_HAVE_MPI_H not defined in gmm : NOT SATIFACTORY !!
+#include<getfem/getfem_arch_config.h>
+
+# if defined(GETFEM_HAVE_MPI_H)
+#   include <mpi.h>
+# elif defined(GETFEM_HAVE_MPI_MPI_H)
+#   include <mpi/mpi.h>
+# elif defined(GETFEM_HAVE_MPICH2_MPI_H)
+#   include <mpich2/mpi.h>
+# endif
+
+namespace gmm {
+
+  
   
   template <typename T> inline MPI_Datatype mpi_type(T)
   { GMM_ASSERT1(false, "Sorry unsupported type"); return MPI_FLOAT; }
@@ -955,13 +967,8 @@ namespace gmm {
 #endif
   inline MPI_Datatype mpi_type(int) { return MPI_INT; }
   inline MPI_Datatype mpi_type(unsigned int) { return MPI_UNSIGNED; }
-  inline MPI_Datatype mpi_type(size_t) {
-    if (sizeof(int) == sizeof(size_t)) return MPI_UNSIGNED;
-    if (sizeof(long) == sizeof(size_t)) return MPI_UNSIGNED_LONG;
-    return MPI_LONG_LONG;
-  }
-
-
+  inline MPI_Datatype mpi_type(long) { return MPI_LONG; }
+  inline MPI_Datatype mpi_type(unsigned long) { return MPI_UNSIGNED_LONG; }
 
   template <typename MAT> struct mpi_distributed_matrix {
     MAT M;

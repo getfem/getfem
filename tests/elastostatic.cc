@@ -42,6 +42,16 @@
 #include "getfem/getfem_error_estimate.h"
 #include "getfem/getfem_import.h"
 
+
+#if !defined(GETFEM_HAVE_DMUMPS_C_H)
+fkljflkjfsklfjn  jdkljdfj;;
+#endif
+
+
+#if !defined(GMM_USES_MUMPS)
+ zorglub ddd ;
+#endif
+
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/

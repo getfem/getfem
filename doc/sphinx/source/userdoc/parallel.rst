@@ -17,8 +17,11 @@ Nevertheless, the brick system offers a generic parallelization based on MPI
 (communication between processes), `METIS
 <http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_ (partition of the mesh)
 and `MUMPS <http://graal.ens-lyon.fr/MUMPS>`_ (parallel sparse direct solver). One
-has to compile |gf| with the option ``-D GETFEM_PARA_LEVEL=2`` to use it. With
-this option, each mesh used is implicitely partitionned (using METIS) into a
+has to compile |gf| with the option ``-D GETFEM_PARA_LEVEL=2`` to use it.
+
+Instead, the configure script can be run with the option ``--enable-paralevel=2``. The configure script will search for MPI and METIS libraries.
+
+With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitely partitionned (using METIS) into a
 number of regions corresponding to the number of processors and the assembly
 procedures are parallelized. This means that the tangent matrix and the constraint
 matrix assembled in the model_state variable are distributed. The choice made (for

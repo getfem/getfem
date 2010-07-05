@@ -166,9 +166,24 @@
 #define GETFEM_MPI_INIT(argc, argv) {GMM_TRACE1("Running sequential Getfem");}
 #define GETFEM_MPI_FINALIZE {}
 
+#if defined(GETFEM_HAVE_DMUMPS_C_H)
+# ifndef GMM_USES_MUMPS
+#   define GMM_USES_MUMPS
+# endif
+#endif
+
+
 #if GETFEM_PARA_LEVEL > 0
 
-# include <mpi.h>
+# if defined(GETFEM_HAVE_MPI_H)
+#   include <mpi.h>
+# endif
+# if defined(GETFEM_HAVE_MPI_MPI_H)
+#   include <mpi/mpi.h>
+# endif
+# if defined(GETFEM_HAVE_MPICH2_MPI_H)
+#   include <mpich2/mpi.h>
+# endif
 
 # undef GMM_TRACE_MSG_MPI
 # define GMM_TRACE_MSG_MPI					         \
@@ -199,6 +214,9 @@
 #  endif
 # endif
 
+
+
+
 # if GETFEM_PARA_LEVEL > 1
 extern "C" void METIS_PartMeshNodal(int *, int *, int *, int *, int *, int *,
 				    int *, int *, int *);
@@ -218,17 +236,20 @@ namespace getfem {
 #if GETFEM_PARA_LEVEL > 1
   template <typename T> inline T MPI_SUM_SCALAR(T a)
   { T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a),MPI_SUM,MPI_COMM_WORLD); return b; }
-  template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &V) {
+  template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &VV) {
+    VECT &V = const_cast<VECT &>(VV);
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V));
     MPI_Allreduce((void *)(&(V[0])), &(W[0]), gmm::vect_size(V), gmm::mpi_type(T()),
 		  MPI_SUM, MPI_COMM_WORLD);
-    gmm::copy(W, gmm::linalg_const_cast(V));
+    gmm::copy(W, V);
   }
   template <typename VECT1, typename VECT2>
-  inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &W) {
+  inline void MPI_SUM_VECTOR(const VECT1 &VV, const VECT2 &WW) {
+    VECT1 &V = const_cast<VECT1 &>(VV);
+    VECT2 &W = const_cast<VECT2 &>(WW);
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
-    MPI_Allreduce((void *)(&(V[0])), &(gmm::linalg_const_cast(W)[0]),
+    MPI_Allreduce((void *)(&(V[0])), &(W[0]),
 		  gmm::vect_size(V), gmm::mpi_type(T()),
 		  MPI_SUM, MPI_COMM_WORLD);
   }

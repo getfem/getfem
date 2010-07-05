@@ -25,14 +25,16 @@ A small interface to |mumps| is also provided (see `MUMPS web1
 :file:`gmm/gmm_MUMPS_interface.h`. In order to use |mumps|, you have to indicates
 some options to the configure shell::
 
-  MUMPS_CFLAGS=" -I /path/to/MUMPS/include "
-  MUMPS_LIBS=" F90 libraries and libs of MUMPS to be linked "
+  --with-mumps-include-dir=" -I /path/to/MUMPS/include "
+  --with-mumps=" F90 libraries and libs of MUMPS to be linked "
+
+alternatively, the option --enable-mumps will serach for an installed MUMPS library.
 
 For instance if you want to use the sequential version of |mumps| with double and
 complex double::
 
-  MUMPS_CFLAGS=" -I /path/to/MUMPS/include "
-  MUMPS_LIBS=" ...F90libs...  -L /path/to/MUMPS/lib -ldmumps -lzmumps -lpord
+  --with-mumps-include-dir=" -I /path/to/MUMPS/include "
+  --with-mumps=" ...F90libs...  -L /path/to/MUMPS/lib -ldmumps -lzmumps -lpord
               -L /path/to/MUMPS/libseq -lmpiseq "
 
 where ``...F90libs...`` are the libraries of the fortran compiler used to compile
