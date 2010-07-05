@@ -20,6 +20,7 @@ root_tlbx = strncpy( etc_tlbx, length(etc_tlbx)-length("\etc\") );
 mprintf("\tLoad macros\n");
 pathmacros = pathconvert( root_tlbx ) + "macros" + filesep();
 sci_getfemlib = lib(pathmacros);
+
 clear pathmacros;
 
 // load gateways
@@ -27,6 +28,14 @@ clear pathmacros;
 mprintf("\tLoad gateways\n");
 ilib_verbose(0);
 exec(pathconvert(root_tlbx+"/sci_gateway/loader_gateway.sce",%f));
+
+v = getversion('scilab');
+if v(2) >= 3 then
+  // set and get only overloadable in 5.3
+  pathmacros = pathconvert( root_tlbx ) + "macros" + filesep() + "overload" + filesep();
+  sci_getfemoverloadlib = lib(pathmacros);
+  exec(pathmacros + filesep() + "init_gf_types.sce");
+end
 
 // Load and add help chapter
 // =============================================================================
