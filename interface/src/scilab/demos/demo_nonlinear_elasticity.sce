@@ -20,10 +20,12 @@ for i=1:s
   r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
 end
 
-incompressible = 1
+new_bricks = 1; // new brick system or old one.
+
+incompressible = 1;
 
 if 0 then
-  h = 20
+  h = 20;
   // import the mesh
   //m = gf_mesh('load', path + '/data/ladder.mesh');
   //m = gf_mesh('load', path + '/data/ladder_1500.mesh');
@@ -45,7 +47,7 @@ if 0 then
 else
   N1 = 1; 
   N2 = 4; 
-  h  = 20
+  h  = 20;
   m   = gf_mesh('cartesian',(0:N1)/N1 - .5, (0:N2)/N2*h, ((0:N1)/N1 - .5)*3);
   mfu = gf_mesh_fem(m,3);     // mesh-fem supporting a 3D-vector field
   mfd = gf_mesh_fem(m,1);     // scalar mesh_fem
@@ -83,20 +85,43 @@ gf_mesh_set(m,'boundary',1,ftop);
 gf_mesh_set(m,'boundary',2,fbot);
 gf_mesh_set(m,'boundary',3,[ftop fbot]);
 
-if ~incompressible then
-  b0 = gf_md_brick('nonlinear_elasticity', mim, mfu, 'Ciarlet Geymonat');
-  b1 = b0;
-  gf_md_brick_set(b1, 'param', 'params', [1;1;-1.4]);
-else
-  b0  = gf_mdbrick('nonlinear_elasticity', mim, mfu, 'Mooney Rivlin');
-  mfp = gf_mesh_fem(m,1); 
-  gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
-  b1  = gf_mdbrick('nonlinear_elasticity_incompressibility_term',b0,mfp);
+lawname = 'Ciarlet Geymonat';
+params  = [1;1;-1.4];
+if (incompressible) then
+  lawname = 'Mooney Rivlin';
+  params  = [1;1];
 end
-//b2 = gf_mdbrick('dirichlet', b1, 2);
-b3 = gf_mdbrick('dirichlet', b1, 3, mfu, 'penalized');
 
-mds = gf_mdstate(b3)
+if (new_bricks) then
+  md = gf_model('real');
+  gf_model_set(md, 'add fem variable', 'u', mfu);
+  gf_model_set(md, 'add_initialized_data', 'params', params);
+  gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+  if (incompressible) then
+    mfp = gf_mesh_fem(m,1); 
+    gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+    gf_model_set(md, 'add fem variable', 'p', mfp);
+    gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p');
+  end
+ 
+  gf_model_set(md, 'add fem data', 'DirichletData', mfd, 3);
+  gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', 1e10, 3, 'DirichletData');
+else
+  if ~incompressible then
+    b0 = gf_md_brick('nonlinear_elasticity', mim, mfu, lawname);
+    b1 = b0;
+    gf_md_brick_set(b1, 'param', 'params', params);
+  else
+    b0  = gf_mdbrick('nonlinear_elasticity', mim, mfu, lawname);
+    mfp = gf_mesh_fem(m,1); 
+    gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+    b1  = gf_mdbrick('nonlinear_elasticity_incompressibility_term',b0,mfp);
+  end
+  //b2 = gf_mdbrick('dirichlet', b1, 2);
+  b3 = gf_mdbrick('dirichlet', b1, 3, mfu, 'penalized');
+
+  mds = gf_mdstate(b3);
+end
 
 VM = zeros(1,gf_mesh_fem_get(mfdu,'nbdof'));
 
@@ -105,7 +130,7 @@ reload = 0;
 if (reload == 0) then
   UU     = [];
   VVM    = [];
-  nbstep = 40
+  nbstep = 40;
 else
   load(path + '/demo_nonlinear_elasticity_U.mat');
   nb_step = size(UU,1);
@@ -155,11 +180,18 @@ for step=1:nbstep
       R(:, i) = ro(1:3) - P(:,i);
     end
 
-    gf_mdbrick_set(b3, 'param', 'R', mfd, R);
-    gf_mdbrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
-    U   = gf_mdstate_get(mds, 'state'); 
-    U   = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-    VM  = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
+    if (new_bricks) then
+      gf_model_set(md, 'variable', 'DirichletData', R);
+      gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
+      U  = gf_model_get(md, 'variable', 'u');
+      VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
+    else 
+      gf_mdbrick_set(b3, 'param', 'R', mfd, R);
+      gf_mdbrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+      U   = gf_mdstate_get(mds, 'state'); 
+      U   = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
+      VM  = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
+    end
     UU  = [UU;U]; 
     VVM = [VVM;VM];
     save(path + '/demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char);
@@ -177,19 +209,12 @@ for step=1:nbstep
   colorbar(min(U),max(U));
   h_graph.color_map = jetcolormap(255);
   drawnow;
-//  axis([-3     6     0    20    -2     2]); caxis([0 .3]);
-//  view(30+20*w, 23+30*w);  
-//  campos([50 -30 80]);
-//  camva(8);
-//  camup
-//  camlight; 
-//  axis off;
   sleep(1000); 
   // save a picture..
   xs2png(h_graph.figure_id, path + sprintf('/torsion%03d.png',step));
 end
   
-disp('end of computations, you can now replay the animation with')
-disp('exec demo_nonlinear_elasticity_anim.sce;')
+disp('end of computations, you can now replay the animation with');
+disp('exec demo_nonlinear_elasticity_anim.sce;');
 
 printf('demo nonlinear_elasticity terminated\n');
