@@ -96,8 +96,6 @@ heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
-MUMPS_LIBS = @MUMPS_LIBS@
-# MUMPS_CFLAGS = @MUMPS_CFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm $(SUPLDFLAGS)
 

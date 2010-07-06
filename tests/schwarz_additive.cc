@@ -18,7 +18,7 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //===========================================================================
-#define GMM_USES_SUPERLU
+
 /**************************************************************************/
 /*                                                                        */
 /*  Schwarz additive test program on an elastostatic problem with         */

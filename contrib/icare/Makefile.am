@@ -8,10 +8,8 @@ CLEANFILES = icare.data
 icare_SOURCES = icare.cc icare.h
 
 SUPLDFLAGS = @SUPLDFLAGS@
-MUMPS_LIBS = @MUMPS_LIBS@
-# MUMPS_CFLAGS = @MUMPS_CFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm  $(SUPLDFLAGS)
 
 TESTS = $(top_srcdir)/contrib/icare/icare.pl
 

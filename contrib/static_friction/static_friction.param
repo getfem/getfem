@@ -5,27 +5,27 @@
 
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 MU = 5; LAMBDA = 10;    % Lamé coefficients (in N/mm^2, i.e. 5 and 10Mpa).
-FRICTION_COEF = 0.0;    % Friction coefficient.
+FRICTION_COEF = 0.5;    % Friction coefficient.
 PG=9810;                % gravitation constante (on earth)
 			% (in mm/s^2, i.e. 9.81m/s^2).
 RHO = 6e-6;     	% "realistic" density for steel
                         % (in kg/mm^3, i.e. 6000kg/m^3)
 N = 2;
-NX = 40;            	% space step.
+NX = 300;            	% space step.
 NOISY = 3;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
-METHOD = 0;             % 0 = Newton.
+METHOD = 1;             % 0 = Newton.
 			% 1 = Additive Schwarz Newton
 if (METHOD == 1)
-  SUBDOMSIZE = 0.6;
-  OVERLAP = 0.4;
+  SUBDOMSIZE = 0.3;
+  OVERLAP = 0.1;
 end
 
 NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary
 			% 1 = Non homogeneous Neumann Boudary on the top
 NEUMANN_INTENSITY = 0;
 
-DIRICHLET = 3;          % 0 = no Dirichlet boundary
+DIRICHLET = 1;          % 0 = no Dirichlet boundary
 			% 1 = Dirichlet boundary on the top
 			% 2 = Dirichlet boundary on the left
 			% 3 = no Dirichlet but suppress horizontal and rotating
@@ -65,7 +65,7 @@ if (N == 3)
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,6)'; % Quadrature rule
 end;
 
-% MESHNAME='splx:';
+MESHNAME='splx:';
 
 % MESHNAME='meshes/donut_regulier_8_elements_288ddl.mesh';
 % MESHNAME='donut_regulier_64_elements_1920ddl.mesh';
@@ -87,13 +87,14 @@ end;
 % MESHNAME='../../../tests/meshes/disc_P2_h3.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h2.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h1.mesh';
-MESHNAME='../../../tests/meshes/disc_P2_h0.5.mesh';
+% MESHNAME='../../../tests/meshes/disc_P2_h0.5.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h0.25.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h0.15.mesh';
 % MESHNAME='../../../tests/meshes/disc_P2_h0.075.mesh';
 
 %%%%%   saving parameters                                             %%%%%
-REFSOLFILENAME = 'reference_sol2d';
+% REFSOLFILENAME = 'reference_sol2d';
+REFSOLFILENAME = '';
 ROOTFILENAME = 'static_friction';     % Root of data files.
 ML_EXPORT = 1; % export solution for Matlab
 DX_EXPORT = 0; % export solution to an OpenDX file ?

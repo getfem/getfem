@@ -8,10 +8,8 @@ xfem_contact_SOURCES = xfem_contact.cc
 xfem_dirichlet_SOURCES = xfem_dirichlet.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
-MUMPS_LIBS = @MUMPS_LIBS@
-MUMPS_CFLAGS = @MUMPS_CFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src $(MUMPS_CFLAGS)
-LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
+INCLUDES = -I$(top_srcdir)/src -I../../src
+LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
 TESTS = $(top_srcdir)/contrib/xfem_contact/xfem_contact.pl
 
