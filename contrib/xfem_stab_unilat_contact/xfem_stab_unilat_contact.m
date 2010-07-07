@@ -9,7 +9,7 @@ mf = gf_mesh_fem('load', 'xfem_stab_unilat_contact_ls.mf');
 
 clf
 
-disp('plotting the lagrange multipliers on the dirichlet boundary');
+disp('plotting the lagrange multipliers on the contact interface');
   sll=gf_Slice('load','xfem_stab_unilat_contact.sll');
   slL=load('xfem_stab_unilat_contact.slL')';
   P0=gf_slice_get(sll, 'pts');
@@ -35,5 +35,5 @@ disp('plotting the lagrange multipliers on the dirichlet boundary');
   axis on;
   view(3);
   camzoom(1.2);
-  axis([0    1   -0.500    0.5000 1 1]);
+  axis([0    1   -0.500    0.5000 -1 1]);
   % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
