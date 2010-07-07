@@ -124,7 +124,7 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 	gmm::clear(matl[0]);
 	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
 	asm_nonlinear_elasticity_optim_tangent_matrix
-	  (matl[0], mim, mf_u, u, mf_params, params, AHL, rg);
+	  (matl[0], mim, mf_u, u, mf_p, p, alpha, beta, mf_params, params, AHL, ls,rg);
       }
 
 
