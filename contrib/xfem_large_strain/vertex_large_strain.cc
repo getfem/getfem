@@ -120,17 +120,57 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
       mesh_region rg(region);
       mf_u.linked_mesh().intersect_with_mpi_region(rg);
 
+      
+      std::vector<scalar_type> P_ls(gmm::vect_size(p));
+      
+      dim_type d = mf_u.linked_mesh().dim();
+      dal::bit_vector p_enriched_dof;
+      for (dal::bv_visitor cv(mf_p.linked_mesh().convex_index());
+	   !cv.finished(); ++cv) {
+	pfem pf = mf_p.fem_of_element(cv);
+	for (size_type j = 0; j < pf->nb_dof(cv); ++j)
+	  if (pf->dof_types()[j] == global_dof(d)) {
+	    size_type dof = mf_p.ind_basic_dof_of_element(cv)[j];
+	    p_enriched_dof.add(dof);
+	    P_ls[dof] = p[dof];
+	    
+	  }
+      }
+      
+      
+      std::vector<scalar_type> U_ls(gmm::vect_size(u));
+      
+      dal::bit_vector u_enriched_dof;
+      for (dal::bv_visitor cv(mf_u.linked_mesh().convex_index());
+	   !cv.finished(); ++cv) {
+	pfem pf = mf_u.fem_of_element(cv);
+	for (size_type j = 0; j< pf->nb_dof(cv); ++j)
+	  if (pf->dof_types()[j] == global_dof(d)) {
+	    for (size_type k = 0; k < d; ++k) {
+	      size_type dof = mf_u.ind_basic_dof_of_element(cv)[j*d+k];
+	      u_enriched_dof.add(dof);
+	      U_ls[dof] = u[dof];
+	    }
+	  }
+      }
+      
+
       if (version & model::BUILD_MATRIX) {
-	gmm::clear(matl[0]);
+	std::vector<scalar_type> V(gmm::vect_size(u));
 	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
 	asm_nonlinear_elasticity_optim_tangent_matrix
-	  (matl[0], mim, mf_u, u, mf_p, p, alpha, beta, mf_params, params, AHL, ls,rg);
+	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+	gmm::copy(gmm::row_vector(V), matl[0]);
       }
 
 
       if (version & model::BUILD_RHS) {
 	asm_nonlinear_elasticity_optim_rhs(vecl[0], vecl[3], mim, 
-					   mf_u, u, mf_p, p, alpha, beta,
+					   mf_u, u, U_ls, u_enriched_dof,
+					   mf_p, p, P_ls, p_enriched_dof,
+					   alpha, beta,
 					   mf_params, params, AHL, ls, rg);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
