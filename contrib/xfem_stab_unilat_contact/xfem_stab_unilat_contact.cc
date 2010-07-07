@@ -95,6 +95,37 @@ public:
 };
 
 /******************************************************************************/
+/* h                                                    */
+/******************************************************************************/
+template<typename VECT1> class nonlin_h
+  : public getfem::nonlinear_elem_term {
+  const getfem::mesh &m;
+  bgeot::multi_index sizes_;
+  size_type cv_old;
+  scalar_type h;
+public:
+  nonlin_h(const getfem::mesh &m_) 
+    : m(m_), U(mf_.nb_basic_dof()), N(mf_.linked_mesh().dim()),
+      gradU(1, N) {
+    sizes_.resize(1); sizes_[0] = 1;
+    cv_old = size_type(-1); h = 0.;
+  }
+  const bgeot::multi_index &sizes() const {  return sizes_; }
+  virtual void compute(getfem::fem_interpolation_context& ctx,
+		       bgeot::base_tensor &t) {
+    size_type cv = ctx.convex_num();
+    if (cv != cv_old) {
+      h = m.convex_radius_estimate(cv);
+      cv_old = cv;
+    }
+    t[0] = 1./h;
+  }
+};
+
+
+
+
+/******************************************************************************/
 /* level set unit tangent                                                     */
 /******************************************************************************/
 template<typename VECT1> class level_set_unit_tang 
@@ -122,8 +153,9 @@ public:
        coeff);
     ctx.pf()->interpolation_grad(ctx, coeff, gradU, 1);
     scalar_type norm = gmm::vect_norm2(gmm::mat_row(gradU, 0));
-    t[0] = gradU(0, 1) / norm; // this expression is true only for the case of 2 dimensional
-    t[1]=-gradU(0, 0) / norm; // this expression is true only for the case of 2 dimensional
+    GMM_ASSERT1(N == 2, "Sorry, to be done for N != 2");
+    t[0] = gradU(0, 1) / norm; // this expression is correct only for the case of 2 dimensional
+    t[1]=-gradU(0, 0) / norm; // this expression is correct only for the case of 2 dimensional
   }
 };
 
@@ -171,7 +203,7 @@ void asm_stabilization_mixed_term
 }
 
 /**********************************************************************************/
-/* asembling stabilised tangente mixed term                                                */
+/* asembling stabilised tangent mixed term                                                */
 /**********************************************************************************/
 
 template<class MAT>
@@ -192,8 +224,7 @@ void asm_stabilization_tang_mixed_term
   
   getfem::generic_assembly assem("lambda=data$1(1); mu=data$2(1);"
                                  "t=comp(Base(#2).NonLin$2(#3).vGrad(#1).NonLin$1(#3));"
-				 "M(#2, #1)+= t(:,i,:,j,j,i).lambda(1)"
-				 "+t(:,i,:,i,j,j).mu(1)"
+				 "M(#2, #1)+= t(:,i,:,i,j,j).mu(1)"
 				 "+t(:,i,:,j,i,j).mu(1)");
   
   assem.push_mi(mim);
@@ -346,12 +377,7 @@ void asm_stabilization_symm_tang_term
   getfem::generic_assembly
     assem("lambda=data$1(1); mu=data$2(1);"
           "t=comp(NonLin$2(#2).vGrad(#1).NonLin$1(#2).NonLin$2(#2).vGrad(#1).NonLin$1(#2));"
-	  "M(#1, #1)+= sym(t(i,:,j,j,i,k,:,l,l,k).lambda(1).lambda(1)"
-          "+t(i,:,j,j,i,k,:,k,l,l).lambda(1).mu(1)"
-	  "+t(i,:,j,j,i,k,:,l,k,l).lambda(1).mu(1)"
-	  "+t(i,:,i,j,j,k,:,l,l,k).lambda(1).mu(1)"
-	  "+t(i,:,j,i,j,k,:,l,l,k).lambda(1).mu(1)"
-	  "+t(i,:,i,j,j,k,:,k,l,l).mu(1).mu(1)"
+	  "M(#1, #1)+= sym(t(i,:,i,j,j,k,:,k,l,l).mu(1).mu(1)"
 	  "+t(i,:,i,j,j,k,:,l,k,l).mu(1).mu(1)"
 	  "+t(i,:,j,i,j,k,:,k,l,l).mu(1).mu(1)"
           "+t(i,:,j,i,j,k,:,l,k,l).mu(1).mu(1))");
@@ -1123,8 +1149,11 @@ if (!contact_only){
   gmm::copy(model.real_variable("u"), U);
   gmm::resize(LAMBDA, mf_cont().nb_dof());
   gmm::copy(model.real_variable("Lambda"), LAMBDA);
-  gmm::resize(LAMBDA_T, mf_cont().nb_dof());
-  gmm::copy(model.real_variable("Lambda_t"), LAMBDA_T);
+  
+  if (!contact_only) {
+    gmm::resize(LAMBDA_T, mf_cont().nb_dof());
+    gmm::copy(model.real_variable("Lambda_t"), LAMBDA_T);
+  }
   
   return (iter.converged());
   
