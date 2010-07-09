@@ -151,11 +151,11 @@ namespace getfem {
   };
 
 
-//============================================================================
-//=                /******************************/                          =
-//=                /*      Term 2 dL/dalpha      */                          =
-//=                /******************************/                          =
-//============================================================================
+//=======================================================================
+//=                /******************************/                     =
+//=                /*      Term 2 dL/dalpha      */                     =
+//=                /******************************/                     =
+//=======================================================================
 
 
  template<typename VECT1, typename VECT2>
@@ -394,7 +394,7 @@ namespace getfem {
 	  temp = 0.0;
 	  for (size_type k = 0; k < N; ++k)
 	    for (size_type l = 0; l < N; ++l) {
-	      temp += GSigma(i,j,k,l)*Ealpha(l,k);	     	
+	      temp += GSigma(i,j,k,l) * Ealpha(l,k);	     	
 	    }
 	  GsEalpha(i,j)=temp;
 	}
@@ -452,7 +452,7 @@ namespace getfem {
 
 //==============================================================================================
 //=     /***********************************************************************/              =
-//=     /* Term 4 d^2(L)/d(alpha)d(u^h)    The part [*]:d(Grad(v^h))/d(alpha)  */              =
+//=     /* Term 4 d^2(L)/d(alpha)d(u^h)    The part [*]:Ln(r).Grad(v^h)        */              =
 //=     /***********************************************************************/              =
 //==============================================================================================
 
@@ -527,7 +527,10 @@ namespace getfem {
       // Computation of p.J.F^{-T}
       gmm::lu_inverse(gradU);
       gmm::add(gmm::scaled(gmm::transposed(gradU), valP[0] * J), eas);     
-      gmm::scale(eas, log(r2)*0.5);      
+      gmm::scale(eas, log(r2)*0.5);  
+     for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j)
+	  t(i,j) = eas(i, j);    
     }
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
@@ -562,11 +565,11 @@ namespace getfem {
   };
 
 
-//==============================================================================================
-//=     /***********************************************************************/              =
-//=     /* Term 5 d^2(L)/d(alpha)d(u^h)    The part [*]:d(Grad(v^h))/d(alpha)  */              =
-//=     /***********************************************************************/              =
-//==============================================================================================
+//============================================================================================================
+//=     /*************************************************************************************/              =
+//=     /* Term 5 d^2(L)/d(alpha)d(u^h)   The part [*]:1/r(cos\theta, sin\theta)(v^h)_ls)    */              =
+//=     /*************************************************************************************/              =
+//============================================================================================================
 
 
  template<typename VECT1, typename VECT2>
@@ -641,6 +644,9 @@ namespace getfem {
       gmm::add(gmm::scaled(gmm::transposed(gradU), valP[0] * J), eas); 
       base_small_vector V(2), W(2); V[0] = x; V[1] = y;
       gmm::mult(gmm::transposed(eas), gmm::scaled(V, 1./r2), W);
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j)
+	  t(i,j) = eas(i, j);
     }
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
@@ -675,10 +681,385 @@ namespace getfem {
   };
 
 
+//========================================================================================
+//=             /*********************************************************/              =
+//=             /*              Term 6 d^2(L)/d^2(alpha)                 */              =
+//=             /*********************************************************/              =
+//========================================================================================
 
-  /***********************************************************/
+ template<typename VECT1, typename VECT2>
+  class elasticity_nonlinear_optim_term6
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U, U_ls;
+    const mesh_fem &mf_p;
+    std::vector<scalar_type> P, P_ls;
+    const mesh_fem *mf_data;
+    const VECT2 &PARAMS;
+    const getfem::level_set &ls;
+    size_type N, cv_old, NFem;
+    const abstract_hyperelastic_law &AHL;
+    base_vector params, coeff, valP, u_ls;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
+    base_tensor GSigma;
+    bgeot::multi_index sizes_;
+    mesher_level_set mls_x, mls_y;
+  public:
+    elasticity_nonlinear_optim_term6
+    (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
+     const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
+     const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+     const abstract_hyperelastic_law &AHL_, const getfem::level_set &ls_) 
+      : mf_u(mf_u_), U(mf_u_.nb_basic_dof()), U_ls(mf_u_.nb_basic_dof()),
+	mf_p(mf_p_),
+	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
+	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
+	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
+      sizes_.resize(1); sizes_[0] = N;
+      cv_old = size_type(-1);
+      mf_u.extend_vector(U_, U);
+      mf_p.extend_vector(P_, P);
+      mf_u.extend_vector(U_ls_, U_ls);
+      mf_p.extend_vector(P_ls_, P_ls);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
+    }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      scalar_type x = mls_x(ctx.xref());
+      scalar_type y = mls_y(ctx.xref());
+      scalar_type r2 = x*x+y*y;
+      // Computation of E
+      gmm::mult(gmm::transposed(gradU), gradU, E);
+      gmm::add(gradU, E);
+      gmm::add(gmm::transposed(gradU), E);
+      gmm::scale(E, scalar_type(0.5));
+
+      
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
+      scalar_type J = gmm::lu_det(gradU);
+
+       // Computation of d(grad U)/d(alpha) 
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim()); 
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU2_ls, mf_u.get_qdim());
+      scalar_type x = mls_x(ctx.xref());
+      scalar_type y = mls_y(ctx.xref());
+      scalar_type r2 = x*x+y*y;
+      gmm::scale(gradU_ls, log(r2) / scalar_type(2));
+      gmm::scale(gradU2_ls, log(r2) * log(r2) * 0.5);
+      ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
+      base_vector Runit(2),Runitlog(2);
+      Runit[0] = x / r2; Runit[1] = y / r2;
+      Runitlog[0] = (x * log(r2))/ (0.5 * r2); Runitlog[1] = (y * log(r2)) / (0.5 * r2);
+      gmm::rank_one_update(gradU_ls, Runit, u_ls);        // gradU_ls contient d(grad U)/d(alpha)
+      gmm::rank_one_update(gradU2_ls, Runitlog, u_ls);    // gradU2_ls contient d^2(grad U)/(d(alpha))^2 
+      
+      // Computation of d(E)/d(alpha) 
+      
+      base_matrix Ealpha(N, N);
+      gmm::mult(gmm::transposed(gradU_ls), gradU, Sigma);
+      gmm::add(Sigma, gmm::transposed(Sigma), Ealpha);
+      gmm::scale(Ealpha, 0.5);
+      
+      // Computation of d(E)/d(alpha) 
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j)
+	 Sigma(i,j) = 0.0);
+      base_matrix Ealpha2(N, N);
+      gmm::mult(gmm::transposed(gradU2_ls), gradU, Sigma);
+      gmm::add(Sigma, gmm::transposed(Sigma), Ealpha2);
+      gmm::scale(Ealpha, 0.5);
+      gmm::mult_add(gradU_ls, gmm::transposed(gradU_ls),Ealpha2);
+
+      // Computation of Sigma:d^2(E)/d^2(alpha)  
+      AHL.sigma(E, Sigma, params);
+      t[0]=mat_euclidean_sp(Sigma, Ealpha2);
+       
+      // Computation of grad_Sigma:d(E)/d(alpha)
+       scalar_type temp ;
+      AHL.grad_sigma(E, GSigma, params);
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j){
+	  temp = 0.0;
+	  for (size_type k = 0; k < N; ++k)
+	    for (size_type l = 0; l < N; ++l) {
+	      temp += GSigma(i,j,k,l) * Ealpha(l,k);	     	
+	    }
+	  GsEalpha(i,j)=temp;
+	}
+      // Computation of (grad_Sigma:d(E)/d(alpha)):d(E)/d(alpha)
+
+      t[0]+=mat_euclidean_sp(GsEalpha, Ealpha);
+
+      // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
+      gmm::lu_inverse(gradU);
+      gradU=gmm::transposed(gradU);
+      temp=0.0;
+      temp=mat_euclidean_sp(gradU, gradU2_ls) + mat_euclidean_sp(gradU, gradU_ls) * mat_euclidean_sp(gradU, gradU2_ls);
+      base_matrix eas(N,N);
+      base_matrix tmp_eas(N,N);      
+      
+      gmm::mult(gradU, gmm::transposed(gradU_ls),tmp_eas);
+      gmm::mult(tmp_eas,gradU_ls,eas);
+      gmm::scale(eas,-1.0)
+      temp+= mat_euclidean_sp(eas, gradU_ls);
+      temp=temp * valP[0] * J 
+	t[0]+=temp; 
+    }
+
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
+      GMM_ASSERT1(nb != 0, "Oops");
+      if (nb == 1) {
+	size_type cv = ctx.convex_num();
+
+	valP.resize(1);
+	coeff.resize(mf_p.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector
+	     (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation(ctx, coeff, valP, 1);
+
+	if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+	}
+
+      } else if (mf_data) {
+	size_type cv = ctx.convex_num();
+	size_type nbp = AHL.nb_params();
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
+	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+	  for (size_type k = 0; k < nbp; ++k)
+	    coeff[i * nbp + k]
+	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nbp+k];
+	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nbp));
+      }
+    } 
+    
+  };
+
+//========================================================================================
+//=             /*********************************************************/              =
+//=             /*              Term 7 d^2(L)/d^2(beta)                  */              =
+//=             /*********************************************************/              =
+//========================================================================================
+
+ template<typename VECT1, typename VECT2>
+  class elasticity_nonlinear_optim_term7
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U, U_ls;
+    const mesh_fem &mf_p;
+    std::vector<scalar_type> P, P_ls;
+    const mesh_fem *mf_data;
+    const VECT2 &PARAMS;
+    const getfem::level_set &ls;
+    size_type N, cv_old, NFem;
+    const abstract_hyperelastic_law &AHL;
+    base_vector params, coeff, valP, u_ls;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
+    base_tensor GSigma;
+    bgeot::multi_index sizes_;
+    mesher_level_set mls_x, mls_y;
+  public:
+    elasticity_nonlinear_optim_term7
+    (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
+     const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
+     const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+     const abstract_hyperelastic_law &AHL_, const getfem::level_set &ls_) 
+      : mf_u(mf_u_), U(mf_u_.nb_basic_dof()), U_ls(mf_u_.nb_basic_dof()),
+	mf_p(mf_p_),
+	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
+	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
+	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
+      sizes_.resize(1); sizes_[0] = N;
+      cv_old = size_type(-1);
+      mf_u.extend_vector(U_, U);
+      mf_p.extend_vector(P_, P);
+      mf_u.extend_vector(U_ls_, U_ls);
+      mf_p.extend_vector(P_ls_, P_ls);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
+    }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)+= scalar_type(1);
+      
+      scalar_type J = gmm::lu_det(gradU);
+
+      t[0] = (J - scalar_type(1)) * valP[0];
+      
 
 
+    }
+
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
+      GMM_ASSERT1(nb != 0, "Oops");
+      if (nb == 1) {
+	size_type cv = ctx.convex_num();
+
+	valP.resize(1);
+	coeff.resize(mf_p.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector
+	     (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation(ctx, coeff, valP, 1);
+
+	if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+	}
+	scalar_type x = mls_x(ctx.xref());
+	scalar_type y = mls_y(ctx.xref());
+	scalar_type r2 = x*x+y*y
+	valP[0] *= 0.5*log(r2)*log(r2) ;
+      } else if (mf_data) {
+	size_type cv = ctx.convex_num();
+	size_type nbp = AHL.nb_params();
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
+	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+	  for (size_type k = 0; k < nbp; ++k)
+	    coeff[i * nbp + k]
+	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nbp+k];
+	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nbp));
+      }
+    } 
+    
+  };
+
+//=============================================================================================
+//=             /**************************************************************/              =
+//=             /*              Term 8 d^2(L)/d(beta)d(alha)                  */              =
+//=             /**************************************************************/              =
+//=============================================================================================
+
+ template<typename VECT1, typename VECT2>
+  class elasticity_nonlinear_optim_term7
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U, U_ls;
+    const mesh_fem &mf_p;
+    std::vector<scalar_type> P, P_ls;
+    const mesh_fem *mf_data;
+    const VECT2 &PARAMS;
+    const getfem::level_set &ls;
+    size_type N, cv_old, NFem;
+    const abstract_hyperelastic_law &AHL;
+    base_vector params, coeff, valP, u_ls;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
+    base_tensor GSigma;
+    bgeot::multi_index sizes_;
+    mesher_level_set mls_x, mls_y;
+  public:
+    elasticity_nonlinear_optim_term7
+    (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
+     const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
+     const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+     const abstract_hyperelastic_law &AHL_, const getfem::level_set &ls_) 
+      : mf_u(mf_u_), U(mf_u_.nb_basic_dof()), U_ls(mf_u_.nb_basic_dof()),
+	mf_p(mf_p_),
+	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
+	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
+	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
+      sizes_.resize(1); sizes_[0] = N;
+      cv_old = size_type(-1);
+      mf_u.extend_vector(U_, U);
+      mf_p.extend_vector(P_, P);
+      mf_u.extend_vector(U_ls_, U_ls);
+      mf_p.extend_vector(P_ls_, P_ls);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
+    }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)+= scalar_type(1);
+      
+      scalar_type J = gmm::lu_det(gradU);
+
+      t[0] = (J - scalar_type(1)) * valP[0];
+      
+
+
+    }
+
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
+      GMM_ASSERT1(nb != 0, "Oops");
+      if (nb == 1) {
+	size_type cv = ctx.convex_num();
+
+	valP.resize(1);
+	coeff.resize(mf_p.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector
+	     (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation(ctx, coeff, valP, 1);
+
+	if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+	}
+	scalar_type x = mls_x(ctx.xref());
+	scalar_type y = mls_y(ctx.xref());
+	scalar_type r2 = x*x+y*y
+	valP[0] *= 0.5*log(r2)*log(r2) ;
+      } else if (mf_data) {
+	size_type cv = ctx.convex_num();
+	size_type nbp = AHL.nb_params();
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
+	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+	  for (size_type k = 0; k < nbp; ++k)
+	    coeff[i * nbp + k]
+	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nbp+k];
+	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nbp));
+      }
+    } 
+    
+  };
+
+ 
+
+  /********************************************************************************************************************/
+  /********************************************************************************************************************/
+  /********************************************************************************************************************/
+
+
+ 
   //=========================================================================
   //
   //  Nonlinear elasticity Brick
