@@ -141,7 +141,7 @@ for step=1:nbstep,
     n = t(step);
     title(['Plastification for t = ', num2str(n)]);
     
-    pause(1);
+    pause();
 
 end;
 

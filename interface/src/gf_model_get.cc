@@ -442,7 +442,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
     
-    /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma) )
+    /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
       Compute on `mf_pl` the plastic part and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.@*/
      sub_command
