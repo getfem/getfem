@@ -134,8 +134,7 @@ namespace getfem {
   {
     gmm::stream_standard_locale sl(f);
     /* print general warning */
-    GMM_WARNING3("" << endl
-              << "  All regions must have different number!");
+    GMM_WARNING3("  All regions must have different number!");
 
     /* print deprecate warning */
     if (deprecate!=0){
@@ -485,6 +484,100 @@ namespace getfem {
     return x;
   }
 
+
+  /* mesh file from noboite [http://www.distene.com/fr/corp/newsroom16.html] */
+  static void import_noboite_msh_file(std::ifstream& f, mesh& m) {
+    
+    using namespace std;
+    gmm::stream_standard_locale sl(f);
+    
+    ofstream fichier_GiD("noboite_to_GiD.gid",    ios::out | ios::trunc );  //déclaration du flux et ouverture du fichier
+    
+    fichier_GiD << "MESH    dimension 3 ElemType Tetrahedra  Nnode 4"<<endl;
+    
+    
+    int i,NE,NP,ligne_debut_NP;
+    
+    /*NE: nombre d'elements (premier nombre du fichier .noboite)
+      NP: nombre de points (deuxieme nombre du fichier .noboite)
+      ligne_debut_NP: la ligne commence la liste des coordonnees des points dans le 		fichier .noboite*/
+    
+    f >> NE>>NP;
+    ligne_debut_NP=NE*4/6+3;
+    
+    //passer 3 premiers lignes du fichier .noboite (la liste des elements commence a la 		quatrieme ligne)
+    string contenu;
+    for (i=1; i<=ligne_debut_NP; i++){
+      getline(f, contenu);
+    }
+    
+
+    /*-----------------------------------------------------------------------
+      Lire les coordonnees dans .noboite
+      -----------------------------------------------------------------------*/
+    fichier_GiD << "Coordinates" <<endl;
+    
+    for (i=1; i<=NP; i++){
+      float coor_x,coor_y,coor_z;
+      
+      fichier_GiD << i<<" ";
+      
+      f>>coor_x >>coor_y >>coor_z;
+      fichier_GiD<<coor_x<<" " <<coor_y <<" "<<coor_z <<endl;
+      
+    }
+    
+    fichier_GiD << "end coordinates" <<endl<<endl;
+    
+    /*-----------------------------------------------------------------------
+      Lire les elements dans .noboite et ecrire au . gid
+      ------------------------------------------------------------------------*/
+    
+    //revenir au debut du fichier . noboite, puis passer les trois premiere lignes
+    f.seekg(0, ios::beg);
+    for (i=1; i<=3; i++){
+      getline(f, contenu);
+    }
+    
+    
+    fichier_GiD << "Elements" <<endl;
+    
+    for (i=1; i<=NE; i++){
+      float elem_1,elem_2,elem_3,elem_4;
+      
+      fichier_GiD << i<<" ";
+      f>>elem_1>>elem_2>>elem_3>>elem_4;
+      fichier_GiD<<elem_1<<" " <<elem_2 <<" "<<elem_3<<" "<<elem_4<<" 1"<<endl;
+      
+    }
+    fichier_GiD << "end elements" <<endl<<endl;
+    
+    
+    
+    if(fichier_GiD)  // si l'ouverture a réussi
+      {
+	// instructions
+	fichier_GiD.close();  // on referme le fichier
+      }
+    else  // sinon
+      cerr << "Erreur à l'ouverture !" << endl;
+    
+    if(f)  // si l'ouverture a réussi
+      {
+	// instructions
+	f.close();  // on referme le fichier
+      }
+    else  // sinon
+      cerr << "Erreur à l'ouverture !" << endl;
+    
+    // appeler sunroutine import_gid_msh_file
+    //import_mesh(const std::string& "noboite_to_GiD.gid", mesh& msh)
+    ifstream fichier1_GiD("noboite_to_GiD.gid", ios::in);
+    import_gid_msh_file(fichier1_GiD, m);
+    
+    //      return 0;
+  }
+  
   /* mesh file from emc2 [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm], am_fmt format
 
   (only triangular 2D meshes)
@@ -495,7 +588,6 @@ namespace getfem {
     std::vector<size_type> tri;
     size_type nbs,nbt;
     base_node P(2);
-
     f >> nbs >> nbt; bgeot::read_until(f,"\n");
     tri.resize(nbt*3);
     for (size_type i=0; i < nbt*3; ++i) f >> tri[i];
@@ -582,6 +674,8 @@ namespace getfem {
       import_gmsh_msh_file(f,m,2);
     else if (bgeot::casecmp(format,"gid")==0)
       import_gid_msh_file(f,m);
+    else if (bgeot::casecmp(format,"noboite")==0)
+      import_noboite_msh_file(f,m);
     else if (bgeot::casecmp(format,"am_fmt")==0)
       import_am_fmt_file(f,m);
     else if (bgeot::casecmp(format,"emc2_mesh")==0)
@@ -593,6 +687,8 @@ namespace getfem {
   void import_mesh(const std::string& filename, mesh& msh) {
     if (filename.compare(0,4,"gid:")==0)
       getfem::import_mesh(filename.substr(4), "gid", msh);
+    else if (filename.compare(0,8,"noboite:") == 0)
+      getfem::import_mesh(filename.substr(8), "noboite", msh);
     else if (filename.compare(0,5,"gmsh:") == 0)
       getfem::import_mesh(filename.substr(5), "gmsh", msh);
     else if (filename.compare(0,7,"gmshv2:") == 0)
