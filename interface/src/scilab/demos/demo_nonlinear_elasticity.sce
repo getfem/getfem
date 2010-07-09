@@ -22,7 +22,17 @@ end
 
 new_bricks = 1; // new brick system or old one.
 
-incompressible = 1;
+incompressible = 0;
+
+// lawname = 'Ciarlet Geymonat';
+// params  = [1;1;-1.4];
+lawname = 'SaintVenant Kirchhoff'; // a supprimer
+params = [0;1];
+if (incompressible) then
+  // lawname = 'Mooney Rivlin';
+  lawname = 'SaintVenant Kirchhoff'; // a supprimer
+  params  = [1;1];
+end
 
 if 0 then
   h = 20;
@@ -84,13 +94,6 @@ fbot = gf_mesh_get(m,'faces from pid',pidbot);
 gf_mesh_set(m,'boundary',1,ftop);
 gf_mesh_set(m,'boundary',2,fbot);
 gf_mesh_set(m,'boundary',3,[ftop fbot]);
-
-lawname = 'Ciarlet Geymonat';
-params  = [1;1;-1.4];
-if (incompressible) then
-  lawname = 'Mooney Rivlin';
-  params  = [1;1];
-end
 
 if (new_bricks) then
   md = gf_model('real');
@@ -183,11 +186,13 @@ for step=1:nbstep
     if (new_bricks) then
       gf_model_set(md, 'variable', 'DirichletData', R);
       gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
+      // full(gf_model_get(md, 'tangent matrix'))
       U  = gf_model_get(md, 'variable', 'u');
       VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     else 
       gf_mdbrick_set(b3, 'param', 'R', mfd, R);
       gf_mdbrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+      // full(gf_mdstate_get(mds, 'tangent matrix'))
       U   = gf_mdstate_get(mds, 'state'); 
       U   = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
       VM  = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
