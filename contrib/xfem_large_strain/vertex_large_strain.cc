@@ -158,11 +158,56 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
       if (version & model::BUILD_MATRIX) {
 	std::vector<scalar_type> V(gmm::vect_size(u));
 	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
-	asm_nonlinear_elasticity_optim_tangent_matrix
+	asm_nonlinear_elasticity_optim_tangent_matrix_alpha_u
 	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
 	   params, AHL, ls,rg);
 	gmm::copy(gmm::row_vector(V), matl[0]);
+
+	gmm::resize(V, gmm::vect_size(p));
+	gmm::clear(V);
+	asm_nonlinear_elasticity_optim_tangent_matrix_alpha_p
+	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+	gmm::copy(gmm::row_vector(V), matl[1]);
+
+	(matl[2])(0,0)
+	  = asm_nonlinear_elasticity_optim_tangent_matrix_alpha_alpha
+	  (mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+
+	
+	matl[5](0,0)
+	  = asm_nonlinear_elasticity_optim_tangent_matrix_beta_alpha
+	  (mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+
+	matl[6](0,0)
+	  = asm_nonlinear_elasticity_optim_tangent_matrix_beta_beta
+	  (mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+
+	gmm::resize(V, gmm::vect_size(u));
+	gmm::clear(V);
+	asm_nonlinear_elasticity_optim_tangent_matrix_beta_u
+	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+	gmm::copy(gmm::row_vector(V), matl[3]);
+
+
+	gmm::resize(V, gmm::vect_size(p));
+	gmm::clear(V);
+	asm_nonlinear_elasticity_optim_tangent_matrix_beta_p
+	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
+	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
+	   params, AHL, ls,rg);
+	gmm::copy(gmm::row_vector(V), matl[4]);
+
       }
 
 
@@ -624,6 +669,154 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
   
 
 
+
+
+
+
+
+
+
+
+
+/*****************************************************************/
+/*   Model.                                                      */
+/*****************************************************************/
+
+
+namespace getfem {
+
+
+  template <typename MAT, typename VEC> 
+  struct model_pb {
+
+    typedef MAT MATRIX;
+    typedef VEC VECTOR;
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+
+    model &md;
+    gmm::abstract_newton_line_search &ls;
+    VECTOR stateinit, &state;
+    const VECTOR &rhs;
+    const MATRIX &K;
+    bool with_pseudo_potential;
+
+    void compute_tangent_matrix(void)
+    { md.to_variables(state); md.assembly(model::BUILD_MATRIX); }
+
+    const MATRIX &tangent_matrix(void) { return K; }
+    
+    inline T scale_residual(void) const { return T(1); }
+
+    void compute_residual(void)
+    { md.to_variables(state); md.assembly(model::BUILD_RHS); }
+
+    void compute_pseudo_potential(void)
+    { md.to_variables(state); md.assembly(model::BUILD_PSEUDO_POTENTIAL); }
+
+
+    const VECTOR &residual(void) { return rhs; }
+
+    R residual_norm(void) { return gmm::vect_norm2(rhs); }
+
+    R line_search(VECTOR &dr, const gmm::iteration &iter) {
+      gmm::resize(stateinit, md.nb_dof());
+      gmm::copy(state, stateinit);
+      R alpha(1), res;
+      if (with_pseudo_potential) {
+	compute_pseudo_potential();
+	res = md.pseudo_potential();
+      } else {
+	res = residual_norm();
+      }
+
+      ls.init_search(res, iter.get_iteration());
+      do {
+	alpha = ls.next_try();
+	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	if (alpha < 1E-10) break;
+	if (with_pseudo_potential) {
+	  compute_pseudo_potential();
+	  res = md.pseudo_potential();
+	} else {
+	  compute_residual();
+	  res = residual_norm();
+	}
+      } while (!ls.is_converged(res));
+
+      if (alpha != ls.converged_value() || with_pseudo_potential) {
+	alpha = ls.converged_value();
+	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	res = ls.converged_residual();
+	compute_residual();
+      }
+      return alpha;
+    }
+
+    model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+	     const VECTOR &rhs_, const MATRIX &K_,
+	     bool with_pseudo_pot = false)
+      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_),
+	with_pseudo_potential(with_pseudo_pot) {}
+
+  };
+
+  static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
+    return default_linear_solver<model_real_sparse_matrix,
+      model_real_plain_vector>(md);
+  } 
+  
+  template <typename MATRIX, typename VECTOR, typename PLSOLVER>
+  void my_solve(model &md, gmm::iteration &iter,
+		PLSOLVER lsolver,
+		gmm::abstract_newton_line_search &ls, const MATRIX &K,
+		const VECTOR &rhs, bool with_pseudo_potential = false) {
+    
+    VECTOR state(md.nb_dof());
+    
+    md.from_variables(state); // copy the model variables in the state vector
+    
+    if (md.is_linear()) {
+      md.assembly(model::BUILD_ALL);
+      (*lsolver)(K, state, rhs, iter);
+    }
+    else {
+      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
+				    with_pseudo_potential);
+      classical_Newton(mdpb, iter, *lsolver);
+    }
+    
+    md.to_variables(state); // copy the state vector into the model variables
+  }
+
+  
+  void my_solve(model &md, gmm::iteration &iter,
+		rmodel_plsolver_type lsolver,
+		gmm::abstract_newton_line_search &ls,
+		bool with_pseudo_potential) {
+    my_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
+		   md.real_rhs(), with_pseudo_potential);
+  }
+  
+  
+  void my_solve(model &md, gmm::iteration &iter,
+		bool with_pseudo_potential = false) {
+    gmm::default_newton_line_search ls;
+    my_solve(md, iter, rdefault_linear_solver(md), ls,
+	     with_pseudo_potential);
+  }
+  
+}
+
+
+
+
+
+
+
+
+
+
 /*****************************************************************/
 /*   Model.                                                      */
 /*****************************************************************/
@@ -632,7 +825,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();
-  size_type law_num = PARAM.int_value("LAW");
+  // size_type law_num = PARAM.int_value("LAW");
   //size_type newton_version = PARAM.int_value("newton_version");
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
@@ -942,10 +1135,10 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   //pr.resize(pl->nb_params());
   
   getfem::model model;
-  size_type alpha,beta;
+  //  scalar_type alpha, beta;
   model.add_fem_variable("u", mf_u());
-  //model.add_fixed_size_variable("alpha", alpha);
-  //model.add_fixed_size_variable("beta", beta);
+  model.add_fixed_size_variable("alpha", 1);
+  model.add_fixed_size_variable("beta", 1);
   
   model.add_initialized_fixed_size_data("Mooney_Riv_coefficient", pr);
   
@@ -1020,6 +1213,13 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
    std::vector<scalar_type> LRH(size);
    model.add_fixed_size_variable("dir", size);
    getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+
+
+   // + nouvelle brique
+
+
+   
+   
    
    // KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(4));
    // KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
@@ -1135,7 +1335,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   gmm::iteration iter(residual, 1, 40000);
   cout << "Solving..." << endl;
   iter.init();
-  getfem::standard_solve(model, iter);
+  getfem::my_solve(model, iter);
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(model.real_variable("u"), U);
 

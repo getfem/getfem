@@ -328,7 +328,7 @@ namespace getfem {
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
-      sizes_.resize(2); sizes_[0] = N; sizes_[1] = N;
+      sizes_.resize(2); sizes_[0] = short_type(N); sizes_[1] = short_type(N);
       cv_old = size_type(-1);
       mf_u.extend_vector(U_, U);
       mf_p.extend_vector(P_, P);
@@ -487,7 +487,7 @@ namespace getfem {
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
-      sizes_.resize(2); sizes_[0] = N; sizes_[1] = N;
+      sizes_.resize(2); sizes_[0] = short_type(N); sizes_[1] = short_type(N);
       cv_old = size_type(-1);
       mf_u.extend_vector(U_, U);
       mf_p.extend_vector(P_, P);
@@ -602,7 +602,7 @@ namespace getfem {
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
-      sizes_.resize(1); sizes_[0] = N;
+      sizes_.resize(1); sizes_[0] = short_type(N);
       cv_old = size_type(-1);
       mf_u.extend_vector(U_, U);
       mf_p.extend_vector(P_, P);
@@ -718,7 +718,7 @@ namespace getfem {
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
-      sizes_.resize(1); sizes_[0] = N;
+      sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
       mf_u.extend_vector(U_, U);
       mf_p.extend_vector(P_, P);
@@ -756,11 +756,8 @@ namespace getfem {
 		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim()); 
       ctx.pf()->interpolation_grad(ctx, coeff, gradU2_ls, mf_u.get_qdim());
-      scalar_type x = mls_x(ctx.xref());
-      scalar_type y = mls_y(ctx.xref());
-      scalar_type r2 = x*x+y*y;
       gmm::scale(gradU_ls, log(r2) / scalar_type(2));
-      gmm::scale(gradU2_ls, log(r2) * log(r2) * 0.5);
+      gmm::scale(gradU2_ls, log(r2) * log(r2) * 0.25);
       ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
       base_vector Runit(2),Runitlog(2);
       Runit[0] = x / r2; Runit[1] = y / r2;
@@ -775,50 +772,41 @@ namespace getfem {
       gmm::add(Sigma, gmm::transposed(Sigma), Ealpha);
       gmm::scale(Ealpha, 0.5);
       
-      // Computation of d(E)/d(alpha) 
-      for (size_type i = 0; i < N; ++i)
-	for (size_type j = 0; j < N; ++j)
-	 Sigma(i,j) = 0.0);
+      // Computation of d(E)/d(alpha)
       base_matrix Ealpha2(N, N);
       gmm::mult(gmm::transposed(gradU2_ls), gradU, Sigma);
       gmm::add(Sigma, gmm::transposed(Sigma), Ealpha2);
-      gmm::scale(Ealpha, 0.5);
-      gmm::mult_add(gradU_ls, gmm::transposed(gradU_ls),Ealpha2);
+      gmm::scale(Ealpha2, 0.5);
+      
+      gmm::mult(gmm::transposed(gradU_ls), gradU_ls, Sigma);
+      gmm::add(Sigma, Ealpha2);
 
       // Computation of Sigma:d^2(E)/d^2(alpha)  
       AHL.sigma(E, Sigma, params);
       t[0]=mat_euclidean_sp(Sigma, Ealpha2);
        
       // Computation of grad_Sigma:d(E)/d(alpha)
-       scalar_type temp ;
+      scalar_type temp ;
       AHL.grad_sigma(E, GSigma, params);
       for (size_type i = 0; i < N; ++i)
-	for (size_type j = 0; j < N; ++j){
-	  temp = 0.0;
+	for (size_type j = 0; j < N; ++j)
 	  for (size_type k = 0; k < N; ++k)
-	    for (size_type l = 0; l < N; ++l) {
-	      temp += GSigma(i,j,k,l) * Ealpha(l,k);	     	
-	    }
-	  GsEalpha(i,j)=temp;
-	}
-      // Computation of (grad_Sigma:d(E)/d(alpha)):d(E)/d(alpha)
-
-      t[0]+=mat_euclidean_sp(GsEalpha, Ealpha);
+	    for (size_type l = 0; l < N; ++l)
+	      t[0]  += GSigma(i,j,k,l) * Ealpha(l,k) * Ealpha(i,j);
 
       // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
       gmm::lu_inverse(gradU);
-      gradU=gmm::transposed(gradU);
-      temp=0.0;
-      temp=mat_euclidean_sp(gradU, gradU2_ls) + mat_euclidean_sp(gradU, gradU_ls) * mat_euclidean_sp(gradU, gradU2_ls);
+      base_matrix FmT;
+      gmm::copy(gmm::transposed(gradU), FmT);
+      temp = mat_euclidean_sp(FmT, gradU2_ls)
+	+ gmm::sqr(mat_euclidean_sp(FmT, gradU_ls));
       base_matrix eas(N,N);
       base_matrix tmp_eas(N,N);      
       
-      gmm::mult(gradU, gmm::transposed(gradU_ls),tmp_eas);
-      gmm::mult(tmp_eas,gradU_ls,eas);
-      gmm::scale(eas,-1.0)
-      temp+= mat_euclidean_sp(eas, gradU_ls);
-      temp=temp * valP[0] * J 
-	t[0]+=temp; 
+      gmm::mult(FmT, gmm::transposed(gradU_ls),tmp_eas);
+      gmm::mult(tmp_eas, FmT, eas);
+      temp -= mat_euclidean_sp(eas, gradU_ls);
+      t[0] += temp * valP[0] * J;
     }
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
@@ -889,7 +877,7 @@ namespace getfem {
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
-      sizes_.resize(1); sizes_[0] = N;
+      sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
       mf_u.extend_vector(U_, U);
       mf_p.extend_vector(P_, P);
@@ -936,8 +924,8 @@ namespace getfem {
 	}
 	scalar_type x = mls_x(ctx.xref());
 	scalar_type y = mls_y(ctx.xref());
-	scalar_type r2 = x*x+y*y
-	valP[0] *= 0.5*log(r2)*log(r2) ;
+	scalar_type r2 = x*x+y*y;
+	valP[0] *= 0.25*log(r2)*log(r2);
       } else if (mf_data) {
 	size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
@@ -959,7 +947,7 @@ namespace getfem {
 //=============================================================================================
 
  template<typename VECT1, typename VECT2>
-  class elasticity_nonlinear_optim_term7
+  class elasticity_nonlinear_optim_term8
     : public getfem::nonlinear_elem_term {
     const mesh_fem &mf_u;
     std::vector<scalar_type> U, U_ls;
@@ -977,7 +965,7 @@ namespace getfem {
     bgeot::multi_index sizes_;
     mesher_level_set mls_x, mls_y;
   public:
-    elasticity_nonlinear_optim_term7
+    elasticity_nonlinear_optim_term8
     (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
      const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
      const mesh_fem *mf_data_, const VECT2 &PARAMS_,
@@ -989,7 +977,7 @@ namespace getfem {
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
 	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
-      sizes_.resize(1); sizes_[0] = N;
+      sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
       mf_u.extend_vector(U_, U);
       mf_p.extend_vector(P_, P);
@@ -999,6 +987,9 @@ namespace getfem {
 	gmm::copy(PARAMS, params);
     }
     const bgeot::multi_index &sizes() const {  return sizes_; }
+
+
+
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
@@ -1007,15 +998,39 @@ namespace getfem {
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
 
-      for (unsigned int alpha = 0; alpha < N; ++alpha)
-	gradU(alpha, alpha)+= scalar_type(1);
+      scalar_type x = mls_x(ctx.xref());
+      scalar_type y = mls_y(ctx.xref());
+      scalar_type r2 = x*x+y*y;
+      // Computation of E
+      gmm::mult(gmm::transposed(gradU), gradU, E);
+      gmm::add(gradU, E);
+      gmm::add(gmm::transposed(gradU), E);
+      gmm::scale(E, scalar_type(0.5));
+
       
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
       scalar_type J = gmm::lu_det(gradU);
 
-      t[0] = (J - scalar_type(1)) * valP[0];
+       // Computation of d(grad U)/d(alpha) 
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim()); 
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU2_ls, mf_u.get_qdim());
+      gmm::scale(gradU_ls, log(r2) / scalar_type(2));
+      gmm::scale(gradU2_ls, log(r2) * log(r2) * 0.25);
+      ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
+      base_vector Runit(2),Runitlog(2);
+      Runit[0] = x / r2; Runit[1] = y / r2;
+      gmm::rank_one_update(gradU_ls, Runit, u_ls);        // gradU_ls contient d(grad U)/d(alpha)
       
-
-
+      
+      // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
+      gmm::lu_inverse(gradU);
+      base_matrix FmT;
+      gmm::copy(gmm::transposed(gradU), FmT);
+      t[0] += mat_euclidean_sp(FmT, gradU_ls) * valP[0] * J;
     }
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
@@ -1036,8 +1051,8 @@ namespace getfem {
 	}
 	scalar_type x = mls_x(ctx.xref());
 	scalar_type y = mls_y(ctx.xref());
-	scalar_type r2 = x*x+y*y
-	valP[0] *= 0.5*log(r2)*log(r2) ;
+	scalar_type r2 = x*x+y*y;
+	valP[0] *= 0.5*log(r2);
       } else if (mf_data) {
 	size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
@@ -1053,6 +1068,348 @@ namespace getfem {
   };
 
  
+
+
+
+//=============================================================================================
+//=             /**************************************************************/              =
+//=             /*              Term 9 d^2(L)/d(beta)d(alha)                  */              =
+//=             /**************************************************************/              =
+//=============================================================================================
+
+ template<typename VECT1, typename VECT2>
+  class elasticity_nonlinear_optim_term9
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U, U_ls;
+    const mesh_fem &mf_p;
+    std::vector<scalar_type> P, P_ls;
+    const mesh_fem *mf_data;
+    const VECT2 &PARAMS;
+    const getfem::level_set &ls;
+    size_type N, cv_old, NFem;
+    const abstract_hyperelastic_law &AHL;
+    base_vector params, coeff, valP, u_ls;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
+    base_tensor GSigma;
+    bgeot::multi_index sizes_;
+    mesher_level_set mls_x, mls_y;
+  public:
+    elasticity_nonlinear_optim_term9
+    (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
+     const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
+     const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+     const abstract_hyperelastic_law &AHL_, const getfem::level_set &ls_) 
+      : mf_u(mf_u_), U(mf_u_.nb_basic_dof()), U_ls(mf_u_.nb_basic_dof()),
+	mf_p(mf_p_),
+	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
+	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
+	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
+      sizes_.resize(2); sizes_[0] = short_type(N); sizes_[1] = short_type(N);
+      cv_old = size_type(-1);
+      mf_u.extend_vector(U_, U);
+      mf_p.extend_vector(P_, P);
+      mf_u.extend_vector(U_ls_, U_ls);
+      mf_p.extend_vector(P_ls_, P_ls);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
+    }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+
+
+
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      scalar_type x = mls_x(ctx.xref());
+      scalar_type y = mls_y(ctx.xref());
+      scalar_type r2 = x*x+y*y;
+      // Computation of E
+      gmm::mult(gmm::transposed(gradU), gradU, E);
+      gmm::add(gradU, E);
+      gmm::add(gmm::transposed(gradU), E);
+      gmm::scale(E, scalar_type(0.5));
+
+      
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
+      scalar_type J = gmm::lu_det(gradU);
+
+       // Computation of d(grad U)/d(alpha) 
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim()); 
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU2_ls, mf_u.get_qdim());
+      gmm::scale(gradU_ls, log(r2) / scalar_type(2));
+      gmm::scale(gradU2_ls, log(r2) * log(r2) * 0.25);
+      ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
+      base_vector Runit(2),Runitlog(2);
+      Runit[0] = x / r2; Runit[1] = y / r2;
+      gmm::rank_one_update(gradU_ls, Runit, u_ls);        // gradU_ls contient d(grad U)/d(alpha)
+      
+      
+      // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
+      gmm::lu_inverse(gradU);
+      base_matrix FmT;
+      gmm::copy(gmm::transposed(gradU), FmT);
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j)
+	  t(i,j) = FmT(i, j) * valP[0] * J;
+    }
+
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
+      GMM_ASSERT1(nb != 0, "Oops");
+      if (nb == 1) {
+	size_type cv = ctx.convex_num();
+
+	valP.resize(1);
+	coeff.resize(mf_p.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector
+	     (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation(ctx, coeff, valP, 1);
+
+	if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+	}
+	scalar_type x = mls_x(ctx.xref());
+	scalar_type y = mls_y(ctx.xref());
+	scalar_type r2 = x*x+y*y;
+	valP[0] *= 0.5*log(r2);
+      } else if (mf_data) {
+	size_type cv = ctx.convex_num();
+	size_type nbp = AHL.nb_params();
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
+	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+	  for (size_type k = 0; k < nbp; ++k)
+	    coeff[i * nbp + k]
+	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nbp+k];
+	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nbp));
+      }
+    } 
+    
+  };
+
+
+
+
+
+
+//=============================================================================================
+//=             /**************************************************************/              =
+//=             /*              Term 10 d^2(L)/d(beta)d(alha)                  */              =
+//=             /**************************************************************/              =
+//=============================================================================================
+
+ template<typename VECT1, typename VECT2>
+  class elasticity_nonlinear_optim_term10
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U, U_ls;
+    const mesh_fem &mf_p;
+    std::vector<scalar_type> P, P_ls;
+    const mesh_fem *mf_data;
+    const VECT2 &PARAMS;
+    const getfem::level_set &ls;
+    size_type N, cv_old, NFem;
+    const abstract_hyperelastic_law &AHL;
+    base_vector params, coeff, valP, u_ls;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
+    base_tensor GSigma;
+    bgeot::multi_index sizes_;
+    mesher_level_set mls_x, mls_y;
+  public:
+    elasticity_nonlinear_optim_term10
+    (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
+     const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
+     const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+     const abstract_hyperelastic_law &AHL_, const getfem::level_set &ls_) 
+      : mf_u(mf_u_), U(mf_u_.nb_basic_dof()), U_ls(mf_u_.nb_basic_dof()),
+	mf_p(mf_p_),
+	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
+	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
+	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
+      sizes_.resize(1); sizes_[0] = 1;
+      cv_old = size_type(-1);
+      mf_u.extend_vector(U_, U);
+      mf_p.extend_vector(P_, P);
+      mf_u.extend_vector(U_ls_, U_ls);
+      mf_p.extend_vector(P_ls_, P_ls);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
+    }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+
+
+
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      scalar_type x = mls_x(ctx.xref());
+      scalar_type y = mls_y(ctx.xref());
+      scalar_type r2 = x*x+y*y;
+      // Computation of E
+      gmm::mult(gmm::transposed(gradU), gradU, E);
+      gmm::add(gradU, E);
+      gmm::add(gmm::transposed(gradU), E);
+      gmm::scale(E, scalar_type(0.5));
+
+      
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
+      scalar_type J = gmm::lu_det(gradU);
+      t[0] = (J-1) * log(r2) * 0.5;
+    }
+
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
+      GMM_ASSERT1(nb != 0, "Oops");
+      if (mf_data) {
+	size_type cv = ctx.convex_num();
+	size_type nbp = AHL.nb_params();
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
+	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+	  for (size_type k = 0; k < nbp; ++k)
+	    coeff[i * nbp + k]
+	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nbp+k];
+	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nbp));
+      }
+    } 
+    
+  };
+
+
+
+
+//=============================================================================================
+//=             /**************************************************************/              =
+//=             /*              Term 11 d^2(L)/d(beta)d(alha)                  */              =
+//=             /**************************************************************/              =
+//=============================================================================================
+
+ template<typename VECT1, typename VECT2>
+  class elasticity_nonlinear_optim_term11
+    : public getfem::nonlinear_elem_term {
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U, U_ls;
+    const mesh_fem &mf_p;
+    std::vector<scalar_type> P, P_ls;
+    const mesh_fem *mf_data;
+    const VECT2 &PARAMS;
+    const getfem::level_set &ls;
+    size_type N, cv_old, NFem;
+    const abstract_hyperelastic_law &AHL;
+    base_vector params, coeff, valP, u_ls;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
+    base_tensor GSigma;
+    bgeot::multi_index sizes_;
+    mesher_level_set mls_x, mls_y;
+  public:
+    elasticity_nonlinear_optim_term11
+    (const mesh_fem &mf_u_, const VECT1 &U_, const VECT1 &U_ls_, 
+     const mesh_fem &mf_p_, const VECT1 &P_, const VECT1 &P_ls_,
+     const mesh_fem *mf_data_, const VECT2 &PARAMS_,
+     const abstract_hyperelastic_law &AHL_, const getfem::level_set &ls_) 
+      : mf_u(mf_u_), U(mf_u_.nb_basic_dof()), U_ls(mf_u_.nb_basic_dof()),
+	mf_p(mf_p_),
+	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
+	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
+	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
+      sizes_.resize(1); sizes_[0] = 1;
+      cv_old = size_type(-1);
+      mf_u.extend_vector(U_, U);
+      mf_p.extend_vector(P_, P);
+      mf_u.extend_vector(U_ls_, U_ls);
+      mf_p.extend_vector(P_ls_, P_ls);
+      if (gmm::vect_size(PARAMS) == AHL_.nb_params())
+	gmm::copy(PARAMS, params);
+    }
+    const bgeot::multi_index &sizes() const {  return sizes_; }
+
+
+
+    virtual void compute(getfem::fem_interpolation_context& ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      scalar_type x = mls_x(ctx.xref());
+      scalar_type y = mls_y(ctx.xref());
+      scalar_type r2 = x*x+y*y;
+      // Computation of E
+      gmm::mult(gmm::transposed(gradU), gradU, E);
+      gmm::add(gradU, E);
+      gmm::add(gmm::transposed(gradU), E);
+      gmm::scale(E, scalar_type(0.5));
+
+      
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
+      scalar_type J = gmm::lu_det(gradU);
+
+       // Computation of d(grad U)/d(alpha) 
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim()); 
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU2_ls, mf_u.get_qdim());
+      gmm::scale(gradU_ls, log(r2) / scalar_type(2));
+      gmm::scale(gradU2_ls, log(r2) * log(r2) * 0.25);
+      ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
+      base_vector Runit(2),Runitlog(2);
+      Runit[0] = x / r2; Runit[1] = y / r2;
+      gmm::rank_one_update(gradU_ls, Runit, u_ls);        // gradU_ls contient d(grad U)/d(alpha)
+      
+      
+      // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
+      gmm::lu_inverse(gradU);
+      base_matrix FmT;
+      gmm::copy(gmm::transposed(gradU), FmT);
+      t[0] += mat_euclidean_sp(FmT, gradU_ls) * J;
+    }
+
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
+      GMM_ASSERT1(nb != 0, "Oops");
+      if (mf_data) {
+	size_type cv = ctx.convex_num();
+	size_type nbp = AHL.nb_params();
+	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
+	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
+	  for (size_type k = 0; k < nbp; ++k)
+	    coeff[i * nbp + k]
+	      = PARAMS[mf_data->ind_basic_dof_of_element(cv)[i]*nbp+k];
+	ctx.pf()->interpolation(ctx, coeff, params, dim_type(nbp));
+      }
+    } 
+    
+  };
+
+ 
+
+
 
   /********************************************************************************************************************/
   /********************************************************************************************************************/
@@ -1074,13 +1431,13 @@ namespace getfem {
 
 template<typename VECT0, typename VECT1, typename VECT2> 
   
-  void asm_nonlinear_elasticity_optim_tangent_matrix
+  void asm_nonlinear_elasticity_optim_tangent_matrix_alpha_u
   (const VECT0 &V_, const mesh_im &mim, 
    const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
    dal::bit_vector &u_enriched_dof,
    const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
-   dal::bit_vector &p_enriched_dof,
-   const VECT2 &alpha, const VECT2 &beta,
+   dal::bit_vector &/* p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
    const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
    const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
    const mesh_region &rg = mesh_region::all_convexes()) {
@@ -1133,6 +1490,218 @@ template<typename VECT0, typename VECT1, typename VECT2>
 
 
 
+template<typename VECT0, typename VECT1, typename VECT2> 
+  void asm_nonlinear_elasticity_optim_tangent_matrix_alpha_p
+  (const VECT0 &V_, const mesh_im &mim, 
+   const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
+   dal::bit_vector &/*u_enriched_dof*/,
+   const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
+   dal::bit_vector &/*p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
+   const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
+   const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    VECT0 &V = const_cast<VECT0 &>(V_);
+    GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_optim_term11<VECT1, VECT2>
+      nterm1(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
+
+    getfem::generic_assembly assem1;
+    
+    if (mf_data)
+      assem1.set("V(#1)+=comp(NonLin(#1,#3).Base(#2))(1,:)");
+    else
+      assem1.set("V(#1)+=comp(NonLin(#1).Base(#2))(1,:)");
+    assem1.push_mi(mim);
+    assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
+    if (mf_data) assem1.push_mf(*mf_data);
+    assem1.push_nonlinear_term(&nterm1);
+    assem1.push_vec(V);
+    assem1.assembly(rg);
+  }
+
+  template<typename VECT1, typename VECT2> 
+  scalar_type asm_nonlinear_elasticity_optim_tangent_matrix_alpha_alpha
+  (const mesh_im &mim, 
+   const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
+   dal::bit_vector &/*u_enriched_dof*/,
+   const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
+   dal::bit_vector &/*p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
+   const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
+   const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    std::vector<scalar_type> V(1);
+    GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_optim_term6<VECT1, VECT2>
+      nterm1(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
+
+    getfem::generic_assembly assem1;
+    
+    if (mf_data)
+      assem1.set("V()+=comp(NonLin(#1,#2,#3))(1)");
+    else
+      assem1.set("V()+=comp(NonLin(#1,#2))(1)");
+    assem1.push_mi(mim);
+    assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
+    if (mf_data) assem1.push_mf(*mf_data);
+    assem1.push_nonlinear_term(&nterm1);
+    assem1.push_vec(V);
+    assem1.assembly(rg);
+    return V[0];
+  }
+
+  template<typename VECT1, typename VECT2> 
+  scalar_type asm_nonlinear_elasticity_optim_tangent_matrix_beta_alpha
+  (const mesh_im &mim, 
+   const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
+   dal::bit_vector &/*u_enriched_dof*/,
+   const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
+   dal::bit_vector &/*p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
+   const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
+   const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    std::vector<scalar_type> V(1);
+    GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_optim_term8<VECT1, VECT2>
+      nterm1(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
+
+    getfem::generic_assembly assem1;
+    
+    if (mf_data)
+      assem1.set("V()+=comp(NonLin(#1,#2,#3))(1)");
+    else
+      assem1.set("V()+=comp(NonLin(#1,#2))(1)");
+    assem1.push_mi(mim);
+    assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
+    if (mf_data) assem1.push_mf(*mf_data);
+    assem1.push_nonlinear_term(&nterm1);
+    assem1.push_vec(V);
+    assem1.assembly(rg);
+    return V[0];
+  }
+
+  template<typename VECT1, typename VECT2> 
+  scalar_type asm_nonlinear_elasticity_optim_tangent_matrix_beta_beta
+  (const mesh_im &mim, 
+   const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
+   dal::bit_vector &/*u_enriched_dof*/,
+   const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
+   dal::bit_vector &/*p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
+   const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
+   const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    std::vector<scalar_type> V(1);
+    GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_optim_term7<VECT1, VECT2>
+      nterm1(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
+
+    getfem::generic_assembly assem1;
+    
+    if (mf_data)
+      assem1.set("V()+=comp(NonLin(#1,#2,#3))(1)");
+    else
+      assem1.set("V()+=comp(NonLin(#1,#2))(1)");
+    assem1.push_mi(mim);
+    assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
+    if (mf_data) assem1.push_mf(*mf_data);
+    assem1.push_nonlinear_term(&nterm1);
+    assem1.push_vec(V);
+    assem1.assembly(rg);
+    return V[0];
+  }
+
+
+
+
+  template<typename VECT0, typename VECT1, typename VECT2> 
+  void asm_nonlinear_elasticity_optim_tangent_matrix_beta_u
+  (const VECT0 &V_, const mesh_im &mim, 
+   const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
+   dal::bit_vector &/*u_enriched_dof*/,
+   const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
+   dal::bit_vector &/*p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
+   const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
+   const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    VECT0 &V = const_cast<VECT0 &>(V_);
+    GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_optim_term9<VECT1, VECT2>
+      nterm1(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
+
+    getfem::generic_assembly assem1;
+    
+    if (mf_data)
+      assem1.set("V(#1)+=comp(NonLin(#1,#2,#3).vGrad(#1))(i,j,:,i,j)");
+    else
+      assem1.set("V(#1)+=comp(NonLin(#1,#2).vGrad(#1))(i,j,:,i,j)");
+    assem1.push_mi(mim);
+    assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
+    if (mf_data) assem1.push_mf(*mf_data);
+    assem1.push_nonlinear_term(&nterm1);
+    assem1.push_vec(V);
+    assem1.assembly(rg);
+  }
+
+
+  template<typename VECT0, typename VECT1, typename VECT2> 
+  void asm_nonlinear_elasticity_optim_tangent_matrix_beta_p
+  (const VECT0 &V_, const mesh_im &mim, 
+   const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
+   dal::bit_vector &/*u_enriched_dof*/,
+   const getfem::mesh_fem &mf_p, const VECT1 &P, const VECT2 &P_ls,
+   dal::bit_vector &p_enriched_dof,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
+   const getfem::mesh_fem *mf_data, const VECT2 &PARAMS,
+   const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    VECT0 &V = const_cast<VECT0 &>(V_);
+    GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
+		"wrong qdim for the mesh_fem");
+
+    elasticity_nonlinear_optim_term10<VECT1, VECT2>
+      nterm1(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
+
+    getfem::generic_assembly assem1;
+    
+    if (mf_data)
+      assem1.set("V(#1)+=comp(NonLin(#1,#3).Base(#2))(1,:)");
+    else
+      assem1.set("V(#1)+=comp(NonLin(#1).Base(#2))(1,:)");
+    assem1.push_mi(mim);
+    assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
+    if (mf_data) assem1.push_mf(*mf_data);
+    assem1.push_nonlinear_term(&nterm1);
+    assem1.push_vec(V);
+    assem1.assembly(rg);
+
+    for (size_type i = 0; i < mf_p.nb_dof(); ++i)
+      if (!(p_enriched_dof.is_in(i))) V[i] = 0.0;
+
+  }
+
+
+
+
   //========================================================================
   //=       Assembling the right hand side of the additional term          =
   //========================================================================
@@ -1141,10 +1710,10 @@ template<typename VECT0, typename VECT1, typename VECT2>
   void asm_nonlinear_elasticity_optim_rhs
   (const VECT1 &R1_, const VECT1 &R2_, const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT3 &U_ls,
-   dal::bit_vector &u_enriched_dof,
+   dal::bit_vector &/*u_enriched_dof*/,
    const getfem::mesh_fem &mf_p, const VECT2 &P, const VECT3 &P_ls,
-   dal::bit_vector &p_enriched_dof,
-   const VECT2 &alpha, const VECT2 &beta,
+   dal::bit_vector &/*p_enriched_dof*/,
+   const VECT2 &/*alpha*/, const VECT2 &/*beta*/,
    const getfem::mesh_fem *mf_data, const VECT3 &PARAMS,
    const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
    const mesh_region &rg = mesh_region::all_convexes()) {
