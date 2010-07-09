@@ -42,6 +42,7 @@
 #include "getfem_assembling_tensors.h"
 #include "getfem_derivatives.h"
 #include "getfem_interpolation.h"
+#include "gmm/gmm_inoutput.h"
 
 namespace getfem {
 
@@ -57,6 +58,9 @@ namespace getfem {
     void reset_unvalid_flag(void) const { uvflag = 0; }
     void inc_unvalid_flag(void) const { uvflag++; }
     int get_unvalid_flag(void) const { return uvflag; }
+    std::string adapted_tangent_term_assembly_fem_data; // should be filled
+    std::string adapted_tangent_term_assembly_cte_data; // to replace the
+                                                        // default assembly
     
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const = 0;
@@ -88,7 +92,7 @@ namespace getfem {
 		       const base_vector &params) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params) const;
-    SaintVenant_Kirchhoff_hyperelastic_law(void) { nb_params_ = 2; }
+    SaintVenant_Kirchhoff_hyperelastic_law(void);
   };
 
 
@@ -174,36 +178,36 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
+
     const bgeot::multi_index &sizes() const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
+      // cout << "compute cv " << cv << " pt " << ctx.xref() << endl;
       coeff.resize(mf.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
 		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
+      
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	gradU(alpha, alpha) += scalar_type(1);
+
       if (version == 3) {
 	for (size_type n = 0; n < NFem; ++n)
 	  for (size_type m = 0; m < N; ++m)
-	    t(n,m) = gradU(n,m) + ((n == m) ? 1.0 : 0.0);
+	    t(n,m) = gradU(n,m);
 	return;
       }
 
       gmm::mult(gmm::transposed(gradU), gradU, E);
-      gmm::add(gmm::sub_matrix(gradU, gmm::sub_interval(0,N),
-			       gmm::sub_interval(0,N)), E);
-      gmm::add(gmm::sub_matrix(gmm::transposed(gradU), gmm::sub_interval(0,N),
-			       gmm::sub_interval(0,N)), E);
+      for (unsigned int alpha = 0; alpha < N; ++alpha)
+	E(alpha, alpha) -= scalar_type(1);
       gmm::scale(E, scalar_type(0.5));
 
       if (version == 2) {
 	t[0] = AHL.strain_energy(E, params);
 	return;
       }
-
-      for (unsigned int alpha = 0; alpha < N; ++alpha)
-	gradU(alpha, alpha)+= scalar_type(1);
-
 
       AHL.sigma(E, Sigma, params);
 
@@ -232,6 +236,7 @@ namespace getfem {
 	  }
       }
     }
+
     virtual void prepare(fem_interpolation_context& ctx, size_type ) {
       if (mf_data) {
 	size_type cv = ctx.convex_num();
@@ -264,19 +269,26 @@ namespace getfem {
 
     elasticity_nonlinear_term<VECT1, VECT2>
       nterm(mf, U, mf_data, PARAMS, AHL, 0);
-    // elasticity_nonlinear_term<VECT1, VECT2>
-    //  nterm2(mf, U, mf_data, PARAMS, AHL, 0);
+    elasticity_nonlinear_term<VECT1, VECT2>
+      nterm2(mf, U, mf_data, PARAMS, AHL, 3);
 
     getfem::generic_assembly assem;
     if (mf_data)
-      assem.set("M(#1,#1)+=sym(comp(NonLin(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
+      if (AHL.adapted_tangent_term_assembly_fem_data.size() > 0)
+	assem.set(AHL.adapted_tangent_term_assembly_cte_data);
+      else
+	assem.set("M(#1,#1)+=sym(comp(NonLin$1(#1,#2)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
     else
-      assem.set("M(#1,#1)+=sym(comp(NonLin(#1)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
+      if (AHL.adapted_tangent_term_assembly_cte_data.size() > 0)
+	assem.set(AHL.adapted_tangent_term_assembly_cte_data);
+      else
+	assem.set("M(#1,#1)+=sym(comp(NonLin$1(#1)(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l)))");
     assem.push_mi(mim);
     assem.push_mf(mf);
     if (mf_data) assem.push_mf(*mf_data);
+    assem.push_data(PARAMS);
     assem.push_nonlinear_term(&nterm);
-    // assem.push_nonlinear_term(&nterm2);
+    assem.push_nonlinear_term(&nterm2);
     assem.push_mat(K);
     assem.assembly(rg);
   }

@@ -105,10 +105,30 @@ namespace getfem {
     size_type N = gmm::mat_nrows(E);
     for (size_type i = 0; i < N; ++i)
       for (size_type l = 0; l < N; ++l) {
-	result(i, i, l, l) = params[0];
+	result(i, i, l, l) += params[0];
 	result(i, l, i, l) += params[1];
-	  result(i, l, l, i) += params[1];
+	result(i, l, l, i) += params[1];
       }
+  }
+
+  SaintVenant_Kirchhoff_hyperelastic_law::SaintVenant_Kirchhoff_hyperelastic_law(void) {
+    adapted_tangent_term_assembly_fem_data = "";
+    // adapted_tangent_term_assembly_cte_data = "";
+
+    adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
+      "t=sym(comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l)));"
+      "u=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k)));" 
+      "v=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i)));"
+      "M(#1,#1)+= t(:,:).params(1) + u(:,:).params(2) + v(:,:).params(2)";
+
+
+//     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
+//       "t=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1));"
+//       "M(#1,#1)+= t(i,j,:,i,j,k,l,:,k,l).params(1);"
+//       "M(#1,#1)+= t(j,i,:,j,k,l,i,:,l,k).params(2);"
+//       "M(#1,#1)+= t(j,i,:,j,k,l,k,:,l,i).params(2);";
+
+    nb_params_ = 2;
   }
 
   scalar_type membrane_elastic_law::strain_energy

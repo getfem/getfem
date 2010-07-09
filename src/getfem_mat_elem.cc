@@ -202,6 +202,12 @@ namespace getfem {
 		  bgeot::multi_index sizes) const {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
 
+      for (size_type k = 0; it != ite; ++it, ++k) {
+	if ((*it).t == GETFEM_NONLINEAR_)
+	  (*it).nlt->term_num() = size_type(-1);
+      }
+      it = pme->begin(); 
+
       bgeot::multi_index::iterator mit = sizes.begin();
       for (size_type k = 0; it != ite; ++it, ++k) {
 	if (pfp[k]) ctx.set_pfp(pfp[k]);
@@ -261,14 +267,24 @@ namespace getfem {
 	  case GETFEM_NONLINEAR_ :
 	    if ((*it).nl_part != 0) { /* for auxiliary fem of nonlinear_term,*/
 	      /* the "prepare" method is called           */
-	      (*it).nlt->prepare(ctx, (*it).nl_part);
-	      /* the dummy assistant multiplies everybody by 1
-		 -> not efficient ! */
+	      if ((*it).nlt->term_num() == size_type(-1)) {
+		(*it).nlt->prepare(ctx, (*it).nl_part);
+		/* the dummy assistant multiplies everybody by 1
+		   -> not efficient ! */
+	      }
 	      bgeot::multi_index sz(1); sz[0] = 1;
 	      elmt_stored[k].adjust_sizes(sz); elmt_stored[k][0] = 1.;
 	    } else {
-	      elmt_stored[k].adjust_sizes((*it).nlt->sizes());
-	      (*it).nlt->compute(ctx, elmt_stored[k]);
+	      // cout << "Term size = " << (*it).nlt->term().size() << endl;
+	      if ((*it).nlt->term_num() == size_type(-1)) {
+		elmt_stored[k].adjust_sizes((*it).nlt->sizes());
+		(*it).nlt->compute(ctx, elmt_stored[k]);
+		(*it).nlt->term_num() = k;
+	      } else {
+		elmt_stored[k] = elmt_stored[(*it).nlt->term_num()];
+	      }
+	      // elmt_stored[k].adjust_sizes((*it).nlt->sizes());
+	      // (*it).nlt->compute(ctx, elmt_stored[k]);
 	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii)
 		++mit;
 	    }

@@ -67,6 +67,7 @@ namespace getfem {
     mutable std::set<pmat_elem_type> melt_list; /* list of melt that will
 						 * be destroyed by
 						 * ~nonlinear_elem_term */
+    mutable size_type term_num_;
   public :
     virtual const bgeot::multi_index &sizes() const = 0;
     virtual void compute(fem_interpolation_context& /*ctx*/,
@@ -74,6 +75,7 @@ namespace getfem {
     virtual void prepare(fem_interpolation_context& /*ctx*/,
                          size_type /*nl_part*/) {}
     virtual ~nonlinear_elem_term();
+    size_type &term_num(void) const { return term_num_; }
     void register_mat_elem(pmat_elem_type p) /* internal use */
     { melt_list.insert(p); }
   };

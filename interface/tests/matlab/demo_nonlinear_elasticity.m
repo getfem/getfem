@@ -6,7 +6,17 @@ r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = ma
 
 new_bricks = 1; % new brick system or old one.
 
-incompressible = 1
+incompressible = 0
+
+% lawname = 'Ciarlet Geymonat';
+% params = [1;1;-1.4];
+lawname = 'SaintVenant Kirchhoff'; % a supprimer
+params = [0;1];
+if (incompressible)
+    % lawname = 'Mooney Rivlin';
+    lawname = 'SaintVenant Kirchhoff'; % a supprimer
+    params = [1;1];
+end
 
 if 0,
   h=20
@@ -29,7 +39,7 @@ if 0,
   % fem for the derivative of U.
   gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,2)'));
 else
-  N1=1; N2=4; h=20
+  N1=1; N2=4; h=20;
   m=gf_mesh('cartesian',(0:N1)/N1 - .5, (0:N2)/N2*h, ((0:N1)/N1 - .5)*3);
   mfu=gf_mesh_fem(m,3);     % mesh-fem supporting a 3D-vector field
   mfd=gf_mesh_fem(m,1);     % scalar mesh_fem
@@ -69,12 +79,6 @@ gf_mesh_set(m,'boundary',2,fbot);
 gf_mesh_set(m,'boundary',3,[ftop fbot]);
 
 
-lawname = 'Ciarlet Geymonat';
-params = [1;1;-1.4];
-if (incompressible)
-    lawname = 'Mooney Rivlin';
-    params = [1;1];
-end
 
 if (new_bricks)
   md=gf_model('real');
@@ -124,8 +128,6 @@ P=gf_mesh_fem_get(mfd, 'basic dof_nodes');
 r = sqrt(P(1 ,:).^2 + P(3, :).^2);
 theta = atan2(P(3,:),P(1,:));
 
-
-
 for step=1:nbstep,
   w = 3*step/nbstep;
   %set(b2, 'param', 'R', [0;0;0]);
@@ -165,11 +167,13 @@ for step=1:nbstep,
     if (new_bricks)
       gf_model_set(md, 'variable', 'DirichletData', R);
       gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
+      % full(gf_model_get(md, 'tangent matrix'))
       U = gf_model_get(md, 'variable', 'u');
       VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     else
       gf_MdBrick_set(b3, 'param', 'R', mfd, R);
       gf_MdBrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
+      % full(gf_MdState_get(mds, 'tangent matrix'))
       U=gf_MdState_get(mds, 'state'); U=U(1:gf_mesh_fem_get(mfu, 'nbdof'));
       VM = gf_MdBrick_get(b0, 'von mises', mds, mfdu);
     end

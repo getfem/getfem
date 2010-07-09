@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2007-2009 Yves Renard, Julien Pommier.
+// Copyright (C) 2007-2010 Yves Renard, Julien Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -128,7 +128,7 @@ struct g_params {
 g_params param;
 
 void g_params::init(int argc, char *argv[]) {
-  PARAM.add_int_param("NX", 50);
+  PARAM.add_int_param("NX", 25);
   PARAM.add_int_param("NDIM", 2);
   PARAM.add_int_param("MESH_TYPE", 0);
   PARAM.add_int_param("K", 3);
@@ -436,8 +436,7 @@ namespace getfem {
   template<class MAT, class VECT>
   void old_asm_stiffness_matrix_for_linear_elasticity
   (MAT &RM, const mesh_im &mim, const mesh_fem &mf, 
-   const mesh_fem &mfdata, const VECT &LAMBDA, const VECT &MU)
-  { // à verifier
+   const mesh_fem &mfdata, const VECT &LAMBDA, const VECT &MU) {
 
     size_type cv, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
@@ -870,10 +869,10 @@ void init_mesh_im(getfem::mesh_im &mim, bool use_exact_im=true) {
   }
 }
 
-void comp_mat(const sparse_matrix_type& M1, const sparse_matrix_type& M2)
-{
+void comp_mat(const sparse_matrix_type& M1, const sparse_matrix_type& M2) {
   scalar_type d = 0;
-  scalar_type mx = 1e-200; /* avoid triggering an FPE for bound assembly when there is no boundary */
+  scalar_type mx = 1e-200; /* avoid triggering an FPE for bound assembly */
+                           /* when there is no boundary                  */
   sparse_vector_type r(gmm::mat_ncols(M1));
   for (size_type i = 0; i < gmm::mat_nrows(M1); ++i) {
     mx = std::max(mx,gmm::vect_norminf(gmm::mat_const_row(M1,i)));
@@ -891,7 +890,8 @@ void comp_mat(const sparse_matrix_type& M1, const sparse_matrix_type& M2)
       gmm::copy(gmm::mat_const_row(M2,i),r2);    
       cout << "\nrow(" << i+1 << "),\nM1=" << r1 << "\nM2=" << r2 << endl;
       fail_cnt++;
-      cout << " FAILED !";
+      GMM_ASSERT1(false, "Failed ! ");
+      // cout << " FAILED !";
       break;
     }
   }
@@ -899,8 +899,7 @@ void comp_mat(const sparse_matrix_type& M1, const sparse_matrix_type& M2)
   cout << " ---> difference between assemblies: " << d / mx << "\n\n";
 }
 
-void comp_vec(const base_vector& V1, const base_vector& V2)
-{
+void comp_vec(const base_vector& V1, const base_vector& V2) {
   scalar_type mx = std::max(gmm::vect_norminf(V1),gmm::vect_norminf(V2));
   base_vector dv = V2;
   gmm::add(gmm::scaled(V1, -1.0),dv);
@@ -1147,7 +1146,8 @@ void
 run_tests(getfem::mesh_im &mim, 
 	  getfem::mesh_fem& mf, getfem::mesh_fem& mfq,
 	  getfem::mesh_fem& mfd, getfem::mesh_fem& mfdq,
-	  bool do_new, bool do_old, const std::vector<bool>& do_what, unsigned nloop, unsigned nloop_bound) {
+	  bool do_new, bool do_old, const std::vector<bool>& do_what,
+	  unsigned nloop, unsigned nloop_bound) {
   size_type Ndim = mf.linked_mesh().dim();
   bool do_new2 = do_new;
   base_vector V1q(Ndim*mf.nb_dof()), V2q(mfq.nb_dof());
@@ -1309,6 +1309,10 @@ run_tests(getfem::mesh_im &mim,
     cout << "done " << c << endl;
   }
   if (do_new) {
+    // (sparse ws 99ms), (full 89), (sparse rs) 90ms)
+    cout << "mfq.nb_dof() = " << mfq.nb_dof() << endl;
+    // getfem::base_matrix M3(mfq.nb_dof(), mfq.nb_dof());
+    // 
     cout << "laplacian, Q=1, new way [" << nloop << " times] .." << flushy;
     c.init();
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
@@ -1316,6 +1320,7 @@ run_tests(getfem::mesh_im &mim,
       getfem::asm_stiffness_matrix_for_laplacian(M2, mim, mf, mfd, A); 
       c.toc(); cout << "#" << flushy;
     }
+    // gmm::copy(M3, M2);
     cout << "done " << c << endl;
   }
   if (do_old && do_new) comp_mat(M1,M2);
@@ -1412,8 +1417,9 @@ run_tests(getfem::mesh_im &mim,
     cout << "done " << c << endl;
   }
   if (do_new) {
-    cout << "linear elasticity, Q=" << Ndim<<", new way [" << nloop << " times] .." << flushy;
+    cout << "linear elasticity, Q=" << Ndim << ", new way [" << nloop << " times] .." << flushy;
     c.init();
+    // (sparsec ws : 1:29ms 2:299ms), (sparsec rs : 1:29ms 2:250ms), (full : 1:30ms 2:209ms)
     for (size_type cnt = 0; cnt < nloop; ++cnt) {
       gmm::clear(M2); c.tic();
       getfem::asm_stiffness_matrix_for_linear_elasticity(M2, mim, mfq, mfd, A, A2);
