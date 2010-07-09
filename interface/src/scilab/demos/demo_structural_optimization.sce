@@ -75,14 +75,14 @@ else
   NY = 30;
   level_set_rate = 0.03 / NY;
   reinitialisation_time = 0.005;
-  threshold_shape = 14;
+  threshold_shape = 15;
   if (TEST_CASE == 3) then
     threshold_topo = 2.6;
   else
     threshold_topo = 0;
   end
   penalty_param = 1E-6;
-  nbiter = 400;
+  nbiter = 600;
   NBDRAW = 5;            // Draw solution each NBDRAW iterations
 end
 
