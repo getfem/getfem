@@ -105,23 +105,27 @@ namespace getfem {
     size_type N = gmm::mat_nrows(E);
     for (size_type i = 0; i < N; ++i)
       for (size_type l = 0; l < N; ++l) {
-	result(i, i, l, l) += params[0];
+	result(i, i, l, l) = params[0];
 	result(i, l, i, l) += params[1];
 	result(i, l, l, i) += params[1];
       }
   }
 
   SaintVenant_Kirchhoff_hyperelastic_law::SaintVenant_Kirchhoff_hyperelastic_law(void) {
-    adapted_tangent_term_assembly_fem_data = "";
-    // adapted_tangent_term_assembly_cte_data = "";
+    // an attempt, the first term is missing grad(h)sigma:grad(v)
+//     adapted_tangent_term_assembly_fem_data = "params=data$1(#2,2);"
+//       "t=comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l).Base(#2)(:));"
+//       "u=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k).Base(#2)(:));" 
+//       "v=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i).Base(#2)(:));"
+//       "M(#1,#1)+= t(:,:,i).params(i,1) + u(:,:,i).params(i,2) + v(:,:,i).params(i,2)";
 
-    adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
-      "t=sym(comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l)));"
-      "u=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k)));" 
-      "v=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i)));"
-      "M(#1,#1)+= t(:,:).params(1) + u(:,:).params(2) + v(:,:).params(2)";
+//     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
+//       "t=sym(comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l)));"
+//       "u=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k)));" 
+//       "v=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i)));"
+//       "M(#1,#1)+= t(:,:).params(1) + u(:,:).params(2) + v(:,:).params(2)";
 
-
+// not efficient at all
 //     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
 //       "t=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1));"
 //       "M(#1,#1)+= t(i,j,:,i,j,k,l,:,k,l).params(1);"
@@ -193,7 +197,7 @@ namespace getfem {
   }
 
   void Mooney_Rivlin_hyperelastic_law::sigma
-  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+  (const base_matrix &E, base_matrix &result, const base_vector &params) const {
     scalar_type C12 = scalar_type(2) * params[0];
     scalar_type C24 = scalar_type(4) * params[1];
     gmm::copy(gmm::identity_matrix(), result);
@@ -201,18 +205,35 @@ namespace getfem {
     gmm::add(gmm::scaled(E, -C24), result);
   }
   void Mooney_Rivlin_hyperelastic_law::grad_sigma
-  (const base_matrix &E, base_tensor &result,const base_vector &params) const {
+  (const base_matrix &E, base_tensor &result, const base_vector &params) const {
     scalar_type C22 = scalar_type(2) * params[1];
     std::fill(result.begin(), result.end(), scalar_type(0));
     size_type N = gmm::mat_nrows(E);
     for (size_type i = 0; i < N; ++i)
       for (size_type l = 0; l < N; ++l) {
-	result(i, i, l, l) = scalar_type(2) * C22;
+	result(i, i, l, l) += scalar_type(2) * C22;
 	result(i, l, i, l) -= C22;
 	result(i, l, l, i) -= C22;
       }
   }
- 
+
+  Mooney_Rivlin_hyperelastic_law::Mooney_Rivlin_hyperelastic_law(void) {
+    nb_params_ = 2;
+    
+    // an attempt, the first term is missing grad(h)sigma:grad(v)
+//     adapted_tangent_term_assembly_fem_data = "params=data$1(#2,2);"
+//       "t=comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l).Base(#2)(:));"
+//       "u=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k).Base(#2)(:));" 
+//       "v=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i).Base(#2)(:));"
+//       "M(#1,#1)+= t(:,:,i).params(i,2)*4 - u(:,:,i).params(i,2)*2 - v(:,:,i).params(i,2)*2";
+    
+//     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
+//       "t=sym(comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l)));"
+//       "u=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k)));" 
+//       "v=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i)));"
+//       "M(#1,#1)+= t(:,:).params(2)*4 - u(:,:).params(2)*2 - v(:,:).params(2)*2";
+  }
+
   scalar_type Ciarlet_Geymonat_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params) const {
     size_type N = gmm::mat_nrows(E);
@@ -231,6 +252,7 @@ namespace getfem {
 	     gmm::mat_euclidean_norm_sqr(C))/scalar_type(2)
       + c * det - d * log(det) / scalar_type(2) + e;
   }
+
   void Ciarlet_Geymonat_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,const base_vector &params) const {
     size_type N = gmm::mat_nrows(E);
@@ -249,6 +271,7 @@ namespace getfem {
     scalar_type det = gmm::lu_inverse(C);
     gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
   }
+
   void Ciarlet_Geymonat_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result,const base_vector &params) const {
     size_type N = gmm::mat_nrows(E);
@@ -586,7 +609,7 @@ namespace getfem {
 
   };
 
-  size_type add_nonlinear_incompressibility
+  size_type add_nonlinear_incompressibility_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region) {
     pbrick pbr = new nonlinear_incompressibility_brick();

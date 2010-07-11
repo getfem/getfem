@@ -390,7 +390,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
 
-     getfem::model model;
+  getfem::model model;
 
   // Main unknown of the problem.
   model.add_fem_variable("u", mf_u);

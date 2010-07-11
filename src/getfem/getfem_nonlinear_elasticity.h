@@ -124,7 +124,7 @@ namespace getfem {
 		       const base_vector &params) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params) const;
-    Mooney_Rivlin_hyperelastic_law(void) { nb_params_ = 2; }
+    Mooney_Rivlin_hyperelastic_law(void);
   };
 
   /** Ciarlet-Geymonat hyperelastic law ( @f$ W=~_1i_1(L) + \frac{~}{2}i_2(L) + 8ci_3(L) - \frac{~_1}{2} \textrm{log}~\textrm{det}~C @f$ )
@@ -546,7 +546,7 @@ namespace getfem {
       to the model with respect to the variable
       `varname` (the displacement) and `multname` (the pressure).
   */
-  size_type add_nonlinear_incompressibility
+  size_type add_nonlinear_incompressibility_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region = size_type(-1));
 

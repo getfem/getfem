@@ -959,7 +959,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
-       = getfem::add_nonlinear_incompressibility
+       = getfem::add_nonlinear_incompressibility_brick
        (md->model(), gfi_mim->mesh_im(), varname, multname, region)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);

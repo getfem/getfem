@@ -6,15 +6,13 @@ r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = ma
 
 new_bricks = 1; % new brick system or old one.
 
-incompressible = 0
+incompressible = 1
 
-% lawname = 'Ciarlet Geymonat';
-% params = [1;1;-1.4];
-lawname = 'SaintVenant Kirchhoff'; % a supprimer
+lawname = 'Ciarlet Geymonat';
+params = [1;1;-1.4];
 params = [0;1];
 if (incompressible)
-    % lawname = 'Mooney Rivlin';
-    lawname = 'SaintVenant Kirchhoff'; % a supprimer
+    lawname = 'Mooney Rivlin';
     params = [1;1];
 end
 

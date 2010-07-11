@@ -384,12 +384,22 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // ll.test_derivatives(3, 1E-6, test_params);
 
   p.resize(pl->nb_params());
-  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u, p);
 
-  getfem::mdbrick_abstract<> *pINCOMP = &ELAS;
-  switch (law_num) {
-    case 1: 
-    case 3: pINCOMP = new getfem::mdbrick_nonlinear_incomp<>(ELAS, mf_p);
+
+
+  getfem::model model;
+
+  // Main unknown of the problem (displacement).
+  model.add_fem_variable("u", mf_u);
+
+  // Nonlinear elasticity brick
+  model.add_initialized_fixed_size_data("params", p);
+  getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "params");
+
+  // Incompressibility
+  if (law_num == 1 || law_num == 3) {
+    model.add_fem_variable("p", mf_p);
+    getfem::add_nonlinear_incompressibility_brick(model, mim, "u", "p");
   }
 
   // Defining the volumic source term.
@@ -399,24 +409,25 @@ bool elastostatic_problem::solve(plain_vector &U) {
   if (N>2)
     f[2] = PARAM.real_value("FORCEZ","Amplitude of the gravity");
   plain_vector F(nb_dof_rhs * N);
-  plain_vector F2(nb_dof_rhs * N);
   for (size_type i = 0; i < nb_dof_rhs; ++i) {
     gmm::copy(f, gmm::sub_vector(F, gmm::sub_interval(i*N, N)));
   }
   // Volumic source term brick.
-  int nb_step = int(PARAM.int_value("NBSTEP"));
-
-
-  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
+  // getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
 
   // Dirichlet condition
-  getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
-  final_model.rhs().set(mf_rhs, F2);
-  final_model.set_constraints_type(getfem::constraints_type
-				   (PARAM.int_value("DIRICHLET_VERSION")));
-  // Generic solver.
-  getfem::standard_model_state MS(final_model);
-  size_type maxit = PARAM.int_value("MAXITER"); 
+  plain_vector F2(nb_dof_rhs * N);
+  model.add_initialized_fem_data("DirichletData", mf_rhs, F2);
+  if (PARAM.int_value("DIRICHLET_VERSION") == 0)
+    getfem::add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+  else
+    getfem::add_Dirichlet_condition_with_penalization
+      (model, mim, "u", 1E15, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+
+
   gmm::iteration iter;
 
 
@@ -433,11 +444,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted for reduced mesh_fems");
   
+  int nb_step = int(PARAM.int_value("NBSTEP"));
+  size_type maxit = PARAM.int_value("MAXITER");
+ 
   for (int step = 0; step < nb_step; ++step) {
     plain_vector DF(F);
 
     gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
-    VOL_F.source_term().set(DF);
+    gmm::copy(DF, model.set_real_variable("VolumicData"));
 
     if (N>2) {
       /* Apply the gradual torsion/extension */
@@ -456,23 +470,22 @@ bool elastostatic_problem::solve(plain_vector &U) {
       }
     }
     /* update the imposed displacement  */
-    final_model.rhs().set(F2);
+    gmm::copy(F2, model.set_real_variable("DirichletData"));
 
-    cout << "step " << step << ", number of variables : " << final_model.nb_dof() << endl;
+    cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")), maxit ? maxit : 40000);
-    cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
 
     /* let the default non-linear solve (Newton) do its job */
-    getfem::standard_solve(MS, final_model, iter);
+    getfem::standard_solve(model, iter);
 
     pl->reset_unvalid_flag();
-    final_model.compute_residual(MS);
+    model.assembly(getfem::model::BUILD_RHS);
     if (pl->get_unvalid_flag()) 
       GMM_WARNING1("The solution is not completely valid, the determinant "
 		   "of the transformation is negative on "
 		   << pl->get_unvalid_flag() << " gauss points");
 
-    gmm::copy(ELAS.get_solution(MS), U);
+    gmm::copy(model.real_variable("u"), U);
     //char s[100]; sprintf(s, "step%d", step+1);
 
     /* append the new displacement to the exported opendx file */
@@ -481,9 +494,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   }
 
   // Solution extraction
-  gmm::copy(ELAS.get_solution(MS), U);
-
-  if (law_num == 3 || law_num == 1) delete pINCOMP;
+  gmm::copy(model.real_variable("u"), U);
   
   return (iter.converged());
 }
