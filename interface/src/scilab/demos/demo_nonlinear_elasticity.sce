@@ -22,15 +22,13 @@ end
 
 new_bricks = 1; // new brick system or old one.
 
-incompressible = 0;
+incompressible = 1;
 
-// lawname = 'Ciarlet Geymonat';
-// params  = [1;1;-1.4];
-lawname = 'SaintVenant Kirchhoff'; // a supprimer
+lawname = 'Ciarlet Geymonat';
+params  = [1;1;-1.4];
 params = [0;1];
 if (incompressible) then
-  // lawname = 'Mooney Rivlin';
-  lawname = 'SaintVenant Kirchhoff'; // a supprimer
+  lawname = 'Mooney Rivlin';
   params  = [1;1];
 end
 
