@@ -113,6 +113,7 @@
 #include "bgeot_geometric_trans.h"
 #include "bgeot_poly_composite.h"
 #include "getfem_integration.h"
+#include "dal_naming_system.h"
 #include <deque>
 
 namespace getfem {
@@ -800,6 +801,18 @@ namespace getfem {
 	    val(r + q*target_dim(), k) += coeff[j*Qmult+q] * (*it);
     }
   }
+
+
+  /* Functions allowing the add of a finite element method outwards
+     of getfem_fem.cc */
+
+  typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
+
+  void inline read_poly(bgeot::base_poly &p, int d, const char *s)
+  { p = bgeot::read_base_poly(short_type(d), s); }
+
+  void add_fem_name(std::string name,
+		    dal::naming_system<virtual_fem>::pfunction f);
 
 
   /* @} */

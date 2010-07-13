@@ -34,6 +34,7 @@
 #include <deque>
 #include <map>
 #include "dal_static_stored_objects.h"
+#include "dal_tree_sorted.h"
 
 
 namespace dal {

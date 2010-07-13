@@ -35,7 +35,6 @@
 
 namespace getfem {
 
-  typedef dal::naming_system<virtual_fem>::param_list fem_param_list;
 
   const base_matrix& fem_interpolation_context::M() const {
     if (gmm::mat_nrows(M_) == 0) {
@@ -916,9 +915,6 @@ namespace getfem {
 	   << k << alpha << "))";
     return fem_descriptor(name.str());
   }
-
-  static void read_poly(bgeot::base_poly &p, int d, const char *s) 
-  { p = bgeot::read_base_poly(short_type(d), s); }
 
   /* ******************************************************************** */
   /*	P1 NON CONFORMING (dim 2)                                         */
@@ -2150,6 +2146,12 @@ namespace getfem {
   std::string name_of_fem(pfem p) {
     return dal::singleton<fem_naming_system>::instance().
       shorter_name_of_method(p);
+  }
+
+  // allows the add of a fem.
+  void add_fem_name(std::string name,
+		    dal::naming_system<virtual_fem>::pfunction f) {
+    dal::singleton<fem_naming_system>::instance().add_suffix(name, f);
   }
 
   /* ******************************************************************** */
