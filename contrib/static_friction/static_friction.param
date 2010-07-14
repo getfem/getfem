@@ -12,13 +12,13 @@ RHO = 6e-6;     	% "realistic" density for steel
                         % (in kg/mm^3, i.e. 6000kg/m^3)
 N = 2;
 NX = 300;            	% space step.
-NOISY = 3;
+NOISY = 1;
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 METHOD = 1;             % 0 = Newton.
 			% 1 = Additive Schwarz Newton
 if (METHOD == 1)
-  SUBDOMSIZE = 0.3;
-  OVERLAP = 0.1;
+  SUBDOMSIZE = 0.15;
+  OVERLAP = 0.025;
 end
 
 NEUMANN = 0;            % 0 = no non homogeneous Neumann Boundary

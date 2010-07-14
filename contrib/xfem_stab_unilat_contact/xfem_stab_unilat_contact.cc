@@ -318,7 +318,7 @@ void asm_mass_matrix_tang_mixed_term
 }
 
 /******************************************************************************************/
-/* asembling stabilised symetric term                                                     */
+/* assembling stabilised symetric term                                                     */
 /******************************************************************************************/
 
 template<class MAT>
@@ -571,8 +571,8 @@ void  unilateral_contact_problem::init(void) {
   dgr = int(PARAM.int_value("dgr", "Enrichement order ofu"));
   
   
-  mu    = PARAM.real_value("MU", "Lame coefficient mu"); 
-  lambda =PARAM.real_value("Lamda", "Lame coefficient lambda");
+  mu    = PARAM.real_value("Mu", "Lame coefficient mu"); 
+  lambda =PARAM.real_value("Lambda", "Lame coefficient lambda");
   
   
   /* First step : build the mesh */
@@ -985,10 +985,9 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   getfem::CONTACT_B_MATRIX BN(nb_dof_cont, nb_dof);
   getfem::CONTACT_B_MATRIX BT(nb_dof_cont, nb_dof);
   asm_mass_matrix_mixed_term(BN, mimbound, mf_u(), mf_cont(), ls);
-  if (!contact_only){
-    asm_mass_matrix_mixed_term(BT, mimbound, mf_u(), mf_cont(), ls);
+  if (!contact_only) {
     asm_mass_matrix_tang_mixed_term(BT, mimbound, mf_u(), mf_cont(), ls);
-}
+  }
   
   getfem::CONTACT_B_MATRIX CA(nb_dof_cont, nb_dof);
   // Assembling stabilized mixed term for contact problem
@@ -1068,6 +1067,8 @@ if (!contact_only){
   
   
   if (stabilized_problem) {
+    // cout << "KA = " << KA << endl;
+    cout << "gamma = " << cont_gamma0 * h << endl;
     getfem::add_explicit_matrix(model, "u", "u", KA);
     // Defining the contact condition.
     gmm::add(CA, BN); 
@@ -1079,17 +1080,18 @@ if (!contact_only){
       getfem::add_explicit_matrix(model, "u", "u", KAT);
       // Defining the contact condition.
       gmm::add(CAT, BT); 
-      getfem::add_Hughes_stab_friction_contact_brick(model, "u", "Lambda", "Lambda_t",
-						  "augmentation_parameter",
-						     BN, BT, MA, MAT, "friction_coeff");
+      getfem::add_Hughes_stab_friction_contact_brick
+	(model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
+	 BN, BT, MA, MAT, "friction_coeff");
                 }
   }  else {		
     getfem::add_basic_contact_brick(model, "u", "Lambda",
 				    "augmentation_parameter", BN);
     
     if (!contact_only){
-      getfem::add_basic_contact_with_friction_brick(model, "u", "Lambda", "Lambda_t",
-						    "augmentation_parameter", BN, BT, "friction_coeff","","",true);
+      getfem::add_basic_contact_with_friction_brick
+	(model, "u", "Lambda", "Lambda_t",
+	 "augmentation_parameter", BN, BT, "friction_coeff","","",true);
       
     }
   }
@@ -1186,10 +1188,15 @@ if (!contact_only){
   
   // Generic solve.
 
-  gmm::iteration iter(residual, 1, 40000);
+  gmm::iteration iter(residual, 1, 40);
   cout << "Solving..." << endl;
   iter.init();
-  getfem::standard_solve(model, iter);
+
+
+  gmm::simplest_newton_line_search lse; // (size_t(-1), 6.0/5.0, 0.2, 3.0/5.0);
+  getfem::standard_solve(model, iter,
+	getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			 getfem::model_real_plain_vector>(model) , lse);
 
 
   gmm::Harwell_Boeing_save("toto.hb", model.real_tangent_matrix());
