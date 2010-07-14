@@ -100,13 +100,14 @@ public:
 template<typename VECT1> class nonlin_h
   : public getfem::nonlinear_elem_term {
   const getfem::mesh &m;
+  size_type N;
   bgeot::multi_index sizes_;
   size_type cv_old;
   scalar_type h;
 public:
   nonlin_h(const getfem::mesh &m_) 
-    : m(m_), U(mf_.nb_basic_dof()), N(mf_.linked_mesh().dim()),
-      gradU(1, N) {
+    : m(m_), N(m.dim())
+      {
     sizes_.resize(1); sizes_[0] = 1;
     cv_old = size_type(-1); h = 0.;
   }
@@ -399,11 +400,40 @@ void asm_stabilization_symm_tang_term
   ls.set_shift(0.);
 }
 
+/**************************************************************************************/
+/* asembling masse matrix for  inf-sup condition                                            */
+/**************************************************************************************/
+
+template<class MAT>
+void asm_mass_matrix_for_inf_sup
+(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_mult,
+ getfem::level_set &ls, const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  MAT &RM = const_cast<MAT &>(RM_);
+  
+  level_set_unit_normal<std::vector<scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+  nonlin_h<std::vector<scalar_type> >
+    nlinh(ls.get_mesh_fem().linked_mesh());
+  
+  
+  getfem::generic_assembly assem("t=comp(NonLin(#2).Base(#1).Base(#1));"
+				 "M(#2,#1)+= t(:,:,:)");
+  assem.push_mi(mim);
+  assem.push_mf(mf_mult);
+  assem.push_mf(ls.get_mesh_fem());
+  assem.push_mat(RM);
+  assem.push_nonlinear_term(&nterm);
+  assem.push_nonlinear_term(&nlinh);
+  
+  gmm::clear(RM);
+  assem.assembly(rg);
+
+}
 
 
 
 /**************************************************************************/
-/*structure of unilateral contact problem                                 */
+/*structure of contact problem                                 */
 /**************************************************************************/
 
 struct unilateral_contact_problem {
@@ -437,7 +467,7 @@ struct unilateral_contact_problem {
   scalar_type mu, lambda;    /* Lame coeff                   */
   
   int dgr;          /* Order of enrichement for u */
-  
+  scalar_type  friction_coeff;
   
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   
@@ -620,6 +650,8 @@ void  unilateral_contact_problem::init(void) {
   cutoff_radius0 = PARAM.real_value("CUTOFF0", "Cutoff0");
   mf_u().set_qdim(dim_type(N));
   
+
+  friction_coeff= PARAM.real_value("FRICTION_COEFF", "Friction_coeff");
   
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -804,7 +836,7 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
 
 
 /************************************************************************************************/
-/*     solv  unilateral_contact_problem                                                         */
+/*     solv contact_problem                                                                     */
 /************************************************************************************************/
 
 bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, plain_vector &LAMBDA_T ) {
@@ -909,15 +941,15 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   std::set<size_type> cols;
   cols.clear(); 
   sparse_matrix BRBB(mf_cont().nb_dof(), mf_cont().nb_dof());
-  // mf_u().set_qdim(1);
-  // asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
-  asm_mass_matrix(BRBB, mimbound, mf_cont(), mf_cont());
+  mf_u().set_qdim(1);
+  asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
+  //asm_mass_matrix(BRBB, mimbound, mf_cont(), mf_cont());
   // cout << "BRBB " << BRBB << endl;
   cout << "Selecting dofs for the multiplier" << endl;
   cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
   gmm::range_basis(BRBB, cols);
   mf_cont().reduce_to_basic_dof(cols);
-  //mf_u().set_qdim(dim_type(N));
+  mf_u().set_qdim(dim_type(N));
   
   size_type nb_dof = mf_u().nb_dof();
   cout << "nb_dof = " << nb_dof << endl;
@@ -1023,7 +1055,8 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   model.add_initialized_scalar_data("lambda", lambda);
   model.add_initialized_scalar_data("mu", mu);
 if (!contact_only){
- model.add_initialized_scalar_data("friction_coeff", 0.3);
+  cout<<"Friction coeff="<< friction_coeff<<endl;
+  model.add_initialized_scalar_data("friction_coeff", friction_coeff);
  }
  model.add_initialized_scalar_data("augmentation_parameter", R/h);
   getfem::add_isotropic_linearized_elasticity_brick
@@ -1071,7 +1104,7 @@ if (!contact_only){
   
   for(size_type i = 0; i < F.size(); i=i+N*N) {
     base_node pt = mf_rhs.point_of_basic_dof(i / (N*N));
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.02;}
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.04;}
     
     // scalar_type coeff = pt[1] > 0. ? -1 : 1;
     // for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
@@ -1119,17 +1152,33 @@ if (!contact_only){
 
   //classical inf-sup condition
 
-  //  if (PARAM.int_value("INF_SUP_COMP")) {
+ //  if (PARAM.int_value("INF_SUP_COMP")) {
     
 //     cout << "Sparse matrices computation for the test of inf-sup condition"
 // 	 << endl;
 
 //     sparse_matrix Sis(nb_dof, nb_dof);
+//     sparse_matrix Siss(nb_dof, nb_dof);
 //     sparse_matrix Mis(nb_dof_cont, nb_dof);
-//     getfem::asm_mass_matrix(Sis, mim, mf_u());
+//     sparse_matrix Miss(nb_dof_cont, nb_dof_cont);
+//     sparse_matrix Bis(nb_dof_cont, nb_dof_cont);
+//     sparse_matrix Biss(nb_dof_cont, nb_dof_cont);
+//     sparse_matrix BissMis(nb_dof_cont, nb_dof);
+//     sparse_matrix BBissMis(nb_dof_cont, nb_dof);
+
+
+//     asm_mass_matrix_for_inf_sup(Miss, mimbound, mf_cont(), ls); // int_gamma_c 1/h psi_i psi_j
+//     getfem::asm_mass_matrix(Sis, mimbound, mf_u());
+//     getfem::asm_mass_matrix(Bis, mimbound, mf_cont());
+//     gmm::copy(gmm::lu_inverse(Bis), Biss);
 //     gmm::copy(BN, Mis);
+//     gmm::mult(Biss, Mis, BissMis);
+//     gmm::mult(Miss, BissMis, BBissMis);
+//     gmm::mult(gmm::transposed(BissMis), BBissMis, Siss);
+
+
 //     cout << "Inf-sup condition test" << endl;
-//     scalar_type lllambda = smallest_eigen_value(Mis, KA, Sis);
+//     scalar_type lllambda = smallest_eigen_value(Siss, Siss, Sis);
 //     cout << "The inf-sup test gives " << lllambda << endl;
 //   }
 
