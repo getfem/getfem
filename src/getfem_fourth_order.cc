@@ -454,10 +454,11 @@ namespace getfem {
 	mf_data = md.pmesh_fem_of_variable(dl[ind]);
 	s = gmm::vect_size(*A);
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	GMM_ASSERT1(mf_u.get_qdim() == s,
+	GMM_ASSERT1(s == mf_u.get_qdim() || s == mf_u.linked_mesh().dim(),
 		    dl[ind] << ": bad format of normal derivative Dirichlet "
 		    "data. Detected dimension is " << s << " should be "
-		    << size_type(mf_u.get_qdim()));
+		    << size_type(mf_u.get_qdim()) << " or "
+		    << mf_u.linked_mesh().dim());
       }
 
       mesh_region rg(region);
@@ -467,15 +468,23 @@ namespace getfem {
 	GMM_TRACE2("Source term assembly for normal derivative Dirichlet "
 		   "condition");	  
 	if (mf_data) {
-	  if (!R_must_be_derivated)
-	    asm_normal_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
-	  else
+	  if (!R_must_be_derivated) {
+	    if (s == mf_u.linked_mesh().dim())
+	      asm_normal_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	    else
+	      asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	  }
+	  else {
 	    asm_real_or_complex_1_param
 	      (vecl[0], mim, mf_mult, *mf_data, *A, rg,
 	       "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
+	  }
 	} else {
 	  GMM_ASSERT1(!R_must_be_derivated, "Incoherent situation");
-	  asm_homogeneous_normal_source_term(vecl[0], mim, mf_mult, *A, rg);
+	  if (s == mf_u.linked_mesh().dim())
+	    asm_homogeneous_normal_source_term(vecl[0], mim, mf_mult, *A, rg);
+	  else
+	    asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
 	}
 	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
       }

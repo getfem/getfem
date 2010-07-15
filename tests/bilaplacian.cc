@@ -353,6 +353,9 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
   
   if (newbricks) {
+    /**********************************************************************/
+    /*  Model with new bricks.                                            */
+    /**********************************************************************/
     getfem::model model;
     
     // Main unknown of the problem.
@@ -429,7 +432,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     getfem::interpolation_function
       (mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
     model.add_initialized_fem_data("Dirichletdata", mf_rhs, F);
-    if (dirichlet_version == 0)
+    if (dirichlet_version != 0)
       add_Dirichlet_condition_with_multipliers
 	(model, mim, "u", mf_u, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
     else
@@ -446,6 +449,10 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     return (iter.converged());
 
   } else {
+    /**********************************************************************/
+    /*  Model with old bricks.                                            */
+    /**********************************************************************/
+
     // Bilaplacian brick.
     getfem::mdbrick_bilaplacian<> BIL(mim, mf_u);
     BIL.D().set(D);

@@ -8,9 +8,9 @@ LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
 QUAD = 1;
 MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
-NX = 30;                 % space step.
+NX = 30;                % space step.
 DIRICHLET_VERSION = 1;  % 0=multipliers, 1=penalization, 2=elimination
-EPS_DIRICHLET_PENAL = 1e10; % Parametre de penalisation
+EPS_DIRICHLET_PENAL = 1e4; % Parametre de penalisation
 FT = 10.0;              % parameter for the exact solution
 D = 1.0;    % "flexion modulus"
 KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love

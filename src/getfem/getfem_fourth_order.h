@@ -715,7 +715,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Normal derivative Dirichlet condition old bricks.         */
+  /*		Normal derivative Dirichlet condition old brick.          */
   /* ******************************************************************** */
 
 
