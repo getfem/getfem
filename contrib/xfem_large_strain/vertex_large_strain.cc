@@ -1147,7 +1147,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   // Incompressibility
   if (mixed_pressure) {
     model.add_fem_variable("p", mf_pe());
-    getfem::add_nonlinear_incompressibility(model, mim, "u" , "p", size_type(-1));
+    getfem::add_nonlinear_incompressibility_brick(model, mim, "u" , "p", size_type(-1));
     }
   // Add nonlinear elasticity optimazition brick
 
