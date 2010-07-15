@@ -99,9 +99,6 @@ SUPLDFLAGS = @SUPLDFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm $(SUPLDFLAGS)
 
-#plasticity_LDADD = ../src/libgetfem.la -lm @SUPLDFLAGS@ $(HOME)/source++/SuperLU/superlu.a -lblas -lg2c
-#plasticity_INCLUDES = $(INCLUDES) -I$(HOME)/source++/SuperLU/
-
 TESTS = \
 	$(top_srcdir)/tests/dynamic_array.pl           \
 	$(top_srcdir)/tests/dynamic_tas.pl             \

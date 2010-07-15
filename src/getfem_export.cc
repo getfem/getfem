@@ -254,7 +254,7 @@ namespace getfem
     */
     for (size_type ic=0; ic < psl->nb_convex(); ++ic) {
       for (size_type i=0; i < psl->nodes(ic).size(); ++i)
-       write_vec(psl->nodes(ic)[i].pt.begin());
+       write_vec(psl->nodes(ic)[i].pt.begin(),psl->nodes(ic)[i].pt.size());
       write_separ();
     }
     /* count total number of simplexes, and total number of entries
@@ -303,7 +303,7 @@ namespace getfem
     for (dal::bv_visitor d(pmf_dof_used); !d.finished(); ++d) {
       dofmap[d] = cnt++;
       base_node P = pmf->point_of_basic_dof(d);
-      write_vec(P.const_begin());
+      write_vec(P.const_begin(),P.size());
       write_separ();
     }
 

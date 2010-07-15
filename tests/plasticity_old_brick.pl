@@ -48,7 +48,7 @@ close(TMPF);
 
 
 $er = 0;
-open F, "./plasticity $tmp 2>&1 |" or die;
+open F, "./plasticity_old_brick $tmp 2>&1 |" or die;
 while (<F>) {
   # print $_;
   if ($_ =~ /error has been detected/)

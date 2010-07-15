@@ -364,13 +364,13 @@ bool bilaplacian_problem::solve(plain_vector &U) {
       model.add_initialized_scalar_data("nu", nu);
       getfem::add_bilaplacian_brick(model, mim, "u", "D");
     } else {
-      getfem::add_bilaplacian_brick(model, mim, "u", "D", "nu");
+      getfem::add_bilaplacian_brick_KL(model, mim, "u", "D", "nu");
     }
     
     // Volumic source term brick.
     plain_vector F(nb_dof_rhs);
     getfem::interpolation_function(mf_rhs, F, sol_f);
-    model.add_initialized_data("VolumicData", mf_rhs, F);
+    model.add_initialized_fem_data("VolumicData", mf_rhs, F);
     getfem::add_source_term_brick(model, mim, "u", "VolumicData");
     
     
@@ -387,7 +387,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     }
 
     // Prescribed momentum on the boundary
-    model.add_initialized_data("Momentum", mf_rhs, F);
+    model.add_initialized_fem_data("Momentum", mf_rhs, F);
     getfem::add_normal_derivative_source_term_brick
       (model, mim, "u", "Momentum", MOMENTUM_BOUNDARY_NUM);
     
@@ -397,15 +397,15 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     if (KL) {
       getfem::interpolation_function(mf_rhs, F,sol_bf,FORCE_BOUNDARY_NUM);
       getfem::interpolation_function(mf_rhs, H,sol_mtensor,FORCE_BOUNDARY_NUM);
-      model.add_initialized_data("M", mf_rhs, F);
-      model.add_initialized_data("H", mf_rhs, H);
+      model.add_initialized_fem_data("M", mf_rhs, F);
+      model.add_initialized_fem_data("H", mf_rhs, H);
       add_Kirchoff_Love_Neumann_term_brick
 	(model, mim, "u", "H", "M", FORCE_BOUNDARY_NUM);
     }
     else {
       getfem::interpolation_function(mf_rhs, F,neumann_val,FORCE_BOUNDARY_NUM);
       gmm::scale(F, -1.0);
-      model.add_initialized_data("Neumanndata", mf_rhs, F);
+      model.add_initialized_fem_data("Neumanndata", mf_rhs, F);
       add_normal_source_term_brick
 	(model, mim, "u", "Neumanndata", FORCE_BOUNDARY_NUM);
     }
@@ -414,26 +414,28 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     gmm::resize(F, nb_dof_rhs*N);
     gmm::clear(F);
     getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
-    model.add_initialized_data("DerDirdata", mf_rhs, F);
+    model.add_initialized_fem_data("DerDirdata", mf_rhs, F);
     if (dirichlet_version == 0)
       add_normal_derivative_Dirichlet_condition_with_multipliers
 	(model, mim, "u", mf_u, CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
     else
       add_normal_derivative_Dirichlet_condition_with_penalization
-	(model, mim, "u", 1E10, CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
+	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
+	 CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
 
     
     // Dirichlet condition brick.
     gmm::resize(F, nb_dof_rhs);
     getfem::interpolation_function
       (mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
-    model.add_initialized_data("Dirichletdata", mf_rhs, F);
+    model.add_initialized_fem_data("Dirichletdata", mf_rhs, F);
     if (dirichlet_version == 0)
       add_Dirichlet_condition_with_multipliers
 	(model, mim, "u", mf_u, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
     else
       add_Dirichlet_condition_with_penalization
-	(model, mim, "u", 1E10, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
+	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
+	 SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
 
     // Generic solve.
     cout << "Total number of variables : " << model.nb_dof() << endl;
@@ -460,12 +462,14 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     // Defining the prescribed momentum.
     if (KL) {
       gmm::resize(F, nb_dof_rhs*N*N);
-      getfem::interpolation_function(mf_rhs,F,sol_mtensor,MOMENTUM_BOUNDARY_NUM);
+      getfem::interpolation_function(mf_rhs, F, sol_mtensor,
+				     MOMENTUM_BOUNDARY_NUM);
       gmm::scale(F, -1.0);
     }
     else {
       gmm::resize(F, nb_dof_rhs);
-      getfem::interpolation_function(mf_rhs,F,sol_lapl_u,MOMENTUM_BOUNDARY_NUM);
+      getfem::interpolation_function(mf_rhs, F, sol_lapl_u,
+				     MOMENTUM_BOUNDARY_NUM);
     }
     // Prescribed momentum on the boundary
     getfem::mdbrick_normal_derivative_source_term<>
@@ -476,10 +480,12 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     gmm::resize(F, nb_dof_rhs*N);
     if (KL) {
       getfem::interpolation_function(mf_rhs, F, sol_bf, FORCE_BOUNDARY_NUM);
-      getfem::interpolation_function(mf_rhs, H, sol_mtensor, FORCE_BOUNDARY_NUM);
+      getfem::interpolation_function(mf_rhs, H, sol_mtensor,
+				     FORCE_BOUNDARY_NUM);
     }
     else {
-      getfem::interpolation_function(mf_rhs, F, neumann_val, FORCE_BOUNDARY_NUM);
+      getfem::interpolation_function(mf_rhs, F, neumann_val,
+				     FORCE_BOUNDARY_NUM);
       gmm::scale(F, -1.0);
     }
     
@@ -507,14 +513,15 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     
     // Defining the Dirichlet condition value.
     gmm::resize(F, nb_dof_rhs);
-    getfem::interpolation_function(mf_rhs, F, sol_u,SIMPLE_SUPPORT_BOUNDARY_NUM);
+    getfem::interpolation_function(mf_rhs, F, sol_u,
+				   SIMPLE_SUPPORT_BOUNDARY_NUM);
     
     // Dirichlet condition brick.
     getfem::mdbrick_Dirichlet<>
       final_model(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
     final_model.set_constraints_type(dirichlet_version);
     if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-      final_model.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
+      final_model.set_penalization_parameter(1./PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
     final_model.rhs().set(mf_rhs, F);
     
     if (0) { getfem::standard_model_state MS(final_model); 

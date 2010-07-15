@@ -34,6 +34,7 @@ NY =10 ;
 NZ =3 ;
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 FEM_TYPE = 'FEM_PK(2,1)';  % P1 for triangles
+FEM_TYPE_SIGMA = 'FEM_PK(2,0)'; 
 INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 GENERIC_DIRICHLET = 0;  % Generic Dirichlet condition for non-lagrangian elts.
 ROOTFILENAME = 'plasticity';     % Root of data files.

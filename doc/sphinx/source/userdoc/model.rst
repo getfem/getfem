@@ -1953,7 +1953,7 @@ where :
       - ``varname`` represents the main unknown on which the brick is added (u). It should be composed of 2 iterates for the time scheme needed for the Newton algorithm used.
       - ``datalambda`` and ``datamu`` are the data corresponding to the Lame coefficients.
       - ``datathreshold`` represents the plastic threshold of the studied material.
-      - ``datasigma`` represents the stress constraint values supported by the material. It should be composed of 2 iterates for the time scheme needed for the Newton algorithm used.
+      - ``datasigma`` represents the stress constraint values supported by the material. It should be composed of 2 iterates for the time scheme needed for the Newton algorithm used. Note that the finite element method on which ``datasigma`` is defined should be able to represent the derivative of ``varname``.
       - ``ACP`` corresponds to the type of projection to be used. It has an `abstract_constraints_projection` type and for the moment, only exists the `VM_projection` corresponding to the Von Mises one.
 
 

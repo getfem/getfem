@@ -56,9 +56,8 @@ namespace getfem {
 
 	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 	const mesh &m = mf_u.linked_mesh();
-	size_type N = m.dim(), Q = mf_u.get_qdim();
-	GMM_ASSERT1(Q == N, "isotropic linearized elasticity brick is only "
-		    "for vector field of the same dimension as the mesh");
+	size_type Q = mf_u.get_qdim();
+	GMM_ASSERT1(Q == 1, "Bilaplacian brick is only for a scalar field");
 	const mesh_im &mim = *mims[0];
 	mesh_region rg(region);
 	m.intersect_with_mpi_region(rg);
@@ -184,7 +183,8 @@ namespace getfem {
       size_type s = gmm::vect_size(A);
       if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
 
-      GMM_ASSERT1(mf_u.get_qdim() == s,
+      GMM_ASSERT1(s == mf_u.get_qdim()
+		  || s == mf_u.get_qdim()*gmm::sqr(mf_u.linked_mesh().dim()),
 		  dl[0] << ": bad format of normal derivative source term "
 		  "data. Detected dimension is " << s << " should be "
 		  << size_type(mf_u.get_qdim()));
