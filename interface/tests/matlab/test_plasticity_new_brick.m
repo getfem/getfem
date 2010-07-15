@@ -20,18 +20,20 @@ f = [0 -330]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
 
 % Create the mesh
-m = gfMesh('triangles grid', [0:4:L], [0:2:H]);
+m = gfMesh('triangles grid', [0:2:L], [0:1:H]);
 
 % Plotting
-gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
+% gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
 
 % Define used MeshIm
 mim=gfMeshIm(m);  set(mim, 'integ', gfInteg('IM_TRIANGLE(6)')); % Gauss methods on triangles
 
 % Define used MeshFem
-mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
+% mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
+mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
 mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
-mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+% mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
+mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_err=gfMeshFem(m); set(mf_err, 'fem',gfFem('FEM_PK(2,0)'));
 mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_pl = gfMeshFem(m); set(mf_pl, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
@@ -121,7 +123,7 @@ for step=1:nbstep,
   
     figure(2)
     subplot(2,1,1);
-    gf_plot(mf_vm,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); 
+    gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); % 'deformed_mesh', 'on')
     colorbar;
     caxis([0 10000]);
     n = t(step);
@@ -135,13 +137,13 @@ for step=1:nbstep,
     title('Error estimate');
 
     figure(3)
-    gf_plot(mf_pl,plast,'deformed_mesh','on', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); 
+    gf_plot(mf_pl,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
     colorbar;
     caxis([0 10000]);
     n = t(step);
     title(['Plastification for t = ', num2str(n)]);
     
-    pause();
+    % pause();
 
 end;
 

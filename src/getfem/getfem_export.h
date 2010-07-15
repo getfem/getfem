@@ -116,13 +116,15 @@ namespace getfem {
         not be used if you are not exporting a slice!  NO SPACE ALLOWED in
         'name' */
     template<class VECT> void write_sliced_point_data(const VECT& Uslice,
-                                                      const std::string& name);
+                                                      const std::string& name,
+                                                      getfem::size_type qdim=1);
     /** export data which is constant over each element. You should not use
         this function if you are exporting a slice.  U should have
         convex_index().card() elements.  */
 
     template<class VECT> void write_cell_data(const VECT& U,
-                                              const std::string& name);
+                                              const std::string& name, 
+                                              getfem::size_type qdim = 1);
     /** export a data_set correspounding to measures of quality for each convex
         of the supplied mesh (which should have the same number of convex than
         the one used in the vtk_export)
@@ -143,11 +145,12 @@ namespace getfem {
     void switch_to_cell_data();
     void switch_to_point_data();
     template<class T> void write_val(T v);
-    template<class V> void write_vec(V p);
+    template<class V> void write_vec(V p, getfem::size_type qdim);
     template<class IT> void write_3x3tensor(IT p);
     void write_separ();
     template<class VECT> void write_dataset_(const VECT& U,
                                              const std::string& name,
+                                             getfem::size_type qdim,
                                              bool cell_data=false);
   };
 
@@ -162,12 +165,12 @@ namespace getfem {
     }
   }
 
-  template<class IT> void vtk_export::write_vec(IT p) {
+  template<class IT> void vtk_export::write_vec(IT p, getfem::size_type qdim) {
     float v[3];
-    for (size_type i=0; i < dim_; ++i) {
+    for (size_type i=0; i < qdim; ++i) {
       v[i] = float(p[i]);
     }
-    for (size_type i=dim_; i < 3; ++i) v[i] = 0.0f;
+    for (size_type i=qdim; i < 3; ++i) v[i] = 0.0f;
     write_val(v[0]);write_val(v[1]);write_val(v[2]);
   }
 
@@ -190,10 +193,11 @@ namespace getfem {
   void vtk_export::write_point_data(const getfem::mesh_fem &mf, const VECT& U,
                                     const std::string& name) {
     size_type Q = (gmm::vect_size(U) / mf.nb_dof()) * mf.get_qdim();
+    size_type qdim = mf.get_qdim();
     if (psl) {
       std::vector<scalar_type> Uslice(Q*psl->nb_points());
       psl->interpolate(mf, U, Uslice);
-      write_dataset_(Uslice, name);
+      write_dataset_(Uslice, name, qdim);
     } else {
       std::vector<scalar_type> V(pmf->nb_dof() * Q);
       if (&mf != &(*pmf)) {
@@ -207,23 +211,25 @@ namespace getfem {
           }
       }
       V.resize(Q*pmf_dof_used.card());
-      write_dataset_(V, name);
+      write_dataset_(V, name, qdim);
     }
   }
 
   template<class VECT>
-  void vtk_export::write_cell_data(const VECT& U, const std::string& name) {
-    write_dataset_(U, name, true);
+  void vtk_export::write_cell_data(const VECT& U, const std::string& name, getfem::size_type qdim) {
+    write_dataset_(U, name, qdim, true);
   }
 
   template<class VECT>
   void vtk_export::write_sliced_point_data(const VECT& U,
-                                           const std::string& name) {
-    write_dataset_(U, name, false);
+                                           const std::string& name,
+                                           getfem::size_type qdim) {
+    write_dataset_(U, name, qdim, false);
   }
 
   template<class VECT>
   void vtk_export::write_dataset_(const VECT& U, const std::string& name,
+                                  getfem::size_type qdim,
                                   bool cell_data) {
     write_mesh();
     size_type nb_val = 0;
@@ -235,7 +241,8 @@ namespace getfem {
       switch_to_point_data();
       nb_val = psl ? psl->nb_points() : pmf_dof_used.card();
     }
-    size_type Q = gmm::vect_size(U) / nb_val;
+    //size_type Q = gmm::vect_size(U) / nb_val;
+    size_type Q = qdim;
     GMM_ASSERT1(gmm::vect_size(U) == nb_val*Q,
                 "inconsistency in the size of the dataset: "
                 << gmm::vect_size(U) << " != " << nb_val << "*" << Q);
@@ -249,7 +256,7 @@ namespace getfem {
     } else if (Q <= 3) {
       os << "VECTORS " << remove_spaces(name) << " float\n";
       for (size_type i=0; i < nb_val; ++i) {
-        write_vec(U.begin() + i*Q);
+        write_vec(U.begin() + i*Q, Q);
       }
     } else if (Q == gmm::sqr(dim_)) {
       /* tensors : coef are supposed to be stored in FORTRAN order
