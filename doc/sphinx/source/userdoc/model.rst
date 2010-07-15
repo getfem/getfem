@@ -1897,11 +1897,11 @@ Of course one should add some boundary condition thanks to appropriated bricks.
 
 
 
-Discret assembly of the terms
-+++++++++++++++++++++++++++++
+Discrete assembly of the terms
+++++++++++++++++++++++++++++++
 
 
-If one note :
+If one denotes:
 
 .. math::
 
@@ -1915,7 +1915,7 @@ where :math:`u_i \in \Re` and :math:`\varphi_i : \Omega \rightarrow \Re^N` with 
 
 where :math:`\sigma_i \in M_{3,3}(\Re)` and :math:`\psi_i : \Omega \rightarrow \Re` ;
 
-one have that :
+one has:
 
 .. math::
 
@@ -1928,7 +1928,7 @@ one have that :
 
 where :math:`a_{i_k}` are the nodes of :math:`W_h` on the element T;
 
-and also :
+and also:
 
 .. math::
 
@@ -1937,7 +1937,7 @@ and also :
 where :math:`h \in V_h` .
 
 
-In order to compute such a projection, one choose to interpolate :math:`\varepsilon^{n}` and :math:`\varepsilon^{n+1}` directly on :math:`\sigma` dofs to make sure that the sum will be correctly computed, then to compute the projection on each dofs of :math:`\sigma` and finally to interpolate the result on the dofs of u for the integration and the assembly.
+In order to compute such a projection, one chooses to interpolate :math:`\varepsilon^{n}` and :math:`\varepsilon^{n+1}` directly on :math:`\sigma` dofs to make sure that the sum will be correctly computed, then to compute the projection on each dofs of :math:`\sigma` and finally to interpolate the result on the dofs of u for the integration and the assembly.
 
 
 

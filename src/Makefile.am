@@ -195,6 +195,7 @@ SRC =                                      		\
 	getfem_modeling.cc                 		\
 	getfem_models.cc                 		\
 	getfem_model_solvers.cc                		\
+	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
 	getfem_Coulomb_friction.cc			\
 	getfem_plasticity.cc

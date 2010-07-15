@@ -17,6 +17,7 @@ KL = 1;     % 0 for pure bilaplacian problem or 1 for Kirchhoff-Love
 if (KL)     % For Kirchhoff-Love plate model only
   NU = 0.3; % Poisson ratio (0 <= NU <= 1)
 end;
+NEWBRICKS = 0;
 
 BOUNDARY_REF = 0 ;      % 0 :  non-homogeneous Dirichlet 
                         % 1 :  mixed boundary conditions 

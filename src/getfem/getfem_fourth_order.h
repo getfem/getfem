@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard
+// Copyright (C) 2006-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -37,12 +37,13 @@
 #define GETFEM_FOURTH_ORDER_H__
 
 #include "getfem_modeling.h"
+#include "getfem_models.h"
 #include "getfem_assembling_tensors.h"
 
 namespace getfem {
   
   /* ******************************************************************** */
-  /*		Bilaplacian brick.                                        */
+  /*		Bilaplacian assembly routines.                            */
   /* ******************************************************************** */
 
   /**
@@ -66,6 +67,21 @@ namespace getfem {
   }
 
   template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_homogeneous_bilaplacian
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &A, const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem
+      ("a=data$1(1);"
+       "M(#1,#1)+=sym(comp(Hess(#1).Hess(#1))(:,i,i,:,j,j).a(1))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(A);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
+  }
+
+
+  template<typename MAT, typename VECT>
   void asm_stiffness_matrix_for_bilaplacian_KL
   (const MAT &M, const mesh_im &mim, const mesh_fem &mf,
    const mesh_fem &mf_data, const VECT &D_, const VECT &nu_,
@@ -83,6 +99,59 @@ namespace getfem {
     assem.push_mat(const_cast<MAT &>(M));
     assem.assembly(rg);
   }
+
+  template<typename MAT, typename VECT>
+  void asm_stiffness_matrix_for_homogeneous_bilaplacian_KL
+  (const MAT &M, const mesh_im &mim, const mesh_fem &mf,
+   const VECT &D_, const VECT &nu_,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    generic_assembly assem
+      ("d=data$1(1); n=data$2(1);"
+       "t=comp(Hess(#1).Hess(#1));"
+       "M(#1,#1)+=sym(t(:,i,j,:,i,j).d(1)-t(:,i,j,:,i,j).d(1).n(1)"
+       "+t(:,i,i,:,j,j).d(1).n(1))");
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(D_);
+    assem.push_data(nu_);
+    assem.push_mat(const_cast<MAT &>(M));
+    assem.assembly(rg);
+  }
+
+  /* ******************************************************************** */
+  /*		Bilaplacian new bricks.                                    */
+  /* ******************************************************************** */
+
+  
+  /** Add a bilaplacian brick on the variable
+      `varname` and on the mesh region `region`. 
+      This represent a term :math:`\Delta(D \Delta u)`. 
+      where :math:`D(x)` is a coefficient determined by `dataname` which
+      could be constant or described on a f.e.m. The corresponding weak form
+      is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
+  */
+  size_type add_bilaplacian_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region = size_type(-1));
+
+  /** Add a bilaplacian brick on the variable
+      `varname` and on the mesh region `region`.
+      This represent a term :math:`\Delta(D \Delta u)` where :math:`D(x)`
+      is a the flexion modulus determined by `dataname1`. The term is
+      integrated by part following a Kirchhoff-Love plate model
+      with `dataname2` the poisson ratio.
+      The corresponding weak form
+      is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
+  */
+  size_type add_bilaplacian_brick_KL
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname1, const std::string &dataname2,
+   size_type region = size_type(-1));
+
+  
+  /* ******************************************************************** */
+  /*		Bilaplacian old brick.                                    */
+  /* ******************************************************************** */
 
 # define MDBRICK_BILAPLACIAN 783465
   
@@ -148,7 +217,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Normale derivative source term brick.                     */
+  /*		Normale derivative source term assembly routines.         */
   /* ******************************************************************** */
 
   /**
@@ -181,9 +250,61 @@ namespace getfem {
 	"V(#1)+=comp(vGrad(#1).Normal().Normal().Normal().Base(#2))"
 	"(:,i,k,k,l,m,j).F(i,l,m,j);";
     else
-       GMM_ASSERT1(false, "invalid rhs vector");
+      GMM_ASSERT1(false, "invalid rhs vector");
     asm_real_or_complex_1_param(B, mim, mf, mf_data, F, rg, s);
   }
+
+  template<typename VECT1, typename VECT2>
+  void asm_homogeneous_normal_derivative_source_term
+  (VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+   const VECT2 &F, const mesh_region &rg) {
+    
+    size_type Q = gmm::vect_size(F);
+
+    const char *s;
+    if (mf.get_qdim() == 1 && Q == 1)
+      s = "F=data(1);"
+	"V(#1)+=comp(Grad(#1).Normal())(:,i,i).F(1);";
+    else if (mf.get_qdim() == 1 && Q == gmm::sqr(mf.linked_mesh().dim()))
+      s = "F=data(mdim(#1),mdim(#1));"
+	"V(#1)+=comp(Grad(#1).Normal().Normal().Normal())"
+	"(:,i,i,l,j).F(l,j);";
+    else if (mf.get_qdim() > size_type(1) && Q == mf.get_qdim())
+      s = "F=data(qdim(#1));"
+	"V(#1)+=comp(vGrad(#1).Normal())(:,i,k,k).F(i);";
+    else if (mf.get_qdim() > size_type(1) &&
+	     Q == size_type(mf.get_qdim()*gmm::sqr(mf.linked_mesh().dim())))
+      s = "F=data(qdim(#1),mdim(#1),mdim(#1));"
+	"V(#1)+=comp(vGrad(#1).Normal().Normal().Normal())"
+	"(:,i,k,k,l,m).F(i,l,m);";
+    else
+      GMM_ASSERT1(false, "invalid rhs vector");
+    asm_real_or_complex_1_param(B, mim, mf, mf, F, rg, s);
+  }
+
+
+  /* ******************************************************************** */
+  /*		Normale derivative source term new brick.                 */
+  /* ******************************************************************** */
+
+
+  /** Add a normal derivative source term brick
+      :math:`F = \int b.\partial_n v` on the variable `varname` and the
+      mesh region `region`.
+     
+      Update the right hand side of the linear system.
+      `dataname` represents `b` and `varname` represents `v`.
+  */
+  size_type add_normal_derivative_source_term_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region = size_type(-1));
+
+
+
+  /* ******************************************************************** */
+  /*		Normale derivative source term old brick.                 */
+  /* ******************************************************************** */
+
 
   /**
      Normal derivative source term brick ( @f$ F = \int b.\partial_n v @f$ ).
@@ -243,7 +364,7 @@ namespace getfem {
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					   size_type) { }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				   size_type) {
+				     size_type) {
       gmm::add(gmm::scaled(get_F(), value_type(-1)),
 	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
     }
@@ -260,7 +381,7 @@ namespace getfem {
     (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
      const VECTOR &B__, size_type bound,
      size_type num_fem_=0) : B_("source_term",mf_data_, this), boundary(bound),
-	num_fem(num_fem_) {
+			     num_fem(num_fem_) {
       this->add_sub_brick(problem);
       if (bound != size_type(-1))
 	this->add_proper_boundary_info(num_fem, bound,
@@ -269,7 +390,7 @@ namespace getfem {
       size_type Nb = gmm::vect_size(B__);
       if (Nb) {
 	if (Nb == mf_data_.nb_dof() * mf_u().get_qdim()) {
-	   B_.reshape(mf_u().get_qdim());
+	  B_.reshape(mf_u().get_qdim());
 	   
 	}
 	else if (Nb == mf_data_.nb_dof() * mf_u().get_qdim()
@@ -291,8 +412,8 @@ namespace getfem {
   /* ******************************************************************** */
 
   /*
-     assembly of the special boundary condition for Kirchhoff-Love model.
-     @ingroup asm
+    assembly of the special boundary condition for Kirchhoff-Love model.
+    @ingroup asm
   */
   template<typename VECT1, typename VECT2>
   void asm_neumann_KL_term
@@ -317,8 +438,45 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+  template<typename VECT1, typename VECT2>
+  void asm_neumann_KL_homogeneous_term
+  (VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
+   const VECT2 &M, const VECT2 &divM, const mesh_region &rg) {
+
+    generic_assembly assem
+      ("MM=data$1(mdim(#1),mdim(#1));"
+       "divM=data$2(mdim(#1));"
+       "V(#1)+=comp(Base(#1).Normal())(:,i).divM(i);"
+       "V(#1)+=comp(Grad(#1).Normal())(:,i,j).MM(i,j)*(-1);"
+       "V(#1)+=comp(Grad(#1).Normal().Normal().Normal())(:,i,i,j,k).MM(j,k);");
+    
+    assem.push_mi(mim);
+    assem.push_mf(mf);
+    assem.push_data(M);
+    assem.push_data(divM);
+    assem.push_vec(B);
+    assem.assembly(rg);
+  }
+
+  /* ******************************************************************** */
+  /*		Kirchoff Love Neumann term new brick.                     */
+  /* ******************************************************************** */
+
+
+  /** Add a Neuman term brick for Kirchhoff-Love model
+      on the variable `varname` and the mesh region `region`.
+      `dataname1` represents the bending moment tensor and  `dataname2`
+      its divergence.
+  */
+  size_type add_Kirchoff_Love_Neumann_term_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname1, const std::string &dataname2,
+   size_type region = size_type(-1));
+
+
+
   /**
-     Brick for Special boundary condition for Kirchhoff-Love model
+     Old Brick for Special boundary condition for Kirchhoff-Love model
 
      @see asm_source_term
      @ingroup bricks
@@ -376,7 +534,7 @@ namespace getfem {
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
 					   size_type) { }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				   size_type) {
+				     size_type) {
       gmm::add(gmm::scaled(get_F(), value_type(-1)),
 	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
     }
@@ -407,7 +565,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Normal derivative Dirichlet condition bricks.            */
+  /*		Normal derivative Dirichlet assembly routines.            */
   /* ******************************************************************** */
 
   /**
@@ -465,15 +623,112 @@ namespace getfem {
     }
   }
 
-  /** Normal derivative Dirichlet condition brick.
+  /* ******************************************************************** */
+  /*		Normal derivative Dirichlet condition new bricks.         */
+  /* ******************************************************************** */
+
+  /** Add a Dirichlet condition on the normal derivative of the variable
+      `varname` and on the mesh region `region` (which should be a boundary. 
+      The general form is
+      :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+      where :math:`r(x)` is
+      the right hand side for the Dirichlet condition (0 for
+      homogeneous conditions) and :math:`v` is in a space of multipliers
+      defined by the variable `multname` on the part of boundary determined
+      by `region`. `dataname` is an optional parameter which represents
+      the right hand side of the Dirichlet condition.
+      If `R_must_be_derivated` is set to `true` then the normal
+      derivative of `dataname` is considered.
+  */
+  size_type add_normal_derivative_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname = std::string(),
+   bool R_must_be_derivated = false);
+  
+
+  /** Add a Dirichlet condition on the normal derivative of the variable
+      `varname` and on the mesh region `region` (which should be a boundary. 
+      The general form is
+      :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+      where :math:`r(x)` is
+      the right hand side for the Dirichlet condition (0 for
+      homogeneous conditions) and :math:`v` is in a space of multipliers
+      defined by the trace of mf_mult on the part of boundary determined
+      by `region`. `dataname` is an optional parameter which represents
+      the right hand side of the Dirichlet condition.
+      If `R_must_be_derivated` is set to `true` then the normal
+      derivative of `dataname` is considered.
+  */
+  size_type add_normal_derivative_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname = std::string(),
+   bool R_must_be_derivated = false);
+
+  /** Add a Dirichlet condition on the normal derivative of the variable
+      `varname` and on the mesh region `region` (which should be a boundary. 
+      The general form is
+      :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+      where :math:`r(x)` is
+      the right hand side for the Dirichlet condition (0 for
+      homogeneous conditions) and :math:`v` is in a space of multipliers
+      defined by the trace of a Lagranfe finite element method of degree
+      `degree` and on the boundary determined
+      by `region`. `dataname` is an optional parameter which represents
+      the right hand side of the Dirichlet condition.
+      If `R_must_be_derivated` is set to `true` then the normal
+      derivative of `dataname` is considered.
+  */
+  size_type add_normal_derivative_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname = std::string(),
+   bool R_must_be_derivated = false);
+
+    /** Add a Dirichlet condition on the normal derivative of the variable
+      `varname` and on the mesh region `region` (which should be a boundary. 
+      The general form is
+      :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+      where :math:`r(x)` is
+      the right hand side for the Dirichlet condition (0 for
+      homogeneous conditions). For this brick the condition is enforced with
+      a penalisation with a penanalization parameter `penalization_coeff` on
+      the boundary determined by `region`.
+      `dataname` is an optional parameter which represents
+      the right hand side of the Dirichlet condition.
+      If `R_must_be_derivated` is set to `true` then the normal
+      derivative of `dataname` is considered.
+      Note that is is possible to change the penalization coefficient
+      using the function `getfem::change_penalization_coeff` of the standard
+      Dirichlet condition.
+  */
+  size_type add_normal_derivative_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   scalar_type penalisation_coeff, size_type region, 
+   const std::string &dataname = std::string(),
+   bool R_must_be_derivated = false);
+  
+  
+
+
+
+
+  /* ******************************************************************** */
+  /*		Normal derivative Dirichlet condition old bricks.         */
+  /* ******************************************************************** */
+
+
+
+  /** Normal derivative Dirichlet condition old brick.
    *
    *  This brick represent a Dirichlet condition on the normal derivative
    *  of the unknow for fourth order pdes.
    *  The general form is
-   *  @f[ \int \partial_n u(x)v(x) = \int r(x)v(x) \forall v@f]
-   *  where @f$ r(x) @f$ is
+   *  :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+   *  where :math:`r(x)` is
    *  the right hand side for the Dirichlet condition (0 for
-   *  homogeneous conditions) and @f$ v @f$ is in a space of multipliers
+   *  homogeneous conditions) and :math:`v` is in a space of multipliers
    *  defined by the trace of mf_mult on the considered part of boundary.
    *
    *  @see asm_normal_derivative_dirichlet_constraints
@@ -491,7 +746,7 @@ namespace getfem {
     size_type boundary;
     bool mfdata_set, B_to_be_computed;
     bool R_must_be_derivated_; /* if true, then R(x) is a scalar field, and we will impose 
-				 grad(u).n = grad(R).n on the boundary */
+				  grad(u).n = grad(R).n on the boundary */
     gmm::sub_index SUB_CT;
     const mesh_fem *mf_mult;
     
