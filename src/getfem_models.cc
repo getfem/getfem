@@ -1547,6 +1547,7 @@ namespace getfem {
   struct Dirichlet_condition_brick : public virtual_brick {
 
     bool H_version; // The version hu = r for vector fields.
+    const mesh_fem *mf_mult_;
     
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
@@ -1566,7 +1567,8 @@ namespace getfem {
 
       bool penalized = (vl.size() == 1);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-      const mesh_fem &mf_mult = md.mesh_fem_of_variable(vl[vl.size()-1]);
+      const mesh_fem &mf_mult = penalized ? (mf_mult_ ? *mf_mult_ : mf_u)
+	: md.mesh_fem_of_variable(vl[1]);
       const mesh_im &mim = *mims[0];
       const model_real_plain_vector *A = 0, *COEFF = 0, *H = 0;
       const mesh_fem *mf_data = 0, *mf_H = 0;
@@ -1608,20 +1610,12 @@ namespace getfem {
 
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
-
-      if (dl.size() > ind) {
-	GMM_TRACE2("Source term assembly for Dirichlet condition");	  
-	if (mf_data)
-	  asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
-	else
-	  asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
-	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
-      }
+      static model_real_sparse_matrix B; // Ugly
 
       if (recompute_matrix) {
 	GMM_TRACE2("Mass term assembly for Dirichlet condition");
 	gmm::clear(matl[0]);
-	if (H_version) {
+	if (H_version) { // Faux, ne tient pas compte du multiplicateur ...
 	  if (mf_H)
 	    asm_real_or_complex_1_param
 	      (matl[0], mim, mf_u, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
@@ -1637,12 +1631,49 @@ namespace getfem {
 	       : "F=data(qdim(#1),qdim(#1));"
 	       "M(#1,#1)+=sym(comp(vBase(#1).vBase(#1))(:,i,:,j).F(i,j));");
 	}
-	else
-	  asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
-	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+	else {
+	  if (penalized && (&mf_mult != &mf_u)) {
+	    gmm::resize(B, mf_mult.nb_dof(), mf_u.nb_dof());
+	    asm_mass_matrix(B, mim, mf_mult, mf_u, region);
+	  }
+	  else
+	    asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+
+	}
+	if (penalized && (&mf_mult != &mf_u)) {
+	  gmm::mult(gmm::transposed(B), B, matl[0]);
+	  gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+	} else if (penalized) {
+	  gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+	}
       }
+
+      if (dl.size() > ind) {
+	GMM_TRACE2("Source term assembly for Dirichlet condition");
+	model_real_plain_vector V;
+	if (penalized && (&mf_mult != &mf_u)) {
+	  gmm::resize(V, mf_mult.nb_dof());
+	  if (mf_data)
+	    asm_source_term(V, mim, mf_mult, *mf_data, *A, rg);
+	  else
+	    asm_homogeneous_source_term(V, mim, mf_mult, *A, rg);
+	} else {
+	  if (mf_data)
+	    asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	  else
+	    asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
+	}
+	
+	if (penalized && (&mf_mult != &mf_u))  {
+	  gmm::mult(gmm::transposed(B), V, vecl[0]);
+	  gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+	} else if (penalized)
+	  gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+      }
+
     }
 
+    // à refaire !
     virtual void asm_complex_tangent_terms(const model &md, size_type ib,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
@@ -1735,7 +1766,9 @@ namespace getfem {
       }
     }
 
-    Dirichlet_condition_brick(bool penalized, bool H_version_) {
+    Dirichlet_condition_brick(bool penalized, bool H_version_,
+			      const mesh_fem *mf_mult__ = 0) {
+      mf_mult_ = mf_mult__;
       H_version = H_version_;
       set_flags(penalized ? "Dirichlet with penalization brick"
 		          : "Dirichlet with multipliers brick",
@@ -1787,14 +1820,14 @@ namespace getfem {
   size_type add_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalisation_coeff, size_type region, 
-   const std::string &dataname) {
+   const std::string &dataname, const mesh_fem *mf_mult) {
     std::string coeffname = md.new_name("penalization_on_" + varname);
     md.add_fixed_size_data(coeffname, 1);
     if (md.is_complex())
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr = new Dirichlet_condition_brick(true, false);
+    pbrick pbr = new Dirichlet_condition_brick(true, false, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -1842,14 +1875,15 @@ namespace getfem {
   size_type add_generalized_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalisation_coeff, size_type region, 
-   const std::string &dataname, const std::string &Hname) {
+   const std::string &dataname, const std::string &Hname,
+   const mesh_fem *mf_mult) {
     std::string coeffname = md.new_name("penalization_on_" + varname);
     md.add_fixed_size_data(coeffname, 1);
     if (md.is_complex())
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr = new Dirichlet_condition_brick(true, true);
+    pbrick pbr = new Dirichlet_condition_brick(true, true, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);

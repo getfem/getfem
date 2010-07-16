@@ -943,13 +943,16 @@ namespace getfem {
       the model. `dataname` is the optional
       right hand side of  the Dirichlet condition. It could be constant or
       described on a fem; scalar or vector valued, depending on the variable
-      on which the Dirichlet condition is prescribed. Return the brick index
-      in the model.
+      on which the Dirichlet condition is prescribed.
+      `mf_mult` is an optional parameter which allows to weaken the
+      Dirichlet condition specifying a multiplier space.
+      Return the brick index in the model.
   */
   size_type add_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalization_coeff, size_type region,
-   const std::string &dataname = std::string());
+   const std::string &dataname = std::string(),
+   const mesh_fem *mf_mult = 0);
 
   /** Change the penalization coefficient of a Dirichlet condition with
       penalization brick. If the brick is not of this kind,
@@ -994,7 +997,8 @@ namespace getfem {
   size_type add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
-   const std::string &dataname, const std::string &Hname);
+   const std::string &dataname, const std::string &Hname,
+   const mesh_fem *mf_mult = 0);
 
   /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This version is for vector field.
@@ -1008,8 +1012,9 @@ namespace getfem {
       described on a fem; scalar or vector valued, depending on the variable
       on which the Dirichlet condition is prescribed. `Hname' is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
-      or described on a scalar fem. Return the brick index
-      in the model.
+      or described on a scalar fem. `mf_mult` is an optional parameter
+      which allows to weaken the Dirichlet condition specifying a
+      multiplier space. Return the brick index in the model.
   */
   size_type add_generalized_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,

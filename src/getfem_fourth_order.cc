@@ -52,6 +52,7 @@ namespace getfem {
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
 	|| md.is_var_newer_than_brick(dl[0], ib);
 
+
       if (recompute_matrix) {
 
 	const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
@@ -72,13 +73,20 @@ namespace getfem {
 	const model_real_plain_vector *data2 = 0;
 	if (KL) {
 	  mf_data2 = md.pmesh_fem_of_variable(dl[1]);
-	  data = &(md.real_variable(dl[1]));
+	  data2 = &(md.real_variable(dl[1]));
 	  size_type sl2 = gmm::vect_size(*data2);
 	  if (mf_data2) sl = sl * mf_data2->get_qdim() / mf_data2->nb_dof();
 	  GMM_ASSERT1(sl2 == 1, "Bad format of bilaplacian coefficient");
 	}
 	
-	GMM_TRACE2("Stiffness matrix assembly for bilaplacian");
+	if (KL) {
+	  GMM_TRACE2("Stiffness matrix assembly of a bilaplacian term for a "
+		     "Kirchhoff-Love plate");
+	}
+	else {
+	  GMM_TRACE2("Stiffness matrix assembly of a bilaplacian term");
+	}
+
 	gmm::clear(matl[0]);
 	if (mf_data) {
 	  if (KL)
@@ -88,9 +96,10 @@ namespace getfem {
 	    asm_stiffness_matrix_for_bilaplacian
 	      (matl[0], mim, mf_u, *mf_data,  *data, rg);
 	} else {
-	  if (KL)
+	  if (KL) {
 	    asm_stiffness_matrix_for_homogeneous_bilaplacian_KL
 	      (matl[0], mim, mf_u,  *data, *data2, rg);
+	  }
 	  else
 	    asm_stiffness_matrix_for_homogeneous_bilaplacian
 	      (matl[0], mim, mf_u,  *data, rg);

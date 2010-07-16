@@ -253,9 +253,10 @@ void bilaplacian_problem::init(void) {
   mf_u.set_finite_element(mesh.convex_index(), pf_u);
 
   std::string dirichlet_fem_name = PARAM.string_value("DIRICHLET_FEM_TYPE");
-  if (dirichlet_fem_name.size() == 0)
+  if (dirichlet_fem_name.size() == 0) {
     mf_mult.set_finite_element(mesh.convex_index(), pf_u);
-  else {
+    cout << "No DIRICHLET_FEM_TYPE\n";
+  } else {
     cout << "DIRICHLET_FEM_TYPE="  << dirichlet_fem_name << "\n";
     mf_mult.set_finite_element(mesh.convex_index(), 
 			       getfem::fem_descriptor(dirichlet_fem_name));
@@ -365,9 +366,9 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     model.add_initialized_scalar_data("D", D);
     if (KL) {
       model.add_initialized_scalar_data("nu", nu);
-      getfem::add_bilaplacian_brick(model, mim, "u", "D");
-    } else {
       getfem::add_bilaplacian_brick_KL(model, mim, "u", "D", "nu");
+    } else {
+      getfem::add_bilaplacian_brick(model, mim, "u", "D");
     }
     
     // Volumic source term brick.
@@ -418,13 +419,13 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     gmm::clear(F);
     getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
     model.add_initialized_fem_data("DerDirdata", mf_rhs, F);
-    if (dirichlet_version == 0)
+    // if (dirichlet_version == 0)
       add_normal_derivative_Dirichlet_condition_with_multipliers
 	(model, mim, "u", mf_u, CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
-    else
-      add_normal_derivative_Dirichlet_condition_with_penalization
-	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
-	 CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
+    // else
+//       add_normal_derivative_Dirichlet_condition_with_penalization
+// 	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
+// 	 CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
 
     
     // Dirichlet condition brick.
@@ -432,13 +433,13 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     getfem::interpolation_function
       (mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
     model.add_initialized_fem_data("Dirichletdata", mf_rhs, F);
-    if (dirichlet_version != 0)
-      add_Dirichlet_condition_with_multipliers
-	(model, mim, "u", mf_u, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
-    else
+//     if (dirichlet_version == 0)
+//       add_Dirichlet_condition_with_multipliers
+// 	(model, mim, "u", mf_u, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
+//     else
       add_Dirichlet_condition_with_penalization
 	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
-	 SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
+	 SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata", &mf_mult);
 
     // Generic solve.
     cout << "Total number of variables : " << model.nb_dof() << endl;
@@ -530,11 +531,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
       final_model.set_penalization_parameter(1./PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
     final_model.rhs().set(mf_rhs, F);
-    
-    if (0) { getfem::standard_model_state MS(final_model); 
-      final_model.compute_tangent_matrix(MS);
-      gmm::HarwellBoeing_IO::write("bilaplacian.hb", MS.tangent_matrix()); }
-    
 
     // Generic solve.
     cout << "Total number of variables : " << final_model.nb_dof() << endl;

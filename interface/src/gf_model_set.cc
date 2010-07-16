@@ -408,6 +408,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = in.pop().to_integer();
        std::string dataname;
        if (in.remaining()) dataname = in.pop().to_string();
+
        size_type ind = config::base_index();
        switch(version) {
        case 1:  ind += getfem::add_Dirichlet_condition_with_multipliers
@@ -426,7 +427,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname])
+    /*@SET ind = ('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname, @tmf mf_mult])
     Add a Dirichlet condition on the variable `varname` and the mesh
     region `region`. This region should be a boundary. The Dirichlet
     condition is prescribed with penalization. The penalization coefficient
@@ -434,18 +435,23 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     `dataname` is the optional right hand side of the Dirichlet condition.
     It could be constant or described on a fem; scalar or vector valued,
     depending on the variable on which the Dirichlet condition is prescribed.
+    `mf_mult` is an optional parameter which allows to weaken the
+      Dirichlet condition specifying a multiplier space.
     Return the brick index in the model.@*/
     sub_command
-      ("add Dirichlet condition with penalization", 4, 5, 0, 1,
+      ("add Dirichlet condition with penalization", 4, 6, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
        size_type region = in.pop().to_integer();
        std::string dataname;
        if (in.remaining()) dataname = in.pop().to_string();
+       const getfem::mesh_fem *mf_mult = 0;
+       if (in.remaining()) mf_mult = in.pop().to_const_mesh_fem();
        size_type ind = config::base_index();
        ind += getfem::add_Dirichlet_condition_with_penalization
-       (md->model(), gfi_mim->mesh_im(), varname, coeff, region, dataname);
+       (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+	dataname, mf_mult);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -512,7 +518,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add generalized Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region, @str dataname, @str Hname)
+    /*@SET ind = ('add generalized Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region, @str dataname, @str Hname[, @tmf mf_mult])
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This version is for vector field.
       It prescribes a condition :math:`Hu = r`
@@ -525,20 +531,24 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       depending on the variable on which the Dirichlet condition is prescribed.
       `Hname' is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
-      or described on a scalar fem. 
+      or described on a scalar fem.
+      `mf_mult` is an optional parameter which allows to weaken the
+      Dirichlet condition specifying a multiplier space.
       Return the brick index in the model.@*/
     sub_command
-      ("add generalized Dirichlet condition with penalization", 6, 6, 0, 1,
+      ("add generalized Dirichlet condition with penalization", 6, 7, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        std::string varname = in.pop().to_string();
        double coeff = in.pop().to_scalar();
        size_type region = in.pop().to_integer();
        std::string dataname= in.pop().to_string();
        std::string Hname= in.pop().to_string();
+       const getfem::mesh_fem *mf_mult = 0;
+       if (in.remaining()) mf_mult = in.pop().to_const_mesh_fem();
        size_type ind = config::base_index();
        ind += getfem::add_generalized_Dirichlet_condition_with_penalization
        (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
-        dataname, Hname);
+        dataname, Hname, mf_mult);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -909,14 +919,25 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
     /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
-    Add a nonlinear elastoplastic term to the model relatively to the variable `varname`, in small deformations, for an isotropic material and for a quasistatic model. 'projname' is the type of projection that we want to use. For the moment, only the Von Mises projection is computing that we could entering 'VM' or 'Von Mises'.
-    `datasigma` is the variable representing the constraints on the material.
-    Be carefull that `varname` and `datasigma` are composed of two iterates for the time scheme needed for the Newton algorithm used. Moreover, the finite element method on which `varname` is described is an K ordered mesh_fem, the `datasigma` one have to be at least an K-1 ordered mesh_fem. 
-    `datalambda` and `datamu` are the Lamé coefficients of the studied material.
-    `datathreshold` is the plasticity threshold of the material.
-    The three last variable could be constants or described on the same finite element method.
-    `region` is an optional mesh region on which the term is added. If it is not specified, it is added on the whole mesh.
-    Return the brick index in the model.@*/
+      Add a nonlinear elastoplastic term to the model relatively to the
+      variable `varname`, in small deformations, for an isotropic material
+      and for a quasistatic model. 'projname' is the type of projection that
+      we want to use. For the moment, only the Von Mises projection is
+      computing that we could entering 'VM' or 'Von Mises'.
+      `datasigma` is the variable representing the constraints on the material.
+      Be carefull that `varname` and `datasigma` are composed of two iterates
+      for the time scheme needed for the Newton algorithm used.
+      Moreover, the finite element method on which `varname` is described
+      is an K ordered mesh_fem, the `datasigma` one have to be at least
+      an K-1 ordered mesh_fem. 
+      `datalambda` and `datamu` are the Lamé coefficients of the studied
+      material.
+      `datathreshold` is the plasticity threshold of the material.
+      The three last variable could be constants or described on the
+      same finite element method.
+      `region` is an optional mesh region on which the term is added.
+      If it is not specified, it is added on the whole mesh.
+      Return the brick index in the model.@*/
     sub_command
       ("add elastoplasticity brick", 7, 8, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
