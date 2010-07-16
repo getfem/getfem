@@ -348,9 +348,10 @@ namespace getfem {
   template <typename MAT, typename VECT>
   void asm_real_or_complex_1_param
   (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
-   const VECT &A, const mesh_region &rg, const char *assembly_description) {
+   const VECT &A, const mesh_region &rg, const char *assembly_description,
+   const mesh_fem *mf_mult = 0) {
     asm_real_or_complex_1_param_
-      (M, mim, mf_u, mf_data, A, rg, assembly_description,
+      (M, mim, mf_u, mf_data, A, rg, assembly_description, mf_mult,
        typename gmm::linalg_traits<VECT>::value_type());
   }
 
@@ -359,11 +360,12 @@ namespace getfem {
   void asm_real_or_complex_1_param_
   (const MAT &M, const mesh_im &mim,  const mesh_fem &mf_u,
    const mesh_fem &mf_data, const VECT &A,  const mesh_region &rg,
-   const char *assembly_description, T) {
+   const char *assembly_description, const mesh_fem *mf_mult, T) {
     generic_assembly assem(assembly_description);
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_data);
+    if (mf_mult) assem.push_mf(*mf_mult);
     assem.push_data(A);
     assem.push_mat_or_vec(const_cast<MAT&>(M));
     assem.assembly(rg);
@@ -374,13 +376,13 @@ namespace getfem {
   void asm_real_or_complex_1_param_
   (MAT &M, const mesh_im &mim, const mesh_fem &mf_u, const mesh_fem &mf_data,
    const VECT &A, const mesh_region &rg,const char *assembly_description,
-   std::complex<T>) {
+   const mesh_fem *mf_mult, std::complex<T>) {
     asm_real_or_complex_1_param_(gmm::real_part(M),mim,mf_u,mf_data,
 				 gmm::real_part(A),rg,
-				 assembly_description, T());
+				 assembly_description, mf_mult, T());
     asm_real_or_complex_1_param_(gmm::imag_part(M),mim,mf_u,mf_data,
 				 gmm::imag_part(A),rg,
-				 assembly_description, T());
+				 assembly_description, mf_mult, T());
   }
 
   /** 

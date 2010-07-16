@@ -647,12 +647,14 @@ The function allowing to add this brick is::
 
   add_Dirichlet_condition_with_penalization(md, mim, varname,
                                             penalization_coeff, region,
-                                            dataname = std::string());
+                                            dataname = std::string(),
+					    *mf_mult = 0);
 
 The penalization consists in computing the mass matrix of the variable and add it
-multiplied by the penalization coefficient to the stiffness matrix. The
-penalization coefficient is added as a data of the model and can be changed thanks
-to the function::
+multiplied by the penalization coefficient to the stiffness matrix.
+The parameter `mf_mult` (a pointer to a ``getfem::mesh_fem`` object) is optional. It allows to weaken the Dirichlet condition for locking situations. In that case, the penalization matrix is of the form :math:`B^TB` where :math:`B` is the "mass matrix" on the boundary between the shape functions of the variable `varname` and the shape function of the multiplier space.
+The penalization coefficient is added as a data of the model and can be
+changed thanks to the function::
 
   change_penalization_coeff(md, ind_brick, penalisation_coeff);
 

@@ -997,8 +997,7 @@ namespace getfem {
   size_type add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
-   const std::string &dataname, const std::string &Hname,
-   const mesh_fem *mf_mult = 0);
+   const std::string &dataname, const std::string &Hname);
 
   /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This version is for vector field.
@@ -1019,7 +1018,8 @@ namespace getfem {
   size_type add_generalized_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalization_coeff, size_type region,
-   const std::string &dataname, const std::string &Hname);
+   const std::string &dataname, const std::string &Hname,
+   const mesh_fem *mf_mult = 0);
 
 
 
