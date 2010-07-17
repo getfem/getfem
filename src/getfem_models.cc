@@ -1616,32 +1616,34 @@ namespace getfem {
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
       if (recompute_matrix) {
+	model_real_sparse_matrix *B = &(matl[0]);
+	if (penalized && (&mf_mult != &mf_u)) {
+	  gmm::resize(rB, mf_mult.nb_dof(), mf_u.nb_dof());
+	  gmm::clear(rB);
+	  B = &rB;
+	} else {
+	  gmm::clear(matl[0]);
+	}
 	GMM_TRACE2("Mass term assembly for Dirichlet condition");
-	gmm::clear(matl[0]);
 	if (H_version) {
 	  if (mf_H)
 	    asm_real_or_complex_1_param
-	      (matl[0], mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
+	      (*B, mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
 	       "F=data(#2);"
 	       "M(#1,#3)+=sym(comp(Base(#1).Base(#3).Base(#2))(:,:,i).F(i))"
 	       : "F=data(qdim(#1),qdim(#1),#2);"
 	       "M(#1,#3)+=sym(comp(vBase(#1).vBase(#3).Base(#2))(:,i,:,j,k).F(i,j,k));", &mf_u);
 	  else
 	     asm_real_or_complex_1_param
-	      (matl[0], mim, mf_mult, mf_u, *H, rg, (mf_u.get_qdim() == 1) ? 
+	      (*B, mim, mf_mult, mf_u, *H, rg, (mf_u.get_qdim() == 1) ? 
 	       "F=data(1);"
 	       "M(#1,#2)+=sym(comp(Base(#1).Base(#2)).F(1))"
 	       : "F=data(qdim(#1),qdim(#1));"
 	       "M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,j).F(i,j));");
 	}
-	else {
-	  if (penalized && (&mf_mult != &mf_u)) {
-	    gmm::resize(rB, mf_mult.nb_dof(), mf_u.nb_dof());
-	    asm_mass_matrix(rB, mim, mf_mult, mf_u, region);
-	  }
-	  else
-	    asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
-	}
+	else
+	  asm_mass_matrix(*B, mim, mf_mult, mf_u, region);
+      
 	if (penalized && (&mf_mult != &mf_u)) {
 	  gmm::mult(gmm::transposed(rB), rB, matl[0]);
 	  gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
@@ -1655,6 +1657,7 @@ namespace getfem {
 	
 	if (penalized && (&mf_mult != &mf_u)) {
 	  gmm::resize(rV, mf_mult.nb_dof());
+	  gmm::clear(rV);
 	  if (mf_data)
 	    asm_source_term(rV, mim, mf_mult, *mf_data, *A, rg);
 	  else
@@ -1739,31 +1742,33 @@ namespace getfem {
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
       if (recompute_matrix) {
+	model_complex_sparse_matrix *B = &(matl[0]);
+	if (penalized && (&mf_mult != &mf_u)) {
+	  gmm::resize(cB, mf_mult.nb_dof(), mf_u.nb_dof());
+	  gmm::clear(cB);
+	  B = &cB;
+	} else {
+	  gmm::clear(matl[0]);
+	}
 	GMM_TRACE2("Mass term assembly for Dirichlet condition");
-	gmm::clear(matl[0]);
 	if (H_version) {
 	  if (mf_H)
 	    asm_real_or_complex_1_param
-	      (matl[0], mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
+	      (*B, mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ? 
 	       "F=data(#2);"
 	       "M(#1,#3)+=sym(comp(Base(#1).Base(#3).Base(#2))(:,:,i).F(i))"
 	       : "F=data(qdim(#1),qdim(#1),#2);"
 	       "M(#1,#3)+=sym(comp(vBase(#1).vBase(#3).Base(#2))(:,i,:,j,k).F(i,j,k));", &mf_u);
 	  else
 	     asm_real_or_complex_1_param
-	      (matl[0], mim, mf_mult, mf_u, *H, rg, (mf_u.get_qdim() == 1) ? 
+	      (*B, mim, mf_mult, mf_u, *H, rg, (mf_u.get_qdim() == 1) ? 
 	       "F=data(1);"
 	       "M(#1,#2)+=sym(comp(Base(#1).Base(#2)).F(1))"
 	       : "F=data(qdim(#1),qdim(#1));"
 	       "M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,j).F(i,j));");
 	}
 	else {
-	  if (penalized && (&mf_mult != &mf_u)) {
-	    gmm::resize(cB, mf_mult.nb_dof(), mf_u.nb_dof());
-	    asm_mass_matrix(cB, mim, mf_mult, mf_u, region);
-	  }
-	  else
-	    asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
+	  asm_mass_matrix(*B, mim, mf_mult, mf_u, region);
 	}
 	if (penalized && (&mf_mult != &mf_u)) {
 	  gmm::mult(gmm::transposed(cB), cB, matl[0]);
@@ -1778,6 +1783,7 @@ namespace getfem {
 	
 	if (penalized && (&mf_mult != &mf_u)) {
 	  gmm::resize(cV, mf_mult.nb_dof());
+	  gmm::clear(cV);
 	  if (mf_data)
 	    asm_source_term(cV, mim, mf_mult, *mf_data, *A, rg);
 	  else

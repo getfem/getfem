@@ -419,13 +419,13 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     gmm::clear(F);
     getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
     model.add_initialized_fem_data("DerDirdata", mf_rhs, F);
-    // if (dirichlet_version == 0)
+    if (dirichlet_version == 0)
       add_normal_derivative_Dirichlet_condition_with_multipliers
 	(model, mim, "u", mf_u, CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
-    // else
-//       add_normal_derivative_Dirichlet_condition_with_penalization
-// 	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
-// 	 CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
+    else
+      add_normal_derivative_Dirichlet_condition_with_penalization
+	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
+	 CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
 
     
     // Dirichlet condition brick.
@@ -433,10 +433,10 @@ bool bilaplacian_problem::solve(plain_vector &U) {
     getfem::interpolation_function
       (mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
     model.add_initialized_fem_data("Dirichletdata", mf_rhs, F);
-//     if (dirichlet_version == 0)
-//       add_Dirichlet_condition_with_multipliers
-// 	(model, mim, "u", mf_u, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
-//     else
+    if (dirichlet_version == 0)
+      add_Dirichlet_condition_with_multipliers
+	(model, mim, "u", mf_u, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
+    else
       add_Dirichlet_condition_with_penalization
 	(model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
 	 SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata", &mf_mult);

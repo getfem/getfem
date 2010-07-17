@@ -33,6 +33,7 @@
 #include <getfem/getfem_Coulomb_friction.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
+#include <getfem/getfem_fourth_order.h>
 
 using namespace getfemint;
 
@@ -374,7 +375,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable described by
       `mult_description`. If `mult_description` is a string this is assumed
-      to be the variable name correpsonding to the multiplier (which should be
+      to be the variable name corresponding to the multiplier (which should be
       first declared as a multiplier variable on the mesh region in the model).
       If it is a finite element method (mesh_fem object) then a multiplier
       variable will be added to the model and build on this finite element
@@ -431,7 +432,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Add a Dirichlet condition on the variable `varname` and the mesh
     region `region`. This region should be a boundary. The Dirichlet
     condition is prescribed with penalization. The penalization coefficient
-    is intially `coeff` and will be added to the data of the model.
+    is initially `coeff` and will be added to the data of the model.
     `dataname` is the optional right hand side of the Dirichlet condition.
     It could be constant or described on a fem; scalar or vector valued,
     depending on the variable on which the Dirichlet condition is prescribed.
@@ -930,7 +931,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Moreover, the finite element method on which `varname` is described
       is an K ordered mesh_fem, the `datasigma` one have to be at least
       an K-1 ordered mesh_fem. 
-      `datalambda` and `datamu` are the Lamé coefficients of the studied
+      `datalambda` and `datamu` are the Lame coefficients of the studied
       material.
       `datathreshold` is the plasticity threshold of the material.
       The three last variable could be constants or described on the
@@ -983,6 +984,199 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        = getfem::add_nonlinear_incompressibility_brick
        (md->model(), gfi_mim->mesh_im(), varname, multname, region)
        + config::base_index();
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
+
+    /*@SET ind = ('add bilaplacian brick', @tmim mim, @str varname, @str dataname [, @int region])
+      Add a bilaplacian brick on the variable
+      `varname` and on the mesh region `region`. 
+      This represent a term :math:`\Delta(D \Delta u)`. 
+      where :math:`D(x)` is a coefficient determined by `dataname` which
+      could be constant or described on a f.e.m. The corresponding weak form
+      is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add bilaplacian brick", 3, 4, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind = config::base_index() +
+       add_bilaplacian_brick(md->model(), gfi_mim->mesh_im(),
+			     varname, dataname, region);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
+    /*@SET ind = ('add Kirchhoff-Love plate brick', @tmim mim, @str varname, @str dataname_D, @str dataname_nu [, @int region])
+      Add a bilaplacian brick on the variable
+      `varname` and on the mesh region `region`.
+      This represent a term :math:`\Delta(D \Delta u)` where :math:`D(x)`
+      is a the flexion modulus determined by `dataname_D`. The term is
+      integrated by part following a Kirchhoff-Love plate model
+      with `dataname_nu` the poisson ratio.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add Kirchhoff-Love plate brick", 4, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname_D = in.pop().to_string();
+       std::string dataname_nu = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind = config::base_index() +
+       add_bilaplacian_brick_KL(md->model(), gfi_mim->mesh_im(),
+				varname, dataname_D, dataname_nu, region);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add normal derivative source term brick', @tmim mim, @str varname, @str dataname, @int region)
+      Add a normal derivative source term brick
+      :math:`F = \int b.\partial_n v` on the variable `varname` and the
+      mesh region `region`.
+      
+      Update the right hand side of the linear system.
+      `dataname` represents `b` and `varname` represents `v`.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add normal derivative source term brick", 4, 4, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       size_type ind = config::base_index() +
+       add_normal_derivative_source_term_brick(md->model(), gfi_mim->mesh_im(),
+				varname, dataname, region);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add Kirchhoff-Love Neumann term brick', @tmim mim, @str varname, @str dataname_M, @str dataname_divM, @int region)
+       Add a Neumann term brick for Kirchhoff-Love model
+      on the variable `varname` and the mesh region `region`.
+      `dataname_M` represents the bending moment tensor and  `dataname_divM`
+      its divergence.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add Kirchhoff-Love Neumann term brick", 5, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname_M = in.pop().to_string();
+       std::string dataname_divM = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       size_type ind = config::base_index() +
+       add_Kirchoff_Love_Neumann_term_brick(md->model(), gfi_mim->mesh_im(),
+				varname, dataname_M, dataname_divM, region);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
+    /*@SET ind = ('add normal derivative Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region [, @str dataname, @int R_must_be_derivated])
+       Add a Dirichlet condition on the normal derivative of the variable
+      `varname` and on the mesh region `region` (which should be a boundary. 
+      The general form is
+      :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+      where :math:`r(x)` is
+      the right hand side for the Dirichlet condition (0 for
+      homogeneous conditions) and :math:`v` is in a space of multipliers
+      defined by `mult_description`.
+      If `mult_description` is a string this is assumed
+      to be the variable name corresponding to the multiplier (which should be
+      first declared as a multiplier variable on the mesh region in the model).
+      If it is a finite element method (mesh_fem object) then a multiplier
+      variable will be added to the model and build on this finite element
+      method (it will be restricted to the mesh region `region` and eventually
+      some conflicting dofs with some other multiplier variables will be
+      suppressed). If it is an integer, then a  multiplier variable will be
+      added to the model and build on a classical finite element of degree
+      that integer. `dataname` is an optional parameter which represents
+      the right hand side of the Dirichlet condition.
+      If `R_must_be_derivated` is set to `true` then the normal
+      derivative of `dataname` is considered.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add normal derivative Dirichlet condition with multipliers", 4, 6, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string multname;
+       getfemint_mesh_fem *gfi_mf = 0;
+       size_type degree = 0;
+       size_type version = 0;
+       mexarg_in argin = in.pop();
+       if (argin.is_integer()) {
+         degree = argin.to_integer();
+         version = 1;
+       } else if (argin.is_string()) {
+         multname = argin.to_string();
+         version = 2;
+       } else {
+         gfi_mf = argin.to_getfemint_mesh_fem();
+         version = 3;
+       }
+       size_type region = in.pop().to_integer();
+       std::string dataname;
+       if (in.remaining()) dataname = in.pop().to_string();
+       bool R_must_be_derivated = false;
+       if (in.remaining())
+	 R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
+       size_type ind = config::base_index();
+       switch(version) {
+       case 1:  ind += 
+	   add_normal_derivative_Dirichlet_condition_with_multipliers
+	   (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region,
+	    dataname, R_must_be_derivated ); break;
+       case 2:  ind += 
+	   add_normal_derivative_Dirichlet_condition_with_multipliers
+	   (md->model(), gfi_mim->mesh_im(), varname, multname, region,
+	    dataname, R_must_be_derivated ); break;
+       case 3:  ind += 
+	   add_normal_derivative_Dirichlet_condition_with_multipliers
+	   (md->model(), gfi_mim->mesh_im(), varname,  gfi_mf->mesh_fem(),
+	    region, dataname, R_must_be_derivated ); break;
+       }
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
+    /*@SET ind = ('add normal derivative Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region [, @str dataname, @int R_must_be_derivated])
+       Add a Dirichlet condition on the normal derivative of the variable
+      `varname` and on the mesh region `region` (which should be a boundary. 
+      The general form is
+      :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
+      where :math:`r(x)` is
+      the right hand side for the Dirichlet condition (0 for
+      homogeneous conditions).
+      The penalization coefficient
+      is initially `coeff` and will be added to the data of the model.
+      It can be changed with the command MODEL:SET('change penalization coeff').
+      `dataname` is an optional parameter which represents
+      the right hand side of the Dirichlet condition.
+      If `R_must_be_derivated` is set to `true` then the normal
+      derivative of `dataname` is considered.
+      Return the brick index in the model.@*/
+    sub_command
+      ("add normal derivative Dirichlet condition with penalization", 4, 6, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       double coeff = in.pop().to_scalar();
+       size_type region = in.pop().to_integer();
+       std::string dataname;
+       if (in.remaining()) dataname = in.pop().to_string();
+       bool R_must_be_derivated = false;
+       if (in.remaining())
+	 R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
+       size_type ind = config::base_index() +
+       add_normal_derivative_Dirichlet_condition_with_penalization
+	   (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+	    dataname, R_must_be_derivated );
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );

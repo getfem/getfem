@@ -1141,11 +1141,13 @@ namespace getfem {
 		"invalid data mesh fem (Qdim=1 required)");
     if (version & ASMDIR_BUILDH) {
       asm_mass_matrix(H, mim, mf_mult, mf_u, region);
-      gmm::clean(H, gmm::default_tol(magn_type())
-		 * gmm::mat_maxnorm(H) * magn_type(1000));
+//       gmm::clean(H, gmm::default_tol(magn_type()) // à remettre !
+// 		 * gmm::mat_maxnorm(H) * magn_type(1000));
     }
     if (version & ASMDIR_BUILDR)
       asm_source_term(R, mim, mf_mult, mf_r, r_data, region);
+
+    return; // à enlever !
 
     // Verifications and simplifications
 

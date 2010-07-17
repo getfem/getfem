@@ -81,7 +81,7 @@ gf_mesh_set(m,'boundary',3,[ftop fbot]);
 if (new_bricks)
   md=gf_model('real');
   gf_model_set(md, 'add fem variable', 'u', mfu);
-  gf_model_set(md,'add_initialized_data','params', params);
+  gf_model_set(md,'add initialized data','params', params);
   gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
   if (incompressible)
     mfp = gf_Mesh_Fem(m,1); 

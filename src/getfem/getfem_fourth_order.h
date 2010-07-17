@@ -29,7 +29,8 @@
 //===========================================================================
 
 /**@file getfem_fourth_order.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>,
+            Julien Pommier <Julien.Pommier@insa-toulouse.fr>
    @date January 6, 2006.
    @brief assembly procedures and bricks for fourth order pdes.
 */
@@ -123,7 +124,7 @@ namespace getfem {
   /* ******************************************************************** */
 
   
-  /** Add a bilaplacian brick on the variable
+  /** Adds a bilaplacian brick on the variable
       `varname` and on the mesh region `region`. 
       This represent a term :math:`\Delta(D \Delta u)`. 
       where :math:`D(x)` is a coefficient determined by `dataname` which
@@ -134,14 +135,12 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region = size_type(-1));
 
-  /** Add a bilaplacian brick on the variable
+  /** Adds a bilaplacian brick on the variable
       `varname` and on the mesh region `region`.
       This represent a term :math:`\Delta(D \Delta u)` where :math:`D(x)`
       is a the flexion modulus determined by `dataname1`. The term is
       integrated by part following a Kirchhoff-Love plate model
       with `dataname2` the poisson ratio.
-      The corresponding weak form
-      is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
   */
   size_type add_bilaplacian_brick_KL
   (model &md, const mesh_im &mim, const std::string &varname,
@@ -288,7 +287,7 @@ namespace getfem {
   /* ******************************************************************** */
 
 
-  /** Add a normal derivative source term brick
+  /** Adds a normal derivative source term brick
       :math:`F = \int b.\partial_n v` on the variable `varname` and the
       mesh region `region`.
      
@@ -297,7 +296,7 @@ namespace getfem {
   */
   size_type add_normal_derivative_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname, size_type region = size_type(-1));
+   const std::string &dataname, size_type region);
 
 
 
@@ -463,7 +462,7 @@ namespace getfem {
   /* ******************************************************************** */
 
 
-  /** Add a Neuman term brick for Kirchhoff-Love model
+  /** Adds a Neumann term brick for Kirchhoff-Love model
       on the variable `varname` and the mesh region `region`.
       `dataname1` represents the bending moment tensor and  `dataname2`
       its divergence.
@@ -471,7 +470,7 @@ namespace getfem {
   size_type add_Kirchoff_Love_Neumann_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
-   size_type region = size_type(-1));
+   size_type region);
 
 
 
@@ -594,8 +593,7 @@ namespace getfem {
     typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
     
     rg.from_mesh(mim.linked_mesh()).error_if_not_faces();
-    GMM_ASSERT1(mf_r.get_qdim() == 1,
-		"invalid data mesh fem (Qdim=1 required)");
+    
     if (version & ASMDIR_BUILDH) {
       const char *s;
       if (mf_u.get_qdim() == 1 && mf_mult.get_qdim() == 1)
@@ -613,6 +611,8 @@ namespace getfem {
 		 * gmm::mat_maxnorm(H) * magn_type(1000));
     }
     if (version & ASMDIR_BUILDR) {
+      GMM_ASSERT1(mf_r.get_qdim() == 1,
+		"invalid data mesh fem (Qdim=1 required)");
       if (!R_must_be_derivated) {
 	asm_normal_source_term(R, mim, mf_mult, mf_r, r_data, rg);
       } else {
@@ -627,7 +627,7 @@ namespace getfem {
   /*		Normal derivative Dirichlet condition new bricks.         */
   /* ******************************************************************** */
 
-  /** Add a Dirichlet condition on the normal derivative of the variable
+  /** Adds a Dirichlet condition on the normal derivative of the variable
       `varname` and on the mesh region `region` (which should be a boundary. 
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
@@ -647,7 +647,7 @@ namespace getfem {
    bool R_must_be_derivated = false);
   
 
-  /** Add a Dirichlet condition on the normal derivative of the variable
+  /** Adds a Dirichlet condition on the normal derivative of the variable
       `varname` and on the mesh region `region` (which should be a boundary. 
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
@@ -666,7 +666,7 @@ namespace getfem {
    const std::string &dataname = std::string(),
    bool R_must_be_derivated = false);
 
-  /** Add a Dirichlet condition on the normal derivative of the variable
+  /** Adds a Dirichlet condition on the normal derivative of the variable
       `varname` and on the mesh region `region` (which should be a boundary. 
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
@@ -686,7 +686,7 @@ namespace getfem {
    const std::string &dataname = std::string(),
    bool R_must_be_derivated = false);
 
-    /** Add a Dirichlet condition on the normal derivative of the variable
+    /** Adds a Dirichlet condition on the normal derivative of the variable
       `varname` and on the mesh region `region` (which should be a boundary. 
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
@@ -709,10 +709,6 @@ namespace getfem {
    const std::string &dataname = std::string(),
    bool R_must_be_derivated = false);
   
-  
-
-
-
 
   /* ******************************************************************** */
   /*		Normal derivative Dirichlet condition old brick.          */

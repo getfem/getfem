@@ -422,6 +422,10 @@ namespace getfem {
   struct normal_derivative_Dirichlet_condition_brick : public virtual_brick {
 
     bool R_must_be_derivated;
+    mutable model_real_sparse_matrix rB;
+    mutable model_real_plain_vector rV;
+    mutable model_complex_sparse_matrix cB;
+    mutable model_complex_plain_vector cV;
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
@@ -473,42 +477,61 @@ namespace getfem {
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
+      if (recompute_matrix) {
+	GMM_TRACE2("Mass term assembly for normal derivative Dirichlet "
+		   "condition");
+	if (penalized) {
+	  gmm::resize(rB, mf_mult.nb_dof(), mf_u.nb_dof());
+	  gmm::clear(rB);
+	  asm_normal_derivative_dirichlet_constraints
+	  (rB, vecl[0], mim, mf_u, mf_mult,
+	   *mf_data, *A, rg, R_must_be_derivated, ASMDIR_BUILDH);
+	} else {
+	  gmm::clear(matl[0]);
+	  asm_normal_derivative_dirichlet_constraints
+	    (matl[0], vecl[0], mim, mf_u, mf_mult,
+	     *mf_data, *A, rg, R_must_be_derivated, ASMDIR_BUILDH);
+	}
+
+	if (penalized) {
+	  gmm::mult(gmm::transposed(rB), rB, matl[0]);
+	  gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+	}
+      }
+
       if (dl.size() > ind) {
 	GMM_TRACE2("Source term assembly for normal derivative Dirichlet "
-		   "condition");	  
+		   "condition");
+	model_real_plain_vector *R = penalized ? &rV : &(vecl[0]);
+	if (penalized) { gmm::resize(rV, mf_mult.nb_dof()); gmm::clear(rV); }
+	  
 	if (mf_data) {
 	  if (!R_must_be_derivated) {
 	    if (s == mf_u.linked_mesh().dim())
-	      asm_normal_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	      asm_normal_source_term(*R, mim, mf_mult, *mf_data, *A, rg);
 	    else
-	      asm_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
+	      asm_source_term(*R, mim, mf_mult, *mf_data, *A, rg);
 	  }
 	  else {
 	    asm_real_or_complex_1_param
-	      (vecl[0], mim, mf_mult, *mf_data, *A, rg,
+	      (*R, mim, mf_mult, *mf_data, *A, rg,
 	       "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
 	  }
 	} else {
 	  GMM_ASSERT1(!R_must_be_derivated, "Incoherent situation");
 	  if (s == mf_u.linked_mesh().dim())
-	    asm_homogeneous_normal_source_term(vecl[0], mim, mf_mult, *A, rg);
+	    asm_homogeneous_normal_source_term(*R, mim, mf_mult, *A, rg);
 	  else
-	    asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
+	    asm_homogeneous_source_term(*R, mim, mf_mult, *A, rg);
 	}
-	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+	if (penalized) {
+	  gmm::mult(gmm::transposed(rB), rV, vecl[0]);
+	  gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+	  rV = model_real_plain_vector();
+	}
       }
 
-      if (recompute_matrix) {
-	GMM_TRACE2("Mass term assembly for normal derivative Dirichlet "
-		   "condition");
-	gmm::clear(matl[0]);
-	asm_normal_derivative_dirichlet_constraints
-	  (matl[0], vecl[0], mim, mf_u, mf_mult,
-	   *mf_data, *A, rg, R_must_be_derivated, ASMDIR_BUILDH);
 
-	//asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
-	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0])); //  bon ?
-      }
     }
 
     virtual void asm_complex_tangent_terms(const model &md, size_type ib,
@@ -551,42 +574,68 @@ namespace getfem {
 	mf_data = md.pmesh_fem_of_variable(dl[ind]);
 	s = gmm::vect_size(*A);
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	GMM_ASSERT1(mf_u.get_qdim() == s,
+	GMM_ASSERT1(s == mf_u.get_qdim() || s == mf_u.linked_mesh().dim(),
 		    dl[ind] << ": bad format of normal derivative Dirichlet "
 		    "data. Detected dimension is " << s << " should be "
-		    << size_type(mf_u.get_qdim()));
+		    << size_type(mf_u.get_qdim()) << " or "
+		    << mf_u.linked_mesh().dim());
       }
 
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
-      if (dl.size() > ind) {
-	GMM_TRACE2("Source term assembly for normal derivative Dirichlet "
-		   "condition");	  
-	if (mf_data) {
-	  if (!R_must_be_derivated)
-	    asm_normal_source_term(vecl[0], mim, mf_mult, *mf_data, *A, rg);
-	  else
-	    asm_real_or_complex_1_param
-	      (vecl[0], mim, mf_mult, *mf_data, *A, rg,
-	       "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
-	} else {
-	  GMM_ASSERT1(!R_must_be_derivated, "Incoherent situation");
-	  asm_homogeneous_normal_source_term(vecl[0], mim, mf_mult, *A, rg);
-	}
-	if (penalized) gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
-      }
-
       if (recompute_matrix) {
 	GMM_TRACE2("Mass term assembly for normal derivative Dirichlet "
 		   "condition");
-	gmm::clear(matl[0]);
-	asm_normal_derivative_dirichlet_constraints
-	  (matl[0], vecl[0], mim, mf_u, mf_mult,
+	if (penalized) {
+	  gmm::resize(cB, mf_mult.nb_dof(), mf_u.nb_dof());
+	  gmm::clear(cB);
+	  asm_normal_derivative_dirichlet_constraints
+	  (cB, vecl[0], mim, mf_u, mf_mult,
 	   *mf_data, *A, rg, R_must_be_derivated, ASMDIR_BUILDH);
+	} else {
+	  gmm::clear(matl[0]);
+	  asm_normal_derivative_dirichlet_constraints
+	    (matl[0], vecl[0], mim, mf_u, mf_mult,
+	     *mf_data, *A, rg, R_must_be_derivated, ASMDIR_BUILDH);
+	}
 
-	//asm_mass_matrix(matl[0], mim, mf_mult, mf_u, region);
-	if (penalized) gmm::scale(matl[0], gmm::abs((*COEFF)[0])); //  bon ?
+	if (penalized) {
+	  gmm::mult(gmm::transposed(cB), cB, matl[0]);
+	  gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+	}
+      }
+
+      if (dl.size() > ind) {
+	GMM_TRACE2("Source term assembly for normal derivative Dirichlet "
+		   "condition");
+	model_complex_plain_vector *R = penalized ? &cV : &(vecl[0]);
+	if (penalized) { gmm::resize(cV, mf_mult.nb_dof()); gmm::clear(cV); }
+	  
+	if (mf_data) {
+	  if (!R_must_be_derivated) {
+	    if (s == mf_u.linked_mesh().dim())
+	      asm_normal_source_term(*R, mim, mf_mult, *mf_data, *A, rg);
+	    else
+	      asm_source_term(*R, mim, mf_mult, *mf_data, *A, rg);
+	  }
+	  else {
+	    asm_real_or_complex_1_param
+	      (*R, mim, mf_mult, *mf_data, *A, rg,
+	       "R=data(#2); V(#1)+=comp(Base(#1).Grad(#2).Normal())(:,i,j,j).R(i)");
+	  }
+	} else {
+	  GMM_ASSERT1(!R_must_be_derivated, "Incoherent situation");
+	  if (s == mf_u.linked_mesh().dim())
+	    asm_homogeneous_normal_source_term(*R, mim, mf_mult, *A, rg);
+	  else
+	    asm_homogeneous_source_term(*R, mim, mf_mult, *A, rg);
+	}
+	if (penalized) {
+	  gmm::mult(gmm::transposed(cB), cV, vecl[0]);
+	  gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+	  cV = model_complex_plain_vector();
+	}
       }
     }
 
