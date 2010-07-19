@@ -5,9 +5,9 @@ eval 'exec perl -S $0 "$@"'
 
 $getfem_root = ".";
 $MAJOR_VERSION = "4";
-$MINOR_VERSION = "0";
+$MINOR_VERSION = "1";
 # $DATE_VERSION = -`date +%Y%m%d`;
-$DATE_VERSION = ".0";
+# $DATE_VERSION = ".0";
 
 
 $gmm_files = "";
@@ -119,8 +119,8 @@ AC_ARG_PROGRAM\n
 PACKAGE="gmm"
 MAJOR_VERSION="$MAJOR_VERSION"
 MINOR_VERSION="$MINOR_VERSION"
-VERSION=\$MAJOR_VERSION.\$MINOR_VERSION$DATE_VERSION
-dnl VERSION=\$MAJOR_VERSION.\$MINOR_VERSION
+dnl VERSION=\$MAJOR_VERSION.\$MINOR_VERSION$DATE_VERSION
+VERSION=\$MAJOR_VERSION.\$MINOR_VERSION
 echo "configuring \$PACKAGE \$VERSION..."\n
 dnl ------------------------------------------------------------------------
 dnl   init automake

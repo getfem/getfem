@@ -359,10 +359,10 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
     getfem::compute_elastoplasticity_Von_Mises_or_Tresca
       (model, "sigma", mf_vm, VM, false);
     
-    getfem::vtk_export exp(datafilename+"["+(char)nb+"]" + ".vtk");
-    exp.exporting(mf_vm);
-    exp.write_point_data(mf_vm,VM, "Von Mises stress");
-    exp.write_point_data(mf_u, U, "displacement");
+//     getfem::vtk_export exp(datafilename+"["+(char)nb+"]" + ".vtk");
+//     exp.exporting(mf_vm);
+//     exp.write_point_data(mf_vm,VM, "Von Mises stress");
+//     exp.write_point_data(mf_u, U, "displacement");
        
   }
 

@@ -15,17 +15,17 @@ EXTRA_DIST = getfem_python.c
 getfem.py: @PSEUDO_FUNCTIONS@ $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(srcdir)/.. python-com > getfem.py || ( rm getfem.py ; /bin/false )
 
-clean: clean-am
-	rm -f getfem.py _getfem.so
-	rm -f *.o
+CLEANFILES = getfem.py _getfem.so *.o getfem_python_c.o getfem_python_c.c
 
 if BUILDPYTHON
 
 PYTHON_CC=$(CC)
 
+getfem_python_c.c : getfem_python.c
+	cp $(srcdir)/getfem_python.c getfem_python_c.c
 
 # ARCHFLAGS is set to empty to disable universal binaries with python 2.5 on macos 10.5
-_getfem.so: getfem_python.c ../libgetfemint.la $(GETFEM_LIB_LA)
+_getfem.so: getfem_python_c.c ../libgetfemint.la $(GETFEM_LIB_LA)
 	touch _getfem.so && rm _getfem.so
 	ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force
 #LDSHARED="$(CXX) -shared" ARCHFLAGS="" python setup.py -v build --build-temp . --build-base . --build-lib . --force

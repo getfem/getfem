@@ -1,0 +1,44 @@
+.. include:: ../replaces.txt
+
+****************************
+  What's New in |gf| 4.1
+****************************
+
+After |gf| 4.0, which introduced the new brick system and a significant
+change of the mesh_fem object, the 4.1 release consists mainly in the
+stabilization and the completion of the new brick system.
+The main changes are:
+
+   Released version, 2010/07/18:
+
+
+   * The following bricks have been rewritten in the new format:
+	 nonlinear elasticity,
+         bilaplacian,
+         unilateral contact and Coulomb friction (still in progress with the help of Konstantinos  Poulios),
+         elastoplasticity.
+
+   * A fully working and documented Scilab interface with the same graphical
+     post-treatment utilities than the Matlab one has been built by
+     Yann Collette. Very important contribution.
+
+   * An important internal modification of the Python/Scilab/Matlab interface
+     has been performed mainly in order to simplify the add of new methods
+     or commands. There is now a unique source which are the gf_*.cc
+     files. All the documentations and command files (mfiles and python file)
+     are produced automatically.
+
+   * The official documentation is now the one in doc/sphinx. Thank you
+     to Luis Saavedra for is important work to re-write the main part of the
+     documentations into the sphinx/rst format.
+     Documentation for the interfaces are now fully automatic.
+     
+   * A convection scheme based on Characteristic Galerkin method has been
+     added. Usefull to update the level-sets.
+
+   * Muparser can now be used to specify some parametrable enrichments in Xfem.
+     A contribution of Luis Saavedra.
+
+
+
+

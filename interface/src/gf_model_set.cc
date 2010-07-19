@@ -437,7 +437,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     It could be constant or described on a fem; scalar or vector valued,
     depending on the variable on which the Dirichlet condition is prescribed.
     `mf_mult` is an optional parameter which allows to weaken the
-      Dirichlet condition specifying a multiplier space.
+    Dirichlet condition specifying a multiplier space.
     Return the brick index in the model.@*/
     sub_command
       ("add Dirichlet condition with penalization", 4, 6, 0, 1,
@@ -476,7 +476,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     that integer. `dataname` is the right hand side of  the
     Dirichlet condition. It could be constant or described on a fem; scalar
     or vector valued, depending on the variable on which the Dirichlet
-    condition is prescribed. `Hname' is the data
+    condition is prescribed. `Hname` is the data
     corresponding to the matrix field `H`.
     Return the brick index in the model.@*/
     sub_command
@@ -530,7 +530,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `dataname` is the right hand side of the Dirichlet condition.
       It could be constant or described on a fem; scalar or vector valued,
       depending on the variable on which the Dirichlet condition is prescribed.
-      `Hname' is the data
+      `Hname` is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
       or described on a scalar fem.
       `mf_mult` is an optional parameter which allows to weaken the
@@ -715,10 +715,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add explicit matrix', @str varname1, @str varname2, @tspmat B[, @int issymmetric[, @int iscoercive]])
     Add a brick representing an explicit matrix to be added to the tangent
-    linear system relatively to the variables 'varname1' and 'varname2'.
+    linear system relatively to the variables `varname1` and `varname2`.
     The given matrix should have has many rows as the dimension of
-    'varname1' and as many columns as the dimension of 'varname2'.
-    If the two variables are different and if `issymmetric' is set to 1
+    `varname1` and as many columns as the dimension of `varname2`.
+    If the two variables are different and if `issymmetric` is set to 1
     then the transpose of the matrix is also added to the tangent system
     (default is 0). Set `iscoercive` to 1 if the term does not affect the
     coercivity of the tangent system (default is 0). The matrix can be
@@ -767,8 +767,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add explicit rhs', @str varname, @vec L)
       Add a brick representing an explicit right hand side to be added to
       the right hand side of the tangent linear system relatively to the
-      variable 'varname'. The given rhs should have the same size than the
-      dimension of 'varname'. The rhs can be changed by the command
+      variable `varname`. The given rhs should have the same size than the
+      dimension of `varname`. The rhs can be changed by the command
       MODEL:SET('set private rhs'). Return the brick index in the model.@*/
     sub_command
       ("add explicit rhs", 2, 2, 0, 1,
@@ -845,7 +845,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add isotropic linearized elasticity brick', @tmim mim, @str varname, @str dataname_lambda, @str dataname_mu[, @int region])
       Add an isotropic linearized elasticity term to the model relatively to
       the variable `varname`. `dataname_lambda` and `dataname_mu` should
-      contain the Lam\'e coefficients. `region` is an optional mesh region
+      contain the Lame coefficients. `region` is an optional mesh region
       on which the term is added. If it is not specified, it is added
       on the whole mesh. Return the brick index in the model.@*/
     sub_command
@@ -873,7 +873,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     which the term is added. If it is not specified, it is added on the whole mesh.
     `dataname_coeff` is an optional penalization coefficient for nearly
     incompressible elasticity for instance. In this case, it is the inverse
-    of the Lam\'e coefficient :math:`\lambda`. Return the brick index in the model.@*/
+    of the Lame coefficient :math:`\lambda`. Return the brick index in the model.@*/
     sub_command
       ("add linear incompressibility brick", 3, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
@@ -922,7 +922,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
       Add a nonlinear elastoplastic term to the model relatively to the
       variable `varname`, in small deformations, for an isotropic material
-      and for a quasistatic model. 'projname' is the type of projection that
+      and for a quasistatic model. `projname` is the type of projection that
       we want to use. For the moment, only the Von Mises projection is
       computing that we could entering 'VM' or 'Von Mises'.
       `datasigma` is the variable representing the constraints on the material.

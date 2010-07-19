@@ -8,10 +8,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem, 4.0)
+AC_INIT(getfem, 4.1)
 MAJOR_VERSION="4"
-MINOR_VERSION="0"
-PATCH_VERSION="1"
+MINOR_VERSION="1"
+PATCH_VERSION="0"
 
 AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])
@@ -996,7 +996,6 @@ AC_CONFIG_FILES(\
 	contrib/Makefile \
 	contrib/icare/Makefile \
 	contrib/delaminated_crack/Makefile \
-	contrib/signorini_schwarz/Makefile \
 	contrib/static_friction/Makefile \
 	contrib/bimaterial_crack_test/Makefile \
 	contrib/bimat_contact_crack_test/Makefile \

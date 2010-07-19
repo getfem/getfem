@@ -13,7 +13,8 @@ LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
 TESTS = $(top_srcdir)/contrib/xfem_stab_unilat_contact/xfem_stab_unilat_contact.pl
 
-EXTRA_DIST = \
-	xfem_stab_unilat_contact.param               
+EXTRA_DIST = 				\
+	xfem_stab_unilat_contact.param	\
+	xfem_stab_unilat_contact.pl               
 
 TESTS_ENVIRONMENT = perl

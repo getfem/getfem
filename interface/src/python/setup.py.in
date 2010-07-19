@@ -42,12 +42,12 @@ getfemmod = Extension('_getfem',
                       libraries = libnames, #['getfemint','getfem','stdc++','m'],
                       library_dirs = libdirs, #['../src/.libs',
 #                                      '@GETFEM_STATICLIBS@'],
-                      sources = ['@srcdir@/getfem_python.c'])
+                      sources = ['getfem_python_c.c'])
 
 setup (name = 'getfem-interface',
        license='LGPL',
        version = '4.0',
-       maintainer="Julien Pommier",
-       maintainer_email="julien.pommier@insa-toulouse.fr",
+       maintainer="Yves Renard",
+       maintainer_email="Yves.Renard@insa-lyon.fr",
        description = "This is the getfem-python-interface module",
        ext_modules = [getfemmod])
