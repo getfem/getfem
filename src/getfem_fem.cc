@@ -1468,13 +1468,13 @@ namespace getfem {
     pt[0] = 0.0; add_node(lagrange_dof(1), pt);
     read_poly(base_[0], 1, "(1 - x)^2*(2*x + 1)");
 
-    pt[0] = 0.0; add_node(derivative_dof(1, 0), pt, dal::bit_vector());
+    pt[0] = 0.0; add_node(derivative_dof(1, 0), pt);
     read_poly(base_[1], 1, "x*(x - 1)*(x - 1)");
 
     pt[0] = 1.0; add_node(lagrange_dof(1), pt);
     read_poly(base_[2], 1, "x*x*(3  - 2*x)");
 
-    pt[0] = 1.0; add_node(derivative_dof(1, 0), pt, dal::bit_vector());
+    pt[0] = 1.0; add_node(derivative_dof(1, 0), pt);
     read_poly(base_[3], 1, "x*x*(x - 1)");
   }
 
