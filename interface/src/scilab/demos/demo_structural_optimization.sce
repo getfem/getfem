@@ -74,7 +74,7 @@ if (N == 2) then
 else
   NY = 30;
   level_set_rate = 0.03 / NY;
-  reinitialisation_time = 0.005;
+  reinitialisation_time = 0.0045;
   threshold_shape = 15;
   if (TEST_CASE == 3) then
     threshold_topo = 2.6;
