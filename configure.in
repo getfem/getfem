@@ -504,48 +504,58 @@ AC_SUBST([MUPARSER_LIBS])
 echo "Configuration of muParser done"
 dnl ---------------------------END OF MUPARSER TEST--------------------------
 
-dnl ------------------------------MUMPS------------------------------
 
-acx_mumps_ok=no
-
-AC_ARG_WITH(mumps,
-        [AS_HELP_STRING([--with-mumps=<lib>],[use MUMPS library <lib>])])
-case $with_mumps in
-        yes | "") ;;
-        no) acx_mumps_ok=disable ;;
-        -* | */* | *.a | *.so | *.so.* | *.o| builtin) MUMPS_LIBS="$with_mumps" ;;
-        *) MUMPS_LIBS="-l$with_mumps" ;;
-esac
+dnl ------------------------------MUMPS TEST------------------------------
 
 AC_ARG_WITH(mumps-include-dir,
         [AS_HELP_STRING([--with-mumps-include-dir],[directory in which the dmumps.h header can be found])],
-	MUMPSINC="-I$withval", MUMPSINC="-I$GFPREFIX/include")
+        [case $withval in
+                -I* ) MUMPSINC="$withval";;
+                * ) MUMPSINC="-I$withval";;
+         esac], MUMPSINC="-I$GFPREFIX/include")
 CPPFLAGS="$CPPFLAGS $MUMPSINC"
 
-dnl ------------------------------MUMPS TEST------------------------------
-usemumps="no"
 MUMPS_LIBS=""
+acx_mumps_ok=no
+AC_ARG_WITH(mumps,
+        [AS_HELP_STRING([--with-mumps=<lib>],[use MUMPS library <lib>])],
+        [case $with_mumps in
+                yes | "") MUMPS_LIBS="" ;;
+                no) MUMPS_LIBS="" ; acx_mumps_ok=disable ;;
+                -* | */* | *.a | *.so | *.so.* | *.o| builtin) MUMPS_LIBS="$with_mumps" ; acx_mumps_ok=yes ;;
+                *) MUMPS_LIBS=`echo $with_mumps | sed -e 's/^/-l/g;s/ / -l/g'` ; acx_mumps_ok=yes ;;
+         esac], MUMPS_LIBS="")
+
+if test "x$acx_mumps_ok" = "xyes"; then
+  save_LIBS="$LIBS"
+  AC_SEARCH_LIBS(dmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
+                 acx_mumps_ok=yes,
+                 [ AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries]);
+                   acx_mumps_ok=disable])
+  LIBS="$save_LIBS"
+fi;
+
 if test "x$acx_mumps_ok" = "xno"; then
   AC_ARG_ENABLE(mumps,
    [AS_HELP_STRING([--enable-mumps],[enable the use of the MUMPS library (Direct parallel LU solver)])],
-   [ if test "x$enableval" = "xyes" ; then usemumps="yes"; fi], [usemumps="no"])
-  MUMPS_LIBS=""
+   [ if test "x$enableval" = "xyes" ; then acx_mumps_ok=yes; fi], [acx_mumps_ok=no])
+  AC_CHECK_LIB(dmumps, dmumps_c, [MUMPS_LIBS="-ldmumps -lzmumps"],
+               [AC_MSG_ERROR([Couldn't found a dmumps library supporting the dmumps_c function]);
+                MUMPS_LIBS="" ; acx_mumps_ok=disable ])
+fi;
 
-  if test "x$usemumps" = "xno"; then
-    echo "Building with MUMPS disabled";
-  else
-    AC_CHECK_LIB(dmumps, dmumps_c)
-    AC_CHECK_HEADERS(dmumps_c.h, [usemumps="yes"],
-      [ 
-        AC_MSG_ERROR([header file dmumps_c.h not found. Use --enable-mumps=no flag]);
-        usemumps="no"
-      ])
-
-    if test "x$usemumps" = "xyes"; then
-      MUMPS_LIBS="-ldmumps -lzmumps"
-    fi;
-    echo "Building with MUMPS (use --enable-mumps=no to disable it)"
-  fi;
+usemumps="no"
+if test "x$acx_mumps_ok" = "xno"; then
+  echo "Building with MUMPS disabled";
+elif test "x$acx_mumps_ok" = "xdisable"; then
+  echo "Could not enable MUMPS support. Building without MUMPS";
+else
+  AC_CHECK_HEADERS(dmumps_c.h, [usemumps="yes"],
+    [ 
+      AC_MSG_ERROR([header file dmumps_c.h not found. Use --enable-mumps=no flag]);
+      usemumps="no" ; MUMPS_LIBS=""
+    ])
+  echo "Building with MUMPS (use --enable-mumps=no to disable it)"
 fi;
 
 AM_CONDITIONAL(MUMPS, test x$usemumps = xyes)
