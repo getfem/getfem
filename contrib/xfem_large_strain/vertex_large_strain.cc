@@ -64,6 +64,118 @@ typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 
+/**************************************************************************/
+/*                                                                        */
+/* Enrichment.                                                            */
+/*                                                                        */
+/**************************************************************************/
+
+
+scalar_type alpha_md = 0.5;
+scalar_type beta_md = 0.5;
+
+struct generic_u_singular_xy_function : public getfem::abstract_xy_function {
+    int n;
+    virtual scalar_type val(scalar_type x, scalar_type y) const;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    virtual base_matrix hess(scalar_type x, scalar_type y) const;
+    generic_u_singular_xy_function(int n_) : n(n_) {}
+  };
+
+
+scalar_type
+generic_u_singular_xy_function::val(scalar_type x, scalar_type y) const {
+  scalar_type r = sqrt(x*x + y*y);  
+  if (r < 1e-10)  return 0;
+  scalar_type theta = atan2(x, y);
+  
+  if (n <= 0)
+    return pow(r, alpha_md) * cos(scalar_type(n) * theta * 0.5);
+  else
+    return pow(r, alpha_md) * sin(scalar_type(n) * theta * 0.5);
+}
+
+
+base_small_vector
+generic_u_singular_xy_function::grad(scalar_type x, scalar_type y) const {
+  scalar_type r = sqrt(x*x + y*y);
+  if (r < 1e-10) {
+    GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
+  }
+  scalar_type theta = atan2(x, y);
+  base_small_vector res(2);
+  scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
+  scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
+
+  if (n <= 0) {
+    res[0] = alpha_md * x * cos_n_2 - scalar_type(n) * 0.5 * y * sin_n_2;
+    res[1] = alpha_md  * y * cos_n_2 + scalar_type(n) * 0.5 * x * sin_n_2;
+  } else {
+    res[0] = alpha_md  * x * sin_n_2 + scalar_type(n) * 0.5 * y * cos_n_2;
+    res[1] = alpha_md  * y * sin_n_2 - scalar_type(n) * 0.5 * x * cos_n_2;
+  }
+
+  gmm::scale(res, pow(r, alpha_md - 2));
+  return res;
+}
+
+
+base_matrix generic_u_singular_xy_function::hess(scalar_type, scalar_type)
+  const {
+  GMM_ASSERT1(false, "To be done !");
+}
+
+struct generic_p_singular_xy_function : public getfem::abstract_xy_function {
+  int n;
+  virtual scalar_type val(scalar_type x, scalar_type y) const;
+  virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+  virtual base_matrix hess(scalar_type x, scalar_type y) const;
+  generic_p_singular_xy_function(int n_) : n(n_) {}
+};
+
+scalar_type
+generic_p_singular_xy_function::val(scalar_type x, scalar_type y) const {
+  scalar_type r = sqrt(x*x + y*y);  
+  if (r < 1e-10)  return 0;
+  scalar_type theta = atan2(x, y);
+  
+  if (n <= 0)
+    return pow(r, beta_md) * cos(scalar_type(n) * theta * 0.5);
+  else
+    return pow(r, beta_md) * sin(scalar_type(n) * theta * 0.5);
+}
+
+
+base_small_vector
+generic_p_singular_xy_function::grad(scalar_type x, scalar_type y) const {
+  scalar_type r = sqrt(x*x + y*y);
+  if (r < 1e-10) {
+    GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
+  }
+  scalar_type theta = atan2(x, y);
+  base_small_vector res(2);
+  scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
+  scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
+
+  if (n <= 0) {
+    res[0] = beta_md * x * cos_n_2 - scalar_type(n) * 0.5 * y * sin_n_2;
+    res[1] = beta_md  * y * cos_n_2 + scalar_type(n) * 0.5 * x * sin_n_2;
+  } else {
+    res[0] = beta_md  * x * sin_n_2 + scalar_type(n) * 0.5 * y * cos_n_2;
+    res[1] = beta_md  * y * sin_n_2 - scalar_type(n) * 0.5 * x * cos_n_2;
+  }
+
+  gmm::scale(res, pow(r, beta_md - 2));
+  return res;
+}
+
+
+base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
+  const {
+  GMM_ASSERT1(false, "To be done !");
+}
+
+
 
 
 /**************************************************************************/
@@ -687,7 +799,7 @@ namespace getfem {
 
 
   template <typename MAT, typename VEC> 
-  struct model_pb {
+  struct my_model_pb {
 
     typedef MAT MATRIX;
     typedef VEC VECTOR;
@@ -734,6 +846,15 @@ namespace getfem {
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	
+	// Ici, on récupère alpha et beta de l'enrichissement
+	alpha_md
+	  = state[md.interval_of_variable("alpha").first()];
+	beta_md
+	  = state[md.interval_of_variable("beta").first()];
+
+
+	
 	if (alpha < 1E-10) break;
 	if (with_pseudo_potential) {
 	  compute_pseudo_potential();
@@ -747,13 +868,22 @@ namespace getfem {
       if (alpha != ls.converged_value() || with_pseudo_potential) {
 	alpha = ls.converged_value();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	
+	// Ici, on récupère alpha et beta de l'enrichissement
+	alpha_md
+	  = state[md.interval_of_variable("alpha").first()];
+	beta_md
+	  = state[md.interval_of_variable("beta").first()];
+
+
 	res = ls.converged_residual();
 	compute_residual();
       }
+      cout << "alpha = " << alpha_md << endl << "beta = " << beta_md << endl;
       return alpha;
     }
 
-    model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+    my_model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
 	     const VECTOR &rhs_, const MATRIX &K_,
 	     bool with_pseudo_pot = false)
       : md(m), ls(ls_), state(st), rhs(rhs_), K(K_),
@@ -781,7 +911,7 @@ namespace getfem {
       (*lsolver)(K, state, rhs, iter);
     }
     else {
-      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
+      my_model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
 				    with_pseudo_potential);
       classical_Newton(mdpb, iter, *lsolver);
     }
@@ -825,7 +955,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();
-  // size_type law_num = PARAM.int_value("LAW");
+  size_type law_num = PARAM.int_value("LAW");
   //size_type newton_version = PARAM.int_value("newton_version");
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
@@ -841,101 +971,62 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   mfls_p.adapt();
   mfls_mortar.adapt(); mfls_mortar.set_qdim(2);
 
-  bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
+  //  bool load_global_fun = GLOBAL_FUNCTION_MF.size() != 0;
 
 
   cout << "Setting up the singular functions for the enrichment\n";
 
-  std::vector<getfem::pglobal_function> vfunc(2);
-  std::vector<getfem::pglobal_function> vfunc_p(2);
-  if (!load_global_fun) {
+  size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U",
+				   "Number of Enriched function for u"));
+  size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P",
+				   "Number of Enriched function for p"));
+
+  std::vector<getfem::pglobal_function> vfunc(2*nb_enr_func_u);
+  std::vector<getfem::pglobal_function> vfunc_p(2*nb_enr_func_p);
+
   std::cout << "Using default singular functions\n";
-    for (unsigned i = 0; i < vfunc.size(); ++i){
-      /* use the singularity */
-     
-      getfem::abstract_xy_function *s = 
-	new getfem::crack_singular_xy_function(i+12);
+  for (unsigned i = 0; i < vfunc.size(); ++i){
+    
+    getfem::abstract_xy_function *s;
+    if (i < nb_enr_func_u)
+      s = new generic_u_singular_xy_function(i+1);
+    else
+      s = new generic_u_singular_xy_function(-(i+1));
+    
+    if (enrichment_option != FIXED_ZONE && 
+	enrichment_option != GLOBAL_WITH_MORTAR) {
+      /* use the product of the singularity function
+	 with a cutoff */
+      getfem::abstract_xy_function *c = 
+	new getfem::cutoff_xy_function(int(cutoff_func),
+				       cutoff_radius, 
+				       cutoff_radius1,cutoff_radius0);
+      s  = new getfem::product_of_xy_functions(*s, *c);
       
-      if (enrichment_option != FIXED_ZONE && 
-	  enrichment_option != GLOBAL_WITH_MORTAR) {
-	/* use the product of the singularity function
-	   with a cutoff */
-	getfem::abstract_xy_function *c = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
-					 cutoff_radius, 
-					 cutoff_radius1,cutoff_radius0);
-	s  = new getfem::product_of_xy_functions(*s, *c);
-        
-      }
-      vfunc[i]=getfem::global_function_on_level_set(ls, *s);           
     }
-
-     for (unsigned i = 0; i < vfunc_p.size() ;++i){
-       /* use the singularity */
-      
-       getfem::abstract_xy_function *sp = 
- 	new getfem::crack_singular_xy_function(i+14);      
-       if (enrichment_option != FIXED_ZONE && 
- 	  enrichment_option != GLOBAL_WITH_MORTAR) {
- 	/* use the product of the singularity function
- 	   with a cutoff */
- 	getfem::abstract_xy_function *cp = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
- 					 cutoff_radius, 
- 					 cutoff_radius1,cutoff_radius0);
- 	sp  = new getfem::product_of_xy_functions(*sp, *cp);
-        
-       }
-       vfunc_p[i]=getfem::global_function_on_level_set(ls, *sp);           
-    }
-  } else {
-    cout << "Load singular functions from " << GLOBAL_FUNCTION_MF << " and " << GLOBAL_FUNCTION_U <<" and " << GLOBAL_FUNCTION_P << "\n";
-    getfem::mesh *m = new getfem::mesh(); 
-    m->read_from_file(GLOBAL_FUNCTION_MF);
-    getfem::mesh_fem *mf_c = new getfem::mesh_fem(*m); 
-    mf_c->read_from_file(GLOBAL_FUNCTION_MF);
-    std::fstream f(GLOBAL_FUNCTION_U.c_str(), std::ios::in);
-    std::fstream fp(GLOBAL_FUNCTION_P.c_str(), std::ios::in);
-    plain_vector W(mf_c->nb_dof());
-    plain_vector WP(mf_c->nb_dof());
-
-
+    vfunc[i]=getfem::global_function_on_level_set(ls, *s);       
+  }
   
-    for (unsigned i=0; i < mf_c->nb_dof(); ++i) {
-      f >> W[i]; GMM_ASSERT1(f.good(), "problem while reading " << GLOBAL_FUNCTION_U);
+  for (unsigned i = 0; i < vfunc_p.size() ;++i){
+    
+    getfem::abstract_xy_function *sp;
+    if (i < nb_enr_func_p)
+      sp = new generic_p_singular_xy_function(i+1);
+    else
+      sp = new generic_p_singular_xy_function(-(i+1));
+    
+    if (enrichment_option != FIXED_ZONE && 
+	enrichment_option != GLOBAL_WITH_MORTAR) {
+      /* use the product of the singularity function
+	 with a cutoff */
+      getfem::abstract_xy_function *cp = 
+	new getfem::cutoff_xy_function(int(cutoff_func),
+				       cutoff_radius, 
+				       cutoff_radius1,cutoff_radius0);
+      sp  = new getfem::product_of_xy_functions(*sp, *cp);
       
-      //cout << "The precalculated dof " << i << " of coordinates " << mf_c->point_of_dof(i) << " is "<< W[i] <<endl; 
-      /*scalar_type x = pow(mf_c->point_of_dof(i)[0],2); scalar_type y = pow(mf_c->point_of_dof(i)[1],2);
-	scalar_type r = std::sqrt(pow(x,2) + pow(y,2));
-	scalar_type sgny = (y < 0 ? -1.0 : 1.0);
-	scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
-	scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));
-	W[i] = std::sqrt(r) * sin2;
-      */
     }
-    unsigned nb_func = mf_c->get_qdim();
-    cout << "read " << nb_func << " global functions OK.\n";
-    vfunc.resize(nb_func);
-    getfem::interpolator_on_mesh_fem *global_interp = 
-      new getfem::interpolator_on_mesh_fem(*mf_c, W);
-    for (size_type i=0; i < nb_func; ++i) {
-      /* use the precalculated function for the enrichment*/
-      //getfem::abstract_xy_function *s = new getfem::crack_singular_xy_function(i);
-      getfem::abstract_xy_function *s = new getfem::interpolated_xy_function(*global_interp,i);
-
-      if (enrichment_option != FIXED_ZONE && 
-	  enrichment_option != GLOBAL_WITH_MORTAR) {
-
-	/* use the product of the enrichment function
-	   with a cutoff */
-	getfem::abstract_xy_function *c = 
-	  new getfem::cutoff_xy_function(int(cutoff_func),
-					 cutoff_radius, 
-					 cutoff_radius1,cutoff_radius0);
-	s = new getfem::product_of_xy_functions(*s, *c);
-      }    
-      vfunc[i] = getfem::global_function_on_level_set(ls, *s);
-    }    
+    vfunc_p[i]=getfem::global_function_on_level_set(ls, *sp);           
   }
   
   mf_sing_u.set_functions(vfunc);
@@ -1121,29 +1212,28 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   /***********************************************/
   // Choose the material law.
  
- //  getfem::abstract_hyperelastic_law *pl = 0;
- //     switch (law_num) {
- //       case 0: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
- //       case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
- //       case 3: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
- //       default: GMM_ASSERT1(false, "no such law");
- //     }
-
-  // if (mixed_pressure) 
-  //   cout << "Number of dof for P: " << mf_pe.nb_dof() << endl;
-  //   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
-  //pr.resize(pl->nb_params());
+  getfem::abstract_hyperelastic_law *pl = 0;
+  switch (law_num) {
+  case 0: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
+  case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
+  case 2: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
+  case 3: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
+  default: GMM_ASSERT1(false, "no such law");
+  }
+  pr.resize(pl->nb_params());
+  
+//   if (mixed_pressure) 
+//     cout << "Number of dof for P: " << mf_pe.nb_dof() << endl;
+//   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
   
   getfem::model model;
-  //  scalar_type alpha, beta;
   model.add_fem_variable("u", mf_u());
   model.add_fixed_size_variable("alpha", 1);
   model.add_fixed_size_variable("beta", 1);
   
-  model.add_initialized_fixed_size_data("Mooney_Riv_coefficient", pr);
+  model.add_initialized_fixed_size_data("coefficients", pr);
   
-  getfem::add_nonlinear_elasticity_brick(model, mim, "u",
-					 getfem::Mooney_Rivlin_hyperelastic_law(), "Mooney_Riv_coefficient");
+  getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "coefficients");
   // Incompressibility
   if (mixed_pressure) {
     model.add_fem_variable("p", mf_pe());
@@ -1152,7 +1242,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   // Add nonlinear elasticity optimazition brick
 
   add_nonlinear_elasticity_optim_brick(model, mim, "u" , "p", "alpha", "beta",
-	   getfem::Mooney_Rivlin_hyperelastic_law(), "Mooney_Riv_coefficient", ls);
+				       *pl, "coefficients", ls);
 
  //  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
  //   getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
@@ -1170,49 +1260,47 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   plain_vector F_Neumann4(nb_dof_rhs * N);
   // Neumann condition brick.
    
-  for(size_type i = 0; i < F_Neumann1.size(); i=i+N) F_Neumann1[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann1.size(); i=i+N) F_Neumann1[i] = AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann2.size(); i=i+N) F_Neumann2[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann2.size(); i=i+N) F_Neumann2[i] = AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann3.size(); i=i+N) F_Neumann3[i] = -AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann3.size(); i=i+N) F_Neumann3[i] = -AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann4.size(); i=i+N) F_Neumann4[i] = -AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann4.size(); i=i+N) F_Neumann4[i] = -AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann1.size(); i=i+N)
+    F_Neumann1[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann1.size(); i=i+N)
+    F_Neumann1[i] = AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann2.size(); i=i+N)
+    F_Neumann2[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann2.size(); i=i+N)
+    F_Neumann2[i] = AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann3.size(); i=i+N)
+    F_Neumann3[i] = -AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann3.size(); i=i+N)
+    F_Neumann3[i] = -AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann4.size(); i=i+N)
+    F_Neumann4[i] = -AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann4.size(); i=i+N)
+    F_Neumann4[i] = -AMP_LOAD_Y;
    
    model.add_initialized_fem_data("NeumannData1", mf_rhs,F_Neumann1 );
-  getfem::add_normal_source_term_brick
+  getfem::add_source_term_brick
     (model, mim, "u", "NeumannData1", NEUMANN1_BOUNDARY_NUM);
 
    model.add_initialized_fem_data("NeumannData2", mf_rhs,F_Neumann2 );
-  getfem::add_normal_source_term_brick
+  getfem::add_source_term_brick
     (model, mim, "u", "NeumannData2", NEUMANN2_BOUNDARY_NUM);
 
    model.add_initialized_fem_data("NeumannData3", mf_rhs,F_Neumann3 );
-   getfem::add_normal_source_term_brick
+   getfem::add_source_term_brick
     (model, mim, "u", "NeumannData3", NEUMANN3_BOUNDARY_NUM);
 
    model.add_initialized_fem_data("NeumannData4", mf_rhs,F_Neumann3 );
-   getfem::add_normal_source_term_brick
+   getfem::add_source_term_brick
     (model, mim, "u", "NeumannData4", NEUMANN4_BOUNDARY_NUM);
-   
-  
-  //  getfem::mdbrick_source_term<> NEUMANN1(INCOMP, mf_rhs, F_Neumann1, NEUMANN1_BOUNDARY_NUM);
-  //  getfem::mdbrick_source_term<> NEUMANN2(NEUMANN1, mf_rhs, F_Neumann2, NEUMANN2_BOUNDARY_NUM);
-  //  gmm::scale(F, -1.0);
-  //  getfem::mdbrick_source_term<> NEUMANN3(NEUMANN2, mf_rhs, F_Neumann3, NEUMANN3_BOUNDARY_NUM);
-  //  getfem::mdbrick_source_term<> NEUMANN4(NEUMANN3, mf_rhs, F_Neumann4, NEUMANN4_BOUNDARY_NUM);
-  //  getfem::mdbrick_constraint<> KILL_RIGID_MOTIONS(NEUMANN4);
 
   GMM_ASSERT1(N==2, "To be corrected for 3D computation");
-  sparse_matrix BB(4, mf_u().nb_dof());
+  sparse_matrix BB(3, mf_u().nb_dof());
   BB(0, icorner1) = 1.0;
   BB(1, icorner1+1) = 1.0;
   BB(2, icorner2) = 1.0;
-  BB(3, icorner2+1) = 1.0;
-   size_type size(3);
-   std::vector<scalar_type> LRH(size);
-   model.add_fixed_size_variable("dir", size);
-   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+  std::vector<scalar_type> LRH(3);
+  model.add_fixed_size_variable("dir", 3);
+  getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
 
 
    // + nouvelle brique
@@ -1335,9 +1423,25 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   gmm::iteration iter(residual, 1, 40000);
   cout << "Solving..." << endl;
   iter.init();
+  alpha_md = 0.5; beta_md = 0.5;
+  std::vector<scalar_type> alpha_v(1), beta_v(1);
+  alpha_v[0] = beta_v[0] = 0.5;
+  gmm::copy(alpha_v, model.set_real_variable("alpha"));
+  gmm::copy(beta_v, model.set_real_variable("beta"));
+
+  gmm::fill_random(model.set_real_variable("u"));
+  gmm::scale(model.set_real_variable("u"), 1e-4);
+  gmm::fill_random(model.set_real_variable("p"));
+  gmm::scale(model.set_real_variable("p"), 1e-4);
+    
+
   getfem::my_solve(model, iter);
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(model.real_variable("u"), U);
+
+
+  cout << "alpha = " << alpha_md << endl;
+  cout << "beta = " << beta_md << endl;
 
 
 

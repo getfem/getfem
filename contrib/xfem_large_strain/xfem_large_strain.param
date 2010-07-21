@@ -35,7 +35,7 @@ P3 = 0 ;   	        % Third elastic coefficient.%
 %Hyperelastic law                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-LAW = 0;     % 0 : Mooney-Rivlin (+incompressibility)
+LAW = 2;     % 0 : Mooney-Rivlin (+incompressibility)
              % 1 : SaintVenant-Kirchhoff
              % 2 : SaintVenant-Kirchhoff+incompressibility
              % 3 : Ciarlet-Geymonat
@@ -68,7 +68,10 @@ INF_SUP_COMP = 0; % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 20;	        % space step.
+NB_ENR_FUNC_U = 2;
+NB_ENR_FUNC_P = 2;
+
+NX = 2;	        % space step.
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh.
 AMP_LOAD_X = 0.01;      % Load in X direction. 
 AMP_LOAD_Y = 0.01;      % Load in Y direction.
@@ -114,7 +117,7 @@ SINGULAR_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2, 6), 9
 % GLOBAL_FUNCTION_U  = "bimaterial_crack12.U"
 
 
-ENRICHMENT_OPTION = 1 ; % 0 = Pas d'enrichissement
+ENRICHMENT_OPTION = 3 ; % 0 = Pas d'enrichissement
 	                % 1 = standard XFEM on a fixed zone
 			% 2 = global functions with mortar junction
 		        % 3 = global functions with cutoff

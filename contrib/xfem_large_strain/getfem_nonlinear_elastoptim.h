@@ -186,7 +186,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N),
 	tt(N, N, N, N), sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
@@ -311,7 +312,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, U_ls_theta, GsEalpha;// U_ls_theta le terme U_ls multiplier par le vecteur 
+    base_matrix E, Sigma, gradU, gradU_ls, U_ls_theta;// U_ls_theta le terme U_ls multiplier par le vecteur 
     base_tensor GSigma;
     bgeot::multi_index sizes_;
     mesher_level_set mls_x, mls_y;
@@ -326,7 +327,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(2); sizes_[0] = short_type(N); sizes_[1] = short_type(N);
       cv_old = size_type(-1);
@@ -376,7 +378,7 @@ namespace getfem {
 
       // Computation of d(E)/d(alpha) 
       
-      base_matrix Ealpha(N, N);
+      base_matrix Ealpha(N, N), GsEalpha(N, N);
       gmm::mult(gmm::transposed(gradU_ls), gradU, Sigma);
       gmm::add(Sigma, gmm::transposed(Sigma), Ealpha);
       gmm::scale(Ealpha, 0.5);
@@ -470,7 +472,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, U_ls_theta, GsEalpha;// U_ls_theta le terme U_ls multiplier par le vecteur 
+    base_matrix E, Sigma, gradU, gradU_ls, U_ls_theta;// U_ls_theta le terme U_ls multiplier par le vecteur 
     base_tensor GSigma;
     bgeot::multi_index sizes_;
     mesher_level_set mls_x, mls_y;
@@ -485,7 +487,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(2); sizes_[0] = short_type(N); sizes_[1] = short_type(N);
       cv_old = size_type(-1);
@@ -585,7 +588,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, U_ls_theta, GsEalpha;// U_ls_theta le terme U_ls multiplier par le vecteur 
+    base_matrix E, Sigma, gradU, gradU_ls, U_ls_theta;// U_ls_theta le terme U_ls multiplier par le vecteur 
     base_tensor GSigma;
     bgeot::multi_index sizes_;
     mesher_level_set mls_x, mls_y;
@@ -600,7 +603,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N), 
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = short_type(N);
       cv_old = size_type(-1);
@@ -644,9 +648,7 @@ namespace getfem {
       gmm::add(gmm::scaled(gmm::transposed(gradU), valP[0] * J), eas); 
       base_small_vector V(2), W(2); V[0] = x; V[1] = y;
       gmm::mult(gmm::transposed(eas), gmm::scaled(V, 1./r2), W);
-      for (size_type i = 0; i < N; ++i)
-	for (size_type j = 0; j < N; ++j)
-	  t(i,j) = eas(i, j);
+      for (size_type i = 0; i < N; ++i) t[i] = W[i];
     }
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
@@ -700,7 +702,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls;
     //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
     base_tensor GSigma;
     bgeot::multi_index sizes_;
@@ -716,7 +718,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N), gradU2_ls(NFem, N),
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
@@ -796,7 +799,7 @@ namespace getfem {
 
       // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
       gmm::lu_inverse(gradU);
-      base_matrix FmT;
+      base_matrix FmT(N,N);
       gmm::copy(gmm::transposed(gradU), FmT);
       temp = mat_euclidean_sp(FmT, gradU2_ls)
 	+ gmm::sqr(mat_euclidean_sp(FmT, gradU_ls));
@@ -859,7 +862,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls;
     //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
     base_tensor GSigma;
     bgeot::multi_index sizes_;
@@ -875,7 +878,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N),  gradU2_ls(NFem, N), 
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
@@ -959,7 +963,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls;
     //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
     base_tensor GSigma;
     bgeot::multi_index sizes_;
@@ -975,7 +979,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N), gradU2_ls(NFem, N), 
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
@@ -1028,7 +1033,7 @@ namespace getfem {
       
       // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
       gmm::lu_inverse(gradU);
-      base_matrix FmT;
+      base_matrix FmT(N,N);
       gmm::copy(gmm::transposed(gradU), FmT);
       t[0] += mat_euclidean_sp(FmT, gradU_ls) * valP[0] * J;
     }
@@ -1073,7 +1078,7 @@ namespace getfem {
 
 //=============================================================================================
 //=             /**************************************************************/              =
-//=             /*              Term 9 d^2(L)/d(beta)d(alha)                  */              =
+//=             /*              Term 9 d^2(L)/d(beta)d(alpha)                  */              =
 //=             /**************************************************************/              =
 //=============================================================================================
 
@@ -1090,7 +1095,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls;
     //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
     base_tensor GSigma;
     bgeot::multi_index sizes_;
@@ -1106,7 +1111,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N),  gradU_ls(NFem, N), gradU2_ls(NFem, N), 
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(2); sizes_[0] = short_type(N); sizes_[1] = short_type(N);
       cv_old = size_type(-1);
@@ -1159,7 +1165,7 @@ namespace getfem {
       
       // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
       gmm::lu_inverse(gradU);
-      base_matrix FmT;
+      base_matrix FmT(N,N);
       gmm::copy(gmm::transposed(gradU), FmT);
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
@@ -1207,7 +1213,7 @@ namespace getfem {
 
 //=============================================================================================
 //=             /**************************************************************/              =
-//=             /*              Term 10 d^2(L)/d(beta)d(alha)                  */              =
+//=             /*              Term 10 d^2(L)/d(beta)d(alpha)                  */              =
 //=             /**************************************************************/              =
 //=============================================================================================
 
@@ -1224,7 +1230,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls;
     //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
     base_tensor GSigma;
     bgeot::multi_index sizes_;
@@ -1240,7 +1246,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N),  gradU2_ls(NFem, N), 
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
@@ -1262,6 +1269,12 @@ namespace getfem {
       gmm::copy(gmm::sub_vector
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      if (cv != cv_old) {
+	mls_x = ls.mls_of_convex(cv, 1);
+	mls_y = ls.mls_of_convex(cv, 0);
+	cv_old = cv;
+      }
 
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
@@ -1300,7 +1313,7 @@ namespace getfem {
 
 //=============================================================================================
 //=             /**************************************************************/              =
-//=             /*              Term 11 d^2(L)/d(beta)d(alha)                  */              =
+//=             /*              Term 11 d^2(L)/d(beta)d(alpha)                  */              =
 //=             /**************************************************************/              =
 //=============================================================================================
 
@@ -1317,7 +1330,7 @@ namespace getfem {
     size_type N, cv_old, NFem;
     const abstract_hyperelastic_law &AHL;
     base_vector params, coeff, valP, u_ls;
-    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls, GsEalpha;
+    base_matrix E, Sigma, gradU, gradU_ls, gradU2_ls;
     //  gradU_ls pour contenir du/dalpha et gradU2_ls pour contenir d^2u/dalpha
     base_tensor GSigma;
     bgeot::multi_index sizes_;
@@ -1333,7 +1346,8 @@ namespace getfem {
 	P(mf_p_.nb_basic_dof()), P_ls(mf_p_.nb_basic_dof()),
 	mf_data(mf_data_), PARAMS(PARAMS_), ls(ls_),
 	N(mf_u_.linked_mesh().dim()), NFem(mf_u_.get_qdim()), AHL(AHL_),
-	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N), gradU(NFem, N),
+	params(AHL_.nb_params()), u_ls(N), E(N, N), Sigma(N, N),
+	gradU(NFem, N), gradU_ls(NFem, N),  gradU2_ls(NFem, N), 
 	GSigma(N, N, N, N) ,sizes_(NFem, N, NFem, N) {
       sizes_.resize(1); sizes_[0] = 1;
       cv_old = size_type(-1);
@@ -1355,6 +1369,12 @@ namespace getfem {
       gmm::copy(gmm::sub_vector
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+
+      if (cv != cv_old) {
+	mls_x = ls.mls_of_convex(cv, 1);
+	mls_y = ls.mls_of_convex(cv, 0);
+	cv_old = cv;
+      }
 
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
@@ -1386,7 +1406,7 @@ namespace getfem {
       
       // Computation of pJ(F^{-T}:d^2(gradU)/d^2(alpha)
       gmm::lu_inverse(gradU);
-      base_matrix FmT;
+      base_matrix FmT(N,N);
       gmm::copy(gmm::transposed(gradU), FmT);
       t[0] += mat_euclidean_sp(FmT, gradU_ls) * J;
     }
@@ -1452,17 +1472,18 @@ template<typename VECT0, typename VECT1, typename VECT2>
     elasticity_nonlinear_optim_term5<VECT1, VECT2>
       nterm3(mf_u, U, U_ls, mf_p, P, P_ls, mf_data, PARAMS, AHL, ls);
 
-
+    gmm::clear(V);
 
     getfem::generic_assembly assem2;
     if (mf_data)
+      assem2.set("V(#1)+=comp(NonLin$1(#1,#2,#3)(i,j).vGrad(#1)(:,i,j));"
+		 "V(#1)+=comp(NonLin$2(#1,#2,#3)(i).vBase(#1)(:,i))");
+    else
       assem2.set("V(#1)+=comp(NonLin$1(#1,#2)(i,j).vGrad(#1)(:,i,j));"
 		 "V(#1)+=comp(NonLin$2(#1,#2)(i).vBase(#1)(:,i))");
-    else
-      assem2.set("V(#1)+=comp(NonLin$1(#1)(i,j).vGrad(#1)(:,i,j));"
-		 "V(#1)+=comp(NonLin$2(#1)(i).vBase(#1)(:,i))");
     assem2.push_mi(mim);
     assem2.push_mf(mf_u);
+    assem2.push_mf(mf_p);
     if (mf_data) assem2.push_mf(*mf_data);
     assem2.push_nonlinear_term(&nterm2);
     assem2.push_nonlinear_term(&nterm3);
@@ -1472,15 +1493,15 @@ template<typename VECT0, typename VECT1, typename VECT2>
     for (size_type i = 0; i < mf_u.nb_dof(); ++i)
       if (!(u_enriched_dof.is_in(i))) V[i] = 0.0;
 
-
     getfem::generic_assembly assem1;
     
     if (mf_data)
-      assem1.set("V(#1)+=comp(NonLin(#1,#2)(i,j).vGrad(#1)(:,i,j))");
+      assem1.set("V(#1)+=comp(NonLin(#1,#2,#3)(i,j).vGrad(#1)(:,i,j))");
     else
-      assem1.set("V(#1)+=comp(NonLin(#1)(i,j).vGrad(#1)(:,i,j))");
+      assem1.set("V(#1)+=comp(NonLin(#1,#2)(i,j).vGrad(#1)(:,i,j))");
     assem1.push_mi(mim);
     assem1.push_mf(mf_u);
+    assem1.push_mf(mf_p);
     if (mf_data) assem1.push_mf(*mf_data);
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
@@ -1511,9 +1532,9 @@ template<typename VECT0, typename VECT1, typename VECT2>
     getfem::generic_assembly assem1;
     
     if (mf_data)
-      assem1.set("V(#1)+=comp(NonLin(#1,#3).Base(#2))(1,:)");
+      assem1.set("V(#2)+=comp(NonLin(#1,#3).Base(#2))(1,:)");
     else
-      assem1.set("V(#1)+=comp(NonLin(#1).Base(#2))(1,:)");
+      assem1.set("V(#2)+=comp(NonLin(#1).Base(#2))(1,:)");
     assem1.push_mi(mim);
     assem1.push_mf(mf_u);
     assem1.push_mf(mf_p);
@@ -1521,6 +1542,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
     assem1.assembly(rg);
+
   }
 
   template<typename VECT1, typename VECT2> 
@@ -1554,6 +1576,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
     assem1.assembly(rg);
+    
     return V[0];
   }
 
@@ -1588,6 +1611,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
     assem1.assembly(rg);
+
     return V[0];
   }
 
@@ -1622,6 +1646,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
     assem1.assembly(rg);
+
     return V[0];
   }
 
@@ -1659,6 +1684,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
     assem1.assembly(rg);
+
   }
 
 
@@ -1683,9 +1709,9 @@ template<typename VECT0, typename VECT1, typename VECT2>
     getfem::generic_assembly assem1;
     
     if (mf_data)
-      assem1.set("V(#1)+=comp(NonLin(#1,#3).Base(#2))(1,:)");
+      assem1.set("V(#2)+=comp(NonLin(#1,#3).Base(#2))(1,:)");
     else
-      assem1.set("V(#1)+=comp(NonLin(#1).Base(#2))(1,:)");
+      assem1.set("V(#2)+=comp(NonLin(#1).Base(#2))(1,:)");
     assem1.push_mi(mim);
     assem1.push_mf(mf_u);
     assem1.push_mf(mf_p);
@@ -1696,6 +1722,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
 
     for (size_type i = 0; i < mf_p.nb_dof(); ++i)
       if (!(p_enriched_dof.is_in(i))) V[i] = 0.0;
+
 
   }
 

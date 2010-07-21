@@ -27,6 +27,10 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 2;            	          % space step.
 NZ = 5;
 
+NB_ENR_FUNC_U = 2;
+NB_ENR_FUNC_P = 2;
+
+
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
 FEM_TYPE = 'FEM_PK(2,2)';  % P1 for triangles
