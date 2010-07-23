@@ -1087,7 +1087,22 @@ namespace gmm {
     mm_read_mtx_crd_data(f, row, col, nz, &I[0], &J[0],
 			 (double*)&PR[0], matcode);
     
-    for (size_type i = 0; i < size_type(nz); ++i) A(I[i]-1, J[i]-1) = PR[i];
+    for (size_type i = 0; i < size_type(nz); ++i) {
+        A(I[i]-1, J[i]-1) = PR[i];
+
+        // FIXED MM Format
+        if (mm_is_hermitian(matcode) && (I[i] != J[i]) ) {
+            A(J[i]-1, I[i]-1) = gmm::conj(PR[i]);
+        }
+
+        if (mm_is_symmetric(matcode) && (I[i] != J[i]) ) {
+            A(J[i]-1, I[i]-1) = PR[i];
+        }
+
+        if (mm_is_skew(matcode) && (I[i] != J[i]) ) {
+            A(J[i]-1, I[i]-1) = -PR[i];
+        }
+    }
   }
 
   template <typename T, int shift> void 
@@ -1136,13 +1151,8 @@ namespace gmm {
   template<typename VEC> static void vecload(std::string fname,
 					     const VEC& V_) {
     VEC &V(const_cast<VEC&>(V_));
-    std::ifstream f(fname.c_str());
-    GMM_ASSERT1(!(f.fail()), "Bad file name");
-    f.imbue(std::locale("C"));
-    for (size_type i=0; i < gmm::vect_size(V); ++i) {
-      GMM_ASSERT1(!(f.eof()), "File too short");
-      f >> V[i];
-    } 
+    std::ifstream f(fname.c_str()); f.imbue(std::locale("C"));
+    for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i]; 
   }
 }
 
