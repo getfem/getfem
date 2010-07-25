@@ -61,11 +61,11 @@ The latest unstable releases is:
 
  * checkout over SVN protocol (TCP 3690)::
 
-     $ svn co svn://svn.gna.org/svn/getfem/trunk/getfem++ getfem
+     $ svn co svn://svn.gna.org/svn/getfem/trunk/getfem getfem
 
  * or checkout over HTTP protocol (TCP 80)::
 
-     $ svn co http://svn.gna.org/svn/getfem/trunk/getfem++ getfem
+     $ svn co http://svn.gna.org/svn/getfem/trunk/getfem getfem
 
  * go to the root directory of |gf|::
 
