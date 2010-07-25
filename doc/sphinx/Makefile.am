@@ -113,6 +113,9 @@ clean:
 	-cd $(srcdir)/source/matlab/images/; make clean
 	-cd $(srcdir)/source/python/images/; make clean
 	-cd $(srcdir)/source/scilab/images/; make clean
+	-rm $(srcdir)/source/matlab/cmdref.rst
+	-rm $(srcdir)/source/scilab/cmdref.rst
+	-rm $(srcdir)/source/python/cmdref.rst
 
 $(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )

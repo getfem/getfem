@@ -1409,7 +1409,8 @@ def generic_destructor(self, destructible=True):
       print '  def get(self, *args):'
       print '    return getfem(\''+o+'_get\',self.id, *args)'
       print '  def __repr__(self):'
-      print '    return getfem(\''+o+'_get\', \'display\')'
+      print '    getfem(\''+o+'_get\',self.id, \'display\')'
+      print '    return \'\''
     if (os.path.exists(directory + '/gf_' + o + '_set.cc')):
       print '  def set(self, *args):'
       print '    return getfem(\''+o+'_set\',self.id, *args)'
