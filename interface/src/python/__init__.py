@@ -8,7 +8,7 @@ This package is licensed under the GNU LGPL 2.1.
 See the COPYING file in the getfem installation directory or
 print getfem.__LICENSE__
 """
-__revision__ = "$Revision"
+__revision__ = "$Revision$"
 __LICENSE__ = """\
 GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
 under  the  terms  of the  GNU  Lesser General Public License as published
@@ -24,5 +24,3 @@ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 """
 
 from getfem import *
-
-
