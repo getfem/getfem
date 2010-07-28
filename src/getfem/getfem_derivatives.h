@@ -290,7 +290,7 @@ namespace getfem
       if (!tresca) {
         /* von mises: norm(deviator(sigma)) */
         //gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma); 
-        VM[i] = gmm::mat_euclidean_norm_sqr(sigma);
+        VM[i] = gmm::mat_euclidean_norm(sigma);
       } else {
         /* else compute the tresca criterion */
         gmm::symmetric_qr_algorithm(sigma, eig);
