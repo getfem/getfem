@@ -278,14 +278,15 @@ namespace getfem
     for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
       scalar_type trE = 0;
       for (unsigned j = 0; j < N; ++j)
-        trE += .5 * GRAD[i*N*N + j*N + j];
+        trE += GRAD[i*N*N + j*N + j];
       for (unsigned j = 0; j < N; ++j) {
         for (unsigned k = 0; k < N; ++k) {
           scalar_type eps = .5 * (GRAD[i*N*N + j*N + k] + 
                              GRAD[i*N*N + k*N + j]);
           sigma(j,k) = 2*MU[i]*eps;
-          if (tresca && j == k) sigma(j,k) += LAMBDA[i]*trE;
         }
+        sigma(j,j) += LAMBDA[i]*trE;
+        if (!tresca) sigma(j,j) -= trE/N; // calculation of deviator(sigma)
       }
       if (!tresca) {
         /* von mises: norm(deviator(sigma)) */
