@@ -60,7 +60,7 @@ namespace getfem
   */
   template<class VECT1, class VECT2>
   void compute_gradient(const mesh_fem &mf, const mesh_fem &mf_target,
-			const VECT1 &UU, VECT2 &VV) {
+                        const VECT1 &UU, VECT2 &VV) {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
 
     size_type N = mf.linked_mesh().dim();
@@ -73,9 +73,9 @@ namespace getfem
     mf.extend_vector(UU, U);
 
     GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
-		"meshes are different.");
+                "meshes are different.");
     GMM_ASSERT1(target_qdim == qdim || target_qdim == 1,
-		"invalid Qdim for gradient mesh_fem");
+                "invalid Qdim for gradient mesh_fem");
     
     base_matrix G;
     std::vector<T> coeff;
@@ -91,7 +91,7 @@ namespace getfem
       if (!pf) continue;
       
       GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
-		  "finite element target not convenient");
+                  "finite element target not convenient");
       
       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 
@@ -102,7 +102,7 @@ namespace getfem
       pf_targetold = pf_target;
 
       if (pf_old != pf) {
-	pfp = fem_precomp(pf, pf_target->node_tab(cv), pf_target);
+        pfp = fem_precomp(pf, pf_target->node_tab(cv), pf_target);
       }
       pf_old = pf;
 
@@ -110,14 +110,14 @@ namespace getfem
       fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
       gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
-		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+                (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
-	size_type dof_t =
-	  mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
-	ctx.set_ii(j);
-	pf->interpolation_grad(ctx, coeff, gradt, dim_type(qdim));
+        size_type dof_t =
+          mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
+        ctx.set_ii(j);
+        pf->interpolation_grad(ctx, coeff, gradt, dim_type(qdim));
         gmm::copy(gmm::transposed(gradt),grad);
-	std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
+        std::copy(grad.begin(), grad.end(), V.begin() + dof_t);
       }
     }
 
@@ -141,7 +141,7 @@ namespace getfem
   */
   template<class VECT1, class VECT2>
   void compute_hessian(const mesh_fem &mf, const mesh_fem &mf_target,
-			const VECT1 &UU, VECT2 &VV) {
+                        const VECT1 &UU, VECT2 &VV) {
     typedef typename gmm::linalg_traits<VECT1>::value_type T;
 
     size_type N = mf.linked_mesh().dim();
@@ -154,9 +154,9 @@ namespace getfem
     mf.extend_vector(UU, U);
 
     GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
-		"meshes are different.");
+                "meshes are different.");
     GMM_ASSERT1(target_qdim == qdim || target_qdim == 1,
-		"invalid Qdim for gradient mesh_fem");
+                "invalid Qdim for gradient mesh_fem");
     base_matrix G;
     std::vector<T> coeff;
  
@@ -169,7 +169,7 @@ namespace getfem
       pf = mf.fem_of_element(cv);
       pf_target = mf_target.fem_of_element(cv);
       GMM_ASSERT1(!(pf_target->need_G()) && pf_target->is_lagrange(),
-		  "finite element target not convenient");
+                  "finite element target not convenient");
       
       bgeot::vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
 
@@ -180,7 +180,7 @@ namespace getfem
       pf_targetold = pf_target;
 
       if (pf_old != pf) {
-	pfp = fem_precomp(pf, pf_target->node_tab(cv), pf_target);
+        pfp = fem_precomp(pf, pf_target->node_tab(cv), pf_target);
       }
       pf_old = pf;
 
@@ -188,14 +188,14 @@ namespace getfem
       fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
       gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
-		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+                (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
-	size_type dof_t
-	  = mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
-	ctx.set_ii(j);
-	pf->interpolation_hess(ctx, coeff, hesst, dim_type(qdim));
+        size_type dof_t
+          = mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
+        ctx.set_ii(j);
+        pf->interpolation_hess(ctx, coeff, hesst, dim_type(qdim));
         gmm::copy(gmm::transposed(hesst), hess);
-	std::copy(hess.begin(), hess.end(), V.begin() + dof_t);
+        std::copy(hess.begin(), hess.end(), V.begin() + dof_t);
       }
     }
 
@@ -207,19 +207,19 @@ namespace getfem
   */
   template <typename VEC1, typename VEC2>
   void interpolation_von_mises(const getfem::mesh_fem &mf_u, 
-			       const getfem::mesh_fem &mf_vm, 
-			       const VEC1 &U, VEC2 &VM,
-			       scalar_type mu=1) {
+                               const getfem::mesh_fem &mf_vm, 
+                               const VEC1 &U, VEC2 &VM,
+                               scalar_type mu=1) {
     dal::bit_vector bv; bv.add(0, mf_vm.nb_dof());
     interpolation_von_mises(mf_u, mf_vm, U, VM, bv, mu);
   }
 
   template <typename VEC1, typename VEC2>
   void interpolation_von_mises(const getfem::mesh_fem &mf_u, 
-			       const getfem::mesh_fem &mf_vm, 
-			       const VEC1 &U, VEC2 &VM,
-			       const dal::bit_vector &mf_vm_dofs,
-			       scalar_type mu=1) {
+                               const getfem::mesh_fem &mf_vm, 
+                               const VEC1 &U, VEC2 &VM,
+                               const dal::bit_vector &mf_vm_dofs,
+                               scalar_type mu=1) {
 
     assert(mf_vm.get_qdim() == 1); 
     unsigned N = mf_u.linked_mesh().dim(); assert(N == mf_u.get_qdim());
@@ -234,18 +234,18 @@ namespace getfem
       VM[i] = 0;
       scalar_type sdiag = 0.;
       for (unsigned j=0; j < N; ++j) {
-	sdiag += DU[i*N*N + j*N + j];
-	for (unsigned k=0; k < N; ++k) {
-	  scalar_type e = .5*(DU[i*N*N + j*N + k] + DU[i*N*N + k*N + j]);
-	  VM[i] += e*e;	
-	}
+        sdiag += DU[i*N*N + j*N + j];
+        for (unsigned k=0; k < N; ++k) {
+          scalar_type e = .5*(DU[i*N*N + j*N + k] + DU[i*N*N + k*N + j]);
+          VM[i] += e*e; 
+        }
       }
       VM[i] -= 1./N * sdiag * sdiag;
       vm_min = (i == 0 ? VM[0] : std::min(vm_min, VM[i]));
       vm_max = (i == 0 ? VM[0] : std::max(vm_max, VM[i]));
     }
     cout << "Von Mises : min=" << 4*mu*mu*vm_min << ", max="
-	 << 4*mu*mu*vm_max << "\n";
+         << 4*mu*mu*vm_max << "\n";
     gmm::scale(VM, 4*mu*mu);
   }
   
@@ -255,13 +255,13 @@ namespace getfem
   */
   template <typename VEC1, typename VEC2, typename VEC3>
   void interpolation_von_mises_or_tresca(const getfem::mesh_fem &mf_u, 
-					 const getfem::mesh_fem &mf_vm, 
-					 const VEC1 &U, VEC2 &VM,
-					 const getfem::mesh_fem &mf_lambda,
-					 const VEC3 &lambda, 
-					 const getfem::mesh_fem &mf_mu,
-					 const VEC3 &mu,
-					 bool tresca) {
+                                         const getfem::mesh_fem &mf_vm, 
+                                         const VEC1 &U, VEC2 &VM,
+                                         const getfem::mesh_fem &mf_lambda,
+                                         const VEC3 &lambda, 
+                                         const getfem::mesh_fem &mf_mu,
+                                         const VEC3 &mu,
+                                         bool tresca) {
     assert(mf_vm.get_qdim() == 1);
     typedef typename gmm::linalg_traits<VEC1>::value_type T;
     size_type N = mf_u.get_qdim();
@@ -278,24 +278,24 @@ namespace getfem
     for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
       scalar_type trE = 0;
       for (unsigned j = 0; j < N; ++j)
-	trE += .5 * GRAD[i*N*N + j*N + j];
+        trE += .5 * GRAD[i*N*N + j*N + j];
       for (unsigned j = 0; j < N; ++j) {
-	for (unsigned k = 0; k < N; ++k) {
-	  scalar_type eps = .5 * (GRAD[i*N*N + j*N + k] + 
-			     GRAD[i*N*N + k*N + j]);
-	  sigma(j,k) = 2*MU[i]*eps;
-	  if (tresca && j == k) sigma(j,k) += LAMBDA[i]*trE;
-	}
+        for (unsigned k = 0; k < N; ++k) {
+          scalar_type eps = .5 * (GRAD[i*N*N + j*N + k] + 
+                             GRAD[i*N*N + k*N + j]);
+          sigma(j,k) = 2*MU[i]*eps;
+          if (tresca && j == k) sigma(j,k) += LAMBDA[i]*trE;
+        }
       }
       if (!tresca) {
-	/* von mises: norm(deviator(sigma)) */
-	//gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma);	
-	VM[i] = gmm::mat_euclidean_norm_sqr(sigma);
+        /* von mises: norm(deviator(sigma)) */
+        //gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma); 
+        VM[i] = gmm::mat_euclidean_norm_sqr(sigma);
       } else {
-	/* else compute the tresca criterion */
-	gmm::symmetric_qr_algorithm(sigma, eig);
-	std::sort(eig.begin(), eig.end());
-	VM[i] = eig.back() - eig.front();
+        /* else compute the tresca criterion */
+        gmm::symmetric_qr_algorithm(sigma, eig);
+        std::sort(eig.begin(), eig.end());
+        VM[i] = eig.back() - eig.front();
       }
     }
   }
