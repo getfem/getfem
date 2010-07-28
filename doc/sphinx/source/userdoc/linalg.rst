@@ -28,7 +28,7 @@ some options to the configure shell::
   --with-mumps-include-dir=" -I /path/to/MUMPS/include "
   --with-mumps=" F90 libraries and libs of MUMPS to be linked "
 
-alternatively, the option --enable-mumps will serach for an installed MUMPS library.
+alternatively, the option ``--enable-mumps`` will search for an installed MUMPS library.
 
 For instance if you want to use the sequential version of |mumps| with double and
 complex double::
