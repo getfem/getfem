@@ -279,15 +279,16 @@ namespace getfem
       scalar_type trE = 0;
       for (unsigned j = 0; j < N; ++j)
         trE += GRAD[i*N*N + j*N + j];
-      scalar_type trE_o_N = trE / N;
       for (unsigned j = 0; j < N; ++j) {
         for (unsigned k = 0; k < N; ++k) {
           scalar_type eps = /* 0.5* */ (GRAD[i*N*N + j*N + k] + 
                                         GRAD[i*N*N + k*N + j]);
           sigma(j,k) = /* 2* */ MU[i]*eps;
         }
-        sigma(j,j) += LAMBDA[i]*trE;
-        if (!tresca) sigma(j,j) -= trE_o_N; // calculation of deviator(sigma)
+        if (tresca) // calculation of sigma
+          sigma(j,j) += LAMBDA[i]*trE;
+        else // calculation of deviator(sigma)
+          sigma(j,j) -= 2*MU[i]*trE/N;
       }
       if (!tresca) {
         /* von mises: norm(deviator(sigma)) */
