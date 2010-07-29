@@ -547,7 +547,7 @@ else
  AC_SEARCH_LIBS(smumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
    [usemumps="yes"],
    [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries.]);
+     AC_MSG_ERROR([The function smumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
     usemumps="no"]
  )
@@ -561,14 +561,14 @@ else
  AC_SEARCH_LIBS(cmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
    [usemumps="yes"],
    [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries.]);
+     AC_MSG_ERROR([The function cmumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
     usemumps="no"]
  )
  AC_SEARCH_LIBS(zmumps_c, [`echo $MUMPS_LIBS | sed -e 's/^-l//g;s/ -l/ /g'`],
    [usemumps="yes"],
    [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([The function dmumps_c couldn't be found in the provided MUMPS libraries.]);
+     AC_MSG_ERROR([The function zmumps_c couldn't be found in the provided MUMPS libraries.]);
     fi;
     usemumps="no"]
  )
