@@ -42,7 +42,7 @@ scilabsrccdir=src/c/copyright \
 	src/c/FILELIST \
 	src/c/machine.h.in  
 
-EXTRADIST=$(toolboxdir)/demos/*.sc[ie] \
+EXTRA_DIST=$(toolboxdir)/demos/*.sc[ie] \
 	$(toolboxdir)/etc/* \
 	$(toolboxdir)/help/*.sce \
 	$(toolboxdir)/help/en_US/*.sce \
