@@ -42,6 +42,35 @@ scilabsrccdir=src/c/copyright \
 	src/c/FILELIST \
 	src/c/machine.h.in  
 
+EXTRADIST=$(toolboxdir)/demos/*.sc[ie] \
+	$(toolboxdir)/etc/* \
+	$(toolboxdir)/help/*.sce \
+	$(toolboxdir)/help/en_US/*.sce \
+	$(toolboxdir)/help/en_US/*.xml \
+	$(toolboxdir)/help/en_US/examples/CHAPTER \
+	$(toolboxdir)/help/en_US/examples/*.xml \
+	$(toolboxdir)/help/fig/* \
+	$(toolboxdir)/help/mml/*.mml \
+	$(toolboxdir)/jar/*.jar \
+	$(toolboxdir)/macros/*.bin \
+	$(toolboxdir)/macros/*.sc[ie] \
+	$(toolboxdir)/macros/names \
+	$(toolboxdir)/macros/lib \
+	$(toolboxdir)/sci_gateway/*.sce \
+	$(toolboxdir)/sci_gateway/c/*.[ch] \
+	$(toolboxdir)/sci_gateway/c/*.sce \
+	$(toolboxdir)/sci_gateway/c/*.so \
+	$(toolboxdir)/src/*.sce \
+	$(toolboxdir)/src/c/*.[ch] \
+	$(toolboxdir)/src/c/*.so \
+	$(toolboxdir)/src/c/MACHINES/Cray/* \
+	$(toolboxdir)/src/c/MACHINES/GCC/* \
+	$(toolboxdir)/src/c/MACHINES/Linux/* \
+	$(toolboxdir)/src/c/MACHINES/RS6000/* \
+	$(toolboxdir)/src/c/MACHINES/SGI/* \
+	$(toolboxdir)/src/c/MACHINES/SPARC/* \
+	$(toolboxdir)/src/c/DOC/*
+
 toolboxdir=@SCILAB_TOOLBOX_DIR@
 
 .NOTPARALLEL: *
