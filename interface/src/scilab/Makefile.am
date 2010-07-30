@@ -19,14 +19,12 @@
 scilabbuilddir=@GETFEM_BUILD_INTERFACE_PATH@/interface/src/scilab
 
 scilabbasedir=builder.sce \
-	DESCRIPTION-FUNCTIONS \
 	loader.sce \
 	readme.txt \
 	changelog.txt \
 	cleaner.sce \
 	Makefile.am \
 	sci_getfem.iss \
-	DESCRIPTION \
 	license.txt \
 	makefile_builder.sce
 
