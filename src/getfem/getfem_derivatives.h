@@ -250,8 +250,8 @@ namespace getfem
   }
   
 
-  /** Compute the Von-Mises stress of a field (only valid for
-      linearized elasticity in 3D)
+  /** Compute the Von-Mises stress of a field (valid for
+      linearized elasticity in 2D and 3D)
   */
   template <typename VEC1, typename VEC2, typename VEC3>
   void interpolation_von_mises_or_tresca(const getfem::mesh_fem &mf_u, 
@@ -274,26 +274,31 @@ namespace getfem
     compute_gradient(mf_u, mf_vm, U, GRAD);
 
     GMM_ASSERT1(!mf_vm.is_reduced(), "Sorry, to be done");
+    GMM_ASSERT1(N>=2 && N<=3, "Only for 2D and 3D");
     
     for (size_type i = 0; i < mf_vm.nb_dof(); ++i) {
-      scalar_type trE = 0;
+      scalar_type trE = 0, diag = 0;
       for (unsigned j = 0; j < N; ++j)
         trE += GRAD[i*N*N + j*N + j];
+      if (tresca)
+        diag = LAMBDA[i]*trE; // calculation of sigma
+      else
+        diag = (-2./3.)*MU[i]*trE;  // for the calculation of deviator(sigma)
       for (unsigned j = 0; j < N; ++j) {
         for (unsigned k = 0; k < N; ++k) {
           scalar_type eps = /* 0.5* */ (GRAD[i*N*N + j*N + k] + 
                                         GRAD[i*N*N + k*N + j]);
           sigma(j,k) = /* 2* */ MU[i]*eps;
         }
-        if (tresca) // calculation of sigma
-          sigma(j,j) += LAMBDA[i]*trE;
-        else // calculation of deviator(sigma)
-          sigma(j,j) -= 2*MU[i]*trE/N;
+        sigma(j,j) += diag;
       }
       if (!tresca) {
         /* von mises: norm(deviator(sigma)) */
         //gmm::add(gmm::scaled(Id, -gmm::mat_trace(sigma) / N), sigma); 
-        VM[i] = gmm::mat_euclidean_norm(sigma);
+        if (N==3)
+          VM[i] = sqrt((3./2.)*gmm::mat_euclidean_norm_sqr(sigma));
+        else // for plane strains ( s_33 = -diag )
+          VM[i] = sqrt((3./2.)*(gmm::mat_euclidean_norm_sqr(sigma) + diag*diag));
       } else {
         /* else compute the tresca criterion */
         gmm::symmetric_qr_algorithm(sigma, eig);
