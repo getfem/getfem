@@ -74,7 +74,7 @@ namespace gmm {
        typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
          ite = vect_const_end(l);
        for (; it != ite; ++it)
-         { irn.push_back(i + 1); jcn.push_back(it.index() + 1); a.push_back(*it); }
+         { irn.push_back((int)i + 1); jcn.push_back((int)it.index() + 1); a.push_back(*it); }
     }
 
     template <typename L> void build_from(const L& l, row_major) {
@@ -164,8 +164,8 @@ namespace gmm {
 #ifdef GMM_USES_MPI
     if (rank == 0) {
 #endif
-      id.n = gmm::mat_nrows(A);
-      id.nz = AA.irn.size();
+      id.n = (int)gmm::mat_nrows(A);
+      id.nz = (int)AA.irn.size();
       id.irn = &(AA.irn[0]);
       id.jcn = &(AA.jcn[0]);
       id.a = (MUMPS_T*)(&(AA.a[0]));
