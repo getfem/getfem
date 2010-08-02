@@ -56,8 +56,7 @@
 
 
     <p>
-      Some help on how to build the Matlab interface on Windows XP can be found on the page of Mirko Windhoff (thank you to him) :
-      <a href="http://windhoff.net/wiki/getfem"> http://windhoff.net/wiki/getfem</a>
+      You can find some help on how to build the Matlab interface on <a href="http://windhoff.net/wiki/how_to/build_getfem_matlab_toolbox_on_windows_xp">Windows XP</a> and <a href="http://windhoff.net/wiki/how_to/build_getfem_matlab_toolbox_on_ubuntu_linux">Ubuntu</a> on the page of Mirko Windhoff.
 
 
       
