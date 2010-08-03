@@ -118,7 +118,7 @@ AC_DEFUN([AC_CHECK_SCILAB],
       fi
     fi
 
-    if test "xwith_scilab_toolbox_dir" != "xyes"
+    if test "x$with_scilab_toolbox_dir" != "xyes"
     then
       SCILAB_TOOLBOX_DIR="$with_scilab_toolbox_dir"
     else
