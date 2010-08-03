@@ -118,10 +118,6 @@ EXTRA_DIST=builddoc.sce \
         etc/sci_getfem.quit \
         etc/sci_getfem.start \
         help/builder_help.sce \
-        help/en_US/ \
-        help/fig/ \
-        help/fr_FR/ \
-        help/mml/ \
         help/en_US/build_help.sce \
         help/en_US/gf_asm_pdetoolbc.xml \
         help/en_US/gf_asm.xml \
@@ -427,10 +423,7 @@ EXTRA_DIST=builddoc.sce \
         src/c/MACHINES/SGI/machine.h \
         src/c/MACHINES/SGI/makefile \
         src/c/MACHINES/SPARC/machine.h \
-        src/c/MACHINES/SPARC/makefile \
-        tests \
-        tests/nonreg_tests \
-        tests/unit_tests 
+        src/c/MACHINES/SPARC/makefile
 
 .NOTPARALLEL: *
 
