@@ -16,9 +16,9 @@
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
 
-toolboxdir=@SCILAB_TOOLBOX_DIR@
+toolboxdir=@srcdir@
 
-scilabbuilddir=@GETFEM_BUILD_INTERFACE_PATH@/interface/src/scilab
+scilabbuilddir=.
 
 scilabbasedir=builder.sce \
 	loader.sce \
@@ -77,7 +77,6 @@ EXTRA_DIST=$(toolboxdir)/builddoc.sce \
         $(toolboxdir)/demos/demo_mortar.sce \
         $(toolboxdir)/demos/demo_nonlinear_elasticity_anim.sce \
         $(toolboxdir)/demos/demo_nonlinear_elasticity.sce \
-        $(toolboxdir)/demos/demo_nonlinear_elasticity_U.mat \
         $(toolboxdir)/demos/demo_plasticity.sce \
         $(toolboxdir)/demos/demo_plate.sce \
         $(toolboxdir)/demos/demo_refine.sce \
@@ -89,7 +88,6 @@ EXTRA_DIST=$(toolboxdir)/builddoc.sce \
         $(toolboxdir)/demos/demo_stokes_3D_tank_alt.sce \
         $(toolboxdir)/demos/demo_stokes_3D_tank_draw.sce \
         $(toolboxdir)/demos/demo_stokes_3D_tank.sce \
-        $(toolboxdir)/demos/demo_stokes_3D_tank_UP.mat \
         $(toolboxdir)/demos/demo_structural_optimization.sce \
         $(toolboxdir)/demos/demo_topological_optimization.sce \
         $(toolboxdir)/demos/demo_tripod_alt.sce \
@@ -124,7 +122,6 @@ EXTRA_DIST=$(toolboxdir)/builddoc.sce \
         $(toolboxdir)/help/fr_FR/ \
         $(toolboxdir)/help/latex/ \
         $(toolboxdir)/help/mml/ \
-        $(toolboxdir)/help/tmp/ \
         $(toolboxdir)/help/en_US/build_help.sce \
         $(toolboxdir)/help/en_US/gf_asm_pdetoolbc.xml \
         $(toolboxdir)/help/en_US/gf_asm.xml \
