@@ -79,9 +79,9 @@ struct friction_problem {
   scalar_type T, dt, r;
   scalar_type init_vert_pos, init_vert_speed, hspeed, dtexport;
   scalar_type pert_stationary, Dirichlet_ratio;
-  bool dt_adapt, periodic, dxexport, Dirichlet, init_stationary;
+  bool dt_adapt, periodic, dxexport, Dirichlet, init_stationary, compare;
 
-  std::string datafilename;
+  std::string datafilename, refrootname, INTEGRATION;
   bgeot::md_param PARAM;
 
   void stationary(plain_vector &U0, plain_vector &LN, plain_vector &LT);
@@ -95,7 +95,7 @@ struct friction_problem {
  */
 void friction_problem::init(void) {
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
-  std::string INTEGRATION = PARAM.string_value("INTEGRATION",
+  INTEGRATION = PARAM.string_value("INTEGRATION",
 					       "Name of integration method");
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
@@ -108,6 +108,9 @@ void friction_problem::init(void) {
   mesh.optimize_structure();
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
+  refrootname = PARAM.string_value("REFROOTNAME",
+				   "Base name of reference files.");
+  compare = (PARAM.int_value("COMPARE") != 0);
   residual = PARAM.real_value("RESIDUAL");
   if (residual == 0.) residual = 1e-10;
 
@@ -815,6 +818,39 @@ void friction_problem::solve(void) {
       }
     }
   }
+
+
+  // save the last time step for convergence test.
+  mf_u.write_to_file(datafilename + ".mfu", true);
+  gmm::vecsave(datafilename + ".U", U0);
+  
+  if (compare) {
+    getfem::mesh m_ref;
+    m_ref.read_from_file(refrootname + ".mfu");
+    getfem::mesh_fem mf_ref(m_ref);
+    mf_ref.read_from_file(refrootname + ".mfu");
+    plain_vector Uref(mf_ref.nb_dof());
+    gmm::vecload(refrootname + ".U", Uref);
+    
+    plain_vector U(mf_ref.nb_dof());
+    
+    getfem::interpolation(mf_u, mf_ref, U0, U, true);
+    getfem::mesh_im mim_ref(m_ref);
+    getfem::pintegration_method ppi = 
+      getfem::int_method_descriptor(INTEGRATION);
+    mim_ref.set_integration_method(m_ref.convex_index(), ppi);
+    
+    cout << "To ref L2 ERROR:"
+	 << getfem::asm_L2_dist(mim_ref, mf_ref, U, mf_ref, Uref) << endl;
+    
+    cout << "To ref H1 ERROR:"
+	 << getfem::asm_H1_dist(mim_ref, mf_ref, U, mf_ref, Uref) << endl;
+    
+    cout << "H1 Norm:"
+	 << getfem::asm_H1_norm(mim_ref, mf_ref, Uref) << endl;
+  }
+  
+  
 }
   
 /**************************************************************************/
@@ -822,12 +858,6 @@ void friction_problem::solve(void) {
 /**************************************************************************/
 
 int main(int argc, char *argv[]) {
-
-//   /* In order to test locale. */
-//   setlocale(LC_NUMERIC,"");
-//   std::locale lc("");
-//   cin.imbue(lc);
-//   cout.imbue(lc);
 
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
