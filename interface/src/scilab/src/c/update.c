@@ -29,7 +29,7 @@
 */
 
 /* update.c 1.3 11/25/87 */
-static	char	rcsid[] = "$Id: update.c,v 1.2 1994/01/13 05:26:06 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 #include	<stdio.h>
 #include	"matrix.h"

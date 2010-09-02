@@ -36,7 +36,7 @@
 
 #define ITERHH
 
-/* RCS id: $Id: iter.h,v 1.2 1994/03/08 05:48:27 des Exp $  */
+/* RCS id: $Id$  */
 
 
 #include	"sparse.h"

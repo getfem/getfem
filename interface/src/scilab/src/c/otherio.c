@@ -28,7 +28,7 @@
 	File for doing assorted I/O operations not invlolving
 	MAT/VEC/PERM objects
 */
-static	char	rcsid[] = "$Id: otherio.c,v 1.2 1994/01/13 05:34:52 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 #include	<stdio.h>
 #include	<ctype.h>

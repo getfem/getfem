@@ -30,7 +30,7 @@
 #include	<stdio.h>
 #include	"matrix.h"
 
-static	char	rcsid[] = "$Id: pxop.c,v 1.5 1994/03/23 23:58:50 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 /**********************************************************************
 Note: A permutation is often interpreted as a matrix

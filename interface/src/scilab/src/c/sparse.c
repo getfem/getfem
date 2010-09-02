@@ -34,7 +34,7 @@
 #include	"sparse.h"
 
 
-static char	rcsid[] = "$Id: sparse.c,v 1.10 1994/03/08 05:46:07 des Exp $";
+static char	rcsid[] = "$Id$";
 
 #define	MINROWLEN	10
 

@@ -83,7 +83,7 @@ int	len;
 		A[m-1][j0], A[m-1][j0+1], ..., A[m-1][j0+n-1]
 */
 
-static char	rcsid[] = "$Id: extras.c,v 1.3 1994/01/13 05:45:36 des Exp $";
+static char	rcsid[] = "$Id$";
 
 #include	<math.h>
 

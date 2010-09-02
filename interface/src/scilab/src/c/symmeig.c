@@ -34,7 +34,7 @@
 #include	<math.h>
 
 
-static char rcsid[] = "$Id: symmeig.c,v 1.5 1994/02/16 03:23:39 des Exp $";
+static char rcsid[] = "$Id$";
 
 
 

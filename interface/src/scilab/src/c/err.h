@@ -26,7 +26,7 @@
 
 /* err.h  28/09/1993 */
 
-/*  RCS id: $Id: err.h,v 1.2 1995/01/30 14:48:05 des Exp $  */
+/*  RCS id: $Id$  */
 
 
 #ifndef ERRHEADER

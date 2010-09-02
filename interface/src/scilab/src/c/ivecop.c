@@ -29,7 +29,7 @@
 #include	<stdio.h>
 #include 	"matrix.h"
 
-static	char	rcsid[] = "$Id: ivecop.c,v 1.5 1994/01/13 05:45:30 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 static char    line[MAXLINE];
 

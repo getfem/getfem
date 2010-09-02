@@ -30,7 +30,7 @@
 	to use Karen George's suggestion to use unordered rows
 */
 
-static	char	rcsid[] = "$Id: spswap.c,v 1.3 1994/01/13 05:44:43 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 #include	<stdio.h>
 #include        "sparse2.h"

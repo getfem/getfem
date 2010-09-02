@@ -29,7 +29,7 @@
 #include 	"matrix.h"
 
 
-static	char	rcsid[] = "$Id: memory.c,v 1.13 1994/04/05 02:10:37 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 /* m_get -- gets an mxn matrix (in MAT form) by dynamic memory allocation */
 MAT	*m_get(m,n)

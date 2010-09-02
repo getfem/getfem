@@ -32,7 +32,7 @@
 #include        <stdio.h>
 #include        "sparse.h"
 
-static char rcsid[] = "$Id: sparseio.c,v 1.4 1994/01/13 05:34:25 des Exp $";
+static char rcsid[] = "$Id$";
 
 
 

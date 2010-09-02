@@ -37,7 +37,7 @@
 #include        "zmatrix.h"
 #include	"matlab.h"
 
-static char rcsid[] = "$Id: zmatlab.c,v 1.1 1994/01/13 04:24:57 des Exp $";
+static char rcsid[] = "$Id$";
 
 /* zm_save -- save matrix in ".mat" file for MATLAB
    -- returns matrix to be saved */

@@ -36,7 +36,7 @@
 #include        "matrix.h"
 #include	"matlab.h"
 
-static char rcsid[] = "$Id: matlab.c,v 1.7 1994/01/13 05:30:09 des Exp $";
+static char rcsid[] = "$Id$";
 
 /* m_save -- save matrix in ".mat" file for MATLAB
 	-- returns matrix to be saved */

@@ -34,7 +34,7 @@
 */
 
 /* givens.c 1.2 11/25/87 */
-static	char	rcsid[] = "$Id: givens.c,v 1.2 1994/01/13 05:39:42 des Exp $";
+static	char	rcsid[] = "$Id$";
 
 #include	<stdio.h>
 #include	"matrix.h"

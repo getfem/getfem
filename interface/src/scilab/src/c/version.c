@@ -36,7 +36,7 @@
 
 void	m_version()
 {
-	static char rcsid[] = "$Id: version.c,v 1.9 1994/03/24 00:04:05 des Exp $";
+	static char rcsid[] = "$Id$";
 
 	printf("Meshach matrix library version 1.2b\n");
 	printf("RCS id: %s\n",rcsid);
