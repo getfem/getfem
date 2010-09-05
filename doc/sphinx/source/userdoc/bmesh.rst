@@ -59,13 +59,13 @@ already existing points. For instance, if one needs to add a new triangle in a 3
 mesh, one needs to define first an array with the indexes of the three points::
 
   std::vector<bgeot::size_type> ind(3);
-  ind[0] = mymesh.add_point(bgeot::base_node(0.0, 0.0, 0.0);
-  ind[1] = mymesh.add_point(bgeot::base_node(0.0, 1.0, 0.0);
-  ind[2] = mymesh.add_point(bgeot::base_node(0.0, 0.0, 1.0);
+  ind[0] = mymesh.add_point(bgeot::base_node(0.0, 0.0, 0.0));
+  ind[1] = mymesh.add_point(bgeot::base_node(0.0, 1.0, 0.0));
+  ind[2] = mymesh.add_point(bgeot::base_node(0.0, 0.0, 1.0));
 
 then adding the element is done by::
 
-  mymesh.add_convex(bgeot::simplex_trans(2,1), ind.begin());
+  mymesh.add_convex(bgeot::simplex_geotrans(2,1), ind.begin());
 
 where ``bgeot::simplex_trans(N,1);`` denotes the usual linear geometric
 transformation for simplices of dimension N.
