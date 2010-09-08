@@ -405,7 +405,11 @@ namespace getfem {
     base_node x0, d;
     scalar_type R;
     void test_point(const base_node& P, bool& in, bool& bound) const {
-      base_node N = P-x0;
+      base_node N = P;
+      if (2 == N.size()) { /* Add Z coorinate if mesh is 2D */
+        N.push_back(0.0);
+      }
+      N = N-x0;
       scalar_type axpos = gmm::vect_sp(d, N);
       scalar_type dist2 = gmm::vect_norm2_sqr(N) - gmm::sqr(axpos);
       bound = gmm::abs(dist2-R*R) < EPS;
@@ -413,8 +417,14 @@ namespace getfem {
     }
     scalar_type edge_intersect(size_type iA, size_type iB,
 			       const mesh_slicer::cs_nodes_ct& nodes) const {
-      base_node F=nodes[iA].pt-x0; scalar_type Fd = gmm::vect_sp(F,d);
+      base_node F=nodes[iA].pt;
       base_node D=nodes[iB].pt-nodes[iA].pt;
+      if (2 == F.size()) {
+        F.push_back(0.0);
+        D.push_back(0.0);
+      }
+      F = F - x0;
+      scalar_type Fd = gmm::vect_sp(F,d);
       scalar_type Dd = gmm::vect_sp(D,d);
       scalar_type a = gmm::vect_norm2_sqr(D) - gmm::sqr(Dd);
       if (a < EPS) return pt_bin.is_in(iA) ? 0. : 1./EPS; assert(a> -EPS);
