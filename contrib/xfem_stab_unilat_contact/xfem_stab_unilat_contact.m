@@ -1,4 +1,4 @@
-% addpath ~/source++/getfem++/contrib/xfem_contact/
+% addpath ~/source++/getfem++/contrib/xfem_stab_unilat_contact/
 
 gf_workspace('clear all');
 mf = gf_mesh_fem('load', 'xfem_stab_unilat_contact_ls.mf');
@@ -36,4 +36,4 @@ disp('plotting the lagrange multipliers on the contact interface');
   view(3);
   camzoom(1.2);
   axis([0    1   -0.500    0.5000 -1 1]);
-  % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
+  %print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');

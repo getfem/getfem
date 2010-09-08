@@ -417,7 +417,7 @@ void asm_mass_matrix_for_inf_sup
   
   
   getfem::generic_assembly assem("t=comp(NonLin(#2).Base(#1).Base(#1));"
-				 "M(#2,#1)+= t(:,:,:)");
+				 "M(#2,#1)+= t(i,:,:)");
   assem.push_mi(mim);
   assem.push_mf(mf_mult);
   assem.push_mf(ls.get_mesh_fem());
@@ -583,7 +583,7 @@ void  unilateral_contact_problem::init(void) {
   size_type N = pgt->dim();
   std::vector<size_type> nsubdiv(N);
   if (strmesh) {
-    std::fill(nsubdiv.begin(),nsubdiv.end(),
+   std::fill(nsubdiv.begin(),nsubdiv.end(),
 	      PARAM.int_value("NX", "Nomber of space steps "));
     getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
 			      PARAM.int_value("MESH_NOISED") != 0);
@@ -940,7 +940,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   
   std::set<size_type> cols;
   cols.clear(); 
-  sparse_matrix BRBB(mf_cont().nb_dof(), mf_cont().nb_dof());
+  sparse_matrix BRBB(mf_pre_uu().nb_dof(), mf_cont().nb_dof());
   mf_u().set_qdim(1);
   asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
   //asm_mass_matrix(BRBB, mimbound, mf_cont(), mf_cont());
