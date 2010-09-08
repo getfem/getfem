@@ -41,7 +41,8 @@ check_PROGRAMS =                 \
 	dynamic_friction         \
 	bilaplacian		 \
 	heat_equation            \
-	wave_equation
+	wave_equation \
+	cyl_slicer
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt \
@@ -54,7 +55,7 @@ CLEANFILES = \
 	ii_files/* auto_gmm* dyn*.txt dynamic_friction.data *.sl time FN0 \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
-	nonlinear_membrane.vtk 
+	nonlinear_membrane.vtk feminterpolation.vtk circleslice.vtk
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 
@@ -94,6 +95,7 @@ dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
 heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
+cyl_slicer_SOURCES = cyl_slicer.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../src
@@ -134,7 +136,8 @@ TESTS = \
 	$(top_srcdir)/tests/bilaplacian.pl    	       \
 	$(top_srcdir)/tests/heat_equation.pl   	       \
 	$(top_srcdir)/tests/wave_equation.pl   	       \
-	$(top_srcdir)/tests/make_gmm_test.pl     
+	$(top_srcdir)/tests/make_gmm_test.pl           \
+	$(top_srcdir)/tests/cyl_slicer.pl
 
 EXTRA_DIST =                               			\
 	dynamic_array.pl                   			\
@@ -191,6 +194,7 @@ EXTRA_DIST =                               			\
 	heat_equation.param                			\
 	wave_equation.pl                   			\
 	wave_equation.param                			\
+	cyl_slicer.pl                           \
 	make_gmm_test.pl                   			\
 	gmm_torture01_lusolve.cc           			\
 	gmm_torture05_mult.cc              			\
