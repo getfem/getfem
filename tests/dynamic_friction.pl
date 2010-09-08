@@ -56,6 +56,8 @@ MESHNAME='meshes/disc_P2_h4.mesh';
 ROOTFILENAME = 'dynamic_friction';     % Root of data files.
 DX_EXPORT = 0 % export solution to an OpenDX file ?
 DT_EXPORT = 0.001; % Time step for the export
+COMPARE = 0;  % Convergence test to be done or not
+REFROOTNAME = '';
 
 ;
 close(TMPF);

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard, Julien Pommier, Houari Khenous.
+// Copyright (C) 2002-2010 Yves Renard, Julien Pommier, Houari Khenous.
 //
 // This file is a part of GETFEM++
 //
@@ -520,7 +520,7 @@ void friction_problem::solve(void) {
 		       - gmm::vect_sp(VOL_F.get_F(), U0));
   cout << "t=0, initial energy: " << Einit << endl;
   
-  while (t <= T) {
+  while (t <= T-dt+1e-12) {
 
     switch (scheme) { // complementary left hand side and velocity complement
     case 0 :
@@ -765,7 +765,7 @@ void friction_problem::solve(void) {
 	}
       }
 
-      cout << "r = " << FRICTION.get_r() << endl;
+      // cout << "r = " << FRICTION.get_r() << endl;
       cout << "t = " << t << " energy : ";
       if (scheme == 5 || scheme == 6) cout << Jdemi;
       else if (scheme == 2) cout << J1 << " energy at midpoint : " << Jdemi;

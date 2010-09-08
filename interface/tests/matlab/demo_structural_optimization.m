@@ -32,7 +32,7 @@ gf_workspace('clear all');
 
 % parameters
 
-TEST_CASE = 2 % 0 : 2D, initial holes, shape gradient only
+TEST_CASE = 3 % 0 : 2D, initial holes, shape gradient only
               % 1 : 2D, no initial hole, coupling with topological gradient
               % 2 : 3D, initial holes, shape gradient only
               % 3 : 3D, no initial hole, coupling with topological gradient
@@ -71,11 +71,11 @@ if (N == 2)
   NBDRAW = 20;            % Draw solution each NBDRAW iterations
 else
   NY = 30
-  level_set_rate = 0.03 / NY;
-  reinitialisation_time = 0.0045;
-  threshold_shape = 20.8;
+  level_set_rate = 0.025 / NY;
+  reinitialisation_time = 0.0035;
+  threshold_shape = 28;
   if (TEST_CASE == 3)
-    threshold_topo = 2.6;
+    threshold_topo = 30;
   else
     threshold_topo = 0;
   end
@@ -306,7 +306,7 @@ for niter = 1:nbiter
       title('Shape gradient on the remaining volume');
       pause(0.3);
     end
-    print(gcf,'-dpng','-r450', sprintf('demo_structural_opt%dD_%d_%d_%d', N, niter, initial_holes, NY));
+    print(gcf,'-dpng','-r450', sprintf('demo_structural_optimi%dD_%d_%d_%d', N, niter, initial_holes, NY));
   end
 
   [val, i] = max(GT);

@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard
+// Copyright (C) 2002-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -34,7 +34,6 @@
 #include <deque>
 #include <map>
 #include "dal_static_stored_objects.h"
-#include "dal_tree_sorted.h"
 
 
 namespace dal {
@@ -79,12 +78,11 @@ namespace dal {
   protected :
 
     std::string prefix;
-    dynamic_tree_sorted<std::string> suffixes;
-    dynamic_array<pfunction> functions;
-    dynamic_array<pgenfunction> genfunctions;
+    std::map<std::string, size_type> suffixes;
+    std::vector<pfunction> functions;
+    std::vector<pgenfunction> genfunctions;
     std::map<std::string, std::string> shorter_names;
     std::map<std::string, std::string> aliases;
-    int nb_genfunctions;
 
     struct method_key : virtual public static_stored_object_key {
       std::string name;
@@ -111,20 +109,26 @@ namespace dal {
     pmethod method(std::string name, size_type &i,
 		   bool throw_if_not_found = true)
     { gmm::standard_locale sl; return method_(name, i, throw_if_not_found); }
-    naming_system(std::string pr) : prefix(pr) { nb_genfunctions = 0; }
+    naming_system(std::string pr) : prefix(pr) {}
 
   };
 
   template <class METHOD>
   void naming_system<METHOD>::add_suffix(std::string name,
 		       typename naming_system<METHOD>::pfunction pf) {
-    size_type i = suffixes.add(prefix + '_' + name);
-    functions[i] = pf;
+    std::string tname = prefix + '_' + name;
+    if (suffixes.find(tname) != suffixes.end()) {
+      functions[suffixes[tname]] = pf;
+    } else {
+      suffixes[tname] = functions.size();
+      functions.push_back(pf);
+    }
+
   }
 
   template <class METHOD>
   void naming_system<METHOD>::add_generic_function(pgenfunction pf) {
-    genfunctions[nb_genfunctions++] = pf;
+    genfunctions.push_back(pf);
   }
 
   template <class METHOD>
@@ -205,7 +209,8 @@ namespace dal {
 	case 1  : i += l; break;
 	case 2  :
 	  suff = name.substr(i, l);
-	  ind_suff = suffixes.search(suff);
+	  if (suffixes.find(suff) != suffixes.end())
+	    ind_suff = suffixes[suff];
 	  state = 1; i += l; break;
 	default : error = true;
 	}
@@ -268,7 +273,7 @@ namespace dal {
 	if (o) return stored_cast<METHOD>(o);
 	pm = 0;
 	std::vector<pstatic_stored_object> dependencies;
-	for (int k = 0; k < nb_genfunctions && pm == 0; ++k) {
+	for (size_type k = 0; k < genfunctions.size() && pm == 0; ++k) {
 	  pm = (*(genfunctions[k]))(nname.name, dependencies);
 	}
 	if (!pm) {
@@ -281,7 +286,6 @@ namespace dal {
 	
 	pstatic_stored_object_key k = key_of_stored_object(pm);
 	if (!k) {
-	  // cout << "adding " << dal::pstatic_stored_object(pm) << endl;
 	  add_stored_object(new method_key(nname), pm,
 			    dal::PERMANENT_STATIC_OBJECT);
 	  for (size_type j = 0; j < dependencies.size(); ++j)

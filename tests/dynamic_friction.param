@@ -10,8 +10,8 @@ N = 2;
 MU = 150
 LAMBDA = 300
 FRICTION_COEF = 0.1;    % Friction coefficient.
-PG = 9810; 		% gravitation constante (on earth) (mm/s^2).
-%PG = 1000000; 		% gravitation constante (on jupiter !) (mm/s^2).
+PG = 9810; 		% gravitation constant (on earth) (mm/s^2).
+%PG = 1000000; 		% gravitation constant (on jupiter !) (mm/s^2).
 RHO = 1e-6;     	% "realistic" density for steel
 
 T = 0.02;
@@ -23,7 +23,6 @@ DT = 1e-6;              % Time step
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 % MESH_TYPE = 'GT_QK(3,1)';       % 	
 %MESH_TYPE = 'GT_PRISM(3,1)';     % 3D prisms
-NX = 10;            	          % space step.
 MESH_NOISE = 0;         % Set to one if you want to "shake" the mesh
 RESIDUAL = 3E-7;     	% residu for Newton.
 
@@ -49,7 +48,7 @@ DT_ADAPT = 0;           % Time step adaptation regarding the energy
 R = 0.1;                % Augmentation parameter
 
 DIRICHLET = 0;
-DIRICHLET_RATIO = -0.2	   % parametre pour la condition de Dirichlet
+DIRICHLET_RATIO = -0.2	   % parameter for the Dirichlet condition
 INIT_VERT_SPEED = -1000;   % Initial vertical velocity
 INIT_VERT_POS = 10;        % Initial vertical position
 FOUNDATION_HSPEED = 0.0;   % Horizontal velocity of the rigid foundation

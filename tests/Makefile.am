@@ -41,18 +41,18 @@ check_PROGRAMS =                 \
 	dynamic_friction         \
 	bilaplacian		 \
 	heat_equation            \
-	wave_equation \
+	wave_equation 		 \
 	cyl_slicer
 
 CLEANFILES = \
-	laplacian.res laplacian.mesh laplacian.dataelt \
-	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh \
-	helmholtz.vtk plate.mesh plate.vtk nonlinear_elastostatic.mesh \
-	nonlinear_elastostatic.mf nonlinear_elastostatic.mfd \
-	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk \
-	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk \
-	plasticity.meshfem plasticity.coef elasto_static_err.vtk \
-	ii_files/* auto_gmm* dyn*.txt dynamic_friction.data *.sl time FN0 \
+	laplacian.res laplacian.mesh laplacian.dataelt 			    \
+	elasto_static.mesh test_mesh.mesh toto.mat test_mat_elem.mesh       \
+	helmholtz.vtk plate.mesh plate.vtk nonlinear_elastostatic.mesh      \
+	nonlinear_elastostatic.mf nonlinear_elastostatic.mfd                \
+	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk                \
+	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk     \
+	plasticity.meshfem plasticity.coef elasto_static_err.vtk            \
+	ii_files/* auto_gmm* dyn*.txt dynamic_friction.data *.sl time FN0   \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
 	nonlinear_membrane.vtk feminterpolation.vtk circleslice.vtk
@@ -136,8 +136,8 @@ TESTS = \
 	$(top_srcdir)/tests/bilaplacian.pl    	       \
 	$(top_srcdir)/tests/heat_equation.pl   	       \
 	$(top_srcdir)/tests/wave_equation.pl   	       \
-	$(top_srcdir)/tests/make_gmm_test.pl           \
-	$(top_srcdir)/tests/cyl_slicer.pl
+	$(top_srcdir)/tests/cyl_slicer.pl	       \
+	$(top_srcdir)/tests/make_gmm_test.pl
 
 EXTRA_DIST =                               			\
 	dynamic_array.pl                   			\

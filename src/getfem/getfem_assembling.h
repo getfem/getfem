@@ -1308,12 +1308,12 @@ namespace getfem {
   /**
      Assembly of generalized Dirichlet constraints h(x)u(x) = r(x),
      where h is a QxQ matrix field (Q == mf_u.get_qdim()), outputs a
-     (under-determined) linear system MU=B.
+     (under-determined) linear system HU=R.
 
      size(h_data) = Q^2 * nb_dof(mf_rh);
      size(r_data) = Q   * nb_dof(mf_rh);
 
-     This function tries hard to make M diagonal or mostly diagonal:
+     This function tries hard to make H diagonal or mostly diagonal:
      this function is able to "simplify" the dirichlet constraints (see below)
      version = |ASMDIR_BUILDH : build H
      |ASMDIR_BUILDR : build R

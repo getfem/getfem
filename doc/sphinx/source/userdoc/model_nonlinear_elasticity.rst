@@ -184,7 +184,7 @@ where :math:`c_1` and :math:`c_2` are given coefficients.
 
 .. math::
 
-  {\hat{\hat{\sigma}}} &= (2c_1 + 4c_2)I + 4c_2(i_1(L)I - L)\\
+  {\hat{\hat{\sigma}}} &= (2c_1 + 4c_2)I + 4c_2(i_1(E)I - E)\\
   \mathcal{A} &= 2c_2(2i_1(H)I - H - H^T)
 
 
