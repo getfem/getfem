@@ -64,6 +64,9 @@ namespace getfem {
       case 9: { /* 2ND ORDER TRIANGLE */
         pgt = bgeot::simplex_geotrans(2,2);
       } break;
+	  case 11: { /* 2ND ORDER TETRAEDRON */
+		pgt = bgeot::simplex_geotrans(3,2);
+      } break;
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
       } break;
@@ -104,6 +107,9 @@ namespace getfem {
       } break;
       case 9: { /* 2ND ORDER TRIANGLE */
         nodes.resize(6);
+      } break;
+	  case 11: { /*2ND ORDER TETRAHEDRON */
+		nodes.resize(10);
       } break;
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
@@ -265,6 +271,25 @@ namespace getfem {
           ci.nodes[2] = tmp_nodes[2];
         }
           break;
+		 case 11: { /* Second order tetrahedron */
+			std::vector<bgeot::size_type> tmp_nodes(10);
+			tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[4],
+		    tmp_nodes[2] = ci.nodes[1];
+			tmp_nodes[3] = ci.nodes[6], tmp_nodes[4] = ci.nodes[5],
+		    tmp_nodes[5] = ci.nodes[2];
+			tmp_nodes[6] = ci.nodes[7], tmp_nodes[7] = ci.nodes[9],
+		    tmp_nodes[8] = ci.nodes[8],
+		    tmp_nodes[9] = ci.nodes[3];
+
+			ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+		    ci.nodes[2] = tmp_nodes[2];
+			ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+		    ci.nodes[5] = tmp_nodes[5];
+			ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7],
+		    ci.nodes[8] = tmp_nodes[8],
+		    ci.nodes[9] = tmp_nodes[9];
+		  }
+		 break;
         case 9 : /* Second order triangle */
           std::vector<size_type> tmp_nodes(6);
           tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
@@ -277,6 +302,7 @@ namespace getfem {
           ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
             ci.nodes[5] = tmp_nodes[5];
           break;
+		  
         }
       }
     }
