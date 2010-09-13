@@ -568,7 +568,7 @@ namespace getfem {
   const mesh_fem &classical_mesh_fem(const mesh &mesh, dim_type degree,
 				     dim_type qdim = 1);
 
-  /* Dummy mehs_fem for default parameter of functions. */
+  /* Dummy mesh_fem for default parameter of functions. */
   const mesh_fem &dummy_mesh_fem(void);
 
 
