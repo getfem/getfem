@@ -176,8 +176,10 @@ namespace gmm {
 
 #define ICNTL(I) icntl[(I)-1]
 #define INFO(I) info[(I)-1]
-    id.ICNTL(1) = -1; id.ICNTL(2) = -1; id.ICNTL(3) = -1; id.ICNTL(4) = 0;
-    id.job = 6;
+    id.ICNTL(1) = -1; // output stream for error messages
+    id.ICNTL(2) = -1; // output stream for other messages
+    id.ICNTL(3) = -1; // output stream for global information
+    id.ICNTL(4) = 0;  // verbosity level
     
     id.ICNTL(14) += 40; /* small boost to the workspace size as we have encountered some problem
                            who did not fit in the default settings of mumps.. 
@@ -187,6 +189,7 @@ namespace gmm {
 
     id.ICNTL(22) = 1;   /* enables out-of-core support */
 
+    id.job = 6;
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
@@ -195,8 +198,8 @@ namespace gmm {
         case -13 :
           GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
         case -9:
-          GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
-                      << ", increase ICNTL(14)");
+          GMM_ASSERT1(false, "Solve with MUMPS failed: error "
+                      << id.INFO(1) << ", increase ICNTL(14)");
         default :
           GMM_ASSERT1(false, "Solve with MUMPS failed with error "
                       << id.INFO(1));
@@ -228,7 +231,7 @@ namespace gmm {
     GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
   
     std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
-  
+
     ij_sparse_matrix<T> AA(A);
   
     const int JOB_INIT = -1;
@@ -264,11 +267,14 @@ namespace gmm {
 
 #define ICNTL(I) icntl[(I)-1]
 #define INFO(I) info[(I)-1]
-    id.ICNTL(1) = -1; id.ICNTL(2) = 6; // id.ICNTL(2) = -1;
-    id.ICNTL(3) = 6;
-    // id.ICNTL(3) = -1; 
-    id.ICNTL(4) = 2;
-    id.ICNTL(5)=0; id.ICNTL(18)=3;
+    id.ICNTL(1) = -1; // output stream for error messages
+    id.ICNTL(2) = 6;  // id.ICNTL(2) = -1; // output stream for other messages
+    id.ICNTL(3) = 6;  // id.ICNTL(3) = -1; // output stream for global information
+    id.ICNTL(4) = 2;  // verbosity level
+
+    id.ICNTL(5) = 0;  // assembled input matrix (default)
+    id.ICNTL(18) = 3; // strategy for distributed input matrix
+
     id.job = 6;
     mumps_interf<T>::mumps_c(id);
     if (id.INFO(1) < 0) {
@@ -278,10 +284,11 @@ namespace gmm {
       case -13:
         GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
       case -9:
-        GMM_ASSERT1(false, "Solve with MUMPS failed: error " << id.INFO(1)
-                    << ", increase ICNTL(14)");
+        GMM_ASSERT1(false, "Solve with MUMPS failed: error "
+                    << id.INFO(1) << ", increase ICNTL(14)");
       default :
-        GMM_ASSERT1(false, "Solve with MUMPS failed with error " <<id.INFO(1));
+        GMM_ASSERT1(false, "Solve with MUMPS failed with error "
+                    << id.INFO(1));
       }
     }
 
