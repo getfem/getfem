@@ -1603,11 +1603,11 @@ namespace getfem {
 	H = &(md.real_variable(dl[ind+1]));
 	mf_H = md.pmesh_fem_of_variable(dl[ind+1]);
 	s = gmm::vect_size(*A);
-	if (mf_H) { 
-    s = s * mf_H->get_qdim() / mf_H->nb_dof();
-	  GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
-		    "a scalar finite element method");
-  }
+    if (mf_H) {
+      s = s * mf_H->get_qdim() / mf_H->nb_dof();
+      GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
+                  "a scalar finite element method");
+    }
 	GMM_ASSERT1(s = gmm::sqr(mf_u.get_qdim()),
 		    dl[ind] << ": bad format of Dirichlet data. "
 		    "Detected dimension is " << s << " should be "
