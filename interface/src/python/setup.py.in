@@ -12,14 +12,15 @@ except ImportError:
     raise Exception("PYTHON interface requires numpy")
 npy_include_dir = numpy.get_include()
 
-cclibopts = "../../../src/.libs/libgetfem.a".split()
+# cclibopts = "../../../src/.libs/libgetfem.a".split()
+cclibopts = "".split() # getfem is explicitly added below
 cclibopts += '@LIBS@'.split()
 
 libnames = [l[2:] for l in cclibopts if l.startswith("-l")]
 libdirs  = [l[2:] for l in cclibopts if l.startswith("-L")]
 libdirs += [l for l in cclibopts if not l.startswith("-")]
 
-libnames += ['getfemint','stdc++','m']
+libnames += ['getfemint','getfem','stdc++','m']
 libdirs = ['../.libs', '../../../src/.libs'] + libdirs
 for i in range(0,len(libdirs)):
     if (os.path.isfile(libdirs[i])):
