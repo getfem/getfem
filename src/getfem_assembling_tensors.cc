@@ -1273,7 +1273,7 @@ namespace getfem {
     accept(OPEN_PAR, "expecting '('");
     mf_comp_vect what;
     bool in_data = false;
-    /* the first optinal argument is the "main" mesh_im, i.e. the one
+    /* the first optional argument is the "main" mesh_im, i.e. the one
        whose integration methods are used, (and whose linked_mesh is
        used for mf_comp::NORMAL, mf_comp::GRADGT etc computations). If
        not given, then the first mesh_im pushed is used (then expect
