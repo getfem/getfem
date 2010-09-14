@@ -344,7 +344,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     default: GMM_THROW(dal::failure_error, "no such law");
   }
 
-  pl->test_derivatives(3, .0001, p);
+  pl->test_derivatives(3, 4e-9, p);
 //   if (0) {
 //     getfem::Ciarlet_Geymonat_hyperelastic_law l;
 //     cout << "test derivees SaintVenantKirchhoff_hyperelastic_law\n";
