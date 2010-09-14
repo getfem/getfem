@@ -308,7 +308,7 @@ namespace getfem {
       scalar_type d2 = 0;
       for (size_type i=0; i < N; ++i) 
 	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
-      if (gmm::abs(d-d2) > 1e-6) {
+      if (gmm::abs(d-d2) > 1e-4*h) {
 	cout << "Test " << count << " wrong derivative of strain_energy, d="
 	     << d << ", d2=" << d2 << endl;
 	ok = false;
@@ -324,7 +324,7 @@ namespace getfem {
 	    }
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
-	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > 1e-6) {
+	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > 1e-4*h) {
 	    cout << "Test " << count << " wrong derivative of sigma, i="
 		 << i << ", j=" << j << ", dsigma=" << dsigma(i,j)
 		 << ", var sigma = " << sigma2(i,j) << endl;
