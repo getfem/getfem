@@ -308,9 +308,9 @@ namespace getfem {
       scalar_type d2 = 0;
       for (size_type i=0; i < N; ++i) 
 	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
-      if (gmm::abs(d-d2) > 1e-4*h) {
+      if (gmm::abs(d-d2)/(gmm::abs(d)+1e-40) > 1e-4) {
 	cout << "Test " << count << " wrong derivative of strain_energy, d="
-	     << d << ", d2=" << d2 << endl;
+	     << d/h << ", d2=" << d2/h << endl;
 	ok = false;
       }
       
@@ -324,10 +324,11 @@ namespace getfem {
 	    }
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
-	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > 1e-4*h) {
+	  if (gmm::abs(dsigma(i,j) - sigma2(i,j))
+	      /(gmm::abs(dsigma(i,j)) + 1e-40) > 1e-4) {
 	    cout << "Test " << count << " wrong derivative of sigma, i="
-		 << i << ", j=" << j << ", dsigma=" << dsigma(i,j)
-		 << ", var sigma = " << sigma2(i,j) << endl;
+		 << i << ", j=" << j << ", dsigma=" << dsigma(i,j)/h
+		 << ", var sigma = " << sigma2(i,j)/h << endl;
 	    ok = false;
 	  }
 	}
@@ -452,7 +453,8 @@ namespace getfem {
   }
 
   void Mooney_Rivlin_hyperelastic_law::sigma
-  (const base_matrix &E, base_matrix &result, const base_vector &params) const {
+  (const base_matrix &E, base_matrix &result,
+   const base_vector &params) const {
     scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
@@ -466,8 +468,10 @@ namespace getfem {
     gmm::add(gmm::scaled(ci.grad_j2(), scalar_type(2)*C2), result);
 
   }
+
   void Mooney_Rivlin_hyperelastic_law::grad_sigma
-  (const base_matrix &E, base_tensor &result, const base_vector &params) const {
+  (const base_matrix &E, base_tensor &result,
+   const base_vector &params) const {
     scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
@@ -481,6 +485,7 @@ namespace getfem {
 			  scalar_type(4)*C1), result.as_vector());
     gmm::add(gmm::scaled(ci.sym_grad_grad_j2().as_vector(),
 			 scalar_type(4)*C2), result.as_vector());
+    
 //     GMM_ASSERT1(check_symmetry(result) == 7,
 // 		"Fourth order tensor not symmetric : " << result);
   }

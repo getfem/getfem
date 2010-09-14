@@ -10,7 +10,7 @@ LZ = 2.0;		% size in Z.
 P1 = 1.;	        % First elastic coefficient.
 P2 = 1.;   	        % Second elastic coefficient.
 P3 = 1.4;   	        % Third elastic coefficient.
-LAW = 0;     % 0 : SaintVenant-Kirchhoff
+LAW = 3;     % 0 : SaintVenant-Kirchhoff
              % 1 : SaintVenant-Kirchhoff+incompressibility
              % 2 : Ciarlet-Geymonat
              % 3 : Mooney-Rivlin (+incompressibility)
