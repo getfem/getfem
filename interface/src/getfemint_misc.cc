@@ -693,20 +693,28 @@ namespace getfemint {
 
   
   const getfem::abstract_hyperelastic_law &
-  abstract_hyperelastic_law_from_name(const std::string &lawname) {
+  abstract_hyperelastic_law_from_name(const std::string &lawname,
+				      size_type N) {
 
     static getfem::SaintVenant_Kirchhoff_hyperelastic_law SVK_AHL;
     static getfem::Mooney_Rivlin_hyperelastic_law MR_AHL;
     static getfem::Ciarlet_Geymonat_hyperelastic_law CG_AHL;
+    static getfem::plane_strain_hyperelastic_law PS_SVK_AHL(&SVK_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_MR_AHL(&MR_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_CG_AHL(&CG_AHL);
+    
 
     if (cmd_strmatch(lawname, "SaintVenant Kirchhoff") ||
-	cmd_strmatch(lawname, "svk")) return SVK_AHL;
+	cmd_strmatch(lawname, "svk"))
+      { if (N == 2) return PS_SVK_AHL; else return SVK_AHL; }
 
     if (cmd_strmatch(lawname, "Mooney Rivlin") ||
-	cmd_strmatch(lawname, "mr")) return MR_AHL;
+	cmd_strmatch(lawname, "mr"))
+      { if (N == 2) return PS_MR_AHL; else return MR_AHL; }
 
     if (cmd_strmatch(lawname, "Ciarlet Geymonat") ||
-	cmd_strmatch(lawname, "cg")) return CG_AHL;
+	cmd_strmatch(lawname, "cg"))
+      { if (N == 2) return PS_CG_AHL; else return CG_AHL; }
 
     THROW_BADARG(lawname <<
 		 " is not the name of a known hyperelastic law. \\"

@@ -295,9 +295,8 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
   getfem::abstract_constraints_projection *proj = 0;
   proj = new getfem::VM_projection(0);
 
-  size_type ind = add_elastoplasticity_brick(model, mim, *proj, 
-					     "u", "lambda", "mu", 
-					     "s", "sigma");
+  add_elastoplasticity_brick(model, mim, *proj, "u", "lambda", "mu", 
+			     "s", "sigma");
   
   plain_vector F(nb_dof_rhs * N);
   model.add_initialized_fem_data("NeumannData", mf_rhs, F);
@@ -348,7 +347,7 @@ bool elastoplasticity_problem::solve(plain_vector &U) {
     getfem::standard_solve(model, iter, getfem::rselect_linear_solver(model, "superlu"), ls);
  
     //compute and save sigma_np1
-    getfem::mesh_fem *mf_data=0;
+    //    getfem::mesh_fem *mf_data=0;
     getfem::elastoplasticity_next_iter(model, mim, "u", *proj, 
 			"lambda", "mu", "s", "sigma");
     

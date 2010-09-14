@@ -350,7 +350,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        std::string lawname = in.pop().to_string();
        /* a refaire , pas bon, le terme incompressible se passe de loi */
        const getfem::abstract_hyperelastic_law &law
-       = abstract_hyperelastic_law_from_name(lawname);
+       = abstract_hyperelastic_law_from_name(lawname,
+					     mf_u->linked_mesh().dim());
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray param = in.pop().to_darray(int(law.nb_params()),
 					 int(mf_d->nb_dof()));

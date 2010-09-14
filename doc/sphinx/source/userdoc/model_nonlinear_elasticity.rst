@@ -63,13 +63,29 @@ The derivatives of the invariants with respect to the tensor :math:`E` in the di
   &\frac{\partial i_2}{\partial E}(E;H) = (i_1( E)I -  E^T):H = (\mbox{tr }  E)(\mbox{tr } H) -  E^T:H\\
   &\frac{\partial i_3}{\partial E}(E;H) = i_3( E)(E^{-T}):H  = (i_2( E)I - i_1( E) E +  E^2):H \mbox{ in 3D}.
 
+We will write
+
+.. math::
+
+  &\frac{\partial i_1}{\partial E}(E) = I\\
+  &\frac{\partial i_2}{\partial E}(E) = i_1( E)I -  E^T\\
+  &\frac{\partial i_3}{\partial E}(E) = i_3( E)E^{-T}.
 
 Let us also recall that
 
 .. math::
 
-  \frac{\partial (M^{-1})}{\partial M}(M;H) &= -M^{-1}HM^{-1}\\
-  &= -H:(M^{-T}M^{-T}) \textrm{\`a confirmer..}
+  \frac{\partial (M^{-1})}{\partial M}(M;H) = -M^{-1}HM^{-1}
+
+
+The second derivatives of the invariants are fourth order tensors defined by
+
+.. math::
+
+  &\frac{\partial^2 i_1}{\partial E^2}(E) = 0\\
+  &\frac{\partial^2 i_2}{\partial E^2}(E)_{ijkl} = \delta_{ij}\delta_{kl} - \delta_{il}\delta_{jk} \\
+  &\frac{\partial^2 i_3}{\partial E^2}(E)_{ijkl} = i_3(E) (E^{-1}_{ji}E^{-1}_{lk} - E^{-1}_{jk}E^{-1}_{li}).
+
 
 The notation :math:`A:B` denotes the Frobenius product :math:`A:B = \displaystyle\sum_{ij}A_{ij}B_{ij}`. This product has the following properties:
 
@@ -154,7 +170,7 @@ which is symmetric w.r.t. :math:`v` and :math:`h`. It can be rewritten as
 
   \int_\Omega {\nabla h}~{\hat{\hat{\sigma}}}( E(u)) : {\nabla v}  + \mathcal{A}((I+{\nabla u^T}){\nabla h}):(I+{\nabla u}^T){\nabla v}~ dx
 
-where :math:`\mathcal{A}` is the symmetric :math:`3\times3\times3\times3` tensor given by :math:`\mathcal{A}_{ijkl} = ((\frac{\partial W}{\partial E})_{ijkl} + (\frac{\partial W}{\partial E})_{jikl})/2`.
+where :math:`\mathcal{A}` is the symmetric :math:`3\times3\times3\times3` tensor given by :math:`\mathcal{A}_{ijkl} = ((\frac{\partial^2 W}{\partial E^2})_{ijkl} + (\frac{\partial^2 W}{\partial E^2})_{jikl})/2`.
 
 Some classical constitutive laws
 ################################
@@ -175,17 +191,30 @@ Incompressible material.
 
 .. math::
 
-  {W} &= c_1(i_1( C) - 3) + c_2(i_2( C)-2)\\
-  &= 2c_1i_1( E) + 4c_2(i_2( E)+i_1( E))
+  {W} = c_1(j_1( C) - 3) + c_2(j_2( C)-3)
   \intertext{with the additional constraint:}
   i_3( C) = 1
 
-where :math:`c_1` and :math:`c_2` are given coefficients.
+where :math:`c_1` and :math:`c_2` are given coefficients and
 
 .. math::
 
-  {\hat{\hat{\sigma}}} &= (2c_1 + 4c_2)I + 4c_2(i_1(E)I - E)\\
-  \mathcal{A} &= 2c_2(2i_1(H)I - H - H^T)
+  j_1(C) &= i_1(C) i_3(C)^{-1/3}\\
+  j_2(C) &= i_2(C) i_3(C)^{-2/3}\\
+  \frac{\partial j_1}{\partial C}(C) &= i_3(C)^{-1/3}\left(\frac{\partial i_1}{\partial C}(C) - \frac{i_1(C)}{3i_3(C)} \frac{\partial i_3}{\partial C}(C)\right)\\
+  \frac{\partial j_2}{\partial C}(C) &= i_3(C)^{-2/3}\left(\frac{\partial i_2}{\partial C}(C) - \frac{2i_2(C)}{3i_3(C)} \frac{\partial i_3}{\partial C}(C)\right)\\
+  \frac{\partial^2 j_1}{\partial C^2}(C) &= i_3(C)^{-1/3}\left(\frac{4i_1(C)}{9i_3(C)^2} \frac{\partial i_3}{\partial C}(C) \otimes \frac{\partial i_3}{\partial C}(C) - \frac{1}{3i_3(C)}\left(\frac{\partial i_3}{\partial C}(C) \otimes \frac{\partial i_1}{\partial C}(C)\right.\right. \\
+  & ~~~~~~~~~~~~~~~~\left.\left. + \frac{\partial i_1}{\partial C}(C) \otimes \frac{\partial i_3}{\partial C}(C)\right) - \frac{i_1(C)}{3i_3(C)} \frac{\partial^2 i_3}{\partial C^2}(C)\right)\\
+  \frac{\partial^2 j_2}{\partial C^2}(C) &= i_3(C)^{-2/3}\left(\frac{\partial^2 i_2}{\partial C^2}(C) + \frac{10i_2(C)}{9i_3(C)^2} \frac{\partial i_3}{\partial C}(C) \otimes \frac{\partial i_3}{\partial C}(C) \right. \\
+  & ~~~~~~~~~~~~~~~~\left. - \frac{2}{3i_3(C)}(\frac{\partial i_3}{\partial C}(C) \otimes \frac{\partial i_2}{\partial C}(C) + \frac{\partial i_2}{\partial C}(C) \otimes \frac{\partial i_3}{\partial C}(C)) - \frac{2i_2(C)}{3i_3(C)} \frac{\partial^2 i_3}{\partial C^2}(C)\right)
+
+and then
+
+.. math::
+
+  {\hat{\hat{\sigma}}}   &= 2c_1 \frac{\partial j_1}{\partial C}(C) + 2c_2 \frac{\partial j_2}{\partial C}(C)  \\
+  \mathcal{B} &= 4 c_1 \frac{\partial^2 j_1}{\partial C^2}(C) + 4c_2 \frac{\partial^2 j_2}{\partial C^2}(C) \\
+  \mathcal{A}_{ijkl} &= (\mathcal{B}_{ijkl} + \mathcal{B}_{jikl})/2
 
 
 The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pression) 
@@ -213,6 +242,12 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
   {W} &= \gamma_1i_1( E) + \frac{\lambda}{2}i_2( E) + 8ci_3( E) - \frac{\gamma_1}{2} \log \det  C
 
 
+``Plane strain hyper-elasticity``
+
+previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.  
+
+
+
 Add an nonlinear elasticity brick to a model
 ++++++++++++++++++++++++++++++++++++++++++++
 
@@ -226,8 +261,9 @@ where ``AHL`` is an object of type ``getfem::abstract_hyperelastic_law`` which r
   getfem::SaintVenant_Kirchhoff_hyperelastic_law AHL;
   getfem::Ciarlet_Geymonat_hyperelastic_law AHL;
   getfem::Mooney_Rivlin_hyperelastic_law AHL;
+  getfem::plane_strain_hyperelastic_law AHL(pAHL);
 
-The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition.
+The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition. The plane strain hyperelastic law take a pointer on an hyperelastic law as a parameter and performs a 2D plane strain approximation.
 
 ``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or decribe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh). 
 
@@ -235,10 +271,10 @@ The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coe
 The program :file:`nonlinear_elastostatic.cc` in :file:`tests` directory and :file:`demo_nonlinear_elasticity.m` in :file:`interface/tests/matlab` directory are some examples of use of this brick with or without an incompressibility condition.
 
 
-It can be noted that the add of a new hyperelastic constitutive law is rther easy. It is sufficient to add the expression of the strain energy, the stress tensor and the derivative of the stress tensor. See the file  :file:`getfem/getfem_nonlinear_elasticity.h` for more details.
+Note that the addition of a new hyperelastic constitutive law consists in furnishing the expression of the strain energy, the stress tensor and the derivative of the stress tensor. See the file  :file:`getfem/getfem_nonlinear_elasticity.cc` for more details. In particular, expression of the invariants and their derivatives are available.
 
 
-It is also furnished a function which computes the Von Mises or Tresca stress: ::
+A function which computes the Von Mises or Tresca stresses is also available: ::
 
   VM = compute_Von_Mises_or_Tresca
     (md, varname, AHL, dataname, mf_vm, VM, tresca)

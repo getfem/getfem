@@ -896,6 +896,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Add a nonlinear elasticity term to the model relatively to the
     variable `varname`. `lawname` is the constitutive law which
     could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+    IMPORTANT : if the variable is defined on a 2D mesh, the plane strain
+    approximation is automatically used.
     `dataname` is a vector of parameters for the constitutive law. Its length
     depends on the law. It could be a short vector of constant values or a
     vector field described on a finite element method for variable
@@ -905,6 +907,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add nonlinear elasticity brick", 4, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       size_type N = gfi_mim->mesh_im().linked_mesh().dim();
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string dataname = in.pop().to_string();
@@ -913,7 +916,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index() +
        add_nonlinear_elasticity_brick
        (md->model(), gfi_mim->mesh_im(), varname,
-        abstract_hyperelastic_law_from_name(lawname), dataname, region);
+        abstract_hyperelastic_law_from_name(lawname, N), dataname, region);
        
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));

@@ -381,7 +381,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_Von_Mises_or_Tresca
        (md->model(), varname, 
-	abstract_hyperelastic_law_from_name(lawname),
+	abstract_hyperelastic_law_from_name
+	(lawname, gfi_mf->mesh_fem().linked_mesh().dim()),
 	dataname, gfi_mf->mesh_fem(), VMM, tresca);
        out.pop().from_dcvector(VMM);
        );

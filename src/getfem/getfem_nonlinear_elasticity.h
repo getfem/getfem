@@ -55,6 +55,7 @@ namespace getfem {
   struct abstract_hyperelastic_law {
     mutable int uvflag;
     size_type nb_params_;
+    getfem::abstract_hyperelastic_law *pl; /* optional reference */
     void reset_unvalid_flag(void) const { uvflag = 0; }
     void inc_unvalid_flag(void) const { uvflag++; }
     int get_unvalid_flag(void) const { return uvflag; }
@@ -70,7 +71,7 @@ namespace getfem {
     virtual void grad_sigma(const base_matrix &E, base_tensor &result, 
 			    const base_vector &params) const = 0;
     size_type nb_params(void) const { return nb_params_; }
-    abstract_hyperelastic_law() { nb_params_ = 0; }
+    abstract_hyperelastic_law() { nb_params_ = 0; pl = 0; }
     virtual ~abstract_hyperelastic_law() {}
     static void random_E(base_matrix &E);
     void test_derivatives(size_type N, scalar_type h,
@@ -141,6 +142,21 @@ namespace getfem {
 			    const base_vector &params) const;
     Ciarlet_Geymonat_hyperelastic_law(void) { nb_params_ = 3; }
   };
+
+  /** Plane strain hyperelastic law (take another law as a parameter)
+   */
+  struct plane_strain_hyperelastic_law : public abstract_hyperelastic_law {
+    virtual scalar_type strain_energy(const base_matrix &E,
+				      const base_vector &params) const;
+    virtual void sigma(const base_matrix &E, base_matrix &result,
+		       const base_vector &params) const;
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
+			    const base_vector &params) const;
+    plane_strain_hyperelastic_law(getfem::abstract_hyperelastic_law *pl_)
+    { pl = pl_; nb_params_ = pl->nb_params(); }
+  };
+
+
 
 
   template<typename VECT1, typename VECT2> class elasticity_nonlinear_term 

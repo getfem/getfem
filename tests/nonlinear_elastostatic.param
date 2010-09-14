@@ -10,7 +10,7 @@ LZ = 2.0;		% size in Z.
 P1 = 1.;	        % First elastic coefficient.
 P2 = 1.;   	        % Second elastic coefficient.
 P3 = 1.4;   	        % Third elastic coefficient.
-LAW = 3;     % 0 : SaintVenant-Kirchhoff
+LAW = 0;     % 0 : SaintVenant-Kirchhoff
              % 1 : SaintVenant-Kirchhoff+incompressibility
              % 2 : Ciarlet-Geymonat
              % 3 : Mooney-Rivlin (+incompressibility)
@@ -70,5 +70,5 @@ DIRICHLET_VERSION=0;
 NBSTEP = 10;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'nonlinear_elastostatic';     % Root of data files.
-VTK_EXPORT = 1 % export solution to a .vtk file ?
+VTK_EXPORT = 1; % export solution to a .vtk file ?
 NOISY=2

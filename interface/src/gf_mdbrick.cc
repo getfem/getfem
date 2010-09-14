@@ -407,7 +407,7 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);
     std::string lawname = in.pop().to_string();
     const getfem::abstract_hyperelastic_law &law =
-      abstract_hyperelastic_law_from_name(lawname);
+      abstract_hyperelastic_law_from_name(lawname, mf_u.linked_mesh().dim());
 
     real_model_state::vector_type P(law.nb_params());
     std::fill(P.begin(), P.end(), 1.);

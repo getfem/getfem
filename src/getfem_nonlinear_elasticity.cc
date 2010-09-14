@@ -26,18 +26,259 @@
 namespace getfem {
 
 
+  /* Usefull functions to compute the invariants and their derivatives
+     Note that the second derivative is symmetrized (see the user
+     documentation for more details). The matrix E is assumed to be symmetric.
+  */
+
+
+  static scalar_type frobenius_product_trans(const base_matrix &A,
+					     const base_matrix &B) {
+    size_type N = gmm::mat_nrows(A);
+    scalar_type res = scalar_type(0);
+    for (size_type i = 0; i < N; ++i)
+      for (size_type j = 0; j < N; ++j)
+	res += A(i, j) * B(j, i);
+    return res;
+  }
+
+  struct compute_invariants {
+    
+    const base_matrix &E;
+    base_matrix Einv;
+    size_type N;
+    scalar_type i1_, i2_, i3_, j1_, j2_;
+    bool i1_c, i2_c, i3_c, j1_c, j2_c;
+
+    base_matrix di1, di2, di3, dj1, dj2; 
+    bool di1_c, di2_c, di3_c, dj1_c, dj2_c;
+
+    base_tensor ddi1, ddi2, ddi3, ddj1, ddj2; 
+    bool ddi1_c, ddi2_c, ddi3_c, ddj1_c, ddj2_c;
+
+
+    /* First invariant tr(E) */
+    void compute_i1(void) {
+      i1_ = gmm::mat_trace(E);
+      i1_c = true;
+    }
+
+    void compute_di1(void) {
+      gmm::resize(di1, N, N);
+      gmm::copy(gmm::identity_matrix(), di1);
+      di1_c = true;
+    }
+
+    void compute_ddi1(void) { // not very usefull, null tensor
+      ddi1 = base_tensor(N, N, N, N); 
+      ddi1_c = true;
+    }
+
+    inline scalar_type i1(void)
+    { if (!i1_c) compute_i1(); return i1_; }
+
+    inline const base_matrix &grad_i1(void)
+    { if (!di1_c) compute_di1(); return di1; }
+
+    inline const base_tensor &sym_grad_grad_i1(void)
+    { if (!ddi1_c) compute_ddi1(); return ddi1; }
+
+
+    /* Second invariant (tr(E)^2 - tr(E^2))/2 */
+    void compute_i2(void) {
+      i2_ = (gmm::sqr(gmm::mat_trace(E))
+	     - frobenius_product_trans(E, E)) / scalar_type(2);
+      i2_c = true;
+    }
+
+    void compute_di2(void) {
+      gmm::resize(di2, N, N);
+      gmm::copy(gmm::identity_matrix(), di2);
+      gmm::scale(di2, i1());
+      // gmm::add(gmm::scale(gmm::transposed(E), -scalar_type(1)), di2);
+      gmm::add(gmm::scaled(E, -scalar_type(1)), di2);
+      di2_c = true;
+    }
+
+    void compute_ddi2(void) {
+      ddi2 = base_tensor(N, N, N, N);
+      for (size_type i = 0; i < N; ++i)
+	for (size_type k = 0; k < N; ++k)
+	  ddi2(i,i,k,k) += scalar_type(1);
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j) {
+	  ddi2(i,j,j,i) -= scalar_type(1)/scalar_type(2);
+	  ddi2(j,i,j,i) -= scalar_type(1)/scalar_type(2);
+	}
+      ddi2_c = true;
+    }
+
+    inline scalar_type i2(void)
+    { if (!i2_c) compute_i2(); return i2_; }
+
+    inline const base_matrix &grad_i2(void)
+    { if (!di2_c) compute_di2(); return di2; }
+
+    inline const base_tensor &sym_grad_grad_i2(void)
+    { if (!ddi2_c) compute_ddi2(); return ddi2; }
+
+    /* Third invariant det(E) */
+    void compute_i3(void) {
+      Einv = E;
+      i3_ = gmm::lu_inverse(Einv);
+      i3_c = true;
+    }
+
+    void compute_di3(void) {
+      scalar_type det = i3();
+      // gmm::resize(di3, N, N);
+      // gmm::copy(gmm::transposed(E), di3);
+      di3 = Einv;
+      // gmm::lu_inverse(di3);
+      gmm::scale(di3, det);
+      di3_c = true;
+    }
+
+    void compute_ddi3(void) {
+      ddi3 = base_tensor(N, N, N, N);
+      scalar_type det = i3() / scalar_type(2); // computes also E inverse.
+      for (size_type i = 0; i < N; ++i)
+	for (size_type j = 0; j < N; ++j)
+	  for (size_type k = 0; k < N; ++k)
+	    for (size_type l = 0; l < N; ++l)
+	      ddi3(i,j,k,l) = det*(Einv(j,i)*Einv(l,k) - Einv(j,k)*Einv(l,i)
+				 + Einv(i,j)*Einv(l,k) - Einv(i,k)*Einv(l,j));
+      ddi3_c = true;
+    }
+
+    inline scalar_type i3(void)
+    { if (!i3_c) compute_i3(); return i3_; }
+
+    inline const base_matrix &grad_i3(void)
+    { if (!di3_c) compute_di3(); return di3; }
+
+    inline const base_tensor &sym_grad_grad_i3(void)
+    { if (!ddi3_c) compute_ddi3(); return ddi3; }
+
+    /* Invariant j1(E) = i1(E)*i3(E)^(-1/3) */
+    void compute_j1(void) {
+      j1_ = i1() * ::pow(gmm::abs(i3()), -scalar_type(1) / scalar_type(3));
+      j1_c = true;
+    }
+
+    void compute_dj1(void) {
+      dj1 = grad_i1();
+      gmm::add(gmm::scaled(grad_i3(), -i1() / (scalar_type(3) * i3())), dj1);
+      gmm::scale(dj1, ::pow(gmm::abs(i3()), -scalar_type(1) / scalar_type(3)));
+      dj1_c = true;
+    }
+
+    void compute_ddj1(void) {
+      const base_matrix &di1_ = grad_i1(); 
+      const base_matrix &di3_ = grad_i3();
+      scalar_type coeff1 = scalar_type(1) / (scalar_type(3)*i3());
+      scalar_type coeff2 = scalar_type(4) * coeff1 * coeff1 * i1();
+      ddj1 = sym_grad_grad_i3();
+      gmm::scale(ddj1.as_vector(), -i1() * coeff1);
+      
+      for (size_type i = 0; i < N; ++i)
+ 	for (size_type j = 0; j < N; ++j)
+ 	  for (size_type k = 0; k < N; ++k)
+ 	    for (size_type l = 0; l < N; ++l)
+	      ddj1(i,j,k,l) +=
+		(di3_(i, j) * di3_(k, l)) * coeff2
+		- (di1_(i, j) * di3_(k, l) + di1_(k, l) * di3_(i, j)) * coeff1;
+
+      gmm::scale(ddj1.as_vector(),
+		 ::pow(gmm::abs(i3()), -scalar_type(1)/scalar_type(3)));
+      ddj1_c = true;
+    }
+
+    inline scalar_type j1(void)
+    { if (!j1_c) compute_j1(); return j1_; }
+
+    inline const base_matrix &grad_j1(void)
+    { if (!dj1_c) compute_dj1(); return dj1; }
+
+    inline const base_tensor &sym_grad_grad_j1(void)
+    { if (!ddj1_c) compute_ddj1(); return ddj1; }
+
+    /* Invariant j2(E) = i2(E)*i3(E)^(-2/3) */
+    void compute_j2(void) {
+      j2_ = i2() * ::pow(gmm::abs(i3()), -scalar_type(2) / scalar_type(3));
+      j2_c = true;
+    }
+
+    void compute_dj2(void) {
+      dj2 = grad_i2();
+      gmm::add(gmm::scaled(grad_i3(), -scalar_type(2) * i2() / (scalar_type(3) * i3())), dj2);
+      gmm::scale(dj2, ::pow(gmm::abs(i3()), -scalar_type(2) / scalar_type(3)));
+      dj2_c = true;
+    }
+
+    void compute_ddj2(void) {
+      const base_matrix &di2_ = grad_i2(); 
+      const base_matrix &di3_ = grad_i3();
+      scalar_type coeff1 = scalar_type(2) / (scalar_type(3)*i3());
+      scalar_type coeff2 = scalar_type(5) * coeff1 * coeff1 * i2()
+	                   / scalar_type(2);
+      ddj2 = sym_grad_grad_i2();
+      gmm::add(gmm::scaled(sym_grad_grad_i3().as_vector(), -i2() * coeff1),
+	       ddj2.as_vector());
+      
+      for (size_type i = 0; i < N; ++i)
+ 	for (size_type j = 0; j < N; ++j)
+ 	  for (size_type k = 0; k < N; ++k)
+ 	    for (size_type l = 0; l < N; ++l)
+	      ddj2(i,j,k,l) +=
+		(di3_(i, j) * di3_(k, l)) * coeff2
+		- (di2_(i, j) * di3_(k, l) + di2_(k, l) * di3_(i, j)) * coeff1;
+
+      gmm::scale(ddj2.as_vector(),
+		 ::pow(gmm::abs(i3()), -scalar_type(2)/scalar_type(3)));
+      ddj2_c = true;
+    }
+
+
+    inline scalar_type j2(void)
+    { if (!j2_c) compute_j2(); return j2_; }
+   
+    inline const base_matrix &grad_j2(void)
+    { if (!dj2_c) compute_dj2(); return dj2; }
+
+    inline const base_tensor &sym_grad_grad_j2(void)
+    { if (!ddj2_c) compute_ddj2(); return ddj2; }
+
+
+    compute_invariants(const base_matrix &EE)
+      : E(EE), i1_c(false), i2_c(false), i3_c(false),
+	j1_c(false), j2_c(false), di1_c(false), di2_c(false), di3_c(false),
+	dj1_c(false), dj2_c(false), ddi1_c(false), ddi2_c(false),
+	ddi3_c(false), ddj1_c(false), ddj2_c(false)
+      { N = gmm::mat_nrows(E); }
+
+  };
+
+
+ 
+
+
+  /* Symmetry check */
+
   int check_symmetry(const base_tensor &t) {
     int flags = 7; size_type N = 3;
     for (size_type n = 0; n < N; ++n)
       for (size_type m = 0; m < N; ++m)
 	for (size_type l = 0; l < N; ++l)
 	  for (size_type k = 0; k < N; ++k) {
-	    if (gmm::abs(t(n,m,l,k) - t(l,k,n,m))>1e-10) flags &= (~1); 
-	    if (gmm::abs(t(n,m,l,k) - t(m,n,l,k))>1e-10) flags &= (~2); 
-	    if (gmm::abs(t(n,m,l,k) - t(n,m,k,l))>1e-10) flags &= (~4);
+	    if (gmm::abs(t(n,m,l,k) - t(l,k,n,m))>1e-5) flags &= (~1); 
+	    if (gmm::abs(t(n,m,l,k) - t(m,n,l,k))>1e-5) flags &= (~2); 
+	    if (gmm::abs(t(n,m,l,k) - t(n,m,k,l))>1e-5) flags &= (~4);
 	  }
     return flags;
   }
+
+  /* Member functions of hyperelastic laws */
 
   void abstract_hyperelastic_law::random_E(base_matrix &E) {
     size_type N = gmm::mat_nrows(E);
@@ -49,42 +290,50 @@ namespace getfem {
 
   void abstract_hyperelastic_law::test_derivatives
   (size_type N, scalar_type h, const base_vector& param) const {
-    base_matrix E(N,N), E2(N,N), DE(N,N); 
-    random_E(E); random_E(DE);
-    gmm::scale(DE,h);
-    gmm::add(E,DE,E2);
-    
-    base_matrix sigma1(N,N), sigma2(N,N);
-    getfem::base_tensor tdsigma(N,N,N,N);
-    base_matrix dsigma(N,N);
-    gmm::copy(E,E2); gmm::add(DE,E2);
-    sigma(E, sigma1, param); sigma(E2, sigma2, param);
-    
-    scalar_type d = strain_energy(E2, param) - strain_energy(E, param);
-    scalar_type d2 = 0;
-    for (size_type i=0; i < N; ++i) 
-      for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
-    if (gmm::abs(d-d2) > h*1e-5) 
-      cout << "wrong derivative of strain_energy, d=" << d
-	   << ", d2=" << d2 << "\n";
-    
-    grad_sigma(E,tdsigma,param);
-    for (size_type i=0; i < N; ++i) {
-      for (size_type j=0; j < N; ++j) {
-	dsigma(i,j) = 0;
-	for (size_type k=0; k < N; ++k) {
-	  for (size_type m=0; m < N; ++m) {
-	    dsigma(i,j) += tdsigma(i,j,k,m)*DE(k,m);
+    base_matrix E(N,N), E2(N,N), DE(N,N);
+    bool ok = true;
+
+    for (size_type count = 0; count < 100; ++count) {
+      random_E(E); random_E(DE);
+      gmm::scale(DE, h);
+      gmm::add(E, DE, E2);
+      
+      base_matrix sigma1(N,N), sigma2(N,N);
+      getfem::base_tensor tdsigma(N,N,N,N);
+      base_matrix dsigma(N,N);
+      gmm::copy(E, E2); gmm::add(DE, E2);
+      sigma(E, sigma1, param); sigma(E2, sigma2, param);
+      
+      scalar_type d = strain_energy(E2, param) - strain_energy(E, param);
+      scalar_type d2 = 0;
+      for (size_type i=0; i < N; ++i) 
+	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
+      if (gmm::abs(d-d2) > 1e-6) {
+	cout << "Test " << count << " wrong derivative of strain_energy, d="
+	     << d << ", d2=" << d2 << endl;
+	ok = false;
+      }
+      
+      grad_sigma(E,tdsigma,param);
+      for (size_type i=0; i < N; ++i) {
+	for (size_type j=0; j < N; ++j) {
+	  dsigma(i,j) = 0;
+	  for (size_type k=0; k < N; ++k) {
+	    for (size_type m=0; m < N; ++m) {
+	      dsigma(i,j) += tdsigma(i,j,k,m)*DE(k,m);
+	    }
 	  }
-	}
-	sigma2(i,j) -= sigma1(i,j);
-	if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > h*1e-5) {
-	  cout << "wrong derivative of sigma, i=" << i << ", j=" 
-	       << j << ", dsigma=" << dsigma(i,j) << ", var sigma = " 
-	       << sigma2(i,j) << "\n";
+	  sigma2(i,j) -= sigma1(i,j);
+	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > 1e-6) {
+	    cout << "Test " << count << " wrong derivative of sigma, i="
+		 << i << ", j=" << j << ", dsigma=" << dsigma(i,j)
+		 << ", var sigma = " << sigma2(i,j) << endl;
+	    ok = false;
+	  }
 	}
       }
     }
+    GMM_ASSERT1(ok, "Derivative test has failed");
   }
     
   scalar_type SaintVenant_Kirchhoff_hyperelastic_law::strain_energy
@@ -191,47 +440,53 @@ namespace getfem {
   scalar_type Mooney_Rivlin_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params) const {
     scalar_type C1 = params[0], C2 = params[1];
-    return scalar_type(2) *
-      (gmm::mat_trace(E) * (C1 + scalar_type(2)*C2)
-       + C2*(gmm::sqr(gmm::mat_trace(E)) - gmm::mat_euclidean_norm_sqr(E)));
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    return C1*(ci.j1() - scalar_type(3)) + C2*(ci.j2() - scalar_type(3));
   }
 
   void Mooney_Rivlin_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result, const base_vector &params) const {
-    scalar_type C12 = scalar_type(2) * params[0];
-    scalar_type C24 = scalar_type(4) * params[1];
-    gmm::copy(gmm::identity_matrix(), result);
-    gmm::scale(result, C24*(gmm::mat_trace(E)+scalar_type(1)) + C12);
-    gmm::add(gmm::scaled(E, -C24), result);
+    scalar_type C1 = params[0], C2 = params[1];
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    gmm::copy(gmm::scaled(ci.grad_j1(), scalar_type(2)*C1), result);
+    gmm::add(gmm::scaled(ci.grad_j2(), scalar_type(2)*C2), result);
+
   }
   void Mooney_Rivlin_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result, const base_vector &params) const {
-    scalar_type C22 = scalar_type(2) * params[1];
-    std::fill(result.begin(), result.end(), scalar_type(0));
+    scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
-    for (size_type i = 0; i < N; ++i)
-      for (size_type l = 0; l < N; ++l) {
-	result(i, i, l, l) += scalar_type(2) * C22;
-	result(i, l, i, l) -= C22;
-	result(i, l, l, i) -= C22;
-      }
+    GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    gmm::copy(gmm::scaled(ci.sym_grad_grad_j1().as_vector(),
+			  scalar_type(4)*C1), result.as_vector());
+    gmm::add(gmm::scaled(ci.sym_grad_grad_j2().as_vector(),
+			 scalar_type(4)*C2), result.as_vector());
+//     GMM_ASSERT1(check_symmetry(result) == 7,
+// 		"Fourth order tensor not symmetric : " << result);
   }
 
   Mooney_Rivlin_hyperelastic_law::Mooney_Rivlin_hyperelastic_law(void) {
     nb_params_ = 2;
-    
-    // an attempt, the first term is missing grad(h)sigma:grad(v)
-//     adapted_tangent_term_assembly_fem_data = "params=data$1(#2,2);"
-//       "t=comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l).Base(#2)(:));"
-//       "u=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k).Base(#2)(:));" 
-//       "v=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i).Base(#2)(:));"
-//       "M(#1,#1)+= t(:,:,i).params(i,2)*4 - u(:,:,i).params(i,2)*2 - v(:,:,i).params(i,2)*2";
-    
-//     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
-//       "t=sym(comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l)));"
-//       "u=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k)));" 
-//       "v=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i)));"
-//       "M(#1,#1)+= t(:,:).params(2)*4 - u(:,:).params(2)*2 - v(:,:).params(2)*2";
   }
 
   scalar_type Ciarlet_Geymonat_hyperelastic_law::strain_energy
@@ -295,6 +550,9 @@ namespace getfem {
 	      (C(i, k)*C(l, j) + C(i, l)*C(k, j)) * (d-scalar_type(2)*det*c)
 	      + (C(i, j) * C(k, l)) * det*c*scalar_type(4);
       }
+
+    GMM_ASSERT1(check_symmetry(result) == 7,
+		"Fourth order tensor not symmetric : " << result);
   }
 
 
@@ -307,6 +565,43 @@ namespace getfem {
        * (static_cast<int> (pow(double(ii-kk),2))%3 )
        * (static_cast<int> (pow(double(jj-kk),2))%3)
        * (pow(double(jj-(ii%3))-double(0.5),2)-double(1.25)));
+  }
+
+
+
+  scalar_type plane_strain_hyperelastic_law::strain_energy
+  (const base_matrix &E, const base_vector &params) const {
+    GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
+    base_matrix E3D(3,3);
+    E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1); 
+    return pl->strain_energy(E3D, params);
+  }
+
+  void plane_strain_hyperelastic_law::sigma
+  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+    GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
+    base_matrix E3D(3,3), result3D(3,3);
+    E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1);
+    pl->sigma(E3D, result3D, params);
+    result(0,0) = result3D(0,0); result(1,0) = result3D(1,0);
+    result(0,1) = result3D(0,1); result(1,1) = result3D(1,1);
+  }
+
+  void plane_strain_hyperelastic_law::grad_sigma
+  (const base_matrix &E, base_tensor &result,const base_vector &params) const {
+    GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
+    base_matrix E3D(3,3);
+    base_tensor result3D(3,3,3,3);
+    E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1);
+    pl->grad_sigma(E3D, result3D, params);
+    result(0,0,0,0) = result3D(0,0,0,0); result(1,0,0,0) = result3D(1,0,0,0);
+    result(0,1,0,0) = result3D(0,1,0,0); result(1,1,0,0) = result3D(1,1,0,0);
+    result(0,0,1,0) = result3D(0,0,1,0); result(1,0,1,0) = result3D(1,0,1,0);
+    result(0,1,1,0) = result3D(0,1,1,0); result(1,1,1,0) = result3D(1,1,1,0);
+    result(0,0,0,1) = result3D(0,0,0,1); result(1,0,0,1) = result3D(1,0,0,1);
+    result(0,1,0,1) = result3D(0,1,0,1); result(1,1,0,1) = result3D(1,1,0,1);
+    result(0,0,1,1) = result3D(0,0,1,1); result(1,0,1,1) = result3D(1,0,1,1);
+    result(0,1,1,1) = result3D(0,1,1,1); result(1,1,1,1) = result3D(1,1,1,1);
   }
 
 

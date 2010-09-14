@@ -78,142 +78,6 @@ struct elastostatic_problem {
 };
 
 
-// namespace getfem {
-// template <typename MODEL_STATE> void
-//   nl_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
-// 	   gmm::iteration &iter) {
-
-//     typedef typename MODEL_STATE::vector_type VECTOR;
-//     typedef typename MODEL_STATE::value_type value_type;
-//     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-//     typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;
-//     typedef typename gmm::number_traits<value_type>::magnitude_type mtype;
-
-//     // TODO : take iter into account for the Newton. compute a consistent 
-//     //        max residu.
-//     //        detect the presence of multipliers before using a preconditioner
-
-//     size_type ndof = problem.nb_dof();
-//     bool is_linear = problem.is_linear();
-//     //mtype alpha, alpha_min=mtype(1)/mtype(32), alpha_mult=mtype(3)/mtype(4);
-//     mtype alpha, alpha_min=mtype(1)/mtype(1000000);
-//     mtype alpha_mult=mtype(2)/mtype(3), alpha_max_ratio(2);
-//     dal::bit_vector mixvar;
-//     gmm::iteration iter_linsolv0 = iter;
-//     iter_linsolv0.set_maxiter(10000);
-//     if (!is_linear) { iter_linsolv0.reduce_noisy(); iter_linsolv0.set_resmax(iter.get_resmax()/10000.0); }
-
-//     MS.adapt_sizes(problem);
-//     /*if (!is_linear) gmm::fill_random(MS.state()); 
-//       else */
-//     //gmm::clear(MS.state());
-//     //gmm::fill_random(MS.state()); 
-//     problem.compute_residual(MS);
-//     problem.compute_tangent_matrix(MS);
-//     MS.compute_reduced_system();
-//     mtype act_res = MS.reduced_residual_norm(), act_res_new(0);
-//     cout << "residual initial: " << gmm::vect_norm2(MS.residual()) << ", " 
-// 	 << gmm::vect_norm2(MS.reduced_residual())
-// 	 << ", |U0|" << gmm::vect_norm2(MS.state()) << "\n";
-//     while (!iter.finished(act_res)) {
-//       gmm::iteration iter_linsolv = iter_linsolv0;
-//       VECTOR d(ndof), dr(gmm::vect_size(MS.reduced_residual()));
-
-//       if (!(iter.first())) {
-// 	problem.compute_tangent_matrix(MS);
-// 	MS.compute_reduced_system();
-//       }
-
-//       if (iter.get_noisy())
-//        	cout << "tangent matrix is "
-// 	     << (gmm::is_symmetric(MS.tangent_matrix(),
-// 				   1E-6*gmm::mat_maxnorm(MS.tangent_matrix()))
-// 		 ? "" : "not ")
-// 	     <<  "symmetric. ";
-//       cout << "Solve.."; cout.flush();
-//       double t0 = ftool::uclock_sec();
-//       if (1)
-//       {
-// 	double rcond;
-//         gmm::SuperLU_solve(MS.reduced_tangent_matrix(), dr,
-//                            gmm::scaled(MS.reduced_residual(), value_type(-1)),
-//                            rcond);
-//       /*size_type srtm = gmm::mat_nrows(MS.reduced_tangent_matrix());
-// 	gmm::dense_matrix<double> MM(srtm, srtm);
-// 	gmm::copy(MS.reduced_tangent_matrix(), MM);
-// 	gmm::lu_solve(MM, dr, gmm::scaled(MS.reduced_residual(), value_type(-1)));*/
-//       }
-//       else {
-// 	gmm::ildlt_precond<T_MATRIX> P(MS.reduced_tangent_matrix());
-// 	gmm::gmres(MS.reduced_tangent_matrix(), dr, 
-// 		   gmm::scaled(MS.reduced_residual(), value_type(-1)),
-// 		   P, 300, iter_linsolv);
-// 	if (!iter_linsolv.converged())
-// 	  GMM_WARNING(2,"gmres did not converge!");
-//       }
-//       MS.unreduced_solution(dr,d);
-//       cout << "..done (" << ftool::uclock_sec() - t0 << ")\n";
-//       VECTOR stateinit(ndof);
-//       gmm::copy(MS.state(), stateinit);
-      
-//       if (0) {
-// 	problem.compute_residual(MS);
-// 	MS.compute_reduced_system();
-// 	scalar_type r0 = MS.reduced_residual_norm();
-// 	cout << "R0 === " << r0 << "\n";
-// 	VECTOR W(gmm::vect_size(dr));
-// 	gmm::mult(MS.reduced_tangent_matrix(), dr,W);
-// 	scalar_type w = 2*gmm::vect_sp(MS.reduced_residual(), W);
-
-// 	for (alpha = mtype(1); alpha >= alpha_min/100; alpha *= alpha_mult) {
-// 	  gmm::add(stateinit, gmm::scaled(d, -alpha), MS.state());
-// 	  problem.compute_residual(MS);
-// 	  MS.compute_reduced_system(); // The whole reduced system do not
-// 	  // have to be computed, only the RHS. To be adapted.
-// 	  act_res_new = gmm::sqr(MS.reduced_residual_norm());
-// 	  printf("%+12.5g  %+12.5g  %+12.5g\n", -alpha, act_res_new, w*(-alpha)+gmm::sqr(r0));
-// 	}
-// 	for (alpha = mtype(1); alpha >= alpha_min/100; alpha *= alpha_mult) {
-// 	  gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-// 	  problem.compute_residual(MS);
-// 	  MS.compute_reduced_system(); // The whole reduced system do not
-// 	  // have to be computed, only the RHS. To be adapted.
-// 	  act_res_new = gmm::sqr(MS.reduced_residual_norm());
-// 	  printf("%+12.5g  %+12.5g  %+12.5g\n", alpha, act_res_new, w*(alpha)+gmm::sqr(r0));
-// 	}
-// 	gmm::copy(stateinit, MS.state());
-// 	problem.compute_residual(MS);
-// 	MS.compute_reduced_system();
-// 	r0 = MS.reduced_residual_norm();
-// 	cout << "R0 === " << r0 << "\n";
-//       }
-
-
-
-//       for (alpha = mtype(1); alpha >= alpha_min; alpha *= alpha_mult) {
-// 	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-// 	problem.compute_residual(MS);
-// 	MS.compute_reduced_system(); // The whole reduced system do not
-// 	// have to be computed, only the RHS. To be adapted.
-// 	act_res_new = MS.reduced_residual_norm();
-// 	if (act_res_new <= act_res * alpha_max_ratio) break;
-
-// 	gmm::add(stateinit, gmm::scaled(d, -alpha), MS.state());
-// 	problem.compute_residual(MS);
-// 	MS.compute_reduced_system(); // The whole reduced system do not
-// 	// have to be computed, only the RHS. To be adapted.
-// 	act_res_new = MS.reduced_residual_norm();
-// 	if (act_res_new <= act_res * alpha_max_ratio) {
-// 	  cout << "WWWWWRONG DIRECTION ALPHA < 0 is BETTER THAN ALPHA > 0 !!!!\n";
-// 	  break;
-// 	}
-//       }
-//       cout << "alpha = " << alpha << ", |U| = " << gmm::vect_norm2(MS.state()) << ", ";
-//       act_res = act_res_new; ++iter;
-//     }
-//   }
-// }
-
 /* Read parameters from the .param file, build the mesh, set finite element
    and integration methods and selects the boundaries.
 
@@ -317,74 +181,26 @@ bool elastostatic_problem::solve(plain_vector &U) {
   size_type law_num = PARAM.int_value("LAW");
   // Linearized elasticity brick.
   base_vector p(3); p[0] = p1; p[1] = p2; p[2] = p3;
-  /*cout << "test Hooke\n";
-  getfem::SaintVenant_Kirchhoff_hyperelastic_law lh;
-  lh.test_derivatives(3, 0.0001, p);
-  cout << "test ciralet\n";
-  getfem::Ciarlet_Geymonat_hyperelastic_law l;
-  l.test_derivatives(3, 0.1, p);
-  l.test_derivatives(3, 0.01, p);
-  l.test_derivatives(3, 0.001, p);
-  l.test_derivatives(3, 0.0001, p);
-  l.test_derivatives(3, 0.00001, p);
-  l.test_derivatives(3, 0.000001, p);
-  l.test_derivatives(3, 0.0000001, p);
-  */
 
   /* choose the material law */
-  getfem::abstract_hyperelastic_law *pl = 0;
+  getfem::abstract_hyperelastic_law *pl1 = 0, *pl = 0;
   switch (law_num) {
     case 0:
-    case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
-    case 2: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
-    case 3: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
+    case 1: pl1 = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
+    case 2: pl1 = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
+    case 3: pl1 = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
     default: GMM_ASSERT1(false, "no such law");
   }
 
-  pl->test_derivatives(3, .0001, p);
-//   if (0) {
-//     getfem::Ciarlet_Geymonat_hyperelastic_law l;
-//     cout << "test derivees SaintVenantKirchhoff_hyperelastic_law\n";
-//     base_vector param(2); param[0] = 1.; param[1] = .7423;
-//     for (size_type itest = 0; itest < 100; ++itest) {
-//       base_matrix L(3,3), L2(3,3); 
-//       gmm::fill_random(L); //gmm::copy(L2,L); gmm::add(transposed(L2),L);
-//       base_matrix DL(3,3); 
-//       gmm::fill_random(DL);
-//       // gmm::fill_random(L2); gmm::copy(L2,DL);
-//       // gmm::add(transposed(L2),DL); gmm::scale(DL,0.1);
-//       base_matrix sigma1(3,3), sigma2(3,3);
-//       getfem::base_tensor tdsigma(3,3,3,3);
-//       base_matrix dsigma(3,3);
-//       gmm::copy(L,L2);
-//       gmm::add(DL,L2);
-//       l.sigma(L, sigma1, param);l.sigma(L2, sigma2, param);
-//       l.grad_sigma(L,tdsigma,param);
-//       for (size_type i=0; i < 3; ++i) {
-// 	for (size_type j=0; j < 3; ++j) {
-// 	  dsigma(i,j) = 0;
-// 	  for (size_type k=0; k < 3; ++k) {
-// 	    for (size_type m=0; m < 3; ++m) {
-// 	      dsigma(i,j) += tdsigma(i,j,k,m)*DL(k,m);
-// 	    }
-// 	  }
-// 	  sigma2(i,j) -= sigma1(i,j);
-// 	  if (gmm::abs(dsigma(i,j) - sigma2(i,j)) > 1e-13) {
-// 	    cout << "erreur derivees i=" << i << ", j=" << j
-// 		 << ", dsigma=" << dsigma(i,j)
-// 		 << ", var sigma = " << sigma2(i,j) << "\n";
-// 	  }
-// 	}
-//       }
-//     }
-//   }
-
-  // getfem::Mooney_Rivlin_hyperelastic_law ll;
-  // base_vector test_params(2); test_params[0] = 1.0; test_params[1] = 1.0;
-  // ll.test_derivatives(3, 1E-6, test_params);
+  if (N == 2) {
+    cout << "2D plane strain hyper-elasticity\n";
+    pl = new getfem::plane_strain_hyperelastic_law(pl1);
+  } else pl = pl1;
 
   p.resize(pl->nb_params());
 
+
+  pl->test_derivatives(3, 1e-12, p);
 
 
   getfem::model model;
@@ -516,8 +332,8 @@ int main(int argc, char *argv[]) {
     p.mf_u.write_to_file(p.datafilename + ".mf", true);
     p.mf_rhs.write_to_file(p.datafilename + ".mfd", true);
     plain_vector U(p.mf_u.nb_dof());
+    GMM_ASSERT1(p.solve(U), "Solve has failed");
     if (p.PARAM.int_value("VTK_EXPORT")) {
-      if (!p.solve(U)) cerr << "Solve has failed\n";
       gmm::vecsave(p.datafilename + ".U", U);
       cout << "export to " << p.datafilename + ".vtk" << "..\n";
       getfem::vtk_export exp(p.datafilename + ".vtk",
