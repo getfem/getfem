@@ -200,7 +200,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   p.resize(pl->nb_params());
 
 
-  pl->test_derivatives(3, 4e-9, p);
+  pl->test_derivatives(3, 5e-9, p);
 
 
   getfem::model model;
