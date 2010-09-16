@@ -1168,7 +1168,7 @@ Hsieh-Clough-Tocher element
 
 This element is not :math:`\tau`-equivalent. This is a composite element.
 Polynomial of degree 3 on each of the three sub-triangles (see figure
-:ref:`ud-fig-HCT_tr` and \cite{ciarlet1978}). It is strongly advised to use a
+:ref:`ud-fig-HCT_tr` and [ciarlet1978]_). It is strongly advised to use a
 ``"IM_HCT_COMPOSITE"`` integration method with this finite element. The numeration
 of the dof is the following: 0, 3 and 6 for the lagrange dof on the first second
 and third vertex respectively; 1, 4, 7 for the derivative with respects to the
@@ -1243,7 +1243,7 @@ A composite :math:`C^1` element on quadrilaterals
 This element is not :math:`\tau`-equivalent. This is a composite element.
 Polynomial of degree 3 on each of the four sub-triangles (see figure
 :ref:`ud-fig-QC1_tr`). At least on the reference element it corresponds to the
-Fraeijs de Veubeke-Sander element (see \cite{ciarlet1978}). It is strongly advised
+Fraeijs de Veubeke-Sander element (see  [ciarlet1978]_). It is strongly advised
 to use a ``"IM_QUADC1_COMPOSITE"`` integration method with this finite element.
 
   .. list-table:: . :math:`C^1` composite element on a quadrilateral (FVS) ``"FEM_QUADC1_COMPOSITE"``
