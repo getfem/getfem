@@ -171,9 +171,9 @@ For instance, to build a mesh with tetrahedrons for a unit cube with
   getfem::mesh mymesh;
   bgeot::base_node org(0.0, 0.0, 0.0);
   std::vector<bgeot::base_small_vector> vect(3);
-  vect[0] = bgeot::base_small_vector(1.0, 0.0, 0.0);
-  vect[1] = bgeot::base_small_vector(0.0, 1.0, 0.0);
-  vect[2] = bgeot::base_small_vector(0.0, 0.0, 1.0);
+  vect[0] = bgeot::base_small_vector(0.1, 0.0, 0.0);
+  vect[1] = bgeot::base_small_vector(0.0, 0.1, 0.0);
+  vect[2] = bgeot::base_small_vector(0.0, 0.0, 0.1);
   std::vector<int> ref(3);
   ref[0] = ref[1] = ref[2] = 10;
   getfem::parallelepiped_regular_simplex_mesh(mymesh, 3, org, vect.begin(), ref.begin());
