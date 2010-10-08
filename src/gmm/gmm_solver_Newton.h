@@ -83,11 +83,13 @@ namespace gmm {
   };
 
   struct default_newton_line_search : public gmm::abstract_newton_line_search {
-    double alpha, alpha_mult, first_res;
+    double alpha, alpha_mult, first_res, alpha_max_ratio;
     double alpha_min, prev_res;
     bool first;
     virtual void init_search(double r, size_t git) {
-      alpha_min = pow(10.0, -1.5 -gmm::random() * 3.0);
+      alpha_min = pow(10.0, -gmm::random() * 4.0);
+      alpha_max_ratio = 1 + gmm::random();
+      // cout << "alpha_min = " << alpha_min << endl;
       glob_it = git;
       conv_alpha = alpha = double(1);
       prev_res = conv_r = first_res = r; it = 0; first = true;
@@ -99,9 +101,9 @@ namespace gmm {
       //      << " first_res = " << first_res << " r = " << r << endl;
       if (r < conv_r || first)
 	{ conv_r = r; conv_alpha = alpha / alpha_mult; first = false; }
-      if (r < first_res * 0.75) return true;
-      if ((alpha <= alpha_min*alpha_mult && r < first_res*2)
-	  || (gmm::abs(r - first_res) < 0.011 && alpha < 0.1)
+      if (r < first_res * 0.9) return true;
+      if ((alpha <= alpha_min*alpha_mult && r < first_res*alpha_max_ratio)
+	  // || (gmm::abs(r - first_res) < 0.011 && alpha < 0.1)
 	  || it >= itmax) return true;
       return false;
     }
