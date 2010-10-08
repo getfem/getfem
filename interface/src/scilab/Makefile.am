@@ -221,83 +221,48 @@ EXTRA_DIST=builddoc.sce \
         help/mml/step_by_step_eq5.mml \
         jar/scilab_en_US_help.jar \
         jar/scilab_fr_FR_help.jar \
-        macros/add_empty_bound.bin \
         macros/add_empty_bound.sci \
-        macros/assert.bin \
-        macros/asserterr.bin \
         macros/asserterr.sci \
-        macros/assert_field.bin \
         macros/assert_field.sci \
         macros/assert.sci \
         macros/buildmacros.sce \
-        macros/build_options_list.bin \
         macros/build_options_list.sci \
-        macros/cart2pol.bin \
         macros/cart2pol.sci \
-        macros/champ3.bin \
         macros/champ3.sci \
-        macros/cross.bin \
         macros/cross.sci \
-        macros/dot.bin \
         macros/dot.sci \
-        macros/gf_asm_pdetoolbc.bin \
         macros/gf_asm_pdetoolbc.sci \
-        macros/gfassert.bin \
         macros/gfassert.sci \
-        macros/gf_colormap.bin \
         macros/gf_colormap.sci \
-        macros/gf_compute_Q1grid_interp.bin \
         macros/gf_compute_Q1grid_interp.sci \
-        macros/gf_interpolate_on_grid.bin \
         macros/gf_interpolate_on_grid.sci \
-        macros/gf_mesh_fem_get_eval.bin \
         macros/gf_mesh_fem_get_eval.sci \
-        macros/gf_plot_1D.bin \
         macros/gf_plot_1D.sci \
-        macros/gf_plot.bin \
-        macros/gf_plot_mesh.bin \
         macros/gf_plot_mesh.sci \
         macros/gf_plot.sci \
-        macros/gf_plot_slice.bin \
         macros/gf_plot_slice.sci \
-        macros/gf_solve.bin \
         macros/gf_solve.sci \
-        macros/has_field.bin \
         macros/has_field.sci \
-        macros/init_pde.bin \
         macros/init_pde.sci \
-        macros/isauto.bin \
         macros/isauto.sci \
-        macros/isnumeric.bin \
         macros/isnumeric.sci \
-        macros/ison.bin \
         macros/ison.sci \
-        macros/isscalar.bin \
         macros/isscalar.sci \
         macros/lib \
         macros/names \
-        macros/null_space.bin \
         macros/null_space.sci \
-        macros/repmat.bin \
         macros/repmat.sci \
-        macros/_setdiff.bin \
         macros/_setdiff.sci \
-        macros/spdiags.bin \
         macros/spdiags.sci \
-        macros/surfnorm.bin \
         macros/surfnorm.sci \
         macros/test_champ3.sce \
         macros/test_spdiags.sce \
-        macros/overload/gf_typeof.bin \
         macros/overload/gf_typeof.sci \
         macros/overload/init_gf_types.sce \
         macros/overload/lib \
         macros/overload/names \
-        macros/overload/%objid_e.bin \
         macros/overload/%objid_e.sci \
-        macros/overload/%objid_get.bin \
         macros/overload/%objid_get.sci \
-        macros/overload/%objid_set.bin \
         macros/overload/%objid_set.sci \
         sci_gateway/builder_gateway.sce \
         sci_gateway/cleaner_gateway.sce \
