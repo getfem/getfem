@@ -1,0 +1,16 @@
+.. include:: ../replaces.txt
+
+****************************
+  What's New in |gf| 4.1.1
+****************************
+
+Minor release, 2010/10/09:
+
+
+   * Scilab files in the archive.
+
+   * Some minor bugs fixed including correction of the Mooney Rivlin hyperelastic law. 
+
+
+
+

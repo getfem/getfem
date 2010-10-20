@@ -52,6 +52,8 @@ EXTRA_DIST=builddoc.sce \
         license.txt \
         loader.sce \
         readme.txt \
+	sci_getfem.iss \
+	makefile_builder.sce \
         demos/axrot_matrix.sci \
         demos/check_all.sce \
         demos/check_asm.sce \
