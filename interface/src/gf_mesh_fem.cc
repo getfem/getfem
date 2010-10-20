@@ -176,7 +176,8 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
 
     /*@INIT MF = ('global function', @tmesh m, @tls ls, @CELL{@tgf GF1,...}[, @int Qdim_m])
       Create a @tmf whose base functions are global function given by the
-      user.@*/
+      user in the system of coordinate defined by the iso-values of the two
+      level-set function of `ls`. @*/
     sub_command
       ("global function", 3, 4, 0, 1,
        mm = in.pop().to_getfemint_mesh();

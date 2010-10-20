@@ -90,6 +90,7 @@ install:
 	$(mkinstalldirs) $(toolboxdir)/
 	@INSTALL@ -m 644 -t $(toolboxdir)/ *.m
 	@INSTALL@ -m 644 -t $(toolboxdir)/ $(srcdir)/*.m
+	@INSTALL@ -m 644 -t $(toolboxdir)/private/ $(srcdir)/private/*.m
 	@list='$(MATLAB_OBJ_DIRS)'; for p in $$list; do \
 	  $(mkinstalldirs) $(toolboxdir)/$$p; \
 	  @INSTALL@ -m 644 -t $(toolboxdir)/$$p $$p/*.m; \
