@@ -100,6 +100,7 @@ end;
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)'; % Discontinuous P1 for triangles
 
 MIXED_PRESSURE=1;       % Mixed version or not.
+SINGULAR_SEARCH=0;	% With singularity order search or not.
 DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
