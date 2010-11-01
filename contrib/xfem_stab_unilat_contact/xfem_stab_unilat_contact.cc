@@ -410,19 +410,19 @@ void asm_mass_matrix_for_inf_sup
  getfem::level_set &ls, const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
   MAT &RM = const_cast<MAT &>(RM_);
   
-  level_set_unit_normal<std::vector<scalar_type> >
-    nterm(ls.get_mesh_fem(), ls.values());
+//  level_set_unit_normal<std::vector<scalar_type> >
+//    nterm(ls.get_mesh_fem(), ls.values());
   nonlin_h<std::vector<scalar_type> >
     nlinh(ls.get_mesh_fem().linked_mesh());
   
   
   getfem::generic_assembly assem("t=comp(NonLin(#2).Base(#1).Base(#1));"
-				 "M(#2,#1)+= t(i,:,:)");
+				 "M(#1,#1)+= t(i,:,:)");
   assem.push_mi(mim);
   assem.push_mf(mf_mult);
   assem.push_mf(ls.get_mesh_fem());
   assem.push_mat(RM);
-  assem.push_nonlinear_term(&nterm);
+ // assem.push_nonlinear_term(&nterm);
   assem.push_nonlinear_term(&nlinh);
   
   gmm::clear(RM);
@@ -474,7 +474,7 @@ struct unilateral_contact_problem {
   
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool contact_only;
-  bool stabilized_problem, strmesh;
+  bool stabilized_problem, strmesh, rangeP_P;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
   size_type cutoff_func;
@@ -688,7 +688,9 @@ void  unilateral_contact_problem::init(void) {
     (PARAM.int_value("CONTACT_ONLY"," contact_only or not.") != 0);
    stabilized_problem =
     (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
-  
+   rangeP_P =
+    (PARAM.int_value("rangeP_P"," The creteria of choise in range bases is performed by comparison to p  or not.") != 0);
+
   mf_contt.set_finite_element(mesh.convex_index(), pf_mult_cont);
   
   
@@ -940,16 +942,26 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   
   std::set<size_type> cols;
   cols.clear(); 
-  sparse_matrix BRBB(mf_pre_uu().nb_dof(), mf_cont().nb_dof());
-  mf_u().set_qdim(1);
-  asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
-  //asm_mass_matrix(BRBB, mimbound, mf_cont(), mf_cont());
-  // cout << "BRBB " << BRBB << endl;
-  cout << "Selecting dofs for the multiplier" << endl;
-  cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
-  gmm::range_basis(BRBB, cols);
-  mf_cont().reduce_to_basic_dof(cols);
-  mf_u().set_qdim(dim_type(N));
+  if (rangeP_P){
+    sparse_matrix BRBB(mf_cont().nb_dof(), mf_cont().nb_dof());
+    asm_mass_matrix(BRBB, mimbound, mf_cont(), mf_cont());
+    cout << "Selecting dofs for the multiplier PP" << endl;
+    cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
+    gmm::range_basis(BRBB, cols);
+    mf_cont().reduce_to_basic_dof(cols);
+  }else{
+    sparse_matrix BRBB(mf_pre_uu().nb_dof(), mf_cont().nb_dof());
+    mf_pre_uu().set_qdim(1);
+    asm_mass_matrix(BRBB, mimbound, mf_pre_uu(), mf_cont());
+    cout << "Selecting dofs for the multiplier UP" << endl;
+    cout << "nb_dof_mult = " << mf_cont().nb_dof() << endl;
+    gmm::range_basis(BRBB, cols);
+    mf_cont().reduce_to_basic_dof(cols);
+    mf_pre_uu().set_qdim(dim_type(N));
+}
+  
+  
+  
   
   size_type nb_dof = mf_u().nb_dof();
   cout << "nb_dof = " << nb_dof << endl;
@@ -1154,44 +1166,62 @@ if (!contact_only){
 
   //classical inf-sup condition
 
- //  if (PARAM.int_value("INF_SUP_COMP")) {
+ //   if (PARAM.int_value("INF_SUP_COMP")) {
     
-//     cout << "Sparse matrices computation for the test of inf-sup condition"
+//      cout << "Sparse matrices computation for the test of inf-sup condition"
 // 	 << endl;
 
-//     sparse_matrix Sis(nb_dof, nb_dof);
-//     sparse_matrix Siss(nb_dof, nb_dof);
-//     sparse_matrix Mis(nb_dof_cont, nb_dof);
-//     sparse_matrix Miss(nb_dof_cont, nb_dof_cont);
-//     sparse_matrix Bis(nb_dof_cont, nb_dof_cont);
-//     sparse_matrix Biss(nb_dof_cont, nb_dof_cont);
-//     sparse_matrix BissMis(nb_dof_cont, nb_dof);
-//     sparse_matrix BBissMis(nb_dof_cont, nb_dof);
+//   //  sparse_matrix MUU(nb_dof, nb_dof);
+//     sparse_matrix MPP(nb_dof_cont, nb_dof_cont);
+//     sparse_matrix BBB(nb_dof_cont, nb_dof);
+//     sparse_matrix MTILD(nb_dof_cont, nb_dof_cont);
+//     plain_vector VVV(nb_dof),VVV1(nb_dof),VVV0(nb_dof), dd1(nb_dof_cont), dd2(nb_dof_cont), YYY(nb_dof_cont), ZZZ(nb_dof_cont);
+//     scalar_type lllambda;
+//     asm_mass_matrix_for_inf_sup(MTILD, mimbound, mf_cont(), ls); // int_gamma_c 1/h psi_i psi_j
+//     asm_mass_matrix_mixed_term(BBB, mimbound, mf_u(), mf_cont(), ls);
+//    // getfem::asm_mass_matrix(MUU, mimbound, mf_u());
+//     getfem::asm_mass_matrix(MPP, mimbound, mf_cont());
+//     gmm::fill_random(VVV);
+//   //  gmm::scaled(VVV,gmm::vect_norm2(VVV));//x_n/norm(x_n)
+// do{
+//     gmm::mult(BBB, VVV, dd1);
+   
+//    gmm::lu_solve(MPP, YYY,dd1);
+
+//    gmm::mult(MTILD, YYY, dd2);
+//    gmm::lu_solve(gmm::transposed(MPP), ZZZ,dd2);
+
+//    gmm::mult(gmm::transposed(BBB), ZZZ, VVV1);
+//    lllambda = gmm::vect_sp(VVV1,VVV);//gmm::vect_norm2(VVV);
+//    gmm::copy(VVV,VVV0);
+//    gmm::copy(VVV1,VVV);
+//    cout << "lambda = " << lllambda << endl;
+// }while (gmm::vect_dist2(VVV1, gmm::scaled(VVV0, lllambda )) > 1E-3);
+
+// //cout << "lambda = " << sqrt(1./lllambda) << endl;
+// cout << "residu = " << gmm::vect_dist2(VVV1, gmm::scaled(VVV, lllambda)) << endl;
+
+// //     gmm::copy(gmm::lu_inverse(Bis), Biss);
+// //     gmm::copy(BN, Mis);
+// //     gmm::mult(Biss, Mis, BissMis);
+// //     gmm::mult(Miss, BissMis, BBissMis);
+// //     gmm::mult(gmm::transposed(BissMis), BBissMis, Siss);
 
 
-//     asm_mass_matrix_for_inf_sup(Miss, mimbound, mf_cont(), ls); // int_gamma_c 1/h psi_i psi_j
-//     getfem::asm_mass_matrix(Sis, mimbound, mf_u());
-//     getfem::asm_mass_matrix(Bis, mimbound, mf_cont());
-//     gmm::copy(gmm::lu_inverse(Bis), Biss);
-//     gmm::copy(BN, Mis);
-//     gmm::mult(Biss, Mis, BissMis);
-//     gmm::mult(Miss, BissMis, BBissMis);
-//     gmm::mult(gmm::transposed(BissMis), BBissMis, Siss);
+// //     cout << "Inf-sup condition test" << endl;
+// //     scalar_type lllambda = smallest_eigen_value(Siss, Siss, Sis);
+// //     cout << "The inf-sup test gives " << lllambda << endl;
 
-
-//     cout << "Inf-sup condition test" << endl;
-//     scalar_type lllambda = smallest_eigen_value(Siss, Siss, Sis);
-//     cout << "The inf-sup test gives " << lllambda << endl;
 //   }
 
 
   
   // Generic solve.
 
-  gmm::iteration iter(residual, 1, 40);
+  gmm::iteration iter(residual, 1, 2000);
   cout << "Solving..." << endl;
   iter.init();
-
+  //getfem::standard_solve(model, iter);
 
   gmm::simplest_newton_line_search lse; // (size_t(-1), 6.0/5.0, 0.2, 3.0/5.0);
   getfem::standard_solve(model, iter,
@@ -1479,26 +1509,35 @@ int main(int argc, char *argv[]) {
     ref_mf_cont.read_from_file(REFERENCE_MF_cont);
     plain_vector ref_cont(ref_mf_cont.nb_dof());
     gmm::vecload(REFERENCE_cont, ref_cont);
-    
-     cout << "Load reference tangent pressure from "
-	  << REFERENCE_MF_tang_cont << " and " << REFERENCE_tang_cont << "\n";
-     getfem::mesh ref_m_tang_cont; 
-     ref_m_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
-     getfem::mesh_fem ref_mf_tang_cont(ref_m_tang_cont); 
-     ref_mf_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
-     plain_vector ref_tang_cont(ref_mf_tang_cont.nb_dof());
-     gmm::vecload(REFERENCE_tang_cont, ref_tang_cont);
-     
-     getfem::level_set ls(ref_m_cont, 1, true);
-     
-     
 
-     for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
-       ls.values(0)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
-       ls.values(1)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
-     }
-     ls.touch();
-     getfem::mesh_level_set mls(ref_m);
+    getfem::mesh ref_m_tang_cont; 
+    getfem::mesh_fem ref_mf_tang_cont(ref_m_tang_cont);
+   
+
+    if (!p.contact_only) {
+    
+      cout << "Load reference tangent pressure from "
+	   << REFERENCE_MF_tang_cont << " and " << REFERENCE_tang_cont << "\n";
+     
+      ref_m_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
+     
+      ref_mf_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
+      
+    }
+    plain_vector ref_tang_cont(ref_mf_tang_cont.nb_dof());
+    gmm::vecload(REFERENCE_tang_cont, ref_tang_cont);
+
+
+    getfem::level_set ls(ref_m_cont, 1, true);
+    
+    
+    
+    for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
+      ls.values(0)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
+      ls.values(1)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
+    }
+    ls.touch();
+    getfem::mesh_level_set mls(ref_m);
     getfem::mesh_level_set mls_cont(ref_m_cont);
     getfem::mesh_level_set mls_tang_cont(ref_m_tang_cont);
     mls.add_level_set(ls);
@@ -1525,12 +1564,19 @@ int main(int argc, char *argv[]) {
     mimboundd.set_integration_method(ref_m_cont.convex_index(),
 				     getfem::int_method_descriptor(INTEGRATION1));
     mimboundd.adapt();
-    
+
+
+
     getfem::mesh_im_level_set mimbounddt(mls_tang_cont, intboundd,
 					 getfem::int_method_descriptor(SIMPLEX_INTEGRATION1));
-    mimbounddt.set_integration_method(ref_m_cont.convex_index(),
-				     getfem::int_method_descriptor(INTEGRATION1));
-    mimbounddt.adapt();
+    if (!p.contact_only) {
+     
+      mimbounddt.set_integration_method( ref_m_tang_cont.convex_index(),
+					getfem::int_method_descriptor(INTEGRATION1));
+      mimbounddt.adapt();
+    }
+
+
 
     //Interpolation of  U on a reference mesh 
     getfem::mesh_im ref_mim(ref_m);
@@ -1569,19 +1615,20 @@ int main(int argc, char *argv[]) {
 	 << getfem::asm_L2_dist(mimboundd, ref_mf_cont, interp_cont,
 				ref_mf_cont, ref_cont) << endl;
     //Interpolation of  Lambda_t on a reference mesh 
-    
     plain_vector interp_tang_cont(ref_mf_tang_cont.nb_dof());
-    getfem::interpolation(p.mf_cont(), ref_mf_tang_cont, Lambda_t, interp_tang_cont);
-    
-    plain_vector interp_tang_cont_error(ref_mf_tang_cont.nb_dof());
-    gmm::add(interp_tang_cont, gmm::scaled(ref_tang_cont, -1.), interp_tang_cont_error);
-    gmm::vecsave(p.datafilename+".tang_cont_map_error", interp_tang_cont_error);
-    
-    cout << "To ref L2 ERROR on P tangent:"
-	 << getfem::asm_L2_dist(mimbounddt, ref_mf_tang_cont, interp_tang_cont,
-				ref_mf_tang_cont, ref_tang_cont) << endl;
-    
-    
+    if (!p.contact_only) {
+     
+      getfem::interpolation(p.mf_cont(), ref_mf_tang_cont, Lambda_t, interp_tang_cont);
+      
+      plain_vector interp_tang_cont_error(ref_mf_tang_cont.nb_dof());
+      gmm::add(interp_tang_cont, gmm::scaled(ref_tang_cont, -1.), interp_tang_cont_error);
+      gmm::vecsave(p.datafilename+".tang_cont_map_error", interp_tang_cont_error);
+      
+      cout << "To ref L2 ERROR on P tangent:"
+	   << getfem::asm_L2_dist(mimbounddt, ref_mf_tang_cont, interp_tang_cont,
+				  ref_mf_tang_cont, ref_tang_cont) << endl;
+      
+    }
   }
   
   return 0; 
