@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2009 Yves Renard
+// Copyright (C) 2004-2008 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -63,7 +63,7 @@ namespace getfem {
     VECTOR gap, threshold, WT, WN, friction_coef, RLN, RLT;
     value_type r, alpha, beta;
     size_type d, nbc;
-    gmm::dense_matrix<size_type> CH;
+    gmm::dense_matrix<size_type> JAC;
 
     const mesh_fem *mf_u;
     gmm::sub_interval SUBU, SUBN, SUBT;
@@ -157,8 +157,8 @@ namespace getfem {
 	gmm::copy(gmm::scaled(AUG_M, -value_type(1)), MM);
       size_type l = 0;
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
-	if (i == CH(l,0)) {
-	  if (CH(l,1) == 0) {
+	if (i == JAC(l,0)) {
+	  if (JAC(l,1) == 0) {
 	    gmm::clear(BBN[i]);
 	    if (gmm::mat_nrows(AUG_M) > 0) gmm::clear(MM[i]);
 	    MM(i, i) = -value_type(1)/r;
@@ -207,10 +207,10 @@ namespace getfem {
 	  value_type th = Tresca_version ? threshold[i]
 	    : - (MS.state())[SUBN.first()+i] * friction_coef[i];
 	  
-	  if (i == CH(l,0)) {
+	  if (i == JAC(l,0)) {
 	    std::vector<double> my_rlt(1);
-	    if (CH(l,2) == 0) my_rlt[0] = - 2.0;
-	    else if (CH(l,3) == 0) my_rlt[0] = 2.0;
+	    if (JAC(l,2) == 0) my_rlt[0] = - 2.0;
+	    else if (JAC(l,3) == 0) my_rlt[0] = 2.0;
 	    else my_rlt[0] = 0.0;
 	    ball_projection_grad(my_rlt, 1.0, pg);
 	  } else
@@ -223,10 +223,10 @@ namespace getfem {
 	  gmm::copy(BTi, gmm::sub_matrix(BBT, SUBJJ, SUBU));
 
 	  if (!Tresca_version) {
-	    if (i == CH(l,0)) {
+	    if (i == JAC(l,0)) {
 	      std::vector<double> my_rlt(1);
-	      if (CH(l,2) == 0) my_rlt[0] = - 2.0;
-	      else if (CH(l,3) == 0) my_rlt[0] = 2.0;
+	      if (JAC(l,2) == 0) my_rlt[0] = - 2.0;
+	      else if (JAC(l,3) == 0) my_rlt[0] = 2.0;
 	      else my_rlt[0] = 0.0;
 	      ball_projection_grad_r(my_rlt, 1.0, vg);
 	      ++l;
@@ -312,13 +312,13 @@ namespace getfem {
       size_type l = 0;
       
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
-	if (i == CH(l,0)) {
-	  if (CH(l,1) == 0) RLN[i] = value_type(0);
+	if (i == JAC(l,0)) {
+	  if (JAC(l,1) == 0) RLN[i] = value_type(0);
 	  if (!contact_only) {
-	    if (CH(l,2) == 0) 
+	    if (JAC(l,2) == 0) 
 	      RLT[i] = Tresca_version ? 
 		-threshold[i] : friction_coef[i]*(MS.state())[SUBN.first()+i];
-	    else if (CH(l,3) == 0) 
+	    else if (JAC(l,3) == 0) 
 	      RLT[i] = Tresca_version ? 
 		threshold[i] : -friction_coef[i]*(MS.state())[SUBN.first()+i];
 	  }
@@ -374,11 +374,14 @@ namespace getfem {
 
     void set_stationary(bool b) { really_stationary = b; }
     void set_beta(value_type a) { beta = a; }
+    value_type get_beta(void) const { return beta; }
     void set_alpha(value_type a) { alpha = a; }
-    void set_CH(const gmm::dense_matrix<size_type> &CH_) {
-      gmm::resize(CH, gmm::mat_nrows(CH_), gmm::mat_ncols(CH_ ));
-      gmm::copy(CH_, CH);
+    value_type get_alpha(void) const { return alpha; }
+    void set_JAC(const gmm::dense_matrix<size_type> &J) {
+      gmm::resize(JAC, gmm::mat_nrows(J), gmm::mat_ncols(J));
+      gmm::copy(J, JAC);
     }
+    void clear_JAC(void) { JAC(0, 0) = size_type(-1); }
 
     template<typename MAT> void set_augmented_matrix(const MAT &M) {
       gmm::resize(AUG_M, gmm::mat_nrows(M), gmm::mat_ncols(M));

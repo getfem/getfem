@@ -1,0 +1,92 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program nonlinear elastostatic problem                   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% pde parameters (in mm):	        			      %%%%%
+
+LX = 20;		% size in X.
+LY = 10;	        % size in Y.
+LZ = 10;		% size in Z.
+
+LAW = 3;     % 0 : SaintVenant-Kirchhoff
+             % 1 : SaintVenant-Kirchhoff+incompressibility
+             % 2 : Ciarlet-Geymonat
+             % 3 : Mooney-Rivlin (+incompressibility)
+	     % 4 : Linear elasticity
+	     % 5 : Linear elasticity + incompressibility
+
+% for Mooney-Rivlin (in N/mm^2) %
+P1 = 2000;	        % First elastic coefficient.
+P2 = 20;   	        % Second elastic coefficient.
+P3 = 200;   	        % Third elastic coefficient.
+
+% Linear elasticity - Lame coefficients %
+LAMBDA = 11500;
+MU = 5;
+
+FORCEX = 0;          % Amplitude of the external force
+FORCEY = 0;
+FORCEZ = -0.00;
+
+DIRICHLET_Z = -0.01;
+DIRICHLET_Y_SPEED = 13800;
+
+% Augmentation parameters %
+R = 1.0E-3; 		% both contact conditions.
+ALPHA = 1.0E7; 		% normal components.
+
+FRICTION_COEFF = 1.0;
+
+%%%%%   discretisation parameters  :   %%%%%
+MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
+NX = 20;            	          % space step.
+NZ = 10;
+
+NBREFINE = 1; 		% number of refinements in the right-bottom corner
+
+MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
+
+FEM_TYPE = 'FEM_PK(2,2)';  	% P2 for triangles
+FEM_TYPE_P = 'FEM_PK(2,1)';  	% P1 for triangles
+
+% DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
+DATA_FEM_TYPE = 'FEM_PK(2,2)'
+
+INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
+                                % to degree 6 on triangles
+
+%%%%%   solver parameters                                             %%%%%
+DIRICHLET_VERSION = 0;	% via Lagrange multipliers, needed for continuations
+
+NEGATIVE_DELTAT = 1;	% negative deltat permitted or not
+
+RESIDUAL = 3E-8;     	% residual for iterative solvers
+DIFFERENCE = 3E-8;	% difference of two successive iteratives
+ANGLE = -1.0;	  	% minimal value of cosine of angle for proceeding in testing a tangent
+ANGLE_BACK = -0.999;	% minimal value of cosine of the angle between the resulting tangent
+			% from a correction and the incomig one (given by the prediction) in
+			% order to avoid returning to the same branch when testing new
+			% Jacobians
+CLASSBOUNDARY = 1E-3;	% parameter for classification of the boundary
+
+MAXITER = 100;		% maximum iterations of the Newton method
+MAXITER_CORR = 10;	% maximum iterations of the Newton correction
+THRESHOLD_CORR = 5;	% threshold of iterations to increase the step length
+STEP0 = 53;  		% number of the foregoing step (which has to be loaded), 
+			% in the case of 0, the methods starts from the beginning
+NBSTEP = 100;		% number of time steps
+
+DELTAT = 1E-6;		% length of time steps of the Newton method
+
+H  = 0.0480504;		% actual step length
+H_INIT = 200;           % initial step length
+H_MAX = 20000;		% maximal step length
+H_MIN = 0.02;	  	% minimal step length
+H_INC = 1.3;		% scale factor for increasing the step length	
+H_DEC = 0.5;		% scale factor for decreasing the step length
+
+%%%%%   saving parameters                                             %%%%%
+ROOTFILENAME = 'nonlinear_elastostatic';	% Root of data files.
+VTK_EXPORT = 1 				% export solution to a .vtk file ?
+NOISY = 2

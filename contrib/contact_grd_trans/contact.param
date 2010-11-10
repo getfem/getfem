@@ -12,11 +12,14 @@ P2 = 200E6;   	        % Second elastic coefficient.
 P3 = 200E6;   	        % Third elastic coefficient.
 MU = 5;
 LAMBDA = 11500;   	% Lamé coefficient.
+RHO = 100;
 
-LAW = 2;     % 0 : SaintVenant-Kirchhoff
+LAW = 3;     % 0 : SaintVenant-Kirchhoff
              % 1 : SaintVenant-Kirchhoff+incompressibility
              % 2 : Ciarlet-Geymonat
              % 3 : Mooney-Rivlin (+incompressibility)
+
+DYNAMIC = 1;
 
 FORCEX = 0          % Amplitude of the external force
 FORCEY = 0;
