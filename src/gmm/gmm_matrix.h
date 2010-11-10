@@ -500,14 +500,14 @@ namespace gmm
     
   public:
     
-    inline const bool operator ()(size_type l, size_type c) const {
+    inline bool operator ()(size_type l, size_type c) const {
       GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(this->begin() + c*nbl+l);
     }
     inline std::_Bit_reference operator()(size_type l,size_type c) {
-    GMM_ASSERT2(l < nbl && c < nbc, "out of range");
-    return *(this->begin() + c*nbl+l);
-  }
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
+      return *(this->begin() + c*nbl+l);
+    }
 
     inline void resize(size_type, size_type);
     inline void reshape(size_type, size_type);
