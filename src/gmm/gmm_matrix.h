@@ -509,10 +509,10 @@ namespace gmm
     return *(this->begin() + c*nbl+l);
   }
 
-    void resize(size_type, size_type);
-    void reshape(size_type, size_type);
+    inline void resize(size_type, size_type);
+    inline void reshape(size_type, size_type);
     
-    void fill(T a, T b = T(0));
+    inline void fill(T a, T b = T(0));
     inline size_type nrows(void) const { return nbl; }
     inline size_type ncols(void) const { return nbc; }
     void swap(dense_matrix<T> &m)
@@ -524,12 +524,12 @@ namespace gmm
   };
 
  
-  void dense_matrix<bool>::reshape(size_type m,size_type n) {
+  inline void dense_matrix<bool>::reshape(size_type m,size_type n) {
     GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
     nbl = m; nbc = n;
   }
 
-  void dense_matrix<bool>::resize(size_type m, size_type n) {
+  inline void dense_matrix<bool>::resize(size_type m, size_type n) {
     if (n*m > nbc*nbl) std::vector<T>::resize(n*m);
     if (m < nbl) {
       for (size_type i = 1; i < std::min(nbc, n); ++i)
@@ -549,7 +549,7 @@ namespace gmm
     nbl = m; nbc = n;
   }
   
-  void dense_matrix<bool>::fill(T a, T b) {
+  inline void dense_matrix<bool>::fill(T a, T b) {
     std::fill(this->begin(), this->end(), b);
     size_type n = std::min(nbl, nbc);
     if (a != b) for (size_type i = 0; i < n; ++i) (*this)(i,i) = a; 
