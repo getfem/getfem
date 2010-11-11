@@ -325,7 +325,7 @@ namespace getfem {
 	  }
 	  sigma2(i,j) -= sigma1(i,j);
 	  if (gmm::abs(dsigma(i,j) - sigma2(i,j))
-	      /(gmm::abs(dsigma(i,j)) + 1e-40) > 1e-4) {
+	      /(gmm::abs(dsigma(i,j)) + 1e-40) > 1.5e-4) {
 	    cout << "Test " << count << " wrong derivative of sigma, i="
 		 << i << ", j=" << j << ", dsigma=" << dsigma(i,j)/h
 		 << ", var sigma = " << sigma2(i,j)/h << endl;
