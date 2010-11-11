@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard
+// Copyright (C) 2002-2010 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -347,17 +347,22 @@ namespace gmm
     typedef typename std::vector<T>::size_type size_type;
     typedef typename std::vector<T>::iterator iterator;
     typedef typename std::vector<T>::const_iterator const_iterator;
+    typedef typename std::vector<T>::reference reference;
+    typedef typename std::vector<T>::const_reference const_reference;
     
   protected:
     size_type nbc, nbl;
     
   public:
     
-    inline const T& operator ()(size_type l, size_type c) const {
+    inline const_reference operator ()(size_type l, size_type c) const {
       GMM_ASSERT2(l < nbl && c < nbc, "out of range");
       return *(this->begin() + c*nbl+l);
     }
-    inline T& operator ()(size_type l, size_type c);
+    inline reference operator ()(size_type l, size_type c) {
+      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
+      return *(this->begin() + c*nbl+l);
+    }
 
     void resize(size_type, size_type);
     void reshape(size_type, size_type);
@@ -372,11 +377,6 @@ namespace gmm
       : std::vector<T>(c*l), nbc(c), nbl(l)  {}
     dense_matrix(void) { nbl = nbc = 0; }
   };
-
-  template<typename T> inline T& dense_matrix<T>::operator()(size_type l,size_type c) {
-    GMM_ASSERT2(l < nbl && c < nbc, "out of range");
-    return *(this->begin() + c*nbl+l);
-  }
 
   template<typename T> void dense_matrix<T>::reshape(size_type m,size_type n) {
     GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
@@ -480,80 +480,6 @@ namespace gmm
 
   template<typename T> std::ostream &operator <<
     (std::ostream &o, const dense_matrix<T>& m) { gmm::write(o,m); return o; }
-
-
-  /* ******************************************************************** */
-  /*		                                            		  */
-  /*		Dense bool matrix                                	  */
-  /*		                                            		  */
-  /* ******************************************************************** */
-
-  template<> class dense_matrix<bool> : public std::vector<bool> {
-  public:
-    typedef bool T;
-    typedef std::vector<T>::size_type size_type;
-    typedef std::vector<T>::iterator iterator;
-    typedef std::vector<T>::const_iterator const_iterator;
-    
-  protected:
-    size_type nbc, nbl;
-    
-  public:
-    
-    inline bool operator ()(size_type l, size_type c) const {
-      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
-      return *(this->begin() + c*nbl+l);
-    }
-    inline std::_Bit_reference operator()(size_type l,size_type c) {
-      GMM_ASSERT2(l < nbl && c < nbc, "out of range");
-      return *(this->begin() + c*nbl+l);
-    }
-
-    inline void resize(size_type, size_type);
-    inline void reshape(size_type, size_type);
-    
-    inline void fill(T a, T b = T(0));
-    inline size_type nrows(void) const { return nbl; }
-    inline size_type ncols(void) const { return nbc; }
-    void swap(dense_matrix<T> &m)
-    { std::vector<T>::swap(m); std::swap(nbc, m.nbc); std::swap(nbl, m.nbl); }
-    
-    dense_matrix(size_type l, size_type c)
-      : std::vector<T>(c*l), nbc(c), nbl(l)  {}
-    dense_matrix(void) { nbl = nbc = 0; }
-  };
-
- 
-  inline void dense_matrix<bool>::reshape(size_type m,size_type n) {
-    GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
-    nbl = m; nbc = n;
-  }
-
-  inline void dense_matrix<bool>::resize(size_type m, size_type n) {
-    if (n*m > nbc*nbl) std::vector<T>::resize(n*m);
-    if (m < nbl) {
-      for (size_type i = 1; i < std::min(nbc, n); ++i)
-	std::copy(this->begin()+i*nbl, this->begin()+(i*nbl+m),
-		  this->begin()+i*m);
-      for (size_type i = std::min(nbc, n); i < n; ++i)
-	std::fill(this->begin()+(i*m), this->begin()+(i+1)*m, T(0));
-      }
-    else if (m > nbl) { /* do nothing when the nb of rows does not change */
-      for (size_type i = std::min(nbc, n); i > 1; --i)
-	std::copy(this->begin()+(i-1)*nbl, this->begin()+i*nbl,
-		  this->begin()+(i-1)*m);
-      for (size_type i = 0; i < std::min(nbc, n); ++i)
-	std::fill(this->begin()+(i*m+nbl), this->begin()+(i+1)*m, T(0));
-    }
-    if (n*m < nbc*nbl) std::vector<T>::resize(n*m);
-    nbl = m; nbc = n;
-  }
-  
-  inline void dense_matrix<bool>::fill(T a, T b) {
-    std::fill(this->begin(), this->end(), b);
-    size_type n = std::min(nbl, nbc);
-    if (a != b) for (size_type i = 0; i < n; ++i) (*this)(i,i) = a; 
-  }
 
 
   /* ******************************************************************** */
