@@ -9,6 +9,11 @@
 |gfm| organization
 =====================
 
+This part of the |sci| |gf| documentation is to be adapted (comes frome the |
+|Mlab| |gf| one).
+
+
+
 The |gfm| toolbox is just a convenient interface to the |gf| library: you must
 have a working |gf| installed on your computer. All the functions of |gfm|
 are prefixed by ``gf_`` (hence typing ``gf_`` at the |sci| prompt and then

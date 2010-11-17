@@ -9,4 +9,6 @@ reference of |gf|, please report to the `specific guides`_, but you should be
 able to use the scilab interface without any particular knowledge of the |gf| 
 internals, although a basic knowledge about Finite Elements is required.
 
+This documentation is still under construction. It is still a to close copy of the Matlab interface documentation.
+
 .. include:: ../license.txt

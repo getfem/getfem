@@ -1033,6 +1033,11 @@ then
   fi
 fi
 
+AC_ARG_WITH(scilab-toolbox-dir,
+            [AS_HELP_STRING([--with-scilab-toolbox-dir],[directory in which the scilab interface will be installed])],
+            SCILAB_TOOLBOX_DIR="$withval",SCILAB_TOOLBOX_DIR="$GFPREFIX/getfem_toolbox")
+AC_SUBST(SCILAB_TOOLBOX_DIR)
+
 
 
 dnl -----------------------------------------------

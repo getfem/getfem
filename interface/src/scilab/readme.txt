@@ -1,6 +1,6 @@
 readme.txt of the scilab getfem interface
 
-To compile this interface, you will need to work with the scilab-5.2.0
+To compile this interface, you will need to work with the scilab-5.2.2
 version or the scilab-master version (the version in the git
 repository) because this interface uses the new interface api.
 

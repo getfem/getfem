@@ -15,8 +15,6 @@ non-GNU compiler, gcc/g++ (>= 4.1) should be a safe solution.
 
 .. caution::
 
-   * you should not use a different compiler than the one that was used for the |gf| library.
-
    * you should have built the |gf| static library (i.e. do not use ``./configure
      --disable-static`` when building |gf|). On linux/x86_64 platforms, a
      mandatory option when building |gf| and |gfi| (and any static library linked
@@ -24,7 +22,7 @@ non-GNU compiler, gcc/g++ (>= 4.1) should be a safe solution.
 
    * you should have use the --enable-matlab option to configure the |gf| sources (i.e. ./configure --enable-matlab ...)
 
-You may also use ``--with-toolbox-dir=toolbox_dir`` to change the default toolbox installation directory (``gfdest_dir/getfem_toolbox``). Use ``./configure --help`` for more options.
+You may also use ``--with-matlab-toolbox-dir=toolbox_dir`` to change the default toolbox installation directory (``gfdest_dir/getfem_toolbox``). Use ``./configure --help`` for more options.
 
 
 With this, since the Matlab interface is contained into the |gf| sources (in the directory interface/src) you can compile both the |gf| library and the Matlab interface by ::
