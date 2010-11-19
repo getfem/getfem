@@ -46,7 +46,7 @@ namespace getfem {
 
   /** Add a frictionless contact condition to the model. If U is the vector
       of degrees of freedom on which the unilateral constraint is applied,
-      the matrix `BN` have to be such that this condition is defined by
+      the matrix `BN` has to be such that this condition is defined by
       $B_N U \le 0$. The constraint is prescribed thank to a multiplier
       `multname_n` whose dimension should be equal to the number of lines of
       `BN`. The augmentation parameter `r` should be chosen in a range of
@@ -66,7 +66,7 @@ namespace getfem {
 
   /** Add a contact with friction condition to the model. If U is the vector
       of degrees of freedom on which the condition is applied,
-      the matrix `BN` have to be such that the contact condition is defined
+      the matrix `BN` has to be such that the contact condition is defined
       by $B_N U \le 0$ and `BT` have to be such that the relative tangential
       displacement is $B_T U$. The matrix `BT` should have as many rows as
       `BN` multiplied b $d-1$ where $d$ is the domain dimension.
@@ -461,7 +461,7 @@ namespace getfem {
       SUBN = gmm::sub_interval(i0 + sub_problem.nb_dof(), gmm::mat_nrows(BN));
       SUBT = gmm::sub_interval(i0 + sub_problem.nb_dof() + gmm::mat_nrows(BN),
                                gmm::mat_nrows(BT));
-      gmm::add(gmm::sub_vector(MS.state(), SUBN), gmm::scaled(gap, r), RLN);
+      gmm::add(gmm::sub_vector(MS.state(), SUBN), gmm::scaled(gap, r*alpha), RLN);
       if (gmm::vect_size(WN) > 0)
         gmm::mult_add(BN, gmm::scaled(WN, -r*alpha), RLN);
       gmm::mult_add(BN, gmm::scaled(gmm::sub_vector(MS.state(), SUBU),
@@ -687,7 +687,9 @@ namespace getfem {
 
     void set_stationary(bool b) { really_stationary = b; }
     void set_beta(value_type a) { beta = a; }
+    value_type get_beta(void) const { return beta; }
     void set_alpha(value_type a) { alpha = a; }
+    value_type get_alpha(void) const { return alpha; }
     template<typename MAT> void set_augmented_matrix(const MAT &M) {
       gmm::resize(AUG_M, gmm::mat_nrows(M), gmm::mat_ncols(M));
       gmm::copy(M, AUG_M);
@@ -702,6 +704,9 @@ namespace getfem {
 
     VECTOR &get_gap(void) { return gap; }
     const VECTOR &get_gap(void) const { return gap; }
+
+    VECTOR &get_friction_coef(void) { return friction_coef; }
+    const VECTOR &get_friction_coef(void) const { return friction_coef; }
 
     SUBVECTOR get_LN(MODEL_STATE &MS) {
       SUBN = gmm::sub_interval(this->first_index() + sub_problem.nb_dof(),

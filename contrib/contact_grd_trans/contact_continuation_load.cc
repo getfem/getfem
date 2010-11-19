@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard, Julien  Pommier.
+// Copyright (C) 2002-2009 Yves Renard, Julien  Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -23,14 +23,15 @@
    @file nonlinear_elastostatic.cc
    @brief Nonlinear Elastostatic problem (large strain).
 
-   A rubber bar is submitted to a large torsion. If the standard solver (Newton) fails,
-   one tries to find a more suitable initial approximation by numerical continuation
-   with respect to load and then restart the standard solver. 
+   A rubber bar is submitted to a large torsion. If the standard
+   solver (Newton) fails, one tries to find a more suitable initial
+   approximation by numerical continuation with respect to load and
+   then restart the standard solver.
 
    TO DO: make compatible with standard mdbrick_Coulomb_friction
    
-   This program is used to check that getfem++ is working. This is also 
-   a good example of use of Getfem++.
+   This program is used to check that getfem++ is working. This is
+   also a good example of use of Getfem++.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -38,7 +39,7 @@
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_nonlinear_elasticity.h"
-#include "my_getfem_Coulomb_friction.h"
+#include "getfem/getfem_Coulomb_friction.h"
 #include "getfem/getfem_superlu.h"
 #include "gmm/gmm.h"
 
@@ -72,7 +73,7 @@ struct elastostatic_problem {
   getfem::mesh_fem mf_vm;    /* mesh_fem used for the VonMises stress        */
   scalar_type p1, p2, p3;    /* elastic coefficients.                        */
   scalar_type LX, LY, LZ;    /* system dimensions                            */
-  scalar_type lambda, mu;    /* Lamé coefficients.                           */
+  scalar_type lambda, mu;    /* Lame coefficients.                           */
   scalar_type residual;      /* max residual for the iterative solvers       */
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -114,7 +115,7 @@ void elastostatic_problem::init(void) {
   LY = PARAM.real_value("LY", "Length along Y axis");
   LZ = PARAM.real_value("LZ", "Length along Z axis");
   int nb_refine = PARAM.int_value("NBREFINE");
-  lambda = PARAM.real_value("LAMBDA", "Lamé coefficient lambda");
+  lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   mu = PARAM.real_value("MU", "Lame coefficient mu");			    
   bgeot::base_matrix M(N,N);
   for (size_type i=0; i < N; ++i) {
@@ -419,9 +420,7 @@ void standard_solver
 
   // cout << "|U| = " << gmm::vect_norm2(MS.state()) << "\n";
 
-  gmm::default_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
-  // gmm::default_newton_line_search ls(size_type(-1), 5.0/3.0, (step == 0) ? 0.5 : 0.1,
-  //                                    0.5, (step == 0) ? 400.0 : 3.0);
+  gmm::default_newton_line_search ls; // (size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0)
   getfem::standard_solve(MS, problem, iter,
 			 getfem::default_linear_solver(problem), ls);
 }
@@ -487,19 +486,18 @@ void compute_displacement
 
 template<typename MODEL_STATE, typename MATRIX, typename VECT>
 void charact_solution
-(MODEL_STATE &MS, getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION,
- const VECT &contact_nodes, const sparse_matrix &BN, const sparse_matrix &BT,
- const plain_vector &U, const plain_vector &U0, MATRIX &charact, int noisy) {
+(getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
+ const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
+ const plain_vector &LN, const plain_vector &LT, MATRIX &charact, int noisy) {
   /* computes charact determining the characters of the solution */
   
-  size_type nb_dof_N = gmm::mat_nrows(BN), nb_dof_T = gmm::mat_nrows(BT);
-  scalar_type r = FRICTION.get_r(), alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
+  size_type nb_dof_N = LN.size();
+  scalar_type r = FRICTION.get_r();
+  scalar_type alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
   plain_vector gap(nb_dof_N), friction_coef(nb_dof_N);
-  plain_vector UN(nb_dof_N), UT(nb_dof_T), UT0(nb_dof_T), LN(nb_dof_N), LT(nb_dof_T);
     
-  gmm::copy(FRICTION.get_gap(), gap); gmm::copy(FRICTION.get_friction_coef(), friction_coef);
-  gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U0, UT0);
-  gmm::copy(FRICTION.get_LN(MS), LN); gmm::copy(FRICTION.get_LT(MS), LT);
+  gmm::copy(FRICTION.get_gap(), gap);
+  gmm::copy(FRICTION.get_friction_coef(), friction_coef);
 
   if (noisy > 1)
     cout << "characters:" << endl;
@@ -512,29 +510,36 @@ void charact_solution
     if (noisy > 1) {
       cout << "node " << i << ": " << contact_nodes[i] << " " 
 	   << charact(i, 0) << charact(i, 1) << charact(i, 2) << endl;
+      if (noisy > 2)
+	cout << "LN = " << LN[i] 
+	     << ", r * alpha * (UN - gap) = " << r * alpha * (UN[i] - gap[i])
+	     << ", - friction_coef * LN + LT = "
+	     << -friction_coef[i] * LN[i] + LT[i]
+	     << ", friction_coef * LN + LT = "
+	     << friction_coef[i] * LN[i] + LT[i] 
+	     << ", r * beta * (UT - UT0) = "
+	     << r * beta * (UT[i]-UT0[i]) << endl;
     }
   }
 }
 
 template<typename MODEL_STATE, typename MATRIX, typename VECT>
 size_type charact_solution
-(MODEL_STATE &MS, getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION,
- const VECT &contact_nodes, const sparse_matrix &BN, const sparse_matrix &BT,
- const plain_vector &U, const plain_vector &U0, MATRIX &charact, const MATRIX &charact0,
+(getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
+ const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
+ const plain_vector &LN, const plain_vector &LT, MATRIX &charact, const MATRIX &charact0,
  int noisy) {
   /* computes charact determining the characters of the solution and compares it with
      charact0 */
   
-  size_type nb_dof_N = gmm::mat_nrows(BN), nb_dof_T = gmm::mat_nrows(BT);
-  size_type nb_change = 0;
+  size_type nb_dof_N = LN.size(), nb_change = 0;
   bool change;
-  scalar_type r = FRICTION.get_r(), alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
+  scalar_type r = FRICTION.get_r();
+  scalar_type alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
   plain_vector gap(nb_dof_N), friction_coef(nb_dof_N);
-  plain_vector UN(nb_dof_N), UT(nb_dof_T), UT0(nb_dof_T), LN(nb_dof_N), LT(nb_dof_T);
     
-  gmm::copy(FRICTION.get_gap(), gap); gmm::copy(FRICTION.get_friction_coef(),friction_coef);
-  gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U0, UT0);
-  gmm::copy(FRICTION.get_LN(MS), LN); gmm::copy(FRICTION.get_LT(MS), LT);
+  gmm::copy(FRICTION.get_gap(), gap);
+  gmm::copy(FRICTION.get_friction_coef(),friction_coef);
 
   if (noisy > 1)
     cout << "changes of characters (if any):" << endl;
@@ -547,7 +552,7 @@ size_type charact_solution
     change = false;
     for (size_type j = 0; j < 3; ++j) {
       if ((charact(i, j) != charact0(i, j))
-	  && (j == 0 || (j > 0 && (charact(i, 0) == 1))))
+	  && (j == 0 || (j > 0 && charact(i, 0))))
 	change = true;
     }
 
@@ -557,6 +562,16 @@ size_type charact_solution
 	cout << "node " << i << ": " << contact_nodes[i] << " "
 	     << charact(i, 0) << charact(i, 1) << charact(i, 2) << endl;
     }
+    if (noisy > 2)
+      cout << "node " << i << ": " << contact_nodes[i] << " " 
+	   << "LN = " << LN[i] 
+	   << ", r * alpha * (UN - gap) = " << r * alpha * (UN[i] - gap[i])
+	   << ", - friction_coef * LN + LT = "
+	   << -friction_coef[i] * LN[i] + LT[i]
+	   << ", friction_coef * LN + LT = "
+	   << friction_coef[i] * LN[i] + LT[i] 
+	   << ", r * beta * (UT - UT0) = "
+	   << r * beta * (UT[i]-UT0[i]) << endl;
   }
 
   return nb_change;
@@ -648,7 +663,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     // creating force density vectors
   int nbc = int(jj);
   sparse_matrix MMBN(nbc, nbc), MMBT(nbc*(N-1), nbc*(N-1));
-  // plain_vector LN1(nbc), LT1(nbc*(N-1));
+  plain_vector UN(nbc), UT(nbc*(N-1)), LN1(nbc), LT1(nbc*(N-1));
   {
     sparse_matrix BB(mf_u.nb_dof(), mf_u.nb_dof());
     getfem::asm_mass_matrix(BB, mim, mf_u, mf_u, FRICTION_BOUNDARY_NUM);
@@ -666,9 +681,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
   scalar_type friction_coef = PARAM.real_value("FRICTION_COEFF",
 					       "Friction cefficient");
   scalar_type r = PARAM.real_value("R", "Augmentation parameter");
-  scalar_type alpha = PARAM.real_value("ALPHA", "Augmentation parameter");
-  gmm::dense_matrix<size_type> JAC(nbc+1, 4);
-  JAC(0, 0) = size_type(-1);
+  scalar_type alpha = PARAM.real_value("ALPHA") ? PARAM.real_value("ALPHA") : 1.0;
   
 
   getfem::mdbrick_Coulomb_friction<> FRICTION(*pINCOMP, BN, gap,
@@ -676,7 +689,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
   FRICTION.set_r(r);
   FRICTION.set_alpha(alpha);
   FRICTION.set_beta(1./deltat);
-  FRICTION.set_JAC(JAC);
  
   // Defining the volumic source term.
   base_vector f(N);
@@ -714,7 +726,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
 
   plain_vector F2_init = F2;
-  plain_vector U0 = U, U_init = U;
+  plain_vector U0 = U, U_init = U, UT_init = UT;
   short convergence = -1;
 //  plain_vector SumN(nb_step), SumT(nb_step),Pressure(nb_step);
 //  plain_vector maxT(nb_step);
@@ -784,6 +796,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	scalar_type h_min = PARAM.real_value("H_MIN", "Minimal step length");
 	scalar_type h_inc = PARAM.real_value("H_INC");
 	scalar_type h_dec = PARAM.real_value("H_DEC");
+	scalar_type h_change = PARAM.real_value("H_CHANGE");
 	scalar_type h = PARAM.real_value("H") ? PARAM.real_value("H") : h_init;
 
 
@@ -792,8 +805,9 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	size_type stot = gmm::mat_ncols(MS.tangent_matrix());
 	plain_vector Y0(stot);
 	plain_vector X0(stot+1), X(stot+1), T0(stot+1), T(stot+1);
-	gmm::dense_matrix<size_type> charact(nbc, 3), charact0(nbc, 3); // bool ?
-	size_type ind =  final_model.first_ind(), sc = gmm::vect_size(final_model.get_CRHS());
+	gmm::dense_matrix<bool> charact(nbc, 3), charact0(nbc, 3);
+	size_type ind =  final_model.first_ind();
+	size_type sc = gmm::vect_size(final_model.get_CRHS());
 	plain_vector deltaF2 = F2;
 	plain_vector grad_XI(stot);
 
@@ -802,6 +816,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	  gmm::vecload(datafilename + s + ".F2", F2_init);
 	  gmm::vecload(datafilename + s + ".U", U_init);
 	  FRICTION.set_WT(gmm::scaled(U_init, -1.0));
+	  compute_displacement(MS, final_model, pl, pELAS_nonlin, pELAS_lin, U, law_num);
+
 	}
 
 	gmm::add(gmm::scaled(F2_init, -1.0), deltaF2);
@@ -819,7 +835,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	    gmm::vecload(datafilename + s + ".Y", Y0);
 	  }
 
-	  /* [Y0, 0]  is not much suitable as an initial point, try to find some better one */
+	  /* [Y0, 0]  is not much suitable as an initial point, 
+	     try to find some better one */
 	  gmm::copy(Y0, MS.state());
 	  do {
 	    XI0 *= h_dec; 
@@ -848,11 +865,19 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	}
 
 	compute_displacement(MS, final_model, pl, pELAS_nonlin, pELAS_lin, U, law_num);
-	charact_solution(MS, FRICTION, contact_nodes, BN, BT, U, U_init, charact0, noisy);
+	gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U_init, UT_init);
+	gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
+	charact_solution(FRICTION, contact_nodes, UN, UT, UT_init, LN1, LT1, charact0,
+			 noisy);
 
 	if (step0_cont == 0){
 	  char s1[100]; sprintf(s1, "step%d", step + 1);
 	  gmm::vecsave(datafilename + s1 + "_0.U", U);
+	  gmm::vecsave(datafilename + s1 + "_0.UN", UN);
+	  gmm::vecsave(datafilename + s1 + "_0.UT", UT);
+	  gmm::vecsave(datafilename + s1 + "_0.LN", LN1);
+	  gmm::vecsave(datafilename + s1 + "_0.LT", LT1);
+	  gmm::vecsave(datafilename + s1 + "_0.X", X0);
 	    
 	  plain_vector VM(mf_vm.nb_dof());
 	  compute_Von_Mises(MS, pELAS_nonlin, pELAS_lin, mf_vm, VM, law_num);
@@ -881,12 +906,18 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	    Newton_correction(MS, final_model, grad_XI, F2_init, deltaF2, X, T, iter_corr);
 
 	    if (iter_corr.converged()) {
-	      compute_displacement(MS, final_model, pl, pELAS_nonlin, pELAS_lin, U, law_num);
-	      size_type nb_change = charact_solution(MS, FRICTION, contact_nodes, BN, BT, U,
-						     U_init, charact, charact0, noisy);
+	      compute_displacement(MS, final_model, pl, pELAS_nonlin, pELAS_lin, U,
+				   law_num);
+	      gmm::mult(BN, U, UN); gmm::mult(BT, U, UT);
+	      gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
+	      size_type nb_change =
+		charact_solution(FRICTION, contact_nodes, UN, UT, UT_init, LN1, LT1,
+				 charact, charact0, noisy);
+
 	      scalar_type XI = X[stot], angle =  gmm::vect_sp(T0, T);
 	      cout << "XI = " << XI << ", XI - XI0 = " << XI - XI0 << ", T0.T = " << angle;
-	      if (((angle >= minangle) || nb_change == 1) && (XI <= 1 + maxdist)) {
+	      if (((angle >= minangle) || ((nb_change == 1) && (h <= h_change)))
+		  && (XI <= 1 + maxdist)) {
 		XI0 = XI; new_point = 1;
 	      }
 	      else
@@ -908,6 +939,10 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	    char s1[100]; sprintf(s1, "step%d", step + 1);
 	    char s2[100]; sprintf(s2, "%d", step_cont+1);
 	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".U", U);
+	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".UN", UN);
+	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".UT", UT);
+	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".LN", LN1);
+	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".LT", LT1);
 	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".X", X);
 	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".T", T);
 	    

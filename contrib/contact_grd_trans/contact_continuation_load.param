@@ -35,9 +35,10 @@ FORCEZ = -0.00;
 DIRICHLET_Z = -0.01;
 DIRICHLET_Y_SPEED = 13800;
 
-% Augmentation parameters %
-R = 1.0E-3; 		% both contact conditions.
-ALPHA = 1.0E7; 		% normal components.
+R = 1.0E-1; %1.0E-3; 	% Augmentation parameter for the contact and frictional condition
+		% (influences convergence of the standard solver - newton_line_search)
+% ALPHA = 1.0E7; 	% Parameter for equalization of the "normal" and "tangential"
+		% components of the test functions (which are not used at this moment)
 
 FRICTION_COEFF = 1.0;
 
@@ -50,6 +51,7 @@ NBREFINE = 4; 		% number of refinements in the right-bottom corner
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
+% FEM_TYPE = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
 FEM_TYPE = 'FEM_PK(2,2)';  	% P2 for triangles
 FEM_TYPE_P = 'FEM_PK(2,1)';  	% P1 for triangles
 
@@ -64,33 +66,34 @@ DIRICHLET_VERSION = 0;	% via the Lagrange multipliers, needed for continuations
 
 RESIDUAL = 3E-8;     	% residual for iterative solvers
 DIFFERENCE = 3E-8;	% difference of two forthcoming iteratives
-ANGLE = 0.95;		% minimal value of cosine of the angle between tangents at successive 
-			% points
-DISTANCE = 1E-1;	% maximal distance between XI and 1 to end with continuation
+ANGLE = 0.95;		% minimal value of cosine of the angle between tangents at
+			% two successive points
+DISTANCE = 1E-2;	% maximal distance between XI and 1 to end with continuation
 
 MAXITER = 100;		% maximum iterations of the Newton method
 MAXITER_CORR = 20;	% maximum iterations of the Newton correction
 THRESHOLD_CORR = 10;	% threshold of iterations to increase the step length
 
-%STEP0 = 30;	  	% number of the foregoing Newton step (which has to be loaded), 
+%STEP0 = 34;	  	% number of the foregoing Newton step (which has to be loaded), 
 			% in the case of 0, the methods starts from the beginning
-%STEP0_CONT = 23; 	% number of the foregoing continuation step (which has to be loaded), 
-			% in the case of 0, the methods starts with the Newton method
+%STEP0_CONT = 75; 	% number of the foregoing continuation step (which has to be
+		% loaded), in the case of 0, the methods starts with the Newton method
 STEP_DEC = 1;		% decrease of the step to the initial step for the continuation
-			% (0 for the last computed solution, 1 for the solution before it,...)
+		% (0 for the last computed solution, 1 for the solution before it ...)
 
-NBSTEP = 33;		% number of time steps
-NBSTEP_CONT = 100;	% number of continuation steps
+NBSTEP = 35;		% number of time steps
+NBSTEP_CONT = 500;	% number of continuation steps
 DELTAT = 1E-6;		% length of the time step
 	
 %H = 20;	
-H_INIT = 20;		% initial step length
-H_MAX = 2000;		% maximal step length
+H_INIT = 2;		% initial step length
+H_MAX = 20;		% maximal step length
 H_MIN = 0.02;	  	% minimal step length
 H_INC = 1.3;		% scale factor for increasing the step length
 H_DEC = 0.5;		% scale factor for decreasing the step length
+H_CHANGE = 2;		% step length for permitting a change of a character
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'nonlinear_elastostatic';	% Root of data files.
+ROOTFILENAME = 'data/nonlinear_elastostatic';	% Root of data files.
 VTK_EXPORT = 1 				% export solution to a .vtk file ?
-NOISY=2
+NOISY = 2

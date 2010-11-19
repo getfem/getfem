@@ -32,9 +32,10 @@ FORCEZ = -0.00;
 DIRICHLET_Z = -0.01;
 DIRICHLET_Y_SPEED = 13800;
 
-% Augmentation parameters %
-R = 1.0E-3; 		% both contact conditions.
-ALPHA = 1.0E7; 		% normal components.
+R = 1.0E-1; %1.0E-3; 	% Augmentation parameter for the contact and frictional condition
+		% (influences convergence of the standard solver - newton_line_search)
+ALPHA = 1.0E7; 		% Parameter for equalization of the "normal" and "tangential"
+			% components of the test functions
 
 FRICTION_COEFF = 1.0;
 
