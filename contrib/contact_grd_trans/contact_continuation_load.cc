@@ -416,11 +416,12 @@ void standard_solver
   /* standard solver for static contact problems (Newton) */
 
   problem.rhs().set(F2);
-  // cout << "F2 = " << F2 << endl;
+// cout << "F2 = " << F2 << endl;
 
-  // cout << "|U| = " << gmm::vect_norm2(MS.state()) << "\n";
+// cout << "|U| = " << gmm::vect_norm2(MS.state()) << "\n";
 
-  gmm::default_newton_line_search ls; // (size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0)
+  gmm::basic_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
+//   gmm::default_newton_line_search ls;
   getfem::standard_solve(MS, problem, iter,
 			 getfem::default_linear_solver(problem), ls);
 }

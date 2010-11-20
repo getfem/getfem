@@ -35,9 +35,9 @@ FORCEZ = -0.00;
 DIRICHLET_Z = -0.01;
 DIRICHLET_Y_SPEED = 13800;
 
-R = 1.0E-1; %1.0E-3; 	% Augmentation parameter for the contact and frictional condition
+R = 1.0E-3; 		% Augmentation parameter for the contact and frictional condition
 		% (influences convergence of the standard solver - newton_line_search)
-% ALPHA = 1.0E7; 	% Parameter for equalization of the "normal" and "tangential"
+%ALPHA = 1.0E7; 	% Parameter for equalization of the "normal" and "tangential"
 		% components of the test functions (which are not used at this moment)
 
 FRICTION_COEFF = 1.0;
@@ -47,7 +47,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 20;            	          % space step.
 NZ = 10;
 
-NBREFINE = 4; 		% number of refinements in the right-bottom corner
+NBREFINE = 0; 		% number of refinements in the right-bottom corner
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
@@ -81,7 +81,7 @@ THRESHOLD_CORR = 10;	% threshold of iterations to increase the step length
 STEP_DEC = 1;		% decrease of the step to the initial step for the continuation
 		% (0 for the last computed solution, 1 for the solution before it ...)
 
-NBSTEP = 35;		% number of time steps
+NBSTEP = 21;		% number of time steps
 NBSTEP_CONT = 500;	% number of continuation steps
 DELTAT = 1E-6;		% length of the time step
 	
