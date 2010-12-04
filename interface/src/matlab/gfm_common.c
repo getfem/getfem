@@ -236,7 +236,6 @@ gfi_array_to_mxarray(gfi_array *t) {
   static const int one = 1;
   const int *dim = (t->dim.dim_len == 0 ? &one : (const int *)t->dim.dim_val);
   mwSize ndim2, *dim2;
-  char msg[80];
   int number = 450;
   int ij;
   /****************** dimensions array in mwSize */  
@@ -265,7 +264,7 @@ gfi_array_to_mxarray(gfi_array *t) {
     } break;
     case GFI_DOUBLE: {
       int i;
-      double *pr, *pi;
+      double *pr = 0, *pi = 0;
       if (!gfi_array_is_complex(t)) {
         m = mxCreateNumericArray(ndim2, dim2, mxDOUBLE_CLASS, mxREAL);
         pr=mxGetData(m);  
@@ -274,7 +273,6 @@ gfi_array_to_mxarray(gfi_array *t) {
             *pr++=t->storage.gfi_storage_u.data_double.data_double_val[i++];
          }      
       } else {
-        double *pr, *pi; int i;
         m = mxCreateNumericArray(ndim2, dim2, mxDOUBLE_CLASS, mxCOMPLEX);
         pr = mxGetData(m); pi = mxGetImagData(m);
         for (i=0; i < t->storage.gfi_storage_u.data_double.data_double_len; ) {
@@ -370,7 +368,6 @@ gfi_array_list *
 build_gfi_array_list(int nrhs, const mxArray *prhs[]) {
   gfi_array_list *l;
   int i;
-  char msg[80];
   gfi_array **pin;
   
   

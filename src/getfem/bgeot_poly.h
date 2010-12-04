@@ -68,12 +68,21 @@ namespace bgeot
   public :
     typedef std::vector<short_type>::iterator iterator;
     typedef std::vector<short_type>::const_iterator const_iterator;
+    typedef std::vector<short_type>::reverse_iterator reverse_iterator;
+    typedef std::vector<short_type>::const_reverse_iterator const_reverse_iterator;
     short_type operator[](size_type idx) const { return v[idx]; }
     short_type& operator[](size_type idx) { dirty(); return v[idx]; }
+
     iterator begin() { dirty(); return v.begin(); }
     const_iterator begin() const { return v.begin(); }
     iterator end() { dirty(); return v.end(); }
     const_iterator end() const { return v.end(); }
+
+    reverse_iterator rbegin() { dirty(); return v.rbegin(); }
+    const_reverse_iterator rbegin() const { return v.rbegin(); }
+    reverse_iterator rend() { dirty(); return v.rend(); }
+    const_reverse_iterator rend() const { return v.rend(); }
+
     size_type size() const { return v.size(); }
     /// Gives the next power index 
     const power_index &operator ++();
@@ -177,7 +186,9 @@ namespace bgeot
     
     typedef typename std::vector<T>::iterator iterator;
     typedef typename std::vector<T>::const_iterator const_iterator;
-    
+    typedef typename std::vector<T>::reverse_iterator reverse_iterator;
+    typedef typename std::vector<T>::const_reverse_iterator const_reverse_iterator;
+
     /// Gives the degree of the polynomial
     short_type degree(void) const { return d; }
     /**  gives the degree of the polynomial, considering only non-zero
@@ -280,9 +291,9 @@ namespace bgeot
   { polynomial res = *this; res *= e; return res; }
   
   template<typename T> short_type polynomial<T>::real_degree(void) const {
-    const_iterator it = this->end() - 1, ite = this->begin() - 1;
+    const_reverse_iterator it = this->rbegin(), ite = this->rend();
     size_type l = this->size();
-    for ( ; it != ite; --it, --l) { if (*it != T(0)) break; }
+    for ( ; it != ite; ++it, --l) { if (*it != T(0)) break; }
     short_type dd = degree();
     while (dd > 0 && alpha(n, short_type(dd-1)) > l) --dd;
     return dd;
@@ -341,13 +352,13 @@ namespace bgeot
     
     power_index miq(Q.dim()), mia(dim()), mitot(dim());
     if (dim() > 0) miq[dim()-1] = Q.degree();
-    const_iterator itq = Q.end() - 1, ite = Q.begin() - 1;
-    for ( ; itq != ite; --itq, --miq)
+    const_reverse_iterator itq = Q.rbegin(), ite = Q.rend();
+    for ( ; itq != ite; ++itq, --miq) {
       if (*itq != T(0)) {
-	iterator ita = aux.end() - 1, itae = aux.begin() - 1;
+	reverse_iterator ita = aux.rbegin(), itae = aux.rend();
 	std::fill(mia.begin(), mia.end(), 0);
 	if (dim() > 0) mia[dim()-1] = aux.degree();
-	for ( ; ita != itae; --ita, --mia)
+	for ( ; ita != itae; ++ita, --mia)
 	  if (*ita != T(0)) {
 	    power_index::iterator mita = mia.begin(), mitq = miq.begin();
 	    power_index::iterator mit = mitot.begin(), mite = mia.end();
@@ -362,6 +373,7 @@ namespace bgeot
 	   
 	  }
       }
+    }
     return *this;
   }
 
@@ -373,13 +385,13 @@ namespace bgeot
     
     power_index miq(Q.dim()), mia(aux.dim()), mitot(dim());
     if (Q.dim() > 0) miq[Q.dim()-1] = Q.degree();
-    const_iterator itq = Q.end() - 1, ite = Q.begin() - 1;
-    for ( ; itq != ite; --itq, --miq)
+    const_reverse_iterator itq = Q.rbegin(), ite = Q.rend();
+    for ( ; itq != ite; ++itq, --miq)
       if (*itq != T(0)) {
-	iterator ita = aux.end() - 1, itae = aux.begin() - 1;
+	reverse_iterator ita = aux.rbegin(), itae = aux.rend();
 	std::fill(mia.begin(), mia.end(), 0); 
 	if (aux.dim() > 0) mia[aux.dim()-1] = aux.degree();
-	for ( ; ita != itae; --ita, --mia)
+	for ( ; ita != itae; ++ita, --mia)
 	  if (*ita != T(0)) {
 	    std::copy(mia.begin(), mia.end(), mitot.begin());
 	    std::copy(miq.begin(), miq.end(), mitot.begin() + aux.dim());
@@ -409,10 +421,11 @@ namespace bgeot
     
      iterator it = this->begin(), ite = this->end();
      power_index mi(dim()); 
-     for ( ; it != ite; ++it, ++mi) {
+     for ( ; it != ite; ++it) {
        if ((*it) != T(0) && mi[k] > 0)
          { mi[k]--; (*this)[mi.global_index()] = (*it) * T(mi[k] + 1); mi[k]++; }
        *it = T(0);
+       ++mi;
      }
      if (d > 0) change_degree(short_type(d-1));
   }

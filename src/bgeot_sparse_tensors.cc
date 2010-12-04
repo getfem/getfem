@@ -739,11 +739,11 @@ namespace bgeot {
       size_type redsz = 1;
       for (unsigned tnum=0; tnum < trtab.size(); ++tnum) {
 	if (!idx_occurences[ir][tnum]) continue;
-        std::bitset<32> once(reduction_chars.size());
+        std::bitset<int(32)> once((int)reduction_chars.size());
 	for (dim_type i=0; i < trtab[tnum].tr().ndim(); ++i) {
 	  bool ignore = false;
 	  for (dal::bv_visitor j(lst); !j.finished(); ++j) {
-	    if (trtab[tnum].ridx[i] == reduction_chars[j]) {
+	    if (trtab[tnum].ridx[i] == reduction_chars[(size_t)j]) {
               if (once[j]) ignore = true; else once[j] = true;
 	    }
           }
@@ -989,7 +989,7 @@ namespace bgeot {
        de l'utilisation de masque qui ne s'arrêtent pas forcement sur les 
        'frontieres' entre les differents tenseurs reduits) */
     //std::fill(out_data.begin(), out_data.end(), 0.);
-    memset(&out_data[0], 0, out_data.size()*sizeof(out_data[0]));
+    if (out_data.size()) memset(&out_data[0], 0, out_data.size()*sizeof(out_data[0]));
     for (unsigned i=0; i < trtab.size(); ++i) {
       if (trtab[i].is_reduction()) { 
         trtab[i].reduction->do_reduction(); 

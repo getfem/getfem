@@ -52,7 +52,8 @@ namespace getfem {
   /** Base class for material law. 
       Inherit from this class to define a new law.
   */
-  struct abstract_hyperelastic_law {
+  class abstract_hyperelastic_law {
+  public:
     mutable int uvflag;
     size_type nb_params_;
     getfem::abstract_hyperelastic_law *pl; /* optional reference */

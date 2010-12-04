@@ -1434,7 +1434,7 @@ namespace getfem {
       if (  md.is_var_mf_newer_than_brick(varname_u1, ib)
          || md.is_var_mf_newer_than_brick(varname_u2, ib)) {
 
-        for (size_type i = 0; i <= two_variables ? 1 : 0; i++) {
+        for (size_type i = 0; i <= size_type(two_variables ? 1 : 0); i++) {
           const mesh_fem &mf_u = i ? mf_u2 : mf_u1;
           // Verification that mf_u is a pure Lagrange fem.
           GMM_ASSERT1(!(mf_u.is_reduced()),
@@ -1477,7 +1477,7 @@ namespace getfem {
 
         // computation of alpha vector.
         scalar_type l = scalar_type(0);
-        for (size_type i = 0; i <= two_variables ? 1 : 0; i++) {
+        for (size_type i = 0; i <= size_type(two_variables ? 1 : 0); i++) {
           const mesh_fem &mf_u = i ? mf_u2 : mf_u1;
           base_node Pmin, Pmax;
           mf_u.linked_mesh().bounding_box(Pmin, Pmax);

@@ -29,6 +29,9 @@
 #include "gfm_common.h"
 #include "getfem_interface.h"
 
+void set_superlu_callback(int (*cb)());
+int handle_getfem_callback();
+
 /* main file for the giant gf_matlab mex-file */
 /*
 char* getfem_interface_main(int config_id, const char *function, 

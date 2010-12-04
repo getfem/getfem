@@ -65,8 +65,8 @@ namespace gmm {
   //               defined.
   //          GMM_ASSERT3 : For internal checks. Hidden by default. Active
   //               only when DEBUG_MODE is defined.
-
-#ifdef __EXCEPTIONS
+// __EXCEPTIONS is defined by gcc, _CPPUNWIND is defined by visual c++
+#if defined(__EXCEPTIONS) || defined(_CPPUNWIND)
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
     std::stringstream msg;
@@ -82,22 +82,32 @@ namespace gmm {
     throw (type)(msg.str());						\
   }
 #else
+#ifndef _MSC_VER
+# define abort_no_return() ::abort()
+#else
+// apparently ::abort() on windows is not declared with __declspec(noreturn) so the compiler spits a lot of warnings when abort is used.
+# define abort_no_return() { assert("GMM ABORT"==0); throw "GMM ABORT"; }
+#endif
+
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
     std::stringstream msg;
     msg << "Error in " << file << ", line " << line << " " << func
 	<< ": \n" << errormsg << ends;
-    ::abort();	
+    std::cerr << msg.str() << std::endl;
+    abort_no_return();	
   }
+
 # define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg;						\
     msg << "Error in "__FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
 	<< errormsg   << ends;						\
-    ::abort();								\
+    std::cerr << msg.str() << std::endl;                                \
+    abort_no_return();							\
   }
 #endif
-  
+
 # define GMM_ASSERT1(test, errormsg)		        		\
   { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 
@@ -106,8 +116,8 @@ namespace gmm {
 #define GMM_THROW(a, b) { GMM_THROW_(a,b); gmm::GMM_THROW(); }
 
 #if defined(NDEBUG)
-# define GMM_ASSERT2(test, errormsg)
-# define GMM_ASSERT3(test, errormsg)
+# define GMM_ASSERT2(test, errormsg) {}
+# define GMM_ASSERT3(test, errormsg) {}
 #elif !defined(GMM_FULL_NDEBUG)
 # define GMM_ASSERT2(test, errormsg)				        \
   { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\

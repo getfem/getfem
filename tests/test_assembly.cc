@@ -27,7 +27,9 @@
 #ifdef GETFEM_HAVE_SYS_TIMES
 # include <sys/times.h>
 #endif
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 using bgeot::base_vector;
 using bgeot::base_matrix;

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7413AF7B-D30C-4BC4-9FD6-952E18C11497}</ProjectGuid>
+    <RootNamespace>superlu</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\common_getfem_settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\common_getfem_settings.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level2</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level2</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\superlu\BLAS.c" />
+    <ClCompile Include="..\..\superlu\ccolumn_bmod.c" />
+    <ClCompile Include="..\..\superlu\ccolumn_dfs.c" />
+    <ClCompile Include="..\..\superlu\ccopy_to_ucol.c" />
+    <ClCompile Include="..\..\superlu\cgscon.c" />
+    <ClCompile Include="..\..\superlu\cgsequ.c" />
+    <ClCompile Include="..\..\superlu\cgsrfs.c" />
+    <ClCompile Include="..\..\superlu\cgssv.c" />
+    <ClCompile Include="..\..\superlu\cgssvx.c" />
+    <ClCompile Include="..\..\superlu\cgstrf.c" />
+    <ClCompile Include="..\..\superlu\cgstrs.c" />
+    <ClCompile Include="..\..\superlu\clacon.c" />
+    <ClCompile Include="..\..\superlu\clangs.c" />
+    <ClCompile Include="..\..\superlu\claqgs.c" />
+    <ClCompile Include="..\..\superlu\cmemory.c" />
+    <ClCompile Include="..\..\superlu\cmyblas2.c" />
+    <ClCompile Include="..\..\superlu\colamd.c" />
+    <ClCompile Include="..\..\superlu\cpanel_bmod.c" />
+    <ClCompile Include="..\..\superlu\cpanel_dfs.c" />
+    <ClCompile Include="..\..\superlu\cpivotgrowth.c" />
+    <ClCompile Include="..\..\superlu\cpivotL.c" />
+    <ClCompile Include="..\..\superlu\cpruneL.c" />
+    <ClCompile Include="..\..\superlu\creadhb.c" />
+    <ClCompile Include="..\..\superlu\csnode_bmod.c" />
+    <ClCompile Include="..\..\superlu\csnode_dfs.c" />
+    <ClCompile Include="..\..\superlu\csp_blas2.c" />
+    <ClCompile Include="..\..\superlu\csp_blas3.c" />
+    <ClCompile Include="..\..\superlu\cutil.c" />
+    <ClCompile Include="..\..\superlu\dcolumn_bmod.c" />
+    <ClCompile Include="..\..\superlu\dcolumn_dfs.c" />
+    <ClCompile Include="..\..\superlu\dcomplex.c" />
+    <ClCompile Include="..\..\superlu\dcopy_to_ucol.c" />
+    <ClCompile Include="..\..\superlu\dgscon.c" />
+    <ClCompile Include="..\..\superlu\dgsequ.c" />
+    <ClCompile Include="..\..\superlu\dgsrfs.c" />
+    <ClCompile Include="..\..\superlu\dgssv.c" />
+    <ClCompile Include="..\..\superlu\dgssvx.c" />
+    <ClCompile Include="..\..\superlu\dgstrf.c" />
+    <ClCompile Include="..\..\superlu\dgstrs.c" />
+    <ClCompile Include="..\..\superlu\dgstrsL.c" />
+    <ClCompile Include="..\..\superlu\dlacon.c" />
+    <ClCompile Include="..\..\superlu\dlamch.c" />
+    <ClCompile Include="..\..\superlu\dlangs.c" />
+    <ClCompile Include="..\..\superlu\dlaqgs.c" />
+    <ClCompile Include="..\..\superlu\dmemory.c" />
+    <ClCompile Include="..\..\superlu\dmyblas2.c" />
+    <ClCompile Include="..\..\superlu\dpanel_bmod.c" />
+    <ClCompile Include="..\..\superlu\dpanel_dfs.c" />
+    <ClCompile Include="..\..\superlu\dpivotgrowth.c" />
+    <ClCompile Include="..\..\superlu\dpivotL.c" />
+    <ClCompile Include="..\..\superlu\dpruneL.c" />
+    <ClCompile Include="..\..\superlu\dreadhb.c" />
+    <ClCompile Include="..\..\superlu\dsnode_bmod.c" />
+    <ClCompile Include="..\..\superlu\dsnode_dfs.c" />
+    <ClCompile Include="..\..\superlu\dsp_blas2.c" />
+    <ClCompile Include="..\..\superlu\dsp_blas3.c" />
+    <ClCompile Include="..\..\superlu\dutil.c" />
+    <ClCompile Include="..\..\superlu\dzsum1.c" />
+    <ClCompile Include="..\..\superlu\f2c_lite.c" />
+    <ClCompile Include="..\..\superlu\get_perm_c.c" />
+    <ClCompile Include="..\..\superlu\heap_relax_snode.c" />
+    <ClCompile Include="..\..\superlu\icmax1.c" />
+    <ClCompile Include="..\..\superlu\izmax1.c" />
+    <ClCompile Include="..\..\superlu\lsame.c" />
+    <ClCompile Include="..\..\superlu\memory.c" />
+    <ClCompile Include="..\..\superlu\mmd.c" />
+    <ClCompile Include="..\..\superlu\relax_snode.c" />
+    <ClCompile Include="..\..\superlu\scolumn_bmod.c" />
+    <ClCompile Include="..\..\superlu\scolumn_dfs.c" />
+    <ClCompile Include="..\..\superlu\scomplex.c" />
+    <ClCompile Include="..\..\superlu\scopy_to_ucol.c" />
+    <ClCompile Include="..\..\superlu\scsum1.c" />
+    <ClCompile Include="..\..\superlu\sgscon.c" />
+    <ClCompile Include="..\..\superlu\sgsequ.c" />
+    <ClCompile Include="..\..\superlu\sgsrfs.c" />
+    <ClCompile Include="..\..\superlu\sgssv.c" />
+    <ClCompile Include="..\..\superlu\sgssvx.c" />
+    <ClCompile Include="..\..\superlu\sgstrf.c" />
+    <ClCompile Include="..\..\superlu\sgstrs.c" />
+    <ClCompile Include="..\..\superlu\slacon.c" />
+    <ClCompile Include="..\..\superlu\slamch.c" />
+    <ClCompile Include="..\..\superlu\slangs.c" />
+    <ClCompile Include="..\..\superlu\slaqgs.c" />
+    <ClCompile Include="..\..\superlu\smemory.c" />
+    <ClCompile Include="..\..\superlu\smyblas2.c" />
+    <ClCompile Include="..\..\superlu\sp_coletree.c" />
+    <ClCompile Include="..\..\superlu\sp_ienv.c" />
+    <ClCompile Include="..\..\superlu\sp_preorder.c" />
+    <ClCompile Include="..\..\superlu\spanel_bmod.c" />
+    <ClCompile Include="..\..\superlu\spanel_dfs.c" />
+    <ClCompile Include="..\..\superlu\spivotgrowth.c" />
+    <ClCompile Include="..\..\superlu\spivotL.c" />
+    <ClCompile Include="..\..\superlu\spruneL.c" />
+    <ClCompile Include="..\..\superlu\sreadhb.c" />
+    <ClCompile Include="..\..\superlu\ssnode_bmod.c" />
+    <ClCompile Include="..\..\superlu\ssnode_dfs.c" />
+    <ClCompile Include="..\..\superlu\ssp_blas2.c" />
+    <ClCompile Include="..\..\superlu\ssp_blas3.c" />
+    <ClCompile Include="..\..\superlu\superlu_timer.c" />
+    <ClCompile Include="..\..\superlu\sutil.c" />
+    <ClCompile Include="..\..\superlu\util.c" />
+    <ClCompile Include="..\..\superlu\xerbla.c" />
+    <ClCompile Include="..\..\superlu\zcolumn_bmod.c" />
+    <ClCompile Include="..\..\superlu\zcolumn_dfs.c" />
+    <ClCompile Include="..\..\superlu\zcopy_to_ucol.c" />
+    <ClCompile Include="..\..\superlu\zgscon.c" />
+    <ClCompile Include="..\..\superlu\zgsequ.c" />
+    <ClCompile Include="..\..\superlu\zgsrfs.c" />
+    <ClCompile Include="..\..\superlu\zgssv.c" />
+    <ClCompile Include="..\..\superlu\zgssvx.c" />
+    <ClCompile Include="..\..\superlu\zgstrf.c" />
+    <ClCompile Include="..\..\superlu\zgstrs.c" />
+    <ClCompile Include="..\..\superlu\zlacon.c" />
+    <ClCompile Include="..\..\superlu\zlangs.c" />
+    <ClCompile Include="..\..\superlu\zlaqgs.c" />
+    <ClCompile Include="..\..\superlu\zmemory.c" />
+    <ClCompile Include="..\..\superlu\zmyblas2.c" />
+    <ClCompile Include="..\..\superlu\zpanel_bmod.c" />
+    <ClCompile Include="..\..\superlu\zpanel_dfs.c" />
+    <ClCompile Include="..\..\superlu\zpivotgrowth.c" />
+    <ClCompile Include="..\..\superlu\zpivotL.c" />
+    <ClCompile Include="..\..\superlu\zpruneL.c" />
+    <ClCompile Include="..\..\superlu\zreadhb.c" />
+    <ClCompile Include="..\..\superlu\zsnode_bmod.c" />
+    <ClCompile Include="..\..\superlu\zsnode_dfs.c" />
+    <ClCompile Include="..\..\superlu\zsp_blas2.c" />
+    <ClCompile Include="..\..\superlu\zsp_blas3.c" />
+    <ClCompile Include="..\..\superlu\zutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\superlu\BLAS_f2c.h" />
+    <ClInclude Include="..\..\superlu\colamd.h" />
+    <ClInclude Include="..\..\superlu\slu_cdefs.h" />
+    <ClInclude Include="..\..\superlu\slu_Cnames.h" />
+    <ClInclude Include="..\..\superlu\slu_dcomplex.h" />
+    <ClInclude Include="..\..\superlu\slu_ddefs.h" />
+    <ClInclude Include="..\..\superlu\slu_scomplex.h" />
+    <ClInclude Include="..\..\superlu\slu_sdefs.h" />
+    <ClInclude Include="..\..\superlu\slu_util.h" />
+    <ClInclude Include="..\..\superlu\slu_zdefs.h" />
+    <ClInclude Include="..\..\superlu\supermatrix.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\superlu\License.txt" />
+    <None Include="..\..\superlu\LOCAL_PATCHES.txt" />
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

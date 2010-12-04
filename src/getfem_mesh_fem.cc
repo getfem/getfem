@@ -364,7 +364,7 @@ namespace getfem {
     gmm::row_matrix<gmm::rsvector<scalar_type> >
       RR(kept_dof.size(), nb_basic_dof());
     size_type j = 0;
-    for (std::set<size_type>::iterator it = kept_dof.begin();
+    for (std::set<size_type>::const_iterator it = kept_dof.begin();
 	 it != kept_dof.end(); ++it, ++j)
       RR(j, *it) = scalar_type(1);
     set_reduction_matrices(RR, gmm::transposed(RR));

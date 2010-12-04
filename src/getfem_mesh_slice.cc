@@ -142,7 +142,7 @@ namespace getfem {
 	    ist >> nod[i].pt_ref[j];
 	  ist >> bgeot::skip(";");
 	  unsigned long ul; ist >> ul;
-	  nod[i].faces = slice_node::faces_ct(ul);
+	  nod[i].faces = slice_node::faces_ct(int(ul));
 	}
 	for (unsigned i=0; i < nbs; ++i) {
 	  unsigned np(0);

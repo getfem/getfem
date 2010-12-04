@@ -219,7 +219,7 @@ namespace getfem {
   /** type of pointer on a fem description @see getfem::virtual_fem */ 
   typedef boost::intrusive_ptr<const getfem::virtual_fem> pfem;
   
-  struct fem_precomp_; 
+  class fem_precomp_; 
   typedef boost::intrusive_ptr<const getfem::fem_precomp_> pfem_precomp;
 
   class fem_interpolation_context;

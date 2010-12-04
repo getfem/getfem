@@ -22,7 +22,9 @@
 #include <getfemint.h>
 #include <getfemint_workspace.h>
 #include <algorithm>
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 #include <iomanip>
 #include <getfem/getfem_mat_elem.h>
 #include <getfemint_mdbrick.h>
@@ -223,10 +225,12 @@ void gf_workspace(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
 
     /* Unofficial function */
+#ifndef _MSC_VER
     sub_command
       ("chdir", 1, 1, 0, 0,
        if (::chdir(in.pop().to_string().c_str())) {}
        );
+#endif
 
     /*@FUNC ('class name', i)
       Return the class name of object i (if I is a mesh handle, it 

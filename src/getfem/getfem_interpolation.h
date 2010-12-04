@@ -532,7 +532,7 @@ namespace getfem {
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
 		     const VECTU &U, VECTV &V, int extrapolation,
-		     double EPS = 1E-10) {
+		     double EPS) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
 		&& (gmm::vect_size(V) % mf_target.nb_dof()) == 0
@@ -546,7 +546,7 @@ namespace getfem {
 
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, int extrapolation, double EPS = 1E-10) {
+		     MAT &M, int extrapolation, double EPS) {
     GMM_ASSERT1(mf_source.nb_dof() == gmm::mat_ncols(M)
 		&& (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
 		&& gmm::mat_nrows(M) != 0, "Dimensions mismatch");

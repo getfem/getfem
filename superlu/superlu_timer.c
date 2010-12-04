@@ -7,7 +7,9 @@
  *       compilation to choose the appropriate function.
  *
  */
-
+#ifdef _MSC_VER
+#define NO_TIMER
+#endif
 
 #ifdef SUN 
 /*

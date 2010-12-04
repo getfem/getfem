@@ -59,6 +59,7 @@ namespace bgeot {
       bool operator()(size_type i1, size_type i2) const;
       component_comp(const dal::dynamic_tas<base_node> &vbn_,
 		     const base_node &c_, unsigned dim);
+	  component_comp() : vbn(0), c(0) {}
     };
     typedef std::set<size_type, component_comp> sorter;
 

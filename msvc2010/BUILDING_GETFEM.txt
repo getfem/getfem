@@ -1,0 +1,33 @@
+Here are some tips in order to build getfem in microsoft visual c++ 2010
+
+- adding a missing .cc file in the libgetfem project: right-click on
+the libgetfem entry in the solution explorer, choose "Add", "Existing
+document", and select the file.
+
+- adding a new test file: console application, uncheck the
+"precompiled headers" entry, check the "empty project" entry.  Add the
+test file to the project, open the property manager for the project,
+right click on the project, choose "add an existing property sheet"
+and select the "common_getfem_settings.vsprops" file.
+
+Building the MATLAB INTERFACE:
+
+right click on the matlab_interface folder in visual C++
+
+in "Configuration Properties/C++/General/Additional Include
+Directories" , make sure that the path matches your matlab version
+Check also the linker path, which must point also to the correct
+matlab folder. It may be simpler to just edit the
+matlab_interface.vcxproj in a regular text editor, and just change the
+strings in that file instead of using the visual c++ project
+properties panel...
+
+Make sure also that you do not try to mix a 64-bit build of getfem
+with a 32-bit version of matlab or vice-versa. The current project
+file builds only a 32-bit version of getfem , hence you need a 32-bit
+version of matlab.  Setting up a 64-bit environment for visual c++
+2010 is really painful unfortunately.
+
+the makebindist.sh script collects the various m-files and the
+compiled mex file into a zip file that can be use to redistribute a
+"ready-to-use" getfem matlab toolbox.

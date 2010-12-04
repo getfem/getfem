@@ -24,7 +24,9 @@
 #include "getfem/bgeot_ftool.h"
 #include <ctype.h>
 #include <limits.h>
-#include <unistd.h>
+#ifndef WIN32
+#  include <unistd.h>
+#endif
 #include <fstream>
 #include "gmm/gmm_def.h"
 

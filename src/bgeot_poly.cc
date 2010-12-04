@@ -54,8 +54,8 @@ namespace bgeot {
     short_type n = short_type(size()), l;
     if (n > 0) {
       size_type g_idx = global_index_; short_type deg = degree_;
-      iterator it = begin() + (n-2);
-      for (l = short_type(n-2); l != short_type(-1); --l, --it)
+      reverse_iterator it = rbegin() + 1;
+      for (l = short_type(n-2); l != short_type(-1); --l, ++it)
 	if (*it != 0) break;
       short_type a = (*this)[n-1]; (*this)[n-1] = 0;
       (*this)[short_type(l+1)] = short_type(a + 1);
@@ -71,9 +71,10 @@ namespace bgeot {
     short_type n = short_type(size()), l;
     if (n > 0) {
       size_type g_idx = global_index_; short_type deg = degree_;
-      iterator it = begin() + (n-1);
-      for (l = short_type(n-1); l != short_type(-1); --l, --it)
+      reverse_iterator it = rbegin();
+      for (l = short_type(n-1); l != short_type(-1); --l, ++it) {
 	if (*it != 0) break;
+      }
       if (l != short_type(-1)) {
 	short_type a = (*this)[l];
 	(*this)[l] = 0; (*this)[n-1] = short_type(a - 1);
@@ -178,25 +179,31 @@ namespace bgeot {
   void do_bin_op(std::vector<base_poly> &value_list,
 		 std::vector<int> &op_list,
 		 std::vector<int> &prior_list) {
-    base_poly &p1(*(value_list.end() - 2)), &p2(*(value_list.end() - 1));
-    
-    switch (op_list.back()) {
-      case 1  : p1 *= p2; break;
-      case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
-      case 3  : p1 += p2; break;
-      case 4  : p1 -= p2; break;
-      case 5  : 
-	{
-	  if (p2.degree() > 0) parse_error(7);
-	  int pow = int(p2[0]);
-	  if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
-	  base_poly p = p1; p1.one();
-	  for (int i = 0; i < pow; ++i) p1 *= p;
-	}
-	break;
-      case 6 : p2 *= opt_long_scalar_type(-1); break;
+    base_poly &p2 = *(value_list.rbegin());
+    if (op_list.back() != 6) {
+      assert(value_list.size()>1);
+      base_poly &p1 = *(value_list.rbegin()+1);    
+      switch (op_list.back()) {
+        case 1  : p1 *= p2; break;
+        case 2  : if (p2.degree() > 0) parse_error(6); p1 /= p2[0]; break;
+        case 3  : p1 += p2; break;
+        case 4  : p1 -= p2; break;
+        case 5  : 
+	  {
+	    if (p2.degree() > 0) parse_error(7);
+	    int pow = int(p2[0]);
+	    if (p2[0] !=  opt_long_scalar_type(pow) || pow < 0) parse_error(8);
+	    base_poly p = p1; p1.one();
+	    for (int i = 0; i < pow; ++i) p1 *= p;
+	  }
+	  break;
+        default: assert(0);
+      }
+      value_list.pop_back(); 
+    } else {
+      p2 *= opt_long_scalar_type(-1);
     }
-    if (op_list.back() != 6) value_list.pop_back(); op_list.pop_back(); prior_list.pop_back();
+    op_list.pop_back(); prior_list.pop_back();
   }
 
   base_poly read_base_poly(short_type n, std::istream &f) {

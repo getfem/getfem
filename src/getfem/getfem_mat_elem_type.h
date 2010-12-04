@@ -100,8 +100,8 @@ namespace getfem {
    *  is not to be manipulate by itself. Use pmat_elem_type and
    *  the functions written to produce those descriptions.
    */ 
-  struct mat_elem_type
-    : virtual public dal::static_stored_object, std::vector<constituant> {
+  class mat_elem_type
+    : virtual public dal::static_stored_object, public std::vector<constituant> {
   protected :
     bgeot::multi_index mi;
   public :

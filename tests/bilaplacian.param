@@ -41,7 +41,7 @@ if (N == 2 && ~QUAD)
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   elseif 0  % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
-    DIRICHLET_FEM_TYPE = 'FEM_PK(2,5)';
+    DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   else
 %     FEM_TYPE = 'FEM_HCT_TRIANGLE';
     FEM_TYPE = 'FEM_REDUCED_HCT_TRIANGLE';

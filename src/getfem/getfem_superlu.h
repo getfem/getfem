@@ -73,7 +73,7 @@ namespace gmm {
     gmm::copy(sol, const_cast<V1 &>(X));
   }
   
-  class SuperLU_factor_impl_common;
+  struct SuperLU_factor_impl_common;
 
   /** Factorization of a sparse matrix with SuperLU.
       

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{CB4F1E6A-9576-4B94-AF1B-83E7794BBC18}</ProjectGuid>
+    <RootNamespace>libgetfemint</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\common_getfem_settings.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\common_getfem_settings.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\interface\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\interface\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DisableSpecificWarnings>4996;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\interface\src\getfem_interface.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_convex_structure.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_global_function.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_gsparse.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_gsparse_misc.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_integ.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_levelset.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_matelem.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_matelemtype.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_mdbrick.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_mesh.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_mesh_fem.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_mesh_im.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_mesh_levelset.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_misc.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_pfem.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_pgt.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_workspace.cc" />
+    <ClCompile Include="..\..\interface\src\gf_asm.cc" />
+    <ClCompile Include="..\..\interface\src\gf_compute.cc" />
+    <ClCompile Include="..\..\interface\src\gf_cvstruct_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_delete.cc" />
+    <ClCompile Include="..\..\interface\src\gf_eltm.cc" />
+    <ClCompile Include="..\..\interface\src\gf_fem.cc" />
+    <ClCompile Include="..\..\interface\src\gf_fem_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_geotrans.cc" />
+    <ClCompile Include="..\..\interface\src\gf_geotrans_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_global_function.cc" />
+    <ClCompile Include="..\..\interface\src\gf_global_function_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_integ.cc" />
+    <ClCompile Include="..\..\interface\src\gf_integ_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_levelset.cc" />
+    <ClCompile Include="..\..\interface\src\gf_levelset_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_levelset_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_linsolve.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mdbrick.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mdbrick_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mdbrick_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mdstate.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mdstate_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mdstate_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_fem.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_fem_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_fem_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_im.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_im_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_im_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_levelset.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_levelset_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_levelset_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_model.cc" />
+    <ClCompile Include="..\..\interface\src\gf_model_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_model_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_precond.cc" />
+    <ClCompile Include="..\..\interface\src\gf_precond_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_slice.cc" />
+    <ClCompile Include="..\..\interface\src\gf_slice_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_slice_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_spmat.cc" />
+    <ClCompile Include="..\..\interface\src\gf_spmat_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_spmat_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_undelete.cc" />
+    <ClCompile Include="..\..\interface\src\gf_util.cc" />
+    <ClCompile Include="..\..\interface\src\gf_workspace.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\interface\src\getfem_interface.h" />
+    <ClInclude Include="..\..\interface\src\getfemint.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_convex_structure.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_global_function.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_gsparse.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_gsparse_misc.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_integ.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_levelset.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_matelem.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_matelemtype.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mdbrick.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mdstate.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mesh.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mesh_fem.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mesh_im.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mesh_levelset.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mesh_slice.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_misc.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_models.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_object.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_pfem.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_pgt.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_poly.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_precond.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_std.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_workspace.h" />
+    <ClInclude Include="..\..\interface\src\gfi_array.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
