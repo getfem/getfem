@@ -1,10 +1,12 @@
 gf_workspace('clear all'); clear all;
 N = 2;
-NX=10; NY=10;
-%m=gfMesh('regular simplices',0:1/NX:1, 0:1/NY:1);
-m=gfMesh('cartesian',0:1/NX:1, 0:1/NY:1);
+NX=10; NY=14;
+m=gfMesh('regular simplices',0:0.4/NX:0.4, 0:1.2/NY:1.2);
+% m=gfMesh('cartesian',0:1/NX:1, 0:1/NY:1);
+% m=gfMesh('cartesian',0:0.4/NX:0.4, 0:1.2/NY:1.2);
 
-useKL=0; % use the Kirchhoff-Love plate model, or just a pure
+
+useKL=1; % use the Kirchhoff-Love plate model, or just a pure
          % bilaplacian problem
 
 D=1.0;   % Flexion modulus
@@ -15,13 +17,13 @@ if useKL, NU=0.3; end; % poisson ratio (0 <= NU <= 1)
 mim=gfMeshIm(m); 
 mfu=gfMeshFem(m); 
 mfd=gfMeshFem(m);
-%set(mim, 'integ',gfInteg('IM_TRIANGLE(13)'));
-%set(mfu, 'fem',gfFem('FEM_ARGYRIS'));
-%set(mfd, 'fem',gfFem('FEM_PK(2,5)'));
+set(mim, 'integ',gfInteg('IM_TRIANGLE(13)'));
+set(mfu, 'fem',gfFem('FEM_ARGYRIS'));
+set(mfd, 'fem',gfFem('FEM_PK(2,5)'));
 
-set(mim, 'integ', gfInteg('IM_GAUSS_PARALLELEPIPED(2,10)'));
-set(mfu, 'fem', gfFem('FEM_REDUCED_QUADC1_COMPOSITE'));
-set(mfd, 'fem', gfFem('FEM_QK(2,3)'));
+% set(mim, 'integ', gfInteg('IM_GAUSS_PARALLELEPIPED(2,10)'));
+% set(mfu, 'fem', gfFem('FEM_REDUCED_QUADC1_COMPOSITE'));
+% set(mfd, 'fem', gfFem('FEM_QK(2,3)'));
 
 flst = get(m, 'outer_faces');
 n = get(m, 'normal of faces', flst);
@@ -36,13 +38,13 @@ SIMPLE_SUPPORT_BOUNDARY_NUM=3;
 CLAMPED_BOUNDARY_NUM=4;
 
 set(m, 'region', FORCE_BOUNDARY_NUM, fright);
-set(m, 'region', SIMPLE_SUPPORT_BOUNDARY_NUM, [ftop fbottom fleft]);
-set(m, 'region', CLAMPED_BOUNDARY_NUM, [fleft fright]);
+set(m, 'region', SIMPLE_SUPPORT_BOUNDARY_NUM, [fleft ftop fbottom]);
+set(m, 'region', CLAMPED_BOUNDARY_NUM, [fleft ftop fbottom]);
 set(m, 'region', MOMENTUM_BOUNDARY_NUM, [ftop fbottom]);
 
-FT=10.;
+FT=2.;
 sol_u=get(mfd, 'eval',{sprintf('sin(%g*(x+y))',FT)});
-sol_f=sol_u*FT*FT*FT*FT*N*N;
+sol_f=sol_u*FT*FT*FT*FT*N*N*D;
 sol_lapl_u=-FT*FT*sol_u*N;
 
 if (newbricks) % uses new bricks
@@ -53,7 +55,7 @@ if (newbricks) % uses new bricks
 
   if useKL
     gf_model_set(md, 'add initialized data', 'D', [D]);
-    gf_model_set(md, 'add initialized data', 'nu', [nu]);
+    gf_model_set(md, 'add initialized data', 'nu', [NU]);
     gf_model_set(md, 'add Kirchhoff-Love plate brick', mim, 'u', 'D', 'nu');
     M = zeros(N,N, get(mfd,'nbdof'));
   else
@@ -63,7 +65,8 @@ if (newbricks) % uses new bricks
   end;
 
   gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, ...
-    	       get(mfd, 'eval', {'1-(x-y).^2'}));
+     	       get(mfd, 'eval', {'1-(x-y).^2'}));
+
   gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
   
@@ -77,7 +80,7 @@ if (newbricks) % uses new bricks
     gf_model_set(md, 'add initialized fem data', 'H', mfd, H);
     gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
     gf_model_set(md, 'add Kirchhoff-Love Neumann term brick', mim, 'u', ...
-		         H, F, FORCE_BOUNDARY_NUM);
+		         'H', 'F', FORCE_BOUNDARY_NUM);
   else
     F = zeros(1, N, get(mfd, 'nbdof'));
     gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
@@ -103,7 +106,7 @@ else % uses old bricks
     b0 = gfMdBrick('bilaplacian', mim, mfu, 'Kirchhoff-Love');
     set(b0, 'param','D', D);
     set(b0, 'param','nu', NU);
-    M = zeros(N,N, get(mfd,'nbdof'));
+    M = zeros(1, get(mfd,'nbdof'));
   else
     b0 = gfMdBrick('bilaplacian', mim, mfu);
     set(b0, 'param','D', D);
@@ -114,10 +117,10 @@ else % uses old bricks
   set(b1, 'param', 'source_term', mfd, get(mfd, 'eval', {'1-(x-y).^2'}));
 
   b2 = gfMdBrick('normal derivative source term',b1,MOMENTUM_BOUNDARY_NUM);
-  set(b2, 'param', 'source_term', mfd,M);
+  set(b2, 'param', 'source_term', mfd, M);
 
   if (useKL) 
-    H = zeros(N, N, get(mfd, 'nbdof'));
+    H = zeros(N*N, get(mfd, 'nbdof'));
     F = zeros(N, get(mfd, 'nbdof'));
     b3 = gfMdBrick('neumann Kirchhoff-Love source term',b2,FORCE_BOUNDARY_NUM);
     set(b3, 'param', 'M', mfd, H);
@@ -145,6 +148,7 @@ end
 
 
 gf_plot(mfu,U,'mesh','on');
+colorbar;
 
 disp(sprintf('H2 norm of the solution: %g', gf_compute(mfu,U,'H2 norm', mim)));
 

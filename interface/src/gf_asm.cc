@@ -460,6 +460,25 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        out.pop().from_sparse(A);
        );
 
+    /*@FUNC A = ('bilaplacian KL', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a, @dvec nu)
+      Assembly of the matrix for the Bilaplacian problem with Kirchoff-Love formulation.
+      
+      :math:`\Delta(a(x)\Delta u) = 0`   with `a` scalar.
+      
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("bilaplacian KL", 4, 4, 0, 1,
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
+       darray           a = in.pop().to_darray(int(mf_d->nb_dof()));
+       darray           nu = in.pop().to_darray(int(mf_d->nb_dof()));
+       gf_real_sparse_by_col  A(mf_u->nb_dof(), mf_u->nb_dof());
+       getfem::asm_stiffness_matrix_for_bilaplacian_KL(A, *mim, *mf_u, *mf_d, a, nu);
+       out.pop().from_sparse(A);
+       );
+
 
     /*@FUNC V = ('volumic source', @tmim mim, @tmf mf_u, @tmf mf_d, @dcvec fd)
     Assembly of a volumic source term.
