@@ -572,34 +572,6 @@ else
     fi;
     usemumps="no"]
  )
- AC_CHECK_LIB(smumps, smumps_c,
-   [usemumps="yes"],
-   [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([Couldn't find a smumps library supporting the smumps_c function.]);
-    fi;
-    usemumps="no"]
- )
- AC_CHECK_LIB(dmumps, dmumps_c,
-   [usemumps="yes"],
-   [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([Couldn't find a dmumps library supporting the dmumps_c function.]);
-    fi;
-    usemumps="no"]
- )
- AC_CHECK_LIB(cmumps, cmumps_c,
-   [usemumps="yes"],
-   [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([Couldn't find a cmumps library supporting the cmumps_c function.]);
-    fi;
-    usemumps="no"]
- )
- AC_CHECK_LIB(zmumps, zmumps_c,
-   [usemumps="yes"],
-   [if test "x$acx_mumps_ok" = "xyes"; then
-     AC_MSG_ERROR([Couldn't find a zmumps library supporting the zmumps_c function.]);
-    fi;
-    usemumps="no"]
- )
  AC_CHECK_HEADERS([smumps_c.h dmumps_c.h cmumps_c.h zmumps_c.h],
    [usemumps="yes"],
    [if test "x$acx_mumps_ok" = "xyes"; then
