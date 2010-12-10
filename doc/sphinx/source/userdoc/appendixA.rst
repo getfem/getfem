@@ -402,7 +402,7 @@ not to have the same degree on each dimension. An example is shown on figure
 
 :math:`.\\`
 
-  .. list-table:: Incomplete :math:`Q_2` Lagrange element on quadrilateral (Quad 8 serendipity element) ``"FEM_INCOMPLETE_Q2"``
+  .. list-table:: Incomplete :math:`Q_2` Lagrange element on quadrilateral (Quad 8 serendipity element) ``"FEM_Q2_INCOMPLETE"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 

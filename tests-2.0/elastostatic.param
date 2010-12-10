@@ -68,7 +68,7 @@ if (N == 2 && QUAD)
   MESH_FILE='structured:GT="GT_LINEAR_QK(2,1)";SIZES=[1,1];NOISED=0';
   %  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1';
   FEM_TYPE = 'FEM_QK(2,2)';         % Q1 for quadrilaterons
-  FEM_TYPE = 'FEM_INCOMPLETE_Q2';
+  FEM_TYPE = 'FEM_Q2_INCOMPLETE';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,6)';
   if (MIXED_PRESSURE)
     FEM_TYPE_P = 'FEM_QK_DISCONTINUOUS(2,0)';

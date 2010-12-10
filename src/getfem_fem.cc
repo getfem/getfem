@@ -955,7 +955,7 @@ namespace getfem {
   // |     |
   // 0--1--2
 
-   static pfem incomplete_Q2_fem(fem_param_list &params,
+   static pfem Q2_incomplete_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() == 0, "Bad number of parameters");
     fem<base_poly> *p = new fem<base_poly>;
@@ -2122,7 +2122,7 @@ namespace getfem {
       add_suffix("PK_FULL_HIERARCHICAL_COMPOSITE",
 		 PK_composite_full_hierarch_fem);
       add_suffix("PK_GAUSSLOBATTO1D", PK_GL_fem);
-      add_suffix("INCOMPLETE_Q2", incomplete_Q2_fem);
+      add_suffix("Q2_INCOMPLETE", Q2_incomplete_fem);
       add_suffix("HCT_TRIANGLE", HCT_triangle_fem);
       add_suffix("REDUCED_HCT_TRIANGLE", reduced_HCT_triangle_fem);
       add_suffix("QUADC1_COMPOSITE", quadc1p3_fem);
