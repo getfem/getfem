@@ -468,7 +468,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Return a @tsp object.
       @*/
     sub_command
-      ("bilaplacian KL", 4, 4, 0, 1,
+      ("bilaplacian KL", 5, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();

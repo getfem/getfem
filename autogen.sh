@@ -22,7 +22,7 @@ function die {
 }
 
 aclocal -I ./m4 || die "aclocal failed";
-libtoolize -f || die "libtoolize failed";
+libtoolize -f || glibtoolize -f || die "libtoolize failed";
 autoheader || die "autoheader failed";
 autoreconf
 autoconf || die "autoconf failed";
