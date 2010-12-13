@@ -416,7 +416,7 @@ not to have the same degree on each dimension. An example is shown on figure
 
      * - 3
        - :math:`P`, :math:`~ 2 \leq P \leq 3`
-       - 8 for :math:`P = 2` 20 for :math:`P = 3`
+       - 8 for�:math:`P = 2`, 20 for�:math:`P = 3`
        - :math:`C^0`
        - No (:math:`Q = 1`)
        - Yes (:math:`M = Id`)
