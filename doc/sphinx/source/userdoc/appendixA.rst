@@ -394,15 +394,15 @@ not to have the same degree on each dimension. An example is shown on figure
 
 :math:`.\\`
 
-.. figure:: images/getfemlistquad8.png
+.. figure:: images/getfemlistincomplete.png
    :align: center
    :scale: 60
 
-   Incomplete :math:`Q_2` element, 8 d.o.f., :math:`C^0`
+   Incomplete :math:`Q_2` elements in dimension two and three, 8 or 20 d.o.f., :math:`C^0`
 
 :math:`.\\`
 
-  .. list-table:: Incomplete :math:`Q_2` Lagrange element on quadrilateral (Quad 8 serendipity element) ``"FEM_Q2_INCOMPLETE"``
+  .. list-table:: Incomplete :math:`Q_2` Lagrange element on parallelepipeds (Quad 8 and Hexa 20 serendipity elements) ``"FEM_Q2_INCOMPLETE(P)"``
      :widths: 10 10 10 10 10 10 10
      :header-rows: 1
 
@@ -415,8 +415,8 @@ not to have the same degree on each dimension. An example is shown on figure
        - Polynomial
 
      * - 3
-       - 2
-       - 8
+       - :math:`P`, :math:`~ 2 \leq P \leq 3`
+       - 8 for :math:`P = 2` 20 for :math:`P = 3`
        - :math:`C^0`
        - No (:math:`Q = 1`)
        - Yes (:math:`M = Id`)

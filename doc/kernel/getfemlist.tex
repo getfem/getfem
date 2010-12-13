@@ -279,19 +279,20 @@ Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent
 
 \begin{figure}[H]
   \begin{center}
-    \includegraphics[width=5cm,angle=0]{getfemlist_quad8.eps} \\
-    Incomplete $Q_2$ element, 8 d.o.f., $C^0$  \\
+    \includegraphics[width=10cm,angle=0]{getfemlistincomplete.eps}
   \end{center}
+  \caption{ \it Incomplete $Q_2$ elements in dimension 2 and 3, 8 or 20 d.o.f., $C^0$}
+  \label{fig:incomplete}
 \end{figure}
 
 \begin{center}
 \begin{tabular}{|m{16.109cm}|} \hline 
-{\bf Incomplete $Q_2$ Lagrange element on quadrilateral (Quad 8 serendipity element)}\\
-{\tt "FEM\_INCOMPLETE\_Q2"} 
+{\bf Incomplete $Q_2$ Lagrange elements on parallelepipeds (Quad 8 and Hexa 20 serendipity elements)}\\
+{\tt "FEM\_Q2\_INCOMPLETE"} 
 \end{tabular} \\ \vspace{-1pt} 
 \begin{tabular}{|m{2cm}|m{2cm}|m{2.5cm}|m{1.5cm}|m{1.5cm}|m{2cm}|m{2cm}|} \hline 
 Degree & dimension & d.o.f. number & class & vectorial & \mbox{$\tau$-equivalent} & Polynomial \\ \hline
-\small $3$ & 2 & 8 & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes \\ \hline
+\small $3$ & \small $P$, \mbox{$~ 2 \leq P \leq 3$} & 8~for~\mbox{$P = 2$} / 20~for~\mbox{$P = 3$} & $C^0$ & No \mbox{($Q = 1$)} & Yes \mbox{($\tilde{M} = Id$)}  & Yes \\ \hline
 \end{tabular}
 \end{center}
 

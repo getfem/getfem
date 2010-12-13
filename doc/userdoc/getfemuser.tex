@@ -3697,13 +3697,14 @@ A prism in dimension $P > 1$ is the direct product of a simplex of dimension $P-
 
 \begin{figure}[H]
   \begin{center}
-    \icgraphic{5cm}{getfemlistquad8}{2D Quad8 element} \\
-    Incomplete $Q_2$ element, 8 d.o.f., $C^0$  \\
+    \icgraphic{10cm}{getfemlistincomplete}{2D Quad8 and 3D Hexa20 elements} \\
   \end{center}
+  \caption{ \it Incomplete $Q_2$ elements in dimension 2 and 3, 8 or 20 d.o.f., $C^0$} 
+  \label{fig:incomplete}
 \end{figure}
 
-\femtab{Incomplete $Q_2$ Lagrange element on quadrilateral (Quad 8 serendipity element)}{"FEM\_INCOMPLETE\_Q2"}
-{$3$}{2}{8}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
+\femtab{Incomplete $Q_2$ Lagrange elements on parallelepipeds (Quad 8 and Hexa 20 serendipity elements)}{"FEM\_Q2\_INCOMPLETE(P)"}
+{$3$}{\small $P$, \mbox{$~ 2 \leq P \leq 3$}}{8~for~\mbox{$P = 2$} / 20~for~\mbox{$P = 3$}}{$C^0$}{No \mbox{($Q = 1$)}}{Yes \mbox{($M = Id$)}}{Yes}
 
  \subsection{Elements with hierarchical basis}
 

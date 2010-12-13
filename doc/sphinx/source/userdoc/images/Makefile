@@ -2,6 +2,7 @@ FIGS=getfemlistargyris.fig                   \
      getfemlistcubeQ1.fig                    \
      getfemlistcubeQ3.fig                    \
      getfemlistHCT.fig                       \
+     getfemlistincomplete.fig                \
      getfemlistintmethodquad2.fig            \
      getfemlistintmethodquad3.fig            \
      getfemlistintmethodquad5.fig            \
@@ -22,7 +23,6 @@ FIGS=getfemlistargyris.fig                   \
      getfemlistprismP1.fig                   \
      getfemlistprismP2P1.fig                 \
      getfemlistprismP3.fig                   \
-     getfemlistquad8.fig                     \
      getfemlistquadc1composite.fig           \
      getfemlistquadQ1.fig                    \
      getfemlistquadQ3.fig                    \
