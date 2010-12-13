@@ -143,71 +143,74 @@ int main(int argc, char **argv) {
 
     getfem::mesher_ball D22(base_node(0.,0.,20.),20.);
 
-
-
-    
+    getfem::mesher_rectangle D23_1(base_node(0.,2.), base_node(20.0, 10.0));
+    getfem::mesher_rectangle D23_2(base_node(2.,0.), base_node(18.0, 2.0));
+    getfem::mesher_ball D23_3(getfem::base_node(2.0,2.0),2.0);
+    getfem::mesher_ball D23_4(getfem::base_node(18.0,2.0),2.0);
+    getfem::mesher_union D23(D23_1, D23_2, D23_3, D23_4);
 
 
     getfem::mesher_signed_distance *dist = &D0;
     switch (opt) {
-      case 0: dist = &D0; break; /* disk */
-      case 1: {
-	getfem::scalar_type z = sqrt(4 - 1.5*1.5);
-	fixed.push_back(base_node(0,z));
-	fixed.push_back(base_node(0,-z));
+    case 0: dist = &D0; break; /* disk */
+    case 1: {
+      getfem::scalar_type z = sqrt(4 - 1.5*1.5);
+      fixed.push_back(base_node(0,z));
+      fixed.push_back(base_node(0,-z));
+    }
+    case 2: dist = &D2; break; /* union of 2 disks */
+    case 3: dist = &D3; break; /* cube */
+    case 4: dist = &D4; break; /* cylinder */
+    case 5: dist = &D5; break; /* ball */
+    case 6: dist = &D6; break; /* union of 2 balls */
+    case 7: dist = &D7; break; /* union of 3 balls */
+    case 8: dist = &D8; break; /* union of 3 disks */
+    case 9: dist = &D9; break; /* union of 3 half balls */
+    case 10: dist = &D10;      /* disk r=20 with fixed points */
+      fixed.push_back(getfem::base_node(0.,0.));
+      fixed.push_back(getfem::base_node(0.,20.));
+      fixed.push_back(getfem::base_node(-20.,20.));
+      fixed.push_back(getfem::base_node(20.,20.));
+      fixed.push_back(getfem::base_node(0.,40.));
+      dist = &D10; 
+      break;
+    case 11: dist = &D11; break; /* half-balls */
+    case 12: dist = &D12; break; /* UFO */
+    case 13: dist = &D13; break; /* moon */
+    case 14: dist = &D14; break; /* substraction of two balls */
+    case 15: dist = &D15; break; /* torus */
+    case 16: dist = &D16; break; /* cube with a hole */
+    case 17: dist = &D17; break; /* space station */
+    case 18: dist = &D18; break;
+    case 19: dist = &D19; break;
+    case 20: {                   /* ladder */
+      scalar_type H = 20; 
+      unsigned nb_step = 3;
+      dist = new getfem::mesher_union
+	(*new getfem::mesher_rectangle(base_node(-3, -1.2, 0), base_node(-1.8, 1.2, H)), 
+	 *new getfem::mesher_rectangle(base_node(1.8, -1.2, 0), base_node(3, 1.2, H)));
+      for (unsigned i=0; i < nb_step; ++i) {
+	scalar_type z = H/nb_step/2 + i*(H/nb_step);
+	getfem::mesher_signed_distance *d = 
+	  new getfem::mesher_cylinder(base_node(-2.4, 0, z), base_node(1, 0, 0), 4.8, .8);
+	dist = new getfem::mesher_union(*dist, *d);
       }
-      case 2: dist = &D2; break; /* union of 2 disks */
-      case 3: dist = &D3; break; /* cube */
-      case 4: dist = &D4; break; /* cylinder */
-      case 5: dist = &D5; break; /* ball */
-      case 6: dist = &D6; break; /* union of 2 balls */
-      case 7: dist = &D7; break; /* union of 3 balls */
-      case 8: dist = &D8; break; /* union of 3 disks */
-      case 9: dist = &D9; break; /* union of 3 half balls */
-      case 10: dist = &D10;      /* disk r=20 with fixed points */
-	fixed.push_back(getfem::base_node(0.,0.));
-	fixed.push_back(getfem::base_node(0.,20.));
-	fixed.push_back(getfem::base_node(-20.,20.));
-	fixed.push_back(getfem::base_node(20.,20.));
-	fixed.push_back(getfem::base_node(0.,40.));
-	dist = &D10; 
-	break;
-      case 11: dist = &D11; break; /* half-balls */
-      case 12: dist = &D12; break; /* UFO */
-      case 13: dist = &D13; break; /* moon */
-      case 14: dist = &D14; break; /* substraction of two balls */
-      case 15: dist = &D15; break; /* torus */
-      case 16: dist = &D16; break; /* cube with a hole */
-      case 17: dist = &D17; break; /* space station */
-      case 18: dist = &D18; break;
-      case 19: dist = &D19; break;
-      case 20: {                   /* ladder */
-	scalar_type H = 20; 
-	unsigned nb_step = 3;
-	dist = new getfem::mesher_union
-	  (*new getfem::mesher_rectangle(base_node(-3, -1.2, 0), base_node(-1.8, 1.2, H)), 
-	   *new getfem::mesher_rectangle(base_node(1.8, -1.2, 0), base_node(3, 1.2, H)));
-	for (unsigned i=0; i < nb_step; ++i) {
-	  scalar_type z = H/nb_step/2 + i*(H/nb_step);
-	  getfem::mesher_signed_distance *d = 
-	    new getfem::mesher_cylinder(base_node(-2.4, 0, z), base_node(1, 0, 0), 4.8, .8);
-	  dist = new getfem::mesher_union(*dist, *d);
-	}
-      } break;
-      case 21: { /* bar with holes */
-	scalar_type H=20;
-	unsigned nb_holes = 4;
-	dist = new getfem::mesher_rectangle(base_node(-2, -1, 0), 
-					    base_node(+2, +1, H));
-	for (unsigned i=0; i < nb_holes; ++i) {
-	  scalar_type z = H/nb_holes/2 + i*(H/nb_holes);
-	  getfem::mesher_signed_distance *d = 
-	    new getfem::mesher_cylinder(base_node(0, -20, z), 
-					base_node(0, 1, 0), 40, .7);
-	  dist = new getfem::mesher_setminus(*dist, *d);
-	}
-      } break;
+    } break;
+    case 21: { /* bar with holes */
+      scalar_type H=20;
+      unsigned nb_holes = 4;
+      dist = new getfem::mesher_rectangle(base_node(-2, -1, 0), 
+					  base_node(+2, +1, H));
+      for (unsigned i=0; i < nb_holes; ++i) {
+	scalar_type z = H/nb_holes/2 + i*(H/nb_holes);
+	getfem::mesher_signed_distance *d = 
+	  new getfem::mesher_cylinder(base_node(0, -20, z), 
+				      base_node(0, 1, 0), 40, .7);
+	dist = new getfem::mesher_setminus(*dist, *d);
+      }
+    } break;
     case 22: dist = &D22; break; /* ball for test of radius 20. */
+    case 23: dist = &D23; break; /* rectangle with rounded corners */
     }
     getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
     cerr << "You can view the result with\n mayavi -d totoq.vtk -m BandedSurfaceMap\n";
