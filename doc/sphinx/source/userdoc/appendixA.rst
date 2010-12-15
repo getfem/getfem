@@ -126,8 +126,8 @@ node is the so-called Lagrange grid. Figures :ref:`ud-fig-segmentpk`.
 
 The number of degrees of freedom for a classical :math:`P_K` Lagrange element of
 dimension :math:`P` and degree :math:`K` is :math:`\Frac{(P+K)!}{P!K!}`. For
-instance, in dimension 2 (:math:`P = 2`), this value is :math:`\Frac{(K+1)
-(K+2)}{2}` and in dimension 3 (:math:`P = 3`), it is :math:`\Frac{(K+1) (K+2)
+instance, in dimension 2 :math:`(P = 2)`, this value is :math:`\Frac{(K+1)
+(K+2)}{2}` and in dimension 3 :math:`(P = 3)`, it is :math:`\Frac{(K+1) (K+2)
 (K+3)}{6}`.
 
   .. _ud-fig-tetrahedronpk:
@@ -220,8 +220,8 @@ the classical :math:`P_K` Lagrange element.
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
        - :math:`\Frac{(K+P)!}{K! P!}`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 :math:`.\\`
@@ -242,8 +242,8 @@ the classical :math:`P_K` Lagrange element.
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
        - :math:`\Frac{(K+P)!}{K! P!}`
        - discontinuous
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 Even though Lagrange elements are defined for arbitrary degrees, to choose a high
@@ -346,8 +346,8 @@ not to have the same degree on each dimension. An example is shown on figure
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
        - :math:`(K+1)^P`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 :math:`.\\`
@@ -368,8 +368,8 @@ not to have the same degree on each dimension. An example is shown on figure
        - :math:`P`, :math:`~ 2 \leq P \leq 255`
        - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 :math:`.\\`
@@ -390,8 +390,8 @@ not to have the same degree on each dimension. An example is shown on figure
        - :math:`P`, :math:`~ 2 \leq P \leq 255`
        - :math:`(K_2+1)` :math:`\times~\Frac{(K_1+P-1)!}{K_1! (P-1)!}`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 :math:`.\\`
@@ -418,10 +418,10 @@ not to have the same degree on each dimension. An example is shown on figure
 
      * - 3
        - :math:`P`, :math:`~ 2 \leq P \leq 3`
-       - 8\ |nbsp|\ for\ |nbsp|\ :math:`P = 2` 20\ |nbsp|\ for\ |nbsp|\ :math:`P = 3`
+       - :math:`8\ \text{for}\ P = 2~~~~~` :math:`20\ \text{for}\ P = 3`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 
@@ -466,8 +466,8 @@ Hierarchical elements with respect to the degree
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
        - :math:`\Frac{(K+P)!}{K! P!}`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 :math:`.\\`
@@ -488,8 +488,8 @@ Hierarchical elements with respect to the degree
        - :math:`P`, :math:`~ 1 \leq P \leq 255`
        - :math:`(K+1)^P`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 :math:`.\\`
@@ -510,8 +510,8 @@ Hierarchical elements with respect to the degree
        - :math:`P`, :math:`~ 2 \leq P \leq 255`
        - :math:`(K+1)` :math:`\times~\Frac{(K+P-1)!}{K! (P-1)!}`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - Yes
 
 some particular choices: :math:`P_4` will be built with the basis of the
@@ -554,7 +554,7 @@ elements. But this tool can also be used to build piecewise polynomial elements.
        - dimension of FEM1
        - variable
        - variable
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - If ``FEM1`` is
        - piecewise
 
@@ -589,8 +589,8 @@ Hierarchical composite elements
        - :math:`P`
        - :math:`\Frac{(SK+P)!}{(SK)! P!}`
        - variable
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - piecewise
 
 :math:`.\\`
@@ -611,8 +611,8 @@ Hierarchical composite elements
        - :math:`P`
        - :math:`\Frac{(SK+P)!}{(SK)! P!}`
        - variable
-       - No (:math:`Q = 1`)
-       - Yes (:math:`M = Id`)
+       - No :math:`(Q = 1)`
+       - Yes :math:`(M = Id)`
        - piecewise
 
 Other constructions are possible thanks to ``"FEM_GEN_HIERARCHICAL(FEM1, FEM2)"``
@@ -652,7 +652,7 @@ Raviart-Thomas of lowest order elements
        - :math:`P`
        - :math:`P+1`
        - H(div)
-       - Yes (:math:`Q = P`)
+       - Yes :math:`(Q = P)`
        - No
        - Yes
 
@@ -674,7 +674,7 @@ Raviart-Thomas of lowest order elements
        - :math:`P`
        - :math:`2P`
        - H(div)
-       - Yes (:math:`Q = P`)
+       - Yes :math:`(Q = P)`
        - No
        - Yes
 
@@ -707,7 +707,7 @@ Nedelec (or Whitney) edge elements
        - :math:`P`
        - :math:`P(P+1)/2`
        - H(rot)
-       - Yes (:math:`Q = P`)
+       - Yes :math:`(Q = P)`
        - No
        - Yes
 
@@ -747,7 +747,7 @@ following values of :math:`K`: :math:`1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
        - :math:`1`
        - :math:`K+1`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -792,7 +792,7 @@ is still diagonal.
        - :math:`1`
        - :math:`4`
        - :math:`C^1`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - Yes
 
@@ -825,7 +825,7 @@ Lagrange element with an additional bubble function
        - :math:`1`
        - :math:`3`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -870,7 +870,7 @@ Elements with additional bubble functions
        - :math:`2`
        - :math:`4` or :math:`7`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -901,7 +901,7 @@ Elements with additional bubble functions
        - :math:`2`
        - :math:`4` or :math:`7`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Piecewise
 
@@ -932,7 +932,7 @@ Elements with additional bubble functions
        - :math:`2`
        - :math:`4`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -963,7 +963,7 @@ Elements with additional bubble functions
        - :math:`2`
        - :math:`4`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -996,7 +996,7 @@ Non-conforming :math:`P_1` element
        - :math:`2`
        - :math:`3`
        - :math:`discontinuous`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -1031,8 +1031,8 @@ Base functions on the reference element:
 This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
 identity). On the real element linear combinations of :math:`\varphi'_4` and
 :math:`\varphi'_7` are used to match the gradient on the corresponding vertex.
-Idem for the two couples (:math:`\varphi'_5`, :math:`\varphi'_8`) and
-(:math:`\varphi'_6`, :math:`\varphi'_9`) for the two other vertices.
+Idem for the two couples :math:`(\varphi'_5`, :math:`\varphi'_8)` and
+:math:`(\varphi'_6`, :math:`\varphi'_9)` for the two other vertices.
 
   .. list-table:: Hermite element on a triangle ``"FEM_HERMITE(2)"``
      :widths: 10 10 10 10 10 10 10
@@ -1050,7 +1050,7 @@ Idem for the two couples (:math:`\varphi'_5`, :math:`\varphi'_8`) and
        - :math:`2`
        - :math:`10`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - Yes
 
@@ -1086,7 +1086,7 @@ fourth order problems, despite the fact that it is not :math:`{\cal C}^0`.
        - :math:`2`
        - :math:`6`
        - discontinuous
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - Yes
 
@@ -1152,7 +1152,7 @@ transformations (for instance to treat curved boundaries).
        - :math:`2`
        - :math:`21`
        - :math:`C^1`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - Yes
 
@@ -1193,7 +1193,7 @@ and 9, 10, 11 for the normal derivatives on face 0, 1, 2 respectively.
        - :math:`2`
        - :math:`12`
        - :math:`C^1`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - piecewise
 
@@ -1226,7 +1226,7 @@ assumed to be polynomial of degree one on each edge (see figure
        - :math:`2`
        - :math:`9`
        - :math:`C^1`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - piecewise
 
@@ -1264,7 +1264,7 @@ to use a ``"IM_QUADC1_COMPOSITE"`` integration method with this finite element.
        - :math:`2`
        - :math:`16`
        - :math:`C^1`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - piecewise
 
@@ -1298,7 +1298,7 @@ assumed to be polynomial of degree one on each edge (see figure
        - :math:`2`
        - :math:`12`
        - :math:`C^1`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - piecewise
 
@@ -1347,7 +1347,7 @@ Elements with additional bubble functions
        - :math:`3`
        - :math:`5`, :math:`11` or :math:`21`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -1378,7 +1378,7 @@ Elements with additional bubble functions
        - :math:`3`
        - :math:`5`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - Yes
        - Yes
 
@@ -1442,6 +1442,6 @@ the corresponding vertex. Idem on the other vertices.
        - :math:`3`
        - :math:`20`
        - :math:`C^0`
-       - No (:math:`Q = 1`)
+       - No :math:`(Q = 1)`
        - No
        - Yes

@@ -24,6 +24,7 @@ sys.path.append('../../../interface/src/python/')      # getfem
 from getfem import getfem_env
 user_preamble = """\n% begin user_preamble:
 \\usepackage{mathrsfs}
+\\usepackage[utf8]{inputenc}
 \\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
 \\newcommand{\\ds}{\\displaystyle}
 \\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
