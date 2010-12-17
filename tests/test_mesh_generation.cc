@@ -143,10 +143,10 @@ int main(int argc, char **argv) {
 
     getfem::mesher_ball D22(base_node(0.,0.,20.),20.);
 
-    getfem::mesher_rectangle D23_1(base_node(0.,2.), base_node(20.0, 10.0));
-    getfem::mesher_rectangle D23_2(base_node(2.,0.), base_node(18.0, 2.0));
-    getfem::mesher_ball D23_3(getfem::base_node(2.0,2.0),2.0);
-    getfem::mesher_ball D23_4(getfem::base_node(18.0,2.0),2.0);
+    getfem::mesher_rectangle D23_1(base_node(0.,1.), base_node(20.0, 10.0));
+    getfem::mesher_rectangle D23_2(base_node(1.,0.), base_node(19.0, 1.0));
+    getfem::mesher_ball D23_3(getfem::base_node(1.0,1.0),1.0);
+    getfem::mesher_ball D23_4(getfem::base_node(19.0,1.0),1.0);
     getfem::mesher_union D23(D23_1, D23_2, D23_3, D23_4);
 
 
@@ -210,7 +210,13 @@ int main(int argc, char **argv) {
       }
     } break;
     case 22: dist = &D22; break; /* ball for test of radius 20. */
-    case 23: dist = &D23; break; /* rectangle with rounded corners */
+    case 23:                   /* rectangle with rounded corners */
+      fixed.push_back(getfem::base_node(0.,1.));
+      fixed.push_back(getfem::base_node(1.,0.));
+      fixed.push_back(getfem::base_node(19.,0.));
+      fixed.push_back(getfem::base_node(20.,1.));
+      dist = &D23;
+      break;
     }
     getfem::build_mesh(m, *dist, h, fixed, K, 2, max_iter, prefind);
     cerr << "You can view the result with\n mayavi -d totoq.vtk -m BandedSurfaceMap\n";

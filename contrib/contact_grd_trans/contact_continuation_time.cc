@@ -20,23 +20,27 @@
 //===========================================================================
 
 /**
-   @file nonlinear_elastostatic.cc
-   @brief Nonlinear Elastostatic problem (large strain).
+   @file contact_continuation_time.cc
+   @brief Nonlinear Problem with Friction(large strain).
 
    A rubber bar is submitted to a large torsion. An attempt to compute
    the solution by numerical continuation w.r.t. time. Not too
    satisfactory because the structure of retrograde branches seems to
-   be very complicated.
+   be very complicated (each sliding point may get stuck).
 
    NOTE: In the case of neg_deltat = 0 the absolut value of deltat is
    set in the friction condition, in the opposite case deltat is used
-   instead; if fact, neg_deltat = 0 should correspond to the case when
+   instead; in fact, neg_deltat = 0 should correspond to the case when
    the term deltat does not occur in the denominator of the friction
    condition whereas neg_deltat = 1 should correspond to the case when
    it occurs there; however, in both cases the derivative with respect
    to time is zero in the rows corresponding to the friction
    conditions and both cases are actually some mixture of the
    possibilities described above.
+   In the case of possibly more active functions when seeking a new
+   Jacobian, all possibilities are tested. Moreover, instead of using
+   some criterion for determining direction of a new tangent when
+   changing the Jacobian, both directions are tested --- unefficient.
    
    This program is used to check that getfem++ is working. This is
    also a good example of use of Getfem++.
@@ -47,7 +51,7 @@
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_nonlinear_elasticity.h"
-#include "my_getfem_Coulomb_friction.h"
+#include "getfem/getfem_Coulomb_friction.h"
 #include "getfem/getfem_superlu.h"
 #include "gmm/gmm.h"
 
@@ -67,9 +71,9 @@ typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 /*
-  structure for the elastostatic problem
+  structure for the frictional problem
 */
-struct elastostatic_problem {
+struct friction_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, FRICTION_BOUNDARY_NUM = 1, NEUMANN_BOUNDARY_NUM = 2};
   getfem::mesh mesh;         /* the mesh */
@@ -88,7 +92,7 @@ struct elastostatic_problem {
 
   bool solve(plain_vector &U);
   void init(void);
-  elastostatic_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh), mf_vm(mesh) {}
+  friction_problem(void) : mim(mesh), mf_u(mesh), mf_p(mesh), mf_rhs(mesh), mf_coef(mesh), mf_vm(mesh) {}
 };
 
 
@@ -97,7 +101,7 @@ struct elastostatic_problem {
 
    (this is boilerplate code, not very interesting)
  */
-void elastostatic_problem::init(void) {
+void friction_problem::init(void) {
   std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type ");
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
   std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P","FEM name for the pressure");
@@ -108,7 +112,6 @@ void elastostatic_problem::init(void) {
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   /* First step : build the mesh */
-  int nb_refine = PARAM.int_value("NBREFINE");
   bgeot::pgeometric_trans pgt = 
     bgeot::geometric_trans_descriptor(MESH_TYPE);
   size_type N = pgt->dim();
@@ -123,6 +126,7 @@ void elastostatic_problem::init(void) {
   LX = PARAM.real_value("LX", "Length along X axis");
   LY = PARAM.real_value("LY", "Length along Y axis");
   LZ = PARAM.real_value("LZ", "Length along Z axis");
+  int nb_refine = PARAM.int_value("NBREFINE");
   lambda = PARAM.real_value("LAMBDA", "Lame coefficient lambda");
   mu = PARAM.real_value("MU", "Lame coefficient mu");
   bgeot::base_matrix M(N,N);
@@ -517,8 +521,7 @@ template<typename MODEL_STATE, typename MATRIX, typename VECT>
 void test_functions
 (MODEL_STATE &MS, getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION,
  const VECT &contact_nodes, const sparse_matrix &BN, const sparse_matrix &BT,
- const plain_vector &U, const plain_vector &U0, MATRIX &TST, scalar_type classboundary,
- int noisy) {
+ const plain_vector &U, const plain_vector &U0, MATRIX &TST, scalar_type limit, int noisy) {
   /* saves the values of the test functions at the solution given by
      MS.state() and U into TST */
 
@@ -544,21 +547,20 @@ void test_functions
 	   << (TST(i, 0) <= 0) << (TST(i, 1) >= 0) << (TST(i, 2) <= 0) << " ";
 
       for (size_type j = 0; j < 3; ++j){
-	if ((TST(i,j) >= -classboundary && TST(i,j) <= classboundary)
-		 && ((j == 0) || (j > 0 && TST(i,0) <= classboundary)))
-	  cout << " ("<< j+1 << "-th component close to the limit: " << TST(i,j) << ") ";
+	if (gmm::abs(TST(i,j)) <= limit && (j == 0 || (j > 0 && TST(i,0) <= limit)))
+	  cout << " ("<< j + 1 << "-th component close to the limit: " << TST(i,j) << ") ";
       }
 
       cout << endl;
-      if (noisy > 2)
-	cout << "LN[i] = " << LN[i] 
-	     << ", r * alpha * (UN[i] - gap[i]) = " << r * alpha * (UN[i] - gap[i])
-	     << ", - friction_coef[i] * LN[i] + LT[i] = "
-	     << -friction_coef[i] * LN[i] + LT[i]
-	     << ", friction_coef[i] * LN[i] + LT[i] = "
-	     << friction_coef[i] * LN[i] + LT[i] 
-	     << ", r * beta * (UT[i]-UT0[i]) = "
-	     << r * beta * (UT[i]-UT0[i]) << endl;
+
+// 	cout << "LN[i] = " << LN[i] 
+// 	     << ", r * alpha * (UN[i] - gap[i]) = " << r * alpha * (UN[i] - gap[i])
+// 	     << ", - friction_coef[i] * LN[i] + LT[i] = "
+// 	     << -friction_coef[i] * LN[i] + LT[i]
+// 	     << ", friction_coef[i] * LN[i] + LT[i] = "
+// 	     << friction_coef[i] * LN[i] + LT[i] 
+// 	     << ", r * beta * (UT[i]-UT0[i]) = "
+// 	     << r * beta * (UT[i]-UT0[i]) << endl;
     }
   }
 }
@@ -568,7 +570,7 @@ size_type test_functions
 (MODEL_STATE &MS, getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION,
  const VECT &contact_nodes, const sparse_matrix &BN, const sparse_matrix &BT,
  const plain_vector &U, const plain_vector &U0, MATRIX &TST, MATRIX &TST0,
- scalar_type classboundary, int noisy) {
+ scalar_type limit, int noisy) {
   /* saves the values of the test functions at the solution given by
      MS.state() and U into TST; moreover, returns the number of
      changes in comparison with TST0 */
@@ -600,20 +602,18 @@ size_type test_functions
 	       << (TST(i, 0) <= 0) << (TST(i, 1) >= 0) << (TST(i, 2) <= 0)
 	       << " - change of the sign of the " << j+1 << "-th component: "
 	       << TST0(i,j) << " -> " << TST(i,j) << endl;
-      } else if ((TST(i,j) >= -classboundary && TST(i,j) <= classboundary)
-		 && ((j == 0) || (j > 0 && TST(i,0) <= classboundary)))
+      } else if (gmm::abs(TST(i,j)) <= limit && (j == 0 || (j > 0 && TST(i,0) <= limit)))
 	cout << "node " << i << ": " << contact_nodes[i] 
-	     << j+1 << "-th component close to the limit: " << TST(i,j) << endl;
+	     << " (" << j + 1 << "-th component close to the limit: " << TST(i,j) << endl;
 
-      if (noisy > 2)
-	cout << "LN[i] = " << LN[i] 
-	     << ", r * alpha * (UN[i] - gap[i]) = " << r * alpha * (UN[i] - gap[i])
-	     << ", - friction_coef[i] * LN[i] + LT[i] = "
-	     << -friction_coef[i] * LN[i] + LT[i]
-	     << ", friction_coef[i] * LN[i] + LT[i] = "
-	     << friction_coef[i] * LN[i] + LT[i] 
-	     << ", r * beta * (UT[i]-UT0[i]) = "
-	     << r * beta * (UT[i]-UT0[i]) << endl;
+// 	cout << "LN[i] = " << LN[i] 
+// 	     << ", r * alpha * (UN[i] - gap[i]) = " << r * alpha * (UN[i] - gap[i])
+// 	     << ", - friction_coef[i] * LN[i] + LT[i] = "
+// 	     << -friction_coef[i] * LN[i] + LT[i]
+// 	     << ", friction_coef[i] * LN[i] + LT[i] = "
+// 	     << friction_coef[i] * LN[i] + LT[i] 
+// 	     << ", r * beta * (UT[i]-UT0[i]) = "
+// 	     << r * beta * (UT[i]-UT0[i]) << endl;
     }
   }
   
@@ -622,83 +622,70 @@ size_type test_functions
 
 template<typename MATRIX>
 void straight_insertion
-(MATRIX &ACT, plain_vector &KEY, size_type i){
-/* places the i-th row of ACT according to the corresponding values in KEY;
-   increasing order is wanted in the first i components of KEY */
+(MATRIX &M, plain_vector &key, size_type i) {
+/* places the i-th row of M according to the corresponding values in key;
+   increasing order is wanted in the first i components of key */
 
   bool found;
   size_type j = i;
-  scalar_type X_key;
   std::vector<size_type> X(3);
+  scalar_type X_key;
 
-  X_key = KEY[i];
-  X[0] = ACT(i, 0);
-  X[1] = ACT(i, 1);
-  X[2] = ACT(i, 2);
+  X[0] = M(i, 0); X[1] = M(i, 1); X[2] = M(i, 2);
+  X_key = key[i];
   if (j == 0) found = true;
-  else found = (X_key >= KEY[j - 1]);
+  else found = (X_key >= key[j - 1]);
  
   while (!found) { // seeking the appropriate  position
-    KEY[j] = KEY[j - 1];
-    ACT(j, 0) = ACT(j - 1, 0);
-    ACT(j, 1) = ACT(j - 1, 1);
-    ACT(j, 2) = ACT(j - 1, 2);
+    key[j] = key[j - 1];
+    M(j, 0) = M(j - 1, 0);
+    M(j, 1) = M(j - 1, 1);
+    M(j, 2) = M(j - 1, 2);
     --j;
     if (j == 0) found = true;
-    else found = (X_key >= KEY[j - 1]);
+    else found = (X_key >= key[j - 1]);
   }
 
-  KEY[j] = X_key;
-  ACT(j, 0) = X[0];
-  ACT(j, 1) = X[1];
-  ACT(j, 2) = X[2];
+  M(j, 0) = X[0]; M(j, 1) = X[1]; M(j, 2) = X[2];
+  key[j] = X_key;
 }
 	    
-template<typename MATRIX, typename T_MATRIX, typename VECT>
+template<typename CH_MATRIX, typename A_MATRIX, typename T_MATRIX, typename VECT>
 void compute_Jacobians
-(const VECT &contact_nodes, MATRIX &JAC, MATRIX &ACT, const T_MATRIX &TST,
- scalar_type classboundary) {
-  /* computes the arrays JAC and ACT determining the Jacobian and the
-     active selection functions, respectively; the items in ACT are
-     ordered so that the corresponding values in KEY are increasing (a
-     heuristics is used!), the values of the test functions are saved
-     in TST */
+(const VECT &contact_nodes, CH_MATRIX &CH, A_MATRIX &ACT, const T_MATRIX &TST,
+ scalar_type limit) {
+  /* computes CH and ACT determining the Jacobian and the active selection functions,
+     respectively; the items in ACT are ordered so that the corresponding values in KEY are
+     increasing (a heuristics is used!), the values of the test functions are saved in TST */
   
   size_type nbc = gmm::mat_nrows(TST);
   plain_vector KEY(3*nbc);
   
   size_type pos = 0;
   for (size_type i = 0; i < nbc; ++i) {
-    JAC(i, 0) = i;
 
-    JAC(i, 1) = (TST(i, 0) <= 0);
-    if ((TST(i, 0) > -classboundary) && (TST(i, 0) < classboundary)) {
-      ACT(pos, 0) = i;
-      ACT(pos, 1) = 1;
-      ACT(pos, 2) = JAC(i, 1);
+    CH(i, 0) = (TST(i, 0) <= 0);
+    if (gmm::abs(TST(i, 0)) < limit) {
+      ACT(pos, 0) = i; ACT(pos, 1) = 0; ACT(pos, 2) = CH(i, 0);
       KEY[pos] = gmm::abs(TST(i, 0));
       straight_insertion(ACT, KEY, pos);
       ++pos;
     }
 
     if (TST(i, 1) < 0) {                  // positive slip
-      JAC(i, 2) = 0; JAC(i, 3) = 1;
-      if (TST(i, 0) < classboundary) {    // contact is possible
-	ACT(pos, 0) = i;
-	ACT(pos, 1) = 2;
-	ACT(pos, 2) = JAC(i, 2);
+      CH(i, 1) = 0; CH(i, 2) = 1;
+      if (TST(i, 0) < limit) {    // contact is possible
+	ACT(pos, 0) = i; ACT(pos, 1) = 1; ACT(pos, 2) = CH(i, 1);
 	KEY[pos] = (-TST(i, 1) < 1./contact_nodes[i][0]) ?
 	  -TST(i, 1) : 1./contact_nodes[i][0];                  // (!)
 	straight_insertion(ACT, KEY, pos);
 	++pos;
       }
     }
-    else if (TST(i,2) > 0) {              // negative slip
-      JAC(i, 2) = 1; JAC(i, 3) = 0;
-      if (TST(i, 0) < classboundary) {    // contact is possible
-	ACT(pos, 0) = i;
-	ACT(pos, 1) = 3;
-	ACT(pos, 2) = JAC(i, 3);
+    else if (TST(i, 2) > 0) {              // negative slip
+      CH(i, 1) = 1; CH(i, 2) = 0;
+      if (TST(i, 0) < limit) {    // contact is possible
+	ACT(pos, 0) = i; ACT(pos, 1) = 2; ACT(pos, 2) = CH(i, 2);
 	KEY[pos] = (TST(i, 2) < 1./contact_nodes[i][0]) ?
 	  TST(i, 2) : 1./contact_nodes[i][0];                  // (!)
 	straight_insertion(ACT, KEY, pos);
@@ -706,22 +693,18 @@ void compute_Jacobians
       }
     }
     else {                                 // stick
-      JAC(i, 2) = 1; JAC(i, 3) = 1;
-      if (TST(i, 0) < classboundary) {     // contact is possible
-	if (TST(i, 1) < classboundary) {
-	  ACT(pos, 0) = i;
-	  ACT(pos, 1) = 2;
-	  ACT(pos, 2) = JAC(i, 2);
-	  KEY[pos] = TST(i, 1);                                // (!)
+      CH(i, 1) = 1; CH(i, 2) = 1;
+      if (TST(i, 0) < limit) {     // contact is possible
+	if (TST(i, 1) < limit) {
+	  ACT(pos, 0) = i; ACT(pos, 1) = 1; ACT(pos, 2) = CH(i, 1);
+	  KEY[pos] = TST(i, 1);
 	  straight_insertion(ACT, KEY, pos);
 	  ++pos;
 	}
 
-	if (TST(i, 2) > -classboundary) {
-	  ACT(pos, 0) = i;
-	  ACT(pos, 1) = 3;
-	  ACT(pos, 2) = JAC(i, 3);
-	  KEY[pos] = -TST(i, 2);                               // (!)
+	if (TST(i, 2) > -limit) {
+	  ACT(pos, 0) = i; ACT(pos, 1) = 2; ACT(pos, 2) = CH(i, 2);
+	  KEY[pos] = -TST(i, 2);
 	  straight_insertion(ACT, KEY, pos);
 	  ++pos;
 	}
@@ -729,7 +712,6 @@ void compute_Jacobians
     }
   }
 
-  JAC(nbc, 0) = size_type(-1);
   ACT(pos, 0) = size_type(-1);
 }
 
@@ -739,9 +721,9 @@ bool test_Jacobian
  getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
  const plain_vector &grad_t, const plain_vector &F2_init, const plain_vector &deltaF2,
  const plain_vector &U00, const plain_vector &U0, scalar_type deltat0, plain_vector &T0,
- const plain_vector &X0, const MATRIX &JAC, scalar_type h, scalar_type minangle_back,
+ const plain_vector &X0, const MATRIX &CH, scalar_type h, scalar_type minangle_back,
  bool neg_deltat, iteration_corr &iter) {
-  /* tries to continuate according to the Jacobian given by JAC;
+  /* tries to continuate according to the Jacobian given by CH;
      returns `true' in the case of success, `false' otherwise */
 
   bool success = false;
@@ -751,12 +733,11 @@ bool test_Jacobian
   if (iter.get_noisy() > 1)
     cout << "testing the following Jacobian:" << endl;
 
-  for (size_type i = 0; i < gmm::mat_nrows(JAC) - 1; ++i) {
+  for (size_type i = 0; i < gmm::mat_nrows(CH); ++i) {
     if (iter.get_noisy() > 1)
-      cout << "node " << JAC(i, 0) << ": " << contact_nodes[i] << " "
-	   << JAC(i, 1) << JAC(i, 2) << JAC(i, 3) << endl;
-    if (((JAC(i, 2) == 0) && (JAC(i, 3) == 0))
-	|| ((JAC(i,1) == 0) && ((JAC(i, 2) == 1) && (JAC(i, 3) == 1))))  /* not wanted */
+      cout << "node " << i << ": " << contact_nodes[i] << " "
+	   << CH(i, 0) << CH(i, 1) << CH(i, 2) << endl;
+    if ((!CH(i, 1) && !CH(i, 2)) || (!CH(i, 0) && (CH(i, 1) && CH(i, 2))))  /* not wanted */
       return success; 
     }
 	   
@@ -771,11 +752,11 @@ bool test_Jacobian
   
   problem.compute_tangent_matrix(MS);
 
-  FRICTION.set_JAC(JAC);
+  FRICTION.set_character_matrix(CH);
   FRICTION.do_compute_tangent_matrix(MS, 0, 0);
   compute_tangent(MS.tangent_matrix(), grad_t, T_test, iter.get_noisy());
   
-  FRICTION.clear_JAC();
+  FRICTION.clear_character_matrix();
   FRICTION.set_WT(gmm::scaled(U0, -1.0));
   gmm::copy(T_test, T);
 
@@ -786,7 +767,7 @@ bool test_Jacobian
   
   if (iter.converged()) {
     scalar_type angle = gmm::vect_sp(T, T0);
-    if (iter.get_noisy()) cout << "angle = " << angle << endl;
+    if (iter.get_noisy()) cout << "angle = " << angle << endl;;
 
     if (angle >= minangle_back) { // tests whether we have not arrived at the incoming branch
       cout << ", success? (1/0): ";  // for confirmation
@@ -820,42 +801,41 @@ bool test_Jacobian
   return success;
 }
 
-template<typename MODEL_STATE, typename MATRIX, typename VECT>
+template<typename MODEL_STATE, typename CH_MATRIX, typename A_MATRIX, typename VECT>
 bool systematic_test_Jacobians
 (MODEL_STATE &MS, getfem::mdbrick_Dirichlet<MODEL_STATE> &problem,
  getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
  const plain_vector &grad_t, const plain_vector &F2_init, const plain_vector &deltaF2,
  const plain_vector &U00, const plain_vector &U0, scalar_type deltat0, plain_vector &T0,
- const plain_vector &X0, MATRIX &JAC, const MATRIX &ACT, size_type level, scalar_type h,
+ const plain_vector &X0, CH_MATRIX &CH, const A_MATRIX &ACT, size_type level, scalar_type h,
  scalar_type minangle_back, bool neg_deltat, iteration_corr &iter) {
-  /* a recursive procedure for systematic testing of possible Jacobians, starts with 
-     the changes corresponding to the test functions with the closest values to zero;
-     returns true in the case success, false otherwise */
+  /* recursive procedure for systematic testing of all possible Jacobians according the order
+     in ACT; returns true in the case success, false otherwise */
 
   bool success = false;
 
   if (level == 0)
     success =
       test_Jacobian(MS, problem, FRICTION, contact_nodes, grad_t, F2_init, deltaF2, U00, U0,
-		    deltat0, T0, X0, JAC, h, minangle_back, neg_deltat, iter);
+		    deltat0, T0, X0, CH, h, minangle_back, neg_deltat, iter);
   else
     success = 
       systematic_test_Jacobians(MS, problem, FRICTION, contact_nodes, grad_t, F2_init,
-				deltaF2, U00, U0, deltat0, T0, X0, JAC, ACT, level - 1, h,
+				deltaF2, U00, U0, deltat0, T0, X0, CH, ACT, level - 1, h,
 				minangle_back, neg_deltat, iter);
 
   if (!success){
-    JAC(ACT(level, 0), ACT(level, 1)) = (ACT(level, 2) == 0);
+    CH(ACT(level, 0), ACT(level, 1)) = (ACT(level, 2) == 0);
     if (level == 0)
       success = 
-	test_Jacobian(MS, problem, FRICTION, contact_nodes, grad_t, F2_init, deltaF2, U00, U0,
-		      deltat0, T0, X0, JAC, h, minangle_back, neg_deltat, iter);
+	test_Jacobian(MS, problem, FRICTION, contact_nodes, grad_t, F2_init, deltaF2, U00,
+		      U0, deltat0, T0, X0, CH, h, minangle_back, neg_deltat, iter);
     else
       success =
 	systematic_test_Jacobians(MS, problem, FRICTION, contact_nodes, grad_t, F2_init,
-				  deltaF2, U00, U0, deltat0, T0, X0, JAC, ACT, level - 1, h,
+				  deltaF2, U00, U0, deltat0, T0, X0, CH, ACT, level - 1, h,
 				  minangle_back, neg_deltat, iter);
-    JAC(ACT(level, 0), ACT(level, 1)) = ACT(level, 2);
+    CH(ACT(level, 0), ACT(level, 1)) = ACT(level, 2);
   }
 
   return success;
@@ -865,7 +845,7 @@ bool systematic_test_Jacobians
 /*  Model.                                                                */
 /**************************************************************************/
 
-bool elastostatic_problem::solve(plain_vector &U) {
+bool friction_problem::solve(plain_vector &U) {
   
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
@@ -934,28 +914,27 @@ bool elastostatic_problem::solve(plain_vector &U) {
   
   // creating force density vectors
   size_type nbc = int(jj);
-  sparse_matrix MMBN(nbc, nbc), MMBT(nbc*(N-1), nbc*(N-1));
+//   sparse_matrix MMBN(nbc, nbc), MMBT(nbc*(N-1), nbc*(N-1));
 //   plain_vector LN1(nbc), LT1(nbc*(N-1));
-  {
-    sparse_matrix BB(mf_u.nb_dof(), mf_u.nb_dof());
-    getfem::asm_mass_matrix(BB, mim, mf_u, mf_u, FRICTION_BOUNDARY_NUM);
-    std::vector<size_type> indN, indT;
-    for (dal::bv_visitor i(cn); !i.finished(); ++i)
-      if ((i%N) == N-1) indN.push_back(i); else indT.push_back(i);
-    gmm::sub_index SUBI(indN);
-    gmm::copy(gmm::sub_matrix(BB, SUBI, SUBI), MMBN);
-    gmm::sub_index SUBJ(indT);
-    gmm::copy(gmm::sub_matrix(BB, SUBJ, SUBJ), MMBT);    
-  }
+//   {
+//     sparse_matrix BB(mf_u.nb_dof(), mf_u.nb_dof());
+//     getfem::asm_mass_matrix(BB, mim, mf_u, mf_u, FRICTION_BOUNDARY_NUM);
+//     std::vector<size_type> indN, indT;
+//     for (dal::bv_visitor i(cn); !i.finished(); ++i)
+//       if ((i%N) == N-1) indN.push_back(i); else indT.push_back(i);
+//     gmm::sub_index SUBI(indN);
+//     gmm::copy(gmm::sub_matrix(BB, SUBI, SUBI), MMBN);
+//     gmm::sub_index SUBJ(indT);
+//     gmm::copy(gmm::sub_matrix(BB, SUBJ, SUBJ), MMBT);    
+//   }
 
 
 
-  scalar_type friction_coef = PARAM.real_value("FRICTION_COEFF",
+  scalar_type friction_coef = PARAM.real_value("FRICTION_COEFF", 
 					       "Friction cefficient");
   scalar_type r = PARAM.real_value("R", "Augmentation parameter");
   scalar_type alpha = PARAM.real_value("ALPHA", "Augmentation parameter");
-  gmm::dense_matrix<size_type> JAC(nbc+1, 4);
-  JAC(0, 0) = size_type(-1);
+  gmm::dense_matrix<bool> CH(nbc, 3);
   
 
   getfem::mdbrick_Coulomb_friction<> FRICTION(*pINCOMP, BN, gap,
@@ -963,7 +942,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
   FRICTION.set_r(r);
   FRICTION.set_alpha(alpha);
   FRICTION.set_beta(1./deltat);
-  FRICTION.set_JAC(JAC);
  
   // Defining the volumic source term.
   base_vector f(N);
@@ -1034,7 +1012,8 @@ bool elastostatic_problem::solve(plain_vector &U) {
     
     
     /* let the default non-linear solve (Newton) do its job */
-    gmm::default_newton_line_search ls; // (size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0)
+    gmm::basic_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
+//     gmm::default_newton_line_search ls;
     getfem::standard_solve(MS, final_model, iter,
 			   getfem::default_linear_solver(final_model), ls);
     
@@ -1072,8 +1051,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     scalar_type minangle_back = PARAM.real_value("ANGLE_BACK");
     size_type maxit_corr = PARAM.int_value("MAXITER_CORR"); 
     size_type thr_corr = PARAM.int_value("THRESHOLD_CORR");
-    scalar_type classboundary = PARAM.real_value
-      ("CLASSBOUNDARY", "Parameter for classification of the boundary");
+    scalar_type limit = PARAM.real_value("LIMIT", "limit for the test functions");
  
     scalar_type h_init = PARAM.real_value("H_INIT", "Initial step length");
     scalar_type h_max = PARAM.real_value("H_MAX", "Maximal step length");
@@ -1121,7 +1099,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
     // (deltat0 < 0) ? FRICTION.set_beta(-1.0) : FRICTION.set_beta(1.0);
     FRICTION.set_WT(gmm::scaled(U00, -1.0));
 
-    test_functions(MS, FRICTION, contact_nodes, BN, BT, U0, U00, TST0, classboundary, noisy);
+    test_functions(MS, FRICTION, contact_nodes, BN, BT, U0, U00, TST0, limit, noisy);
 
       if (step == 11) {
 	gmm::fill_random(T0);
@@ -1140,7 +1118,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
       while ((new_point == 1) && (step < nb_step)) {
 	cout << "beginning of step " << step+1
-	     << ", number of variables : " << final_model.nb_dof() << endl;
+	     << ", number of variables : " << final_model.nb_dof() + 1 << endl;
 	
 	FRICTION.set_WT(gmm::scaled(U0, -1.0));
 	nb_dec = 0;
@@ -1162,7 +1140,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	   if (iter_corr.converged()) {
 	     compute_displacement(MS, final_model, pl, pELAS_nonlin, pELAS_lin, U, law_num);
 	     size_type nb_change = test_functions(MS, FRICTION, contact_nodes, BN, BT, U,
-						  U0, TST, TST0, classboundary, noisy);
+						  U0, TST, TST0, limit, noisy);
 	     
 	     t = X[stot]; scalar_type angle = gmm::vect_sp(T, T0);
 	     cout << "t = " << t << ", deltat = " << t - t0 << ", T0.T = " << angle;
@@ -1190,7 +1168,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
 	       ++nb_dec;
 	       new_point = 0;
 	     } else { /* try to change the Jacobian manually */
-	       
 	       cout << "classical continuation has broken down"
 		    << ", starting to change the Jacobian manually" << endl;
 	       
@@ -1199,32 +1176,32 @@ bool elastostatic_problem::solve(plain_vector &U) {
 					maxit_corr ? maxit_corr : 40000, minangle);
 	       gmm::dense_matrix<size_type> ACT(3*nbc+1, 3);
 	       
-	       compute_Jacobians(contact_nodes, JAC, ACT, TST0, classboundary);
+	       compute_Jacobians(contact_nodes, CH, ACT, TST0, limit);
 	       
 	       for (size_type level = 0; level < 3*nbc+1; ++level) {
 		 if (ACT(level, 0) == size_type(-1)) break;
 		 
-		 JAC(ACT(level, 0), ACT(level, 1)) = (ACT(level, 2) == 0);
+		 CH(ACT(level, 0), ACT(level, 1)) = (ACT(level, 2) == 0);
 		 cout << "change for node " << ACT(level, 0) << endl;
 		 
 		 if (level > 0) 
 		   new_Jacobian = systematic_test_Jacobians
 		     (MS, final_model, FRICTION, contact_nodes, grad_t, F2, deltaF2, U00, U0,
-		      deltat0, T0, X0, JAC, ACT, level - 1, h_min, minangle_back, neg_deltat,
+		      deltat0, T0, X0, CH, ACT, level - 1, h_min, minangle_back, neg_deltat,
 		      iter_test);
 		 else
 		   new_Jacobian = test_Jacobian
 		     (MS, final_model, FRICTION, contact_nodes, grad_t, F2, deltaF2, U00, U0,
-		      deltat0, T0, X0, JAC, h, minangle_back, neg_deltat, iter_test);
+		      deltat0, T0, X0, CH, h, minangle_back, neg_deltat, iter_test);
 		 
 		 if (new_Jacobian)
 		   break;
 		 else
-		   JAC(ACT(level, 0), ACT(level, 1)) = ACT(level, 2);
+		   CH(ACT(level, 0), ACT(level, 1)) = ACT(level, 2);
 	       }
 	       
 	       if (new_Jacobian) {
-		 cout << "new Jacobian found, restarting classical continuation" << endl;
+		 cout << "new Jacobian found, restarting the classical continuation" << endl;
 		 h = h_init;
 		 nb_dec = 0;
 		 new_point = 0;
@@ -1278,7 +1255,7 @@ int main(int argc, char *argv[]) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
    // try {    
-    elastostatic_problem p;
+    friction_problem p;
     p.PARAM.read_command_line(argc, argv);
     p.init();
     p.mesh.write_to_file(p.datafilename + ".mesh");

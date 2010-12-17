@@ -413,7 +413,9 @@ namespace getfem {
 
     T_MATRIX BN, BT;
     typedef gmm::row_matrix<gmm::rsvector<value_type> > RT_MATRIX;
+    typedef gmm::dense_matrix<bool> CH_MATRIX;
     RT_MATRIX AUG_M; // For Hansbo augmentation.
+    CH_MATRIX CH_M; // For determining the Jacobian manually; only for 2D.
     VECTOR gap, threshold, WT, WN, friction_coef, RLN, RLT;
     value_type r, alpha, beta;
     size_type d, nbc;
@@ -509,11 +511,18 @@ namespace getfem {
       if (gmm::mat_nrows(AUG_M) > 0)
         gmm::copy(gmm::scaled(AUG_M, -value_type(1)), MM);
       for (size_type i=0; i < nb_contact_nodes(); ++i) {
-        if (RLN[i] >= value_type(0)) {
-          gmm::clear(BBN[i]);
-          if (gmm::mat_nrows(AUG_M) > 0) gmm::clear(MM[i]);
-          MM(i, i) = -value_type(1)/r;
-        }
+	if (gmm::mat_nrows(CH_M) > 0) {
+	  if (!CH_M(i, 0)) {
+	    gmm::clear(BBN[i]);
+	    if (gmm::mat_nrows(AUG_M) > 0) gmm::clear(MM[i]);
+	    MM(i, i) = -value_type(1)/r;
+	  }
+	}
+	else if (RLN[i] >= value_type(0)) {
+	  gmm::clear(BBN[i]);
+	  if (gmm::mat_nrows(AUG_M) > 0) gmm::clear(MM[i]);
+	  MM(i, i) = -value_type(1)/r;
+	}
       }
       gmm::copy(BBN, gmm::sub_matrix(MS.tangent_matrix(), SUBN, SUBU));
       gmm::copy(MM, gmm::sub_matrix(MS.tangent_matrix(), SUBN));
@@ -549,17 +558,29 @@ namespace getfem {
           gmm::sub_interval SUBJJ(i*(d-1),(d-1));
           value_type th = Tresca_version ? threshold[i]
             : - (MS.state())[SUBN.first()+i] * friction_coef[i];
-          
-          ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
+	  std::vector<double> rlt_CH(1);
+
+	  if (mat_nrows(CH_M) > 0) {
+	    if (!CH_M(i, 0)) th = 0.0;
+	    else th = 1.0;
+	    if (!CH_M(i, 1)) rlt_CH[0] = -2.0;
+	    else if (!CH_M(i, 2)) rlt_CH[0] = 2.0;
+	    else rlt_CH[0] = 0.0;
+	    ball_projection_grad(rlt_CH, th, pg);
+          } else
+	    ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
           if (!really_stationary)
             gmm::mult(gmm::scaled(pg, -beta), 
                       gmm::sub_matrix(BT, SUBI,
-                                      gmm::sub_interval(0,gmm::mat_ncols(BT))),
+                                      gmm::sub_interval(0, gmm::mat_ncols(BT))),
                       BTi);
           gmm::copy(BTi, gmm::sub_matrix(BBT, SUBJJ, SUBU));
 
           if (!Tresca_version) {
-            ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
+	    if (mat_nrows(CH_M) > 0)
+	      ball_projection_grad_r(rlt_CH, th, vg);
+	    else
+	      ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
             for (size_type k = 0; k < d-1; ++k)
               MS.tangent_matrix()(SUBT.first()+i*(d-1)+k, SUBN.first()+i)
                 = - friction_coef[i] * vg[k] / r;
@@ -693,6 +714,12 @@ namespace getfem {
     template<typename MAT> void set_augmented_matrix(const MAT &M) {
       gmm::resize(AUG_M, gmm::mat_nrows(M), gmm::mat_ncols(M));
       gmm::copy(M, AUG_M);
+    }
+
+    void clear_character_matrix(void) { resize(CH_M, 0, 0); }
+    template<typename MAT> void set_character_matrix(const MAT &M) {
+      gmm::resize(CH_M, gmm::mat_nrows(M), gmm::mat_ncols(M));
+      gmm::copy(M, CH_M);
     }
 
     void set_r(value_type r_) { r = r_; }
