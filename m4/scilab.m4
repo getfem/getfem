@@ -60,7 +60,7 @@ AC_DEFUN([AC_CHECK_SCILAB],
     else
       AC_CHECK_PROG([has_scilab],[scilab],[yes],[no], , )
       if test x$has_scilab = xno; then
-        AC_MSG_ERROR([[Scilab binary program was found in your PATH], your PATH is $PATH])
+        AC_MSG_ERROR([[Scilab binary program was not found in your PATH], your PATH is $PATH])
       fi
       SCILAB_EXE="scilab"
       AC_DEFINE(HAVE_SCILAB)
