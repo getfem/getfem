@@ -87,7 +87,7 @@ clean-local: clean-m-files
 toolboxdir=@TOOLBOXDIR@
 
 install:
-	$(mkinstalldirs) $(toolboxdir)/
+	$(mkinstalldirs) $(toolboxdir)/private
 	@INSTALL@ -m 644 -t $(toolboxdir)/ *.m
 	@INSTALL@ -m 644 -t $(toolboxdir)/ $(srcdir)/*.m
 	@INSTALL@ -m 644 -t $(toolboxdir)/private/ $(srcdir)/private/*.m
