@@ -846,13 +846,13 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     default: GMM_ASSERT1(false, "no such law");
   }
 
-  if (N == 2) {
-    cout << "2D plane strain hyper-elasticity\n";
-    pl = new getfem::plane_strain_hyperelastic_law(pl1);
-  } else pl = pl1;
+   if (N == 2) {
+     cout << "2D plane strain hyper-elasticity\n";
+     pl = new getfem::plane_strain_hyperelastic_law(pl1);
+   } else pl = pl1;
 
   pr.resize(pl->nb_params());
-  cout << "paramètre du loi de comportements"<< pr << endl ;
+  cout << "parametre du loi de comportements"<< pr << endl ;
 
   //pl1->test_derivatives(3, 5e-9, pr);
 
@@ -861,15 +861,16 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 
   // Main unknown of the problem (displacement).
   model.add_fem_variable("u", mf_u());
-
+  
   // Nonlinear elasticity brick
   model.add_initialized_fixed_size_data("params", pr);
   getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "params");
 
   // Incompressibility
   if (mixed_pressure && (law_num == 1 || law_num == 3)) {
+    cout << "mixed pressure <|-------------------------|>" << endl;
     model.add_fem_variable("p", mf_pe());
-    getfem::add_nonlinear_incompressibility_brick(model, mim, "u", "p");
+    getfem::add_nonlinear_incompressibility_brick(model, mim, "u", "p", size_type(-1));
   }
 
  // Defining the Neumann condition right hand side.
@@ -917,13 +918,13 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   GMM_ASSERT1(N==2, "To be corrected for 3D computation");
   sparse_matrix BB(3, mf_u().nb_dof());
   
-  BB(0, 0) = 1.0;
-  BB(1, 1) = 1.0;
-  BB(2, 1) = 1.0;
+  // BB(0, 0) = 1.0;
+  // BB(1, 1) = 1.0;
+  // BB(2, 1) = 1.0;
 
-  // BB(0, icorner1) = 1.0;
-//   BB(1, icorner1+1) = 1.0;
-//   BB(2, icorner2) = 1.0;
+   BB(0, icorner1) = 1.0;
+   BB(1, icorner1+1) = 1.0;
+   BB(2, icorner2) = 1.0;
   std::vector<scalar_type> LRH(3);
   model.add_fixed_size_variable("dir", 3);
   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
@@ -948,7 +949,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   
   //  size_type maxit = PARAM.int_value("MAXITER");
  
-  for (int step = 0; step < nb_step; ++step) {
+for (int step = 0; step < nb_step; ++step)   {
     plain_vector DF1(F_Neumann1);
     plain_vector DF2(F_Neumann2);
     plain_vector DF3(F_Neumann3);
@@ -974,8 +975,9 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     //gmm::iteration iter(residual, 1, 40000);
 
     /* let the default non-linear solve (Newton) do its job */
+    
     getfem::standard_solve(model, iter);
-
+    
     pl->reset_unvalid_flag();
     model.assembly(getfem::model::BUILD_RHS);
     if (pl->get_unvalid_flag()) 
@@ -994,6 +996,8 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     exp.serie_add_object("deformationsteps");
   }
 
+
+ 
   // Solution extraction
   gmm::copy(model.real_variable("u"), U);
   gmm::copy(model.real_variable("p"), P);
