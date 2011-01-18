@@ -175,7 +175,6 @@ namespace gmm {
 #endif
 
 #define ICNTL(I) icntl[(I)-1]
-#define INFO(I) info[(I)-1]
     id.ICNTL(1) = -1; // output stream for error messages
     id.ICNTL(2) = -1; // output stream for other messages
     id.ICNTL(3) = -1; // output stream for global information
@@ -191,20 +190,7 @@ namespace gmm {
 
     id.job = 6;
     mumps_interf<T>::mumps_c(id);
-    if (id.INFO(1) < 0) {
-      switch (id.INFO(1)) {
-        case -6 : case -10 :
-          GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
-        case -13 :
-          GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
-        case -9:
-          GMM_ASSERT1(false, "Solve with MUMPS failed: error "
-                      << id.INFO(1) << ", increase ICNTL(14)");
-        default :
-          GMM_ASSERT1(false, "Solve with MUMPS failed with error "
-                      << id.INFO(1));
-      }
-    }
+    mumps_error_check(id);
 
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
@@ -212,7 +198,6 @@ namespace gmm {
     gmm::copy(rhs, X);
 
 #undef ICNTL
-#undef INFO
 
   }
 
@@ -266,7 +251,6 @@ namespace gmm {
 #endif
 
 #define ICNTL(I) icntl[(I)-1]
-#define INFO(I) info[(I)-1]
     id.ICNTL(1) = -1; // output stream for error messages
     id.ICNTL(2) = 6;  // id.ICNTL(2) = -1; // output stream for other messages
     id.ICNTL(3) = 6;  // id.ICNTL(3) = -1; // output stream for global information
@@ -277,20 +261,7 @@ namespace gmm {
 
     id.job = 6;
     mumps_interf<T>::mumps_c(id);
-    if (id.INFO(1) < 0) {
-      switch (id.INFO(1)) {
-      case -6 : case -10 :
-        GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
-      case -13:
-        GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
-      case -9:
-        GMM_ASSERT1(false, "Solve with MUMPS failed: error "
-                    << id.INFO(1) << ", increase ICNTL(14)");
-      default :
-        GMM_ASSERT1(false, "Solve with MUMPS failed with error "
-                    << id.INFO(1));
-      }
-    }
+    mumps_error_check(id);
 
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
@@ -300,11 +271,32 @@ namespace gmm {
     gmm::copy(rhs, X);
 
 #undef ICNTL
-#undef INFO
 
   }
 
 
+  template <typename MUMPS_STRUCT>
+  static inline void mumps_error_check(MUMPS_STRUCT &id) {
+#define INFO(I) info[(I)-1]
+    if (id.INFO(1) < 0) {
+      switch (id.INFO(1)) {
+        case -2:
+          GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
+                      << " is out of range");
+        case -6 : case -10 :
+          GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
+        case -9:
+          GMM_ASSERT1(false, "Solve with MUMPS failed: error "
+                      << id.INFO(1) << ", increase ICNTL(14)");
+        case -13 :
+          GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+        default :
+          GMM_ASSERT1(false, "Solve with MUMPS failed with error "
+                      << id.INFO(1));
+      }
+    }
+#undef INFO
+  }
 
 
 }
