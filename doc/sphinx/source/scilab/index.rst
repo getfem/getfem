@@ -13,4 +13,5 @@ SciLab Interface
    intro
    install
    scilabgf
+   plotcmdref
    cmdref

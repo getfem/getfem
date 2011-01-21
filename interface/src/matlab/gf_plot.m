@@ -27,7 +27,10 @@ function [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot(mf,U,varargin)
 %  'cvlst',[]		      : list of convexes to plot (empty=>all convexes)
 %  'title',[]                 : set the title
 %  'contour',[]               : list of contour values
-%%%%%%%%%%%%
+%  'disp_options', {'off'|'on'} : shows the option or not.
+%
+%
+
   try 
     gf_workspace('push');
     [hsurf, hcontour, hquiver, hmesh, hdefmesh]=gf_plot_aux(mf,U,varargin{:});

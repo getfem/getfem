@@ -16,5 +16,6 @@
    pre
    mlabgf
    examples
+   plotcmdref
    cmdref
    oocmd
