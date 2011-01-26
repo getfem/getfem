@@ -1145,52 +1145,24 @@ int main(int argc, char *argv[]) {
   // getfem::mesh_im mim_refined_p(mcut_refined_p); 
   // mim_refined.set_integration_method(getfem::int_method_descriptor
   //				     ("IM_TRIANGLE(6)"));  
-  mcut.write_to_file(p.datafilename + ".meshvm");
+  
   
   getfem::mesh_fem mf_refined(mcut_refined, dim_type(Q));
   mf_refined.set_classical_discontinuous_finite_element(2,0.001);
   plain_vector W(mf_refined.nb_dof());
-  
-  //getfem::mesh_fem mf_refined_p(mcut_refined_p, dim_type(Q));
-  //mf_refined_p.set_classical_discontinuous_finite_element(2,0.001);
-  //plain_vector PPW(mf_refined.nb_dof());
-  //getfem::interpolation(p.mf_pe(), mf_refined, P, PPW);
-  
-  getfem::interpolation(p.mf_u(), mf_refined, U, W);
-  mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
-  gmm::vecsave(p.datafilename + ".Uvm", W);
-  
-
-  
-  getfem::mesh_fem mf_vm(mcut_refined,  1);
-  mf_vm.set_classical_discontinuous_finite_element(2, 0.001);
-  plain_vector Vm(mf_vm.nb_dof());
  
-  cout << "compute Von_mises" << endl;
-  getfem::interpolation_von_mises(mf_refined, mf_vm, W, Vm);
-  
-  gmm::vecsave(p.datafilename + ".VM",Vm);
-  mf_vm.write_to_file(p.datafilename + ".meshfemvm", true); 
   
   if (p.PARAM.int_value("VTK_EXPORT")) {
     
-    getfem::mesh_fem mf_refined_vm(mcut_refined, 1);
-    getfem::mesh_fem mf_refined_p(mcut_refined, 1);
-
-    mf_refined_vm.set_classical_discontinuous_finite_element(2, 0.001);
-    mf_refined_p.set_classical_discontinuous_finite_element(2, 0.001);
-
-    cerr << "mf_refined_vm.nb_dof=" << mf_refined_vm.nb_dof() << "\n";
+     getfem::mesh_fem mf_refined_p(mcut_refined, 1);
     
-    plain_vector VM(mf_refined_vm.nb_dof());
+    mf_refined_p.set_classical_discontinuous_finite_element(2, 0.001);
+  
     plain_vector PPW(mf_refined_p.nb_dof());
    
-    cout << "computing von mises\n";
-    
-    getfem::interpolation_von_mises(mf_refined, mf_refined_vm, W, VM);
+   
     getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
-    plain_vector D(mf_refined_vm.nb_dof() * Q), 
-      DN(mf_refined_vm.nb_dof());
+
     
     cout << "export to " << p.datafilename + ".vtk" << "..\n";
     getfem::vtk_export exp(p.datafilename + ".vtk",
@@ -1200,17 +1172,13 @@ int main(int argc, char *argv[]) {
     
     //exp.write_point_data(mf_refined_vm, DN, "error");
     getfem::interpolation(p.mf_pe(), mf_refined_p, P, PPW);
-    exp.write_point_data(mf_refined_vm, VM, "von_mises_stress");
+    
     exp.write_point_data(mf_refined, W, "elastostatic_displacement");
-    exp.write_point_data(mf_refined_vm, PPW, "Pressure");
+    exp.write_point_data(mf_refined_p, PPW, "Pressure");
 
     base_node line_x0(0.70001,0);
     base_small_vector line_dir(0, 0.5001);
-    unsigned line_nb_points = 1000;
-    export_interpolated_on_line(mf_refined_vm, VM, 
-				line_x0, line_dir, line_nb_points,
-				"von_mises_on_line.data");
-    
+
     
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d " << p.datafilename << ".vtk -f  "
@@ -1281,3 +1249,4 @@ int main(int argc, char *argv[]) {
 
   return 0; 
 }
+
