@@ -133,20 +133,35 @@ namespace getfem {
          'discontinuous' meshes
     */
     void merge_nodes() const;
+
+    /** @brief Return the number of merged nodes in slice. */
     size_type nb_merged_nodes() const 
       { return merged_nodes_idx.size() - 1; }
+
+    /** @brief Return the physical position of the merged node.
+     	@param i_merged should be 0 <= i_merged < nb_merged_nodes()
+     */
     const base_node merged_point(size_type i_merged) const 
       { return merged_nodes[merged_nodes_idx[i_merged]].P->pt; }
+ 
     size_type merged_index(size_type ic, size_type ipt) const
       { return to_merged_index[global_index(ic,ipt)]; }
     size_type global_index(size_type ic, size_type ipt) const 
       { return cvlst[ic].global_points_count+ipt; }
+
+    /** @brief Return the number of nodes that were merged 
+       to form the merged one.
+      @param i_merged  index of the merged node: 
+                             0 <= i_merged < nb_merged_nodes()
+     */
     size_type merged_point_cnt(size_type i_merged) const 
       { return merged_nodes_idx[i_merged+1] - merged_nodes_idx[i_merged]; }
+    
     std::vector<merged_node_t>::const_iterator 
     merged_point_nodes(size_type i_merged) const { 
       return merged_nodes.begin() + merged_nodes_idx[i_merged]; 
     }
+
     void clear_merged_nodes() const;
 
     /** @brief Extract the list of mesh edges.
