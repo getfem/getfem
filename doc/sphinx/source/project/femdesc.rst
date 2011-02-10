@@ -150,9 +150,9 @@ A geometric transformation is a polynomial application:
 
 .. math::
 
-   \tau : T' \subset \Reel^P \longrightarrow T \subset \Reel^N,
+   \tau : \widehat{T} \subset \Reel^P \longrightarrow T \subset \Reel^N,
 
-which maps the reference element :math:`T'` to the real element :math:`T`. The
+which maps the reference element :math:`\widehat{T}` to the real element :math:`T`. The
 geometric nodes are denoted:
 
 .. math::
@@ -165,13 +165,13 @@ transformation can also be supported by |gf|, but this is very rarely used)
 
 .. math::
 
-   {\cal N}(x'),
+   {\cal N}(\widehat{x}),
 
 such that
 
 .. math::
 
-  \tau(x') = \sum_{i = 0}^{n_g - 1}{\cal N}_i(x') g^i.
+  \tau(\widehat{x}) = \sum_{i = 0}^{n_g - 1}{\cal N}_i(\widehat{x}) g^i.
 
 Denoting
 
@@ -183,24 +183,24 @@ the :math:`N\times n_g` matrix containing of all the geometric nodes, one has
 
 .. math::
 
-   \fbox{$\tau(x') = G\cdot{\cal N}(x')$.}
+   \fbox{$\tau(\widehat{x}) = G\cdot{\cal N}(\widehat{x})$.}
 
 The derivative of :math:`\tau` is then
 
 .. math::
 
-   \fbox{$K(x') := \nabla\tau(x') = G\cdot\nabla {\cal N}(x')$,}
+   \fbox{$K(\widehat{x}) := \nabla\tau(\widehat{x}) = G\cdot\nabla {\cal N}(\widehat{x})$,}
 
-where :math:`K(x') = \nabla\tau(x')` is a :math:`N\times P` matrix and 
-:math:`\nabla {\cal N}(x')` a :math:`n_g\times P` matrix. The (transposed) 
-pseudo-inverse of :math:`\nabla\tau(x')` is a :math:`N\times P` matrix denoted 
-:math:`B(x')`:
+where :math:`K(\widehat{x}) = \nabla\tau(\widehat{x})` is a :math:`N\times P` matrix and 
+:math:`\nabla {\cal N}(\widehat{x})` a :math:`n_g\times P` matrix. The (transposed) 
+pseudo-inverse of :math:`\nabla\tau(\widehat{x})` is a :math:`N\times P` matrix denoted 
+:math:`B(\widehat{x})`:
 
 .. math::
 
-   \fbox{$B(x') := K(x')(K(x')^T K(x'))^{-1}$,}
+   \fbox{$B(\widehat{x}) := K(\widehat{x})(K(\widehat{x})^T K(\widehat{x}))^{-1}$,}
 
-Of course, when :math:`P=N`, one has :math:`B(x')=K(x')^{-T}`.
+Of course, when :math:`P=N`, one has :math:`B(\widehat{x})=K(\widehat{x})^{-T}`.
 
 Pointers on a descriptor of a geometric transformation can be obtained by the
 following function defined in the file :file:`bgeot_geometric_trans.h`::
@@ -239,18 +239,18 @@ Finite element methods description
 ----------------------------------
 
 A finite element method is defined on a reference element
-:math:`T'\subset\Reel^P` by a set of :math:`n_d` nodes :math:`a^i` and
+:math:`\widehat{T}\subset\Reel^P` by a set of :math:`n_d` nodes :math:`a^i` and
 corresponding base functions
 
 .. math::
 
-   (\varphi')^i : T'\subset\Reel^P \longrightarrow \Reel^Q
+   (\widehat{\varphi})^i : \widehat{T}\subset\Reel^P \longrightarrow \Reel^Q
 
 Denoting
 
 .. math::
 
-   \psi^i(x) = (\varphi')^i(x') = (\varphi')^i(\tau^{-1}(x)),
+   \psi^i(x) = (\widehat{\varphi})^i(\widehat{x}) = (\widehat{\varphi})^i(\tau^{-1}(x)),
 
 a supplementary linear transformation is allowed for the real base function
 
@@ -265,8 +265,8 @@ this case, we will say that the element is :math:`\tau`-equivalent.
 
 This approach allows to define hermite elements (Argyris for instance) in a
 generic way, even with non linear transformations (i.e. mainly for curved
-boundaries). We denote :math:`[\varphi'(x')]` the :math:`n_d \times Q` matrix
-whose ith line is :math:`(\varphi')^i(x')`. Whis this notation, for a function is
+boundaries). We denote :math:`[\widehat{\varphi}(\widehat{x})]` the :math:`n_d \times Q` matrix
+whose ith line is :math:`(\widehat{\varphi})^i(\widehat{x})`. Whis this notation, for a function is
 defined by
 
 .. math::
@@ -277,7 +277,7 @@ one has
 
 .. math::
 
-   \fbox{$f(\tau(x')) = \alpha^T M [\varphi'(x')]$,}
+   \fbox{$f(\tau(\widehat{x})) = \alpha^T M [\widehat{\varphi}(\widehat{x})]$,}
 
 where :math:`\alpha` is the vector whose ith component is :math:`\alpha_i`.
 

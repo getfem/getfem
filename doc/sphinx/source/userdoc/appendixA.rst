@@ -262,9 +262,9 @@ functions of the tensorial product (on the reference element) as
 
 .. math::
 
-  \phi'_{ij}(x,y) = \phi'^1_i(x) \phi'^2_j(y), ~~ x \in \Reel^{P^1}, y \in  \Reel^{P^2},
+  \widehat{\varphi}_{ij}(x,y) = \widehat{\varphi}^1_i(x) \widehat{\varphi}^2_j(y), ~~ x \in \Reel^{P^1}, y \in  \Reel^{P^2},
 
-where :math:`\phi'^1_i` and :math:`\phi'^2_i` are respectively the base functions
+where :math:`\widehat{\varphi}^1_i` and :math:`\widehat{\varphi}^2_i` are respectively the base functions
 of the first and second element.
 
   .. _ud-fig-prodpkdeux:
@@ -767,8 +767,8 @@ Base functions on the reference element
 .. math::
 
   \begin{array}{ll}
-    \varphi'_0 = (2x+1)(x-1)^2,&\ \ \ \varphi'_1 = x(x-1)^2, \\
-    \varphi'_2 = x^2(3-2x),& \ \ \ \varphi'_3 = x^2(x - 1).
+    \widehat{\varphi}_0 = (2x+1)(x-1)^2,&\ \ \ \widehat{\varphi}_1 = x(x-1)^2, \\
+    \widehat{\varphi}_2 = x^2(3-2x),& \ \ \ \widehat{\varphi}_3 = x^2(x - 1).
   \end{array}
 
 This element is close to be :math:`\tau`-equivalent but it is not. On the real
@@ -1016,23 +1016,23 @@ Base functions on the reference element:
 .. math::
 
   \begin{array}{ll}
-  \varphi'_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\varphi'_0(0,0) = 1), \\
-  \varphi'_1 = x(1-x-y)(1-x-2y), & (\partial_x\varphi'_1(0,0) = 1), \\
-  \varphi'_2 = y(1-x-y)(1-2x-y), & (\partial_y\varphi'_2(0,0) = 1), \\
-  \varphi'_3 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\varphi'_3(1,0) = 1), \\
-  \varphi'_4 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\varphi'_4(1,0) = 1), \\
-  \varphi'_5 = xy(y+2x-1), & (\partial_y\varphi'_5(1,0) = 1), \\
-  \varphi'_6 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\varphi'_6(0,1) = 1), \\
-  \varphi'_7 = xy(x+2y-1), & (\partial_x\varphi'_7(0,1) = 1), \\
-  \varphi'_8 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\varphi'_8(0,1) = 1), \\
-  \varphi'_9 = 27xy(1-x-y), & (\varphi'_9(1/3,1/3) = 1), \\
+  \widehat{\varphi}_0 = (1-x-y)(1+x+y-2x^2-2y^2-11xy),~~ & (\widehat{\varphi}_0(0,0) = 1), \\
+  \widehat{\varphi}_1 = x(1-x-y)(1-x-2y), & (\partial_x\widehat{\varphi}_1(0,0) = 1), \\
+  \widehat{\varphi}_2 = y(1-x-y)(1-2x-y), & (\partial_y\widehat{\varphi}_2(0,0) = 1), \\
+  \widehat{\varphi}_3 = -2x^3 + 7 x^2y + 7xy^2 + 3x^2 - 7xy, & (\widehat{\varphi}_3(1,0) = 1), \\
+  \widehat{\varphi}_4 = x^3-2x^2y-2xy^2-x^2+2xy, & (\partial_x\widehat{\varphi}_4(1,0) = 1), \\
+  \widehat{\varphi}_5 = xy(y+2x-1), & (\partial_y\widehat{\varphi}_5(1,0) = 1), \\
+  \widehat{\varphi}_6 = 7x^2y + 7xy^2 - 2y^3+3y^2-7xy, & (\widehat{\varphi}_6(0,1) = 1), \\
+  \widehat{\varphi}_7 = xy(x+2y-1), & (\partial_x\widehat{\varphi}_7(0,1) = 1), \\
+  \widehat{\varphi}_8 = y^3-2x^2y-2xy^2-y^2+2xy, & (\partial_y\widehat{\varphi}_8(0,1) = 1), \\
+  \widehat{\varphi}_9 = 27xy(1-x-y), & (\widehat{\varphi}_9(1/3,1/3) = 1), \\
   \end{array}
 
 This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
-identity). On the real element linear combinations of :math:`\varphi'_4` and
-:math:`\varphi'_7` are used to match the gradient on the corresponding vertex.
-Idem for the two couples :math:`(\varphi'_5`, :math:`\varphi'_8)` and
-:math:`(\varphi'_6`, :math:`\varphi'_9)` for the two other vertices.
+identity). On the real element linear combinations of :math:`\widehat{\varphi}_4` and
+:math:`\widehat{\varphi}_7` are used to match the gradient on the corresponding vertex.
+Idem for the two couples :math:`(\widehat{\varphi}_5`, :math:`\widehat{\varphi}_8)` and
+:math:`(\widehat{\varphi}_6`, :math:`\widehat{\varphi}_9)` for the two other vertices.
 
   .. list-table:: Hermite element on a triangle ``"FEM_HERMITE(2)"``
      :widths: 10 10 10 10 10 10 10
@@ -1106,32 +1106,32 @@ The base functions on the reference element are:
 .. math::
 
   \begin{array}{ll}
-  \varphi'_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\varphi'_0(0,0) = 1), \\
-  \varphi'_{1}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\varphi'_1(0,0) = 1),\\
-  \varphi'_{2}(x,y) = y - 11x^2y - 6y^3 + 18x^3y + 10x^2y^2 + 8y^4 - 8x^4y - 10x^3y^2 + x^2y^3 - 3y^5, & (\partial_y\varphi'_2(0,0) = 1),\\
-  \varphi'_{3}(x,y) = 0.5x^2 - 1.5x^3 + 1.5x^4 - 1.5x^2y^2 - 0.5x^5 + 1.5x^3y^2 + x^2y^3, & (\partial^2_{xx}\varphi'_3(0,0) = 1),\\
-  \varphi'_{4}(x,y) = xy - 4x^2y - 4xy^2 + 5x^3y + 10x^2y^2 + 5xy^3 - 2x^4y - 6x^3y^2 - 6x^2y^3 - 2xy^4, & (\partial^2_{xy}\varphi'_{4}(0,0) = 1),\\
-  \varphi'_{5}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\varphi'_{5}(0,0) = 1),\\
-  \varphi'_{6}(x,y) = 10x^3 - 15x^4 + 15x^2y^2 + 6x^5 - 15x^3y^2 - 15x^2y^3, & (\varphi'_6(1,0) = 1),\\
-  \varphi'_{7}(x,y) = -4x^3 + 7x^4 - 3.5x^2y^2 - 3x^5 + 3.5x^3y^2 + 3.5x^2y^3, & (\partial_x\varphi'_7(1,0) = 1),\\
-  \varphi'_{8}(x,y) = -5x^2y + 14x^3y + 18.5x^2y^2 - 8x^4y - 18.5x^3y^2 - 13.5x^2y^3, & (\partial_y\varphi'_8(1,0) = 1),\\
-  \varphi'_{9}(x,y) = 0.5x^3 - x^4 + 0.25x^2y^2 + 0.5x^5 - 0.25x^3y^2 - 0.25x^2y^3, & (\partial^2_{xx}\varphi'_{9}(1,0) = 1),\\
-  \varphi'_{10}(x,y) = x^2y - 3x^3y - 3.5x^2y^2 + 2x^4y + 3.5x^3y^2 + 2.5x^2y^3, & (\partial^2_{xy}\varphi'_{10}(1,0) = 1),\\
-  \varphi'_{11}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\varphi'_{11}(1,0) = 1),\\
-  \varphi'_{12}(x,y) = 10y^3 + 15x^2y^2 - 15y^4 - 15x^3y^2 - 15x^2y^3 + 6y^5, & (\varphi'_{12}(0,1) = 1),\\
-  \varphi'_{13}(x,y) = -5xy^2 + 18.5x^2y^2 + 14xy^3 - 13.5x^3y^2 - 18.5x^2y^3 - 8xy^4, & (\partial_x\varphi'_{13}(0,1) = 1),\\
-  \varphi'_{14}(x,y) = -4y^3 - 3.5x^2y^2 + 7y^4 + 3.5x^3y^2 + 3.5x^2y^3 - 3y^5, & (\partial_y\varphi'_{14}(0,0) = 1),\\
-  \varphi'_{15}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\varphi'_{15}(0,1) = 1),\\
-  \varphi'_{16}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\varphi'_{16}(0,1) = 1),\\
-  \varphi'_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\varphi'_{17}(0,1) = 1),\\
-  \varphi'_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & ~\hspace{-10.5em}(\sqrt{0.5}(\partial_{x}\varphi'_{18}(0.5,0.5) + \partial_{y}\varphi'_{18}(0.5,0.5)) = 1),\\
-  \varphi'_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\varphi'_{19}(0,0.5) = 1),\\
-  \varphi'_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\varphi'_{20}(0.5,0) = 1),\\
+  \widehat{\varphi}_{0}(x,y) = 1 - 10x^3 - 10y^3 + 15x^4 - 30x^2y^2 + 15y^4 - 6x^5 + 30x^3y^2 + 30x^2y^3 - 6y^5, & (\widehat{\varphi}_0(0,0) = 1), \\
+  \widehat{\varphi}_{1}(x,y) = x - 6x^3 - 11xy^2 + 8x^4 + 10x^2y^2 + 18xy^3 - 3x^5 + x^3y^2 - 10x^2y^3 - 8xy^4, & (\partial_x\widehat{\varphi}_1(0,0) = 1),\\
+  \widehat{\varphi}_{2}(x,y) = y - 11x^2y - 6y^3 + 18x^3y + 10x^2y^2 + 8y^4 - 8x^4y - 10x^3y^2 + x^2y^3 - 3y^5, & (\partial_y\widehat{\varphi}_2(0,0) = 1),\\
+  \widehat{\varphi}_{3}(x,y) = 0.5x^2 - 1.5x^3 + 1.5x^4 - 1.5x^2y^2 - 0.5x^5 + 1.5x^3y^2 + x^2y^3, & (\partial^2_{xx}\widehat{\varphi}_3(0,0) = 1),\\
+  \widehat{\varphi}_{4}(x,y) = xy - 4x^2y - 4xy^2 + 5x^3y + 10x^2y^2 + 5xy^3 - 2x^4y - 6x^3y^2 - 6x^2y^3 - 2xy^4, & (\partial^2_{xy}\widehat{\varphi}_{4}(0,0) = 1),\\
+  \widehat{\varphi}_{5}(x,y) = 0.5y^2 - 1.5y^3 - 1.5x^2y^2 + 1.5y^4 + x^3y^2 + 1.5x^2y^3 - 0.5y^5, & (\partial^2_{yy}\widehat{\varphi}_{5}(0,0) = 1),\\
+  \widehat{\varphi}_{6}(x,y) = 10x^3 - 15x^4 + 15x^2y^2 + 6x^5 - 15x^3y^2 - 15x^2y^3, & (\widehat{\varphi}_6(1,0) = 1),\\
+  \widehat{\varphi}_{7}(x,y) = -4x^3 + 7x^4 - 3.5x^2y^2 - 3x^5 + 3.5x^3y^2 + 3.5x^2y^3, & (\partial_x\widehat{\varphi}_7(1,0) = 1),\\
+  \widehat{\varphi}_{8}(x,y) = -5x^2y + 14x^3y + 18.5x^2y^2 - 8x^4y - 18.5x^3y^2 - 13.5x^2y^3, & (\partial_y\widehat{\varphi}_8(1,0) = 1),\\
+  \widehat{\varphi}_{9}(x,y) = 0.5x^3 - x^4 + 0.25x^2y^2 + 0.5x^5 - 0.25x^3y^2 - 0.25x^2y^3, & (\partial^2_{xx}\widehat{\varphi}_{9}(1,0) = 1),\\
+  \widehat{\varphi}_{10}(x,y) = x^2y - 3x^3y - 3.5x^2y^2 + 2x^4y + 3.5x^3y^2 + 2.5x^2y^3, & (\partial^2_{xy}\widehat{\varphi}_{10}(1,0) = 1),\\
+  \widehat{\varphi}_{11}(x,y) = 1.25x^2y^2 - 0.75x^3y^2 - 1.25x^2y^3, & (\partial^2_{yy}\widehat{\varphi}_{11}(1,0) = 1),\\
+  \widehat{\varphi}_{12}(x,y) = 10y^3 + 15x^2y^2 - 15y^4 - 15x^3y^2 - 15x^2y^3 + 6y^5, & (\widehat{\varphi}_{12}(0,1) = 1),\\
+  \widehat{\varphi}_{13}(x,y) = -5xy^2 + 18.5x^2y^2 + 14xy^3 - 13.5x^3y^2 - 18.5x^2y^3 - 8xy^4, & (\partial_x\widehat{\varphi}_{13}(0,1) = 1),\\
+  \widehat{\varphi}_{14}(x,y) = -4y^3 - 3.5x^2y^2 + 7y^4 + 3.5x^3y^2 + 3.5x^2y^3 - 3y^5, & (\partial_y\widehat{\varphi}_{14}(0,0) = 1),\\
+  \widehat{\varphi}_{15}(x,y) = 1.25x^2y^2 - 1.25x^3y^2 - 0.75x^2y^3, & (\partial^2_{xx}\widehat{\varphi}_{15}(0,1) = 1),\\
+  \widehat{\varphi}_{16}(x,y) = xy^2 - 3.5x^2y^2 - 3xy^3 + 2.5x^3y^2 + 3.5x^2y^3 + 2xy^4, & (\partial^2_{xy}\widehat{\varphi}_{16}(0,1) = 1),\\
+  \widehat{\varphi}_{17}(x,y) = 0.5y^3 + 0.25x^2y^2 - y^4 - 0.25x^3y^2 - 0.25x^2y^3 + 0.5y^5, & (\partial^2_{yy}\widehat{\varphi}_{17}(0,1) = 1),\\
+  \widehat{\varphi}_{18}(x,y) = \sqrt{2}(-8x^2y^2 + 8x^3y^2 + 8x^2y^3), & ~\hspace{-10.5em}(\sqrt{0.5}(\partial_{x}\widehat{\varphi}_{18}(0.5,0.5) + \partial_{y}\widehat{\varphi}_{18}(0.5,0.5)) = 1),\\
+  \widehat{\varphi}_{19}(x,y) = -16xy^2 + 32x^2y^2 + 32xy^3 - 16x^3y^2 - 32x^2y^3 - 16xy^4, & (-\partial_{x}\widehat{\varphi}_{19}(0,0.5) = 1),\\
+  \widehat{\varphi}_{20}(x,y) = -16x^2y + 32x^3y + 32x^2y^2 - 16x^4y - 32x^3y^2 - 16x^2y^3, & (-\partial_{y}\widehat{\varphi}_{20}(0.5,0) = 1),\\
   \end{array}
 
 This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
 identity). On the real element linear combinations of the transformed base
-functions :math:`\varphi'_i` are used to match the gradient, the second
+functions :math:`\widehat{\varphi}_i` are used to match the gradient, the second
 derivatives and the normal derivatives on the faces. Note that the use of the
 matrix :math:`M` allows to define Argyris element even with nonlinear geometric
 transformations (for instance to treat curved boundaries).
@@ -1398,32 +1398,32 @@ Base functions on the reference element:
 .. math::
 
   \begin{array}{ll}
-  \varphi'_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
-  ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\varphi'_0(0,0,0) = 1),\\
-  \varphi'_{1}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\partial_x\varphi'_1(0,0,0) = 1),\\
-  \varphi'_{2}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\partial_y\varphi'_2(0,0,0) = 1),\\
-  \varphi'_{3}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\partial_z\varphi'_3(0,0,0) = 1),\\
-  \varphi'_{4}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\varphi'_4(1,0,0) = 1),\\
-  \varphi'_{5}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\partial_x\varphi'_5(1,0,0) = 1),\\
-  \varphi'_{6}(x,y) = -xy + 2x^2y + xy^2, & (\partial_y\varphi'_6(1,0,0) = 1),\\
-  \varphi'_{7}(x,y) = -xz + 2x^2z + xz^2, & (\partial_z\varphi'_7(1,0,0) = 1),\\
-  \varphi'_{8}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\varphi'_8(0,1,0) = 1),\\
-  \varphi'_{9}(x,y) = -xy + x^2y + 2xy^2, & (\partial_x\varphi'_9(0,1,0) = 1),\\
-  \varphi'_{10}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\partial_y\varphi'_{10}(0,1,0) = 1),\\
-  \varphi'_{11}(x,y) = -yz + 2y^2z + yz^2, & (\partial_z\varphi'_{11}(0,1,0) = 1),\\
-  \varphi'_{12}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\varphi'_{12}(0,0,1) = 1),\\
-  \varphi'_{13}(x,y) = -xz + x^2z + 2xz^2, & (\partial_x\varphi'_{13}(0,0,1) = 1),\\
-  \varphi'_{14}(x,y) = -yz + y^2z + 2yz^2, & (\partial_y\varphi'_{14}(0,0,1) = 1),\\
-  \varphi'_{15}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\partial_z\varphi'_{15}(0,0,1) = 1),\\
-  \varphi'_{16}(x,y) = 27xyz, & (\varphi'_{16}(1/3,1/3,1/3) = 1),\\
-  \varphi'_{17}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\varphi'_{17}(0,1/3,1/3) = 1),\\
-  \varphi'_{18}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\varphi'_{18}(1/3,0,1/3) = 1),\\
-  \varphi'_{19}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\varphi'_{19}(1/3,1/3,0) = 1),\\
+  \widehat{\varphi}_{0}(x,y) = 1 - 3x^2 - 13xy - 13xz - 3y^2 - 13yz - 3z^2 + 2x^3 + 13x^2y + 13x^2z & \\
+  ~~~~~~~~~~~~~~~ + 13xy^2 + 33xyz + 13xz^2 + 2y^3 + 13y^2z + 13yz^2 + 2z^3, & (\widehat{\varphi}_0(0,0,0) = 1),\\
+  \widehat{\varphi}_{1}(x,y) = x - 2x^2 - 3xy - 3xz + x^3 + 3x^2y + 3x^2z + 2xy^2 + 4xyz + 2xz^2, & (\partial_x\widehat{\varphi}_1(0,0,0) = 1),\\
+  \widehat{\varphi}_{2}(x,y) = y - 3xy - 2y^2 - 3yz + 2x^2y + 3xy^2 + 4xyz + y^3 + 3y^2z + 2yz^2, & (\partial_y\widehat{\varphi}_2(0,0,0) = 1),\\
+  \widehat{\varphi}_{3}(x,y) = z - 3xz - 3yz - 2z^2 + 2x^2z + 4xyz + 3xz^2 + 2y^2z + 3yz^2 + z^3, & (\partial_z\widehat{\varphi}_3(0,0,0) = 1),\\
+  \widehat{\varphi}_{4}(x,y) = 3x^2 - 7xy - 7xz - 2x^3 + 7x^2y + 7x^2z + 7xy^2 + 7xyz + 7xz^2, & (\widehat{\varphi}_4(1,0,0) = 1),\\
+  \widehat{\varphi}_{5}(x,y) = -x^2 + 2xy + 2xz + x^3 - 2x^2y - 2x^2z - 2xy^2 - 2xyz - 2xz^2, & (\partial_x\widehat{\varphi}_5(1,0,0) = 1),\\
+  \widehat{\varphi}_{6}(x,y) = -xy + 2x^2y + xy^2, & (\partial_y\widehat{\varphi}_6(1,0,0) = 1),\\
+  \widehat{\varphi}_{7}(x,y) = -xz + 2x^2z + xz^2, & (\partial_z\widehat{\varphi}_7(1,0,0) = 1),\\
+  \widehat{\varphi}_{8}(x,y) = -7xy + 3y^2 - 7yz + 7x^2y + 7xy^2 + 7xyz - 2y^3 + 7y^2z + 7yz^2, & (\widehat{\varphi}_8(0,1,0) = 1),\\
+  \widehat{\varphi}_{9}(x,y) = -xy + x^2y + 2xy^2, & (\partial_x\widehat{\varphi}_9(0,1,0) = 1),\\
+  \widehat{\varphi}_{10}(x,y) = 2xy - y^2 + 2yz - 2x^2y - 2xy^2 - 2xyz + y^3 - 2y^2z - 2yz^2, & (\partial_y\widehat{\varphi}_{10}(0,1,0) = 1),\\
+  \widehat{\varphi}_{11}(x,y) = -yz + 2y^2z + yz^2, & (\partial_z\widehat{\varphi}_{11}(0,1,0) = 1),\\
+  \widehat{\varphi}_{12}(x,y) = -7xz - 7yz + 3z^2 + 7x^2z + 7xyz + 7xz^2 + 7y^2z + 7yz^2 - 2z^3, & (\widehat{\varphi}_{12}(0,0,1) = 1),\\
+  \widehat{\varphi}_{13}(x,y) = -xz + x^2z + 2xz^2, & (\partial_x\widehat{\varphi}_{13}(0,0,1) = 1),\\
+  \widehat{\varphi}_{14}(x,y) = -yz + y^2z + 2yz^2, & (\partial_y\widehat{\varphi}_{14}(0,0,1) = 1),\\
+  \widehat{\varphi}_{15}(x,y) = 2xz + 2yz - z^2 - 2x^2z - 2xyz - 2xz^2 - 2y^2z - 2yz^2 + z^3, & (\partial_z\widehat{\varphi}_{15}(0,0,1) = 1),\\
+  \widehat{\varphi}_{16}(x,y) = 27xyz, & (\widehat{\varphi}_{16}(1/3,1/3,1/3) = 1),\\
+  \widehat{\varphi}_{17}(x,y) = 27yz - 27xyz - 27y^2z - 27yz^2, & (\widehat{\varphi}_{17}(0,1/3,1/3) = 1),\\
+  \widehat{\varphi}_{18}(x,y) = 27xz - 27x^2z - 27xyz - 27xz^2, & (\widehat{\varphi}_{18}(1/3,0,1/3) = 1),\\
+  \widehat{\varphi}_{19}(x,y) = 27xy - 27x^2y - 27xy^2 - 27xyz, & (\widehat{\varphi}_{19}(1/3,1/3,0) = 1),\\
   \end{array}
 
 This element is not :math:`\tau`-equivalent (The matrix :math:`M` is not equal to
-identity). On the real element linear combinations of :math:`\varphi'_8`,
-:math:`\varphi'_{12}` and :math:`\varphi'_{16}` are used to match the gradient on
+identity). On the real element linear combinations of :math:`\widehat{\varphi}_8`,
+:math:`\widehat{\varphi}_{12}` and :math:`\widehat{\varphi}_{16}` are used to match the gradient on
 the corresponding vertex. Idem on the other vertices.
 
   .. list-table:: Hermite element on a tetrahedron ``"FEM_HERMITE(3)"``
