@@ -2,6 +2,11 @@
 #include "getfem/dal_singleton.h"
 #include "getfem/getfem_mesh_fem.h"
 
+
+namespace getfem {
+
+#if GETFEM_PARA_LEVEL > 1
+
 /* Fonction de renumérotation des degrés de libertés */
 
 /// Parallel Enumeration of dofs
@@ -18,14 +23,15 @@ void mesh_fem::enumerate_dof_para(void) const {
     dof_structure.clear();
     MPI_STATUS mstatus;
 
-/* Récupération du nombre total de régions (procs)!!!!*/	
-/// ??????????
-/// ??????????
+/* Récupération du nombre total de régions (procs)!!!!*/
+    int num_rg, nb_rg;
+    MPI_Comm_Rank(MPI_COMM_WORLD, &num_rg);
+    MPI_Comm_Size(MPI_COMM_WORLD, &nb_rg);
 	
 	
 /* Récupération du num de la région */
-    size_type num_rg;
-    num_rg = linked_mesh.mpi_region.id();
+    //size_type num_rg;
+    //num_rg = linked_mesh.mpi_region.id();
 	
 /* Création de la liste des ddl */
 /// list_of_dof[1:nb_total_dof_mesh, 1:2]
@@ -47,7 +53,7 @@ void mesh_fem::enumerate_dof_para(void) const {
 /* Construction de la liste des cv à la charge de chaque proc en fonction de la région */
 /// list_of_cv[1:nb_cv_total_mesh, 1:2]
     std::vector<size_type> list_of_cv_num_rg = 0;
-    std::vector<size_type> list_of_cv_first_index;
+    std::vector<size_type> list_of_cv_first_index = 0;
 	
 /// En parallèle sur les régions on récupère les indices des cv de chaque proc
     dal::bit_vector index_tab;
@@ -75,11 +81,16 @@ void mesh_fem::enumerate_dof_para(void) const {
 // Mise en commun par échange MPI_AllReduce du nombre totale de cv sur le mesh
     MPI_Allreduce (nb_cv, nb_cv_tot, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
 
+    std::vector<size_type> list_of_cv_num_rg_Recv;
+    std::vector<size_type> list_of_cv_first_index_Recv;
 
 // Mise en commun par échange MPI_AllReduce de la liste list_of_cv_num_rg
-    MPI_Allreduce (list_of_cv_num_rg[0], list_of_cv_num_rg, nb_cv_tot, 
+    MPI_Allreduce (list_of_cv_num_rg[0], list_of_cv_num_rg_Recv, nb_cv_tot, 
                    MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
 
+// Mise en commun par échange MPI_AllReduce de la liste list_of_cv_num_rg
+    MPI_Allreduce (list_of_cv_first_index[0], list_of_cv_first_index_Recv, nb_cv_tot, 
+                   MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
 
 /* Construction de la liste des ddl à la charge de chaque proc */
     size_type nb_dof = 0;
@@ -89,9 +100,9 @@ void mesh_fem::enumerate_dof_para(void) const {
     size_type nb_global_dof_tot;
 	
 // Pour chaque cv dont ce proc a la charge : 
-    for(size_type icv = 0; icv < list_of_cv_num_rg.size(); ++icv)
+    for(size_type icv = 0; icv < list_of_cv_num_rg_Recv.size(); ++icv)
     {
-	if (list_of_cv_num_rg[icv] == num_rg)
+	if (list_of_cv_num_rg_Recv[icv] == num_rg)
 	{
 	    pfem pf = fem_of_element(icv);
 	    size_type nbd = pf->nb_dof(icv);
@@ -99,7 +110,7 @@ void mesh_fem::enumerate_dof_para(void) const {
 	    pdof_description andof = global_dof(pf->dim());
 			
 // 	    pour chaque ddl associé à ce cv :
-	    for (size_type i = list_of_cv_first_index[icv], i <= list_of_cv_fisrt_index[icv] + nbd; i++)
+	    for (size_type i = list_of_cv_first_index_Recv[icv], i <= list_of_cv_first_index_Recv[icv] + nbd; i++)
 	    {
 		fd.pnd = pf->dof_types()[i];
 		fd.part = get_dof_partition(cv);
@@ -117,12 +128,12 @@ void mesh_fem::enumerate_dof_para(void) const {
 		     for (size_type jcv = neighboors[0]; jcv < neighboors.size(); ++jcv)
 		     {
 //			 Si le voisin appartient à la même région (ie pas ddl interface)
-			 if (list_of_cv_num_rg[jcv] == num_rg)
+			 if (list_of_cv_num_rg_Recv[jcv] == num_rg)
 			 {
 			      bool_rg++;
 			 }
 //			 Sinon si c'est un dof interface "et" qui doit être à la charge de cette région
-			 else if (list_of_cv_num_rg[jcv] > num_rg)
+			 else if (list_of_cv_num_rg_Recv[jcv] > num_rg)
 			 {						
 			      bool_inter++;
 			 }
@@ -130,7 +141,7 @@ void mesh_fem::enumerate_dof_para(void) const {
 //		     Test si pas ddl interface
 		     if (bool_rg==neighboors.size()) // ie tout les voisins raccordable sont dans cette même region
 		     {
-			 list_of_dof_linkable_index[nb_dof_linkable] = list_of_cv_first_index[jcv]+j;
+			 list_of_dof_linkable_index[nb_dof_linkable] = list_of_cv_first_index_Recv[jcv]+j;
 			 list_of_dof_linkable_to[nb_dof_linkable] = i;
 			 nb_dof_linkable ++;
 			 list_of_dof_num_rg[i] = num_rg;
@@ -149,10 +160,10 @@ void mesh_fem::enumerate_dof_para(void) const {
 				 pgpj->transform(linked_mesh().points_of_convex(jcv), j, Pj);
 				 if (P == Pj)
 				 {
-				     list_of_dof_linkable_index[nb_dof_linkable] = list_of_cv_first_index[jcv]+j;
+				     list_of_dof_linkable_index[nb_dof_linkable] = list_of_cv_first_index_Recv[jcv]+j;
 				     list_of_dof_linkable_to[nb_dof_linkable] = i;
 				     nb_dof_linkable++;
-				     list_of_dof_num_rg[list_of_cv_first_index[jcv]+j] = num_rg;
+				     list_of_dof_num_rg[list_of_cv_first_index_Recv[jcv]+j] = num_rg;
 				  }
 			      }
 			   }
@@ -183,16 +194,18 @@ void mesh_fem::enumerate_dof_para(void) const {
 
 // Mise en commun par échange MPI_AllReduce de la liste list_of _dof
 
-// Mise en commun par échange MPI_AllReduce du nombre totale de cv sur le mesh
+// Mise en commun par échange MPI_AllReduce du nombre totale de dof sur le mesh
 	MPI_Allreduce (nb_dof, nb_dof_tot, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
 	size_type nbd_p;
 	for (size_type p = 0; p < nb_rg; p++)
 	{
+	  // Si il a des proc plus petit que num_rg, il recoit le nb de dof des autres plus petit pour mettre à jour son indice de début de numérotation
 	  if (p < num_rg)
 	  {
 	    MPI_Recv(nbd_p, 1, MPI_INTEGER, p, 100, MPI_COMM_WORLD, mstatus);
 	    numerot += nbd_p;
 	  }
+	  // Sinon il envoi le nombre de dof qu'il a à sa charge au autre qui lui sont supérieur
 	  else if (p > num_rg)
 	  {
 	    MPI_Send(nb_dof, 1, MPI_INTEGER, p, 100, MPI_COMM_WORLD);
@@ -200,18 +213,34 @@ void mesh_fem::enumerate_dof_para(void) const {
 	}
 	    
 
+	std::vector<size_type> list_of_dof_num_rg_Recv
 
 // Mise en commun par échange MPI_AllReduce de la liste list_of_cv_num_rg
-	MPI_Allreduce (list_of_dof_num_rg[0], list_of_dof_num_rg, nb_dof_tot, 
-                   MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce (list_of_dof_num_rg[0], list_of_dof_num_rg_Recv, nb_dof_tot, 
+		       MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
 
+
+	std::vector<size_type> list_of_global_dof_index_Recv;
+	std::vector<size_type> list_of_global_dof_local_index_Recv;
 
 // Mise en commun des information sur les global_dof
 	MPI_Allreduce (nb_global_dof, nb_global_dof_tot, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce (list_of_global_dof_index[0], list_of_global_dof_index[num_rg*1+nb_global_dof], nb_global_dof_tot,
-		       MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce (list_of_global_dof_local_index[0], list_of_global_dof_local_index[num_rg*1+nb_global_dof], nb_global_dof_tot,
-		       MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD);
+
+	for (size_type p = 0; p<nb_rg; p++)
+	{
+	    MPI_Send (nb_global_dof, 1, MPI_INTEGER, p, 200, MPI_COMM_WORLD);
+	    MPI_Recv (nb_global_dof_Recv, 1, MPI_INTEGER, p, 200, MPI_COMM_WORLD, mstatus);
+
+	    MPI_Send(list_of_global_dof_index[0], nb_global_dof, MPI_INTEGER, p, 300, MPI_COMM_WORLD);
+
+	    MPI_Recv (list_of_global_dof_index_Recv[0], nb_global_dof_Recv, 
+		      MPI_INTEGER, p, 300, MPI_COMM_WORLD, mstatus);
+
+	    MPI_Send(list_of_global_dof_local_index[0], nb_global_dof, MPI_INTEGER, p, 400, MPI_COMM_WORLD);
+
+	    MPI_Recv (list_of_global_dof_local_index_Recv[0], nb_global_dof_Recv, 
+		      MPI_INTEGER, p, 400, MPI_COMM_WORLD, mstatus);
+	}
 
 
 
@@ -220,11 +249,11 @@ void mesh_fem::enumerate_dof_para(void) const {
 	size_type numerot = 0;
 	size_type ind_linkable = 0;
 	
-	for(size_type i = 0; i < list_of_dof_num_rg.size(); ++i)
+	for(size_type i = 0; i < list_of_dof_num_rg_Recv.size(); ++i)
 	{
 	    pfem pf = fem_of_element(icv);
 
-	    if (list_of_dof_num_rg[i] == num_region && !enumeration_of_dof_made[i])
+	    if (list_of_dof_num_rg_Recv[i] == num_region && !enumeration_of_dof_made[i])
 	    {
 		 if (!dof_linkable(fd.pnd))
 		 {
@@ -251,26 +280,30 @@ void mesh_fem::enumerate_dof_para(void) const {
 
 // Traitement des ddl globaux
 // Boucle sur list_of_global_dof_in_charge
-	for (size_type i=0; i < list_of_global_dof_index.size(); i++)
+	if(num_rg == 0)// temporairement
+	  {
+	for (size_type i=0; i < list_of_global_dof_index_Recv.size(); i++)
 	  {
 	    pfem pf = fem_of_element(icv);
 
 	    if(!enumeration_of_dof_made[i])
 	    {
 ///	         Récupère les indices ayant le même num_global
-	         for (size_type j = i; j < list_of_global_dof_index.size(); j++)
+	         for (size_type j = i; j < list_of_global_dof_index_Recv.size(); j++)
 	         {
 ///	             Numérotation
-	             if (list_of_global_dof_index[j] == list_of_global_dof_index[i] && !enumeration_of_dof_made[j])
+	             if (list_of_global_dof_index_Recv[j] == list_of_global_dof_index_Recv[i] 
+			 && !enumeration_of_dof_made[j])
 		     {
-	                 list_of_dof_numeration[j] = numerot;
-	                 enumeration_of_dof_made[j] = true;
+	                 list_of_dof_numeration[list_of_global_dof_local_index_Recv[j]] = numerot;
+	                 enumeration_of_dof_made[list_of_gloabl_dof_local_index_Recv[j]] = true;
 	             }
 	         }
-		 list_of_dof_numeration[i] = numerot;
-		 enumeration_of_dof_made[i] = true;
+		 list_of_dof_numeration[list_of_global_dof_local_index[i]] = numerot;
+		 enumeration_of_dof_made[list_of_global_dof_local_index[i]] = true;
 		 numerot += Qdim / pf->target_dim();
 	    }
+	  }
 	  }
 // Fin boucle		
 
@@ -287,7 +320,7 @@ void mesh_fem::enumerate_dof_para(void) const {
 	        pfem pf = fem_of_element(icv);
 	        size_type nbd = pf->nb_dof(icv);
 		tab.resize(nbd);
-		for (size_type i = list_of_cv_first_index[icv]; i < list_of_cv_first_index[icv] + nbd; i++)
+		for (size_type i = list_of_cv_first_index_Recv[icv]; i < list_of_cv_first_index_Recv[icv] + nbd; i++)
 		{
 		  tab[ind_tab] = list_of_dof_numeration[i];
 		  ind_tab++;
@@ -298,3 +331,8 @@ void mesh_fem::enumerate_dof_para(void) const {
 	
 	nb_total_dof = nb_dof_tot;
 }
+
+#endif
+
+
+} // end of getfem namespace

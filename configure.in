@@ -645,21 +645,22 @@ if test $paralevel -ge 2; then
   MPI_LIBS=""
   AC_CHECK_LIB(mpich, MPI_Test)
   AC_CHECK_LIB(mpichcxx, MPI_Test)
-  AC_CHECK_HEADERS(mpi/mpi.h, [usempi="yes"],
-   [ 
-     AC_CHECK_HEADERS(mpi.h, [usempi="yes"],
-     [
-       AC_CHECK_HEADERS(mpich2/mpi.h, [usempi="yes"],
-       [
-         if test "x$usempi" = "xyes"; then
-     	   AC_MSG_ERROR([header file mpi.h not found.]);
-	   usempi="no"
-   	 fi;
-       ])
-     ])
-   ])
+dnl   AC_CHECK_HEADERS(mpi/mpi.h, [usempi="yes"],
+dnl    [ 
+dnl      AC_CHECK_HEADERS(mpi.h, [usempi="yes"],
+dnl      [
+dnl        AC_CHECK_HEADERS(mpich2/mpi.h, [usempi="yes"],
+dnl        [
+dnl          if test "x$usempi" = "xyes"; then
+dnl      	   AC_MSG_ERROR([header file mpi.h not found.]);
+dnl 	   usempi="no"
+dnl    	 fi;
+dnl        ])
+dnl      ])
+dnl    ])
+  CPPFLAGS="$CPPFLAGS -DGETFEM_HAVE_MPI_MPI_H=1 -I/usr/include/mpi"
   if test "x$usempi" = "xyes"; then
-    MPI_LIBS="-lmpich -lmpichcxx"
+    MPI_LIBS="-lmpi -lmpi++"
   fi;
   echo "Building with MPI (use --enable-mpi=no to disable it)"
 fi;
@@ -697,11 +698,11 @@ if test "$MPI_CFLAGS" -o "$MPI_LIBS"; then
   dnl AC_DEFINE_UNQUOTED([PARA_LEVEL], 2, [getfem parallelisation flag])
   LIBS="$LIBS $MPI_LIBS -lmetis"
   CXXFLAGS="$CXXFLAGS $MPI_CFLAGS -DGETFEM_PARA_LEVEL=2"
-  AC_CHECK_LIB(metis, METIS_PartMeshNodal, [metis_ok="yes"], [metis_ok="no"])
-  if test "x$metis_ok" = "xno"; then
-    AC_MSG_ERROR([Parallel getfem requires the METIS ( http://www-users.cs.umn.edu/~karypis/metis/metis/ ) library
- ----------> Please add the path to libmetis.a to the MPI_LIBS variable.])
-  fi
+dnl   AC_CHECK_LIB(metis, METIS_PartMeshNodal, [metis_ok="yes"], [metis_ok="no"])
+dnl   if test "x$metis_ok" = "xno"; then
+dnl     AC_MSG_ERROR([Parallel getfem requires the METIS ( http://www-users.cs.umn.edu/~karypis/metis/metis/ ) library
+dnl  ----------> Please add the path to libmetis.a to the MPI_LIBS variable.])
+dnl   fi
   AC_SUBST(MPI_LIBS)
   AC_SUBST(MPI_CFLAGS)
 fi

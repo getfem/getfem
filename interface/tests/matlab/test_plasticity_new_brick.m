@@ -53,10 +53,10 @@ CVtop = find(CV > 250); % Retrieve index of convex located at the top
 % Definition of Lame coeff
 lambda(CVbottom) = 121150; % Stell
 lambda(CVtop) = 84605; % Iron
-%lambda(CV) = 84605;
+%lambda = 121150;
 mu(CVbottom) = 80769; %Stell
 mu(CVtop) = 77839; % Iron
-%mu(CV) = 77839;
+%mu = 80769;
 von_mises_threshold(CVbottom) = 7000;
 von_mises_threshold(CVtop) = 8000;
 
@@ -129,14 +129,14 @@ for step=1:nbstep,
     n = t(step);
     title(['Von Mises criterion for t = ', num2str(n)]);
   
-    ERR=gf_compute(mf_u,U,'error estimate', mim);
-    E=ERR; E(dd)=ERR;
+    %ERR=gf_compute(mf_u,U,'error estimate', mim);
+    %E=ERR; E(dd)=ERR;
     subplot(2,1,2);
-    gf_plot(mf_err, E, 'mesh','on', 'refine', 1); 
-    colorbar;
-    title('Error estimate');
+    %gf_plot(mf_err, E, 'mesh','on', 'refine', 1); 
+    %colorbar;
+    %title('Error estimate');
 
-    figure(3)
+    %figure(3)
     gf_plot(mf_pl,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
     colorbar;
     caxis([0 10000]);

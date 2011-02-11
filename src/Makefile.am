@@ -198,7 +198,8 @@ SRC =                                      		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
 	getfem_Coulomb_friction.cc			\
-	getfem_plasticity.cc
+	getfem_plasticity.cc				
+#	getfem_enumeration_dof_para.cc
 
 lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)

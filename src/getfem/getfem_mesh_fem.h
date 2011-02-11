@@ -477,7 +477,12 @@ namespace getfem {
     { return convex_to_basic_dof(d); }
     /** Renumber the degrees of freedom. You should not have
      * to call this function, as it is done automatically */
-    void enumerate_dof(void) const;
+    void enumerate_dof(void)const;
+
+#if GETFEM_PARA_LEVEL > 1
+    void enumerate_dof_para(void)const;
+#endif
+
     /** Return the total number of basic degrees of freedom (before the
      * optional redution). */
     virtual size_type nb_basic_dof(void) const {

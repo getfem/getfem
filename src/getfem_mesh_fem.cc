@@ -273,6 +273,7 @@ namespace getfem {
 
   typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
 
+
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {
     GMM_ASSERT1(linked_mesh_ != 0, "Uninitialized mesh_fem");
