@@ -796,7 +796,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       set this matrix. @*/
     sub_command
       ("set private matrix", 2, 2, 0, 0,
-       size_type ind = in.pop().to_integer();
+       size_type ind = in.pop().to_integer() - config::base_index();
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
        
        if (B->is_complex() && !md->is_complex())
@@ -828,7 +828,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       set this rhs. @*/
     sub_command
       ("set private rhs", 2, 2, 0, 0,
-       size_type ind = in.pop().to_integer();
+       size_type ind = in.pop().to_integer() - config::base_index();
        
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();

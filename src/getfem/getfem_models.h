@@ -761,6 +761,8 @@ namespace getfem {
     bool isreal;      // The brick admits a real version or not.
     bool iscomplex;   // The brick admits a complex version or not.
     bool isinit;      // internal flag.
+    bool compute_each_time; // The brick is linear but needs to be computed
+                            // each time it is evaluated.
     std::string name; // Name of the brick.
    
   public :
@@ -769,10 +771,11 @@ namespace getfem {
     
     virtual_brick(void) { isinit = false; }
     void set_flags(const std::string &bname, bool islin, bool issym,
-		   bool iscoer, bool ire, bool isco) {
+		   bool iscoer, bool ire, bool isco, bool each_time = false) {
       name = bname;
       islinear = islin; issymmetric = issym; iscoercive = iscoer;
       isreal = ire; iscomplex = isco; isinit = true;
+      compute_each_time = each_time;
     }
 
 #   define BRICK_NOT_INIT GMM_ASSERT1(isinit, "Set brick flags !")
@@ -781,6 +784,8 @@ namespace getfem {
     bool is_coercive(void)  const { BRICK_NOT_INIT; return iscoercive;  }
     bool is_real(void)      const { BRICK_NOT_INIT; return isreal;      }
     bool is_complex(void)   const { BRICK_NOT_INIT; return iscomplex;   }
+    bool is_to_be_computed_each_time(void) const
+    { BRICK_NOT_INIT; return compute_each_time; }
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
 
     virtual void asm_real_tangent_terms(const model &, size_type,
@@ -1075,7 +1080,7 @@ namespace getfem {
   template <typename VECT, typename T>
   void set_private_data_rhs(model &md, size_type ind, const VECT &L,
 			   std::complex<T>) {
-    model_complex_plain_vector &LL = set_private_data_brick_complex_rhs(md, ind);
+    model_complex_plain_vector &LL=set_private_data_brick_complex_rhs(md, ind);
     gmm::resize(LL, gmm::vect_size(L));
     gmm::copy(L, LL);
   }

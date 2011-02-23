@@ -707,6 +707,7 @@ namespace getfem {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
     bool tobecomputed = brick.terms_to_be_computed
+      || brick.pbr->is_to_be_computed_each_time()
       || !(brick.pbr->is_linear());
     
     // check variable list to test if a mesh_fem as changed. 
@@ -2388,7 +2389,8 @@ namespace getfem {
       set_flags("Explicit matrix brick",
 		true /* is linear*/,
 		symmetric_ /* is symmetric */, coercive_ /* is coercive */,
-		true /* is real */, true /* is complex */);
+		true /* is real */, true /* is complex */,
+		true /* is to be computed each time */);
     }
   };
 
@@ -2450,7 +2452,8 @@ namespace getfem {
       set_flags("Explicit rhs brick",
 		true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
-		true /* is real */, true /* is complex */);
+		true /* is real */, true /* is complex */,
+		true /* is to be computed each time */);
     }
 
 
