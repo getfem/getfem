@@ -80,7 +80,7 @@ scalar_type
 generic_u_singular_xy_function::val(scalar_type x, scalar_type y) const {
   scalar_type r = sqrt(x*x + y*y);  
   if (r < 1e-10)  return 0;
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   
   if (n <= 0)
     return pow(r, alpha_md) * cos(scalar_type(n) * theta * 0.5);
@@ -95,7 +95,7 @@ generic_u_singular_xy_function::grad(scalar_type x, scalar_type y) const {
   if (r < 1e-10) {
     GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
   }
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   base_small_vector res(2);
   scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
   scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
@@ -129,7 +129,7 @@ scalar_type
 generic_p_singular_xy_function::val(scalar_type x, scalar_type y) const {
   scalar_type r = sqrt(x*x + y*y);  
   if (r < 1e-10)  return 0;
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   
   if (n <= 0)
     return pow(r, beta_md) * cos(scalar_type(n) * theta * 0.5);
@@ -144,7 +144,7 @@ generic_p_singular_xy_function::grad(scalar_type x, scalar_type y) const {
   if (r < 1e-10) {
     GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
   }
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   base_small_vector res(2);
   scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
   scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
@@ -166,12 +166,6 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
   const {
   GMM_ASSERT1(false, "To be done !");
 }
-
-
-
-
-
-
 
 
 
@@ -572,12 +566,14 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
-  // Linearized elasticity brick.
+  std::cout<<"law num  "<< law_num << endl;
+  
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
     ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
     ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
+    
   }
   ls.touch();
 
@@ -600,15 +596,23 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   std::vector<getfem::pglobal_function> vfunc(2*nb_enr_func_u);
   std::vector<getfem::pglobal_function> vfunc_p(2*nb_enr_func_p);
 
+  
+
   std::cout << "Using default singular functions\n";
   for (unsigned i = 0; i < vfunc.size(); ++i){
     
-    getfem::abstract_xy_function *s;
-    if (i < nb_enr_func_u)
+     getfem::abstract_xy_function *s;
+     if (i < nb_enr_func_u){
+       //std::cout << "if____i <<< nb_enr_func_u*--*-**-*-*-*-\n"<< i;
       s = new generic_u_singular_xy_function(i+1);
-    else
+     }
+     else{
+       //std::cout << "else__i >>> nb_enr_func_u*--*-**-*-*-*-\n"<< i;
       s = new generic_u_singular_xy_function(-(i+1));
-    
+     }
+
+
+
     if (enrichment_option != FIXED_ZONE && 
 	enrichment_option != GLOBAL_WITH_MORTAR) {
       /* use the product of the singularity function
@@ -625,7 +629,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   
   for (unsigned i = 0; i < vfunc_p.size() ;++i){
     
-    getfem::abstract_xy_function *sp;
+  getfem::abstract_xy_function *sp;
     if (i < nb_enr_func_p)
       sp = new generic_p_singular_xy_function(i+1);
     else
@@ -655,6 +659,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 					spider.theta0, spider.bimat_enrichment,
 					spider.epsilon);
     mf_us.set_finite_element(mesh.convex_index(),spider.fem->get_pfem());
+
     for (dal::bv_visitor_c i(mf_us.convex_index()); !i.finished(); ++i) {
       if (mf_us.fem_of_element(i)->nb_dof(i) == 0) {
 	mf_us.set_finite_element(i,0);
@@ -817,12 +822,12 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   for (size_type i = 0; i < mf_u().nb_basic_dof(); i+=N) {
     //cout << i <<" basic_dof" << mf_u().point_of_basic_dof(i) <<endl;
     scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner1);
-    cout << i <<" Basic_dof____dd1=" << dd1 <<endl;
-    cout <<"************************************************************************************" << endl;
+    //cout << i <<" Basic_dof____dd1=" << dd1 <<endl;
+    //cout <<"************************************************************************************" << endl;
     if (dd1 < d1) { icorner1 = i; d1 = dd1; }
     scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner2);
-    cout << i <<" Basic_dof____dd2=" << dd2 <<endl;   
-    cout <<"************************************************************************************" << endl;
+    //cout << i <<" Basic_dof____dd2=" << dd2 <<endl;   
+    //cout <<"************************************************************************************" << endl;
  
     if (dd2 < d2) { icorner2 = i; d2 = dd2; }
   }
@@ -846,13 +851,13 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     default: GMM_ASSERT1(false, "no such law");
   }
 
-   if (N == 2) {
-     cout << "2D plane strain hyper-elasticity\n";
-     pl = new getfem::plane_strain_hyperelastic_law(pl1);
+  if (N == 2) {
+   cout << "2D plane strain hyper-elasticity\n";
+   pl = new getfem::plane_strain_hyperelastic_law(pl1);
    } else pl = pl1;
 
   pr.resize(pl->nb_params());
-  cout << "parametre du loi de comportements"<< pr << endl ;
+  cout << "parametre du loi de comportements "<< pr << endl ;
 
   //pl1->test_derivatives(3, 5e-9, pr);
 
@@ -918,10 +923,6 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   GMM_ASSERT1(N==2, "To be corrected for 3D computation");
   sparse_matrix BB(3, mf_u().nb_dof());
   
-  // BB(0, 0) = 1.0;
-  // BB(1, 1) = 1.0;
-  // BB(2, 1) = 1.0;
-
    BB(0, icorner1) = 1.0;
    BB(1, icorner1+1) = 1.0;
    BB(2, icorner2) = 1.0;
@@ -948,62 +949,79 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   
   
   //  size_type maxit = PARAM.int_value("MAXITER");
- 
-for (int step = 0; step < nb_step; ++step)   {
-    plain_vector DF1(F_Neumann1);
-    plain_vector DF2(F_Neumann2);
-    plain_vector DF3(F_Neumann3);
-    plain_vector DF4(F_Neumann4);
+  //  getfem::standard_solve(model, iter);
+
+  //for (int step = 0; step < nb_step; ++step)    {
+//     plain_vector DF1(F_Neumann1);
+//     plain_vector DF2(F_Neumann2);
+//     plain_vector DF3(F_Neumann3);
+//     plain_vector DF4(F_Neumann4);
 
 
-    gmm::copy(gmm::scaled(F_Neumann1, (step+1.)/nb_step), DF1);
-    gmm::copy(DF1, model.set_real_variable("NeumannData1"));
+//     gmm::copy(gmm::scaled(F_Neumann1, (step+1.)/nb_step), DF1);
+//     gmm::copy(DF1, model.set_real_variable("NeumannData1"));
 
-    gmm::copy(gmm::scaled(F_Neumann2, (step+1.)/nb_step), DF2);
-    gmm::copy(DF2, model.set_real_variable("NeumannData2"));
+//     gmm::copy(gmm::scaled(F_Neumann2, (step+1.)/nb_step), DF2);
+//     gmm::copy(DF2, model.set_real_variable("NeumannData2"));
 
-    gmm::copy(gmm::scaled(F_Neumann3, (step+1.)/nb_step), DF3);
-    gmm::copy(DF3, model.set_real_variable("NeumannData3"));
+//     gmm::copy(gmm::scaled(F_Neumann3, (step+1.)/nb_step), DF3);
+//     gmm::copy(DF3, model.set_real_variable("NeumannData3"));
     
-    gmm::copy(gmm::scaled(F_Neumann4, (step+1.)/nb_step), DF4);
-    gmm::copy(DF3, model.set_real_variable("NeumannData4"));
+//     gmm::copy(gmm::scaled(F_Neumann4, (step+1.)/nb_step), DF4);
+//     gmm::copy(DF3, model.set_real_variable("NeumannData4"));
     
-    /* update the imposed displacement  */
-    //gmm::copy(F2, model.set_real_variable("DirichletData"));
+//     // sparse_matrix BBst(3, mf_u().nb_dof());
+  
+// //       BBst(0, icorner1) = 1.0;
+// //       BBst(1, icorner1+1) = 1.0;
+// //       BBst(2, icorner2) = 1.0;
+// //       std::vector<scalar_type> LRHst(3);
+// //       model.add_fixed_size_variable("dir", 3);
+// //       getfem::add_constraint_with_multipliers(model, "u", "dir", BBst, LRHst);
 
-    cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
-    //gmm::iteration iter(residual, 1, 40000);
 
-    /* let the default non-linear solve (Newton) do its job */
+//     /* update the imposed displacement  */
+//     //gmm::copy(F2, model.set_real_variable("DirichletData"));
+
+//     cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
+   
+
+//     /* let the default non-linear solve (Newton) do its job */
     
-    getfem::standard_solve(model, iter);
+//     getfem::standard_solve(model, iter);
     
-    pl->reset_unvalid_flag();
-    model.assembly(getfem::model::BUILD_RHS);
-    if (pl->get_unvalid_flag()) 
-      GMM_WARNING1("The solution is not completely valid, the determinant "
-		   "of the transformation is negative on "
-		   << pl->get_unvalid_flag() << " gauss points");
+//     pl->reset_unvalid_flag();
+//     model.assembly(getfem::model::BUILD_RHS);
+//     if (pl->get_unvalid_flag()) 
+//       GMM_WARNING1("The solution is not completely valid, the determinant "
+// 		   "of the transformation is negative on "
+// 		   << pl->get_unvalid_flag() << " gauss points");
 
-    gmm::copy(model.real_variable("u"), U);
-    gmm::copy(model.real_variable("p"), P);
-    //char s[100]; sprintf(s, "step%d", step+1);
+//     gmm::copy(model.real_variable("u"), U);
+//     if (mixed_pressure && (law_num == 1 || law_num == 3)) {
+//       gmm::copy(model.real_variable("p"), P);}
+//     //char s[100]; sprintf(s, "step%d", step+1);
 
-    /* append the new displacement to the exported opendx file */
-    exp.write_point_data(mf_u(), U);
-    exp.write_point_data(mf_pe(), P);
+//     /* append the new displacement to the exported opendx file */
+//     exp.write_point_data(mf_u(), U);
+//     exp.write_point_data(mf_pe(), P);
 
-    exp.serie_add_object("deformationsteps");
-  }
+//     exp.serie_add_object("deformationsteps");
+//   } 
 
 
  
   // Solution extraction
-  gmm::copy(model.real_variable("u"), U);
-  gmm::copy(model.real_variable("p"), P);
+  //bool with_pseudo_potential = true;
+  //getfem::standard_solve(model, iter, with_pseudo_potential);
+   getfem::standard_solve(model, iter);
+   gmm::copy(model.real_variable("u"), U);
+   if (mixed_pressure && (law_num == 1 || law_num == 3)) {
+     gmm::copy(model.real_variable("p"), P);}
 
   
   return (iter.converged());
+
 if (reference_test == 1) {
       
       cout << "Exporting reference solution...";
@@ -1188,10 +1206,10 @@ int main(int argc, char *argv[]) {
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
     
-    std::string REFERENCE_MF = "Solution_160_ref_raffine_P1BP1.meshfem";
-    std::string REFERENCE_U = "Solution_160_ref_raffine_P1BP1.U";
-    std::string REFERENCE_MFP = "Solution_160_ref_raffine_P1BP1.p_meshfem";
-    std::string REFERENCE_P = "Solution_160_ref_raffine_P1BP1.P";
+    std::string REFERENCE_MF = "reference_COE_N80_ciagey_0.15_load.meshfem";
+    std::string REFERENCE_U = "reference_COE_N80_ciagey_0.15_load.U";
+    std::string REFERENCE_MFP = "reference_COE_N80_ciagey_0.15_load.p_meshfem";
+    std::string REFERENCE_P = "reference_COE_N80_ciagey_0.15_load.P";
     
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
