@@ -21,7 +21,7 @@
 
 /**
    @file contact_continuation_load.cc
-   @brief Nonlinear Problem with Friction(large strain).
+   @brief Nonlinear Problem with Friction (large strain).
 
    A rubber bar is submitted to a large torsion. If the standard
    solver (Newton) fails, one tries to find a more suitable initial
@@ -74,6 +74,7 @@ struct friction_problem {
   scalar_type LX, LY, LZ;    /* system dimensions                            */
   scalar_type lambda, mu;    /* Lame coefficients.                           */
   scalar_type residual;      /* max residual for the iterative solvers       */
+  bool is_dynamic;
   scalar_type rho;           /* density.                                     */
   size_type nocontact_mass;
   std::string datafilename;
@@ -146,12 +147,12 @@ void friction_problem::init(void) {
     for (int i = 0; i < nb_refine; ++i) {
       cvref.clear();
       for (dal::bv_visitor j(mesh.convex_index()); !j.finished(); ++j) {
-	if ((mesh.points_of_convex(j)[0][0] > LX * (1 - layerx))
-	    && (mesh.points_of_convex(j)[1][0] > LX * (1 - layerx))
-	    && (mesh.points_of_convex(j)[2][0] > LX * (1 - layerx))
-	    && (mesh.points_of_convex(j)[0][N-1] < LY * layery)
-	    &&  (mesh.points_of_convex(j)[1][N-1] < LY * layery)
-	    &&  (mesh.points_of_convex(j)[2][N-1] < LY * layery))
+	if ((mesh.points_of_convex(j)[0][0] > LX * (1 - layerx)
+	     && mesh.points_of_convex(j)[1][0] > LX * (1 - layerx)
+	     && mesh.points_of_convex(j)[2][0] > LX * (1 - layerx))
+	    && (mesh.points_of_convex(j)[0][N-1] < LY * layery
+		&& mesh.points_of_convex(j)[1][N-1] < LY * layery
+		&& mesh.points_of_convex(j)[2][N-1] < LY * layery))
 	  cvref.add(j);
       }
       mesh.Bank_refine(cvref);
@@ -163,6 +164,7 @@ void friction_problem::init(void) {
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
 
+  is_dynamic = (PARAM.int_value("DYNAMIC", "Is dynamic?") != 0);
   rho = PARAM.real_value("RHO", "Density");
   nocontact_mass = PARAM.int_value("NOCONTACT_MASS", "Suppress the mass "
 				   "of contact nodes");
@@ -219,7 +221,7 @@ void friction_problem::init(void) {
       mesh.region(DIRICHLET_BOUNDARY_NUM).add(it.cv(),it.f());
     } else if (gmm::abs(un[N-1] + 1.0) < 1.0E-7) {
       mesh.region(FRICTION_BOUNDARY_NUM).add(it.cv(),it.f());
-    } else if (mesh.points_of_convex(it.cv())[0][N-1] < LZ * 0.2)
+    } else if (mesh.points_of_convex(it.cv())[0][N-1] < LY * 0.2)
       mesh.region(FRICTION_BOUNDARY_NUM).add(it.cv(),it.f());
   }
 }
@@ -255,45 +257,40 @@ public:
     if (noise > 0)
       cout << "iter " << nit << " residual " << gmm::abs(res)
 	   << " difference " << gmm::abs(diff) << endl;
-    return ((nit >= maxiter) || converged());
+    return ((nit >= maxiter || res > 1.0E+200) || converged());
   }
 };
 
 /* The object for adaptation of the continuation to non-smoothness of
-   the problem by means of active functions */
-class active_functions {
+   the problem by means of active selection functions */
+class selections {
   size_type row, nba;
-  gmm::dense_matrix<bool> CH_M;
-  gmm::dense_matrix<size_type> ACT_M;
-  plain_vector limit_val, tangent;
+  gmm::dense_matrix<bool> CH;
+  gmm::dense_matrix<size_type> ACT;
+  plain_vector LV;
 public:
-  void clear(void) { row = nba = 0; gmm::resize(tangent, 0); }
-  active_functions(void) { clear(); }
+  void clear(void) { row = nba = 0; }
+  selections(void) { clear(); }
   bool empty(void) { return (nba == 0); }
 
-  template<typename MODEL_STATE, typename MATRIX, typename VECT>
-  void compute_Jacobians
-  (getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
-   const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
-   const plain_vector &LN, const plain_vector &LT, const MATRIX &CH_, scalar_type limit,
+  template<typename CH_MATRIX, typename T_MATRIX, typename VECT>
+  void proper_update
+  (const VECT &contact_nodes, const CH_MATRIX &CH_, const T_MATRIX &TST, scalar_type limit,
    int noisy);
 
-  template<typename MODEL_STATE>
+  template<typename MODEL_STATE, typename CH_MATRIX, typename VECT>
   bool compute_new_tangent
   (MODEL_STATE &MS, getfem::mdbrick_abstract<MODEL_STATE> &final_model,
    getfem::mdbrick_Dirichlet<MODEL_STATE> &DIRICHLET,
-   getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, plain_vector grad_XI,
-   const plain_vector &F2_init, const plain_vector &deltaF2, const plain_vector &X,
-   const plain_vector &T, int noisy);
+   getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
+   plain_vector grad_XI, const plain_vector &F2_0, const plain_vector &deltaF2,
+   const plain_vector &X, plain_vector &T, CH_MATRIX &CH_, int noisy);
 
   template<typename MODEL_STATE>
-  void tangent_orientation
+  void determine_tangent_orientation
   (getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const plain_vector &UN,
    const plain_vector &UT, const plain_vector &UT0, const plain_vector &LN,
-   const plain_vector &LT, plain_vector &T);
-
-  plain_vector &get_tangent(void) { return tangent; }
-  
+   const plain_vector &LT, plain_vector &T);  
 };
 
 template<typename MAT>
@@ -382,7 +379,6 @@ void compute_tangent(const MAT &A, const VECT1 &B, VECT2 &T, int noisy) {
   }
 
   gmm::scale(T, 1.0/gmm::vect_norm2(T));
-
 }
 
 template<typename MAT, typename VECT1, typename VECT2>
@@ -483,11 +479,11 @@ template<typename MODEL_STATE>
 void Newton_correction
 (MODEL_STATE &MS, getfem::mdbrick_abstract<MODEL_STATE> &final_model,
  getfem::mdbrick_Dirichlet<MODEL_STATE> &DIRICHLET, const plain_vector &grad_XI,
- const plain_vector &F2_init, const plain_vector &deltaF2, plain_vector &X, plain_vector &T,
+ const plain_vector &F2_0, const plain_vector &deltaF2, plain_vector &X, plain_vector &T,
  iteration_corr &iter) {
 
   size_type stot = gmm::mat_ncols(MS.tangent_matrix());
-  plain_vector F2 = F2_init;
+  plain_vector F2 = F2_0;
 
   gmm::copy(gmm::sub_vector(X, gmm::sub_interval(0, stot)), MS.state());
   gmm::add(gmm::scaled(deltaF2, X[stot]), F2);
@@ -507,7 +503,7 @@ void Newton_correction
       cout << "linear solver done" << endl;
 
     gmm::copy(gmm::sub_vector(X, gmm::sub_interval(0, stot)), MS.state());
-    gmm::copy(F2_init, F2);
+    gmm::copy(F2_0, F2);
     gmm::add(gmm::scaled(deltaF2, X[stot]), F2);
     DIRICHLET.rhs().set(F2);
 
@@ -551,11 +547,33 @@ void compute_Von_Mises
     ELAS_lin.compute_Von_Mises_or_Tresca(MS, mf_vm, VM, false);
 }
 
-template<typename MODEL_STATE, typename VECT>
-void write_charact_solution
-(getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
- const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
- const plain_vector &LN, const plain_vector &LT) {
+template<typename MODEL_STATE>
+scalar_type compute_test_function
+(getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const plain_vector &UN,
+ const plain_vector &UT, const plain_vector &UT0, const plain_vector &LN,
+ const plain_vector &LT, size_type i, size_type j) {
+  
+  scalar_type r = FRICTION.get_r(), alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
+  plain_vector gap(LN.size()), friction_coef(LN.size());
+  scalar_type tst;
+    
+  gmm::copy(FRICTION.get_gap(), gap);
+  gmm::copy(FRICTION.get_friction_coef(), friction_coef);
+
+  switch (j) {
+  case 0: tst = (LN[i] - r * alpha * (UN[i] - gap[i])) / r; break;
+  case 1: tst = (-friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i])) / r; break;
+  default: tst = (friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i])) / r; break;
+  }
+
+  return tst;
+}
+
+template<typename MODEL_STATE, typename T_MATRIX>
+void compute_test_functions
+(getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const plain_vector &UN,
+ const plain_vector &UT, const plain_vector &UT0, const plain_vector &LN,
+ const plain_vector &LT, T_MATRIX &TST) {
   
   scalar_type r = FRICTION.get_r();
   scalar_type alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
@@ -564,167 +582,128 @@ void write_charact_solution
   gmm::copy(FRICTION.get_gap(), gap);
   gmm::copy(FRICTION.get_friction_coef(), friction_coef);
 
-  cout << "characters of the solution:" << endl;
-
   for (size_type i = 0; i < LN.size(); ++i) {
-    cout << "node " << i << ": " << contact_nodes[i] << " " 
-	 << (LN[i] - r * alpha * (UN[i] - gap[i]) <= 0)
-	 << (- friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]) >= 0)
-	 << (friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]) <= 0) << endl;
-
-// 	cout << "LN - r * alpha * (UN - gap) = " << LN[i] - r * alpha * (UN[i] - gap[i])
-// 	     << ", - friction_coef * LN + LT -  r * beta * (UT - UT0) = "
-// 	     << -friction_coef[i] * LN[i] + LT[i] -  r * beta * (UT[i]-UT0[i])
-// 	     << ", friction_coef * LN + LT -  r * beta * (UT - UT0) = "
-// 	     << friction_coef[i] * LN[i] + LT[i] -  r * beta * (UT[i]-UT0[i]) << endl;
-// 	cout << "LN = " << LN[i] 
-// 	     << ", r * alpha * (UN - gap) = " << r * alpha * (UN[i] - gap[i])
-// 	     << ", - friction_coef * LN + LT = "
-// 	     << -friction_coef[i] * LN[i] + LT[i]
-// 	     << ", friction_coef * LN + LT = "
-// 	     << friction_coef[i] * LN[i] + LT[i] 
-// 	     << ", r * beta * (UT - UT0) = "
-// 	     << r * beta * (UT[i]-UT0[i]) << endl;
+    TST(i, 0) = (LN[i] - r * alpha * (UN[i] - gap[i])) / r;
+    TST(i, 1) = (- friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i])) / r;
+    TST(i, 2) = (friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i])) / r;
   }
 }
 
-template<typename MODEL_STATE, typename MATRIX, typename VECT>
-void compute_charact_solution
+template<typename MODEL_STATE, typename CH_MATRIX, typename T_MATRIX, typename VECT>
+void compute_activity
 (getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
  const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
- const plain_vector &LN, const plain_vector &LT, MATRIX &CH, int noisy) {
-  
-  scalar_type r = FRICTION.get_r();
-  scalar_type alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
-  plain_vector gap(LN.size()), friction_coef(LN.size());
-  base_vector test_fcn(3);
-    
-  gmm::copy(FRICTION.get_gap(), gap);
-  gmm::copy(FRICTION.get_friction_coef(), friction_coef);
+ const plain_vector &LN, const plain_vector &LT, CH_MATRIX &CH, T_MATRIX &TST, int noisy) {
+
+  compute_test_functions(FRICTION, UN, UT, UT0, LN, LT, TST);
 
   if (noisy > 1)
-    write_charact_solution(FRICTION, contact_nodes, UN, UT, UT0, LN, LT);
+    cout << "characters of the solution:" << endl;
 
   for (size_type i = 0; i < LN.size(); ++i) {
-    CH(i, 0) = (LN[i] - r * alpha * (UN[i] - gap[i]) <= 0);
-    CH(i, 1) = (- friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]) >= 0);
-    CH(i, 2) = (friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]) <= 0);
-  }
+    CH(i, 0) = (TST(i, 0) <= 0);
+    CH(i, 1) = (TST(i, 1) >= 0);
+    CH(i, 2) = (TST(i, 2) <= 0);
 
+    if (noisy > 1)
+      cout << "node " << i << ": " << contact_nodes[i] << " "
+	   << CH(i, 0) << CH(i, 1) << CH(i, 2)
+//            << " " << TST(i, 0) << " " << TST(i, 1) << " " << TST(i, 2)
+	   << endl;
+  }
 }
 
-template<typename MODEL_STATE, typename MATRIX, typename VECT>
-size_type compute_charact_solution
+template<typename MODEL_STATE, typename CH_MATRIX, typename T_MATRIX, typename VECT>
+size_type compute_activity
 (getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
  const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
- const plain_vector &LN, const plain_vector &LT, MATRIX &CH, const MATRIX &CH0, int noisy) {
+ const plain_vector &LN, const plain_vector &LT, const CH_MATRIX &CH0, CH_MATRIX &CH,
+ T_MATRIX &TST, scalar_type x_min, int noisy) {
   
-  size_type nb_change = 0;
-  bool change;
+  size_type nch = 0, nch_i = 0;
 
-  compute_charact_solution(FRICTION, contact_nodes, UN, UT, UT0, LN, LT, CH, noisy);
+  compute_activity(FRICTION, contact_nodes, UN, UT, UT0, LN, LT, CH, TST, noisy);
 
   for (size_type i = 0; i < LN.size(); ++i) {
-    change = false;
+    nch_i = 0;
     for (size_type j = 0; j < 3; ++j) {
-      if ((CH(i, j) != CH0(i, j)) && (j == 0 || (j > 0 && CH(i, 0))))
-	change = true;
+      if ((CH(i, j) != CH0(i, j)) && (j == 0 || (j > 0 && (CH(i, 0) || CH0(i, 0))))
+	  && contact_nodes[i][0] >= x_min)
+	++nch_i;
     }
 
-    if (change) {
-      if (nb_change == 0)
+    if (nch_i > 0) {
+      if (nch == 0)
 	cout << "changes of characters:" << endl;
       cout << "node " << i << ": " << contact_nodes[i] << " "
 	   << CH0(i, 0) << CH0(i, 1) << CH0(i, 2) << " -> "
 	   << CH(i, 0) << CH(i, 1) << CH(i, 2) << endl;
-      ++nb_change;
+      nch += nch_i;
     }
   }
   
-  return nb_change;
+  return nch;
 }
 
 template<typename MATRIX>
 void straight_insertion
-(MATRIX &M, plain_vector &key, size_type i) {
+(MATRIX &M, plain_vector &KEY, size_type i) {
 /* places the i-th row of M according to the absolut values of the corresponding components
-   in key; increasing order is wanted in the first i components of key */
+   in KEY; increasing order is wanted in the first i components of KEY */
 
   bool found;
   size_type j = i;
   std::vector<size_type> X(2);
-  scalar_type X_key;
+  scalar_type X_KEY;
 
   X[0] = M(i, 0); X[1] = M(i, 1);
-  X_key = key[i];
+  X_KEY = KEY[i];
   if (j == 0) found = true;
-  else found = (gmm::abs(X_key) >= gmm::abs(key[j - 1]));
+  else found = (gmm::abs(X_KEY) >= gmm::abs(KEY[j - 1]));
  
   while (!found) { // seeking the appropriate  position
-    key[j] = key[j - 1];
+    KEY[j] = KEY[j - 1];
     M(j, 0) = M(j - 1, 0);
     M(j, 1) = M(j - 1, 1);
     --j;
     if (j == 0) found = true;
-    else found = (gmm::abs(X_key) >= gmm::abs(key[j - 1]));
+    else found = (gmm::abs(X_KEY) >= gmm::abs(KEY[j - 1]));
   }
 
   M(j, 0) = X[0]; M(j, 1) = X[1];
-  key[j] = X_key;
+  KEY[j] = X_KEY;
 }
 
-template<typename MODEL_STATE, typename MATRIX, typename VECT>
-void active_functions::compute_Jacobians
-(getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
- const plain_vector &UN, const plain_vector &UT, const plain_vector &UT0,
- const plain_vector &LN, const plain_vector &LT, const MATRIX &CH_, scalar_type limit,
+template<typename CH_MATRIX, typename T_MATRIX, typename VECT>
+void selections::proper_update
+(const VECT &contact_nodes, const CH_MATRIX &CH_, const T_MATRIX &TST, scalar_type limit,
  int noisy) {
 
-  scalar_type r = FRICTION.get_r();
-  scalar_type alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta();
-  plain_vector gap(LN.size()), friction_coef(LN.size());
-  base_vector test_fcn(3);
-    
-  gmm::copy(FRICTION.get_gap(), gap);
-  gmm::copy(FRICTION.get_friction_coef(), friction_coef);
+  size_type nbc = gmm::mat_nrows(CH_);
 
-  if (noisy > 1)
-    write_charact_solution(FRICTION, contact_nodes, UN, UT, UT0, LN, LT);
-
-  if (gmm::mat_nrows(CH_M) == 0) {
-    gmm::resize(CH_M, gmm::mat_nrows(CH_), gmm::mat_ncols(CH_));
-    gmm::resize(ACT_M, 3 * gmm::mat_nrows(CH_), 2);
-    gmm::resize(limit_val, 3 * gmm::mat_nrows(CH_));
+  if (noisy > 1) {
+    cout << "characters of the last computed solution:" << endl;
+    for (size_type i = 0; i < nbc; ++i)
+      cout << "node " << i << ": " << contact_nodes[i] << " " 
+	   << CH_(i, 0) << CH_(i, 1) << CH_(i, 2) << endl;
   }
-  
-  gmm::copy(CH_, CH_M);
 
+  if (gmm::mat_nrows(CH) == 0) {
+    gmm::resize(CH, nbc, 3); gmm::resize(ACT, 3 * nbc, 2); gmm::resize(LV, 3 * nbc);
+  }
+
+  gmm::copy(CH_, CH);
   nba = 0;
 
-  for (size_type i = 0; i < LN.size(); ++i) {
-    test_fcn[0] = LN[i] - r * alpha * (UN[i] - gap[i]);
-    test_fcn[1] = - friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]);
-    test_fcn[2] = friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]);
-    
+  for (size_type i = 0; i < nbc; ++i) {   
     for (size_type j = 0; j < 3; ++j)
-      if (gmm::abs(test_fcn[j]) <= limit) {
+      if (gmm::abs(TST(i, j)) <= limit) {
 	if (nba == 0)
 	  cout << "test functions with values close to zero:" << endl;
-	cout << "test_fcn(" << i << ", " << j << ") = " << test_fcn[j]
-	     << " (node " << i << ", " << contact_nodes[i] << " " 
-// 	     << "LN = " << LN[i] 
-// 	     << ", r * alpha * (UN - gap) = " << r * alpha * (UN[i] - gap[i])
-// 	     << ", - friction_coef * LN + LT = "
-// 	     << -friction_coef[i] * LN[i] + LT[i]
-// 	     << ", friction_coef * LN + LT = "
-// 	     << friction_coef[i] * LN[i] + LT[i] 
-// 	     << ", r * beta * (UT - UT0) = "
-// 	     << r * beta * (UT[i]-UT0[i])
-	     << CH_M(i, 0) << CH_M(i, 1) << CH_M(i, 2) << ")" << endl;
+	cout << "TST(" << i << ", " << j << ") = " << TST(i, j) << endl;
 	
-	ACT_M(nba, 0) = i; ACT_M(nba, 1) = j;
-	limit_val[nba] = test_fcn[j];
-	straight_insertion(ACT_M, limit_val, nba);
+	ACT(nba, 0) = i; ACT(nba, 1) = j; LV[nba] = TST(i, j);
+	straight_insertion(ACT, LV, nba);
 	++nba;
       }
   }
@@ -733,90 +712,72 @@ void active_functions::compute_Jacobians
     cout << "no test functions with values close to zero were founded " << endl;
 }
 
-template<typename MODEL_STATE>
-bool active_functions::compute_new_tangent
+template<typename MODEL_STATE, typename CH_MATRIX, typename VECT>
+bool selections::compute_new_tangent
 (MODEL_STATE &MS, getfem::mdbrick_abstract<MODEL_STATE> &final_model,
  getfem::mdbrick_Dirichlet<MODEL_STATE> &DIRICHLET,
- getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, plain_vector grad_XI,
- const plain_vector &F2_init, const plain_vector &deltaF2, const plain_vector &X,
- const plain_vector &T, int noisy) {
+ getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const VECT &contact_nodes,
+ plain_vector grad_XI, const plain_vector &F2_0, const plain_vector &deltaF2,
+ const plain_vector &X, plain_vector &T, CH_MATRIX &CH_, int noisy) {
   /* cames through the proposed Jacobians with a change exactly at one character */
 
   bool new_tangent = false;
   size_type stot = gmm::mat_ncols(MS.tangent_matrix());
-  plain_vector F2 = F2_init;
+  plain_vector F2 = F2_0;
   
   if (row < nba) {
     gmm::copy(gmm::sub_vector(X, gmm::sub_interval(0, stot)), MS.state());
     gmm::add(gmm::scaled(deltaF2, X[stot]), F2);
     DIRICHLET.rhs().set(F2);
     
+    size_type i, j;
     while(!new_tangent && row < nba) {
-      size_type i = ACT_M(row, 0), j = ACT_M(row, 1);
-      
-      CH_M(i, j) = !CH_M(i, j);
-      
-      if((CH_M(i, 0) || j == 0) && (CH_M(i, 1) || CH_M(i, 2))) {
-	/* the character can be accepted */
-	cout << "trying the following character of node " << i << ": "
-	     << CH_M(i, 0) << CH_M(i, 1) << CH_M(i, 2) << endl;
 	
-	FRICTION.set_character_matrix(CH_M);
+      i = ACT(row, 0), j = ACT(row, 1);
+      CH(i, j) = !CH(i, j);
+      
+      if ((CH(i, 0) && (CH(i, 1) || CH(i, 2))) || (!CH(i, 0) && CH(i, 1) != CH(i, 2))) {
+	/* the transition is meaningful */
+	cout << "enforcing transition of node " << i << ": " << contact_nodes[i] << " ";
+	switch (j) {
+	case 0: cout << !CH(i, 0) << CH(i, 1) << CH(i, 2); break;
+	case 1: cout << CH(i, 0) << !CH(i, 1) << CH(i, 2); break;
+	case 2: cout << CH(i, 0) << CH(i, 1) << !CH(i, 2); break;
+	}
+	cout << " -> " << CH(i, 0) << CH(i, 1) << CH(i, 2) << endl;
+	
+	FRICTION.set_character_matrix(CH);
 	final_model.compute_tangent_matrix(MS);
 	
-	if (gmm::vect_size(tangent) == 0)
-	  gmm::resize(tangent, stot + 1);
-	gmm::copy(T, tangent);
-	compute_tangent(MS.tangent_matrix(), grad_XI, tangent, noisy);
-	cout << "T0.tangent = " << gmm::vect_sp(T, tangent) << ", ";
-	new_tangent = true;
+	compute_tangent(MS.tangent_matrix(), grad_XI, T, noisy);
+	new_tangent = true; gmm::copy(CH, CH_);
       }
       
-      CH_M(i, j) = !CH_M(i, j);
+      CH(i, j) = !CH(i, j);
       ++row;
     }
     
     FRICTION.clear_character_matrix();
   }
-
+  
   return new_tangent;
-
+  
 }
 
 template<typename MODEL_STATE>
-void active_functions::tangent_orientation
+void selections::determine_tangent_orientation
 (getfem::mdbrick_Coulomb_friction<MODEL_STATE> &FRICTION, const plain_vector &UN,
  const plain_vector &UT, const plain_vector &UT0, const plain_vector &LN,
  const plain_vector &LT, plain_vector &T) {
 
-  size_type i = ACT_M(row - 1, 0), j = ACT_M(row - 1, 1);
-  scalar_type r = FRICTION.get_r(), alpha = FRICTION.get_alpha(), beta = FRICTION.get_beta(),
-    test_fcn;
-  plain_vector gap(LN.size()), friction_coef(LN.size());
-    
-  gmm::copy(FRICTION.get_gap(), gap);
-  gmm::copy(FRICTION.get_friction_coef(), friction_coef);
+  size_type i = ACT(row - 1, 0), j = ACT(row - 1, 1);
+  scalar_type tst = compute_test_function(FRICTION, UN, UT, UT0, LN, LT, i, j);
 
-  switch (j) {
-  case 0: test_fcn = LN[i] - r * alpha * (UN[i] - gap[i]); break;
-  case 1: test_fcn = - friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]); break;
-  default: test_fcn = friction_coef[i] * LN[i] + LT[i] - r * beta * (UT[i] - UT0[i]); break;
-  }
-
-  cout << "test_fcn(i, j)(tangent) = " << test_fcn - limit_val[row - 1] << ", ";
-//   cout << " LN = " << LN[i] 
-//        << ", r * alpha * (UN - gap) = " << r * alpha * (UN[i] - gap[i]) << ", ";
-// 	     << ", - friction_coef * LN + LT = "
-// 	     << -friction_coef[i] * LN[i] + LT[i]
-// 	     << ", friction_coef * LN + LT = "
-// 	     << friction_coef[i] * LN[i] + LT[i] 
-// 	     << ", r * beta * (UT - UT0) = "
-// 	     << r * beta * (UT[i]-UT0[i])
-  if (limit_val[row - 1] * (test_fcn - limit_val[row - 1])  > 0) {
+  if (LV[row - 1] * (tst - LV[row - 1])  > 0) {
     gmm::scale(T, -1.0);
-    cout << "T0 := -tangent" << endl;
+    cout << "TST(i, j)(X0 + T) - TST(i, j)(X0) = " << LV[row - 1] - tst << ", ";
   } else
-    cout << "T0 := tangent" << endl;
+    cout << "TST(i, j)(X0 + T) - TST(i, j)(X0) = " << tst - LV[row - 1] << ", ";
 }
   
 /**************************************************************************/
@@ -945,7 +906,7 @@ bool friction_problem::solve(plain_vector &U) {
   getfem::mdbrick_dynamic<> *pDYNAMIC = 0;
 
   // Eventual dynamic brick
-  if (rho > 0) {
+  if (is_dynamic) {
     pfinal_model = pDYNAMIC = new getfem::mdbrick_dynamic<>(DIRICHLET, rho);
     pDYNAMIC->set_dynamic_coeff(1./(deltat*deltat), 1.);
     if (nocontact_mass)
@@ -955,23 +916,24 @@ bool friction_problem::solve(plain_vector &U) {
   // Generic solver.
   getfem::standard_model_state MS(*pfinal_model);
   size_type step0 = PARAM.int_value("STEP0") ? PARAM.int_value("STEP0") : 0;
+  bool start_standard_solver = (PARAM.int_value("STANDARD_SOLVER",
+						"Start with the standard solver?") != 0);
   size_type step0_cont = PARAM.int_value("STEP0_CONT") ?
     PARAM.int_value("STEP0_CONT") : 0;
-  bool X0_given = PARAM.int_value("X0_GIVEN") ? (PARAM.int_value("X0_GIVEN") != 0) : false;
-  size_type maxit = PARAM.int_value("MAXITER"); 
+  size_type maxit = PARAM.int_value("MAXITER");
   gmm::iteration iter;
 
   scalar_type dy = PARAM.real_value("DIRICHLET_Y",
 				    "Prescribed displacement in y");
   scalar_type dxv = PARAM.real_value("DIRICHLET_X_SPEED",
 				     "Prescribed velocity in x");
-  scalar_type limit = PARAM.real_value("LIMIT", "limit for the test functions");
+  scalar_type x_min = PARAM.real_value("X_MIN");
   int noisy = PARAM.int_value("NOISY");
 
 
-  plain_vector F2_init = F2;
-  plain_vector U0 = U, U_init = U, UT0 = UT, UT_init = UT,
-    V0(gmm::vect_size(U)), DF(gmm::vect_size(U));
+  plain_vector F2_0 = F2, U0 = U, UT0 = UT, V0(gmm::vect_size(U)), DF(gmm::vect_size(U));
+  gmm::dense_matrix<bool> CH_(nbc, 3), CH0_(nbc, 3);
+  gmm::dense_matrix<scalar_type> TST(nbc, 3);
   short convergence = -1;
 //  plain_vector SumN(nb_step), SumT(nb_step),Pressure(nb_step);
 //  plain_vector maxT(nb_step);
@@ -983,7 +945,7 @@ bool friction_problem::solve(plain_vector &U) {
     char s[100]; sprintf(s, "step%d", step0);
     gmm::vecload(datafilename + s + ".U", U0);
     gmm::vecload(datafilename + s + ".Y", MS.state());
-    if (rho > 0)
+    if (is_dynamic)
       gmm::vecload(datafilename + s + ".V", V0);
   }
  
@@ -992,11 +954,12 @@ bool friction_problem::solve(plain_vector &U) {
     cout << "beginning of step " << step+1 
 	     << ", number of variables : " << pfinal_model->nb_dof() << endl ;
 
-    if (rho > 0) {
+    if (is_dynamic) {
       gmm::mult(pDYNAMIC->get_M(), gmm::scaled(U0, 1./(deltat*deltat)), DF);
       gmm::mult_add(pDYNAMIC->get_M(), gmm::scaled(V0, 1./deltat), DF);
       pDYNAMIC->set_DF(DF);
     }
+    FRICTION.set_WT(gmm::scaled(U0, -1.0));
 
     convergence = -1;
 
@@ -1011,9 +974,7 @@ bool friction_problem::solve(plain_vector &U) {
 	// F2[i*N+N-1] = dy+dy*3*step/nb_step;
       }
 
-      FRICTION.set_WT(gmm::scaled(U0, -1.0));
-
-      if (step0_cont ==  0 && !X0_given) { /* the standard solver */
+      if (start_standard_solver) { /* the standard solver */
 	iter = gmm::iteration(residual, noisy, maxit ? maxit : 40000);
 	standard_solver(MS, *pfinal_model, DIRICHLET, F2, iter);
 
@@ -1021,8 +982,10 @@ bool friction_problem::solve(plain_vector &U) {
 	  convergence = 1;
 	else {
 	  cout << "the standard solver has failed, ";
-	  if (convergence == 0) /* the initial approximation was given by continuation */
+	  if (convergence == 0) /* the initial approximation was given by the continuation */
 	    convergence = - 2;
+	  else
+	    step0_cont = 0;
 	}
 	  
       } // the standard solver
@@ -1030,88 +993,60 @@ bool friction_problem::solve(plain_vector &U) {
       if (convergence == -1) {
 	/* the solution has not been found by the standard solver; 
 	   proceed with continuation --- the continuation parameter XI is such that 
-	   the actual Dirichlet condition (load) is F2_init + XI * (F2 - F2_init) */
+	   the actual Dirichlet condition (load) is F2_0 + XI * (F2 - F2_0) */
 
-	cout << "starting to continue";
+	cout << "starting to continue" << endl;
 	GMM_ASSERT1(PARAM.int_value("DIRICHLET_VERSION") == 0, "The continuation only "
 		    "implemented for the Dirichlet condition with multipliers");
-	GMM_ASSERT1(rho <= 0, "The continuation is proposed only for the quasi-static case");
+	GMM_ASSERT1(!is_dynamic,
+		    "The continuation is proposed only for the quasi-static case");
 
-	size_type step_dec = PARAM.int_value("STEP_DEC") ? PARAM.int_value("STEP_DEC") : 0;
-	size_type step_init = step - step_dec;
-	cout << ", initial step for continuation = " << step_init << endl;
 	scalar_type difference = PARAM.real_value("DIFFERENCE");
 	if (difference == 0.) difference = 1e-10;
 	scalar_type minangle = PARAM.real_value("ANGLE");
+	scalar_type limit = PARAM.real_value("LIMIT", "limit for the test functions");
 	scalar_type XI_end = PARAM.real_value("XI_END");
 	scalar_type maxdist = PARAM.real_value("DISTANCE");
 	size_type maxit_corr = PARAM.int_value("MAXITER_CORR");
 	size_type thr_corr = PARAM.int_value("THRESHOLD_CORR");
 	size_type nb_step_cont = PARAM.int_value("NBSTEP_CONT");
 
-	size_type n = pfinal_model->nb_dof();
-	scalar_type h_init = PARAM.real_value("H_INIT", "Initial step length") * n;
-	scalar_type h_max = PARAM.real_value("H_MAX", "Maximal step length") * n;
-	scalar_type h_min = PARAM.real_value("H_MIN", "Minimal step length") * n;
-	scalar_type h_inc = PARAM.real_value("H_INC");
-	scalar_type h_dec = PARAM.real_value("H_DEC");
-	scalar_type h_change = PARAM.real_value("H_CHANGE") * n;
-	scalar_type h = PARAM.real_value("H") ? PARAM.real_value("H") * n : h_init;
-
-
 	/* set the initial values and compute the gradient with respect to XI */
 	scalar_type XI0;
 	size_type stot = gmm::mat_ncols(MS.tangent_matrix());
-	plain_vector Y0(stot);
-	plain_vector X0(stot+1), X(stot+1), T0(stot+1), T(stot+1);
+	plain_vector Y0(stot), X0(stot+1), X(stot+1), T0(stot+1), T(stot+1);
 	gmm::dense_matrix<bool> CH(nbc, 3), CH0(nbc, 3);
+	gmm::dense_matrix<scalar_type> TST0(nbc, 3);
 	plain_vector deltaF2 = F2;
 	plain_vector grad_XI(stot);
 
-	if (step_init > 0) {
-	  char s[100]; sprintf(s, "step%d", step_init);
-	  gmm::vecload(datafilename + s + ".F2", F2_init);
-	  gmm::vecload(datafilename + s + ".U", U_init);
-	  FRICTION.set_WT(gmm::scaled(U_init, -1.0));
+	if (step > 0) {
+	  char s[100]; sprintf(s, "step%d", step);
+	  gmm::vecload(datafilename + s + ".F2", F2_0);
 	}
 
 	size_type ind =  DIRICHLET.first_ind();
 	size_type sc = gmm::vect_size(DIRICHLET.get_CRHS());
-	gmm::add(gmm::scaled(F2_init, -1.0), deltaF2);
+	gmm::add(gmm::scaled(F2_0, -1.0), deltaF2);
 	DIRICHLET.rhs().set(deltaF2);
 	pfinal_model->compute_tangent_matrix(MS);
 	gmm::copy(DIRICHLET.get_CRHS(),
 		  gmm::sub_vector(grad_XI, gmm::sub_interval(ind, sc)));
 	gmm::scale(grad_XI, -1.0);
 
-	if (X0_given || step0_cont > 0) {
-	  char s1[100]; sprintf(s1, "step%d", step + 1);
-	  char s2[100]; sprintf(s2, "%d", step0_cont);
-	  gmm::vecload(datafilename + s1 + "_" + s2 + ".X", X0);
-	  gmm::copy(gmm::sub_vector(X0, gmm::sub_interval(0, stot)), MS.state());
-	  XI0 = X0[stot];
-	  if (step0_cont > 0)
-	    gmm::vecload(datafilename + s1 + "_" + s2 + ".T", T0);
-	}
+	if (step0_cont == 0) {
 
-	if (step0_cont == 0){
-
-	  if (!X0_given) {
-	    cout << "starting computing an initial point" << endl;
-	    if (step_init > 0) {
-	      char s[100]; sprintf(s, "step%d", step_init);
-	      gmm::vecload(datafilename + s + ".Y", Y0);
-	    }
-	    gmm::copy(Y0, MS.state()); XI0 = maxdist;
-	  } else {
-	    cout << "correcting the given initial point" << endl;
-	    XI0 /= h_dec;
+	  cout << "starting computing an initial point" << endl;
+	  if (step > 0) {
+	    char s[100]; sprintf(s, "step%d", step);
+	    gmm::vecload(datafilename + s + ".Y", Y0);
 	  }
+	  gmm::copy(Y0, MS.state()); XI0 = maxdist;
 
 	  do {
-	    XI0 *= h_dec; 
+	    XI0 *= 0.5; 
 	    cout << "XI0 = " << XI0 << endl;
-	    gmm::copy(F2_init, F2);
+	    gmm::copy(F2_0, F2);
 	    gmm::add(gmm::scaled(deltaF2, XI0), F2);
 	    iter = gmm::iteration(residual, noisy, maxit_corr ? maxit_corr : 40000);
 	    standard_solver(MS, *pfinal_model, DIRICHLET, F2, iter);
@@ -1125,13 +1060,21 @@ bool friction_problem::solve(plain_vector &U) {
 	  compute_tangent(MS.tangent_matrix(), grad_XI, T0, noisy);
 	  if (T0[stot] < 0)
 	    gmm::scale(T0, -1.0);
+
+	} else {
+	  char s1[100]; sprintf(s1, "step%d", step + 1);
+	  char s2[100]; sprintf(s2, "%d", step0_cont);
+	  gmm::vecload(datafilename + s1 + "_" + s2 + ".X", X0);
+	  gmm::copy(gmm::sub_vector(X0, gmm::sub_interval(0, stot)), MS.state());
+	  XI0 = X0[stot];
+	  gmm::vecload(datafilename + s1 + "_" + s2 + ".T", T0);
 	}
 
 	compute_displacement(MS, *pfinal_model, *pl, *pELAS_nonlin, *pELAS_lin, U, law_num);
-	gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U_init, UT_init);
+	gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U0, UT0);
 	gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
-	compute_charact_solution(FRICTION, contact_nodes, UN, UT, UT_init, LN1, LT1, CH0,
-				 noisy + 1);
+	compute_activity(FRICTION, contact_nodes, UN, UT, UT0, LN1, LT1, CH0, TST0,
+			 noisy + 1);
 
 	if (step0_cont == 0){
 	  char s1[100]; sprintf(s1, "step%d", step + 1);
@@ -1147,19 +1090,27 @@ bool friction_problem::solve(plain_vector &U) {
 	  gmm::vecsave(datafilename + s1 + "_0.VM", VM);
 	}
 
+	scalar_type h_init = PARAM.real_value("H_INIT", "Initial step length");
+	scalar_type h = PARAM.real_value("H") ? PARAM.real_value("H") : h_init;
+	scalar_type h_max = PARAM.real_value("H_MAX", "Maximal step length");
+	scalar_type h_min = PARAM.real_value("H_MIN", "Minimal step length");
+	scalar_type h_inc = PARAM.real_value("H_INC");
+	scalar_type h_dec = PARAM.real_value("H_DEC");
+	scalar_type h_change = PARAM.real_value("H_CHANGE");
+
 	size_type nb_dec;
-	active_functions act_fcn;
+	selections sel;
 	short new_point = -1;
 	iteration_corr iter_corr;
 	size_type step_cont = step0_cont;
-	while ((XI0 < XI_end - maxdist) && (step_cont < nb_step_cont)) {
+	while (XI0<XI_end - maxdist && XI0>-100. && step_cont<nb_step_cont) {
 	  cout << "beginning of step " << step + 1 << "_" << step_cont + 1
 	     << ", number of variables : " << stot + 1<< endl;
 	  nb_dec = 0;
 
 	  do { /* seek a new point */
 	    new_point = -1;
-	    cout << "XI0 = " << XI0 << ", h = " << h / n <<  ", deltaXI = " << h * T0[stot]
+	    cout << "XI0 = " << XI0 << ", h = " << h <<  ", deltaXI = " << h * T0[stot]
 		 << endl;
 
 	    gmm::copy(X0, X); gmm::copy(T0, T);
@@ -1167,7 +1118,7 @@ bool friction_problem::solve(plain_vector &U) {
 
 	    iter_corr = iteration_corr(residual, difference, noisy,
 				       maxit_corr ? maxit_corr : 40000);
-	    Newton_correction(MS, *pfinal_model, DIRICHLET, grad_XI, F2_init, deltaF2, X, T,
+	    Newton_correction(MS, *pfinal_model, DIRICHLET, grad_XI, F2_0, deltaF2, X, T,
 			      iter_corr);
 
 	    if (iter_corr.converged()) {
@@ -1176,13 +1127,13 @@ bool friction_problem::solve(plain_vector &U) {
 	      gmm::mult(BN, U, UN); gmm::mult(BT, U, UT);
 	      gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
 	      size_type nb_change =
-		compute_charact_solution(FRICTION, contact_nodes, UN, UT, UT_init, LN1, LT1,
-					 CH, CH0, noisy);
+		compute_activity(FRICTION, contact_nodes, UN, UT, UT0, LN1, LT1, CH0, CH,
+				 TST, x_min, noisy - 1);
 
 	      scalar_type XI = X[stot], angle =  gmm::vect_sp(T0, T);
 	      cout << "XI = " << XI << ", XI - XI0 = " << XI - XI0 << ", T0.T = " << angle;
-	      if ((angle >= minangle || (nb_change == 1 && h <= h_change))
-		  && (XI <= XI_end + maxdist)) {
+	      if (((nb_change == 0 && angle >= minangle)
+		   || (nb_change == 1 && h <= h_change)) && (XI <= XI_end + maxdist)) {
 		XI0 = XI; new_point = 1;
 	      }
 	      else
@@ -1196,30 +1147,24 @@ bool friction_problem::solve(plain_vector &U) {
 		++nb_dec;
 		new_point = 0;
 	      } else { /* try to change the Jacobian */
-		if (act_fcn.empty()) {
+		if (sel.empty()) {
 		  cout << "classical continuation has broken down, "
 		       << "starting searching for a new Jacobian" << endl;
-		  char s1[100]; sprintf(s1, "step%d", step + 1);
-		  char s2[100]; sprintf(s2, "%d", step_cont);
-		  gmm::vecload(datafilename + s1 + "_" + s2 + ".UN", UN);
-		  gmm::vecload(datafilename + s1 + "_" + s2 + ".UT", UT);
-		  gmm::vecload(datafilename + s1 + "_" + s2 + ".LN", LN1);
-		  gmm::vecload(datafilename + s1 + "_" + s2 + ".LT", LT1);
-		  act_fcn.compute_Jacobians(FRICTION, contact_nodes, UN, UT, UT_init, LN1,
-					    LT1, CH0, limit, noisy);
+		  sel.proper_update(contact_nodes, CH0, TST0, limit, noisy);
 		}
-		if (act_fcn.compute_new_tangent(MS, *pfinal_model, DIRICHLET, FRICTION,
-						grad_XI, F2_init, deltaF2, X0, T0, noisy)) {
-		  gmm::copy(act_fcn.get_tangent(), T0);
-
-		  cout << "determining direction of the new tangent" << endl;
-		  gmm::add(gmm::sub_vector(T0, gmm::sub_interval(0, stot)),
-			   gmm::sub_vector(X0, gmm::sub_interval(0, stot)), MS.state());
+		gmm::copy(T0, T);
+		if (sel.compute_new_tangent(MS, *pfinal_model, DIRICHLET, FRICTION,
+					    contact_nodes, grad_XI, F2_0, deltaF2, X0, T,
+					    CH0, noisy)) {
+		  gmm::add(gmm::sub_vector(X0, gmm::sub_interval(0, stot)),
+			   gmm::sub_vector(T, gmm::sub_interval(0, stot)), MS.state());
 		  compute_displacement(MS, *pfinal_model, *pl, *pELAS_nonlin, *pELAS_lin, U,
 				       law_num);
 		  gmm::mult(BN, U, UN); gmm::mult(BT, U, UT);
 		  gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
-		  act_fcn.tangent_orientation(FRICTION, UN, UT, UT_init, LN1, LT1, T0);
+		  sel.determine_tangent_orientation(FRICTION, UN, UT, UT0, LN1, LT1, T);
+		  cout << "T0.T = " << gmm::vect_sp(T0, T) << endl;
+		  gmm::copy(T, T0);
 
 		  h = h_init; nb_dec = 0;
 		  new_point = 0;
@@ -1244,8 +1189,8 @@ bool friction_problem::solve(plain_vector &U) {
 	    compute_Von_Mises(MS, *pELAS_nonlin, *pELAS_lin, mf_vm, VM, law_num);
 	    gmm::vecsave(datafilename + s1 + "_" + s2 + ".VM", VM);
 
-	    gmm::copy(X, X0); gmm::copy(T, T0); gmm::copy(CH, CH0);
-	    act_fcn.clear();
+	    gmm::copy(X, X0); gmm::copy(T, T0); gmm::copy(CH, CH0); gmm::copy(TST, TST0);
+	    sel.clear();
 	    if ((nb_dec == 0) && (iter_corr.get_iteration() <= thr_corr))
 	      h = (h_inc * h < h_max) ? h_inc * h : h_max; 
 	    cout << "end of Step n° " << step + 1 << "_" << step_cont + 1 << endl;
@@ -1257,7 +1202,7 @@ bool friction_problem::solve(plain_vector &U) {
 	} // the main loop of continuation
 
 	if (gmm::abs(XI_end - XI0) <= maxdist) {
-	  X0_given = false; step0_cont = 0; 
+	  start_standard_solver = true;
 	  convergence = 0;
 	  cout << "stop continuing, restarting the standard solver"
 	       << " with a new initial approximation" << endl;
@@ -1269,11 +1214,14 @@ bool friction_problem::solve(plain_vector &U) {
     if (convergence == 1) { /* solution in the actual step has been found */
 
       compute_displacement(MS, *pfinal_model, *pl, *pELAS_nonlin, *pELAS_lin, U, law_num);
-      if (noisy > 1) {
-	gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U0, UT0);
-	gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
-	write_charact_solution(FRICTION, contact_nodes, UN, UT, UT0, LN1, LT1);
-      }
+      gmm::mult(BN, U, UN); gmm::mult(BT, U, UT); gmm::mult(BT, U0, UT0);
+      gmm::copy(FRICTION.get_LN(MS), LN1); gmm::copy(FRICTION.get_LT(MS), LT1);
+      if (step == step0)
+	compute_activity(FRICTION, contact_nodes, UN, UT, UT0, LN1, LT1, CH_, TST,
+			 noisy + 1);
+      else
+	compute_activity(FRICTION, contact_nodes, UN, UT, UT0, LN1, LT1, CH0_, CH_, TST,
+			 x_min, noisy);
       
       // gmm::copy(FRICTION.get_LN(MS), LN1);
       // gmm::copy(FRICTION.get_LT(MS), LT1);
@@ -1343,13 +1291,13 @@ bool friction_problem::solve(plain_vector &U) {
       compute_Von_Mises(MS, *pELAS_nonlin, *pELAS_lin, mf_vm, VM, law_num);
       gmm::vecsave(datafilename + s + ".VM", VM);
       
-      if (rho > 0) {
+      if (is_dynamic) {
 	gmm::add(U, gmm::scaled(U0, -1.0), V0);
 	gmm::scale(V0, 1./deltat);
 	gmm::vecsave(datafilename + s + ".V", V0);
       }
 
-      gmm::copy(U, U0);
+      gmm::copy(U, U0); gmm::copy(CH_, CH0_);
       cout << "end of Step n° " << step+1 << " / " << nb_step << endl;
     
     // 	if (max[step]> Fmax)
