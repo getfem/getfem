@@ -556,8 +556,8 @@ namespace getfem {
 	      + (C(i, j) * C(k, l)) * det*c*scalar_type(4);
       }
 
-    GMM_ASSERT1(check_symmetry(result) == 7,
-		"Fourth order tensor not symmetric : " << result);
+//     GMM_ASSERT1(check_symmetry(result) == 7,
+// 		"Fourth order tensor not symmetric : " << result);
   }
 
 
