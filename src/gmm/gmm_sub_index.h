@@ -128,7 +128,7 @@ namespace gmm {
     template <typename CONT> sub_index(const CONT &c)
       : ind(index_generator::create_index(c.begin(), c.end())),
 	rind(index_generator::create_rindex(ind))
-        { comp_extr(); }
+    { comp_extr(); }
     ~sub_index()
       { index_generator::unattach(rind); index_generator::unattach(ind); }
     sub_index(const sub_index &si) : first_(si.first_), last_(si.last_),
@@ -144,12 +144,15 @@ namespace gmm {
   };
 
   struct unsorted_sub_index : public sub_index {
+    typedef basic_index base_type;
+    typedef base_type::const_iterator const_iterator;
+    
     template <typename IT> unsorted_sub_index(IT it, IT ite)
       : sub_index(it, ite) {}
     template <typename CONT> unsorted_sub_index(const CONT &c)
       : sub_index(c) {}
     unsorted_sub_index() {}
-    unsorted_sub_index(const unsorted_sub_index &si) : sub_index(si) {}
+    unsorted_sub_index(const unsorted_sub_index &si) : sub_index((sub_index &)(si)) { }
     unsorted_sub_index &operator =(const unsorted_sub_index &si)
     { sub_index::operator =(si); return *this; }
     void swap(size_type i, size_type j) {
