@@ -474,7 +474,7 @@ struct unilateral_contact_problem {
   
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool contact_only;
-  bool stabilized_problem, strmesh, rangeP_P;
+  bool stabilized_problem, Test_of_coer, strmesh, rangeP_P;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
   size_type cutoff_func;
@@ -684,13 +684,12 @@ void  unilateral_contact_problem::init(void) {
   
   
   
-  contact_only =
-    (PARAM.int_value("CONTACT_ONLY"," contact_only or not.") != 0);
-   stabilized_problem =
-    (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
-   rangeP_P =
+  contact_only = (PARAM.int_value("CONTACT_ONLY"," contact_only or not.") != 0);
+  stabilized_problem =  (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
+  Test_of_coer= (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
+  rangeP_P =
     (PARAM.int_value("rangeP_P"," The creteria of choise in range bases is performed by comparison to p  or not.") != 0);
-
+  
   mf_contt.set_finite_element(mesh.convex_index(), pf_mult_cont);
   
   
@@ -1164,19 +1163,27 @@ if (!contact_only){
   model.add_fixed_size_variable("dir", size);
   getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
 
+  //verified coercivit condition
+  
+  
+
+  
+  
+  
+  
   //classical inf-sup condition
-
- //   if (PARAM.int_value("INF_SUP_COMP")) {
-    
-//      cout << "Sparse matrices computation for the test of inf-sup condition"
-// 	 << endl;
-
-//   //  sparse_matrix MUU(nb_dof, nb_dof);
-//     sparse_matrix MPP(nb_dof_cont, nb_dof_cont);
-//     sparse_matrix BBB(nb_dof_cont, nb_dof);
-//     sparse_matrix MTILD(nb_dof_cont, nb_dof_cont);
-//     plain_vector VVV(nb_dof),VVV1(nb_dof),VVV0(nb_dof), dd1(nb_dof_cont), dd2(nb_dof_cont), YYY(nb_dof_cont), ZZZ(nb_dof_cont);
-//     scalar_type lllambda;
+  
+  //   if (PARAM.int_value("INF_SUP_COMP")) {
+  
+  //      cout << "Sparse matrices computation for the test of inf-sup condition"
+  // 	 << endl;
+  
+  //   //  sparse_matrix MUU(nb_dof, nb_dof);
+  //     sparse_matrix MPP(nb_dof_cont, nb_dof_cont);
+  //     sparse_matrix BBB(nb_dof_cont, nb_dof);
+  //     sparse_matrix MTILD(nb_dof_cont, nb_dof_cont);
+  //     plain_vector VVV(nb_dof),VVV1(nb_dof),VVV0(nb_dof), dd1(nb_dof_cont), dd2(nb_dof_cont), YYY(nb_dof_cont), ZZZ(nb_dof_cont);
+  //     scalar_type lllambda;
 //     asm_mass_matrix_for_inf_sup(MTILD, mimbound, mf_cont(), ls); // int_gamma_c 1/h psi_i psi_j
 //     asm_mass_matrix_mixed_term(BBB, mimbound, mf_u(), mf_cont(), ls);
 //    // getfem::asm_mass_matrix(MUU, mimbound, mf_u());
@@ -1185,9 +1192,9 @@ if (!contact_only){
 //   //  gmm::scaled(VVV,gmm::vect_norm2(VVV));//x_n/norm(x_n)
 // do{
 //     gmm::mult(BBB, VVV, dd1);
-   
+  
 //    gmm::lu_solve(MPP, YYY,dd1);
-
+  
 //    gmm::mult(MTILD, YYY, dd2);
 //    gmm::lu_solve(gmm::transposed(MPP), ZZZ,dd2);
 
@@ -1200,7 +1207,6 @@ if (!contact_only){
 
 // //cout << "lambda = " << sqrt(1./lllambda) << endl;
 // cout << "residu = " << gmm::vect_dist2(VVV1, gmm::scaled(VVV, lllambda)) << endl;
-
 // //     gmm::copy(gmm::lu_inverse(Bis), Biss);
 // //     gmm::copy(BN, Mis);
 // //     gmm::mult(Biss, Mis, BissMis);
@@ -1231,6 +1237,62 @@ if (!contact_only){
 
   gmm::Harwell_Boeing_save("toto.hb", model.real_tangent_matrix());
 
+
+  //Test of coercivity
+  if (PARAM.int_value("Test_of_coer")) {
+    cout << "Compute the smallest eigenvalue" << endl;
+    size_type  nb_up;
+    gmm::sub_interval interval; 
+    nb_up= gmm::nnz(model.real_variable("u"));
+    interval = model.interval_of_variable("u");
+    cout<< "nb_up=" << nb_up << endl;
+    cout <<"nbdof_in_u="<<  gmm::nnz(model.real_variable("u"))<<endl;
+    cout <<"nbdof_in_p="<<  gmm::nnz(model.real_variable("Lambda"))<<endl;
+    sparse_matrix KKK(gmm::nnz(model.real_variable("u")), gmm::nnz(model.real_variable("u"))), 
+		       KKKK(gmm::nnz(model.real_variable("u")), gmm::nnz(model.real_variable("u")));
+
+
+    gmm::copy(gmm::sub_matrix(model.real_tangent_matrix(),interval, interval) ,KKK); 
+    plain_vector VVV(gmm::nnz(model.real_variable("u"))), VVV1(gmm::nnz(model.real_variable("u"))) ;
+    gmm::fill_random(VVV);   
+    scalar_type lllambda(0), lllambda_aux(1), lllambda_max(0);
+    do{
+      lllambda_aux= lllambda;
+      // gmm::copy(VVV,VVV1);
+      gmm::copy(gmm::scaled(VVV, (1./gmm::vect_norm2(VVV))),VVV1);
+      // cout<<"norm="<<gmm::vect_norm2(VVV1)<<endl;
+      gmm::mult(KKK,VVV1,VVV);
+      lllambda=gmm::vect_sp(VVV,VVV1); 
+      // cout<<"lllambda="<< lllambda<<endl;
+    }while (gmm::abs(lllambda-lllambda_aux ) > 1E-12);
+    lllambda_max=lllambda;
+    cout<<"lllambda_max="<< lllambda_max<<endl;
+
+
+    gmm::copy(gmm::identity_matrix(),KKKK);
+    gmm::scale(KKKK,-2.*lllambda_max);
+    gmm::add(KKKK,KKK);
+    //  cout<<KKKK<<endl;
+
+
+
+    gmm::fill_random(VVV);   
+    lllambda=0;
+    lllambda_aux=1;
+    do{
+      lllambda_aux= lllambda;
+      gmm::copy(gmm::scaled(VVV,(1./gmm::vect_norm2(VVV))),VVV1);
+      gmm::mult(KKK,VVV1,VVV);
+      lllambda=gmm::vect_sp(VVV,VVV1); 
+      // cout<<"lllambda="<< lllambda<<endl;
+    }while (gmm::abs(lllambda-lllambda_aux ) > 1E-10);
+    cout<<"lllambda_min="<<  lllambda+2.*lllambda_max <<endl;
+      }
+  
+
+
+
+
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(model.real_variable("u"), U);
   gmm::resize(LAMBDA, mf_cont().nb_dof());
@@ -1239,6 +1301,8 @@ if (!contact_only){
   if (!contact_only) {
     gmm::resize(LAMBDA_T, mf_cont().nb_dof());
     gmm::copy(model.real_variable("Lambda_t"), LAMBDA_T);
+
+
   }
   
   return (iter.converged());
@@ -1291,7 +1355,7 @@ int main(int argc, char *argv[]) {
   
   cout << p.mf_u().nb_basic_dof() << endl;
   cout << p.mf_cont().nb_basic_dof() << endl;
-  
+   cout << p.mf_cont().nb_dof() << endl;
   //construction of mesh refined
   
   // getfem::stored_mesh_slice slr;
@@ -1480,6 +1544,42 @@ int main(int argc, char *argv[]) {
   }
   
   
+
+
+ cout << "plot Von mises" << endl;
+
+
+  getfem::mesh_im mim_refined(mcut); 
+  mim_refined.set_integration_method(getfem::int_method_descriptor
+				     ("IM_TRIANGLE(6)"));
+
+  mcut.write_to_file(p.datafilename + ".meshvm");
+
+  getfem::mesh_fem mf_refined(mcut,dim_type(Q));
+  mf_refined.set_classical_discontinuous_finite_element(4, 0.001);
+  plain_vector W(mf_refined.nb_dof());
+  
+  getfem::interpolation(p.mf_u(), mf_refined, U, W);
+
+  mf_refined.write_to_file(p.datafilename + ".meshfemuvm", true);
+  gmm::vecsave(p.datafilename + ".Uvm", W);
+ 
+  getfem::mesh_fem mf_vm(mcut,  1);
+  mf_vm.set_classical_discontinuous_finite_element(4, 0.001);
+  plain_vector Vm(mf_vm.nb_dof());
+
+  
+  cout << "compute Von_mises" << endl;
+  getfem::interpolation_von_mises(mf_refined, mf_vm, W, Vm);
+
+  gmm::vecsave(p.datafilename + ".VM",Vm);
+  mf_vm.write_to_file(p.datafilename + ".meshfemvm", true);  
+
+
+
+
+
+
   //Compute error 
   
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
