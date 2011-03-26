@@ -39,6 +39,7 @@
 #include "getfem/getfem_superlu.h"
 #include "getfem_nonlinear_elastoptim.h" /*Optimization procedure to evaluate the order of singularities*/
 #include "gmm/gmm.h"
+#include "gmm/gmm_solver_Newton.h"
 #include "gmm/gmm_inoutput.h"
 
 /* some Getfem++ types that we will be using */
@@ -60,7 +61,7 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 /**************************************************************************/
 /*                                                                        */
-/* Enrichment.                                                            */
+/*                            Enrichment.                                 */
 /*                                                                        */
 /**************************************************************************/
 
@@ -83,9 +84,9 @@ generic_u_singular_xy_function::val(scalar_type x, scalar_type y) const {
   scalar_type theta = atan2(y, x);
   
   if (n <= 0)
-    return pow(r, alpha_md) * cos(scalar_type(n) * theta * 0.5);
+    return pow(r, alpha_md-n) * cos(scalar_type(n) * theta * 0.5);
   else
-    return pow(r, alpha_md) * sin(scalar_type(n) * theta * 0.5);
+    return pow(r, alpha_md+n) * sin(scalar_type(n) * theta * 0.5);
 }
 
 
@@ -174,7 +175,7 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
 */
 struct cr_nl_elastostatic_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN1_BOUNDARY_NUM = 1, NEUMANN2_BOUNDARY_NUM=2, NEUMANN3_BOUNDARY_NUM=3, NEUMANN4_BOUNDARY_NUM=4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
+  enum { BOUNDARY_NUM0 = 0, BOUNDARY_NUM1 = 1, BOUNDARY_NUM2 = 2, BOUNDARY_NUM3 = 3, BOUNDARY_NUM4 = 4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
   getfem::mesh mesh;         /* the mesh */
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::mesh_level_set mls;       /* the integration methods for cutted element.    */
@@ -304,21 +305,13 @@ std::string name_of_dof(getfem::pdof_description dof) {
  */
 void cr_nl_elastostatic_problem::init(void) {
 
-  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE",
-					     "Mesh type ");
-  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE",
-					     "FEM name");
-  std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P",
-					       "FEM name for the pressure");
-  std::string INTEGRATION = PARAM.string_value("INTEGRATION", 
-					       "Name of integration method");
-  std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
-						       "Name of simplex integration method");
-  std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION",
-							"Singular integration");
-
-  enrichment_option = enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION",
-							     "Enrichment option"));
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE", "Mesh type");
+  std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE", "FEM name");
+  std::string FEM_TYPE_P  = PARAM.string_value("FEM_TYPE_P", "FEM name for the pressure");
+  std::string INTEGRATION = PARAM.string_value("INTEGRATION", "Name of integration method");
+  std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION", "Name of simplex integration method");
+  std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION", "Singular integration");
+  enrichment_option = enrichment_option_enum(PARAM.int_value("ENRICHMENT_OPTION", "Enrichment option"));
   /* Lecture des parametres */
   pr1 = PARAM.real_value("P1", "First Elastic coefficient");
   pr2 = PARAM.real_value("P2", "Second Elastic coefficient");
@@ -464,10 +457,10 @@ void cr_nl_elastostatic_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(it.cv(), it.f());
     un /= gmm::vect_norm2(un);
 
-    if (un[0]  > 0.5) mesh.region(NEUMANN1_BOUNDARY_NUM).add(it.cv(), it.f());
-    if (un[1]  > 0.5) mesh.region(NEUMANN2_BOUNDARY_NUM).add(it.cv(), it.f());
-    if (un[0]  < -0.5) mesh.region(NEUMANN3_BOUNDARY_NUM).add(it.cv(), it.f());
-    if (un[1]  < -0.5) mesh.region(NEUMANN4_BOUNDARY_NUM).add(it.cv(), it.f());   
+    if (un[0]  > 0.5) mesh.region(BOUNDARY_NUM1).add(it.cv(), it.f());
+    if (un[1]  > 0.5) mesh.region(BOUNDARY_NUM2).add(it.cv(), it.f());
+    if (un[0]  < -0.5) mesh.region(BOUNDARY_NUM3).add(it.cv(), it.f());
+    if (un[1]  < -0.5) mesh.region(BOUNDARY_NUM4).add(it.cv(), it.f());   
 
   }
 }
@@ -544,6 +537,7 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
     lambda = gmm::vect_norm2(V2);
 
 //  compute the Rayleigh quotient
+
 //     mult(G, V2, W);
 //     scalar_type lambda2 = gmm::vect_sp(V2, W);
 //     gmm::mult(M, V2, W);
@@ -566,6 +560,8 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
+  size_type line_search_version = PARAM.int_value("line_search_version");
+  size_type Pseudo_Potential = PARAM.int_value("Pseudo_Potential");
   std::cout<<"law num  "<< law_num << endl;
   
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
@@ -879,44 +875,18 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   }
 
  // Defining the Neumann condition right hand side.
-  plain_vector F_Neumann1(nb_dof_rhs * N);
-  plain_vector F_Neumann2(nb_dof_rhs * N);
-  plain_vector F_Neumann3(nb_dof_rhs * N);
-  plain_vector F_Neumann4(nb_dof_rhs * N);
-  // Neumann condition brick.
+  plain_vector F_Neumann(nb_dof_rhs * N);
+ // Neumann condition brick.
    
-  for(size_type i = 0; i < F_Neumann1.size(); i=i+N)
-    F_Neumann1[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann1.size(); i=i+N)
-    F_Neumann1[i] = AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann2.size(); i=i+N)
-    F_Neumann2[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann2.size(); i=i+N)
-    F_Neumann2[i] = AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann3.size(); i=i+N)
-    F_Neumann3[i] = -AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann3.size(); i=i+N)
-    F_Neumann3[i] = -AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann4.size(); i=i+N)
-    F_Neumann4[i] = -AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann4.size(); i=i+N)
-    F_Neumann4[i] = -AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_Y;
+  
    
-   model.add_initialized_fem_data("NeumannData1", mf_rhs,F_Neumann1 );
-  getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData1", NEUMANN1_BOUNDARY_NUM);
+   model.add_initialized_fem_data("NeumannData", mf_rhs,F_Neumann );
 
-   model.add_initialized_fem_data("NeumannData2", mf_rhs,F_Neumann2 );
-  getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData2", NEUMANN2_BOUNDARY_NUM);
+  getfem::add_source_term_brick (model, mim, "u", "NeumannData", BOUNDARY_NUM1);
 
-   model.add_initialized_fem_data("NeumannData3", mf_rhs,F_Neumann3 );
-   getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData3", NEUMANN3_BOUNDARY_NUM);
-
-   model.add_initialized_fem_data("NeumannData4", mf_rhs,F_Neumann3 );
-   getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData4", NEUMANN4_BOUNDARY_NUM); 
+  
   
   // Dirichlet condition
 
@@ -1009,12 +979,82 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 //     exp.serie_add_object("deformationsteps");
 //   } 
 
+// line search 
+  // gmm::simplest_newton_line_search silnrs;
+  // gmm::default_newton_line_search dlnrs;
+  // gmm::systematic_newton_line_search sylnrs;
 
- 
-  // Solution extraction
-  //bool with_pseudo_potential = true;
-  //getfem::standard_solve(model, iter, with_pseudo_potential);
-   getfem::standard_solve(model, iter);
+  //gmm::abstract_newton_line_search line_search1;
+
+
+gmm::simplest_newton_line_search simls;
+gmm::default_newton_line_search dlnrs;
+gmm::systematic_newton_line_search sylnrs;
+
+//  simplest_newton_line_search 1 *** default_newton_line_search 2 *** systematic_newton_line_search 3
+ cout << "line search value" <<line_search_version<< endl;
+ switch (line_search_version){
+     
+    case 1:{
+      if (Pseudo_Potential == 1){
+	bool with_pseudo_potential = true;
+        //gmm::simplest_newton_line_search simls;
+	getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), simls, with_pseudo_potential);
+	cout << "/******************/" << endl;
+	cout << "/* Enery Criteria */" << endl;
+	cout << "/******************/" << endl;
+      }
+      getfem::standard_solve(model, iter,getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), simls );
+      cout << "=============================== " << endl;
+      cout << "= Simplest_newton_line_search = " << endl;
+      cout << "=============================== " << endl;
+      cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
+    }break;
+    case 2:{
+      if (Pseudo_Potential == 1){
+	bool with_pseudo_potential = true;
+	//gmm::default_newton_line_search dlnrs;
+	getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), dlnrs, with_pseudo_potential);
+	cout << "/******************/" << endl;
+	cout << "/* Enery Criteria */" << endl;
+	cout << "/******************/" << endl;
+      }
+      getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), dlnrs);
+      cout << "============================== " << endl;
+      cout << "= Default_newton_line_search = " << endl;
+      cout << "============================== " << endl;   
+      cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
+    }break;
+    
+
+    case 3: {
+      if (Pseudo_Potential == 1){
+	bool with_pseudo_potential = true;
+	//gmm::systematic_newton_line_search sylnrs;
+	getfem::standard_solve(model, iter,getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), sylnrs,  with_pseudo_potential);
+	cout << "/******************/" << endl;
+	cout << "/* Enery Criteria */" << endl;
+	cout << "/******************/" << endl;
+      }
+      getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), sylnrs); 
+      cout << "================================= " << endl;
+      cout << "= Systematic_newton_line_search = " << endl;
+      cout << "================================= " << endl;
+      cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
+    }break;
+    default: GMM_ASSERT1(false, "No such line search");
+    }
+
+  
+  
+
+   // Solution extraction
    gmm::copy(model.real_variable("u"), U);
    if (mixed_pressure && (law_num == 1 || law_num == 3)) {
      gmm::copy(model.real_variable("p"), P);}
@@ -1206,10 +1246,10 @@ int main(int argc, char *argv[]) {
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
     
-    std::string REFERENCE_MF = "reference_COE_N80_ciagey_0.15_load.meshfem";
-    std::string REFERENCE_U = "reference_COE_N80_ciagey_0.15_load.U";
-    std::string REFERENCE_MFP = "reference_COE_N80_ciagey_0.15_load.p_meshfem";
-    std::string REFERENCE_P = "reference_COE_N80_ciagey_0.15_load.P";
+    std::string REFERENCE_MF  = "reference_NX120_CIG_COE_base_comp.meshfem";
+    std::string REFERENCE_U   = "reference_NX120_CIG_COE_base_comp.U";
+    std::string REFERENCE_MFP = "reference_NX120_CIG_COE_base_comp.p_meshfem";
+    std::string REFERENCE_P   = "reference_NX120_CIG_COE_base_comp.P";
     
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
