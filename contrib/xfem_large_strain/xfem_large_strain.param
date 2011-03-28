@@ -1,22 +1,23 @@
-%-*- mat-lab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-*- mat-lab -*- (enables emacs matlab mode)                              %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program crack                                            %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-MU = 10.0;	        % Lam� coefficient.
+MU = 10.0;	        % Lame coefficient.
 QUAD = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%Nonlinear elasticity                               %%
+%%           Nonlinear elasticity                    %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Elastic coefficients                      %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Just for indication 			   %
-%Ogden mu=4.225E05			   
-%Mooney-Rivlin c1=0.4375*mu c2=0.0625*mu
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Ogden mu=4.225E05			   %
+%Mooney-Rivlin c1=0.4375*mu c2=0.0625*mu   %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Mooney-Rivlin.                           %  
@@ -27,17 +28,21 @@ QUAD = 0;
 %C_01=0.0034 MPa.                                   %    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-P1 = 1.83 ;	        % First elastic coefficient.%
-P2 = 0.034 ;   	        % Second elastic coefficient.%
-P3 = 0 ;   	        % Third elastic coefficient.%
+%P1 = 1.83 ;	        % First elastic coefficient.
+%P2 = 0.034 ;   		% Second elastic coefficient.
+%P3 = 0 ;   	        % Third elastic coefficient.
+
+P1 = 1 ;	        % First elastic coefficient.%
+P2 = 1 ;   	        % Second elastic coefficient.%
+P3 = 1 ;   	        % Third elastic coefficient.%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Hyperelastic law                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-LAW = 3;     % 1 : SaintVenant-Kirchhoff + incompressibility
-             % 2 : Ciarlet_Geymonat
-             % 3 : Mooney_Rivlin + incompressibility
+LAW = 2 ;     % 1 : SaintVenant-Kirchhoff + incompressibility
+              % 2 : Ciarlet_Geymonat
+              % 3 : Mooney_Rivlin + incompressibility
 
 
 BIMATERIAL = 0;         % 1 : To enable the bimaterial case
@@ -47,34 +52,42 @@ if BIMATERIAL
   MU_DOWN = 1.0;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%Newton_versions                           %
+%            Line search version           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-newton_version = 2     % 1 for simplest_newton_line_search
-                       % 2 for default_newton_line_search 
-    		       % 3 for systematic_newton_line_search 	
+line_search_version = 2     % 1 for simplest_newton_line_search
+                       	    % 2 for default_newton_line_search 
+    		            % 3 for systematic_newton_line_search
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	
+%            Energy criteria                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Pseudo_Potential = 0   % 1    Enable energy criteria
+                       % else Disable energy criteria 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %Hyperelastic law                          %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-REFINEMENT_RADIUS = 0 ;  % REF: 0.4;  % 0 for no refinement
+REFINEMENT_RADIUS = 0 ;   % REF: 0.4;  % 0 for no refinement
 REFINEMENT_PROCESS = 0 ;  % nb of desired refinement steps
 
-REFERENCE_TEST = 0;   % 1 to compute a reference solution exported into files
-ERROR_TO_REF_SOL = 1; % 1 to compute errors wrt the reference solution
-INF_SUP_COMP = 0; % Compute or not the inf_sup condition
+REFERENCE_TEST = 1;     % 1 to compute a reference solution exported into files
+ERROR_TO_REF_SOL = 0;   % 1 to compute errors wrt the reference solution
+INF_SUP_COMP = 0;       % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NB_ENR_FUNC_U = 2;
-NB_ENR_FUNC_P = 2;
+NB_ENR_FUNC_U = 3;
+NB_ENR_FUNC_P = 3;
 
-NX = 2;	        % space step.
-MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh.
-AMP_LOAD_X = 0.01;      % Load in X direction. 
-AMP_LOAD_Y = 0.01;      % Load in Y direction.
-nb_step  = 5;
+NX = 20 ;	         % space step.
+MESH_NOISED = 0;         % Set to one if you want to "shake" the mesh.
+AMP_LOAD_X = 0;       % Load in X direction. 
+AMP_LOAD_Y = 0.1;       % Load in Y direction.
+nb_step  = 6;
 NOISY = 0;
 stnst = 0; % 1 Applying load progressively (don't work) 
 
@@ -98,9 +111,9 @@ end;
 
 FEM_DISC = 'FEM_PK_DISCONTINUOUS(2,3,0.0001)'; % Discontinuous P1 for triangles
 
-MIXED_PRESSURE = 1;       % Mixed version or not.
-SINGULAR_SEARCH = 0;	% With singularity order search or not.
-DIRICHLET_VERSION = 0;  % 0 = multipliers, 1 = penalization, 2 = elimination
+MIXED_PRESSURE = 0;       % Mixed version or not.
+SINGULAR_SEARCH = 0;	  % With singularity order search or not.
+DIRICHLET_VERSION = 0;    % 0 = multipliers, 1 = penalization, 2 = elimination
 
 % integration meth. for sub-simplexe of elements crossed by the level-set
 SIMPLEX_INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),3)';
@@ -142,9 +155,11 @@ SPIDER_BIMAT_ENRICHMENT = 0;  % 0 for a sqrt spider enrichment
                               % 1 for sqrt(r)cos(ln(r)) and sqrt(r)sin(ln(r)) spider enrichment
 
 RESIDUAL = 1E-9;     	% residual for iterative methods if any.
-MAXITER = 500;
+MAXITER = 5000;
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'NX10_20enrichi_P1P1B_0.5load';     % Root of data files.
+% STD= Standard XFEM
+% COE= Cutoff_enrichement
+ROOTFILENAME = 'test_dirichlet_NX20';     % Root of data files.
 VTK_EXPORT = 0 % 2 export solution to a .vtk file ?
 
 

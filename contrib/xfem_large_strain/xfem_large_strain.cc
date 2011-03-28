@@ -221,6 +221,7 @@ struct cr_nl_elastostatic_problem {
   getfem::mesh_fem& mf_pe() { return mf_p_sum; }
   getfem::mesh_fem mf_rhs;
   
+ 
   scalar_type residual;        /* max residual for the iterative solvers         */
   bool mixed_pressure;
   bool sing_search;
@@ -557,6 +558,7 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
 
 bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
+  size_type nb_dof_mult = mf_mult.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
@@ -882,23 +884,36 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   for(size_type i = 1; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_Y;
   
    
-   model.add_initialized_fem_data("NeumannData", mf_rhs,F_Neumann );
+   model.add_initialized_fem_data("NeumannData", mf_rhs, F_Neumann );
 
-  getfem::add_source_term_brick (model, mim, "u", "NeumannData", BOUNDARY_NUM1);
+  getfem::add_source_term_brick (model, mim, "u", "NeumannData", BOUNDARY_NUM2);
 
+    //Dirichlet condition brick
+
+    plain_vector F_Diri(nb_dof_rhs * N);
+    
+    // for(size_type i = 0; i < F_Diri.size(); i=i+N) F_Diri[i] = 0;
+    // for(size_type i = 1; i < F_Diri.size(); i=i+N) F_Diri[i] = 0;
   
+    // gmm::resize(F_Diri, nb_dof_mult);
+    
+    model.add_initialized_fem_data("Dirichletdata", mf_rhs, F_Diri);
+    if (PARAM.int_value("DIRICHLET_VERSION") == 0)
+    add_Dirichlet_condition_with_multipliers (model, mim, "u", mf_u(), BOUNDARY_NUM4, "Dirichletdata");
+    else
+    add_Dirichlet_condition_with_penalization (model, mim, "u", 1E15, BOUNDARY_NUM4, "Dirichletdata");
   
   // Dirichlet condition
 
-  GMM_ASSERT1(N==2, "To be corrected for 3D computation");
-  sparse_matrix BB(3, mf_u().nb_dof());
+  // GMM_ASSERT1(N==2, "To be corrected for 3D computation");
+  // sparse_matrix BB(3, mf_u().nb_dof());
   
-   BB(0, icorner1) = 1.0;
-   BB(1, icorner1+1) = 1.0;
-   BB(2, icorner2) = 1.0;
-  std::vector<scalar_type> LRH(3);
-  model.add_fixed_size_variable("dir", 3);
-  getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+  // BB(0, icorner1) = 1.0;
+  // BB(1, icorner1+1) = 1.0;
+  // BB(2, icorner2) = 1.0;
+  // std::vector<scalar_type> LRH(3);
+  // model.add_fixed_size_variable("dir", 3);
+  // getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
 
 
  
