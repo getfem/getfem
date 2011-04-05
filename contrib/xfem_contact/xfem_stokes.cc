@@ -245,12 +245,84 @@ void asm_stabilization_symm_term
   assem.assembly(rg);
 }
 
+
+
+
+
+template<class MAT>
+void asm_mass_matrix_pl(const MAT &RM_, const getfem::mesh_im &mim,  const getfem::mesh_fem &mf_p, const getfem::mesh_fem &mf, 
+						 getfem::level_set &ls,
+						 const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+	MAT &RM = const_cast<MAT &>(RM_);
+	
+	level_set_unit_normal<std::vector<scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+	
+	getfem::generic_assembly
+    assem("t=comp(Base(#1).vBase(#2).NonLin(#3));"
+		  "M(#1, #2)+= t(:,:,i,i)");
+	assem.push_mi(mim);
+	assem.push_mf(mf_p);
+	assem.push_mf(mf);
+	assem.push_mf(ls.get_mesh_fem());
+	assem.push_mat(RM);
+	assem.push_nonlinear_term(&nterm);
+	assem.assembly(rg);
+}
+					
+
+
+template<class MAT>
+void asm_mass_matrix_up(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_p, const getfem::mesh_fem &mf, 
+					getfem::level_set &ls,
+					const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+	MAT &RM = const_cast<MAT &>(RM_);
+	
+	level_set_unit_normal<std::vector<scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+	
+	getfem::generic_assembly
+    assem("t=comp(Base(#1).NonLin(#3).NonLin(#3).vGrad(#2));"
+		  "M(#1, #2)+= t(:,i,j,:,i,j)");
+	assem.push_mi(mim);
+	assem.push_mf(mf_p);
+	assem.push_mf(mf);
+	assem.push_mf(ls.get_mesh_fem());
+	assem.push_mat(RM);
+	assem.push_nonlinear_term(&nterm);
+	assem.assembly(rg);
+}
+				   
+				   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  * Elementary extrapolation matrices
  */
 
-void compute_mass_matrix_extra_element
-(base_matrix &M, const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
+void compute_mass_matrix_extra_element(base_matrix &M, const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
  size_type cv1, size_type cv2) {
 
   getfem::pfem pf1_old = 0;
@@ -541,6 +613,44 @@ int main(int argc, char *argv[]) {
   scalar_type dir_gamma0(0);
   sparse_matrix MA(nb_dof_mult, nb_dof_mult), KA(nb_dof, nb_dof);
   sparse_matrix BA(nb_dof_mult, nb_dof);
+	
+	
+	
+	// Stabilization of the pressure
+	sparse_matrix Mup(nb_dof_p, nb_dof);
+	sparse_matrix Mpp(nb_dof_p, nb_dof_p);
+	sparse_matrix Mpl(nb_dof_p, nb_dof_mult);
+	
+	
+	getfem::asm_mass_matrix(Mpp,mimbound,mf_p,mf_p);
+	asm_mass_matrix_pl(Mpl,mimbound,mf_p,mf_mult,ls);
+	asm_mass_matrix_up(Mup,mimbound,mf_p,mf,ls);
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
   if (stabilized_dirichlet > 0) {
 
     sparse_row_matrix E1(nb_dof, nb_dof);
@@ -638,6 +748,11 @@ int main(int argc, char *argv[]) {
     gmm::scale(BA, -dir_gamma0 * h);
     gmm::scale(KA, -dir_gamma0 * h);
 
+	gmm::scale(Mup,  dir_gamma0 * h);
+	gmm::scale(Mpp, -dir_gamma0 * h);  
+	gmm::scale(Mpl, dir_gamma0 * h);  
+	  
+	  
     if (stabilized_dirichlet == 2) {
       sparse_matrix A1(nb_dof_mult, nb_dof);
       gmm::copy(BA, A1);
@@ -758,6 +873,11 @@ cout << compteur << " " << G[0] << " " << G[1] << endl;
   if (stabilized_dirichlet > 0){
        getfem::add_explicit_matrix(MS, "LAMBDA", "LAMBDA", MA);
        getfem::add_explicit_matrix(MS, "u", "u", KA);
+	  
+	  getfem::add_explicit_matrix(MS, "u", "p", gmm::transposed(Mup));
+	  getfem::add_explicit_matrix(MS, "p", "p", Mpp);
+	  getfem::add_explicit_matrix(MS, "p", "LAMBDA", Mpl);
+	  getfem::add_explicit_matrix(MS, "LAMBDA", "p", gmm::transposed(Mpl));	  
   }
 
 

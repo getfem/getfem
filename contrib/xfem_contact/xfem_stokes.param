@@ -5,16 +5,16 @@
 
 NU = 1.0;	        % Viscosity coefficient.
 
-QUAD = 1;
+QUAD = 0;
 N = 2;
 RADIUS = 0.21;             % radius of the real circular domain.
 LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial.
                            % defining the level set.
 EXACT_SOL = 4;             % Which exact solution.
 SIMPLIFY_LEVEL_SET = 0;
-STABILIZED_DIRICHLET = 1; % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab.
-MINIMAL_ELT_RATIO = 0.005;  % threshold ratio for the fully stab Dirichlet.
-DIRICHLET_GAMMA0 = 0.1;  % Barbosa Hughes stabilization parameter
+STABILIZED_DIRICHLET = 1;    % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab.
+MINIMAL_ELT_RATIO = 0.005;   % threshold ratio for the fully stab Dirichlet.
+DIRICHLET_GAMMA0 = 0.01;     % Barbosa Hughes stabilization parameter
 		   
 OK = 0;
 
@@ -29,28 +29,26 @@ if (N == 1)
 end;
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[20,20]';
+  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[40,40]';
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
   FEM = 'FEM_QK(2,2)';      % Finite element method for the velocity u.
+  FEM_RHS = 'FEM_QK(2,2)';     % Finite element method for the rhs
   FEM_p = 'FEM_QK(2,1)';      % Finite element method for the pressure p.
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
-  FEM_RHS = 'FEM_QK(2,2)';     % Finite element method for the rhs
   FEM_MULT = 'FEM_QK(2,0)'; % Finite element method for multipliers
   OK = 1;
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[40,40]';
+  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[20,20]';
 %  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
-  FEM = 'FEM_PK(2,2)';      % Finite element method for the velocity u.
-  FEM_p = 'FEM_PK(2,1)';      % Finite element method for the pressure p.
-  FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
-%  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
-%  FEM = 'FEM_P1_PIECEWISE_LINEAR_BUBBLE';
+  FEM =     'FEM_PK(2,2)';      % Finite element method for the velocity u.
   FEM_RHS = 'FEM_PK(2,2)';  % Finite element method for the rhs
+  FEM_p =   'FEM_PK(2,1)';      % Finite element method for the pressure p.
+  FEM_MULT = 'FEM_PK(2,1)'; % Finite element method for multipliers
   OK = 1;
 end;
 
@@ -73,3 +71,6 @@ end;
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'xfem_dirichlet';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
+
+%  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
+%  FEM = 'FEM_P1_PIECEWISE_LINEAR_BUBBLE';
