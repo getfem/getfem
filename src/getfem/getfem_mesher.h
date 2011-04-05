@@ -798,7 +798,7 @@ namespace getfem {
       return d;
     }
     scalar_type grad(const base_node &, base_small_vector &) const
-    { assert(0); }
+    { GMM_ASSERT1(false, "Sorry, to be done"); return 0.; }
     void hess(const base_node &, base_matrix &) const {
       GMM_ASSERT1(false, "Sorry, to be done");
     }
