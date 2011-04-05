@@ -136,14 +136,18 @@ namespace getfem {
 
       bgeot::geotrans_interpolation_context c2(pgp2, 0, G);
       scalar_type area1 = convex_area_estimate(pgt, G, pim1);
+	  
+      size_type tdim = mf.get_qdim() / pf->target_dim();
 
       for (size_type i = 0; i < pai2->nb_points_on_convex(); ++i) {
 	for (unsigned d = 0; d < pf->nb_dof(cv); ++d) {
-	  // deals with Qdim eventually ...
-	  if (i == 0) areas[mf.ind_basic_dof_of_element(cv)[d]] += area1;
-	  c2.set_ii(i);
-	  area_supports[mf.ind_basic_dof_of_element(cv)[d]]
-	    += pai2->coeff(i) * c2.J() * gmm::sqr(pfp->val(i)[d]);
+	  for (size_type j = 0; j < tdim; ++j) {
+	    if (i == 0)
+	      areas[mf.ind_basic_dof_of_element(cv)[d*tdim+j]] += area1;
+	    c2.set_ii(i);
+	    area_supports[mf.ind_basic_dof_of_element(cv)[d*tdim+j]]
+	      += pai2->coeff(i) * c2.J() * gmm::sqr(pfp->val(i)[d]);
+	  }
 	  //	    * ((gmm::abs(pfp->val(i)[d]) < 1e-10) ? 0.0 : 1.0);
 	}
       }
