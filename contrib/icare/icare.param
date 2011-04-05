@@ -2,28 +2,53 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % parameters for program stokes                                           %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-N = 3;
+N = 2;
 QUAD = 0;
-NU = 1/80;       % Viscosity coefficient. (NU = 1 / Re)
+NU = 1/80;        % test 1/100 sinon, Viscosity coefficient. (NU = 1 / Re)
 ALPHA = 0.0;   	  % rate of rotation of the cylinder
+                  % The RADIUS must be less than 1 
 
-BOXXmin = 4.5;
-BOXXmax = 5.5;
-BOXYmin = -0.5;
-BOXYmax =  0.5;
+PRINT_PT_PART = 1; % 0 = no output values in the point define in BOXX
+				 % 1 = output
+
+CLCD = 1; % Computation of the Lift and Drag Coefficients
+
+POSTPROCESS = 0;
+IstartPostprocess = 0;
+PasPostprocess = 1;
+NbPostprocess = 1;
 
 
-%INIT_FILE_U="icare.U100000000";
-%INIT_FILE_P="icare.P100000000";
+if (N==2)
+  BOXXmin = 9.9;
+  BOXXmax = 10.1;
+  BOXYmin = -0.1;
+  BOXYmax =  0.1;
+end;
+  
+if (N==3)
+  BOXXmin = 4.5;
+  BOXXmax = 5.5;
+  BOXYmin = -0.5;
+  BOXYmax =  0.5;
+  BOXZmin = -0.1;
+  BOXZmax = 0.1;
+end;
+
+%INIT_FILE_Um1="SolIcare/icare.1Um1";
+%INIT_FILE_U="icare.U500";
+%INIT_FILE_P="icare.P500";
 
 
 Tinitial = 0;
 DT = 0.01;        % Time step
-%T = 5.1;         % Final time
-T=100.01;
+T = 250;         % Final time
 
 NOISY = 0;
+
+TIME_ORDER = 1 % 1 = Euler of order 1
+               % 2 = Euler of order 2
+
 
 OPTION = 4;  % 0 = Stokes avec schema de splitting 1
              % 1 = Navier Stokes avec schema de splitting 1
@@ -35,14 +60,26 @@ PROBLEM = 3; % 1 = Reference solution for Stokes
              % 2 = Reference solution for Navier Stokes
 	     % 3 = flow around a cylinder (centered at 0)
 
-NON_REFLECTIVE_BC = 0;   % 0 : basic condition
+NON_REFLECTIVE_BC = 0;   % 0 : basic condition 
+                               % if (N==2) : optimal condition, all
+                               % terms are considered 
+                               % if (N==3) : some terms are neglect
+                               % => bad choice
 			 % 1 : improved condition
+                               % interpolation of the hessian is
+                               % made ... so it is not optimal 
+                               % if (N==2) : the basic condition is
+                               % better
+                               % if (N==3) : all terms are considered
+
 
 if (N == 2 && ~QUAD)
 % MESHNAME = 'maillage003.mesh'; % name of the mesh file
 %MESHNAME = 'gmshv2:pouet5_v2.msh';
-%MESHNAME = 'navier_stokes_cylinder1.mesh'; % name of the mesh file
- MESHNAME = 'gmshv2:triangular.msh';
+%MESHNAME = 'MESHES/navier_stokes_cylinder2.mesh'; % name of the mesh file
+%MESHNAME = 'gmshv2:triangular.msh';
+%MESHNAME = 'gmshv2:yannick.msh';
+MESHNAME = 'gmshv2:MESHES/mejdi.msh';
 %MESHNAME = 'gmshv2:Rkd2.msh';
 %MESHNAME = 'maillage02.mesh';
 %MESHNAME = 'structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[30,30]';
@@ -59,29 +96,44 @@ end
 
 if (N == 2 && QUAD)
 %  MESHNAME = 'structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
-  MESHNAME = 'gmshv2:rectangularQ.msh';
+%  MESHNAME = 'gmshv2:rectangularRitesh2D.msh';
+%  MESHNAME = 'gmshv2:rectangular.msh';
+%  MESHNAME = 'gmshv2:mesh100_2D.msh';
+%  MESHNAME = 'gmshv2:cyl2DsmScaling.msh';
+
+MESHNAME = 'gmshv2:cyl2D_400k-ddl.msh';
+%MESHNAME = 'gmshv2:cyl2D_1,7M-ddl.msh';
+
+%   MESHNAME = 'gmshv2:cyl2D.msh';
   FEM_TYPE = 'FEM_QK(2,2)';  % QK method
   FEM_TYPE_P = 'FEM_QK(2,1)';
   % DATA_FEM_TYPE = 'FEM_QK(2,1)';
   INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(2,10)'; 
+  %INTEGRATION = 'IM_QUAD(7)'; 
 end
 
 if (N == 3 && ~QUAD)
   %MESHNAME = 'structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NSUBDIV=[5,5,5]';
-  MESHNAME = 'gmshv2:tralala_3D.msh';
+%  MESHNAME = 'gmshv2:tralala_3D.msh';
+   MESHNAME = 'gmshv2:cyl3D.msh';
   FEM_TYPE = 'FEM_PK(3,2)';  % PK method
   FEM_TYPE_P = 'FEM_PK(3,1)';
   % DATA_FEM_TYPE = 'FEM_PK(3,1)'; 
-  INTEGRATION = 'IM_TETRAHEDRON(6)'; 
+  INTEGRATION = 'IM_TETRAHEDRON(8)'; 
 end
 
 if (N == 3 && QUAD)
-  MESHNAME = 'gmshv2:rectangularRitesh3D.msh';
+%  MESHNAME = 'gmshv2:rectangularRitesh3D.msh';
+  MESHNAME = 'gmshv2:cylinder3D.msh';
+%   MESHNAME = 'gmshv2:cyl3D.msh';
+%   MESHNAME = 'gmshv2:cyl3D-20.msh';
+%   MESHNAME = 'gmshv2:cyl3D-40.msh';
+%   MESHNAME = 'gmshv2:cyl3D-60.msh';
   FEM_TYPE = 'FEM_QK(3,2)';  % QK method
   FEM_TYPE_P = 'FEM_QK(3,1)';
   % DATA_FEM_TYPE = 'FEM_QK(3,1)';
-  %INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,10)'; 
-  INTEGRATION = 'IM_HEXAHEDRON(5)'; 
+  INTEGRATION = 'IM_GAUSS_PARALLELEPIPED(3,10)'; 
+  %INTEGRATION = 'IM_HEXAHEDRON(9)'; 
 end
 
 
@@ -92,4 +144,6 @@ RESIDUAL = 1E-9;     	% residual for conjugate gradient.
 ROOTFILENAME = 'icare';     % Root of data files.
 DX_EXPORT = 1; % export solution to a .dx file ?
 VTK_EXPORT = 1; 
-DT_EXPORT = 250*DT;
+DT_EXPORT = 100*DT;
+DT_MUMPS_ANALYSE=50;
+BORNE=1;

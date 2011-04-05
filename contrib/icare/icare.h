@@ -39,6 +39,29 @@
 
 namespace getfem {
 
+
+	/*
+	 * Adams-Bashfort - For explict treatment
+	 */
+	
+	template<typename VEC1, typename VEC>
+	void asm_NS_uuT_Explicite(const VEC1 &V, const mesh_im &mim,
+					const mesh_fem &mf, const VEC &U0,
+					const mesh_region &rg = mesh_region::all_convexes()) {
+		generic_assembly assem;    
+		assem.set("u=data(#1); "
+				  "t = comp(vBase(#1).vBase(#1).vGrad(#1));"
+				  "V(#1)+=u(l).u(i).t(i,k,:,j,l,j,k)"
+				   );
+		assem.push_mi(mim);
+		assem.push_mf(mf);
+		assem.push_data(U0);
+		assem.push_vec(V);
+		assem.assembly(rg);
+	}
+	
+	
+	
   /*
    * div(uuT) term. 
    */
@@ -60,82 +83,117 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+  /*
+   * Boundary term for the pressure 
+   */
+  
+  template<typename MAT>
+  void asm_B_boundary(const MAT &M, const mesh_im &mim,
+		      const mesh_fem &mfu, const mesh_fem &mfp,
+		      const mesh_region &rg) {
+    generic_assembly assem;    
+    assem.set("M$1(#2, #1)+=-comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+    assem.push_mi(mim);
+    assem.push_mf(mfu);
+    assem.push_mf(mfp);
+    assem.push_mat(const_cast<MAT&>(M));
+    assem.assembly(rg);
+  }
+
+
+
+ //template<typename VEC, typename VECTOR>
+// void traineePortance2D(VEC &Cd, VEC &Cl, const mesh_im &mim,
+//			const mesh_fem &mf, const VECTOR &lambda,
+//			const mesh_region &rg) {
+//
+//   generic_assembly assem;
+//   assem.set("l=data$1(#1); V$1()+=comp(vBase(#1).Normal())(i,1,1).l(i);V$2()+=comp(vBase(#1).Normal())(i,1,2).l(i);");
+//   
+//   assem.push_mi(mim);
+//   
+//   assem.push_mf(mf);
+//   assem.push_data(lambda);
+//
+//   assem.push_vec(Cd);
+//   assem.push_vec(Cl);
+//
+//   assem.assembly(rg); //region = bord du cylindre
+//						 
+// }
+
+	
+	
+	template<typename VEC, typename VECTOR>
+	void ClCd2D(VEC &Cxn, VEC &Cxp,VEC &Cyn, VEC &Cyp, const mesh_im &mim,
+						   const mesh_fem &mf1,const mesh_fem &mf2, const VECTOR &U0,const VECTOR &P0, const mesh_region &rg) {
+		
+		generic_assembly assem;
+		
+		assem.set("u=data$1(#1); p=data$2(#2);"
+				  "t1=comp(vGrad(#1).Normal());"
+				  "V$1()+=2*t1(i,1,1,1).u(i) + t1(i,1,2,2).u(i) + t1(i,2,1,2).u(i);"
+				  "t2=comp(Base(#2).Normal());"
+				  "V$2()+=-1*t2(i,1).p(i);"
+				  "t3=comp(vGrad(#1).Normal());"
+				  "V$3()+=2*t3(i,2,2,2).u(i) + t3(i,1,2,1).u(i) + t3(i,2,1,1).u(i);"
+				  "t4=comp(Base(#2).Normal());"
+				  "V$4()+=-1*t4(i,2).p(i);");
+		
+		
+		//assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDxV=data$3(#1); nuDyV=data$4(#1); p=data$5(#2);"
+		//		  "t1=comp(vBase(#1).Normal());"
+		//		  "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,1,2).nuDyU(i) + t1(i,1,2).nuDxV(i);"
+		//		  "t2=comp(Base(#2).Normal());"
+		//		  "V$2()+=-1*t2(i,1).p(i);"
+		//		  "t3=comp(vBase(#1).Normal());"
+		//		  "V$3()+=2*t3(i,1,2).nuDyV(i) + t3(i,1,1).nuDyU(i) + t3(i,1,1).nuDxV(i);"
+		//		  "t4=comp(Base(#2).Normal());"
+		//		  "V$4()+=-1*t4(i,2).p(i);");
+		
+		
+		assem.push_mi(mim);
+		assem.push_mf(mf1);
+		assem.push_mf(mf2);
+
+		assem.push_data(U0);
+		assem.push_data(P0);
+		
+		assem.push_vec(Cxn); 
+		assem.push_vec(Cxp);
+		assem.push_vec(Cyn); 
+		assem.push_vec(Cyp);
+		
+		assem.assembly(rg); //region = bord du cylindre
+		
+	}
+		
+
  template<typename VEC, typename VECTOR>
- void traineePortance2D(VEC &Cd, VEC &Cl, const mesh_im &mim,
-			const mesh_fem &mf, const VECTOR &lambda,
-			const mesh_region &rg) {
+ void ClCd3D(VEC &Cxn, VEC &Cxp,VEC &Cyn, VEC &Cyp, const mesh_im &mim,
+			const mesh_fem &mf1, const mesh_fem &mf2,const VECTOR &U0, 
+			const VECTOR &P0, const mesh_region &rg) {
 
    generic_assembly assem;
-   assem.set("l=data$1(#1); V$1()+=comp(vBase(#1).Normal())(i,1,1).l(i);V$2()+=comp(vBase(#1).Normal())(i,1,2).l(i);");
-   
-   assem.push_mi(mim);
-   
-   assem.push_mf(mf);
-   assem.push_data(lambda);
 
-   assem.push_vec(Cd);
-   assem.push_vec(Cl);
-
-   assem.assembly(rg); //region = bord du cylindre
-						 
- }
-
-
-
-
- template<typename VEC, typename VECTOR>
- void traineePortance3D(VEC &Cxn, VEC &Cxp,VEC &Cyn, VEC &Cyp, const mesh_im &mim,
-			const mesh_fem &mf1, const mesh_fem &mf2,
-			const VECTOR &nuDxU, const VECTOR &nuDyU, const VECTOR &nuDzU,
-			const VECTOR &nuDxV, const VECTOR &nuDyV, const VECTOR &nuDzV, 
-			const VECTOR &nuDxW, const VECTOR &nuDyW, const VECTOR &nuDzW, 
-			const VECTOR &PP, const mesh_region &rg) {
-
-   generic_assembly assem;
-
-   assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDzU=data$3(#1); nuDxV=data$4(#1); nuDyU=data$5(#1); nuDzU=data$6(#1); nuDxW=data$7(#1); nuDyW=data$8(#1);  nuDzW=data$9(#1);    p=data$10(#2);"
-	     "t1=comp(vBase(#1).Normal());"
-             "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,2,2).nuDxU(i) + t1(i,1,2).nuDxV(i) + t1(i,1,3).nuDxW(i) + t1(i,3,3).nuDxU(i);"
-	     "t2=comp(vBase(#2).Normal());"
-             "V$2()+=t2(i,1,1).p(i);"
-	     "t3=comp(vBase(#1).Normal());"
-             "V$3()+=2*t3(i,2,2).nuDxV(i) + t3(i,2,1).nuDxU(i) + t3(i,1,1).nuDxV(i) + t3(i,2,3).nuDxW(i) + t3(i,3,3).nuDxV(i);"
-	     "t4=comp(vBase(#2).Normal());"
-             "V$4()+=t4(i,1,2).p(i);");
-
-
-
-
-   assem.set("nuDxU=data$1(#1); nuDyU=data$2(#1); nuDxV=data$3(#1); nuDyV=data$4(#1); p=data$5(#2);"
-	     "t1=comp(vBase(#1).Normal());"
-             "V$1()+=2*t1(i,1,1).nuDxU(i) + t1(i,1,2).nuDyU(i) + t1(i,2,2).nuDxV(i);"
-	     "t2=comp(vBase(#2).Normal());"
-             "V$2()+=-1*t2(i,1,1).p(i);"
-	     "t3=comp(vBase(#1).Normal());"
-             "V$3()+=2*t3(i,2,2).nuDyV(i) + t3(i,1,1).nuDyU(i) + t3(i,2,1).nuDxV(i);"
-	     "t4=comp(vBase(#2).Normal());"
-             "V$4()+=-1*t4(i,1,2).p(i);");
-
-
+	assem.set("u=data$1(#1); p=data$2(#2);"
+			  "t1=comp(vGrad(#1).Normal());"
+			  "V$1()+=2*t1(i,1,1,1).u(i) + t1(i,1,2,2).u(i) + t1(i,2,1,2).u(i) + t1(i,3,1,3).u(i) + t1(i,1,3,3).u(i);"
+			  "t2=comp(Base(#2).Normal());"
+			  "V$2()+=-1*t2(i,1).p(i);"
+			  "t3=comp(vGrad(#1).Normal());"
+			  "V$3()+=2*t3(i,2,2,2).u(i) + t3(i,1,2,1).u(i) + t3(i,2,1,1).u(i) + t3(i,3,2,3).u(i) + t3(i,2,3,3).u(i);"
+			  "t4=comp(Base(#2).Normal());"
+			  "V$4()+=-1*t4(i,2).p(i);");
+	 
    assem.push_mi(mim);
 
    assem.push_mf(mf1);
    assem.push_mf(mf2);
 
-   assem.push_data(nuDxU);   
-   assem.push_data(nuDyU);
-   assem.push_data(nuDzU);
-
-   assem.push_data(nuDxV);   
-   assem.push_data(nuDyV);
-   assem.push_data(nuDzV);
-
-   assem.push_data(nuDxW);   
-   assem.push_data(nuDyW);
-   assem.push_data(nuDzW);
+   assem.push_data(U0);   
+   assem.push_data(P0);
    
-   assem.push_data(PP);
-
    assem.push_vec(Cxn); 
    assem.push_vec(Cxp);
    assem.push_vec(Cyn); 
