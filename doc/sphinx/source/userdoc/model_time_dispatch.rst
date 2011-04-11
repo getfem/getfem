@@ -199,7 +199,7 @@ Midpoint dispatcher
 -------------------
 
 The principle of the midpoint scheme is to dispacth a term :math:`F(U)` into 
-:math:`F((U^{n+1}-U^{n})/2),`
+:math:`F((U^{n+1}+U^{n})/2),`
 
 It is different from the Crank-Nicholson scheme (:math:`\theta`-method for 
 :math:`\theta=1/2`) only for nonlinear terms.
