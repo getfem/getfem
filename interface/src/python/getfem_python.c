@@ -695,7 +695,7 @@ getfem_env(PyObject *self, PyObject *args) {
     word_out = PyString_FromString(GETFEM_PACKAGE_VERSION);
   }else if(strcmp(word_in,"version") == 0){
     word_out = PyString_FromString(GETFEM_VERSION);
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
   }else if(strcmp(word_in,"muParser") == 0){
     word_out = PyString_FromString("1");
 #endif

@@ -106,7 +106,7 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        );
 
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
     /*@INIT GF = ('parser', @str val[, @str grad[, @str hess]])
       Create a global function from strings `val`, `grad` and `hess`.@*/
     sub_command

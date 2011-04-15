@@ -63,7 +63,7 @@ namespace getfemint {
       ls->values(idx)[i] = p.eval(x.begin());
     }
   }
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
   void getfemint_levelset::values_from_func(unsigned idx,
                                             const std::string &s) {
     const getfem::mesh_fem &mf = levelset().get_mesh_fem();

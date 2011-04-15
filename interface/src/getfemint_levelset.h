@@ -67,7 +67,7 @@ namespace getfemint
 
     static getfemint_levelset* get_from(getfem::level_set *ls, int flags=0);
     void values_from_poly(unsigned idx, const std::string &s);
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
     void values_from_func(unsigned idx, const std::string &s);
 #endif
   };

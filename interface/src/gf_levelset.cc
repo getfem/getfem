@@ -74,7 +74,7 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
     gls = getfemint_levelset::get_from(ls);
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H  
     if (s1.size()) gls->values_from_func(0, s1);
     if (s2.size()) gls->values_from_func(1, s2);
 #else

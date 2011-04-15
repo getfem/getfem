@@ -43,7 +43,7 @@
 #include "getfem/getfem_arch_config.h"
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
 #include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_MUPARSER_H
+#elif GETFEM_HAVE_MUPARSER_H
 #include <muParser.h>
 #endif
 
@@ -161,7 +161,7 @@ namespace getfem {
     virtual ~abstract_xy_function() {}
   };
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
   struct parser_xy_function : public abstract_xy_function {
     mu::Parser pval;
     mu::Parser pXgrad,pYgrad;

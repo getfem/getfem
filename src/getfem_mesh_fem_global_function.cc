@@ -146,7 +146,7 @@ namespace getfem {
   }
 
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
 
   parser_xy_function::parser_xy_function(const std::string &sval,
 					 const std::string &sgrad,
