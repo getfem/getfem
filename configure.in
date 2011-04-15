@@ -481,7 +481,7 @@ MUPARSER_LIBS=""
 if test "x$usemuparser" = "xno"; then
   echo "Building with muParser explicitly disabled";
 else
-  AC_CHECK_LIB(muparser, _init)
+  AC_CHECK_LIB(muparser, _init, [], [AC_CHECK_LIB(muparser, mupEval)])
    AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
    [ 
      AC_CHECK_HEADERS(muParser.h, [usemuparser="yes"],
