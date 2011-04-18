@@ -9,7 +9,7 @@
 // under  the  terms  of the  GNU  Lesser General Public License as published
 // by  the  Free Software Foundation;  either version 2.1 of the License,  or
 // (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
+// This program  is  distributed  in  the  hope that it will be useful,  but
 // WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 // or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 // License for more details.
@@ -96,7 +96,7 @@ generic_u_singular_xy_function::grad(scalar_type x, scalar_type y) const {
   if (r < 1e-10) {
     GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
   }
-  scalar_type theta = atan2(y, x);
+  scalar_type theta = atan2(y,x);
   base_small_vector res(2);
   scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
   scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
@@ -175,7 +175,7 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
 */
 struct cr_nl_elastostatic_problem {
 
-  enum { BOUNDARY_NUM0 = 0, BOUNDARY_NUM1 = 1, BOUNDARY_NUM2 = 2, BOUNDARY_NUM3 = 3, BOUNDARY_NUM4 = 4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
+  enum { BOUNDARY_NUM0 = 0, BOUNDARY_NUM1 = 1, BOUNDARY_NUM2 = 2, BOUNDARY_NUM3 = 3, BOUNDARY_NUM4 = 4, PART_CAL_ERROR = 5,DIRICHLET_BOUND=6, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
   getfem::mesh mesh;         /* the mesh */
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::mesh_level_set mls;       /* the integration methods for cutted element.    */
@@ -188,13 +188,13 @@ struct cr_nl_elastostatic_problem {
   
   getfem::mesh_fem mf_partition_of_unity;
   getfem::mesh_fem_product mf_product;
-  getfem::mesh_fem_sum mf_u_sum;
+  getfem::mesh_fem_sum mf_u_sum/*, mf_u_sumCE*/;
   
   getfem::mesh_fem mf_pre_p; /* mesh_fem for the pressure for mixed form     */
   getfem::mesh_fem_level_set mfls_p;   /* mesh_fem for the pressure enriched with H.   */
   getfem::mesh_fem_global_function mf_sing_p;
   getfem::mesh_fem_product mf_product_p;
-  getfem::mesh_fem_sum mf_p_sum;
+  getfem::mesh_fem_sum mf_p_sum /*, mf_p_sumCE*/;
 
   base_small_vector cracktip;
   
@@ -224,7 +224,7 @@ struct cr_nl_elastostatic_problem {
  
   scalar_type residual;        /* max residual for the iterative solvers         */
   bool mixed_pressure;
-  bool sing_search;
+  //bool sing_search;
   unsigned dir_with_mult;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   size_type cutoff_func;
@@ -252,10 +252,11 @@ struct cr_nl_elastostatic_problem {
 				     mf_sing_u(mesh),
 				     mf_partition_of_unity(mesh),
 				     mf_product(mf_partition_of_unity, mf_sing_u),
-				     mf_u_sum(mesh), mf_pre_p(mesh), mfls_p(mls, mf_pre_p), 
+				     mf_u_sum(mesh),
+				     mf_pre_p(mesh), mfls_p(mls, mf_pre_p), 
 				     mf_sing_p(mesh), mf_product_p(mf_partition_of_unity, mf_sing_p), 
 				     mf_p_sum(mesh),
-				     mf_us(mesh),  mf_rhs(mesh)  {}
+				     mf_us(mesh),  mf_rhs(mesh) {}
 };
 
 std::string name_of_dof(getfem::pdof_description dof) {
@@ -416,7 +417,7 @@ void cr_nl_elastostatic_problem::init(void) {
   mf_partition_of_unity.set_classical_finite_element(1);
 
   mixed_pressure = (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
-  sing_search = (PARAM.int_value("SINGULAR_SEARCH","Singular search or not.") != 0);
+  //sing_search = (PARAM.int_value("SINGULAR_SEARCH","Singular search or not.") != 0);
   dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSION", "Version of Dirichlet"));
 
   if (mixed_pressure) {
@@ -450,6 +451,22 @@ void cr_nl_elastostatic_problem::init(void) {
 
   /* set boundary conditions
    * (Neuman on the upper face, Dirichlet elsewhere) */
+
+/*******************************************************************************/
+/*         Select the part of convex where the error will be calculation       */
+/*******************************************************************************/
+
+
+  //for(getfem::mr_visitor it_err(mesh.convex_index()); !it_err.finished(); ++it_err){   
+  
+  //base_node un1_cal_err = mesh.normal_of_face_of_convex(it_err.cv(), it_err.f());
+  //un1_cal_err /= gmm::vect_norm2(un1_cal_err);
+  //if (un1_cal_err[1]> -0.5) mesh.region(PART_CAL_ERROR).add(it_err.cv());   
+  //
+  //    }
+
+
+
   cout << "Selecting Neumann and Dirichlet boundaries\n";
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
@@ -465,6 +482,8 @@ void cr_nl_elastostatic_problem::init(void) {
 
   }
 }
+
+
 
 base_small_vector ls_function(const base_node P, int num = 0) {
   scalar_type x = P[0], y = P[1];
@@ -558,7 +577,7 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
 
 bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
-  size_type nb_dof_mult = mf_mult.nb_dof();
+  // size_type nb_dof_mult = mf_mult.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
@@ -818,15 +837,10 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   base_node corner2 = base_node(1.0, 0.5);
   GMM_ASSERT1(!(mf_u().is_reduced()), "To be adapted for reduced fems");
   for (size_type i = 0; i < mf_u().nb_basic_dof(); i+=N) {
-    //cout << i <<" basic_dof" << mf_u().point_of_basic_dof(i) <<endl;
+    
     scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner1);
-    //cout << i <<" Basic_dof____dd1=" << dd1 <<endl;
-    //cout <<"************************************************************************************" << endl;
     if (dd1 < d1) { icorner1 = i; d1 = dd1; }
     scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner2);
-    //cout << i <<" Basic_dof____dd2=" << dd2 <<endl;   
-    //cout <<"************************************************************************************" << endl;
- 
     if (dd2 < d2) { icorner2 = i; d2 = dd2; }
   }
 
@@ -861,10 +875,13 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 
 
   getfem::model model;
-
-  // Main unknown of the problem (displacement).
-  model.add_fem_variable("u", mf_u());
   
+  // Main unknown of the problem (displacement).
+
+   model.add_fem_variable("u", mf_u());
+
+  // model.add_fem_variable("u",  error_cal);
+
   // Nonlinear elasticity brick
   model.add_initialized_fixed_size_data("params", pr);
   getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "params");
@@ -931,80 +948,10 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   exp.serie_add_object("deformationsteps");
 
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted for reduced mesh_fems");
-  
-  
-  //  size_type maxit = PARAM.int_value("MAXITER");
-  //  getfem::standard_solve(model, iter);
-
-  //for (int step = 0; step < nb_step; ++step)    {
-//     plain_vector DF1(F_Neumann1);
-//     plain_vector DF2(F_Neumann2);
-//     plain_vector DF3(F_Neumann3);
-//     plain_vector DF4(F_Neumann4);
-
-
-//     gmm::copy(gmm::scaled(F_Neumann1, (step+1.)/nb_step), DF1);
-//     gmm::copy(DF1, model.set_real_variable("NeumannData1"));
-
-//     gmm::copy(gmm::scaled(F_Neumann2, (step+1.)/nb_step), DF2);
-//     gmm::copy(DF2, model.set_real_variable("NeumannData2"));
-
-//     gmm::copy(gmm::scaled(F_Neumann3, (step+1.)/nb_step), DF3);
-//     gmm::copy(DF3, model.set_real_variable("NeumannData3"));
     
-//     gmm::copy(gmm::scaled(F_Neumann4, (step+1.)/nb_step), DF4);
-//     gmm::copy(DF3, model.set_real_variable("NeumannData4"));
-    
-//     // sparse_matrix BBst(3, mf_u().nb_dof());
-  
-// //       BBst(0, icorner1) = 1.0;
-// //       BBst(1, icorner1+1) = 1.0;
-// //       BBst(2, icorner2) = 1.0;
-// //       std::vector<scalar_type> LRHst(3);
-// //       model.add_fixed_size_variable("dir", 3);
-// //       getfem::add_constraint_with_multipliers(model, "u", "dir", BBst, LRHst);
-
-
-//     /* update the imposed displacement  */
-//     //gmm::copy(F2, model.set_real_variable("DirichletData"));
-
-//     cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
-   
-
-//     /* let the default non-linear solve (Newton) do its job */
-    
-//     getfem::standard_solve(model, iter);
-    
-//     pl->reset_unvalid_flag();
-//     model.assembly(getfem::model::BUILD_RHS);
-//     if (pl->get_unvalid_flag()) 
-//       GMM_WARNING1("The solution is not completely valid, the determinant "
-// 		   "of the transformation is negative on "
-// 		   << pl->get_unvalid_flag() << " gauss points");
-
-//     gmm::copy(model.real_variable("u"), U);
-//     if (mixed_pressure && (law_num == 1 || law_num == 3)) {
-//       gmm::copy(model.real_variable("p"), P);}
-//     //char s[100]; sprintf(s, "step%d", step+1);
-
-//     /* append the new displacement to the exported opendx file */
-//     exp.write_point_data(mf_u(), U);
-//     exp.write_point_data(mf_pe(), P);
-
-//     exp.serie_add_object("deformationsteps");
-//   } 
-
-// line search 
-  // gmm::simplest_newton_line_search silnrs;
-  // gmm::default_newton_line_search dlnrs;
-  // gmm::systematic_newton_line_search sylnrs;
-
-  //gmm::abstract_newton_line_search line_search1;
-
-
-gmm::simplest_newton_line_search simls;
-gmm::default_newton_line_search dlnrs;
-gmm::systematic_newton_line_search sylnrs;
+  gmm::simplest_newton_line_search simls;
+  gmm::default_newton_line_search dlnrs;
+  gmm::systematic_newton_line_search sylnrs;
 
 //  simplest_newton_line_search 1 *** default_newton_line_search 2 *** systematic_newton_line_search 3
  cout << "line search value" <<line_search_version<< endl;
@@ -1142,7 +1089,8 @@ int main(int argc, char *argv[]) {
   p.PARAM.read_command_line(argc, argv);
   p.init();
   p.mesh.write_to_file(p.datafilename + ".mesh");
-  
+  //getfem::mesh_region &rg_error_calc = p.mesh.region(1);
+  //getfem::mesh_region &rg2 = p.mesh.region(2);
   plain_vector U, P;
   
   if (!p.solve(U, P)) GMM_ASSERT1(false,"Solve has failed");
@@ -1260,21 +1208,39 @@ int main(int argc, char *argv[]) {
     
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
-    
-    std::string REFERENCE_MF  = "reference_NX120_CIG_COE_base_comp.meshfem";
-    std::string REFERENCE_U   = "reference_NX120_CIG_COE_base_comp.U";
-    std::string REFERENCE_MFP = "reference_NX120_CIG_COE_base_comp.p_meshfem";
-    std::string REFERENCE_P   = "reference_NX120_CIG_COE_base_comp.P";
-    
+
+   
+    std::string REFERENCE_MF  = "refNX80_incom_MR_diri_amp0_12.meshfem";
+    std::string REFERENCE_U   = "refNX80_incom_MR_diri_amp0_12.U";
+    std::string REFERENCE_MFP = "refNX80_incom_MR_diri_amp0_12.p_meshfem";
+    std::string REFERENCE_P   = "refNX80_incom_MR_diri_amp0_12.P";
+                                 
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
-    getfem::mesh ref_m; 
+
+    getfem::mesh ref_m ; 
     ref_m.read_from_file(REFERENCE_MF);
+        
+    
+    enum { Part_cal_error = 82};
+      for(dal::bv_visitor i(ref_m.convex_index()); !i.finished(); ++i){
+	for(size_type j=0; j < 3; ++j){
+        base_node cord_err = ref_m.points_of_convex(i)[j];
+	//cout << "coordonne-erreur " << cord_err[1] << endl;
+	 if (cord_err[1] > -0.45) ref_m.region(Part_cal_error).add(i);
+	}   
+        }
+
+
     getfem::mesh_fem ref_mf(ref_m); 
-    ref_mf.read_from_file(REFERENCE_MF);
+    ref_mf.read_from_file(REFERENCE_MF);    
+    
+      
     plain_vector ref_U(ref_mf.nb_dof());
     gmm::vecload(REFERENCE_U, ref_U);
     
+    
+
     cout << "Load reference pressure from "
 	 << REFERENCE_MFP << " and " << REFERENCE_P << "\n";
     getfem::mesh_fem ref_mfp(ref_m); 
@@ -1296,15 +1262,14 @@ int main(int argc, char *argv[]) {
     gmm::vecsave(p.datafilename+".U_map_error", interp_U_error);
 
     cout << "To ref L2 ERROR on U:"
-	 << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U,
-				ref_mf, ref_U) << endl;
+	 << getfem::asm_L2_dist(ref_mim, ref_mf, interp_U, ref_mf, ref_U, Part_cal_error) << endl;
     
     cout << "To ref H1 ERROR on U:"
 	 << getfem::asm_H1_dist(ref_mim, ref_mf, interp_U,
-				ref_mf, ref_U) << endl;
+				ref_mf, ref_U, Part_cal_error ) << endl;
     
     plain_vector interp_P(ref_mfp.nb_dof());
-    getfem::interpolation(p.mf_pe(), ref_mfp, P, interp_P);
+    getfem::interpolation(p.mf_pe(), ref_mfp, P, interp_P, Part_cal_error);
 
     plain_vector interp_P_error(ref_mfp.nb_dof());
     gmm::add(interp_P, gmm::scaled(ref_P, -1.), interp_P_error);
