@@ -1,24 +1,5 @@
-# SUBDIRS = 
-
-check_PROGRAMS =                 \
-	icare
-
-CLEANFILES = icare.data
-
-icare_SOURCES = icare.cc icare.h
-
-SUPLDFLAGS = @SUPLDFLAGS@
-MUMPS_LIBS = @MUMPS_LIBS@
-MUMPS_CFLAGS = @MUMPS_CFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src $(MUMPS_CFLAGS)
-LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
-
-TESTS = $(top_srcdir)/contrib/icare/icare.pl
-
-EXTRA_DIST = \
-	icare.pl                  \
-	icare.param		\
-	navier_stokes_cylinder1.mesh \
-	navier_stokes_cylinder2.mesh
-
-TESTS_ENVIRONMENT = perl
+SUBDIRS = icare delaminated_crack bimat_contact_crack_test static_friction \
+	 bimaterial_crack_test mixed_elastostatic xfem_contact crack_plate \
+	 aposteriori inter_element_test contact_grd_trans                  \
+         mixed_dynamic_friction xfem_large_strain                          \
+         static_contact_gears xfem_stab_unilat_contact
