@@ -4,7 +4,7 @@ gf_workspace('clear all');
 mf = gf_mesh_fem('load', 'xfem_dirichlet_ls.mf');
 lsU = -load('xfem_dirichlet_ls.U')';
 
-nn=5 % 0 : plot the exported mf
+nn=0 % 0 : plot the exported mf
      % 1 : 
      % 2 : 
      % 3 : 
@@ -16,7 +16,7 @@ nn=5 % 0 : plot the exported mf
 clf
 if nn==0,
   disp('plot the exported mf');
-  [hsur, hcont] = gf_plot(mf,lsU,'refine',16,'contour',0,'mesh','on', 'pcolor','off');
+  [hsur, hcont] = gf_plot(mf,lsU,'refine',16,'contour',0,'mesh','on', 'pcolor','on');
   set(hcont{1}, 'LineWidth', 2);
   set(hcont{1}, 'Color', 'black');
 elseif nn==1
@@ -29,7 +29,7 @@ elseif nn==1
   
   %[hsur, hcont] = gf_plot(mf, lsU, 'refine', 24, 'zplot', 'on');
   %hold on;
-  [hsur, hcont] = gf_plot(mfc, lsUc.*(lsUc>0), 'refine', 8, 'zplot', 'on', 'mesh','on', 'pcolor','on'); hold on;
+  [hsur, hcont] = gf_plot(mfc, lsUc.*(lsUc>0), 'refine', 20, 'zplot', 'on', 'mesh','on', 'pcolor','on'); hold on;
   colormap([.8 1 .8]);
   %[hsur, hcont] = gf_plot(mf,lsU,'refine',4,'contour',0,'pcolor','off');
   
@@ -72,9 +72,9 @@ elseif nn==4,
   [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color',[.3 .3 .3]);
   hold on;
   gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*0.05]);
-  [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5);
+  [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5,'showoptions','on');
   sl=gf_Slice('load','xfem_dirichlet.sl');
-  gf_plot_slice(sl,'mesh','on');
+  gf_plot_slice(sl,'mesh','off');
   
   npt = size(P0, 2);
   P0 = [P0;zeros(1,npt)];
@@ -83,14 +83,14 @@ elseif nn==4,
   F=[lseg(1,:) lseg(2,:); lseg(2,:) npt+lseg(2,:); npt+lseg(1,:) npt+lseg(1,:)];
   %F=[lseg; npt+lseg(2,:)];
   h=patch('Vertices',[P0 P1]', 'Faces', F');
-  hold off;
-  set(h,'FaceAlpha',0.3);
-  set(h,'LineStyle','none');
-  set(gcf,'renderer','opengl');
+  hold on;
+  %set(h,'FaceAlpha',0.3);
+  %set(h,'LineStyle','none');
+  %set(gcf,'renderer','opengl');
   set(gcf,'color','white');
-  axis off;
-  view(3);
-  camzoom(1.7);
+  axis on;
+  view(2);
+  camzoom(1);
   axis([-0.5000    0.5000   -0.5000    0.5000 -.5 .5]);
   % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
 elseif nn==5,

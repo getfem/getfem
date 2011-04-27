@@ -36,6 +36,20 @@
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_inter_element.h"
 #include "gmm/gmm.h"
+#include "getfem/bgeot_mesh_structure.h"
+#include "getfem/getfem_config.h"
+
+extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
+			    int *, int *, int *, int *, int *);
+extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
+			    int *, int *, int *, int *, int *);
+
+
+extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
+				      int *, int *, float *, int *, int *, int *);
+extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
+				      int *, int *, int *, int *, int *);
+
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -283,6 +297,29 @@ void asm_stabilization_symm_term
   assem.assembly(rg);
 }
 
+
+
+/**************************************************************/
+/* asembling patch vector                                     */
+/**************************************************************/
+
+template<class VEC>
+void asm_patch_vector     
+(const VEC &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_mult,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  VEC &RM = const_cast<VEC &>(RM_);
+    
+  getfem::generic_assembly assem("t=comp(Base(#1)); V(#1)+= t(:);");
+  assem.push_mi(mim);
+  assem.push_mf(mf_mult);
+  assem.push_vec(RM);
+  // assem.set("RM(#1)+=comp(Base(#1))()");
+  assem.assembly(rg);
+
+}
+
+
+
 /*
  * Elementary extrapolation matrices
  */
@@ -513,7 +550,6 @@ int main(int argc, char *argv[]) {
   // Mass matrix on the boundary
   sparse_matrix B2(mf_rhs.nb_dof(), nb_dof);
   getfem::asm_mass_matrix(B2, mimboundup, mf_rhs, mf);
-
   sparse_matrix B(nb_dof_mult, nb_dof);
   getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
 
@@ -524,8 +560,80 @@ int main(int argc, char *argv[]) {
   sparse_matrix MA(nb_dof_mult, nb_dof_mult), KA(nb_dof, nb_dof);
   sparse_matrix BA(nb_dof_mult, nb_dof);
   if (stabilized_dirichlet > 0) {
-
+    
     sparse_row_matrix E1(nb_dof, nb_dof);
+    
+    if (stabilized_dirichlet == 3) {
+
+      std::string datafilename;
+      datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
+      mesh.write_to_file(datafilename + ".mesh");
+      cout<<"save mesh done"<<endl;
+      
+      
+      // assemby patch vector
+      size_type nbe = mf_P0.nb_dof();
+      int ne = 0;
+      plain_vector Patch_Vector(nbe);
+      asm_patch_vector(Patch_Vector, mimboundup, mf_P0);
+      cout<<"patch_vectot="<< Patch_Vector<<endl;
+      dal::bit_vector  Patch_element_list, Patch_dof_ind;
+      for (size_type i = 0; i < nbe; ++i) {
+	if (Patch_Vector[i] != scalar_type(0)){
+	  size_type cv = mf_P0.first_convex_of_basic_dof(i);
+	  Patch_element_list.add(cv);
+	  Patch_dof_ind.add(i);
+	  ne++;
+	}
+      }
+      cout<<"Path_element_list="<< Patch_element_list <<endl;
+      cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
+      cout<<"size_of element_in_patch"<< ne <<endl;
+      std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);// adjwgt(2*ne-2),
+      std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
+      int j = 0, k = 0;
+      for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+	numelt[j] = int(ic);
+	indelt[ic] = j;
+      }
+      j = 0;
+      for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+	size_type ind_dof_patch = mf_P0.ind_basic_dof_of_element(ic)[0];
+	vwgt[j] = int(100000*Patch_Vector[ind_dof_patch]);
+	xadj[j] = k;
+	bgeot::mesh_structure::ind_set s;
+	mesh.neighbours_of_convex(ic, s);
+	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
+	  if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
+	}
+      }
+
+      xadj[j] = k;
+      std::vector<int> adjwgt(k);
+      cout<<"xadj="<<xadj<<endl;
+      cout<<"adjncy="<<adjncy<<endl;
+      cout<<"vwgt="<<vwgt<<endl;
+      
+
+      int ncon=0, wgtflag = 2, edgecut, nparts=3, numflag = 0;
+      float ubvec = {1.03};
+      int  options[5] = {0,0,0,0,0};
+      //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //		    &numflag, &nparts, &ubvec,  options, &edgecut, &(part[0]));
+      // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
+      METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      			  &numflag, &nparts, options, &edgecut, &(part[0]));
+      // METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //		       &numflag, &nparts, options, &edgecut, &(part[0]));
+
+       cout<<"good"<<part<<endl;
+    }
+
+    
+
+
+
 
     if (stabilized_dirichlet == 2) {
 
@@ -782,7 +890,7 @@ int main(int argc, char *argv[]) {
     plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
     sl.interpolate(mf, U, UU);
     gmm::vecsave("xfem_dirichlet.slU", UU);
-    // gmm::scale(LAMBDA, 0.005);
+     gmm::scale(LAMBDA, 0.005);
     sll.interpolate(mf_mult, LAMBDA, LL);
     gmm::vecsave("xfem_dirichlet.slL", LL);
   }

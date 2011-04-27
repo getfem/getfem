@@ -10,9 +10,9 @@ LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
                            % defining the level set.
 EXACT_SOL = 3;             % Which exact solution.
 SIMPLIFY_LEVEL_SET = 0;
-STABILIZED_DIRICHLET = 2; % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab.
+STABILIZED_DIRICHLET = 3;     % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab.
 MINIMAL_ELT_RATIO = 0.005;  % threshold ratio for the fully stab Dirichlet.
-DIRICHLET_GAMMA0 = 0.1;  % Barbosa Hughes stabilization parameter
+DIRICHLET_GAMMA0 = 0.1;    % Barbosa Hughes stabilization parameter
 		   
 OK = 0;
 
@@ -27,12 +27,14 @@ if (N == 1)
 end;
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[32,32]';
+  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[10,10]';
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
+%   IM='IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
-  FEM = 'FEM_QK(2,1)';      % Finite element method for the unknown.
+%   IM_SIMPLEX ='IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4), 3)';
+  FEM = 'FEM_QK(2,2)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
-  FEM_RHS = 'FEM_QK(2,3)';     % Finite element method for the rhs
+  FEM_RHS = 'FEM_QK(2,2)';     % Finite element method for the rhs
   FEM_MULT = 'FEM_QK(2,1)'; % Finite element method for multipliers
   OK = 1;
 end;
