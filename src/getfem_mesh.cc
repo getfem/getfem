@@ -138,6 +138,7 @@ namespace getfem {
       else {
 	int ne = int(nb_convex());
 	std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
+	std::vector<int> indelt(convex_index().last_true()+1);
 	
 	double t_ref = MPI_Wtime();
 
@@ -145,10 +146,14 @@ namespace getfem {
 	ind_set s;
 	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
 	  numelt[j] = ic;
+	  indelt[ic] = j;
+	}
+	j = 0;
+	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
 	  xadj[j] = k;
 	  neighbours_of_convex(ic, s);
 	  for (ind_set::iterator it = s.begin();
-	       it != s.end(); ++it) { adjncy.push_back(*it); ++k; }
+	       it != s.end(); ++it) { adjncy.push_back(indelt[*it]); ++k; }
 	}
 	xadj[j] = k;
 
