@@ -282,7 +282,12 @@ namespace getfem {
 
   void abstract_hyperelastic_law::random_E(base_matrix &E) {
     size_type N = gmm::mat_nrows(E);
-    base_matrix Phi(N,N); gmm::fill_random(Phi);
+    base_matrix Phi(N,N);
+    scalar_type d;
+    do {
+      gmm::fill_random(Phi);
+      d = gmm::lu_det(Phi);
+    } while (d < scalar_type(0.01)); 
     gmm::mult(gmm::transposed(Phi),Phi,E);
     gmm::scale(E,-1.); gmm::add(gmm::identity_matrix(),E); 
     gmm::scale(E,-0.5);
