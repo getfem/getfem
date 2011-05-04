@@ -610,12 +610,24 @@ dnl ---------------------------END OF PARA LEVEL--------------------------
 
 dnl ---------------------------METIS--------------------------
 usemetis="no"
-METIS_LIBS=""
-
 if test $paralevel -ge 2; then
   usemetis="yes"
-  METIS_LIBS=""
-  AC_CHECK_LIB(metis, SelectQueueOneWay)
+fi;
+
+METIS_LIBS=""
+AC_ARG_ENABLE(mumps,
+ [AS_HELP_STRING([--enable-metis],[enable the use of the METIS library.])],
+ [case $enableval in
+   yes | "") usemetis="yes" ;;
+   no) usemetis="no"; METIS_LIBS="" ;;
+  esac],
+ [usemumps="test"]
+)
+
+if test "x$usemetis" = "xno"; then
+  echo "Building without METIS";
+else
+  AC_CHECK_LIB(metis, SelectQueueOneWay, [usemetis="yes"], [usemetis="no"])
 dnl  AC_CHECK_HEADERS(metis.h, [usemetis="yes"],
 dnl    [ 
 dnl      AC_MSG_ERROR([header file metis.h not found]);
@@ -624,8 +636,10 @@ dnl    ])
 
   if test "x$usemetis" = "xyes"; then
     METIS_LIBS="-lmetis"
+    echo "Building with METIS (use --enable-metis=no to disable it)"
+  else
+    echo "Building without METIS";
   fi;
-  echo "Building with METIS (use --enable-metis=no to disable it)"
 fi;
 
 AM_CONDITIONAL(METIS, test x$usemetis = xyes)
