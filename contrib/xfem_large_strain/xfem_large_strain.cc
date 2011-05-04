@@ -118,6 +118,7 @@ base_matrix generic_u_singular_xy_function::hess(scalar_type, scalar_type)
   const {
   GMM_ASSERT1(false, "To be done !");
 }
+
 struct generic_p_singular_xy_function : public getfem::abstract_xy_function {
   int n;
   virtual scalar_type val(scalar_type x, scalar_type y) const;
@@ -168,6 +169,67 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
   GMM_ASSERT1(false, "To be done !");
 }
 
+
+///////////*/*/*/*///////////////////////////////////////////////////////////
+//                                                                         //
+//    Singular functions for crack problem  from Stephenson article        //
+//                                                                         //
+///////////*/*/*/*///////////////////////////////////////////////////////////
+ 
+struct steph_u_singular_xy_function : public getfem::abstract_xy_function {
+    unsigned l;
+    virtual scalar_type val(scalar_type x, scalar_type y) const;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    virtual base_matrix hess(scalar_type x, scalar_type y) const;
+    steph_u_singular_xy_function(unsigned l_) : l(l_) {}
+  };
+
+
+scalar_type steph_u_singular_xy_function::val(scalar_type x, scalar_type y) const {
+  
+  scalar_type r = sqrt(x*x + y*y);  
+  if (r < 1e-10)  return 0;
+  scalar_type theta = atan2(y, x);
+  scalar_type res = 0;
+    switch(l){
+      case 0 : res = r*sin(theta*0.5)*sin(theta*0.5) ; break;
+      case 1 : res = sqrt(r)*sin(theta*0.5)          ; break;
+      default: GMM_ASSERT2(false, "arg");
+    }
+  return res;
+}
+
+
+base_small_vector steph_u_singular_xy_function::grad(scalar_type x, scalar_type y) const {
+  scalar_type r = sqrt(x*x + y*y);
+  
+  scalar_type theta = atan2(y, x);
+  base_small_vector res(2);
+  if (r < 1e-10) {
+    GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
+  }
+  
+    switch(l){
+    case 0 :
+      res[0] = sin(theta*0.5)*sin(theta*0.5);
+      res[1] = sin(theta*0.5)*cos(theta*0.5);
+      break;
+    case 1 :
+      res[0] = (-1/sqrt(r))*0.5*sin(theta*0.5) ;
+      res[1] = 0.5*sqrt(r)*sin(theta*0.5);
+      break;
+      
+      default: GMM_ASSERT2(false, "arg");
+    }
+
+  return res;
+}
+
+
+base_matrix steph_u_singular_xy_function::hess(scalar_type, scalar_type)
+  const {
+  GMM_ASSERT1(false, "To be done !");
+}
 
 
 /*
@@ -605,35 +667,33 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 
   cout << "Setting up the singular functions for the enrichment\n";
 
-  size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U",
-				   "Number of Enriched function for u"));
-  size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P",
-				   "Number of Enriched function for p"));
+  //size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U", "Number of Enriched function for u"));
+    size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P", "Number of Enriched function for p"));
 
-  std::vector<getfem::pglobal_function> vfunc(2*nb_enr_func_u);
+    //std::vector<getfem::pglobal_function> vfunc(2*nb_enr_func_u);
   std::vector<getfem::pglobal_function> vfunc_p(2*nb_enr_func_p);
-
-  
+  std::vector<getfem::pglobal_function> vfunc(2);
+  //std::vector<getfem::pglobal_function> vfunc_p(2);
 
   std::cout << "Using default singular functions\n";
   for (unsigned i = 0; i < vfunc.size(); ++i){
     
-     getfem::abstract_xy_function *s;
-     if (i < nb_enr_func_u){
-       //std::cout << "if____i <<< nb_enr_func_u*--*-**-*-*-*-\n"<< i;
-      s = new generic_u_singular_xy_function(i+1);
-     }
-     else{
-       //std::cout << "else__i >>> nb_enr_func_u*--*-**-*-*-*-\n"<< i;
-      s = new generic_u_singular_xy_function(-(i+1));
-     }
+    // getfem::abstract_xy_function *s;
+//     if (i < nb_enr_func_u){
+//      s = new generic_u_singular_xy_function(i+1);
+//     }
+//     else{
+//      s = new generic_u_singular_xy_function(-(i+1));
+//       }
 
-
+    getfem::abstract_xy_function *s = 
+        new steph_u_singular_xy_function(i);
 
     if (enrichment_option != FIXED_ZONE && 
 	enrichment_option != GLOBAL_WITH_MORTAR) {
       /* use the product of the singularity function
 	 with a cutoff */
+
       getfem::abstract_xy_function *c = 
 	new getfem::cutoff_xy_function(int(cutoff_func),
 				       cutoff_radius, 
@@ -646,12 +706,13 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   
   for (unsigned i = 0; i < vfunc_p.size() ;++i){
     
-  getfem::abstract_xy_function *sp;
-    if (i < nb_enr_func_p)
-      sp = new generic_p_singular_xy_function(i+1);
-    else
-      sp = new generic_p_singular_xy_function(-(i+1));
-    
+
+   getfem::abstract_xy_function *sp;
+       if (i < nb_enr_func_p)
+         sp = new generic_p_singular_xy_function(i+1);
+       else
+         sp = new generic_p_singular_xy_function(-(i+1));
+                     
     if (enrichment_option != FIXED_ZONE && 
 	enrichment_option != GLOBAL_WITH_MORTAR) {
       /* use the product of the singularity function
@@ -829,24 +890,25 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   //                                                                  //
   //////////////////////////////////////////////////////////////////////
 
-  cout << "Find the dofs on the upper right and lower right corners" << endl;
-  scalar_type d1 = 1.0, d2 = 1.0;
-  
-  size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
-  base_node corner1 = base_node(1.0, -0.5);
-  base_node corner2 = base_node(1.0, 0.5);
-  GMM_ASSERT1(!(mf_u().is_reduced()), "To be adapted for reduced fems");
-  for (size_type i = 0; i < mf_u().nb_basic_dof(); i+=N) {
+   cout << "Find the dofs on the upper right and lower right corners" << endl;
+     scalar_type d1 = 1.0, d2 = 1.0;
+     size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
+     base_node corner1 = base_node(1.0, -0.5);
+     base_node corner2 = base_node(1.0, 0.5);
+     GMM_ASSERT1(!(mf_u().is_reduced()), "To be adapted for reduced fems");
+     
+     for (size_type i = 0; i < mf_u().nb_basic_dof(); i+=N) {
     
-    scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner1);
-    if (dd1 < d1) { icorner1 = i; d1 = dd1; }
-    scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner2);
-    if (dd2 < d2) { icorner2 = i; d2 = dd2; }
-  }
+       scalar_type dd1 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner1);
+       if (dd1 < d1) { icorner1 = i; d1 = dd1; }
+       scalar_type dd2 = gmm::vect_dist2(mf_u().point_of_basic_dof(i), corner2);
+       if (dd2 < d2) { icorner2 = i; d2 = dd2; }
+       
+       }
 
-  // GMM_ASSERT1(((d1 < 1E-8) && (d2 < 1E-8)),
-  // 	      "Upper right or lower right corners not found d1 = "
-  // 	      << d1 << " d2 = " << d2);
+    GMM_ASSERT1(((d1 < 1E-8) && (d2 < 1E-8)),
+   	       "Upper right or lower right corners not found d1 = "
+   	       << d1 << " d2 = " << d2);
 
   /*******************************************/
   /*                                         */
@@ -919,18 +981,53 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     add_Dirichlet_condition_with_multipliers (model, mim, "u", mf_u(), BOUNDARY_NUM4, "Dirichletdata");
     else
     add_Dirichlet_condition_with_penalization (model, mim, "u", 1E15, BOUNDARY_NUM4, "Dirichletdata");
-  
-  // Dirichlet condition
 
-  // GMM_ASSERT1(N==2, "To be corrected for 3D computation");
-  // sparse_matrix BB(3, mf_u().nb_dof());
+//     ////////////////////////////////////////// 
+//     //
+//     //     Symetrie condition
+//     //
+//     //////////////////////////////////////////
+
+    model.add_initialized_fixed_size_data("Dirichletsymdata",
+					  plain_vector(N, 0.0));
+    plain_vector HH(N*N); HH[0] = 1.0;
+    model.add_initialized_fixed_size_data("Hdata", HH); 
+
+    getfem::add_generalized_Dirichlet_condition_with_multipliers(model, mim, "u", 1, BOUNDARY_NUM3, "Dirichletsymdata", "Hdata");
+
+
   
-  // BB(0, icorner1) = 1.0;
-  // BB(1, icorner1+1) = 1.0;
-  // BB(2, icorner2) = 1.0;
-  // std::vector<scalar_type> LRH(3);
-  // model.add_fixed_size_variable("dir", 3);
-  // getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+
+
+//     getfem::partial_mesh_fem symetrie_NUM3(mf_u());
+//     dal::bit_vector symetrie_dofs_NUM3 = mf_u().basic_dof_on_region(BOUNDARY_NUM3);
+//     cout << "*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+//     cout << "Size of vector  :" << symetrie_dofs_NUM3.card() << endl;
+//     cout << "Basic dof on region BOUNDARY_NUM3  :" << symetrie_dofs_NUM3 << endl;
+//     cout << "*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*" << endl;
+//     cout << "test  :" << symetrie_dofs_NUM3[1] << endl;
+//     cout << "test  :" << symetrie_dofs_NUM3[2] << endl;
+//     GMM_ASSERT1(N==2, "To be corrected for 3D computation");
+
+//     sparse_matrix BB((symetrie_dofs_NUM3.size()/2), mf_u().nb_dof());
+    
+   
+//     // for (size_type i = 0; i < mf_u().nb_basic_dof(); i+=N) 
+//     //    {}
+//     for (size_type j = 0; j < symetrie_dofs_NUM3.size()+1 ; j+=N ){
+//     for (size_type i = 0; i < (symetrie_dofs_NUM3.size()/2)+1 ; ++i )
+//       {
+//         BB(j,symetrie_dofs_NUM3[i])=1.0;
+// 	  }}
+   
+//     // BB (0, icorner1)   = 1.0;
+//     // BB (1, icorner1+1) = 1.0;
+//     // BB (2, icorner2)   = 1.0;
+
+//   // cout << "matrice BB   :" << BB << endl;
+//   // std::vector<scalar_type> LRH(3);
+//   // model.add_fixed_size_variable("dir", 3);
+//   // getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
 
 
  
@@ -1210,11 +1307,11 @@ int main(int argc, char *argv[]) {
     cout << "Computing error with respect to a reference solution..." << endl;
 
    
-    std::string REFERENCE_MF  = "refNX80_incom_MR_diri_amp0_12.meshfem";
-    std::string REFERENCE_U   = "refNX80_incom_MR_diri_amp0_12.U";
-    std::string REFERENCE_MFP = "refNX80_incom_MR_diri_amp0_12.p_meshfem";
-    std::string REFERENCE_P   = "refNX80_incom_MR_diri_amp0_12.P";
-                                 
+    std::string REFERENCE_MF  = "referenceNX120_incomMR_diri_LD_015_enriold_func.meshfem";
+    std::string REFERENCE_U   = "referenceNX120_incomMR_diri_LD_015_enriold_func.U";
+    std::string REFERENCE_MFP = "referenceNX120_incomMR_diri_LD_015_enriold_func.p_meshfem";
+    std::string REFERENCE_P   = "referenceNX120_incomMR_diri_LD_015_enriold_func.P";
+                                                                  
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
 
@@ -1227,7 +1324,7 @@ int main(int argc, char *argv[]) {
 	for(size_type j=0; j < 3; ++j){
         base_node cord_err = ref_m.points_of_convex(i)[j];
 	//cout << "coordonne-erreur " << cord_err[1] << endl;
-	 if (cord_err[1] > -0.45) ref_m.region(Part_cal_error).add(i);
+	 if (cord_err[1] > -0.39) ref_m.region(Part_cal_error).add(i);
 	}   
         }
 
