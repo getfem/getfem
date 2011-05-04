@@ -32,14 +32,14 @@ Mesh refinement is most of the time coupled with an *a posteriori* error
 estimate. A basic error estimate is available in the file
 :file:`getfem/getfem_error_estimate.h`::
 
-  error_estimate(mim, mf, U, err, cvlist);
+  error_estimate(mim, mf, U, err, rg);
 
 where ``mim`` is the integration method (a |gf_mim| object), ``mf`` is the finite
 element method on which the unknown has been computed (a |gf_mf| object), ``U`` is
 the vector of degrees of freedom of the unknow, ``err`` is a sufficiently large
 vector in which the error estimate is computed for each element of the mesh, and
-``cvlst`` is a list of indices of element on which the error estimate should be
-computed (a |dal_bv| object).
+``rg`` is a mesh region bulild from elements on which the error estimate should be
+computed (a |gf_mr| object).
 
 This basic error estimate is only valid for order two problems and just compute
 the sum of the jump in normal derivative across the elements on each edge (for
