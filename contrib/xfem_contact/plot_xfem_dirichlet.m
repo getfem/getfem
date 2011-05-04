@@ -4,13 +4,13 @@ gf_workspace('clear all');
 mf = gf_mesh_fem('load', 'xfem_dirichlet_ls.mf');
 lsU = -load('xfem_dirichlet_ls.U')';
 
-nn=0 % 0 : plot the exported mf
-     % 1 : 
-     % 2 : 
-     % 3 : 
-     % 4 : plotting the lagrange multipliers on the dirichlet boundary
-     % 5 : the solution. 
-     % 6 : plot some convergence curves. 
+nn=5; % 0 : plot the exported mf
+       % 1 : 
+       % 2 : 
+       % 3 : 
+       % 4 : plotting the lagrange multipliers on the dirichlet boundary
+       % 5 : the solution. 
+       % 6 : plot some convergence curves. 
 
 
 clf

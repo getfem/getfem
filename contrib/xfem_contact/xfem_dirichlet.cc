@@ -420,7 +420,7 @@ int main(int argc, char *argv[]) {
   Pmin += Pmax; Pmin /= -2.0;
   // Pmin[N-1] = -Pmax[N-1];
   mesh.translation(Pmin);
-  scalar_type h = mesh.minimal_convex_radius_estimate();
+  scalar_type h = 2. * mesh.minimal_convex_radius_estimate();
   cout << "h = " << h << endl;
   
   // Level set definition
@@ -528,7 +528,7 @@ int main(int argc, char *argv[]) {
   getfem::mesh_fem mf_mult(mesh);
   std::string FEMM = PARAM.string_value("FEM_MULT", "fem for multipliers");
   mf_mult.set_finite_element(mesh.convex_index(),
-			     getfem::fem_descriptor(FEMM));
+				 getfem::fem_descriptor(FEMM));
   // getfem::partial_mesh_fem mf_mult(pre_mf_mult);
 
   // Range_basis call
@@ -539,7 +539,7 @@ int main(int argc, char *argv[]) {
   cout << "nb_dof_mult = " << mf_mult.nb_dof() << endl;
   gmm::range_basis(BRBB, cols);
   mf_mult.reduce_to_basic_dof(cols);
-  // penser ï¿½ l'optimisation sur les mailles ...
+  // penser à l'optimisation sur les mailles ...
 
 
   // kept_dof_mult = select_dofs_from_im(pre_mf_mult, mimbounddown, N-1);
@@ -558,133 +558,166 @@ int main(int argc, char *argv[]) {
 			"Dirichlet condition or not"));
   scalar_type dir_gamma0(0);
   sparse_matrix MA(nb_dof_mult, nb_dof_mult), KA(nb_dof, nb_dof);
-  sparse_matrix BA(nb_dof_mult, nb_dof);
+  sparse_matrix BA(nb_dof_mult, nb_dof),  M1(nb_dof_mult, nb_dof_mult);
   if (stabilized_dirichlet > 0) {
     
     sparse_row_matrix E1(nb_dof, nb_dof);
     
     if (stabilized_dirichlet == 3) {
 
-       std::string datafilename;
-      datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
-      mesh.write_to_file(datafilename + ".mesh");
-      cout<<"save mesh done"<<endl;
-      
-      
-      // assemby patch vector
-      size_type nbe = mf_P0.nb_dof();
-      int ne = 0;
-      plain_vector Patch_Vector(nbe);
-      asm_patch_vector(Patch_Vector, mimboundup, mf_P0);
-      cout<<"patch_vectot="<< Patch_Vector<<endl;
-      dal::bit_vector  Patch_element_list, Patch_dof_ind;
-      for (size_type i = 0; i < nbe; ++i) {
-	if (Patch_Vector[i] !=0){
-	  size_type cv = mf_P0.first_convex_of_basic_dof(i);
-	  Patch_element_list.add(cv);
-	  Patch_dof_ind.add(i);
-	  ne++;
-	      }
-      }
-      cout<<"Path_element_list="<< Patch_element_list <<endl;
-      cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
-      cout<<"size_of element_in_patch"<< ne <<endl;
-      std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);// adjwgt(2*ne-2),
-      std::vector<int> vwgt(ne);
-      int j = 0, k = 0, r=0;
-      for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
-	numelt[j] =int(ic);
-	size_type ind_dof_patch;
-	getfem::mesh_fem::ind_dof_ct  ind_dof_patch_ct(mf_P0.ind_basic_dof_of_element(ic));
-	ind_dof_patch=ind_dof_patch_ct[0];
-	//	vwgt[j]=int(100000*Patch_Vector[ind_dof_patch]);
-	vwgt[j]=2;
-	xadj[j] = k;
-	bgeot::mesh_structure::ind_set s;
-	mesh.neighbours_of_convex(ic, s);
-	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
-	  if (Patch_element_list.is_in(*it)) {adjncy.push_back(*it); ++k;r++;}
-	}
-      }
-
-      xadj[j] = k;
-      std::vector<int> adjwgt(r);
-      cout<<"xadj="<<xadj<<endl;
-      cout<<"adjncy="<<adjncy<<endl;
-      cout<<"vwgt="<<vwgt<<endl;
-
-      int ncon=1, wgtflag = 2, edgecut, nparts=3, numflag = 0;
-      float ubvec = {1.03};
-      int  options[5] = {0,0,0,0,0};
-      //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //		    &numflag, &nparts, &ubvec,  options, &edgecut, &(part[0]));
-      // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
-      // METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //			  &numflag, &nparts, options, &edgecut, &(part[0]));
-      METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      			       &numflag, &nparts, options, &edgecut, &(part[0]));
-
-       cout<<"good"<<part<<endl;
-    }
-
-    if (stabilized_dirichlet == 4) {
-      size_type nbe = mf_P0.nb_dof();
       std::string datafilename;
       datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
       mesh.write_to_file(datafilename + ".mesh");
       cout<<"save mesh done"<<endl;
-      int ne = int(mesh.nb_convex());
-      std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);// adjwgt(2*ne-2),
-      std::vector<int> vwgt(ne);
-      int j = 0, k = 0, r=0;
-      bgeot::mesh_structure::ind_set s;
-      for (dal::bv_visitor ic(mesh.convex_index()); !ic.finished(); ++ic, j++) {
-	numelt[j] = ic;
-	xadj[j] = k;
-	vwgt[j]=2;
-	mesh.neighbours_of_convex(ic, s);
-	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) { adjncy.push_back(*it); ++k;++r; }
-	for(int j=0;j<ne+1;j=j+3){vwgt[j]=2;}
 
-}
-      cout<<"2*number of edge="<< r<<endl;
-      std::vector<int> adjwgt(r);
+
+      /****************************************************/
+      /*        " select patch "                          */
+      /****************************************************/
+
+
+
+      // assemby patch vector
+      size_type nbe = mf_P0.nb_dof();
+      int ne = 0;
+      double size_of_crack = 0;
+      plain_vector Patch_Vector(nbe);
+      asm_patch_vector(Patch_Vector, mimbounddown, mf_P0);
+      cout<<"patch_vectot="<< Patch_Vector<<endl;
+      dal::bit_vector  Patch_element_list, Patch_dof_ind;
+      for (size_type i = 0; i < nbe; ++i) {
+	if (Patch_Vector[i] != scalar_type(0)){
+	  size_type cv = mf_P0.first_convex_of_basic_dof(i);
+	  Patch_element_list.add(cv);
+	  Patch_dof_ind.add(i);
+	  ne++;
+	  size_of_crack=size_of_crack + Patch_Vector[i];
+	}
+      }
+      cout<<"Path_element_list="<< Patch_element_list <<endl;
+      cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
+      cout<<"size_of element_in_patch"<< ne <<endl;
+      std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);
+      std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
+      std::vector<double> vwgtt(ne);
+      int j = 0, k = 0;
+      for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+	numelt[j] = int(ic);
+	indelt[ic] = j;
+      }
+      j = 0;
+      for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+	size_type ind_dof_patch = mf_P0.ind_basic_dof_of_element(ic)[0];
+	vwgt[indelt[ic]] = int(1000000*Patch_Vector[ind_dof_patch]);
+	vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
+	xadj[j] = k;
+	bgeot::mesh_structure::ind_set s;
+	mesh.neighbours_of_convex(ic, s);
+	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
+	  if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
+	}
+      }
+
       xadj[j] = k;
-      int ncon=0, wgtflag = 2, edgecut, nparts=3,  numflag = 0, options[5] = {0,0,0,0,0};
-      float ubvec = {1.03};
-      cout<<"numelt="<<numelt<<endl;
+      std::vector<int> adjwgt(k);
       cout<<"xadj="<<xadj<<endl;
       cout<<"adjncy="<<adjncy<<endl;
       cout<<"vwgt="<<vwgt<<endl;
 
-      // METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //			  &numflag, &nparts, options, &edgecut, &(part[0]));
-      //  METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //		       &numflag, &nparts, options, &edgecut, &(part[0]));
-      //  METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //		    &numflag, &nparts, &ubvec,  options, &edgecut, &(part[0]));
+      scalar_type ratio_size = PARAM.real_value("RATIO_GR_MESH", "ratio size between mesh and patches");
 
-      METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      				 &numflag, &nparts,  options, &edgecut, &(part[0]));
+      int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
+      // float ubvec[1] = {1.03f};
+      int  options[5] = {0,0,0,0,0};
+      //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
+      // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
+      //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //	  &numflag, &nparts, options, &edgecut, &(part[0]));
+      METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+			       &numflag, &nparts, options, &edgecut, &(part[0]));
+      
+      cout<<"size_of_mesh="<<h<<endl;
+      cout<<"size_of_crack="<< size_of_crack <<endl;
+      cout<<"nb_partition="<<nparts<<endl;
+      cout<<"partition="<<part<<endl;
+      cout<<"edgecut="<<edgecut<<endl;
+
+
+      /**************************************************************/
+      /*        Assembly matrices                                   */
+      /**************************************************************/
+
+
+      std::vector<double> size_patch(nparts);
+
+      sparse_matrix M0(nb_dof_mult, nbe);
+      getfem::asm_mass_matrix(M0, mimbounddown, mf_mult, mf_P0);
+
+      for (size_type i=0; i < size_type(ne); i++) {
+	size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];	  
+      }
+
+      cout<<"size_patch="<<size_patch<<endl;
+
+      sparse_row_matrix MAT_aux(nparts, nb_dof_mult);
+      for (size_type r=0; r < nbe; r++) {
+	size_type cv = mf_P0.first_convex_of_basic_dof(r);
+	gmm::add(gmm::mat_col(M0, r), gmm::mat_row(MAT_aux, part[indelt[cv]]));
+      }
+      
+      sparse_row_matrix MAT_proj(nbe, nb_dof_mult);
+
+      for (size_type r=0; r < nbe; r++) {
+	size_type cv = mf_P0.first_convex_of_basic_dof(r);
+	int p=part[indelt[cv]];
+	gmm::copy(gmm::scaled(gmm::mat_row(MAT_aux, p), 1./size_patch[p]),
+		  gmm::mat_row(MAT_proj, r));
+      }
      
-      cout<<"good"<<part<<endl;
-    }
+      gmm::mult(M0, MAT_proj, M1);
 
 
 
+
+
+
+  
+//       sparse_matrix MAT_proj(nbe, nb_dof_mult);
+
+//       for (int r=0; r<nbe; r++){
+// 	for (int jj=0; jj<nb_dof_mult; jj++){
+// 	  size_type cv = mf_P0.first_convex_of_basic_dof(r);
+// 	  int p=part[indelt[cv]];
+// 	  for (int i=0; i<ne; i++){
+// 	    if ( part[i]== p) {
+// 	      size_type ind_dof_patch= mf_P0.ind_basic_dof_of_element(numelt[i])[0];
+// 	      MAT_proj(r,jj) += M0(jj,ind_dof_patch);
+// 	    }
+// 	  }
+//  	  MAT_proj(r,jj) /=  size_patch[p];
+// 	}
+//       }
+//       gmm::mult(M0, MAT_proj, M1);
+
+      // cout<<"M0="<<M0<<endl;
+      //cout<<"MAT_proj="<<MAT_proj<<endl;
+      // cout<<"M1="<<M1<<endl;
+
+    }//end stabilized_dirichlet == 3
+    
     
 
 
 
-
     if (stabilized_dirichlet == 2) {
-
+      
       // Computation of the extrapolation operator
       scalar_type min_ratio =
 	PARAM.real_value("MINIMAL_ELT_RATIO",
 			 "Threshold ratio for the fully stab Dirichlet");
-
+      
       cout << "Computation of the extrapolation operator" << endl;
       dal::bit_vector elt_black_list, dof_black_list;
       size_type nbe = mf_P0.nb_dof();
@@ -770,13 +803,21 @@ int main(int argc, char *argv[]) {
     dir_gamma0 = PARAM.real_value("DIRICHLET_GAMMA0",
 				  "Stabilization parameter for "
 				  "Dirichlet condition");
-    getfem::asm_mass_matrix(MA, mimbounddown, mf_mult);
-    asm_stabilization_mixed_term(BA, mimbounddown, mf, mf_mult, lsdown);
-    asm_stabilization_symm_term(KA, mimbounddown, mf, lsdown);
-    gmm::scale(MA, -dir_gamma0 * h);
-    gmm::scale(BA, -dir_gamma0 * h);
-    gmm::scale(KA, -dir_gamma0 * h);
+   
+    if (stabilized_dirichlet == 3) {
+      getfem::asm_mass_matrix(MA, mimbounddown, mf_mult);
+      gmm::scale(M1, dir_gamma0 );
+      gmm::scale(MA, -dir_gamma0 );
+      gmm::add(M1, MA);
 
+    }else{
+      getfem::asm_mass_matrix(MA, mimbounddown, mf_mult);
+      asm_stabilization_mixed_term(BA, mimbounddown, mf, mf_mult, lsdown);
+      asm_stabilization_symm_term(KA, mimbounddown, mf, lsdown);
+      gmm::scale(MA, -dir_gamma0 * h);
+      gmm::scale(BA, -dir_gamma0 * h);
+      gmm::scale(KA, -dir_gamma0 * h);
+    }
     if (stabilized_dirichlet == 2) {
       sparse_matrix A1(nb_dof_mult, nb_dof);
       gmm::copy(BA, A1);
@@ -792,7 +833,58 @@ int main(int argc, char *argv[]) {
   test_mim(mim, mf_rhs, false);
   test_mim(mimbounddown, mf_rhs, true);
 
-  // Brick system
+#if 1
+
+  // New Brick system
+
+  getfem::model model;
+  
+  model.add_fem_variable("u", mf);
+  model.add_fem_variable("Lambda", mf_mult);
+  getfem::add_Laplacian_brick(model, mim, "u");
+  
+  
+  if (stabilized_dirichlet > 0){
+    getfem::add_explicit_matrix(model, "Lambda", "Lambda", MA);
+    if (stabilized_dirichlet != 3) {
+      getfem::add_explicit_matrix(model, "u", "u", KA);
+    }
+  }
+  
+  //Volumic source term
+  plain_vector F(nb_dof_rhs);
+  getfem::interpolation_function(mf_rhs, F, rhs);
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
+  
+  // Neumann condition
+  getfem::interpolation_function(mf_rhs, F, g_exact);
+  plain_vector R(nb_dof);
+  gmm::mult(gmm::transposed(B2), F, R);
+  getfem::add_explicit_rhs(model, "u", R);
+  
+  // Dirichlet condition
+  
+  getfem::add_constraint_with_multipliers(model, "u", "Lambda", B, plain_vector(nb_dof_mult));
+ 
+  //Solving the problem
+  
+  gmm::iteration iter(1e-9, 1, 40000);
+  getfem::standard_solve(model, iter);
+  plain_vector U(nb_dof);
+  gmm::copy(model.real_variable("u"), U);
+  plain_vector LAMBDA(nb_dof_mult);
+  gmm::copy(model.real_variable("Lambda"), LAMBDA);
+  
+  cout<<"desplacement="<<U<<endl;
+  
+  cout<<"Mult="<<LAMBDA<<endl;
+
+#else
+
+  // Old Brick system
+
+
   getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
 
   getfem::mdbrick_source_term<> brick_volumic_rhs(brick_laplacian);
@@ -810,8 +902,14 @@ int main(int argc, char *argv[]) {
   getfem::mdbrick_constraint<> brick_constraint(brick_volumic_rhs);
   brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
   brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
-  if (stabilized_dirichlet > 0)
-    brick_constraint.set_optional_matrices(KA, MA);
+
+  //add stabilized term
+  if (stabilized_dirichlet > 0){
+    if (stabilized_dirichlet == 3) {
+      brick_constraint.set_optional_matrices(KA, MA);
+    }else{
+      brick_constraint.set_optional_matrices(KA, MA);}
+  }
 
   getfem::mdbrick_abstract<> *final_brick = &brick_constraint;
     
@@ -824,6 +922,11 @@ int main(int argc, char *argv[]) {
   gmm::copy(brick_laplacian.get_solution(MS), U);
   plain_vector LAMBDA(nb_dof_mult);
   gmm::copy(brick_constraint.get_mult(MS), LAMBDA);
+
+#endif
+
+
+
 
   // interpolation of the solution on mf_rhs
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
