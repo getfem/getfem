@@ -539,7 +539,7 @@ int main(int argc, char *argv[]) {
   cout << "nb_dof_mult = " << mf_mult.nb_dof() << endl;
   gmm::range_basis(BRBB, cols);
   mf_mult.reduce_to_basic_dof(cols);
-  // penser à l'optimisation sur les mailles ...
+  // penser ï¿½ l'optimisation sur les mailles ...
 
 
   // kept_dof_mult = select_dofs_from_im(pre_mf_mult, mimbounddown, N-1);
@@ -565,7 +565,7 @@ int main(int argc, char *argv[]) {
     
     if (stabilized_dirichlet == 3) {
 
-      std::string datafilename;
+       std::string datafilename;
       datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
       mesh.write_to_file(datafilename + ".mesh");
       cout<<"save mesh done"<<endl;
@@ -579,56 +579,99 @@ int main(int argc, char *argv[]) {
       cout<<"patch_vectot="<< Patch_Vector<<endl;
       dal::bit_vector  Patch_element_list, Patch_dof_ind;
       for (size_type i = 0; i < nbe; ++i) {
-	if (Patch_Vector[i] != scalar_type(0)){
+	if (Patch_Vector[i] !=0){
 	  size_type cv = mf_P0.first_convex_of_basic_dof(i);
 	  Patch_element_list.add(cv);
 	  Patch_dof_ind.add(i);
 	  ne++;
-	}
+	      }
       }
       cout<<"Path_element_list="<< Patch_element_list <<endl;
       cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
       cout<<"size_of element_in_patch"<< ne <<endl;
       std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);// adjwgt(2*ne-2),
-      std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
-      int j = 0, k = 0;
+      std::vector<int> vwgt(ne);
+      int j = 0, k = 0, r=0;
       for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
-	numelt[j] = int(ic);
-	indelt[ic] = j;
-      }
-      j = 0;
-      for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
-	size_type ind_dof_patch = mf_P0.ind_basic_dof_of_element(ic)[0];
-	vwgt[j] = int(100000*Patch_Vector[ind_dof_patch]);
+	numelt[j] =int(ic);
+	size_type ind_dof_patch;
+	getfem::mesh_fem::ind_dof_ct  ind_dof_patch_ct(mf_P0.ind_basic_dof_of_element(ic));
+	ind_dof_patch=ind_dof_patch_ct[0];
+	//	vwgt[j]=int(100000*Patch_Vector[ind_dof_patch]);
+	vwgt[j]=2;
 	xadj[j] = k;
 	bgeot::mesh_structure::ind_set s;
 	mesh.neighbours_of_convex(ic, s);
 	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
-	  if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
+	  if (Patch_element_list.is_in(*it)) {adjncy.push_back(*it); ++k;r++;}
 	}
       }
 
       xadj[j] = k;
-      std::vector<int> adjwgt(k);
+      std::vector<int> adjwgt(r);
       cout<<"xadj="<<xadj<<endl;
       cout<<"adjncy="<<adjncy<<endl;
       cout<<"vwgt="<<vwgt<<endl;
-      
 
-      int ncon=0, wgtflag = 2, edgecut, nparts=3, numflag = 0;
+      int ncon=1, wgtflag = 2, edgecut, nparts=3, numflag = 0;
       float ubvec = {1.03};
       int  options[5] = {0,0,0,0,0};
       //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
       //		    &numflag, &nparts, &ubvec,  options, &edgecut, &(part[0]));
       // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
       //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
-      METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      			  &numflag, &nparts, options, &edgecut, &(part[0]));
-      // METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-      //		       &numflag, &nparts, options, &edgecut, &(part[0]));
+      // METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //			  &numflag, &nparts, options, &edgecut, &(part[0]));
+      METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      			       &numflag, &nparts, options, &edgecut, &(part[0]));
 
        cout<<"good"<<part<<endl;
     }
+
+    if (stabilized_dirichlet == 4) {
+      size_type nbe = mf_P0.nb_dof();
+      std::string datafilename;
+      datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
+      mesh.write_to_file(datafilename + ".mesh");
+      cout<<"save mesh done"<<endl;
+      int ne = int(mesh.nb_convex());
+      std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);// adjwgt(2*ne-2),
+      std::vector<int> vwgt(ne);
+      int j = 0, k = 0, r=0;
+      bgeot::mesh_structure::ind_set s;
+      for (dal::bv_visitor ic(mesh.convex_index()); !ic.finished(); ++ic, j++) {
+	numelt[j] = ic;
+	xadj[j] = k;
+	vwgt[j]=2;
+	mesh.neighbours_of_convex(ic, s);
+	for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) { adjncy.push_back(*it); ++k;++r; }
+	for(int j=0;j<ne+1;j=j+3){vwgt[j]=2;}
+
+}
+      cout<<"2*number of edge="<< r<<endl;
+      std::vector<int> adjwgt(r);
+      xadj[j] = k;
+      int ncon=0, wgtflag = 2, edgecut, nparts=3,  numflag = 0, options[5] = {0,0,0,0,0};
+      float ubvec = {1.03};
+      cout<<"numelt="<<numelt<<endl;
+      cout<<"xadj="<<xadj<<endl;
+      cout<<"adjncy="<<adjncy<<endl;
+      cout<<"vwgt="<<vwgt<<endl;
+
+      // METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //			  &numflag, &nparts, options, &edgecut, &(part[0]));
+      //  METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //		       &numflag, &nparts, options, &edgecut, &(part[0]));
+      //  METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      //		    &numflag, &nparts, &ubvec,  options, &edgecut, &(part[0]));
+
+      METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+      				 &numflag, &nparts,  options, &edgecut, &(part[0]));
+     
+      cout<<"good"<<part<<endl;
+    }
+
+
 
     
 
