@@ -636,14 +636,16 @@ namespace getfem {
       gmm::resize(stateinit, pb.nb_dof());
       gmm::copy(MS.state(), stateinit);
       MS.unreduced_solution(dr, d);
-      R alpha(1), res;
-      
-      ls.init_search(MS.reduced_residual_norm(), iter.get_iteration());
+      R alpha(1), res, R0;
+      R0 = gmm::real(gmm::vect_sp(dr, residual()));
+
+      ls.init_search(MS.reduced_residual_norm(), iter.get_iteration(), R0);
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
 	compute_residual();
 	res = MS.reduced_residual_norm();
+	R0 = gmm::real(gmm::vect_sp(dr, residual()));
       } while (!ls.is_converged(res));
 
       if (alpha != ls.converged_value()) {

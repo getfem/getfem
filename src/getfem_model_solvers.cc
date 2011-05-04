@@ -75,15 +75,16 @@ namespace getfem {
     R line_search(VECTOR &dr, const gmm::iteration &iter) {
       gmm::resize(stateinit, md.nb_dof());
       gmm::copy(state, stateinit);
-      R alpha(1), res;
+      R alpha(1), res, R0;
       if (with_pseudo_potential) {
 	compute_pseudo_potential();
 	res = md.pseudo_potential();
       } else {
 	res = residual_norm();
       }
+      R0 = gmm::real(gmm::vect_sp(dr, rhs));
 
-      ls.init_search(res, iter.get_iteration());
+      ls.init_search(res, iter.get_iteration(), R0);
       do {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
@@ -95,7 +96,8 @@ namespace getfem {
 	  compute_residual();
 	  res = residual_norm();
 	}
-      } while (!ls.is_converged(res));
+	R0 = gmm::real(gmm::vect_sp(dr, rhs));
+      } while (!ls.is_converged(res, R0));
 
       if (alpha != ls.converged_value() || with_pseudo_potential) {
 	alpha = ls.converged_value();

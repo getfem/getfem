@@ -48,9 +48,9 @@ namespace gmm {
     double conv_alpha, conv_r;
     size_t it, itmax, glob_it;
     //  size_t tot_it;
-    virtual void init_search(double r, size_t git) = 0;
+    virtual void init_search(double r, size_t git, double R0 = 0.0) = 0;
     virtual double next_try(void) = 0;
-    virtual bool is_converged(double) = 0;
+    virtual bool is_converged(double, double R1 = 0.0) = 0;
     virtual double converged_value(void) {
       // tot_it += it; cout << "tot_it = " << tot_it << endl; it = 0;
       return conv_alpha;
@@ -60,15 +60,40 @@ namespace gmm {
   };
 
 
+  struct quadratic_newton_line_search : public abstract_newton_line_search {
+    double R0_, R1_;
+
+    double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min;
+    virtual void init_search(double r, size_t git, double R0 = 0.0) {
+      GMM_ASSERT1(R0 != 0.0, "You have to specify R0");
+      glob_it = git;
+      conv_alpha = alpha = double(1); conv_r = first_res = r; it = 0;
+      R0_ = R0;
+    }
+    virtual double next_try(void) {
+      ++it;
+      if (it == 1) return double(1);
+      GMM_ASSERT1(R1_ != 0.0, "You have to specify R1");
+      double a = R0_ / R1_;
+      return (a < 0) ? (a*0.5 + sqrt(a*a*0.25-a)) : a*0.5;
+    }
+    virtual bool is_converged(double r, double R1 = 0.0) {
+      conv_r = r;
+      R1_ = R1; return ((gmm::abs(R1_) < gmm::abs(R0_*0.5)) || it >= itmax);
+    }
+    quadratic_newton_line_search(size_t imax = size_t(-1))  { itmax = imax; }
+  };
+
+
   struct simplest_newton_line_search : public abstract_newton_line_search {
     double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min;
-    virtual void init_search(double r, size_t git) {
+    virtual void init_search(double r, size_t git, double = 0.0) {
       glob_it = git;
       conv_alpha = alpha = double(1); conv_r = first_res = r; it = 0;
     }
     virtual double next_try(void)
     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
-    virtual bool is_converged(double r) {
+    virtual bool is_converged(double r, double = 0.0) {
       conv_r = r;
       return ((it <= 1 && r < first_res)
 	      || (r <= first_res * alpha_max_ratio)
@@ -86,7 +111,7 @@ namespace gmm {
     double alpha, alpha_mult, first_res, alpha_max_ratio;
     double alpha_min, prev_res;
     bool first;
-    virtual void init_search(double r, size_t git) {
+    virtual void init_search(double r, size_t git, double = 0.0) {
       alpha_min = pow(10.0, -gmm::random() * 4.0);
       alpha_max_ratio = 1 + gmm::random();
       // cout << "alpha_min = " << alpha_min << endl;
@@ -96,7 +121,7 @@ namespace gmm {
     }
     virtual double next_try(void)
     { double a = alpha; alpha *= alpha_mult; ++it; return a; }
-    virtual bool is_converged(double r) {
+    virtual bool is_converged(double r, double = 0.0) {
       // cout << "alpha = " << alpha
       //      << " first_res = " << first_res << " r = " << r << endl;
       if (r < conv_r || first)
@@ -115,14 +140,14 @@ namespace gmm {
   struct basic_newton_line_search : public abstract_newton_line_search {
     double alpha, alpha_mult, first_res, alpha_max_ratio;
     double alpha_min, prev_res, alpha_max_augment;
-    virtual void init_search(double r, size_t git) {
+    virtual void init_search(double r, size_t git, double = 0.0) {
       glob_it = git;
       conv_alpha = alpha = double(1);
       prev_res = conv_r = first_res = r; it = 0;
     }
     virtual double next_try(void)
     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
-    virtual bool is_converged(double r) {
+    virtual bool is_converged(double r, double = 0.0) {
       if (glob_it == 0 || (r < first_res / double(2))
 	  || (conv_alpha <= alpha_min && r < first_res * alpha_max_augment)
 	  || it >= itmax)
@@ -145,14 +170,14 @@ namespace gmm {
     double alpha, alpha_mult, first_res;
     double alpha_min, prev_res;
     bool first;
-    virtual void init_search(double r, size_t git) {
+    virtual void init_search(double r, size_t git, double = 0.0) {
       glob_it = git;
       conv_alpha = alpha = double(1);
       prev_res = conv_r = first_res = r; it = 0; first = true;
     }
     virtual double next_try(void)
     { double a = alpha; alpha *= alpha_mult; ++it; return a; }
-    virtual bool is_converged(double r) {
+    virtual bool is_converged(double r, double = 0.0) {
       // cout << "a = " << alpha / alpha_mult << " r = " << r << endl;
       if (r < conv_r || first)
 	{ conv_r = r; conv_alpha = alpha / alpha_mult; first = false; }
