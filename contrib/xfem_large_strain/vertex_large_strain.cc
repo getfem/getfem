@@ -24,7 +24,8 @@
  *
  * This program is used to check that getfem++ is working. This is also 
  * a good example of use of Getfem++.
- */
+ *
+ **/
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
 #include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
@@ -39,7 +40,7 @@
 #include "getfem/getfem_spider_fem.h"
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "getfem/getfem_superlu.h"
-#include "getfem_nonlinear_elastoptim.h"/* Optimization procedure to evaluate order of singularities*/
+#include "getfem_nonlinear_elastoptim.h"
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
 
@@ -450,7 +451,6 @@ struct crack_problem {
  
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool mixed_pressure;
-  bool sing_search;
   unsigned dir_with_mult;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
@@ -571,7 +571,7 @@ void crack_problem::init(void) {
   base_small_vector tt(N); tt[1] = -0.5;
   mesh.translation(tt); 
   
-  cracktip.resize(2); // Coordonnï¿½e du fond de fissure
+  cracktip.resize(2); // Coordonn%Gï¿½%@e du fond de fissure
   cracktip[0] = 0.9;
   cracktip[1] = 0.;
 
@@ -647,8 +647,6 @@ void crack_problem::init(void) {
 
   mixed_pressure =
     (PARAM.int_value("MIXED_PRESSURE","Mixed version or not.") != 0);
-  sing_search =
-    (PARAM.int_value("SINGULAR_SEARCH","Singular search or not.") != 0);
   dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSION",
 					   "Version of Dirichlet"));
   if (mixed_pressure) {
@@ -850,7 +848,7 @@ namespace getfem {
 	alpha = ls.next_try();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
 	
-	// Ici, on récupère alpha et beta de l'enrichissement
+	// Ici, on r%Gï¿½%@cup%Gï¿½%@re alpha et beta de l'enrichissement
 	alpha_md
 	  = state[md.interval_of_variable("alpha").first()];
 	beta_md
@@ -872,8 +870,7 @@ namespace getfem {
 	alpha = ls.converged_value();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
 	
-	// Ici, on récupère alpha et beta de l'enrichissement
-
+	// Ici, on r%Gï¿½%@cup%Gï¿½%@re alpha et beta de l'enrichissement
 	alpha_md
 	  = state[md.interval_of_variable("alpha").first()];
 	beta_md
@@ -1220,7 +1217,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   switch (law_num) {
   case 0: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
   case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
-  case 2: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
+  case 2: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
   case 3: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
   default: GMM_ASSERT1(false, "no such law");
   }
@@ -1232,10 +1229,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   
   getfem::model model;
   model.add_fem_variable("u", mf_u());
-  if (sing_search){
   model.add_fixed_size_variable("alpha", 1);
   model.add_fixed_size_variable("beta", 1);
-  }
   
   model.add_initialized_fixed_size_data("coefficients", pr);
   
@@ -1776,3 +1771,5 @@ int main(int argc, char *argv[]) {
   
   return 0; 
 }
+
+
