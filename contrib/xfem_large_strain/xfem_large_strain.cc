@@ -170,11 +170,11 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
 }
 
 
-///////////*/*/*/*///////////////////////////////////////////////////////////
-//                                                                         //
-//    Singular functions for crack problem  from Stephenson article        //
-//                                                                         //
-///////////*/*/*/*///////////////////////////////////////////////////////////
+///////////*/*/*/*////////////////////////////////////////////////////////////////////////
+//                                                                                      //
+//    Displacement Singular functions for crack problem  from Stephenson article 1982   //
+//                                                                                      //
+///////////*/*/*/*////////////////////////////////////////////////////////////////////////
  
 struct steph_u_singular_xy_function : public getfem::abstract_xy_function {
     unsigned l;
@@ -230,6 +230,70 @@ base_matrix steph_u_singular_xy_function::hess(scalar_type, scalar_type)
   const {
   GMM_ASSERT1(false, "To be done !");
 }
+
+
+///////////*/*/*/*////////////////////////////////////////////////////////////////////
+//                                                                                  //
+//    Pressure Singular functions for crack problem  from Stephenson article 1982   //
+//                                                                                  //
+///////////*/*/*/*////////////////////////////////////////////////////////////////////
+ 
+struct steph_p_singular_xy_function : public getfem::abstract_xy_function {
+    unsigned l;
+    virtual scalar_type val(scalar_type x, scalar_type y) const;
+    virtual base_small_vector grad(scalar_type x, scalar_type y) const;
+    virtual base_matrix hess(scalar_type x, scalar_type y) const;
+    steph_p_singular_xy_function(unsigned l_) : l(l_) {}
+  };
+
+
+scalar_type steph_p_singular_xy_function::val(scalar_type x, scalar_type y) const {
+  
+  scalar_type r = sqrt(x*x + y*y);  
+  if (r < 1e-10)  return 0;
+  scalar_type theta = atan2(y, x);
+  scalar_type res = 0;
+    switch(l){
+      case 0 : res = 1/r ; break;
+      case 1 : res = sin(theta*0.5)/sqrt(r) ; break;
+      default: GMM_ASSERT2(false, "arg");
+    }
+  return res;
+}
+
+
+base_small_vector steph_p_singular_xy_function::grad(scalar_type x, scalar_type y) const {
+  scalar_type r = sqrt(x*x + y*y);
+  scalar_type theta = atan2(y, x);
+  base_small_vector res(2);
+  if (r < 1e-10) {
+    GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
+  }
+  
+    switch(l){
+    case 0 :
+      res[0] =- 1/(r*r) ;
+      res[1] = 0 ;
+      break;
+    case 1 :
+      res[0] = (-0.5*sin(theta*0.5))/(r*sqrt(r)) ;
+      res[1] = (0.5*sin(theta*0.5))/(r*sqrt(r));
+      break;
+      
+      default: GMM_ASSERT2(false, "arg");
+    }
+
+  return res;
+}
+
+
+base_matrix steph_p_singular_xy_function::hess(scalar_type, scalar_type)
+  const {
+  GMM_ASSERT1(false, "To be done !");
+}
+
+
+
 
 
 /*
@@ -667,13 +731,13 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 
   cout << "Setting up the singular functions for the enrichment\n";
 
-  //size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U", "Number of Enriched function for u"));
-    size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P", "Number of Enriched function for p"));
+  // size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U", "Number of Enriched function for u"));
+  // size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P", "Number of Enriched function for p"));
 
     //std::vector<getfem::pglobal_function> vfunc(2*nb_enr_func_u);
-  std::vector<getfem::pglobal_function> vfunc_p(2*nb_enr_func_p);
+    //std::vector<getfem::pglobal_function> vfunc_p(2*nb_enr_func_p);
   std::vector<getfem::pglobal_function> vfunc(2);
-  //std::vector<getfem::pglobal_function> vfunc_p(2);
+  std::vector<getfem::pglobal_function> vfunc_p(2);
 
   std::cout << "Using default singular functions\n";
   for (unsigned i = 0; i < vfunc.size(); ++i){
@@ -707,12 +771,14 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   for (unsigned i = 0; i < vfunc_p.size() ;++i){
     
 
-   getfem::abstract_xy_function *sp;
-       if (i < nb_enr_func_p)
-         sp = new generic_p_singular_xy_function(i+1);
-       else
-         sp = new generic_p_singular_xy_function(-(i+1));
-                     
+   // getfem::abstract_xy_function *sp;
+   //        if (i < nb_enr_func_p)
+   //          sp = new generic_p_singular_xy_function(i+1);
+   //        else
+   //          sp = new generic_p_singular_xy_function(-(i+1));
+    getfem::abstract_xy_function *sp = 
+        new steph_p_singular_xy_function(i);
+                 
     if (enrichment_option != FIXED_ZONE && 
 	enrichment_option != GLOBAL_WITH_MORTAR) {
       /* use the product of the singularity function
@@ -1049,6 +1115,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   gmm::simplest_newton_line_search simls;
   gmm::default_newton_line_search dlnrs;
   gmm::systematic_newton_line_search sylnrs;
+  gmm::quadratic_newton_line_search qdlnrs;
 
 //  simplest_newton_line_search 1 *** default_newton_line_search 2 *** systematic_newton_line_search 3
  cout << "line search value" <<line_search_version<< endl;
@@ -1071,10 +1138,10 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
       cout << "=============================== " << endl;
       cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
     }break;
+
     case 2:{
       if (Pseudo_Potential == 1){
 	bool with_pseudo_potential = true;
-	//gmm::default_newton_line_search dlnrs;
 	getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), dlnrs, with_pseudo_potential);
 	cout << "/******************/" << endl;
@@ -1083,9 +1150,9 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
       }
       getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), dlnrs);
-      cout << "============================== " << endl;
-      cout << "= Default_newton_line_search = " << endl;
-      cout << "============================== " << endl;   
+      cout << "================================ " << endl;
+      cout << "=  Default_newton_line_search  = " << endl;
+      cout << "================================ " << endl;   
       cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
     }break;
     
@@ -1093,7 +1160,6 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     case 3: {
       if (Pseudo_Potential == 1){
 	bool with_pseudo_potential = true;
-	//gmm::systematic_newton_line_search sylnrs;
 	getfem::standard_solve(model, iter,getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), sylnrs,  with_pseudo_potential);
 	cout << "/******************/" << endl;
@@ -1102,11 +1168,32 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
       }
       getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), sylnrs); 
-      cout << "================================= " << endl;
-      cout << "= Systematic_newton_line_search = " << endl;
-      cout << "================================= " << endl;
+      cout << "=================================== " << endl;
+      cout << "=  Systematic_newton_line_search  = " << endl;
+      cout << "=================================== " << endl;
       cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
     }break;
+
+    case 4: {
+      if (Pseudo_Potential == 1){
+	bool with_pseudo_potential = true;
+	getfem::standard_solve(model, iter,getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), qdlnrs,  with_pseudo_potential);
+	cout << "/******************/" << endl;
+	cout << "/* Enery Criteria */" << endl;
+	cout << "/******************/" << endl;
+      }
+      getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+			       getfem::model_real_plain_vector>(model), qdlnrs); 
+      cout << "================================== " << endl;
+      cout << "=  Quadratic_newton_line_search  = " << endl;
+      cout << "================================== " << endl;
+      cout << "alpha_md valeur de l'ordre de singularite =  " << alpha_md << endl;
+    }break;
+
+
+
+
     default: GMM_ASSERT1(false, "No such line search");
     }
 
@@ -1307,10 +1394,10 @@ int main(int argc, char *argv[]) {
     cout << "Computing error with respect to a reference solution..." << endl;
 
    
-    std::string REFERENCE_MF  = "referenceNX120_incomMR_diri_LD_015_enriold_func.meshfem";
-    std::string REFERENCE_U   = "referenceNX120_incomMR_diri_LD_015_enriold_func.U";
-    std::string REFERENCE_MFP = "referenceNX120_incomMR_diri_LD_015_enriold_func.p_meshfem";
-    std::string REFERENCE_P   = "referenceNX120_incomMR_diri_LD_015_enriold_func.P";
+    std::string REFERENCE_MF  = "refNX140_incomp_MR_diri_sym_amp0_11.meshfem";
+    std::string REFERENCE_U   = "refNX140_incomp_MR_diri_sym_amp0_11.U";
+    std::string REFERENCE_MFP = "refNX140_incomp_MR_diri_sym_amp0_11.p_meshfem";
+    std::string REFERENCE_P   = "refNX140_incomp_MR_diri_sym_amp0_11.P";
                                                                   
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
