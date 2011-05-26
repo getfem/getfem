@@ -130,20 +130,20 @@ upload:
 	make html
 	-rm -fr homepage *.tar.gz
 	-mv build/html homepage
-	$(top_srcdir)/bin/upload_html --delete homepage
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_html --delete homepage)
 	-rm -fr getfem-$(DISTVERSION)-docs-html
 	-mv homepage getfem-$(DISTVERSION)-docs-html
 	tar -cf getfem-$(DISTVERSION)-docs-html.tar getfem-$(DISTVERSION)-docs-html
 	gzip -9 getfem-$(DISTVERSION)-docs-html.tar
-	$(top_srcdir)/bin/upload_documentation --delete getfem-$(DISTVERSION)-docs-html.tar.gz
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete getfem-$(DISTVERSION)-docs-html.tar.gz)
 	rm -fr getfem-$(DISTVERSION)-docs-html *.tar.gz
 	make pdf
 	-mv build/latex/*.pdf .
-	$(top_srcdir)/bin/upload_documentation --delete scilab_interface.pdf
-	$(top_srcdir)/bin/upload_documentation --delete python_interface.pdf
-	$(top_srcdir)/bin/upload_documentation --delete matlab_interface.pdf
-	$(top_srcdir)/bin/upload_documentation --delete getfem_userdoc.pdf
-	$(top_srcdir)/bin/upload_documentation --delete getfem_project.pdf
-	$(top_srcdir)/bin/upload_documentation --delete gmm_userdoc.pdf
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete scilab_interface.pdf)
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete python_interface.pdf)
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete matlab_interface.pdf)
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete getfem_userdoc.pdf)
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete getfem_project.pdf)
+	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete gmm_userdoc.pdf)
 	rm -fr *.pdf
 	rm -fr build

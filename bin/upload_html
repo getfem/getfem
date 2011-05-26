@@ -29,7 +29,16 @@ do_mrproper=0
 
 where="html"
 
-me=$(whoami)
+if [ "$srcdir" == "" ]; then
+  srcdir="."
+fi
+echo "srcdir = $srcdir"
+me=$(cd $srcdir/.svn && grep "svn+ssh" entries | sed "1,1d" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
+echo "gna login : $me"
+if [ "$me" == "" ]; then
+  die "Cannot determine gna login"
+fi
+
 while test "$#" -gt 0; do
   case $1 in
     --mrproper)
