@@ -1015,6 +1015,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
   getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "params");
 
   // Incompressibility
+
   if (mixed_pressure && (law_num == 1 || law_num == 3)) {
     cout << "mixed pressure <|-------------------------|>" << endl;
     model.add_fem_variable("p", mf_pe());
@@ -1049,9 +1050,9 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     add_Dirichlet_condition_with_penalization (model, mim, "u", 1E15, BOUNDARY_NUM4, "Dirichletdata");
 
 //     ////////////////////////////////////////// 
-//     //
-//     //     Symetrie condition
-//     //
+//     //                                      //
+//     //     Symetrie condition               // 
+//     //                                      //
 //     //////////////////////////////////////////
 
     model.add_initialized_fixed_size_data("Dirichletsymdata",
@@ -1394,10 +1395,10 @@ int main(int argc, char *argv[]) {
     cout << "Computing error with respect to a reference solution..." << endl;
 
    
-    std::string REFERENCE_MF  = "refNX140_incomp_MR_diri_sym_amp0_11.meshfem";
-    std::string REFERENCE_U   = "refNX140_incomp_MR_diri_sym_amp0_11.U";
-    std::string REFERENCE_MFP = "refNX140_incomp_MR_diri_sym_amp0_11.p_meshfem";
-    std::string REFERENCE_P   = "refNX140_incomp_MR_diri_sym_amp0_11.P";
+    std::string REFERENCE_MF  = "TestEnrichemen**tPressureStephNX40.meshfem";
+    std::string REFERENCE_U   = "TestEnrichemen**tPressureStephNX40.U";
+    std::string REFERENCE_MFP = "TestEnrichemen**tPressureStephNX40.p_meshfem";
+    std::string REFERENCE_P   = "TestEnrichemen**tPressureStephNX40.P";
                                                                   
     cout << "Load reference displacement from "
 	 << REFERENCE_MF << " and " << REFERENCE_U << "\n";
@@ -1461,8 +1462,20 @@ int main(int argc, char *argv[]) {
     
     cout << "To ref L2 ERROR on P:"
 	 << getfem::asm_L2_dist(ref_mim, ref_mfp, interp_P,
-				ref_mfp, ref_P) << endl;
-    
+				ref_mfp, ref_P, Part_cal_error) << endl;
+    cout << "/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/ " << endl;
+    cout << "/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/*/ " << endl;
+    cout << "                                                                                            " << endl;
+
+    cout << "Norme of displacement error vector %%% asm_L2_norm %%% : " 
+	 << getfem::asm_L2_norm(ref_mim, ref_mf, interp_U_error, Part_cal_error)
+         << endl;
+    cout << "Norme of displacement error vector %%% asm_H1_norm %%% : " 
+	 << getfem::asm_H1_norm(ref_mim, ref_mf, interp_U_error, Part_cal_error)
+         << endl;
+    cout << "Norme of pressure error vector     %%% asm_L2_norm %%% : " 
+	 << getfem::asm_L2_norm(ref_mim, ref_mfp, interp_P_error, Part_cal_error)
+         << endl;
     gmm::add(gmm::scaled(interp_U, -1.), ref_U);
     gmm::vecsave(p.datafilename + ".diff_ref", ref_U);
     
