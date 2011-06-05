@@ -49,16 +49,17 @@ namespace getfem {
 
 
 
-  inline scalar_type mat_euclidean_sp(base_matrix &Sigma, base_matrix &Ealpha) {
-    return gmm::vect_sp((std::vector<scalar_type> &)Sigma, (std::vector<scalar_type> &)Ealpha);
-  }
+  //  inline scalar_type mat_euclidean_sp(base_matrix &Sigma, base_matrix &Ealpha) {
+  //  return gmm::vect_sp((std::vector<scalar_type> &)Sigma, (std::vector<scalar_type> &)Ealpha);
+  //
+  //  }
 
 
   
 
 //=======================================================================
 //=                /******************************/                     =
-//=                /*   Term 1 d(L)/d(alpha)     */                     =
+//=  compressible  /*   Term 1 d(L)/d(alpha)     */                     =
 //=                /******************************/                     =
 //=======================================================================
 
@@ -115,7 +116,7 @@ namespace getfem {
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)+= scalar_type(1);
       
-      scalar_type J = gmm::lu_det(gradU);
+      //scalar_type J = gmm::lu_det(gradU);
 
 
       // Computation of d(E)/d(alpha)
@@ -155,13 +156,13 @@ namespace getfem {
 
   //===================================================================
   //=                                                                 =
-  //=             Terms of the tangent matrix for optimization        =
+  //= Compressible Terms of the tangent matrix for optimization       =
   //=                                                                 =
   //===================================================================
 
 //==================================================================================
 //=     /***********************************************************/              =
-//=     /* Term 2 d^2(L)/d(alpha)d(u^h)   The part [*]:Grad(v^h)   */              =
+//=     /* Term 2 d^2(L)/d(alpha)d(u^h)   The part [*]:Grad(v^h)   */              = Compressible
 //=     /***********************************************************/              =
 //==================================================================================
 
@@ -219,7 +220,7 @@ namespace getfem {
 
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1); // gradU contient le tenseur F
-      scalar_type J = gmm::lu_det(gradU);
+      // scalar_type J = gmm::lu_det(gradU);
       
 
       // Computation of d(gradU)/d(alpha) 
@@ -292,7 +293,7 @@ namespace getfem {
 
 //==============================================================================================
 //=     /***********************************************************************/              =
-//=     /* Term 3 d^2(L)/d(alpha)d(u^h)    The part [*]:Ln(r).Grad(v^h)        */              =
+//=     /* Term 3 d^2(L)/d(alpha)d(u^h)    The part [*]:Ln(r).Grad(v^h)        */              = Compressible
 //=     /***********************************************************************/              =
 //==============================================================================================
 
@@ -353,14 +354,14 @@ namespace getfem {
 
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1); // GradU contient le tenseur F maintenant
-      scalar_type J = gmm::lu_det(gradU);
+      // scalar_type J = gmm::lu_det(gradU);
       
 
       // Computation of F.Sigma 
       AHL.sigma(E, Sigma, params);
       base_matrix eas(N,N);
       gmm::mult(gradU, Sigma, eas);
-            
+      gmm::scale(eas, log(r2)*0.5);     
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
 	  t(i,j) = eas(i, j);    
@@ -385,7 +386,7 @@ namespace getfem {
 
 //============================================================================================================
 //=     /*************************************************************************************/              =
-//=     /* Term 4 d^2(L)/d(alpha)d(u^h)   The part [*]:1/r(cos\theta, sin\theta)(v^h)_ls)    */              =
+//=     /* Term 4 d^2(L)/d(alpha)d(u^h)   The part [*]:1/r(cos\theta, sin\theta)(v^h)_ls)    */              = Compressible
 //=     /*************************************************************************************/              =
 //============================================================================================================
 
@@ -444,7 +445,7 @@ namespace getfem {
 
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
-      scalar_type J = gmm::lu_det(gradU);
+       // scalar_type J = gmm::lu_det(gradU);
       
 
       // Computation of F.Sigma 
@@ -475,7 +476,7 @@ namespace getfem {
 
 //========================================================================================
 //=             /*********************************************************/              =
-//=             /*              Term 5 d^2(L)/d^2(alpha)                 */              =
+//=             /*              Term 5 d^2(L)/d^2(alpha)                 */              = Compressible
 //=             /*********************************************************/              =
 //========================================================================================
 
@@ -534,9 +535,9 @@ namespace getfem {
       
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
-      scalar_type J = gmm::lu_det(gradU);
+      // scalar_type J = gmm::lu_det(gradU);
 
-       // Computation of d(grad U)/d(alpha) 
+      // Computation of d(grad U)/d(alpha) 
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
 		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
@@ -572,7 +573,7 @@ namespace getfem {
       t[0]=mat_euclidean_sp(Sigma, Ealpha2);
        
       // Computation of grad_Sigma:d(E)/d(alpha)
-      scalar_type temp ;
+      // scalar_type temp ;
       AHL.grad_sigma(E, GSigma, params);
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
@@ -614,21 +615,21 @@ namespace getfem {
  
   //=========================================================================
   //
-  //  Nonlinear elasticity Brick
+  //  Nonlinear elasticity Brick                                       Compressible
   //
   //=========================================================================
 
 
   //=========================================================================
   //
-  //  Assembling the tangent of the additional term
+  //  Assembling the tangent of the additional term                    Compressible
   //
   //=========================================================================
 
 
 template<typename VECT0, typename VECT1, typename VECT2> 
   
-  void asm_nonlinear_elasticity_optim_tangent_matrix_alpha_u
+  void asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_u
   (const VECT0 &V_, const mesh_im &mim, 
    const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
    dal::bit_vector &u_enriched_dof, const VECT2 &/*alpha*/, 
@@ -674,7 +675,6 @@ template<typename VECT0, typename VECT1, typename VECT2>
       assem1.set("V(#1)+=comp(NonLin(#1,#2)(i,j).vGrad(#1)(:,i,j))");
     assem1.push_mi(mim);
     assem1.push_mf(mf_u);
-    assem1.push_mf(mf_p);
     if (mf_data) assem1.push_mf(*mf_data);
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
@@ -687,7 +687,7 @@ template<typename VECT0, typename VECT1, typename VECT2>
 
 
   template<typename VECT1, typename VECT2> 
-  scalar_type asm_nonlinear_elasticity_optim_tangent_matrix_alpha_alpha
+  scalar_type asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_alpha
   (const mesh_im &mim, 
    const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT2 &U_ls,
    dal::bit_vector &/*u_enriched_dof*/, const VECT2 &/*alpha*/, 
@@ -720,31 +720,30 @@ template<typename VECT0, typename VECT1, typename VECT2>
 
   //=========================================================================
   //=========================================================================
-  //==       Assembling the right hand side of the additional term         ==
+  //==       Assembling the right hand side of the additional term         == Compressible
   //=========================================================================
   //=========================================================================
 
 
   template<typename VECT1, typename VECT2, typename VECT3> 
-  void asm_nonlinear_elasticity_optim_rhs
-  (const VECT1 &R1_, const VECT1 &R2_, const mesh_im &mim,
+  void asm_nonlinear_elasticity_optim_compressible_rhs
+  (const VECT1 &R1_, const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U, const VECT3 &U_ls,
    dal::bit_vector &/*u_enriched_dof*/,
    const VECT2 &/*alpha*/, const getfem::mesh_fem *mf_data, const VECT3 &PARAMS,
    const abstract_hyperelastic_law &AHL, const getfem::level_set &ls,
    const mesh_region &rg = mesh_region::all_convexes()) {
     VECT1 &R1 = const_cast<VECT1 &>(R1_);
-    VECT1 &R2 = const_cast<VECT1 &>(R2_);
     GMM_ASSERT1(mf_u.get_qdim() >= mf_u.linked_mesh().dim(),
 		"wrong qdim for the mesh_fem");
 
 
     GMM_ASSERT1(!mf_u.is_reduced(), "Do not work for reduced fems");
-    GMM_ASSERT1(!mf_p.is_reduced(), "Do not work for reduced fems");
+
     
     
     {
-      elasticity_nonlinear_optim_term_compresssible1<VECT2, VECT3>
+      elasticity_nonlinear_optim_term_compressible1<VECT2, VECT3>
 	nterm(mf_u, U, U_ls, mf_data, PARAMS, AHL, ls);
       
       getfem::generic_assembly assem;
@@ -764,12 +763,6 @@ template<typename VECT0, typename VECT1, typename VECT2>
     
 
   }
-
-
-
-
-
-
 
 
 

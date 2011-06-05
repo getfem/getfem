@@ -41,6 +41,7 @@
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "getfem/getfem_superlu.h"
 #include "getfem_nonlinear_elastoptim.h"
+#include "compressible_getfem_nonlinear_elastoptim.h"
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
 
@@ -180,8 +181,8 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
 
 
 /**************************************************************************/
-/*                                                                        */
-/* Brick definition.                                                      */
+/* Incompressible cases                                                   */
+/* Brick for incompressible formulation definition.                       */
 /*                                                                        */
 /**************************************************************************/
 
@@ -195,12 +196,12 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
   virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
 				      const model::varnamelist &vl,
 				      const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &vecl,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version version) const {
+                                      const model::mimlist &mims,
+                                            model::real_matlist &matl,
+                                            model::real_veclist &vecl,
+				            model::real_veclist &,
+                                            size_type region,
+                                            build_version version) const {
       GMM_ASSERT1(mims.size() == 1,
 		  "Nonlinear elasticity brick need a single mesh_im");
       GMM_ASSERT1(vl.size() == 4,
@@ -345,7 +346,7 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
     }
 
   };
-  
+
   //=========================================================================
   //  Add a nonlinear elasticity brick.  
   //=========================================================================
@@ -374,17 +375,157 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1,&mim), region);
   }
 
+}
+
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
 
 
+/**************************************************************************/
+/* Compressible cases                                                     */
+/* Brick for Compressible formulation definition.                         */
+/*                                                                        */
+/**************************************************************************/
+
+namespace getfem {
+
+struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
+  
+  const abstract_hyperelastic_law &AHL;
+  const getfem::level_set &ls;
+  
+  virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+				      const model::varnamelist &vl,
+				      const model::varnamelist &dl,
+                                      const model::mimlist &mims,
+                                            model::real_matlist &matl,
+                                            model::real_veclist &vecl,
+                                            model::real_veclist &,
+                                            size_type region,
+                                            build_version version) const {
+      GMM_ASSERT1(mims.size() == 1,
+		  "Nonlinear elasticity brick need a single mesh_im");
+      GMM_ASSERT1(vl.size() == 4,
+		  "Nonlinear elasticity brick need a single variable");
+      GMM_ASSERT1(dl.size() == 1,
+		  "Wrong number of data for nonlinear elasticity brick, "
+                  << dl.size() << " should be 1 (vector).");
+      GMM_ASSERT1(matl.size() == 7,  "Wrong number of terms for nonlinear "
+		  "elasticity brick");
+
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+
+      const model_real_plain_vector &alpha = md.real_variable(vl[1]);
+      
+
+      const mesh_fem *mf_params = md.pmesh_fem_of_variable(dl[0]);
+      const model_real_plain_vector &params = md.real_variable(dl[0]);
+      const mesh_im &mim = *mims[0];
+
+      size_type sl = gmm::vect_size(params);
+      if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
+      GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for the "
+		  "nonlinear constitutive elastic law");
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+         
+      
+      std::vector<scalar_type> U_ls(gmm::vect_size(u));
+      
+      dim_type d = mf_u.linked_mesh().dim();
+      dal::bit_vector u_enriched_dof;
+      for (dal::bv_visitor cv(mf_u.linked_mesh().convex_index());
+	   !cv.finished(); ++cv) {
+	pfem pf = mf_u.fem_of_element(cv);
+	for (size_type j = 0; j< pf->nb_dof(cv); ++j)
+	  if (pf->dof_types()[j] == global_dof(d)) {
+	    for (size_type k = 0; k < d; ++k) {
+	      size_type dof = mf_u.ind_basic_dof_of_element(cv)[j*d+k];
+	      u_enriched_dof.add(dof);
+	      U_ls[dof] = u[dof];
+	    }
+	  }
+      }
+      
+
+      if (version & model::BUILD_MATRIX) {
+	std::vector<scalar_type> V(gmm::vect_size(u));
+	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
+
+	asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_u
+	  (V, mim, mf_u, u, U_ls, u_enriched_dof, alpha, mf_params, params, AHL, ls,rg);
+	gmm::copy(gmm::row_vector(V), matl[0]);
+
+	(matl[2])(0,0)
+	  = asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_alpha
+	  (mim, mf_u, u, U_ls, u_enriched_dof, alpha, mf_params, params, AHL, ls,rg);
+	
+      }
 
 
+      if (version & model::BUILD_RHS) {
+	asm_nonlinear_elasticity_optim_compressible_rhs(vecl[0], mim, 
+					   mf_u, u, U_ls, u_enriched_dof,
+					   alpha, mf_params, params, AHL, ls, rg);
+	gmm::scale(vecl[0], scalar_type(-1));
+      }
 
+    }
+
+
+    nonlinear_elasticity_optim_brick_compressible(const abstract_hyperelastic_law &AHL_,
+				     const getfem::level_set &ls_)
+      : AHL(AHL_), ls(ls_) {
+      set_flags("Nonlinear elasticity brick", false /* is linear*/,
+                true /* is symmetric */, true /* is coercive */,
+		true /* is real */, false /* is complex */);
+    }
+
+  };
+
+  //=========================================================================
+  //  Add a nonlinear elasticity brick compressible cases.  
+  //=========================================================================
+
+  size_type add_nonlinear_elasticity_optim_compressible_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &varname_alpha, const abstract_hyperelastic_law &AHL, const std::string &dataname_law,
+   const getfem::level_set &ls, size_type region = size_type(-1)) {
+    pbrick pbr = new nonlinear_elasticity_optim_brick_compressible(AHL, ls);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_alpha, varname_u, true));
+    tl.push_back(model::term_description(varname_alpha, varname_alpha, true));
+    model::varnamelist dl(1, dataname_law);
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(varname_alpha);
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1,&mim), region);
+  }
 
 }
 
 
 
 
+
+
+
+
+
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
+/*****************************************************************************************************************/
 
 
 /**************************************************************************/
@@ -1241,9 +1382,11 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     getfem::add_nonlinear_incompressibility_brick(model, mim, "u" , "p", size_type(-1));
     }
   // Add nonlinear elasticity optimazition brick
-
-  add_nonlinear_elasticity_optim_brick(model, mim, "u" , "p", "alpha", "beta",
-				       *pl, "coefficients", ls);
+if (mixed_pressure) {
+  add_nonlinear_elasticity_optim_brick(model, mim, "u" , "p", "alpha", "beta", *pl, "coefficients", ls);
+ }
+ else
+add_nonlinear_elasticity_optim_compressible_brick(model, mim, "u" , "alpha", *pl, "coefficients", ls);
 
  //  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
  //   getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
