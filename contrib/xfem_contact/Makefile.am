@@ -2,11 +2,11 @@ if METIS
 optprogs = xfem_dirichlet
 libmetis = -lmetis
 else
-optprogs = 0
+optprogs = 
 libmetis = 
 endif
 
-check_PROGRAMS = xfem_contact xfem_stokes $(xfem_dirichlet)
+check_PROGRAMS = xfem_contact xfem_stokes $(optprogs)
 
 CLEANFILES = 
 
