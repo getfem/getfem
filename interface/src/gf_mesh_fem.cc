@@ -33,7 +33,7 @@
 using namespace getfemint;
 
 /*@GFDOC
-  This object represent a finite element method defined on a whole mesh.
+  This object represents a finite element method defined on a whole mesh.
 @*/
 
 
