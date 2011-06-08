@@ -31,7 +31,7 @@ using namespace getfemint;
 void gf_mesh_im_set_integ(getfem::mesh_im *mim, getfemint::mexargs_in& in);
 
 /*@GFDOC
-  This object represent an integration method defined on a whole mesh (an 
+  This object represents an integration method defined on a whole mesh (an 
   potentialy on its boundaries).
 @*/
 

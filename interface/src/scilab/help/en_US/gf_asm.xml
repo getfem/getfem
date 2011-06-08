@@ -39,7 +39,7 @@ M = gf_asm('extrapolation matrix', mesh_fem mf1, mesh_fem mf2)
     <title>Description</title>
 
     <para>Many of the functions below use more than one mesh_fem: the main
-    mesh_fem (mf_u) used for the main unknow, and data mesh_fem (mf_d) used
+    mesh_fem (mf_u) used for the main unknown, and data mesh_fem (mf_d) used
     for the data. It is always assumed that the Qdim of mf_d is equal to 1: if
     mf_d is used to describe vector or tensor data, you just have to "stack"
     (in fortran ordering) as many scalar fields as necessary.</para>

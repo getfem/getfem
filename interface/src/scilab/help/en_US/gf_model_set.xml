@@ -571,12 +571,12 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
 	  are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
 	  obstacle correspond to <![CDATA[z <= 0]]>, the corresponding signed distance will
 	  be simply 'z'. <literal>multname_n</literal> should be a fixed size variable whose size is
-	  the number of degrees of freedom on boundary <literal>region</literal>. It represent the
+	  the number of degrees of freedom on boundary <literal>region</literal>. It represents the
 	  contact equivalent nodal forces. In order to add a friction condition
 	  one has to add the <literal>multname_t</literal> and <literal>dataname_friction_coeff</literal> parameters.
 	  <literal>multname_t</literal> should be a fixed size variable whose size is
 	  the number of degrees of freedom on boundary <literal>region</literal> multiplied by <![CDATA[d-1]]>
-	  where <![CDATA[d]]> is the domain dimension. It represent the friction equivalent nodal forces.
+	  where <![CDATA[d]]> is the domain dimension. It represents the friction equivalent nodal forces.
 	  The augmentation parameter <literal>r</literal> should be chosen in a
 	  range of acceptabe values (close to the Young modulus of the elastic
 	  body, see Getfem user documentation). <literal>dataname_friction_coeff</literal> is

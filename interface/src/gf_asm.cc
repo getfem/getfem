@@ -207,7 +207,7 @@ void assemble_source(size_type boundary_num,
   General assembly function.
 
   Many of the functions below use more than one mesh_fem: the main
-  mesh_fem (mf_u) used for the main unknow, and data mesh_fem (mf_d)
+  mesh_fem (mf_u) used for the main unknown, and data mesh_fem (mf_d)
   used for the data. It is always assumed that the Qdim of mf_d is
   equal to 1: if mf_d is used to describe vector or tensor data, you
   just have to "stack" (in fortran ordering) as many scalar fields as

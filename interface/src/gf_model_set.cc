@@ -1518,12 +1518,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
     obstacle correspond to :math:`z \le 0`, the corresponding signed distance will
     be simply "z". `multname_n` should be a fixed size variable whose size is
-    the number of degrees of freedom on boundary `region`. It represent the
+    the number of degrees of freedom on boundary `region`. It represents the
     contact equivalent nodal forces. In order to add a friction condition
     one has to add the `multname_t` and `dataname_friction_coeff` parameters.
     `multname_t` should be a fixed size variable whose size is
     the number of degrees of freedom on boundary `region` multiplied by :math:`d-1`
-    where :math:`d` is the domain dimension. It represent the friction equivalent
+    where :math:`d` is the domain dimension. It represents the friction equivalent
     nodal forces.
     The augmentation parameter `r` should be chosen in a
     range of acceptabe values (close to the Young modulus of the elastic

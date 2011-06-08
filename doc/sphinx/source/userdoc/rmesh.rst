@@ -36,7 +36,7 @@ estimate. A basic error estimate is available in the file
 
 where ``mim`` is the integration method (a |gf_mim| object), ``mf`` is the finite
 element method on which the unknown has been computed (a |gf_mf| object), ``U`` is
-the vector of degrees of freedom of the unknow, ``err`` is a sufficiently large
+the vector of degrees of freedom of the unknown, ``err`` is a sufficiently large
 vector in which the error estimate is computed for each element of the mesh, and
 ``rg`` is a mesh region bulild from elements on which the error estimate should be
 computed (a |gf_mr| object).
