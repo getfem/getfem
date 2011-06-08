@@ -28,7 +28,7 @@
 using namespace getfemint;
 
 static void
-cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
+cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in, bool linear=true)
 {
   getfemint::size_type dim = in.remaining();
 
@@ -66,7 +66,8 @@ cartesian_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in)
   std::vector<int> ipt(dim);
   std::vector<getfem::base_node> pts(1 << (dim+1));
 
-  bgeot::pgeometric_trans pgt = bgeot::parallelepiped_linear_geotrans(dim);
+  bgeot::pgeometric_trans pgt = linear ? bgeot::parallelepiped_linear_geotrans(dim)
+                                       : bgeot::parallelepiped_geotrans(dim, 1);
 
   /* add the convexes */
   for (size_type i=0; i < grid_nconvex; i++) {
@@ -349,6 +350,15 @@ void gf_mesh(getfemint::mexargs_in& m_in,
     sub_command
       ("cartesian", 1, 32, 0, 1,
        cartesian_mesh(pmesh, in);
+       );
+
+
+    /*@INIT M = ('cartesian Q1', @dvec X, @dvec Y[, @dvec Z,..])
+      Build quickly a regular mesh of quadrangles, cubes, etc. with
+      Q1 elements.@*/
+    sub_command
+      ("cartesian Q1", 2, 32, 0, 1,
+       cartesian_mesh(pmesh, in, false);
        );
 
 
