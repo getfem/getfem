@@ -192,16 +192,16 @@ namespace gmm {
 	qn = j + 1;
 	rn = U_ptr[i];
 	
-	for (pn++; U_ind[pn] < i && pn < U_ptr[L_ind[j]+1]; pn++) {
-	  while (L_ind[qn] < U_ind[pn] && qn < L_ptr[i+1])
+	for (pn++; pn < U_ptr[L_ind[j]+1] && U_ind[pn] < i; pn++) {
+	  while (qn < L_ptr[i+1] && L_ind[qn] < U_ind[pn])
 	    qn++;
-	  if (U_ind[pn] == L_ind[qn] && qn < L_ptr[i+1])
+	  if (qn < L_ptr[i+1] && U_ind[pn] == L_ind[qn])
 	    L_val[qn] -= multiplier * U_val[pn];
 	}
 	for (; pn < U_ptr[L_ind[j]+1]; pn++) {
-	  while (U_ind[rn] < U_ind[pn] && rn < U_ptr[i+1])
+	  while (rn < U_ptr[i+1] && U_ind[rn] < U_ind[pn])
 	    rn++;
-	  if (U_ind[pn] == U_ind[rn] && rn < U_ptr[i+1])
+	  if (rn < U_ptr[i+1] && U_ind[pn] == U_ind[rn])
 	    U_val[rn] -= multiplier * U_val[pn];
 	}
       }
