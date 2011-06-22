@@ -160,13 +160,19 @@ namespace gmm {
 
 	gmm::mult(lv, mat_col(eigvect, num), v);
 
-	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)*R(1000)) break;
-	if (gmm::abs(rho-rho2) <= rho*R(gmm::sqrt(EPS))) break;
+	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)*R(1)) break;
+	if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) break;
+	// if (gmm::abs(rho-rho2) < rho*R(EPS)*R(1000)) break;
       }
 
       // cout << " iter = " << iter << endl;
+      
+      cout << "gmm::abs(rho-rho2) = " << gmm::abs(rho-rho2) << endl;
+      cout << "rho*R(gmm::sqrt(EPS)) = " << rho*R(EPS)*R(1000) << endl;
+      
 
-      if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
+      if (gmm::abs(rho-rho2) < 0.1*rho*R(gmm::sqrt(EPS))) {
+      // if (gmm::abs(rho-rho2) < rho*R(EPS)*R(1000)) {
 	size_type j_max = size_type(-1), j = 0;
 	R val_max = R(0);
 	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
