@@ -160,19 +160,18 @@ namespace gmm {
 
 	gmm::mult(lv, mat_col(eigvect, num), v);
 
-	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)*R(1)) break;
-	if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) break;
-	// if (gmm::abs(rho-rho2) < rho*R(EPS)*R(1000)) break;
+	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)) break;
+	// if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) break;
+	if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) break;
       }
 
       // cout << " iter = " << iter << endl;
-      
-      cout << "gmm::abs(rho-rho2) = " << gmm::abs(rho-rho2) << endl;
-      cout << "rho*R(gmm::sqrt(EPS)) = " << rho*R(EPS)*R(1000) << endl;
+      // cout << "gmm::abs(rho-rho2) = " << gmm::abs(rho-rho2) << endl;
+      // cout << "rho*R(gmm::sqrt(EPS)) = " << rho*R(EPS)*R(100) << endl;
       
 
-      if (gmm::abs(rho-rho2) < 0.1*rho*R(gmm::sqrt(EPS))) {
-      // if (gmm::abs(rho-rho2) < rho*R(EPS)*R(1000)) {
+      // if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
+      if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) {
 	size_type j_max = size_type(-1), j = 0;
 	R val_max = R(0);
 	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
@@ -442,7 +441,7 @@ namespace gmm {
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
 
-    if (columns.size() > std::max(size_type(500), actsize))
+    if (columns.size() > std::max(size_type(1500), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
       range_basis_eff_Gram_Schmidt_dense(B, columns, c_ortho, EPS);
