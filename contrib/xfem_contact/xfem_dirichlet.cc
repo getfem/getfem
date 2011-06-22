@@ -76,30 +76,49 @@ typedef gmm::row_matrix<sparse_vector> sparse_row_matrix;
 double Radius;
 int u_version;
 double u_alpha = 1.5;
-double u_B = 20;
-double u_n = 7.0;
+double u_B = 20.0;
+double u_n = 8.0;
 double dtheta = M_PI/36;
+double sol5_a = 0.075, sol5_b = 30.0;
 
 double u_exact(const base_node &p) {
   double R = Radius, r=gmm::vect_norm2(p), T=atan2(p[1], p[0])+dtheta;
   switch (u_version) {
-    case 0: {
-      double sum = std::accumulate(p.begin(), p.end(), double(0));
-      
-      return 5.0 * sin(sum) * (r*r - Radius*Radius);
-    }
-    case 1: {
-      double A=u_alpha, n=u_n;
-      return (R*R - r*r *(1+A*(1.0 + sin(n*T))));
-    }
-    case 2: {
-      double A=u_alpha, n=u_n, B=u_B;
-      return (R*R - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
-    }
-    case 3: {
-      double A=u_alpha, n=u_n;
-      return 5*(R*R*R*R - r*r*r*r*(1+A*(1.0 + sin(n*T))));      
-    }
+  case 0: {
+    double sum = std::accumulate(p.begin(), p.end(), double(0));
+    
+    return 5.0 * sin(sum) * (r*r - Radius*Radius);
+  }
+  case 1: {
+    double A=u_alpha, n=u_n;
+    return (R*R - r*r *(1+A*(1.0 + sin(n*T))));
+  }
+  case 2: {
+    double A=u_alpha, n=u_n, B=u_B;
+    return (R*R - r*r *(1+A*(1.0 + sin(n*T)))) * cos(B*r);      
+  }
+  case 3: {
+    double A=u_alpha, n=u_n;
+    return 5*(R*R*R*R - r*r*r*r*(1+A*(1.0 + sin(n*T))));      
+  }
+  case 4:{
+    return 5.0 * (r*r*r - Radius*Radius*Radius);
+  }
+  case 5:{
+    double a = sol5_a, b = sol5_b;
+    T = atan2(p[1], p[0]);
+    return 5.0 * r*r*(r - Radius*(1 - a*sin(b*T)));
+  }
+  case 6:{
+    double sum = std::accumulate(p.begin(), p.end(), double(0));
+    
+    return 5.0 * sin(sum) * (r*r*r - Radius*Radius*Radius);
+  }
+  case 7:{
+    double sum = std::accumulate(p.begin(), p.end(), double(0));
+    
+    return 5.0 * sin(sum) * (r*r*r*r - Radius*Radius*Radius*Radius);
+  }
   }
   GMM_ASSERT1(false, "Invalid exact solution");
 }
@@ -137,9 +156,29 @@ double g_exact(const base_node &p) {
   case 3: {
     double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
     return -5*r*r*r*sqrt(16.0 + 32.0*A*A + 32.0*A*sin(n*T) + 32.0*A
-			+ 32.0*A*A*sin(n*T) - 16*gmm::sqr(A*cos(n*T))
-		       + gmm::sqr(A*cos(n*T)*n));
+			 + 32.0*A*A*sin(n*T) - 16*gmm::sqr(A*cos(n*T))
+			 + gmm::sqr(A*cos(n*T)*n));
   }   
+  case 4: {
+    r=gmm::vect_norm2(p);
+    return 15*r*r;
+  }
+  case 5:{
+    double a = sol5_a, b = sol5_b;
+    double T = atan2(p[1], p[0]);
+    return 5.0*r*sqrt( gmm::sqr(3*r-2*Radius*(1-a*sin(b*T)))
+		       + gmm::sqr(R*cos(b*T)*b*a));
+  }  
+  case 6: {
+    double sum=std::accumulate(p.begin(), p.end(), double(0)), T=atan2(p[1], p[0]);
+    return 5*cos(sum)*(cos(T)+sin(T))*(r*r*r-Radius*Radius*Radius)+15*r*r*sin(sum);
+    //  return 5.0*sqrt( gmm::sqr(5*cos(sum)*(cos(T)+sin(T))*(r*r*r-Radius*Radius*Radius)+15*r*r*sin(sum))
+    //	     + gmm::sqr(5*cos(sum)*(cos(T)-sin(T))*(r*r*r-Radius*Radius*Radius))) ;
+  }  
+  case 7: {
+    double sum=std::accumulate(p.begin(), p.end(), double(0)), T=atan2(p[1], p[0]);
+    return 5*cos(sum)*(cos(T)+sin(T))*(r*r*r*r-Radius*Radius*Radius*Radius)+20*r*r*r*sin(sum);
+  }  
   }
   return 0;
 }
@@ -170,6 +209,23 @@ double rhs(const base_node &p) {
     double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
     return -5*r*r*(-16.0-16.0*A*sin(n*T)-16.0*A+A*sin(n*T)*n*n);
   }
+  case 4: {
+    r=gmm::vect_norm2(p);
+    return -45.0*r;
+  }
+  case 5:{
+    double a = sol5_a, b = sol5_b;
+    double T = atan2(p[1], p[0]);
+    return 5.0*(4.0*Radius-9.0*r-4.0*Radius*sin(b*T)*a+Radius*sin(b*T)*b*b*a);
+  }  
+  case 6: {
+    double sum = std::accumulate(p.begin(), p.end(), double(0));
+    return 5.0 * (2*sin(sum)*(r*r*r-Radius*Radius*Radius)-6*r*sum*cos(sum)-9*r*sin(sum));
+  }
+  case 7: {
+    double sum = std::accumulate(p.begin(), p.end(), double(0));
+    return 5.0 * (2*sin(sum)*(r*r*r*r-Radius*Radius*Radius*Radius)-8*r*r*sum*cos(sum)-16*r*r*sin(sum));
+  }
   }
   return 0;
 }
@@ -177,7 +233,7 @@ double rhs(const base_node &p) {
 double ls_value(const base_node &p) {
   double R = Radius, r=gmm::vect_norm2(p);
   switch (u_version) {
-  case 0: return gmm::vect_norm2_sqr(p) - R*R;
+  case 0: case 4: case 6: case 7:  return gmm::vect_norm2_sqr(p) - R*R;
   case 1: case 2: {
     double A=u_alpha, T=atan2(p[1],p[0])+dtheta, n=u_n;
     return -(R*R - r*r*(1+A*(1.0 + sin(n*T)))) / 15.0;
@@ -186,6 +242,14 @@ double ls_value(const base_node &p) {
     double A=u_alpha, T=atan2(p[1], p[0])+dtheta, n=u_n;
     return -(R*R*R*R - r*r*r*r*(1+A*(1.0 + sin(n*T)))) / 4.0;      
   } 
+  case 5:{
+    double a = sol5_a, b = sol5_b;
+    double T = atan2(p[1], p[0]);
+    return r*r*(r - Radius*(1 - a*sin(b*T))) / (Radius*sqrt(Radius+Radius*Radius*b*b*a*a));
+  } 
+    //  case 6:{
+    //return r*r*r-R*R*R;
+    //}
   }
   return 0;
 }
@@ -410,16 +474,28 @@ int main(int argc, char *argv[]) {
   
   // Load the mesh
   getfem::mesh mesh;
-  std::string MESH_FILE = PARAM.string_value("MESH_FILE", "Mesh file");
-  getfem::import_mesh(MESH_FILE, mesh);
-  unsigned N = mesh.dim();
-  
+  // std::string MESH_FILE = PARAM.string_value("MESH_FILE", "Mesh file");
+  //getfem::import_mesh(MESH_FILE, mesh);
+  //unsigned N = mesh.dim();
+
+  std::string MESH_TYPE = PARAM.string_value("MESH_TYPE","Mesh type");
+  bgeot::pgeometric_trans pgt = 
+    bgeot::geometric_trans_descriptor(MESH_TYPE);
+  size_type N = pgt->dim();
+  std::vector<size_type> nsubdiv(N);
+  std::fill(nsubdiv.begin(),nsubdiv.end(),
+	    PARAM.int_value("NX", "Nomber of space steps "));
+  getfem::regular_unit_mesh(mesh, nsubdiv, pgt,
+			    PARAM.int_value("MESH_NOISED") != 0);
+  //  base_small_vector tt(N); tt[1] = -0.5;
+  //  mesh.translation(tt); 
   // center the mesh in (0, 0).
   base_node Pmin(N), Pmax(N);
   mesh.bounding_box(Pmin, Pmax);
   Pmin += Pmax; Pmin /= -2.0;
   // Pmin[N-1] = -Pmax[N-1];
   mesh.translation(Pmin);
+  cout<<"Creating mesh done"<<endl; 
   scalar_type h = 2. * mesh.minimal_convex_radius_estimate();
   cout << "h = " << h << endl;
   
@@ -530,14 +606,30 @@ int main(int argc, char *argv[]) {
   mf_mult.set_finite_element(mesh.convex_index(),
 				 getfem::fem_descriptor(FEMM));
   // getfem::partial_mesh_fem mf_mult(pre_mf_mult);
+  cout << "NX="                      << PARAM.int_value("NX", "Nomber of space steps ")     << "\n"; 
+  cout << "MESH_TYPE="               << MESH_TYPE                 << "\n";
+  cout << "FEM_TYPE="                << FEM                       << "\n";
+  cout << "FEM_MULT="                << FEMM                      << "\n";
+
+  int stabilized_dirichlet =
+    int(PARAM.int_value("STABILIZED_DIRICHLET", "Stabilized version of "
+			"Dirichlet condition or not"));
+  cout << "stabilized_dirichlet ="<< stabilized_dirichlet << "\n";
 
   // Range_basis call
   cols.clear();
-  sparse_matrix BRBB(nb_dof, mf_mult.nb_dof());
-  getfem::asm_mass_matrix(BRBB, mimbounddown, mf, mf_mult);
+  sparse_matrix BRBB;
+  if (stabilized_dirichlet) {
+    gmm::resize(BRBB, mf_mult.nb_dof(), mf_mult.nb_dof());
+    getfem::asm_mass_matrix(BRBB, mimbounddown, mf_mult, mf_mult);
+    // cout << BRBB << endl;
+  } else {
+    gmm::resize(BRBB, nb_dof, mf_mult.nb_dof());
+    getfem::asm_mass_matrix(BRBB, mimbounddown, mf, mf_mult);
+  }
   cout << "Selecting dofs for the multiplier" << endl;
   cout << "nb_dof_mult = " << mf_mult.nb_dof() << endl;
-  gmm::range_basis(BRBB, cols);
+  gmm::range_basis(BRBB, cols, 1e-12);
   mf_mult.reduce_to_basic_dof(cols);
   // penser à l'optimisation sur les mailles ...
 
@@ -553,12 +645,10 @@ int main(int argc, char *argv[]) {
   sparse_matrix B(nb_dof_mult, nb_dof);
   getfem::asm_mass_matrix(B, mimbounddown, mf_mult, mf);
 
-  int stabilized_dirichlet =
-    int(PARAM.int_value("STABILIZED_DIRICHLET", "Stabilized version of "
-			"Dirichlet condition or not"));
   scalar_type dir_gamma0(0);
   sparse_matrix MA(nb_dof_mult, nb_dof_mult), KA(nb_dof, nb_dof);
-  sparse_matrix BA(nb_dof_mult, nb_dof),  M1(nb_dof_mult, nb_dof_mult);
+  sparse_matrix BA(nb_dof_mult, nb_dof);
+  sparse_row_matrix M1(nb_dof_mult, nb_dof_mult);
   if (stabilized_dirichlet > 0) {
     
     sparse_row_matrix E1(nb_dof, nb_dof);
@@ -583,7 +673,7 @@ int main(int argc, char *argv[]) {
       double size_of_crack = 0;
       plain_vector Patch_Vector(nbe);
       asm_patch_vector(Patch_Vector, mimbounddown, mf_P0);
-      cout<<"patch_vectot="<< Patch_Vector<<endl;
+      // cout<<"patch_vectot="<< Patch_Vector<<endl;
       dal::bit_vector  Patch_element_list, Patch_dof_ind;
       for (size_type i = 0; i < nbe; ++i) {
 	if (Patch_Vector[i] != scalar_type(0)){
@@ -594,8 +684,8 @@ int main(int argc, char *argv[]) {
 	  size_of_crack=size_of_crack + Patch_Vector[i];
 	}
       }
-      cout<<"Path_element_list="<< Patch_element_list <<endl;
-      cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
+      // cout<<"Path_element_list="<< Patch_element_list <<endl;
+      //cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
       cout<<"size_of element_in_patch"<< ne <<endl;
       std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);
       std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
@@ -620,9 +710,9 @@ int main(int argc, char *argv[]) {
 
       xadj[j] = k;
       std::vector<int> adjwgt(k);
-      cout<<"xadj="<<xadj<<endl;
-      cout<<"adjncy="<<adjncy<<endl;
-      cout<<"vwgt="<<vwgt<<endl;
+      // cout<<"xadj="<<xadj<<endl;
+      //cout<<"adjncy="<<adjncy<<endl;
+      //cout<<"vwgt="<<vwgt<<endl;
 
       scalar_type ratio_size = PARAM.real_value("RATIO_GR_MESH", "ratio size between mesh and patches");
 
@@ -876,9 +966,9 @@ int main(int argc, char *argv[]) {
   plain_vector LAMBDA(nb_dof_mult);
   gmm::copy(model.real_variable("Lambda"), LAMBDA);
   
-  cout<<"desplacement="<<U<<endl;
+  // cout<<"desplacement="<<U<<endl;
   
-  cout<<"Mult="<<LAMBDA<<endl;
+  // cout<<"Mult="<<LAMBDA<<endl;
 
 #else
 
@@ -945,7 +1035,13 @@ int main(int argc, char *argv[]) {
       exactmax = std::max(exactmax, Vint[i]);
     }
     else Eint[i] = 0.0;
-  cout << "Linfty error: " << 100.0 * errmax / exactmax << "%" << endl;
+
+  mf_rhs.write_to_file("xfem_dirichlet.mf", true);
+  gmm::vecsave("xfem_dirichlet_exact.U", Vint);
+  gmm::vecsave("xfem_dirichlet.U", Uint);
+  gmm::vecsave("xfem_dirichlet.map_error", Eint);
+
+  // cout << "Linfty error: " << 100.0 * errmax / exactmax << "%" << endl;
   cout << "L2 error: " << 100.0
     * getfem::asm_L2_dist(mim, mf, U, mf_rhs, Vint)
     / getfem::asm_L2_norm(mim, mf_rhs, Vint) << "%" << endl;
@@ -1003,6 +1099,8 @@ int main(int argc, char *argv[]) {
 
   lsmf.write_to_file("xfem_dirichlet_ls.mf", true);
   gmm::vecsave("xfem_dirichlet_ls.U", ls.values());
+  
+
 
   unsigned nrefine = mf.linked_mesh().convex_index().card() < 200 ? 32 : 4;
   if (1) {
@@ -1020,7 +1118,10 @@ int main(int argc, char *argv[]) {
     slicer.push_back_action(iso);     // extract isosurface 0
     slicer.push_back_action(sbuild0); // store it into sl0
     slicer.exec(nrefine, mf.convex_index());
-    
+
+
+
+
     getfem::mesh_slicer slicer2(mf.linked_mesh());
     getfem::mesh_slice_cv_dof_data<plain_vector> 
       mfL(ls.get_mesh_fem(), ls.values());
@@ -1036,9 +1137,53 @@ int main(int argc, char *argv[]) {
     plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
     sl.interpolate(mf, U, UU);
     gmm::vecsave("xfem_dirichlet.slU", UU);
-     gmm::scale(LAMBDA, 0.005);
+    gmm::scale(LAMBDA, 0.005);
     sll.interpolate(mf_mult, LAMBDA, LL);
     gmm::vecsave("xfem_dirichlet.slL", LL);
+
+
+    
+    /********************************************/
+    /*exacte solution                           */
+    /********************************************/
+    plain_vector UE(nb_dof_rhs);
+    plain_vector UEE(nb_dof);
+    for (size_type i = 0; i < nb_dof_rhs; ++i) {
+      UE[i] = u_exact(mf_rhs.point_of_basic_dof(i));
+    }
+    mf.write_to_file("xfem_dirichlet.mfE", true);
+    getfem::interpolation(mf_rhs, mf, UE, UEE);
+    gmm::vecsave("xfem_dirichlet_exact.UE", UEE);
+    getfem::stored_mesh_slice sle, sl0e,slle;
+    getfem::mesh_slicer slicere(mf.linked_mesh());
+    getfem::slicer_build_stored_mesh_slice sbuilde(sle);
+    getfem::mesh_slice_cv_dof_data<plain_vector> mfUe(mf, UEE);
+    getfem::slicer_isovalues isoe(mfUe, 0.0, 0);
+    getfem::slicer_build_stored_mesh_slice sbuild0e(sl0e);
+    
+    slicere.push_back_action(sbuilde);  // full slice in sle
+    slicere.push_back_action(isoe);     // extract isosurface 0
+    slicere.push_back_action(sbuild0e); // store it into sl0e
+    slicere.exec(nrefine, mf.convex_index());
+
+
+    
+    getfem::mesh_slicer slicer2e(mf.linked_mesh());
+    getfem::mesh_slice_cv_dof_data<plain_vector> 
+      mfLe(ls.get_mesh_fem(), ls.values());
+    getfem::slicer_isovalues iso2e(mfL, 0.0, 0);
+    getfem::slicer_build_stored_mesh_slice sbuildle(slle);
+    slicer2.push_back_action(iso2e);     // extract isosurface 0
+    slicer2.push_back_action(sbuildle); // store it into sl0e
+    slicer2.exec(nrefine, mf.convex_index());
+    
+    sle.write_to_file("xfem_dirichlet.sle", true);
+    sl0e.write_to_file("xfem_dirichlet.sl0e", true);
+    sll.write_to_file("xfem_dirichlet.slle", true);
+    plain_vector UUE(sle.nb_points());
+    sle.interpolate(mf, UEE, UUE);
+    gmm::vecsave("xfem_dirichlet.slUE", UUE);
+    
   }
   
   return 0; 
