@@ -113,8 +113,9 @@ namespace getfem {
 	gradU(alpha, alpha)+= scalar_type(1);
       
       scalar_type J = gmm::lu_det(gradU);
-
+      
       t[0] = (J - scalar_type(1)) * valP[0];
+     
     }
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
       GMM_ASSERT1(nb != 0, "Oops");
@@ -123,10 +124,12 @@ namespace getfem {
 	valP.resize(1);
 	size_type cv = ctx.convex_num();
 	coeff.resize(mf_p.nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector
-	     (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
+
+	gmm::copy(gmm::sub_vector (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
+	// cout<< "La valeur du vecteur P_ls :" << P_ls << endl;
+
 	ctx.pf()->interpolation(ctx, coeff, valP, 1);
-	
+	// cout<<"Le terme RHS dL/dBeta valeur de valP[0] apres ctx.pf()->interpolation :" << valP << endl;
 
 	if (cv != cv_old) {
 	  mls_x = ls.mls_of_convex(cv, 1);
@@ -134,9 +137,20 @@ namespace getfem {
 	  cv_old = cv;
 	}
 	scalar_type x = mls_x(ctx.xref());
+	// cout<<" "<<endl;
+	// cout<<"Le terme RHS dL/dBeta valeur de x :"<< x << endl;
 	scalar_type y = mls_y(ctx.xref());
+	// cout<<" "<<endl;
+	// cout<<"Le terme RHS dL/dBeta valeur de y :"<< y << endl;
+	// cout<<" "<<endl;
+	// cout<<"Le terme RHS dL/dBeta valeur de log(x*x+y*y) :" << log(x*x+y*y) << endl;
+	// cout<<"Le terme RHS dL/dBeta valeur de log(x*x+y*y)/2 :" << log(x*x+y*y)/ scalar_type(2) << endl;
+	// cout<<"Le terme RHS dL/dBeta valeur de valP[0] dans prepare :" << valP[0]  << endl;
 
 	valP[0] *= log(x*x+y*y) / scalar_type(2);
+	//cout<<"Le terme RHS dL/dBeta valeur de valP[0] dans prepare :" << valP[0]  << endl;
+
+
       } else if (mf_data) {
 	size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
@@ -230,6 +244,7 @@ namespace getfem {
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
       scalar_type r2 = x*x+y*y;
+
       gmm::scale(gradU_ls, log(r2) / scalar_type(2));
 
       ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
@@ -367,6 +382,7 @@ namespace getfem {
       gmm::copy(gmm::sub_vector
 		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim());
+
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
       scalar_type r2 = x*x+y*y;
@@ -423,23 +439,24 @@ namespace getfem {
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
       GMM_ASSERT1(nb != 0, "Oops");
-      if (nb == 1) {
-	size_type cv = ctx.convex_num();
+      
+      size_type cv = ctx.convex_num();
+      if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+      }
 
+      if (nb == 1) {
 	valP.resize(1);
 	coeff.resize(mf_p.nb_basic_dof_of_element(cv));
 	gmm::copy(gmm::sub_vector
 	     (P_ls, gmm::sub_index(mf_p.ind_basic_dof_of_element(cv))), coeff);
 	ctx.pf()->interpolation(ctx, coeff, valP, 1);
 
-	if (cv != cv_old) {
-	  mls_x = ls.mls_of_convex(cv, 1);
-	  mls_y = ls.mls_of_convex(cv, 0);
-	  cv_old = cv;
-	}
-
       } else if (mf_data) {
-	size_type cv = ctx.convex_num();
+
+     // size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
 	coeff.resize(mf_data->nb_basic_dof_of_element(cv)*nbp);
 	for (size_type i = 0; i < mf_data->nb_basic_dof_of_element(cv); ++i)
@@ -530,8 +547,9 @@ namespace getfem {
       gmm::mult(gradU, Sigma, eas);
       // Computation of p.J.F^{-T}
       gmm::lu_inverse(gradU);
-      gmm::add(gmm::scaled(gmm::transposed(gradU), valP[0] * J), eas);     
-      gmm::scale(eas, log(r2)*0.5);  
+      gmm::add(gmm::scaled(gmm::transposed(gradU), valP[0] * J), eas); 
+      gmm::scale(eas, 0.5*log(r2));
+      
      for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
 	  t(i,j) = eas(i, j);    

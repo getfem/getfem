@@ -73,8 +73,8 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 /**************************************************************************/
 
 
-scalar_type alpha_md = 0.5;
-scalar_type beta_md = 0.5;
+scalar_type alpha_md = 0.6;
+scalar_type beta_md = -0.5;
 
 struct generic_u_singular_xy_function : public getfem::abstract_xy_function {
     int n;
@@ -188,6 +188,8 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
 
 namespace getfem {
 
+#define COEFF_MULT_ALPHABETA 1E12
+
 struct nonlinear_elasticity_optim_brick : public virtual_brick {
   
   const abstract_hyperelastic_law &AHL;
@@ -209,7 +211,7 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
       GMM_ASSERT1(dl.size() == 1,
 		  "Wrong number of data for nonlinear elasticity brick, "
                   << dl.size() << " should be 1 (vector).");
-      GMM_ASSERT1(matl.size() == 7,  "Wrong number of terms for nonlinear "
+      GMM_ASSERT1(matl.size() == 11,  "Wrong number of terms for nonlinear "
 		  "elasticity brick");
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);
@@ -276,34 +278,49 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
 	   params, AHL, ls,rg);
-	gmm::copy(gmm::row_vector(V), matl[0]);
+	cout << "IIncomp********alpha u******* Vecteur alpha u V:" << V << endl; 
+	gmm::copy(gmm::row_vector(gmm::scaled(V, COEFF_MULT_ALPHABETA)),
+		  matl[0]);
+	gmm::copy(gmm::col_vector(V), matl[7]);
 
-	gmm::resize(V, gmm::vect_size(p));
+        gmm::resize(V, gmm::vect_size(p));
 	gmm::clear(V);
 	asm_nonlinear_elasticity_optim_tangent_matrix_alpha_p
 	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
 	   params, AHL, ls,rg);
-	gmm::copy(gmm::row_vector(V), matl[1]);
+	cout << "IIncomp********alpha p******* Vecteur alpha p V:" << V << endl; 
+
+	gmm::copy(gmm::row_vector(gmm::scaled(V, COEFF_MULT_ALPHABETA)),
+		  matl[1]);
+	gmm::copy(gmm::col_vector(V), matl[8]);
 
 	(matl[2])(0,0)
 	  = asm_nonlinear_elasticity_optim_tangent_matrix_alpha_alpha
 	  (mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
-	   params, AHL, ls,rg);
+	   params, AHL, ls,rg) * COEFF_MULT_ALPHABETA;
 
+	cout << "IIncomp********alpha alpha******* Vecteur alpha alpha :" << 
+	  (matl[2])(0,0) << endl; 
 	
 	matl[5](0,0)
 	  = asm_nonlinear_elasticity_optim_tangent_matrix_beta_alpha
 	  (mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
-	   params, AHL, ls,rg);
+	   params, AHL, ls,rg) * COEFF_MULT_ALPHABETA;
+
+	cout << "IIncomp********beta alpha******* Vecteur beta alpha :" <<
+	  matl[5](0,0) << endl; 
 
 	matl[6](0,0)
 	  = asm_nonlinear_elasticity_optim_tangent_matrix_beta_beta
 	  (mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
-	   params, AHL, ls,rg);
+	   params, AHL, ls,rg) * COEFF_MULT_ALPHABETA;
+
+	cout << "IIncomp********beta beta******* Vecteur beta beta :" <<
+	  matl[6](0,0) << endl;
 
 	gmm::resize(V, gmm::vect_size(u));
 	gmm::clear(V);
@@ -311,7 +328,9 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
 	   params, AHL, ls,rg);
-	gmm::copy(gmm::row_vector(V), matl[3]);
+	gmm::copy(gmm::scaled(gmm::row_vector(V), COEFF_MULT_ALPHABETA),
+		  matl[3]);
+	gmm::copy(gmm::col_vector(V), matl[9]);
 
 
 	gmm::resize(V, gmm::vect_size(p));
@@ -320,7 +339,9 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 	  (V, mim, mf_u, u, U_ls, u_enriched_dof,
 	   mf_p, p, P_ls, p_enriched_dof, alpha, beta, mf_params,
 	   params, AHL, ls,rg);
-	gmm::copy(gmm::row_vector(V), matl[4]);
+	gmm::copy(gmm::scaled(gmm::row_vector(V), COEFF_MULT_ALPHABETA),
+		  matl[4]);
+	gmm::copy(gmm::col_vector(V), matl[10]);
 
       }
 
@@ -331,7 +352,11 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 					   mf_p, p, P_ls, p_enriched_dof,
 					   alpha, beta,
 					   mf_params, params, AHL, ls, rg);
-	gmm::scale(vecl[0], scalar_type(-1));
+	// gmm::scale(vecl[0], scalar_type(-1));
+	
+	gmm::scale(vecl[0], scalar_type(-COEFF_MULT_ALPHABETA));
+	gmm::scale(vecl[3], scalar_type(-COEFF_MULT_ALPHABETA));
+
       }
 
     }
@@ -360,13 +385,20 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
     pbrick pbr = new nonlinear_elasticity_optim_brick(AHL, ls);
 
     model::termlist tl;
-    tl.push_back(model::term_description(varname_alpha, varname_u, true));
-    tl.push_back(model::term_description(varname_alpha, varname_p, true));
+    tl.push_back(model::term_description(varname_alpha, varname_u, false));
+    tl.push_back(model::term_description(varname_alpha, varname_p, false));
     tl.push_back(model::term_description(varname_alpha, varname_alpha, true));
-    tl.push_back(model::term_description(varname_beta, varname_u, true));
-    tl.push_back(model::term_description(varname_beta, varname_p, true));
+    tl.push_back(model::term_description(varname_beta, varname_u, false));
+    tl.push_back(model::term_description(varname_beta, varname_p, false));
     tl.push_back(model::term_description(varname_beta, varname_alpha, true));
     tl.push_back(model::term_description(varname_beta, varname_beta, true));
+    //
+    //Non symetrie pour multiplier les lignes work in progress 
+    //
+    tl.push_back(model::term_description(varname_u, varname_alpha, false));
+    tl.push_back(model::term_description(varname_p, varname_alpha, false));
+    tl.push_back(model::term_description(varname_u, varname_beta, false));
+    tl.push_back(model::term_description(varname_p, varname_beta, false));
     model::varnamelist dl(1, dataname_law);
     model::varnamelist vl(1, varname_u);
     vl.push_back(varname_p);
@@ -377,19 +409,13 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 
 }
 
-/*****************************************************************************************************************/
-/*****************************************************************************************************************/
-/*****************************************************************************************************************/
-/*****************************************************************************************************************/
-/*****************************************************************************************************************/
-/*****************************************************************************************************************/
-
 
 /**************************************************************************/
 /* Compressible cases                                                     */
 /* Brick for Compressible formulation definition.                         */
 /*                                                                        */
 /**************************************************************************/
+
 
 namespace getfem {
 
@@ -409,12 +435,12 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
                                             build_version version) const {
       GMM_ASSERT1(mims.size() == 1,
 		  "Nonlinear elasticity brick need a single mesh_im");
-      GMM_ASSERT1(vl.size() == 4,
+      GMM_ASSERT1(vl.size() == 2,
 		  "Nonlinear elasticity brick need a single variable");
       GMM_ASSERT1(dl.size() == 1,
 		  "Wrong number of data for nonlinear elasticity brick, "
                   << dl.size() << " should be 1 (vector).");
-      GMM_ASSERT1(matl.size() == 7,  "Wrong number of terms for nonlinear "
+      GMM_ASSERT1(matl.size() == 3,  "Wrong number of terms for nonlinear "
 		  "elasticity brick");
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);
@@ -453,20 +479,28 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
 	    }
 	  }
       }
-      
-
+ 
       if (version & model::BUILD_MATRIX) {
 	std::vector<scalar_type> V(gmm::vect_size(u));
 	GMM_TRACE2("Nonlinear elasticity stiffness matrix assembly");
 
 	asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_u
 	  (V, mim, mf_u, u, U_ls, u_enriched_dof, alpha, mf_params, params, AHL, ls,rg);
-	gmm::copy(gmm::row_vector(V), matl[0]);
+	gmm::copy(gmm::row_vector(gmm::scaled(V, COEFF_MULT_ALPHABETA)),
+		  matl[0]);
+	gmm::copy(gmm::col_vector(V), matl[2]);
+      
+        
+       	cout << "CComp********alpha u******* Vecteur alpha u V:" << V << endl; 
 
-	(matl[2])(0,0)
+
+	(matl[1])(0,0)
 	  = asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_alpha
-	  (mim, mf_u, u, U_ls, u_enriched_dof, alpha, mf_params, params, AHL, ls,rg);
-	
+	  (mim, mf_u, u, U_ls, u_enriched_dof, alpha, mf_params, params, AHL, ls, rg)* COEFF_MULT_ALPHABETA;
+
+       	cout << "CComp********alpha alpha******* Vecteur alpha alpha :" << 
+	  (matl[1])(0,0) << endl; 
+
       }
 
 
@@ -474,7 +508,10 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
 	asm_nonlinear_elasticity_optim_compressible_rhs(vecl[0], mim, 
 					   mf_u, u, U_ls, u_enriched_dof,
 					   alpha, mf_params, params, AHL, ls, rg);
-	gmm::scale(vecl[0], scalar_type(-1));
+	// gmm::scale(vecl[0], scalar_type(-1));
+	gmm::scale(vecl[0], scalar_type(-COEFF_MULT_ALPHABETA));
+
+
       }
 
     }
@@ -501,8 +538,15 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
     pbrick pbr = new nonlinear_elasticity_optim_brick_compressible(AHL, ls);
 
     model::termlist tl;
-    tl.push_back(model::term_description(varname_alpha, varname_u, true));
+    tl.push_back(model::term_description(varname_alpha, varname_u, false));
     tl.push_back(model::term_description(varname_alpha, varname_alpha, true));
+
+    //
+    //Non symetrie pour multiplier la partie work in progress 
+    //
+    tl.push_back(model::term_description(varname_u, varname_alpha, false));
+
+    
     model::varnamelist dl(1, dataname_law);
     model::varnamelist vl(1, varname_u);
     vl.push_back(varname_alpha);
@@ -511,12 +555,6 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
   }
 
 }
-
-
-
-
-
-
 
 
 
@@ -536,7 +574,7 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
 
 struct crack_problem {
 
-  enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN1_BOUNDARY_NUM = 1, NEUMANN2_BOUNDARY_NUM=2, NEUMANN3_BOUNDARY_NUM=3, NEUMANN4_BOUNDARY_NUM=4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
+  enum { DIRICHLET_BOUNDARY_NUM = 0, BOUNDARY_NUM1 = 1, BOUNDARY_NUM2=2, BOUNDARY_NUM3 = 3, BOUNDARY_NUM4 = 4, MORTAR_BOUNDARY_IN=42, MORTAR_BOUNDARY_OUT=43};
   getfem::mesh mesh;  /* the mesh */
   getfem::level_set ls;      /* The two level sets defining the crack.       */
   getfem::mesh_level_set mls;       /* the integration methods for cutted element.    */
@@ -713,8 +751,8 @@ void crack_problem::init(void) {
   mesh.translation(tt); 
   
   cracktip.resize(2); // Coordonn%G�%@e du fond de fissure
-  cracktip[0] = 0.9;
-  cracktip[1] = 0.;
+  cracktip[0] = 0.5;
+  cracktip[1] = 0.1;
 
   scalar_type refinement_radius;
   refinement_radius = PARAM.real_value("REFINEMENT_RADIUS", "Refinement Radius");
@@ -825,10 +863,10 @@ void crack_problem::init(void) {
     base_node un = mesh.normal_of_face_of_convex(i.cv(), i.f());
     un /= gmm::vect_norm2(un);
     
-    if (un[0]  > 0.5) mesh.region(NEUMANN1_BOUNDARY_NUM).add(i.cv(), i.f());
-    if (un[1]  > 0.5) mesh.region(NEUMANN2_BOUNDARY_NUM).add(i.cv(), i.f());
-    if (un[0]  < -0.5) mesh.region(NEUMANN3_BOUNDARY_NUM).add(i.cv(), i.f());
-    if (un[1]  < -0.5) mesh.region(NEUMANN4_BOUNDARY_NUM).add(i.cv(), i.f());
+    if (un[0]  >  0.5) mesh.region(BOUNDARY_NUM1).add(i.cv(), i.f());
+    if (un[1]  >  0.5) mesh.region(BOUNDARY_NUM2).add(i.cv(), i.f());
+    if (un[0]  < -0.5) mesh.region(BOUNDARY_NUM3).add(i.cv(), i.f());
+    if (un[1]  < -0.5) mesh.region(BOUNDARY_NUM4).add(i.cv(), i.f());
   }
   
   
@@ -840,8 +878,10 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   base_small_vector res(2);
   switch (num) {
     case 0: {
-      res[0] = y;
-      res[1] = -.5 + x;
+      // res[0] = y;
+      // res[1] = -.5 + x;
+      res[0] = gmm::vect_dist2(P, base_node(0.5, 0.)) - .24;
+      res[1] = gmm::vect_dist2(P, base_node(0.25, 0.0)) - 0.27;
     } break;
     case 1: {
       res[0] = gmm::vect_dist2(P, base_node(0.5, 0.)) - .25;
@@ -920,17 +960,6 @@ scalar_type smallest_eigen_value(const sparse_matrix &B,
   
   return sqrt(1./lambda);
 }
-  
-
-
-
-
-
-
-
-
-
-
 
 /*****************************************************************/
 /*   Model.                                                      */
@@ -947,14 +976,153 @@ namespace getfem {
     typedef VEC VECTOR;
     typedef typename gmm::linalg_traits<VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
-
     model &md;
     gmm::abstract_newton_line_search &ls;
     VECTOR stateinit, &state;
     const VECTOR &rhs;
     const MATRIX &K;
     bool with_pseudo_potential;
+    // bool with_incompressible_terms;
+    void compute_tangent_matrix(void)
+    { md.to_variables(state); md.assembly(model::BUILD_MATRIX); }
 
+    const MATRIX &tangent_matrix(void) { return K; }
+    
+    inline T scale_residual(void) const { return T(1); }
+
+    void compute_residual(void)
+    { md.to_variables(state); md.assembly(model::BUILD_RHS); }
+
+    void compute_pseudo_potential(void)
+    { md.to_variables(state); md.assembly(model::BUILD_PSEUDO_POTENTIAL); }
+
+
+    const VECTOR &residual(void) { return rhs; }
+
+    R residual_norm(void) { return gmm::vect_norm2(rhs); }
+
+    R line_search(VECTOR &dr, const gmm::iteration &iter) {
+      gmm::resize(stateinit, md.nb_dof());
+      gmm::copy(state, stateinit);
+      R alpha(1), res;
+      if (with_pseudo_potential) {
+	compute_pseudo_potential();
+	res = md.pseudo_potential();
+      } else {
+	res = residual_norm();
+      }
+
+      ls.init_search(res, iter.get_iteration());
+      do {
+	alpha = ls.next_try();
+	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	
+	// Ici, on recupere alpha et beta de l'enrichissement
+	alpha_md = state[md.interval_of_variable("alpha").first()];
+	beta_md = state[md.interval_of_variable("beta").first()];
+
+	
+	if (alpha < 1E-10) break;
+	if (with_pseudo_potential) {
+	  compute_pseudo_potential();
+	  res = md.pseudo_potential();
+	} else {
+	  compute_residual();
+	  res = residual_norm();
+	}
+      } while (!ls.is_converged(res));
+
+      if (alpha != ls.converged_value() || with_pseudo_potential) {
+	alpha = ls.converged_value();
+	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	
+	// Ici, on recupere alpha et beta de l'enrichissement
+
+	alpha_md
+	  = state[md.interval_of_variable("alpha").first()];
+
+	beta_md
+	  = state[md.interval_of_variable("beta").first()];
+
+	res = ls.converged_residual();
+	compute_residual();
+      }
+      cout << "alpha = " << alpha_md << endl ;
+      cout << "beta  = " << beta_md  << endl;
+     
+      return alpha;
+    }
+
+    my_model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+	     const VECTOR &rhs_, const MATRIX &K_, bool with_pseudo_pot = false )
+      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
+
+  };
+
+   static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
+     return default_linear_solver <model_real_sparse_matrix, model_real_plain_vector>(md);
+   } 
+  
+  template <typename MATRIX, typename VECTOR, typename PLSOLVER>
+  void my_solve(model &md, gmm::iteration &iter,
+		PLSOLVER lsolver,
+		gmm::abstract_newton_line_search &ls, const MATRIX &K,
+		const VECTOR &rhs, bool with_pseudo_potential = false) {
+    
+    VECTOR state(md.nb_dof());
+    
+    md.from_variables(state); // copy the model variables in the state vector
+    
+    if (md.is_linear()) {
+      md.assembly(model::BUILD_ALL);
+      (*lsolver)(K, state, rhs, iter);
+    }
+    else {
+      my_model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
+				    with_pseudo_potential);
+      classical_Newton(mdpb, iter, *lsolver);
+    }
+    
+    md.to_variables(state); // copy the state vector into the model variables
+  }
+
+  
+  void my_solve(model &md, gmm::iteration &iter,
+		rmodel_plsolver_type lsolver,
+		gmm::abstract_newton_line_search &ls,
+		bool with_pseudo_potential ) {
+    my_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
+	     md.real_rhs(), with_pseudo_potential );
+  }
+  
+  
+  void my_solve(model &md, gmm::iteration &iter,
+		bool with_pseudo_potential = false ) {
+    gmm::default_newton_line_search ls;
+    my_solve(md, iter, rdefault_linear_solver(md), ls, with_pseudo_potential );
+  }
+}
+/*****************************************************************/
+/*                                                               */
+/*   Compressible solver                                         */
+/*                                                               */
+/*****************************************************************/
+
+namespace getfem {
+ template <typename MAT, typename VEC> 
+  struct my_model_pb_comp {
+
+    typedef MAT MATRIX;
+    typedef VEC VECTOR;
+    typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+    typedef typename gmm::number_traits<T>::magnitude_type R;
+    model &md;
+    gmm::abstract_newton_line_search &ls;
+    VECTOR stateinit, &state;
+    const VECTOR &rhs;
+    const MATRIX &K;
+    bool with_pseudo_potential;
+    // bool with_incompressible_terms;
     void compute_tangent_matrix(void)
     { md.to_variables(state); md.assembly(model::BUILD_MATRIX); }
 
@@ -992,11 +1160,7 @@ namespace getfem {
 	// Ici, on r%G�%@cup%G�%@re alpha et beta de l'enrichissement
 	alpha_md
 	  = state[md.interval_of_variable("alpha").first()];
-	beta_md
-	  = state[md.interval_of_variable("beta").first()];
 
-
-	
 	if (alpha < 1E-10) break;
 	if (with_pseudo_potential) {
 	  compute_pseudo_potential();
@@ -1011,35 +1175,30 @@ namespace getfem {
 	alpha = ls.converged_value();
 	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
 	
-	// Ici, on r%G�%@cup%G�%@re alpha et beta de l'enrichissement
+	// Ici, on recupere alpha et beta de l'enrichissement
+
 	alpha_md
 	  = state[md.interval_of_variable("alpha").first()];
-	beta_md
-	  = state[md.interval_of_variable("beta").first()];
-
 
 	res = ls.converged_residual();
 	compute_residual();
       }
-      cout << "alpha = " << alpha_md << endl << "beta = " << beta_md << endl;
+      cout << "alpha = " << alpha_md << endl ;
       return alpha;
     }
 
-    my_model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
-	     const VECTOR &rhs_, const MATRIX &K_,
-	     bool with_pseudo_pot = false)
-      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_),
-	with_pseudo_potential(with_pseudo_pot) {}
+    my_model_pb_comp(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+	     const VECTOR &rhs_, const MATRIX &K_, bool with_pseudo_pot = false )
+      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
 
   };
 
-  static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
-    return default_linear_solver<model_real_sparse_matrix,
-      model_real_plain_vector>(md);
-  } 
+  //  static rmodel_plsolver_type rdefault_linear_solver(const model &md) {
+  //  return default_linear_solver <model_real_sparse_matrix, model_real_plain_vector>(md);
+  // } 
   
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
-  void my_solve(model &md, gmm::iteration &iter,
+  void my_solve_comp(model &md, gmm::iteration &iter,
 		PLSOLVER lsolver,
 		gmm::abstract_newton_line_search &ls, const MATRIX &K,
 		const VECTOR &rhs, bool with_pseudo_potential = false) {
@@ -1053,7 +1212,7 @@ namespace getfem {
       (*lsolver)(K, state, rhs, iter);
     }
     else {
-      my_model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
+      my_model_pb_comp<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
 				    with_pseudo_potential);
       classical_Newton(mdpb, iter, *lsolver);
     }
@@ -1062,29 +1221,22 @@ namespace getfem {
   }
 
   
-  void my_solve(model &md, gmm::iteration &iter,
+  void my_solve_comp(model &md, gmm::iteration &iter,
 		rmodel_plsolver_type lsolver,
 		gmm::abstract_newton_line_search &ls,
-		bool with_pseudo_potential) {
-    my_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
-		   md.real_rhs(), with_pseudo_potential);
+		bool with_pseudo_potential ) {
+    my_solve_comp(md, iter, lsolver, ls, md.real_tangent_matrix(),
+	     md.real_rhs(), with_pseudo_potential );
   }
   
   
-  void my_solve(model &md, gmm::iteration &iter,
-		bool with_pseudo_potential = false) {
+  void my_solve_comp(model &md, gmm::iteration &iter,
+		bool with_pseudo_potential = false ) {
     gmm::default_newton_line_search ls;
-    my_solve(md, iter, rdefault_linear_solver(md), ls,
-	     with_pseudo_potential);
+    my_solve_comp(md, iter, rdefault_linear_solver(md), ls, with_pseudo_potential );
   }
-  
+ 
 }
-
-
-
-
-
-
 
 
 
@@ -1098,7 +1250,10 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type N = mesh.dim();
   ls.reinit();
   size_type law_num = PARAM.int_value("LAW");
+  size_type problem_num = PARAM.int_value("PROBLEM_NUM");
+
   //size_type newton_version = PARAM.int_value("newton_version");
+
   base_vector pr(3); pr[0] = pr1; pr[1] = pr2; pr[2] = pr3;
 
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
@@ -1354,25 +1509,28 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   /***********************************************/
   // Choose the material law.
  
-  getfem::abstract_hyperelastic_law *pl = 0;
+  getfem::abstract_hyperelastic_law *pl1 = 0, *pl = 0;
   switch (law_num) {
-  case 0: pl = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
-  case 1: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
-  case 2: pl = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
-  case 3: pl = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
-  default: GMM_ASSERT1(false, "no such law");
+    case 0:
+    case 1: pl1 = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
+    case 2: pl1 = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
+    case 3: pl1 = new getfem::Mooney_Rivlin_hyperelastic_law(); break;
+    default: GMM_ASSERT1(false, "no such law");
   }
+
+  if (N == 2) {
+   cout << "2D plane strain hyper-elasticity\n";
+   pl = new getfem::plane_strain_hyperelastic_law(pl1);
+   } else pl = pl1;
+
   pr.resize(pl->nb_params());
-  
-//   if (mixed_pressure) 
-//     cout << "Number of dof for P: " << mf_pe.nb_dof() << endl;
-//   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
-  
+
   getfem::model model;
   model.add_fem_variable("u", mf_u());
   model.add_fixed_size_variable("alpha", 1);
+  if (mixed_pressure) {
   model.add_fixed_size_variable("beta", 1);
-  
+  }
   model.add_initialized_fixed_size_data("coefficients", pr);
   
   getfem::add_nonlinear_elasticity_brick(model, mim, "u", *pl, "coefficients");
@@ -1382,21 +1540,24 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     getfem::add_nonlinear_incompressibility_brick(model, mim, "u" , "p", size_type(-1));
     }
   // Add nonlinear elasticity optimazition brick
-if (mixed_pressure) {
-  add_nonlinear_elasticity_optim_brick(model, mim, "u" , "p", "alpha", "beta", *pl, "coefficients", ls);
+  if (mixed_pressure) {
+    add_nonlinear_elasticity_optim_brick(model, mim, "u" , "p", "alpha", "beta", *pl, "coefficients", ls);
+    cout << "IIIIIncompressible Singular Search\n";
  }
- else
-add_nonlinear_elasticity_optim_compressible_brick(model, mim, "u" , "alpha", *pl, "coefficients", ls);
+ else{
+   add_nonlinear_elasticity_optim_compressible_brick(model, mim, "u" , "alpha", *pl, "coefficients", ls);
+   cout << "CCCCCompressible Singular Search\n";
+ }
 
- //  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u(), pr);
- //   getfem::mdbrick_nonlinear_incomp<> INCOMP(ELAS, mf_pe());
-
-
-
-
-
-
-
+  /**************************************************************************/
+  /*                                                                        */
+  /* Two problems with different boundary conditions can be solved          */
+  /*                                                                        */
+  /**************************************************************************/
+  
+  switch (problem_num){
+  case 0 :{
+    cout << "Solving Neumann condition problem *********"<< endl ;
   // Defining the Neumann condition right hand side.
   plain_vector F_Neumann1(nb_dof_rhs * N);
   plain_vector F_Neumann2(nb_dof_rhs * N);
@@ -1404,189 +1565,156 @@ add_nonlinear_elasticity_optim_compressible_brick(model, mim, "u" , "alpha", *pl
   plain_vector F_Neumann4(nb_dof_rhs * N);
   // Neumann condition brick.
    
-  for(size_type i = 0; i < F_Neumann1.size(); i=i+N)
-    F_Neumann1[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann1.size(); i=i+N)
-    F_Neumann1[i] = AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann2.size(); i=i+N)
-    F_Neumann2[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann2.size(); i=i+N)
-    F_Neumann2[i] = AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann3.size(); i=i+N)
-    F_Neumann3[i] = -AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann3.size(); i=i+N)
-    F_Neumann3[i] = -AMP_LOAD_Y;
-  for(size_type i = 0; i < F_Neumann4.size(); i=i+N)
-    F_Neumann4[i] = -AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann4.size(); i=i+N)
-    F_Neumann4[i] = -AMP_LOAD_Y;
+  for(size_type i = 0; i < F_Neumann1.size(); i=i+N)  F_Neumann1[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann1.size(); i=i+N)  F_Neumann1[i] = AMP_LOAD_X;
+  for(size_type i = 0; i < F_Neumann2.size(); i=i+N)  F_Neumann2[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann2.size(); i=i+N)  F_Neumann2[i] = AMP_LOAD_X;
+  for(size_type i = 0; i < F_Neumann3.size(); i=i+N)  F_Neumann3[i] = -AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann3.size(); i=i+N)  F_Neumann3[i] = -AMP_LOAD_X;
+  for(size_type i = 0; i < F_Neumann4.size(); i=i+N)  F_Neumann4[i] = -AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann4.size(); i=i+N)  F_Neumann4[i] = -AMP_LOAD_X;
    
    model.add_initialized_fem_data("NeumannData1", mf_rhs,F_Neumann1 );
   getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData1", NEUMANN1_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData1", BOUNDARY_NUM1);
 
    model.add_initialized_fem_data("NeumannData2", mf_rhs,F_Neumann2 );
   getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData2", NEUMANN2_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData2", BOUNDARY_NUM2);
 
    model.add_initialized_fem_data("NeumannData3", mf_rhs,F_Neumann3 );
    getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData3", NEUMANN3_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData3", BOUNDARY_NUM3);
 
-   model.add_initialized_fem_data("NeumannData4", mf_rhs,F_Neumann3 );
+   model.add_initialized_fem_data("NeumannData4", mf_rhs,F_Neumann4 );
    getfem::add_source_term_brick
-    (model, mim, "u", "NeumannData4", NEUMANN4_BOUNDARY_NUM);
+    (model, mim, "u", "NeumannData4", BOUNDARY_NUM4);
 
-  GMM_ASSERT1(N==2, "To be corrected for 3D computation");
-  sparse_matrix BB(3, mf_u().nb_dof());
-  BB(0, icorner1) = 1.0;
-  BB(1, icorner1+1) = 1.0;
-  BB(2, icorner2) = 1.0;
-  std::vector<scalar_type> LRH(3);
-  model.add_fixed_size_variable("dir", 3);
-  getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH);
+
+
+       GMM_ASSERT1(N==2, "To be corrected for 3D computation");
+       sparse_matrix BB(3, mf_u().nb_dof());
+       BB(0, icorner1) = 1.0;
+       BB(1, icorner1+1) = 1.0;
+       BB(2, icorner2) = 1.0;
+       std::vector<scalar_type> LRH(3);
+       model.add_fixed_size_variable("dir", 3);
+       getfem::add_constraint_with_multipliers(model, "u", "dir", BB, LRH); 
+
+
+  } break;
+  case 1 :{
+  // Defining the Neumann condition right hand side.
+    cout << "Solving Dirichlet condition problem //////////"<< endl ;
+
+  plain_vector F_Neumann(nb_dof_rhs * N);
+ // Neumann condition brick.
+   
+  for(size_type i = 0; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_X;
+  for(size_type i = 1; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_Y;
+  
+   
+   model.add_initialized_fem_data("NeumannData", mf_rhs, F_Neumann );
+
+  getfem::add_source_term_brick (model, mim, "u", "NeumannData", BOUNDARY_NUM2);
+
+    //Dirichlet condition brick
+
+    plain_vector F_Diri(nb_dof_rhs * N);
+    
+    // for(size_type i = 0; i < F_Diri.size(); i=i+N) F_Diri[i] = 0;
+    // for(size_type i = 1; i < F_Diri.size(); i=i+N) F_Diri[i] = 0;
+  
+    // gmm::resize(F_Diri, nb_dof_mult);
+    
+    model.add_initialized_fem_data("Dirichletdata", mf_rhs, F_Diri);
+    if (PARAM.int_value("DIRICHLET_VERSION") == 0)
+    add_Dirichlet_condition_with_multipliers (model, mim, "u", mf_u(), BOUNDARY_NUM4, "Dirichletdata");
+    else
+    add_Dirichlet_condition_with_penalization (model, mim, "u", 1E15, BOUNDARY_NUM4, "Dirichletdata");
+
+     ////////////////////////////////////////// 
+     //                                      //
+     //          Symetrie condition          // 
+     //                                      //
+     //////////////////////////////////////////
+
+    model.add_initialized_fixed_size_data("Dirichletsymdata",
+					  plain_vector(N, 0.0));
+    plain_vector HH(N*N); HH[0] = 1.0;
+    model.add_initialized_fixed_size_data("Hdata", HH); 
+
+    getfem::add_generalized_Dirichlet_condition_with_multipliers(model, mim, "u", 1, BOUNDARY_NUM3, "Dirichletsymdata", "Hda        ta");
+
+  }break;
+  default: GMM_ASSERT1(false, "no such problem");
+  }
+
+
+
+
 
 
    // + nouvelle brique
 
-
-   
-   
-   
-   // KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(4));
-   // KILL_RIGID_MOTIONS.set_constraints_type(getfem::constraints_type(dir_with_mult));
-
-   // Dirichlet condition brick.
-   // getfem::mdbrick_Dirichlet<> DIRICHLET (KILL_RIGID_MOTIONS, DIRICHLET_BOUNDARY_NUM, mf_mult);
-    
-   // DIRICHLET.set_constraints_type(getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
-
-   // getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
-
-/*************************************/
-/*       Generic solve.              */
-/*************************************/
-
-   // getfem::standard_model_state MS(*final_model);
-   // size_type maxit = PARAM.int_value("MAXITER"); 
-   // gmm::iteration iter;
-  
-   //size_type stnst = PARAM.int_value("stnst");
-  
-  //if (stnst==1) {
  
- /**********************/
- /*   Step loading     */
- /**********************/
-  // cout << "By step amigoo###################################<<<<<>>>>>>######" << endl;
-  // cout << "Nb de Step " << nb_step <<endl;     
-  // for (int step = 0; step < nb_step; ++step) {
-  // plain_vector DF(F);
-
-  //gmm::copy(gmm::scaled(F, (step+1.)/(scalar_type)nb_step), DF);
-  //NEUMANN4.source_term().set(DF);
-
-       /************************************/
-       /* increment  imposed displacement  */
-       /************************************/ 
-     
-  //KILL_RIGID_MOTIONS.set_constraints(BB, plain_vector(3));
-
-    /********************************************************/
-    /* let the default non-linear solve (Newton) do its job */
-    /********************************************************/ 
-
-    // cout << "step " << step << ", number of variables : " << final_model->nb_dof() << endl;
-    // cout << "DF " << DF <<  endl;
-
-    // iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")), maxit ? maxit : 40000);
-    
-    // gmm::abstract_newton_line_search alnrs;
-    // gmm::simplest_newton_line_search silnrs;
-    // gmm::default_newton_line_search dlnrs;
-    // gmm::systematic_newton_line_search sylnrs;
-    
-    // getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
-
-    // pl->reset_unvalid_flag();
-    //   final_model->compute_residual(MS);
-    // if (pl->get_unvalid_flag())
-    //  GMM_WARNING1("The solution is not completely valid, the determinant "
-    //               "of the transformation is negative on "
-    //               << pl->get_unvalid_flag() << " gauss points");
-
-  //}   
-
-  //}
-  //else{
-  //cout << "Resolution direct =============D=I=R=E=C=T====================> " << endl;
- /****************/
- /*Sans iteration*/
- /****************/
- // iter = gmm::iteration(residual, int(PARAM.int_value("NOISY", "Noisy = ")),
-// 			  maxit ? maxit : 40000);
-    
-    
-//  // gmm::abstract_newton_line_search alnrs;
-//     gmm::simplest_newton_line_search silnrs;
-//     gmm::default_newton_line_search dlnrs;
-//     gmm::systematic_newton_line_search sylnrs;
-    
-//     switch (newton_version){
-    
-//  // case 0: getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), alnrs);
-//     case 1:{
-//       getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), silnrs);
-//       cout << "============================ " << endl;
-//       cout << "=:simplest_newton_line_search= " << endl;
-//       cout << "============================ " << endl;
-//     }break;
-//     case 2:{
-//       getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), dlnrs);
-//       cout << "============================ " << endl;
-//       cout << "=default_newton_line_search= " << endl;
-//       cout << "============================ " << endl;
-//     }break;
-    
-
-//     case 3: {
-//       getfem::standard_solve(MS,*final_model, iter, getfem::default_linear_solver(*final_model), sylnrs);
-//       cout << "=============================== " << endl;
-//       cout << "=systematic_newton_line_search= " << endl;
-//       cout << "=============================== " << endl;
-//     }break;
-//     default: GMM_ASSERT1(false, "No such newton");
-//     }
-//     pl->reset_unvalid_flag();
-//     final_model->compute_residual(MS);
-//     if (pl->get_unvalid_flag()) 
-//       GMM_WARNING1("The solution is not completely valid, the determinant "
-// 		   "of the transformation is negative on "
-// 		   << pl->get_unvalid_flag() << " gauss points");
-//   }
+   
+   
+  
   gmm::iteration iter(residual, 1, 40000);
   cout << "Solving..." << endl;
   iter.init();
-  alpha_md = 0.5; beta_md = 0.5;
+  // alpha_md = 0.5; beta_md = -0.3;
   std::vector<scalar_type> alpha_v(1), beta_v(1);
-  alpha_v[0] = beta_v[0] = 0.5;
+  alpha_v[0] = alpha_md; beta_v[0] = beta_md;
   gmm::copy(alpha_v, model.set_real_variable("alpha"));
-  gmm::copy(beta_v, model.set_real_variable("beta"));
 
+  if (mixed_pressure) {
+  gmm::copy(beta_v, model.set_real_variable("beta"));
+  }
   gmm::fill_random(model.set_real_variable("u"));
   gmm::scale(model.set_real_variable("u"), 1e-4);
+
+  if (mixed_pressure) {
   gmm::fill_random(model.set_real_variable("p"));
   gmm::scale(model.set_real_variable("p"), 1e-4);
-    
+  }
 
-  getfem::my_solve(model, iter);
+
+
+   // Recuperation de la matrice tangente  
+   //  gmm::csc_matrix<double> TM;
+   //   cout << " Recuperation de la matrice tangente... " << endl;
+   //   cout << " Before copy Matrix TM  : " << TM << endl;
+   //   gmm::copy(model.real_tangent_matrix(),TM);
+   //   // cout << " After copy Matrix TM   : " << TM(0,0) << endl;
+   //   cout << " Here befor : " << endl;
+   //   MatrixMarket_save("Matrix_Market_Tangent_matrix_", TM);
+   //   cout << " Here after " << endl;
+   //   Harwell_Boeing_save("Harwell_Boeing_Tangent_matrix_", TM);
+
+
+  gmm::simplest_newton_line_search simls(size_t(-1), 6.0/5.0, 0.1, 3.0/5.0);
+  gmm::default_newton_line_search dlnrs;
+  gmm::systematic_newton_line_search sylnrs;
+  gmm::quadratic_newton_line_search qdlnrs;
+if (mixed_pressure) {
+  getfem::my_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), simls, false);
+ }
+ else
+   {getfem::my_solve_comp(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), simls, false);}
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(model.real_variable("u"), U);
 
-
   cout << "alpha = " << alpha_md << endl;
+  if (mixed_pressure) {
   cout << "beta = " << beta_md << endl;
-
+  }
+  
+  
+  
 
 
 //  /*************************************/
