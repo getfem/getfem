@@ -134,6 +134,7 @@ namespace getfem {
     }
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
       GMM_ASSERT1(nb != 0, "Oops");
+
       if (mf_data) {
 	size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
@@ -229,10 +230,20 @@ namespace getfem {
       gmm::copy(gmm::sub_vector
 		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim());
+
+      if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+      }
+
       scalar_type x = mls_x(ctx.xref());
+      
       scalar_type y = mls_y(ctx.xref());
+      
+
       scalar_type r2 = x*x+y*y;
-      gmm::scale(gradU_ls, 0.5*log(r2) );
+      gmm::scale(gradU_ls, 0.5*log(r2));
 
       ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
       base_vector Runit(2);
@@ -341,6 +352,12 @@ namespace getfem {
       gmm::copy(gmm::sub_vector
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
+      
+      if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+      }
 
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
@@ -351,17 +368,23 @@ namespace getfem {
       gmm::add(gmm::transposed(gradU), E);
       gmm::scale(E, scalar_type(0.5));
 
-
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1); // GradU contient le tenseur F maintenant
       // scalar_type J = gmm::lu_det(gradU);
-      
+
+      /*****************************/      
+      /*****************************/
 
       // Computation of F.Sigma 
       AHL.sigma(E, Sigma, params);
       base_matrix eas(N,N);
       gmm::mult(gradU, Sigma, eas);
-      gmm::scale(eas, log(r2)*0.5);     
+      // cout << "Avant multiplication log :" << eas << endl ;
+      // cout << "Valeur du rayon :" << r2 << endl ;
+      // cout << "*****************************************************************\n" ;
+      // cout << "Avant multiplication log" << eas << endl;
+      gmm::scale(eas, 0.5*log(r2));
+      // cout << "Aprés multiplication log" << eas << endl;
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
 	  t(i,j) = eas(i, j);    
@@ -433,6 +456,11 @@ namespace getfem {
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
 
+      if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+      }
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
       scalar_type r2 = x*x+y*y;
@@ -523,6 +551,12 @@ namespace getfem {
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
 
+      if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+      }
+
       scalar_type x = mls_x(ctx.xref());
       scalar_type y = mls_y(ctx.xref());
       scalar_type r2 = x*x+y*y;
@@ -586,7 +620,7 @@ namespace getfem {
 
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
       GMM_ASSERT1(nb != 0, "Oops");
-      
+            
       if (mf_data) {
 	size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
@@ -651,11 +685,11 @@ template<typename VECT0, typename VECT1, typename VECT2>
 
     getfem::generic_assembly assem2;
     if (mf_data)
-      assem2.set("V(#1)+=comp(NonLin$1(#1,#2,#3)(i,j).vGrad(#1)(:,i,j));"
-		 "V(#1)+=comp(NonLin$2(#1,#2,#3)(i).vBase(#1)(:,i))");
-    else
       assem2.set("V(#1)+=comp(NonLin$1(#1,#2)(i,j).vGrad(#1)(:,i,j));"
 		 "V(#1)+=comp(NonLin$2(#1,#2)(i).vBase(#1)(:,i))");
+    else
+      assem2.set("V(#1)+=comp(NonLin$1(#1)(i,j).vGrad(#1)(:,i,j));"
+		 "V(#1)+=comp(NonLin$2(#1)(i).vBase(#1)(:,i))");
     assem2.push_mi(mim);
     assem2.push_mf(mf_u);
     if (mf_data) assem2.push_mf(*mf_data);
@@ -670,9 +704,9 @@ template<typename VECT0, typename VECT1, typename VECT2>
     getfem::generic_assembly assem1;
     
     if (mf_data)
-      assem1.set("V(#1)+=comp(NonLin(#1,#2,#3)(i,j).vGrad(#1)(:,i,j))");
-    else
       assem1.set("V(#1)+=comp(NonLin(#1,#2)(i,j).vGrad(#1)(:,i,j))");
+    else
+      assem1.set("V(#1)+=comp(NonLin(#1)(i,j).vGrad(#1)(:,i,j))");
     assem1.push_mi(mim);
     assem1.push_mf(mf_u);
     if (mf_data) assem1.push_mf(*mf_data);
@@ -704,16 +738,15 @@ template<typename VECT0, typename VECT1, typename VECT2>
     getfem::generic_assembly assem1;
     
     if (mf_data)
-      assem1.set("V()+=comp(NonLin(#1,#2,#3))(1)");
-    else
       assem1.set("V()+=comp(NonLin(#1,#2))(1)");
+    else
+      assem1.set("V()+=comp(NonLin(#1))(1)");
     assem1.push_mi(mim);
     assem1.push_mf(mf_u);
     if (mf_data) assem1.push_mf(*mf_data);
     assem1.push_nonlinear_term(&nterm1);
     assem1.push_vec(V);
     assem1.assembly(rg);
-    
     return V[0];
   }
 
@@ -748,9 +781,9 @@ template<typename VECT0, typename VECT1, typename VECT2>
       
       getfem::generic_assembly assem;
       if (mf_data)
-	assem.set("t=comp(NonLin(#1,#2,#3))); V() += t(i)");
+	assem.set("t=comp(NonLin(#1,#2))); V() += t(i)");
       else
-	assem.set("t=comp(NonLin(#1,#2)); V() += t(i)");
+	assem.set("t=comp(NonLin(#1)); V() += t(i)");
       // comp() to be optimized ?
       assem.push_mi(mim);
       assem.push_mf(mf_u);
