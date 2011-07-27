@@ -16,24 +16,18 @@ LAW = 2;     % 0 : SaintVenant-Kirchhoff
 	     % 4 : Linear elasticity
 	     % 5 : Linear elasticity + incompressibility
 
-% for SaintVenant-Kirchhoff+incompressibility (in N/mm^2)
-% P1 = 1000;
-% P2 = 1000;
-
-% for Ciarlet-Geymonat (in N/mm^2) %
-P1 = 1000;	        % First elastic coefficient.
-P2 = 1000;   	        % Second elastic coefficient.
-P3 = 1400;   	        % Third elastic coefficient.
-
-% Linear elasticity - Lame coefficients %
+% Elasticity constants %
 LAMBDA = 11500;
 MU = 5;
+P1 = 4000;	        % First elastic coefficient.
+P2 = 120;   	        % Second elastic coefficient.
+P3 = -180;   	        % Third elastic coefficient.
 
 FORCEX = 0;         % Amplitude of the volume force
 FORCEY = 0;
 FORCEZ = -0.00;
 
-DIRICHLET_Y = -0.48;
+DIRICHLET_Y = -0.4;
 DIRICHLET_X_SPEED = 13800;
 
 FRICTION_COEFF = 1.0;
@@ -47,17 +41,18 @@ NOCONTACT_MASS = 1;     % 0 : Normal mass matrix
 %%%%%   discretisation parameters  :   %%%%%
 DELTAT = 1E-5;		% length of the time step
 
-MESHFILENAME = '';	% file with the mesh in the case that
+%MESHFILENAME = '';
+MESHFILENAME = 'gum_2.0_fix.mesh';	% file with the mesh in the case that
 					% it has to be loaded
 MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
-NX = 20;            	          % space step.
+NX = 20;            	          % space step
 NY = 10;
 
-NBREFINE = 0; 		% number of refinements in the right-bottom corner
-LAYERX = 0.16;		% thickness of refined layers
-LAYERY = 0.09;
-LAYERX_FACT = 0.825;	% multiplication factors for successive refinements
-LAYERY_FACT = 0.59;
+NBREFINE = 3; 		% number of refinements in the right-bottom corner
+LAYERX = 0.25;		% thickness of refined layers
+LAYERY = 0.25;
+LAYERX_FACT = 0.73;	% multiplication factors for successive refinements
+LAYERY_FACT = 0.92;
 
 MESH_NOISED = 0; % Set to one if you want to "shake" the mesh
 
@@ -74,39 +69,44 @@ INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
 %%%%%   solver parameters                                             %%%%%
 DIRICHLET_VERSION = 0;	% via the Lagrange multipliers, needed for continuations
 
-R = 1E-1;%1E0; 	% Augmentation parameter for the contact and frictional condition
-		% (influences convergence of the standard solver - newton_line_search)
-ALPHA = 1E5; 	% Parameter for equalization of the "normal" and "tangential"
+R = 1E-2; 	% Augmentation parameter for the contact and frictional condition
+		% (influences convergence of the standard solver --- newton_line_search)
+ALPHA = 1E5; 	% Parameter for equalizating of the "normal" and "tangential"
 			% components of the test functions
 
-STEP0 = 0;	  	% number of the foregoing Newton step (which has to be loaded); 
-			% in the case of 0, the method starts from the beginning
-STANDARD_SOLVER = 1;	% if (STANDARD_SOLVER != 0), the standard solver starts,
+STEP0 = 46;	  	% number of the foregoing time step (which is to be loaded); 
+			% in the case of 0, the solver starts from t = 0
+STANDARD_SOLVER = 0;	% if (STANDARD_SOLVER != 0), the standard solver starts,
 			% otherwise the continuation is employed from the beginning
-STEP0_CONT = 56569; 	% number of the foregoing continuation step (which has to be
-			% loaded) in the case of STANDARD_SOLVER == 0
+RANGE_CONT = 1;		% number of time steps between XI = 0 and XI = 1
+RANGE_CONT_INC = 1;  	% increment of RANGE_CONT (if RANGE_CONT is to increase)
+STEP0_CONT = 18042; 	% number of the foregoing continuation step (which is to be
+			% loaded) in the case of STANDARD_SOLVER == 0 
+X0FILENAME = '';
+%X0FILENAME = 'data/nonlinear_elastostaticstep553_1_1.X';
+XI_END = 30.;
 
-NBSTEP = 50;		% number of time steps
-NBSTEP_CONT = 100;	% number of continuation steps 
-XI_END = 1.0;		% ending value of XI for continuations
+NBSTEP = 47;		% number of time steps
+NBSTEP_CONT = 60000;	% number of continuation steps
 
-MAXITER = 100;		% maximum iterations of the Newton method
+MAXITER = 25;		% maximum iterations of the Newton method
 MAXITER_CORR = 5;	% maximum iterations of the Newton correction
-THRESHOLD_CORR = 4;	% threshold of iterations to increase the step length
+THRESHOLD_CORR = 4;	% threshold of iterations for increasing the step length
 
 RESIDUAL = 3E-8;     	% residual for iterative solvers
 DIFFERENCE = 3E-8;	% difference of two forthcoming iteratives 
-DISTANCE = 1E-3;	% maximal distance between XI and XI_end to end with continuation
+DISTANCE = 1E-3;	% maximal distance between the actual and the wanted value of XI to
+			% end the continuation
 
 ANGLE = 0.95;		% minimal value of cosine of the angle between tangents at
 			% two forthcoming points
-X_MIN = 16.25;		% lower bound of the X-coordinate determining the region of contact
+X_MIN = 16.0;		% lower bound of the X-coordinate determining the region of contact
 			% nodes whose characters are monitored
-LIMIT = 3E-3;		% parameter characterizing the closedness of components of the test
+LIMIT = 2E-2;	% parameter characterizing the closedness of components of the test
 			% functions to zero
 	
-%H = 0.04;		% actual step length
-H_INIT = 0.01;		% initial step length
+H = 12.8;		% actual step length
+H_INIT = 0.1;		% initial step length
 H_MAX = 15;		% maximal step length
 H_MIN = 1E-5;		% minimal step length
 H_INC = 2.0;		% scale factor for increasing the step length

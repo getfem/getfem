@@ -134,7 +134,7 @@ namespace getfem {
    */
   struct Ciarlet_Geymonat_hyperelastic_law : public abstract_hyperelastic_law {
     // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
-    // The parameters gamma'(1) has to verify gamma'(1) in ]-lambda/2-mu, -mu[
+    // The parameter gamma'(1) has to verify gamma'(1) in ]max{-lambda/2-mu, -2mu}, -mu[
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
@@ -144,7 +144,7 @@ namespace getfem {
     Ciarlet_Geymonat_hyperelastic_law(void) { nb_params_ = 3; }
   };
 
-  /** Plane strain hyperelastic law (take another law as a parameter)
+  /** Plane strain hyperelastic law (takes another law as a parameter)
    */
   struct plane_strain_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
