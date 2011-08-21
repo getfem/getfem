@@ -222,7 +222,6 @@ namespace getfem {
 		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
 
-
       gmm::mult(gmm::transposed(gradU), gradU, E);
       gmm::add(gradU, E);
       gmm::add(gmm::transposed(gradU), E);
@@ -242,10 +241,18 @@ namespace getfem {
 		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim());
       scalar_type x = mls_x(ctx.xref());
+      cout << "------------------------------- " <<  endl;
+      cout << "la valeur (incompressible)  x :" <<  x <<endl;
+      cout << "------------------------------- " <<  endl;
       scalar_type y = mls_y(ctx.xref());
+      cout << "------------------------------- " <<  endl;
+      cout << "la valeur (incompressible)  y :" << y  <<endl;
+      cout << "------------------------------- " <<  endl;
       scalar_type r2 = x*x+y*y;
-
-      gmm::scale(gradU_ls, log(r2) / scalar_type(2));
+      cout << "------------------------------- " <<  endl;
+      cout << "le rayon (incompressible) r2 :" << r2  <<endl;
+      cout << "------------------------------- " <<  endl;
+      gmm::scale(gradU_ls, log(r2)/scalar_type(2));
 
       ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
       base_vector Runit(2);

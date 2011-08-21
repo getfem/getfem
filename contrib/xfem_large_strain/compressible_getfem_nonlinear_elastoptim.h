@@ -97,44 +97,94 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes() const { return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-		(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      gmm::copy(gmm::sub_vector	(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf_u.get_qdim());
-
-
+      
       gmm::mult(gmm::transposed(gradU), gradU, E);
       gmm::add(gradU, E);
       gmm::add(gmm::transposed(gradU), E);
       gmm::scale(E, scalar_type(0.5));
-
-
+      
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)+= scalar_type(1);
-      
-      //scalar_type J = gmm::lu_det(gradU);
+
+      //cout << "------------------------------- " <<  endl;
+      //cout << "Le Tenseur F :" << gradU  <<endl;
+      //cout << "------------------------------- " <<  endl;
+
+ 
+      scalar_type J = gmm::lu_det(gradU);
+      // Computation of d/dalpha (grad U)
+
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(U_ls, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, gradU_ls, mf_u.get_qdim());
+      if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+	}
+      scalar_type x = mls_x(ctx.xref());
+     // cout << "------------------------------- " <<  endl;
+     // cout << "la valeur (compressible) x :" <<  x <<endl;
+     // cout << "------------------------------- " <<  endl;
+      scalar_type y = mls_y(ctx.xref());
+     // cout << "------------------------------- " <<  endl;
+    //  cout << "la valeur (compressible) y :" << y  <<endl;
+    //  cout << "------------------------------- " <<  endl;
+      scalar_type r2 = x*x+y*y;
+      //cout << "------------------------------- " <<  endl;
+      //cout << "la valeur (compressible) r2 :" << r2  <<endl;
+      //cout << "------------------------------- " <<  endl;
+      gmm::scale(gradU_ls, log(r2) / scalar_type(2));
+
+      ctx.pf()->interpolation(ctx, coeff, u_ls, mf_u.get_qdim());
+      base_vector Runit(2);
+      Runit[0] = x / r2; Runit[1] = y / r2; 
+      gmm::rank_one_update(gradU_ls, Runit, u_ls);
 
 
       // Computation of d(E)/d(alpha)
       
       base_matrix Ealpha(N, N);
       gmm::mult(gmm::transposed(gradU_ls), gradU, Sigma);
+      /* cout << "-------------------------------------- " << endl; */
+      /* cout << "Le Tenseur gradU_ls :" <<   gradU_ls     << endl; */
+      /* cout << "-------------------------------------- " << endl; */
       gmm::add(Sigma, gmm::transposed(Sigma), Ealpha);
       gmm::scale(Ealpha, 0.5);
-
+      //cout << "-------------------------------------- " << endl;
+      //cout << "Le Tenseur d(E)/d(alpha) :"   << Ealpha  << endl;
+      //cout << "-------------------------------------- " << endl;
       // The term sigma:dE/dalpha
       AHL.sigma(E, Sigma, params);
+      //cout << "-------------------------------------- " << endl;
+      //cout << " la valeur du tenseur sigma :" << Sigma  << endl;
+      //cout << "-------------------------------------- " << endl;
       t[0] = mat_euclidean_sp(Sigma, Ealpha);
-
+     // cout << "============================================================================ " <<  endl;
+     // cout << "The term sigma:dE/dalpha :" << t[0] << endl;
+     // cout << "============================================================================ " <<  endl;
      
     }
     virtual void prepare(fem_interpolation_context& ctx, size_type nb) {
       GMM_ASSERT1(nb != 0, "Oops");
+      /*if (nb == 1) {
+	size_type cv = ctx.convex_num();
+	
+	if (cv != cv_old) {
+	  mls_x = ls.mls_of_convex(cv, 1);
+	  mls_y = ls.mls_of_convex(cv, 0);
+	  cv_old = cv;
+	}
 
+      } else*/
       if (mf_data) {
 	size_type cv = ctx.convex_num();
 	size_type nbp = AHL.nb_params();
