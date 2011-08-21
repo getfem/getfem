@@ -1,11 +1,10 @@
 # SUBDIRS = 
 
-check_PROGRAMS = xfem_large_strain nonlinear_incomp_xfem vertex_large_strain test_xfem_large_strain 
+check_PROGRAMS = xfem_large_strain nonlinear_incomp_xfem vertex_large_strain  
 CLEANFILES = 
 
 xfem_large_strain_SOURCES = xfem_large_strain.cc
 nonlinear_incomp_xfem_SOURCES = nonlinear_incomp_xfem.cc
-test_xfem_large_strain_SOURCES = test_xfem_large_strain.cc
 vertex_large_strain_SOURCES = vertex_large_strain.cc \
                               getfem_nonlinear_elastoptim.h \
                               compressible_getfem_nonlinear_elastoptim.h
