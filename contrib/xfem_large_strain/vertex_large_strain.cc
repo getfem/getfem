@@ -61,6 +61,7 @@ using bgeot::base_matrix; /* small dense matrix. */
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
  */
+
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
@@ -89,7 +90,7 @@ scalar_type
 generic_u_singular_xy_function::val(scalar_type x, scalar_type y) const {
   scalar_type r = sqrt(x*x + y*y);  
   if (r < 1e-10)  return 0;
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   
   if (n <= 0)
     return pow(r, alpha_md) * cos(scalar_type(n) * theta * 0.5);
@@ -104,7 +105,7 @@ generic_u_singular_xy_function::grad(scalar_type x, scalar_type y) const {
   if (r < 1e-10) {
     GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
   }
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   base_small_vector res(2);
   scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
   scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
@@ -139,7 +140,7 @@ scalar_type
 generic_p_singular_xy_function::val(scalar_type x, scalar_type y) const {
   scalar_type r = sqrt(x*x + y*y);  
   if (r < 1e-10)  return 0;
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   
   if (n <= 0)
     return pow(r, beta_md) * cos(scalar_type(n) * theta * 0.5);
@@ -154,7 +155,7 @@ generic_p_singular_xy_function::grad(scalar_type x, scalar_type y) const {
   if (r < 1e-10) {
     GMM_WARNING0("Warning, point close to the singularity (r=" << r << ")");
   }
-  scalar_type theta = atan2(x, y);
+  scalar_type theta = atan2(y, x);
   base_small_vector res(2);
   scalar_type cos_n_2 = cos(scalar_type(n) * theta * 0.5);
   scalar_type sin_n_2 = sin(scalar_type(n) * theta * 0.5);
@@ -188,7 +189,7 @@ base_matrix generic_p_singular_xy_function::hess(scalar_type, scalar_type)
 
 namespace getfem {
 
-#define COEFF_MULT_ALPHABETA 1E12
+#define COEFF_MULT_ALPHABETA 1
 
 struct nonlinear_elasticity_optim_brick : public virtual_brick {
   
@@ -411,8 +412,9 @@ struct nonlinear_elasticity_optim_brick : public virtual_brick {
 
 
 /**************************************************************************/
+/*                                                                        */
 /* Compressible cases                                                     */
-/* Brick for Compressible formulation definition.                         */
+/*      Brick for Compressible formulation definition.                    */
 /*                                                                        */
 /**************************************************************************/
 
@@ -491,14 +493,14 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
 	gmm::copy(gmm::col_vector(V), matl[2]);
       
         
-       	cout << "CComp********alpha u******* Vecteur alpha u V:" << V << endl; 
+       	cout << "CComp********alpha u********** Vecteur alpha u V:" << V << endl; 
 
 
 	(matl[1])(0,0)
 	  = asm_nonlinear_elasticity_optim_compressible_tangent_matrix_alpha_alpha
 	  (mim, mf_u, u, U_ls, u_enriched_dof, alpha, mf_params, params, AHL, ls, rg)* COEFF_MULT_ALPHABETA;
 
-       	cout << "CComp********alpha alpha******* Vecteur alpha alpha :" << 
+       	cout << "CComp********alpha alpha****** Vecteur alpha alpha :" << 
 	  (matl[1])(0,0) << endl; 
 
       }
@@ -508,7 +510,9 @@ struct nonlinear_elasticity_optim_brick_compressible : public virtual_brick {
 	asm_nonlinear_elasticity_optim_compressible_rhs(vecl[0], mim, 
 					   mf_u, u, U_ls, u_enriched_dof,
 					   alpha, mf_params, params, AHL, ls, rg);
-	// gmm::scale(vecl[0], scalar_type(-1));
+	//gmm::scale(vecl[0], scalar_type(-1));
+	cout << "CComp********_Right_hand_side******* Partie dL/dalpha :" << 
+	  vecl[0] << endl; 
 	gmm::scale(vecl[0], scalar_type(-COEFF_MULT_ALPHABETA));
 
 
@@ -594,7 +598,7 @@ struct crack_problem {
   getfem::mesh_fem_product mf_product_p;
   getfem::mesh_fem_sum mf_p_sum;
 
-  scalar_type pr1, pr2, pr3, AMP_LOAD_X, AMP_LOAD_Y, nb_step;   /* elastic coefficients,Amplitude of load, number of step loadings*/
+  scalar_type pr1, pr2, pr3, AMP_LOAD_X, AMP_LOAD_Y, NB_STEP;   /* elastic coefficients,Amplitude of load, number of step loadings*/
 
   base_small_vector cracktip;
 
@@ -730,7 +734,7 @@ void crack_problem::init(void) {
   pr3 = PARAM.real_value("P3", "Third Elastic coefficient");
   AMP_LOAD_X = PARAM.real_value("AMP_LOAD_X", "Amp load x");
   AMP_LOAD_Y = PARAM.real_value("AMP_LOAD_Y", "Amp load y");
-  nb_step  = PARAM.real_value("nb_step", "nb_step");
+  NB_STEP  = PARAM.real_value("NB_STEP", "NB_STEP");
   reference_test = int(PARAM.int_value("REFERENCE_TEST", "Reference test"));
   cout << "AMP_LOAD_X = " << AMP_LOAD_X << "\n";
   cout << "AMP_LOAD_Y = " << AMP_LOAD_Y << "\n";
@@ -878,10 +882,8 @@ base_small_vector ls_function(const base_node P, int num = 0) {
   base_small_vector res(2);
   switch (num) {
     case 0: {
-      // res[0] = y;
-      // res[1] = -.5 + x;
-      res[0] = gmm::vect_dist2(P, base_node(0.5, 0.)) - .24;
-      res[1] = gmm::vect_dist2(P, base_node(0.25, 0.0)) - 0.27;
+       res[0] = y;
+       res[1] = -.5 + x;
     } break;
     case 1: {
       res[0] = gmm::vect_dist2(P, base_node(0.5, 0.)) - .25;
@@ -1249,8 +1251,9 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   size_type nb_dof_rhs = mf_rhs.nb_dof();
   size_type N = mesh.dim();
   ls.reinit();
-  size_type law_num = PARAM.int_value("LAW");
-  size_type problem_num = PARAM.int_value("PROBLEM_NUM");
+  size_type LAW_NUM = PARAM.int_value("LAW");
+  size_type line_search_version = PARAM.int_value("line_search_version");
+  size_type PROBLEM_VERSION = PARAM.int_value("PROBLEM_VERSION");
 
   //size_type newton_version = PARAM.int_value("newton_version");
 
@@ -1261,7 +1264,6 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
   }
   ls.touch();
-
   mls.adapt();
   mim.adapt();
   mfls_u.adapt();
@@ -1273,10 +1275,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
 
   cout << "Setting up the singular functions for the enrichment\n";
 
-  size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U",
-				   "Number of Enriched function for u"));
-  size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P",
-				   "Number of Enriched function for p"));
+  size_type nb_enr_func_u = size_type(PARAM.int_value("NB_ENR_FUNC_U", "Number of Enriched function for u"));
+  size_type nb_enr_func_p = size_type(PARAM.int_value("NB_ENR_FUNC_P", "Number of Enriched function for p"));
 
   std::vector<getfem::pglobal_function> vfunc(2*nb_enr_func_u);
   std::vector<getfem::pglobal_function> vfunc_p(2*nb_enr_func_p);
@@ -1482,9 +1482,12 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     }
   }
   
-  ///////////////////////////////////////////////////////////////
-  // find the dofs on the upper right and lower right corners  //
-  ///////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  //                                                                     //
+  //      find the dofs on the upper right and lower right corners       //
+  //                                                                     //
+  /////////////////////////////////////////////////////////////////////////
+
   cout << "Find the dofs on the upper right and lower right corners" << endl;
   scalar_type d1 = 1.0, d2 = 1.0;
   size_type icorner1 = size_type(-1), icorner2 = size_type(-1);
@@ -1510,7 +1513,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   // Choose the material law.
  
   getfem::abstract_hyperelastic_law *pl1 = 0, *pl = 0;
-  switch (law_num) {
+  switch (LAW_NUM) {
     case 0:
     case 1: pl1 = new getfem::SaintVenant_Kirchhoff_hyperelastic_law(); break;
     case 2: pl1 = new getfem::Ciarlet_Geymonat_hyperelastic_law(); break;
@@ -1555,7 +1558,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   /*                                                                        */
   /**************************************************************************/
   
-  switch (problem_num){
+  switch (PROBLEM_VERSION){
   case 0 :{
     cout << "Solving Neumann condition problem *********"<< endl ;
   // Defining the Neumann condition right hand side.
@@ -1610,8 +1613,9 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   plain_vector F_Neumann(nb_dof_rhs * N);
  // Neumann condition brick.
    
-  for(size_type i = 0; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_X;
-  for(size_type i = 1; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_Y;
+  // for(size_type i = 0; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_X;
+
+     for(size_type i = 1; i < F_Neumann.size(); i=i+N) F_Neumann[i] = AMP_LOAD_Y;
   
    
    model.add_initialized_fem_data("NeumannData", mf_rhs, F_Neumann );
@@ -1644,7 +1648,7 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
     plain_vector HH(N*N); HH[0] = 1.0;
     model.add_initialized_fixed_size_data("Hdata", HH); 
 
-    getfem::add_generalized_Dirichlet_condition_with_multipliers(model, mim, "u", 1, BOUNDARY_NUM3, "Dirichletsymdata", "Hda        ta");
+    getfem::add_generalized_Dirichlet_condition_with_multipliers(model, mim, "u", 1, BOUNDARY_NUM3, "Dirichletsymdata", "Hdata");
 
   }break;
   default: GMM_ASSERT1(false, "no such problem");
@@ -1698,13 +1702,67 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   gmm::default_newton_line_search dlnrs;
   gmm::systematic_newton_line_search sylnrs;
   gmm::quadratic_newton_line_search qdlnrs;
-if (mixed_pressure) {
-  getfem::my_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+
+
+// Line search version
+
+cout << "line search value" <<line_search_version<< endl;
+ switch (line_search_version){
+     
+    case 1:{
+      if (mixed_pressure) {
+	getfem::my_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
 		   getfem::model_real_plain_vector>(model), simls, false);
+    }
+   else
+     {getfem::my_solve_comp(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), simls, false);}
+    }break;
+
+    case 2:{
+     if (mixed_pressure) {
+       getfem::my_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), dlnrs, false); }
+   else
+   {getfem::my_solve_comp(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), dlnrs, false);} 
+
+    }break;
+    
+
+    case 3: {
+     if (mixed_pressure) {
+  getfem::my_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), sylnrs, false);
  }
  else
    {getfem::my_solve_comp(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
-		   getfem::model_real_plain_vector>(model), simls, false);}
+		   getfem::model_real_plain_vector>(model), sylnrs, false);}
+
+    }break;
+
+    case 4: {
+      if (mixed_pressure) {
+	getfem::my_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), qdlnrs, false);
+    }
+     else
+       {getfem::my_solve_comp(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix, 
+		   getfem::model_real_plain_vector>(model), qdlnrs, false);} 
+   }break;
+
+
+
+
+    default: GMM_ASSERT1(false, "No such line search");
+    }
+
+
+
+
+
+// Solution extration
+
   gmm::resize(U, mf_u().nb_dof());
   gmm::copy(model.real_variable("u"), U);
 
