@@ -220,12 +220,33 @@ namespace bgeot {
         val[k] = trans[k].eval(pt.begin());
     }
 
+    virtual void poly_vector_val(const base_node &pt, const convex_ind_ct &ind_ct,
+                                 base_vector &val) const {
+      size_type nb_funcs=ind_ct.size();
+      val.resize(nb_funcs);
+      for (size_type k = 0; k < nb_funcs; ++k)
+        val[k] = trans[ind_ct[k]].eval(pt.begin());
+    }
+
     virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
       FUNC PP;
       pc.resize(nb_points(),dim());
       for (size_type i = 0; i < nb_points(); ++i)
         for (dim_type n = 0; n < dim(); ++n) {
           PP = trans[i];
+          PP.derivative(n);
+          pc(i, n) = PP.eval(pt.begin());
+        }
+    }
+
+    virtual void poly_vector_grad(const base_node &pt, const convex_ind_ct &ind_ct,
+                                  base_matrix &pc) const {
+      FUNC PP;
+      size_type nb_funcs=ind_ct.size();
+      pc.resize(nb_funcs,dim());
+      for (size_type i = 0; i < nb_funcs; ++i)
+        for (dim_type n = 0; n < dim(); ++n) {
+          PP = trans[ind_ct[i]];
           PP.derivative(n);
           pc(i, n) = PP.eval(pt.begin());
         }

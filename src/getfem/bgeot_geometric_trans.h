@@ -42,6 +42,9 @@
 #include "bgeot_convex_ref.h"
 
 namespace bgeot {
+
+  typedef std::vector<short_type> convex_ind_ct;
+
   /**  Description of a geometric transformation between a
    * reference element and a real element.
    *
@@ -124,11 +127,17 @@ namespace bgeot {
     /// Basic structure of the reference element.
     pconvex_structure basic_structure(void) const
     { return cvr->structure()->basic_structure(); }
-    /// Gives the value of the vector of functions at a certain point.
+    /// Gives the value of the functions vector at a certain point.
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const = 0;
-    /// Gives the gradient of the vector of functions at a certain point.
+    /// Gives the value of a subgroup of the functions vector at a certain point.
+    virtual void poly_vector_val(const base_node &pt, const convex_ind_ct &ind_ct,
+                                 base_vector &val) const = 0;
+    /// Gives the gradient of the functions vector at a certain point.
     virtual void poly_vector_grad(const base_node &pt, base_matrix &val) const = 0;
-    /// Gives the hessian of the vector of functions at a certain point.
+    /// Gives the gradient of a subgroup of the functions vector at a certain point.
+    virtual void poly_vector_grad(const base_node &pt, const convex_ind_ct &ind_ct,
+                                  base_matrix &val) const = 0;
+    /// Gives the hessian of the functions vector at a certain point.
     virtual void poly_vector_hess(const base_node &pt, base_matrix &val) const = 0;
     /// Gives the number of vertices.
     size_type nb_vertices(void) const { return vertices_.size(); }
