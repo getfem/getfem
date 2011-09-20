@@ -37,7 +37,6 @@
 
 namespace getfem {
 
-  typedef bgeot::convex<base_node>::ref_convex_pt_ct ref_convex_pt_ct;
   typedef bgeot::convex<base_node>::dref_convex_pt_ct dref_convex_pt_ct;
   typedef bgeot::basic_mesh::ref_mesh_face_pt_ct ref_mesh_face_pt_ct;
 
@@ -309,28 +308,24 @@ namespace getfem {
 
       size_type N = m.dim();
       size_type P = pgt->structure()->dim();
+
       size_type nb_pts_cv = pgt->nb_points();
       size_type nb_pts_fc = pgt->structure()->nb_points_of_face(fc);
+
       bgeot::convex_ind_ct ind_pts_fc = pgt->structure()->ind_points_of_face(fc);
       ref_mesh_face_pt_ct pts_fc = m.points_of_face_of_convex(cv, fc);
-      ref_convex_pt_ct ref_pts_fc = pgt->convex_ref()->points_of_face(fc);
-      dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
-      GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
 
       // Local base on reference face
-      std::vector<base_node> base_vecs_fc(P-1);
-      for (size_type i = 0; i < P-1; ++i)
-        base_vecs_fc[i] = dref_pts_fc[i+1] - dref_pts_fc[0];
-
-      base_vector val(nb_pts_cv);
-      base_matrix pc_cv(nb_pts_cv, P);
-      base_matrix pc_fc(nb_pts_fc, P-1), G(N, nb_pts_fc);
-      base_matrix K(N,P-1), KK(N,P), B(N,P-1), BB(N,P), CS(P-1,P-1);
-      base_matrix base_mat_fc(P-1,N);
-      vectors_to_base_matrix(G, pts_fc);
-      vectors_to_base_matrix(K, base_vecs_fc);
-      gmm::copy(gmm::transposed(K),base_mat_fc);
-      gmm::clear(K);
+      base_matrix base_ref_fc(P-1,N);
+      {
+        dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
+        GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
+        base_node vec(dref_pts_fc[0].size());
+        for (size_type i = 0; i < P-1; ++i) {
+          vec = dref_pts_fc[i+1] - dref_pts_fc[0];
+          gmm::copy(vec,gmm::mat_row(base_ref_fc,i));
+        }
+      }
 
       GMM_ASSERT1( slave_node.size() == N, "Dimensions mismatch");
       const base_node &xx = slave_node;
@@ -339,62 +334,87 @@ namespace getfem {
       base_node vres(P);
       scalar_type res= 1.;
 
-      xp = gmm::mean_value(ref_pts_fc);
+      // initial guess
+      xp = gmm::mean_value(pgt->convex_ref()->points_of_face(fc));
+
       gmm::clear(xxp);
-      pgt->poly_vector_val(xp, val);
+      base_vector val(nb_pts_fc);
+      pgt->poly_vector_val(xp, ind_pts_fc, val);
       for (size_type l = 0; l < nb_pts_fc; ++l)
-        gmm::add(gmm::scaled(pts_fc[l], val[ ind_pts_fc[l] ] ), xxp);
+        gmm::add(gmm::scaled(pts_fc[l], val[l] ), xxp);
+
+      base_matrix G(N, nb_pts_fc);
+      vectors_to_base_matrix(G, pts_fc);
+
+      base_matrix K(N,P-1);
+
+      base_matrix grad_fc(nb_pts_fc, P);
+      base_matrix grad_fc1(nb_pts_fc, P-1);
+      base_matrix B(N,P-1), BB(N,P), CS(P-1,P-1);
 
       scalar_type EPS = 10E-12;
       unsigned cnt = 50;
       while (res > EPS && --cnt) {
         // computation of the pseudo inverse matrix B at point xp
-        pgt->poly_vector_grad(xp, pc_cv);                // Non-optimized
-        for (size_type i = 0; i < nb_pts_fc; ++i)        // computation
-          for (size_type j = 0; j < P-1; ++j)            // of pc_fc
-            pc_fc(i,j) = gmm::vect_sp(gmm::mat_row(pc_cv, ind_pts_fc[i]),
-                                      base_vecs_fc[j]);
-        gmm::mult(G,pc_fc,K);
+        pgt->poly_vector_grad(xp, ind_pts_fc, grad_fc);
+        gmm::mult(grad_fc, gmm::transposed(base_ref_fc), grad_fc1);
+        gmm::mult(G, grad_fc1, K);
         gmm::mult(gmm::transposed(K), K, CS);
         gmm::lu_inverse(CS);
         gmm::mult(K, CS, B);
-        gmm::mult(B, base_mat_fc, BB);
+        gmm::mult(B, base_ref_fc, BB);
 
-        // Projection onto the face of convex
+        // Projection onto the face of the convex
         gmm::mult_add(gmm::transposed(BB), xx-xxp, xp);
         gmm::clear(xxp);
-        pgt->poly_vector_val(xp, val);
+        pgt->poly_vector_val(xp, ind_pts_fc, val);
         for (size_type l = 0; l < nb_pts_fc; ++l)
-          gmm::add(gmm::scaled(pts_fc[l], val[ind_pts_fc[l]]), xxp);
+          gmm::add(gmm::scaled(pts_fc[l], val[l]), xxp);
 
         gmm::mult(gmm::transposed(BB), xx - xxp, vres);
         res = gmm::vect_norm2(vres);
       }
       GMM_ASSERT1( res <= EPS,
                   "Iterative pojection on convex face did not converge");
+      { // calculate K at the final point
+        pgt->poly_vector_grad(xp, ind_pts_fc, grad_fc);
+        gmm::mult(grad_fc, gmm::transposed(base_ref_fc), grad_fc1);
+        gmm::mult(G, grad_fc1, K);
+      }
 
       // computation of normal vector
       un.resize(N);
-//    un = xx - xxp;
-//    gmm::scale(un, 1/gmm::vect_norm2(un));
-
+      // un = xx - xxp;
+      // gmm::scale(un, 1/gmm::vect_norm2(un));
       gmm::clear(un);
-      gmm::sub_index SUB_PTS_FC = gmm::sub_index(ind_pts_fc);
-      gmm::mult(G, gmm::sub_matrix(pc_cv, SUB_PTS_FC, gmm::sub_interval(0, P)), KK);
-      base_matrix bases_product(P-1, P);
-      gmm::mult(gmm::transposed(K), KK, bases_product);
-      for (size_type i = 0; i < P; ++i) {
-        std::vector<size_type> ind(0);
-        for (size_type j = 0; j < P; ++j)
-          if (j != i ) ind.push_back(j);
-        scalar_type
-          det = gmm::lu_det(gmm::sub_matrix(bases_product,
-                                            gmm::sub_interval(0, P-1),
-                                            gmm::sub_index(ind)       ) );
-        gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ), un);
-      }
-      gmm::scale(un, 1/gmm::vect_norm2(un));
+      {
+        base_matrix KK(N,P);
+        { // calculate KK
+          base_matrix grad_cv(nb_pts_cv, P);
+          pgt->poly_vector_grad(xp, grad_cv);
 
+          base_matrix GG(N, nb_pts_cv);
+          vectors_to_base_matrix(GG, m.points_of_convex(cv));
+
+          gmm::mult(GG, grad_cv, KK);
+        }
+
+        base_matrix bases_product(P-1, P);
+        gmm::mult(gmm::transposed(K), KK, bases_product);
+
+        for (size_type i = 0; i < P; ++i) {
+          std::vector<size_type> ind(0);
+          for (size_type j = 0; j < P; ++j)
+            if (j != i ) ind.push_back(j);
+          scalar_type det = gmm::lu_det(gmm::sub_matrix(bases_product,
+                                                        gmm::sub_interval(0, P-1),
+                                                        gmm::sub_index(ind)      ) );
+          gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ), un);
+        }
+      }
+      // normalizing
+      gmm::scale(un, 1/gmm::vect_norm2(un));
+      // ensure that normal points outwards
       if (gmm::vect_sp(un, gmm::mean_value(pts_fc) -
                            gmm::mean_value(m.points_of_convex(cv))) < 0)
         gmm::scale(un,scalar_type(-1));
