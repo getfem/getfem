@@ -113,8 +113,8 @@ namespace getfem {
 
 /** Add Hughes stabilized frictionless contact condition to the model. If U 
     is the vector of degrees of freedom on which the unilateral constraint is applied, 
-    and Lambda the multiplier Vector of contact force.Then Hughes stabilizedfrictionless
-    contact condition is difined by the matrix `BN` and 'DN' have to be such that this
+    and Lambda the multiplier Vector of contact force.Then Hughes stabilized frictionless
+    contact condition is defined by the matrix `BN` and 'DN' have to be such that this
     condition is defined by $B_N U - DN Lambda \le 0$. where 'DN' is the masse matrix 
     relative to stabilzed term.
     The augmentation parameter `r` should be chosen in a range of acceptabe values. 

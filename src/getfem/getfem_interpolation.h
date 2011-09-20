@@ -359,7 +359,7 @@ namespace getfem {
   
   /*
      interpolation of a solution on another mesh.
-     - mti contains the points where to interpole.
+     - mti contains the points where to interpolate.
      - the solution should be continuous.
    */
   template<typename VECTU, typename VECTV, typename MAT>
