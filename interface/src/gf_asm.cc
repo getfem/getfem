@@ -26,6 +26,7 @@
 #include <getfem/getfem_interpolation.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_fourth_order.h>
+#include <getfem/getfem_Coulomb_friction.h>
 
 using namespace getfemint;
 namespace getfemint {
@@ -257,19 +258,19 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   if (subc_tab.size() == 0) {
 
    
-    /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2])
+    /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, boundary_num]])
     Assembly of a mass matrix.
 
     Return a @tsp object.
     @*/
     sub_command
-      ("mass matrix", 2, 3, 0, 1, 
+      ("mass matrix", 2, 4, 0, 1, 
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.remaining() ? in.pop().to_const_mesh_fem() : mf_u1;
-
+       size_type nbound = in.remaining() ? in.pop().to_integer():size_type(-1);
        gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
-       getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2);
+       getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2, nbound);
        out.pop().from_sparse(M);
        );
 
@@ -656,6 +657,34 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("extrapolation matrix", 2, 2, 0, 1,
        interpolate_or_extrapolate(in, out, 2);
        );
+
+
+    /*@FUNC B = ('contact Usawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec lambda, @tmf mf_obstacle, @dvec obstacle, r)
+    Specific assembly procedure for the use of an Usawa algorithm to solve
+      contact problems. Projects the term $(\lambda - r u_N)_-$ on the
+      finite element space of $\lambda$.
+
+    Return a @dcvec object.
+    @*/
+    sub_command
+      ("contact Usawa projection", 9, 9, 0, 1,
+       int boundary_num = in.pop().to_integer();
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       // unsigned q_dim = mf_u->get_qdim();
+       darray u   = in.pop().to_darray(1, int(mf_u->nb_dof()));
+       const getfem::mesh_fem *mf_lambda = in.pop().to_const_mesh_fem();
+       darray lambda = in.pop().to_darray(1, int(mf_lambda->nb_dof()));
+       const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
+       darray obs  = in.pop().to_darray(1, int(mf_obs->nb_dof()));
+       double r = in.pop().to_scalar();
+       darray F               = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
+       getfem::asm_Coulomb_friction_continuous_Usawa_proj
+       (F, *mim, *mf_u, u, *mf_lambda, lambda,*mf_obs, obs, r, boundary_num);
+       
+       );
+
+
   }
 
   if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");

@@ -47,7 +47,7 @@ namespace getfem {
   /** Add a frictionless contact condition to the model. If U is the vector
       of degrees of freedom on which the unilateral constraint is applied,
       the matrix `BN` has to be such that this condition is defined by
-      $B_N U \le 0$. The constraint is prescribed thank to a multiplier
+      $B_N U \le gap$. The constraint is prescribed thank to a multiplier
       `multname_n` whose dimension should be equal to the number of lines of
       `BN`. The augmentation parameter `r` should be chosen in a range of
       acceptabe values (see Getfem user documentation). `dataname_gap` is an
@@ -67,7 +67,7 @@ namespace getfem {
   /** Add a contact with friction condition to the model. If U is the vector
       of degrees of freedom on which the condition is applied,
       the matrix `BN` has to be such that the contact condition is defined
-      by $B_N U \le 0$ and `BT` have to be such that the relative tangential
+      by $B_N U \le gap$ and `BT` have to be such that the relative tangential
       displacement is $B_T U$. The matrix `BT` should have as many rows as
       `BN` multiplied b $d-1$ where $d$ is the domain dimension.
       The contact condition is prescribed thank to a multiplier
@@ -237,6 +237,28 @@ namespace getfem {
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    size_type region, const std::string &obstacle, bool symmetrized); 
 
+  /** Add a contact with friction condition with a rigid obstacle
+      to the model. Compared to the previous ones, this brick add a
+      contact which is defined
+      in a continuous way. Is it the direct approximation of an augmented
+      Lagrangian formulation (see Getfem user documentation) defined at the
+      continuous level. The advantage is a better scalability: the number of
+      Newton iterations should be more or less independent of the mesh size.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `multname_n` should be a fem variable representing the contact stress.
+      An inf-sup condition beetween `multname_n` and `varname_u` is required.
+      The augmentation parameter `dataname_r` should be chosen in a
+      range of acceptabe values (to be determined ....).
+      The brick should be extended to friction in a near future.
+  */
+  size_type add_continuous_contact_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &multname_n, const std::string &dataname_obs,
+   const std::string &dataname_r, size_type region); 
+
 
   /** Add a frictionless contact condition between two faces of one or two
       elastic bodies. The condition is applied on the variable `varname_u` or
@@ -387,6 +409,96 @@ namespace getfem {
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
        vrg1, vrg2, slave1, slave2, symmetrized);
+  }
+
+
+
+
+
+  class friction_nonlinear_term : public nonlinear_elem_term {
+    
+  public:
+    dim_type N;
+    const mesh_fem &mf_u;
+    const mesh_fem &mf_lambda;
+    const mesh_fem &mf_obs;
+    std::vector<scalar_type> U, lambda_n, obs;
+    bgeot::multi_index sizes_;
+
+    base_small_vector no; // unit normal (to the obstacle)
+    base_vector coeff, V, aux;
+    base_matrix grad;
+    scalar_type ln, un, g, r_;
+    size_type option; // 0 : -H(u_n - g) n
+                      // 1 : (H(-l_n) * H(u_n-g) - 1)/r
+                      // 2 : l_n * H(u_n - g) n
+                      // 3 : (u_n - g)_+ + (l_n + (l_n)_-H(u_n-g))/r
+                      // 4 : -n 
+                      // 5 : -H(r(u_n-g)-l_n)n
+                      // 6 : (H(r(u_n-g)-l_n)-1)/r
+                      // 7 : l_n n
+                      // 8 : (l_n+(l_n-r(u_n-g))_-)/r
+                      // 9 : -(l_n-r(u_n-g))_-
+
+    template <class VECT> friction_nonlinear_term
+    (const mesh_fem &mf_u_, const VECT &U_, 
+     const mesh_fem &mf_lambda_, const VECT &lambda_n_, 
+     const mesh_fem &mf_obs_, const VECT &obs_,
+     scalar_type r__, size_type option_) :
+      N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), mf_lambda(mf_lambda_),
+      mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
+      lambda_n(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
+      r_(r__), option(option_) {
+      
+      sizes_.resize(1); sizes_[0] = 1;
+      if (option == 0 || option == 2 || option == 4 ||
+	  option == 5 || option == 7) sizes_[0] = N;
+      
+      mf_u.extend_vector(U_, U);
+      mf_lambda.extend_vector(lambda_n_, lambda_n);
+      mf_obs.extend_vector(obs_, obs);
+      
+      V.resize(N); no.resize(N); aux.resize(1);
+      gmm::resize(grad, 1, N);
+      
+      GMM_ASSERT1(mf_u.get_qdim() == N, "wrong qdim for the mesh_fem");
+    }
+    
+    const bgeot::multi_index &sizes() const { return sizes_; }
+    
+    virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb);
+
+  };
+
+
+
+
+
+
+
+  /** Specific assembly procedure for the use of an Usawa algorithm to solve
+      contact problems.
+  */
+  template<typename VECT1> 
+  void asm_Coulomb_friction_continuous_Usawa_proj
+  (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 9);
+
+    getfem::generic_assembly assem;
+    assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).Base(#2))(i,:); ");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_vec(R);
+    assem.assembly(rg); 
   }
 
 

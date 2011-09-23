@@ -80,7 +80,7 @@ cancel the symmetricity, and the assembly will be a little bit slower). Next, th
 
 .. math::
 
-   \int\partial_k\varphi^{i}_{j}\partial_l\varphi^m_n\psi^p,
+   \int\partial_k\varphi^{i}_{j}\partial_n\varphi^l_m\psi^p,
 
 where :math:`\varphi^i_j` is a :math:`jth` component of the :math:`ith` base
 function of ``mf`` and :math:`\psi^p` is a (scalar) base function of the second

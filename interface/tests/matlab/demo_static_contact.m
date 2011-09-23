@@ -26,10 +26,9 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh
-% m=gfMesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-%m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
- m=gf_Mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
-
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 d = gf_mesh_get(m, 'dim');
 
 
@@ -37,13 +36,15 @@ d = gf_mesh_get(m, 'dim');
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
 friction_coeff = 0.2; % coefficient of friction
-r = 5;       % Augmentation parameter
-version = 1; % 1 : frictionless contact and the basic contact brick
+r = 100;      % Augmentation parameter
+version = 6; % 1 : frictionless contact and the basic contact brick
              % 2 : contact with 'static' friction and the basic contact brick
              % 3 : frictionless contact and the contact with a
              %     rigid obstacle brick
              % 4 : contact with 'static' friction and the contact with a
              %     rigid obstacle brick
+             % 5 : frictionless contact and the continuous brick : Newton
+             % 6 : frictionless contact and the continuous brick : Usawa
 if (d == 2)
   obstacle = 'y';  % Signed distance representing the obstacle
 else
@@ -53,7 +54,7 @@ end;
 % Selection of the contact boundary
 border = gf_mesh_get(m,'outer faces');
 normals = gf_mesh_get(m, 'normal of faces', border);
-contact_boundary=border(:,find(normals(d, :) < 0));
+contact_boundary=border(:, find(normals(d, :) < 0));
 GAMMAC = 1;
 gf_mesh_set(m, 'region', GAMMAC, contact_boundary);
 
@@ -65,13 +66,19 @@ pause(0.1);
 
 
 % Finite element methods
-mfu=gf_Mesh_Fem(m, d);
+mfu=gf_mesh_fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', 2);
-mfd=gf_Mesh_Fem(m, 1);
+mfd=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfd, 'classical fem', 1);
-mfvm=gf_Mesh_Fem(m, 1);
+mfvm=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
-mim=gf_Mesh_Im(m, 4);
+mflambda=gf_mesh_fem(m, 1); % used only by version 5
+gf_mesh_fem_set(mflambda, 'classical fem', 1);
+
+% Integration method
+mim=gf_mesh_im(m, 6);
+% mim=gf_mesh_im(m, gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),10)'));
+
 
 
 % Volumic density of force
@@ -86,13 +93,14 @@ gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md, 'add initialized data', 'mu', [mu]);
 gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
-             'lambda', 'mu');
+                 'lambda', 'mu');
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
 % Small penalty term to avoid rigid motion (should be replaced by an explicit
 % treatment of the rigid motion with a constraint matrix)
-gf_model_set(md, 'add initialized data', 'penalty_param', [1E-8]);          
+gf_model_set(md, 'add initialized data', 'penalty_param', [1E-8]);
+% gf_model_set(md, 'add initialized data', 'penalty_param', [0.01]);          
 gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 
 % The contact condition
@@ -122,8 +130,7 @@ if (version == 1 || version == 2) % defining the matrices BN and BT by hand
   gf_model_set(md, 'add initialized data', 'r', [r]);
   if (version == 2)
     gf_model_set(md, 'add variable', 'lambda_t', nbc * (d-1));
-    gf_model_set(md, 'add initialized data', 'friction_coeff', ...
-		 [friction_coeff]);
+    gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   end;
   gf_model_set(md, 'add initialized data', 'gap', gap);
   gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
@@ -150,19 +157,60 @@ elseif (version == 3 || version == 4) % BN and BT defined by the contact brick
 		 obstacle, 0);
   end;
 
+elseif (version == 5) % The continuous version, Newton
+ 
+  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
+  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
+  gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+  gf_model_set(md, 'add initialized data', 'r', [r]);
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
+  gf_model_set(md, 'add continuous contact with rigid obstacle brick', mim, 'u', ...
+	         'lambda_n', 'obstacle', 'r', GAMMAC);
+          
+elseif (version == 6) % The continuous version, Usawa
+ 
+  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
+  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
+  nbc = gf_mesh_fem_get(mflambda_partial, 'nbdof');
+  lambda_n = zeros(1, nbc); lzeros = lambda_n;
+  lambda_n_vect = reshape([lzeros; lambda_n], nbc * 2, 1); 
+  gf_model_set(md, 'add initialized fem data', 'lambda_n', mflambda_partial, lambda_n_vect);
+  gf_model_set(md, 'add source term brick', mim, 'u', 'lambda_n', GAMMAC);
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  r = 1; % a supprimer
+  M = gf_asm('mass matrix', mim, mflambda_partial, mflambda_partial, GAMMAC);
+      
+  for i=1:100
+      disp(sprintf('iteration %d', i));
+      gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy');
+      U = gf_model_get(md, 'variable', 'u');
+      lambda_n = (M\ gf_asm('contact Usawa projection', GAMMAC, mim, mfu, U, mflambda_partial, lambda_n, mfd, OBS, r))';
+      lambda_n_vect = reshape([lzeros; lambda_n], nbc * 2, 1); % pas vraiment satisfaisant ...
+      gf_model_set(md, 'variable', 'lambda_n', lambda_n_vect);
+      format long
+      lambda_n
+      pause;
+  end;
+  
+  
 else
   error('Unexistent version');
 end
 
 % Solve the problem
 
-gf_model_get(md, 'solve', 'max_res', 1E-7, 'very noisy', 'max_iter', 100); % , 'with pseudo potential');
+if (version ~= 6)
 
+  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', 50, 'lsearch', 'default'); % , 'with pseudo potential');
+
+end;
 
 U = gf_model_get(md, 'variable', 'u');
 lambda_n = gf_model_get(md, 'variable', 'lambda_n');
 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 		  'u', 'lambda', 'mu', mfvm);
+    
 
 % set a custom colormap
 % r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);

@@ -58,15 +58,17 @@ one has
 .. math::
 
    \fbox{$\int_{\Gamma} f(x)\ d\sigma =
-   \int_{\widehat{\Gamma}}\widehat{f}(\widehat{x}) \|B(\widehat{x})\eta\| J_{\tau}(\widehat{x})\ d\widehat{\sigma}$,}
+   \int_{\widehat{\Gamma}}\widehat{f}(\widehat{x}) \|B(\widehat{x})\widehat{n}\| J_{\tau}(\widehat{x})\ d\widehat{\sigma}$,}
 
-where :math:`\eta` is the unit normal to :math:`\widehat{T}` on :math:`\widehat{\Gamma}`. In a same
+where :math:`\widehat{n}` is the unit normal to :math:`\widehat{T}` on :math:`\widehat{\Gamma}`. In a same
 way
 
 .. math::
 
-   \fbox{$\int_{\Gamma} F(x)\cdot\eta\ d\sigma =
-   \int_{\widehat{\Gamma}} \widehat{F}(\widehat{x})\cdot(B(\widehat{x})\cdot\widehat{\eta}) J_{\tau}(\widehat{x})\ d\widehat{\sigma}$.}
+   \fbox{$\int_{\Gamma} F(x)\cdot n\ d\sigma =
+   \int_{\widehat{\Gamma}} \widehat{F}(\widehat{x})\cdot(B(\widehat{x})\cdot\widehat{n}) J_{\tau}(\widehat{x})\ d\widehat{\sigma}$,}
+
+For :math:`n` the unit normal to :math:`T` on :math:`\Gamma`.
 
 
 Derivative computation

@@ -113,7 +113,7 @@ namespace gmm {
     bool first;
     virtual void init_search(double r, size_t git, double = 0.0) {
       alpha_min = pow(10.0, -gmm::random() * 4.0);
-      alpha_max_ratio = 1 + gmm::random();
+      alpha_max_ratio = 1. + 2.* gmm::random();
       // cout << "alpha_min = " << alpha_min << endl;
       glob_it = git;
       conv_alpha = alpha = double(1);

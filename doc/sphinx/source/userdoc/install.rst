@@ -20,7 +20,7 @@ Requirements
   automake, and libtool.
 
 * If you want to build |py| |gfi|, it requires the python
-  developpement files (python.h etc.) to be available (package
+  development files (Python.h etc.) to be available (package
   ``python-all-dev`` in debian distribution), and also the |np| and |sp|
   packages to be installed (package ``python-numpy`` and ``python-scipy``
   in debian
@@ -76,7 +76,7 @@ The latest unstable releases is:
      $ bash autogen.sh
 
 
-Compilling
+Compiling
 ----------
 
 Configure with::

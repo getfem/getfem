@@ -1516,15 +1516,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     be described with the string `obstacle` being a signed distance to
     the obstacle. This string should be an expression where the coordinates
     are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
-    obstacle correspond to :math:`z \le 0`, the corresponding signed distance will
-    be simply "z". `multname_n` should be a fixed size variable whose size is
-    the number of degrees of freedom on boundary `region`. It represents the
+    obstacle correspond to :math:`z \le 0`, the corresponding signed distance
+    will be simply "z". `multname_n` should be a fixed size variable whose size
+    is the number of degrees of freedom on boundary `region`. It represents the
     contact equivalent nodal forces. In order to add a friction condition
     one has to add the `multname_t` and `dataname_friction_coeff` parameters.
     `multname_t` should be a fixed size variable whose size is
-    the number of degrees of freedom on boundary `region` multiplied by :math:`d-1`
-    where :math:`d` is the domain dimension. It represents the friction equivalent
-    nodal forces.
+    the number of degrees of freedom on boundary `region` multiplied by
+    :math:`d-1` where :math:`d` is the domain dimension. It represents
+    the friction equivalent nodal forces.
     The augmentation parameter `r` should be chosen in a
     range of acceptabe values (close to the Young modulus of the elastic
     body, see Getfem user documentation).  `dataname_friction_coeff` is
@@ -1569,6 +1569,41 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           ind = getfem::add_contact_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
              dataname_r, region, obstacle, symmetrized);
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+    /*@SET ind = ('add continuous contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region)
+
+    Add a contact with friction condition with a rigid obstacle
+    to the model. Compared to the previous ones, this brick add a contact
+    which is defined
+    in a continuous way. Is it the direct approximation of an augmented
+    Lagrangian formulation (see Getfem user documentation) defined at the
+    continuous level. The advantage is a better scalability: the number of
+    Newton iterations should be more or less independent of the mesh size.
+    The contact condition is applied on the variable `varname_u`
+    on the boundary corresponding to `region`. The rigid obstacle should
+    be described with the data `dataname_obstacle` being a signed distance to
+    the obstacle (interpolated on a finite element method).
+    `multname_n` should be a fem variable representing the contact stress.
+    An inf-sup condition beetween `multname_n` and `varname_u` is required.
+    The augmentation parameter `dataname_r` should be chosen in a
+    range of acceptabe values (to be determined ....).
+    The brick should be extended to friction in a near future.
+    @*/
+     sub_command
+       ("add continuous contact with rigid obstacle brick", 6, 6, 0, 1,
+        
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string multname_n = in.pop().to_string();
+        std::string dataname_obs = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+	size_type ind=getfem::add_continuous_contact_with_rigid_obstacle_brick
+	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+	 dataname_obs, dataname_r, region);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
