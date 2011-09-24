@@ -257,7 +257,7 @@ namespace getfem {
   size_type add_continuous_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_obs,
-   const std::string &dataname_r, size_type region); 
+   const std::string &dataname_r, size_type region, int option); 
 
 
   /** Add a frictionless contact condition between two faces of one or two
@@ -411,10 +411,6 @@ namespace getfem {
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
-
-
-
-
   class friction_nonlinear_term : public nonlinear_elem_term {
     
   public:
@@ -470,11 +466,6 @@ namespace getfem {
     virtual void prepare(fem_interpolation_context& ctx, size_type nb);
 
   };
-
-
-
-
-
 
 
   /** Specific assembly procedure for the use of an Usawa algorithm to solve

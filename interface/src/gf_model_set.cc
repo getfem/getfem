@@ -1573,7 +1573,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-    /*@SET ind = ('add continuous contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region)
+    /*@SET ind = ('add continuous contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region [,@int option])
 
     Add a contact with friction condition with a rigid obstacle
     to the model. Compared to the previous ones, this brick add a contact
@@ -1589,11 +1589,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     `multname_n` should be a fem variable representing the contact stress.
     An inf-sup condition beetween `multname_n` and `varname_u` is required.
     The augmentation parameter `dataname_r` should be chosen in a
-    range of acceptabe values (to be determined ....).
+    range of acceptabe values (to be determined ....). `option` is 1 for
+    the new augmented Lagrangian method and 2 for the Alart-Curnier one.
     The brick should be extended to friction in a near future.
     @*/
      sub_command
-       ("add continuous contact with rigid obstacle brick", 6, 6, 0, 1,
+       ("add continuous contact with rigid obstacle brick", 6, 7, 0, 1,
         
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -1601,9 +1602,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         size_type region = in.pop().to_integer();
+	int option = 2;
+        if (in.remaining()) option = in.pop().to_integer();
 	size_type ind=getfem::add_continuous_contact_with_rigid_obstacle_brick
 	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-	 dataname_obs, dataname_r, region);
+	 dataname_obs, dataname_r, region, option);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );

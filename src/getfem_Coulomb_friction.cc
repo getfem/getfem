@@ -1151,48 +1151,27 @@ namespace getfem {
 
     
   void friction_nonlinear_term::compute
-  (fem_interpolation_context&, bgeot::base_tensor &t) { 
+  (fem_interpolation_context &/*ctx*/, bgeot::base_tensor &t) { 
     
     t.adjust_sizes(sizes_);
-    scalar_type e;
+    scalar_type e; dim_type i;
     
     switch (option) {
-    case 0 : 
-      e = -Heav(un - g);
-      // cout << "e=" << e << " pt " << ctx.xreal() << " ln=" << ln << endl;
-      for (size_type i = 0; i < N; ++i) t[i] = e * no[i];
+    case 0 : e = -Heav(un - g); for (i=0; i<N; ++i) t[i] = e * no[i]; break;
+    case 1 : t[0] = (Heav(-ln)*Heav(un-g)-scalar_type(1))/r_; break;
+    case 2 : e = Heav(un - g) * ln; for (i = 0; i < N; ++i) t[i] = e * no[i];
       break;
-    case 1 :
-      t[0] = (Heav(-ln)*Heav(un-g)-scalar_type(1))/r_;
-      // cout << "t[0]=" << t[0] << " pt " << ctx.xreal() <<" ln="<<ln<<endl;
-      break;
-    case 2 :
-      e = Heav(un - g) * ln;
-      for (size_type i = 0; i < N; ++i) t[i] = e * no[i];
-      break;
-    case 3 : 
-      t[0] = gmm::pos(un-g) + (ln + gmm::neg(ln)*Heav(un-g))/r_;
-      // cout << "t[0]=" << t[0] << " pt " << ctx.xreal() <<" ln="<<ln<<endl;
-      break;
-    case 4 :	
-      for (size_type i = 0; i < N; ++i) t[i] = -no[i];
-      break;
+    case 3 : t[0] = gmm::pos(un-g) + (ln + gmm::neg(ln)*Heav(un-g))/r_; break;
+    case 4 : for (i=0; i<N; ++i) t[i] = -no[i]; break;
     case 5 :
       e = -Heav(r_*(un - g) - ln);
-      for (size_type i = 0; i < N; ++i) t[i] = e * no[i];
+      for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-    case 6 :
-      t[0] = (Heav(r_*(un - g) - ln) - scalar_type(1))/r_;
-      break;
-    case 7 :
-      e = ln;
-      for (size_type i = 0; i < N; ++i) t[i] = e * no[i];
-      break;
-    case 8 :
-      t[0] = (ln+gmm::neg(ln-r_*(un - g)))/r_;
-      break;
-    case 9 :
-      t[0] = -gmm::neg(ln-r_*(un - g));
+    case 6 : t[0] = (Heav(r_*(un - g) - ln) - scalar_type(1))/r_; break;
+    case 7 : e = ln; for (i=0; i<N; ++i) t[i] = e * no[i]; break;
+    case 8 : t[0] = (ln+gmm::neg(ln-r_*(un - g)))/r_; break;
+    case 9 : t[0] = -gmm::neg(ln - r_*(un - g));
+      // cout << "t[0]=" << t[0]<< "un - g=" << un - g << " pt " << ctx.xreal() << " ln=" <<ln<<endl;
       break;
       
     }
@@ -1205,21 +1184,21 @@ namespace getfem {
     
     switch (nb) {
     case 1 :
-      coeff.resize(mf_lambda.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-		(lambda_n, gmm::sub_index
-		 (mf_lambda.ind_basic_dof_of_element(cv))), coeff);
-      ctx.pf()->interpolation(ctx, coeff, aux, 1);
-      ln = aux[0];
-      break;
-      
-    case 2 :
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
 		(U, gmm::sub_index
 		 (mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation(ctx, coeff, V, N);
       un = gmm::vect_sp(V, no);
+      break;
+      
+    case 2 :
+      coeff.resize(mf_lambda.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+		(lambda_n, gmm::sub_index
+		 (mf_lambda.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation(ctx, coeff, aux, 1);
+      ln = aux[0];
       break;
       
     case 3 : // it is computed first.
@@ -1230,7 +1209,6 @@ namespace getfem {
       ctx.pf()->interpolation_grad(ctx, coeff, grad, 1);
       gmm::copy(gmm::mat_row(grad, 0), no);
       no /= -gmm::vect_norm2(no);
-      // cout << "no = " << no;
       ctx.pf()->interpolation(ctx, coeff, aux, 1);
       g = aux[0];
       // cout << "gap = " << g << " at pt " << ctx.xreal() << endl;
@@ -1324,13 +1302,6 @@ namespace getfem {
     assem.push_mat(Klu);
     assem.push_mat(Kll);
     assem.assembly(rg);
-
-    // gmm::clean(Kul, 1e-12);
-//     gmm::clean(Klu, 1e-12);
-//     gmm::clean(Kll, 1e-12);
-//     cout << "Kul' = " << gmm::transposed(Kul) << endl;
-//     cout << "Klu = " << Klu << endl;
-//     cout << "Kll = " << Kll << endl;
   }
 
 
@@ -1466,14 +1437,14 @@ namespace getfem {
   size_type add_continuous_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_obs,
-   const std::string &dataname_r, size_type region) {
+   const std::string &dataname_r, size_type region, int option) {
    
-    int option = 2; // à mettre en option reellement ...
     pbrick pbr
       = new Coulomb_friction_continuous_brick(true, option);
 
-
     model::termlist tl;
+    GMM_ASSERT1(option == 1 || option == 2,
+		"Incorrect option for continuous contact brick");
     if (option == 1) {
       tl.push_back(model::term_description(varname_u, multname_n, true));
       tl.push_back(model::term_description(multname_n, multname_n, true));
