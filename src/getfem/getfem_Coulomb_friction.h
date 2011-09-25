@@ -435,6 +435,8 @@ namespace getfem {
                       // 7 : l_n n
                       // 8 : (l_n+(l_n-r(u_n-g))_-)/r
                       // 9 : -(l_n-r(u_n-g))_-
+                      // 10 : r H(r(un - g)-ln)n n^t
+                      // 11 : -(ln-r(un - g))_n n
 
     template <class VECT> friction_nonlinear_term
     (const mesh_fem &mf_u_, const VECT &U_, 
@@ -447,8 +449,12 @@ namespace getfem {
       r_(r__), option(option_) {
       
       sizes_.resize(1); sizes_[0] = 1;
-      if (option == 0 || option == 2 || option == 4 ||
-	  option == 5 || option == 7) sizes_[0] = N;
+      switch (option) {
+      case 0: case 2: case 4: case 5: case 7: case 11: case 13: case 15:
+	sizes_[0] = N; break;
+      case 10: case 12:
+	sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
+      }
       
       mf_u.extend_vector(U_, U);
       mf_lambda.extend_vector(lambda_n_, lambda_n);

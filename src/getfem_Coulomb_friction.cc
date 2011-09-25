@@ -1147,14 +1147,30 @@ namespace getfem {
   //=========================================================================
 
 
-  template <typename T> inline T Heav(T a) { return (a < T(0)) ? T(0) : T(1); }
+  template <typename T> inline static T Heav(T a) { return (a < T(0)) ? T(0) : T(1); }
 
-    
+// for alpha = 2
+//   static double R__(double x) { return gmm::sqr(gmm::pos(x)); }
+//   static double dR__(double x) { return 2.*gmm::pos(x); }
+//   static double ddR__(double x) { return 2.*Heav(x); }
+//   static double S__(double x) { return gmm::sqr(gmm::neg(x))-1; }
+//   static double dS__(double x) { return -2.*gmm::neg(x); }
+//   static double ddS__(double x) { return 2.*Heav(-x); }
+
+  static double alpha = 1.5; // for alpha > 1 and alpha != 2
+  static double R__(double x) { return ::pow(gmm::pos(x), alpha); }
+  static double dR__(double x) { return alpha*::pow(gmm::pos(x),alpha-1.); }
+  static double ddR__(double x) { return (x <= 0.) ? 0. : alpha*(alpha-1.)*::pow(x,alpha-2.); }
+  static double S__(double x) { return ::pow(gmm::neg(x), alpha)-1; }
+  static double dS__(double x) { return -alpha*::pow(gmm::neg(x), alpha-1.); }
+  static double ddS__(double x) { return (x >= 0.) ? 0. : alpha*(alpha-1.)*::pow(-x, alpha-2.); }
+
+
   void friction_nonlinear_term::compute
   (fem_interpolation_context &/*ctx*/, bgeot::base_tensor &t) { 
     
     t.adjust_sizes(sizes_);
-    scalar_type e; dim_type i;
+    scalar_type e; dim_type i, j;
     
     switch (option) {
     case 0 : e = -Heav(un - g); for (i=0; i<N; ++i) t[i] = e * no[i]; break;
@@ -1173,7 +1189,23 @@ namespace getfem {
     case 9 : t[0] = -gmm::neg(ln - r_*(un - g));
       // cout << "t[0]=" << t[0]<< "un - g=" << un - g << " pt " << ctx.xreal() << " ln=" <<ln<<endl;
       break;
-      
+    case 10 : e = r_*Heav(r_*(un - g)-ln);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = e * no[i] * no[j];
+      break;
+    case 11 : e = -gmm::neg(ln-r_*(un - g));
+      for (i=0; i<N; ++i) t[i] = e * no[i];
+      break;
+    case 12 : e = -ln*ddR__(un-g)-gmm::sqr(gmm::neg(ln))*ddS__(un-g)/(2.*r_);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = e * no[i] * no[j];
+      break;
+    case 13 : e = -dR__(un-g)+gmm::neg(ln)*dS__(un-g)/r_;
+      for (i=0; i<N; ++i) t[i] = e * no[i];
+      break;
+    case 14 : t[0] = -(1+Heav(-ln)*S__(un-g))/r_; break;
+    case 15 : e = dR__(un-g)+gmm::sqr(gmm::neg(ln))*dS__(un-g)/(2.*r_);
+      for (i=0; i<N; ++i) t[i] = e * no[i];
+      break;
+    case 16 : t[0] = R__(un-g)+ln/r_-gmm::neg(ln)*S__(un-g)/r_; break;
     }
   }
   
@@ -1244,6 +1276,39 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+  template<typename MAT, typename VECT1> 
+  void asm_Coulomb_friction_continuous_tangent_matrix_new_smooth
+  (MAT &Kul, MAT &Kuu, MAT &Kll, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 13);
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 12);
+    friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 14);
+
+    getfem::generic_assembly assem;
+    assem.set
+      ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
+       "M$2(#1,#1)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); "
+       "M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_nonlinear_term(&nterm3);
+    assem.push_mat(Kul);
+    assem.push_mat(Kuu);
+    assem.push_mat(Kll);
+    assem.assembly(rg);
+  }
+
 
   template<typename VECT1> 
   void asm_Coulomb_friction_continuous_rhs_new
@@ -1256,6 +1321,32 @@ namespace getfem {
 				   obs, r, 2);
     friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
 				   obs, r, 3);
+
+    getfem::generic_assembly assem;
+    assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
+	      "V$2(#2)+=comp(NonLin$2(#1,#1,#2,#3).Base(#2))(i,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_vec(Ru);
+    assem.push_vec(Rl);
+    assem.assembly(rg); 
+  }
+
+  template<typename VECT1> 
+  void asm_Coulomb_friction_continuous_rhs_new_smooth
+  (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 15);
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 16);
 
     getfem::generic_assembly assem;
     assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
@@ -1304,6 +1395,39 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+  template<typename MAT, typename VECT1> 
+  void asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier_sym
+  (MAT &Kul, MAT &Kuu, MAT &Kll, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 10);
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 5);
+    friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 6);
+
+    getfem::generic_assembly assem;
+    assem.set
+      ("M$1(#1,#2)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
+       "M$2(#1,#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); "
+       "M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_nonlinear_term(&nterm3);
+    assem.push_mat(Kul);
+    assem.push_mat(Kuu);
+    assem.push_mat(Kll);
+    assem.assembly(rg);
+  }
+
 
   template<typename VECT1> 
   void asm_Coulomb_friction_continuous_rhs_Alart_Curnier
@@ -1331,14 +1455,42 @@ namespace getfem {
     assem.assembly(rg); 
   }
 
+  template<typename VECT1> 
+  void asm_Coulomb_friction_continuous_rhs_Alart_Curnier_sym
+  (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
+   const mesh_region &rg = mesh_region::all_convexes()) {
+    
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 11);
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
+				   obs, r, 8);
+
+    getfem::generic_assembly assem;
+    assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
+	      "V$2(#2)+=comp(NonLin$2(#1,#1,#2,#3).Base(#2))(i,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_vec(Ru);
+    assem.push_vec(Rl);
+    assem.assembly(rg); 
+  }
+
 
   struct Coulomb_friction_continuous_brick : public virtual_brick {
 
     bool Tresca_version, contact_only;
     int option;
 
-    // option = 1 : new augmented Lagrangian
-    // option = 2 : Alart-Curnier
+    // option = 1 : Alart-Curnier
+    // option = 2 : Symmetric Alart-Curnier
+    // option = 3 : new augmented Lagrangian
+    // option = 4 : new smooth augmented Lagrangian
     
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -1356,7 +1508,7 @@ namespace getfem {
       GMM_ASSERT1(dl.size() == 2,
 		  "Wrong number of data for continuous Coulomb friction "
 		  << "brick, " << dl.size() << " should be 2.");
-      GMM_ASSERT1(matl.size() == size_type(1+option),
+      GMM_ASSERT1(matl.size() == 3 - (option == 3),
 		  "Wrong number of terms for "
 		  "continuous Coulomb friction brick");
 
@@ -1380,31 +1532,62 @@ namespace getfem {
 
       if (version & model::BUILD_MATRIX) {
 	GMM_TRACE2("Continuous Coulomb friction tangent term");
-	if (option == 1) {
-	  gmm::clear(matl[0]); gmm::clear(matl[1]);
-	  asm_Coulomb_friction_continuous_tangent_matrix_new
-	    (matl[0], matl[1], mim, mf_u, u, mf_lambda, lambda_n,
-	     mf_obstacle, obstacle, vr[0], rg);
-	} else if (option == 2) {
+
+	switch (option) {
+	case 1 :
 	  gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
 	  asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
 	    (matl[0], matl[1], matl[2], mim, mf_u, u, mf_lambda, lambda_n,
 	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
+	case 2 :
+	  gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
+	  asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier_sym
+	    (matl[0], matl[1], matl[2], mim, mf_u, u, mf_lambda, lambda_n,
+	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
+	case 3 :
+	  gmm::clear(matl[0]); gmm::clear(matl[1]);
+	  asm_Coulomb_friction_continuous_tangent_matrix_new
+	    (matl[0], matl[1], mim, mf_u, u, mf_lambda, lambda_n,
+	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
+	case 4 :
+	  gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
+	  asm_Coulomb_friction_continuous_tangent_matrix_new_smooth
+	    (matl[0], matl[1], matl[2], mim, mf_u, u, mf_lambda, lambda_n,
+	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
 	}
       }
 
 
       if (version & model::BUILD_RHS) {
-	if (option == 1) {
-	  gmm::clear(vecl[0]); gmm::clear(vecl[1]);
-	  asm_Coulomb_friction_continuous_rhs_new
-	    (vecl[0], vecl[1], mim, mf_u, u, mf_lambda, lambda_n,
-	     mf_obstacle, obstacle, vr[0], rg);
-	} else if (option == 2) {
+	switch (option) {
+	case 1 :
 	  gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
 	  asm_Coulomb_friction_continuous_rhs_Alart_Curnier
 	    (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda_n,
 	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
+	case 2 : 
+	  gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
+	  asm_Coulomb_friction_continuous_rhs_Alart_Curnier_sym
+	    (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda_n,
+	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
+	case 3 :
+	  gmm::clear(vecl[0]); gmm::clear(vecl[1]);
+	  asm_Coulomb_friction_continuous_rhs_new
+	    (vecl[0], vecl[1], mim, mf_u, u, mf_lambda, lambda_n,
+	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
+	case 4 :
+	  gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
+	  asm_Coulomb_friction_continuous_rhs_new_smooth
+	    (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda_n,
+	     mf_obstacle, obstacle, vr[0], rg);
+	  break;
 	}
       }
 
@@ -1429,10 +1612,8 @@ namespace getfem {
   //=========================================================================
 
 
-  // à faire la version qui accepte une fonction explicite à interpoler
+  // à faire : la version qui accepte une fonction explicite à interpoler
   // pour la fonction level set de l'obstacle
-
-  // voir si r peut être rendu facultatif ... (surtout s'il a peu d'influence)
 
   size_type add_continuous_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -1443,16 +1624,27 @@ namespace getfem {
       = new Coulomb_friction_continuous_brick(true, option);
 
     model::termlist tl;
-    GMM_ASSERT1(option == 1 || option == 2,
-		"Incorrect option for continuous contact brick");
-    if (option == 1) {
-      tl.push_back(model::term_description(varname_u, multname_n, true));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
-    } else if (option == 2) {
+
+    switch (option) {
+    case 1 :
       tl.push_back(model::term_description(varname_u, multname_n, false));
       tl.push_back(model::term_description(multname_n, varname_u, false));
       tl.push_back(model::term_description(multname_n, multname_n, true));
+      break;
+    case 2 : case 4 :
+      tl.push_back(model::term_description(varname_u, multname_n, true));
+      tl.push_back(model::term_description(varname_u, varname_u, true));
+      tl.push_back(model::term_description(multname_n, multname_n, true));
+      break;
+    case 3 : 
+      tl.push_back(model::term_description(varname_u, multname_n, true));
+      tl.push_back(model::term_description(multname_n, multname_n, true));
+      break;
+    default :GMM_ASSERT1(false,
+			 "Incorrect option for continuous contact brick");
+
     }
+    
    
     model::varnamelist dl(1, dataname_obs);
     dl.push_back(dataname_r);

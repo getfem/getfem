@@ -1590,7 +1590,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     An inf-sup condition beetween `multname_n` and `varname_u` is required.
     The augmentation parameter `dataname_r` should be chosen in a
     range of acceptabe values (to be determined ....). `option` is 1 for
-    the new augmented Lagrangian method and 2 for the Alart-Curnier one.
+    non symmetric Alart-Curnier augmented Lagrangian method,
+    2 for the symmetric one, 3 for a new nonsmooth augmented Lagrangian
+    and 4 for a smooth one.
     The brick should be extended to friction in a near future.
     @*/
      sub_command

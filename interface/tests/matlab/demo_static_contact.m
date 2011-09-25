@@ -26,30 +26,36 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.25.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.15.mesh');
-d = gf_mesh_get(m, 'dim');
+d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 
 % Parameters of the model
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
 friction_coeff = 0.2; % coefficient of friction
-r = 1;       % Augmentation parameter
-version = 6; % 1 : frictionless contact and the basic contact brick
+r = 0.0001;       % Augmentation parameter
+version = 5; % 1 : frictionless contact and the basic contact brick
              % 2 : contact with 'static' friction and basic contact brick
              % 3 : frictionless contact and the contact with a
              %     rigid obstacle brick
              % 4 : contact with 'static' friction and the contact with a
              %     rigid obstacle brick
              % 5 : frictionless contact and the continuous brick
-             %     Newton and new augmented lagrangian (not fully working)
+             %     Newton and Alart-Curnier augmented lagrangian,
+             %     unsymmetric version
              % 6 : frictionless contact and the continuous brick
-             %     Newton and Alart-Curnier augmented lagrangian
-             % 7 : frictionless contact and the continuous brick : Usawa
+             %     Newton and Alart-Curnier augmented lagrangian, symmetric
+             %     version
+             % 7 : frictionless contact and the continuous brick
+             %     Newton and new augmented lagrangian (not fully working)
+             % 8 : frictionless contact and the continuous brick
+             %     Newton and new smooth augmented lagrangian (not fully working)
+             % 9 : frictionless contact and the continuous brick : Usawa
              %     (not very adapted because it is a semi-coercive case)
 penalty_parameter = 1E-8;    % For rigid motions.
 usawa_r = penalty_parameter; % Descent coefficient for Usawa method.
@@ -65,20 +71,20 @@ GAMMAC = 1;
 gf_mesh_set(m, 'region', GAMMAC, contact_boundary);
 
 % Plot the mesh
-% figure(1);
-% gf_plot_mesh(m, 'regions', [GAMMAC]);
-% title('Mesh and contact boundary (in red)');
-% pause(0.1);
+figure(1);
+gf_plot_mesh(m, 'regions', [GAMMAC]);
+title('Mesh and contact boundary (in red)');
+pause(0.1);
 
 
 % Finite element methods
 mfu=gf_mesh_fem(m, d);
-gf_mesh_fem_set(mfu, 'classical fem', 2);
+gf_mesh_fem_set(mfu, 'classical fem', 1);
 mfd=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfd, 'classical fem', 1);
 mfvm=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
-mflambda=gf_mesh_fem(m, 1); % used only by version 5 and 6
+mflambda=gf_mesh_fem(m, 1); % used only by version 5, 6, 7, 8 and 9
 gf_mesh_fem_set(mflambda, 'classical fem', 1);
 
 % Integration method
@@ -164,7 +170,7 @@ elseif (version == 3 || version == 4) % BN and BT defined by the contact brick
 		 obstacle, 0);
   end;
 
-elseif (version == 5) % The continuous version, Newton & new augmented lag
+elseif (version >= 5 && version <= 8) % The continuous version, Newton
  
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -173,20 +179,9 @@ elseif (version == 5) % The continuous version, Newton & new augmented lag
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add continuous contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'lambda_n', 'obstacle', 'r', GAMMAC, 1);
+	         'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
           
-elseif (version == 6) % The continuous version, Newton & Alart-Curnier
- 
-  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
-  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
-  gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
-  gf_model_set(md, 'add initialized data', 'r', [r]);
-  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
-  gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  gf_model_set(md, 'add continuous contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'lambda_n', 'obstacle', 'r', GAMMAC, 2);
-          
-elseif (version == 7) % The continuous version, Usawa
+elseif (version == 9) % The continuous version, Usawa
  
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -220,7 +215,7 @@ end
 
 % Solve the problem
 
-if (version ~= 7)
+if (version ~= 9)
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter, 'lsearch', 'default'); % , 'with pseudo potential');
 end;
 
