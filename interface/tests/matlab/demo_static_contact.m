@@ -210,7 +210,7 @@ elseif (version == 9) % The continuous version, Uzawa
   
   
 else
-  error('Unexistent version');
+  error('Inexistent version');
 end
 
 % Solve the problem

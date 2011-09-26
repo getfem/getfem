@@ -420,7 +420,7 @@ namespace getfem {
 
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
         
-    GMM_ASSERT1(ibrick < bricks.size(), "Unexistent brick");
+    GMM_ASSERT1(ibrick < bricks.size(), "Inexistent brick");
 
     pbrick pbr = bricks[ibrick].pbr;
 
@@ -452,7 +452,7 @@ namespace getfem {
 
   const std::string &model::varname_of_brick(size_type ind_brick,
 				      size_type ind_var) {
-    GMM_ASSERT1(ind_brick < bricks.size(), "Unexistent brick");
+    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
     GMM_ASSERT1(ind_var < bricks[ind_brick].vlist.size(),
 	       "Inexistent brick variable");
     return bricks[ind_brick].vlist[ind_var];
@@ -460,7 +460,7 @@ namespace getfem {
   
   const std::string &model::dataname_of_brick(size_type ind_brick,
 					      size_type ind_data) {
-    GMM_ASSERT1(ind_brick < bricks.size(), "Unexistent brick");
+    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
     GMM_ASSERT1(ind_data < bricks[ind_brick].dlist.size(),
 		"Inexistent brick data");
     return bricks[ind_brick].dlist[ind_data];
@@ -676,7 +676,7 @@ namespace getfem {
     if (ind != size_type(-1)) {
       var_description &vd = variables[varname];
       GMM_ASSERT1(ind < vd.n_iter + vd.n_temp_iter,
-		  "Unexistent iteration " << ind);
+		  "Inexistent iteration " << ind);
       vd.default_iter = ind;
     }
   }

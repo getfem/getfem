@@ -160,7 +160,7 @@ elseif (version == 3 | version == 4) then // BN and BT defined by the contact br
 	         'lambda_n', 'lambda_t', 'r', 'friction_coeff', GAMMAC, obstacle, 0);
   end
 else
-  error('Unexistent version');
+  error('Inexistent version');
 end
 
 // Solve the problem

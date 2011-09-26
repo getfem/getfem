@@ -315,13 +315,13 @@ namespace getfem {
 
     /** Disable a brick.  */
     void disable_brick(size_type ib) {
-      GMM_ASSERT1(ib < bricks.size(), "Unexistent brick");
+      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
       active_bricks.sup(ib);
     }
 
     /** Enable a brick.  */
     void enable_brick(size_type ib) {
-      GMM_ASSERT1(ib < bricks.size(), "Unexistent brick");
+      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
       active_bricks.add(ib);
     }
     
