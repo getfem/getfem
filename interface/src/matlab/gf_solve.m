@@ -301,13 +301,13 @@ function [U,P]=do_solve_stokes_cg(K,B,Fu,Fp)
 function [U,P]=do_solve_stokes_cg3(K,B,Fu,Fp)
   nu = size(K,2); np = size(B,2);
 
-  disp('solve stokes usawa cholinc');
+  disp('solve stokes uzawa cholinc');
   [pcB]=cholinc(K,'0');
   pcBt = pcB';
-  disp('solve stokes usawa first pcg');
+  disp('solve stokes uzawa first pcg');
   P = zeros(np,1);
   U = pcg(K,Fu - B*P,1e-6,100,pcBt,pcB);
-  disp('solve stokes usawa : got U');
+  disp('solve stokes uzawa : got U');
   for k=1:10000,
     r = Fp - B'*U;
     res = norm(r);

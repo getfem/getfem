@@ -474,11 +474,11 @@ namespace getfem {
   };
 
 
-  /** Specific assembly procedure for the use of an Usawa algorithm to solve
+  /** Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems.
   */
   template<typename VECT1> 
-  void asm_Coulomb_friction_continuous_Usawa_proj
+  void asm_Coulomb_friction_continuous_Uzawa_proj
   (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,

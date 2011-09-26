@@ -55,10 +55,10 @@ version = 5; % 1 : frictionless contact and the basic contact brick
              %     Newton and new augmented lagrangian (not fully working)
              % 8 : frictionless contact and the continuous brick
              %     Newton and new smooth augmented lagrangian (not fully working)
-             % 9 : frictionless contact and the continuous brick : Usawa
+             % 9 : frictionless contact and the continuous brick : Uzawa
              %     (not very adapted because it is a semi-coercive case)
 penalty_parameter = 1E-8;    % For rigid motions.
-usawa_r = penalty_parameter; % Descent coefficient for Usawa method.
+uzawa_r = penalty_parameter; % Descent coefficient for Uzawa method.
 niter = 50;  % Maximum number of iterations for Newton's algorithm.
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -181,7 +181,7 @@ elseif (version >= 5 && version <= 8) % The continuous version, Newton
   gf_model_set(md, 'add continuous contact with rigid obstacle brick', mim_friction, 'u', ...
 	         'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
           
-elseif (version == 9) % The continuous version, Usawa
+elseif (version == 9) % The continuous version, Uzawa
  
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -199,7 +199,7 @@ elseif (version == 9) % The continuous version, Usawa
       U = gf_model_get(md, 'variable', 'u');
       lambda_n_old = lambda_n;
       % format long; lambda_n
-      lambda_n = (M\ gf_asm('contact Usawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, usawa_r))';
+      lambda_n = (M\ gf_asm('contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, uzawa_r))';
       W=-gf_asm('boundary', GAMMAC, 'a=data(#2);V(#1)+=comp(vBase(#1).Base(#2))(:,2,i).a(i)', mim, mfu, mflambda_partial, lambda_n);
       gf_model_set(md, 'set private rhs', indb, W);
       difff = max(abs(lambda_n-lambda_n_old));
