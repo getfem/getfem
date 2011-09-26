@@ -319,8 +319,8 @@ namespace getfem {
       active_bricks.sup(ib);
     }
 
-    /** Disable a brick.  */
-    void unable_brick(size_type ib) {
+    /** Enable a brick.  */
+    void enable_brick(size_type ib) {
       GMM_ASSERT1(ib < bricks.size(), "Unexistent brick");
       active_bricks.add(ib);
     }

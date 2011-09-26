@@ -2889,7 +2889,7 @@ ind_brick=gf_model_set(md,'add explicit rhs', \tstr varname, \tvec L)
 gf_model_set(md,'set private matrix',  \tint indbrick, \tmat B)
 gf_model_set(md,'set private rhs',  \tint indbrick, \tvec L)
 gf_model_set(md,'disable bricks',  \tivec indbricks)
-gf_model_set(md,'unable bricks',  \tivec indbricks)
+gf_model_set(md,'enable bricks',  \tivec indbricks)
 ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', \tmim mim, \tstr varname, \tstr dataname_lambda, \tstr dataname_mu[, \tint region])
 ind_brick=gf_model_set(md,'add linear incompressibility brick', \tmim mim, \tstr varname, \tstr multname_pressure[, \tint region[, \tstr dataname_coeff]])
 ind_brick=gf_model_set(md,'add mass brick', \tmim mim, \tstr varname[, \tstr dataname_rho[, \tint region]])
@@ -3083,8 +3083,8 @@ For some specific bricks having an internal right hand side vector
 Disable a brick (the brick will no longer participate to the
 building of the tangent linear system).
 
-\sep{@@gf_model_set(md,'unable bricks',  \tivec indbricks)@@} :
-Unable a disabled brick.
+\sep{@@gf_model_set(md,'enable bricks',  \tivec indbricks)@@} :
+Enable a disabled brick.
 
 \sep{@@ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', \tmim mim, \tstr varname, \tstr dataname_lambda, \tstr dataname_mu[, \tint region])@@} :
 Add an isotropic linearized elasticity term to the model relatively to the

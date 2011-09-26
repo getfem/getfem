@@ -31569,7 +31569,7 @@ tivec
 
 \end_inset
 
- indbricks) gfmodelset(md,'unable bricks', 
+ indbricks) gfmodelset(md,'enable bricks', 
 \begin_inset ERT
 status collapsed
 
@@ -34080,7 +34080,7 @@ sep{
 
 \end_inset
 
-@@gfmodelset(md,'unable bricks', 
+@@gfmodelset(md,'enable bricks', 
 \begin_inset ERT
 status collapsed
 
@@ -34104,7 +34104,7 @@ status collapsed
 
 \end_inset
 
- : Unable a disabled brick.
+ : Enable a disabled brick.
 \end_layout
 
 \begin_layout Standard

@@ -1336,13 +1336,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ('unable bricks', @ivec bricks_indices)
-    Unable a disabled brick.@*/
+    /*@SET ('enable bricks', @ivec bricks_indices)
+    Enable a disabled brick.@*/
      sub_command
-       ("unable bricks", 1, 1, 0, 0,
+       ("enable bricks", 1, 1, 0, 0,
         dal::bit_vector bv = in.pop().to_bit_vector();
         for (dal::bv_visitor ii(bv); !ii.finished(); ++ii)
-          md->model().unable_brick(ii);
+          md->model().enable_brick(ii);
         );
 
 

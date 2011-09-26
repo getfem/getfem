@@ -3412,7 +3412,7 @@ namespace getfem {
       }
 
     }
-    md.unable_brick(id2dt2b);
+    md.enable_brick(id2dt2b);
   }
 
 

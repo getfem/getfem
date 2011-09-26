@@ -46,7 +46,7 @@ ind_brick=gf_model_set(md,'add explicit rhs', string varname, vec L)
 gf_model_set(md,'set private matrix',  int indbrick, mat B)
 gf_model_set(md,'set private rhs',  int indbrick, vec L)
 gf_model_set(md,'disable bricks',  ivec indbricks)
-gf_model_set(md,'unable bricks',  ivec indbricks)
+gf_model_set(md,'enable bricks',  ivec indbricks)
 ind_brick=gf_model_set(md,'add isotropic linearized elasticity brick', mesh_im mim, string varname, string dataname_lambda, string dataname_mu[, int region])
 ind_brick=gf_model_set(md,'add linear incompressibility brick', mesh_im mim, string varname, string multname_pressure[, int region[, string dataname_coeff]])
 ind_brick=gf_model_set(md,'add mass brick', mesh_im mim, string varname[, string dataname_rho[, int region]])
@@ -508,7 +508,7 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
       </listitem>
 
       <listitem>
-        <para>gf_model_set(mds,'unable bricks', vec bricks_indices) Unable a
+        <para>gf_model_set(mds,'enable bricks', vec bricks_indices) Enable a
         disabled brick.</para>
       </listitem>
 

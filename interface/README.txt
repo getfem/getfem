@@ -57,7 +57,7 @@ Detailed Installation process (if quick install does not work..)
 
 - unpack archive
 
-- ./configure CXX=mycompiler --unable-matlab --disable-shared
+- ./configure CXX=mycompiler --enable-matlab --disable-shared
 
 - the mex files and .m files will go in the directory specified by the
   --with-matlab-toolbox-dir option. Nothing else will be installed.
