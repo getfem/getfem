@@ -67,11 +67,11 @@ m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
 
 # interpolate the exact solution (Assuming mfu is a Lagrange fem)
-Ue = mfu.eval('x[1]*(x[1]-1)*x[0]*(x[0]-1)+x[0]*x[0]*x[0]*x[0]*x[0]')
+Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
 
 # interpolate the source term
-F1 = mfrhs.eval('-(2*(x[0]*x[0]+x[1]*x[1])-2*x[0]-2*x[1]+20*x[0]*x[0]*x[0])')
-F2 = mfrhs.eval('[x[1]*(x[1]-1)*(2*x[0]-1) + 5*x[0]*x[0]*x[0]*x[0], x[0]*(x[0]-1)*(2*x[1]-1)]')
+F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
+F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
 
 # model
 md = gf.Model('real')

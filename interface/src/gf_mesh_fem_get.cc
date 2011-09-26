@@ -908,11 +908,11 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     Examples::
 
-      mf.eval('x[0]*x[1]') # interpolates the function 'x*y'
-      mf.eval('[x[0],x[1]]') # interpolates the vector field '[x,y]'
+      mf.eval('x*y') # interpolates the function 'x*y'
+      mf.eval('[x,y]') # interpolates the vector field '[x,y]'
 
       import numpy as np
-      mf.eval('np.sin(x[0])',globals(),locals()) # interpolates the function sin(x)
+      mf.eval('np.sin(x)',globals(),locals()) # interpolates the function sin(x)
     """
     P = self.basic_dof_nodes()
     nbd = P.shape[1]
@@ -923,15 +923,18 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
       Ind = numpy.arange(0,nbd,self.qdim()) # = sdof
       P   = P[:,Ind]
       nbd = P.shape[1] # = nb_sdof
-    x = P[:,0]
-    gl['x'] = P[:,0]
-    lo['x'] = P[:,0]
+    vars = ('x','y','z','u','v','w')
+    nbvars = min(P.shape[0],len(vars))
+    for i in xrange(0,nbvars):
+      gl[vars[i]] = P[i,0]
+      lo[vars[i]] = P[i,0]
     r = numpy.array(eval(expression,gl,lo))
     Z = numpy.zeros(r.shape + (nbd,), r.dtype)
-    for i in xrange(0,nbd):
-      gl['x'] = P[:,i]
-      lo['x'] = P[:,i]
-      Z[...,i] = eval(expression,gl,lo)
+    for j in xrange(0,nbd):
+      for i in xrange(0,nbvars):
+        gl[vars[i]] = P[i,j]
+        lo[vars[i]] = P[i,j]
+      Z[...,j] = eval(expression,gl,lo)
     return Z
   @*/
 

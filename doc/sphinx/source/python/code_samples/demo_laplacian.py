@@ -68,11 +68,11 @@ m.set_region(left, fleft)
 m.set_region(right, fright)
 
 # interpolate the exact solution (assuming mfu is a Lagrange fem)
-g = mfu.eval('x[1]*(x[1]-1)*x[0]*(x[0]-1)+x[0]*x[0]*x[0]*x[0]*x[0]')
+g = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
 
 # interpolate the source terms (assuming mfrhs is a Lagrange fem)
-f = mfrhs.eval('-(2*(x[0]*x[0]+x[1]*x[1])-2*x[0]-2*x[1]+20*x[0]*x[0]*x[0])')
-h = mfrhs.eval('[x[1]*(x[1]-1)*(2*x[0]-1) + 5*x[0]*x[0]*x[0]*x[0], x[0]*(x[0]-1)*(2*x[1]-1)]')
+f = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
+h = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
 
 # model
 md = gf.Model('real')

@@ -57,7 +57,7 @@ for i in xrange(1):
   #ULS2s = np.minimum(ULS2s, ((x - xc).^2 + (y - yc).^2) - R^2)
   ULS2s = np.minimum(ULS2s, (abs(y - yc)+abs(x-xc) - R))
 
-ls2.set_values(ULS2,ULS2s) # '-x[1]-x[0]+.2') # '(x[1]-.2)**2 - 0.04')
+ls2.set_values(ULS2,ULS2s) # '-y-x+.2') # '(y-.2)**2 - 0.04')
 
 mls = gf.MeshLevelSet(m)
 mls.add(ls)

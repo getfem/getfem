@@ -62,7 +62,7 @@ m.set_region(DIRICHLET_BOUNDARY,fobj)
 m.set_region(ROBIN_BOUNDARY,fout)
 
 ## Interpolate the exact solution on mfd (assuming it is a Lagrange fem)
-wave_expr = ('cos(%f*x[1]+.2)+complex(0.,1.)*sin(%f*x[1]+.2)' % (k,k));
+wave_expr = ('cos(%f*y+.2)+complex(0.,1.)*sin(%f*y+.2)' % (k,k));
 Uinc=mfd.eval(wave_expr,globals(),locals());
 
 ## Model Bricks

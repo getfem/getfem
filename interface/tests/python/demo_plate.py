@@ -69,7 +69,7 @@ else:
     b0 = MdBrick('mixed_isotropic_linearized_plate',mim,mfut,mfu3,mfth,thickness)
 
 b1 = MdBrick('plate_source_term', b0)
-b1.set('param', 'M', mfd, mfd.eval('[0, x[1]*x[1]/1000]'))
+b1.set('param', 'M', mfd, mfd.eval('[0, y*y/1000]'))
 
 b2 = MdBrick('plate clamped support', b1, CLAMPED_BOUNDARY, 'augmented');
 

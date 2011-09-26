@@ -35,7 +35,7 @@ md.add_fem_variable('u', mf)
 md.add_Laplacian_brick(mim, 'u');
 
 # add Dirichlet condition
-g = mf.eval('x[0]*(x[0]-1) - x[1]*(x[1]-1)')
+g = mf.eval('x*(x-1) - y*(y-1)')
 md.add_initialized_fem_data('DirichletData', mf, g)
 md.add_Dirichlet_condition_with_multipliers(mim, 'u', mf, 42, 'DirichletData')
 
