@@ -1,19 +1,20 @@
 EXTRA_DIST= 				\
-	demo_tripod.py 			\
-	demo_tripod_alt.py 		\
-	demo_plate.py 			\
 	check_export.py 		\
-	check_levelset.py		\
-	getfem_tvtk.py 			\
-	demo_laplacian.py 		\
-	demo_plasticity.py              \
-	demo_wave.py			\
 	check_global_functions.py	\
+	check_levelset.py		\
 	demo_crack.py 			\
 	demo_fictitious_domains.py 	\
+	demo_laplacian.py 		\
+	demo_mortar.py 			\
+	demo_plasticity.py              \
+	demo_plate.py 			\
+	demo_static_contact.py 		\
 	demo_step_by_step.py		\
 	demo_stokes_3D_tank.py          \
 	demo_stokes_3D_tank_draw.py	\
+	demo_tripod.py 			\
+	demo_tripod_alt.py 		\
+	demo_wave.py			\
 	getfem_tvtk.py
 
 if BUILDPYTHON
