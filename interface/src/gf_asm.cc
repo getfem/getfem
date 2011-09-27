@@ -672,13 +672,16 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        // unsigned q_dim = mf_u->get_qdim();
-       darray u   = in.pop().to_darray(1, int(mf_u->nb_dof()));
+       darray u = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_u->nb_dof()));
        const getfem::mesh_fem *mf_lambda = in.pop().to_const_mesh_fem();
-       darray vec_lambda = in.pop().to_darray(1, int(mf_lambda->nb_dof()));
+       darray vec_lambda = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_lambda->nb_dof()));
        const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
-       darray obs  = in.pop().to_darray(1, int(mf_obs->nb_dof()));
+       darray obs = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        double r = in.pop().to_scalar();
-       darray F               = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
+       darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        getfem::asm_Coulomb_friction_continuous_Uzawa_proj
          (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs, r, boundary_num);
        
