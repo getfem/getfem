@@ -237,12 +237,12 @@ namespace getfem {
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    size_type region, const std::string &obstacle, bool symmetrized); 
 
-  /** Add a contact with friction condition with a rigid obstacle
-      to the model. Compared to the previous ones, this brick add a
-      contact which is defined
-      in a continuous way. Is it the direct approximation of an augmented
+  /** Add a frictionless contact condition with a rigid obstacle
+      to the model. This brick add a contact which is defined
+      in an integral way. Is it the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
-      continuous level. The advantage is a better scalability: the number of
+      continuous level. The advantage should be a better scalability:
+      the number of
       Newton iterations should be more or less independent of the mesh size.
       The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
@@ -251,13 +251,46 @@ namespace getfem {
       `multname_n` should be a fem variable representing the contact stress.
       An inf-sup condition beetween `multname_n` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
-      range of acceptabe values (to be determined ....).
-      The brick should be extended to friction in a near future.
+      range of acceptabe values.
+      The possible value for `option` is 1 for the non-symmetric
+      Alart-Curnier version, 2 for the symmetric one and 3 for the
+      non-symmetric Alart-Curnier with an additional augmentation.
   */
   size_type add_continuous_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_obs,
    const std::string &dataname_r, size_type region, int option); 
+
+  /** Add a contact with friction condition with a rigid obstacle
+      to the model. This brick add a contact which is defined
+      in an integral way. Is it the direct approximation of an augmented
+      Lagrangian formulation (see Getfem user documentation) defined at the
+      continuous level. The advantage should be a better scalability:
+      the number of
+      Newton iterations should be more or less independent of the mesh size.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `multname_n` should be a fem variable representing the contact stress.
+      An inf-sup condition beetween `multname_n` and `varname_u` is required.
+      The augmentation parameter `dataname_r` should be chosen in a
+      range of acceptabe values. `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method. 
+      The possible value for `option` is 1 for the non-symmetric
+      Alart-Curnier version, 2 for the symmetric one and 3 for the
+      non-symmetric Alart-Curnier with an additional augmentation.
+      'dataname_alpha' and 'dataname_wt' are optional parameters to solve
+      dynamical friction problems.
+  */
+  size_type add_continuous_contact_with_friction_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &multname_n, const std::string &dataname_obs,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   size_type region, int option,
+   const std::string &dataname_alpha = "",
+   const std::string &dataname_wt = "");
 
 
   /** Add a frictionless contact condition between two faces of one or two
@@ -418,41 +451,34 @@ namespace getfem {
     const mesh_fem &mf_u;
     const mesh_fem &mf_lambda;
     const mesh_fem &mf_obs;
-    std::vector<scalar_type> U, lambda_n, obs;
+    const mesh_fem *mf_coeff;
+    std::vector<scalar_type> U, lambda_n, obs, friction_coeff, WT;
     bgeot::multi_index sizes_;
 
-    base_small_vector no; // unit normal (to the obstacle)
-    base_vector coeff, V, aux;
-    base_matrix grad;
-    scalar_type ln, un, g, r_;
-    size_type option; // 0 : -H(u_n - g) n
-                      // 1 : (H(-l_n) * H(u_n-g) - 1)/r
-                      // 2 : l_n * H(u_n - g) n
-                      // 3 : (u_n - g)_+ + (l_n + (l_n)_-H(u_n-g))/r
-                      // 4 : -n 
-                      // 5 : -H(r(u_n-g)-l_n)n
-                      // 6 : (H(r(u_n-g)-l_n)-1)/r
-                      // 7 : l_n n
-                      // 8 : (l_n+(l_n-r(u_n-g))_-)/r
-                      // 9 : -(l_n-r(u_n-g))_-
-                      // 10 : r H(r(un - g)-ln)n n^t
-                      // 11 : -(ln-r(un - g))_n n
+    base_small_vector no, aux1, lt, lambda, auxN, zt, V, coeff;
+    // base_vector coeff, V;
+    base_matrix grad, GP;
+    scalar_type ln, un, g, r, alpha, f_coeff;
+    bool contact_only;
+    size_type option;
 
     template <class VECT> friction_nonlinear_term
     (const mesh_fem &mf_u_, const VECT &U_, 
      const mesh_fem &mf_lambda_, const VECT &lambda_n_, 
      const mesh_fem &mf_obs_, const VECT &obs_,
-     scalar_type r__, size_type option_) :
+     scalar_type r__, size_type option_, bool contact_only_ = true,
+     scalar_type alpha_ = scalar_type(-1), const mesh_fem *mf_coeff_ = 0,
+     const VECT *f_coeff_ = 0, const VECT *WT_ = 0) :
       N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), mf_lambda(mf_lambda_),
       mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
       lambda_n(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
-      r_(r__), option(option_) {
+      r(r__), alpha(alpha_), contact_only(contact_only_), option(option_) {
       
       sizes_.resize(1); sizes_[0] = 1;
       switch (option) {
-      case 0: case 2: case 4: case 5: case 7: case 11: case 13: case 15:
+      case 0: case 2: case 4: case 5: case 7: case 11: case 13: 
 	sizes_[0] = N; break;
-      case 10: case 12:
+      case 1: case 3: case 10: case 12: case 15:
 	sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
       }
       
@@ -460,8 +486,22 @@ namespace getfem {
       mf_lambda.extend_vector(lambda_n_, lambda_n);
       mf_obs.extend_vector(obs_, obs);
       
-      V.resize(N); no.resize(N); aux.resize(1);
+      V.resize(N); no.resize(N); aux1.resize(1); auxN.resize(N);
+      lambda.resize(N); lt.resize(N); zt.resize(N);
       gmm::resize(grad, 1, N);
+      gmm::resize(GP, N, N);
+
+      if (!contact_only) {
+	mf_coeff = mf_coeff_;
+	if (!mf_coeff)
+	  f_coeff = (*f_coeff_)[0];
+	else {
+	  friction_coeff.resize(mf_coeff->nb_basic_dof());
+	  mf_coeff->extend_vector(*f_coeff_, friction_coeff);
+	}
+	WT.resize(mf_u.nb_basic_dof());
+	mf_u.extend_vector(*WT_, WT);
+      }
       
       GMM_ASSERT1(mf_u.get_qdim() == N, "wrong qdim for the mesh_fem");
     }

@@ -1575,10 +1575,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add continuous contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region [,@int option])
 
-    Add a contact with friction condition with a rigid obstacle
-    to the model. Compared to the previous ones, this brick add a contact
-    which is defined
-    in a continuous way. Is it the direct approximation of an augmented
+    Add a frictionless contact condition with a rigid obstacle
+    to the model. This brick add a contact which is defined
+    in an integral way. Is it the direct approximation of an augmented
     Lagrangian formulation (see Getfem user documentation) defined at the
     continuous level. The advantage is a better scalability: the number of
     Newton iterations should be more or less independent of the mesh size.
@@ -1589,11 +1588,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     `multname_n` should be a fem variable representing the contact stress.
     An inf-sup condition beetween `multname_n` and `varname_u` is required.
     The augmentation parameter `dataname_r` should be chosen in a
-    range of acceptabe values (to be determined ....). `option` is 1 for
+    range of acceptabe values. `option` is 1 for
     non symmetric Alart-Curnier augmented Lagrangian method,
-    2 for the symmetric one, 3 for a new nonsmooth augmented Lagrangian
-    and 4 for a smooth one.
-    The brick should be extended to friction in a near future.
+    2 for the symmetric one, 3 for the
+    non-symmetric Alart-Curnier method with an additional augmentation. The
+    default value is 1.
     @*/
      sub_command
        ("add continuous contact with rigid obstacle brick", 6, 7, 0, 1,
@@ -1604,11 +1603,64 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         size_type region = in.pop().to_integer();
-	int option = 2;
+	int option = 1;
         if (in.remaining()) option = in.pop().to_integer();
 	size_type ind=getfem::add_continuous_contact_with_rigid_obstacle_brick
 	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
 	 dataname_obs, dataname_r, region, option);
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+     /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt]]])
+
+      Add a contact with friction condition with a rigid obstacle
+      to the model. This brick add a contact which is defined
+      in an integral way. Is it the direct approximation of an augmented
+      Lagrangian formulation (see Getfem user documentation) defined at the
+      continuous level. The advantage should be a better scalability:
+      the number of
+      Newton iterations should be more or less independent of the mesh size.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `multname_n` should be a fem variable representing the contact stress.
+      An inf-sup condition beetween `multname_n` and `varname_u` is required.
+      The augmentation parameter `dataname_r` should be chosen in a
+      range of acceptabe values. `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method. 
+      The possible value for `option` is 1 for the non-symmetric
+      Alart-Curnier version, 2 for the symmetric one and 3 for the
+      non-symmetric Alart-Curnier with an additional augmentation. The
+      default value is 1.
+      'dataname_alpha' and 'dataname_wt' are optional parameters to solve
+      dynamical friction problems.
+    @*/
+     sub_command
+       ("add continuous contact with friction with rigid obstacle brick", 7, 10, 0, 1,
+        
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string multname_n = in.pop().to_string();
+        std::string dataname_obs = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        std::string dataname_coeff = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+	int option = 1;
+        if (in.remaining()) option = in.pop().to_integer();
+	std::string dataname_alpha = "";
+	if (in.remaining()) dataname_alpha = in.pop().to_string();
+	std::string dataname_wt = "";
+	if (in.remaining()) dataname_wt = in.pop().to_string();
+	
+
+	size_type ind=
+	getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
+	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+	 dataname_obs, dataname_r, dataname_coeff, region, option,
+	 dataname_alpha, dataname_wt);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );

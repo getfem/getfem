@@ -55,10 +55,9 @@ version = 5 # 1 : frictionless contact and the basic contact brick
             #     Newton and Alart-Curnier augmented lagrangian, symmetric
             #     version
             # 7 : frictionless contact and the continuous brick
-            #     Newton and new augmented lagrangian (not fully working)
-            # 8 : frictionless contact and the continuous brick
-            #     Newton and new smooth augmented lagrangian (not fully working)
-            # 9 : frictionless contact and the continuous brick : Uzawa
+            #     Newton and Alart-Curnier augmented lagrangian,
+            #     with an additional augmentation.
+            # 8 : frictionless contact and the continuous brick : Uzawa
             #     (not very adapted because it is a semi-coercive case)
 penalty_parameter = 1E-8    # For rigid motions.
 uzawa_r = penalty_parameter # Descent coefficient for Uzawa method.
@@ -159,7 +158,7 @@ elif version == 3 or version == 4: # BN and BT defined by the contact brick
       md.add_contact_with_rigid_obstacle_brick(mim, 'u', 'lambda_n', 'lambda_t', 'r',
                                               'friction_coeff', GAMMAC, obstacle, 0)
 
-elif version >= 5 and version <= 8: # The continuous version, Newton
+elif version >= 5 and version <= 7: # The continuous version, Newton
 
    ldof = mflambda.dof_on_region(GAMMAC)
    mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
@@ -170,7 +169,7 @@ elif version >= 5 and version <= 8: # The continuous version, Newton
    md.add_continuous_contact_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n',
                                                       'obstacle', 'r', GAMMAC, version-4);
 
-elif version == 9: # The continuous version, Uzawa
+elif version == 8: # The continuous version, Uzawa
 
    ldof = mflambda.dof_on_region(GAMMAC)
    mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
@@ -202,7 +201,7 @@ else:
    print 'Unexistent version'
 
 # Solve the problem
-if version != 9:
+if version != 8:
    md.solve('max_res', 1E-9, 'very noisy', 'max_iter', niter, 'lsearch', 'default') #, 'with pseudo potential')
 
 U = md.get('variable', 'u')
