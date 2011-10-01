@@ -26,8 +26,8 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.25.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.15.mesh');
@@ -37,9 +37,9 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 % Parameters of the model
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
-friction_coeff = 0.2; % coefficient of friction
-r = 1;    % Augmentation parameter
-version = 7; % 1 : frictionless contact and the basic contact brick
+friction_coeff = 0.; % coefficient of friction
+r = 10.0;    % Augmentation parameter
+version = 9; % 1 : frictionless contact and the basic contact brick
              % 2 : contact with 'static' friction and basic contact brick
              % 3 : frictionless contact and the contact with a
              %     rigid obstacle brick
@@ -56,9 +56,12 @@ version = 7; % 1 : frictionless contact and the basic contact brick
              %     unsymmetric version with an additional augmentation.
              % 8 : frictionless contact and the continuous brick : Uzawa
              %     (not very adapted because it is a semi-coercive case)
+             % 9 : contact with Coulomb friction and the continuous brick
+             %     Newton and Alart-Curnier augmented lagrangian,
+             %     unsymmetric version
 penalty_parameter = 1E-8;    % For rigid motions.
 uzawa_r = penalty_parameter; % Descent coefficient for Uzawa method.
-niter = 50;  % Maximum number of iterations for Newton's algorithm.
+niter = 100;  % Maximum number of iterations for Newton's algorithm.
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
 
@@ -80,7 +83,7 @@ pause(0.1);
 mfu=gf_mesh_fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', 2);
 mfd=gf_mesh_fem(m, 1);
-gf_mesh_fem_set(mfd, 'classical fem', 1);
+gf_mesh_fem_set(mfd, 'classical fem', 2);
 mfvm=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
 mflambda=gf_mesh_fem(m, 1); % used only by version 5, 6, 7, 8 and 9
@@ -208,6 +211,19 @@ elseif (version == 8) % The continuous version, Uzawa
   end;
   
   
+elseif (version == 9)
+    % The continuous version, Newton
+ 
+  gf_mesh_fem_set(mflambda, 'qdim', 2);
+  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
+  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
+  gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+  gf_model_set(md, 'add initialized data', 'r', [r]);
+  gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
+  gf_model_set(md, 'add continuous contact with friction with rigid obstacle brick', mim_friction, 'u', ...
+	         'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-8);
 else
   error('Inexistent version');
 end
@@ -215,7 +231,7 @@ end
 % Solve the problem
 
 if (version ~= 8)
-  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter, 'lsearch', 'simplest'); % , 'with pseudo potential');
+  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % 'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
 
 U = gf_model_get(md, 'variable', 'u');

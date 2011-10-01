@@ -1161,31 +1161,27 @@ namespace getfem {
     case 0 : for (i=0; i<N; ++i) t[i] = lambda[i]; break;
     case 1 :
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = (i == j) ? scalar_type(1) : scalar_type(0);
+	t[i*N+j] = (i == j) ? -scalar_type(1) : scalar_type(0);
       break;
     case 2 : {
-        auxN = lt - zt; ball_projection(zt, -f_coeff * ln);
-	auxN *= -scalar_type(1); auxN += lt; auxN /= r;
-        auxN += (ln+gmm::neg(ln-r*(un-g))) * no;
-	for (i=0; i<N; ++i) t[i] = auxN[i];
+        e = ln+gmm::neg(ln-r*(un-g));
+	auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
+	for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i])/ r;
       }
       break;
-    case 3 : e = alpha-Heav(r*(un-g)-ln); // verifier pour le alpha ...
-      auxN = lt - zt; ball_projection_grad(zt, -f_coeff * ln, GP);
+    case 3 : e = -Heav(r*(un-g)-ln);
+      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
+      e += alpha * gmm::vect_sp(GP, no, no); // à verifier ... 
+      // cout << "GP = " << GP << endl;
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
 	t[i*N+j] = no[i]*no[j]*e - alpha*GP(i,j);
       break;
     case 4 : for (i=0; i<N; ++i) t[i] = -no[i]; break;
-    case 5 :
-      e = -Heav(r*(un - g) - ln);
-      for (i=0; i<N; ++i) t[i] = e * no[i];
-      break;
-    case 6 : t[0] = (Heav(r*(un - g) - ln) - scalar_type(1))/r; break;
-    case 7 : e = ln; for (i=0; i<N; ++i) t[i] = e * no[i]; break;
+    case 5 : e = -Heav(r*(un-g)-ln); for (i=0; i<N; ++i) t[i] = e*no[i]; break;
+    case 6 : t[0] = (Heav(r*(un-g)-ln) - scalar_type(1))/r; break;
+    case 7 : for (i=0; i<N; ++i) t[i] = ln * no[i]; break;
     case 8 : t[0] = (ln+gmm::neg(ln-r*(un - g)))/r; break;
-    case 9 : t[0] = -gmm::neg(ln - r*(un - g));
-      // cout << "t[0]=" << t[0]<< "un - g=" << un - g << " pt " << ctx.xreal() << " ln=" <<ln<<endl;
-      break;
+    case 9 : t[0] = -gmm::neg(ln - r*(un - g)); break;
     case 10 : e = r*Heav(r*(un - g)-ln);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = e * no[i] * no[j];
       break;
@@ -1199,13 +1195,14 @@ namespace getfem {
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
     case 14 : t[0] = -Heav(ln)+(1.-Heav(un-g))*Heav(-ln); break;
-    case 15 : e = (Heav(r*(un-g)-ln) - scalar_type(1))/r;
-      auxN = lt - zt; ball_projection_grad(zt, -f_coeff * ln, GP);
-      ball_projection_grad_r(zt, -f_coeff * ln, V);
+    case 15 :
+      e = (Heav(r*(un-g)-ln))/r;
+      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
+      ball_projection_grad_r(auxN, -f_coeff * ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
 	t[i*N+j] = no[i]*no[j]*e
 	  - (((i == j) ? scalar_type(1) : scalar_type(0)) - GP(i,j))/r
-	  + f_coeff * V[j] * no[i] / r; // controller aue ce n'est pas grad[i] * no[j] ...
+          - f_coeff * V[j] * no[i] / r;
       break;
     case 16 : t[0] = gmm::pos(un)+gmm::pos(ln) + (1.-Heav(un-g))*gmm::neg(ln);
       break;
@@ -1217,7 +1214,7 @@ namespace getfem {
   void friction_nonlinear_term::prepare
   (fem_interpolation_context& ctx, size_type nb) {
     size_type cv = ctx.convex_num();
-    
+    // cout << "begin prepare " << nb << endl;
     switch (nb) {
     case 1 :
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
@@ -1227,12 +1224,17 @@ namespace getfem {
       ctx.pf()->interpolation(ctx, coeff, V, N);
       un = gmm::vect_sp(V, no);
       if (!contact_only) {
-	gmm::copy(gmm::sub_vector
-		  (WT, gmm::sub_index
-		   (mf_u.ind_basic_dof_of_element(cv))), coeff);
-	ctx.pf()->interpolation(ctx, coeff, aux1, N);
-	aux1 -= gmm::vect_sp(aux1, no) * no;
-	zt = ((V - un * no) - aux1) * (r * alpha); // zt = r*alpha*(u_T-w_T)
+	if (gmm::vect_size(WT) == gmm::vect_size(U)) {
+	  gmm::copy(gmm::sub_vector
+		    (WT, gmm::sub_index
+		     (mf_u.ind_basic_dof_of_element(cv))), coeff);
+	  ctx.pf()->interpolation(ctx, coeff, auxN, N);
+	  auxN -= gmm::vect_sp(auxN, no) * no;
+	} else {
+	  gmm::clear(auxN);
+	}
+	// cout << "wt = " << auxN << endl;
+	zt = ((V - un * no) - auxN) * (r * alpha); // zt = r*alpha*(u_T-w_T)
       }
       break;
       
@@ -1259,21 +1261,26 @@ namespace getfem {
       ctx.pf()->interpolation_grad(ctx, coeff, grad, 1);
       gmm::copy(gmm::mat_row(grad, 0), no);
       no /= -gmm::vect_norm2(no);
+      // cout << "no = " << no << endl;
+      // no[0] = 0; no[1] = -1;
       ctx.pf()->interpolation(ctx, coeff, aux1, 1);
       g = aux1[0];
       // cout << "gap = " << g << " at pt " << ctx.xreal() << endl;
       break;
     case 4 :
-      GMM_ASSERT1(!contact_only && mf_coeff, "unvalid friction option");
-      coeff.resize(mf_coeff->nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-		(friction_coeff, gmm::sub_index
-		 (mf_coeff->ind_basic_dof_of_element(cv))), coeff);
-      ctx.pf()->interpolation(ctx, coeff, aux1, 1);
-      f_coeff = aux1[0];
+      GMM_ASSERT1(!contact_only, "unvalid friction option");
+      if (mf_coeff) {
+	coeff.resize(mf_coeff->nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector
+		  (friction_coeff, gmm::sub_index
+		   (mf_coeff->ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation(ctx, coeff, aux1, 1);
+	f_coeff = aux1[0];
+      }
       break;
     default : GMM_ASSERT1(false, "unvalid option");
     }
+    // cout << "end prepare" << endl;
   }
 
 
@@ -1359,28 +1366,29 @@ namespace getfem {
     switch (option) {
     case 1 :
       assem.set
-       ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
-        "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#2).vBase(#1))(i,:,:,i); "
-	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:)");
+       ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); "
+        "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2).vBase(#1))(i,j,:,j,:,i); "
+	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3,#4).vBase(#2).vBase(#2))(i,j,:,i,:,j)");
       break;
     case 2 :
       assem.set
-       ("M$1(#1,#2)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
-	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:);"
-	"M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
+       ("M$1(#1,#2)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); "
+	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3,#4).vBase(#2).vBase(#2))(i,j,:,i,:,j);"
+	"M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3,#4).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
       break;
     case 3 :
       assem.set
-      ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
-       "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#2).vBase(#1))(i,:,:,i); "
-       "M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:); "
-       "M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
+      ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); "
+       "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2).vBase(#1))(i,j,:,j,:,i); "
+       "M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3,#4).vBase(#2).vBase(#2))(i,j,:,i,:,j); "
+       "M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3,#4).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
       break;
     }
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
+    assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
@@ -1439,12 +1447,13 @@ namespace getfem {
 				   r, 2, false, alpha, mf_coeff, &f_coeff,&WT);
 
     getfem::generic_assembly assem;
-    assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
-	      "V$2(#2)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#2))(i,:,i)");
+    assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1))(i,:,i); "
+	      "V$2(#2)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2))(i,:,i)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
+    assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_vec(Ru);
@@ -1524,8 +1533,9 @@ namespace getfem {
 		    "Parameter alpha should be a scalar");
       }
 
+      model_real_plain_vector voidvec;
       const model_real_plain_vector &WT
-	= (!contact_only && dl.size()>=5) ? md.real_variable(dl[4]) : u;
+	= (!contact_only && dl.size()>=5) ? md.real_variable(dl[4]) : voidvec;
 
       mesh_region rg(region);
       mf_u.linked_mesh().intersect_with_mpi_region(rg);
@@ -1568,9 +1578,9 @@ namespace getfem {
       Tresca_version = false;   // for future version ...
       option = option_;
       contact_only = contact_only_;
-      GMM_ASSERT1(contact_only, "friction is not implemented yet ...");
       set_flags("Continuous Coulomb friction brick", false /* is linear*/,
-                true /* is symmetric */, false /* is coercive */,
+                (option!=2) && contact_only /* is symmetric */,
+		false /* is coercive */,
 		true /* is real */, false /* is complex */);
     }
 
@@ -1637,7 +1647,7 @@ namespace getfem {
    const std::string &dataname_alpha, const std::string &dataname_wt) {
    
     pbrick pbr
-      = new Coulomb_friction_continuous_brick(true, option);
+      = new Coulomb_friction_continuous_brick(false, option);
 
     model::termlist tl;
 

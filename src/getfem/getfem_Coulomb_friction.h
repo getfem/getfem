@@ -499,8 +499,12 @@ namespace getfem {
 	  friction_coeff.resize(mf_coeff->nb_basic_dof());
 	  mf_coeff->extend_vector(*f_coeff_, friction_coeff);
 	}
-	WT.resize(mf_u.nb_basic_dof());
-	mf_u.extend_vector(*WT_, WT);
+	if (WT_ && gmm::vect_size(*WT_)) {
+	  WT.resize(mf_u.nb_basic_dof());
+	  mf_u.extend_vector(*WT_, WT);
+	}
+	else
+	  WT.resize(0);
       }
       
       GMM_ASSERT1(mf_u.get_qdim() == N, "wrong qdim for the mesh_fem");

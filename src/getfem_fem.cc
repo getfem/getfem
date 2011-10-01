@@ -972,10 +972,10 @@ namespace getfem {
    static pfem Q2_incomplete_fem(fem_param_list &params,
 	std::vector<dal::pstatic_stored_object> &dependencies) {
     GMM_ASSERT1(params.size() <= 1, "Bad number of parameters");
-    int n = 2;
+    dim_type n = 2;
     if (params.size() > 0) {
       GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
-      n = int(::floor(params[0].num() + 0.01));
+      n = dim_type(::floor(params[0].num() + 0.01));
        GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
     }
     fem<base_poly> *p = new fem<base_poly>;
