@@ -37,7 +37,7 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 % Parameters of the model
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
-friction_coeff = 0.; % coefficient of friction
+friction_coeff = 0.4; % coefficient of friction
 r = 10.0;    % Augmentation parameter
 version = 9; % 1 : frictionless contact and the basic contact brick
              % 2 : contact with 'static' friction and basic contact brick
@@ -122,6 +122,7 @@ gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 cdof = gf_mesh_fem_get(mfu, 'dof on region', GAMMAC);
 nbc = size(cdof, 2) / d;
 
+solved = false;
 if (version == 1 || version == 2) % defining the matrices BN and BT by hand
   contact_dof = cdof(d:d:nbc*d);
   contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
@@ -210,9 +211,9 @@ elseif (version == 8) % The continuous version, Uzawa
       if (difff < penalty_parameter) break; end;
   end;
   
+  solved = true;
   
-elseif (version == 9)
-    % The continuous version, Newton
+elseif (version == 9) % The continuous version with friction, Newton
  
   gf_mesh_fem_set(mflambda, 'qdim', 2);
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
@@ -230,7 +231,7 @@ end
 
 % Solve the problem
 
-if (version ~= 8)
+if (~solved)
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % 'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
 

@@ -1172,7 +1172,6 @@ namespace getfem {
     case 3 : e = -Heav(r*(un-g)-ln);
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
       e += alpha * gmm::vect_sp(GP, no, no); // à verifier ... 
-      // cout << "GP = " << GP << endl;
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
 	t[i*N+j] = no[i]*no[j]*e - alpha*GP(i,j);
       break;
@@ -1201,8 +1200,8 @@ namespace getfem {
       ball_projection_grad_r(auxN, -f_coeff * ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
 	t[i*N+j] = no[i]*no[j]*e
-	  - (((i == j) ? scalar_type(1) : scalar_type(0)) - GP(i,j))/r
-          - f_coeff * V[j] * no[i] / r;
+	  - (((i == j) ? scalar_type(1) : scalar_type(0)) - GP(i,j))/r;
+      // - f_coeff * V[j] * no[i] / r;
       break;
     case 16 : t[0] = gmm::pos(un)+gmm::pos(ln) + (1.-Heav(un-g))*gmm::neg(ln);
       break;
@@ -1261,7 +1260,7 @@ namespace getfem {
       ctx.pf()->interpolation_grad(ctx, coeff, grad, 1);
       gmm::copy(gmm::mat_row(grad, 0), no);
       no /= -gmm::vect_norm2(no);
-      // cout << "no = " << no << endl;
+      // cout << "no = " << no << " f_coeff = " << f_coeff << " alpha = " << alpha << endl;
       // no[0] = 0; no[1] = -1;
       ctx.pf()->interpolation(ctx, coeff, aux1, 1);
       g = aux1[0];
