@@ -42,23 +42,34 @@ Lambda = 1  # Lame coefficient
 Mu = 1      # Lame coefficient
 friction_coeff = 0.2 # coefficient of friction
 r = 0.0001  # Augmentation parameter
-version = 5 # 1 : frictionless contact and the basic contact brick
-            # 2 : contact with 'static' friction and basic contact brick
-            # 3 : frictionless contact and the contact with a
-            #     rigid obstacle brick
-            # 4 : contact with 'static' friction and the contact with a
-            #     rigid obstacle brick
-            # 5 : frictionless contact and the continuous brick
-            #     Newton and Alart-Curnier augmented lagrangian,
-            #     unsymmetric version
-            # 6 : frictionless contact and the continuous brick
-            #     Newton and Alart-Curnier augmented lagrangian, symmetric
-            #     version
-            # 7 : frictionless contact and the continuous brick
-            #     Newton and Alart-Curnier augmented lagrangian,
-            #     with an additional augmentation.
-            # 8 : frictionless contact and the continuous brick : Uzawa
-            #     (not very adapted because it is a semi-coercive case)
+version = 9   # 1 : frictionless contact and the basic contact brick
+              # 2 : contact with 'static' Coulomb friction and basic contact
+              #     brick
+              # 3 : frictionless contact and the contact with a
+              #     rigid obstacle brick
+              # 4 : contact with 'static' Coulomb friction and the contact
+              #     with a rigid obstacle brick
+              # 5 : frictionless contact and the continuous brick
+              #     Newton and Alart-Curnier augmented lagrangian,
+              #     unsymmetric version
+              # 6 : frictionless contact and the continuous brick
+              #     Newton and Alart-Curnier augmented lagrangian, symmetric
+              #     version.
+              # 7 : frictionless contact and the continuous brick
+              #     Newton and Alart-Curnier augmented lagrangian,
+              #     unsymmetric version with an additional augmentation.
+              # 8 : frictionless contact and the continuous brick : Uzawa
+              #     (not very adapted because it is a semi-coercive case)
+              # 9 : contact with 'static' Coulomb friction and the continuous
+              #     brick. Newton and Alart-Curnier augmented lagrangian,
+              #     unsymmetric version.
+              # 10 : contact with 'static' Coulomb friction and the continuous
+              #     brick. Newton and Alart-Curnier augmented lagrangian,
+              #     nearly symmetric version.
+              # 11 : contact with 'static' Coulomb friction and the continuous
+              #     brick. Newton and Alart-Curnier augmented lagrangian,
+              #     unsymmetric version with an additional augmentation.
+
 penalty_parameter = 1E-8    # For rigid motions.
 uzawa_r = penalty_parameter # Descent coefficient for Uzawa method.
 niter = 50  # Maximum number of iterations for Newton's algorithm.
@@ -196,6 +207,18 @@ elif version == 8: # The continuous version, Uzawa
       print 'diff : %g' % difff
       if difff < penalty_parameter:
          break
+
+elif version >= 9 and version <= 11: # Continuous version with friction, Newton
+
+   mflambda.set_qdim(2);
+   ldof = mflambda.dof_on_region(GAMMAC)
+   mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
+   md.add_fem_variable('lambda_n', mflambda_partial)
+   md.add_initialized_data('r', [r])
+   md.add_initialized_data('friction_coeff', [friction_coeff])
+   OBS = mfd.eval(obstacle)
+   md.add_initialized_fem_data('obstacle', mfd, OBS)
+   md.add_continuous_contact_with_friction_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-8);
 
 else:
    print 'Unexistent version'

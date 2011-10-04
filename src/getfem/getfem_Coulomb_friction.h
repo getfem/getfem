@@ -476,9 +476,9 @@ namespace getfem {
       
       sizes_.resize(1); sizes_[0] = 1;
       switch (option) {
-      case 0: case 2: case 4: case 5: case 7: case 11: case 13: 
+      case 0: case 2: case 4: case 5: case 7: case 11: case 13: case 19: case 21: 
 	sizes_[0] = N; break;
-      case 1: case 3: case 10: case 12: case 15:
+      case 1: case 3: case 10: case 12: case 15: case 17: case 18: case 20:
 	sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
       }
       
