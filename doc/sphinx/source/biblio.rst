@@ -5,10 +5,12 @@
 References
 ----------
 
+.. [AL-CU1991] P. Alart, A. Curnier. *A mixed formulation for frictional contact problems prone to newton like solution methods*, Computer Methods in Applied
+Mechanics and Engineering 92, 353--375, (1991).
 
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser, *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, (1983).
 
-.. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen. *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, 1994.
+.. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen. *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, (1994).
 
 .. [ciarlet1978] P.G.. Ciarlet, *The finite element method for elliptic 
    problems*, Studies in Mathematics and its Applications vol. 4 (1978), 
@@ -18,8 +20,10 @@ References
    <http://www.cs.kuleuven.ac.be/~ines/research/ecf/ecf.html>`_, J. Complexity.
 
 
-.. [dh-to1984] G. Dhatt, and G. Touzot, *The Finite Element Method Displayed*, J. 
+.. [dh-to1984] G. Dhatt, G. Touzot, *The Finite Element Method Displayed*, J. 
    Wiley & Sons, New York, (1984).
+
+.. [LA-RE2006] P. Laborde, Y. Renard. *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
 
 .. [Xfem] N. Moës, J. Dolbow and T. Belytschko, *A finite element method for

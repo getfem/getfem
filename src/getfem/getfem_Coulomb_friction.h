@@ -69,12 +69,12 @@ namespace getfem {
       the matrix `BN` has to be such that the contact condition is defined
       by $B_N U \le gap$ and `BT` have to be such that the relative tangential
       displacement is $B_T U$. The matrix `BT` should have as many rows as
-      `BN` multiplied b $d-1$ where $d$ is the domain dimension.
+      `BN` multiplied by $d-1$ where $d$ is the domain dimension.
       The contact condition is prescribed thank to a multiplier
       `multname_n` whose dimension should be equal to the number of rows of
-      `BN` and the friction condition by a mutliplier `multname_t` whise size
+      `BN` and the friction condition by a mutliplier `multname_t` whose size
       should be the number of rows of `BT`.
-      The parameter `dataname_friction_coeff` describe the friction
+      The parameter `dataname_friction_coeff` describes the friction
       coefficient. It could be a scalar or a vector describing the
       coefficient on each contact condition. 
       The augmentation parameter
@@ -249,7 +249,7 @@ namespace getfem {
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
       `multname_n` should be a fem variable representing the contact stress.
-      An inf-sup condition beetween `multname_n` and `varname_u` is required.
+      An inf-sup condition between `multname_n` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptabe values.
       The possible value for `option` is 1 for the non-symmetric
@@ -261,7 +261,7 @@ namespace getfem {
    const std::string &multname_n, const std::string &dataname_obs,
    const std::string &dataname_r, size_type region, int option); 
 
-  /** Add a contact with friction condition with a rigid obstacle
+  /** Adds a contact with friction condition with a rigid obstacle
       to the model. This brick add a contact which is defined
       in an integral way. Is it the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
@@ -273,7 +273,7 @@ namespace getfem {
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
       `multname_n` should be a fem variable representing the contact stress.
-      An inf-sup condition beetween `multname_n` and `varname_u` is required.
+      An inf-sup condition between `multname_n` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptabe values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
@@ -281,7 +281,7 @@ namespace getfem {
       The possible value for `option` is 1 for the non-symmetric
       Alart-Curnier version, 2 for the symmetric one and 3 for the
       non-symmetric Alart-Curnier with an additional augmentation.
-      'dataname_alpha' and 'dataname_wt' are optional parameters to solve
+      `dataname_alpha` and `dataname_wt` are optional parameters to solve
       dynamical friction problems.
   */
   size_type add_continuous_contact_with_friction_with_rigid_obstacle_brick
@@ -293,7 +293,7 @@ namespace getfem {
    const std::string &dataname_wt = "");
 
 
-  /** Add a frictionless contact condition between two faces of one or two
+  /** Adds a frictionless contact condition between two faces of one or two
       elastic bodies. The condition is applied on the variable `varname_u` or
       the variables `varname_u1` and `varname_u2` depending if a single or
       two distinct displacement fields are given. Vectors `rg1` and `rg2`

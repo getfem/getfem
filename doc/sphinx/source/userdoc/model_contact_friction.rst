@@ -10,10 +10,10 @@
 
 
 
-Contact with Coulomb friction brick
------------------------------------
+Contact with Coulomb friction bricks
+------------------------------------
 
-The aim of this brick is to take into account a contact condition with or without friction of an elastic structure on a rigid foundation or between two elastic structures. This brick is restricted to small deformation approximation of contact.
+The aim of these bricks is to take into account a contact condition with or without friction of an elastic structure on a rigid foundation or between two elastic structures. These bricks are restricted to small deformation approximation of contact (this may include large deformations on a flat obstacle).
 
 Approximation of contact
 ++++++++++++++++++++++++
@@ -21,9 +21,9 @@ Approximation of contact
 For small deformation problems submitted
 a simple (compared to large deformation !) expression of the contact with friction condition is usually used where the tangential displacement do not influence the normal one. This is an approximation in the sense that if an obstacle is not perfectly flat, the tengential displacement of course influence the point where the contact holds. This will not be the case in small deformation where the contact condition can be considered to be described on the reference configuration.
 
-There is mainly to largely used discretizations of the contact with friction condition in this framework: a direct nodal contact condition (usually prescribed on the displacement finite element nodes) or a weak nodal contact condition (usually prescribed on the multiplier finite element nodes). The two discretization leads to similar system. However, the interpretation of quantities is not the same.
+There is mainly two largely used discretizations of the contact with friction condition in this framework: a direct nodal contact condition (usually prescribed on the displacement finite element nodes) or a weak nodal contact condition (usually prescribed on the multiplier finite element nodes). The two discretization leads to similar system. However, the interpretation of quantities is not the same. A third approach is developped on Getfem contact bricks: a weak continuous contact condition. It needs the computation of a non-linear integral on the contact boundary at each iteration but the numerical resolution is potentially more scalable because it derives directly from continuous principles.
 
-More details can be found for instance in [KI-OD1988]_ and [KH-PO-RE2006]_
+More details can be found for instance in [KI-OD1988]_, [KH-PO-RE2006]_ and [LA-RE2006]_.
 
 Direct nodal contact condition
 ++++++++++++++++++++++++++++++
@@ -146,13 +146,126 @@ where :math:`\psi_i` is the shape function of the multiplier for the node :math:
 Note that without additional stabilization technique (see [HI-RE2010]_) an inf-sup condition have to be satisfied between the finite element of the displacement and the one for the multipliers. This means in particular that the finite element for the multiplier have to be "less rich" than the one for the displacement.
 
 
+Weak continuous contact condition
++++++++++++++++++++++++++++++++++
+
+The weak continuous contact formulatio allows not to explicitely describe the discrete set of admissible stress. The contact stress (including the friction one) is described on a finite element space :math:`W^h` on the contact boundary :math:`\Gamma_c`:
+
+.. math::
+
+  \lambda^h \in W^h = \left\{ \sum \lambda_i \psi_i, \lambda_i \in I\hspace{-0.2em}R^d \right\}
+
+where :math:`d` is the dimension of the problem and :math:`\psi_i` still the shapes functions on which the contact stress is developped. Now, given a outward unit vector :math:`n` on the contact boundary :math:`\Gamma_c` (usually the normal to the obstacle), we make the standard decompositions:
+
+.. math::
+
+  \lambda_N^h = \lambda^h \cdot n, ~~~~ \lambda_T^h = \lambda^h - \lambda_N^h n, ~~~~
+  u_N^h = u^h \cdot n, ~~~~ u_T^h = u^h - u_N^h n,
+
+where :math:`u^h` is the displacement field approximated on a finite element space :math:`V^h`. This allows to express the contact condition in the following way
+
+.. math::
+
+  \displaystyle \int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+
+where :math:`gap` is a given initial gap in reference configuration, :math:`r` is an augmentation parameter and :math:`(\cdot)_-:I\hspace{-0.2em}R\rightarrow I\hspace{-0.2em}R_+` is the negative part. The friction condition can similarly be written:
+
+.. math::
+
+  \displaystyle \int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+
+where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`\rho` and :math:`P_{B(\rho)}` is the orthogonal projection on it. The term :math:`\alpha(u^h_T-w^h_T)` represent here an approximation of the sliding velocity. The parameter :math:`\alpha` and the field :math:`w^h_T` have to be adapted with respect to the chosen approximation. For instance, if the standard finite difference
+
+.. math::
+
+  (\dot{u}^h_T)^{n+1} \approx \displaystyle \frac{(u^h_T)^{n+1} - (u^h_T)^{n}}{dt}
+
+is chosen, then one has to take :math:`\alpha = 1/dt` and :math:`w^h_T = (u^h_T)^{n}`. Note that due to the symmetry of the ball, the parameter :math:`\alpha` do not play an important role in the formulation. It can simply be viewed as a scaling between the augmentation parameter for the contact condition and the one for the friction condition. Note also that contrarily to the previous formulations of contact, here there is not a strict independance of the conditions with respect to the augmentation parameter (the independance only occurs at the continuous level).
+
+
+Getfem++ bricks implement three versions of the contact condition derived from the Alart-Curnier augmented Lagrangian formulation [AL-CU1991]_. The first one corresponds to the non-symmetric version. It consists in solving:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  \end{array}\right.
+
+where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity. In order to write a Newton iteration, one has to derive the the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  \cdots - \displaystyle \int_{\Gamma_c} \delta_{\lambda} \cdot v d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
+  \displaystyle -\frac{1}{r}\int_{\Gamma_c}(1-H(r(u^h_N-gap)-\lambda_N))\delta_{\lambda_N}\mu^h_N d\Gamma
+  \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
+  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
+  \end{array}\right.
+  
+where :math:`H(\cdot)` is the Heaviside function (0 for a negative argument and 1 for a non-negative argument), :math:`D_xP_{B(r)}(x)` and :math:`D_rP_{B(r)}(x)` are the derivatives of the projection on :math:`B(r)` and :math:`\delta_{\lambda}` and :math:`\delta_{u}` are the unknown corresponding to the tangent problem.
+
+
+The second version corresponds to the "symmetric" version. It is in fact symmetric in the frictionless case only (because in this case it directly derives from the augmented Lagrangian formulation). It reads:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} (\lambda^h_N - r(u^h_N-gap))_- v^h_N d\Gamma \\
+  ~~~~~~ - \int_{\Gamma_c} P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  \end{array}\right.
+
+and the tangent system:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  \cdots + \displaystyle \int_{\Gamma_c} rH(r(u^h_N-gap)-\lambda_N)\delta_{u_N} v_N -  H(r(u^h_N-gap)-\lambda_N)\delta_{\lambda_N} v_N d\Gamma \\
+  ~~~~~~+ \displaystyle \int_{\Gamma_c} r \alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{u_T}\cdot v^h_T d\Gamma \\
+  ~~~~~~- \displaystyle \int_{\Gamma_c} D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{\lambda_T}\cdot v^h_T d\Gamma \\
+  ~~~~~~+ \displaystyle \int_{\Gamma_c} ({-\mathscr F} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{\lambda_N})\cdot v^h_T d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
+  \displaystyle -\frac{1}{r}\int_{\Gamma_c}(1-H(r(u^h_N-gap)-\lambda_N))\delta_{\lambda_N}\mu^h_N d\Gamma
+  \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
+  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
+  \end{array}\right.
+
+
+The third version is closed to the non-symmetric version with an additional augmentation of the contact condition. It reads:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma +\int_{\Gamma_c} r(u^h_N-gap)_+ v^h_Nd\Gamma  = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  \end{array}\right.
+
+and the tangent system:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  \cdots - \displaystyle \int_{\Gamma_c} \delta_{\lambda} \cdot v d\Gamma + \int_{\Gamma_c} r H(u^h_N-gap)\delta_{u_N}\delta_{v_N}d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
+  \displaystyle -\frac{1}{r}\int_{\Gamma_c}(1-H(r(u^h_N-gap)-\lambda_N))\delta_{\lambda_N}\mu^h_N d\Gamma
+  \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
+  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
+  \end{array}\right.
 
 
 Add a contact with or without friction to a model
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
-Frictionless contact brick
-++++++++++++++++++++++++++
+Frictionless basic contact brick
+++++++++++++++++++++++++++++++++
 
 In order to add a frictionless contact brick you call the model object method::
 
@@ -163,6 +276,99 @@ This function adds a frictionless contact brick on ``varname_u`` thanks to a mul
 Note that is possible to change the basic contact matrix :math:`BN` by use::
 
      getfem::contact_brick_set_BN(md, indbrick);
+
+
+Basic contact brick with friction
++++++++++++++++++++++++++++++++++
+
+getfem::add_basic_contact_with_friction_brick
+          (md, varname_u, multname_n, multname_t, dataname_r, BN, dataname_friction_coeff, dataname_gap , dataname_alpha, symmetrized );
+
+This function adds a contact brick with friction on ``varname_u`` thanks to twomultiplier variables ``multname_n`` and ``multname_t``.If ``U`` is the vector
+of degrees of freedom on which the condition is applied,
+the matrix ``BN`` has to be such that the contact condition is defined
+by :math:`B_N U \le gap` and ``BT`` have to be such that the relative
+tangential
+displacement is :math:`B_T U`. The matrix ``BT`` should have as many rows as
+``BN`` multiplied by :math:`d-1` where :math:`d` is the domain dimension.
+The contact condition is prescribed thank to a multiplier
+``multname_n`` whose dimension should be equal to the number of rows of
+``BN`` and the friction condition by a mutliplier ``multname_t`` whose
+size should be the number of rows of ``BT``.
+The parameter ``dataname_friction_coeff`` describes the friction
+coefficient. It could be a scalar or a vector describing the
+coefficient on each contact condition. 
+The augmentation parameter
+``r`` should be chosen in a range of acceptabe values
+(see Getfem user documentation). ``dataname_gap`` is an
+optional parameter representing the initial gap. It can be a single value
+or a vector of value. ``dataname_alpha`` is an optional homogenization
+parameter for the augmentation parameter. The parameter ``symmetrized``
+indicates
+that a part of the symmetry of the tangent matrix will be kept or not
+(except for the coupling bewteen contact and friction).
+
+Note that is possible to change the basic contact matrices :math:`BN` and :math:`BT` by use::
+
+     getfem::contact_brick_set_BN(md, indbrick);
+     getfem::contact_brick_set_BT(md, indbrick);
+
+
+Frictionless contact brick with a rigid obstacle
+++++++++++++++++++++++++++++++++++++++++++++++++
+
+     getfem::add_contact_with_rigid_obstacle_brick
+          (md, mim, varname_u, multname_n, dataname_r, region, obstacle, symmetrized);
+
+This function adds a direct nodal frictionless contact condition with a rigid obstacle to the model. The condition is applied on the variable ``varname_u``
+on the boundary corresponding to ``region``. The rigid obstacle should
+be described with the string ``obstacle`` being a signed distance to
+the obstacle. This string should be an expression where the coordinates
+are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
+obstacle correspond to :math:`z \le 0`, the corresponding signed distance will
+be simply 'z'. ``multname_n`` should be a fixed size variable whose size is
+the number of degrees of freedom on boundary ``region``. It represents the
+contact equivalent nodal forces. 
+The augmentation parameter ``r`` should be chosen in a
+range of acceptabe values (close to the Young modulus of the elastic
+body, see Getfem user documentation). The
+parameter ``symmetrized`` indicates that the symmetry of the tangent
+matrix will be kept or not. Basically, this brick computes the matrix BN
+and the vectors gap and alpha and calls the basic contact brick.
+
+
+Contact with friction brick with a rigid obstacle
++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     getfem::add_contact_with_friction_with_rigid_obstacle_brick
+          (md, mim, varname_u, multname_n, multname_t, dataname_r,
+          dataname_friction_coeff, region, obstacle, symmetrized);
+
+
+This function adds a direct nodal contact with friction condition with a rigid obstacle
+to the model. The condition is applied on the variable ``varname_u``
+on the boundary corresponding to ``region``. The rigid obstacle should
+be described with the string ``obstacle`` being a signed distance to
+the obstacle. This string should be an expression where the coordinates
+are 'x', 'y' in 2D and 'x', 'y', 'z' in 3D. For instance, if the rigid
+obstacle correspond to :math:`z \le 0`, the corresponding signed distance will
+be simply 'z'. ``multname_n`` should be a fixed size variable whose size is
+the number of degrees of freedom on boundary ``region``. It represents the
+contact equivalent nodal forces. 
+``multname_t`` should be a fixed size variable whose size is
+the number of degrees of freedom on boundary ``region`` multiplied by
+:math:`d-1` where :math:`d` is the domain dimension. It represents the
+friction equivalent nodal forces.
+The augmentation parameter ``r`` should be chosen in a
+range of acceptabe values (close to the Young modulus of the elastic
+body, see Getfem user documentation). ``dataname_friction_coeff`` is
+the friction coefficient. It could be a scalar or a vector of values
+representing the friction coefficient on each contact node.
+The parameter  ``symmetrized`` indicates that the symmetry of the tangent
+matrix will be kept or not. Basically, this brick computes the matrix BN
+and the vectors gap and alpha and calls the basic contact brick.
+
+
 
 Hughes stabilized frictionless contact condition
 ++++++++++++++++++++++++++++++++++++++++++++++++
@@ -177,3 +383,61 @@ Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughe
 
       getfem::contact_brick_set_DN(md, indbrick);
 
+
+Continuous frictionless contact brick with a rigid obstacle
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     getfem::add_continuous_contact_with_rigid_obstacle_brick
+     (md, mim, varname_u, multname_n, dataname_obs, dataname_r, region, option);
+
+Adds a frictionless contact condition with a rigid obstacle
+to the model. This brick add a contact which is defined
+in an integral way. Is it the direct approximation of an augmented
+Lagrangian formulation defined at the
+continuous level. The advantage should be a better scalability:
+the number of
+Newton iterations should be more or less independent of the mesh size.
+The condition is applied on the variable ``varname_u``
+on the boundary corresponding to ``region``. The rigid obstacle should
+be described with the data ``dataname_obstacle`` being a signed distance to
+the obstacle (interpolated on a finite element method).
+``multname_n`` should be a fem variable representing the contact stress.
+An inf-sup condition between ``multname_n`` and ``varname_u`` is required.
+The augmentation parameter ``dataname_r`` should be chosen in a
+range of acceptabe values.
+The possible value for ``option`` is 1 for the non-symmetric
+Alart-Curnier version, 2 for the symmetric one and 3 for the
+non-symmetric Alart-Curnier with an additional augmentation. ``mim`` represents
+of course the integration method. Note that it should be accurate enough to integrate efficiently the nonlinear terms involved.
+
+Continuous contact with friction brick with a rigid obstacle
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+     getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
+     (md, mim, varname_u, multname_n, dataname_obs, dataname_r,
+     dataname_friction_coeff, region, option, dataname_alpha = "",
+     dataname_wt = "");
+
+
+Adds a contact with friction condition with a rigid obstacle
+to the model. This brick add a contact which is defined
+in an integral way. Is it the direct approximation of an augmented
+Lagrangian formulation defined at the
+continuous level. The advantage should be a better scalability:
+the number of
+Newton iterations should be more or less independent of the mesh size.
+The condition is applied on the variable ``varname_u``
+on the boundary corresponding to ``region``. The rigid obstacle should
+be described with the data ``dataname_obstacle`` being a signed distance to
+the obstacle (interpolated on a finite element method).
+``multname_n`` should be a fem variable representing the contact stress.
+An inf-sup condition between ``multname_n`` and ``varname_u`` is required.
+The augmentation parameter ``dataname_r`` should be chosen in a
+range of acceptabe values. ``dataname_friction_coeff`` is the friction
+coefficient which could be constant or defined on a finite element
+method. 
+The possible value for ``option`` is 1 for the non-symmetric
+Alart-Curnier version, 2 for the symmetric one and 3 for the
+non-symmetric Alart-Curnier with an additional augmentation.
+``dataname_alpha`` and ``dataname_wt`` are optional parameters to solve
+dynamical friction problems. ``mim`` represents
+of course the integration method. Note that it should be accurate enough to integrate efficiently the nonlinear terms involved.
