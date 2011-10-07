@@ -1242,31 +1242,30 @@ namespace getfem {
     case 26: t[0] = r*(un-g) + gmm::pos(ln);
       break;
     case 27: e = -gmm::neg(ln);
-      auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
-      for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
+      // auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      for (i=0; i<N; ++i) t[i] = no[i]*e; // + auxN[i];
       break;
     case 28: e = r*(un-g) + gmm::pos(ln);
-      auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
-      for (i=0; i<N; ++i) t[i] = no[i]*e + zt[i] + lt[i] - auxN[i];
+      // auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      for (i=0; i<N; ++i) t[i] = no[i]*e; // + zt[i] + lt[i] - auxN[i];
       break;
     case 29: e = -Heav(-ln);
-      auxN = lt;  ball_projection_grad(auxN, f_coeff * gmm::neg(ln), GP);
-      e += gmm::vect_sp(GP, no, no);
-      ball_projection_grad_r(auxN, f_coeff * gmm::neg(ln), V);
+      // ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
+      // e += gmm::vect_sp(GP, no, no);
+      // ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+	t[i*N+j] = no[i]*no[j]*e; // - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
       break;
-    case 30: e = -r*(1-alpha);
+    case 30: e = -r; // r*(alpha-scalar_type(1));
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e
-	  - (i == j) ? r*alpha : scalar_type(0);
+	t[i*N+j] = no[i]*no[j]*e; // - (i == j) ? r*alpha : scalar_type(0);
       break;
-    case 31: e = -Heav(ln);
-      auxN = lt;  ball_projection_grad(auxN, f_coeff * gmm::neg(ln), GP);
-      e -= gmm::vect_sp(GP, no, no);
-      ball_projection_grad_r(auxN, f_coeff * gmm::neg(ln), V);
+    case 31: e = -Heav(ln) + scalar_type(1);
+      // ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
+      // e -= gmm::vect_sp(GP, no, no);
+      // ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+	t[i*N+j] = no[i]*no[j]*e - (i == j) ? scalar_type(1) : scalar_type(0); // + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
       break;
     default : GMM_ASSERT1(false, "Invalid option");
     }
@@ -1527,7 +1526,7 @@ namespace getfem {
 				   &f_coeff, &WT);
     friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
 				   r, subterm2, false, alpha, mf_coeff,
-				   &f_coeff,&WT);
+				   &f_coeff, &WT);
 
     getfem::generic_assembly assem;
     assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1))(i,:,i); "

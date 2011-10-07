@@ -26,8 +26,8 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.25.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.15.mesh');
@@ -37,7 +37,7 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 % Parameters of the model
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
-friction_coeff = 0.4; % coefficient of friction
+friction_coeff = 0.0; % coefficient of friction
 r = 1.0;      % Augmentation parameter
 version = 13;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
