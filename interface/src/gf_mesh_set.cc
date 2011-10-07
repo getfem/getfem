@@ -24,24 +24,28 @@
 
 using namespace getfemint;
 
-static void check_empty_mesh(const getfem::mesh *pmesh)
-{
+static void check_empty_mesh(const getfem::mesh *pmesh) {
   if (pmesh->dim() == bgeot::dim_type(-1) || pmesh->dim() == 0) {
     THROW_ERROR( "mesh object has an invalid dimension");
   }
 }
 
-static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in)
-{
+static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in) {
   unsigned boundary_num  = in.pop().to_integer(1);
-  iarray v               = in.pop().to_iarray(2,-1);
+  // iarray v               = in.pop().to_iarray(2,-1);
+
+  iarray v               = in.pop().to_iarray();
+  
+  if (v.getm() < 1 || v.getm() > 2 || v.getp() != 1 || v.getq() != 1)
+    THROW_BADARG( "Invalid format for the convex or face list");
 
   getfem::mesh_region &rg = mesh.region(boundary_num);
   /* loop over the edges of mxEdge */
   for (size_type j=0; j < v.getn(); j++) {
     size_type cv = size_type(v(0,j))-config::base_index();
 
-    size_type f  = size_type(v(1,j))-config::base_index();
+    size_type f  = v.getm() == 2 ? (size_type(v(1,j))-config::base_index())
+                                 : size_type(-1);
     if (!mesh.convex_index().is_in(cv)) {
       THROW_BADARG( "Invalid convex number '" << cv+config::base_index() << "' at column " << j+config::base_index());
     }
@@ -280,13 +284,16 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ('region', @int rnum, @dmat CVFIDs)
-    Assigns the region number `rnum` to the convex faces stored in each
-    column of the matrix `CVFIDs`.
+    Assigns the region number `rnum` to the convex faces (or convexes)
+    stored in each column of the matrix `CVFIDs`.
 
     The first row of `CVFIDs` contains a convex #ids, and the second row
     contains a face number in the convex (or @MATLAB{0}@SCILAB{0}@PYTHON{``-1``}
     for the whole convex (regions are usually used to store a list of
-    convex faces, but you may also use them to store a list of convexes).@*/
+    convex faces, but you may also use them to store a list of convexes).
+
+    If a vector is provided (or a one row matrix) the region will represent
+    the corresponding set of convex.@*/
     sub_command
       ("region", 2, 2, 0, 0,
        set_region(*pmesh, in);
