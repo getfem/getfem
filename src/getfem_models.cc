@@ -1548,6 +1548,7 @@ namespace getfem {
   struct Dirichlet_condition_brick : public virtual_brick {
 
     bool H_version; // The version hu = r for vector fields.
+    bool normal_component; // Dirichlet on normal component for vector field.
     const mesh_fem *mf_mult_;
     mutable model_real_sparse_matrix rB;
     mutable model_real_plain_vector rV;
@@ -1592,7 +1593,8 @@ namespace getfem {
 	mf_data = md.pmesh_fem_of_variable(dl[ind]);
 	s = gmm::vect_size(*A);
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	GMM_ASSERT1(mf_u.get_qdim() == s,
+	GMM_ASSERT1(mf_u.get_qdim() ==
+		    s * ((normal_component) ? mf_u.linked_mesh().dim() : 1),
 		    dl[ind] << ": bad format of Dirichlet data. "
 		    "Detected dimension is " << s << " should be "
 		    << size_type(mf_u.get_qdim()));
@@ -1645,8 +1647,20 @@ namespace getfem {
 	       "M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,j).F(i,j);");
 	  }
 	}
-	else
+	else if (normal_component) {
+	  generic_assembly assem;
+	  if (mf_mult.get_qdim() == 1)
+	    assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+	  else
+	    assem.set("M(#2,#1)+=comp(vBase(#2).mBase(#1).Normal())(:,i,:,i,j,j);");
+	  assem.push_mi(mim);
+	  assem.push_mf(mf_u);
+	  assem.push_mf(mf_mult);
+	  assem.push_mat(*B);
+	  assem.assembly(region);
+	} else {
 	  asm_mass_matrix(*B, mim, mf_mult, mf_u, region);
+	}
       
 	if (penalized && (&mf_mult != &mf_u)) {
 	  gmm::mult(gmm::transposed(rB), rB, matl[0]);
@@ -1721,7 +1735,8 @@ namespace getfem {
 	mf_data = md.pmesh_fem_of_variable(dl[ind]);
 	s = gmm::vect_size(*A);
 	if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	GMM_ASSERT1(mf_u.get_qdim() == s,
+	GMM_ASSERT1(mf_u.get_qdim() ==
+		    s * ((normal_component) ? mf_u.linked_mesh().dim() : 1),
 		    dl[ind] << ": bad format of Dirichlet data. "
 		    "Detected dimension is " << s << " should be "
 		    << size_type(mf_u.get_qdim()));
@@ -1773,7 +1788,18 @@ namespace getfem {
 	       : "F=data(qdim(#1),qdim(#1));"
 	       "M(#1,#2)+=sym(comp(vBase(#1).vBase(#2))(:,i,:,j).F(i,j));");
 	}
-	else {
+	else if (normal_component) {
+	  generic_assembly assem;
+	  if (mf_mult.get_qdim() == 1)
+	    assem.set("M(#2,#1)+=comp(Base(#2).vBase(#1).Normal())(:,:,i,i);");
+	  else
+	    assem.set("M(#2,#1)+=comp(vBase(#2).mBase(#1).Normal())(:,i,:,i,j,j);");
+	  assem.push_mi(mim);
+	  assem.push_mf(mf_u);
+	  assem.push_mf(mf_mult);
+	  assem.push_mat(gmm::real_part(*B));
+	  assem.assembly(region);
+	} else {
 	  asm_mass_matrix(*B, mim, mf_mult, mf_u, region);
 	}
 	if (penalized && (&mf_mult != &mf_u)) {
@@ -1811,9 +1837,12 @@ namespace getfem {
     }
 
     Dirichlet_condition_brick(bool penalized, bool H_version_,
+			      bool normal_component_, 
 			      const mesh_fem *mf_mult__ = 0) {
       mf_mult_ = mf_mult__;
       H_version = H_version_;
+      normal_component = normal_component_;
+      GMM_ASSERT1(!(H_version && normal_component), "Bad Dirichlet version");
       set_flags(penalized ? "Dirichlet with penalization brick"
 		          : "Dirichlet with multipliers brick",
 		true /* is linear*/,
@@ -1826,7 +1855,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname) {
-    pbrick pbr = new Dirichlet_condition_brick(false, false);
+    pbrick pbr = new Dirichlet_condition_brick(false, false, false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -1871,7 +1900,7 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr = new Dirichlet_condition_brick(true, false, mf_mult);
+    pbrick pbr = new Dirichlet_condition_brick(true, false, false, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);
@@ -1880,11 +1909,65 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
+  size_type add_normal_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname) {
+    pbrick pbr = new Dirichlet_condition_brick(false, false, true);
+    model::termlist tl;
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl;
+    if (dataname.size()) dl.push_back(dataname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+  size_type add_normal_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname) {
+    std::string multname = md.new_name("mult_on_" + varname);
+    md.add_multiplier(multname, mf_mult, varname);
+    return add_normal_Dirichlet_condition_with_multipliers
+      (md, mim, varname, multname, region, dataname);
+  }
+
+  size_type add_normal_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname) {
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    const mesh_fem &mf_mult = classical_mesh_fem(mf_u.linked_mesh(),degree, 1);
+    return add_normal_Dirichlet_condition_with_multipliers
+      (md, mim, varname, mf_mult, region, dataname);
+  }
+
+  size_type add_normal_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   scalar_type penalisation_coeff, size_type region, 
+   const std::string &dataname, const mesh_fem *mf_mult) {
+    std::string coeffname = md.new_name("penalization_on_" + varname);
+    md.add_fixed_size_data(coeffname, 1);
+    if (md.is_complex())
+      md.set_complex_variable(coeffname)[0] = penalisation_coeff;
+    else
+      md.set_real_variable(coeffname)[0] = penalisation_coeff;
+    pbrick pbr = new Dirichlet_condition_brick(true, false, true, mf_mult);
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl(1, coeffname);
+    if (dataname.size()) dl.push_back(dataname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
   size_type add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname, const std::string &Hname) {
-    pbrick pbr = new Dirichlet_condition_brick(false, true);
+    pbrick pbr = new Dirichlet_condition_brick(false, true, false);
     model::termlist tl;
     tl.push_back(model::term_description(multname, varname, true));
     model::varnamelist vl(1, varname);
@@ -1927,7 +2010,7 @@ namespace getfem {
       md.set_complex_variable(coeffname)[0] = penalisation_coeff;
     else
       md.set_real_variable(coeffname)[0] = penalisation_coeff;
-    pbrick pbr = new Dirichlet_condition_brick(true, true, mf_mult);
+    pbrick pbr = new Dirichlet_condition_brick(true, true, false, mf_mult);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
     model::varnamelist vl(1, varname);

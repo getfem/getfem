@@ -38,8 +38,8 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
 friction_coeff = 0.4; % coefficient of friction
-r = 1;     % Augmentation parameter
-version = 10; % 1 : frictionless contact and the basic contact brick
+r = 1.0;      % Augmentation parameter
+version = 13;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -54,17 +54,21 @@ version = 10; % 1 : frictionless contact and the basic contact brick
               % 7 : frictionless contact and the continuous brick
               %     Newton and Alart-Curnier augmented lagrangian,
               %     unsymmetric version with an additional augmentation.
-              % 8 : frictionless contact and the continuous brick : Uzawa
+              % 8 : frictionless contact and the continuous brick
+              %     New unsymmetric method.
+              % 9 : frictionless contact and the continuous brick : Uzawa
               %     (not very adapted because it is a semi-coercive case)
-              % 9 : contact with 'static' Coulomb friction and the continuous brick
-              %     Newton and Alart-Curnier augmented lagrangian,
-              %     unsymmetric version.
               % 10 : contact with 'static' Coulomb friction and the continuous brick
               %     Newton and Alart-Curnier augmented lagrangian,
-              %     nearly symmetric version.
+              %     unsymmetric version.
               % 11 : contact with 'static' Coulomb friction and the continuous brick
               %     Newton and Alart-Curnier augmented lagrangian,
+              %     nearly symmetric version.
+              % 12 : contact with 'static' Coulomb friction and the continuous brick
+              %     Newton and Alart-Curnier augmented lagrangian,
               %     unsymmetric version with an additional augmentation.
+              % 13 : contact with 'static' Coulomb friction and the continuous brick
+              %     New unsymmetric method.
 penalty_parameter = 1E-8;    % For rigid motions.
 uzawa_r = penalty_parameter; % Descent coefficient for Uzawa method.
 niter = 100;  % Maximum number of iterations for Newton's algorithm.
@@ -179,7 +183,7 @@ elseif (version == 3 || version == 4) % BN and BT defined by the contact brick
 		 obstacle, 0);
   end;
 
-elseif (version >= 5 && version <= 7) % The continuous version, Newton
+elseif (version >= 5 && version <= 8) % The continuous version, Newton
  
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -190,7 +194,7 @@ elseif (version >= 5 && version <= 7) % The continuous version, Newton
   gf_model_set(md, 'add continuous contact with rigid obstacle brick', mim_friction, 'u', ...
 	         'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
           
-elseif (version == 8) % The continuous version, Uzawa
+elseif (version == 9) % The continuous version, Uzawa
  
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -219,7 +223,7 @@ elseif (version == 8) % The continuous version, Uzawa
   
   solved = true;
   
-elseif (version >= 9 && version <= 11) % The continuous version with friction, Newton
+elseif (version >= 10 && version <= 13) % The continuous version with friction, Newton
  
   gf_mesh_fem_set(mflambda, 'qdim', 2);
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
@@ -230,7 +234,7 @@ elseif (version >= 9 && version <= 11) % The continuous version with friction, N
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add continuous contact with friction with rigid obstacle brick', mim_friction, 'u', ...
-	         'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-8);
+	         'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
 else
   error('Unexistent version');
 end
@@ -238,7 +242,7 @@ end
 % Solve the problem
 
 if (~solved)
-  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
+  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter,  'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
 
 U = gf_model_get(md, 'variable', 'u');

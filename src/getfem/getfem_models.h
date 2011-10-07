@@ -915,7 +915,7 @@ namespace getfem {
    const std::string &multname, size_type region,
    const std::string &dataname = std::string());
 
-  /** Same function as the preceeding one but the multipliers variable will
+  /** Same function as the previous one but the multipliers variable will
       be declared to the brick by the function. `mf_mult` is the finite element
       method on which the multiplier will be build (it will be restricted to
       the mesh region `region` and eventually some conflicting dofs with some
@@ -926,7 +926,7 @@ namespace getfem {
    const mesh_fem &mf_mult, size_type region,
    const std::string &dataname = std::string());
 
-  /** Same function as the preceeding one but the `mf_mult` parameter is
+  /** Same function as the previous one but the `mf_mult` parameter is
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
    */
@@ -951,13 +951,83 @@ namespace getfem {
       on which the Dirichlet condition is prescribed.
       `mf_mult` is an optional parameter which allows to weaken the
       Dirichlet condition specifying a multiplier space.
-      Return the brick index in the model.
+      Returns the brick index in the model.
   */
   size_type add_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalization_coeff, size_type region,
    const std::string &dataname = std::string(),
    const mesh_fem *mf_mult = 0);
+
+  /** Add a Dirichlet condition to the normal component of the vector
+     (or tensor) valued variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with a multiplier variable `multname` which
+      should be first declared as a multiplier 
+      variable on the mesh region in the model. `dataname` is the optional
+      right hand side of  the normal Dirichlet condition.
+      It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed (scalar if the variable
+      is vector valued, vector if the variable is tensor valued).
+      Returns the brick index in the model.
+  */
+  size_type add_normal_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region,
+   const std::string &dataname = std::string());
+
+  /** Same function as the previous one but the multipliers variable will
+      be declared to the brick by the function. `mf_mult` is the finite element
+      method on which the multiplier will be build (it will be restricted to
+      the mesh region `region` and eventually some conflicting dofs with some
+      other multiplier variables will be suppressed).
+  */
+  size_type add_normal_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const mesh_fem &mf_mult, size_type region,
+   const std::string &dataname = std::string());
+
+  /** Same function as the previous one but the `mf_mult` parameter is
+      replaced by `degree`. The multiplier will be described on a standard
+      finite element method of the corresponding degree.
+   */
+  size_type add_normal_Dirichlet_condition_with_multipliers
+  (model &md, const mesh_im &mim, const std::string &varname,
+   dim_type degree, size_type region,
+   const std::string &dataname = std::string());
+
+  /** Add a Dirichlet condition to the normal component of the vector
+     (or tensor) valued variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with penalization. The penalization coefficient
+      is intially `penalization_coeff` and will be added to the data of
+      the model. `dataname` is the optional
+      right hand side of  the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed (scalar if the variable
+      is vector valued, vector if the variable is tensor valued).
+      `mf_mult` is an optional parameter which allows to weaken the
+      Dirichlet condition specifying a multiplier space.
+      Return the brick index in the model.
+  */
+  size_type add_normal_Dirichlet_condition_with_penalization
+  (model &md, const mesh_im &mim, const std::string &varname,
+   scalar_type penalization_coeff, size_type region,
+   const std::string &dataname = std::string(),
+   const mesh_fem *mf_mult = 0);
+
+
+
+
+
+
+
+
+
+
+
+
 
   /** Change the penalization coefficient of a Dirichlet condition with
       penalization brick. If the brick is not of this kind,

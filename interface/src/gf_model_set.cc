@@ -457,6 +457,99 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+    /*@SET ind = ('add normal Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
+      Add a Dirichlet condition to the normal component of the vector
+     (or tensor) valued variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with a multiplier variable described by
+      `mult_description`. If `mult_description` is a string this is assumed
+      to be the variable name corresponding to the multiplier (which should be
+      first declared as a multiplier variable on the mesh region in the model).
+      If it is a finite element method (mesh_fem object) then a multiplier
+      variable will be added to the model and build on this finite element
+      method (it will be restricted to the mesh region `region` and eventually
+      some conflicting dofs with some other multiplier variables will be
+      suppressed). If it is an integer, then a  multiplier variable will be
+      added to the model and build on a classical finite element of degree
+      that integer. `dataname` is the optional right hand side of  the
+      Dirichlet condition. It could be constant or described on a fem; scalar
+      or vector valued, depending on the variable on which the Dirichlet
+      condition is prescribed (scalar if the variable
+      is vector valued, vector if the variable is tensor valued).
+      Returns the brick index in the model.@*/
+    sub_command
+      ("add normal Dirichlet condition with multipliers", 4, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       int version = 0;
+       size_type degree = 0;
+       std::string multname;
+       getfemint_mesh_fem *gfi_mf = 0;
+       mexarg_in argin = in.pop();
+       if (argin.is_integer()) {
+         degree = argin.to_integer();
+         version = 1;
+       } else if (argin.is_string()) {
+         multname = argin.to_string();
+         version = 2;
+       } else {
+         gfi_mf = argin.to_getfemint_mesh_fem();
+         version = 3;
+       }
+       size_type region = in.pop().to_integer();
+       std::string dataname;
+       if (in.remaining()) dataname = in.pop().to_string();
+
+       size_type ind = config::base_index();
+       switch(version) {
+       case 1:  ind += getfem::add_normal_Dirichlet_condition_with_multipliers
+           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region, dataname);
+         break;
+       case 2:  ind += getfem::add_normal_Dirichlet_condition_with_multipliers
+           (md->model(), gfi_mim->mesh_im(), varname, multname, region, dataname);
+         break;
+       case 3:  ind += getfem::add_normal_Dirichlet_condition_with_multipliers
+           (md->model(), gfi_mim->mesh_im(), varname, gfi_mf->mesh_fem(), region, dataname);
+         workspace().set_dependance(md, gfi_mf);
+         break;
+       }
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
+    /*@SET ind = ('add normal Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname, @tmf mf_mult])
+    Add a Dirichlet condition to the normal component of the vector
+    (or tensor) valued variable `varname` and the mesh
+    region `region`. This region should be a boundary. The Dirichlet
+    condition is prescribed with penalization. The penalization coefficient
+    is initially `coeff` and will be added to the data of the model.
+    `dataname` is the optional right hand side of the Dirichlet condition.
+    It could be constant or described on a fem; scalar or vector valued,
+    depending on the variable on which the Dirichlet condition is prescribed
+    (scalar if the variable
+    is vector valued, vector if the variable is tensor valued).
+    `mf_mult` is an optional parameter which allows to weaken the
+    Dirichlet condition specifying a multiplier space.
+    Returns the brick index in the model.@*/
+    sub_command
+      ("add normal Dirichlet condition with penalization", 4, 6, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       double coeff = in.pop().to_scalar();
+       size_type region = in.pop().to_integer();
+       std::string dataname;
+       if (in.remaining()) dataname = in.pop().to_string();
+       const getfem::mesh_fem *mf_mult = 0;
+       if (in.remaining()) mf_mult = in.pop().to_const_mesh_fem();
+       size_type ind = config::base_index();
+       ind += getfem::add_normal_Dirichlet_condition_with_penalization
+       (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+	dataname, mf_mult);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
 
     /*@SET ind = ('add generalized Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region, @str dataname, @str Hname)
     Add a Dirichlet condition on the variable `varname` and the mesh
@@ -478,7 +571,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     or vector valued, depending on the variable on which the Dirichlet
     condition is prescribed. `Hname` is the data
     corresponding to the matrix field `H`.
-    Return the brick index in the model.@*/
+    Returns the brick index in the model.@*/
     sub_command
       ("add generalized Dirichlet condition with multipliers", 6, 6, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();

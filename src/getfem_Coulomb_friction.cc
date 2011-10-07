@@ -1164,11 +1164,9 @@ namespace getfem {
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
 	t[i*N+j] = (i == j) ? -scalar_type(1) : scalar_type(0);
       break;
-    case 2 : {
-        e = ln+gmm::neg(ln-r*(un-g));
-	auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
-	for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i])/ r;
-      }
+    case 2 : e = ln+gmm::neg(ln-r*(un-g));
+      auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
+      for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i])/ r;
       break;
     case 3 : e = -Heav(r*(un-g)-ln);
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
@@ -1212,7 +1210,7 @@ namespace getfem {
       e += gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(auxN, -f_coeff * ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e - GP(i,j) - f_coeff * V[j] * no[i]; // transposer ?
+	t[i*N+j] = no[i]*no[j]*e - GP(i,j) - f_coeff * V[j] * no[i];
       break;
     case 18 : e = Heav(r*(un-g)-ln);
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
@@ -1225,14 +1223,51 @@ namespace getfem {
       for (i=0; i<N; ++i) t[i] = auxN[i] - e*no[i];
       break;
     case 20 : e = r*Heav(r*(un-g)-ln);
-      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e;
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = no[i]*no[j]*e;
       break;
     case 21 : e = r*gmm::pos(un-g);
       for (i=0; i<N; ++i) t[i] = lambda[i] - e*no[i];
       break;
-       
-            
+    case 22 : e = -Heav(-ln);
+      for (i=0; i<N; ++i) t[i] = e*no[i];
+      break;
+    case 23 : e = -r;
+      for (i=0; i<N; ++i) t[i] = e*no[i];
+      break;
+    case 24: t[0] = -Heav(ln);
+      break;
+    case 25 : e = -gmm::neg(ln);
+      for (i=0; i<N; ++i) t[i] = e*no[i];
+      break;
+    case 26: t[0] = r*(un-g) + gmm::pos(ln);
+      break;
+    case 27: e = -gmm::neg(ln);
+      auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
+      break;
+    case 28: e = r*(un-g) + gmm::pos(ln);
+      auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      for (i=0; i<N; ++i) t[i] = no[i]*e + zt[i] + lt[i] - auxN[i];
+      break;
+    case 29: e = -Heav(-ln);
+      auxN = lt;  ball_projection_grad(auxN, f_coeff * gmm::neg(ln), GP);
+      e += gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(auxN, f_coeff * gmm::neg(ln), V);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
+	t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+      break;
+    case 30: e = -r*(1-alpha);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
+	t[i*N+j] = no[i]*no[j]*e
+	  - (i == j) ? r*alpha : scalar_type(0);
+      break;
+    case 31: e = -Heav(ln);
+      auxN = lt;  ball_projection_grad(auxN, f_coeff * gmm::neg(ln), GP);
+      e -= gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(auxN, f_coeff * gmm::neg(ln), V);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
+	t[i*N+j] = no[i]*no[j]*e + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+      break;
     default : GMM_ASSERT1(false, "Invalid option");
     }
   }
@@ -1313,31 +1348,37 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
    const mesh_region &rg = mesh_region::all_convexes()) {
     
+    size_type subterm1 = (option == 4) ? 22 : 4;
+    size_type subterm2 = (option == 4) ? 23 : 5;
+    size_type subterm3 = (option == 4) ? 24 : 6;
+    size_type subterm4 = (option == 2) ? 10 : 12;
+
+
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
-				   obs, r, 4);
+				   obs, r, subterm1);
     friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
-				   obs, r, 5);
+				   obs, r, subterm2);
     friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda_n, mf_obs,
-				   obs, r, 6);
+				   obs, r, subterm3);
     friction_nonlinear_term nterm4(mf_u, U, mf_lambda, lambda_n, mf_obs,
-				   obs, r, (option == 2) ? 10 : 12);
+				   obs, r, subterm4);
     
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1 :
+    case 1: case 4:
       assem.set
        ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
         "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#2).vBase(#1))(i,:,:,i); "
 	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:)");
       break;
-    case 2 :
+    case 2:
       assem.set
        ("M$1(#1,#2)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
 	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3).Base(#2).Base(#2))(i,:,:);"
 	"M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
       break;
-    case 3 :
+    case 3:
       assem.set
       ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#2))(i,:,i,:); "
        "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#2).vBase(#1))(i,:,:,i); "
@@ -1370,16 +1411,20 @@ namespace getfem {
    const VECT1 &WT, int option,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
-    size_type subterm1 = (option == 2) ? 17 : 1;
+    size_type subterm1 = (option == 2) ? 17 : ((option == 4) ? 29 : 1);
+    size_type subterm2 = (option == 4) ? 30 : 3;
+    size_type subterm3 = (option == 4) ? 31 : 15;
     size_type subterm4 = (option == 2) ? 18 : 20;
 
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
 				   r, subterm1, false, alpha, mf_coeff,
 				   &f_coeff, &WT);
     friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
-				   r, 3, false, alpha, mf_coeff, &f_coeff,&WT);
+				   r, subterm2, false, alpha, mf_coeff,
+				   &f_coeff, &WT);
     friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
-				   r, 15, false, alpha, mf_coeff,&f_coeff,&WT);
+				   r, subterm3, false, alpha, mf_coeff,
+				   &f_coeff, &WT);
     friction_nonlinear_term nterm4(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
 				   r, subterm4, false, alpha, mf_coeff,
 				   &f_coeff, &WT);
@@ -1387,20 +1432,20 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1 :
+    case 1: case 4:
       assem.set
        ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); "
         "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2).vBase(#1))(i,j,:,j,:,i); "
 	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3,#4).vBase(#2).vBase(#2))(i,j,:,i,:,j)");
       break;
-    case 2 :
+    case 2:
       assem.set
        ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); "
 	"M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2).vBase(#1))(i,j,:,j,:,i); "
 	"M$3(#2,#2)+=comp(NonLin$3(#1,#1,#2,#3,#4).vBase(#2).vBase(#2))(i,j,:,i,:,j);"
 	"M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3,#4).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
       break;
-    case 3 :
+    case 3:
       assem.set
       ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); "
        "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2).vBase(#1))(i,j,:,j,:,i); "
@@ -1432,12 +1477,18 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
    const mesh_region &rg = mesh_region::all_convexes()) {
     
-    size_type subterm = (option == 1) ? 7 : ((option == 2) ? 11 : 13);
+    size_type subterm1 = 0, subterm2 = (option == 4) ? 26 : 8;
+    switch (option) {
+    case 1 : subterm1 = 7; break;
+    case 2 : subterm1 = 11; break;
+    case 3 : subterm1 = 13; break;
+    case 4 : subterm1 = 25; break;
+    }
 
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
-				   obs, r, subterm);
+				   obs, r, subterm1);
     friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
-				   obs, r, 8);
+				   obs, r, subterm2);
 
     getfem::generic_assembly assem;
     assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
@@ -1463,13 +1514,20 @@ namespace getfem {
    const VECT1 &WT, int option,
    const mesh_region &rg = mesh_region::all_convexes()) {
     
-    size_type subterm = (option == 1) ? 0 : ((option == 2) ? 19 : 21);
+    size_type subterm1 = 0, subterm2 = (option == 4) ? 28 : 2;
+    switch (option) {
+    case 1 : subterm1 = 0; break;
+    case 2 : subterm1 = 19; break;
+    case 3 : subterm1 = 21; break;
+    case 4 : subterm1 = 27; break;
+    }
 
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
-				   r, subterm, false, alpha, mf_coeff,
+				   r, subterm1, false, alpha, mf_coeff,
 				   &f_coeff, &WT);
     friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
-				   r, 2, false, alpha, mf_coeff, &f_coeff,&WT);
+				   r, subterm2, false, alpha, mf_coeff,
+				   &f_coeff,&WT);
 
     getfem::generic_assembly assem;
     assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1))(i,:,i); "
@@ -1495,6 +1553,7 @@ namespace getfem {
     // option = 1 : Alart-Curnier
     // option = 2 : Symmetric Alart-Curnier
     // option = 3 : Alart Curnier "over-augmented"
+    // option = 4 : New method
     
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -1577,7 +1636,7 @@ namespace getfem {
 	     mf_lambda, lambda, mf_obstacle, obstacle, vr[0], option, rg);
 	}
 	else {
-	  size_type fourthmat = (option == 1) ? 1 : 3;
+	  size_type fourthmat = (option == 3) ? 3 : 1;
 	  asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
 	    (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
 	     mf_lambda, lambda, mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
@@ -1608,7 +1667,7 @@ namespace getfem {
       option = option_;
       contact_only = contact_only_;
       set_flags("Continuous Coulomb friction brick", false /* is linear*/,
-                (option!=2) && contact_only /* is symmetric */,
+                (option==2) && contact_only /* is symmetric */,
 		false /* is coercive */,
 		true /* is real */, false /* is complex */);
     }
@@ -1633,7 +1692,7 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1 : 
+    case 1 : case 4 : 
       tl.push_back(model::term_description(varname_u, multname_n, false));
       tl.push_back(model::term_description(multname_n, varname_u, false));
       tl.push_back(model::term_description(multname_n, multname_n, true));
@@ -1681,18 +1740,18 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1 : 
+    case 1: case 4:
       tl.push_back(model::term_description(varname_u, multname_n, false));
       tl.push_back(model::term_description(multname_n, varname_u, false));
       tl.push_back(model::term_description(multname_n, multname_n, true));
       break;
-    case 2 : 
+    case 2: 
       tl.push_back(model::term_description(varname_u, multname_n, false));
       tl.push_back(model::term_description(multname_n, varname_u, false));
       tl.push_back(model::term_description(multname_n, multname_n, true));
       tl.push_back(model::term_description(varname_u, varname_u, true));
       break;
-    case 3 :
+    case 3:
       tl.push_back(model::term_description(varname_u, multname_n, false));
       tl.push_back(model::term_description(multname_n, varname_u, false));
       tl.push_back(model::term_description(multname_n, multname_n, true));

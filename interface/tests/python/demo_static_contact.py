@@ -58,17 +58,21 @@ version = 9   # 1 : frictionless contact and the basic contact brick
               # 7 : frictionless contact and the continuous brick
               #     Newton and Alart-Curnier augmented lagrangian,
               #     unsymmetric version with an additional augmentation.
-              # 8 : frictionless contact and the continuous brick : Uzawa
+              # 8 : frictionless contact and the continuous brick
+              #     New unsymmetric version.
+              # 9 : frictionless contact and the continuous brick : Uzawa
               #     (not very adapted because it is a semi-coercive case)
-              # 9 : contact with 'static' Coulomb friction and the continuous
-              #     brick. Newton and Alart-Curnier augmented lagrangian,
-              #     unsymmetric version.
               # 10 : contact with 'static' Coulomb friction and the continuous
               #     brick. Newton and Alart-Curnier augmented lagrangian,
-              #     nearly symmetric version.
+              #     unsymmetric version.
               # 11 : contact with 'static' Coulomb friction and the continuous
               #     brick. Newton and Alart-Curnier augmented lagrangian,
+              #     nearly symmetric version.
+              # 12 : contact with 'static' Coulomb friction and the continuous
+              #     brick. Newton and Alart-Curnier augmented lagrangian,
               #     unsymmetric version with an additional augmentation.
+              # 13 : contact with 'static' Coulomb friction and the continuous
+              #     brick. New unsymmetric version.
 
 penalty_parameter = 1E-8    # For rigid motions.
 uzawa_r = penalty_parameter # Descent coefficient for Uzawa method.
@@ -169,7 +173,7 @@ elif version == 3 or version == 4: # BN and BT defined by the contact brick
       md.add_contact_with_rigid_obstacle_brick(mim, 'u', 'lambda_n', 'lambda_t', 'r',
                                               'friction_coeff', GAMMAC, obstacle, 0)
 
-elif version >= 5 and version <= 7: # The continuous version, Newton
+elif version >= 5 and version <= 8: # The continuous version, Newton
 
    ldof = mflambda.dof_on_region(GAMMAC)
    mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
@@ -180,7 +184,7 @@ elif version >= 5 and version <= 7: # The continuous version, Newton
    md.add_continuous_contact_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n',
                                                       'obstacle', 'r', GAMMAC, version-4);
 
-elif version == 8: # The continuous version, Uzawa
+elif version == 9: # The continuous version, Uzawa
 
    ldof = mflambda.dof_on_region(GAMMAC)
    mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
@@ -208,7 +212,7 @@ elif version == 8: # The continuous version, Uzawa
       if difff < penalty_parameter:
          break
 
-elif version >= 9 and version <= 11: # Continuous version with friction, Newton
+elif version >= 10 and version <= 13: # Continuous version with friction, Newton
 
    mflambda.set_qdim(2);
    ldof = mflambda.dof_on_region(GAMMAC)
@@ -218,13 +222,13 @@ elif version >= 9 and version <= 11: # Continuous version with friction, Newton
    md.add_initialized_data('friction_coeff', [friction_coeff])
    OBS = mfd.eval(obstacle)
    md.add_initialized_fem_data('obstacle', mfd, OBS)
-   md.add_continuous_contact_with_friction_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-8);
+   md.add_continuous_contact_with_friction_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
 
 else:
    print 'Unexistent version'
 
 # Solve the problem
-if version != 8:
+if version != 9:
    md.solve('max_res', 1E-9, 'very noisy', 'max_iter', niter, 'lsearch', 'default') #, 'with pseudo potential')
 
 U = md.get('variable', 'u')

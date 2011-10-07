@@ -29,13 +29,13 @@ Mechanics and Engineering 92, 353--375, (1991).
 .. [Xfem] N. Moës, J. Dolbow and T. Belytschko, *A finite element method for
    crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.
 
-.. [KH-PO-RE2006] Khenous H., Pommier J., Renard Y. Hybrid discretization of the Signorini problem with Coulomb friction, theoretical aspects and comparison of some numerical solvers. Applied Numerical Mathematics, 56/2:163-192, 2006.
+.. [KH-PO-RE2006] Khenous H., Pommier J., Renard Y. *Hybrid discretization of the Signorini problem with Coulomb friction, theoretical aspects and comparison of some numerical solvers*. Applied Numerical Mathematics, 56/2:163-192, 2006.
 
 
 .. [KI-OD1988] Kikuchi N., Oden J.T., Contact problems in elasticity, SIAM, 1988.
 
 
-.. [HI-RE2010] Hild P., Renard Y. Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics. To appear in Numer. Math.
+.. [HI-RE2010] Hild P., Renard Y. Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics. Numer. Math. 15:1 (2010), 101--129.
 
 .. [nedelec1991] J.-C. Nedelec. *Notions sur les techniques d'éléments finis*, 
    Ellipses, SMAI, Mathématiques & Applications n°7, (1991).
