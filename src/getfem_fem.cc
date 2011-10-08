@@ -2099,11 +2099,13 @@ namespace getfem {
     static bgeot::pgeometric_trans pgt_last = 0;
     static short_type k_last = short_type(-1);
     static pfem fm_last = 0;
-    bool found = false;
+    static char isuffix_last = 0;
+    bool found = false, isuffix = suffix[0];
 
-    if (pgt_last == pgt && k_last == k)
+    if (pgt_last == pgt && k_last == k && isuffix == isuffix_last)
       return fm_last;
 
+    isuffix_last = isuffix;
 
     size_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
