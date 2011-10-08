@@ -37,8 +37,11 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 % Parameters of the model
 lambda = 1;  % Lame coefficient
 mu = 1;      % Lame coefficient
-friction_coeff = 0.0; % coefficient of friction
+friction_coeff = 0.4; % coefficient of friction
 r = 1.0;      % Augmentation parameter
+penalty_parameter = 1E-8;    % For rigid motions.
+uzawa_r = penalty_parameter; % Descent coefficient for Uzawa method.
+niter = 50;  % Maximum number of iterations for Newton's algorithm.
 version = 13;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
@@ -69,9 +72,6 @@ version = 13;  % 1 : frictionless contact and the basic contact brick
               %     unsymmetric version with an additional augmentation.
               % 13 : contact with 'static' Coulomb friction and the continuous brick
               %     New unsymmetric method.
-penalty_parameter = 1E-8;    % For rigid motions.
-uzawa_r = penalty_parameter; % Descent coefficient for Uzawa method.
-niter = 100;  % Maximum number of iterations for Newton's algorithm.
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
 
@@ -94,16 +94,15 @@ mfu=gf_mesh_fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', 2);
 mfd=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfd, 'classical fem', 2);
+mflambda=gf_mesh_fem(m, 1); % used only by versions 5 to 13
+gf_mesh_fem_set(mflambda, 'classical fem', 1);
 mfvm=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
-mflambda=gf_mesh_fem(m, 1); % used only by version 5, 6, 7, 8 and 9
-gf_mesh_fem_set(mflambda, 'classical fem', 1);
 
 % Integration method
 mim=gf_mesh_im(m, 4);
-mim_friction=gf_mesh_im(m, gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),4)'));
-
-
+mim_friction=gf_mesh_im(m, ...
+    gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),4)'));
 
 % Volumic density of force
 nbdofd = gf_mesh_fem_get(mfd, 'nbdof');
@@ -161,13 +160,13 @@ if (version == 1 || version == 2) % defining the matrices BN and BT by hand
   gf_model_set(md, 'add initialized data', 'gap', gap);
   gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
   if (version == 1)
-    gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', BN, ...
-	         'gap', 'alpha', 0);
+    gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', ...
+        BN, 'gap', 'alpha', 0);
   else
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', ...
 		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'gap', 'alpha', 0);
   end;
-elseif (version == 3 || version == 4) % BN and BT defined by the contact brick
+elseif (version == 3 || version == 4) % BN and BT defined by contact brick
 
   gf_model_set(md, 'add variable', 'lambda_n', nbc);
   gf_model_set(md, 'add initialized data', 'r', [r]);
@@ -191,8 +190,8 @@ elseif (version >= 5 && version <= 8) % The continuous version, Newton
   gf_model_set(md, 'add initialized data', 'r', [r]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  gf_model_set(md, 'add continuous contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
+  gf_model_set(md, 'add continuous contact with rigid obstacle brick', ...
+      mim_friction, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
           
 elseif (version == 9) % The continuous version, Uzawa
  

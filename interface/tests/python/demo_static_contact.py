@@ -100,7 +100,7 @@ mfd.set_classical_fem(1)
 mfvm = gf.MeshFem(m, 1)
 mfvm.set_classical_discontinuous_fem(1)
 
-mflambda = gf.MeshFem(m, 1) # used only by version 5, 6, 7, 8 and 9
+mflambda = gf.MeshFem(m, 1) # used only by version 5 to 13
 mflambda.set_classical_fem(1)
 
 # Integration method

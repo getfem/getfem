@@ -1682,9 +1682,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     An inf-sup condition beetween `multname_n` and `varname_u` is required.
     The augmentation parameter `dataname_r` should be chosen in a
     range of acceptabe values. `option` is 1 for
-    non symmetric Alart-Curnier augmented Lagrangian method,
-    2 for the symmetric one, 3 for the
-    non-symmetric Alart-Curnier method with an additional augmentation. The
+    non symmetric Alart-Curnier augmented Lagrangian method, 2 for the
+    symmetric one, 3 for the non-symmetric Alart-Curnier method with
+    an additional augmentation and 4 for a new unsymmetric method. The
     default value is 1.
     @*/
      sub_command
@@ -1726,8 +1726,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       method. 
       The possible value for `option` is 1 for the non-symmetric
       Alart-Curnier version, 2 for the symmetric one and 3 for the
-      non-symmetric Alart-Curnier with an additional augmentation. The
-      default value is 1.
+      non-symmetric Alart-Curnier with an additional augmentation and 4 for
+      a new unsymmetric method. The default value is 1.
       'dataname_alpha' and 'dataname_wt' are optional parameters to solve
       dynamical friction problems.
     @*/

@@ -1153,16 +1153,16 @@ namespace getfem {
 
 
   void friction_nonlinear_term::compute
-  (fem_interpolation_context &/*ctx*/, bgeot::base_tensor &t) { 
+  (fem_interpolation_context &ctx, bgeot::base_tensor &t) { 
     
     t.adjust_sizes(sizes_);
-    scalar_type e; dim_type i, j;
+    scalar_type e; dim_type i, j; size_type cv = ctx.convex_num();
     
     switch (option) {
     case 0 : for (i=0; i<N; ++i) t[i] = lambda[i]; break;
     case 1 :
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = (i == j) ? -scalar_type(1) : scalar_type(0);
+	t[i*N+j] = ((i == j) ? -scalar_type(1) : scalar_type(0));
       break;
     case 2 : e = ln+gmm::neg(ln-r*(un-g));
       auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
@@ -1192,7 +1192,7 @@ namespace getfem {
     case 13 : e = ln - gmm::pos(un-g) * r;
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-    case 14 : t[0] = -Heav(ln)+(1.-Heav(un-g))*Heav(-ln); break;
+    case 14 : t[0] = -Heav(ln)+(scalar_type(1)-Heav(un-g))*Heav(-ln); break;
     case 15 :
       e = (Heav(r*(un-g)-ln))/r;
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
@@ -1228,7 +1228,7 @@ namespace getfem {
     case 21 : e = r*gmm::pos(un-g);
       for (i=0; i<N; ++i) t[i] = lambda[i] - e*no[i];
       break;
-    case 22 : e = -Heav(-ln);
+    case 22 : e = -Heav(-ln); //Heav(ln)-scalar_type(1);
       for (i=0; i<N; ++i) t[i] = e*no[i];
       break;
     case 23 : e = -r;
@@ -1242,30 +1242,30 @@ namespace getfem {
     case 26: t[0] = r*(un-g) + gmm::pos(ln);
       break;
     case 27: e = -gmm::neg(ln);
-      // auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
-      for (i=0; i<N; ++i) t[i] = no[i]*e; // + auxN[i];
+      auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
       break;
     case 28: e = r*(un-g) + gmm::pos(ln);
-      // auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
-      for (i=0; i<N; ++i) t[i] = no[i]*e; // + zt[i] + lt[i] - auxN[i];
+      auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      for (i=0; i<N; ++i) t[i] = no[i]*e + zt[i] + lt[i] - auxN[i];
       break;
-    case 29: e = -Heav(-ln);
-      // ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
-      // e += gmm::vect_sp(GP, no, no);
-      // ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
+    case 29: e = -Heav(-ln); //Heav(ln)-scalar_type(1);
+      ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
+       e += gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e; // - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+	t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
       break;
-    case 30: e = -r; // r*(alpha-scalar_type(1));
+    case 30: e = r*(alpha-scalar_type(1));
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e; // - (i == j) ? r*alpha : scalar_type(0);
+	t[i*N+j] = no[i]*no[j]*e - ((i == j) ? r*alpha : scalar_type(0));
       break;
     case 31: e = -Heav(ln) + scalar_type(1);
-      // ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
-      // e -= gmm::vect_sp(GP, no, no);
-      // ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
+      ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
+      e -= gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = no[i]*no[j]*e - (i == j) ? scalar_type(1) : scalar_type(0); // + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+	t[i*N+j] = no[i]*no[j]*e - ((i == j) ? scalar_type(1) : scalar_type(0)) + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
       break;
     default : GMM_ASSERT1(false, "Invalid option");
     }
@@ -1627,15 +1627,15 @@ namespace getfem {
       if (version & model::BUILD_MATRIX) {
 	GMM_TRACE2("Continuous Coulomb friction tangent term");
 	gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
-	if (option == 3) gmm::clear(matl[3]);
+	if (matl.size() >= 4) gmm::clear(matl[3]);
 	if (contact_only) {
-	  size_type fourthmat = (option == 3) ? 3 : 1;
+	  size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
 	  asm_frictionless_continuous_tangent_matrix_Alart_Curnier
 	    (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
 	     mf_lambda, lambda, mf_obstacle, obstacle, vr[0], option, rg);
 	}
 	else {
-	  size_type fourthmat = (option == 3) ? 3 : 1;
+	  size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
 	  asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
 	    (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
 	     mf_lambda, lambda, mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
@@ -1646,7 +1646,7 @@ namespace getfem {
 
       if (version & model::BUILD_RHS) {
 	gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
-	if (option == 3) gmm::clear(vecl[3]);
+	if (matl.size() >= 4) gmm::clear(vecl[3]);
 
 	if (contact_only)
 	  asm_frictionless_continuous_rhs_Alart_Curnier
@@ -1685,8 +1685,7 @@ namespace getfem {
    const std::string &multname_n, const std::string &dataname_obs,
    const std::string &dataname_r, size_type region, int option) {
    
-    pbrick pbr
-      = new Coulomb_friction_continuous_brick(true, option);
+    pbrick pbr = new Coulomb_friction_continuous_brick(true, option);
 
     model::termlist tl;
 

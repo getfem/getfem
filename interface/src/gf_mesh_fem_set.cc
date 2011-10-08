@@ -71,15 +71,15 @@ static void set_classical_fem(getfem::mesh_fem *mf, getfemint::mexargs_in& in,
     bv = in.pop().to_bit_vector(&mf->linked_mesh().convex_index(),
 				-config::base_index());
     if (!discontinuous) {
-      mf->set_classical_finite_element(bv,K);
+      mf->set_classical_finite_element(bv, K);
     } else {
-      mf->set_classical_discontinuous_finite_element(bv,K,alpha);
+      mf->set_classical_discontinuous_finite_element(bv, K, alpha);
     }
   } else {
     if (!discontinuous) {
       mf->set_classical_finite_element(K);
     } else {
-      mf->set_classical_discontinuous_finite_element(K,alpha);
+      mf->set_classical_discontinuous_finite_element(K, alpha);
     }
   }
 }
