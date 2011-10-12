@@ -225,7 +225,7 @@ elif version >= 10 and version <= 13: # Continuous version with friction, Newton
    md.add_continuous_contact_with_friction_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
 
 else:
-   print 'Unexistent version'
+   print 'Inexistent version'
 
 # Solve the problem
 if version != 9:

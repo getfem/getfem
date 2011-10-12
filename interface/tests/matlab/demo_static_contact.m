@@ -235,7 +235,7 @@ elseif (version >= 10 && version <= 13) % The continuous version with friction, 
   gf_model_set(md, 'add continuous contact with friction with rigid obstacle brick', mim_friction, 'u', ...
 	         'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
 else
-  error('Unexistent version');
+  error('Inexistent version');
 end
 
 % Solve the problem
