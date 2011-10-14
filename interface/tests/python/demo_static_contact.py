@@ -40,9 +40,12 @@ d = m.dim() # Mesh dimension
 # Parameters of the model
 Lambda = 1  # Lame coefficient
 Mu = 1      # Lame coefficient
-friction_coeff = 0.2 # coefficient of friction
-r = 0.0001  # Augmentation parameter
-version = 9   # 1 : frictionless contact and the basic contact brick
+friction_coeff = 0.4 # coefficient of friction
+r = 1.      # Augmentation parameter
+penalty_parameter = 1E-8    # For rigid motions.
+uzawa_r = penalty_parameter # Descent coefficient for Uzawa method.
+niter = 50  # Maximum number of iterations for Newton's algorithm.
+version = 8   # 1 : frictionless contact and the basic contact brick
               # 2 : contact with 'static' Coulomb friction and basic contact
               #     brick
               # 3 : frictionless contact and the contact with a
@@ -74,9 +77,6 @@ version = 9   # 1 : frictionless contact and the basic contact brick
               # 13 : contact with 'static' Coulomb friction and the continuous
               #     brick. New unsymmetric version.
 
-penalty_parameter = 1E-8    # For rigid motions.
-uzawa_r = penalty_parameter # Descent coefficient for Uzawa method.
-niter = 50  # Maximum number of iterations for Newton's algorithm.
 # Signed distance representing the obstacle
 if d == 2:
    obstacle = 'y'
@@ -92,16 +92,16 @@ m.set_region(GAMMAC, contact_boundary)
 
 # Finite element methods
 mfu = gf.MeshFem(m, d)
-mfu.set_classical_fem(1)
+mfu.set_classical_fem(2)
 
 mfd = gf.MeshFem(m, 1)
-mfd.set_classical_fem(1)
-
-mfvm = gf.MeshFem(m, 1)
-mfvm.set_classical_discontinuous_fem(1)
+mfd.set_classical_fem(2)
 
 mflambda = gf.MeshFem(m, 1) # used only by version 5 to 13
 mflambda.set_classical_fem(1)
+
+mfvm = gf.MeshFem(m, 1)
+mfvm.set_classical_discontinuous_fem(1)
 
 # Integration method
 mim = gf.MeshIm(m, 4)
@@ -133,6 +133,7 @@ md.add_mass_brick(mim, 'u', 'penalty_param')
 cdof = mfu.dof_on_region(GAMMAC)
 nbc = cdof.shape[0] / d
 
+solved = False
 if version == 1 or version == 2: # defining the matrices BN and BT by hand
    contact_dof = cdof[d-1:nbc*d:d]
    contact_nodes = mfu.basic_dof_nodes(contact_dof)
@@ -212,6 +213,8 @@ elif version == 9: # The continuous version, Uzawa
       if difff < penalty_parameter:
          break
 
+   solved = True
+
 elif version >= 10 and version <= 13: # Continuous version with friction, Newton
 
    mflambda.set_qdim(2);
@@ -228,11 +231,11 @@ else:
    print 'Inexistent version'
 
 # Solve the problem
-if version != 9:
+if not solved:
    md.solve('max_res', 1E-9, 'very noisy', 'max_iter', niter, 'lsearch', 'default') #, 'with pseudo potential')
 
 U = md.get('variable', 'u')
-# lambda_n = md.get('variable', 'lambda_n')
+LAMBDA = md.get('variable', 'lambda_n')
 VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'lambda', 'mu', mfvm)
 
 mfd.export_to_vtk('static_contact.vtk', 'ascii', mfvm,  VM, 'Von Mises Stress', mfu, U, 'Displacement')

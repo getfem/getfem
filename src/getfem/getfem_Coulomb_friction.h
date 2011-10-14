@@ -446,33 +446,40 @@ namespace getfem {
 
   class friction_nonlinear_term : public nonlinear_elem_term {
 
+    // temporary variables to be calculated at the current interpolation context
+    base_small_vector lnt, lt; // multiplier lambda and its tangential component lambda_t 
+    scalar_type ln;            // normal component lambda_n of the multiplier
+    base_small_vector zt;      // tangential relative displacement
+    scalar_type un;            // normal relative displacement
+    base_small_vector no;      // surface normal
+    scalar_type g, f_coeff;    // gap and coefficient of friction values
+    base_small_vector aux1, auxN, V, coeff; // helper vectors
+    base_matrix grad, GP;
+
   public:
     dim_type N;
     const mesh_fem &mf_u;
     const mesh_fem &mf_lambda;
     const mesh_fem &mf_obs;
     const mesh_fem *mf_coeff;
-    std::vector<scalar_type> U, lambda_n, obs, friction_coeff, WT;
-    bgeot::multi_index sizes_;
-
-    base_small_vector no, aux1, lt, lambda, auxN, zt, V, coeff;
-    // base_vector coeff, V;
-    base_matrix grad, GP;
-    scalar_type ln, un, g, r, alpha, f_coeff;
+    std::vector<scalar_type> U, lambda, obs, friction_coeff, WT;
+    scalar_type r, alpha;
     bool contact_only;
     size_type option;
 
+    bgeot::multi_index sizes_;
+
     template <class VECT> friction_nonlinear_term
     (const mesh_fem &mf_u_, const VECT &U_,
-     const mesh_fem &mf_lambda_, const VECT &lambda_n_,
+     const mesh_fem &mf_lambda_, const VECT &lambda_,
      const mesh_fem &mf_obs_, const VECT &obs_,
-     scalar_type r__, size_type option_, bool contact_only_ = true,
+     scalar_type r_, size_type option_, bool contact_only_ = true,
      scalar_type alpha_ = scalar_type(-1), const mesh_fem *mf_coeff_ = 0,
      const VECT *f_coeff_ = 0, const VECT *WT_ = 0) :
       N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), mf_lambda(mf_lambda_),
       mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
-      lambda_n(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
-      r(r__), alpha(alpha_), contact_only(contact_only_), option(option_) {
+      lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
+      r(r_), alpha(alpha_), contact_only(contact_only_), option(option_) {
 
       sizes_.resize(1); sizes_[0] = 1;
       switch (option) {
@@ -485,11 +492,12 @@ namespace getfem {
       }
 
       mf_u.extend_vector(U_, U);
-      mf_lambda.extend_vector(lambda_n_, lambda_n);
+      mf_lambda.extend_vector(lambda_, lambda);
       mf_obs.extend_vector(obs_, obs);
 
-      V.resize(N); no.resize(N); aux1.resize(1); auxN.resize(N);
-      lambda.resize(N); lt.resize(N); zt.resize(N);
+      lnt.resize(N); lt.resize(N); zt.resize(N); no.resize(N);
+      aux1.resize(1); auxN.resize(N); V.resize(N);
+
       gmm::resize(grad, 1, N);
       gmm::resize(GP, N, N);
 
@@ -526,11 +534,11 @@ namespace getfem {
   template<typename VECT1>
   void asm_Coulomb_friction_continuous_Uzawa_proj
   (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, 9);
 
     getfem::generic_assembly assem;

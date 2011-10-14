@@ -1142,8 +1142,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Continuous augmented Lagrangian brick (given obstacle, u, lambda_N).
-  //  Frictionless for the moment.
+  //  Continuous augmented Lagrangian brick (given obstacle, u, lambda).
   //
   //=========================================================================
 
@@ -1151,48 +1150,63 @@ namespace getfem {
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
 
-
   void friction_nonlinear_term::compute
-  (fem_interpolation_context &ctx, bgeot::base_tensor &t) {
+  (fem_interpolation_context & /* ctx */, bgeot::base_tensor &t) {
 
     t.adjust_sizes(sizes_);
-    scalar_type e; dim_type i, j; size_type cv = ctx.convex_num();
+    scalar_type e; dim_type i, j;
 
     switch (option) {
-    case 0 : for (i=0; i<N; ++i) t[i] = lambda[i]; break;
+    case 0 :
+      for (i=0; i<N; ++i) t[i] = lnt[i]; break;
     case 1 :
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = ((i == j) ? -scalar_type(1) : scalar_type(0));
       break;
-    case 2 : e = ln+gmm::neg(ln-r*(un-g));
+    case 2 :
+      e = ln+gmm::neg(ln-r*(un-g));
       auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
       for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i])/ r;
       break;
-    case 3 : e = -Heav(r*(un-g)-ln);
+    case 3 :
+      e = -Heav(r*(un-g)-ln);
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
       e += alpha * gmm::vect_sp(GP, no, no);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - alpha*GP(i,j);
       break;
-    case 4 : for (i=0; i<N; ++i) t[i] = -no[i]; break;
-    case 5 : e = -Heav(r*(un-g)-ln); for (i=0; i<N; ++i) t[i] = e*no[i]; break;
-    case 6 : t[0] = (Heav(r*(un-g)-ln) - scalar_type(1))/r; break;
-    case 7 : for (i=0; i<N; ++i) t[i] = ln * no[i]; break;
-    case 8 : t[0] = (ln+gmm::neg(ln-r*(un - g)))/r; break;
-    case 9 : t[0] = -gmm::neg(ln - r*(un - g)); break;
-    case 10 : e = r*Heav(r*(un - g)-ln);
+    case 4 :
+      for (i=0; i<N; ++i) t[i] = -no[i]; break;
+    case 5 :
+      e = -Heav(r*(un-g)-ln);
+      for (i=0; i<N; ++i) t[i] = e*no[i];
+      break;
+    case 6 :
+      t[0] = (Heav(r*(un-g)-ln) - scalar_type(1))/r; break;
+    case 7 :
+      for (i=0; i<N; ++i) t[i] = ln * no[i]; break;
+    case 8 :
+      t[0] = (ln+gmm::neg(ln-r*(un - g)))/r; break;
+    case 9 :
+      t[0] = -gmm::neg(ln - r*(un - g)); break;
+    case 10 :
+      e = r*Heav(r*(un - g)-ln);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = e * no[i] * no[j];
       break;
-    case 11 : e = -gmm::neg(ln-r*(un - g));
+    case 11 :
+      e = -gmm::neg(ln-r*(un - g));
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-    case 12 : e = Heav(un - g) * r;
+    case 12 :
+      e = Heav(un - g) * r;
       for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = e * no[i] * no[j];
       break;
-    case 13 : e = ln - gmm::pos(un-g) * r;
+    case 13 :
+      e = ln - gmm::pos(un-g) * r;
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-    case 14 : t[0] = -Heav(ln)+(scalar_type(1)-Heav(un-g))*Heav(-ln); break;
+    case 14 :
+      t[0] = -Heav(ln)+(scalar_type(1)-Heav(un-g))*Heav(-ln); break;
     case 15 :
       e = (Heav(r*(un-g)-ln))/r;
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
@@ -1203,64 +1217,77 @@ namespace getfem {
           - (((i == j) ? scalar_type(1) : scalar_type(0)) - GP(i,j))/r
           - f_coeff * V[j] * no[i] / r;
       break;
-    case 16 : t[0] = gmm::pos(un)+gmm::pos(ln) + (1.-Heav(un-g))*gmm::neg(ln);
-      break;
-    case 17 : e = -Heav(r*(un-g)-ln);
+    case 16 :
+      t[0] = gmm::pos(un)+gmm::pos(ln) + (1.-Heav(un-g))*gmm::neg(ln); break;
+    case 17 :
+      e = -Heav(r*(un-g)-ln);
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
       e += gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(auxN, -f_coeff * ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - GP(i,j) - f_coeff * V[j] * no[i];
       break;
-    case 18 : e = Heav(r*(un-g)-ln);
+    case 18 :
+      e = Heav(r*(un-g)-ln);
       auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
       e -= alpha*gmm::vect_sp(GP, no, no);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j));
       break;
-    case 19 : e = gmm::neg(ln - r*(un-g));
+    case 19 :
+      e = gmm::neg(ln - r*(un-g));
       auxN = lt - zt;  ball_projection(auxN, -f_coeff * ln);
       for (i=0; i<N; ++i) t[i] = auxN[i] - e*no[i];
       break;
-    case 20 : e = r*Heav(r*(un-g)-ln);
+    case 20 :
+      e = r*Heav(r*(un-g)-ln);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = no[i]*no[j]*e;
       break;
-    case 21 : e = r*gmm::pos(un-g);
-      for (i=0; i<N; ++i) t[i] = lambda[i] - e*no[i];
+    case 21 :
+      e = r*gmm::pos(un-g);
+      for (i=0; i<N; ++i) t[i] = lnt[i] - e*no[i];
       break;
-    case 22 : e = -Heav(-ln); //Heav(ln)-scalar_type(1);
+    case 22 :
+      e = -Heav(-ln); //Heav(ln)-scalar_type(1);
       for (i=0; i<N; ++i) t[i] = e*no[i];
       break;
-    case 23 : e = -r;
+    case 23 :
+      e = -r;
       for (i=0; i<N; ++i) t[i] = e*no[i];
       break;
-    case 24: t[0] = -Heav(ln);
-      break;
-    case 25 : e = -gmm::neg(ln);
+    case 24:
+      t[0] = -Heav(ln); break;
+    case 25 :
+      e = -gmm::neg(ln);
       for (i=0; i<N; ++i) t[i] = e*no[i];
       break;
-    case 26: t[0] = r*(un-g) + gmm::pos(ln);
-      break;
-    case 27: e = -gmm::neg(ln);
+    case 26:
+      t[0] = r*(un-g) + gmm::pos(ln); break;
+    case 27:
+      e = -gmm::neg(ln);
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
       for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
       break;
-    case 28: e = r*(un-g) + gmm::pos(ln);
+    case 28:
+      e = r*(un-g) + gmm::pos(ln);
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
       for (i=0; i<N; ++i) t[i] = no[i]*e + zt[i] + lt[i] - auxN[i];
       break;
-    case 29: e = -Heav(-ln); //Heav(ln)-scalar_type(1);
+    case 29:
+      e = -Heav(-ln); //Heav(ln)-scalar_type(1);
       ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
        e += gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
       break;
-    case 30: e = r*(alpha-scalar_type(1));
+    case 30:
+      e = r*(alpha-scalar_type(1));
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - ((i == j) ? r*alpha : scalar_type(0));
       break;
-    case 31: e = -Heav(ln) + scalar_type(1);
+    case 31:
+      e = -Heav(ln) + scalar_type(1);
       ball_projection_grad(lt, f_coeff * gmm::neg(ln), GP);
       e -= gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
@@ -1275,8 +1302,8 @@ namespace getfem {
   void friction_nonlinear_term::prepare
   (fem_interpolation_context& ctx, size_type nb) {
     size_type cv = ctx.convex_num();
-    switch (nb) {
-    case 1 :
+    switch (nb) { // last is computed first
+    case 1 : // calculate [un] and [zt] interpolating [U],[WT] on [mf_u]
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
                 (U, gmm::sub_index
@@ -1297,22 +1324,22 @@ namespace getfem {
       }
       break;
 
-    case 2 :
+    case 2 : // calculate [lnt],[ln],[lt] interpolating [lambda] on [mf_lambda]
       coeff.resize(mf_lambda.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
-                (lambda_n, gmm::sub_index
+                (lambda, gmm::sub_index
                  (mf_lambda.ind_basic_dof_of_element(cv))), coeff);
       if (contact_only) {
         ctx.pf()->interpolation(ctx, coeff, aux1, 1);
         ln = aux1[0];
       } else {
-        ctx.pf()->interpolation(ctx, coeff, lambda, N);
-        ln = gmm::vect_sp(lambda, no);
-        lt = lambda - ln * no;
+        ctx.pf()->interpolation(ctx, coeff, lnt, N);
+        ln = gmm::vect_sp(lnt, no);
+        lt = lnt - ln * no;
       }
       break;
 
-    case 3 : // it is computed first.
+    case 3 : // calculate [g] and [no] interpolating [obs] on [mf_obs]
       coeff.resize(mf_obs.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
                 (obs, gmm::sub_index
@@ -1323,8 +1350,8 @@ namespace getfem {
       ctx.pf()->interpolation(ctx, coeff, aux1, 1);
       g = aux1[0];
       break;
-    case 4 :
-      GMM_ASSERT1(!contact_only, "unvalid friction option");
+    case 4 : // calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+      GMM_ASSERT1(!contact_only, "Invalid friction option");
       if (mf_coeff) {
         coeff.resize(mf_coeff->nb_basic_dof_of_element(cv));
         gmm::copy(gmm::sub_vector
@@ -1334,7 +1361,7 @@ namespace getfem {
         f_coeff = aux1[0];
       }
       break;
-    default : GMM_ASSERT1(false, "unvalid option");
+    default : GMM_ASSERT1(false, "Invalid option");
     }
   }
 
@@ -1343,7 +1370,7 @@ namespace getfem {
   void asm_frictionless_continuous_tangent_matrix_Alart_Curnier
   (MAT &Kul, MAT &Klu, MAT &Kll, MAT &Kuu, const mesh_im &mim,
    const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
@@ -1352,16 +1379,14 @@ namespace getfem {
     size_type subterm3 = (option == 4) ? 24 : 6;
     size_type subterm4 = (option == 2) ? 10 : 12;
 
-
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, subterm1);
-    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, subterm2);
-    friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, subterm3);
-    friction_nonlinear_term nterm4(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm4(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, subterm4);
-
 
     getfem::generic_assembly assem;
     switch (option) {
@@ -1404,7 +1429,7 @@ namespace getfem {
   void asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
   (MAT &Kul, MAT &Klu, MAT &Kll, MAT &Kuu, const mesh_im &mim,
    const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
    scalar_type alpha, const getfem::mesh_fem *mf_coeff, const VECT1 &f_coeff,
    const VECT1 &WT, int option,
@@ -1415,19 +1440,18 @@ namespace getfem {
     size_type subterm3 = (option == 4) ? 31 : 15;
     size_type subterm4 = (option == 2) ? 18 : 20;
 
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                    r, subterm1, false, alpha, mf_coeff,
                                    &f_coeff, &WT);
-    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                    r, subterm2, false, alpha, mf_coeff,
                                    &f_coeff, &WT);
-    friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
+    friction_nonlinear_term nterm3(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                    r, subterm3, false, alpha, mf_coeff,
                                    &f_coeff, &WT);
-    friction_nonlinear_term nterm4(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
+    friction_nonlinear_term nterm4(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                    r, subterm4, false, alpha, mf_coeff,
                                    &f_coeff, &WT);
-
 
     getfem::generic_assembly assem;
     switch (option) {
@@ -1472,7 +1496,7 @@ namespace getfem {
   template<typename VECT1>
   void asm_frictionless_continuous_rhs_Alart_Curnier
   (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
    const mesh_region &rg = mesh_region::all_convexes()) {
 
@@ -1484,9 +1508,9 @@ namespace getfem {
     case 4 : subterm1 = 25; break;
     }
 
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, subterm1);
-    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs,
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, subterm2);
 
     getfem::generic_assembly assem;
@@ -1507,7 +1531,7 @@ namespace getfem {
   template<typename VECT1>
   void asm_Coulomb_friction_continuous_rhs_Alart_Curnier
   (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda_n,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
    scalar_type alpha, const getfem::mesh_fem *mf_coeff, const VECT1 &f_coeff,
    const VECT1 &WT, int option,
@@ -1521,10 +1545,10 @@ namespace getfem {
     case 4 : subterm1 = 27; break;
     }
 
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                    r, subterm1, false, alpha, mf_coeff,
                                    &f_coeff, &WT);
-    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda_n, mf_obs, obs,
+    friction_nonlinear_term nterm2(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                    r, subterm2, false, alpha, mf_coeff,
                                    &f_coeff, &WT);
 
@@ -1581,7 +1605,7 @@ namespace getfem {
       //             friction.
       // data      : obstacle, r for the version without friction
       //           : obstacle, r, friction_coeff, alpha, w_t for the
-      //             version with friction. alpha et w_t are optionnal and
+      //             version with friction. alpha and w_t are optional and
       //             equal to 1 and 0 by default, respectively.
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);
@@ -1611,7 +1635,7 @@ namespace getfem {
                   "has not the right format");
 
       scalar_type alpha = 1;
-      if (!contact_only  && dl.size() >= 4) {
+      if (!contact_only && dl.size() >= 4) {
         alpha = md.real_variable(dl[3])[0];
         GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3])) == 1,
                     "Parameter alpha should be a scalar");
@@ -1642,7 +1666,6 @@ namespace getfem {
              friction_coeff, WT, option, rg);
         }
       }
-
 
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
