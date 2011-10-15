@@ -444,7 +444,15 @@ namespace getfem {
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
-  enum friction_nonlinear_term_version { RHS_U_V1 = 7,
+  enum friction_nonlinear_term_version { RHS_L_V1 = 8,
+                                         RHS_L_V2 = 26,
+                                         K_LL_V1 = 6,
+                                         K_LL_V2 = 24,
+                                         UZAWA_PROJ = 9,
+                                         UNKNOWN1 = 14,
+                                         UNKNOWN2 = 16,
+
+                                         RHS_U_V1 = 7,
                                          RHS_U_V2 = 11,
                                          RHS_U_V3 = 13,
                                          RHS_U_V4 = 25,
@@ -452,19 +460,16 @@ namespace getfem {
                                          RHS_U_FRICT_V2 = 19,
                                          RHS_U_FRICT_V3 = 21,
                                          RHS_U_FRICT_V4 = 27,
-                                         RHS_L_V1 = 8,
-                                         RHS_L_V2 = 26,
                                          RHS_L_FRICT_V1 = 2,
                                          RHS_L_FRICT_V2 = 28,
                                          K_UL_V1 = 4,
                                          K_UL_V2 = 22,
                                          K_UL_V3 = 5,
                                          K_UL_V4 = 23,
-                                         K_LL_V1 = 6,
-                                         K_LL_V2 = 24,
+
                                          K_UU_V1 = 12,
                                          K_UU_V2 = 10,
-                                         K_UL_FRICT_V1 = 1, // EYE = 1,
+                                         K_UL_FRICT_V1 = 1, // EYE
                                          K_UL_FRICT_V2 = 29,
                                          K_UL_FRICT_V3 = 17,
                                          K_UL_FRICT_V4 = 3,
@@ -472,10 +477,7 @@ namespace getfem {
                                          K_LL_FRICT_V1 = 15,
                                          K_LL_FRICT_V2 = 31,
                                          K_UU_FRICT_V1 = 20,
-                                         K_UU_FRICT_V2 = 18,
-                                         UZAWA_PROJ = 9,
-                                         UNKNOWN1 = 14,
-                                         UNKNOWN2 = 16
+                                         K_UU_FRICT_V2 = 18
   };
 
   class friction_nonlinear_term : public nonlinear_elem_term {
