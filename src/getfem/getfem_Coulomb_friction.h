@@ -444,6 +444,40 @@ namespace getfem {
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
+  enum friction_nonlinear_term_version { RHS_U_V1 = 7,
+                                         RHS_U_V2 = 11,
+                                         RHS_U_V3 = 13,
+                                         RHS_U_V4 = 25,
+                                         RHS_U_FRICT_V1 = 0,
+                                         RHS_U_FRICT_V2 = 19,
+                                         RHS_U_FRICT_V3 = 21,
+                                         RHS_U_FRICT_V4 = 27,
+                                         RHS_L_V1 = 8,
+                                         RHS_L_V2 = 26,
+                                         RHS_L_FRICT_V1 = 2,
+                                         RHS_L_FRICT_V2 = 28,
+                                         K_UL_V1 = 4,
+                                         K_UL_V2 = 22,
+                                         K_UL_V3 = 5,
+                                         K_UL_V4 = 23,
+                                         K_LL_V1 = 6,
+                                         K_LL_V2 = 24,
+                                         K_UU_V1 = 12,
+                                         K_UU_V2 = 10,
+                                         K_UL_FRICT_V1 = 1, // EYE = 1,
+                                         K_UL_FRICT_V2 = 29,
+                                         K_UL_FRICT_V3 = 17,
+                                         K_UL_FRICT_V4 = 3,
+                                         K_UL_FRICT_V5 = 30,
+                                         K_LL_FRICT_V1 = 15,
+                                         K_LL_FRICT_V2 = 31,
+                                         K_UU_FRICT_V1 = 20,
+                                         K_UU_FRICT_V2 = 18,
+                                         UZAWA_PROJ = 9,
+                                         UNKNOWN1 = 14,
+                                         UNKNOWN2 = 16
+  };
+
   class friction_nonlinear_term : public nonlinear_elem_term {
 
     // temporary variables to be calculated at the current interpolation context
@@ -483,11 +517,19 @@ namespace getfem {
 
       sizes_.resize(1); sizes_[0] = 1;
       switch (option) {
-      case 0: case 2: case 4: case 5: case 7: case 11: case 13: case 19:
-      case 21: case 22: case 23: case 25: case 27: case 28:
+      // one-dimensional tensors [N]
+      case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4:
+      case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
+      case RHS_U_FRICT_V3: case RHS_U_FRICT_V4:
+      case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
+      case K_UL_V1: case K_UL_V2: case K_UL_V3: case K_UL_V4:
         sizes_[0] = N; break;
-      case 1: case 3: case 10: case 12: case 15: case 17: case 18: case 20:
-      case 29: case 30: case 31:
+      // two-dimensional tensors [N x N]
+      case K_UU_V1: case K_UU_V2:
+      case K_UL_FRICT_V1: case K_UL_FRICT_V2:
+      case K_UL_FRICT_V3: case K_UL_FRICT_V4: case K_UL_FRICT_V5:
+      case K_LL_FRICT_V1: case K_LL_FRICT_V2:
+      case K_UU_FRICT_V1: case K_UU_FRICT_V2:
         sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
       }
 
@@ -539,7 +581,7 @@ namespace getfem {
    const mesh_region &rg = mesh_region::all_convexes()) {
 
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
-                                   obs, r, 9);
+                                   obs, r, UZAWA_PROJ);
 
     getfem::generic_assembly assem;
     assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).Base(#2))(i,:); ");

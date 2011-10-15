@@ -22,7 +22,7 @@
 
 """ Static equilibrium of an elastic solid in contact with a rigid foundation
 
-  This program is used to check that matlab-getfem is working. This is also
+  This program is used to check that python-getfem is working. This is also
   a good example of use of GetFEM++.
 """
 
@@ -45,7 +45,7 @@ r = 1.      # Augmentation parameter
 penalty_parameter = 1E-8    # For rigid motions.
 uzawa_r = penalty_parameter # Descent coefficient for Uzawa method.
 niter = 50  # Maximum number of iterations for Newton's algorithm.
-version = 8   # 1 : frictionless contact and the basic contact brick
+version = 13  # 1 : frictionless contact and the basic contact brick
               # 2 : contact with 'static' Coulomb friction and basic contact
               #     brick
               # 3 : frictionless contact and the contact with a
