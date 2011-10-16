@@ -43,12 +43,12 @@
 namespace getfem {
 
   class virtual_brick;
-  /** type of pointer on a brick */ 
+  /** type of pointer on a brick */
   typedef boost::intrusive_ptr<const getfem::virtual_brick> pbrick;
 
   class virtual_dispatcher;
   typedef boost::intrusive_ptr<const getfem::virtual_dispatcher> pdispatcher;
-  
+
   // Event management : The model has to react when something has changed in
   //    the context and ask for corresponding (linear) bricks to recompute
   //    some terms.
@@ -83,9 +83,9 @@ namespace getfem {
 
   // utiliser le même type que l'interface matlab/python pour représenter
   // les vecteurs/matrices ?
-  // Cela faciliterait les échanges et réduirait les composantes de la 
+  // Cela faciliterait les échanges et réduirait les composantes de la
   // classe model.
-  
+
   typedef gmm::col_matrix<model_real_sparse_vector> model_real_sparse_matrix;
   typedef gmm::col_matrix<model_complex_sparse_vector>
   model_complex_sparse_matrix;
@@ -115,14 +115,14 @@ namespace getfem {
     enum  var_description_filter {
       VDESCRFILTER_NO,     // Variable being directly the dofs of a given fem
       VDESCRFILTER_REGION, /* Variable being the dofs of a fem on a mesh region
-			    * (uses mf.dof_on_region). */
+                            * (uses mf.dof_on_region). */
       VDESCRFILTER_INFSUP  /* Variable being the dofs of a fem on a mesh region
-			    * with an additional filter on a mass matrix with
+                            * with an additional filter on a mass matrix with
                             * respect to another fem. */
     };
 
     struct var_description {
-     
+
       bool is_variable;  // This is a variable or a parameter.
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
@@ -143,25 +143,25 @@ namespace getfem {
       gmm::uint64_type v_num, v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system
-  
+
       std::vector<model_real_plain_vector> real_value;
       std::vector<model_complex_plain_vector> complex_value;
       std::vector<gmm::uint64_type> v_num_var_iter;
       std::vector<gmm::uint64_type> v_num_iter;
 
       var_description(bool is_var = false, bool is_com = false,
-		      bool is_fem = false, size_type n_it = 1,
-		      var_description_filter fil = VDESCRFILTER_NO,
-		      const mesh_fem *mmf = 0,
-		      size_type m_reg = size_type(-1), dim_type Q = 1,
-		      const std::string &filter_v = std::string(""))
-	: is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
-	  filter(fil), n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
-	  default_iter(0), mf(mmf), m_region(m_reg), filter_var(filter_v),
-	  qdim(Q), v_num(0), v_num_data(act_counter()) {
-	if (filter != VDESCRFILTER_NO && mf != 0)
-	  partial_mf = new partial_mesh_fem(*mf);
-	// v_num_data = v_num;
+                      bool is_fem = false, size_type n_it = 1,
+                      var_description_filter fil = VDESCRFILTER_NO,
+                      const mesh_fem *mmf = 0,
+                      size_type m_reg = size_type(-1), dim_type Q = 1,
+                      const std::string &filter_v = std::string(""))
+        : is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
+          filter(fil), n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
+          default_iter(0), mf(mmf), m_region(m_reg), filter_var(filter_v),
+          qdim(Q), v_num(0), v_num_data(act_counter()) {
+        if (filter != VDESCRFILTER_NO && mf != 0)
+          partial_mf = new partial_mesh_fem(*mf);
+        // v_num_data = v_num;
       }
 
       // add a temporary version for time integration schemes. Automatically
@@ -172,14 +172,14 @@ namespace getfem {
       void clear_temporaries(void);
 
       const mesh_fem &associated_mf(void) const {
-	GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
-	if (filter == VDESCRFILTER_NO) return *mf; else return *partial_mf; 
+        GMM_ASSERT1(is_fem_dofs, "This variable is not linked to a fem");
+        if (filter == VDESCRFILTER_NO) return *mf; else return *partial_mf;
       }
 
       const mesh_fem *passociated_mf(void) const {
-	if (!is_fem_dofs) return 0;
-	if (filter == VDESCRFILTER_NO) return mf;
-	else return partial_mf.get(); 
+        if (!is_fem_dofs) return 0;
+        if (filter == VDESCRFILTER_NO) return mf;
+        else return partial_mf.get();
       }
 
       size_type size(void) const // Should control that the variable is
@@ -204,21 +204,21 @@ namespace getfem {
       bool is_symmetric;   // Term have to be symmetrized.
       std::string var1, var2;
       term_description(const std::string &v)
-	: is_matrix_term(false), is_symmetric(false), var1(v) {}
+        : is_matrix_term(false), is_symmetric(false), var1(v) {}
       term_description(const std::string &v1, const std::string &v2,
-		       bool issym)
-	: is_matrix_term(true), is_symmetric(issym), var1(v1), var2(v2) {}
+                       bool issym)
+        : is_matrix_term(true), is_symmetric(issym), var1(v1), var2(v2) {}
     };
 
     typedef std::vector<term_description> termlist;
 
     enum build_version { BUILD_RHS = 1,
-			 BUILD_MATRIX = 2,
-			 BUILD_ALL = 3,
-			 BUILD_ON_DATA_CHANGE = 4,
+                         BUILD_MATRIX = 2,
+                         BUILD_ALL = 3,
+                         BUILD_ON_DATA_CHANGE = 4,
                          BUILD_WITH_COMPLETE_RHS = 8,
                          BUILD_COMPLETE_RHS = 9,
-			 BUILD_PSEUDO_POTENTIAL = 16
+                         BUILD_PSEUDO_POTENTIAL = 16
                        };
 
   private :
@@ -240,7 +240,7 @@ namespace getfem {
       mutable scalar_type matrix_coeff;
       mutable real_matlist rmatlist;    // Matrices the brick have to fill in
                                         // (real version).
-      mutable std::vector<real_veclist> rveclist; // Rhs the brick have to 
+      mutable std::vector<real_veclist> rveclist; // Rhs the brick have to
                                         // fill in (real version).
       mutable std::vector<real_veclist> rveclist_sym; // additional rhs for
                                         //  symmetric terms (real version).
@@ -250,16 +250,16 @@ namespace getfem {
                                         // fill in (complex version).
       mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs
                                         // for symmetric terms (real version).
-      
+
       brick_description(pbrick p, const varnamelist &vl,
-			const varnamelist &dl, const termlist &tl,
-			const mimlist &mms, size_type reg)
-	: terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
-	  vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
-	  rveclist(1), rveclist_sym(1), cveclist(1),
-	  cveclist_sym(1)  { }
+                        const varnamelist &dl, const termlist &tl,
+                        const mimlist &mms, size_type reg)
+        : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
+          vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
+          rveclist(1), rveclist_sym(1), cveclist(1),
+          cveclist_sym(1)  { }
     };
-    
+
     typedef std::map<std::string, var_description> VAR_SET;
     mutable VAR_SET variables;
     std::vector<brick_description> bricks;
@@ -267,42 +267,42 @@ namespace getfem {
 
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
-			     bool assert = true) const;
+                             bool assert = true) const;
     void brick_init(size_type ib, build_version version,
-		      size_type rhs_ind = 0) const;
+                      size_type rhs_ind = 0) const;
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
   public :
 
-    // call the brick if necessary 
+    // call the brick if necessary
     void update_brick(size_type ib, build_version version) const;
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data,
-				 size_type n_iter) const;
+                                 size_type n_iter) const;
     void brick_call(size_type ib, build_version version,
-		    size_type rhs_ind = 0) const;
+                    size_type rhs_ind = 0) const;
     model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
     { return bricks[ib].coeffs; }
     scalar_type &matrix_coeff_of_brick(size_type ib) const
     { return bricks[ib].matrix_coeff; }
     bool is_var_newer_than_brick(const std::string &varname,
-				 size_type ib) const;
+                                 size_type ib) const;
     bool is_var_mf_newer_than_brick(const std::string &varname,
-				    size_type ib) const;
+                                    size_type ib) const;
     pbrick get_brick(size_type ib) const { return bricks[ib].pbr; }
-    
+
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
 
     const varnamelist &varnamelist_of_brick(size_type ib) const
     { return bricks[ib].vlist; }
-    
+
     const varnamelist &datanamelist_of_brick(size_type ib) const
     { return bricks[ib].dlist; }
-    
+
     bool temporary_uptodate(const std::string &varname,
-			    gmm::uint64_type  id_num, size_type &ind) const;
+                            gmm::uint64_type  id_num, size_type &ind) const;
     void set_default_iter_of_variable(const std::string &varname,
-				      size_type ind) const;
+                                      size_type ind) const;
     void reset_default_iter_of_variables(const varnamelist &vl) const;
 
     void update_from_context(void) const {  act_size_to_be_done = true; }
@@ -324,25 +324,25 @@ namespace getfem {
       GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
       active_bricks.add(ib);
     }
-    
+
     /** Boolean which says if the model deals with real or complex unknowns
-	and data. */
+        and data. */
     bool is_complex(void) const { return complex_version; }
 
     /** Return true if all the model terms do not affect the coercivity of
-	the whole tangent system. */    
+        the whole tangent system. */
     bool is_coercive(void) const { return is_coercive_; }
 
-    /** Return true if all the model terms are linear. */    
+    /** Return true if all the model terms are linear. */
     bool is_linear(void) const { return is_linear_; }
 
     /** Total number of degrees of freedom in the model. */
     size_type nb_dof(void) const {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       if (complex_version)
-	return gmm::vect_size(crhs);
+        return gmm::vect_size(crhs);
       else
-	return gmm::vect_size(rrhs);
+        return gmm::vect_size(rrhs);
     }
 
     /** Leading dimension of the meshes used in the model. */
@@ -356,45 +356,45 @@ namespace getfem {
     { return variables[name].I; }
 
     /** Gives the access to the vector value of a variable. For the real
-	version. */
+        version. */
     const model_real_plain_vector &
     real_variable(const std::string &name,
-		  size_type niter = size_type(-1)) const;
+                  size_type niter = size_type(-1)) const;
 
     /** Gives the access to the vector value of a variable. For the complex
-	version. */
+        version. */
     const model_complex_plain_vector &
     complex_variable(const std::string &name,
-		     size_type niter = size_type(-1)) const;
+                     size_type niter = size_type(-1)) const;
 
     /** Gives the write access to the vector value of a variable. Make a
-	change flag of the variable set. For the real version. */
+        change flag of the variable set. For the real version. */
     model_real_plain_vector &
     set_real_variable(const std::string &name,
-		      size_type niter = size_type(-1)) const;
+                      size_type niter = size_type(-1)) const;
 
     /** Gives the write access to the vector value of a variable. Make a
-	change flag of the variable set. For the complex version. */
+        change flag of the variable set. For the complex version. */
     model_complex_plain_vector &
     set_complex_variable(const std::string &name,
-			 size_type niter = size_type(-1)) const;
+                         size_type niter = size_type(-1)) const;
 
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, T) const {
       for (VAR_SET::iterator it = variables.begin();
-	   it != variables.end(); ++it)
-	if (it->second.is_variable)
-	  gmm::copy(it->second.real_value[0],
-		    gmm::sub_vector(V, it->second.I));
+           it != variables.end(); ++it)
+        if (it->second.is_variable)
+          gmm::copy(it->second.real_value[0],
+                    gmm::sub_vector(V, it->second.I));
     }
 
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, std::complex<T>) const {
       for (VAR_SET::iterator it = variables.begin();
-	   it != variables.end(); ++it)
-	if (it->second.is_variable)
-	  gmm::copy(it->second.complex_value[0],
-		    gmm::sub_vector(V, it->second.I));
+           it != variables.end(); ++it)
+        if (it->second.is_variable)
+          gmm::copy(it->second.complex_value[0],
+                    gmm::sub_vector(V, it->second.I));
     }
 
     template<typename VECTOR> void from_variables(VECTOR &V) const {
@@ -407,23 +407,23 @@ namespace getfem {
     template<typename VECTOR, typename T>
     void to_variables(VECTOR &V, T) {
       for (VAR_SET::iterator it = variables.begin();
-	   it != variables.end(); ++it)
-	if (it->second.is_variable) {
-	  gmm::copy(gmm::sub_vector(V, it->second.I),
-		    it->second.real_value[0]);
-	  it->second.v_num_data = act_counter();
-	}
+           it != variables.end(); ++it)
+        if (it->second.is_variable) {
+          gmm::copy(gmm::sub_vector(V, it->second.I),
+                    it->second.real_value[0]);
+          it->second.v_num_data = act_counter();
+        }
     }
 
     template<typename VECTOR, typename T>
     void to_variables(VECTOR &V, std::complex<T>) {
       for (VAR_SET::iterator it = variables.begin();
-	   it != variables.end(); ++it)
-	if (it->second.is_variable) {
-	  gmm::copy(gmm::sub_vector(V, it->second.I),
-		    it->second.complex_value[0]);
-	  it->second.v_num_data = act_counter();
-	}
+           it != variables.end(); ++it)
+        if (it->second.is_variable) {
+          gmm::copy(gmm::sub_vector(V, it->second.I),
+                    it->second.complex_value[0]);
+          it->second.v_num_data = act_counter();
+        }
     }
 
     template<typename VECTOR> void to_variables(VECTOR &V) {
@@ -433,14 +433,14 @@ namespace getfem {
     }
 
     /** Add a fixed size variable to the model. niter is the number of version
-	of the variable stored, for time integration schemes. */
+        of the variable stored, for time integration schemes. */
     void add_fixed_size_variable(const std::string &name, size_type size,
-				 size_type niter = 1);
+                                 size_type niter = 1);
 
     /** Add a fixed size data to the model. niter is the number of version
-	of the data stored, for time integration schemes. */
+        of the data stored, for time integration schemes. */
     void add_fixed_size_data(const std::string &name, size_type size,
-			     size_type niter = 1);
+                             size_type niter = 1);
 
     /** Resize a fixed size variable (or data) of the model. */
     void resize_fixed_size_variable(const std::string &name, size_type size);
@@ -449,12 +449,12 @@ namespace getfem {
     /** Add a fixed size data to the model initialized with V. */
     template <typename VECT>
     void add_initialized_fixed_size_data(const std::string &name,
-					 const VECT &v) {
+                                         const VECT &v) {
       this->add_fixed_size_data(name, gmm::vect_size(v), 1);
       if (this->is_complex()) // to be templated .. see later
-	gmm::copy(v, this->set_complex_variable(name));
+        gmm::copy(v, this->set_complex_variable(name));
       else
-	gmm::copy(gmm::real_part(v), this->set_real_variable(name));
+        gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
 
     /** Add a scalar data (i.e. of size 1) to the model initialized with e. */
@@ -462,48 +462,48 @@ namespace getfem {
     void add_initialized_scalar_data(const std::string &name, T e) {
       this->add_fixed_size_data(name, 1, 1);
       if (this->is_complex()) // to be templated .. see later
-	this->set_complex_variable(name)[0] = e;
+        this->set_complex_variable(name)[0] = e;
       else
-	this->set_real_variable(name)[0] = gmm::real(e);
+        this->set_real_variable(name)[0] = gmm::real(e);
     }
 
 
     /** Add a variable being the dofs of a finite element method to the model.
-	niter is the number of version of the variable stored, for time
-	integration schemes. */
+        niter is the number of version of the variable stored, for time
+        integration schemes. */
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
-			  size_type niter = 1);
+                          size_type niter = 1);
 
     /** Add a data being the dofs of a finite element method to the model.
-	The data is initialized with V. */
+        The data is initialized with V. */
     void add_fem_data(const std::string &name, const mesh_fem &mf,
-		      dim_type qdim = 1, size_type niter = 1);
+                      dim_type qdim = 1, size_type niter = 1);
 
     /** Add a fixed size data to the model. niter is the number of version
-	of the data stored, for time integration schemes. */
+        of the data stored, for time integration schemes. */
     template <typename VECT>
     void add_initialized_fem_data(const std::string &name, const mesh_fem &mf,
-				  const VECT &v) {
+                                  const VECT &v) {
       this->add_fem_data(name, mf,
-			 dim_type(gmm::vect_size(v) / mf.nb_dof()), 1);
+                         dim_type(gmm::vect_size(v) / mf.nb_dof()), 1);
       if (this->is_complex()) // to be templated .. see later
-	gmm::copy(v, this->set_complex_variable(name));
+        gmm::copy(v, this->set_complex_variable(name));
       else
-	gmm::copy(gmm::real_part(v), this->set_real_variable(name));
+        gmm::copy(gmm::real_part(v), this->set_real_variable(name));
     }
-    
+
     /** Add a particular variable linked to a fem being a multiplier with
-	respect to a primal variable. The dof will be filtered with the
-	gmm::range_basis function applied on the terms of the model which
-	link the multiplier and the primal variable. Optimized for boundary
-	multipliers. niter is the number of version of the data stored,
-	for time integration schemes. */
+        respect to a primal variable. The dof will be filtered with the
+        gmm::range_basis function applied on the terms of the model which
+        link the multiplier and the primal variable. Optimized for boundary
+        multipliers. niter is the number of version of the data stored,
+        for time integration schemes. */
     void add_multiplier(const std::string &name, const mesh_fem &mf,
-			const std::string &primal_name,
-			size_type niter = 1);
-    
+                        const std::string &primal_name,
+                        size_type niter = 1);
+
     /** Gives the access to the mesh_fem of a variable if any. Throw an
-	exception otherwise. */
+        exception otherwise. */
     const mesh_fem &mesh_fem_of_variable(const std::string &name) const;
 
     /** Gives a pointer to the mesh_fem of a variable if any. 0 otherwise.*/
@@ -516,16 +516,16 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return rTM;
     }
-    
+
     /** Gives the access to the tangent matrix. For the complex version. */
     const model_complex_sparse_matrix &complex_tangent_matrix(void) const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
       return cTM;
     }
-    
+
     /** Gives the access to the right hand side of the tangent linear system.
-	For the real version. */
+        For the real version. */
     const model_real_plain_vector &real_rhs(void) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -533,13 +533,13 @@ namespace getfem {
     }
 
     /** Gives the access to the pseudo potential. It has to be computed first
-	by the call of assembly(model::BUILD_PSEUDO_POTENTIAL); */
+        by the call of assembly(model::BUILD_PSEUDO_POTENTIAL); */
     scalar_type pseudo_potential(void) const {
       return pseudo_potential_;
     }
-    
+
     /** Gives the access to the right hand side of the tangent linear system.
-	For the complex version. */
+        For the complex version. */
     const model_complex_plain_vector &complex_rhs(void) const {
       GMM_ASSERT1(complex_version, "This model is a real one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -552,7 +552,7 @@ namespace getfem {
     /** List the model bricks. */
     void listbricks(std::ostream &ost, size_type base_id = 0) const;
 
-    /** Force the re-computation of a brick for the next assembly. */ 
+    /** Force the re-computation of a brick for the next assembly. */
     void touch_brick(size_type ind_brick) {
       GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
       bricks[ind_brick].terms_to_be_computed = true;
@@ -566,11 +566,11 @@ namespace getfem {
     /** Add a brick to the model. varname is the list of variable used
         and datanames the data used. If a variable is used as a data, it
         should be declared in the datanames (it will depend on the value of
-	the variable not only on the fem). */
+        the variable not only on the fem). */
     size_type add_brick(pbrick pbr, const varnamelist &varnames,
-			const varnamelist &datanames,
-			const termlist &terms, const mimlist &mims, 
-			size_type region);
+                        const varnamelist &datanames,
+                        const termlist &terms, const mimlist &mims,
+                        size_type region);
 
     /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
@@ -581,22 +581,22 @@ namespace getfem {
     void first_iter(void);
 
     /** For transient problems. Prepare the next iterations. In particular
-	shift the version of the variables. 
+        shift the version of the variables.
     */
     void next_iter(void);
 
     /** Gives the name of the variable of index `ind_var` of the brick
-	of index `ind_brick`. */
+        of index `ind_brick`. */
     const std::string &varname_of_brick(size_type ind_brick,
-					size_type ind_var);
+                                        size_type ind_var);
 
     /** Gives the name of the data of index `ind_data` of the brick
-	of index `ind_brick`. */
+        of index `ind_brick`. */
     const std::string &dataname_of_brick(size_type ind_brick,
-					 size_type ind_data);
+                                         size_type ind_data);
 
     /** Assembly of the tangent system taking into account the terms
-	from all bricks. */
+        from all bricks. */
     void assembly(build_version version);
 
     void clear(void) {
@@ -636,11 +636,11 @@ namespace getfem {
     { for (size_type i = 0; i < v.size(); ++i) gmm::clear(v[i]); }
 
     void transfert(model::real_veclist &v1,
-		   model::real_veclist &v2) const
+                   model::real_veclist &v2) const
     { for (size_type i = 0; i < v1.size(); ++i) gmm::copy(v1[i], v2[i]); }
 
     void transfert(model::complex_veclist &v1,
-		   model::complex_veclist &v2) const
+                   model::complex_veclist &v2) const
     { for (size_type i = 0; i < v1.size(); ++i) gmm::copy(v1[i], v2[i]); }
 
     size_type nbrhs_;
@@ -681,7 +681,7 @@ namespace getfem {
      std::vector<model::real_veclist> &,
      build_version) const {
       GMM_ASSERT1(false, "Time dispatcher with not defined real tangent "
-		  "terms !");
+                  "terms !");
     }
 
     virtual void asm_complex_tangent_terms
@@ -690,13 +690,13 @@ namespace getfem {
      std::vector<model::complex_veclist> &,
      build_version) const {
       GMM_ASSERT1(false, "Time dispatcher with not defined complex tangent "
-		  "terms !");
+                  "terms !");
     }
 
     virtual_dispatcher(size_type _nbrhs) : nbrhs_(_nbrhs) {
       GMM_ASSERT1(_nbrhs > 0, "Time dispatcher with no rhs");
     }
-    
+
   };
 
   //=========================================================================
@@ -710,7 +710,7 @@ namespace getfem {
       $\theta K U^{n+1} + (1-\theta) K U^{n}$.
   */
   void add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
-				   const std::string &THETA);
+                                   const std::string &THETA);
 
   /** Function which udpate the velocity $v^{n+1}$ after the computation
       of the displacement $u^{n+1}$ and before the next iteration. Specific
@@ -750,13 +750,13 @@ namespace getfem {
       The virtual methods asm_real_tangent_terms and/or
       asm_complex_tangent_terms have to be defined.
       The brick should not store data. The data have to be stored in the
-      model object. 
+      model object.
   **/
   class virtual_brick : virtual public dal::static_stored_object {
   private :
     bool islinear;    // The brick add a linear term or not.
     bool issymmetric; // The brick add a symmetric term or not.
-    bool iscoercive;  // The brick add a potentialy coercive terms or not. 
+    bool iscoercive;  // The brick add a potentialy coercive terms or not.
     //   (in particular, not a term involving a multiplier)
     bool isreal;      // The brick admits a real version or not.
     bool iscomplex;   // The brick admits a complex version or not.
@@ -764,14 +764,14 @@ namespace getfem {
     bool compute_each_time; // The brick is linear but needs to be computed
                             // each time it is evaluated.
     std::string name; // Name of the brick.
-   
+
   public :
 
     typedef model::build_version build_version;
-    
+
     virtual_brick(void) { isinit = false; }
     void set_flags(const std::string &bname, bool islin, bool issym,
-		   bool iscoer, bool ire, bool isco, bool each_time = false) {
+                   bool iscoer, bool ire, bool isco, bool each_time = false) {
       name = bname;
       islinear = islin; issymmetric = issym; iscoercive = iscoer;
       isreal = ire; iscomplex = isco; isinit = true;
@@ -789,53 +789,52 @@ namespace getfem {
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
 
     virtual void asm_real_tangent_terms(const model &, size_type,
-					const model::varnamelist &,
-					const model::varnamelist &,
-					const model::mimlist &,
-					model::real_matlist &,
-					model::real_veclist &,
-					model::real_veclist &,
-					size_type, build_version) const
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::real_matlist &,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
 
     virtual void asm_complex_tangent_terms(const model &, size_type,
-					   const model::varnamelist &,
-					   const model::varnamelist &,
-					   const model::mimlist &,
-					   model::complex_matlist &,
-					   model::complex_veclist &,
-					   model::complex_veclist &,
-					   size_type, build_version) const
+                                           const model::varnamelist &,
+                                           const model::varnamelist &,
+                                           const model::mimlist &,
+                                           model::complex_matlist &,
+                                           model::complex_veclist &,
+                                           model::complex_veclist &,
+                                           size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
 
 
     virtual scalar_type asm_real_pseudo_potential(const model &, size_type,
-						  const model::varnamelist &,
-						  const model::varnamelist &,
-						  const model::mimlist &,
-						  model::real_matlist &,
-						  model::real_veclist &,
-						  model::real_veclist &,
-						  size_type) const {
+                                                  const model::varnamelist &,
+                                                  const model::varnamelist &,
+                                                  const model::mimlist &,
+                                                  model::real_matlist &,
+                                                  model::real_veclist &,
+                                                  model::real_veclist &,
+                                                  size_type) const {
       GMM_WARNING1("Brick " << name << " has no contribution to the "
-		   << "pseudo potential !");
+                   << "pseudo potential !");
       return scalar_type(0);
     }
-    
+
     virtual scalar_type asm_complex_pseudo_potential(const model &, size_type,
-						     const model::varnamelist&,
-						     const model::varnamelist&,
-						     const model::mimlist &,
-						     model::complex_matlist &,
-						     model::complex_veclist &,
-						     model::complex_veclist &,
-						     size_type) const { 
+                                                     const model::varnamelist&,
+                                                     const model::varnamelist&,
+                                                     const model::mimlist &,
+                                                     model::complex_matlist &,
+                                                     model::complex_veclist &,
+                                                     model::complex_veclist &,
+                                                     size_type) const {
       GMM_WARNING1("Brick " << name << " has no contribution to the "
-		   << "pseudo potential !");
+                   << "pseudo potential !");
       return scalar_type(0);
     }
-    
-    
+
   };
 
   //=========================================================================
@@ -844,7 +843,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  
+
   /** Add a Laplacian term on the variable `varname`. If it is a vector
       valued variable, the Laplacian term is componentwise. `region` is an
       optional mesh region on which the term is added. Return the brick index
@@ -853,7 +852,7 @@ namespace getfem {
   size_type add_Laplacian_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    size_type region = size_type(-1));
-  
+
 
   /** Add an elliptic term on the variable `varname`. The shape of the elliptic
       term depends both on the variable and the data. This corresponds to a
@@ -874,7 +873,7 @@ namespace getfem {
   size_type add_generic_elliptic_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region = size_type(-1));
-  
+
 
   /** Add a source term on the variable `varname`. The source term is
       represented by the data `dataname` which could be constant or described
@@ -903,7 +902,7 @@ namespace getfem {
   /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
-      should be first declared as a multiplier 
+      should be first declared as a multiplier
       variable on the mesh region in the model. `dataname` is the optional
       right hand side of  the Dirichlet condition. It could be constant or
       described on a fem; scalar or vector valued, depending on the variable
@@ -963,7 +962,7 @@ namespace getfem {
      (or tensor) valued variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
-      should be first declared as a multiplier 
+      should be first declared as a multiplier
       variable on the mesh region in the model. `dataname` is the optional
       right hand side of  the normal Dirichlet condition.
       It could be constant or
@@ -1034,14 +1033,14 @@ namespace getfem {
       this function has an undefined behavior.
   */
   void change_penalization_coeff(model &md, size_type ind_brick,
-				 scalar_type penalisation_coeff); 
+                                 scalar_type penalisation_coeff);
 
   /** Add a generalized Dirichlet condition on the variable `varname` and
       the mesh region `region`. This version is for vector field.
       It prescribes a condition @f$ Hu = r @f$ where `H` is a matrix field.
       This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
-      should be first declared as a multiplier 
+      should be first declared as a multiplier
       variable on the mesh region in the model. `dataname` is the
       right hand side of  the Dirichlet condition. It could be constant or
       described on a fem; scalar or vector valued, depending on the variable
@@ -1106,9 +1105,9 @@ namespace getfem {
       complex, fem dependant or not.
   */
   size_type add_Helmholtz_brick(model &md, const mesh_im &mim,
-				const std::string &varname,
-				const std::string &dataname,
-				size_type region = size_type(-1));
+                                const std::string &varname,
+                                const std::string &dataname,
+                                size_type region = size_type(-1));
 
 
   /** Add a Fourier-Robin brick to the model. This correspond to the weak term
@@ -1121,9 +1120,9 @@ namespace getfem {
       side can be added with a source term brick.
   */
   size_type add_Fourier_Robin_brick(model &md, const mesh_im &mim,
-				    const std::string &varname,
-				    const std::string &dataname,
-				    size_type region);
+                                    const std::string &varname,
+                                    const std::string &dataname,
+                                    size_type region);
 
   // Constraint brick.
   model_real_sparse_matrix &set_private_data_brick_real_matrix
@@ -1141,7 +1140,7 @@ namespace getfem {
 
   template <typename VECT, typename T>
   void set_private_data_rhs(model &md, size_type ind,
-				const VECT &L, T) {
+                                const VECT &L, T) {
     model_real_plain_vector &LL = set_private_data_brick_real_rhs(md, ind);
     gmm::resize(LL, gmm::vect_size(L));
     gmm::copy(L, LL);
@@ -1149,7 +1148,7 @@ namespace getfem {
 
   template <typename VECT, typename T>
   void set_private_data_rhs(model &md, size_type ind, const VECT &L,
-			   std::complex<T>) {
+                           std::complex<T>) {
     model_complex_plain_vector &LL=set_private_data_brick_complex_rhs(md, ind);
     gmm::resize(LL, gmm::vect_size(L));
     gmm::copy(L, LL);
@@ -1157,7 +1156,7 @@ namespace getfem {
 
   /** For some specific bricks having an internal right hand side vector
       (explicit bricks: 'constraint brick' and 'explicit rhs brick'),
-      set this rhs. 
+      set this rhs.
   */
   template <typename VECT>
   void set_private_data_rhs(model &md, size_type indbrick, const VECT &L) {
@@ -1167,7 +1166,7 @@ namespace getfem {
 
   template <typename MAT, typename T>
   void set_private_data_matrix(model &md, size_type ind,
-				   const MAT &B, T) {
+                                   const MAT &B, T) {
     model_real_sparse_matrix &BB = set_private_data_brick_real_matrix(md, ind);
     gmm::resize(BB, gmm::mat_nrows(B), gmm::mat_ncols(B));
     gmm::copy(B, BB);
@@ -1175,7 +1174,7 @@ namespace getfem {
 
   template <typename MAT, typename T>
   void set_private_data_matrix(model &md, size_type ind, const MAT &B,
-			      std::complex<T>) {
+                              std::complex<T>) {
     model_complex_sparse_matrix &BB
       = set_private_data_brick_complex_matrix(md, ind);
     gmm::resize(BB, gmm::mat_nrows(B), gmm::mat_ncols(B));
@@ -1187,7 +1186,7 @@ namespace getfem {
       set this matrix. @*/
   template <typename MAT>
   void set_private_data_matrix(model &md, size_type indbrick,
-				   const MAT &B) {
+                                   const MAT &B) {
     typedef typename gmm::linalg_traits<MAT>::value_type T;
     set_private_data_matrix(md, indbrick, B, T());
   }
@@ -1195,7 +1194,7 @@ namespace getfem {
   /** Add an additional explicit penalized constraint on the variable
       `varname`. The constraint is $BU=L$ with `B` being a rectangular
       sparse matrix.
-      Be aware that `B` should not contain a palin row, otherwise the whole
+      Be aware that `B` should not contain a plain row, otherwise the whole
       tangent matrix will be plain. It is possible to change the constraint
       at any time whith the methods set_private_matrix and set_private_rhs.
       The method change_penalization_coeff can also be used.
@@ -1231,13 +1230,13 @@ namespace getfem {
   }
 
   size_type add_explicit_matrix(model &md, const std::string &varname1,
-				const std::string &varname2,
-				bool issymmetric, bool iscoercive); 
+                                const std::string &varname2,
+                                bool issymmetric, bool iscoercive);
   size_type add_explicit_rhs(model &md, const std::string &varname);
-  
+
   /** Add a brick reprenting an explicit matrix to be added to the tangent
       linear system relatively to the variables 'varname1' and 'varname2'.
-      The given matrix should have has many rows as the dimension of
+      The given matrix should have as many rows as the dimension of
       'varname1' and as many columns as the dimension of 'varname2'.
       If the two variables are different and if `issymmetric' is set to true
       then the transpose of the matrix is also added to the tangent system
@@ -1247,11 +1246,11 @@ namespace getfem {
   */
   template <typename MAT>
   size_type add_explicit_matrix(model &md, const std::string &varname1,
-				const std::string &varname2, const MAT &B,
-				bool issymmetric = false,
-				bool iscoercive = false) {
+                                const std::string &varname2, const MAT &B,
+                                bool issymmetric = false,
+                                bool iscoercive = false) {
     size_type ind = add_explicit_matrix(md, varname1, varname2,
-					issymmetric, iscoercive);
+                                        issymmetric, iscoercive);
     set_private_data_matrix(md, ind, B);
     return ind;
   }
@@ -1261,15 +1260,15 @@ namespace getfem {
        linear system relatively to the variable 'varname'.
        The given rhs should have the same size than the dimension of
        'varname'. The rhs can be changed by the command set_private_rhs.
-  */  
+  */
   template <typename VECT>
   size_type add_explicit_rhs(model &md, const std::string &varname,
-			     const VECT &L) {
+                             const VECT &L) {
     size_type ind = add_explicit_rhs(md, varname);
     set_private_data_rhs(md, ind, L);
     return ind;
   }
-  
+
 
   /** Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
       for isotropic material. Parametrized by the lamé coefficients
@@ -1286,7 +1285,7 @@ namespace getfem {
   (model &md, const std::string &varname, const std::string &dataname_lambda,
    const std::string &dataname_mu, const mesh_fem &mf_vm,
    model_real_plain_vector &VM, bool tresca);
-    
+
   /**
      Compute the Von-Mises stress or the Tresca stress of a field
      (only valid for isotropic linearized elasticity in 3D)
@@ -1307,7 +1306,7 @@ namespace getfem {
 
      Update the tangent matrix with a pressure term:
      @f[
-     T \longrightarrow 
+     T \longrightarrow
      \begin{array}{ll} T & B \\ B^t & M \end{array}
      @f]
      with @f$ B = - \int p.div u @f$ and
@@ -1317,7 +1316,7 @@ namespace getfem {
      Be aware that an inf-sup condition between the finite element method
      describing the rpressure and the primal variable has to be satisfied.
 
-     For nearly incompressible elasticity, 
+     For nearly incompressible elasticity,
      @f[ p = -\lambda \textrm{div}~u @f]
      @f[ \sigma = 2 \mu \varepsilon(u) -p I @f]
      @see asm_stokes_B
@@ -1340,7 +1339,7 @@ namespace getfem {
       Add the standard discretization of a first order time derivative. The
       parameter $rho$ is the density which could be omitted (the defaul value
       is 1). This brick should be used in addition to a time dispatcher for the
-      other terms. 
+      other terms.
   */
   size_type add_basic_d_on_dt_brick
   (model &md, const mesh_im &mim, const std::string &varname,
