@@ -46,7 +46,7 @@ else
   end;
 end;
 
-set(ls, 'values', ULS);
+gf_levelset_set(ls, 'values', ULS);
 
 ULS2=1000*ones(1,numel(x));
 ULS2s=1000*ones(1,numel(x));
@@ -62,7 +62,7 @@ for i=1:1,
   ULS2s = min(ULS2s, (abs(y - yc)+abs(x-xc) - R));
 end;
 
-set(ls2, 'values', ULS2, ULS2s); %'-y-x+.2'); %, '(y-.2)^2 - 0.04');
+gf_levelset_set(ls2, 'values', ULS2, ULS2s); %'-y-x+.2'); %, '(y-.2)^2 - 0.04');
 
 mls=gfMeshLevelSet(m);
 set(mls, 'add', ls);
@@ -85,7 +85,7 @@ A=gf_asm('volumic','V()+=comp()',mim_bound)
 
 dof_out = get(mfu0, 'dof from im', mim);
 cv_out = get(mim, 'convex_index');
-cv_in = setdiff(get(m, 'cvid'), cv_out);
+cv_in = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
 
 % mfu = gfMeshFem('partial', mfu0, dof_out, cv_in);
 
@@ -117,7 +117,7 @@ hold on;
 % set(h2{1},'LineWidth',2);
 % set(h2{1},'Color','white');
 
-[h1,h2]=gf_plot(mf_ls, get(ls,'values'), 'contour', 0,'pcolor','off');
+[h1,h2]=gf_plot(mf_ls, gf_levelset_get(ls,'values'), 'contour', 0, 'pcolor','off');
 set(h2{1},'LineWidth',1);
 set(h2{1},'Color','blue');
 %[h1,h2]=gf_plot(mf_ls2, get(ls2,'values'), 'contour',
