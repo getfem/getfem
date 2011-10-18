@@ -1999,12 +1999,12 @@ namespace getfem {
   struct PK_discont_ : public PK_fem_ {
   public :
     
-    PK_discont_(dim_type nc, short_type k, scalar_type alpha=0.)
+    PK_discont_(dim_type nc, short_type k, scalar_type alpha=scalar_type(0))
       : PK_fem_(nc, k) {
       std::fill(dof_types_.begin(), dof_types_.end(),
 		lagrange_nonconforming_dof(nc));
 
-      if (alpha != 0.) {
+      if (alpha != scalar_type(0)) {
 	base_node G = 
 	  gmm::mean_value(cv_node.points().begin(), cv_node.points().end());
       for (size_type i=0; i < cv_node.nb_points(); ++i) 

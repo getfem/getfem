@@ -1149,6 +1149,26 @@ namespace getfem {
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
 
+  void friction_nonlinear_term::adjust_tensor_size(int option) {
+    sizes_.resize(1); sizes_[0] = 1;
+    switch (option) {
+      // one-dimensional tensors [N]
+    case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4:
+    case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
+    case RHS_U_FRICT_V3: case RHS_U_FRICT_V4:
+    case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
+    case K_UL_V1: case K_UL_V2: case K_UL_V3: case K_UL_V4:
+      sizes_[0] = N; break;
+      // two-dimensional tensors [N x N]
+    case K_UU_V1: case K_UU_V2:
+    case K_UL_FRICT_V1: case K_UL_FRICT_V2:
+    case K_UL_FRICT_V3: case K_UL_FRICT_V4: case K_UL_FRICT_V5:
+    case K_LL_FRICT_V1: case K_LL_FRICT_V2:
+    case K_UU_FRICT_V1: case K_UU_FRICT_V2:
+      sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
+    } 
+  }
+
   void friction_nonlinear_term::compute
   (fem_interpolation_context & /* ctx */, bgeot::base_tensor &t) {
 
@@ -1171,11 +1191,6 @@ namespace getfem {
 
     case UZAWA_PROJ:
       t[0] = -gmm::neg(ln - r*(un - g)); break;
-
-    case UNKNOWN1:
-      t[0] = -Heav(ln)+(scalar_type(1)-Heav(un-g))*Heav(-ln); break;
-    case UNKNOWN2:
-      t[0] = gmm::pos(un)+gmm::pos(ln) + (1.-Heav(un-g))*gmm::neg(ln); break;
 
     // one-dimensional tensors [N]
 
@@ -1811,6 +1826,214 @@ namespace getfem {
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
+
+
+  //=========================================================================
+  //
+  //  Continuous penalized contact with friction (given obstacle, u, lambda).
+  //
+  //=========================================================================
+
+
+  struct penalized_Coulomb_friction_brick : public virtual_brick {
+
+    bool Tresca_version, contact_only;
+    
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      GMM_ASSERT1(mims.size() == 1,
+                  "Penalized Coulomb friction brick need a single mesh_im");
+      GMM_ASSERT1(vl.size() == 2,
+                  "Penalized Coulomb friction brick need two variables");
+      GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 5,
+                  "Wrong number of data for penalized Coulomb friction "
+                  << "brick, " << dl.size() << " should be 2.");
+      GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
+                  "penalized Coulomb friction brick");
+
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+      const model_real_plain_vector &obstacle = md.real_variable(dl[0]);
+      const mesh_fem &mf_obstacle = *(md.pmesh_fem_of_variable(dl[0]));
+      size_type sl = gmm::vect_size(obstacle) * mf_obstacle.get_qdim()
+        / mf_obstacle.nb_dof();
+      GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
+                  "the right format");
+
+      const model_real_plain_vector &vr = md.real_variable(dl[1]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+      const mesh_im &mim = *mims[0];
+
+      const model_real_plain_vector &friction_coeff
+        = contact_only ? u : md.real_variable(dl[2]);
+      const mesh_fem *mf_coeff = contact_only ? 0 : md.pmesh_fem_of_variable(dl[2]);
+      sl = gmm::vect_size(friction_coeff);
+      if (mf_coeff) { sl *= mf_coeff->get_qdim(); sl /= mf_coeff->nb_dof(); }
+      GMM_ASSERT1(sl == 1 || contact_only,
+                  "the data corresponding to the friction coefficient "
+                  "has not the right format");
+
+      scalar_type alpha = 1;
+      if (!contact_only && dl.size() >= 4) {
+        alpha = md.real_variable(dl[3])[0];
+        GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3])) == 1,
+                    "Parameter alpha should be a scalar");
+      }
+
+//       model_real_plain_vector voidvec;
+//       const model_real_plain_vector &WT
+//         = (!contact_only && dl.size()>=5) ? md.real_variable(dl[4]) : voidvec;
+
+//       mesh_region rg(region);
+//       mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+//       if (version & model::BUILD_MATRIX) {
+//         GMM_TRACE2("Continuous Coulomb friction tangent term");
+//         gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
+//         if (matl.size() >= 4) gmm::clear(matl[3]);
+//         if (contact_only) {
+//           size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
+//           asm_frictionless_continuous_tangent_matrix_Alart_Curnier
+//             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
+//              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], option, rg);
+//         }
+//         else {
+//           size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
+//           asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
+//             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
+//              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
+//              friction_coeff, WT, option, rg);
+//         }
+//       }
+
+//       if (version & model::BUILD_RHS) {
+//         gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
+//         if (matl.size() >= 4) gmm::clear(vecl[3]);
+
+//         if (contact_only)
+//           asm_frictionless_continuous_rhs_Alart_Curnier
+//             (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda,
+//              mf_obstacle, obstacle, vr[0], option, rg);
+//         else
+//           asm_Coulomb_friction_continuous_rhs_Alart_Curnier
+//             (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda,
+//              mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
+//              friction_coeff, WT, option, rg);
+//       }
+
+    }
+
+    penalized_Coulomb_friction_brick(bool contact_only_) {
+      Tresca_version = false;   // for future version ...
+      contact_only = contact_only_;
+      set_flags("Continuous penalized Coulomb friction brick",
+		false /* is linear*/, contact_only /* is symmetric */,
+                true /* is coercive */,
+                true /* is real */, false /* is complex */);
+    }
+
+  };
+
+
+  //=========================================================================
+  //  Add a frictionless contact condition with a rigid obstacle given
+  //  by a level set.
+  //=========================================================================
+
+  size_type add_penalized_contact_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_r,
+   size_type region) {
+
+    pbrick pbr = new penalized_Coulomb_friction_brick(true);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, true));
+
+    model::varnamelist dl(1, dataname_obs);
+    dl.push_back(dataname_r);
+
+    model::varnamelist vl(1, varname_u);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

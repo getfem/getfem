@@ -449,8 +449,6 @@ namespace getfem {
                                          K_LL_V1 = 6,
                                          K_LL_V2 = 24,
                                          UZAWA_PROJ = 9,
-                                         UNKNOWN1 = 14,
-                                         UNKNOWN2 = 16,
 
                                          RHS_U_V1 = 7,
                                          RHS_U_V2 = 11,
@@ -492,6 +490,8 @@ namespace getfem {
     base_small_vector aux1, auxN, V, coeff; // helper vectors
     base_matrix grad, GP;
 
+    void adjust_tensor_size(int option);
+
   public:
     dim_type N;
     const mesh_fem &mf_u;
@@ -517,23 +517,7 @@ namespace getfem {
       lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
       r(r_), alpha(alpha_), contact_only(contact_only_), option(option_) {
 
-      sizes_.resize(1); sizes_[0] = 1;
-      switch (option) {
-      // one-dimensional tensors [N]
-      case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4:
-      case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
-      case RHS_U_FRICT_V3: case RHS_U_FRICT_V4:
-      case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
-      case K_UL_V1: case K_UL_V2: case K_UL_V3: case K_UL_V4:
-        sizes_[0] = N; break;
-      // two-dimensional tensors [N x N]
-      case K_UU_V1: case K_UU_V2:
-      case K_UL_FRICT_V1: case K_UL_FRICT_V2:
-      case K_UL_FRICT_V3: case K_UL_FRICT_V4: case K_UL_FRICT_V5:
-      case K_LL_FRICT_V1: case K_LL_FRICT_V2:
-      case K_UU_FRICT_V1: case K_UU_FRICT_V2:
-        sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
-      }
+      adjust_tensor_size(option);
 
       mf_u.extend_vector(U_, U);
       mf_lambda.extend_vector(lambda_, lambda);
