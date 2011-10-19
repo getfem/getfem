@@ -162,7 +162,7 @@ namespace getfem {
       that a part of the symmetry of the tangent matrix will be kept or not
       (except for the coupling bewteen contact and friction).
    **/
-  inline size_type add_Hughes_stab_friction_contact_brick
+  inline size_type add_Hughes_stab_with_friction_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &multname_t, const std::string &dataname_r,
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT, CONTACT_B_MATRIX &DN,CONTACT_B_MATRIX &DT,
@@ -251,7 +251,7 @@ namespace getfem {
       `multname_n` should be a fem variable representing the contact stress.
       An inf-sup condition between `multname_n` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
-      range of acceptabe values.
+      range of acceptable values.
       The possible value for `option` is 1 for the non-symmetric
       Alart-Curnier version, 2 for the symmetric one and 3 for the
       non-symmetric Alart-Curnier with an additional augmentation.
@@ -259,7 +259,7 @@ namespace getfem {
   size_type add_continuous_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_obs,
-   const std::string &dataname_r, size_type region, int option);
+   const std::string &dataname_r, size_type region, int option = 1);
 
   /** Adds a contact with friction condition with a rigid obstacle
       to the model. This brick add a contact which is defined
@@ -272,10 +272,11 @@ namespace getfem {
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
-      `multname_n` should be a fem variable representing the contact stress.
-      An inf-sup condition between `multname_n` and `varname_u` is required.
+      `multname` should be a fem variable representing the contact and
+      friction stress.
+      An inf-sup condition between `multname` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
-      range of acceptabe values. `dataname_friction_coeff` is the friction
+      range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method.
       The possible value for `option` is 1 for the non-symmetric
@@ -286,11 +287,28 @@ namespace getfem {
   */
   size_type add_continuous_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &multname_n, const std::string &dataname_obs,
+   const std::string &multname, const std::string &dataname_obs,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
-   size_type region, int option,
-   const std::string &dataname_alpha = "",
+   size_type region, int option = 1, const std::string &dataname_alpha = "",
    const std::string &dataname_wt = "");
+
+
+  /** Adds a penalized contact frictionless condition with a rigid obstacle
+      to the model.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe an approximate non-penetration condition
+      but not too large not to deteriorate to much the conditionning of
+      the tangent system. 
+  */
+  size_type add_penalized_contact_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_r,
+   size_type region);
+
 
 
   /** Adds a frictionless contact condition between two faces of one or two
@@ -444,38 +462,39 @@ namespace getfem {
        vrg1, vrg2, slave1, slave2, symmetrized);
   }
 
-  enum friction_nonlinear_term_version { RHS_L_V1 = 8,
-                                         RHS_L_V2 = 26,
-                                         K_LL_V1 = 6,
-                                         K_LL_V2 = 24,
-                                         UZAWA_PROJ = 9,
+  enum friction_nonlinear_term_version { RHS_L_V1,
+                                         RHS_L_V2,
+                                         K_LL_V1,
+                                         K_LL_V2,
+                                         UZAWA_PROJ,
 
-                                         RHS_U_V1 = 7,
-                                         RHS_U_V2 = 11,
-                                         RHS_U_V3 = 13,
-                                         RHS_U_V4 = 25,
-                                         RHS_U_FRICT_V1 = 0,
-                                         RHS_U_FRICT_V2 = 19,
-                                         RHS_U_FRICT_V3 = 21,
-                                         RHS_U_FRICT_V4 = 27,
-                                         RHS_L_FRICT_V1 = 2,
-                                         RHS_L_FRICT_V2 = 28,
-                                         K_UL_V1 = 4,
-                                         K_UL_V2 = 22,
-                                         K_UL_V3 = 5,
-                                         K_UL_V4 = 23,
+                                         RHS_U_V1,
+                                         RHS_U_V2,
+                                         RHS_U_V3,
+                                         RHS_U_V4,
+                                         RHS_U_V5,
+                                         RHS_U_FRICT_V1,
+                                         RHS_U_FRICT_V2,
+                                         RHS_U_FRICT_V3,
+                                         RHS_U_FRICT_V4,
+                                         RHS_L_FRICT_V1,
+                                         RHS_L_FRICT_V2,
+                                         K_UL_V1,
+                                         K_UL_V2,
+                                         K_UL_V3,
+                                         K_UL_V4,
 
-                                         K_UU_V1 = 12,
-                                         K_UU_V2 = 10,
-                                         K_UL_FRICT_V1 = 1, // EYE
-                                         K_UL_FRICT_V2 = 29,
-                                         K_UL_FRICT_V3 = 17,
-                                         K_UL_FRICT_V4 = 3,
-                                         K_UL_FRICT_V5 = 30,
-                                         K_LL_FRICT_V1 = 15,
-                                         K_LL_FRICT_V2 = 31,
-                                         K_UU_FRICT_V1 = 20,
-                                         K_UU_FRICT_V2 = 18
+                                         K_UU_V1,
+                                         K_UU_V2,
+                                         K_UL_FRICT_V1, // EYE
+                                         K_UL_FRICT_V2,
+                                         K_UL_FRICT_V3,
+                                         K_UL_FRICT_V4,
+                                         K_UL_FRICT_V5,
+                                         K_LL_FRICT_V1,
+                                         K_LL_FRICT_V2,
+                                         K_UU_FRICT_V1,
+                                         K_UU_FRICT_V2
   };
 
   class friction_nonlinear_term : public nonlinear_elem_term {
@@ -490,7 +509,7 @@ namespace getfem {
     base_small_vector aux1, auxN, V, coeff; // helper vectors
     base_matrix grad, GP;
 
-    void adjust_tensor_size(int option);
+    void adjust_tensor_size(void);
 
   public:
     dim_type N;
@@ -517,7 +536,7 @@ namespace getfem {
       lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
       r(r_), alpha(alpha_), contact_only(contact_only_), option(option_) {
 
-      adjust_tensor_size(option);
+      adjust_tensor_size();
 
       mf_u.extend_vector(U_, U);
       mf_lambda.extend_vector(lambda_, lambda);

@@ -518,7 +518,7 @@ namespace getfem {
             bgeot::pgeometric_trans pgt = mesh_m.trans_of_convex(cv_sel);
             fem_interpolation_context
               ctx(pgt, pf, proj_node_ref_sel, G, cv_sel, fc_sel);
-            pf->interpolation (ctx, M, qdim);
+            pf->interpolation (ctx, M, int(qdim));
 
             mesh_fem::ind_dof_ct
               master_dofs = mf_disp->ind_basic_dof_of_element(cv_sel);
@@ -1149,11 +1149,11 @@ namespace getfem {
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
 
-  void friction_nonlinear_term::adjust_tensor_size(int option) {
+  void friction_nonlinear_term::adjust_tensor_size(void) {
     sizes_.resize(1); sizes_[0] = 1;
     switch (option) {
       // one-dimensional tensors [N]
-    case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4:
+    case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4: case RHS_U_V5:
     case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
     case RHS_U_FRICT_V3: case RHS_U_FRICT_V4:
     case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
@@ -1207,6 +1207,10 @@ namespace getfem {
     case RHS_U_V4:
       e = -gmm::neg(ln);
       for (i=0; i<N; ++i) t[i] = e*no[i];
+      break;
+    case RHS_U_V5:
+      e = - gmm::pos(un-g) * r;
+      for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
 
     case RHS_U_FRICT_V1:
@@ -1403,7 +1407,7 @@ namespace getfem {
    const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
-   const mesh_region &rg = mesh_region::all_convexes()) {
+   const mesh_region &rg) {
 
     size_type subterm1 = (option == 4) ? K_UL_V2 : K_UL_V1;
     size_type subterm2 = (option == 4) ? K_UL_V4 : K_UL_V3;
@@ -1463,8 +1467,7 @@ namespace getfem {
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
    scalar_type alpha, const getfem::mesh_fem *mf_coeff, const VECT1 &f_coeff,
-   const VECT1 &WT, int option,
-   const mesh_region &rg = mesh_region::all_convexes()) {
+   const VECT1 &WT, int option, const mesh_region &rg) {
 
     size_type subterm1 = (option == 2) ? K_UL_FRICT_V3 :
                          ((option == 4) ? K_UL_FRICT_V2 : K_UL_FRICT_V1);
@@ -1529,7 +1532,7 @@ namespace getfem {
   (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
-   const mesh_region &rg = mesh_region::all_convexes()) {
+   const mesh_region &rg) {
 
     size_type subterm1;
     switch (option) {
@@ -1567,7 +1570,7 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
    scalar_type alpha, const getfem::mesh_fem *mf_coeff, const VECT1 &f_coeff,
    const VECT1 &WT, int option,
-   const mesh_region &rg = mesh_region::all_convexes()) {
+   const mesh_region &rg) {
 
     size_type subterm1;
     switch (option) {
@@ -1782,7 +1785,7 @@ namespace getfem {
 
   size_type add_continuous_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &multname_n, const std::string &dataname_obs,
+   const std::string &multname, const std::string &dataname_obs,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    size_type region, int option,
    const std::string &dataname_alpha, const std::string &dataname_wt) {
@@ -1794,20 +1797,20 @@ namespace getfem {
 
     switch (option) {
     case 1: case 4:
-      tl.push_back(model::term_description(varname_u, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u, multname, false));
+      tl.push_back(model::term_description(multname, varname_u, false));
+      tl.push_back(model::term_description(multname, multname, true));
       break;
     case 2:
-      tl.push_back(model::term_description(varname_u, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u, multname, false));
+      tl.push_back(model::term_description(multname, varname_u, false));
+      tl.push_back(model::term_description(multname, multname, true));
       tl.push_back(model::term_description(varname_u, varname_u, true));
       break;
     case 3:
-      tl.push_back(model::term_description(varname_u, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u, multname, false));
+      tl.push_back(model::term_description(multname, varname_u, false));
+      tl.push_back(model::term_description(multname, multname, true));
       tl.push_back(model::term_description(varname_u, varname_u, true));
       break;
     default :GMM_ASSERT1(false,
@@ -1822,7 +1825,7 @@ namespace getfem {
     }
 
     model::varnamelist vl(1, varname_u);
-    vl.push_back(multname_n);
+    vl.push_back(multname);
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
@@ -1833,6 +1836,49 @@ namespace getfem {
   //  Continuous penalized contact with friction (given obstacle, u, lambda).
   //
   //=========================================================================
+
+
+
+  template<typename MAT, typename VECT1>
+  void asm_frictionless_penalized_tangent_matrix
+  (MAT &Kuu, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   scalar_type r, const mesh_region &rg) {
+
+    friction_nonlinear_term nterm(mf_u, U, mf_obs, obs, mf_obs, obs,r,K_UU_V1);
+
+    getfem::generic_assembly assem;
+    assem.set
+    ("M(#1,#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(Kuu);
+    assem.assembly(rg);
+  }
+
+
+  template<typename VECT1>
+  void asm_frictionless_penalized_rhs
+  (VECT1 &Ru, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   scalar_type r, const mesh_region &rg) {
+
+    friction_nonlinear_term nterm(mf_u, U, mf_obs, obs, mf_obs,
+                                   obs, r, RHS_U_V5);
+    
+    getfem::generic_assembly assem;
+    assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(Ru);
+    assem.assembly(rg);
+  }
 
 
   struct penalized_Coulomb_friction_brick : public virtual_brick {
@@ -1850,7 +1896,7 @@ namespace getfem {
                                         build_version version) const {
       GMM_ASSERT1(mims.size() == 1,
                   "Penalized Coulomb friction brick need a single mesh_im");
-      GMM_ASSERT1(vl.size() == 2,
+      GMM_ASSERT1(vl.size() == 1,
                   "Penalized Coulomb friction brick need two variables");
       GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 5,
                   "Wrong number of data for penalized Coulomb friction "
@@ -1887,46 +1933,27 @@ namespace getfem {
                     "Parameter alpha should be a scalar");
       }
 
-//       model_real_plain_vector voidvec;
-//       const model_real_plain_vector &WT
-//         = (!contact_only && dl.size()>=5) ? md.real_variable(dl[4]) : voidvec;
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
 
-//       mesh_region rg(region);
-//       mf_u.linked_mesh().intersect_with_mpi_region(rg);
+      if (version & model::BUILD_MATRIX) {
+	GMM_TRACE2("Penalized Coulomb friction tangent term");
+	gmm::clear(matl[0]);
+        if (contact_only)
+          asm_frictionless_penalized_tangent_matrix
+            (matl[0], mim, mf_u, u, mf_obstacle, obstacle, vr[0], rg);
+        else
+          GMM_ASSERT1(false, "to be done");
+      }
 
-//       if (version & model::BUILD_MATRIX) {
-//         GMM_TRACE2("Continuous Coulomb friction tangent term");
-//         gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
-//         if (matl.size() >= 4) gmm::clear(matl[3]);
-//         if (contact_only) {
-//           size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
-//           asm_frictionless_continuous_tangent_matrix_Alart_Curnier
-//             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
-//              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], option, rg);
-//         }
-//         else {
-//           size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
-//           asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
-//             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
-//              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
-//              friction_coeff, WT, option, rg);
-//         }
-//       }
-
-//       if (version & model::BUILD_RHS) {
-//         gmm::clear(vecl[0]); gmm::clear(vecl[1]); gmm::clear(vecl[2]);
-//         if (matl.size() >= 4) gmm::clear(vecl[3]);
-
-//         if (contact_only)
-//           asm_frictionless_continuous_rhs_Alart_Curnier
-//             (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda,
-//              mf_obstacle, obstacle, vr[0], option, rg);
-//         else
-//           asm_Coulomb_friction_continuous_rhs_Alart_Curnier
-//             (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda,
-//              mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
-//              friction_coeff, WT, option, rg);
-//       }
+      if (version & model::BUILD_RHS) {
+        gmm::clear(vecl[0]);
+        if (contact_only)
+          asm_frictionless_penalized_rhs
+            (vecl[0], mim, mf_u, u, mf_obstacle, obstacle, vr[0], rg);
+        else
+          GMM_ASSERT1(false, "to be done");
+      }
 
     }
 
@@ -1964,76 +1991,6 @@ namespace getfem {
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

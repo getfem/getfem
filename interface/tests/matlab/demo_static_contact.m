@@ -16,7 +16,8 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
-% Static equilibrium of an elastic solid in contact with a rigid foundation
+% Static equilibrium of an elastic solid in contact with a rigid foundation.
+% Test of the different contact/friction formulations of Getfem.
 %
 % This program is used to check that matlab-getfem is working. This is also
 % a good example of use of GetFEM++.
@@ -42,7 +43,7 @@ r = 1.0;      % Augmentation parameter
 penalty_parameter = 1E-8;    % For rigid motions.
 uzawa_r = penalty_parameter; % Descent coefficient for Uzawa method.
 niter = 50;  % Maximum number of iterations for Newton's algorithm.
-version = 13;  % 1 : frictionless contact and the basic contact brick
+version = 14;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -72,6 +73,7 @@ version = 13;  % 1 : frictionless contact and the basic contact brick
               %     unsymmetric version with an additional augmentation.
               % 13 : contact with 'static' Coulomb friction and the continuous brick
               %     New unsymmetric method.
+              % 14 : penalized frictionless contact
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
 
@@ -227,13 +229,24 @@ elseif (version >= 10 && version <= 13) % The continuous version with friction, 
   gf_mesh_fem_set(mflambda, 'qdim', 2);
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
-  gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+  gf_model_set(md, 'add fem variable', 'lambda', mflambda_partial);
   gf_model_set(md, 'add initialized data', 'r', [r]);
   gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add continuous contact with friction with rigid obstacle brick', mim_friction, 'u', ...
-	         'lambda_n', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
+	         'lambda', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
+elseif (version == 14)
+   
+ 
+  % gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+  gf_model_set(md, 'add initialized data', 'r', [r]);
+  % gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
+  gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
+	         'obstacle', 'r', GAMMAC);
+    
 else
   error('Inexistent version');
 end

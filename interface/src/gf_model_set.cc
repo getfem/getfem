@@ -1705,7 +1705,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-     /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt]]])
+     /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt]]])
 
       Add a contact with friction condition with a rigid obstacle
       to the model. This brick add a contact which is defined
@@ -1718,8 +1718,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
-      `multname_n` should be a fem variable representing the contact stress.
-      An inf-sup condition beetween `multname_n` and `varname_u` is required.
+      `multname` should be a fem variable representing the contact stress.
+      An inf-sup condition beetween `multname` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptabe values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
@@ -1736,7 +1736,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
-        std::string multname_n = in.pop().to_string();
+        std::string multname = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         std::string dataname_coeff = in.pop().to_string();
@@ -1751,9 +1751,39 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 	size_type ind=
 	getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
-	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+	(md->model(), gfi_mim->mesh_im(), varname_u, multname,
 	 dataname_obs, dataname_r, dataname_coeff, region, option,
 	 dataname_alpha, dataname_wt);
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+     /*@SET ind = ('add penalized contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @int region)
+
+      Adds a penalized contact frictionless condition with a rigid obstacle
+      to the model.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe an approximate non-penetration condition
+      but not too large not to deteriorate to much the conditionning of
+      the tangent system. 
+    @*/
+     sub_command
+       ("add penalized contact with rigid obstacle brick", 5, 5, 0, 1,
+        
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string dataname_obs = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+
+	size_type ind=
+	getfem::add_penalized_contact_with_rigid_obstacle_brick
+	(md->model(), gfi_mim->mesh_im(), varname_u,
+	 dataname_obs, dataname_r, region);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
