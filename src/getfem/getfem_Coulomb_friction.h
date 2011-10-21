@@ -302,12 +302,14 @@ namespace getfem {
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe an approximate non-penetration condition
       but not too large not to deteriorate to much the conditionning of
-      the tangent system. 
+      the tangent system. `dataname_n` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda_n (comes
+      from an augmented Lagrangian formulation).
   */
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   size_type region);
+   size_type region, const std::string &dataname_n = "", int option = 1);
 
 
 
@@ -524,13 +526,13 @@ namespace getfem {
 
     bgeot::multi_index sizes_;
 
-    template <class VECT> friction_nonlinear_term
-    (const mesh_fem &mf_u_, const VECT &U_,
-     const mesh_fem &mf_lambda_, const VECT &lambda_,
-     const mesh_fem &mf_obs_, const VECT &obs_,
+    template <typename VECT1, typename VECT2> friction_nonlinear_term
+    (const mesh_fem &mf_u_, const VECT1 &U_,
+     const mesh_fem &mf_lambda_, const VECT2 &lambda_,
+     const mesh_fem &mf_obs_, const VECT2 &obs_,
      scalar_type r_, size_type option_, bool contact_only_ = true,
      scalar_type alpha_ = scalar_type(-1), const mesh_fem *mf_coeff_ = 0,
-     const VECT *f_coeff_ = 0, const VECT *WT_ = 0) :
+     const VECT2 *f_coeff_ = 0, const VECT2 *WT_ = 0) :
       N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), mf_lambda(mf_lambda_),
       mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
       lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
@@ -583,13 +585,38 @@ namespace getfem {
   (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
-   const mesh_region &rg = mesh_region::all_convexes()) {
+   const mesh_region &rg) {
 
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, UZAWA_PROJ);
 
     getfem::generic_assembly assem;
     assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).Base(#2))(i,:); ");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_vec(R);
+    assem.assembly(rg);
+  }
+
+
+  /** Specific assembly procedure for the use of an Uzawa algorithm to solve
+      contact problems.
+  */
+  template<typename VECT1>
+  void asm_level_set_normal_source_term
+  (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs, const mesh_region &rg) {
+
+    std::vector<scalar_type> U(mf_u.nb_dof());
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda,
+				   lambda, mf_obs, obs, 1, RHS_U_V1);
+
+    getfem::generic_assembly assem;
+    assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);

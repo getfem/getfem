@@ -661,7 +661,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@FUNC B = ('contact Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, r)
     Specific assembly procedure for the use of an Uzawa algorithm to solve
-      contact problems. Projects the term $(\lambda - r u_N)_-$ on the
+      contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
       finite element space of $\lambda$.
 
     Return a @dcvec object.
@@ -684,6 +684,31 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        getfem::asm_Coulomb_friction_continuous_Uzawa_proj
          (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs, r, boundary_num);
+       
+       );
+
+    /*@FUNC B = ('level set normal source term', @int bnum, @tmim mim, @tmf mf_u, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_levelset, @dvec levelset)
+    Performs an assembly of the source term represented by `vec_lambda`
+    on `mf_lambda` considerd to be a component in the direction of the
+    gradient of a levelset function (normal to the levelset) of a vector
+    field defined on `mf_u` on the boundary `bnum`.
+
+    Return a @dcvec object.
+    @*/
+    sub_command
+      ("level set normal source term", 7, 7, 0, 1,
+       int boundary_num = in.pop().to_integer();
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_lambda = in.pop().to_const_mesh_fem();
+       darray vec_lambda = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_lambda->nb_dof()));
+       const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
+       darray obs = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
+       darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+       getfem::asm_level_set_normal_source_term
+         (F, *mim, *mf_u, *mf_lambda, vec_lambda, *mf_obs,obs,boundary_num);
        
        );
 

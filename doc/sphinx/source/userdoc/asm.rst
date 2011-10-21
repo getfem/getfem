@@ -23,7 +23,7 @@ An assembling procedure is defined to solve the problem:
 
 .. math::
 
-   \mbox{div}(a(x)\cdot\mbox{grad}(u(x))) &= f(x)\ \mbox{ in }\Omega,  \\
+   -\mbox{div}(a(x)\cdot\mbox{grad}(u(x))) &= f(x)\ \mbox{ in }\Omega,  \\
    u(x) & = U(x)\ \mbox{ on }\Gamma_D, \\
    \frac{\partial u}{\partial\eta}(x) & = F(x)\ \mbox{ on }\Gamma_N,
 

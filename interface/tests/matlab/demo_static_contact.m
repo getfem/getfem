@@ -17,7 +17,7 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
 % Static equilibrium of an elastic solid in contact with a rigid foundation.
-% Test of the different contact/friction formulations of Getfem.
+% Tests the different contact/friction formulations of Getfem.
 %
 % This program is used to check that matlab-getfem is working. This is also
 % a good example of use of GetFEM++.
@@ -36,12 +36,13 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 
 % Parameters of the model
-lambda = 1;  % Lame coefficient
-mu = 1;      % Lame coefficient
+lambda = 1;           % Lame coefficient
+mu = 1;               % Lame coefficient
 friction_coeff = 0.4; % coefficient of friction
-r = 100.0;      % Augmentation parameter
+r = 1000.0;             % Augmentation parameter
+with_dirichlet = 0;   % With a Dirichlet condition (otherwise, rigid motions are slightly penalized)
 penalty_parameter = 1E-8;    % For rigid motions.
-niter = 50;  % Maximum number of iterations for Newton's algorithm.
+niter = 50;   % Maximum number of iterations for Newton's algorithm.
 version = 9;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
@@ -77,12 +78,16 @@ version = 9;  % 1 : frictionless contact and the basic contact brick
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
 
-% Selection of the contact boundary
+% Selection of the contact and Dirichlet boundaries
+GAMMAC = 1; GAMMAD = 2;
+
 border = gf_mesh_get(m,'outer faces');
 normals = gf_mesh_get(m, 'normal of faces', border);
-contact_boundary=border(:, find(normals(d, :) < 0));
-GAMMAC = 1;
+contact_boundary=border(:, find(normals(d, :) < -0.1));
 gf_mesh_set(m, 'region', GAMMAC, contact_boundary);
+contact_boundary=border(:, find(normals(d, :) > 0.1));
+gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
+
 
 % Plot the mesh
 figure(1);
@@ -92,14 +97,17 @@ pause(0.1);
 
 
 % Finite element methods
+u_degree = 2;
+lambda_degree = 1;
+
 mfu=gf_mesh_fem(m, d);
-gf_mesh_fem_set(mfu, 'classical fem', 2);
+gf_mesh_fem_set(mfu, 'classical fem', u_degree);
 mfd=gf_mesh_fem(m, 1);
-gf_mesh_fem_set(mfd, 'classical fem', 2);
+gf_mesh_fem_set(mfd, 'classical fem', u_degree);
 mflambda=gf_mesh_fem(m, 1); % used only by versions 5 to 13
-gf_mesh_fem_set(mflambda, 'classical fem', 1);
+gf_mesh_fem_set(mflambda, 'classical fem', lambda_degree);
 mfvm=gf_mesh_fem(m, 1);
-gf_mesh_fem_set(mfvm, 'classical discontinuous fem', 1);
+gf_mesh_fem_set(mfvm, 'classical discontinuous fem', u_degree-1);
 
 % Integration method
 mim=gf_mesh_im(m, 4);
@@ -115,18 +123,23 @@ F(d:d:nbdofd*d) = -0.02;
 % Elasticity model
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
-gf_model_set(md, 'add initialized data', 'mu', [mu]);
-gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
+gf_model_set(md, 'add initialized data', 'cmu', [mu]);
+gf_model_set(md, 'add initialized data', 'clambda', [lambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
-                 'lambda', 'mu');
+                 'clambda', 'cmu');
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
-% Small penalty term to avoid rigid motion (should be replaced by an
-% explicit treatment of the rigid motion with a constraint matrix)
-gf_model_set(md, 'add initialized data', 'penalty_param', ...
-             [penalty_parameter]);          
-gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
+if (with_dirichlet)
+  gf_model_set(md, 'add initialized data', 'Ddata', [0, -5]);
+  gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', u_degree, GAMMAD, 'Ddata');
+else
+  % Small penalty term to avoid rigid motion (should be replaced by an
+  % explicit treatment of the rigid motion with a constraint matrix)
+  gf_model_set(md, 'add initialized data', 'penalty_param', ...
+               [penalty_parameter]);          
+  gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
+end;
 
 % The contact condition
 
@@ -197,31 +210,39 @@ elseif (version >= 5 && version <= 8) % The continuous version, Newton
           
 elseif (version == 9) % The continuous version, Uzawa
  
+  sub_option = 2;  
+    
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
+  % ldof = gf_mesh_fem_get(mfd, 'dof on region', GAMMAC);
+  % mflambda_partial = gf_mesh_fem('partial', mfd, ldof);
   nbc = gf_mesh_fem_get(mflambda_partial, 'nbdof');
-  lambda_n = zeros(1, nbc);
-  % Not correct : the normal to the obstacle is assumed to be vertical.
-  W=-gf_asm('boundary', GAMMAC, 'a=data(#2);V(#1)+=comp(vBase(#1).Base(#2))(:,2,i).a(i)', mim, mfu, mflambda_partial, lambda_n);
-  indb=gf_model_set(md, 'add explicit rhs', 'u', W);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   M = gf_asm('mass matrix', mim, mflambda_partial, mflambda_partial, GAMMAC);
+  lambda_n = zeros(1, nbc);
+  gf_model_set(md, 'add initialized fem data', 'lambda_n', mflambda_partial, lambda_n);
+  if (sub_option == 1)
+    W = zeros(nbdofu, 1);
+    indb=gf_model_set(md, 'add explicit rhs', 'u', W);
+  end;
   
   gf_model_set(md, 'add initialized data', 'r', [r]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'obstacle', 'r', GAMMAC);
+	         'obstacle', 'r', GAMMAC, 'lambda_n', sub_option);
   
   for ii=1:100
       disp(sprintf('iteration %d', ii));
       gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter); % , 'very noisy');
       U = gf_model_get(md, 'variable', 'u');
       lambda_n_old = lambda_n;
-      % format long; lambda_n
-      lambda_n = (M\ gf_asm('contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, r/10))';
-      W=-gf_asm('boundary', GAMMAC, 'a=data(#2);V(#1)+=comp(vBase(#1).Base(#2))(:,2,i).a(i)', mim, mfu, mflambda_partial, lambda_n);
-      gf_model_set(md, 'set private rhs', indb, W);
+      lambda_n = (M\ gf_asm('contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, r))';
+      gf_model_set(md, 'variable', 'lambda_n', lambda_n);
+      if (sub_option == 1)
+        W=gf_asm('level set normal source term', GAMMAC, mim_friction, mfu, mflambda_partial, lambda_n, mfd, OBS)';
+        gf_model_set(md, 'set private rhs', indb, W);
+      end;
       difff = max(abs(lambda_n-lambda_n_old));
       disp(sprintf('diff : %g', difff/max(abs(lambda_n))));
       % pause;
@@ -265,7 +286,7 @@ end;
 U = gf_model_get(md, 'variable', 'u');
 % lambda_n = gf_model_get(md, 'variable', 'lambda_n');
 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u', 'lambda', 'mu', mfvm);
+		  'u', 'clambda', 'cmu', mfvm);
     
 
 % set a custom colormap

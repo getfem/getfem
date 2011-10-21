@@ -1206,7 +1206,7 @@ namespace getfem {
       break;
     case RHS_U_V4:
       e = -gmm::neg(ln);
-      for (i=0; i<N; ++i) t[i] = e*no[i];
+      for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
     case RHS_U_V5:
       e = - gmm::pos(un-g) * r;
@@ -1629,7 +1629,7 @@ namespace getfem {
                   "Continuous Coulomb friction brick need two variables");
       GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 5,
                   "Wrong number of data for continuous Coulomb friction "
-                  << "brick, " << dl.size() << " should be 2.");
+                  << "brick, " << dl.size() << " should be between 2 and 5.");
       GMM_ASSERT1(matl.size() == size_type(3 + (option == 3)
                                            + (option == 2 && !contact_only)),
                   "Wrong number of terms for "
@@ -1838,21 +1838,22 @@ namespace getfem {
   //=========================================================================
 
 
-
   template<typename MAT, typename VECT1>
   void asm_frictionless_penalized_tangent_matrix
   (MAT &Kuu, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
-   scalar_type r, const mesh_region &rg) {
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda,
+   const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   scalar_type r, const mesh_region &rg, int option) {
 
-    friction_nonlinear_term nterm(mf_u, U, mf_obs, obs, mf_obs, obs,r,K_UU_V1);
+    friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
+				  r, (option == 1) ? K_UU_V1 : K_UU_V2);
 
     getfem::generic_assembly assem;
     assem.set
     ("M(#1,#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
-    assem.push_mf(mf_obs);
+    assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
     assem.push_nonlinear_term(&nterm);
     assem.push_mat(Kuu);
@@ -1863,17 +1864,18 @@ namespace getfem {
   template<typename VECT1>
   void asm_frictionless_penalized_rhs
   (VECT1 &Ru, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
-   scalar_type r, const mesh_region &rg) {
+   const VECT1 &U,  const getfem::mesh_fem &mf_lambda,
+   const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   scalar_type r, const mesh_region &rg, int option) {
 
-    friction_nonlinear_term nterm(mf_u, U, mf_obs, obs, mf_obs,
-                                   obs, r, RHS_U_V5);
+    friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
+				  r, (option == 1) ? RHS_U_V5 : RHS_U_V2);
     
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
-    assem.push_mf(mf_obs);
+    assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
     assem.push_nonlinear_term(&nterm);
     assem.push_vec(Ru);
@@ -1884,6 +1886,7 @@ namespace getfem {
   struct penalized_Coulomb_friction_brick : public virtual_brick {
 
     bool Tresca_version, contact_only;
+    int option;
     
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -1898,9 +1901,10 @@ namespace getfem {
                   "Penalized Coulomb friction brick need a single mesh_im");
       GMM_ASSERT1(vl.size() == 1,
                   "Penalized Coulomb friction brick need two variables");
-      GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 5,
+      size_type nb_data = ((option == 1) ? 2 : 3);
+      GMM_ASSERT1(dl.size() == nb_data,
                   "Wrong number of data for penalized Coulomb friction "
-                  << "brick, " << dl.size() << " should be 2.");
+                  << "brick, " << dl.size() << " should be " << nb_data <<".");
       GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
                   "penalized Coulomb friction brick");
 
@@ -1917,9 +1921,19 @@ namespace getfem {
       GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
       const mesh_im &mim = *mims[0];
 
+      const model_real_plain_vector &lambda
+        = (option == 1) ? obstacle : md.real_variable(dl[2]);
+      const mesh_fem *mf_lambda = (option == 1) ? &mf_obstacle : md.pmesh_fem_of_variable(dl[2]);
+      sl = gmm::vect_size(lambda);
+      sl *= mf_lambda->get_qdim(); sl/=mf_lambda->nb_dof();
+      GMM_ASSERT1(sl == 1 || option == 1,
+                  "the data corresponding to the contact stress "
+                  "has not the right format");
+
+      size_type shift = ((option == 1) ? 0 : 1);
       const model_real_plain_vector &friction_coeff
-        = contact_only ? u : md.real_variable(dl[2]);
-      const mesh_fem *mf_coeff = contact_only ? 0 : md.pmesh_fem_of_variable(dl[2]);
+        = contact_only ? u : md.real_variable(dl[2+shift]);
+      const mesh_fem *mf_coeff = contact_only ? 0 : md.pmesh_fem_of_variable(dl[2+shift]);
       sl = gmm::vect_size(friction_coeff);
       if (mf_coeff) { sl *= mf_coeff->get_qdim(); sl /= mf_coeff->nb_dof(); }
       GMM_ASSERT1(sl == 1 || contact_only,
@@ -1928,8 +1942,8 @@ namespace getfem {
 
       scalar_type alpha = 1;
       if (!contact_only && dl.size() >= 4) {
-        alpha = md.real_variable(dl[3])[0];
-        GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3])) == 1,
+        alpha = md.real_variable(dl[3+shift])[0];
+        GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3+shift])) == 1,
                     "Parameter alpha should be a scalar");
       }
 
@@ -1941,7 +1955,7 @@ namespace getfem {
 	gmm::clear(matl[0]);
         if (contact_only)
           asm_frictionless_penalized_tangent_matrix
-            (matl[0], mim, mf_u, u, mf_obstacle, obstacle, vr[0], rg);
+            (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle, vr[0], rg, option);
         else
           GMM_ASSERT1(false, "to be done");
       }
@@ -1950,20 +1964,21 @@ namespace getfem {
         gmm::clear(vecl[0]);
         if (contact_only)
           asm_frictionless_penalized_rhs
-            (vecl[0], mim, mf_u, u, mf_obstacle, obstacle, vr[0], rg);
+            (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle, vr[0], rg, option);
         else
           GMM_ASSERT1(false, "to be done");
       }
 
     }
 
-    penalized_Coulomb_friction_brick(bool contact_only_) {
+    penalized_Coulomb_friction_brick(bool contact_only_, int option_) {
       Tresca_version = false;   // for future version ...
       contact_only = contact_only_;
+      option = option_;
       set_flags("Continuous penalized Coulomb friction brick",
 		false /* is linear*/, contact_only /* is symmetric */,
-                true /* is coercive */,
-                true /* is real */, false /* is complex */);
+                true /* is coercive */, true /* is real */,
+		false /* is complex */);
     }
 
   };
@@ -1977,15 +1992,20 @@ namespace getfem {
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   size_type region) {
+   size_type region, const std::string &dataname_n, int option) {
 
-    pbrick pbr = new penalized_Coulomb_friction_brick(true);
+    pbrick pbr = new penalized_Coulomb_friction_brick(true, option);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, true));
 
     model::varnamelist dl(1, dataname_obs);
     dl.push_back(dataname_r);
+    switch (option) {
+    case 1: break;
+    case 2: dl.push_back(dataname_n); break;
+    default: GMM_ASSERT1(false, "Penalized contact brick : invalid option");
+    }
 
     model::varnamelist vl(1, varname_u);
 

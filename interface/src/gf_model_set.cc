@@ -267,7 +267,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add Laplacian brick', @tmim mim, @str varname[, @int region])
-    Add a Laplacian term to the model relatively to the variable `varname`.
+    Add a Laplacian term to the model relatively to the variable `varname`
+    (in fact with a minus : :math:`-\text{div}(\nabla u)`).
     If this is a vector valued variable, the Laplacian term is added
     componentwise. `region` is an optional mesh region on which the term
     is added. If it is not specified, it is added on the whole mesh. Return
@@ -301,7 +302,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     The components of the matrix/tensor have to be stored with the fortran
     order (columnwise) in the data vector (compatibility with blas). The
     symmetry of the given matrix/tensor is not verified (but assumed). If
-    this is a vector valued variable, the Laplacian term is added
+    this is a vector valued variable, the elliptic term is added
     componentwise. `region` is an optional mesh region on which the term is
     added. If it is not specified, it is added on the whole mesh. Return the
     brick index in the model.@*/
@@ -1758,7 +1759,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-     /*@SET ind = ('add penalized contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @int region)
+     /*@SET ind = ('add penalized contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @int region [, dataname_n, option])
 
       Adds a penalized contact frictionless condition with a rigid obstacle
       to the model.
@@ -1769,21 +1770,27 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe an approximate non-penetration condition
       but not too large not to deteriorate to much the conditionning of
-      the tangent system. 
+      the tangent system. `dataname_n` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda_n (comes
+      from an augmented Lagrangian formulation).
     @*/
      sub_command
-       ("add penalized contact with rigid obstacle brick", 5, 5, 0, 1,
+       ("add penalized contact with rigid obstacle brick", 5, 7, 0, 1,
         
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         size_type region = in.pop().to_integer();
+	std::string dataname_n;
+	if (in.remaining()) dataname_n = in.pop().to_string();
+	int option = 1;
+	if  (in.remaining()) option = in.pop().to_integer();
 
 	size_type ind=
 	getfem::add_penalized_contact_with_rigid_obstacle_brick
 	(md->model(), gfi_mim->mesh_im(), varname_u,
-	 dataname_obs, dataname_r, region);
+	 dataname_obs, dataname_r, region, dataname_n, option);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );

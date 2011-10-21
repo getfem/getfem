@@ -844,7 +844,8 @@ namespace getfem {
   //=========================================================================
 
 
-  /** Add a Laplacian term on the variable `varname`. If it is a vector
+  /** Add a Laplacian term on the variable `varname` (in fact with a minus :
+      :math:`-\text{div}(\nabla u)`). If it is a vector
       valued variable, the Laplacian term is componentwise. `region` is an
       optional mesh region on which the term is added. Return the brick index
       in the model.
