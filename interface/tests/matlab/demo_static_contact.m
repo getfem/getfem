@@ -318,14 +318,36 @@ VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 
 figure(2);
 if (d == 3)
-  gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...
-          gf_mesh_get(mfu,'outer faces'), 'deformation', U, ...
-          'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+  c=[0.1;0;20];x=[1;0;0];y=[0;1;0];z=[0;0;1];
+  % Whole boundary
+  % sl2=gf_slice({'boundary',{'none'}}, m, 5);
+  % Slice, 3 planes
+  % sl2=gf_slice({'boundary',{'union',{'planar',+1,c,x},{'planar',+1,c,y},{'planar',+1,c,z}}},m,5);
+  % Slice, 2 planes
+  % sl2=gf_slice({'boundary',{'union',{'planar',+1,c,x},{'planar',+1,c,y}}},m,5);
+  % Slice, 1 plane
+  sl2=gf_slice({'boundary',{'planar',+1,c,x}}, m, 5);
+
+  P=gf_slice_get(sl2,'pts'); dP=gf_compute(mfu,U,'interpolate on',sl2);
+  gf_slice_set(sl2, 'pts', P+dP);
+  VMsl=gf_compute(mfvm,VM,'interpolate on',sl2);
+  set(gcf,'renderer','zbuffer');
+  h=gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
+  view(-80,-15); axis on; camlight; gf_colormap('chouette');
+  % map=[1:-1/10:0]'*[1 1 1]; colormap(map); % for NB
+    
+  % gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...
+  %        gf_mesh_get(mfu,'outer faces'), 'deformation', U, ...
+  %        'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+  % view(-5,-10); camlight; colormap(map);
+  xlabel('x'); ylabel('y'); zlabel('z');
+  title('Sliced deformed configuration (not really a small deformation of course ...)');
 else
   gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U, ...
           'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+  xlabel('x'); ylabel('y');
+  title('Deformed configuration (not really a small deformation of course ...)');
 end;
 
-title('Deformed configuration (not really a small deformation of course ...)');
 colorbar;
 pause(0.1);
