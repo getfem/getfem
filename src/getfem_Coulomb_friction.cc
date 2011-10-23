@@ -563,7 +563,6 @@ namespace getfem {
     bool Tresca_version, symmetrized, contact_only;
     bool really_stationary, friction_dynamic_term;
     bool two_variables, Hughes_stabilized;
-    bool new_method; // ligne add
 
     void init_BBN_BBT(void) const {
       gmm::resize(BBN1, gmm::mat_nrows(BN1), gmm::mat_ncols(BN1));
@@ -618,8 +617,7 @@ namespace getfem {
 
       gmm::copy(gmm::scaled(gap, r), RLN);
       for (size_type i = 0; i < gmm::mat_nrows(BN1); ++i) RLN[i] *= alpha[i];
-      if (!new_method) // ligne add
-        gmm::add(lambda_n, RLN);
+      gmm::add(lambda_n, RLN);
       gmm::mult_add(BBN1, gmm::scaled(u1, -r), RLN);
       if (Hughes_stabilized)
         gmm::mult_add(DDN, gmm::scaled(lambda_n, -r), RLN);
@@ -694,13 +692,6 @@ namespace getfem {
         if (two_variables)
           gmm::copy(gmm::scaled(gmm::transposed(BBN2), -vt1), T_u2_n);
         for (size_type i=0; i < nbc; ++i) {
-          if (new_method) {  // ligne add
-            if (RLN[i] > scalar_type(0)) {  // ligne add
-              gmm::clear(gmm::mat_col(T_u1_n, i));  // ligne add
-              T_n_n(i, i) = -vt1/100000.0;  // ligne add
-            } else T_n_n(i, i) = -(lambda_n[i] >= scalar_type(0)) * vt1/r; // ligne add
-          }  // ligne add
-          else   // ligne add
           if (RLN[i] >= scalar_type(0)) {
             gmm::clear(gmm::mat_col(T_u1_n, i));
             if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
@@ -805,20 +796,7 @@ namespace getfem {
       }
 
       if (version & model::BUILD_RHS) {
-        if (new_method) { // ligne add
-          gmm::copy(gmm::scaled(RLN, -vt1/r), rlambda_n); // ligne add
-        } // ligne add
-        for (size_type i=0; i < nbc; ++i) {
-          if (new_method) { // ligne add
-            if (RLN[i] > scalar_type(0)) { // ligne add
-              // cout << "constraint " << i << " unsatured. lambda = " << lambda_n[i] << endl;
-              rlambda_n[i] = lambda_n[i] / 100000.0; // ligne add
-            } else { // ligne add
-              // cout << "constraint " << i << " satured. lambda = " << lambda_n[i] << " RLN[i] = " << RLN[i] << endl;
-              rlambda_n[i] += std::max(scalar_type(0), lambda_n[i]) / r; // ligne add
-            } // ligne add
-          } else // ligne add
-          { // ligne add
+        for (size_type i=0; i < nbc; ++i) { 
             RLN[i] = std::min(scalar_type(0), RLN[i]);
             if (!contact_only) {
               scalar_type radius = Tresca_version ? threshold[i]
@@ -826,7 +804,6 @@ namespace getfem {
               ball_projection
                 (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
             }
-          } // ligne add
         }
 
         if (symmetrized) {
@@ -847,14 +824,13 @@ namespace getfem {
           }
         }
 
-        if (!new_method) {  // ligne add
-          gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
-                   rlambda_n);
-
-          if (!contact_only)
-            gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-                     rlambda_t);
-        } // ligne add
+        
+	gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+		 rlambda_n);
+	
+	if (!contact_only)
+	  gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+		   rlambda_t);
       }
     }
 
@@ -958,7 +934,6 @@ namespace getfem {
       symmetrized = symmetrized_;
       contact_only = contact_only_;
       is_init = false;
-      new_method = false; // ligne add
       Tresca_version = false;   // for future version ...
       really_stationary = false;   // for future version ...
       friction_dynamic_term = false;  // for future version ...
@@ -1338,6 +1313,7 @@ namespace getfem {
   void friction_nonlinear_term::prepare
   (fem_interpolation_context& ctx, size_type nb) {
     size_type cv = ctx.convex_num();
+
     switch (nb) { // last is computed first
     case 1 : // calculate [un] and [zt] interpolating [U],[WT] on [mf_u]
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
@@ -1399,6 +1375,7 @@ namespace getfem {
       break;
     default : GMM_ASSERT1(false, "Invalid option");
     }
+
   }
 
   template<typename MAT, typename VECT1>
@@ -1561,6 +1538,7 @@ namespace getfem {
     assem.push_vec(Ru);
     assem.push_vec(Rl);
     assem.assembly(rg);
+
   }
 
   template<typename VECT1>
@@ -1635,7 +1613,6 @@ namespace getfem {
                   "Wrong number of terms for "
                   "continuous Coulomb friction brick");
 
-
       // variables : u, lambda. The variable lambda should be scalar in the
       //             frictionless case and vector valued in the case with
       //             friction.
@@ -1648,7 +1625,7 @@ namespace getfem {
       const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
       const model_real_plain_vector &lambda = md.real_variable(vl[1]);
       const mesh_fem &mf_lambda = *(md.pmesh_fem_of_variable(vl[1]));
-      GMM_ASSERT1(mf_lambda.get_qdim() == contact_only ? 1 : mf_u.get_qdim(),
+      GMM_ASSERT1(mf_lambda.get_qdim() == (contact_only ? 1 : mf_u.get_qdim()),
                   "The contact stress has not the right dimension");
       const model_real_plain_vector &obstacle = md.real_variable(dl[0]);
       const mesh_fem &mf_obstacle = *(md.pmesh_fem_of_variable(dl[0]));

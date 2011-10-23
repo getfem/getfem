@@ -508,7 +508,8 @@ namespace getfem {
     scalar_type un;            // normal relative displacement
     base_small_vector no;      // surface normal
     scalar_type g, f_coeff;    // gap and coefficient of friction values
-    base_small_vector aux1, auxN, V, coeff; // helper vectors
+    base_small_vector aux1, auxN, V; // helper vectors
+    base_vector coeff;
     base_matrix grad, GP;
 
     void adjust_tensor_size(void);
@@ -519,7 +520,7 @@ namespace getfem {
     const mesh_fem &mf_lambda;
     const mesh_fem &mf_obs;
     const mesh_fem *mf_coeff;
-    std::vector<scalar_type> U, lambda, obs, friction_coeff, WT;
+    base_vector U, lambda, obs, friction_coeff, WT;
     scalar_type r, alpha;
     bool contact_only;
     size_type option;

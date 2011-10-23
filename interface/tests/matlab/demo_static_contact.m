@@ -26,24 +26,35 @@
 gf_workspace('clear all');
 clear all;
 
-% Import the mesh
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+% Import the mesh : disc
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.25.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0.15.mesh');
+
+% Import the mesh : sphere
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_8_elts.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
+m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_2000_elts.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_16000_elts.mesh');
+
+
 d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 
 % Parameters of the model
-lambda = 1;           % Lame coefficient
-mu = 1;               % Lame coefficient
-friction_coeff = 0.4; % coefficient of friction
-r = 1000.0;             % Augmentation parameter
-with_dirichlet = 0;   % With a Dirichlet condition (otherwise, rigid motions are slightly penalized)
-penalty_parameter = 1E-8;    % For rigid motions.
-niter = 50;   % Maximum number of iterations for Newton's algorithm.
-version = 9;  % 1 : frictionless contact and the basic contact brick
+clambda = 1;           % Lame coefficient
+cmu = 1;               % Lame coefficient
+friction_coeff = 0.4;  % coefficient of friction
+vertical_force = 0.05; % Volumic load in the vertical direction
+r = 10;                % Augmentation parameter
+with_dirichlet = 0;    % With a Dirichlet condition (otherwise, rigid motions are slightly penalized)
+penalty_parameter = 1E-6;    % For rigid motions.
+niter = 200;   % Maximum number of iterations for Newton's algorithm.
+plot_mesh = false;
+version = 13;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -83,22 +94,17 @@ GAMMAC = 1; GAMMAD = 2;
 
 border = gf_mesh_get(m,'outer faces');
 normals = gf_mesh_get(m, 'normal of faces', border);
-contact_boundary=border(:, find(normals(d, :) < -0.1));
+contact_boundary=border(:, find(normals(d, :) < -0.01));
 gf_mesh_set(m, 'region', GAMMAC, contact_boundary);
-contact_boundary=border(:, find(normals(d, :) > 0.1));
+contact_boundary=border(:, find(normals(d, :) > 0.01));
 gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 
 
-% Plot the mesh
-figure(1);
-gf_plot_mesh(m, 'regions', [GAMMAC]);
-title('Mesh and contact boundary (in red)');
-pause(0.1);
 
 
 % Finite element methods
 u_degree = 2;
-lambda_degree = 1;
+lambda_degree = 2;
 
 mfu=gf_mesh_fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', u_degree);
@@ -111,27 +117,41 @@ gf_mesh_fem_set(mfvm, 'classical discontinuous fem', u_degree-1);
 
 % Integration method
 mim=gf_mesh_im(m, 4);
-mim_friction=gf_mesh_im(m, ...
-    gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),4)'));
+if (d == 2)
+  mim_friction=gf_mesh_im(m, ...
+      gf_integ('IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4),4)'));
+else
+   mim_friction=gf_mesh_im(m, ...
+      gf_integ('IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(5),4)')); 
+end;
+
+% Plot the mesh
+if (plot_mesh)
+  figure(1);
+  gf_plot_mesh(m, 'regions', [GAMMAC]);
+  title('Mesh and contact boundary (in red)');
+  pause(0.1);
+end;
 
 % Volumic density of force
 nbdofd = gf_mesh_fem_get(mfd, 'nbdof');
 nbdofu = gf_mesh_fem_get(mfu, 'nbdof');
 F = zeros(nbdofd*d, 1);
-F(d:d:nbdofd*d) = -0.02;
+F(d:d:nbdofd*d) = -vertical_force;
 
 % Elasticity model
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
-gf_model_set(md, 'add initialized data', 'cmu', [mu]);
-gf_model_set(md, 'add initialized data', 'clambda', [lambda]);
+gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
+gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
                  'clambda', 'cmu');
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
 if (with_dirichlet)
-  gf_model_set(md, 'add initialized data', 'Ddata', [0, -5]);
+  Ddata = zeros(1, d); Ddata(d) = -5;
+  gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', u_degree, GAMMAD, 'Ddata');
 else
   % Small penalty term to avoid rigid motion (should be replaced by an
@@ -146,21 +166,26 @@ end;
 cdof = gf_mesh_fem_get(mfu, 'dof on region', GAMMAC);
 nbc = size(cdof, 2) / d;
 
+if (nbc <= 0)
+    disp('No contact zone');
+    return;
+end;
+
 solved = false;
 if (version == 1 || version == 2) % defining the matrices BN and BT by hand
   contact_dof = cdof(d:d:nbc*d);
   contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
   BN = sparse(nbc, nbdofu);
+  ngap = zeros(nbc, 1);
   for i = 1:nbc
     BN(i, contact_dof(i)) = -1.0;
-    gap(i) = contact_nodes(d, i);
+    ngap(i) = contact_nodes(d, i);
   end;
   if (version == 2)
     BT = sparse(nbc*(d-1), nbdofu);
     for i = 1:nbc
-      BT(i*(d-1), contact_dof(i)-d+1) = 1.0;
-      if (d > 2)
-        BT(i*(d-1)+1, contact_dof(i)-d+2) = 1.0;
+      for j = 1:d-1
+        BT(j+(i-1)*(d-1), contact_dof(i)-d+j) = 1.0;
       end;
     end;
   end;
@@ -172,14 +197,14 @@ if (version == 1 || version == 2) % defining the matrices BN and BT by hand
     gf_model_set(md, 'add initialized data', 'friction_coeff', ...
                  [friction_coeff]);
   end;
-  gf_model_set(md, 'add initialized data', 'gap', gap);
+  gf_model_set(md, 'add initialized data', 'ngap', ngap);
   gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
   if (version == 1)
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', ...
-        BN, 'gap', 'alpha', 0);
+        BN, 'ngap', 'alpha', 0);
   else
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', ...
-		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'gap', 'alpha', 0);
+		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', 0);
   end;
 elseif (version == 3 || version == 4) % BN and BT defined by contact brick
 
@@ -253,7 +278,7 @@ elseif (version == 9) % The continuous version, Uzawa
   
 elseif (version >= 10 && version <= 13) % The continuous version with friction, Newton
  
-  gf_mesh_fem_set(mflambda, 'qdim', 2);
+  gf_mesh_fem_set(mflambda, 'qdim', d);
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
   gf_model_set(md, 'add fem variable', 'lambda', mflambda_partial);
@@ -278,9 +303,8 @@ else
 end
 
 % Solve the problem
-
 if (~solved)
-  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter,  'lsearch', 'simplest'); % , 'with pseudo potential');
+  gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
 
 U = gf_model_get(md, 'variable', 'u');
@@ -295,7 +319,7 @@ VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 figure(2);
 if (d == 3)
   gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...
-          gf_mesh_get(mfdu,'outer faces'), 'deformation', U, ...
+          gf_mesh_get(mfu,'outer faces'), 'deformation', U, ...
           'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
 else
   gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U, ...
