@@ -25,6 +25,7 @@
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_interpolation.h"
 
 
 namespace getfem {
@@ -2039,6 +2040,267 @@ namespace getfem {
     }
   }
 
+  // ----------------------------------------------------------------------
+  //
+  // Pointwise constraints brick
+  //
+  // ----------------------------------------------------------------------
+  // Two variables : with multipliers
+  // One variable : penalization
+
+  struct pointwise_constraints_brick : public virtual_brick {
+    
+    mutable gmm::row_matrix<model_real_sparse_vector> rB;
+    mutable gmm::row_matrix<model_complex_sparse_vector> cB;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type,
+                                        build_version version) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                  "Pointwize constraints brick only one term");
+      GMM_ASSERT1(mims.size() == 0,
+                  "Pointwize constraints brick does not need a mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
+                  "Wrong number of variables for pointwize constraints brick");
+      bool penalized = (vl.size() == 1);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      dim_type N = mf_u.linked_mesh().dim(), Q = mf_u.get_qdim(), ind_pt = 0;
+      size_type dlsize = size_type((penalized ? 1 : 0) + 1 + (Q > 1 ? 1 : 0));
+      GMM_ASSERT1(dl.size() == dlsize || dl.size() == dlsize+1,
+		  "Wrong number of data for pointwize constraints brick");
+
+      
+      const model_real_plain_vector *COEFF = 0;
+      if (penalized) {
+        COEFF = &(md.real_variable(dl[0]));
+	ind_pt = 1;
+        GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+                    "Data for coefficient should be a scalar");
+      }
+
+      const model_real_plain_vector &PT = md.real_variable(dl[ind_pt]);
+      size_type nb_co = gmm::vect_size(PT) / N;
+      
+      dim_type ind_unitv = dim_type((Q > 1) ? ind_pt+1 : 0);
+      const model_real_plain_vector &unitv =md.real_variable(dl[ind_unitv]);
+      GMM_ASSERT1((!ind_unitv || gmm::vect_size(unitv) == nb_co * Q),
+		  "Wrong size for vector of unit vectors");
+      
+      dim_type ind_rhs = dim_type((Q > 1) ? ind_pt+2 : ind_pt+1);
+      if (dl.size() < size_type(ind_rhs + 1)) ind_rhs = 0;
+      const model_real_plain_vector &rhs =  md.real_variable(dl[ind_rhs]);
+      GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
+		  "Wrong size for vector of rhs");
+
+      
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+        || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
+			  || md.is_var_newer_than_brick(dl[ind_unitv], ib)
+			  || md.is_var_newer_than_brick(dl[ind_rhs], ib)));
+      
+      if (recompute_matrix) {
+	gmm::row_matrix<model_real_sparse_vector> BB(nb_co*Q, mf_u.nb_dof());
+	gmm::clear(rB); gmm::resize(rB, nb_co, mf_u.nb_dof());
+
+	dal::bit_vector dof_untouched;
+	getfem::mesh_trans_inv mti(mf_u.linked_mesh());
+	base_node pt(N);
+	for (size_type i = 0; i < nb_co; ++i) {
+	  gmm::copy(gmm::sub_vector(PT, gmm::sub_interval(i*N, N)), pt);
+	  mti.add_point(pt);
+	}
+	gmm::row_matrix<model_real_sparse_vector> &BBB = ((Q > 1) ? BB : rB);
+	model_real_plain_vector vv;
+	interpolation(mf_u, mti, vv, vv, BBB,  1, 1, &dof_untouched);
+	GMM_ASSERT1(dof_untouched.card() == 0,
+		    "Pointwize constraints : some of the points are outside "
+		    "the mesh: " << dof_untouched);
+	
+	if (Q > 1) {
+	  for (size_type i = 0; i < nb_co; ++i)
+	    for (size_type q = 0; q < Q; ++q)
+	      gmm::add(gmm::scaled(gmm::mat_row(BB, i*Q+q), unitv[i*Q+q]),
+		       gmm::mat_row(rB, i));
+	}
+        if (penalized) {
+          gmm::mult(gmm::transposed(rB), rB, matl[0]);
+          gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+        } else
+	  gmm::copy(rB, matl[0]);
+      }
+
+      if (ind_rhs) {
+        if (penalized) {
+          gmm::mult(gmm::transposed(rB), rhs, vecl[0]);
+          gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+        }
+	else gmm::copy(rhs, vecl[0]);
+      }
+      else gmm::clear(vecl[0]);
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
+                                           const model::varnamelist &vl,
+                                           const model::varnamelist &dl,
+                                           const model::mimlist &mims,
+                                           model::complex_matlist &matl,
+                                           model::complex_veclist &vecl,
+                                           model::complex_veclist &,
+                                           size_type,
+                                           build_version version) const {
+      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                  "Pointwize constraints brick only one term");
+      GMM_ASSERT1(mims.size() == 0,
+                  "Pointwize constraints brick does not need a mesh_im");
+      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
+                  "Wrong number of variables for pointwize constraints brick");
+      bool penalized = (vl.size() == 1);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      dim_type N = mf_u.linked_mesh().dim(), Q = mf_u.get_qdim(), ind_pt = 0;
+      size_type dlsize = size_type((penalized ? 1 : 0) + 1 + (Q > 1 ? 1 : 0));
+      GMM_ASSERT1(dl.size() == dlsize || dl.size() == dlsize+1,
+		  "Wrong number of data for pointwize constraints brick");
+
+      
+      const model_complex_plain_vector *COEFF = 0;
+      if (penalized) {
+        COEFF = &(md.complex_variable(dl[0]));
+	ind_pt = 1;
+        GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+                    "Data for coefficient should be a scalar");
+      }
+
+      const model_complex_plain_vector &PT = md.complex_variable(dl[ind_pt]);
+      size_type nb_co = gmm::vect_size(PT) / N;
+      
+      dim_type ind_unitv = dim_type((Q > 1) ? ind_pt+1 : 0);
+      const model_complex_plain_vector &unitv
+	= md.complex_variable(dl[ind_unitv]);
+      GMM_ASSERT1((!ind_unitv || gmm::vect_size(unitv) == nb_co * Q),
+		  "Wrong size for vector of unit vectors");
+      
+      dim_type ind_rhs = dim_type((Q > 1) ? ind_pt+2 : ind_pt+1);
+      if (dl.size() < size_type(ind_rhs + 1)) ind_rhs = 0;
+      const model_complex_plain_vector &rhs
+	= md.complex_variable(dl[ind_rhs]);
+      GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
+		  "Wrong size for vector of rhs");
+      
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+        || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
+			  || md.is_var_newer_than_brick(dl[ind_unitv], ib)
+			  || md.is_var_newer_than_brick(dl[ind_rhs], ib)));
+
+      if (recompute_matrix) {
+	gmm::row_matrix<model_complex_sparse_vector> BB(nb_co*Q,mf_u.nb_dof());
+	gmm::clear(cB); gmm::resize(cB, nb_co, mf_u.nb_dof());
+	dal::bit_vector dof_untouched;
+	getfem::mesh_trans_inv mti(mf_u.linked_mesh());
+	base_node pt(N);
+	for (size_type i = 0; i < nb_co; ++i) {
+	  gmm::copy(gmm::real_part(gmm::sub_vector(PT,
+				   gmm::sub_interval(i*N, N))), pt);
+	  mti.add_point(pt);
+	}
+	gmm::row_matrix<model_complex_sparse_vector> &BBB = ((Q > 1) ? BB :cB);
+	model_complex_plain_vector vv;
+	interpolation(mf_u, mti, vv, vv, BBB,  1, 1, &dof_untouched);
+	GMM_ASSERT1(dof_untouched.card() == 0,
+		    "Pointwize constraints : some of the points are outside "
+		    "the mesh: " << dof_untouched);
+	
+	if (Q > 1) {
+	  for (size_type i = 0; i < nb_co; ++i)
+	    for (size_type q = 0; q < Q; ++q)
+	      gmm::add(gmm::scaled(gmm::mat_row(BB, i*Q+q), unitv[i*Q+q]),
+		       gmm::mat_row(cB, i));
+	}
+
+        if (penalized) {
+          gmm::mult(gmm::transposed(cB), cB, matl[0]);
+          gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+        } else
+	  gmm::copy(cB, matl[0]);
+      }
+
+      
+      if (ind_rhs) {
+        if (penalized) {
+          gmm::mult(gmm::transposed(cB), rhs, vecl[0]);
+          gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+        }
+	else gmm::copy(rhs, vecl[0]);
+      }
+      else gmm::clear(vecl[0]);
+    }
+
+    pointwise_constraints_brick(bool penalized) {
+      set_flags(penalized ? "Pointwise cosntraints with penalization brick"
+                          : "Pointwise cosntraints with multipliers brick",
+                true /* is linear*/,
+                true /* is symmetric */, penalized /* is coercive */,
+                true /* is real */, true /* is complex */);
+    }
+  };
+
+
+  size_type add_pointwise_constraints_with_penalization
+  (model &md, const std::string &varname,
+   scalar_type penalisation_coeff, const std::string &dataname_pt,
+   const std::string &dataname_unitv, const std::string &dataname_val) {
+    std::string coeffname = md.new_name("penalization_on_" + varname);
+    md.add_fixed_size_data(coeffname, 1);
+    if (md.is_complex())
+      md.set_complex_variable(coeffname)[0] = penalisation_coeff;
+    else
+      md.set_real_variable(coeffname)[0] = penalisation_coeff;
+    pbrick pbr = new pointwise_constraints_brick(true);
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl(1, coeffname);
+    dl.push_back(dataname_pt);
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    if (mf_u.get_qdim() > 1) dl.push_back(dataname_unitv);
+    if (dataname_val.size() > 0) dl.push_back(dataname_val);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+
+  size_type add_pointwise_constraints_with_given_multipliers
+  (model &md, const std::string &varname,
+   const std::string &multname, const std::string &dataname_pt,
+   const std::string &dataname_unitv, const std::string &dataname_val) {
+    pbrick pbr = new  pointwise_constraints_brick(false);
+    model::termlist tl;
+    tl.push_back(model::term_description(multname, varname, true));
+    model::varnamelist vl(1, varname);
+    vl.push_back(multname);
+    model::varnamelist dl(1, dataname_pt);
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    if (mf_u.get_qdim() > 1) dl.push_back(dataname_unitv);
+    if (dataname_val.size() > 0) dl.push_back(dataname_val);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
+  }
+
+  size_type add_pointwise_constraints_with_multipliers
+  (model &md, const std::string &varname, const std::string &dataname_pt,
+   const std::string &dataname_unitv, const std::string &dataname_val) {
+    std::string multname = md.new_name("mult_on_" + varname);
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    size_type nb_co =
+      ((md.is_complex()) ? gmm::vect_size(md.complex_variable(dataname_pt))
+       : gmm::vect_size(md.real_variable(dataname_pt)))
+      / mf_u.linked_mesh().dim();
+    md.add_fixed_size_variable(multname, nb_co);
+    return add_pointwise_constraints_with_given_multipliers
+      (md, varname, multname, dataname_pt, dataname_unitv, dataname_val);
+  }
 
 
   // ----------------------------------------------------------------------

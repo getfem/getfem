@@ -1018,15 +1018,73 @@ namespace getfem {
    const mesh_fem *mf_mult = 0);
 
 
+  /** Add some pointwise constraints on the variable `varname` thanks to
+      a penalization. The penalization coefficient is initially
+      `penalization_coeff` and will be added to the data of the model.
+      The conditions are prescribed on a set of points given in the data
+      `dataname_pt` whose dimension is the number of points times the dimension
+      of the mesh. If the variable represents a vector field, the data
+      `dataname_unitv` represents a vector of dimension the number of points
+      times the dimension of the vector field which should store some
+      unit vectors. In that case the prescribed constraint is the scalar
+      product of the variable at the corresponding point with the corresponding
+      unit vector.
+      The optional data `dataname_val` is the vector of values to be prescribed
+      at the different points.
+      This brick is specifically designed to kill rigid displacement
+      in a Neumann problem.
+  */
+  size_type add_pointwise_constraints_with_penalization
+  (model &md, const std::string &varname,
+   scalar_type penalisation_coeff, const std::string &dataname_pt,
+   const std::string &dataname_unitv = std::string(),
+   const std::string &dataname_val = std::string());
 
 
+  /** Add some pointwise constraints on the variable `varname` using a given
+      multiplier `multname`.
+      The conditions are prescribed on a set of points given in the data
+      `dataname_pt` whose dimension is the number of points times the dimension
+      of the mesh.
+      The multiplier variable should be a fixed size variable of size the
+      number of points.
+      If the variable represents a vector field, the data
+      `dataname_unitv` represents a vector of dimension the number of points
+      times the dimension of the vector field which should store some
+      unit vectors. In that case the prescribed constraint is the scalar
+      product of the variable at the corresponding point with the corresponding
+      unit vector.
+      The optional data `dataname_val` is the vector of values to be prescribed
+      at the different points.
+      This brick is specifically designed to kill rigid displacement
+      in a Neumann problem.
+  */
+  size_type add_pointwise_constraints_with_given_multipliers
+  (model &md, const std::string &varname,
+   const std::string &multname, const std::string &dataname_pt,
+   const std::string &dataname_unitv = std::string(),
+   const std::string &dataname_val = std::string());
 
-
-
-
-
-
-
+  /** Add some pointwise constraints on the variable `varname` using
+      multiplier. The multiplier variable is automatically added to the model.
+      The conditions are prescribed on a set of points given in the data
+      `dataname_pt` whose dimension is the number of points times the dimension
+      of the mesh.
+      If the variable represents a vector field, the data
+      `dataname_unitv` represents a vector of dimension the number of points
+      times the dimension of the vector field which should store some
+      unit vectors. In that case the prescribed constraint is the scalar
+      product of the variable at the corresponding point with the corresponding
+      unit vector.
+      The optional data `dataname_val` is the vector of values to be prescribed
+      at the different points.
+      This brick is specifically designed to kill rigid displacement
+      in a Neumann problem.
+  */
+  size_type add_pointwise_constraints_with_multipliers
+  (model &md, const std::string &varname, const std::string &dataname_pt,
+   const std::string &dataname_unitv = std::string(),
+   const std::string &dataname_val = std::string());
 
 
   /** Change the penalization coefficient of a Dirichlet condition with

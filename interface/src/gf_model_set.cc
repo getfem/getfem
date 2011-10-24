@@ -649,6 +649,123 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ind = ('add pointwise constraints with multipliers', @str varname, @str dataname_pt[, @str dataname_unitv] [, @str dataname_val])
+    Add some pointwise constraints on the variable `varname` using
+    multiplier. The multiplier variable is automatically added to the model.
+    The conditions are prescribed on a set of points given in the data
+    `dataname_pt` whose dimension is the number of points times the dimension
+    of the mesh.
+    If the variable represents a vector field, one has to give the data
+    `dataname_unitv` which represents a vector of dimension the number of
+    points times the dimension of the vector field which should store some
+    unit vectors. In that case the prescribed constraint is the scalar
+    product of the variable at the corresponding point with the corresponding
+    unit vector.
+    The optional data `dataname_val` is the vector of values to be prescribed
+    at the different points.
+    This brick is specifically designed to kill rigid displacement
+    in a Neumann problem.
+    Returns the brick index in the model.@*/
+    sub_command
+      ("add pointwise constraints with multipliers", 2, 4, 0, 1,
+       std::string varname = in.pop().to_string();
+       std::string dataname_pt = in.pop().to_string();
+       const getfem::mesh_fem *mf_u
+         = &(md->model().mesh_fem_of_variable(varname));
+       GMM_ASSERT1(mf_u, "The variable should depend on a mesh_fem");
+       std::string dataname_unitv;
+       if (mf_u->get_qdim() > 1)
+	 dataname_unitv = in.pop().to_string();
+       std::string dataname_val;
+       if (in.remaining()) dataname_val = in.pop().to_string();
+       
+       size_type ind = config::base_index();
+       ind += getfem::add_pointwise_constraints_with_multipliers
+       (md->model(), varname, dataname_pt, dataname_unitv, dataname_val);
+       out.pop().from_integer(int(ind));
+       );
+
+    /*@SET ind = ('add pointwise constraints with given multipliers', @str varname, @str multname, @str dataname_pt[, @str dataname_unitv] [, @str dataname_val])
+    Add some pointwise constraints on the variable `varname` using a given
+    multiplier `multname`.
+    The conditions are prescribed on a set of points given in the data
+    `dataname_pt` whose dimension is the number of points times the dimension
+    of the mesh.
+    The multiplier variable should be a fixed size variable of size the
+      number of points.
+    If the variable represents a vector field, one has to give the data
+    `dataname_unitv` which represents a vector of dimension the number of
+    points times the dimension of the vector field which should store some
+    unit vectors. In that case the prescribed constraint is the scalar
+    product of the variable at the corresponding point with the corresponding
+    unit vector.
+    The optional data `dataname_val` is the vector of values to be prescribed
+    at the different points.
+    This brick is specifically designed to kill rigid displacement
+    in a Neumann problem.
+    Returns the brick index in the model.@*/
+    sub_command
+      ("add pointwise constraints with given multipliers", 3, 5, 0, 1,
+       std::string varname = in.pop().to_string();
+       std::string multname = in.pop().to_string();
+       std::string dataname_pt = in.pop().to_string();
+       const getfem::mesh_fem *mf_u
+         = &(md->model().mesh_fem_of_variable(varname));
+       GMM_ASSERT1(mf_u, "The variable should depend on a mesh_fem");
+       std::string dataname_unitv;
+       if (mf_u->get_qdim() > 1)
+	 dataname_unitv = in.pop().to_string();
+       std::string dataname_val;
+       if (in.remaining()) dataname_val = in.pop().to_string();
+       
+       size_type ind = config::base_index();
+       ind += getfem::add_pointwise_constraints_with_given_multipliers
+       (md->model(), varname, multname, dataname_pt, dataname_unitv,
+	dataname_val);
+       out.pop().from_integer(int(ind));
+       );
+
+
+    /*@SET ind = ('add pointwise constraints with penalization', @str varname, @scalar coeff, @str dataname_pt[, @str dataname_unitv] [, @str dataname_val])
+    Add some pointwise constraints on the variable `varname` thanks to
+      a penalization. The penalization coefficient is initially
+      `penalization_coeff` and will be added to the data of the model.
+    The conditions are prescribed on a set of points given in the data
+    `dataname_pt` whose dimension is the number of points times the dimension
+    of the mesh.
+    If the variable represents a vector field, one has to give the data
+    `dataname_unitv` which represents a vector of dimension the number of
+    points times the dimension of the vector field which should store some
+    unit vectors. In that case the prescribed constraint is the scalar
+    product of the variable at the corresponding point with the corresponding
+    unit vector.
+    The optional data `dataname_val` is the vector of values to be prescribed
+    at the different points.
+    This brick is specifically designed to kill rigid displacement
+    in a Neumann problem.
+    Returns the brick index in the model.@*/
+    sub_command
+      ("add pointwise constraints with penalization", 3, 5, 0, 1,
+       std::string varname = in.pop().to_string();
+       double coeff = in.pop().to_scalar();
+       std::string dataname_pt = in.pop().to_string();
+       const getfem::mesh_fem *mf_u
+         = &(md->model().mesh_fem_of_variable(varname));
+       GMM_ASSERT1(mf_u, "The variable should depend on a mesh_fem");
+       std::string dataname_unitv;
+       if (mf_u->get_qdim() > 1)
+	 dataname_unitv = in.pop().to_string();
+       std::string dataname_val;
+       if (in.remaining()) dataname_val = in.pop().to_string();
+       
+       size_type ind = config::base_index();
+       ind += getfem::add_pointwise_constraints_with_penalization
+       (md->model(), varname, coeff, dataname_pt, dataname_unitv,
+	dataname_val);
+       out.pop().from_integer(int(ind));
+       );
+
+
     /*@SET ('change penalization coeff', @int ind_brick, @scalar coeff)
     Change the penalization coefficient of a Dirichlet condition with
     penalization brick. If the brick is not of this kind, this

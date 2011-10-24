@@ -35,8 +35,8 @@ clear all;
 
 % Import the mesh : sphere
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_8_elts.mesh');
-% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
-m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
+m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_2000_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_16000_elts.mesh');
 
@@ -50,11 +50,21 @@ cmu = 1;               % Lame coefficient
 friction_coeff = 0.4;  % coefficient of friction
 vertical_force = 0.05; % Volumic load in the vertical direction
 r = 10;                % Augmentation parameter
-with_dirichlet = 0;    % With a Dirichlet condition (otherwise, rigid motions are slightly penalized)
-penalty_parameter = 1E-6;    % For rigid motions.
+condition_type = 0; % 0 = Explicitely kill horizontal rigid displacements
+                    % 1 = Kill rigid displacements using a global penalization
+                    % 2 = Add a Dirichlet condition on the top of the structure
+penalty_parameter = 1E-6;    % Penalization coefficient for the global penalization
+if (d == 2)
+    cpoints = [0, 0];   % constraigned points for 2d
+    cunitv  = [1, 0];   % corresponding constraigned directions for 2d
+else
+    cpoints = [0, 0, 0,   0, 0, 0,   5, 0, 5]; % constraigned points for 3d
+    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];  % corresponding constraigned directions for 3d
+end;
+
 niter = 200;   % Maximum number of iterations for Newton's algorithm.
-plot_mesh = false;
-version = 13;  % 1 : frictionless contact and the basic contact brick
+plot_mesh = true;
+version = 8;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -149,15 +159,19 @@ gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
-if (with_dirichlet)
+if (condition_type == 2)
   Ddata = zeros(1, d); Ddata(d) = -5;
   gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', u_degree, GAMMAD, 'Ddata');
-else
+elseif (condition_type == 0)
+  gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
+  gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
+  gf_model_set(md, 'add pointwise constraints with multipliers', 'u', 'cpoints', 'cunitv');
+elseif (condition_type == 1)  
   % Small penalty term to avoid rigid motion (should be replaced by an
   % explicit treatment of the rigid motion with a constraint matrix)
   gf_model_set(md, 'add initialized data', 'penalty_param', ...
-               [penalty_parameter]);          
+              [penalty_parameter]);          
   gf_model_set(md, 'add mass brick', mim, 'u', 'penalty_param');
 end;
 
