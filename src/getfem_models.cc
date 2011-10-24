@@ -2525,6 +2525,156 @@ namespace getfem {
 
   // ----------------------------------------------------------------------
   //
+  // Basic nonlinear brick
+  //
+  // ----------------------------------------------------------------------
+
+  class basic_nonlinear_term : public nonlinear_elem_term {
+
+  public:
+    dim_type N;
+    const mesh_fem &mf_u;
+    std::vector<scalar_type> U;
+    scalar_type lambda;
+    base_small_vector V, coeff;
+    bgeot::multi_index sizes_;
+    int version;
+    
+    template <class VECT> basic_nonlinear_term
+    (const mesh_fem &mf_u_, const VECT &U_, scalar_type lambda_,
+     int version_)
+      : N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), U(mf_u.nb_basic_dof()),
+	lambda(lambda_), version(version_) {
+      sizes_.resize(1); sizes_[0] = 1;
+      V.resize(1);
+      mf_u.extend_vector(U_, U);
+    }
+
+    const bgeot::multi_index &sizes() const { return sizes_; }
+
+    virtual void compute(fem_interpolation_context &ctx,
+			 bgeot::base_tensor &t) {
+      size_type cv = ctx.convex_num();
+      t.adjust_sizes(sizes_);
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+                (U, gmm::sub_index
+                 (mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation(ctx, coeff, V, 1);
+
+      switch (version) {
+      case 0 : t[0] = - lambda * exp(V[0]); break; // tangent matrix
+      case 1 : t[0] = - lambda * exp(V[0]); break; // rhs
+      }
+
+    }
+
+  };
+
+  template<typename MAT, typename VECT>
+  void asm_basic_nonlinear_tangent_matrix
+  (const MAT &K, const mesh_im &mim, const mesh_fem &mf_u, const VECT &U,
+   scalar_type lambda, const mesh_region &rg = mesh_region::all_convexes()) {
+
+    basic_nonlinear_term nterm(mf_u, U, lambda, 0);
+
+    generic_assembly assem;
+    assem.set("M(#1,#1)+=sym(comp(NonLin(#1).Base(#1).Base(#1))(i,:,:))");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(const_cast<MAT &>(K));
+    assem.assembly(rg);
+  }
+
+  template<typename VECT>
+  void asm_basic_nonlinear_rhs
+  (const VECT &V, const mesh_im &mim, const mesh_fem &mf_u, const VECT &U,
+   scalar_type lambda, const mesh_region &rg = mesh_region::all_convexes()) {
+
+    basic_nonlinear_term nterm(mf_u, U, lambda, 1);
+
+    generic_assembly assem;
+    assem.set("V(#1)+=comp(NonLin(#1).Base(#1))(i,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(const_cast<VECT &>(V));
+    assem.assembly(rg);
+  }
+
+
+  struct basic_nonlinear_brick : public virtual_brick {
+    
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      GMM_ASSERT1(mims.size() == 1,
+		  "Basic nonlinear brick needs a single mesh_im");
+      GMM_ASSERT1(vl.size() == 1,
+		  "Basic nonlinear brick needs a single variable");
+      GMM_ASSERT1(dl.size() == 1,
+		  "Wrong number of data for Basic nonlinear brick");
+      GMM_ASSERT1(matl.size() == 1,  "Wrong number of terms for basic "
+		  "nonlinear brick");
+
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+      size_type Q = mf_u.get_qdim();
+      GMM_ASSERT1(Q == 1, "Basic nonlinear brick is only for scalar field, "
+		  "sorry.");
+
+      const model_real_plain_vector &vlambda = md.real_variable(dl[0]);
+      const mesh_im &mim = *mims[0];
+
+      size_type sl = gmm::vect_size(vlambda);
+      GMM_ASSERT1(sl == 1, "Basic nonlinear brick "
+		  "needs one scalar parameter");
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (version & model::BUILD_MATRIX) {
+	gmm::clear(matl[0]);
+	GMM_TRACE2("Basic nonlinear stiffness matrix assembly");
+	asm_basic_nonlinear_tangent_matrix
+	  (matl[0], mim, mf_u, u, vlambda[0], rg);
+      }
+
+      if (version & model::BUILD_RHS) {
+	asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u, vlambda[0], rg);
+	gmm::scale(vecl[0], scalar_type(-1));
+      }
+      
+    }
+
+    basic_nonlinear_brick(void)
+    { set_flags("Basic nonlinear brick", false /* is linear*/,
+		true /* is symmetric */, true /* is coercive */,
+		true /* is real */, false /* is complex */);
+    }
+    
+  };
+
+  size_type add_basic_nonlinear_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region) {
+    pbrick pbr = new basic_nonlinear_brick;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname, varname, true));
+    model::varnamelist dl(1, dataname);
+    model::varnamelist vl(1, varname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+    
+  // ----------------------------------------------------------------------
+  //
   // Constraint brick
   //
   // ----------------------------------------------------------------------

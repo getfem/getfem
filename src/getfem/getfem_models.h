@@ -1183,6 +1183,17 @@ namespace getfem {
                                     const std::string &dataname,
                                     size_type region);
 
+
+  /** Add a brick representing the scalar term @f$-lambda * exp(u)@f$ to the
+      left-hand side of the model. In the weak form, one adds
+      @f$... - \int lambda*exp(u).v = 0@f). 
+
+      `dataname` should contain the scalar real parameter $lambda$.
+   */
+  size_type add_basic_nonlinear_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &dataname, size_type region = size_type(-1));
+
   // Constraint brick.
   model_real_sparse_matrix &set_private_data_brick_real_matrix
   (model &md, size_type indbrick);
@@ -1330,7 +1341,7 @@ namespace getfem {
 
 
   /** Linear elasticity brick ( @f$ \int \sigma(u):\varepsilon(v) @f$ ).
-      for isotropic material. Parametrized by the lamé coefficients
+      for isotropic material. Parametrized by the Lamé coefficients
       lambda and mu.
   */
   size_type add_isotropic_linearized_elasticity_brick

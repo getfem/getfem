@@ -1052,6 +1052,29 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        }
        );
 
+    /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str dataname_coeff, @str nonlinear_term[, @int region])
+    Add a brick representing the scalar term :math:`-lambda * exp(u)` to the
+    left-hand side of the model. In the weak form, one adds
+    :math:` - \int lambda*exp(u).v dx`. 
+    `dataname` should contain the scalar real parameter lambda.
+    Return the
+    brick index in the model.@*/
+    sub_command
+      ("add basic nonlinear brick", 4, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname_coeff = in.pop().to_string();
+       std::string nonlinear_term = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind
+       = getfem::add_basic_nonlinear_brick(md->model(), gfi_mim->mesh_im(),
+                                            varname, dataname_coeff, region)
+       + config::base_index();
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
 
     /*@SET ind = ('add isotropic linearized elasticity brick', @tmim mim, @str varname, @str dataname_lambda, @str dataname_mu[, @int region])
       Add an isotropic linearized elasticity term to the model relatively to
