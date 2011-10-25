@@ -103,7 +103,7 @@ where :math:`H` is a matrix field. The functions adding the corresponding bricks
 are similar to the ones of the standard Dirichlet condition except that they need 
 the supplementary parameter `Hname` which gives the name of the data corresponding 
 to :math:`H`. This data can be a matrix field described on a scalar fem or a 
-constant matrix.::
+constant matrix. ::
 
 
   add_generalized_Dirichlet_condition_with_multipliers(md, mim, varname,
@@ -123,3 +123,44 @@ constant matrix.::
   add_generalized_Dirichlet_condition_with_penalization(md, mim, varname,
                                             penalization_coeff, region,
                                             dataname, Hname);
+
+
+
+Pointwise constraints brick
+---------------------------
+
+The pointwise constraints brick is a Dirichlet condition like brick which allows to prescribe the value of an unknown on given points of the domain. These points are not necessarily some vertex of the mesh or some degrees of freedom of the finite element method on which the unknown is described.
+
+
+For scalar field variables, given a set of :math:`N_p` points :math:`x_i, i = 1\cdots N_p`, the brick allows to prescribe the value of the variable on these points, i.e. to enforce the condition
+
+.. math::
+
+  u(x_i) = l_i, ~~~ i = 1\cdots N_p,
+
+where :math:`u` is the scalar field and :math:`l_i` the value to be prescribed on the point :math:`x_i`.
+
+For vector field variables, given a set of :math:`N_p` points :math:`x_i, i = 1\cdots N_p`, the brick allows to prescribe the value of one component of the variable on these points, i.e. to enforce the condition
+
+.. math::
+
+  u(x_i)\cdot n_i = l_i, ~~~ i = 1\cdots N_p,
+
+where :math:`n_i` is the vector such that :math:`u(x_i)\cdot n_i` represent the component to be prescribed.
+
+The brick has two versions: a penalized version and a version with multipliers. The call is the following::
+
+  add_pointwise_constraints_with_penalization(md, varname, penalisation_coeff,
+		dataname_pt, dataname_unitv = std::string(),
+		dataname_val = std::string());
+
+  add_pointwise_constraints_with_given_multipliers(md, varname, multname,
+		dataname_pt, dataname_unitv = std::string(),
+		dataname_val = std::string());
+
+  add_pointwise_constraints_with_multipliers(md, varname, dataname_pt,
+		dataname_unitv = std::string(), dataname_val = std::string());
+
+respectively for the penalized version, the one with a given multiplier fixed size variable and the one which automatically adds a multiplier variable of the right size to the model. The data `dataname_pt`, `dataname_unitv` and `dataname_val` should be added first to the moel. `dataname_pt` should be a vector containing the coordinates of the points where to prescribed the value of the variable `varname`. It is thus of size :math:`N N_p` where :math:`N` is the dimension of the mesh. `dataname_unitv` is ignored for a scalar field variable. For a vector field variable, it should contain the vector :math:`n_i`. In that case, it size should be :math:`Q N_p` where :math:`Q` is the dimension of the vector field. `dataname_val` is optional and represent the right hand side, it should contain the components :math:`l_i`. The default value for :math:`l_i` is 0.
+
+This brick is mainly designed to prescribe the rigid displacements for pure Neumann problems.

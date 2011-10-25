@@ -67,7 +67,7 @@ then adding the element is done by::
 
   mymesh.add_convex(bgeot::simplex_geotrans(2,1), ind.begin());
 
-where ``bgeot::simplex_trans(N,1);`` denotes the usual linear geometric
+where ``bgeot::simplex_geotrans(N,1);`` denotes the usual linear geometric
 transformation for simplices of dimension N.
 
 For simplices, a more specialized function exists, which is::
@@ -84,7 +84,7 @@ where now ``itp`` is an iterator on an array of points. For example::
   pts[0] = bgeot::base_node(0.0, 0.0, 0.0);
   pts[1] = bgeot::base_node(0.0, 1.0, 0.0);
   pts[2] = bgeot::base_node(0.0, 0.0, 1.0);
-  mymesh.add_convex_by_points(bgeot::simplex_trans(2,1), pts.begin());
+  mymesh.add_convex_by_points(bgeot::simplex_geotrans(2,1), pts.begin());
 
 It is possible to use also::
 
@@ -94,11 +94,11 @@ For other elements than simplices, it is still possible to use
 ``mymesh.add_convex_by_points`` or ``mymesh.add_convex`` with the appropriate
 geometric transformation.
 
-* ``bgeot::parallelepiped_trans(N, 1)`` describes the usual transformation for
+* ``bgeot::parallelepiped_geotrans(N, 1)`` describes the usual transformation for
   parallelepipeds of dimension ``N`` (quadrilateron for ``N=2``, hexahedron for
   ``N=3``, ...)
 
-* ``bgeot::prism_trans(N, 1)`` describes the usual transformation for prisms of
+* ``bgeot::prism_geotrans(N, 1)`` describes the usual transformation for prisms of
   dimension ``N`` (usual prism is for ``N=3``. A generalized prism is the product
   of a simplex of dimension ``N-1`` with a segment)
 
