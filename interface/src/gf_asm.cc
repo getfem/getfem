@@ -659,7 +659,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC B = ('contact Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, r)
+    /*@FUNC B = ('contact Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, @scalar r)
     Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
       finite element space of $\lambda$.
@@ -682,9 +682,69 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        double r = in.pop().to_scalar();
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
-       getfem::asm_Coulomb_friction_continuous_Uzawa_proj
-         (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs, r, boundary_num);
-       
+       getfem::asm_contact_continuous_Uzawa_proj
+         (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs,
+	  r, boundary_num);
+       );
+
+    /*@FUNC B = ('contact with friction Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, @scalar r, {@scalar coeff | @tmf mf_coeff, @dvec coeff} [, @scalar alpha, @dvec W])
+    Specific assembly procedure for the use of an Uzawa algorithm to solve
+      contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
+      finite element space of $\lambda$.
+
+    Return a @dcvec object.
+    @*/
+    sub_command
+      ("contact with friction Uzawa projection", 10, 13, 0, 1,
+       int boundary_num = in.pop().to_integer();
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       // unsigned q_dim = mf_u->get_qdim();
+       darray u = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_u->nb_dof()));
+       const getfem::mesh_fem *mf_lambda = in.pop().to_const_mesh_fem();
+       darray vec_lambda = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_lambda->nb_dof()));
+       const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
+       darray obs = in.pop().to_darray();
+       in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
+       double r = in.pop().to_scalar();
+
+       const getfem::mesh_fem *mf_coeff = 0;
+       darray vec_coeff;
+       std::vector<double> coeff(1);
+       mexarg_in argin = in.pop();
+       if (argin.is_mesh_fem()) {
+	 mf_coeff = argin.to_const_mesh_fem();
+	 vec_coeff = in.pop().to_darray();
+	 in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
+       } else {
+	 coeff[0] = argin.to_scalar();
+       }
+
+       double alpha = 1;
+       if (in.remaining()) {
+	 alpha = in.pop().to_scalar();
+       }
+       darray vec_W;
+       if (in.remaining()) {
+	 vec_W = in.pop().to_darray();
+	 in.last_popped().check_trailing_dimension(int(mf_u->nb_dof()));
+       }
+
+       darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
+       if (mf_coeff)
+	 getfem::asm_contact_with_friction_continuous_Uzawa_proj
+	   (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs, r,
+	    mf_coeff, vec_coeff, boundary_num, alpha, vec_W);
+       else {
+	 std::vector<double> v_obs(gmm::vect_size(obs));
+	 gmm::copy(obs, v_obs);
+	 getfem::asm_contact_with_friction_continuous_Uzawa_proj
+	   (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, v_obs, r,
+	    mf_coeff, coeff, boundary_num, alpha, vec_W);
+
+       }
        );
 
     /*@FUNC B = ('level set normal source term', @int bnum, @tmim mim, @tmf mf_u, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_levelset, @dvec levelset)

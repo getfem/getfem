@@ -1899,7 +1899,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-     /*@SET ind = ('add penalized contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @int region [, dataname_n, option])
+     /*@SET ind = ('add penalized contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @int region [, @int option, @str dataname_n])
 
       Adds a penalized contact frictionless condition with a rigid obstacle
       to the model.
@@ -1922,15 +1922,57 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         size_type region = in.pop().to_integer();
-	std::string dataname_n;
-	if (in.remaining()) dataname_n = in.pop().to_string();
 	int option = 1;
 	if  (in.remaining()) option = in.pop().to_integer();
-
+	std::string dataname_n;
+	if (in.remaining()) dataname_n = in.pop().to_string();
+	
 	size_type ind=
 	getfem::add_penalized_contact_with_rigid_obstacle_brick
 	(md->model(), gfi_mim->mesh_im(), varname_u,
-	 dataname_obs, dataname_r, region, dataname_n, option);
+	 dataname_obs, dataname_r, region, option, dataname_n);
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+     /*@SET ind = ('add penalized contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @str dataname_coeff, @int region [, @int option, @str dataname_lambda, [, @str dataname_alpha [, @str dataname_wt]]])
+      Adds a penalized contact with Coulomb friction condition with a
+      rigid obstacle to the model.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe approximate non-penetration and friction
+      conditions but not too large not to deteriorate to much the
+      conditionning of the tangent system.
+      `dataname_lambda` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda (comes
+      from an augmented Lagrangian formulation).
+    @*/
+     sub_command
+       ("add penalized contact with friction with rigid obstacle brick", 6, 10, 0, 1,
+        
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string dataname_obs = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+	std::string dataname_coeff = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+	int option = 1;
+        if (in.remaining()) option = in.pop().to_integer();
+	std::string dataname_lambda;
+	if (in.remaining()) dataname_lambda = in.pop().to_string();
+	std::string dataname_alpha = "";
+	if (in.remaining()) dataname_alpha = in.pop().to_string();
+	std::string dataname_wt = "";
+	if (in.remaining()) dataname_wt = in.pop().to_string();
+	
+	size_type ind=
+	getfem::add_penalized_contact_with_friction_with_rigid_obstacle_brick
+	(md->model(), gfi_mim->mesh_im(), varname_u,
+	 dataname_obs, dataname_r, dataname_coeff, region, option,
+	 dataname_lambda, dataname_alpha, dataname_wt);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );

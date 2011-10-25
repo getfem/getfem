@@ -309,8 +309,29 @@ namespace getfem {
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   size_type region, const std::string &dataname_n = "", int option = 1);
+   size_type region, int option = 1, const std::string &dataname_n = "");
 
+  /** Adds a penalized contact condition with Coulomb friction with a
+      rigid obstacle to the model.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe approximate non-penetration and friction
+      conditions but not too large not to deteriorate to much the
+      conditionning of the tangent system.
+      `dataname_lambda` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda (comes
+      from an augmented Lagrangian formulation).
+  */
+  size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff, 
+   size_type region, int option = 1, const std::string &dataname_lambda = "",
+   const std::string &dataname_alpha = "",
+   const std::string &dataname_wt = "");
 
 
   /** Adds a frictionless contact condition between two faces of one or two
@@ -475,7 +496,9 @@ namespace getfem {
                                          RHS_U_V3,
                                          RHS_U_V4,
                                          RHS_U_V5,
-                                         RHS_U_FRICT_V1,
+					 RHS_U_V6,
+                                         RHS_U_V7,
+					 RHS_U_FRICT_V1,
                                          RHS_U_FRICT_V2,
                                          RHS_U_FRICT_V3,
                                          RHS_U_FRICT_V4,
@@ -485,6 +508,7 @@ namespace getfem {
                                          K_UL_V2,
                                          K_UL_V3,
                                          K_UL_V4,
+					 UZAWA_PROJ_FRICT,
 
                                          K_UU_V1,
                                          K_UU_V2,
@@ -496,7 +520,9 @@ namespace getfem {
                                          K_LL_FRICT_V1,
                                          K_LL_FRICT_V2,
                                          K_UU_FRICT_V1,
-                                         K_UU_FRICT_V2
+                                         K_UU_FRICT_V2,
+                                         K_UU_FRICT_V3,
+                                         K_UU_FRICT_V4
   };
 
   class friction_nonlinear_term : public nonlinear_elem_term {
@@ -527,13 +553,14 @@ namespace getfem {
 
     bgeot::multi_index sizes_;
 
-    template <typename VECT1, typename VECT2> friction_nonlinear_term
+    template <typename VECT1, typename VECT2, typename VECT3>
+    friction_nonlinear_term
     (const mesh_fem &mf_u_, const VECT1 &U_,
      const mesh_fem &mf_lambda_, const VECT2 &lambda_,
-     const mesh_fem &mf_obs_, const VECT2 &obs_,
+     const mesh_fem &mf_obs_, const VECT3 &obs_,
      scalar_type r_, size_type option_, bool contact_only_ = true,
      scalar_type alpha_ = scalar_type(-1), const mesh_fem *mf_coeff_ = 0,
-     const VECT2 *f_coeff_ = 0, const VECT2 *WT_ = 0) :
+     const VECT3 *f_coeff_ = 0, const VECT2 *WT_ = 0) :
       N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), mf_lambda(mf_lambda_),
       mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
       lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
@@ -579,10 +606,38 @@ namespace getfem {
 
 
   /** Specific assembly procedure for the use of an Uzawa algorithm to solve
+      contact problems with friction.
+  */
+  template<typename VECT1, typename VECT2, typename VECT3>
+  void asm_contact_with_friction_continuous_Uzawa_proj
+  (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem &mf_obs, const VECT2 &obs, scalar_type r,
+   const getfem::mesh_fem *mf_coeff, const VECT3 &f_coeff,
+   const mesh_region &rg, scalar_type alpha, const VECT1 &WT) {
+
+
+    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
+                                   obs, r, UZAWA_PROJ_FRICT, false, alpha,
+				   mf_coeff, &f_coeff, &WT);
+
+    getfem::generic_assembly assem;
+    assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i); ");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_vec(R);
+    assem.assembly(rg);
+  }
+
+  /** Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems.
   */
   template<typename VECT1>
-  void asm_Coulomb_friction_continuous_Uzawa_proj
+  void asm_contact_continuous_Uzawa_proj
   (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,

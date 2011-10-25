@@ -1128,11 +1128,13 @@ namespace getfem {
     sizes_.resize(1); sizes_[0] = 1;
     switch (option) {
       // one-dimensional tensors [N]
-    case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4: case RHS_U_V5:
+    case RHS_U_V1: case RHS_U_V2: case RHS_U_V3: case RHS_U_V4:
+    case RHS_U_V5: case RHS_U_V6: case RHS_U_V7:
     case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
     case RHS_U_FRICT_V3: case RHS_U_FRICT_V4:
     case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
     case K_UL_V1: case K_UL_V2: case K_UL_V3: case K_UL_V4:
+    case UZAWA_PROJ_FRICT:
       sizes_[0] = N; break;
       // two-dimensional tensors [N x N]
     case K_UU_V1: case K_UU_V2:
@@ -1140,6 +1142,7 @@ namespace getfem {
     case K_UL_FRICT_V3: case K_UL_FRICT_V4: case K_UL_FRICT_V5:
     case K_LL_FRICT_V1: case K_LL_FRICT_V2:
     case K_UU_FRICT_V1: case K_UU_FRICT_V2:
+    case K_UU_FRICT_V3: case K_UU_FRICT_V4:
       sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
     } 
   }
@@ -1148,7 +1151,7 @@ namespace getfem {
   (fem_interpolation_context & /* ctx */, bgeot::base_tensor &t) {
 
     t.adjust_sizes(sizes_);
-    scalar_type e; dim_type i, j;
+    scalar_type e, augm_ln; dim_type i, j;
 
     switch (option) {
 
@@ -1187,7 +1190,16 @@ namespace getfem {
       e = - gmm::pos(un-g) * r;
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-
+    case RHS_U_V6:
+      e = - gmm::neg(ln-r*(un - g));
+      auxN = lt - zt;  ball_projection(auxN, -f_coeff*e );
+      for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i]);
+      break;
+    case RHS_U_V7:
+      e = - gmm::neg(-r*(un - g));
+      auxN = - zt;  ball_projection(auxN, -f_coeff *e );
+      for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i]);
+      break;
     case RHS_U_FRICT_V1:
       for (i=0; i<N; ++i) t[i] = lnt[i]; break;
     case RHS_U_FRICT_V2:
@@ -1230,6 +1242,12 @@ namespace getfem {
       e = -r;
       for (i=0; i<N; ++i) t[i] = e*no[i];
       break;
+    case UZAWA_PROJ_FRICT:
+      e = -gmm::neg(ln - r*(un - g));
+      auxN = lt - zt;  ball_projection(auxN, -f_coeff * e); 
+      for (i=0; i<N; ++i) t[i] = e*no[i] + auxN[i];
+      break;
+
 
     // two-dimensional tensors [N x N]
 
@@ -1252,7 +1270,7 @@ namespace getfem {
        e += gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+        t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j];
       break;
     case K_UL_FRICT_V3:
       e = -Heav(r*(un-g)-ln);
@@ -1304,6 +1322,26 @@ namespace getfem {
       e -= alpha*gmm::vect_sp(GP, no, no);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j));
+      break;
+    case K_UU_FRICT_V3:
+      e = Heav(r*(un-g)-ln);
+      augm_ln = -gmm::neg(ln - r*(un-g));
+      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * augm_ln, GP);
+      e -= alpha*gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(auxN, -f_coeff * augm_ln, V);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
+        t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
+		      - f_coeff*Heav(r*(un-g)-ln)*no[i]*V[j]); // transposer ? signe ?
+      break;
+    case K_UU_FRICT_V4:
+      e = Heav(r*(un-g));
+      augm_ln = -gmm::neg(- r*(un-g));
+      auxN = - zt; ball_projection_grad(auxN, -f_coeff * augm_ln, GP);
+      e -= alpha*gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(auxN, -f_coeff * augm_ln, V);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
+        t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
+		      - f_coeff*Heav(r*(un-g))*no[i]*V[j]); // transposer ? signe ?
       break;
 
     default : GMM_ASSERT1(false, "Invalid option");
@@ -1362,7 +1400,7 @@ namespace getfem {
       ctx.pf()->interpolation(ctx, coeff, aux1, 1);
       g = aux1[0];
       break;
-    case 4 : // calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+    case 4 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
       GMM_ASSERT1(!contact_only, "Invalid friction option");
       if (mf_coeff) {
         coeff.resize(mf_coeff->nb_basic_dof_of_element(cv));
@@ -1576,8 +1614,7 @@ namespace getfem {
     assem.push_mf(mf_obs);
     assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
     assem.push_nonlinear_term(&nterm1);
-    assem.push_nonlinear_term(&nterm2);
-    assem.push_vec(Ru);
+    assem.push_nonlinear_term(&nterm2);    assem.push_vec(Ru);
     assem.push_vec(Rl);
     assem.assembly(rg);
   }
@@ -1820,7 +1857,7 @@ namespace getfem {
   (MAT &Kuu, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda,
    const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
-   scalar_type r, const mesh_region &rg, int option) {
+   scalar_type r, int option, const mesh_region &rg) {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
 				  r, (option == 1) ? K_UU_V1 : K_UU_V2);
@@ -1843,7 +1880,7 @@ namespace getfem {
   (VECT1 &Ru, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U,  const getfem::mesh_fem &mf_lambda,
    const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
-   scalar_type r, const mesh_region &rg, int option) {
+   scalar_type r, int option, const mesh_region &rg) {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
 				  r, (option == 1) ? RHS_U_V5 : RHS_U_V2);
@@ -1854,6 +1891,56 @@ namespace getfem {
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(Ru);
+    assem.assembly(rg);
+  }
+
+  template<typename MAT, typename VECT1>
+  void asm_Coulomb_friction_penalized_tangent_matrix
+  (MAT &Kuu, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U, const getfem::mesh_fem &mf_lambda,
+   const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   scalar_type r, scalar_type alpha, const getfem::mesh_fem *mf_coeff,
+   const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
+
+    friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
+				  (option==1) ? K_UU_FRICT_V4 : K_UU_FRICT_V3,
+				  false, alpha, mf_coeff, &f_coeff, &WT);
+
+    getfem::generic_assembly assem;
+    assem.set
+    ("M(#1,#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(Kuu);
+    assem.assembly(rg);
+  }
+
+
+  template<typename VECT1>
+  void asm_Coulomb_friction_penalized_rhs
+  (VECT1 &Ru, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+   const VECT1 &U,  const getfem::mesh_fem &mf_lambda,
+   const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   scalar_type r, scalar_type alpha, const getfem::mesh_fem *mf_coeff,
+   const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
+
+    friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
+				  (option == 1) ? RHS_U_V7 : RHS_U_V6,
+				  false, alpha, mf_coeff, &f_coeff, &WT);
+    
+    getfem::generic_assembly assem;
+    assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_obs);
+    assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
     assem.push_nonlinear_term(&nterm);
     assem.push_vec(Ru);
     assem.assembly(rg);
@@ -1878,10 +1965,12 @@ namespace getfem {
                   "Penalized Coulomb friction brick need a single mesh_im");
       GMM_ASSERT1(vl.size() == 1,
                   "Penalized Coulomb friction brick need two variables");
-      size_type nb_data = ((option == 1) ? 2 : 3);
-      GMM_ASSERT1(dl.size() == nb_data,
+      size_type nb_data_1 = ((option == 1) ? 2 : 3), nb_data_2 = nb_data_1;
+      if (!contact_only) nb_data_2 += 2;
+      GMM_ASSERT1(dl.size() >= nb_data_1 && dl.size() <= nb_data_2,
                   "Wrong number of data for penalized Coulomb friction "
-                  << "brick, " << dl.size() << " should be " << nb_data <<".");
+                  << "brick, " << dl.size() << " should be between "
+		  << nb_data_1 << " and " << nb_data_2 << ".");
       GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
                   "penalized Coulomb friction brick");
 
@@ -1891,6 +1980,7 @@ namespace getfem {
       const mesh_fem &mf_obstacle = *(md.pmesh_fem_of_variable(dl[0]));
       size_type sl = gmm::vect_size(obstacle) * mf_obstacle.get_qdim()
         / mf_obstacle.nb_dof();
+      size_type N = mf_u.linked_mesh().dim();
       GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
                   "the right format");
 
@@ -1898,12 +1988,13 @@ namespace getfem {
       GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
       const mesh_im &mim = *mims[0];
 
+
       const model_real_plain_vector &lambda
         = (option == 1) ? obstacle : md.real_variable(dl[2]);
       const mesh_fem *mf_lambda = (option == 1) ? &mf_obstacle : md.pmesh_fem_of_variable(dl[2]);
       sl = gmm::vect_size(lambda);
       sl *= mf_lambda->get_qdim(); sl/=mf_lambda->nb_dof();
-      GMM_ASSERT1(sl == 1 || option == 1,
+      GMM_ASSERT1(sl == (contact_only ? 1 : N) || option == 1,
                   "the data corresponding to the contact stress "
                   "has not the right format");
 
@@ -1918,11 +2009,16 @@ namespace getfem {
                   "has not the right format");
 
       scalar_type alpha = 1;
-      if (!contact_only && dl.size() >= 4) {
+      if (!contact_only && dl.size() >= 4+shift) {
         alpha = md.real_variable(dl[3+shift])[0];
         GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3+shift])) == 1,
                     "Parameter alpha should be a scalar");
       }
+
+      model_real_plain_vector voidvec;
+      const model_real_plain_vector &WT
+        = (!contact_only && dl.size()>=5+shift) ?
+	md.real_variable(dl[4+shift]) : voidvec;
 
       mesh_region rg(region);
       mf_u.linked_mesh().intersect_with_mpi_region(rg);
@@ -1932,18 +2028,24 @@ namespace getfem {
 	gmm::clear(matl[0]);
         if (contact_only)
           asm_frictionless_penalized_tangent_matrix
-            (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle, vr[0], rg, option);
+            (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
+	     vr[0], option, rg);
         else
-          GMM_ASSERT1(false, "to be done");
+          asm_Coulomb_friction_penalized_tangent_matrix
+            (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
+	     vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
       }
 
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
         if (contact_only)
           asm_frictionless_penalized_rhs
-            (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle, vr[0], rg, option);
+            (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
+	     vr[0], option, rg);
         else
-          GMM_ASSERT1(false, "to be done");
+	  asm_Coulomb_friction_penalized_rhs
+            (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
+	     vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
       }
 
     }
@@ -1952,7 +2054,8 @@ namespace getfem {
       Tresca_version = false;   // for future version ...
       contact_only = contact_only_;
       option = option_;
-      set_flags("Continuous penalized Coulomb friction brick",
+      set_flags(contact_only ? "Continuous penalized contact brick"
+		: "Continuous penalized Coulomb friction brick",
 		false /* is linear*/, contact_only /* is symmetric */,
                 true /* is coercive */, true /* is real */,
 		false /* is complex */);
@@ -1969,7 +2072,7 @@ namespace getfem {
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   size_type region, const std::string &dataname_n, int option) {
+   size_type region, int option, const std::string &dataname_n) {
 
     pbrick pbr = new penalized_Coulomb_friction_brick(true, option);
 
@@ -1989,6 +2092,40 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
+  //=========================================================================
+  //  Add a contact condition with friction with a rigid obstacle given
+  //  by a level set.
+  //=========================================================================
+
+  size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff, 
+   size_type region, int option, const std::string &dataname_lambda,
+   const std::string &dataname_alpha, const std::string &dataname_wt) {
+
+    pbrick pbr = new penalized_Coulomb_friction_brick(false, option);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, true));
+
+    model::varnamelist dl(1, dataname_obs);
+    dl.push_back(dataname_r);
+    switch (option) {
+    case 1: break;
+    case 2: dl.push_back(dataname_lambda); break;
+    default: GMM_ASSERT1(false, "Penalized contact brick : invalid option");
+    }
+    dl.push_back(dataname_friction_coeff);
+    if (dataname_alpha.size() > 0) {
+      dl.push_back(dataname_alpha);
+      if (dataname_wt.size() > 0) dl.push_back(dataname_wt);
+    }
+
+    model::varnamelist vl(1, varname_u);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
 
 
   //=========================================================================

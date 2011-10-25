@@ -58,13 +58,13 @@ if (d == 2)
     cpoints = [0, 0];   % constraigned points for 2d
     cunitv  = [1, 0];   % corresponding constraigned directions for 2d
 else
-    cpoints = [0, 0, 0,   0, 0, 0,   5, 0, 5]; % constraigned points for 3d
+    cpoints = [0, 0, 0,   0, 0, 0,   5, 0, 5];  % constraigned points for 3d
     cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];  % corresponding constraigned directions for 3d
 end;
 
-niter = 200;   % Maximum number of iterations for Newton's algorithm.
+niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 8;  % 1 : frictionless contact and the basic contact brick
+version = 13; % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -94,7 +94,9 @@ version = 8;  % 1 : frictionless contact and the basic contact brick
               %     unsymmetric version with an additional augmentation.
               % 13 : contact with 'static' Coulomb friction and the continuous brick
               %     New unsymmetric method.
-              % 14 : penalized frictionless contact (r is the penalization
+              % 14 : contact with 'static' Coulomb friction and the continuous brick : Uzawa
+              %     on the Lagrangian augmented by the penalization term.
+              % 15 : penalized contact with 'static' Coulomb friction (r is the penalization
               %     coefficient).
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -247,29 +249,20 @@ elseif (version >= 5 && version <= 8) % The continuous version, Newton
   gf_model_set(md, 'add continuous contact with rigid obstacle brick', ...
       mim_friction, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
           
-elseif (version == 9) % The continuous version, Uzawa
- 
-  sub_option = 2;  
+elseif (version == 9) % The continuous version, Uzawa on the augmented Lagrangian
     
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
-  % ldof = gf_mesh_fem_get(mfd, 'dof on region', GAMMAC);
-  % mflambda_partial = gf_mesh_fem('partial', mfd, ldof);
   nbc = gf_mesh_fem_get(mflambda_partial, 'nbdof');
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   M = gf_asm('mass matrix', mim, mflambda_partial, mflambda_partial, GAMMAC);
   lambda_n = zeros(1, nbc);
   gf_model_set(md, 'add initialized fem data', 'lambda_n', mflambda_partial, lambda_n);
-  if (sub_option == 1)
-    W = zeros(nbdofu, 1);
-    indb=gf_model_set(md, 'add explicit rhs', 'u', W);
-  end;
-  
   gf_model_set(md, 'add initialized data', 'r', [r]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'obstacle', 'r', GAMMAC, 'lambda_n', sub_option);
+	         'obstacle', 'r', GAMMAC, 'lambda_n', 2);
   
   for ii=1:100
       disp(sprintf('iteration %d', ii));
@@ -278,10 +271,6 @@ elseif (version == 9) % The continuous version, Uzawa
       lambda_n_old = lambda_n;
       lambda_n = (M\ gf_asm('contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, r))';
       gf_model_set(md, 'variable', 'lambda_n', lambda_n);
-      if (sub_option == 1)
-        W=gf_asm('level set normal source term', GAMMAC, mim_friction, mfu, mflambda_partial, lambda_n, mfd, OBS)';
-        gf_model_set(md, 'set private rhs', indb, W);
-      end;
       difff = max(abs(lambda_n-lambda_n_old));
       disp(sprintf('diff : %g', difff/max(abs(lambda_n))));
       % pause;
@@ -302,15 +291,47 @@ elseif (version >= 10 && version <= 13) % The continuous version with friction, 
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add continuous contact with friction with rigid obstacle brick', mim_friction, 'u', ...
 	         'lambda', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
-elseif (version == 14)
- 
-  % gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+
+elseif (version == 14) % The continuous version, Uzawa on the augmented Lagrangian with friction
+  
+  gf_mesh_fem_set(mflambda, 'qdim', d);
+  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
+  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
+  nbc = gf_mesh_fem_get(mflambda_partial, 'nbdof');
+  gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  M = gf_asm('mass matrix', mim, mflambda_partial, mflambda_partial, GAMMAC);
+  lambda = zeros(1, nbc);
+  gf_model_set(md, 'add initialized fem data', 'lambda', mflambda_partial, lambda);
   gf_model_set(md, 'add initialized data', 'r', [r]);
-  % gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'obstacle', 'r', GAMMAC);
+  gf_model_set(md, 'add penalized contact with friction with rigid obstacle brick', mim_friction, 'u', ...
+	         'obstacle', 'r', 'friction_coeff', GAMMAC, 2, 'lambda');
+  
+  for ii=1:100
+      disp(sprintf('iteration %d', ii));
+      gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter); % , 'very noisy');
+      U = gf_model_get(md, 'variable', 'u');
+      lambda_old = lambda;
+      lambda = (M\ gf_asm('contact with friction Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda, mfd, OBS, r, friction_coeff))';
+      gf_model_set(md, 'variable', 'lambda', lambda);
+      difff = max(abs(lambda-lambda_old));
+      disp(sprintf('diff : %g', difff/max(abs(lambda))));
+      % pause;
+      if (difff/max(abs(lambda)) < penalty_parameter) break; end;
+  end;
+  
+  solved = true;
+
+elseif (version == 15)
+ 
+  gf_model_set(md, 'add initialized data', 'r', [r]);
+  gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
+  gf_model_set(md, 'add penalized contact with friction with rigid obstacle brick', mim_friction, 'u', ...
+	         'obstacle', 'r', 'friction_coeff', GAMMAC);
     
 else
   error('Inexistent version');
@@ -332,7 +353,7 @@ VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 
 figure(2);
 if (d == 3)
-  c=[0.1;0;20];x=[1;0;0];y=[0;1;0];z=[0;0;1];
+  c=[0.1;0;20]; x=[1;0;0]; y=[0;1;0]; z=[0;0;1];
   % Whole boundary
   % sl2=gf_slice({'boundary',{'none'}}, m, 5);
   % Slice, 3 planes

@@ -129,7 +129,7 @@ constant matrix. ::
 Pointwise constraints brick
 ---------------------------
 
-The pointwise constraints brick is a Dirichlet condition like brick which allows to prescribe the value of an unknown on given points of the domain. These points are not necessarily some vertex of the mesh or some degrees of freedom of the finite element method on which the unknown is described.
+The pointwise constraints brick is a Dirichlet condition like brick which allows to prescribe the value of an unknown on given points of the domain. These points are not necessarily some vertex of the mesh or some points corresponding to degrees of freedom of the finite element method on which the unknown is described.
 
 
 For scalar field variables, given a set of :math:`N_p` points :math:`x_i, i = 1\cdots N_p`, the brick allows to prescribe the value of the variable on these points, i.e. to enforce the condition

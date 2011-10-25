@@ -215,7 +215,7 @@ The second version corresponds to the "symmetric" version. It is in fact symmetr
 
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} (\lambda^h_N - r(u^h_N-gap))_- v^h_N d\Gamma \\
-  ~~~~~~ - \int_{\Gamma_c} P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
   ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
