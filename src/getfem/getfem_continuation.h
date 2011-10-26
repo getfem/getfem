@@ -37,6 +37,7 @@
 #ifndef GETFEM_CONTINUATION_H__
 #define GETFEM_CONTINUATION_H__
 
+#include <getfem/getfem_model_solvers.h>
 
 namespace getfem {
 
@@ -225,7 +226,7 @@ namespace getfem {
       h_dec_, epsilon_;
     int noisy_;
 
-    typedef std::vector<double> VECT;
+    typedef base_vector VECT;
 
     S_getfem_model(model &m, std::string pn, rmodel_plsolver_type ls,
 		   unsigned long mit = 1000, unsigned long tit = 100,

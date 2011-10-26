@@ -30,6 +30,7 @@
 #include <getfemint_mdbrick.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
+#include <getfem/getfem_continuation.h>
 
 using namespace getfemint;
 
@@ -326,6 +327,67 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 				*ls, with_pseudo_pot);
        }
        );
+
+
+    /*@FUNC E = ('init Moore Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @scalar init_dir)
+    blabla ...
+    @*/
+    sub_command
+      ("init Moore Penrose continuation", 4, 4, 0, 3,
+
+       std::string dataname_parameter = in.pop().to_string();
+       darray y = in.pop().to_darray();
+       scalar_type gamma = in.pop().to_scalar();
+       scalar_type t_gamma = in.pop().to_scalar();
+       
+
+       if (md->model().is_complex())
+	 THROW_BADARG("Sorry, complex version of convect to be interfaced");
+       
+       getfem::S_getfem_model S(md->model(), dataname_parameter,
+		     getfem::rselect_linear_solver(md->model(), "superlu"));
+
+       darray t_y = out.pop().create_darray_h(int(gmm::vect_size(y)));
+       double h;
+       std::vector<double> yy(gmm::vect_size(y));
+       gmm::copy(y, yy);
+       std::vector<double> tt_y(gmm::vect_size(y));
+       getfem::init_continuation(S, yy, gamma, tt_y, t_gamma, h);
+       gmm::copy(tt_y, t_y);
+       out.pop().from_scalar(t_gamma);
+       out.pop().from_scalar(h);
+       );
+
+    /*@FUNC E = ('Moore Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @vec tangent, @scalar tangent_parameter, @scalar h)
+    blabla ...
+    @*/
+    sub_command
+      ("Moore Penrose continuation", 6, 6, 0, 3,
+
+       std::string dataname_parameter = in.pop().to_string();
+       darray y = in.pop().to_darray();
+       scalar_type gamma = in.pop().to_scalar();
+       darray t_y = in.pop().to_darray();
+       scalar_type t_gamma = in.pop().to_scalar();
+       scalar_type h = in.pop().to_scalar();
+       
+
+       if (md->model().is_complex())
+	 THROW_BADARG("Sorry, complex version of convect to be interfaced");
+       
+       getfem::S_getfem_model S(md->model(), dataname_parameter,
+		     getfem::rselect_linear_solver(md->model(), "superlu"));
+
+       std::vector<double> yy(gmm::vect_size(y));
+       gmm::copy(y, yy);
+       std::vector<double> tt_y(gmm::vect_size(y));
+       gmm::copy(t_y, tt_y);
+       getfem::Moore_Penrose_continuation(S, yy, gamma, tt_y, t_gamma, h);
+       gmm::copy(tt_y, t_y);
+       out.pop().from_scalar(t_gamma);
+       out.pop().from_scalar(h);
+       );
+
 
 
     /*@GET V = ('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])

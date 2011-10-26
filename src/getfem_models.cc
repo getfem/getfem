@@ -2544,7 +2544,8 @@ namespace getfem {
     const mesh_fem &mf_u;
     std::vector<scalar_type> U;
     scalar_type param;
-    base_small_vector V, coeff;
+    base_small_vector V;
+    base_vector coeff;
     std::string f, dfdu, varname, paramname;
     mu::Parser parser;
     bgeot::multi_index sizes_;
@@ -2709,7 +2710,7 @@ namespace getfem {
     basic_nonlinear_brick(const std::string &f_, const std::string &dfdu_)
       : f(f_), dfdu(dfdu_)
     { set_flags("basic nonlinear brick", false /* is linear*/,
-		true /* is symmetric */, true /* is coercive */,
+		true /* is symmetric */, false /* is coercive */,
 		true /* is real */, false /* is complex */);
     }
     

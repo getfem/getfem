@@ -822,16 +822,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str f, @str dfdu[, @int region, @str dataname])
+    /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str f, @str dfdu[, @str dataname, @int region])
     Add a brick representing the scalar term :math:`f(u)` to the left-hand
-    side of the model. In the weak form, one adds :math:` + \int f(u).v dx`.
+    side of the model. In the weak form, one adds :math:` + \int f(u)v dx`.
     The function :math:`f` may optionally depend on :math:`lambda`, i.e.,
     :math:`f(u) = f(u, lambda)`.
-    `dataname_f` and `dataname_dfdu` should contain the expressions for
+    `f` and `dfdu` should contain the expressions for
     :math:`f(u)` and :math:`\frac{\partial f}{\partial u}(u)', respectively.
-    region` is an optional mesh region on which the term is added. `dataname`
-    is the optional real scalar parameter :math:`\lambda'. If it is not
-    specified, it is added on the whole mesh.
+    region` is an optional mesh region on which the term is added. If it is not
+    specified, it is added on the whole mesh. `dataname` is the optional real
+    scalar parameter :math:`\lambda'. 
     Return the brick index in the model.@*/
     sub_command
       ("add basic nonlinear brick", 4, 6, 0, 1,
@@ -839,10 +839,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        std::string f = in.pop().to_string();
        std::string dfdu = in.pop().to_string();
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
        std::string dataname;
        if (in.remaining()) dataname = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_basic_nonlinear_brick(md->model(), gfi_mim->mesh_im(),
 					   varname, f, dfdu,

@@ -29,6 +29,7 @@ EXTRA_DIST= \
 	demo_nonlinear_elasticity.m \
 	demo_nonlinear_elasticity_anim.m \
 	demo_plasticity.m \
+	demo_continuation.m \
 	demo_crack.m \
 	demo_mortar.m \
 	demo_topological_optimization.m \
