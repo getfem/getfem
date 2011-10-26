@@ -93,10 +93,12 @@ namespace gmm {
     col_matrix< rsvector<T> > B(mat_nrows(BB), mat_ncols(BB));
 
     k = 0;
-    for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k)
+    for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k){
       gmm::copy(scaled(mat_col(BB, *it), T(1)/vect_norm2(mat_col(BB, *it))),
 		mat_col(B, *it));
-
+      // cout << "mat_col(BB, *it)"<< mat_col(BB, *it) << endl;
+      //cout << "vect_norm2(mat_col(BB, *it))"<< vect_norm2(mat_col(BB, *it)) << endl;
+    }
     std::vector<T> w(mat_nrows(B));
     size_type restart = 120;
     std::vector<T> sdiag(restart);
@@ -104,7 +106,7 @@ namespace gmm {
     dense_matrix<T> eigvect(restart, restart);
     
     R rho = R(-1), rho2;
-    
+    // cout << "B"<< B << endl;
     while (nc_r) {
 
       std::vector<T> v(nc_r), v0(nc_r), wl(nc_r);
@@ -123,8 +125,9 @@ namespace gmm {
 	    v[k] = vect_hp(w, mat_col(B, *it));
 	  rho = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0));
 	}
+	rho *= 2.;
       }
-
+     
       // Computing vectors of the null space of de B^* B with restarted Lanczos
       rho2 = 0;
       gmm::fill_random(v);
@@ -134,11 +137,13 @@ namespace gmm {
 	R beta = R(0), alpha;
 	gmm::scale(v, T(1)/vect_norm2(v));
 	for (size_type i = 0; i < restart; ++i) { // Lanczos iterations
+	  // cout<<"iter_i="<<i<<endl;
 	  gmm::copy(v, mat_col(lv, i));
 	  gmm::clear(w);
 	  k = 0;
 	  for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++k)
 	    add(scaled(mat_col(B, *it), v[k]), w);
+	  
 	  k = 0;
 	  for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++k)
 	    wl[k] = v[k]*rho - vect_hp(w, mat_col(B, *it)) - beta*v0[k];
@@ -149,7 +154,6 @@ namespace gmm {
 	  gmm::copy(v, v0);
 	  gmm::copy(gmm::scaled(wl, T(1) / beta), v);
 	}
-
 	tridiag_qr_algorithm(diag, sdiag, eigval, eigvect, true);
 
 	size_type num = size_type(-1);
@@ -160,16 +164,22 @@ namespace gmm {
 
 	gmm::mult(lv, mat_col(eigvect, num), v);
 
-	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)) break;
+
+	//      cout<<"rho2"<<rho2 <<endl;
+	//      cout << " iter = " << iter << endl;
+	//      cout << "gmm::abs(rho_old-rho2) = " << gmm::abs(rho_old-rho2) << endl;
+	//	cout << "gmm::abs(rho-rho2) = " << gmm::abs(rho-rho2) << endl;
+	//	cout << "rho*R(gmm::sqrt(EPS)) = " << rho*R(EPS)*R(100) << endl;
+	//	cout << "rho_old =" <<  rho_old << endl;
+	//      getchar();
+
+
+	if (gmm::abs(rho2-rho_old) < rho*R(EPS)) break;
 	// if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) break;
 	if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) break;
-      }
-
-      // cout << " iter = " << iter << endl;
-      // cout << "gmm::abs(rho-rho2) = " << gmm::abs(rho-rho2) << endl;
-      // cout << "rho*R(gmm::sqrt(EPS)) = " << rho*R(EPS)*R(100) << endl;
       
 
+      }
       // if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
       if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) {
 	size_type j_max = size_type(-1), j = 0;
@@ -393,7 +403,7 @@ namespace gmm {
     std::vector<R> norms(nc);
     std::vector<bool> c_ortho(nc), booked(nr);
     std::vector< std::set<size_type> > nnzs(mat_nrows(B));
-
+   
     if (!skip_init) {
       
       R norm_max = R(0);
@@ -440,8 +450,8 @@ namespace gmm {
       if (columns.size() == nc_r) break;
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
-
-    if (columns.size() > std::max(size_type(1500), actsize))
+    cout<<"size of colun"<<columns.size()<<endl;
+    if (columns.size() > std::max(size_type(1000), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
       range_basis_eff_Gram_Schmidt_dense(B, columns, c_ortho, EPS);
