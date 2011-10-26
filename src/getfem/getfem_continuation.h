@@ -32,8 +32,8 @@
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Tomas Ligursky <tomas.ligursky@gmail.com>
     @date October 17, 2011.
-    @brief Moore-Penrose  (or Gauss-Newton ?) continuation method.
- */
+    @brief (approximate) Moore-Penrose (also called Gauss-Newton) continuation method.
+*/
 #ifndef GETFEM_CONTINUATION_H__
 #define GETFEM_CONTINUATION_H__
 
@@ -47,96 +47,163 @@ namespace getfem {
 
   
   template <typename S, typename VECT> 
-  void compute_gamma_derivative_(const S &s, const VECT &y0,
-				 double gamma0, VECT &v) {
+  void compute_gamma_derivative_(const S &s, const VECT &y,
+				 double gamma, VECT &d) {
     if (s.has_gamma_derivative()) {
-      s.gamma_derivative(y0, gamma0, v);
+//       s.gamma_derivative(y, gamma, d);
     } else {
-      VECT F0(y0), F1(y0);
-      s.F(y0, gamma0, F0);
-      s.F(y0, gamma0 + s.epsilon(), F1);
-      s.sub(F1, F0, v);
-      s.scale(v, 1./s.epsilon());
+      VECT F0(y), F1(y);
+      s.F(y, gamma, F0);
+      s.F(y, gamma + s.epsilon(), F1);
+      s.scaled_add(F1, F0, -1., d);
+      s.scale(d, 1./s.epsilon());
     }
   }
 
 
-  template <typename S, typename VECT>
-    void init_continuation(const S &s, const VECT &y0,
-			   double gamma0, double step,
-			   VECT &t_y, double &t_gamma) {
-    
-    VECT v(y0);
+  template <typename S, typename VECT> 
+  double sp_(const S &s, const VECT &y1, const VECT &y2,
+	     double gamma1, double gamma2) {
+    double r = s.sp(y1, y2) + gamma1 * gamma2;
+    return r;
+  }
 
-    // Compute the derivative with respect to the continuation parameter
-    compute_gamma_derivative_(s, y0, gamma0, v);
-    
-    // computation of the tangent
-    s.solve_grad(y0, gamma0, v, t_y);
-    double no = s.norm(t_y); no = sqrt(no * no + 1.0);
-    if (step > 0.) no = -no; 
-    s.scale(t_y, 1/no);
-    t_gamma = 1./no;
+  template <typename S, typename VECT> 
+  double norm_(const S &s, const VECT &y) {
+    double no = sqrt(s.sp(y, y));
+    return no;
   }
 
 
+  template <typename S, typename VECT> 
+  double norm_(const S &s, const VECT &y, double gamma) {
+    double no = sqrt(sp_(s, y, y, gamma, gamma));
+    return no;
+  }
+
 
   template <typename S, typename VECT>
-    void Moore_Penrose_continuation(const S &s, VECT &y0,
-				    double &gamma0, double step,
-				    VECT &t_y, double &t_gamma) {
-    
-    VECT Y0(y0), Y(y0), T0_y(y0), T_y(y0), w(y0), z(y0), F(y0), v(y0), X_y(y0);
-    double Gamma0, T0_gamma, Gamma;
-    step = abs(step);
-    
+  void compute_tangent(const S &s, const VECT &y, double gamma,
+		       VECT &t_y, double &t_gamma) {
 
-    for (;;) { // step control
+    VECT d(y), w(y);
+
+    compute_gamma_derivative_(s, y, gamma, d);
+    s.solve_grad(y, gamma, d, w);
+    t_gamma = 1. / (t_gamma - s.sp(t_y, w));
+    s.scale(w, -t_gamma); s.copy(w, t_y);
+    
+    double no = norm_(s, t_y, t_gamma);
+    s.scale(t_y, 1./no); t_gamma /= no;
+  }
+  
+
+  template <typename S, typename VECT>
+  bool is_tangent(const S &s, const VECT &y, double gamma,
+		  const VECT &t_y, double t_gamma) {
+
+    double Gamma, T_gamma=t_gamma, ang;
+    VECT Y(y), T_y(t_y);
+    
+    s.scaled_add(y, T_y, s.h_min(), Y); Gamma = gamma + s.h_min() * T_gamma;
+    compute_tangent(s, Y, Gamma, T_y, T_gamma);
+    
+    ang = sp_(s, t_y, T_y, t_gamma, T_gamma);
+    return (ang >= s.minang());
+  }
+
+
+  template <typename S, typename VECT>
+  void init_continuation(const S &s, const VECT &y, double gamma,
+			 VECT &t_y, double &t_gamma, double &h) {
+    s.clear(t_y); t_gamma = (t_gamma >= 0) ? 1. : -1.;
+    if (s.noisy() > 1) cout << "computing initial tangent" << endl;
+    compute_tangent(s, y, gamma, t_y, t_gamma);
+    h = s.h_init();
+  }
+
+
+  template <typename S, typename VECT>
+    bool Moore_Penrose_continuation(const S &s, VECT &y, double &gamma,
+				    VECT &t_y, double &t_gamma, double &h) {
+    
+    bool converged, finished=false, new_tangent_found=false;
+    unsigned long it, step_dec=0;
+    double Delta_Gamma, Gamma, T_gamma, r, no, res, diff, ang;
+    VECT F(y), d(y), Delta_Y(y), Y(y), T_y(y), W(y);
+
+    do { // step control
 
       // prediction
-      s.scaled_add(y0, 1., t_y, step, Y0);
-      Gamma0 = gamma0 + step*t_gamma;
-      s.copy(t_y, T0_y);
-      T0_gamma = t_gamma;
+      if (s.noisy() > 0) cout << "prediction with h = " << h << endl;
+      s.scaled_add(y, t_y, h, Y); Gamma = gamma + h * t_gamma;
+      s.copy(t_y, T_y); T_gamma = t_gamma;
       
       // correction
+      it = 0;
+      s.F(Y, Gamma, F);
       
-      for (;;) { // Newton iterations
+      do { // Newton iterations
+	if (s.noisy() > 0) cout << "starting correction " << endl;
+	compute_gamma_derivative_(s, Y, Gamma, d);
+	s.solve_grad(Y, Gamma, F, d, Delta_Y, W);
+	r = s.sp(T_y, W);
+
+	Delta_Gamma = s.sp(T_y, Delta_Y) / (r - T_gamma);
+	s.scaled_add(Delta_Y, W, -Delta_Gamma, Delta_Y);
+	s.scaled_add(Y, Delta_Y, -1., Y); Gamma -= Delta_Gamma;
 	
-	
-	compute_gamma_derivative_(s, Y0, Gamma0, v);
-	
-	
-	s.solve_grad(Y0, Gamma0, v, T_y);
-	s.copy(T_y, w);
-	
-	double T_gamma = 1. / (t_gamma - s.sp(t_y, T_y));
-	s.scale(T_y, -T_gamma);
-	
-	double no = s.norm(T_y); no = sqrt(no * no + T_gamma*T_gamma);
+	T_gamma = 1. / (T_gamma - r);
+	s.scale(W, -T_gamma); s.copy(W, T_y);
+	no = norm_(s, T_y, T_gamma);
 	s.scale(T_y, 1./no); T_gamma /= no;
-	
-	
-	s.F(y0, gamma0, F);
-	s.solve_grad(Y0, Gamma0, F, z);
-	
-	double X_gamma = -s.sp(t_y, z) / (t_gamma - s.sp(t_y, w));
-	s.scaled_add(z, 1., w, -X_gamma, X_y);
-	
-	s.add(Y0, X_y, Y);
-	Gamma = Gamma0 + X_gamma;
-	
-	....;
-	
-	s.copy(Y, Y0); Gamma0 = Gamma;
-	
+
+	s.F(Y, Gamma, F); res = norm_(s, F); 
+	diff = norm_(s, Delta_Y, Delta_Gamma);
+	converged = (res <= s.maxres() && diff <= s.maxdiff());
+	it++;
+
+	if (s.noisy() > 0) cout << "iter " << it << " residual " << res
+				<< " difference " << diff << endl;
+
+      } while (!converged && it < s.maxit());
+
+      if (converged) {
+	ang = sp_(s, t_y, T_y, t_gamma, T_gamma);
+	if (s.noisy() > 0) cout << "ang " << ang << endl;
+	if (ang >= s.minang()) {
+	  finished = true;
+	  if (step_dec == 0 && it <= s.thrit()) // elongate the tangent
+	    h = (s.h_inc() * h < s.h_max()) ? s.h_inc() * h : s.h_max();
+	}
       }
       
+      if (!finished) {
+	if (h > s.h_min()) { // diminish the step length
+	  h = (s.h_dec() * h > s.h_min()) ? s.h_dec() * h : s.h_min();
+	  step_dec++;
+	}
+	else {
+	  do { // seek a new tangent
+	    s.scaled_add(y, t_y, h, Y); Gamma = gamma + h * t_gamma;
+	    compute_tangent(s, Y, Gamma, t_y, t_gamma);
 
-    }
+	    if (is_tangent(s, y, gamma, t_y, t_gamma))
+	      new_tangent_found = true;
+	    else {
+	      s.scale(t_y, -1.); t_gamma *= -1.;
+	      new_tangent_found = is_tangent(s, y, gamma, t_y, t_gamma);
+	    }
+	  } while (!new_tangent_found);
+	  
+	  h = s.h_init(); step_dec = 0;
+	}
+      }
+    } while (!finished);
 
-    s.copy(Y, y0); gamma0 = Gamma; s.copy(T_y, t_y); t_gamma = T_gamma;
-
+    s.copy(Y, y); gamma = Gamma;
+    s.copy(T_y, t_y); t_gamma = T_gamma;
+    return true;
   }
 
 
@@ -150,72 +217,98 @@ namespace getfem {
  
   struct S_getfem_model {
 
-    double epsilon_;
     model &md;  // for real models only
     std::string parameter_name;
     rmodel_plsolver_type lsolver;
+    unsigned long maxit_, thrit_;
+    double maxres_, maxdiff_, minang_, h_init_, h_max_, h_min_, h_inc_,
+      h_dec_, epsilon_;
+    int noisy_;
 
     typedef std::vector<double> VECT;
+
+    S_getfem_model(model &m, std::string pn, rmodel_plsolver_type ls,
+		   unsigned long mit = 1000, unsigned long tit = 100,
+		   double mres = 1.e-6, double mdiff = 1.e-6,
+		   double mang = 0.99, double hin = 1.e-3,
+		   double hmax = 1.e-1, double hmin = 1.e-5,
+		   double hinc = 2., double hdec = 0.5, double eps = 1.e-9,
+		   int noi = 1)
+      : md(m), parameter_name(pn), lsolver(ls), maxit_(mit) , thrit_(tit),
+	maxres_(mres), maxdiff_(mdiff), minang_(mang), h_init_(hin),
+	h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
+	epsilon_(eps), noisy_(noi)
+    {}
     
 
     // Linear algebra functions
-    void sub(const VECT &v1, const VECT &v2, VECT &v)
-    { gmm::add(v1, gmm::scaled(v2, -1.), v); }
-    void add(const VECT &v1, const VECT &v2, VECT &v)
-    { gmm::add(v1, v2, v); }
-    void scale(VECT &v, double alpha)
-    { gmm::scale(v, alpha); }
-    void copy(const VECT &v1, VECT &v)
+    void clear (VECT &v) const
+    { gmm::clear(v); }
+    void copy(const VECT &v1, VECT &v) const
     { gmm::copy(v1, v); }
-    void scaled_add(VECT &v1, double a, const VECT &v2, double b, VECT &v)
-    { gmm::add(gmm::scaled(v1, a), gmm::scaled(v2, b), v); }
+    void scale (VECT &v, double a) const
+    { gmm::scale(v, a); }
+    void scaled_add(const VECT &v1, const VECT &v2, double a, VECT &v) const
+    { gmm::add(v1, gmm::scaled(v2, a), v); }
+    double sp (const VECT &v1, const VECT &v2) const
+    { return gmm::vect_sp(v1, v2); }
 
 
     // Evaluation of  ...
-    void F(const VECT &y, double gamma, VECT &f) {
+    void F(const VECT &y, double gamma, VECT &f) const {
       md.set_real_variable(parameter_name)[0] = gamma;
       md.to_variables(y);
       md.assembly(model::BUILD_RHS);
       gmm::copy(gmm::scaled(md.real_rhs(), -1.), f);
     }
 
-    void solve_grad(const VECT &y, double gamma, const VECT &L, VECT &g) {
+    void solve_grad(const VECT &y, double gamma,
+		    const VECT &L, VECT &g) const {
       md.set_real_variable(parameter_name)[0] = gamma;
       md.to_variables(y);
+      if (noisy_ > 1) cout << "starting computing tangent matrix" << endl;
+      md.assembly(model::BUILD_MATRIX);
+      
+      if (noisy_ > 1) cout << "starting linear solver" << endl;
+      gmm::iteration iter(maxres_, noisy_, maxit_);
+      (*lsolver)(md.real_tangent_matrix(), g, L, iter);
+      if (noisy_ > 1) cout << "linear solver done" << endl;
+    }
+
+    void solve_grad(const VECT &y, double gamma, const VECT &L1,
+		    const VECT &L2, VECT &g1, VECT &g2) const {
+      md.set_real_variable(parameter_name)[0] = gamma;
+      md.to_variables(y);
+      if (noisy_ > 1) cout << "starting computing tangent matrix" << endl;
       md.assembly(model::BUILD_MATRIX);
 
-      gmm::iteration iter(...);
-
-      lsolver(md.real_tangent_matrix(), g, L, iter);
+      gmm::iteration iter(maxres_, noisy_, maxit_);
+      (*lsolver)(md.real_tangent_matrix(), g1, L1, iter);
+      (*lsolver)(md.real_tangent_matrix(), g2, L2, iter);
     }
+
+//     void gamma_derivative(const VECT &y, double gamma, VECT &d) const {}
 
     
     // Misc.
 
-    double epsilon(void) { return epsilon_; }
-    bool has_gamma_derivative(void) { return false; }
-
-
-
+    bool has_gamma_derivative(void) const { return false; }
+    unsigned long thrit(void) const { return thrit_; }
+    unsigned long maxit(void) const { return maxit_; }
+    double epsilon(void) const { return epsilon_; }
+    double minang(void) const { return minang_; }
+    double maxres(void) const { return maxres_; }
+    double maxdiff(void) const { return maxdiff_; }
+    double h_init(void) const { return h_init_; }
+    double h_min(void) const { return h_min_; }
+    double h_max(void) const { return h_max_; }
+    double h_dec(void) const { return h_dec_; }
+    double h_inc(void) const { return h_inc_; }
+    int noisy(void) const { return noisy_; }
 
   };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }  /* end of namespace getfem.                                             */

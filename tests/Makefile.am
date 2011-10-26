@@ -42,7 +42,8 @@ check_PROGRAMS =                 \
 	bilaplacian		 \
 	heat_equation            \
 	wave_equation 		 \
-	cyl_slicer
+	cyl_slicer		 \
+	test_continuation
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt 			    \
@@ -96,6 +97,7 @@ bilaplacian_SOURCES = bilaplacian.cc
 heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
 cyl_slicer_SOURCES = cyl_slicer.cc
+test_continuation_SOURCES = test_continuation.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../src
@@ -194,7 +196,8 @@ EXTRA_DIST =                               			\
 	heat_equation.param                			\
 	wave_equation.pl                   			\
 	wave_equation.param                			\
-	cyl_slicer.pl                           \
+	cyl_slicer.pl                           		\
+	test_continuation.param
 	make_gmm_test.pl                   			\
 	gmm_torture01_lusolve.cc           			\
 	gmm_torture05_mult.cc              			\

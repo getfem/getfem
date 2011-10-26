@@ -1,0 +1,36 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program test_continuation                                %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%   discretisation parameters:	                     	      %%%%%
+NX = 10;            	          % space step.
+FEM_TYPE = 'FEM_PK(1,1)';  % P1 for segments
+INTEGRATION = 'IM_GAUSS1D(3)'; % Gauss-Legendre integration on the
+                               % segment of order 10
+
+%%%%%   continuation parameters:	                     	      %%%%%
+LAMBDA0 = 0.;		% initial value of the parameter lambda
+DIRECTION = 1.;		% direction of the continuation
+NBSTEP = 100;		% number of the continuation steps
+
+MAXITER = 5;		% maximum iterations of the Newton correction
+THR_ITER = 4;		% threshold for the number of iterations for
+			% increasing the step length
+RESIDUAL = 1E-6;     	% residual
+DIFFERENCE = 1E-6;	% difference of two forthcoming iteratives
+ANGLE = 0.99 		% cosine of the angle between tangents at
+			% two forthcoming points
+
+H_INIT = 1E-3;		% initial step length
+H_MAX = 1E-2;		% maximal step length
+H_MIN = 1E-6;		% minimal step length
+H_INC = 2.0;		% scale factor for increasing the step length
+H_DEC = 0.5;		% scale factor for decreasing the step length
+
+EPSILON = 1E-9;		% spacing for finite differences
+RESIDUAL_INIT = 1E-8;	% initial residual
+
+
+%%%%%   saving and output parameters                                  %%%%%
+ROOTFILENAME = 'continuation';     % Root of data files.
+NOISY = 2;
