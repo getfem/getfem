@@ -18,7 +18,11 @@ This brick represents a weak term of the form
 
    \int_{\Omega} f(u,\lambda)\cdot v\ dx + \ldots
 
-where :math:`f` is a function given by a string and interpreted with muparser. This means in particular that this bricks need that Getfem++ is build with muparser library being installed. Here also, :math:`u` is the unknown and  :math:`\lambda` is an optional real parameter. This brick can be used to add basic nonlinear term such as :math:`u^2` or :math:`e^u`.
+.. |muparser| replace:: muparser
+.. _muparser: http://muparser.sourceforge.net/
+
+
+where :math:`f` is a function given by a string and interpreted with |muparser|_. This means in particular that this bricks need that Getfem++ is build with |muparser|_ library being installed. Here also, :math:`u` is the unknown and  :math:`\lambda` is an optional real parameter. This brick can be used to add basic nonlinear term such as :math:`u^2` or :math:`e^u`.
 
 The function which adds this brick to a model is::
 
