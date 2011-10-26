@@ -26,6 +26,12 @@
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_interpolation.h"
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#include <muParser/muParser.h>
+#elif GETFEM_HAVE_MUPARSER_H
+#include <muParser.h>
+#endif
+
 
 
 namespace getfem {
@@ -2528,6 +2534,8 @@ namespace getfem {
   // Basic nonlinear brick
   //
   // ----------------------------------------------------------------------
+      
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
 
   class basic_nonlinear_term : public nonlinear_elem_term {
 
@@ -2535,19 +2543,31 @@ namespace getfem {
     dim_type N;
     const mesh_fem &mf_u;
     std::vector<scalar_type> U;
-    scalar_type lambda;
+    scalar_type param;
     base_small_vector V, coeff;
+    std::string f, dfdu, varname, paramname;
+    mu::Parser parser;
     bgeot::multi_index sizes_;
     int version;
     
     template <class VECT> basic_nonlinear_term
-    (const mesh_fem &mf_u_, const VECT &U_, scalar_type lambda_,
+    (const mesh_fem &mf_u_, const VECT &U_, scalar_type param_,
+     const std::string &f_, const std::string &dfdu_,
+     const std::string &varname_, const std::string &paramname_,
      int version_)
       : N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), U(mf_u.nb_basic_dof()),
-	lambda(lambda_), version(version_) {
+	param(param_), f(f_), dfdu(dfdu_), varname(varname_),
+	paramname(paramname_), version(version_) {
       sizes_.resize(1); sizes_[0] = 1;
       V.resize(1);
       mf_u.extend_vector(U_, U);
+
+      switch (version) {
+      case 0 : parser.SetExpr(dfdu); break; // tangent matrix
+      case 1 : parser.SetExpr(f); break; // rhs
+      }
+      parser.DefineVar(varname, &V[0]);
+      if (paramname.size()) parser.DefineVar(paramname, &param);
     }
 
     const bgeot::multi_index &sizes() const { return sizes_; }
@@ -2562,11 +2582,16 @@ namespace getfem {
                  (mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation(ctx, coeff, V, 1);
 
-      switch (version) {
-      case 0 : t[0] = - lambda * exp(V[0]); break; // tangent matrix
-      case 1 : t[0] = - lambda * exp(V[0]); break; // rhs
+      try {
+	t[0] = scalar_type(parser.Eval());
+      } catch (mu::Parser::exception_type &e) {
+	std::cerr << "Message  : " << e.GetMsg()   << std::endl;
+	std::cerr << "Formula  : " << e.GetExpr()  << std::endl;
+	std::cerr << "Token    : " << e.GetToken() << std::endl;
+	std::cerr << "Position : " << e.GetPos()   << std::endl;
+	std::cerr << "Errc     : " << e.GetCode()  << std::endl;
+	GMM_ASSERT1(false, "error in the expressions");
       }
-
     }
 
   };
@@ -2574,9 +2599,12 @@ namespace getfem {
   template<typename MAT, typename VECT>
   void asm_basic_nonlinear_tangent_matrix
   (const MAT &K, const mesh_im &mim, const mesh_fem &mf_u, const VECT &U,
-   scalar_type lambda, const mesh_region &rg = mesh_region::all_convexes()) {
+   const std::string &f, const std::string &dfdu, const std::string &varname,
+   const mesh_region &rg = mesh_region::all_convexes(),
+   scalar_type param = 0., const std::string &paramname = std::string()) {
 
-    basic_nonlinear_term nterm(mf_u, U, lambda, 0);
+    basic_nonlinear_term nterm(mf_u, U, param, f, dfdu, 
+			       varname, paramname, 0);
 
     generic_assembly assem;
     assem.set("M(#1,#1)+=sym(comp(NonLin(#1).Base(#1).Base(#1))(i,:,:))");
@@ -2590,9 +2618,12 @@ namespace getfem {
   template<typename VECT>
   void asm_basic_nonlinear_rhs
   (const VECT &V, const mesh_im &mim, const mesh_fem &mf_u, const VECT &U,
-   scalar_type lambda, const mesh_region &rg = mesh_region::all_convexes()) {
+   const std::string &f, const std::string &dfdu, const std::string &varname,
+   const mesh_region &rg = mesh_region::all_convexes(),
+   scalar_type param = 0., const std::string &paramname = std::string()) {
 
-    basic_nonlinear_term nterm(mf_u, U, lambda, 1);
+    basic_nonlinear_term nterm(mf_u, U, param, f, dfdu,
+			       varname, paramname, 1);
 
     generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin(#1).Base(#1))(i,:)");
@@ -2603,8 +2634,11 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+#endif
 
   struct basic_nonlinear_brick : public virtual_brick {
+
+    std::string f, dfdu;
     
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -2616,46 +2650,65 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const {
       GMM_ASSERT1(mims.size() == 1,
-		  "Basic nonlinear brick needs a single mesh_im");
+		  "basic nonlinear brick needs a single mesh_im");
       GMM_ASSERT1(vl.size() == 1,
-		  "Basic nonlinear brick needs a single variable");
-      GMM_ASSERT1(dl.size() == 1,
-		  "Wrong number of data for Basic nonlinear brick");
-      GMM_ASSERT1(matl.size() == 1,  "Wrong number of terms for basic "
+		  "basic nonlinear brick needs a single variable");
+      GMM_ASSERT1(dl.size() <= 1,
+		  "wrong number of data for basic nonlinear brick");
+      GMM_ASSERT1(matl.size() == 1,  "wrong number of terms for basic "
 		  "nonlinear brick");
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);
       const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
       size_type Q = mf_u.get_qdim();
-      GMM_ASSERT1(Q == 1, "Basic nonlinear brick is only for scalar field, "
-		  "sorry.");
+      GMM_ASSERT1(Q == 1, "basic nonlinear brick is only for scalar field, "
+		  "sorry");
 
-      const model_real_plain_vector &vlambda = md.real_variable(dl[0]);
+      const model_real_plain_vector *vparam = 0;
+      if (dl.size()) {
+	vparam = &md.real_variable(dl[0]) ;
+	size_type sl = gmm::vect_size(*vparam);
+	GMM_ASSERT1(sl == 1, "the parameter in basic nonlinear brick "
+		    "has to be scalar");
+      }
+
       const mesh_im &mim = *mims[0];
-
-      size_type sl = gmm::vect_size(vlambda);
-      GMM_ASSERT1(sl == 1, "Basic nonlinear brick "
-		  "needs one scalar parameter");
-
       mesh_region rg(region);
       mf_u.linked_mesh().intersect_with_mpi_region(rg);
 
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
-	GMM_TRACE2("Basic nonlinear stiffness matrix assembly");
-	asm_basic_nonlinear_tangent_matrix
-	  (matl[0], mim, mf_u, u, vlambda[0], rg);
+	GMM_TRACE2("basic nonlinear stiffness matrix assembly");
+	if (dl.size())
+	  asm_basic_nonlinear_tangent_matrix(matl[0], mim, mf_u, u, f, dfdu,
+					     vl[0], rg, (*vparam)[0], dl[0]);
+	else
+	  asm_basic_nonlinear_tangent_matrix(matl[0], mim, mf_u, u,
+					     f, dfdu, vl[0], rg);
       }
 
       if (version & model::BUILD_RHS) {
-	asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u, vlambda[0], rg);
+	if (dl.size())
+	  asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u,
+				  f, dfdu, vl[0], rg, (*vparam)[0], dl[0]);
+	else
+	  asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u, f, dfdu, vl[0], rg);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
       
     }
+#else
 
-    basic_nonlinear_brick(void)
-    { set_flags("Basic nonlinear brick", false /* is linear*/,
+    GMM_ASSERT1(false, "Muparser is not installed, "
+                    "you cannot use basic nonlinear brick");
+
+#endif
+
+    basic_nonlinear_brick(const std::string &f_, const std::string &dfdu_)
+      : f(f_), dfdu(dfdu_)
+    { set_flags("basic nonlinear brick", false /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
 		true /* is real */, false /* is complex */);
     }
@@ -2664,12 +2717,14 @@ namespace getfem {
 
   size_type add_basic_nonlinear_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname, size_type region) {
-    pbrick pbr = new basic_nonlinear_brick;
+   const std::string &f, const std::string &dfdu, size_type region,
+   const std::string &dataname) {
+    pbrick pbr = new basic_nonlinear_brick(f, dfdu);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));
-    model::varnamelist dl(1, dataname);
     model::varnamelist vl(1, varname);
+    model::varnamelist dl;
+    if (dataname.size()) dl.push_back(dataname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
     

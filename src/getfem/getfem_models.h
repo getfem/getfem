@@ -1184,15 +1184,22 @@ namespace getfem {
                                     size_type region);
 
 
-  /** Add a brick representing the scalar term @f$-lambda * exp(u)@f$ to the
-      left-hand side of the model. In the weak form, one adds
-      @f$... - \int lambda*exp(u).v = 0@f). 
+  /** Add a brick representing the scalar term @f$f(u)@f$ to the left-hand
+      side of the model. In the weak form, one adds @f$+\int f(u).v@f. The
+      function $f$ may optionally depend on $lambda$, i.e.,
+      $f(u) = f(u, \lambda)$.
 
-      `dataname` should contain the scalar real parameter $lambda$.
+      `f` and `dfdu` should contain the expressions for $f(u)$ and
+      $\frac{\partial f}{\partial u}(u)$, respectively. `region` is an
+      optional mesh region on which the term is added. `dataname` is the
+      optional real scalar parameter $\lambda$. Return the brick index in the
+      model.
    */
   size_type add_basic_nonlinear_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &dataname, size_type region = size_type(-1));
+   const std::string &f, const std::string &dfdu,
+   size_type region = size_type(-1),
+   const std::string &dataname = std::string());
 
   // Constraint brick.
   model_real_sparse_matrix &set_private_data_brick_real_matrix
