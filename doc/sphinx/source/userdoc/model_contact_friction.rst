@@ -481,8 +481,8 @@ The penalization parameter `dataname_r` should be chosen
 large enough to prescribe an approximate non-penetration condition
 but not too large not to deteriorate to much the conditionning of
 the tangent system. `dataname_n` is an optional parameter used if option
-is 2. In that case, the penalization term is shifted by lambda_n (comes
-from an augmented Lagrangian formulation).
+is 2. In that case, the penalization term is shifted by lambda_n (this allows
+the use of an Uzawa algorithm on the corresponding augmented Lagrangian formulation)
 
 
 Penalized contact with friction brick with a rigid obstacle
@@ -494,18 +494,18 @@ Penalized contact with friction brick with a rigid obstacle
         region, option = 1, dataname_lambda = "", dataname_alpha = "",
 	dataname_wt = "");
 
-  /** Adds a penalized contact condition with Coulomb friction with a
-      rigid obstacle to the model.
-      The condition is applied on the variable `varname_u`
-      on the boundary corresponding to `region`. The rigid obstacle should
-      be described with the data `dataname_obstacle` being a signed distance to
-      the obstacle (interpolated on a finite element method).
-      The penalization parameter `dataname_r` should be chosen
-      large enough to prescribe approximate non-penetration and friction
-      conditions but not too large not to deteriorate to much the
-      conditionning of the tangent system.
-      `dataname_lambda` is an optional parameter used if option
-      is 2. In that case, the penalization term is shifted by lambda (comes
-      from an augmented Lagrangian formulation).
-  */
+Adds a penalized contact condition with Coulomb friction with a
+rigid obstacle to the model.
+The condition is applied on the variable `varname_u`
+on the boundary corresponding to `region`. The rigid obstacle should
+be described with the data `dataname_obstacle` being a signed distance to
+the obstacle (interpolated on a finite element method).
+The penalization parameter `dataname_r` should be chosen
+large enough to prescribe approximate non-penetration and friction
+conditions but not too large not to deteriorate to much the
+conditionning of the tangent system.
+`dataname_lambda` is an optional parameter used if option
+is 2. In that case, the penalization term is shifted by lambda (this allows
+the use of an Uzawa algorithm on the corresponding augmented Lagrangian formulation).
+
  
