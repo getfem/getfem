@@ -55,7 +55,7 @@ function [hline, hdof] = gf_plot_1D_aux(mf, U, varargin)
   m=gf_mesh_fem_get(mf, 'linked_mesh');
   sl=gf_slice({'none'},m, REFINE); 
   Usl = gf_compute(mf,U,'interpolate on', sl);
-  D = unique(gf_mesh_fem_get(mf, 'dof nodes'));
+  D = unique(gf_mesh_fem_get(mf, 'basic dof nodes'));
   slD = gf_slice('points', m, D);
   UD  = gf_compute(mf,U,'interpolate on',slD);
   
