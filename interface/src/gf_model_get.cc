@@ -329,62 +329,72 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @scalar init_dir)
+    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter, @scalar init_dir)
     blabla ...
     @*/
     sub_command
-      ("init Moore-Penrose continuation", 4, 4, 0, 3,
+      ("init Moore-Penrose continuation", 2, 2, 0, 3,
 
        std::string dataname_parameter = in.pop().to_string();
-       darray y = in.pop().to_darray();
-       scalar_type gamma = in.pop().to_scalar();
        scalar_type t_gamma = in.pop().to_scalar();
        
 
        if (md->model().is_complex())
-	 THROW_BADARG("sorry, Moore-Penrose continuation has only a real version");
+	 THROW_BADARG("sorry, Moore-Penrose continuation has only a "
+		      "real version");
        
        getfem::S_getfem_model S(md->model(), dataname_parameter,
 		     getfem::rselect_linear_solver(md->model(), "superlu"));
 
-       darray t_y = out.pop().create_darray_h(int(gmm::vect_size(y)));
+       size_type nbdof = md->model().nb_dof();
+       std::vector<double> yy(nbdof);
+       md->model().from_variables(yy);
+       const getfem::model_real_plain_vector &GAMMA
+       = md->model().real_variable(dataname_parameter);
+       GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
+		   "The continuation parameter should be a real scalar");
+       scalar_type gamma = GAMMA[0];
        double h;
-       std::vector<double> yy(gmm::vect_size(y));
-       gmm::copy(y, yy);
-       std::vector<double> tt_y(gmm::vect_size(y));
+       std::vector<double> tt_y(nbdof);
+
        getfem::init_continuation(S, yy, gamma, tt_y, t_gamma, h);
-       gmm::copy(tt_y, t_y);
+       out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
 
-    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @vec tangent, @scalar tangent_parameter, @scalar h)
+    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter, @vec tangent, @scalar tangent_parameter, @scalar h)
     blabla ...
     @*/
     sub_command
-      ("Moore-Penrose continuation", 6, 6, 0, 3,
+      ("Moore-Penrose continuation", 4, 4, 0, 3,
 
        std::string dataname_parameter = in.pop().to_string();
-       darray y = in.pop().to_darray();
-       scalar_type gamma = in.pop().to_scalar();
        darray t_y = in.pop().to_darray();
        scalar_type t_gamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
        
 
        if (md->model().is_complex())
-	 THROW_BADARG("sorry, Moore-Penrose continuation has only a real version");
-       
+	 THROW_BADARG("sorry, Moore-Penrose continuation has only a "
+		      "real version");
+
+       size_type nbdof = md->model().nb_dof();
+       std::vector<double> yy(nbdof);
+       md->model().from_variables(yy);
+       const getfem::model_real_plain_vector &GAMMA
+       = md->model().real_variable(dataname_parameter);
+       GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
+		   "The continuation parameter should be a real scalar");
+       scalar_type gamma = GAMMA[0];
+
        getfem::S_getfem_model S(md->model(), dataname_parameter,
 		     getfem::rselect_linear_solver(md->model(), "superlu"));
 
-       std::vector<double> yy(gmm::vect_size(y));
-       gmm::copy(y, yy);
-       std::vector<double> tt_y(gmm::vect_size(y));
+       std::vector<double> tt_y(nbdof);
        gmm::copy(t_y, tt_y);
        getfem::Moore_Penrose_continuation(S, yy, gamma, tt_y, t_gamma, h);
-       gmm::copy(tt_y, t_y);
-       out.pop().from_dcvector(t_y);
+       out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
