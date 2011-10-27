@@ -183,7 +183,7 @@ where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`
 is chosen, then one has to take :math:`\alpha = 1/dt` and :math:`w^h_T = (u^h_T)^{n}`. Note that due to the symmetry of the ball, the parameter :math:`\alpha` do not play an important role in the formulation. It can simply be viewed as a scaling between the augmentation parameter for the contact condition and the one for the friction condition. Note also that contrarily to the previous formulations of contact, here there is not a strict independance of the conditions with respect to the augmentation parameter (the independance only occurs at the continuous level).
 
 
-Getfem++ bricks implement three versions of the contact condition derived from the Alart-Curnier augmented Lagrangian formulation [AL-CU1991]_. The first one corresponds to the non-symmetric version. It consists in solving:
+Getfem++ bricks implement four versions of the contact condition derived from the Alart-Curnier augmented Lagrangian formulation [AL-CU1991]_. The first one corresponds to the non-symmetric version. It consists in solving:
 
 .. math::
 
@@ -259,6 +259,27 @@ and the tangent system:
   ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
   ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
   \end{array}\right.
+
+The fourth version corresponds to a penalized contact and friction condition. It does not require the use of a multiplier. In this version, the parameter :math:`r` is a penalization parameter and as to be large enough to perform a good approximation of the nonpenetration and the Coulomb friction conditions. The formulation reads:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} r(u^h_N-gap)_+ v^h_N d\Gamma \\
+  ~~~~~~ + \displaystyle \int_{\Gamma_c} P_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h,
+  \end{array}\right.
+
+and the tangent system:
+
+.. math::
+
+  \left\{\begin{array}{l}
+  \cdots + \displaystyle \int_{\Gamma_c} rH(u^h_N-gap)\delta_{u_N} v_N d\Gamma \\
+  ~~~~~~- \displaystyle \int_{\Gamma_c} r \alpha D_xP_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T)) \delta_{u_T}\cdot v^h_T d\Gamma \\
+  ~~~~~~+ \displaystyle \int_{\Gamma_c} ({r\mathscr F} H(u^h_N-gap) D_rP_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T)) \delta_{u_N})\cdot v^h_T d\Gamma = \cdots  ~~~~ \forall v^h \in V^h,
+  \end{array}\right.
+
+
 
 
 Add a contact with or without friction to a model
@@ -412,6 +433,7 @@ of course the integration method. Note that it should be accurate enough to inte
 
 Continuous contact with friction brick with a rigid obstacle
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
      getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
      (md, mim, varname_u, multname_n, dataname_obs, dataname_r,
      dataname_friction_coeff, region, option, dataname_alpha = "",
@@ -441,3 +463,49 @@ non-symmetric Alart-Curnier with an additional augmentation.
 ``dataname_alpha`` and ``dataname_wt`` are optional parameters to solve
 dynamical friction problems. ``mim`` represents
 of course the integration method. Note that it should be accurate enough to integrate efficiently the nonlinear terms involved.
+
+Penalized contact brick with a rigid obstacle
++++++++++++++++++++++++++++++++++++++++++++++
+
+  ind_brick = add_penalized_contact_with_rigid_obstacle_brick(md, mim,
+	 varname_u, dataname_obs, dataname_r, region, option = 1,
+	 dataname_n = "");
+
+Adds a penalized contact frictionless condition with a rigid obstacle
+to the model.
+The condition is applied on the variable `varname_u`
+on the boundary corresponding to `region`. The rigid obstacle should
+be described with the data `dataname_obstacle` being a signed distance to
+the obstacle (interpolated on a finite element method).
+The penalization parameter `dataname_r` should be chosen
+large enough to prescribe an approximate non-penetration condition
+but not too large not to deteriorate to much the conditionning of
+the tangent system. `dataname_n` is an optional parameter used if option
+is 2. In that case, the penalization term is shifted by lambda_n (comes
+from an augmented Lagrangian formulation).
+
+
+Penalized contact with friction brick with a rigid obstacle
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+  ind_brick = add_penalized_contact_with_friction_with_rigid_obstacle_brick
+       (md, mim, varname_u, dataname_obs, dataname_r, dataname_friction_coeff, 
+        region, option = 1, dataname_lambda = "", dataname_alpha = "",
+	dataname_wt = "");
+
+  /** Adds a penalized contact condition with Coulomb friction with a
+      rigid obstacle to the model.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe approximate non-penetration and friction
+      conditions but not too large not to deteriorate to much the
+      conditionning of the tangent system.
+      `dataname_lambda` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda (comes
+      from an augmented Lagrangian formulation).
+  */
+ 

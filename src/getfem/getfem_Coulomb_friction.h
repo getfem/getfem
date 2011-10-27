@@ -303,8 +303,9 @@ namespace getfem {
       large enough to prescribe an approximate non-penetration condition
       but not too large not to deteriorate to much the conditionning of
       the tangent system. `dataname_n` is an optional parameter used if option
-      is 2. In that case, the penalization term is shifted by lambda_n (comes
-      from an augmented Lagrangian formulation).
+      is 2. In that case, the penalization term is shifted by lambda_n (this
+      allows the use of an Uzawa algorithm on the corresponding augmented
+      Lagrangian formulation)
   */
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -322,8 +323,9 @@ namespace getfem {
       conditions but not too large not to deteriorate to much the
       conditionning of the tangent system.
       `dataname_lambda` is an optional parameter used if option
-      is 2. In that case, the penalization term is shifted by lambda (comes
-      from an augmented Lagrangian formulation).
+      is 2. In that case, the penalization term is shifted by lambda (this
+      allows the use of an Uzawa algorithm on the corresponding augmented
+      Lagrangian formulation)
   */
   size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,

@@ -1919,8 +1919,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       large enough to prescribe an approximate non-penetration condition
       but not too large not to deteriorate to much the conditionning of
       the tangent system. `dataname_n` is an optional parameter used if option
-      is 2. In that case, the penalization term is shifted by lambda_n (comes
-      from an augmented Lagrangian formulation).
+      is 2. In that case, the penalization term is shifted by lambda_n (this
+      allows the use of an Uzawa algorithm on the corresponding augmented
+      Lagrangian formulation)
     @*/
      sub_command
        ("add penalized contact with rigid obstacle brick", 5, 7, 0, 1,
@@ -1955,8 +1956,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       conditions but not too large not to deteriorate to much the
       conditionning of the tangent system.
       `dataname_lambda` is an optional parameter used if option
-      is 2. In that case, the penalization term is shifted by lambda (comes
-      from an augmented Lagrangian formulation).
+      is 2. In that case, the penalization term is shifted by lambda (this
+      allows the use of an Uzawa algorithm on the corresponding augmented
+      Lagrangian formulation)
     @*/
      sub_command
        ("add penalized contact with friction with rigid obstacle brick", 6, 10, 0, 1,
