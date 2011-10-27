@@ -96,8 +96,6 @@ namespace gmm {
     for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k){
       gmm::copy(scaled(mat_col(BB, *it), T(1)/vect_norm2(mat_col(BB, *it))),
 		mat_col(B, *it));
-      // cout << "mat_col(BB, *it)"<< mat_col(BB, *it) << endl;
-      //cout << "vect_norm2(mat_col(BB, *it))"<< vect_norm2(mat_col(BB, *it)) << endl;
     }
     std::vector<T> w(mat_nrows(B));
     size_type restart = 120;
@@ -106,7 +104,6 @@ namespace gmm {
     dense_matrix<T> eigvect(restart, restart);
     
     R rho = R(-1), rho2;
-    // cout << "B"<< B << endl;
     while (nc_r) {
 
       std::vector<T> v(nc_r), v0(nc_r), wl(nc_r);
@@ -125,7 +122,7 @@ namespace gmm {
 	    v[k] = vect_hp(w, mat_col(B, *it));
 	  rho = gmm::abs(vect_hp(v, v0) / vect_hp(v0, v0));
 	}
-	rho *= 2.;
+	rho *= R(2);
       }
      
       // Computing vectors of the null space of de B^* B with restarted Lanczos
@@ -137,7 +134,6 @@ namespace gmm {
 	R beta = R(0), alpha;
 	gmm::scale(v, T(1)/vect_norm2(v));
 	for (size_type i = 0; i < restart; ++i) { // Lanczos iterations
-	  // cout<<"iter_i="<<i<<endl;
 	  gmm::copy(v, mat_col(lv, i));
 	  gmm::clear(w);
 	  k = 0;
@@ -164,24 +160,11 @@ namespace gmm {
 
 	gmm::mult(lv, mat_col(eigvect, num), v);
 
-
-	//      cout<<"rho2"<<rho2 <<endl;
-	//      cout << " iter = " << iter << endl;
-	//      cout << "gmm::abs(rho_old-rho2) = " << gmm::abs(rho_old-rho2) << endl;
-	//	cout << "gmm::abs(rho-rho2) = " << gmm::abs(rho-rho2) << endl;
-	//	cout << "rho*R(gmm::sqrt(EPS)) = " << rho*R(EPS)*R(100) << endl;
-	//	cout << "rho_old =" <<  rho_old << endl;
-	//      getchar();
-
-
-	if (gmm::abs(rho2-rho_old) < rho*R(EPS)) break;
-	// if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) break;
-	if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) break;
-      
-
+	if (gmm::abs(rho2-rho_old) < rho*R(EPS*0.1)) break;
+	if (gmm::abs(rho-rho2) < rho*R(EPS*10.)) break;
       }
-      // if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) {
-      if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) {
+
+      if (gmm::abs(rho-rho2) < rho*R(EPS*10.)) {
 	size_type j_max = size_type(-1), j = 0;
 	R val_max = R(0);
 	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
