@@ -276,7 +276,7 @@ namespace getfem {
           size_type nbdof = it->second.mf->nb_dof();
           for (std::set<size_type>::iterator itt = glob_columns.begin();
                itt != glob_columns.end(); ++itt)
-            if (*itt > s && *itt < s + nbdof) kept.add(*itt-s);
+            if (*itt >= s && *itt < s + nbdof) kept.add(*itt-s);
           it->second.partial_mf->adapt(kept);
           it->second.set_size(it->second.partial_mf->nb_dof());
           it->second.v_num = act_counter();
