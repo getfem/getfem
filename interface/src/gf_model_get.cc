@@ -329,11 +329,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@FUNC E = ('init Moore Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @scalar init_dir)
+    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @scalar init_dir)
     blabla ...
     @*/
     sub_command
-      ("init Moore Penrose continuation", 4, 4, 0, 3,
+      ("init Moore-Penrose continuation", 4, 4, 0, 3,
 
        std::string dataname_parameter = in.pop().to_string();
        darray y = in.pop().to_darray();
@@ -342,7 +342,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        
 
        if (md->model().is_complex())
-	 THROW_BADARG("Sorry, complex version of convect to be interfaced");
+	 THROW_BADARG("sorry, Moore-Penrose continuation has only a real version");
        
        getfem::S_getfem_model S(md->model(), dataname_parameter,
 		     getfem::rselect_linear_solver(md->model(), "superlu"));
@@ -358,11 +358,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_scalar(h);
        );
 
-    /*@FUNC E = ('Moore Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @vec tangent, @scalar tangent_parameter, @scalar h)
+    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter, @vec init_value, @scalar init_parameter, @vec tangent, @scalar tangent_parameter, @scalar h)
     blabla ...
     @*/
     sub_command
-      ("Moore Penrose continuation", 6, 6, 0, 3,
+      ("Moore-Penrose continuation", 6, 6, 0, 3,
 
        std::string dataname_parameter = in.pop().to_string();
        darray y = in.pop().to_darray();
@@ -373,7 +373,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        
 
        if (md->model().is_complex())
-	 THROW_BADARG("Sorry, complex version of convect to be interfaced");
+	 THROW_BADARG("sorry, Moore-Penrose continuation has only a real version");
        
        getfem::S_getfem_model S(md->model(), dataname_parameter,
 		     getfem::rselect_linear_solver(md->model(), "superlu"));
@@ -384,6 +384,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        gmm::copy(t_y, tt_y);
        getfem::Moore_Penrose_continuation(S, yy, gamma, tt_y, t_gamma, h);
        gmm::copy(tt_y, t_y);
+       out.pop().from_dcvector(t_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );

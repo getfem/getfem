@@ -71,6 +71,7 @@ EXTRA_DIST=builddoc.sce \
         demos/check_spmat.sce \
         demos/check_workspace.sce \
         demos/demo_bilaplacian.sce \
+        demos/demo_continuation.sce \
         demos/demo_convection_rotating_cavity.sce \
         demos/demo_crack.sce \
         demos/demo_fictitious_domains.sce \

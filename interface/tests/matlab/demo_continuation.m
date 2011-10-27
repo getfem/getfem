@@ -51,7 +51,7 @@ U = gf_model_get(md, 'variable', 'u');
 
 
 
-[a, b, c] = gf_model_get(md, 'init Moore Penrose continuation', 'lambda', gf_model_get(md, 'from variables'), 0, 1);
+[a, b, c] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', gf_model_get(md, 'from variables'), 0, 1);
 
 
 
