@@ -1,13 +1,8 @@
-.. Automatically generated file, do not edit it.
-.. If some modification are necessary, please modify
-.. the corresponding C++ source or the python program extract_doc
-
-
 .. include:: ../replaces.txt
 
 .. highlightlang:: matlab
 
-.. _mlab-cmdref:
+.. _scilab-cmdref:
 
 Draw Command reference
 ======================
@@ -102,9 +97,9 @@ gf_plot_1D
   The options are specified as pairs of "option name"/"option value"
 
 
-  'style', 'bo-'       : the line style and dof marker style (same syntax as in the matlab command 'plot').
-  'color', []          : override the line color.
-  'dof_color', [1,0,0] : color of the markers for the degrees of freedom.
+  'style', 'bo-'       : line style and dof marker style (same syntax as in the Scilab command 'plot');
+  'color', ''          : override the line color;
+  'dof_color', 'red'   : color of markers for degrees of freedom;
   'width', 2           : line width.
 
 
