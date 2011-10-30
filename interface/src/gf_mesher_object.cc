@@ -109,10 +109,49 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
 	 vd.push_back(psd);
        }
        
-       getfem::mesher_signed_distance *inter
-       = new getfem::mesher_intersection(vd);
+       getfem::mesher_signed_distance *psd2 
+         = new getfem::mesher_intersection(vd);
+       pmo = getfemint_mesher_object::get_from(psd2);
+       );
+
+    /*@INIT MF = ('union', @tmo object1 , @tmo object2, ...)
+      Union of several objects.
+      @*/
+    sub_command
+      ("union", 2, 100, 0, 1,
+
+       std::vector<const getfem::mesher_signed_distance *> vd;
+
+       const getfem::mesher_signed_distance *psd
+          = in.pop().to_const_mesher_object();
+
+       vd.push_back(psd);
+
+       while (in.remaining()) {
+	 psd = in.pop().to_const_mesher_object();
+	 vd.push_back(psd);
+       }
        
-       pmo = getfemint_mesher_object::get_from(inter);
+       getfem::mesher_signed_distance *psd2 = new getfem::mesher_union(vd);
+       pmo = getfemint_mesher_object::get_from(psd2);
+       );
+
+    /*@INIT MF = ('set minus', @tmo object1 , @tmo object2)
+      Geometric object being object1 minus object2.
+      @*/
+    sub_command
+      ("set minus", 2, 100, 0, 1,
+
+       std::vector<const getfem::mesher_signed_distance *> vd;
+
+       const getfem::mesher_signed_distance *psd1
+          = in.pop().to_const_mesher_object();
+       const getfem::mesher_signed_distance *psd2
+          = in.pop().to_const_mesher_object();
+       
+       getfem::mesher_signed_distance *psd
+         = new getfem::mesher_setminus(*psd1, *psd2);
+       pmo = getfemint_mesher_object::get_from(psd);
        );
   }
 

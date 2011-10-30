@@ -424,6 +424,10 @@ namespace getfem {
     mutable bool isin;
     bool with_min;
   public:
+    mesher_union(const std::vector<const mesher_signed_distance *>
+			&dists_) : dists(dists_) 
+    { vd.resize(dists.size()); }
+
     mesher_union(const mesher_signed_distance &a_,
 		 const mesher_signed_distance &b_,
 		 const mesher_signed_distance &c_ = void_signed_distance,
