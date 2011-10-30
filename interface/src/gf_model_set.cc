@@ -692,7 +692,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     `dataname_pt` whose dimension is the number of points times the dimension
     of the mesh.
     The multiplier variable should be a fixed size variable of size the
-      number of points.
+    number of points.
     If the variable represents a vector field, one has to give the data
     `dataname_unitv` which represents a vector of dimension the number of
     points times the dimension of the vector field which should store some
@@ -728,8 +728,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add pointwise constraints with penalization', @str varname, @scalar coeff, @str dataname_pt[, @str dataname_unitv] [, @str dataname_val])
     Add some pointwise constraints on the variable `varname` thanks to
-      a penalization. The penalization coefficient is initially
-      `penalization_coeff` and will be added to the data of the model.
+    a penalization. The penalization coefficient is initially
+    `penalization_coeff` and will be added to the data of the model.
     The conditions are prescribed on a set of points given in the data
     `dataname_pt` whose dimension is the number of points times the dimension
     of the mesh.
@@ -824,14 +824,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str f, @str dfdu[, @str dataname, @int region])
     Add a brick representing the scalar term :math:`f(u)` to the left-hand
-    side of the model. In the weak form, one adds :math:` + \int f(u)v dx`.
-    The function :math:`f` may optionally depend on :math:`lambda`, i.e.,
-    :math:`f(u) = f(u, lambda)`.
+    side of the model. In the weak form, one adds :math:`+\int f(u)v`.
+    The function :math:`f` may optionally depend on :math:`\lambda`, i.e.,
+    :math:`f(u)=f(u,\lambda)`.
     `f` and `dfdu` should contain the expressions for
-    :math:`f(u)` and :math:`\frac{\partial f}{\partial u}(u)', respectively.
-    region` is an optional mesh region on which the term is added. If it is not
-    specified, it is added on the whole mesh. `dataname` is the optional real
-    scalar parameter :math:`\lambda'. 
+    :math:`f(u)` and :math:`\frac{df}{du}(u)`, respectively.
+    `region` is an optional mesh region on which the term is added. If it is
+    not specified, it is added on the whole mesh. `dataname` is the optional
+    real scalar parameter :math:`\lambda`. 
     Return the brick index in the model.@*/
     sub_command
       ("add basic nonlinear brick", 4, 6, 0, 1,

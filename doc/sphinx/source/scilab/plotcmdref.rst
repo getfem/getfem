@@ -2,7 +2,7 @@
 
 .. highlightlang:: matlab
 
-.. _scilab-cmdref:
+.. _scilab-plotcmdref:
 
 Draw Command reference
 ======================
@@ -96,17 +96,16 @@ gf_plot_1D
 
   The options are specified as pairs of "option name"/"option value"
 
-
   'style', 'bo-'       : line style and dof marker style (same syntax as in the Scilab command 'plot');
-  'color', ''          : override the line color;
-  'dof_color', 'red'   : color of markers for degrees of freedom;
+  'color', ''          : override line color (by a given color name);
+  'dof_color', ''      : override color of dof markers;
   'width', 2           : line width.
 
 
 **Description :**
 
 
-  This function plots a 1D finite elements field.
+  This function plots a 1D finite element field.
 
 
 gf_plot_mesh

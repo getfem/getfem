@@ -5,8 +5,8 @@ function [hline, hdof] = gf_plot_1D(mf,U, varargin)
 // The options are specified as pairs of 'option name'/'option value'
 //  'style', 'bo-'       : line style and dof marker style (same
 //                         syntax as in the Scilab command 'plot');
-//  'color', ''          : override the line color;
-//  'dof_color', 'red'   : color of markers for degrees of freedom;
+//  'color', ''          : override line color (by a given color name);
+//  'dof_color', ''      : override color of dof markers;
 //  'width', 2           : line width.
 
 opts = build_options_list(varargin(:));
@@ -28,19 +28,22 @@ function [hline, hdof] = gf_plot_1D_aux(mf, U, opts)
 
 [opt_style,err]      = get_param(opts,'style','bo-');
 [opt_color,err]      = get_param(opts,'color','');
-[opt_dof_color,err]  = get_param(opts,'dof_color','red');
+[opt_dof_color,err]  = get_param(opts,'dof_color','');
 [opt_width,err]      = get_param(opts,'width',2);
 
-// try to remove markers from the line style
+// remove eventual markers from the line style
 s              = opt_style; 
 opt_style      = ''; 
 opt_dof_marker = '';
 
-for i=s
-  if (isempty(strindex('o.x+*sdv^<>p',i))) then 
-    opt_style = opt_style + i;
-  else
-    opt_dof_marker = i;
+for i = 1:length(s)
+  if (isempty(strindex('ox+*.sdv^<>p', part(s, i)))) then
+    opt_style = opt_style + part(s, i);
+  elseif i == 1 then
+    opt_dof_marker = part(s, i);
+  elseif '-.' == part(s, [i-1,i]) then
+    opt_style = opt_style + '.';
+  else opt_dof_marker = part(s, i);
   end
 end
 
@@ -68,15 +71,24 @@ Y = Usl;
 plot(X, Y, opt_style); 
 hline = gce();
 hline.children.thickness = opt_width;
-if (~isempty(opt_color)) then 
+if (~isempty(opt_color)) then
   hline.children.foreground = color(opt_color);
 end
 
 hdof = [];
 if (~isempty(opt_dof_marker)) then
+  // add color to the marker if it is given in opt_style
+  for i = 1:length(opt_style)
+    if (~isempty(strindex('rgbcmykw', part(opt_style, i)))) then
+      opt_dof_marker = part(s, i) + opt_dof_marker;
+    end
+  end
+  
   plot(gf_slice_get(slD, 'pts'), UD, opt_dof_marker);
   hdof = gce();
-  hdof.children.mark_foreground = color(opt_dof_color);
+  if (~isempty(opt_color)) then
+    hdof.children.mark_foreground = color(opt_dof_color);
+  end
 end
 endfunction
 

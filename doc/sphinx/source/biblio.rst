@@ -5,8 +5,7 @@
 References
 ----------
 
-.. [AL-CU1991] P. Alart, A. Curnier. *A mixed formulation for frictional contact problems prone to newton like solution methods*, Computer Methods in Applied
-Mechanics and Engineering 92, 353--375, (1991).
+.. [AL-CU1991] P. Alart, A. Curnier. *A mixed formulation for frictional contact problems prone to newton like solution methods*, Computer Methods in Applied Mechanics and Engineering 92, 353--375, (1991).
 
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser, *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, (1983).
 

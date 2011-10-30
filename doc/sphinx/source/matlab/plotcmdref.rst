@@ -7,7 +7,7 @@
 
 .. highlightlang:: matlab
 
-.. _mlab-cmdref:
+.. _mlab-plotcmdref:
 
 Draw Command reference
 ======================
