@@ -41,6 +41,8 @@ PSEUDO_MFUNCTIONS = \
 	gf_model_get.cc \
 	gf_model_set.cc \
 	gf_eltm.cc \
+	gf_mesher_object.cc \
+	gf_mesher_object_get.cc \
 	gf_mesh.cc \
 	gf_mesh_set.cc \
 	gf_mesh_get.cc \

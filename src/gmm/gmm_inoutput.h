@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2008 Yves Renard
+// Copyright (C) 2003-2011 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -209,7 +209,7 @@ namespace gmm {
       int i,ind,col,offset,count;
       int Ptrperline, Ptrwidth, Indperline, Indwidth;
       int Valperline, Valwidth, Valprec, Nentries;
-      int Valflag;           /* Indicates 'E','D', or 'F' float format */
+      int Valflag = 'D';           /* Indicates 'E','D', or 'F' float format */
       char line[BUFSIZ];
       gmm::standard_locale sl;
 

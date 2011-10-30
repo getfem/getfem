@@ -42,6 +42,7 @@
 #include <getfemint_levelset.h>
 #include <getfemint_mesh_levelset.h>
 #include <getfemint_global_function.h>
+#include <getfemint_mesher_object.h>
 
 #include <getfemint_misc.h>
 //#ifdef MAINTAINER_MODE
@@ -76,6 +77,7 @@ namespace getfemint {
       "gfMeshFem",
       "gfMeshIm",
       "gfMeshLevelSet",
+      "gfMesherObject",
       "gfModel",
       "gfPrecond",
       "gfSlice",
@@ -396,6 +398,15 @@ namespace getfemint {
   }
 
   bool
+  mexarg_in::is_mesher_object() {
+    id_type id, cid;
+    if (is_object_id(&id, &cid) && cid == MESHER_OBJECT_CLASS_ID) {
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
+      return (object_is_mesher_object(o));
+    } else return false;
+  }
+
+  bool
   mexarg_in::is_gsparse() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == GSPARSE_CLASS_ID) {
@@ -673,6 +684,7 @@ namespace getfemint {
     error_if_nonwritable(o, writeable);
     return object_to_global_function(o);
   }
+
   getfem::abstract_xy_function *
   mexarg_in::to_global_function() {
     return &to_getfemint_global_function(true)->global_function();
@@ -682,6 +694,34 @@ namespace getfemint {
   mexarg_in::to_const_global_function() {
     return &to_getfemint_global_function(false)->global_function();
   }
+
+  /*
+    check if the argument is a valid handle to a mesher_object,
+    and returns it
+  */
+  getfemint_mesher_object *
+  mexarg_in::to_getfemint_mesher_object(bool writeable) {
+    id_type id, cid;
+    to_object_id(&id,&cid);
+    if (cid != MESHER_OBJECT_CLASS_ID) {
+      THROW_BADARG("argument " << argnum << " should be a mesher_object " <<
+                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
+    }
+    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
+    error_if_nonwritable(o, writeable);
+    return object_to_mesher_object(o);
+  }
+
+  getfem::mesher_signed_distance *
+  mexarg_in::to_mesher_object() {
+    return &to_getfemint_mesher_object(true)->mesher_object();
+  }
+
+  const getfem::mesher_signed_distance *
+  mexarg_in::to_const_mesher_object() {
+    return &to_getfemint_mesher_object(false)->mesher_object();
+  }
+
 
   getfemint_precond *
   mexarg_in::to_precond() {

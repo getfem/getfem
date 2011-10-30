@@ -485,6 +485,31 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        pmesh->copy_from(*m2);
        );
 
+    /*@INIT M = ('generate', @tmo mo, @scalar h[, @int K = 1[, @mat vertices]])
+      Call the (very) experimental mesher of Getfem on the geometry represented by `mo`. please control the conformity of the produced mesh. You can add the mesher by adding a priori vertices in the array `vertices` which should be of size ``n x m`` where ``n`` n is the dimension of the mesh and ``m`` the number of points. `h` is approximate diameter of the elements. `K` is the degree of the mesh ( > 1 for curved boundaries).  The mesher try to optimize the quality of the elements. This operation may be time consuming. @*/
+    sub_command
+      ("generate", 2, 4, 0, 1,
+
+       const getfem::mesher_signed_distance *pmo
+            = in.pop().to_const_mesher_object();
+       double h = in.pop().to_scalar();
+       int K = 1;
+       if (in.remaining()) K = in.pop().to_integer(1,6);
+       std::vector<getfem::base_node> fixed;
+       if (in.remaining()) {
+	 darray v = in.pop().to_darray(-1, -1);
+	 for (int j=0; j < int(v.getn()); j++) {
+	   getfem::base_node pt(v.getm());
+	   gmm::copy(v.col_to_bn(j), pt);
+	   fixed.push_back(pt);
+	 }
+       }
+       int prefind = 1;
+       int max_iter = 400;
+
+       getfem::build_mesh(*pmesh, *pmo, h, fixed, K, 2, max_iter, prefind);
+       );
+
   }
 
 

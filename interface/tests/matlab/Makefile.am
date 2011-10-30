@@ -32,6 +32,7 @@ EXTRA_DIST= \
 	demo_continuation.m \
 	demo_crack.m \
 	demo_mortar.m \
+	demo_mesh_generation.m \
 	demo_topological_optimization.m \
 	demo_structural_optimization.m \
 	demo_refine.m \

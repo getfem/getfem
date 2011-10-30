@@ -19,8 +19,7 @@ structure is defined in :file:`getfem/getfem_mesh.h` by the object |gf_m|.
 This object is able to store any element in any dimension even if you mix
 elements with different dimensions.
 
-There is no meshing procedures in |gf| to mesh complex geometries. This is not
-the goal of this package. But you can easily load a mesh from any format (some
+There is only a (very) experimental meshing procedure in |gf| to mesh complex geometries. But you can easily load a mesh from any format (some
 procedures are in :file:`getfem/getfem_import.h` to load meshes from some public
 domain mesh generators).
 

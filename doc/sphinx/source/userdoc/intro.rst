@@ -45,7 +45,7 @@ are just some parameters that can be changed very easily, thus
 allowing a large spectrum of experimentations. Numerous examples are
 available in the ``tests`` directory of the distribution.
 
-|gf| has no meshing capabilities (apart regular meshes), hence it is
+|gf| has only a (very) experimental meshing procedure (and produces regular meshes), hence it is generally 
 necessary to import meshes. Imports formats currently known by |gf|
 are |gid|, |gmsh| and *emc2* mesh files. However, given a mesh, it
 is possible to refine it automatically.

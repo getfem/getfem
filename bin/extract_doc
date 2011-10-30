@@ -290,6 +290,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = string.replace(d, '@tstate', 'mdstate')
     d = string.replace(d, '@tgt',    'geotrans')
     d = string.replace(d, '@tgf',    'global_function')
+    d = string.replace(d, '@tmo',    'mesher_object')
     d = string.replace(d, '@tmls',   'mesh_levelset')
     d = string.replace(d, '@tmim',   'mesh_im')
     d = string.replace(d, '@tls',    'levelset')
@@ -371,6 +372,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = string.replace(d, '@tstate', 'MdState')
     d = string.replace(d, '@tgt',    'GeoTrans')
     d = string.replace(d, '@tgf',    'GlobalFunction')
+    d = string.replace(d, '@tmo',    'MesherObject')
     d = string.replace(d, '@tmls',   'MeshLevelSet')
     d = string.replace(d, '@tmim',   'MeshIm')
     d = string.replace(d, '@tls',    'LevelSet')
@@ -877,6 +879,7 @@ elif (option == 'matlab-doc'):
   print '`integ`            integration method descriptor (or gfInteg object)'
   print '`model`            model descriptor (or gfModel object)'
   print '`global_function`  global function descriptor'
+  print '`mesher_object`    mesher object descriptor'
   print '=================  =================================================='
   print ''  
   print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'
@@ -1123,6 +1126,7 @@ elif (option == 'scilab-doc'):
   print '`integ`            integration method descriptor (or gfInteg object)'
   print '`model`            model descriptor (or gfModel object)'
   print '`global_function`  global function descriptor'
+  print '`mesher_object`    mesher object descriptor'
   print '=================  =================================================='
   print ''  
   print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'
@@ -1346,6 +1350,7 @@ def generic_destructor(self, destructible=True):
   non_destructible_objects.add('fem');
   non_destructible_objects.add('integ');
   non_destructible_objects.add('global_function');
+  non_destructible_objects.add('mesher_object');
   non_destructible_objects.add('eltm');
   non_destructible_objects.add('cvstruct');
   for o in ob:

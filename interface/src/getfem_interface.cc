@@ -38,6 +38,8 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_fem_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_cvstruct_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_mesh(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_mesher_object(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
+void gf_mesher_object_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_mesh_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_mesh_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
 void gf_mesh_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out);
@@ -137,6 +139,8 @@ char* getfem_interface_main(int config_id, const char *function,
     subc_tab["fem"] = gf_fem;
     subc_tab["fem_get"] = gf_fem_get;
     subc_tab["cvstruct_get"] = gf_cvstruct_get;
+    subc_tab["mesher_object"] = gf_mesher_object;
+    subc_tab["mesher_object_get"] = gf_mesher_object_get;
     subc_tab["mesh"] = gf_mesh;
     subc_tab["mesh_get"] = gf_mesh_get;
     subc_tab["mesh_set"] = gf_mesh_set;

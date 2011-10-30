@@ -50,6 +50,7 @@
 #include <getfem/dal_shared_ptr.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
+#include <getfem/getfem_mesher.h>
 
 namespace getfem {
   class stored_mesh_slice;
@@ -104,6 +105,7 @@ namespace getfemint
   class getfemint_levelset;
   class getfemint_mesh_levelset;
   class getfemint_global_function;
+  class getfemint_mesher_object;
   class gsparse;
 
   class sub_index : public gmm::unsorted_sub_index{
@@ -404,6 +406,7 @@ namespace getfemint {
     bool                                 is_levelset();
     bool                                 is_mesh_levelset();
     bool                                 is_global_function();
+    bool                                 is_mesher_object();
     bool                                 is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
     bool                                 is_gsparse();
     bool                                 is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
@@ -437,8 +440,11 @@ namespace getfemint {
     getfemint_mesh_levelset *            to_getfemint_mesh_levelset(bool writeable=false);
     //getfem::mesh_level_set *             to_mesh_levelset();
     const getfem::abstract_xy_function * to_const_global_function();
+    const getfem::mesher_signed_distance * to_const_mesher_object();
     getfem::abstract_xy_function *       to_global_function();
+    getfem::mesher_signed_distance *     to_mesher_object();
     getfemint_global_function *          to_getfemint_global_function(bool writeable=false);
+    getfemint_mesher_object *            to_getfemint_mesher_object(bool writeable=false);
     getfem::pintegration_method          to_integration_method();
     getfemint_pfem*                      to_getfemint_pfem();
     getfem::pfem                         to_fem();
