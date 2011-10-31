@@ -36,7 +36,7 @@ elseif (N == 2)
   fixed_vertices = [0; 4];
   h = 0.5;
 elseif (N == 3)
-  if (1)
+  if (0)
     mo1 = gf_mesher_object('ball', [0 0 1], 2);
     mo2 = gf_mesher_object('ball', [0 0 -1], 2);
     mo3 = gf_mesher_object('intersect', mo1, mo2);
@@ -46,8 +46,13 @@ elseif (N == 3)
     mo  = gf_mesher_object('set minus', mo5, mo6);
     fixed_vertices = []; h = 0.3; 
   else
-    mo =  gf_mesher_object('cone', [0 0 0], [0 0 1], 2, pi/4);
-    fixed_vertices = []; h = 0.2;
+    alpha = pi/6;
+    L = 2;
+    R = L * tan(alpha) * 0.7;
+    mo1 = gf_mesher_object('cone', [0 0 0], [0 0 1], L, alpha);
+    mo2 = gf_mesher_object('cylinder', [0 0 2], [0, 0, 1], L, R);
+    mo = gf_mesher_object('union', mo1, mo2);
+    fixed_vertices = []; h = 0.25;
   end
 elseif (N == 4)
   mo = gf_mesher_object('ball', [0 0 0 4], 2);
