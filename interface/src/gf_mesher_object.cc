@@ -32,7 +32,7 @@ using namespace getfemint;
 
 /*@GFDOC
   This object represents a geometric object to be meshed by the (very)
-  experimental mesher of Getfem.
+  experimental meshing procedure of Getfem.
 @*/
 
 
@@ -75,7 +75,7 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
   if (subc_tab.size() == 0) {
     
     /*@INIT MF = ('ball', @vec center, @scalar radius)
-      Represent a ball of corresponding center and radius.
+      Represents a ball of corresponding center and radius.
       @*/
     sub_command
       ("ball", 2, 2, 0, 1,
@@ -90,6 +90,89 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
 
        pmo = getfemint_mesher_object::get_from(ball);
        );
+
+    /*@INIT MF = ('half space', @vec origin, @vec normal_vector)
+      Represents an half space delimited by the plane which contains the
+      origin and normal to `normal_vector`. The selected part is the part
+      in the direction of the normal vector. This allows to cut a geometry
+      with a plane for instance to build a polygon or a polyhedron.
+      @*/
+    sub_command
+      ("half space", 2, 2, 0, 1,
+       darray origin = in.pop().to_darray();
+       darray n = in.pop().to_darray();
+
+       getfem::base_node bnorigin(gmm::vect_size(origin));
+       gmm::copy(origin, bnorigin);
+       getfem::base_node bnn(gmm::vect_size(n));
+       gmm::copy(n, bnn);
+
+       getfem::mesher_signed_distance *half
+         = new getfem::mesher_half_space(bnorigin, bnn);
+
+       pmo = getfemint_mesher_object::get_from(half);
+       );
+
+    /*@INIT MF = ('cylinder', @vec origin, @vec n, @scalar length, @scalar radius)
+      Represents a cylinder (in any dimension) of a certain radius whose axis is determined by the origin, a vector `n` and a certain length.
+      @*/
+    sub_command
+      ("cylinder", 4, 4, 0, 1,
+       darray origin = in.pop().to_darray();
+       darray n = in.pop().to_darray();
+       double length = in.pop().to_scalar();
+       double radius = in.pop().to_scalar();
+       
+       getfem::base_node bnorigin(gmm::vect_size(origin));
+       gmm::copy(origin, bnorigin);
+       getfem::base_node bnn(gmm::vect_size(n));
+       gmm::copy(n, bnn);
+
+       getfem::mesher_signed_distance *cyl
+       = new getfem::mesher_cylinder(bnorigin, bnn, length, radius);
+
+       pmo = getfemint_mesher_object::get_from(cyl);
+       );
+
+        /*@INIT MF = ('cone', @vec origin, @vec n, @scalar length, @scalar half_angle)
+      Represents a cone (in any dimension) of a certain half-angle (in radians) whose axis is determined by the origin, a vector `n` and a certain length.
+      @*/
+    sub_command
+      ("cone", 4, 4, 0, 1,
+       darray origin = in.pop().to_darray();
+       darray n = in.pop().to_darray();
+       double length = in.pop().to_scalar();
+       double half_angle = in.pop().to_scalar();
+       
+       getfem::base_node bnorigin(gmm::vect_size(origin));
+       gmm::copy(origin, bnorigin);
+       getfem::base_node bnn(gmm::vect_size(n));
+       gmm::copy(n, bnn);
+
+       getfem::mesher_signed_distance *cone
+       = new getfem::mesher_cone(bnorigin, bnn, length, half_angle);
+
+       pmo = getfemint_mesher_object::get_from(cone);
+       );
+
+    /*@INIT MF = ('torus', @scalar R, @scalar r)
+      Represents a torus in 3d of axis along the z axis with a great radius
+      equal to `R` and small radius equal to `r`. For the moment, the
+      possibility to change the axis is not given.
+      @*/
+    sub_command
+      ("torus", 2, 2, 0, 1,
+       double R = in.pop().to_scalar();
+       double r = in.pop().to_scalar();
+
+       getfem::mesher_signed_distance *torus
+         = new getfem::mesher_torus(R, r);
+
+       pmo = getfemint_mesher_object::get_from(torus);
+       );
+
+    
+
 
     /*@INIT MF = ('intersect', @tmo object1 , @tmo object2, ...)
       Intersection of several objects.

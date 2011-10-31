@@ -252,7 +252,7 @@ latex_documents = [
     ('matlab/index', 'matlab_interface.tex',
      'Matlab Interface', _stdauthor, 'manual', False),
     ('scilab/index', 'scilab_interface.tex',
-     'Scilab Interface', _stdauthor, 'manual', False),
+     'Scilab Interface', 'Yann Colette, ' + _stdauthor, 'manual', False),
     ('userdoc/index', 'getfem_userdoc.tex',
      'Short User Documentation', _stdauthor, 'manual', False),
     ('project/index', 'getfem_project.tex',

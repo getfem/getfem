@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Julien Pommier
+// Copyright (C) 2004-2011 Julien Pommier, Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -167,45 +167,6 @@ namespace getfem {
   }
 
 
-  class mesher_tube : public mesher_signed_distance {
-    base_node x0; base_node n; scalar_type R;
-  public:
-      mesher_tube(base_node x0_, base_node n_, scalar_type R_)
-	: x0(x0_), n(n_), R(R_)
-    { n /= gmm::vect_norm2(n); }
-    bool bounding_box(base_node &, base_node &) const
-    { return false; }
-    virtual scalar_type operator()(const base_node &P) const {
-      base_node v(P); v -= x0;
-      gmm::add(gmm::scaled(n, -gmm::vect_sp(v, n)), v);
-      return gmm::vect_norm2(v) - R;
-    }
-    virtual scalar_type operator()(const base_node &P,
-				   dal::bit_vector &bv) const {
-      scalar_type d = (*this)(P);
-      bv[id] = (gmm::abs(d) < SEPS);
-      return d;
-    }
-    virtual void register_constraints(std::vector<const
-				      mesher_signed_distance*>& list) const {
-      id = list.size(); list.push_back(this);
-    }
-    scalar_type grad(const base_node &P, base_small_vector &G) const {
-      G = P; G -= x0;
-      gmm::add(gmm::scaled(n, -gmm::vect_sp(G, n)), G);
-      scalar_type e = gmm::vect_norm2(G), d = e - R;
-      while (e == scalar_type(0)) {
-	gmm::fill_random(G);
-	gmm::add(gmm::scaled(n, -gmm::vect_sp(G, n)), G);
-	e = gmm::vect_norm2(G);
-      }
-      G /= e;
-      return d;
-    }
-    void hess(const base_node &, base_matrix &) const {
-      GMM_ASSERT1(false, "Sorry, to be done");
-    }
-  };
 
 
   class mesher_ball : public mesher_signed_distance {
@@ -727,42 +688,164 @@ namespace getfem {
 
   };
   
+
+  class mesher_tube : public mesher_signed_distance {
+    base_node x0; base_node n; scalar_type R;
+  public:
+      mesher_tube(base_node x0_, base_node n_, scalar_type R_)
+	: x0(x0_), n(n_), R(R_)
+    { n /= gmm::vect_norm2(n); }
+    bool bounding_box(base_node &, base_node &) const
+    { return false; }
+    virtual scalar_type operator()(const base_node &P) const {
+      base_node v(P); v -= x0;
+      gmm::add(gmm::scaled(n, -gmm::vect_sp(v, n)), v);
+      return gmm::vect_norm2(v) - R;
+    }
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector &bv) const {
+      scalar_type d = (*this)(P);
+      bv[id] = (gmm::abs(d) < SEPS);
+      return d;
+    }
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const {
+      id = list.size(); list.push_back(this);
+    }
+    scalar_type grad(const base_node &P, base_small_vector &G) const {
+      G = P; G -= x0;
+      gmm::add(gmm::scaled(n, -gmm::vect_sp(G, n)), G);
+      scalar_type e = gmm::vect_norm2(G), d = e - R;
+      while (e == scalar_type(0)) {
+	gmm::fill_random(G);
+	gmm::add(gmm::scaled(n, -gmm::vect_sp(G, n)), G);
+	e = gmm::vect_norm2(G);
+      }
+      G /= e;
+      return d;
+    }
+    void hess(const base_node &, base_matrix &) const {
+      GMM_ASSERT1(false, "Sorry, to be done");
+    }
+  };
+
   class mesher_cylinder : public mesher_signed_distance {
     base_node x0; base_small_vector n;
     scalar_type L, R;
     mesher_tube t;
     mesher_half_space p1, p2;
-    mesher_intersection i1, i2;
+    mesher_intersection i1;
   public:
     mesher_cylinder(const base_node &c, const base_small_vector &no,
 		    scalar_type L_, scalar_type R_)
       : x0(c), n(no/gmm::vect_norm2(no)), L(L_), R(R_), t(x0, n, R),
-	p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2), i2(i1, t) {}
+	p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2, t) {}
     bool bounding_box(base_node &bmin, base_node &bmax) const {
       base_node x1(x0+n*L);
-      bmin = bmax = base_node(3);
-      for (unsigned i = 0; i < 3; ++i) {
+      bmin = bmax = x0;
+      for (unsigned i = 0; i < gmm::vect_size(x0); ++i) {
 	bmin[i] = std::min(x0[i], x1[i]) - R;
 	bmax[i] = std::max(x0[i], x1[i]) + R;
       }
       return true;
     }
-    virtual scalar_type operator()(const base_node &P) const { return i2(P); }
+    virtual scalar_type operator()(const base_node &P) const { return i1(P); }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector& bv) const
-    { return i2(P, bv); }
+    { return i1(P, bv); }
     scalar_type grad(const base_node &P, base_small_vector &G) const
-      { return i2.grad(P, G); }
+      { return i1.grad(P, G); }
     void hess(const base_node &, base_matrix &) const {
       GMM_ASSERT1(false, "Sorry, to be done");
     }
     virtual void register_constraints(std::vector<const
 				      mesher_signed_distance*>& list) const
-    { i2.register_constraints(list); }
+    { i1.register_constraints(list); }
   };
 
 
-  class mesher_ellipse : public mesher_signed_distance { // TODO
+
+  class mesher_infinite_cone : public mesher_signed_distance {
+    // uses the true distance to a cone.
+    base_node x0; base_node n; scalar_type alpha;
+  public:
+      mesher_infinite_cone(base_node x0_, base_node n_, scalar_type alpha_)
+	: x0(x0_), n(n_), alpha(alpha_)
+    { n /= gmm::vect_norm2(n); }
+    bool bounding_box(base_node &, base_node &) const
+    { return false; }
+    virtual scalar_type operator()(const base_node &P) const {
+      base_node v(P); v -= x0;
+      scalar_type v_n = gmm::vect_sp(v, n);
+      gmm::add(gmm::scaled(n, -v_n), v);
+      return gmm::vect_norm2(v) * cos(alpha) - gmm::abs(v_n) * sin(alpha);
+    }
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector &bv) const {
+      scalar_type d = (*this)(P);
+      bv[id] = (gmm::abs(d) < SEPS);
+      return d;
+    }
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const {
+      id = list.size(); list.push_back(this);
+    }
+    scalar_type grad(const base_node &P, base_small_vector &v) const {
+      v = P; v -= x0;
+      scalar_type v_n = gmm::vect_sp(v, n);
+      gmm::add(gmm::scaled(n, -v_n), v);
+      scalar_type no = gmm::vect_norm2(v);
+      scalar_type d = no * cos(alpha) - gmm::abs(v_n) * sin(alpha);
+      while (no ==  scalar_type(0)) {
+	gmm::fill_random(v);
+	gmm::add(gmm::scaled(n, -gmm::vect_sp(v, n)), v);
+	no = gmm::vect_norm2(v);
+      }
+      v *= cos(alpha) / no;
+      v -= (sin(alpha) * gmm::sgn(v_n)) * n;
+      return d;
+    }
+    void hess(const base_node &, base_matrix &) const {
+      GMM_ASSERT1(false, "Sorry, to be done");
+    }
+  };
+
+  class mesher_cone : public mesher_signed_distance {
+    base_node x0; base_small_vector n;
+    scalar_type L, alpha;
+    mesher_infinite_cone t;
+    mesher_half_space p1, p2;
+    mesher_intersection i1;
+  public:
+    mesher_cone(const base_node &c, const base_small_vector &no,
+		    scalar_type L_, scalar_type alpha_)
+      : x0(c), n(no/gmm::vect_norm2(no)), L(L_), alpha(alpha_),
+	t(x0, n, alpha), p1(x0, n), p2(x0+n*L, -1.0 * n), i1(p1, p2, t) {}
+    bool bounding_box(base_node &bmin, base_node &bmax) const {
+      base_node x1(x0+n*L);
+      scalar_type R = L * sin(alpha);
+      bmin = bmax = x0;
+      for (unsigned i = 0; i < gmm::vect_size(x0); ++i) {
+	bmin[i] = std::min(x0[i], x1[i]) - R;
+	bmax[i] = std::max(x0[i], x1[i]) + R;
+      }
+      return true;
+    }
+    virtual scalar_type operator()(const base_node &P) const { return i1(P); }
+    virtual scalar_type operator()(const base_node &P,
+				   dal::bit_vector& bv) const
+    { return i1(P, bv); }
+    scalar_type grad(const base_node &P, base_small_vector &G) const
+      { return i1.grad(P, G); }
+    void hess(const base_node &, base_matrix &) const {
+      GMM_ASSERT1(false, "Sorry, to be done");
+    }
+    virtual void register_constraints(std::vector<const
+				      mesher_signed_distance*>& list) const
+    { i1.register_constraints(list); }
+  };
+
+  class mesher_ellipse : public mesher_signed_distance {
     base_node x0; base_small_vector n, t;
     scalar_type r, R, a;
   public:
