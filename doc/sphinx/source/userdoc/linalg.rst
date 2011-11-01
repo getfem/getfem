@@ -28,7 +28,7 @@ some options to the configure shell::
   --with-mumps-include-dir=" -I /path/to/MUMPS/include "
   --with-mumps=" F90 libraries and libs of MUMPS to be linked "
 
-alternatively, the option ``--enable-mumps`` will search for an installed MUMPS library.
+alternatively, the option ``--enable-mumps`` will search for an installed MUMPS library. Note that if both the sequential and the parallel version is installed on your system (especially on Debian and Ubuntu), the default version will be the parallel one. To select the sequential one it is necessary to add the option ``--with-mumps="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"``.
 
 For instance if you want to use the sequential version of |mumps| with double and
 complex double::
