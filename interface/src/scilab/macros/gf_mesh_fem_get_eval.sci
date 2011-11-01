@@ -72,7 +72,8 @@ if typeof(_what)=='list' then
         x = xpos;
         y = ypos;
         z = zpos;
-        X(i,dof+j-1) = eval(_what(i)(j));
+        //X(i,dof+j-1) = eval(_what(i)(j));
+        X(i,dof+j-1) = evstr(_what(i)(j));
       elseif ((typeof(_what(i)(j))=='function')|(typeof(_what(i)(j))=='fptr')) then
         X(i,dof+j-1) = feval(xpos,ypos,zpos,_what(i)(j));
       else
