@@ -486,7 +486,17 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        );
 
     /*@INIT M = ('generate', @tmo mo, @scalar h[, @int K = 1[, @mat vertices]])
-      Call the (very) experimental mesher of Getfem on the geometry represented by `mo`. please control the conformity of the produced mesh. You can add the mesher by adding a priori vertices in the array `vertices` which should be of size ``n x m`` where ``n`` n is the dimension of the mesh and ``m`` the number of points. `h` is approximate diameter of the elements. `K` is the degree of the mesh ( > 1 for curved boundaries).  The mesher try to optimize the quality of the elements. This operation may be time consuming. Note that if the mesh generation fails, because of some random procedure used, you can try it again @*/
+      Call the (very) experimental mesher of Getfem on the geometry
+      represented by `mo`. please control the conformity of the produced mesh.
+      You can add the mesher by adding a priori vertices in the array
+      `vertices` which should be of size ``n x m`` where ``n`` n is the
+      dimension of the mesh and ``m`` the number of points. `h` is
+      approximate diameter of the elements. `K` is the degree of the
+      mesh ( > 1 for curved boundaries).  The mesher try to optimize the
+      quality of the elements. This operation may be time consuming.
+      Note that if the mesh generation fails, because of some random
+      procedure used, it will not give necessarily the same result due
+      to random procedures used. @*/
     sub_command
       ("generate", 2, 4, 0, 1,
 
