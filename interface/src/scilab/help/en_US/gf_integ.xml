@@ -24,7 +24,7 @@
     <title>Description</title>
 
     <para>Here is a list of some integration methods defined in getfem++ (see
-      the <link linkend = "http://www-gmm.insa-toulouse.fr/getfem/doc">description of finite element and integration methods</link> for a complete
+      the <ulink url="http://www-gmm.insa-toulouse.fr/getfem/doc">description of finite element and integration methods</ulink> for a complete
       reference):</para>
     
     <itemizedlist>

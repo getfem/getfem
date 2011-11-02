@@ -56,7 +56,7 @@ gf_linsolve('bicgstab', spmat M, vec b [, precond P][, 'noisy'][,'res', r][,'max
 
       <listitem>
         <para>list(U, cond) = gf_linsolve('superlu',Spmat M, vec b) Solve
-        <emphasis>M.U = b</emphasis> apply the <link linkend="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</link> solver (sparse LU
+        <emphasis>M.U = b</emphasis> apply the <ulink url="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</ulink> solver (sparse LU
         factorization). The condition number estimate <literal>cond</literal> is returned with the solution <literal>U</literal>.</para>
       </listitem>
     </itemizedlist>

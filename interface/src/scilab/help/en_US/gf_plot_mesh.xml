@@ -105,7 +105,7 @@
     <title>Examples</title>
 
     <para>Displaying a donut (meshed with quadratic tetrahedrons) created with
-    <link linkend="http://gid.cimne.upc.es/">GiD</link>:</para>
+    <ulink url="http://gid.cimne.upc.es/">GiD</ulink>:</para>
 
     <programlisting role="example"> 
 // the mesh is in the demos directory of the distribution

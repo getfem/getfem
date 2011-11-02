@@ -119,7 +119,7 @@ gf_compute(mf, U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string op
           </listitem>
 
           <listitem>
-            <para>Interpolation on a Slice <phrase>sli</phrase>: this is
+            <para>Interpolation on a Slice <literal>sli</literal>: this is
             similar to interpolation on a refined P1-discontinuous mesh, but
             it is much faster.</para>
           </listitem>

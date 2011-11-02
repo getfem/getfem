@@ -26,13 +26,13 @@
     consider a regular mesh whose nodes are
     {xi=0...10,j=0..10=(i/10,j/10)}.</para>
 
-    <programlisting role="example"> 
+    <programlisting role="example"><![CDATA[ 
 // creation of a simple cartesian mesh
---&gt; m = gf_mesh('cartesian',[0:.1:1],[0:.1:1])
+--> m = gf_mesh('cartesian',[0:.1:1],[0:.1:1])
 m =
      id: 0
     cid: 0
- </programlisting>
+ ]]></programlisting>
 
     <para>If you try to look at the value of m, you'll notice that it appears
     to be a structure containing two integers. The first one is its
@@ -45,10 +45,10 @@ m =
     <para>Now we can try to have a look at the mesh, with its vertices
     numbering and the convexes numbering:</para>
 
-    <programlisting role="example"> 
+    <programlisting role="example"><![CDATA[
 // we enable vertices and convexes labels
---&gt; gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
- </programlisting>
+--> gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
+ ]]></programlisting>
 
     <para>As you can see, the mesh is regular, and the numbering of its nodes
     and convexes is also regular (this is guaranteed for cartesian meshes, but
@@ -57,10 +57,10 @@ m =
     <para>The next step is to create a mesh_fem object. This one links a mesh
     with a set of FEM.</para>
 
-    <programlisting role="example"> 
---&gt; mf = gf_mesh_fem(m,1);    // create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
---&gt; gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
- </programlisting>
+    <programlisting role="example"><![CDATA[
+--> mf = gf_mesh_fem(m,1);    // create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
+--> gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
+ ]]></programlisting>
 
     <para>The first instruction builds a new mesh_fem object, the second
     argument specifies that this object will be used to interpolate scalar
@@ -70,8 +70,8 @@ m =
     polynomials of degree 2k). As Q2 is a polynomial FEM, you can view the
     expression of its basis functions on the reference convex:</para>
 
-    <programlisting role="example"> 
---&gt; gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str')
+    <programlisting role="example"><![CDATA[
+--> gf_fem_get(gf_fem('FEM_QK(2,2)'), 'poly_str')
 ans =
     '1 - 3*x - 3*y + 2*x^2 + 9*x*y + 2*y^2 - 6*x^2*y - 6*x*y^2 + 4*x^2*y^2'
     '4*x - 4*x^2 - 12*x*y + 12*x^2*y + 8*x*y^2 - 8*x^2*y^2'
@@ -82,15 +82,15 @@ ans =
     '-y + 3*x*y + 2*y^2 - 2*x^2*y - 6*x*y^2 + 4*x^2*y^2'
     '-4*x*y + 4*x^2*y + 8*x*y^2 - 8*x^2*y^2'
     'x*y - 2*x^2*y - 2*x*y^2 + 4*x^2*y^2'
- </programlisting>
+ ]]></programlisting>
 
     <para>Now, in order to perform numerical integrations on mf, we need to
     build a mesh_im object:</para>
 
-    <programlisting role="example"> 
+    <programlisting role="example"><![CDATA[
 // assign the same integration method on all convexes 
---&gt; mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
-  </programlisting>
+--> mim=gf_mesh_im(m, gf_integ('IM_EXACT_PARALLELEPIPED(2)'));
+  ]]></programlisting>
 
     <para>The integration method will be used to compute the various integrals
     on each element: here we choose to perform exact computations (no
@@ -111,11 +111,11 @@ ans =
     and convex faces. These sets (called "regions") are accessed via an
     integer #id:</para>
 
-    <programlisting role="example"> 
---&gt; border = gf_mesh_get(m,'outer faces');
---&gt; gf_mesh_set(m, 'region', 42, border); // create the region #42
---&gt; gf_plot_mesh(m, 'regions', [42]); // the boundary edges appears in red
-  </programlisting>
+    <programlisting role="example"><![CDATA[
+--> border = gf_mesh_get(m,'outer faces');
+--> gf_mesh_set(m, 'region', 42, border); // create the region #42
+--> gf_plot_mesh(m, 'regions', [42]); // the boundary edges appears in red
+  ]]></programlisting>
 
     <para>Here we find the faces of the convexes which are on the boundary of
     the mesh (i.e. the faces which are not shared by two convexes). remark: we
@@ -137,63 +137,41 @@ ans =
     matrix and its right hand side are stored in a "model state" structure,
     created with the gf_mdstate constructor.</para>
 
-    <para>Let us build a problem with an easy solution: <inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="../../mml/step_by_step_eq1.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation>, then we have <inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="../../mml/step_by_step_eq2.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation> (the FEM won't be able to catch the exact solution
-    since we use a Q2 method).</para>
+    <para>Let us build a problem with an easy solution: 
+    <latex style="text"><![CDATA[u=x\left(x-1\right)y\left(y-1\right)+x^{5}]]></latex>, then we have 
+    <latex style="text"><![CDATA[\Delta u=2\left(x^{2}+y^{2}\right)-2\left(x+y\right)+20y^{3}]]></latex>
+    (the FEM won't be able to catch the exact solution since we use a Q2 method).</para>
 
     <para>We start with a "generic elliptic" brick, which handles
-    <inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="../../mml/step_by_step_eq3.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation> problems, where A can be a scalar field, a matrix
-    field, or an order 4 tensor field. By default, A=1.</para>
+    <latex style="text"><![CDATA[-\text{div}\left(A\nabla u\right)=\cdots]]></latex>
+    problems, where A can be a scalar field, a matrix field, or an order 4 tensor field. By default, A=1.</para>
 
-    <programlisting role="example"> 
---&gt; b0=gf_mdbrick('generic elliptic',mim,mf)
-  </programlisting>
+    <programlisting role="example"><![CDATA[ 
+--> b0=gf_mdbrick('generic elliptic',mim,mf)
+  ]]></programlisting>
 
     <para>Each brick embeds a number of parameter fields. In the case of the
     generic elliptic brick, there is only one parameter field, the A(x)
-    coefficient in <inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="../../mml/step_by_step_eq3.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation>. It is possible to view the list of parameters of the
-    brick with</para>
+    coefficient in <latex style="text"><![CDATA[-\text{div}\left(A\nabla u\right)=\cdots]]></latex>.
+    It is possible to view the list of parameters of the brick with</para>
 
-    <programlisting role="example"> 
---&gt; gf_mdbrick_get(b0, 'param list')
+    <programlisting role="example"><![CDATA[ 
+--> gf_mdbrick_get(b0, 'param list')
 ans =
 
     'A'
---&gt; gf_mdbrick_get(b0, 'param', 'A')
+--> gf_mdbrick_get(b0, 'param', 'A')
 
 ans =
 
      1
- </programlisting>
+ ]]></programlisting>
 
     <para>Next we add a Dirichlet condition on the domain boundary:</para>
 
-    <programlisting role="example"> 
---&gt; b1=gf_mdbrick('dirichlet',b0,42,mf,'penalized')
-  </programlisting>
+    <programlisting role="example"><![CDATA[
+--> b1=gf_mdbrick('dirichlet',b0,42,mf,'penalized')
+  ]]></programlisting>
 
     <para>Here the number 42 is the region number to which the dirichlet
     condition is applied. The 'penalized' says that the Dirichlet condition
@@ -201,30 +179,18 @@ ans =
     (augmented system, direct elimination). A mesh fem argument is also
     required, as the Dirichlet condition u=r is imposed in a weak form </para>
 
-    <para><inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="../../mml/step_by_step_eq4.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation> </para>
+    <para><latex align="center"><![CDATA[\int u\left(x\right)\nu\left(x\right)=\int r\left(x\right)\nu\left(x\right)\,\forall\nu]]></latex></para>
 
     <para>where v is taken in the space of multipliers given by here by
     mf.</para>
 
     <para>By default, the Dirichlet brick imposes u=0 on the specified
-    boundary. We change this to <inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata fileref="../../mml/step_by_step_eq5.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation>:</para>
+    boundary. We change this to <latex style="text"><![CDATA[u=\left(x-0.5\right)^{2}+\left(y-0.5\right)^{2}+x/5-y/3]]></latex>:</para>
 
-    <programlisting role="example"> 
---&gt; R=gf_mesh_fem_get(mf, 'eval', list('(x-.5).^2 + (y-.5).^2 + x/5 - y/3'));
---&gt; gf_mdbrick_set(b1, 'param', 'R', mf, R); 
-  </programlisting>
+    <programlisting role="example"><![CDATA[ 
+--> R=gf_mesh_fem_get(mf, 'eval', list('(x-.5).^2 + (y-.5).^2 + x/5 - y/3'));
+--> gf_mdbrick_set(b1, 'param', 'R', mf, R); 
+  ]]></programlisting>
 
     <para>Remark: the polynomial expression was interpolated on mf. It is
     possible only if mf is of Lagrange type. In this first example we use the
@@ -236,19 +202,19 @@ ans =
     <para>A "model state" variable is created, and the solver is
     launched:</para>
 
-    <programlisting role="example"> 
---&gt; mds=gf_mdstate('real')
---&gt; gf_mdbrick_get(b1, 'solve', mds)
- </programlisting>
+    <programlisting role="example"><![CDATA[
+--> mds=gf_mdstate('real')
+--> gf_mdbrick_get(b1, 'solve', mds)
+ ]]></programlisting>
 
     <para>The model state now contains the solution (as well as other things,
     such as the linear system which was solved). It is extracted, a display
     into a matlab figure.</para>
 
-    <programlisting role="example"> 
---&gt; U=gf_mdstate_get(mds, 'state');
---&gt; gf_plot(mf, U, 'mesh','on');
- </programlisting>
+    <programlisting role="example"><![CDATA[
+--> U=gf_mdstate_get(mds, 'state');
+--> gf_plot(mf, U, 'mesh','on');
+ ]]></programlisting>
   </refsection>
 
   <refsection>

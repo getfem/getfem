@@ -68,7 +68,7 @@ gf_mesh_set(M  'refine' [, mat CVLST])
       <listitem>
         <para>CVIDs = gf_mesh_set(M,'add convex',GeoTrans GT, mat PTS) Add a
         new convex into the mesh. The convex structure (triangle, prism,...)
-        is given by <phrase>GT</phrase> (obtained with gf_geotrans('...')),
+        is given by <literal>GT</literal> (obtained with gf_geotrans('...')),
         and its points are given by the columns of <literal>PTS</literal>. On
         return, <literal>CVIDs</literal> contains the convex #ids.
         <literal>PTS</literal> might be a 3-dimensional array in order to

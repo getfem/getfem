@@ -74,27 +74,16 @@ M = gf_asm('extrapolation matrix', mesh_fem mf1, mesh_fem mf2)
       <listitem>
         <para>L = gf_asm('laplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
         vec a) Assembly of the matrix for the Laplacian problem.
-        <inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_asm_eq1.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation> with <literal>a</literal> scalar. Return a Spmat
-        object.</para>
+        <latex style="text"><![CDATA[\nabla\cdot\left(a\left(x\right)\nabla u\right)]]></latex>
+        with <literal>a</literal> scalar. Return a Spmat object.</para>
       </listitem>
 
       <listitem>
         <para>Le = gf_asm('linear_elasticity',MeshIm mim, MeshFem mf_u,
         MeshFem mf_d, vec lambda_d, vec mu_d) Assembles of the matrix for the
-        linear (isotropic) elasticity problem. <inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_asm_eq2.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation> with <literal>C</literal> defined via
-        <literal>lambda_d</literal> and <literal>mu_d</literal>.</para>
+        linear (isotropic) elasticity problem.
+            <latex style="text"><![CDATA[\nabla\cdot\left(C\left(x\right):\nabla u\right)]]></latex>
+            with <literal>C</literal> defined via <literal>lambda_d</literal> and <literal>mu_d</literal>.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -145,21 +134,10 @@ M = gf_asm('extrapolation matrix', mesh_fem mf1, mesh_fem mf2)
         mf_p, MeshFem mf_d, vec nu) Assembly of matrices for the Stokes
         problem.</para>
 
-        <para><inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_asm_eq3.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation></para>
+        <para><latex align="center"><![CDATA[-\nu\left(x\right)\Delta u+\nabla p=0]]>
+          </latex></para>
 
-        <para><inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_asm_eq4.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation> with <emphasis>nu</emphasis>, the fluid's dynamic
+        <para><latex style="text"><![CDATA[\nabla u=0]]></latex> with <emphasis>nu</emphasis>, the fluid's dynamic
         viscosity. </para>
 
         <para>On output, <literal>K</literal> is the usual linear elasticity
@@ -174,13 +152,7 @@ M = gf_asm('extrapolation matrix', mesh_fem mf1, mesh_fem mf2)
         <para>A = gf_asm('helmholtz',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
         vec k) Assembly of the matrix for the Helmholtz problem. </para>
 
-        <para><inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_asm_eq5.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation> with <literal>k</literal> complex scalar.</para>
+        <para><latex style="text"><![CDATA[\Delta u+k^{2}u=0]]></latex> with <literal>k</literal> complex scalar.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>
@@ -189,13 +161,7 @@ M = gf_asm('extrapolation matrix', mesh_fem mf1, mesh_fem mf2)
         <para>A = gf_asm('bilaplacian',MeshIm mim, MeshFem mf_u, MeshFem mf_d,
         vec a) Assembly of the matrix for the Bilaplacian problem.</para>
 
-        <para><inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_asm_eq6.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation> with <literal>a</literal> scalar.</para>
+        <para><latex style="center"><![CDATA[\Delta\left(a\left(x\right)\Delta u\right)=0]]></latex> with <literal>a</literal> scalar.</para>
 
         <para>Return a Spmat object.</para>
       </listitem>

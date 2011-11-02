@@ -24,7 +24,7 @@
     <title>Description</title>
 
     <para>The fem_name should contain a description of the finite element method. Please refer to the getfem++ manual 
-      (especially <link linkend="http://www-gmm.insa-toulouse.fr/getfem/doc">the description of finite element and integration methods</link>) 
+      (especially <ulink url="http://www-gmm.insa-toulouse.fr/getfem/doc">the description of finite element and integration methods</ulink>) 
       for a complete reference. </para>
 
     <para>Here is a list of some of them:</para>

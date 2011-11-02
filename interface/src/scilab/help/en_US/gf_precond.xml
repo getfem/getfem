@@ -79,9 +79,9 @@ gf_precond('ilut', spmat M [, int fillin [, scalar threshold]])gf_precond('super
       </listitem>
 
       <listitem>
-        <para>gf_precond('superlu', Spmat m) Uses <link linkend="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</link> to build an exact
+        <para>gf_precond('superlu', Spmat m) Uses <ulink url="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</ulink> to build an exact
           factorization of the sparse matrix `m`. This preconditioner is only available if the getfem-interface was built with 
-	  <link linkend="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</link> support</para>
+	  <ulink url="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</ulink> support</para>
 
         <para>Note that LU factorization is likely to eat all your memory for 3D problems.</para>
       </listitem>

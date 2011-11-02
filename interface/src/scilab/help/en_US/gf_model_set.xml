@@ -167,13 +167,8 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
         term to the model relatively to the variable
         <literal>varname</literal>. The shape of the elliptic term depends
         both on the variable and the data. This corresponds to a term
-        <inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_model_set_eq1.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation> where <literal>a</literal> is the data and
+        <latex style="text"><![CDATA[-\text{div}\left(a\nabla u\right)]]>
+          </latex> where <literal>a</literal> is the data and
         <literal>u</literal> the variable. The data can be a scalar, a matrix
         or an order four tensor. The variable can be vector valued or not. If
         the data is a scalar or a matrix and the variable is vector valued
@@ -317,13 +312,8 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
         <para>ind = gf_model_set(mds,'add Fourier Robin brick', mesh_im mim,
         string varname, string dataname, int region) add a Fourier-Robin term
         to the model relatively to the variable <literal>varname</literal>.
-        this corresponds to a weak term of the form <inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_model_set_eq2.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation>. <phrase>dataname</phrase> should contain the
+        this corresponds to a weak term of the form <latex style="text"><![CDATA[\int\left(qu\right)\cdot\nu]]></latex>.
+        <literal>dataname</literal> should contain the
         parameter <literal>q</literal> of the Fourier-Robin condition.
         <literal>region</literal> is the mesh region on which the term is
         added.</para>
@@ -459,25 +449,13 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
         <para>gf_model_set(mds,'add theta method dispatcher', vec
         bricks_indices, string theta) Add a theta-method time dispatcher to a
         list of bricks. For instance, a matrix term <literal>K</literal> will
-        be replaced by <inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_model_set_eq3.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation>.</para>
+        be replaced by <latex style="text"><![CDATA[\theta KU^{n+1}+\left(1-\theta\right)KU^{n}]]></latex>.</para>
       </listitem>
 
       <listitem>
         <para>gf_model_set(mds,'add midpoint dispatcher', vec bricks_indices)
         Add a midpoint time dispatcher to a list of bricks. For instance, a
-        nonlinear term K(U) will be replaced by <inlineequation>
-            <inlinemediaobject>
-              <imageobject>
-                <imagedata fileref="../mml/gf_model_set_eq4.mml" />
-              </imageobject>
-            </inlinemediaobject>
-          </inlineequation>.</para>
+        nonlinear term K(U) will be replaced by <latex style="text"><![CDATA[K\left(\left(U^{n+1}+U^{n}\right)/2\right)]]></latex>.</para>
       </listitem>
 
       <listitem>

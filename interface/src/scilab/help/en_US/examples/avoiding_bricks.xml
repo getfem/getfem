@@ -24,7 +24,7 @@
     demonstration demo_tripod_alt.m is very similar to the demo_tripod.sce
     except that the assembly is explicit:</para>
 
-    <programlisting role="example"> 
+    <programlisting role="example"><![CDATA[
 nbd = gf_mesh_fem_get(mfd, 'nbdof');
 F = gf_asm('boundary_source', 1, mim, mfu, mfd, repmat([0;-10;0],1,nbd));
 K = gf_asm('linear_elasticity', mim, mfu, mfd, lambda*ones(1,nbd),mu*ones(1,nbd));
@@ -53,19 +53,13 @@ end
 disp(sprintf('linear system solved in %.2f sec', timer()-t0));
 
 U = (N*UU).' + U0;
- </programlisting>
+ ]]></programlisting>
 
     <para>In getfem-interface, the assembly of vectors, and matrices is done
     via the gf_asm function. The Dirichlet condition u(x) = r(x) is handled in
     the weak form</para>
 
-    <para><inlineequation>
-        <inlinemediaobject>
-          <imageobject>
-            <imagedata align="center" fileref="../../mml/avoiding_eq1.mml" />
-          </imageobject>
-        </inlinemediaobject>
-      </inlineequation></para>
+    <para><latex style="center"><![CDATA[\int\left(h\left(x\right)u\left(x\right)\right)\cdot\nu\left(x\right)=\int r\left(x\right)\cdot\nu\left(x\right)\,\forall\nu]]></latex></para>
 
     <para>(where h(x) is a 3×3 matrix field - here it is constant and equal to
     the identity). The reduced system KK * UU = FF is then built via the
