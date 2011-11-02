@@ -7,12 +7,14 @@ printf("demo bilaplacian started\n");
 
 N  = 2;
 NX = 10;
-NY = 10;
+NY = 14;
 
-//m = gf_mesh('regular simplices',0:1/NX:1, 0:1/NY:1);
-m = gf_mesh('cartesian',0:1/NX:1, 0:1/NY:1);
+m=gf_mesh('regular simplices',0:0.4/NX:0.4, 0:1.2/NY:1.2);
+// m=gf_mesh('cartesian',0:1/NX:1, 0:1/NY:1);
+// m=gf_mesh('cartesian',0:0.4/NX:0.4, 0:1.2/NY:1.2);
 
-useKL = 0; // use the Kirchhoff-Love plate model, or just a pure
+
+useKL = 1; // use the Kirchhoff-Love plate model, or just a pure
            // bilaplacian problem
 
 D = 1.0;   // Flexion modulus
@@ -24,13 +26,13 @@ mim = gf_mesh_im(m);
 mfu = gf_mesh_fem(m); 
 mfd = gf_mesh_fem(m);
 
-//gf_mesh_im_set(mim, 'integ',gf_integ('IM_TRIANGLE(13)'));
-//gf_mesh_fem_set(mfu, 'fem',gf_fem('FEM_ARGYRIS'));
-//gf_mesh_fem_set(mfd, 'fem',gf_fem('FEM_PK(2,5)'));
+gf_mesh_im_set(mim, 'integ',gf_integ('IM_TRIANGLE(13)'));
+gf_mesh_fem_set(mfu, 'fem',gf_fem('FEM_ARGYRIS'));
+gf_mesh_fem_set(mfd, 'fem',gf_fem('FEM_PK(2,5)'));
 
-gf_mesh_im_set(mim, 'integ',gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
-gf_mesh_fem_set(mfu, 'fem',gf_fem('FEM_REDUCED_QUADC1_COMPOSITE'));
-gf_mesh_fem_set(mfd, 'fem',gf_fem('FEM_QK(2,3)'));
+//gf_mesh_im_set(mim, 'integ',gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
+//gf_mesh_fem_set(mfu, 'fem',gf_fem('FEM_REDUCED_QUADC1_COMPOSITE'));
+//gf_mesh_fem_set(mfd, 'fem',gf_fem('FEM_QK(2,3)'));
 
 flst = gf_mesh_get(m, 'outer_faces');
 n    = gf_mesh_get(m, 'normal of faces', flst);
@@ -46,13 +48,13 @@ SIMPLE_SUPPORT_BOUNDARY = 3;
 CLAMPED_BOUNDARY        = 4;
 
 gf_mesh_set(m, 'region', FORCE_BOUNDARY, fright);
-gf_mesh_set(m, 'region', SIMPLE_SUPPORT_BOUNDARY, [ftop fbottom fleft]);
-gf_mesh_set(m, 'region', CLAMPED_BOUNDARY, [fleft fright]);
+gf_mesh_set(m, 'region', SIMPLE_SUPPORT_BOUNDARY, [fleft ftop fbottom]);
+gf_mesh_set(m, 'region', CLAMPED_BOUNDARY, [fleft ftop fbottom]);
 gf_mesh_set(m, 'region', MOMENTUM_BOUNDARY, [ftop fbottom]);
 
-FT = 10.;
+FT = 2.;
 sol_u = gf_mesh_fem_get_eval(mfd,list(list(sprintf('sin(%g*(x+y))',FT))));
-sol_f = sol_u*FT*FT*FT*FT*N*N;
+sol_f = sol_u*FT*FT*FT*FT*N*N*D;
 sol_lapl_u = -FT*FT*sol_u*N;
 
 if (newbricks) then // uses new bricks
@@ -61,7 +63,7 @@ if (newbricks) then // uses new bricks
 
   if useKL
     gf_model_set(md, 'add initialized data', 'D', [D]);
-    gf_model_set(md, 'add initialized data', 'nu', [nu]);
+    gf_model_set(md, 'add initialized data', 'nu', [NU]);
     gf_model_set(md, 'add Kirchhoff-Love plate brick', mim, 'u', 'D', 'nu');
     M = zeros(N,N, gf_mesh_fem_get(mfd,'nbdof'));
   else
@@ -84,7 +86,7 @@ if (newbricks) then // uses new bricks
     gf_model_set(md, 'add initialized fem data', 'H', mfd, H);
     gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
     gf_model_set(md, 'add Kirchhoff-Love Neumann term brick', mim, 'u', ...
-		 H, F, FORCE_BOUNDARY);
+		 'H', 'F', FORCE_BOUNDARY);
   else
     F = zeros(1, N, gf_mesh_fem_get(mfd, 'nbdof'));
     gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
@@ -108,7 +110,7 @@ else // uses old bricks
     b0 = gf_mdbrick('bilaplacian', mim, mfu, 'Kirchhoff-Love')
     gf_mdbrick_set(b0, 'param','D', D);
     gf_mdbrick_set(b0, 'param','nu', NU);
-    M = zeros(N,N, gf_mesh_fem_get(mfd,'nbdof'));
+    M = zeros(1, gf_mesh_fem_get(mfd,'nbdof'));
   else
     b0 = gf_mdbrick('bilaplacian', mim, mfu);
     gf_mdbrick_set(b0, 'param','D', D);
@@ -122,7 +124,7 @@ else // uses old bricks
   gf_mdbrick_set(b2, 'param', 'source_term', mfd,M);
 
   if (useKL) then
-    H = zeros(N, N, gf_mesh_fem_get(mfd, 'nbdof'));
+    H = zeros(N*N, gf_mesh_fem_get(mfd, 'nbdof'));
     F = zeros(N, gf_mesh_fem_get(mfd, 'nbdof'));
     b3 = gf_mdbrick('neumann Kirchhoff-Love source term',b2,FORCE_BOUNDARY);
     gf_mdbrick_set(b3, 'param', 'M', mfd, H);
