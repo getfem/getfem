@@ -48,21 +48,6 @@ namespace getfem {
 
   
   template <typename S, typename VECT> 
-  void compute_gamma_derivative_(const S &s, const VECT &y,
-				 double gamma, VECT &d) {
-    if (s.has_gamma_derivative()) {
-//       s.gamma_derivative(y, gamma, d);
-    } else {
-      VECT F0(y), F1(y);
-      s.F(y, gamma, F0);
-      s.F(y, gamma + s.epsilon(), F1);
-      s.scaled_add(F1, F0, -1., d);
-      s.scale(d, 1./s.epsilon());
-    }
-  }
-
-
-  template <typename S, typename VECT> 
   double sp_(const S &s, const VECT &y1, const VECT &y2,
 	     double gamma1, double gamma2) {
     double r = s.sp(y1, y2) + gamma1 * gamma2;
@@ -89,7 +74,7 @@ namespace getfem {
 
     VECT d(y), w(y);
 
-    compute_gamma_derivative_(s, y, gamma, d);
+    s.gamma_derivative(y, gamma, d);
     s.solve_grad(y, gamma, d, w);
     t_gamma = 1. / (t_gamma - s.sp(t_y, w));
     s.scale(w, -t_gamma); s.copy(w, t_y);
@@ -115,8 +100,9 @@ namespace getfem {
 
 
   template <typename S, typename VECT>
-  void init_continuation(const S &s, const VECT &y, double gamma,
-			 VECT &t_y, double &t_gamma, double &h) {
+  void init_Moore_Penrose_continuation(const S &s, const VECT &y,
+				       double gamma, VECT &t_y,
+				       double &t_gamma, double &h) {
     s.clear(t_y); t_gamma = (t_gamma >= 0) ? 1. : -1.;
     if (s.noisy() > 1) cout << "computing initial tangent" << endl;
     compute_tangent(s, y, gamma, t_y, t_gamma);
@@ -141,12 +127,12 @@ namespace getfem {
       s.copy(t_y, T_y); T_gamma = t_gamma;
       
       // correction
+      if (s.noisy() > 0) cout << "starting correction " << endl;
       it = 0;
       s.F(Y, Gamma, F);
       
       do { // Newton iterations
-	if (s.noisy() > 0) cout << "starting correction " << endl;
-	compute_gamma_derivative_(s, Y, Gamma, d);
+	s.gamma_derivative(Y, Gamma, d);
 	s.solve_grad(Y, Gamma, F, d, Delta_Y, W);
 	r = s.sp(T_y, W);
 
@@ -174,7 +160,7 @@ namespace getfem {
 	if (s.noisy() > 0) cout << "ang " << ang << endl;
 	if (ang >= s.minang()) {
 	  finished = true;
-	  if (step_dec == 0 && it <= s.thrit()) // elongate the tangent
+	  if (step_dec == 0 && it < s.thrit()) // elongate the step size
 	    h = (s.h_inc() * h < s.h_max()) ? s.h_inc() * h : s.h_max();
 	}
       }
@@ -223,22 +209,22 @@ namespace getfem {
     rmodel_plsolver_type lsolver;
     unsigned long maxit_, thrit_;
     double maxres_, maxdiff_, minang_, h_init_, h_max_, h_min_, h_inc_,
-      h_dec_, epsilon_;
+      h_dec_, epsilon_, maxres_solve_;
     int noisy_;
 
     typedef base_vector VECT;
 
     S_getfem_model(model &m, std::string pn, rmodel_plsolver_type ls,
-		   unsigned long mit = 1000, unsigned long tit = 100,
+		   unsigned long mit = 10, unsigned long tit = 8,
 		   double mres = 1.e-6, double mdiff = 1.e-6,
-		   double mang = 0.99, double hin = 1.e-3,
+		   double mang = 0.9, double hin = 1.e-2,
 		   double hmax = 1.e-1, double hmin = 1.e-5,
-		   double hinc = 2., double hdec = 0.5, double eps = 1.e-9,
-		   int noi = 1)
+		   double hinc = 1.3, double hdec = 0.5, double eps = 1.e-8,
+		   double mress = 1.e-7, int noi = 0)
       : md(m), parameter_name(pn), lsolver(ls), maxit_(mit) , thrit_(tit),
 	maxres_(mres), maxdiff_(mdiff), minang_(mang), h_init_(hin),
 	h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
-	epsilon_(eps), noisy_(noi)
+	epsilon_(eps), maxres_solve_(mress), noisy_(noi)
     {}
     
 
@@ -271,7 +257,7 @@ namespace getfem {
       md.assembly(model::BUILD_MATRIX);
       
       if (noisy_ > 1) cout << "starting linear solver" << endl;
-      gmm::iteration iter(maxres_, noisy_, maxit_);
+      gmm::iteration iter(maxres_solve_, noisy_, 40000);
       (*lsolver)(md.real_tangent_matrix(), g, L, iter);
       if (noisy_ > 1) cout << "linear solver done" << endl;
     }
@@ -283,17 +269,21 @@ namespace getfem {
       if (noisy_ > 1) cout << "starting computing tangent matrix" << endl;
       md.assembly(model::BUILD_MATRIX);
 
-      gmm::iteration iter(maxres_, noisy_, maxit_);
+      gmm::iteration iter(maxres_solve_, noisy_, 40000);
       (*lsolver)(md.real_tangent_matrix(), g1, L1, iter);
       (*lsolver)(md.real_tangent_matrix(), g2, L2, iter);
     }
 
-//     void gamma_derivative(const VECT &y, double gamma, VECT &d) const {}
+    void gamma_derivative(const VECT &y, double gamma, VECT &d) const {
+      VECT F0(y), F1(y);
+      F(y, gamma + epsilon_, F1);
+      F(y, gamma, F0);
+      gmm::add(F1, gmm::scaled(F0, -1.), d);
+      gmm::scale(d, 1./epsilon_);
+    }
 
     
     // Misc.
-
-    bool has_gamma_derivative(void) const { return false; }
     unsigned long thrit(void) const { return thrit_; }
     unsigned long maxit(void) const { return maxit_; }
     double epsilon(void) const { return epsilon_; }

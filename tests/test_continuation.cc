@@ -127,14 +127,15 @@ bool state_problem::cont(plain_vector &U) {
     h_min = PARAM.real_value("H_MIN") * nb_dof,
     h_inc = PARAM.real_value("H_INC"),
     h_dec = PARAM.real_value("H_DEC"),
-    eps = PARAM.real_value("EPSILON");
+    eps = PARAM.real_value("EPSILON"),
+    maxres_solve = PARAM.real_value("RESIDUAL_SOLVE");
   int noisy = PARAM.int_value("NOISY");
   getfem::S_getfem_model s(model, "lambda", ls, maxit, thrit, maxres,
 			   maxdiff, minang, h_init, h_max, h_min, h_inc,
-			   h_dec, eps, noisy);
+			   h_dec, eps, maxres_solve, noisy);
 
   if (noisy > 0) cout << "computing initial point" << endl;
-  gmm::iteration iter(PARAM.real_value("RESIDUAL_INIT"), noisy, 40000);
+  gmm::iteration iter(maxres_solve, noisy, 40000);
   getfem::standard_solve(model, iter);
 
   gmm::resize(U, mf_u.nb_dof());
@@ -145,14 +146,15 @@ bool state_problem::cont(plain_vector &U) {
 
   plain_vector T_U(U);
   scalar_type T_lambda = PARAM.real_value("DIRECTION"), h;
-  init_continuation(s, U, lambda, T_U, T_lambda, h);
+  getfem::init_Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
 
   // Continuation
   bool converged = true;
   for (size_type step = 0; step < nb_step; ++step) {
     cout << endl << "beginning of step " << step + 1 << endl;
     
-    converged = Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
+    converged =
+      getfem::Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
     
     cout << "U = " << U << endl;
     cout << "lambda = " << lambda << endl;

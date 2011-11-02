@@ -56,4 +56,4 @@ The kernel of the model description is contained in the file
    model_elastoplasticity.rst
    model_nonlinear_elasticity.rst
    model_bilaplacian.rst
-
+   model_continuation.rst

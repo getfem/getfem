@@ -329,22 +329,81 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter, @scalar init_dir)
-    blabla ...
-    @*/
+    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter, @scalar init_dir[, ...])
+    Initialize the Moore-Penrose continuation (for more details about the
+    continuation see the Getfem++ user documentation): The variable
+    `dataname_parameter` should parametrize the model. Return a tangent
+    corresponding to the solution branch at the current solution and the
+    current value of the parameter, and an initial step size for the
+    continuation. Direction of the computed tangent with respect to the
+    parameter is determined by the sign of `init_dir`.
+    
+    Additional options:
+    
+    - 'lsolver', @str SOLVER_NAME
+       name of a solver to be used for the incorporated linear system (the
+       default value is 'auto', which lets getfem choose itself); possible
+       values are 'superlu', 'mumps' (if supported), 'cg/ildlt', 'gmres/ilu'
+       and 'gmres/ilut';
+    - 'noisy' or 'very_noisy'
+       determines how detailed information has to be displayed during the
+       computations (residual values etc.);
+    - 'epsilon', @scalar EPS
+       increment to be used to compute the incorporated finite
+       difference;
+    - 'max_res_solve', @scalar RES_SOLVE
+       target residual value for the linear system to be solved;
+    - 'h_init', @scalar HIN
+       initial step size.@*/
     sub_command
-      ("init Moore-Penrose continuation", 2, 2, 0, 3,
+      ("init Moore-Penrose continuation", 2, 11, 0, 3,
 
        std::string dataname_parameter = in.pop().to_string();
        scalar_type t_gamma = in.pop().to_scalar();
+       std::string lsolver = "auto";
+       size_type maxit = 10;
+       size_type thrit = 8;
+       scalar_type maxres = 1.e-6;
+       scalar_type maxdiff = 1.e-6;
+       scalar_type minang = 0.9; 
+       scalar_type h_init = 1.e-2;
+       scalar_type h_max = 1.e-1;
+       scalar_type h_min = 1.e-5;
+       scalar_type h_inc = 1.3;
+       scalar_type h_dec = 0.5;
+       scalar_type epsilon = 1.e-8;
+       scalar_type maxres_solve = 1.e-7;
+       int noisy = 0;
        
+       while (in.remaining() && in.front().is_string()) {
+	 std::string opt = in.pop().to_string();
+	 if (cmd_strmatch(opt, "lsolver"))  {
+	   if (in.remaining()) lsolver = in.pop().to_string();
+	   else THROW_BADARG("missing name for " << opt);
+	 } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
+	 else if (cmd_strmatch(opt, "very noisy") ||
+		  cmd_strmatch(opt, "very_noisy")) noisy = 2;
+	 else if (cmd_strmatch(opt, "epsilon")) {
+	   if (in.remaining()) epsilon = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "max_res_solve")) {
+	   if (in.remaining()) maxres_solve = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "h_init")) {
+	   if (in.remaining()) h_init = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else THROW_BADARG("bad option: " << opt);
+       }
 
        if (md->model().is_complex())
-	 THROW_BADARG("sorry, Moore-Penrose continuation has only a "
-		      "real version");
+	 THROW_BADARG("Sorry, Moore-Penrose continuation " 
+		      "has only a real version.");
        
-       getfem::S_getfem_model S(md->model(), dataname_parameter,
-		     getfem::rselect_linear_solver(md->model(), "superlu"));
+       getfem::S_getfem_model S
+       (md->model(), dataname_parameter,
+	getfem::rselect_linear_solver(md->model(), lsolver),
+	maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+	h_dec, epsilon, maxres_solve, noisy);
 
        size_type nbdof = md->model().nb_dof();
        std::vector<double> yy(nbdof);
@@ -352,32 +411,136 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        const getfem::model_real_plain_vector &GAMMA
        = md->model().real_variable(dataname_parameter);
        GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-		   "The continuation parameter should be a real scalar");
+		   "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
-       double h;
+       scalar_type h;
        std::vector<double> tt_y(nbdof);
 
-       getfem::init_continuation(S, yy, gamma, tt_y, t_gamma, h);
+       getfem::init_Moore_Penrose_continuation(S, yy, gamma,
+					       tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
 
-    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter, @vec tangent, @scalar tangent_parameter, @scalar h)
-    blabla ...
-    @*/
+    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter, @vec tangent, @scalar tangent_parameter, @scalar h[, ...])
+    Compute one step of the Moore-Penrose continuation (for more details about
+    the continuation see the Getfem++ user documentation): The variable
+    `dataname_parameter` should parametrize the model. Take the current
+    solution, the current value of the parameter, the tangent given by
+    `tangent` and `tangent_parameter`, and the step size `h`, return a new
+    tangent and step size for the next step (and save a new point in the
+    model);
+
+    Additional options:
+
+    - 'lsolver', @str SOLVER_NAME
+       name of a solver to be used for the incorporated linear systems (the
+       default value is 'auto', which lets getfem choose itself); possible
+       values are 'superlu', 'mumps' (if supported), 'cg/ildlt', 'gmres/ilu'
+       and 'gmres/ilut';
+    - 'noisy' or 'very_noisy'
+       determines how detailed information has to be displayed during the
+       process (residual values etc.);
+    - 'max_iter', @int NIT
+       maximum number of iterations allowed in the correction;
+    - 'thr_iter', @int TIT
+       threshold number of iterations of the correction for enlarging the step
+       size;
+    - 'max_res', @scalar RES
+       target residual value of the new point;
+    - 'max_diff', @scalar DIFF
+       determines a criterion of convergence to the new tangent vector;
+    - 'min_ang', @scalar ANG
+       serves for controlling changes of direction between tangents to the
+       solution curve at the old point and the new one;
+    - 'h_init', @scalar HIN
+       initial step size;
+    - 'h_max', @scalar HMAX
+       maximal step size;
+    - 'h_min', @scalar HMIN
+       minimal step size;
+    - 'h_inc', @scalar HINC
+       factor for enlarging the step size;
+    - 'h_dec', @scalar HDEC
+       factor for diminishing the step size;
+    - 'epsilon', @scalar EPS
+       increment to be used to compute the incorporated finite
+       differences;
+    - 'max_res_solve', @scalar RES_SOLVE
+       target residual value for the linear systems to be solved.@*/
     sub_command
-      ("Moore-Penrose continuation", 4, 4, 0, 3,
+      ("Moore-Penrose continuation", 4, 31, 0, 3,
 
        std::string dataname_parameter = in.pop().to_string();
        darray t_y = in.pop().to_darray();
        scalar_type t_gamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
+       std::string lsolver = "auto";
+       size_type maxit = 10;
+       size_type thrit = 8;
+       scalar_type maxres = 1.e-6;
+       scalar_type maxdiff = 1.e-6;
+       scalar_type minang = 0.9; 
+       scalar_type h_init = 1.e-2;
+       scalar_type h_max = 1.e-1;
+       scalar_type h_min = 1.e-5;
+       scalar_type h_inc = 1.3;
+       scalar_type h_dec = 0.5;
+       scalar_type epsilon = 1.e-8;
+       scalar_type maxres_solve = 1.e-7;
+       int noisy = 0;
        
-
+       while (in.remaining() && in.front().is_string()) {
+	 std::string opt = in.pop().to_string();
+	 if (cmd_strmatch(opt, "lsolver"))  {
+	   if (in.remaining()) lsolver = in.pop().to_string();
+	   else THROW_BADARG("missing name for " << opt);
+	 } else if (cmd_strmatch(opt, "max_iter")) {
+	   if (in.remaining()) maxit = in.pop().to_integer();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "thr_iter")) {
+	   if (in.remaining()) thrit = in.pop().to_integer();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "max_res")) {
+	   if (in.remaining()) maxres = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "max_diff")) {
+	   if (in.remaining()) maxdiff = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "min_ang")) {
+	   if (in.remaining()) minang = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "h_init")) {
+	   if (in.remaining()) h_init = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "h_max")) {
+	   if (in.remaining()) h_max = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "h_min")) {
+	   if (in.remaining()) h_min = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "h_inc")) {
+	   if (in.remaining()) h_inc = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "h_dec")) {
+	   if (in.remaining()) h_dec = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "epsilon")) {
+	   if (in.remaining()) epsilon = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "max_res_solve")) {
+	   if (in.remaining()) maxres_solve = in.pop().to_scalar();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
+	 else if (cmd_strmatch(opt, "very noisy") ||
+		  cmd_strmatch(opt, "very_noisy")) noisy = 2;
+	 else THROW_BADARG("bad option: " << opt);
+       }
+       
        if (md->model().is_complex())
-	 THROW_BADARG("sorry, Moore-Penrose continuation has only a "
-		      "real version");
+	 THROW_BADARG("Sorry, Moore-Penrose continuation "
+		      "has only a real version.");
 
        size_type nbdof = md->model().nb_dof();
        std::vector<double> yy(nbdof);
@@ -385,11 +548,14 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        const getfem::model_real_plain_vector &GAMMA
        = md->model().real_variable(dataname_parameter);
        GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-		   "The continuation parameter should be a real scalar");
+		   "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
 
-       getfem::S_getfem_model S(md->model(), dataname_parameter,
-		     getfem::rselect_linear_solver(md->model(), "superlu"));
+       getfem::S_getfem_model S
+       (md->model(), dataname_parameter,
+	getfem::rselect_linear_solver(md->model(), lsolver),
+	maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+	h_dec, epsilon, maxres_solve, noisy);
 
        std::vector<double> tt_y(nbdof);
        gmm::copy(t_y, tt_y);
@@ -398,7 +564,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
-
 
 
     /*@GET V = ('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])

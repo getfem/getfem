@@ -28,9 +28,16 @@ stacksize('max');
 gf_workspace('clear all');
 lambda0 = 0;
 direction = 1;
-nbstep = 10;
+nbstep = 100;
 
-noisy = 2;
+maxit = 5;
+thrit = 4;
+maxres_solve = 1.e-7;
+noisy = 'very_noisy';
+
+h_init = 1e-3;
+h_max = 1e-2;
+h_min = 1e-6;
 
 // create a simple cartesian mesh
 m = gf_mesh('cartesian', [0:.1:1]);
@@ -47,46 +54,60 @@ mim = gf_mesh_im(m, 4);
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
-lambda = lambda0;
-gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
+gf_model_set(md, 'add initialized data', 'lambda', [lambda0]);
 gf_model_set(md, 'add basic nonlinear brick', mim, 'u', 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 
 
-if noisy > 0 then printf('computing initial point\n'); end
-gf_model_get(md, 'solve', 'noisy', 'max_iter', 100);
+nb_dof = gf_mesh_fem_get(mf, 'nbdof') + 1;
+h_init = h_init * nb_dof;
+h_max = h_max * nb_dof;
+h_min = h_min * nb_dof;
+
+if (~isempty(strindex(noisy, 'noisy'))) then
+    printf('computing initial point\n');
+end
+gf_model_get(md, 'solve', noisy, 'max_iter', 100, 'max_res', maxres_solve);
+[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction, noisy);
 U = gf_model_get(md, 'variable', 'u');
-//lambda = gf_model_get(md, 'variable', 'lambda');
-[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', U, lambda, direction);
+lambda = gf_model_get(md, 'variable', 'lambda');
 printf('U = '); disp(U); printf('lambda = %e\n', lambda);
 printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
+U_hist = zeros(1, nbstep); lambda_hist = zeros(1, nbstep);
+U_hist(1) = U(1); lambda_hist(1) = lambda;
+
 clf();
 drawlater;
-x  = gf_mesh_fem_get(mf, 'basic dof nodes'); plot(x, U, 'k+-');
-//gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1);  colorbar;
-xtitle('lambda = '+ string(lambda), '$x$', '$u$');
-a = get("current_axes");
-a.title.font_size = 4; a.x_label.font_size= 4; a.y_label.font_size= 4; a.y_label.font_angle = 0;
+subplot(2,1,1);
+plot(lambda_hist(1), U_hist(1), 'k.');
+xtitle('', 'lambda', 'u(0)');
+subplot(2,1,2)
+gf_plot_1D(mf, U, 'style', 'k.-');
+xtitle('', 'x', 'u');
 drawnow;
 
 
 for step = 1:nbstep
-    sleep(1000);
-    printf('\nbeginning of step %d\n', step);
-    [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', U, lambda, T_U, T_lambda, h);
-    U = gf_model_get(md, 'variable', 'u');
-    lambda = gf_model_get(md, 'variable', 'lambda');
-    printf('U = '); disp(U); printf('lambda = %e\n', lambda);
-    printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
+  sleep(1000);
+  printf('\nbeginning of step %d\n', step);
+  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', T_U, T_lambda, h, noisy, 'max_iter', maxit, 'thr_iter', thrit, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min);
+  U = gf_model_get(md, 'variable', 'u');
+  lambda = gf_model_get(md, 'variable', 'lambda');
+  printf('U = '); disp(U); printf('lambda = %e\n', lambda);
+  printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
-    clf();
-    drawlater;
-    x  = gf_mesh_fem_get(mf, 'basic dof nodes'); plot(x, U, 'k+-');
-    //gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1);  colorbar;
-    xtitle('lambda = '+ string(lambda), '$x$', '$u$');
-    a = get("current_axes");
-    a.title.font_size = 4;
-    a.x_label.font_size= 4; a.y_label.font_size= 4; a.y_label.font_angle = 0;
-    drawnow;
-    printf('end of step n° %d', step); printf(' / %d\n', nbstep);
+  U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
+
+  clf();
+  drawlater;
+  subplot(2,1,1);
+  plot(lambda_hist(1:step+1), U_hist(1:step+1), 'k-');
+  plot(lambda_hist(1:step), U_hist(1:step), 'ko');
+  plot(lambda_hist(step+1), U_hist(step+1), 'k.');
+  xtitle('', 'lambda', 'u(0)');
+  subplot(2,1,2)
+  gf_plot_1D(mf, U, 'style', 'k.-');
+  xtitle('', 'x', 'u');
+  drawnow;
+  printf('end of step n° %d', step); printf(' / %d\n', nbstep);
 end

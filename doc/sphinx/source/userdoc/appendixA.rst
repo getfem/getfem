@@ -4,9 +4,9 @@
 
 .. highlightlang:: c++
 
-.. _ud-appendixa:
-
 .. |nbsp| unicode:: U+00A0 .. non-breaking space
+
+.. _ud-appendixa:
 
 Appendix A. Finite element method list
 ======================================
