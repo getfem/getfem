@@ -6,8 +6,8 @@
 #include <MALLOC.h>
 #include <stack-c.h>
 
-#include <sparse2.h>
-#include <err.h>
+#include "sparse2.h"
+#include "err.h"
 
 #define DEBUG
 

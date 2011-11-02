@@ -71,11 +71,24 @@ Files = ['gfm_common.c','gfm_scilab.c','sci_spluinc.c','sci_spcholinc.c','sci_sp
          'sci_cgne.c','sci_cgs.c','sci_gmres.c','sci_mgcr.c','sci_spchsolve.c','sci_splusolve.c'];
 Libraries = ['../../src/c/libsp_get'];
 
-cflags = ' -g -I' + sci_getfem_path + ' -I' + sci_getfem_path + ' -I' + sci_getfem_path + '/../../src/c';
-cflags = cflags + ' -I' + getfem_path + '/interface/src/' + ' -I' + getfem_path + '/src/getfem';
-cflags = cflags + ' -I' + SCI + '/../../include/scilab'; // For the binary distribution
+if getos()=='Windows' then
+  cflags = ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + '/../../src/c';
+  cflags = cflags + ' /I' + getfem_path + '/interface/src/' + ' /I' + getfem_path + '/src/getfem';
+  cflags = cflags + ' /I' + SCI + '/../../include/scilab'; // For the binary distribution
+  
+  if win64() then
+    ldflags = sci_getfem_path + '/../../src/win64/libgetfemint.lib ' + sci_getfem_path + '/../../src/win64/libgetfem.lib' + sci_getfem_path + '/../../src/win64/superlu.lib';
+  else
+    ldflags = sci_getfem_path + '/../../src/win32/libgetfemint.lib ' + sci_getfem_path + '/../../src/win32/libgetfem.lib' + sci_getfem_path + '/../../src/win32/superlu.lib';
+  end
+else
+  cflags = ' -g -I' + sci_getfem_path + ' -I' + sci_getfem_path + ' -I' + sci_getfem_path + '/../../src/c';
+  cflags = cflags + ' -I' + getfem_path + '/interface/src/' + ' -I' + getfem_path + '/src/getfem';
+  cflags = cflags + ' -I' + SCI + '/../../include/scilab'; // For the binary distribution
+  
+  ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a';
+end
 
-ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a';
 if ~isempty('@QHULL_LIBS@') then
   ldflags = ldflags + ' -L/usr/lib @QHULL_LIBS@';
 end

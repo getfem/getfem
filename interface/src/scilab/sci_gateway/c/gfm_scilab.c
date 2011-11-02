@@ -24,10 +24,11 @@
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <time.h>
-
+#ifndef _MSC_VER
+#include <unistd.h>
+#endif
 #include <stack-c.h>
 #include <sciprint.h>
 #include <Scierror.h>

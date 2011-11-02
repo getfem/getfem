@@ -180,6 +180,7 @@ int sci_spcgs(char * fname)
     }
 
   // call iter_spcgs method.
+
   catchall(xsol = iter_spcgs(A, M, b, r0, *tol_pdbl_real, x0, (int)*maxit_pdbl_real, &steps),
   	   Scierror(999,"%s: an error (%d) occured.\n",fname,_err_num); return 0);
 
