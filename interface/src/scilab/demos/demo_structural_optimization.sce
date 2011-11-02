@@ -73,11 +73,11 @@ if (N == 2) then
   NBDRAW = 20;            // Draw solution each NBDRAW iterations
 else
   NY = 30;
-  level_set_rate = 0.03 / NY;
-  reinitialisation_time = 0.0045;
+  level_set_rate = 0.025 / NY;
+  reinitialisation_time = 0.003;
   threshold_shape = 15;
   if (TEST_CASE == 3) then
-    threshold_topo = 2.6;
+    threshold_topo = 30;
   else
     threshold_topo = 0;
   end
