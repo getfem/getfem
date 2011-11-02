@@ -198,9 +198,9 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
     for bnum=1:length(o_boundaries),
       plot3d(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2), bedge(bnum)(:,:,3)); // 'Color','red','LineWidth',2);
       hbound(bnum) = gce();
-      hbound(bnum).children(:).thickness  = 2;
-      hbound(bnum).children(:).line_style = 0; // Continuous line
-      hbound(bnum).children(:).foreground = 5; // Red
+      hbound(bnum).thickness  = 2;
+      hbound(bnum).line_style = 0; // Continuous line
+      hbound(bnum).foreground = 5; // Red
     end
     if (ison(o_vertices)) then
       for i=1:length(PID)
