@@ -33,15 +33,14 @@
   */
 static	char	*rcsid = "$Id$";
 
-#include	"machine.h"
-#include        "zmatrix.h"
 #include	<math.h>
+
+#include	"machine.h"
+#include    "zmatrix.h"
 
 
 /* __zconj__ -- complex conjugate */
-void	__zconj__(zp,len)
-complex	*zp;
-int	len;
+void	__zconj__(complex * zp, int len)
 {
     int		i;
 

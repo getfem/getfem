@@ -34,8 +34,7 @@ static	char	rcsid[] = "$Id$";
 
 
 /* m_add -- matrix addition -- may be in-situ */
-MAT	*m_add(mat1,mat2,out)
-MAT	*mat1,*mat2,*out;
+MAT * m_add(MAT * mat1, MAT * mat2, MAT * out)
 {
 	u_int	m,n,i;
 
@@ -59,8 +58,7 @@ MAT	*mat1,*mat2,*out;
 }
 
 /* m_sub -- matrix subtraction -- may be in-situ */
-MAT	*m_sub(mat1,mat2,out)
-MAT	*mat1,*mat2,*out;
+MAT * m_sub(MAT * mat1, MAT * mat2, MAT * out)
 {
 	u_int	m,n,i;
 
@@ -84,23 +82,21 @@ MAT	*mat1,*mat2,*out;
 }
 
 /* m_mlt -- matrix-matrix multiplication */
-MAT	*m_mlt(A,B,OUT)
-MAT	*A,*B,*OUT;
-{
+MAT * m_mlt(MAT * A, MAT * B, MAT * out) {
 	u_int	i, /* j, */ k, m, n, p;
-	Real	**A_v, **B_v /*, *B_row, *OUT_row, sum, tmp */;
+	Real	**A_v, **B_v /*, *B_row, *out_row, sum, tmp */;
 
 	if ( A==(MAT *)NULL || B==(MAT *)NULL )
 		error(E_NULL,"m_mlt");
 	if ( A->n != B->m )
 		error(E_SIZES,"m_mlt");
-	if ( A == OUT || B == OUT )
+	if ( A == out || B == out )
 		error(E_INSITU,"m_mlt");
 	m = A->m;	n = A->n;	p = B->n;
 	A_v = A->me;		B_v = B->me;
 
-	if ( OUT==(MAT *)NULL || OUT->m != A->m || OUT->n != B->n )
-		OUT = m_resize(OUT,A->m,B->n);
+	if ( out==(MAT *)NULL || out->m != A->m || out->n != B->n )
+		out = m_resize(out,A->m,B->n);
 
 /****************************************************************
 	for ( i=0; i<m; i++ )
@@ -109,101 +105,97 @@ MAT	*A,*B,*OUT;
 			sum = 0.0;
 			for ( k=0; k<n; k++ )
 				sum += A_v[i][k]*B_v[k][j];
-			OUT->me[i][j] = sum;
+			out->me[i][j] = sum;
 		}
 ****************************************************************/
-	m_zero(OUT);
+	m_zero(out);
 	for ( i=0; i<m; i++ )
 		for ( k=0; k<n; k++ )
 		{
 		    if ( A_v[i][k] != 0.0 )
-		        __mltadd__(OUT->me[i],B_v[k],A_v[i][k],(int)p);
+		        __mltadd__(out->me[i],B_v[k],A_v[i][k],(int)p);
 		    /**************************************************
-		    B_row = B_v[k];	OUT_row = OUT->me[i];
+		    B_row = B_v[k];	out_row = out->me[i];
 		    for ( j=0; j<p; j++ )
-			(*OUT_row++) += tmp*(*B_row++);
+			(*out_row++) += tmp*(*B_row++);
 		    **************************************************/
 		}
 
-	return OUT;
+	return out;
 }
 
 /* mmtr_mlt -- matrix-matrix transposed multiplication
-	-- A.B^T is returned, and stored in OUT */
-MAT	*mmtr_mlt(A,B,OUT)
-MAT	*A, *B, *OUT;
+	-- A.B^T is returned, and stored in out */
+MAT	*mmtr_mlt(MAT * A, MAT * B, MAT * out)
 {
 	int	i, j, limit;
 	/* Real	*A_row, *B_row, sum; */
 
 	if ( ! A || ! B )
 		error(E_NULL,"mmtr_mlt");
-	if ( A == OUT || B == OUT )
+	if ( A == out || B == out )
 		error(E_INSITU,"mmtr_mlt");
 	if ( A->n != B->n )
 		error(E_SIZES,"mmtr_mlt");
-	if ( ! OUT || OUT->m != A->m || OUT->n != B->m )
-		OUT = m_resize(OUT,A->m,B->m);
+	if ( ! out || out->m != A->m || out->n != B->m )
+		out = m_resize(out,A->m,B->m);
 
 	limit = A->n;
 	for ( i = 0; i < A->m; i++ )
 		for ( j = 0; j < B->m; j++ )
 		{
-		    OUT->me[i][j] = __ip__(A->me[i],B->me[j],(int)limit);
+		    out->me[i][j] = __ip__(A->me[i],B->me[j],(int)limit);
 		    /**************************************************
 		    sum = 0.0;
 		    A_row = A->me[i];
 		    B_row = B->me[j];
 		    for ( k = 0; k < limit; k++ )
 			sum += (*A_row++)*(*B_row++);
-		    OUT->me[i][j] = sum;
+		    out->me[i][j] = sum;
 		    **************************************************/
 		}
 
-	return OUT;
+	return out;
 }
 
 /* mtrm_mlt -- matrix transposed-matrix multiplication
-	-- A^T.B is returned, result stored in OUT */
-MAT	*mtrm_mlt(A,B,OUT)
-MAT	*A, *B, *OUT;
+	-- A^T.B is returned, result stored in out */
+MAT * mtrm_mlt(MAT * A, MAT * B, MAT * out)
 {
 	int	i, k, limit;
-	/* Real	*B_row, *OUT_row, multiplier; */
+	/* Real	*B_row, *out_row, multiplier; */
 
 	if ( ! A || ! B )
 		error(E_NULL,"mmtr_mlt");
-	if ( A == OUT || B == OUT )
+	if ( A == out || B == out )
 		error(E_INSITU,"mtrm_mlt");
 	if ( A->m != B->m )
 		error(E_SIZES,"mmtr_mlt");
-	if ( ! OUT || OUT->m != A->n || OUT->n != B->n )
-		OUT = m_resize(OUT,A->n,B->n);
+	if ( ! out || out->m != A->n || out->n != B->n )
+		out = m_resize(out,A->n,B->n);
 
 	limit = B->n;
-	m_zero(OUT);
+	m_zero(out);
 	for ( k = 0; k < A->m; k++ )
 		for ( i = 0; i < A->n; i++ )
 		{
 		    if ( A->me[k][i] != 0.0 )
-			__mltadd__(OUT->me[i],B->me[k],A->me[k][i],(int)limit);
+			__mltadd__(out->me[i],B->me[k],A->me[k][i],(int)limit);
 		    /**************************************************
 		    multiplier = A->me[k][i];
-		    OUT_row = OUT->me[i];
+		    out_row = out->me[i];
 		    B_row   = B->me[k];
 		    for ( j = 0; j < limit; j++ )
-			*(OUT_row++) += multiplier*(*B_row++);
+			*(out_row++) += multiplier*(*B_row++);
 		    **************************************************/
 		}
 
-	return OUT;
+	return out;
 }
 
 /* mv_mlt -- matrix-vector multiplication 
 		-- Note: b is treated as a column vector */
-VEC	*mv_mlt(A,b,out)
-MAT	*A;
-VEC	*b,*out;
+VEC * mv_mlt(MAT * A, VEC * b, VEC * out)
 {
 	u_int	i, m, n;
 	Real	**A_v, *b_v /*, *A_row */;
@@ -237,9 +229,7 @@ VEC	*b,*out;
 }
 
 /* sm_mlt -- scalar-matrix multiply -- may be in-situ */
-MAT	*sm_mlt(scalar,matrix,out)
-double	scalar;
-MAT	*matrix,*out;
+MAT * sm_mlt(double scalar, MAT * matrix, MAT * out)
 {
 	u_int	m,n,i;
 
@@ -259,9 +249,7 @@ MAT	*matrix,*out;
 
 /* vm_mlt -- vector-matrix multiplication 
 		-- Note: b is treated as a row vector */
-VEC	*vm_mlt(A,b,out)
-MAT	*A;
-VEC	*b,*out;
+VEC * vm_mlt(MAT * A, VEC * b, VEC * out)
 {
 	u_int	j,m,n;
 	/* Real	sum,**A_v,*b_v; */
@@ -296,8 +284,7 @@ VEC	*b,*out;
 }
 
 /* m_transp -- transpose matrix */
-MAT	*m_transp(in,out)
-MAT	*in, *out;
+MAT * m_transp(MAT * in, MAT * out)
 {
 	int	i, j;
 	int	in_situ;
@@ -327,9 +314,7 @@ MAT	*in, *out;
 }
 
 /* swap_rows -- swaps rows i and j of matrix A upto column lim */
-MAT	*swap_rows(A,i,j,lo,hi)
-MAT	*A;
-int	i, j, lo, hi;
+MAT * swap_rows(MAT * A, int i, int j, int lo, int hi)
 {
 	int	k;
 	Real	**A_me, tmp;
@@ -352,9 +337,7 @@ int	i, j, lo, hi;
 }
 
 /* swap_cols -- swap columns i and j of matrix A upto row lim */
-MAT	*swap_cols(A,i,j,lo,hi)
-MAT	*A;
-int	i, j, lo, hi;
+MAT * swap_cols(MAT * A, int i, int j, int lo, int hi)
 {
 	int	k;
 	Real	**A_me, tmp;
@@ -379,9 +362,7 @@ int	i, j, lo, hi;
 /* ms_mltadd -- matrix-scalar multiply and add
 	-- may be in situ
 	-- returns out == A1 + s*A2 */
-MAT	*ms_mltadd(A1,A2,s,out)
-MAT	*A1, *A2, *out;
-double	s;
+MAT * ms_mltadd(MAT * A1, MAT * A2, double s, MAT * out)
 {
 	/* register Real	*A1_e, *A2_e, *out_e; */
 	/* register int	j; */
@@ -418,10 +399,7 @@ double	s;
 /* mv_mltadd -- matrix-vector multiply and add
 	-- may not be in situ
 	-- returns out == v1 + alpha*A*v2 */
-VEC	*mv_mltadd(v1,v2,A,alpha,out)
-VEC	*v1, *v2, *out;
-MAT	*A;
-double	alpha;
+VEC * mv_mltadd(VEC * v1, VEC * v2, MAT * A, double alpha, VEC * out)
 {
 	/* register	int	j; */
 	int	i, m, n;
@@ -460,10 +438,7 @@ double	alpha;
 /* vm_mltadd -- vector-matrix multiply and add
 	-- may not be in situ
 	-- returns out' == v1' + v2'*A */
-VEC	*vm_mltadd(v1,v2,A,alpha,out)
-VEC	*v1, *v2, *out;
-MAT	*A;
-double	alpha;
+VEC * vm_mltadd(VEC * v1, VEC * v2, MAT * A,double alpha, VEC * out)
 {
 	int	/* i, */ j, m, n;
 	Real	tmp, /* *A_e, */ *out_ve;

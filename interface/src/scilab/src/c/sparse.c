@@ -650,9 +650,9 @@ SPMAT	*A;
 }
 
 /* sp_copy2 -- copy sparse matrix (type 2) 
-   -- keeps structure of the OUT matrix */
-SPMAT	*sp_copy2(A,OUT)
-SPMAT	*A, *OUT;
+   -- keeps structure of the out matrix */
+SPMAT	*sp_copy2(A,out)
+SPMAT	*A, *out;
 {
    int	i /* , idx, len1, len2 */;
    SPROW	*r1, *r2;
@@ -661,45 +661,45 @@ SPMAT	*A, *OUT;
    
    if ( ! A )
      error(E_NULL,"sp_copy2");
-   if ( ! OUT )
-     OUT = sp_get(A->m,A->n,10);
+   if ( ! out )
+     out = sp_get(A->m,A->n,10);
    if ( ! scratch ) {
       scratch = sprow_xpd(scratch,MINROWLEN,TYPE_SPROW);
       MEM_STAT_REG(scratch,TYPE_SPROW);
    }
 
-   if ( OUT->m < A->m )
+   if ( out->m < A->m )
    {
       if (mem_info_is_on()) {
 	 mem_bytes(TYPE_SPMAT,A->max_m*sizeof(SPROW),
 		      A->m*sizeof(SPROW));
       }
 
-      OUT->row = RENEW(OUT->row,A->m,SPROW);
-      if ( ! OUT->row )
+      out->row = RENEW(out->row,A->m,SPROW);
+      if ( ! out->row )
 	error(E_MEM,"sp_copy2");
       
-      for ( i = OUT->m; i < A->m; i++ )
+      for ( i = out->m; i < A->m; i++ )
       {
-	 OUT->row[i].elt = NEW_A(MINROWLEN,row_elt);
-	 if ( ! OUT->row[i].elt )
+	 out->row[i].elt = NEW_A(MINROWLEN,row_elt);
+	 if ( ! out->row[i].elt )
 	   error(E_MEM,"sp_copy2");
 	 else if (mem_info_is_on()) {
 	    mem_bytes(TYPE_SPMAT,0,MINROWLEN*sizeof(row_elt));
 	 }
 	 
-	 OUT->row[i].maxlen = MINROWLEN;
-	 OUT->row[i].len = 0;
+	 out->row[i].maxlen = MINROWLEN;
+	 out->row[i].len = 0;
       }
-      OUT->m = A->m;
+      out->m = A->m;
    }
    
-   OUT->flag_col = OUT->flag_diag = FALSE;
-   /* sp_zero(OUT); */
+   out->flag_col = out->flag_diag = FALSE;
+   /* sp_zero(out); */
 
    for ( i = 0; i < A->m; i++ )
    {
-      r1 = &(A->row[i]);	r2 = &(OUT->row[i]);
+      r1 = &(A->row[i]);	r2 = &(out->row[i]);
       sprow_copy(r1,r2,scratch,TYPE_SPROW);
       if ( r2->maxlen < scratch->len )
 	sprow_xpd(r2,scratch->len,TYPE_SPMAT);
@@ -716,8 +716,8 @@ SPMAT	*A, *OUT;
 	*******************************************************/
    }
 
-   sp_col_access(OUT);
-   return OUT;
+   sp_col_access(out);
+   return out;
 }
 
 /* sp_resize -- resize a sparse matrix

@@ -32,10 +32,10 @@
 
 
 #include	<stdio.h>
-#include	"zmatrix.h"
-#include        "zmatrix2.h"
 #include	<math.h>
 
+#include	"zmatrix.h"
+#include    "zmatrix2.h"
 
 #define	is_zero(z)	((z).re == 0.0 && (z).im == 0.0)
 #define	b2s(t_or_f)	((t_or_f) ? "TRUE" : "FALSE")

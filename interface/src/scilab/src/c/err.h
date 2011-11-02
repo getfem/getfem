@@ -38,8 +38,15 @@
 
 /* Error recovery */
 
-extern	jmp_buf	restart;
-
+//#ifdef _MSC_VER
+//#ifdef DLLIMPORT
+//jmp_buf __declspec(dllimport) restart;
+//#else
+//jmp_buf __declspec(dllexport) restart;
+//#endif
+//#else
+extern jmp_buf restart;
+//#endif
 
 /* max. # of error lists */
 #define ERR_LIST_MAX_LEN   10

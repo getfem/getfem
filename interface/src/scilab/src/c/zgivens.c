@@ -35,9 +35,10 @@
 static	char	rcsid[] = "$Id: ";
 
 #include	<stdio.h>
-#include	"zmatrix.h"
-#include        "zmatrix2.h"
 #include	<math.h>
+
+#include	"zmatrix.h"
+#include    "zmatrix2.h"
 
 /*
 	(Complex) Givens rotation matrix:

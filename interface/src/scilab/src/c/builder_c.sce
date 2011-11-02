@@ -18,11 +18,17 @@ Files = ['bdfactor.c','hessen.c','machine.c','spchfctr.c', ...
 	 'zfunc.c','zhsehldr.c','zmatio.c','zmemory.c','zschur.c', ...
 	 'zgivens.c','zlufctr.c','zmatlab.c','znorm.c','zsolve.c'];
 Symbols = ['sp_get','sp_set_val','spICHfactor','sp_col_access','spILUfactor','iter_spcgne', ...
-           'iter_spcgs','iter_spgmres','iter_spmgcr','spCHfactor','spILUfactor'];
+           'iter_spcgs','iter_spgmres','iter_spmgcr','spCHfactor','spILUfactor','spLUfactor',...
+           'spLUsolve','v_set_val','v_free','sp_free','v_get','restart'];
 
 libs = [];
 ldflags = '';
-cflags = '-I' + sparsecomp_path + ' -I' + sparsecomp_path + '/MACHINES/GCC';
+
+if getos()=='Windows' then
+  cflags = '/I' + sparsecomp_path + ' /I' + sparsecomp_path + '/MACHINES/GCC';
+else
+  cflags = '-I' + sparsecomp_path + ' -I' + sparsecomp_path + '/MACHINES/GCC';
+end
 
 tbx_build_src(Symbols, Files, 'c', sparsecomp_path, libs, ldflags, cflags);
 

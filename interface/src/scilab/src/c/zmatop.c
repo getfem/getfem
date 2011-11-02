@@ -90,8 +90,8 @@ ZMAT	*mat1,*mat2,*out;
   */
 
 /* zm_mlt -- matrix-matrix multiplication */
-ZMAT	*zm_mlt(A,B,OUT)
-ZMAT	*A,*B,*OUT;
+ZMAT	*zm_mlt(A,B,out)
+ZMAT	*A,*B,*out;
 {
     u_int	i, /* j, */ k, m, n, p;
     complex	**A_v, **B_v /*, *B_row, *OUT_row, sum, tmp */;
@@ -100,13 +100,13 @@ ZMAT	*A,*B,*OUT;
 	error(E_NULL,"zm_mlt");
     if ( A->n != B->m )
 	error(E_SIZES,"zm_mlt");
-    if ( A == OUT || B == OUT )
+    if ( A == out || B == out )
 	error(E_INSITU,"zm_mlt");
     m = A->m;	n = A->n;	p = B->n;
     A_v = A->me;		B_v = B->me;
     
-    if ( OUT==ZMNULL || OUT->m != A->m || OUT->n != B->n )
-	OUT = zm_resize(OUT,A->m,B->n);
+    if ( out==ZMNULL || out->m != A->m || out->n != B->n )
+	out = zm_resize(out,A->m,B->n);
     
     /****************************************************************
       for ( i=0; i<m; i++ )
@@ -115,90 +115,90 @@ ZMAT	*A,*B,*OUT;
       sum = 0.0;
       for ( k=0; k<n; k++ )
       sum += A_v[i][k]*B_v[k][j];
-      OUT->me[i][j] = sum;
+      out->me[i][j] = sum;
       }
     ****************************************************************/
-    zm_zero(OUT);
+    zm_zero(out);
     for ( i=0; i<m; i++ )
 	for ( k=0; k<n; k++ )
 	{
 	    if ( ! is_zero(A_v[i][k]) )
-		__zmltadd__(OUT->me[i],B_v[k],A_v[i][k],(int)p,Z_NOCONJ);
+		__zmltadd__(out->me[i],B_v[k],A_v[i][k],(int)p,Z_NOCONJ);
 	    /**************************************************
-	      B_row = B_v[k];	OUT_row = OUT->me[i];
+	      B_row = B_v[k];	out_row = out->me[i];
 	      for ( j=0; j<p; j++ )
-	      (*OUT_row++) += tmp*(*B_row++);
+	      (*out_row++) += tmp*(*B_row++);
 	    **************************************************/
 	}
     
-    return OUT;
+    return out;
 }
 
 /* zmma_mlt -- matrix-matrix adjoint multiplication
-   -- A.B* is returned, and stored in OUT */
-ZMAT	*zmma_mlt(A,B,OUT)
-ZMAT	*A, *B, *OUT;
+   -- A.B* is returned, and stored in out */
+ZMAT	*zmma_mlt(A,B,out)
+ZMAT	*A, *B, *out;
 {
     int	i, j, limit;
     /* complex	*A_row, *B_row, sum; */
     
     if ( ! A || ! B )
 	error(E_NULL,"zmma_mlt");
-    if ( A == OUT || B == OUT )
+    if ( A == out || B == out )
 	error(E_INSITU,"zmma_mlt");
     if ( A->n != B->n )
 	error(E_SIZES,"zmma_mlt");
-    if ( ! OUT || OUT->m != A->m || OUT->n != B->m )
-	OUT = zm_resize(OUT,A->m,B->m);
+    if ( ! out || out->m != A->m || out->n != B->m )
+	out = zm_resize(out,A->m,B->m);
     
     limit = A->n;
     for ( i = 0; i < A->m; i++ )
 	for ( j = 0; j < B->m; j++ )
 	{
-	    OUT->me[i][j] = __zip__(B->me[j],A->me[i],(int)limit,Z_CONJ);
+	    out->me[i][j] = __zip__(B->me[j],A->me[i],(int)limit,Z_CONJ);
 	    /**************************************************
 	      sum = 0.0;
 	      A_row = A->me[i];
 	      B_row = B->me[j];
 	      for ( k = 0; k < limit; k++ )
 	      sum += (*A_row++)*(*B_row++);
-	      OUT->me[i][j] = sum;
+	      out->me[i][j] = sum;
 	      **************************************************/
 	}
     
-    return OUT;
+    return out;
 }
 
 /* zmam_mlt -- matrix adjoint-matrix multiplication
-   -- A*.B is returned, result stored in OUT */
-ZMAT	*zmam_mlt(A,B,OUT)
-ZMAT	*A, *B, *OUT;
+   -- A*.B is returned, result stored in out */
+ZMAT	*zmam_mlt(A,B,out)
+ZMAT	*A, *B, *out;
 {
     int	i, k, limit;
-    /* complex	*B_row, *OUT_row, multiplier; */
+    /* complex	*B_row, *out_row, multiplier; */
     complex	tmp;
     
     if ( ! A || ! B )
 	error(E_NULL,"zmam_mlt");
-    if ( A == OUT || B == OUT )
+    if ( A == out || B == out )
 	error(E_INSITU,"zmam_mlt");
     if ( A->m != B->m )
 	error(E_SIZES,"zmam_mlt");
-    if ( ! OUT || OUT->m != A->n || OUT->n != B->n )
-	OUT = zm_resize(OUT,A->n,B->n);
+    if ( ! out || out->m != A->n || out->n != B->n )
+	out = zm_resize(out,A->n,B->n);
     
     limit = B->n;
-    zm_zero(OUT);
+    zm_zero(out);
     for ( k = 0; k < A->m; k++ )
 	for ( i = 0; i < A->n; i++ )
 	{
 	    tmp.re =   A->me[k][i].re;
 	    tmp.im = - A->me[k][i].im;
 	    if ( ! is_zero(tmp) )
-		__zmltadd__(OUT->me[i],B->me[k],tmp,(int)limit,Z_NOCONJ);
+		__zmltadd__(out->me[i],B->me[k],tmp,(int)limit,Z_NOCONJ);
 	}
     
-    return OUT;
+    return out;
 }
 
 /* zmv_mlt -- matrix-vector multiplication 

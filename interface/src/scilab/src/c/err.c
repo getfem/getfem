@@ -102,8 +102,11 @@ static char *warn_mesg[] = {
 
 #define	MAX_ERRS	100
 
+#ifdef _MSC_VER
+jmp_buf	__declspec(dllexport) restart;
+#else
 jmp_buf	restart;
-
+#endif
 
 /* array of pointers to lists of errors */
 
