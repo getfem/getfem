@@ -462,8 +462,8 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
         <para>gf_model_set(mds,'velocity update for order two theta method',
         string varnameU, string datanameV, string dataname_dt, string
         dataname_theta) Function which udpate the velocity
-        v<superscript>n+1</superscript> after the computation of the
-        displacement u<superscript>n+1</superscript> and before the next
+        <latex style="text"><![CDATA[ v^{n+1} ]]></latex> after the computation of the
+        displacement <latex style="text"><![CDATA[ u^{n+1} ]]></latex> and before the next
         iteration. Specific for theta-method and when the velocity is included
         in the data of the model.</para>
       </listitem>
@@ -472,8 +472,8 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
         <para>gf_model_set(mds,'velocity update for Newmark scheme', int
         id2dt2_brick, string varnameU, string datanameV, string dataname_dt,
         string dataname_twobeta, string dataname_alpha) Function which udpate
-        the velocity v<superscript>n+1</superscript> after the computation of
-        the displacement u<superscript>n+1</superscript> and before the next
+        the velocity <latex style="text"> <![CDATA[ v^{n+1} ]]></latex> after the computation of
+        the displacement <latex style="text"> <![CDATA[ u^{n+1} ]]></latex> and before the next
         iteration. Specific for Newmark scheme and when the velocity is
         included in the data of the model. This version inverts the mass
         matrix by a conjugate gradient.</para>

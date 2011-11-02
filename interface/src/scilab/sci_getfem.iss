@@ -1,48 +1,48 @@
 ;##############################################################################################################
-; Script d'installation Inno Setup (5.2.2) pour scilab
-; Allan CORNET
-; Version TRUNK
+; Inno Setup Install script for SciGetFem Module
+; http://www.jrsoftware.org/isinfo.php
+; Yann COLLETTE
 ; This file is released into the public domain
 ;##############################################################################################################
-;--------------------------------------------------------------------------------------------------------------
-; toolbox_skeleton
-;--------------------------------------------------------------------------------------------------------------
-#define TOOLBOX_SKELETON "toolbox_skeleton"
+; modify this path where is sciglpk directory
+#define BinariesSourcePath "E:\toolboxes\getfem\getfem\interface\src\scilab"
 ;
-Source: contrib\{#TOOLBOX_SKELETON}\builder.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\toolbox_skeleton_redist.iss; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\changelog.txt; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\license.txt; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\readme.txt; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}; Components: {#COMPN_TOOLBOX_SKELETON}
+#define SCIGETFEM_Module_version "1.0"
+#define CurrentYear "2011"
+#define SCIGETFEM_ModuleDirFilename "scigetfem-1.0"
+;##############################################################################################################
+[Setup]
+; Debut Données de base à renseigner suivant version
+SourceDir={#BinariesSourcePath}
+AppName=SciGetFem Module
+AppVerName=SciGetFem Module version 1.0
+DefaultDirName={pf}/{#SCIGETFEM_ModuleDirFilename}
+InfoAfterfile=readme.txt
+LicenseFile=license.txt
+WindowVisible=true
+AppPublisher=Home
+BackColorDirection=lefttoright
+AppCopyright=Copyright © {#CurrentYear}
+Compression=lzma/max
+InternalCompressLevel=normal
+SolidCompression=true
+VersionInfoVersion={#SCIGETFEM_Module_version}
+VersionInfoCompany=Home
+;##############################################################################################################
+[Files]
+; Add here files that you want to add
+Source: loader.sce; DestDir: {app}
+Source: license.txt; DestDir: {app}
+Source: readme.txt; DestDir: {app}
+Source: etc\sci_getfem.quit; DestDir: {app}\etc
+Source: etc\sci_getfem.start; DestDir: {app}\etc
+Source: sci_gateway\loader_gateway.sce; DestDir: {app}\sci_gateway
+Source: sci_gateway\c\loader.sce; DestDir: {app}\sci_gateway\c
+Source: sci_gateway\c\*.dll; DestDir: {app}\sci_gateway\c
+Source: demos\*.*; DestDir: {app}\demos;
+Source: demos\data\*.*; DestDir: {app}\demos\data;
+Source: jar\*.*; DestDir: {app}\jar
+Source: src\c\loader.sce; DestDir: {app}\src\c
+Source: src\c\*.dll; DestDir: {app}\src\c
 ;
-Source: contrib\{#TOOLBOX_SKELETON}\demos\*.*; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\demos; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\etc\toolbox_skeleton.quit; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\etc; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\etc\toolbox_skeleton.start; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\etc; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\help\builder_help.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\help; Components: {#COMPN_TOOLBOX_SKELETON}
-
-Source: contrib\{#TOOLBOX_SKELETON}\help\en_US\build_help.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\help\en_US; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\help\en_US\*.xml; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\help\en_US; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\help\fr_FR\build_help.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\help\fr_FR; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\help\fr_FR\*.xml; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\help\fr_FR; Components: {#COMPN_TOOLBOX_SKELETON}
-;
-;Source: contrib\{#TOOLBOX_SKELETON}\includes\*.h; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\includes
-;Source: contrib\{#TOOLBOX_SKELETON}\locales\*.*; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\locales
-;
-Source: contrib\{#TOOLBOX_SKELETON}\macros\buildmacros.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\macros; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\macros\*.sci; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\macros; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\builder_gateway.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\c\builder_gateway_c.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\c; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\c\sci_csum.c; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\c; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\c\sci_csub.c; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\c; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\cpp\sci_cpp_find.cxx; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\cpp; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\cpp\builder_gateway_cpp.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\cpp; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\fortran\builder_gateway_fortran.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\fortran; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\sci_gateway\fortran\sci_fsum.c; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\sci_gateway\fortran; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\src\builder_src.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\src; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\src\c\builder_c.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\src\c; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\src\c\csum.c; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\src\c; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\src\c\csub.c; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\src\c; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\src\fortran\builder_fortran.sce; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\src\fortran; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\src\fortran\fsum.f; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\src\fortran; Components: {#COMPN_TOOLBOX_SKELETON}
-Source: contrib\{#TOOLBOX_SKELETON}\tests\*.*; DestDir: {app}\contrib\{#TOOLBOX_SKELETON}\tests; Flags: recursesubdirs; Components: {#COMPN_TOOLBOX_SKELETON}
-;--------------------------------------------------------------------------------------------------------------
+;##############################################################################################################
