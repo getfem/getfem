@@ -26,19 +26,26 @@ gf_workspace('clear all');
 
 lambda0 = 0;
 direction = 1;
-nbstep = 10;
+nbstep = 70;
 
-noisy = 2;
+maxit = 5;
+thrit = 4;
+maxres_solve = 1.e-7;
+noisy = 'very_noisy'
+
+h_init = 1e-2;
+h_max = 5e-2;
+h_min = 1e-6;
+
+with_dirichlet = true;
 
 % create a simple cartesian mesh
 m = gf_mesh('cartesian', [0:.1:1]);
 
-
-
 % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
-% assign the Q2 fem to all convexes of the mesh_fem,
-gf_mesh_fem_set(mf, 'classical fem', 2);
+% assign the P1 fem to all convexes of the mesh_fem,
+gf_mesh_fem_set(mf, 'classical fem', 1);
 
 % Integration which will be used
 mim = gf_mesh_im(m, 4);
@@ -54,39 +61,64 @@ gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized data', 'lambda', [lambda0]);
 gf_model_set(md, 'add basic nonlinear brick', mim, 'u', 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
-% gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
+if (with_dirichlet)
+  gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
+end;
 
-if (noisy > 0) disp('computing initial point\n'); end
-gf_model_get(md, 'solve', 'very noisy', 'max iter', 100);
+nb_dof = gf_mesh_fem_get(mf, 'nbdof') + 1;
+h_init = h_init * nb_dof;
+h_max = h_max * nb_dof;
+h_min = h_min * nb_dof;
+
+if (noisy) disp('computing initial point\n'); end
+gf_model_get(md, 'solve', noisy, 'max iter', 100, 'max_res', maxres_solve);
+[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction, noisy);
 U = gf_model_get(md, 'variable', 'u');
 lambda = gf_model_get(md, 'variable', 'lambda');
-
-[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction);
-
 disp('U = '); disp(U); disp(sprintf('lambda = %e\n', lambda));
 disp(sprintf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1))));
 
-x  = gf_mesh_fem_get(mf, 'basic dof nodes');
-plot(x, U, 'k+-');
-% gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1);  colorbar;
-title(sprintf('lambda = %e', lambda));
-pause(1)
+U_hist = zeros(1, nbstep); lambda_hist = zeros(1, nbstep);
+U_hist(1) = max(U); lambda_hist(1) = lambda;
+
+figure(1);
+subplot(2,1,1);
+plot(lambda_hist(1), U_hist(1), 'k.');
+xlabel('lambda'); ylabel('max(u)');
+if (with_dirichlet) axis([0 4 0 10]); else axis([0 0.4 0 11]); end
+subplot(2,1,2)
+gf_plot_1D(mf, U, 'style', 'k.-');
+if (with_dirichlet) axis([0 1 0 10]); else axis([0 1 0 11]); end  
+xlabel('x'); ylabel('u');
+pause(1);
 
 
 for step = 1:nbstep
-    pause(1);
-    disp(sprintf('\nbeginning of step %d\n', step));
-    [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', T_U, T_lambda, h);
-    U = gf_model_get(md, 'variable', 'u');
-    lambda = gf_model_get(md, 'variable', 'lambda');
-    disp('U = '); disp(U); disp(sprintf('lambda = %e\n', lambda));
-    disp(sprintf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1))));
+  disp(sprintf('\nbeginning of step %d\n', step));
+  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', T_U, T_lambda, h, ...
+      noisy, 'max_iter', maxit, 'thr_iter', thrit, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min);
+  U = gf_model_get(md, 'variable', 'u');
+  lambda = gf_model_get(md, 'variable', 'lambda');
+  % disp('U = '); disp(U);
+  disp(sprintf('lambda = %e\n', lambda));
+  % disp(sprintf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1))));
+   
+  U_hist(step+1) = max(U); lambda_hist(step+1) = lambda;
     
-    x  = gf_mesh_fem_get(mf, 'basic dof nodes'); plot(x, U, 'k+-');
-    % gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1);  colorbar;
-    title(sprintf('lambda = %e', lambda));
-    pause(0.1);
-    disp(sprintf('end of step n° %d', step)); disp(sprintf(' / %d\n', nbstep));
+  subplot(2,1,1);
+  plot(lambda_hist(1:step+1), U_hist(1:step+1), 'k-');
+  hold on;
+  plot(lambda_hist(1:step), U_hist(1:step), 'ko');
+  plot(lambda_hist(step+1), U_hist(step+1), 'k.');
+  hold off;
+  if (with_dirichlet) axis([0 4 0 10]); else axis([0 0.4 0 11]); end
+  xlabel('lambda'); ylabel('max(u)');
+  subplot(2,1,2)
+  gf_plot_1D(mf, U, 'style', 'k.-');
+  if (with_dirichlet) axis([0 1 0 10]); else axis([0 1 0 11]); end
+  xlabel('x'); ylabel('u');
+  pause(0.25);
+  disp(sprintf('end of step n° %d', step)); disp(sprintf(' / %d\n', nbstep));
 end
 
 

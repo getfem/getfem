@@ -709,6 +709,7 @@ You have also to add the call of the interface function in :file:`getfem_interfa
 
 The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing te object to be saved in a file and the second one is to give some informations about the object. Additionnaly, a constructor from a string is necessary to load the object from a file.
 
+For the Scilab interface the file :file:`sci_gateway\c\builder_gateway_c.sce.in` has to be modified and the file in the directory :file:`macros\overload`.
 
 Perspectives
 ^^^^^^^^^^^^
