@@ -94,7 +94,7 @@ gf_plot_1D
 
   gf_plot_1D(mesh_fem mf, U, ...)
 
-  The options are specified as pairs of "option name"/"option value"
+  Available options are specified as pairs of "option name"/"option value"
 
   'style', 'bo-'       : line style and dof marker style (same syntax as in the Scilab command 'plot');
   'color', ''          : override line color (by a given color name);

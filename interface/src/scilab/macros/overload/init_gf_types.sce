@@ -16,4 +16,5 @@ gfSpmat          = gf_spmat;
 gfPrecond        = gf_precond;
 gfLevelSet       = gf_levelset;
 gfMeshLevelSet   = gf_mesh_levelset;
+gfMesherObject   = gf_mesher_object;
 gfGlobalFunction = gf_global_function;

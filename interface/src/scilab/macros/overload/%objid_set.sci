@@ -46,18 +46,21 @@ function %objid_set(varargin)
     // gfMeshLevelSet
     gf_mesh_levelset_set(gf_obj,other_param(:));
   case 13 then
+    // gfMesherObject
+    // No gf_mesher_object_set function
+  case 14 then
     // gfModel
     gf_model_set(gf_obj,other_param(:));
-  case 14 then
+  case 15 then
     // gfPrecond
     // No gf_precond_set function
-  case 15 then
+  case 16 then
     // gfSlice
     gf_slice_set(gf_obj,other_param(:));
-  case 16 then
+  case 17 then
     // gfSpmat
     gf_spmat_set(gf_obj,other_param(:));
-  case 17 then
+  case 18 then
     // gfPoly
     // No gf_poly_set function
   else

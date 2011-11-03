@@ -10,7 +10,7 @@
   <refnamediv>
     <refname>gf_plot_1D</refname>
 
-    <refpurpose>This function plots a 1D finite elements field.</refpurpose>
+    <refpurpose>This function plots a 1D finite element field.</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
@@ -22,28 +22,27 @@
   <refsection>
     <title>Description</title>
 
-    <para>This function plots a 1D finite elements field.</para>
+    <para>This function plots a 1D finite element field.</para>
 
-    <para>The options are specified as pairs of 'option name'/'option
+    <para>Available options are specified as pairs of 'option name'/'option
     value':</para>
 
     <itemizedlist>
       <listitem>
-        <para>'style', 'bo-' : the line style and dof marker style (same //
-        syntax as in the matlab command 'plot').</para>
+        <para>'style', 'bo-': line style and dof marker style (same //
+        syntax as in the Scilab command 'plot');</para>
       </listitem>
 
       <listitem>
-        <para>'color', [] : override the line color.</para>
+        <para>'color', '': override line color (by a given color name);</para>
       </listitem>
 
       <listitem>
-        <para>'dof_color', [1,0,0] : color of the markers for the degrees of
-        freedom.</para>
+        <para>'dof_color', '': overrride color of dof markers;</para>
       </listitem>
 
       <listitem>
-        <para>'width', 2 : line width. </para>
+        <para>'width', 2: line width. </para>
       </listitem>
     </itemizedlist>
   </refsection>
