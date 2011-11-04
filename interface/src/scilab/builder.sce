@@ -24,6 +24,11 @@ TOOLBOX_TITLE = 'SciGetFem';
 // ====================================================================
 toolbox_dir = get_absolute_file_path('builder.sce');
 
+// Under Windows, configure is not launched.
+if getos()=='Windows' then
+  copyfile(pwd() + '/sci_gateway/c/build_gateway_c.sce.in',pwd() + '/sci_gateway/c/build_gateway_c.sce');
+end
+
 tbx_builder_macros(toolbox_dir);
 tbx_builder_src(toolbox_dir);
 tbx_builder_gateway(toolbox_dir);
