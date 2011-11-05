@@ -25,20 +25,21 @@
 
 gf_workspace('clear all');
 clear all;
+path = get_absolute_file_path('demo_static_contact.sce');
 
 // Import the mesh : disc
-// m = gf_mesh('load', 'data/disc_P2_h2.mesh');
-// m = gf_mesh('load', 'data/disc_P2_h1.mesh');
-// m = gf_mesh('load', 'data/disc_P2_h0.5.mesh');
-// m = gf_mesh('load', 'data/disc_P2_h0.25.mesh');
-// m = gf_mesh('load', 'data/disc_P2_h0.15.mesh');
+// m = gf_mesh('load', path + 'data/disc_P2_h2.mesh');
+// m = gf_mesh('load', path + 'data/disc_P2_h1.mesh');
+// m = gf_mesh('load', path + 'data/disc_P2_h0.5.mesh');
+// m = gf_mesh('load', path + 'data/disc_P2_h0.25.mesh');
+// m = gf_mesh('load', path + 'data/disc_P2_h0.15.mesh');
 
 // Import the mesh : sphere
-// m = gf_mesh('load', 'data/sphere_with_quadratic_tetra_8_elts.mesh');
-m = gf_mesh('load', 'data/sphere_with_quadratic_tetra_80_elts.mesh');
-// m = gf_mesh('load', 'data/sphere_with_quadratic_tetra_400_elts.mesh');
-// m = gf_mesh('load', 'data/sphere_with_quadratic_tetra_2000_elts.mesh');
-// m = gf_mesh('load', 'data/sphere_with_quadratic_tetra_16000_elts.mesh');
+// m = gf_mesh('load', path + 'data/sphere_with_quadratic_tetra_8_elts.mesh');
+m = gf_mesh('load', path + 'data/sphere_with_quadratic_tetra_80_elts.mesh');
+// m = gf_mesh('load', path + 'data/sphere_with_quadratic_tetra_400_elts.mesh');
+// m = gf_mesh('load', path + 'data/sphere_with_quadratic_tetra_2000_elts.mesh');
+// m = gf_mesh('load', path + 'data/sphere_with_quadratic_tetra_16000_elts.mesh');
 
 d = gf_mesh_get(m, 'dim'); // Mesh dimension
 
@@ -187,7 +188,7 @@ solved = %f;
 if (version == 1 | version == 2) then // defining the matrices BN and BT by hand
   contact_dof   = cdof(d:d:nbc*d);
   contact_nodes = gf_mesh_fem_get(mfu, 'basic dof nodes', contact_dof);
-  BN   = sparse(nbc, nbdofu);
+  BN   = spzeros(nbc, nbdofu);
   ngap = zeros(nbc, 1);
   for i = 1:nbc
     BN(i, contact_dof(i)) = -1.0;
@@ -195,7 +196,7 @@ if (version == 1 | version == 2) then // defining the matrices BN and BT by hand
   end
 
   if (version == 2) then
-    BT = sparse(nbc*(d-1), nbdofu);
+    BT = spzeros(nbc*(d-1), nbdofu);
     for i = 1:nbc
       for j = 1:d-1
         BT(j+(i-1)*(d-1), contact_dof(i)-d+j) = 1.0;
