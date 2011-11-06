@@ -149,18 +149,22 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
   disp('plotting mesh...');
   if (mdim <= 2) then
     if (ison(o_edges)) then
+      drawlater;
       plot(X, Y);
       hmesh = gce();
       hmesh.children(:).thickness  = o_edges_width;
       hmesh.children(:).line_style = 0; // Continous lines
-      hmesh.children(:).foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3))); 
+      hmesh.children(:).foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3)));
+      drawnow;
     end
     for bnum=1:length(o_boundaries),
+      drawlater;
       plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
       hbound(bnum) = gce();
       hbound(bnum).children(:).thickness  = 2;
       hbound(bnum).children(:).line_style = 0; // Continous lines
       hbound(bnum).children(:).foreground = 5;
+      drawnow;
     end
     if (ison(o_vertices)) then
       xstring(PXY(1,PID)+ecart(1), PXY(2,PID)+ecart(2), string(double(PID)));
@@ -189,18 +193,22 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
     end
   else
     if (ison(o_edges)) then
+      drawlater;
       plot3d(X, Y, Z); // 'Color',o_edges_color,'LineWidth',o_edges_width
       hmesh = gce();
       hmesh.thickness  = o_edges_width;
       //hmesh.children(:).line_style = 0; // Continuous line
-      hmesh.foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3))); 
+      hmesh.foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3)));
+      drawnow;
     end
     for bnum=1:length(o_boundaries),
+      drawlater;
       plot3d(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2), bedge(bnum)(:,:,3)); // 'Color','red','LineWidth',2);
       hbound(bnum) = gce();
       hbound(bnum).thickness  = 2;
       hbound(bnum).line_style = 0; // Continuous line
       hbound(bnum).foreground = 5; // Red
+      drawnow;
     end
     if (ison(o_vertices)) then
       for i=1:length(PID)
