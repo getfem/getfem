@@ -241,7 +241,7 @@ namespace getfem {
 #else
     size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
 # ifdef GMM_USES_MUMPS
-    max3d = 100000;
+    max3d = 250000;
 # endif
     if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
 # ifdef GMM_USES_MUMPS
