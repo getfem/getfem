@@ -25,9 +25,9 @@ libs = [];
 ldflags = '';
 
 if getos()=='Windows' then
-  cflags = '/I' + sparsecomp_path + ' /I' + sparsecomp_path + '/MACHINES/GCC';
+  cflags = '/I' + sparsecomp_path + ' /I' + sparsecomp_path + '/MACHINES/GCC /DHAVE_CONFIG_H';
 else
-  cflags = '-I' + sparsecomp_path + ' -I' + sparsecomp_path + '/MACHINES/GCC';
+  cflags = '-I' + sparsecomp_path + ' -I' + sparsecomp_path + '/MACHINES/GCC -DHAVE_CONFIG_H';
 end
 
 tbx_build_src(Symbols, Files, 'c', sparsecomp_path, libs, ldflags, cflags);

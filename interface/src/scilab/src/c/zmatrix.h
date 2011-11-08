@@ -31,14 +31,13 @@
 
 #include "matrix.h"
 
-
-          /*  Type definitions for complex vectors and matrices  */
+/*  Type definitions for complex vectors and matrices  */
 
 
 /* complex definition */
 typedef struct  {
                 Real re,im;
-        } complex;
+                } complex;
 
 /* complex vector definition */
 typedef struct  {

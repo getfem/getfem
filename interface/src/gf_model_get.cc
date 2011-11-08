@@ -232,7 +232,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET nbit = ('solve'[, ...])
+    /*@GET ('solve'[, ...])
     Run the standard getfem solver.
 
     Note that you should be able to use your own solver if you want
@@ -256,15 +256,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     - 'lsearch', @str LINE_SEARCH_NAME
        select explicitely the line search method used for the linear systems (the
        default value is 'default').
-       Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
+       Possible values are 'simplest', 'systematic'.
     - 'with pseudo potential'
       for nonlinear problems, the criterion of the line search will
       be a pseudo potential instead of the residual. Still experimental since
-      not all bricks define a pseudo potential.
-
-      Return the number of iterations, if a iterative method is used. @*/
+      not all bricks define a pseudo potential. @*/
     sub_command
-      ("solve", 0, 15, 0, 1,
+      ("solve", 0, 15, 0, 0,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
        std::string lsearch = "default";
@@ -306,8 +304,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        gmm::default_newton_line_search default_ls(size_type(-1), alpha_mult);
        gmm::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
        gmm::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
-       gmm::basic_newton_line_search basic_ls(size_type(-1), alpha_min, alpha_mult);
-       gmm::quadratic_newton_line_search quadratic_ls(size_type(-1));
 
        gmm::abstract_newton_line_search *ls = 0;
 
@@ -315,13 +311,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	 ls = &default_ls;
        else if (lsearch == "simplest")
 	 ls = &simplest_ls;
-       else if (lsearch == "basic")
-	 ls = &basic_ls;
-       else if (lsearch == "systematic")
+       else //lsearch == "systematic"
 	 ls = &systematic_ls;
-       else if (lsearch == "quadratic")
-	 ls = &quadratic_ls;
-       else GMM_ASSERT1(false, "unknown line search");
 
 
        if (!md->model().is_complex()) {
@@ -335,7 +326,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 							      lsolver),
 				*ls, with_pseudo_pot);
        }
-       out.pop().from_integer(int(iter.get_iteration()));
        );
 
 

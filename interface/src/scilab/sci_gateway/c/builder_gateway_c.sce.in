@@ -82,6 +82,8 @@ Files = ['gfm_common.c','gfm_scilab.c','sci_spluinc.c','sci_spcholinc.c','sci_sp
 Libraries = ['../../src/c/libsp_get'];
 
 if getos()=='Windows' then
+  getfem_path = pwd() + '/../../../';
+  disp(getfem_path);
   cflags = ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + '/../../src/c';
   cflags = cflags + ' /I' + getfem_path + '/interface/src/' + ' /I' + getfem_path + '/src/getfem';
   cflags = cflags + ' /I' + SCI + '/../../include/scilab'; // For the binary distribution
@@ -100,6 +102,22 @@ if getos()=='Windows' then
     ldflags = sci_getfem_path + '/../../src/win32/libgetfemint.lib';
     ldflags = ldflags + ' ' + sci_getfem_path + '/../../src/win32/libgetfem.lib';
     ldflags = ldflags + ' ' + sci_getfem_path + '/../../src/win32/superlu.lib';
+
+    // Under windows, scilab ships only sparse_f.dll
+    // We need first to recreate the lib part 
+
+    // * Here are the mingw commands necessary to produce this lib library:
+    //   echo EXPORT > sparse_f.def
+    //   nm sparse_f.dll | grep 'T_' | sed 's/.* T _//' > sparse_f.def
+    //   dll_tool --def sparse_f.def --dllname sparse_f.dll --outputfile sparse_f.lib
+    // * Here are the visual commands necessary to produce this lib library:
+    //   dumpbin /exports sparse_f.dll > sparse_f.def
+    //   Edit sparse_f.def, add 'EXPORTS' on the first line and remove all the
+    //   cryptic symbols except the symbol name.
+    //   Now produce the lib file: lib /def:sparse_f.def /OUT:sparse_f.lib
+    
+    ldflags = ldflags + ' ' + SCI + '/bin/sparse_f.lib';
+
     if (isfile(sci_getfem_path + '/../../src/win32/qhullstatic.lib')) then
       ldflags = ldflags + ' ' + sci_getfem_path + '/../../src/win32/qhullstatic.lib';
     end  
@@ -115,11 +133,11 @@ else
   ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a';
 end
 
-if ~isempty('@QHULL_LIBS@') then
+if ~isempty('@QHULL_LIBS@') & getos()~='Windows' then
   ldflags = ldflags + ' -L/usr/lib @QHULL_LIBS@';
 end
 
-if ~isempty('@MUPARSER_LIBS@') then
+if ~isempty('@MUPARSER_LIBS@') & getos()~='Windows' then
   ldflags = ldflags + ' -L/usr/lib @MUPARSER_LIBS@';
 end
 

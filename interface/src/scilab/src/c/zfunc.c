@@ -49,8 +49,7 @@ double	real, imag;
 
 #ifndef zneg
 /* zneg -- returns negative of z */
-complex	zneg(z)
-complex	z;
+complex	zneg(complex z)
 {
     z.re = - z.re;
     z.im = - z.im;
@@ -61,8 +60,7 @@ complex	z;
 
 #ifndef zabs
 /* zabs -- returns |z| */
-double	zabs(z)
-complex	z;
+double	zabs(complex z)
 {
     Real	x, y, tmp;
     int		x_expt, y_expt;
@@ -89,8 +87,7 @@ complex	z;
 
 #ifndef zadd
 /* zadd -- returns z1+z2 */
-complex zadd(z1,z2)
-complex	z1, z2;
+complex zadd(complex z1, complex z2)
 {
     complex z;
 
@@ -103,8 +100,7 @@ complex	z1, z2;
 
 #ifndef zsub
 /* zsub -- returns z1-z2 */
-complex zsub(z1,z2)
-complex	z1, z2;
+complex zsub(complex z1, complex z2)
 {
     complex z;
 
@@ -117,8 +113,7 @@ complex	z1, z2;
 
 #ifndef zmlt
 /* zmlt -- returns z1*z2 */
-complex	zmlt(z1,z2)
-complex	z1, z2;
+complex	zmlt(complex z1, complex z2)
 {
     complex z;
 
@@ -131,8 +126,7 @@ complex	z1, z2;
 
 #ifndef zinv
 /* zmlt -- returns 1/z */
-complex	zinv(z)
-complex	z;
+complex	zinv(complex z)
 {
     Real	x, y, tmp;
     int		x_expt, y_expt;
@@ -162,8 +156,7 @@ complex	z;
 
 #ifndef zdiv
 /* zdiv -- returns z1/z2 */
-complex	zdiv(z1,z2)
-complex	z1, z2;
+complex	zdiv(complex z1, complex z2)
 {
     return zmlt(z1,zinv(z2));
 }
@@ -171,8 +164,7 @@ complex	z1, z2;
 
 #ifndef zsqrt
 /* zsqrt -- returns sqrt(z); uses branch with Re sqrt(z) >= 0 */
-complex	zsqrt(z)
-complex	z;
+complex	zsqrt(complex z)
 {
     complex	w;	/* == sqrt(z) at end */
     Real	alpha;
@@ -195,8 +187,7 @@ complex	z;
 
 #ifndef	zexp
 /* zexp -- returns exp(z) */
-complex	zexp(z)
-complex	z;
+complex	zexp(complex z)
 {
     complex	w;	/* == exp(z) at end */
     Real	r;
@@ -211,8 +202,7 @@ complex	z;
 
 #ifndef	zlog
 /* zlog -- returns log(z); uses principal branch with -pi <= Im log(z) <= pi */
-complex	zlog(z)
-complex	z;
+complex	zlog(complex z)
 {
     complex	w;	/* == log(z) at end */
 
@@ -224,8 +214,7 @@ complex	z;
 #endif
 
 #ifndef zconj
-complex	zconj(z)
-complex	z;
+complex	zconj(complex z)
 {
     complex	w;	/* == conj(z) */
 

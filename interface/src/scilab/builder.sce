@@ -26,7 +26,7 @@ toolbox_dir = get_absolute_file_path('builder.sce');
 
 // Under Windows, configure is not launched.
 if getos()=='Windows' then
-  copyfile(pwd() + '/sci_gateway/c/build_gateway_c.sce.in',pwd() + '/sci_gateway/c/build_gateway_c.sce');
+  copyfile(pwd() + '/sci_gateway/c/builder_gateway_c.sce.in',pwd() + '/sci_gateway/c/builder_gateway_c.sce');
 end
 
 tbx_builder_macros(toolbox_dir);
