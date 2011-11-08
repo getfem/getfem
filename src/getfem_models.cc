@@ -2698,13 +2698,13 @@ namespace getfem {
 	gmm::scale(vecl[0], scalar_type(-1));
       }
       
-    }
 #else
 
     GMM_ASSERT1(false, "Muparser is not installed, "
                     "you cannot use basic nonlinear brick");
 
 #endif
+    }
 
     basic_nonlinear_brick(const std::string &f_, const std::string &dfdu_)
       : f(f_), dfdu(dfdu_)

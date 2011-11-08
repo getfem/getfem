@@ -35,6 +35,10 @@
 #include <getfem/bgeot_kdtree.h>
 #endif
 
+#ifdef _MSC_VER
+#define xor ^
+#endif
+
 namespace getfem {
 
   typedef bgeot::convex<base_node>::dref_convex_pt_ct dref_convex_pt_ct;

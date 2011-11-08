@@ -1383,6 +1383,9 @@ namespace getfem {
 # else
 
   extern "C" {
+#ifdef _MSC_VER
+# include <libqhull/qhull_a.h>
+#else
 # include <qhull/qhull.h>
 //# include <qhull/mem.h>
 # include <qhull/qset.h>
@@ -1391,6 +1394,7 @@ namespace getfem {
 //# include <qhull/poly.h>
 //# include <qhull/io.h>
 //# include <qhull/stat.h>
+#endif
 }
 
   void delaunay(const std::vector<base_node> &pts,
