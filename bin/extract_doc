@@ -987,6 +987,148 @@ elif (option == 'matlab-doc'):
 elif (option == 'scilab-com'):
 
   langage = 'scilab'
+
+  # Write XML page related to types
+  
+  mfile = open('getfem_types.xml', 'w')
+  
+  mfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+  mfile.write('<refentry version="5.0-subset Scilab" xml:id="getfem_types" xml:lang="en"\n')
+  mfile.write('          xmlns="http://docbook.org/ns/docbook"\n')
+  mfile.write('          xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+  mfile.write('          xmlns:xi="http://www.w3.org/2001/XInclude"\n')
+  mfile.write('          xmlns:svg="http://www.w3.org/2000/svg"\n')
+  mfile.write('          xmlns:mml="http://www.w3.org/1998/Math/MathML"\n')
+  mfile.write('          xmlns:html="http://www.w3.org/1999/xhtml"\n')
+  mfile.write('          xmlns:db="http://docbook.org/ns/docbook">\n')
+
+  mfile.write('  <refnamediv>\n')
+  mfile.write('    <refname>getfem types</refname>\n')
+  mfile.write('  </refnamediv>\n\n')
+
+  mfile.write('')
+
+  mfile.write('  <refsection>\n')
+  mfile.write('    <title>Description</title>\n')
+  mfile.write('    <para>The expected type of each function argument is indicated in this reference. Here is a list of these types:</para>\n\n')
+  mfile.write('    <variablelist>\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>int</term>\n')
+  mfile.write('        <para>integer value</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>hobj</term>\n')
+  mfile.write('        <para>a handle for any getfem++ object</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>scalar</term>\n')
+  mfile.write('        <para>scalar value</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>string</term>\n');
+  mfile.write('        <para>string</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>ivec</term>')
+  mfile.write('        <para>vector of integer values</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>vec</term>\n')
+  mfile.write('        <para>vector</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>imat</term>\n')
+  mfile.write('         <para>matrix of integer values</para>')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>mat</term>\n')
+  mfile.write('        <para>matrix</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>spmat</term>\n')
+  mfile.write('        <para>sparse matrix (both matlab native sparse matrices, and getfem sparse matrices)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>precond</term>\n')
+  mfile.write('        <para>getfem preconditioner object</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('`        <term>mesh mesh</term>\n')
+  mfile.write('         <para>object descriptor (or gfMesh object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>mesh_fem</term>\n')
+  mfile.write('         <para>mesh fem object descriptor (or gfMeshFem object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>mesh_im</term>\n')
+  mfile.write('         <para>mesh im object descriptor( or gfMeshIm object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>mesh_slice</term>\n')
+  mfile.write('         <para>mesh slice object descriptor (or gfSlice object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>cvstruct</term>\n')
+  mfile.write('         <para>convex structure descriptor (or gfCvStruct object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>geotrans</term>\n')
+  mfile.write('         <para>geometric transformation descriptor (or gfGeoTrans object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>fem</term>\n')
+  mfile.write('         <para>fem descriptor (or gfFem object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>eltm</term>\n')
+  mfile.write('         <para>elementary matrix descriptor (or gfEltm object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>integ</term>\n')
+  mfile.write('         <para>integration method descriptor (or gfInteg object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>model</term>\n')
+  mfile.write('         <para>model descriptor (or gfModel object)</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>global_function</term>\n')
+  mfile.write('         <para>global function descriptor</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('      <varlistentry>\n')
+  mfile.write('         <term>mesher_object</term>\n')
+  mfile.write('         <para>mesher object descriptor</para>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('    </variablelist>\n\n')
+
+  mfile.write('    <para>Arguments listed between square brackets are optional. Lists between braces indicate</para>\n')
+  mfile.write('    <para>that the argument must match one of the elements of the list. For example:</para>\n\n')
+
+  mfile.write('    <programlisting role=""><![CDATA[ >> [X,Y]=dummy(int i, \'foo\' | \'bar\' [,vec v])]]></programlisting>\n\n')
+
+  mfile.write('    <para>means that the dummy function takes two or three arguments, its first being an integer value,</para>\n')
+  mfile.write('    <para>the second a string which is either \'foo\' or \'bar\', and a third optional argument. It returns two</para>\n')
+  mfile.write('    <para>values (with the usual matlab meaning, i.e. the caller can always choose to ignore them).</para>\n')
+  mfile.write('  </refsection>\n')
+  mfile.write('</refentry>\n')
+  
+  mfile.close()
+
+  # Write XML function documentation pages
   
   allc = sorted(objects+commands)
   for o in allc:
@@ -995,13 +1137,25 @@ elif (option == 'scilab-com'):
       [r, initiale] = StandardObjectName(o)
       if (os.path.exists(src_dir) and os.path.isfile(src_dir)):
 
-        mfile = open('gf_'+o+ext+'.rst', 'w')
+        mfile = open('gf_'+o+ext+'.xml', 'w')
         
-        mfile.write('gf_' + o + ext+'\n')
-        mfile.write('-------------------------------------------\n\n')
-        mfile.write('Synopsis\n')
-        mfile.write('++++++++\n')
-        mfile.write('::\n\n')
+        mfile.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        mfile.write('<refentry version="5.0-subset Scilab" xml:id="gf_' + o + ext + '" xml:lang="en"\n')
+        mfile.write('          xmlns="http://docbook.org/ns/docbook"\n')
+        mfile.write('          xmlns:xlink="http://www.w3.org/1999/xlink"\n')
+        mfile.write('          xmlns:xi="http://www.w3.org/2001/XInclude"\n')
+        mfile.write('          xmlns:svg="http://www.w3.org/2000/svg"\n')
+        mfile.write('          xmlns:mml="http://www.w3.org/1998/Math/MathML"\n')
+        mfile.write('          xmlns:html="http://www.w3.org/1999/xhtml"\n')
+        mfile.write('          xmlns:db="http://docbook.org/ns/docbook">\n')
+
+        mfile.write('  <refnamediv>\n')
+        mfile.write('    <refname>gf_' + o + ext + '</refname>\n')
+        mfile.write('  </refnamediv>\n\n')
+
+        mfile.write('  <refsynopsisdiv>\n')
+        mfile.write('    <title>Calling Sequence</title>\n\n')
+
         [gdoc, args] = ExtractGlobalDoc(src_dir);
         if (args != ''):
           args = FilterDoc(args, langage, objects, commands) + ', '
@@ -1022,18 +1176,26 @@ elif (option == 'scilab-com'):
           else:
             mname = ''
             params = params[1:].strip()
-          mfile.write('  ' + ret + 'gf_'+o+ext+firstarg+mname + params+')\n')
+          mfile.write('    <synopsis>' + ret + 'gf_'+o+ext+firstarg+mname + params+')</synopsis>\n')
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
 
+        mfile.write('  </refsynopsisdiv>\n\n')
         fl.close()
-        mfile.write('\nDescription :\n')
-        mfile.write('+++++++++++++\n\n')
+        
+        mfile.write('  <refsection>\n')
+        mfile.write('    <title>Description</title>\n')
+
         if ((o in set_objects) and (ext == '')):
-          mfile.write('General constructor for ' + o + ' objects.\n\n')
+          mfile.write('    <para>General constructor for ' + o + ' objects.</para>\n\n')
+
         gdoc = FilterDoc(gdoc, langage, objects, commands)
-        mfile.write(gdoc)
-        mfile.write('\n\nCommand list :\n')
-        mfile.write('++++++++++++++\n\n')
+        mfile.write('    <para>' + gdoc + '</para>\n')
+        mfile.write('  </refsection>\n\n')
+
+        mfile.write('  </refsection>\n')
+        mfile.write('    <title>Command list</title>\n\n')
+        mfile.write('    <itemizedlist>\n')
+
         fl = open(src_dir)
         doc = '';
         [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
@@ -1047,7 +1209,11 @@ elif (option == 'scilab-com'):
           else:
             mname = ''
             params = params[1:].strip()
-          mfile.write('\n  ``' + ret + 'gf_'+o+ext+firstarg+mname + params+')``\n\n')
+
+          mfile.write('    <listitem>\n')
+          mfile.write('    <para><literal>' + ret + 'gf_'+o+ext+firstarg+mname + params+')</literal></para>\n\n')
+
+          mfile.write('    <para>')
           doc = FilterDoc(doc, langage, objects, commands)
           nbspace = -1
           for l in doc.split('\n'):
@@ -1059,11 +1225,31 @@ elif (option == 'scilab-com'):
             if (nbspace > 0):
               l = l[:nbspace-1].strip() + l[nbspace:]
             if (nbspace >= 0):
-              mfile.write('    ' + l + '\n')
-          mfile.write('\n')
+              mfile.write('   ' + l + '\n')
+
+          mfile.write('    </para>\n')
+          mfile.write('    </listitem>\n\n')
+
           [ok, doc, dtype, mname, params, ret] = ExtractSubDoc(fl, langage)
     
         fl.close()
+        mfile.write('    </itemizedlist>\n')
+        mfile.write('  </refsection>\n\n')
+
+        mfile.write('  <refsection>\n')
+        mfile.write('    <title>See Also</title>\n')
+        mfile.write('    <simplelist type="inline">\n')
+        mfile.write('      <member><link linkend="getfem_types">getfem types</link></member>\n')
+        mfile.write('    </simplelist>\n')
+        mfile.write('  </refsection>\n\n')
+
+        mfile.write('  <refsection>\n')
+        mfile.write('    <title>Authors</title>\n')
+        mfile.write('    <para>Y. Collette</para>\n')
+        mfile.write('  </refsection>\n\n')
+
+        mfile.write('</refentry>\n')
+
         mfile.close()
 
 
