@@ -2049,7 +2049,7 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == 1,
                   "Penalized Coulomb friction brick need two variables");
       size_type nb_data_1 = ((option == 1) ? 2 : 3), nb_data_2 = nb_data_1;
-      if (!contact_only) nb_data_2 += 2;
+      if (!contact_only) nb_data_2 += 3;
       GMM_ASSERT1(dl.size() >= nb_data_1 && dl.size() <= nb_data_2,
                   "Wrong number of data for penalized Coulomb friction "
                   << "brick, " << dl.size() << " should be between "
@@ -2204,7 +2204,7 @@ namespace getfem {
       dl.push_back(dataname_alpha);
       if (dataname_wt.size() > 0) dl.push_back(dataname_wt);
     }
-
+    
     model::varnamelist vl(1, varname_u);
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
