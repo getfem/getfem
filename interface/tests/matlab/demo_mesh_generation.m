@@ -52,7 +52,7 @@ elseif (N == 3)
     mo1 = gf_mesher_object('cone', [0 0 0], [0 0 1], L, alpha);
     mo2 = gf_mesher_object('cylinder', [0 0 L], [0, 0, 1], L, R);
     mo = gf_mesher_object('union', mo1, mo2);
-    fixed_vertices = []; h = 0.5;
+    fixed_vertices = []; h = 1.7;
   end
 elseif (N == 4)
   mo = gf_mesher_object('ball', [0 0 0 4], 2);

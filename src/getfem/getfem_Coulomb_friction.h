@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2010 Yves Renard
+// Copyright (C) 2004-2011 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -506,6 +506,7 @@ namespace getfem {
                                          RHS_U_FRICT_V4,
                                          RHS_L_FRICT_V1,
                                          RHS_L_FRICT_V2,
+                                         RHS_L_FRICT_V3,
                                          K_UL_V1,
                                          K_UL_V2,
                                          K_UL_V3,
@@ -519,8 +520,10 @@ namespace getfem {
                                          K_UL_FRICT_V3,
                                          K_UL_FRICT_V4,
                                          K_UL_FRICT_V5,
+                                         K_UL_FRICT_V6,
                                          K_LL_FRICT_V1,
                                          K_LL_FRICT_V2,
+                                         K_LL_FRICT_V3,
                                          K_UU_FRICT_V1,
                                          K_UU_FRICT_V2,
                                          K_UU_FRICT_V3,
