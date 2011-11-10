@@ -115,7 +115,6 @@ namespace getfem {
       gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
       gmm::scale(xt, f*(f - xn/nxt));
 
-      
       gmm::scale(xt, -f); gmm::add(n, xt);
       gmm::rank_one_update(g, xt, xt);
       gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
@@ -1355,8 +1354,7 @@ namespace getfem {
 	if (nzt != scalar_type(0)) 
 	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
 	gmm::mult(A, B, GP);
-	for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	  t[i*N+j] = -GP(i,j);
+	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
       }
       break;
     case K_LL_FRICT_V1:
