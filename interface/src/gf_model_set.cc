@@ -823,15 +823,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str f, @str dfdu[, @str dataname, @int region])
-    Add a brick representing the scalar term :math:`f(u)` to the left-hand
+    Add a brick representing a scalar term :math:`f(u)` to the left-hand
     side of the model. In the weak form, one adds :math:`+\int f(u)v`.
     The function :math:`f` may optionally depend on :math:`\lambda`, i.e.,
     :math:`f(u)=f(u,\lambda)`.
     `f` and `dfdu` should contain the expressions for
     :math:`f(u)` and :math:`\frac{df}{du}(u)`, respectively.
-    `region` is an optional mesh region on which the term is added. If it is
-    not specified, it is added on the whole mesh. `dataname` is the optional
-    real scalar parameter :math:`\lambda`. 
+    `dataname` represents the optional real scalar parameter :math:`\lambda`
+    in the model. `region` is an optional mesh region on which the term is
+    added. If it is not specified, the term is added on the whole mesh.
     Return the brick index in the model.@*/
     sub_command
       ("add basic nonlinear brick", 4, 6, 0, 1,

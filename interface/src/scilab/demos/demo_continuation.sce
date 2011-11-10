@@ -23,12 +23,11 @@
 
 lines(0);
 stacksize('max');
-// path = get_absolute_file_path('demo_continuation.sce');
 
 gf_workspace('clear all');
-lambda0 = 0;
+lambda = 0;
 direction = 1;
-nbstep = 100;
+nbstep = 70;
 
 maxit = 5;
 thrit = 4;
@@ -54,7 +53,7 @@ mim = gf_mesh_im(m, 4);
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
-gf_model_set(md, 'add initialized data', 'lambda', [lambda0]);
+gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
 gf_model_set(md, 'add basic nonlinear brick', mim, 'u', 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 
 
@@ -63,13 +62,12 @@ h_init = h_init * nb_dof;
 h_max = h_max * nb_dof;
 h_min = h_min * nb_dof;
 
-if (~isempty(strindex(noisy, 'noisy'))) then
+if (~isempty(noisy)) then
     printf('computing initial point\n');
 end
 gf_model_get(md, 'solve', noisy, 'max_iter', 100, 'max_res', maxres_solve);
-[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction, noisy);
+[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction, noisy, 'h_init', h_init);
 U = gf_model_get(md, 'variable', 'u');
-lambda = gf_model_get(md, 'variable', 'lambda');
 printf('U = '); disp(U); printf('lambda = %e\n', lambda);
 printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 

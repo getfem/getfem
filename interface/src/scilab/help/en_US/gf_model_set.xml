@@ -39,6 +39,7 @@ ind_brick=gf_model_set(md,'add generalized Dirichlet condition with penalization
 gf_model_set(md,'change penalization coeff', int ind_brick, scalar coeff)
 ind_brick=gf_model_set(md,'add Helmholtz brick', mesh_im mim, string varname, string dataname[, int region])
 ind_brick=gf_model_set(md,'add Fourier Robin brick', mesh_im mim, string varname[, string dataname, int region)
+ind_brick=gf_model_set(md,'add basic nonlinear brick', mesh_im mim, string varname, string f, string dfdu[, string dataname, int region])
 ind_brick=gf_model_set(md,'add constraint with penalization',  string varname, scalar coeff, mat B, vec L)
 ind_brick=gf_model_set(md,'add constraint with multipliers,  string varname, string multname, mat B, vec L)
 ind_brick=gf_model_set(md,'add explicit matrix', string varname1, string varname2, mat B[, int issymmetric[, int iscoercive]])
@@ -317,6 +318,24 @@ ind_brick=gf_model_set(md, 'add contact with rigid obstacle brick', mesh_im mim,
         parameter <literal>q</literal> of the Fourier-Robin condition.
         <literal>region</literal> is the mesh region on which the term is
         added.</para>
+      </listitem>
+
+      <listitem>
+        <para>ind = gf_model_set(mds,'add basic nonlinear brick', mesh_im mim,
+        string varname, string f, string dfdu[, string dataname, int region]) add
+        a brick representing a scalar term <latex style="text"><![CDATA[f(u)]]></latex>
+        to the left-hand side of the model. In the weak form, one adds <latex style="text"><![CDATA[+\int f(u)v]]></latex>.
+        The function <latex style="text"><![CDATA[f]]></latex> may
+        optionally depend on <latex style="text"><![CDATA[\lambda]]></latex>,
+        i.e., <latex style="text"><![CDATA[f(u)=f(u,\lambda)]]></latex>.
+        <literal>f</literal> and <literal>dfdu</literal> should
+        contain the expressions for <latex style="text"><![CDATA[f(u)]]></latex>
+         and <latex style="text"><![CDATA[\frac{df}{du}(u)]]></latex>,
+        respectively. <literal>dataname</literal> represents the optional
+        real scalar parameter <latex style="text"><![CDATA[\lambda]]></latex>
+        in the model. <literal>region</literal> is an optional region on
+        which the term is added. If it is not specified, the term is added on the
+        whole mesh. Return the brick index in the model.</para>
       </listitem>
 
       <listitem>

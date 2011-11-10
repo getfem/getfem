@@ -339,14 +339,17 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter, @scalar init_dir[, ...])
+    /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar init_dir[, ...])
     Initialize the Moore-Penrose continuation (for more details about the
     continuation see the Getfem++ user documentation): The variable
-    `dataname_parameter` should parametrize the model. Return a tangent
-    corresponding to the solution branch at the current solution and the
-    current value of the parameter, and an initial step size for the
-    continuation. Direction of the computed tangent with respect to the
-    parameter is determined by the sign of `init_dir`.
+    `dataname_parameter` should parametrize the model. If the parametrization is
+    done via some vector datum, `dataname_init` and `dataname_final` should
+    store two given values of this datum determining the parametrization, and
+    `dataname_current` serves for actual values of this datum. Return a tangent
+    corresponding to the solution branch at the current solution and the current
+    value of the parameter, and an initial step size for the continuation.
+    Direction of the computed tangent with respect to the parameter is
+    determined by the sign of `init_dir`.
     
     Additional options:
     
@@ -360,16 +363,30 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        computations (residual values etc.);
     - 'epsilon', @scalar EPS
        increment to be used to compute the incorporated finite
-       difference;
+       difference (the default value is 1e-8);
     - 'max_res_solve', @scalar RES_SOLVE
-       target residual value for the linear system to be solved;
+       target residual value for the linear system to be solved (the default
+       value is 1e-7);
     - 'h_init', @scalar HIN
-       initial step size.@*/
+       initial step size (the default value is 1e-2).@*/
     sub_command
-      ("init Moore-Penrose continuation", 2, 11, 0, 3,
+      ("init Moore-Penrose continuation", 2, 14, 0, 3,
 
+       bool with_parametrized_data = false;
        std::string dataname_parameter = in.pop().to_string();
-       scalar_type t_gamma = in.pop().to_scalar();
+       std::string dataname_init; std::string dataname_final;
+       std::string dataname_current;
+
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+	 with_parametrized_data = true;
+	 dataname_init = argin.to_string();
+	 dataname_final = in.pop().to_string();
+	 dataname_current = in.pop().to_string();
+	 argin = in.pop();
+       }
+       scalar_type t_gamma = argin.to_scalar();
+       
        std::string lsolver = "auto";
        size_type maxit = 10;
        size_type thrit = 8;
@@ -409,11 +426,20 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	 THROW_BADARG("Sorry, Moore-Penrose continuation " 
 		      "has only a real version.");
        
-       getfem::S_getfem_model S
-       (md->model(), dataname_parameter,
-	getfem::rselect_linear_solver(md->model(), lsolver),
-	maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
-	h_dec, epsilon, maxres_solve, noisy);
+       getfem::S_getfem_model *S = 0;
+       if (with_parametrized_data)
+	 S = new getfem::S_getfem_model
+	   (md->model(), dataname_parameter, dataname_init, dataname_final,
+	    dataname_current,
+	    getfem::rselect_linear_solver(md->model(), lsolver), maxit,
+	    thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+	    h_dec, epsilon, maxres_solve, noisy);
+       else
+	 S = new getfem::S_getfem_model
+	   (md->model(), dataname_parameter,
+	    getfem::rselect_linear_solver(md->model(), lsolver),
+	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
+	    h_inc, h_dec, epsilon, maxres_solve, noisy);
 
        size_type nbdof = md->model().nb_dof();
        std::vector<double> yy(nbdof);
@@ -426,21 +452,24 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type h;
        std::vector<double> tt_y(nbdof);
 
-       getfem::init_Moore_Penrose_continuation(S, yy, gamma,
+       getfem::init_Moore_Penrose_continuation(*S, yy, gamma,
 					       tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
 
-    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter, @vec tangent, @scalar tangent_parameter, @scalar h[, ...])
-    Compute one step of the Moore-Penrose continuation (for more details about
-    the continuation see the Getfem++ user documentation): The variable
-    `dataname_parameter` should parametrize the model. Take the current
-    solution, the current value of the parameter, the tangent given by
-    `tangent` and `tangent_parameter`, and the step size `h`, return a new
-    tangent and step size for the next step (and save a new point in the
-    model);
+
+    /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter[, @str dataname_init, @str dataname_final, @str dataname_current], @vec tangent, @scalar tangent_parameter, @scalar h[, ...])
+    Compute one step of the Moore-Penrose continuation (for more details
+    about the continuation see the Getfem++ user documentation): The variable
+    `dataname_parameter` should parametrize the model. If the parametrization is
+    done via some vector datum, `dataname_init` and `dataname_final` should
+    store two given values of this datum determining the parametrization, and
+    `dataname_current` serves for actual values of this datum. Take the current
+    solution, the current value of the parameter, the tangent given by `tangent`
+    and `tangent_parameter`, and the step size `h`, return a new tangent and
+    step size for the next step (and save a new point in the model).
 
     Additional options:
 
@@ -453,37 +482,54 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        determines how detailed information has to be displayed during the
        process (residual values etc.);
     - 'max_iter', @int NIT
-       maximum number of iterations allowed in the correction;
+       maximum number of iterations allowed in the correction (the default
+       value is 10);
     - 'thr_iter', @int TIT
-       threshold number of iterations of the correction for enlarging the step
-       size;
+       threshold number of iterations of the correction for enlarging the
+       step size (the default value is 8);
     - 'max_res', @scalar RES
-       target residual value of the new point;
+       target residual value of the new point (the default value is 1e-6);
     - 'max_diff', @scalar DIFF
-       determines a criterion of convergence to the new tangent vector;
+       determines a criterion of convergence to the new tangent vector (the
+       default value is 1e-6);
     - 'min_ang', @scalar ANG
-       serves for controlling changes of direction between tangents to the
-       solution curve at the old point and the new one;
+       minimal value of the cosine of the angle between tangents to the
+       solution curve at the old point and the new one (the default value is
+       0.9);
     - 'h_init', @scalar HIN
-       initial step size;
+       initial step size (the default value is 1e-2);
     - 'h_max', @scalar HMAX
-       maximal step size;
+       maximal step size (the default value is 1e-1);
     - 'h_min', @scalar HMIN
-       minimal step size;
+       minimal step size (the default value is 1e-5);
     - 'h_inc', @scalar HINC
-       factor for enlarging the step size;
+       factor for enlarging the step size (the default value is 1.3);
     - 'h_dec', @scalar HDEC
-       factor for diminishing the step size;
+       factor for diminishing the step size (the default value is 0.5);
     - 'epsilon', @scalar EPS
        increment to be used to compute the incorporated finite
-       differences;
+       differences (the default value is 1e-8);
     - 'max_res_solve', @scalar RES_SOLVE
-       target residual value for the linear systems to be solved.@*/
+       target residual value for the linear systems to be solved (the default
+       value is 1e-7).@*/
     sub_command
-      ("Moore-Penrose continuation", 4, 31, 0, 3,
+      ("Moore-Penrose continuation", 4, 34, 0, 3,
 
+       bool with_parametrized_data = false;
        std::string dataname_parameter = in.pop().to_string();
-       darray t_y = in.pop().to_darray();
+       std::string dataname_init; std::string dataname_final;
+       std::string dataname_current;
+
+       mexarg_in argin = in.pop();
+       if (argin.is_string()) {
+	 with_parametrized_data = true;
+	 dataname_init = argin.to_string();
+	 dataname_final = in.pop().to_string();
+	 dataname_current = in.pop().to_string();
+	 argin = in.pop();
+       }
+
+       darray t_y = argin.to_darray();
        scalar_type t_gamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
        std::string lsolver = "auto";
@@ -561,20 +607,29 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 		   "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
 
-       getfem::S_getfem_model S
-       (md->model(), dataname_parameter,
-	getfem::rselect_linear_solver(md->model(), lsolver),
-	maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
-	h_dec, epsilon, maxres_solve, noisy);
+       getfem::S_getfem_model *S = 0;
+       if (with_parametrized_data)
+	 S = new getfem::S_getfem_model
+	   (md->model(), dataname_parameter, dataname_init, dataname_final,
+	    dataname_current,
+	    getfem::rselect_linear_solver(md->model(), lsolver), maxit,
+	    thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+	    h_dec, epsilon, maxres_solve, noisy);
+       else
+	 S = new getfem::S_getfem_model
+	   (md->model(), dataname_parameter,
+	    getfem::rselect_linear_solver(md->model(), lsolver),
+	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
+	    h_inc, h_dec, epsilon, maxres_solve, noisy);
 
        std::vector<double> tt_y(nbdof);
        gmm::copy(t_y, tt_y);
-       getfem::Moore_Penrose_continuation(S, yy, gamma, tt_y, t_gamma, h);
+       getfem::Moore_Penrose_continuation(*S, yy, gamma, tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
-
+ 
 
     /*@GET V = ('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])
       Compute the Von-Mises stress or the Tresca stress of a field (only
@@ -601,6 +656,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        (md->model(), varname, dataname_lambda, dataname_mu, gfi_mf->mesh_fem(), VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
+
 
     /*@GET V = ('compute Von Mises or Tresca', @str varname, @str lawname, @str dataname, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises stress or the Tresca stress of a field

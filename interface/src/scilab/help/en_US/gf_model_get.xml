@@ -28,7 +28,9 @@ name=gf_model_get(md,'mult varname Dirichlet', int ind_brick)
 V=gf_model_get(md,'from variables')
 gf_model_get(md,'assembly'[, string option])
 gf_model_get(md,'solve' [,...])
-V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])
+E=gf_model_get(md,'init Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], scalar init_dir[,...])
+E=gf_model_get(md,'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[,...])
+V=gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])
     </synopsis>
   </refsynopsisdiv>
 
@@ -117,10 +119,181 @@ V = gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', string v
           </listitem>
 
           <listitem>
-            <para>- 'lsolver', SOLVERNAME select explicitely the solver used
+            <para>'lsolver', SOLVERNAME select explicitely the solver used
             for the linear systems (the default value is 'auto', which lets
             getfem choose itself). Possible values are 'superlu', 'mumps' (if
             supported), 'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>E=gf_model_get(mds,'init Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], scalar init_dir[,...])
+        Initialize the Moore-Penrose continuation (for more details about the
+        continuation see the Getfem++ user documentation): The variable
+        `dataname_parameter` should parametrize the model. If the parametrization
+        is done via some vector datum, `dataname_init` and `dataname_final`
+        should store two given values of this datum determining the
+        parametrization, and `dataname_current` serves for actual values of this
+        datum. Return a tangent corresponding to the solution branch at the
+        current solution and the current value of the parameter, and an initial
+        step size for the continuation. Direction of the computed tangent with
+        respect to the parameter is determined by the sign of `init_dir`.
+        </para>
+    
+        <para>Additional options:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>'lsolver', string SOLVER_NAME</para>
+
+            <para>name of a solver to be used for the incorporated linear
+            system (the default value is 'auto', which lets getfem choose
+            itself); possible values are 'superlu', 'mumps' (if supported),
+            'cg/ildlt', 'gmres/ilu' and 'gmres/ilut';</para>
+          </listitem>
+
+          <listitem>
+            <para>'noisy' or 'very_noisy'</para>
+
+            <para>determines how detailed information has to be displayed
+            during the computations (residual values etc.);</para>
+          </listitem>
+
+          <listitem>
+            <para>'epsilon', scalar EPS</para>
+
+            <para>increment to be used to compute the incorporated finite
+            difference (the default value is 1e-8);</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_res_solve', scalar RES_SOLVE</para>
+       
+            <para>target residual value for the linear system to be solved
+            (the default value is 1e-7);</para>
+          </listitem>
+
+          <listitem>
+            <para>'h_init', scalar HIN</para>
+
+            <para>initial step size (the default value is 1e-2).</para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+
+      <listitem>
+        <para>E=gf_model_get(mds,'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[,...])
+        Compute one step of the Moore-Penrose continuation (for more details
+        about the continuation see the Getfem++ user documentation): The variable
+        `dataname_parameter` should parametrize the model. If the parametrization
+        is done via some vector datum, `dataname_init` and `dataname_final`
+        should store two given values of this datum determining the
+        parametrization, and `dataname_current` serves for actual values of this
+        datum. Take the current solution, the current value of the parameter, the
+        tangent given by `tangent` and `tangent_parameter`, and the step size
+        `h`, return a new tangent and step size for the next step (and save a new
+        point in the model).</para>
+    
+        <para>Additional options:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>'lsolver', string SOLVER_NAME</para>
+
+            <para>name of a solver to be used for the incorporated linear
+            systems (the default value is 'auto', which lets getfem choose
+            itself); possible values are 'superlu', 'mumps' (if supported),
+            'cg/ildlt', 'gmres/ilu' and 'gmres/ilut';</para>
+          </listitem>
+
+          <listitem>
+            <para>'noisy' or 'very_noisy'</para>
+
+            <para>determines how detailed information has to be displayed
+            during the computations (residual values etc.);</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_iter', int NIT</para>
+
+            <para>maximum number of iterations allowed in the correction (the
+            default value is 10);</para>
+          </listitem>
+
+          <listitem>
+            <para>'thr_iter', int TIT</para>
+
+            <para>threshold number of iterations of the correction for
+            enlarging the step size (the default value is 8);</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_res', scalar RES</para>
+
+            <para>target residual value of the new point (the default value is
+            1e-6);</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_diff', scalar DIFF</para>
+
+            <para>determines a criterion of convergence to the new tangent
+            vector (the default value is 1e-6);</para>
+          </listitem>
+
+          <listitem>
+            <para>'min_ang', scalar ANG</para>
+
+            <para>minimal value of the cosine of the angle between tangents to
+            the solution curve at the old point and the new one (the default
+            value is 0.9);</para>
+          </listitem>
+
+          <listitem>
+            <para>'h_init', scalar HIN</para>
+
+            <para>initial step size (the default value is 1e-2).</para>
+          </listitem>
+
+          <listitem>
+            <para>'h_max', scalar HMAX</para>
+
+            <para>maximal step size (the default value is 1e-1);</para>
+          </listitem>
+
+          <listitem>
+            <para>'h_min', scalar HMIN</para>
+
+            <para>minimal step size (the default value is 1e-5);</para>
+          </listitem>
+
+          <listitem>
+            <para>'h_inc', scalar HINC</para>
+
+            <para>factor for enlarging the step size (the default value is
+            1.3);</para>
+          </listitem>
+
+          <listitem>
+            <para>'h_dec', scalar HDEC</para>
+
+            <para>factor for diminishing the step size (the default value is
+            0.5);</para>
+          </listitem>
+
+          <listitem>
+            <para>'epsilon', scalar EPS</para>
+
+            <para>increment to be used to compute the incorporated finite
+            difference (the default value is 1e-8);</para>
+          </listitem>
+
+          <listitem>
+            <para>'max_res_solve', scalar RES_SOLVE</para>
+       
+            <para>target residual value for the linear systems to be solved
+            (the default value is 1e-7);</para>
           </listitem>
         </itemizedlist>
       </listitem>

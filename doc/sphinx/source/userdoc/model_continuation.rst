@@ -64,14 +64,20 @@ with
 
    F^{l}(Y, T) := \begin{pmatrix}F(Y)\\ (T_{j+1}^{l-1})^{T}(Y - Y_{j+1}^{l-1})\\ \nabla F(Y_{j+1}^{l-1})T\\ (T_{j+1}^{l-1})^{T} T - (T_{j+1}^{l-1})^{T}T_{j+1}^{l-1})\end{pmatrix}.
 
+.. _ud_fig_correction:
+.. figure:: images/getfemusercorrection.png
+   :align: center
+
+   Correction
+
 A new couple :math:`(Y_{j+1}, T_{j+1})` is set to
 :math:`(Y_{j+1}^{l}, T_{j+1}^{l})` iff
 :math:`\lVert F(Y_{j+1}^{l})\rVert \leq \varepsilon`,
 :math:`\lVert Y_{j+1}^{l} - Y_{j+1}^{l-1}\rVert \leq \varepsilon'` and
 :math:`(T_{j+1}^{l})^{T} T_{j} \geq \vartheta_{\mathrm{min}}`. Let us note that
 the partial gradient :math:`\nabla_{U} F` is assembled analytically whereas
-:math:`\nabla_{\lambda} F` is evaluated by a finite difference with the
-increment equal to :math:`\epsilon`. 
+:math:`\nabla_{\lambda} F` is evaluated by a finite difference with an increment
+equal to :math:`\epsilon`. 
 
 Finally, the step size :math:`h_{j+1}` in the next prediction depends on how
 this Newton correction is successfull. Denoting the number of iterations needed
@@ -87,15 +93,37 @@ where :math:`0 < h_{\mathrm{dec}} < 1 < h_{\mathrm{inc}}`,
 beginning, one sets :math:`h_{1} := h_{\mathrm{init}}` for some
 :math:`h_{\mathrm{min}} \leq h_{\mathrm{init}} \leq h_{\mathrm{max}}`.
 
-In order to apply the Moore-Penrose continuation on a model defined in |gf|, one
-has to do the initialization first::
+In |gf|, the Moore-Penrose continuation is implemented for two ways of
+parametrization of the model:
 
-  getfem::S_getfem_model s(model, parameter_name, ls, maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc, h_dec, eps, maxres_solve, noisy);
+1. The parameter :math:`\lambda` is directly some scalar datum that the model
+   depends on.
+
+2. The model is parametrized by the scalar parameter :math:`\lambda` *via* some
+   vector datum :math:`V` that it depends on. In this case, one takes the linear
+   path
+
+   .. math::
+
+      \lambda \mapsto V(\lambda) := (1 - \lambda)V^{0} + \lambda V^{1},
+
+   where :math:`V^{0}` and :math:`V^{1}` are given values of :math:`V`, and one
+   traces a solution set to the problem
+
+   .. math::
+
+      F(U, V(\lambda)) = 0.
+
+In order to use the continuation, one has to do its initialization first::
+
+  getfem::S_getfem_model s(model, parameter_name[, initdata_name, finaldata_name, currentdata_name],
+                           ls, maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+			   h_dec, eps, maxres_solve, noisy);
   getfem::init_Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
 
-where ``parameter_name`` is the name of the variable representing the parameter
-in the model, ``ls`` is the name of a solver to be used for the linear systems
-incorporated in the process (e.g.
+where ``parameter_name`` is the name of the model datum representing
+:math:`\lambda`, ``ls`` is the name of a solver to be used for the linear
+systems incorporated in the process (e.g.
 ``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``),
 the integers ``maxit`` and ``thrit`` stand for the maximal number of iterations
 allowed in the correction and :math:`l_{\mathrm{thr}}`, respectively, the reals
@@ -106,9 +134,14 @@ allowed in the correction and :math:`l_{\mathrm{thr}}`, respectively, the reals
 :math:`h_{\mathrm{inc}}`, :math:`h_{\mathrm{dec}}`, :math:`\epsilon` and the
 target residual value for the linear systems to be solved, and the non-negative
 integer ``noisy`` determines how detailed information has to be displayed in the
-course of the continuation process (the larger value the more details). Further,
-``U`` should be a solution for the value of parameter :math:`\lambda` equal to
-``lambda`` so that :math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). In accordance with
+course of the continuation process (the larger value the more details). Under
+the optional data names ``initdata_name`` and ``finaldata_name``, :math:`V^{0}`
+and :math:`V^{1}` should be stored, respectively, in the case of the
+parametrization by vector datum. Under ``currentdata_name``, the values of
+:math:`V(\lambda)` are stored then, that is, actual values of the datum the
+model depends on. Further, ``U`` should be a solution for the value of parameter
+:math:`\lambda` equal to ``lambda`` so that
+:math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). In accordance with
 the sign of the initial value ``T_lambda``, an initial unit tangent
 :math:`T_{0}` corresponding to :math:`Y_{0}` is computed and returned in
 ``T_U``, ``T_lambda``. Moreover, ``h`` is set to the initial step size
@@ -122,6 +155,6 @@ After each call, a new point on the solution curve and the corresponding tangent
 are returned in the variables ``U``, ``lambda`` and ``T_U``, ``T_lambda``. Step
 size to the next prediction is returned in ``h``.
 
-For a complete example of use, you can see the test programs
+For a complete example of use, see the test programs
 ``tests/test_continuation.cc``, ``interface/tests/matlab/demo_continuation.m``
 or ``interface/src/scilab/demos/demo_continuation.sce``.
