@@ -232,7 +232,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET nbit = ('solve'[, ...])
+    /*@GET [nbit, converged] = ('solve'[, ...])
     Run the standard getfem solver.
 
     Note that you should be able to use your own solver if you want
@@ -264,7 +264,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
       Return the number of iterations, if a iterative method is used. @*/
     sub_command
-      ("solve", 0, 15, 0, 1,
+      ("solve", 0, 15, 0, 2,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
        std::string lsearch = "default";
@@ -336,6 +336,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 				*ls, with_pseudo_pot);
        }
        out.pop().from_integer(int(iter.get_iteration()));
+       out.pop().from_integer(int(iter.converged()));
        );
 
 
@@ -426,20 +427,23 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	 THROW_BADARG("Sorry, Moore-Penrose continuation " 
 		      "has only a real version.");
        
-       getfem::S_getfem_model *S = 0;
-       if (with_parametrized_data)
-	 S = new getfem::S_getfem_model
+       getfem::S_getfem_model S;
+       if (with_parametrized_data) {
+	  getfem::S_getfem_model S1
 	   (md->model(), dataname_parameter, dataname_init, dataname_final,
 	    dataname_current,
 	    getfem::rselect_linear_solver(md->model(), lsolver), maxit,
 	    thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
 	    h_dec, epsilon, maxres_solve, noisy);
-       else
-	 S = new getfem::S_getfem_model
+	  S = S1;
+       }  else {
+	 getfem::S_getfem_model S1
 	   (md->model(), dataname_parameter,
 	    getfem::rselect_linear_solver(md->model(), lsolver),
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
 	    h_inc, h_dec, epsilon, maxres_solve, noisy);
+	 S = S1;
+       }
 
        size_type nbdof = md->model().nb_dof();
        std::vector<double> yy(nbdof);
@@ -452,7 +456,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type h;
        std::vector<double> tt_y(nbdof);
 
-       getfem::init_Moore_Penrose_continuation(*S, yy, gamma,
+       getfem::init_Moore_Penrose_continuation(S, yy, gamma,
 					       tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
@@ -607,24 +611,28 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 		   "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
 
-       getfem::S_getfem_model *S = 0;
-       if (with_parametrized_data)
-	 S = new getfem::S_getfem_model
+       getfem::S_getfem_model S;
+       if (with_parametrized_data) {
+	 getfem::S_getfem_model S1
 	   (md->model(), dataname_parameter, dataname_init, dataname_final,
 	    dataname_current,
 	    getfem::rselect_linear_solver(md->model(), lsolver), maxit,
 	    thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
 	    h_dec, epsilon, maxres_solve, noisy);
-       else
-	 S = new getfem::S_getfem_model
+	 S = S1;
+       }
+       else {
+	 getfem::S_getfem_model S1
 	   (md->model(), dataname_parameter,
 	    getfem::rselect_linear_solver(md->model(), lsolver),
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
 	    h_inc, h_dec, epsilon, maxres_solve, noisy);
+	 S = S1;
+       }
 
        std::vector<double> tt_y(nbdof);
        gmm::copy(t_y, tt_y);
-       getfem::Moore_Penrose_continuation(*S, yy, gamma, tt_y, t_gamma, h);
+       getfem::Moore_Penrose_continuation(S, yy, gamma, tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);

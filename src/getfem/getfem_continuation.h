@@ -206,7 +206,7 @@ namespace getfem {
  
   struct S_getfem_model {
 
-    model &md;  // for real models only
+    model *md;  // for real models only
     std::string parameter_name;
     rmodel_plsolver_type lsolver;
     unsigned long maxit_, thrit_;
@@ -226,7 +226,7 @@ namespace getfem {
 		   double hmax = 1.e-1, double hmin = 1.e-5,
 		   double hinc = 1.3, double hdec = 0.5, double eps = 1.e-8,
 		   double mress = 1.e-7, int noi = 0)
-      : md(m), parameter_name(pn), lsolver(ls), maxit_(mit) , thrit_(tit),
+      : md(&m), parameter_name(pn), lsolver(ls), maxit_(mit) , thrit_(tit),
 	maxres_(mres), maxdiff_(mdiff), minang_(mang), h_init_(hin),
 	h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
 	epsilon_(eps), maxres_solve_(mress), noisy_(noi), build_F(true),
@@ -242,13 +242,15 @@ namespace getfem {
 		   double hmax = 1.e-1, double hmin = 1.e-5,
 		   double hinc = 1.3, double hdec = 0.5, double eps = 1.e-8,
 		   double mress = 1.e-7, int noi = 0)
-      : md(m), parameter_name(pn), lsolver(ls), maxit_(mit) , thrit_(tit),
+      : md(&m), parameter_name(pn), lsolver(ls), maxit_(mit) , thrit_(tit),
 	maxres_(mres), maxdiff_(mdiff), minang_(mang), h_init_(hin),
 	h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
 	epsilon_(eps), maxres_solve_(mress), noisy_(noi), build_F(true),
 	with_parametrized_data(true), initdata_name(in), finaldata_name(fn),
 	currentdata_name(cn)
     {}
+
+    S_getfem_model(void) {}
     
 
     // Linear algebra functions
@@ -267,50 +269,50 @@ namespace getfem {
     // Evaluation of  ...
     void F(const VECT &y, double gamma, VECT &f) {
       if (build_F) {
-	md.set_real_variable(parameter_name)[0] = gamma;
+	md->set_real_variable(parameter_name)[0] = gamma;
 	if (with_parametrized_data) {
-	  gmm::add(gmm::scaled(md.real_variable(initdata_name), 1. - gamma),
-		   gmm::scaled(md.real_variable(finaldata_name), gamma),
-		   md.set_real_variable(currentdata_name));
+	  gmm::add(gmm::scaled(md->real_variable(initdata_name), 1. - gamma),
+		   gmm::scaled(md->real_variable(finaldata_name), gamma),
+		   md->set_real_variable(currentdata_name));
 	}
-	md.to_variables(y);
-	md.assembly(model::BUILD_RHS);
+	md->to_variables(y);
+	md->assembly(model::BUILD_RHS);
       }
-      gmm::copy(gmm::scaled(md.real_rhs(), -1.), f);
+      gmm::copy(gmm::scaled(md->real_rhs(), -1.), f);
     }
 
     void solve_grad(const VECT &y, double gamma,
 		    const VECT &L, VECT &g) {
-      md.set_real_variable(parameter_name)[0] = gamma;
+      md->set_real_variable(parameter_name)[0] = gamma;
       if (with_parametrized_data) {
-	gmm::add(gmm::scaled(md.real_variable(initdata_name), 1. - gamma),
-		 gmm::scaled(md.real_variable(finaldata_name), gamma),
-		 md.set_real_variable(currentdata_name));
+	gmm::add(gmm::scaled(md->real_variable(initdata_name), 1. - gamma),
+		 gmm::scaled(md->real_variable(finaldata_name), gamma),
+		 md->set_real_variable(currentdata_name));
       }
-      md.to_variables(y);
+      md->to_variables(y);
       if (noisy_ > 1) cout << "starting computing tangent matrix" << endl;
-      md.assembly(model::BUILD_MATRIX);
+      md->assembly(model::BUILD_MATRIX);
       if (noisy_ > 1) cout << "starting linear solver" << endl;
       gmm::iteration iter(maxres_solve_, noisy_, 40000);
-      (*lsolver)(md.real_tangent_matrix(), g, L, iter);
+      (*lsolver)(md->real_tangent_matrix(), g, L, iter);
       if (noisy_ > 1) cout << "linear solver done" << endl;
     }
 
     void solve_grad(const VECT &y, double gamma, const VECT &L1,
 		    const VECT &L2, VECT &g1, VECT &g2) {
-      md.set_real_variable(parameter_name)[0] = gamma;
+      md->set_real_variable(parameter_name)[0] = gamma;
       if (with_parametrized_data) {
-	gmm::add(gmm::scaled(md.real_variable(initdata_name), 1. - gamma),
-		 gmm::scaled(md.real_variable(finaldata_name), gamma),
-		 md.set_real_variable(currentdata_name));
+	gmm::add(gmm::scaled(md->real_variable(initdata_name), 1. - gamma),
+		 gmm::scaled(md->real_variable(finaldata_name), gamma),
+		 md->set_real_variable(currentdata_name));
       }
-      md.to_variables(y);
+      md->to_variables(y);
       if (noisy_ > 1) cout << "starting computing tangent matrix" << endl;
-      md.assembly(model::BUILD_MATRIX);
+      md->assembly(model::BUILD_MATRIX);
 
       gmm::iteration iter(maxres_solve_, noisy_, 40000);
-      (*lsolver)(md.real_tangent_matrix(), g1, L1, iter);
-      (*lsolver)(md.real_tangent_matrix(), g2, L2, iter);
+      (*lsolver)(md->real_tangent_matrix(), g1, L1, iter);
+      (*lsolver)(md->real_tangent_matrix(), g2, L2, iter);
     }
 
     void gamma_derivative(const VECT &y, double gamma, VECT &d) {

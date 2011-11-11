@@ -350,14 +350,14 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        
        dal::bit_vector pids;
        for (size_type j=0; j < v.getn(); j++) {
-	 size_type cv = v(0,j);
-	 short_type f = short_type(v(1,j));
+	 size_type cv = v(0,j) - config::base_index();
+	 short_type f = short_type(v(1,j) - config::base_index());
 	 
 	 if (pmesh->convex_index().is_in(cv)) {
-	   if (short_type(-1)==f){// this works in python only, please porting it to matlab.
+	   if (short_type(-1)==f){
 	     for (unsigned i=0; i < pmesh->nb_points_of_convex(cv); ++i)
 	       pids.add(pmesh->ind_points_of_convex(cv)[i]);
-	   } else if ( 0. <= f && f <= pmesh->structure_of_convex(cv)->nb_faces()){
+	   } else if (f < pmesh->structure_of_convex(cv)->nb_faces()) {
 	     for (unsigned i=0; i < pmesh->structure_of_convex(cv)->nb_points_of_face(f); ++i)
 	       pids.add(pmesh->ind_points_of_face_of_convex(cv,f)[i]);
 	   }
@@ -396,16 +396,16 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
       ("pid in regions", 1, 1, 0, 1,
        check_empty_mesh(pmesh);
        
-       dal::bit_vector rlst = in.pop().to_bit_vector();
+       dal::bit_vector rlst = in.pop().to_bit_vector(&pmesh->regions_index(), 0);
        dal::bit_vector pids;
        
        for (dal::bv_visitor r(rlst); !r.finished(); ++r) {
 	 if (pmesh->regions_index().is_in(r)) {
 	   for (getfem::mr_visitor i(pmesh->region(r)); !i.finished(); ++i) {
-	     if (short_type(-1)==i.f()){// this works in python only, please porting it to matlab.
+	     if (short_type(-1)==i.f()) {
 	       for (unsigned j=0; j < pmesh->nb_points_of_convex(i.cv()); ++j)
 		 pids.add(pmesh->ind_points_of_convex(i.cv())[j]);
-	     } else{
+	     } else {
 	       for (unsigned j=0; j < pmesh->structure_of_convex(i.cv())->nb_points_of_face(i.f()); ++j)
 		 pids.add(pmesh->ind_points_of_face_of_convex(i.cv(),i.f())[j]);
 	     }
