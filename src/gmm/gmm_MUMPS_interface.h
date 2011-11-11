@@ -180,13 +180,13 @@ namespace gmm {
     id.ICNTL(3) = -1; // output stream for global information
     id.ICNTL(4) = 0;  // verbosity level
     
-    id.ICNTL(14) += 40; /* small boost to the workspace size as we have encountered some problem
+    id.ICNTL(14) += 80; /* small boost to the workspace size as we have encountered some problem
                            who did not fit in the default settings of mumps.. 
                            by default, ICNTL(14) = 15 or 20
                        */
     //cout << "ICNTL(14): " << id.ICNTL(14) << "\n";
 
-    id.ICNTL(22) = 1;   /* enables out-of-core support */
+    // id.ICNTL(22) = 1;   /* enables out-of-core support */
 
     id.job = 6;
     mumps_interf<T>::mumps_c(id);
