@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2010 Yves Renard.
+// Copyright (C) 2009-2011 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -232,7 +232,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET [nbit, converged] = ('solve'[, ...])
+    /*@GET @CELL{nbit, converged} = ('solve'[, ...])
     Run the standard getfem solver.
 
     Note that you should be able to use your own solver if you want
@@ -335,8 +335,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 							      lsolver),
 				*ls, with_pseudo_pot);
        }
-       out.pop().from_integer(int(iter.get_iteration()));
-       out.pop().from_integer(int(iter.converged()));
+       if (out.remaining()) out.pop().from_integer(int(iter.get_iteration()));
+       if (out.remaining()) out.pop().from_integer(int(iter.converged()));
        );
 
 
