@@ -262,7 +262,7 @@ elseif (version == 9) % The continuous version, Uzawa on the augmented Lagrangia
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
   gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
-	         'obstacle', 'r', GAMMAC, 'lambda_n', 2);
+	         'obstacle', 'r', GAMMAC, 2, 'lambda_n');
   
   for ii=1:100
       disp(sprintf('iteration %d', ii));
