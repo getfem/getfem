@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2009 Yann Collette
+ Copyright (C) 2009-2011 Yann Collette
 
  This file is a part of GETFEM++
 
@@ -113,7 +113,7 @@ void sigint_callback(int sig)
   assert(handle_getfem_callback() == 1);
 }
 
-int sci_gf_scilab(char * fname) 
+extern "C" int sci_gf_scilab(char * fname) 
 {
   gfi_output     * out  = NULL;
   gfi_array_list * in   = NULL;
