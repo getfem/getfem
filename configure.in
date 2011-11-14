@@ -1070,7 +1070,7 @@ AC_CONFIG_FILES(\
 	interface/src/python/Makefile \
 	interface/src/python/setup.py \
 	interface/src/scilab/Makefile \
-	interface/src/scilab/sci_gateway/c/builder_gateway_c.sce \
+	interface/src/scilab/sci_gateway/cpp/builder_gateway_c.sce \
 	interface/tests/Makefile \
 	interface/tests/meshes/Makefile \
 	interface/tests/matlab/Makefile \
