@@ -1,38 +1,15 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
-/*========================================================================
-
- Copyright (C) 2009-2011 Yann Collette
-
- This file is a part of GETFEM++
-
- Getfem++ is free software; you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as
- published by the Free Software Foundation; either version 2.1 of the
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Lesser General Public License for more details.
- You should have received a copy of the GNU Lesser General Public
- License along with this program; if not, write to the Free Software
- Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
- USA.
-
- ========================================================================*/
-
 #include <api_common.h>
 #include <api_sparse.h>
 #include <api_double.h>
 #include <MALLOC.h>
 #include <stack-c.h>
 
+#include <string.h>
+
 #include <sparse2.h>
 #include <err.h>
 
-#include <string.h>
-
-extern "C" int sci_splusolve(char * fname)
+int sci_spchsolve(char * fname)
 {
   int      p_in_spmat_nb_rows, p_in_spmat_nb_cols, p_in_spmat_nb_items;
   int    * p_in_spmat_address;
@@ -47,7 +24,6 @@ extern "C" int sci_splusolve(char * fname)
   int    * p_out_x_dbl_address = NULL;
   SPMAT  * A  = NULL;
   VEC    * vB = NULL, * vOut = NULL;
-  PERM   * pivot = NULL;
   int      Index, i, j, res;
   double   value, alpha = 1.0;
   SciErr   _SciErr;
@@ -60,21 +36,21 @@ extern "C" int sci_splusolve(char * fname)
   // First, access to the input variable (a matrix of strings)
   _SciErr = getVarAddressFromPosition(&_StrCtx, 1,&p_in_spmat_address);
 
-  _SciErr = getVarType(&_StrCtx, p_in_spmat_address, &var_type);
+  _SciErr = getVarType(&_StrCtx,p_in_spmat_address,&var_type);
   if (var_type!=sci_sparse)
     {
       Scierror(999,"%s: wrong parameter, a sparse matrix is needed\n",fname);
       return 0;
     }
 
-  if (isVarComplex(&_StrCtx, p_in_spmat_address))
+  if (isVarComplex(&_StrCtx,p_in_spmat_address))
     {
       Scierror(999,"%s: wrong parameter, a real sparse matrix is needed\n",fname);
       return 0;
     }
 
   _SciErr = getSparseMatrix(&_StrCtx, p_in_spmat_address, &p_in_spmat_nb_rows, &p_in_spmat_nb_cols, 
-			    &p_in_spmat_nb_items, &p_in_spmat_items_row, &p_in_spmat_col_pos, &p_in_spmat_val);
+			&p_in_spmat_nb_items, &p_in_spmat_items_row, &p_in_spmat_col_pos, &p_in_spmat_val);
 
   // Second, get b
   _SciErr = getVarAddressFromPosition(&_StrCtx, 2, &p_in_b_dbl_address);
@@ -106,10 +82,7 @@ extern "C" int sci_splusolve(char * fname)
     }
 
   // Resolution
-
-  pivot = px_get(A->m);
-
-  catchall(spLUsolve(A,pivot,vB,vOut),Scierror(999,"%s: an error (%d) occured.\n",fname,_err_num); return 0);
+  catchall(spCHsolve(A,vB,vOut),Scierror(999,"%s: an error (%d) occured.\n",fname,_err_num); return 0);
 
   // Now, create the result
   p_out_x_dbl_matrix = (double *)MALLOC(p_in_b_nb_rows*sizeof(double));

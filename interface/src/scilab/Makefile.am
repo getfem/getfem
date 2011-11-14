@@ -271,24 +271,24 @@ EXTRA_DIST=builddoc.sce \
         sci_gateway/builder_gateway.sce \
         sci_gateway/cleaner_gateway.sce \
         sci_gateway/loader_gateway.sce \
-        sci_gateway/cpp/builder_gateway_c.sce \
-        sci_gateway/cpp/cleaner.sce \
-        sci_gateway/cpp/gfm_common.c \
-        sci_gateway/cpp/gfm_common.h \
-        sci_gateway/cpp/gfm_scilab.c \
-        sci_gateway/cpp/libscigetfem_c.c \
-        sci_gateway/cpp/libscigetfem_c.so \
-        sci_gateway/cpp/loader.sce \
-        sci_gateway/cpp/sci_cgne.c \
-        sci_gateway/cpp/sci_cgs.c \
-        sci_gateway/cpp/sci_gmres.c \
-        sci_gateway/cpp/sci_mgcr.c \
-        sci_gateway/cpp/sci_spchol.c \
-        sci_gateway/cpp/sci_spcholinc.c \
-        sci_gateway/cpp/sci_spchsolve.c \
-        sci_gateway/cpp/sci_splu.c \
-        sci_gateway/cpp/sci_spluinc.c \
-        sci_gateway/cpp/sci_splusolve.c \
+        sci_gateway/c/builder_gateway_c.sce \
+        sci_gateway/c/cleaner.sce \
+        sci_gateway/c/gfm_common.c \
+        sci_gateway/c/gfm_common.h \
+        sci_gateway/c/gfm_scilab.c \
+        sci_gateway/c/libscigetfem_c.c \
+        sci_gateway/c/libscigetfem_c.so \
+        sci_gateway/c/loader.sce \
+        sci_gateway/c/sci_cgne.c \
+        sci_gateway/c/sci_cgs.c \
+        sci_gateway/c/sci_gmres.c \
+        sci_gateway/c/sci_mgcr.c \
+        sci_gateway/c/sci_spchol.c \
+        sci_gateway/c/sci_spcholinc.c \
+        sci_gateway/c/sci_spchsolve.c \
+        sci_gateway/c/sci_splu.c \
+        sci_gateway/c/sci_spluinc.c \
+        sci_gateway/c/sci_splusolve.c \
         src/builder_src.sce \
         src/c/bdfactor.c \
         src/c/bkpfacto.c \

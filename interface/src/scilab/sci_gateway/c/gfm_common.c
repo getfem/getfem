@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2009-2011 Yann Collette
+ Copyright (C) 2009-2010 Yann Collette
 
  This file is a part of GETFEM++
 

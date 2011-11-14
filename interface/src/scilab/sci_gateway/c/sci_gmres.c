@@ -1,26 +1,3 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
-/*========================================================================
-
- Copyright (C) 2009-2011 Yann Collette
-
- This file is a part of GETFEM++
-
- Getfem++ is free software; you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as
- published by the Free Software Foundation; either version 2.1 of the
- License, or (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU Lesser General Public License for more details.
- You should have received a copy of the GNU Lesser General Public
- License along with this program; if not, write to the Free Software
- Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
- USA.
-
- ========================================================================*/
-
 #include <stdio.h>
 
 #include <api_common.h>
@@ -33,7 +10,7 @@
 #include <iter.h>
 #include <err.h>
 
-// #define DEBUG
+#define DEBUG
 
 // x = cgs(A,b)
 // cgs(A,b,tol)
@@ -54,7 +31,7 @@
 // iter_spgmres - a simple interface to iter_gmres 
 // VEC * iter_spgmres(SPMAT * A, SPMAT * B, VEC * b, double tol, VEC * x, int k, int maxit, int * steps)
 
-extern "C" int sci_spgmres(char * fname)
+int sci_spgmres(char * fname)
 {
   // [x,[iter]] = gmres(A,b,tol,[maxit,[k,[B,[x0]]]])
   int * A_pi_address, A_pi_nb_rows, A_pi_nb_cols, A_pi_nb_items, * A_pi_nb_items_row, * A_pi_col_pos;
