@@ -94,7 +94,7 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
     Return the total number of integration points.
 
     Count the points for the volume integration, and points for
-    surface integration on each face of the reference convex.<Par>
+    surface integration on each face of the reference convex.
 
     Only for approximate methods, this has no meaning for exact
     integration methods!@*/

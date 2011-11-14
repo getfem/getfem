@@ -449,7 +449,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
 
     Lagrangian means that each base function Phi[i] is such that
     Phi[i](P[j]) = delta(i,j), where P[j] is the dof location of
-    the jth base function, and delta(i,j) = 1 if i==j, else 0.<Par>
+    the jth base function, and delta(i,j) = 1 if i==j, else 0.
 
     If `CVids` is omitted, it returns 1 if all convexes in the mesh
     are Lagrangian. If `CVids` is used, it returns the convex indices
