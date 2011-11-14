@@ -252,6 +252,14 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
       d += r[(j+1):]
       i = d.find(m)
 
+  # Replace the :math:` ... ` by scilab xml tag
+  if (langage == 'scilab'):
+    i = d.find(':math:`')
+    while (i != -1):
+      d = d[:i] + d[i:].replace(':math:`','<latex style="text"><![CDATA[',1)
+      d = d[:i] + d[i:].replace('`',']]></latex>',1)
+      i = d.find(':math:`')
+          
   if (langage == 'matlab' or langage == 'scilab'):
     for o in objects:
       [r, I] = StandardObjectName(o)
@@ -1192,7 +1200,7 @@ elif (option == 'scilab-com'):
         mfile.write('    <para>' + gdoc + '</para>\n')
         mfile.write('  </refsection>\n\n')
 
-        mfile.write('  </refsection>\n')
+        mfile.write('  <refsection>\n')
         mfile.write('    <title>Command list</title>\n\n')
         mfile.write('    <itemizedlist>\n')
 
