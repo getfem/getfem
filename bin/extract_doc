@@ -252,13 +252,20 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
       d += r[(j+1):]
       i = d.find(m)
 
-  # Replace the :math:` ... ` by scilab xml tag
   if (langage == 'scilab'):
+    # Replace the :math:` ... ` by scilab latex xml tag
     i = d.find(':math:`')
     while (i != -1):
       d = d[:i] + d[i:].replace(':math:`','<latex style="text"><![CDATA[',1)
       d = d[:i] + d[i:].replace('`',']]></latex>',1)
       i = d.find(':math:`')
+          
+    # Replace the ` ... ` by scilab literal xml tag
+    i = d.find('`')
+    while (i != -1):
+      d = d[:i] + d[i:].replace('`','<literal>',1)
+      d = d[:i] + d[i:].replace('`','</literal>',1)
+      i = d.find('`')
           
   if (langage == 'matlab' or langage == 'scilab'):
     for o in objects:
@@ -986,7 +993,7 @@ elif (option == 'matlab-doc'):
 #
 #
 # Option scilab-com
-#      Extract the scilab documentation for each command in rst format
+#      Extract the scilab documentation for each command in xml format
 #
 #
 #
@@ -1023,103 +1030,156 @@ elif (option == 'scilab-com'):
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>int</term>\n')
-  mfile.write('        <para>integer value</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>integer value</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>hobj</term>\n')
-  mfile.write('        <para>a handle for any getfem++ object</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>a handle for any getfem++ object</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>scalar</term>\n')
-  mfile.write('        <para>scalar value</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>scalar value</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>string</term>\n');
-  mfile.write('        <para>string</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>string</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>ivec</term>')
-  mfile.write('        <para>vector of integer values</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>vector of integer values</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>vec</term>\n')
-  mfile.write('        <para>vector</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>vector</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>imat</term>\n')
-  mfile.write('         <para>matrix of integer values</para>')
+  mfile.write('        <term>imat</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>matrix of integer values</para>')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>mat</term>\n')
-  mfile.write('        <para>matrix</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>matrix</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>spmat</term>\n')
-  mfile.write('        <para>sparse matrix (both matlab native sparse matrices, and getfem sparse matrices)</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>sparse matrix (both matlab native sparse matrices, and getfem sparse matrices)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>precond</term>\n')
-  mfile.write('        <para>getfem preconditioner object</para>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>getfem preconditioner object</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
-  mfile.write('`        <term>mesh mesh</term>\n')
-  mfile.write('         <para>object descriptor (or gfMesh object)</para>\n')
+  mfile.write('        <term>mesh mesh</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>object descriptor (or gfMesh object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>mesh_fem</term>\n')
-  mfile.write('         <para>mesh fem object descriptor (or gfMeshFem object)</para>\n')
+  mfile.write('        <term>mesh_fem</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>mesh fem object descriptor (or gfMeshFem object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
 
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>mesh_im</term>\n')
-  mfile.write('         <para>mesh im object descriptor( or gfMeshIm object)</para>\n')
+  mfile.write('        <term>mesh_im</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>mesh im object descriptor( or gfMeshIm object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+  
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>mesh_slice</term>\n')
-  mfile.write('         <para>mesh slice object descriptor (or gfSlice object)</para>\n')
+  mfile.write('        <term>mesh_slice</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>mesh slice object descriptor (or gfSlice object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>cvstruct</term>\n')
-  mfile.write('         <para>convex structure descriptor (or gfCvStruct object)</para>\n')
+  mfile.write('        <term>cvstruct</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>convex structure descriptor (or gfCvStruct object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>geotrans</term>\n')
-  mfile.write('         <para>geometric transformation descriptor (or gfGeoTrans object)</para>\n')
+  mfile.write('        <term>geotrans</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>geometric transformation descriptor (or gfGeoTrans object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>fem</term>\n')
-  mfile.write('         <para>fem descriptor (or gfFem object)</para>\n')
+  mfile.write('        <term>fem</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>fem descriptor (or gfFem object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>eltm</term>\n')
-  mfile.write('         <para>elementary matrix descriptor (or gfEltm object)</para>\n')
+  mfile.write('        <term>eltm</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>elementary matrix descriptor (or gfEltm object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>integ</term>\n')
-  mfile.write('         <para>integration method descriptor (or gfInteg object)</para>\n')
+  mfile.write('        <term>integ</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>integration method descriptor (or gfInteg object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>model</term>\n')
-  mfile.write('         <para>model descriptor (or gfModel object)</para>\n')
+  mfile.write('        <term>model</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>model descriptor (or gfModel object)</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>global_function</term>\n')
-  mfile.write('         <para>global function descriptor</para>\n')
+  mfile.write('        <term>global_function</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>global function descriptor</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
+
   mfile.write('      <varlistentry>\n')
-  mfile.write('         <term>mesher_object</term>\n')
-  mfile.write('         <para>mesher object descriptor</para>\n')
+  mfile.write('        <term>mesher_object</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>mesher object descriptor</para>\n')
+  mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
   mfile.write('    </variablelist>\n\n')
 
@@ -1223,17 +1283,7 @@ elif (option == 'scilab-com'):
 
           mfile.write('    <para>')
           doc = FilterDoc(doc, langage, objects, commands)
-          nbspace = -1
-          for l in doc.split('\n'):
-            if (nbspace == -1 and len(l.strip()) > 0):
-              for i in range(len(l)):
-                nbspace = i
-                if (not l[i].isspace()): break
-            
-            if (nbspace > 0):
-              l = l[:nbspace-1].strip() + l[nbspace:]
-            if (nbspace >= 0):
-              mfile.write('   ' + l + '\n')
+          mfile.write('   ' + doc + '\n')
 
           mfile.write('    </para>\n')
           mfile.write('    </listitem>\n\n')
@@ -1265,14 +1315,14 @@ elif (option == 'scilab-com'):
 #
 #
 #
-# Option scilab-doc
+# Option scilab-doc-rst
 #      Extract the scilab documentation for commands in rst format
 #
 #
 #
 #######################################################################
 
-elif (option == 'scilab-doc'):
+elif (option == 'scilab-doc-rst'):
 
   langage = 'scilab'
   
