@@ -29,19 +29,28 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
+extern "C" {
 #include <stack-c.h>
 #include <sciprint.h>
 #include <Scierror.h>
 #include <api_common.h>
 #include <MALLOC.h>
+}
 
+extern "C" {
 #include "gfm_common.h"
+}
+
 #include "gfi_array.h"
 #include "getfem_interface.h"
+#include "stream_redirect.h"
 
 //#define DEBUG_TIMER
 //#define DEBUG
 //#define DEBUG2
+
+extern "C" int handle_getfem_callback();
+extern "C" void set_superlu_callback(int (*cb)());
 
 gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
 {
@@ -60,7 +69,7 @@ gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
     }
 #endif
 
-  pin = gfi_calloc(in.arg.arg_len, sizeof(gfi_array*));
+  pin = (gfi_array **)gfi_calloc(in.arg.arg_len, sizeof(gfi_array*));
   for (i=0; i < in.arg.arg_len; ++i) 
     {
       pin[i] = &in.arg.arg_val[i];
@@ -86,7 +95,7 @@ gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
     {
       result.status = GFI_STATUS_OK;
       result.gfi_output_u.output.arg.arg_len = nlhs;
-      result.gfi_output_u.output.arg.arg_val = gfi_calloc(nlhs, sizeof(gfi_array));
+      result.gfi_output_u.output.arg.arg_val = (gfi_array *)gfi_calloc(nlhs, sizeof(gfi_array));
       for(i=0; i<nlhs; ++i) 
 	{
 	  assert(pout[i]);
@@ -113,18 +122,20 @@ void sigint_callback(int sig)
   assert(handle_getfem_callback() == 1);
 }
 
-int sci_gf_scilab(char * fname) 
+extern "C" int sci_gf_scilab(char * fname) 
 {
   gfi_output     * out  = NULL;
   gfi_array_list * in   = NULL;
   gfi_array_list * outl = NULL;
   int ** ptr_param = NULL;
-  int *  sci_x     = NULL;
+  int sci_x;
   int picol, pirow, var_type;
   unsigned int i;
   SciErr _SciErr;
   StrCtx _StrCtx;
   clock_t time_start, time_end;
+  ScilabStream scicout(std::cout);
+  ScilabStream scicerr(std::cerr);
 
   set_cancel_flag(0);
   set_superlu_callback(is_cancel_flag_set);

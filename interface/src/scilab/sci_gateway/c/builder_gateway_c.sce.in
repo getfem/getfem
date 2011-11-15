@@ -83,7 +83,7 @@ Libraries = ['../../src/c/libsp_get'];
 
 if getos()=='Windows' then
   getfem_path = pwd() + '/../../../';
-  disp(getfem_path);
+
   cflags = ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + '/../../src/c';
   cflags = cflags + ' /I' + getfem_path + '/interface/src/' + ' /I' + getfem_path + '/src/getfem';
   cflags = cflags + ' /I' + SCI + '/../../include/scilab'; // For the binary distribution
