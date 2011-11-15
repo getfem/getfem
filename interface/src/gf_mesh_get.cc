@@ -808,7 +808,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET Q = ('quality'[, @ivec CVIDs])
-    Return an estimation of the quality of each convex (0 <= Q <= 1).@*/
+    Return an estimation of the quality of each convex (:math:`0 \leq Q \leq 1`).@*/
     sub_command
       ("quality", 0, 1, 0, 1,
        dal::bit_vector bv;

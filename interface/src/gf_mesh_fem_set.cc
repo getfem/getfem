@@ -157,7 +157,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
 
     Similar to MESH_FEM:SET('classical fem') except that
     FEM_PK_DISCONTINUOUS is used. Param `alpha` the node inset,
-    0 <= alpha < 1, where 0 implies usual dof nodes, greater values
+    :math:`0 \leq alpha < 1`, where 0 implies usual dof nodes, greater values
     move the nodes toward the center of gravity, and 1 means that all
     degrees of freedom collapse on the center of gravity.@*/
     sub_command

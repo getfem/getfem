@@ -104,8 +104,9 @@ void gf_mesh_im_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     integration method with an integration method handle `im` obtained
     via INTEG:INIT('IM_SOMETHING'), or to let getfem choose a suitable
     integration method with `im_degree` (choosen such that polynomials
-    of `degree <= im_degree` are exactly integrated. If `im_degree=-1`,
-    then the dummy integration method IM_NONE will be used.)@*/
+    of :math:`\text{degree} \leq \text{im_degree`} are exactly integrated.
+    If `im_degree=-1`, then the dummy integration method IM_NONE will 
+    be used.)@*/
     gf_mesh_im_set_integ(mim, in);
   } else if (check_cmd(cmd, "adapt", in, out, 0, 0, 0, 0)) {
     /*@SET ('adapt')

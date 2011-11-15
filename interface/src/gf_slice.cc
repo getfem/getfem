@@ -345,7 +345,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
 
   * @CELL{'isovalues', @int orient, @tmf mf, @vec U, @scalar s} :
     Cut using the isosurface of the field `U` (defined on the @tmf `mf`).
-    The result is the set `{x such that `U`(x) <= `s`}` or `{x such that
+    The result is the set `{x such that :math:`U(x) \leq s`}` or `{x such that
     `U`(x)=`s`}` or `{x such that `U`(x) >= `s`}` depending on the value of
     `orient`.
 
@@ -355,8 +355,8 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
     considered (i.e. it is equivalent to @CELL{'boundary',{'none'}}).
 
   * @CELL{'explode', @mat Coef} :
-    Build an 'exploded' view of the mesh: each convex is shrinked (0 <
-    `Coef` <= 1). In the case of 3D convexes, only their faces are kept.
+    Build an 'exploded' view of the mesh: each convex is shrinked (:math:`0 <
+    \text{Coef} \leq 1`). In the case of 3D convexes, only their faces are kept.
 
   * @CELL{'union', SLICEOP1, SLICEOP2} :
     Returns the union of slicing operations.

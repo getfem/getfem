@@ -31,10 +31,10 @@ using namespace getfemint;
    The level-set object is represented by a primary level-set and optionally
    a secondary level-set used to represent fractures (if p(x) is the primary
    level-set function and s(x) is the secondary level-set, the crack is
-   defined by p(x)=0 and s(x)<=0: the role of the secondary is to determine
+   defined by :math:`p(x)=0` and :math:`s(x)\leq0` : the role of the secondary is to determine
    the crack front/tip).
 
-   .. note::
+   note:
 
       All tools listed below need the package qhull installed on your
       system. This package is widely available. It computes convex hull and
