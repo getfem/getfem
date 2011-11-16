@@ -136,10 +136,10 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   }
 
 
-  if (m_in.narg() < 1)  THROW_BADARG( "Wrong number of input arguments");
+  if (m_in.narg() < 1)  THROW_BADARG("Wrong number of input arguments");
 
-  std::string init_cmd   = m_in.pop().to_string();
-  std::string cmd        = cmd_normalize(init_cmd);
+  std::string init_cmd  = m_in.pop().to_string();
+  std::string cmd       = cmd_normalize(init_cmd);
 
   
   SUBC_TAB::iterator it = subc_tab.find(cmd);

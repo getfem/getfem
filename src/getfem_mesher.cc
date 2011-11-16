@@ -1237,14 +1237,14 @@ namespace getfem {
 	if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)
 	     || iter_wtcc>iter_max || count > 10000) {
 
-	  {
-	    m.clear();
-	    adapt_mesh(m,K);
-	    m.optimize_structure();
-	    getfem::vtk_export exp("toto1.vtk");
-	    exp.exporting(m);
-	    exp.write_mesh_quality(m);
-	  }
+// 	  {
+// 	    m.clear();
+// 	    adapt_mesh(m,K);
+// 	    m.optimize_structure();
+// 	    getfem::vtk_export exp("toto1.vtk");
+// 	    exp.exporting(m);
+// 	    exp.write_mesh_quality(m);
+// 	  }
 
 	  control_mesh_surface();
 	  size_type nbpt = pts.size();
@@ -1254,14 +1254,14 @@ namespace getfem {
 	  select_elements((prefind == 3) ? 0 : 1);
 	  suppress_flat_boundary_elements();
 
-	  {
-	    m.clear();
-	    adapt_mesh(m,K);
-	    m.optimize_structure();
-	    getfem::vtk_export exp("toto2.vtk");
-	    exp.exporting(m);
-	    exp.write_mesh_quality(m);
-	  }
+// 	  {
+// 	    m.clear();
+// 	    adapt_mesh(m,K);
+// 	    m.optimize_structure();
+// 	    getfem::vtk_export exp("toto2.vtk");
+// 	    exp.exporting(m);
+// 	    exp.write_mesh_quality(m);
+// 	  }
 
 	  if (prefind != 3) optimize_quality();
 	  
@@ -1288,14 +1288,14 @@ namespace getfem {
 	    select_elements((prefind == 3) ? 0 : 1);
 	    suppress_flat_boundary_elements();
 
-	    {
-	      m.clear();
-	      adapt_mesh(m,K);
-	      m.optimize_structure();
-	      getfem::vtk_export exp("toto3.vtk");
-	      exp.exporting(m);
-	      exp.write_mesh_quality(m);
-	    }
+// 	    {
+// 	      m.clear();
+// 	      adapt_mesh(m,K);
+// 	      m.optimize_structure();
+// 	      getfem::vtk_export exp("toto3.vtk");
+// 	      exp.exporting(m);
+// 	      exp.write_mesh_quality(m);
+// 	    }
 	    
 	    if (prefind != 3) optimize_quality();
 	  }
@@ -1307,24 +1307,27 @@ namespace getfem {
 
       m.clear();
       adapt_mesh(m,K);
-      m.write_to_file("toto.mesh");
+      // m.write_to_file("toto.mesh");
       
       m.optimize_structure();
 
 
-      getfem::vtk_export exp("toto4.vtk");
-      exp.exporting(m);
-      exp.write_mesh_quality(m);
+//       getfem::vtk_export exp("toto4.vtk");
+//       exp.exporting(m);
+//       exp.write_mesh_quality(m);
 
-      getfem::stored_mesh_slice sl;
-      sl.build(m, getfem::slicer_explode(0.8), 8);
-      getfem::vtk_export exp2("totoq.vtk");
-      exp2.exporting(sl);
-      exp2.write_mesh();
-      exp2.write_mesh_quality(m);
-      getfem::dx_export exp3("totoq.dx");
-      exp3.exporting(sl);
-      exp3.write_mesh();
+//       getfem::stored_mesh_slice sl;
+//       sl.build(m, getfem::slicer_explode(0.8), 8);
+//       getfem::vtk_export exp2("totoq.vtk");
+//       exp2.exporting(sl);
+//       exp2.write_mesh();
+//       exp2.write_mesh_quality(m);
+//       getfem::dx_export exp3("totoq.dx");
+//       exp3.exporting(sl);
+//       exp3.write_mesh();
+
+
+
 
 //       getfem::stored_mesh_slice slb; slb.build(m, getfem::slicer_boundary(m), 4);
 //       getfem::stored_mesh_slice sl2;
