@@ -1019,6 +1019,7 @@ elif (option == 'scilab-com'):
 
   mfile.write('  <refnamediv>\n')
   mfile.write('    <refname>getfem types</refname>\n')
+  mfile.write('    <refpurpose>Types reference</refpurpose>\n')
   mfile.write('  </refnamediv>\n\n')
 
   mfile.write('')
@@ -1217,10 +1218,14 @@ elif (option == 'scilab-com'):
         mfile.write('          xmlns:html="http://www.w3.org/1999/xhtml"\n')
         mfile.write('          xmlns:db="http://docbook.org/ns/docbook">\n')
 
+        [gdoc, args] = ExtractGlobalDoc(src_dir);
+        gdoc = FilterDoc(gdoc, langage, objects, commands)
+
         mfile.write('  <refnamediv>\n')
         mfile.write('    <refname>gf_' + o + ext + '</refname>\n')
+        mfile.write('    <refpurpose>' + gdoc + '</refpurpose>\n')
         mfile.write('  </refnamediv>\n\n')
-
+        
         mfile.write('  <refsynopsisdiv>\n')
         mfile.write('    <title>Calling Sequence</title>\n\n')
 
