@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="getfem_types" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>getfem types</refname>
+  </refnamediv>
+
+  <refsection>
+    <title>Description</title>
+    <para>The expected type of each function argument is indicated in this reference. Here is a list of these types:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>int</term>
+        <listitem>
+          <para>integer value</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>hobj</term>
+        <listitem>
+          <para>a handle for any getfem++ object</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>scalar</term>
+        <listitem>
+          <para>scalar value</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>string</term>
+        <listitem>
+          <para>string</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>ivec</term>        <listitem>
+          <para>vector of integer values</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>vec</term>
+        <listitem>
+          <para>vector</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>imat</term>
+        <listitem>
+          <para>matrix of integer values</para>        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mat</term>
+        <listitem>
+          <para>matrix</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>spmat</term>
+        <listitem>
+          <para>sparse matrix (both matlab native sparse matrices, and getfem sparse matrices)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>precond</term>
+        <listitem>
+          <para>getfem preconditioner object</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mesh mesh</term>
+        <listitem>
+          <para>object descriptor (or gfMesh object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mesh_fem</term>
+        <listitem>
+          <para>mesh fem object descriptor (or gfMeshFem object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mesh_im</term>
+        <listitem>
+          <para>mesh im object descriptor( or gfMeshIm object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mesh_slice</term>
+        <listitem>
+          <para>mesh slice object descriptor (or gfSlice object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>cvstruct</term>
+        <listitem>
+          <para>convex structure descriptor (or gfCvStruct object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>geotrans</term>
+        <listitem>
+          <para>geometric transformation descriptor (or gfGeoTrans object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>fem</term>
+        <listitem>
+          <para>fem descriptor (or gfFem object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>eltm</term>
+        <listitem>
+          <para>elementary matrix descriptor (or gfEltm object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>integ</term>
+        <listitem>
+          <para>integration method descriptor (or gfInteg object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>model</term>
+        <listitem>
+          <para>model descriptor (or gfModel object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>global_function</term>
+        <listitem>
+          <para>global function descriptor</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mesher_object</term>
+        <listitem>
+          <para>mesher object descriptor</para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+
+    <para>Arguments listed between square brackets are optional. Lists between braces indicate</para>
+    <para>that the argument must match one of the elements of the list. For example:</para>
+
+    <programlisting role=""><![CDATA[ >> [X,Y]=dummy(int i, 'foo' | 'bar' [,vec v])]]></programlisting>
+
+    <para>means that the dummy function takes two or three arguments, its first being an integer value,</para>
+    <para>the second a string which is either 'foo' or 'bar', and a third optional argument. It returns two</para>
+    <para>values (with the usual matlab meaning, i.e. the caller can always choose to ignore them).</para>
+  </refsection>
+</refentry>

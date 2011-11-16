@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_mesher_object" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_mesher_object</refname>
+    <refpurpose>  This object represents a geometric object to be meshed by the (very)
+  experimental meshing procedure of Getfem.
+</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>MF = gf_mesher_object('ball', vec center, scalar radius)</synopsis>
+    <synopsis>MF = gf_mesher_object('half space', vec origin, vec normal_vector)</synopsis>
+    <synopsis>MF = gf_mesher_object('cylinder', vec origin, vec n, scalar length, scalar radius)</synopsis>
+    <synopsis>MF = gf_mesher_object('cone', vec origin, vec n, scalar length, scalar half_angle)</synopsis>
+    <synopsis>MF = gf_mesher_object('torus', scalar R, scalar r)</synopsis>
+    <synopsis>MF = gf_mesher_object('intersect', mesher_object object1 , mesher_object object2, ...)</synopsis>
+    <synopsis>MF = gf_mesher_object('union', mesher_object object1 , mesher_object object2, ...)</synopsis>
+    <synopsis>MF = gf_mesher_object('set minus', mesher_object object1 , mesher_object object2)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>General constructor for mesher_object objects.</para>
+
+    <para>  This object represents a geometric object to be meshed by the (very)
+  experimental meshing procedure of Getfem.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>MF = gf_mesher_object('ball', vec center, scalar radius)</literal></para>
+
+    <para>         Represents a ball of corresponding center and radius.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('half space', vec origin, vec normal_vector)</literal></para>
+
+    <para>         Represents an half space delimited by the plane which contains the
+      origin and normal to <literal>normal_vector</literal>. The selected part is the part
+      in the direction of the normal vector. This allows to cut a geometry
+      with a plane for instance to build a polygon or a polyhedron.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('cylinder', vec origin, vec n, scalar length, scalar radius)</literal></para>
+
+    <para>         Represents a cylinder (in any dimension) of a certain radius whose axis is determined by the origin, a vector <literal>n</literal> and a certain length.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('cone', vec origin, vec n, scalar length, scalar half_angle)</literal></para>
+
+    <para>         Represents a cone (in any dimension) of a certain half-angle (in radians) whose axis is determined by the origin, a vector <literal>n</literal> and a certain length.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('torus', scalar R, scalar r)</literal></para>
+
+    <para>         Represents a torus in 3d of axis along the z axis with a great radius
+      equal to <literal>R</literal> and small radius equal to <literal>r</literal>. For the moment, the
+      possibility to change the axis is not given.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('intersect', mesher_object object1 , mesher_object object2, ...)</literal></para>
+
+    <para>         Intersection of several objects.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('union', mesher_object object1 , mesher_object object2, ...)</literal></para>
+
+    <para>         Union of several objects.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('set minus', mesher_object object1 , mesher_object object2)</literal></para>
+
+    <para>         Geometric object being object1 minus object2.
+      
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>
