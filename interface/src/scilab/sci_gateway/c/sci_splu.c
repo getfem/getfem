@@ -5,11 +5,13 @@
 #include <api_double.h>
 #include <MALLOC.h>
 #include <stack-c.h>
+#include <Scierror.h>
+#include <sciprint.h>
 
 #include "sparse2.h"
 #include "err.h"
 
-#define DEBUG
+//#define DEBUG
 
 int sci_splu(char * fname)
 {
@@ -23,11 +25,11 @@ int sci_splu(char * fname)
   int    * p_in_dbl_address = NULL;
   SPMAT  * A = NULL;
   PERM   * pivot = NULL;
-  int      Index, i, j, res;
+  int      Index, i, j;
   int    * p_out_spmat_item_row = NULL;
   int    * p_out_spmat_col_pos  = NULL;
   double * p_out_spmat_val      = NULL;
-  double   value, alpha = 1.0;
+  double   alpha = 1.0;
   int      nnz = 0, var_type;
   SciErr _SciErr;
   StrCtx _StrCtx;

@@ -1,3 +1,26 @@
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*========================================================================
+
+ Copyright (C) 2009-2011 Yann Collette
+
+ This file is a part of GETFEM++
+
+ Getfem++ is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as
+ published by the Free Software Foundation; either version 2.1 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+ You should have received a copy of the GNU Lesser General Public
+ License along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+ USA.
+
+ ========================================================================*/
+
 #include <stdio.h>
 
 #include <api_common.h>
@@ -5,12 +28,14 @@
 #include <api_double.h>
 #include <MALLOC.h>
 #include <stack-c.h>
+#include <Scierror.h>
+#include <sciprint.h>
 
 #include <sparse2.h>
 #include <iter.h>
 #include <err.h>
 
-#define DEBUG
+//#define DEBUG
 
 // x = cgs(A,b)
 // cgs(A,b,tol)
@@ -40,24 +65,24 @@
 int sci_spcgs(char * fname)
 {
   // [x,flag,[relres,[iter,[resvec]]]] = cgs(A,b,tol,[maxit,[M,[x0]]])
-  int * A_pi_address, A_pi_nb_rows, A_pi_nb_cols, A_pi_nb_items, * A_pi_nb_items_row, * A_pi_col_pos;
-  double * A_pdbl_real;
-  int * b_pi_address, b_pi_nb_rows, b_pi_nb_cols;
-  double * b_pdbl_real;
-  int * tol_pi_address, tol_pi_nb_rows, tol_pi_nb_cols;
-  double * tol_pdbl_real;
-  int * maxit_pi_address, maxit_pi_nb_rows, maxit_pi_nb_cols;
-  double * maxit_pdbl_real;
-  int * M_pi_address, M_pi_nb_rows, M_pi_nb_cols, M_pi_nb_items, * M_pi_nb_items_row, * M_pi_col_pos;
-  double * M_pdbl_real;
-  int * x0_pi_address, x0_pi_nb_rows, x0_pi_nb_cols;
-  double * x0_pdbl_real;
-  int * xsol_pi_address, xsol_pi_nb_rows, xsol_pi_nb_cols;
-  double * xsol_pdbl_real;
-  int * iter_pi_address, iter_pi_nb_rows, iter_pi_nb_cols;
-  double * iter_pdbl_real;
-  int * resvec_pi_address, resvec_pi_nb_rows, resvec_pi_nb_cols;
-  double * resvec_pdbl_real;
+  int * A_pi_address = NULL, A_pi_nb_rows, A_pi_nb_cols, A_pi_nb_items, * A_pi_nb_items_row = NULL, * A_pi_col_pos = NULL;
+  double * A_pdbl_real = NULL;
+  int * b_pi_address = NULL, b_pi_nb_rows, b_pi_nb_cols;
+  double * b_pdbl_real = NULL;
+  int * tol_pi_address = NULL, tol_pi_nb_rows, tol_pi_nb_cols;
+  double * tol_pdbl_real = NULL;
+  int * maxit_pi_address = NULL, maxit_pi_nb_rows, maxit_pi_nb_cols;
+  double * maxit_pdbl_real = NULL;
+  int * M_pi_address = NULL, M_pi_nb_rows, M_pi_nb_cols, M_pi_nb_items, * M_pi_nb_items_row = NULL, * M_pi_col_pos = NULL;
+  double * M_pdbl_real = NULL;
+  int * x0_pi_address = NULL, x0_pi_nb_rows, x0_pi_nb_cols;
+  double * x0_pdbl_real = NULL;
+  int xsol_pi_nb_rows, xsol_pi_nb_cols;
+  double * xsol_pdbl_real = NULL;
+  int iter_pi_nb_rows, iter_pi_nb_cols;
+  double * iter_pdbl_real = NULL;
+  int resvec_pi_nb_rows, resvec_pi_nb_cols;
+  double * resvec_pdbl_real = NULL;
   SciErr _SciErr;
   StrCtx _StrCtx;
   int var_type;

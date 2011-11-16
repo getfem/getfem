@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2009 Yann Collette
+ Copyright (C) 2009-2011 Yann Collette
 
  This file is a part of GETFEM++
 
@@ -58,7 +58,7 @@ gfi_output * call_getfem_interface(char *funname, gfi_array_list in, int nlhs)
   gfi_array **pin  = NULL;
   gfi_array **pout = NULL;
   char *errmsg = 0, *infomsg = 0;
-  unsigned int i;
+  int i;
 
 #ifdef DEBUG2
   sciprint("call_getfem_interface: len = %d \n",in.arg.arg_len);
@@ -113,7 +113,7 @@ char *current_scilab_function = NULL;
 
 void sigint_callback(int sig) 
 {
-  char *s = current_scilab_function; if (!s) s = "doh!!";
+  const char * s = current_scilab_function; if (!s) s = "doh!!";
   fprintf(stderr, "*** CTRL-C hit during execution of the getfem_scilab function: gf_%s...\n" \
 	  "You will gain control as soon as the current operation is finished ***\n" \
 	  "If you want to abort immediatly the current operation, hit CTRL-C again\n" \
@@ -129,11 +129,12 @@ extern "C" int sci_gf_scilab(char * fname)
   gfi_array_list * outl = NULL;
   int ** ptr_param = NULL;
   int sci_x;
-  int picol, pirow, var_type;
   unsigned int i;
   SciErr _SciErr;
   StrCtx _StrCtx;
+#ifdef DEBUG_TIMER
   clock_t time_start, time_end;
+#endif
   ScilabStream scicout(std::cout);
   ScilabStream scicerr(std::cerr);
 

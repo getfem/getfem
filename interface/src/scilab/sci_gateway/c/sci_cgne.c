@@ -5,12 +5,14 @@
 #include <api_double.h>
 #include <MALLOC.h>
 #include <stack-c.h>
+#include <Scierror.h>
+#include <sciprint.h>
 
 #include <sparse2.h>
 #include <iter.h>
 #include <err.h>
 
-#define DEBUG
+//#define DEBUG
 
 // x = cgs(A,b)
 // cgs(A,b,tol)
@@ -40,28 +42,28 @@
 int sci_spcgne(char * fname)
 {
   // [x,[iter]] = pmgcr(A,b,tol,[maxit,[k,[B,[x0]]]])
-  int * A_pi_address, A_pi_nb_rows, A_pi_nb_cols, A_pi_nb_items, * A_pi_nb_items_row, * A_pi_col_pos;
-  double * A_pdbl_real;
-  int * B_pi_address, B_pi_nb_rows, B_pi_nb_cols, B_pi_nb_items, * B_pi_nb_items_row, * B_pi_col_pos;
-  double * B_pdbl_real;
-  int * b_pi_address, b_pi_nb_rows, b_pi_nb_cols;
-  double * b_pdbl_real;
-  int * tol_pi_address, tol_pi_nb_rows, tol_pi_nb_cols;
-  double * tol_pdbl_real;
-  int * maxit_pi_address, maxit_pi_nb_rows, maxit_pi_nb_cols;
-  double * maxit_pdbl_real;
-  int * x0_pi_address, x0_pi_nb_rows, x0_pi_nb_cols;
-  double * x0_pdbl_real;
-  int * xsol_pi_address, xsol_pi_nb_rows, xsol_pi_nb_cols;
-  double * xsol_pdbl_real;
-  int * iter_pi_address, iter_pi_nb_rows, iter_pi_nb_cols;
-  double * iter_pdbl_real;
+  int * A_pi_address = NULL, A_pi_nb_rows, A_pi_nb_cols, A_pi_nb_items, * A_pi_nb_items_row = NULL, * A_pi_col_pos = NULL;
+  double * A_pdbl_real = NULL;
+  int * B_pi_address = NULL, B_pi_nb_rows, B_pi_nb_cols, B_pi_nb_items, * B_pi_nb_items_row = NULL, * B_pi_col_pos = NULL;
+  double * B_pdbl_real = NULL;
+  int * b_pi_address = NULL, b_pi_nb_rows, b_pi_nb_cols;
+  double * b_pdbl_real = NULL;
+  int * tol_pi_address = NULL, tol_pi_nb_rows, tol_pi_nb_cols;
+  double * tol_pdbl_real = NULL;
+  int * maxit_pi_address = NULL, maxit_pi_nb_rows, maxit_pi_nb_cols;
+  double * maxit_pdbl_real = NULL;
+  int * x0_pi_address = NULL, x0_pi_nb_rows, x0_pi_nb_cols;
+  double * x0_pdbl_real = NULL;
+  int xsol_pi_nb_rows, xsol_pi_nb_cols;
+  double * xsol_pdbl_real = NULL;
+  int iter_pi_nb_rows, iter_pi_nb_cols;
+  double * iter_pdbl_real = NULL;
   SciErr _SciErr;
   StrCtx _StrCtx;
   int var_type;
   SPMAT  * A = NULL, * B = NULL;
   VEC * b = NULL, * x0 = NULL, * xsol = NULL;
-  int Index, steps, i, j, k;
+  int Index, steps, i, j;
 
   CheckRhs(3,7);
   CheckLhs(1,2);

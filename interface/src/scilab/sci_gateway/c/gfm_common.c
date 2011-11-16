@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
- Copyright (C) 2009-2010 Yann Collette
+ Copyright (C) 2009-2011 Yann Collette
 
  This file is a part of GETFEM++
 
@@ -87,21 +87,20 @@ const char * sci_ClassID2string(sci_types id)
 int sci_array_to_gfi_array(int * sci_x, gfi_array *t)
 {
   SciErr _SciErr;
-  StrCtx _StrCtx;
-  int i, j, k, Index, n = 0, var_type = 0;
+  int i, n = 0, var_type = 0;
   int * item_address = NULL;
   int pirow, picol, *pilen = NULL, *pilistaddress, size_pistring = 0, nbitem;
-  int * nbitemrow, * picolpos, * offset;
+  int * nbitemrow = NULL, * picolpos = NULL;
   char ** pstStrings = NULL, ** pstData = NULL;
-  double * pdblDataID, * pdblDataCID;
-  int * pintDims, * ptr;
-  double * pdblDims, * pdblDataReal, * pdblDataImag;
-  int piPrecision, ret, * p_item_address;
+  double * pdblDataID = NULL, * pdblDataCID = NULL;
+  int * pintDims = NULL, * ptr = NULL;
+  double * pdblDims = NULL, * pdblDataReal = NULL, * pdblDataImag = NULL;
+  int piPrecision, * p_item_address = NULL;
   int * piData32 = NULL, * piBool = NULL;
-  unsigned int * puiData32;
+  unsigned int * puiData32 = NULL;
   int is_complex;
   int tmp_cnt, tmp_cnt2;
-  double * tmp_dblDataReal, * tmp_dblDataImag;
+  double * tmp_dblDataReal = NULL, * tmp_dblDataImag = NULL;
   
 #ifdef DEBUG
   int _picol, _pirow;
@@ -736,32 +735,32 @@ int gfi_array_to_sci_array(gfi_array *t, int ivar)
   // - addCellToCell, addStringToCell, etc.. pour gérer les listes imbriquées
 
   SciErr _SciErr;
-  int *m_var, var_type;
-  StrCtx _StrCtx;
+  int * m_var = NULL, var_type;
 
   /* Scilab represent scalars as an array of size one */
   /* while gfi_array represents "scalar" values with 0-dimension array */
 
   int ndim = (t->dim.dim_len == 0 ? 1 : t->dim.dim_len);
   static const int one = 1;
-  const int *dim = (t->dim.dim_len == 0 ? &one : (const int *)t->dim.dim_val);
+  const int * dim = (t->dim.dim_len == 0 ? &one : (const int *)t->dim.dim_val);
   int is_hypermat = 0;
   int nrow, ncol, nb_item, pi_precision;
-  int pirow, picol, nbitem, * pi_col_pos, * nb_item_row, * nb_item_row_tmp, * pi_col_pos_tmp, *pilen;
-  int * dims;
-  unsigned int * entries;
+  int pirow, picol, nbitem, * pi_col_pos = NULL, * nb_item_row = NULL;
+  int * nb_item_row_tmp = NULL, * pi_col_pos_tmp = NULL, * pilen = NULL;
+  int * dims = NULL;
+  unsigned int * entries = NULL;
   int nb_elem = 1;
-  double *pr, *pi;
-  int i, j, k, nnz, Index;
-  double * pdblDataReal, * pdblDataImag, * pdblDataReal_tmp, * pdblDataImag_tmp;
-  double * dbl_entries;
-  double * entries_pr, *entries_pi;
+  double * pr = NULL, * pi = NULL;
+  int i, j;
+  double * pdblDataReal = NULL, * pdblDataImag = NULL, * pdblDataReal_tmp = NULL, * pdblDataImag_tmp = NULL;
+  double * dbl_entries = NULL;
+  double * entries_pr = NULL, * entries_pi = NULL;
   int iscomplex;
-  int * ptr, * m_content, * piData32;
-  char ** pstStrings;
-  double * pdblReal, * pdblImag;
-  unsigned int * puiData32;
-  int * piBool;
+  int * ptr = NULL, * m_content = NULL, * piData32 = NULL;
+  char ** pstStrings = NULL;
+  double * pdblReal = NULL, * pdblImag = NULL;
+  unsigned int * puiData32 = NULL;
+  int * piBool = NULL;
 
   assert(t);
   
@@ -794,8 +793,8 @@ int gfi_array_to_sci_array(gfi_array *t, int ivar)
 	  }
 	else
 	  {
-	    char *fields[] = {"hm","dims","entries"};
-        nb_elem = 1;
+	    const char * const fields[] = {"hm","dims","entries"};
+	    nb_elem = 1;
 
 	    _SciErr = createMList(pvApiCtx,ivar,3,&m_var); CHECK_ERROR_API_SCILAB;
 	    _SciErr = createMatrixOfStringInList(pvApiCtx,ivar, m_var, 1, 1, 3, fields); CHECK_ERROR_API_SCILAB;
@@ -849,7 +848,7 @@ int gfi_array_to_sci_array(gfi_array *t, int ivar)
 	  }
 	else
 	  {
-	    char *fields[] = {"hm","dims","entries"};
+	    const char * const fields[] = {"hm","dims","entries"};
 	    nb_elem = 1;
 
 	    _SciErr = createMList(pvApiCtx,ivar,3,&m_var); CHECK_ERROR_API_SCILAB;
@@ -862,15 +861,15 @@ int gfi_array_to_sci_array(gfi_array *t, int ivar)
 		nb_elem *= (int)t->dim.dim_val[i];
 	      }
 
-	    entries = (double *)MALLOC(nb_elem*sizeof(double));
-	    for(i=0;i<nb_elem;i++) entries[i] = (double)t->storage.gfi_storage_u.data_int32.data_int32_val[i];
+	    dbl_entries = (double *)MALLOC(nb_elem*sizeof(double));
+	    for(i=0;i<nb_elem;i++) dbl_entries[i] = (double)t->storage.gfi_storage_u.data_int32.data_int32_val[i];
 	    
 	    // Add a vector to the 'dims' field -> a row vector
 	    _SciErr = createMatrixOfInteger32InList(pvApiCtx,ivar, m_var, 2, 1, t->dim.dim_len, dims); CHECK_ERROR_API_SCILAB;
 	    // Add a vector to the 'entries' field -> a column vector
-	    _SciErr = createMatrixOfDoubleInList(pvApiCtx,ivar, m_var, 3, nb_elem, 1, entries); CHECK_ERROR_API_SCILAB;
+	    _SciErr = createMatrixOfDoubleInList(pvApiCtx,ivar, m_var, 3, nb_elem, 1, dbl_entries); CHECK_ERROR_API_SCILAB;
 		
-	    if (entries) FREE(entries);
+	    if (entries) FREE(dbl_entries);
 	    if (dims)    FREE(dims);
 	  }
       } 
@@ -937,7 +936,7 @@ int gfi_array_to_sci_array(gfi_array *t, int ivar)
 #ifdef DEBUG
 	    sciprint("DEBUG: array is hypermat\n");
 #endif
-	    char *fields[] = {"hm","dims","entries"};
+	    const char * const fields[] = {"hm","dims","entries"};
 	    nb_elem = 1;
 
 	    _SciErr = createMList(pvApiCtx,ivar,3,&m_var); CHECK_ERROR_API_SCILAB;

@@ -1,13 +1,38 @@
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*========================================================================
+
+ Copyright (C) 2009-2011 Yann Collette
+
+ This file is a part of GETFEM++
+
+ Getfem++ is free software; you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as
+ published by the Free Software Foundation; either version 2.1 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Lesser General Public License for more details.
+ You should have received a copy of the GNU Lesser General Public
+ License along with this program; if not, write to the Free Software
+ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301,
+ USA.
+
+ ========================================================================*/
+
 #include <api_common.h>
 #include <api_sparse.h>
 #include <api_double.h>
 #include <MALLOC.h>
+#include <Scierror.h>
+#include <sciprint.h>
 #include <stack-c.h>
 
 #include <sparse2.h>
 #include <err.h>
 
-#define DEBUG
+//#define DEBUG
 
 int sci_spluinc(char * fname)
 {
@@ -20,11 +45,11 @@ int sci_spluinc(char * fname)
   double * p_in_dbl_matrix  = NULL;
   int    * p_in_dbl_address = NULL;
   SPMAT  * A = NULL;
-  int      Index, i, j, res;
+  int      Index, i, j;
   int    * p_out_spmat_item_row = NULL;
   int    * p_out_spmat_col_pos  = NULL;
   double * p_out_spmat_val      = NULL;
-  double   value, alpha = 1.0;
+  double   alpha = 1.0;
   int      nnz = 0, var_type;
   SciErr  _SciErr;
   StrCtx  _StrCtx;
