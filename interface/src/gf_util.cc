@@ -105,24 +105,32 @@ void gf_util(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC ('trace level', @int level)
+    /*@FUNC tl = ('trace level' [, @int level])
       Set the verbosity of some getfem++ routines.
 
       Typically the messages printed by the model bricks, 0 means no
-      trace message (default is 3).@*/
+      trace message (default is 3). if no level is given,
+      the current trace level is returned. @*/
     sub_command
-      ("trace level", 1, 1, 0, 0,
-       gmm::set_traces_level(in.pop().to_integer(0, 100));
+      ("trace level", 0, 1, 0, 1,
+       if (in.remaining())
+	 gmm::set_traces_level(in.pop().to_integer(0, 100));
+       else
+	 out.pop().from_integer(int(gmm::traces_level::level()));
        );
 
 
-    /*@FUNC ('warning level', @int level)
+    /*@FUNC tl = ('warning level', @int level)
       Filter the less important warnings displayed by getfem.
 
-      0 means no warnings, default level is 3.@*/
+      0 means no warnings, default level is 3. if no level is given,
+      the current warning level is returned. @*/
     sub_command
-      ("warning level", 1, 1, 0, 0,
-       gmm::set_warning_level(in.pop().to_integer(0, 100));
+      ("warning level", 0, 1, 0, 1,
+       if (in.remaining())
+	 gmm::set_warning_level(in.pop().to_integer(0, 100));
+       else
+	 out.pop().from_integer(int(gmm::warning_level::level()));
        );
 
   }

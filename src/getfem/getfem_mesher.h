@@ -954,7 +954,7 @@ namespace getfem {
   // mesher
   void build_mesh(mesh &m, const mesher_signed_distance& dist_,
 		  scalar_type h0, const std::vector<base_node> &fixed_points
-		  = std::vector<base_node>(), size_type K = 1, int noise = 1,
+		  = std::vector<base_node>(), size_type K = 1, int noise = -1,
 		  size_type iter_max = 500, int prefind = 1,
 		  scalar_type dist_point_hull = 4,
 		  scalar_type boundary_threshold_flatness = 0.11);

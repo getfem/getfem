@@ -1664,7 +1664,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         bool symmetrized = false;
-        if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+        if (in.remaining()) symmetrized = ((in.pop().to_integer(0,1)) != 0);
         
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
@@ -1693,7 +1693,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           }
           else THROW_BADARG("Matrix BT should be a sparse matrix");
         }
-        
+    
         size_type ind;
         if (friction) {
           ind = getfem::add_basic_contact_with_friction_brick
@@ -1798,8 +1798,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type region = argin.to_integer();
         std::string obstacle = in.pop().to_string();
         bool symmetrized = false;
-        if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+        if (in.remaining()) symmetrized = ((in.pop().to_integer(0,1)) != 0);
         
+	cout << "symmetrized = " << symmetrized << endl;
+
+
         size_type ind;
         
         if (friction)

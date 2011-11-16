@@ -52,7 +52,7 @@ elseif (N == 3)
     mo1 = gf_mesher_object('cone', [0 0 0], [0 0 1], L, alpha);
     mo2 = gf_mesher_object('cylinder', [0 0 L], [0, 0, 1], L, R);
     mo = gf_mesher_object('union', mo1, mo2);
-    fixed_vertices = []; h = 1.7;
+    fixed_vertices = []; h = 4;
   end
 elseif (N == 4)
   mo = gf_mesher_object('ball', [0 0 0 4], 2);
@@ -62,16 +62,21 @@ else
   error('It is not very reasonable to build a mesh in dimension greater than 4 !');
 end;
  
- m = gf_mesh('generate', mo, h, K, fixed_vertices);
+
+tl = gf_util('trace level');
+% gf_util('trace level', 2);   % no trace for mesh generation
+gf_util('trace level', 4);   % all traces for mesh generation
+m = gf_mesh('generate', mo, h, K, fixed_vertices);
+gf_util('trace level', tl);
  
  
- if (N <= 2) 
-     gf_plot_mesh(m);
- elseif (N == 3)
-    mf=gf_mesh_fem(m, 1);
-    gf_mesh_fem_set(mf, 'classical fem', K);
-    VAL = gf_mesh_fem_get(mf, 'eval', {'x+y+z'});
-    gf_plot(mf, VAL, 'mesh', 'on', 'cvlst', gf_mesh_get(mf,'outer faces'), 'refine', 4);
-    axis on; camlight; gf_colormap('chouette');
+if (N <= 2) 
+    gf_plot_mesh(m);
+elseif (N == 3)
+   mf=gf_mesh_fem(m, 1);
+   gf_mesh_fem_set(mf, 'classical fem', K);
+   VAL = gf_mesh_fem_get(mf, 'eval', {'x+y+z'});
+   gf_plot(mf, VAL, 'mesh', 'on', 'cvlst', gf_mesh_get(mf,'outer faces'), 'refine', 4);
+   axis on; camlight; gf_colormap('chouette');
 end;
  

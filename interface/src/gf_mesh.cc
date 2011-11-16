@@ -496,7 +496,11 @@ void gf_mesh(getfemint::mexargs_in& m_in,
       quality of the elements. This operation may be time consuming.
       Note that if the mesh generation fails, because of some random
       procedure used, it will not give necessarily the same result due
-      to random procedures used. @*/
+      to random procedures used.
+      The messages send to the console by the mesh generation can be
+      desactivated using `gf_util('trace level', 2)`. More information
+      can be obtained by `gf_util('trace level', 4)`.
+      @*/
     sub_command
       ("generate", 2, 4, 0, 1,
 
@@ -517,7 +521,7 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        int prefind = 1;
        int max_iter = 400;
 
-       getfem::build_mesh(*pmesh, *pmo, h, fixed, K, 2, max_iter, prefind);
+       getfem::build_mesh(*pmesh, *pmo, h, fixed, K, -1, max_iter, prefind);
        );
 
   }

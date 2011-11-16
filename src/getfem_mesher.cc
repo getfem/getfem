@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Julien Pommier
+// Copyright (C) 2004-2011 Julien Pommier, Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -274,6 +274,7 @@ namespace getfem {
       : dist(dist_), edge_len(edge_len_), dist_point_hull(dph),
 	boundary_threshold_flatness(btf), iter_max(itm), prefind(pref),
 	noisy(noise) {
+      if (noise == -1) noisy = gmm::traces_level::level() - 2;
       K=K_; h0=h0_;
       ptol = 0.0025;
       ttol = .1;
@@ -774,7 +775,7 @@ namespace getfem {
 	  }
 	}
       }
-      cout << "effective bounding box : " << eff_boxmin << " : " << eff_boxmax << endl;
+      if (noisy > 0) cout << "effective bounding box : " << eff_boxmin << " : " << eff_boxmax << endl;
       if (prefind == 3) {
 	h0 = std::min(h0, gmm::vect_dist2(eff_boxmin, eff_boxmax)
 		      / scalar_type(2));
@@ -1232,8 +1233,6 @@ namespace getfem {
 	//		 dal::index_ref_iterator(pts.begin(), &t[i*(N+1)]));
 	// char s[50]; sprintf(s, "toto%02d.mesh", count);
 	// m.write_to_file(s);
-
-	cout << "iter : " << count << endl;
 
 	if ( (count > 40 && sqrt(maxdp)*deltat < ptol * h0)
 	     || iter_wtcc>iter_max || count > 10000) {
