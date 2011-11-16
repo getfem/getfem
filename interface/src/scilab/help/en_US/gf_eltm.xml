@@ -9,83 +9,114 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_eltm</refname>
+    <refpurpose>
+  This object represents a type of elementary matrix. In order to obtain a
+  numerical value of theses matrices, see gf_mesh_im_get(mesh_im MI, 'eltm').
 
-    <refpurpose>get a descriptor</refpurpose>
+  If you have very particular assembling needs, or if you just want to check
+  the content of an elementary matrix, this function might be useful. But
+  the generic assembly abilities of gf_asm(...) should suit most needs.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>ELTM = gf_eltm(elt_matrix_type, args..)</synopsis>
+    <synopsis>E = gf_eltm('base', fem FEM)</synopsis>
+    <synopsis>E = gf_eltm('grad', fem FEM)</synopsis>
+    <synopsis>E = gf_eltm('hessian', fem FEM)</synopsis>
+    <synopsis>E = gf_eltm('normal')</synopsis>
+    <synopsis>E = gf_eltm('grad_geotrans')</synopsis>
+    <synopsis>E = gf_eltm('grad_geotrans_inv')</synopsis>
+    <synopsis>E = gf_eltm('product', eltm A, eltm B)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for eltm objects.</para>
+
+    <para>
+  This object represents a type of elementary matrix. In order to obtain a
+  numerical value of theses matrices, see gf_mesh_im_get(mesh_im MI, 'eltm').
+
+  If you have very particular assembling needs, or if you just want to check
+  the content of an elementary matrix, this function might be useful. But
+  the generic assembly abilities of gf_asm(...) should suit most needs.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_eltm('base', Fem FEM) return a descriptor for the integration
-        of shape functions on elements, using the Fem <literal>FEM</literal>.
-        </para>
-      </listitem>
+    <listitem>
+    <para><literal>E = gf_eltm('base', fem FEM)</literal></para>
 
-      <listitem>
-        <para>gf_eltm('grad', Fem FEM) return a descriptor for the integration
-        of the gradient of shape functions on elements, using the Fem
-        <literal>FEM</literal>. </para>
-      </listitem>
+    <para>         return a descriptor for the integration of shape functions on
+      elements, using the fem <literal>FEM</literal>. 
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_eltm('hessian', Fem FEM) return a descriptor for the
-        integration of the hessian of shape functions on elements, using the
-        Fem <literal>FEM</literal>. </para>
-      </listitem>
+    <listitem>
+    <para><literal>E = gf_eltm('grad', fem FEM)</literal></para>
 
-      <listitem>
-        <para>gf_eltm('normal') return a descriptor for the unit normal of
-        convex faces. </para>
-      </listitem>
+    <para>         return a descriptor for the integration of the gradient of shape
+      functions on elements, using the fem <literal>FEM</literal>.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_eltm('grad_geotrans') return a descriptor to the gradient
-        matrix of the geometric transformation. </para>
-      </listitem>
+    <listitem>
+    <para><literal>E = gf_eltm('hessian', fem FEM)</literal></para>
 
-      <listitem>
-        <para>gf_eltm('grad_geotrans_inv') return a descriptor to the inverse
-        of the gradient matrix of the geometric transformation (this is rarely
-        used). </para>
-      </listitem>
+    <para>         return a descriptor for the integration of the hessian of shape
+      functions on elements, using the fem <literal>FEM</literal>.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_eltm('product', Eltm A, Eltm B) return a descriptor for the
-        integration of the tensorial product of elementary matrices
-        <literal>A</literal> and <literal>B</literal>. In order to obtain a
-        numerical value of theses matrices, see
-        <emphasis>gf_mesh_im_get(MIM,('eltm').</emphasis></para>
-      </listitem>
+    <listitem>
+    <para><literal>E = gf_eltm('normal')</literal></para>
+
+    <para>         return a descriptor for the unit normal of convex faces.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_eltm('grad_geotrans')</literal></para>
+
+    <para>         return a descriptor to the gradient matrix of the geometric
+      transformation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_eltm('grad_geotrans_inv')</literal></para>
+
+    <para>         return a descriptor to the inverse of the gradient matrix of the
+      geometric transformation (this is rarely used).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_eltm('product', eltm A, eltm B)</literal></para>
+
+    <para>         return a descriptor for the integration of the tensorial product of
+      elementary matrices <literal>A</literal> and <literal>B</literal>.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_im_get">gf_mesh_im_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

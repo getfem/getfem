@@ -9,137 +9,138 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_spmat</refname>
+    <refpurpose>  Create a new sparse matrix in getfem++ format. These sparse matrix can be stored as CSC (compressed column
+  sparse), which is the format used by Matlab, or they can be stored as WSC
+  (internal format to getfem). The CSC matrices are not writable (it would
+  be very inefficient), but they are optimized for multiplication with
+  vectors, and memory usage. The WSC are writable, they are very fast with
+  respect to random read/write operation. However their memory overhead is
+  higher than CSC matrices, and they are a little bit slower for
+  matrix-vector multiplications.
 
-    <refpurpose>Sparse matrix manipulation</refpurpose>
+  By default, all newly created matrices are build as WSC matrices. This can
+  be changed later with <literal></literal>gf_spmat_set(spmat S, 'to_csc',...)<literal></literal>, or may be changed
+  automatically by getfem (for example <literal></literal>gf_linsolve()<literal></literal> converts the
+  matrices to CSC).
+
+  The matrices may store REAL or COMPLEX values.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-M=gf_spmat('empty', int m [, int n])
-M=gf_spmat('identity', int n)
-M=gf_spmat('copy', spmat K [,ivec I [, ivec J]])
-M=gf_spmat('mult',  spmat A,  spmat B)
-M=gf_spmat('add', spmat A, spmat B)
-M=gf_spmat('harwell-boeing', string filename)M=gf_spmat('matrix-market', string filename)
-    </synopsis>
+    <synopsis>SM = gf_spmat('empty', int m [, int n])</synopsis>
+    <synopsis>SM = gf_spmat('copy', mat K [,  I [,  J]])</synopsis>
+    <synopsis>SM = gf_spmat('identity', int n)</synopsis>
+    <synopsis>SM = gf_spmat('mult', spmat A, spmat B)</synopsis>
+    <synopsis>SM = gf_spmat('add', spmat A, spmat B)</synopsis>
+    <synopsis>SM = gf_spmat('diag', mat D [, ivec E [, int n [,int m]]])</synopsis>
+    <synopsis>SM = gf_spmat('load','hb'|'harwell-boeing'|'mm'|'matrix-market', string filename)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for spmat objects.</para>
 
-    <para>These sparse matrix can be stored as CSC (compressed column sparse),
-    which is the format used by Matlab, or they can be stored as WSC (internal
-    format to getfem). The CSC matrices are not writable (it would be very
-    inefficient), but they are optimized for multiplication with vectors, and
-    memory usage. The WSC are writable, they are very fast with respect to
-    random read/write operation. However their memory overhead is higher than
-    CSC matrices, and they are a little bit slower for matrix-vector
-    multiplications. By default, all newly created matrices are build as WSC
-    matrices. This can be changed later with
-    <emphasis>gf_spmat_set(M,('to_csc',...)</emphasis>, or may be changed
-    automatically by getfem (for example gf_linsolve() converts the matrices
-    to CSC). The matrices may store REAL or COMPLEX values. </para>
+    <para>  Create a new sparse matrix in getfem++ format. These sparse matrix can be stored as CSC (compressed column
+  sparse), which is the format used by Matlab, or they can be stored as WSC
+  (internal format to getfem). The CSC matrices are not writable (it would
+  be very inefficient), but they are optimized for multiplication with
+  vectors, and memory usage. The WSC are writable, they are very fast with
+  respect to random read/write operation. However their memory overhead is
+  higher than CSC matrices, and they are a little bit slower for
+  matrix-vector multiplications.
+
+  By default, all newly created matrices are build as WSC matrices. This can
+  be changed later with <literal></literal>gf_spmat_set(spmat S, 'to_csc',...)<literal></literal>, or may be changed
+  automatically by getfem (for example <literal></literal>gf_linsolve()<literal></literal> converts the
+  matrices to CSC).
+
+  The matrices may store REAL or COMPLEX values.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_spmat('empty', int m [, int n]) Create a new empty (i.e. full
-        of zeros) sparse matrix, of dimensions <emphasis>m x n</emphasis>. If
-        <literal>n</literal> is omitted, the matrix dimension is <emphasis>m x
-        m</emphasis>. </para>
-      </listitem>
+    <listitem>
+    <para><literal>SM = gf_spmat('empty', int m [, int n])</literal></para>
 
-      <listitem>
-        <para>gf_spmat('copy', mat K [, list I [, list J]]) Duplicate a matrix
-        <literal>K</literal> (which might be a Spmat). If (index)
-        <literal>I</literal> and/or <literal>J</literal> are given, the matrix
-        will be a submatrix of <literal>K</literal>. </para>
+    <para>         Create a new empty (i.e. full of zeros) sparse matrix, of dimensions
+      <literal>m x n</literal>. If <literal>n</literal> is omitted, the matrix dimension is <literal>m x m</literal>.
+    </para>
+    </listitem>
 
-        <para>For example: <emphasis>M = gf_spmat('copy',
-        gf_spmat('empty',50,50), range(40), [6, 7, 8, 3, 10])</emphasis> will
-        return a 40x5 matrix. </para>
-      </listitem>
+    <listitem>
+    <para><literal>SM = gf_spmat('copy', mat K [,  I [,  J]])</literal></para>
 
-      <listitem>
-        <para>gf_spmat('identity', int n) Create a <emphasis>n x n</emphasis>
-        identity matrix. </para>
-      </listitem>
+    <para>         Duplicate a matrix <literal>K</literal> (which might be a spmat). If index <literal>I</literal> and/or <literal>J</literal> are given, the matrix will
+      be a submatrix of <literal>K</literal>. For example::
 
-      <listitem>
-        <para>gf_spmat('mult', SpMat A, SpMat B) Create a sparse matrix as the
-        product of the sparse matrices <literal>A</literal> and
-        <literal>B</literal>. It requires that <literal>A</literal> and
-        <literal>B</literal> be both real or both complex, you may have to use
-        <emphasis>gf_spmat_set(M,('to_complex') </emphasis></para>
-      </listitem>
+        
+        m = gf_spmat('copy', sprand(50,50,.1), 1:40, [6 7 8 3 10])
+        
 
-      <listitem>
-        <para>gf_spmat('add', SpMat A, SpMat B) Create a sparse matrix as the
-        sum of the sparse matrices <literal>A</literal> and
-        <literal>B</literal>. Adding a real matrix with a complex matrix is
-        possible. </para>
-      </listitem>
+      will return a 40x5 matrix.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_spmat_set(M,('diag', mat D [, ivec E [, int n [,int m]]])
-        Create a diagonal matrix. If <literal>E</literal> is given,
-        <literal>D</literal> might be a matrix and each column of
-        <literal>E</literal> will contain the sub-diagonal number that will be
-        filled with the corresponding column of <literal>D</literal>. </para>
-      </listitem>
+    <listitem>
+    <para><literal>SM = gf_spmat('identity', int n)</literal></para>
 
-      <listitem>
-        <para>gf_spmat('load','hb'|'harwell-boeing', string filename) Read a
-        sparse matrix from an Harwell-Boeing file. </para>
-      </listitem>
+    <para>          Create a <literal>n x n</literal> identity matrix.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_spmat('load','mm'|'matrix-market', filename) Read a sparse
-        matrix from a Matrix-Market file.</para>
-      </listitem>
+    <listitem>
+    <para><literal>SM = gf_spmat('mult', spmat A, spmat B)</literal></para>
+
+    <para>          Create a sparse matrix as the product of the sparse matrices <literal>A</literal> and
+       <literal>B</literal>. It requires that <literal>A</literal> and <literal>B</literal> be both real or both complex, you
+       may have to use <literal></literal>gf_spmat_set(spmat S, 'to_complex')<literal></literal> 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>SM = gf_spmat('add', spmat A, spmat B)</literal></para>
+
+    <para>          Create a sparse matrix as the sum of the sparse matrices <literal>A</literal> and <literal>B</literal>.
+       Adding a real matrix with a complex matrix is possible.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>SM = gf_spmat('diag', mat D [, ivec E [, int n [,int m]]])</literal></para>
+
+    <para>          Create a diagonal matrix. If <literal>E</literal> is given, <literal>D</literal> might be a matrix and
+       each column of <literal>E</literal> will contain the sub-diagonal number that will be
+       filled with the corresponding column of <literal>D</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>SM = gf_spmat('load','hb'|'harwell-boeing'|'mm'|'matrix-market', string filename)</literal></para>
+
+    <para>         Read a sparse matrix from an Harwell-Boeing or a Matrix-Market file
+      .
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"><![CDATA[ 
-// TEST EMPTY COPY FULL
-A  = gf_spmat('empty', 5,6);
-B  = gf_spmat('empty', 11111);
-C  = gf_spmat('copy', A);
-C  = sprand(50,50,.1); C(2,2)=1+2*%i; I = 1:40; J = [6 7 8 3 10];
-D  = gf_spmat('copy', C, I, J);
-DD = gf_spmat_get(D,'full');
-
-// TEST MULT
-A  = gf_spmat('identity', 11111);
-C  = gf_spmat('mult',A,B);
-n  = gf_spmat_get(C,'nnz'); assert('n==0');
-C  = gf_spmat('mult',A,A);
-n  = gf_spmat_get(C,'nnz'); assert('n==11111');
-M1 = sprand(50,43,.1);
-M2 = sprand(43,14,.3);
-C  = gf_spmat('mult',M1,M2);
-C  = gf_spmat_get(C, 'full');
-P  = full(M1*M2);
- ]]></programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_spmat_get">gf_spmat_get</link></member>
-      <member><link linkend="gf_spmat_set">gf_spmat_set</link></member>
-      <member><link linkend="gf_util">gf_util</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

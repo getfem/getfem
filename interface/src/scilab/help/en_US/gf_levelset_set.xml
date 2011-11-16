@@ -9,47 +9,58 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_levelset_set</refname>
-
-    <refpurpose>General function for modification of LEVELSET
-    objects.</refpurpose>
+    <refpurpose>  General function for modification of LEVELSET objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_levelset_set(LS, ...)  </synopsis>
+    <synopsis>gf_levelset_set(levelset LS, 'values', {mat v1|string func_1}[, mat v2|string func_2])</synopsis>
+    <synopsis>gf_levelset_set(levelset LS, 'simplify'[, scalar eps=0.01])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for modification of LEVELSET objects.
+</para>
+  </refsection>
 
-    <para>General function for modification of LEVELSET objects.</para>
+  <refsection>
+    <title>Command list</title>
 
-    <para>gf_levelset_set(LS,'values',list(mat v1|string poly1)[, list(mat
-    v2|string poly2)]) Set values of the vector of dof for the level-set
-    functions. Set the primary function with the vector of dof
-    <literal>v1</literal> (or the polynomial expression
-    <literal>poly1</literal>) and the secondary function (if any) with the
-    vector of dof <literal>v2</literal> (or the polynomial expression
-    poly2).</para>
+    <itemizedlist>
+    <listitem>
+    <para><literal>gf_levelset_set(levelset LS, 'values', {mat v1|string func_1}[, mat v2|string func_2])</literal></para>
 
-    <para>gf_levelset_set(LS,'simplify'[scalar eps=0.01]) Simplify dof of
-    level-set optionally with the parameter <literal>eps</literal>.</para>
+    <para>       Set values of the vector of dof for the level-set functions.
+
+    Set the primary function with the vector of dof <literal>v1</literal> (or the expression
+    <literal>func_1</literal>) and the secondary function (if any) with  the vector of dof
+    <literal>v2</literal> (or the expression <literal>func_2</literal>)
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_levelset_set(levelset LS, 'simplify'[, scalar eps=0.01])</literal></para>
+
+    <para>       Simplify dof of level-set optionally with the parameter <literal>eps</literal>.
+    </para>
+    </listitem>
+
+    </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_levelset">gf_levelset</link></member>
-
-      <member><link linkend="gf_levelset_get">gf_levelset_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

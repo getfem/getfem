@@ -9,81 +9,97 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_im</refname>
-
-    <refpurpose>General constructor for MeshIm object (integration methods on
-    a mesh).</refpurpose>
+    <refpurpose>  This object represents an integration method defined on a whole mesh (an 
+  potentialy on its boundaries).
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-mesh_im MIM = gf_mesh_im(mesh M [, { integ | int }])
-mesh_im MIM[,M] = gf_mesh_im('load', string filename[,mesh M])
-mesh_im MIM[,M] = gf_mesh_im('from string', string S [,mesh M])
-mesh_im MIM = gf_mesh_im('clone', mesh_im MIM0)
-    </synopsis>
+    <synopsis>MIM = gf_mesh_im('load', string fname[, mesh m])</synopsis>
+    <synopsis>MIM = gf_mesh_im('from string', string s[, mesh m])</synopsis>
+    <synopsis>MIM = gf_mesh_im('clone', mesh_im mim)</synopsis>
+    <synopsis>MIM = gf_mesh_im('levelset', mesh_levelset mls, string where, integ im[, integ im_tip[, integ im_set]])</synopsis>
+    <synopsis>MIM = gf_mesh_im(mesh m, [{integ im|int im_degree}])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for mesh_im objects.</para>
 
-    <para>General constructor for MeshIm object (integration methods on a
-    mesh). </para>
+    <para>  This object represents an integration method defined on a whole mesh (an 
+  potentialy on its boundaries).
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_mesh_im(mesh m[list(integ im|int im_degree)]) : Return a getfem handle to the newly created MeshIm object. For
-	  convenience, optional arguments ('im' or 'im_degree') can be provided, in that case a call to gf_mesh_im_set(mim, 'integ', ..) 
-	  is issued with these arguments.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MIM = gf_mesh_im('load', string fname[, mesh m])</literal></para>
 
-      <listitem>
-        <para>gf_mesh_im('load', string fname[, Mesh m]) : Load a MeshIm from a
-        file. If the mesh <literal>m</literal> is not supplied (this kind of
-        file does not store the mesh), then it is read from the file and its
-        descriptor is returned as the second output argument.</para>
-      </listitem>
+    <para>         Load a mesh_im from a file.
 
-      <listitem>
-        <para>gf_mesh_im('from string', string s[, mesh M]) : Create a MeshIm
-        object from its string description. See also
-        gf_mesh_im_get(mim,'char')</para>
-      </listitem>
+      If the mesh <literal>m</literal> is not supplied (this kind of file does not store the
+      mesh), then it is read from the file and its descriptor is returned as
+      the second output argument.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_im('clone', MeshIm mim2) : Create a copy of a
-        MeshIm.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MIM = gf_mesh_im('from string', string s[, mesh m])</literal></para>
 
-      <listitem>
-        <para>gf_mesh_im('levelset', LevelSet ls, string where, Integ im[, Integ im_tip]) : Build an integration method conformal to a partition
-        defined implicitely by a levelset. The <literal>where</literal> argument define the domain of integration with respect to the
-        levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and 'BOUNDARY'.</para>
-      </listitem>
+    <para>         Create a mesh_im object from its string description.
 
-      <listitem>
-        <para>gf_mesh_im('.mesh',Mesh m, [list(Integ im|int im_degree)]) : Build
-        a new MeshIm object. For convenience, optional arguments
-        (<literal>im</literal> or <literal>im_degree</literal>) can be
-        provided, in that case a call to MeshIm.integ() is issued with these
-        arguments.</para>
-      </listitem>
+      See also <literal></literal>gf_mesh_im_get(mesh_im MI, 'char')<literal></literal>
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MIM = gf_mesh_im('clone', mesh_im mim)</literal></para>
+
+    <para>         Create a copy of a mesh_im.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MIM = gf_mesh_im('levelset', mesh_levelset mls, string where, integ im[, integ im_tip[, integ im_set]])</literal></para>
+
+    <para>         Build an integration method conformal to a partition defined
+      implicitely by a levelset.
+
+      The <literal>where</literal> argument define the domain of integration with respect to
+      the levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and
+      'BOUNDARY'.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MIM = gf_mesh_im(mesh m, [{integ im|int im_degree}])</literal></para>
+
+    <para>         Build a new mesh_im object.
+
+      For convenience, optional arguments (<literal>im</literal> or <literal>im_degree</literal>) can be
+      provided, in that case a call to <literal></literal>gf_mesh_im_get(mesh_im MI, 'integ')<literal></literal> is issued
+      with these arguments.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_im_set">gf_mesh_im_set</link></member>
-      <member><link linkend="gf_mesh_im_get">gf_mesh_im_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

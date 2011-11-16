@@ -9,46 +9,51 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_slice_set</refname>
-
-    <refpurpose>Edition of mesh slices.</refpurpose>
+    <refpurpose>  Edition of mesh slices.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_slice_set(mesh_slice sl, 'pts', mat P)
-    </synopsis>
+    <synopsis>gf_slice_set(slice S, 'pts', mat P)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  Edition of mesh slices.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_slice_set(SL,('pts',mat P) : Replace the points of the slice.
-        The new points <literal>P</literal> are stored in the columns the
-        matrix. Note that you can use the function to apply a deformation to a
-        slice, or to change the dimension of the slice (the number of rows of
-        <literal>P</literal> is not required to be equal to
-        <emphasis>gf_slice_get(SL,('dim'))</emphasis>.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_slice_set(slice S, 'pts', mat P)</literal></para>
+
+    <para>       Replace the points of the slice.
+
+    The new points <literal>P</literal> are stored in the columns the matrix. Note that
+    you can use the function to apply a deformation to a slice, or to
+    change the dimension of the slice (the number of rows of <literal>P</literal> is not
+    required to be equal to gf_slice_get(slice S, 'dim')).
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_slice_get">gf_slice_get</link></member>
-      <member><link linkend="gf_slice">gf_slice</link></member>
-      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

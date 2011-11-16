@@ -9,114 +9,125 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_fem</refname>
-
-    <refpurpose>General constructor for mesh_fem objects (Finite Element basis
-    functions on a mesh).</refpurpose>
+    <refpurpose>  This object represents a finite element method defined on a whole mesh.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-mesh_fem MF = gf_mesh_fem(mesh M [, int Qdim=1])
-mesh_fem MF[,M] = gf_mesh_fem('load', string filename[,mesh M])
-mesh_fem MF[,M] = gf_mesh_fem('from string', string S [,mesh M])
-mesh_fem MF = gf_mesh_fem('clone', mesh_fem MF0)
-mesh_fem MF = gf_mesh_fem('partial', mesh_fem mf, vec DOFs[, vec RCVs])
-mesh_fem MF = gf_mesh_fem('global function', mesh m, level_set ls, [gl F1,...][, int Qdim_m])
-    </synopsis>
+    <synopsis>MF = gf_mesh_fem('load', string fname[, mesh m])</synopsis>
+    <synopsis>MF = gf_mesh_fem('from string', string s[, mesh m])</synopsis>
+    <synopsis>MF = gf_mesh_fem('clone', mesh_fem mf)</synopsis>
+    <synopsis>MF = gf_mesh_fem('sum', mesh_fem mf1, mesh_fem mf2[, mesh_fem mf3[, ...]])</synopsis>
+    <synopsis>MF = gf_mesh_fem('levelset', mesh_levelset mls, mesh_fem mf)</synopsis>
+    <synopsis>MF = gf_mesh_fem('global function', mesh m, levelset ls, {global_function GF1,...}[, int Qdim_m])</synopsis>
+    <synopsis>MF = gf_mesh_fem('partial', mesh_fem mf, ivec DOFs[, ivec RCVs])</synopsis>
+    <synopsis>MF = gf_mesh_fem(mesh m[, int Qdim_m=1[, int Qdim_n=1]])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for mesh_fem objects.</para>
 
-    <para>This function creates a mesh_fem object. These objects hold the finite element basis functions on a mesh : 
-      a finite element is assigned to each convex of the mesh, and the mesh_fem takes care of connecting them across the convexes 
-      and enumerating the degrees of freedom.</para>
-    <para>gf_mesh_fem(M,Qdim) creates a new mesh_fem object linked to the mesh M. mesh_fem objects can be used everywhere a const_mesh object 
-      is required (its linked mesh is automatically used). The argument Qdim specifies the dimension of the unknown on this mesh. 
-      If the unknown is a scalar field, then Qdim=1, if it is a 2D vector field then Qdim=2 etc...: 
-      this is independent of the mesh dimension.</para>
-    <para>The load command can restore a previously saved mesh_fem object. If you don't specify the mesh argument, it is assumed that the mesh 
-      was saved in the same file that the mesh_fem (with gf_mesh_fem_get(mf, 'save with mesh')). The 'from string' command is very similar, 
-      but loads the object from a string instead of a file.</para>
-    <para>And finally, it is possible to build a copy of a mesh_fem object with the gf_mesh_fem('clone', MF0) command 
-      (see also the gf_mesh('clone') command).</para>
+    <para>  This object represents a finite element method defined on a whole mesh.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_mesh_fem('load', string fname[, Mesh m]) Load a MeshFem from
-        a file. If the mesh <literal>m</literal> is not supplied (this kind of
-        file does not store the mesh), then it is read from the file
-        <literal>fname</literal> and its descriptor is returned as the second
-        output argument.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('load', string fname[, mesh m])</literal></para>
 
-      <listitem>
-        <para>gf_mesh_fem('from string', string [, mesh M]) Create a MeshFem
-        object from its string description. See also
-        gf_mesh_fem_get(mf,'char')</para>
-      </listitem>
+    <para>         Load a mesh_fem from a file.
 
-      <listitem>
-        <para>gf_mesh_fem('clone', MeshFem mf2) Create a copy of a
-        MeshFem.</para>
-      </listitem>
+      If the mesh <literal>m</literal> is not supplied (this kind of file does not store the
+      mesh), then it is read from the file <literal>fname</literal> and its descriptor is
+      returned as the second output argument.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_fem('sum', MeshFem mf1, MeshFem mf2[, MeshFem mf3[,
-        ...]]) Create a MeshFem that combines two (or more) MeshFem's. All
-        MeshFem must share the same mesh (see gf_fem('interpolated_fem') to
-        map a MeshFem onto another). After that, you should not modify the FEM
-        of <literal>mf1</literal>, <literal>mf2</literal> etc.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('from string', string s[, mesh m])</literal></para>
 
-      <listitem>
-        <para>gf_mesh_fem('levelset', MeshFem mf, LevelSet ls) Create a
-        MeshFem that is conformal to implicit surfaces defined by
-        LevelSet's.</para>
-      </listitem>
+    <para>         Create a mesh_fem object from its string description.
 
-      <listitem>
-        <para>gf_mesh_fem('partial', MeshFem mf, vec DOFs[,vec RCVs]) Build a
-        restricted MeshFem by keeping only a subset of the degrees of freedom
-        of <literal>mf</literal>. If <literal>RCVs</literal> is given, no FEM
-        will be put on the convexes listed in <literal>RCVs</literal>.</para>
-      </listitem>
+      See also <literal></literal>gf_mesh_fem_get(mesh_fem MF, 'char')<literal></literal>
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_fem('.mesh', Mesh m[, int Qdim=1]) Build a new MeshFem
-        object. The <literal>Qdim</literal> parameter is optional.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('clone', mesh_fem mf)</literal></para>
 
-      <listitem>
-	<para>gf_mesh_fem('partial', mesh_fem mf, vec DOFs[, vec
-	RCVs]) creates a special restricted mesh_fem by keeping only a
-	subset of the degrees of freedom of a pre-existing mesh_fem
-	`mf`.</para>
-	<para>If `RCVs` is given, no FEM will be put on the convexes
-	listed in `RCVs`.</para>
-      </listitem>
-      <listitem>
-	<para>gf_mesh_fem('global function', mesh m, level_set ls, [gl
-	  F1,...][, int Qdim_m]) Create a mesh_fem whose base functions are
-	  global function given by the user.</para>
-      </listitem>
+    <para>         Create a copy of a mesh_fem.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('sum', mesh_fem mf1, mesh_fem mf2[, mesh_fem mf3[, ...]])</literal></para>
+
+    <para>         Create a mesh_fem that combines two (or more) mesh_fem's.
+
+      All mesh_fem must share the same mesh (see
+      <literal></literal>gf_fem('interpolated_fem')<literal></literal> to map a mesh_fem onto another).
+
+      After that, you should not modify the FEM of <literal>mf1</literal>, <literal>mf2</literal> etc.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('levelset', mesh_levelset mls, mesh_fem mf)</literal></para>
+
+    <para>         Create a mesh_fem that is conformal to implicit surfaces defined in
+      mesh_levelset.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('global function', mesh m, levelset ls, {global_function GF1,...}[, int Qdim_m])</literal></para>
+
+    <para>         Create a mesh_fem whose base functions are global function given by the
+      user in the system of coordinate defined by the iso-values of the two
+      level-set function of <literal>ls</literal>. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesh_fem('partial', mesh_fem mf, ivec DOFs[, ivec RCVs])</literal></para>
+
+    <para>           Build a restricted mesh_fem by keeping only a subset of the degrees of
+        freedom of <literal>mf</literal>.
+
+        If <literal>RCVs</literal> is given, no FEM will be put on the convexes listed in
+        <literal>RCVs</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesh_fem(mesh m[, int Qdim_m=1[, int Qdim_n=1]])</literal></para>
+
+    <para>         Build a new mesh_fem object.
+
+      <literal>Qdim_m</literal> and <literal>Qdim_n</literal> parameters are optionals. Returns the handle of
+      the created object. 
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
-  
+
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_fem_set">gf_mesh_fem_set</link></member>
-      <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

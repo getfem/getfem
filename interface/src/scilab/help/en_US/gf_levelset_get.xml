@@ -9,64 +9,95 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_levelset_get</refname>
-
-    <refpurpose>General function for querying information about LEVELSET
-    objects.</refpurpose>
+    <refpurpose>    General function for querying information about LEVELSET objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_levelset_get(LS, ...)</synopsis>
+    <synopsis>V = gf_levelset_get(levelset LS, 'values', int nls)</synopsis>
+    <synopsis>d = gf_levelset_get(levelset LS, 'degree')</synopsis>
+    <synopsis>mf = gf_levelset_get(levelset LS, 'mf')</synopsis>
+    <synopsis>z = gf_levelset_get(levelset LS, 'memsize')</synopsis>
+    <synopsis>s = gf_levelset_get(levelset LS, 'char')</synopsis>
+    <synopsis>gf_levelset_get(levelset LS, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>    General function for querying information about LEVELSET objects.
+</para>
+  </refsection>
 
-    <para>General function for querying information about LEVELSET
-    objects.</para>
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>V = gf_levelset_get(LS,'values',int nls) Return the vector of
-        dof for <literal>nls</literal> funtion. If <literal>nls</literal> is
-        0, the method return the vector of dof for the primary level-set
-        funtion. If <literal>nls</literal> is 1, the method return the vector
-        of dof for the secondary level-set function (if any).</para>
-      </listitem>
+    <listitem>
+    <para><literal>V = gf_levelset_get(levelset LS, 'values', int nls)</literal></para>
 
-      <listitem>
-        <para>V = gf_levelset_get(LS,'values',int nls) Return the vector of
-        dof for <literal>nls</literal> funtion. If <literal>nls</literal> is
-        0, the method return the vector of dof for the primary level-set
-        funtion. If <literal>nls</literal> is 1, the method return the vector
-        of dof for the secondary level-set function (if any).</para>
-      </listitem>
+    <para>       Return the vector of dof for <literal>nls</literal> funtion.
 
-      <listitem>
-        <para>mf = gf_levelset_get(LS,'mf') Return a reference on the MeshFem
-        object.</para>
-      </listitem>
+    If <literal>nls</literal> is 0, the method return the vector of dof for the primary
+    level-set funtion. If <literal>nls</literal> is 1, the method return the vector of
+    dof for the secondary level-set function (if any).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>z = gf_levelset_get(LS,'memsize') Return the amount of memory
-        (in bytes) used by the level-set.</para>
-      </listitem>
+    <listitem>
+    <para><literal>d = gf_levelset_get(levelset LS, 'degree')</literal></para>
+
+    <para>         Return the degree of lagrange representation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>mf = gf_levelset_get(levelset LS, 'mf')</literal></para>
+
+    <para>       Return a reference on the mesh_fem object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>z = gf_levelset_get(levelset LS, 'memsize')</literal></para>
+
+    <para>         Return the amount of memory (in bytes) used by the level-set.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_levelset_get(levelset LS, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the levelset.
+
+      This can be used to perform comparisons between two
+      different levelset objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_levelset_get(levelset LS, 'display')</literal></para>
+
+    <para>         displays a short summary for a levelset.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_levelset">gf_levelset</link></member>
-      <member><link linkend="gf_levelset_set">gf_levelset_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

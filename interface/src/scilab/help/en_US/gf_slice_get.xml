@@ -9,213 +9,253 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_slice_get</refname>
-
-    <refpurpose>Get informations related to mesh slices</refpurpose>
+    <refpurpose>  General function for querying information about slice objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-int I = gf_slice_get(sl, 'dim')
-scalar I = gf_slice_get(sl, 'area')
-ivec cvlst = gf_slice_get(sl, 'cvs')
-int n = gf_slice_get(sl, 'nbpts')
-mat P = gf_slice_get(sl, 'pts')
-ivec NS = gf_slice_get(sl, 'nbsplxs')
-int NS = gf_slice_get(sl, 'nbsplxs',int dim)
-[imat S, ivec CV2SPLX] = gf_slice_get(sl, 'splxs', int dim)
-mat E = gf_slice_get(sl, 'edges')
-[mat P, ivec E1, ivec E2] = gf_slice_get(sl, 'edges')
-vec Usl=gf_slice_get(sl, 'interpolate_convex_data', Ucv)
-mesh m = gf_slice_get(sl, 'linked mesh')
-gf_slice_get(sl,'export_to_vtk', filename ... [, 'ascii'][, 'edges'],...)
-gf_slice_get(sl,'export_to_pov', filename, ...)
-gf_slice_get(sl,'export_to_dx', filename, ...[, 'ascii'][, 'edges'][, 'append'])int ms=gf_slice_get(sl, 'memsize')
-    </synopsis>
+    <synopsis>d = gf_slice_get(slice S, 'dim')</synopsis>
+    <synopsis>a = gf_slice_get(slice S, 'area')</synopsis>
+    <synopsis>CVids = gf_slice_get(slice S, 'cvs')</synopsis>
+    <synopsis>n = gf_slice_get(slice S, 'nbpts')</synopsis>
+    <synopsis>ns = gf_slice_get(slice S, 'nbsplxs'[, int dim])</synopsis>
+    <synopsis>P = gf_slice_get(slice S, 'pts')</synopsis>
+    <synopsis>{S, CV2S} = gf_slice_get(slice S, 'splxs',int dim)</synopsis>
+    <synopsis>{P, E1, E2} = gf_slice_get(slice S, 'edges')</synopsis>
+    <synopsis>Usl = gf_slice_get(slice S, 'interpolate_convex_data', mat Ucv)</synopsis>
+    <synopsis>m = gf_slice_get(slice S, 'linked mesh')</synopsis>
+    <synopsis>m = gf_slice_get(slice S, 'mesh')</synopsis>
+    <synopsis>z = gf_slice_get(slice S, 'memsize')</synopsis>
+    <synopsis>gf_slice_get(slice S, 'export to vtk', string filename, ...)</synopsis>
+    <synopsis>gf_slice_get(slice S, 'export to pov', string filename)</synopsis>
+    <synopsis>gf_slice_get(slice S, 'export to dx', string filename, ...)</synopsis>
+    <synopsis>gf_slice_get(slice S, 'export to pos', string filename[, string name][[,mesh_fem mf1], mat U1, string nameU1[[,mesh_fem mf1], mat U2, string nameU2,...])</synopsis>
+    <synopsis>s = gf_slice_get(slice S, 'char')</synopsis>
+    <synopsis>gf_slice_get(slice S, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for querying information about slice objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>d = gf_slice_get(sl,'dim') Return the dimension of the slice (2
-        for a 2D mesh, etc..).</para>
-      </listitem>
+    <listitem>
+    <para><literal>d = gf_slice_get(slice S, 'dim')</literal></para>
 
-      <listitem>
-        <para>a = gf_slice_get(sl,'area') Return the area of the slice.</para>
-      </listitem>
+    <para>         Return the dimension of the slice (2 for a 2D mesh, etc..).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>CVids = gf_slice_get(sl,'cvs') Return the list of convexes of
-        the original mesh contained in the slice.</para>
-      </listitem>
+    <listitem>
+    <para><literal>a = gf_slice_get(slice S, 'area')</literal></para>
 
-      <listitem>
-        <para>n = gf_slice_get(sl,'nbpts') Return the number of points in the
-        slice.</para>
-      </listitem>
+    <para>         Return the area of the slice.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>ns = gf_slice_get(sl,'nbsplxs'[, int dim]) Return the number of
-        simplexes in the slice. Since the slice may contain points (simplexes
-        of dim 0), segments (simplexes of dimension 1), triangles etc., the
-        result is a vector of size gf_slice_get(sl,'dim')+1 , except if the
-        optional argument <literal>dim</literal> is used.</para>
-      </listitem>
+    <listitem>
+    <para><literal>CVids = gf_slice_get(slice S, 'cvs')</literal></para>
 
-      <listitem>
-        <para>P = gf_slice_get(sl,'pts') Return the list of point
-        coordinates.</para>
-      </listitem>
+    <para>       Return the list of convexes of the original mesh contained in the slice.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>list(S, CV2S) = gf_slice_get(sl,'splxs',int dim) Return the list
-        of simplexes of dimension <literal>dim</literal>. </para>
+    <listitem>
+    <para><literal>n = gf_slice_get(slice S, 'nbpts')</literal></para>
 
-        <para>On output, S has <emphasis>dim+1</emphasis> rows, each column
-        contains the point numbers of a simplex. The vector
-        <literal>CV2S</literal> can be used to find the list of simplexes for
-        any convex stored in the slice. For example
-        <emphasis>S(:,CV2S(4):CV2S(5)-1)</emphasis> gives the list of
-        simplexes for the fourth convex.</para>
-      </listitem>
+    <para>         Return the number of points in the slice.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>list(P, E1, E2) = gf_slice_get(sl,'edges') Return the edges of
-        the linked mesh contained in the slice. <literal>P</literal> contains
-        the list of all edge vertices, <literal>E1</literal> contains the
-        indices of each mesh edge in <literal>P</literal>, and
-        <literal>E2</literal> contains the indices of each "edges" which is on
-        the border of the slice. This function is useless except for
-        post-processing purposes.</para>
-      </listitem>
+    <listitem>
+    <para><literal>ns = gf_slice_get(slice S, 'nbsplxs'[, int dim])</literal></para>
 
-      <listitem>
-        <para>Usl = gf_slice_get(sl,'interpolate_convex_data',mat Ucv)
-        Interpolate data given on each convex of the mesh to the slice nodes.
-        The input array <literal>Ucv</literal> may have any number of
-        dimensions, but its last dimension should be equal to
-        <emphasis>gf_mesh_get(m,'max cvid')</emphasis>.</para>
+    <para>       Return the number of simplexes in the slice.
 
-        <para>Example of use:</para>
+    Since the slice may contain points (simplexes of dim 0), segments
+    (simplexes of dimension 1), triangles etc., the result is a vector
+    of size gf_slice_get(slice S, 'dim')+1, except if the optional argument <literal>dim</literal>
+    is used.
+    </para>
+    </listitem>
 
-        <programlisting role="example"><![CDATA[  
-gf_slice_get(sl,'interpolate_convex_data', gf_mesh_get(m,'quality'))
- ]]></programlisting>
-      </listitem>
+    <listitem>
+    <para><literal>P = gf_slice_get(slice S, 'pts')</literal></para>
 
-      <listitem>
-        <para> m = gf_slice_get(sl,'linked mesh') Return the mesh on which the
-        slice was taken.</para>
-      </listitem>
+    <para>         Return the list of point coordinates.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para> z = gf_slice_get(sl,'memsize') Return the amount of memory (in
-        bytes) used by the slice object.</para>
-      </listitem>
+    <listitem>
+    <para><literal>{S, CV2S} = gf_slice_get(slice S, 'splxs',int dim)</literal></para>
 
-      <listitem>
-        <para> gf_slice_get(sl,'export to vtk',string filename ... [,
-        'ascii'][, 'edges'] ...) Export a slice to VTK. Following the
-        <literal>filename</literal>, you may use any of the following
-        options:</para>
+    <para>         Return the list of simplexes of dimension <literal>dim</literal>.
+      
+      On output, S has 'dim+1' rows, each column contains the point
+      numbers of a simplex.  The vector <literal>CV2S</literal> can be used to find the
+      list of simplexes for any convex stored in the slice. For example
+      'S(:,CV2S(4):CV2S(5)-1)'
+      gives the list of simplexes for the fourth convex.
+    </para>
+    </listitem>
 
-        <itemizedlist>
-          <listitem>
-            <para>if 'ascii' is not used, the file will contain binary data
-            (non portable, but fast).</para>
-          </listitem>
+    <listitem>
+    <para><literal>{P, E1, E2} = gf_slice_get(slice S, 'edges')</literal></para>
 
-          <listitem>
-            <para>if 'edges' is used, the edges of the original mesh will be
-            written instead of the slice content</para>
-          </listitem>
-        </itemizedlist>
+    <para>         Return the edges of the linked mesh contained in the slice.
+      
+      <literal>P</literal> contains the list of all edge vertices, <literal>E1</literal> contains
+      the indices of each mesh edge in <literal>P</literal>, and <literal>E2</literal> contains the
+      indices of each "edges" which is on the border of the slice.
+      This function is useless except for post-processing purposes.
+    </para>
+    </listitem>
 
-        <para>More than one dataset may be written, just list them. Each
-        dataset consists of either:</para>
+    <listitem>
+    <para><literal>Usl = gf_slice_get(slice S, 'interpolate_convex_data', mat Ucv)</literal></para>
 
-        <itemizedlist>
-          <listitem>
-            <para>a field interpolated on the slice (scalar, vector or
-            tensor), followed by an optional name.</para>
-          </listitem>
+    <para>       Interpolate data given on each convex of the mesh to the slice nodes.
 
-          <listitem>
-            <para>a mesh_fem and a field, followed by an optional name.</para>
-          </listitem>
-        </itemizedlist>
+    The input array <literal>Ucv</literal> may have any number of dimensions, but its
+    last dimension should be equal to gf_mesh_get(mesh M, 'max cvid').
 
-        <para>Examples:</para>
+    Example of use: gf_slice_get(slice S, 'interpolate_convex_data', gf_mesh_get(mesh M, 'quality')).
+    </para>
+    </listitem>
 
-	<programlisting role="example"><![CDATA[ 
-gf_slice_get(sl,'export to vtk','test.vtk',Usl,'first_dataset', mf, U2, 'second_dataset')
-gf_slice_get(sl,'export to vtk','test.vtk','ascii',mf,U2)
-gf_slice_get(sl,'export to vtk','test.vtk','edges','ascii',Uslice)
- ]]></programlisting>
-      </listitem>
+    <listitem>
+    <para><literal>m = gf_slice_get(slice S, 'linked mesh')</literal></para>
 
-      <listitem>
-        <para>gf_slice_get(sl,'export to pov',string filename, ...) Export a
-        the triangles of the slice to POV-RAY.</para>
-      </listitem>
+    <para>         Return the mesh on which the slice was taken.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para> gf_slice_get(sl,'export to dx',string filename, ...) Export a
-        slice to OpenDX. Following the file name, you may use any of the
-        following options:</para>
+    <listitem>
+    <para><literal>m = gf_slice_get(slice S, 'mesh')</literal></para>
 
-        <itemizedlist>
-          <listitem>
-            <para>if 'ascii' is not used, the file will contain binary data
-            (non portable, but fast).</para>
-          </listitem>
+    <para>         Return the mesh on which the slice was taken
+      (identical to 'linked mesh')
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>if 'edges' is used, the edges of the original mesh will be
-            written instead of the slice content.</para>
-          </listitem>
+    <listitem>
+    <para><literal>z = gf_slice_get(slice S, 'memsize')</literal></para>
 
-          <listitem>
-            <para>if 'append' is used, the opendx file will not be
-            overwritten, and the new data will be added at the end of the
-            file.</para>
-          </listitem>
-        </itemizedlist>
+    <para>       Return the amount of memory (in bytes) used by the slice object.
+    </para>
+    </listitem>
 
-        <para>More than one dataset may be written, just list them. Each
-        dataset consists of either:</para>
+    <listitem>
+    <para><literal>gf_slice_get(slice S, 'export to vtk', string filename, ...)</literal></para>
 
-        <itemizedlist>
-          <listitem>
-            <para>a field interpolated on the slice (scalar, vector or
-            tensor), followed by an optional name.</para>
-          </listitem>
+    <para>       Export a slice to VTK.
 
-          <listitem>
-            <para>a mesh_fem and a field, followed by an optional name.</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
+    Following the <literal>filename</literal>, you may use any of the following options:
+
+    - if 'ascii' is not used, the file will contain binary data
+      (non portable, but fast).
+    - if 'edges' is used, the edges of the original mesh will be
+      written instead of the slice content.
+
+    More than one dataset may be written, just list them. Each dataset
+    consists of either:
+
+    - a field interpolated on the slice (scalar, vector or tensor),
+      followed by an optional name.
+    - a mesh_fem and a field, followed by an optional name.
+
+    Examples:
+
+    - gf_slice_get(slice S, 'export to vtk', 'test.vtk', Usl, 'first_dataset', mf,
+      U2, 'second_dataset')
+    - gf_slice_get(slice S, 'export to vtk', 'test.vtk', 'ascii', mf,U2)
+    - gf_slice_get(slice S, 'export to vtk', 'test.vtk', 'edges', 'ascii', Uslice)
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_slice_get(slice S, 'export to pov', string filename)</literal></para>
+
+    <para>         Export a the triangles of the slice to POV-RAY.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_slice_get(slice S, 'export to dx', string filename, ...)</literal></para>
+
+    <para>       Export a slice to OpenDX.
+
+    Following the <literal>filename</literal>, you may use any of the following
+    options:
+
+    - if 'ascii' is not used, the file will contain binary data
+      (non portable, but fast).
+    - if 'edges' is used, the edges of the original mesh will be
+      written instead of the slice content.
+    - if 'append' is used, the opendx file will not be overwritten,
+      and the new data will be added at the end of the file.
+
+    More than one dataset may be written, just list them. Each dataset
+    consists of either:
+
+    - a field interpolated on the slice (scalar, vector or tensor),
+      followed by an optional name.
+    - a mesh_fem and a field, followed by an optional name.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_slice_get(slice S, 'export to pos', string filename[, string name][[,mesh_fem mf1], mat U1, string nameU1[[,mesh_fem mf1], mat U2, string nameU2,...])</literal></para>
+
+    <para>       Export a slice to Gmsh.
+
+    More than one dataset may be written, just list them.
+    Each dataset consists of either:
+
+    - a field interpolated on the slice (scalar, vector or tensor).
+    - a mesh_fem and a field.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_slice_get(slice S, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the slice.
+
+      This can be used to perform comparisons between two
+      different slice objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_slice_get(slice S, 'display')</literal></para>
+
+    <para>         displays a short summary for a slice object.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_slice_get">gf_slice_get</link></member>
-      <member><link linkend="gf_slice">gf_slice</link></member>
-      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

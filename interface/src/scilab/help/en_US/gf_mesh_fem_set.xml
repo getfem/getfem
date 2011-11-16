@@ -9,113 +9,125 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_fem_set</refname>
-
-    <refpurpose>General function for modifying mesh_fem objects.</refpurpose>
+    <refpurpose>  General function for modifying mesh_fem objects.
+  </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_mesh_fem_set(MF, 'fem', fem fem [, ivec CVIDX])
-gf_mesh_fem_set(MF, 'classical fem', fem fem, int K [, ivec CVIDX])
-gf_mesh_fem_set(MF, 'classical discontinuous fem', fem fem, int K [, ivec CVIDX])
-gf_mesh_fem_set(MF, 'qdim', int Qdim)
-gf_mesh_fem_set(MF, 'reduction', int s)
-gf_mesh_fem_set(MF, 'reduction matrices', spmat R, spmat E)
-gf_mesh_fem_set(MF, 'dof partition', ivec DOFP)
-gf_mesh_fem_set(MF, 'set partial', ivec DOFs[, ivec RCVs])
-    </synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'fem', fem f[, ivec CVids])</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'classical fem', int k[, ivec CVids])</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'classical discontinuous fem', int K[, @tscalar alpha[, ivec CVIDX]])</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'qdim', int Q)</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'reduction matrices', mat R, mat E)</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'reduction', int s)</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'dof partition', ivec DOFP)</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'set partial', ivec DOFs[, ivec RCVs])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for modifying mesh_fem objects.
+  </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'fem',Fem f[, vec CVids]) Set the Finite
-        Element Method. Assign a FEM <literal>f</literal> to all convexes
-        whose #ids are listed in <literal>CVids</literal>. If
-        <literal>CVids</literal> is not given, the integration is assigned to
-        all convexes. See the help of gf_fem to obtain a list of available FEM
-        methods.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'fem', fem f[, ivec CVids])</literal></para>
 
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'classical fem',int k[, vec CVids]) Assign a
-        classical (Lagrange polynomial) fem of order <literal>k</literal> to
-        the MeshFem. Uses FEM_PK for simplexes, FEM_QK for parallelepipeds
-        etc.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'classical discontinuous fem',int K, [int
-        IM_DEGREE [,vec CVIDX]]) Assigns a classical (Lagrange polynomial)
-        discontinuous fem or order K. Similar to gf_mesh_fem_set(MF,'classical
-        fem') except that FEM_PK_DISCONTINUOUS is used.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'qdim',int Q) Change the <literal>Q</literal>
-        dimension of the field that is interpolated by the MeshFem.
-        <emphasis>Q = 1</emphasis> means that the MeshFem describes a scalar
-        field, <emphasis>Q = N</emphasis> means that the MeshFem describes a
-        vector field of dimension N.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'reduction matrices',mat R,mat E) Set the
-        reduction and extension matrices and valid their use.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'reduction',int s) Set or unset the use of
-        the reduction/extension matrices.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_mesh_fem_set(MF,'dof partition',vec DOFP) Change the
-        'dof_partition' array. <literal>DOFP</literal> is a vector holding a
-        integer value for each convex of the MeshFem. See
-        gf_mesh_fem_get(MF,'dof partition') for a description of "dof
-        partition".</para>
-      </listitem>
+    <para>         Set the Finite Element Method.
       
-      <listitem>
-	<para>gf_mesh_fem_set(MF, 'set partial', ivec DOFs[, ivec
-	  RCVs]) Can only be applied to a partial mesh_fem. 
-	  Change the subset of the degrees of freedom of `mf`.</para>
-	<para>If `RCVs` is given, no FEM will be put on the convexes
-	  listed in `RCVs`.</para>
-      </listitem>
-    </itemizedlist>
-  </refsection>
-  
-  <refsection>
-    <title>Examples</title>
+      Assign a FEM <literal>f</literal> to all convexes whose #ids are listed in <literal>CVids</literal>.
+      If <literal>CVids</literal> is not given, the integration is assigned to all convexes.
+      
+      See the help of gf_fem to obtain a list of available FEM methods.
+    </para>
+    </listitem>
 
-    <para>Building a discontinuous mesh_fem mfdu to compute the gradient DU of a field U defined on a mesh_fem mf: </para>
-    <programlisting role="example"><![CDATA[ 
-mfdu = gf_mesh_fem(m);
-// use polynomials of degree 2, and no integration method
-gf_mesh_fem_set(mfdu,'classical discontinuous fem',2); 
-DU = gf_compute(mf,U,'gradient',mfdu);
- ]]></programlisting>
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'classical fem', int k[, ivec CVids])</literal></para>
+
+    <para>       Assign a classical (Lagrange polynomial) fem of order <literal>k</literal> to the mesh_fem.
+
+    Uses FEM_PK for simplexes, FEM_QK for parallelepipeds etc.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'classical discontinuous fem', int K[, @tscalar alpha[, ivec CVIDX]])</literal></para>
+
+    <para>       Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
+
+    Similar to gf_mesh_fem_set(mesh_fem MF, 'classical fem') except that
+    FEM_PK_DISCONTINUOUS is used. Param <literal>alpha</literal> the node inset,
+    <latex style="text"><![CDATA[0 \leq alpha < 1]]></latex>, where 0 implies usual dof nodes, greater values
+    move the nodes toward the center of gravity, and 1 means that all
+    degrees of freedom collapse on the center of gravity.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'qdim', int Q)</literal></para>
+
+    <para>         Change the <literal>Q</literal> dimension of the field that is interpolated by the mesh_fem.
+      
+      <literal>Q = 1</literal> means that the mesh_fem describes a scalar field, <literal>Q = N</literal> means
+      that the mesh_fem describes a vector field of dimension N.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'reduction matrices', mat R, mat E)</literal></para>
+
+    <para>         Set the reduction and extension matrices and valid their use.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'reduction', int s)</literal></para>
+
+    <para>         Set or unset the use of the reduction/extension matrices.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'dof partition', ivec DOFP)</literal></para>
+
+    <para>       Change the 'dof_partition' array.
+
+    <literal>DOFP</literal> is a vector holding a integer value for each convex of the mesh_fem.
+    See gf_mesh_fem_get(mesh_fem MF, 'dof partition') for a description of "dof partition".
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'set partial', ivec DOFs[, ivec RCVs])</literal></para>
+
+    <para>         Can only be applied to a partial mesh_fem. Change the subset of the
+      degrees of freedom of <literal>mf</literal>.
+
+      If <literal>RCVs</literal> is given, no FEM will be put on the convexes listed
+      in <literal>RCVs</literal>.
+    </para>
+    </listitem>
+
+    </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_fem_get">gf_mesh_fem_get</link></member>
-      <member><link linkend="gf_mesh_fem">gf_mesh_fem</link></member>
-      <member><link linkend="gf_fem">gf_fem</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

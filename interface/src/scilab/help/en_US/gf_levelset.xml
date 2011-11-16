@@ -9,68 +9,80 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_levelset</refname>
+    <refpurpose>
+   The level-set object is represented by a primary level-set and optionally
+   a secondary level-set used to represent fractures (if p(x) is the primary
+   level-set function and s(x) is the secondary level-set, the crack is
+   defined by <latex style="text"><![CDATA[p(x)=0]]></latex> and <latex style="text"><![CDATA[s(x)\leq0]]></latex> : the role of the secondary is to determine
+   the crack front/tip).
 
-    <refpurpose></refpurpose>
+   note:
+
+      All tools listed below need the package qhull installed on your
+      system. This package is widely available. It computes convex hull and
+      delaunay triangulations in arbitrary dimension.
+
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>LevelSet = gf_levelset(...)</synopsis>
+    <synopsis>LS = gf_levelset(mesh m, int d[, string 'ws'| string f1[, string f2 | string 'ws']])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for levelset objects.</para>
 
-    <para>The level-set object is represented by a primary level-set and
-    optionally a secondary level-set used to represent fractures (if p(x) is
-    the primary level-set function and s(x) is the secondary level-set, the
-    crack is defined by p(x)=0 and s(x)&lt;=0: the role of the secondary is
-    stop the crack).</para>
+    <para>
+   The level-set object is represented by a primary level-set and optionally
+   a secondary level-set used to represent fractures (if p(x) is the primary
+   level-set function and s(x) is the secondary level-set, the crack is
+   defined by <latex style="text"><![CDATA[p(x)=0]]></latex> and <latex style="text"><![CDATA[s(x)\leq0]]></latex> : the role of the secondary is to determine
+   the crack front/tip).
+
+   note:
+
+      All tools listed below need the package qhull installed on your
+      system. This package is widely available. It computes convex hull and
+      delaunay triangulations in arbitrary dimension.
+
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_levelset(Mesh m, int d) Create a LevelSet object on a Mesh m
-        represented by a primary function defined on a lagrange Fem of degree
-        d.</para>
-      </listitem>
+    <listitem>
+    <para><literal>LS = gf_levelset(mesh m, int d[, string 'ws'| string f1[, string f2 | string 'ws']])</literal></para>
 
-      <listitem>
-        <para>gf_levelset(Mesh m, int d, string poly1) Create a LevelSet
-        object on a Mesh m represented by a primary function defined by the
-        polynomial expression poly1 on a lagrange Fem of degree d.</para>
-      </listitem>
+    <para>         Create a levelset object on a mesh represented by a primary function
+      (and optional secondary function, both) defined on a lagrange mesh_fem of
+      degree <literal>d</literal>.
 
-      <listitem>
-        <para>gf_levelset(Mesh m, int d, 'with_secondary' [, string poly2])
-        Create a LevelSet object on a Mesh m represented by a primary function
-        defined by the polynomial expression poly1 and a secondary function,
-        both on a lagrange Fem of degree d.</para>
-      </listitem>
+      If <literal>ws</literal> (with secondary) is set; this levelset is represented by a
+      primary function and a secondary function. If <literal>f1</literal> is set; the primary
+      function is defined by that expression. If <literal>f2</literal> is set; this levelset
+      is represented by a primary function and a secondary function defined
+      by these expressions. 
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_levelset(Mesh m, int d, string poly1, string poly2) Create a
-        LevelSet object on a Mesh m represented by a primary function defined
-        by the polynomial expression poly1 and a secondary function defined by
-        the polynomial expression poly2, both on a lagrange Fem of degree
-        d.</para>
-      </listitem>
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_levelset_set">gf_levelset_set</link></member>
-
-      <member><link linkend="gf_levelset_get">gf_levelset_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

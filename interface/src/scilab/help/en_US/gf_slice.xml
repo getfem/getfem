@@ -9,205 +9,177 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_slice</refname>
+    <refpurpose>  Creation of a mesh slice. Mesh slices are very similar to a
+  P1-discontinuous mesh_fem on which interpolation is very fast. The slice is
+  built from a mesh object, and a description of the slicing operation, for
+  example::
 
-    <refpurpose>Mesh slice creation.</refpurpose>
+    sl = gf_slice({'planar',+1,[0;0],[1;0]}, m, 5);
+
+  cuts the original mesh with the half space {y>0}. Each convex of the
+  original mesh <literal>m</literal> is simplexified (for example a quadrangle is splitted
+  into 2 triangles), and each simplex is refined 5 times.
+
+  Slicing operations can be:
+
+  * cutting with a plane, a sphere or a cylinder
+  * intersection or union of slices
+  * isovalues surfaces/volumes
+  * "points", "streamlines" (see below)
+
+  If the first argument is a mesh_fem <literal>mf</literal> instead of a mesh, and if it is
+  followed by a <literal>mf</literal>-field <literal>u</literal>, then the deformation <literal>u</literal> will be applied to the
+  mesh before the slicing operation.
+
+  The first argument can also be a slice.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-sl = gf_slice(sliceop, mesh M, int REFINE [, CVFLST])
-sl = gf_slice(sliceop, mesh_fem MF, vec U, int REFINE [, CVFLST])
-sl = gf_slice(sliceop, slice SL)
-sl = gf_slice('streamlines', mesh_fem MF, vec U, mat SEEDS)
-sl = gf_slice('points', mesh M, mat PTS)  
-    </synopsis>
+    <synopsis>sl = gf_slice(sliceop, {slice sl|{mesh m| mesh_fem mf, vec U}, int refine}[, mat CVfids])</synopsis>
+    <synopsis>sl = gf_slice('streamlines', mesh_fem mf, mat U, mat S)</synopsis>
+    <synopsis>sl = gf_slice('points', mesh m, mat Pts)</synopsis>
+    <synopsis>sl = gf_slice('load', string filename[, mesh m])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for slice objects.</para>
 
-    <para>Creation of a mesh slice. Mesh slices are very similar to a
-    P1-discontinuous mesh_fem on which interpolation is very fast. The slice
-    is built from a mesh object, and a description of the slicing operation,
-    for example,</para>
+    <para>  Creation of a mesh slice. Mesh slices are very similar to a
+  P1-discontinuous mesh_fem on which interpolation is very fast. The slice is
+  built from a mesh object, and a description of the slicing operation, for
+  example::
 
-    <programlisting role="example"><![CDATA[ 
-sl = gf_slice(list('planar',+1,[0;0],[1;0]), m, 5);
- ]]></programlisting>
+    sl = gf_slice({'planar',+1,[0;0],[1;0]}, m, 5);
 
-    <para>cuts the original mesh with the half space [y&gt;0]. Each convex of
-    the original mesh m is simplexified (for example a quadrangle is splitted
-    into 2 triangles), and each simplex is refined 5 times.</para>
+  cuts the original mesh with the half space {y>0}. Each convex of the
+  original mesh <literal>m</literal> is simplexified (for example a quadrangle is splitted
+  into 2 triangles), and each simplex is refined 5 times.
 
-    <para>Slicing operations can be:</para>
+  Slicing operations can be:
 
-    <itemizedlist>
-      <listitem>
-        <para>cutting with a plane, a sphere or a cylinder</para>
-      </listitem>
+  * cutting with a plane, a sphere or a cylinder
+  * intersection or union of slices
+  * isovalues surfaces/volumes
+  * "points", "streamlines" (see below)
 
-      <listitem>
-        <para>intersection or union of slices</para>
-      </listitem>
+  If the first argument is a mesh_fem <literal>mf</literal> instead of a mesh, and if it is
+  followed by a <literal>mf</literal>-field <literal>u</literal>, then the deformation <literal>u</literal> will be applied to the
+  mesh before the slicing operation.
 
-      <listitem>
-        <para>isovalues surfaces/volumes</para>
-      </listitem>
-
-      <listitem>
-        <para>"points", "streamlines" (see below)</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>If the first argument is a mesh_fem mf instead of a mesh, and if it
-    is followed by a field <literal>U</literal> (with <emphasis>size(U,1) ==
-    gf_mesh_fem_get(mf,U)</emphasis>), then the deformation
-    <literal>U</literal> will be applied to the mesh before the slicing
-    operation.</para>
-
-    <para>The first argument can also be a slice.</para>
-
-    <para>Slicing operations:</para>
-
-    <para>Always specifiy them between braces (i.e. in a cell array). The
-    first argument is the name of the operation, followed the slicing
-    options.</para>
-
-    <itemizedlist>
-      <listitem>
-        <para>list('none'): Does not cut the mesh.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('planar', orient, p, n): Planar cut. <literal>p</literal>
-        and <literal>n</literal> define a half-space, <literal>p</literal>
-        being a point belong to the boundary of the half-space, and n being
-        its normal. If <literal>orient</literal> is equal to -1 (resp. 0, +1),
-        then the slicing operation will cut the mesh with the "interior"
-        (resp. "boundary", "exterior") of the half-space.
-        <literal>Orient</literal> may also be set to +2 which means that the
-        mesh will be sliced, but both the outer and inner parts will be
-        kept.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('ball', orient, c, r): Cut with a ball of center
-        <literal>c</literal> and radius <literal>r</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('cylinder', orient, p1, p2, r): Cut with a cylinder whose
-        axis is the line (p1,p2) and whose radius is r.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('isovalues',orient, mesh_fem MF, vec U, scalar V): Cut
-        using the isosurface of the field <literal>U</literal> (defined on the
-        mesh_fem <literal>MF</literal>). The result is the set <emphasis>{x
-        such that U(x) &lt;= V} or {x such that U(x) == V} or {x such that
-        U(x) &lt;= V}</emphasis> depending on the value of
-        <literal>ORIENT</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('boundary'[, SLICEOP]): Return the boundary of the result
-        of <literal>SLICEOP</literal>, where <literal>SLICEOP</literal> is any
-        slicing operation. If <literal>SLICEOP</literal> is not specified,
-        then the whole mesh is considered (i.e. it is equivalent to
-        list('boundary',list('none'))).</para>
-      </listitem>
-
-      <listitem>
-        <para>list('explode', coef): Build an 'exploded' view of the mesh:
-        each convex is shrinked (<emphasis>0 &lt;coef &lt;= 1</emphasis>). In
-        the case of 3D convexes, only their faces are kept.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('union', SLICEOP1, SLICEOP2),</para>
-      </listitem>
-
-      <listitem>
-        <para>list('intersection', SLICEOP1, SLICEOP2),</para>
-      </listitem>
-
-      <listitem>
-        <para>list('comp', SLICEOP),</para>
-      </listitem>
-
-      <listitem>
-        <para>list('diff', SLICEOP1, SLICEOP2): Boolean operations: returns
-        the union,intersection,complementary or difference of slicing
-        operations.</para>
-      </listitem>
-
-      <listitem>
-        <para>list('mesh', MESH): Build a slice which is the intersection of
-        the sliced mesh with another mesh. The slice is such that all of its
-        simplexes are stricly contained into a convex of each mesh.</para>
-      </listitem>
-    </itemizedlist>
-
-
-    <para>SPECIAL SLICES:</para>
-
-    <para>There are also some special calls to gf_slice:</para>
-
-    <itemizedlist>
-      <listitem>
-        <para>gf_slice('streamlines',mf, U, mat SEEDS): compute streamlines of
-        the (vector) field <literal>U</literal>, with seed points given by the
-        columns of <literal>SEEDS</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_slice('points', m, mat PTS): return the "slice" composed of
-        points given by the columns of <literal>PTS</literal> (useful for
-        interpolation on a given set of sparse points, see
-        <emphasis>gf_compute(mf,U,'interpolate on',sl)</emphasis>.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_slice('load', filename [,m]): load the slice (and its
-        linked_mesh if it is not given as an argument) from a text
-        file.</para>
-      </listitem>
-    </itemizedlist>
+  The first argument can also be a slice.
+</para>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
+    <title>Command list</title>
 
-    <para>Apply the deformation given by mf,U on the mesh, then slice it with the z+ half-space, and keep only the part where U2(x) > 0. </para>
+    <itemizedlist>
+    <listitem>
+    <para><literal>sl = gf_slice(sliceop, {slice sl|{mesh m| mesh_fem mf, vec U}, int refine}[, mat CVfids])</literal></para>
 
-    <programlisting role="example"><![CDATA[ 
-sl = gf_slice(list(intersection',list('planar',+1,[0;0;0],[0;0;1]),list('isovalues',-1,mf2,U2,0)),mf,U,5);
- ]]></programlisting>
+    <para>     Create a slice using <literal>sliceop</literal> operation.
 
-    <para>view the convex quality of a 2D or 3D mesh m:</para>
-    
-    <programlisting role="example"><![CDATA[ 
-gf_plot_slice(gf_slice(list('explode', 0.7), m, 2), 'convex_data', gf_mesh_get(m,'quality'));
- ]]></programlisting>
+  <literal>sliceop</literal> operation is specified with Scilab CELL arrays (i.e. with braces) . The first element is the
+  name of the operation, followed the slicing options:
 
-    <para>See the gf_plot_slice usage example for more slices. </para>
+  * {'none'} :
+    Does not cut the mesh.
+
+  * {'planar', int orient, vec p, vec n} :
+    Planar cut. <literal>p</literal> and <literal>n</literal> define a half-space, <literal>p</literal> being a point belong to
+    the boundary of the half-space, and <literal>n</literal> being its normal. If <literal>orient</literal> is
+    equal to -1 (resp. 0, +1), then the slicing operation will cut the mesh
+    with the "interior" (resp. "boundary", "exterior") of the half-space.
+    <literal>orient</literal> may also be set to +2 which means that the mesh will be sliced,
+    but both the outer and inner parts will be kept.
+
+  * {'ball', int orient, vec c, scalar r} :
+    Cut with a ball of center <literal>c</literal> and radius <literal>r</literal>.
+
+  * {'cylinder', int orient, vec p1, vec p2, scalar r} :
+    Cut with a cylinder whose axis is the line <literal>(p1, p2)</literal> and whose radius
+    is <literal>r</literal>.
+
+  * {'isovalues', int orient, mesh_fem mf, vec U, scalar s} :
+    Cut using the isosurface of the field <literal>U</literal> (defined on the mesh_fem <literal>mf</literal>).
+    The result is the set <literal>{x such that <latex style="text"><![CDATA[U(x) \leq s]]></latex>}</literal> or <literal>{x such that
+    </literal>U<literal>(x)=</literal>s<literal>}</literal> or <literal>{x such that </literal>U<literal>(x) >= </literal>s<literal>}</literal> depending on the value of
+    <literal>orient</literal>.
+
+  * {'boundary'[, SLICEOP]} :
+    Return the boundary of the result of SLICEOP, where SLICEOP is any
+    slicing operation. If SLICEOP is not specified, then the whole mesh is
+    considered (i.e. it is equivalent to {'boundary',{'none'}}).
+
+  * {'explode', mat Coef} :
+    Build an 'exploded' view of the mesh: each convex is shrinked (<latex style="text"><![CDATA[0 <
+    \text{Coef} \leq 1]]></latex>). In the case of 3D convexes, only their faces are kept.
+
+  * {'union', SLICEOP1, SLICEOP2} :
+    Returns the union of slicing operations.
+
+  * {'intersection', SLICEOP1, SLICEOP2} :
+    Returns the intersection of slicing operations, for example::
+
+      sl = gf_slice({intersection',{'planar',+1,[0;0;0],[0;0;1]},
+                                 {'isovalues',-1,mf2,u2,0}},mf,u,5)
+
+  * {'comp', SLICEOP} :
+    Returns the complementary of slicing operations.
+
+  * {'diff', SLICEOP1, SLICEOP2} :
+    Returns the difference of slicing operations.
+
+  * {'mesh', mesh m} :
+    Build a slice which is the intersection of the sliced mesh with another
+    mesh. The slice is such that all of its simplexes are stricly contained
+    into a convex of each mesh.
+
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>sl = gf_slice('streamlines', mesh_fem mf, mat U, mat S)</literal></para>
+
+    <para>         Compute streamlines of the (vector) field <literal>U</literal>, with seed points given
+      by the columns of <literal>S</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>sl = gf_slice('points', mesh m, mat Pts)</literal></para>
+
+    <para>         Return the "slice" composed of points given by the columns of <literal>Pts</literal>
+      (useful for interpolation on a given set of sparse points, see
+      <literal></literal>gf_compute('interpolate on',sl)<literal></literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>sl = gf_slice('load', string filename[, mesh m])</literal></para>
+
+    <para>         Load the slice (and its linked mesh if it is not given as an argument)
+      from a text file.
+    </para>
+    </listitem>
+
+    </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_slice_get">gf_slice_get</link></member>
-      <member><link linkend="gf_slice_set">gf_slice_set</link></member>
-      <member><link linkend="gf_plot_slice">gf_plot_slice</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

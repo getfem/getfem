@@ -9,91 +9,132 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_integ_get</refname>
-
-    <refpurpose>Gives access to various internal informations of an Integration Method handle IM.</refpurpose>
+    <refpurpose>  General function for querying information about integration method objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-int I = gf_integ_get(IM,'is_exact')
-int I = gf_integ_get(IM,'dim')
-int I = gf_integ_get(IM,'nbpts')
-mat gf_integ_get(IM,'pts')
-vec gf_integ_get(IM,'coeffs')
-mat gf_integ_get(IM,'face_pts', int F)
-vec gf_integ_get(IM,'face_coeffs',int F)
-string S=gf_integ_get(IM,'char')
-    </synopsis>
+    <synopsis>b = gf_integ_get(integ I, 'is_exact')</synopsis>
+    <synopsis>d = gf_integ_get(integ I, 'dim')</synopsis>
+    <synopsis>n = gf_integ_get(integ I, 'nbpts')</synopsis>
+    <synopsis>Pp = gf_integ_get(integ I, 'pts')</synopsis>
+    <synopsis>Pf = gf_integ_get(integ I, 'face_pts',F)</synopsis>
+    <synopsis>Cp = gf_integ_get(integ I, 'coeffs')</synopsis>
+    <synopsis>Cf = gf_integ_get(integ I, 'face_coeffs',F)</synopsis>
+    <synopsis>s = gf_integ_get(integ I, 'char')</synopsis>
+    <synopsis>gf_integ_get(integ I, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for querying information about integration method objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>b = gf_integ_get(im,'is_exact') Return 0 if the integration is an
-        approximate one.</para>
-      </listitem>
+    <listitem>
+    <para><literal>b = gf_integ_get(integ I, 'is_exact')</literal></para>
 
-      <listitem>
-        <para>d = gf_integ_get(im,'dim') Return the dimension of the reference
-        convex of the method.</para>
-      </listitem>
+    <para>       Return 0 if the integration is an approximate one.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>n = gf_integ_get(im,'nbpts') Return the total number of integration
-        points. Count the points for the volume integration, and points for
-        surface integration on each face of the reference convex.</para>
+    <listitem>
+    <para><literal>d = gf_integ_get(integ I, 'dim')</literal></para>
 
-        <para>Only for approximate methods, this has no meaning for exact
-        integration methods!</para>
-      </listitem>
+    <para>       Return the dimension of the reference convex of
+    the method.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>Pf = gf_integ_get(im,'face_pts',F) Return the list of integration
-        points for a face.</para>
+    <listitem>
+    <para><literal>n = gf_integ_get(integ I, 'nbpts')</literal></para>
 
-        <para>Only for approximate methods, this has no meaning for exact
-        integration methods!</para>
-      </listitem>
+    <para>       Return the total number of integration points.
 
-      <listitem>
-        <para>Cp = gf_integ_get(im,'coeffs') Returns the coefficients associated to
-        each integration point.</para>
+    Count the points for the volume integration, and points for
+    surface integration on each face of the reference convex.
 
-        <para>Only for approximate methods, this has no meaning for exact
-        integration methods!</para>
-      </listitem>
+    Only for approximate methods, this has no meaning for exact
+    integration methods!
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>Cf = gf_integ_get(im,'face_coeffs',F) Returns the coefficients
-        associated to each integration of a face.</para>
+    <listitem>
+    <para><literal>Pp = gf_integ_get(integ I, 'pts')</literal></para>
 
-        <para>Only for approximate methods, this has no meaning for exact
-        integration methods!</para>
-      </listitem>
+    <para>         Return the list of integration points
+      
+      Only for approximate methods, this has no meaning for exact
+      integration methods!
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>s = gf_integ_get(im,'char') Ouput a (unique) string representation of
-        the integration method. This can be used to comparisons between two
-        different Integ objects.</para>
-      </listitem>
+    <listitem>
+    <para><literal>Pf = gf_integ_get(integ I, 'face_pts',F)</literal></para>
+
+    <para>         Return the list of integration points for a face.
+      
+      Only for approximate methods, this has no meaning for exact
+      integration methods!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Cp = gf_integ_get(integ I, 'coeffs')</literal></para>
+
+    <para>       Returns the coefficients associated to each integration point.
+
+    Only for approximate methods, this has no meaning for exact
+    integration methods!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Cf = gf_integ_get(integ I, 'face_coeffs',F)</literal></para>
+
+    <para>       Returns the coefficients associated to each integration of a face.
+
+    Only for approximate methods, this has no meaning for exact
+    integration methods!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_integ_get(integ I, 'char')</literal></para>
+
+    <para>       Ouput a (unique) string representation of the integration method.
+
+    This can be used to  comparisons between two different integ
+    objects.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_integ_get(integ I, 'display')</literal></para>
+
+    <para>       displays a short summary for a integ object.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_integ">gf_integ</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

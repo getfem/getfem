@@ -9,107 +9,141 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_spmat_set</refname>
-
-    <refpurpose>Modification of the content of a getfem sparse
-    matrix.</refpurpose>
+    <refpurpose>   Modification of the content of a getfem sparse matrix.
+ </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_spmat_set(M,'clear'[, I[, J]])
-gf_spmat_set(M,'scale', V)
-gf_spmat_set(M,'transpose')
-gf_spmat_set(M,'conjugate')
-gf_spmat_set(M,'transconj')
-gf_spmat_set(M,'to_csc')
-gf_spmat_set(M,'to_wsc')
-gf_spmat_set(M,'to_complex')
-gf_spmat_set(M,'diag', mat D [, ivec E])
-gf_spmat_set(M,'assign', ivec I, ivec J, V)gf_spmat_set(M,'add', I, J, V)
-    </synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'clear'[, list I[, list J]])</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'scale', scalar v)</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'transpose')</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'conjugate')</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'transconj')</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'to_csc')</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'to_wsc')</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'to_complex')</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'diag', mat D [, ivec E])</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'assign', ivec I, ivec J, mat V)</synopsis>
+    <synopsis>gf_spmat_set(spmat S, 'add', ivec I, ivec J, mat V)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>   Modification of the content of a getfem sparse matrix.
+ </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_spmat_set(M,'clear'[, list I[, list J]]) Erase the non-zero
-        entries of the matrix. The optional arguments <literal>I</literal> and
-        <literal>J</literal> may be specified to clear a sub-matrix instead of
-        the entire matrix.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'clear'[, list I[, list J]])</literal></para>
 
-      <listitem>
-        <para>gf_spmat_set(M,'scale',scalar v) Multiplies the matrix by a
-        scalar value `v`.</para>
-      </listitem>
+    <para>         Erase the non-zero entries of the matrix.
 
-      <listitem>
-        <para>gf_spmat_set(M,'transpose') Transpose the matrix.</para>
-      </listitem>
+      The optional arguments <literal>I</literal> and <literal>J</literal> may be specified to clear a
+      sub-matrix instead of the entire matrix.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_spmat_set(M,'conjugate') Conjugate each element of the
-        matrix.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'scale', scalar v)</literal></para>
 
-      <listitem>
-        <para>gf_spmat_set(M,'transconj') Transpose and conjugate the
-        matrix.</para>
-      </listitem>
+    <para>         Multiplies the matrix by a scalar value <literal>v</literal>.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_spmat_set(M,'to_csc') Convert the matrix to CSC storage. CSC
-        storage is recommended for matrix-vector multiplications.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'transpose')</literal></para>
 
-      <listitem>
-        <para>gf_spmat_set(M,'to_wsc') Convert the matrix to WSC storage. Read
-        and write operation are quite fast with WSC storage.</para>
-      </listitem>
+    <para>         Transpose the matrix.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_spmat_set(M,'to_wsc') Convert the matrix to WSC storage. Read
-        and write operation are quite fast with WSC storage.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'conjugate')</literal></para>
 
-      <listitem>
-        <para>gf_spmat_set(M,'diag',mat D [, ivec E]) Change the diagonal (or
-        sub-diagonals) of the matrix. If <literal>E</literal> is given,
-        <literal>D</literal> might be a matrix and each column of
-        <literal>E</literal> will contain the sub-diagonal number that will be
-        filled with the corresponding column of <literal>D</literal>.</para>
-      </listitem>
+    <para>         Conjugate each element of the matrix.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_spmat_set(M,'assign',ivec I, ivec J, mat V) Copy
-        <literal>V</literal> into the sub-matrix 'M(I,J)'.
-        <literal>V</literal> might be a sparse matrix or a full matrix.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'transconj')</literal></para>
 
-      <listitem>
-        <para>gf_spmat_set(M,'add',ivec I, ivec J, mat V) Add
-        <literal>V</literal> to the sub-matrix 'M(I,J)'. <literal>V</literal>
-        might be a sparse matrix or a full matrix.</para>
-      </listitem>
+    <para>         Transpose and conjugate the matrix.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'to_csc')</literal></para>
+
+    <para>         Convert the matrix to CSC storage.
+
+      CSC storage is recommended for matrix-vector multiplications.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'to_wsc')</literal></para>
+
+    <para>         Convert the matrix to WSC storage.
+      
+      Read and write operation are quite fast with WSC storage.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'to_complex')</literal></para>
+
+    <para>         Store complex numbers.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'diag', mat D [, ivec E])</literal></para>
+
+    <para>         Change the diagonal (or sub-diagonals) of the matrix.
+      
+      If <literal>E</literal> is given, <literal>D</literal> might be a matrix and each column of <literal>E</literal> will
+      contain the sub-diagonal number that will be filled with the
+      corresponding column of <literal>D</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'assign', ivec I, ivec J, mat V)</literal></para>
+
+    <para>         Copy V into the sub-matrix 'M(I,J)'.
+      
+      <literal>V</literal> might be a sparse matrix or a full matrix.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_spmat_set(spmat S, 'add', ivec I, ivec J, mat V)</literal></para>
+
+    <para>       Add <literal>V</literal> to the sub-matrix 'M(I,J)'.
+
+    <literal>V</literal> might be a sparse matrix or a full matrix.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_spmat_get">gf_spmat_get</link></member>
-      <member><link linkend="gf_spmat">gf_spmat</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

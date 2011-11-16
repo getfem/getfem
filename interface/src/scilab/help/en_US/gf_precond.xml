@@ -9,97 +9,127 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_precond</refname>
-
-    <refpurpose>Create a preconditioner</refpurpose>
+    <refpurpose>  The preconditioners may store REAL or COMPLEX values. They accept getfem
+  sparse matrices and Matlab sparse matrices.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_precond('identity')
-gf_precond('cidentity')
-gf_precond('diagonal', vec D)
-gf_precond('ildlt', spmat M)
-gf_precond('ilu', spmat M)
-gf_precond('ildltt', spmat M [, int fillin [, scalar threshold]])
-gf_precond('ilut', spmat M [, int fillin [, scalar threshold]])gf_precond('superlu', spmat M)
-    </synopsis>
+    <synopsis>PC = gf_precond('identity')</synopsis>
+    <synopsis>PC = gf_precond('cidentity')</synopsis>
+    <synopsis>PC = gf_precond('diagonal', vec D)</synopsis>
+    <synopsis>PC = gf_precond('ildlt', spmat m)</synopsis>
+    <synopsis>PC = gf_precond('ilu', spmat m)</synopsis>
+    <synopsis>PC = gf_precond('ildltt', spmat m[, int fillin[, scalar threshold]])</synopsis>
+    <synopsis>PC = gf_precond('ilut', spmat m[, int fillin[, scalar threshold]])</synopsis>
+    <synopsis>PC = gf_precond('superlu', spmat m)</synopsis>
+    <synopsis>PC = gf_precond('spmat', spmat m)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for precond objects.</para>
 
-    <para>The preconditioners may store REAL or COMPLEX values. They accept
-    getfem sparse matrices and Scilab sparse matrices.</para>
+    <para>  The preconditioners may store REAL or COMPLEX values. They accept getfem
+  sparse matrices and Matlab sparse matrices.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_precond('identity') Create a REAL identity
-        precondioner.</para>
-      </listitem>
+    <listitem>
+    <para><literal>PC = gf_precond('identity')</literal></para>
 
-      <listitem>
-        <para>gf_precond('cidentity') Create a COMPLEX identity
-        preconditioner.</para>
-      </listitem>
+    <para>         Create a REAL identity precondioner.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_precond('diagonal', vec D) Create a diagonal
-        precondioner.</para>
-      </listitem>
+    <listitem>
+    <para><literal>PC = gf_precond('cidentity')</literal></para>
 
-      <listitem>
-        <para>gf_precond('ildlt', Spmat m) Create an ILDLT (Cholesky)
-        preconditioner for the (symmetric) sparse matrix `m`. This
-        preconditioner has the same sparsity pattern than `m` (no
-        fill-in).</para>
-      </listitem>
+    <para>         Create a COMPLEX identity precondioner.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_precond('ilu', Spmat m) Create an ILU (Incomplete LU)
-        preconditioner for the sparse matrix `m`. This preconditioner has the
-        same sparsity pattern than `m` (no fill-in).</para>
-      </listitem>
+    <listitem>
+    <para><literal>PC = gf_precond('diagonal', vec D)</literal></para>
 
-      <listitem>
-        <para>gf_precond('ildltt', Spmat m[, int fillin[, scalar threshold]])
-        Create an ILDLT (Cholesky with filling) preconditioner for the
-        (symmetric) sparse matrix `m`. The preconditioner may add at most
-        `fillin` additional non-zero entries on each line. The default value
-        for `fillin` is 10, and the default threshold is1e-7.</para>
-      </listitem>
+    <para>         Create a diagonal precondioner.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_precond('ilut', Spmat m[, int fillin[, scalar threshold]])
-        Create an ILUT (Incomplete LU with filling) preconditioner for the
-        sparse matrix `m`. The preconditioner may add at most `fillin`
-        additional non-zero entries on each line. The default value for
-        `fillin` is 10, and the default threshold is 1e-7.</para>
-      </listitem>
+    <listitem>
+    <para><literal>PC = gf_precond('ildlt', spmat m)</literal></para>
 
-      <listitem>
-        <para>gf_precond('superlu', Spmat m) Uses <ulink url="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</ulink> to build an exact
-          factorization of the sparse matrix `m`. This preconditioner is only available if the getfem-interface was built with 
-	  <ulink url="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</ulink> support</para>
+    <para>         Create an ILDLT (Cholesky) preconditioner for the (symmetric) sparse
+      matrix <literal>m</literal>. This preconditioner has the same sparsity pattern than <literal>m</literal>
+      (no fill-in).
+    </para>
+    </listitem>
 
-        <para>Note that LU factorization is likely to eat all your memory for 3D problems.</para>
-      </listitem>
+    <listitem>
+    <para><literal>PC = gf_precond('ilu', spmat m)</literal></para>
+
+    <para>         Create an ILU (Incomplete LU) preconditioner for the sparse
+      matrix <literal>m</literal>. This preconditioner has the same sparsity pattern
+      than <literal>m</literal> (no fill-in).  
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>PC = gf_precond('ildltt', spmat m[, int fillin[, scalar threshold]])</literal></para>
+
+    <para>         Create an ILDLTT (Cholesky with filling) preconditioner for the
+      (symmetric) sparse matrix <literal>m</literal>. The preconditioner may add at most
+      <literal>fillin</literal> additional non-zero entries on each line. The default value
+      for <literal>fillin</literal> is 10, and the default threshold is1e-7.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>PC = gf_precond('ilut', spmat m[, int fillin[, scalar threshold]])</literal></para>
+
+    <para>         Create an ILUT (Incomplete LU with filling) preconditioner for the
+      sparse matrix <literal>m</literal>. The preconditioner may add at most <literal>fillin</literal>
+      additional non-zero entries on each line. The default value for
+      <literal>fillin</literal> is 10, and the default threshold is 1e-7.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>PC = gf_precond('superlu', spmat m)</literal></para>
+
+    <para>         Uses SuperLU to build an exact factorization of the sparse matrix <literal>m</literal>.
+      This preconditioner is only available if the getfem-interface was
+      built with SuperLU support. Note that LU factorization is likely to
+      eat all your memory for 3D problems.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>PC = gf_precond('spmat', spmat m)</literal></para>
+
+    <para>         Preconditionner given explicitely by a sparse matrix.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_precond_get">gf_precond_get</link></member>
-      <member><link linkend="gf_linsolve">gf_linsolve</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

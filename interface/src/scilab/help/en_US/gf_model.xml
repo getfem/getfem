@@ -9,58 +9,66 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_model</refname>
+    <refpurpose>  model variables store the variables and the state data and the
+  description of a model. This includes the global tangent matrix, the right
+  hand side and the constraints. There are two kinds of models, the <literal>real</literal>
+  and the <literal>complex</literal> models.
 
-    <refpurpose>General constructor for model objects. Return a getfem handle
-    to the newly created object.</refpurpose>
+  model object is the evolution for getfem++ 4.0 of the mdstate object.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-mds=gf_model('real')
-mds=gf_model('complex')
-    </synopsis>
+    <synopsis>MD = gf_model('real')</synopsis>
+    <synopsis>MD = gf_model('complex')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for model objects.</para>
 
-    <para>General constructor for model objects. Return a getfem handle to the
-    newly created object.</para>
+    <para>  model variables store the variables and the state data and the
+  description of a model. This includes the global tangent matrix, the right
+  hand side and the constraints. There are two kinds of models, the <literal>real</literal>
+  and the <literal>complex</literal> models.
 
-    <para>"Model" variables store the variables and the state data and the
-    description of a model. This includes the global tangent matrix, the right
-    hand side and the constraints. </para>
+  model object is the evolution for getfem++ 4.0 of the mdstate object.
+</para>
+  </refsection>
 
-    <para>There are two kinds of models, the "real" and the "complex" models.
-    "Model" object is the evolution for Getfem++ 4.0 of the "MdState" object.
-    </para>
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>MDS = gf_model('real') Build a model for real unknowns.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MD = gf_model('real')</literal></para>
 
-      <listitem>
-        <para>MDS = gf_model('complex') Build a model for complex
-        unknowns.</para>
-      </listitem>
+    <para>         Build a model for real unknowns.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MD = gf_model('complex')</literal></para>
+
+    <para>         Build a model for complex unknowns.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_model_set">gf_model_set</link></member>
-      <member><link linkend="gf_model_get">gf_model_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

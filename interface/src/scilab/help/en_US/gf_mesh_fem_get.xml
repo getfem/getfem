@@ -9,348 +9,446 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_fem_get</refname>
-
-    <refpurpose>General function for inquiry about mesh_fem
-    objects.</refpurpose>
+    <refpurpose>  General function for inquiry about mesh_fem objects.
+  </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-int N = gf_mesh_fem_get(MF, 'nbdof')
-int N = gf_mesh_fem_get(MF, 'nb basic dof')
-ivec DOF = gf_mesh_fem_get(MF, 'basic dof from cv', ivec CVLST)
-ivec [DOF,CV2DOF] = gf_mesh_fem_get(MF, 'basic dof from cvid', [ivec CVLST])
-ivec DOF = gf_mesh_fem_get(MF, 'non conformal basic dof' [, ivec CVLST])
-fem FEMLST[, ivec CV2F] = gf_mesh_fem_get(MF, 'fem' [, ivec CVLST])
-ivec CVLST = gf_mesh_fem_get(MF, 'convex_index')
-int N = gf_mesh_fem_get(MF, 'qdim')
-ivec I = gf_mesh_fem_get(MF, {'is_lagrangian' | 'is_equivalent' | 'is_polynomial'} 
-      [, ivec CVLST])
-int N = gf_mesh_fem_get(MF, 'is_reduced')
-spmat R = gf_mesh_fem_get(MF, 'reduction_matrix')
-spmat R = gf_mesh_fem_get(MF, 'extension_matrix')
-ivec DOFLST = gf_mesh_fem_get(MF, 'basic dof on region', ivec rlist)
-ivec DOFLST = gf_mesh_fem_get(MF, 'dof on region', ivec rlist)
-mat DOF_XY = gf_mesh_fem_get(MF, 'basic dof nodes'[, ivec DOFLST])
-ivec DOFP = gf_mesh_fem_get(MF, 'dof partition')
-vec U = gf_mesh_fem_get(MF, 'interpolate convex data', vec Ucv)
-gf_mesh_fem_get(MF, 'save', string filename, ['with mesh'])
-gf_mesh_fem_get(MF,'export_to_vtk', filename, ... ['ascii'], U, 'name'...)
-gf_mesh_fem_get(MF,'export_to_dx', filename, ... ['as', mesh_name][,'edges']['serie',serie_name][,'ascii'][,'append'], U, 'name'...)
-string S=gf_mesh_fem_get(M, 'char' [,'with mesh'])
-mesh M=gf_mesh_fem_get(MF, 'linked mesh')
-vec U=gf_mesh_fem_get(MF, 'eval', expr [,ivec DOFLST])
-M=gf_mesh_fem_get(MF, 'memsize')
-    </synopsis>
+    <synopsis>n = gf_mesh_fem_get(mesh_fem MF, 'nbdof')</synopsis>
+    <synopsis>n = gf_mesh_fem_get(mesh_fem MF, 'nb basic dof')</synopsis>
+    <synopsis>DOF = gf_mesh_fem_get(mesh_fem MF, 'dof from cv',mat CVids)</synopsis>
+    <synopsis>DOF = gf_mesh_fem_get(mesh_fem MF, 'basic dof from cv',mat CVids)</synopsis>
+    <synopsis>{DOFs, IDx} = gf_mesh_fem_get(mesh_fem MF, 'dof from cvid'[, mat CVids])</synopsis>
+    <synopsis>{DOFs, IDx} = gf_mesh_fem_get(mesh_fem MF, 'basic dof from cvid'[, mat CVids])</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'non conformal dof'[, mat CVids])</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'non conformal basic dof'[, mat CVids])</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'qdim')</synopsis>
+    <synopsis>{FEMs, CV2F} = gf_mesh_fem_get(mesh_fem MF, 'fem'[, mat CVids])</synopsis>
+    <synopsis>CVs = gf_mesh_fem_get(mesh_fem MF, 'convex_index')</synopsis>
+    <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'is_lagrangian'[, mat CVids])</synopsis>
+    <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'is_equivalent'[, mat CVids])</synopsis>
+    <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'is_polynomial'[, mat CVids])</synopsis>
+    <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'is_reduced')</synopsis>
+    <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'reduction matrix')</synopsis>
+    <synopsis>bB = gf_mesh_fem_get(mesh_fem MF, 'extension matrix')</synopsis>
+    <synopsis>DOFs = gf_mesh_fem_get(mesh_fem MF, 'basic dof on region',mat Rs)</synopsis>
+    <synopsis>DOFs = gf_mesh_fem_get(mesh_fem MF, 'dof on region',mat Rs)</synopsis>
+    <synopsis>DOFpts = gf_mesh_fem_get(mesh_fem MF, 'dof nodes'[, mat DOFids])</synopsis>
+    <synopsis>DOFpts = gf_mesh_fem_get(mesh_fem MF, 'basic dof nodes'[, mat DOFids])</synopsis>
+    <synopsis>DOFP = gf_mesh_fem_get(mesh_fem MF, 'dof partition')</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'save',string filename[, string opt])</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'char'[, string opt])</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'display')</synopsis>
+    <synopsis>m = gf_mesh_fem_get(mesh_fem MF, 'linked mesh')</synopsis>
+    <synopsis>m = gf_mesh_fem_get(mesh_fem MF, 'mesh')</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'export to vtk',string filename, ... ['ascii'], U, 'name'...)</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'export to dx',string filename, ...['as', string mesh_name][,'edges']['serie',string serie_name][,'ascii'][,'append'], U, 'name'...)</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'export to pos',string filename[, string name][[,mesh_fem mf1], mat U1, string nameU1[[,mesh_fem mf2], mat U2, string nameU2,...]])</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'dof_from_im',mesh_im mim[, int p])</synopsis>
+    <synopsis>U = gf_mesh_fem_get(mesh_fem MF, 'interpolate_convex_data',mat Ucv)</synopsis>
+    <synopsis>z = gf_mesh_fem_get(mesh_fem MF, 'memsize')</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'has_linked_mesh_levelset')</synopsis>
+    <synopsis>gf_mesh_fem_get(mesh_fem MF, 'linked_mesh_levelset')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for inquiry about mesh_fem objects.
+  </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>n = gf_mesh_fem_get(MF,'nbdof') Return the number of degrees of
-        freedom (dof) of the MeshFem.</para>
-      </listitem>
+    <listitem>
+    <para><literal>n = gf_mesh_fem_get(mesh_fem MF, 'nbdof')</literal></para>
 
-      <listitem>
-        <para>n = gf_mesh_fem_get(MF,'nb basic dof') Return the number of
-        basic degrees of freedom (dof) of the MeshFem.</para>
-      </listitem>
+    <para>       Return the number of degrees of freedom (dof) of the mesh_fem.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>DOF = gf_mesh_fem_get(MF,'dof from cv',mat CVids) Deprecated
-        function. Use gf_mesh_fem_get(MF,'basic dof from cv') instead.</para>
-      </listitem>
+    <listitem>
+    <para><literal>n = gf_mesh_fem_get(mesh_fem MF, 'nb basic dof')</literal></para>
 
-      <listitem>
-        <para>DOF = gf_mesh_fem_get(MF,'basic dof from cv',mat CVids) Return
-        the dof of the convexes listed in <literal>CVids</literal>. </para>
+    <para>       Return the number of basic degrees of freedom (dof) of the mesh_fem.
+    </para>
+    </listitem>
 
-        <para>WARNING: the Degree of Freedom might be returned in ANY order,
-        do not use this function in your assembly routines. Use 'basic dof
-        from cvid' instead, if you want to be able to map a convex number with
-        its associated degrees of freedom. One can also get the list of basic
-        dof on a set on convex faces, by indicating on the second row of
-        <literal>CVids</literal> the faces numbers (with respect to the convex
-        number on the first row).</para>
-      </listitem>
+    <listitem>
+    <para><literal>DOF = gf_mesh_fem_get(mesh_fem MF, 'dof from cv',mat CVids)</literal></para>
 
-      <listitem>
-        <para>DOF = gf_mesh_fem_get(MF,'dof from cvid'[, mat CVids])
-        Deprecated function. Use gf_mesh_fem_get(MF,'basic dof from cvid')
-        instead.</para>
-      </listitem>
+    <para>       Deprecated function. Use gf_mesh_fem_get(mesh_fem MF, 'basic dof from cv') instead. 
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>list(DOFs, IDx) = gf_mesh_fem_get(MF,'basic dof from cvid'[, mat
-        CVids]) Return the degrees of freedom attached to each convex of the
-        mesh. If <literal>CVids</literal> is omitted, all the convexes will be
-        considered (equivalent to <emphasis>CVids = 1 ... gf_mesh_get(M,'max
-        cvid')</emphasis>). <literal>IDx</literal> is a Scilab row vector,
-        <emphasis>length(IDx) = length(CVids)+1</emphasis>.
-        <literal>DOFs</literal> is a Scilab row vector containing the
-        concatenated list of dof of each convex in <literal>CVids</literal>.
-        Each entry of <literal>IDx</literal> is the position of the
-        corresponding convex point list in <literal>DOFs</literal>. Hence, for
-        example, the list of points of the second convex is
-        <emphasis>DOFs(IDx(2):IDx(3)-1)</emphasis>. If
-        <literal>CVids</literal> contains convex #id which do not exist in the
-        mesh, their point list will be empty.</para>
-      </listitem>
+    <listitem>
+    <para><literal>DOF = gf_mesh_fem_get(mesh_fem MF, 'basic dof from cv',mat CVids)</literal></para>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'non conformal dof'[, mat CVids]) Deprecated
-        function. Use gf_mesh_fem_get(MF,'non conformal basic dof')
-        instead.</para>
-      </listitem>
+    <para>       Return the dof of the convexes listed in <literal>CVids</literal>.
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'non conformal basic dof'[, mat CVids])
-        Return partially linked degrees of freedom. Return the basic dof
-        located on the border of a convex and which belong to only one convex,
-        except the ones which are located on the border of the mesh. For
-        example, if the convex 'a' and 'b' share a common face, 'a' has a P1
-        FEM, and 'b' has a P2 FEM, then the basic dof on the middle of the
-        face will be returned by this function (this can be useful when
-        searching the interfaces between classical FEM and hierarchical
-        FEM).</para>
-      </listitem>
+    WARNING: the Degree of Freedom might be returned in ANY order, do
+    not use this function in your assembly routines. Use 'basic dof from cvid'
+    instead, if you want to be able to map a convex number with its
+    associated degrees of freedom.
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'qdim') Return the dimension Q of the field
-        interpolated by the MeshFem. By default, Q=1 (scalar field). This has
-        an impact on the dof numbering.</para>
-      </listitem>
+    One can also get the list of basic dof on a set on convex faces, by
+    indicating on the second row of <literal>CVids</literal> the faces numbers (with
+    respect to the convex number on the first row).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>list(FEMs, CV2F) = gf_mesh_fem_get(MF,'fem'[, mat CVids]) Return
-        a list of FEM used by the MeshFem. <literal>FEMs</literal> is an array
-        of all Fem objects found in the convexes given in
-        <literal>CVids</literal>. If <literal>CV2F</literal> was supplied as
-        an output argument, it contains, for each convex listed in
-        <literal>CVids</literal>, the index of its correspounding FEM in
-        <literal>FEMs</literal>. Convexes which are not part of the mesh, or
-        convexes which do not have any FEM have their correspounding entry in
-        <literal>CV2F</literal> set to -1.</para>
-      </listitem>
+    <listitem>
+    <para><literal>{DOFs, IDx} = gf_mesh_fem_get(mesh_fem MF, 'dof from cvid'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>CVs = gf_mesh_fem_get(MF,'convex_index') Return the list of
-        convexes who have a FEM.</para>
-      </listitem>
+    <para>         Deprecated function. Use gf_mesh_fem_get(mesh_fem MF, 'basic dof from cvid') instead.
+      
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>bB = gf_mesh_fem_get(MF,'is_lagrangian'[, mat CVids]) Test if
-        the MeshFem is Lagrangian. Lagrangian means that each base function
-        <emphasis>Phi[i]</emphasis> is such that <emphasis>Phi[i](P[j]) =
-        delta(i,j)</emphasis>, where <emphasis>P[j]</emphasis> is the dof
-        location of the jth base function, and <emphasis>delta(i,j) = 1 if
-        i==j, else 0</emphasis>.</para>
+    <listitem>
+    <para><literal>{DOFs, IDx} = gf_mesh_fem_get(mesh_fem MF, 'basic dof from cvid'[, mat CVids])</literal></para>
 
-        <para>If <literal>CVids</literal> is omitted, it returns 1 if all
-        convexes in the mesh are Lagrangian. If <literal>CVids</literal> is
-        used, it returns the convex indices (with respect to
-        <literal>CVids</literal>) which are Lagrangian.</para>
-      </listitem>
+    <para>       Return the degrees of freedom attached to each convex of the mesh.
 
-      <listitem>
-        <para>bB = gf_mesh_fem_get(MF,'is_equivalent'[, mat CVids]) Test if
-        the MeshFem is equivalent. See
-        gf_mesh_fem_get(MF,'is_lagrangian')</para>
-      </listitem>
+    If <literal>CVids</literal> is omitted, all the convexes will be considered (equivalent
+    to <literal>CVids = 1 ... gf_mesh_get(mesh M, 'max cvid')</literal>).
 
-      <listitem>
-        <para>bB = gf_mesh_fem_get(MF,'is_polynomial'[, mat CVids]) Test if
-        all base functions are polynomials. See
-        gf_mesh_fem_get(MF,'is_lagrangian')</para>
-      </listitem>
+    <literal>IDx</literal> is a vector, <literal>length(IDx) = length(CVids)+1</literal>.
+    <literal>DOFs</literal> is a vector containing the concatenated list
+    of dof of each convex in <literal>CVids</literal>. Each entry of <literal>IDx</literal> is the position
+    of the corresponding convex point list in <literal>DOFs</literal>. Hence, for example,
+    the list of points of the second convex is DOFs(IDx(2):IDx(3)-1).
 
-      <listitem>
-        <para>bB = gf_mesh_fem_get(MF,'is_reduced') Return 1 if the optional
-        reduction matrix is applied to the dofs.</para>
-      </listitem>
+    If <literal>CVids</literal> contains convex #id which do not exist in the mesh, their
+    point list will be empty.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>bB = gf_mesh_fem_get(MF,'reduction matrix') Return the optional
-        reduction matrix.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'non conformal dof'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>bB = gf_mesh_fem_get(MF,'extension matrix') Return the optional
-        extension matrix.</para>
-      </listitem>
+    <para>         Deprecated function. Use gf_mesh_fem_get(mesh_fem MF, 'non conformal basic dof') instead.
+      
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>DOFs = gf_mesh_fem_get(MF,'basic dof on region',mat Rs) Return
-        the list of basic dof (before the optional reduction) lying on one of
-        the mesh regions listed in <literal>Rs</literal>. More precisely, this
-        function returns the basic dof whose support is non-null on one of
-        regions whose #ids are listed in <literal>Rs</literal> (note that for
-        boundary regions, some dof nodes may not lie exactly on the boundary,
-        for example the dof of Pk(n,0) lies on the center of the convex, but
-        the base function in not null on the convex border).</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'non conformal basic dof'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>DOFs = gf_mesh_fem_get(MF,'dof on region',mat Rs) Return the
-        list of dof (after the optional reduction) lying on one of the mesh
-        regions listed in <literal>Rs</literal>. More precisely, this function
-        returns the basic dof whose support is non-null on one of regions
-        whose #ids are listed in `Rs` (note that for boundary regions, some
-        dof nodes may not lie exactly on the boundary, for example the dof of
-        Pk(n,0) lies on the center of the convex, but the base function in not
-        null on the convex border). For a reduced mesh_fem a dof is lying on a
-        region if its potential corresponding shape function is nonzero on
-        this region. The extension matrix is used to make the correspondance
-        between basic and reduced dofs.</para>
-      </listitem>
+    <para>       Return partially linked degrees of freedom.
 
-      <listitem>
-        <para>DOFpts = gf_mesh_fem_get(MF,'dof nodes'[, mat DOFids])
-        Deprecated function. Use gf_mesh_fem_get(MF,'basic dof nodes')
-        instead.</para>
-      </listitem>
+    Return the basic dof located on the border of a convex and which belong
+    to only one convex, except the ones which are located on the border
+    of the mesh.  For example, if the convex 'a' and 'b' share a common
+    face, 'a' has a P1 FEM, and 'b' has a P2 FEM, then the basic dof on the
+    middle of the face will be returned by this function (this can be
+    useful when searching the interfaces between classical FEM and
+    hierarchical FEM).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>DOFpts = gf_mesh_fem_get(MF,'basic dof nodes'[, mat DOFids]) Get
-        location of basic degrees of freedom. Return the list of interpolation
-        points for the specified dof #IDs in `DOFids` (if `DOFids` is omitted,
-        all basic dof are considered).</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'qdim')</literal></para>
 
-      <listitem>
-        <para>DOFP = gf_mesh_fem_get(MF,'dof partition') Get the
-        'dof_partition' array. Return the array which associates an integer
-        (the partition number) to each convex of the MeshFem. By default, it
-        is an all-zero array. The degrees of freedom of each convex of the
-        MeshFem are connected only to the dof of neighbouring convexes which
-        have the same partition number, hence it is possible to create
-        partially discontinuous MeshFem very easily.</para>
-      </listitem>
+    <para>       Return the dimension Q of the field interpolated by the mesh_fem.
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'save',string filename[, string opt]) Save a
-        MeshFem in a text file (and optionaly its linked mesh object if
-        <literal>opt</literal> is the string 'with_mesh').</para>
-      </listitem>
+    By default, Q=1 (scalar field). This has an impact on the dof numbering.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'char'[, string opt]) Output a string
-        description of the MeshFem. By default, it does not include the
-        description of the linked mesh object, except if
-        <literal>opt</literal> is 'with_mesh'.</para>
-      </listitem>
+    <listitem>
+    <para><literal>{FEMs, CV2F} = gf_mesh_fem_get(mesh_fem MF, 'fem'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>m = gf_mesh_fem_get(MF,'linked mesh') Return a reference to the
-        Mesh object linked to `mf`.</para>
-      </listitem>
+    <para>         Return a list of FEM used by the mesh_fem.
+      
+      <literal>FEMs</literal> is an array of all fem objects found in the convexes
+      given in <literal>CVids</literal>. If <literal>CV2F</literal> was supplied as an output argument,
+      it contains, for each convex listed in <literal>CVids</literal>, the index of its
+      correspounding FEM in <literal>FEMs</literal>.
+      
+      Convexes which are not part of the mesh, or convexes which do not
+      have any FEM have their correspounding entry in <literal>CV2F</literal> set to -1.
+      
+      
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'export to vtk',string filename, ...
-        ['ascii'], U, 'name'...) Export a MeshFem and some fields to a vtk
-        file. The FEM and geometric transformations will be mapped to order 1
-        or 2 isoparametric Pk (or Qk) FEMs (as VTK does not handle higher
-        order elements). If you need to represent high-order FEMs or
-        high-order geometric transformations, you should consider
-        gf_slice_get(sl,'export to vtk').</para>
-      </listitem>
+    <listitem>
+    <para><literal>CVs = gf_mesh_fem_get(mesh_fem MF, 'convex_index')</literal></para>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'export to dx',string filename, ...['as',
-        string mesh_name][,'edges']['serie',string
-        serie_name][,'ascii'][,'append'], U, 'name'...) Export a MeshFem and
-        some fields to an OpenDX file. This function will fail if the MeshFem
-        mixes different convex types (i.e. quads and triangles), or if OpenDX
-        does not handle a specific element type (i.e. prism connections are
-        not known by OpenDX). The FEM will be mapped to order 1 Pk (or Qk)
-        FEMs. If you need to represent high-order FEMs or high-order geometric
-        transformations, you should consider gf_slice_get(sl,'export to
-        dx').</para>
-      </listitem>
+    <para>       Return the list of convexes who have a FEM.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'export to pos',string filename[, mat U1,
-        string nameU1[, mat U2, string nameU2,...]) Export a MeshFem and some
-        fields to a pos file. The FEM and geometric transformations will be
-        mapped to order 1 isoparametric Pk (or Qk) FEMs (as GMSH does not
-        handle higher order elements).</para>
-      </listitem>
+    <listitem>
+    <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'is_lagrangian'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'dof_from_im',MeshIm mim[, int p]) Return a
-        selection of dof who contribute significantly to the mass-matrix that
-        would be computed with <literal>mf</literal> and the integration
-        method <literal>mim</literal>. <literal>p</literal> represents the
-        dimension on what the integration method operates (default <emphasis>p
-        = mesh dimension</emphasis>). </para>
+    <para>       Test if the mesh_fem is Lagrangian.
 
-        <para>IMPORTANT: you still have to set a valid integration method on
-        the convexes which are not crosses by the levelset!</para>
-      </listitem>
+    Lagrangian means that each base function Phi[i] is such that
+    Phi[i](P[j]) = delta(i,j), where P[j] is the dof location of
+    the jth base function, and delta(i,j) = 1 if i==j, else 0.
 
-      <listitem>
-        <para>U = gf_mesh_fem_get(MF,'interpolate_convex_data',mat Ucv)
-        Interpolate data given on each convex of the mesh to the MeshFem dof.
-        The MeshFem has to be lagrangian, and should be discontinuous
-        (typically a FEM_PK(N,0) or FEM_QK(N,0) should be used). The last
-        dimension of the input vector Ucv should have gf_mesh_get(M,'max
-        cvid') elements. </para>
+    If <literal>CVids</literal> is omitted, it returns 1 if all convexes in the mesh
+    are Lagrangian. If <literal>CVids</literal> is used, it returns the convex indices
+    (with respect to <literal>CVids</literal>) which are Lagrangian.
+    </para>
+    </listitem>
 
-        <para>Example of use: gf_mesh_fem_get(MF,'interpolate_convex_data',
-        gf_mesh_get(M,'quality'))</para>
-      </listitem>
+    <listitem>
+    <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'is_equivalent'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>z = gf_mesh_fem_get(MF,'memsize') Return the amount of memory
-        (in bytes) used by the mesh_fem object. The result does not take into
-        account the linked mesh object.</para>
-      </listitem>
+    <para>       Test if the mesh_fem is equivalent.
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'has_linked_mesh_levelset') ???.</para>
-      </listitem>
+    See gf_mesh_fem_get(mesh_fem MF, 'is_lagrangian')
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_fem_get(MF,'linked_mesh_levelset') ???</para>
-      </listitem>
+    <listitem>
+    <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'is_polynomial'[, mat CVids])</literal></para>
+
+    <para>         Test if all base functions are polynomials.
+      
+      See gf_mesh_fem_get(mesh_fem MF, 'is_lagrangian')
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'is_reduced')</literal></para>
+
+    <para>       Return 1 if the optional reduction matrix is applied to the dofs.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'reduction matrix')</literal></para>
+
+    <para>       Return the optional reduction matrix.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>bB = gf_mesh_fem_get(mesh_fem MF, 'extension matrix')</literal></para>
+
+    <para>       Return the optional extension matrix.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>DOFs = gf_mesh_fem_get(mesh_fem MF, 'basic dof on region',mat Rs)</literal></para>
+
+    <para>       Return the list of basic dof (before the optional reduction) lying on one
+    of the mesh regions listed in <literal>Rs</literal>.
+
+    More precisely, this function returns the basic dof whose support is
+    non-null on one of regions whose #ids are listed in <literal>Rs</literal> (note
+    that for boundary regions, some dof nodes may not lie exactly
+    on the boundary, for example the dof of Pk(n,0) lies on the center
+    of the convex, but the base function in not null on the convex
+    border).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>DOFs = gf_mesh_fem_get(mesh_fem MF, 'dof on region',mat Rs)</literal></para>
+
+    <para>       Return the list of dof (after the optional reduction) lying on one
+    of the mesh regions listed in <literal>Rs</literal>.
+
+    More precisely, this function returns the basic dof whose support is
+    non-null on one of regions whose #ids are listed in <literal>Rs</literal> (note
+    that for boundary regions, some dof nodes may not lie exactly
+    on the boundary, for example the dof of Pk(n,0) lies on the center
+    of the convex, but the base function in not null on the convex
+    border).
+
+    For a reduced mesh_fem
+    a dof is lying on a region if its potential corresponding shape
+    function is nonzero on this region. The extension matrix is used
+    to make the correspondance between basic and reduced dofs.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>DOFpts = gf_mesh_fem_get(mesh_fem MF, 'dof nodes'[, mat DOFids])</literal></para>
+
+    <para>       Deprecated function. Use gf_mesh_fem_get(mesh_fem MF, 'basic dof nodes') instead. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>DOFpts = gf_mesh_fem_get(mesh_fem MF, 'basic dof nodes'[, mat DOFids])</literal></para>
+
+    <para>       Get location of basic degrees of freedom.
+
+    Return the list of interpolation points for the specified
+    dof #IDs in <literal>DOFids</literal> (if <literal>DOFids</literal> is omitted, all basic dof are
+    considered).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>DOFP = gf_mesh_fem_get(mesh_fem MF, 'dof partition')</literal></para>
+
+    <para>       Get the 'dof_partition' array.
+
+    Return the array which associates an integer (the partition number)
+    to each convex of the mesh_fem. By default, it is an all-zero array.
+    The degrees of freedom of each convex of the mesh_fem are connected
+    only to the dof of neighbouring convexes which have the same
+    partition number, hence it is possible to create partially
+    discontinuous mesh_fem very easily.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'save',string filename[, string opt])</literal></para>
+
+    <para>       Save a mesh_fem in a text file (and optionaly its linked mesh object
+    if <literal>opt</literal> is the string 'with_mesh').
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'char'[, string opt])</literal></para>
+
+    <para>         Output a string description of the mesh_fem.
+      
+      By default, it does not include the description of the linked mesh
+      object, except if <literal>opt</literal> is 'with_mesh'.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'display')</literal></para>
+
+    <para>         displays a short summary for a mesh_fem object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>m = gf_mesh_fem_get(mesh_fem MF, 'linked mesh')</literal></para>
+
+    <para>         Return a reference to the mesh object linked to <literal>mf</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>m = gf_mesh_fem_get(mesh_fem MF, 'mesh')</literal></para>
+
+    <para>         Return a reference to the mesh object linked to <literal>mf</literal>.
+      (identical to gf_mesh_get(mesh M, 'linked mesh'))
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'export to vtk',string filename, ... ['ascii'], U, 'name'...)</literal></para>
+
+    <para>       Export a mesh_fem and some fields to a vtk file.
+
+    The FEM and geometric transformations will be mapped to order 1
+    or 2 isoparametric Pk (or Qk) FEMs (as VTK does not handle higher
+    order elements). If you need to represent high-order FEMs or
+    high-order geometric transformations, you should consider
+    gf_slice_get(slice S, 'export to vtk').
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'export to dx',string filename, ...['as', string mesh_name][,'edges']['serie',string serie_name][,'ascii'][,'append'], U, 'name'...)</literal></para>
+
+    <para>       Export a mesh_fem and some fields to an OpenDX file.
+
+    This function will fail if the mesh_fem mixes different convex types
+    (i.e. quads and triangles), or if OpenDX does not handle a specific
+    element type (i.e. prism connections are not known by OpenDX).
+
+    The FEM will be mapped to order 1 Pk (or Qk) FEMs. If you need to
+    represent high-order FEMs or high-order geometric transformations,
+    you should consider gf_slice_get(slice S, 'export to dx').
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'export to pos',string filename[, string name][[,mesh_fem mf1], mat U1, string nameU1[[,mesh_fem mf2], mat U2, string nameU2,...]])</literal></para>
+
+    <para>       Export a mesh_fem and some fields to a pos file.
+
+    The FEM and geometric transformations will be mapped to order 1
+    isoparametric Pk (or Qk) FEMs (as GMSH does not handle higher
+    order elements).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'dof_from_im',mesh_im mim[, int p])</literal></para>
+
+    <para>       Return a selection of dof who contribute significantly to the
+    mass-matrix that would be computed with <literal>mf</literal> and the integration
+    method <literal>mim</literal>.
+
+    <literal>p</literal> represents the dimension on what the integration method
+    operates (default <literal>p = mesh dimension</literal>).
+
+    IMPORTANT: you still have to set a valid integration method on
+    the convexes which are not crosses by the levelset!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>U = gf_mesh_fem_get(mesh_fem MF, 'interpolate_convex_data',mat Ucv)</literal></para>
+
+    <para>   
+    Interpolate data given on each convex of the mesh to the mesh_fem dof.
+    The mesh_fem has to be lagrangian, and should be discontinuous (typically
+    a FEM_PK(N,0) or FEM_QK(N,0) should be used).
+
+    The last dimension of the input vector Ucv should have
+    gf_mesh_get(mesh M, 'max cvid') elements.
+
+    Example of use: gf_mesh_fem_get(mesh_fem MF, 'interpolate_convex_data', gf_mesh_get(mesh M, 'quality'))
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>z = gf_mesh_fem_get(mesh_fem MF, 'memsize')</literal></para>
+
+    <para>       Return the amount of memory (in bytes) used by the mesh_fem object.
+
+    The result does not take into account the linked mesh object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'has_linked_mesh_levelset')</literal></para>
+
+    <para>          Is a mesh_fem_level_set or not. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_fem_get(mesh_fem MF, 'linked_mesh_levelset')</literal></para>
+
+    <para>         if it is a mesh_fem_level_set gives the linked mesh_level_set. 
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-cvid=gf_mesh_get(mf,'cvid');
-[f,c2f]=gf_mesh_fem_get(mf, 'fem');
-sf = list()
-for i=1:size(f), sf(i)=gf_fem_get('char',f(i)); end;
-for i=1:size(c2f),
-  disp(sprintf('the fem of convex %d is %s', cvid(i),sf(i)));
-end
-
-U1=gf_mesh_fem_get_eval(mf,1)
-U2=gf_mesh_fem_get_eval(mf,[1;0]) // output has two rows
-U3=gf_mesh_fem_get_eval(mf,[1 0]) // output has one row, only valid if qdim(mf)==2
-U4=gf_mesh_fem_get_eval(mf,list('x';'y.*z';4;myfunctionofxyz))
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
-      <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

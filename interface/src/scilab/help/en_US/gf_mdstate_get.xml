@@ -9,95 +9,140 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mdstate_get</refname>
-
-    <refpurpose>Get information from a model state object.</refpurpose>
+    <refpurpose>  Get information from a model state object.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_mdstate_get(mds,'is_complex')
-gf_mdstate_get(mds,'tangent_matrix')
-gf_mdstate_get(mds,'constraints_matrix')
-gf_mdstate_get(mds,'reduced_tangent_matrix')
-gf_mdstate_get(mds,'constraints_nullspace')
-gf_mdstate_get(mds,'state')
-gf_mdstate_get(mds,'residual')
-gf_mdstate_get(mds,'reduced_residual')
-gf_mdstate_get(mds,'unreduce', vec U)
-gf_mdstate_get(mds,'memsize')
-    </synopsis>
+    <synopsis>b = gf_mdstate_get(mdstate MDS, 'is_complex')</synopsis>
+    <synopsis>T = gf_mdstate_get(mdstate MDS, 'tangent_matrix')</synopsis>
+    <synopsis>C = gf_mdstate_get(mdstate MDS, 'constraints_matrix')</synopsis>
+    <synopsis>A = gf_mdstate_get(mdstate MDS, 'reduced_tangent_matrix')</synopsis>
+    <synopsis>gf_mdstate_get(mdstate MDS, 'constraints_nullspace')</synopsis>
+    <synopsis>gf_mdstate_get(mdstate MDS, 'state')</synopsis>
+    <synopsis>gf_mdstate_get(mdstate MDS, 'residual')</synopsis>
+    <synopsis>gf_mdstate_get(mdstate MDS, 'reduced_residual')</synopsis>
+    <synopsis>gf_mdstate_get(mdstate MDS, 'unreduce', vec U)</synopsis>
+    <synopsis>z = gf_mdstate_get(mdstate MDS, 'memsize')</synopsis>
+    <synopsis>s = gf_mdstate_get(mdstate MDS, 'char')</synopsis>
+    <synopsis>gf_mdstate_get(mdstate MDS, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  Get information from a model state object.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>b = gf_mdstate_get(mds,'is_complex') : Return 0 is the model state
-        is real, 1 if it is complex.</para>
-      </listitem>
+    <listitem>
+    <para><literal>b = gf_mdstate_get(mdstate MDS, 'is_complex')</literal></para>
 
-      <listitem>
-        <para>T = gf_mdstate_get(mds,tangent_matrix') : Return the tangent
-        matrix stored in the model state.</para>
-      </listitem>
+    <para>       Return 0 is the model state is real, 1 if it is complex.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>C = gf_mdstate_get(mds,'constraints_matrix') : Return the
-        constraints matrix stored in the model state.</para>
-      </listitem>
+    <listitem>
+    <para><literal>T = gf_mdstate_get(mdstate MDS, 'tangent_matrix')</literal></para>
 
-      <listitem>
-        <para>A = gf_mdstate_get(mds,'reduced_tangent_matrix') : Return the
-        reduced tangent matrix (i.e. the tangent matrix after elimination of
-        the constraints).</para>
-      </listitem>
+    <para>       Return the tangent matrix stored in the model state.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mdstate_get(mds,'constraints_nullspace') : Return the nullspace
-        of the constraints matrix.</para>
-      </listitem>
+    <listitem>
+    <para><literal>C = gf_mdstate_get(mdstate MDS, 'constraints_matrix')</literal></para>
 
-      <listitem>
-        <para>gf_mdstate_get(mds,'state') : Return the vector of unknowns, which
-        contains the solution after gf_mdbrick_get(mdb,'solve').</para>
-      </listitem>
+    <para>       Return the constraints matrix stored in the model state.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mdstate_get(mds,'residual') : Return the residual.</para>
-      </listitem>
+    <listitem>
+    <para><literal>A = gf_mdstate_get(mdstate MDS, 'reduced_tangent_matrix')</literal></para>
 
-      <listitem>
-        <para>gf_mdstate_get(mds,'reduced_residual') : Return the residual on
-        the reduced system.</para>
-      </listitem>
+    <para>       Return the reduced tangent matrix (i.e. the tangent matrix after
+    elimination of the constraints).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mdstate_get(mds,'unreduce',vec U) : Reinsert the constraint
-        eliminated from the system.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mdstate_get(mdstate MDS, 'constraints_nullspace')</literal></para>
 
-      <listitem>
-        <para>z = gf_mdstate_get(mds,'memsize') : Return the amount of memory
-        (in bytes) used by the model state.</para>
-      </listitem>
+    <para>       Return the nullspace of the constraints matrix.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdstate_get(mdstate MDS, 'state')</literal></para>
+
+    <para>       Return the vector of unknowns, which contains the solution after gf_mdbrick_get(mdbrick MDB, 'solve').
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdstate_get(mdstate MDS, 'residual')</literal></para>
+
+    <para>       Return the residual.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdstate_get(mdstate MDS, 'reduced_residual')</literal></para>
+
+    <para>       Return the residual on the reduced system.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdstate_get(mdstate MDS, 'unreduce', vec U)</literal></para>
+
+    <para>       Reinsert the constraint eliminated from the system.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>z = gf_mdstate_get(mdstate MDS, 'memsize')</literal></para>
+
+    <para>       Return the amount of memory (in bytes) used by the model state.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_mdstate_get(mdstate MDS, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the mdstate.
+
+      This can be used to perform comparisons between two
+      different mdstate objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdstate_get(mdstate MDS, 'display')</literal></para>
+
+    <para>         displays a short summary for a mdstate.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mdstate_set">gf_mdstate_set</link></member>
-      <member><link linkend="gf_mdstate">gf_mdstate</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

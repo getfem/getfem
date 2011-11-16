@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_global_function_get"
-          xml:lang="en" xmlns="http://docbook.org/ns/docbook"
+<refentry version="5.0-subset Scilab" xml:id="gf_global_function_get" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
           xmlns:svg="http://www.w3.org/2000/svg"
@@ -9,51 +9,89 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_global_function_get</refname>
-
-    <refpurpose> General function for querying information about global_function objects.</refpurpose>
+    <refpurpose>    General function for querying information about global_function objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-      mat VALs = gf_global_function('val', mat PTs)
-      mat GRADs = gf_global_function('grad', mat PTs)
-      mat HESSs = gf_global_function('hess', mat PTs)
-    </synopsis>
+    <synopsis>VALs = gf_global_function_get(global_function GF, 'val',mat PTs)</synopsis>
+    <synopsis>GRADs = gf_global_function_get(global_function GF, 'grad',mat PTs)</synopsis>
+    <synopsis>HESSs = gf_global_function_get(global_function GF, 'hess',mat PTs)</synopsis>
+    <synopsis>s = gf_global_function_get(global_function GF, 'char')</synopsis>
+    <synopsis>gf_global_function_get(global_function GF, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>    General function for querying information about global_function objects.
+</para>
+  </refsection>
 
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-	<para>mat VALs = gf_global_function('val', mat PTs)  Return `val`
-	  function evaluation in `PTs` (column points).</para>
-      </listitem>
-      <listitem>
-	<para>mat GRADs = gf_global_function('grad', mat PTs)  Return
-	`val` function evaluation in `PTs` (column points).</para>
-      </listitem>
-      <listitem>
-	<para>mat HESSs = gf_global_function('hess', mat PTs) Return
-	`val` function evaluation in `PTs` (column points).</para>
-      </listitem>
+    <listitem>
+    <para><literal>VALs = gf_global_function_get(global_function GF, 'val',mat PTs)</literal></para>
+
+    <para>         Return <literal>val</literal> function evaluation in <literal>PTs</literal> (column points).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>GRADs = gf_global_function_get(global_function GF, 'grad',mat PTs)</literal></para>
+
+    <para>       Return <literal>grad</literal> function evaluation in <literal>PTs</literal> (column points).
+
+    On return, each column of <literal>GRADs</literal> is of the
+    form [Gx,Gy].
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>HESSs = gf_global_function_get(global_function GF, 'hess',mat PTs)</literal></para>
+
+    <para>       Return <literal>hess</literal> function evaluation in <literal>PTs</literal> (column points).
+
+    On return, each column of <literal>HESSs</literal> is of the
+    form [Hxx,Hxy,Hyx,Hyy].
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_global_function_get(global_function GF, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the global_function.
+
+      This can be used to perform comparisons between two
+      different global_function objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_global_function_get(global_function GF, 'display')</literal></para>
+
+    <para>         displays a short summary for a global_function object.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_global_function">gf_global_function</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

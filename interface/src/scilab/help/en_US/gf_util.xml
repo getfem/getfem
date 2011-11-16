@@ -9,56 +9,76 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_util</refname>
-
-    <refpurpose>Performs various operations which do not fit elsewhere.</refpurpose>
+    <refpurpose>  Performs various operations which do not fit elsewhere.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_util('save matrix',string fmt, string filename, spmat A)
-A = gf_util('load matrix',string fmt, string filename)
-gf_util('trace level', int level)
-gf_util('warning level', int level)
-</synopsis>
+    <synopsis>gf_util('save matrix', string FMT, string FILENAME, mat A)</synopsis>
+    <synopsis>A = gf_util('load matrix', string FMT, string FILENAME)</synopsis>
+    <synopsis>gf_util('trace level', int level)</synopsis>
+    <synopsis>gf_util('warning level', int level)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  Performs various operations which do not fit elsewhere.
+</para>
+  </refsection>
 
-    <para>Performs various operations which do not fit elsewhere.</para>
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_util('save matrix', string FMT, string FILENAME, spmat A):
-        Exports a sparse matrix into the file named FILENAME, using
-        Harwell-Boeing (FMT='hb') or Matrix-Market (FMT='mm')
-        formatting.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_util('save matrix', string FMT, string FILENAME, mat A)</literal></para>
 
-      <listitem>
-        <para>A = gf_util('load matrix', string FMT, string FILENAME): Imports
-        a sparse matrix from a file.</para>
-      </listitem>
+    <para>       Exports a sparse matrix into the file named FILENAME, using
+    Harwell-Boeing (FMT='hb') or Matrix-Market (FMT='mm') formatting. 
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_util('trace_level',int level): Set the verbosity of some
-        getfem++ routines. Typically the messages printed by the model bricks,
-        0 means no trace message (default is 3).</para>
-      </listitem>
+    <listitem>
+    <para><literal>A = gf_util('load matrix', string FMT, string FILENAME)</literal></para>
 
-      <listitem>
-        <para>gf_util('warning_level',int level): Filter the less important
-        warnings displayed by getfem. 0 means no warnings, default level is
-        3.</para>
-      </listitem>
+    <para>        Imports a sparse matrix from a file. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_util('trace level', int level)</literal></para>
+
+    <para>         Set the verbosity of some getfem++ routines.
+
+      Typically the messages printed by the model bricks, 0 means no
+      trace message (default is 3).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_util('warning level', int level)</literal></para>
+
+    <para>         Filter the less important warnings displayed by getfem.
+
+      0 means no warnings, default level is 3.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Authors</title>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
 
+  <refsection>
+    <title>Authors</title>
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

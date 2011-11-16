@@ -9,318 +9,355 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_model_get</refname>
-
-    <refpurpose>Get information from a model object.</refpurpose>
+    <refpurpose>  Get information from a model object.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-b=gf_model_get(md,'is_complex')
-M=gf_model_get(md,'tangent_matrix')
-V=gf_model_get(md,'rhs')
-gf_model_get(md,'listvar')
-gf_model_get(md,'listbricks')
-size=gf_model_get(md,'memsize')
-V=gf_model_get(md,'variable', string name[, int niter])
-name=gf_model_get(md,'mult varname Dirichlet', int ind_brick)
-V=gf_model_get(md,'from variables')
-gf_model_get(md,'assembly'[, string option])
-gf_model_get(md,'solve' [,...])
-E=gf_model_get(md,'init Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], scalar init_dir[,...])
-E=gf_model_get(md,'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[,...])
-V=gf_model_get(md,'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])
-    </synopsis>
+    <synopsis>b = gf_model_get(model M, 'is_complex')</synopsis>
+    <synopsis>T = gf_model_get(model M, 'tangent_matrix')</synopsis>
+    <synopsis>gf_model_get(model M, 'rhs')</synopsis>
+    <synopsis>z = gf_model_get(model M, 'memsize')</synopsis>
+    <synopsis>gf_model_get(model M, 'listvar')</synopsis>
+    <synopsis>gf_model_get(model M, 'listbricks')</synopsis>
+    <synopsis>V = gf_model_get(model M, 'variable', string name[, int niter])</synopsis>
+    <synopsis>name = gf_model_get(model M, 'mult varname Dirichlet', int ind_brick)</synopsis>
+    <synopsis>I = gf_model_get(model M, 'interval of variable', string varname)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'from variables')</synopsis>
+    <synopsis>gf_model_get(model M, 'assembly'[, string option])</synopsis>
+    <synopsis>{nbit, converged} = gf_model_get(model M, 'solve'[, ...])</synopsis>
+    <synopsis>E = gf_model_get(model M, 'init Moore-Penrose continuation', string dataname_parameter[,string dataname_init, string dataname_final, string dataname_current], scalar init_dir[, ...])</synopsis>
+    <synopsis>E = gf_model_get(model M, 'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[, ...])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>gf_model_get(model M, 'compute plasticity constraints', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>M = gf_model_get(model M, 'matrix term', int ind_brick, int ind_term)</synopsis>
+    <synopsis>s = gf_model_get(model M, 'char')</synopsis>
+    <synopsis>gf_model_get(model M, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  Get information from a model object.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>b = gf_model_get(mds,'is_complex') Return 0 is the model is
-        real, 1 if it is complex.</para>
-      </listitem>
+    <listitem>
+    <para><literal>b = gf_model_get(model M, 'is_complex')</literal></para>
 
-      <listitem>
-        <para>T = gf_model_get(mds,'tangent_matrix') Return the tangent matrix
-        stored in the model .</para>
-      </listitem>
+    <para>         Return 0 is the model is real, 1 if it is complex.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_model_get(mds,'rhs') Return the right hand side of the
-        tangent problem.</para>
-      </listitem>
+    <listitem>
+    <para><literal>T = gf_model_get(model M, 'tangent_matrix')</literal></para>
 
-      <listitem>
-        <para>z = gf_model_get(mds,'memsize') Return a rough approximation of
-        the amount of memory (in bytes) used by the model.</para>
-      </listitem>
+    <para>         Return the tangent matrix stored in the model .
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_model_get(mds,'listvar') print to the output the list of
-        variables and constants of the model.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_model_get(model M, 'rhs')</literal></para>
 
-      <listitem>
-        <para>gf_model_get(mds,'listbricks') print to the output the list of
-        bricks of the model.</para>
-      </listitem>
+    <para>         Return the right hand side of the tangent problem.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>V = gf_model_get(mds,'variable', string name[, int niter]) Gives
-        the value of a variable or data.</para>
-      </listitem>
+    <listitem>
+    <para><literal>z = gf_model_get(model M, 'memsize')</literal></para>
 
-      <listitem>
-        <para>name = gf_model_get(mds,'mult varname Dirichlet', int ind_brick)
-        Gives the name of the multiplier variable for a Dirichlet brick. If
-        the brick is not a Dirichlet condition with multiplier brick, this
-        function has an undefined behavior</para>
-      </listitem>
+    <para>         Return a rough approximation of the amount of memory (in bytes) used by
+      the model.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>V = gf_model_get(mds,'from variables') Return the vector of all
-        the degrees of freedom of the model consisting of the concatenation of
-        the variables of the model (usefull to solve your problem with you own
-        solver).</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_model_get(model M, 'listvar')</literal></para>
 
-      <listitem>
-        <para>gf_model_get(mds,'assembly'[, string option]) Assembly of the
-        tangent system taking into account the terms from all bricks.
-        <literal>option</literal>, if specified, should be 'build all', 'build
-        rhs' or 'build matrix'. The default is to build the whole tangent
-        linear system (matrix and rhs). This function is usefull to solve your
-        problem with you own solver.</para>
-      </listitem>
+    <para>         print to the output the list of variables and constants of the model.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_model_get(mds,'solve'[,...]) Run the standard getfem solver.
-        Note that you should be able to use your own solver if you want (it is
-        possible to obtain the tangent matrix and its right hand side with the
-        gf_model_get(mds,'tangent matrix') etc.).</para>
+    <listitem>
+    <para><literal>gf_model_get(model M, 'listbricks')</literal></para>
 
-        <para>Various options can be specified: </para>
+    <para>         print to the output the list of bricks of the model.
+    </para>
+    </listitem>
 
-        <itemizedlist>
-          <listitem>
-            <para>'noisy' or 'very noisy' the solver will display some
-            information showing the progress (residual values etc.).</para>
-          </listitem>
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'variable', string name[, int niter])</literal></para>
 
-          <listitem>
-            <para>'max_iter', NIT set the maximum iterations numbers.</para>
-          </listitem>
+    <para>         Gives the value of a variable or data.
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'max_res', RES set the target residual value.</para>
-          </listitem>
+    <listitem>
+    <para><literal>name = gf_model_get(model M, 'mult varname Dirichlet', int ind_brick)</literal></para>
 
-          <listitem>
-            <para>'lsolver', SOLVERNAME select explicitely the solver used
-            for the linear systems (the default value is 'auto', which lets
-            getfem choose itself). Possible values are 'superlu', 'mumps' (if
-            supported), 'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
+    <para>         Gives the name of the multiplier variable for a Dirichlet brick.
+      If the brick is not a Dirichlet condition with multiplier brick,
+      this function has an undefined behavior
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>E=gf_model_get(mds,'init Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], scalar init_dir[,...])
-        Initialize the Moore-Penrose continuation (for more details about the
-        continuation see the Getfem++ user documentation): The variable
-        `dataname_parameter` should parametrize the model. If the parametrization
-        is done via some vector datum, `dataname_init` and `dataname_final`
-        should store two given values of this datum determining the
-        parametrization, and `dataname_current` serves for actual values of this
-        datum. Return a tangent corresponding to the solution branch at the
-        current solution and the current value of the parameter, and an initial
-        step size for the continuation. Direction of the computed tangent with
-        respect to the parameter is determined by the sign of `init_dir`.
-        </para>
+    <listitem>
+    <para><literal>I = gf_model_get(model M, 'interval of variable', string varname)</literal></para>
+
+    <para>         Gives the interval of the variable <literal>varname</literal> in the linear system of
+      the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'from variables')</literal></para>
+
+    <para>         Return the vector of all the degrees of freedom of the model consisting
+      of the concatenation of the variables of the model (usefull
+      to solve your problem with you own solver). 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_get(model M, 'assembly'[, string option])</literal></para>
+
+    <para>         Assembly of the tangent system taking into account the terms
+      from all bricks. <literal>option</literal>, if specified, should be 'build_all',
+      'build_rhs', 'build_matrix' or 'pseudo_potential' (in that case,
+      the pseudo_potential is returned).
+      The default is to build the whole
+      tangent linear system (matrix and rhs). This function is usefull
+      to solve your problem with you own solver. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{nbit, converged} = gf_model_get(model M, 'solve'[, ...])</literal></para>
+
+    <para>       Run the standard getfem solver.
+
+    Note that you should be able to use your own solver if you want
+    (it is possible to obtain the tangent matrix and its right hand
+    side with the gf_model_get(model M, 'tangent matrix') etc.).
+
+    Various options can be specified:
+
+    - 'noisy' or 'very_noisy'
+       the solver will display some information showing the progress
+       (residual values etc.).
+    - 'max_iter', int NIT
+       set the maximum iterations numbers.
+    - 'max_res', @float RES
+       set the target residual value.
+    - 'lsolver', string SOLVER_NAME
+       select explicitely the solver used for the linear systems (the
+       default value is 'auto', which lets getfem choose itself).
+       Possible values are 'superlu', 'mumps' (if supported),
+       'cg/ildlt', 'gmres/ilu' and 'gmres/ilut'.
+    - 'lsearch', string LINE_SEARCH_NAME
+       select explicitely the line search method used for the linear systems (the
+       default value is 'default').
+       Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
+    - 'with pseudo potential'
+      for nonlinear problems, the criterion of the line search will
+      be a pseudo potential instead of the residual. Still experimental since
+      not all bricks define a pseudo potential.
+
+      Return the number of iterations, if a iterative method is used. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_model_get(model M, 'init Moore-Penrose continuation', string dataname_parameter[,string dataname_init, string dataname_final, string dataname_current], scalar init_dir[, ...])</literal></para>
+
+    <para>       Initialize the Moore-Penrose continuation (for more details about the
+    continuation see the Getfem++ user documentation): The variable
+    <literal>dataname_parameter</literal> should parametrize the model. If the parametrization is
+    done via some vector datum, <literal>dataname_init</literal> and <literal>dataname_final</literal> should
+    store two given values of this datum determining the parametrization, and
+    <literal>dataname_current</literal> serves for actual values of this datum. Return a tangent
+    corresponding to the solution branch at the current solution and the current
+    value of the parameter, and an initial step size for the continuation.
+    Direction of the computed tangent with respect to the parameter is
+    determined by the sign of <literal>init_dir</literal>.
     
-        <para>Additional options:</para>
-
-        <itemizedlist>
-          <listitem>
-            <para>'lsolver', string SOLVER_NAME</para>
-
-            <para>name of a solver to be used for the incorporated linear
-            system (the default value is 'auto', which lets getfem choose
-            itself); possible values are 'superlu', 'mumps' (if supported),
-            'cg/ildlt', 'gmres/ilu' and 'gmres/ilut';</para>
-          </listitem>
-
-          <listitem>
-            <para>'noisy' or 'very_noisy'</para>
-
-            <para>determines how detailed information has to be displayed
-            during the computations (residual values etc.);</para>
-          </listitem>
-
-          <listitem>
-            <para>'epsilon', scalar EPS</para>
-
-            <para>increment to be used to compute the incorporated finite
-            difference (the default value is 1e-8);</para>
-          </listitem>
-
-          <listitem>
-            <para>'max_res_solve', scalar RES_SOLVE</para>
-       
-            <para>target residual value for the linear system to be solved
-            (the default value is 1e-7);</para>
-          </listitem>
-
-          <listitem>
-            <para>'h_init', scalar HIN</para>
-
-            <para>initial step size (the default value is 1e-2).</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para>E=gf_model_get(mds,'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[,...])
-        Compute one step of the Moore-Penrose continuation (for more details
-        about the continuation see the Getfem++ user documentation): The variable
-        `dataname_parameter` should parametrize the model. If the parametrization
-        is done via some vector datum, `dataname_init` and `dataname_final`
-        should store two given values of this datum determining the
-        parametrization, and `dataname_current` serves for actual values of this
-        datum. Take the current solution, the current value of the parameter, the
-        tangent given by `tangent` and `tangent_parameter`, and the step size
-        `h`, return a new tangent and step size for the next step (and save a new
-        point in the model).</para>
+    Additional options:
     
-        <para>Additional options:</para>
+    - 'lsolver', string SOLVER_NAME
+       name of a solver to be used for the incorporated linear system (the
+       default value is 'auto', which lets getfem choose itself); possible
+       values are 'superlu', 'mumps' (if supported), 'cg/ildlt', 'gmres/ilu'
+       and 'gmres/ilut';
+    - 'noisy' or 'very_noisy'
+       determines how detailed information has to be displayed during the
+       computations (residual values etc.);
+    - 'epsilon', scalar EPS
+       increment to be used to compute the incorporated finite
+       difference (the default value is 1e-8);
+    - 'max_res_solve', scalar RES_SOLVE
+       target residual value for the linear system to be solved (the default
+       value is 1e-7);
+    - 'h_init', scalar HIN
+       initial step size (the default value is 1e-2).
+    </para>
+    </listitem>
 
-        <itemizedlist>
-          <listitem>
-            <para>'lsolver', string SOLVER_NAME</para>
+    <listitem>
+    <para><literal>E = gf_model_get(model M, 'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[, ...])</literal></para>
 
-            <para>name of a solver to be used for the incorporated linear
-            systems (the default value is 'auto', which lets getfem choose
-            itself); possible values are 'superlu', 'mumps' (if supported),
-            'cg/ildlt', 'gmres/ilu' and 'gmres/ilut';</para>
-          </listitem>
+    <para>       Compute one step of the Moore-Penrose continuation (for more details
+    about the continuation see the Getfem++ user documentation): The variable
+    <literal>dataname_parameter</literal> should parametrize the model. If the parametrization is
+    done via some vector datum, <literal>dataname_init</literal> and <literal>dataname_final</literal> should
+    store two given values of this datum determining the parametrization, and
+    <literal>dataname_current</literal> serves for actual values of this datum. Take the current
+    solution, the current value of the parameter, the tangent given by <literal>tangent</literal>
+    and <literal>tangent_parameter</literal>, and the step size <literal>h</literal>, return a new tangent and
+    step size for the next step (and save a new point in the model).
 
-          <listitem>
-            <para>'noisy' or 'very_noisy'</para>
+    Additional options:
 
-            <para>determines how detailed information has to be displayed
-            during the computations (residual values etc.);</para>
-          </listitem>
+    - 'lsolver', string SOLVER_NAME
+       name of a solver to be used for the incorporated linear systems (the
+       default value is 'auto', which lets getfem choose itself); possible
+       values are 'superlu', 'mumps' (if supported), 'cg/ildlt', 'gmres/ilu'
+       and 'gmres/ilut';
+    - 'noisy' or 'very_noisy'
+       determines how detailed information has to be displayed during the
+       process (residual values etc.);
+    - 'max_iter', int NIT
+       maximum number of iterations allowed in the correction (the default
+       value is 10);
+    - 'thr_iter', int TIT
+       threshold number of iterations of the correction for enlarging the
+       step size (the default value is 8);
+    - 'max_res', scalar RES
+       target residual value of the new point (the default value is 1e-6);
+    - 'max_diff', scalar DIFF
+       determines a criterion of convergence to the new tangent vector (the
+       default value is 1e-6);
+    - 'min_ang', scalar ANG
+       minimal value of the cosine of the angle between tangents to the
+       solution curve at the old point and the new one (the default value is
+       0.9);
+    - 'h_init', scalar HIN
+       initial step size (the default value is 1e-2);
+    - 'h_max', scalar HMAX
+       maximal step size (the default value is 1e-1);
+    - 'h_min', scalar HMIN
+       minimal step size (the default value is 1e-5);
+    - 'h_inc', scalar HINC
+       factor for enlarging the step size (the default value is 1.3);
+    - 'h_dec', scalar HDEC
+       factor for diminishing the step size (the default value is 0.5);
+    - 'epsilon', scalar EPS
+       increment to be used to compute the incorporated finite
+       differences (the default value is 1e-8);
+    - 'max_res_solve', scalar RES_SOLVE
+       target residual value for the linear systems to be solved (the default
+       value is 1e-7).
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'max_iter', int NIT</para>
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</literal></para>
 
-            <para>maximum number of iterations allowed in the correction (the
-            default value is 10);</para>
-          </listitem>
+    <para>         Compute the Von-Mises stress or the Tresca stress of a field (only
+      valid for isotropic linearized elasticity in 3D). <literal>version</literal> should
+      be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). 
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'thr_iter', int TIT</para>
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</literal></para>
 
-            <para>threshold number of iterations of the correction for
-            enlarging the step size (the default value is 8);</para>
-          </listitem>
+    <para>         Compute on <literal>mf_vm</literal> the Von-Mises stress or the Tresca stress of a field
+      for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
+      depends on the law. It could be a short vector of constant values or a
+      vector field described on a finite element method for variable coefficients.
+      <literal>version</literal> should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default). 
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'max_res', scalar RES</para>
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</literal></para>
 
-            <para>target residual value of the new point (the default value is
-            1e-6);</para>
-          </listitem>
+    <para>         Compute on <literal>mf_vm</literal> the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
+      <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.  
+      <literal>version</literal> should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'max_diff', scalar DIFF</para>
+    <listitem>
+    <para><literal>gf_model_get(model M, 'compute plasticity constraints', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
 
-            <para>determines a criterion of convergence to the new tangent
-            vector (the default value is 1e-6);</para>
-          </listitem>
+    <para>         Compute and save the stress constraints sigma for other hypothetical iterations. 
+      'mim' is the integration method to use for the computation.
+      'varname' is the main variable of the problem.
+      'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
+      'datalambda' and 'datamu' are the Lame coefficients of the material.
+      'datasigma' is a vector which will contains the new stress constraints values.
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'min_ang', scalar ANG</para>
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
 
-            <para>minimal value of the cosine of the angle between tangents to
-            the solution curve at the old point and the new one (the default
-            value is 0.9);</para>
-          </listitem>
+    <para>         Compute on <literal>mf_pl</literal> the plastic part and return it into the vector V.
+      <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'h_init', scalar HIN</para>
+    <listitem>
+    <para><literal>M = gf_model_get(model M, 'matrix term', int ind_brick, int ind_term)</literal></para>
 
-            <para>initial step size (the default value is 1e-2).</para>
-          </listitem>
+    <para>         Gives the matrix term ind_term of the brick ind_brick if it exists
+      
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'h_max', scalar HMAX</para>
+    <listitem>
+    <para><literal>s = gf_model_get(model M, 'char')</literal></para>
 
-            <para>maximal step size (the default value is 1e-1);</para>
-          </listitem>
+    <para>         Output a (unique) string representation of the model.
 
-          <listitem>
-            <para>'h_min', scalar HMIN</para>
+      This can be used to perform comparisons between two
+      different model objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
 
-            <para>minimal step size (the default value is 1e-5);</para>
-          </listitem>
+    <listitem>
+    <para><literal>gf_model_get(model M, 'display')</literal></para>
 
-          <listitem>
-            <para>'h_inc', scalar HINC</para>
+    <para>         displays a short summary for a model object.
+    </para>
+    </listitem>
 
-            <para>factor for enlarging the step size (the default value is
-            1.3);</para>
-          </listitem>
-
-          <listitem>
-            <para>'h_dec', scalar HDEC</para>
-
-            <para>factor for diminishing the step size (the default value is
-            0.5);</para>
-          </listitem>
-
-          <listitem>
-            <para>'epsilon', scalar EPS</para>
-
-            <para>increment to be used to compute the incorporated finite
-            difference (the default value is 1e-8);</para>
-          </listitem>
-
-          <listitem>
-            <para>'max_res_solve', scalar RES_SOLVE</para>
-       
-            <para>target residual value for the linear systems to be solved
-            (the default value is 1e-7);</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
-
-      <listitem>
-        <para>V = gf_model_get(mds,'compute isotropic linearized Von Mises or
-        Tresca', string varname, string dataname_lambda, string dataname_mu,
-        MeshFem mf_vm[, string version]) Compute the Von-Mises stress or the
-        Tresca stress of a field (only valid for isotropic linearized
-        elasticity in 3D). `version` should be 'Von Mises' or 'Tresca' ('Von
-        Mises' is the default).</para>
-      </listitem>
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_model">gf_model</link></member>
-      <member><link linkend="gf_model_set">gf_model_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

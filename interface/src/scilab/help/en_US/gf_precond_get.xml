@@ -9,78 +9,99 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_precond_get</refname>
-
-    <refpurpose>get informations related to the preconditioner</refpurpose>
+    <refpurpose>  General function for querying information about precond objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-vec PV=gf_precond_get(P,'mult', vec V)
-vec tPV=gf_precond_get(P,'tmult', vec V)
-string S=gf_precond_get(P,'type')
-ivec gf_precond_get('size')
-int gf_precond_get(P,'is_complex')string S=gf_precond_get(P,'info')
-    </synopsis>
+    <synopsis>gf_precond_get(precond P, 'mult', vec V)</synopsis>
+    <synopsis>gf_precond_get(precond P, 'tmult', vec V)</synopsis>
+    <synopsis>gf_precond_get(precond P, 'type')</synopsis>
+    <synopsis>gf_precond_get(precond P, 'size')</synopsis>
+    <synopsis>gf_precond_get(precond P, 'is_complex')</synopsis>
+    <synopsis>s = gf_precond_get(precond P, 'char')</synopsis>
+    <synopsis>gf_precond_get(precond P, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for querying information about precond objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_precond_get(P,'mult',vec V) Apply the preconditioner to the
-        supplied vector.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_precond_get(precond P, 'mult', vec V)</literal></para>
 
-      <listitem>
-        <para>gf_precond_get(P,'tmult',vec V) Apply the transposed
-        preconditioner to the supplied vector.</para>
-      </listitem>
+    <para>       Apply the preconditioner to the supplied vector.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_precond_get(P,'type') Return a string describing the type of
-        the preconditioner ('ilu', 'ildlt',..).</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_precond_get(precond P, 'tmult', vec V)</literal></para>
 
-      <listitem>
-        <para>gf_precond_get(P,'size') Return the dimensions of the
-        preconditioner.</para>
-      </listitem>
+    <para>         Apply the transposed preconditioner to the supplied vector.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_precond_get(P,'is_complex') Return 1 if the preconditioner
-        stores complex values.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_precond_get(precond P, 'type')</literal></para>
 
-      <listitem>
-        <para>gf_precond_get(P,'info') Return a short informative string about
-        the preconditioner.</para>
-      </listitem>
+    <para>         Return a string describing the type of the preconditioner ('ilu', 'ildlt',..).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_precond_get(precond P, 'size')</literal></para>
+
+    <para>         Return the dimensions of the preconditioner.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_precond_get(precond P, 'is_complex')</literal></para>
+
+    <para>         Return 1 if the preconditioner stores complex values.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_precond_get(precond P, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the precond.
+
+      This can be used to perform comparisons between two
+      different precond objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_precond_get(precond P, 'display')</literal></para>
+
+    <para>         displays a short summary for a precond object.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"> 
-  Add an example here
- </programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_precond">gf_precond</link></member>
-      <member><link linkend="gf_linsolve">gf_linsolve</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

@@ -9,123 +9,138 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_workspace</refname>
+    <refpurpose>    Getfem workspace management function. 
 
-    <refpurpose>Getfem workspace management function.</refpurpose>
+    Getfem uses its own workspaces in Matlab, independently of the
+    matlab workspaces (this is due to some limitations in the memory
+    management of matlab objects). By default, all getfem variables
+    belong to the root getfem workspace. A function can create its own
+    workspace by invoking gf_workspace('push') at its beginning. When
+    exiting, this function MUST invoke gf_workspace('pop') (you can
+    use matlab exceptions handling to do this cleanly when the
+    function exits on an error).
+
+ </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_workspace('push') 
-gf_workspace('pop' [,hobj i, hobj j,..])  
-gf_workspace('stat') 
-gf_workspace('stats')
-gf_workspace('keep', hobj i[,hobj j, hobj k..]) 
-gf_workspace('clear')
-gf_workspace('clear all')
-gf_workspace('class name', hobj i)
-  </synopsis>
+    <synopsis>gf_workspace('push')</synopsis>
+    <synopsis>gf_workspace('pop',  [,i,j, ...])</synopsis>
+    <synopsis>gf_workspace('stat')</synopsis>
+    <synopsis>gf_workspace('stats')</synopsis>
+    <synopsis>gf_workspace('keep', i[,j,k...])</synopsis>
+    <synopsis>gf_workspace('keep all')</synopsis>
+    <synopsis>gf_workspace('clear')</synopsis>
+    <synopsis>gf_workspace('clear all')</synopsis>
+    <synopsis>gf_workspace('class name', i)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>    Getfem workspace management function. 
 
-    <para>Getfem uses its own workspaces in Scilab, independently of the
-    scilab workspaces (this is due to some limitations in the memory
-    management of scilab objects). By default, all getfem variables belong to
-    the root getfem workspace. A function can create its own workspace by
-    invoking gf_workspace('push') at its beginning. When exiting, this
-    function MUST invoke gf_workspace('pop') (you can use scilab exceptions
-    handling to do this cleanly when the function exits on an error).</para>
+    Getfem uses its own workspaces in Matlab, independently of the
+    matlab workspaces (this is due to some limitations in the memory
+    management of matlab objects). By default, all getfem variables
+    belong to the root getfem workspace. A function can create its own
+    workspace by invoking gf_workspace('push') at its beginning. When
+    exiting, this function MUST invoke gf_workspace('pop') (you can
+    use matlab exceptions handling to do this cleanly when the
+    function exits on an error).
+
+ </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_workspace('push'): Create a new temporary workspace on
-          the workspace stack.</para>
-      </listitem>
-      
-      <listitem>
-        <para>gf_workspace('pop' [,i,j,..]): Leave the current
-          workspace, destroying all getfem objects belonging to it, except
-          the one listed after 'pop', and the ones moved to parent
-          workspace by gf_workspace('keep').</para>
-      </listitem>
-      
-      <listitem>
-        <para>gf_workspace('stat'): Print informations about variables
-          in current workspace.</para>
-      </listitem>
-      
-      <listitem>
-        <para>gf_workspace('stats'): Print informations about all getfem
-          variables.</para>
-      </listitem>
-      
-      <listitem>
-        <para>gf_workspace('keep', i[,j,k..]): prevent the listed
-          variables i from being deleted when gf_workspace("pop") will be
-          called by moving this variable in the parent workspace.</para>
-      </listitem>
-      
-      <listitem>
-        <para>gf_workspace('clear'): Clear the current workspace.</para>
-      </listitem>
-      
-      <listitem>
-        <para>gf_workspace('clear all'): Clear every workspace, and
-          returns to the main workspace (you should not need this
-          command).</para>
-      </listitem>
-      
-      <listitem>
-        <para>S=gf_workspace('class name', i): Return the class name of
-          object i (if I is a mesh handle, it return gfMesh etc..)</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_workspace('push')</literal></para>
+
+    <para>         Create a new temporary workspace on the workspace stack. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('pop',  [,i,j, ...])</literal></para>
+
+    <para>         Leave the current workspace, destroying all getfem objects
+      belonging to it, except the one listed after 'pop', and the ones
+      moved to parent workspace by gf_workspace('keep'). 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('stat')</literal></para>
+
+    <para>          Print informations about variables in current workspace. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('stats')</literal></para>
+
+    <para>          Print informations about all getfem variables. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('keep', i[,j,k...])</literal></para>
+
+    <para>         prevent the listed variables from being deleted when
+      gf_workspace("pop") will be called by moving these variables in the
+      parent workspace. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('keep all')</literal></para>
+
+    <para>         prevent all variables from being deleted when
+      gf_workspace("pop") will be called by moving the variables in the
+      parent workspace. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('clear')</literal></para>
+
+    <para>         Clear the current workspace. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('clear all')</literal></para>
+
+    <para>         Clear every workspace, and returns to the main workspace (you
+      should not need this command). 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_workspace('class name', i)</literal></para>
+
+    <para>         Return the class name of object i (if I is a mesh handle, it 
+      return gfMesh etc..) 
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <para>If you want to create getfem-matlab object within one of your own m-files, you should follow this template in order to avoid memory leaks.</para>
-
-    <programlisting role="example"><![CDATA[ 
-// First example
-function [a]=foo(x,y,z)
-gf_workspace('push');
-try
-  ...                      // some work here ...
-  a = gf_mesh_fem(m);      // create a  getfem++ object
-  b = gf_mesh(x);
-  gf_workspace('keep', a); // b will be automatically destroyed at the 'pop'
-  ...                      // other work...
-catch
-  gf_workspace('pop');     // cleanup before error
-  error(lasterror);
-end
-gf_workspace('pop');
-endfunction
-
-// Second example
-m  = gf_mesh('cartesian',[0:.1:1],[0:.1:1]); 
-gf_workspace('stats');
- ]]></programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_delete">gf_delete</link></member>
-      <member><link linkend="gf_mesh">gf_mesh</link></member>
-      <member><link linkend="gf_mesh_fem">gf_mesh_fem</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

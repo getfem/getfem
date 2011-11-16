@@ -9,56 +9,80 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mdstate</refname>
+    <refpurpose>  A model state is an object which store the state data for a chain of model
+  bricks. This includes the global tangent matrix, the right hand side and
+  the constraints.
 
-    <refpurpose>General constructor for mdstate objects. Return a getfem
-    handle to the newly created object.</refpurpose>
+  This object is now deprecated and replaced by the model object.
+
+  There are two sorts of model states, the <literal>real</literal> and the <literal>complex</literal> models
+  states.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>M = gf_mdstate('complex' | 'real')</synopsis>
+    <synopsis>MDS = gf_mdstate('real')</synopsis>
+    <synopsis>MDS = gf_mdstate('complex')</synopsis>
+    <synopsis>MDS = gf_mdstate(mdbrick B)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for mdstate objects.</para>
 
-    <para> "Model State" variables store the state data for a set of model
-    bricks. This includes the global tangent matrix, the right hand side and
-    the constraints. There are two sorts of model states, the "real" and the
-    "complex" models states.</para>
+    <para>  A model state is an object which store the state data for a chain of model
+  bricks. This includes the global tangent matrix, the right hand side and
+  the constraints.
+
+  This object is now deprecated and replaced by the model object.
+
+  There are two sorts of model states, the <literal>real</literal> and the <literal>complex</literal> models
+  states.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>MDS = gf_mdstate('real') Build a model state for real
-        unknowns.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MDS = gf_mdstate('real')</literal></para>
 
-      <listitem>
-        <para>MDS = gf_mdstate('complex') Build a model state for complex
-        unknowns.</para>
-      </listitem>
+    <para>           Build a model state for real unknowns.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>MDS = gf_mdstate('.mdbrick',MdBrick B) Build a modelstate for
-        the brick <literal>B</literal>. Selects the real or complex state from
-        the complexity of <literal>B</literal>.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MDS = gf_mdstate('complex')</literal></para>
+
+    <para>           Build a model state for complex unknowns.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MDS = gf_mdstate(mdbrick B)</literal></para>
+
+    <para>         Build a modelstate for the brick <literal>B</literal>.
+
+      Selects the real or complex state from the complexity of <literal>B</literal>.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mdstate_get">gf_mdstate_get</link></member>
-      <member><link linkend="gf_mdstate_set">gf_mdstate_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

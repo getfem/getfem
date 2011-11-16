@@ -9,144 +9,207 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh</refname>
+    <refpurpose>  This object is able to store any element in any dimension even if you mix
+  elements with different dimensions.
 
-    <refpurpose>General constructor for mesh object.</refpurpose>
+  
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-M = gf_mesh('empty', int dim) 
-M = gf_mesh('cartesian', vec X[, vec Y[, vec Z,..]])
-M = gf_mesh('triangles grid', vec X, vec Y)
-M = gf_mesh('regular simplices', vec X[, vec Y[, vec Z,.., ]][, 'degree', int K]['noised'])
-M = gf_mesh('curved', const_mesh M0, vec F)
-M = gf_mesh('prismatic', const_mesh M0, int K)
-M = gf_mesh('pt2D', mat p, imat t[, int n])
-M = gf_mesh('ptND', mat p, imat t)
-M = gf_mesh('load', string filename)
-M = gf_mesh('from string', string s)
-M = gf_mesh('import', string format, string filename)
-M = gf_mesh('clone', const_mesh M0)
-    </synopsis>
+    <synopsis>M = gf_mesh('empty', int dim)</synopsis>
+    <synopsis>M = gf_mesh('cartesian', vec X[, vec Y[, vec Z,..]])</synopsis>
+    <synopsis>M = gf_mesh('cartesian Q1', vec X, vec Y[, vec Z,..])</synopsis>
+    <synopsis>M = gf_mesh('triangles grid', vec X, vec Y)</synopsis>
+    <synopsis>M = gf_mesh('regular simplices', vec X[, vec Y[, vec Z,...]]['degree', int k]['noised'])</synopsis>
+    <synopsis>M = gf_mesh('curved', mesh m, vec F)</synopsis>
+    <synopsis>M = gf_mesh('prismatic', mesh m, int nl)</synopsis>
+    <synopsis>M = gf_mesh('pt2D', mat P, imat T[, int n])</synopsis>
+    <synopsis>M = gf_mesh('ptND', mat P, imat T)</synopsis>
+    <synopsis>M = gf_mesh('load', string filename)</synopsis>
+    <synopsis>M = gf_mesh('from string', string s)</synopsis>
+    <synopsis>M = gf_mesh('import', string format, string filename)</synopsis>
+    <synopsis>M = gf_mesh('clone', mesh m2)</synopsis>
+    <synopsis>M = gf_mesh('generate', mesher_object mo, scalar h[, int K = 1[, mat vertices]])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for mesh objects.</para>
 
-    <para>The function gf_mesh creates a new mesh object. The gf_mesh version returns a matlab structure, which can be manipulated with 
-      gf_mesh_get(M,...) and gf_mesh_set(M,...).</para>
-    <para>The first argument specifies the kind of operation which will create the mesh. The returned value, M, is an identifier (of type uint32)
-      to the new object.</para>
+    <para>  This object is able to store any element in any dimension even if you mix
+  elements with different dimensions.
+
+  
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-	<para>gf_mesh('empty', dim) : return a new empty mesh, whose nodes have dim coordinates. 
-	  This mesh can be later populated with e.g. gf_mesh_set('add convex',...).</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh('empty', int dim)</literal></para>
 
-      <listitem>
-	<para>gf_mesh('cartesian', X[, Y,...]) : can be used to build quickly a cartesian mesh (with a linear geometric transformation, 
-	see gf_geotrans. The vectors X,Y,...contain the vertices coordinates along each axis. The regular numbering of points 
-	and convexes is guaranteed by this functions</para>
-      </listitem>
+    <para>         Create a new empty mesh.
+    </para>
+    </listitem>
 
-      <listitem>
-	<para>gf_mesh('triangles grid', X, Y) : create a regular 2D mesh, similar to a cartesian grid where each rectangle is split in two triangles.</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh('cartesian', vec X[, vec Y[, vec Z,..]])</literal></para>
 
-      <listitem>
-	<para>gf_mesh('regular simplices', X, ...) : is a generalization to arbitrary dimensions of the triangles grid. 
-	  For example, gf_mesh('regular simplices',0:10, 0:10, 'degree', 2, 'noised') will build a mesh of quadratic triangles (of irregular shape).</para>
-      </listitem>
+    <para>         Build quickly a regular mesh of quadrangles, cubes, etc.
+    </para>
+    </listitem>
 
-      <listitem>
-	<para>gf_mesh('curved', M0, F) : build a curved (n+1)-dimensions mesh from a n-dimensions mesh M0: the new mesh has one additional dimension. 
-	  The additional coordinate is given by the vector F. This can be used to obtain meshes for shells.</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh('cartesian Q1', vec X, vec Y[, vec Z,..])</literal></para>
 
-      <listitem>
-	<para>gf_mesh('prismatic', M0, K) : extrude a prismatic mesh M from a mesh M0. In the additional dimension there are K layers of elements 
-	stacked in the range [0..1].</para>
-      </listitem>
+    <para>         Build quickly a regular mesh of quadrangles, cubes, etc. with
+      Q1 elements.
+    </para>
+    </listitem>
 
-      <listitem>
-	<para>gf_mesh('pt2D', p, t[, n]) : build quickly a planar mesh from a points array p and a triangulation t. This can be used to convert 
-	  a pdetool mesh exported in variables p and t into a getfem++ mesh M. n is optional and is a zone number. If n is specified only triangle
-	  belonging to the zone number n are created in the mesh. The points array p is assumed to be a 2×npoints matrix, and the triangles 
-	  array should be a 3×nbtri matrix, or a 4×nbtri if a zone number is used.</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh('triangles grid', vec X, vec Y)</literal></para>
 
-      <listitem>
-	<para>gf_mesh('ptND', p, t[, n]) : this is a more general form of 'pt2d'. It builds a simplex mesh from a given triangulation. 
-	  The dimension of the mesh will be the number of rows of p, and the dimension of the simplexes will be the number of rows of t.</para>
-      </listitem>
+    <para>         Build quickly a regular mesh of triangles.
 
-      <listitem>
-	<para>gf_mesh('load', filename) : load a mesh from a getfem++ mesh file (which may have been created by gf_mesh_get(M,'save',filename). 
-	  gf_mesh('from string', s) is very similar, but the mesh is loaded from a string instead of a file. 
-	  The content of this string may be set by s=gf_mesh_get(M,'char').</para>
-      </listitem>
+      This is a very limited and somehow deprecated function (See also
+      <literal></literal>gf_mesh('ptND')<literal></literal>, <literal></literal>gf_mesh('regular simplices')<literal></literal> and
+      <literal></literal>gf_mesh('cartesian')<literal></literal>).
+    </para>
+    </listitem>
 
-      <listitem>
-	<para>gf_mesh('import', format, filename) import a mesh from a file. For the moment, only three formats are supported:</para>
-	<itemizedlist>
-	  <listitem>
-	    <para> mesh objects created with gmsh (GPL meshing/post processing tool) : gf_mesh('import', 'gmsh', filename). 
-	      Note that gmsh meshes always use 3D points, even for planar meshes. 
-	      However, you can remove the z-component of the planar mesh with 
-	      gf_mesh_set(m, 'transform', [1 0 0; 0 1 0]). 
-	      Use gf_mesh('import', 'gmshv2', filename) for gmsh file-format version 2.0.</para>
-	  </listitem>
-	  <listitem>
-	    <para> mesh objects created with GiD (only limited version is free, but it is able to generate quadratic elements) : 
-	      gf_mesh('import', 'gid', filename).</para>
-	  </listitem>
-	  <listitem>
-	    <para> 2D triangular meshes from emc2, saved with the am_fmt format : gf_mesh('import', 'am_fmt', filename). </para>
-	  </listitem>
-	</itemizedlist>
-	<para>Support for other file-formats should be quickly available.</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh('regular simplices', vec X[, vec Y[, vec Z,...]]['degree', int k]['noised'])</literal></para>
 
-      <listitem>
-	<para>gf_mesh('clone', M0) : return a copy of the mesh M0. Note that m = gf_mesh('clone', m0) is different from doing m = m0 
-	  since in the latter case, m and m0 still refer the same getfem mesh object! </para>
-      </listitem>
+    <para>         Mesh a n-dimensionnal parallelepipeded with simplices (triangles,
+      tetrahedrons etc) .
+
+      The optional degree may be used to build meshes with non linear
+      geometric transformations.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('curved', mesh m, vec F)</literal></para>
+
+    <para>         Build a curved (n+1)-dimensions mesh from a n-dimensions mesh <literal>m</literal>.
+
+      The points of the new mesh have one additional coordinate, given by
+      the vector <literal>F</literal>. This can be used to obtain meshes for shells. <literal>m</literal> may
+      be a mesh_fem object, in that case its linked mesh will be used.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('prismatic', mesh m, int nl)</literal></para>
+
+    <para>         Extrude a prismatic mesh <literal>M</literal> from a mesh <literal>m</literal>.
+
+      In the additional dimension there are <literal>nl</literal> layers of elements built
+      from <literal></literal>0<literal></literal> to <literal></literal>1<literal></literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('pt2D', mat P, imat T[, int n])</literal></para>
+
+    <para>         Build a mesh from a 2D triangulation.
+
+      Each column of <literal>P</literal> contains a point coordinate, and each column of <literal>T</literal>
+      contains the point indices of a triangle. <literal>n</literal> is optional and is a
+      zone number. If <literal>n</literal> is specified then only the zone number <literal>n</literal> is
+      converted (in that case, <literal>T</literal> is expected to have 4 rows, the fourth
+      containing these zone numbers).
+
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('ptND', mat P, imat T)</literal></para>
+
+    <para>         Build a mesh from a n-dimensional "triangulation".
+
+      Similar function to 'pt2D', for building simplexes meshes from a
+      triangulation given in <literal>T</literal>, and a list of points given in <literal>P</literal>. The
+      dimension of the mesh will be the number of rows of <literal>P</literal>, and the
+      dimension of the simplexes will be the number of rows of <literal>T</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('load', string filename)</literal></para>
+
+    <para>         Load a mesh from a getfem++ ascii mesh file.
+
+      See also <literal></literal>gf_mesh_get(mesh M, 'save', string filename)<literal></literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('from string', string s)</literal></para>
+
+    <para>         Load a mesh from a string description.
+
+      For example, a string returned by <literal></literal>gf_mesh_get(mesh M, 'char')<literal></literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('import', string format, string filename)</literal></para>
+
+    <para>         Import a mesh.
+
+      <literal>format</literal> may be:
+
+      - 'gmsh' for a mesh created with <literal>Gmsh</literal>
+      - 'gid' for a mesh created with <literal>GiD</literal>
+      - 'am_fmt' for a mesh created with <literal>EMC2</literal>
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('clone', mesh m2)</literal></para>
+
+    <para>         Create a copy of a mesh.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_mesh('generate', mesher_object mo, scalar h[, int K = 1[, mat vertices]])</literal></para>
+
+    <para>         Call the (very) experimental mesher of Getfem on the geometry
+      represented by <literal>mo</literal>. please control the conformity of the produced mesh.
+      You can add the mesher by adding a priori vertices in the array
+      <literal>vertices</literal> which should be of size <literal></literal>n x m<literal></literal> where <literal></literal>n<literal></literal> n is the
+      dimension of the mesh and <literal></literal>m<literal></literal> the number of points. <literal>h</literal> is
+      approximate diameter of the elements. <literal>K</literal> is the degree of the
+      mesh ( > 1 for curved boundaries).  The mesher try to optimize the
+      quality of the elements. This operation may be time consuming.
+      Note that if the mesh generation fails, because of some random
+      procedure used, it will not give necessarily the same result due
+      to random procedures used. 
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <para>Building a small 5×3 cartesian mesh: </para>
-
-    <programlisting role="example"><![CDATA[ 
-m = gf_mesh('cartesian',[0:.2:1], [0:3])
- ]]></programlisting>
-
-    <para>Making a curved mesh with z=x^2+y^2: </para>
-
-    <programlisting role="example"><![CDATA[ 
-pts = gf_mesh_get(m, 'pts coords');
-V = pts(1,:).^2 + pts(2,:)^2;
-m2 = gf_mesh('curved', m, V);
- ]]></programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_get">gf_mesh_get</link></member>
-      <member><link linkend="gf_mesh_set">gf_mesh_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

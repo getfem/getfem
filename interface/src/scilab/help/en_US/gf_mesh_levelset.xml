@@ -9,42 +9,54 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_levelset</refname>
-
-    <refpurpose>Manage level sets.</refpurpose>
+    <refpurpose>  General constructor for mesh_levelset objects. The role of this object is
+  to provide a mesh cut by a certain number of level_set. This object is
+  used to build conformal integration method (object mim and enriched finite
+  element methods (Xfem)).
+  </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>gf_mesh_levelset('.mesh', Mesh m)</synopsis>
+    <synopsis>MLS = gf_mesh_levelset(mesh m)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for mesh_levelset objects.</para>
+
+    <para>  General constructor for mesh_levelset objects. The role of this object is
+  to provide a mesh cut by a certain number of level_set. This object is
+  used to build conformal integration method (object mim and enriched finite
+  element methods (Xfem)).
+  </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para> gf_mesh_levelset('.mesh', Mesh m) Build a new MeshLevelSet
-        object from a Mesh object.</para>
-      </listitem>
+    <listitem>
+    <para><literal>MLS = gf_mesh_levelset(mesh m)</literal></para>
+
+    <para>         Build a new mesh_levelset object from a mesh and returns its handle. 
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link
-      linkend="gf_mesh_levelset_get">gf_mesh_levelset_get</link></member>
-
-      <member><link
-      linkend="gf_mesh_levelset_set">gf_mesh_levelset_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

@@ -9,73 +9,88 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mdbrick_set</refname>
-
-    <refpurpose>Modify a model brick object.</refpurpose>
+    <refpurpose>  Modify a model brick object.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_mdbrick_set(b,'param', string name, mesh_fem MF,V | V)
-gf_mdbrick_set(b,'constraints', spmat H, vec R)
-gf_mdbrick_set(b,'constraints_rhs', spmat H, vec R)
-gf_mdbrick_set(b,'penalization_coef', scalar eps)
-    </synopsis>
+    <synopsis>gf_mdbrick_set(mdbrick MDB, 'param', string name, {mesh_fem mf,V | V})</synopsis>
+    <synopsis>gf_mdbrick_set(mdbrick MDB, 'penalization_epsilon', scalar eps)</synopsis>
+    <synopsis>gf_mdbrick_set(mdbrick MDB, 'constraints', mat H, vec R)</synopsis>
+    <synopsis>gf_mdbrick_set(mdbrick MDB, 'constraints_rhs', mat H, vec R)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  Modify a model brick object.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_mdbrick_set(b,'param',string name,list(MeshFem mf,V | V)) :
-        Change the value of a brick parameter. <literal>name</literal> is the
-        name of the parameter. <literal>V</literal> should contain the new
-        parameter value (vector or float). If a MeshFem is given,
-        <literal>V</literal> should hold the field values over that MeshFem
-        (i.e. its last dimension should be gf_meshfem_get(mf,'nbdof') or 1 for
-        constant field).</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mdbrick_set(mdbrick MDB, 'param', string name, {mesh_fem mf,V | V})</literal></para>
 
-      <listitem>
-        <para>gf_mdbrick_set(b,'penalization_epsilon',scalar eps) : Change the
-        penalization coefficient of a constraint brick. This is only
-        applicable to the bricks which inherit from the constraint brick, such
-        as the Dirichlet ones. And of course it is not effective when the
-        constraint is enforced via direct elimination or via Lagrange
-        multipliers. The default value of <literal>eps</literal> is
-        1e-9.</para>
-      </listitem>
+    <para>       Change the value of a brick parameter.
 
-      <listitem>
-        <para>gf_mdbrick_set(b,'constraints',mat H, vec R) : Set the constraints
-        imposed by a constraint brick. This is only applicable to the bricks
-        which inherit from the constraint brick, such as the Dirichlet ones.
-        Imposes <emphasis>H.U=R</emphasis>.</para>
-      </listitem>
+    <literal>name</literal> is the name of the parameter. <literal>V</literal> should contain the
+    new parameter value (vector or float). If a mesh_fem is given,
+    <literal>V</literal> should hold the field values over that mesh_fem (i.e. its
+    last dimension should be gf_mesh_fem_get(mesh_fem MF, 'nbdof') or 1 for
+    constant field).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mdbrick_set(b,'constraints_rhs',mat H, vec R) : Set the right
-        hand side of the constraints imposed by a constraint brick. This is
-        only applicable to the bricks which inherit from the constraint brick,
-        such as the Dirichlet ones.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mdbrick_set(mdbrick MDB, 'penalization_epsilon', scalar eps)</literal></para>
+
+    <para>       Change the penalization coefficient of a constraint brick.
+
+    This is only applicable to the bricks which inherit from the
+    constraint brick, such as the Dirichlet ones. And of course it
+    is not effective when the constraint is enforced via direct
+    elimination or via Lagrange multipliers. The default value of
+    <literal>eps</literal> is 1e-9.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdbrick_set(mdbrick MDB, 'constraints', mat H, vec R)</literal></para>
+
+    <para>       Set the constraints imposed by a constraint brick.
+
+    This is only applicable to the bricks which inherit from the
+    constraint brick, such as the Dirichlet ones. Imposes <literal>H.U=R</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mdbrick_set(mdbrick MDB, 'constraints_rhs', mat H, vec R)</literal></para>
+
+    <para>       Set the right hand side of the constraints imposed by a constraint brick.
+
+    This is only applicable to the bricks which inherit from the
+    constraint brick, such as the Dirichlet ones.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mdbrick_get">gf_mdbrick_get</link></member>
-      <member><link linkend="gf_mdbrick">gf_mdbrick</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

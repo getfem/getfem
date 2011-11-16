@@ -9,117 +9,145 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_im_get</refname>
-
-    <refpurpose>General function extracting information from mesh_im
-    objects.</refpurpose>
+    <refpurpose>  General function extracting information from mesh_im objects.
+  </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-string IMLST[, ivec CV2IM] = gf_mesh_im_get(MIM, 'integ' [, ivec CVLST])
-ivec CVLST = gf_mesh_im_get(MIM, 'convex_index')
-mat M = gf_mesh_fem_get(MIM, 'eltm', eltm MET, int CV [, int FACE])
-gf_mesh_im_get(MIM, 'save', string filename, ['with mesh'])
-string S=gf_mesh_im_get(M, 'char' [,'with mesh'])
-mesh M=gf_mesh_im_get(MIM, 'linked mesh')
-M=gf_mesh_im_get(MIM, 'memsize')
-    </synopsis>
+    <synopsis>{I, CV2I} = gf_mesh_im_get(mesh_im MI, 'integ'[, mat CVids])</synopsis>
+    <synopsis>CVids = gf_mesh_im_get(mesh_im MI, 'convex_index')</synopsis>
+    <synopsis>M = gf_mesh_im_get(mesh_im MI, 'eltm', eltm em, int cv [, int f])</synopsis>
+    <synopsis>Ip = gf_mesh_im_get(mesh_im MI, 'im_nodes'[, mat CVids])</synopsis>
+    <synopsis>gf_mesh_im_get(mesh_im MI, 'save',string filename[, 'with mesh'])</synopsis>
+    <synopsis>gf_mesh_im_get(mesh_im MI, 'char'[,'with mesh'])</synopsis>
+    <synopsis>gf_mesh_im_get(mesh_im MI, 'display')</synopsis>
+    <synopsis>m = gf_mesh_im_get(mesh_im MI, 'linked mesh')</synopsis>
+    <synopsis>z = gf_mesh_im_get(mesh_im MI, 'memsize')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function extracting information from mesh_im objects.
+  </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>list(I, CV2I) = gf_mesh_im_get(mim,'integ'[, mat CVids]) Return
-        a list of integration methods used by the MeshIm. <literal>I</literal>
-        is an array of all Integ objects found in the convexes given in
-        <literal>CVids</literal>. If <literal>CV2I</literal> was supplied as
-        an output argument, it contains, for each convex listed in
-        <literal>CVids</literal>, the index of its correspounding integration
-        method in <literal>I</literal>. Convexes which are not part of the
-        mesh, or convexes which do not have any integration method have their
-        correspounding entry in <literal>CV2I</literal> set to -1.</para>
-      </listitem>
+    <listitem>
+    <para><literal>{I, CV2I} = gf_mesh_im_get(mesh_im MI, 'integ'[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>CVids = gf_mesh_im_get(mim,'convex_index') Return the list of
-        convexes who have a integration method. Convexes who have the dummy
-        IM_NONE method are not listed.</para>
-      </listitem>
+    <para>       Return a list of integration methods used by the mesh_im.
 
-      <listitem>
-        <para>M = gf_mesh_im_get(mim,'eltm',Eltm em, int cv [int f]) Return
-        the elementary matrix (or tensor) integrated on the convex
-        <literal>cv</literal>. </para>
+    <literal>I</literal> is an array of all integ objects found in the convexes
+    given in <literal>CVids</literal>. If <literal>CV2I</literal> was supplied as an output argument, it
+    contains, for each convex listed in <literal>CVids</literal>, the index of its
+    correspounding integration method in <literal>I</literal>.
 
-        <para>**WARNING** Be sure that the fem used for the construction of
-        <literal>em</literal> is compatible with the fem assigned to element
-        <literal>cv</literal> ! This is not checked by the function ! If the
-        argument <literal>f</literal> is given, then the elementary tensor is
-        integrated on the face <literal>f</literal> of <literal>cv</literal>
-        instead of the whole convex.</para>
-      </listitem>
+    Convexes which are not part of the mesh, or convexes which do
+    not have any integration method have their correspounding entry
+    in <literal>CV2I</literal> set to -1.
+    
 
-      <listitem>
-        <para>Ip = gf_mesh_im_get(mim,'im_nodes'[, mat CVids]) Return the
-        coordinates of the integration points, with their weights.
-        <literal>CVids</literal> may be a list of convexes, or a list of
-        convex faces, such as returned by gf_mesh_get(M,'region')</para>
-      </listitem>
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>gf_mesh_im_get(mim,'save',string filename[, 'with mesh']) Saves
-        a MeshIm in a text file (and optionaly its linked mesh object).</para>
-      </listitem>
+    <listitem>
+    <para><literal>CVids = gf_mesh_im_get(mesh_im MI, 'convex_index')</literal></para>
 
-      <listitem>
-        <para>gf_mesh_im_get(mim,'char'[,'with mesh']) Output a string
-        description of the MeshIm. By default, it does not include the
-        description of the linked Mesh object.</para>
-      </listitem>
+    <para>       Return the list of convexes who have a integration method.
 
-      <listitem>
-        <para>m = gf_mesh_im_get(mim,'linked mesh') Returns a reference to the
-        Mesh object linked to <literal>mim</literal>.</para>
-      </listitem>
+    Convexes who have the dummy IM_NONE method are not listed.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>z = gf_mesh_im_get(mim,'memsize') Return the amount of memory
-        (in bytes) used by the MeshIm object. The result does not take into
-        account the linked Mesh object.</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh_im_get(mesh_im MI, 'eltm', eltm em, int cv [, int f])</literal></para>
+
+    <para>       Return the elementary matrix (or tensor) integrated on the convex <literal>cv</literal>.
+
+    **WARNING**
+
+    Be sure that the fem used for the construction of <literal>em</literal> is compatible
+    with the fem assigned to element <literal>cv</literal> ! This is not checked by the
+    function ! If the argument <literal>f</literal> is given, then the elementary tensor
+    is integrated on the face <literal>f</literal> of <literal>cv</literal> instead of the whole convex.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Ip = gf_mesh_im_get(mesh_im MI, 'im_nodes'[, mat CVids])</literal></para>
+
+    <para>       Return the coordinates of the integration points, with their weights.
+
+    <literal>CVids</literal> may be a list of convexes, or a list of convex faces, such
+    as returned by gf_mesh_get(mesh M, 'region')
+
+    **WARNING**
+
+    Convexes which are not part of the mesh, or convexes which
+    do not have an approximate integration method don't have
+    their correspounding entry (this has no meaning for exact
+    integration methods!).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_get(mesh_im MI, 'save',string filename[, 'with mesh'])</literal></para>
+
+    <para>         Saves a mesh_im in a text file (and optionaly its linked mesh object).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_get(mesh_im MI, 'char'[,'with mesh'])</literal></para>
+
+    <para>         Output a string description of the mesh_im.
+      
+      By default, it does not include the description of the linked
+      mesh object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_get(mesh_im MI, 'display')</literal></para>
+
+    <para>         displays a short summary for a mesh_im object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>m = gf_mesh_im_get(mesh_im MI, 'linked mesh')</literal></para>
+
+    <para>       Returns a reference to the mesh object linked to <literal>mim</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>z = gf_mesh_im_get(mesh_im MI, 'memsize')</literal></para>
+
+    <para>       Return the amount of memory (in bytes) used by the mesh_im object.
+
+    The result does not take into account the linked mesh object.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <programlisting role="example"><![CDATA[ 
-cvid = gf_mesh_get(mim,'cvid');
-[f,c2f] = gf_mesh_im_get(mim, 'integ');
-sf = list();
-for i=1:size(f), sf(i)=gf_integ_get('char',f(i)); end;
-for i=1:size(c2f)
-  disp(sprintf('the integration of convex %d is %s', cvid(i),sf(i)));
-end
- ]]></programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_im_set">gf_mesh_im_set</link></member>
-      <member><link linkend="gf_mesh_im">gf_mesh_im</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

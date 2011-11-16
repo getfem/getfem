@@ -9,71 +9,87 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_linsolve</refname>
-
-    <refpurpose>The linear solver</refpurpose>
+    <refpurpose>  Various linear system solvers.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_linsolve('gmres', spmat M, vec b [, int restart=50][, precond P][, 'noisy'][,'res', r][,'maxiter', n])
-gf_linsolve('cg', spmat M, vec b [, precond P][, 'noisy'][,'res', r][,'maxiter', n])
-gf_linsolve('bicgstab', spmat M, vec b [, precond P][, 'noisy'][,'res', r][,'maxiter', n])[U,cond] = gf_linsolve('lu'|'superlu', spmat M, vec b [, precond P])
-</synopsis>
+    <synopsis>X = gf_linsolve('gmres', spmat M, vec b[, int restart][, precond P][,'noisy'][,'res', r][,'maxiter', n])</synopsis>
+    <synopsis>X = gf_linsolve('cg', spmat M, vec b [, precond P][,'noisy'][,'res', r][,'maxiter', n])</synopsis>
+    <synopsis>X = gf_linsolve('bicgstab', spmat M, vec b [, precond P][,'noisy'][,'res', r][,'maxiter', n])</synopsis>
+    <synopsis>{U, cond} = gf_linsolve('lu', spmat M, vec b)</synopsis>
+    <synopsis>{U, cond} = gf_linsolve('superlu', spmat M, vec b)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  Various linear system solvers.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>X = gf_linsolve('gmres',Spmat M, vec b[, int restart][, Precond
-        P][,'noisy'][,'res', r][,'maxiter', n]) Solve <emphasis>M.X =
-        b</emphasis> with the generalized minimum residuals method. Optionally
-        using <literal>P</literal> as preconditioner. The default value of the
-        restart parameter is 50.</para>
-      </listitem>
+    <listitem>
+    <para><literal>X = gf_linsolve('gmres', spmat M, vec b[, int restart][, precond P][,'noisy'][,'res', r][,'maxiter', n])</literal></para>
 
-      <listitem>
-        <para>X = gf_linsolve('cg',Spmat M, vec b [, Precond
-        P][,'noisy'][,'res', r][,'maxiter', n]) Solve <emphasis>M.X =
-        b</emphasis> with the conjugated gradient method. Optionally using
-        <literal>P</literal> as preconditioner.</para>
-      </listitem>
+    <para>       Solve <literal>M.X = b</literal> with the generalized minimum residuals method.
 
-      <listitem>
-        <para>X = gf_linsolve('bicgstab',Spmat M, vec b [, Precond
-        P][,'noisy'][,'res', r][,'maxiter', n]) Solve <emphasis>M.X =
-        b</emphasis> with the bi-conjugated gradient stabilized method.
-        Optionally using <literal>P</literal> as a preconditioner.</para>
-      </listitem>
+    Optionally using <literal>P</literal> as preconditioner. The default value of the
+    restart parameter is 50.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>list(U, cond) = gf_linsolve('lu',Spmat M, vec b) Alias for
-        gf_linsolve('superlu',...)</para>
-      </listitem>
+    <listitem>
+    <para><literal>X = gf_linsolve('cg', spmat M, vec b [, precond P][,'noisy'][,'res', r][,'maxiter', n])</literal></para>
 
-      <listitem>
-        <para>list(U, cond) = gf_linsolve('superlu',Spmat M, vec b) Solve
-        <emphasis>M.U = b</emphasis> apply the <ulink url="http://crd.lbl.gov/~xiaoye/SuperLU/">SuperLU</ulink> solver (sparse LU
-        factorization). The condition number estimate <literal>cond</literal> is returned with the solution <literal>U</literal>.</para>
-      </listitem>
+    <para>       Solve <literal>M.X = b</literal> with the conjugated gradient method.
+
+    Optionally using <literal>P</literal> as preconditioner.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>X = gf_linsolve('bicgstab', spmat M, vec b [, precond P][,'noisy'][,'res', r][,'maxiter', n])</literal></para>
+
+    <para>       Solve <literal>M.X = b</literal> with the bi-conjugated gradient stabilized method.
+
+    Optionally using <literal>P</literal> as a preconditioner.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{U, cond} = gf_linsolve('lu', spmat M, vec b)</literal></para>
+
+    <para>         Alias for gf_linsolve('superlu',...)
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{U, cond} = gf_linsolve('superlu', spmat M, vec b)</literal></para>
+
+    <para>       Solve <literal>M.U = b</literal> apply the SuperLU solver (sparse LU factorization).
+
+    The condition number estimate <literal>cond</literal> is returned with the solution <literal>U</literal>.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_precond_get">gf_precond_get</link></member>
-      <member><link linkend="gf_precond">gf_precond</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

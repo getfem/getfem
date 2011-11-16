@@ -9,236 +9,211 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_compute</refname>
-
-    <refpurpose>Various computations involving the solution U of the finite
-    element problem.</refpurpose>
+    <refpurpose>  
+  Various computations involving the solution U to a finite element problem.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-N = gf_compute(mf, U, 'L2 norm', mesh_im MIM [,ivec CVLST])
-N = gf_compute(mf, U, 'H1 semi norm', mesh_im MIM [,CVLST])
-N = gf_compute(mf, U, 'H1 norm', mesh_im MIM [,ivec CVLST])
-N = gf_compute(mf, U, 'H2 semi norm', mesh_im MIM [,CVLST])
-N = gf_compute(mf, U, 'H2 norm', mesh_im MIM [,ivec CVLST])
-DU = gf_compute(mf, U, 'gradient', mesh_fem mfgrad)
-D2U = gf_compute(mf, U, 'hessian', mesh_fem mfhess)
-U2 = gf_compute(mf, U, 'interpolate on', mesh_fem mf2)
-U2 = gf_compute(mf, U, 'interpolate on', mesh_slice sl)
-[U2[,mf2,[,X[,Y[,Z]]]]] = gf_compute(mf,U,'interpolate on Q1 grid', 
-      {'regular h', hxyz | 'regular N',Nxyz | X[,Y[,Z]]})
-U2 = gf_compute(mf, U, 'extrapolate on', mesh_fem mf2)
-E = gf_compute(mf, U, 'error estimate',  mesh_im MIM) 
-gf_compute(mf, U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option]) 
-  </synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'L2 norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H1 semi norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H1 norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H2 semi norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H2 norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>DU = gf_compute(mesh_fem MF, vec U, 'gradient', mesh_fem mf_du)</synopsis>
+    <synopsis>HU = gf_compute(mesh_fem MF, vec U, 'hessian', mesh_fem mf_h)</synopsis>
+    <synopsis>UP = gf_compute(mesh_fem MF, vec U, 'eval on triangulated surface', int Nrefine, [vec CVLIST])</synopsis>
+    <synopsis>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli})</synopsis>
+    <synopsis>Ue = gf_compute(mesh_fem MF, vec U, 'extrapolate on', mesh_fem mfe)</synopsis>
+    <synopsis>E = gf_compute(mesh_fem MF, vec U, 'error estimate', mesh_im mim)</synopsis>
+    <synopsis>E = gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  
+  Various computations involving the solution U to a finite element problem.
+</para>
+  </refsection>
 
-    <para>The first two arguments of this function are always mf and U, where U is a field defined on the mesh_fem mf.</para>
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>n = gf_compute(MF, U,('L2 norm',MeshIm mim[, mat CVids]) Compute
-        the L2 norm of the (real or complex) field <literal>U</literal>. If
-        <literal>CVids</literal> is given, the norm will be computed only on
-        the listed convexes.</para>
-      </listitem>
+    <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'L2 norm', mesh_im mim[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>n = gf_compute(MF, U,('H1 semi norm',MeshIm mim[, mat CVids])
-        Compute the L2 norm of grad(<literal>U</literal>). If
-        <literal>CVids</literal> is given, the norm will be computed only on
-        the listed convexes.</para>
-      </listitem>
+    <para>       Compute the L2 norm of the (real or complex) field <literal>U</literal>.
 
-      <listitem>
-        <para>n = gf_compute(MF, U,('H1 norm',MeshIm mim[, mat CVids]) Compute
-        the H1 norm of <literal>U</literal>. If <literal>CVids</literal> is
-        given, the norm will be computed only on the listed convexes.</para>
-      </listitem>
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>n = gf_compute(MF, U,('H2 semi norm',MeshIm mim[, mat CVids])
-        Compute the L2 norm of D^2(<literal>U</literal>). If
-        <literal>CVids</literal> is given, the norm will be computed only on
-        the listed convexes.</para>
-      </listitem>
+    <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'H1 semi norm', mesh_im mim[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>n = gf_compute(MF, U,('H2 norm',MeshIm mim[, mat CVids]) Compute
-        the H2 norm of <literal>U</literal>. If <literal>CVids</literal> is
-        given, the norm will be computed only on the listed convexes.</para>
-      </listitem>
+    <para>       Compute the L2 norm of grad(<literal>U</literal>).
 
-      <listitem>
-        <para>DU = gf_compute(MF, U,('gradient',MeshFem mf_du) Compute the
-        gradient of the field <literal>U</literal> defined on MeshFem
-        <literal>mf_du</literal>. The gradient is interpolated on the MeshFem
-        <literal>mf_du</literal>, and returned in <literal>DU</literal>. For
-        example, if <literal>U</literal> is defined on a P2 MeshFem,
-        <literal>DU</literal> should be evaluated on a P1-discontinuous
-        MeshFem. <literal>mf</literal> and <literal>mf_du</literal> should
-        share the same mesh. <literal>U</literal> may have any number of
-        dimensions (i.e. this function is not restricted to the gradient of
-        scalar fields, but may also be used for tensor fields). However the
-        last dimension of <literal>U</literal> has to be equal to the number
-        of dof of <literal>mf</literal>. For example, if <literal>U</literal>
-        is a <emphasis>[3x3xNmf]</emphasis> array (where
-        <literal>Nmf</literal> is the number of dof of <literal>mf</literal>),
-        <literal>DU</literal> will be a <literal>[Nx3x3[xQ]xNmf_du]</literal>
-        array, where <literal>N</literal> is the dimension of the mesh,
-        <literal>Nmf_du</literal> is the number of dof of
-        <literal>mf_du</literal>, and the optional <literal>Q</literal>
-        dimension is inserted if <emphasis>Qdim_mf != Qdim_mf_du</emphasis>,
-        where <literal>Qdim_mf</literal> is the Qdim of <literal>mf</literal>
-        and <literal>Qdim_mf_du</literal> is the Qdim of
-        <literal>mf_du</literal>.</para>
-      </listitem>
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>HU = gf_compute(MF, U,('hessian',MeshFem mf_h) Compute the
-        hessian of the field <literal>U</literal> defined on MeshFem
-        <literal>mf_h</literal>. See also <emphasis>gf_compute(MF,
-        U,('gradient', MeshFem mf_du)</emphasis>.</para>
-      </listitem>
+    <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'H1 norm', mesh_im mim[, mat CVids])</literal></para>
 
-      <listitem>
-        <para>Ui = gf_compute(MF, U,('interpolate_on',list(MeshFem mfi | Slice
-        sli)) Interpolate a field on another MeshFem or a Slice.</para>
+    <para>       Compute the H1 norm of <literal>U</literal>.
 
-        <itemizedlist>
-          <listitem>
-            <para>Interpolation on another MeshFem <literal>mfi</literal>:
-            <literal>mfi</literal> has to be Lagrangian. If
-            <literal>mf</literal> and <literal>mfi</literal> share the same
-            mesh object, the interpolation will be much faster.</para>
-          </listitem>
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>Interpolation on a Slice <literal>sli</literal>: this is
-            similar to interpolation on a refined P1-discontinuous mesh, but
-            it is much faster.</para>
-          </listitem>
-        </itemizedlist>
+    <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'H2 semi norm', mesh_im mim[, mat CVids])</literal></para>
 
-        <para>This can also be used with
-        <emphasis>gf_slice('points')</emphasis> to obtain field values at a
-        given set of points. See also
-        <emphasis>gf_asm('interpolation_matrix')</emphasis></para>
-      </listitem>
+    <para>       Compute the L2 norm of D^2(<literal>U</literal>).
 
-      <listitem>
-        <para>Ue = gf_compute(MF, U,('extrapolate_on',MeshFem mfe) Extrapolate
-        a field on another MeshFem. If the mesh of <literal>mfe</literal> is
-        stricly included in the mesh of <literal>mf</literal>, this function
-        does stricly the same job as <emphasis>gf_compute(MF,
-        U,('interpolate_on')</emphasis>. However, if the mesh of
-        <literal>mfe</literal> is not exactly included in
-        <literal>mf</literal> (imagine interpolation between a curved refined
-        mesh and a coarse mesh), then values which are slightly outside
-        <literal>mf</literal> will be extrapolated. See also
-        <emphasis>gf_asm('extrapolation_matrix')</emphasis></para>
-      </listitem>
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>E = gf_compute(MF, U,('error_estimate',MeshIm mim) Compute an a
-        posteriori error estimation. Currently there is only one which is
-        available:</para>
+    <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'H2 norm', mesh_im mim[, mat CVids])</literal></para>
 
-        <para>for each convex, the jump of the normal derivative is integrated
-        on its faces.</para>
-      </listitem>
+    <para>       Compute the H2 norm of <literal>U</literal>.
 
-      <listitem>
-        <para>[U2[,MF2,[,X[,Y[,Z]]]]] = gf_compute(MF,U,'interpolate on Q1
-        grid',{'regular h', hxyz | 'regular N',Nxyz |X[,Y[,Z]]} Creates a
-        cartesian Q1 mesh fem and interpolates U on it. The returned field U2
-        is organized in a matrix such that in can be drawn via the MATLAB
-        command 'pcolor'. The first dimension is the Qdim of
-        <literal>MF</literal> (i.e. 1 if U is a scalar field). Example
-        (<literal>mf_u</literal> is a 2D mesh_fem):</para>
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
 
-        <programlisting role="example"><![CDATA[  
-Uq = gf_compute(mf_u, U, 'interpolate on Q1 grid', 'regular h', [.05, .05]);
-pcolor(squeeze(Uq(1,:,:)));
- ]]></programlisting>
-      </listitem>
+    <listitem>
+    <para><literal>DU = gf_compute(mesh_fem MF, vec U, 'gradient', mesh_fem mf_du)</literal></para>
 
-      <listitem>
-        <para>E = gf_compute(MF, U, 'mesh edges deformation', N [,vec or mat
-        CVLIST]) [OBSOLETE FUNCTION! will be removed in a future
-        release]</para>
+    <para>       Compute the gradient of the field <literal>U</literal> defined on mesh_fem <literal>mf_du</literal>.
 
-        <para>Evaluates the deformation of the mesh caused by the field
-        <literal>U</literal> (for a 2D mesh, <literal>U</literal> must be a
-        <emphasis>[2 x nb_dof]</emphasis> matrix). <literal>N</literal> is the
-        refinment level (N&gt;=2) of the edges. <literal>CVLIST</literal> can
-        be used to restrict the computation to the edges of the listed
-        convexes (if <literal>CVLIST</literal> is a row vector), or to
-        restrict the computations to certain faces of certain convexes when
-        <literal>CVLIST</literal> is a two-rows matrix, the first row
-        containing convex numbers and the second face numbers.</para>
-      </listitem>
+    The gradient is interpolated on the mesh_fem <literal>mf_du</literal>, and returned in
+    <literal>DU</literal>. For example, if <literal>U</literal> is defined on a P2 mesh_fem, <literal>DU</literal> should be
+    evaluated on a P1-discontinuous mesh_fem. <literal>mf</literal> and <literal>mf_du</literal> should
+    share the same mesh.
 
-      <listitem>
-        <para>UP = gf_compute(MF, U, 'eval on triangulated surface', int
-        Nrefine,[vec CVLIST]) [OBSOLETE FUNCTION! will be removed in a future
-        release]</para>
+    <literal>U</literal> may have any number of dimensions (i.e. this function is not
+    restricted to the gradient of scalar fields, but may also be used
+    for tensor fields). However the last dimension of <literal>U</literal> has to be
+    equal to the number of dof of <literal>mf</literal>. For example, if <literal>U</literal> is a
+    [3x3xNmf] array (where Nmf is the number of dof of <literal>mf</literal>), <literal>DU</literal> will
+    be a [Nx3x3[xQ]xNmf_du] array, where N is the dimension of the mesh,
+    Nmf_du is the number of dof of <literal>mf_du</literal>, and the optional Q dimension
+    is inserted if <literal>Qdim_mf != Qdim_mf_du</literal>, where Qdim_mf is the Qdim of
+    <literal>mf</literal> and Qdim_mf_du is the Qdim of <literal>mf_du</literal>.
+    </para>
+    </listitem>
 
-        <para>Utility function designed for 2D triangular meshes: returns a
-        list of triangles coordinates with interpolated <literal>U</literal>
-        values. This can be used for the accurate visualization of data
-        defined on a discontinous high order element.</para>
+    <listitem>
+    <para><literal>HU = gf_compute(mesh_fem MF, vec U, 'hessian', mesh_fem mf_h)</literal></para>
 
-        <para>On output, the six first rows of <literal>UP</literal> contains
-        the triangle coordinates, and the others rows contain the interpolated
-        values of <literal>U</literal> (one for each triangle vertex)
-        <literal>CVLIST</literal> may indicate the list of convex number that
-        should be consider, if not used then all the mesh convexes will be
-        used. <literal>U</literal> should be a row vector.</para>
-      </listitem>
+    <para>       Compute the hessian of the field <literal>U</literal> defined on mesh_fem <literal>mf_h</literal>.
 
-      <listitem>
-	<para>gf_compute(mf, U, 'convect', mesh_fem mf_v, vec V,
-	  scalar dt, int nt, string option]) Compute a convection
-	  of <literal>U</literal> with regards to a steady state
-	  velocity field <literal>V</literal> with a Characteristic-Galerkin method. This
-	  method is restricted to pure Lagrange fems for U. <literal>mf_v</literal> should represent
-	  a continuous finite element method. <literal>dt</literal> is the integration time and <literal>nt</literal>
-	  is the number of integration step on the caracteristics. <literal>option</literal> is an
-	  option for the part of the boundary where there is a re-entrant convection.
-	  <literal>option = 'extrapolation'</literal> for an extrapolation on the nearest element
-	  or <literal>option = 'unchanged'</literal> for a constant value on that boundary.
-	  This method is rather dissipative, but stable.</para>
-      </listitem>
+    See also gf_compute('gradient', mesh_fem mf_du).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>UP = gf_compute(mesh_fem MF, vec U, 'eval on triangulated surface', int Nrefine, [vec CVLIST])</literal></para>
+
+    <para>       [OBSOLETE FUNCTION! will be removed in a future release]
+    Utility function designed for 2D triangular meshes : returns a list
+    of triangles coordinates with interpolated U values. This can be
+    used for the accurate visualization of data defined on a
+    discontinous high order element. On output, the six first rows of UP
+    contains the triangle coordinates, and the others rows contain the
+    interpolated values of U (one for each triangle vertex) CVLIST may
+    indicate the list of convex number that should be consider, if not
+    used then all the mesh convexes will be used. U should be a row
+    vector.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli})</literal></para>
+
+    <para>       Interpolate a field on another mesh_fem or a slice.
+
+    - Interpolation on another mesh_fem <literal>mfi</literal>:
+       <literal>mfi</literal> has to be Lagrangian. If <literal>mf</literal> and <literal>mfi</literal> share the same
+       mesh object, the interpolation will be much faster.
+    - Interpolation on a slice <literal>sli</literal>:
+       this is similar to interpolation on a refined P1-discontinuous
+       mesh, but it is much faster. This can also be used with
+       gf_slice('points') to obtain field values at a given set of
+       points.
+
+    See also gf_asm('interpolation matrix')
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>Ue = gf_compute(mesh_fem MF, vec U, 'extrapolate on', mesh_fem mfe)</literal></para>
+
+    <para>       Extrapolate a field on another mesh_fem.
+
+    If the mesh of <literal>mfe</literal> is stricly included in the mesh of <literal>mf</literal>, this
+    function does stricly the same job as gf_compute('interpolate_on').
+    However, if the mesh of <literal>mfe</literal> is not exactly included in <literal>mf</literal>
+    (imagine interpolation between a curved refined mesh and a coarse
+    mesh), then values which are outside <literal>mf</literal> will be
+    extrapolated.
+
+    See also gf_asm('extrapolation matrix')
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_compute(mesh_fem MF, vec U, 'error estimate', mesh_im mim)</literal></para>
+
+    <para>       Compute an a posteriori error estimate.
+
+    Currently there is only one which is available: for each convex,
+    the jump of the normal derivative is integrated on its faces.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option])</literal></para>
+
+    <para>       Compute a convection of <literal>U</literal> with regards to a steady state velocity
+    field <literal>V</literal> with a Characteristic-Galerkin method. This
+    method is restricted to pure Lagrange fems for U. <literal>mf_v</literal> should represent
+    a continuous finite element method. <literal>dt</literal> is the integration time and <literal>nt</literal>
+    is the number of integration step on the caracteristics. <literal>option</literal> is an
+    option for the part of the boundary where there is a re-entrant convection.
+    <literal>option = 'extrapolation'</literal> for an extrapolation on the nearest element
+    or <literal>option = 'unchanged'</literal> for a constant value on that boundary.
+    This method is rather dissipative, but stable.
+    
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
-
-    <para>Using the error estimate to refine the worst convexes: </para>
-    <programlisting role="example"><![CDATA[  
-E = gf_compute(mf, U, 'error_estimate', mim);
-gf_mesh_set(m, 'refine', find(E < 1e-3));  
- ]]></programlisting>
-  </refsection>
-
-  <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh">gf_mesh</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

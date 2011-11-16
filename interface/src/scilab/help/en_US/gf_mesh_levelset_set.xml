@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_mesh_levelset_set"
-          xml:lang="en" xmlns="http://docbook.org/ns/docbook"
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_levelset_set" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
           xmlns:svg="http://www.w3.org/2000/svg"
@@ -9,50 +9,75 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_levelset_set</refname>
-
-    <refpurpose>General function for modification of MESHLEVELSET
-    objects.</refpurpose>
+    <refpurpose>  General function for modification of mesh_levelset objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>gf_mesh_levelset_set(MLS, ...)</synopsis>
+    <synopsis>gf_mesh_levelset_set(mesh_levelset MLS, 'add', levelset ls)</synopsis>
+    <synopsis>gf_mesh_levelset_set(mesh_levelset MLS, 'sup', levelset ls)</synopsis>
+    <synopsis>gf_mesh_levelset_set(mesh_levelset MLS, 'adapt')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for modification of mesh_levelset objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_mesh_levelset_set(MLS,'add',arg1)</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_mesh_levelset_set(mesh_levelset MLS, 'add', levelset ls)</literal></para>
 
-      <listitem>
-        <para>gf_mesh_levelset_set(MLS,'delete',arg1)</para>
-      </listitem>
+    <para>       Add a link to the levelset <literal>ls</literal>.
 
-      <listitem>
-        <para>gf_mesh_levelset_set(MLS,'adapt')</para>
-      </listitem>
+    Only a reference is kept, no copy is done. In order to indicate
+    that the linked mesh is cut by a levelset one has to call this
+    method, where <literal>ls</literal> is an levelset object. An arbitrary number of
+    levelset can be added.
+
+    **WARNING**
+
+    The mesh of <literal>ls</literal> and the linked mesh must be the same.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_levelset_set(mesh_levelset MLS, 'sup', levelset ls)</literal></para>
+
+    <para>       Remove a link to the levelset <literal>ls</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_levelset_set(mesh_levelset MLS, 'adapt')</literal></para>
+
+    <para>       Do all the work (cut the convexes with the levelsets).
+
+    To initialice the mesh_levelset object or to actualize it when the
+    value of any levelset function is modified, one has to call
+    this method.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link
-      linkend="gf_mesh_levelset_get">gf_mesh_levelset_get</link></member>
-
-      <member><link
-      linkend="gf_mesh_levelset">gf_mesh_levelset</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

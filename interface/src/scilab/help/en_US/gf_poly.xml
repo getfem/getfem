@@ -9,40 +9,58 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_poly</refname>
-
-    <refpurpose>Performs various operations on the polynom</refpurpose>
+    <refpurpose>  
+  Performs various operations on the polynom POLY.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>gf_poly(operation, poly [,args])</synopsis>
+    <synopsis>gf_poly(poly P, 'print')</synopsis>
+    <synopsis>gf_poly(poly P, 'product')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  
+  Performs various operations on the polynom POLY.
+</para>
+  </refsection>
 
-    <para>Performs various operations on the polynom
-    <literal>poly</literal>.</para>
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>gf_poly('print', p) Prints the content of P.</para>
-      </listitem>
+    <listitem>
+    <para><literal>gf_poly(poly P, 'print')</literal></para>
+
+    <para>         Prints the content of P.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_poly(poly P, 'product')</literal></para>
+
+    <para>         To be done ... !
+    
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_integ">gf_integ</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

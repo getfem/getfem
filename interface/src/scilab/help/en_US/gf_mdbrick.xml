@@ -9,312 +9,359 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mdbrick</refname>
-
-    <refpurpose>General constructor for mdbrick object. Returns a getfem
-    handle to the newly created object.</refpurpose>
+    <refpurpose></refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-gf_mdbrick('constraint', mdbrick parent, string CTYPE [, int numfem])
-gf_mdbrick('dirichlet', mdbrick parent, int BNUM, mesh_fem MFMULT, string CTYPE [, int numfem])
-gf_mdbrick('dirichlet on normal component', mdbrick parent, int BNUM, mesh_fem MFMULT, string CTYPE [, int numfem])
-gf_mdbrick('dirichlet on normal derivative', mdbrick parent, int BNUM, mesh_fem MFMULT, string CTYPE [, int numfem])
-gf_mdbrick('generalized dirichlet', mdbrick parent, int BNUM [, int numfem])
-gf_mdbrick('source term', mdbrick parent, [, int BNUM=-1[, int numfem]])
-gf_mdbrick('normal source term', mdbrick parent, int BNUM [, int numfem])
-gf_mdbrick('normal derivative source term', mdbrick parent, int BNUM [, int numfem])
-gf_mdbrick('neumann KirchhoffLove source term', mdbrick parent, int BNUM [, int numfem])
-gf_mdbrick('qu term', mdbrick parent, [, int BNUM [, int numfem]])
-gf_mdbrick('mass matrix', mesh_im mim, mesh_fem mf_u [,'real'|'complex'])
-gf_mdbrick('generic elliptic', mesh_im MIM, mesh_fem mfu [,'scalar'|'matrix'|'tensor'][,'real'|'complex'])
-gf_mdbrick('helmholtz', mesh_im MIM, mesh_fem mfu [,'real'|'complex'])
-gf_mdbrick('isotropic linearized elasticity', mesh_im MIM, mesh_fem mfu)
-gf_mdbrick('linear incompressibility term', mdbrick parent, mesh_fem mf_p [, int numfem])
-gf_mdbrick('nonlinear elasticity', mesh_im MIM, mesh_fem mfu, string lawname)
-gf_mdbrick('nonlinear elasticity incompressibility term', mdbrick parent, mesh_fem mf_p [, int numfem])
-gf_mdbrick('small deformations plasticity', mesh_im MIM, mesh_fem mfu, scalar THRESHOLD)
-gf_mdbrick('bilaplacian', mesh_im MIM, mesh_fem mfu, ['Kirchhoff-Love'])
-gf_mdbrick('isotropic_linearized_plate', mesh_im MIM, mesh_im MIMSUB, mesh_fem MF_UT, mesh_fem MF_U3, mesh_fem MF_THETA, scalar EPSILON)
-gf_mdbrick('mixed_isotropic_linearized_plate', mesh_im MIM, mesh_fem MF_UT, mesh_fem MF_U3, mesh_fem MF_THETA, scalar EPSILON)
-gf_mdbrick('plate_source_term', mdbrick parent, [, int BNUM=-1[, int numfem]])
-gf_mdbrick('plate_simple_support', mdbrick parent, int BNUM, string CTYPE [, int numfem])
-gf_mdbrick('plate_clamped_support', mdbrick parent, int BNUM, string CTYPE[, int numfem])
-gf_mdbrick('plate_closing', mdbrick parent [, int numfem])
-    </synopsis>
+    <synopsis>B = gf_mdbrick('constraint', mdbrick pb, string CTYPE[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('dirichlet', mdbrick pb, int bnum, mesh_fem mf_m, string CTYPE[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('dirichlet on normal component', mdbrick pb, int bnum, mesh_fem mf_m, string CTYPE[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('dirichlet on normal derivative', mdbrick pb, int bnum, mesh_fem mf_m, string CTYPE[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('generalized dirichlet', mdbrick pb, int bnum[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('source term', mdbrick pb[, int bnum=-1[, int nfem]])</synopsis>
+    <synopsis>B = gf_mdbrick('normal source term', mdbrick pb, int bnum[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('normal derivative source term', mdbrick parent, int bnum[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('neumann KirchhoffLove source term', mdbrick pb, int bnum[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('qu term', mdbrick pb[, int bnum[, int nfem]])</synopsis>
+    <synopsis>B = gf_mdbrick('mass matrix', mesh_im mim, mesh_fem mf_u[, 'real'|'complex'])</synopsis>
+    <synopsis>B = gf_mdbrick('generic elliptic', mesh_im mim, mesh_fem mfu[, 'scalar'|'matrix'|'tensor'][, 'real'|'complex'])</synopsis>
+    <synopsis>B = gf_mdbrick('helmholtz', mesh_im mim, mesh_fem mfu[, 'real'|'complex'])</synopsis>
+    <synopsis>B = gf_mdbrick('isotropic linearized elasticity', mesh_im mim, mesh_fem mfu)</synopsis>
+    <synopsis>B = gf_mdbrick('linear incompressibility term', mdbrick pb, mesh_fem mfp[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('nonlinear elasticity', mesh_im mim, mesh_fem mfu, string law)</synopsis>
+    <synopsis>B = gf_mdbrick('nonlinear elasticity incompressibility term', mdbrick pb, mesh_fem mfp[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('small deformations plasticity', mesh_im mim, mesh_fem mfu, scalar THRESHOLD)</synopsis>
+    <synopsis>B = gf_mdbrick('dynamic', mdbrick pb, scalar rho[, int numfem])</synopsis>
+    <synopsis>B = gf_mdbrick('bilaplacian', mesh_im mim, mesh_fem mfu[, 'Kirchhoff-Love'])</synopsis>
+    <synopsis>B = gf_mdbrick('navier stokes', mesh_im mim, mesh_fem mfu, mesh_fem mfp)</synopsis>
+    <synopsis>B = gf_mdbrick('isotropic_linearized_plate', mesh_im mim, mesh_im mims, mesh_fem mfut, mesh_fem mfu3, mesh_fem mftheta, scalar eps)</synopsis>
+    <synopsis>B = gf_mdbrick('mixed_isotropic_linearized_plate', mesh_im mim, mesh_fem mfut, mesh_fem mfu3, mesh_fem mftheta, scalar eps)</synopsis>
+    <synopsis>B = gf_mdbrick('plate_source_term', mdbrick pb[, int bnum=-1[, int nfem]])</synopsis>
+    <synopsis>B = gf_mdbrick('plate_simple_support', mdbrick pb, int bnum, string CTYPE[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('plate_clamped_support', mdbrick pb, int bnum, string CTYPE[, int nfem])</synopsis>
+    <synopsis>B = gf_mdbrick('plate_closing', mdbrick pb[, int nfem])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for mdbrick objects.</para>
 
-    <para>Many of the bricks take a "numfem" optional parameter, which is the
-    meshfem number in the stack of parent bricks (by default numfem=0, i.e. it
-    refers to the first meshfem in the stack of bricks).</para>
+    <para></para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>B = gf_mdbrick('constraint', MdBrick pb, string CTYPE[, int
-        nfem]) Build a generic constraint brick. It may be useful in some
-        situations, such as the Stokes problem where the pressure is defined
-        modulo a constant. In such a situation, this brick can be used to add
-        an additional constraint on the pressure value.</para>
+    <listitem>
+    <para><literal>B = gf_mdbrick('constraint', mdbrick pb, string CTYPE[, int nfem])</literal></para>
 
-        <para><literal>CTYPE</literal> has to be chosen among 'augmented',
-        'penalized', and 'eliminated'. The constraint can be specified with
-        gf_mdbrick_set(b,constraints'). Note that Dirichlet bricks (except the
-        'generalized Dirichlet' one) are also specializations of the
-        'constraint' brick.</para>
-      </listitem>
+    <para>       Build a generic constraint brick.
 
-      <listitem>
-        <para>B = gf_mdbrick('dirichlet', MdBrick pb, int bnum, MeshFem mf_m,
-        string CTYPE[, int nfem]) Build a Dirichlet condition brick which
-        impose the value of a field along a mesh boundary. The
-        <literal>bnum</literal> parameter selects on which mesh region the
-        Dirichlet condition is imposed. <literal>CTYPE</literal> has to be
-        chosen among 'augmented', 'penalized', and 'eliminated'. The
-        <literal>mf_m</literal> may generally be taken as the MeshFem of the
-        unknown, but for 'augmented' Dirichlet conditions, you may have to
-        respect the Inf-Sup condition and choose an adequate MeshFem.</para>
-      </listitem>
+    It may be useful in some situations, such as the Stokes problem
+    where the pressure is defined modulo a constant. In such a
+    situation, this brick can be used to add an additional constraint
+    on the pressure value.
+    <literal>CTYPE</literal> has to be chosen among 'augmented', 'penalized', and
+    'eliminated'. The constraint can be specified with
+    gf_mdbrick_set(mdbrick MDB, 'constraints'). Note that Dirichlet bricks (except
+    the 'generalized Dirichlet' one) are also specializations of
+    the 'constraint' brick.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('dirichlet on normal component', MdBrick pb, int
-        bnum, MeshFem mf_m, string CTYPE[, int nfem]) Build a Dirichlet
-        condition brick which imposes the value of the normal component of a
-        vector field.</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('dirichlet', mdbrick pb, int bnum, mesh_fem mf_m, string CTYPE[, int nfem])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('dirichlet on normal derivative', MdBrick pb, int
-        bnum, MeshFem mf_m, string CTYPE[, int nfem]) Build a Dirichlet
-        condition brick which imposes the value of the normal derivative of
-        the unknown.</para>
-      </listitem>
+    <para>       Build a Dirichlet condition brick which impose the value of a field along a mesh boundary.
 
-      <listitem>
-        <para>B = gf_mdbrick('generalized dirichlet', MdBrick pb, int bnum[,
-        int nfem]) This is the "old" Dirichlet brick of getfem. This brick can
-        be used to impose general Dirichlet conditions <emphasis>h(x)u(x) =
-        r(x)</emphasis>, however it may have some issues with elaborated Fem's
-        (such as Argyris, etc). It should be avoided when possible.</para>
-      </listitem>
+    The <literal>bnum</literal> parameter selects on which mesh region the Dirichlet
+    condition is imposed. <literal>CTYPE</literal> has to be chosen among 'augmented',
+    'penalized', and 'eliminated'. The <literal>mf_m</literal> may generally be taken
+    as the mesh_fem of the unknown, but for 'augmented' Dirichlet
+    conditions, you may have to respect the Inf-Sup condition and
+    choose an adequate mesh_fem.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('source term', MdBrick pb[, int bnum=-1[, int
-        nfem]]) Add a boundary or volumic source term ( \int B.v ). If
-        <literal>bnum</literal> is omitted (or set to -1) , the brick adds a
-        volumic source term on the whole mesh. For <literal>bnum</literal>
-        &gt;= 0, the source term is imposed on the mesh region
-        <literal>bnum</literal>. Use gf_mdbrick_set(b,'param','source
-        term',mf,B) to set the source term field. The source term is expected
-        as a vector field of size <literal>Q</literal> (with <emphasis>Q =
-        qdim</emphasis>).</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('dirichlet on normal component', mdbrick pb, int bnum, mesh_fem mf_m, string CTYPE[, int nfem])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('normal source term', MdBrick pb, int bnum[, int
-        nfem]) Add a boundary source term ( \int (Bn).v ). The source term is
-        imposed on the mesh region <literal>bnum</literal> (which of course is
-        not allowed to be a volumic region, only boundary regions are
-        allowed). Use gf_mdbrick_set(b,'param','source term',mf,B) to set the
-        source term field. The source term <literal>B</literal> is expected as
-        tensor field of size <emphasis>QxN</emphasis> (with <emphasis>Q =
-        qdim, N = mesh dim</emphasis>). </para>
+    <para>       Build a Dirichlet condition brick which imposes the value of the normal component of a vector field.
+    </para>
+    </listitem>
 
-        <para>For example, if you consider an elasticity problem, this brick
-        may be used to impose a force on the boundary with
-        <literal>B</literal> as the stress tensor.</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('dirichlet on normal derivative', mdbrick pb, int bnum, mesh_fem mf_m, string CTYPE[, int nfem])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('normal derivative source term', MdBrick parent,
-        int bnum[, int nfem]) Add a boundary source term ( \int (\partial_n
-        B).v ). The source term is imposed on the mesh region
-        <literal>bnum</literal>. Use gf_mdbrick_set(b,'param','source
-        term',mf,B) to set the source term field, which is expected as a
-        vector field of size <literal>Q</literal> (with <emphasis>Q =
-        qdim</emphasis>).</para>
-      </listitem>
+    <para>       Build a Dirichlet condition brick which imposes the value of the normal derivative of the unknown.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('neumann KirchhoffLove source term', MdBrick pb,
-        int bnum[, int nfem]) Add a boundary source term for neumann
-        Kirchhoff-Love plate problems. Should be used with the Kirchhoff-Love
-        flavour of the bilaplacian brick.</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('generalized dirichlet', mdbrick pb, int bnum[, int nfem])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('qu term', MdBrick pb[, int bnum[, int nfem]])
-        Update the tangent matrix with a \int (Qu).v term. The
-        <emphasis>Q(x)</emphasis> parameter is a matrix field of size qdim x
-        qdim. An example of use is for the "iku" part of Robin boundary
-        conditions \partial_n u + iku = ...</para>
-      </listitem>
+    <para>       This is the "old" Dirichlet brick of getfem.
 
-      <listitem>
-        <para>B = gf_mdbrick('mass matrix', MeshIm mim, MeshFem mf_u[,
-        'real'|'complex']) Build a mass-matrix brick.</para>
-      </listitem>
+    This brick can be used to impose general Dirichlet conditions
+    <literal>h(x)u(x) = r(x)</literal>, however it may have some issues with elaborated
+    fem's (such as Argyris, etc). It should be avoided when possible.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('generic elliptic', MeshIm mim, MeshFem mfu[,
-        'scalar'|'matrix'|'tensor'][, 'real'|'complex']) Setup a generic
-        elliptic problem. <emphasis></emphasis></para>
+    <listitem>
+    <para><literal>B = gf_mdbrick('source term', mdbrick pb[, int bnum=-1[, int nfem]])</literal></para>
 
-        <para><emphasis>a(x)*grad(U).grad(V)</emphasis></para>
+    <para>       Add a boundary or volumic source term ( \int B.v ).
 
-        <para>The brick parameter <literal>a</literal> may be a scalar field,
-        a matrix field, or a tensor field (default is scalar).</para>
-      </listitem>
+    If <literal>bnum</literal> is omitted (or set to -1) , the brick adds a volumic
+    source term on the whole mesh. For <literal>bnum</literal> >= 0, the source term is
+    imposed on the mesh region <literal>bnum</literal>. Use gf_mdbrick_set(mdbrick MDB, 'param','source
+    term',mf,B) to set the source term field. The source term is
+    expected as a vector field of size Q (with Q = qdim).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('helmholtz', MeshIm mim, MeshFem mfu[,
-        'real'|'complex']) Setup a Helmholtz problem. The brick has one
-        parameter, 'wave_number'.</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('normal source term', mdbrick pb, int bnum[, int nfem])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('isotropic linearized elasticity', MeshIm mim,
-        MeshFem mfu) Setup a linear elasticity problem. The brick has two
-        scalar parameter, 'lambda' and 'mu' (the Lame coefficients).</para>
-      </listitem>
+    <para>       Add a boundary source term ( \int (Bn).v ).
 
-      <listitem>
-        <para>B = gf_mdbrick('linear incompressibility term', MdBrick pb,
-        MeshFem mfp[, int nfem]) Add an incompressibily constraint (div u =
-        0).</para>
-      </listitem>
+    The source term is imposed on the mesh region <literal>bnum</literal> (which of course
+    is not allowed to be a volumic region, only boundary regions are
+    allowed). Use gf_mdbrick_set(mdbrick MDB, 'param','source term',mf,B) to set the
+    source term field. The source term B is expected as tensor field
+    of size QxN (with Q = qdim, N = mesh dim). For example, if you
+    consider an elasticity problem, this brick may be used to impose
+    a force on the boundary with B as the stress tensor.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('nonlinear elasticity', MeshIm mim, MeshFem mfu,
-        string law) Setup a nonlinear elasticity (large deformations)
-        problem.</para>
+    <listitem>
+    <para><literal>B = gf_mdbrick('normal derivative source term', mdbrick parent, int bnum[, int nfem])</literal></para>
 
-        <para>The material <literal>law</literal> can be chosen among:</para>
+    <para>       Add a boundary source term ( \int (\partial_n B).v ).
 
-        <itemizedlist>
-          <listitem>
-            <para>'SaintVenant Kirchhoff'&lt;par&gt; Linearized material
-            law.</para>
-          </listitem>
+    The source term is imposed on the mesh region <literal>bnum</literal>. Use
+    gf_mdbrick_set(mdbrick MDB, 'param','source term',mf,B) to set the source term
+    field, which is expected as a vector field of size Q (with Q =
+    qdim).
+    </para>
+    </listitem>
 
-          <listitem>
-            <para>'Mooney Rivlin' To be used with the nonlinear
-            incompressibily term.</para>
-          </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('neumann KirchhoffLove source term', mdbrick pb, int bnum[, int nfem])</literal></para>
 
-          <listitem>
-            <para>'Ciarlet Geymonat'</para>
-          </listitem>
-        </itemizedlist>
-      </listitem>
+    <para>       Add a boundary source term for neumann Kirchhoff-Love plate problems.
 
-      <listitem>
-        <para>B = gf_mdbrick('nonlinear elasticity incompressibility term',
-        MdBrick pb, MeshFem mfp[, int nfem]) Add an incompressibily constraint
-        to a large strain elasticity problem.</para>
-      </listitem>
+    Should be used with the Kirchhoff-Love flavour of the bilaplacian
+    brick.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('small deformations plasticity', MeshIm mim,
-        MeshFem mfu, scalar THRESHOLD) Setup a plasticity problem (with small
-        deformations). The <literal>THRESHOLD</literal> parameter is the
-        maximum value of the Von Mises stress before 'plastification' of the
-        material.</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('qu term', mdbrick pb[, int bnum[, int nfem]])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('dynamic', MdBrick pb, scalar rho[, int numfem])
-        Dynamic brick. This brick is not ready.</para>
-      </listitem>
+    <para>       Update the tangent matrix with a \int (Qu).v term.
 
-      <listitem>
-        <para>B = gf_mdbrick('bilaplacian', MeshIm mim, MeshFem mfu[,
-        'Kirchhoff-Love']) Setup a bilaplacian problem. If the
-        'Kirchhoff-Love' option is specified, the Kirchhoff-Love plate model
-        is used.</para>
-      </listitem>
+    The Q(x) parameter is a matrix field of size qdim x qdim. An example
+    of use is for the "iku" part of Robin boundary conditions
+    \partial_n u + iku = ...
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('navier stokes', MeshIm mim, MeshFem mfu, MeshFem
-        mfp) Setup a Navier-Stokes problem (this brick is not ready, do not
-        use it).</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('mass matrix', mesh_im mim, mesh_fem mf_u[, 'real'|'complex'])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('isotropic_linearized_plate', MeshIm mim, MeshIm
-        mims, MeshFem mfut, MeshFem mfu3, MeshFem mftheta, scalar eps) Setup a
-        linear plate model brick. For moderately thick plates, using the
-        Reissner-Mindlin model. <literal>eps</literal> is the plate thinkness,
-        the MeshFem <literal>mfut</literal> and <literal>mfu3</literal> are
-        used respectively for the membrane displacement and the transverse
-        displacement of the plate. The MeshFem <literal>mftheta</literal> is
-        the rotation of the normal ("section rotations"). The second
-        integration method <literal>mims</literal> can be chosen equal to
-        <literal>mim</literal>, or different if you want to perform
-        sub-integration on the transverse shear term (mitc4 projection). This
-        brick has two parameters "lambda" and "mu" (the Lame
-        coefficients)</para>
-      </listitem>
+    <para>       Build a mass-matrix brick.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('mixed_isotropic_linearized_plate', MeshIm mim,
-        MeshFem mfut, MeshFem mfu3, MeshFem mftheta, scalar eps) Setup a mixed
-        linear plate model brick. For thin plates, using Kirchhoff-Love model.
-        For a non-mixed version, use the bilaplacian brick.</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('generic elliptic', mesh_im mim, mesh_fem mfu[, 'scalar'|'matrix'|'tensor'][, 'real'|'complex'])</literal></para>
 
-      <listitem>
-        <para>B = gf_mdbrick('plate_source_term', MdBrick pb[, int bnum=-1[,
-        int nfem]]) Add a boundary or a volumic source term to a plate
-        problem. This brick has two parameters: "B" is the displacement (ut
-        and u3) source term, "M" is the moment source term (i.e. the source
-        term on the rotation of the normal).</para>
-      </listitem>
+    <para>       Setup a generic elliptic problem.
 
-      <listitem>
-        <para>B = gf_mdbrick('plate_simple_support', MdBrick pb, int bnum,
-        string CTYPE[, int nfem]) Add a "simple support" boundary condition to
-        a plate problem. Homogeneous Dirichlet condition on the displacement,
-        free rotation. <literal>CTYPE</literal> specifies how the constraint
-        is enforced ('penalized', 'augmented' or 'eliminated').</para>
-      </listitem>
+    a(x)*grad(U).grad(V)
 
-      <listitem>
-        <para>B = gf_mdbrick('plate_clamped_support', MdBrick pb, int bnum,
-        string CTYPE[, int nfem]) Add a "clamped support" boundary condition
-        to a plate problem. Homogeneous Dirichlet condition on the
-        displacement and on the rotation. <literal>CTYPE</literal> specifies
-        how the constraint is enforced ('penalized', 'augmented' or
-        'eliminated').</para>
-      </listitem>
+    The brick parameter <literal>a</literal> may be a scalar field, a matrix field, or
+    a tensor field (default is scalar).
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>B = gf_mdbrick('plate_closing', MdBrick pb[, int nfem]) Add a
-        free edges condition for the mixed plate model brick. This brick is
-        required when the mixed linearized plate brick is used. It must be
-        inserted after all other boundary conditions (the reason is that the
-        brick has to inspect all other boundary conditions to determine the
-        number of disconnected boundary parts which are free edges).</para>
-      </listitem>
+    <listitem>
+    <para><literal>B = gf_mdbrick('helmholtz', mesh_im mim, mesh_fem mfu[, 'real'|'complex'])</literal></para>
+
+    <para>       Setup a Helmholtz problem.
+
+    The brick has one parameter, 'wave_number'.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('isotropic linearized elasticity', mesh_im mim, mesh_fem mfu)</literal></para>
+
+    <para>       Setup a linear elasticity problem.
+
+    The brick has two scalar parameter, 'lambda' and 'mu' (the Lame
+    coefficients).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('linear incompressibility term', mdbrick pb, mesh_fem mfp[, int nfem])</literal></para>
+
+    <para>       Add an incompressibily constraint (div u = 0).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('nonlinear elasticity', mesh_im mim, mesh_fem mfu, string law)</literal></para>
+
+    <para>       Setup a nonlinear elasticity (large deformations) problem.
+
+    The material <literal>law</literal> can be chosen among:
+
+    - 'SaintVenant Kirchhoff' :
+      Linearized material law.
+    - 'Mooney Rivlin' :
+      To be used with the nonlinear incompressibily term.
+    - 'Ciarlet Geymonat'
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('nonlinear elasticity incompressibility term', mdbrick pb, mesh_fem mfp[, int nfem])</literal></para>
+
+    <para>       Add an incompressibily constraint to a large strain elasticity problem.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('small deformations plasticity', mesh_im mim, mesh_fem mfu, scalar THRESHOLD)</literal></para>
+
+    <para>       Setup a plasticity problem (with small deformations).
+
+    The <literal>THRESHOLD</literal> parameter is the maximum value of the Von Mises
+    stress before 'plastification' of the material.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('dynamic', mdbrick pb, scalar rho[, int numfem])</literal></para>
+
+    <para>       Dynamic brick. This brick is not fully working.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('bilaplacian', mesh_im mim, mesh_fem mfu[, 'Kirchhoff-Love'])</literal></para>
+
+    <para>       Setup a bilaplacian problem.
+
+    If the 'Kirchhoff-Love' option is specified, the Kirchhoff-Love
+    plate model is used.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('navier stokes', mesh_im mim, mesh_fem mfu, mesh_fem mfp)</literal></para>
+
+    <para>       Setup a Navier-Stokes problem (this brick is not ready, do not use it).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('isotropic_linearized_plate', mesh_im mim, mesh_im mims, mesh_fem mfut, mesh_fem mfu3, mesh_fem mftheta, scalar eps)</literal></para>
+
+    <para>       Setup a linear plate model brick.
+
+    For moderately thick plates, using the Reissner-Mindlin model.
+    <literal>eps</literal> is the plate thinkness, the mesh_fem <literal>mfut</literal> and <literal>mfu3</literal> are used
+    respectively for the membrane displacement and the transverse
+    displacement of the plate. The mesh_fem <literal>mftheta</literal> is the rotation of
+    the normal ("section rotations").
+
+    The second integration method <literal>mims</literal> can be chosen equal to
+    <literal>mim</literal>, or different if you want to perform sub-integration on
+    the transverse shear term (mitc4 projection).
+
+    This brick has two parameters "lambda" and "mu" (the Lame
+    coefficients)
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('mixed_isotropic_linearized_plate', mesh_im mim, mesh_fem mfut, mesh_fem mfu3, mesh_fem mftheta, scalar eps)</literal></para>
+
+    <para>       Setup a mixed linear plate model brick.
+
+    For thin plates, using Kirchhoff-Love model. For a non-mixed version,
+    use the bilaplacian brick.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('plate_source_term', mdbrick pb[, int bnum=-1[, int nfem]])</literal></para>
+
+    <para>       Add a boundary or a volumic source term to a plate problem.
+
+    This brick has two parameters: "B" is the displacement (ut and u3)
+    source term, "M" is the moment source term (i.e. the source term
+    on the rotation of the normal).
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('plate_simple_support', mdbrick pb, int bnum, string CTYPE[, int nfem])</literal></para>
+
+    <para>       Add a "simple support" boundary condition to a plate problem.
+
+    Homogeneous Dirichlet condition on the displacement, free rotation.
+    <literal>CTYPE</literal> specifies how the constraint is enforced ('penalized',
+    'augmented' or 'eliminated').
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('plate_clamped_support', mdbrick pb, int bnum, string CTYPE[, int nfem])</literal></para>
+
+    <para>       Add a "clamped support" boundary condition to a plate problem.
+
+    Homogeneous Dirichlet condition on the displacement and on the
+    rotation. <literal>CTYPE</literal> specifies how the constraint is enforced
+    ('penalized', 'augmented' or 'eliminated').
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_mdbrick('plate_closing', mdbrick pb[, int nfem])</literal></para>
+
+    <para>       Add a free edges condition for the mixed plate model brick.
+
+    This brick is required when the mixed linearized plate brick is
+    used. It must be inserted after all other boundary conditions
+    (the reason is that the brick has to inspect all other boundary
+    conditions to determine the number of disconnected boundary parts
+    which are free edges). 
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mdbrick_set">gf_mdbrick_set</link></member>
-      <member><link linkend="gf_mdbrick_get">gf_mdbrick_get</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

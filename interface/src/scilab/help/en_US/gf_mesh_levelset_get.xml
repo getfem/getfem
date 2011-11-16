@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<refentry version="5.0-subset Scilab" xml:id="gf_mesh_levelset_get"
-          xml:lang="en" xmlns="http://docbook.org/ns/docbook"
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_levelset_get" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
           xmlns:xlink="http://www.w3.org/1999/xlink"
           xmlns:xi="http://www.w3.org/2001/XInclude"
           xmlns:svg="http://www.w3.org/2000/svg"
@@ -9,59 +9,108 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_mesh_levelset_get</refname>
-
-    <refpurpose>General function for querying information about MESHLEVELSET
-    objects.</refpurpose>
+    <refpurpose>  General function for querying information about mesh_levelset objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_mesh_levelset_get(MLS, ...)</synopsis>
+    <synopsis>M = gf_mesh_levelset_get(mesh_levelset MLS, 'cut_mesh')</synopsis>
+    <synopsis>LM = gf_mesh_levelset_get(mesh_levelset MLS, 'linked_mesh')</synopsis>
+    <synopsis>nbls = gf_mesh_levelset_get(mesh_levelset MLS, 'nb_ls')</synopsis>
+    <synopsis>LS = gf_mesh_levelset_get(mesh_levelset MLS, 'levelsets')</synopsis>
+    <synopsis>CVIDs = gf_mesh_levelset_get(mesh_levelset MLS, 'crack_tip_convexes')</synopsis>
+    <synopsis>SIZE = gf_mesh_levelset_get(mesh_levelset MLS, 'memsize')</synopsis>
+    <synopsis>s = gf_mesh_levelset_get(mesh_levelset MLS, 'char')</synopsis>
+    <synopsis>gf_mesh_levelset_get(mesh_levelset MLS, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>  General function for querying information about mesh_levelset objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
 
     <itemizedlist>
-      <listitem>
-        <para>M = gf_mesh_levelset_get(MLS,'cut_mesh')</para>
-      </listitem>
+    <listitem>
+    <para><literal>M = gf_mesh_levelset_get(mesh_levelset MLS, 'cut_mesh')</literal></para>
 
-      <listitem>
-        <para>LM = gf_mesh_levelset_get(MLS,'linked_mesh')</para>
-      </listitem>
+    <para>         Return a mesh cut by the linked levelset's.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>LS = gf_mesh_levelset_get(MLS,'levelsets')</para>
-      </listitem>
+    <listitem>
+    <para><literal>LM = gf_mesh_levelset_get(mesh_levelset MLS, 'linked_mesh')</literal></para>
 
-      <listitem>
-        <para>CC = gf_mesh_levelset_get(MLS,'crack_tip_convexes')</para>
-      </listitem>
+    <para>         Return a reference to the linked mesh.
+    </para>
+    </listitem>
 
-      <listitem>
-        <para>CC = gf_mesh_levelset_get(MLS,'memsize') Return the amount of
-        memory (in bytes) used by the mesh-level-set.</para>
-      </listitem>
+    <listitem>
+    <para><literal>nbls = gf_mesh_levelset_get(mesh_levelset MLS, 'nb_ls')</literal></para>
+
+    <para>         Return the number of linked levelset's.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>LS = gf_mesh_levelset_get(mesh_levelset MLS, 'levelsets')</literal></para>
+
+    <para>         Return a list of references to the linked levelset's.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>CVIDs = gf_mesh_levelset_get(mesh_levelset MLS, 'crack_tip_convexes')</literal></para>
+
+    <para>         Return the list of convex #id's of the linked mesh on
+      which have a tip of any linked levelset's.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>SIZE = gf_mesh_levelset_get(mesh_levelset MLS, 'memsize')</literal></para>
+
+    <para>         Return the amount of memory (in bytes) used by the mesh_levelset.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_mesh_levelset_get(mesh_levelset MLS, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the mesh_levelsetn.
+
+      This can be used to perform comparisons between two
+      different mesh_levelset objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_levelset_get(mesh_levelset MLS, 'display')</literal></para>
+
+    <para>         displays a short summary for a mesh_levelset object.
+    </para>
+    </listitem>
+
     </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link
-      linkend="gf_mesh_levelset">gf_mesh_levelset</link></member>
-
-      <member><link
-      linkend="gf_mesh_levelset_set">gf_mesh_levelset_set</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

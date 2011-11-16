@@ -9,93 +9,66 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_geotrans</refname>
-
-    <refpurpose>Return the handle of a geometric transformation object</refpurpose>
+    <refpurpose>   The geometric transformation must be used when you are building a custom
+   mesh convex by convex (see the add_convex() function of mesh): it also
+   defines the kind of convex (triangle, hexahedron, prism, etc..)
+  </refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>I = gf_geotrans(name)  </synopsis>
+    <synopsis>GT = gf_geotrans(string name)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
+    <para>General constructor for geotrans objects.</para>
 
-    <para>The geometric transformation must be used when you are building a custom mesh convex by convex 
-      (see the 'add convex' sub-command of gf_mesh_set): it also defines the kind of convex (triangle, hexahedron, prism, etc..).</para>
-    <para>The name argument contains the specification of the geometric transformation as a string, which may be:</para>
-
-    <itemizedlist>
-      <listitem>
-        <para>GT_PK(n,k) Transformation on simplexes, dim
-        <literal>n</literal>, degree <literal>k</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>GT_QK(n,k) Transformation on parallelepipeds, dim
-        <literal>n</literal>, degree <literal>k</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>GT_PRISM(n,k) Transformation on prisms, dim
-        <literal>n</literal>, degree <literal>k</literal>.</para>
-      </listitem>
-
-      <listitem>
-        <para>GT_PRODUCT(A,B) Tensorial product of two transformations.</para>
-      </listitem>
-
-      <listitem>
-        <para>GT_LINEAR_PRODUCT(A,B) Linear tensorial product of two
-        transformations</para>
-      </listitem>
-    </itemizedlist>
-
-    <para>Geometric transformations of an existing mesh can be obtained with gf_mesh_get(M,'geotrans').</para>
+    <para>   The geometric transformation must be used when you are building a custom
+   mesh convex by convex (see the add_convex() function of mesh): it also
+   defines the kind of convex (triangle, hexahedron, prism, etc..)
+  </para>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
+    <title>Command list</title>
 
-    <para>In order to get the geometric transformation for a prism of dimension 3, you could use</para>
+    <itemizedlist>
+    <listitem>
+    <para><literal>GT = gf_geotrans(string name)</literal></para>
 
-    <programlisting role="example"><![CDATA[ 
-gt = gf_geotrans('GT_PRISM(3,1)')
-or
-gt = gf_geotrans('GT_PRODUCT(GT_PK(2,1),GT_PK(1,1))')
- ]]></programlisting>
+    <para>   
+The name argument contains the specification of the geometric transformation
+as a string, which may be:
 
-    <para>If you want the geometric transformation for a curved triangle, you might choose </para>
+  - GT_PK(n,k) :
+    Transformation on simplexes, dim <literal>n</literal>, degree <literal>k</literal>.
+  - GT_QK(n,k) :
+    Transformation on parallelepipeds, dim <literal>n</literal>, degree <literal>k</literal>.
+  - GT_PRISM(n,k) :
+    Transformation on prisms, dim <literal>n</literal>, degree <literal>k</literal>.
+  - GT_PRODUCT(A,B) :
+    Tensorial product of two transformations.
+  - GT_LINEAR_PRODUCT(geotrans gt1,geotrans gt2) :
+    Linear tensorial product of two transformations
 
-    <programlisting role="example"><![CDATA[ 
-gt = gf_geotrans('GT_PK(2,2)') // 6-noded triangle
- ]]></programlisting>
+    </para>
+    </listitem>
 
-    <para>If you want to use a cartesian mesh, then it is preferable to use</para>
-
-    <programlisting role="example"><![CDATA[ 
-gt = gf_geotrans('GT_LINEAR_PRODUCT(GT_PK(1,1), GT_PK(1,1))')
-instead of gf_geotrans('GT_QK(2,1)') 
-or gf_geotrans('GT_PRODUCT(GT_PK(1,1), GT_PK(1,1))'),
- ]]></programlisting>
-
-    <para>since the geometric transformation for parallelepipeds is linear, and getfem++ can take advantage of it 
-      (exact integration method, direct inversion of the geometrical transformation,...).</para>
+    </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_mesh_set">gf_mesh_set(M,'add convex')</link></member>
-      <member><link linkend="gf_mesh_get">gf_mesh_get(M,'geotrans')</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>

@@ -9,166 +9,178 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>gf_fem_get</refname>
-
-    <refpurpose> General function for querying information about FEM
-    objects.</refpurpose>
+    <refpurpose>  General function for querying information about FEM objects.
+</refpurpose>
   </refnamediv>
 
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>
-int I = gf_fem_get(fem F,'nbdof')
-int I = gf_fem_get(fem F,'dim')
-int I = gf_fem_get(fem F,'target_dim')
-mat P = gf_fem_get(fem F,'pts')
-int I = gf_fem_get(fem F,'is_equivalent')
-int I = gf_fem_get(fem F,'is_lagrange')
-int I = gf_fem_get(fem F,'is_polynomial')
-int I = gf_fem_get(fem F,'estimated_degree')
-mat V = gf_fem_get(fem F,'base_value', vec X)
-mat V = gf_fem_get(fem F,'grad_base_value', vec X)
-mat V = gf_fem_get(fem F,'hess_base_value', vec X)
-string S = gf_fem_get(fem F,'poly_str')
-string S = gf_fem_get(fem F,'char')
-    </synopsis>
+    <synopsis>n = gf_fem_get(fem F, 'nbdof'[, int cv])</synopsis>
+    <synopsis>d = gf_fem_get(fem F, 'dim')</synopsis>
+    <synopsis>td = gf_fem_get(fem F, 'target_dim')</synopsis>
+    <synopsis>P = gf_fem_get(fem F, 'pts'[, int cv])</synopsis>
+    <synopsis>b = gf_fem_get(fem F, 'is_equivalent')</synopsis>
+    <synopsis>b = gf_fem_get(fem F, 'is_lagrange')</synopsis>
+    <synopsis>b = gf_fem_get(fem F, 'is_polynomial')</synopsis>
+    <synopsis>d = gf_fem_get(fem F, 'estimated_degree')</synopsis>
+    <synopsis>E = gf_fem_get(fem F, 'base_value',mat p)</synopsis>
+    <synopsis>ED = gf_fem_get(fem F, 'grad_base_value',mat p)</synopsis>
+    <synopsis>EH = gf_fem_get(fem F, 'hess_base_value',mat p)</synopsis>
+    <synopsis>gf_fem_get(fem F, 'poly_str')</synopsis>
+    <synopsis>string = gf_fem_get(fem F, 'char')</synopsis>
+    <synopsis>gf_fem_get(fem F, 'display')</synopsis>
   </refsynopsisdiv>
 
   <refsection>
     <title>Description</title>
-
-    <para>The number of degrees of freedom of a specific fem F are returned by gf_fem_get(F,'nbdof'), 
-      while its dimension (i.e. the dimension of the reference convex) is given by gf_fem_get(F,'dim').</para>
-    <para>The target dimension, i.e. the dimension of the target space (denoted Q in the introduction to the finite element kernel) 
-      is returned by gf_fem_get(F,'target dim') (it is always 1 except for vector FEM).</para>
-    <para>The geometrical nodes (on the reference convex) associated with each degree of freedom of the fem is given in the columns of 
-      gf_fem_get(F,'pts').</para>
-    <para>gf_fem_get(F,'is equivalent'), gf_fem_get(F,'is lagrange'), or gf_fem_get(F,'is polynomial') gives some important properties of 
-      a FEM (a polynomial fem is a necessary condition for an exact integration method, and a interpolation a function of a Lagrangian fem is easy).</para>
-    <para>gf_fem_get(F,'estimated_degree') : return an estimation of the polynomial degree of a fem (this is an estimation for fem which 
-      are not polynomials).</para>
-    <para>gf_fem_get(F,'base_value',X) evaluate the values of all basis functions of the FEM at point X (X is supposed to be in the reference convex!). 
-      gf_fem_get(F,'grad_base_value',X) and gf_fem_get(F,'hess_base_value',X) evaluate respectively the first 
-      and second derivative of the basis functions.</para>
-    <para>gf_fem_get(F, 'char') return the canonical name of the FEM in getfem, and gf_fem_get(F, 'poly_str') return the polynomial expression of its basis functions in the reference convex (of course this will fail on non-polynomial FEMs). </para>
-
-    <para></para>
-
-    <itemizedlist>
-      <listitem>
-        <para>n = gf_fem_get(fem,'nbdof'[, int cv]) Return the number of dof for the
-        Fem. Some specific Fem (for example 'interpolated_fem') may require a
-        convex number <literal>cv</literal> to give their result. In most of
-        the case, you can omit this convex number.</para>
-      </listitem>
-
-      <listitem>
-        <para>d = gf_fem_get(fem,'dim') Return the dimension (dimension of the
-        reference convex) of the Fem.</para>
-      </listitem>
-
-      <listitem>
-        <para>td = gf_fem_get(fem,'target_dim') Return the dimension of the target
-        space. The target space dimension is usually 1, except for vector Fem
-        (none of them has been implemented in getfem++ for now).</para>
-      </listitem>
-
-      <listitem>
-        <para>P = gf_fem_get(fem,'pts'[, int cv]) Get the location of the dof on the
-        reference element. Some specific Fem may require a convex number
-        <literal>cv</literal> to give their result (for example
-        'interpolated_fem'). In most of the case, you can omit this convex
-        number.</para>
-      </listitem>
-
-      <listitem>
-        <para>b = gf_fem_get(fem,'is_equivalent') Return 0 if the Fem is not
-        equivalent. Equivalent Fem are evaluated on the reference convex. This
-        is the case of most classical Fem's.</para>
-      </listitem>
-
-      <listitem>
-        <para>b = gf_fem_get(fem,'is_lagrange') Return 0 if the Fem is not of
-        Lagrange type.</para>
-      </listitem>
-
-      <listitem>
-        <para>b = gf_fem_get(fem,'is_polynomial') Return 0 if the basis functions are
-        not polynomials.</para>
-      </listitem>
-
-      <listitem>
-        <para>d = gf_fem_get(fem,'estimated_degree') Return an estimation of the
-        polynomial degree of the Fem. This is an estimation for fem which are
-        not polynomials.</para>
-      </listitem>
-
-      <listitem>
-        <para>E = gf_fem_get(fem,'base_value',mat p) Evaluate all basis functions of
-        the FEM at point <literal>p</literal>. <literal>p</literal> is
-        supposed to be in the reference convex!</para>
-      </listitem>
-
-      <listitem>
-        <para>EH = gf_fem_get(fem,'hess_base_value',mat p) Evaluate the Hessian of
-        all base functions of the Fem at point <literal>p</literal>.
-        <literal>p</literal> is supposed to be in the reference
-        convex!.</para>
-      </listitem>
-
-      <listitem>
-        <para>gf_fem_get(fem,'poly_str') Return the polynomial expressions of its
-        basis functions in the reference convex. The result is expressed as a
-        list of strings. Of course this will fail on non-polynomial
-        Fem's.</para>
-      </listitem>
-
-      <listitem>
-        <para>str = gf_fem_get(fem,'char') Ouput a (unique) string representation of
-        the Fem. This can be used to perform comparisons between two different
-        Fem objects.</para>
-      </listitem>
-    </itemizedlist>
-
-    <para></para>
+    <para>  General function for querying information about FEM objects.
+</para>
   </refsection>
 
   <refsection>
-    <title>Examples</title>
+    <title>Command list</title>
 
-    <para>Plotting the basis functions of the P5 fem on a segment:</para>
+    <itemizedlist>
+    <listitem>
+    <para><literal>n = gf_fem_get(fem F, 'nbdof'[, int cv])</literal></para>
 
-    <programlisting role="example"><![CDATA[ 
-f = gf_fem('FEM_PK(1,5)');
-n = 100;
-M = zeros(gf_fem_get(f,'nbdof'),n);
-for i=1:n, 
-  M(:,i)=gf_fem_get(f,'base_value',(i-1)/(n-1)); 
-end
-plot((0:n-1)/n,M); 
- ]]></programlisting>
+    <para>       Return the number of dof for the fem.
 
-    <para><imagedata fileref="../fig/gf_fem_get_fig_1.png" /></para>
+    Some specific fem (for example 'interpolated_fem') may require a
+    convex number <literal>cv</literal> to give their result. In most of the case, you
+    can omit this convex number.
+    </para>
+    </listitem>
 
-    <para>Viewing the basis function of the Argyris FEM: </para>
+    <listitem>
+    <para><literal>d = gf_fem_get(fem F, 'dim')</literal></para>
 
-    <programlisting role="example"><![CDATA[ 
-f=gf_fem('FEM_ARGYRIS');
-gf_fem_get(f, 'poly_str')
- ]]></programlisting>
+    <para>         Return the dimension (dimension of the reference convex) of the fem.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>td = gf_fem_get(fem F, 'target_dim')</literal></para>
+
+    <para>       Return the dimension of the target space.
+
+    The target space dimension is usually 1, except for vector fem. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>P = gf_fem_get(fem F, 'pts'[, int cv])</literal></para>
+
+    <para>         Get the location of the dof on the reference element.
+      
+      Some specific fem may require a convex number <literal>cv</literal> to give their
+      result (for example 'interpolated_fem'). In most of the case, you
+      can omit this convex number. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>b = gf_fem_get(fem F, 'is_equivalent')</literal></para>
+
+    <para>         Return 0 if the fem is not equivalent.
+      
+      Equivalent fem are evaluated on the reference convex. This is
+      the case of most classical fem's.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>b = gf_fem_get(fem F, 'is_lagrange')</literal></para>
+
+    <para>         Return 0 if the fem is not of Lagrange type.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>b = gf_fem_get(fem F, 'is_polynomial')</literal></para>
+
+    <para>         Return 0 if the basis functions are not polynomials.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>d = gf_fem_get(fem F, 'estimated_degree')</literal></para>
+
+    <para>       Return an estimation of the polynomial degree of the fem.
+
+    This is an estimation for fem which are not polynomials.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_fem_get(fem F, 'base_value',mat p)</literal></para>
+
+    <para>         Evaluate all basis functions of the FEM at point <literal>p</literal>.
+      
+      <literal>p</literal> is supposed to be in the reference convex!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ED = gf_fem_get(fem F, 'grad_base_value',mat p)</literal></para>
+
+    <para>       Evaluate the gradient of all base functions of the fem at point <literal>p</literal>.
+
+    <literal>p</literal> is supposed to be in the reference convex!
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>EH = gf_fem_get(fem F, 'hess_base_value',mat p)</literal></para>
+
+    <para>       Evaluate the Hessian of all base functions of the fem at point <literal>p</literal>.
+
+    <literal>p</literal> is supposed to be in the reference convex!.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_fem_get(fem F, 'poly_str')</literal></para>
+
+    <para>         Return the polynomial expressions of its basis functions in
+      the reference convex.
+
+      The result is expressed as a cell array of
+      strings. Of course this will fail on non-polynomial fem's. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>string = gf_fem_get(fem F, 'char')</literal></para>
+
+    <para>       Ouput a (unique) string representation of the fem.
+
+    This can be used to perform comparisons between two different fem
+    objects.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_fem_get(fem F, 'display')</literal></para>
+
+    <para>       displays a short summary for a fem object.
+    </para>
+    </listitem>
+
+    </itemizedlist>
   </refsection>
 
   <refsection>
     <title>See Also</title>
-
     <simplelist type="inline">
-      <member><link linkend="gf_fem">gf_fem</link></member>
+      <member><link linkend="getfem_types">getfem types</link></member>
     </simplelist>
   </refsection>
 
   <refsection>
     <title>Authors</title>
-
     <para>Y. Collette</para>
   </refsection>
+
 </refentry>
