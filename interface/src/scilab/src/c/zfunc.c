@@ -28,8 +28,8 @@
 	-- if not already defined
 */
 
-#include	"zmatrix.h"
 #include	<math.h>
+#include	"zmatrix.h"
 
 static char rcsid[] = "$Id$";
 
