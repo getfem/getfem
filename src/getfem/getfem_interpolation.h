@@ -45,9 +45,9 @@
 namespace getfem {
 
   /* ********************************************************************* */
-  /*								   	   */
-  /*	I. Distribution of a set of points on a mesh.         		   */
-  /*									   */
+  /*                                                                       */
+  /*        I. Distribution of a set of points on a mesh.                  */
+  /*                                                                       */
   /* ********************************************************************* */
 
   class mesh_trans_inv : public bgeot::geotrans_inv {
@@ -84,62 +84,62 @@ namespace getfem {
   
 
   /* ********************************************************************* */
-  /*								   	   */
-  /*	II. Interpolation of functions.                     		   */
-  /*									   */
+  /*                                                                       */
+  /*        II. Interpolation of functions.                                */
+  /*                                                                       */
   /* ********************************************************************* */
 
 
   template <typename VECT, typename F, typename M>
   inline void interpolation_function__(const mesh_fem &mf, VECT &V,
-				       F &f, const dal::bit_vector &dofs,
-				       const M &, gmm::abstract_null_type) {
+                                       F &f, const dal::bit_vector &dofs,
+                                       const M &, gmm::abstract_null_type) {
     size_type Q = mf.get_qdim();
     GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof() && Q == 1,
-		"Dof vector has not the right size");
+                "Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       V[i] = f(mf.point_of_basic_dof(i));
   }
 
   template <typename VECT, typename F, typename M>
   inline void interpolation_function__(const mesh_fem &mf, VECT &V,
-				       F &f, const dal::bit_vector &dofs,
-				       const M &v, gmm::abstract_vector) {
+                                       F &f, const dal::bit_vector &dofs,
+                                       const M &v, gmm::abstract_vector) {
     size_type N = gmm::vect_size(v),  Q = mf.get_qdim();
     GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof()*N/Q,
-		"Dof vector has not the right size");
+                "Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       if (i % Q == 0)
-	gmm::copy(f(mf.point_of_basic_dof(i)),
-		  gmm::sub_vector(V, gmm::sub_interval(i*N/Q, N)));
+        gmm::copy(f(mf.point_of_basic_dof(i)),
+                  gmm::sub_vector(V, gmm::sub_interval(i*N/Q, N)));
   }
 
   template <typename VECT, typename F, typename M>
   inline void interpolation_function__(const mesh_fem &mf, VECT &V,
-				       F &f, const dal::bit_vector &dofs,
-				       const M &mm, gmm::abstract_matrix) {
+                                       F &f, const dal::bit_vector &dofs,
+                                       const M &mm, gmm::abstract_matrix) {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     size_type Nr = gmm::mat_nrows(mm), Nc = gmm::mat_ncols(mm), N = Nr*Nc;
     size_type Q = mf.get_qdim();
     base_matrix m(Nr, Nc);
     GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof()*N/Q,
-		"Dof vector has not the right size");
+                "Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       if (i % Q == 0) {
-	gmm::copy(f(mf.point_of_basic_dof(i)), m);
-	for (size_type j = 0; j < Nc; ++j)
-	  gmm::copy(gmm::mat_col(m, j),
-		    gmm::sub_vector(V, gmm::sub_interval(i*N/Q+j*Nr, Nr)));
+        gmm::copy(f(mf.point_of_basic_dof(i)), m);
+        for (size_type j = 0; j < Nc; ++j)
+          gmm::copy(gmm::mat_col(m, j),
+                    gmm::sub_vector(V, gmm::sub_interval(i*N/Q+j*Nr, Nr)));
       }
 
   }
 
   template <typename VECT, typename F, typename M>
   inline void interpolation_function_(const mesh_fem &mf, VECT &V,
-				      F &f, const dal::bit_vector &dofs,
-				      const M &m) {
+                                      F &f, const dal::bit_vector &dofs,
+                                      const M &m) {
     interpolation_function__(mf, V, f, dofs, m,
-			     typename gmm::linalg_traits<M>::linalg_type());
+                             typename gmm::linalg_traits<M>::linalg_type());
   }
 
 #if GETFEM_PARA_LEVEL > 0
@@ -173,7 +173,7 @@ namespace getfem {
   */
   template <typename VECT, typename F>
   void interpolation_function(mesh_fem &mf_target, const VECT &VV, F &f,
-			 mesh_region rg=mesh_region::all_convexes()) {
+                         mesh_region rg=mesh_region::all_convexes()) {
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     size_type qqdimt = gmm::vect_size(VV) / mf_target.nb_dof();
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
@@ -181,26 +181,26 @@ namespace getfem {
     dal::bit_vector dofs = mf_target.basic_dof_on_region(rg);
     if (dofs.card() > 0)
       interpolation_function_(mf_target, V, f, dofs,
-			      f(mf_target.point_of_basic_dof(dofs.first())));
+                              f(mf_target.point_of_basic_dof(dofs.first())));
 
     if (mf_target.is_reduced()) {
       for (size_type k = 0; k < qqdimt; ++k)
-	gmm::mult(mf_target.reduction_matrix(),
-		  gmm::sub_vector(V,
-				  gmm::sub_slice(k, mf_target.nb_basic_dof(),
-						 qqdimt)),
-		  gmm::sub_vector(const_cast<VECT &>(VV),
-				  gmm::sub_slice(k, mf_target.nb_dof(),
-						 qqdimt)));
+        gmm::mult(mf_target.reduction_matrix(),
+                  gmm::sub_vector(V,
+                                  gmm::sub_slice(k, mf_target.nb_basic_dof(),
+                                                 qqdimt)),
+                  gmm::sub_vector(const_cast<VECT &>(VV),
+                                  gmm::sub_slice(k, mf_target.nb_dof(),
+                                                 qqdimt)));
     }
     else
       gmm::copy(V, const_cast<VECT &>(VV));
   }
 
   /* ********************************************************************* */
-  /*								   	   */
-  /*	III. Interpolation between two meshes.                		   */
-  /*									   */
+  /*                                                                       */
+  /*        III. Interpolation between two meshes.                         */
+  /*                                                                       */
   /* ********************************************************************* */
 
   /* ------------------------------ Interface -----------------------------*/
@@ -218,8 +218,8 @@ namespace getfem {
   */
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, int extrapolation = 0,
-		     double EPS = 1E-10);
+                     const VECTU &U, VECTV &V, int extrapolation = 0,
+                     double EPS = 1E-10);
 
   /**
      @brief Build the interpolation matrix of mf_source on mf_target.
@@ -230,7 +230,7 @@ namespace getfem {
    */
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, int extrapolation = 0, double EPS = 1E-10);
+                     MAT &M, int extrapolation = 0, double EPS = 1E-10);
 
 
   /* --------------------------- Implementation ---------------------------*/
@@ -246,9 +246,9 @@ namespace getfem {
   */
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation_same_mesh(const mesh_fem &mf_source,
-				 const mesh_fem &mf_target,
-				 const VECTU &UU, VECTV &VV,
-				 MAT &MM, int version) {
+                                 const mesh_fem &mf_target,
+                                 const VECTU &UU, VECTV &VV,
+                                 MAT &MM, int version) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     base_matrix G;
@@ -258,9 +258,9 @@ namespace getfem {
     std::vector<std::vector<T> > coeff;
     std::vector<size_type> dof_source;
     GMM_ASSERT1(qdim == mf_target.get_qdim() || mf_target.get_qdim() == 1,
-		"Attempt to interpolate a field of dimension "
-		<< qdim << " on a mesh_fem whose Qdim is " << 
-		int(mf_target.get_qdim()));
+                "Attempt to interpolate a field of dimension "
+                << qdim << " on a mesh_fem whose Qdim is " << 
+                int(mf_target.get_qdim()));
     size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
     fem_precomp_pool fppool;
@@ -279,7 +279,7 @@ namespace getfem {
       bgeot::pgeometric_trans pgt=mf_source.linked_mesh().trans_of_convex(cv);
       pfem pf_s = mf_source.fem_of_element(cv);
       if (!mf_target.convex_index().is_in(cv)) 
-	continue;
+        continue;
       pfem pf_t = mf_target.fem_of_element(cv);
       size_type nbd_s = pf_s->nb_dof(cv);
       size_type nbd_t = pf_t->nb_dof(cv);
@@ -292,46 +292,46 @@ namespace getfem {
           coeff[qq].resize(nbd_s*qdim);
           itdof = mf_source.ind_basic_dof_of_element(cv).begin();
           for (size_type k = 0; k < cvnbdof; ++k, ++itdof) {
-	    coeff[qq][k] = U[(*itdof)*qqdim+qq];
-	  }
+            coeff[qq][k] = U[(*itdof)*qqdim+qq];
+          }
         }
       }
       if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix
-	  (G, mf_source.linked_mesh().points_of_convex(cv));
+        bgeot::vectors_to_base_matrix
+          (G, mf_source.linked_mesh().points_of_convex(cv));
 
       GMM_ASSERT1(pf_t->target_dim() == 1,
-		  "won't interpolate on a vector FEM... ");
+                  "won't interpolate on a vector FEM... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-				    size_type(-1));
+                                    size_type(-1));
       itdof = mf_target.ind_basic_dof_of_element(cv).begin();
       if (version != 0) {
-	const mesh_fem::ind_dof_ct &idct
-	  = mf_source.ind_basic_dof_of_element(cv);
-	dof_source.assign(idct.begin(), idct.end());
+        const mesh_fem::ind_dof_ct &idct
+          = mf_source.ind_basic_dof_of_element(cv);
+        dof_source.assign(idct.begin(), idct.end());
       }
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
-	size_type dof_t = *itdof*qmult;
+        size_type dof_t = *itdof*qmult;
         if (dof_t_done.is_in(*itdof)) continue;
         dof_t_done.add(*itdof);
-	ctx.set_ii(i);
-	if (version == 0) {
+        ctx.set_ii(i);
+        if (version == 0) {
           for (size_type qq=0; qq < qqdim; ++qq) {
             pf_s->interpolation(ctx, coeff[qq], val, qdim);
             for (size_type k=0; k < qdim; ++k)
-	      V[(dof_t + k)*qqdim+qq] = val[k];
+              V[(dof_t + k)*qqdim+qq] = val[k];
           }
-	}
-	else {
-	  base_matrix Mloc(qdim, mf_source.nb_basic_dof_of_element(cv));
-	  pf_s->interpolation(ctx, Mloc, qdim);
-	  for (size_type k=0; k < qdim; ++k) {
+        }
+        else {
+          base_matrix Mloc(qdim, mf_source.nb_basic_dof_of_element(cv));
+          pf_s->interpolation(ctx, Mloc, qdim);
+          for (size_type k=0; k < qdim; ++k) {
             for (size_type j=0; j < dof_source.size(); ++j) {
               M(dof_t + k, dof_source[j]) = Mloc(k, j);
             }
-	  }
-	}
+          }
+        }
       }
     }
 
@@ -340,19 +340,19 @@ namespace getfem {
       mf_target.reduce_vector(V, VV);
     else {
       if (mf_target.is_reduced())
-	if (mf_source.is_reduced()) {
-	  gmm::row_matrix<gmm::rsvector<scalar_type> >
-	    MMM(mf_target.nb_dof(), mf_source.nb_basic_dof());
-	  gmm::mult(mf_target.reduction_matrix(), M, MMM);
-	  gmm::mult(MMM, mf_source.extension_matrix(), MM);
-	}
-	else
-	  gmm::mult(mf_target.reduction_matrix(), M, MM); 
+        if (mf_source.is_reduced()) {
+          gmm::row_matrix<gmm::rsvector<scalar_type> >
+            MMM(mf_target.nb_dof(), mf_source.nb_basic_dof());
+          gmm::mult(mf_target.reduction_matrix(), M, MMM);
+          gmm::mult(MMM, mf_source.extension_matrix(), MM);
+        }
+        else
+          gmm::mult(mf_target.reduction_matrix(), M, MM); 
       else
-	if (mf_source.is_reduced())
-	  gmm::mult(M, mf_source.extension_matrix(), MM);
-	else
-	  gmm::copy(M, MM);
+        if (mf_source.is_reduced())
+          gmm::mult(M, mf_source.extension_matrix(), MM);
+        else
+          gmm::copy(M, MM);
     }
   }
 
@@ -364,10 +364,10 @@ namespace getfem {
    */
   template<typename VECTU, typename VECTV, typename MAT>
   void interpolation(const mesh_fem &mf_source,
-		     mesh_trans_inv &mti,
-		     const VECTU &UU, VECTV &V, MAT &MM,
-		     int version, int extrapolation = 0,
-		     dal::bit_vector *dof_untouched = 0) {
+                     mesh_trans_inv &mti,
+                     const VECTU &UU, VECTV &V, MAT &MM,
+                     int version, int extrapolation = 0,
+                     dal::bit_vector *dof_untouched = 0) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     const mesh &msh(mf_source.linked_mesh());
@@ -398,84 +398,84 @@ namespace getfem {
 
       pfem pf_s = mf_source.fem_of_element(cv);
       if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
+        bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
 
       fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv,
-				    size_type(-1));
+                                    size_type(-1));
       if (version == 0) {
         coeff.resize(qqdim);
         for (size_type qq=0; qq < qqdim; ++qq) {
           coeff[qq].resize(mf_source.nb_basic_dof_of_element(cv));
-	  gmm::sub_index SUBI(mf_source.ind_basic_dof_of_element(cv));
+          gmm::sub_index SUBI(mf_source.ind_basic_dof_of_element(cv));
           gmm::copy(gmm::sub_vector(U, SUBI), coeff[qq]);
         }
       }
       if (version != 0) {
-	const mesh_fem::ind_dof_ct &idct
-	  = mf_source.ind_basic_dof_of_element(cv);
-	dof_source.assign(idct.begin(), idct.end());
+        const mesh_fem::ind_dof_ct &idct
+          = mf_source.ind_basic_dof_of_element(cv);
+        dof_source.assign(idct.begin(), idct.end());
       }
       for (size_type i = 0; i < itab.size(); ++i) {
-	size_type dof_t = itab[i];
-	if (dof_done.is_in(dof_t)) {
-	  dof_done.sup(dof_t);
-	  ctx.set_xref(mti.reference_coords()[dof_t]);
-	  size_type pos = dof_t * qdim_s;
-	  if (version == 0) {
+        size_type dof_t = itab[i];
+        if (dof_done.is_in(dof_t)) {
+          dof_done.sup(dof_t);
+          ctx.set_xref(mti.reference_coords()[dof_t]);
+          size_type pos = dof_t * qdim_s;
+          if (version == 0) {
             for (size_type qq=0; qq < qqdim; ++qq) {           
               pf_s->interpolation(ctx, coeff[qq], val, qdim_s);
               for (size_type k=0; k < qdim_s; ++k)
-		V[(pos + k)*qqdim+qq] = val[k];
+                V[(pos + k)*qqdim+qq] = val[k];
             }
-	    // Partie à arranger si on veut en option pouvoir interpoler
-	    // le gradient.
-	    //	  if (PVGRAD) {
-	    // base_matrix grad(mdim, qdim);
-	    // pf_s->interpolation_grad(ctx,coeff,gmm::transposed(grad), qdim);
-	    // std::copy(grad.begin(), grad.end(), V.begin()+dof_t*qdim*mdim);
-	    // }
-	  }
-	  else {
-	    base_matrix Mloc(qdim_s, mf_source.nb_basic_dof_of_element(cv));
-	    pf_s->interpolation(ctx, Mloc, qdim_s);
-	    for (size_type k=0; k < qdim_s; ++k) {
+            // Partie à arranger si on veut en option pouvoir interpoler
+            // le gradient.
+            //          if (PVGRAD) {
+            // base_matrix grad(mdim, qdim);
+            // pf_s->interpolation_grad(ctx,coeff,gmm::transposed(grad), qdim);
+            // std::copy(grad.begin(), grad.end(), V.begin()+dof_t*qdim*mdim);
+            // }
+          }
+          else {
+            base_matrix Mloc(qdim_s, mf_source.nb_basic_dof_of_element(cv));
+            pf_s->interpolation(ctx, Mloc, qdim_s);
+            for (size_type k=0; k < qdim_s; ++k) {
               for (size_type j=0; j < gmm::mat_ncols(Mloc); ++j)
                 M(pos+k, dof_source[j]) = Mloc(k,j);
                 /* does not work with col matrices
-		   gmm::clear(gmm::mat_row(M, pos+k));
-		   gmm::copy(gmm::mat_row(Mloc, k),
-		   gmm::sub_vector(gmm::mat_row(M, pos+k), isrc));
+                   gmm::clear(gmm::mat_row(M, pos+k));
+                   gmm::copy(gmm::mat_row(Mloc, k),
+                   gmm::sub_vector(gmm::mat_row(M, pos+k), isrc));
                 */
-	    }
-	  }
-	}
+            }
+          }
+        }
       }
     }
     if (dof_done.card() != 0) {
       if (dof_untouched)
-	*dof_untouched = dof_done;
+        *dof_untouched = dof_done;
       else
-	GMM_WARNING2("in interpolation (different meshes),"
-		     << dof_done.card() << " dof of target mesh_fem have "
-		     << " been missed\nmissing dofs : " << dof_done);
+        GMM_WARNING2("in interpolation (different meshes),"
+                     << dof_done.card() << " dof of target mesh_fem have "
+                     << " been missed\nmissing dofs : " << dof_done);
     }
 
     if (version != 0) {
       if (mf_source.is_reduced())
-	gmm::mult(M, mf_source.extension_matrix(), MM);
+        gmm::mult(M, mf_source.extension_matrix(), MM);
       else
-	gmm::copy(M, MM);
+        gmm::copy(M, MM);
     }
     
   }
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
-		     const VECTU &U, VECTV &V, int extrapolation = 0,
-		     dal::bit_vector *dof_untouched = 0) {
+                     const VECTU &U, VECTV &V, int extrapolation = 0,
+                     dal::bit_vector *dof_untouched = 0) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0 &&
-		gmm::vect_size(V)!=0, "Dimension of vector mismatch");
+                gmm::vect_size(V)!=0, "Dimension of vector mismatch");
     interpolation(mf_source, mti, U, V, M, 0, extrapolation, dof_untouched);
   }
 
@@ -488,9 +488,9 @@ namespace getfem {
    */
   template<typename VECTU, typename VECTV, typename MAT>
     void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		       const VECTU &U, VECTV &VV, MAT &MM,
-		       int version, int extrapolation,
-		       double EPS) {
+                       const VECTU &U, VECTV &VV, MAT &MM,
+                       int version, int extrapolation,
+                       double EPS) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
@@ -503,14 +503,14 @@ namespace getfem {
     getfem::mesh_trans_inv mti(msh, EPS);
     size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
     GMM_ASSERT1(qdim_s == qdim_t || qdim_t == 1,
-		"Attempt to interpolate a field of dimension "
-		<< qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
+                "Attempt to interpolate a field of dimension "
+                << qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
     
     /* test if the target mesh_fem is really of Lagrange type.         */
     for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
       pfem pf_t = mf_target.fem_of_element(cv);
       GMM_ASSERT1(pf_t->target_dim() == 1 && pf_t->is_lagrange(),
-		  "Target fem not convenient for interpolation");
+                  "Target fem not convenient for interpolation");
     }
     /* initialisation of the mesh_trans_inv */
     size_type nbpts = mf_target.nb_basic_dof() / qdim_t;
@@ -522,21 +522,21 @@ namespace getfem {
       mf_target.reduce_vector(V, VV);
     else {
       if (mf_target.is_reduced())
-	gmm::mult(mf_target.reduction_matrix(), M, MM); 
+        gmm::mult(mf_target.reduction_matrix(), M, MM); 
       else
-	gmm::copy(M, MM);
+        gmm::copy(M, MM);
     }
 
   }
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     const VECTU &U, VECTV &V, int extrapolation,
-		     double EPS) {
+                     const VECTU &U, VECTV &V, int extrapolation,
+                     double EPS) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
-		&& (gmm::vect_size(V) % mf_target.nb_dof()) == 0
-		&& gmm::vect_size(V) != 0, "Dimensions mismatch");
+                && (gmm::vect_size(V) % mf_target.nb_dof()) == 0
+                && gmm::vect_size(V) != 0, "Dimensions mismatch");
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
     }
@@ -546,10 +546,10 @@ namespace getfem {
 
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-		     MAT &M, int extrapolation, double EPS) {
+                     MAT &M, int extrapolation, double EPS) {
     GMM_ASSERT1(mf_source.nb_dof() == gmm::mat_ncols(M)
-		&& (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
-		&& gmm::mat_nrows(M) != 0, "Dimensions mismatch");
+                && (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
+                && gmm::mat_nrows(M) != 0, "Dimensions mismatch");
     std::vector<scalar_type> U, V;
     if (&mf_source.linked_mesh() == &mf_target.linked_mesh())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);

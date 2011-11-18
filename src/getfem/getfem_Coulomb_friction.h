@@ -170,7 +170,7 @@ namespace getfem {
    std::string dataname_gap="", std::string dataname_alpha="",
    bool symmetrized=false){
 
-    size_type indbrick =add_basic_contact_with_friction_brick
+    size_type indbrick = add_basic_contact_with_friction_brick
       (md, varname_u, multname_n, multname_t, dataname_r, BN, BT,
        dataname_friction_coeff, dataname_gap, dataname_alpha, symmetrized, true);
     gmm::resize(contact_brick_set_DN(md, indbrick),
@@ -498,9 +498,9 @@ namespace getfem {
                                          RHS_U_V3,
                                          RHS_U_V4,
                                          RHS_U_V5,
-					 RHS_U_V6,
+                                         RHS_U_V6,
                                          RHS_U_V7,
-					 RHS_U_FRICT_V1,
+                                         RHS_U_FRICT_V1,
                                          RHS_U_FRICT_V2,
                                          RHS_U_FRICT_V3,
                                          RHS_U_FRICT_V4,
@@ -511,7 +511,7 @@ namespace getfem {
                                          K_UL_V2,
                                          K_UL_V3,
                                          K_UL_V4,
-					 UZAWA_PROJ_FRICT,
+                                         UZAWA_PROJ_FRICT,
 
                                          K_UU_V1,
                                          K_UU_V2,
@@ -624,7 +624,7 @@ namespace getfem {
 
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
                                    obs, r, UZAWA_PROJ_FRICT, false, alpha,
-				   mf_coeff, &f_coeff, &WT);
+                                   mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
     assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i); ");
@@ -674,7 +674,7 @@ namespace getfem {
 
     std::vector<scalar_type> U(mf_u.nb_dof());
     friction_nonlinear_term nterm1(mf_u, U, mf_lambda,
-				   lambda, mf_obs, obs, 1, RHS_U_V1);
+                                   lambda, mf_obs, obs, 1, RHS_U_V1);
 
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");

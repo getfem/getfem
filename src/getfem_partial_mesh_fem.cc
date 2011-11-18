@@ -22,11 +22,11 @@
 #include "getfem/getfem_partial_mesh_fem.h"
 
 namespace getfem {
-  
+
 
   void partial_mesh_fem::clear(void)
   { mesh_fem::clear(); is_adapted = false; }
-  
+
   partial_mesh_fem::partial_mesh_fem(const mesh_fem &mef)
     : mesh_fem(mef.linked_mesh()), mf(mef)
   { is_adapted = false; }
@@ -39,7 +39,7 @@ namespace getfem {
 
   DAL_SIMPLE_KEY(special_partialmf_key, pfem);
   void partial_mesh_fem::adapt(const dal::bit_vector &kept_dofs,
-			       const dal::bit_vector &rejected_elt) {
+                               const dal::bit_vector &rejected_elt) {
     mf.context_check();
 
     if (mf.get_qdim_m() != QdimM || mf.get_qdim_n() != QdimN) {
@@ -56,17 +56,17 @@ namespace getfem {
     size_type j = 0;
     for (dal::bv_visitor i(kept_dofs); !i.finished(); ++i, ++j)
       RR(j, i) = scalar_type(1);
-    
+
     R_ = REDUCTION_MATRIX(kept_dofs.card(), mf.nb_basic_dof());
     E_ = EXTENSION_MATRIX(mf.nb_basic_dof(), kept_dofs.card());
 
     if (mf.is_reduced()) {
       gmm::row_matrix<gmm::rsvector<scalar_type> >
-	A(kept_dofs.card(), mf.nb_basic_dof());
+        A(kept_dofs.card(), mf.nb_basic_dof());
       gmm::mult(RR, mf.reduction_matrix(), A);
       gmm::copy(A, R_);
       gmm::row_matrix<gmm::rsvector<scalar_type> >
-	B(mf.nb_basic_dof(), kept_dofs.card());
+        B(mf.nb_basic_dof(), kept_dofs.card());
       gmm::mult(mf.extension_matrix(), gmm::transposed(RR), B);
       gmm::copy(B, E_);
     }
@@ -88,7 +88,7 @@ namespace getfem {
   }
 
   void partial_mesh_fem::write_to_file(const std::string &name,
-				       bool with_mesh) const {
+                                       bool with_mesh) const {
     std::ofstream o(name.c_str());
     GMM_ASSERT1(o, "impossible to open file '" << name << "'");
     o << "% GETFEM MESH_FEM FILE " << '\n';
@@ -98,7 +98,7 @@ namespace getfem {
   }
 
   dal::bit_vector select_dofs_from_im(const mesh_fem &mf, const mesh_im &mim,
-				      unsigned P) {
+                                      unsigned P) {
     const mesh &m = mf.linked_mesh();
     unsigned N = m.dim();
     if (P == unsigned(-1)) P = N;
@@ -108,7 +108,7 @@ namespace getfem {
     getfem::pfem pf_old = 0;
     getfem::pfem_precomp pfp = 0;
     pintegration_method pim1 = 0;
-    
+
     std::vector<scalar_type> areas(mf.nb_basic_dof());
     std::vector<scalar_type> area_supports(mf.nb_basic_dof());
     dal::bit_vector kept_dofs;
@@ -120,47 +120,47 @@ namespace getfem {
       if (pim == im_none()) continue;
       getfem::pfem pf = mf.fem_of_element(cv);
       GMM_ASSERT1(pim->type() == IM_APPROX,
-		  "Works only with approximate integration");
+                  "Works only with approximate integration");
       papprox_integration pai2= pim->approx_method();
       static papprox_integration pai2_old = 0;
       if (pgt_old != pgt || pai2 != pai2_old) {
-	pim1 = getfem::classical_approx_im(pgt, 2);
-      	pgp2 = bgeot::geotrans_precomp(pgt,&(pai2->integration_points()),pim);
+        pim1 = getfem::classical_approx_im(pgt, 2);
+              pgp2 = bgeot::geotrans_precomp(pgt,&(pai2->integration_points()),pim);
       }
       if (pai2 != pai2_old || pf != pf_old) {
-	pf_old = pf;
-	pfp = getfem::fem_precomp(pf, &(pai2->integration_points()), pim);
+        pf_old = pf;
+        pfp = getfem::fem_precomp(pf, &(pai2->integration_points()), pim);
       }
       pai2_old = pai2;
       pgt_old = pgt;
 
       bgeot::geotrans_interpolation_context c2(pgp2, 0, G);
       scalar_type area1 = convex_area_estimate(pgt, G, pim1);
-	  
+
       size_type tdim = mf.get_qdim() / pf->target_dim();
 
       for (size_type i = 0; i < pai2->nb_points_on_convex(); ++i) {
-	for (unsigned d = 0; d < pf->nb_dof(cv); ++d) {
-	  for (size_type j = 0; j < tdim; ++j) {
-	    if (i == 0)
-	      areas[mf.ind_basic_dof_of_element(cv)[d*tdim+j]] += area1;
-	    c2.set_ii(i);
-	    area_supports[mf.ind_basic_dof_of_element(cv)[d*tdim+j]]
-	      += pai2->coeff(i) * c2.J() * gmm::sqr(pfp->val(i)[d]);
-	  }
-	  //	    * ((gmm::abs(pfp->val(i)[d]) < 1e-10) ? 0.0 : 1.0);
-	}
+        for (unsigned d = 0; d < pf->nb_dof(cv); ++d) {
+          for (size_type j = 0; j < tdim; ++j) {
+            if (i == 0)
+              areas[mf.ind_basic_dof_of_element(cv)[d*tdim+j]] += area1;
+            c2.set_ii(i);
+            area_supports[mf.ind_basic_dof_of_element(cv)[d*tdim+j]]
+              += pai2->coeff(i) * c2.J() * gmm::sqr(pfp->val(i)[d]);
+          }
+          //            * ((gmm::abs(pfp->val(i)[d]) < 1e-10) ? 0.0 : 1.0);
+        }
       }
     }
 
-    
+
     std::vector<scalar_type> areas2(mf.nb_dof());
     std::vector<scalar_type> area_supports2(mf.nb_dof());
 
     if (mf.is_reduced()) {
       gmm::mult(gmm::transposed(mf.extension_matrix()), areas, areas2);
       gmm::mult(gmm::transposed(mf.extension_matrix()), area_supports,
-		area_supports2);
+                area_supports2);
     }
     else {
       gmm::copy(areas, areas2);
@@ -169,7 +169,7 @@ namespace getfem {
 
     for (size_type i = 0; i < mf.nb_dof(); ++i) {
       if (area_supports2[i] > pow(1e-14 * areas2[i], scalar_type(P) / N))
-	kept_dofs.add(i);
+        kept_dofs.add(i);
     }
 
     return kept_dofs;

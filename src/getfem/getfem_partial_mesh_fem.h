@@ -46,7 +46,7 @@
 #include "getfem_mesh_im.h"
 
 
-// a ajuster : mesh, qdim, qdim_mn, 
+// a ajuster : mesh, qdim, qdim_mn,
 
 
 namespace getfem {
@@ -55,7 +55,7 @@ namespace getfem {
      of the original mesh_fem.
   */
   class partial_mesh_fem : public mesh_fem, public boost::noncopyable,
-			   public dal::static_stored_object {
+                           public dal::static_stored_object {
   protected :
     const mesh_fem &mf;
     mutable bool is_adapted;
@@ -65,9 +65,9 @@ namespace getfem {
     { mf.context_check(); is_adapted = false; }
 
     /** build the mesh_fem keeping only the dof of the original
-	mesh_fem which are listed in kept_dof. */
+        mesh_fem which are listed in kept_dof. */
     void adapt(const dal::bit_vector &kept_dof,
-	       const dal::bit_vector &rejected_elt = dal::bit_vector());
+               const dal::bit_vector &rejected_elt = dal::bit_vector());
     void clear(void);
 
     pfem fem_of_element(size_type cv) const
@@ -76,13 +76,13 @@ namespace getfem {
     virtual dim_type get_qdim() const { return  mf.get_qdim(); }
 
     virtual void set_qdim(dim_type) {
-      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same than "
-		  "the original fem"); 
+      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
+                  "the original fem");
     }
 
     virtual void set_qdim_mn(dim_type, dim_type) {
-      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same than "
-		  "the original fem"); 
+      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
+                  "the original fem");
     }
 
     ind_dof_ct ind_basic_dof_of_element(size_type cv) const
@@ -94,7 +94,7 @@ namespace getfem {
 
     size_type nb_basic_dof_of_face_of_element(size_type cv, short_type f) const
     { return  mf.nb_basic_dof_of_face_of_element(cv, f); }
-    
+
     size_type nb_basic_dof_of_element(size_type cv) const
     { return  mf.nb_basic_dof_of_element(cv); }
 
@@ -115,7 +115,7 @@ namespace getfem {
 
     size_type nb_dof(void) const {
       context_check();
-      return use_reduction ? gmm::mat_nrows(R_) : mf.nb_dof(); 
+      return use_reduction ? gmm::mat_nrows(R_) : mf.nb_dof();
     }
 
     size_type nb_basic_dof(void) const
@@ -123,9 +123,9 @@ namespace getfem {
 
     dal::bit_vector basic_dof_on_region(const mesh_region &b) const
     { return mf.basic_dof_on_region(b); }
-    
+
     void read_from_file(std::istream &)
-    { GMM_ASSERT1(false, "You cannot directely read this kind of mesh_fem"); }
+    { GMM_ASSERT1(false, "You cannot directly read this kind of mesh_fem"); }
     void write_to_file(std::ostream &ost) const;
     void write_to_file(const std::string &name, bool with_mesh=false) const;
 
@@ -148,10 +148,10 @@ namespace getfem {
      A more efficient algorithm is now present in gmm_range_basis.h
    */
   dal::bit_vector select_dofs_from_im(const mesh_fem &mf, const mesh_im &mim,
-				      unsigned P = unsigned(-1));
-  
-  
+                                      unsigned P = unsigned(-1));
+
+
 }  /* end of namespace getfem.                                            */
 
 #endif
-  
+

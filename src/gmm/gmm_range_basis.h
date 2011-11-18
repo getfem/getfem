@@ -433,7 +433,7 @@ namespace gmm {
       if (columns.size() == nc_r) break;
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
-    cout<<"size of colun"<<columns.size()<<endl;
+    cout << "size of columns " << columns.size() << endl;
     if (columns.size() > std::max(size_type(1000), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else

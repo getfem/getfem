@@ -98,7 +98,7 @@ namespace getfem {
 
   template<typename VEC, typename MAT>
   static void De_Saxce_projection_grad(const VEC &x, const VEC &n,
-				       scalar_type f, MAT &g) {
+                                       scalar_type f, MAT &g) {
     scalar_type xn = gmm::vect_sp(x, n);
     scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
 
@@ -872,12 +872,12 @@ namespace getfem {
         }
 
         
-	gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
-		 rlambda_n);
-	
-	if (!contact_only)
-	  gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-		   rlambda_t);
+        gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+                 rlambda_n);
+        
+        if (!contact_only)
+          gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+                   rlambda_t);
       }
     }
 
@@ -1189,7 +1189,7 @@ namespace getfem {
     case K_UL_FRICT_V4: case K_UL_FRICT_V5: case K_UL_FRICT_V6:
     case K_LL_FRICT_V1: case K_LL_FRICT_V2: case K_LL_FRICT_V3:
     case K_UU_FRICT_V1: case K_UU_FRICT_V2:
-    case K_UU_FRICT_V3: case K_UU_FRICT_V4: 
+    case K_UU_FRICT_V3: case K_UU_FRICT_V4:
       sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
     } 
   }
@@ -1345,16 +1345,16 @@ namespace getfem {
       break;
     case K_UL_FRICT_V6:
       {
-	scalar_type nzt = gmm::vect_norm2(zt);
-	auxN = lnt - (r*(un-g) - f_coeff * nzt) * no - zt;
-	base_matrix A(N, N), B(N, N);
-	De_Saxce_projection_grad(auxN, no, f_coeff, A);
-	gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
-	gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
-	if (nzt != scalar_type(0)) 
-	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
-	gmm::mult(A, B, GP);
-	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+        scalar_type nzt = gmm::vect_norm2(zt);
+        auxN = lnt - (r*(un-g) - f_coeff * nzt) * no - zt;
+        base_matrix A(N, N), B(N, N);
+        De_Saxce_projection_grad(auxN, no, f_coeff, A);
+        gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
+        gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
+        if (nzt != scalar_type(0)) 
+          gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+        gmm::mult(A, B, GP);
+        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
       }
       break;
     case K_LL_FRICT_V1:
@@ -1379,7 +1379,7 @@ namespace getfem {
       auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
       De_Saxce_projection_grad(auxN, no, f_coeff, GP);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = (GP(i,j) - scalar_type((i == j) ? 1 : 0))/r;
+        t[i*N+j] = (GP(i,j) - scalar_type((i == j) ? 1 : 0))/r;
       break;
     case K_UU_FRICT_V1:
       e = r*Heav(r*(un-g)-ln);
@@ -1400,7 +1400,7 @@ namespace getfem {
       ball_projection_grad_r(auxN, -f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
-		      - f_coeff*Heav(r*(un-g)-ln)*no[i]*V[j]);
+                      - f_coeff*Heav(r*(un-g)-ln)*no[i]*V[j]);
       break;
     case K_UU_FRICT_V4:
       e = Heav(r*(un-g));
@@ -1410,7 +1410,7 @@ namespace getfem {
       ball_projection_grad_r(auxN, -f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
-		      - f_coeff*Heav(r*(un-g))*no[i]*V[j]);
+                      - f_coeff*Heav(r*(un-g))*no[i]*V[j]);
       break;
     default : GMM_ASSERT1(false, "Invalid option");
     }
@@ -1941,7 +1941,7 @@ namespace getfem {
    scalar_type r, int option, const mesh_region &rg) {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
-				  r, (option == 1) ? K_UU_V1 : K_UU_V2);
+                                  r, (option == 1) ? K_UU_V1 : K_UU_V2);
 
     getfem::generic_assembly assem;
     assem.set
@@ -1964,7 +1964,7 @@ namespace getfem {
    scalar_type r, int option, const mesh_region &rg) {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
-				  r, (option == 1) ? RHS_U_V5 : RHS_U_V2);
+                                  r, (option == 1) ? RHS_U_V5 : RHS_U_V2);
     
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
@@ -1986,8 +1986,8 @@ namespace getfem {
    const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
-				  (option==1) ? K_UU_FRICT_V4 : K_UU_FRICT_V3,
-				  false, alpha, mf_coeff, &f_coeff, &WT);
+                                  (option==1) ? K_UU_FRICT_V4 : K_UU_FRICT_V3,
+                                  false, alpha, mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
     assem.set
@@ -2012,8 +2012,8 @@ namespace getfem {
    const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
-				  (option == 1) ? RHS_U_V7 : RHS_U_V6,
-				  false, alpha, mf_coeff, &f_coeff, &WT);
+                                  (option == 1) ? RHS_U_V7 : RHS_U_V6,
+                                  false, alpha, mf_coeff, &f_coeff, &WT);
     
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
@@ -2051,7 +2051,7 @@ namespace getfem {
       GMM_ASSERT1(dl.size() >= nb_data_1 && dl.size() <= nb_data_2,
                   "Wrong number of data for penalized Coulomb friction "
                   << "brick, " << dl.size() << " should be between "
-		  << nb_data_1 << " and " << nb_data_2 << ".");
+                  << nb_data_1 << " and " << nb_data_2 << ".");
       GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
                   "penalized Coulomb friction brick");
 
@@ -2099,22 +2099,22 @@ namespace getfem {
       model_real_plain_vector voidvec;
       const model_real_plain_vector &WT
         = (!contact_only && dl.size()>=5+shift) ?
-	md.real_variable(dl[4+shift]) : voidvec;
+        md.real_variable(dl[4+shift]) : voidvec;
 
       mesh_region rg(region);
       mf_u.linked_mesh().intersect_with_mpi_region(rg);
 
       if (version & model::BUILD_MATRIX) {
-	GMM_TRACE2("Penalized Coulomb friction tangent term");
-	gmm::clear(matl[0]);
+        GMM_TRACE2("Penalized Coulomb friction tangent term");
+        gmm::clear(matl[0]);
         if (contact_only)
           asm_frictionless_penalized_tangent_matrix
             (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
-	     vr[0], option, rg);
+             vr[0], option, rg);
         else
           asm_Coulomb_friction_penalized_tangent_matrix
             (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
-	     vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
+             vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
       }
 
       if (version & model::BUILD_RHS) {
@@ -2122,11 +2122,11 @@ namespace getfem {
         if (contact_only)
           asm_frictionless_penalized_rhs
             (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
-	     vr[0], option, rg);
+             vr[0], option, rg);
         else
-	  asm_Coulomb_friction_penalized_rhs
+          asm_Coulomb_friction_penalized_rhs
             (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
-	     vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
+             vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
       }
 
     }
@@ -2136,10 +2136,10 @@ namespace getfem {
       contact_only = contact_only_;
       option = option_;
       set_flags(contact_only ? "Continuous penalized contact brick"
-		: "Continuous penalized Coulomb friction brick",
-		false /* is linear*/, contact_only /* is symmetric */,
+                : "Continuous penalized Coulomb friction brick",
+                false /* is linear*/, contact_only /* is symmetric */,
                 true /* is coercive */, true /* is real */,
-		false /* is complex */);
+                false /* is complex */);
     }
 
   };
@@ -2202,7 +2202,7 @@ namespace getfem {
       dl.push_back(dataname_alpha);
       if (dataname_wt.size() > 0) dl.push_back(dataname_wt);
     }
-    
+
     model::varnamelist vl(1, varname_u);
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);

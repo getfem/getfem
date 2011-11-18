@@ -33,7 +33,7 @@ You can try to launch a demo (be careful, there is a lot of work needed before t
 
 For the compilation of the toolbox under windows:
 - compile getfem + getfem interface using the visual studio 2010 project.
-  copy the lib files (from msvc2010/Release) into scilab/src/win32 ou
+  copy the lib files (from msvc2010/Release) into scilab/src/win32 or
   src/win64
   If you plan to add support for qhull and muparser in the windows
   library, you must add:
