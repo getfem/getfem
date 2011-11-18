@@ -560,7 +560,6 @@ namespace gmm
   
   template <typename T, int shift>
   void csc_matrix<T, shift>::init_with_identity(size_type n) {
-    if (pr) { delete[] pr; delete[] ir; delete[] jc; }
     nc = nr = n; 
     pr.resize(nc); ir.resize(nc); jc.resize(nc+1);
     for (size_type j = 0; j < nc; ++j)
