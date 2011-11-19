@@ -5,17 +5,17 @@
 ; This file is released into the public domain
 ;##############################################################################################################
 ; modify this path where is sciglpk directory
-#define BinariesSourcePath "E:\toolboxes\getfem\getfem\interface\src\scilab"
+#define BinariesSourcePath "E:\Scilab\toolboxes\getfem\interface\src\scilab"
 ;
-#define SCIGETFEM_Module_version "1.0"
+#define SCIGETFEM_Module_version "3914"
 #define CurrentYear "2011"
-#define SCIGETFEM_ModuleDirFilename "scigetfem-1.0"
+#define SCIGETFEM_ModuleDirFilename "scigetfem-rev3914"
 ;##############################################################################################################
 [Setup]
 ; Debut Données de base à renseigner suivant version
 SourceDir={#BinariesSourcePath}
 AppName=SciGetFem Module
-AppVerName=SciGetFem Module version 1.0
+AppVerName=SciGetFem Module version rev3914
 DefaultDirName={pf}/{#SCIGETFEM_ModuleDirFilename}
 InfoAfterfile=readme.txt
 LicenseFile=license.txt
@@ -39,6 +39,8 @@ Source: etc\sci_getfem.start; DestDir: {app}\etc
 Source: sci_gateway\loader_gateway.sce; DestDir: {app}\sci_gateway
 Source: sci_gateway\c\loader.sce; DestDir: {app}\sci_gateway\c
 Source: sci_gateway\c\*.dll; DestDir: {app}\sci_gateway\c
+Source: macros\*.*; DestDir: {app}\macros;
+Source: macros\overload\*.*; DestDir: {app}\macros\overload;
 Source: demos\*.*; DestDir: {app}\demos;
 Source: demos\data\*.*; DestDir: {app}\demos\data;
 Source: jar\*.*; DestDir: {app}\jar
