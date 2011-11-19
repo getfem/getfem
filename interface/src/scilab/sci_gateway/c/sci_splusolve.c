@@ -50,35 +50,34 @@ int sci_splusolve(char * fname)
   PERM   * pivot = NULL;
   int      Index, i, j;
   SciErr   _SciErr;
-  StrCtx   _StrCtx;
   int      var_type;
 
   CheckRhs(1,2);
   CheckLhs(1,1);
 
   // First, access to the input variable (a matrix of strings)
-  _SciErr = getVarAddressFromPosition(&_StrCtx, 1,&p_in_spmat_address);
+  _SciErr = getVarAddressFromPosition(pvApiCtx, 1,&p_in_spmat_address);
 
-  _SciErr = getVarType(&_StrCtx, p_in_spmat_address, &var_type);
+  _SciErr = getVarType(pvApiCtx, p_in_spmat_address, &var_type);
   if (var_type!=sci_sparse)
     {
       Scierror(999,"%s: wrong parameter, a sparse matrix is needed\n",fname);
       return 0;
     }
 
-  if (isVarComplex(&_StrCtx, p_in_spmat_address))
+  if (isVarComplex(pvApiCtx, p_in_spmat_address))
     {
       Scierror(999,"%s: wrong parameter, a real sparse matrix is needed\n",fname);
       return 0;
     }
 
-  _SciErr = getSparseMatrix(&_StrCtx, p_in_spmat_address, &p_in_spmat_nb_rows, &p_in_spmat_nb_cols, 
+  _SciErr = getSparseMatrix(pvApiCtx, p_in_spmat_address, &p_in_spmat_nb_rows, &p_in_spmat_nb_cols, 
 			    &p_in_spmat_nb_items, &p_in_spmat_items_row, &p_in_spmat_col_pos, &p_in_spmat_val);
 
   // Second, get b
-  _SciErr = getVarAddressFromPosition(&_StrCtx, 2, &p_in_b_dbl_address);
+  _SciErr = getVarAddressFromPosition(pvApiCtx, 2, &p_in_b_dbl_address);
 
-  _SciErr = getMatrixOfDouble(&_StrCtx, p_in_b_dbl_address, &p_in_b_nb_rows, &p_in_b_nb_cols, &p_in_b_dbl_matrix);
+  _SciErr = getMatrixOfDouble(pvApiCtx, p_in_b_dbl_address, &p_in_b_nb_rows, &p_in_b_nb_cols, &p_in_b_dbl_matrix);
 
   ////////////////////////////
   // Proceed the resolution //
@@ -114,7 +113,7 @@ int sci_splusolve(char * fname)
   p_out_x_dbl_matrix = (double *)MALLOC(p_in_b_nb_rows*sizeof(double));
   memcpy(p_out_x_dbl_matrix,vOut->ve,p_in_b_nb_rows*sizeof(double));
 
-  _SciErr = createMatrixOfDouble(&_StrCtx, Rhs+1, p_in_b_nb_rows, p_in_b_nb_cols, p_out_x_dbl_matrix);
+  _SciErr = createMatrixOfDouble(pvApiCtx, Rhs+1, p_in_b_nb_rows, p_in_b_nb_cols, p_out_x_dbl_matrix);
 
   LhsVar(1) = Rhs+1;
 

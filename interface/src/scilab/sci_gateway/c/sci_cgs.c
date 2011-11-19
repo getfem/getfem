@@ -1,4 +1,3 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
 /*========================================================================
 
  Copyright (C) 2009-2011 Yann Collette
@@ -84,7 +83,6 @@ int sci_spcgs(char * fname)
   int resvec_pi_nb_rows, resvec_pi_nb_cols;
   double * resvec_pdbl_real = NULL;
   SciErr _SciErr;
-  StrCtx _StrCtx;
   int var_type;
   SPMAT  * A = NULL;
   VEC * b = NULL, * x0 = NULL, * r0 = NULL, * xsol = NULL;
@@ -95,22 +93,22 @@ int sci_spcgs(char * fname)
   CheckLhs(1,5);
 
   // Get A
-  _SciErr = getVarAddressFromPosition(&_StrCtx,1,&A_pi_address);
+  _SciErr = getVarAddressFromPosition(pvApiCtx,1,&A_pi_address);
 
-  _SciErr = getVarType(&_StrCtx,A_pi_address,&var_type);
+  _SciErr = getVarType(pvApiCtx,A_pi_address,&var_type);
   if (var_type!=sci_sparse)
     {
       Scierror(999,"%s: wrong parameter, a sparse matrix is needed\n",fname);
       return 0;
     }
 
-  if (isVarComplex(&_StrCtx,A_pi_address))
+  if (isVarComplex(pvApiCtx,A_pi_address))
     {
       Scierror(999,"%s: wrong parameter, a real sparse matrix is needed\n",fname);
       return 0;
     }
 
-  _SciErr = getSparseMatrix(&_StrCtx,A_pi_address, &A_pi_nb_rows, &A_pi_nb_cols, 
+  _SciErr = getSparseMatrix(pvApiCtx,A_pi_address, &A_pi_nb_rows, &A_pi_nb_cols, 
 			    &A_pi_nb_items, &A_pi_nb_items_row, &A_pi_col_pos, &A_pdbl_real);
 
   // Convert Scilab sparse into SPMAT
@@ -126,8 +124,8 @@ int sci_spcgs(char * fname)
     }
 
   // Get b
-  _SciErr = getVarAddressFromPosition(&_StrCtx,2,&b_pi_address);
-  _SciErr = getMatrixOfDouble(&_StrCtx,b_pi_address, &b_pi_nb_rows, &b_pi_nb_cols, &b_pdbl_real);
+  _SciErr = getVarAddressFromPosition(pvApiCtx,2,&b_pi_address);
+  _SciErr = getMatrixOfDouble(pvApiCtx,b_pi_address, &b_pi_nb_rows, &b_pi_nb_cols, &b_pdbl_real);
 
   // Convert Scilab vector into VEC
   b  = v_get(b_pi_nb_rows);
@@ -139,34 +137,34 @@ int sci_spcgs(char * fname)
     }
 
   // Get tol
-  _SciErr = getVarAddressFromPosition(&_StrCtx,3,&tol_pi_address);
-  _SciErr = getMatrixOfDouble(&_StrCtx,tol_pi_address, &tol_pi_nb_rows, &tol_pi_nb_cols, &tol_pdbl_real);
+  _SciErr = getVarAddressFromPosition(pvApiCtx,3,&tol_pi_address);
+  _SciErr = getMatrixOfDouble(pvApiCtx,tol_pi_address, &tol_pi_nb_rows, &tol_pi_nb_cols, &tol_pdbl_real);
 
   // Get optional maxit
   if (Rhs>=4)
     {
-      _SciErr = getVarAddressFromPosition(&_StrCtx,4,&maxit_pi_address);
-      _SciErr = getMatrixOfDouble(&_StrCtx,maxit_pi_address, &maxit_pi_nb_rows, &maxit_pi_nb_cols, &maxit_pdbl_real);
+      _SciErr = getVarAddressFromPosition(pvApiCtx,4,&maxit_pi_address);
+      _SciErr = getMatrixOfDouble(pvApiCtx,maxit_pi_address, &maxit_pi_nb_rows, &maxit_pi_nb_cols, &maxit_pdbl_real);
     }
 
   // Get optional M
   if (Rhs>=5)
     {
-      _SciErr = getVarAddressFromPosition(&_StrCtx,5,&M_pi_address);
-      _SciErr = getVarType(&_StrCtx,M_pi_address,&var_type);
+      _SciErr = getVarAddressFromPosition(pvApiCtx,5,&M_pi_address);
+      _SciErr = getVarType(pvApiCtx,M_pi_address,&var_type);
       if (var_type!=sci_sparse)
 	{
 	  Scierror(999,"%s: wrong parameter, a sparse matrix is needed\n",fname);
 	  return 0;
 	}
       
-      if (isVarComplex(&_StrCtx,M_pi_address))
+      if (isVarComplex(pvApiCtx,M_pi_address))
 	{
 	  Scierror(999,"%s: wrong parameter, a real sparse matrix is needed\n",fname);
 	  return 0;
 	}
 
-      _SciErr = getSparseMatrix(&_StrCtx,M_pi_address, &M_pi_nb_rows, &M_pi_nb_cols, 
+      _SciErr = getSparseMatrix(pvApiCtx,M_pi_address, &M_pi_nb_rows, &M_pi_nb_cols, 
 				&M_pi_nb_items, &M_pi_nb_items_row, &M_pi_col_pos, &M_pdbl_real);
 
       // Convert SPMAT into Scilab sparse
@@ -185,8 +183,8 @@ int sci_spcgs(char * fname)
   // Get optional x0
   if (Rhs>=6)
     {
-      _SciErr = getVarAddressFromPosition(&_StrCtx,6,&x0_pi_address);
-      _SciErr = getMatrixOfDouble(&_StrCtx,x0_pi_address, &x0_pi_nb_rows, &x0_pi_nb_cols, &x0_pdbl_real);
+      _SciErr = getVarAddressFromPosition(pvApiCtx,6,&x0_pi_address);
+      _SciErr = getMatrixOfDouble(pvApiCtx,x0_pi_address, &x0_pi_nb_rows, &x0_pi_nb_cols, &x0_pdbl_real);
 
       // Convert Scilab vector into VEC
       x0 = v_get(x0_pi_nb_rows);
@@ -214,7 +212,7 @@ int sci_spcgs(char * fname)
   memcpy(xsol_pdbl_real,xsol->ve,b_pi_nb_rows*sizeof(double));
   xsol_pi_nb_rows = b_pi_nb_rows;
   xsol_pi_nb_cols = 1;
-  _SciErr = createMatrixOfDouble(&_StrCtx, Rhs+1, xsol_pi_nb_rows, xsol_pi_nb_cols, xsol_pdbl_real);
+  _SciErr = createMatrixOfDouble(pvApiCtx, Rhs+1, xsol_pi_nb_rows, xsol_pi_nb_cols, xsol_pdbl_real);
   if (xsol_pdbl_real) FREE(xsol_pdbl_real);
 
   LhsVar(1) = Rhs+1;
@@ -225,7 +223,7 @@ int sci_spcgs(char * fname)
       *iter_pdbl_real = (double)steps;
       iter_pi_nb_rows = 1;
       iter_pi_nb_cols = 1;
-      _SciErr = createMatrixOfDouble(&_StrCtx, Rhs+2, iter_pi_nb_rows, iter_pi_nb_cols, iter_pdbl_real);
+      _SciErr = createMatrixOfDouble(pvApiCtx, Rhs+2, iter_pi_nb_rows, iter_pi_nb_cols, iter_pdbl_real);
       if (iter_pdbl_real) FREE(iter_pdbl_real);
 
       LhsVar(2) = Rhs+2;
@@ -237,7 +235,7 @@ int sci_spcgs(char * fname)
       memcpy(resvec_pdbl_real,r0->ve,b_pi_nb_rows*sizeof(double));
       resvec_pi_nb_rows = b_pi_nb_rows;
       resvec_pi_nb_cols = 1;
-      _SciErr = createMatrixOfDouble(&_StrCtx, Rhs+3, resvec_pi_nb_rows, resvec_pi_nb_cols, resvec_pdbl_real);
+      _SciErr = createMatrixOfDouble(pvApiCtx, Rhs+3, resvec_pi_nb_rows, resvec_pi_nb_cols, resvec_pdbl_real);
       if (resvec_pdbl_real) FREE(resvec_pdbl_real);
 
       LhsVar(3) = Rhs+3;

@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <time.h>
+
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
@@ -43,7 +44,10 @@ extern "C" {
 
 #include "gfi_array.h"
 #include "getfem_interface.h"
+
+#ifndef _MSCVER
 #include "stream_redirect.h"
+#endif
 
 //#define DEBUG_TIMER
 //#define DEBUG
@@ -131,13 +135,13 @@ extern "C" int sci_gf_scilab(char * fname)
   int sci_x;
   unsigned int i;
   SciErr _SciErr;
-  StrCtx _StrCtx;
 #ifdef DEBUG_TIMER
   clock_t time_start, time_end;
 #endif
+#ifndef _MSCVER
   ScilabStream scicout(std::cout);
   ScilabStream scicerr(std::cerr);
-
+#endif
   set_cancel_flag(0);
   set_superlu_callback(is_cancel_flag_set);
   
@@ -151,10 +155,10 @@ extern "C" int sci_gf_scilab(char * fname)
 #ifdef DEBUG
       sciprint("sci_gf_scilab: i = %d Rhs = %d\n", i, Rhs);
 #endif
-      _SciErr = getVarAddressFromPosition(&_StrCtx,i,ptr_param+i);
+      _SciErr = getVarAddressFromPosition(pvApiCtx,i,ptr_param+i);
 #ifdef DEBUG
-      _SciErr = getVarDimension(&_StrCtx,ptr_param[i],&pirow,&picol);
-      _SciErr = getVarType(&_StrCtx,ptr_param[i],&var_type);
+      _SciErr = getVarDimension(pvApiCtx,ptr_param[i],&pirow,&picol);
+      _SciErr = getVarType(pvApiCtx,ptr_param[i],&var_type);
       sciprint("sci_gf_scilab: position %d - address %d - type %d - dimension %d %d\n", i, ptr_param[i],var_type,pirow,picol);
 #endif
     }
