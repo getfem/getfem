@@ -99,21 +99,27 @@ namespace getfem {
   template<typename VEC, typename MAT>
   static void De_Saxce_projection_grad(const VEC &x, const VEC &n,
                                        scalar_type f, MAT &g) {
+    // Verified and correct in 2D and 3D.
     scalar_type xn = gmm::vect_sp(x, n);
     scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
+    size_type N = gmm::vect_size(x);
 
     if (xn >= scalar_type(0) && f * nxt <= xn) {
       gmm::clear(g);
     } else if (xn > scalar_type(0) || nxt > -f*xn) {
       static VEC xt;
-      gmm::resize(xt, gmm::vect_size(x));
+      gmm::resize(xt, N);
       gmm::add(x, gmm::scaled(n, -xn), xt);
       gmm::scale(xt, scalar_type(1)/nxt);
 
-      gmm::copy(gmm::identity_matrix(), g);
-      gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
-      gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
-      gmm::scale(xt, f*(f - xn/nxt));
+      if (N > 2) {
+	gmm::copy(gmm::identity_matrix(), g);
+	gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
+	gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
+	gmm::scale(g, f*(f - xn/nxt));
+      } else {
+	gmm::clear(g);
+      }
 
       gmm::scale(xt, -f); gmm::add(n, xt);
       gmm::rank_one_update(g, xt, xt);
@@ -1343,8 +1349,33 @@ namespace getfem {
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - ((i == j) ? r*alpha : scalar_type(0));
       break;
-    case K_UL_FRICT_V6:
+    case K_UL_FRICT_V6: // not working ... an error ?
       {
+
+	// cout << "alpha = " << alpha << " r = " << r << " f_coeff = " << f_coeff << endl;
+
+	base_small_vector auxM = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
+	
+	De_Saxce_projection(auxM, no, f_coeff);
+	base_matrix GPp(N,N);
+
+	for (i = 0; i < N; ++i) {
+	  V[i] +=  1E-12;
+	  un = gmm::vect_sp(V, no);
+	  zt = (V - un * no) * (alpha * r);
+	  auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
+	  De_Saxce_projection(auxN, no, f_coeff);
+	  gmm::add(auxN, gmm::scaled(auxM, -1.0), gmm::mat_col(GPp, i));
+	  gmm::scale(gmm::mat_col(GPp, i), 1E12);
+	  V[i] -=  1E-12;
+	  un = gmm::vect_sp(V, no);
+	  zt = (V - un * no);
+	}
+	gmm::scale(GPp, -1./r);
+	cout << "GPp = " << GPp;
+
+
+
         scalar_type nzt = gmm::vect_norm2(zt);
         auxN = lnt - (r*(un-g) - f_coeff * nzt) * no - zt;
         base_matrix A(N, N), B(N, N);
@@ -1352,9 +1383,20 @@ namespace getfem {
         gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
         gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
         if (nzt != scalar_type(0)) 
-          gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
-        gmm::mult(A, B, GP);
-        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+        gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+        gmm::mult(A, B, GP); // should be that, normally
+	// gmm::mult(gmm::transposed(B), A, GP);
+	// gmm::mult(B, A, GP);
+        // gmm::mult(A, gmm::transposed(B), GP); //a bit better ... why ?
+        
+	cout << "GP = " << GP << endl;
+
+	gmm::copy(GPp, GP);
+	
+	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+
+	
+
       }
       break;
     case K_LL_FRICT_V1:
