@@ -7,6 +7,14 @@ path = get_absolute_file_path('demo_stokes_2D_poiseuille.sce');
 
 printf('demo stokes_2D_poiseuille started\n');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 gf_workspace('clear all');
 
 disp('validation for 2D stokes with rectangular elements : Poiseuille flow with cartesian mesh');

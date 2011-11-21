@@ -3,6 +3,14 @@ stacksize('max');
 
 path = get_absolute_file_path('demo_stokes_3D_tank_draw.sce');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 if (exists('U')~=1 | exists('P') ~= 1) then
   error('run demo_stokes_3D_tank2 first');
 end

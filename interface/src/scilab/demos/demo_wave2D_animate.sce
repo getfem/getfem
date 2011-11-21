@@ -5,6 +5,14 @@ path = get_absolute_file_path('demo_wave2D_animate.sce');
 
 printf('demo wave2D_animate started\n');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 dt = 2*%pi/20;
 t  = 0:dt:2*%pi-dt/2;
 

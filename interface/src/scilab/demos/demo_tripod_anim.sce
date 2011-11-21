@@ -5,6 +5,14 @@ path = get_absolute_file_path('demo_tripod_anim.sce');
 
 printf('demo tripod_anim started\n');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 // You should run demo_tripod first ...
 //m    = gf_mesh('import','gid', path + '/data/tripod.GiD.msh');
 //mfu  = gf_mesh_fem('from string', smfu, m);

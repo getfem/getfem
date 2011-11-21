@@ -5,6 +5,14 @@ path = get_absolute_file_path('demo_finallaplacian.sce');
 
 printf('demo finallaplacian started\n');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 // boundary names
 up    = 101; // m.region(101)
 down  = 102; // m.region(102)

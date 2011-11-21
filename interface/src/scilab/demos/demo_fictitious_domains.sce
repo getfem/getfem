@@ -8,6 +8,14 @@ printf('demo fictitious domains started\n');
 disp('This demo use levelset to impose (weakly) a Dirichlet condition on an');
 disp('implicit boundary defined by the zero of the levelset');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 gf_workspace('clear all');
 
 NX = 40;

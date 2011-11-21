@@ -20,6 +20,14 @@
 // The transport equation into the unit square (rotating cavity)
 //
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 gf_workspace('clear all');
 
 K0 = 2;  // degree for u

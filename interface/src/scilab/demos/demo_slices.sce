@@ -1,5 +1,13 @@
 // not working, not part of the getfem-interface distrib
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 [mf] = gfMeshFem('load','signorini_cou.mesh_fem'); m = mf.linked_mesh;
 load signorini_cou.data; U=signorini_cou';
 

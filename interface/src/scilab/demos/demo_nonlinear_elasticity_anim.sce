@@ -5,6 +5,14 @@ path = get_absolute_file_path('demo_nonlinear_elasticity_anim.sce');
 
 printf('demo nonlinear_elasticity_anim\n');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 // replay all the computations of demo_nonlinear_elasticity.sci
 
 load(path + '/demo_nonlinear_elasticity_U.mat');

@@ -3,6 +3,14 @@ stacksize('max');
 
 path = get_absolute_file_path('demo_plasticity.sce');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 L = 100;
 H = 20;
 

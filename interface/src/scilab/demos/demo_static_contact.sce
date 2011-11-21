@@ -27,6 +27,14 @@ gf_workspace('clear all');
 clear all;
 path = get_absolute_file_path('demo_static_contact.sce');
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 // Import the mesh : disc
 // m = gf_mesh('load', path + 'data/disc_P2_h2.mesh');
 // m = gf_mesh('load', path + 'data/disc_P2_h1.mesh');

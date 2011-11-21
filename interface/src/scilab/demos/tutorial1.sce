@@ -1,3 +1,11 @@
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 m  = gf_mesh('cartesian',[0:.1:1],[0:.1:1]);
 mf = gf_mesh_fem(m,1); // create a meshfem of for a field of dimension 1 (i.e. a scalar field)
 gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));

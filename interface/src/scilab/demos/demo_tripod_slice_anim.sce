@@ -7,6 +7,14 @@ printf('demo tripod_slice_anim started\n');
 
 disp('this file should be launched after demo_tripod.sce as it assumes the tripod mesh and solutions are in memory')
 
+if getos()=='Windows' then
+  // Under Windows, all the trace messages are available in the dos console
+  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  consolebox('on');
+end
+gf_util('trace level',3);
+gf_util('warning level',3);
+
 //m    = gf_mesh('from string',sm);
 //mfu  = gf_mesh_fem('from string',smfu,m);
 //mfdu = gf_mesh_fem('from string',smfdu,m);
