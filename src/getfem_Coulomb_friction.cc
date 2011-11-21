@@ -86,13 +86,16 @@ namespace getfem {
     scalar_type xn = gmm::vect_sp(x, n);
     scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
     if (xn >= scalar_type(0) && f * nxt <= xn) {
+      // cout << "case 1" << endl;
       gmm::clear(const_cast<VEC&>(x));
     } else if (xn > scalar_type(0) || nxt > -f*xn) {
       gmm::add(gmm::scaled(n, -xn), const_cast<VEC&>(x));
       gmm::scale(const_cast<VEC&>(x), -f / nxt);
       gmm::add(n, const_cast<VEC&>(x));
       gmm::scale(const_cast<VEC&>(x), (xn - f * nxt) / (f*f+scalar_type(1)));
-    }
+      // cout << "case 2" << endl;
+    } // else  cout << "case 3" << endl;
+
   }
 
 
@@ -127,6 +130,26 @@ namespace getfem {
     } else {
       gmm::copy(gmm::identity_matrix(), g);
     }
+
+//     MAT gg(N,N);
+//     VEC y = x;
+//     De_Saxce_projection(y, n, f);
+//     VEC z(N);
+
+//     for (size_type i = 0; i < N; ++i) {
+//       gmm::copy(x, z);
+//       z[i] += 1E-8;
+//       De_Saxce_projection(z, n, f);
+//       gmm::add(z, gmm::scaled(y, -1.), gmm::mat_col(gg, i));
+//       gmm::scale(gmm::mat_col(gg, i), 1E8);
+//     }
+
+//     gmm::add(gmm::scaled(g, -1.), gg);
+//     if (gmm::mat_norminf(gg) > 1E-6) {
+//       gmm::add(g, gg);
+//       cout << "oooooups g = " << g << " gg = " << gg << endl;
+//     }
+
   }
 
 
@@ -1349,52 +1372,63 @@ namespace getfem {
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - ((i == j) ? r*alpha : scalar_type(0));
       break;
-    case K_UL_FRICT_V6: // not working ... an error ?
+    case K_UL_FRICT_V6:
       {
+// 	base_small_vector auxM = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
+// 	// cout << " auxM = " << auxM;
 
-	// cout << "alpha = " << alpha << " r = " << r << " f_coeff = " << f_coeff << endl;
+// 	De_Saxce_projection(auxM, no, f_coeff);
+// 	// cout << " auxM = " << auxM << endl;
+// 	base_matrix GPp(N,N);
 
-	base_small_vector auxM = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
-	
-	De_Saxce_projection(auxM, no, f_coeff);
-	base_matrix GPp(N,N);
-
-	for (i = 0; i < N; ++i) {
-	  V[i] +=  1E-12;
-	  un = gmm::vect_sp(V, no);
-	  zt = (V - un * no) * (alpha * r);
-	  auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
-	  De_Saxce_projection(auxN, no, f_coeff);
-	  gmm::add(auxN, gmm::scaled(auxM, -1.0), gmm::mat_col(GPp, i));
-	  gmm::scale(gmm::mat_col(GPp, i), 1E12);
-	  V[i] -=  1E-12;
-	  un = gmm::vect_sp(V, no);
-	  zt = (V - un * no);
-	}
-	gmm::scale(GPp, -1./r);
-	cout << "GPp = " << GPp;
+// 	for (i = 0; i < N; ++i) {
+// 	  V[i] +=  1E-12;
+// 	  un = gmm::vect_sp(V, no);
+// 	  zt = (V - un * no) * (alpha * r);
+// 	  auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
+// 	  // cout << " auxN = " << auxN;
+// 	  De_Saxce_projection(auxN, no, f_coeff);
+// 	  // cout << " auxN = " << auxN << endl;
+// 	  gmm::add(auxN, gmm::scaled(auxM, -1.0), gmm::mat_col(GPp, i));
+// 	  gmm::scale(gmm::mat_col(GPp, i), 1E12);
+// 	  V[i] -=  1E-12;
+// 	  un = gmm::vect_sp(V, no);
+// 	  zt = (V - un * no) * (alpha * r);
+// 	}
+// 	gmm::scale(GPp, -1./r);
 
 
 
         scalar_type nzt = gmm::vect_norm2(zt);
         auxN = lnt - (r*(un-g) - f_coeff * nzt) * no - zt;
+	// cout << "auxN bis = " << auxN << endl;
         base_matrix A(N, N), B(N, N);
         De_Saxce_projection_grad(auxN, no, f_coeff, A);
         gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
         gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
         if (nzt != scalar_type(0)) 
         gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
-        gmm::mult(A, B, GP); // should be that, normally
-	// gmm::mult(gmm::transposed(B), A, GP);
-	// gmm::mult(B, A, GP);
-        // gmm::mult(A, gmm::transposed(B), GP); //a bit better ... why ?
-        
-	cout << "GP = " << GP << endl;
+        gmm::mult(A, B, GP);
 
-	gmm::copy(GPp, GP);
+
+	
+// 	gmm::add(gmm::scaled(GP, -1.), GPp);
+// 	// cout << "norminf = " << gmm::mat_norminf(GPp) << endl;
+// 	if (gmm::mat_norminf(GPp) > 1E-2) {
+// 	  gmm::add(GP, GPp);
+// 	  cout << "ouupsss  GPp = " << GPp << " GP = " << GP;
+// 	  cout << "lambdan = " << ln << "lambdat = " << lt << "  -f*lambdan = " << -ln*f_coeff << endl;
+// 	  cout << "auxN = " << auxN << endl;
+// 	  cout << "-f*auxN.no = " << -f_coeff * gmm::vect_sp(auxN, no) << endl;
+// 	  cout << "no = " << no << endl;
+// 	  cout << "A = " << A << " B = " << B << endl;
+// 	  gmm::copy(GPp, GP);
+// 	  GMM_ASSERT1(A(0,0) != 1.0, "internal error");
+// 	}
+
 	
 	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
-
+	
 	
 
       }
