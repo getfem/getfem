@@ -8,11 +8,10 @@ lines(0);
 try
  v = getversion('scilab');
 catch
- error(gettext('Scilab 5.2 or more is required.'));  
+ error(gettext('Scilab 5.3.x or more is required.'));  
 end;
-if v(2) < 2 then
- // new API in scilab 5.2
- error(gettext('Scilab 5.2 or more is required.'));  
+if v(2) < 3 then
+ error(gettext('Scilab 5.3.x or more is required.'));  
 end
 // ====================================================================
 if ~with_module('development_tools') then
