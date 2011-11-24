@@ -63,7 +63,7 @@ public:
 protected:
   virtual int_type overflow(int_type v)
   {
-    if (v == EOF)
+    if (v == '\n')
       {
 	sciprint("getfem: %s\n",m_string.c_str());
 	m_string.clear();
@@ -81,7 +81,7 @@ protected:
     int pos = 0;
     while (pos != std::string::npos)
       {
-	pos = m_string.find(EOF);
+	pos = m_string.find('\n');
 	if (pos != std::string::npos)
 	  {
 	    std::string tmp(m_string.begin(), m_string.begin() + pos);
