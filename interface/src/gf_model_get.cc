@@ -343,14 +343,14 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar init_dir[, ...])
     Initialize the Moore-Penrose continuation (for more details about the
     continuation see the Getfem++ user documentation): The variable
-    `dataname_parameter` should parametrize the model. If the parametrization is
-    done via some vector datum, `dataname_init` and `dataname_final` should
-    store two given values of this datum determining the parametrization, and
-    `dataname_current` serves for actual values of this datum. Return a tangent
-    corresponding to the solution branch at the current solution and the current
-    value of the parameter, and an initial step size for the continuation.
-    Direction of the computed tangent with respect to the parameter is
-    determined by the sign of `init_dir`.
+    `dataname_parameter` should parametrize the model. If the parametrization
+    is done via some vector datum, `dataname_init` and `dataname_final`
+    should store two given values of this datum determining the
+    parametrization, and `dataname_current` serves for actual values of this
+    datum. Return a tangent corresponding to the solution branch at the
+    current solution and the current value of the parameter, and an initial
+    step size for the continuation. Direction of the computed tangent with
+    respect to the parameter is determined by the sign of `init_dir`.
     
     Additional options:
     
@@ -467,13 +467,15 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@FUNC E = ('Moore-Penrose continuation', @str dataname_parameter[, @str dataname_init, @str dataname_final, @str dataname_current], @vec tangent, @scalar tangent_parameter, @scalar h[, ...])
     Compute one step of the Moore-Penrose continuation (for more details
     about the continuation see the Getfem++ user documentation): The variable
-    `dataname_parameter` should parametrize the model. If the parametrization is
-    done via some vector datum, `dataname_init` and `dataname_final` should
-    store two given values of this datum determining the parametrization, and
-    `dataname_current` serves for actual values of this datum. Take the current
-    solution, the current value of the parameter, the tangent given by `tangent`
-    and `tangent_parameter`, and the step size `h`, return a new tangent and
-    step size for the next step (and save a new point in the model).
+    `dataname_parameter` should parametrize the model. If the parametrization
+    is done via some vector datum, `dataname_init` and `dataname_final`
+    should store two given values of this datum determining the
+    parametrization, and `dataname_current` serves for actual values of this
+    datum. Take the current solution, the current value of the parameter, the
+    tangent given by `tangent` and `tangent_parameter`, and the step size
+    `h`, return a new tangent and step size for the next step (and save a new
+    point in the model). If the returned step size equals zero, the
+    continuation has failed.
 
     Additional options:
 

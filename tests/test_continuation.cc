@@ -149,13 +149,12 @@ bool state_problem::cont(plain_vector &U) {
   getfem::init_Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
 
   // Continuation
-  bool converged = true;
   for (size_type step = 0; step < nb_step; ++step) {
     cout << endl << "beginning of step " << step + 1 << endl;
     
-    converged =
-      getfem::Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
-    
+    getfem::Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
+    if (h == 0) break;
+
     cout << "U = " << U << endl;
     cout << "lambda = " << lambda << endl;
     cout << "lambda - U[0] * exp(-U[0]) = "
@@ -164,7 +163,7 @@ bool state_problem::cont(plain_vector &U) {
     cout << "end of Step nº " << step+1 << " / " << nb_step << endl;
   }
 
-  return (converged);
+  return (h > 0);
 }
   
 /**************************************************************************/
@@ -181,7 +180,7 @@ int main(int argc, char *argv[]) {
     p.PARAM.read_command_line(argc, argv);
     p.init();
     plain_vector U(p.mf_u.nb_dof());
-    if (!p.cont(U)) GMM_ASSERT1(false, "Solve has failed");
+    if (!p.cont(U)) GMM_ASSERT1(false, "Continuation has failed");
   }
   GMM_STANDARD_CATCH_ERROR;
 

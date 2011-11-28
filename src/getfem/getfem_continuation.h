@@ -85,17 +85,30 @@ namespace getfem {
   
 
   template <typename S, typename VECT>
-  bool is_tangent(S &s, const VECT &y, double gamma,
-		  const VECT &t_y, double t_gamma) {
+  int test_direction(S &s, const VECT &y, double gamma,
+		   const VECT &t_y, double t_gamma,
+		   VECT &T_y, double &T_gamma, double h) {
 
-    double Gamma, T_gamma=t_gamma, ang;
-    VECT Y(y), T_y(t_y);
+    int result = 1;
+    double Gamma, T_Gamma = T_gamma, ang;
+    VECT Y(y), T_Y(T_y);
     
-    s.scaled_add(y, T_y, s.h_min(), Y); Gamma = gamma + s.h_min() * T_gamma;
-    compute_tangent(s, Y, Gamma, T_y, T_gamma);
+    s.scaled_add(y, T_y, h, Y); Gamma = gamma + h * T_gamma;
+    compute_tangent(s, Y, Gamma, T_Y, T_Gamma);
     
-    ang = sp_(s, t_y, T_y, t_gamma, T_gamma);
-    return (ang >= s.minang());
+    ang = sp_(s, T_y, T_Y, T_gamma, T_Gamma);
+    if (s.noisy() > 1) cout << "ang1 = " << ang << endl;
+    if (ang >=  0.9995) result = (h > 0) ? 3 : 4;
+    else {
+      ang = sp_(s, t_y, T_Y, t_gamma, T_Gamma);
+      if (s.noisy() > 1) cout << "ang2 = " << ang << endl;
+      if (ang <= 0.9995 && ang >= -0.9995) {
+	result = 2;
+	s.copy(T_Y, T_y); T_gamma = T_Gamma; // try (T_Y, T_Gamma) next
+      }
+    }
+
+    return result;
   }
 
 
@@ -105,16 +118,22 @@ namespace getfem {
 				       double &h) {
     s.clear(t_y); t_gamma = (t_gamma >= 0) ? 1. : -1.;
     if (s.noisy() > 1) cout << "computing initial tangent" << endl;
-    s.set_build_F(true); compute_tangent(s, y, gamma, t_y, t_gamma);
+    compute_tangent(s, y, gamma, t_y, t_gamma);
     h = s.h_init();
   }
 
 
   template <typename S, typename VECT>
-    bool Moore_Penrose_continuation(S &s, VECT &y, double &gamma, VECT &t_y,
+    void Moore_Penrose_continuation(S &s, VECT &y, double &gamma, VECT &t_y,
 				    double &t_gamma, double &h) {
     
-    bool converged, finished=false, new_tangent_found=false;
+    bool converged, finished = false;
+    int tangent_status = 0;
+      /* 0: no manipulation with tangent direction yet;
+	 1: current direction neither admitted nor rejected;
+	 2: direction rejected;
+	 3: direction admitted with plus sign;
+	 4: direction admitted with minus sign; */
     unsigned long it, step_dec=0;
     double Delta_Gamma, Gamma, T_gamma, r, no, res, diff, ang;
     VECT F(y), d(y), Delta_Y(y), Y(y), T_y(y), W(y);
@@ -124,8 +143,8 @@ namespace getfem {
       // prediction
       if (s.noisy() > 0) cout << "prediction with h = " << h << endl;
       s.scaled_add(y, t_y, h, Y); Gamma = gamma + h * t_gamma;
-      s.copy(t_y, T_y); T_gamma = t_gamma;
       s.set_build_F(true);
+      s.copy(t_y, T_y); T_gamma = t_gamma;
       
       // correction
       if (s.noisy() > 0) cout << "starting correction " << endl;
@@ -133,14 +152,13 @@ namespace getfem {
       s.F(Y, Gamma, F); s.set_build_F(false);
       
       do { // Newton iterations
-	s.gamma_derivative(Y, Gamma, d);
+	s.gamma_derivative(Y, Gamma, d); //s.set_build_F(true);
 	s.solve_grad(Y, Gamma, F, d, Delta_Y, W);
 	r = s.sp(T_y, W);
 
 	Delta_Gamma = s.sp(T_y, Delta_Y) / (r - T_gamma);
 	s.scaled_add(Delta_Y, W, -Delta_Gamma, Delta_Y);
 	s.scaled_add(Y, Delta_Y, -1., Y); Gamma -= Delta_Gamma;
-	s.set_build_F(true);
 	
 	T_gamma = 1. / (T_gamma - r);
 	s.scale(W, -T_gamma); s.copy(W, T_y);
@@ -152,10 +170,12 @@ namespace getfem {
 	converged = (res <= s.maxres() && diff <= s.maxdiff());
 	it++;
 
-	if (s.noisy() > 0) cout << "iter " << it << " residual " << res
-				<< " difference " << diff << endl;
+	if (s.noisy() > 0)
+	  cout << "iter " << it << " residual " << res
+	       << " difference " << diff
+	       << " t.T = " << sp_(s, t_y, T_y, t_gamma, T_gamma) << endl;
 
-      } while (!converged && it < s.maxit());
+      } while (!converged && it < s.maxit() && res < 1.e8);
 
       if (converged) {
 	ang = sp_(s, t_y, T_y, t_gamma, T_gamma);
@@ -172,27 +192,49 @@ namespace getfem {
 	  h = (s.h_dec() * h > s.h_min()) ? s.h_dec() * h : s.h_min();
 	  step_dec++;
 	}
-	else {
-	  do { // seek a new tangent
-	    s.scaled_add(y, t_y, h, Y); Gamma = gamma + h * t_gamma;
-	    compute_tangent(s, Y, Gamma, t_y, t_gamma);
+	else if (tangent_status == 0) {
+	  if (s.noisy() > 1)
+	    cout << "Seeking a new tangent direction" << endl;
+	  unsigned long tan = 0;
+	  s.copy(t_y, T_y); T_gamma = t_gamma;
+	  s.scaled_add(y, T_y, h, Y); Gamma = gamma + h * T_gamma;
+	  s.set_build_F(true);
+	  compute_tangent(s, Y, Gamma, T_y, T_gamma);
 
-	    if (is_tangent(s, y, gamma, t_y, t_gamma))
-	      new_tangent_found = true;
-	    else {
-	      s.scale(t_y, -1.); t_gamma *= -1.;
-	      new_tangent_found = is_tangent(s, y, gamma, t_y, t_gamma);
-	    }
-	  } while (!new_tangent_found);
+	  do { // seek a new tangent
+	    if (s.noisy() > 1)
+	      cout << "Trying direction " << tan + 1 << endl;
+	    h = s.h_min();
+
+	    do { // test (T_y, T_gamma)
+	      tangent_status =
+		test_direction(s, y, gamma, t_y, t_gamma, T_y, T_gamma, h);
+	      if (tangent_status == 1) {
+		h *= -1.;
+		tangent_status =
+		  test_direction(s, y, gamma, t_y, t_gamma, T_y, T_gamma, h);
+		h *= -2.;
+	      }
+	    } while (tangent_status == 1);
+
+	    tan++;
+	  } while (tangent_status <= 2 && tan < 1); // tan >= 1?
 	  
-	  h = s.h_init(); step_dec = 0;
-	}
+	  if (tangent_status >= 3) {
+	    if (s.noisy() > 1)
+	      cout << "Direction " << tan << " accepted" << endl;
+	    s.copy(T_y, t_y); t_gamma = T_gamma;
+	    if (tangent_status == 4) { s.scale(t_y, -1.); t_gamma *= -1.; }
+	    h = s.h_init(); step_dec = 0;
+	  } else break;
+	} else break;
       }
     } while (!finished);
 
-    s.copy(Y, y); gamma = Gamma;
-    s.copy(T_y, t_y); t_gamma = T_gamma;
-    return true;
+    if (finished) {
+      s.copy(Y, y); gamma = Gamma;
+      s.copy(T_y, t_y); t_gamma = T_gamma;
+    } else h = 0;
   }
 
 

@@ -35,15 +35,16 @@ gf_util('warning level',3);
 gf_workspace('clear all');
 lambda = 0;
 direction = 1;
-nbstep = 70;
+nbstep = 40;
 
 maxit = 5;
 thrit = 4;
+minang = 0.99939;
 maxres_solve = 1.e-7;
 noisy = 'very_noisy';
 
 h_init = 1e-3;
-h_max = 1e-2;
+h_max = 1e-1;
 h_min = 1e-6;
 
 // create a simple cartesian mesh
@@ -76,14 +77,13 @@ end
 gf_model_get(md, 'solve', noisy, 'max_iter', 100, 'max_res', maxres_solve);
 [T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction, noisy, 'h_init', h_init);
 U = gf_model_get(md, 'variable', 'u');
-printf('U = '); disp(U); printf('lambda = %e\n', lambda);
-printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
+//printf('U = '); disp(U); printf('lambda = %e\n', lambda);
+//printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
 U_hist = zeros(1, nbstep); lambda_hist = zeros(1, nbstep);
 U_hist(1) = U(1); lambda_hist(1) = lambda;
 
-clf();
-drawlater;
+drawlater; clf();
 subplot(2,1,1);
 plot(lambda_hist(1), U_hist(1), 'k.');
 xtitle('', 'lambda', 'u(0)');
@@ -96,16 +96,21 @@ drawnow;
 for step = 1:nbstep
   sleep(1000);
   printf('\nbeginning of step %d\n', step);
-  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', T_U, T_lambda, h, noisy, 'max_iter', maxit, 'thr_iter', thrit, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min);
+  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', T_U, T_lambda, h, noisy, 'max_iter', maxit, 'thr_iter', thrit, 'min_ang', minang, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min);
+  
+  if (h == 0) then
+    printf('Continuation has failed');
+    break;
+  end
+  
   U = gf_model_get(md, 'variable', 'u');
   lambda = gf_model_get(md, 'variable', 'lambda');
-  printf('U = '); disp(U); printf('lambda = %e\n', lambda);
-  printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
+//  printf('U = '); disp(U); printf('lambda = %e\n', lambda);
+//  printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
   U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
 
-  clf();
-  drawlater;
+  drawlater; clf();
   subplot(2,1,1);
   plot(lambda_hist(1:step+1), U_hist(1:step+1), 'k-');
   plot(lambda_hist(1:step), U_hist(1:step), 'ko');
