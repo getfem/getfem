@@ -114,7 +114,8 @@ namespace gmm {
     }
     template <typename VECT> bool converged(const VECT &v)
     { return converged(gmm::vect_norm2(v)); }
-    bool diverged(void) { return (nit>=maxiter) || (res>=rhsn*diverged_res); }
+    bool diverged(void)
+    { return (nit>=maxiter) || (res>=rhsn*diverged_res && nit > 2); }
     bool diverged(double nr) { 
       res = gmm::abs(nr); resminreach = std::min(resminreach, res);
       return diverged();
