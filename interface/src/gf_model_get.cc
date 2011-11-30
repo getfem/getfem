@@ -248,6 +248,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        set the maximum iterations numbers.
     - 'max_res', @float RES
        set the target residual value.
+    - 'diverged_res', @float RES
+       set the threshold value of the residual beyond which the iterative
+       method is considered to diverge (default is 1e200).
     - 'lsolver', @str SOLVER_NAME
        select explicitely the solver used for the linear systems (the
        default value is 'auto', which lets getfem choose itself).
@@ -284,6 +287,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   else THROW_BADARG("missing value for " << opt);
 	 } else if (cmd_strmatch(opt, "max_res")) {
 	   if (in.remaining()) iter.set_resmax(in.pop().to_scalar());
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "diverged_res")) {
+	   if (in.remaining()) iter.set_diverged_residual(in.pop().to_scalar());
 	   else THROW_BADARG("missing value for " << opt);
 	 } else if (cmd_strmatch(opt, "lsolver")) {
 	   if (in.remaining()) lsolver = in.pop().to_string();

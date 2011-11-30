@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard
+// Copyright (C) 2002-2011 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -55,6 +55,8 @@ namespace gmm {
     int noise;         /* if noise > 0 iterations are printed.             */
     double resmax;     /* maximum residu.                                  */
     double resminreach, resadd;
+    double diverged_res; /* Threshold beyond which the iterative           */
+                       /* is considered to diverge.                        */
     size_type nit;     /* iteration number.                                */
     double res;        /* last computed residu.                            */
     std::string name;  /* eventually, name of the method.                  */
@@ -64,12 +66,14 @@ namespace gmm {
 
     void init(void) { 
       nit = 0; res = 0.0; written = false; 
-      resminreach = 1E50; resadd = 0.0; 
+      resminreach = 1E200; resadd = 0.0; 
       callback = 0;
     }
 
-    iteration(double r = 1.0E-8, int noi = 0, size_type mit = size_type(-1))
-      : rhsn(1.0), maxiter(mit), noise(noi), resmax(r) { init(); }
+    iteration(double r = 1.0E-8, int noi = 0, size_type mit = size_type(-1),
+	      double div_res = 1E200)
+      : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), diverged_res(div_res)
+    { init(); }
 
     void  operator ++(int) {  nit++; written = false; resadd += res; }
     void  operator ++() { (*this)++; }
@@ -91,6 +95,9 @@ namespace gmm {
       callback = t;
     }
 
+    double get_diverged_residual(void) const { return diverged_res; }
+    void set_diverged_residual(double r) { diverged_res = r; }
+
     size_type get_iteration(void) const { return nit; }
     void set_iteration(size_type i) { nit = i; }
     
@@ -107,6 +114,11 @@ namespace gmm {
     }
     template <typename VECT> bool converged(const VECT &v)
     { return converged(gmm::vect_norm2(v)); }
+    bool diverged(void) { return (nit>=maxiter) || (res>=rhsn*diverged_res); }
+    bool diverged(double nr) { 
+      res = gmm::abs(nr); resminreach = std::min(resminreach, res);
+      return diverged();
+    }
 
     bool finished(double nr) {
       if (callback) callback(*this);
@@ -123,7 +135,7 @@ namespace gmm {
 	cout <<  endl;
 	written = true;
       }
-      return (nit >= maxiter || converged(nr));
+      return (converged(nr) || diverged(nr));
     }
     template <typename VECT> bool finished_vect(const VECT &v)
     { return finished(double(gmm::vect_norm2(v))); }
