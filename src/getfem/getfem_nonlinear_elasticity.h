@@ -129,6 +129,22 @@ namespace getfem {
     Mooney_Rivlin_hyperelastic_law(void);
   };
 
+
+  /** Blatz_Ko hyperelastic law 
+      
+      To be used for compressible problems.
+  */
+  struct generalized_Blatz_Ko_hyperelastic_law : public abstract_hyperelastic_law {
+    virtual scalar_type strain_energy(const base_matrix &E,
+				      const base_vector &params) const;
+    virtual void sigma(const base_matrix &E, base_matrix &result,
+		       const base_vector &params) const;
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
+			    const base_vector &params) const;
+    generalized_Blatz_Ko_hyperelastic_law(void);
+  };
+
+
   /** Ciarlet-Geymonat hyperelastic law ( @f$ W=~_1i_1(L) + \frac{~}{2}i_2(L) + 8ci_3(L) - \frac{~_1}{2} \textrm{log}~\textrm{det}~C @f$ )
       
    */

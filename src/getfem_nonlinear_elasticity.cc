@@ -499,6 +499,114 @@ namespace getfem {
     nb_params_ = 2;
   }
 
+
+
+
+  scalar_type generalized_Blatz_Ko_hyperelastic_law::strain_energy
+  (const base_matrix &E, const base_vector &params) const {
+    scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
+    size_type n = size_type(params[4]+0.1);
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Generalized Blatz Ko hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    return pow(a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
+	       + c*ci.i2() / ci.i3() + d, scalar_type(n));
+  }
+
+  void generalized_Blatz_Ko_hyperelastic_law::sigma
+  (const base_matrix &E, base_matrix &result,
+   const base_vector &params) const {
+    scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
+    size_type n = size_type(params[4]+0.1);
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Generalized Blatz Ko hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    scalar_type z = a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
+      + c*ci.i2() / ci.i3() + d;
+    scalar_type nz = scalar_type(n) * pow(z, scalar_type(n-1));
+    scalar_type di1 = nz * a;
+    scalar_type di2 = nz * c / ci.i3();
+    scalar_type di3 = nz *
+      (b / (2. * sqrt(gmm::abs(ci.i3()))) - c * ci.i2() / gmm::sqr(ci.i3()));
+
+    gmm::copy(gmm::scaled(ci.grad_i1(), di1 * 2.0), result);
+    gmm::add(gmm::scaled(ci.grad_i2(), di2 * 2.0), result);
+    gmm::add(gmm::scaled(ci.grad_i3(), di3 * 2.0), result);
+  }
+
+  void generalized_Blatz_Ko_hyperelastic_law::grad_sigma
+  (const base_matrix &E, base_tensor &result,
+   const base_vector &params) const {
+    scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
+    size_type n = size_type(params[4]+0.1);
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Generalized Blatz Ko hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+
+    scalar_type z = a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
+      + c*ci.i2() / ci.i3() + d;
+    scalar_type nz = scalar_type(n) * pow(z, scalar_type(n-1));
+    scalar_type di1 = nz * a;
+    scalar_type di2 = nz * c / ci.i3();
+    scalar_type y = (b / (2. * sqrt(gmm::abs(ci.i3()))) - c * ci.i2() / gmm::sqr(ci.i3()));
+    scalar_type di3 = nz * y;
+
+    gmm::copy(gmm::scaled(ci.sym_grad_grad_i1().as_vector(),
+			  scalar_type(4)*di1), result.as_vector());
+    gmm::add(gmm::scaled(ci.sym_grad_grad_i2().as_vector(),
+			 scalar_type(4)*di2), result.as_vector());
+    gmm::add(gmm::scaled(ci.sym_grad_grad_i3().as_vector(),
+			 scalar_type(4)*di3), result.as_vector());
+
+    scalar_type nnz = scalar_type(n * (n-1)) * pow(z, scalar_type(n-1));
+    base_matrix A(3, 3); // second derivatives of W with respect to invariants
+    A(0, 0) = nnz * a * a;
+    A(1, 0) = A(0, 1) = nnz * a * c / ci.i3();
+    A(2, 0) = A(0, 2) = nnz * a * y;
+    A(1, 1) = nnz * c * c / gmm::sqr(ci.i3());
+    A(2, 1) = A(1, 2) = nnz * y * c / ci.i3();
+    A(2, 2) = nnz * y * y + nz * (2. * c * ci.i2() / pow(ci.i3(), 4.) - b / (4. * pow(ci.i3(), 1.5)));
+
+    typedef const base_matrix * pointer_base_matrix__;
+    pointer_base_matrix__ di[3];
+    di[0] = &(ci.grad_i1()); 
+    di[1] = &(ci.grad_i2()); 
+    di[2] = &(ci.grad_i3());
+
+    for (size_type j = 0; j < N; ++j)
+      for (size_type k = 0; k < N; ++k) {
+	for (size_type l1 = 0; l1 < N; ++l1)
+	  for (size_type l2 = 0; l2 < N; ++l2)
+	    for (size_type l3 = 0; l3 < N; ++l3)
+	      for (size_type l4 = 0; l4 < N; ++l4)
+		result(l1, l2, l3, l4)
+		  += A(j, k) * (*di[j])(l1, l2) * (*di[k])(l3, l4);
+      }
+
+//     GMM_ASSERT1(check_symmetry(result) == 7,
+// 		"Fourth order tensor not symmetric : " << result);
+  }
+
+  generalized_Blatz_Ko_hyperelastic_law::generalized_Blatz_Ko_hyperelastic_law(void) {
+    nb_params_ = 5;
+  }
+
+
   scalar_type Ciarlet_Geymonat_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params) const {
     size_type N = gmm::mat_nrows(E);

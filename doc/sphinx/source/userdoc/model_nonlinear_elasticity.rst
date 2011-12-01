@@ -111,7 +111,7 @@ The stress in the reference configuration can be describe by the second Piola-Ki
 
 .. math::
 
-  {\hat{\hat{\sigma}}} &= -\frac{\partial}{\partial E} {W}(E)
+  {\hat{\hat{\sigma}}} &= \frac{\partial}{\partial E} {W}(E)
 
 where :math:`{W}` is the density of strain energy of the material. The total strain energy is given by
 
