@@ -595,7 +595,7 @@ namespace getfem {
 	    for (size_type l3 = 0; l3 < N; ++l3)
 	      for (size_type l4 = 0; l4 < N; ++l4)
 		result(l1, l2, l3, l4)
-		  += A(j, k) * (*di[j])(l1, l2) * (*di[k])(l3, l4);
+		  += 4. * A(j, k) * (*di[j])(l1, l2) * (*di[k])(l3, l4);
       }
 
 //     GMM_ASSERT1(check_symmetry(result) == 7,
