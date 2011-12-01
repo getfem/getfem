@@ -1701,7 +1701,7 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
 		
 #if  (GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER)
       MUMPS_distributed_matrix_solve(A1,X,Y);
-#elif (GETFEM_PARA_LEVEL==1 && GMM_USES_MUMPS)
+#elif (GETFEM_PARA_LEVEL==1 && defined(GMM_USES_MUMPS))
       MUMPS_solve(A1,X,Y);
       //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
       //MUMPS_solve(A1,X,Y);
@@ -1842,7 +1842,7 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
 
 #if  (GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER)
       MUMPS_distributed_matrix_solve(K2,X,Z);
-#elif (GETFEM_PARA_LEVEL==1 && GMM_USES_MUMPS)
+#elif (GETFEM_PARA_LEVEL==1 && defined(GMM_USES_MUMPS))
       MUMPS_solve(K2,X,Z);
       //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
       //MUMPS_solve(K2,X,Z);
@@ -1912,9 +1912,9 @@ gmm :: sub_interval SUB_CT_P(0,nbdof_p);
 		
 #if  (GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER)
                 MUMPS_distributed_matrix_solve(A2,X,Y);
-#elif (GETFEM_PARA_LEVEL==1 && GMM_USES_MUMPS)
+#elif (GETFEM_PARA_LEVEL==1 && defined(GMM_USES_MUMPS))
       MUMPS_solve(A2,X,Y);
-      //#elif (GETFEM_PARA_LEVEL==0 && GMM_USES_MUMPS)
+      //#elif (GETFEM_PARA_LEVEL==0 && defined(GMM_USES_MUMPS))
       //MUMPS_solve(A2,X,Y);
 #elif (GETFEM_PARA_LEVEL==0)
       //SuperLU_solve(A2, X, Y, rcond);
