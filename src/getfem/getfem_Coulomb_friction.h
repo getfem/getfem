@@ -500,18 +500,22 @@ namespace getfem {
                                          RHS_U_V5,
                                          RHS_U_V6,
                                          RHS_U_V7,
+                                         RHS_U_V8,
                                          RHS_U_FRICT_V1,
                                          RHS_U_FRICT_V2,
                                          RHS_U_FRICT_V3,
                                          RHS_U_FRICT_V4,
+                                         RHS_U_FRICT_V5,
                                          RHS_L_FRICT_V1,
                                          RHS_L_FRICT_V2,
                                          RHS_L_FRICT_V3,
+                                         RHS_L_FRICT_V4,
                                          K_UL_V1,
                                          K_UL_V2,
                                          K_UL_V3,
                                          K_UL_V4,
                                          UZAWA_PROJ_FRICT,
+                                         UZAWA_PROJ_FRICT_SAXCE,
 
                                          K_UU_V1,
                                          K_UU_V2,
@@ -521,13 +525,17 @@ namespace getfem {
                                          K_UL_FRICT_V4,
                                          K_UL_FRICT_V5,
                                          K_UL_FRICT_V6,
+                                         K_UL_FRICT_V7,
+                                         K_UL_FRICT_V8,
                                          K_LL_FRICT_V1,
                                          K_LL_FRICT_V2,
                                          K_LL_FRICT_V3,
+                                         K_LL_FRICT_V4,
                                          K_UU_FRICT_V1,
                                          K_UU_FRICT_V2,
                                          K_UU_FRICT_V3,
-                                         K_UU_FRICT_V4
+                                         K_UU_FRICT_V4,
+                                         K_UU_FRICT_V5
   };
 
   class friction_nonlinear_term : public nonlinear_elem_term {
@@ -619,12 +627,12 @@ namespace getfem {
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT2 &obs, scalar_type r,
    const getfem::mesh_fem *mf_coeff, const VECT3 &f_coeff,
-   const mesh_region &rg, scalar_type alpha, const VECT1 &WT) {
+   const mesh_region &rg, scalar_type alpha, const VECT1 &WT, int option = 1) {
 
-
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
-                                   obs, r, UZAWA_PROJ_FRICT, false, alpha,
-                                   mf_coeff, &f_coeff, &WT);
+    friction_nonlinear_term nterm1
+      (mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
+       (option == 1) ? UZAWA_PROJ_FRICT : UZAWA_PROJ_FRICT_SAXCE,
+       false, alpha, mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
     assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i); ");

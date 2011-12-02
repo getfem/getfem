@@ -687,7 +687,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	  r, boundary_num);
        );
 
-    /*@FUNC B = ('contact with friction Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, @scalar r, {@scalar coeff | @tmf mf_coeff, @dvec coeff} [, @scalar alpha, @dvec W])
+    /*@FUNC B = ('contact with friction Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, @scalar r, {@scalar coeff | @tmf mf_coeff, @dvec coeff} [, @int option[, @scalar alpha, @dvec W]])
     Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
       finite element space of $\lambda$.
@@ -721,7 +721,10 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        } else {
 	 coeff[0] = argin.to_scalar();
        }
-
+       int option = 1;
+       if (in.remaining()) {
+	 option = in.pop().to_integer();
+       }
        double alpha = 1;
        if (in.remaining()) {
 	 alpha = in.pop().to_scalar();
@@ -742,7 +745,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	 gmm::copy(obs, v_obs);
 	 getfem::asm_contact_with_friction_continuous_Uzawa_proj
 	   (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, v_obs, r,
-	    mf_coeff, coeff, boundary_num, alpha, vec_W);
+	    mf_coeff, coeff, boundary_num, alpha, vec_W, option);
 
        }
        );

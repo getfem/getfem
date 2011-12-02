@@ -1182,20 +1182,23 @@ namespace getfem {
     switch (option) {
       // one-dimensional tensors [N]
     case RHS_U_V1:       case RHS_U_V2:       case RHS_U_V3: case RHS_U_V4:
-    case RHS_U_V5:       case RHS_U_V6:       case RHS_U_V7:
+    case RHS_U_V5:       case RHS_U_V6:       case RHS_U_V7: case RHS_U_V8:
     case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
-    case RHS_U_FRICT_V3: case RHS_U_FRICT_V4:
-    case RHS_L_FRICT_V1: case RHS_L_FRICT_V2: case RHS_L_FRICT_V3:
+    case RHS_U_FRICT_V3: case RHS_U_FRICT_V4: case RHS_U_FRICT_V5:
+    case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
+    case RHS_L_FRICT_V3: case RHS_L_FRICT_V4:
     case K_UL_V1:        case K_UL_V2:        case K_UL_V3:  case K_UL_V4:
-    case UZAWA_PROJ_FRICT:
+    case UZAWA_PROJ_FRICT: case UZAWA_PROJ_FRICT_SAXCE:
       sizes_[0] = N; break;
       // two-dimensional tensors [N x N]
     case K_UU_V1: case K_UU_V2:
     case K_UL_FRICT_V1: case K_UL_FRICT_V2: case K_UL_FRICT_V3:
     case K_UL_FRICT_V4: case K_UL_FRICT_V5: case K_UL_FRICT_V6:
-    case K_LL_FRICT_V1: case K_LL_FRICT_V2: case K_LL_FRICT_V3:
+    case K_UL_FRICT_V7: case K_UL_FRICT_V8:
+    case K_LL_FRICT_V1: case K_LL_FRICT_V2:
+    case K_LL_FRICT_V3: case K_LL_FRICT_V4:
     case K_UU_FRICT_V1: case K_UU_FRICT_V2:
-    case K_UU_FRICT_V3: case K_UU_FRICT_V4:
+    case K_UU_FRICT_V3: case K_UU_FRICT_V4: case K_UU_FRICT_V5:
       sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
     } 
   }
@@ -1253,6 +1256,11 @@ namespace getfem {
       auxN = - zt;  ball_projection(auxN, -f_coeff *e );
       for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i]);
       break;
+    case RHS_U_V8:
+      auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
+      De_Saxce_projection(auxN, no, f_coeff);
+      for (i=0; i<N; ++i) t[i] = auxN[i];
+      break;
     case RHS_U_FRICT_V1:
       for (i=0; i<N; ++i) t[i] = lnt[i]; break;
     case RHS_U_FRICT_V2:
@@ -1269,6 +1277,10 @@ namespace getfem {
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
       for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
       break;
+    case RHS_U_FRICT_V5:
+      auxN = lnt; De_Saxce_projection(auxN, no, f_coeff);
+      for (i=0; i<N; ++i) t[i] = auxN[i];
+      break;
     case RHS_L_FRICT_V1:
       e = ln+gmm::neg(ln-r*(un-g));
       auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
@@ -1283,6 +1295,12 @@ namespace getfem {
       auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
       De_Saxce_projection(auxN, no, f_coeff);
       for (i=0; i<N; ++i) t[i] = (lnt[i] - auxN[i])/r;
+      break;
+    case RHS_L_FRICT_V4:
+      auxN = lnt;
+      De_Saxce_projection(auxN, no, f_coeff);
+      auxN -= lnt + (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no + zt;
+      for (i=0; i<N; ++i) t[i] = -auxN[i];
       break;
     case K_UL_V1:
       for (i=0; i<N; ++i) t[i] = -no[i];
@@ -1303,6 +1321,11 @@ namespace getfem {
       e = -gmm::neg(ln - r*(un - g));
       auxN = lt - zt;  ball_projection(auxN, -f_coeff * e); 
       for (i=0; i<N; ++i) t[i] = e*no[i] + auxN[i];
+      break;
+    case UZAWA_PROJ_FRICT_SAXCE:
+      auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
+      De_Saxce_projection(auxN, no, f_coeff);
+      for (i=0; i<N; ++i) t[i] = auxN[i];
       break;
 
 
@@ -1358,9 +1381,23 @@ namespace getfem {
         gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
         gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
         if (nzt != scalar_type(0)) 
-        gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
         gmm::mult(A, B, GP);
 	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+      }
+      break;
+    case K_UL_FRICT_V7:
+      De_Saxce_projection_grad(lnt, no, f_coeff, GP);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+      break;
+    case K_UL_FRICT_V8:
+      {
+        scalar_type nzt = gmm::vect_norm2(zt);
+	gmm::copy(gmm::identity_matrix(), GP); gmm::scale(GP, alpha);
+	gmm::rank_one_update(GP, gmm::scaled(no, scalar_type(1)-alpha), no);
+	if (nzt != scalar_type(0)) 
+	  gmm::rank_one_update(GP, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -r * GP(i,j);
       }
       break;
     case K_LL_FRICT_V1:
@@ -1386,6 +1423,11 @@ namespace getfem {
       De_Saxce_projection_grad(auxN, no, f_coeff, GP);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = (GP(i,j) - scalar_type((i == j) ? 1 : 0))/r;
+      break;
+    case K_LL_FRICT_V4:
+      De_Saxce_projection_grad(lnt, no, f_coeff, GP);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
+	t[i*N+j] = GP(i,j) - ((i == j) ? scalar_type(1) : scalar_type(0));
       break;
     case K_UU_FRICT_V1:
       e = r*Heav(r*(un-g)-ln);
@@ -1417,6 +1459,20 @@ namespace getfem {
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
                       - f_coeff*Heav(r*(un-g))*no[i]*V[j]);
+      break;
+    case K_UU_FRICT_V5:
+      {
+        scalar_type nzt = gmm::vect_norm2(zt);
+        auxN = lnt - (r*(un-g) - f_coeff * nzt) * no - zt;
+        base_matrix A(N, N), B(N, N);
+        De_Saxce_projection_grad(auxN, no, f_coeff, A);
+        gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
+        gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
+        if (nzt != scalar_type(0)) 
+	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+        gmm::mult(A, B, GP);
+	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = r*GP(i,j);
+      }
       break;
     default : GMM_ASSERT1(false, "Invalid option");
     }
@@ -1570,6 +1626,8 @@ namespace getfem {
       subterm3 = K_LL_FRICT_V2; break;
     case 5 : subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V6;
       subterm3 = K_LL_FRICT_V3; break;
+    case 6 : subterm1 = K_UL_FRICT_V7; subterm2 = K_UL_FRICT_V8;
+      subterm3 = K_LL_FRICT_V2; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
@@ -1590,7 +1648,7 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1: case 4: case 5:
+    case 1: case 4: case 5: case 6:
       assem.set
        ("M$1(#1,#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1).vBase(#2))(i,j,:,i,:,j); " // UL
         "M$2(#2,#1)+=comp(NonLin$2(#1,#1,#2,#3,#4).vBase(#2).vBase(#1))(i,j,:,j,:,i); " // LU
@@ -1680,6 +1738,7 @@ namespace getfem {
     case 3 : subterm1 = RHS_U_FRICT_V3; subterm2 = RHS_L_FRICT_V1; break;
     case 4 : subterm1 = RHS_U_FRICT_V4; subterm2 = RHS_L_FRICT_V2; break;
     case 5 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V3; break;
+    case 6 : subterm1 = RHS_U_FRICT_V5; subterm2 = RHS_L_FRICT_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
@@ -1714,7 +1773,7 @@ namespace getfem {
     // option = 3 : Alart Curnier "over-augmented"
     // option = 4 : New method
     // option = 5 : De-Saxcé
-    // option = 6 : De-Saxcé symmetric ?
+    // option = 6 : New method based on De-Saxcé.
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -1897,7 +1956,7 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1: case 4: case 5:
+    case 1: case 4: case 5: case 6:
       tl.push_back(model::term_description(varname_u, multname, false));
       tl.push_back(model::term_description(multname, varname_u, false));
       tl.push_back(model::term_description(multname, multname, true));
@@ -1991,9 +2050,15 @@ namespace getfem {
    scalar_type r, scalar_type alpha, const getfem::mesh_fem *mf_coeff,
    const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
 
+    size_type subterm;
+    switch (option) {
+    case 1 : subterm =  K_UU_FRICT_V4; break;
+    case 2 : subterm =  K_UU_FRICT_V3; break;
+    case 3 : subterm =  K_UU_FRICT_V5; break;
+    }
+    
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
-                                  (option==1) ? K_UU_FRICT_V4 : K_UU_FRICT_V3,
-                                  false, alpha, mf_coeff, &f_coeff, &WT);
+                             subterm, false, alpha, mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
     assem.set
@@ -2017,9 +2082,15 @@ namespace getfem {
    scalar_type r, scalar_type alpha, const getfem::mesh_fem *mf_coeff,
    const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
 
+    size_type subterm;
+    switch (option) {
+    case 1 : subterm =  RHS_U_V7; break;
+    case 2 : subterm =  RHS_U_V6; break;
+    case 3 : subterm =  RHS_U_V8; break;
+    }
+
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
-                                  (option == 1) ? RHS_U_V7 : RHS_U_V6,
-                                  false, alpha, mf_coeff, &f_coeff, &WT);
+                             subterm, false, alpha, mf_coeff, &f_coeff, &WT);
     
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
@@ -2200,7 +2271,7 @@ namespace getfem {
     dl.push_back(dataname_r);
     switch (option) {
     case 1: break;
-    case 2: dl.push_back(dataname_lambda); break;
+    case 2: case 3: dl.push_back(dataname_lambda); break;
     default: GMM_ASSERT1(false, "Penalized contact brick : invalid option");
     }
     dl.push_back(dataname_friction_coeff);
