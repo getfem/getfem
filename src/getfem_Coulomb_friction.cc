@@ -1388,7 +1388,7 @@ namespace getfem {
       break;
     case K_UL_FRICT_V7:
       De_Saxce_projection_grad(lnt, no, f_coeff, GP);
-      for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+      for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(j,i);
       break;
     case K_UL_FRICT_V8:
       {
@@ -1416,7 +1416,7 @@ namespace getfem {
       e -= gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - ((i == j) ? scalar_type(1) : scalar_type(0)) + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j]; // transposer ?
+        t[i*N+j] = no[i]*no[j]*e - ((i == j) ? scalar_type(1) : scalar_type(0)) + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j];
       break;
     case K_LL_FRICT_V3:
       auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
@@ -1471,7 +1471,7 @@ namespace getfem {
         if (nzt != scalar_type(0)) 
 	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
         gmm::mult(A, B, GP);
-	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = r*GP(i,j);
+	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = r*GP(j,i);
       }
       break;
     default : GMM_ASSERT1(false, "Invalid option");
@@ -1627,7 +1627,7 @@ namespace getfem {
     case 5 : subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V6;
       subterm3 = K_LL_FRICT_V3; break;
     case 6 : subterm1 = K_UL_FRICT_V7; subterm2 = K_UL_FRICT_V8;
-      subterm3 = K_LL_FRICT_V2; break;
+      subterm3 = K_LL_FRICT_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
@@ -2050,7 +2050,7 @@ namespace getfem {
    scalar_type r, scalar_type alpha, const getfem::mesh_fem *mf_coeff,
    const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
 
-    size_type subterm;
+    size_type subterm = 0;
     switch (option) {
     case 1 : subterm =  K_UU_FRICT_V4; break;
     case 2 : subterm =  K_UU_FRICT_V3; break;
@@ -2082,7 +2082,7 @@ namespace getfem {
    scalar_type r, scalar_type alpha, const getfem::mesh_fem *mf_coeff,
    const VECT1 &f_coeff, const VECT1 &WT, int option, const mesh_region &rg) {
 
-    size_type subterm;
+    size_type subterm = 0;
     switch (option) {
     case 1 : subterm =  RHS_U_V7; break;
     case 2 : subterm =  RHS_U_V6; break;
