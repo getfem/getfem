@@ -45,14 +45,17 @@ elseif (N == 3)
     mo6 = gf_mesher_object('ball', [-1 0 0], 1);
     mo  = gf_mesher_object('set minus', mo5, mo6);
     fixed_vertices = []; h = 0.3; 
-  else
+  elseif (1)
     alpha = pi/5;
     L = 20;
     R = L * tan(alpha) * 0.7;
     mo1 = gf_mesher_object('cone', [0 0 0], [0 0 1], L, alpha);
     mo2 = gf_mesher_object('cylinder', [0 0 L], [0, 0, 1], L, R);
     mo = gf_mesher_object('union', mo1, mo2);
-    fixed_vertices = []; h = 4;
+    fixed_vertices = []; h = 2.1;
+  else
+    mo  = gf_mesher_object('ball', [0 0 20], 20);
+    fixed_vertices = []; h = 3;
   end
 elseif (N == 4)
   mo = gf_mesher_object('ball', [0 0 0 4], 2);
