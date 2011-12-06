@@ -89,6 +89,8 @@ namespace gmm {
     void set_resmax(double r) { resmax = r; }
 
     double get_res() const { return res; }
+    void enforce_converged(bool c = true)
+    { if (c) res = double(0); else res = rhsn * resmax + double(1); }
 
     /* change the user-definable callback, called after each iteration */
     void set_callback(void (*t)(const gmm::iteration&)) {

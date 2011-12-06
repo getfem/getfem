@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Julien Pommier
+// Copyright (C) 2004-2011 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -138,7 +138,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   template<typename T>
-  void SuperLU_solve(const gmm::csc_matrix<T> &csc_A, T *sol, T *rhs,
+  int SuperLU_solve(const gmm::csc_matrix<T> &csc_A, T *sol, T *rhs,
 		     double& rcond_, int permc_spec) {
     /*
      * Get column permutation vector perm_c[], according to permc_spec:
@@ -211,13 +211,16 @@ namespace gmm {
     if (SU.Store) Destroy_CompCol_Matrix(&SU);
     StatFree(&stat);
     GMM_ASSERT1(info != -333333333, "SuperLU was cancelled."); // user interruption (for matlab interface)
-    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
+
+    GMM_ASSERT1(info >= 0, "SuperLU solve failed: info =" << info);
+    if (info > 0) GMM_WARNING1("SuperLU solve failed: info =" << info);
+    return info;
   }
 
-  template void SuperLU_solve(const gmm::csc_matrix<float> &csc_A, float *sol, float *rhs, double& rcond_, int permc_spec);
-  template void SuperLU_solve(const gmm::csc_matrix<double> &csc_A, double *sol, double *rhs, double& rcond_, int permc_spec);
-  template void SuperLU_solve(const gmm::csc_matrix<std::complex<float> > &csc_A, std::complex<float> *sol, std::complex<float> *rhs, double& rcond_, int permc_spec);
-  template void SuperLU_solve(const gmm::csc_matrix<std::complex<double> > &csc_A, std::complex<double> *sol, std::complex<double> *rhs, double& rcond_, int permc_spec);
+  template int SuperLU_solve(const gmm::csc_matrix<float> &csc_A, float *sol, float *rhs, double& rcond_, int permc_spec);
+  template int SuperLU_solve(const gmm::csc_matrix<double> &csc_A, double *sol, double *rhs, double& rcond_, int permc_spec);
+  template int SuperLU_solve(const gmm::csc_matrix<std::complex<float> > &csc_A, std::complex<float> *sol, std::complex<float> *rhs, double& rcond_, int permc_spec);
+  template int SuperLU_solve(const gmm::csc_matrix<std::complex<double> > &csc_A, std::complex<double> *sol, std::complex<double> *rhs, double& rcond_, int permc_spec);
 
   struct SuperLU_factor_impl_common {
     mutable SuperMatrix SA, SL, SB, SU, SX;

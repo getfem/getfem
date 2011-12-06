@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2008 Yves Renard
+// Copyright (C) 2003-2011 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -157,7 +157,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT, typename VECTX, typename VECTB>
-  void SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
+  int SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
 		     double& rcond_, int permc_spec = 3) {
     VECTX &X = const_cast<VECTX &>(X_);
     /*
@@ -231,8 +231,10 @@ namespace gmm {
     Destroy_SuperNode_Matrix(&SL);
     Destroy_CompCol_Matrix(&SU);
     StatFree(&stat);
-    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
+    GMM_ASSERT1(info >= 0, "SuperLU solve failed: info =" << info);
+    if (info > 0) GMM_WARNING1("SuperLU solve failed: info =" << info);
     gmm::copy(sol, X);
+    return info;
   }
 
   template <class T> class SuperLU_factor {

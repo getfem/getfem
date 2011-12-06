@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2010 Yves Renard
+// Copyright (C) 2009-2011 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -67,6 +67,13 @@ namespace getfem {
     void compute_pseudo_potential(void)
     { md.to_variables(state); md.assembly(model::BUILD_PSEUDO_POTENTIAL); }
 
+    void perturbation(void) {
+      R res = gmm::vect_norm2(state), ampl = res / R(1000);
+      if (res == R(0)) ampl = 1E-30;
+      std::vector<R> V(gmm::vect_size(state));
+      gmm::fill_random(V);
+      gmm::add(gmm::scaled(V, ampl), state);
+    }
 
     const VECTOR &residual(void) { return rhs; }
 

@@ -147,7 +147,8 @@ namespace getfem {
       /*gmm::HarwellBoeing_IO::write("test.hb", M);
       std::fstream f("bbb", std::ios::out); 
       for (unsigned i=0; i < gmm::vect_size(b); ++i) f << b[i] << "\n";*/
-      SuperLU_solve(M, x, b, rcond);
+      int info = SuperLU_solve(M, x, b, rcond);
+      iter.enforce_converged(info == 0);
       if (iter.get_noisy()) cout << "condition number: " << 1.0/rcond<< endl;
     }
   };
@@ -157,8 +158,10 @@ namespace getfem {
   template <typename MAT, typename VECT> 
   struct linear_solver_mumps : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &) const 
-    { gmm::MUMPS_solve(M, x, b); }
+		     gmm::iteration &iter) const {
+      bool ok = gmm::MUMPS_solve(M, x, b);
+      iter.enforce_converged(ok);
+    }
   };
 #endif
 
@@ -167,9 +170,10 @@ namespace getfem {
   struct linear_solver_distributed_mumps
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &) const { 
+		     gmm::iteration &iter) const { 
       double tt_ref=MPI_Wtime();
-      MUMPS_distributed_matrix_solve(M, x, b);
+      bool ok = MUMPS_distributed_matrix_solve(M, x, b);
+      iter.enforce_converged(ok);
       cout<<"temps MUMPS "<< MPI_Wtime() - tt_ref<<endl;
     }
   };
@@ -202,11 +206,32 @@ namespace getfem {
       gmm::iteration iter_linsolv = iter_linsolv0;
       if (iter.get_noisy() > 1)
 	cout << "starting computing tangent matrix" << endl;
-      pb.compute_tangent_matrix();
-      gmm::clear(dr);
-      gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
-      if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
-      linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+
+      int is_singular = 1;
+      while (is_singular) {
+	pb.compute_tangent_matrix();
+	gmm::clear(dr);
+	gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
+	if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
+	
+	linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+	if (!iter_linsolv.converged()) {
+	  is_singular++;
+	  if (is_singular <= 4) {
+	    if (iter.get_noisy())
+	      cout << "Singular tangent matrix:"
+		" perturbation of the state vector" << endl;
+	    pb.perturbation();
+	  } else {
+	    if (iter.get_noisy())
+	      cout << "Singular tangent matrix: perturbation failed, aborting"
+		   << endl;
+	    return;
+	  }
+	}
+	else is_singular = 0;
+      }
+
       if (iter.get_noisy() > 1) cout << "linear solver done" << endl;      
       R alpha = pb.line_search(dr, iter); // it is assumed that the line
       // search execute a pb.compute_residual();
@@ -615,6 +640,14 @@ namespace getfem {
 	pb.compute_residual(MS);
 	MS.compute_reduced_system();
       }
+    }
+
+    void perturbation(void) {
+      R res = gmm::vect_norm2(MS.state()), ampl = res / R(1000);
+      if (res == R(0)) ampl = 1E-30;
+      VECTOR V(gmm::vect_size(MS.state()));
+      gmm::fill_random(V);
+      gmm::add(gmm::scaled(V, ampl), MS.state());
     }
 
     inline T scale_residual(void) const { return T(-1); }

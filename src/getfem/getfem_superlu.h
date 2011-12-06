@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2004-2008 Julien Pommier
+// Copyright (C) 2004-2011 Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -49,7 +49,7 @@
 namespace gmm {
 
   template<typename T>
-  void SuperLU_solve(const gmm::csc_matrix<T> &A, T *X_, T *B, double& rcond_, int permc_spec = 3);
+  int SuperLU_solve(const gmm::csc_matrix<T> &A, T *X_, T *B, double& rcond_, int permc_spec = 3);
   /** solve a sparse linear system AX=B (float, double, complex<float>
       or complex<double>) via SuperLU.
 
@@ -60,7 +60,7 @@ namespace gmm {
       @param permc_spec specify the kind of renumbering than SuperLU should do.
   */
   template<typename MAT, typename V1, typename V2>
-  void SuperLU_solve(const MAT &A, const V1& X, const V2& B, double& rcond_, int permc_spec = 3) {
+  int SuperLU_solve(const MAT &A, const V1& X, const V2& B, double& rcond_, int permc_spec = 3) {
     typedef typename gmm::linalg_traits<MAT>::value_type T;
     
     int m = int(mat_nrows(A)), n = int(mat_ncols(A));
@@ -69,8 +69,9 @@ namespace gmm {
     std::vector<T> rhs(m), sol(m);
     gmm::copy(B, rhs);
     
-    SuperLU_solve(csc_A, &sol[0], &rhs[0], rcond_, permc_spec);
+    int info = SuperLU_solve(csc_A, &sol[0], &rhs[0], rcond_, permc_spec);
     gmm::copy(sol, const_cast<V1 &>(X));
+    return info;
   }
   
   struct SuperLU_factor_impl_common;

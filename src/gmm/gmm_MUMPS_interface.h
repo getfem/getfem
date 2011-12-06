@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2003-2008 Yves Renard
+// Copyright (C) 2003-2011 Yves Renard, Julien Pommier
 //
 // This file is a part of GETFEM++
 //
@@ -133,7 +133,7 @@ namespace gmm {
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
-  void MUMPS_solve(const MAT &A, const VECTX &X_, const VECTB &B) {
+  bool MUMPS_solve(const MAT &A, const VECTX &X_, const VECTB &B) {
     VECTX &X = const_cast<VECTX &>(X_);
 
     typedef typename linalg_traits<MAT>::value_type T;
@@ -190,12 +190,14 @@ namespace gmm {
 
     id.job = 6;
     mumps_interf<T>::mumps_c(id);
-    mumps_error_check(id);
+    bool ok = mumps_error_check(id);
 
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
 
     gmm::copy(rhs, X);
+
+    return ok;
 
 #undef ICNTL
 
@@ -207,7 +209,7 @@ namespace gmm {
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
-  void MUMPS_distributed_matrix_solve(const MAT &A, const VECTX &X_,
+  bool MUMPS_distributed_matrix_solve(const MAT &A, const VECTX &X_,
                                       const VECTB &B) {
     VECTX &X = const_cast<VECTX &>(X_);
 
@@ -261,7 +263,7 @@ namespace gmm {
 
     id.job = 6;
     mumps_interf<T>::mumps_c(id);
-    mumps_error_check(id);
+    bool ok = mumps_error_check(id);
 
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
@@ -270,13 +272,15 @@ namespace gmm {
 #endif
     gmm::copy(rhs, X);
 
+    return ok;
+
 #undef ICNTL
 
   }
 
 
   template <typename MUMPS_STRUCT>
-  static inline void mumps_error_check(MUMPS_STRUCT &id) {
+  static inline bool mumps_error_check(MUMPS_STRUCT &id) {
 #define INFO(I) info[(I)-1]
     if (id.INFO(1) < 0) {
       switch (id.INFO(1)) {
@@ -284,7 +288,8 @@ namespace gmm {
           GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
                       << " is out of range");
         case -6 : case -10 :
-          GMM_ASSERT1(false, "Solve with MUMPS failed: matrix is singular");
+          GMM_WARNING1("Solve with MUMPS failed: matrix is singular");
+	  return false;
         case -9:
           GMM_ASSERT1(false, "Solve with MUMPS failed: error "
                       << id.INFO(1) << ", increase ICNTL(14)");
@@ -295,6 +300,7 @@ namespace gmm {
                       << id.INFO(1));
       }
     }
+    return true;
 #undef INFO
   }
 
