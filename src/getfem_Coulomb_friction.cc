@@ -1204,7 +1204,7 @@ namespace getfem {
   }
 
   void friction_nonlinear_term::compute
-  (fem_interpolation_context & /* ctx */, bgeot::base_tensor &t) {
+  (fem_interpolation_context &/* ctx */, bgeot::base_tensor &t) {
 
     t.adjust_sizes(sizes_);
     scalar_type e, augm_ln; dim_type i, j;
@@ -1274,7 +1274,11 @@ namespace getfem {
       break;
     case RHS_U_FRICT_V4:
       e = -gmm::neg(ln);
+      // if (e < 0. && ctx.xreal()[1] > 1.)
+      //	cout << "x = " << ctx.xreal() << " e = " << e << endl;
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
+      // if (gmm::vect_norm2(auxN) > 0. && ctx.xreal()[1] > 1.)
+      //	cout << "x = " << ctx.xreal() << " auxN = " << auxN << endl;
       for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
       break;
     case RHS_U_FRICT_V5:
@@ -1758,7 +1762,8 @@ namespace getfem {
     assem.push_mf(mf_obs);
     assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
     assem.push_nonlinear_term(&nterm1);
-    assem.push_nonlinear_term(&nterm2);    assem.push_vec(Ru);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_vec(Ru);
     assem.push_vec(Rl);
     assem.assembly(rg);
   }

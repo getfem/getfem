@@ -220,11 +220,11 @@ namespace getfem {
 	  if (is_singular <= 4) {
 	    if (iter.get_noisy())
 	      cout << "Singular tangent matrix:"
-		" perturbation of the state vector" << endl;
+		" perturbation of the state vector." << endl;
 	    pb.perturbation();
 	  } else {
 	    if (iter.get_noisy())
-	      cout << "Singular tangent matrix: perturbation failed, aborting"
+	      cout << "Singular tangent matrix: perturbation failed, aborting."
 		   << endl;
 	    return;
 	  }

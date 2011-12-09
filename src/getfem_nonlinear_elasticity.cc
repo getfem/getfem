@@ -307,9 +307,11 @@ namespace getfem {
       getfem::base_tensor tdsigma(N,N,N,N);
       base_matrix dsigma(N,N);
       gmm::copy(E, E2); gmm::add(DE, E2);
-      sigma(E, sigma1, param); sigma(E2, sigma2, param);
+      sigma(E, sigma1, param, scalar_type(1));
+      sigma(E2, sigma2, param, scalar_type(1));
       
-      scalar_type d = strain_energy(E2, param) - strain_energy(E, param);
+      scalar_type d = strain_energy(E2, param, scalar_type(1))
+	- strain_energy(E, param, scalar_type(1));
       scalar_type d2 = 0;
       for (size_type i=0; i < N; ++i) 
 	for (size_type j=0; j < N; ++j) d2 += sigma1(i,j)*DE(i,j);
@@ -319,7 +321,7 @@ namespace getfem {
 	ok = false;
       }
       
-      grad_sigma(E,tdsigma,param);
+      grad_sigma(E,tdsigma,param, scalar_type(1));
       for (size_type i=0; i < N; ++i) {
 	for (size_type j=0; j < N; ++j) {
 	  dsigma(i,j) = 0;
@@ -343,19 +345,19 @@ namespace getfem {
   }
     
   scalar_type SaintVenant_Kirchhoff_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params) const {
+  (const base_matrix &E, const base_vector &params, scalar_type) const {
     return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
       + gmm::mat_euclidean_norm_sqr(E) * params[1];
   }
   
   void SaintVenant_Kirchhoff_hyperelastic_law::sigma
-  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+  (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type) const {
     gmm::copy(gmm::identity_matrix(), result);
     gmm::scale(result, params[0] * gmm::mat_trace(E));
     gmm::add(gmm::scaled(E, 2 * params[1]), result);
   }
   void SaintVenant_Kirchhoff_hyperelastic_law::grad_sigma
-  (const base_matrix &E, base_tensor &result,const base_vector &params) const {
+  (const base_matrix &E, base_tensor &result,const base_vector &params, scalar_type) const {
     std::fill(result.begin(), result.end(), scalar_type(0));
     size_type N = gmm::mat_nrows(E);
     for (size_type i = 0; i < N; ++i)
@@ -391,18 +393,18 @@ namespace getfem {
   }
 
   scalar_type membrane_elastic_law::strain_energy
-  (const base_matrix & /* E */, const base_vector & /* params */) const {
+  (const base_matrix & /* E */, const base_vector & /* params */, scalar_type) const {
     // to be done if needed
     GMM_ASSERT1(false, "To be done");
     return 0;
   }
   
   void membrane_elastic_law::sigma
-  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+  (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type det_trans) const {
     // should be optimized, maybe deriving sigma from strain energy
     base_tensor tt(2,2,2,2);
     size_type N = gmm::mat_nrows(E);
-    grad_sigma(E,tt,params);
+    grad_sigma(E,tt,params, det_trans);
     for (size_type i = 0; i < N; ++i)
       for (size_type j = 0; j < N; ++j) {
 	result(i,j)=0.0;
@@ -419,7 +421,7 @@ namespace getfem {
   
   void membrane_elastic_law::grad_sigma
   (const base_matrix & /* E */, base_tensor &result,
-   const base_vector &params) const {
+   const base_vector &params, scalar_type) const {
     // to be optimized!!
     std::fill(result.begin(), result.end(), scalar_type(0));
     scalar_type poisonXY=params[0]*params[1]/params[2];	//Ex*vYX=Ey*vXY
@@ -444,7 +446,7 @@ namespace getfem {
   }
 
   scalar_type Mooney_Rivlin_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params) const {
+  (const base_matrix &E, const base_vector &params, scalar_type) const {
     scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
@@ -459,7 +461,7 @@ namespace getfem {
 
   void Mooney_Rivlin_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
-   const base_vector &params) const {
+   const base_vector &params, scalar_type) const {
     scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
@@ -476,7 +478,7 @@ namespace getfem {
 
   void Mooney_Rivlin_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result,
-   const base_vector &params) const {
+   const base_vector &params, scalar_type) const {
     scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
@@ -503,7 +505,7 @@ namespace getfem {
 
 
   scalar_type generalized_Blatz_Ko_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params) const {
+  (const base_matrix &E, const base_vector &params, scalar_type ) const {
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
     size_type n = size_type(params[4]+0.1);
     size_type N = gmm::mat_nrows(E);
@@ -520,7 +522,7 @@ namespace getfem {
 
   void generalized_Blatz_Ko_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
-   const base_vector &params) const {
+   const base_vector &params, scalar_type) const {
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
     size_type n = size_type(params[4]+0.1);
     size_type N = gmm::mat_nrows(E);
@@ -546,7 +548,7 @@ namespace getfem {
 
   void generalized_Blatz_Ko_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result,
-   const base_vector &params) const {
+   const base_vector &params, scalar_type) const {
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
     size_type n = size_type(params[4]+0.1);
     size_type N = gmm::mat_nrows(E);
@@ -608,7 +610,8 @@ namespace getfem {
 
 
   scalar_type Ciarlet_Geymonat_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params) const {
+  (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
+    if (det_trans <= scalar_type(0)) return 1e200;
     size_type N = gmm::mat_nrows(E);
     scalar_type a = params[1] + params[2] / scalar_type(2);
     scalar_type b = -(params[1] + params[2]) / scalar_type(2);
@@ -627,7 +630,7 @@ namespace getfem {
   }
 
   void Ciarlet_Geymonat_hyperelastic_law::sigma
-  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+  (const base_matrix &E, base_matrix &result, const base_vector &params, scalar_type det_trans) const {
     size_type N = gmm::mat_nrows(E);
     scalar_type a = params[1] + params[2] / scalar_type(2);
     scalar_type b = -(params[1] + params[2]) / scalar_type(2);
@@ -641,12 +644,16 @@ namespace getfem {
     gmm::copy(gmm::identity_matrix(), result);
     gmm::scale(result, scalar_type(2) * (a + b * gmm::mat_trace(C)));
     gmm::add(gmm::scaled(C, -scalar_type(2) * b), result);
-    scalar_type det = gmm::lu_inverse(C);
-    gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
+    if (det_trans <= scalar_type(0))
+      gmm::add(gmm::scaled(C, 1e200), result);
+    else {
+      scalar_type det = gmm::lu_inverse(C);
+      gmm::add(gmm::scaled(C, scalar_type(2) * c * det - d), result);
+    }
   }
 
   void Ciarlet_Geymonat_hyperelastic_law::grad_sigma
-  (const base_matrix &E, base_tensor &result,const base_vector &params) const {
+  (const base_matrix &E, base_tensor &result,const base_vector &params, scalar_type) const {
     size_type N = gmm::mat_nrows(E);
     scalar_type b2 = -(params[1] + params[2]); // b * 2
     scalar_type c = (params[0]  - 2*b2) / scalar_type(4);
@@ -688,30 +695,30 @@ namespace getfem {
 
 
   scalar_type plane_strain_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params) const {
+  (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
     GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
     base_matrix E3D(3,3);
     E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1); 
-    return pl->strain_energy(E3D, params);
+    return pl->strain_energy(E3D, params, det_trans);
   }
 
   void plane_strain_hyperelastic_law::sigma
-  (const base_matrix &E, base_matrix &result,const base_vector &params) const {
+  (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type det_trans) const {
     GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
     base_matrix E3D(3,3), result3D(3,3);
     E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1);
-    pl->sigma(E3D, result3D, params);
+    pl->sigma(E3D, result3D, params, det_trans);
     result(0,0) = result3D(0,0); result(1,0) = result3D(1,0);
     result(0,1) = result3D(0,1); result(1,1) = result3D(1,1);
   }
 
   void plane_strain_hyperelastic_law::grad_sigma
-  (const base_matrix &E, base_tensor &result,const base_vector &params) const {
+  (const base_matrix &E, base_tensor &result,const base_vector &params, scalar_type det_trans) const {
     GMM_ASSERT1(gmm::mat_nrows(E) == 2, "Plane strain law is for 2D only.");
     base_matrix E3D(3,3);
     base_tensor result3D(3,3,3,3);
     E3D(0,0)=E(0,0); E3D(1,0)=E(1,0); E3D(0,1)=E(0,1); E3D(1,1)=E(1,1);
-    pl->grad_sigma(E3D, result3D, params);
+    pl->grad_sigma(E3D, result3D, params, det_trans);
     result(0,0,0,0) = result3D(0,0,0,0); result(1,0,0,0) = result3D(1,0,0,0);
     result(0,1,0,0) = result3D(0,1,0,0); result(1,1,0,0) = result3D(1,1,0,0);
     result(0,0,1,0) = result3D(0,0,1,0); result(1,0,1,0) = result3D(1,0,1,0);
@@ -892,7 +899,7 @@ namespace getfem {
       gmm::scale(E, scalar_type(1)/scalar_type(2));
       if (mf_params)
 	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
-      AHL.sigma(E, sigmahathat, p);
+      AHL.sigma(E, sigmahathat, p, scalar_type(1));
       if (NFem == 3 && N == 2) {
 	//jyh : compute ez, normal on deformed surface
 	for (unsigned int l = 0; l <NFem; ++l)  {

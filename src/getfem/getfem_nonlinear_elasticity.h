@@ -65,12 +65,14 @@ namespace getfem {
                                                         // default assembly
     
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const = 0;
+				      const base_vector &params,
+				      scalar_type det_trans) const = 0;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const = 0;
+		       const base_vector &params,
+		       scalar_type det_trans) const = 0;
     // the result of grad_sigma has to be completely symmetric.
     virtual void grad_sigma(const base_matrix &E, base_tensor &result, 
-			    const base_vector &params) const = 0;
+		 const base_vector &params, scalar_type det_trans) const = 0;
     size_type nb_params(void) const { return nb_params_; }
     abstract_hyperelastic_law() { nb_params_ = 0; pl = 0; }
     virtual ~abstract_hyperelastic_law() {}
@@ -88,12 +90,13 @@ namespace getfem {
     public abstract_hyperelastic_law {
     /* W = lambda*0.5*trace(E)^2 + mu*tr(E^2) */
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const;
+				      const base_vector &params,
+				      scalar_type det_trans) const;
     /* sigma = lambda*trace(E) + 2 mu * E */
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params) const;
+		      const base_vector &params, scalar_type det_trans) const;
     SaintVenant_Kirchhoff_hyperelastic_law(void);
   };
 
@@ -106,11 +109,12 @@ namespace getfem {
   struct membrane_elastic_law : 
     public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const;
+				      const base_vector &params,
+				      scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     membrane_elastic_law(void) { nb_params_ = 6; }
   };
 
@@ -121,11 +125,11 @@ namespace getfem {
   */
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const;
+				      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params) const;
+			    const base_vector &params, scalar_type det_trans) const;
     Mooney_Rivlin_hyperelastic_law(void);
   };
 
@@ -136,11 +140,11 @@ namespace getfem {
   */
   struct generalized_Blatz_Ko_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const;
+				      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params) const;
+			    const base_vector &params, scalar_type det_trans) const;
     generalized_Blatz_Ko_hyperelastic_law(void);
   };
 
@@ -152,11 +156,11 @@ namespace getfem {
     // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
     // The parameter gamma'(1) has to verify gamma'(1) in ]max{-lambda/2-mu, -2mu}, -mu[
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const;
+				      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params) const;
+			    const base_vector &params, scalar_type det_trans) const;
     Ciarlet_Geymonat_hyperelastic_law(void) { nb_params_ = 3; }
   };
 
@@ -164,11 +168,11 @@ namespace getfem {
    */
   struct plane_strain_hyperelastic_law : public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,
-				      const base_vector &params) const;
+				      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
-		       const base_vector &params) const;
+		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
-			    const base_vector &params) const;
+			    const base_vector &params, scalar_type det_trans) const;
     plane_strain_hyperelastic_law(getfem::abstract_hyperelastic_law *pl_)
     { pl = pl_; nb_params_ = pl->nb_params(); }
   };
@@ -237,15 +241,17 @@ namespace getfem {
 	E(alpha, alpha) -= scalar_type(1);
       gmm::scale(E, scalar_type(0.5));
 
+      scalar_type det_trans = gmm::lu_det(gradU);
+
       if (version == 2) {
-	t[0] = AHL.strain_energy(E, params);
+	t[0] = AHL.strain_energy(E, params, det_trans);
 	return;
       }
 
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, det_trans);
 
       if (version == 0) {	  
-	AHL.grad_sigma(E, tt, params);	
+	AHL.grad_sigma(E, tt, params, det_trans);	
 	for (size_type n = 0; n < NFem; ++n)
 	  for (size_type m = 0; m < N; ++m)
 	    for (size_type l = 0; l < N; ++l)
@@ -258,8 +264,7 @@ namespace getfem {
 		t(n, m, k, l) = aux;
 	      }
       } else {
-        if (gmm::lu_det(gradU) < 0) AHL.inc_unvalid_flag();
-
+        if (det_trans < scalar_type(0)) AHL.inc_unvalid_flag();
 	for (size_type i = 0; i < NFem; ++i)
 	  for (size_type j = 0; j < N; ++j) {
 	    scalar_type aux(0);
@@ -700,7 +705,7 @@ namespace getfem {
 	  gmm::add(gmm::scaled(Id, -scalar_type(1)), E);
 	  gmm::scale(E, scalar_type(1)/scalar_type(2));
 	  gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
-	  AHL.sigma(E, sigmahathat, p);
+	  AHL.sigma(E, sigmahathat, p, scalar_type(1));
 	  if (NFem == 3 && N == 2) {
 	    //jyh : compute ez, normal on deformed surface
 	    for (unsigned int l = 0; l <NFem; ++l)  {
