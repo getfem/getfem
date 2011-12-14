@@ -67,19 +67,29 @@ Some project using Getfem++ and/or Gmm++
 
 * EChem++: |link7b|_.
 
+
+.. |link7c| replace:: a software for the Simulation of Non-invasive Brain Stimulation
+.. _link7c: http://simnibs.de/
+
+* SimNIBS: |link7c|_.
+
+
 Some publications based on Getfem++ and/or Gmm++
 ------------------------------------------------
 
 .. |link8| replace:: www3.interscience.wiley.com
 .. _link8: http://www3.interscience.wiley.com/journal/122440964/abstract
 
-    * A. Andreykiv, D. J. Rixen, Numerical modelling of electromechanical coupling using fictitious domain and level set methods. Int. J. Numer. Meth. Engng 2009. |link8|_.
+    * Andreykiv A., Rixen D. J., Numerical modelling of electromechanical coupling using fictitious domain and level set methods. Int. J. Numer. Meth. Engng 2009. |link8|_.
 
-.. |link9| replace:: Yves Renard publications
+.. |link9| replace:: publications of Yves Renard
 .. _link9: http://math.univ-lyon1.fr/~renard/publis.html
 
 
     * |link9|_.
+
+
+    * Mirko Windhoff, Alexander Opitz, and Axel Thielscher, Electric Field Calculations in Brain Stimulation Based on Finite Elements: An Optimized Processing Pipeline for the Generation and Usage of Accurate Individual Head Models. Human Brain Mapping, 2011. DOI: 10.1002/hbm.21479
 
 
 
