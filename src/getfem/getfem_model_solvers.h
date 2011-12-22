@@ -76,76 +76,76 @@ namespace getfem {
   /*     Linear solvers definition                                     */
   /* ***************************************************************** */
 
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct abstract_linear_solver {
     virtual void operator ()(const MAT &, VECT &, const VECT &,
-			     gmm::iteration &) const  = 0;
+                             gmm::iteration &) const  = 0;
     virtual ~abstract_linear_solver() {}
   };
 
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct linear_solver_cg_preconditioned_ildlt
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter)  const {
+                     gmm::iteration &iter)  const {
       gmm::ildlt_precond<MAT> P(M);
       gmm::cg(M, x, b, P, iter);
       if (!iter.converged()) GMM_WARNING2("cg did not converge!");
     }
   };
 
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct linear_solver_gmres_preconditioned_ilu
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter)  const {
+                     gmm::iteration &iter)  const {
       gmm::ilu_precond<MAT> P(M);
       gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
 
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct linear_solver_gmres_unpreconditioned
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter)  const {
+                     gmm::iteration &iter)  const {
       gmm::identity_matrix P;
       gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
 
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct linear_solver_gmres_preconditioned_ilut
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter)  const {
+                     gmm::iteration &iter)  const {
       gmm::ilut_precond<MAT> P(M, 40, 1E-7);
       gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
-  
-  template <typename MAT, typename VECT> 
+
+  template <typename MAT, typename VECT>
   struct linear_solver_gmres_preconditioned_ilutp
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter)  const {
+                     gmm::iteration &iter)  const {
       gmm::ilutp_precond<MAT> P(M, 20, 1E-7);
       gmm::gmres(M, x, b, P, 500, iter);
       if (!iter.converged()) GMM_WARNING2("gmres did not converge!");
     }
   };
-  
-  template <typename MAT, typename VECT> 
+
+  template <typename MAT, typename VECT>
   struct linear_solver_superlu
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter)  const {
+                     gmm::iteration &iter)  const {
       double rcond;
       /*gmm::HarwellBoeing_IO::write("test.hb", M);
-      std::fstream f("bbb", std::ios::out); 
+      std::fstream f("bbb", std::ios::out);
       for (unsigned i=0; i < gmm::vect_size(b); ++i) f << b[i] << "\n";*/
       int info = SuperLU_solve(M, x, b, rcond);
       iter.enforce_converged(info == 0);
@@ -155,10 +155,10 @@ namespace getfem {
 
 
 #ifdef GMM_USES_MUMPS
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct linear_solver_mumps : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter) const {
+                     gmm::iteration &iter) const {
       bool ok = gmm::MUMPS_solve(M, x, b);
       iter.enforce_converged(ok);
     }
@@ -166,11 +166,11 @@ namespace getfem {
 #endif
 
 #if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
-  template <typename MAT, typename VECT> 
+  template <typename MAT, typename VECT>
   struct linear_solver_distributed_mumps
     : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter) const { 
+                     gmm::iteration &iter) const {
       double tt_ref=MPI_Wtime();
       bool ok = MUMPS_distributed_matrix_solve(M, x, b);
       iter.enforce_converged(ok);
@@ -184,11 +184,11 @@ namespace getfem {
   /*     Newton algorithm.                                             */
   /* ***************************************************************** */
 
-  template <typename PB> 
+  template <typename PB>
   void classical_Newton(PB &pb, gmm::iteration &iter,
-			const abstract_linear_solver<typename PB::MATRIX,
-			typename PB::VECTOR> &linear_solver) {
-    // TODO : take iter into account for the Newton. compute a consistent 
+                        const abstract_linear_solver<typename PB::MATRIX,
+                        typename PB::VECTOR> &linear_solver) {
+    // TODO : take iter into account for the Newton. compute a consistent
     //        max residu.
     typedef typename gmm::linalg_traits<typename PB::VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
@@ -205,34 +205,34 @@ namespace getfem {
     while (!iter.finished(pb.residual_norm())) {
       gmm::iteration iter_linsolv = iter_linsolv0;
       if (iter.get_noisy() > 1)
-	cout << "starting computing tangent matrix" << endl;
+        cout << "starting computing tangent matrix" << endl;
 
       int is_singular = 1;
       while (is_singular) {
-	pb.compute_tangent_matrix();
-	gmm::clear(dr);
-	gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
-	if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
-	
-	linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
-	if (!iter_linsolv.converged()) {
-	  is_singular++;
-	  if (is_singular <= 4) {
-	    if (iter.get_noisy())
-	      cout << "Singular tangent matrix:"
-		" perturbation of the state vector." << endl;
-	    pb.perturbation();
-	  } else {
-	    if (iter.get_noisy())
-	      cout << "Singular tangent matrix: perturbation failed, aborting."
-		   << endl;
-	    return;
-	  }
-	}
-	else is_singular = 0;
+        pb.compute_tangent_matrix();
+        gmm::clear(dr);
+        gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
+        if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
+
+        linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
+        if (!iter_linsolv.converged()) {
+          is_singular++;
+          if (is_singular <= 4) {
+            if (iter.get_noisy())
+              cout << "Singular tangent matrix:"
+                " perturbation of the state vector." << endl;
+            pb.perturbation();
+          } else {
+            if (iter.get_noisy())
+              cout << "Singular tangent matrix: perturbation failed, aborting."
+                   << endl;
+            return;
+          }
+        }
+        else is_singular = 0;
       }
 
-      if (iter.get_noisy() > 1) cout << "linear solver done" << endl;      
+      if (iter.get_noisy() > 1) cout << "linear solver done" << endl;
       R alpha = pb.line_search(dr, iter); // it is assumed that the line
       // search execute a pb.compute_residual();
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
@@ -242,14 +242,14 @@ namespace getfem {
 
 
   //---------------------------------------------------------------------
-  // Default linear solver.   
+  // Default linear solver.
   //---------------------------------------------------------------------
 
   typedef abstract_linear_solver<model_real_sparse_matrix,
-				 model_real_plain_vector> rmodel_linear_solver;
+                                 model_real_plain_vector> rmodel_linear_solver;
   typedef std::auto_ptr<rmodel_linear_solver> rmodel_plsolver_type;
   typedef abstract_linear_solver<model_complex_sparse_matrix,
-				 model_complex_plain_vector>
+                                 model_complex_plain_vector>
           cmodel_linear_solver;
   typedef std::auto_ptr<cmodel_linear_solver> cmodel_plsolver_type;
 
@@ -258,7 +258,7 @@ namespace getfem {
   std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> >
   default_linear_solver(const model &md) {
     std::auto_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
-    
+
 #if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
       p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
@@ -276,15 +276,15 @@ namespace getfem {
 # endif
     }
     else {
-      if (md.is_coercive()) 
-	p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
+      if (md.is_coercive())
+        p.reset(new linear_solver_cg_preconditioned_ildlt<MATRIX, VECTOR>);
       else {
-	if (dim <= 2)
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
-	else
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
+        if (dim <= 2)
+          p.reset(new
+                  linear_solver_gmres_preconditioned_ilut<MATRIX,VECTOR>);
+        else
+          p.reset(new
+                  linear_solver_gmres_preconditioned_ilu<MATRIX,VECTOR>);
       }
     }
 #endif
@@ -324,23 +324,23 @@ namespace getfem {
   }
 
   inline rmodel_plsolver_type rselect_linear_solver(const model &md,
-					     const std::string &name) {
+                                             const std::string &name) {
     return select_linear_solver<model_real_sparse_matrix,
                                 model_real_plain_vector>(md, name);
   }
 
   inline cmodel_plsolver_type cselect_linear_solver(const model &md,
-					     const std::string &name) {
+                                             const std::string &name) {
     return select_linear_solver<model_complex_sparse_matrix,
                                 model_complex_plain_vector>(md, name);
-  } 
+  }
 
   //---------------------------------------------------------------------
-  // Standard solve.      
+  // Standard solve.
   //---------------------------------------------------------------------
 
 
-  /** A default solver for the model brick system.  
+  /** A default solver for the model brick system.
   Of course it could be not very well suited for a particular
   problem, so it could be copied and adapted to change solvers,
   add a special traitement on the problem, etc ...  This is in
@@ -357,25 +357,25 @@ namespace getfem {
   @ingroup bricks
   */
   void standard_solve(model &md, gmm::iteration &iter,
-		      rmodel_plsolver_type lsolver,
-		      gmm::abstract_newton_line_search &ls,
-		      bool with_pseudo_potential = false);
+                      rmodel_plsolver_type lsolver,
+                      gmm::abstract_newton_line_search &ls,
+                      bool with_pseudo_potential = false);
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      cmodel_plsolver_type lsolver,
-		      gmm::abstract_newton_line_search &ls,
-		      bool with_pseudo_potential = false);
-  
-  void standard_solve(model &md, gmm::iteration &iter,
-		      rmodel_plsolver_type lsolver,
-		      bool with_pseudo_potential = false);
+                      cmodel_plsolver_type lsolver,
+                      gmm::abstract_newton_line_search &ls,
+                      bool with_pseudo_potential = false);
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      cmodel_plsolver_type lsolver,
-		      bool with_pseudo_potential = false);
+                      rmodel_plsolver_type lsolver,
+                      bool with_pseudo_potential = false);
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      bool with_pseudo_potential = false);
+                      cmodel_plsolver_type lsolver,
+                      bool with_pseudo_potential = false);
+
+  void standard_solve(model &md, gmm::iteration &iter,
+                      bool with_pseudo_potential = false);
 
 
 }
@@ -386,9 +386,9 @@ namespace getfem {
 
 
 //---------------------------------------------------------------------
-//           
+//
 // Solvers for the old brick system. Kept for compatibility reasons.
-//           
+//
 //---------------------------------------------------------------------
 
 
@@ -397,7 +397,7 @@ namespace getfem {
 namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == SCHWARZADD_PARA_SOLVER
-  template <typename MODEL_STATE, typename MAT, typename VECT> 
+  template <typename MODEL_STATE, typename MAT, typename VECT>
   struct linear_solver_para_schwarzadd
     : public abstract_linear_solver<MAT, VECT> {
 
@@ -406,18 +406,18 @@ namespace getfem {
     const mdbrick_abstract<MODEL_STATE> &problem;
     int nblocsubdom; // Number of sub-domains per process
 
-    linear_solver_para_schwarzadd(const mdbrick_abstract<MODEL_STATE> &problem_, 
-				  int nblocsubdom_)
+    linear_solver_para_schwarzadd(const mdbrick_abstract<MODEL_STATE> &problem_,
+                                  int nblocsubdom_)
       : problem(problem_), nblocsubdom(nblocsubdom_) {}
 
     void operator ()(const MAT &M, VECT &x, const VECT &b,
-		     gmm::iteration &iter) const { 
+                     gmm::iteration &iter) const {
       double tt_ref=MPI_Wtime();
 
       // Meshes sub-partition.
       std::set<const mesh *> mesh_set;
       for (size_type i = 0; i < problem.nb_mesh_fems(); ++i)
-	mesh_set.insert(&(problem.get_mesh_fem(i).linked_mesh()));
+        mesh_set.insert(&(problem.get_mesh_fem(i).linked_mesh()));
 
       std::vector< std::vector<int> > eparts(mesh_set.size());
 
@@ -427,91 +427,91 @@ namespace getfem {
       MPI_Comm_size(MPI_COMM_WORLD, &size);
 
       for (std::set<const mesh *>::iterator it = mesh_set.begin();
-	   it != mesh_set.end(); ++it, ++nset) {
+           it != mesh_set.end(); ++it, ++nset) {
 
-	int ne = int((*it)->get_mpi_region().nb_convex());
-	std::vector<int> xadj(ne+1), adjncy, numelt((*it)->convex_index().last_true()+1), numeltinv(ne), npart(ne);
+        int ne = int((*it)->get_mpi_region().nb_convex());
+        std::vector<int> xadj(ne+1), adjncy, numelt((*it)->convex_index().last_true()+1), numeltinv(ne), npart(ne);
 
-	int j = 0, k = 0;
-	bgeot::mesh_structure::ind_set s;
-	for (mr_visitor ic((*it)->get_mpi_region()); !ic.finished();++ic,++j) 
-	  { numelt[ic.cv()] = j; numeltinv[j] = ic.cv(); }
+        int j = 0, k = 0;
+        bgeot::mesh_structure::ind_set s;
+        for (mr_visitor ic((*it)->get_mpi_region()); !ic.finished();++ic,++j)
+          { numelt[ic.cv()] = j; numeltinv[j] = ic.cv(); }
 
-	j = 0;
-	for (mr_visitor ic((*it)->get_mpi_region()); !ic.finished();++ic,++j) {
-	  xadj[j] = k;
-	  (*it)->neighbours_of_convex(ic.cv(), s);
-	  for (bgeot::mesh_structure::ind_set::iterator iti = s.begin();
-	       iti != s.end(); ++iti)
-	    if ((*it)->get_mpi_region().is_in(*iti)) 
-	      { adjncy.push_back(numelt[*iti]); ++k; }  
-	}
-	xadj[j] = k;
+        j = 0;
+        for (mr_visitor ic((*it)->get_mpi_region()); !ic.finished();++ic,++j) {
+          xadj[j] = k;
+          (*it)->neighbours_of_convex(ic.cv(), s);
+          for (bgeot::mesh_structure::ind_set::iterator iti = s.begin();
+               iti != s.end(); ++iti)
+            if ((*it)->get_mpi_region().is_in(*iti))
+              { adjncy.push_back(numelt[*iti]); ++k; }
+        }
+        xadj[j] = k;
 
-	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
-	int nbbl = nblocsubdom/size;
+        int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
+        int nbbl = nblocsubdom/size;
 
-	// The mpi region is partitionned into nblocsubdom sub-domains.
-	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
-			    &numflag, &nbbl, options, &edgecut,
-			    &(npart[0]));
+        // The mpi region is partitionned into nblocsubdom sub-domains.
+        METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
+                            &numflag, &nbbl, options, &edgecut,
+                            &(npart[0]));
 
-	eparts[nset].resize(0);
-	eparts[nset].resize((*it)->convex_index().last()+1, size_type(-1));
-	
-	for (size_type i = 0; i < size_type(ne); ++i)
-	  eparts[nset][numeltinv[i]] = npart[i];
+        eparts[nset].resize(0);
+        eparts[nset].resize((*it)->convex_index().last()+1, size_type(-1));
+
+        for (size_type i = 0; i < size_type(ne); ++i)
+          eparts[nset][numeltinv[i]] = npart[i];
       }
-      
+
       // To be completeted for non-finite element dofs
-      // nblocsubdom is number of sub dom per proc  
+      // nblocsubdom is number of sub dom per proc
 //       std::vector<dal::bit_vector> Bidof(nblocsubdom);
-      // nblocsubdom is the global number of  sub dom        
+      // nblocsubdom is the global number of  sub dom
       std::vector<dal::bit_vector> Bidof(nblocsubdom/size);
       size_type apos = 0;
       for (size_type i = 0; i < problem.nb_mesh_fems(); ++i) {
-	const mesh_fem &mf = problem.get_mesh_fem(i);
-	nset = 0;
-	for (std::set<const mesh *>::iterator it = mesh_set.begin();
-	     it != mesh_set.end(); ++it, ++nset)
-	  if (*it == &(mf.linked_mesh())) break; 
-	size_type pos = problem.get_mesh_fem_position(i);
-	GMM_ASSERT1(pos == apos, "Multipliers are not taken into account");
-	size_type length = mf.nb_dof();
-	apos += length;
-	for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
-	  size_type k = eparts[nset][j];
-	  if (k != size_type(-1))
-	    for (size_type l = 0; l < mf.nb_dof_of_element(j); ++l)
-	      Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
-	}
-	GMM_ASSERT1(apos == ndof, "Multipliers are not taken into account");
+        const mesh_fem &mf = problem.get_mesh_fem(i);
+        nset = 0;
+        for (std::set<const mesh *>::iterator it = mesh_set.begin();
+             it != mesh_set.end(); ++it, ++nset)
+          if (*it == &(mf.linked_mesh())) break;
+        size_type pos = problem.get_mesh_fem_position(i);
+        GMM_ASSERT1(pos == apos, "Multipliers are not taken into account");
+        size_type length = mf.nb_dof();
+        apos += length;
+        for (dal::bv_visitor j(mf.convex_index()); !j.finished(); ++j) {
+          size_type k = eparts[nset][j];
+          if (k != size_type(-1))
+            for (size_type l = 0; l < mf.nb_dof_of_element(j); ++l)
+              Bidof[k].add(mf.ind_dof_of_element(j)[l] + pos);
+        }
+        GMM_ASSERT1(apos == ndof, "Multipliers are not taken into account");
       }
-      // nblocsubdom is number of sub dom per proc        
-//       std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom*size);   
-      // nblocsubdom is the global number of  sub dom             
-      std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom);     
-      // nblocsubdom is number of sub dom per proc        
+      // nblocsubdom is number of sub dom per proc
+//       std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom*size);
+      // nblocsubdom is the global number of  sub dom
+      std::vector< gmm::row_matrix< gmm::rsvector<value_type> > > Bi(nblocsubdom);
+      // nblocsubdom is number of sub dom per proc
 //       for (size_type i = 0; i < size_type(nblocsubdom); ++i) {
-      // nblocsubdom is the global number of  sub dom        
+      // nblocsubdom is the global number of  sub dom
       for (size_type i = 0; i < size_type(nblocsubdom/size); ++i) {
-     // nblocsubdom is number of sub dom per proc        
-// 	gmm::resize(Bi[size*rank + i], ndof, Bidof[i].card());
-     // nblocsubdom is the global number of  sub dom     
-	gmm::resize(Bi[(nblocsubdom/size)*rank + i], ndof, Bidof[i].card());
-	size_type k = 0;
-	for (dal::bv_visitor j(Bidof[i]); !j.finished(); ++j, ++k)
-    // nblocsubdom is number of sub dom per proc      
-// 	  Bi[size*rank + i](j, k) = value_type(1);
-     // nblocsubdom is the global number of  sub dom    
-	  Bi[(nblocsubdom/size)*rank + i](j, k) = value_type(1);
+     // nblocsubdom is number of sub dom per proc
+//         gmm::resize(Bi[size*rank + i], ndof, Bidof[i].card());
+     // nblocsubdom is the global number of  sub dom
+        gmm::resize(Bi[(nblocsubdom/size)*rank + i], ndof, Bidof[i].card());
+        size_type k = 0;
+        for (dal::bv_visitor j(Bidof[i]); !j.finished(); ++j, ++k)
+    // nblocsubdom is number of sub dom per proc
+//           Bi[size*rank + i](j, k) = value_type(1);
+     // nblocsubdom is the global number of  sub dom
+          Bi[(nblocsubdom/size)*rank + i](j, k) = value_type(1);
       }
 
       gmm::mpi_distributed_matrix<MAT> mpiM(ndof, ndof);
       gmm::copy(M, mpiM.local_matrix());
-      
+
       additive_schwarz(mpiM, x, b, gmm::identity_matrix(), Bi, iter,
-		       gmm::using_superlu(), gmm::using_cg());
+                       gmm::using_superlu(), gmm::using_cg());
 
       cout<<"temps SCHWARZ ADD "<< MPI_Wtime() - tt_ref<<endl;
     }
@@ -519,21 +519,21 @@ namespace getfem {
 #endif
 
   template <typename MODEL_STATE> struct useful_types {
-    
+
     TYPEDEF_MODEL_STATE_TYPES;
     typedef abstract_linear_solver<T_MATRIX, VECTOR> lsolver_type;
     typedef std::auto_ptr<lsolver_type> plsolver_type;
   };
 
 
-  template <typename MODEL_STATE> 
+  template <typename MODEL_STATE>
   typename useful_types<MODEL_STATE>::plsolver_type
   default_linear_solver(const mdbrick_abstract<MODEL_STATE> &problem) {
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::vector_type VECTOR;
 
     typename useful_types<MODEL_STATE>::plsolver_type p;
-  
+
 #if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     p.reset(new linear_solver_mumps<T_MATRIX, VECTOR>);
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
@@ -556,23 +556,23 @@ namespace getfem {
 # endif
     }
     else {
-      if (problem.is_coercive()) 
-	p.reset(new linear_solver_cg_preconditioned_ildlt<T_MATRIX, VECTOR>);
+      if (problem.is_coercive())
+        p.reset(new linear_solver_cg_preconditioned_ildlt<T_MATRIX, VECTOR>);
       else if (problem.mixed_variables().card() == 0) {
-	if (dim <= 2)
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
-	else
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
+        if (dim <= 2)
+          p.reset(new
+                  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
+        else
+          p.reset(new
+                  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
       }
       else {
-	if (dim <= 2)
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
-	else
-	  p.reset(new
-		  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
+        if (dim <= 2)
+          p.reset(new
+                  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
+        else
+          p.reset(new
+                  linear_solver_gmres_preconditioned_ilu<T_MATRIX,VECTOR>);
       }
     }
 #endif
@@ -583,10 +583,10 @@ namespace getfem {
   template <typename MODEL_STATE>
   typename useful_types<MODEL_STATE>::plsolver_type
   select_linear_solver(const mdbrick_abstract<MODEL_STATE> &problem,
-		       const std::string &name) {
+                       const std::string &name) {
     typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
     typedef typename MODEL_STATE::vector_type VECTOR;
-    
+
     typename useful_types<MODEL_STATE>::plsolver_type p;
 
     if (bgeot::casecmp(name, "superlu") == 0)
@@ -621,7 +621,7 @@ namespace getfem {
   /*     Intermediary structure for Newton algorithms.                 */
   /* ***************************************************************** */
 
-  template <typename MODEL_STATE> 
+  template <typename MODEL_STATE>
   struct model_problem {
 
     TYPEDEF_MODEL_STATE_TYPES;
@@ -637,8 +637,8 @@ namespace getfem {
     void compute_tangent_matrix(void) {
       pb.compute_tangent_matrix(MS);
       if (pb.nb_constraints() > 0) {
-	pb.compute_residual(MS);
-	MS.compute_reduced_system();
+        pb.compute_residual(MS);
+        MS.compute_reduced_system();
       }
     }
 
@@ -654,7 +654,7 @@ namespace getfem {
 
     const T_MATRIX &tangent_matrix(void)
     { return MS.reduced_tangent_matrix(); }
-    
+
     void compute_residual(void) {
       pb.compute_residual(MS);
       if (pb.nb_constraints() > 0) MS.compute_reduced_residual();
@@ -674,24 +674,24 @@ namespace getfem {
 
       ls.init_search(MS.reduced_residual_norm(), iter.get_iteration(), R0);
       do {
-	alpha = ls.next_try();
-	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-	compute_residual();
-	res = MS.reduced_residual_norm();
-	R0 = gmm::real(gmm::vect_sp(dr, residual()));
+        alpha = ls.next_try();
+        gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+        compute_residual();
+        res = MS.reduced_residual_norm();
+        R0 = gmm::real(gmm::vect_sp(dr, residual()));
       } while (!ls.is_converged(res));
 
       if (alpha != ls.converged_value()) {
-	alpha = ls.converged_value();
-	gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
-	res = ls.converged_residual();
-	compute_residual();
+        alpha = ls.converged_value();
+        gmm::add(stateinit, gmm::scaled(d, alpha), MS.state());
+        res = ls.converged_residual();
+        compute_residual();
       }
       return alpha;
     }
 
     model_problem(MODEL_STATE &MS_, mdbrick_abstract<MODEL_STATE> &pb_,
-		  gmm::abstract_newton_line_search &ls_)
+                  gmm::abstract_newton_line_search &ls_)
       : MS(MS_), pb(pb_), ls(ls_) {}
 
   };
@@ -700,8 +700,8 @@ namespace getfem {
   /*     Standard solve.                                               */
   /* ***************************************************************** */
 
-  /** A default solver for the old model brick system.  
-      
+  /** A default solver for the old model brick system.
+
   Of course it could be not very well suited for a particular
   problem, so it could be copied and adapted to change solvers,
   add a special traitement on the problem, etc ...  This is in
@@ -747,8 +747,8 @@ namespace getfem {
 
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
-		 gmm::iteration &iter,
-		 typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
+                 gmm::iteration &iter,
+                 typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
     gmm::default_newton_line_search ls;
     standard_solve(MS, problem, iter, lsolver, ls);
   }
@@ -756,7 +756,7 @@ namespace getfem {
 
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
-		 gmm::iteration &iter) {
+                 gmm::iteration &iter) {
     gmm::default_newton_line_search ls;
     standard_solve(MS, problem, iter, default_linear_solver(problem), ls);
   }

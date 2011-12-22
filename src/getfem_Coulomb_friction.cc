@@ -113,12 +113,12 @@ namespace getfem {
       gmm::scale(xt, scalar_type(1)/nxt);
 
       if (N > 2) {
-	gmm::copy(gmm::identity_matrix(), g);
-	gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
-	gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
-	gmm::scale(g, f*(f - xn/nxt));
+        gmm::copy(gmm::identity_matrix(), g);
+        gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
+        gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
+        gmm::scale(g, f*(f - xn/nxt));
       } else {
-	gmm::clear(g);
+        gmm::clear(g);
       }
 
       gmm::scale(xt, -f); gmm::add(n, xt);
@@ -849,7 +849,7 @@ namespace getfem {
       }
 
       if (version & model::BUILD_RHS) {
-        for (size_type i=0; i < nbc; ++i) { 
+        for (size_type i=0; i < nbc; ++i) {
             RLN[i] = std::min(scalar_type(0), RLN[i]);
             if (!contact_only) {
               scalar_type radius = Tresca_version ? threshold[i]
@@ -877,10 +877,10 @@ namespace getfem {
           }
         }
 
-        
+
         gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
                  rlambda_n);
-        
+
         if (!contact_only)
           gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
                    rlambda_t);
@@ -1200,7 +1200,7 @@ namespace getfem {
     case K_UU_FRICT_V1: case K_UU_FRICT_V2:
     case K_UU_FRICT_V3: case K_UU_FRICT_V4: case K_UU_FRICT_V5:
       sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
-    } 
+    }
   }
 
   void friction_nonlinear_term::compute
@@ -1275,10 +1275,10 @@ namespace getfem {
     case RHS_U_FRICT_V4:
       e = -gmm::neg(ln);
       // if (e < 0. && ctx.xreal()[1] > 1.)
-      //	cout << "x = " << ctx.xreal() << " e = " << e << endl;
+      //        cout << "x = " << ctx.xreal() << " e = " << e << endl;
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
       // if (gmm::vect_norm2(auxN) > 0. && ctx.xreal()[1] > 1.)
-      //	cout << "x = " << ctx.xreal() << " auxN = " << auxN << endl;
+      //        cout << "x = " << ctx.xreal() << " auxN = " << auxN << endl;
       for (i=0; i<N; ++i) t[i] = no[i]*e + auxN[i];
       break;
     case RHS_U_FRICT_V5:
@@ -1323,7 +1323,7 @@ namespace getfem {
       break;
     case UZAWA_PROJ_FRICT:
       e = -gmm::neg(ln - r*(un - g));
-      auxN = lt - zt;  ball_projection(auxN, -f_coeff * e); 
+      auxN = lt - zt;  ball_projection(auxN, -f_coeff * e);
       for (i=0; i<N; ++i) t[i] = e*no[i] + auxN[i];
       break;
     case UZAWA_PROJ_FRICT_SAXCE:
@@ -1384,10 +1384,10 @@ namespace getfem {
         De_Saxce_projection_grad(auxN, no, f_coeff, A);
         gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
         gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
-        if (nzt != scalar_type(0)) 
-	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+        if (nzt != scalar_type(0))
+          gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
         gmm::mult(A, B, GP);
-	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
+        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
       }
       break;
     case K_UL_FRICT_V7:
@@ -1397,11 +1397,11 @@ namespace getfem {
     case K_UL_FRICT_V8:
       {
         scalar_type nzt = gmm::vect_norm2(zt);
-	gmm::copy(gmm::identity_matrix(), GP); gmm::scale(GP, alpha);
-	gmm::rank_one_update(GP, gmm::scaled(no, scalar_type(1)-alpha), no);
-	if (nzt != scalar_type(0)) 
-	  gmm::rank_one_update(GP, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
-	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -r * GP(i,j);
+        gmm::copy(gmm::identity_matrix(), GP); gmm::scale(GP, alpha);
+        gmm::rank_one_update(GP, gmm::scaled(no, scalar_type(1)-alpha), no);
+        if (nzt != scalar_type(0))
+          gmm::rank_one_update(GP, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -r * GP(i,j);
       }
       break;
     case K_LL_FRICT_V1:
@@ -1431,7 +1431,7 @@ namespace getfem {
     case K_LL_FRICT_V4:
       De_Saxce_projection_grad(lnt, no, f_coeff, GP);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-	t[i*N+j] = GP(i,j) - ((i == j) ? scalar_type(1) : scalar_type(0));
+        t[i*N+j] = GP(i,j) - ((i == j) ? scalar_type(1) : scalar_type(0));
       break;
     case K_UU_FRICT_V1:
       e = r*Heav(r*(un-g)-ln);
@@ -1472,10 +1472,10 @@ namespace getfem {
         De_Saxce_projection_grad(auxN, no, f_coeff, A);
         gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
         gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
-        if (nzt != scalar_type(0)) 
-	  gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
+        if (nzt != scalar_type(0))
+          gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
         gmm::mult(A, B, GP);
-	for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = r*GP(j,i);
+        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = r*GP(j,i);
       }
       break;
     default : GMM_ASSERT1(false, "Invalid option");
@@ -2035,7 +2035,7 @@ namespace getfem {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs,
                                   r, (option == 1) ? RHS_U_V5 : RHS_U_V2);
-    
+
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
@@ -2061,7 +2061,7 @@ namespace getfem {
     case 2 : subterm =  K_UU_FRICT_V3; break;
     case 3 : subterm =  K_UU_FRICT_V5; break;
     }
-    
+
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
                              subterm, false, alpha, mf_coeff, &f_coeff, &WT);
 
@@ -2096,7 +2096,7 @@ namespace getfem {
 
     friction_nonlinear_term nterm(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
                              subterm, false, alpha, mf_coeff, &f_coeff, &WT);
-    
+
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
@@ -2114,7 +2114,7 @@ namespace getfem {
 
     bool Tresca_version, contact_only;
     int option;
-    
+
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
@@ -2263,7 +2263,7 @@ namespace getfem {
   size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   const std::string &dataname_friction_coeff, 
+   const std::string &dataname_friction_coeff,
    size_type region, int option, const std::string &dataname_lambda,
    const std::string &dataname_alpha, const std::string &dataname_wt) {
 
