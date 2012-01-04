@@ -568,6 +568,13 @@ namespace getfem {
 	  }	  
 	  add_elem(t, ctx, J, first, true, icb, sizes);
 	}
+
+	// GMM_ASSERT1(!first, "No integration point on this element.");
+	if (first) {
+	  GMM_WARNING3("No integration point on this element. "
+		       "Caution, returning a null tensor");
+	  t.adjust_sizes(sizes); gmm::clear(t.as_vector());
+	}
       }
 
       /* Applying linear transformation for non tau-equivalent elements.   */
