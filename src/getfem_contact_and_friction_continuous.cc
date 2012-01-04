@@ -516,7 +516,7 @@ namespace getfem {
   }
 
   template<typename MAT, typename VECT1>
-  void asm_frictionless_continuous_tangent_matrix_Alart_Curnier
+  void asm_continuous_contact_tangent_matrix_Alart_Curnier
   (MAT &Kul, MAT &Klu, MAT &Kll, MAT &Kuu, const mesh_im &mim,
    const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
@@ -575,7 +575,7 @@ namespace getfem {
   }
 
   template<typename MAT, typename VECT1>
-  void asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
+  void asm_continuous_contact_with_friction_tangent_matrix_Alart_Curnier
   (MAT &Kul, MAT &Klu, MAT &Kll, MAT &Kuu, const mesh_im &mim,
    const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
@@ -655,7 +655,7 @@ namespace getfem {
   }
 
   template<typename VECT1>
-  void asm_frictionless_continuous_rhs_Alart_Curnier
+  void asm_continuous_contact_rhs_Alart_Curnier
   (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r, int option,
@@ -692,7 +692,7 @@ namespace getfem {
   }
 
   template<typename VECT1>
-  void asm_Coulomb_friction_continuous_rhs_Alart_Curnier
+  void asm_continuous_contact_with_friction_rhs_Alart_Curnier
   (VECT1 &Ru, VECT1 &Rl, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
@@ -820,13 +820,13 @@ namespace getfem {
         if (matl.size() >= 4) gmm::clear(matl[3]);
         if (contact_only) {
           size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
-          asm_frictionless_continuous_tangent_matrix_Alart_Curnier
+          asm_continuous_contact_tangent_matrix_Alart_Curnier
             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], option, rg);
         }
         else {
           size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
-          asm_Coulomb_friction_continuous_tangent_matrix_Alart_Curnier
+          asm_continuous_contact_with_friction_tangent_matrix_Alart_Curnier
             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
              friction_coeff, WT, option, rg);
@@ -838,11 +838,11 @@ namespace getfem {
         if (matl.size() >= 4) gmm::clear(vecl[3]);
 
         if (contact_only)
-          asm_frictionless_continuous_rhs_Alart_Curnier
+          asm_continuous_contact_rhs_Alart_Curnier
             (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda,
              mf_obstacle, obstacle, vr[0], option, rg);
         else
-          asm_Coulomb_friction_continuous_rhs_Alart_Curnier
+          asm_continuous_contact_with_friction_rhs_Alart_Curnier
             (vecl[0], vecl[2], mim, mf_u, u, mf_lambda, lambda,
              mf_obstacle, obstacle, vr[0], alpha, mf_coeff,
              friction_coeff, WT, option, rg);
@@ -969,7 +969,7 @@ namespace getfem {
 
 
   template<typename MAT, typename VECT1>
-  void asm_frictionless_penalized_tangent_matrix
+  void asm_penalized_contact_tangent_matrix
   (MAT &Kuu, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda,
    const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -992,7 +992,7 @@ namespace getfem {
 
 
   template<typename VECT1>
-  void asm_frictionless_penalized_rhs
+  void asm_penalized_contact_rhs
   (VECT1 &Ru, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U,  const getfem::mesh_fem &mf_lambda,
    const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -1013,7 +1013,7 @@ namespace getfem {
   }
 
   template<typename MAT, typename VECT1>
-  void asm_Coulomb_friction_penalized_tangent_matrix
+  void asm_penalized_contact_with_friction_tangent_matrix
   (MAT &Kuu, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U, const getfem::mesh_fem &mf_lambda,
    const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -1045,7 +1045,7 @@ namespace getfem {
 
 
   template<typename VECT1>
-  void asm_Coulomb_friction_penalized_rhs
+  void asm_penalized_contact_with_friction_rhs
   (VECT1 &Ru, const mesh_im &mim, const getfem::mesh_fem &mf_u,
    const VECT1 &U,  const getfem::mesh_fem &mf_lambda,
    const VECT1 &lambda, const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -1155,11 +1155,11 @@ namespace getfem {
         GMM_TRACE2("Penalized Coulomb friction tangent term");
         gmm::clear(matl[0]);
         if (contact_only)
-          asm_frictionless_penalized_tangent_matrix
+          asm_penalized_contact_tangent_matrix
             (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
              vr[0], option, rg);
         else
-          asm_Coulomb_friction_penalized_tangent_matrix
+          asm_penalized_contact_with_friction_tangent_matrix
             (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
              vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
       }
@@ -1167,11 +1167,11 @@ namespace getfem {
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
         if (contact_only)
-          asm_frictionless_penalized_rhs
+          asm_penalized_contact_rhs
             (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
              vr[0], option, rg);
         else
-          asm_Coulomb_friction_penalized_rhs
+          asm_penalized_contact_with_friction_rhs
             (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle, obstacle,
              vr[0], alpha, mf_coeff, friction_coeff, WT, option, rg);
       }
