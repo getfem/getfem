@@ -103,6 +103,8 @@ Note also that
 
   \frac{\partial i_j}{\partial E}(C;H) = 2 \frac{\partial i_j}{\partial C}(C;H).
 
+This property enables us to write the constitutive laws as a function of the Cauchy-Green tensor invariants, espacially for the case of the generalized Blatz-Ko strain energy.
+
 
 Potential elastic energy and its derivative
 ###########################################
@@ -111,7 +113,7 @@ The stress in the reference configuration can be describe by the second Piola-Ki
 
 .. math::
 
-  {\hat{\hat{\sigma}}} &= \frac{\partial}{\partial E} {W}(E)
+  {\hat{\hat{\sigma}}} &= \frac{\partial}{\partial E} {W}(E) = 2\frac{\partial}{\partial C} {W}(C)
 
 where :math:`{W}` is the density of strain energy of the material. The total strain energy is given by
 
@@ -242,6 +244,27 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
   {W} &= \gamma_1i_1( E) + \frac{\lambda}{2}i_2( E) + 8ci_3( E) - \frac{\gamma_1}{2} \log \det  C
 
 
+``Generalized Blatz-Ko law``
+
+..math::
+
+ {W} &= (ai_1(C) + bi_3(C)^{1/2} + c\frac{\i_2(C)}{\i_3(C)} + d)^n
+
+Since :math:`\frac{\partial}{\partial C} {W}(C) = \displaystyle\sum_{j}\frac{\partial W}{\partial i_j(C)} \frac{\partial i_j(C)}{\partial C}`, and :math:` \frac{\partial^2}{\partial C^2} {W}(C) = \displaystyle\sum_{j} \displaystyle\sum_{k} \frac{\partial^2 W}{\partial i_j(C) \partial i_k(C)} \frac{\partial i_k(C)}{\partial C} \otimes \frac{\partial i_j(C)}{\partial C} + \displaystyle\sum_{j} \frac{\partial W}{\partial i_j(C)} \frac{\partial^2 i_j(C)}{\partial C^2}`We must compute the derivatives of the strain energy function with respect to the Cauchy-Green tensor invariants (we don't need to compute the invariants derivatives with respect to :math:`C` since :math:`\frac{\partial i_j}{\partial E}(C;H) = 2 \frac{\partial i_j}{\partial C}(C;H)`) :
+
+.. math::
+
+\frac{\partial W}{\partial i_1(C)} = nAZ^{n-1}  with Z = (ai_1(C) + bi_3(C)^{1/2} + c\frac{\i_2(C)}{\i_3(C)} + d)
+\frac{\partial W}{\partial i_2(C)} = n\frac{c}{i_3(C)}Z^{n-1}
+\frac{\partial W}{\partial i_3(C)} = n(\frac{b}{2i_3(C)^{1/2}}-\frac{ci_2(C)}{i_3(C)^2})Z^{n-1}
+\frac{\partial W^2}{\partial^2 i_1(C)} = n(n-1)A^2Z^{n-2}
+\frac{\partial W^2}{\partial i_1(C) \partial i_2(C)} = n(n-1)A\frac{c}{i_3(C)}Z^{n-2}
+\frac{\partial W^2}{\partial i_1(C) \partial i_3(C)} = n(n-1)A(\frac{b}{2i_3(C)^{1/2}}-\frac{ci_2(C)}{i_3(C)^2})Z^{n-2}
+\frac{\partial W^2}{\partial^2 i_2(C)} = n(n-1)\frac{c^2}{i_3(C)^2}Z^{n-2}
+\frac{\partial W^2}{\partial i_2(C) \partial i_3(C)} = n(n-1)(\frac{b}{2i_3(C)^{1/2}}-\frac{ci_2(C)}{i_3(C)^2})Z^{n-2} - n\frac{c^2}{i_3(C)^2}Z^{n-1}
+\frac{\partial W^2}{\partial i_3(C)^2} = n(n-1)(\frac{b}{2i_3(C)^{1/2}}-\frac{ci_2(C)}{i_3(C)^2})^2Z^{n-2} + n(-\frac{b}{4i_3(C)^{3/2}}+2\frac{ci_2(C)}{i_3(C)^4})Z^{n-1}
+
+
 ``Plane strain hyper-elasticity``
 
 previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.  
@@ -262,6 +285,7 @@ where ``AHL`` is an object of type ``getfem::abstract_hyperelastic_law`` which r
   getfem::Ciarlet_Geymonat_hyperelastic_law AHL;
   getfem::Mooney_Rivlin_hyperelastic_law AHL;
   getfem::plane_strain_hyperelastic_law AHL(pAHL);
+  getfem::generalized_Blatz_Ko_hyperelastic_law AHL;
 
 The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition. The plane strain hyperelastic law take a pointer on an hyperelastic law as a parameter and performs a 2D plane strain approximation.
 

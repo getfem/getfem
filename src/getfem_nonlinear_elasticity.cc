@@ -508,7 +508,7 @@ namespace getfem {
   (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
     if (det_trans <= scalar_type(0)) return 1e200;
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
-    size_type n = size_type(params[4]+0.1);
+    scalar_type n = params[4];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Generalized Blatz Ko hyperelastic law only defined "
 		"on dimension 3, sorry");
@@ -518,14 +518,14 @@ namespace getfem {
     compute_invariants ci(C);
 
     return pow(a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
-	       + c*ci.i2() / ci.i3() + d, scalar_type(n));
+	       + c*ci.i2() / ci.i3() + d, n);
   }
 
   void generalized_Blatz_Ko_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
    const base_vector &params, scalar_type det_trans) const {
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
-    size_type n = size_type(params[4]+0.1);
+    scalar_type n = params[4];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Generalized Blatz Ko hyperelastic law only defined "
 		"on dimension 3, sorry");
@@ -536,7 +536,7 @@ namespace getfem {
 
     scalar_type z = a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
       + c*ci.i2() / ci.i3() + d;
-    scalar_type nz = scalar_type(n) * pow(z, scalar_type(n-1));
+    scalar_type nz = n * pow(z, n-1.);
     scalar_type di1 = nz * a;
     scalar_type di2 = nz * c / ci.i3();
     scalar_type di3 = nz *
@@ -554,7 +554,7 @@ namespace getfem {
   (const base_matrix &E, base_tensor &result,
    const base_vector &params, scalar_type) const {
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
-    size_type n = size_type(params[4]+0.1);
+    scalar_type n = params[4];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Generalized Blatz Ko hyperelastic law only defined "
 		"on dimension 3, sorry");
@@ -566,26 +566,26 @@ namespace getfem {
 
     scalar_type z = a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
       + c*ci.i2() / ci.i3() + d;
-    scalar_type nz = scalar_type(n) * pow(z, scalar_type(n-1));
+    scalar_type nz = n * pow(z, n-1.);
     scalar_type di1 = nz * a;
     scalar_type di2 = nz * c / ci.i3();
     scalar_type y = (b / (2. * sqrt(gmm::abs(ci.i3()))) - c * ci.i2() / gmm::sqr(ci.i3()));
     scalar_type di3 = nz * y;
 
     gmm::copy(gmm::scaled(ci.sym_grad_grad_i1().as_vector(),
-			  scalar_type(4)*di1), result.as_vector());
+ 			  scalar_type(4)*di1), result.as_vector());
     gmm::add(gmm::scaled(ci.sym_grad_grad_i2().as_vector(),
 			 scalar_type(4)*di2), result.as_vector());
     gmm::add(gmm::scaled(ci.sym_grad_grad_i3().as_vector(),
 			 scalar_type(4)*di3), result.as_vector());
 
-    scalar_type nnz = scalar_type(n * (n-1)) * pow(z, scalar_type(n-1));
+    scalar_type nnz = n * (n-1.) * pow(z, n-2.);
     base_matrix A(3, 3); // second derivatives of W with respect to invariants
     A(0, 0) = nnz * a * a;
     A(1, 0) = A(0, 1) = nnz * a * c / ci.i3();
     A(2, 0) = A(0, 2) = nnz * a * y;
     A(1, 1) = nnz * c * c / gmm::sqr(ci.i3());
-    A(2, 1) = A(1, 2) = nnz * y * c / ci.i3();
+    A(2, 1) = A(1, 2) = nnz * y * c / ci.i3() - nz * c / gmm::sqr(ci.i3());
     A(2, 2) = nnz * y * y + nz * (2. * c * ci.i2() / pow(ci.i3(), 4.) - b / (4. * pow(ci.i3(), 1.5)));
 
     typedef const base_matrix * pointer_base_matrix__;
