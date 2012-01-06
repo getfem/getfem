@@ -505,7 +505,8 @@ namespace getfem {
 
 
   scalar_type generalized_Blatz_Ko_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params, scalar_type ) const {
+  (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
+    if (det_trans <= scalar_type(0)) return 1e200;
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
     size_type n = size_type(params[4]+0.1);
     size_type N = gmm::mat_nrows(E);
@@ -522,7 +523,7 @@ namespace getfem {
 
   void generalized_Blatz_Ko_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
-   const base_vector &params, scalar_type) const {
+   const base_vector &params, scalar_type det_trans) const {
     scalar_type a = params[0], b = params[1], c = params[2], d = params[3];
     size_type n = size_type(params[4]+0.1);
     size_type N = gmm::mat_nrows(E);
@@ -544,6 +545,9 @@ namespace getfem {
     gmm::copy(gmm::scaled(ci.grad_i1(), di1 * 2.0), result);
     gmm::add(gmm::scaled(ci.grad_i2(), di2 * 2.0), result);
     gmm::add(gmm::scaled(ci.grad_i3(), di3 * 2.0), result);
+    if (det_trans <= scalar_type(0))
+      gmm::add(gmm::scaled(C, 1e200), result);
+
   }
 
   void generalized_Blatz_Ko_hyperelastic_law::grad_sigma
