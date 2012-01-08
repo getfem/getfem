@@ -25,14 +25,14 @@ element of mixed types can be treated, even if the dimensions are different.
 
 To select a particular integration method on a given element, one can use::
 
-  mf.set_integration_method(i, ppi);
+  mim.set_integration_method(i, ppi);
 
 where ``i`` is the index of the element and ``ppi`` is the descriptor of the
 integration method. Alternative forms of this member function are::
 
-  void mesh_fem::set_integration_method(const dal::bit_vector &cvs,
+  void mesh_im::set_integration_method(const dal::bit_vector &cvs,
                                         getfem::pintegration_method ppi);
-  void mesh_fem::set_integration_method(getfem::pintegration_method ppi);
+  void mesh_im::set_integration_method(getfem::pintegration_method ppi);
 
 which set the integration method for either the convexes listed in the |bv| cvs,
 or all the convexes of the mesh.

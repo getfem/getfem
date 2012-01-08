@@ -262,7 +262,7 @@ namespace bgeot {
   /**
    *  precomputed geometric transformation operations use this for
    *  repetitive evaluation of a geometric transformations on a set of
-   *  points "pspt" in the the reference convex which do not change.
+   *  points "pspt" in the reference convex which do not change.
    */
   class geotrans_precomp_ : virtual public dal::static_stored_object {
   protected:

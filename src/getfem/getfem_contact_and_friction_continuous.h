@@ -107,7 +107,7 @@ namespace getfem {
       the obstacle (interpolated on a finite element method).
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe an approximate non-penetration condition
-      but not too large not to deteriorate to much the conditionning of
+      but not too large not to deteriorate too much the conditionning of
       the tangent system. `dataname_n` is an optional parameter used if option
       is 2. In that case, the penalization term is shifted by lambda_n (this
       allows the use of an Uzawa algorithm on the corresponding augmented
@@ -126,7 +126,7 @@ namespace getfem {
       the obstacle (interpolated on a finite element method).
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe approximate non-penetration and friction
-      conditions but not too large not to deteriorate to much the
+      conditions but not too large not to deteriorate too much the
       conditionning of the tangent system.
       `dataname_lambda` is an optional parameter used if option
       is 2. In that case, the penalization term is shifted by lambda (this

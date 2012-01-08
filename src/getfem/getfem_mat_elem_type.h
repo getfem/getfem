@@ -85,7 +85,7 @@ namespace getfem {
   struct constituant {
     constituant_type t;
     pfem pfi;
-    unsigned nl_part; /* only usefull with GETFEM_NONLINEAR_ : since the
+    unsigned nl_part; /* only useful with GETFEM_NONLINEAR_ : since the
 			 nonlinear term may use more than one pfem, it will
 			 be splitted into one "constituant" per fem
 			 for (nl_part = 0), the mat_elem_* computations will

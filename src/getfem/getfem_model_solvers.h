@@ -233,8 +233,8 @@ namespace getfem {
       }
 
       if (iter.get_noisy() > 1) cout << "linear solver done" << endl;
-      R alpha = pb.line_search(dr, iter); // it is assumed that the line
-      // search execute a pb.compute_residual();
+      R alpha = pb.line_search(dr, iter); //it is assumed that the linesearch
+                                          //executes a pb.compute_residual();
       if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
       ++iter;
     }

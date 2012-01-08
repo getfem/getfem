@@ -902,14 +902,14 @@ are different.\\[0.5cm]
 To select a particular integration method on a given element, one can
 use\\[0.5cm]
 \index{GETFEM!mim.set\_integration\_method(i, ppi)}
-\cpp{mf.set\_integration\_method(i, ppi); }\\[0.5cm]
+\cpp{mim.set\_integration\_method(i, ppi); }\\[0.5cm]
 where \cpp{i} is the index of the element and \cpp{ppi} is the
 descriptor of the integration method. Alternative forms of this member
 function are:
 \begin{cppcode}
-  void mesh\_fem::set\_integration\_method(const dal::bit\_vector &cvs, 
+  void mesh\_im::set\_integration\_method(const dal::bit\_vector &cvs, 
     getfem::pintegration\_method ppi);
-  void mesh\_fem::set\_integration\_method(getfem::pintegration\_method ppi);
+  void mesh\_im::set\_integration\_method(getfem::pintegration\_method ppi);
 \end{cppcode}
 which set the integration method for either the convexes listed in the \cpp{bit\_vector} cvs, or all the convexes of the mesh.
 
