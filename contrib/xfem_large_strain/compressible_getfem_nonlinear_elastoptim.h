@@ -163,7 +163,7 @@ namespace getfem {
       //cout << "Le Tenseur d(E)/d(alpha) :"   << Ealpha  << endl;
       //cout << "-------------------------------------- " << endl;
       // The term sigma:dE/dalpha
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       //cout << "-------------------------------------- " << endl;
       //cout << " la valeur du tenseur sigma :" << Sigma  << endl;
       //cout << "-------------------------------------- " << endl;
@@ -271,7 +271,7 @@ namespace getfem {
 
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1); // gradU contient le tenseur F
-      // scalar_type J = gmm::lu_det(gradU);
+      scalar_type J = gmm::lu_det(gradU);
       
 
       // Computation of d(gradU)/d(alpha) 
@@ -309,12 +309,12 @@ namespace getfem {
 
       // The term sigma.d(E)/d(alpha)
       base_matrix eas(N,N);
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       gmm::mult(Ealpha, Sigma, eas);
 
       // The term grad_sigma:d(E)/d(alpha)
       scalar_type temp ;
-      AHL.grad_sigma(E, GSigma, params);
+      AHL.grad_sigma(E, GSigma, params, J);
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j){
 	  temp = 0.0;
@@ -420,13 +420,13 @@ namespace getfem {
 
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1); // GradU contient le tenseur F maintenant
-      // scalar_type J = gmm::lu_det(gradU);
+      scalar_type J = gmm::lu_det(gradU);
 
       /*****************************/      
       /*****************************/
 
       // Computation of F.Sigma 
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       base_matrix eas(N,N);
       gmm::mult(gradU, Sigma, eas);
       // cout << "Avant multiplication log :" << eas << endl ;
@@ -523,11 +523,11 @@ namespace getfem {
 
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
-       // scalar_type J = gmm::lu_det(gradU);
+      scalar_type J = gmm::lu_det(gradU);
       
 
       // Computation of F.Sigma 
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       base_matrix eas(N,N);
       gmm::mult(gradU, Sigma, eas); // eas contient le tenseur F fois sigma
        base_small_vector V(2), W(2); V[0] = x; V[1] = y;
@@ -619,7 +619,7 @@ namespace getfem {
       
       for (unsigned int alpha = 0; alpha < N; ++alpha)
 	gradU(alpha, alpha)=gradU(alpha, alpha)+ scalar_type(1);
-      // scalar_type J = gmm::lu_det(gradU);
+      scalar_type J = gmm::lu_det(gradU);
 
       // Computation of d(grad U)/d(alpha) 
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
@@ -653,12 +653,12 @@ namespace getfem {
       gmm::add(Sigma, Ealpha2);
 
       // Computation of Sigma:d^2(E)/d^2(alpha)  
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       t[0]=mat_euclidean_sp(Sigma, Ealpha2);
        
       // Computation of grad_Sigma:d(E)/d(alpha)
       // scalar_type temp ;
-      AHL.grad_sigma(E, GSigma, params);
+      AHL.grad_sigma(E, GSigma, params, J);
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
 	  for (size_type k = 0; k < N; ++k)

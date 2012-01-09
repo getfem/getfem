@@ -149,7 +149,7 @@ namespace getfem {
     for (unsigned d = 0; d < mf_pre_u.nb_dof(); ++d) {
         // getting a getfem::pdof_description about the curent dof
         const getfem::mesh::ind_cv_ct cvs = mf_pre_u.convex_to_basic_dof(d);
-        unsigned cv = cvs[0], ld = unsigned(-1);
+        size_type cv = cvs[0], ld = unsigned(-1);
         // getting the local index  (ld)
         for (unsigned dd = 0; dd < mf_pre_u.nb_basic_dof_of_element(cv); dd += 1) {
            if (mf_pre_u.ind_basic_dof_of_element(cv)[dd] == d) {
@@ -454,7 +454,7 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
     
     cout << "initialisations ls2, ls3, mls2, mls3 : OK\n" ;
     
-    int where = PARAM.int_value("WHERE") ;
+    int where = int(PARAM.int_value("WHERE"));
 // 1	getfem::mesh_im_level_set::INTEGRATE_INSIDE (integrate over p(x)<0),
 // 2	getfem::mesh_im_level_set::INTEGRATE_OUTSIDE (integrate over p(x)>0),
 // 3	getfem::mesh_im_level_set::INTEGRATE_ALL,
@@ -528,8 +528,8 @@ void bilaplacian_crack_problem::compute_sif(const plain_vector &U, scalar_type r
     cout << "mim2.set_integration_method(... -> OK\n";
     
     cout << "done.\nEntering in compute_crack_stress_intensity_factors_KL(... \n" ;
-  compute_crack_stress_intensity_factors_KL(ls, mim, mim2, mim3, mf_pre_u, mf_u(), U, ring_radius, D, nu, E, epsilon, KI, KII);
-  cout << "computation of crack SIF via J-Integral \nK1_J:" << KI << "\nK2_J:" << KII << "\n";
+    compute_crack_stress_intensity_factors_KL(ls, mim, mim2, mim3, mf_pre_u, mf_u(), U, ring_radius, D, nu, E, epsilon, KI, KII);
+    cout << "computation of crack SIF via J-Integral \nK1_J:" << KI << "\nK2_J:" << KII << "\n";
 }
 
 void bilaplacian_crack_problem::exact_sif(scalar_type &K1, scalar_type &K2){

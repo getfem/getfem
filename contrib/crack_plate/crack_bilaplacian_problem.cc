@@ -245,8 +245,8 @@ void bilaplacian_crack_problem::init(void) {
   std::string SIMPLEX_INTEGRATION = PARAM.string_value("SIMPLEX_INTEGRATION",
 					 "Name of simplex integration method");
   std::string SINGULAR_INTEGRATION = PARAM.string_value("SINGULAR_INTEGRATION");
-  enrichment_option = PARAM.int_value("ENRICHMENT_OPTION",
-				      "Enrichment option");
+  enrichment_option = unsigned(PARAM.int_value("ENRICHMENT_OPTION",
+					       "Enrichment option"));
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
 				     "radius of the enrichment area");
 
@@ -922,7 +922,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 
       const getfem::mesh::ind_cv_ct cvs = mf_u().convex_to_basic_dof(d);
       for (size_type i=0; i < cvs.size(); ++i) {
-        unsigned cv = cvs[i];
+        size_type cv = cvs[i];
         //if (pm_cvlist.is_in(cv)) flag1 = true; else flag2 = true;
 
         getfem::pfem pf = mf_u().fem_of_element(cv);
@@ -1082,7 +1082,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       // 	  mf_u().point_of_dof(d) << " M2(d,d) = " << M2(d,d) << "\n";
       if (M2(d,d) < PARAM.real_value("SEUIL")) {
 	cout << "removed : " << mf_u().point_of_basic_dof(d) << "\n";	
-	unsigned n = gmm::mat_nrows(H);
+	size_type n = gmm::mat_nrows(H);
 	gmm::resize(H, n+1, gmm::mat_ncols(H));
 	H(n, d) = 1;
       }
@@ -1118,7 +1118,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
     for (size_type d = 0; d < mf_u().nb_dof(); ++d) {
       if (M2(d,d) < PARAM.real_value("SEUIL_FINAL")) {
 	cout << "OULALA " << d << " @ " << mf_u().point_of_basic_dof(d) << " : " << M2(d,d) << "\n";	
-        unsigned n = gmm::mat_nrows(H);
+        size_type n = gmm::mat_nrows(H);
 	gmm::resize(H1, n+1, gmm::mat_ncols(H));
 	H1(n, d) = 1;
       }
@@ -1168,7 +1168,7 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	  GMM_ASSERT1(!mf_u().is_reduced(), "To be adapted");
 	  
 	  for (unsigned d=0; d < mf_u().nb_dof(); d += q) {
-	    unsigned cv = mf_u().first_convex_of_basic_dof(d) ;
+	    size_type cv = mf_u().first_convex_of_basic_dof(d) ;
 	    getfem::pfem pf = mf_u().fem_of_element(cv);
 	    unsigned ld = unsigned(-1);
 	    for (unsigned dd = 0; dd < mf_u().nb_basic_dof_of_element(cv); dd += q) {

@@ -267,7 +267,7 @@ namespace getfem {
       gmm::scale(Ealpha, 0.5);
 
       // The term sigma:dE/dalpha
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       t[0] = mat_euclidean_sp(Sigma, Ealpha);
 
       // The term pJF^{-T}:dgradu/dalpha
@@ -409,12 +409,12 @@ namespace getfem {
 
       // The term sigma.d(E)/d(alpha)
       base_matrix eas(N,N);
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       gmm::mult(Ealpha, Sigma, eas);
 
       // The term grad_sigma:d(E)/d(alpha)
       scalar_type temp ;
-      AHL.grad_sigma(E, GSigma, params);
+      AHL.grad_sigma(E, GSigma, params, J);
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j){
 	  temp = 0.0;
@@ -549,7 +549,7 @@ namespace getfem {
       
 
       // Computation of F.Sigma 
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       base_matrix eas(N,N);
       gmm::mult(gradU, Sigma, eas);
       // Computation of p.J.F^{-T}
@@ -666,7 +666,7 @@ namespace getfem {
       
 
       // Computation of F.Sigma 
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       base_matrix eas(N,N);
       gmm::mult(gradU, Sigma, eas);
       // Computation of p.J.F^{-T}
@@ -811,12 +811,12 @@ namespace getfem {
       gmm::add(Sigma, Ealpha2);
 
       // Computation of Sigma:d^2(E)/d^2(alpha)  
-      AHL.sigma(E, Sigma, params);
+      AHL.sigma(E, Sigma, params, J);
       t[0]=mat_euclidean_sp(Sigma, Ealpha2);
        
       // Computation of grad_Sigma:d(E)/d(alpha)
       scalar_type temp ;
-      AHL.grad_sigma(E, GSigma, params);
+      AHL.grad_sigma(E, GSigma, params, J);
       for (size_type i = 0; i < N; ++i)
 	for (size_type j = 0; j < N; ++j)
 	  for (size_type k = 0; k < N; ++k)
