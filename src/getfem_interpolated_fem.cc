@@ -296,7 +296,7 @@ namespace getfem {
 	actualize_fictx(pf, cv, ptref);
 	pf->real_grad_base_value(fictx, taux);
 	for (size_type i = 0; i < nbdof; ++i)
-	  ind_dof.at(elements.at(cv).inddof.at(i)) = i;
+	  ind_dof.at(e.inddof.at(i)) = i;
 	if (pif) {
 	  pif->grad(c.xreal(), trans);
 	  for (size_type i = 0; i < pf->nb_dof(cv); ++i)
