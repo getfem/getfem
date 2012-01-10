@@ -220,6 +220,36 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        else out.pop().from_scalar(getfem::asm_L2_norm(*mim, *mf, U.cplx(),bv));
        );
 
+    /*@FUNC n = ('L2 dist', @tmim mim, @tmf mf2, @vec U2[, @mat CVids])
+    Compute the L2 distance between `U` and `U2`.
+
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
+    sub_command
+      ("L2 dist", 3, 4, 0, 1,
+       U_is_a_vector(U, "L2 dist");
+       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_fem *mf_2 = in.pop().to_const_mesh_fem();
+       if (!U.is_complex()) {
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+	 dal::bit_vector bv = in.remaining() ?
+	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+
+	 out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.real(),
+						   *mf_2, V, bv));
+       } else {
+	 GMM_ASSERT1(false, "Sorry, complex version to be done");
+//          carray st = in.pop().to_carray();
+//          std::vector<std::complex<double> > V(st.begin(), st.end());
+// 	 dal::bit_vector bv = in.remaining() ?
+// 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+
+//          out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
+// 						   *mf_2, V, bv));
+       }
+       );
+
 
    /*@FUNC n = ('H1 semi norm', @tmim mim[, @mat CVids])
     Compute the L2 norm of grad(`U`).
@@ -237,6 +267,37 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 							U.real(), bv));
        else out.pop().from_scalar(getfem::asm_H1_semi_norm(*mim,
 							   *mf, U.cplx(), bv));
+       );
+
+
+    /*@FUNC n = ('H1 semi dist', @tmim mim, @tmf mf2, @vec U2[, @mat CVids])
+    Compute the semi H1 distance between `U` and `U2`.
+
+    If `CVids` is given, the norm will be computed only on the listed
+    convexes.@*/
+    sub_command
+      ("H1 semi dist", 3, 4, 0, 1,
+       U_is_a_vector(U, "H1 semi dist");
+       const getfem::mesh_im *mim = in.pop().to_const_mesh_im();
+       const getfem::mesh_fem *mf_2 = in.pop().to_const_mesh_fem();
+       if (!U.is_complex()) {
+         darray st = in.pop().to_darray();
+         std::vector<double> V(st.begin(), st.end());
+	 dal::bit_vector bv = in.remaining() ?
+	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+
+	 out.pop().from_scalar(getfem::asm_H1_semi_dist(*mim, *mf, U.real(),
+						   *mf_2, V, bv));
+       } else {
+	 GMM_ASSERT1(false, "Sorry, complex version to be done");
+//          carray st = in.pop().to_carray();
+//          std::vector<std::complex<double> > V(st.begin(), st.end());
+// 	 dal::bit_vector bv = in.remaining() ?
+// 	   in.pop().to_bit_vector(&mf->convex_index()) : mf->convex_index();
+
+//          out.pop().from_scalar(getfem::asm_L2_dist(*mim, *mf, U.cplx(),
+// 						   *mf_2, V, bv));
+       }
        );
 
 

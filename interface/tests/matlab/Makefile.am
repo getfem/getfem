@@ -48,6 +48,7 @@ EXTRA_DIST= \
 	demo_tripod_alt.m \
 	demo_tripod_slice_anim.m \
 	demo_fictitious_domains.m \
+	demo_fictitious_domains_laplacian.m \
 	demo_static_contact.m \
 	demo_wave2D.m \
 	demo_wave2D_alt.m \
