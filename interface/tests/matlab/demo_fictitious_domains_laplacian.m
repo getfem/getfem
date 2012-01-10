@@ -12,27 +12,25 @@ R = 0.4;
 if (N == 3)
   m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5, -.5:(1/NX):.5);
   %m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5, -.5:(1/NX):.5);
+  mfu0=gfMeshFem(m,1);
+  mf_mult=gfMeshFem(m,1);
+  set(mfu0, 'fem', gf_fem('FEM_QK(3,2)'));
+  set(mf_mult, 'fem', gf_fem('FEM_QK(3,1)'));
+  adapt_im = 'IM_TETRAHEDRON(6)'
 elseif (N == 2)
   m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
   %m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
+  mfu0=gfMeshFem(m,1);
+  mf_mult=gfMeshFem(m,1);
+  set(mfu0, 'fem', gf_fem('FEM_QK(2,2)'));
+  set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'));
+  adapt_im = 'IM_TRIANGLE(6)'
 else 
   error('Wrong dimension');
 end
-   
+
 ls=gf_levelset(m, ls_degree);
 ls2=gf_LevelSet(m, ls_degree, 'with_secondary');
-
-mfu0=gfMeshFem(m,1);
-mf_mult=gfMeshFem(m,1);
-
-if (N == 2)
-  set(mfu0, 'fem', gf_fem('FEM_QK(2,2)'));
-  set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'));
-else
-  set(mfu0, 'fem', gf_fem('FEM_QK(3,2)'));
-  set(mf_mult, 'fem', gf_fem('FEM_QK(3,1)'));
-end
-
 
 mf_ls=gfObject(gf_levelset_get(ls, 'mf'));
 P=get(mf_ls, 'basic dof nodes');
@@ -52,16 +50,9 @@ mls=gfMeshLevelSet(m);
 set(mls, 'add', ls);
 set(mls, 'add',ls2);
 set(mls, 'adapt');
-
-if (N == 2)
-  mim_bound2 = gfMeshIm('levelset',mls,'boundary(a)', gf_integ('IM_TRIANGLE(6)'));
-  mim_bound = gfMeshIm('levelset',mls,'boundary(b)', gf_integ('IM_TRIANGLE(6)'));
-  mim_int = gfMeshIm('levelset', mls, 'inside(a)', gf_integ('IM_TRIANGLE(6)'));
-else
-  mim_bound2 = gfMeshIm('levelset',mls,'boundary(a)', gf_integ('IM_TETRAHEDRON(6)'));
-  mim_bound = gfMeshIm('levelset',mls,'boundary(b)', gf_integ('IM_TETRAHEDRON(6)'));
-  mim_int = gfMeshIm('levelset', mls, 'inside(a)', gf_integ('IM_TETRAHEDRON(6)'));
-end
+mim_bound2 = gfMeshIm('levelset',mls,'boundary(a)', gf_integ(adapt_im));
+mim_bound = gfMeshIm('levelset',mls,'boundary(b)', gf_integ(adapt_im));
+mim_int = gfMeshIm('levelset', mls, 'inside(a)', gf_integ(adapt_im));
 set(mim_int, 'integ', 4);
 
 % Some verifications
@@ -95,7 +86,6 @@ else
   Sol_U = gf_mesh_fem_get(mfu0, 'eval', { sprintf('5*((%g)^3-(x.^2+y.^2+z.^2).^1.5)', R) });
 end
 
-
 % getfem model
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
@@ -113,19 +103,15 @@ gf_model_set(md, 'add Dirichlet condition with multipliers', ...
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
-
-
-
-
+% Comparison with the exaxt solution
 ERRL2 = gf_compute(mfu, U, 'L2 dist', mim_int, mfu0, Sol_U);
 ERRH1 = gf_compute(mfu, U, 'H1 semi dist', mim_int, mfu0, Sol_U);
 disp(sprintf('L2 error= %g\nsemi H1 error = %g', ERRL2, ERRH1));
 
 
-
 if (N == 2)
   gf_plot(mfu, U, 'mesh','on', 'refine', 2);
 else
-  gf_plot(mfu, U, 'mesh','on', 'cvlst', get(m, 'outer faces'), 'refine', 2);
+  gf_plot(mfu, U, 'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'refine', 2);
 end
 gf_colormap('chouette');
