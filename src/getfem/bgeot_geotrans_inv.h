@@ -96,7 +96,7 @@ namespace bgeot {
 		scalar_type IN_EPS=1e-12);
 
     /**
-       given the node on the real element, returne the node
+       given the node on the real element, returns the node
        on the reference element (even if it is outside of the ref. convex).
        
        This version will not throw an exception if the geometric

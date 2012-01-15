@@ -102,7 +102,7 @@ namespace bgeot {
      */
     inline const convex_ind_ct &ind_points_of_face(short_type i) const
     { return faces[i]; }
-    /** Return "direct" points indexes. These are the subset of points than
+    /** Return "direct" points indexes. These are the subset of points that
      *	can be used to build a direct vector basis. (rarely used)
      */
     inline const convex_ind_ct &ind_dir_points() const

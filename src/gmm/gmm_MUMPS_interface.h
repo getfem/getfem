@@ -289,7 +289,7 @@ namespace gmm {
                       << " is out of range");
         case -6 : case -10 :
           GMM_WARNING1("Solve with MUMPS failed: matrix is singular");
-	  return false;
+          return false;
         case -9:
           GMM_ASSERT1(false, "Solve with MUMPS failed: error "
                       << id.INFO(1) << ", increase ICNTL(14)");

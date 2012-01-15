@@ -234,7 +234,7 @@ namespace bgeot {
   std::string name_of_geometric_trans(pgeometric_trans p);
 
   /** norm of returned vector is the ratio between the face surface on
-   *  the reel element and the face surface on the reference element
+   *  the real element and the face surface on the reference element
    *  IT IS NOT UNITARY
    *
    *  pt is the position of the evaluation point on the reference element

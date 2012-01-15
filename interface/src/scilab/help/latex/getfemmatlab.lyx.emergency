@@ -15631,7 +15631,7 @@ y matrices A and B.
 \end_layout
 
 \begin_layout Standard
-In order to obtain a numerical value of theses matrices, see @@gf_mesh_im_get('e
+In order to obtain a numerical value of these matrices, see @@gf_mesh_im_get('e
 ltm')@@.
  
 \begin_inset ERT

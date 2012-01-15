@@ -28,7 +28,7 @@ using namespace getfemint;
 /*@GFDOC
 
   This object represents a type of elementary matrix. In order to obtain a
-  numerical value of theses matrices, see MESH_IM:GET('eltm').
+  numerical value of these matrices, see MESH_IM:GET('eltm').
 
   If you have very particular assembling needs, or if you just want to check
   the content of an elementary matrix, this function might be useful. But
