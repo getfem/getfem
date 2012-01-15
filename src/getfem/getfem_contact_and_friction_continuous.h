@@ -142,11 +142,12 @@ namespace getfem {
    const std::string &dataname_wt = "");
 
 
-  enum friction_nonlinear_term_version { RHS_L_V1,
+  enum contact_nonlinear_term_version {  RHS_L_V1,
                                          RHS_L_V2,
                                          K_LL_V1,
                                          K_LL_V2,
                                          UZAWA_PROJ,
+                                         CONTACT_FLAG,
 
                                          RHS_U_V1,
                                          RHS_U_V2,
@@ -193,58 +194,88 @@ namespace getfem {
                                          K_UU_FRICT_V5
   };
 
-  class friction_nonlinear_term : public nonlinear_elem_term {
+  class contact_nonlinear_term : public nonlinear_elem_term {
 
-    // temporary variables to be calculated at the current interpolation context
+  protected:
+    // the following variables are used in the compute method and their values
+    // have to be calculated during the preceding calls to the prepare method
+    // at the current interpolation context
     base_small_vector lnt, lt; // multiplier lambda and its tangential component lambda_t 
     scalar_type ln;            // normal component lambda_n of the multiplier
     base_small_vector zt;      // tangential relative displacement
-    scalar_type un;            // normal relative displacement
-    base_small_vector no;      // surface normal
+    scalar_type un;            // normal relative displacement (positive when the first
+                               // elastic body surface moves outwards)
+    base_small_vector no;      // surface normal, pointing outwards with respect
+                               // to the (first) elastic body
     scalar_type g, f_coeff;    // gap and coefficient of friction values
-    base_small_vector aux1, auxN, V; // helper vectors
-    base_vector coeff;
-    base_matrix grad, GP;
+
+    // these variables are used as temporary storage and they will usually contain
+    // garbage from previous calculations
+    base_small_vector aux1, auxN, V; // helper vectors of size 1, N and N respectively
+    base_matrix GP;                  // helper matrix of size NxN
 
     void adjust_tensor_size(void);
 
   public:
     dim_type N;
+    scalar_type r;
+    size_type option;
+    bool contact_only;
+    scalar_type alpha;
+
+    bgeot::multi_index sizes_;
+
+    contact_nonlinear_term(dim_type N_, scalar_type r_, size_type option_,
+                           bool contact_only_ = true,
+                           scalar_type alpha_ = scalar_type(-1)) :
+      N(N_), r(r_), option(option_), contact_only(contact_only_), alpha(alpha_) {
+
+      adjust_tensor_size();
+    }
+
+    const bgeot::multi_index &sizes() const { return sizes_; }
+
+    virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
+    virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nb*/)
+    { GMM_ASSERT1(false, "the prepare method has to be reimplemented in "
+                         "a derived class"); }
+
+  };
+
+
+  class contact_rigid_obstacle_nonlinear_term : public contact_nonlinear_term {
+
+    // temporary variables to be used inside the prepare method
+    base_vector coeff; // of variable size
+    base_matrix grad;  // of size 1xN
+
+  public:
+    // class specific objects to take into account inside the prepare method
     const mesh_fem &mf_u;
     const mesh_fem &mf_lambda;
     const mesh_fem &mf_obs;
     const mesh_fem *mf_coeff;
     base_vector U, lambda, obs, friction_coeff, WT;
-    scalar_type r, alpha;
-    bool contact_only;
-    size_type option;
-
-    bgeot::multi_index sizes_;
 
     template <typename VECT1, typename VECT2, typename VECT3>
-    friction_nonlinear_term
+    contact_rigid_obstacle_nonlinear_term
     (const mesh_fem &mf_u_, const VECT1 &U_,
      const mesh_fem &mf_lambda_, const VECT2 &lambda_,
      const mesh_fem &mf_obs_, const VECT3 &obs_,
      scalar_type r_, size_type option_, bool contact_only_ = true,
      scalar_type alpha_ = scalar_type(-1), const mesh_fem *mf_coeff_ = 0,
-     const VECT3 *f_coeff_ = 0, const VECT2 *WT_ = 0) :
-      N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), mf_lambda(mf_lambda_),
-      mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
-      lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
-      r(r_), alpha(alpha_), contact_only(contact_only_), option(option_) {
-
-      adjust_tensor_size();
+     const VECT3 *f_coeff_ = 0, const VECT2 *WT_ = 0)
+      : contact_nonlinear_term(mf_u_.linked_mesh().dim(),
+                               r_, option_, contact_only_, alpha_),
+        mf_u(mf_u_), mf_lambda(mf_lambda_),
+        mf_obs(mf_obs_), U(mf_u.nb_basic_dof()),
+        lambda(mf_lambda_.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()) {
 
       mf_u.extend_vector(U_, U);
       mf_lambda.extend_vector(lambda_, lambda);
       mf_obs.extend_vector(obs_, obs);
 
-      lnt.resize(N); lt.resize(N); zt.resize(N); no.resize(N);
-      aux1.resize(1); auxN.resize(N); V.resize(N);
-
       gmm::resize(grad, 1, N);
-      gmm::resize(GP, N, N);
 
       if (!contact_only) {
         mf_coeff = mf_coeff_;
@@ -265,16 +296,82 @@ namespace getfem {
       GMM_ASSERT1(mf_u.get_qdim() == N, "wrong qdim for the mesh_fem");
     }
 
-    const bgeot::multi_index &sizes() const { return sizes_; }
+    // this methode prepares all necessary data for the compute method
+    // of the base class
+    virtual void prepare(fem_interpolation_context& ctx, size_type nb);
 
-    virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
+  };
+
+
+  class contact_nonmatching_meshes_nonlinear_term : public contact_nonlinear_term {
+
+    // temporary variables to be used inside the prepare method
+    base_vector coeff; // of variable size
+    base_matrix grad;  // of size 1xN
+
+  public:
+    const mesh_fem &mf_u1;     // displacements on the non-mortar side
+    const mesh_fem &mf_u2;     // displacements of the mortar side projected on the non-mortar side
+    const mesh_fem &mf_lambda; // Lagrange multipliers defined on the non-mortar side
+    const mesh_fem *mf_coeff;  // coefficient of friction defined on the non-mortar side
+    base_vector U1, U2, lambda, friction_coeff, WT1, WT2;
+
+    template <typename VECT1, typename VECT2, typename VECT3>
+    contact_nonmatching_meshes_nonlinear_term
+    (const mesh_fem &mf_u1_, const VECT1 &U1_,
+     const mesh_fem &mf_u2_, const VECT1 &U2_,
+     const mesh_fem &mf_lambda_, const VECT2 &lambda_,
+     scalar_type r_, size_type option_, bool contact_only_ = true,
+     scalar_type alpha_ = scalar_type(-1), const mesh_fem *mf_coeff_ = 0,
+     const VECT3 *f_coeff_ = 0, const VECT2 *WT1_ = 0, const VECT2 *WT2_ = 0)
+      : contact_nonlinear_term(mf_u1_.linked_mesh().dim(),
+                               r_, option_, contact_only_, alpha_),
+        mf_u1(mf_u1_), mf_u2(mf_u2_), mf_lambda(mf_lambda_),
+        U1(mf_u1.nb_basic_dof()), U2(mf_u2.nb_basic_dof()),
+        lambda(mf_lambda_.nb_basic_dof()) {
+
+      GMM_ASSERT1(mf_u2.linked_mesh().dim() == N,
+                  "incompatible mesh dimensions for the given mesh_fem's");
+
+      mf_u1.extend_vector(U1_, U1);
+      mf_u2.extend_vector(U2_, U2);
+      mf_lambda.extend_vector(lambda_, lambda);
+
+      gmm::resize(grad, 1, N);
+
+      if (!contact_only) {
+        mf_coeff = mf_coeff_;
+        if (!mf_coeff)
+          f_coeff = (*f_coeff_)[0];
+        else {
+          friction_coeff.resize(mf_coeff->nb_basic_dof());
+          mf_coeff->extend_vector(*f_coeff_, friction_coeff);
+        }
+        if (WT1_ && WT2_ && gmm::vect_size(*WT1_) && gmm::vect_size(*WT2_)) {
+          WT1.resize(mf_u1.nb_basic_dof());
+          mf_u1.extend_vector(*WT1_, WT1);
+          WT2.resize(mf_u2.nb_basic_dof());
+          mf_u2.extend_vector(*WT2_, WT2);
+        }
+        else {
+          WT1.resize(0);
+          WT2.resize(0);
+        }
+      }
+
+      GMM_ASSERT1(mf_u1.get_qdim() == N, "wrong qdim for the mesh_fem");
+      GMM_ASSERT1(mf_u2.get_qdim() == N, "wrong qdim for the mesh_fem");
+    }
+
+    // this methode prepares all necessary data for the compute method
+    // of the base class
     virtual void prepare(fem_interpolation_context& ctx, size_type nb);
 
   };
 
 
   /** Specific assembly procedure for the use of an Uzawa algorithm to solve
-      contact problems with friction.
+      contact with rigid obstacle problems with friction.
   */
   template<typename VECT1, typename VECT2, typename VECT3>
   void asm_continuous_contact_with_friction_Uzawa_proj
@@ -284,10 +381,10 @@ namespace getfem {
    const getfem::mesh_fem *mf_coeff, const VECT3 &f_coeff,
    const mesh_region &rg, scalar_type alpha, const VECT1 &WT, int option = 1) {
 
-    friction_nonlinear_term nterm1
-      (mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
-       (option == 1) ? UZAWA_PROJ_FRICT : UZAWA_PROJ_FRICT_SAXCE,
-       false, alpha, mf_coeff, &f_coeff, &WT);
+    contact_rigid_obstacle_nonlinear_term
+      nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
+             (option == 1) ? UZAWA_PROJ_FRICT : UZAWA_PROJ_FRICT_SAXCE,
+             false, alpha, mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
     assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i); ");
@@ -311,8 +408,8 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
    const mesh_region &rg) {
 
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda, lambda, mf_obs,
-                                   obs, r, UZAWA_PROJ);
+    contact_rigid_obstacle_nonlinear_term
+      nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, r, UZAWA_PROJ);
 
     getfem::generic_assembly assem;
     assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).Base(#2))(i,:); ");
@@ -336,8 +433,8 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs, const mesh_region &rg) {
 
     std::vector<scalar_type> U(mf_u.nb_dof());
-    friction_nonlinear_term nterm1(mf_u, U, mf_lambda,
-                                   lambda, mf_obs, obs, 1, RHS_U_V1);
+    contact_rigid_obstacle_nonlinear_term
+      nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, 1, RHS_U_V1);
 
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
@@ -349,7 +446,6 @@ namespace getfem {
     assem.push_vec(R);
     assem.assembly(rg);
   }
-
 
 }  /* end of namespace getfem.                                             */
 
