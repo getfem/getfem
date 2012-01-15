@@ -29,7 +29,7 @@ namespace getfem {
   /* calculates the projection of a point on the face of a convex
    * Input:
    *   pgt : the geometric transformation of the convex
-   *   G_cv: the points of the convex, stored in columns
+   *   G_cv: the nodes of the convex, stored in columns
    *   fc  : the face of the convex to project on
    *   pt  : the point to be projected
    * Output:
@@ -111,7 +111,7 @@ namespace getfem {
   /* calculates the normal at a specific point on the face of a convex
    * Input:
    *   pgt   : the geometric transformation of the convex
-   *   G_cv  : the points of the convex, stored in columns
+   *   G_cv  : the nodes of the convex, stored in columns
    *   fc    : the face of the convex to project on
    *   ref_pt: the point in the reference element
    * Output:
@@ -232,19 +232,20 @@ namespace getfem {
       }
       else { // project on convex faces
         mesh_region::face_bitset faces = rg_source.faces_of_convex(cv);
-        if (faces.count() > 0)
+        if (faces.count() > 0) {
           bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
-        // this should rarely be more than one face
-        for (short_type f = 0; f < faces.size(); ++f) {
-          if (!faces.test(f))
-            continue;
-          projection_on_convex_face(pgt, G, f, pt, proj_ref);
-          scalar_type is_in = pgt->convex_ref()->is_in(proj_ref);
-          if (is_in < is_in_sel) {
-            is_in_sel = is_in;
-            cv_sel = cv;
-            fc_sel = f;
-            proj_ref_sel = proj_ref;
+          // this should rarely be more than one face
+          for (short_type f = 0; f < faces.size(); ++f) {
+            if (faces.test(f)) {
+              projection_on_convex_face(pgt, G, f, pt, proj_ref);
+              scalar_type is_in = pgt->convex_ref()->is_in(proj_ref);
+              if (is_in < is_in_sel) {
+                is_in_sel = is_in;
+                cv_sel = cv;
+                fc_sel = f;
+                proj_ref_sel = proj_ref;
+              }
+            }
           }
         }
       }
@@ -311,7 +312,18 @@ namespace getfem {
         /* todo: use a geotrans_interpolation_context */
         base_node gpt = pgt->transform(i.is_face() ? pai->point_on_face(f,k) : pai->point(k),
                                        mim_target.linked_mesh().points_of_convex(cv));
+
         gppd.iflags = find_a_projected_point(gpt, gppd.ptref, gppd.cv, gppd.f) ? 1 : 0;
+        if (gppd.iflags) {
+          // calculate gppd.normal
+          const bgeot::pgeometric_trans pgt_source = mf_source.linked_mesh().trans_of_convex(gppd.cv);
+          bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(gppd.cv));
+          normal_on_convex_face(pgt_source, G, gppd.f, gppd.ptref, gppd.normal);
+          // calculate gppd.gap
+          base_node ppt = pgt_source->transform(gppd.ptref, G);
+          gppd.gap = gmm::vect_sp(gpt-ppt, gppd.normal);
+        }
+
         if (gppd.iflags && (last_cv != gppd.cv || last_f != gppd.f)) {
           if (gppd.f == short_type(-1)) { // convex
             size_type nbdof = mf_source.nb_basic_dof_of_element(gppd.cv);
@@ -598,6 +610,32 @@ namespace getfem {
   (const fem_interpolation_context&, base_tensor &, bool) const
   { GMM_ASSERT1(false, "Sorry, to be done."); }
 
+  void projected_fem::projection_data(const fem_interpolation_context& c,
+                                      base_node &normal, scalar_type &gap) const {
+    elt_projection_data &e = elements.at(c.convex_num());
+    if (e.nb_dof == 0) return;
+
+    if (c.have_pgp() &&
+        (&c.pgp()->get_point_tab()
+         == &e.pim->approx_method()->integration_points())) {
+      gausspt_projection_data &gppd = e.gausspt.at(c.ii());
+      if (gppd.iflags & 1) {
+        normal = gppd.normal;
+      }
+    }
+    else {
+      size_type cv;
+      short_type f;
+      if (find_a_projected_point(c.xreal(), ptref, cv, f)) {
+        const bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
+        bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
+        normal_on_convex_face(pgt, G, f, ptref, normal);
+        base_node ppt = pgt->transform(ptref, G);
+        gap = gmm::vect_sp(c.xreal()-ppt, normal);
+      }
+    }
+
+  }
 
   dal::bit_vector projected_fem::projected_convexes() const {
     dal::bit_vector bv;

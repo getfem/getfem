@@ -52,6 +52,8 @@ namespace getfem {
                           // flags & 2 : base_val is stored
                           // flags & 4 : grad_val is stored
     base_node ptref;      // coords on reference element of mf_source element
+    base_node normal;     // normal vector at the projected point on the mf_source element
+    scalar_type gap;      // gap distance from the gauss point to the projected point
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
     std::vector<size_type> local_dof; // correspondance between dof of the
@@ -127,6 +129,9 @@ namespace getfem {
                               base_tensor &t, bool = true) const;
     void real_hess_base_value(const fem_interpolation_context&,
                               base_tensor &, bool = true) const;
+
+    void projection_data(const fem_interpolation_context& c,
+                         base_node &normal, scalar_type &gap) const;
 
     /** return the list of convexes of the projected mesh_fem which
      *  contain at least one gauss point (should be all convexes)! */
