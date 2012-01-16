@@ -56,9 +56,9 @@ namespace gmm {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT1 &eigvect = const_cast<MAT1 &>(eigvect_);
     typedef typename number_traits<T>::magnitude_type R;
-
+    
     if (compvect) gmm::copy(identity_matrix(), eigvect);
-
+    
     size_type n = diag.size(), q = 0, p, ite = 0;
     if (n == 0) return;
     if (n == 1) { eigval[0] = gmm::real(diag[0]); return; }
@@ -72,7 +72,7 @@ namespace gmm {
       symmetric_Wilkinson_qr_step(sub_vector(diag, SUBI),
 				  sub_vector(sdiag, SUBI),
 				  sub_matrix(eigvect, SUBJ, SUBK), compvect);
-
+      
       symmetric_qr_stop_criterion(diag, sdiag, p, q, tol*R(3));
       ++ite;
       GMM_ASSERT1(ite < n*100, "QR algorithm failed.");
@@ -80,7 +80,7 @@ namespace gmm {
     
     gmm::copy(diag, eigval);
   }
-
+  
   // Range basis with a restarted Lanczos method
   template <typename Mat>
   void range_basis_eff_Lanczos(const Mat &BB, std::set<size_type> &columns,
@@ -91,7 +91,7 @@ namespace gmm {
 
     size_type nc_r = columns.size(), k;
     col_matrix< rsvector<T> > B(mat_nrows(BB), mat_ncols(BB));
-
+    
     k = 0;
     for (TAB::iterator it = columns.begin(); it!=columns.end(); ++it, ++k){
       gmm::copy(scaled(mat_col(BB, *it), T(1)/vect_norm2(mat_col(BB, *it))),
@@ -105,7 +105,7 @@ namespace gmm {
     
     R rho = R(-1), rho2;
     while (nc_r) {
-
+      
       std::vector<T> v(nc_r), v0(nc_r), wl(nc_r);
       dense_matrix<T> lv(nc_r, restart);
 
@@ -124,7 +124,7 @@ namespace gmm {
 	}
 	rho *= R(2);
       }
-     
+      
       // Computing vectors of the null space of de B^* B with restarted Lanczos
       rho2 = 0;
       gmm::fill_random(v);
@@ -133,6 +133,12 @@ namespace gmm {
 	R rho_old = rho2;
 	R beta = R(0), alpha;
 	gmm::scale(v, T(1)/vect_norm2(v));
+	size_type eff_restart = restart;
+	if (sdiag.size() != restart) {
+	  sdiag.resize(restart); eigval.resize(restart); diag.resize(restart); gmm::resize(eigvect, restart, restart);
+	  gmm::resize(lv, nc_r, restart);
+	}
+	
 	for (size_type i = 0; i < restart; ++i) { // Lanczos iterations
 	  gmm::copy(v, mat_col(lv, i));
 	  gmm::clear(w);
@@ -148,20 +154,30 @@ namespace gmm {
 	  gmm::add(gmm::scaled(v, -alpha), wl);
 	  sdiag[i] = beta = vect_norm2(wl);
 	  gmm::copy(v, v0);
+	  if (beta < EPS) { eff_restart = i+1; break; }
 	  gmm::copy(gmm::scaled(wl, T(1) / beta), v);
 	}
+	if (eff_restart != restart) {
+	  sdiag.resize(eff_restart); eigval.resize(eff_restart); diag.resize(eff_restart);
+	  gmm::resize(eigvect, eff_restart, eff_restart); gmm::resize(lv, nc_r, eff_restart);
+	}
 	tridiag_qr_algorithm(diag, sdiag, eigval, eigvect, true);
-
+	
 	size_type num = size_type(-1);
 	rho2 = R(0);
-	for (size_type j = 0; j < restart; ++j)
-	  { R nvp=gmm::abs(eigval[j]); if (nvp > rho2) { rho2=nvp; num=j; } }
+	for (size_type j = 0; j < eff_restart; ++j)
+	  { R nvp=gmm::abs(eigval[j]); if (nvp > rho2) { rho2=nvp; num=j; }}
+	  
 	GMM_ASSERT1(num != size_type(-1), "Internal error");
-
+	
 	gmm::mult(lv, mat_col(eigvect, num), v);
-
-	if (gmm::abs(rho2-rho_old) < rho*R(EPS*0.1)) break;
-	if (gmm::abs(rho-rho2) < rho*R(EPS*10.)) break;
+	
+	
+	if (gmm::abs(rho2-rho_old) < rho_old*R(EPS)) break;
+	// if (gmm::abs(rho-rho2) < rho*R(gmm::sqrt(EPS))) break;
+	if (gmm::abs(rho-rho2) < rho*R(EPS)*R(100)) break;
+      
+	
       }
 
       if (gmm::abs(rho-rho2) < rho*R(EPS*10.)) {
@@ -170,30 +186,29 @@ namespace gmm {
 	for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it, ++j)
 	  if (gmm::abs(v[j]) > val_max)
 	    { val_max = gmm::abs(v[j]); j_max = *it; }
-	//	cout << "Eliminate " << j_max  << endl;
 	columns.erase(j_max); nc_r = columns.size();
       }
       else break;
     }
   }
-
+  
   // Range basis with LU decomposition. Not stable from a numerical viewpoint.
   // Complex version not verified
   template <typename Mat>
   void range_basis_eff_lu(const Mat &B, std::set<size_type> &columns,
-			     std::vector<bool> &c_ortho, double EPS) {
-   
+			  std::vector<bool> &c_ortho, double EPS) {
+    
     typedef std::set<size_type> TAB;
     typedef typename linalg_traits<Mat>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-
+    
     size_type nc_r = 0, nc_o = 0, nc = mat_ncols(B), nr = mat_nrows(B), i, j;
-
+    
     for (TAB::iterator it=columns.begin(); it!=columns.end(); ++it)
       if (!(c_ortho[*it])) ++nc_r; else nc_o++;
-
+    
     if (nc_r > 0) {
- 
+      
       gmm::row_matrix< gmm::rsvector<T> > Hr(nc, nc_r), Ho(nc, nc_o);
       gmm::row_matrix< gmm::rsvector<T> > BBr(nr, nc_r), BBo(nr, nc_o);
       
@@ -433,8 +448,8 @@ namespace gmm {
       if (columns.size() == nc_r) break;
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
-    cout << "size of columns " << columns.size() << endl;
-    if (columns.size() > std::max(size_type(1000), actsize))
+    // cout<<"size of colun"<<columns.size()<<endl;
+    if (columns.size() > std::max(size_type(10), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
       range_basis_eff_Gram_Schmidt_dense(B, columns, c_ortho, EPS);
