@@ -4,21 +4,25 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 QUAD = 0;
-N = 2;
-RADIUS = 0.47;             % radius of the real circular domain.
-LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
+N = 3;
+RADIUS = 0.4;              % radius of the real circular domain.
+LEVEL_SET_DEGREE = 1;      % Degree of the piecewise polynomial
                            % defining the level set.
-EXACT_SOL = 3;             % Which exact solution.
+EXACT_SOL = 8;             % Which exact solution(8 is three dimensional solution).
 SIMPLIFY_LEVEL_SET = 0;
-STABILIZED_DIRICHLET = 3;  % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab.
-MINIMAL_ELT_RATIO = 0.005; % threshold ratio for the fully stab Dirichlet.
-DIRICHLET_GAMMA0 = 0.01;    % Barbosa Hughes stabilization parameter
-RATIO_GR_MESH = 5;         % Ratio size between mesh and patches.
+STABILIZED_DIRICHLET = 0;  % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab., 3 = Patch stab.
+MINIMAL_ELT_RATIO = 0.01;  % threshold ratio for the fully stab Dirichlet.
+DIRICHLET_GAMMA0 = 0.1;   % Barbosa Hughes stabilization parameter
+RATIO_GR_MESH = 2;         % Ratio size between mesh and patches.
 	   
 OK = 0;
+NX = 10;                  % space step.
+MESH_NOISED = 0;           % Set to one if you want to "shake" the mesh
+
 
 if (N == 1) 
-  MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0;NSUBDIV=[3]';
+ % MESH_FILE='structured:GT="GT_PK(1,1)";SIZES=[1];NOISED=0;NSUBDIV=[3]';
+  MESH_TYPE = 'GT_PK(1,1)'; 
   IM = 'IM_GAUSS1D(6)';     % Integration method.
   IM_SIMPLEX = IM;          % Integration method on sub-triangles.
   FEM = 'FEM_PK(1,1)';      % Finite element method for the unknown.
@@ -28,11 +32,11 @@ if (N == 1)
 end;
 
 if (N == 2 && QUAD)
-  MESH_FILE='structured:GT="GT_QK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[40, 40]';
+  MESH_TYPE = 'GT_QK(2,1)'; 
   IM = 'IM_GAUSS_PARALLELEPIPED(2,6)';        % Integration method.
-%   IM='IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
+% IM='IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6), 5)';
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';   % Integration method on sub-triangles.
-%   IM_SIMPLEX ='IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4), 3)';
+% IM_SIMPLEX ='IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(4), 3)';
   FEM = 'FEM_QK(2,1)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
   FEM_RHS = 'FEM_QK(2,3)';     % Finite element method for the rhs
@@ -41,10 +45,10 @@ if (N == 2 && QUAD)
 end;
 
 if (N == 2 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[40,40]';
-%  IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
-  IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';    % Integration method.
-  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(9),2)';
+  MESH_TYPE = 'GT_PK(2,1)';
+% IM = 'IM_HCT_COMPOSITE(IM_TRIANGLE(6))';
+  IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';    % Integration method.
+  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
   FEM = 'FEM_PK(2,1)';      % Finite element method for the unknown.
   FEM_MULT = 'FEM_PK(2,0)'; % Finite element method for multipliers
 %  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
@@ -53,15 +57,29 @@ if (N == 2 && ~QUAD)
   OK = 1;
 end;
 
+if (N == 3 && QUAD)
+  MESH_TYPE = 'GT_QK(3,1)'; 
+  IM = 'IM_GAUSS_PARALLELEPIPED(3,6)';        % Integration method.
+% IM='IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 5)';
+  IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),2)';   % Integration method on sub-triangles.
+% IM_SIMPLEX ='IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(4), 3)';
+  FEM = 'FEM_QK(3,1)';      % Finite element method for the unknown.
+%  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
+  FEM_RHS = 'FEM_QK(3,3)';     % Finite element method for the rhs
+  FEM_MULT = 'FEM_QK(3,0)'; % Finite element method for multipliers
+  OK = 1;
+end;
+
 if (N == 3 && ~QUAD)
-  MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NOISED=0;NSUBDIV=[3,3,3]';
+ % MESH_FILE='structured:GT="GT_PK(3,1)";SIZES=[1,1,1];NOISED=0;NSUBDIV=[3,3,3]';
+  MESH_TYPE = 'GT_PK(3,1)';
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)'; 
   FEM = 'FEM_PK(3,2)';      % Finite element method for the unknown.
   FEM_RHS = FEM;            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(3,1)'; % Finite element method for multipliers
-  FEM_MULT_DEGREE = 1;      % Degree for multipliers definition
-   OK = 1;
+  FEM_MULT_DEGREE = 2;      % Degree for multipliers definition
+  OK = 1;
 end;
 
 if (~OK)
@@ -70,5 +88,5 @@ end;
 
 
 %%%%%   saving parameters                                             %%%%%
-ROOTFILENAME = 'xfem_dirichlet';     % Root of data files.
+ROOTFILENAME = 'xfem_dirichlet_toto';     % Root of data files.
 VTK_EXPORT = 2 % export solution to a .vtk file ?
