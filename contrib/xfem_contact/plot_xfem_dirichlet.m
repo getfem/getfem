@@ -2,9 +2,10 @@
 
 gf_workspace('clear all');
 mf = gf_mesh_fem('load', 'xfem_dirichlet_ls.mf');
-lsU = -load('xfem_dirichlet_ls.U')';
-
-nn=5; % 0 : plot the exported mf
+lsU = load('xfem_dirichlet_ls.U')';
+lsU1 = load('xfem_dirichlet_exact.U')';
+mf1 = gf_mesh_fem('load', 'xfem_dirichlet.mfE');
+nn=5;  % 0 : plot the exported mf
        % 1 : 
        % 2 : 
        % 3 : 
@@ -16,8 +17,8 @@ nn=5; % 0 : plot the exported mf
 clf
 if nn==0,
   disp('plot the exported mf');
-  [hsur, hcont] = gf_plot(mf,lsU,'refine',16,'contour',0,'mesh','on', 'pcolor','on');
-  set(hcont{1}, 'LineWidth', 2);
+  [hsur, hcont] = gf_plot(mf,lsU,'refine',20,'contour',0.,'mesh','on', 'pcolor','off');
+  set(hcont{1}, 'LineWidth', 3);
   set(hcont{1}, 'Color', 'black');
 elseif nn==1
   disp('plot the cut mesh');
@@ -27,14 +28,14 @@ elseif nn==1
   
   lsUc = gf_compute(mf, lsU, 'interpolate on', mfc);
   
-  %[hsur, hcont] = gf_plot(mf, lsU, 'refine', 24, 'zplot', 'on');
-  %hold on;
-  [hsur, hcont] = gf_plot(mfc, lsUc.*(lsUc>0), 'refine', 20, 'zplot', 'on', 'mesh','on', 'pcolor','on'); hold on;
-  colormap([.8 1 .8]);
-  %[hsur, hcont] = gf_plot(mf,lsU,'refine',4,'contour',0,'pcolor','off');
+  [hsur, hcont] = gf_plot(mf, lsU, 'refine', 2, 'zplot', 'on');
+  hold on;
+  [hsur, hcont] = gf_plot(mfc, lsUc.*(lsUc<0), 'refine', 1, 'mesh','on', 'pcolor','off','zplot', 'on'); hold on;
+  %colormap([.8 1 .8]);
+  [hsur, hcont] = gf_plot(mf,lsU,'refine',1,'mesh','on','zplot', 'on','contour',0.,'pcolor','off');
   
   %set(hcont{1}, 'LineWidth', 2);
-  %set(hcont{1}, 'Color', 'black');
+  %set(hcont{1}, 'Color', 'read');
   %axis('tight'); axis off;
 elseif nn==2 || nn==3,
   disp('plot the solution, with the 0 isovalue');
@@ -42,12 +43,12 @@ elseif nn==2 || nn==3,
   slU=load('xfem_dirichlet.slU')';
   P=gf_slice_get(sl,'pts'); P=[P(1:2,:);slU];
   gf_slice_set(sl,'pts',P);
-  gf_plot_slice(sl, 'data', slU, 'mesh','on','mesh_edges','on');
+  gf_plot_slice(sl, 'data', slU, 'mesh','on','mesh_edges','off');
   
   
 
-  m=get(mf, 'linked_mesh');
-  slc=gfSlice({'isovalues', 0, mf, lsU, 0}, m, 16);
+  m=gf_mesh_fem_get(mf, 'linked_mesh');
+  slc=gf_Slice({'isovalues', 0, mf, lsU, 0}, m, 16);
   hold on;
   P2=gf_slice_get(slc, 'pts');
   gf_slice_set(slc, 'pts', [P2;0.1 * ones(1,size(P2,2))]);
@@ -55,24 +56,26 @@ elseif nn==2 || nn==3,
   set(h4, 'LineWidth', 2);
   
   if (nn == 2),
-    %set(hcont{1}, 'Color', 'black');
-    view(3); camlight; view(2);
+%    set(hcont{1}, 'Color', 'black');
+    view(3); camlight; 
   else
     slc2=gfSlice('load', 'xfem_dirichlet.sl0');
     hold on;
+    set(gcf,'renderer','zbuffer');
     [h1,h2,h3,h4]=gf_plot_slice(slc2, 'tube','off','mesh_slice_edges_color','white');
     set(h4, 'LineWidth', 4);
-    caxis([-.2 .3]); gf_colormap('froid');
+    view(3); 
+    %caxis([-.2 .3]); gf_colormap('froid');
   end;
 elseif nn==4,
   disp('plotting the lagrange multipliers on the dirichlet boundary');
   sll=gf_Slice('load','xfem_dirichlet.sll');
   slL=load('xfem_dirichlet.slL')';
   P0=gf_slice_get(sll, 'pts');
-  [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color',[.3 .3 .3]);
+  [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','red');
   hold on;
-  gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*0.05]);
-  [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5,'showoptions','on');
+  gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*3]);
+  [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','on','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5,'showoptions','on');
   sl=gf_Slice('load','xfem_dirichlet.sl');
   gf_plot_slice(sl,'mesh','off');
   
@@ -89,20 +92,45 @@ elseif nn==4,
   %set(gcf,'renderer','opengl');
   set(gcf,'color','white');
   axis on;
-  view(2);
+  view(3);
   camzoom(1);
   axis([-0.5000    0.5000   -0.5000    0.5000 -.5 .5]);
   % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
 elseif nn==5,
   disp('plot the solution');
-  lsU = max(lsU, 0) * 10;
-  [hsur, hcont] = gf_plot(mf, lsU, 'refine',16,'mesh','on', 'zplot', 'on');
-  colormap([0.7 0.8 1.0; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8]);
+  lsU = max(-lsU, 0) *10;
+  [hsur, hcont] = gf_plot(mf, lsU, 'refine',2,'mesh','on','zplot', 'on');
+  %colormap([0.7 0.8 1.0; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8; 0.8 1 0.8]);
   axis off;
-  camlight;
+  %camlight;
   % set(hcont{1}, 'LineWidth', 2);
   % set(hcont{1}, 'Color', 'black');
-elseif nn==6,
+elseif nn==6,%plot multiplier
+  slL=load('xfem_dirichlet.slL')';
+  sll=gf_Slice('load','xfem_dirichlet.sll');
+  gf_plot_slice(sll,'mesh','on','mesh_slice_edges_color','black','data',slL,'showoptions','on');
+  slL=load('xfem_dirichlet.slL')';
+  %sll=gf_Slice('load','xfem_dirichlet.sl0');
+  %slL=load('xfem_dirichlet.slU0')';
+  %gf_plot_slice(sll,'mesh','on','mesh_slice_edges_color','black','data',slL,'showoptions','on');
+  axis on;
+elseif nn==7,%plot displacement at the bondary
+  slU=load('xfem_dirichlet.slU')';  
+  sll=gf_Slice('load','xfem_dirichlet.sl');
+  gf_plot_slice(sll, 'mesh','on','mesh_slice_edges_color','black','data',slU,'showoptions','on');
+  axis on;
+  
+elseif nn==8,%plot displacement at the half sphere 
+ % sll=gf_Slice('load','xfem_dirichlet.sl0');
+ 
+ mfs = gf_mesh_fem('load', 'xfem_dirichlet.mf');
+lsUs = load('xfem_dirichlet_ls.U')';
+
+ sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0],0.4}}},mfs,9);
+ Usl=gf_compute(mfs,lsUs,'interpolate on', sl);
+ gf_plot_slice(sl,'mesh_faces','on','mesh','on','data',Usl,'mesh_slice_edges','on');
+
+elseif nn==9,
 
   % Without stabilization, FEM_RHS = 'FEM_PK(2,3)'; LEVEL_SET_DEGREE = 2;
   H    = [1/320   1/160  1/80   1/40  1/20  1/10  1/5];
@@ -150,7 +178,7 @@ elseif nn==6,
   axesobj = findobj('type', 'axes');
   set(axesobj, 'fontname', 'times'); set(axesobj, 'fontunits', 'points');
   set(axesobj, 'fontsize', 18); set(axesobj, 'fontweight', 'bold');
-  set(axesobj, 'linewidth', 2);
+  set(axesobj, 'linewidth', 4);
   xlabel('h');
   ylabel('L^2(\Omega) relative error (in %)');
   set(gca,'XTickLabel',{'0.001';'0.01';'0.1';'1';'...'}) 
