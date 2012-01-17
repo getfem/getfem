@@ -121,7 +121,7 @@ $(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcd
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
 
 $(srcdir)/source/scilab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc > $(srcdir)/source/scilab/cmdref.rst || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
+	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc-rst > $(srcdir)/source/scilab/cmdref.rst || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
 
 $(srcdir)/source/python/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/cmdref.rst || (rm -f $(srcdir)/source/python/cmdref.rst; /bin/false )
