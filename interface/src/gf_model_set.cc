@@ -1858,34 +1858,36 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-     /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt]]])
+     /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt [, @str dataname_gamma [, @str dataname_vt]]]]])
 
       Add a contact with friction condition with a rigid obstacle
-      to the model. This brick add a contact which is defined
-      in an integral way. Is it the direct approximation of an augmented
+      to the model. This brick adds a contact which is defined
+      in an integral way. It is the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
       continuous level. The advantage should be a better scalability:
-      the number of
+      the number of the
       Newton iterations should be more or less independent of the mesh size.
       The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
-      be described with the data `dataname_obstacle` being a signed distance to
-      the obstacle (interpolated on a finite element method).
+      be described with the data `dataname_obstacle` being a signed distance
+      to the obstacle (interpolated on a finite element method).
       `multname` should be a fem variable representing the contact stress.
-      An inf-sup condition beetween `multname` and `varname_u` is required.
+      An inf-sup condition between `multname` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
-      range of acceptabe values. `dataname_friction_coeff` is the friction
+      range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method. 
       The possible value for `option` is 1 for the non-symmetric
       Alart-Curnier version, 2 for the symmetric one and 3 for the
       non-symmetric Alart-Curnier with an additional augmentation and 4 for
       a new unsymmetric method. The default value is 1.
-      'dataname_alpha' and 'dataname_wt' are optional parameters to solve
-      dynamical friction problems.
+      `dataname_alpha` and `dataname_wt` are optional parameters to solve
+      evolutionary friction problems. `dataname_gamma` and `dataname_vt`
+      represent optional data for adding a parameter-dependent sliding
+      velocity to the friction condition.
     @*/
      sub_command
-       ("add continuous contact with friction with rigid obstacle brick", 7, 10, 0, 1,
+       ("add continuous contact with friction with rigid obstacle brick", 7, 12, 0, 1,
         
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -1900,13 +1902,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 	if (in.remaining()) dataname_alpha = in.pop().to_string();
 	std::string dataname_wt = "";
 	if (in.remaining()) dataname_wt = in.pop().to_string();
+	std::string dataname_gamma = "";
+	if (in.remaining()) dataname_gamma = in.pop().to_string();
+	std::string dataname_vt = "";
+	if (in.remaining()) dataname_vt = in.pop().to_string();
 	
 
 	size_type ind=
 	getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
 	(md->model(), gfi_mim->mesh_im(), varname_u, multname,
 	 dataname_obs, dataname_r, dataname_coeff, region, option,
-	 dataname_alpha, dataname_wt);
+	 dataname_alpha, dataname_wt, dataname_gamma, dataname_vt);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
