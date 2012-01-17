@@ -55,11 +55,11 @@ condition_type = 0; % 0 = Explicitely kill horizontal rigid displacements
                     % 2 = Add a Dirichlet condition on the top of the structure
 penalty_parameter = 1E-6;    % Penalization coefficient for the global penalization
 if (d == 2)
-    cpoints = [0, 0];   % constraigned points for 2d
-    cunitv  = [1, 0];   % corresponding constraigned directions for 2d
+    cpoints = [0, 0];   % constrained points for 2d
+    cunitv  = [1, 0];   % corresponding constrained directions for 2d
 else
-    cpoints = [0, 0, 0,   0, 0, 0,   5, 0, 5];  % constraigned points for 3d
-    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];  % corresponding constraigned directions for 3d
+    cpoints = [0, 0, 0,   0, 0, 0,   5, 0, 5];  % constrained points for 3d
+    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];  % corresponding constrained directions for 3d
 end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
@@ -254,7 +254,6 @@ elseif (version == 9) % The continuous version, Uzawa on the augmented Lagrangia
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
   nbc = gf_mesh_fem_get(mflambda_partial, 'nbdof');
-  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   M = gf_asm('mass matrix', mim, mflambda_partial, mflambda_partial, GAMMAC);
   lambda_n = zeros(1, nbc);
   gf_model_set(md, 'add initialized fem data', 'lambda_n', mflambda_partial, lambda_n);
@@ -299,7 +298,6 @@ elseif (version == 14) % The continuous version, Uzawa on the augmented Lagrangi
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
   nbc = gf_mesh_fem_get(mflambda_partial, 'nbdof');
   gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
-  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   M = gf_asm('mass matrix', mim, mflambda_partial, mflambda_partial, GAMMAC);
   lambda = zeros(1, nbc);
   gf_model_set(md, 'add initialized fem data', 'lambda', mflambda_partial, lambda);
