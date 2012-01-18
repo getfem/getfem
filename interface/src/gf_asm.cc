@@ -683,7 +683,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        double r = in.pop().to_scalar();
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        getfem::asm_continuous_contact_Uzawa_proj
-         (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs,
+         (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
           r, boundary_num);
        );
 
@@ -712,14 +712,15 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
        const getfem::mesh_fem *mf_coeff = 0;
        darray vec_coeff;
-       std::vector<double> coeff(1);
+       double scalar_coeff;
        mexarg_in argin = in.pop();
        if (argin.is_mesh_fem()) {
          mf_coeff = argin.to_const_mesh_fem();
          vec_coeff = in.pop().to_darray();
          in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
        } else {
-         coeff[0] = argin.to_scalar();
+         scalar_coeff = argin.to_scalar();
+         vec_coeff = darray(&scalar_coeff, 1);
        }
        int option = 1;
        if (in.remaining()) {
@@ -736,23 +737,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
 
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
-       if (mf_coeff)
-         getfem::asm_continuous_contact_with_friction_Uzawa_proj
-           (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
-            mf_coeff, vec_coeff, vec_W, boundary_num, r, alpha);
-       else {
-         std::vector<double> v_obs(gmm::vect_size(obs));
-         gmm::copy(obs, v_obs);
-         getfem::asm_continuous_contact_with_friction_Uzawa_proj
-           (F, *mim, *mf_u, u, *mf_obs, v_obs, *mf_lambda, vec_lambda,
-            mf_coeff, coeff, vec_W, boundary_num, r, alpha, option);
-
-       }
+       getfem::asm_continuous_contact_with_friction_Uzawa_proj
+         (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
+          mf_coeff, vec_coeff, vec_W, r, alpha, boundary_num, option);
        );
 
     /*@FUNC B = ('level set normal source term', @int bnum, @tmim mim, @tmf mf_u, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_levelset, @dvec levelset)
     Performs an assembly of the source term represented by `vec_lambda`
-    on `mf_lambda` considerd to be a component in the direction of the
+    on `mf_lambda` considered to be a component in the direction of the
     gradient of a levelset function (normal to the levelset) of a vector
     field defined on `mf_u` on the boundary `bnum`.
 
@@ -771,8 +763,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
        getfem::asm_level_set_normal_source_term
-         (F, *mim, *mf_u, *mf_lambda, vec_lambda, *mf_obs,obs,boundary_num);
-
+         (F, *mim, *mf_u, *mf_obs, obs, *mf_lambda, vec_lambda, boundary_num);
+       
        );
 
 
