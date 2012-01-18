@@ -118,6 +118,39 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        RETURN_VECTOR(real_rhs(), complex_rhs());
        );
 
+    /*@GET ('brick term rhs', @int ind_brick[, @int ind_term, @int sym, @int ind_iter])
+      Gives the access to the part of the right hand side of a term
+      of a particular nonlinear brick. Does not account of the eventual
+      time dispatcher. An assembly of the rhs has to be done first.
+      `ind_brick` is the brick index. `ind_term` is the index of the
+      term inside the brick (default value : @MATLAB{1}@PYTHON{0}@SCILAB{1}).
+      `sym` is to access to the second right hand side of for symmetric
+      terms acting on two different variables (default is 0).
+      `ind_iter` is the iteration number when time dispatchers are
+      used (default is @MATLAB{1}@PYTHON{0}@SCILAB{1}).
+      @*/
+    sub_command
+      ("brick term rhs", 1, 4, 0, 1,
+
+       size_type ind_brick = in.pop().to_integer() - config::base_index();
+       size_type ind_term = 0;
+       if (in.remaining())
+	 ind_term = in.pop().to_integer() - config::base_index();
+       bool sym = false;
+       if (in.remaining())
+	 sym = (in.pop().to_integer() != 0);
+       size_type ind_iter = 0;
+       if (in.remaining())
+	 ind_iter = in.pop().to_integer() - config::base_index();
+
+       if (md->model().is_complex())
+	 out.pop().from_dcvector(md->model().complex_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
+       else
+	 out.pop().from_dcvector(md->model().real_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
+       );
+
+    
+
 
     /*@GET z = ('memsize')
       Return a rough approximation of the amount of memory (in bytes) used by
@@ -163,7 +196,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       this function has an undefined behavior@*/
     sub_command
       ("mult varname Dirichlet", 1, 1, 0, 1,
-       size_type ind_brick = in.pop().to_integer();
+       size_type ind_brick = in.pop().to_integer() - config::base_index();
        out.pop().from_string
        (getfem::mult_varname_Dirichlet(md->model(), ind_brick).c_str());
        );
