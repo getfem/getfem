@@ -738,14 +738,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        if (mf_coeff)
 	 getfem::asm_continuous_contact_with_friction_Uzawa_proj
-	   (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs, r,
-	    mf_coeff, vec_coeff, boundary_num, alpha, vec_W);
+	   (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
+	    mf_coeff, vec_coeff, vec_W, boundary_num, r, alpha);
        else {
 	 std::vector<double> v_obs(gmm::vect_size(obs));
 	 gmm::copy(obs, v_obs);
 	 getfem::asm_continuous_contact_with_friction_Uzawa_proj
-	   (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, v_obs, r,
-	    mf_coeff, coeff, boundary_num, alpha, vec_W, option);
+	   (F, *mim, *mf_u, u, *mf_obs, v_obs, *mf_lambda, vec_lambda,
+	    mf_coeff, coeff, vec_W, boundary_num, r, alpha, option);
 
        }
        );

@@ -257,31 +257,31 @@ namespace getfem {
   public:
     // class specific objects to take into account inside the prepare method
     const mesh_fem &mf_u;
-    const mesh_fem &mf_lambda;
     const mesh_fem &mf_obs;
+    const mesh_fem &mf_lambda;
     const mesh_fem *mf_coeff;
-    base_vector U, lambda, obs, friction_coeff, WT, VT;
+    base_vector U, obs, lambda, friction_coeff, WT, VT;
     scalar_type gamma;
 
     template <typename VECT1, typename VECT2, typename VECT3>
     contact_rigid_obstacle_nonlinear_term
     (const mesh_fem &mf_u_, const VECT1 &U_,
-     const mesh_fem &mf_lambda_, const VECT2 &lambda_,
      const mesh_fem &mf_obs_, const VECT3 &obs_,
+     const mesh_fem &mf_lambda_, const VECT2 &lambda_,
      scalar_type r_, size_type option_, bool contact_only_ = true,
      scalar_type alpha_ = scalar_type(1), const mesh_fem *mf_coeff_ = 0,
      const VECT3 *f_coeff_ = 0, const VECT2 *WT_ = 0,
      scalar_type gamma_ = scalar_type(1), const VECT2 *VT_ = 0)
       : contact_nonlinear_term(mf_u_.linked_mesh().dim(),
                                r_, option_, contact_only_, alpha_),
-        mf_u(mf_u_), mf_lambda(mf_lambda_), mf_obs(mf_obs_),
-	U(mf_u.nb_basic_dof()), lambda(mf_lambda_.nb_basic_dof()),
-	obs(mf_obs_.nb_basic_dof()), gamma(gamma_) {
-      
+        mf_u(mf_u_), mf_obs(mf_obs_), mf_lambda(mf_lambda_),
+        U(mf_u.nb_basic_dof()), obs(mf_obs_.nb_basic_dof()),
+        lambda(mf_lambda_.nb_basic_dof()), gamma(gamma_) {
+
       mf_u.extend_vector(U_, U);
-      mf_lambda.extend_vector(lambda_, lambda);
       mf_obs.extend_vector(obs_, obs);
-      
+      mf_lambda.extend_vector(lambda_, lambda);
+
       vt.resize(N);
       gmm::resize(grad, 1, N);
 
@@ -293,14 +293,14 @@ namespace getfem {
           friction_coeff.resize(mf_coeff->nb_basic_dof());
           mf_coeff->extend_vector(*f_coeff_, friction_coeff);
         }
-	
+
         if (WT_ && gmm::vect_size(*WT_)) {
           WT.resize(mf_u.nb_basic_dof());
           mf_u.extend_vector(*WT_, WT);
         }
         else
           WT.resize(0);
-	
+
         if (VT_ && gmm::vect_size(*VT_)) {
           VT.resize(mf_u.nb_basic_dof());
           mf_u.extend_vector(*VT_, VT);
@@ -391,23 +391,24 @@ namespace getfem {
   */
   template<typename VECT1, typename VECT2, typename VECT3>
   void asm_continuous_contact_with_friction_Uzawa_proj
-  (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
-   const getfem::mesh_fem &mf_obs, const VECT2 &obs, scalar_type r,
-   const getfem::mesh_fem *mf_coeff, const VECT3 &f_coeff,
-   const mesh_region &rg, scalar_type alpha, const VECT1 &WT, int option = 1) {
+  (VECT1 &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, const VECT1 &U,
+   const getfem::mesh_fem &mf_obs, const VECT2 &obs,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem *mf_coeff, const VECT3 &f_coeff, const VECT1 &WT,
+   scalar_type r, scalar_type alpha, const mesh_region &rg, int option = 1) {
 
     contact_rigid_obstacle_nonlinear_term
-      nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, r,
+      nterm1(mf_u, U, mf_obs, obs, mf_lambda, lambda, r,
              (option == 1) ? UZAWA_PROJ_FRICT : UZAWA_PROJ_FRICT_SAXCE,
              false, alpha, mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
-    assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#2))(i,:,i); ");
+    assem.set("V(#3)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#3))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
-    assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
+    assem.push_mf(mf_lambda);
     assem.push_mf(mf_coeff ? *mf_coeff : mf_obs);
     assem.push_nonlinear_term(&nterm1);
     assem.push_vec(R);
@@ -419,20 +420,21 @@ namespace getfem {
   */
   template<typename VECT1>
   void asm_continuous_contact_Uzawa_proj
-  (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
-   const VECT1 &U, const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
-   const getfem::mesh_fem &mf_obs, const VECT1 &obs, scalar_type r,
-   const mesh_region &rg) {
+  (VECT1 &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, const VECT1 &U,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   scalar_type r, const mesh_region &rg) {
 
     contact_rigid_obstacle_nonlinear_term
-      nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, r, UZAWA_PROJ);
+      nterm1(mf_u, U, mf_obs, obs, mf_lambda, lambda, r, UZAWA_PROJ);
 
     getfem::generic_assembly assem;
-    assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).Base(#2))(i,:); ");
+    assem.set("V(#3)+=comp(NonLin$1(#1,#1,#2,#3).Base(#3))(i,:); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
-    assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
+    assem.push_mf(mf_lambda);
     assem.push_nonlinear_term(&nterm1);
     assem.push_vec(R);
     assem.assembly(rg);
@@ -444,20 +446,22 @@ namespace getfem {
   */
   template<typename VECT1>
   void asm_level_set_normal_source_term
-  (VECT1 &R, const mesh_im &mim, const getfem::mesh_fem &mf_u,
+  (VECT1 &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
-   const getfem::mesh_fem &mf_obs, const VECT1 &obs, const mesh_region &rg) {
+   const mesh_region &rg) {
 
     std::vector<scalar_type> U(mf_u.nb_dof());
     contact_rigid_obstacle_nonlinear_term
-      nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, 1, RHS_U_V1);
+      nterm1(mf_u, U, mf_obs, obs, mf_lambda, lambda, 1, RHS_U_V1);
 
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
-    assem.push_mf(mf_lambda);
     assem.push_mf(mf_obs);
+    assem.push_mf(mf_lambda);
     assem.push_nonlinear_term(&nterm1);
     assem.push_vec(R);
     assem.assembly(rg);
