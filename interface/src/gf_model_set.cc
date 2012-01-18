@@ -68,7 +68,7 @@ template <typename T> static inline void dummy_func(T &) {}
     psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
     psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
     subc_tab[cmd_normalize(name)] = psubc;                              \
-  }                           
+  }
 
 
 void gf_model_set(getfemint::mexargs_in& m_in,
@@ -321,7 +321,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-    
+
     /*@SET ind = ('add source term brick', @tmim mim, @str varname, @str dataname[, @int region[, @str directdataname]])
     Add a source term to the model relatively to the variable `varname`.
     The source term is represented by the data `dataname` which could be
@@ -453,7 +453,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        ind += getfem::add_Dirichlet_condition_with_penalization
        (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
-	dataname, mf_mult);
+        dataname, mf_mult);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -546,7 +546,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index();
        ind += getfem::add_normal_Dirichlet_condition_with_penalization
        (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
-	dataname, mf_mult);
+        dataname, mf_mult);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -675,10 +675,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        GMM_ASSERT1(mf_u, "The variable should depend on a mesh_fem");
        std::string dataname_unitv;
        if (mf_u->get_qdim() > 1)
-	 dataname_unitv = in.pop().to_string();
+         dataname_unitv = in.pop().to_string();
        std::string dataname_val;
        if (in.remaining()) dataname_val = in.pop().to_string();
-       
+
        size_type ind = config::base_index();
        ind += getfem::add_pointwise_constraints_with_multipliers
        (md->model(), varname, dataname_pt, dataname_unitv, dataname_val);
@@ -714,14 +714,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        GMM_ASSERT1(mf_u, "The variable should depend on a mesh_fem");
        std::string dataname_unitv;
        if (mf_u->get_qdim() > 1)
-	 dataname_unitv = in.pop().to_string();
+         dataname_unitv = in.pop().to_string();
        std::string dataname_val;
        if (in.remaining()) dataname_val = in.pop().to_string();
-       
+
        size_type ind = config::base_index();
        ind += getfem::add_pointwise_constraints_with_given_multipliers
        (md->model(), varname, multname, dataname_pt, dataname_unitv,
-	dataname_val);
+        dataname_val);
        out.pop().from_integer(int(ind));
        );
 
@@ -754,14 +754,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        GMM_ASSERT1(mf_u, "The variable should depend on a mesh_fem");
        std::string dataname_unitv;
        if (mf_u->get_qdim() > 1)
-	 dataname_unitv = in.pop().to_string();
+         dataname_unitv = in.pop().to_string();
        std::string dataname_val;
        if (in.remaining()) dataname_val = in.pop().to_string();
-       
+
        size_type ind = config::base_index();
        ind += getfem::add_pointwise_constraints_with_penalization
        (md->model(), varname, coeff, dataname_pt, dataname_unitv,
-	dataname_val);
+        dataname_val);
        out.pop().from_integer(int(ind));
        );
 
@@ -845,8 +845,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind
        = getfem::add_basic_nonlinear_brick(md->model(), gfi_mim->mesh_im(),
-					   varname, f, dfdu,
-					   region, dataname)
+                                           varname, f, dfdu,
+                                           region, dataname)
        + config::base_index();
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -869,10 +869,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
          THROW_BADARG("Real constraint for a complex model");
-       
+
        size_type ind
        = getfem::add_constraint_with_multipliers(md->model(),varname,multname);
-       
+
        if (md->is_complex()) {
          if (B->storage()==gsparse::CSCMAT)
            getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
@@ -888,7 +888,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          else
            THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
-       
+
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
@@ -921,10 +921,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
          THROW_BADARG("Real constraint for a complex model");
-       
+
        size_type ind
        = getfem::add_constraint_with_penalization(md->model(), varname, coeff);
-       
+
        if (md->is_complex()) {
          if (B->storage()==gsparse::CSCMAT)
            getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
@@ -940,7 +940,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          else
            THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
-       
+
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
@@ -950,7 +950,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          std::vector<std::complex<double> > V(st.begin(), st.end());
          getfem::set_private_data_rhs(md->model(), ind, V);
        }
-       
+
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
@@ -976,16 +976,16 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) issymmetric = (in.pop().to_integer(0,1) != 1);
        if (!issymmetric && in.remaining())
          iscoercive = (in.pop().to_integer(0,1) != 1);
-       
+
        size_type ind
        = getfem::add_explicit_matrix(md->model(), varname1, varname2,
                                      issymmetric, iscoercive);
-       
+
        if (B->is_complex() && !md->is_complex())
          THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
          THROW_BADARG("Real constraint for a complex model");
-       
+
        if (md->is_complex()) {
          if (B->storage()==gsparse::CSCMAT)
            getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
@@ -1001,7 +1001,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          else
            THROW_BADARG("Constraint matrix should be a sparse matrix");
        }
-       
+
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
@@ -1017,7 +1017,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string varname = in.pop().to_string();
        size_type ind
        = getfem::add_explicit_rhs(md->model(), varname);
-       
+
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
@@ -1027,7 +1027,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          std::vector<std::complex<double> > V(st.begin(), st.end());
          getfem::set_private_data_rhs(md->model(), ind, V);
        }
-       
+
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
@@ -1040,12 +1040,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       ("set private matrix", 2, 2, 0, 0,
        size_type ind = in.pop().to_integer() - config::base_index();
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
-       
+
        if (B->is_complex() && !md->is_complex())
          THROW_BADARG("Complex constraint for a real model");
        if (!B->is_complex() && md->is_complex())
          THROW_BADARG("Real constraint for a complex model");
-       
+
        if (md->is_complex()) {
          if (B->storage()==gsparse::CSCMAT)
            getfem::set_private_data_matrix(md->model(), ind, B->cplx_csc());
@@ -1071,7 +1071,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("set private rhs", 2, 2, 0, 0,
        size_type ind = in.pop().to_integer() - config::base_index();
-       
+
        if (!md->is_complex()) {
          darray st = in.pop().to_darray();
          std::vector<double> V(st.begin(), st.end());
@@ -1160,7 +1160,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        add_nonlinear_elasticity_brick
        (md->model(), gfi_mim->mesh_im(), varname,
         abstract_hyperelastic_law_from_name(lawname, N), dataname, region);
-       
+
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1176,7 +1176,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       for the time scheme needed for the Newton algorithm used.
       Moreover, the finite element method on which `varname` is described
       is an K ordered mesh_fem, the `datasigma` one have to be at least
-      an K-1 ordered mesh_fem. 
+      an K-1 ordered mesh_fem.
       `datalambda` and `datamu` are the Lame coefficients of the studied
       material.
       `datathreshold` is the plasticity threshold of the material.
@@ -1201,11 +1201,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type ind = config::base_index() +
        add_elastoplasticity_brick
        (md->model(), gfi_mim->mesh_im(),
-        abstract_constraints_projection_from_name(projname), 
-	varname, datalambda, datamu,
-	datathreshold, datasigma,
-	region);
-       
+        abstract_constraints_projection_from_name(projname),
+        varname, datalambda, datamu,
+        datathreshold, datasigma,
+        region);
+
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1238,8 +1238,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add bilaplacian brick', @tmim mim, @str varname, @str dataname [, @int region])
       Add a bilaplacian brick on the variable
-      `varname` and on the mesh region `region`. 
-      This represent a term :math:`\Delta(D \Delta u)`. 
+      `varname` and on the mesh region `region`.
+      This represent a term :math:`\Delta(D \Delta u)`.
       where :math:`D(x)` is a coefficient determined by `dataname` which
       could be constant or described on a f.e.m. The corresponding weak form
       is :math:`\int D(x)\Delta u(x) \Delta v(x) dx`.
@@ -1253,7 +1253,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_bilaplacian_brick(md->model(), gfi_mim->mesh_im(),
-			     varname, dataname, region);
+                             varname, dataname, region);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1277,7 +1277,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_bilaplacian_brick_KL(md->model(), gfi_mim->mesh_im(),
-				varname, dataname_D, dataname_nu, region);
+                                varname, dataname_D, dataname_nu, region);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1286,7 +1286,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Add a normal derivative source term brick
       :math:`F = \int b.\partial_n v` on the variable `varname` and the
       mesh region `region`.
-      
+
       Update the right hand side of the linear system.
       `dataname` represents `b` and `varname` represents `v`.
       Return the brick index in the model.@*/
@@ -1298,7 +1298,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_normal_derivative_source_term_brick(md->model(), gfi_mim->mesh_im(),
-				varname, dataname, region);
+                                varname, dataname, region);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1318,7 +1318,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        size_type region = in.pop().to_integer();
        size_type ind = config::base_index() +
        add_Kirchoff_Love_Neumann_term_brick(md->model(), gfi_mim->mesh_im(),
-				varname, dataname_M, dataname_divM, region);
+                                varname, dataname_M, dataname_divM, region);
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1326,7 +1326,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary. 
+      `varname` and on the mesh region `region` (which should be a boundary.
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -1371,21 +1371,21 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) dataname = in.pop().to_string();
        bool R_must_be_derivated = false;
        if (in.remaining())
-	 R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
+         R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
        size_type ind = config::base_index();
        switch(version) {
-       case 1:  ind += 
-	   add_normal_derivative_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region,
-	    dataname, R_must_be_derivated ); break;
-       case 2:  ind += 
-	   add_normal_derivative_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname, multname, region,
-	    dataname, R_must_be_derivated ); break;
-       case 3:  ind += 
-	   add_normal_derivative_Dirichlet_condition_with_multipliers
-	   (md->model(), gfi_mim->mesh_im(), varname,  gfi_mf->mesh_fem(),
-	    region, dataname, R_must_be_derivated ); break;
+       case 1:  ind +=
+           add_normal_derivative_Dirichlet_condition_with_multipliers
+           (md->model(), gfi_mim->mesh_im(), varname, dim_type(degree), region,
+            dataname, R_must_be_derivated ); break;
+       case 2:  ind +=
+           add_normal_derivative_Dirichlet_condition_with_multipliers
+           (md->model(), gfi_mim->mesh_im(), varname, multname, region,
+            dataname, R_must_be_derivated ); break;
+       case 3:  ind +=
+           add_normal_derivative_Dirichlet_condition_with_multipliers
+           (md->model(), gfi_mim->mesh_im(), varname,  gfi_mf->mesh_fem(),
+            region, dataname, R_must_be_derivated ); break;
        }
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
@@ -1394,7 +1394,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
     /*@SET ind = ('add normal derivative Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region [, @str dataname, @int R_must_be_derivated])
        Add a Dirichlet condition on the normal derivative of the variable
-      `varname` and on the mesh region `region` (which should be a boundary. 
+      `varname` and on the mesh region `region` (which should be a boundary.
       The general form is
       :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
       where :math:`r(x)` is
@@ -1418,11 +1418,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) dataname = in.pop().to_string();
        bool R_must_be_derivated = false;
        if (in.remaining())
-	 R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
+         R_must_be_derivated = (in.pop().to_integer(0,1)) != 0;
        size_type ind = config::base_index() +
        add_normal_derivative_Dirichlet_condition_with_penalization
-	   (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
-	    dataname, R_must_be_derivated );
+           (md->model(), gfi_mim->mesh_im(), varname, coeff, region,
+            dataname, R_must_be_derivated );
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
@@ -1607,7 +1607,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int symmetrized]])
-    
+
     Add a contact with  or without friction brick to the model.
     If U is the vector
     of degrees of freedom on which the unilateral constraint is applied,
@@ -1635,14 +1635,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     cannot be symmetrized). @*/
      sub_command
        ("add basic contact brick", 4, 10, 0, 1,
-        
+
         bool friction = false;
-        
+
         std::string varname_u = in.pop().to_string();
         std::string multname_n = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         std::string multname_t; std::string friction_coeff;
-        
+
         mexarg_in argin = in.pop();
         if (argin.is_string()) {
           friction = true;
@@ -1650,7 +1650,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           dataname_r = argin.to_string();
           argin = in.pop();
         }
-        
+
         dal::shared_ptr<gsparse> BN = argin.to_sparse();
         if (BN->is_complex()) THROW_BADARG("Complex matrix not allowed");
         dal::shared_ptr<gsparse> BT;
@@ -1659,14 +1659,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           if (BT->is_complex()) THROW_BADARG("Complex matrix not allowed");
           friction_coeff = in.pop().to_string();
         }
-        
+
         std::string dataname_gap;
         dataname_gap = in.pop().to_string();
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         bool symmetrized = false;
         if (in.remaining()) symmetrized = ((in.pop().to_integer(0,1)) != 0);
-        
+
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
         if (BN->storage()==gsparse::CSCMAT) {
@@ -1680,7 +1680,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           gmm::copy(BN->real_wsc(), BBN);
         }
         else THROW_BADARG("Matrix BN should be a sparse matrix");
-        
+
         if (friction) {
           if (BT->storage()==gsparse::CSCMAT) {
             gmm::resize(BBT, gmm::mat_nrows(BT->real_csc()),
@@ -1694,7 +1694,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           }
           else THROW_BADARG("Matrix BT should be a sparse matrix");
         }
-    
+
         size_type ind;
         if (friction) {
           ind = getfem::add_basic_contact_with_friction_brick
@@ -1705,7 +1705,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             (md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,
              dataname_alpha, symmetrized);
         }
-        
+
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
@@ -1716,10 +1716,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        ("contact brick set BN", 2, 2, 0, 0,
         size_type ind = in.pop().to_integer();
         dal::shared_ptr<gsparse> B = in.pop().to_sparse();
-        
+
         if (B->is_complex())
           THROW_BADARG("BN should be a real matrix");
-        
+
         if (B->storage()==gsparse::CSCMAT)
           gmm::copy(B->real_csc(),
                     getfem::contact_brick_set_BN(md->model(), ind));
@@ -1738,10 +1738,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        ("contact brick set BT", 2, 2, 0, 0,
         size_type ind = in.pop().to_integer();
         dal::shared_ptr<gsparse> B = in.pop().to_sparse();
-        
+
         if (B->is_complex())
           THROW_BADARG("BT should be a real matrix");
-        
+
         if (B->storage()==gsparse::CSCMAT)
           gmm::copy(B->real_csc(), getfem::contact_brick_set_BT(md->model(), ind));
         else if (B->storage()==gsparse::WSCMAT)
@@ -1752,7 +1752,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int symmetrized])
-    
+
     Add a contact with or without friction condition with a rigid obstacle
     to the model. The condition is applied on the variable `varname_u`
     on the boundary corresponding to `region`. The rigid obstacle should
@@ -1778,15 +1778,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     and the vectors gap and alpha and calls the basic contact brick. @*/
      sub_command
        ("add contact with rigid obstacle brick", 6, 9, 0, 1,
-        
+
         bool friction = false;
-        
+
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
         std::string multname_n = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         std::string multname_t;  std::string dataname_fr;
-        
+
         mexarg_in argin = in.pop();
         if (argin.is_string()) {
           friction = true;
@@ -1795,17 +1795,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           dataname_fr = in.pop().to_string();
           argin = in.pop();
         }
-        
+
         size_type region = argin.to_integer();
         std::string obstacle = in.pop().to_string();
         bool symmetrized = false;
         if (in.remaining()) symmetrized = ((in.pop().to_integer(0,1)) != 0);
-        
-	cout << "symmetrized = " << symmetrized << endl;
+
+        cout << "symmetrized = " << symmetrized << endl;
 
 
         size_type ind;
-        
+
         if (friction)
           ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
@@ -1842,18 +1842,18 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
      sub_command
        ("add continuous contact with rigid obstacle brick", 6, 7, 0, 1,
-        
+
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
         std::string multname_n = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         size_type region = in.pop().to_integer();
-	int option = 1;
+        int option = 1;
         if (in.remaining()) option = in.pop().to_integer();
-	size_type ind=getfem::add_continuous_contact_with_rigid_obstacle_brick
-	(md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-	 dataname_obs, dataname_r, region, option);
+        size_type ind=getfem::add_continuous_contact_with_rigid_obstacle_brick
+        (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
+         dataname_obs, dataname_r, region, option);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
@@ -1876,7 +1876,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
-      method. 
+      method.
       The possible value for `option` is 1 for the non-symmetric
       Alart-Curnier version, 2 for the symmetric one and 3 for the
       non-symmetric Alart-Curnier with an additional augmentation and 4 for
@@ -1888,7 +1888,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
      sub_command
        ("add continuous contact with friction with rigid obstacle brick", 7, 12, 0, 1,
-        
+
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
         std::string multname = in.pop().to_string();
@@ -1896,23 +1896,23 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_r = in.pop().to_string();
         std::string dataname_coeff = in.pop().to_string();
         size_type region = in.pop().to_integer();
-	int option = 1;
+        int option = 1;
         if (in.remaining()) option = in.pop().to_integer();
-	std::string dataname_alpha = "";
-	if (in.remaining()) dataname_alpha = in.pop().to_string();
-	std::string dataname_wt = "";
-	if (in.remaining()) dataname_wt = in.pop().to_string();
-	std::string dataname_gamma = "";
-	if (in.remaining()) dataname_gamma = in.pop().to_string();
-	std::string dataname_vt = "";
-	if (in.remaining()) dataname_vt = in.pop().to_string();
-	
+        std::string dataname_alpha = "";
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        std::string dataname_wt = "";
+        if (in.remaining()) dataname_wt = in.pop().to_string();
+        std::string dataname_gamma = "";
+        if (in.remaining()) dataname_gamma = in.pop().to_string();
+        std::string dataname_vt = "";
+        if (in.remaining()) dataname_vt = in.pop().to_string();
 
-	size_type ind=
-	getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
-	(md->model(), gfi_mim->mesh_im(), varname_u, multname,
-	 dataname_obs, dataname_r, dataname_coeff, region, option,
-	 dataname_alpha, dataname_wt, dataname_gamma, dataname_vt);
+
+        size_type ind=
+        getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
+        (md->model(), gfi_mim->mesh_im(), varname_u, multname,
+         dataname_obs, dataname_r, dataname_coeff, region, option,
+         dataname_alpha, dataname_wt, dataname_gamma, dataname_vt);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
@@ -1935,21 +1935,21 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
      sub_command
        ("add penalized contact with rigid obstacle brick", 5, 7, 0, 1,
-        
+
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
         size_type region = in.pop().to_integer();
-	int option = 1;
-	if  (in.remaining()) option = in.pop().to_integer();
-	std::string dataname_n;
-	if (in.remaining()) dataname_n = in.pop().to_string();
-	
-	size_type ind=
-	getfem::add_penalized_contact_with_rigid_obstacle_brick
-	(md->model(), gfi_mim->mesh_im(), varname_u,
-	 dataname_obs, dataname_r, region, option, dataname_n);
+        int option = 1;
+        if  (in.remaining()) option = in.pop().to_integer();
+        std::string dataname_n;
+        if (in.remaining()) dataname_n = in.pop().to_string();
+
+        size_type ind=
+        getfem::add_penalized_contact_with_rigid_obstacle_brick
+        (md->model(), gfi_mim->mesh_im(), varname_u,
+         dataname_obs, dataname_r, region, option, dataname_n);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
@@ -1972,34 +1972,34 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     @*/
      sub_command
        ("add penalized contact with friction with rigid obstacle brick", 6, 10, 0, 1,
-        
+
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
         std::string dataname_obs = in.pop().to_string();
         std::string dataname_r = in.pop().to_string();
-	std::string dataname_coeff = in.pop().to_string();
+        std::string dataname_coeff = in.pop().to_string();
         size_type region = in.pop().to_integer();
-	int option = 1;
+        int option = 1;
         if (in.remaining()) option = in.pop().to_integer();
-	std::string dataname_lambda;
-	if (in.remaining()) dataname_lambda = in.pop().to_string();
-	std::string dataname_alpha = "";
-	if (in.remaining()) dataname_alpha = in.pop().to_string();
-	std::string dataname_wt = "";
-	if (in.remaining()) dataname_wt = in.pop().to_string();
-	
-	size_type ind=
-	getfem::add_penalized_contact_with_friction_with_rigid_obstacle_brick
-	(md->model(), gfi_mim->mesh_im(), varname_u,
-	 dataname_obs, dataname_r, dataname_coeff, region, option,
-	 dataname_lambda, dataname_alpha, dataname_wt);
+        std::string dataname_lambda;
+        if (in.remaining()) dataname_lambda = in.pop().to_string();
+        std::string dataname_alpha = "";
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        std::string dataname_wt = "";
+        if (in.remaining()) dataname_wt = in.pop().to_string();
+
+        size_type ind=
+        getfem::add_penalized_contact_with_friction_with_rigid_obstacle_brick
+        (md->model(), gfi_mim->mesh_im(), varname_u,
+         dataname_obs, dataname_r, dataname_coeff, region, option,
+         dataname_lambda, dataname_alpha, dataname_wt);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
 
     /*@SET ind = ('add nonmatching meshes contact brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int symmetrized])
-    
+
     Add a contact with or without friction condition between two faces of
     one or two elastic bodies. The condition is applied on the variable
     `varname_u1` or the variables `varname_u1` and `varname_u2` depending
@@ -2088,14 +2088,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
   }
- 
+
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
   getfemint_model *md  = m_in.pop().to_getfemint_model(true);
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,

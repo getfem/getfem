@@ -65,8 +65,8 @@ using namespace getfemint;
 struct sub_gf_md_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfemint_model *md) = 0;
+                   getfemint::mexargs_out& out,
+                   getfemint_model *md) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_md_get> psub_command;
@@ -75,21 +75,21 @@ typedef boost::intrusive_ptr<sub_gf_md_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_md_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfemint_model *md)				\
-      { dummy_func(in); dummy_func(out);  dummy_func(md); code }	\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_md_get {                                \
+      virtual void run(getfemint::mexargs_in& in,                       \
+                       getfemint::mexargs_out& out,                     \
+                       getfemint_model *md)                             \
+      { dummy_func(in); dummy_func(out);  dummy_func(md); code }        \
+    };                                                                  \
+    psub_command psubc = new subc;                                      \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
+    subc_tab[cmd_normalize(name)] = psubc;                              \
+  }
 
 
 void gf_model_get(getfemint::mexargs_in& m_in,
-		  getfemint::mexargs_out& m_out) {
+                  getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -136,18 +136,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        size_type ind_brick = in.pop().to_integer() - config::base_index();
        size_type ind_term = 0;
        if (in.remaining())
-	 ind_term = in.pop().to_integer() - config::base_index();
+         ind_term = in.pop().to_integer() - config::base_index();
        bool sym = false;
        if (in.remaining())
-	 sym = (in.pop().to_integer() != 0);
+         sym = (in.pop().to_integer() != 0);
        size_type ind_iter = 0;
        if (in.remaining())
-	 ind_iter = in.pop().to_integer() - config::base_index();
+         ind_iter = in.pop().to_integer() - config::base_index();
 
        if (md->model().is_complex())
-	 out.pop().from_dcvector(md->model().complex_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
+         out.pop().from_dcvector(md->model().complex_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
        else
-	 out.pop().from_dcvector(md->model().real_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
+         out.pop().from_dcvector(md->model().real_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
        );
 
 
@@ -183,9 +183,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string name = in.pop().to_string();
        size_type niter = 0;
        if (in.remaining())
-	 niter = in.pop().to_integer(0,10) - config::base_index();
+         niter = in.pop().to_integer(0,10) - config::base_index();
        RETURN_VECTOR(real_variable(name, niter),
-		     complex_variable(name, niter));
+                     complex_variable(name, niter));
        );
 
 
@@ -221,13 +221,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     sub_command
       ("from variables", 0, 0, 0, 1,
        if (!md->is_complex()) {
-	 std::vector<double> V(md->model().nb_dof());
-	 md->model().from_variables(V);
-	 out.pop().from_dcvector(V);
+         std::vector<double> V(md->model().nb_dof());
+         md->model().from_variables(V);
+         out.pop().from_dcvector(V);
        } else {
-	 std::vector<std::complex<double> > V(md->model().nb_dof());
-	 md->model().from_variables(V);
-	 out.pop().from_dcvector(V);
+         std::vector<std::complex<double> > V(md->model().nb_dof());
+         md->model().from_variables(V);
+         out.pop().from_dcvector(V);
        }
        );
 
@@ -246,21 +246,21 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) option = in.pop().to_string();
        getfem::model::build_version version = getfem::model::BUILD_ALL;
        if (cmd_strmatch(option, "build all") ||
-	   cmd_strmatch(option, "build_all"))
-	 version = getfem::model::BUILD_ALL;
+           cmd_strmatch(option, "build_all"))
+         version = getfem::model::BUILD_ALL;
        else if (cmd_strmatch(option, "build rhs") ||
-		cmd_strmatch(option, "build_rhs"))
-	 version = getfem::model::BUILD_RHS;
+                cmd_strmatch(option, "build_rhs"))
+         version = getfem::model::BUILD_RHS;
        else if (cmd_strmatch(option, "build matrix") ||
-		cmd_strmatch(option, "build_matrix"))
-	 version = getfem::model::BUILD_MATRIX;
+                cmd_strmatch(option, "build_matrix"))
+         version = getfem::model::BUILD_MATRIX;
        else if (cmd_strmatch(option, "pseudo potential") ||
-		cmd_strmatch(option, "pseudo_potential"))
-	 version = getfem::model::BUILD_PSEUDO_POTENTIAL;
+                cmd_strmatch(option, "pseudo_potential"))
+         version = getfem::model::BUILD_PSEUDO_POTENTIAL;
        else THROW_BADARG("bad option: " << option);
        md->model().assembly(version);
        if (version == getfem::model::BUILD_PSEUDO_POTENTIAL)
-	 out.pop().from_scalar(md->model().pseudo_potential());
+         out.pop().from_scalar(md->model().pseudo_potential());
        );
 
 
@@ -308,39 +308,39 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type alpha_min = 1.0/1000.0;
        scalar_type alpha_max_ratio = 6.0/5.0;
        while (in.remaining() && in.front().is_string()) {
-	 std::string opt = in.pop().to_string();
-	 if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
-	 else if (cmd_strmatch(opt, "with pseudo potential"))
-	   with_pseudo_pot = true;
-	 else if (cmd_strmatch(opt, "very noisy") ||
-		  cmd_strmatch(opt, "very_noisy")) iter.set_noisy(2);
-	 else if (cmd_strmatch(opt, "max_iter")) {
-	   if (in.remaining()) iter.set_maxiter(in.pop().to_integer());
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "max_res")) {
-	   if (in.remaining()) iter.set_resmax(in.pop().to_scalar());
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "diverged_res")) {
-	   if (in.remaining()) iter.set_diverged_residual(in.pop().to_scalar());
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "lsolver")) {
-	   if (in.remaining()) lsolver = in.pop().to_string();
-	   else THROW_BADARG("missing solver name for " << opt);
-	 } else if (cmd_strmatch(opt, "lsearch")) {
-	   if (in.remaining()) lsearch = in.pop().to_string();
-	   else THROW_BADARG("missing line search name for " << opt);
-	 } else if (cmd_strmatch(opt, "alpha mult")) {
-	   if (in.remaining()) alpha_mult = in.pop().to_scalar();
-	   else THROW_BADARG("missing line search name for " << opt);
-	 } else if (cmd_strmatch(opt, "alpha min")) {
-	   if (in.remaining()) alpha_min = in.pop().to_scalar();
-	   else THROW_BADARG("missing line search name for " << opt);
-	 } else if (cmd_strmatch(opt, "alpha max ratio")) {
-	   if (in.remaining()) alpha_max_ratio = in.pop().to_scalar();
-	   else THROW_BADARG("missing line search name for " << opt);
-	 } else THROW_BADARG("bad option: " << opt);
+         std::string opt = in.pop().to_string();
+         if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
+         else if (cmd_strmatch(opt, "with pseudo potential"))
+           with_pseudo_pot = true;
+         else if (cmd_strmatch(opt, "very noisy") ||
+                  cmd_strmatch(opt, "very_noisy")) iter.set_noisy(2);
+         else if (cmd_strmatch(opt, "max_iter")) {
+           if (in.remaining()) iter.set_maxiter(in.pop().to_integer());
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "max_res")) {
+           if (in.remaining()) iter.set_resmax(in.pop().to_scalar());
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "diverged_res")) {
+           if (in.remaining()) iter.set_diverged_residual(in.pop().to_scalar());
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "lsolver")) {
+           if (in.remaining()) lsolver = in.pop().to_string();
+           else THROW_BADARG("missing solver name for " << opt);
+         } else if (cmd_strmatch(opt, "lsearch")) {
+           if (in.remaining()) lsearch = in.pop().to_string();
+           else THROW_BADARG("missing line search name for " << opt);
+         } else if (cmd_strmatch(opt, "alpha mult")) {
+           if (in.remaining()) alpha_mult = in.pop().to_scalar();
+           else THROW_BADARG("missing line search name for " << opt);
+         } else if (cmd_strmatch(opt, "alpha min")) {
+           if (in.remaining()) alpha_min = in.pop().to_scalar();
+           else THROW_BADARG("missing line search name for " << opt);
+         } else if (cmd_strmatch(opt, "alpha max ratio")) {
+           if (in.remaining()) alpha_max_ratio = in.pop().to_scalar();
+           else THROW_BADARG("missing line search name for " << opt);
+         } else THROW_BADARG("bad option: " << opt);
        }
-       
+
        gmm::default_newton_line_search default_ls(size_type(-1), alpha_mult);
        gmm::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
        gmm::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
@@ -350,28 +350,28 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        gmm::abstract_newton_line_search *ls = 0;
 
        if (lsearch == "default")
-	 ls = &default_ls;
+         ls = &default_ls;
        else if (lsearch == "simplest")
-	 ls = &simplest_ls;
+         ls = &simplest_ls;
        else if (lsearch == "basic")
-	 ls = &basic_ls;
+         ls = &basic_ls;
        else if (lsearch == "systematic")
-	 ls = &systematic_ls;
+         ls = &systematic_ls;
        else if (lsearch == "quadratic")
-	 ls = &quadratic_ls;
+         ls = &quadratic_ls;
        else GMM_ASSERT1(false, "unknown line search");
 
 
        if (!md->model().is_complex()) {
-	 getfem::standard_solve(md->model(), iter,
-				getfem::rselect_linear_solver(md->model(),
-							      lsolver),
-				*ls, with_pseudo_pot);
+         getfem::standard_solve(md->model(), iter,
+                                getfem::rselect_linear_solver(md->model(),
+                                                              lsolver),
+                                *ls, with_pseudo_pot);
        } else {
-	 getfem::standard_solve(md->model(), iter,
-				getfem::cselect_linear_solver(md->model(),
-							      lsolver),
-				*ls, with_pseudo_pot);
+         getfem::standard_solve(md->model(), iter,
+                                getfem::cselect_linear_solver(md->model(),
+                                                              lsolver),
+                                *ls, with_pseudo_pot);
        }
        if (out.remaining()) out.pop().from_integer(int(iter.get_iteration()));
        if (out.remaining()) out.pop().from_integer(int(iter.converged()));
@@ -389,9 +389,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     current solution and the current value of the parameter, and an initial
     step size for the continuation. Direction of the computed tangent with
     respect to the parameter is determined by the sign of `init_dir`.
-    
+
     Additional options:
-    
+
     - 'lsolver', @str SOLVER_NAME
        name of a solver to be used for the incorporated linear system (the
        default value is 'auto', which lets getfem choose itself); possible
@@ -418,20 +418,20 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
        mexarg_in argin = in.pop();
        if (argin.is_string()) {
-	 with_parametrized_data = true;
-	 dataname_init = argin.to_string();
-	 dataname_final = in.pop().to_string();
-	 dataname_current = in.pop().to_string();
-	 argin = in.pop();
+         with_parametrized_data = true;
+         dataname_init = argin.to_string();
+         dataname_final = in.pop().to_string();
+         dataname_current = in.pop().to_string();
+         argin = in.pop();
        }
        scalar_type t_gamma = argin.to_scalar();
-       
+
        std::string lsolver = "auto";
        size_type maxit = 10;
        size_type thrit = 8;
        scalar_type maxres = 1.e-6;
        scalar_type maxdiff = 1.e-6;
-       scalar_type minang = 0.9; 
+       scalar_type minang = 0.9;
        scalar_type h_init = 1.e-2;
        scalar_type h_max = 1.e-1;
        scalar_type h_min = 1.e-5;
@@ -440,47 +440,47 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type epsilon = 1.e-8;
        scalar_type maxres_solve = 1.e-7;
        int noisy = 0;
-       
+
        while (in.remaining() && in.front().is_string()) {
-	 std::string opt = in.pop().to_string();
-	 if (cmd_strmatch(opt, "lsolver"))  {
-	   if (in.remaining()) lsolver = in.pop().to_string();
-	   else THROW_BADARG("missing name for " << opt);
-	 } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
-	 else if (cmd_strmatch(opt, "very noisy") ||
-		  cmd_strmatch(opt, "very_noisy")) noisy = 2;
-	 else if (cmd_strmatch(opt, "epsilon")) {
-	   if (in.remaining()) epsilon = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "max_res_solve")) {
-	   if (in.remaining()) maxres_solve = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "h_init")) {
-	   if (in.remaining()) h_init = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else THROW_BADARG("bad option: " << opt);
+         std::string opt = in.pop().to_string();
+         if (cmd_strmatch(opt, "lsolver"))  {
+           if (in.remaining()) lsolver = in.pop().to_string();
+           else THROW_BADARG("missing name for " << opt);
+         } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
+         else if (cmd_strmatch(opt, "very noisy") ||
+                  cmd_strmatch(opt, "very_noisy")) noisy = 2;
+         else if (cmd_strmatch(opt, "epsilon")) {
+           if (in.remaining()) epsilon = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "max_res_solve")) {
+           if (in.remaining()) maxres_solve = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "h_init")) {
+           if (in.remaining()) h_init = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else THROW_BADARG("bad option: " << opt);
        }
 
        if (md->model().is_complex())
-	 THROW_BADARG("Sorry, Moore-Penrose continuation " 
-		      "has only a real version.");
-       
+         THROW_BADARG("Sorry, Moore-Penrose continuation "
+                      "has only a real version.");
+
        getfem::S_getfem_model S;
        if (with_parametrized_data) {
-	  getfem::S_getfem_model S1
-	   (md->model(), dataname_parameter, dataname_init, dataname_final,
-	    dataname_current,
-	    getfem::rselect_linear_solver(md->model(), lsolver), maxit,
-	    thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
-	    h_dec, epsilon, maxres_solve, noisy);
-	  S = S1;
+          getfem::S_getfem_model S1
+           (md->model(), dataname_parameter, dataname_init, dataname_final,
+            dataname_current,
+            getfem::rselect_linear_solver(md->model(), lsolver), maxit,
+            thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+            h_dec, epsilon, maxres_solve, noisy);
+          S = S1;
        }  else {
-	 getfem::S_getfem_model S1
-	   (md->model(), dataname_parameter,
-	    getfem::rselect_linear_solver(md->model(), lsolver),
-	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-	    h_inc, h_dec, epsilon, maxres_solve, noisy);
-	 S = S1;
+         getfem::S_getfem_model S1
+           (md->model(), dataname_parameter,
+            getfem::rselect_linear_solver(md->model(), lsolver),
+            maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
+            h_inc, h_dec, epsilon, maxres_solve, noisy);
+         S = S1;
        }
 
        size_type nbdof = md->model().nb_dof();
@@ -489,13 +489,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        const getfem::model_real_plain_vector &GAMMA
        = md->model().real_variable(dataname_parameter);
        GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-		   "The continuation parameter should be a real scalar!");
+                   "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
        scalar_type h;
        std::vector<double> tt_y(nbdof);
 
        getfem::init_Moore_Penrose_continuation(S, yy, gamma,
-					       tt_y, t_gamma, h);
+                                               tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
@@ -566,11 +566,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
        mexarg_in argin = in.pop();
        if (argin.is_string()) {
-	 with_parametrized_data = true;
-	 dataname_init = argin.to_string();
-	 dataname_final = in.pop().to_string();
-	 dataname_current = in.pop().to_string();
-	 argin = in.pop();
+         with_parametrized_data = true;
+         dataname_init = argin.to_string();
+         dataname_final = in.pop().to_string();
+         dataname_current = in.pop().to_string();
+         argin = in.pop();
        }
 
        darray t_y = argin.to_darray();
@@ -581,7 +581,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        size_type thrit = 8;
        scalar_type maxres = 1.e-6;
        scalar_type maxdiff = 1.e-6;
-       scalar_type minang = 0.9; 
+       scalar_type minang = 0.9;
        scalar_type h_init = 1.e-2;
        scalar_type h_max = 1.e-1;
        scalar_type h_min = 1.e-5;
@@ -590,57 +590,57 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type epsilon = 1.e-8;
        scalar_type maxres_solve = 1.e-7;
        int noisy = 0;
-       
+
        while (in.remaining() && in.front().is_string()) {
-	 std::string opt = in.pop().to_string();
-	 if (cmd_strmatch(opt, "lsolver"))  {
-	   if (in.remaining()) lsolver = in.pop().to_string();
-	   else THROW_BADARG("missing name for " << opt);
-	 } else if (cmd_strmatch(opt, "max_iter")) {
-	   if (in.remaining()) maxit = in.pop().to_integer();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "thr_iter")) {
-	   if (in.remaining()) thrit = in.pop().to_integer();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "max_res")) {
-	   if (in.remaining()) maxres = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "max_diff")) {
-	   if (in.remaining()) maxdiff = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "min_ang")) {
-	   if (in.remaining()) minang = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "h_init")) {
-	   if (in.remaining()) h_init = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "h_max")) {
-	   if (in.remaining()) h_max = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "h_min")) {
-	   if (in.remaining()) h_min = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "h_inc")) {
-	   if (in.remaining()) h_inc = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "h_dec")) {
-	   if (in.remaining()) h_dec = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "epsilon")) {
-	   if (in.remaining()) epsilon = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "max_res_solve")) {
-	   if (in.remaining()) maxres_solve = in.pop().to_scalar();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
-	 else if (cmd_strmatch(opt, "very noisy") ||
-		  cmd_strmatch(opt, "very_noisy")) noisy = 2;
-	 else THROW_BADARG("bad option: " << opt);
+         std::string opt = in.pop().to_string();
+         if (cmd_strmatch(opt, "lsolver"))  {
+           if (in.remaining()) lsolver = in.pop().to_string();
+           else THROW_BADARG("missing name for " << opt);
+         } else if (cmd_strmatch(opt, "max_iter")) {
+           if (in.remaining()) maxit = in.pop().to_integer();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "thr_iter")) {
+           if (in.remaining()) thrit = in.pop().to_integer();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "max_res")) {
+           if (in.remaining()) maxres = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "max_diff")) {
+           if (in.remaining()) maxdiff = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "min_ang")) {
+           if (in.remaining()) minang = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "h_init")) {
+           if (in.remaining()) h_init = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "h_max")) {
+           if (in.remaining()) h_max = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "h_min")) {
+           if (in.remaining()) h_min = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "h_inc")) {
+           if (in.remaining()) h_inc = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "h_dec")) {
+           if (in.remaining()) h_dec = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "epsilon")) {
+           if (in.remaining()) epsilon = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "max_res_solve")) {
+           if (in.remaining()) maxres_solve = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
+         else if (cmd_strmatch(opt, "very noisy") ||
+                  cmd_strmatch(opt, "very_noisy")) noisy = 2;
+         else THROW_BADARG("bad option: " << opt);
        }
-       
+
        if (md->model().is_complex())
-	 THROW_BADARG("Sorry, Moore-Penrose continuation "
-		      "has only a real version.");
+         THROW_BADARG("Sorry, Moore-Penrose continuation "
+                      "has only a real version.");
 
        size_type nbdof = md->model().nb_dof();
        std::vector<double> yy(nbdof);
@@ -648,26 +648,26 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        const getfem::model_real_plain_vector &GAMMA
        = md->model().real_variable(dataname_parameter);
        GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-		   "The continuation parameter should be a real scalar!");
+                   "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
 
        getfem::S_getfem_model S;
        if (with_parametrized_data) {
-	 getfem::S_getfem_model S1
-	   (md->model(), dataname_parameter, dataname_init, dataname_final,
-	    dataname_current,
-	    getfem::rselect_linear_solver(md->model(), lsolver), maxit,
-	    thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
-	    h_dec, epsilon, maxres_solve, noisy);
-	 S = S1;
+         getfem::S_getfem_model S1
+           (md->model(), dataname_parameter, dataname_init, dataname_final,
+            dataname_current,
+            getfem::rselect_linear_solver(md->model(), lsolver), maxit,
+            thrit, maxres, maxdiff, minang, h_init, h_max, h_min, h_inc,
+            h_dec, epsilon, maxres_solve, noisy);
+         S = S1;
        }
        else {
-	 getfem::S_getfem_model S1
-	   (md->model(), dataname_parameter,
-	    getfem::rselect_linear_solver(md->model(), lsolver),
-	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-	    h_inc, h_dec, epsilon, maxres_solve, noisy);
-	 S = S1;
+         getfem::S_getfem_model S1
+           (md->model(), dataname_parameter,
+            getfem::rselect_linear_solver(md->model(), lsolver),
+            maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
+            h_inc, h_dec, epsilon, maxres_solve, noisy);
+         S = S1;
        }
 
        std::vector<double> tt_y(nbdof);
@@ -677,7 +677,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
- 
+
 
     /*@GET V = ('compute isotropic linearized Von Mises or Tresca', @str varname, @str dataname_lambda, @str dataname_mu, @tmf mf_vm[, @str version])
       Compute the Von-Mises stress or the Tresca stress of a field (only
@@ -693,12 +693,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) stresca = in.pop().to_string();
        bool tresca = false;
        if (cmd_strmatch(stresca, "Von Mises") ||
-	   cmd_strmatch(stresca, "Von_Mises"))
-	 tresca = false;
+           cmd_strmatch(stresca, "Von_Mises"))
+         tresca = false;
        else if (cmd_strmatch(stresca, "Tresca"))
-	 tresca = true;
+         tresca = true;
        else THROW_BADARG("bad option \'version\': " << stresca);
-       
+
        getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
        (md->model(), varname, dataname_lambda, dataname_mu, gfi_mf->mesh_fem(), VMM, tresca);
@@ -724,18 +724,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) stresca = in.pop().to_string();
        bool tresca = false;
        if (cmd_strmatch(stresca, "Von Mises") ||
-	   cmd_strmatch(stresca, "Von_Mises"))
-	 tresca = false;
+           cmd_strmatch(stresca, "Von_Mises"))
+         tresca = false;
        else if (cmd_strmatch(stresca, "Tresca"))
-	 tresca = true;
+         tresca = true;
        else THROW_BADARG("bad option \'version\': " << stresca);
-       
+
        getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_Von_Mises_or_Tresca
-       (md->model(), varname, 
-	abstract_hyperelastic_law_from_name
-	(lawname, gfi_mf->mesh_fem().linked_mesh().dim()),
-	dataname, gfi_mf->mesh_fem(), VMM, tresca);
+       (md->model(), varname,
+        abstract_hyperelastic_law_from_name
+        (lawname, gfi_mf->mesh_fem().linked_mesh().dim()),
+        dataname, gfi_mf->mesh_fem(), VMM, tresca);
        out.pop().from_dcvector(VMM);
        );
 
@@ -743,7 +743,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
     /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
-      `datasigma` is a vector which contains the stress constraints values supported by the mesh.  
+      `datasigma` is a vector which contains the stress constraints values supported by the mesh.
       `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).@*/
     sub_command
       ("compute elastoplasticity Von Mises or Tresca", 2, 3, 0, 1,
@@ -753,12 +753,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) stresca = in.pop().to_string();
        bool tresca = false;
        if (cmd_strmatch(stresca, "Von Mises") ||
-	   cmd_strmatch(stresca, "Von_Mises"))
-	 tresca = false;
+           cmd_strmatch(stresca, "Von_Mises"))
+         tresca = false;
        else if (cmd_strmatch(stresca, "Tresca"))
-	 tresca = true;
+         tresca = true;
        else THROW_BADARG("bad option \'version\': " << stresca);
-       
+
        getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_elastoplasticity_Von_Mises_or_Tresca
        (md->model(), datasigma, gfi_mf->mesh_fem(), VMM, tresca);
@@ -769,7 +769,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
         /*@GET ('compute plasticity constraints', @tmim mim, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
-      Compute and save the stress constraints sigma for other hypothetical iterations. 
+      Compute and save the stress constraints sigma for other hypothetical iterations.
       'mim' is the integration method to use for the computation.
       'varname' is the main variable of the problem.
       'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.
@@ -785,16 +785,16 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string datathreshold = in.pop().to_string();
        std::string datasigma = in.pop().to_string();
 
-      
+
        getfem::elastoplasticity_next_iter
        (md->model(), gfi_mim->mesh_im(), varname,
-	  abstract_constraints_projection_from_name(projname), 
-	  datalambda, datamu, datathreshold, datasigma);
+          abstract_constraints_projection_from_name(projname),
+          datalambda, datamu, datathreshold, datasigma);
        );
 
 
 
-    
+
     /*@GET V = ('compute plastic part', @tmim mim, @tmf mf_pl, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
       Compute on `mf_pl` the plastic part and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.@*/
@@ -812,10 +812,10 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfem::model_real_plain_vector plast((gfi_mf->mesh_fem()).nb_dof());
        getfem::compute_plastic_part
        (md->model(), gfi_mim->mesh_im(),  gfi_mf->mesh_fem(), varname,
-	  abstract_constraints_projection_from_name(projname), 
-	datalambda, datamu, datathreshold, datasigma, plast);
+          abstract_constraints_projection_from_name(projname),
+        datalambda, datamu, datathreshold, datasigma, plast);
        out.pop().from_dcvector(plast);
-       ); 
+       );
 
 
 
@@ -827,7 +827,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        size_type ind_brick = in.pop().to_integer() - config::base_index();
        size_type ind_term = in.pop().to_integer() - config::base_index();
        RETURN_SPARSE(linear_real_matrix_term(ind_brick, ind_term),
-		     linear_complex_matrix_term(ind_brick, ind_term));
+                     linear_complex_matrix_term(ind_brick, ind_term));
        );
 
 
@@ -854,22 +854,22 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        infomsg() << "gfModel object with " << md->model().nb_dof()
        << " degrees of freedom\n";
        );
-    
+
   }
 
- 
+
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
 
   getfemint_model *md  = m_in.pop().to_getfemint_model();
   std::string init_cmd   = m_in.pop().to_string();
   std::string cmd        = cmd_normalize(init_cmd);
 
-  
+
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, md);
   }
   else bad_cmd(init_cmd);

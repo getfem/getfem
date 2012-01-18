@@ -140,7 +140,7 @@ namespace getfem {
   size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   const std::string &dataname_friction_coeff, 
+   const std::string &dataname_friction_coeff,
    size_type region, int option = 1, const std::string &dataname_lambda = "",
    const std::string &dataname_alpha = "",
    const std::string &dataname_wt = "");
@@ -204,7 +204,7 @@ namespace getfem {
     // the following variables are used in the compute method and their values
     // have to be calculated during the preceding calls to the prepare method
     // at the current interpolation context
-    base_small_vector lnt, lt; // multiplier lambda and its tangential component lambda_t 
+    base_small_vector lnt, lt; // multiplier lambda and its tangential component lambda_t
     scalar_type ln;            // normal component lambda_n of the multiplier
     base_small_vector zt;      // tangential relative displacement
     scalar_type un;            // normal relative displacement (positive when the first

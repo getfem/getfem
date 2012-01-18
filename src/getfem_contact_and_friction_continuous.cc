@@ -477,7 +477,7 @@ namespace getfem {
       break;
 
     case 2 : // calculate [g] and [no] interpolating [obs] on [mf_obs]
-             // calculate [ln] and [lt] from [lnt] and [no] 
+             // calculate [ln] and [lt] from [lnt] and [no]
       coeff.resize(mf_obs.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector
                 (obs, gmm::sub_index
@@ -568,8 +568,8 @@ namespace getfem {
       }
       break;
 
-    case 2 : // calculate [g] and [no] 
-             // calculate [ln] and [lt] from [lnt] and [no] 
+    case 2 : // calculate [g] and [no]
+             // calculate [ln] and [lt] from [lnt] and [no]
              // calculate [un] and [zt] interpolating [U2],[WT2] on [mf_u2]
       {
         const projected_fem &pfe = dynamic_cast<const projected_fem&>(*ctx.pf());

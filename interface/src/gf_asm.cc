@@ -65,10 +65,10 @@ namespace gmm {
     { std::fill(it, ite, value_type(0)); }
     static void do_clear(this_type &v) { std::fill(v.begin(), v.end(), 0.); }
     static value_type access(const origin_type *, const const_iterator &it,
-			     const const_iterator &, size_type i)
+                             const const_iterator &, size_type i)
     { return it[i]; }
     static reference access(origin_type *, const iterator &it,
-			    const iterator &, size_type i)
+                            const iterator &, size_type i)
     { return it[i]; }
   };
 }
@@ -83,7 +83,7 @@ namespace getfem {
     }
     ~vec_factory() {
       for (size_type i=0; i < this->size(); ++i) {
-	delete (*this)[i].vec(); // but it does not deallocate the gfi_array !! that's fine
+        delete (*this)[i].vec(); // but it does not deallocate the gfi_array !! that's fine
       }
     }
   };
@@ -132,7 +132,7 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
     if (assem.mat()[i] != 0) {
       getfem::base_asm_mat *BM = assem.mat()[i];
       getfem::asm_mat<gf_real_sparse_by_col> * M =
-	static_cast<getfem::asm_mat<gf_real_sparse_by_col>*>(BM);
+        static_cast<getfem::asm_mat<gf_real_sparse_by_col>*>(BM);
       out.pop().from_sparse(*M->mat());
     }
   }
@@ -140,10 +140,10 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   if (out.remaining()) {
     for (size_type i=0; out.remaining() && i < assem.vec().size(); ++i) {
       if (assem.vec()[i] != 0) {
-	getfem::base_asm_vec *BV = assem.vec()[i];
-	getfem::asm_vec<darray_with_gfi_array> *V =
-	  static_cast<getfem::asm_vec<darray_with_gfi_array> *>(BV);
-	mexarg_out mo = out.pop(); mo.arg = V->vec()->mx;
+        getfem::base_asm_vec *BV = assem.vec()[i];
+        getfem::asm_vec<darray_with_gfi_array> *V =
+          static_cast<getfem::asm_vec<darray_with_gfi_array> *>(BV);
+        mexarg_out mo = out.pop(); mo.arg = V->vec()->mx;
       }
     }
   }
@@ -152,10 +152,10 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
 
 template<typename T> static void
 gf_dirichlet(getfemint::mexargs_out& out,
-	     const getfem::mesh_im &mim,
-	     const getfem::mesh_fem &mf_u,
-	     const getfem::mesh_fem &mf_d,
-	     mexarg_in in_h, mexarg_in in_r, int boundary_num, T)
+             const getfem::mesh_im &mim,
+             const getfem::mesh_fem &mf_u,
+             const getfem::mesh_fem &mf_d,
+             mexarg_in in_h, mexarg_in in_r, int boundary_num, T)
 {
   unsigned q_dim = mf_u.get_qdim();
 
@@ -181,13 +181,13 @@ void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolat
 static const getfem::mesh_im *get_mim(mexargs_in &in) {
   if (!in.front().is_mesh_im()) {
     THROW_BADARG("Since release 2.0 of getfem, all assembly functions"
-		 " expect a mesh_im as their second argument");
+                 " expect a mesh_im as their second argument");
   }
   return in.pop().to_const_mesh_im();
 }
 
 void assemble_source(size_type boundary_num,
-		     mexargs_in &in, mexargs_out &out) {
+                     mexargs_in &in, mexargs_out &out) {
   const getfem::mesh_im *mim = get_mim(in);
   const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
   const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
@@ -224,7 +224,7 @@ void assemble_source(size_type boundary_num,
 struct sub_gf_asm : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out) = 0;
+                   getfemint::mexargs_out& out) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_asm> psub_command;
@@ -233,16 +233,16 @@ typedef boost::intrusive_ptr<sub_gf_asm> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_asm {					\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out)			\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }                           
+    struct subc : public sub_gf_asm {                                   \
+      virtual void run(getfemint::mexargs_in& in,                       \
+                       getfemint::mexargs_out& out)                     \
+      { dummy_func(in); dummy_func(out); code }                         \
+    };                                                                  \
+    psub_command psubc = new subc;                                      \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;         \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;     \
+    subc_tab[cmd_normalize(name)] = psubc;                              \
+  }
 
 
 
@@ -254,17 +254,17 @@ template <typename T> static inline void dummy_func(T &) {}
 void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
- 
+
   if (subc_tab.size() == 0) {
 
-   
+
     /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, boundary_num]])
     Assembly of a mass matrix.
 
     Return a @tsp object.
     @*/
     sub_command
-      ("mass matrix", 2, 4, 0, 1, 
+      ("mass matrix", 2, 4, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.remaining() ? in.pop().to_const_mesh_fem() : mf_u1;
@@ -319,7 +319,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     The solution `U` is required at the current time-step. The `law`
     may be choosen among:
-     
+
      - 'SaintVenant Kirchhoff':
        Linearized law, should be avoided). This law has the two usual
        Lame coefficients as parameters, called lambda and mu.
@@ -352,44 +352,44 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        /* a refaire , pas bon, le terme incompressible se passe de loi */
        const getfem::abstract_hyperelastic_law &law
        = abstract_hyperelastic_law_from_name(lawname,
-					     mf_u->linked_mesh().dim());
+                                             mf_u->linked_mesh().dim());
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
        darray param = in.pop().to_darray(int(law.nb_params()),
-					 int(mf_d->nb_dof()));
+                                         int(mf_d->nb_dof()));
        while (in.remaining()) {
- 	 std::string what = in.pop().to_string();
- 	 if (cmd_strmatch(what, "tangent matrix")) {
- 	   gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
- 	   getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U,
- 							   mf_d, param, law);
- 	   out.pop().from_sparse(K);
- 	 } else if (cmd_strmatch(what, "rhs")) {
- 	   darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
- 	   getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
- 						param, law); 
- 	 } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
- 	   const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
- 	   darray P = in.pop().to_darray(int(mf_p->nb_dof()));
- 	   gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
- 	   gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
- 	   getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u,
- 						       *mf_p, U, P);
- 	   out.pop().from_sparse(K);
- 	   out.pop().from_sparse(B);
- 	 } else if (cmd_strmatch(what, "incompressible rhs")) {
- 	   const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
- 	   darray P = in.pop().to_darray(int(mf_p->nb_dof()));
- 	   darray RU = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
- 	   darray RB = out.pop().create_darray_v(unsigned(mf_p->nb_dof()));
- 	   getfem::asm_nonlinear_incomp_rhs(RU, RB, *mim, *mf_u, *mf_p, U, P);
- 	 } else {
-  	   THROW_BADARG("expecting 'tangent matrix' or 'rhs', or "
-  			"'incomp tangent matrix' or 'incomp rhs', got '"
-  			<< what << "'");
- 	 }
+         std::string what = in.pop().to_string();
+         if (cmd_strmatch(what, "tangent matrix")) {
+           gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
+           getfem::asm_nonlinear_elasticity_tangent_matrix(K, *mim, *mf_u, U,
+                                                           mf_d, param, law);
+           out.pop().from_sparse(K);
+         } else if (cmd_strmatch(what, "rhs")) {
+           darray B = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+           getfem::asm_nonlinear_elasticity_rhs(B, *mim, *mf_u, U, mf_d,
+                                                param, law);
+         } else if (cmd_strmatch(what, "incompressible tangent matrix")) {
+           const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
+           darray P = in.pop().to_darray(int(mf_p->nb_dof()));
+           gf_real_sparse_by_col  K(mf_u->nb_dof(), mf_u->nb_dof());
+           gf_real_sparse_by_col  B(mf_u->nb_dof(), mf_p->nb_dof());
+           getfem::asm_nonlinear_incomp_tangent_matrix(K, B, *mim, *mf_u,
+                                                       *mf_p, U, P);
+           out.pop().from_sparse(K);
+           out.pop().from_sparse(B);
+         } else if (cmd_strmatch(what, "incompressible rhs")) {
+           const getfem::mesh_fem *mf_p = in.pop().to_const_mesh_fem();
+           darray P = in.pop().to_darray(int(mf_p->nb_dof()));
+           darray RU = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+           darray RB = out.pop().create_darray_v(unsigned(mf_p->nb_dof()));
+           getfem::asm_nonlinear_incomp_rhs(RU, RB, *mim, *mf_u, *mf_p, U, P);
+         } else {
+           THROW_BADARG("expecting 'tangent matrix' or 'rhs', or "
+                        "'incomp tangent matrix' or 'incomp rhs', got '"
+                        << what << "'");
+         }
        }
        if (in.remaining())
- 	 THROW_BADARG("too much arguments for asm(nonlinear_elasticity)");
+         THROW_BADARG("too much arguments for asm(nonlinear_elasticity)");
        );
 
 
@@ -445,9 +445,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@FUNC A = ('bilaplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
       Assembly of the matrix for the Bilaplacian problem.
-      
+
       :math:`\Delta(a(x)\Delta u) = 0`   with `a` scalar.
-      
+
       Return a @tsp object.
       @*/
     sub_command
@@ -463,9 +463,9 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     /*@FUNC A = ('bilaplacian KL', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a, @dvec nu)
       Assembly of the matrix for the Bilaplacian problem with Kirchoff-Love formulation.
-      
+
       :math:`\Delta(a(x)\Delta u) = 0`   with `a` scalar.
-      
+
       Return a @tsp object.
       @*/
     sub_command
@@ -545,16 +545,16 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        mexarg_in in_r = in.pop();
        double threshold = 1e-8;
        if (in.remaining()) {
-	 threshold = in.pop().to_scalar();
-	 if (threshold < 0 || threshold > 1e10) THROW_BADARG("wrong threshold\n");
+         threshold = in.pop().to_scalar();
+         if (threshold < 0 || threshold > 1e10) THROW_BADARG("wrong threshold\n");
        }
-       
+
        if (in_h.is_complex() || in_r.is_complex())
-	 gf_dirichlet(out, *mim, *mf_u, *mf_d, in_h, in_r, boundary_num, complex_type());
+         gf_dirichlet(out, *mim, *mf_u, *mf_d, in_h, in_r, boundary_num, complex_type());
        else gf_dirichlet(out, *mim, *mf_u, *mf_d, in_h, in_r, boundary_num, scalar_type());
        );
 
-    
+
     /*@FUNC Q = ('boundary qu term',@int boundary_num, @tmim mim, @tmf mf_u, @tmf mf_d, @dmat q)
     Assembly of a boundary qu term.
 
@@ -570,55 +570,55 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-       
+
        unsigned q_dim = mf_u->get_qdim();
        if (!in.front().is_complex()) {
-	 darray q            = in.pop().to_darray();
-	 if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
-	 else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
-	 gf_real_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
-	 getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
-	 out.pop().from_sparse(Q);
+         darray q            = in.pop().to_darray();
+         if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
+         else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
+         gf_real_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
+         getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
+         out.pop().from_sparse(Q);
        } else {
-	 carray q            = in.pop().to_carray();
-	 if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
-	 else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
-	 gf_cplx_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
-	 getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
-	 out.pop().from_sparse(Q);
+         carray q            = in.pop().to_carray();
+         if (q.ndim() == 2) in.last_popped().check_dimensions(q, q_dim* q_dim, int(mf_d->nb_dof()));
+         else               in.last_popped().check_dimensions(q, q_dim, q_dim, int(mf_d->nb_dof()));
+         gf_cplx_sparse_by_col Q(mf_u->nb_dof(), mf_u->nb_dof());
+         getfem::asm_qu_term(Q, *mim, *mf_u, *mf_d, q, boundary_num);
+         out.pop().from_sparse(Q);
        }
        );
 
-    
+
     /*@FUNC @CELL{...} = ('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])
       Generic assembly procedure for volumic assembly.
-      
+
       The expression `expr` is evaluated over the @tmf's listed in the
       arguments (with optional data) and assigned to the output arguments.
       For details about the syntax of assembly expressions, please refer
       to the getfem user manual (or look at the file getfem_assembling.h
       in the getfem++ sources).
-      
+
       For example, the L2 norm of a field can be computed with::
-      
+
         ::COMPUTE('L2 norm') or with:
-      
+
         ::ASM('volumic','u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)
-      
+
       The Laplacian stiffness matrix can be evaluated with::
-      
+
         ::ASM('laplacian',mim, mf, A) or equivalently with:
-      
+
         ::ASM('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf, A);@*/
     sub_command
       ("volumic", 2, -1, 0, -1,
        do_generic_assembly(in, out, false);
        );
 
-    
+
     /*@FUNC @CELL{...} = ('boundary', @int bnum, @str expr [, @tmim mim, @tmf mf, data...])
       Generic boundary assembly.
-      
+
       See the help for ::ASM('volumic').@*/
     sub_command
       ("boundary", 3, -1, 0, -1,
@@ -684,7 +684,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        getfem::asm_continuous_contact_Uzawa_proj
          (F, *mim, *mf_u, u, *mf_lambda, vec_lambda, *mf_obs, obs,
-	  r, boundary_num);
+          r, boundary_num);
        );
 
     /*@FUNC B = ('contact with friction Uzawa projection', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_obstacle, @dvec obstacle, @scalar r, {@scalar coeff | @tmf mf_coeff, @dvec coeff} [, @int option[, @scalar alpha, @dvec W]])
@@ -715,37 +715,37 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        std::vector<double> coeff(1);
        mexarg_in argin = in.pop();
        if (argin.is_mesh_fem()) {
-	 mf_coeff = argin.to_const_mesh_fem();
-	 vec_coeff = in.pop().to_darray();
-	 in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
+         mf_coeff = argin.to_const_mesh_fem();
+         vec_coeff = in.pop().to_darray();
+         in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
        } else {
-	 coeff[0] = argin.to_scalar();
+         coeff[0] = argin.to_scalar();
        }
        int option = 1;
        if (in.remaining()) {
-	 option = in.pop().to_integer();
+         option = in.pop().to_integer();
        }
        double alpha = 1;
        if (in.remaining()) {
-	 alpha = in.pop().to_scalar();
+         alpha = in.pop().to_scalar();
        }
        darray vec_W;
        if (in.remaining()) {
-	 vec_W = in.pop().to_darray();
-	 in.last_popped().check_trailing_dimension(int(mf_u->nb_dof()));
+         vec_W = in.pop().to_darray();
+         in.last_popped().check_trailing_dimension(int(mf_u->nb_dof()));
        }
 
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        if (mf_coeff)
-	 getfem::asm_continuous_contact_with_friction_Uzawa_proj
-	   (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
-	    mf_coeff, vec_coeff, vec_W, boundary_num, r, alpha);
+         getfem::asm_continuous_contact_with_friction_Uzawa_proj
+           (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
+            mf_coeff, vec_coeff, vec_W, boundary_num, r, alpha);
        else {
-	 std::vector<double> v_obs(gmm::vect_size(obs));
-	 gmm::copy(obs, v_obs);
-	 getfem::asm_continuous_contact_with_friction_Uzawa_proj
-	   (F, *mim, *mf_u, u, *mf_obs, v_obs, *mf_lambda, vec_lambda,
-	    mf_coeff, coeff, vec_W, boundary_num, r, alpha, option);
+         std::vector<double> v_obs(gmm::vect_size(obs));
+         gmm::copy(obs, v_obs);
+         getfem::asm_continuous_contact_with_friction_Uzawa_proj
+           (F, *mim, *mf_u, u, *mf_obs, v_obs, *mf_lambda, vec_lambda,
+            mf_coeff, coeff, vec_W, boundary_num, r, alpha, option);
 
        }
        );
@@ -772,7 +772,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
        getfem::asm_level_set_normal_source_term
          (F, *mim, *mf_u, *mf_lambda, vec_lambda, *mf_obs,obs,boundary_num);
-       
+
        );
 
 
@@ -786,8 +786,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out);
   }
   else bad_cmd(init_cmd);
@@ -801,7 +801,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   @*/
 /*@MATLABFUNC @CELL{Q, G, H, R, F} = ('pdetool boundary conditions', mf_u, mf_d, b, e[, f_expr])
   Assembly of pdetool boundary conditions.
-  
+
   `B` is the boundary matrix exported by pdetool, and `E` is the
   edges array. `f_expr` is an optionnal expression (or vector) for
   the volumic term. On return `Q, G, H, R, F` contain the assembled
