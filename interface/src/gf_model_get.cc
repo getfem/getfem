@@ -118,6 +118,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        RETURN_VECTOR(real_rhs(), complex_rhs());
        );
 
+
     /*@GET ('brick term rhs', @int ind_brick[, @int ind_term, @int sym, @int ind_iter])
       Gives the access to the part of the right hand side of a term
       of a particular nonlinear brick. Does not account of the eventual
@@ -148,8 +149,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        else
 	 out.pop().from_dcvector(md->model().real_brick_term_rhs(ind_brick, ind_term, sym, ind_iter));
        );
-
-    
 
 
     /*@GET z = ('memsize')

@@ -532,8 +532,6 @@ namespace getfem {
       return rrhs;
     }
 
-
-
     /** Gives the access to the part of the right hand side of a term of a particular nonlinear brick. Does not account of the eventual time dispatcher. An assembly of the rhs has to be done first. For the real version. */
     const model_real_plain_vector &real_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
@@ -542,17 +540,13 @@ namespace getfem {
       GMM_ASSERT1(ind_term < bricks[ib].tlist.size(), "Inexistent term");
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
-		  "Term is not symmetric");
+                  "Term is not symmetric");
 
       if (sym)
-	return bricks[ib].rveclist_sym[ind_iter][ind_term];
+        return bricks[ib].rveclist_sym[ind_iter][ind_term];
       else
-	return bricks[ib].rveclist[ind_iter][ind_term];
+        return bricks[ib].rveclist[ind_iter][ind_term];
     }
-
-
-
-
 
     /** Gives the access to the pseudo potential. It has to be computed first
         by the call of assembly(model::BUILD_PSEUDO_POTENTIAL); */
@@ -576,12 +570,12 @@ namespace getfem {
       GMM_ASSERT1(ind_term < bricks[ib].tlist.size(), "Inexistent term");
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
-		  "Term is not symmetric");
+                  "Term is not symmetric");
 
       if (sym)
-	return bricks[ib].cveclist_sym[ind_iter][ind_term];
+        return bricks[ib].cveclist_sym[ind_iter][ind_term];
       else
-	return bricks[ib].cveclist[ind_iter][ind_term];
+        return bricks[ib].cveclist[ind_iter][ind_term];
     }
 
     /** List the model variables and constant. */

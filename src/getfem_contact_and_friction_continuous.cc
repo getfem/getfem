@@ -718,7 +718,7 @@ namespace getfem {
     }
 
     size_type subterm4 = (option == 2) ? K_UU_FRICT_V2 : K_UU_FRICT_V1;
-    
+
     contact_rigid_obstacle_nonlinear_term
       nterm1(mf_u, U, mf_lambda, lambda, mf_obs, obs, r, subterm1,
              false, alpha, mf_coeff, &f_coeff, &WT, gamma, &VT);
@@ -957,7 +957,7 @@ namespace getfem {
           asm_continuous_contact_with_friction_tangent_matrix_Alart_Curnier
             (matl[0], matl[1], matl[2], matl[fourthmat], mim, mf_u, u,
              mf_lambda, lambda, mf_obstacle, obstacle, vr[0], alpha, gamma,
-	     mf_coeff, friction_coeff, WT, VT, option, rg);
+             mf_coeff, friction_coeff, WT, VT, option, rg);
         }
       }
 
@@ -1081,14 +1081,14 @@ namespace getfem {
     if (dataname_alpha.size()) {
       dl.push_back(dataname_alpha);
       if (dataname_wt.size()) {
-	dl.push_back(dataname_wt);
-	if (dataname_gamma.size()) {
-	  dl.push_back(dataname_gamma);
-	  if (dataname_vt.size()) dl.push_back(dataname_vt);
-	}
+        dl.push_back(dataname_wt);
+        if (dataname_gamma.size()) {
+          dl.push_back(dataname_gamma);
+          if (dataname_vt.size()) dl.push_back(dataname_vt);
+        }
       }
     }
-    
+
     model::varnamelist vl(1, varname_u);
     vl.push_back(multname);
 
@@ -1306,8 +1306,8 @@ namespace getfem {
         else
           asm_penalized_contact_with_friction_tangent_matrix
             (matl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle,
-	     obstacle, vr[0], alpha, gamma, mf_coeff, friction_coeff, WT, VT,
-	     option, rg);
+             obstacle, vr[0], alpha, gamma, mf_coeff, friction_coeff, WT, VT,
+             option, rg);
       }
 
       if (version & model::BUILD_RHS) {
@@ -1319,8 +1319,8 @@ namespace getfem {
         else
           asm_penalized_contact_with_friction_rhs
             (vecl[0], mim, mf_u, u, *mf_lambda, lambda, mf_obstacle,
-	     obstacle, vr[0], alpha, gamma, mf_coeff, friction_coeff, WT, VT,
-	     option, rg);
+             obstacle, vr[0], alpha, gamma, mf_coeff, friction_coeff, WT, VT,
+             option, rg);
       }
 
     }
