@@ -403,7 +403,7 @@ namespace getfem {
              false, alpha, mf_coeff, &f_coeff, &WT);
 
     getfem::generic_assembly assem;
-    assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i); ");
+    assem.set("V(#2)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#2))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);

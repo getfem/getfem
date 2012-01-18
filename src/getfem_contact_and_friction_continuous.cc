@@ -1170,7 +1170,7 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     assem.set
-    ("M(#1,#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
+    ("M(#1,#1)+=comp(NonLin(#1,#1,#2,#3,#4).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);
@@ -1203,7 +1203,7 @@ namespace getfem {
             false, alpha, mf_coeff, &f_coeff, &WT, gamma, &VT);
 
     getfem::generic_assembly assem;
-    assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
+    assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_lambda);
