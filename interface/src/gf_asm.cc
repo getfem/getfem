@@ -737,7 +737,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
        getfem::asm_continuous_contact_with_friction_Uzawa_proj
          (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
-          mf_coeff, vec_coeff, vec_W, r, alpha, boundary_num, option);
+          mf_coeff, vec_coeff, &vec_W, r, alpha, boundary_num, option);
        );
 
     /*@FUNC B = ('level set normal source term', @int bnum, @tmim mim, @tmf mf_u, @tmf mf_lambda, @dvec vec_lambda, @tmf mf_levelset, @dvec levelset)
