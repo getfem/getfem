@@ -712,15 +712,13 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
        const getfem::mesh_fem *mf_coeff = 0;
        darray vec_coeff;
-       double scalar_coeff;
        mexarg_in argin = in.pop();
        if (argin.is_mesh_fem()) {
          mf_coeff = argin.to_const_mesh_fem();
          vec_coeff = in.pop().to_darray();
          in.last_popped().check_trailing_dimension(int(mf_coeff->nb_dof()));
        } else {
-         scalar_coeff = argin.to_scalar();
-         vec_coeff = darray(&scalar_coeff, 1);
+         vec_coeff = darray(new double(argin.to_scalar()), 1);
        }
        int option = 1;
        if (in.remaining()) {
