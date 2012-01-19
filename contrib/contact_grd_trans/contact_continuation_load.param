@@ -48,7 +48,7 @@ MESH_TYPE = 'GT_PK(2,1)';         % linear triangles
 NX = 20;            	          % space step
 NY = 10;
 
-NBREFINE = 3; 		% number of refinements in the right-bottom corner
+NBREFINE = 0; 		% number of refinements in the right-bottom corner
 LAYERX = 0.25;		% thickness of refined layers
 LAYERY = 0.25;
 LAYERX_FACT = 0.73;	% multiplication factors for successive refinements
@@ -72,11 +72,11 @@ DIRICHLET_VERSION = 0;	% via the Lagrange multipliers, needed for continuations
 R = 1E-2; 	% Augmentation parameter for the contact and frictional condition
 		% (influences convergence of the standard solver --- newton_line_search)
 ALPHA = 1E5; 	% Parameter for equalizating of the "normal" and "tangential"
-			% components of the test functions
+		% components of the test functions
 
-STEP0 = 46;	  	% number of the foregoing time step (which is to be loaded); 
+STEP0 = 0;	  	% number of the foregoing time step (which is to be loaded); 
 			% in the case of 0, the solver starts from t = 0
-STANDARD_SOLVER = 0;	% if (STANDARD_SOLVER != 0), the standard solver starts,
+STANDARD_SOLVER = 1;	% if (STANDARD_SOLVER != 0), the standard solver starts,
 			% otherwise the continuation is employed from the beginning
 RANGE_CONT = 1;		% number of time steps between XI = 0 and XI = 1
 RANGE_CONT_INC = 1;  	% increment of RANGE_CONT (if RANGE_CONT is to increase)
@@ -102,7 +102,7 @@ ANGLE = 0.95;		% minimal value of cosine of the angle between tangents at
 			% two forthcoming points
 X_MIN = 16.0;		% lower bound of the X-coordinate determining the region of contact
 			% nodes whose characters are monitored
-LIMIT = 2E-2;	% parameter characterizing the closedness of components of the test
+LIMIT = 2E-2;		% parameter characterizing the closedness of components of the test
 			% functions to zero
 	
 H = 12.8;		% actual step length

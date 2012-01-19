@@ -98,11 +98,11 @@ namespace getfem {
     
     ang = sp_(s, T_y, T_Y, T_gamma, T_Gamma);
     if (s.noisy() > 1) cout << "ang1 = " << ang << endl;
-    if (ang >=  0.9995) result = (h > 0) ? 3 : 4;
+    if (ang >=  0.996) result = (h > 0) ? 3 : 4;
     else {
       ang = sp_(s, t_y, T_Y, t_gamma, T_Gamma);
       if (s.noisy() > 1) cout << "ang2 = " << ang << endl;
-      if (ang <= 0.9995 && ang >= -0.9995) {
+      if (ang < 0.86 && ang > -0.86) {
 	result = 2;
 	s.copy(T_Y, T_y); T_gamma = T_Gamma; // try (T_Y, T_Gamma) next
       }
@@ -213,9 +213,9 @@ namespace getfem {
 		h *= -1.;
 		tangent_status =
 		  test_direction(s, y, gamma, t_y, t_gamma, T_y, T_gamma, h);
-		h *= -2.;
+	        h *= -2.;
 	      }
-	    } while (tangent_status == 1);
+	    } while (tangent_status == 1 && h <= 1e5);
 
 	    tan++;
 	  } while (tangent_status <= 2 && tan < 1); // tan >= 1?
@@ -224,8 +224,10 @@ namespace getfem {
 	    if (s.noisy() > 1)
 	      cout << "Direction " << tan << " accepted" << endl;
 	    s.copy(T_y, t_y); t_gamma = T_gamma;
-	    if (tangent_status == 4) { s.scale(t_y, -1.); t_gamma *= -1.; }
-	    h = s.h_init(); step_dec = 0;
+	    if (tangent_status == 4) { 
+	      s.scale(t_y, -1.); t_gamma *= -1.; h /= 2.;
+	    }
+	    h = (h < s.h_init()) ? s.h_init() : h; step_dec = 0;
 	  } else break;
 	} else break;
       }
@@ -354,6 +356,7 @@ namespace getfem {
 
       gmm::iteration iter(maxres_solve_, noisy_, 40000);
       (*lsolver)(md->real_tangent_matrix(), g1, L1, iter);
+      iter.init();
       (*lsolver)(md->real_tangent_matrix(), g2, L2, iter);
     }
 
