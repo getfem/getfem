@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2006-2008 Yves Renard
+// Copyright (C) 2006-2011 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -108,28 +108,37 @@ namespace gmm {
   };
 
   struct default_newton_line_search : public gmm::abstract_newton_line_search {
-    double alpha, alpha_mult, first_res, alpha_max_ratio;
+    double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min_ratio;
     double alpha_min, prev_res;
-    bool first;
+    size_type count;
+    bool mratio;
     virtual void init_search(double r, size_t git, double = 0.0) {
-      alpha_min = pow(10.0, -gmm::random() * 4.0);
-      alpha_max_ratio = 1. + 2.* gmm::random();
-      // cout << "alpha_min = " << alpha_min << endl;
+      alpha_min_ratio = 0.9;
+      alpha_min = 1e-5;
+      alpha_max_ratio = 1.3;
+      if (git >= 5 && (git % 5) == 0) {
+	alpha_min_ratio = 0.9; // 0.8 + 0.2 * gmm::random();
+	alpha_min = pow(10.0, -gmm::random() * 3.0);
+	alpha_max_ratio = 2.0; // 1.001 + 2.0* gmm::random();
+      }
       glob_it = git;
       conv_alpha = alpha = double(1);
-      prev_res = conv_r = first_res = r; it = 0; first = true;
+      prev_res = conv_r = first_res = r; it = 0; count = 0;
+      mratio = false;
     }
     virtual double next_try(void)
     { double a = alpha; alpha *= alpha_mult; ++it; return a; }
     virtual bool is_converged(double r, double = 0.0) {
-      // cout << "alpha = " << alpha
-      //      << " first_res = " << first_res << " r = " << r << endl;
-      if (r < conv_r || first)
-	{ conv_r = r; conv_alpha = alpha / alpha_mult; first = false; }
-      if (r < first_res * 0.9) return true;
-      if ((alpha <= alpha_min*alpha_mult && r < first_res*alpha_max_ratio)
-	  // || (gmm::abs(r - first_res) < 0.011 && alpha < 0.1)
-	  || it >= itmax) return true;
+      // cout << "r = " << r << " alpha = " << alpha << " conv_r = " << conv_r << endl;
+      if (count == 0 || r < conv_r)
+	{ conv_r = r; conv_alpha=alpha / alpha_mult; count = 1; }
+      if (conv_r < first_res) ++count;
+      if (!mratio && r < first_res*alpha_max_ratio) mratio = true;
+      if (r < first_res *  alpha_min_ratio || count >= 5) return true;
+      if (it >= itmax || (alpha < alpha_min && mratio)) {
+	if (conv_r > r) { conv_r = r; conv_alpha = alpha / alpha_mult; }
+	return true;
+      }
       return false;
     }
     default_newton_line_search(size_t imax = size_t(-1), double a_mult = 0.5)

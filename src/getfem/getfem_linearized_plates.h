@@ -834,14 +834,14 @@ namespace getfem {
 	(*ut_part, bound, dummy_mesh_fem(), num_fem+1);
       u3_part->set_constraints_type(cot);
 
-      bool mixed = false, symmetrized = false;
+      bool mixed = false; // , symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
 	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; symmetrized = false; } 
+	{ mixed = false; /* symmetrized = false; */ } 
       else if (problem.get_mesh_fem_info(num_fem).brick_ident 
 	       == MDBRICK_MIXED_LINEAR_PLATE) {
 	mixed=true;
-	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+	// symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
       else GMM_ASSERT1(false, "This brick should only be applied to "
 		       "a plate problem");
@@ -901,14 +901,14 @@ namespace getfem {
       u3_part.set_constraints_type(cot);
       theta_part.set_constraints_type(cot);
 
-      bool mixed = false, symmetrized = false;
+      bool mixed = false; // , symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
 	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; symmetrized = false; } 
+	{ mixed = false; /* symmetrized = false; */ } 
       else if (problem.get_mesh_fem_info(num_fem).brick_ident 
 	       == MDBRICK_MIXED_LINEAR_PLATE) {
 	mixed=true;
-	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+	// symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
       else GMM_ASSERT1(false, "This brick should only be applied to "
 		       "a plate problem");

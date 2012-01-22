@@ -53,7 +53,6 @@ namespace gmm {
     // optimisable : copie de la ligne, precalcul de C * trans(C).
     
     typedef VectorX TmpVec;
-    typedef size_t size_type;
     typedef typename linalg_traits<VectorX>::value_type value_type;
     
     size_type nr = mat_nrows(C), nc = mat_ncols(C);
@@ -101,7 +100,6 @@ namespace gmm {
     typedef typename temporary_vector<CMatrix>::vector_type TmpCVec;
     typedef row_matrix<TmpCVec> TmpCmat;
     
-    typedef size_t size_type;
     typedef typename linalg_traits<VectorX>::value_type value_type;
     value_type rho = 1.0, rho_1, lambda, gamma;
     TmpVec p(vect_size(x)), q(vect_size(x)), q2(vect_size(x)),
