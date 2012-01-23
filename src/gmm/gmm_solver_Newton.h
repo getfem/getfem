@@ -108,41 +108,76 @@ namespace gmm {
   };
 
   struct default_newton_line_search : public gmm::abstract_newton_line_search {
-    double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min_ratio;
-    double alpha_min, prev_res;
+    // This line search try to detect where is the minimum, dividing the step
+    // by a factor two each time.
+    //    - it stops if the residual is less than the previous residual
+    //      times alpha_min_ratio (= 0.9).
+    //    - if the minimal step is reached with a residual greater than
+    //      the previous residual times alpha_min_ratio then it decides
+    //      between two options :
+    //        - return with the step corresponding to the smallest residual
+    //        - return with a greater residual corresponding to a residual
+    //          less than the previous residual times alpha_max_ratio.
+    //      the decision is taken randomly and considering the smallnest of
+    //      the step corresponding to the smallest residual.
+    //    - in order to shorten the line search, the process stops when
+    //      the residual increases three times consecutively.
+    // possible improvment : detect the curvature at the origin
+    // (only one evaluation) and take it into account.
+    // Fitted to some experiments in contrib/tests_newton
+
+    double alpha, alpha_old, alpha_mult, first_res, alpha_max_ratio;
+    double alpha_min_ratio, alpha_min;
     size_type count;
-    bool mratio;
+    bool max_ratio_reached;
+    double alpha_max_ratio_reached, r_max_ratio_reached;
+    size_type it_max_ratio_reached;
+
     virtual void init_search(double r, size_t git, double = 0.0) {
       alpha_min_ratio = 0.9;
-      alpha_min = 1e-5;
-      alpha_max_ratio = 1.3;
-      if (git >= 5 && (git % 5) == 0) {
-	alpha_min_ratio = 0.9; // 0.8 + 0.2 * gmm::random();
-	alpha_min = pow(10.0, -gmm::random() * 3.0);
-	alpha_max_ratio = 2.0; // 1.001 + 2.0* gmm::random();
-      }
+      alpha_min = 1e-8;
+      alpha_max_ratio = 2.0;
+      alpha_mult = 0.25;
+      itmax = size_type(-1);
       glob_it = git;
-      conv_alpha = alpha = double(1);
-      prev_res = conv_r = first_res = r; it = 0; count = 0;
-      mratio = false;
+      conv_alpha = alpha = alpha_old = 1.;
+      conv_r = first_res = r; it = 0;
+      count = 0;
+      max_ratio_reached = false;
     }
-    virtual double next_try(void)
-    { double a = alpha; alpha *= alpha_mult; ++it; return a; }
+    virtual double next_try(void) {
+      alpha_old = alpha;
+      if (alpha == 1.) alpha = 0.5; else alpha *= alpha_mult; ++it;
+      return alpha_old;
+    }
     virtual bool is_converged(double r, double = 0.0) {
-      // cout << "r = " << r << " alpha = " << alpha << " conv_r = " << conv_r << endl;
+      // cout << "r = " << r << " alpha = " << alpha / alpha_mult << endl;
+      if (!max_ratio_reached && r < first_res * alpha_max_ratio) {
+	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
+	it_max_ratio_reached = it; max_ratio_reached = true; 
+      }
+      if (max_ratio_reached && r < r_max_ratio_reached * 0.9
+	  && it <= it_max_ratio_reached+1) {
+	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
+	it_max_ratio_reached = it; max_ratio_reached = true; 
+      }
       if (count == 0 || r < conv_r)
-	{ conv_r = r; conv_alpha=alpha / alpha_mult; count = 1; }
+	{ conv_r = r; conv_alpha = alpha_old; count = 1; }
       if (conv_r < first_res) ++count;
-      if (!mratio && r < first_res*alpha_max_ratio) mratio = true;
-      if (r < first_res *  alpha_min_ratio || count >= 5) return true;
-      if (it >= itmax || (alpha < alpha_min && mratio)) {
-	if (conv_r > r) { conv_r = r; conv_alpha = alpha / alpha_mult; }
+      if (r < first_res *  alpha_min_ratio) return true;
+      
+      if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
+	double e = gmm::random() * 20.;
+	// cout << "e = " << e << " -log(conv_alpha) = " << -log(conv_alpha)-4.0 << endl;
+	if (e < -log(conv_alpha)-4.0) {
+	  conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached;
+	  // cout << "cutting" << endl;
+	}
 	return true;
       }
       return false;
     }
-    default_newton_line_search(size_t imax = size_t(-1), double a_mult = 0.5)
-      : alpha_mult(a_mult), alpha_min(0.1)  { itmax = imax; }
+    default_newton_line_search(void) { }
   };
 
   /* the former default_newton_line_search */
