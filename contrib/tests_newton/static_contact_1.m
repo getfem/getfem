@@ -1,5 +1,5 @@
 % The newton should converge "almost" every time with less than 100 iterations
-% (10% d'echec max, 1% serait mieux)
+% (1% of failure is ok)
 
 
 clear all;

@@ -118,8 +118,7 @@ namespace gmm {
     //        - return with the step corresponding to the smallest residual
     //        - return with a greater residual corresponding to a residual
     //          less than the previous residual times alpha_max_ratio.
-    //      the decision is taken randomly and considering the smallnest of
-    //      the step corresponding to the smallest residual.
+    //      the decision is taken regarding the previous iterations.
     //    - in order to shorten the line search, the process stops when
     //      the residual increases three times consecutively.
     // possible improvment : detect the curvature at the origin
@@ -128,7 +127,7 @@ namespace gmm {
 
     double alpha, alpha_old, alpha_mult, first_res, alpha_max_ratio;
     double alpha_min_ratio, alpha_min;
-    size_type count;
+    size_type count, count_pat;
     bool max_ratio_reached;
     double alpha_max_ratio_reached, r_max_ratio_reached;
     size_type it_max_ratio_reached;
@@ -139,7 +138,7 @@ namespace gmm {
       alpha_max_ratio = 2.0;
       alpha_mult = 0.25;
       itmax = size_type(-1);
-      glob_it = git;
+      glob_it = git; if (git <= 1) count_pat = 0;
       conv_alpha = alpha = alpha_old = 1.;
       conv_r = first_res = r; it = 0;
       count = 0;
@@ -147,37 +146,37 @@ namespace gmm {
     }
     virtual double next_try(void) {
       alpha_old = alpha;
-      if (alpha == 1.) alpha = 0.5; else alpha *= alpha_mult; ++it;
+      if (alpha >= 0.4) alpha *= 0.5; else alpha *= alpha_mult; ++it;
       return alpha_old;
     }
     virtual bool is_converged(double r, double = 0.0) {
-      // cout << "r = " << r << " alpha = " << alpha / alpha_mult << endl;
+      // cout << "r = " << r << " alpha = " << alpha / alpha_mult << " count_pat = " << count_pat << endl;
       if (!max_ratio_reached && r < first_res * alpha_max_ratio) {
 	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
 	it_max_ratio_reached = it; max_ratio_reached = true; 
       }
-      if (max_ratio_reached && r < r_max_ratio_reached * 0.9
-	  && it <= it_max_ratio_reached+1) {
+      if (max_ratio_reached && r < r_max_ratio_reached * 0.8
+	  && r > first_res * 1.1 && it <= it_max_ratio_reached+1) {
 	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
-	it_max_ratio_reached = it; max_ratio_reached = true; 
+	it_max_ratio_reached = it;
       }
       if (count == 0 || r < conv_r)
 	{ conv_r = r; conv_alpha = alpha_old; count = 1; }
       if (conv_r < first_res) ++count;
-      if (r < first_res *  alpha_min_ratio) return true;
-      
+
+      if (r < first_res *  alpha_min_ratio)
+	{ count_pat = 0.; return true; }      
       if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
-	double e = gmm::random() * 20.;
-	// cout << "e = " << e << " -log(conv_alpha) = " << -log(conv_alpha)-4.0 << endl;
-	if (e < -log(conv_alpha)-4.0) {
-	  conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached;
-	  // cout << "cutting" << endl;
-	}
+	// double e = gmm::random() * 50.;
+	if (conv_r < first_res * 0.999) count_pat = 0;
+	if (/*e < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
+	  { conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
+	if (conv_r >= first_res * 0.9999) count_pat++;
 	return true;
       }
       return false;
     }
-    default_newton_line_search(void) { }
+    default_newton_line_search(void) { count_pat = 0; }
   };
 
   /* the former default_newton_line_search */

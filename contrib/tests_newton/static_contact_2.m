@@ -1,5 +1,5 @@
-% The newton should converge every time with about 10 to 20 iterations
-% (should not go upper than 20 iterations ...)
+% The newton should converge every time with about 10 to 15 iterations
+% (should not go upper than 15 iterations ...)
 
 
 clear all;
