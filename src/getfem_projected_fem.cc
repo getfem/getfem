@@ -141,7 +141,8 @@ namespace getfem {
     {
       dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
       GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
-      bgeot::vectors_to_base_matrix(base_ref_fc, dref_pts_fc);
+      for (size_type i = 0; i < P-1; ++i)
+          gmm::copy(dref_pts_fc[i+1] - dref_pts_fc[0], gmm::mat_col(base_ref_fc,i));
     }
 
     normal.resize(N);
@@ -272,18 +273,18 @@ namespace getfem {
 
     build_kdtree();
 
-    std::vector<elt_projection_data> vv(mim_target.convex_index().last_true() + 1);
-    elements.swap(vv);
+    elements.clear();
     ind_dof.resize(mf_source.nb_basic_dof());
-    dal::bit_vector alldofs;
     size_type max_dof = 0;
     if (rg_target.id() != mesh_region::all_convexes().id() &&
-        rg_target.is_empty())
+        rg_target.is_empty()) {
+      dim_ = mim_target.linked_mesh().dim();
       return;
+    }
 
     for (mr_visitor i(rg_target); !i.finished(); ++i) {
-      size_type cv = i.cv();
-      short_type f = i.f();
+      size_type cv = i.cv(); // refers to the target mesh
+      short_type f = i.f();  // refers to the target mesh
 
       dim_type dim__ = mim_target.linked_mesh().structure_of_convex(cv)->dim();
       if (dim_ == dim_type(-1)) {
@@ -303,12 +304,13 @@ namespace getfem {
       papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim_target.linked_mesh().trans_of_convex(cv);
       dal::bit_vector dofs;
-      size_type last_cv(-1);
-      short_type last_f(-1);
+      size_type last_cv(-1); // refers to the source mesh
+      short_type last_f(-1); // refers to the source mesh
       size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f) : pai->nb_points();
-      elements[cv].gausspt.resize(nb_pts);
+      size_type start_pt = i.is_face() ? pai->ind_first_point_on_face(f) : 0;
+      elt_projection_data &e = elements[cv];
       for (size_type k = 0; k < nb_pts; ++k) {
-        gausspt_projection_data &gppd = elements[cv].gausspt[k];
+        gausspt_projection_data &gppd = e.gausspt[start_pt + k];
         /* todo: use a geotrans_interpolation_context */
         base_node gpt = pgt->transform(i.is_face() ? pai->point_on_face(f,k) : pai->point(k),
                                        mim_target.linked_mesh().points_of_convex(cv));
@@ -343,19 +345,18 @@ namespace getfem {
           last_f = gppd.f;
         }
       }
-      elements[cv].nb_dof = dofs.card();
-      elements[cv].pim = pim;
+      e.nb_dof = dofs.card();
+      e.pim = pim;
+      e.inddof.resize(dofs.card());
       max_dof = std::max(max_dof, dofs.card());
-      elements[cv].inddof.resize(dofs.card());
       size_type cnt = 0;
       for (dal::bv_visitor idof(dofs); !idof.finished(); ++idof)
-        { elements[cv].inddof[cnt] = idof; ind_dof[idof] = cnt++; }
+        { e.inddof[cnt] = idof; ind_dof[idof] = cnt++; }
       for (size_type k = 0; k < nb_pts; ++k) {
-        gausspt_projection_data &gppd = elements[cv].gausspt[k];
+        gausspt_projection_data &gppd = e.gausspt[start_pt + k];
         if (gppd.iflags) {
           if (gppd.f == short_type(-1)) { // convex
             size_type nbdof = mf_source.nb_basic_dof_of_element(gppd.cv);
-            gppd.local_dof.resize(nbdof);
             for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) {
               size_type idof = mf_source.ind_basic_dof_of_element(gppd.cv)[loc_dof];
               gppd.local_dof[loc_dof] = dofs.is_in(idof) ? ind_dof[idof]
@@ -364,16 +365,17 @@ namespace getfem {
           }
           else { // convex face
             size_type nbdof = mf_source.nb_basic_dof_of_face_of_element(gppd.cv, gppd.f);
-            gppd.local_dof.resize(nbdof);
-            for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) {
+            pfem pf = mf_source.fem_of_element(gppd.cv);
+            bgeot::convex_ind_ct ind_pts_fc = pf->structure(gppd.cv)->ind_points_of_face(gppd.f);
+            for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) { // local dof with respect to the source convex face
               size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
-              gppd.local_dof[loc_dof] = dofs.is_in(idof) ? ind_dof[idof]
-                                                         : size_type(-1);
+              size_type loc_dof2 = ind_pts_fc[loc_dof]; // local dof with respect to the source convex
+              gppd.local_dof[loc_dof2] = dofs.is_in(idof) ? ind_dof[idof]
+                                                          : size_type(-1);
             }
           }
         }
       }
-      alldofs |= dofs;
     }
     /** setup global dofs, with dummy coordinates */
     base_node P(dim()); gmm::fill(P,1./20);
@@ -391,26 +393,33 @@ namespace getfem {
   }
 
   size_type projected_fem::nb_dof(size_type cv) const
-  { context_check();
-    if (mim_target.linked_mesh().convex_index().is_in(cv))
-      return elements[cv].nb_dof;
-    else GMM_ASSERT1(false, "Wrong convex number: " << cv);
+  {
+    context_check();
+    GMM_ASSERT1(mim_target.linked_mesh().convex_index().is_in(cv),
+                "Wrong convex number: " << cv);
+    std::map<size_type,elt_projection_data>::const_iterator eit;
+    eit = elements.find(cv);
+    return (eit != elements.end()) ? eit->second.nb_dof : 0;
   }
 
-  size_type projected_fem::index_of_global_dof
-  (size_type cv, size_type i) const
-  { return elements[cv].inddof[i]; }
+  size_type projected_fem::index_of_global_dof(size_type cv, size_type i) const
+  {
+    std::map<size_type,elt_projection_data>::const_iterator eit;
+    eit = elements.find(cv);
+    GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << cv);
+    return eit->second.inddof[i];
+  }
 
   bgeot::pconvex_ref projected_fem::ref_convex(size_type cv) const
   { return mim_target.int_method_of_element(cv)->approx_method()->ref_convex(); }
 
-  const bgeot::convex<base_node> &projected_fem::node_convex
-  (size_type cv) const
+  const bgeot::convex<base_node> &projected_fem::node_convex(size_type cv) const
   {
-    if (mim_target.linked_mesh().convex_index().is_in(cv))
-      return *(bgeot::generic_dummy_convex_ref(dim(), nb_dof(cv),
-                 mim_target.linked_mesh().structure_of_convex(cv)->nb_faces()));
-    else GMM_ASSERT1(false, "Wrong convex number: " << cv);
+    GMM_ASSERT1(mim_target.linked_mesh().convex_index().is_in(cv),
+                "Wrong convex number: " << cv);
+    return *(bgeot::generic_dummy_convex_ref
+             (dim(), nb_dof(cv),
+              mim_target.linked_mesh().structure_of_convex(cv)->nb_faces()));
   }
 
   bgeot::pstored_point_tab projected_fem::node_tab(size_type)
@@ -444,17 +453,29 @@ namespace getfem {
 
   void projected_fem::real_base_value(const fem_interpolation_context& c,
                                       base_tensor &t, bool) const {
-    elt_projection_data &e = elements.at(c.convex_num());
+    std::map<size_type,elt_projection_data>::iterator eit;
+    eit = elements.find(c.convex_num());
+    if (eit == elements.end()) {
+      mi2[1] = target_dim(); mi2[0] = short_type(0);
+      t.adjust_sizes(mi2);
+      std::fill(t.begin(), t.end(), scalar_type(0));
+      return;
+    }
+//    GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << c.convex_num());
+    elt_projection_data &e = eit->second;
 
     mi2[1] = target_dim(); mi2[0] = short_type(e.nb_dof);
     t.adjust_sizes(mi2);
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (e.nb_dof == 0) return;
 
+    std::map<size_type,gausspt_projection_data>::iterator git;
+    git = e.gausspt.find(c.ii());
     if (c.have_pgp() &&
         (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points())) {
-      gausspt_projection_data &gppd = e.gausspt.at(c.ii());
+         == &e.pim->approx_method()->integration_points()) &&
+        git != e.gausspt.end()) {
+      gausspt_projection_data &gppd = git->second;
       if (gppd.iflags & 1) {
         if (gppd.iflags & 2) {
           t = gppd.base_val;
@@ -465,19 +486,20 @@ namespace getfem {
         actualize_fictx(pf, cv, gppd.ptref);
         pf->real_base_value(fictx, taux);
         unsigned rdim = target_dim() / pf->target_dim();
+        std::map<size_type,size_type>::const_iterator ii;
         if (rdim == 1) // mdim == 0
           for (size_type i = 0; i < pf->nb_dof(cv); ++i) {
-            size_type ii = gppd.local_dof[i];
-            if (ii != size_type(-1))
+            ii = gppd.local_dof.find(i);
+            if (ii != gppd.local_dof.end() && ii->second != size_type(-1))
               for (size_type j = 0; j < target_dim(); ++j)
-                t(ii,j) = taux(i,j);
+                t(ii->second,j) = taux(i,j);
           }
         else // mdim == 1
           for (size_type i = 0; i < pf->nb_dof(cv); ++i)
             for (size_type j = 0; j < target_dim(); ++j) {
-              size_type ij = gppd.local_dof[i*rdim+j];
-              if (ij != size_type(-1))
-                t(ij,j) = taux(i,0);
+              ii = gppd.local_dof.find(i*rdim+j);
+              if (ii != gppd.local_dof.end() && ii->second != size_type(-1))
+                t(ii->second,j) = taux(i,0);
             }
 
         if (store_values) {
@@ -523,7 +545,16 @@ namespace getfem {
 
   void projected_fem::real_grad_base_value(const fem_interpolation_context& c,
                                            base_tensor &t, bool) const {
-    elt_projection_data &e = elements.at(c.convex_num());
+    std::map<size_type,elt_projection_data>::iterator eit;
+    eit = elements.find(c.convex_num());
+    if (eit == elements.end()) {
+    mi3[2] = mf_source.linked_mesh().dim(); mi3[1] = target_dim(); mi3[0] = short_type(0);
+      t.adjust_sizes(mi2);
+      std::fill(t.begin(), t.end(), scalar_type(0));
+      return;
+    }
+//    GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << c.convex_num());
+    elt_projection_data &e = eit->second;
 
     size_type N = mf_source.linked_mesh().dim();
     mi3[2] = short_type(N); mi3[1] = target_dim(); mi3[0] = short_type(e.nb_dof);
@@ -531,10 +562,13 @@ namespace getfem {
     std::fill(t.begin(), t.end(), scalar_type(0));
     if (e.nb_dof == 0) return;
 
-    if (c.have_pgp()  &&
+    std::map<size_type,gausspt_projection_data>::iterator git;
+    git = e.gausspt.find(c.ii());
+    if (c.have_pgp() &&
         (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points())) {
-      gausspt_projection_data &gppd = e.gausspt.at(c.ii());
+         == &e.pim->approx_method()->integration_points()) &&
+        git != e.gausspt.end()) {
+      gausspt_projection_data &gppd = git->second;
       if (gppd.iflags & 1) {
         if (gppd.iflags & 4) {
           t = gppd.grad_val;
@@ -546,21 +580,22 @@ namespace getfem {
         pf->real_grad_base_value(fictx, taux);
 
         unsigned rdim = target_dim() / pf->target_dim();
+        std::map<size_type,size_type>::const_iterator ii;
         if (rdim == 1) // mdim == 0
           for (size_type i = 0; i < pf->nb_dof(cv); ++i) {
-            size_type ii = gppd.local_dof[i];
-            if (ii != size_type(-1))
+            ii = gppd.local_dof.find(i);
+            if (ii != gppd.local_dof.end() && ii->second != size_type(-1))
               for (size_type j = 0; j < target_dim(); ++j)
                 for (size_type k = 0; k < N; ++k)
-                  t(ii, j, k) = taux(i, j, k);
+                  t(ii->second, j, k) = taux(i, j, k);
           }
         else // mdim == 1
           for (size_type i = 0; i < pf->nb_dof(cv); ++i)
             for (size_type j = 0; j < target_dim(); ++j) {
-              size_type ij = gppd.local_dof[i*rdim+j];
-              if (ij != size_type(-1))
+              ii = gppd.local_dof.find(i*rdim+j);
+              if (ii != gppd.local_dof.end() && ii->second != size_type(-1))
                 for (size_type k = 0; k < N; ++k)
-                  t(ij, j, k) = taux(i, 0, k);
+                  t(ii->second, j, k) = taux(i, 0, k);
             }
         if (store_values) {
           gppd.grad_val = t;
@@ -569,10 +604,6 @@ namespace getfem {
       }
     }
     else {
-      cerr << "NON PGP OU MAUVAIS PTS sz=" << elements.size() << ", cv="
-           << c.convex_num() << " ";
-      cerr << "ii=" << c.ii() << ", sz=" << e.gausspt.size() << "\n";
-
       size_type cv;
       short_type f;
       if (find_a_projected_point(c.xreal(), ptref, cv, f)) {
@@ -612,13 +643,19 @@ namespace getfem {
 
   void projected_fem::projection_data(const fem_interpolation_context& c,
                                       base_node &normal, scalar_type &gap) const {
-    elt_projection_data &e = elements.at(c.convex_num());
+    std::map<size_type,elt_projection_data>::iterator eit;
+    eit = elements.find(c.convex_num());
+    GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << c.convex_num());
+    elt_projection_data &e = eit->second;
     if (e.nb_dof == 0) return;
 
+    std::map<size_type,gausspt_projection_data>::iterator git;
+    git = e.gausspt.find(c.ii());
     if (c.have_pgp() &&
         (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points())) {
-      gausspt_projection_data &gppd = e.gausspt.at(c.ii());
+         == &e.pim->approx_method()->integration_points()) &&
+        git != e.gausspt.end()) {
+      gausspt_projection_data &gppd = git->second;
       if (gppd.iflags & 1) {
         normal = gppd.normal;
       }
@@ -639,11 +676,12 @@ namespace getfem {
 
   dal::bit_vector projected_fem::projected_convexes() const {
     dal::bit_vector bv;
-    for (dal::bv_visitor cv(mim_target.linked_mesh().convex_index()); !cv.finished();
-         ++cv) {
-      for (unsigned ii=0; ii < elements.at(cv).gausspt.size(); ++ii) {
-        if (elements[cv].gausspt[ii].iflags)
-          bv.add(elements[cv].gausspt[ii].cv);
+    std::map<size_type,elt_projection_data>::const_iterator eit;
+    for (eit = elements.begin(); eit != elements.end(); ++eit) {
+      std::map<size_type,gausspt_projection_data>::const_iterator git;
+      for (git = eit->second.gausspt.begin(); git != eit->second.gausspt.end(); ++git) {
+        if (git->second.iflags)
+          bv.add(git->second.cv);
       }
     }
     return bv;
@@ -652,33 +690,39 @@ namespace getfem {
   void projected_fem::gauss_pts_stats(unsigned &ming, unsigned &maxg,
                                       scalar_type &meang) const {
     std::vector<unsigned> v(mf_source.linked_mesh().convex_index().last_true()+1);
-    for (dal::bv_visitor cv(mim_target.linked_mesh().convex_index());
-         !cv.finished(); ++cv) {
-      for (unsigned ii=0; ii < elements.at(cv).gausspt.size(); ++ii) {
-        if (elements[cv].gausspt[ii].iflags)
-          v[elements[cv].gausspt[ii].cv]++;
+    std::map<size_type,elt_projection_data>::const_iterator eit;
+    for (eit = elements.begin(); eit != elements.end(); ++eit) {
+      std::map<size_type,gausspt_projection_data>::const_iterator git;
+      for (git = eit->second.gausspt.begin(); git != eit->second.gausspt.end(); ++git) {
+        if (git->second.iflags)
+          v[git->second.cv]++;
       }
     }
+
     ming = 100000; maxg = 0; meang = 0;
+    unsigned cntg = 0;
     for (dal::bv_visitor cv(mf_source.linked_mesh().convex_index());
          !cv.finished(); ++cv) {
       ming = std::min(ming, v[cv]);
       maxg = std::max(maxg, v[cv]);
       meang += v[cv];
+      if (v[cv] > 0) ++cntg; 
     }
-    meang /= scalar_type(mf_source.linked_mesh().convex_index().card());
+    meang /= scalar_type(cntg);
   }
 
   size_type projected_fem::memsize() const {
     size_type sz = 0;
     sz += blocked_dofs.memsize();
     sz += sizeof(*this);
-    sz += elements.capacity() * sizeof(elt_projection_data);
-    for (unsigned i=0; i < elements.size(); ++i) {
-      sz += elements[i].gausspt.capacity()*sizeof(gausspt_projection_data);
-      sz += elements[i].inddof.capacity() * sizeof(size_type);
-      for (unsigned j=0; j < elements[i].gausspt.size(); ++j) {
-        sz += elements[i].gausspt[j].local_dof.capacity() * sizeof(size_type);
+    sz += elements.size() * sizeof(elt_projection_data); // Wrong for std::map
+    std::map<size_type,elt_projection_data>::const_iterator eit;
+    for (eit = elements.begin(); eit != elements.end(); ++eit) {
+      sz += eit->second.gausspt.size() * sizeof(gausspt_projection_data); // Wrong for std::map
+      sz += eit->second.inddof.capacity() * sizeof(size_type);
+      std::map<size_type,gausspt_projection_data>::const_iterator git;
+      for (git = eit->second.gausspt.begin(); git != eit->second.gausspt.end(); ++git) {
+        sz += git->second.local_dof.size() * sizeof(size_type); // Wrong for std::map
       }
     }
     return sz;
@@ -686,23 +730,18 @@ namespace getfem {
 
   projected_fem::projected_fem(const mesh_fem &mf_source_,
                                const mesh_im &mim_target_,
-                               const mesh_region &rg_source_,
-                               const mesh_region &rg_target_,
+                               size_type rg_source_,
+                               size_type rg_target_,
                                dal::bit_vector blocked_dofs_, bool store_val)
     : mf_source(mf_source_), mim_target(mim_target_),
-      rg_source(rg_source_), rg_target(rg_target_), store_values(store_val),
-      blocked_dofs(blocked_dofs_), mi2(2), mi3(3) {
+      rg_source(mf_source.linked_mesh().region(rg_source_)),
+      rg_target(mim_target.linked_mesh().region(rg_target_)),
+      store_values(store_val), blocked_dofs(blocked_dofs_), mi2(2), mi3(3) {
     this->add_dependency(mf_source);
     this->add_dependency(mim_target);
     is_pol = is_lag = false; es_degree = 5;
     is_equiv = real_element_defined = true;
     ntarget_dim = mf_source.get_qdim();
-
-    if (rg_source.id() == mesh_region::all_convexes().id())
-      rg_source.from_mesh(mf_source.linked_mesh());
-
-    if (rg_target.id() == mesh_region::all_convexes().id())
-      rg_target.from_mesh(mim_target.linked_mesh());
 
     update_from_context();
   }
@@ -710,7 +749,7 @@ namespace getfem {
   DAL_SIMPLE_KEY(special_projfem_key, pfem);
 
   pfem new_projected_fem(const mesh_fem &mf_source_, const mesh_im &mim_target_,
-                         const mesh_region &rg_source_, const mesh_region &rg_target_,
+                         size_type rg_source_, size_type rg_target_,
                          dal::bit_vector blocked_dofs_, bool store_val) {
     pfem pf = new projected_fem(mf_source_, mim_target_, rg_source_, rg_target_,
                                 blocked_dofs_, store_val);

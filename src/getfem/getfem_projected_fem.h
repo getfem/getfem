@@ -46,8 +46,8 @@
 namespace getfem {
 
   struct gausspt_projection_data {
-    size_type cv; // convex of the projected mesh_fem corresponding to the gauss point
-    short_type f; // convex face of the projected mesh_fem corresponding to the gauss point
+    size_type cv; // convex of the source mesh_fem opposite to the gauss point
+    short_type f; // convex face of the source mesh_fem opposite to the gauss point
     size_type iflags;     // flags & 1 : there is an element or not
                           // flags & 2 : base_val is stored
                           // flags & 4 : grad_val is stored
@@ -56,8 +56,8 @@ namespace getfem {
     scalar_type gap;      // gap distance from the gauss point to the projected point
     base_tensor base_val; // optional storage of the base values
     base_tensor grad_val; // optional storage of the grad base values
-    std::vector<size_type> local_dof; // correspondance between dof of the
-                                      // mf_source element and dof of the projected element.
+    std::map<size_type,size_type> local_dof; // correspondance between dof of the
+                                             // mf_source element and dof of the projected element.
     gausspt_projection_data() :
       cv(size_type(-1)), f(short_type(-1)), iflags(size_type(-1)) {}
   };
@@ -71,11 +71,12 @@ namespace getfem {
   protected :
 
     struct elt_projection_data {
+      short_type f;    // face number on the target mesh
       size_type nb_dof;
-      std::vector<gausspt_projection_data> gausspt;
+      std::map<size_type,gausspt_projection_data> gausspt;
       std::vector<size_type> inddof;
       pintegration_method pim; // for DEBUG
-      elt_projection_data() : nb_dof(0), pim(0) {}
+      elt_projection_data() : f(-1), nb_dof(0), pim(0) {}
     };
 
     const mesh_fem &mf_source; // mf_source represents the original finite
@@ -89,7 +90,7 @@ namespace getfem {
     dal::bit_vector blocked_dofs;
 
     // auxiliary variables
-    mutable std::vector<elt_projection_data> elements;
+    mutable std::map<size_type,elt_projection_data> elements;
     mutable bgeot::kdtree tree; // Tree containing the nodes of the
                                 // projected mf_source dofs
     mutable std::vector<size_type> ind_dof; /* all functions using this work
@@ -145,15 +146,14 @@ namespace getfem {
   private:
 
     projected_fem(const mesh_fem &mf_source_, const mesh_im &mim_target_,
-                  const mesh_region &rg_source_,
-                  const mesh_region &rg_target_,
+                  size_type rg_source_, size_type rg_target_,
                   dal::bit_vector blocked_dofs_,
                   bool store_val = true);
 
     friend pfem new_projected_fem(const mesh_fem &mf_source_,
                                   const mesh_im &mim_target_,
-                                  const mesh_region &rg_source_,
-                                  const mesh_region &rg_target_,
+                                  size_type rg_source_,
+                                  size_type rg_target_,
                                   dal::bit_vector blocked_dofs_,
                                   bool store_val);
   };
@@ -168,8 +168,8 @@ namespace getfem {
              function are cached at each gauss point (eats much memory).
   */
   pfem new_projected_fem(const mesh_fem &mf_source, const mesh_im &mim_target,
-                         const mesh_region &rg_source_ = mesh_region::all_convexes(),
-                         const mesh_region &rg_target_ = mesh_region::all_convexes(),
+                         size_type rg_source_ = size_type(-1),
+                         size_type rg_target_ = size_type(-1),
                          dal::bit_vector blocked_dofs = dal::bit_vector(),
                          bool store_val = true);
 
