@@ -134,7 +134,7 @@ namespace gmm {
 
     virtual void init_search(double r, size_t git, double = 0.0) {
       alpha_min_ratio = 0.9;
-      alpha_min = 1e-8;
+      alpha_min = 1e-10;
       alpha_max_ratio = 2.0;
       alpha_mult = 0.25;
       itmax = size_type(-1);
@@ -167,9 +167,8 @@ namespace gmm {
       if (r < first_res *  alpha_min_ratio)
 	{ count_pat = 0.; return true; }      
       if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
-	// double e = gmm::random() * 50.;
 	if (conv_r < first_res * 0.999) count_pat = 0;
-	if (/*e < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
+	if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
 	  { conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
 	if (conv_r >= first_res * 0.9999) count_pat++;
 	return true;

@@ -991,14 +991,15 @@ namespace getfem {
 
       if (brick.pbr->is_linear())
         brick.terms_to_be_computed = false;
-      else
-        if (cplx) {
-          brick.cmatlist = complex_matlist(brick.tlist.size());
-          brick.cveclist[0] = complex_veclist(brick.tlist.size());
-        } else {
-          brick.rmatlist = real_matlist(brick.tlist.size());
-          brick.rveclist[0] = real_veclist(brick.tlist.size());
-        }
+// commented to allow to get this information. Should be optional ?
+//       else
+//         if (cplx) {
+//           brick.cmatlist = complex_matlist(brick.tlist.size());
+//           brick.cveclist[0] = complex_veclist(brick.tlist.size());
+//         } else {
+//           brick.rmatlist = real_matlist(brick.tlist.size());
+//           brick.rveclist[0] = real_veclist(brick.tlist.size());
+//         }
 
     }
   }
