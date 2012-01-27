@@ -841,7 +841,7 @@ void friction_problem::solve(void) {
       if (Dirichlet == 3) gmm::fill(MS.state(), scalar_type(-1));
       gmm::iteration iter(residual, int(noisy), 40000);
       
-      gmm::default_newton_line_search ls;
+      getfem::default_newton_line_search ls;
       getfem::model_problem<MODEL_STATE> mdpb(MS,FRICTION,ls);
       
       int l = gmm::get_warning_level();

@@ -1229,7 +1229,7 @@ if (!contact_only){
   iter.init();
   //getfem::standard_solve(model, iter);
 
-  gmm::simplest_newton_line_search lse; // (size_t(-1), 6.0/5.0, 0.2, 3.0/5.0);
+  getfem::simplest_newton_line_search lse; // (size_t(-1), 6.0/5.0, 0.2, 3.0/5.0);
   getfem::standard_solve(model, iter,
 	getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			 getfem::model_real_plain_vector>(model) , lse);

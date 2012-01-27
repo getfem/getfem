@@ -636,8 +636,8 @@ void friction_problem::solve(void) {
       	  if (UN[i] < -1E-13) FRICTION.get_gap()[i] = 1.E13;
       }
   
-      gmm::default_newton_line_search ls;
-      // gmm::simplest_newton_line_search ls(100000, 1.4, 0.001, 0.8);
+      getfem::default_newton_line_search ls;
+      // getfem::simplest_newton_line_search ls(100000, 1.4, 0.001, 0.8);
       getfem::standard_solve(MS, PERIODIC, iter,
 			     getfem::default_linear_solver(PERIODIC), ls);
     

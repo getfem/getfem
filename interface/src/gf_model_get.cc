@@ -341,13 +341,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          } else THROW_BADARG("bad option: " << opt);
        }
 
-       gmm::default_newton_line_search default_ls;
-       gmm::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
-       gmm::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
-       gmm::basic_newton_line_search basic_ls(size_type(-1), alpha_min, alpha_mult);
-       gmm::quadratic_newton_line_search quadratic_ls(size_type(-1));
+       getfem::default_newton_line_search default_ls;
+       getfem::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
+       getfem::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
+       getfem::basic_newton_line_search basic_ls(size_type(-1), alpha_min, alpha_mult);
+       getfem::quadratic_newton_line_search quadratic_ls(size_type(-1));
 
-       gmm::abstract_newton_line_search *ls = 0;
+       getfem::abstract_newton_line_search *ls = 0;
 
        if (lsearch == "default")
          ls = &default_ls;

@@ -1,5 +1,6 @@
-% The newton should converge "almost" every time with less than 100 iterations
-% (1% of failure is ok)
+% Converges with 5 Uzawa iterations
+% The first Newton should converge "almost" every time with less than 70 iterations
+
 
 
 clear all;
@@ -17,16 +18,16 @@ else
   disp('non-automatic version');
   clear all;
   % main parameters 
-  expe = 3; % SHOULD BE 3;              % Experiment number
-  r = 200;                  % Augmentation parameter
+  expe = 3;              % Experiment number
+  r = 500;                  % Augmentation parameter
   dirichlet_translation = -15;
   vertical_force = 20.0; % Volumic load in the vertical direction
-  niter = 100;           % Maximum number of iterations for Newton's algorithm.
+  niter = 200;           % Maximum number of iterations for Newton's algorithm.
   friction_coeff = 1.0;  % coefficient of friction
 
   draw = false;
   plot_mesh = false;
-  version = 13; % 1 : frictionless contact and the basic contact brick
+  version = 16; % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick, symmetric version
@@ -298,11 +299,11 @@ if (version >= 1 && version <= 4) % defining the matrices BN and BT by hand
   end;
 
   gf_model_set(md, 'add variable', 'lambda_n', nbc);
-  % gf_model_set(md, 'variable', 'lambda_n', 0.01*(rand(1, nbc)-0.5));
+  gf_model_set(md, 'variable', 'lambda_n', 0.01*(rand(1, nbc)-0.5));
   gf_model_set(md, 'add initialized data', 'r', [real_r]);
   if (version == 2 || version == 4)
     gf_model_set(md, 'add variable', 'lambda_t', nbc*(d-1));
-    % gf_model_set(md, 'variable', 'lambda_t', 0.01*(rand(1, nbc*(d-1))-0.5));
+    gf_model_set(md, 'variable', 'lambda_t', 0.01*(rand(1, nbc*(d-1))-0.5));
     gf_model_set(md, 'add initialized data', 'friction_coeff', ...
                  [friction_coeff]);
   end;
@@ -336,7 +337,7 @@ elseif (version >= 5 && version <= 8) % The continuous version, Newton
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
   gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
-  % gf_model_set(md, 'variable', 'lambda_n', 0.01*(rand(1, gf_mesh_fem_get(mflambda_partial, 'nbdof'))-0.5));
+  gf_model_set(md, 'variable', 'lambda_n', 0.01*(rand(1, gf_mesh_fem_get(mflambda_partial, 'nbdof'))-0.5));
   gf_model_set(md, 'add initialized data', 'r', [real_r]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
@@ -387,7 +388,7 @@ elseif (version >= 10 && version <= 15) % The continuous version with friction, 
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
   gf_model_set(md, 'add fem variable', 'lambda', mflambda_partial);
-  % gf_model_set(md, 'variable', 'lambda', 0.01*(rand(1, gf_mesh_fem_get(mflambda_partial, 'nbdof'))-0.5));
+  gf_model_set(md, 'variable', 'lambda', 0.01*(rand(1, gf_mesh_fem_get(mflambda_partial, 'nbdof'))-0.5));
   gf_model_set(md, 'add initialized data', 'r', [real_r]);
   gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });

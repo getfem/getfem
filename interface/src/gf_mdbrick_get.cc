@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2001-2010 Y. Renard, J. Pommier.
+// Copyright (C) 2001-2012 Y. Renard, J. Pommier.
 //
 // This file is a part of GETFEM++
 //
@@ -165,7 +165,6 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     if (b->is_complex() != md->is_complex())
       THROW_BADARG("cannot mix complex mdbricks with real mdstate");
 
-    //gmm::iteration iter;
     getfemint::interruptible_iteration iter;
     std::string lsolver = "auto";
     while (in.remaining() && in.front().is_string()) {
@@ -183,7 +182,7 @@ void gf_mdbrick_get(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 	else THROW_BADARG("missing solver name for " << opt);
       } else THROW_BADARG("bad option: " << opt);
     }
-    gmm::default_newton_line_search ls;
+    getfem::default_newton_line_search ls;
     if (!md->is_complex()) {
       getfem::standard_solve(md->real_mdstate(), b->real_mdbrick(), iter,
 	       getfem::select_linear_solver(b->real_mdbrick(), lsolver), ls);

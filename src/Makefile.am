@@ -34,7 +34,6 @@ nobase_include_HEADERS =                   		\
 	gmm/gmm_solver_bicgstab.h          		\
 	gmm/gmm_solver_Schwarz_additive.h  		\
 	gmm/gmm_solver_bfgs.h              		\
-	gmm/gmm_solver_Newton.h		   		\
 	gmm/gmm_domain_decomp.h            		\
 	gmm/gmm_superlu_interface.h        		\
 	gmm/gmm_precond.h                  		\

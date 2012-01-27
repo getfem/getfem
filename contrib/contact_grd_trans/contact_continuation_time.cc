@@ -1012,8 +1012,8 @@ bool friction_problem::solve(plain_vector &U) {
     
     
     /* let the default non-linear solve (Newton) do its job */
-    gmm::basic_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
-//     gmm::default_newton_line_search ls;
+    getfem::basic_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
+//     getfem::default_newton_line_search ls;
     getfem::standard_solve(MS, final_model, iter,
 			   getfem::default_linear_solver(final_model), ls);
     

@@ -469,8 +469,8 @@ gmm::iteration &iter) {
 // cout << "F2 = " << F2 << endl;
 // cout << "|U| = " << gmm::vect_norm2(MS.state()) << "\n";
 
-  gmm::basic_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
-//   gmm::default_newton_line_search ls;
+  getfem::basic_newton_line_search ls(size_type(-1), 5.0/3.0, 0.1, 0.5, 3.0);
+//   getfem::default_newton_line_search ls;
   getfem::standard_solve(MS, final_model, iter,
 			 getfem::default_linear_solver(final_model), ls);
 }

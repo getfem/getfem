@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard
+// Copyright (C) 2002-2012 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -43,7 +43,6 @@
 #include "gmm_solver_gmres.h"
 #include "gmm_solver_bicgstab.h"
 #include "gmm_solver_qmr.h"
-#include "gmm_solver_Newton.h"
 
 namespace gmm {
       
@@ -595,7 +594,69 @@ namespace gmm {
   void mult(const AS_exact_gradient<Matrixt, MatrixBi> &M,
 	    const Vector2 &p, const Vector3 &p2, const Vector4 &q)
   { mult(M, p, const_cast<Vector4 &>(q)); add(p2, q); }
-  
+
+  struct S_default_newton_line_search {
+    
+    double conv_alpha, conv_r;
+    size_t it, itmax, glob_it;
+
+    double alpha, alpha_old, alpha_mult, first_res, alpha_max_ratio;
+    double alpha_min_ratio, alpha_min;
+    size_type count, count_pat;
+    bool max_ratio_reached;
+    double alpha_max_ratio_reached, r_max_ratio_reached;
+    size_type it_max_ratio_reached;
+
+    
+    double converged_value(void) { return conv_alpha; };
+    double converged_residual(void) { return conv_r; };
+
+    virtual void init_search(double r, size_t git, double = 0.0) {
+      alpha_min_ratio = 0.9;
+      alpha_min = 1e-10;
+      alpha_max_ratio = 10.0;
+      alpha_mult = 0.25;
+      itmax = size_type(-1);
+      glob_it = git; if (git <= 1) count_pat = 0;
+      conv_alpha = alpha = alpha_old = 1.;
+      conv_r = first_res = r; it = 0;
+      count = 0;
+      max_ratio_reached = false;
+    }
+    virtual double next_try(void) {
+      alpha_old = alpha;
+      if (alpha >= 0.4) alpha *= 0.5; else alpha *= alpha_mult; ++it;
+      return alpha_old;
+    }
+    virtual bool is_converged(double r, double = 0.0) {
+      // cout << "r = " << r << " alpha = " << alpha / alpha_mult << " count_pat = " << count_pat << endl;
+      if (!max_ratio_reached && r < first_res * alpha_max_ratio) {
+	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
+	it_max_ratio_reached = it; max_ratio_reached = true; 
+      }
+      if (max_ratio_reached && r < r_max_ratio_reached * 0.5
+	  && r > first_res * 1.1 && it <= it_max_ratio_reached+1) {
+	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
+	it_max_ratio_reached = it;
+      }
+      if (count == 0 || r < conv_r)
+	{ conv_r = r; conv_alpha = alpha_old; count = 1; }
+      if (conv_r < first_res) ++count;
+
+      if (r < first_res *  alpha_min_ratio)
+	{ count_pat = 0.; return true; }      
+      if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
+	if (conv_r < first_res * 0.99) count_pat = 0;
+	if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
+	  { conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
+	if (conv_r >= first_res * 0.9999) count_pat++;
+	return true;
+      }
+      return false;
+    }
+    S_default_newton_line_search(void) { count_pat = 0; }
+  };
+
 
   
   template <typename Matrixt, typename MatrixBi, typename Vector,
@@ -611,10 +672,8 @@ namespace gmm {
     
     double residual = iter.get_resmax();
 
-    default_newton_line_search internal_ls;
-    default_newton_line_search external_ls;
-
-    // systematic_newton_line_search external_ls(size_t(-1), 1.0/10000.0, 3.0/100.0);
+    S_default_newton_line_search internal_ls;
+    S_default_newton_line_search external_ls;
 
     typename chgt_precond::APrecond PP = chgt_precond::transform(P);
     iter.set_rhsnorm(mtype(1));

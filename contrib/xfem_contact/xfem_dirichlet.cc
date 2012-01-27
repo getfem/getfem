@@ -972,7 +972,7 @@ int main(int argc, char *argv[]) {
   gmm::iteration iter(1e-9, 1, 40000);
   //getfem::standard_solve(model, iter);
   
-  gmm::default_newton_line_search lsear;
+  getfem::default_newton_line_search lsear;
   getfem::standard_solve(model, iter, getfem::rselect_linear_solver(model,"mumps"), lsear);
 
 

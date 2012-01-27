@@ -254,7 +254,7 @@ bool elastostatic_contact_problem::solve() {
 
   gmm::iteration iter(residual, 1, 40000);
 
-  gmm::default_newton_line_search ls;
+  getfem::default_newton_line_search ls;
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"superlu"), ls);
 
   if (!iter.converged()) return false; // Solution has not converged

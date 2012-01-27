@@ -979,7 +979,7 @@ namespace getfem {
     typedef typename gmm::linalg_traits<VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
     model &md;
-    gmm::abstract_newton_line_search &ls;
+    getfem::abstract_newton_line_search &ls;
     VECTOR stateinit, &state;
     const VECTOR &rhs;
     const MATRIX &K;
@@ -1062,7 +1062,7 @@ namespace getfem {
       return alpha;
     }
 
-    my_model_pb(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+    my_model_pb(model &m, getfem::abstract_newton_line_search &ls_, VECTOR &st,
 	     const VECTOR &rhs_, const MATRIX &K_, bool with_pseudo_pot = false )
       : md(m), ls(ls_), state(st), rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
 
@@ -1075,7 +1075,7 @@ namespace getfem {
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
   void my_solve(model &md, gmm::iteration &iter,
 		PLSOLVER lsolver,
-		gmm::abstract_newton_line_search &ls, const MATRIX &K,
+		getfem::abstract_newton_line_search &ls, const MATRIX &K,
 		const VECTOR &rhs, bool with_pseudo_potential = false) {
     
     VECTOR state(md.nb_dof());
@@ -1098,7 +1098,7 @@ namespace getfem {
   
   void my_solve(model &md, gmm::iteration &iter,
 		rmodel_plsolver_type lsolver,
-		gmm::abstract_newton_line_search &ls,
+		getfem::abstract_newton_line_search &ls,
 		bool with_pseudo_potential ) {
     my_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
 	     md.real_rhs(), with_pseudo_potential );
@@ -1107,7 +1107,7 @@ namespace getfem {
   
   void my_solve(model &md, gmm::iteration &iter,
 		bool with_pseudo_potential = false ) {
-    gmm::default_newton_line_search ls;
+    getfem::default_newton_line_search ls;
     my_solve(md, iter, rdefault_linear_solver(md), ls, with_pseudo_potential );
   }
 }
@@ -1126,7 +1126,7 @@ namespace getfem {
     typedef typename gmm::linalg_traits<VECTOR>::value_type T;
     typedef typename gmm::number_traits<T>::magnitude_type R;
     model &md;
-    gmm::abstract_newton_line_search &ls;
+    getfem::abstract_newton_line_search &ls;
     VECTOR stateinit, &state;
     const VECTOR &rhs;
     const MATRIX &K;
@@ -1203,7 +1203,7 @@ namespace getfem {
       return alpha;
     }
 
-    my_model_pb_comp(model &m, gmm::abstract_newton_line_search &ls_, VECTOR &st,
+    my_model_pb_comp(model &m, getfem::abstract_newton_line_search &ls_, VECTOR &st,
 	     const VECTOR &rhs_, const MATRIX &K_, bool with_pseudo_pot = false )
       : md(m), ls(ls_), state(st), rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
 
@@ -1216,7 +1216,7 @@ namespace getfem {
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
   void my_solve_comp(model &md, gmm::iteration &iter,
 		PLSOLVER lsolver,
-		gmm::abstract_newton_line_search &ls, const MATRIX &K,
+		getfem::abstract_newton_line_search &ls, const MATRIX &K,
 		const VECTOR &rhs, bool with_pseudo_potential = false) {
     
     VECTOR state(md.nb_dof());
@@ -1239,7 +1239,7 @@ namespace getfem {
   
   void my_solve_comp(model &md, gmm::iteration &iter,
 		rmodel_plsolver_type lsolver,
-		gmm::abstract_newton_line_search &ls,
+		getfem::abstract_newton_line_search &ls,
 		bool with_pseudo_potential ) {
     my_solve_comp(md, iter, lsolver, ls, md.real_tangent_matrix(),
 	     md.real_rhs(), with_pseudo_potential );
@@ -1248,7 +1248,7 @@ namespace getfem {
   
   void my_solve_comp(model &md, gmm::iteration &iter,
 		bool with_pseudo_potential = false ) {
-    gmm::default_newton_line_search ls;
+    getfem::default_newton_line_search ls;
     my_solve_comp(md, iter, rdefault_linear_solver(md), ls, with_pseudo_potential );
   }
  
@@ -1712,10 +1712,10 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
    //   Harwell_Boeing_save("Harwell_Boeing_Tangent_matrix_", TM);
 
 
-  gmm::simplest_newton_line_search simls(size_t(-1), 6.0/5.0, 0.1, 3.0/5.0);
-  gmm::default_newton_line_search dlnrs;
-  gmm::systematic_newton_line_search sylnrs;
-  gmm::quadratic_newton_line_search qdlnrs;
+  getfem::simplest_newton_line_search simls(size_t(-1), 6.0/5.0, 0.1, 3.0/5.0);
+  getfem::default_newton_line_search dlnrs;
+  getfem::systematic_newton_line_search sylnrs;
+  getfem::quadratic_newton_line_search qdlnrs;
 
 
 // Line search version

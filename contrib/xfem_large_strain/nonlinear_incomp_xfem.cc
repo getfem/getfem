@@ -1059,9 +1059,9 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted for reduced mesh_fems");
     
-  gmm::simplest_newton_line_search simls;
-  gmm::default_newton_line_search dlnrs;
-  gmm::systematic_newton_line_search sylnrs;
+  getfem::simplest_newton_line_search simls;
+  getfem::default_newton_line_search dlnrs;
+  getfem::systematic_newton_line_search sylnrs;
 
 //  simplest_newton_line_search 1 *** default_newton_line_search 2 *** systematic_newton_line_search 3
  cout << "line search value" <<line_search_version<< endl;
@@ -1070,7 +1070,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     case 1:{
       if (Pseudo_Potential == 1){
 	bool with_pseudo_potential = true;
-        //gmm::simplest_newton_line_search simls;
+        //getfem::simplest_newton_line_search simls;
 	getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), simls, with_pseudo_potential);
 	cout << "/******************/" << endl;
@@ -1087,7 +1087,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     case 2:{
       if (Pseudo_Potential == 1){
 	bool with_pseudo_potential = true;
-	//gmm::default_newton_line_search dlnrs;
+	//getfem::default_newton_line_search dlnrs;
 	getfem::standard_solve(model, iter, getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), dlnrs, with_pseudo_potential);
 	cout << "/******************/" << endl;
@@ -1106,7 +1106,7 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
     case 3: {
       if (Pseudo_Potential == 1){
 	bool with_pseudo_potential = true;
-	//gmm::systematic_newton_line_search sylnrs;
+	//getfem::systematic_newton_line_search sylnrs;
 	getfem::standard_solve(model, iter,getfem::default_linear_solver<getfem::model_real_sparse_matrix,
 			       getfem::model_real_plain_vector>(model), sylnrs,  with_pseudo_potential);
 	cout << "/******************/" << endl;

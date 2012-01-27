@@ -1113,10 +1113,10 @@ bool cr_nl_elastostatic_problem::solve(plain_vector &U, plain_vector &P) {
 
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted for reduced mesh_fems");
     
-  gmm::simplest_newton_line_search simls;
-  gmm::default_newton_line_search dlnrs;
-  gmm::systematic_newton_line_search sylnrs;
-  gmm::quadratic_newton_line_search qdlnrs;
+  getfem::simplest_newton_line_search simls;
+  getfem::default_newton_line_search dlnrs;
+  getfem::systematic_newton_line_search sylnrs;
+  getfem::quadratic_newton_line_search qdlnrs;
 
 //  simplest_newton_line_search 1 *** default_newton_line_search 2 *** systematic_newton_line_search 3
  cout << "line search value" <<line_search_version<< endl;

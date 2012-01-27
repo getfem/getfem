@@ -462,7 +462,7 @@ void hyperbolic_problem::solve(void) {
     DYNAMIC.set_DFV(DFV);
     
     iter.init();
-    gmm::default_newton_line_search ls;
+    getfem::default_newton_line_search ls;
     getfem::standard_solve(MS, DYNAMIC, iter,
 			   getfem::default_linear_solver(DYNAMIC), ls);
     

@@ -459,7 +459,7 @@ bool elastostatic_problem::solve(plain_vector &U) {
 
 
     /* let the default non-linear solve (Newton) do its job */
-    gmm::default_newton_line_search ls;
+    getfem::default_newton_line_search ls;
     getfem::standard_solve(MS, final_model, iter,
 			   getfem::default_linear_solver(final_model), ls);
 
