@@ -16,8 +16,8 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
-% Static equilibrium of an elastic solid in contact with a rigid foundation.
-% Tests the different contact/friction formulations of Getfem.
+% Elastodynamic problem with unilateral contact with a rigid obstacle.
+% Newmark scheme.
 %
 % This program is used to check that matlab-getfem is working. This is also
 % a good example of use of GetFEM++.
@@ -53,16 +53,15 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 % Parameters of the model
 
-% Parameters of the model
-clambda = 1;           % Lame coefficient
-cmu = 1;               % Lame coefficient
-vertical_force = 0.05; % Volumic load in the vertical direction
-r = 10;                % Augmentation parameter
-dt = 0.1;
-beta = 0.5;
-gamma = 0.5;
+clambda = 1;             % Lame coefficient
+cmu = 1;                 % Lame coefficient
+vertical_force = 0.05;   % Volumic load in the vertical direction
+r = 10;                  % Augmentation parameter
+dt = 0.1;                % time step
+beta = 0.5;              % Newmark scheme coefficient
+gamma = 0.5;             % Newmark scheme coefficient
 
-niter = 100;   % Maximum number of iterations for Newton's algorithm.
+niter = 100;             % Maximum number of iterations for Newton's algorithm.
 
 % Signed distance representing the obstacle
 if (d == 1) obstacle = 'x'; elseif (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -149,7 +148,7 @@ gf_model_set(md, 'add initialized data', 'r', [r]);
 OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
 gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 gf_model_set(md, 'add continuous contact with rigid obstacle brick', ...
-      mim, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, 4);
+      mim, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, 1);
 
 nbdofl = size(ldof,1);
 U0 = zeros(nbdofu, 1);
@@ -172,15 +171,19 @@ for t = 0:dt:1
   U1 = gf_model_get(md, 'variable', 'u');
   LAMBDA1 = gf_model_get(md, 'variable', 'u');
   lambda_n = gf_model_get(md, 'variable', 'lambda_n');
-  if (d > 1)
-    VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-	  	  'u', 'clambda', 'cmu', mfvm);
-  end
+
+  % TODO : computation of the velocity V1 ...
+
   U0 = U1;
   LAMBDA0 = LAMBDA1;
   V0 = V1;
 end
     
+if (d > 1)
+  VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+ 	            'u', 'clambda', 'cmu', mfvm);
+end
+
 
 % set a custom colormap
 % r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
