@@ -19,7 +19,7 @@ else
   clear all;
   % main parameters 
   expe = 3;              % Experiment number
-  r = 500;                  % Augmentation parameter
+  r = 500;               % Augmentation parameter
   dirichlet_translation = -15;
   vertical_force = 20.0; % Volumic load in the vertical direction
   niter = 200;           % Maximum number of iterations for Newton's algorithm.

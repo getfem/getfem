@@ -1,5 +1,4 @@
-% The newton should converge "almost" every time with less than 100 iterations
-% (1% of failure is ok)
+% The newton should converge every time with less than 50 iterations
 
 
 clear all;
@@ -18,10 +17,10 @@ else
   clear all;
   % main parameters 
   expe = 3; % SHOULD BE 3;              % Experiment number
-  r = 200;                  % Augmentation parameter
+  r = 2000;                  % Augmentation parameter
   dirichlet_translation = -15;
   vertical_force = 20.0; % Volumic load in the vertical direction
-  niter = 100;           % Maximum number of iterations for Newton's algorithm.
+  niter = 200;           % Maximum number of iterations for Newton's algorithm.
   friction_coeff = 1.0;  % coefficient of friction
 
   draw = false;

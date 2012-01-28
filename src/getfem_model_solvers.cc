@@ -38,7 +38,7 @@ namespace getfem {
   void default_newton_line_search::init_search(double r, size_t git, double) {
     alpha_min_ratio = 0.9;
     alpha_min = 1e-10;
-    alpha_max_ratio = 10.0;
+    alpha_max_ratio = 4.0;
     alpha_mult = 0.25;
     itmax = size_type(-1);
     glob_it = git; if (git <= 1) count_pat = 0;
@@ -143,13 +143,16 @@ namespace getfem {
       gmm::resize(stateinit, md.nb_dof());
       gmm::copy(state, stateinit);
       R alpha(1), res, res_init, R0;
-      // size_type N = gmm::vect_size(residual());
 	  
       res_init = res = compute_res(false);      
       // cout << "first residual = " << residual() << endl << endl;
       R0 = gmm::real(gmm::vect_sp(dr, rhs));
 
-      // VECTOR first_rhs(N); gmm::copy(residual(), first_rhs);
+      // store the initial residual for the reprojection step.
+//       size_type N = gmm::vect_size(residual());
+//       VECTOR first_rhs(N); gmm::copy(residual(), first_rhs); // à éliminer
+
+
       // Compute the second derivative at alpha = 0 (value 2*a)
       // not very effective ... precision problem ?
       
@@ -188,63 +191,6 @@ namespace getfem {
 	// cout << "residual = " << residual() << endl << endl;
 	R0 = gmm::real(gmm::vect_sp(dr, rhs));
 
-
-
-// 	{ // reprojection step ...
-// 	  // detection des ddls "coupables"
-// 	  R mean = R(0);
-// 	  for (size_type i = 0; i < N; ++i) mean += gmm::abs(residual()[i]);
-// 	  mean /= R(N);
-// 	  cout << "mean = " << mean << endl << "selected : ";
-
-// 	  VECTOR new_dr(N);
-// 	  size_type Ndof = 0;
-// 	  for (size_type i = 0; i < N; ++i)
-// 	    if (gmm::abs(residual()[i])
-// 		> std::max(gmm::abs(first_rhs[i]), mean) * R(3)) {
-// 	      cout << i << " ";
-// 	      new_dr[i] = dr[i];
-// 	      ++Ndof;
-// 	    }
-// 	  cout << endl;
-
-// 	  if (Ndof > 0) {
-// 	    cout << "performing post-correction" << endl;
-	    
-// 	    // divided difference
-// 	    R EPS = 1e-8;
-// 	    R THR = 0.8;
-// 	    gmm::add(gmm::scaled(new_dr, -EPS), state);
-// 	    R res2 = compute_res();
-// 	    cout << "res = " << res << " res2 = " << res2 << " res_init = " << res_init << endl;
-// 	    cout << "pente = " << (res - res2) / EPS << endl;
-// 	    R beta = (res - res2) / EPS;
-// 	    R mini_alpha = (res2 - THR*res_init)/((beta > 0) ? beta : R(1));
-// 	    if (beta > 0) cout << "mini_alpha = " << mini_alpha << endl;
-// 	    if (beta > 0 && mini_alpha < alpha && mini_alpha > 0) {
-// 	      gmm::add(gmm::scaled(new_dr, -mini_alpha+EPS), state);
-// 	      R res3 = compute_res();
-// 	      cout << "res3 = " << res3 << endl;
-// 	      gmm::add(gmm::scaled(new_dr, mini_alpha*0.5), state);
-// 	      R res4 = compute_res();
-// 	      cout << "res4 = " << res4 << endl;
-// 	      gmm::add(gmm::scaled(new_dr, -mini_alpha), state);
-// 	      R res5 = compute_res();
-// 	      cout << "res5 = " << res5 << endl;
-// 	    } else {
-
-// 	      // cancel ...
-// 	    }
-// 	  }
-
-// 	  // cancel correction
-// 	  gmm::add(stateinit, gmm::scaled(dr, alpha), state); // à éliminer
-// 	  res = compute_res(); // à éliminer
-
-//	}
-
-
-
 	++ nit;
       } while (!ls.is_converged(res, R0));
 
@@ -254,6 +200,71 @@ namespace getfem {
 	res = ls.converged_residual();
 	compute_residual();
       }
+
+  //     if (1) { // reprojection step ...
+// 	// detection des ddls "coupables"
+// 	R mean = R(0);
+// 	for (size_type i = 0; i < N; ++i) mean += gmm::abs(residual()[i]);
+// 	mean /= R(N);
+// 	cout << "mean = " << mean << endl << "selected : ";
+	
+// 	VECTOR new_dr(N);
+// 	size_type Ndof = 0;
+// 	for (size_type i = 0; i < N; ++i)
+// 	  if (gmm::abs(residual()[i])
+// 	      > std::max(gmm::abs(first_rhs[i]), mean) * R(4)) {
+// 	    cout << i << " ";
+// 	    new_dr[i] = dr[i];
+// 	    ++Ndof;
+// 	  }
+// 	cout << endl;
+	
+// 	if (Ndof > 0) {
+
+// 	  R EPS = 1e-8;
+// 	  R THR = 0.8;
+// 	  R mini_alpha = alpha * THR;
+
+// 	  cout << "performing post-correction" << endl;
+// 	  cout << "res = " << res << " res_init = " << res_init << endl;
+	  
+
+// 	  // divided difference
+// 	  gmm::add(gmm::scaled(new_dr, -EPS), state);
+// 	  R res2 = compute_res();
+// 	  cout << "pente = " << (res - res2) / EPS << endl;
+// 	  R beta = (res - res2) / EPS;
+// 	  mini_alpha = (res2 - THR*std::min(res_init, res))/((beta != R(0)) ? beta : R(1));
+
+// 	  cout << "mini_alpha = " << mini_alpha << endl;
+// 	  if (mini_alpha > alpha * THR)
+// 	    mini_alpha = alpha * THR;
+
+// 	  if (mini_alpha > 0) {
+	  
+// 	    gmm::add(gmm::scaled(new_dr, -mini_alpha+EPS), state);
+// 	    R res4 = compute_res(), res3;
+// 	    cout << "res4 = " << res4 << endl;
+// 	    size_type mini_it = 0;
+// 	    do {
+// 	      res3 = res4;
+// 	      mini_alpha /= R(2); mini_it++;
+// 	      gmm::add(gmm::scaled(new_dr, mini_alpha), state);
+// 	      res4 = compute_res();
+// 	      cout << "res4 = " << res4 << endl;
+// 	    } while (res4 < res3 && mini_it <= 6);
+	    
+// 	    if (res4 < res3) { res3 = res4; }
+// 	    else gmm::add(gmm::scaled(new_dr, -mini_alpha), state);
+	    
+// 	    if (res3 > res) { // cancel correction
+// 	      gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+// 	    }
+// 	  }
+// 	  else gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+// 	  res = compute_res();
+// 	}
+//       }
       return alpha;
     }
 

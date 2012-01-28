@@ -3881,7 +3881,7 @@ namespace getfem {
     md.disable_brick(id2dt2b);
 
     if (md.is_complex()) {
-      typedef std::complex<scalar_type> complex_type;
+      //      typedef std::complex<scalar_type> complex_type;
 
       complex_type twobeta = md.complex_variable(ptwobeta)[0];
       complex_type gamma = md.complex_variable(pgamma)[0];

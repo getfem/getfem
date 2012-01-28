@@ -57,8 +57,9 @@ A very classical problem at this step is the incompatibility of the C and C++ li
 
 In order to fix this problem one has to enforce Matlab to load the C and C++ libraries of the system. There is two possibilities to do this. The most radical is to delete the C and C++ libraries distributed along with Matlab (if you have administrator privileges ...!) for instance with::
 
-  rm /usr/local/matlab14-SP3/sys/os/??/libgcc_s.so.1
-  rm /usr/local/matlab14-SP3/sys/os/??/libstdc++_s.so.6
+  mv /usr/local/matlab14-SP3/sys/os/??/libgcc_s.so.1 libgcc_s.so.1_old
+  mv /usr/local/matlab14-SP3/sys/os/??/libstdc++_s.so.6 libstdc++_s.so.6_old
+  mv /usr/local/matlab14-SP3/sys/os/??/libgfortran.so.3 libgfortran.so.3_old
 
 The second possibility is to set the variable LDPRELOAD before launching Matlab for instance with (depending on the system)::
 
