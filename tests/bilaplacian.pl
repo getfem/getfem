@@ -22,7 +22,7 @@ sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
-print TMPF <<
+print TMPF <<""
 LX = 1.0; LY = LX; LZ = LX;
 MESH_NOISED = 0;
 MESH_TYPE = 'GT_PK(2,1)';

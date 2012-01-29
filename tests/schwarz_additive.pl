@@ -21,7 +21,7 @@ sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
-print TMPF <<
+print TMPF <<""
 N = 3;                  % dimension.
 PG = 9.81;		% gravity constant.
 RHO = 0.1;     	        % mass density

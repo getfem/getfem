@@ -21,7 +21,7 @@ sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
-print TMPF <<
+print TMPF <<""
 LX =50;
 LY =25;
 NX =10;

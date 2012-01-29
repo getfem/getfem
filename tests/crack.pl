@@ -22,7 +22,7 @@ $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
 
-print TMPF <<
+print TMPF <<""
 MU = 1.0;
 LAMBDA = 1.0;
 MESH_NOISED = 0;

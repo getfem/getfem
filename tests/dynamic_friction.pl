@@ -21,7 +21,7 @@ sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
-print TMPF <<
+print TMPF <<""
 MU = 30;
 LAMBDA = 55;
 FRICTION_COEF = 0.0;    % Friction coefficient.

@@ -21,7 +21,7 @@ sub catch { `rm -f $tmp`; exit(1); }
 $SIG{INT} = 'catch';
 
 open(TMPF, ">$tmp") or die "Open file impossible : $!\n";
-print TMPF <<
+print TMPF <<""
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 0.0;   	% Lamé coefficient.
 EPSILON = 0.01;          % thickness of the plate
