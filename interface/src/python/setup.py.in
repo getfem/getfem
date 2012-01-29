@@ -16,11 +16,12 @@ npy_include_dir = numpy.get_include()
 cclibopts = "".split() # getfem is explicitly added below
 cclibopts += '@LIBS@'.split()
 
-libnames = [l[2:] for l in cclibopts if l.startswith("-l")]
+libnames = ['getfemint','getfem']
+libnames += [l[2:] for l in cclibopts if l.startswith("-l")]
 libdirs  = [l[2:] for l in cclibopts if l.startswith("-L")]
 libdirs += [l for l in cclibopts if not l.startswith("-")]
 
-libnames += ['getfemint','getfem','stdc++','m']
+libnames += ['stdc++','m']
 libdirs = ['../.libs', '../../../src/.libs'] + libdirs
 for i in range(0,len(libdirs)):
     if (os.path.isfile(libdirs[i])):
