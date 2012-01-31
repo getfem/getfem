@@ -565,6 +565,15 @@ namespace getfem {
    const std::string &dataname, const mesh_fem &mf_vm,
    model_real_plain_vector &VM, bool tresca);
 
+
+  void compute_sigmahathat(model &md,
+			   const std::string &varname, 
+			   const abstract_hyperelastic_law &AHL,
+			   const std::string &dataname,
+			   const mesh_fem &mf_sigma,
+			   model_real_plain_vector &SIGMA);
+
+
   /**
      Compute the Von-Mises stress or the Tresca stress of a field
      with respect to the constitutive elasticity law AHL (only valid in 3D).
