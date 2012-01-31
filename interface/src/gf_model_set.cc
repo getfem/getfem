@@ -973,9 +973,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        dal::shared_ptr<gsparse> B = in.pop().to_sparse();
        bool issymmetric = false;
        bool iscoercive = false;
-       if (in.remaining()) issymmetric = (in.pop().to_integer(0,1) != 1);
+       if (in.remaining()) issymmetric = (in.pop().to_integer(0,1) != 0);
        if (!issymmetric && in.remaining())
-         iscoercive = (in.pop().to_integer(0,1) != 1);
+         iscoercive = (in.pop().to_integer(0,1) != 0);
 
        size_type ind
        = getfem::add_explicit_matrix(md->model(), varname1, varname2,
@@ -1257,6 +1257,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
+    
+       
 
 
     /*@SET ind = ('add Kirchhoff-Love plate brick', @tmim mim, @str varname, @str dataname_D, @str dataname_nu [, @int region])
