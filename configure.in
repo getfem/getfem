@@ -615,7 +615,7 @@ if test $paralevel -ge 2; then
 fi;
 
 METIS_LIBS=""
-AC_ARG_ENABLE(mumps,
+AC_ARG_ENABLE(metis,
  [AS_HELP_STRING([--enable-metis],[enable the use of the METIS library.])],
  [case $enableval in
    yes | "") usemetis="yes" ;;
