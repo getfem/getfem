@@ -15,6 +15,7 @@ npy_include_dir = numpy.get_include()
 # cclibopts = "../../../src/.libs/libgetfem.a".split()
 cclibopts = "".split() # getfem is explicitly added below
 cclibopts += '@LIBS@'.split()
+cclibopts += '@LDFLAGS@'.split()
 
 libnames = ['getfemint','getfem']
 libnames += [l[2:] for l in cclibopts if l.startswith("-l")]
