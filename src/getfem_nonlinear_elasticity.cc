@@ -948,6 +948,62 @@ namespace getfem {
       }
     }
   }
+
+
+  void compute_sigmahathat(model &md,
+		     const std::string &varname, 
+		     const abstract_hyperelastic_law &AHL,
+		     const std::string &dataname,
+		     const mesh_fem &mf_sigma,
+		     model_real_plain_vector &SIGMA) {
+    const mesh_fem &mf_u = md.mesh_fem_of_variable(varname);
+    const model_real_plain_vector &u = md.real_variable(varname);
+    const mesh_fem *mf_params = md.pmesh_fem_of_variable(dataname);
+    const model_real_plain_vector &params = md.real_variable(dataname);
+    
+    size_type sl = gmm::vect_size(params);
+    if (mf_params) sl = sl * mf_params->get_qdim() / mf_params->nb_dof();
+    GMM_ASSERT1(sl == AHL.nb_params(), "Wrong number of coefficients for "
+		"the nonlinear constitutive elastic law");
+    
+    unsigned N = unsigned(mf_u.linked_mesh().dim());
+    unsigned NP = unsigned(AHL.nb_params()), NFem = mf_u.get_qdim();
+    size_type ratio = gmm::vect_size(SIGMA) / mf_sigma.nb_dof();
+    
+    GMM_ASSERT1(((ratio == 1) || (ratio == N*N)) &&
+		(gmm::vect_size(SIGMA) == ratio * mf_sigma.nb_dof()),
+		"The vector has not the good size");
+
+    model_real_plain_vector GRAD(mf_sigma.nb_dof()*NFem*N);
+    model_real_plain_vector PARAMS(mf_sigma.nb_dof()*NP);
+    if (mf_params) interpolation(*mf_params, mf_sigma, params, PARAMS);
+    compute_gradient(mf_u, mf_sigma, u, GRAD);
+    base_matrix E(N, N), gradphi(NFem,N),gradphit(N,NFem), Id(N, N),
+      sigmahathat(N,N),aux(NFem,N), sigma(NFem,NFem),
+      IdNFem(NFem, NFem);
+    base_vector p(NP);
+    if (!mf_params) gmm::copy(params, p);
+    base_vector eig(NFem);
+    base_vector ez(NFem);	// vector normal at deformed surface, (ex X ey)
+    gmm::copy(gmm::identity_matrix(), Id);
+    gmm::copy(gmm::identity_matrix(), IdNFem);
+    for (size_type i = 0; i < mf_sigma.nb_dof()/ratio; ++i) {
+      gmm::resize(gradphi,NFem,N);
+      std::copy(GRAD.begin()+i*NFem*N, GRAD.begin()+(i+1)*NFem*N,
+		gradphit.begin());
+      gmm::copy(gmm::transposed(gradphit),gradphi);
+      for (unsigned int alpha = 0; alpha <N; ++alpha)
+	gradphi(alpha, alpha)+=1;
+      gmm::mult(gmm::transposed(gradphi), gradphi, E);
+      gmm::add(gmm::scaled(Id, -scalar_type(1)), E);
+      gmm::scale(E, scalar_type(1)/scalar_type(2));
+      if (mf_params)
+	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
+      AHL.sigma(E, sigmahathat, p, scalar_type(1));
+      std::copy(sigmahathat.begin(), sigmahathat.end(), SIGMA.begin()+i*N*N);
+    }
+  }
+
   
 
   // ----------------------------------------------------------------------

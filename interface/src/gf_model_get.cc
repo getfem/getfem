@@ -739,6 +739,42 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(VMM);
        );
 
+    /*@GET V = ('compute second Piola Kirchhoff tensor', @str varname, @str lawname, @str dataname, @tmf mf_sigma)
+      Compute on `mf_sigma` the second Piola Kirchhoff stress tensor of a field
+      for nonlinear elasticity in 3D. `lawname` is the constitutive law which
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      `dataname` is a vector of parameters for the constitutive law. Its length
+      depends on the law. It could be a short vector of constant values or a
+      vector field described on a finite element method for variable
+      coefficients.
+     @*/
+    sub_command
+      ("compute second Piola Kirchhoff tensor", 4, 4, 0, 1,
+       std::string varname = in.pop().to_string();
+       std::string lawname = in.pop().to_string();
+       std::string dataname = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+
+
+       unsigned N = unsigned(gfi_mf->mesh_fem().linked_mesh().dim());
+       size_type ratio = 1;
+       if ((gfi_mf->mesh_fem()).get_qdim() == 1) ratio = N*N;
+       
+       getfem::model_real_plain_vector
+         VMM(ratio*(gfi_mf->mesh_fem()).nb_dof());
+
+       getfem::compute_sigmahathat
+       (md->model(), varname,
+        abstract_hyperelastic_law_from_name
+        (lawname, gfi_mf->mesh_fem().linked_mesh().dim()),
+        dataname, gfi_mf->mesh_fem(), VMM);
+       out.pop().from_dcvector(VMM);
+       );
+
+
+    
+    
+
 
 
     /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
