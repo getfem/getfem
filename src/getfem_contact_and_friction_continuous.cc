@@ -1468,4 +1468,282 @@ namespace getfem {
   }
 
 
+  //=========================================================================
+  //
+  //  Continuous penalized contact with friction between non-matching meshes.
+  //
+  //=========================================================================
+
+  template<typename MAT, typename VECT1>
+  void asm_penalized_contact_nonmatching_meshes_tangent_matrix // frictionless
+  (MAT &Ku1u1, MAT &Ku2u2, MAT &Ku1u2, MAT &Ku2u1,
+   const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
+   const getfem::mesh_fem *pmf_lambda, const VECT1 *lambda,
+   const scalar_type r, const mesh_region &rg, int option = 1) {
+
+    contact_nonmatching_meshes_nonlinear_term
+      nterm((option == 1) ? K_UU_V1 : K_UU_V2, r,
+            mf_u1, U1, mf_u2, U2, pmf_lambda, lambda);
+
+    const std::string aux_fems = pmf_lambda ? "#1,#2,#3" : "#1,#2";
+
+    getfem::generic_assembly assem;
+    assem.set("M$1(#1,#1)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j); "
+              "M$2(#2,#2)+=comp(NonLin(#1," + aux_fems + ").vBase(#2).vBase(#2))(i,j,:,i,:,j); "
+              "M$3(#1,#2)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#2))(i,j,:,i,:,j); "
+              "M$4(#2,#1)+=comp(NonLin(#1," + aux_fems + ").vBase(#2).vBase(#1))(i,j,:,i,:,j)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    if (pmf_lambda)
+      assem.push_mf(*pmf_lambda);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(Ku1u1);
+    assem.push_mat(Ku2u2);
+    assem.push_mat(Ku1u2);
+    assem.push_mat(Ku2u1);
+    assem.assembly(rg);
+
+    gmm::scale(Ku1u2, scalar_type(-1));
+    gmm::scale(Ku2u1, scalar_type(-1));
+  }
+
+  template<typename VECT1>
+  void asm_penalized_contact_nonmatching_meshes_rhs // frictionless
+  (VECT1 &Ru1, VECT1 &Ru2,
+   const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
+   const getfem::mesh_fem *pmf_lambda, const VECT1 *lambda,
+   scalar_type r, const mesh_region &rg, int option = 1) {
+
+    contact_nonmatching_meshes_nonlinear_term
+      nterm((option == 1) ? RHS_U_V5 : RHS_U_V2, r,
+            mf_u1, U1, mf_u2, U2, pmf_lambda, lambda);
+
+    getfem::generic_assembly assem;
+    if (pmf_lambda)
+      assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
+                "V$2(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i)");
+    else
+      assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2).vBase(#1))(i,:,i); "
+                "V$2(#2)+=comp(NonLin$1(#1,#1,#2).vBase(#2))(i,:,i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    if (pmf_lambda)
+      assem.push_mf(*pmf_lambda);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(Ru1);
+    assem.push_vec(Ru2);
+    assem.assembly(rg);
+    gmm::scale(Ru2, scalar_type(-1));
+  }
+
+  struct penalized_contact_nonmatching_meshes_brick : public virtual_brick {
+
+    size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
+                        // expected to come in contact.
+    bool Tresca_version, contact_only;
+    int option;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      // Integration method
+      GMM_ASSERT1(mims.size() == 1,
+                  "Penalized contact between nonmatching meshes bricks need a single mesh_im");
+      const mesh_im &mim = *mims[0];
+
+      // Variables : u1, u2
+      GMM_ASSERT1(vl.size() == 2,
+                  "Penalized contact between nonmatching meshes bricks need two variables");
+      const model_real_plain_vector &u1 = md.real_variable(vl[0]);
+      const model_real_plain_vector &u2 = md.real_variable(vl[1]);
+      const mesh_fem &mf_u1 = *(md.pmesh_fem_of_variable(vl[0]));
+      const mesh_fem &mf_u2 = *(md.pmesh_fem_of_variable(vl[1]));
+
+      size_type N = mf_u1.linked_mesh().dim();
+
+      // Data : r, [lambda,] [friction_coeff,] [alpha,] [WT1, WT2]
+      size_type nb_data_1 = ((option == 1) ? 1 : 2) + (contact_only ? 0 : 1);
+      size_type nb_data_2 = nb_data_1 + (contact_only ? 0 : 3);
+      GMM_ASSERT1(dl.size() >= nb_data_1 && dl.size() <= nb_data_2,
+                  "Wrong number of data for penalized contact between nonmatching meshes "
+                  << "brick, " << dl.size() << " should be between "
+                  << nb_data_1 << " and " << nb_data_2 << ".");
+
+      size_type nd = 0;
+      const model_real_plain_vector &vr = md.real_variable(dl[nd]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+
+      size_type sl;
+      const model_real_plain_vector *lambda = 0;
+      const mesh_fem *pmf_lambda = 0;
+      if (option != 1) {
+        nd++;
+        lambda = &(md.real_variable(dl[nd]));
+        pmf_lambda = md.pmesh_fem_of_variable(dl[nd]);
+        sl = gmm::vect_size(*lambda) * pmf_lambda->get_qdim() / pmf_lambda->nb_dof();
+        GMM_ASSERT1(sl == (contact_only ? 1 : N),
+                    "the data corresponding to the contact stress "
+                    "has not the right format");
+      }
+
+      const model_real_plain_vector *f_coeff = 0;
+      const mesh_fem *pmf_coeff = 0;
+      scalar_type alpha = 1;
+      const model_real_plain_vector *WT = 0;
+      if (!contact_only) {
+        nd++;
+        f_coeff = &(md.real_variable(dl[nd]));
+        pmf_coeff = md.pmesh_fem_of_variable(dl[nd]);
+        sl = gmm::vect_size(*f_coeff);
+        if (pmf_coeff) { sl *= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
+        GMM_ASSERT1(sl == 1,
+                  "the data corresponding to the friction coefficient "
+                  "has not the right format");
+
+        if (dl.size() > nd) {
+          nd++;
+          alpha = md.real_variable(dl[nd])[0];
+          GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[nd])) == 1,
+                      "Parameter alpha should be a scalar");
+        }
+
+        if (dl.size() > nd) {
+          nd++;
+          WT = &(md.real_variable(dl[nd]));
+        }
+      }
+
+      GMM_ASSERT1(matl.size() == 4, "Wrong number of terms for "
+                  "penalized contact between nonmatching meshes brick");
+
+      mesh_region rg(region);
+      mf_u1.linked_mesh().intersect_with_mpi_region(rg); // FIXME: mfu_2?
+
+      // FIXME: use stored objects instead of creating them on the fly
+      getfem::mesh_fem proj_mf_u2(mim.linked_mesh(),N);
+      getfem::pfem ifem = new_projected_fem(mf_u2, mim, rg2, rg1);
+      proj_mf_u2.set_finite_element(mim.linked_mesh().convex_index(), ifem);
+
+      size_type nbdof1=mf_u1.nb_basic_dof();
+      size_type nbdof2=proj_mf_u2.nb_basic_dof();
+      std::vector<size_type> ind;
+      ind.reserve(nbdof2);
+      for (size_type i=0; i < nbdof2; i++) {
+          size_type dof = size_type(-1);
+          size_type cv = proj_mf_u2.first_convex_of_basic_dof(i) ;
+          for (int j=0; j < int(proj_mf_u2.nb_basic_dof_of_element(cv)); j++) {
+              if (proj_mf_u2.ind_basic_dof_of_element(cv)[j] == i) {
+                  dof = ifem->index_of_global_dof(cv,j);
+              }
+          }
+          ind.push_back(dof);
+      }
+      gmm::unsorted_sub_index SUBI(ind);
+
+      model_real_plain_vector proj_u2(nbdof2);
+      gmm::copy(gmm::sub_vector(u2, SUBI), proj_u2);
+
+      if (version & model::BUILD_MATRIX) {
+        GMM_TRACE2("Penalized contact between nonmatching meshes tangent term");
+        gmm::clear(matl[0]);
+        gmm::clear(matl[1]);
+        gmm::clear(matl[2]);
+        gmm::clear(matl[3]);
+
+        model_real_sparse_matrix Ku2u2(nbdof2,nbdof2);
+        model_real_sparse_matrix Ku1u2(nbdof1,nbdof2);
+        model_real_sparse_matrix Ku2u1(nbdof2,nbdof1);
+
+        if (contact_only) {
+          asm_penalized_contact_nonmatching_meshes_tangent_matrix
+            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, proj_mf_u2, proj_u2,
+             pmf_lambda, lambda, vr[0], rg, option);
+        }
+//        else
+//          asm_penalized_contact_nonmatching_meshes_tangent_matrix
+//            (matl[0], mim, mf_u, u, mf_lambda, lambda, mf_obstacle, obstacle,
+//             vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
+        gmm::copy(Ku2u2, gmm::sub_matrix(matl[1], SUBI));
+        gmm::copy(Ku1u2, gmm::sub_matrix(matl[2], gmm::sub_interval(0, nbdof1), SUBI));
+        gmm::copy(Ku2u1, gmm::sub_matrix(matl[3], SUBI, gmm::sub_interval(0, nbdof1)));
+      }
+
+      if (version & model::BUILD_RHS) {
+        gmm::clear(vecl[0]);
+        gmm::clear(vecl[1]);
+
+        model_real_plain_vector Ru2(nbdof2);
+
+        if (contact_only)
+          asm_penalized_contact_nonmatching_meshes_rhs
+            (vecl[0], Ru2, mim, mf_u1, u1, proj_mf_u2, proj_u2, pmf_lambda, lambda,
+             vr[0], rg, option);
+//        else
+//          asm_penalized_contact_nonmatching_meshes_rhs
+//            (vecl[0], mim, mf_u, u, mf_lambda, lambda, mf_obstacle, obstacle,
+//             vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
+        gmm::copy(Ru2, gmm::sub_vector(vecl[1], SUBI));
+      }
+    }
+
+    penalized_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
+                                               bool contact_only_, int option_)
+    : rg1(rg1_), rg2(rg2_), contact_only(contact_only_), option(option_) {
+      Tresca_version = false;   // for future version ...
+      set_flags(contact_only
+                ? "Continuous penalized contact between nonmatching meshes brick"
+                : "Continuous penalized contact with friction between nonmatching "
+                  "meshes brick",
+                false /* is linear*/, contact_only /* is symmetric */,
+                true /* is coercive */, true /* is real */,
+                false /* is complex */);
+    }
+
+  };
+
+
+  //=========================================================================
+  //  Add a frictionless contact condition between two bodies discretized
+  //  with nonmatching meshes.
+  //=========================================================================
+
+  size_type add_penalized_contact_between_nonmatching_meshes_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &dataname_r,
+   size_type region1, size_type region2,
+   int option, const std::string &dataname_n) {
+
+    pbrick pbr = new penalized_contact_nonmatching_meshes_brick(region1, region2, true, option);
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u1, varname_u1, true));
+    tl.push_back(model::term_description(varname_u2, varname_u2, true));
+    tl.push_back(model::term_description(varname_u1, varname_u2, true));
+    tl.push_back(model::term_description(varname_u2, varname_u1, true));
+
+    model::varnamelist dl(1, dataname_r);
+    switch (option) {
+    case 1: break;
+    case 2: dl.push_back(dataname_n); break;
+    default: GMM_ASSERT1(false, "Penalized contact brick : invalid option");
+    }
+
+    model::varnamelist vl(1, varname_u1);
+    vl.push_back(varname_u2);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region1);
+  }
+
 }  /* end of namespace getfem.                                             */

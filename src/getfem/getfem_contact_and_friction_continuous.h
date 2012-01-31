@@ -146,6 +146,25 @@ namespace getfem {
    const std::string &dataname_wt = "");
 
 
+  /** Add a penalized contact frictionless condition between nonmatching
+      meshes to the model.
+      The condition is applied on the variabls `varname_u1` and  `varname_u2`
+      on the boundaries corresponding to `region1` and `region2`.
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe an approximate non-penetration condition
+      but not too large not to deteriorate too much the conditionning of
+      the tangent system. `dataname_n` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda_n (this
+      allows the use of an Uzawa algorithm on the corresponding augmented
+      Lagrangian formulation)
+  */
+  size_type add_penalized_contact_between_nonmatching_meshes_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &dataname_r,
+   size_type region1, size_type region2,
+   int option = 1, const std::string &dataname_n = "");
+
+
   enum contact_nonlinear_term_version {  RHS_L_V1,
                                          RHS_L_V2,
                                          K_LL_V1,
