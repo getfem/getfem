@@ -103,7 +103,7 @@ namespace getfem {
    const std::string &dataname_vt = "");
 
 
-  /** Adds a penalized contact frictionless condition with a rigid obstacle
+  /** Add a penalized contact frictionless condition with a rigid obstacle
       to the model.
       The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
@@ -122,7 +122,7 @@ namespace getfem {
    const std::string &dataname_obs, const std::string &dataname_r,
    size_type region, int option = 1, const std::string &dataname_n = "");
 
-  /** Adds a penalized contact condition with Coulomb friction with a
+  /** Add a penalized contact condition with Coulomb friction with a
       rigid obstacle to the model.
       The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
@@ -386,7 +386,7 @@ namespace getfem {
       GMM_ASSERT1(mf_u2.get_qdim() == N, "wrong qdim for the 2nd mesh_fem");
     }
 
-    // this methode prepares all necessary data for the compute method
+    // this method prepares all necessary data for the compute method
     // of the base class
     virtual void prepare(fem_interpolation_context& ctx, size_type nb);
 

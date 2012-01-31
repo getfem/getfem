@@ -237,7 +237,7 @@ namespace getfem {
    size_type region, const std::string &obstacle, bool symmetrized);
 
 
-  /** Adds a frictionless contact condition between two faces of one or two
+  /** Add a frictionless contact condition between two faces of one or two
       elastic bodies. The condition is applied on the variable `varname_u` or
       the variables `varname_u1` and `varname_u2` depending if a single or
       two distinct displacement fields are given. Vectors `rg1` and `rg2`

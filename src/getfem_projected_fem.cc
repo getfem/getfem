@@ -367,12 +367,23 @@ namespace getfem {
             size_type nbdof = mf_source.nb_basic_dof_of_face_of_element(gppd.cv, gppd.f);
             pfem pf = mf_source.fem_of_element(gppd.cv);
             bgeot::convex_ind_ct ind_pts_fc = pf->structure(gppd.cv)->ind_points_of_face(gppd.f);
-            for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) { // local dof with respect to the source convex face
-              size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
-              size_type loc_dof2 = ind_pts_fc[loc_dof]; // local dof with respect to the source convex
-              gppd.local_dof[loc_dof2] = dofs.is_in(idof) ? ind_dof[idof]
-                                                          : size_type(-1);
-            }
+            unsigned rdim = target_dim() / pf->target_dim();
+            if (rdim == 1)
+              for (size_type loc_dof = 0; loc_dof < nbdof; ++loc_dof) { // local dof with respect to the source convex face
+                size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
+                size_type loc_dof2 = ind_pts_fc[loc_dof]; // local dof with respect to the source convex
+                gppd.local_dof[loc_dof2] = dofs.is_in(idof) ? ind_dof[idof]
+                                                            : size_type(-1);
+              }
+            else
+              for (size_type ii = 0; ii < nbdof/rdim; ++ii)
+                for (size_type jj = 0; jj < rdim; ++jj) {
+                  size_type loc_dof = ii*rdim + jj; // local dof with respect to the source convex face
+                  size_type idof = mf_source.ind_basic_dof_of_face_of_element(gppd.cv, gppd.f)[loc_dof];
+                  size_type loc_dof2 = ind_pts_fc[ii]*rdim + jj; // local dof with respect to the source convex
+                  gppd.local_dof[loc_dof2] = dofs.is_in(idof) ? ind_dof[idof]
+                                                              : size_type(-1);
+                }
           }
         }
       }
@@ -611,7 +622,7 @@ namespace getfem {
         actualize_fictx(pf, cv, ptref);
         pf->real_grad_base_value(fictx, taux);
         for (size_type i = 0; i < e.nb_dof; ++i)
-          ind_dof.at(e.inddof.at(i)) = i;
+          ind_dof.at(e.inddof[i]) = i;
 
         unsigned rdim = target_dim() / pf->target_dim();
         if (rdim == 1) // mdim == 0
@@ -631,8 +642,8 @@ namespace getfem {
                   t(ij,j,k) = taux(i,0,k);
             }
 
-          for (size_type i = 0; i < e.nb_dof; ++i)
-            ind_dof[e.inddof[i]] = size_type(-1);
+        for (size_type i = 0; i < e.nb_dof; ++i)
+          ind_dof[e.inddof[i]] = size_type(-1);
       }
     }
   }
@@ -658,6 +669,7 @@ namespace getfem {
       gausspt_projection_data &gppd = git->second;
       if (gppd.iflags & 1) {
         normal = gppd.normal;
+        gap = gppd.gap;
       }
     }
     else {
