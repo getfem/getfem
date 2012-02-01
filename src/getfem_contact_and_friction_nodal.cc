@@ -566,9 +566,12 @@ namespace getfem {
     mutable model_real_plain_vector RLN, RLT;
     mutable scalar_type r, gamma;
     mutable bool is_init;
-    bool Tresca_version, symmetrized, contact_only;
+    bool Tresca_version, contact_only;
     bool really_stationary, friction_dynamic_term;
     bool two_variables, Hughes_stabilized;
+    int augmentation_version; // 0 for non-symmetric Alart-Curnier version
+                              // 1 for symmetric Alart-Curnier version
+                              // 2 for new version
 
     void init_BBN_BBT(void) const {
       gmm::resize(BBN1, gmm::mat_nrows(BN1), gmm::mat_ncols(BN1));
@@ -618,9 +621,6 @@ namespace getfem {
                  const model_real_plain_vector &lambda_t,
                  const model_real_plain_vector &wt1,
                  const model_real_plain_vector &wt2) const {
-      gmm::resize(RLN, gmm::mat_nrows(BN1));
-      if (!contact_only) gmm::resize(RLT, gmm::mat_nrows(BT1));
-
       gmm::copy(gmm::scaled(gap, r), RLN);
       for (size_type i = 0; i < gmm::mat_nrows(BN1); ++i) RLN[i] *= alpha[i];
       gmm::add(lambda_n, RLN);
@@ -659,7 +659,7 @@ namespace getfem {
       GMM_ASSERT1(matl.size() == nbt,
                   "Wrong number of terms for the contact brick");
 
-      const scalar_type vt1 = scalar_type(1);
+      const scalar_type vt1 = scalar_type(1), vt0 = scalar_type(0);
       size_type nbc = gmm::mat_nrows(BN1);
       size_type d = gmm::mat_nrows(BT1)/nbc;
 
@@ -688,33 +688,54 @@ namespace getfem {
 
       // pre-computations
       if (!is_init) init_BBN_BBT();
-      precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
+      gmm::resize(RLN, nbc);
+      if (!contact_only) gmm::resize(RLT, nbc*d);
+      if (augmentation_version <= 1)
+	precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
 
       if (version & model::BUILD_MATRIX) {
         // Unilateral contact
         gmm::clear(T_n_n); gmm::clear(T_u1_u1);
         if (two_variables) gmm::clear(T_u2_u2);
-        gmm::copy(gmm::scaled(gmm::transposed(BBN1), -vt1), T_u1_n);
-        if (two_variables)
-          gmm::copy(gmm::scaled(gmm::transposed(BBN2), -vt1), T_u2_n);
-        for (size_type i=0; i < nbc; ++i) {
-          if (RLN[i] >= scalar_type(0)) {
-            gmm::clear(gmm::mat_col(T_u1_n, i));
-            if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
-            T_n_n(i, i) = -vt1/r;
-          }
-          else {
-            if (Hughes_stabilized)
-              gmm::copy(gmm::scaled(gmm::mat_row(DDN, i), -vt1), gmm::mat_col(T_n_n, i));
-          }
-        }
-        if (Hughes_stabilized) {
-          model_real_sparse_matrix aux(gmm::mat_nrows(T_n_n), gmm::mat_nrows(T_n_n));
-          gmm::copy(gmm::transposed(T_n_n), aux);
-          gmm::copy(aux, T_n_n);
-        }
-        gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
-        if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
+
+	switch (augmentation_version) {
+	case 0: case 1:
+	  gmm::copy(gmm::scaled(gmm::transposed(BBN1), -vt1), T_u1_n);
+	  if (two_variables)
+	    gmm::copy(gmm::scaled(gmm::transposed(BBN2), -vt1), T_u2_n);
+	  for (size_type i=0; i < nbc; ++i) {
+	    if (RLN[i] >= vt0) {
+	      gmm::clear(gmm::mat_col(T_u1_n, i));
+	      if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
+	      T_n_n(i, i) = -vt1/r;
+	    }
+	    if (RLN[i] < scalar_type(0) && Hughes_stabilized)
+	      gmm::copy(gmm::scaled(gmm::mat_row(DDN, i), -vt1),
+			gmm::mat_col(T_n_n, i));
+	  }
+	  if (Hughes_stabilized) {
+	    model_real_sparse_matrix aux(nbc, nbc);
+	    gmm::copy(gmm::transposed(T_n_n), aux);
+	    gmm::copy(aux, T_n_n);
+	  }
+	  gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
+	  if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
+	  break;
+	case 2:
+	  gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
+	  if (two_variables)
+	    gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
+	  for (size_type i=0; i < nbc; ++i) {
+	    if (lambda_n[i] >= vt0) {
+	      gmm::clear(gmm::mat_col(T_u1_n, i));
+	      if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
+	      T_n_n(i, i) = -vt1/r;
+	    }
+	  }
+	  gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
+	  if (two_variables) gmm::copy(gmm::scaled(BBN2, -r), T_n_u2);
+	  break;
+	}
 
         // Friction
         if (!contact_only) {
@@ -723,49 +744,102 @@ namespace getfem {
           gmm::clear(T_u1_t); gmm::clear(T_t_n); gmm::clear(T_t_t);
           if (two_variables) gmm::clear(T_u2_t);
 
-          for (size_type i=0; i < nbc; ++i) {
-            gmm::sub_interval SUBI(i*d, d);
-            scalar_type th = Tresca_version ? threshold[i]
-              : - lambda_n[i] * friction_coeff[i];
-            ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
-            if (!really_stationary)
-              for (size_type k1 = 0; k1 < d; ++k1)
-                for (size_type k2 = 0; k2 < d; ++k2) {
-                  gmm::add(gmm::scaled(gmm::mat_row(BBT1, i*d+k1), -pg(k2,k1)),
-                           gmm::mat_col(T_u1_t, i*d+k2));
-                  if (two_variables)
-                    gmm::add(gmm::scaled(gmm::mat_row(BBT2, i*d+k1), -pg(k2,k1)),
-                             gmm::mat_col(T_u2_t, i*d+k2));
-                }
-
-            if (!Tresca_version) {
-              ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
-              for (size_type k = 0; k < d; ++k)
-                T_t_n(i*d+k, i) = - friction_coeff[i] * vg[k] / r;
-            }
-            for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
-            if (Hughes_stabilized) {
-              for (size_type k = 0; k < d; ++k)
-                for (size_type l = 0; l < d; ++l) {
-                  gmm::add(gmm::scaled(gmm::mat_row(DDT, d*i+l), -pg(k,l)),
-                           gmm::mat_col(T_t_t, d*i+k));
-                  T_t_t(d*i+l, d*i+k) += pg(k,l) / r;
-                }
-            } else
-              gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
-
-          }
-          if (Hughes_stabilized) {
-            model_real_sparse_matrix aux(gmm::mat_nrows(T_t_t), gmm::mat_nrows(T_t_t));
-            gmm::copy(gmm::transposed(T_t_t), aux);
-            gmm::copy(aux, T_t_t);
-          }
-          gmm::copy(gmm::transposed(T_u1_t), T_t_u1);
-          if (two_variables) gmm::copy(gmm::transposed(T_u2_t), T_t_u2);
+	  switch (augmentation_version) {
+	  case 0: case 1:
+	    for (size_type i=0; i < nbc; ++i) {
+	      gmm::sub_interval SUBI(i*d, d);
+	      scalar_type th = Tresca_version ? threshold[i]
+		: - lambda_n[i] * friction_coeff[i];
+	      ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
+	      if (!really_stationary)
+		for (size_type k1 = 0; k1 < d; ++k1)
+		  for (size_type k2 = 0; k2 < d; ++k2) {
+		    gmm::add(gmm::scaled(gmm::mat_row(BBT1, i*d+k1), -pg(k2,k1)),
+			     gmm::mat_col(T_u1_t, i*d+k2));
+		    if (two_variables)
+		      gmm::add(gmm::scaled(gmm::mat_row(BBT2, i*d+k1), -pg(k2,k1)),
+			       gmm::mat_col(T_u2_t, i*d+k2));
+		  }
+	      
+	      if (!Tresca_version) {
+		ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
+		for (size_type k = 0; k < d; ++k)
+		  T_t_n(i*d+k, i) = - friction_coeff[i] * vg[k] / r;
+	      }
+	      for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
+	      if (Hughes_stabilized) {
+		for (size_type k = 0; k < d; ++k)
+		  for (size_type l = 0; l < d; ++l) {
+		    gmm::add(gmm::scaled(gmm::mat_row(DDT, d*i+l), -pg(k,l)),
+			     gmm::mat_col(T_t_t, d*i+k));
+		    T_t_t(d*i+l, d*i+k) += pg(k,l) / r;
+		  }
+	      } else
+		gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
+	      
+	    }
+	    if (Hughes_stabilized) {
+	      model_real_sparse_matrix aux(gmm::mat_nrows(T_t_t), gmm::mat_nrows(T_t_t));
+	      gmm::copy(gmm::transposed(T_t_t), aux);
+	      gmm::copy(aux, T_t_t);
+	    }
+	    gmm::copy(gmm::transposed(T_u1_t), T_t_u1);
+	    if (two_variables) gmm::copy(gmm::transposed(T_u2_t), T_t_u2);
+	    break;
+	  
+	  case 2:
+	    for (size_type i=0; i < nbc; ++i) {
+	      gmm::sub_interval SUBI(i*d, d);
+	      scalar_type th = Tresca_version ? threshold[i]
+		: gmm::neg(lambda_n[i]) * friction_coeff[i];
+	      ball_projection_grad(gmm::sub_vector(lambda_t, SUBI), th, pg);
+	      if (!really_stationary)
+		for (size_type k1 = 0; k1 < d; ++k1)
+		  for (size_type k2 = 0; k2 < d; ++k2) {
+		    gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k1),-pg(k2,k1)),
+			     gmm::mat_col(T_u1_t, i*d+k2));
+		    if (two_variables)
+		      gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k1),
+					   -pg(k2,k1)),
+			       gmm::mat_col(T_u2_t, i*d+k2));
+		  }
+	      if (!Tresca_version) {
+		ball_projection_grad_r(gmm::sub_vector(lambda_t, SUBI),th,vg);
+		for (size_type k1 = 0; k1 < d; ++k1) {
+		  gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k1),
+				       friction_coeff[i]*vg[k1]),
+			   gmm::mat_col(T_u1_n, i));
+		  if (two_variables)
+		    gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k1),
+					 friction_coeff[i]*vg[k1]),
+			     gmm::mat_col(T_u2_n, i));
+		  T_t_n(i*d+k1, i) = friction_coeff[i] * vg[k1] / r;
+		}
+	      }
+	      for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
+	      
+	      gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
+	      
+	    }
+	    gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
+	    if (two_variables) gmm::copy(gmm::scaled(BBT2, -r), T_t_u2);
+	    break;
+	  }
         }
-
-        if (symmetrized) {
-          // gmm::copy(gmm::transposed(T_n_u1), T_u1_n);  // already done
+	
+	switch (augmentation_version) {
+	case 0:
+	  gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
+          if (two_variables)
+            gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
+          if (!contact_only) {
+            gmm::copy(gmm::scaled(gmm::transposed(BT1), -vt1), T_u1_t);
+            if (two_variables)
+              gmm::copy(gmm::scaled(gmm::transposed(BT2), -vt1), T_u2_t);
+          }
+	  break;
+	case 1:
+	  // gmm::copy(gmm::transposed(T_n_u1), T_u1_n);  // already done
           // gmm::copy(gmm::transposed(T_n_u2), T_u2_n);  // already done
           model_real_sparse_matrix tmp1(gmm::mat_ncols(BN1),
                                         gmm::mat_ncols(BN1));
@@ -788,39 +862,24 @@ namespace getfem {
               gmm::add(tmp2, T_u2_u2);
             }
           }
-        }
-        else {
-          gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
-          if (two_variables)
-            gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
-          if (!contact_only) {
-            gmm::copy(gmm::scaled(gmm::transposed(BT1), -vt1), T_u1_t);
-            if (two_variables)
-              gmm::copy(gmm::scaled(gmm::transposed(BT2), -vt1), T_u2_t);
-          }
-        }
+	  break;
+	}
       }
 
       if (version & model::BUILD_RHS) {
-        for (size_type i=0; i < nbc; ++i) {
-            RLN[i] = std::min(scalar_type(0), RLN[i]);
-            if (!contact_only) {
-              scalar_type radius = Tresca_version ? threshold[i]
-                : -friction_coeff[i]*lambda_n[i];
-              ball_projection
-                (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
-            }
-        }
 
-        if (symmetrized) {
-          gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
-          if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
-          if (!contact_only) {
-            gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
-            if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
-          }
-        } else {
-          gmm::mult_add(gmm::transposed(BN1), lambda_n, ru1);
+	switch (augmentation_version) {
+	case 0:
+	  for (size_type i=0; i < nbc; ++i) {
+	    RLN[i] = std::min(scalar_type(0), RLN[i]);
+	    if (!contact_only) {
+	      scalar_type radius = Tresca_version ? threshold[i]
+		: -friction_coeff[i]*lambda_n[i];
+	      ball_projection
+		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+	    } 
+	  }
+	  gmm::mult_add(gmm::transposed(BN1), lambda_n, ru1);
           if (two_variables)
             gmm::mult_add(gmm::transposed(BN2), lambda_n, ru2);
           if (!contact_only) {
@@ -828,15 +887,65 @@ namespace getfem {
             if (two_variables)
               gmm::mult_add(gmm::transposed(BT2), lambda_t, ru2);
           }
-        }
+	  gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+		   rlambda_n);
+	  if (!contact_only)
+	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+		     rlambda_t);
+	  break;
+	case 1:
+	  for (size_type i=0; i < nbc; ++i) {
+	    RLN[i] = std::min(scalar_type(0), RLN[i]);
+	    if (!contact_only) {
+	      scalar_type radius = Tresca_version ? threshold[i]
+		: -friction_coeff[i]*lambda_n[i];
+	      ball_projection
+		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+	    } 
+	  }
+	  gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
+          if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
+          if (!contact_only) {
+            gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
+            if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
+          }
+	  gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+		   rlambda_n);
+	  if (!contact_only)
+	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+		     rlambda_t);
+	  break;
+	case 2:
+	  gmm::copy(lambda_t, RLT);
+	  for (size_type i=0; i < nbc; ++i) {
+	    RLN[i] = gmm::neg(lambda_n[i]);
+	    rlambda_n[i] = gmm::pos(lambda_n[i])/r - alpha[i]*gap[i];
 
-
-        gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
-                 rlambda_n);
-
-        if (!contact_only)
-          gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-                   rlambda_t);
+	    if (!contact_only) {
+	      scalar_type radius = Tresca_version ? threshold[i]
+		: friction_coeff[i]*gmm::neg(lambda_n[i]);
+	      ball_projection
+		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+	    }
+	  }
+	  gmm::mult(gmm::transposed(BN1), gmm::scaled(RLN, -vt1), ru1);
+	  if (two_variables)
+            gmm::mult(gmm::transposed(BN2), gmm::scaled(RLN, -vt1), ru2);
+	  gmm::mult_add(BBN1, u1, rlambda_n);
+	  if (two_variables)
+	    gmm::mult_add(BBN2, u2, rlambda_n);
+	  if (!contact_only) {
+            gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
+            if (two_variables)
+              gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
+	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+		      rlambda_t);
+	    gmm::mult_add(BBT1, u1, rlambda_t);
+	    if (two_variables)
+	      gmm::mult_add(BBT2, u2, rlambda_t);
+          }
+	  break;
+	}
       }
     }
 
@@ -934,10 +1043,15 @@ namespace getfem {
 
     }
 
-    Coulomb_friction_brick(bool symmetrized_, bool contact_only_,
+    Coulomb_friction_brick(int aug_version, bool contact_only_,
                            bool two_variables_=false,
                            bool Hughes_stabilized_=false) {
-      symmetrized = symmetrized_;
+      augmentation_version = aug_version;
+      GMM_ASSERT1(aug_version >=0 && aug_version <= 2,
+		  "Wrong augmentation version");
+      GMM_ASSERT1(!Hughes_stabilized_ || aug_version <= 1,
+		  "The Hughes stabilized version is only for Alart-Curnier "
+		  "version");
       contact_only = contact_only_;
       is_init = false;
       Tresca_version = false;   // for future version ...
@@ -947,7 +1061,7 @@ namespace getfem {
       Hughes_stabilized = Hughes_stabilized_;
       set_flags("Coulomb friction brick", false /* is linear*/,
                 /* is symmetric */
-                symmetrized && (contact_only || Tresca_version),
+                (augmentation_version == 1) && (contact_only||Tresca_version),
                 false /* is coercive */, true /* is real */,
                 false /* is complex */);
     }
@@ -1037,9 +1151,9 @@ namespace getfem {
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized, bool Hughes_stabilized) {
-    Coulomb_friction_brick *pbr_=new Coulomb_friction_brick(symmetrized, true, false,
-                                                            Hughes_stabilized);
+   int aug_version, bool Hughes_stabilized) {
+    Coulomb_friction_brick *pbr_
+      = new Coulomb_friction_brick(aug_version, true, false,Hughes_stabilized);
     pbr_->set_BN1(BN);
     pbrick pbr = pbr_;
 
@@ -1081,9 +1195,9 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized, bool Hughes_stabilized) {
+   int aug_version, bool Hughes_stabilized) {
     Coulomb_friction_brick *pbr_
-      = new Coulomb_friction_brick(symmetrized,false, false,Hughes_stabilized);
+      = new Coulomb_friction_brick(aug_version,false, false,Hughes_stabilized);
     pbr_->set_BN1(BN);
     pbr_->set_BT1(BT);
     pbrick pbr = pbr_;
@@ -1324,8 +1438,8 @@ namespace getfem {
     }
 
     Coulomb_friction_brick_rigid_obstacle
-    (bool symmetrized_, bool contact_only_, const std::string &obs)
-      : Coulomb_friction_brick(symmetrized_, contact_only_), obstacle(obs) {}
+    (int aug_version, bool contact_only_, const std::string &obs)
+      : Coulomb_friction_brick(aug_version, contact_only_), obstacle(obs) {}
 
   };
 
@@ -1338,9 +1452,9 @@ namespace getfem {
   size_type add_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_r,
-   size_type region, const std::string &obstacle, bool symmetrized) {
+   size_type region, const std::string &obstacle, int aug_version) {
     pbrick pbr
-      = new Coulomb_friction_brick_rigid_obstacle(symmetrized, true, obstacle);
+      = new Coulomb_friction_brick_rigid_obstacle(aug_version, true, obstacle);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1365,9 +1479,9 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
-   size_type region, const std::string &obstacle, bool symmetrized) {
+   size_type region, const std::string &obstacle, int aug_version) {
     pbrick pbr
-      = new Coulomb_friction_brick_rigid_obstacle(symmetrized,false,obstacle);
+      = new Coulomb_friction_brick_rigid_obstacle(aug_version,false,obstacle);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
@@ -1536,10 +1650,10 @@ namespace getfem {
     }
 
     Coulomb_friction_brick_nonmatching_meshes
-      (bool symmetrized_, bool contact_only_, bool two_variables_,
+      (int aug_version, bool contact_only_, bool two_variables_,
        const std::vector<size_type> &rg1_, const std::vector<size_type> &rg2_,
        bool slave1_=true, bool slave2_=false)
-      : Coulomb_friction_brick(symmetrized_, contact_only_, two_variables_),
+      : Coulomb_friction_brick(aug_version, contact_only_, two_variables_),
         rg1(rg1_), rg2(rg2_), slave1(slave1_), slave2(slave2_) {}
 
   };
@@ -1555,12 +1669,12 @@ namespace getfem {
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
-   bool slave1, bool slave2, bool symmetrized) {
+   bool slave1, bool slave2, int aug_version) {
 
     bool two_variables = (varname_u1.compare(varname_u2) != 0);
 
     pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
-           (symmetrized, true, two_variables, rg1, rg2, slave1, slave2);
+           (aug_version, true, two_variables, rg1, rg2, slave1, slave2);
 
     // Calculate multipliers size
     const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);
@@ -1626,12 +1740,12 @@ namespace getfem {
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
-   bool slave1, bool slave2, bool symmetrized) {
+   bool slave1, bool slave2, int aug_version) {
 
     bool two_variables = (varname_u1.compare(varname_u2) != 0);
 
     pbrick pbr = new Coulomb_friction_brick_nonmatching_meshes
-           (symmetrized, false, two_variables, rg1, rg2, slave1, slave2);
+           (aug_version, false, two_variables, rg1, rg2, slave1, slave2);
 
     // Calculate multipliers size
     const mesh_fem &mf_u1 = md.mesh_fem_of_variable(varname_u1);

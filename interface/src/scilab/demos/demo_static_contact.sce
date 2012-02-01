@@ -223,10 +223,10 @@ if (version == 1 | version == 2) then // defining the matrices BN and BT by hand
   gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
   if (version == 1) then
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', ...
-        BN, 'ngap', 'alpha', 0);
+        BN, 'ngap', 'alpha', 1);
   else
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', ...
-		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', 0);
+		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', 1);
   end
 elseif (version == 3 | version == 4) then // BN and BT defined by contact brick
 
@@ -234,14 +234,14 @@ elseif (version == 3 | version == 4) then // BN and BT defined by contact brick
   gf_model_set(md, 'add initialized data', 'r', [r]);
   if (version == 3) then
     gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', ...
-	         'lambda_n', 'r', GAMMAC, obstacle, 0);
+	         'lambda_n', 'r', GAMMAC, obstacle, 1);
   else
     gf_model_set(md, 'add variable', 'lambda_t', nbc * (d-1));
     gf_model_set(md, 'add initialized data', 'friction_coeff', ...
 		 [friction_coeff]);
     gf_model_set(md, 'add contact with rigid obstacle brick', mim, 'u', ...
 	         'lambda_n', 'lambda_t', 'r', 'friction_coeff', GAMMAC, ...
-		 obstacle, 0);
+		 obstacle, 1);
   end
 
 elseif (version >= 5 & version <= 8) then // The continuous version, Newton

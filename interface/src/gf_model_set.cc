@@ -1608,7 +1608,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int symmetrized]])
+    /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]])
 
     Add a contact with  or without friction brick to the model.
     If U is the vector
@@ -1631,10 +1631,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     optional parameter representing the initial gap. It can be a single value
     or a vector of value. `dataname_alpha` is an optional homogenization
     parameter for the augmentation parameter
-    (see Getfem user documentation). The parameter `symmetrized` indicates
-    that the symmetry of the tangent matrix will be kept or not (except for
-    the part representing the coupling between contact and friction which
-    cannot be symmetrized). @*/
+    (see Getfem user documentation).  The parameter `augmented_version`
+    indicates the augmentation strategy : 1 for the non-symmetric
+    Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
+    the coupling bewteen contact and Coulomb friction),
+    3 for the new unsymmetric method. @*/
      sub_command
        ("add basic contact brick", 4, 10, 0, 1,
 
@@ -1666,8 +1667,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         dataname_gap = in.pop().to_string();
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
-        bool symmetrized = false;
-        if (in.remaining()) symmetrized = ((in.pop().to_integer(0,1)) != 0);
+        int augmented_version = 0;
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
 
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
@@ -1701,11 +1702,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (friction) {
           ind = getfem::add_basic_contact_with_friction_brick
             (md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
-             friction_coeff, dataname_gap, dataname_alpha, symmetrized);
+             friction_coeff, dataname_gap, dataname_alpha, augmented_version-1);
         } else {
           ind = getfem::add_basic_contact_brick
             (md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,
-             dataname_alpha, symmetrized);
+             dataname_alpha, augmented_version-1);
         }
 
         out.pop().from_integer(int(ind + config::base_index()));
@@ -1753,7 +1754,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int symmetrized])
+    /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int augmented_version])
 
     Add a contact with or without friction condition with a rigid obstacle
     to the model. The condition is applied on the variable `varname_u`
@@ -1774,9 +1775,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     range of acceptabe values (close to the Young modulus of the elastic
     body, see Getfem user documentation).  `dataname_friction_coeff` is
     the friction coefficient. It could be a scalar or a vector of values
-    representing the friction coefficient on each contact node. The
-    parameter `symmetrized` indicates that the symmetry of the tangent
-    matrix will be kept or not. Basically, this brick compute the matrix BN
+    representing the friction coefficient on each contact node. 
+    The parameter `augmented_version`
+    indicates the augmentation strategy : 1 for the non-symmetric
+    Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
+    the coupling bewteen contact and Coulomb friction),
+    3 for the new unsymmetric method.
+    Basically, this brick compute the matrix BN
     and the vectors gap and alpha and calls the basic contact brick. @*/
      sub_command
        ("add contact with rigid obstacle brick", 6, 9, 0, 1,
@@ -1800,11 +1805,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         size_type region = argin.to_integer();
         std::string obstacle = in.pop().to_string();
-        bool symmetrized = false;
-        if (in.remaining()) symmetrized = ((in.pop().to_integer(0,1)) != 0);
-
-        cout << "symmetrized = " << symmetrized << endl;
-
+	int augmented_version = 0;
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
 
         size_type ind;
 
@@ -1812,11 +1814,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
              multname_t, dataname_r, dataname_fr, region, obstacle,
-             symmetrized);
+             augmented_version-1);
         else
           ind = getfem::add_contact_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-             dataname_r, region, obstacle, symmetrized);
+             dataname_r, region, obstacle, augmented_version-1);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
@@ -2000,7 +2002,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ind = ('add nonmatching meshes contact brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int symmetrized])
+    /*@SET ind = ('add nonmatching meshes contact brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int augmented_version])
 
     Add a contact with or without friction condition between two faces of
     one or two elastic bodies. The condition is applied on the variable
@@ -2025,8 +2027,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     and `rg2` are correspondingly considered as "slaves". By default
     `slave1` is true and `slave2` is false, i.e. `rg1` contains the slave
     surfaces, while 'rg2' the master surfaces. Preferrably only one of
-    `slave1` and `slave2` is set to true. The parameter `symmetrized`
-    indicates that the symmetry of the tangent matrix will be kept or not.
+    `slave1` and `slave2` is set to true.  The parameter `augmented_version`
+    indicates the augmentation strategy : 1 for the non-symmetric
+    Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
+    the coupling bewteen contact and Coulomb friction),
+    3 for the new unsymmetric method.
     Basically, this brick computes the matrices BN and BT and the vectors
     gap and alpha and calls the basic contact brick. @*/
      sub_command
@@ -2039,7 +2044,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         getfemint_mesh_im *gfi_mim2;
         std::string varname_u1;
         std::string varname_u2;
-        bool slave1=true; bool slave2=false; bool symmetrized=false;
+        bool slave1=true; bool slave2=false;
+	int augmented_version = 0;
 
         gfi_mim1 = in.pop().to_getfemint_mesh_im();
         mexarg_in argin = in.pop();
@@ -2069,20 +2075,20 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::vector<size_type> vrg2(1,in.pop().to_integer());
         if (in.remaining()) slave1 = (in.pop().to_integer(0,1)) != 0;
         if (in.remaining()) slave2 = (in.pop().to_integer(0,1)) != 0;
-        if (in.remaining()) symmetrized = (in.pop().to_integer(0,1)) != 0;
+	if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
 
         size_type ind;
         if (!friction)
           ind = getfem::add_nonmatching_meshes_contact_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, dataname_r,
-             vrg1, vrg2, slave1, slave2, symmetrized);
+             vrg1, vrg2, slave1, slave2, augmented_version-1);
         else
           ind = getfem::add_nonmatching_meshes_contact_with_friction_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, multname_t,
              dataname_r, dataname_fr,
-             vrg1, vrg2, slave1, slave2, symmetrized);
+             vrg1, vrg2, slave1, slave2, augmented_version-1);
         workspace().set_dependance(md, gfi_mim1);
         if (two_variables)
           workspace().set_dependance(md, gfi_mim2);

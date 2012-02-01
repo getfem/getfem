@@ -201,21 +201,21 @@ if version == 1 or version == 2: # defining the matrices BN and BT by hand
    md.add_initialized_data('ngap', ngap)
    md.add_initialized_data('alpha', np.ones(nbc))
    if version == 1:
-      md.add_basic_contact_brick('u', 'lambda_n', 'r', BN, 'ngap', 'alpha', 0)
+      md.add_basic_contact_brick('u', 'lambda_n', 'r', BN, 'ngap', 'alpha', 1)
    else:
-      md.add_basic_contact_brick('u', 'lambda_n', 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', 0);
+      md.add_basic_contact_brick('u', 'lambda_n', 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', 1);
 
 elif version == 3 or version == 4: # BN and BT defined by the contact brick
 
    md.add_variable('lambda_n', nbc)
    md.add_initialized_data('r', [r])
    if version == 3:
-      md.add_contact_with_rigid_obstacle_brick(mim, 'u', 'lambda_n', 'r', GAMMAC, obstacle, 0);
+      md.add_contact_with_rigid_obstacle_brick(mim, 'u', 'lambda_n', 'r', GAMMAC, obstacle, 1);
    else:
       md.add_variable('lambda_t', nbc*(d-1))
       md.add_initialized_data('friction_coeff', [friction_coeff])
       md.add_contact_with_rigid_obstacle_brick(mim, 'u', 'lambda_n', 'lambda_t', 'r',
-                                              'friction_coeff', GAMMAC, obstacle, 0)
+                                              'friction_coeff', GAMMAC, obstacle, 1)
 
 elif version >= 5 and version <= 8: # The continuous version, Newton
 

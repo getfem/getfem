@@ -53,14 +53,16 @@ namespace getfem {
       optional parameter representing the initial gap. It can be a single value
       or a vector of value. `dataname_alpha` is an optional homogenization
       parameter for the augmentation parameter
-      (see Getfem user documentation). The parameter `symmetrized` indicates
-      that the symmetry of the tangent matrix will be kept or not.
+      (see Getfem user documentation). The parameter `aug_version` indicates
+      the augmentation strategy : 0 for the non-symmetric Alart-Curnier
+      augmented Lagrangian, 1 for the symmetric one,
+      2 for the new unsymmetric method.
   */
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap = "", std::string dataname_alpha = "",
-   bool symmetrized = false, bool Hughes_stabilized = false);
+   int aug_version=0, bool Hughes_stabilized = false);
 
 
   /** Add a contact with friction condition to the model. If U is the vector
@@ -82,9 +84,11 @@ namespace getfem {
       optional parameter representing the initial gap. It can be a single value
       or a vector of value. `dataname_alpha` is an optional homogenization
       parameter for the augmentation parameter
-      (see Getfem user documentation). The parameter `symmetrized` indicates
-      that a part of the symmetry of the tangent matrix will be kept or not
-      (except for the coupling bewteen contact and friction).
+      (see Getfem user documentation). The parameter `aug_version`
+      indicates the augmentation strategy : 0 for the non-symmetric
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+      the coupling bewteen contact and Coulomb friction),
+      2 for the new unsymmetric method.
   */
   size_type add_basic_contact_with_friction_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
@@ -92,7 +96,7 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap, std::string dataname_alpha,
-   bool symmetrized, bool Hughes_stabilized = false) ;
+   int aug_version=0, bool Hughes_stabilized = false) ;
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */
@@ -119,18 +123,21 @@ namespace getfem {
     The augmentation parameter `r` should be chosen in a range of acceptabe values.
     `dataname_gap` is an optional parameter representing the initial gap. It can be
     a single value or a vector of value. `dataname_alpha` is an optional homogenization
-    parameter for the augmentation parameter. The parameter `symmetrized` indicates that
-    a part of the symmetry of the tangent matrix will be kept or not
+    parameter for the augmentation parameter. The parameter `aug_version`
+    indicates the augmentation strategy : 0 for the non-symmetric
+    Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+    the coupling bewteen contact and Coulomb friction),
+    2 for the new unsymmetric method.
   */
    inline size_type add_Hughes_stab_basic_contact_brick
    (model &md, const std::string &varname_u, const std::string &multname_n,
     const std::string &dataname_r, CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &DN,
     std::string dataname_gap="", std::string dataname_alpha="",
-    bool symmetrized=false) {
+    int aug_version=0) {
 
     size_type indbrick = add_basic_contact_brick
       (md, varname_u, multname_n, dataname_r, BN,
-       dataname_gap, dataname_alpha, symmetrized, true);
+       dataname_gap, dataname_alpha, aug_version, true);
     gmm::resize(contact_brick_set_DN(md, indbrick),
                 gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
@@ -157,9 +164,11 @@ namespace getfem {
       optional parameter representing the initial gap. It can be a single value
       or a vector of value. `dataname_alpha` is an optional homogenization
       parameter for the augmentation parameter
-      (see Getfem user documentation). The parameter `symmetrized` indicates
-      that a part of the symmetry of the tangent matrix will be kept or not
-      (except for the coupling bewteen contact and friction).
+      (see Getfem user documentation). The parameter `aug_version`
+      indicates the augmentation strategy : 0 for the non-symmetric
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+      the coupling bewteen contact and Coulomb friction),
+      2 for the new unsymmetric method.
    **/
   inline size_type add_Hughes_stab_with_friction_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
@@ -167,11 +176,11 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT, CONTACT_B_MATRIX &DN,CONTACT_B_MATRIX &DT,
    std::string dataname_friction_coeff,
    std::string dataname_gap="", std::string dataname_alpha="",
-   bool symmetrized=false){
+   int aug_version=0){
 
     size_type indbrick = add_basic_contact_with_friction_brick
       (md, varname_u, multname_n, multname_t, dataname_r, BN, BT,
-       dataname_friction_coeff, dataname_gap, dataname_alpha, symmetrized, true);
+       dataname_friction_coeff, dataname_gap, dataname_alpha, aug_version, true);
     gmm::resize(contact_brick_set_DN(md, indbrick),
                 gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
@@ -196,15 +205,18 @@ namespace getfem {
       contact equivalent nodal forces.
       The augmentation parameter `r` should be chosen in a
       range of acceptabe values (close to the Young modulus of the elastic
-      body, see Getfem user documentation). The
-      parameter `symmetrized` indicates that the symmetry of the tangent
-      matrix will be kept or not. Basically, this brick computes the matrix BN
+      body, see Getfem user documentation). The parameter `aug_version`
+      indicates the augmentation strategy : 0 for the non-symmetric
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+      the coupling bewteen contact and Coulomb friction),
+      2 for the new unsymmetric method.
+      Basically, this brick computes the matrix BN
       and the vectors gap and alpha and calls the basic contact brick.
   */
   size_type add_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_r,
-   size_type region, const std::string &obstacle, bool symmetrized = false);
+   size_type region, const std::string &obstacle, int aug_version=0);
 
 
   /** Add a contact with friction condition with a rigid obstacle
@@ -226,15 +238,19 @@ namespace getfem {
       body, see Getfem user documentation). `dataname_friction_coeff` is
       the friction coefficient. It could be a scalar or a vector of values
       representing the friction coefficient on each contact node.
-      The parameter `symmetrized` indicates that the symmetry of the tangent
-      matrix will be kept or not. Basically, this brick computes the matrix BN
+      The parameter `aug_version`
+      indicates the augmentation strategy : 0 for the non-symmetric
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+      the coupling bewteen contact and Coulomb friction),
+      2 for the new unsymmetric method.
+      Basically, this brick computes the matrix BN
       and the vectors gap and alpha and calls the basic contact brick.
   */
   size_type add_contact_with_friction_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
-   size_type region, const std::string &obstacle, bool symmetrized);
+   size_type region, const std::string &obstacle, int aug_version=0);
 
 
   /** Add a frictionless contact condition between two faces of one or two
@@ -256,8 +272,11 @@ namespace getfem {
       defined in `rg1` and `rg2` are correspondingly considered as "slaves".
       By default `slave1` is true and `slave2` is false, i.e. `rg1` contains
       the slave surfaces, while 'rg2' the master surfaces. Preferably only
-      one of `slave1` and `slave2` is set to true. The parameter `symmetrized`
-      indicates that the symmetry of the tangent matrix will be kept or not.
+      one of `slave1` and `slave2` is set to true. The parameter `aug_version`
+      indicates the augmentation strategy : 0 for the non-symmetric
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+      the coupling bewteen contact and Coulomb friction),
+      2 for the new unsymmetric method.
       Basically, this brick computes the matrix BN and the vectors gap and
       alpha and calls the basic contact brick.
   */
@@ -266,44 +285,44 @@ namespace getfem {
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
-   bool slave1=true, bool slave2=false, bool symmetrized=false);
+   bool slave1=true, bool slave2=false, int aug_version=0);
 
   inline size_type add_nonmatching_meshes_contact_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
-   bool symmetrized=false) {
+   int aug_version=0) {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
     return add_nonmatching_meshes_contact_brick
       (md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
-       vrg1, vrg2, slave1, slave2, symmetrized);
+       vrg1, vrg2, slave1, slave2, aug_version);
   }
 
   inline size_type add_nonmatching_meshes_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, const std::string &dataname_r,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
-   bool slave1=true, bool slave2=false, bool symmetrized=false) {
+   bool slave1=true, bool slave2=false, int aug_version=0) {
 
     return add_nonmatching_meshes_contact_brick
       (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
-       rg1, rg2, slave1, slave2, symmetrized);
+       rg1, rg2, slave1, slave2, aug_version);
   }
 
   inline size_type add_nonmatching_meshes_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, const std::string &dataname_r,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
-   bool symmetrized=false) {
+   int aug_version=0) {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
     return add_nonmatching_meshes_contact_brick
       (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
-       vrg1, vrg2, slave1, slave2, symmetrized);
+       vrg1, vrg2, slave1, slave2, aug_version);
   }
 
 
@@ -331,8 +350,11 @@ namespace getfem {
       and `rg2` are correspondingly considered as "slaves". By default `slave1`
       is true and `slave2` is false, i.e. `rg1` contains the slave surfaces,
       while 'rg2' the master surfaces. Preferably only one of `slave1` and
-      `slave2` is set to true. The parameter `symmetrized` indicates that the
-      symmetry of the tangent matrix will be kept or not.
+      `slave2` is set to true.  The parameter `aug_version`
+      indicates the augmentation strategy : 0 for the non-symmetric
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
+      the coupling bewteen contact and Coulomb friction),
+      2 for the new unsymmetric method.
       Basically, this brick computes the matrices BN and BT as well the vectors
       gap and alpha and calls the basic contact brick.
   */
@@ -342,7 +364,7 @@ namespace getfem {
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
-   bool slave1=true, bool slave2=false, bool symmetrized=false);
+   bool slave1=true, bool slave2=false, int aug_version=0);
 
   inline size_type add_nonmatching_meshes_contact_with_friction_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
@@ -350,14 +372,14 @@ namespace getfem {
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
-   bool symmetrized=false) {
+   int aug_version=0) {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
     return add_nonmatching_meshes_contact_with_friction_brick
       (md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
-       vrg1, vrg2, slave1, slave2, symmetrized);
+       vrg1, vrg2, slave1, slave2, aug_version);
   }
 
   inline size_type add_nonmatching_meshes_contact_with_friction_brick
@@ -365,12 +387,12 @@ namespace getfem {
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
-   bool slave1=true, bool slave2=false, bool symmetrized=false) {
+   bool slave1=true, bool slave2=false, int aug_version=0) {
 
     return add_nonmatching_meshes_contact_with_friction_brick
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
-       rg1, rg2, slave1, slave2, symmetrized);
+       rg1, rg2, slave1, slave2, aug_version);
   }
 
   inline size_type add_nonmatching_meshes_contact_with_friction_brick
@@ -378,14 +400,14 @@ namespace getfem {
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
-   bool symmetrized=false) {
+   int aug_version=0) {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
     return add_nonmatching_meshes_contact_with_friction_brick
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
-       vrg1, vrg2, slave1, slave2, symmetrized);
+       vrg1, vrg2, slave1, slave2, aug_version);
   }
 
 
