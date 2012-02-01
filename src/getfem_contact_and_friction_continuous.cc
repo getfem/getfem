@@ -165,7 +165,7 @@ namespace getfem {
     case RHS_L_V1:
       t[0] = (ln+gmm::neg(ln-r*(un - g)))/r; break;
     case RHS_L_V2:
-      t[0] = r*(un-g) + gmm::pos(ln); break;
+      t[0] = (un-g) + gmm::pos(ln)/r; break;
 
     case K_LL_V1:
       t[0] = (Heav(r*(un-g)-ln) - scalar_type(1))/r; break;
@@ -245,7 +245,7 @@ namespace getfem {
     case RHS_L_FRICT_V2:
       e = r*(un-g) + gmm::pos(ln);
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
-      for (i=0; i<N; ++i) t[i] = no[i]*e + zt[i] + lt[i] - auxN[i];
+      for (i=0; i<N; ++i) t[i] = (no[i]*e + zt[i] + lt[i] - auxN[i])/r;
       break;
     case RHS_L_FRICT_V3:
       auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
@@ -256,7 +256,7 @@ namespace getfem {
       auxN = lnt;
       De_Saxce_projection(auxN, no, f_coeff);
       auxN -= lnt + (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no + zt;
-      for (i=0; i<N; ++i) t[i] = -auxN[i];
+      for (i=0; i<N; ++i) t[i] = -auxN[i]/r;
       break;
     case K_UL_V1:
       for (i=0; i<N; ++i) t[i] = -no[i];
@@ -270,8 +270,7 @@ namespace getfem {
       for (i=0; i<N; ++i) t[i] = e*no[i];
       break;
     case K_UL_V4:
-      e = -r;
-      for (i=0; i<N; ++i) t[i] = e*no[i];
+      for (i=0; i<N; ++i) t[i] = -no[i];
       break;
     case UZAWA_PROJ_FRICT:
       e = -gmm::neg(ln - r*(un - g));
@@ -323,9 +322,9 @@ namespace getfem {
         t[i*N+j] = no[i]*no[j]*e - alpha*GP(i,j);
       break;
     case K_UL_FRICT_V5:
-      e = r*(alpha-scalar_type(1));
+      e = (alpha-scalar_type(1));
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - ((i == j) ? r*alpha : scalar_type(0));
+        t[i*N+j] = no[i]*no[j]*e - ((i == j) ? alpha : scalar_type(0));
       break;
     case K_UL_FRICT_V6:
       {
@@ -352,7 +351,7 @@ namespace getfem {
         gmm::rank_one_update(GP, gmm::scaled(no, scalar_type(1)-alpha), no);
         if (nzt != scalar_type(0))
           gmm::rank_one_update(GP, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
-        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -r * GP(i,j);
+        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = - GP(i,j);
       }
       break;
     case K_LL_FRICT_V1:
@@ -371,7 +370,7 @@ namespace getfem {
       e -= gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - ((i == j) ? scalar_type(1) : scalar_type(0)) + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j];
+        t[i*N+j] = (no[i]*no[j]*e - ((i == j) ? scalar_type(1) : scalar_type(0)) + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j])/r;
       break;
     case K_LL_FRICT_V3:
       auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
@@ -382,7 +381,7 @@ namespace getfem {
     case K_LL_FRICT_V4:
       De_Saxce_projection_grad(lnt, no, f_coeff, GP);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = GP(i,j) - ((i == j) ? scalar_type(1) : scalar_type(0));
+        t[i*N+j] = (GP(i,j) - ((i == j) ? scalar_type(1) : scalar_type(0)))/r;
       break;
     case K_UU_FRICT_V1:
       e = r*Heav(r*(un-g)-ln);
@@ -880,8 +879,8 @@ namespace getfem {
     // option = 2 : symmetric Alart-Curnier (almost with friction)
     // option = 3 : Alart Curnier "over-augmented"
     // option = 4 : New method
-    // option = 5 : De-Saxcé
-    // option = 6 : New method based on De-Saxcé.
+    // option = 5 : De-Saxce
+    // option = 6 : New method based on De-Saxce.
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -1332,7 +1331,7 @@ namespace getfem {
       }
 
       const model_real_plain_vector *f_coeff = 0;
-      const mesh_fem *pmf_coeff;
+      const mesh_fem *pmf_coeff = 0;
       scalar_type alpha = 1;
       const model_real_plain_vector *WT = 0;
       if (!contact_only) {
@@ -1632,7 +1631,7 @@ namespace getfem {
       mf_u1.linked_mesh().intersect_with_mpi_region(rg); // FIXME: mfu_2?
 
       // FIXME: use stored objects instead of creating them on the fly
-      getfem::mesh_fem proj_mf_u2(mim.linked_mesh(),N);
+      getfem::mesh_fem proj_mf_u2(mim.linked_mesh(), dim_type(N));
       getfem::pfem ifem = new_projected_fem(mf_u2, mim, rg2, rg1);
       proj_mf_u2.set_finite_element(mim.linked_mesh().convex_index(), ifem);
 
