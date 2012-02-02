@@ -170,7 +170,7 @@ namespace getfem {
     case K_LL_V1:
       t[0] = (Heav(r*(un-g)-ln) - scalar_type(1))/r; break;
     case K_LL_V2:
-      t[0] = -Heav(ln); break;
+      t[0] = -Heav(ln)/r; break;
 
     case UZAWA_PROJ:
       t[0] = -gmm::neg(ln - r*(un - g)); break;

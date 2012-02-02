@@ -916,7 +916,7 @@ namespace getfem {
 		     rlambda_t);
 	  break;
 	case 2:
-	  gmm::copy(lambda_t, RLT);
+	  if (!contact_only) gmm::copy(lambda_t, RLT);
 	  for (size_type i=0; i < nbc; ++i) {
 	    RLN[i] = gmm::neg(lambda_n[i]);
 	    rlambda_n[i] = gmm::pos(lambda_n[i])/r - alpha[i]*gap[i];

@@ -38,7 +38,7 @@ namespace getfem {
   void default_newton_line_search::init_search(double r, size_t git, double) {
     alpha_min_ratio = 0.9;
     alpha_min = 1e-10;
-    alpha_max_ratio = 4.0;
+    alpha_max_ratio = 10.0;
     alpha_mult = 0.25;
     itmax = size_type(-1);
     glob_it = git; if (git <= 1) count_pat = 0;
@@ -77,7 +77,7 @@ namespace getfem {
       if (conv_r < first_res * 0.99) count_pat = 0;
       if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
 	{ conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
-      if (conv_r >= first_res * 0.9999) count_pat++;
+      if (conv_r >= first_res * 0.999) count_pat++;
       return true;
     }
     return false;
