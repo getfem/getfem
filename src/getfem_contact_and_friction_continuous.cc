@@ -1475,7 +1475,7 @@ namespace getfem {
 
   template<typename MAT, typename VECT1>
   void asm_penalized_contact_nonmatching_meshes_tangent_matrix // frictionless
-  (MAT &Ku1u1, MAT &Ku2u2, MAT &Ku1u2, MAT &Ku2u1,
+  (MAT &Ku1u1, MAT &Ku2u2, MAT &Ku1u2,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u1, const VECT1 &U1,
    const getfem::mesh_fem &mf_u2, const VECT1 &U2,
@@ -1491,8 +1491,7 @@ namespace getfem {
     getfem::generic_assembly assem;
     assem.set("M$1(#1,#1)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j); "
               "M$2(#2,#2)+=comp(NonLin(#1," + aux_fems + ").vBase(#2).vBase(#2))(i,j,:,i,:,j); "
-              "M$3(#1,#2)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#2))(i,j,:,i,:,j); "
-              "M$4(#2,#1)+=comp(NonLin(#1," + aux_fems + ").vBase(#2).vBase(#1))(i,j,:,i,:,j)");
+              "M$3(#1,#2)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#2))(i,j,:,i,:,j)");
     assem.push_mi(mim);
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2);
@@ -1502,11 +1501,9 @@ namespace getfem {
     assem.push_mat(Ku1u1);
     assem.push_mat(Ku2u2);
     assem.push_mat(Ku1u2);
-    assem.push_mat(Ku2u1);
     assem.assembly(rg);
 
     gmm::scale(Ku1u2, scalar_type(-1));
-    gmm::scale(Ku2u1, scalar_type(-1));
   }
 
   template<typename VECT1>
@@ -1624,8 +1621,9 @@ namespace getfem {
         }
       }
 
-      GMM_ASSERT1(matl.size() == 4, "Wrong number of terms for "
-                  "penalized contact between nonmatching meshes brick");
+      GMM_ASSERT1(matl.size() == contact_only ? 3 : 4,
+                  "Wrong number of terms for penalized contact "
+                  "between nonmatching meshes brick");
 
       mesh_region rg(region);
       mf_u1.linked_mesh().intersect_with_mpi_region(rg); // FIXME: mfu_2?
@@ -1659,24 +1657,25 @@ namespace getfem {
         gmm::clear(matl[0]);
         gmm::clear(matl[1]);
         gmm::clear(matl[2]);
-        gmm::clear(matl[3]);
 
         model_real_sparse_matrix Ku2u2(nbdof2,nbdof2);
         model_real_sparse_matrix Ku1u2(nbdof1,nbdof2);
-        model_real_sparse_matrix Ku2u1(nbdof2,nbdof1);
 
         if (contact_only) {
           asm_penalized_contact_nonmatching_meshes_tangent_matrix
-            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, proj_mf_u2, proj_u2,
+            (matl[0], Ku2u2, Ku1u2, mim, mf_u1, u1, proj_mf_u2, proj_u2,
              pmf_lambda, lambda, vr[0], rg, option);
         }
-//        else
+//        else {
+//          gmm::clear(matl[3]);
+//          model_real_sparse_matrix Ku2u1(nbdof2,nbdof1);
 //          asm_penalized_contact_nonmatching_meshes_tangent_matrix
-//            (matl[0], mim, mf_u, u, mf_lambda, lambda, mf_obstacle, obstacle,
-//             vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
+//            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, proj_mf_u2, proj_u2,
+//             pmf_lambda, lambda, vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
+//          gmm::copy(Ku2u1, gmm::sub_matrix(matl[3], SUBI, gmm::sub_interval(0, nbdof1)));
+//        }
         gmm::copy(Ku2u2, gmm::sub_matrix(matl[1], SUBI));
         gmm::copy(Ku1u2, gmm::sub_matrix(matl[2], gmm::sub_interval(0, nbdof1), SUBI));
-        gmm::copy(Ku2u1, gmm::sub_matrix(matl[3], SUBI, gmm::sub_interval(0, nbdof1)));
       }
 
       if (version & model::BUILD_RHS) {
@@ -1724,13 +1723,12 @@ namespace getfem {
    size_type region1, size_type region2,
    int option, const std::string &dataname_n) {
 
-    pbrick pbr = new penalized_contact_nonmatching_meshes_brick(region1, region2, true, option);
-
+    pbrick pbr = new penalized_contact_nonmatching_meshes_brick
+                     (region1, region2, /* contact_only */ true, option);
     model::termlist tl;
     tl.push_back(model::term_description(varname_u1, varname_u1, true));
     tl.push_back(model::term_description(varname_u2, varname_u2, true));
     tl.push_back(model::term_description(varname_u1, varname_u2, true));
-    tl.push_back(model::term_description(varname_u2, varname_u1, true));
 
     model::varnamelist dl(1, dataname_r);
     switch (option) {
