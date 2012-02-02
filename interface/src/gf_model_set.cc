@@ -1634,7 +1634,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     (see Getfem user documentation).  The parameter `augmented_version`
     indicates the augmentation strategy : 1 for the non-symmetric
     Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
-    the coupling bewteen contact and Coulomb friction),
+    the coupling between contact and Coulomb friction),
     3 for the new unsymmetric method. @*/
      sub_command
        ("add basic contact brick", 4, 10, 0, 1,
@@ -1779,7 +1779,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     The parameter `augmented_version`
     indicates the augmentation strategy : 1 for the non-symmetric
     Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
-    the coupling bewteen contact and Coulomb friction),
+    the coupling between contact and Coulomb friction),
     3 for the new unsymmetric method.
     Basically, this brick compute the matrix BN
     and the vectors gap and alpha and calls the basic contact brick. @*/
@@ -1805,7 +1805,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         size_type region = argin.to_integer();
         std::string obstacle = in.pop().to_string();
-	int augmented_version = 0;
+        int augmented_version = 0;
         if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
 
         size_type ind;
@@ -2030,7 +2030,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     `slave1` and `slave2` is set to true.  The parameter `augmented_version`
     indicates the augmentation strategy : 1 for the non-symmetric
     Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
-    the coupling bewteen contact and Coulomb friction),
+    the coupling between contact and Coulomb friction),
     3 for the new unsymmetric method.
     Basically, this brick computes the matrices BN and BT and the vectors
     gap and alpha and calls the basic contact brick. @*/
@@ -2045,7 +2045,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string varname_u1;
         std::string varname_u2;
         bool slave1=true; bool slave2=false;
-	int augmented_version = 0;
+        int augmented_version = 0;
 
         gfi_mim1 = in.pop().to_getfemint_mesh_im();
         mexarg_in argin = in.pop();
@@ -2075,7 +2075,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::vector<size_type> vrg2(1,in.pop().to_integer());
         if (in.remaining()) slave1 = (in.pop().to_integer(0,1)) != 0;
         if (in.remaining()) slave2 = (in.pop().to_integer(0,1)) != 0;
-	if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
 
         size_type ind;
         if (!friction)
