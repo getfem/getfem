@@ -1668,7 +1668,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         int augmented_version = 0;
-        if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
 
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
