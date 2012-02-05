@@ -104,7 +104,7 @@ namespace getfem {
     scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
     size_type N = gmm::vect_size(x);
 
-    if (xn >= scalar_type(0) && f * nxt <= xn) {
+    if (xn > scalar_type(0) && f * nxt <= xn) {
       gmm::clear(g);
     } else if (xn > scalar_type(0) || nxt > -f*xn) {
       static VEC xt;
@@ -741,12 +741,13 @@ namespace getfem {
 	precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
 
       if (version & model::BUILD_MATRIX) {
-        // Unilateral contact
 	base_matrix pg(d, d);
 	base_vector vg(d);
 
-        gmm::clear(T_n_n); gmm::clear(T_u1_u1);
-        if (two_variables) gmm::clear(T_u2_u2);
+        gmm::clear(T_n_n); gmm::clear(T_n_u1);
+	gmm::clear(T_u1_n); gmm::clear(T_u1_u1);
+        if (two_variables)
+	  { gmm::clear(T_u2_u2); gmm::clear(T_n_u2); gmm::clear(T_u2_n); }
 	if (!contact_only) {
 	  gmm::clear(T_u1_t); gmm::clear(T_t_n); gmm::clear(T_t_t);
           if (two_variables) gmm::clear(T_u2_t);
@@ -851,7 +852,7 @@ namespace getfem {
 	  if (two_variables)
 	    gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
 	  for (size_type i=0; i < nbc; ++i) {
-	    if (lambda_n[i] >= vt0) {
+	    if (lambda_n[i] > vt0) {
 	      gmm::clear(gmm::mat_col(T_u1_n, i));
 	      if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
 	      T_n_n(i, i) = -vt1/r;
@@ -899,23 +900,26 @@ namespace getfem {
 	  break;
 
 	case 3: // Desaxce projection
-	  base_small_vector x(d+1), n(d+1), u(d);
+	  base_small_vector x(d+1), n(d+1), u(d); n[0] = vt1;
 	  base_matrix g(d+1, d+1);
-	  n[0] = vt1;
+	  model_real_sparse_matrix T_n_u1_transp(gmm::mat_ncols(T_n_u1), nbc);
+	  model_real_sparse_matrix T_n_u2_transp(gmm::mat_ncols(T_n_u2), nbc);
+	  
 	  gmm::mult(BT1, u1, RLT);
 	  if (two_variables) gmm::mult_add(BT2, u2, RLT);
+	  
 	  for (size_type i=0; i < nbc; ++i) {
 	    x[0] = lambda_n[i];
-	    gmm::copy(gmm::sub_vector(lambda_t, gmm::sub_interval(i*d,d)),
-		      gmm::sub_vector(x, gmm::sub_interval(1, d)));
+	    for (size_type j=0; j < d; ++j) x[1+j] = lambda_t[i*d+j];
 	    De_Saxce_projection_grad(x, n, friction_coeff[i], g);
-
-	    gmm::add(gmm::scaled(gmm::mat_row(BN1, i), g(0,0)),
+	    
+	    gmm::add(gmm::scaled(gmm::mat_row(BN1, i), -g(0,0)),
 		     gmm::mat_col(T_u1_n, i));
 	    if (two_variables)
-	      gmm::add(gmm::scaled(gmm::mat_row(BN2, i), g(0,0)),
+	      gmm::add(gmm::scaled(gmm::mat_row(BN2, i), -g(0,0)),
 		       gmm::mat_col(T_u2_n, i));
-	    T_n_n(i, i) = -vt1/r + g(0,0)/r;
+	    T_n_n(i, i) = (g(0,0) - vt1)/r;
+	    // cout << "T_n_n(i, i) = " << T_n_n(i, i) << " lambda_n[i] = " << lambda_n[i] << " r = " << r << endl;
 
 	    gmm::copy(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), u);
 	    scalar_type nu = gmm::vect_norm2(u);
@@ -923,44 +927,45 @@ namespace getfem {
 	      for (size_type j=0; j < d; ++j) {
 		gmm::add(gmm::scaled(gmm::mat_row(BBT1, i*d+j),
 				     friction_coeff[i] * u[j] / nu),
-			 gmm::mat_col(T_u1_n, i));
+			 gmm::mat_col(T_n_u1_transp, i));
 		if (two_variables)
 		  gmm::add(gmm::scaled(gmm::mat_row(BBT2, i*d+j),
 				       friction_coeff[i] * u[j] / nu),
-			   gmm::mat_col(T_u2_n, i));
+			   gmm::mat_col(T_n_u2_transp, i));
 	      }
 
 	    for (size_type j=0; j < d; ++j) {
-	      
-	      gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+j), g(0,j+1)),
+	      gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+j), -g(0,j+1)),
 		     gmm::mat_col(T_u1_n, i));
 	      if (two_variables)
-		gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+j), g(0,j+1)),
+		gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+j), -g(0,j+1)),
 			 gmm::mat_col(T_u2_n, i));
 
-	      gmm::add(gmm::scaled(gmm::mat_row(BN1, i), g(j+1,0)),
+	      gmm::add(gmm::scaled(gmm::mat_row(BN1, i), -g(j+1,0)),
 		       gmm::mat_col(T_u1_t, i*d+j));
 	      if (two_variables)
-		gmm::add(gmm::scaled(gmm::mat_row(BN2, i), g(j+1,0)),
+		gmm::add(gmm::scaled(gmm::mat_row(BN2, i), -g(j+1,0)),
 			 gmm::mat_col(T_u2_t, i*d+j));
-	      T_t_t(i*d+j, i*d+j) = -vt1/r + g(1+j, 1+j)/r;
-	      T_t_n(i*d+j, i) = g(1+j,0)/r;
-	      // T_n_t(i, i*d+j) = g(0,1+j)/r;
-	     
+
 	      for (size_type k=0; k < d; ++k) {
-		gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+k), g(1+j,1+k)),
+		gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+k), -g(1+j,1+k)),
 			 gmm::mat_col(T_u1_t, i*d+j));
 		if (two_variables)
-		  gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+k), g(1+j,1+k)),
+		  gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+k), -g(1+j,1+k)),
 			   gmm::mat_col(T_u2_t, i*d+j));
-		if (k != j) T_t_t(i*d+j, i*d+k) = g(1+j, 1+k)/r;
+		T_t_t(i*d+j, i*d+k) = g(1+j, 1+k)/r;
 	      }
+	      T_t_t(i*d+j, i*d+j) -= vt1/r;
+	      T_t_n(i*d+j, i) = g(1+j,0)/r;
+	      // T_n_t(i, i*d+j) = g(0,1+j)/r;
 	    }
-	    gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
-	    if (two_variables) gmm::copy(gmm::scaled(BBN2, -r), T_n_u2);
-	    gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
-	    if (two_variables) gmm::copy(gmm::scaled(BBT2, -r), T_t_u2);
 	  }
+	  gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
+	  if (two_variables) gmm::copy(gmm::scaled(BBN2, -vt1), T_n_u2);
+	  gmm::add(gmm::transposed(T_n_u1_transp), T_n_u1);
+ 	  if (two_variables) gmm::add(gmm::transposed(T_n_u2_transp), T_n_u2);
+	  gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
+	  if (two_variables) gmm::copy(gmm::scaled(BBT2, -vt1), T_t_u2);
 	  break;
 	}
       }
@@ -1017,7 +1022,7 @@ namespace getfem {
 	case 2: // New unsymmetric method
 	  if (!contact_only) gmm::copy(lambda_t, RLT);
 	  for (size_type i=0; i < nbc; ++i) {
-	    RLN[i] = gmm::neg(lambda_n[i]);
+	    RLN[i] = -gmm::neg(lambda_n[i]);
 	    rlambda_n[i] = gmm::pos(lambda_n[i])/r - alpha[i]*gap[i];
 
 	    if (!contact_only) {
@@ -1027,21 +1032,17 @@ namespace getfem {
 		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
 	    }
 	  }
-	  gmm::mult(gmm::transposed(BN1), gmm::scaled(RLN, -vt1), ru1);
-	  if (two_variables)
-            gmm::mult(gmm::transposed(BN2), gmm::scaled(RLN, -vt1), ru2);
+	  gmm::mult(gmm::transposed(BN1), RLN, ru1);
+	  if (two_variables) gmm::mult(gmm::transposed(BN2), RLN, ru2);
 	  gmm::mult_add(BBN1, u1, rlambda_n);
-	  if (two_variables)
-	    gmm::mult_add(BBN2, u2, rlambda_n);
+	  if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
 	  if (!contact_only) {
             gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
-            if (two_variables)
-              gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
+            if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
 	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
 		      rlambda_t);
 	    gmm::mult_add(BBT1, u1, rlambda_t);
-	    if (two_variables)
-	      gmm::mult_add(BBT2, u2, rlambda_t);
+	    if (two_variables) gmm::mult_add(BBT2, u2, rlambda_t);
           }
 	  break;
 	case 3:  // New unsymmetric method with De Saxce projection
@@ -1064,11 +1065,14 @@ namespace getfem {
 	      - friction_coeff[i] * gmm::vect_norm2(gmm::sub_vector(rlambda_t,
 						    gmm::sub_interval(i*d,d)));
 	  }
+	  gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
+	  if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
+	  gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
+	  if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
 	  gmm::add(gmm::scaled(lambda_t, vt1/r), rlambda_t);
 	  gmm::add(gmm::scaled(RLT, -vt1/r), rlambda_t);
 	  gmm::mult_add(BBN1, u1, rlambda_n);
-	  if (two_variables)
-	    gmm::mult_add(BBN2, u2, rlambda_n);
+	  if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
 	  break;
 	}
       }
@@ -1619,7 +1623,8 @@ namespace getfem {
     tl.push_back(model::term_description(varname_u, multname_t, false));
     tl.push_back(model::term_description(multname_t, varname_u, false));
     tl.push_back(model::term_description(multname_t, multname_t, false));
-    tl.push_back(model::term_description(multname_t, multname_n, false));
+    tl.push_back(model::term_description(multname_t, multname_n,
+					 (aug_version == 3)));
     model::varnamelist dl(1, dataname_r);
     dl.push_back(dataname_friction_coeff);
 
@@ -1924,7 +1929,8 @@ namespace getfem {
       tl.push_back(model::term_description(multname_t, varname_u2, false));
     }
     tl.push_back(model::term_description(multname_t, multname_t, false));
-    tl.push_back(model::term_description(multname_t, multname_n, false));
+    tl.push_back(model::term_description(multname_t, multname_n,
+					 (aug_version == 3)));
 
     // Variables (order: varname_u, multname_n, multname_t)
     model::varnamelist vl;
