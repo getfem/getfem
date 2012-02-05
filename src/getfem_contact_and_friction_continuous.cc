@@ -111,7 +111,7 @@ namespace getfem {
   }
 
   template <typename T> inline static T Heav(T a)
-  { return (a < T(0)) ? T(0) : T(1); }
+  { return (a <= T(0)) ? T(0) : T(1); }
 
 
   //=========================================================================

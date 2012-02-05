@@ -759,12 +759,12 @@ namespace getfem {
 	  if (two_variables)
 	    gmm::copy(gmm::scaled(gmm::transposed(BBN2), -vt1), T_u2_n);
 	  for (size_type i=0; i < nbc; ++i) {
-	    if (RLN[i] >= vt0) {
+	    if (RLN[i] > vt0) {
 	      gmm::clear(gmm::mat_col(T_u1_n, i));
 	      if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
 	      T_n_n(i, i) = -vt1/r;
 	    }
-	    if (RLN[i] < scalar_type(0) && Hughes_stabilized)
+	    if (RLN[i] <= scalar_type(0) && Hughes_stabilized)
 	      gmm::copy(gmm::scaled(gmm::mat_row(DDN, i), -vt1),
 			gmm::mat_col(T_n_n, i));
 	  }
