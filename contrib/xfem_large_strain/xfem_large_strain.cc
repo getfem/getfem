@@ -39,7 +39,6 @@
 #include "getfem/getfem_superlu.h"
 #include "getfem_nonlinear_elastoptim.h" /*Optimization procedure to evaluate the order of singularities*/
 #include "gmm/gmm.h"
-#include "gmm/gmm_solver_Newton.h"
 #include "gmm/gmm_inoutput.h"
 
 /* some Getfem++ types that we will be using */
