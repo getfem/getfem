@@ -125,7 +125,8 @@ namespace getfem {
 
     const VECTOR &residual(void) { return rhs; }
 
-    R residual_norm(void) { return gmm::vect_norm2(rhs); }
+    R residual_norm(void) { return gmm::vect_norm1(rhs); } // seems to be
+    //                             better than norm2 at least for contact
 
     R compute_res(bool comp = true) {
       if (with_pseudo_potential) {

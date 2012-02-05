@@ -309,10 +309,10 @@ if (version >= 1 && version <= 4) % defining the matrices BN and BT by hand
   gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
   if (version == 1 || version == 3)
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', ...
-        BN, 'ngap', 'alpha', (version - 1)/2);
+        BN, 'ngap', 'alpha', 1+(version - 1)/2);
   else
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', ...
-		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', (version - 2)/2);
+		 'lambda_t', 'r', BN, BT, 'friction_coeff', 'ngap', 'alpha', 1+(version - 2)/2);
   end;
 % elseif (version == 3 || version == 4) % BN and BT defined by contact brick
 % 
