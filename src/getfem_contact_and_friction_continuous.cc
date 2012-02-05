@@ -51,10 +51,10 @@ namespace getfem {
 
   template <typename VEC, typename MAT>
   static void ball_projection_grad(const VEC &x, double radius, MAT &g) {
-    if (radius <= scalar_type(0)) { gmm::clear(g); return; }
+    if (radius < scalar_type(0)) { gmm::clear(g); return; }
     gmm::copy(gmm::identity_matrix(), g);
     scalar_type a = gmm::vect_norm2(x);
-    if (a >= radius) {
+    if (a > radius) {
       gmm::scale(g, radius/a);
       // gmm::rank_one_update(g, gmm::scaled(x, -radius/(a*a*a)), x);
       for (size_type i = 0; i < x.size(); ++i)
@@ -85,7 +85,7 @@ namespace getfem {
     scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
     size_type N = gmm::vect_size(x);
 
-    if (xn >= scalar_type(0) && f * nxt <= xn) {
+    if (xn > scalar_type(0) && f * nxt <= xn) {
       gmm::clear(g);
     } else if (xn > scalar_type(0) || nxt > -f*xn) {
       static VEC xt;
