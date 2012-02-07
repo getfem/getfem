@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2010 Yves Renard
+// Copyright (C) 2009-2012 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -326,6 +326,7 @@ namespace getfem {
         ost << std::setw(8) << std::right << si;
         if (is_complex()) ost << " complex";
         ost << " double" << ((si > 1) ? "s." : ".") << endl;
+	if (it->second.is_disabled) ost << " disabled";
       }
     }
   }
@@ -345,7 +346,7 @@ namespace getfem {
     variables[name].set_size(size);
   }
 
-    void resize_fixed_size_variable(const std::string &name, size_type size);
+  void resize_fixed_size_variable(const std::string &name, size_type size);
 
 
   void model::add_fixed_size_data(const std::string &name, size_type size,
@@ -803,6 +804,22 @@ namespace getfem {
   }
 
 
+  bool model::build_reduced_index(std::vector<size_type> &ind) {
+    ind.resize(0);
+    bool reduced = false;
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
+      if (it->second.is_variable) {
+	if  (it->second.is_disabled)
+	  reduced = true;
+	else {
+	  for (size_type i=it->second.I.first(); i < it->second.I.last(); ++i)
+	    ind.push_back(i);
+	}
+      }
+    return reduced;
+  }
+
+
   void model::assembly(build_version version) {
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -820,6 +837,15 @@ namespace getfem {
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
 
       brick_description &brick = bricks[ib];
+      
+      // Disables the brick if all its variables are disabled.
+      bool auto_disabled_brick = true;
+      for (size_type j = 0; j < brick.vlist.size(); ++j) {
+	if (!(variables[brick.vlist[j]].is_disabled))
+	  auto_disabled_brick = false;
+      }
+      if (auto_disabled_brick) continue;
+
       update_brick(ib, version);
 
       bool cplx = is_complex() && brick.pbr->is_complex();
@@ -853,9 +879,6 @@ namespace getfem {
         gmm::sub_interval I1 = variables[term.var1].I;
         gmm::sub_interval I2(0,0);
         if (term.is_matrix_term) I2 = variables[term.var2].I;
-
-
-
 
         if (cplx) {
           if (term.is_matrix_term && (version & BUILD_MATRIX)) {
@@ -991,7 +1014,7 @@ namespace getfem {
 
       if (brick.pbr->is_linear())
         brick.terms_to_be_computed = false;
-// commented to allow to get this information. Should be optional ?
+// Commented to allow to get this information. Should be optional ?
 //       else
 //         if (cplx) {
 //           brick.cmatlist = complex_matlist(brick.tlist.size());

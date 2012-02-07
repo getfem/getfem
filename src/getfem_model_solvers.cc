@@ -73,7 +73,7 @@ namespace getfem {
     
     if (r < first_res *  alpha_min_ratio)
       { count_pat = 0.; return true; }      
-    if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
+    if (count>=5 || (alpha < alpha_min && max_ratio_reached) || alpha<1e-15) {
       if (conv_r < first_res * 0.99) count_pat = 0;
       if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
 	{ conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
@@ -96,38 +96,53 @@ namespace getfem {
     typedef typename gmm::number_traits<T>::magnitude_type R;
 
     model &md;
+    bool is_reduced;
+    std::vector<size_type> &sind;
+    gmm::sub_index I;
     abstract_newton_line_search &ls;
     VECTOR stateinit, &state;
     const VECTOR &rhs;
     const MATRIX &K;
+    MATRIX Kr;
+    VECTOR rhsr;
     bool with_pseudo_potential;
 
-    void compute_tangent_matrix(void)
-    { md.to_variables(state); md.assembly(model::BUILD_MATRIX); }
+    void compute_tangent_matrix(void) {
+      md.to_variables(state);
+      md.assembly(model::BUILD_MATRIX);
+      if (is_reduced) gmm::copy(gmm::sub_matrix(K, I, I), Kr);
+    }
 
-    const MATRIX &tangent_matrix(void) { return K; }
+    const MATRIX &tangent_matrix(void) { return (is_reduced ? Kr : K); }
     
     inline T scale_residual(void) const { return T(1); }
 
-    void compute_residual(void)
-    { md.to_variables(state); md.assembly(model::BUILD_RHS); }
+    void compute_residual(void) {
+      md.to_variables(state);
+      md.assembly(model::BUILD_RHS);
+      if (is_reduced) gmm::copy(gmm::sub_vector(rhs, I), rhsr);
+    }
 
     void compute_pseudo_potential(void)
     { md.to_variables(state); md.assembly(model::BUILD_PSEUDO_POTENTIAL); }
 
     void perturbation(void) {
-      R res = gmm::vect_norm2(state), ampl = res / R(1000);
-      if (res == R(0)) ampl = 1E-30;
+      R res = gmm::vect_norm2(state), ampl = res * R(1E-20);
+      if (res == R(0)) ampl = R(1E-50);
       std::vector<R> V(gmm::vect_size(state));
       gmm::fill_random(V);
       gmm::add(gmm::scaled(V, ampl), state);
     }
 
-    const VECTOR &residual(void) { return rhs; }
+    const VECTOR &residual(void) { return (is_reduced ? rhsr : rhs); }
 
-    R residual_norm(void)
-    { return gmm::vect_norm1(rhs)/R(gmm::vect_size(rhs)); } // seems to be
-    //                             better than norm2 at least for contact
+    R residual_norm(void) { // A norm1 seems to be better than a norm2
+                            // at least for contact problems.
+      if (is_reduced)
+	return gmm::vect_norm1(rhsr)/R(gmm::vect_size(rhsr));
+      else
+	return gmm::vect_norm1(rhs)/R(gmm::vect_size(rhs));
+    }
 
     R compute_res(bool comp = true) {
       if (with_pseudo_potential) {
@@ -148,7 +163,8 @@ namespace getfem {
 	  
       res_init = res = compute_res(false);      
       // cout << "first residual = " << residual() << endl << endl;
-      R0 = gmm::real(gmm::vect_sp(dr, rhs));
+      R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
+	               : gmm::real(gmm::vect_sp(dr, rhs)));
 
       // store the initial residual for the reprojection step.
 //       size_type N = gmm::vect_size(residual());
@@ -159,7 +175,8 @@ namespace getfem {
       // not very effective ... precision problem ?
       
 //       R EPS = 1e-6;
-//       gmm::add(stateinit, gmm::scaled(dr, EPS), state);
+//       gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, EPS),
+//                                               gmm::sub_vector(state, I));
 //       R res2 = compute_res();
       
 //       R a = (res2 + EPS * res - res) / gmm::sqr(EPS);
@@ -175,7 +192,9 @@ namespace getfem {
 // 	alpha_bis = std::min(alpha_bis, res / (R(2)*a));
 //       cout << "alpha_bis = " << alpha_bis << endl;
       
-//       gmm::add(stateinit, gmm::scaled(dr, alpha_bis), state);
+//       gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha_bis),
+//                                               gmm::sub_vector(state, I));
+
 //       R res3 = compute_res();
 //       cout << "res3 = " << res3 << endl;
 
@@ -188,22 +207,26 @@ namespace getfem {
       ls.init_search(res, iter.get_iteration(), R0);
       do {
 	alpha = ls.next_try();
-	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
+		 gmm::sub_vector(state, I));
 	res = compute_res();
 	// cout << "residual = " << residual() << endl << endl;
-	R0 = gmm::real(gmm::vect_sp(dr, rhs));
+	R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
+	                 : gmm::real(gmm::vect_sp(dr, rhs)));
 
 	++ nit;
       } while (!ls.is_converged(res, R0));
 
       if (alpha != ls.converged_value() || with_pseudo_potential) {
 	alpha = ls.converged_value();
-	gmm::add(stateinit, gmm::scaled(dr, alpha), state);
+	gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
+		 gmm::sub_vector(state, I));
 	res = ls.converged_residual();
 	compute_residual();
       }
 
-  //     if (1) { // reprojection step ...
+//     if (1) { // reprojection step ... only for non reduced case ...
+//     GMM_ASSERT1(!is_reduced, "to be done ...");
 // 	// detection des ddls "coupables"
 // 	R mean = R(0);
 // 	for (size_type i = 0; i < N; ++i) mean += gmm::abs(residual()[i]);
@@ -271,10 +294,11 @@ namespace getfem {
     }
 
     model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
-	     const VECTOR &rhs_, const MATRIX &K_,
+	     const VECTOR &rhs_, const MATRIX &K_, bool reduced_,
+	     std::vector<size_type> &sind_,
 	     bool with_pseudo_pot = false)
-      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_),
-	with_pseudo_potential(with_pseudo_pot) {}
+      : md(m), is_reduced(reduced_), sind(sind_), I(sind_), ls(ls_), state(st),
+	rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
 
   };
 
@@ -289,15 +313,33 @@ namespace getfem {
 		      const VECTOR &rhs, bool with_pseudo_potential = false) {
 
     VECTOR state(md.nb_dof());
+    std::vector<size_type> sind;
+    bool is_reduced;
     
     md.from_variables(state); // copy the model variables in the state vector
 
+    is_reduced = md.build_reduced_index(sind);  // sub index of the dof to 
+                              //  be solved in case of disabled variables
+
     if (md.is_linear()) {
       md.assembly(model::BUILD_ALL);
-      (*lsolver)(K, state, rhs, iter);
+      
+      if (is_reduced) {
+	gmm::sub_index I(sind);
+	cout << "reduced index : " << sind << endl;
+	MATRIX Kr(sind.size(), sind.size());
+	VECTOR rhsr(sind.size()), stater(sind.size());
+	gmm::copy(gmm::sub_matrix(K, I, I), Kr);
+	gmm::copy(gmm::sub_vector(state, I), stater);
+	gmm::copy(gmm::sub_vector(rhs, I), rhsr);
+	(*lsolver)(Kr, stater, rhsr, iter);
+	gmm::copy(stater, gmm::sub_vector(state, I));
+      } else {
+	(*lsolver)(K, state, rhs, iter);
+      }
     }
     else {
-      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K,
+      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K, is_reduced, sind,
 				    with_pseudo_potential);
       classical_Newton(mdpb, iter, *lsolver);
     }

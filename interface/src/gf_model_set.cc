@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2010 Yves Renard.
+// Copyright (C) 2009-2012 Yves Renard.
 //
 // This file is a part of GETFEM++
 //
@@ -1581,8 +1581,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ('enable bricks', @ivec bricks_indices)
-    Enable a disabled brick.@*/
+     /*@SET ('enable bricks', @ivec bricks_indices)
+       Enable a disabled brick. @*/
      sub_command
        ("enable bricks", 1, 1, 0, 0,
         dal::bit_vector bv = in.pop().to_bit_vector();
@@ -1590,52 +1590,74 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           md->model().enable_brick(ii);
         );
 
+     /*@SET ('disable variable', @str varname)
+       Disable a variable for a solve. The next solve will operate only on
+       the remaining variables. This allows to solve separately different
+       parts of a model. If there is a strong coupling of the variables,
+       a fixed point strategy can the be used. @*/
+     sub_command
+       ("disable variable", 1, 1, 0, 0,
+	std::string varname = in.pop().to_string();
+	md->model().disable_variable(varname);
+        );
 
-    /*@SET ('first iter')
-    To be executed before the first iteration of a time integration scheme.@*/
+
+     /*@SET ('enable variable', @str varname)
+       Enable a disabled variable. @*/
+     sub_command
+       ("enable variable", 1, 1, 0, 0,
+        std::string varname = in.pop().to_string();
+	md->model().enable_variable(varname);
+        );
+
+
+     /*@SET ('first iter')
+       To be executed before the first iteration of a time integration
+       scheme. @*/
      sub_command
        ("first iter", 0, 0, 0, 0,
         md->model().first_iter();
         );
 
 
-    /*@SET ('next iter')
-      To be executed at the end of each iteration of a time
-      integration scheme.@*/
+     /*@SET ('next iter')
+       To be executed at the end of each iteration of a time
+       integration scheme. @*/
      sub_command
        ("next iter", 0, 0, 0, 0,
         md->model().next_iter();
         );
 
 
-    /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]])
-
-    Add a contact with  or without friction brick to the model.
-    If U is the vector
-    of degrees of freedom on which the unilateral constraint is applied,
-    the matrix `BN` have to be such that this constraint is defined by
-    :math:`B_N U \le 0`. A friction condition can be considered by adding the three
-    parameters `multname_t`, `BT` and `dataname_friction_coeff`. In this case,
-    the tangential displacement is :math:`B_T U` and the matrix `BT` should have as
-    many rows as `BN` multiplied by :math:`d-1` where :math:`d` is the domain dimension.
-    In this case also, `dataname_friction_coeff` is a data which represents the
-    coefficient of friction. It can be a scalar or a vector representing a
-    value on each contact condition.  The unilateral constraint is prescribed
-    thank to a multiplier
-    `multname_n` whose dimension should be equal to the number of rows of
-    `BN`. If a friction condition is added, it is prescribed with a
-    multiplier `multname_t` whose dimension should be equal to the number
-    of rows of `BT`. The augmentation parameter `r` should be chosen in
-    a range of
-    acceptabe values (see Getfem user documentation). `dataname_gap` is an
-    optional parameter representing the initial gap. It can be a single value
-    or a vector of value. `dataname_alpha` is an optional homogenization
-    parameter for the augmentation parameter
-    (see Getfem user documentation).  The parameter `augmented_version`
-    indicates the augmentation strategy : 1 for the non-symmetric
-    Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
-    the coupling between contact and Coulomb friction),
-    3 for the new unsymmetric method. @*/
+     /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]])
+       
+     Add a contact with  or without friction brick to the model.
+     If U is the vector
+     of degrees of freedom on which the unilateral constraint is applied,
+     the matrix `BN` have to be such that this constraint is defined by
+     :math:`B_N U \le 0`. A friction condition can be considered by adding
+     the three parameters `multname_t`, `BT` and `dataname_friction_coeff`.
+     In this case, the tangential displacement is :math:`B_T U` and
+     the matrix `BT` should have as many rows as `BN` multiplied by
+     :math:`d-1` where :math:`d` is the domain dimension.
+     In this case also, `dataname_friction_coeff` is a data which represents
+     the coefficient of friction. It can be a scalar or a vector representing a
+     value on each contact condition.  The unilateral constraint is prescribed
+     thank to a multiplier
+     `multname_n` whose dimension should be equal to the number of rows of
+     `BN`. If a friction condition is added, it is prescribed with a
+     multiplier `multname_t` whose dimension should be equal to the number
+     of rows of `BT`. The augmentation parameter `r` should be chosen in
+     a range of
+     acceptabe values (see Getfem user documentation). `dataname_gap` is an
+     optional parameter representing the initial gap. It can be a single value
+     or a vector of value. `dataname_alpha` is an optional homogenization
+     parameter for the augmentation parameter
+     (see Getfem user documentation).  The parameter `augmented_version`
+     indicates the augmentation strategy : 1 for the non-symmetric
+     Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
+     the coupling between contact and Coulomb friction),
+     3 for the new unsymmetric method. @*/
      sub_command
        ("add basic contact brick", 4, 10, 0, 1,
 

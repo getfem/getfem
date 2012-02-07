@@ -23,3 +23,9 @@ See also the next section for an example of use.
 
 Note that |sLU| is used by default on "small" problems. You can also link
 |mumps| with |gf| (see section :ref:`ud-linalg`) and used the parallel version.
+
+Note also that it is possible to disable some variables
+(with the method md.disable_variable(varname) of the model object) in order to
+solve the problem only with respect to a subset of variables (the
+disabled variables are the considered as data) for instance to
+replace the global Newton strategy with a fixed point one.

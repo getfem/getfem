@@ -368,7 +368,7 @@ namespace getfem {
         gmm::clear(dr);
         gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
         if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
-
+	iter_linsolv.init();
         linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
         if (!iter_linsolv.converged()) {
           is_singular++;
@@ -377,6 +377,7 @@ namespace getfem {
               cout << "Singular tangent matrix:"
                 " perturbation of the state vector." << endl;
             pb.perturbation();
+	    pb.compute_residual();
           } else {
             if (iter.get_noisy())
               cout << "Singular tangent matrix: perturbation failed, aborting."
@@ -508,6 +509,12 @@ namespace getfem {
 
   When MPI/METIS is enabled, a partition is done via METIS, and a parallel
   solver can be used.
+
+  Note that it is possible to disable some variables
+  (see the md.disable_variable(varname) method) in order to
+  solve the problem only with respect to a subset of variables (the
+  disabled variables are the considered as data) for instance to
+  replace the global Newton strategy with a fixed point one.
 
   @ingroup bricks
   */

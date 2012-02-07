@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2009-2010 Yves Renard
+// Copyright (C) 2009-2012 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -124,6 +124,7 @@ namespace getfem {
     struct var_description {
 
       bool is_variable;  // This is a variable or a parameter.
+      bool is_disabled;  // For a variable, to be solved or not
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
@@ -155,8 +156,9 @@ namespace getfem {
                       const mesh_fem *mmf = 0,
                       size_type m_reg = size_type(-1), dim_type Q = 1,
                       const std::string &filter_v = std::string(""))
-        : is_variable(is_var), is_complex(is_com), is_fem_dofs(is_fem),
-          filter(fil), n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
+        : is_variable(is_var), is_disabled(false), is_complex(is_com),
+	  is_fem_dofs(is_fem), filter(fil),
+	  n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
           default_iter(0), mf(mmf), m_region(m_reg), filter_var(filter_v),
           qdim(Q), v_num(0), v_num_data(act_counter()) {
         if (filter != VDESCRFILTER_NO && mf != 0)
@@ -279,6 +281,7 @@ namespace getfem {
     void update_brick(size_type ib, build_version version) const;
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data,
                                  size_type n_iter) const;
+    bool build_reduced_index(std::vector<size_type> &ind);
     void brick_call(size_type ib, build_version version,
                     size_type rhs_ind = 0) const;
     model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
@@ -323,6 +326,16 @@ namespace getfem {
     void enable_brick(size_type ib) {
       GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
       active_bricks.add(ib);
+    }
+
+    /** Disable a variable.  */
+    void disable_variable(const std::string &name) {
+      variables[name].is_disabled = true;
+    }
+
+    /** Enable a variable.  */
+    void enable_variable(const std::string &name) {
+      variables[name].is_disabled = false;
     }
 
     /** Boolean which says if the model deals with real or complex unknowns

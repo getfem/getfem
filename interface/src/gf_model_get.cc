@@ -297,7 +297,15 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       be a pseudo potential instead of the residual. Still experimental since
       not all bricks define a pseudo potential.
 
-      Return the number of iterations, if a iterative method is used. @*/
+      Return the number of iterations, if a iterative method is used.
+      
+      Note that it is possible to disable some variables
+      (see MODEL:SET('disable variable') ) in order to
+      solve the problem only with respect to a subset of variables (the
+      disabled variables are the considered as data) for instance to
+      replace the global Newton strategy with a fixed point one.
+
+      @*/
     sub_command
       ("solve", 0, 15, 0, 2,
        getfemint::interruptible_iteration iter;
