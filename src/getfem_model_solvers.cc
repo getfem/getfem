@@ -110,7 +110,10 @@ namespace getfem {
     void compute_tangent_matrix(void) {
       md.to_variables(state);
       md.assembly(model::BUILD_MATRIX);
-      if (is_reduced) gmm::copy(gmm::sub_matrix(K, I, I), Kr);
+      if (is_reduced) {
+	gmm::resize(Kr, sind.size(), sind.size());
+	gmm::copy(gmm::sub_matrix(K, I, I), Kr);
+      }
     }
 
     const MATRIX &tangent_matrix(void) { return (is_reduced ? Kr : K); }
@@ -120,7 +123,10 @@ namespace getfem {
     void compute_residual(void) {
       md.to_variables(state);
       md.assembly(model::BUILD_RHS);
-      if (is_reduced) gmm::copy(gmm::sub_vector(rhs, I), rhsr);
+      if (is_reduced) {
+	gmm::resize(rhsr, sind.size());
+	gmm::copy(gmm::sub_vector(rhs, I), rhsr);
+      }
     }
 
     void compute_pseudo_potential(void)
@@ -326,7 +332,6 @@ namespace getfem {
       
       if (is_reduced) {
 	gmm::sub_index I(sind);
-	cout << "reduced index : " << sind << endl;
 	MATRIX Kr(sind.size(), sind.size());
 	VECTOR rhsr(sind.size()), stater(sind.size());
 	gmm::copy(gmm::sub_matrix(K, I, I), Kr);

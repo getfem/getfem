@@ -325,8 +325,9 @@ namespace getfem {
         size_type si = it->second.size();
         ost << std::setw(8) << std::right << si;
         if (is_complex()) ost << " complex";
-        ost << " double" << ((si > 1) ? "s." : ".") << endl;
-	if (it->second.is_disabled) ost << " disabled";
+        ost << " double" << ((si > 1) ? "s." : ".");
+	if (it->second.is_disabled) ost << "\t (disabled)";
+	ost << endl;
       }
     }
   }
