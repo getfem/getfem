@@ -764,7 +764,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
 
 
-       unsigned N = unsigned(gfi_mf->mesh_fem().linked_mesh().dim());
+       size_type N = size_type(gfi_mf->mesh_fem().linked_mesh().dim());
        size_type ratio = 1;
        if ((gfi_mf->mesh_fem()).get_qdim() == 1) ratio = N*N;
        
@@ -778,11 +778,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
         dataname, gfi_mf->mesh_fem(), VMM);
        out.pop().from_dcvector(VMM);
        );
-
-
-    
-    
-
 
 
     /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
