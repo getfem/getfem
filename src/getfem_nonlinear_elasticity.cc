@@ -968,38 +968,62 @@ namespace getfem {
     
     unsigned N = unsigned(mf_u.linked_mesh().dim());
     unsigned NP = unsigned(AHL.nb_params()), NFem = mf_u.get_qdim();
-    size_type ratio = gmm::vect_size(SIGMA) / mf_sigma.nb_dof();
+    GMM_ASSERT1(mf_sigma.nb_dof() > 0, "Bad mf_sigma");
+    size_type qqdim = mf_sigma.get_qdim();
+    size_type ratio = N*N / qqdim;
     
     GMM_ASSERT1(((ratio == 1) || (ratio == N*N)) &&
-		(gmm::vect_size(SIGMA) == ratio * mf_sigma.nb_dof()),
+		(gmm::vect_size(SIGMA) == mf_sigma.nb_dof()*ratio),
 		"The vector has not the good size");
 
-    model_real_plain_vector GRAD(mf_sigma.nb_dof()*NFem*N);
+    model_real_plain_vector GRAD(mf_sigma.nb_dof()*ratio*NFem/N);
     model_real_plain_vector PARAMS(mf_sigma.nb_dof()*NP);
-    if (mf_params) interpolation(*mf_params, mf_sigma, params, PARAMS);
+
+
+    getfem::mesh_trans_inv mti(mf_sigma.linked_mesh());
+    if (mf_params) {
+      for (size_type i = 0; i < mf_sigma.nb_dof(); ++i)
+	mti.add_point(mf_sigma.point_of_basic_dof(i));
+      interpolation(*mf_params, mti, params, PARAMS);
+    }
+
     compute_gradient(mf_u, mf_sigma, u, GRAD);
     base_matrix E(N, N), gradphi(NFem,N),gradphit(N,NFem), Id(N, N),
       sigmahathat(N,N),aux(NFem,N), sigma(NFem,NFem),
       IdNFem(NFem, NFem);
+    
+
     base_vector p(NP);
     if (!mf_params) gmm::copy(params, p);
     base_vector eig(NFem);
     base_vector ez(NFem);	// vector normal at deformed surface, (ex X ey)
     gmm::copy(gmm::identity_matrix(), Id);
     gmm::copy(gmm::identity_matrix(), IdNFem);
-    for (size_type i = 0; i < mf_sigma.nb_dof()/ratio; ++i) {
+
+    // cout << "GRAD = " << GRAD << endl;
+    // GMM_ASSERT1(false, "oops");
+
+
+    for (size_type i = 0; i < mf_sigma.nb_dof()/qqdim; ++i) {
+//       cout << "GRAD size = " << gmm::vect_size(GRAD) << endl;
+//       cout << "i = " << i << endl;
+//       cout << "i*NFem*N = " << i*NFem*N << endl;
+      
       gmm::resize(gradphi,NFem,N);
       std::copy(GRAD.begin()+i*NFem*N, GRAD.begin()+(i+1)*NFem*N,
 		gradphit.begin());
+      // cout << "GRAD = " << gradphit << endl;
       gmm::copy(gmm::transposed(gradphit),gradphi);
       for (unsigned int alpha = 0; alpha <N; ++alpha)
-	gradphi(alpha, alpha)+=1;
+	gradphi(alpha, alpha) += scalar_type(1);
       gmm::mult(gmm::transposed(gradphi), gradphi, E);
       gmm::add(gmm::scaled(Id, -scalar_type(1)), E);
       gmm::scale(E, scalar_type(1)/scalar_type(2));
       if (mf_params)
-	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*NP,NP)), p);
+	gmm::copy(gmm::sub_vector(PARAMS, gmm::sub_interval(i*ratio*NP,NP)),p);
+      // cout << "E = " << E << endl;
       AHL.sigma(E, sigmahathat, p, scalar_type(1));
+      // cout << "ok" << endl;
       std::copy(sigmahathat.begin(), sigmahathat.end(), SIGMA.begin()+i*N*N);
     }
   }

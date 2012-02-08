@@ -74,8 +74,8 @@ namespace getfem
 
     GMM_ASSERT1(&mf.linked_mesh() == &mf_target.linked_mesh(),
                 "meshes are different.");
-    GMM_ASSERT1(target_qdim == qdim || target_qdim == 1,
-                "invalid Qdim for gradient mesh_fem");
+    GMM_ASSERT1(target_qdim == qdim*N || target_qdim == qdim
+		|| target_qdim == 1, "invalid Qdim for gradient mesh_fem");
     
     base_matrix G;
     std::vector<T> coeff;
