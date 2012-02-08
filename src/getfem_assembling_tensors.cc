@@ -1374,7 +1374,7 @@ namespace getfem {
       advance(); 
     }
     if (datanum >= indata.size())
-      ASM_THROW_PARSE_ERROR("wong dataset number: " << datanum);
+      ASM_THROW_PARSE_ERROR("wrong dataset number: " << datanum);
     
     vdim_specif_list sz;
     do_dim_spec(sz);
