@@ -18,7 +18,7 @@ This matlab version requires some specific flags to be used when building getfem
  CFLAGS = -fno-common -no-cpp-precomp -arch i386 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5  -fexceptions
  CXXFLAGS = -fno-common -no-cpp-precomp -fexceptions -arch i386 -isysroot /Developer/SDKs/MacOSX10.5.sdk -mmacosx-version-min=10.5
 
-Those that are important here are the the arch one (you need to build a binary for the same architecture than the matlab one (ppc, ppc64, i386, x86_64)). The -isysroot and the -mmacos-min-version are used to linked against the same system library versions than matlab.
+Those that are important here are the arch one (you need to build a binary for the same architecture than the matlab one (ppc, ppc64, i386, x86_64)). The -isysroot and the -mmacos-min-version are used to linked against the same system library versions than matlab.
 
 
 If you want to install qhull (in order to use the levelset stuff), 

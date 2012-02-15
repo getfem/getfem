@@ -312,7 +312,7 @@ The list is not exhaustive.
    point ``pt`` has no influence if the geometric transformation is
    linear. This is not a unit normal, the norm of the resulting vector
    is the ratio between the surface of the face of the reference
-   element and the the surface of the face of the real element.
+   element and the surface of the face of the real element.
 
 .. function:: mymesh.convex_area_estimate(ic)
 

@@ -81,7 +81,7 @@ files: meschach[01234].shar (which contain the library itself),
 meschach0.shar (which contains basic documentation and machine dependent
 files for a number of machines).  Of the meschach[1234].shar files, only
 meschach[12].shar are needed for the basic Meschach library; the third
-.shar file contains the sparse matrix routines, and the the fourth contains
+.shar file contains the sparse matrix routines, and the fourth contains
 the routines for complex numbers, vectors and matrices.  There is also a
 README file that you should get from meschach0.shar.
 
@@ -257,12 +257,12 @@ into a library. Consult your local compiler's manual for details of how to
 do this.
 
    When compiling programs/routines that use Meschach, you will need to
-have access the the header files in the INCLUDE directory. The INCLUDE
+have access to the header files in the INCLUDE directory. The INCLUDE
 directory's contents can be copied to the directory where the
 programs/routines are compiled.
 
    The files in the DOC directory form a very brief form of documentation
-on the the library routines in Meschach. See the printed documentation for
+on the library routines in Meschach. See the printed documentation for
 more comprehensive documentation of the Meschach routines.  This can be
 obtained from the authors via email.
 

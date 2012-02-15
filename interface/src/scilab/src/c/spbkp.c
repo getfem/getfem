@@ -27,7 +27,7 @@
 /*
   Sparse matrix Bunch--Kaufman--Parlett factorisation and solve
   Radical revision started Thu 05th Nov 1992, 09:36:12 AM
-  to use Karen George's suggestion of leaving the the row elements unordered
+  to use Karen George's suggestion of leaving the row elements unordered
   Radical revision completed Mon 07th Dec 1992, 10:59:57 AM
 */
 

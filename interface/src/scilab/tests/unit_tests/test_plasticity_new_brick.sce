@@ -87,7 +87,7 @@ gf_model_set(md, 'add fem data', 'sigma', mf_sigma);
 // Add plasticity brick on u
 gf_model_set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
 
-// Add homogeneous Dirichlet condition to u on the the left hand side of the domain
+// Add homogeneous Dirichlet condition to u on the left hand side of the domain
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
 
 // Add a source term to the system

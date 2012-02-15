@@ -193,7 +193,7 @@ Getfem++ bricks implement four versions of the contact condition derived from th
   ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
-where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity. In order to write a Newton iteration, one has to derive the the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
+where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
 
 .. math::
 

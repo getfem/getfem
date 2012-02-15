@@ -705,7 +705,7 @@ to the screen.
 
    Some of the most common routines have variants that take a variable
 number of arguments.  These are the routines .._get_vars(), .._resize_vars()
-and .._free_vars().  These correspond to the the basic routines .._get(),
+and .._free_vars().  These correspond to the basic routines .._get(),
 .._resize() and .._free() respectively.  Also there is the
 mem_stat_reg_vars() routine which registers a list of static workspace
 variables. This corresponds to mem_stat_reg_list() for a single variable.

@@ -586,7 +586,7 @@ To make all the thing works automatically, a certain number of rules have to be 
   If the method/function returns a value, then a name for the return value
   is given (which is arbitrary) followed by ``=``.
 
-  The the parameters of the method/function are described. For a method, the
+  The parameters of the method/function are described. For a method, the
   object itself is not mentionned. The first parameter should be the method
   or sub-command name between single quotes (a speical case is when
   this name begin with a dot this means that it correspond to a

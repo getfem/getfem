@@ -44,7 +44,7 @@ namespace getfem {
 
 
   /** Add a frictionless contact condition with a rigid obstacle
-      to the model. This brick add a contact which is defined
+      to the model. This brick adds a contact which is defined
       in an integral way. Is it the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
       continuous level. The advantage should be a better scalability:

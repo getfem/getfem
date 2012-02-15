@@ -119,7 +119,7 @@ namespace bgeot {
     void points_in_box(kdtree_tab_type &ipts,
 		       const base_node &min, 
 		       const base_node &max);
-    /* assigns at ipt the index of the the nearest neighbor at location
+    /* assigns at ipt the index of the nearest neighbor at location
        pos and returns the square of the distance to this point*/
     scalar_type nearest_neighbor(index_node_pair &ipt,
                                  const base_node &pos);

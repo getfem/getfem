@@ -42,7 +42,7 @@
 	
 2008-09-26 Yves Renard  <Yves.Renard@insa-lyon.fr>
 	* src/getfem/getfem_nonlinear_elasticity.h
-	Adding the the contribution of Jean-Yves Heddebaut <jyhed@alpino.be>
+	Adding the contribution of Jean-Yves Heddebaut <jyhed@alpino.be>
 	concerning the deformation of a nonlinear membrane.
 
 2008-08-11 Yves Renard  <Yves.Renard@insa-lyon.fr>

@@ -738,322 +738,322 @@ namespace getfem {
       gmm::resize(RLN, nbc);
       if (!contact_only) gmm::resize(RLT, nbc*d);
       if (augmentation_version <= 2)
-	precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
+        precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
 
       if (version & model::BUILD_MATRIX) {
-	base_matrix pg(d, d);
-	base_vector vg(d);
+        base_matrix pg(d, d);
+        base_vector vg(d);
 
         gmm::clear(T_n_n); gmm::clear(T_n_u1);
-	gmm::clear(T_u1_n); gmm::clear(T_u1_u1);
+        gmm::clear(T_u1_n); gmm::clear(T_u1_u1);
         if (two_variables)
-	  { gmm::clear(T_u2_u2); gmm::clear(T_n_u2); gmm::clear(T_u2_n); }
-	if (!contact_only) {
-	  gmm::clear(T_u1_t); gmm::clear(T_t_n); gmm::clear(T_t_t);
+          { gmm::clear(T_u2_u2); gmm::clear(T_n_u2); gmm::clear(T_u2_n); }
+        if (!contact_only) {
+          gmm::clear(T_u1_t); gmm::clear(T_t_n); gmm::clear(T_t_t);
           if (two_variables) gmm::clear(T_u2_t);
-	}
+        }
 
-	switch (augmentation_version) {
-	case 0: case 1: case 2:
-	  gmm::copy(gmm::scaled(gmm::transposed(BBN1), -vt1), T_u1_n);
-	  if (two_variables)
-	    gmm::copy(gmm::scaled(gmm::transposed(BBN2), -vt1), T_u2_n);
-	  for (size_type i=0; i < nbc; ++i) {
-	    if (RLN[i] > vt0) {
-	      gmm::clear(gmm::mat_col(T_u1_n, i));
-	      if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
-	      T_n_n(i, i) = -vt1/r;
-	    }
-	    if (Hughes_stabilized && RLN[i] <= vt0)
-	      gmm::copy(gmm::scaled(gmm::mat_row(DDN, i), -vt1),
-			gmm::mat_col(T_n_n, i));
-	  }
-	  if (Hughes_stabilized) {
-	    model_real_sparse_matrix aux(nbc, nbc);
-	    gmm::copy(gmm::transposed(T_n_n), aux);
-	    gmm::copy(aux, T_n_n);
-	  }
-	  gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
-	  if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
-	  if (!contact_only) {
-	    for (size_type i=0; i < nbc; ++i) {
-	      gmm::sub_interval SUBI(i*d, d);
-	      scalar_type th = Tresca_version ? threshold[i]
-		: - ((augmentation_version == 2) ? std::min(vt0, RLN[i]) : lambda_n[i])
-		* friction_coeff[i];
-	      ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
-	      if (!really_stationary)
-		for (size_type k1 = 0; k1 < d; ++k1)
-		  for (size_type k2 = 0; k2 < d; ++k2) {
-		    gmm::add(gmm::scaled(gmm::mat_row(BBT1,i*d+k1),-pg(k2,k1)),
-			     gmm::mat_col(T_u1_t, i*d+k2));
-		    if (two_variables)
-		      gmm::add(gmm::scaled(gmm::mat_row(BBT2,i*d+k1),
-					   -pg(k2,k1)),
-			       gmm::mat_col(T_u2_t, i*d+k2));
-		  }
-	      
-	      if (!Tresca_version) {
-		if (augmentation_version <= 1 || RLN[i] <= vt0) {// à verif
-		  ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
-		  for (size_type k = 0; k < d; ++k)
-		    T_t_n(i*d+k, i) = - friction_coeff[i] * vg[k] / r;
-		}
-	      }
-	      for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
-	      if (Hughes_stabilized) {
-		for (size_type k = 0; k < d; ++k)
-		  for (size_type l = 0; l < d; ++l) {
-		    gmm::add(gmm::scaled(gmm::mat_row(DDT, d*i+l), -pg(k,l)),
-			     gmm::mat_col(T_t_t, d*i+k));
-		    T_t_t(d*i+l, d*i+k) += pg(k,l) / r;
-		  }
-	      } else
-		gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t,SUBI));
-	      
-	    }
-	    if (Hughes_stabilized) {
-	      model_real_sparse_matrix aux(gmm::mat_nrows(T_t_t), gmm::mat_nrows(T_t_t));
-	      gmm::copy(gmm::transposed(T_t_t), aux);
-	      gmm::copy(aux, T_t_t);
-	    }
-	    gmm::copy(gmm::transposed(T_u1_t), T_t_u1);
-	    if (two_variables) gmm::copy(gmm::transposed(T_u2_t), T_t_u2);
-	  }
+        switch (augmentation_version) {
+        case 0: case 1: case 2:
+          gmm::copy(gmm::scaled(gmm::transposed(BBN1), -vt1), T_u1_n);
+          if (two_variables)
+            gmm::copy(gmm::scaled(gmm::transposed(BBN2), -vt1), T_u2_n);
+          for (size_type i=0; i < nbc; ++i) {
+            if (RLN[i] > vt0) {
+              gmm::clear(gmm::mat_col(T_u1_n, i));
+              if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
+              T_n_n(i, i) = -vt1/r;
+            }
+            if (Hughes_stabilized && RLN[i] <= vt0)
+              gmm::copy(gmm::scaled(gmm::mat_row(DDN, i), -vt1),
+                        gmm::mat_col(T_n_n, i));
+          }
+          if (Hughes_stabilized) {
+            model_real_sparse_matrix aux(nbc, nbc);
+            gmm::copy(gmm::transposed(T_n_n), aux);
+            gmm::copy(aux, T_n_n);
+          }
+          gmm::copy(gmm::transposed(T_u1_n), T_n_u1);
+          if (two_variables) gmm::copy(gmm::transposed(T_u2_n), T_n_u2);
+          if (!contact_only) {
+            for (size_type i=0; i < nbc; ++i) {
+              gmm::sub_interval SUBI(i*d, d);
+              scalar_type th = Tresca_version ? threshold[i]
+                : - ((augmentation_version == 2) ? std::min(vt0, RLN[i]) : lambda_n[i])
+                * friction_coeff[i];
+              ball_projection_grad(gmm::sub_vector(RLT, SUBI), th, pg);
+              if (!really_stationary)
+                for (size_type k1 = 0; k1 < d; ++k1)
+                  for (size_type k2 = 0; k2 < d; ++k2) {
+                    gmm::add(gmm::scaled(gmm::mat_row(BBT1,i*d+k1),-pg(k2,k1)),
+                             gmm::mat_col(T_u1_t, i*d+k2));
+                    if (two_variables)
+                      gmm::add(gmm::scaled(gmm::mat_row(BBT2,i*d+k1),
+                                           -pg(k2,k1)),
+                               gmm::mat_col(T_u2_t, i*d+k2));
+                  }
 
-	  if (augmentation_version == 0) {
-	    gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
-	    if (two_variables)
-	      gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
-	    if (!contact_only) {
-	      gmm::copy(gmm::scaled(gmm::transposed(BT1), -vt1), T_u1_t);
-	      if (two_variables)
-		gmm::copy(gmm::scaled(gmm::transposed(BT2), -vt1), T_u2_t);
-	    } 
-	  } else {
-	    model_real_sparse_matrix tmp1(gmm::mat_ncols(BN1),
-					  gmm::mat_ncols(BN1));
-	    gmm::mult(gmm::transposed(gmm::scaled(BBN1,-r)), T_n_u1, tmp1);
-	    gmm::add(tmp1, T_u1_u1);
-	    if (two_variables) {
-	      gmm::mult(gmm::transposed(gmm::scaled(BBN2,-r)), T_n_u2, tmp1);
-	      gmm::add(tmp1, T_u2_u2);
-	    }
-	    
-	    if (!contact_only) {
-	      gmm::mult(gmm::transposed(gmm::scaled(BBT1,-r)), T_t_u1, tmp1);
-	      gmm::add(tmp1, T_u1_u1);
-	      if (two_variables) {
-		gmm::mult(gmm::transposed(gmm::scaled(BBT2,-r)), T_t_u2, tmp1);
-		gmm::add(tmp1, T_u2_u2);
-	      }
-	    }
+              if (!Tresca_version) {
+                if (augmentation_version <= 1 || RLN[i] <= vt0) {// à verif
+                  ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
+                  for (size_type k = 0; k < d; ++k)
+                    T_t_n(i*d+k, i) = - friction_coeff[i] * vg[k] / r;
+                }
+              }
+              for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
+              if (Hughes_stabilized) {
+                for (size_type k = 0; k < d; ++k)
+                  for (size_type l = 0; l < d; ++l) {
+                    gmm::add(gmm::scaled(gmm::mat_row(DDT, d*i+l), -pg(k,l)),
+                             gmm::mat_col(T_t_t, d*i+k));
+                    T_t_t(d*i+l, d*i+k) += pg(k,l) / r;
+                  }
+              } else
+                gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t,SUBI));
 
-	    if (!contact_only && !Tresca_version && augmentation_version>=1) {
-	      // should be simplified ... !
-	      model_real_sparse_matrix tmp5(gmm::mat_ncols(BT1),
-					    gmm::mat_ncols(BT1));
-	      model_real_sparse_matrix tmp6(gmm::mat_ncols(BT1),
-					    gmm::mat_ncols(BT1));
-	      model_real_sparse_matrix tmp7(gmm::mat_ncols(BT2),
-					    gmm::mat_ncols(BT2));
-	      model_real_sparse_matrix tmp8(gmm::mat_ncols(BT2),
-					    gmm::mat_ncols(BT2));
-	      model_real_sparse_matrix tmp3(gmm::mat_ncols(T_t_u1),
-					    gmm::mat_nrows(T_t_u1));
-	      model_real_sparse_matrix tmp4(gmm::mat_ncols(T_t_u2),
-					    gmm::mat_nrows(T_t_u2));
+            }
+            if (Hughes_stabilized) {
+              model_real_sparse_matrix aux(gmm::mat_nrows(T_t_t), gmm::mat_nrows(T_t_t));
+              gmm::copy(gmm::transposed(T_t_t), aux);
+              gmm::copy(aux, T_t_t);
+            }
+            gmm::copy(gmm::transposed(T_u1_t), T_t_u1);
+            if (two_variables) gmm::copy(gmm::transposed(T_u2_t), T_t_u2);
+          }
 
-	      for (size_type i=0; i < nbc; ++i) {
-		gmm::sub_interval SUBI(i*d, d);
-		scalar_type th = - ((augmentation_version == 2) ?
-				    std::min(vt0, RLN[i])
-				    : lambda_n[i]) * friction_coeff[i];
-		if (augmentation_version == 1 || RLN[i] <= vt0) {// à verif
-		  ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
-		  for (size_type k = 0; k < d; ++k) {
-		    gmm::add(gmm::scaled(gmm::mat_row(BBT1,i*d+k),
-		       vg[k]*friction_coeff[i]), gmm::mat_col(T_u1_n, i));
-		    if (two_variables)
-		      gmm::add(gmm::scaled(gmm::mat_row(BBT2,i*d+k),
-		       vg[k]*friction_coeff[i]), gmm::mat_col(T_u2_n, i));
-		    if (augmentation_version == 2) {
-		      gmm::add(gmm::scaled(gmm::mat_row(BBN1,i),
-		       vg[k]*friction_coeff[i]), gmm::mat_col(tmp3, i*d+k));
-		      if (two_variables)
-			gmm::add(gmm::scaled(gmm::mat_row(BBN2,i),
-			 vg[k]*friction_coeff[i]), gmm::mat_col(tmp4, i*d+k));
+          if (augmentation_version == 0) {
+            gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
+            if (two_variables)
+              gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
+            if (!contact_only) {
+              gmm::copy(gmm::scaled(gmm::transposed(BT1), -vt1), T_u1_t);
+              if (two_variables)
+                gmm::copy(gmm::scaled(gmm::transposed(BT2), -vt1), T_u2_t);
+            }
+          } else {
+            model_real_sparse_matrix tmp1(gmm::mat_ncols(BN1),
+                                          gmm::mat_ncols(BN1));
+            gmm::mult(gmm::transposed(gmm::scaled(BBN1,-r)), T_n_u1, tmp1);
+            gmm::add(tmp1, T_u1_u1);
+            if (two_variables) {
+              gmm::mult(gmm::transposed(gmm::scaled(BBN2,-r)), T_n_u2, tmp1);
+              gmm::add(tmp1, T_u2_u2);
+            }
+
+            if (!contact_only) {
+              gmm::mult(gmm::transposed(gmm::scaled(BBT1,-r)), T_t_u1, tmp1);
+              gmm::add(tmp1, T_u1_u1);
+              if (two_variables) {
+                gmm::mult(gmm::transposed(gmm::scaled(BBT2,-r)), T_t_u2, tmp1);
+                gmm::add(tmp1, T_u2_u2);
+              }
+            }
+
+            if (!contact_only && !Tresca_version && augmentation_version>=1) {
+              // should be simplified ... !
+              model_real_sparse_matrix tmp5(gmm::mat_ncols(BT1),
+                                            gmm::mat_ncols(BT1));
+              model_real_sparse_matrix tmp6(gmm::mat_ncols(BT1),
+                                            gmm::mat_ncols(BT1));
+              model_real_sparse_matrix tmp7(gmm::mat_ncols(BT2),
+                                            gmm::mat_ncols(BT2));
+              model_real_sparse_matrix tmp8(gmm::mat_ncols(BT2),
+                                            gmm::mat_ncols(BT2));
+              model_real_sparse_matrix tmp3(gmm::mat_ncols(T_t_u1),
+                                            gmm::mat_nrows(T_t_u1));
+              model_real_sparse_matrix tmp4(gmm::mat_ncols(T_t_u2),
+                                            gmm::mat_nrows(T_t_u2));
+
+              for (size_type i=0; i < nbc; ++i) {
+                gmm::sub_interval SUBI(i*d, d);
+                scalar_type th = - ((augmentation_version == 2) ?
+                                    std::min(vt0, RLN[i])
+                                    : lambda_n[i]) * friction_coeff[i];
+                if (augmentation_version == 1 || RLN[i] <= vt0) {// à verif
+                  ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
+                  for (size_type k = 0; k < d; ++k) {
+                    gmm::add(gmm::scaled(gmm::mat_row(BBT1,i*d+k),
+                       vg[k]*friction_coeff[i]), gmm::mat_col(T_u1_n, i));
+                    if (two_variables)
+                      gmm::add(gmm::scaled(gmm::mat_row(BBT2,i*d+k),
+                       vg[k]*friction_coeff[i]), gmm::mat_col(T_u2_n, i));
+                    if (augmentation_version == 2) {
+                      gmm::add(gmm::scaled(gmm::mat_row(BBN1,i),
+                       vg[k]*friction_coeff[i]), gmm::mat_col(tmp3, i*d+k));
+                      if (two_variables)
+                        gmm::add(gmm::scaled(gmm::mat_row(BBN2,i),
+                         vg[k]*friction_coeff[i]), gmm::mat_col(tmp4, i*d+k));
 
 
-		      gmm::copy(gmm::scaled(gmm::mat_row(BBT1,i*d+k),
-					    -r*friction_coeff[i]*vg[k]),
-				gmm::mat_col(tmp5, i*d+k));
-		      gmm::copy(gmm::mat_row(BBN1,i),
-				gmm::mat_col(tmp6, i*d+k));
-		      if (two_variables) {
-			gmm::copy(gmm::scaled(gmm::mat_row(BBT2,i*d+k),
-					      -r*friction_coeff[i]*vg[k]),
-				  gmm::mat_col(tmp7, i*d+k));
-			gmm::copy(gmm::mat_row(BBN2,i),
-				  gmm::mat_col(tmp8, i*d+k));
-		      }
-		    }
-		  }
-		}
-	      }
-	      if (augmentation_version == 2) {
-		gmm::add(gmm::transposed(tmp3), T_t_u1);
-		if (two_variables)
-		  gmm::add(gmm::transposed(tmp4), T_t_u2);
+                      gmm::copy(gmm::scaled(gmm::mat_row(BBT1,i*d+k),
+                                            -r*friction_coeff[i]*vg[k]),
+                                gmm::mat_col(tmp5, i*d+k));
+                      gmm::copy(gmm::mat_row(BBN1,i),
+                                gmm::mat_col(tmp6, i*d+k));
+                      if (two_variables) {
+                        gmm::copy(gmm::scaled(gmm::mat_row(BBT2,i*d+k),
+                                              -r*friction_coeff[i]*vg[k]),
+                                  gmm::mat_col(tmp7, i*d+k));
+                        gmm::copy(gmm::mat_row(BBN2,i),
+                                  gmm::mat_col(tmp8, i*d+k));
+                      }
+                    }
+                  }
+                }
+              }
+              if (augmentation_version == 2) {
+                gmm::add(gmm::transposed(tmp3), T_t_u1);
+                if (two_variables)
+                  gmm::add(gmm::transposed(tmp4), T_t_u2);
 
-		gmm::mult(tmp5, gmm::transposed(tmp6), gmm::transposed(tmp1));
-		gmm::add(gmm::transposed(tmp1), T_u1_u1);
-		if (two_variables) {
-		  gmm::mult(tmp7, gmm::transposed(tmp8),gmm::transposed(tmp1));
-		  gmm::add(gmm::transposed(tmp1), T_u1_u1);
-		}
-	      }
-	    }
- 
-	  }
-	  break;
-	  
-	case 3:
-	  gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
-	  if (two_variables)
-	    gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
-	  for (size_type i=0; i < nbc; ++i) {
-	    if (lambda_n[i] > vt0) {
-	      gmm::clear(gmm::mat_col(T_u1_n, i));
-	      if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
-	      T_n_n(i, i) = -vt1/r;
-	    }
-	  }
-	  gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
-	  if (two_variables) gmm::copy(gmm::scaled(BBN2, -r), T_n_u2);
-	  if (!contact_only) {
-	    for (size_type i=0; i < nbc; ++i) {
-	      gmm::sub_interval SUBI(i*d, d);
-	      scalar_type th = Tresca_version ? threshold[i]
-		: gmm::neg(lambda_n[i]) * friction_coeff[i];
-	      ball_projection_grad(gmm::sub_vector(lambda_t, SUBI), th, pg);
-	      if (!really_stationary)
-		for (size_type k1 = 0; k1 < d; ++k1)
-		  for (size_type k2 = 0; k2 < d; ++k2) {
-		    gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k1),-pg(k2,k1)),
-			     gmm::mat_col(T_u1_t, i*d+k2));
-		    if (two_variables)
-		      gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k1),
-					   -pg(k2,k1)),
-			       gmm::mat_col(T_u2_t, i*d+k2));
-		  }
-	      if (!Tresca_version) {
-		ball_projection_grad_r(gmm::sub_vector(lambda_t, SUBI),th,vg);
-		for (size_type k1 = 0; k1 < d; ++k1) {
-		  gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k1),
-				       friction_coeff[i]*vg[k1]),
-			   gmm::mat_col(T_u1_n, i));
-		  if (two_variables)
-		    gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k1),
-					 friction_coeff[i]*vg[k1]),
-			     gmm::mat_col(T_u2_n, i));
-		  T_t_n(i*d+k1, i) = friction_coeff[i] * vg[k1] / r;
-		}
-	      }
-	      for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
-	      
-	      gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
-	      
-	    }
-	    gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
-	    if (two_variables) gmm::copy(gmm::scaled(BBT2, -r), T_t_u2);
-	  }
-	  break;
+                gmm::mult(tmp5, gmm::transposed(tmp6), gmm::transposed(tmp1));
+                gmm::add(gmm::transposed(tmp1), T_u1_u1);
+                if (two_variables) {
+                  gmm::mult(tmp7, gmm::transposed(tmp8),gmm::transposed(tmp1));
+                  gmm::add(gmm::transposed(tmp1), T_u1_u1);
+                }
+              }
+            }
 
-	case 4: // Desaxce projection
-	  base_small_vector x(d+1), n(d+1), u(d); n[0] = vt1;
-	  base_matrix g(d+1, d+1);
-	  model_real_sparse_matrix T_n_u1_transp(gmm::mat_ncols(T_n_u1), nbc);
-	  model_real_sparse_matrix T_n_u2_transp(gmm::mat_ncols(T_n_u2), nbc);
-	  
-	  gmm::mult(BT1, u1, RLT);
-	  if (two_variables) gmm::mult_add(BT2, u2, RLT);
-	  
-	  for (size_type i=0; i < nbc; ++i) {
-	    x[0] = lambda_n[i];
-	    for (size_type j=0; j < d; ++j) x[1+j] = lambda_t[i*d+j];
-	    De_Saxce_projection_grad(x, n, friction_coeff[i], g);
-	    
-	    gmm::add(gmm::scaled(gmm::mat_row(BN1, i), -g(0,0)),
-		     gmm::mat_col(T_u1_n, i));
-	    if (two_variables)
-	      gmm::add(gmm::scaled(gmm::mat_row(BN2, i), -g(0,0)),
-		       gmm::mat_col(T_u2_n, i));
-	    T_n_n(i, i) = (g(0,0) - vt1)/r;
+          }
+          break;
 
-	    gmm::copy(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), u);
-	    scalar_type nu = gmm::vect_norm2(u);
-	    if (nu != vt0)
-	      for (size_type j=0; j < d; ++j) {
-		gmm::add(gmm::scaled(gmm::mat_row(BBT1, i*d+j),
-				     friction_coeff[i] * u[j] / nu),
-			 gmm::mat_col(T_n_u1_transp, i));
-		if (two_variables)
-		  gmm::add(gmm::scaled(gmm::mat_row(BBT2, i*d+j),
-				       friction_coeff[i] * u[j] / nu),
-			   gmm::mat_col(T_n_u2_transp, i));
-	      }
+        case 3:
+          gmm::copy(gmm::scaled(gmm::transposed(BN1), -vt1), T_u1_n);
+          if (two_variables)
+            gmm::copy(gmm::scaled(gmm::transposed(BN2), -vt1), T_u2_n);
+          for (size_type i=0; i < nbc; ++i) {
+            if (lambda_n[i] > vt0) {
+              gmm::clear(gmm::mat_col(T_u1_n, i));
+              if (two_variables) gmm::clear(gmm::mat_col(T_u2_n, i));
+              T_n_n(i, i) = -vt1/r;
+            }
+          }
+          gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
+          if (two_variables) gmm::copy(gmm::scaled(BBN2, -r), T_n_u2);
+          if (!contact_only) {
+            for (size_type i=0; i < nbc; ++i) {
+              gmm::sub_interval SUBI(i*d, d);
+              scalar_type th = Tresca_version ? threshold[i]
+                : gmm::neg(lambda_n[i]) * friction_coeff[i];
+              ball_projection_grad(gmm::sub_vector(lambda_t, SUBI), th, pg);
+              if (!really_stationary)
+                for (size_type k1 = 0; k1 < d; ++k1)
+                  for (size_type k2 = 0; k2 < d; ++k2) {
+                    gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k1),-pg(k2,k1)),
+                             gmm::mat_col(T_u1_t, i*d+k2));
+                    if (two_variables)
+                      gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k1),
+                                           -pg(k2,k1)),
+                               gmm::mat_col(T_u2_t, i*d+k2));
+                  }
+              if (!Tresca_version) {
+                ball_projection_grad_r(gmm::sub_vector(lambda_t, SUBI),th,vg);
+                for (size_type k1 = 0; k1 < d; ++k1) {
+                  gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k1),
+                                       friction_coeff[i]*vg[k1]),
+                           gmm::mat_col(T_u1_n, i));
+                  if (two_variables)
+                    gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k1),
+                                         friction_coeff[i]*vg[k1]),
+                             gmm::mat_col(T_u2_n, i));
+                  T_t_n(i*d+k1, i) = friction_coeff[i] * vg[k1] / r;
+                }
+              }
+              for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
 
-	    for (size_type j=0; j < d; ++j) {
-	      gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+j), -g(0,j+1)),
-		     gmm::mat_col(T_u1_n, i));
-	      if (two_variables)
-		gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+j), -g(0,j+1)),
-			 gmm::mat_col(T_u2_n, i));
+              gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t, SUBI));
 
-	      gmm::add(gmm::scaled(gmm::mat_row(BN1, i), -g(j+1,0)),
-		       gmm::mat_col(T_u1_t, i*d+j));
-	      if (two_variables)
-		gmm::add(gmm::scaled(gmm::mat_row(BN2, i), -g(j+1,0)),
-			 gmm::mat_col(T_u2_t, i*d+j));
+            }
+            gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
+            if (two_variables) gmm::copy(gmm::scaled(BBT2, -r), T_t_u2);
+          }
+          break;
 
-	      for (size_type k=0; k < d; ++k) {
-		gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+k), -g(1+j,1+k)),
-			 gmm::mat_col(T_u1_t, i*d+j));
-		if (two_variables)
-		  gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+k), -g(1+j,1+k)),
-			   gmm::mat_col(T_u2_t, i*d+j));
-		T_t_t(i*d+j, i*d+k) = g(1+j, 1+k)/r;
-	      }
-	      T_t_t(i*d+j, i*d+j) -= vt1/r;
-	      T_t_n(i*d+j, i) = g(1+j,0)/r;
-	      // T_n_t(i, i*d+j) = g(0,1+j)/r;
-	    }
-	  }
-	  gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
-	  if (two_variables) gmm::copy(gmm::scaled(BBN2, -vt1), T_n_u2);
-	  gmm::add(gmm::transposed(T_n_u1_transp), T_n_u1);
- 	  if (two_variables) gmm::add(gmm::transposed(T_n_u2_transp), T_n_u2);
-	  gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
-	  if (two_variables) gmm::copy(gmm::scaled(BBT2, -vt1), T_t_u2);
-	  break;
-	}
+        case 4: // Desaxce projection
+          base_small_vector x(d+1), n(d+1), u(d); n[0] = vt1;
+          base_matrix g(d+1, d+1);
+          model_real_sparse_matrix T_n_u1_transp(gmm::mat_ncols(T_n_u1), nbc);
+          model_real_sparse_matrix T_n_u2_transp(gmm::mat_ncols(T_n_u2), nbc);
+
+          gmm::mult(BT1, u1, RLT);
+          if (two_variables) gmm::mult_add(BT2, u2, RLT);
+
+          for (size_type i=0; i < nbc; ++i) {
+            x[0] = lambda_n[i];
+            for (size_type j=0; j < d; ++j) x[1+j] = lambda_t[i*d+j];
+            De_Saxce_projection_grad(x, n, friction_coeff[i], g);
+
+            gmm::add(gmm::scaled(gmm::mat_row(BN1, i), -g(0,0)),
+                     gmm::mat_col(T_u1_n, i));
+            if (two_variables)
+              gmm::add(gmm::scaled(gmm::mat_row(BN2, i), -g(0,0)),
+                       gmm::mat_col(T_u2_n, i));
+            T_n_n(i, i) = (g(0,0) - vt1)/r;
+
+            gmm::copy(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), u);
+            scalar_type nu = gmm::vect_norm2(u);
+            if (nu != vt0)
+              for (size_type j=0; j < d; ++j) {
+                gmm::add(gmm::scaled(gmm::mat_row(BBT1, i*d+j),
+                                     friction_coeff[i] * u[j] / nu),
+                         gmm::mat_col(T_n_u1_transp, i));
+                if (two_variables)
+                  gmm::add(gmm::scaled(gmm::mat_row(BBT2, i*d+j),
+                                       friction_coeff[i] * u[j] / nu),
+                           gmm::mat_col(T_n_u2_transp, i));
+              }
+
+            for (size_type j=0; j < d; ++j) {
+              gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+j), -g(0,j+1)),
+                     gmm::mat_col(T_u1_n, i));
+              if (two_variables)
+                gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+j), -g(0,j+1)),
+                         gmm::mat_col(T_u2_n, i));
+
+              gmm::add(gmm::scaled(gmm::mat_row(BN1, i), -g(j+1,0)),
+                       gmm::mat_col(T_u1_t, i*d+j));
+              if (two_variables)
+                gmm::add(gmm::scaled(gmm::mat_row(BN2, i), -g(j+1,0)),
+                         gmm::mat_col(T_u2_t, i*d+j));
+
+              for (size_type k=0; k < d; ++k) {
+                gmm::add(gmm::scaled(gmm::mat_row(BT1, i*d+k), -g(1+j,1+k)),
+                         gmm::mat_col(T_u1_t, i*d+j));
+                if (two_variables)
+                  gmm::add(gmm::scaled(gmm::mat_row(BT2, i*d+k), -g(1+j,1+k)),
+                           gmm::mat_col(T_u2_t, i*d+j));
+                T_t_t(i*d+j, i*d+k) = g(1+j, 1+k)/r;
+              }
+              T_t_t(i*d+j, i*d+j) -= vt1/r;
+              T_t_n(i*d+j, i) = g(1+j,0)/r;
+              // T_n_t(i, i*d+j) = g(0,1+j)/r;
+            }
+          }
+          gmm::copy(gmm::scaled(BBN1, -vt1), T_n_u1);
+          if (two_variables) gmm::copy(gmm::scaled(BBN2, -vt1), T_n_u2);
+          gmm::add(gmm::transposed(T_n_u1_transp), T_n_u1);
+           if (two_variables) gmm::add(gmm::transposed(T_n_u2_transp), T_n_u2);
+          gmm::copy(gmm::scaled(BBT1, -vt1), T_t_u1);
+          if (two_variables) gmm::copy(gmm::scaled(BBT2, -vt1), T_t_u2);
+          break;
+        }
       }
 
       if (version & model::BUILD_RHS) {
 
-	switch (augmentation_version) {
-	case 0: // unsymmetric Alart-Curnier
-	  for (size_type i=0; i < nbc; ++i) {
-	    RLN[i] = std::min(scalar_type(0), RLN[i]);
-	    if (!contact_only) {
-	      scalar_type radius = Tresca_version ? threshold[i]
-		: -friction_coeff[i]*lambda_n[i];
-	      ball_projection
-		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
-	    } 
-	  }
-	  gmm::mult_add(gmm::transposed(BN1), lambda_n, ru1);
+        switch (augmentation_version) {
+        case 0: // unsymmetric Alart-Curnier
+          for (size_type i=0; i < nbc; ++i) {
+            RLN[i] = std::min(scalar_type(0), RLN[i]);
+            if (!contact_only) {
+              scalar_type radius = Tresca_version ? threshold[i]
+                : -friction_coeff[i]*lambda_n[i];
+              ball_projection
+                (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+            }
+          }
+          gmm::mult_add(gmm::transposed(BN1), lambda_n, ru1);
           if (two_variables)
             gmm::mult_add(gmm::transposed(BN2), lambda_n, ru2);
           if (!contact_only) {
@@ -1061,112 +1061,112 @@ namespace getfem {
             if (two_variables)
               gmm::mult_add(gmm::transposed(BT2), lambda_t, ru2);
           }
-	  gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
-		   rlambda_n);
-	  if (!contact_only)
-	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-		     rlambda_t);
-	  break;
-	case 1: // symmetric Alart-Curnier
-	  for (size_type i=0; i < nbc; ++i) {
-	    RLN[i] = std::min(scalar_type(0), RLN[i]);
-	    if (!contact_only) {
-	      scalar_type radius = Tresca_version ? threshold[i]
-		: -friction_coeff[i]*lambda_n[i];
-	      ball_projection
-		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
-	    } 
-	  }
-	  gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
+          gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+                   rlambda_n);
+          if (!contact_only)
+            gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+                     rlambda_t);
+          break;
+        case 1: // symmetric Alart-Curnier
+          for (size_type i=0; i < nbc; ++i) {
+            RLN[i] = std::min(scalar_type(0), RLN[i]);
+            if (!contact_only) {
+              scalar_type radius = Tresca_version ? threshold[i]
+                : -friction_coeff[i]*lambda_n[i];
+              ball_projection
+                (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+            }
+          }
+          gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
           if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
           if (!contact_only) {
             gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
             if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
           }
-	  gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
-		   rlambda_n);
-	  if (!contact_only)
-	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-		     rlambda_t);
-	  break;
-	case 2: // symmetric Alart-Curnier with additional term
-	  for (size_type i=0; i < nbc; ++i) {
-	    RLN[i] = std::min(vt0, RLN[i]);
-	    if (!contact_only) {
-	      scalar_type radius = Tresca_version ? threshold[i]
-		: -friction_coeff[i]*RLN[i]; // a verif
-	      ball_projection
-		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
-	    } 
-	  }
-	  gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
+          gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+                   rlambda_n);
+          if (!contact_only)
+            gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+                     rlambda_t);
+          break;
+        case 2: // symmetric Alart-Curnier with additional term
+          for (size_type i=0; i < nbc; ++i) {
+            RLN[i] = std::min(vt0, RLN[i]);
+            if (!contact_only) {
+              scalar_type radius = Tresca_version ? threshold[i]
+                : -friction_coeff[i]*RLN[i]; // a verif
+              ball_projection
+                (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+            }
+          }
+          gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
           if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
           if (!contact_only) {
             gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
             if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
           }
-	  gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
-		   rlambda_n);
-	  if (!contact_only)
-	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-		     rlambda_t);
-	  break;
-	case 3: // New unsymmetric method
-	  if (!contact_only) gmm::copy(lambda_t, RLT);
-	  for (size_type i=0; i < nbc; ++i) {
-	    RLN[i] = -gmm::neg(lambda_n[i]);
-	    rlambda_n[i] = gmm::pos(lambda_n[i])/r - alpha[i]*gap[i];
+          gmm::add(gmm::scaled(lambda_n, vt1/r), gmm::scaled(RLN,-vt1/r),
+                   rlambda_n);
+          if (!contact_only)
+            gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+                     rlambda_t);
+          break;
+        case 3: // New unsymmetric method
+          if (!contact_only) gmm::copy(lambda_t, RLT);
+          for (size_type i=0; i < nbc; ++i) {
+            RLN[i] = -gmm::neg(lambda_n[i]);
+            rlambda_n[i] = gmm::pos(lambda_n[i])/r - alpha[i]*gap[i];
 
-	    if (!contact_only) {
-	      scalar_type radius = Tresca_version ? threshold[i]
-		: friction_coeff[i]*gmm::neg(lambda_n[i]);
-	      ball_projection
-		(gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
-	    }
-	  }
-	  gmm::mult(gmm::transposed(BN1), RLN, ru1);
-	  if (two_variables) gmm::mult(gmm::transposed(BN2), RLN, ru2);
-	  gmm::mult_add(BBN1, u1, rlambda_n);
-	  if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
-	  if (!contact_only) {
+            if (!contact_only) {
+              scalar_type radius = Tresca_version ? threshold[i]
+                : friction_coeff[i]*gmm::neg(lambda_n[i]);
+              ball_projection
+                (gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)), radius);
+            }
+          }
+          gmm::mult(gmm::transposed(BN1), RLN, ru1);
+          if (two_variables) gmm::mult(gmm::transposed(BN2), RLN, ru2);
+          gmm::mult_add(BBN1, u1, rlambda_n);
+          if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
+          if (!contact_only) {
             gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
             if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
-	    gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
-		      rlambda_t);
-	    gmm::mult_add(BBT1, u1, rlambda_t);
-	    if (two_variables) gmm::mult_add(BBT2, u2, rlambda_t);
+            gmm::add(gmm::scaled(lambda_t, vt1/r), gmm::scaled(RLT,-vt1/r),
+                      rlambda_t);
+            gmm::mult_add(BBT1, u1, rlambda_t);
+            if (two_variables) gmm::mult_add(BBT2, u2, rlambda_t);
           }
-	  break;
-	case 4:  // New unsymmetric method with De Saxce projection
-	  base_small_vector x(d+1), n(d+1);
-	  n[0] = vt1;
-	  GMM_ASSERT1(!Tresca_version,
-	       "Augmentation version incompatible with Tresca friction law");
-	  gmm::mult(BBT1, u1, rlambda_t);
-	  if (two_variables)
-	      gmm::mult_add(BBT2, u2, rlambda_t);
-	  for (size_type i=0; i < nbc; ++i) {
-	    x[0] = lambda_n[i];
-	    gmm::copy(gmm::sub_vector(lambda_t, gmm::sub_interval(i*d,d)),
-		      gmm::sub_vector(x, gmm::sub_interval(1, d)));
-	    De_Saxce_projection(x, n, friction_coeff[i]);
-	    RLN[i] = x[0];
-	    gmm::copy(gmm::sub_vector(x, gmm::sub_interval(1, d)),
-		      gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)));
-	    rlambda_n[i] = lambda_n[i]/r - x[0]/r - alpha[i]*gap[i]
-	      - friction_coeff[i] * gmm::vect_norm2(gmm::sub_vector(rlambda_t,
-						    gmm::sub_interval(i*d,d)));
-	  }
-	  gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
-	  if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
-	  gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
-	  if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
-	  gmm::add(gmm::scaled(lambda_t, vt1/r), rlambda_t);
-	  gmm::add(gmm::scaled(RLT, -vt1/r), rlambda_t);
-	  gmm::mult_add(BBN1, u1, rlambda_n);
-	  if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
-	  break;
-	}
+          break;
+        case 4:  // New unsymmetric method with De Saxce projection
+          base_small_vector x(d+1), n(d+1);
+          n[0] = vt1;
+          GMM_ASSERT1(!Tresca_version,
+               "Augmentation version incompatible with Tresca friction law");
+          gmm::mult(BBT1, u1, rlambda_t);
+          if (two_variables)
+              gmm::mult_add(BBT2, u2, rlambda_t);
+          for (size_type i=0; i < nbc; ++i) {
+            x[0] = lambda_n[i];
+            gmm::copy(gmm::sub_vector(lambda_t, gmm::sub_interval(i*d,d)),
+                      gmm::sub_vector(x, gmm::sub_interval(1, d)));
+            De_Saxce_projection(x, n, friction_coeff[i]);
+            RLN[i] = x[0];
+            gmm::copy(gmm::sub_vector(x, gmm::sub_interval(1, d)),
+                      gmm::sub_vector(RLT, gmm::sub_interval(i*d,d)));
+            rlambda_n[i] = lambda_n[i]/r - x[0]/r - alpha[i]*gap[i]
+              - friction_coeff[i] * gmm::vect_norm2(gmm::sub_vector(rlambda_t,
+                                                    gmm::sub_interval(i*d,d)));
+          }
+          gmm::mult_add(gmm::transposed(BT1), RLT, ru1);
+          if (two_variables) gmm::mult_add(gmm::transposed(BT2), RLT, ru2);
+          gmm::mult_add(gmm::transposed(BN1), RLN, ru1);
+          if (two_variables) gmm::mult_add(gmm::transposed(BN2), RLN, ru2);
+          gmm::add(gmm::scaled(lambda_t, vt1/r), rlambda_t);
+          gmm::add(gmm::scaled(RLT, -vt1/r), rlambda_t);
+          gmm::mult_add(BBN1, u1, rlambda_n);
+          if (two_variables) gmm::mult_add(BBN2, u2, rlambda_n);
+          break;
+        }
       }
     }
 
@@ -1270,10 +1270,10 @@ namespace getfem {
       if (aug_version == 4 && contact_only_) aug_version = 3;
       augmentation_version = aug_version;
       GMM_ASSERT1(aug_version >= 0 && aug_version <= 4,
-		  "Wrong augmentation version");
+                  "Wrong augmentation version");
       GMM_ASSERT1(!Hughes_stabilized_ || aug_version <= 1,
-		  "The Hughes stabilized version is only for Alart-Curnier "
-		  "version");
+                  "The Hughes stabilized version is only for Alart-Curnier "
+                  "version");
       contact_only = contact_only_;
       is_init = false;
       Tresca_version = false;   // for future version ...
@@ -1433,7 +1433,7 @@ namespace getfem {
     tl.push_back(model::term_description(multname_t, varname_u, false));
     tl.push_back(model::term_description(multname_t, multname_t, false));
     tl.push_back(model::term_description(multname_t, multname_n,
-					 (aug_version == 4)));
+                                         (aug_version == 4)));
     model::varnamelist dl(1, dataname_r);
     if (dataname_gap.size() == 0) {
       dataname_gap = md.new_name("contact_gap_on_" + varname_u);
@@ -1715,7 +1715,7 @@ namespace getfem {
     tl.push_back(model::term_description(multname_t, varname_u, false));
     tl.push_back(model::term_description(multname_t, multname_t, false));
     tl.push_back(model::term_description(multname_t, multname_n,
-					 (aug_version == 3)));
+                                         (aug_version == 3)));
     model::varnamelist dl(1, dataname_r);
     dl.push_back(dataname_friction_coeff);
 
@@ -2021,7 +2021,7 @@ namespace getfem {
     }
     tl.push_back(model::term_description(multname_t, multname_t, false));
     tl.push_back(model::term_description(multname_t, multname_n,
-					 (aug_version == 3)));
+                                         (aug_version == 3)));
 
     // Variables (order: varname_u, multname_n, multname_t)
     model::varnamelist vl;
