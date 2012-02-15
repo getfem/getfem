@@ -117,75 +117,98 @@ namespace getfem {
       { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
     base_node oldX, aux(N);
     size_type iter = 0;
-    scalar_type residual(0), alpha(0);
-    do {
-      oldX = X;
-      gmm::mult(gmm::transposed(G), G, H);
-      // cout << "H = " << H << endl;
-      info = gmm::lu_factor(H, ipvt);
-      scalar_type det(1);
-      for (i = 0; i < nbco; ++i) det *= H(i,i);
+    scalar_type residual(0), alpha(0), det(0);
 
-      if (info) {
-	dal::bit_vector cts_red = cts;
-	int eliminated = 0;
-	// cout << "det = " << det << endl;
-	// cout << "G before = " << G << endl;
-	i = 0;
-	for (dal::bv_visitor ic(cts); !ic.finished(); ++ic, ++i) {
-// 	  scalar_type norm_gi = gmm::vect_norm2(G[i]);
-// 	  if (norm_gi > scalar_type(0))
-// 	    gmm::scale(G[i], scalar_type(1)/norm_gi);
- 	  for (size_type j = 0; j < i; ++j)
-	    gmm::add(gmm::scaled(G[j], -gmm::vect_sp(G[j], G[i])), G[i]);
-	  scalar_type norm_gi = gmm::vect_norm2(G[i]);
-	  // cout << "norm_gi = " << norm_gi << endl;
-	  if (norm_gi < 1E-10)
-	    { cts_red[ic] = false; eliminated++; }
+    if (nbco == 1) {
+      // cout << "one constraint" << endl;
+      try_projection(*(ls[0]), X, true);
+      d[0] = -(ls[0]->grad(X, G[0]));
+    } else {
+      do {
+	oldX = X;
+	det = scalar_type(0); info = 1;
+	alpha = -scalar_type(1);
+	
+	if (nbco <= N) {
+	  if (nbco < N)
+	    gmm::mult(gmm::transposed(G), G, H);
 	  else
-	    gmm::scale(G[i], scalar_type(1)/norm_gi);
-	}
-	// cout << "G after = " << G << endl;
-	if (eliminated >= 1) {
-	  // cout << "rec call with " << eliminated << " eliminated constraints" << endl;
-	  pure_multi_constraint_projection(list_constraints, X, cts_red); 
-	  for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
-	  gmm::mult(gmm::transposed(G), G, H);
+	    gmm::copy(gmm::transposed(G), H);
+	  // cout << "H = " << H << endl;
 	  info = gmm::lu_factor(H, ipvt);
+	  det = scalar_type(1);
 	  for (i = 0; i < nbco; ++i) det *= H(i,i);
 	}
-	alpha = -1.;
-      }
-
-      if (gmm::vect_norm2(d) > 1e-14) {
+	// cout << "G = " << G << endl;
+	
 	if (info || gmm::abs(det) < 1E-40) {
-	  for (i = 0; i < nbco; ++i)
-	    try_projection(*(ls[i]), X, true);
-	  for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
-	}
-	else {
-	  lu_solve(H, ipvt, v, d);
-	  gmm::mult(G, v, dd);
-	  gmm::add(dd, X);
-	  for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
-	  alpha = 1.;
-	  if (iter > 0)
-	    while (gmm::vect_norm2(d) > residual && alpha > 1E-15) {
-	      alpha /= 2.;
-	      gmm::add(gmm::scaled(dd, -alpha), X);
-	      for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	  dal::bit_vector cts_red = cts;
+	  int eliminated = 0;
+	  i = 0;
+	  for (dal::bv_visitor ic(cts); !ic.finished(); ++ic, ++i) {
+	    for (size_type j = 0; j < i; ++j)
+	      gmm::add(gmm::scaled(G[j], -gmm::vect_sp(G[j], G[i])), G[i]);
+	    scalar_type norm_gi = gmm::vect_norm2(G[i]);
+	    // cout << "norm_gi = " << norm_gi << endl;
+	    if (norm_gi < 1E-10)
+	      { cts_red[ic] = false; eliminated++; }
+	    else
+	      gmm::scale(G[i], scalar_type(1)/norm_gi);
+	  }
+	  // cout << "G after = " << G << endl;
+	  if (eliminated >= 1) {
+	    // cout << "rec call with " << eliminated << " eliminated constraints" << endl;
+	    pure_multi_constraint_projection(list_constraints, X, cts_red); 
+	    for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	    
+	    det = scalar_type(0); info = 1;
+	    if (nbco <= N) {
+	      if (nbco < N)
+		gmm::mult(gmm::transposed(G), G, H);
+	      else
+		gmm::copy(G, H);
+	      info = gmm::lu_factor(H, ipvt);
+	      det = scalar_type(1);
+	      for (i = 0; i < nbco; ++i) det *= H(i,i);
 	    }
-	  if (alpha < 1E-15) break;
+	    
+	  }
 	}
-      }
-      
-      ++iter;
-      residual = gmm::vect_norm2(d);
-      // cout << "residual = " << residual << " alpha = " << alpha;
-      // cout << " gmm::vect_dist2(oldX,X) = " << gmm::vect_dist2(oldX,X) << endl;
-    } while (residual > 1e-14 /* && gmm::vect_dist2(oldX,X) > 1e-14 */
-	     && iter < 200);
-    // cout << "final residual = " << residual << endl;
+	
+	if (gmm::vect_norm2(d) > 1e-14) {
+	  if (info || gmm::abs(det) < 1E-40) {
+	    for (i = 0; i < nbco; ++i)
+	      try_projection(*(ls[i]), X, true);
+	    for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	  }
+	  else {
+	    gmm::lu_solve(H, ipvt, v, d);
+	    if (nbco < N)
+	      gmm::mult(G, v, dd);
+	    else
+	      gmm::copy(v, dd);
+	    GMM_ASSERT1(nbco <= N, "internal error");
+	    gmm::add(dd, X);
+	    for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	    alpha = scalar_type(1);
+	    if (iter > 0)
+	      while (gmm::vect_norm2(d) > residual && alpha > 1E-10) {
+		alpha /= scalar_type(2);
+		gmm::add(gmm::scaled(dd, -alpha), X);
+		for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
+	      }
+	    if (alpha < 1E-15) break;
+	  }
+	}
+	
+	++iter;
+	residual = gmm::vect_norm2(d);
+	// cout << "residual = " << residual << " alpha = " << alpha;
+	// cout << " gmm::vect_dist2(oldX,X) = " << gmm::vect_dist2(oldX,X) << endl;
+      } while (residual > 1e-14 && (residual > 1e-11 || iter < 15)
+	       && iter < 200);
+      // cout << "final residual = " << residual << endl;
+    }
     for (i = 0; i < nbco; ++i) if (gmm::abs(d[i]) > SEPS) {
       //cout << "PURE MULTI HAS FAILED for " << cts << " nb iter = " << iter << endl;
       return false;
