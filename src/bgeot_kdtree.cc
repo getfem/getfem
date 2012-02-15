@@ -227,7 +227,7 @@ namespace bgeot {
     if (!t->isleaf()) {
       const kdtree_node *tn = static_cast<const kdtree_node*>(t);
       scalar_type dist = p.pos[dir] - tn->split_v;
-      if (dist <= scalar_type(0) && tn->left || !tn->right) {
+      if ((dist <= scalar_type(0) && tn->left) || !tn->right) {
         nearest_neighbor_main(p, tn->left, unsigned((dir+1)%p.N));
       } else if (tn->right) {
         nearest_neighbor_main(p, tn->right, unsigned((dir+1)%p.N));
@@ -238,7 +238,7 @@ namespace bgeot {
       // tree node which are closer to pos as the current minimum distance
       if (dist * dist <= p.dist2) {
         for (size_type k=0; k < p.N; ++k) p.vec_to_tree_elm[k] = 0.;
-        if (dist <= scalar_type(0) && tn->right || !tn->left) {
+        if ((dist <= scalar_type(0) && tn->right) || !tn->left) {
           p.vec_to_tree_elm[dir] = -dist;
           nearest_neighbor_assist(p, tn->right, unsigned((dir+1)%p.N));
         } else if (tn->left) {

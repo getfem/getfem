@@ -118,23 +118,34 @@ struct Chrono {
 			 constraints, list_constraints);
       }
     }
+
+    // cout << "ipts.size() = " << ipts.size() << endl;
+    // cout << " nb_vertices = " <<  nb_vertices << endl;
+
     dal::bit_vector cts; size_type cnt = 0;
     for (size_type i=0; i < ipts.size(); ++i) {
-      if (ipts[i] < nb_vertices) { 
+      // cout << "ipts[i] = " << ipts[i] << endl;
+      if (ipts[i] < nb_vertices) {
+	// cout << "point " << i << " constraints[ipts[i]] = " << constraints[ipts[i]] << endl;
 	if (cnt == 0) cts = constraints[ipts[i]];
 	else cts &= constraints[ipts[i]];
 	++cnt;
       }
     }
+
     if (cts.card()) {
+      // cout << "cts = " << cts << endl;
       // dal::bit_vector new_cts;
       for (size_type i=0; i < ipts.size(); ++i) {
 	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) { 
 	  base_node &P = m.points()[ipts[i]];
 	  // if (cts.card() > 1)
 	  //   cout << "WARNING, projection sur " << cts << endl;
-	  if (!pure_multi_constraint_projection(list_constraints, P, cts))
+	  if (!pure_multi_constraint_projection(list_constraints, P, cts)) {
 	    GMM_WARNING1("Pure multi has failed in interpolate_face !!");
+	    // GMM_ASSERT1(false, "");
+	  }
+	  ptdone[ipts[i]] = true;
 	  // dist(P, new_cts);
 	}
       }

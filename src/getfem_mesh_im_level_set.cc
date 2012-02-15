@@ -342,9 +342,19 @@ namespace getfem {
 	  B = gmm::mean_value(msh.points_of_face_of_convex(i, f));
 	  if (pgt->convex_ref()->is_in(B) < -1E-7) continue;
 	  for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi) {
-	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 1E-6) ff = fi;
+	    if (gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) < 2E-6) ff = fi;
 	  }
-	  GMM_ASSERT3(ff != short_type(-1), "");
+
+	  if (ff == short_type(-1)) {
+	    cout << "Distance to the element : "
+		 << pgt->convex_ref()->is_in(B) << endl;
+	    for (short_type fi = 0; fi < pgt->structure()->nb_faces(); ++fi) {
+	      cout << "Distance to face " << fi << " : "
+		   << gmm::abs(pgt->convex_ref()->is_in_face(fi, B)) << endl;
+	    }
+	    GMM_ASSERT3(false, "the point is neither in the interior nor "
+			"the boundary of the element");
+	  }
 	}
 	  
 	vectors_to_base_matrix(G, msh.points_of_convex(i));

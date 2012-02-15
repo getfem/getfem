@@ -106,6 +106,7 @@ namespace getfem {
    base_node &X, const dal::bit_vector &cts) {
     size_type nbco = cts.card(), i(0), info, N = X.size();
     if (!nbco) return true;
+    // cout << "nbco = " << nbco << endl;
     std::vector<const mesher_signed_distance*> ls(nbco);
     std::vector<scalar_type> d(nbco), v(nbco);
     std::vector<int> ipvt(nbco);
@@ -114,35 +115,46 @@ namespace getfem {
     base_small_vector dd(N);
     for (dal::bv_visitor ic(cts); !ic.finished(); ++ic, ++i)
       { ls[i] = list_constraints[ic]; d[i] = -(ls[i]->grad(X, G[i])); }
-    base_node oldX;
+    base_node oldX, aux(N);
     size_type iter = 0;
-    scalar_type residual(0), alpha;
+    scalar_type residual(0), alpha(0);
     do {
       oldX = X;
       gmm::mult(gmm::transposed(G), G, H);
-      info = lu_factor(H, ipvt);
+      // cout << "H = " << H << endl;
+      info = gmm::lu_factor(H, ipvt);
       scalar_type det(1);
       for (i = 0; i < nbco; ++i) det *= H(i,i);
+
       if (info) {
 	dal::bit_vector cts_red = cts;
 	int eliminated = 0;
+	// cout << "det = " << det << endl;
+	// cout << "G before = " << G << endl;
 	i = 0;
 	for (dal::bv_visitor ic(cts); !ic.finished(); ++ic, ++i) {
-	  for (size_type j = 0; j < i; ++j)
+// 	  scalar_type norm_gi = gmm::vect_norm2(G[i]);
+// 	  if (norm_gi > scalar_type(0))
+// 	    gmm::scale(G[i], scalar_type(1)/norm_gi);
+ 	  for (size_type j = 0; j < i; ++j)
 	    gmm::add(gmm::scaled(G[j], -gmm::vect_sp(G[j], G[i])), G[i]);
 	  scalar_type norm_gi = gmm::vect_norm2(G[i]);
-	  if (norm_gi > 1E-10)
-	    gmm::scale(G[i], scalar_type(1)/norm_gi);
-	  else
+	  // cout << "norm_gi = " << norm_gi << endl;
+	  if (norm_gi < 1E-10)
 	    { cts_red[ic] = false; eliminated++; }
+	  else
+	    gmm::scale(G[i], scalar_type(1)/norm_gi);
 	}
-	if (eliminated > 1) {
+	// cout << "G after = " << G << endl;
+	if (eliminated >= 1) {
+	  // cout << "rec call with " << eliminated << " eliminated constraints" << endl;
 	  pure_multi_constraint_projection(list_constraints, X, cts_red); 
 	  for (i = 0; i < nbco; ++i) d[i] = -(ls[i]->grad(X, G[i]));
 	  gmm::mult(gmm::transposed(G), G, H);
-	  info = lu_factor(H, ipvt);
+	  info = gmm::lu_factor(H, ipvt);
 	  for (i = 0; i < nbco; ++i) det *= H(i,i);
 	}
+	alpha = -1.;
       }
 
       if (gmm::vect_norm2(d) > 1e-14) {
@@ -169,10 +181,11 @@ namespace getfem {
       
       ++iter;
       residual = gmm::vect_norm2(d);
-    } while ((residual > 1e-14 || gmm::vect_dist2(oldX,X) > 1e-14)
-	     && iter < 1000);
-//     cout << "nb iter de pure_multi : " << iter
-//   	 << " norm(d) = " << gmm::vect_norm2(d) << " cts = " << cts << endl;
+      // cout << "residual = " << residual << " alpha = " << alpha;
+      // cout << " gmm::vect_dist2(oldX,X) = " << gmm::vect_dist2(oldX,X) << endl;
+    } while (residual > 1e-14 /* && gmm::vect_dist2(oldX,X) > 1e-14 */
+	     && iter < 200);
+    // cout << "final residual = " << residual << endl;
     for (i = 0; i < nbco; ++i) if (gmm::abs(d[i]) > SEPS) {
       //cout << "PURE MULTI HAS FAILED for " << cts << " nb iter = " << iter << endl;
       return false;
