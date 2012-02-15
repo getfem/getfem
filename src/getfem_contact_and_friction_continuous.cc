@@ -645,7 +645,7 @@ namespace getfem {
   //=========================================================================
 
   template<typename MAT, typename VECT1>
-  void asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix
+  void asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix // frictionless
   (MAT &Kul, MAT &Klu, MAT &Kll, MAT &Kuu,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
@@ -693,16 +693,18 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
-    assem.push_nonlinear_term(&nterm4);
+    if (option == 2 || option == 3)
+      assem.push_nonlinear_term(&nterm4);
     assem.push_mat(Kul);
     assem.push_mat(Klu);
     assem.push_mat(Kll);
-    assem.push_mat(Kuu);
+    if (option == 2 || option == 3)
+      assem.push_mat(Kuu);
     assem.assembly(rg);
   }
 
   template<typename MAT, typename VECT1>
-  void asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix
+  void asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix // with friction
   (MAT &Kul, MAT &Klu, MAT &Kll, MAT &Kuu,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
@@ -752,19 +754,12 @@ namespace getfem {
         "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU
         "M$3(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j)"); // LL
       break;
-    case 2:
+    case 2: case 3:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // UL
         "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU
         "M$3(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j);"  // LL
         "M$4(#1,#1)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j)"); // UU
-      break;
-    case 3:
-      assem.set
-      ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // UL
-       "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU
-       "M$3(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j); " // LL
-       "M$4(#1,#1)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j)"); // UU
       break;
     }
     assem.push_mi(mim);
@@ -776,17 +771,18 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
-    assem.push_nonlinear_term(&nterm4);
+    if (option == 2 || option == 3)
+      assem.push_nonlinear_term(&nterm4);
     assem.push_mat(Kul);
     assem.push_mat(Klu);
     assem.push_mat(Kll);
-    if (option != 1 && option != 4 && option != 5 && option != 6)
+    if (option == 2 || option == 3)
       assem.push_mat(Kuu);
     assem.assembly(rg);
   }
 
   template<typename VECT1>
-  void asm_Alart_Curnier_contact_rigid_obstacle_rhs
+  void asm_Alart_Curnier_contact_rigid_obstacle_rhs // frictionless
   (VECT1 &Ru, VECT1 &Rl,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
@@ -824,7 +820,7 @@ namespace getfem {
   }
 
   template<typename VECT1>
-  void asm_Alart_Curnier_contact_rigid_obstacle_rhs
+  void asm_Alart_Curnier_contact_rigid_obstacle_rhs // with friction
   (VECT1 &Ru, VECT1 &Rl,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
@@ -965,21 +961,18 @@ namespace getfem {
         GMM_TRACE2("Continuous Coulomb friction tangent term");
         gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
         if (matl.size() >= 4) gmm::clear(matl[3]);
-        if (contact_only) {
-          size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
+        size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
+        if (contact_only)
           asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix
             (matl[0], matl[1], matl[2], matl[fourthmat], mim,
              mf_u, u, mf_obstacle, obstacle, mf_lambda, lambda, vr[0],
              rg, option);
-        }
-        else {
-          size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
+        else
           asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix
             (matl[0], matl[1], matl[2], matl[fourthmat], mim,
              mf_u, u, mf_obstacle, obstacle, mf_lambda, lambda,
              pmf_coeff, friction_coeff, WT, VT, vr[0], alpha, gamma,
              rg, option);
-        }
       }
 
       if (version & model::BUILD_RHS) {
@@ -1030,20 +1023,20 @@ namespace getfem {
 
     switch (option) {
     case 1 : case 4 :
-      tl.push_back(model::term_description(varname_u, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u, multname_n, false)); // UL
+      tl.push_back(model::term_description(multname_n, varname_u, false)); // LU
+      tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
       break;
     case 2 :
-      tl.push_back(model::term_description(varname_u, multname_n, true));
-      tl.push_back(model::term_description(varname_u, varname_u, true));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u, multname_n, true));  // UL
+      tl.push_back(model::term_description(varname_u, varname_u, true));   // UU (fourthmat == 1)
+      tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
       break;
     case 3 :
-      tl.push_back(model::term_description(varname_u, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
-      tl.push_back(model::term_description(varname_u, varname_u, true));
+      tl.push_back(model::term_description(varname_u, multname_n, false)); // UL
+      tl.push_back(model::term_description(multname_n, varname_u, false)); // LU
+      tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
+      tl.push_back(model::term_description(varname_u, varname_u, true));   // UU
       break;
     default :GMM_ASSERT1(false,
                          "Incorrect option for continuous contact brick");
@@ -1079,21 +1072,15 @@ namespace getfem {
 
     switch (option) {
     case 1: case 4: case 5: case 6:
-      tl.push_back(model::term_description(varname_u, multname, false));
-      tl.push_back(model::term_description(multname, varname_u, false));
-      tl.push_back(model::term_description(multname, multname, true));
+      tl.push_back(model::term_description(varname_u, multname, false)); // UL
+      tl.push_back(model::term_description(multname, varname_u, false)); // LU
+      tl.push_back(model::term_description(multname, multname, true));   // LL
       break;
-    case 2:
-      tl.push_back(model::term_description(varname_u, multname, false));
-      tl.push_back(model::term_description(multname, varname_u, false));
-      tl.push_back(model::term_description(multname, multname, true));
-      tl.push_back(model::term_description(varname_u, varname_u, true));
-      break;
-    case 3:
-      tl.push_back(model::term_description(varname_u, multname, false));
-      tl.push_back(model::term_description(multname, varname_u, false));
-      tl.push_back(model::term_description(multname, multname, true));
-      tl.push_back(model::term_description(varname_u, varname_u, true));
+    case 2: case 3:
+      tl.push_back(model::term_description(varname_u, multname, false)); // UL
+      tl.push_back(model::term_description(multname, varname_u, false)); // LU
+      tl.push_back(model::term_description(multname, multname, true));   // LL
+      tl.push_back(model::term_description(varname_u, varname_u, true)); // UU
       break;
     default :GMM_ASSERT1(false,
                          "Incorrect option for continuous contact brick");
@@ -1469,6 +1456,513 @@ namespace getfem {
 
   //=========================================================================
   //
+  //  Continuous contact with friction between non-matching meshes.
+  //
+  //=========================================================================
+
+  template<typename MAT, typename VECT1>
+  void asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix // frictionless
+  (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll, MAT &Ku1u1, MAT &Ku2u2,
+   const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   scalar_type r, const mesh_region &rg, int option = 1) {
+
+    size_type subterm1 = (option == 4) ? K_UL_V2 : K_UL_V1;
+    size_type subterm2 = (option == 4) ? K_UL_V4 : K_UL_V3;
+    size_type subterm3 = (option == 4) ? K_LL_V2 : K_LL_V1;
+    size_type subterm4 = (option == 2) ? K_UU_V2 : K_UU_V1;
+
+    contact_nonmatching_meshes_nonlinear_term
+      nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda),
+      nterm2(subterm2, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda),
+      nterm3(subterm3, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda),
+      nterm4(subterm4, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda);
+
+    getfem::generic_assembly assem;
+    switch (option) {
+    case 1: case 4:
+      assem.set
+       ("M$1(#1,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); " // U1L
+        "M$2(#3,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#1))(i,:,:,i); " // LU1
+        "M$3(#2,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2).Base(#3))(i,:,i,:); " // U2L
+        "M$4(#3,#2)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#2))(i,:,:,i); " // LU2
+        "M$5(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:)");    // LL
+      break;
+    case 2:
+      assem.set
+       ("M$1(#1,#3)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); "      // U1L
+        "M$3(#2,#3)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#2).Base(#3))(i,:,i,:); "      // U2L
+        "M$5(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:); "         // LL
+        "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
+        "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j)"); // U2U2
+      break;
+    case 3:
+      assem.set
+      ("M$1(#1,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); "      // U1L
+       "M$2(#3,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#1))(i,:,:,i); "      // LU1
+       "M$3(#2,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2).Base(#3))(i,:,i,:); "      // U2L
+       "M$4(#3,#2)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#2))(i,:,:,i); "      // LU2
+       "M$5(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:); "         // LL
+       "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)"   // U1U1
+       "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j)"); // U2U2
+      break;
+    }
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mf(mf_lambda);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_nonlinear_term(&nterm3);
+    if (option == 2 || option == 3)
+      assem.push_nonlinear_term(&nterm4);
+    assem.push_mat(Ku1l);
+    assem.push_mat(Klu1);
+    assem.push_mat(Ku2l);
+    assem.push_mat(Klu2);
+    assem.push_mat(Kll);
+    if (option == 2 || option == 3) {
+      assem.push_mat(Ku1u1);
+      assem.push_mat(Ku2u2);
+    }
+    assem.assembly(rg);
+
+    gmm::scale(Ku2l, scalar_type(-1));
+    if (option != 2) // Klu2 was calculated
+      gmm::scale(Klu2, scalar_type(-1));
+  }
+
+  template<typename MAT, typename VECT1>
+  void asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix // with friction
+  (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll, MAT &Ku1u1, MAT &Ku2u2,
+   const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
+   const VECT1 *WT1, const VECT1 *WT2,
+   scalar_type r, scalar_type alpha,
+   const mesh_region &rg, int option = 1) {
+
+    size_type subterm1, subterm2, subterm3;
+    switch (option) {
+    case 1 :
+      subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V4; subterm3 = K_LL_FRICT_V1;
+      break;
+    case 2 :
+      subterm1 = K_UL_FRICT_V3; subterm2 = K_UL_FRICT_V4; subterm3 = K_LL_FRICT_V1;
+      break;
+    case 3 :
+      subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V4; subterm3 = K_LL_FRICT_V1;
+      break;
+    case 4 :
+      subterm1 = K_UL_FRICT_V2; subterm2 = K_UL_FRICT_V5; subterm3 = K_LL_FRICT_V2;
+      break;
+    case 5 :
+      subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V6; subterm3 = K_LL_FRICT_V3;
+      break;
+    case 6 :
+      subterm1 = K_UL_FRICT_V7; subterm2 = K_UL_FRICT_V8; subterm3 = K_LL_FRICT_V4;
+      break;
+    default : GMM_ASSERT1(false, "Incorrect option");
+    }
+
+    size_type subterm4 = (option == 2) ? K_UU_FRICT_V2 : K_UU_FRICT_V1;
+
+    contact_nonmatching_meshes_nonlinear_term
+      nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
+             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+      nterm2(subterm2, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
+             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+      nterm3(subterm3, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
+             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+      nterm4(subterm4, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
+             pmf_coeff, &f_coeff, WT1, WT2, alpha);
+
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4" : "#1,#2,#3";
+
+    getfem::generic_assembly assem;
+    switch (option) {
+    case 1: case 4: case 5: case 6:
+      assem.set
+       ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // U1L
+        "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU1
+        "M$3(#2,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#2).vBase(#3))(i,j,:,i,:,j); " // U2L
+        "M$4(#3,#2)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#2))(i,j,:,j,:,i); " // LU2
+        "M$5(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j)"); // LL
+      break;
+    case 2: case 3:
+      assem.set
+       ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // U1L
+        "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU1
+        "M$3(#2,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#2).vBase(#3))(i,j,:,i,:,j); " // U2L
+        "M$4(#3,#2)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#2))(i,j,:,j,:,i); " // LU2
+        "M$5(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j); " // LL
+        "M$6(#1,#1)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
+        "M$7(#2,#2)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#2).vBase(#2))(i,j,:,i,:,j)"); // U2U2
+      break;
+    }
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mf(mf_lambda);
+    if (pmf_coeff)
+      assem.push_mf(*pmf_coeff);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_nonlinear_term(&nterm3);
+    if (option == 2 || option == 3)
+      assem.push_nonlinear_term(&nterm4);
+    assem.push_mat(Ku1l);
+    assem.push_mat(Klu1);
+    assem.push_mat(Ku2l);
+    assem.push_mat(Klu2);
+    assem.push_mat(Kll);
+    if (option == 2 || option == 3) {
+      assem.push_mat(Ku1u1);
+      assem.push_mat(Ku2u2);
+    }
+    assem.assembly(rg);
+
+    gmm::scale(Ku2l, scalar_type(-1));
+    gmm::scale(Klu2, scalar_type(-1));
+  }
+
+  template<typename VECT1>
+  void asm_Alart_Curnier_contact_nonmatching_meshes_rhs // frictionless
+  (VECT1 &Ru1, VECT1 &Ru2, VECT1 &Rl,
+   const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   scalar_type r, const mesh_region &rg, int option = 1) {
+
+    size_type subterm1;
+    switch (option) {
+    case 1 : subterm1 = RHS_U_V1; break;
+    case 2 : subterm1 = RHS_U_V2; break;
+    case 3 : subterm1 = RHS_U_V3; break;
+    case 4 : subterm1 = RHS_U_V4; break;
+    default : GMM_ASSERT1(false, "Incorrect option");
+    }
+    size_type subterm2 = (option == 4) ? RHS_L_V2 : RHS_L_V1;
+
+    contact_nonmatching_meshes_nonlinear_term
+      nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda),
+      nterm2(subterm2, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda);
+
+    getfem::generic_assembly assem;
+    assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
+              "V$2(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i); "
+              "V$3(#3)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3))(i,:)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mf(mf_lambda);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_vec(Ru1);
+    assem.push_vec(Ru2);
+    assem.push_vec(Rl);
+    assem.assembly(rg);
+
+    gmm::scale(Ru2, scalar_type(-1));
+  }
+
+  template<typename VECT1>
+  void asm_Alart_Curnier_contact_nonmatching_meshes_rhs // with friction
+  (VECT1 &Ru1, VECT1 &Ru2, VECT1 &Rl,
+   const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
+   const VECT1 *WT1, const VECT1 *WT2,
+   scalar_type r, scalar_type alpha,
+   const mesh_region &rg, int option = 1) {
+
+    size_type subterm1, subterm2;
+    switch (option) {
+    case 1 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V1; break;
+    case 2 : subterm1 = RHS_U_FRICT_V2; subterm2 = RHS_L_FRICT_V1; break;
+    case 3 : subterm1 = RHS_U_FRICT_V3; subterm2 = RHS_L_FRICT_V1; break;
+    case 4 : subterm1 = RHS_U_FRICT_V4; subterm2 = RHS_L_FRICT_V2; break;
+    case 5 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V3; break;
+    case 6 : subterm1 = RHS_U_FRICT_V5; subterm2 = RHS_L_FRICT_V4; break;
+    default : GMM_ASSERT1(false, "Incorrect option");
+    }
+
+    contact_nonmatching_meshes_nonlinear_term
+      nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
+             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+      nterm2(subterm2, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
+             pmf_coeff, &f_coeff, WT1, WT2, alpha);
+
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4" : "#1,#2,#3";
+
+    getfem::generic_assembly assem;
+    assem.set("V$1(#1)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1))(i,:,i); "
+              "V$2(#2)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#2))(i,:,i); "
+              "V$3(#3)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3))(i,:,i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(mf_u2);
+    assem.push_mf(mf_lambda);
+    if (pmf_coeff)
+      assem.push_mf(*pmf_coeff);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_vec(Ru1);
+    assem.push_vec(Ru2);
+    assem.push_vec(Rl);
+    assem.assembly(rg);
+
+    gmm::scale(Ru2, scalar_type(-1));
+  }
+
+  struct continuous_contact_nonmatching_meshes_brick : public virtual_brick {
+
+    size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
+                        // expected to come in contact.
+    bool Tresca_version, contact_only;
+    int option;
+
+    // option = 1 : Alart-Curnier
+    // option = 2 : symmetric Alart-Curnier (almost with friction)
+    // option = 3 : Alart Curnier "over-augmented"
+    // option = 4 : New method
+    // option = 5 : De-Saxce
+    // option = 6 : New method based on De-Saxce.
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      // Integration method
+      GMM_ASSERT1(mims.size() == 1,
+                  "Continuous contact between nonmatching meshes bricks need a single mesh_im");
+      const mesh_im &mim = *mims[0];
+
+      // Variables : u1, u2, lambda
+      //       the variable lambda should be scalar in the frictionless
+      //       case and vector valued in the case with friction.
+      GMM_ASSERT1(vl.size() == 3,
+                  "Continuous contact between nonmatching meshes bricks need three variables");
+      const model_real_plain_vector &u1 = md.real_variable(vl[0]);
+      const model_real_plain_vector &u2 = md.real_variable(vl[1]);
+      const mesh_fem &mf_u1 = *(md.pmesh_fem_of_variable(vl[0]));
+      const mesh_fem &mf_u2 = *(md.pmesh_fem_of_variable(vl[1]));
+      const model_real_plain_vector &lambda = md.real_variable(vl[2]);
+      const mesh_fem &mf_lambda = *(md.pmesh_fem_of_variable(vl[2]));
+      GMM_ASSERT1(mf_lambda.get_qdim() == (contact_only ? 1 : mf_u1.get_qdim()),
+                  "The contact stress variable has not the right dimension");
+
+      // Data : r, [friction_coeff,] [alpha,] [WT1, WT2]
+      //     alpha, WT1, WT2 are optional and equal to 1, 0 and 0 by default respectively.
+      if (contact_only) {
+        GMM_ASSERT1(dl.size() == 1,
+                    "Wrong number of data for continuous contact between nonmatching meshes "
+                    << "brick, the number of data should be equal to 1 .");
+      }
+      else {
+        GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 5,
+                    "Wrong number of data for continuous contact between nonmatching meshes "
+                    << "brick, it should be between 2 and 5 instead of "  << dl.size() << " .");
+      }
+      const model_real_plain_vector &vr = md.real_variable(dl[0]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+
+      const model_real_plain_vector *f_coeff = 0, *WT1 = 0, *WT2 = 0;
+      const mesh_fem *pmf_coeff = 0;
+      scalar_type alpha = 1;
+      if (!contact_only) {
+        f_coeff = &(md.real_variable(dl[1]));
+        pmf_coeff = md.pmesh_fem_of_variable(dl[1]);
+
+        size_type sl = gmm::vect_size(*f_coeff);
+        if (pmf_coeff) { sl *= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
+        GMM_ASSERT1(sl == 1,
+                    "the data corresponding to the friction coefficient "
+                    "has not the right format");
+
+        if (dl.size() >= 3) {
+          alpha = md.real_variable(dl[2])[0];
+          GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[2])) == 1,
+                      "Parameter alpha should be a scalar");
+        }
+
+        if (dl.size() >= 4)
+          WT1 = &(md.real_variable(dl[3]));
+
+        if (dl.size() >= 5)
+          WT2 = &(md.real_variable(dl[4]));
+      }
+
+      // Matrix terms (T_u1l, T_lu1, T_u2l, T_lu2, T_ll, T_u1u1, T_u2u2) // FIXME: T_u1u2, T_u2u1 ???
+      GMM_ASSERT1(matl.size() == size_type(5 + 2*(option == 3 ||
+                                                  (option == 2 && !contact_only))),
+                  "Wrong number of terms for "
+                  "continuous contact between nonmatching meshes brick");
+
+      mesh_region rg(region);
+      mf_u1.linked_mesh().intersect_with_mpi_region(rg);
+
+      size_type N = mf_u1.linked_mesh().dim();
+
+      // FIXME: use stored objects instead of creating them on the fly
+      getfem::mesh_fem proj_mf_u2(mim.linked_mesh(), dim_type(N));
+      getfem::pfem ifem = new_projected_fem(mf_u2, mim, rg2, rg1);
+      proj_mf_u2.set_finite_element(mim.linked_mesh().convex_index(), ifem);
+
+      size_type nbdof_lambda = mf_lambda.nb_dof();
+      size_type nbdof1 = mf_u1.nb_dof();
+      size_type nbdof2 = proj_mf_u2.nb_dof();
+      std::vector<size_type> ind;
+      ind.reserve(nbdof2);
+      for (size_type i=0; i < nbdof2; i++) {
+          size_type dof = size_type(-1);
+          size_type cv = proj_mf_u2.first_convex_of_basic_dof(i) ;
+          for (int j=0; j < int(proj_mf_u2.nb_basic_dof_of_element(cv)); j++) {
+              if (proj_mf_u2.ind_basic_dof_of_element(cv)[j] == i) {
+                  dof = ifem->index_of_global_dof(cv,j);
+              }
+          }
+          ind.push_back(dof);
+      }
+      gmm::unsorted_sub_index SUBI(ind);
+
+      model_real_plain_vector proj_u2(nbdof2);
+      gmm::copy(gmm::sub_vector(u2, SUBI), proj_u2);
+
+      if (version & model::BUILD_MATRIX) {
+        GMM_TRACE2("Continuous contact between nonmatching meshes "
+                   "tangent term");
+        for (size_type i = 0; i < matl.size(); i++) gmm::clear(matl[i]);
+
+        model_real_sparse_matrix Ku2l(nbdof2, nbdof_lambda);
+        model_real_sparse_matrix Klu2(nbdof_lambda, nbdof2);
+        model_real_sparse_matrix Ku2u2(nbdof2, nbdof2);
+
+        size_type sixthmat = (matl.size() >= 6) ? 5 : 1;
+        if (contact_only)
+          asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
+            (matl[0] /* u1l */, matl[1] /* lu1 */, Ku2l, Klu2, matl[4] /* ll */,
+             matl[sixthmat] /* u1u1 */, Ku2u2,
+             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             vr[0], rg, option);
+        else
+          asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
+            (matl[0] /* u1l */, matl[1] /* lu1 */, Ku2l, Klu2, matl[4] /* ll */,
+             matl[sixthmat] /* u1u1 */, Ku2u2,
+             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             pmf_coeff, *f_coeff, WT1, WT2,
+             vr[0], alpha, rg, option);
+        gmm::copy(Ku2l, gmm::sub_matrix(matl[2], SUBI, gmm::sub_interval(0, nbdof_lambda)));
+        gmm::copy(Klu2, gmm::sub_matrix(matl[3], gmm::sub_interval(0, nbdof_lambda), SUBI));
+        if (matl.size() > 6)
+          gmm::copy(Ku2u2, gmm::sub_matrix(matl[6], SUBI));
+      }
+
+      if (version & model::BUILD_RHS) {
+        for (size_type i = 0; i < matl.size(); i++) gmm::clear(vecl[i]);
+
+        model_real_plain_vector Ru2(nbdof2);
+
+        if (contact_only)
+          asm_Alart_Curnier_contact_nonmatching_meshes_rhs
+            (vecl[0], Ru2, vecl[4], // u1, u2, lambda
+             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             vr[0], rg, option);
+        else
+          asm_Alart_Curnier_contact_nonmatching_meshes_rhs
+            (vecl[0], Ru2, vecl[4], // u1, u2, lambda
+             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             pmf_coeff, *f_coeff, WT1, WT2,
+             vr[0], alpha, rg, option);
+        gmm::copy(Ru2, gmm::sub_vector(vecl[2], SUBI));
+      }
+
+    }
+
+    continuous_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
+                                                bool contact_only_, int option_)
+    : rg1(rg1_), rg2(rg2_), contact_only(contact_only_), option(option_) {
+      Tresca_version = false;   // for future version ...
+      set_flags(contact_only
+                ? "Continuous contact between nonmatching meshes brick"
+                : "Continuous contact with friction between nonmatching "
+                  "meshes brick",
+                false /* is linear*/,
+                (option==2) && contact_only /* is symmetric */,
+                false /* is coercive */, true /* is real */,
+                false /* is complex */);
+    }
+
+  };
+
+
+  //=========================================================================
+  //  Add a frictionless contact condition between two bodies discretized
+  //  with nonmatching meshes.
+  //=========================================================================
+
+  size_type add_continuous_contact_between_nonmatching_meshes_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &multname_n,
+   const std::string &dataname_r,
+   size_type region1, size_type region2, int option) {
+
+    pbrick pbr = new continuous_contact_nonmatching_meshes_brick
+                     (region1, region2, true /* contact_only */, option);
+
+    model::termlist tl;
+
+    switch (option) {
+    case 1 : case 4 :
+      tl.push_back(model::term_description(varname_u1, multname_n, false));
+      tl.push_back(model::term_description(multname_n, varname_u1, false));
+      tl.push_back(model::term_description(varname_u2, multname_n, false));
+      tl.push_back(model::term_description(multname_n, varname_u2, false));
+      tl.push_back(model::term_description(multname_n, multname_n, true));
+      break;
+    case 2 :
+      tl.push_back(model::term_description(varname_u1, multname_n, true));
+      tl.push_back(model::term_description(varname_u2, multname_n, true));
+      tl.push_back(model::term_description(varname_u1, varname_u1, true));
+      tl.push_back(model::term_description(multname_n, multname_n, true));
+      break;
+    case 3 :
+      tl.push_back(model::term_description(varname_u1, multname_n, false));
+      tl.push_back(model::term_description(multname_n, varname_u1, false));
+      tl.push_back(model::term_description(varname_u2, multname_n, false));
+      tl.push_back(model::term_description(multname_n, varname_u2, false));
+      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u1, varname_u1, true));
+      tl.push_back(model::term_description(varname_u2, varname_u2, true));
+      break;
+    default : GMM_ASSERT1(false,
+                          "Incorrect option for continuous contact brick");
+
+    }
+    model::varnamelist dl(1, dataname_r);
+
+    model::varnamelist vl(1, varname_u1);
+    vl.push_back(varname_u2);
+    vl.push_back(multname_n);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region1);
+  }
+
+
+  //=========================================================================
+  //
   //  Continuous penalized contact with friction between non-matching meshes.
   //
   //=========================================================================
@@ -1633,8 +2127,8 @@ namespace getfem {
       getfem::pfem ifem = new_projected_fem(mf_u2, mim, rg2, rg1);
       proj_mf_u2.set_finite_element(mim.linked_mesh().convex_index(), ifem);
 
-      size_type nbdof1=mf_u1.nb_basic_dof();
-      size_type nbdof2=proj_mf_u2.nb_basic_dof();
+      size_type nbdof1 = mf_u1.nb_dof();
+      size_type nbdof2 = proj_mf_u2.nb_dof();
       std::vector<size_type> ind;
       ind.reserve(nbdof2);
       for (size_type i=0; i < nbdof2; i++) {

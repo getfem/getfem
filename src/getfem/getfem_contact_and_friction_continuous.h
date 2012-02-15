@@ -146,6 +146,31 @@ namespace getfem {
    const std::string &dataname_wt = "");
 
 
+  /** Add a frictionless contact condition between nonmatching meshes
+      to the model. This brick adds a contact which is defined
+      in an integral way. Is it the direct approximation of an augmented
+      Lagrangian formulation (see Getfem user documentation) defined at the
+      continuous level. The advantage should be a better scalability:
+      the number of Newton iterations should be more or less independent
+      of the mesh size.
+      The condition is applied on the variables `varname_u1` and `varname_u2`
+      on the boundaries corresponding to `region1` and `region1`.
+      `multname_n` should be a fem variable representing the contact stress.
+      An inf-sup condition between `multname_n` and `varname_u1` and
+      `varname_u2` is required.
+      The augmentation parameter `dataname_r` should be chosen in a
+      range of acceptable values.
+      The possible value for `option` is 1 for the non-symmetric
+      Alart-Curnier version, 2 for the symmetric one and 3 for the
+      non-symmetric Alart-Curnier with an additional augmentation.
+  */
+  size_type add_continuous_contact_between_nonmatching_meshes_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &multname_n,
+   const std::string &dataname_r,
+   size_type region1, size_type region2, int option = 1);
+
+
   /** Add a penalized contact frictionless condition between nonmatching
       meshes to the model.
       The condition is applied on the variabls `varname_u1` and  `varname_u2`
