@@ -305,9 +305,9 @@ Frictionless basic contact brick
 In order to add a frictionless contact brick you call the model object method::
 
      getfem::add_basic_contact_brick
-          (md, varname_u, multname_n, dataname_r, BN,dataname_gap , dataname_alpha, symmetrized );
+          (md, varname_u, multname_n, dataname_r, BN,dataname_gap , dataname_alpha, aug_version );
 
-This function adds a frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, the matrix :math:`B_N` have to be such that this condition is defined by :math:`B_N U \le 0`. The constraint is prescribed thank to a multiplier ``multname_n`` whose dimension should be equal to the number of lines of :math:`B_N`. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter ``symmetrized`` indicates that the symmetry of the tangent matrix will be kept or not. 
+This function adds a frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, the matrix :math:`B_N` have to be such that this condition is defined by :math:`B_N U \le 0`. The constraint is prescribed thank to a multiplier ``multname_n`` whose dimension should be equal to the number of lines of :math:`B_N`. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter `aug_version` indicates the augmentation strategy : 0 for the non-symmetric Alart-Curnier augmented Lagrangian, 1 for the symmetric one, 2 for the symmetric one with an additional term and 3 for the new unsymmetric method.
 Note that is possible to change the basic contact matrix :math:`BN` by use::
 
      getfem::contact_brick_set_BN(md, indbrick);
@@ -317,7 +317,7 @@ Basic contact brick with friction
 +++++++++++++++++++++++++++++++++
 
 getfem::add_basic_contact_with_friction_brick
-          (md, varname_u, multname_n, multname_t, dataname_r, BN, dataname_friction_coeff, dataname_gap , dataname_alpha, symmetrized );
+          (md, varname_u, multname_n, multname_t, dataname_r, BN, dataname_friction_coeff, dataname_gap , dataname_alpha, aug_version  );
 
 This function adds a contact brick with friction on ``varname_u`` thanks to two
 multiplier variables ``multname_n`` and ``multname_t``. If ``U`` is the vector
@@ -339,10 +339,12 @@ The augmentation parameter
 (see Getfem user documentation). ``dataname_gap`` is an
 optional parameter representing the initial gap. It can be a single value
 or a vector of value. ``dataname_alpha`` is an optional homogenization
-parameter for the augmentation parameter. The parameter ``symmetrized``
-indicates
-that a part of the symmetry of the tangent matrix will be kept or not
-(except for the coupling between contact and friction).
+parameter for the augmentation parameter. The parameter `aug_version`
+indicates the augmentation strategy : 0 for the non-symmetric
+Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+2 for the symmetric
+one with an additional term, 3 for the new unsymmetric method
+and 4 for the new unsymmetric method with De Saxce projection.
 
 Note that is possible to change the basic contact matrices :math:`BN` and :math:`BT` by use::
 
@@ -354,7 +356,7 @@ Frictionless contact brick with a rigid obstacle
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
      getfem::add_contact_with_rigid_obstacle_brick
-          (md, mim, varname_u, multname_n, dataname_r, region, obstacle, symmetrized);
+          (md, mim, varname_u, multname_n, dataname_r, region, obstacle, aug_version);
 
 This function adds a direct nodal frictionless contact condition with a rigid obstacle to the model. The condition is applied on the variable ``varname_u``
 on the boundary corresponding to ``region``. The rigid obstacle should
@@ -367,10 +369,7 @@ the number of degrees of freedom on boundary ``region``. It represents the
 contact equivalent nodal forces. 
 The augmentation parameter ``r`` should be chosen in a
 range of acceptable values (close to the Young modulus of the elastic
-body, see Getfem user documentation). The
-parameter ``symmetrized`` indicates that the symmetry of the tangent
-matrix will be kept or not. Basically, this brick computes the matrix BN
-and the vectors gap and alpha and calls the basic contact brick.
+body, see Getfem user documentation). The parameter `aug_version` indicates the augmentation strategy : 0 for the non-symmetric Alart-Curnier augmented Lagrangian, 1 for the symmetric one, 2 for the symmetric one with an additional term and 3 for the new unsymmetric method.
 
 
 Contact with friction brick with a rigid obstacle
@@ -378,7 +377,7 @@ Contact with friction brick with a rigid obstacle
 
      getfem::add_contact_with_friction_with_rigid_obstacle_brick
           (md, mim, varname_u, multname_n, multname_t, dataname_r,
-          dataname_friction_coeff, region, obstacle, symmetrized);
+          dataname_friction_coeff, region, obstacle, aug_version);
 
 
 This function adds a direct nodal contact with friction condition with a rigid
@@ -399,10 +398,13 @@ The augmentation parameter ``r`` should be chosen in a
 range of acceptable values (close to the Young modulus of the elastic
 body, see Getfem user documentation). ``dataname_friction_coeff`` is
 the friction coefficient. It could be a scalar or a vector of values
-representing the friction coefficient on each contact node.
-The parameter  ``symmetrized`` indicates that the symmetry of the tangent
-matrix will be kept or not. Basically, this brick computes the matrix BN
-and the vectors gap and alpha and calls the basic contact brick.
+representing the friction coefficient on each contact node. The parameter `aug_version`
+indicates the augmentation strategy : 0 for the non-symmetric
+Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+2 for the symmetric
+one with an additional term, 3 for the new unsymmetric method
+and 4 for the new unsymmetric method with De Saxce projection.
+
 
 
 
@@ -412,9 +414,14 @@ Hughes stabilized frictionless contact condition
 In order to add a Hughes stabilized frictionless contact brick you call the model object method::
 
       getfem::add_Hughes_stab_basic_contact_brick
-          (md, varname_u, multname_n, dataname_r, BN, DN, dataname_gap, dataname_alpha, symmetrized);
+          (md, varname_u, multname_n, dataname_r, BN, DN, dataname_gap, dataname_alpha, aug_version);
 
-This function adds a Hughes stabilized frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, and :math:`\lambda` the multiplier Vector of contact force. Then Hughes stabilized frictionless contact condition is defined by the matrix :math:`BN` and :math:`DN` have to be such that this condition is defined by :math:`B_N U - D_N \lambda \le 0`. Where :math:`DN` is the mass matrix relative to stabilized term. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter ``symmetrized`` indicates that the symmetry of the tangent matrix will be kept or not. 
+This function adds a Hughes stabilized frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, and :math:`\lambda` the multiplier Vector of contact force. Then Hughes stabilized frictionless contact condition is defined by the matrix :math:`BN` and :math:`DN` have to be such that this condition is defined by :math:`B_N U - D_N \lambda \le 0`. Where :math:`DN` is the mass matrix relative to stabilized term. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter `aug_version`
+indicates the augmentation strategy : 0 for the non-symmetric
+Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+2 for the symmetric
+one with an additional term, 3 for the new unsymmetric method
+and 4 for the new unsymmetric method with De Saxce projection.
 Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughes stabilised term. You can change it with::
 
       getfem::contact_brick_set_DN(md, indbrick);

@@ -55,8 +55,8 @@ namespace getfem {
       parameter for the augmentation parameter
       (see Getfem user documentation). The parameter `aug_version` indicates
       the augmentation strategy : 0 for the non-symmetric Alart-Curnier
-      augmented Lagrangian, 1 for the symmetric one,
-      2 for the new unsymmetric method.
+      augmented Lagrangian, 1 for the symmetric one, 2 for the symmetric
+      one with an additional term and 3 for the new unsymmetric method.
   */
   size_type add_basic_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
@@ -86,9 +86,10 @@ namespace getfem {
       parameter for the augmentation parameter
       (see Getfem user documentation). The parameter `aug_version`
       indicates the augmentation strategy : 0 for the non-symmetric
-      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-      the coupling bewteen contact and Coulomb friction),
-      2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term, 3 for the new unsymmetric method
+      and 4 for the new unsymmetric method with De Saxce projection.
   */
   size_type add_basic_contact_with_friction_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
@@ -125,9 +126,9 @@ namespace getfem {
     a single value or a vector of value. `dataname_alpha` is an optional homogenization
     parameter for the augmentation parameter. The parameter `aug_version`
     indicates the augmentation strategy : 0 for the non-symmetric
-    Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-    the coupling bewteen contact and Coulomb friction),
-    2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term and 3 for the new unsymmetric method.
   */
    inline size_type add_Hughes_stab_basic_contact_brick
    (model &md, const std::string &varname_u, const std::string &multname_n,
@@ -166,9 +167,10 @@ namespace getfem {
       parameter for the augmentation parameter
       (see Getfem user documentation). The parameter `aug_version`
       indicates the augmentation strategy : 0 for the non-symmetric
-      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-      the coupling bewteen contact and Coulomb friction),
-      2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term, 3 for the new unsymmetric method
+      and 4 for the new unsymmetric method with De Saxce projection.
    **/
   inline size_type add_Hughes_stab_with_friction_contact_brick
   (model &md, const std::string &varname_u, const std::string &multname_n,
@@ -207,9 +209,10 @@ namespace getfem {
       range of acceptabe values (close to the Young modulus of the elastic
       body, see Getfem user documentation). The parameter `aug_version`
       indicates the augmentation strategy : 0 for the non-symmetric
-      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-      the coupling bewteen contact and Coulomb friction),
-      2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term, 3 for the new unsymmetric method
+      and 4 for the new unsymmetric method with De Saxce projection.
       Basically, this brick computes the matrix BN
       and the vectors gap and alpha and calls the basic contact brick.
   */
@@ -240,9 +243,10 @@ namespace getfem {
       representing the friction coefficient on each contact node.
       The parameter `aug_version`
       indicates the augmentation strategy : 0 for the non-symmetric
-      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-      the coupling bewteen contact and Coulomb friction),
-      2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term, 3 for the new unsymmetric method
+      and 4 for the new unsymmetric method with De Saxce projection.
       Basically, this brick computes the matrix BN
       and the vectors gap and alpha and calls the basic contact brick.
   */
@@ -274,9 +278,10 @@ namespace getfem {
       the slave surfaces, while 'rg2' the master surfaces. Preferably only
       one of `slave1` and `slave2` is set to true. The parameter `aug_version`
       indicates the augmentation strategy : 0 for the non-symmetric
-      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-      the coupling bewteen contact and Coulomb friction),
-      2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term, 3 for the new unsymmetric method
+      and 4 for the new unsymmetric method with De Saxce projection.
       Basically, this brick computes the matrix BN and the vectors gap and
       alpha and calls the basic contact brick.
   */
@@ -352,9 +357,10 @@ namespace getfem {
       while 'rg2' the master surfaces. Preferably only one of `slave1` and
       `slave2` is set to true.  The parameter `aug_version`
       indicates the augmentation strategy : 0 for the non-symmetric
-      Alart-Curnier augmented Lagrangian, 1 for the symmetric one (except for
-      the coupling bewteen contact and Coulomb friction),
-      2 for the new unsymmetric method.
+      Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
+      2 for the symmetric
+      one with an additional term, 3 for the new unsymmetric method
+      and 4 for the new unsymmetric method with De Saxce projection.
       Basically, this brick computes the matrices BN and BT as well the vectors
       gap and alpha and calls the basic contact brick.
   */

@@ -1656,8 +1656,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      (see Getfem user documentation).  The parameter `augmented_version`
      indicates the augmentation strategy : 1 for the non-symmetric
      Alart-Curnier augmented Lagrangian, 2 for the symmetric one (except for
-     the coupling between contact and Coulomb friction),
-     3 for the new unsymmetric method. @*/
+     the coupling between contact and Coulomb friction), 3 for the symmetric
+     one with an additional term, 4 for the new unsymmetric method,
+     5 for the new unsymmetric method with De Saxce projection. @*/
      sub_command
        ("add basic contact brick", 4, 10, 0, 1,
 
@@ -1690,7 +1691,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         int augmented_version = 0;
-        if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,5);
 
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
