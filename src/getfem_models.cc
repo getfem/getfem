@@ -4012,7 +4012,7 @@ namespace getfem {
                           VECTLIST &vectl, VECTLIST &vectl_sym,
                           bool first_iter) const {
 
-      pbrick pbr = md.get_brick(ib);
+      pbrick pbr = md.brick_pointer(ib);
 
       if (first_iter) { // For the moment, temporaries are deleted by
         // model::first_iter before the call to virtual_dispatcher::next_iter
@@ -4056,7 +4056,7 @@ namespace getfem {
      build_version version) const {
 
       scalar_type half = scalar_type(1)/scalar_type(2);
-      pbrick pbr = md.get_brick(ib);
+      pbrick pbr = md.brick_pointer(ib);
       size_type ind;
 
       const model::varnamelist &vl = md.varnamelist_of_brick(ib);
@@ -4104,7 +4104,7 @@ namespace getfem {
      build_version version) const {
 
       scalar_type half = scalar_type(1)/scalar_type(2);
-      pbrick pbr = md.get_brick(ib);
+      pbrick pbr = md.brick_pointer(ib);
       size_type ind;
 
       const model::varnamelist &vl = md.varnamelist_of_brick(ib);

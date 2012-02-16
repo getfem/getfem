@@ -292,7 +292,15 @@ namespace getfem {
                                  size_type ib) const;
     bool is_var_mf_newer_than_brick(const std::string &varname,
                                     size_type ib) const;
-    pbrick get_brick(size_type ib) const { return bricks[ib].pbr; }
+    pbrick get_brick(size_type ib) const IS_DEPRECATED {
+      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+      return bricks[ib].pbr;
+    }
+    pbrick brick_pointer(size_type ind_brick) const { 
+      GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+      return bricks[ind_brick].pbr;
+    }
+
 
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
 
@@ -601,11 +609,6 @@ namespace getfem {
     void touch_brick(size_type ind_brick) {
       GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
       bricks[ind_brick].terms_to_be_computed = true;
-    }
-
-    pbrick brick_pointer(size_type ind_brick) {
-      GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
-      return bricks[ind_brick].pbr;
     }
 
     /** Add a brick to the model. varname is the list of variable used

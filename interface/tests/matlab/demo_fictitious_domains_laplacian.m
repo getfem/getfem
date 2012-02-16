@@ -4,9 +4,9 @@ disp('the remaining part of that boundary. A Poisson problem');
 
 clear all;
 gf_workspace('clear all');
-NX=10;
+NX=20;
 N = 2;
-ls_degree = 1;
+ls_degree = 2;
 R = 0.4;
 
 if (N == 3)
@@ -16,7 +16,7 @@ if (N == 3)
   mf_mult=gfMeshFem(m,1);
   set(mfu0, 'fem', gf_fem('FEM_QK(3,2)'));
   set(mf_mult, 'fem', gf_fem('FEM_QK(3,1)'));
-  adapt_im = 'IM_TETRAHEDRON(6)'
+  adapt_im = 'IM_TETRAHEDRON(6)';
 elseif (N == 2)
   m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
   %m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
@@ -24,7 +24,7 @@ elseif (N == 2)
   mf_mult=gfMeshFem(m,1);
   set(mfu0, 'fem', gf_fem('FEM_QK(2,2)'));
   set(mf_mult, 'fem', gf_fem('FEM_QK(2,1)'));
-  adapt_im = 'IM_TRIANGLE(6)'
+  adapt_im = 'IM_TRIANGLE(6)';
 else 
   error('Wrong dimension');
 end
@@ -48,7 +48,7 @@ gf_levelset_set(ls2, 'values', ULS, ULS2);
 
 mls=gfMeshLevelSet(m);
 set(mls, 'add', ls);
-set(mls, 'add',ls2);
+set(mls, 'add', ls2);
 set(mls, 'adapt');
 mim_bound2 = gfMeshIm('levelset',mls,'boundary(a)', gf_integ(adapt_im));
 mim_bound = gfMeshIm('levelset',mls,'boundary(b)', gf_integ(adapt_im));
