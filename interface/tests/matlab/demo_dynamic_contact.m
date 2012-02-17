@@ -31,7 +31,7 @@ plot_mesh = true;
 
 
 
-m=gf_mesh('cartesian', [0:0.1:1]);
+m=gf_mesh('cartesian', [0:0.05:1]);
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
@@ -55,11 +55,13 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 clambda = 1;             % Lame coefficient
 cmu = 1;                 % Lame coefficient
-vertical_force = 0.05;   % Volumic load in the vertical direction
+vertical_force = 0.0;   % Volumic load in the vertical direction
 r = 10;                  % Augmentation parameter
-dt = 0.1;                % time step
-beta = 0.5;              % Newmark scheme coefficient
+dt = 0.005;              % time step
+beta = 0.25;             % Newmark scheme coefficient
 gamma = 0.5;             % Newmark scheme coefficient
+dirichlet_val = 0.45;
+singular_mass = 0;
 
 niter = 100;             % Maximum number of iterations for Newton's algorithm.
 
@@ -112,6 +114,10 @@ end
 M = gf_asm('mass matrix', mim, mfu);
 M_sing = gf_asm('mass matrix', mim_sing, mfu);
 
+if (singular_mass)
+  M = M_sing;
+end
+
 % Plot the mesh
 if (plot_mesh)
   figure(1);
@@ -139,7 +145,10 @@ ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nbdofu,1));
 
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
-gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', u_degree, GAMMAD);
+
+gf_model_set(md, 'add initialized data', 'dirichletdata', [dirichlet_val]);
+gf_model_set(md, 'add multiplier', 'dirichlet_multiplier', mfu, 'u');
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 'dirichlet_multiplier', GAMMAD, 'dirichletdata');
 
 ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
 mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -151,45 +160,63 @@ gf_model_set(md, 'add continuous contact with rigid obstacle brick', ...
       mim, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, 1);
 
 nbdofl = size(ldof,1);
-U0 = (gf_mesh_fem_get(mfu, 'eval', {'0.5-0.5*x'}))'
+U0 = (gf_mesh_fem_get(mfu, 'eval', { sprintf('%g+0.5-0.5*x', dirichlet_val)}))'
 
 gf_plot(mfu, U0');
 pause;
 
 MV0 = zeros(nbdofu, 1);
-LAMBDA0 = zeros(nbdofl, 1);
+% LAMBDA0 = zeros(nbdofl, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F');
 K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
-LL0 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA0);
+% LL0 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA0);
+MA0 = FF;
 
 nit = 0;
 for t = 0:dt:100
   
   % calcul de B
-  B = M*U0 + dt*MV0 + dt*dt*(1-beta)*(-K*U0+FF+LL0);
+  B = (M*U0 + dt*MV0 + dt*dt*(1-beta)*MA0)/(beta*dt*dt);
   
   gf_model_set(md, 'set private rhs', ind_rhs, B)
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter);
 
   U1 = (gf_model_get(md, 'variable', 'u'))';
-  LAMBDA1 = (gf_model_get(md, 'variable', 'lambda_n'))';
-  LL1 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA1);
-
+  % LAMBDA1 = (gf_model_get(md, 'variable', 'lambda_n'))';
+  % LL1 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA1);
   
-  MV1 = MV0 + dt*(gamma*(FF-LL1-K*U1) + (1-gamma)*(FF-LL0-K*U0));
-    
+  disp(sprintf('u1(1) = %g', U1(1)));
+  
+  MA1 = (M*U1-M*U0-dt*MV0-dt*dt*(1-beta)*MA0)/(dt*dt*beta);
+  MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
+  
+  Msize = size(M,1);
+  
+  MV1(Msize) = 0;
+  if (singular_mass)
+    V1(2:Msize) = M(2:Msize, 2:Msize) \ MV1(2:Msize);
+    V1(1) = 0;
+  else
+    V1 = M \ MV1;
+    disp('ok...');
+  end
+  V1(Msize) = 0;
+  
+  E = (V1'*MV1 + U1'*K*U1)/2 - FF'*U1;
+  disp(sprintf('energy = %g', E));
   
   ++nit;
   if (mod(nit, 10) == 0)
     gf_plot(mfu, U1');
-    pause(0.1);
+    pause;
   end;
   
   
   U0 = U1;
-  LAMBDA0 = LAMBDA1;
+  % LAMBDA0 = LAMBDA1;
   MV0 = MV1;
-  LL0 = LL1;
+  % LL0 = LL1;
+  MA0 = MA1;
 end
     
 
