@@ -113,9 +113,9 @@ clean:
 	-cd $(srcdir)/source/matlab/images/; make clean
 	-cd $(srcdir)/source/python/images/; make clean
 	-cd $(srcdir)/source/scilab/images/; make clean
-	-rm $(srcdir)/source/matlab/cmdref.rst
-	-rm $(srcdir)/source/scilab/cmdref.rst
-	-rm $(srcdir)/source/python/cmdref.rst
+	-rm -f $(srcdir)/source/matlab/cmdref.rst
+	-rm -f $(srcdir)/source/scilab/cmdref.rst
+	-rm -f $(srcdir)/source/python/cmdref.rst
 
 $(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
@@ -147,3 +147,11 @@ upload:
 	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete gmm_userdoc.pdf)
 	rm -fr *.pdf
 	rm -fr build
+
+
+EXTRA_DIST = \
+	source/userdoc/images/Makefile                  \
+	source/project/images/Makefile                  \
+	source/matlab/images/Makefile                  \
+	source/python/images/Makefile                  \
+	source/scilab/images/Makefile

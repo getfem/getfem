@@ -37,7 +37,7 @@ if 0,
   % fem for the derivative of U.
   gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,2)'));
 else
-  N1=4; N2=16; h=20;
+  N1=1; N2=4; h=20;
   m=gf_mesh('cartesian',(0:N1)/N1 - .5, (0:N2)/N2*h, ((0:N1)/N1 - .5)*3);
   mfu=gf_mesh_fem(m,3);     % mesh-fem supporting a 3D-vector field
   mfd=gf_mesh_fem(m,1);     % scalar mesh_fem

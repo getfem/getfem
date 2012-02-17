@@ -197,7 +197,7 @@ EXTRA_DIST =                               			\
 	wave_equation.pl                   			\
 	wave_equation.param                			\
 	cyl_slicer.pl                           		\
-	test_continuation.param
+	test_continuation.param                                 \
 	make_gmm_test.pl                   			\
 	gmm_torture01_lusolve.cc           			\
 	gmm_torture05_mult.cc              			\
@@ -207,18 +207,18 @@ EXTRA_DIST =                               			\
 	gmm_torture20_iterative_solvers.cc 			\
         meshes/disc_2D_degree3.mesh        			\
 	meshes/donut_regulier_72_elements.mesh    		\
-	meshes/disc_P2_h0.15.mesh                 		\
+	meshes/disc_P2_h0_3.mesh                 		\
         meshes/donut_regulier_8_elements_288ddl.mesh		\
-	meshes/disc_P2_h0.25.mesh				\
-	meshes/disc_P2_h0.5.mesh				\
-	meshes/disc_P2_h1.mesh					\
+	meshes/disc_P2_h0_5.mesh				\
+	meshes/disc_P2_h1.mesh				\
 	meshes/disc_P2_h2.mesh					\
-	meshes/sphere_with_quadratic_tetra_16000_elts.mesh	\
-	meshes/disc_P2_h3.mesh					\
-	meshes/sphere_with_quadratic_tetra_2000_elts.mesh	\
 	meshes/disc_P2_h4.mesh					\
+	meshes/sphere_with_quadratic_tetra_16000_elts.mesh	\
+	meshes/disc_P2_h6.mesh					\
+	meshes/sphere_with_quadratic_tetra_2000_elts.mesh	\
+	meshes/disc_P2_h8.mesh					\
 	meshes/sphere_with_quadratic_tetra_400_elts.mesh	\
-	meshes/disc_P2_h5.5.mesh				\
+	meshes/disc_P2_h10.mesh				\
 	meshes/sphere_with_quadratic_tetra_80_elts.mesh		\
 	meshes/donut_regulier_32_elements.mesh			\
 	meshes/sphere_with_quadratic_tetra_8_elts.mesh		\

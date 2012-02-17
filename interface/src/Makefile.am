@@ -95,6 +95,7 @@ libgetfemint_la_SOURCES = \
 	gfi_array.h \
 	getfemint_convex_structure.h \
 	getfemint_mesh.h \
+	getfemint_mesher_object.h \
 	getfemint_misc.h \
 	getfemint_std.h \
 	gfi_rpc.h \
