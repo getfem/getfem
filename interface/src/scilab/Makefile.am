@@ -55,21 +55,21 @@ EXTRA_DIST=builddoc.sce \
 	sci_getfem.iss \
 	makefile_builder.sce \
         demos/axrot_matrix.sci \
-        demos/check_all.sce \
-        demos/check_asm.sce \
-        demos/check_bricks.sce \
-        demos/check_fem.sce \
-        demos/check_geotrans.sce \
-        demos/check_integ.sce \
-        demos/check_interpolated_fem.sce \
-        demos/check_levelset.sce \
-        demos/check_mesh_fem.sce \
-        demos/check_oo.sce \
-        demos/check_plot.sce \
-        demos/check_slices.sce \
-        demos/check_solve.sce \
-        demos/check_spmat.sce \
-        demos/check_workspace.sce \
+        tests/unit_tests/check_all.sce \
+        tests/unit_tests/check_asm.sce \
+        tests/unit_tests/check_bricks.sce \
+        tests/unit_tests/check_fem.sce \
+        tests/unit_tests/check_geotrans.sce \
+        tests/unit_tests/check_integ.sce \
+        tests/unit_tests/check_interpolated_fem.sce \
+        tests/unit_tests/check_levelset.sce \
+        tests/unit_tests/check_mesh_fem.sce \
+        tests/unit_tests/check_oo.sce \
+        tests/unit_tests/check_plot.sce \
+        tests/unit_tests/check_slices.sce \
+        tests/unit_tests/check_solve.sce \
+        tests/unit_tests/check_spmat.sce \
+        tests/unit_tests/check_workspace.sce \
         demos/demo_bilaplacian.sce \
         demos/demo_continuation.sce \
         demos/demo_convection_rotating_cavity.sce \
@@ -78,7 +78,7 @@ EXTRA_DIST=builddoc.sce \
         demos/demo_finallaplacian.sce \
         demos/demo_laplacian1D.sce \
         demos/demo_laplacian.sce \
-        demos/demo_mesh_generation.m \
+        demos/demo_mesh_generation.sce \
         demos/demo_mortar.sce \
         demos/demo_nonlinear_elasticity_anim.sce \
         demos/demo_nonlinear_elasticity.sce \
@@ -104,8 +104,8 @@ EXTRA_DIST=builddoc.sce \
         demos/demo_wave2D.sce \
         demos/demo_wave_equation.sce \
         demos/sci_getfem.dem.gateway.sce \
-        demos/test_argyris.sce \
-        demos/test_plasticity_new_brick.sce \
+        tests/unit_tests/test_argyris.sce \
+        tests/unit_tests/test_plasticity_new_brick.sce \
         demos/tutorial1.sce \
         demos/data/disc_P2_h0.5.mesh \
         demos/data/disc_P2_h1.mesh \
@@ -275,7 +275,7 @@ EXTRA_DIST=builddoc.sce \
         sci_gateway/c/cleaner.sce \
         sci_gateway/c/gfm_common.c \
         sci_gateway/c/gfm_common.h \
-        sci_gateway/c/gfm_scilab.c \
+        sci_gateway/c/gfm_scilab.cpp \
         sci_gateway/c/libscigetfem_c.c \
         sci_gateway/c/libscigetfem_c.so \
         sci_gateway/c/loader.sce \
