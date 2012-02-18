@@ -504,7 +504,7 @@ AC_SUBST([MUPARSER_LIBS])
 echo "Configuration of muParser done"
 dnl ---------------------------END OF MUPARSER TEST--------------------------
 
-dnl ------------------------------MUMPS------------------------------
+dnl ------------------------------MUMPS TEST------------------------------
 MUMPSINC=""
 AC_ARG_WITH(mumps-include-dir,
  [AS_HELP_STRING([--with-mumps-include-dir],[directory in which the dmumps.h header can be found])],
@@ -518,28 +518,34 @@ CPPFLAGS="$CPPFLAGS $MUMPSINC"
 
 MUMPS_LIBS=""
 acx_mumps_ok="no"
+usemumps="no"
+AC_ARG_ENABLE(mumps,
+ [AS_HELP_STRING([--enable-mumps],[enable the use of the (sequential) MUMPS library. A direct solver for large sparse linear systems.])],
+ [case $enableval in
+   yes | "") usemumps="yes"; acx_mumps_ok="yes"; MUMPS_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq";;
+   no) usemumps="no";;
+  esac],
+ [usemumps="test"; acx_mumps_ok="test"; MUMPS_LIBS="-lsmumps_seq -ldmumps_seq -lcmumps_seq -lzmumps_seq"]
+)
+
+AC_ARG_ENABLE(par-mumps,
+ [AS_HELP_STRING([--enable-par-mumps],[enable the use of the parrallel MUMPS library. A direct solver for large sparse linear systems.])],
+ [case $enableval in
+   yes | "") usemumps="yes"; MUMPS_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps";;
+   no) usemumps="no";;
+  esac]
+)
+
 AC_ARG_WITH(mumps,
  [AS_HELP_STRING([--with-mumps=<lib>],[use MUMPS library <lib>])],
  [case $with_mumps in
-   yes | "") acx_mumps_ok="yes" ;;
+   yes | "") usemumps="yes";;
    no) acx_mumps_ok="no" ;;
    -* | */* | *.a | *.so | *.so.* | *.o| builtin) MUMPS_LIBS="$with_mumps"; acx_mumps_ok="yes" ;;
-   *) MUMPS_LIBS=`echo $with_mumps | sed -e 's/^/-l/g;s/ / -l/g'` ; acx_mumps_ok="yes" ;;
-  esac],
- [MUMPS_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps"; acx_mumps_ok="test"]
+   *) MUMPS_LIBS=`echo $with_mumps | sed -e 's/^/-l/g;s/ / -l/g'` ; usemumps="yes";;
+  esac]
 )
-dnl ---------------------------END OF MUMPS--------------------------
 
-dnl ------------------------------MUMPS TEST------------------------------
-usemumps="no"
-AC_ARG_ENABLE(mumps,
- [AS_HELP_STRING([--enable-mumps],[enable the use of the MUMPS library. A direct solver for large sparse linear systems.])],
- [case $enableval in
-   yes | "") usemumps="yes"; acx_mumps_ok="yes" ;;
-   no) usemumps="no"; MUMPS_LIBS="" ;;
-  esac],
- [usemumps="test"]
-)
 
 if test "x$usemumps" = "xno" -o "x$acx_mumps_ok" = "xno"; then
   echo "Building with MUMPS explicitly disabled";
@@ -621,7 +627,7 @@ AC_ARG_ENABLE(metis,
    yes | "") usemetis="yes" ;;
    no) usemetis="no"; METIS_LIBS="" ;;
   esac],
- [usemumps="test"]
+ [usemetis="test"]
 )
 
 if test "x$usemetis" = "xno"; then
