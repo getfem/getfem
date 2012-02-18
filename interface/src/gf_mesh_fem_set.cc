@@ -23,6 +23,7 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_partial_mesh_fem.h>
+#include <gmm/gmm.h>
 
 using namespace getfemint;
 
@@ -208,12 +209,25 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
        mf->set_reduction(s != size_type(0));
        );
 
+    /*@SET ('reduce meshfem', @mat RM)
+      Set reduction mesh fem
+      This function use a range basis function to select basis on the boundary or on the real domain in the case of
+      fictitious domain method.
+      `RM` is a masse matrix construct on the boundary whith the `mesfem` of the fictious domain. @*/
+    sub_command
+      ("reduce meshfem", 1, 1, 0, 0,
+       dal::shared_ptr<gsparse>  RM = in.pop().to_sparse();
+       std::set<size_type> cols;
+       cols.clear();
+       gmm::range_basis(RM->real_csc(), cols, 1e-12);
+       mf->reduce_to_basic_dof(cols);
+       );
 
     /*@SET ('dof partition', @ivec DOFP)
-    Change the 'dof_partition' array.
-
-    `DOFP` is a vector holding a integer value for each convex of the @tmf.
-    See MESH_FEM:GET('dof partition') for a description of "dof partition".@*/
+      Change the 'dof_partition' array.
+      
+      `DOFP` is a vector holding a integer value for each convex of the @tmf.
+      See MESH_FEM:GET('dof partition') for a description of "dof partition".@*/
     sub_command
       ("dof partition", 1, 1, 0, 0,
        iarray v =
