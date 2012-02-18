@@ -70,11 +70,14 @@ m1.export_to_vtk('check_export1.vtk','quality')
 mf0.export_to_vtk('check_export2.vtk','ascii')
 mf1.export_to_vtk('check_export3.vtk','ascii')
 
+
+
 # DX:
 try:
     m0.export_to_dx('check_export0.dx')
-except RuntimeError:
-    pass
+except RuntimeError as detail:
+    print detail
+
 m1.export_to_dx('check_export0.dx','ascii','edges')
 m1.export_to_dx('check_export0.dx','ascii','append')
 sl.export_to_dx('check_export1.dx','ascii')
