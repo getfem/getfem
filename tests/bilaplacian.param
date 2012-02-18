@@ -6,9 +6,9 @@
 %%%%% pde parameters :	                              %%%%%
 LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
-QUAD = 1;
-MESH_NOISED = 1;        % Set to one if you want to "shake" the mesh
-NX = 80;                % space step.
+QUAD = 0;
+MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
+NX = 8;                % space step.
 DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
 EPS_DIRICHLET_PENAL = 1e10; % Parametre de penalisation
 FT = 10.0;              % parameter for the exact solution
@@ -39,7 +39,7 @@ if (N == 2 && ~QUAD)
   if 0   % hermite element
     FEM_TYPE = 'FEM_HERMITE(2)';   % not conformal -> problem
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
-  elseif 0  % argyris element
+  elseif 1  % argyris element
     FEM_TYPE = 'FEM_ARGYRIS';
     DIRICHLET_FEM_TYPE = 'FEM_PK(2,3)';
   else

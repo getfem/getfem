@@ -37,6 +37,7 @@ ROOTFILENAME = 'bilaplacian';
 DIRICHLET_VERSION = 0;
 D = 1.0;
 KL = 0;
+BOUNDARY_REF = 1;
 
 ;
 
