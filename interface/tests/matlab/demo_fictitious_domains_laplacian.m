@@ -7,9 +7,9 @@ gf_workspace('clear all');
 
   
 
-NX=40
-N = 2
-ls_degree = 1
+NX=5
+N = 3
+ls_degree = 2
 R = 0.4;
 
 if (N == 3)
