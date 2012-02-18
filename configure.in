@@ -471,6 +471,19 @@ AC_SUBST([QHULL_LIBS])
 echo "Configuration of qhull done"
 dnl -----------------------------END OF QHULL TEST---------------------------
 
+dnl ------------------------------MUPARSER------------------------------
+MUPARSERSINC=""
+AC_ARG_WITH(muparser-include-dir,
+ [AS_HELP_STRING([--with-muparser-include-dir],[directory in which the muParser.h header can be found])],
+ [case $withval in
+   -I* ) MUPARSERINC="$withval";;
+   * ) MUPARSERINC="-I$withval";;
+  esac],
+ [MUPARSERINC="-I$GFPREFIX/include"]
+)
+CPPFLAGS="$CPPFLAGS $MUPARSERINC"
+dnl ---------------------------END OF MUPARSER--------------------------
+
 dnl ------------------------------MUPARSER TEST------------------------------
 usemuparser="no"
 AC_ARG_ENABLE(muparser,
