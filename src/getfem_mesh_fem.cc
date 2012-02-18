@@ -271,8 +271,23 @@ namespace getfem {
     }
   };
 
-  typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
+  void mesh_fem::get_global_dof_index(std::vector<size_type> &ind) const {
+    context_check(); if (!dof_enumeration_made) enumerate_dof();
+    ind.resize(nb_total_dof);
+    for (size_type i=0; i < nb_total_dof; i++) {
+      size_type cv = first_convex_of_basic_dof(i) ;
+      pfem pf = fem_of_element(cv);
+      for (size_type j=0; j < nb_basic_dof_of_element(cv); j++) {
+        if (pf->dof_types()[j] == global_dof(pf->dim()))
+          if (ind_basic_dof_of_element(cv)[j] == i) {
+            ind[i] = pf->index_of_global_dof(cv,j);
+            break;
+          }
+      }
+    }
+  }
 
+  typedef std::map<fem_dof, size_type, dof_comp_> dof_sort_type;
 
   /// Enumeration of dofs
   void mesh_fem::enumerate_dof(void) const {

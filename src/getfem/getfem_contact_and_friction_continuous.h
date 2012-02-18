@@ -524,6 +524,55 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+
+  template<typename VECT1>
+  void asm_nonmatching_meshes_surface_traction_term
+  (VECT1 &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &proj_mf_u2, const VECT1 &proj_U2,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const mesh_region &rg) {
+
+    scalar_type r(0);
+    contact_nonmatching_meshes_nonlinear_term
+      nterm(RHS_U_V1, r, mf_u1, U1, proj_mf_u2, proj_U2, &mf_lambda, &lambda);
+
+    getfem::generic_assembly assem;
+    assem.set("V$1(#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1))(i,:,i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(proj_mf_u2);
+    assem.push_mf(mf_lambda);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(R);
+    assem.assembly(rg);
+  }
+
+  template<typename VECT1>
+  scalar_type asm_nonmatching_meshes_contact_area
+  (const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
+   const getfem::mesh_fem &proj_mf_u2, const VECT1 &proj_U2,
+   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const mesh_region &rg) {
+
+    scalar_type r(0);
+    contact_nonmatching_meshes_nonlinear_term
+      nterm(CONTACT_FLAG, r, mf_u1, U1, proj_mf_u2, proj_U2, &mf_lambda, &lambda);
+
+    getfem::generic_assembly assem;
+    assem.set("V()+=comp(NonLin(#1,#1,#2,#3))(i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u1);
+    assem.push_mf(proj_mf_u2);
+    assem.push_mf(mf_lambda);
+    assem.push_nonlinear_term(&nterm);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.assembly(rg);
+    return v[0];
+  }
+
 }  /* end of namespace getfem.                                             */
 
 

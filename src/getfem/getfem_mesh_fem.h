@@ -379,7 +379,7 @@ namespace getfem {
      */
     void set_classical_discontinuous_finite_element(dim_type fem_degree,
 						    scalar_type alpha=0);   
-    /** Return the basic fem associated with an element (in no fem is
+    /** Return the basic fem associated with an element (if no fem is
      *	associated, the function will crash! use the convex_index() of
      *  the mesh_fem to check that a fem is associated to a given
      *  convex). This fem does not take into account the optional
@@ -475,16 +475,22 @@ namespace getfem {
     virtual const mesh::ind_cv_ct &convex_to_basic_dof(size_type d) const;
     const mesh::ind_cv_ct &convex_to_dof(size_type d) const IS_DEPRECATED
     { return convex_to_basic_dof(d); }
+
+    /** Give an array that contains the global dof indices corresponding
+     * to the mesh_fem dofs or size_type(-1) if a dof is not global.
+     *  @param ind the returned global dof indices array.
+     */
+    virtual void get_global_dof_index(std::vector<size_type> &ind) const;
     /** Renumber the degrees of freedom. You should not have
      * to call this function, as it is done automatically */
-    void enumerate_dof(void)const;
+    void enumerate_dof(void) const;
 
 #if GETFEM_PARA_LEVEL > 1
     void enumerate_dof_para(void)const;
 #endif
 
     /** Return the total number of basic degrees of freedom (before the
-     * optional redution). */
+     * optional reduction). */
     virtual size_type nb_basic_dof(void) const {
       context_check(); if (!dof_enumeration_made) enumerate_dof();
       return nb_total_dof;

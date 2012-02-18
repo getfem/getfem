@@ -545,7 +545,7 @@ namespace getfem {
     //   for i0
     // - in each call ctx.pf() corresponds to the fem of the cv convex
     //   on the i4,i3,i2 and i1 mesh_fem respectively
-    // - this method expexts that i1,i2,i3 and i4 mesh_fems will correspond
+    // - this method expects that i1,i2,i3 and i4 mesh_fems will correspond
     //   to mf_u1, mf_u2, mf_lambda and mf_coeff
 
     switch (nb) { // last is computed first
@@ -1726,6 +1726,8 @@ namespace getfem {
 
     size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
                         // expected to come in contact.
+    mutable getfem::pfem pfem_proj;        // cached fem and mesh_fem for the
+    mutable getfem::mesh_fem *pmf_u2_proj; // projection between nonmatching meshes
     bool Tresca_version, contact_only;
     int option;
 
@@ -1816,30 +1818,22 @@ namespace getfem {
 
       size_type N = mf_u1.linked_mesh().dim();
 
-      // FIXME: use stored objects instead of creating them on the fly
-      getfem::mesh_fem proj_mf_u2(mim.linked_mesh(), dim_type(N));
-      getfem::pfem ifem = new_projected_fem(mf_u2, mim, rg2, rg1);
-      proj_mf_u2.set_finite_element(mim.linked_mesh().convex_index(), ifem);
+      // projection of the second mesh_fem onto the mesh of the first mesh_fem
+      if (!pmf_u2_proj) {
+        pmf_u2_proj = new getfem::mesh_fem(mim.linked_mesh(), dim_type(N));
+        pfem_proj = new_projected_fem(mf_u2, mim, rg2, rg1);
+        pmf_u2_proj->set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
+      }
 
       size_type nbdof_lambda = mf_lambda.nb_dof();
-      size_type nbdof1 = mf_u1.nb_dof();
-      size_type nbdof2 = proj_mf_u2.nb_dof();
+      size_type nbdof2 = pmf_u2_proj->nb_basic_dof();
+
       std::vector<size_type> ind;
-      ind.reserve(nbdof2);
-      for (size_type i=0; i < nbdof2; i++) {
-          size_type dof = size_type(-1);
-          size_type cv = proj_mf_u2.first_convex_of_basic_dof(i) ;
-          for (int j=0; j < int(proj_mf_u2.nb_basic_dof_of_element(cv)); j++) {
-              if (proj_mf_u2.ind_basic_dof_of_element(cv)[j] == i) {
-                  dof = ifem->index_of_global_dof(cv,j);
-              }
-          }
-          ind.push_back(dof);
-      }
+      pmf_u2_proj->get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
-      model_real_plain_vector proj_u2(nbdof2);
-      gmm::copy(gmm::sub_vector(u2, SUBI), proj_u2);
+      model_real_plain_vector u2_proj(nbdof2);
+      gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Continuous contact between nonmatching meshes "
@@ -1855,13 +1849,13 @@ namespace getfem {
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
             (matl[0] /* u1l */, matl[1] /* lu1 */, Ku2l, Klu2, matl[4] /* ll */,
              matl[sixthmat] /* u1u1 */, Ku2u2,
-             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
             (matl[0] /* u1l */, matl[1] /* lu1 */, Ku2l, Klu2, matl[4] /* ll */,
              matl[sixthmat] /* u1u1 */, Ku2u2,
-             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, *f_coeff, WT1, WT2,
              vr[0], alpha, rg, option);
         gmm::copy(Ku2l, gmm::sub_matrix(matl[2], SUBI, gmm::sub_interval(0, nbdof_lambda)));
@@ -1878,12 +1872,12 @@ namespace getfem {
         if (contact_only)
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
             (vecl[0], Ru2, vecl[4], // u1, u2, lambda
-             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
             (vecl[0], Ru2, vecl[4], // u1, u2, lambda
-             mim, mf_u1, u1, proj_mf_u2, proj_u2, mf_lambda, lambda,
+             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, *f_coeff, WT1, WT2,
              vr[0], alpha, rg, option);
         gmm::copy(Ru2, gmm::sub_vector(vecl[2], SUBI));
@@ -1893,7 +1887,9 @@ namespace getfem {
 
     continuous_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
                                                 bool contact_only_, int option_)
-    : rg1(rg1_), rg2(rg2_), contact_only(contact_only_), option(option_) {
+    : rg1(rg1_), rg2(rg2_), pfem_proj(0), pmf_u2_proj(0),
+      contact_only(contact_only_), option(option_)
+    {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
                 ? "Continuous contact between nonmatching meshes brick"
@@ -1904,6 +1900,9 @@ namespace getfem {
                 false /* is coercive */, true /* is real */,
                 false /* is complex */);
     }
+
+    ~continuous_contact_nonmatching_meshes_brick()
+    { if (pmf_u2_proj) delete pmf_u2_proj; }
 
   };
 
@@ -2036,6 +2035,8 @@ namespace getfem {
 
     size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
                         // expected to come in contact.
+    mutable getfem::pfem pfem_proj;        // cached fem and mesh_fem for the
+    mutable getfem::mesh_fem *pmf_u2_proj; // projection between nonmatching meshes
     bool Tresca_version, contact_only;
     int option;
 
@@ -2122,29 +2123,22 @@ namespace getfem {
       mesh_region rg(region);
       mf_u1.linked_mesh().intersect_with_mpi_region(rg); // FIXME: mfu_2?
 
-      // FIXME: use stored objects instead of creating them on the fly
-      getfem::mesh_fem proj_mf_u2(mim.linked_mesh(), dim_type(N));
-      getfem::pfem ifem = new_projected_fem(mf_u2, mim, rg2, rg1);
-      proj_mf_u2.set_finite_element(mim.linked_mesh().convex_index(), ifem);
+      // projection of the second mesh_fem onto the mesh of the first mesh_fem
+      if (!pmf_u2_proj) {
+        pmf_u2_proj = new getfem::mesh_fem(mim.linked_mesh(), dim_type(N));
+        pfem_proj = new_projected_fem(mf_u2, mim, rg2, rg1);
+        pmf_u2_proj->set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
+      }
 
       size_type nbdof1 = mf_u1.nb_dof();
-      size_type nbdof2 = proj_mf_u2.nb_dof();
+      size_type nbdof2 = pmf_u2_proj->nb_dof();
+
       std::vector<size_type> ind;
-      ind.reserve(nbdof2);
-      for (size_type i=0; i < nbdof2; i++) {
-          size_type dof = size_type(-1);
-          size_type cv = proj_mf_u2.first_convex_of_basic_dof(i) ;
-          for (int j=0; j < int(proj_mf_u2.nb_basic_dof_of_element(cv)); j++) {
-              if (proj_mf_u2.ind_basic_dof_of_element(cv)[j] == i) {
-                  dof = ifem->index_of_global_dof(cv,j);
-              }
-          }
-          ind.push_back(dof);
-      }
+      pmf_u2_proj->get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
-      model_real_plain_vector proj_u2(nbdof2);
-      gmm::copy(gmm::sub_vector(u2, SUBI), proj_u2);
+      model_real_plain_vector u2_proj(nbdof2);
+      gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Penalized contact between nonmatching meshes tangent term");
@@ -2157,14 +2151,14 @@ namespace getfem {
 
         if (contact_only) {
           asm_penalized_contact_nonmatching_meshes_tangent_matrix
-            (matl[0], Ku2u2, Ku1u2, mim, mf_u1, u1, proj_mf_u2, proj_u2,
+            (matl[0], Ku2u2, Ku1u2, mim, mf_u1, u1, *pmf_u2_proj, u2_proj,
              pmf_lambda, lambda, vr[0], rg, option);
         }
 //        else {
 //          gmm::clear(matl[3]);
 //          model_real_sparse_matrix Ku2u1(nbdof2,nbdof1);
 //          asm_penalized_contact_nonmatching_meshes_tangent_matrix
-//            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, proj_mf_u2, proj_u2,
+//            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, *pmf_u2_proj, u2_proj,
 //             pmf_lambda, lambda, vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
 //          gmm::copy(Ku2u1, gmm::sub_matrix(matl[3], SUBI, gmm::sub_interval(0, nbdof1)));
 //        }
@@ -2180,7 +2174,7 @@ namespace getfem {
 
         if (contact_only)
           asm_penalized_contact_nonmatching_meshes_rhs
-            (vecl[0], Ru2, mim, mf_u1, u1, proj_mf_u2, proj_u2, pmf_lambda, lambda,
+            (vecl[0], Ru2, mim, mf_u1, u1, *pmf_u2_proj, u2_proj, pmf_lambda, lambda,
              vr[0], rg, option);
 //        else
 //          asm_penalized_contact_nonmatching_meshes_rhs
@@ -2192,7 +2186,8 @@ namespace getfem {
 
     penalized_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
                                                bool contact_only_, int option_)
-    : rg1(rg1_), rg2(rg2_), contact_only(contact_only_), option(option_) {
+    : rg1(rg1_), rg2(rg2_), pfem_proj(0), pmf_u2_proj(0),
+      contact_only(contact_only_), option(option_) {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
                 ? "Continuous penalized contact between nonmatching meshes brick"
@@ -2202,6 +2197,9 @@ namespace getfem {
                 true /* is coercive */, true /* is real */,
                 false /* is complex */);
     }
+
+    ~penalized_contact_nonmatching_meshes_brick()
+    { if (pmf_u2_proj) delete pmf_u2_proj; }
 
   };
 
