@@ -23,7 +23,7 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_partial_mesh_fem.h>
-#include <gmm/gmm.h>
+#include <gmm/gmm_range_basis.h>
 
 using namespace getfemint;
 
@@ -211,9 +211,10 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
 
     /*@SET ('reduce meshfem', @mat RM)
       Set reduction mesh fem
-      This function use a range basis function to select basis on the boundary or on the real domain in the case of
-      fictitious domain method.
-      `RM` is a masse matrix construct on the boundary whith the `mesfem` of the fictious domain. @*/
+      This function selects the degrees of freedom of the finite element
+      method by selecting a set of independent vectors of the matrix RM.
+      The numer of columns of RM should corresponds to the number of degrees
+      of fredoom of the finite element method.  @*/
     sub_command
       ("reduce meshfem", 1, 1, 0, 0,
        dal::shared_ptr<gsparse>  RM = in.pop().to_sparse();

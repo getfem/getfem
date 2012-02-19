@@ -8,10 +8,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem, 4.1.1)
+AC_INIT(getfem, 4.2)
 MAJOR_VERSION="4"
-MINOR_VERSION="1"
-PATCH_VERSION="1"
+MINOR_VERSION="2"
+PATCH_VERSION="0"
 
 AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])
@@ -179,6 +179,8 @@ dnl always build with -fPIC so that the matlab and python interface
 dnl can be run on x86_64 platforms
 dnl unfortunately , it does not work... I HATE LIBTOOL
 dnl AC_LIBTOOL_PICMODE(['yes'])
+
+AC_LIBTOOL_PICMODE(['yes'])
 
 AM_PROG_LIBTOOL
 AC_SUBST([LIBTOOL_DEPS])
@@ -1121,59 +1123,68 @@ fi;
 
 dnl configuration sum-up
 
-echo ""
+echo
 echo "------------------------------------------------------------------------------"
-echo "If you want to build the shared library of getfem++, use --enable-shared"
-echo "(by default, only the static one will be built)"
+echo
+echo "Libraries Used:"
+echo "---------------"
+echo
+
+
 
 if test "x$useQDlib" = "xyes" ; then  
-  echo "Using the QD library:"
-  echo "   high precision (${QD_PREC}-double precision) polynomials and integration methods are enabled";
+  echo "- QD library found. High precision (${QD_PREC}-double precision) polynomials"
+  echo "  and integration methods are enabled.";
+else
+  echo "- QD library not found (not recommended)."
 fi;
 
 if test "x$useQHULL" = "xyes"; then
-  echo "Using the qhull library for delaunay triangulations."
+  echo "- Qhull found. Using the Qhull library for delaunay triangulations."
 else
-  echo "Not using the qhull library. Mesh generation will be disabled."
+  echo "- Qhull not found. Mesh generation will be disabled."
 fi;
 
 if test "x$usemuparser" = "xyes"; then
-  echo "Using the muParser library for parsing mathematical expressions."
+  echo "- MuParser found. Used for parsing mathematical expressions."
 else
-  echo "Not using the muParser library. Parsing mathematical expressions will be disabled."
+  echo "- MuParser not found. Parsing mathematical expressions will be disabled."
 fi;
 
 if test "x$usemumps" = "xyes"; then
-  echo "Using the MUMPS library. A direct solver for large sparse linear systems."
+  echo "- Mumps found. A direct solver for large sparse linear systems."
 else
-  echo "Not using the MUMPS library. A direct solver for large sparse linear systems."
+  echo "- Mumps not found. Not using the MUMPS library for large sparse linear systems."
 fi;
-
-echo
-if test "x$HAVE_VENDOR_BLAS" = "x0"; then
-  echo "*** No usable blas library was found ***"
-  echo "A generic BLAS implementation will be used, however you should "
-  echo "consider installing a faster BLAS, such as ATLAS"
-else
-  echo "Link options for the BLAS library: $BLAS_LIBS"
-fi;
-echo "You can give the location of your prefered blas library with either"
-echo "the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
-echo 'for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'
-echo
 
 if test x"$acx_lapack_ok" = xyes; then
-  echo "Lapack library found : $LAPACK_LIBS"
+  echo "- Lapack library found: $LAPACK_LIBS"
 else
-  echo "No lapack library found : generic (less effective) algorithms will be used"
+  echo "- Lapack library not found: generic (less effective) algorithms will be used"
 fi
 
-echo "---------------------------------------"
+if test "x$HAVE_VENDOR_BLAS" = "x0"; then
+  echo "- *** No usable blas library was found ***"
+  echo "  A generic BLAS implementation will be used, however you should "
+  echo "  consider installing a faster BLAS, such as ATLAS"
+else
+  echo "- BLAS library found. Link options: $BLAS_LIBS"
+fi;
+echo "  You can give the location of your prefered blas library with either"
+echo "  the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
+echo '  for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'
+echo
+echo
+
+
+echo "-----------------------------------------------------------------------"
 echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
 echo "  building PYTHON interface: $usepython (requires numpy and scipy)"
 echo "  building SCILAB interface: $usescilab"
-echo "---------------------------------------"
+echo "  If you want to build the shared library of getfem++, use --enable-shared"
+echo "  (by default, only the static one will be built)"
+echo "-----------------------------------------------------------------------"
 
 case $host in
   x86_64-*)
