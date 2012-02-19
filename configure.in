@@ -171,21 +171,9 @@ dnl ------------------------------------------------------------------------
 dnl   init libtools for shared libraries
 dnl ------------------------------------------------------------------------
 
-dnl AC_DISABLE_FAST_INSTALL
-AM_DISABLE_SHARED
-AM_ENABLE_STATIC
-
-dnl always build with -fPIC so that the matlab and python interface
-dnl can be run on x86_64 platforms
-dnl unfortunately , it does not work... I HATE LIBTOOL
-dnl AC_LIBTOOL_PICMODE(['yes'])
-
-AC_LIBTOOL_PICMODE(['yes'])
-
-AM_PROG_LIBTOOL
+dnl option pic-only is not working: a libtool bug ...
+LT_INIT([pic-only disable-shared])
 AC_SUBST([LIBTOOL_DEPS])
-
-
 
 dnl -------------------------------BLAS----------------------------------
 
@@ -1198,3 +1186,5 @@ case $host in
         fi      
   ;;
 esac
+
+echo $shared_mode
