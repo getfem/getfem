@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2002-2008 Yves Renard
+// Copyright (C) 2002-2012 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -102,7 +102,7 @@ namespace gmm {
     std::stringstream msg;						\
     msg << "Error in "__FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
-	<< errormsg   << ends;						\
+	<< errormsg;						\
     std::cerr << msg.str() << std::endl;                                \
     abort_no_return();							\
   }
@@ -159,7 +159,7 @@ namespace gmm {
 #define GMM_WARNING_MSG(level_, thestr)  {			       \
       std::stringstream msg;                                           \
       msg << "Level " << level_ << " Warning in "__FILE__ << ", line " \
-          << __LINE__ << ": " << thestr << ends;		       \
+          << __LINE__ << ": " << thestr;		       \
        std::cerr << msg.str() << std::endl;                            \
     }
 
@@ -221,8 +221,7 @@ namespace gmm {
     GMM_TRACE_MSG_MPI {						       \
       std::stringstream msg;                                           \
       msg << "Trace " << level_ << " in "__FILE__ << ", line "         \
-          << __LINE__ << ": " << thestr				       \
-          << ends;						       \
+          << __LINE__ << ": " << thestr;        		       \
       std::cout << msg.str() << std::endl;			       \
     }                                                                  \
   }        
