@@ -137,13 +137,15 @@ struct Chrono {
       // cout << "cts = " << cts << endl;
       // dal::bit_vector new_cts;
       for (size_type i=0; i < ipts.size(); ++i) {
-	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) { 
-	  base_node &P = m.points()[ipts[i]];
+	if (ipts[i] >= nb_vertices && !ptdone[ipts[i]]) {
+	  base_node P = m.points()[ipts[i]];
 	  // if (cts.card() > 1)
 	  //   cout << "WARNING, projection sur " << cts << endl;
 	  if (!pure_multi_constraint_projection(list_constraints, P, cts)) {
-	    GMM_WARNING1("Pure multi has failed in interpolate_face !!");
+	    GMM_WARNING1("Pure multi has failed in interpolate_face !! Original point " << m.points()[ipts[i]] << " projection " << P);
 	    // GMM_ASSERT1(false, "");
+	  } else {
+	    m.points()[ipts[i]] = P;
 	  }
 	  ptdone[ipts[i]] = true;
 	  // dist(P, new_cts);

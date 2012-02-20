@@ -1,7 +1,7 @@
 // -*- c++ -*- (enables emacs c++ mode)
 //===========================================================================
 //
-// Copyright (C) 2007-2008 Yves Renard
+// Copyright (C) 2007-2012 Yves Renard
 //
 // This file is a part of GETFEM++
 //
@@ -46,17 +46,19 @@ namespace bgeot {
   }
 
   void node_tab::add_sorter(void) const {
-    if (sorters.size() > 1) GMM_WARNING3("Multiple sort needed for node tab");
+    if (sorters.size() > 1)
+      GMM_WARNING3("Multiple sort needed for node tab : " << sorters.size()+1);
     sorters.push_back(sorter(component_comp(*this, c, dim_)));
     for (dal::bv_visitor i(index()); !i.finished(); ++i)
       sorters.back().insert(size_type(i));
   }
 
-  size_type node_tab::search_node(const base_node &pt, const scalar_type radius) const {
+  size_type node_tab::search_node(const base_node &pt,
+				  const scalar_type radius) const {
     if (card() == 0) return size_type(-1);
         
     scalar_type eps_radius = std::max(eps, radius);
-    for (size_type is = 0; ; ++is) {
+    for (size_type is = 0; is < 5; ++is) {
       if (is >= sorters.size()) add_sorter();
 
       c = pt - eps_radius * sorters[is].key_comp().v;
@@ -65,19 +67,22 @@ namespace bgeot {
       scalar_type up_bound
         = gmm::vect_sp(pt, sorters[is].key_comp().v) + 2*eps_radius;
       size_type count = 0;
-      for (; it != sorters[is].end() && count < 20+10*is; ++it, ++count) {
+      // if (is > 0) cout << "begin loop " << " v = " <<  sorters[is].key_comp().v << "sp c = " << gmm::vect_sp(c, sorters[is].key_comp().v) << " eps_radius = " << eps_radius << " max_radius " <<  max_radius << endl;
+      for (; it != sorters[is].end() && count < 20; ++it, ++count) {
 
 	const base_node &pt2 = (*this)[*it];
-	// if (count > 0)
-	//   cout << "count " << count << " pt = " << pt << " pt2 = " << pt2 << endl;
-	if (gmm::vect_dist2(pt, pt2) < eps_radius)
-	  return *it;
+
+// 	if (count > 0) {
+// 	  cout << "count " << count << " is = " << is << " pt = " << pt << " pt2 = " << pt2 << " sp = " << gmm::vect_sp(pt2, sorters[is].key_comp().v) << " spinit = " << gmm::vect_sp(pt, sorters[is].key_comp().v) << endl;
+// 	}
+
+	if (gmm::vect_dist2(pt, pt2) < eps_radius) return *it;
 	if (gmm::vect_sp(pt2, sorters[is].key_comp().v) > up_bound)
 	  return size_type(-1);
       }
       if (it == sorters[is].end()) return size_type(-1);
-      GMM_ASSERT1(is < 30, "Problem in node structure !!");
     }
+    GMM_ASSERT1(false, "Problem in node structure !!");
   }
 
   void node_tab::clear(void) {
