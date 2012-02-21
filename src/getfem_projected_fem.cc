@@ -671,6 +671,10 @@ namespace getfem {
         normal = gppd.normal;
         gap = gppd.gap;
       }
+      else { // return undefined normal vector and huge gap
+        normal = base_node(c.N());
+        gap = 1e12;
+      }
     }
     else {
       size_type cv;
@@ -681,6 +685,10 @@ namespace getfem {
         normal_on_convex_face(pgt, G, f, ptref, normal);
         base_node ppt = pgt->transform(ptref, G);
         gap = gmm::vect_sp(c.xreal()-ppt, normal);
+      }
+      else { // return undefined normal vector and huge gap
+        normal = base_node(c.N());
+        gap = 1e12;
       }
     }
 
