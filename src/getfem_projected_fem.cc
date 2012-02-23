@@ -264,9 +264,6 @@ namespace getfem {
     fictx_cv = size_type(-1);
     dim_ = dim_type(-1);
 
-    GMM_ASSERT1(!mf_source.is_reduced(),
-                "Projected fem works only on non reduced mesh_fems");
-
     dim_type N = mf_source.linked_mesh().dim();
     GMM_ASSERT1( N == mim_target.linked_mesh().dim(),
                  "Dimensions mismatch between the source and the target meshes");

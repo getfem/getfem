@@ -1826,23 +1826,30 @@ namespace getfem {
       }
 
       size_type nbdof_lambda = mf_lambda.nb_dof();
-      size_type nbdof2 = pmf_u2_proj->nb_basic_dof();
+      size_type nbdof2 = mf_u2.nb_dof();
+      size_type nbsub = pmf_u2_proj->nb_basic_dof();
 
       std::vector<size_type> ind;
       pmf_u2_proj->get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
-      model_real_plain_vector u2_proj(nbdof2);
-      gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
+      model_real_plain_vector u2_proj(nbsub);
+      if (mf_u2.is_reduced())
+        gmm::mult(gmm::sub_matrix(mf_u2.extension_matrix(),
+                                  SUBI, gmm::sub_interval(0, nbdof2)),
+                  u2,
+                  u2_proj);
+      else
+        gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Continuous contact between nonmatching meshes "
                    "tangent term");
         for (size_type i = 0; i < matl.size(); i++) gmm::clear(matl[i]);
 
-        model_real_sparse_matrix Ku2l(nbdof2, nbdof_lambda);
-        model_real_sparse_matrix Klu2(nbdof_lambda, nbdof2);
-        model_real_sparse_matrix Ku2u2(nbdof2, nbdof2);
+        model_real_sparse_matrix Ku2l(nbsub, nbdof_lambda);
+        model_real_sparse_matrix Klu2(nbdof_lambda, nbsub);
+        model_real_sparse_matrix Ku2u2(nbsub, nbsub);
 
         size_type sixthmat = (matl.size() >= 6) ? 5 : 1;
         if (contact_only)
@@ -1858,16 +1865,40 @@ namespace getfem {
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, *f_coeff, WT1, WT2,
              vr[0], alpha, rg, option);
-        gmm::copy(Ku2l, gmm::sub_matrix(matl[2], SUBI, gmm::sub_interval(0, nbdof_lambda)));
-        gmm::copy(Klu2, gmm::sub_matrix(matl[3], gmm::sub_interval(0, nbdof_lambda), SUBI));
-        if (matl.size() > 6)
-          gmm::copy(Ku2u2, gmm::sub_matrix(matl[6], SUBI));
+
+        if (mf_u2.is_reduced()) {
+          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                    gmm::sub_interval(0, nbdof2), SUBI),
+                    Ku2l,
+                    matl[2]);
+          gmm::mult(Klu2,
+                    gmm::sub_matrix(mf_u2.extension_matrix(),
+                                    SUBI, gmm::sub_interval(0, nbdof2)),
+                    matl[3]);
+          if (matl.size() > 6) {
+            model_real_sparse_matrix tmp(nbsub, nbdof2);
+            gmm::mult(Ku2u2,
+                      gmm::sub_matrix(mf_u2.extension_matrix(),
+                                      SUBI, gmm::sub_interval(0, nbdof2)),
+                      tmp);
+            gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                      gmm::sub_interval(0, nbdof2), SUBI),
+                      tmp,
+                      matl[6]);
+          }
+        }
+        else {
+          gmm::copy(Ku2l, gmm::sub_matrix(matl[2], SUBI, gmm::sub_interval(0, nbdof_lambda)));
+          gmm::copy(Klu2, gmm::sub_matrix(matl[3], gmm::sub_interval(0, nbdof_lambda), SUBI));
+          if (matl.size() > 6)
+            gmm::copy(Ku2u2, gmm::sub_matrix(matl[6], SUBI));
+        }
       }
 
       if (version & model::BUILD_RHS) {
         for (size_type i = 0; i < matl.size(); i++) gmm::clear(vecl[i]);
 
-        model_real_plain_vector Ru2(nbdof2);
+        model_real_plain_vector Ru2(nbsub);
 
         if (contact_only)
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
@@ -1880,7 +1911,14 @@ namespace getfem {
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, *f_coeff, WT1, WT2,
              vr[0], alpha, rg, option);
-        gmm::copy(Ru2, gmm::sub_vector(vecl[2], SUBI));
+
+        if (mf_u2.is_reduced())
+          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                    gmm::sub_interval(0, nbdof2), SUBI),
+                    Ru2,
+                    vecl[2]);
+        else
+          gmm::copy(Ru2, gmm::sub_vector(vecl[2], SUBI));
       }
 
     }
@@ -2131,14 +2169,21 @@ namespace getfem {
       }
 
       size_type nbdof1 = mf_u1.nb_dof();
-      size_type nbdof2 = pmf_u2_proj->nb_dof();
+      size_type nbdof2 = mf_u2.nb_dof();
+      size_type nbsub = pmf_u2_proj->nb_dof();
 
       std::vector<size_type> ind;
       pmf_u2_proj->get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
-      model_real_plain_vector u2_proj(nbdof2);
-      gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
+      model_real_plain_vector u2_proj(nbsub);
+      if (mf_u2.is_reduced())
+        gmm::mult(gmm::sub_matrix(mf_u2.extension_matrix(),
+                                  SUBI, gmm::sub_interval(0, nbdof2)),
+                  u2,
+                  u2_proj);
+      else
+        gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Penalized contact between nonmatching meshes tangent term");
@@ -2146,8 +2191,8 @@ namespace getfem {
         gmm::clear(matl[1]);
         gmm::clear(matl[2]);
 
-        model_real_sparse_matrix Ku2u2(nbdof2,nbdof2);
-        model_real_sparse_matrix Ku1u2(nbdof1,nbdof2);
+        model_real_sparse_matrix Ku2u2(nbsub,nbsub);
+        model_real_sparse_matrix Ku1u2(nbdof1,nbsub);
 
         if (contact_only) {
           asm_penalized_contact_nonmatching_meshes_tangent_matrix
@@ -2156,21 +2201,39 @@ namespace getfem {
         }
 //        else {
 //          gmm::clear(matl[3]);
-//          model_real_sparse_matrix Ku2u1(nbdof2,nbdof1);
+//          model_real_sparse_matrix Ku2u1(nbsub,nbdof1);
 //          asm_penalized_contact_nonmatching_meshes_tangent_matrix
 //            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, *pmf_u2_proj, u2_proj,
 //             pmf_lambda, lambda, vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
 //          gmm::copy(Ku2u1, gmm::sub_matrix(matl[3], SUBI, gmm::sub_interval(0, nbdof1)));
 //        }
-        gmm::copy(Ku2u2, gmm::sub_matrix(matl[1], SUBI));
-        gmm::copy(Ku1u2, gmm::sub_matrix(matl[2], gmm::sub_interval(0, nbdof1), SUBI));
+
+        if (mf_u2.is_reduced()) {
+          model_real_sparse_matrix tmp(nbsub, nbdof2);
+          gmm::mult(Ku2u2,
+                    gmm::sub_matrix(mf_u2.extension_matrix(),
+                                    SUBI, gmm::sub_interval(0, nbdof2)),
+                    tmp);
+          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                    gmm::sub_interval(0, nbdof2), SUBI),
+                    tmp,
+                    matl[1]);
+          gmm::mult(Ku1u2,
+                    gmm::sub_matrix(mf_u2.extension_matrix(),
+                                    SUBI, gmm::sub_interval(0, nbdof2)),
+                    matl[2]);
+        }
+        else {
+          gmm::copy(Ku2u2, gmm::sub_matrix(matl[1], SUBI));
+          gmm::copy(Ku1u2, gmm::sub_matrix(matl[2], gmm::sub_interval(0, nbdof1), SUBI));
+        }
       }
 
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
         gmm::clear(vecl[1]);
 
-        model_real_plain_vector Ru2(nbdof2);
+        model_real_plain_vector Ru2(nbsub);
 
         if (contact_only)
           asm_penalized_contact_nonmatching_meshes_rhs
@@ -2180,7 +2243,14 @@ namespace getfem {
 //          asm_penalized_contact_nonmatching_meshes_rhs
 //            (vecl[0], mim, mf_u, u, mf_lambda, lambda, mf_obstacle, obstacle,
 //             vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
-        gmm::copy(Ru2, gmm::sub_vector(vecl[1], SUBI));
+
+        if (mf_u2.is_reduced())
+          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                    gmm::sub_interval(0, nbdof2), SUBI),
+                    Ru2,
+                    vecl[1]);
+        else
+          gmm::copy(Ru2, gmm::sub_vector(vecl[1], SUBI));
       }
     }
 
