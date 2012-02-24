@@ -1460,13 +1460,13 @@ namespace getfem {
   //
   //=========================================================================
 
-  template<typename MAT, typename VECT1>
+  template<typename MAT, typename VEC>
   void asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix // frictionless
   (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll, MAT &Ku1u1, MAT &Ku2u2,
    const mesh_im &mim,
-   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
-   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
-   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem &mf_u1, const VEC &U1,
+   const getfem::mesh_fem &mf_u2, const VEC &U2,
+   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    scalar_type r, const mesh_region &rg, int option = 1) {
 
     size_type subterm1 = (option == 4) ? K_UL_V2 : K_UL_V1;
@@ -1534,15 +1534,15 @@ namespace getfem {
       gmm::scale(Klu2, scalar_type(-1));
   }
 
-  template<typename MAT, typename VECT1>
+  template<typename MAT, typename VEC>
   void asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix // with friction
   (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll, MAT &Ku1u1, MAT &Ku2u2,
    const mesh_im &mim,
-   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
-   const getfem::mesh_fem &mf_u2, const VECT1 &U2,
-   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
-   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   const VECT1 *WT1, const VECT1 *WT2,
+   const getfem::mesh_fem &mf_u1, const VEC &U1,
+   const getfem::mesh_fem &mf_u2, const VEC &U2,
+   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
+   const getfem::mesh_fem *pmf_coeff, const VEC &f_coeff,
+   const VEC *WT1, const VEC *WT2,
    scalar_type r, scalar_type alpha,
    const mesh_region &rg, int option = 1) {
 
@@ -1833,12 +1833,19 @@ namespace getfem {
       pmf_u2_proj->get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
+      gmm::csc_matrix<scalar_type> Rsub(nbdof2, nbsub), Esub(nbsub, nbdof2);
+      if (mf_u2.is_reduced()) {
+          gmm::copy(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                    gmm::sub_interval(0, nbdof2), SUBI),
+                    Rsub);
+          gmm::copy(gmm::sub_matrix(mf_u2.extension_matrix(),
+                                    SUBI, gmm::sub_interval(0, nbdof2)),
+                    Esub);
+      }
+
       model_real_plain_vector u2_proj(nbsub);
       if (mf_u2.is_reduced())
-        gmm::mult(gmm::sub_matrix(mf_u2.extension_matrix(),
-                                  SUBI, gmm::sub_interval(0, nbdof2)),
-                  u2,
-                  u2_proj);
+        gmm::mult(Esub, u2, u2_proj);
       else
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
@@ -1867,24 +1874,12 @@ namespace getfem {
              vr[0], alpha, rg, option);
 
         if (mf_u2.is_reduced()) {
-          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
-                                    gmm::sub_interval(0, nbdof2), SUBI),
-                    Ku2l,
-                    matl[2]);
-          gmm::mult(Klu2,
-                    gmm::sub_matrix(mf_u2.extension_matrix(),
-                                    SUBI, gmm::sub_interval(0, nbdof2)),
-                    matl[3]);
+          gmm::mult(Rsub, Ku2l, matl[2]);
+          gmm::mult(Klu2, Esub, matl[3]);
           if (matl.size() > 6) {
             model_real_sparse_matrix tmp(nbsub, nbdof2);
-            gmm::mult(Ku2u2,
-                      gmm::sub_matrix(mf_u2.extension_matrix(),
-                                      SUBI, gmm::sub_interval(0, nbdof2)),
-                      tmp);
-            gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
-                                      gmm::sub_interval(0, nbdof2), SUBI),
-                      tmp,
-                      matl[6]);
+            gmm::mult(Ku2u2, Esub, tmp);
+            gmm::mult(Rsub, tmp, matl[6]);
           }
         }
         else {
@@ -1913,10 +1908,7 @@ namespace getfem {
              vr[0], alpha, rg, option);
 
         if (mf_u2.is_reduced())
-          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
-                                    gmm::sub_interval(0, nbdof2), SUBI),
-                    Ru2,
-                    vecl[2]);
+          gmm::mult(Rsub, Ru2, vecl[2]);
         else
           gmm::copy(Ru2, gmm::sub_vector(vecl[2], SUBI));
       }
@@ -2176,12 +2168,19 @@ namespace getfem {
       pmf_u2_proj->get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
+      gmm::csc_matrix<scalar_type> Rsub(nbdof2, nbsub), Esub(nbsub, nbdof2);
+      if (mf_u2.is_reduced()) {
+          gmm::copy(gmm::sub_matrix(mf_u2.reduction_matrix(),
+                                    gmm::sub_interval(0, nbdof2), SUBI),
+                    Rsub);
+          gmm::copy(gmm::sub_matrix(mf_u2.extension_matrix(),
+                                    SUBI, gmm::sub_interval(0, nbdof2)),
+                    Esub);
+      }
+
       model_real_plain_vector u2_proj(nbsub);
       if (mf_u2.is_reduced())
-        gmm::mult(gmm::sub_matrix(mf_u2.extension_matrix(),
-                                  SUBI, gmm::sub_interval(0, nbdof2)),
-                  u2,
-                  u2_proj);
+        gmm::mult(Esub, u2, u2_proj);
       else
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
@@ -2210,18 +2209,9 @@ namespace getfem {
 
         if (mf_u2.is_reduced()) {
           model_real_sparse_matrix tmp(nbsub, nbdof2);
-          gmm::mult(Ku2u2,
-                    gmm::sub_matrix(mf_u2.extension_matrix(),
-                                    SUBI, gmm::sub_interval(0, nbdof2)),
-                    tmp);
-          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
-                                    gmm::sub_interval(0, nbdof2), SUBI),
-                    tmp,
-                    matl[1]);
-          gmm::mult(Ku1u2,
-                    gmm::sub_matrix(mf_u2.extension_matrix(),
-                                    SUBI, gmm::sub_interval(0, nbdof2)),
-                    matl[2]);
+          gmm::mult(Ku2u2, Esub, tmp);
+          gmm::mult(Rsub, tmp, matl[1]);
+          gmm::mult(Ku1u2, Esub, matl[2]);
         }
         else {
           gmm::copy(Ku2u2, gmm::sub_matrix(matl[1], SUBI));
@@ -2245,10 +2235,7 @@ namespace getfem {
 //             vr[0], alpha, mf_coeff, friction_coeff, WT, rg, option);
 
         if (mf_u2.is_reduced())
-          gmm::mult(gmm::sub_matrix(mf_u2.reduction_matrix(),
-                                    gmm::sub_interval(0, nbdof2), SUBI),
-                    Ru2,
-                    vecl[1]);
+          gmm::mult(Rsub, Ru2, vecl[1]);
         else
           gmm::copy(Ru2, gmm::sub_vector(vecl[1], SUBI));
       }
