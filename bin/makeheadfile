@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Copyright (C) 1998-2009 Yves Renard
+# Copyright (C) 1998-2012 Yves Renard
 #
 # This file is a part of GETFEM++
 #
@@ -14,6 +14,9 @@
 # You  should  have received a copy of the GNU Lesser General Public License
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+use Switch;
 
 sub clean_line {
   $_[0] =~ s/\/\*//g;
@@ -30,7 +33,7 @@ sub print_license  {
   my $RES   = $_[0];
   my $NAME = $_[1];
 
-  print RES <<
+  print RES <<""
 /*===========================================================================
  
  Copyright (C) $year1-$year2 $copyauth
@@ -52,7 +55,7 @@ sub print_license  {
 
 ;
   if ($NAME =~ /\.h/) {
-    print RES <<
+    print RES <<""
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
  instantiate  templates  or  use macros or inline functions from this file,
@@ -65,29 +68,42 @@ sub print_license  {
 
 ;
   }
-print RES <<
+print RES <<""
 ===========================================================================*/
 
 ;
 }
 
 
-$year = `date +%Y`;
-chomp $year;
 
-while ($name = $ARGV[0]) {
-  shift;
+
+
+
+sub process_file  {
+
+  my $name   = $_[0];
+  my $option = $_[1];
   open(FILE, "$name");
 
-
+# try to identify the license
+# $license = 0: no detected license
+#            1: LGPL
+#            2: LGPL with special exception
+#            3: Boost
+#            4: Xerox (superlu)
+#            5: other (todo)
 
 # extract information
   $license = 0;
-  $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0;
+  $libname = 0; $filename = 0; $date = 0; $author1 = 0; $year1 = 0; $year2 = -1;
   $comment1 = ""; $comment2 = ""; $author2=""; $author3=""; $copyauth="";
   $authors = $copyauth = "Yves Renard, Julien Pommier.";
 
   while ($li = <FILE>) {
+
+    if ($license==0 && $li =~ /Copyright/ && $li =~ /Xerox/
+	&& $li =~ /Corporation/)
+      { $license = 4; }
 
     if ($li =~ /Copyright/ && !$year1) {
       ($li, $l1) = split('\)', $li, 2);
@@ -99,62 +115,171 @@ while ($name = $ARGV[0]) {
       $copyauth =~ s/\*\///g;
       clean_line($copyauth);
     }
-    if ($li =~ /MERCHANTABILITY/) { $license = 1; }
-    if (($license == 1) && ($li =~ /=========/)) { $li = <FILE>; last; }
+    if ($license==0 && $li =~ /Boost/ && $li =~ /Software/ && $li =~ /License/)
+      { $license = 3; }
+    if ($license==0 && $li =~ /GNU/ &&  $li =~ /Lesser/ && $li =~ /General/
+	&& $li =~ /Public/ && $li =~ /License/)
+      { $license = 1; }
+    if ($license==1 && $li =~ /special/ && $li =~ /exception/)
+      { $license = 2; }
+
+
+    if (($license == 1 || $license == 2) && ($li =~ /=========/))
+      { $li = <FILE>; last; }
     if ($li =~ /^#/) { last; }
   }
 
-  $year2=$year;
-  $enablecpp = "/* -*- c++ -*- (enables emacs c++ mode) */\n";
 
-  if (!($license)) {
-    $year1 = $year;
-    $date = $year;
-    $authors = $copyauth = "Yves Renard, Julien Pommier.";
-    seek(FILE, 0, 0);
-    # close(FILE);
-    # open(FILE, "$name");
-    open(RES, ">$name".".newhead");
-    print RES $enablecpp;
-    print_license(RES, $name);
-  }
-  else {
-
-    if ($author3)
-      { $authors = "$author1, $author2, $author3"; }
-    elsif ($author2)
-      { $authors = "$author1, $author2"; }
-    else { $authors = "$author1"; }
-
-
-    $filename = $name;
-
-    open(RES, ">$name".".newhead");
-
-    print RES $enablecpp;
-    print_license(RES, $name);
+  switch ($license) {
+    case(0) { print "No copyright detected.\n"; }
+    case(1) { print "Copyright detected: LGPL $year1-$year2 $copyauth\n"; }
+    case(2) { print "Copyright detected: LGPL with special exception $year1-$year2 $copyauth\n"; }
+    case(4) { print "Copyright detected: Xerox $year1-$year2 $copyauth\n"; }
+    else { print "Unknown license detected: $year1-$year2 $copyauth\n"; }
   }
 
 
-  do {
-    # $li =~ s/\#include\ \<getfem(.*)\.h\>/\#include \"getfem$1\.h\"/g;
-    # $li =~ s/\#include\ \<gmm(.*)\.h\>/\#include \"gmm$1\.h\"/g;
-    # $li =~ s/\#include\ \<dal(.*)\.h\>/\#include \"dal$1\.h\"/g;
-    # $li =~ s/\#include\ \<bgeot(.*)\.h\>/\#include \"bgeot$1\.h\"/g;
+  if ($option == 2) {
 
-    #$li =~ s/\#include\ \"gmm(.*)\.h\"/\#include \"gmm\/gmm$1\.h\"/g;
-    #$li =~ s/\#include\ \"getfem(.*)\.h\"/\#include \"getfem\/getfem$1\.h\"/g;
-    #$li =~ s/\#include\ \"bgeot(.*)\.h\"/\#include \"getfem\/bgeot$1\.h\"/g;
-    #$li =~ s/\#include\ \"dal(.*)\.h\"/\#include \"getfem\/dal$1\.h\"/g;
+    do {
 
-    print RES "$li";
-  } while ($li = <FILE>);
+      if ($li =~ /Copyright/ || $li =~ /copyright/) {
+	print "Other copyright info:\n$li";
+      }
+      if ($li =~ /Author/ || $li =~ /author/) {
+	print "Other author info:\n$li";
+      }
+      if ($li =~ /License/ || $li =~ /license/) {
+	print "Other license info:\n$li";
+      }
+    } while ($li = <FILE>);
 
+    print "\n";
 
-  close(RES);
+  }
+
+  if ($option == 1 && $year2 != $year && $license < 3) {
+
+    if ($license == 0) {
+      print "Copyright notice have to be added : adding LGPL License ?\n";
+    } else {
+      print "Copyright notice have to be updated\n";
+    }
+
+    print "Perform the modification ? (Y/[N]) ";
+    $ans = <STDIN>; chomp($ans);
+    if ($ans eq "y" || $ans eq "Y") {
+      print "Updating license\n\n";
+
+      $year2=$year;
+      $enablecpp = "/* -*- c++ -*- (enables emacs c++ mode) */\n";
+
+      if (!($license)) {
+	$year1 = $year;
+	$date = $year;
+	$authors = $copyauth = "Yves Renard, Julien Pommier.";
+	seek(FILE, 0, 0);
+	# close(FILE);
+	# open(FILE, "$name");
+	open(RES, ">$name".".newhead");
+	print RES $enablecpp;
+	print_license(RES, $name);
+      }
+      else {
+
+	if ($author3)
+	  { $authors = "$author1, $author2, $author3"; }
+	elsif ($author2)
+	  { $authors = "$author1, $author2"; }
+	else { $authors = "$author1"; }
+
+	$filename = $name;
+
+	open(RES, ">$name".".newhead");
+
+	print RES $enablecpp;
+	print_license(RES, $name);
+      }
+
+      do {
+	print RES "$li";
+      } while ($li = <FILE>);
+
+      close(RES);
+      close(FILE);
+      `mv -f $name.newhead $name`;
+
+    }
+  } else { print"\n"; }
   close(FILE);
 
-  `mv -f $name.newhead $name`;
+}
 
+
+
+
+
+
+
+
+
+
+###############
+# Main program
+###############
+
+# TODO : options make, info, diff
+#        option info : affiche les differentes licenses et les auteurs déclarés
+#        option diff :donne les modif de date ou d'ajout de license nécessaires
+#                     affiche si possible un récapitulatif.
+#        option make : fait les modifs nécessaires avec confirmation
+# reconnaissance et modif des license de programmes perl, python, scilab,
+#   fichier c de superlu ...
+
+$year = `date +%Y`;
+chomp $year;
+
+$options = $ARGV[0];
+
+if ($options eq "make") { $option = 1; }
+elsif ($options eq "info") { $option = 2; }
+elsif ($options eq "diff") { $option = 3; }
+else {
+  print "valid options are:\n";
+  print "make: change the header files where necessary,\n";
+  print "diff: show only the necessary modifications without doing them,\n";
+  print "info: show information.\n";
+  exit(1);
+}
+
+
+#all the files in the directory and subdirectories
+$allfiles =  `find . -name \"*\"`;
+
+($name, $allfiles) = split('\n', $allfiles, 2);
+while ($name) {
+  if (($name =~ /\.c$/ || $name =~ /\.cc$/ || $name =~ /\.h$/
+       || $name =~ /\.hpp$/)
+      && !($name =~ /\/superlu\// )
+      && !($name =~ /\/scilab\// )
+      && !($name =~ /\/getfem_arch_config.h/)
+      && !($name =~ /\.\/config.h/)
+     ) {
+    print "File $name:\n";
+    process_file($name, $option);
+  }
+  ($name, $allfiles) = split('\n', $allfiles, 2);
+}
+
+if ($option == 2) {
+
+  print "Remember : Some files in the Scilab interface are\n";
+  print "         - Released in the public domain by Yann Colette\n";
+  print "         - Under a restrictive license (src/c/*.[hc])\n";
+  print "         - LGPL Copyright Yann Colette for file in sci_gateway/c/\n";
+  print "         - sans license pour la plupart des tests (mais pas tous)\n";
+  print "\n\n";
+
+  print "Ideally, author and copyright information should coincide\n";
 
 }

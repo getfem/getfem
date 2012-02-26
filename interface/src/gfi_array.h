@@ -1,10 +1,10 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
-
- Copyright (C) 2006-2010 Yves Renard, Julien Pommier.
-
+ 
+ Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+ 
  This file is a part of GETFEM++
-
+ 
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 2.1 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-
+ 
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
  instantiate  templates  or  use macros or inline functions from this file,
@@ -25,8 +25,8 @@
  to be covered  by the GNU Lesser General Public License.  This   exception
  does not  however  invalidate  any  other  reasons why the executable file
  might be covered by the GNU Lesser General Public License.
-
- ===========================================================================*/
+ 
+===========================================================================*/
 
 #ifndef GFI_ARRAY
 #define GFI_ARRAY
