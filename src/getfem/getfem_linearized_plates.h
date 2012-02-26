@@ -28,7 +28,7 @@
  
 ===========================================================================*/
 /**@file getfem_linearized_plates.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>, Michel Salaun, msalaun@ensica.fr
+   @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 1, 2004.
    @brief Define a linear plate model brick.
 */

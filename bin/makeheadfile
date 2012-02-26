@@ -322,15 +322,3 @@ while ($name) {
   ($name, $allfiles) = split('\n', $allfiles, 2);
 }
 
-if ($option == 2) {
-
-  print "Remember : Some files in the Scilab interface are\n";
-  print "         - Released in the public domain by Yann Colette\n";
-  print "         - Under a restrictive license (src/c/*.[hc])\n";
-  print "         - LGPL Copyright Yann Colette for file in sci_gateway/c/\n";
-  print "         - Without license for most of the tests (but not all)\n";
-  print "\n\n";
-
-  print "Ideally, author and copyright information should coincide\n";
-
-}
