@@ -91,7 +91,8 @@ sub process_file  {
 #            2: LGPL with special exception
 #            3: Boost
 #            4: Xerox (superlu)
-#            5: other (todo)
+#            5: Meshash Library (used by scilab interface)
+#            6: other
 
 # extract information
   $license = 0;
@@ -122,6 +123,9 @@ sub process_file  {
       { $license = 1; }
     if ($license==1 && $li =~ /special/ && $li =~ /exception/)
       { $license = 2; }
+    if ($license==0 && $li =~ /Meschach/ && $li =~ /Library/
+	&& $li =~ /without/)
+      { $license = 5; }
 
 
     if (($license == 1 || $license == 2) && ($li =~ /=========/))
@@ -134,7 +138,9 @@ sub process_file  {
     case(0) { print "No copyright detected.\n"; }
     case(1) { print "Copyright detected: LGPL $year1-$year2 $copyauth\n"; }
     case(2) { print "Copyright detected: LGPL with special exception $year1-$year2 $copyauth\n"; }
+    case(3) { print "Copyright detected: Boost $year1-$year2 $copyauth\n"; }
     case(4) { print "Copyright detected: Xerox $year1-$year2 $copyauth\n"; }
+    case(5) { print "Copyright detected: special license from Meschach Library  $year1-$year2 $copyauth\n"; }
     else { print "Unknown license detected: $year1-$year2 $copyauth\n"; }
   }
 
@@ -161,9 +167,9 @@ sub process_file  {
   if ($option == 1 && $year2 != $year && $license < 3) {
 
     if ($license == 0) {
-      print "Copyright notice have to be added : adding LGPL License ?\n";
+      print "Copyright notice has to be added : adding LGPL License ?\n";
     } else {
-      print "Copyright notice have to be updated\n";
+      print "Copyright notice has to be updated\n";
     }
 
     print "Perform the modification ? (Y/[N]) ";
@@ -182,7 +188,7 @@ sub process_file  {
 	# close(FILE);
 	# open(FILE, "$name");
 	open(RES, ">$name".".newhead");
-	print RES $enablecpp;
+	if ($name =~ /\.h/) { print RES $enablecpp; }
 	print_license(RES, $name);
       }
       else {
@@ -196,8 +202,7 @@ sub process_file  {
 	$filename = $name;
 
 	open(RES, ">$name".".newhead");
-
-	print RES $enablecpp;
+	if ($name =~ /\.h/) { print RES $enablecpp; }
 	print_license(RES, $name);
       }
 
@@ -259,9 +264,9 @@ $allfiles =  `find . -name \"*\"`;
 ($name, $allfiles) = split('\n', $allfiles, 2);
 while ($name) {
   if (($name =~ /\.c$/ || $name =~ /\.cc$/ || $name =~ /\.h$/
-       || $name =~ /\.hpp$/)
+       || $name =~ /\.hpp$/ || $name =~ /\.cpp$/)
       && !($name =~ /\/superlu\// )
-      && !($name =~ /\/scilab\// )
+#      && !($name =~ /\/scilab\// )
       && !($name =~ /\/getfem_arch_config.h/)
       && !($name =~ /\.\/config.h/)
      ) {
@@ -277,7 +282,7 @@ if ($option == 2) {
   print "         - Released in the public domain by Yann Colette\n";
   print "         - Under a restrictive license (src/c/*.[hc])\n";
   print "         - LGPL Copyright Yann Colette for file in sci_gateway/c/\n";
-  print "         - sans license pour la plupart des tests (mais pas tous)\n";
+  print "         - Without license for most of the tests (but not all)\n";
   print "\n\n";
 
   print "Ideally, author and copyright information should coincide\n";
