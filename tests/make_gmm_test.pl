@@ -1,5 +1,4 @@
-# -*- perl -*-
-# Copyright (C) 2001-2009 Yves Renard
+# Copyright (C) 2001-2012 Yves Renard
 #
 # This file is a part of GETFEM++
 #
@@ -146,6 +145,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     while (($li = <DATAF> )&& ($reading_param)) {
       chomp($li);
+      if ($li=~/^\/\//) {
       if ($li=~/ENDPARAM/) { $reading_param = 0; }
       elsif ($li=~/DENSE_VECTOR_PARAM/) { $param[$nb_param++] = 1; }
       elsif ($li=~/VECTOR_PARAM/) { $param[$nb_param++] = 2; }
@@ -153,6 +153,7 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
       elsif ($li=~/SQUARED_MATRIX_PARAM/) { $param[$nb_param++] = 4; }
       elsif ($li=~/\/\//) { }
       else { die "Error in parameter list"; }
+    }
     }
 
     $TYPES[0] = "float";

@@ -1,6 +1,6 @@
 % Matlab GetFEM++ interface
 %
-% Copyright (C) 2011-2011 Yves Renard.
+% Copyright (C) 2011-2012 Yves Renard.
 %
 % This file is a part of GetFEM++
 %

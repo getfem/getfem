@@ -33,6 +33,50 @@ sub print_license  {
   my $RES   = $_[0];
   my $NAME = $_[1];
 
+  if ($NAME =~ /\.pl$/) {
+    print RES <<""
+# Copyright (C) $year1-$year2 $copyauth
+#
+# This file is a part of GETFEM++
+#
+# Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+# under  the  terms  of the  GNU  Lesser General Public License as published
+# by  the  Free Software Foundation;  either version 2.1 of the License,  or
+# (at your option) any later version.
+# This program  is  distributed  in  the  hope  that it will be useful,  but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+# You  should  have received a copy of the GNU Lesser General Public License
+# along  with  this program;  if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+;
+
+  } elsif ($NAME =~ /\.m$/) {
+    print RES <<""
+% Copyright (C) $year1-$year2 $copyauth
+%
+% This file is a part of GETFEM++
+%
+% Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+% under  the  terms  of the  GNU  Lesser General Public License as published
+% by  the  Free Software Foundation;  either version 2.1 of the License,  or
+% (at your option) any later version.
+% This program  is  distributed  in  the  hope  that it will be useful,  but
+% WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+% or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+% License for more details.
+% You  should  have received a copy of the GNU Lesser General Public License
+% along  with  this program;  if not, write to the Free Software Foundation,
+% Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+
+;
+
+  } else {
+
   print RES <<""
 /*===========================================================================
  
@@ -54,7 +98,7 @@ sub print_license  {
  
 
 ;
-  if ($NAME =~ /\.h/) {
+  if ($NAME =~ /\.h$/) {
     print RES <<""
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
@@ -72,6 +116,7 @@ print RES <<""
 ===========================================================================*/
 
 ;
+}
 }
 
 
@@ -130,7 +175,9 @@ sub process_file  {
 
     if (($license == 1 || $license == 2) && ($li =~ /=========/))
       { $li = <FILE>; last; }
-    if ($li =~ /^#/) { last; }
+    if ($li =~ /^#/ && !($name =~ /\.pl$/)) { last; }
+    if ($li =~ /USA\./ && ($name =~ /\.pl$/ || $name =~ /\.m$/)) { $li = <FILE>; last; }
+
   }
 
 
@@ -233,13 +280,8 @@ sub process_file  {
 # Main program
 ###############
 
-# TODO : options make, info, diff
-#        option info : affiche les differentes licenses et les auteurs déclarés
-#        option diff :donne les modif de date ou d'ajout de license nécessaires
-#                     affiche si possible un récapitulatif.
-#        option make : fait les modifs nécessaires avec confirmation
-# reconnaissance et modif des license de programmes perl, python, scilab,
-#   fichier c de superlu ...
+# TODO :
+# reconnaissance et modif des licenses de programmes python and scilab.
 
 $year = `date +%Y`;
 chomp $year;
@@ -248,12 +290,11 @@ $options = $ARGV[0];
 
 if ($options eq "make") { $option = 1; }
 elsif ($options eq "info") { $option = 2; }
-elsif ($options eq "diff") { $option = 3; }
 else {
-  print "valid options are:\n";
-  print "make: change the header files where necessary,\n";
-  print "diff: show only the necessary modifications without doing them,\n";
-  print "info: show information.\n";
+  print "Valid options are:\n";
+  print "  make: change the header files where necessary,\n";
+  print "  info: show information.\n";
+  print "Should be run on the top of Getfem tree\n";
   exit(1);
 }
 
@@ -264,11 +305,16 @@ $allfiles =  `find . -name \"*\"`;
 ($name, $allfiles) = split('\n', $allfiles, 2);
 while ($name) {
   if (($name =~ /\.c$/ || $name =~ /\.cc$/ || $name =~ /\.h$/
-       || $name =~ /\.hpp$/ || $name =~ /\.cpp$/)
+       || $name =~ /\.hpp$/ || $name =~ /\.cpp$/ || $name =~ /\.pl$/
+       || $name =~ /\.m$/)
       && !($name =~ /\/superlu\// )
 #      && !($name =~ /\/scilab\// )
-      && !($name =~ /\/getfem_arch_config.h/)
-      && !($name =~ /\.\/config.h/)
+      && !($name =~ /\/getfem_arch_config\.h$/)
+      && !($name =~ /\/libscigetfem_c\.c$/)
+      && !($name =~ /\/interface\/src\/matlab/)
+      && !($name =~ /\.\/doc\//)
+      && !($name =~ /\/auto\_gmm\_torture/)
+      && !($name =~ /\.\/config\.h$/)
      ) {
     print "File $name:\n";
     process_file($name, $option);

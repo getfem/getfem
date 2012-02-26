@@ -1,5 +1,4 @@
-#!/usr/bin/env perl
-# Copyright (C) 2001-2009 Jeremie Lasry
+# Copyright (C) 2001-2012 Jeremie Lasry
 #
 # This file is a part of GETFEM++
 #
