@@ -693,13 +693,11 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
-    if (option == 2 || option == 3)
-      assem.push_nonlinear_term(&nterm4);
+    assem.push_nonlinear_term(&nterm4);
     assem.push_mat(Kul);
     assem.push_mat(Klu);
     assem.push_mat(Kll);
-    if (option == 2 || option == 3)
-      assem.push_mat(Kuu);
+    assem.push_mat(Kuu);
     assem.assembly(rg);
   }
 
@@ -771,13 +769,11 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
-    if (option == 2 || option == 3)
-      assem.push_nonlinear_term(&nterm4);
+    assem.push_nonlinear_term(&nterm4);
     assem.push_mat(Kul);
     assem.push_mat(Klu);
     assem.push_mat(Kll);
-    if (option == 2 || option == 3)
-      assem.push_mat(Kuu);
+    assem.push_mat(Kuu);
     assem.assembly(rg);
   }
 
@@ -1462,7 +1458,8 @@ namespace getfem {
 
   template<typename MAT, typename VEC>
   void asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix // frictionless
-  (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll, MAT &Ku1u1, MAT &Ku2u2,
+  (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll,
+   MAT &Ku1u1, MAT &Ku2u2, MAT &Ku1u2,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u1, const VEC &U1,
    const getfem::mesh_fem &mf_u2, const VEC &U2,
@@ -1496,7 +1493,8 @@ namespace getfem {
         "M$3(#2,#3)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#2).Base(#3))(i,:,i,:); "      // U2L
         "M$5(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:); "         // LL
         "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
-        "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j)"); // U2U2
+        "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j); " // U2U2
+        "M$8(#1,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#2))(i,j,:,i,:,j)"); // U1U2
       break;
     case 3:
       assem.set
@@ -1505,8 +1503,9 @@ namespace getfem {
        "M$3(#2,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2).Base(#3))(i,:,i,:); "      // U2L
        "M$4(#3,#2)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#2))(i,:,:,i); "      // LU2
        "M$5(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:); "         // LL
-       "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)"   // U1U1
-       "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j)"); // U2U2
+       "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
+       "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j); " // U2U2
+       "M$8(#1,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#2))(i,j,:,i,:,j)"); // U1U2
       break;
     }
     assem.push_mi(mim);
@@ -1516,27 +1515,27 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
-    if (option == 2 || option == 3)
-      assem.push_nonlinear_term(&nterm4);
+    assem.push_nonlinear_term(&nterm4);
     assem.push_mat(Ku1l);
     assem.push_mat(Klu1);
     assem.push_mat(Ku2l);
     assem.push_mat(Klu2);
     assem.push_mat(Kll);
-    if (option == 2 || option == 3) {
-      assem.push_mat(Ku1u1);
-      assem.push_mat(Ku2u2);
-    }
+    assem.push_mat(Ku1u1);
+    assem.push_mat(Ku2u2);
+    assem.push_mat(Ku1u2);
     assem.assembly(rg);
 
     gmm::scale(Ku2l, scalar_type(-1));
     if (option != 2) // Klu2 was calculated
       gmm::scale(Klu2, scalar_type(-1));
+    gmm::scale(Ku1u2, scalar_type(-1));
   }
 
   template<typename MAT, typename VEC>
   void asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix // with friction
-  (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll, MAT &Ku1u1, MAT &Ku2u2,
+  (MAT &Ku1l, MAT &Klu1, MAT &Ku2l, MAT &Klu2, MAT &Kll,
+   MAT &Ku1u1, MAT &Ku2u2, MAT &Ku1u2,
    const mesh_im &mim,
    const getfem::mesh_fem &mf_u1, const VEC &U1,
    const getfem::mesh_fem &mf_u2, const VEC &U2,
@@ -1601,7 +1600,8 @@ namespace getfem {
         "M$4(#3,#2)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#2))(i,j,:,j,:,i); " // LU2
         "M$5(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j); " // LL
         "M$6(#1,#1)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
-        "M$7(#2,#2)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#2).vBase(#2))(i,j,:,i,:,j)"); // U2U2
+        "M$7(#2,#2)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#2).vBase(#2))(i,j,:,i,:,j); " // U2U2
+        "M$8(#1,#2)+=comp(NonLin$4(#1," + aux_fems + ").vBase(#1).vBase(#2))(i,j,:,i,:,j)"); // U1U2
       break;
     }
     assem.push_mi(mim);
@@ -1613,21 +1613,20 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
-    if (option == 2 || option == 3)
-      assem.push_nonlinear_term(&nterm4);
+    assem.push_nonlinear_term(&nterm4);
     assem.push_mat(Ku1l);
     assem.push_mat(Klu1);
     assem.push_mat(Ku2l);
     assem.push_mat(Klu2);
     assem.push_mat(Kll);
-    if (option == 2 || option == 3) {
-      assem.push_mat(Ku1u1);
-      assem.push_mat(Ku2u2);
-    }
+    assem.push_mat(Ku1u1);
+    assem.push_mat(Ku2u2);
+    assem.push_mat(Ku1u2);
     assem.assembly(rg);
 
     gmm::scale(Ku2l, scalar_type(-1));
     gmm::scale(Klu2, scalar_type(-1));
+    gmm::scale(Ku1u2, scalar_type(-1));
   }
 
   template<typename VECT1>
@@ -1807,9 +1806,10 @@ namespace getfem {
           WT2 = &(md.real_variable(dl[4]));
       }
 
-      // Matrix terms (T_u1l, T_lu1, T_u2l, T_lu2, T_ll, T_u1u1, T_u2u2) // FIXME: T_u1u2, T_u2u1 ???
-      GMM_ASSERT1(matl.size() == size_type(5 + 2*(option == 3 ||
-                                                  (option == 2 && !contact_only))),
+      // Matrix terms (T_u1l, T_lu1, T_u2l, T_lu2, T_ll, T_u1u1, T_u2u2, T_u1u2)
+      GMM_ASSERT1(matl.size() == size_type(3 +                                // U1L, U2L, LL
+                                           2 * !is_symmetric() +              // LU1, LU2
+                                           3 * (option == 3 || option == 2)), // U1U1, U2U2, U1U2
                   "Wrong number of terms for "
                   "continuous contact between nonmatching meshes brick");
 
@@ -1825,6 +1825,7 @@ namespace getfem {
         pmf_u2_proj->set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
       }
 
+      size_type nbdof1 = mf_u1.nb_dof();
       size_type nbdof_lambda = mf_lambda.nb_dof();
       size_type nbdof2 = mf_u2.nb_dof();
       size_type nbsub = pmf_u2_proj->nb_basic_dof();
@@ -1849,6 +1850,15 @@ namespace getfem {
       else
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
+      size_type U1L = 0;
+      size_type LU1 = U1L + (is_symmetric() ? 0 : 1);
+      size_type U2L = LU1 + 1;
+      size_type LU2 = U2L + (is_symmetric() ? 0 : 1);
+      size_type LL  = LU2 + 1;
+      size_type U1U1 = (option == 1 || option == 4) ? U1L : LL + 1;
+      size_type U2U2 = (option == 1 || option == 4) ? U2L : LL + 2;
+      size_type U1U2 = (option == 1 || option == 4) ? U1L : LL + 3;
+
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Continuous contact between nonmatching meshes "
                    "tangent term");
@@ -1857,36 +1867,38 @@ namespace getfem {
         model_real_sparse_matrix Ku2l(nbsub, nbdof_lambda);
         model_real_sparse_matrix Klu2(nbdof_lambda, nbsub);
         model_real_sparse_matrix Ku2u2(nbsub, nbsub);
+        model_real_sparse_matrix Ku1u2(nbdof1, nbsub);
 
-        size_type sixthmat = (matl.size() >= 6) ? 5 : 1;
         if (contact_only)
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
-            (matl[0] /* u1l */, matl[1] /* lu1 */, Ku2l, Klu2, matl[4] /* ll */,
-             matl[sixthmat] /* u1u1 */, Ku2u2,
+            (matl[U1L], matl[LU1], Ku2l, Klu2, matl[LL], matl[U1U1], Ku2u2, Ku1u2,
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
-            (matl[0] /* u1l */, matl[1] /* lu1 */, Ku2l, Klu2, matl[4] /* ll */,
-             matl[sixthmat] /* u1u1 */, Ku2u2,
+            (matl[U1L], matl[LU1], Ku2l, Klu2, matl[LL], matl[U1U1], Ku2u2, Ku1u2,
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, *f_coeff, WT1, WT2,
              vr[0], alpha, rg, option);
 
         if (mf_u2.is_reduced()) {
-          gmm::mult(Rsub, Ku2l, matl[2]);
-          gmm::mult(Klu2, Esub, matl[3]);
-          if (matl.size() > 6) {
+          gmm::mult(Rsub, Ku2l, matl[U2L]);
+          if (LU2 != U2L) gmm::mult(Klu2, Esub, matl[LU2]);
+          if (U2U2 != U2L) {
             model_real_sparse_matrix tmp(nbsub, nbdof2);
             gmm::mult(Ku2u2, Esub, tmp);
-            gmm::mult(Rsub, tmp, matl[6]);
+            gmm::mult(Rsub, tmp, matl[U2U2]);
+            gmm::mult(Ku1u2, Esub, matl[U1U2]);
           }
         }
         else {
-          gmm::copy(Ku2l, gmm::sub_matrix(matl[2], SUBI, gmm::sub_interval(0, nbdof_lambda)));
-          gmm::copy(Klu2, gmm::sub_matrix(matl[3], gmm::sub_interval(0, nbdof_lambda), SUBI));
-          if (matl.size() > 6)
-            gmm::copy(Ku2u2, gmm::sub_matrix(matl[6], SUBI));
+          gmm::copy(Ku2l, gmm::sub_matrix(matl[U2L], SUBI, gmm::sub_interval(0, nbdof_lambda)));
+          if (LU2 != U2L)
+            gmm::copy(Klu2, gmm::sub_matrix(matl[LU2], gmm::sub_interval(0, nbdof_lambda), SUBI));
+          if (U2U2 != U2L) {
+            gmm::copy(Ku2u2, gmm::sub_matrix(matl[U2U2], SUBI));
+            gmm::copy(Ku1u2, gmm::sub_matrix(matl[U1U2], gmm::sub_interval(0, nbdof1), SUBI));
+          }
         }
       }
 
@@ -1897,20 +1909,20 @@ namespace getfem {
 
         if (contact_only)
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
-            (vecl[0], Ru2, vecl[4], // u1, u2, lambda
+            (vecl[U1L], Ru2, vecl[LL], // u1, u2, lambda
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
-            (vecl[0], Ru2, vecl[4], // u1, u2, lambda
+            (vecl[U1L], Ru2, vecl[LL], // u1, u2, lambda
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, *f_coeff, WT1, WT2,
              vr[0], alpha, rg, option);
 
         if (mf_u2.is_reduced())
-          gmm::mult(Rsub, Ru2, vecl[2]);
+          gmm::mult(Rsub, Ru2, vecl[U2L]);
         else
-          gmm::copy(Ru2, gmm::sub_vector(vecl[2], SUBI));
+          gmm::copy(Ru2, gmm::sub_vector(vecl[U2L], SUBI));
       }
 
     }
@@ -1955,26 +1967,29 @@ namespace getfem {
 
     switch (option) {
     case 1 : case 4 :
-      tl.push_back(model::term_description(varname_u1, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u1, false));
-      tl.push_back(model::term_description(varname_u2, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u2, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u1, multname_n, false)); // U1L
+      tl.push_back(model::term_description(multname_n, varname_u1, false)); // LU1
+      tl.push_back(model::term_description(varname_u2, multname_n, false)); // U2L
+      tl.push_back(model::term_description(multname_n, varname_u2, false)); // LU2
+      tl.push_back(model::term_description(multname_n, multname_n, true));  // LL
       break;
     case 2 :
-      tl.push_back(model::term_description(varname_u1, multname_n, true));
-      tl.push_back(model::term_description(varname_u2, multname_n, true));
-      tl.push_back(model::term_description(varname_u1, varname_u1, true));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
+      tl.push_back(model::term_description(varname_u1, multname_n, true)); // U1L
+      tl.push_back(model::term_description(varname_u2, multname_n, true)); // U2L
+      tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
+      tl.push_back(model::term_description(varname_u1, varname_u1, true)); // U1U1
+      tl.push_back(model::term_description(varname_u2, varname_u2, true)); // U2U2
+      tl.push_back(model::term_description(varname_u1, varname_u2, true)); // U1U2
       break;
     case 3 :
-      tl.push_back(model::term_description(varname_u1, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u1, false));
-      tl.push_back(model::term_description(varname_u2, multname_n, false));
-      tl.push_back(model::term_description(multname_n, varname_u2, false));
-      tl.push_back(model::term_description(multname_n, multname_n, true));
-      tl.push_back(model::term_description(varname_u1, varname_u1, true));
-      tl.push_back(model::term_description(varname_u2, varname_u2, true));
+      tl.push_back(model::term_description(varname_u1, multname_n, false)); // U1L
+      tl.push_back(model::term_description(multname_n, varname_u1, false)); // LU1
+      tl.push_back(model::term_description(varname_u2, multname_n, false)); // U2L
+      tl.push_back(model::term_description(multname_n, varname_u2, false)); // LU2
+      tl.push_back(model::term_description(multname_n, multname_n, true));  // LL
+      tl.push_back(model::term_description(varname_u1, varname_u1, true));  // U1U1
+      tl.push_back(model::term_description(varname_u2, varname_u2, true));  // U2U2
+      tl.push_back(model::term_description(varname_u1, varname_u2, true));  // U1U2
       break;
     default : GMM_ASSERT1(false,
                           "Incorrect option for continuous contact brick");
