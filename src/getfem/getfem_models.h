@@ -304,11 +304,17 @@ namespace getfem {
 
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
 
+    const mimlist &mimlist_of_brick(size_type ib) const
+    { return bricks[ib].mims; }
+
     const varnamelist &varnamelist_of_brick(size_type ib) const
     { return bricks[ib].vlist; }
 
     const varnamelist &datanamelist_of_brick(size_type ib) const
     { return bricks[ib].dlist; }
+
+    size_type region_of_brick(size_type ib) const
+    { return bricks[ib].region; }
 
     bool temporary_uptodate(const std::string &varname,
                             gmm::uint64_type  id_num, size_type &ind) const;

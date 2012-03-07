@@ -499,19 +499,19 @@ namespace getfem {
   /** Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems.
   */
-  template<typename VECT1>
+  template<typename VEC>
   void asm_level_set_normal_source_term
-  (VECT1 &R, const mesh_im &mim,
-   const getfem::mesh_fem &mf_u,
-   const getfem::mesh_fem &mf_obs, const VECT1 &obs,
-   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+  (VEC &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, // const VEC &U,
+   const getfem::mesh_fem &mf_obs, const VEC &obs,
+   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    const mesh_region &rg) {
 
-    VECT1 U;
+    VEC U;
     gmm::resize(U, mf_u.nb_dof());
     scalar_type r(0.);
     contact_rigid_obstacle_nonlinear_term
-      nterm1(RHS_U_V1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda);
+      nterm(RHS_U_V1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda);
 
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
@@ -519,20 +519,46 @@ namespace getfem {
     assem.push_mf(mf_u);
     assem.push_mf(mf_obs);
     assem.push_mf(mf_lambda);
-    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm);
     assem.push_vec(R);
     assem.assembly(rg);
   }
 
-
-  template<typename VECT1>
-  void asm_nonmatching_meshes_surface_traction_term
-  (VECT1 &R, const mesh_im &mim,
-   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
-   const getfem::mesh_fem &mf_u2_proj, const VECT1 &U2_proj,
-   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+  template<typename VEC>
+  scalar_type asm_level_set_contact_area
+  (const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, const VEC &U,
+   const getfem::mesh_fem &mf_obs, const VEC &obs,
    const mesh_region &rg) {
 
+    scalar_type r(0);
+    contact_rigid_obstacle_nonlinear_term
+      nterm(CONTACT_FLAG, r, mf_u, U, mf_obs, obs);
+
+    getfem::generic_assembly assem;
+    assem.set("V()+=comp(NonLin(#1,#1,#2))(i)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    assem.push_nonlinear_term(&nterm);
+    std::vector<scalar_type> v(1);
+    assem.push_vec(v);
+    assem.assembly(rg);
+    return v[0];
+  }
+
+
+  template<typename VEC>
+  void asm_nonmatching_meshes_normal_source_term
+  (VEC &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u1, // const VEC &U1,
+   const getfem::mesh_fem &mf_u2_proj, // const VEC &U2_proj,
+   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
+   const mesh_region &rg) {
+
+    VEC U1, U2_proj;
+    gmm::resize(U1, mf_u1.nb_dof());
+    gmm::resize(U2_proj, mf_u2_proj.nb_dof());
     scalar_type r(0);
     contact_nonmatching_meshes_nonlinear_term
       nterm(RHS_U_V1, r, mf_u1, U1, mf_u2_proj, U2_proj, &mf_lambda, &lambda);
@@ -548,12 +574,12 @@ namespace getfem {
     assem.assembly(rg);
   }
 
-  template<typename VECT1>
+  template<typename VEC>
   scalar_type asm_nonmatching_meshes_contact_area
   (const mesh_im &mim,
-   const getfem::mesh_fem &mf_u1, const VECT1 &U1,
-   const getfem::mesh_fem &mf_u2_proj, const VECT1 &U2_proj,
-   const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
+   const getfem::mesh_fem &mf_u1, const VEC &U1,
+   const getfem::mesh_fem &mf_u2_proj, const VEC &U2_proj,
+   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    const mesh_region &rg) {
 
     scalar_type r(0);
@@ -572,6 +598,11 @@ namespace getfem {
     assem.assembly(rg);
     return v[0];
   }
+
+
+  void compute_contact_area_and_force_between_nonmatching_meshes
+  (model &md, size_type indbrick,
+   scalar_type &area, model_real_plain_vector &Forces);
 
 }  /* end of namespace getfem.                                             */
 

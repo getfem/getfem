@@ -176,7 +176,7 @@ namespace getfem {
       t[0] = -gmm::neg(ln - r*(un - g)); break;
 
     case CONTACT_FLAG:
-      t[0] = Heav(-ln);  break;
+      t[0] = Heav(un-g);  break;
 
     // one-dimensional tensors [N]
 
@@ -905,13 +905,13 @@ namespace getfem {
       //             respectively.
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);
-      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const model_real_plain_vector &lambda = md.real_variable(vl[1]);
-      const mesh_fem &mf_lambda = *(md.pmesh_fem_of_variable(vl[1]));
+      const mesh_fem &mf_lambda = md.mesh_fem_of_variable(vl[1]);
       GMM_ASSERT1(mf_lambda.get_qdim() == (contact_only ? 1 : mf_u.get_qdim()),
                   "The contact stress has not the right dimension");
       const model_real_plain_vector &obstacle = md.real_variable(dl[0]);
-      const mesh_fem &mf_obstacle = *(md.pmesh_fem_of_variable(dl[0]));
+      const mesh_fem &mf_obstacle = md.mesh_fem_of_variable(dl[0]);
       size_type sl = gmm::vect_size(obstacle) * mf_obstacle.get_qdim()
         / mf_obstacle.nb_dof();
       GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
@@ -994,7 +994,10 @@ namespace getfem {
       Tresca_version = false;   // for future version ...
       option = option_;
       contact_only = contact_only_;
-      set_flags("Continuous Coulomb friction brick", false /* is linear*/,
+      set_flags(contact_only
+                ? "Continuous contact with rigid obstacle brick"
+                : "Continuous contact and friction with rigid obstacle brick",
+                false /* is linear*/,
                 (option==2) && contact_only /* is symmetric */,
                 false /* is coercive */,
                 true /* is real */, false /* is complex */);
@@ -1278,7 +1281,7 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == 1,
                   "Penalized contact with rigid obstacle bricks need a single variable");
       const model_real_plain_vector &u = md.real_variable(vl[0]);
-      const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 
       size_type N = mf_u.linked_mesh().dim();
 
@@ -1292,7 +1295,7 @@ namespace getfem {
 
       size_type nd = 0;
       const model_real_plain_vector &obs = md.real_variable(dl[nd]);
-      const mesh_fem &mf_obs = *(md.pmesh_fem_of_variable(dl[nd]));
+      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[nd]);
       size_type sl = gmm::vect_size(obs) * mf_obs.get_qdim() / mf_obs.nb_dof();
       GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
                   "the right format");
@@ -1376,8 +1379,9 @@ namespace getfem {
       Tresca_version = false;   // for future version ...
       contact_only = contact_only_;
       option = option_;
-      set_flags(contact_only ? "Continuous penalized contact brick"
-                : "Continuous penalized Coulomb friction brick",
+      set_flags(contact_only
+                ? "Continuous penalized contact with rigid obstacle brick"
+                : "Continuous penalized contact and friction with rigid obstacle brick",
                 false /* is linear*/, contact_only /* is symmetric */,
                 true /* is coercive */, true /* is real */,
                 false /* is complex */);
@@ -1758,10 +1762,10 @@ namespace getfem {
                   "Continuous contact between nonmatching meshes bricks need three variables");
       const model_real_plain_vector &u1 = md.real_variable(vl[0]);
       const model_real_plain_vector &u2 = md.real_variable(vl[1]);
-      const mesh_fem &mf_u1 = *(md.pmesh_fem_of_variable(vl[0]));
-      const mesh_fem &mf_u2 = *(md.pmesh_fem_of_variable(vl[1]));
+      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_u2 = md.mesh_fem_of_variable(vl[1]);
       const model_real_plain_vector &lambda = md.real_variable(vl[2]);
-      const mesh_fem &mf_lambda = *(md.pmesh_fem_of_variable(vl[2]));
+      const mesh_fem &mf_lambda = md.mesh_fem_of_variable(vl[2]);
       GMM_ASSERT1(mf_lambda.get_qdim() == (contact_only ? 1 : mf_u1.get_qdim()),
                   "The contact stress variable has not the right dimension");
 
@@ -1935,7 +1939,7 @@ namespace getfem {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
                 ? "Continuous contact between nonmatching meshes brick"
-                : "Continuous contact with friction between nonmatching "
+                : "Continuous contact and friction between nonmatching "
                   "meshes brick",
                 false /* is linear*/,
                 (option==2) && contact_only /* is symmetric */,
@@ -2104,8 +2108,8 @@ namespace getfem {
                   "Penalized contact between nonmatching meshes bricks need two variables");
       const model_real_plain_vector &u1 = md.real_variable(vl[0]);
       const model_real_plain_vector &u2 = md.real_variable(vl[1]);
-      const mesh_fem &mf_u1 = *(md.pmesh_fem_of_variable(vl[0]));
-      const mesh_fem &mf_u2 = *(md.pmesh_fem_of_variable(vl[1]));
+      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_u2 = md.mesh_fem_of_variable(vl[1]);
 
       size_type N = mf_u1.linked_mesh().dim();
 
@@ -2263,7 +2267,7 @@ namespace getfem {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
                 ? "Continuous penalized contact between nonmatching meshes brick"
-                : "Continuous penalized contact with friction between nonmatching "
+                : "Continuous penalized contact and friction between nonmatching "
                   "meshes brick",
                 false /* is linear*/, contact_only /* is symmetric */,
                 true /* is coercive */, true /* is real */,
@@ -2305,6 +2309,103 @@ namespace getfem {
     vl.push_back(varname_u2);
 
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region1);
+  }
+
+
+  // Computation of contact area and contact forces
+  void compute_contact_area_and_force_between_nonmatching_meshes
+  (model &md, size_type indbrick, scalar_type &area,
+   model_real_plain_vector &F) {
+
+    pbrick pbr = md.brick_pointer(indbrick);
+    const model::mimlist &ml = md.mimlist_of_brick(indbrick);
+    const model::varnamelist &vl = md.varnamelist_of_brick(indbrick);
+    const model::varnamelist &dl = md.datanamelist_of_brick(indbrick);
+    size_type reg = md.region_of_brick(indbrick);
+
+    GMM_ASSERT1(ml.size() == 1, "Wrong size");
+
+    if (pbr->brick_name() == "Continuous contact with rigid obstacle brick" ||
+        pbr->brick_name() == "Continuous contact and friction with rigid obstacle brick") {
+      continuous_contact_rigid_obstacle_brick *p
+        = dynamic_cast<continuous_contact_rigid_obstacle_brick *>
+         (const_cast<virtual_brick *>(pbr.get()));
+      GMM_ASSERT1(p, "Wrong type of brick");
+
+      GMM_ASSERT1(vl.size() >= 2, "Wrong size");
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const model_real_plain_vector &lambda = md.real_variable(vl[1]);
+      const mesh_fem &mf_lambda = md.mesh_fem_of_variable(vl[1]);
+      GMM_ASSERT1(dl.size() >= 1, "Wrong size");
+      const model_real_plain_vector &obs = md.real_variable(dl[0]);
+      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
+
+      area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg);
+
+      gmm::resize(F, mf_u.nb_dof());
+      asm_level_set_normal_source_term
+        (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, reg);
+    }
+    else if (pbr->brick_name() == "Continuous penalized contact with rigid obstacle brick" ||
+             pbr->brick_name() == "Continuous penalized contact and friction with rigid "
+                                  "obstacle brick") {
+      penalized_contact_rigid_obstacle_brick *p
+        = dynamic_cast<penalized_contact_rigid_obstacle_brick *>
+         (const_cast<virtual_brick *>(pbr.get()));
+      GMM_ASSERT1(p, "Wrong type of brick");
+    }
+    else if (pbr->brick_name() == "Continuous contact between nonmatching meshes brick" ||
+             pbr->brick_name() == "Continuous contact and friction between nonmatching "
+                                  "meshes brick") {
+      continuous_contact_nonmatching_meshes_brick *p
+        = dynamic_cast<continuous_contact_nonmatching_meshes_brick *>
+         (const_cast<virtual_brick *>(pbr.get()));
+      GMM_ASSERT1(p, "Wrong type of brick");
+
+      GMM_ASSERT1(vl.size() == 3, "Wrong size");
+      const model_real_plain_vector &u1 = md.real_variable(vl[0]);
+      const model_real_plain_vector &u2 = md.real_variable(vl[1]);
+      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const mesh_fem &mf_u2 = md.mesh_fem_of_variable(vl[1]);
+      const model_real_plain_vector &lambda = md.real_variable(vl[2]);
+      const mesh_fem &mf_lambda = md.mesh_fem_of_variable(vl[2]);
+
+      std::vector<size_type> ind;
+      p->pmf_u2_proj->get_global_dof_index(ind);
+      gmm::unsorted_sub_index SUBI(ind);
+
+      size_type nbdof2 = mf_u2.nb_dof();
+      size_type nbsub = p->pmf_u2_proj->nb_basic_dof();
+      model_real_plain_vector u2_proj(nbsub);
+
+      if (mf_u2.is_reduced()) {
+        gmm::csc_matrix<scalar_type> Esub(nbsub, nbdof2);
+        gmm::copy(gmm::sub_matrix(mf_u2.extension_matrix(),
+                                  SUBI, gmm::sub_interval(0, nbdof2)),
+                  Esub);
+        gmm::mult(Esub, u2, u2_proj);
+      }
+      else
+        gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
+
+      area = asm_nonmatching_meshes_contact_area
+             (*ml[0], mf_u1, u1, *(p->pmf_u2_proj), u2_proj, mf_lambda, lambda, reg);
+
+      gmm::resize(F, mf_u1.nb_dof());
+      asm_nonmatching_meshes_normal_source_term
+        (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, reg);
+
+    }
+    else if (pbr->brick_name() == "Continuous penalized contact between nonmatching meshes brick" ||
+             pbr->brick_name() == "Continuous penalized contact and friction between nonmatching "
+                                  "meshes brick") {
+      penalized_contact_nonmatching_meshes_brick *p
+        = dynamic_cast<penalized_contact_nonmatching_meshes_brick *>
+         (const_cast<virtual_brick *>(pbr.get()));
+      GMM_ASSERT1(p, "Wrong type of brick");
+    }
+
   }
 
 }  /* end of namespace getfem.                                             */
