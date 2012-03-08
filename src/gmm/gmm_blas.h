@@ -529,7 +529,7 @@ namespace gmm {
    mat_trace(const M &m) {
      typedef typename linalg_traits<M>::value_type T;
      T res(0);
-     for (size_type i = 0; i < std::max(mat_nrows(m), mat_ncols(m)); ++i)
+     for (size_type i = 0; i < std::min(mat_nrows(m), mat_ncols(m)); ++i)
        res += m(i,i);
      return res;
   }
