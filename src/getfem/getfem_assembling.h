@@ -406,9 +406,7 @@ namespace getfem {
     assem.push_mat(const_cast<MAT &>(M));
     assem.assembly(rg);
   }
-  
-  
-  
+
   /** 
    *  generic mass matrix assembly (on the whole mesh or on the specified
    *  boundary) 
@@ -475,7 +473,7 @@ namespace getfem {
   /** 
       source term (for both volumic sources and boundary (Neumann) sources).
       @ingroup asm
-  */
+   */
   template<typename VECT1, typename VECT2>
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mf_data, const VECT2 &F,

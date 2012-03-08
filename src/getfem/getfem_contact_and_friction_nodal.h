@@ -62,7 +62,7 @@ namespace getfem {
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap = "", std::string dataname_alpha = "",
-   int aug_version=0, bool Hughes_stabilized = false);
+   int aug_version=0, bool Hughes_stabilized=false);
 
 
   /** Add a contact with friction condition to the model. If U is the vector
@@ -97,7 +97,7 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap="", std::string dataname_alpha="",
-   int aug_version=0, bool Hughes_stabilized = false, bool Tresca_version = false) ;
+   int aug_version=0, bool Tresca_version=false, bool Hughes_stabilized=false);
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */
@@ -176,13 +176,14 @@ namespace getfem {
   (model &md, const std::string &varname_u, const std::string &multname_n,
    const std::string &multname_t, const std::string &dataname_r,
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT, CONTACT_B_MATRIX &DN,CONTACT_B_MATRIX &DT,
-   std::string dataname_friction_coeff, bool Tresca_virsion=false,
+   std::string dataname_friction_coeff,
    std::string dataname_gap="", std::string dataname_alpha="",
-   int aug_version=0){
+   int aug_version=0, bool Tresca_version=false) {
 
     size_type indbrick = add_basic_contact_with_friction_brick
       (md, varname_u, multname_n, multname_t, dataname_r, BN, BT,
-       dataname_friction_coeff, dataname_gap, dataname_alpha, aug_version, true, Tresca_virsion);
+       dataname_friction_coeff, dataname_gap, dataname_alpha,
+       aug_version, Tresca_version, true);
     gmm::resize(contact_brick_set_DN(md, indbrick),
                 gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
