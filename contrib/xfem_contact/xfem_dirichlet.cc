@@ -262,7 +262,7 @@ double ls_value(const base_node &p) {
   } 
   case 8:{
     double rho=gmm::sqrt(p[0]*p[0]+ p[1]*p[1]+ p[2]*p[2]); 
-    return (rho - Radius);
+    return (rho*rho*rho - Radius*Radius*Radius);
   }
     //  case 6:{
     //return r*r*r-R*R*R;
@@ -398,6 +398,127 @@ void asm_patch_vector
   assem.assembly(rg);
 
 }
+/**************************************************************/
+/* assembling patch matrix                                     */
+/**************************************************************/
+
+template<class MAT>
+void asm_stabilization_patch_term
+(const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_im &mimbounddown, const getfem::mesh_fem &mf_mult,
+ scalar_type ratio_size, scalar_type h ){
+  MAT &M1 = const_cast<MAT &>(RM_);
+  
+  /****************************************************/
+  /*        " select patch "                          */
+  /****************************************************/
+  
+  
+  
+  // assemby patch vector
+  const getfem::mesh_fem &mf_P0 = getfem::classical_mesh_fem(mesh, 0);
+  size_type nbe = mf_P0.nb_dof();
+  int ne = 0;
+  double size_of_crack = 0;
+  plain_vector Patch_Vector(nbe);
+  asm_patch_vector(Patch_Vector, mimbounddown, mf_P0);
+  // cout<<"patch_vectot="<< Patch_Vector<<endl;
+  dal::bit_vector  Patch_element_list, Patch_dof_ind;
+  for (size_type i = 0; i < nbe; ++i) {
+    if (Patch_Vector[i] != scalar_type(0)){
+      size_type cv = mf_P0.first_convex_of_basic_dof(i);
+      Patch_element_list.add(cv);
+      Patch_dof_ind.add(i);
+      ne++;
+      size_of_crack=size_of_crack + Patch_Vector[i];
+    }
+  }
+  // cout<<"Path_element_list="<< Patch_element_list <<endl;
+  //cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
+  cout<<"number of element in patch="<< ne <<endl;
+  std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);
+  std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
+  std::vector<double> vwgtt(ne);
+  int j = 0, k = 0;
+  for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+    numelt[j] = int(ic);
+    indelt[ic] = j;
+  }
+  j = 0;
+  for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+    size_type ind_dof_patch = mf_P0.ind_basic_dof_of_element(ic)[0];
+    vwgt[indelt[ic]] = int(1000000*Patch_Vector[ind_dof_patch]);
+    vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
+    xadj[j] = k;
+    bgeot::mesh_structure::ind_set s;
+    mesh.neighbours_of_convex(ic, s);
+    for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
+      if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
+    }
+  }
+  
+  xadj[j] = k;
+  std::vector<int> adjwgt(k);
+  // cout<<"xadj="<<xadj<<endl;
+  //cout<<"adjncy="<<adjncy<<endl;
+  //cout<<"vwgt="<<vwgt<<endl;
+  
+  cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
+  
+  int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
+      // float ubvec[1] = {1.03f};
+  int  options[5] = {0,0,0,0,0};
+  //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
+  // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
+  //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //	  &numflag, &nparts, options, &edgecut, &(part[0]));
+  METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+			   &numflag, &nparts, options, &edgecut, &(part[0]));
+  
+  //cout<<"size_of_mesh="<<h<<endl;
+  //cout<<"size_of_crack="<< size_of_crack <<endl;
+  cout<<"nb_partition="<<nparts<<endl;
+  // cout<<"partition="<<part<<endl;
+  //cout<<"edgecut="<<edgecut<<endl;
+  
+
+  /**************************************************************/
+  /*        Assembly matrices                                   */
+  /**************************************************************/
+  
+  
+  std::vector<double> size_patch(nparts);
+  size_type nb_dof_mult=mf_mult.nb_dof();
+  sparse_matrix M0(nb_dof_mult, nbe);
+  getfem::asm_mass_matrix(M0, mimbounddown, mf_mult, mf_P0);
+  
+  for (size_type i=0; i < size_type(ne); i++) {
+    size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];	  
+  }
+  
+  //cout<<"size_patch="<<size_patch<<endl;
+  
+  sparse_row_matrix MAT_aux(nparts, nb_dof_mult);
+  for (size_type r=0; r < nbe; r++) {
+    size_type cv = mf_P0.first_convex_of_basic_dof(r);
+    gmm::add(gmm::mat_col(M0, r), gmm::mat_row(MAT_aux, part[indelt[cv]]));
+  }
+  
+  sparse_row_matrix MAT_proj(nbe, nb_dof_mult);
+  
+  for (size_type r=0; r < nbe; r++) {
+    size_type cv = mf_P0.first_convex_of_basic_dof(r);
+    int p=part[indelt[cv]];
+    gmm::copy(gmm::scaled(gmm::mat_row(MAT_aux, p), 1./size_patch[p]),
+	      gmm::mat_row(MAT_proj, r));
+  }
+  
+  gmm::mult(M0, MAT_proj, M1);
+  
+}
+
+
 
 
 
@@ -521,8 +642,13 @@ int main(int argc, char *argv[]) {
   for (unsigned i = 0; i < lsmf.nb_dof(); ++i) {
     lsup.values()[i] = lsdown.values()[i] = ls.values()[i]
       = ls_value(lsmf.point_of_basic_dof(i));
-    lsdown.values(1)[i] = lsmf.point_of_basic_dof(i)[1];
-    lsup.values(1)[i] = -lsmf.point_of_basic_dof(i)[1];
+    if(N==2){
+      lsdown.values(1)[i] = lsmf.point_of_basic_dof(i)[1];
+      lsup.values(1)[i] = -lsmf.point_of_basic_dof(i)[1];
+    }else{
+      lsdown.values(2)[i] = lsmf.point_of_basic_dof(i)[2];
+      lsup.values(2)[i] = -lsmf.point_of_basic_dof(i)[2];
+    }
   }
   
   if (simplify_level_set) {
@@ -670,6 +796,17 @@ int main(int argc, char *argv[]) {
       datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
       mesh.write_to_file(datafilename + ".mesh");
       cout<<"save mesh done"<<endl;
+      scalar_type tpa = PARAM.real_value("TPA", "Type of patch assembly");
+
+      if(tpa){
+	
+	scalar_type ratio_size = PARAM.real_value("RATIO_GR_MESH", "ratio size between mesh and patches");
+	//       cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
+	
+	asm_stabilization_patch_term(M1, mesh, mimbounddown, mf_mult, ratio_size, h);
+       
+	//	cout<<'patch matrix='<<M1<<endl; 
+      }else{
       
       
       /****************************************************/
@@ -729,6 +866,7 @@ int main(int argc, char *argv[]) {
       cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
 
       int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
+
       // float ubvec[1] = {1.03f};
       int  options[5] = {0,0,0,0,0};
       //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
@@ -745,7 +883,7 @@ int main(int argc, char *argv[]) {
       cout<<"nb_partition="<<nparts<<endl;
       // cout<<"partition="<<part<<endl;
       //cout<<"edgecut="<<edgecut<<endl;
-
+      
 
       /**************************************************************/
       /*        Assembly matrices                                   */
@@ -779,6 +917,11 @@ int main(int argc, char *argv[]) {
       }
      
       gmm::mult(M0, MAT_proj, M1);
+
+
+      }
+
+
   
 //       sparse_matrix MAT_proj(nbe, nb_dof_mult);
 
@@ -1038,8 +1181,9 @@ int main(int argc, char *argv[]) {
 
   // interpolation of the solution on mf_rhs
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
-  plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs);
+  plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs),lambda_int(nb_dof_rhs);
   getfem::interpolation(mf, mf_rhs, U, Uint);
+  //getfem::interpolation(mf_mult, mf_rhs, LAMBDA, lambda_int);
   for (size_type i = 0; i < nb_dof_rhs; ++i) {
     Vint[i] = u_exact(mf_rhs.point_of_basic_dof(i));
     Eint[i] = gmm::abs(Uint[i] - Vint[i]);
@@ -1057,8 +1201,10 @@ int main(int argc, char *argv[]) {
     else Eint[i] = 0.0;
 
   mf_rhs.write_to_file("xfem_dirichlet.mf", true);
+  mf_mult.write_to_file("xfem_dirichlet.mfmult", true);
   gmm::vecsave("xfem_dirichlet_exact.U", Vint);
   gmm::vecsave("xfem_dirichlet.U", Uint);
+  gmm::vecsave("xfem_dirichlet.L", LAMBDA);
   gmm::vecsave("xfem_dirichlet.map_error", Eint);
 
   // cout << "Linfty error: " << 100.0 * errmax / exactmax << "%" << endl;
@@ -1089,188 +1235,188 @@ int main(int argc, char *argv[]) {
   // cout << "L2^2 max on multipliers: " << gmm::vect_sp(KA, Vint, Vint);
   // cout << "  LAMBDA^2: " << gmm::vect_sp(B, LAMBDA, LAMBDA);
   // cout << "  Double produit: " <<  2*gmm::vect_sp(BA, Vint, LAMBDA)<<endl;
-
-  
-  /*********************************************************************/  
-  /*         exporting solution in vtk format.                         */
-  /*********************************************************************/
-  {
-    getfem::vtk_export exp("xfem_dirichlet.vtk", (2==1));
+  if(0){
+    
+    /*********************************************************************/  
+    /*         exporting solution in vtk format.                         */
+    /*********************************************************************/
+    {
+      getfem::vtk_export exp("xfem_dirichlet.vtk", (2==1));
     exp.exporting(mf); 
     exp.write_point_data(mf, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
       "mayavi -d xfem_dirichlet.vtk -f WarpScalar -m BandedSurfaceMap "
       "-m Outline\n";
-  }
-  // exporting error in vtk format.
-  {
-    getfem::vtk_export exp("xfem_dirichlet_error.vtk", (2==1));
-    exp.exporting(mf_rhs); 
-    exp.write_point_data(mf_rhs, Eint, "error");
-    cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d xfem_dirichlet_error.vtk -f WarpScalar -m BandedSurfaceMap "
-      "-m Outline\n";
-  }
-  // exporting multipliers in vtk format.
-  {
-    getfem::vtk_export exp("xfem_dirichlet_mult.vtk", (2==1));
-    exp.exporting(mf_mult); 
-    exp.write_point_data(mf_mult, LAMBDA, "multipliers");
-    cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d xfem_dirichlet_mult.vtk -f WarpScalar -m BandedSurfaceMap "
-      "-m Outline\n";
-  }
-
-  lsmf.write_to_file("xfem_dirichlet_ls.mf", true);
- 
-  gmm::vecsave("xfem_dirichlet_ls.U", ls.values());
-  
- //save solution
-
-  /*********************************************************************/  
-  /*         Save the solution.                                        */
-  /*********************************************************************/
-  mf.write_to_file("xfem_dirichlet.mfsol", true);
-  gmm::vecsave("xfem_dirichlet.Usol", U);
-
-  mf_mult.write_to_file("xfem_dirichlet.mf_mult", true);
-  gmm::vecsave("xfem_dirichlet.Lsol", LAMBDA);
-  cout << "saving solution done"<<endl;
-
-  unsigned nrefine = mf.linked_mesh().convex_index().card() < 200 ? 32 : 4;
-  /*********************************************************************/  
-  /*         Creationg Slice                                           */
-  /*********************************************************************/
-  if(1){
-  if (N==2) {
-    cout << "saving the slice solution for matlab\n";
-    getfem::stored_mesh_slice sl, sl0,sll;
+    }
+    // exporting error in vtk format.
+    {
+      getfem::vtk_export exp("xfem_dirichlet_error.vtk", (2==1));
+      exp.exporting(mf_rhs); 
+      exp.write_point_data(mf_rhs, Eint, "error");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d xfem_dirichlet_error.vtk -f WarpScalar -m BandedSurfaceMap "
+	"-m Outline\n";
+    }
+    // exporting multipliers in vtk format.
+    {
+      getfem::vtk_export exp("xfem_dirichlet_mult.vtk", (2==1));
+      exp.exporting(mf_mult); 
+      exp.write_point_data(mf_mult, LAMBDA, "multipliers");
+      cout << "export done, you can view the data file with (for example)\n"
+	"mayavi -d xfem_dirichlet_mult.vtk -f WarpScalar -m BandedSurfaceMap "
+	"-m Outline\n";
+    }
     
+    lsmf.write_to_file("xfem_dirichlet_ls.mf", true);
     
-    getfem::mesh_slicer slicer(mf.linked_mesh());
-    getfem::slicer_build_stored_mesh_slice sbuild(sl);
-    getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf, U);
-    getfem::slicer_isovalues iso(mfU, 0.0, 0);
-    getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
+    gmm::vecsave("xfem_dirichlet_ls.U", ls.values());
     
-    slicer.push_back_action(sbuild);  // full slice in sl
-    slicer.push_back_action(iso);     // extract isosurface 0
-    slicer.push_back_action(sbuild0); // store it into sl0
-    slicer.exec(nrefine, mf.convex_index());
+    //save solution
     
-    getfem::mesh_slicer slicer2(mf.linked_mesh());
-    getfem::mesh_slice_cv_dof_data<plain_vector> 
-      mfL(ls.get_mesh_fem(), ls.values());
-    getfem::slicer_isovalues iso2(mfL, 0.0, 0);
-    getfem::slicer_build_stored_mesh_slice sbuildl(sll);
-    slicer2.push_back_action(iso2);     // extract isosurface 0
-    slicer2.push_back_action(sbuildl); // store it into sll
-    slicer2.exec(nrefine, mf.convex_index());
+    /*********************************************************************/  
+    /*         Save the solution.                                        */
+    /*********************************************************************/
+    mf.write_to_file("xfem_dirichlet.mfsol", true);
+    gmm::vecsave("xfem_dirichlet.Usol", U);
     
-    sl.write_to_file("xfem_dirichlet.sl", true);
-    sl0.write_to_file("xfem_dirichlet.sl0", true);
-    sll.write_to_file("xfem_dirichlet.sll", true);
-    plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
-    sl.interpolate(mf, U, UU);
-    gmm::vecsave("xfem_dirichlet.slU", UU);
-    // gmm::scale(LAMBDA, 0.005);
-    sll.interpolate(mf_mult, LAMBDA, LL);
-    gmm::vecsave("xfem_dirichlet.slL", LL);
-  }else{
-    cout << "saving the slice solution for matlab\n";
-    // Create slice of the sphere to plot the Solution in the half sphere
-    // getfem::slicer_boundary exbond(mf.linked_mesh());//extract boundary
-    getfem::stored_mesh_slice  sl, sll, sl0, slU, slsph;
+    mf_mult.write_to_file("xfem_dirichlet.mf_mult", true);
+    gmm::vecsave("xfem_dirichlet.Lsol", LAMBDA);
+    cout << "saving solution done"<<endl;
+    
+    unsigned nrefine = mf.linked_mesh().convex_index().card() < 200 ? 32 : 4;
+    /*********************************************************************/  
+    /*         Creationg Slice                                           */
+    /*********************************************************************/
+    
+    if (N==2) {
+      cout << "saving the slice solution for matlab\n";
+      getfem::stored_mesh_slice sl, sl0,sll;
+      
+      
+      getfem::mesh_slicer slicer(mf.linked_mesh());
+      getfem::slicer_build_stored_mesh_slice sbuild(sl);
+      getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf, U);
+      getfem::slicer_isovalues iso(mfU, 0.0, 0);
+      getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
+      
+      slicer.push_back_action(sbuild);  // full slice in sl
+      slicer.push_back_action(iso);     // extract isosurface 0
+      slicer.push_back_action(sbuild0); // store it into sl0
+      slicer.exec(nrefine, mf.convex_index());
+      
+      getfem::mesh_slicer slicer2(mf.linked_mesh());
+      getfem::mesh_slice_cv_dof_data<plain_vector> 
+	mfL(ls.get_mesh_fem(), ls.values());
+      getfem::slicer_isovalues iso2(mfL, 0.0, 0);
+      getfem::slicer_build_stored_mesh_slice sbuildl(sll);
+      slicer2.push_back_action(iso2);     // extract isosurface 0
+      slicer2.push_back_action(sbuildl); // store it into sll
+      slicer2.exec(nrefine, mf.convex_index());
+      
+      sl.write_to_file("xfem_dirichlet.sl", true);
+      sl0.write_to_file("xfem_dirichlet.sl0", true);
+      sll.write_to_file("xfem_dirichlet.sll", true);
+      plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
+      sl.interpolate(mf, U, UU);
+      gmm::vecsave("xfem_dirichlet.slU", UU);
+      // gmm::scale(LAMBDA, 0.005);
+      sll.interpolate(mf_mult, LAMBDA, LL);
+      gmm::vecsave("xfem_dirichlet.slL", LL);
+    }else{
+      cout << "saving the slice solution for matlab\n";
+      // Create slice of the sphere to plot the Solution in the half sphere
+      // getfem::slicer_boundary exbond(mf.linked_mesh());//extract boundary
+      getfem::stored_mesh_slice  sl, sll, sl0, slU, slsph;
+      
+    
+      
+      getfem::mesh_slicer slicer(mf.linked_mesh());
+      getfem::slicer_build_stored_mesh_slice sbuild(sl);
+      getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf, U);
+      getfem::slicer_isovalues iso(mfU, 0.0, 0);
+      getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
+      
+      slicer.push_back_action(sbuild);  // full slice in sl
+      slicer.push_back_action(iso);     // extract isosurface 0
+      slicer.push_back_action(sbuild0); // store it into sl0
+      slicer.exec(nrefine, mf.convex_index());
+      
 
-    
 
-     getfem::mesh_slicer slicer(mf.linked_mesh());
-    getfem::slicer_build_stored_mesh_slice sbuild(sl);
-    getfem::mesh_slice_cv_dof_data<plain_vector> mfU(mf, U);
-    getfem::slicer_isovalues iso(mfU, 0.0, 0);
-    getfem::slicer_build_stored_mesh_slice sbuild0(sl0);
-    
-    slicer.push_back_action(sbuild);  // full slice in sl
-    slicer.push_back_action(iso);     // extract isosurface 0
-    slicer.push_back_action(sbuild0); // store it into sl0
-    slicer.exec(nrefine, mf.convex_index());
-
-
-
-    getfem::mesh_slicer slicer2(ls.get_mesh_fem().linked_mesh());
-    getfem::mesh_slice_cv_dof_data<plain_vector> 
-      mfL(ls.get_mesh_fem(), ls.values());
-    getfem::slicer_isovalues  iso2(mfL, 0.0, 0);
-    //getfem::slicer_half_space hs(base_node(0,0,0), base_node(0,1,0),-1);
-    // getfem::slicer_intersect  sect(iso2,hs);
-    getfem::slicer_build_stored_mesh_slice sbuildlu(slU);
-    slicer2.push_back_action(sbuild);                 // Full slice in slfulll
-    slicer2.push_back_action(iso2);                   // extract isosurface 0
-    // slicer2.push_back_action(hs);                  // cut with half space
-    // slicer2.push_back_action(exbond);              // extract boundary
-    slicer2.push_back_action(sbuildlu);               // store it into slU
-    slicer2.exec(nrefine, ls.get_mesh_fem().convex_index());
-    
-    sl.write_to_file("xfem_dirichlet.sl", true);
-    sl0.write_to_file("xfem_dirichlet.sl0", true);
-    slU.write_to_file("xfem_dirichlet.slU", true);
-    plain_vector  UU(slU.nb_points());
-    
-    slU.interpolate(mf, U, UU);
-    gmm::vecsave("xfem_dirichlet.sl_U", UU);
-
+      getfem::mesh_slicer slicer2(ls.get_mesh_fem().linked_mesh());
+      getfem::mesh_slice_cv_dof_data<plain_vector> 
+	mfL(ls.get_mesh_fem(), ls.values());
+      getfem::slicer_isovalues  iso2(mfL, 0.0, 0);
+      //getfem::slicer_half_space hs(base_node(0,0,0), base_node(0,1,0),-1);
+      // getfem::slicer_intersect  sect(iso2,hs);
+      getfem::slicer_build_stored_mesh_slice sbuildlu(slU);
+      slicer2.push_back_action(sbuild);                 // Full slice in slfulll
+      slicer2.push_back_action(iso2);                   // extract isosurface 0
+      // slicer2.push_back_action(hs);                  // cut with half space
+      // slicer2.push_back_action(exbond);              // extract boundary
+      slicer2.push_back_action(sbuildlu);               // store it into slU
+      slicer2.exec(nrefine, ls.get_mesh_fem().convex_index());
+      
+      sl.write_to_file("xfem_dirichlet.sl", true);
+      sl0.write_to_file("xfem_dirichlet.sl0", true);
+      slU.write_to_file("xfem_dirichlet.slU", true);
+      plain_vector  UU(slU.nb_points());
+      
+      slU.interpolate(mf, U, UU);
+      gmm::vecsave("xfem_dirichlet.sl_U", UU);
+      
    
+      
+      // Create slice of the sphere to plot the multiplier at the boundary
+      
+      getfem::mesh_slicer slicer3(mf.linked_mesh());
+      //getfem::mesh_slice_cv_dof_data<plain_vector> 
+      //  mfL(ls.get_mesh_fem(), ls.values());
+      getfem::slicer_isovalues  iso3(mfL, 0.0, 0);
+      getfem::slicer_half_space hs(base_node(0,0,0), base_node(0,1,0),-1);
+      //    getfem::slicer_intersect  sect3(iso3,hs);
+      getfem::slicer_build_stored_mesh_slice sbuildl(sll);
+      slicer3.push_back_action(sbuild);            // Full slice in sl
+      slicer3.push_back_action(iso3);              // extract isosurface 0
+      slicer3.push_back_action(hs);                // cut with half space
+      slicer3.push_back_action(sbuildl);           // store it into sll
+      slicer3.exec(nrefine, mf.convex_index());
+      
+      sll.write_to_file("xfem_dirichlet.sll", true);
+      plain_vector  LL(sll.nb_points()), UUb(sll.nb_points());
+      
+      sll.interpolate(mf, U, UUb);
+      gmm::vecsave("xfem_dirichlet.slUb", UUb);
+      
+      gmm::scale(LAMBDA, 0.005);
+      sll.interpolate(mf_mult, LAMBDA, LL);
+      gmm::vecsave("xfem_dirichlet.slL", LL);
+      
+      getfem::slicer_boundary exbond1(mf.linked_mesh());//extract boundary
+      getfem::mesh_slicer slicer4(mf.linked_mesh());
+      //getfem::slicer_build_stored_mesh_slice sbuildfull(sl);
+      getfem::slicer_sphere sph(base_node(0,0), Radius, -1 );
+      // getfem::slicer_half_space hs1(base_node(0,0,0), base_node(0,1,0),-1);
+      //getfem::slicer_intersect  sect4(sph,hs1);
+      getfem::slicer_build_stored_mesh_slice sbuildsph(slsph);
+      
+      slicer4.push_back_action(sbuild);  // Full slice in sl
+      slicer4.push_back_action(sph);         // extract sphere 
+      //slicer4.push_back_action(hs1);         // cut with half space
+      slicer4.push_back_action(exbond1);      // extract boundary
+      slicer4.push_back_action(sbuildsph);   // store it into slsph
+      
+      slicer4.exec(nrefine, mf.convex_index());
+      slsph.write_to_file("xfem_dirichlet.slsph", true);
     
-    // Create slice of the sphere to plot the multiplier at the boundary
+      plain_vector UUs(slsph.nb_points()); 
+      slsph.interpolate(mf, U, UUs);
+      gmm::vecsave("xfem_dirichlet.slUsph", UUs);
+    }
     
-    getfem::mesh_slicer slicer3(mf.linked_mesh());
-    //getfem::mesh_slice_cv_dof_data<plain_vector> 
-    //  mfL(ls.get_mesh_fem(), ls.values());
-    getfem::slicer_isovalues  iso3(mfL, 0.0, 0);
-    getfem::slicer_half_space hs(base_node(0,0,0), base_node(0,1,0),-1);
-    //    getfem::slicer_intersect  sect3(iso3,hs);
-    getfem::slicer_build_stored_mesh_slice sbuildl(sll);
-    slicer3.push_back_action(sbuild);            // Full slice in sl
-    slicer3.push_back_action(iso3);              // extract isosurface 0
-    slicer3.push_back_action(hs);                // cut with half space
-    slicer3.push_back_action(sbuildl);           // store it into sll
-    slicer3.exec(nrefine, mf.convex_index());
-
-    sll.write_to_file("xfem_dirichlet.sll", true);
-    plain_vector  LL(sll.nb_points()), UUb(sll.nb_points());
-
-    sll.interpolate(mf, U, UUb);
-    gmm::vecsave("xfem_dirichlet.slUb", UUb);
-    
-    gmm::scale(LAMBDA, 0.005);
-    sll.interpolate(mf_mult, LAMBDA, LL);
-    gmm::vecsave("xfem_dirichlet.slL", LL);
-
-   //  getfem::slicer_boundary exbond1(mf.linked_mesh());//extract boundary
-//     getfem::mesh_slicer slicer4(mf.linked_mesh());
-//     //getfem::slicer_build_stored_mesh_slice sbuildfull(sl);
-//     getfem::slicer_sphere sph(base_node(0,0), Radius, -1 );
-//     // getfem::slicer_half_space hs1(base_node(0,0,0), base_node(0,1,0),-1);
-//     //getfem::slicer_intersect  sect4(sph,hs1);
-//     getfem::slicer_build_stored_mesh_slice sbuildsph(slsph);
-    
-//     slicer4.push_back_action(sbuild);  // Full slice in sl
-//     slicer4.push_back_action(sph);         // extract sphere 
-//     //slicer4.push_back_action(hs1);         // cut with half space
-//     slicer4.push_back_action(exbond1);      // extract boundary
-//     slicer4.push_back_action(sbuildsph);   // store it into slsph
-    
-//     slicer4.exec(nrefine, mf.convex_index());
-//     slsph.write_to_file("xfem_dirichlet.slsph", true);
-    
-//     plain_vector UUs(slsph.nb_points()); 
-//     slsph.interpolate(mf, U, UUs);
-//     gmm::vecsave("xfem_dirichlet.slUsph", UUs);
-}
-  
-  /********************************************/
-  /*exacte solution                           */
-  /********************************************/
+    /********************************************/
+    /*exacte solution                           */
+    /********************************************/
     plain_vector UE(nb_dof_rhs);
     plain_vector UEE(nb_dof);
     for (size_type i = 0; i < nb_dof_rhs; ++i) {

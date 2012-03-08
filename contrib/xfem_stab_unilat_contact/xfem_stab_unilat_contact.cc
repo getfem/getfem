@@ -474,6 +474,7 @@ struct unilateral_contact_problem {
   
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool contact_only;
+  bool Tresca_version;
   bool stabilized_problem, Test_of_coer, strmesh, rangeP_P;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
@@ -685,6 +686,8 @@ void  unilateral_contact_problem::init(void) {
   
   
   contact_only = (PARAM.int_value("CONTACT_ONLY"," contact_only or not.") != 0);
+  Tresca_version=(PARAM.int_value("TRESCA_VIRSION"," tresca version or not.") != 0);
+  cout<< "Tresca Version="<< Tresca_version<< endl;
   stabilized_problem =  (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
   Test_of_coer= (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
   rangeP_P =
@@ -1093,7 +1096,7 @@ if (!contact_only){
       gmm::add(CAT, BT); 
       getfem::add_Hughes_stab_with_friction_contact_brick
 	(model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
-	 BN, BT, MA, MAT, "friction_coeff");
+	 BN, BT, MA, MAT, "friction_coeff", Tresca_version);
                 }
   }  else {		
     getfem::add_basic_contact_brick(model, "u", "Lambda",
@@ -1102,7 +1105,7 @@ if (!contact_only){
     if (!contact_only){
       getfem::add_basic_contact_with_friction_brick
 	(model, "u", "Lambda", "Lambda_t",
-	 "augmentation_parameter", BN, BT, "friction_coeff","","",true);
+	 "augmentation_parameter", BN, BT, "friction_coeff","","",0, false, Tresca_version);
       
     }
   }

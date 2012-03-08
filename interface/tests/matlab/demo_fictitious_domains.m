@@ -20,17 +20,17 @@ disp('implicit boundary defined by the zero of the levelset');
 
 %clear all;
 gf_workspace('clear all');
-NX=40;
-ls_degree = 2;
+NX=80;
+ls_degree = 1;
 
 
 m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
 %m=gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
 ls=gf_levelset(m, ls_degree);
-ls2=gf_LevelSet(m, ls_degree, 'with_secondary');
+%ls2=gf_LevelSet(m, ls_degree, 'with_secondary');
 
 mf_ls=gfObject(gf_levelset_get(ls, 'mf'));
-mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));
+%mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));
 
 P=get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
@@ -41,8 +41,8 @@ ULS=1000*ones(1,numel(x));
 rand('state',1);
 
 if 0,
-  for ix=1:5,
-    for iy=1:5,
+  for ix=1:1,
+    for iy=1:1,
       xc = ((ix-1)/4) * 0.8 - 0.4;
       yc = ((iy-1)/4) * 0.8 - 0.4;
       if (mod(iy,2)==0),
@@ -55,10 +55,10 @@ if 0,
     end;
   end;
 else
-  for i=1:8,
-    xc = rand() - 0.5;
-    yc = rand() - 0.5;
-    R = rand() * 0.09 + 0.02;
+  for i=1:1,
+    xc =0.1;% rand() - 0.5;
+    yc =0;% rand() - 0.5;
+    R=0.1;%R = rand() * 0.09 + 0.02;
     ULS = min(ULS, ((x - xc).^2 + (y - yc).^2) - R^2);
   end;
 end;
@@ -73,21 +73,21 @@ for i=1:1,
   theta = pi/3; %pi*rand();
   n = [-sin(theta) cos(theta)];
   
-  R = 0.19; %rand() * 0.09 + 0.02;
+  R = 0.1; %rand() * 0.09 + 0.02;
   ULS2 = min(ULS2, ((x-xc)*n(1) + (y-yc)*n(2)));
-  %ULS2s = min(ULS2s, ((x - xc).^2 + (y - yc).^2) - R^2);
-  ULS2s = min(ULS2s, (abs(y - yc)+abs(x-xc) - R));
+  ULS2s = min(ULS2s, ((x - xc).^2 + (y - yc).^2) - R^2);
+  %ULS2s = min(ULS2s, (abs(y - yc)+abs(x-xc) - R));
 end;
 
-gf_levelset_set(ls2, 'values', ULS2, ULS2s); %'-y-x+.2'); %, '(y-.2)^2 - 0.04');
+%gf_levelset_set(ls2, 'values', ULS2s, ULS2); %'-y-x+.2'); %, '(y-.2)^2 - 0.04');
 
 mls=gfMeshLevelSet(m);
 set(mls, 'add', ls);
-set(mls, 'add', ls2);
+%set(mls, 'add', ls2);
 set(mls, 'adapt');
 
-mim_bound = gfMeshIm('levelset',mls,'boundary(a+b)', gf_integ('IM_TRIANGLE(6)')); %, gf_integ('IM_QUAD(5)'));
-mim = gfMeshIm('levelset',mls,'all(a+b)', gf_integ('IM_TRIANGLE(6)'));
+mim_bound = gfMeshIm('levelset',mls,'boundary', gf_integ('IM_TRIANGLE(6)')); %, gf_integ('IM_QUAD(5)'));
+mim = gfMeshIm('levelset',mls,'all', gf_integ('IM_TRIANGLE(6)'));
 set(mim, 'integ', 4);
 
 mfu0=gfMeshFem(m,2); set(mfu0, 'fem', gf_fem('FEM_QK(2,3)'));
@@ -104,7 +104,7 @@ dof_out = get(mfu0, 'dof from im', mim);
 cv_out = get(mim, 'convex_index');
 cv_in = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
 
-% mfu = gfMeshFem('partial', mfu0, dof_out, cv_in);
+mfu = gfMeshFem('partial', mfu0, dof_out, cv_in);
 
 
 md=gf_model('real');
@@ -122,6 +122,7 @@ gf_model_set(md, 'add Dirichlet condition with multipliers', ...
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
+
 VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
 
 gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, ...
@@ -137,12 +138,11 @@ hold on;
 [h1,h2]=gf_plot(mf_ls, gf_levelset_get(ls,'values'), 'contour', 0, 'pcolor','off');
 set(h2{1},'LineWidth',1);
 set(h2{1},'Color','blue');
-%[h1,h2]=gf_plot(mf_ls2, get(ls2,'values'), 'contour',
-%0,'pcolor','off');
+%[h1,h1]=gf_plot(mf_ls2, gf_levelset_get(ls2,'values'), 'contour',0,'pcolor','off');
 
-h2=line([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)]);
-set(h2,'LineWidth',1);
-set(h2,'Color','blue');
+%h2=line([xc + R*n(2); xc - R*n(2)],[yc - R*n(1), yc + R*n(1)]);
+%set(h2,'LineWidth',1);
+%set(h2,'Color','blue');
 
 
 

@@ -645,6 +645,8 @@ dnl    ])
 
   if test "x$usemetis" = "xyes"; then
     METIS_LIBS="-lmetis"
+    LIBS="$LIBS $METIS_LIBS"
+    AC_DEFINE_UNQUOTED([HAVE_METIS],1,[defined if the Metis library was found and is working])
     echo "Building with METIS (use --enable-metis=no to disable it)"
   else
     echo "Building without METIS";

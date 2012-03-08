@@ -436,9 +436,10 @@ namespace getfemint {
     getfem::mesh *                       to_mesh();
     getfemint_mesh_slice *               to_getfemint_mesh_slice(bool writeable=false);
     getfemint_levelset *                 to_getfemint_levelset(bool writeable=false);
-    //getfem::level_set *                  to_levelset();
+    // const getfem::level_set *            to_const_levelset();
+    getfem::level_set *                  to_levelset();
     getfemint_mesh_levelset *            to_getfemint_mesh_levelset(bool writeable=false);
-    //getfem::mesh_level_set *             to_mesh_levelset();
+    getfem::mesh_level_set *             to_mesh_levelset();
     const getfem::abstract_xy_function * to_const_global_function();
     const getfem::mesher_signed_distance * to_const_mesher_object();
     getfem::abstract_xy_function *       to_global_function();

@@ -1,9 +1,7 @@
 if METIS
 optprogs = xfem_dirichlet
-libmetis = -lmetis
 else
 optprogs = 
-libmetis = 
 endif
 
 check_PROGRAMS = xfem_contact xfem_stokes $(optprogs)
@@ -18,7 +16,7 @@ xfem_stokes_SOURCES = xfem_stokes.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la $(libmetis) -lm $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
 TESTS = $(top_srcdir)/contrib/xfem_contact/xfem_contact.pl
 

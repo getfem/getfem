@@ -41,9 +41,11 @@
 #define GETFEM_ASSEMBLING_H__
 
 #include "getfem_assembling_tensors.h"
+#include "getfem/getfem_mesh_im_level_set.h"
+
 
 namespace getfem {
-
+  
   template <typename VEC>
   scalar_type asm_mean_value(const mesh_im &mim, const mesh_fem &mf,
 			     const VEC &U,
@@ -404,7 +406,9 @@ namespace getfem {
     assem.push_mat(const_cast<MAT &>(M));
     assem.assembly(rg);
   }
-
+  
+  
+  
   /** 
    *  generic mass matrix assembly (on the whole mesh or on the specified
    *  boundary) 
@@ -467,10 +471,11 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+    
   /** 
       source term (for both volumic sources and boundary (Neumann) sources).
       @ingroup asm
-   */
+  */
   template<typename VECT1, typename VECT2>
   void asm_source_term(const VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
 		       const mesh_fem &mf_data, const VECT2 &F,

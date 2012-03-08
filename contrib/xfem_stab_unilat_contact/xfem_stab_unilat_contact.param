@@ -7,13 +7,14 @@
 Mu = 1.0;	            % Lame coefficient.
 Lambda=1.0                  % Lame coefficient.
 dgr = 1;                    % degree of enrichment in u
-CONTACT_GAMMA0 = 0.000001;  % Stabilization parameter for contact condition
+CONTACT_GAMMA0 = 0.001;  % Stabilization parameter for contact condition
 R=100;                      % Augmented parameter
 STABILIZED_PROBLEM = 0;     % stabilized_problem or not
 strmesh = 1;
 CONTACT_ONLY=1;
+TRESCA_VIRSION=1;
 FRICTION_COEFF=0.3; 
-
+rangeP_P=1;
 
 
 %%if BIMATERIAL
@@ -30,7 +31,7 @@ ERROR_TO_REF_SOL =1;        % 1 to compute errors wrt the reference solution
 
 %%%%%   discretisation parameters  :                     	      %%%%%
 
-NX = 20;                    % space step.
+NX = 10;                    % space step.
 MESH_NOISED = 0;            % Set to one if you want to "shake" the mesh
 
 

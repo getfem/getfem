@@ -1266,7 +1266,8 @@ namespace getfem {
 
     Coulomb_friction_brick(int aug_version, bool contact_only_,
                            bool two_variables_=false,
-                           bool Hughes_stabilized_=false) {
+                           bool Hughes_stabilized_=false,
+			   bool Tresca_version_=false) {
       if (aug_version == 4 && contact_only_) aug_version = 3;
       augmentation_version = aug_version;
       GMM_ASSERT1(aug_version >= 0 && aug_version <= 4,
@@ -1276,7 +1277,7 @@ namespace getfem {
                   "version");
       contact_only = contact_only_;
       is_init = false;
-      Tresca_version = false;   // for future version ...
+      Tresca_version = Tresca_version_;   // for future version ...
       really_stationary = false;   // for future version ...
       friction_dynamic_term = false;  // for future version ...
       two_variables = two_variables_;
@@ -1417,9 +1418,9 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap, std::string dataname_alpha,
-   int aug_version, bool Hughes_stabilized) {
+   int aug_version, bool Hughes_stabilized, bool Tresca_version) {
     Coulomb_friction_brick *pbr_
-      = new Coulomb_friction_brick(aug_version,false, false,Hughes_stabilized);
+      = new Coulomb_friction_brick(aug_version,false, false, Hughes_stabilized, Tresca_version);
     pbr_->set_BN1(BN);
     pbr_->set_BT1(BT);
     pbrick pbr = pbr_;

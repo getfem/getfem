@@ -6,17 +6,18 @@
 QUAD = 0;
 N = 3;
 RADIUS = 0.4;              % radius of the real circular domain.
-LEVEL_SET_DEGREE = 1;      % Degree of the piecewise polynomial
+LEVEL_SET_DEGREE = 2;      % Degree of the piecewise polynomial
                            % defining the level set.
 EXACT_SOL = 8;             % Which exact solution(8 is three dimensional solution).
+TPA=0;
 SIMPLIFY_LEVEL_SET = 0;
 STABILIZED_DIRICHLET = 0;  % 0 = no, 1 = Barbosa-Hughes stab, 2 = fully stab., 3 = Patch stab.
-MINIMAL_ELT_RATIO = 0.01;  % threshold ratio for the fully stab Dirichlet.
-DIRICHLET_GAMMA0 = 0.1;   % Barbosa Hughes stabilization parameter
+MINIMAL_ELT_RATIO = 0.1;  % threshold ratio for the fully stab Dirichlet.
+DIRICHLET_GAMMA0 = 1;   % Barbosa Hughes stabilization parameter
 RATIO_GR_MESH = 2;         % Ratio size between mesh and patches.
 	   
 OK = 0;
-NX = 10;                  % space step.
+NX = 5;                  % space step.
 MESH_NOISED = 0;           % Set to one if you want to "shake" the mesh
 
 
@@ -50,7 +51,7 @@ if (N == 2 && ~QUAD)
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),1)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(6),2)';
   FEM = 'FEM_PK(2,1)';      % Finite element method for the unknown.
-  FEM_MULT = 'FEM_PK(2,0)'; % Finite element method for multipliers
+  FEM_MULT = 'FEM_PK(2,2)'; % Finite element method for multipliers
 %  FEM = 'FEM_PK_WITH_CUBIC_BUBBLE(2,1)';
 %  FEM = 'FEM_P1_PIECEWISE_LINEAR_BUBBLE';
   FEM_RHS = 'FEM_PK(2,3)';  % Finite element method for the rhs
@@ -63,10 +64,10 @@ if (N == 3 && QUAD)
 % IM='IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6), 5)';
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),2)';   % Integration method on sub-triangles.
 % IM_SIMPLEX ='IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(4), 3)';
-  FEM = 'FEM_QK(3,1)';      % Finite element method for the unknown.
+  FEM = 'FEM_QK(3,2)';      % Finite element method for the unknown.
 %  FEM = 'FEM_PRODUCT(FEM_PK_WITH_CUBIC_BUBBLE(1,1), FEM_PK_WITH_CUBIC_BUBBLE(1,1))';      % Finite element method for the unknown.
   FEM_RHS = 'FEM_QK(3,3)';     % Finite element method for the rhs
-  FEM_MULT = 'FEM_QK(3,0)'; % Finite element method for multipliers
+  FEM_MULT = 'FEM_QK(3,1)'; % Finite element method for multipliers
   OK = 1;
 end;
 
@@ -76,7 +77,7 @@ if (N == 3 && ~QUAD)
   IM = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)';    % Integration method.
   IM_SIMPLEX = 'IM_STRUCTURED_COMPOSITE(IM_TETRAHEDRON(6),1)'; 
   FEM = 'FEM_PK(3,2)';      % Finite element method for the unknown.
-  FEM_RHS = FEM;            % Finite element method for the rhs
+  FEM_RHS ='FEM_PK(3,3)';            % Finite element method for the rhs
   FEM_MULT = 'FEM_PK(3,1)'; % Finite element method for multipliers
   FEM_MULT_DEGREE = 2;      % Degree for multipliers definition
   OK = 1;

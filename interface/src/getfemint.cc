@@ -661,12 +661,21 @@ namespace getfemint {
     error_if_nonwritable(o,writeable);
     return object_to_mesh_levelset(o);
   }
-
-  /*  getfem::mesh_level_set *
+  
+  getfem::mesh_level_set *
   mexarg_in::to_mesh_levelset() {
     return &to_getfemint_mesh_levelset(true)->mesh_levelset();
   }
-  */
+  getfem::level_set *
+  mexarg_in::to_levelset() {
+    return &to_getfemint_levelset(true)->levelset();
+  }
+
+  // getfem::level_set *
+//   mexarg_in::to_const_levelset() {
+//     return &to_getfemint_levelset(false)->levelset();
+//   }
+
 
   /*
     check if the argument is a valid handle to a global_function,

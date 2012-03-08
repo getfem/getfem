@@ -24,9 +24,9 @@ gf_workspace('clear all');
 
   
 
-NX=5
+NX=30
 N = 3
-ls_degree = 2
+ls_degree = 1
 R = 0.4;
 
 if (N == 3)
@@ -36,7 +36,7 @@ if (N == 3)
   mf_mult=gfMeshFem(m,1);
   set(mfu0, 'fem', gf_fem('FEM_QK(3,1)'))
   %set(mfu0, 'fem', gf_fem('FEM_PK(3,1)'));
-  set(mf_mult, 'fem', gf_fem('FEM_QK(3,0)'))
+  set(mf_mult, 'fem', gf_fem('FEM_QK(3,1)'))
   %set(mf_mult, 'fem', gf_fem('FEM_PK(3,0)'));
   adapt_im = 'IM_TETRAHEDRON(6)';
 elseif (N == 2)
@@ -202,17 +202,28 @@ if (N == 2)
 else
  % gf_plot(mfu, U, 'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'refine', 2);
  %Plot displasment
-  %sl=gf_slice({'boundary',{'intersection',{'ball', -1,[0;0;0], 0.39},{'planar',-1,[0;0;0],[0;1;0]}}},mfu,3);
   figure(1);
-  sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0;0],R}}},mfu,1);
+  sl=gf_slice({'boundary',{'intersection',{'ball', -1,[0;0;0], R},{'planar',1,[0;0;0],[0;0;1]}}},mfu,3);
+  %sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0;0],R}}},mfu,1);
   Usl=gf_compute(mfu,U,'interpolate on', sl);
   gf_plot_slice(sl,'mesh_faces','on','mesh','off','data',Usl,'mesh_slice_edges','on');
   xlabel('x'); ylabel('y'); zlabel('z');
   title('Displasment solution');
-  %Plot map eroor on u
+  
+  
+  %plot exact solution
   figure(2);
-  %sl=gf_slice({'boundary',{'intersection',{'ball', -1,[0;0;0], 0.39},{'planar',-1,[0;0;0],[0;0;1]}}},mfu0,10);
-  sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0;0],R}}},mfu0,3);
+  sl=gf_slice({'boundary',{'intersection',{'ball', -1,[0;0;0], R},{'planar',1,[0;0;0],[0;0;1]}}},mfu0,3);
+  %sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0;0],R}}},mfu0,10);
+  Usl=gf_compute(mfu0,Sol_U,'interpolate on', sl);
+  gf_plot_slice(sl,'mesh_faces','on','mesh','off','data',Usl,'mesh_slice_edges','on');
+  xlabel('x'); ylabel('y'); zlabel('z');
+  title('Exact solution');
+  
+  %Plot map eroor on u
+  figure(3);
+  sl=gf_slice({'boundary',{'intersection',{'ball', -1,[0;0;0], R},{'planar',-1,[0;0;0],[0;0;1]}}},mfu0,10);
+  %sl=gf_slice({'boundary',{'intersection',{'ball',-1,[0;0;0],R}}},mfu0,10);
   Usl=gf_compute(mfu0,map_Error,'interpolate on', sl);
   gf_plot_slice(sl,'mesh_faces','on','mesh','off','data',Usl,'mesh_slice_edges','on');
   xlabel('x'); ylabel('y'); zlabel('z');
@@ -220,7 +231,7 @@ else
   
   
   %Plot multiplier
-  figure(3);
+  figure(4);
   %sl=gf_slice({'boundary',{'intersection',{'ball', 0,[0;0;0], R},{'planar',-1,[0;0;0],[0;0;1]}}},mf_mult,10);
   sl=gf_slice({'boundary',{'intersection',{'ball',0,[0;0;0],R}}},mf_mult,3);
   Usl=gf_compute(mf_mult, Lambda,'interpolate on', sl);

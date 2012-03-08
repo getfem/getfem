@@ -28,6 +28,245 @@
 #include <getfem/getfem_fourth_order.h>
 #include <getfem/getfem_Coulomb_friction.h>
 
+#ifdef GETFEM_HAVE_METIS 
+ extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
+ 			    int *, int *, int *, int *, int *);
+ extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
+			    int *, int *, int *, int *, int *);
+
+ extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
+				      int *, int *, float *, int *, int *, int *);
+ extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
+				      int *, int *, int *, int *, int *);
+#endif
+
+/********************************/
+/*compute level set unit normal*/
+
+template<typename VECT1> class level_set_unit_normal 
+  : public getfem::nonlinear_elem_term {
+  const getfem::mesh_fem &mf;
+  std::vector<bgeot::scalar_type> U;
+  bgeot::size_type N;
+  bgeot::base_matrix gradU;
+  bgeot::base_vector coeff;
+  bgeot::multi_index sizes_;
+public:
+  level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
+    : mf(mf_), U(mf_.nb_basic_dof()), N(mf_.linked_mesh().dim()),
+      gradU(1, N) {
+    sizes_.resize(1); sizes_[0] = bgeot::short_type(N);
+    mf.extend_vector(U_, U);
+  }
+  const bgeot::multi_index &sizes() const {  return sizes_; }
+  virtual void compute(getfem::fem_interpolation_context& ctx,
+		       bgeot::base_tensor &t) {
+    bgeot::size_type cv = ctx.convex_num();
+    coeff.resize(mf.nb_basic_dof_of_element(cv));
+    gmm::copy
+      (gmm::sub_vector(U,gmm::sub_index(mf.ind_basic_dof_of_element(cv))),
+       coeff);
+    ctx.pf()->interpolation_grad(ctx, coeff, gradU, 1);
+    bgeot::scalar_type norm = gmm::vect_norm2(gmm::mat_row(gradU, 0));
+    for (bgeot::size_type i = 0; i < N; ++i) t[i] = gradU(0, i) / norm;
+  }
+};
+
+
+
+ template<class MAT>
+void asm_lsneuman_matrix
+(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf, 
+ const getfem::mesh_fem &mf_mult, getfem::level_set &ls,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  MAT &RM = const_cast<MAT &>(RM_);
+
+  level_set_unit_normal<std::vector<bgeot::scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+
+  getfem::generic_assembly assem("t=comp(Base(#2).Grad(#1).NonLin(#3));"
+				 "M(#2, #1)+= t(:,:,i,i)");
+  assem.push_mi(mim);
+  assem.push_mf(mf);
+  assem.push_mf(mf_mult);
+  assem.push_mf(ls.get_mesh_fem());
+  assem.push_mat(RM);
+  assem.push_nonlinear_term(&nterm);
+  assem.assembly(rg);
+}
+
+ 
+    /** 
+	generic normal grad level set matrix (on the whole mesh level set or on the specified
+	convex set level set or boundary level set) 
+	
+    */
+  
+
+template<typename MAT>  void asm_nlsgrad_matrix
+(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf1,
+ const getfem::mesh_fem &mf2,  getfem::level_set &ls,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  MAT &RM = const_cast<MAT &>(RM_);
+  
+  level_set_unit_normal<std::vector<bgeot::scalar_type> >
+    nterm(ls.get_mesh_fem(), ls.values());
+  
+  getfem::generic_assembly
+    assem("t=comp(Grad(#1).NonLin(#3).Grad(#2).NonLin(#3));"
+	  "M(#1, #2)+= sym(t(:,i,i,:,j,j))");
+  assem.push_mi(mim);
+  assem.push_mf(mf1);
+    assem.push_mf(mf2);
+    assem.push_mf(ls.get_mesh_fem());
+    assem.push_mat(RM);
+    assem.push_nonlinear_term(&nterm);
+    assem.assembly(rg);
+  }
+
+
+/**************************************************************/
+/* assembling patch vector                                     */
+/**************************************************************/
+
+template<class VEC>
+void asm_patch_vector     
+(const VEC &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_mult,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  VEC &RM = const_cast<VEC &>(RM_);
+    
+  getfem::generic_assembly assem("t=comp(Base(#1)); V(#1)+= t(:);");
+  assem.push_mi(mim);
+  assem.push_mf(mf_mult);
+  assem.push_vec(RM);
+  // assem.set("RM(#1)+=comp(Base(#1))()");
+  assem.assembly(rg);
+
+}
+/**************************************************************/
+/* assembling patch matrix                                     */
+/**************************************************************/
+
+template<class MAT>
+void asm_stabilization_patch_matrix
+(const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_fem &mf_mult, const getfem::mesh_im &mimbounddown,
+ bgeot::scalar_type ratio_size, bgeot::scalar_type h ){
+  MAT &M1 = const_cast<MAT &>(RM_);
+  
+  /****************************************************/
+  /*        " select patch "                          */
+  /****************************************************/
+  
+  
+  
+  // assemby patch vector
+  const getfem::mesh_fem &mf_P0 = getfem::classical_mesh_fem(mesh, 0);
+  bgeot::size_type nbe = mf_P0.nb_dof();
+  int ne = 0;
+  double size_of_crack = 0;
+  getfem::modeling_standard_plain_vector Patch_Vector(nbe);
+  asm_patch_vector(Patch_Vector, mimbounddown, mf_P0);
+  // cout<<"patch_vectot="<< Patch_Vector<<endl;
+  dal::bit_vector  Patch_element_list, Patch_dof_ind;
+  for (bgeot::size_type i = 0; i < nbe; ++i) {
+    if (Patch_Vector[i] != bgeot::scalar_type(0)){
+      bgeot::size_type cv = mf_P0.first_convex_of_basic_dof(i);
+      Patch_element_list.add(cv);
+      Patch_dof_ind.add(i);
+      ne++;
+      size_of_crack=size_of_crack + Patch_Vector[i];
+    }
+  }
+  // cout<<"Path_element_list="<< Patch_element_list <<endl;
+  //cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
+  cout<<"number of element in patch="<< ne <<endl;
+  std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);
+  std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
+  std::vector<double> vwgtt(ne);
+  int j = 0, k = 0;
+  for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+    numelt[j] = int(ic);
+    indelt[ic] = j;
+  }
+  j = 0;
+  for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+    bgeot::size_type ind_dof_patch = mf_P0.ind_basic_dof_of_element(ic)[0];
+    vwgt[indelt[ic]] = int(1000000*Patch_Vector[ind_dof_patch]);
+    vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
+    xadj[j] = k;
+    bgeot::mesh_structure::ind_set s;
+    mesh.neighbours_of_convex(ic, s);
+    for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
+      if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
+    }
+  }
+  
+  xadj[j] = k;
+  std::vector<int> adjwgt(k);
+  // cout<<"xadj="<<xadj<<endl;
+  //cout<<"adjncy="<<adjncy<<endl;
+  //cout<<"vwgt="<<vwgt<<endl;
+  
+  cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
+  
+  int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
+      // float ubvec[1] = {1.03f};
+  int  options[5] = {0,0,0,0,0};
+  #ifdef GETFEM_HAVE_METIS 
+  //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
+  // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
+  //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //	  &numflag, &nparts, options, &edgecut, &(part[0]));
+  METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+			   &numflag, &nparts, options, &edgecut, &(part[0]));
+  #else
+    GMM_ASSERT1(false, "Metis not present ...");
+  #endif
+  //cout<<"size_of_mesh="<<h<<endl;
+  //cout<<"size_of_crack="<< size_of_crack <<endl;
+  cout<<"nb_partition="<<nparts<<endl;
+  // cout<<"partition="<<part<<endl;
+  //cout<<"edgecut="<<edgecut<<endl;
+  
+
+  /**************************************************************/
+  /*        Assembly matrices                                   */
+  /**************************************************************/
+  
+  
+  std::vector<double> size_patch(nparts);
+  bgeot::size_type nb_dof_mult=mf_mult.nb_dof();
+  getfem::modeling_standard_sparse_matrix M0(nb_dof_mult, nbe);
+  getfem::asm_mass_matrix(M0, mimbounddown, mf_mult, mf_P0);
+  
+  for (bgeot::size_type i=0; i < bgeot::size_type(ne); i++) {
+    size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];	  
+  }
+  
+  //cout<<"size_patch="<<size_patch<<endl;
+  
+  gmm::row_matrix<getfem::modeling_standard_sparse_vector> MAT_aux(nparts, nb_dof_mult);
+  for (bgeot::size_type r=0; r < nbe; r++) {
+    bgeot::size_type cv = mf_P0.first_convex_of_basic_dof(r);
+    gmm::add(gmm::mat_col(M0, r), gmm::mat_row(MAT_aux, part[indelt[cv]]));
+  }
+  
+  gmm::row_matrix<getfem::modeling_standard_sparse_vector> MAT_proj(nbe, nb_dof_mult);
+  
+  for (bgeot::size_type r=0; r < nbe; r++) {
+    bgeot::size_type cv = mf_P0.first_convex_of_basic_dof(r);
+    int p=part[indelt[cv]];
+    gmm::copy(gmm::scaled(gmm::mat_row(MAT_aux, p), 1./size_patch[p]),
+	      gmm::mat_row(MAT_proj, r));
+  }
+  
+  gmm::mult(M0, MAT_proj, M1);
+  
+}
+
+
 using namespace getfemint;
 namespace getfemint {
   struct darray_with_gfi_array : public darray {
@@ -72,6 +311,8 @@ namespace gmm {
     { return it[i]; }
   };
 }
+
+
 
 namespace getfem {
   template<> class vec_factory<darray_with_gfi_array> :
@@ -202,7 +443,9 @@ void assemble_source(size_type boundary_num,
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
   }
 }
-
+ 
+ 
+  
 /*@GFDOC
 
   General assembly function.
@@ -256,11 +499,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   static SUBC_TAB subc_tab;
 
   if (subc_tab.size() == 0) {
-
-
+    
+    
     /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, boundary_num]])
     Assembly of a mass matrix.
-
+    
     Return a @tsp object.
     @*/
     sub_command
@@ -273,15 +516,64 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2, nbound);
        out.pop().from_sparse(M);
        );
-
-
+    
+    /*@FUNC M = ('lsneuman matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls)
+      Assembly of a level set Neuman  matrix.
+      
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("lsneuman matrix", 3, 4, 0, 1, 
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
+       getfem::level_set *ls1= in.pop().to_levelset();
+       gf_real_sparse_by_col M(mf_u2->nb_dof(), mf_u1->nb_dof());
+       asm_lsneuman_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
+       out.pop().from_sparse(M);
+       );
+    
+    /*@FUNC M = ('nlsgrad matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls)
+      Assembly of a nlsgrad matrix.
+      
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("nlsgrad matrix", 3, 4, 0, 1, 
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
+       const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
+       getfem::level_set *ls1= in.pop().to_levelset();
+       gf_real_sparse_by_col M(mf_u1->nb_dof(), mf_u2->nb_dof());
+       asm_nlsgrad_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
+       out.pop().from_sparse(M);
+       );
+    
+    /*@FUNC M = ('stabilization patch matrix', @tm mesh, @tmf mf,  @tmim mim, @real ratio, @real h)
+      Assembly of stabilization patch matrix .
+      
+      Return a @tsp object.
+      @*/
+    sub_command
+      ("stabilization patch matrix", 5, 5, 0, 1, 
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh *mesh = in.pop().to_const_mesh();
+       const getfem::mesh_fem *mf_mult = in.pop().to_const_mesh_fem();
+       double ratio_size= in.pop().to_scalar();
+       double h= in.pop().to_scalar();
+       gf_real_sparse_by_col M(mf_mult->nb_dof(), mf_mult->nb_dof());
+       asm_stabilization_patch_matrix(M, *mesh,* mf_mult, *mim, ratio_size, h);
+       out.pop().from_sparse(M);
+       );
+    
+    
     /*@FUNC L = ('laplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
-    Assembly of the matrix for the Laplacian problem.
-
-    :math:`\nabla\cdot(a(x)\nabla u)`  with `a` a scalar.
-
-    Return a @tsp object.
-    @*/
+      Assembly of the matrix for the Laplacian problem.
+      
+      :math:`\nabla\cdot(a(x)\nabla u)`  with `a` a scalar.
+      
+      Return a @tsp object.
+      @*/
     sub_command
       ("laplacian", 4, 4,0, 1,
        const getfem::mesh_im *mim = get_mim(in);
@@ -298,7 +590,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     :math:`\nabla\cdot(C(x):\nabla u)`
     with :math:`C` defined via `lambda_d` and `mu_d`.
-
+    
     Return a @tsp object.
     @*/
     sub_command
@@ -312,24 +604,24 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        getfem::asm_stiffness_matrix_for_linear_elasticity(M, *mim, *mf_u, *mf_d, lambda, mu);
        out.pop().from_sparse(M);
        );
-
-
+    
+    
     /*@FUNC TRHS = ('nonlinear elasticity', @tmim mim, @tmf mf_u, @dvec U, @str law, @tmf mf_d, @dmat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', @tmf mf_p, @dvec P|'incompressible rhs', @tmf mf_p, @dvec P})
-    Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
-
-    The solution `U` is required at the current time-step. The `law`
-    may be choosen among:
-
-     - 'SaintVenant Kirchhoff':
-       Linearized law, should be avoided). This law has the two usual
-       Lame coefficients as parameters, called lambda and mu.
-     - 'Mooney Rivlin':
-       Only for incompressibility. This law has two parameters,
-       called C1 and C2.
-     - 'Ciarlet Geymonat':
-       This law has 3 parameters, called lambda, mu and gamma, with
-       gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
-
+      Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
+      
+      The solution `U` is required at the current time-step. The `law`
+      may be choosen among:
+      
+      - 'SaintVenant Kirchhoff':
+      Linearized law, should be avoided). This law has the two usual
+      Lame coefficients as parameters, called lambda and mu.
+      - 'Mooney Rivlin':
+      Only for incompressibility. This law has two parameters,
+      called C1 and C2.
+      - 'Ciarlet Geymonat':
+      This law has 3 parameters, called lambda, mu and gamma, with
+      gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
+      
     The parameters of the material law are described on the @tmf `mf_d`.
     The matrix `params` should have `nbdof(mf_d)` columns, each row
     correspounds to a parameter.
