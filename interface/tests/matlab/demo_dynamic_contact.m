@@ -27,9 +27,9 @@ clear all;
 plot_mesh = true;
 
 
+NX = 20;
 
-
-m=gf_mesh('cartesian', [0:0.05:1]);
+m=gf_mesh('cartesian', [0:1/NX:1]);
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
@@ -165,7 +165,7 @@ gf_model_set(md, 'add continuous contact with rigid obstacle brick', ...
 nbdofl = size(ldof,1);
 U0 = (gf_mesh_fem_get(mfu, 'eval', { sprintf('%g+0.5-0.5*x', dirichlet_val)}))'
 
-gf_plot(mfu, U0');
+% gf_plot(mfu, U0');
 
 MV0 = zeros(nbdofu, 1);
 V1 = zeros(nbdofu, 1);
@@ -222,9 +222,21 @@ for t = 0:dt:10
   nit = nit + 1;
   disp(sprintf('nit = %d', nit));
   if (t >= tplot)
-    gf_plot(mfu, U1');
-    pause;
-    tplot = tplot + 0.1;
+      if (d == 1)
+        X = [0:1/NX:1]';
+        plot(zeros(1, Msize)-0.05, X+U1, '-b');
+        hold on;
+        plot(zeros(1, Msize)+0.05, U1+X, '-b');
+        for i = 1:NX+1
+           plot([-0.05 0.05], (U1(i)+X(i))*[1 1], 'b'); 
+        end
+        hold off;
+        axis([-0.4 0.4 0.0 1.5]);
+      else
+        gf_plot(mfu, U1');
+      end
+    pause(0.1);
+    tplot = tplot + 0.01;
   end;
   
 
