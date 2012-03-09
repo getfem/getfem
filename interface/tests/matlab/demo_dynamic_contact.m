@@ -53,13 +53,15 @@ d = gf_mesh_get(m, 'dim'); % Mesh dimension
 
 clambda = 1;             % Lame coefficient
 cmu = 1;                 % Lame coefficient
-vertical_force = 0.0;   % Volumic load in the vertical direction
+vertical_force = 1.0;    % Volumic load in the vertical direction
 r = 10;                  % Augmentation parameter
-dt = 0.005;              % time step
+dt = 0.0005;              % time step
 beta = 0.25;             % Newmark scheme coefficient
 gamma = 0.5;             % Newmark scheme coefficient
+theta = 0.5;             % theta-method scheme coefficient
 dirichlet_val = 0.45;
-singular_mass = 0;
+singular_mass = 1;
+with_theta_method = 1;
 
 niter = 100;             % Maximum number of iterations for Newton's algorithm.
 
@@ -136,17 +138,20 @@ md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
-ind_el = gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
+gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
                  'clambda', 'cmu');
-gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*beta));
+if (with_theta_method)
+    gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*theta*theta));
+else
+    gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*beta));
+end
 ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nbdofu,1));
 
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
 gf_model_set(md, 'add initialized data', 'dirichletdata', [dirichlet_val]);
-gf_model_set(md, 'add multiplier', 'dirichlet_multiplier', mfu, 'u');
-gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', 'dirichlet_multiplier', GAMMAD, 'dirichletdata');
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, GAMMAD, 'dirichletdata');
 
 ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
 mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -164,33 +169,42 @@ gf_plot(mfu, U0');
 pause;
 
 MV0 = zeros(nbdofu, 1);
+V1 = zeros(nbdofu, 1);
 % LAMBDA0 = zeros(nbdofl, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F');
 K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
 % LL0 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA0);
-MA0 = FF;
+MA0 = FF-K*U0;
 
 nit = 0;
-for t = 0:dt:100
+tplot = 0;
+for t = 0:dt:10
   
   % calcul de B
-  B = (M*U0 + dt*MV0 + dt*dt*(1-beta)*MA0)/(beta*dt*dt);
+  if (with_theta_method)
+      B = (M*U0 + dt*MV0)/(dt*dt*theta*theta) + (1-theta)*MA0/theta;
+  else
+      B = (M*U0 + dt*MV0 + dt*dt*(1/2-beta)*MA0)/(beta*dt*dt);
+  end
   
   gf_model_set(md, 'set private rhs', ind_rhs, B)
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter);
 
   U1 = (gf_model_get(md, 'variable', 'u'))';
-  % LAMBDA1 = (gf_model_get(md, 'variable', 'lambda_n'))';
-  % LL1 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA1);
-  
+  lambda_n = gf_model_get(md, 'variable', 'lambda_n');
   disp(sprintf('u1(1) = %g', U1(1)));
+  disp(sprintf('lambda_n = %g', lambda_n(1)));
   
-  MA1 = (M*U1-M*U0-dt*MV0-dt*dt*(1-beta)*MA0)/(dt*dt*beta);
-  MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
-  
+  if (with_theta_method)
+     MV1 = ((M*U1 - M*U0)/dt -(1-theta)*MV0)/theta;
+     MA1 = ((MV1-MV0)/dt - (1-theta)*MA0)/theta;
+  else
+     MA1 = (M*U1-M*U0-dt*MV0-dt*dt*(1/2-beta)*MA0)/(dt*dt*beta);
+     MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
+  end   
+      
   Msize = size(M,1);
-  
-  MV1(Msize) = 0;
+  % MV1(Msize) = 0;
   if (singular_mass)
     V1(2:Msize) = M(2:Msize, 2:Msize) \ MV1(2:Msize);
     V1(1) = 0;
@@ -198,22 +212,22 @@ for t = 0:dt:100
     V1 = M \ MV1;
     disp('ok...');
   end
-  V1(Msize) = 0;
+  % V1(Msize) = 0;
   
   E = (V1'*MV1 + U1'*K*U1)/2 - FF'*U1;
   disp(sprintf('energy = %g', E));
   
-  ++nit;
-  if (mod(nit, 10) == 0)
+  nit = nit + 1;
+  disp(sprintf('nit = %d', nit));
+  if (t >= tplot)
     gf_plot(mfu, U1');
     pause;
+    tplot = tplot + 0.1;
   end;
   
-  
+
   U0 = U1;
-  % LAMBDA0 = LAMBDA1;
   MV0 = MV1;
-  % LL0 = LL1;
   MA0 = MA1;
 end
     
