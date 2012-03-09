@@ -55,13 +55,13 @@ clambda = 1;             % Lame coefficient
 cmu = 1;                 % Lame coefficient
 vertical_force = 1.0;    % Volumic load in the vertical direction
 r = 10;                  % Augmentation parameter
-dt = 0.0005;              % time step
-beta = 0.25;             % Newmark scheme coefficient
+dt = 0.005;               % time step
+beta = 0.5;              % Newmark scheme coefficient
 gamma = 0.5;             % Newmark scheme coefficient
 theta = 0.5;             % theta-method scheme coefficient
 dirichlet_val = 0.45;
-singular_mass = 1;
-with_theta_method = 1;
+singular_mass = 0;
+with_theta_method = 0;
 
 niter = 100;             % Maximum number of iterations for Newton's algorithm.
 
@@ -166,7 +166,6 @@ nbdofl = size(ldof,1);
 U0 = (gf_mesh_fem_get(mfu, 'eval', { sprintf('%g+0.5-0.5*x', dirichlet_val)}))'
 
 gf_plot(mfu, U0');
-pause;
 
 MV0 = zeros(nbdofu, 1);
 V1 = zeros(nbdofu, 1);
@@ -174,8 +173,9 @@ V1 = zeros(nbdofu, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F');
 K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
 % LL0 = gf_asm('boundary', GAMMAC, 'l=data(#2);V(#1)+=comp(vBase(#1).Base(#2).Normal())(:,i,k,i).l(k)', mim, mfu, mflambda_partial, LAMBDA0);
+Msize = size(M,1);
 MA0 = FF-K*U0;
-
+A0 = M \ MA0; A0(Msize) = 0; MA0 = M * A0;
 nit = 0;
 tplot = 0;
 for t = 0:dt:10
@@ -195,6 +195,10 @@ for t = 0:dt:10
   disp(sprintf('u1(1) = %g', U1(1)));
   disp(sprintf('lambda_n = %g', lambda_n(1)));
   
+  disp(sprintf('U0(N) = %g', U0(Msize)));
+  disp(sprintf('U1(N) = %g', U1(Msize)));
+  disp(sprintf('MV0(N) = %g', MV0(Msize)));
+  
   if (with_theta_method)
      MV1 = ((M*U1 - M*U0)/dt -(1-theta)*MV0)/theta;
      MA1 = ((MV1-MV0)/dt - (1-theta)*MA0)/theta;
@@ -203,8 +207,6 @@ for t = 0:dt:10
      MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
   end   
       
-  Msize = size(M,1);
-  % MV1(Msize) = 0;
   if (singular_mass)
     V1(2:Msize) = M(2:Msize, 2:Msize) \ MV1(2:Msize);
     V1(1) = 0;
@@ -212,7 +214,7 @@ for t = 0:dt:10
     V1 = M \ MV1;
     disp('ok...');
   end
-  % V1(Msize) = 0;
+  % disp(sprintf('V1(N) = %g', V1(Msize)));
   
   E = (V1'*MV1 + U1'*K*U1)/2 - FF'*U1;
   disp(sprintf('energy = %g', E));
