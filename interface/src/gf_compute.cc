@@ -155,6 +155,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     for (size_type i = 0; i < nbpoints; ++i) {
       gmm::copy(gmm::sub_vector(PTS, gmm::sub_interval(i*N, N)), p);
       mti.add_point(p);
+      cout << "point " << i+1 << " : " << p << endl;
     }
     
     size_type qmult = mf.get_qdim();
