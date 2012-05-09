@@ -83,6 +83,13 @@ namespace bgeot {
     tensor_ranges() : std::vector<index_type>() {}
     tensor_ranges(size_type n) : std::vector<index_type>(n) {}
     tensor_ranges(size_type n, index_type V) : std::vector<index_type>(n,V) {}
+    bool is_zero_size() const
+    {
+      for (dim_type i=0; i < this->size(); ++i)
+        if ((*this)[i] == 0)
+          return true;
+      return false;
+    }
   };
   typedef std::vector<stride_type> tensor_strides;
   typedef std::vector<dim_type> index_set;
@@ -235,14 +242,14 @@ namespace bgeot {
       eval_strides();
     }
     void set_full(index_type dim, index_type range) {
-      assert(range);
+      // assert(range); // not sure if permitting range==0 can have any side effects
       r.resize(1); r[0] = range;
       idxs.resize(1); idxs[0] = dim_type(dim);
       m.assign(range, true); set_card(range);
       eval_strides();
     }
     void set_empty(index_type dim, index_type range) {
-      assert(range);
+      // assert(range); // not sure if permitting range==0 can have any side effects
       r.resize(1); r[0] = range;
       idxs.resize(1); idxs[0] = dim_type(dim);
       m.assign(range,false); set_card(0);

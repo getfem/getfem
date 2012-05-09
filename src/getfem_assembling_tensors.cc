@@ -72,6 +72,10 @@ namespace getfem {
     }
   }
 
+  bool ATN::is_zero_size() {
+    return child(0).is_zero_size();
+  }
+
   /* 
      general class for tensor who store their data
   */
@@ -79,14 +83,13 @@ namespace getfem {
     TDIter data_base;
   protected:
     std::vector<scalar_type> data;
-  public:
-    void reinit();
+    void reinit_();
     void reinit0()
-    { ATN_tensor_w_data::reinit(); std::fill(data.begin(), data.end(),0); }
+    { ATN_tensor_w_data::reinit_(); std::fill(data.begin(), data.end(),0); }
   };
 
   /* note that the data is NOT filled with zeros */
-  void ATN_tensor_w_data::reinit() {
+  void ATN_tensor_w_data::reinit_() {
     tr.assign_shape(req_shape);
     tr.init_strides();
     if (tr.card() > 10000000) {
@@ -97,7 +100,7 @@ namespace getfem {
     if (tr.card() == 0) {
       cerr << "WARNING: tensor " << name()
 	   << " will be created with a size of " 
-	   << ranges() << " and 0 non-nul elements!" << endl;
+	   << ranges() << " and 0 non-null elements!" << endl;
     }
     data.resize(tr.card());
     data_base = &data[0];
@@ -189,7 +192,9 @@ namespace getfem {
 	s.append(red[n].first->ranges().size(), ' ');
       return s;
     }
-    void reinit() {
+
+  private:
+    void reinit_() {
       tred.clear();
       for (dim_type i=0; i < red.size(); ++i) {
 	// cerr << "ATN_reduced_tensor::reinit : insertion of r(" << red_n(i) 
@@ -212,8 +217,7 @@ namespace getfem {
       /* on fournit notre propre tenseur pour stocker les resultats */
       tred.prepare(&tensor());
     }
-  private:
-    
+
     void exec_(size_type , dim_type ) {
       std::fill(data.begin(), data.end(), 0.); /* do_reduction ne peut pas */
       /* le faire puisque ce n'est pas lui le proprietaire du tenseur de   */
@@ -253,11 +257,11 @@ namespace getfem {
 		   tensor_mask::Slice(slice_dim, index_type(slice_idx))));
       child(0).merge_required_shape(ts);
     }
-    void reinit() {
+  private:
+    void reinit_() {
       tensor() = tensor_ref(child(0).tensor(),
 		   tensor_mask::Slice(slice_dim, index_type(slice_idx)));
     }
-  private:
     void exec_(size_type, dim_type) {}
   };
 
@@ -294,7 +298,7 @@ namespace getfem {
       ts.permute(reorder, true);
       child(0).merge_required_shape(ts);
     }
-    void reinit() {
+    void reinit_() {
       tensor() = child(0).tensor();
       tensor().permute(reorder);
     }
@@ -327,7 +331,7 @@ namespace getfem {
       tensor_shape ts = req_shape.diag_shape(tensor_mask::Diagonal(i1,i2));
       child(0).merge_required_shape(ts);
     }
-    void reinit() {
+    void reinit_() {
       tensor() = tensor_ref(child(0).tensor(), tensor_mask::Diagonal(i1,i2));
     }
     void exec_(size_type, dim_type) {}
@@ -866,7 +870,7 @@ namespace getfem {
       }
     }
 
-    void reinit() {
+    void reinit_() {
       if (!shape_updated_) return;
       tensor().clear();
       tsize = 1;
@@ -971,12 +975,12 @@ namespace getfem {
       }
     }
     virtual void init_required_shape() { req_shape = tensor_shape(ranges()); }
-    void reinit() {
-      ATN_tensor_w_data::reinit();
-      mti.assign(tensor(), true);
-    }
 
   private:
+    void reinit_() {
+      ATN_tensor_w_data::reinit_();
+      mti.assign(tensor(), true);
+    }
     void exec_(size_type cv, dim_type ) {
       vdim.build_strides_for_cv(cv, e_r, e_str);
       assert(e_r == ranges());
@@ -1012,12 +1016,12 @@ namespace getfem {
       child(0).merge_required_shape(ts);
     }
 
-    void reinit() {
+  private:
+    void reinit_() {
       req_shape.set_full(ranges()); // c'est plus simple comme ça
       ATN_tensor_w_data::reinit0();
       mti.assign(child(0).tensor(),true);
     }
-  private:
     void exec_(size_type, dim_type) {
       std::fill(data.begin(), data.end(), 0.);
       mti.rewind();
@@ -1039,11 +1043,11 @@ namespace getfem {
       if ((shape_updated_ = (ranges() != child(0).ranges())))      
 	r_ = child(0).ranges();
     }
-    void reinit() {
+  private:
+    void reinit_() {
       ATN_tensor_w_data::reinit0();
       mti.assign(tensor(), child(0).tensor(),false);
     }
-  private:
     void update_cv_(size_type, dim_type) {
       mti.rewind();
       do {
@@ -1072,17 +1076,17 @@ namespace getfem {
 	  ASM_THROW_TENSOR_ERROR("can't add two tensors of sizes " << 
 				 ranges() << " and " << child(i).ranges());
     }
-    void reinit() {
-      ATN_tensor_w_data::reinit0();
-      mti.resize(nchilds());
-      for (size_type i=0; i < nchilds(); ++i)
-	mti[i].assign(tensor(), child(i).tensor(),false);
-    }
     void apply_scale(scalar_type s) { 
       for (size_type i=0; i < scales.size(); ++i) scales[i] *= s; 
     }
     ATN_tensors_sum_scaled* is_tensors_sum_scaled() { return this; }
   private:
+    void reinit_() {
+      ATN_tensor_w_data::reinit0();
+      mti.resize(nchilds());
+      for (size_type i=0; i < nchilds(); ++i)
+	mti[i].assign(tensor(), child(i).tensor(),false);
+    }
     void exec_(size_type, dim_type) {
       //if (cv == 0) {
       // cerr << "ATN_tensors_sum["<< name() << "] req_shape="
@@ -1113,11 +1117,11 @@ namespace getfem {
       if ((shape_updated_ = child(0).is_shape_updated()))
 	r_ = child(0).ranges();
     }
-    void reinit() {
-      ATN_tensor_w_data::reinit();
+  private:
+    void reinit_() {
+      ATN_tensor_w_data::reinit_();
       mti.assign(tensor(), child(0).tensor(),false);
     }
-  private:
     void exec_(size_type, dim_type) {
       std::fill(data.begin(), data.end(), v);
       mti.rewind();
@@ -1134,8 +1138,8 @@ namespace getfem {
   public:
     ATN_print_tensor(ATN_tensor& a, std::string n_) 
       : name(n_) { add_child(a); }
-    void reinit() {}
   private:
+    void reinit_() {}
     void exec_(size_type cv, dim_type face) {
       multi_tensor_iterator mti(child(0).tensor(), true);
       cout << "------- > evaluation of " << name << ", at" << endl;

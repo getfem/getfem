@@ -87,11 +87,12 @@ namespace getfem {
     size_type nchilds() { return childs_.size(); }
     /* reinit is called each time the object need to reset itself
        (when the shape of one of its childs has changed) */
-    virtual void reinit() = 0;   
+    void reinit() { if (!is_zero_size()) reinit_(); }
     /* do the computations for a given convex */
     void exec(size_type cv, dim_type face) {      
       if (cv != current_cv || face != current_face) {
-	exec_(cv,face);
+        if (!is_zero_size())
+          exec_(cv,face);
 	current_cv = cv;
 	current_face = face;
       }
@@ -103,11 +104,14 @@ namespace getfem {
      */
     virtual void update_childs_required_shape();
 
+    virtual bool is_zero_size();
+
     /* numbering og tensors, such that if i < j then tensor(j)
        cannot be in the sub-tree of tensor(i) */
     void set_number(unsigned &gcnt);
     unsigned number() const { return number_; }
   private:
+    virtual void reinit_() = 0;
     virtual void exec_(size_type , dim_type ) {}
   };
   
@@ -152,6 +156,8 @@ namespace getfem {
     tensor_ref& tensor() { 
       return tr; 
     }
+
+    bool is_zero_size() { return r_.is_zero_size(); }
 
     void merge_required_shape(const tensor_shape& shape_from_parent) {
       req_shape.merge(shape_from_parent, false);
@@ -210,7 +216,7 @@ namespace getfem {
 			       << strides[vdim.size()]);      
     }
   private:
-    void reinit() {
+    void reinit_() {
       mti = multi_tensor_iterator(child(0).tensor(),true);
     }
     void exec_(size_type cv, dim_type) {
@@ -296,7 +302,7 @@ namespace getfem {
       it.reserve(100);
     }
   private:
-    void reinit() {
+    void reinit_() {
       mti = multi_tensor_iterator(child(0).tensor(),true);
       it.resize(0);
     }
