@@ -144,7 +144,30 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     garray<T> V = out.pop().create_array(dims, T());
     sl->interpolate(mf, U, V);
   }
-  else THROW_BADARG("expecting a mesh_fem or a mesh_slice for interpolation");
+  else {
+
+    size_type N = mf.get_qdim();
+    darray st = in.pop().to_darray();
+    std::vector<double> PTS(st.begin(), st.end());
+    size_type nbpoints = gmm::vect_size(PTS) / N;
+    getfem::base_node p(N);
+    getfem::mesh_trans_inv mti(mf.linked_mesh());
+    for (size_type i = 0; i < nbpoints; ++i) {
+      gmm::copy(gmm::sub_vector(PTS, gmm::sub_interval(i*N, N)), p);
+      mti.add_point(p);
+    }
+    
+    size_type qmult = mf.get_qdim();
+    if (qmult != 1) dims.push_back(unsigned(qmult));
+    dims.push_back(unsigned(nbpoints));
+    dims.opt_transform_col_vect_into_row_vect();
+    garray<T> V = out.pop().create_array(dims,T());
+
+    getfem::base_matrix Maux;
+    getfem::interpolation(mf, mti, U, V, Maux, 0);
+
+  }
+  // else THROW_BADARG("expecting a mesh_fem or a mesh_slice for interpolation");
 }
 
 bool U_is_a_vector(const rcarray &U, const std::string& cmd) {
@@ -428,8 +451,8 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC Ui = ('interpolate on', {@tmf mfi | @tsl sli})
-    Interpolate a field on another @tmf or a @tsl.
+    /*@FUNC Ui = ('interpolate on', {@tmf mfi | @tsl sli | @vec pts})
+    Interpolate a field on another @tmf or a @tsl or a list of points.
 
     - Interpolation on another @tmf `mfi`:
        `mfi` has to be Lagrangian. If `mf` and `mfi` share the same
@@ -439,6 +462,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        mesh, but it is much faster. This can also be used with
        SLICE:INIT('points') to obtain field values at a given set of
        points.
+    - Interpolation on a set of points `pts`
 
     See also ::ASM('interpolation matrix')
     @*/
