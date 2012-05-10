@@ -655,7 +655,11 @@ namespace getfem {
     eit = elements.find(c.convex_num());
     GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << c.convex_num());
     elt_projection_data &e = eit->second;
-    if (e.nb_dof == 0) return;
+    if (e.nb_dof == 0) { // return undefined normal vector and huge gap
+        normal = base_node(c.N());
+        gap = 1e12;
+        return;
+    }
 
     std::map<size_type,gausspt_projection_data>::iterator git;
     git = e.gausspt.find(c.ii());
