@@ -132,7 +132,13 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
       The `where` argument define the domain of integration with respect to
       the levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and
-      'BOUNDARY'.@*/
+      'BOUNDARY'.
+
+      CAUTION: this integration method will be defined only on the element
+      cut by the level-set. For the 'ALL', 'INSIDE' and 'OUTSIDE' options
+      it is mandatory to use the method ``MESH_IM:SET('integ')`` to define
+      the integration method on the remaining elements.
+      @*/
     sub_command
       ("levelset", 3, 5, 0, 1,
        getfemint_mesh_levelset *gmls = in.pop().to_getfemint_mesh_levelset();
