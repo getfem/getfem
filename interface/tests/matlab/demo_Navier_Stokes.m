@@ -67,11 +67,11 @@ Fd = [gf_mesh_fem_get(mf_f, 'eval', { 0}); gf_mesh_fem_get(mf_f, 'eval', { rho*g
 FD =Fd;
 U = zeros(gf_mesh_fem_get(mf_u, 'nbdof'), 1); % initial condition
 
-M=gf_asm('mass matrix',mim,mf_u) / Dt;
+M=rho*gf_asm('mass matrix',mim,mf_u) / Dt;
 K=nu*gf_asm('volumic','M(#1,#1)+=comp(vGrad(#1).vGrad(#1))(:,i,j,:,i,j)', mim, mf_u);
 F=gf_asm('volumic source',mim,mf_u,mf_f,Fd); %#1 methode d'elmt fini 1, vBase vecteur de base de methode d'EF 1, vGrad grad vect
 Kp=gf_asm('volumic','M(#1,#1)+=comp(Grad(#1).Grad(#1))(:,i,:,i)', mim, mf_p);
-D=gf_asm('volumic','M(#1,#2)+=comp(Base(#1).vGrad(#2))(:,:,i,i)', mim, mf_p, mf_u) / Dt;
+D=gf_asm('volumic','M(#1,#2)+=comp(Base(#1).vGrad(#2))(:,:,i,i)', mim, mf_p, mf_u);
 B=gf_asm('volumic','M(#1,#2)+=comp(vBase(#1).Grad(#2))(:,i,:,i)', mim, mf_u, mf_p);
 
 % for the vorticity computation
@@ -91,7 +91,7 @@ for t=0:Dt:T
     
   if (scheme == 1)
     
-    C=gf_asm('volumic','a=data(#1);M(#1,#1)+=comp(vBase(#1).vGrad(#1).vBase(#1))(i,j,:,k,j,:,k).a(i)', mim,mf_u, U);
+    C=rho*gf_asm('volumic','a=data(#1);M(#1,#1)+=comp(vBase(#1).vGrad(#1).vBase(#1))(i,j,:,k,j,:,k).a(i)', mim,mf_u, U);
     A = M + K + C;
     L = F + M * U;
   
@@ -106,17 +106,17 @@ for t=0:Dt:T
     end;
     U1_2 = A \ L;
  
-    L2 = -D * U1_2;
+    L2 = -D * U1_2/Dt;
     L2(1) = 0;
     P =  Kp \ L2 ;
     U = M \ (M * U1_2 - B * P);
   
   elseif (scheme == 2)
       
-      C=gf_asm('volumic','a=data(#1);M(#1,#1)+=comp(vBase(#1).vGrad(#1).vBase(#1))(i,j,:,k,j,:,k).a(i)', mim,mf_u, U);
-      C=C+gf_asm('volumic','a=data(#1);M(#1,#1)+=comp(vBase(#1).vGrad(#1).vBase(#1))(:,i,j,k,k,:,i).a(j)', mim,mf_u, U)/2;
+      C=rho*gf_asm('volumic','a=data(#1);M(#1,#1)+=comp(vBase(#1).vGrad(#1).vBase(#1))(i,j,:,k,j,:,k).a(i)', mim,mf_u, U);
+      C=C+rho*gf_asm('volumic','a=data(#1);M(#1,#1)+=comp(vBase(#1).vGrad(#1).vBase(#1))(:,i,j,k,k,:,i).a(j)', mim,mf_u, U)/2;
       
-      A = [M+K+C, (-Dt*D)'; -Dt*D, zeros(Ndofp)];
+      A = [M+K+C, -D'; -D, zeros(Ndofp)];
       L = F + M * U;
       
       for i=UBOUND     % Boundary conditions
