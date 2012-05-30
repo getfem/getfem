@@ -1885,6 +1885,45 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+     /*@SET ind = ('add Nitsche contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_gamma, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
+
+      Add a contact with friction condition with a rigid obstacle
+      to the model with  Nitsche strategy (no multiplier) in an integral way.
+      This is an experimental brick, which works only for linear homogeneous
+      isotropic elasticity.
+      The condition is applied on the variable `varname_u`
+      on the boundary corresponding to `region`. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance
+      to the obstacle (interpolated on a finite element method).
+      The Nitsche parameter `dataname_gamma` should be chosen in a
+      range of acceptable values. `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method. `dataname_lambda` and `dataname_mu` are the Lame coefficients.
+    @*/
+     sub_command
+       ("add Nitsche contact with friction with rigid obstacle brick", 8, 8, 0, 1,
+
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string dataname_obs = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        std::string dataname_coeff = in.pop().to_string();
+        std::string dataname_lambda = in.pop().to_string();
+        std::string dataname_mu = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+
+        size_type ind=
+        getfem::add_Nitsche_contact_with_friction_with_rigid_obstacle_brick
+        (md->model(), gfi_mim->mesh_im(), varname_u, dataname_obs, dataname_r,
+	 dataname_coeff, dataname_lambda, dataname_mu, region);
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+#endif
+
+
+
      /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt [, @str dataname_gamma [, @str dataname_vt]]]]])
 
       Add a contact with friction condition with a rigid obstacle

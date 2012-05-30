@@ -604,6 +604,20 @@ namespace getfem {
   (model &md, size_type indbrick,
    scalar_type &area, model_real_plain_vector &Forces);
 
+
+
+
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+  // Experimental implementation of contact condition with Nitsche method.
+  // To be deleted when a more general implementation will be designed.
+  size_type add_Nitsche_contact_with_friction_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_lambda, const std::string &dataname_mu,
+   size_type region);
+#endif
+
 }  /* end of namespace getfem.                                             */
 
 

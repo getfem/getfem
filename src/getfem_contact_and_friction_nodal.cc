@@ -794,22 +794,21 @@ namespace getfem {
                   }
 
               if (!Tresca_version) {
-                if (augmentation_version <= 1 || RLN[i] <= vt0) {// à verif
+                if (augmentation_version <= 1 || RLN[i] <= vt0) {
                   ball_projection_grad_r(gmm::sub_vector(RLT, SUBI), th, vg);
                   for (size_type k = 0; k < d; ++k)
                     T_t_n(i*d+k, i) = - friction_coeff[i] * vg[k] / r;
                 }
               }
               for (size_type k = 0; k < d; ++k) pg(k,k) -= vt1;
+	      gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t,SUBI));
               if (Hughes_stabilized) {
                 for (size_type k = 0; k < d; ++k)
                   for (size_type l = 0; l < d; ++l) {
                     gmm::add(gmm::scaled(gmm::mat_row(DDT, d*i+l), -pg(k,l)),
                              gmm::mat_col(T_t_t, d*i+k));
-                    T_t_t(d*i+l, d*i+k) += pg(k,l) / r;
                   }
-              } else
-                gmm::copy(gmm::scaled(pg, vt1/r), gmm::sub_matrix(T_t_t,SUBI));
+              }
 
             }
             if (Hughes_stabilized) {

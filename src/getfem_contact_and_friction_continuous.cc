@@ -1433,7 +1433,7 @@ namespace getfem {
     pbrick pbr = new penalized_contact_rigid_obstacle_brick(false, option);
 
     model::termlist tl;
-    tl.push_back(model::term_description(varname_u, varname_u, true));
+    tl.push_back(model::term_description(varname_u, varname_u, false));
 
     model::varnamelist dl(1, dataname_obs);
     dl.push_back(dataname_r);
@@ -2407,5 +2407,434 @@ namespace getfem {
     }
 
   }
+
+
+
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+
+
+  // Experimental implementation of contact condition with Nitsche method.
+  // To be deleted when a more general implementation will be designed.
+
+
+  class contact_nitsche_nonlinear_term : public nonlinear_elem_term {
+
+  protected:
+    base_small_vector lnt, lt; // multiplier lambda and its tangential component lambda_t
+    scalar_type ln;            // normal component lambda_n of the multiplier
+    base_small_vector ut;      // tangential relative displacement
+    scalar_type un;            // normal relative displacement (positive when the first
+                               // elastic body surface moves outwards)
+    base_small_vector no, n;   // surface normal, pointing outwards with respect
+                               // to the (first) elastic body
+    scalar_type g, f_coeff;    // gap and coefficient of friction values
+    scalar_type lambda, mu;    // Lame coefficients
+
+    base_small_vector aux1, auxN, V;
+    base_matrix GP, grad;
+    base_vector coeff;
+    const mesh_fem &mf_u;       // mandatory
+    const mesh_fem &mf_obs;     // mandatory
+    const mesh_fem *pmf_coeff;
+    base_vector U, obs, friction_coeff;
+
+    void adjust_tensor_size(void) {
+      sizes_.resize(4); sizes_[0] = sizes_[1] = sizes_[2] = sizes_[3] = N;
+      switch (option) {
+      case 1 : sizes_.resize(1); break;
+      case 2 : case 3 :  sizes_.resize(2); break;
+      case 4 :  sizes_.resize(3); break;
+      }
+      gmm::resize(grad, 1, N);
+      lnt.resize(N); lt.resize(N); ut.resize(N); no.resize(N); n.resize(N);
+      aux1.resize(1); auxN.resize(N); V.resize(N);
+      gmm::resize(GP, N, N);
+    }
+
+  public:
+    dim_type N;
+    size_type option;
+    scalar_type r;
+
+    bgeot::multi_index sizes_;
+
+    template <typename VECT1>
+    contact_nitsche_nonlinear_term(size_type option_, scalar_type r_,
+				   scalar_type lambda_, scalar_type mu_,
+				   const mesh_fem &mf_u_, const VECT1 &U_,
+				   const mesh_fem &mf_obs_, const VECT1 &obs_,
+				   const mesh_fem *pmf_coeff_ = 0,
+				   const VECT1 *f_coeff_ = 0)		  
+      : lambda(lambda_), mu(mu_), mf_u(mf_u_),
+      mf_obs(mf_obs_), pmf_coeff(pmf_coeff_), U(mf_u.nb_basic_dof()),
+	obs(mf_obs.nb_basic_dof()), friction_coeff(0), option(option_), r(r_) {
+      N = mf_u_.linked_mesh().dim();
+      adjust_tensor_size();
+
+      mf_u.extend_vector(U_, U);
+      mf_obs.extend_vector(obs_, obs);
+
+      if (!pmf_coeff)
+	f_coeff = (*f_coeff_)[0];
+      else {
+	friction_coeff.resize(pmf_coeff->nb_basic_dof());
+	pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
+      }
+    }
+
+    const bgeot::multi_index &sizes() const { return sizes_; }
+
+    virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
+    virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nb*/);
+
+  };
+
+  void contact_nitsche_nonlinear_term::compute
+  (fem_interpolation_context &/* ctx */, bgeot::base_tensor &t) {
+
+    t.adjust_sizes(sizes_);
+    scalar_type e;
+    dim_type i, j, k, l;
+
+    if (option == 3 || option == 4 || option == 5) { // computation of matrix A
+      e = f_coeff*gmm::pos(un-g-r*ln)/r;
+      auxN = ut - r*lt;
+      ball_projection_grad(auxN, e, GP);
+      ball_projection_grad_r(auxN, e, V);
+      e = -gmm::vect_sp(GP, no, no);
+      gmm::rank_one_update(GP, gmm::scaled(V, 1./r), no);
+      e += Heav(un-g-r*ln)/r;
+      gmm::rank_one_update(GP, gmm::scaled(no, e), no);
+    }
+
+    if (option == 1 || option == 2) {
+      e = gmm::pos(un-g-r*ln)/r;
+      V = ut - r*lt;
+      ball_projection(V, f_coeff*e);
+      V = V/r + e*no;
+    }
+
+    switch (option) {
+      // one-dimensional tensors [N]
+    case 1:
+      for (i=0; i < N; ++i) t[i] = -V[i];
+      break;
+
+      // two-dimensional tensors [N x N]
+    case 2:
+      e = gmm::vect_sp(V, n);
+      V += r*lnt;
+      for (i=0; i < N; ++i)
+	for (j=0; j < N; ++j) {
+	  t(i,j) = r*mu*(V[i]*n[j]+V[j]*n[i]);
+	  if (i == j) t(i,j) += r*e;
+	}
+      break;
+
+    case 3:
+      for (i=0; i < N; ++i)
+	for (j=0; j < N; ++j)
+	  t(i,j) = GP(i,j);
+      break;
+
+    // three-dimensional tensors [N x N x N]
+
+    case 4:
+      gmm::mult(GP, n, V);
+      for (i=0; i < N; ++i)
+	for (j=0; j < N; ++j)
+	  for (k=0; k < N; ++k) {
+	    t(i,j,k) = r*mu*(GP(k,i)*n[j] + GP(k,j)*n[i]);
+	    if (i == j) t(i,j,k) += r*lambda*V[k];
+	  } 
+      break;
+       
+      
+    // four-dimensional tensors [N x N x N x N]
+
+    case 5:
+
+      gmm::scale(GP, r*r);
+      for (i=0; i < N; ++i) GP(i,i) -= r;  // matrix B
+
+      e = gmm::vect_sp(GP, n, n);
+      gmm::mult(gmm::transposed(GP), n, auxN);
+      gmm::mult(GP, n, V);
+
+      for (i=0; i < N; ++i)
+	for (j=0; j < N; ++j)
+	  for (k=0; k < N; ++k)
+	    for (l=0; l < N; ++l) {
+	      t(i,j,k,l) = mu*mu*(n[i]*GP(k,j)*n[l] + n[j]*GP(k,i)*n[l]
+				  + n[j]*GP(l,i)*n[k] + n[i]*GP(l,j)*n[k]);
+	      if (i == j && k == l)
+		t(i,j,k,l) += lambda*lambda*e;
+	      if (i == j)
+		t(i,j,k,l) += lambda*mu*(V[k]*n[l] + V[l]*n[k]);
+	      if (k == l)
+		t(i,j,k,l) += lambda*mu*(auxN[j]*n[i] + auxN[i]*n[j]);
+	    }
+
+      break;
+    default : GMM_ASSERT1(false, "Invalid option");
+    }
+  }
+
+
+  void contact_nitsche_nonlinear_term::prepare
+  (fem_interpolation_context& ctx, size_type nb) {
+    size_type cv = ctx.convex_num();
+
+    switch (nb) { // last is computed first
+    case 1 : // calculate [un] and [ut] interpolating [U] on [mf_u]
+      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+                (U, gmm::sub_index
+                 (mf_u.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation(ctx, coeff, V, N);
+      un = gmm::vect_sp(V, no);
+      ut = V - un * no;
+
+      ctx.pf()->interpolation_grad(ctx, coeff, GP, N);
+
+      lnt = lambda*(gmm::mat_trace(GP))*n;
+      gmm::mult_add(GP, gmm::scaled(n, mu), lnt);
+      gmm::mult_add(gmm::transposed(GP), gmm::scaled(n, mu), lnt);      
+      ln = gmm::vect_sp(lnt, no);
+      lt = lnt - ln * no;
+      break;
+
+    case 2 : // calculate [g] and [no] interpolating [obs] on [mf_obs]
+             // calculate [ln] and [lt] from [lnt] and [no]
+      coeff.resize(mf_obs.nb_basic_dof_of_element(cv));
+      gmm::copy(gmm::sub_vector
+                (obs, gmm::sub_index
+                 (mf_obs.ind_basic_dof_of_element(cv))), coeff);
+      ctx.pf()->interpolation_grad(ctx, coeff, grad, 1);
+      gmm::copy(gmm::mat_row(grad, 0), no);
+      no /= -gmm::vect_norm2(no);
+      ctx.pf()->interpolation(ctx, coeff, aux1, 1);
+      g = aux1[0];
+      n = compute_normal(ctx, ctx.face_num());
+      n /= gmm::vect_norm2(n);
+      break;
+
+    case 3 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+      if (pmf_coeff) {
+        coeff.resize(pmf_coeff->nb_basic_dof_of_element(cv));
+        gmm::copy(gmm::sub_vector
+                  (friction_coeff, gmm::sub_index
+                   (pmf_coeff->ind_basic_dof_of_element(cv))), coeff);
+        ctx.pf()->interpolation(ctx, coeff, aux1, 1);
+        f_coeff = aux1[0];
+      }
+      break;
+
+    default : GMM_ASSERT1(false, "Invalid option");
+    }
+  }
+
+
+
+
+  template<typename MAT, typename VECT1>
+  void asm_Nitsche_contact_rigid_obstacle_tangent_matrix
+  (MAT &K, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, const VECT1 &U,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
+   scalar_type gamma, scalar_type lambda, scalar_type mu,
+   const mesh_region &rg) {
+
+    contact_nitsche_nonlinear_term
+      nterm1(5, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
+      nterm2(3, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
+      nterm3(4, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff);
+
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
+
+    getfem::generic_assembly assem;
+    assem.set
+      ("w1=comp(NonLin$1(#1,"+aux_fems+")(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l));"
+       "w2=comp(NonLin$2(#1,"+aux_fems+").vBase(#1).vBase(#1))(i,j,:,i,:,j);"
+       "w3=comp(NonLin$3(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);"
+       "w4=comp(NonLin$3(#1,"+aux_fems+").vBase(#1).vGrad(#1))(i,j,k,:,k,:,i,j);"
+       "M(#1,#1)+=w1+w2-w3-w4;"
+       );
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    if (pmf_coeff) assem.push_mf(*pmf_coeff);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_nonlinear_term(&nterm3);
+    assem.push_mat(K);
+    assem.assembly(rg);
+  }
+
+
+
+  template<typename VECT1>
+  void asm_Nitsche_contact_rigid_obstacle_rhs
+  (VECT1 &R, const mesh_im &mim,
+   const getfem::mesh_fem &mf_u, const VECT1 &U,
+   const getfem::mesh_fem &mf_obs, const VECT1 &obs,
+   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
+   scalar_type gamma, scalar_type lambda, scalar_type mu,
+   const mesh_region &rg) {
+
+    contact_nitsche_nonlinear_term
+      nterm1(1, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
+      nterm2(2, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff);
+    
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
+    
+    getfem::generic_assembly assem;
+    assem.set("V(#1)+=comp(NonLin$1(#1,"+aux_fems+").vBase(#1))(i,:,i); "
+              "V(#1)+=comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j)");
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    if (pmf_coeff) assem.push_mf(*pmf_coeff);
+    assem.push_nonlinear_term(&nterm1);
+    assem.push_nonlinear_term(&nterm2);
+    assem.push_vec(R);
+    assem.assembly(rg);
+  }
+
+
+  struct Nitsche_contact_rigid_obstacle_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      // Integration method
+      GMM_ASSERT1(mims.size() == 1, "Nitsche contact with rigid obstacle "
+		  "bricks need a single mesh_im");
+      const mesh_im &mim = *mims[0];
+
+      // Variables : u
+      GMM_ASSERT1(vl.size() == 1,
+                  "Nitsche contact with rigid obstacle bricks need a "
+		  "single variable");
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+
+      // Data : obs, r, [lambda,] [friction_coeff,] [alpha,] [WT]
+      GMM_ASSERT1(dl.size() == 5, "Wrong number of data for Nitsche "
+		  "contact with rigid obstacle brick");
+
+      const model_real_plain_vector &obs = md.real_variable(dl[0]);
+      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
+      size_type sl = gmm::vect_size(obs) * mf_obs.get_qdim() / mf_obs.nb_dof();
+      GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
+                  "the right format");
+
+      const model_real_plain_vector &vr = md.real_variable(dl[1]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+
+      const model_real_plain_vector *f_coeff = 0;
+      const mesh_fem *pmf_coeff = 0;
+      
+      f_coeff = &(md.real_variable(dl[2]));
+      pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
+      sl = gmm::vect_size(*f_coeff);
+      if (pmf_coeff) { sl*= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
+      GMM_ASSERT1(sl == 1, "the data corresponding to the friction "
+		  "coefficient has not the right format");
+      
+      const model_real_plain_vector &vlambda = md.real_variable(dl[3]);
+      GMM_ASSERT1(gmm::vect_size(vlambda) == 1,
+		  "Parameter lambda should be a scalar");
+      const model_real_plain_vector &vmu = md.real_variable(dl[4]);
+      GMM_ASSERT1(gmm::vect_size(vmu) == 1, "Parameter mu should be a scalar");
+
+
+      GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
+                  "Nitsche contact with rigid obstacle brick");
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (version & model::BUILD_MATRIX) {
+        GMM_TRACE2("Nitsche contact with rigid obstacle tangent term");
+        gmm::clear(matl[0]);
+	asm_Nitsche_contact_rigid_obstacle_tangent_matrix
+	  (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
+	   vr[0], vlambda[0], vmu[0], rg);
+      }
+
+      if (version & model::BUILD_RHS) {
+        gmm::clear(vecl[0]);
+	asm_Nitsche_contact_rigid_obstacle_rhs
+	  (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
+	   vr[0], vlambda[0], vmu[0], rg);
+      }
+
+    }
+
+    Nitsche_contact_rigid_obstacle_brick(void) {
+      set_flags("Continuous Nitsche contact and friction with rigid "
+		"obstacle brick",
+                false /* is linear*/, false /* is symmetric */,
+                true /* is coercive */, true /* is real */,
+                false /* is complex */);
+    }
+
+  };
+
+
+  size_type add_Nitsche_contact_with_friction_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_lambda, const std::string &dataname_mu,
+   size_type region) {
+
+    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick;
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+
+    model::varnamelist dl(1, dataname_obs);
+    dl.push_back(dataname_r);
+    dl.push_back(dataname_friction_coeff);
+    dl.push_back(dataname_lambda);
+    dl.push_back(dataname_mu);
+
+    model::varnamelist vl(1, varname_u);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+
+
+
+
+
+
+
+
+
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
 
 }  /* end of namespace getfem.                                             */
