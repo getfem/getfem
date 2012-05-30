@@ -2493,25 +2493,25 @@ namespace getfem {
   (fem_interpolation_context &/* ctx */, bgeot::base_tensor &t) {
 
     t.adjust_sizes(sizes_);
-    scalar_type e;
+    scalar_type e, f;
     dim_type i, j, k, l;
 
     if (option == 3 || option == 4 || option == 5) { // computation of matrix A
-      e = f_coeff*gmm::pos(un-g-r*ln)/r;
+      e = f_coeff*gmm::pos(un-g-r*ln);
       auxN = ut - r*lt;
       ball_projection_grad(auxN, e, GP);
       ball_projection_grad_r(auxN, e, V);
-      e = -gmm::vect_sp(GP, no, no);
-      gmm::rank_one_update(GP, gmm::scaled(V, 1./r), no);
-      e += Heav(un-g-r*ln)/r;
+      f = Heav(un-g-r*ln)/r;
+      e = f-gmm::vect_sp(GP, no, no);
+      gmm::rank_one_update(GP, no, gmm::scaled(V, f*f_coeff));
       gmm::rank_one_update(GP, gmm::scaled(no, e), no);
     }
 
     if (option == 1 || option == 2) {
-      e = gmm::pos(un-g-r*ln)/r;
+      e = gmm::pos(un-g-r*ln);
       V = ut - r*lt;
       ball_projection(V, f_coeff*e);
-      V = V/r + e*no;
+      V = V/r + e*no/r;
     }
 
     switch (option) {
