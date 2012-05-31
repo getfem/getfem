@@ -2443,7 +2443,7 @@ namespace getfem {
       switch (option) {
       case 1 : sizes_.resize(1); break;
       case 2 : case 3 :  sizes_.resize(2); break;
-      case 4 :  sizes_.resize(3); break;
+      case 4 : case 5 :  sizes_.resize(3); break;
       }
       gmm::resize(grad, 1, N);
       lnt.resize(N); lt.resize(N); ut.resize(N); no.resize(N); n.resize(N);
@@ -2493,69 +2493,75 @@ namespace getfem {
   (fem_interpolation_context &/* ctx */, bgeot::base_tensor &t) {
 
     t.adjust_sizes(sizes_);
-    scalar_type e, f;
+    scalar_type e;
     dim_type i, j, k, l;
 
-    if (option == 3 || option == 4 || option == 5) { // computation of matrix A
-      e = f_coeff*gmm::pos(un-g-r*ln);
-      auxN = ut - r*lt;
+    if (option >= 3) { // computation of matrix A
+      e = f_coeff*gmm::neg(ln-r*(un-g));
+      auxN = lt - r*ut;
       ball_projection_grad(auxN, e, GP);
       ball_projection_grad_r(auxN, e, V);
-      f = Heav(un-g-r*ln)/r;
-      e = f-gmm::vect_sp(GP, no, no);
-      gmm::rank_one_update(GP, no, gmm::scaled(V, f*f_coeff));
-      gmm::rank_one_update(GP, gmm::scaled(no, e), no);
-    }
-
-    if (option == 1 || option == 2) {
-      e = gmm::pos(un-g-r*ln);
-      V = ut - r*lt;
+      e = Heav(r*(un-g) - ln);
+      gmm::rank_one_update(GP, gmm::scaled(V, -e*f_coeff), no);
+      gmm::rank_one_update(GP, gmm::scaled(no, e-gmm::vect_sp(GP,no,no)), no);
+      gmm::scale(GP, 1./r);
+    } else { // computation of vector W
+      e = gmm::neg(ln-r*(un-g));
+      V = lt - r*ut;
       ball_projection(V, f_coeff*e);
-      V = V/r + e*no/r;
+      V -= e*no;
     }
 
     switch (option) {
       // one-dimensional tensors [N]
     case 1:
-      for (i=0; i < N; ++i) t[i] = -V[i];
+      for (i=0; i < N; ++i) t[i] = V[i];
       break;
 
       // two-dimensional tensors [N x N]
     case 2:
+      V -= lnt;
+      gmm::scale(V, -1./r);
       e = gmm::vect_sp(V, n);
-      V += r*lnt;
       for (i=0; i < N; ++i)
 	for (j=0; j < N; ++j) {
-	  t(i,j) = r*mu*(V[i]*n[j]+V[j]*n[i]);
-	  if (i == j) t(i,j) += r*e;
+	  t(i,j) = mu*(V[i]*n[j]+V[j]*n[i]);
+	  if (i == j) t(i,j) += lambda*e;
 	}
       break;
 
     case 3:
       for (i=0; i < N; ++i)
 	for (j=0; j < N; ++j)
-	  t(i,j) = GP(i,j);
+	  t(i,j) = r*r*GP(i,j);
       break;
 
     // three-dimensional tensors [N x N x N]
-
     case 4:
+      gmm::mult(gmm::transposed(GP), n, V);
+      for (i=0; i < N; ++i)
+	for (j=0; j < N; ++j)
+	  for (k=0; k < N; ++k) {
+	    t(i,j,k) = -r*mu*(GP(j,i)*n[k] + GP(k,i)*n[j]);
+	    if (j == k) t(i,j,k) -= r*lambda*V[i];
+	  } 
+      break;
+       
+    case 5:
       gmm::mult(GP, n, V);
       for (i=0; i < N; ++i)
 	for (j=0; j < N; ++j)
 	  for (k=0; k < N; ++k) {
-	    t(i,j,k) = r*mu*(GP(k,i)*n[j] + GP(k,j)*n[i]);
-	    if (i == j) t(i,j,k) += r*lambda*V[k];
+	    t(i,j,k) = -r*mu*(GP(k,i)*n[j] + GP(k,j)*n[i]);
+	    if (i == j) t(i,j,k) -= r*lambda*V[k];
 	  } 
       break;
-       
       
     // four-dimensional tensors [N x N x N x N]
 
-    case 5:
+    case 6:
 
-      gmm::scale(GP, r*r);
-      for (i=0; i < N; ++i) GP(i,i) -= r;  // matrix B
+      for (i=0; i < N; ++i) GP(i,i) -= 1./r;  // matrix B
 
       e = gmm::vect_sp(GP, n, n);
       gmm::mult(gmm::transposed(GP), n, auxN);
@@ -2567,12 +2573,9 @@ namespace getfem {
 	    for (l=0; l < N; ++l) {
 	      t(i,j,k,l) = mu*mu*(n[i]*GP(k,j)*n[l] + n[j]*GP(k,i)*n[l]
 				  + n[j]*GP(l,i)*n[k] + n[i]*GP(l,j)*n[k]);
-	      if (i == j && k == l)
-		t(i,j,k,l) += lambda*lambda*e;
-	      if (i == j)
-		t(i,j,k,l) += lambda*mu*(V[k]*n[l] + V[l]*n[k]);
-	      if (k == l)
-		t(i,j,k,l) += lambda*mu*(auxN[j]*n[i] + auxN[i]*n[j]);
+	      if (i == j && k == l) t(i,j,k,l) += lambda*lambda*e;
+	      if (i == j) t(i,j,k,l) += lambda*mu*(V[k]*n[l] + V[l]*n[k]);
+	      if (k == l) t(i,j,k,l) += lambda*mu*(auxN[j]*n[i]+auxN[i]*n[j]);
 	    }
 
       break;
@@ -2588,15 +2591,12 @@ namespace getfem {
     switch (nb) { // last is computed first
     case 1 : // calculate [un] and [ut] interpolating [U] on [mf_u]
       coeff.resize(mf_u.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-                (U, gmm::sub_index
-                 (mf_u.ind_basic_dof_of_element(cv))), coeff);
+      gmm::copy(gmm::sub_vector(U, gmm::sub_index
+				(mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation(ctx, coeff, V, N);
       un = gmm::vect_sp(V, no);
       ut = V - un * no;
-
       ctx.pf()->interpolation_grad(ctx, coeff, GP, N);
-
       lnt = lambda*(gmm::mat_trace(GP))*n;
       gmm::mult_add(GP, gmm::scaled(n, mu), lnt);
       gmm::mult_add(gmm::transposed(GP), gmm::scaled(n, mu), lnt);      
@@ -2647,9 +2647,10 @@ namespace getfem {
    const mesh_region &rg) {
 
     contact_nitsche_nonlinear_term
-      nterm1(5, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
+      nterm1(6, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
       nterm2(3, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
-      nterm3(4, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff);
+      nterm3(4, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
+      nterm4(5, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
 
@@ -2657,9 +2658,10 @@ namespace getfem {
     assem.set
       ("w1=comp(NonLin$1(#1,"+aux_fems+")(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l));"
        "w2=comp(NonLin$2(#1,"+aux_fems+").vBase(#1).vBase(#1))(i,j,:,i,:,j);"
-       "w3=comp(NonLin$3(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);"
-       "w4=comp(NonLin$3(#1,"+aux_fems+").vBase(#1).vGrad(#1))(i,j,k,:,k,:,i,j);"
-       "M(#1,#1)+=w1+w2-w3-w4;"
+       
+       "w3=comp(NonLin$3(#1,"+aux_fems+").vBase(#1).vGrad(#1))(i,j,k,:,i,:,j,k);"
+       "w4=comp(NonLin$4(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);"
+       "M(#1,#1)+=w1+w2+w3+w4;"
        );
     assem.push_mi(mim);
     assem.push_mf(mf_u);
@@ -2668,6 +2670,7 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm1);
     assem.push_nonlinear_term(&nterm2);
     assem.push_nonlinear_term(&nterm3);
+    assem.push_nonlinear_term(&nterm4);
     assem.push_mat(K);
     assem.assembly(rg);
   }

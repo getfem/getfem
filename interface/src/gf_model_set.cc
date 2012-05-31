@@ -1886,7 +1886,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
-     /*@SET ind = ('add Nitsche contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_gamma, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
+     /*@SET ind = ('add Nitsche contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
 
       Add a contact with friction condition with a rigid obstacle
       to the model with  Nitsche strategy (no multiplier) in an integral way.
@@ -1896,7 +1896,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance
       to the obstacle (interpolated on a finite element method).
-      The Nitsche parameter `dataname_gamma` should be chosen in a
+      The Nitsche parameter `dataname_r` should be chosen in a
       range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method. `dataname_lambda` and `dataname_mu` are the Lame coefficients.
