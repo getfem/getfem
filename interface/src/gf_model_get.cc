@@ -24,6 +24,7 @@
 */
 
 #include <getfemint.h>
+#include <getfemint_workspace.h>
 #include <getfemint_misc.h>
 #include <getfemint_models.h>
 #include <getfem/getfem_model_solvers.h>
@@ -102,6 +103,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_integer(md->is_complex());
        );
 
+
+    /*@GET T = ('nbdof')
+      Return the total number of degrees of freedom of the model.@*/
+    sub_command
+      ("nbdof", 0, 0, 0, 1,
+       out.pop().from_integer(int(md->model().nb_dof()));
+       );
 
     /*@GET T = ('tangent_matrix')
       Return the tangent matrix stored in the model .@*/
@@ -186,6 +194,21 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          niter = in.pop().to_integer(0,10) - config::base_index();
        RETURN_VECTOR(real_variable(name, niter),
                      complex_variable(name, niter));
+       );
+
+    
+    /*@GET V = ('mesh fem of variable', @str name)
+      Gives access to the `mesh_fem` of a variable or data.@*/
+    sub_command
+      ("mesh fem of variable", 1, 1, 0, 1,
+       std::string name = in.pop().to_string();
+       const getfem::mesh_fem &mf = md->model().mesh_fem_of_variable(name);
+       getfem::mesh_fem *mmf = const_cast<getfem::mesh_fem *>(&mf);
+       getfem_object *o =
+       getfemint::workspace().object(getfem_object::internal_key_type(mmf));
+       getfemint_mesh_fem *gmf = getfemint_mesh_fem::get_from(mmf);
+       if (!o) workspace().set_dependance(gmf, md);
+       out.pop().from_object_id(gmf->get_id(), MESHFEM_CLASS_ID);
        );
 
 
