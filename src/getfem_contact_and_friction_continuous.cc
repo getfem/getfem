@@ -2502,7 +2502,7 @@ namespace getfem {
       ball_projection_grad(auxN, e, GP);
       ball_projection_grad_r(auxN, e, V);
       e = Heav(r*(un-g) - ln);
-      gmm::rank_one_update(GP, gmm::scaled(V, -e*f_coeff), no);
+      gmm::rank_one_update(GP, no, gmm::scaled(V, -e*f_coeff));
       gmm::rank_one_update(GP, gmm::scaled(no, e-gmm::vect_sp(GP,no,no)), no);
       gmm::scale(GP, 1./r);
     } else { // computation of vector W
@@ -2533,7 +2533,7 @@ namespace getfem {
     case 3:
       for (i=0; i < N; ++i)
 	for (j=0; j < N; ++j)
-	  t(i,j) = r*r*GP(i,j);
+	  t(i,j) = r*r*GP(j,i);
       break;
 
     // three-dimensional tensors [N x N x N]

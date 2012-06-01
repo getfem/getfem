@@ -410,8 +410,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET ('test tangent matrix'[, @scalar EPS[, @int NB]])
-      Test the consistency of the tangent matrix (usefull to test
-      newly created bricks) in some random positions and random directions.
+      Test the consistency of the tangent matrix in some random positions
+      and random directions (usefull to test newly created bricks).
       `EPS` is the value of the small parameter for the finite difference
       computation of the derivative is the random direction (default is 1E-6).
       `NN` is the number of tests (default is 100).
