@@ -409,6 +409,71 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET ('test tangent matrix'[, @scalar EPS[, @int NB]])
+      Test the consistency of the tangent matrix (usefull to test
+      newly created bricks) in some random positions and random directions.
+      `EPS` is the value of the small parameter for the finite difference
+      computation of the derivative is the random direction (default is 1E-6).
+      `NN` is the number of tests (default is 100).
+      @*/
+    sub_command
+      ("test tangent matrix", 0, 2, 0, 1,
+       size_type nbdof = md->model().nb_dof();
+       scalar_type EPS = 1E-6;
+       if (in.remaining()) EPS = in.pop().to_scalar();
+       scalar_type errmax = scalar_type(0);
+       size_type NN = 100;
+       if (in.remaining()) NN = in.pop().to_integer();
+       if (md->is_complex()) {
+	 std::vector<complex_type> U(nbdof);
+	 std::vector<complex_type> DIR(nbdof);
+	 std::vector<complex_type> D1(nbdof);
+	 std::vector<complex_type> D2(nbdof);
+	 for (size_type i = 0; i < NN; ++i) {
+	   gmm::fill_random(U);
+	   gmm::fill_random(DIR);
+	   md->model().to_variables(U);
+	   md->model().assembly(getfem::model::BUILD_ALL);
+	   gmm::copy(md->model().complex_rhs(), D2);
+	   gmm::mult(md->model().complex_tangent_matrix(), DIR, D1);
+	   gmm::add(gmm::scaled(DIR, complex_type(EPS)), U);
+	   md->model().to_variables(U);
+	   md->model().assembly(getfem::model::BUILD_RHS);
+	   gmm::add(gmm::scaled(md->model().complex_rhs(),
+				 -complex_type(1)), D2);
+	   gmm::scale(D2, complex_type(1)/complex_type(EPS));
+	   scalar_type err = gmm::vect_dist2(D1, D2);
+	   cout << "Error at step " << i << " : " << err << endl;
+	   errmax = std::max(err, errmax);
+	 }
+       } else {
+	 std::vector<scalar_type> U(nbdof);
+	 std::vector<scalar_type> DIR(nbdof);
+	 std::vector<scalar_type> D1(nbdof);
+	 std::vector<scalar_type> D2(nbdof);
+	 for (size_type i = 0; i < NN; ++i) {
+	   gmm::fill_random(U);
+	   gmm::fill_random(DIR);
+	   md->model().to_variables(U);
+	   md->model().assembly(getfem::model::BUILD_ALL);
+	   gmm::copy(md->model().real_rhs(), D2);
+	   gmm::mult(md->model().real_tangent_matrix(), DIR, D1);
+	   gmm::add(gmm::scaled(DIR, EPS), U);
+	   md->model().to_variables(U);
+	   md->model().assembly(getfem::model::BUILD_RHS);
+	   gmm::add(gmm::scaled(md->model().real_rhs(), -scalar_type(1)), D2);
+	   gmm::scale(D2, scalar_type(1)/EPS);
+	   scalar_type err = gmm::vect_dist2(D1, D2);
+	   cout << "Error at step " << i << " : " << err << endl;
+	   errmax = std::max(err, errmax);
+	 }
+       }
+       out.pop().from_scalar(errmax);
+       );
+
+
+
+
     /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar init_dir[, ...])
     Initialize the Moore-Penrose continuation (for more details about the
     continuation see the Getfem++ user documentation): The variable
