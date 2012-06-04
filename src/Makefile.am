@@ -132,7 +132,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_model_solvers.h             	\
 	getfem/getfem_linearized_plates.h         	\
 	getfem/getfem_contact_and_friction_nodal.h	\
-	getfem/getfem_contact_and_friction_continuous.h	\
+	getfem/getfem_contact_and_friction_integral.h	\
 	getfem/getfem_Coulomb_friction.h          	\
 	getfem/getfem_nonlinear_elasticity.h      	\
 	getfem/getfem_fourth_order.h              	\
@@ -202,7 +202,7 @@ SRC =                                      		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
 	getfem_contact_and_friction_nodal.cc		\
-	getfem_contact_and_friction_continuous.cc	\
+	getfem_contact_and_friction_integral.cc	\
 	getfem_plasticity.cc				
 #	getfem_enumeration_dof_para.cc
 

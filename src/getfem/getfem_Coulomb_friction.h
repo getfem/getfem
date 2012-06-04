@@ -42,7 +42,7 @@
 // header files for the new brick system
 
 #include "getfem_contact_and_friction_nodal.h"
-#include "getfem_contact_and_friction_continuous.h"
+#include "getfem_contact_and_friction_integral.h"
 
 namespace getfem {
 
