@@ -21,7 +21,7 @@ Approximation of contact
 For small deformation problems submitted
 a simple (compared to large deformation !) expression of the contact with friction condition is usually used where the tangential displacement do not influence the normal one. This is an approximation in the sense that if an obstacle is not perfectly flat, the tangential displacement of course influence the point where the contact holds. This will not be the case in small deformation where the contact condition can be considered to be described on the reference configuration.
 
-There are mainly two largely used discretizations of the contact with friction condition in this framework: a direct nodal contact condition (usually prescribed on the displacement finite element nodes) or a weak nodal contact condition (usually prescribed on the multiplier finite element nodes). The two discretization leads to similar system. However, the interpretation of quantities is not the same. A third approach is developed on Getfem contact bricks: a weak continuous contact condition. It needs the computation of a non-linear integral on the contact boundary at each iteration but the numerical resolution is potentially more scalable because it derives directly from continuous principles.
+There are mainly two largely used discretizations of the contact with friction condition in this framework: a direct nodal contact condition (usually prescribed on the displacement finite element nodes) or a weak nodal contact condition (usually prescribed on the multiplier finite element nodes). The two discretization leads to similar system. However, the interpretation of quantities is not the same. A third approach is developed on Getfem contact bricks: a weak integral contact condition. It needs the computation of a non-linear integral on the contact boundary at each iteration but the numerical resolution is potentially more scalable because it derives directly from continuous principles.
 
 More details can be found for instance in [KI-OD1988]_, [KH-PO-RE2006]_ and [LA-RE2006]_.
 
@@ -146,10 +146,10 @@ where :math:`\psi_i` is the shape function of the multiplier for the node :math:
 Note that without additional stabilization technique (see [HI-RE2010]_) an inf-sup condition have to be satisfied between the finite element of the displacement and the one for the multipliers. This means in particular that the finite element for the multiplier have to be "less rich" than the one for the displacement.
 
 
-Weak continuous contact condition
+Weak integral contact condition
 +++++++++++++++++++++++++++++++++
 
-The weak continuous contact formulation allows not to explicitly describe the discrete set of admissible stress. The contact stress (including the friction one) is described on a finite element space :math:`W^h` on the contact boundary :math:`\Gamma_c`:
+The weak integral contact formulation allows not to explicitly describe the discrete set of admissible stress. The contact stress (including the friction one) is described on a finite element space :math:`W^h` on the contact boundary :math:`\Gamma_c`:
 
 .. math::
 
@@ -280,7 +280,7 @@ and the tangent system:
   \end{array}\right.
 
 
-In addition, |gf| develops a method of numerical continuation for finding numerical solutions of discretized evolutionary contact problems based on the weak continuous contact condition (see :ref:`ud-model-continuation` for a general introduction). For this purpose, a parameter-dependent sliding velocity may be added to the friction condition so that it becomes:
+In addition, |gf| develops a method of numerical continuation for finding numerical solutions of discretized evolutionary contact problems based on the weak integral contact condition (see :ref:`ud-model-continuation` for a general introduction). For this purpose, a parameter-dependent sliding velocity may be added to the friction condition so that it becomes:
 
 .. math::
 
@@ -427,10 +427,10 @@ Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughe
       getfem::contact_brick_set_DN(md, indbrick);
 
 
-Continuous frictionless contact brick with a rigid obstacle
+Integral frictionless contact brick with a rigid obstacle
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-     getfem::add_continuous_contact_with_rigid_obstacle_brick
+     getfem::add_integral_contact_with_rigid_obstacle_brick
      (md, mim, varname_u, multname_n, dataname_obs, dataname_r, region, option);
 
 Adds a frictionless contact condition with a rigid obstacle
@@ -453,10 +453,10 @@ Alart-Curnier version, 2 for the symmetric one and 3 for the
 non-symmetric Alart-Curnier with an additional augmentation. ``mim`` represents
 of course the integration method. Note that it should be accurate enough to integrate efficiently the nonlinear terms involved.
 
-Continuous contact with friction brick with a rigid obstacle
+Integral contact with friction brick with a rigid obstacle
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-     getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
+     getfem::add_integral_contact_with_rigid_obstacle_brick
      (md, mim, varname_u, multname_n, dataname_obs, dataname_r,
      dataname_friction_coeff, region, option, dataname_alpha = "",
      dataname_wt = "", dataname_gamma = "", dataname_vt = "");

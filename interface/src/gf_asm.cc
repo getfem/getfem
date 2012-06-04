@@ -974,7 +974,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        in.last_popped().check_trailing_dimension(int(mf_obs->nb_dof()));
        double r = in.pop().to_scalar();
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
-       getfem::asm_continuous_contact_Uzawa_proj
+       getfem::asm_integral_contact_Uzawa_proj
          (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
           r, boundary_num);
        );
@@ -1027,7 +1027,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
 
        darray F = out.pop().create_darray_v(unsigned(mf_lambda->nb_dof()));
-       getfem::asm_continuous_contact_with_friction_Uzawa_proj
+       getfem::asm_integral_contact_Uzawa_proj
          (F, *mim, *mf_u, u, *mf_obs, obs, *mf_lambda, vec_lambda,
           mf_coeff, vec_coeff, &vec_W, r, alpha, boundary_num, option);
        );

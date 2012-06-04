@@ -70,31 +70,31 @@ version = 13  # 1 : frictionless contact and the basic contact brick
               #     rigid obstacle brick
               # 4 : contact with 'static' Coulomb friction and the contact with a
               #     rigid obstacle brick
-              # 5 : frictionless contact and the continuous brick
+              # 5 : frictionless contact and the integral brick
               #     Newton and Alart-Curnier augmented lagrangian,
               #     unsymmetric version
-              # 6 : frictionless contact and the continuous brick
+              # 6 : frictionless contact and the integral brick
               #     Newton and Alart-Curnier augmented lagrangian, symmetric
               #     version.
-              # 7 : frictionless contact and the continuous brick
+              # 7 : frictionless contact and the integral brick
               #     Newton and Alart-Curnier augmented lagrangian,
               #     unsymmetric version with an additional augmentation.
-              # 8 : frictionless contact and the continuous brick
+              # 8 : frictionless contact and the integral brick
               #     New unsymmetric method.
-              # 9 : frictionless contact and the continuous brick : Uzawa
+              # 9 : frictionless contact and the integral brick : Uzawa
               #     on the Lagrangian augmented by the penalization term.
-              # 10 : contact with 'static' Coulomb friction and the continuous brick
+              # 10 : contact with 'static' Coulomb friction and the integral brick
               #     Newton and Alart-Curnier augmented lagrangian,
               #     unsymmetric version.
-              # 11 : contact with 'static' Coulomb friction and the continuous brick
+              # 11 : contact with 'static' Coulomb friction and the integral brick
               #     Newton and Alart-Curnier augmented lagrangian,
               #     nearly symmetric version.
-              # 12 : contact with 'static' Coulomb friction and the continuous brick
+              # 12 : contact with 'static' Coulomb friction and the integral brick
               #     Newton and Alart-Curnier augmented lagrangian,
               #     unsymmetric version with an additional augmentation.
-              # 13 : contact with 'static' Coulomb friction and the continuous brick
+              # 13 : contact with 'static' Coulomb friction and the integral brick
               #     New unsymmetric method.
-              # 14 : contact with 'static' Coulomb friction and the continuous brick : Uzawa
+              # 14 : contact with 'static' Coulomb friction and the integral brick : Uzawa
               #     on the Lagrangian augmented by the penalization term.
               # 15 : penalized contact with 'static' Coulomb friction (r is the penalization
               #     coefficient).
@@ -217,7 +217,7 @@ elif version == 3 or version == 4: # BN and BT defined by the contact brick
       md.add_contact_with_rigid_obstacle_brick(mim, 'u', 'lambda_n', 'lambda_t', 'r',
                                               'friction_coeff', GAMMAC, obstacle, 1)
 
-elif version >= 5 and version <= 8: # The continuous version, Newton
+elif version >= 5 and version <= 8: # The integral version, Newton
 
    ldof = mflambda.dof_on_region(GAMMAC)
    mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
@@ -225,10 +225,10 @@ elif version >= 5 and version <= 8: # The continuous version, Newton
    md.add_initialized_data('r', [r])
    OBS = mfd.eval(obstacle)
    md.add_initialized_fem_data('obstacle', mfd, OBS)
-   md.add_continuous_contact_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n',
+   md.add_integral_contact_with_rigid_obstacle_brick(mim_friction, 'u', 'lambda_n',
                                                       'obstacle', 'r', GAMMAC, version-4);
 
-elif version == 9: # The continuous version, Uzawa on the augmented Lagrangian
+elif version == 9: # The integral version, Uzawa on the augmented Lagrangian
 
    ldof = mflambda.dof_on_region(GAMMAC)
    mflambda_partial = gf.MeshFem('partial', mflambda, ldof)
@@ -257,7 +257,7 @@ elif version == 9: # The continuous version, Uzawa on the augmented Lagrangian
 
    solved = True
 
-elif version >= 10 and version <= 13: # Continuous version with friction, Newton
+elif version >= 10 and version <= 13: # The integral version with friction, Newton
 
    mflambda.set_qdim(d);
    ldof = mflambda.dof_on_region(GAMMAC)
@@ -267,10 +267,10 @@ elif version >= 10 and version <= 13: # Continuous version with friction, Newton
    md.add_initialized_data('friction_coeff', [friction_coeff])
    OBS = mfd.eval(obstacle)
    md.add_initialized_fem_data('obstacle', mfd, OBS)
-   md.add_continuous_contact_with_friction_with_rigid_obstacle_brick \
+   md.add_integral_contact_with_friction_with_rigid_obstacle_brick \
      (mim_friction, 'u', 'lambda', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9)
 
-elif version == 14: # The continuous version, Uzawa on the augmented Lagrangian with friction
+elif version == 14: # The integral version, Uzawa on the augmented Lagrangian with friction
   
    mflambda.set_qdim(d)
    ldof = mflambda.dof_on_region(GAMMAC)

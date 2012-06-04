@@ -1846,7 +1846,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-    /*@SET ind = ('add continuous contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region [,@int option])
+    /*@SET ind = ('add integral contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region [,@int option])
 
     Add a frictionless contact condition with a rigid obstacle
     to the model. This brick add a contact which is defined
@@ -1868,7 +1868,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     default value is 1.
     @*/
      sub_command
-       ("add continuous contact with rigid obstacle brick", 6, 7, 0, 1,
+       ("add integral contact with rigid obstacle brick", 6, 7, 0, 1,
 
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -1878,7 +1878,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type region = in.pop().to_integer();
         int option = 1;
         if (in.remaining()) option = in.pop().to_integer();
-        size_type ind=getfem::add_continuous_contact_with_rigid_obstacle_brick
+        size_type ind=getfem::add_integral_contact_with_rigid_obstacle_brick
         (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
          dataname_obs, dataname_r, region, option);
         workspace().set_dependance(md, gfi_mim);
@@ -1914,7 +1914,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type region = in.pop().to_integer();
 
         size_type ind=
-        getfem::add_Nitsche_contact_with_friction_with_rigid_obstacle_brick
+        getfem::add_Nitsche_contact_with_rigid_obstacle_brick
         (md->model(), gfi_mim->mesh_im(), varname_u, dataname_obs, dataname_r,
 	 dataname_coeff, dataname_lambda, dataname_mu, region);
         workspace().set_dependance(md, gfi_mim);
@@ -1924,7 +1924,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
 
-     /*@SET ind = ('add continuous contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt [, @str dataname_gamma [, @str dataname_vt]]]]])
+     /*@SET ind = ('add integral contact with friction with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @int region [, @int option [, @str dataname_alpha [, @str dataname_wt [, @str dataname_gamma [, @str dataname_vt]]]]])
 
       Add a contact with friction condition with a rigid obstacle
       to the model. This brick adds a contact which is defined
@@ -1953,7 +1953,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       velocity to the friction condition.
     @*/
      sub_command
-       ("add continuous contact with friction with rigid obstacle brick", 7, 12, 0, 1,
+       ("add integral contact with friction with rigid obstacle brick", 7, 12, 0, 1,
 
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -1975,7 +1975,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
         size_type ind=
-        getfem::add_continuous_contact_with_friction_with_rigid_obstacle_brick
+        getfem::add_integral_contact_with_rigid_obstacle_brick
         (md->model(), gfi_mim->mesh_im(), varname_u, multname,
          dataname_obs, dataname_r, dataname_coeff, region, option,
          dataname_alpha, dataname_wt, dataname_gamma, dataname_vt);
@@ -2055,7 +2055,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (in.remaining()) dataname_wt = in.pop().to_string();
 
         size_type ind=
-        getfem::add_penalized_contact_with_friction_with_rigid_obstacle_brick
+        getfem::add_penalized_contact_with_rigid_obstacle_brick
         (md->model(), gfi_mim->mesh_im(), varname_u,
          dataname_obs, dataname_r, dataname_coeff, region, option,
          dataname_lambda, dataname_alpha, dataname_wt);

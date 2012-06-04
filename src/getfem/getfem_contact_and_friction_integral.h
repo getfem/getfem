@@ -28,14 +28,14 @@
  
 ===========================================================================*/
 
-/** @file getfem_contact_and_friction_continuous.h
+/** @file getfem_contact_and_friction_integral.h
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
     @date November, 2011.
     @brief Unilateral contact and Coulomb friction condition brick.
  */
-#ifndef GETFEM_CONTACT_AND_FRICTION_CONTINUOUS_H__
-#define GETFEM_CONTACT_AND_FRICTION_CONTINUOUS_H__
+#ifndef GETFEM_CONTACT_AND_FRICTION_INTEGRAL_H__
+#define GETFEM_CONTACT_AND_FRICTION_INTEGRAL_H__
 
 #include "getfem_models.h"
 #include "getfem_assembling_tensors.h"
@@ -62,7 +62,7 @@ namespace getfem {
       Alart-Curnier version, 2 for the symmetric one and 3 for the
       non-symmetric Alart-Curnier with an additional augmentation.
   */
-  size_type add_continuous_contact_with_rigid_obstacle_brick
+  size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_obs,
    const std::string &dataname_r, size_type region, int option = 1);
@@ -93,7 +93,7 @@ namespace getfem {
       represent optional data for adding a parameter-dependent sliding
       velocity to the friction condition.
   */
-  size_type add_continuous_contact_with_friction_with_rigid_obstacle_brick
+  size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_obs,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
@@ -137,7 +137,7 @@ namespace getfem {
       allows the use of an Uzawa algorithm on the corresponding augmented
       Lagrangian formulation)
   */
-  size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
+  size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_friction_coeff,
@@ -164,7 +164,7 @@ namespace getfem {
       Alart-Curnier version, 2 for the symmetric one and 3 for the
       non-symmetric Alart-Curnier with an additional augmentation.
   */
-  size_type add_continuous_contact_between_nonmatching_meshes_brick
+  size_type add_integral_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
    const std::string &varname_u2, const std::string &multname_n,
    const std::string &dataname_r,
@@ -441,7 +441,7 @@ namespace getfem {
       contact with rigid obstacle problems with friction.
   */
   template<typename VECT1>
-  void asm_continuous_contact_with_friction_Uzawa_proj
+  void asm_integral_contact_Uzawa_proj
   (VECT1 &R, const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -474,7 +474,7 @@ namespace getfem {
       contact problems.
   */
   template<typename VECT1>
-  void asm_continuous_contact_Uzawa_proj
+  void asm_integral_contact_Uzawa_proj
   (VECT1 &R, const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -600,7 +600,7 @@ namespace getfem {
   }
 
 
-  void compute_contact_area_and_force_between_nonmatching_meshes
+  void compute_integral_contact_area_and_force
   (model &md, size_type indbrick,
    scalar_type &area, model_real_plain_vector &Forces);
 
@@ -610,7 +610,7 @@ namespace getfem {
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
   // Experimental implementation of contact condition with Nitsche method.
   // To be deleted when a more general implementation will be designed.
-  size_type add_Nitsche_contact_with_friction_with_rigid_obstacle_brick
+  size_type add_Nitsche_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_friction_coeff,
@@ -621,4 +621,4 @@ namespace getfem {
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_CONTACT_AND_FRICTION_CONTINUOUS_H__ */
+#endif /* GETFEM_CONTACT_AND_FRICTION_INTEGRAL_H__ */

@@ -20,7 +20,7 @@
 ===========================================================================*/
 
 
-#include "getfem/getfem_contact_and_friction_continuous.h"
+#include "getfem/getfem_contact_and_friction_integral.h"
 #include "getfem/getfem_projected_fem.h"
 
 
@@ -640,7 +640,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Continuous augmented Lagrangian brick (given obstacle, u, lambda).
+  //  Integral augmented Lagrangian brick (given obstacle, u, lambda).
   //
   //=========================================================================
 
@@ -862,7 +862,7 @@ namespace getfem {
     assem.assembly(rg);
   }
 
-  struct continuous_contact_rigid_obstacle_brick : public virtual_brick {
+  struct integral_contact_rigid_obstacle_brick : public virtual_brick {
 
     bool Tresca_version, contact_only;
     int option;
@@ -884,16 +884,16 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const {
       GMM_ASSERT1(mims.size() == 1,
-                  "Continuous contact with rigid obstacle bricks need a single mesh_im");
+                  "Integral contact with rigid obstacle bricks need a single mesh_im");
       GMM_ASSERT1(vl.size() == 2,
-                  "Continuous contact with rigid obstacle bricks need two variables");
+                  "Integral contact with rigid obstacle bricks need two variables");
       GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 7,
-                  "Wrong number of data for continuous contact with rigid obstacle "
+                  "Wrong number of data for integral contact with rigid obstacle "
                   << "brick, " << dl.size() << " should be between 2 and 7.");
       GMM_ASSERT1(matl.size() == size_type(3 + (option == 3)
                                            + (option == 2 && !contact_only)),
                   "Wrong number of terms for "
-                  "continuous contact with rigid obstacle brick");
+                  "integral contact with rigid obstacle brick");
 
       // variables : u, lambda. The variable lambda should be scalar in the
       //             frictionless case and vector valued in the case with
@@ -954,7 +954,7 @@ namespace getfem {
       mf_u.linked_mesh().intersect_with_mpi_region(rg);
 
       if (version & model::BUILD_MATRIX) {
-        GMM_TRACE2("Continuous Coulomb friction tangent term");
+        GMM_TRACE2("Integral contact with rigid obstacle friction tangent term");
         gmm::clear(matl[0]); gmm::clear(matl[1]); gmm::clear(matl[2]);
         if (matl.size() >= 4) gmm::clear(matl[3]);
         size_type fourthmat = (matl.size() >= 4) ? 3 : 1;
@@ -990,13 +990,13 @@ namespace getfem {
 
     }
 
-    continuous_contact_rigid_obstacle_brick(bool contact_only_, int option_) {
+    integral_contact_rigid_obstacle_brick(bool contact_only_, int option_) {
       Tresca_version = false;   // for future version ...
       option = option_;
       contact_only = contact_only_;
       set_flags(contact_only
-                ? "Continuous contact with rigid obstacle brick"
-                : "Continuous contact and friction with rigid obstacle brick",
+                ? "Integral contact with rigid obstacle brick"
+                : "Integral contact and friction with rigid obstacle brick",
                 false /* is linear*/,
                 (option==2) && contact_only /* is symmetric */,
                 false /* is coercive */,
@@ -1011,12 +1011,12 @@ namespace getfem {
   //  by a level set.
   //=========================================================================
 
-  size_type add_continuous_contact_with_rigid_obstacle_brick
+  size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_obs,
    const std::string &dataname_r, size_type region, int option) {
 
-    pbrick pbr = new continuous_contact_rigid_obstacle_brick(true, option);
+    pbrick pbr = new integral_contact_rigid_obstacle_brick(true, option);
 
     model::termlist tl;
 
@@ -1038,7 +1038,7 @@ namespace getfem {
       tl.push_back(model::term_description(varname_u, varname_u, true));   // UU
       break;
     default :GMM_ASSERT1(false,
-                         "Incorrect option for continuous contact brick");
+                         "Incorrect option for integral contact brick");
 
     }
     model::varnamelist dl(1, dataname_obs);
@@ -1056,7 +1056,7 @@ namespace getfem {
   //  given by a level set.
   //=========================================================================
 
-  size_type add_continuous_contact_with_friction_with_rigid_obstacle_brick
+  size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_obs,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
@@ -1065,7 +1065,7 @@ namespace getfem {
    const std::string &dataname_gamma, const std::string &dataname_vt) {
 
     pbrick pbr
-      = new continuous_contact_rigid_obstacle_brick(false, option);
+      = new integral_contact_rigid_obstacle_brick(false, option);
 
     model::termlist tl;
 
@@ -1082,7 +1082,7 @@ namespace getfem {
       tl.push_back(model::term_description(varname_u, varname_u, true)); // UU
       break;
     default :GMM_ASSERT1(false,
-                         "Incorrect option for continuous contact brick");
+                         "Incorrect option for integral contact brick");
     }
     model::varnamelist dl(1, dataname_obs);
     dl.push_back(dataname_r);
@@ -1107,7 +1107,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Continuous penalized contact with friction (given obstacle, u, lambda).
+  //  Integral penalized contact with friction (given obstacle, u, lambda).
   //
   //=========================================================================
 
@@ -1380,8 +1380,8 @@ namespace getfem {
       contact_only = contact_only_;
       option = option_;
       set_flags(contact_only
-                ? "Continuous penalized contact with rigid obstacle brick"
-                : "Continuous penalized contact and friction with rigid obstacle brick",
+                ? "Integral penalized contact with rigid obstacle brick"
+                : "Integral penalized contact and friction with rigid obstacle brick",
                 false /* is linear*/, contact_only /* is symmetric */,
                 true /* is coercive */, true /* is real */,
                 false /* is complex */);
@@ -1423,7 +1423,7 @@ namespace getfem {
   //  by a level set.
   //=========================================================================
 
-  size_type add_penalized_contact_with_friction_with_rigid_obstacle_brick
+  size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_friction_coeff,
@@ -1456,7 +1456,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Continuous contact with friction between non-matching meshes.
+  //  Integral contact (with friction) between non-matching meshes.
   //
   //=========================================================================
 
@@ -1725,7 +1725,7 @@ namespace getfem {
     gmm::scale(Ru2, scalar_type(-1));
   }
 
-  struct continuous_contact_nonmatching_meshes_brick : public virtual_brick {
+  struct integral_contact_nonmatching_meshes_brick : public virtual_brick {
 
     size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
                         // expected to come in contact.
@@ -1752,14 +1752,14 @@ namespace getfem {
                                         build_version version) const {
       // Integration method
       GMM_ASSERT1(mims.size() == 1,
-                  "Continuous contact between nonmatching meshes bricks need a single mesh_im");
+                  "Integral contact between nonmatching meshes bricks need a single mesh_im");
       const mesh_im &mim = *mims[0];
 
       // Variables : u1, u2, lambda
       //       the variable lambda should be scalar in the frictionless
       //       case and vector valued in the case with friction.
       GMM_ASSERT1(vl.size() == 3,
-                  "Continuous contact between nonmatching meshes bricks need three variables");
+                  "Integral contact between nonmatching meshes bricks need three variables");
       const model_real_plain_vector &u1 = md.real_variable(vl[0]);
       const model_real_plain_vector &u2 = md.real_variable(vl[1]);
       const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
@@ -1773,12 +1773,12 @@ namespace getfem {
       //     alpha, WT1, WT2 are optional and equal to 1, 0 and 0 by default respectively.
       if (contact_only) {
         GMM_ASSERT1(dl.size() == 1,
-                    "Wrong number of data for continuous contact between nonmatching meshes "
+                    "Wrong number of data for integral contact between nonmatching meshes "
                     << "brick, the number of data should be equal to 1 .");
       }
       else {
         GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 5,
-                    "Wrong number of data for continuous contact between nonmatching meshes "
+                    "Wrong number of data for integral contact between nonmatching meshes "
                     << "brick, it should be between 2 and 5 instead of "  << dl.size() << " .");
       }
       const model_real_plain_vector &vr = md.real_variable(dl[0]);
@@ -1815,7 +1815,7 @@ namespace getfem {
                                            2 * !is_symmetric() +              // LU1, LU2
                                            3 * (option == 3 || option == 2)), // U1U1, U2U2, U1U2
                   "Wrong number of terms for "
-                  "continuous contact between nonmatching meshes brick");
+                  "integral contact between nonmatching meshes brick");
 
       mesh_region rg(region);
       mf_u1.linked_mesh().intersect_with_mpi_region(rg);
@@ -1864,7 +1864,7 @@ namespace getfem {
       size_type U1U2 = (option == 1 || option == 4) ? U1L : LL + 3;
 
       if (version & model::BUILD_MATRIX) {
-        GMM_TRACE2("Continuous contact between nonmatching meshes "
+        GMM_TRACE2("Integral contact between nonmatching meshes "
                    "tangent term");
         for (size_type i = 0; i < matl.size(); i++) gmm::clear(matl[i]);
 
@@ -1931,15 +1931,15 @@ namespace getfem {
 
     }
 
-    continuous_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
+    integral_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
                                                 bool contact_only_, int option_)
     : rg1(rg1_), rg2(rg2_), pfem_proj(0), pmf_u2_proj(0),
       contact_only(contact_only_), option(option_)
     {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
-                ? "Continuous contact between nonmatching meshes brick"
-                : "Continuous contact and friction between nonmatching "
+                ? "Integral contact between nonmatching meshes brick"
+                : "Integral contact and friction between nonmatching "
                   "meshes brick",
                 false /* is linear*/,
                 (option==2) && contact_only /* is symmetric */,
@@ -1947,7 +1947,7 @@ namespace getfem {
                 false /* is complex */);
     }
 
-    ~continuous_contact_nonmatching_meshes_brick()
+    ~integral_contact_nonmatching_meshes_brick()
     { if (pmf_u2_proj) delete pmf_u2_proj; }
 
   };
@@ -1958,13 +1958,13 @@ namespace getfem {
   //  with nonmatching meshes.
   //=========================================================================
 
-  size_type add_continuous_contact_between_nonmatching_meshes_brick
+  size_type add_integral_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
    const std::string &varname_u2, const std::string &multname_n,
    const std::string &dataname_r,
    size_type region1, size_type region2, int option) {
 
-    pbrick pbr = new continuous_contact_nonmatching_meshes_brick
+    pbrick pbr = new integral_contact_nonmatching_meshes_brick
                      (region1, region2, true /* contact_only */, option);
 
     model::termlist tl;
@@ -1996,7 +1996,7 @@ namespace getfem {
       tl.push_back(model::term_description(varname_u1, varname_u2, true));  // U1U2
       break;
     default : GMM_ASSERT1(false,
-                          "Incorrect option for continuous contact brick");
+                          "Incorrect option for integral contact brick");
 
     }
     model::varnamelist dl(1, dataname_r);
@@ -2011,7 +2011,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Continuous penalized contact with friction between non-matching meshes.
+  //  Integral penalized contact (with friction) between non-matching meshes.
   //
   //=========================================================================
 
@@ -2266,8 +2266,8 @@ namespace getfem {
       contact_only(contact_only_), option(option_) {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
-                ? "Continuous penalized contact between nonmatching meshes brick"
-                : "Continuous penalized contact and friction between nonmatching "
+                ? "Integral penalized contact between nonmatching meshes brick"
+                : "Integral penalized contact and friction between nonmatching "
                   "meshes brick",
                 false /* is linear*/, contact_only /* is symmetric */,
                 true /* is coercive */, true /* is real */,
@@ -2313,7 +2313,7 @@ namespace getfem {
 
 
   // Computation of contact area and contact forces
-  void compute_contact_area_and_force_between_nonmatching_meshes
+  void compute_integral_contact_area_and_force
   (model &md, size_type indbrick, scalar_type &area,
    model_real_plain_vector &F) {
 
@@ -2325,10 +2325,10 @@ namespace getfem {
 
     GMM_ASSERT1(ml.size() == 1, "Wrong size");
 
-    if (pbr->brick_name() == "Continuous contact with rigid obstacle brick" ||
-        pbr->brick_name() == "Continuous contact and friction with rigid obstacle brick") {
-      continuous_contact_rigid_obstacle_brick *p
-        = dynamic_cast<continuous_contact_rigid_obstacle_brick *>
+    if (pbr->brick_name() == "Integral contact with rigid obstacle brick" ||
+        pbr->brick_name() == "Integral contact and friction with rigid obstacle brick") {
+      integral_contact_rigid_obstacle_brick *p
+        = dynamic_cast<integral_contact_rigid_obstacle_brick *>
          (const_cast<virtual_brick *>(pbr.get()));
       GMM_ASSERT1(p, "Wrong type of brick");
 
@@ -2347,19 +2347,19 @@ namespace getfem {
       asm_level_set_normal_source_term
         (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, reg);
     }
-    else if (pbr->brick_name() == "Continuous penalized contact with rigid obstacle brick" ||
-             pbr->brick_name() == "Continuous penalized contact and friction with rigid "
+    else if (pbr->brick_name() == "Integral penalized contact with rigid obstacle brick" ||
+             pbr->brick_name() == "Integral penalized contact and friction with rigid "
                                   "obstacle brick") {
       penalized_contact_rigid_obstacle_brick *p
         = dynamic_cast<penalized_contact_rigid_obstacle_brick *>
          (const_cast<virtual_brick *>(pbr.get()));
       GMM_ASSERT1(p, "Wrong type of brick");
     }
-    else if (pbr->brick_name() == "Continuous contact between nonmatching meshes brick" ||
-             pbr->brick_name() == "Continuous contact and friction between nonmatching "
+    else if (pbr->brick_name() == "Integral contact between nonmatching meshes brick" ||
+             pbr->brick_name() == "Integral contact and friction between nonmatching "
                                   "meshes brick") {
-      continuous_contact_nonmatching_meshes_brick *p
-        = dynamic_cast<continuous_contact_nonmatching_meshes_brick *>
+      integral_contact_nonmatching_meshes_brick *p
+        = dynamic_cast<integral_contact_nonmatching_meshes_brick *>
          (const_cast<virtual_brick *>(pbr.get()));
       GMM_ASSERT1(p, "Wrong type of brick");
 
@@ -2397,8 +2397,8 @@ namespace getfem {
         (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, reg);
 
     }
-    else if (pbr->brick_name() == "Continuous penalized contact between nonmatching meshes brick" ||
-             pbr->brick_name() == "Continuous penalized contact and friction between nonmatching "
+    else if (pbr->brick_name() == "Integral penalized contact between nonmatching meshes brick" ||
+             pbr->brick_name() == "Integral penalized contact and friction between nonmatching "
                                   "meshes brick") {
       penalized_contact_nonmatching_meshes_brick *p
         = dynamic_cast<penalized_contact_nonmatching_meshes_brick *>
@@ -2783,8 +2783,8 @@ namespace getfem {
     }
 
     Nitsche_contact_rigid_obstacle_brick(void) {
-      set_flags("Continuous Nitsche contact and friction with rigid "
-		"obstacle brick",
+      set_flags("Integral Nitsche contact and friction with rigid "
+                "obstacle brick",
                 false /* is linear*/, false /* is symmetric */,
                 true /* is coercive */, true /* is real */,
                 false /* is complex */);
@@ -2793,7 +2793,7 @@ namespace getfem {
   };
 
 
-  size_type add_Nitsche_contact_with_friction_with_rigid_obstacle_brick
+  size_type add_Nitsche_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_friction_coeff,

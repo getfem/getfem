@@ -159,7 +159,7 @@ gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
 gf_model_set(md, 'add initialized data', 'r', [r]);
 OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
 gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-gf_model_set(md, 'add continuous contact with rigid obstacle brick', ...
+gf_model_set(md, 'add integral contact with rigid obstacle brick', ...
       mim, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, 1);
 
 nbdofl = size(ldof,1);
