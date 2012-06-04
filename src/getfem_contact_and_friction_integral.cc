@@ -176,7 +176,10 @@ namespace getfem {
       t[0] = -gmm::neg(ln - r*(un - g)); break;
 
     case CONTACT_FLAG:
-      t[0] = Heav(un-g);  break;
+      // here ln is expected to be an estimation of the mesh size
+      // and r should be a threshold coefficient expressing a penetration
+      // or separation distance as percentage of the mesh size 
+      t[0] = Heav(un-g - r*ln);  break;
 
     // one-dimensional tensors [N]
 

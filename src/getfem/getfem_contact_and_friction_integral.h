@@ -529,11 +529,32 @@ namespace getfem {
   (const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VEC &U,
    const getfem::mesh_fem &mf_obs, const VEC &obs,
-   const mesh_region &rg) {
+   const mesh_region &rg, scalar_type threshold_factor=0.0) {
 
-    scalar_type r(0);
+    //FIXME: use an adapted integration method
+
+    // assemble an estimator of the mesh size
+    getfem::mesh_fem mf_mesh_size(mf_u.linked_mesh());
+    mf_mesh_size.set_qdim(1);
+    mf_mesh_size.set_classical_finite_element(1);
+    VEC vec_mesh_size(mf_mesh_size.nb_dof());
+
+    getfem::generic_assembly assem_mesh_size;
+    assem_mesh_size.set("V(#1)+=comp(Base(#1))");
+    assem_mesh_size.push_mi(mim);
+    assem_mesh_size.push_mf(mf_mesh_size);
+    assem_mesh_size.push_vec(vec_mesh_size);
+    assem_mesh_size.assembly(rg);
+    if (mf_u.get_qdim() == 3)
+      for (size_type i=0; i < gmm::vect_size(vec_mesh_size); i++)
+        vec_mesh_size[i] = sqrt(vec_mesh_size[i]);
+
+    // compute the total contact area
+    // remark: the CONTACT_FLAG option misuses r as threshold factor and mf_lambda
+    //         as mesh size estimation
+    scalar_type r(threshold_factor);
     contact_rigid_obstacle_nonlinear_term
-      nterm(CONTACT_FLAG, r, mf_u, U, mf_obs, obs);
+      nterm(CONTACT_FLAG, r, mf_u, U, mf_obs, obs, &mf_mesh_size, &vec_mesh_size);
 
     getfem::generic_assembly assem;
     assem.set("V()+=comp(NonLin(#1,#1,#2))(i)");
@@ -579,19 +600,39 @@ namespace getfem {
   (const mesh_im &mim,
    const getfem::mesh_fem &mf_u1, const VEC &U1,
    const getfem::mesh_fem &mf_u2_proj, const VEC &U2_proj,
-   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
-   const mesh_region &rg) {
+   const mesh_region &rg, scalar_type threshold_factor=0.0) {
 
-    scalar_type r(0);
+    //FIXME: use an adapted integration method
+
+    // assemble an estimator of the mesh size
+    getfem::mesh_fem mf_mesh_size(mf_u1.linked_mesh());
+    mf_mesh_size.set_qdim(1);
+    mf_mesh_size.set_classical_finite_element(1);
+    VEC vec_mesh_size(mf_mesh_size.nb_dof());
+
+    getfem::generic_assembly assem_mesh_size;
+    assem_mesh_size.set("V(#1)+=comp(Base(#1))");
+    assem_mesh_size.push_mi(mim);
+    assem_mesh_size.push_mf(mf_mesh_size);
+    assem_mesh_size.push_vec(vec_mesh_size);
+    assem_mesh_size.assembly(rg);
+    if (mf_u1.get_qdim() == 3)
+      for (size_type i=0; i < gmm::vect_size(vec_mesh_size); i++)
+        vec_mesh_size[i] = sqrt(vec_mesh_size[i]);
+    
+    // compute the total contact area
+    // remark: the CONTACT_FLAG option misuses r as threshold factor and mf_lambda
+    //         as mesh size estimation
+    scalar_type r(threshold_factor);
     contact_nonmatching_meshes_nonlinear_term
-      nterm(CONTACT_FLAG, r, mf_u1, U1, mf_u2_proj, U2_proj, &mf_lambda, &lambda);
+      nterm(CONTACT_FLAG, r, mf_u1, U1, mf_u2_proj, U2_proj, &mf_mesh_size, &vec_mesh_size);
 
     getfem::generic_assembly assem;
     assem.set("V()+=comp(NonLin(#1,#1,#2,#3))(i)");
     assem.push_mi(mim);
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2_proj);
-    assem.push_mf(mf_lambda);
+    assem.push_mf(mf_mesh_size);
     assem.push_nonlinear_term(&nterm);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
