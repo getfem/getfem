@@ -557,10 +557,11 @@ namespace getfem {
       nterm(CONTACT_FLAG, r, mf_u, U, mf_obs, obs, &mf_mesh_size, &vec_mesh_size);
 
     getfem::generic_assembly assem;
-    assem.set("V()+=comp(NonLin(#1,#1,#2))(i)");
+    assem.set("V()+=comp(NonLin(#1,#1,#2,#3))(i)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_obs);
+    assem.push_mf(mf_mesh_size);
     assem.push_nonlinear_term(&nterm);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
