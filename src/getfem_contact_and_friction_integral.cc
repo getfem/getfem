@@ -2344,7 +2344,7 @@ namespace getfem {
       const model_real_plain_vector &obs = md.real_variable(dl[0]);
       const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
 
-      area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg);
+      area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg, -1e-3);
 
       gmm::resize(F, mf_u.nb_dof());
       asm_level_set_normal_source_term
@@ -2393,7 +2393,7 @@ namespace getfem {
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
       area = asm_nonmatching_meshes_contact_area
-             (*ml[0], mf_u1, u1, *(p->pmf_u2_proj), u2_proj, mf_lambda, lambda, reg);
+             (*ml[0], mf_u1, u1, *(p->pmf_u2_proj), u2_proj, reg, -1e-3);
 
       gmm::resize(F, mf_u1.nb_dof());
       asm_nonmatching_meshes_normal_source_term
