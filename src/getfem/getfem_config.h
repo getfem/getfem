@@ -259,8 +259,11 @@ namespace getfem {
   template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
   template <typename VECT> inline void MPI_SUM_VECTOR(VECT) {}
   template <typename VECT1, typename VECT2>
-  inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &W)
-  { gmm::copy(V, gmm::linalg_const_cast(W)); }
+  inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &WW)
+  {
+    VECT2 &W = const_cast<VECT2 &>(WW);
+    gmm::copy(V, W);
+  }
   inline bool MPI_IS_MASTER(void) { return true; }
 #endif
 
