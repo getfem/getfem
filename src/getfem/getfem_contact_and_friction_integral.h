@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2011-2012 Yves Renard
+ Copyright (C) 2011-2012 Yves Renard, Konstantinos Poulios.
  
  This file is a part of GETFEM++
  
@@ -30,7 +30,7 @@
 
 /** @file getfem_contact_and_friction_integral.h
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
-    @author Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+    @author Konstantinos Poulios <logari81@googlemail.com>
     @date November, 2011.
     @brief Unilateral contact and Coulomb friction condition brick.
  */

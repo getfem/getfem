@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2011-2012 Yves Renard.
+ Copyright (C) 2011-2012 Yves Renard, Konstantinos Poulios.
  
  This file is a part of GETFEM++
  
@@ -19,10 +19,16 @@
  
 ===========================================================================*/
 
-
+#include "getfem/bgeot_rtree.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
 #include "getfem/getfem_projected_fem.h"
 
+#include <getfem/getfem_arch_config.h>
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#include <muParser/muParser.h>
+#elif GETFEM_HAVE_MUPARSER_H
+#include <muParser.h>
+#endif
 
 namespace getfem {
 
@@ -2618,7 +2624,7 @@ namespace getfem {
       no /= -gmm::vect_norm2(no);
       ctx.pf()->interpolation(ctx, coeff, aux1, 1);
       g = aux1[0];
-      n = compute_normal(ctx, ctx.face_num());
+      n = bgeot::compute_normal(ctx, ctx.face_num());
       n /= gmm::vect_norm2(n);
       break;
 
@@ -2819,25 +2825,402 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
-
-
-
-
-
-
-
-
-
-
 #endif
 
 
 
+  //=========================================================================
+  //
+  //  Large sliding brick.
+  //
+  //=========================================================================
+
+  //=========================================================================
+  // 1)- Structure which computes and stores the contact pairs
+  //=========================================================================
+  
+  
+  // Ne pas oublier que les vecteurs deplacement doivent être étendus
+  // avant d'être passe à la structure "contact_frame"
 
 
+  struct contact_frame {
+    bool frictionless;
+    size_type N;
+    scalar_type friction_coef; // could depend on the surfaces ...
+    struct contact_boundary {
+      size_type region;                 // Boundary number
+      const getfem::mesh_fem *mf;       // F.e.m. for the displacement.
+      const model_real_plain_vector *U; // Displacement vector(extended one !).
+    };
+    std::vector<contact_boundary> contact_boundaries;
+
+    std::vector<std::string> coordinates;
+    base_node pt_eval;
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    std::vector<mu::Parser> obstacles_parsers;
+#endif
+    std::vector<std::string> obstacles;
+    std::vector<std::string> obstacles_velocities;
+
+    const getfem::mesh_fem &mf_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mf); }
+    const model_real_plain_vector &disp_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].U); }
+    size_type region_of_boundary(size_type n) const
+    { return contact_boundaries[n].region; }
+
+    contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
+      coordinates[0] = "x";
+      coordinates[1] = "y";
+      coordinates[3] = "z";
+      coordinates[4] = "w";
+      GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
+		  "dimension greater than 4");
+     // à completer et bien remplir "obstacles_parsers" avec
+     // parser.SetExpr(obstacle);
+     // for (size_type k = 0; k <= N; ++k)
+     // parser.DefineVar(coordinates[k], &pt_eval[k]);
+    }
+    
+  };
 
 
+  struct contact_pairs {
 
+    contact_frame &cf;   // contact frame description.
+
+    bgeot::node_tab points; // Point list
+    std::vector<dim_type> point_states; // 0 if no contact, 1 with a boundary,
+                                        // 2 with a rigid obstacle
+    std::vector<size_type> point_bound_num;
+    std::vector<base_node> point_y0s;
+    std::vector<base_node> point_y0_refs;
+    
+    // list des enrichissements pour ses points : y0, d0, element ...
+    bgeot::rtree element_boxes;  // influence regions of boundary elements
+    // list des enrichissements of boundary elements
+    std::vector<size_type> boundary_of_elements;
+    std::vector<size_type> ind_of_elements;
+    std::vector<size_type> face_of_elements;
+    std::vector<base_node> unit_normal_of_elements;
+
+    fem_precomp_pool fppool;
+
+
+    void init(void) {
+      // compute the influence regions of boundary elements and clear the list
+      // of points.
+      element_boxes.clear();
+      unit_normal_of_elements.resize(0);
+      boundary_of_elements.resize(0);
+      ind_of_elements.resize(0);
+      face_of_elements.resize(0);
+
+      size_type N;
+      base_matrix G;
+      model_real_plain_vector coeff;
+      for (size_type i = 0; i < cf.contact_boundaries.size(); ++i) {
+	size_type bnum = cf.region_of_boundary(i);
+	const mesh_fem &mfu = cf.mf_of_boundary(i);
+	const model_real_plain_vector &U = cf.disp_of_boundary(i);
+	const mesh &m = mfu.linked_mesh();
+	if (i == 0) N = m.dim();
+	GMM_ASSERT1(m.dim() == N,
+		    "Meshes are of mixed dimensions, cannot deal with that");
+	base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
+	base_matrix grad(N,N);
+	mesh_region region = m.region(bnum);
+	GMM_ASSERT1(mfu.get_qdim() == N,
+		    "Wrong mesh_fem qdim to compute contact pairs");
+
+	dal::bit_vector points_already_interpolated;
+	std::vector<base_node> transformed_points(m.nb_max_points());
+	for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+	  size_type cv = v.cv();
+	  bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+	  pfem pf_s = mfu.fem_of_element(cv);
+	  size_type nbd_t = pgt->nb_points();
+	  size_type cvnbdof = mfu.nb_basic_dof_of_element(cv);
+	  coeff.resize(cvnbdof);
+	  mesh_fem::ind_dof_ct::const_iterator
+	    itdof = mfu.ind_basic_dof_of_element(cv).begin();
+	  for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k]=U[*itdof];
+	  if (pf_s->need_G()) 
+	    bgeot::vectors_to_base_matrix
+	      (G, mfu.linked_mesh().points_of_convex(cv));
+	  
+	  pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+	  fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+					size_type(-1));
+
+	  size_type nb_pt_on_face = 0;
+	  gmm::clear(n_mean);
+	  for (short_type ip = 0; ip < nbd_t; ++ip) {
+	    size_type ind = m.ind_points_of_convex(cv)[ip];
+	    
+	    // computation of transformed vertex
+	    if (!(points_already_interpolated.is_in(ind))) {
+	      ctx.set_ii(ip);
+	      pf_s->interpolation(ctx, coeff, val, dim_type(N));
+	      val += ctx.xreal();
+	      transformed_points[ind] = val;
+	      points_already_interpolated.add(ind);	  
+	    } else {
+	      val = transformed_points[ind];
+	    }
+	    // computation of unit normal vector if the vertex is on the face
+	    bool is_on_face = false;
+	    bgeot::pconvex_structure cvs = pgt->structure();
+	    for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
+	      if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
+	    if (is_on_face) {
+	      n0 = bgeot::compute_normal(ctx, v.f());
+	      pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+	      scalar_type J = gmm::lu_inverse(grad);
+	      if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
+	      gmm::mult(gmm::transposed(grad), n0, n);
+	      n /= gmm::vect_norm2(n);
+	      n_mean += n;
+	      ++nb_pt_on_face;
+	    }
+
+	    if (ip == 0) // computation of bounding box
+	      bmin = bmax = val;
+	    else {
+	      for (size_type k = 0; k < N; ++k) {
+		bmin[k] = std::min(bmin[k], val[k]);
+		bmax[k] = std::max(bmax[k], val[k]);
+	      }
+	    }
+	  }
+
+	  GMM_ASSERT1(nb_pt_on_face,
+		      "This element has not vertex on considered face !");
+
+	  // Computation of influence box :
+	  // offset of the bounding box relatively to its "diameter"
+	  scalar_type h = bmax[0] - bmin[0];
+	  for (size_type k = 1; k < N; ++k)
+	    h = std::max(h, bmax[k] - bmin[k]);
+	  for (size_type k = 1; k < N; ++k)
+	    { bmin[k] -= h; bmax[k] += h; }
+
+	  // Store the influence box and additional information.
+	  element_boxes.add_box(bmin, bmax, unit_normal_of_elements.size());
+	  n_mean /= gmm::vect_norm2(n_mean);
+	  unit_normal_of_elements.push_back(n_mean);
+	  boundary_of_elements.push_back(i);
+	  ind_of_elements.push_back(cv);
+	  face_of_elements.push_back(v.f());
+	}
+      }
+ 
+
+      points.clear();
+      point_states.resize(0);
+      point_bound_num.resize(0);
+      point_y0s.resize(0);
+      point_y0_refs.resize(0);
+      // WARNING : control to clear all the enrichissements
+    }
+
+    size_type add_point(size_type boundary_num,
+			getfem::fem_interpolation_context &ctx) {
+      // il faut les vecteurs déplacement également ...
+      const mesh_fem &mfu = cf.mf_of_boundary(boundary_num);
+      const model_real_plain_vector &U = cf.disp_of_boundary(boundary_num);
+      size_type N = mfu.get_qdim();
+      base_node pt0 = ctx.xreal();
+      size_type ind = points.search_node(pt0);
+      if (ind == size_type(-1)) {
+	base_node n0 = bgeot::compute_normal(ctx, ctx.face_num());
+	size_type cv = ctx.convex_num();
+	base_small_vector n(N), val(N), h(N);
+	base_vector coeff;
+	base_matrix grad(N,N), gradtot(N,N), G;
+	coeff.resize(mfu.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector
+		  (U, gmm::sub_index
+		   (mfu.ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
+	base_node pt = pt0 + val;
+	
+	ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
+	scalar_type J = gmm::lu_inverse(grad); // remplacer par une résolution ...
+	if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
+	gmm::mult(gmm::transposed(grad), n0, n);
+	n /= gmm::vect_norm2(n);
+
+	bgeot::rtree::pbox_set bset;
+	element_boxes.find_boxes_at_point(pt, bset);
+
+	cout << "Number of boxes found : " << bset.size() << endl; 
+
+	// unit normal criterion
+	bgeot::rtree::pbox_set::iterator it = bset.begin(), itnext;
+	for (; it != bset.end(); it = itnext) {
+	  itnext = it; ++itnext;
+	  if (gmm::vect_sp(unit_normal_of_elements[(*it)->id], n) < scalar_type(0))
+	    bset.erase(it);
+	}
+
+	cout << "Number of boxes satisfying the unit normal criterion : " << bset.size() << endl; 
+
+	
+	it = bset.begin();
+	std::vector<base_node> y0s, y0_refs;
+	std::vector<scalar_type> d0s;
+	std::vector<size_type> elt_nums;
+	for (; it != bset.end(); it = itnext) {
+	  size_type boundary_num_y0 = boundary_of_elements[(*it)->id];
+	  size_type cv_y0 = ind_of_elements[(*it)->id];
+	  size_type face_y0 = face_of_elements[(*it)->id];
+	  const mesh_fem &mfu_y0 = cf.mf_of_boundary(boundary_num_y0);
+	  pfem pf_s = mfu_y0.fem_of_element(cv_y0);
+	  const model_real_plain_vector &U_y0
+	    = cf.disp_of_boundary(boundary_num_y0);
+	  const mesh &m = mfu_y0.linked_mesh();
+	  bgeot::pgeometric_trans pgt_y0 = m.trans_of_convex(cv);
+	  bgeot::pconvex_structure cvs_y0 = pgt_y0->structure();
+
+	  // Find an interior point (in order to promote the more interior
+	  // y0 in case of locally non invertible transformation.
+	  size_type ind_dep_point = 0;
+	  for (; ind_dep_point < cvs_y0->nb_points(); ++ind_dep_point) {
+	    bool is_on_face = false;
+	    for (size_type k = 0;
+		 k < cvs_y0->nb_points_of_face(short_type(face_y0)); ++k)
+	      if (cvs_y0->ind_points_of_face(short_type(face_y0))[k] == ind_dep_point)
+		is_on_face = true;
+	    if (!is_on_face) break;
+	  }
+	  GMM_ASSERT1(ind_dep_point < cvs_y0->nb_points(), 
+		      "No interior point found !");
+	  
+	  base_node y0_ref = pgt_y0->convex_ref()->points()[ind_dep_point];
+
+	  size_type cvnbdof = mfu_y0.nb_basic_dof_of_element(cv_y0);
+	  coeff.resize(cvnbdof);
+	  mesh_fem::ind_dof_ct::const_iterator
+	    itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
+	  for (size_type k = 0; k < cvnbdof; ++k, ++itdof)
+	    coeff[k] = U_y0[*itdof];
+	  if (pf_s->need_G()) 
+	    bgeot::vectors_to_base_matrix
+	      (G, mfu_y0.linked_mesh().points_of_convex(cv));
+	  
+	  fem_interpolation_context ctx_y0(pgt_y0, pf_s, y0_ref, G, cv_y0,
+					size_type(-1));
+	  
+	  size_type newton_iter = 0;
+	  for(;;) { // Newton algorithm to invert geometric transformation
+	    
+	    pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
+	    val += ctx_y0.xreal() - pt;
+	    scalar_type init_res = gmm::vect_norm2(val);
+
+	    if (init_res < 1E-12) break;
+	    GMM_ASSERT1(newton_iter < 200,
+			"Newton has failed to invert transformation"); // il faudrait faire qlq chose d'autre ... !
+	    
+	    pf_s->interpolation_grad(ctx_y0, coeff, grad, dim_type(N));
+
+	    gmm::add(gmm::identity_matrix(), grad);
+	    gmm::mult(grad, ctx_y0.K(), gradtot);
+
+
+	    
+	    std::vector<int> ipvt(N);
+	    size_type info = gmm::lu_factor(gradtot, ipvt);
+	    GMM_ASSERT1(!info, "Singular system, pivot = " << info); // il faudrait faire qlq chose d'autre ... perturber par exemple
+	    gmm::lu_solve(gradtot, ipvt, h, val);
+	    
+	    // line search
+	    bool ok = false;
+	    scalar_type alpha;
+	    for (alpha = 1; alpha >= 1E-4; alpha/=scalar_type(2)) {
+	      
+	      ctx_y0.set_xref(y0_ref - alpha*h);
+	      pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
+	      val += ctx_y0.xreal() - pt;
+	      
+	      if (gmm::vect_norm2(val) < init_res) { ok = true; break; }
+	    }
+	    if (!ok)
+	      GMM_WARNING1("Line search has failed to invert transformation");
+	    y0_ref -= alpha*h;
+	    ctx_y0.set_xref(y0_ref);
+	    newton_iter++;
+	  }
+
+	  y0s.push_back(ctx_y0.xreal()); // Usefull ?
+	  y0_refs.push_back(y0_ref);
+	  elt_nums.push_back((*it)->id);
+	  base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
+	  d0s.push_back(pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
+							 y0_ref)
+			/ gmm::vect_norm2(n0_y0)); // vérifier la cohérence
+
+	  // Remark : A scaling with the normal vector in real configuration
+	  //          may be more efficient ? Not sure.
+	}
+
+	dim_type state = 0;
+	scalar_type d0 = 1E100;
+
+	size_type ibound = size_type(-1);
+	for (size_type k = 0; k < y0_refs.size(); ++k)
+	  if (d0s[k] < d0) { d0 = d0s[k]; ibound = k; state = 1; }
+
+	
+	size_type irigid_obstacle = size_type(-1);
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+	cf.pt_eval = pt;
+	for (size_type i = 0; i < cf.obstacles.size(); ++i) {
+	  scalar_type d0_o = scalar_type(cf.obstacles_parsers[i].Eval());
+	  if (d0_o < d0) { d0 = d0_o; irigid_obstacle = i; state = 2; }
+	}
+#else
+	if (cf.obstacles.size() > 0)
+	  GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
+		       "muParser to account for rigid obstacles");
+#endif
+
+	// store the result
+	size_type ip = points.add(pt0);
+	GMM_ASSERT1(ip == point_states.size(), "Internal error");
+	point_states.push_back(state);
+	switch (state) {
+	case 0:
+	  point_bound_num.push_back(0);
+	  point_y0s.push_back(base_node());
+	  point_y0_refs.push_back(base_node());
+	  break;
+	case 1:
+	  {
+	    size_type eltnum = elt_nums[ibound];
+	    point_bound_num.push_back(boundary_of_elements[eltnum]);
+	    point_y0s.push_back(y0s[ibound]);
+	    point_y0_refs.push_back(y0_refs[ibound]);
+	  }
+	  break;
+	case 2:
+	  point_bound_num.push_back(irigid_obstacle);
+	  point_y0s.push_back(base_node());
+	  point_y0_refs.push_back(base_node());
+	  break;
+	}
+
+      }
+      return ind;
+    }
+
+    size_type search_point(getfem::fem_interpolation_context &ctx)
+    { return points.search_node(ctx.xreal()); }
+
+
+  };
 
 
 
