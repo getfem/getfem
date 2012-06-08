@@ -25,16 +25,27 @@
 
 gf_workspace('clear all'); clear all;
 
-N = 3;   % dimension of the mesh
+N = 2;   % dimension of the mesh
 K = 2;   % degree of the mesh (for curved boundaries)
 if (N == 1) 
   mo = gf_mesher_object('ball', [0], 2);
   fixed_vertices = [0];
   h = 0.5;
-elseif (N == 2) 
-  mo = gf_mesher_object('ball', [0 4], 2);
-  fixed_vertices = [0; 4];
-  h = 0.5;
+elseif (N == 2)
+  if (1)  
+    mo = gf_mesher_object('ball', [0 4], 2);
+    fixed_vertices = [0; 4];
+    h = 0.5;
+  else
+    mo1 = gf_mesher_object('ball', [0 1.1], 1);
+    mo2 = gf_mesher_object('rectangle', [-0.2 1.085], [0.2, 1.115]);
+    mo3 = gf_mesher_object('ball', [0.4 1.1], 0.2);
+    mo4 = gf_mesher_object('ball', [-0.4 1.1], 0.2);
+    mo5 = gf_mesher_object('union', mo2, mo3, mo4);
+    mo = gf_mesher_object('set minus', mo1, mo5);
+    fixed_vertices = [];
+    h = 0.05;
+  end
 elseif (N == 3)
   if (0)
     mo1 = gf_mesher_object('ball', [0 0 1], 2);
@@ -83,3 +94,4 @@ elseif (N == 3)
    axis on; camlight; gf_colormap('chouette');
 end;
  
+% gf_mesh_get(m, 'save', 'name.mesh');

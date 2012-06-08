@@ -2839,51 +2839,6 @@ namespace getfem {
   // 1)- Structure which computes and stores the contact pairs
   //=========================================================================
   
-  
-  // Ne pas oublier que les vecteurs deplacement doivent être étendus
-  // avant d'être passe à la structure "contact_frame"
-
-
-  struct contact_frame {
-    bool frictionless;
-    size_type N;
-    scalar_type friction_coef; // could depend on the surfaces ...
-    struct contact_boundary {
-      size_type region;                 // Boundary number
-      const getfem::mesh_fem *mf;       // F.e.m. for the displacement.
-      const model_real_plain_vector *U; // Displacement vector(extended one !).
-    };
-    std::vector<contact_boundary> contact_boundaries;
-
-    std::vector<std::string> coordinates;
-    base_node pt_eval;
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-    std::vector<mu::Parser> obstacles_parsers;
-#endif
-    std::vector<std::string> obstacles;
-    std::vector<std::string> obstacles_velocities;
-
-    const getfem::mesh_fem &mf_of_boundary(size_type n) const
-    { return *(contact_boundaries[n].mf); }
-    const model_real_plain_vector &disp_of_boundary(size_type n) const
-    { return *(contact_boundaries[n].U); }
-    size_type region_of_boundary(size_type n) const
-    { return contact_boundaries[n].region; }
-
-    contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
-      coordinates[0] = "x";
-      coordinates[1] = "y";
-      coordinates[3] = "z";
-      coordinates[4] = "w";
-      GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
-		  "dimension greater than 4");
-     // à completer et bien remplir "obstacles_parsers" avec
-     // parser.SetExpr(obstacle);
-     // for (size_type k = 0; k <= N; ++k)
-     // parser.DefineVar(coordinates[k], &pt_eval[k]);
-    }
-    
-  };
 
 
   struct contact_pairs {
@@ -2906,6 +2861,9 @@ namespace getfem {
     std::vector<base_node> unit_normal_of_elements;
 
     fem_precomp_pool fppool;
+
+
+    contact_pairs(contact_frame &ccf) : cf(ccf) {}
 
 
     void init(void) {
@@ -3176,7 +3134,7 @@ namespace getfem {
 	
 	size_type irigid_obstacle = size_type(-1);
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-	cf.pt_eval = pt;
+	gmm::copy(pt, cf.pt_eval);
 	for (size_type i = 0; i < cf.obstacles.size(); ++i) {
 	  scalar_type d0_o = scalar_type(cf.obstacles_parsers[i].Eval());
 	  if (d0_o < d0) { d0 = d0_o; irigid_obstacle = i; state = 2; }
@@ -3223,6 +3181,69 @@ namespace getfem {
   };
 
 
+  void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2) {
+    contact_pairs cp(cf);
+    fem_precomp_pool fppool;
+    base_matrix G;
+
+    const mesh_fem &mf1 = cf.mf_of_boundary(0);
+    const mesh_fem &mf2 = cf.mf_of_boundary(1);
+    const mesh &m1 = mf1.linked_mesh();
+    const mesh &m2 = mf2.linked_mesh();
+    size_type r1 = cf.region_of_boundary(0);
+    size_type r2 = cf.region_of_boundary(0);
+    mesh_region mr1 = m1.region(r1);
+    mesh_region mr2 = m2.region(r2);
+    
+    for (getfem::mr_visitor v(mr1, m1); !v.finished(); ++v) {
+      size_type cv = v.cv();
+      bgeot::pgeometric_trans pgt = m1.trans_of_convex(cv);
+      pfem pf_s = mf1.fem_of_element(cv);
+      pintegration_method pim = mim1.int_method_of_element(cv);
+//       size_type nbd_t = pgt->nb_points();
+//       size_type cvnbdof = mf1.nb_basic_dof_of_element(cv);
+//       coeff.resize(cvnbdof);
+//       mesh_fem::ind_dof_ct::const_iterator
+// 	itdof = mf1.ind_basic_dof_of_element(cv).begin();
+//       for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k]=U[*itdof];
+      if (pf_s->need_G()) 
+	bgeot::vectors_to_base_matrix
+	  (G, mf1.linked_mesh().points_of_convex(cv));
+	  
+      pfem_precomp pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+				    size_type(-1));
+
+      for (size_type k = 0; k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
+	ctx.set_ii(pim->approx_method()->ind_first_point_on_face(v.f())+k);
+	cp.add_point(0,ctx);
+      }
+    }
+
+
+    for (getfem::mr_visitor v(mr2, m2); !v.finished(); ++v) {
+      size_type cv = v.cv();
+      bgeot::pgeometric_trans pgt = m2.trans_of_convex(cv);
+      pfem pf_s = mf2.fem_of_element(cv);
+      pintegration_method pim = mim2.int_method_of_element(cv);
+      if (pf_s->need_G()) 
+	bgeot::vectors_to_base_matrix
+	  (G, mf2.linked_mesh().points_of_convex(cv));
+      
+      pfem_precomp pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+				    size_type(-1));
+      
+      for (size_type k = 0; k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
+	ctx.set_ii(pim->approx_method()->ind_first_point_on_face(v.f())+k);
+	cp.add_point(0,ctx);
+      }
+    }
+
+
+
+
+  }
 
 
 

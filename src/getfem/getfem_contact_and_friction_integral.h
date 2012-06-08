@@ -649,6 +649,91 @@ namespace getfem {
 
 
 
+
+}
+
+
+
+  // will not remain here ....
+
+
+
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#include <muParser/muParser.h>
+#elif GETFEM_HAVE_MUPARSER_H
+#include <muParser.h>
+#endif
+
+namespace getfem {
+
+
+  struct contact_frame {
+    bool frictionless;
+    size_type N;
+    scalar_type friction_coef; // could depend on the surfaces ...
+    struct contact_boundary {
+      size_type region;                 // Boundary number
+      const getfem::mesh_fem *mf;       // F.e.m. for the displacement.
+      model_real_plain_vector U; // Displacement vector(extended one !).
+    };
+    std::vector<contact_boundary> contact_boundaries;
+
+    std::vector<std::string> coordinates;
+    base_node pt_eval;
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    std::vector<mu::Parser> obstacles_parsers;
+#endif
+    std::vector<std::string> obstacles;
+    std::vector<std::string> obstacles_velocities;
+
+    const getfem::mesh_fem &mf_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mf); }
+    const model_real_plain_vector &disp_of_boundary(size_type n) const
+    { return contact_boundaries[n].U; }
+    size_type region_of_boundary(size_type n) const
+    { return contact_boundaries[n].region; }
+
+    contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
+      if (N > 0) coordinates[0] = "x";
+      if (N > 1) coordinates[1] = "y";
+      if (N > 2) coordinates[3] = "z";
+      if (N > 3) coordinates[4] = "w";
+      GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
+		  "dimension greater than 4");
+    }
+
+    size_type add_obstacle(const std::string &obs) {
+      size_type ind = obstacles.size();
+      obstacles.push_back(obs);
+      obstacles_velocities.push_back("");
+      mu::Parser mu;
+      obstacles_parsers.push_back(mu);
+      obstacles_parsers[ind].SetExpr(obstacles[ind]);
+      for (size_type k = 0; k < N; ++k)
+	obstacles_parsers[ind].DefineVar(coordinates[k], &pt_eval[k]);
+      return ind;
+    }
+
+    size_type add_boundary(const getfem::mesh_fem &mf,
+			   const model_real_plain_vector &U, size_type reg) {
+      contact_boundary cb;
+      cb.region = reg;
+      cb.mf = &mf;
+      gmm::resize(cb.U, mf.nb_basic_dof());
+      mf.extend_vector(U, cb.U);
+      size_type ind = contact_boundaries.size();
+      contact_boundaries.push_back(cb);
+      return ind;
+    }
+
+  };
+
+
+  void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2);
+
+
+
+
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
   // Experimental implementation of contact condition with Nitsche method.
   // To be deleted when a more general implementation will be designed.
