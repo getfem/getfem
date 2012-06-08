@@ -432,8 +432,9 @@ void assemble_source(size_type boundary_num,
   const getfem::mesh_im *mim = get_mim(in);
   const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
   const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
-  unsigned q_dim = mf_u->get_qdim();
+  unsigned q_dim = mf_u->get_qdim() / mf_d->get_qdim();
   if (!in.front().is_complex()) {
+    
     darray g               = in.pop().to_darray(q_dim, int(mf_d->nb_dof()));
     darray F               = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);

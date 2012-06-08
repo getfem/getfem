@@ -172,6 +172,26 @@ void gf_mesher_object(getfemint::mexargs_in& m_in,
        );
 
     
+    /*@INIT MF = ('rectangle', @vec rmin, @vec rmax)
+      Represents a rectangle (or parallelepiped in 3D) parallel to the axes.
+      @*/
+    sub_command
+      ("rectangle", 2, 2, 0, 1,
+       darray rmin = in.pop().to_darray();
+       darray rmax = in.pop().to_darray();
+       
+       size_type N = gmm::vect_size(rmin);
+       GMM_ASSERT1(N == gmm::vect_size(rmax),
+		   "Extreme points should be the same lenght");
+
+       getfem::base_node rrmin(N); getfem::base_node rrmax(N);
+       gmm::copy(rmin, rrmin); gmm::copy(rmax, rrmax);
+
+       getfem::mesher_signed_distance *rectangle
+         = new getfem::mesher_rectangle(rrmin, rrmax);
+
+       pmo = getfemint_mesher_object::get_from(rectangle);
+       );
 
 
     /*@INIT MF = ('intersect', @tmo object1 , @tmo object2, ...)
