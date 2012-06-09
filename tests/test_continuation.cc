@@ -118,19 +118,20 @@ bool state_problem::cont(plain_vector &U) {
   size_type nb_step = int(PARAM.int_value("NBSTEP")),
     maxit = PARAM.int_value("MAXITER"),
     thrit = PARAM.int_value("THR_ITER"),
-    nb_dof = mf_u.nb_dof() + 1;
-  scalar_type maxres = PARAM.real_value("RESIDUAL"),
+    nb_dof = mf_u.nb_dof();
+  scalar_type scfac = 1./ nb_dof,
+    maxres = PARAM.real_value("RESIDUAL"),
     maxdiff = PARAM.real_value("DIFFERENCE"),
     minang = PARAM.real_value("ANGLE"),
-    h_init = PARAM.real_value("H_INIT") * nb_dof,
-    h_max = PARAM.real_value("H_MAX") * nb_dof,
-    h_min = PARAM.real_value("H_MIN") * nb_dof,
+    h_init = PARAM.real_value("H_INIT"),
+    h_max = PARAM.real_value("H_MAX"),
+    h_min = PARAM.real_value("H_MIN"),
     h_inc = PARAM.real_value("H_INC"),
     h_dec = PARAM.real_value("H_DEC"),
     eps = PARAM.real_value("EPSILON"),
     maxres_solve = PARAM.real_value("RESIDUAL_SOLVE");
   int noisy = PARAM.int_value("NOISY");
-  getfem::S_getfem_model s(model, "lambda", ls, maxit, thrit, maxres,
+  getfem::S_getfem_model s(model, "lambda", ls, scfac, maxit, thrit, maxres,
 			   maxdiff, minang, h_init, h_max, h_min, h_inc,
 			   h_dec, eps, maxres_solve, noisy);
 
@@ -138,7 +139,7 @@ bool state_problem::cont(plain_vector &U) {
   gmm::iteration iter(maxres_solve, noisy, 40000);
   getfem::standard_solve(model, iter);
 
-  gmm::resize(U, mf_u.nb_dof());
+  gmm::resize(U, nb_dof);
   gmm::copy(model.real_variable("u"), U);
 
   cout << "U = " << U << endl;

@@ -28,8 +28,8 @@
     <synopsis>V = gf_model_get(model M, 'from variables')</synopsis>
     <synopsis>gf_model_get(model M, 'assembly'[, string option])</synopsis>
     <synopsis>{nbit, converged} = gf_model_get(model M, 'solve'[, ...])</synopsis>
-    <synopsis>E = gf_model_get(model M, 'init Moore-Penrose continuation', string dataname_parameter[,string dataname_init, string dataname_final, string dataname_current], scalar init_dir[, ...])</synopsis>
-    <synopsis>E = gf_model_get(model M, 'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[, ...])</synopsis>
+    <synopsis>E = gf_model_get(model M, 'init Moore-Penrose continuation', string dataname_parameter[,string dataname_init, string dataname_final, string dataname_current], scalar sc_fac, scalar init_dir[, ...])</synopsis>
+    <synopsis>E = gf_model_get(model M, 'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], scalar sc_fac, vec tangent, scalar tangent_parameter, scalar h[, ...])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
@@ -176,18 +176,19 @@
     </listitem>
 
     <listitem>
-    <para><literal>E = gf_model_get(model M, 'init Moore-Penrose continuation', string dataname_parameter[,string dataname_init, string dataname_final, string dataname_current], scalar init_dir[, ...])</literal></para>
+    <para><literal>E = gf_model_get(model M, 'init Moore-Penrose continuation', string dataname_parameter[,string dataname_init, string dataname_final, string dataname_current], scalar sc_fac, scalar init_dir[, ...])</literal></para>
 
-    <para>       Initialize the Moore-Penrose continuation (for more details about the
+    <para>       Initialise the Moore-Penrose continuation (for more details about the
     continuation see the Getfem++ user documentation): The variable
-    <literal>dataname_parameter</literal> should parametrize the model. If the parametrization is
+    <literal>dataname_parameter</literal> should parametrise the model. If the parametrisation is
     done via some vector datum, <literal>dataname_init</literal> and <literal>dataname_final</literal> should
-    store two given values of this datum determining the parametrization, and
-    <literal>dataname_current</literal> serves for actual values of this datum. Return a tangent
+    store two given values of this datum determining the parametrisation, and
+    <literal>dataname_current</literal> serves for actual values of this datum. Return a unit tangent
     corresponding to the solution branch at the current solution and the current
     value of the parameter, and an initial step size for the continuation.
     Direction of the computed tangent with respect to the parameter is
     determined by the sign of <literal>init_dir</literal>.
+    <literal>sc_fac</literal> is a scale factor involved in the norm used in the routine.
     
     Additional options:
     
@@ -211,17 +212,18 @@
     </listitem>
 
     <listitem>
-    <para><literal>E = gf_model_get(model M, 'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], vec tangent, scalar tangent_parameter, scalar h[, ...])</literal></para>
+    <para><literal>E = gf_model_get(model M, 'Moore-Penrose continuation', string dataname_parameter[, string dataname_init, string dataname_final, string dataname_current], scalar sc_fac, vec tangent, scalar tangent_parameter, scalar h[, ...])</literal></para>
 
     <para>       Compute one step of the Moore-Penrose continuation (for more details
     about the continuation see the Getfem++ user documentation): The variable
-    <literal>dataname_parameter</literal> should parametrize the model. If the parametrization is
+    <literal>dataname_parameter</literal> should parametrise the model. If the parametrisation is
     done via some vector datum, <literal>dataname_init</literal> and <literal>dataname_final</literal> should
-    store two given values of this datum determining the parametrization, and
-    <literal>dataname_current</literal> serves for actual values of this datum. Take the current
+    store two given values of this datum determining the parametrisation, and
+    <literal>dataname_current</literal> serves for actual values of this datum. <literal>sc_fac</literal> is a scale factor involved in the scalar product and the norm used in the routine. Take the current
     solution, the current value of the parameter, the tangent given by <literal>tangent</literal>
-    and <literal>tangent_parameter</literal>, and the step size <literal>h</literal>, return a new tangent and
-    step size for the next step (and save a new point in the model).
+    and <literal>tangent_parameter</literal>, and the step size <literal>h</literal>, return a new tangent and a
+    step size for the next step (and save a new point into the model). If the returned step size
+    equals zero, the continuation has failed.
 
     Additional options:
 
@@ -243,7 +245,7 @@
        target residual value of the new point (the default value is 1e-6);
     - 'max_diff', scalar DIFF
        determines a criterion of convergence to the new tangent vector (the
-       default value is 1e-6);
+       default value is 1e-9);
     - 'min_ang', scalar ANG
        minimal value of the cosine of the angle between tangents to the
        solution curve at the old point and the new one (the default value is

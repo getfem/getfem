@@ -31,8 +31,8 @@ thrit = 4;
 maxres_solve = 1.e-7;
 noisy = 'very_noisy'
 
-h_init = 1e-2;
-h_max = 5e-2;
+h_init = 1e-3;
+h_max = 2e-1;
 h_min = 1e-6;
 
 with_dirichlet = true;
@@ -63,14 +63,11 @@ if (with_dirichlet)
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
 end;
 
-nb_dof = gf_mesh_fem_get(mf, 'nbdof') + 1;
-h_init = h_init * nb_dof;
-h_max = h_max * nb_dof;
-h_min = h_min * nb_dof;
+scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
 
 if (noisy) disp('computing initial point\n'); end
 gf_model_get(md, 'solve', noisy, 'max iter', 100, 'max_res', maxres_solve);
-[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', direction, noisy);
+[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', scfac, direction, noisy);
 U = gf_model_get(md, 'variable', 'u');
 lambda = gf_model_get(md, 'variable', 'lambda');
 disp('U = '); disp(U); disp(sprintf('lambda = %e\n', lambda));
@@ -93,7 +90,7 @@ pause(1);
 
 for step = 1:nbstep
   disp(sprintf('\nbeginning of step %d\n', step));
-  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', T_U, T_lambda, h, ...
+  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', scfac, T_U, T_lambda, h, ...
       noisy, 'max_iter', maxit, 'thr_iter', thrit, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min);
   U = gf_model_get(md, 'variable', 'u');
   lambda = gf_model_get(md, 'variable', 'lambda');
@@ -121,16 +118,5 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
 % gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
 % colorbar; title('computed solution');
-
-
