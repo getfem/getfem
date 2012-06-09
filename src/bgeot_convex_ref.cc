@@ -143,14 +143,15 @@ namespace bgeot {
     }
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       // return a null number if pt is in the face of the convex
+      // negative if the point is on the side of the face where the element is
       if (pt.size() != cvs->dim())
 	throw dimension_error
 	  ("K_simplex_of_ref_::is_in_face : Dimension does not match");
-      if (f > 0) return gmm::abs(pt[f-1]);
+      if (f > 0) return -pt[f-1];
       scalar_type e = -1.0;
       base_node::const_iterator it = pt.begin(), ite = pt.end();
       for (; it != ite; e += *it, ++it) {};
-      return gmm::abs(e);
+      return e / sqrt(scalar_type(pt.size()));
     }
     K_simplex_of_ref_(dim_type NN, short_type KK) {
       cvs = simplex_structure(NN, KK);
@@ -310,7 +311,7 @@ namespace bgeot {
     scalar_type is_in_face(short_type f, const base_node &pt) const {
       const base_node &x0 = (f ? convex<base_node>::points()[f-1]
 			     : convex<base_node>::points().back());
-      return gmm::abs(gmm::vect_sp(pt-x0, normals()[f])); 
+      return gmm::vect_sp(pt-x0, normals()[f]); 
     }
     equilateral_simplex_of_ref_(size_type N) {
       pconvex_ref prev = equilateral_simplex_of_reference(dim_type(N-1));

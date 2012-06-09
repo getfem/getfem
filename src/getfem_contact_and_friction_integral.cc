@@ -2904,9 +2904,8 @@ namespace getfem {
 	  mesh_fem::ind_dof_ct::const_iterator
 	    itdof = mfu.ind_basic_dof_of_element(cv).begin();
 	  for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k]=U[*itdof];
-	  if (pf_s->need_G()) 
-	    bgeot::vectors_to_base_matrix
-	      (G, mfu.linked_mesh().points_of_convex(cv));
+	  bgeot::vectors_to_base_matrix
+	    (G, mfu.linked_mesh().points_of_convex(cv));
 	  
 	  pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
 	  fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
@@ -2933,8 +2932,10 @@ namespace getfem {
 	    for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
 	      if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
 	    if (is_on_face) {
+	      ctx.set_ii(ip); 
 	      n0 = bgeot::compute_normal(ctx, v.f());
 	      pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+	      gmm::add(gmm::identity_matrix(), grad);
 	      scalar_type J = gmm::lu_inverse(grad);
 	      if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
 	      gmm::mult(gmm::transposed(grad), n0, n);
@@ -2961,7 +2962,7 @@ namespace getfem {
 	  scalar_type h = bmax[0] - bmin[0];
 	  for (size_type k = 1; k < N; ++k)
 	    h = std::max(h, bmax[k] - bmin[k]);
-	  for (size_type k = 1; k < N; ++k)
+	  for (size_type k = 0; k < N; ++k)
 	    { bmin[k] -= h; bmax[k] += h; }
 
 	  // Store the influence box and additional information.
@@ -3005,6 +3006,7 @@ namespace getfem {
 	base_node pt = pt0 + val;
 	
 	ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
+	gmm::add(gmm::identity_matrix(), grad);
 	scalar_type J = gmm::lu_inverse(grad); // remplacer par une résolution ...
 	if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
 	gmm::mult(gmm::transposed(grad), n0, n);
@@ -3019,7 +3021,7 @@ namespace getfem {
 	bgeot::rtree::pbox_set::iterator it = bset.begin(), itnext;
 	for (; it != bset.end(); it = itnext) {
 	  itnext = it; ++itnext;
-	  if (gmm::vect_sp(unit_normal_of_elements[(*it)->id], n) < scalar_type(0))
+	  if (gmm::vect_sp(unit_normal_of_elements[(*it)->id], n) >= scalar_type(0))
 	    bset.erase(it);
 	}
 
@@ -3029,8 +3031,9 @@ namespace getfem {
 	it = bset.begin();
 	std::vector<base_node> y0s, y0_refs;
 	std::vector<scalar_type> d0s;
+	std::vector<scalar_type> d1s;
 	std::vector<size_type> elt_nums;
-	for (; it != bset.end(); it = itnext) {
+	for (; it != bset.end(); ++it) {
 	  size_type boundary_num_y0 = boundary_of_elements[(*it)->id];
 	  size_type cv_y0 = ind_of_elements[(*it)->id];
 	  size_type face_y0 = face_of_elements[(*it)->id];
@@ -3039,7 +3042,7 @@ namespace getfem {
 	  const model_real_plain_vector &U_y0
 	    = cf.disp_of_boundary(boundary_num_y0);
 	  const mesh &m = mfu_y0.linked_mesh();
-	  bgeot::pgeometric_trans pgt_y0 = m.trans_of_convex(cv);
+	  bgeot::pgeometric_trans pgt_y0 = m.trans_of_convex(cv_y0);
 	  bgeot::pconvex_structure cvs_y0 = pgt_y0->structure();
 
 	  // Find an interior point (in order to promote the more interior
@@ -3064,9 +3067,9 @@ namespace getfem {
 	    itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
 	  for (size_type k = 0; k < cvnbdof; ++k, ++itdof)
 	    coeff[k] = U_y0[*itdof];
-	  if (pf_s->need_G()) 
+	  // if (pf_s->need_G()) 
 	    bgeot::vectors_to_base_matrix
-	      (G, mfu_y0.linked_mesh().points_of_convex(cv));
+	      (G, mfu_y0.linked_mesh().points_of_convex(cv_y0));
 	  
 	  fem_interpolation_context ctx_y0(pgt_y0, pf_s, y0_ref, G, cv_y0,
 					size_type(-1));
@@ -3116,20 +3119,29 @@ namespace getfem {
 	  y0_refs.push_back(y0_ref);
 	  elt_nums.push_back((*it)->id);
 	  base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
+	  cout << "dist0 = "
+	       << pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
+						   y0_ref)
+	    / gmm::vect_norm2(n0_y0);
 	  d0s.push_back(pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
 							 y0_ref)
 			/ gmm::vect_norm2(n0_y0)); // vérifier la cohérence
-
 	  // Remark : A scaling with the normal vector in real configuration
 	  //          may be more efficient ? Not sure.
+	  cout << " dist1 = " << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
+	  d1s.push_back(pgt_y0->convex_ref()->is_in(y0_ref));
+// 	  d1s.push_back(pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
+// 							 y0_ref)
+// 			/ gmm::vect_norm2(n0_y0));
+
 	}
 
 	dim_type state = 0;
-	scalar_type d0 = 1E100;
+	scalar_type d0 = 1E100, d1 = 1E100;
 
 	size_type ibound = size_type(-1);
 	for (size_type k = 0; k < y0_refs.size(); ++k)
-	  if (d0s[k] < d0) { d0 = d0s[k]; ibound = k; state = 1; }
+	  if (d1s[k] < d1) { d0 = d0s[k]; d1 = d1s[k]; ibound = k; state = 1; }
 
 	
 	size_type irigid_obstacle = size_type(-1);
@@ -3146,6 +3158,25 @@ namespace getfem {
 #endif
 
 	// store the result
+
+	cout  << "Point : " << pt << " of boundary " << boundary_num
+	      << " state = " << int(state);
+	if (state == 1) {
+	  size_type nbo = boundary_of_elements[elt_nums[ibound]];
+	  const mesh_fem &mfu_y0 = cf.mf_of_boundary(nbo);
+	  const mesh &m = mfu_y0.linked_mesh();
+	  size_type icv = ind_of_elements[elt_nums[ibound]];
+
+	  cout << " y0 = " << y0s[ibound] << " of element "
+	       << icv  << " of boundary " << nbo << endl;
+	  for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
+	    cout << "point " << k << " : "
+		 << m.points()[m.ind_points_of_convex(icv)[k]] << endl;
+	}
+	cout << " d0 = " << d0 << endl;
+
+
+
 	size_type ip = points.add(pt0);
 	GMM_ASSERT1(ip == point_states.size(), "Internal error");
 	point_states.push_back(state);
@@ -3183,6 +3214,7 @@ namespace getfem {
 
   void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2) {
     contact_pairs cp(cf);
+    cp.init();
     fem_precomp_pool fppool;
     base_matrix G;
 
@@ -3191,28 +3223,21 @@ namespace getfem {
     const mesh &m1 = mf1.linked_mesh();
     const mesh &m2 = mf2.linked_mesh();
     size_type r1 = cf.region_of_boundary(0);
-    size_type r2 = cf.region_of_boundary(0);
+    size_type r2 = cf.region_of_boundary(1);
     mesh_region mr1 = m1.region(r1);
     mesh_region mr2 = m2.region(r2);
     
     for (getfem::mr_visitor v(mr1, m1); !v.finished(); ++v) {
+      cout << "boundary 0, element " << v.cv() << endl;
       size_type cv = v.cv();
       bgeot::pgeometric_trans pgt = m1.trans_of_convex(cv);
       pfem pf_s = mf1.fem_of_element(cv);
       pintegration_method pim = mim1.int_method_of_element(cv);
-//       size_type nbd_t = pgt->nb_points();
-//       size_type cvnbdof = mf1.nb_basic_dof_of_element(cv);
-//       coeff.resize(cvnbdof);
-//       mesh_fem::ind_dof_ct::const_iterator
-// 	itdof = mf1.ind_basic_dof_of_element(cv).begin();
-//       for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k]=U[*itdof];
-      if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix
-	  (G, mf1.linked_mesh().points_of_convex(cv));
-	  
+      bgeot::vectors_to_base_matrix
+	(G, mf1.linked_mesh().points_of_convex(cv));
+	
       pfem_precomp pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
-      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-				    size_type(-1));
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
 
       for (size_type k = 0; k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
 	ctx.set_ii(pim->approx_method()->ind_first_point_on_face(v.f())+k);
@@ -3222,21 +3247,20 @@ namespace getfem {
 
 
     for (getfem::mr_visitor v(mr2, m2); !v.finished(); ++v) {
+      cout << "boundary 1, element " << v.cv() << endl;
       size_type cv = v.cv();
       bgeot::pgeometric_trans pgt = m2.trans_of_convex(cv);
       pfem pf_s = mf2.fem_of_element(cv);
       pintegration_method pim = mim2.int_method_of_element(cv);
-      if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix
-	  (G, mf2.linked_mesh().points_of_convex(cv));
+      bgeot::vectors_to_base_matrix
+	(G, mf2.linked_mesh().points_of_convex(cv));
       
       pfem_precomp pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
-      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-				    size_type(-1));
+      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
       
       for (size_type k = 0; k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
 	ctx.set_ii(pim->approx_method()->ind_first_point_on_face(v.f())+k);
-	cp.add_point(0,ctx);
+	cp.add_point(1,ctx);
       }
     }
 

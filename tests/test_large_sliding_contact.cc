@@ -177,7 +177,7 @@ void contact_problem::solve(void) {
   cout << "Number of dof of the model: " << model.nb_dof() << endl;
 
   getfem::contact_frame cf(N);
-  cf.add_obstacle("x");
+  cf.add_obstacle("y");
   cf.add_boundary(mf_u1, model.real_variable("u1"), CONTACT_BOUNDARY1);
   cf.add_boundary(mf_u2, model.real_variable("u2"), CONTACT_BOUNDARY2);
 
@@ -194,13 +194,10 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
-  try {    
-    contact_problem p;
-    p.PARAM.read_command_line(argc, argv);
-    p.init();
-    p.solve();
-  }
-  GMM_STANDARD_CATCH_ERROR;
+  contact_problem p;
+  p.PARAM.read_command_line(argc, argv);
+  p.init();
+  p.solve();
 
   return 0; 
 }

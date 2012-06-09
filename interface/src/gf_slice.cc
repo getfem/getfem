@@ -99,7 +99,7 @@ namespace getfem {
       scalar_type best_f = 1e10;
       size_type cnt = 0;
       for (short_type i=0; i < ml.structure_of_convex(cv)->nb_faces(); ++i) {
-        scalar_type v = ml.trans_of_convex(cv)->convex_ref()->is_in_face(i,refP);
+        scalar_type v = gmm::abs(ml.trans_of_convex(cv)->convex_ref()->is_in_face(i,refP));
         cnt++;
         if (v < best_f || cnt == 0) { best_f = v; f = dim_type(i); }
       }

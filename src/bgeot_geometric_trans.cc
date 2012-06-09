@@ -82,7 +82,7 @@ namespace bgeot {
 
   const base_matrix& geotrans_interpolation_context::B() const {
     if (!have_B()) {
-      GMM_ASSERT1(have_G() && have_pgt(), "unable to compute K\n");
+      GMM_ASSERT1(have_G() && have_pgt(), "unable to compute B\n");
       size_type P = pgt_->structure()->dim();
       B_.resize(N(), P);
       if (P != N()) {

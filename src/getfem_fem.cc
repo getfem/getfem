@@ -51,7 +51,8 @@ namespace getfem {
   }
 
   size_type fem_interpolation_context::face_num() const {
-    GMM_ASSERT3(face_num_ != size_type(-1), "");
+    GMM_ASSERT3(face_num_ != size_type(-1),
+		"Face number is asked but not defined");
     return face_num_; 
   }
 

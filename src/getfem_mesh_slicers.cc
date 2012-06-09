@@ -790,7 +790,7 @@ namespace getfem {
     
     dal::bit_vector pt_in_face; pt_in_face.sup(0, cvm.points().index().last_true()+1);
     for (dal::bv_visitor ip(cvm.points().index()); !ip.finished(); ++ip)
-      if (cvr->is_in_face(short_type(f), cvm.points()[ip])) pt_in_face.add(ip);
+      if (gmm::abs(cvr->is_in_face(short_type(f), cvm.points()[ip]))) pt_in_face.add(ip);
 
     for (dal::bv_visitor_c ic(cvm.convex_index()); !ic.finished(); ++ic) {
       for (short_type ff=0; ff < cvm.nb_faces_of_convex(ic); ++ff) {

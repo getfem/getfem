@@ -334,7 +334,8 @@ namespace bgeot {
     dal::bit_vector on_face;
     for (size_type i = 0; i < m.nb_max_points(); ++i) {
       if (m.is_point_valid(i)) {
-        if (cvr->is_in_face(f, m.points()[i]) < 1e-12) on_face.add(i);
+        if (gmm::abs(cvr->is_in_face(f, m.points()[i])) < 1e-12)
+	  on_face.add(i);
       }
     }
     //cerr << "on_face=" << on_face << endl;
