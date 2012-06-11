@@ -3115,25 +3115,24 @@ namespace getfem {
 	    newton_iter++;
 	  }
 
+	  base_node y0 = ctx_y0.xreal();
+	  base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
+	  scalar_type d0
+	    = pgt_y0->convex_ref()->is_in_face(short_type(face_y0), y0_ref)
+	      / gmm::vect_norm2(n0_y0); // vérifier la cohérence
+	  // eliminate wrong auto-contact situations
+	  if (d0 < scalar_type(0) && &(mfu.linked_mesh()) == &m
+	      && gmm::vect_dist2(y0, pt0) < -d0 / scalar_type(3)) 
+	    { cout << "Eliminated x0 = " << pt0 << " y0 = " << y0 << " d0 = " << d0 << endl;  continue; }
+
 	  y0s.push_back(ctx_y0.xreal()); // Usefull ?
 	  y0_refs.push_back(y0_ref);
 	  elt_nums.push_back((*it)->id);
-	  base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
-	  cout << "dist0 = "
-	       << pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
-						   y0_ref)
-	    / gmm::vect_norm2(n0_y0);
-	  d0s.push_back(pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
-							 y0_ref)
-			/ gmm::vect_norm2(n0_y0)); // vérifier la cohérence
-	  // Remark : A scaling with the normal vector in real configuration
-	  //          may be more efficient ? Not sure.
-	  cout << " dist1 = " << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
+	  d0s.push_back(d0);
 	  d1s.push_back(pgt_y0->convex_ref()->is_in(y0_ref));
-// 	  d1s.push_back(pgt_y0->convex_ref()->is_in_face(short_type(face_y0),
-// 							 y0_ref)
-// 			/ gmm::vect_norm2(n0_y0));
-
+	  
+	  cout << "dist0 = " << d0
+	       << " dist1 = " << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
 	}
 
 	dim_type state = 0;
@@ -3159,7 +3158,7 @@ namespace getfem {
 
 	// store the result
 
-	cout  << "Point : " << pt << " of boundary " << boundary_num
+	cout  << "Point : " << pt0 << " of boundary " << boundary_num
 	      << " state = " << int(state);
 	if (state == 1) {
 	  size_type nbo = boundary_of_elements[elt_nums[ibound]];
