@@ -688,6 +688,10 @@ namespace getfem {
     gmm::dense_matrix< model_real_sparse_matrix * > UL;
     gmm::dense_matrix< model_real_sparse_matrix * > LU;
     gmm::dense_matrix< model_real_sparse_matrix * > LL;
+
+    std::vector< model_real_plain_vector *> Urhs;
+    std::vector< model_real_plain_vector *> Lrhs;
+    
     
 
     std::vector<std::string> coordinates;
@@ -745,6 +749,10 @@ namespace getfem {
       return *(LL(contact_boundaries[n].ind_lambda,
 		  contact_boundaries[m].ind_lambda));
     }
+    model_real_plain_vector &U_vector(size_type n) const
+    { return *(Urhs[contact_boundaries[n].ind_U]); }
+    model_real_plain_vector &L_vector(size_type n) const
+    { return *(Lrhs[contact_boundaries[n].ind_lambda]); }
 
     contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
       if (N > 0) coordinates[0] = "x";
@@ -784,6 +792,8 @@ namespace getfem {
       gmm::resize(UL, ind+1, ind+1);
       gmm::resize(LU, ind+1, ind+1);
       gmm::resize(LL, ind+1, ind+1);
+      gmm::resize(Urhs, ind+1);
+      gmm::resize(Lrhs, ind+1);
       return ind;
     }
 

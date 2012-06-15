@@ -116,6 +116,33 @@ namespace getfem {
     }
   }
 
+  template<typename VEC, typename MAT> // à vérifier
+  static void De_Saxce_projection_gradn(const VEC &x, const VEC &n,
+					scalar_type f, MAT &g) {
+    scalar_type xn = gmm::vect_sp(x, n);
+    scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
+    size_type N = gmm::vect_size(x);
+    gmm::clear(g);
+
+    if (!(xn > scalar_type(0) && f * nxt <= xn)
+	&& (xn > scalar_type(0) || nxt > -f*xn)) {
+      static VEC xt;
+      gmm::resize(xt, N);
+      gmm::add(x, gmm::scaled(n, -xn), xt);
+      gmm::scale(xt, scalar_type(1)/nxt);
+
+      gmm::copy(gmm::identity_matrix(), g);
+      gmm::scale(g, (scalar_type(1)+f*xn/nxt));
+      gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)/nxt), xt);
+      gmm::scale(g, xn - f*nxt);
+      
+      gmm::rank_one_update(g, gmm::scaled(xt, -f*(nxt+f*xn)), xt);
+      gmm::rank_one_update(g, gmm::scaled(n, nxt+scalar_type(2)*f*xn-f*f*nxt),
+			   xt);
+      gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
+    }
+  }
+
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
 
@@ -2857,15 +2884,11 @@ namespace getfem {
 			 const mesh_fem &mf2, size_type cv2) {
     MAT1 &M = const_cast<MAT1 &>(M_);
     typedef typename gmm::linalg_traits<MAT1>::value_type T;
-    
-//     cout << "mf1.nbdof() = " << mf1.nb_dof() << endl;
-//     cout << "mf2.nbdof() = " << mf2.nb_dof() << endl;
-
+    T val;
     std::vector<size_type> cvdof1(mf1.ind_basic_dof_of_element(cv1).begin(),
 				  mf1.ind_basic_dof_of_element(cv1).end());
     std::vector<size_type> cvdof2(mf2.ind_basic_dof_of_element(cv2).begin(),
 				  mf2.ind_basic_dof_of_element(cv2).end());
-    T val;
 
 //     cout << "cvdof1 = " << cvdof1 << endl;
 //     cout << "cvdof2 = " << cvdof2 << endl;
@@ -2906,6 +2929,31 @@ namespace getfem {
 	      M(cvdof1[i], cvdof2[j]) += val;
       }
     }
+  }
+
+
+  template <typename VEC1, typename VEC2>
+  void vec_elem_assembly(const VEC1 &V_, const VEC2 &Velem,
+			 const mesh_fem &mf, size_type cv) {
+    VEC1 &V = const_cast<VEC1 &>(V_);
+    typedef typename gmm::linalg_traits<VEC1>::value_type T;
+    T val;
+    std::vector<size_type> cvdof(mf.ind_basic_dof_of_element(cv).begin(),
+				 mf.ind_basic_dof_of_element(cv).end());
+
+    GMM_ASSERT1(cvdof.size() == gmm::vect_size(Velem),
+		"Dimensions mismatch");
+    
+//     if (mf.is_reduced()) {
+//       for (size_type i = 0; i < cvdof1.size(); ++i)
+// 	if ((val = Velem(i,j)) != T(0))
+// 	    ?? asmrankoneupdate
+// 	      (M, cvdof[i],
+// 	       gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+//     } else {
+//       for (size_type i = 0; i < cvdof.size(); ++i)
+// 	if ((val = Velem(i)) != T(0)) V(cvdof1[i]) += val;
+//     }
   }
   
   
@@ -3066,7 +3114,7 @@ namespace getfem {
       base_node n0 = bgeot::compute_normal(ctxu, ctxu.face_num());
       size_type cv = ctxu.convex_num();
       base_small_vector n(N), val(N), h(N);
-      base_matrix grad(N,N), gradtot(N,N), G;
+      base_matrix gradinv(N,N), grad(N,N), gradtot(N,N), G;
       size_type cvnbdofu = mfu.nb_basic_dof_of_element(cv);
       size_type cvnbdofl = mfl.nb_basic_dof_of_element(cv);
       base_vector coeff(cvnbdofu);
@@ -3076,11 +3124,11 @@ namespace getfem {
       ctxu.pf()->interpolation(ctxu, coeff, val, dim_type(N));
       base_node x = x0 + val;
       
-      ctxu.pf()->interpolation_grad(ctxu, coeff, grad, dim_type(N));
-      gmm::add(gmm::identity_matrix(), grad);
-      scalar_type J = gmm::lu_inverse(grad); // remplacer par une résolution...
+      ctxu.pf()->interpolation_grad(ctxu, coeff, gradinv, dim_type(N));
+      gmm::add(gmm::identity_matrix(), gradinv);
+      scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une résolution...
       if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
-      gmm::mult(gmm::transposed(grad), n0, n);
+      gmm::mult(gmm::transposed(gradinv), n0, n);
       n /= gmm::vect_norm2(n);
       
       // ----------------------------------------------------------
@@ -3278,18 +3326,16 @@ namespace getfem {
 		  "Large sliding contact assembly procedure has to be adapted "
 		  "to intrinsic vectorial elements. To be done.");
 
-      // Éviter les calculs inutile dans le cas state == 0 ... à voir à la fin
+      // Éviter les calculs inutiles dans le cas state == 2 ... à voir à la fin
+      // regarder aussi si on peut factoriser des mat_elem_assembly ...
 
-      base_matrix Melem, grad_y0(N, N), gradinv_y0(N, N);
-      base_vector coeff_y0, lambda(N);
-      base_tensor tu, tu_y0, tl, tgradu_y0;
-      size_type cv_y0 = 0, cvnbdofu_y0 = 0;
-      size_type nbound_y0
-	= (state == 1) ? boundary_of_elements[elt_nums[ibound]] : 0;
-      const mesh_fem &mfu_y0
-	= (state == 1) ? cf.mfu_of_boundary(nbound_y0) : mfu;
-      ctxu.base_value(tu);
+      scalar_type r = scalar_type(1); // à mettre en paramêtre
+      base_matrix Melem;
+      base_vector Velem;
+      base_tensor tl, tu;
+      base_small_vector lambda(N);
       ctxl.base_value(tl);
+      ctxu.base_value(tu);
 
       coeff.resize(cvnbdofl);
       gmm::copy(gmm::sub_vector
@@ -3297,80 +3343,144 @@ namespace getfem {
 		 (mfl.ind_basic_dof_of_element(cv))), coeff);
       ctxu.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
       
+      // Tangent term (1/r)\int \delta\lambda.\mu
+      gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+      scalar_type cmult = (state == 0) ? -scalar_type(1) : scalar_type(1)/r;
+      for (size_type i = 0; i < cvnbdofl; ++i)
+	for (size_type j = 0; j < cvnbdofl; ++j)
+	  if (i%N == j%N) Melem(i,j) = tl[i/N]*tl[j/N]*weight*cmult;
+      mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+			Melem, mfl, cv, mfl, cv);
+      
+      // Rhs term \int \lambda.\psi(x_0)
+      gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
+      for (size_type i = 0; i < cvnbdofu; ++i)
+	Velem[i] = tu[i/N] * lambda[i%N];
+      vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
 
-      if (state == 1) {
-	cv_y0 = ind_of_elements[elt_nums[ibound]];
-	cvnbdofu_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
- 	const model_real_plain_vector &U_y0 = cf.disp_of_boundary(nbound_y0);
-	mesh_fem::ind_dof_ct::const_iterator
-	  itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
-	coeff_y0.resize(cvnbdofu_y0);
-	gmm::copy(gmm::sub_vector
-		  (U_y0, gmm::sub_index
-		   (mfu_y0.ind_basic_dof_of_element(cv_y0))), coeff_y0);
-	ctx_y0s[ibound].pf()->interpolation_grad(ctx_y0s[ibound], coeff_y0,
-						 grad_y0, dim_type(N));
-	gmm::add(gmm::identity_matrix(), grad_y0);
-	gmm::copy(grad_y0, gradinv_y0);
-	gmm::lu_inverse(gradinv_y0); // à proteger contre la non-inversibilité
-	ctx_y0s[ibound].base_value(tu_y0);
-	ctx_y0s[ibound].grad_base_value(tgradu_y0);
-      }
-
-
-      // Term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
       if (state) {
+	base_matrix grad_y0(N, N), gradinv_y0(N, N), gradaux(N,N);
+	base_vector coeff_y0;
+	base_small_vector vv(N), vvv(N); // auxilliary vectors
+	base_tensor tgradu, tu_y0, tgradu_y0;
+	size_type cv_y0 = 0, cvnbdofu_y0 = 0;
+	size_type nbound_y0
+	  = (state == 1) ? boundary_of_elements[elt_nums[ibound]] : 0;
+	const mesh_fem &mfu_y0
+	  = (state == 1) ? cf.mfu_of_boundary(nbound_y0) : mfu;
+	ctxu.grad_base_value(tgradu);
+      
+	if (state == 1) {
+	  cv_y0 = ind_of_elements[elt_nums[ibound]];
+	  cvnbdofu_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
+	  const model_real_plain_vector &U_y0 = cf.disp_of_boundary(nbound_y0);
+	  mesh_fem::ind_dof_ct::const_iterator
+	    itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
+	  coeff_y0.resize(cvnbdofu_y0);
+	  gmm::copy(gmm::sub_vector
+		    (U_y0, gmm::sub_index
+		     (mfu_y0.ind_basic_dof_of_element(cv_y0))), coeff_y0);
+	  ctx_y0s[ibound].pf()->interpolation_grad(ctx_y0s[ibound], coeff_y0,
+						   grad_y0, dim_type(N));
+	  gmm::add(gmm::identity_matrix(), grad_y0);
+	  gmm::copy(grad_y0, gradinv_y0);
+	  gmm::lu_inverse(gradinv_y0);// à proteger contre la non-inversibilité
+	  ctx_y0s[ibound].base_value(tu_y0);
+	  ctx_y0s[ibound].grad_base_value(tgradu_y0);
+	}
+
+
+	// Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
 	gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
 	for (size_type i = 0; i < cvnbdofu; ++i)
 	  for (size_type j = 0; j < cvnbdofl; ++j)
 	    if (i%N == j%N) Melem(i,j) = -tu[i/N]*tl[j/N]*weight;
-
+	
 	cout << "Melem = " << Melem << endl;
 	mat_elem_assembly(cf.UL_matrix(boundary_num, boundary_num),
 			  Melem, mfu, cv, mfl, cv);
-      
+	
 	if (state == 1) {
 	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofl); gmm::clear(Melem);
 	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	    for (size_type j = 0; j < cvnbdofl; ++j)
 	      if (i%N == j%N) Melem(i,j) = -tu_y0[i/N]*tl[j/N]*weight;
-
+	  
 	  cout << "Melem2 = " << Melem << endl;
 	  mat_elem_assembly(cf.UL_matrix(nbound_y0, boundary_num),
 			    Melem, mfu_y0, cv_y0, mfl, cv);
 	}
-      }
 
-      // Term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta\psi(y_0) - \delta\psi(x_0))
-      if (state == 1) {
-	base_small_vector vv(N);
-	gmm::mult(gradinv_y0, lambda, vv);
-
-	cout << "tgradu_y0 =" << tgradu_y0 << endl;
+	// Tangent term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta u(y_0) - \delta u(x_0))
+	if (state == 1) {
+	  gmm::mult(gradinv_y0, lambda, vv);
+	  
+	  cout << "tgradu_y0 =" << tgradu_y0 << endl;
+	  
+	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    for (size_type j = 0; j < cvnbdofu; ++j)
+	      Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
+	  
+	  mat_elem_assembly(cf.UU_matrix(nbound_y0, boundary_num),
+			    Melem, mfu_y0, cv_y0, mfu, cv);
+	  
+	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
+	      Melem(i, j) = vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
+	  
+	  mat_elem_assembly(cf.UU_matrix(nbound_y0, nbound_y0),
+			    Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
+	}
 	
-	gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	base_small_vector zeta(N); // Unstabilized frictionless case for the moment
+	gmm::add(lambda, gmm::scaled(n, d0), zeta);
+	De_Saxce_projection_grad(zeta, n, scalar_type(0), grad);
+	
+	// Tangent term -\nabla P(zeta) (dzeta/du)(\delta u) . \mu
+	
+	// à séparer en trois termes différents ...
+	
+	
+	
+	// Tangent term -\nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
+	gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofl; ++j)
+	    Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
+	mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+			  Melem, mfl, cv, mfl, cv);
+	
+	
+	
+	// Tangent term -\nabla_n P(zeta) (dn/du)(\delta u) . \mu
+	De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
+	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
+	gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
 	  for (size_type j = 0; j < cvnbdofu; ++j)
-	    Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) -= tl[i/N]*tgradu[j-(j%N)+k]
+		            *gradaux(j%N,i%N)*n[j%N]*weight/r;
+	gmm::mult(grad, n, vv);
+	gmm::mult(gradinv, n, vvv);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) += tl[i/N]*vv[i%N]
+		            *tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
+	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
+			  Melem, mfl, cv, mfu, cv);
+	
 
-	mat_elem_assembly(cf.UU_matrix(boundary_num,boundary_num),
-			  Melem, mfu, cv, mfu, cv);
 
-	gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	  for (size_type j = 0; j < cvnbdofu_y0; ++j)
-	    Melem(i, j) = vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
 
-	mat_elem_assembly(cf.UU_matrix(boundary_num,boundary_num),
-			  Melem, mfu, cv, mfu_y0, cv_y0);
+
       }
 
-
-
-      
-      
     }
-
+    
   };
 
 
@@ -3381,7 +3491,10 @@ namespace getfem {
     base_matrix G;
 
 
-    for (size_type i = 0; i < cf.contact_boundaries.size(); ++i)
+    for (size_type i = 0; i < cf.contact_boundaries.size(); ++i) {
+      cf.Urhs[i] = new model_real_plain_vector(cf.mfu_of_boundary(i).nb_dof());
+      cf.Lrhs[i]
+	= new model_real_plain_vector(cf.mflambda_of_boundary(i).nb_dof());
       for (size_type j = 0; j < cf.contact_boundaries.size(); ++j) {
 	cf.UU(i,j) = new model_real_sparse_matrix
 	  (cf.mfu_of_boundary(i).nb_dof(), cf.mfu_of_boundary(j).nb_dof());
@@ -3393,6 +3506,7 @@ namespace getfem {
 	  (cf.mflambda_of_boundary(i).nb_dof(),
 	   cf.mflambda_of_boundary(j).nb_dof());
       }
+    }
 
 
     const mesh_fem &mfu1 = cf.mfu_of_boundary(0);

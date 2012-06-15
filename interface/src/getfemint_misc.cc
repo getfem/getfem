@@ -696,14 +696,19 @@ namespace getfemint {
   abstract_hyperelastic_law_from_name(const std::string &lawname,
 				      size_type N) {
 
+    // à rechanger    
+    static getfem::abstract_hyperelastic_law *GBK_AHL;
+    static getfem::abstract_hyperelastic_law *PS_GBK_AHL;
+
+
     static getfem::SaintVenant_Kirchhoff_hyperelastic_law SVK_AHL;
     static getfem::Mooney_Rivlin_hyperelastic_law MR_AHL;
     static getfem::Ciarlet_Geymonat_hyperelastic_law CG_AHL;
-    static getfem::generalized_Blatz_Ko_hyperelastic_law GBK_AHL;
+    // static getfem::generalized_Blatz_Ko_hyperelastic_law GBK_AHL;
     static getfem::plane_strain_hyperelastic_law PS_SVK_AHL(&SVK_AHL);
     static getfem::plane_strain_hyperelastic_law PS_MR_AHL(&MR_AHL);
     static getfem::plane_strain_hyperelastic_law PS_CG_AHL(&CG_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_GBK_AHL(&GBK_AHL);
+    // static getfem::plane_strain_hyperelastic_law PS_GBK_AHL(&GBK_AHL);
     
     
 
@@ -721,7 +726,11 @@ namespace getfemint {
 
     if (cmd_strmatch(lawname, "generalized Blatz Ko") ||
 	cmd_strmatch(lawname, "gbk"))
-      { if (N == 2) return PS_GBK_AHL; else return GBK_AHL; }
+      {
+	GBK_AHL = new getfem::generalized_Blatz_Ko_hyperelastic_law();
+	PS_GBK_AHL = new getfem::plane_strain_hyperelastic_law PS_GBK_AHL(GBK_AHL);
+	if (N == 2) return *PS_GBK_AHL; else return *GBK_AHL;
+      }
     
 
     THROW_BADARG(lawname <<
