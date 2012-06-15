@@ -510,7 +510,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     - 'h_init', @scalar HIN
        initial step size (the default value is 1e-2).@*/
     sub_command
-      ("init Moore-Penrose continuation", 3, 15, 0, 3,
+      ("init Moore-Penrose continuation", 3, 15, 0, 6,
 
        bool with_parametrized_data = false;
        std::string dataname_parameter = in.pop().to_string();
@@ -601,6 +601,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
+       if (out.remaining()) out.pop().from_scalar(S.tau1());
+       if (out.remaining()) out.pop().from_scalar(S.tau2());
+       if (out.remaining()) out.pop().from_scalar(S.tau3());
        );
 
 
@@ -660,7 +663,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        target residual value for the linear systems to be solved (the default
        value is 1e-7).@*/
     sub_command
-      ("Moore-Penrose continuation", 5, 35, 0, 3,
+      ("Moore-Penrose continuation", 5, 41, 0, 6,
 
        bool with_parametrized_data = false;
        std::string dataname_parameter = in.pop().to_string();
@@ -694,6 +697,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type epsilon = 1.e-8;
        scalar_type maxres_solve = 1.e-7;
        int noisy = 0;
+       scalar_type tau1 = 1.e4;
+       scalar_type tau2 = 1.e4; 
+       scalar_type tau3 = 1.e4;
 
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();
@@ -736,6 +742,15 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          } else if (cmd_strmatch(opt, "max_res_solve")) {
            if (in.remaining()) maxres_solve = in.pop().to_scalar();
            else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "tau1")) {
+           if (in.remaining()) tau1 = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "tau2")) {
+           if (in.remaining()) tau2 = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "tau3")) {
+           if (in.remaining()) tau3 = in.pop().to_scalar();
+           else THROW_BADARG("missing value for " << opt);
          } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
          else if (cmd_strmatch(opt, "very noisy") ||
                   cmd_strmatch(opt, "very_noisy")) noisy = 2;
@@ -762,7 +777,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
             dataname_current,
             getfem::rselect_linear_solver(md->model(), lsolver), scfac,
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-	    h_inc, h_dec, epsilon, maxres_solve, noisy);
+	    h_inc, h_dec, epsilon, maxres_solve, noisy, tau1, tau2, tau3);
          S = S1;
        }
        else {
@@ -770,7 +785,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
            (md->model(), dataname_parameter,
             getfem::rselect_linear_solver(md->model(), lsolver), scfac,
             maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-            h_inc, h_dec, epsilon, maxres_solve, noisy);
+            h_inc, h_dec, epsilon, maxres_solve, noisy, tau1, tau2, tau3);
          S = S1;
        }
 
@@ -780,6 +795,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
+       if (out.remaining()) out.pop().from_scalar(S.tau1());
+       if (out.remaining()) out.pop().from_scalar(S.tau2());
+       if (out.remaining()) out.pop().from_scalar(S.tau3());
        );
 
 

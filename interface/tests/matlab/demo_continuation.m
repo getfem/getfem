@@ -14,7 +14,7 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
-% Simple exemple of bifurcation problem : Delta(u) + u = lambda exp(u)
+% Simple exemple othe f bifurcation problem: -Delta(u) + u = lambda exp(u)
 %
 % This program is used to check that matlab-getfem is working. This is also
 % a good example of use of GetFEM++.
@@ -73,7 +73,7 @@ lambda = gf_model_get(md, 'variable', 'lambda');
 disp('U = '); disp(U); disp(sprintf('lambda = %e\n', lambda));
 disp(sprintf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1))));
 
-U_hist = zeros(1, nbstep); lambda_hist = zeros(1, nbstep);
+U_hist = zeros(1, nbstep + 1); lambda_hist = zeros(1, nbstep + 1);
 U_hist(1) = max(U); lambda_hist(1) = lambda;
 
 figure(1);

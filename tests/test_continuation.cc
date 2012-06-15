@@ -23,7 +23,8 @@
    @file test_continuation.cc
    
    Continuation of solutions to the following state problem parameterized by
-   lambda: u'' +  u = lambda * exp(u) in (0, 1), u'(0) = u'(1) = 0.
+   lambda:
+   -u'' +  u = lambda * exp(u) in (0, 1), u'(0) = u'(1) = 0.
 
    This program is used to check that getfem++ is working. This is also 
    a good example of use of Getfem++.
@@ -73,7 +74,7 @@ void state_problem::init(void) {
   /* First step: build the mesh */
   std::vector<getfem::size_type> nsubdiv(1);
   nsubdiv[0] = PARAM.int_value("NX", "Number of the space steps ");
-  regular_unit_mesh(mesh, nsubdiv, bgeot::parallelepiped_geotrans(1, 1));
+  regular_unit_mesh(mesh, nsubdiv, bgeot::simplex_geotrans(1, 1));
   
   datafilename = PARAM.string_value("ROOTFILENAME",
 				    "Base name of data files.");
@@ -94,24 +95,18 @@ void state_problem::init(void) {
 
 bool state_problem::cont(plain_vector &U) {
   
+  //Define the model
   getfem::model model;
-
-  // Main unknown of the problem
   model.add_fem_variable("u", mf_u);
-
-  // The Helmholtz term on u.
-  plain_vector K(1); K[0] = 1.;
-  model.add_initialized_fixed_size_data("k", K);
-  add_Helmholtz_brick(model, mim, "u", "k");
-
-  // The term lambda * exp(u).
-  std::string f = "-lambda*exp(u)", dfdu = "-lambda*exp(u)";
+  add_Laplacian_brick(model, mim, "u");
+  std::string f = "u-lambda*exp(u)", dfdu = "1-lambda*exp(u)";
   lambda = PARAM.real_value("LAMBDA0");
   model.add_initialized_scalar_data("lambda", lambda);
   add_basic_nonlinear_brick(model, mim, "u", f, dfdu,
 			    size_type(-1), "lambda");
 
-  // Initialize the continuation
+
+  // Initialise the continuation
   getfem::rmodel_plsolver_type ls =
     getfem::default_linear_solver<getfem::model_real_sparse_matrix,
                                   getfem::model_real_plain_vector>(model);
