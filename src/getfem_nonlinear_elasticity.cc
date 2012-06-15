@@ -610,6 +610,9 @@ namespace getfem {
 
   generalized_Blatz_Ko_hyperelastic_law::generalized_Blatz_Ko_hyperelastic_law(void) {
     nb_params_ = 5;
+    base_vector V(5);
+    V[0] = 1.0;  V[1] = 1.0, V[2] = 1.5; V[3] = -0.5; V[4] = 1.5;
+    test_derivatives(3, 1e-8, V);
   }
 
 

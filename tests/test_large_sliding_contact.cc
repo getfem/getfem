@@ -165,6 +165,8 @@ void contact_problem::solve(void) {
   // Main unknowns of the problem.
   model.add_fem_variable("u1", mf_u1);
   model.add_fem_variable("u2", mf_u2);
+  model.add_fem_variable("lambda1", mf_u1); // il faudrait réduire ...
+  model.add_fem_variable("lambda2", mf_u2);
 
   // Linearized elasticity bricks.
   model.add_initialized_scalar_data("lambda", lambda);
@@ -178,8 +180,10 @@ void contact_problem::solve(void) {
 
   getfem::contact_frame cf(N);
   cf.add_obstacle("y");
-  cf.add_boundary(mf_u1, model.real_variable("u1"), CONTACT_BOUNDARY1);
-  cf.add_boundary(mf_u2, model.real_variable("u2"), CONTACT_BOUNDARY2);
+  cf.add_boundary(mf_u1, model.real_variable("u1"),
+		  mf_u1, model.real_variable("lambda1"), CONTACT_BOUNDARY1);
+  cf.add_boundary(mf_u2, model.real_variable("u2"),
+		  mf_u2, model.real_variable("lambda2"), CONTACT_BOUNDARY2);
 
   getfem::test_contact_frame(cf, mim1, mim2);
 }

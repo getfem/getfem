@@ -671,12 +671,24 @@ namespace getfem {
     bool frictionless;
     size_type N;
     scalar_type friction_coef; // could depend on the surfaces ...
+    std::vector<const model_real_plain_vector *> Us;
+    std::vector<model_real_plain_vector> ext_Us;
+    std::vector<const model_real_plain_vector *> lambdas;
+    std::vector<model_real_plain_vector> ext_lambdas;
     struct contact_boundary {
       size_type region;                 // Boundary number
-      const getfem::mesh_fem *mf;       // F.e.m. for the displacement.
-      model_real_plain_vector U; // Displacement vector(extended one !).
+      const getfem::mesh_fem *mfu;      // F.e.m. for the displacement.
+      size_type ind_U;                  // Index of displacement.
+      const getfem::mesh_fem *mflambda; // F.e.m. for the multiplier.
+      size_type ind_lambda;             // Index of multiplier.
     };
     std::vector<contact_boundary> contact_boundaries;
+
+    gmm::dense_matrix< model_real_sparse_matrix * > UU;
+    gmm::dense_matrix< model_real_sparse_matrix * > UL;
+    gmm::dense_matrix< model_real_sparse_matrix * > LU;
+    gmm::dense_matrix< model_real_sparse_matrix * > LL;
+    
 
     std::vector<std::string> coordinates;
     base_node pt_eval;
@@ -686,12 +698,53 @@ namespace getfem {
     std::vector<std::string> obstacles;
     std::vector<std::string> obstacles_velocities;
 
-    const getfem::mesh_fem &mf_of_boundary(size_type n) const
-    { return *(contact_boundaries[n].mf); }
+    size_type add_U(const getfem::mesh_fem &mfu,
+		    const model_real_plain_vector &U) {
+      size_type i = 0;
+      for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
+      Us.push_back(&U);
+      model_real_plain_vector ext_U(mfu.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
+      mfu.extend_vector(U, ext_U);
+      ext_Us.push_back(ext_U);
+      return i;
+    }
+
+    size_type add_lambda(const getfem::mesh_fem &mfl,
+			 const model_real_plain_vector &l) {
+      size_type i = 0;
+      for (; i < lambdas.size(); ++i) if (lambdas[i] == &l) return i;
+      lambdas.push_back(&l);
+      model_real_plain_vector ext_l(mfl.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
+      mfl.extend_vector(l, ext_l);
+      ext_lambdas.push_back(ext_l);
+      return i;
+    }
+
+
+    const getfem::mesh_fem &mfu_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mfu); }
+    const getfem::mesh_fem &mflambda_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mflambda); }
     const model_real_plain_vector &disp_of_boundary(size_type n) const
-    { return contact_boundaries[n].U; }
+    { return ext_Us[contact_boundaries[n].ind_U]; }
+    const model_real_plain_vector &lambda_of_boundary(size_type n) const
+    { return ext_lambdas[contact_boundaries[n].ind_lambda]; }
     size_type region_of_boundary(size_type n) const
     { return contact_boundaries[n].region; }
+    model_real_sparse_matrix &UU_matrix(size_type n, size_type m) const
+    { return *(UU(contact_boundaries[n].ind_U, contact_boundaries[m].ind_U)); }
+    model_real_sparse_matrix &LU_matrix(size_type n, size_type m) const {
+      return *(LU(contact_boundaries[n].ind_lambda,
+		  contact_boundaries[m].ind_U));
+    }
+    model_real_sparse_matrix &UL_matrix(size_type n, size_type m) const {
+      return *(UL(contact_boundaries[n].ind_U,
+		  contact_boundaries[m].ind_lambda));
+    }
+    model_real_sparse_matrix &LL_matrix(size_type n, size_type m) const {
+      return *(LL(contact_boundaries[n].ind_lambda,
+		  contact_boundaries[m].ind_lambda));
+    }
 
     contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
       if (N > 0) coordinates[0] = "x";
@@ -714,15 +767,23 @@ namespace getfem {
       return ind;
     }
 
-    size_type add_boundary(const getfem::mesh_fem &mf,
-			   const model_real_plain_vector &U, size_type reg) {
+    size_type add_boundary(const getfem::mesh_fem &mfu,
+			   const model_real_plain_vector &U,
+			   const getfem::mesh_fem &mfl,
+			   const model_real_plain_vector &l,
+			   size_type reg) {
       contact_boundary cb;
       cb.region = reg;
-      cb.mf = &mf;
-      gmm::resize(cb.U, mf.nb_basic_dof());
-      mf.extend_vector(U, cb.U);
+      cb.mfu = &mfu;
+      cb.mflambda = &mfl;
+      cb.ind_U = add_U(mfu, U);
+      cb.ind_lambda = add_lambda(mfl, l);
       size_type ind = contact_boundaries.size();
       contact_boundaries.push_back(cb);
+      gmm::resize(UU, ind+1, ind+1);
+      gmm::resize(UL, ind+1, ind+1);
+      gmm::resize(LU, ind+1, ind+1);
+      gmm::resize(LL, ind+1, ind+1);
       return ind;
     }
 
