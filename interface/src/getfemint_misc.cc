@@ -728,7 +728,7 @@ namespace getfemint {
 	cmd_strmatch(lawname, "gbk"))
       {
 	GBK_AHL = new getfem::generalized_Blatz_Ko_hyperelastic_law();
-	PS_GBK_AHL = new getfem::plane_strain_hyperelastic_law PS_GBK_AHL(GBK_AHL);
+	PS_GBK_AHL = new getfem::plane_strain_hyperelastic_law(GBK_AHL);
 	if (N == 2) return *PS_GBK_AHL; else return *GBK_AHL;
       }
     
