@@ -2937,23 +2937,20 @@ namespace getfem {
 			 const mesh_fem &mf, size_type cv) {
     VEC1 &V = const_cast<VEC1 &>(V_);
     typedef typename gmm::linalg_traits<VEC1>::value_type T;
-    T val;
     std::vector<size_type> cvdof(mf.ind_basic_dof_of_element(cv).begin(),
 				 mf.ind_basic_dof_of_element(cv).end());
 
-    GMM_ASSERT1(cvdof.size() == gmm::vect_size(Velem),
-		"Dimensions mismatch");
+    GMM_ASSERT1(cvdof.size() == gmm::vect_size(Velem), "Dimensions mismatch");
     
-//     if (mf.is_reduced()) {
-//       for (size_type i = 0; i < cvdof1.size(); ++i)
-// 	if ((val = Velem(i,j)) != T(0))
-// 	    ?? asmrankoneupdate
-// 	      (M, cvdof[i],
-// 	       gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
-//     } else {
-//       for (size_type i = 0; i < cvdof.size(); ++i)
-// 	if ((val = Velem(i)) != T(0)) V(cvdof1[i]) += val;
-//     }
+    if (mf.is_reduced()) {
+      T val;
+      for (size_type i = 0; i < cvdof.size(); ++i)
+	if ((val = Velem[i]) != T(0))
+	  gmm::add(gmm::scaled(gmm::mat_row(mf.extension_matrix(), cvdof[i]),
+			       val), V);
+    } else {
+      for (size_type i = 0; i < cvdof.size(); ++i) V[cvdof[i]] += Velem[i];
+    }
   }
   
   
@@ -3389,6 +3386,13 @@ namespace getfem {
 	  ctx_y0s[ibound].grad_base_value(tgradu_y0);
 	}
 
+	// Rhs term -\int \lambda.\psi(y_0)
+	if (state == 1) {
+	  gmm::resize(Velem,  cvnbdofu_y0);gmm::clear(Velem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    Velem[i] = -tu_y0[i/N] * lambda[i%N];
+	  vec_elem_assembly(cf.U_vector(nbound_y0), Velem, mfu_y0, cv_y0);
+	}
 
 	// Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
 	gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
