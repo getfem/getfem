@@ -2866,18 +2866,9 @@ namespace getfem {
   //=========================================================================
 
   //=========================================================================
-  // 1)- Structure which computes and stores the contact pairs
+  // 0)- Some basic assembly functions
   //=========================================================================
-  
 
-  // TODO : Un stockage des x0 n'est pas satisfaisant : des configuration de
-  //        references différentes peuvent 'intersecter ou être les même (par
-  //        exemple pour le contact d'un grand nombre de sphères. Il faut
-  //        stoker par variable différente et peut-être pas globalement
-
-
-
-  
   template <typename MAT1, typename MAT2>
   void mat_elem_assembly(const MAT1 &M_, const MAT2 &Melem,
 			 const mesh_fem &mf1, size_type cv1,
@@ -2889,10 +2880,6 @@ namespace getfem {
 				  mf1.ind_basic_dof_of_element(cv1).end());
     std::vector<size_type> cvdof2(mf2.ind_basic_dof_of_element(cv2).begin(),
 				  mf2.ind_basic_dof_of_element(cv2).end());
-
-//     cout << "cvdof1 = " << cvdof1 << endl;
-//     cout << "cvdof2 = " << cvdof2 << endl;
-//     cout << "nrows = " << gmm::mat_nrows(M) << " ncols = " << gmm::mat_ncols(M) << endl;
 
     GMM_ASSERT1(cvdof1.size() == gmm::mat_nrows(Melem)
 		&& cvdof2.size() == gmm::mat_ncols(Melem),
@@ -2955,18 +2942,13 @@ namespace getfem {
   
   
 
+  //=========================================================================
+  // 1)- Structure which computes the contact pairs, rhs and tangent terms
+  //=========================================================================
 
-
-  struct contact_pairs {
+  struct contact_elements {
 
     contact_frame &cf;   // contact frame description.
-
-//     bgeot::node_tab points; // Point list
-//     std::vector<dim_type> point_states; // 0 if no contact, 1 with a boundary,
-//                                         // 2 with a rigid obstacle
-//     std::vector<size_type> point_bound_num;
-//     std::vector<base_node> point_y0s;
-//     std::vector<base_node> point_y0_refs;
     
     // list des enrichissements pour ses points : y0, d0, element ...
     bgeot::rtree element_boxes;  // influence regions of boundary elements
@@ -2976,520 +2958,587 @@ namespace getfem {
     std::vector<size_type> face_of_elements;
     std::vector<base_node> unit_normal_of_elements;
 
-    contact_pairs(contact_frame &ccf) : cf(ccf) {}
-
-
-    void init(void) {
-      fem_precomp_pool fppool;
-      // compute the influence regions of boundary elements. To be run
-      // before the assembly of contact terms.
-      element_boxes.clear();
-      unit_normal_of_elements.resize(0);
-      boundary_of_elements.resize(0);
-      ind_of_elements.resize(0);
-      face_of_elements.resize(0);
-
-      size_type N = 0;
-      base_matrix G;
-      model_real_plain_vector coeff;
-      for (size_type i = 0; i < cf.contact_boundaries.size(); ++i) {
-	size_type bnum = cf.region_of_boundary(i);
-	const mesh_fem &mfu = cf.mfu_of_boundary(i);
-	const model_real_plain_vector &U = cf.disp_of_boundary(i);
-	const mesh &m = mfu.linked_mesh();
-	if (i == 0) N = m.dim();
-	GMM_ASSERT1(m.dim() == N,
-		    "Meshes are of mixed dimensions, cannot deal with that");
-	base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
-	base_matrix grad(N,N);
-	mesh_region region = m.region(bnum);
-	GMM_ASSERT1(mfu.get_qdim() == N,
-		    "Wrong mesh_fem qdim to compute contact pairs");
-
-	dal::bit_vector points_already_interpolated;
-	std::vector<base_node> transformed_points(m.nb_max_points());
-	for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
-	  size_type cv = v.cv();
-	  bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-	  pfem pf_s = mfu.fem_of_element(cv);
-	  size_type nbd_t = pgt->nb_points();
-	  size_type cvnbdof = mfu.nb_basic_dof_of_element(cv);
-	  coeff.resize(cvnbdof);
-	  mesh_fem::ind_dof_ct::const_iterator
-	    itdof = mfu.ind_basic_dof_of_element(cv).begin();
-	  for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k]=U[*itdof];
-	  bgeot::vectors_to_base_matrix
-	    (G, mfu.linked_mesh().points_of_convex(cv));
-	  
-	  pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
-	  fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-					size_type(-1));
-
-	  size_type nb_pt_on_face = 0;
-	  gmm::clear(n_mean);
-	  for (short_type ip = 0; ip < nbd_t; ++ip) {
-	    size_type ind = m.ind_points_of_convex(cv)[ip];
-	    
-	    // computation of transformed vertex
-	    if (!(points_already_interpolated.is_in(ind))) {
-	      ctx.set_ii(ip);
-	      pf_s->interpolation(ctx, coeff, val, dim_type(N));
-	      val += ctx.xreal();
-	      transformed_points[ind] = val;
-	      points_already_interpolated.add(ind);	  
-	    } else {
-	      val = transformed_points[ind];
-	    }
-	    // computation of unit normal vector if the vertex is on the face
-	    bool is_on_face = false;
-	    bgeot::pconvex_structure cvs = pgt->structure();
-	    for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
-	      if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
-	    if (is_on_face) {
-	      ctx.set_ii(ip); 
-	      n0 = bgeot::compute_normal(ctx, v.f());
-	      pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
-	      gmm::add(gmm::identity_matrix(), grad);
-	      scalar_type J = gmm::lu_inverse(grad);
-	      if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
-	      gmm::mult(gmm::transposed(grad), n0, n);
-	      n /= gmm::vect_norm2(n);
-	      n_mean += n;
-	      ++nb_pt_on_face;
-	    }
-
-	    if (ip == 0) // computation of bounding box
-	      bmin = bmax = val;
-	    else {
-	      for (size_type k = 0; k < N; ++k) {
-		bmin[k] = std::min(bmin[k], val[k]);
-		bmax[k] = std::max(bmax[k], val[k]);
-	      }
-	    }
-	  }
-
-	  GMM_ASSERT1(nb_pt_on_face,
-		      "This element has not vertex on considered face !");
-
-	  // Computation of influence box :
-	  // offset of the bounding box relatively to its "diameter"
-	  scalar_type h = bmax[0] - bmin[0];
-	  for (size_type k = 1; k < N; ++k)
-	    h = std::max(h, bmax[k] - bmin[k]);
-	  for (size_type k = 0; k < N; ++k)
-	    { bmin[k] -= h; bmax[k] += h; }
-
-	  // Store the influence box and additional information.
-	  element_boxes.add_box(bmin, bmax, unit_normal_of_elements.size());
-	  n_mean /= gmm::vect_norm2(n_mean);
-	  unit_normal_of_elements.push_back(n_mean);
-	  boundary_of_elements.push_back(i);
-	  ind_of_elements.push_back(cv);
-	  face_of_elements.push_back(v.f());
-	}
-      }
-    }
-
-
-
+    contact_elements(contact_frame &ccf) : cf(ccf) {}
+    void init(void);
     void add_point_contribution(size_type boundary_num,
 				getfem::fem_interpolation_context &ctxu,
 				getfem::fem_interpolation_context &ctxl,
-				scalar_type weight) {
-      const mesh_fem &mfu = cf.mfu_of_boundary(boundary_num);
-      const mesh_fem &mfl = cf.mflambda_of_boundary(boundary_num);
-      const model_real_plain_vector &U = cf.disp_of_boundary(boundary_num);
-      const model_real_plain_vector &L = cf.lambda_of_boundary(boundary_num);
-      size_type N = mfu.get_qdim();
-      base_node x0 = ctxu.xreal();
-      
-      // ----------------------------------------------------------
-      // Computation of the point coordinates and the unit normal
-      // vector in real configuration
-      // ----------------------------------------------------------
-      
-      base_node n0 = bgeot::compute_normal(ctxu, ctxu.face_num());
-      size_type cv = ctxu.convex_num();
-      base_small_vector n(N), val(N), h(N);
-      base_matrix gradinv(N,N), grad(N,N), gradtot(N,N), G;
-      size_type cvnbdofu = mfu.nb_basic_dof_of_element(cv);
-      size_type cvnbdofl = mfl.nb_basic_dof_of_element(cv);
-      base_vector coeff(cvnbdofu);
-      gmm::copy(gmm::sub_vector
-		(U, gmm::sub_index
-		 (mfu.ind_basic_dof_of_element(cv))), coeff);
-      ctxu.pf()->interpolation(ctxu, coeff, val, dim_type(N));
-      base_node x = x0 + val;
-      
-      ctxu.pf()->interpolation_grad(ctxu, coeff, gradinv, dim_type(N));
-      gmm::add(gmm::identity_matrix(), gradinv);
-      scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une résolution...
-      if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
-      gmm::mult(gmm::transposed(gradinv), n0, n);
-      n /= gmm::vect_norm2(n);
-      
-      // ----------------------------------------------------------
-      // Selection of influence boxes
-      // ----------------------------------------------------------
-
-      bgeot::rtree::pbox_set bset;
-      element_boxes.find_boxes_at_point(x, bset);
-      
-      cout << "Number of boxes found : " << bset.size() << endl; 
-
-      // ----------------------------------------------------------
-      // Eliminates some influence boxes qith the mean normal
-      // criterion : should at least eliminate the original element.
-      // ----------------------------------------------------------
-      
-      bgeot::rtree::pbox_set::iterator it = bset.begin(), itnext;
-      for (; it != bset.end(); it = itnext) {
-	itnext = it; ++itnext;
-	if (gmm::vect_sp(unit_normal_of_elements[(*it)->id], n)
-	    >= scalar_type(0)) bset.erase(it);
-      }
-      
-      cout << "Number of boxes satisfying the unit normal criterion : "
-	   << bset.size() << endl; 
-
-      
-      // ----------------------------------------------------------
-      // For each remaining influence box, compute y0, the corres-
-      // ponding unit normal vector and eliminate wrong auto-contact
-      // situations with a test on |x0-y0|
-      // ----------------------------------------------------------
-	
-      it = bset.begin();
-      std::vector<base_node> y0s, y0_refs;
-      std::vector<scalar_type> d0s;
-      std::vector<scalar_type> d1s;
-      std::vector<size_type> elt_nums;
-      std::vector<fem_interpolation_context> ctx_y0s;
-      for (; it != bset.end(); ++it) {
-	size_type boundary_num_y0 = boundary_of_elements[(*it)->id];
-	size_type cv_y0 = ind_of_elements[(*it)->id];
-	size_type face_y0 = face_of_elements[(*it)->id];
-	const mesh_fem &mfu_y0 = cf.mfu_of_boundary(boundary_num_y0);
-	pfem pf_s = mfu_y0.fem_of_element(cv_y0);
-	const model_real_plain_vector &U_y0
-	  = cf.disp_of_boundary(boundary_num_y0);
-	const mesh &m = mfu_y0.linked_mesh();
-	bgeot::pgeometric_trans pgt_y0 = m.trans_of_convex(cv_y0);
-	bgeot::pconvex_structure cvs_y0 = pgt_y0->structure();
-	
-	// Find an interior point (in order to promote the more interior
-	// y0 in case of locally non invertible transformation.
-	size_type ind_dep_point = 0;
-	for (; ind_dep_point < cvs_y0->nb_points(); ++ind_dep_point) {
-	  bool is_on_face = false;
-	  for (size_type k = 0;
-	       k < cvs_y0->nb_points_of_face(short_type(face_y0)); ++k)
-	    if (cvs_y0->ind_points_of_face(short_type(face_y0))[k]
-		== ind_dep_point) is_on_face = true;
-	  if (!is_on_face) break;
-	}
-	GMM_ASSERT1(ind_dep_point < cvs_y0->nb_points(), 
-		    "No interior point found !");
-	
-	base_node y0_ref = pgt_y0->convex_ref()->points()[ind_dep_point];
-	
-	size_type cvnbdof_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
-	coeff.resize(cvnbdof_y0);
-	mesh_fem::ind_dof_ct::const_iterator
-	  itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
-	for (size_type k = 0; k < cvnbdof_y0; ++k, ++itdof)
-	  coeff[k] = U_y0[*itdof];
-	// if (pf_s->need_G()) 
-	bgeot::vectors_to_base_matrix
-	  (G, mfu_y0.linked_mesh().points_of_convex(cv_y0));
-	
-	fem_interpolation_context ctx_y0(pgt_y0, pf_s, y0_ref, G, cv_y0,
-					 size_type(-1));
-	
-	size_type newton_iter = 0;
-	for(;;) { // Newton algorithm to invert geometric transformation
-	  
-	  pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
-	  val += ctx_y0.xreal() - x;
-	  scalar_type init_res = gmm::vect_norm2(val);
-	  
-	  if (init_res < 1E-12) break;
-	  GMM_ASSERT1(newton_iter < 200,
-		      "Newton has failed to invert transformation"); // il faudrait faire qlq chose d'autre ... !
-	  
-	  pf_s->interpolation_grad(ctx_y0, coeff, grad, dim_type(N));
-	  
-	  gmm::add(gmm::identity_matrix(), grad);
-
-	  gmm::mult(grad, ctx_y0.K(), gradtot);
-	    
-	  std::vector<int> ipvt(N);
-	  size_type info = gmm::lu_factor(gradtot, ipvt);
-	  GMM_ASSERT1(!info, "Singular system, pivot = " << info); // il faudrait faire qlq chose d'autre ... perturber par exemple
-	  gmm::lu_solve(gradtot, ipvt, h, val);
-	  
-	  // line search
-	  bool ok = false;
-	  scalar_type alpha;
-	  for (alpha = 1; alpha >= 1E-4; alpha/=scalar_type(2)) {
-	    
-	    ctx_y0.set_xref(y0_ref - alpha*h);
-	    pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
-	    val += ctx_y0.xreal() - x;
-	    
-	    if (gmm::vect_norm2(val) < init_res) { ok = true; break; }
-	  }
-	  if (!ok)
-	    GMM_WARNING1("Line search has failed to invert transformation");
-	  y0_ref -= alpha*h;
-	  ctx_y0.set_xref(y0_ref);
-	  newton_iter++;
-	}
-	
-	base_node y0 = ctx_y0.xreal();
-	base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
-	scalar_type d0
-	  = pgt_y0->convex_ref()->is_in_face(short_type(face_y0), y0_ref)
-	  / gmm::vect_norm2(n0_y0); // vérifier la cohérence
-	// eliminate wrong auto-contact situations
-	if (d0 < scalar_type(0) && &(U_y0) == &U
-	    && gmm::vect_dist2(y0, x0) < -d0 / scalar_type(3)) 
-	  { cout << "Eliminated x0 = " << x0 << " y0 = " << y0 << " d0 = " << d0 << endl;  continue; }
-	
-	y0s.push_back(ctx_y0.xreal()); // Usefull ?
-	y0_refs.push_back(y0_ref);
-	elt_nums.push_back((*it)->id);
-	d0s.push_back(d0);
-	d1s.push_back(pgt_y0->convex_ref()->is_in(y0_ref));
-	ctx_y0s.push_back(ctx_y0);
-	
-	cout << "dist0 = " << d0
-	     << " dist1 = " << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
-      }
-
-      // ----------------------------------------------------------
-      // Compute the distance to rigid obstacles and selects the
-      // nearest boundary/obstacle.
-      // ----------------------------------------------------------
-
-      dim_type state = 0;
-      scalar_type d0 = 1E100, d1 = 1E100;
-      
-      size_type ibound = size_type(-1);
-      for (size_type k = 0; k < y0_refs.size(); ++k)
-	if (d1s[k] < d1) { d0 = d0s[k]; d1 = d1s[k]; ibound = k; state = 1; }
-      
-      
-      size_type irigid_obstacle = size_type(-1);
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-      gmm::copy(x, cf.pt_eval);
-      for (size_type i = 0; i < cf.obstacles.size(); ++i) {
-	scalar_type d0_o = scalar_type(cf.obstacles_parsers[i].Eval());
-	if (d0_o < d0) { d0 = d0_o; irigid_obstacle = i; state = 2; }
-      }
-#else
-      if (cf.obstacles.size() > 0)
-	GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
-		     "muParser to account for rigid obstacles");
-#endif
-      
-
-      // ----------------------------------------------------------
-      // Print the found contact state ...
-      // ----------------------------------------------------------
-
-
-      cout  << "Point : " << x0 << " of boundary " << boundary_num
-	    << " state = " << int(state);
-      if (state == 1) {
-	size_type nbo = boundary_of_elements[elt_nums[ibound]];
-	const mesh_fem &mfu_y0 = cf.mfu_of_boundary(nbo);
-	const mesh &m = mfu_y0.linked_mesh();
-	size_type icv = ind_of_elements[elt_nums[ibound]];
-	
-	cout << " y0 = " << y0s[ibound] << " of element "
-	     << icv  << " of boundary " << nbo << endl;
-	for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
-	  cout << "point " << k << " : "
-	       << m.points()[m.ind_points_of_convex(icv)[k]] << endl;
-      }
-      cout << " d0 = " << d0 << endl;
-      
-      // ----------------------------------------------------------
-      // Add the contributions to the tangent matrices and rhs
-      // ----------------------------------------------------------
-
-      GMM_ASSERT1(ctxu.pf()->target_dim() == 1 && ctxl.pf()->target_dim() == 1,
-		  "Large sliding contact assembly procedure has to be adapted "
-		  "to intrinsic vectorial elements. To be done.");
-
-      // Éviter les calculs inutiles dans le cas state == 2 ... à voir à la fin
-      // regarder aussi si on peut factoriser des mat_elem_assembly ...
-
-      scalar_type r = scalar_type(1); // à mettre en paramêtre
-      base_matrix Melem;
-      base_vector Velem;
-      base_tensor tl, tu;
-      base_small_vector lambda(N);
-      ctxl.base_value(tl);
-      ctxu.base_value(tu);
-
-      coeff.resize(cvnbdofl);
-      gmm::copy(gmm::sub_vector
-		(L, gmm::sub_index
-		 (mfl.ind_basic_dof_of_element(cv))), coeff);
-      ctxu.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
-      
-      // Tangent term (1/r)\int \delta\lambda.\mu
-      gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
-      scalar_type cmult = (state == 0) ? -scalar_type(1) : scalar_type(1)/r;
-      for (size_type i = 0; i < cvnbdofl; ++i)
-	for (size_type j = 0; j < cvnbdofl; ++j)
-	  if (i%N == j%N) Melem(i,j) = tl[i/N]*tl[j/N]*weight*cmult;
-      mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
-			Melem, mfl, cv, mfl, cv);
-      
-      // Rhs term \int \lambda.\psi(x_0)
-      gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
-      for (size_type i = 0; i < cvnbdofu; ++i)
-	Velem[i] = tu[i/N] * lambda[i%N];
-      vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
-
-      if (state) {
-	base_matrix grad_y0(N, N), gradinv_y0(N, N), gradaux(N,N);
-	base_vector coeff_y0;
-	base_small_vector vv(N), vvv(N); // auxilliary vectors
-	base_tensor tgradu, tu_y0, tgradu_y0;
-	size_type cv_y0 = 0, cvnbdofu_y0 = 0;
-	size_type nbound_y0
-	  = (state == 1) ? boundary_of_elements[elt_nums[ibound]] : 0;
-	const mesh_fem &mfu_y0
-	  = (state == 1) ? cf.mfu_of_boundary(nbound_y0) : mfu;
-	ctxu.grad_base_value(tgradu);
-      
-	if (state == 1) {
-	  cv_y0 = ind_of_elements[elt_nums[ibound]];
-	  cvnbdofu_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
-	  const model_real_plain_vector &U_y0 = cf.disp_of_boundary(nbound_y0);
-	  mesh_fem::ind_dof_ct::const_iterator
-	    itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
-	  coeff_y0.resize(cvnbdofu_y0);
-	  gmm::copy(gmm::sub_vector
-		    (U_y0, gmm::sub_index
-		     (mfu_y0.ind_basic_dof_of_element(cv_y0))), coeff_y0);
-	  ctx_y0s[ibound].pf()->interpolation_grad(ctx_y0s[ibound], coeff_y0,
-						   grad_y0, dim_type(N));
-	  gmm::add(gmm::identity_matrix(), grad_y0);
-	  gmm::copy(grad_y0, gradinv_y0);
-	  gmm::lu_inverse(gradinv_y0);// à proteger contre la non-inversibilité
-	  ctx_y0s[ibound].base_value(tu_y0);
-	  ctx_y0s[ibound].grad_base_value(tgradu_y0);
-	}
-
-	// Rhs term -\int \lambda.\psi(y_0)
-	if (state == 1) {
-	  gmm::resize(Velem,  cvnbdofu_y0);gmm::clear(Velem);
-	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	    Velem[i] = -tu_y0[i/N] * lambda[i%N];
-	  vec_elem_assembly(cf.U_vector(nbound_y0), Velem, mfu_y0, cv_y0);
-	}
-
-	// Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
-	gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofu; ++i)
-	  for (size_type j = 0; j < cvnbdofl; ++j)
-	    if (i%N == j%N) Melem(i,j) = -tu[i/N]*tl[j/N]*weight;
-	
-	cout << "Melem = " << Melem << endl;
-	mat_elem_assembly(cf.UL_matrix(boundary_num, boundary_num),
-			  Melem, mfu, cv, mfl, cv);
-	
-	if (state == 1) {
-	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofl); gmm::clear(Melem);
-	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	    for (size_type j = 0; j < cvnbdofl; ++j)
-	      if (i%N == j%N) Melem(i,j) = -tu_y0[i/N]*tl[j/N]*weight;
-	  
-	  cout << "Melem2 = " << Melem << endl;
-	  mat_elem_assembly(cf.UL_matrix(nbound_y0, boundary_num),
-			    Melem, mfu_y0, cv_y0, mfl, cv);
-	}
-
-	// Tangent term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta u(y_0) - \delta u(x_0))
-	if (state == 1) {
-	  gmm::mult(gradinv_y0, lambda, vv);
-	  
-	  cout << "tgradu_y0 =" << tgradu_y0 << endl;
-	  
-	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
-	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	    for (size_type j = 0; j < cvnbdofu; ++j)
-	      Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
-	  
-	  mat_elem_assembly(cf.UU_matrix(nbound_y0, boundary_num),
-			    Melem, mfu_y0, cv_y0, mfu, cv);
-	  
-	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
-	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
-	      Melem(i, j) = vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
-	  
-	  mat_elem_assembly(cf.UU_matrix(nbound_y0, nbound_y0),
-			    Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
-	}
-	
-	base_small_vector zeta(N); // Unstabilized frictionless case for the moment
-	gmm::add(lambda, gmm::scaled(n, d0), zeta);
-	De_Saxce_projection_grad(zeta, n, scalar_type(0), grad);
-	
-	// Tangent term -\nabla P(zeta) (dzeta/du)(\delta u) . \mu
-	
-	// à séparer en trois termes différents ...
-	
-	
-	
-	// Tangent term -\nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
-	gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofl; ++j)
-	    Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
-	mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
-			  Melem, mfl, cv, mfl, cv);
-	
-	
-	
-	// Tangent term -\nabla_n P(zeta) (dn/du)(\delta u) . \mu
-	De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
-	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
-	gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofu; ++j)
-	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) -= tl[i/N]*tgradu[j-(j%N)+k]
-		            *gradaux(j%N,i%N)*n[j%N]*weight/r;
-	gmm::mult(grad, n, vv);
-	gmm::mult(gradinv, n, vvv);
-	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofu; ++j)
-	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) += tl[i/N]*vv[i%N]
-		            *tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
-	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
-			  Melem, mfl, cv, mfu, cv);
-	
-
-
-
-
-      }
-
-    }
-    
+				scalar_type weight);
   };
 
 
+  void contact_elements::init(void) {
+    fem_precomp_pool fppool;
+    // compute the influence regions of boundary elements. To be run
+    // before the assembly of contact terms.
+    element_boxes.clear();
+    unit_normal_of_elements.resize(0);
+    boundary_of_elements.resize(0);
+    ind_of_elements.resize(0);
+    face_of_elements.resize(0);
+    
+    size_type N = 0;
+    base_matrix G;
+    model_real_plain_vector coeff;
+    for (size_type i = 0; i < cf.contact_boundaries.size(); ++i) {
+      size_type bnum = cf.region_of_boundary(i);
+      const mesh_fem &mfu = cf.mfu_of_boundary(i);
+      const model_real_plain_vector &U = cf.disp_of_boundary(i);
+      const mesh &m = mfu.linked_mesh();
+      if (i == 0) N = m.dim();
+      GMM_ASSERT1(m.dim() == N,
+		  "Meshes are of mixed dimensions, cannot deal with that");
+      base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
+      base_matrix grad(N,N);
+      mesh_region region = m.region(bnum);
+      GMM_ASSERT1(mfu.get_qdim() == N,
+		  "Wrong mesh_fem qdim to compute contact pairs");
+      
+      dal::bit_vector points_already_interpolated;
+      std::vector<base_node> transformed_points(m.nb_max_points());
+      for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+	size_type cv = v.cv();
+	bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+	pfem pf_s = mfu.fem_of_element(cv);
+	size_type nbd_t = pgt->nb_points();
+	size_type cvnbdof = mfu.nb_basic_dof_of_element(cv);
+	coeff.resize(cvnbdof);
+	mesh_fem::ind_dof_ct::const_iterator
+	  itdof = mfu.ind_basic_dof_of_element(cv).begin();
+	for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k]=U[*itdof];
+	bgeot::vectors_to_base_matrix
+	  (G, mfu.linked_mesh().points_of_convex(cv));
+	
+	pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+	fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+				      size_type(-1));
+	
+	size_type nb_pt_on_face = 0;
+	gmm::clear(n_mean);
+	for (short_type ip = 0; ip < nbd_t; ++ip) {
+	  size_type ind = m.ind_points_of_convex(cv)[ip];
+	  
+	  // computation of transformed vertex
+	  if (!(points_already_interpolated.is_in(ind))) {
+	    ctx.set_ii(ip);
+	    pf_s->interpolation(ctx, coeff, val, dim_type(N));
+	    val += ctx.xreal();
+	    transformed_points[ind] = val;
+	    points_already_interpolated.add(ind);	  
+	  } else {
+	    val = transformed_points[ind];
+	  }
+	  // computation of unit normal vector if the vertex is on the face
+	  bool is_on_face = false;
+	  bgeot::pconvex_structure cvs = pgt->structure();
+	  for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
+	    if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
+	  if (is_on_face) {
+	    ctx.set_ii(ip); 
+	    n0 = bgeot::compute_normal(ctx, v.f());
+	    pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+	    gmm::add(gmm::identity_matrix(), grad);
+	    scalar_type J = gmm::lu_inverse(grad);
+	    if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
+	    gmm::mult(gmm::transposed(grad), n0, n);
+	    n /= gmm::vect_norm2(n);
+	    n_mean += n;
+	    ++nb_pt_on_face;
+	  }
+	  
+	  if (ip == 0) // computation of bounding box
+	    bmin = bmax = val;
+	  else {
+	    for (size_type k = 0; k < N; ++k) {
+	      bmin[k] = std::min(bmin[k], val[k]);
+	      bmax[k] = std::max(bmax[k], val[k]);
+	    }
+	  }
+	}
+	
+	GMM_ASSERT1(nb_pt_on_face,
+		    "This element has not vertex on considered face !");
+	
+	// Computation of influence box :
+	// offset of the bounding box relatively to its "diameter"
+	scalar_type h = bmax[0] - bmin[0];
+	for (size_type k = 1; k < N; ++k)
+	  h = std::max(h, bmax[k] - bmin[k]);
+	for (size_type k = 0; k < N; ++k)
+	  { bmin[k] -= h; bmax[k] += h; }
+	
+	// Store the influence box and additional information.
+	element_boxes.add_box(bmin, bmax, unit_normal_of_elements.size());
+	n_mean /= gmm::vect_norm2(n_mean);
+	unit_normal_of_elements.push_back(n_mean);
+	boundary_of_elements.push_back(i);
+	ind_of_elements.push_back(cv);
+	face_of_elements.push_back(v.f());
+      }
+    }
+  }
+  
+
+
+  void contact_elements::add_point_contribution
+  (size_type boundary_num, getfem::fem_interpolation_context &ctxu,
+   getfem::fem_interpolation_context &ctxl, scalar_type weight) {
+    const mesh_fem &mfu = cf.mfu_of_boundary(boundary_num);
+    const mesh_fem &mfl = cf.mflambda_of_boundary(boundary_num);
+    const model_real_plain_vector &U = cf.disp_of_boundary(boundary_num);
+    const model_real_plain_vector &L = cf.lambda_of_boundary(boundary_num);
+    size_type N = mfu.get_qdim();
+    base_node x0 = ctxu.xreal();
+    
+    // ----------------------------------------------------------
+    // Computation of the point coordinates and the unit normal
+    // vector in real configuration
+    // ----------------------------------------------------------
+    
+    base_node n0 = bgeot::compute_normal(ctxu, ctxu.face_num());
+    scalar_type face_factor = gmm::vect_norm2(n0);
+    size_type cv = ctxu.convex_num();
+    base_small_vector n(N), val(N), h(N);
+    base_matrix gradinv(N,N), grad(N,N), gradtot(N,N), G;
+    size_type cvnbdofu = mfu.nb_basic_dof_of_element(cv);
+    size_type cvnbdofl = mfl.nb_basic_dof_of_element(cv);
+    base_vector coeff(cvnbdofu);
+    gmm::copy(gmm::sub_vector
+	      (U, gmm::sub_index
+	       (mfu.ind_basic_dof_of_element(cv))), coeff);
+    ctxu.pf()->interpolation(ctxu, coeff, val, dim_type(N));
+    base_node x = x0 + val;
+    
+    ctxu.pf()->interpolation_grad(ctxu, coeff, gradinv, dim_type(N));
+    gmm::add(gmm::identity_matrix(), gradinv);
+    scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une résolution...
+    if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
+    gmm::mult(gmm::transposed(gradinv), n0, n);
+    n /= gmm::vect_norm2(n);
+    
+    // ----------------------------------------------------------
+    // Selection of influence boxes
+    // ----------------------------------------------------------
+    
+    bgeot::rtree::pbox_set bset;
+    element_boxes.find_boxes_at_point(x, bset);
+    
+    cout << "Number of boxes found : " << bset.size() << endl; 
+    
+    // ----------------------------------------------------------
+    // Eliminates some influence boxes with the mean normal
+    // criterion : should at least eliminate the original element.
+    // ----------------------------------------------------------
+    
+    bgeot::rtree::pbox_set::iterator it = bset.begin(), itnext;
+    for (; it != bset.end(); it = itnext) {
+      itnext = it; ++itnext;
+      if (gmm::vect_sp(unit_normal_of_elements[(*it)->id], n)
+	  >= scalar_type(0)) bset.erase(it);
+    }
+    
+    cout << "Number of boxes satisfying the unit normal criterion : "
+	 << bset.size() << endl; 
+    
+    
+    // ----------------------------------------------------------
+    // For each remaining influence box, compute y0, the corres-
+    // ponding unit normal vector and eliminate wrong auto-contact
+    // situations with a test on |x0-y0|
+    // ----------------------------------------------------------
+    
+    it = bset.begin();
+    std::vector<base_node> y0s, y0_refs;
+    std::vector<base_small_vector> n0_y0s;
+    std::vector<scalar_type> d0s;
+    std::vector<scalar_type> d1s;
+    std::vector<size_type> elt_nums;
+    std::vector<fem_interpolation_context> ctx_y0s;
+    for (; it != bset.end(); ++it) {
+      size_type boundary_num_y0 = boundary_of_elements[(*it)->id];
+      size_type cv_y0 = ind_of_elements[(*it)->id];
+      size_type face_y0 = face_of_elements[(*it)->id];
+      const mesh_fem &mfu_y0 = cf.mfu_of_boundary(boundary_num_y0);
+      pfem pf_s = mfu_y0.fem_of_element(cv_y0);
+      const model_real_plain_vector &U_y0
+	= cf.disp_of_boundary(boundary_num_y0);
+      const mesh &m = mfu_y0.linked_mesh();
+      bgeot::pgeometric_trans pgt_y0 = m.trans_of_convex(cv_y0);
+      bgeot::pconvex_structure cvs_y0 = pgt_y0->structure();
+      
+      // Find an interior point (in order to promote the more interior
+      // y0 in case of locally non invertible transformation.
+      size_type ind_dep_point = 0;
+      for (; ind_dep_point < cvs_y0->nb_points(); ++ind_dep_point) {
+	bool is_on_face = false;
+	for (size_type k = 0;
+	     k < cvs_y0->nb_points_of_face(short_type(face_y0)); ++k)
+	  if (cvs_y0->ind_points_of_face(short_type(face_y0))[k]
+	      == ind_dep_point) is_on_face = true;
+	if (!is_on_face) break;
+      }
+      GMM_ASSERT1(ind_dep_point < cvs_y0->nb_points(), 
+		  "No interior point found !");
+      
+      base_node y0_ref = pgt_y0->convex_ref()->points()[ind_dep_point];
+      
+      size_type cvnbdof_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
+      coeff.resize(cvnbdof_y0);
+      mesh_fem::ind_dof_ct::const_iterator
+	itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
+      for (size_type k = 0; k < cvnbdof_y0; ++k, ++itdof)
+	coeff[k] = U_y0[*itdof];
+      // if (pf_s->need_G()) 
+      bgeot::vectors_to_base_matrix
+	(G, mfu_y0.linked_mesh().points_of_convex(cv_y0));
+      
+      fem_interpolation_context ctx_y0(pgt_y0, pf_s, y0_ref, G, cv_y0,
+				       size_type(-1));
+      
+      size_type newton_iter = 0;
+      for(;;) { // Newton algorithm to invert geometric transformation
+	
+	pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
+	val += ctx_y0.xreal() - x;
+	scalar_type init_res = gmm::vect_norm2(val);
+	
+	if (init_res < 1E-12) break;
+	GMM_ASSERT1(newton_iter < 200,
+		    "Newton has failed to invert transformation"); // il faudrait faire qlq chose d'autre ... !
+	
+	pf_s->interpolation_grad(ctx_y0, coeff, grad, dim_type(N));
+	
+	gmm::add(gmm::identity_matrix(), grad);
+	
+	gmm::mult(grad, ctx_y0.K(), gradtot);
+	
+	std::vector<int> ipvt(N);
+	size_type info = gmm::lu_factor(gradtot, ipvt);
+	GMM_ASSERT1(!info, "Singular system, pivot = " << info); // il faudrait faire qlq chose d'autre ... perturber par exemple
+	gmm::lu_solve(gradtot, ipvt, h, val);
+	
+	// line search
+	bool ok = false;
+	scalar_type alpha;
+	for (alpha = 1; alpha >= 1E-4; alpha/=scalar_type(2)) {
+	  
+	  ctx_y0.set_xref(y0_ref - alpha*h);
+	  pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
+	  val += ctx_y0.xreal() - x;
+	  
+	  if (gmm::vect_norm2(val) < init_res) { ok = true; break; }
+	}
+	if (!ok)
+	  GMM_WARNING1("Line search has failed to invert transformation");
+	y0_ref -= alpha*h;
+	ctx_y0.set_xref(y0_ref);
+	newton_iter++;
+      }
+      
+      base_node y0 = ctx_y0.xreal();
+      base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
+      scalar_type d0
+	= pgt_y0->convex_ref()->is_in_face(short_type(face_y0), y0_ref)
+	/ gmm::vect_norm2(n0_y0); // vérifier la cohérence
+      // Eliminates wrong auto-contact situations
+      if (d0 < scalar_type(0) && &(U_y0) == &U
+	  && gmm::vect_dist2(y0, x0) < -d0 / scalar_type(3)) {
+	cout << "Eliminated x0 = " << x0 << " y0 = " << y0
+	     << " d0 = " << d0 << endl;
+	continue;
+      }
+      
+      y0s.push_back(ctx_y0.xreal()); // Usefull ?
+      y0_refs.push_back(y0_ref);
+      elt_nums.push_back((*it)->id);
+      d0s.push_back(d0);
+      d1s.push_back(pgt_y0->convex_ref()->is_in(y0_ref));
+      ctx_y0s.push_back(ctx_y0);
+      n0_y0 /= gmm::vect_norm2(n0_y0);
+      n0_y0s.push_back(n0_y0);
+      
+      cout << "dist0 = " << d0
+	   << " dist1 = " << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
+    }
+    
+    // ----------------------------------------------------------
+    // Compute the distance to rigid obstacles and selects the
+    // nearest boundary/obstacle.
+    // ----------------------------------------------------------
+    
+    dim_type state = 0;
+    scalar_type d0 = 1E100, d1 = 1E100;
+    base_small_vector grad_obs(N);
+    
+    size_type ibound = size_type(-1);
+    for (size_type k = 0; k < y0_refs.size(); ++k)
+      if (d1s[k] < d1) { d0 = d0s[k]; d1 = d1s[k]; ibound = k; state = 1; }
+    
+    
+    size_type irigid_obstacle = size_type(-1);
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    gmm::copy(x, cf.pt_eval);
+    for (size_type i = 0; i < cf.obstacles.size(); ++i) {
+      scalar_type d0_o = scalar_type(cf.obstacles_parsers[i].Eval());
+      if (d0_o < d0) { d0 = d0_o; irigid_obstacle = i; state = 2; }
+    }
+    if (state == 2) {
+      scalar_type EPS = face_factor * 1E-10;
+      for (size_type k = 0; k < N; ++k) {
+	cf.pt_eval[k] += EPS;
+	grad_obs[k] = 
+	  (scalar_type(cf.obstacles_parsers[irigid_obstacle].Eval())-d0)/EPS;
+	cf.pt_eval[k] -= EPS;
+      }
+    }
+    
+#else
+    if (cf.obstacles.size() > 0)
+      GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
+		   "muParser to account for rigid obstacles");
+#endif
+    
+    
+    // ----------------------------------------------------------
+    // Print the found contact state ...
+    // ----------------------------------------------------------
+    
+    
+    cout  << "Point : " << x0 << " of boundary " << boundary_num
+	  << " state = " << int(state);
+    if (state == 1) {
+      size_type nbo = boundary_of_elements[elt_nums[ibound]];
+      const mesh_fem &mfu_y0 = cf.mfu_of_boundary(nbo);
+      const mesh &m = mfu_y0.linked_mesh();
+      size_type icv = ind_of_elements[elt_nums[ibound]];
+      
+      cout << " y0 = " << y0s[ibound] << " of element "
+	   << icv  << " of boundary " << nbo << endl;
+      for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
+	cout << "point " << k << " : "
+	     << m.points()[m.ind_points_of_convex(icv)[k]] << endl;
+    }
+    cout << " d0 = " << d0 << endl;
+    
+    // ----------------------------------------------------------
+    // Add the contributions to the tangent matrices and rhs
+    // ----------------------------------------------------------
+    
+    GMM_ASSERT1(ctxu.pf()->target_dim() == 1 && ctxl.pf()->target_dim() == 1,
+		"Large sliding contact assembly procedure has to be adapted "
+		"to intrinsic vectorial elements. To be done.");
+    
+    // Éviter les calculs inutiles dans le cas state == 2 ... à voir à la fin
+    // regarder aussi si on peut factoriser des mat_elem_assembly ...
+    
+    scalar_type r = scalar_type(1); // à mettre en paramêtre
+    base_matrix Melem;
+    base_vector Velem;
+    base_tensor tl, tu;
+    base_small_vector lambda(N), zeta(N), vv(N);
+    ctxl.base_value(tl);
+    ctxu.base_value(tu);
+    
+    coeff.resize(cvnbdofl);
+    gmm::copy(gmm::sub_vector
+	      (L, gmm::sub_index
+	       (mfl.ind_basic_dof_of_element(cv))), coeff);
+    ctxu.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
+    
+    // Tangent term (1/r)\int \delta\lambda.\mu
+    gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+    for (size_type i = 0; i < cvnbdofl; ++i)
+      for (size_type j = 0; j < cvnbdofl; ++j)
+	if (i%N == j%N) Melem(i,j) = -tl[i/N]*tl[j/N]*weight/r;
+    mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+		      Melem, mfl, cv, mfl, cv);
+    
+    // Rhs term \int \lambda.\psi(x_0)
+    gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
+    for (size_type i = 0; i < cvnbdofu; ++i)
+      Velem[i] = tu[i/N] * lambda[i%N]*weight;
+    vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
+    
+    
+    // Rhs term -(1/r)\int (\lambda - P(\zeta)).\mu
+    // Unstabilized frictionless case for the moment
+    gmm::clear(vv);
+    if (state) {
+      gmm::add(lambda, gmm::scaled(n, d0), zeta);
+      gmm::copy(zeta, vv);
+      De_Saxce_projection(vv, n, scalar_type(0));
+      gmm::scaled(vv, -scalar_type(1));
+      gmm::add(lambda, vv);
+    } else gmm::copy(lambda, vv);
+    gmm::resize(Velem,  cvnbdofl); gmm::clear(Velem);
+    for (size_type i = 0; i < cvnbdofl; ++i)
+      Velem[i] = (tl[i/N] * vv[i%N])*weight/r;
+    vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
+    
+    
+    if (state) {
+      base_matrix grad_y0(N, N), gradinv_y0(N, N), gradaux(N,N);
+      base_vector coeff_y0;
+      base_small_vector vvv(N), ntilde_y0(N);
+      base_tensor tgradu, tu_y0, tgradu_y0;
+      size_type cv_y0 = 0, cvnbdofu_y0 = 0;
+      size_type nbound_y0
+	= (state == 1) ? boundary_of_elements[elt_nums[ibound]] : 0;
+      const mesh_fem &mfu_y0
+	= (state == 1) ? cf.mfu_of_boundary(nbound_y0) : mfu;
+      ctxu.grad_base_value(tgradu);
+      
+      if (state == 1) {
+	cv_y0 = ind_of_elements[elt_nums[ibound]];
+	cvnbdofu_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
+	const model_real_plain_vector &U_y0 = cf.disp_of_boundary(nbound_y0);
+	mesh_fem::ind_dof_ct::const_iterator
+	  itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
+	coeff_y0.resize(cvnbdofu_y0);
+	gmm::copy(gmm::sub_vector
+		  (U_y0, gmm::sub_index
+		   (mfu_y0.ind_basic_dof_of_element(cv_y0))), coeff_y0);
+	ctx_y0s[ibound].pf()->interpolation_grad(ctx_y0s[ibound], coeff_y0,
+						 grad_y0, dim_type(N));
+	gmm::add(gmm::identity_matrix(), grad_y0);
+	gmm::copy(grad_y0, gradinv_y0);
+	gmm::lu_inverse(gradinv_y0);// à proteger contre la non-inversibilité
+	ctx_y0s[ibound].base_value(tu_y0);
+	ctx_y0s[ibound].grad_base_value(tgradu_y0);
+	gmm::mult(gmm::transposed(gradinv_y0), n0_y0s[ibound], ntilde_y0); // (not unit) normal vector
+      }
+      
+      // Rhs term -\int \lambda.\psi(y_0)
+      if (state == 1) {
+	gmm::resize(Velem,  cvnbdofu_y0);gmm::clear(Velem);
+	for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	  Velem[i] = -tu_y0[i/N] * lambda[i%N]*weight;
+	vec_elem_assembly(cf.U_vector(nbound_y0), Velem, mfu_y0, cv_y0);
+      }	
+      
+      // Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
+      gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
+      for (size_type i = 0; i < cvnbdofu; ++i)
+	for (size_type j = 0; j < cvnbdofl; ++j)
+	  if (i%N == j%N) Melem(i,j) = -tu[i/N]*tl[j/N]*weight;
+      
+      cout << "Melem = " << Melem << endl;
+      mat_elem_assembly(cf.UL_matrix(boundary_num, boundary_num),
+			Melem, mfu, cv, mfl, cv);
+      
+      if (state == 1) {
+	gmm::resize(Melem, cvnbdofu_y0, cvnbdofl); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	  for (size_type j = 0; j < cvnbdofl; ++j)
+	    if (i%N == j%N) Melem(i,j) = -tu_y0[i/N]*tl[j/N]*weight;
+	
+	cout << "Melem2 = " << Melem << endl;
+	mat_elem_assembly(cf.UL_matrix(nbound_y0, boundary_num),
+			  Melem, mfu_y0, cv_y0, mfl, cv);
+      }
+      
+      // Tangent term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta u(y_0) - \delta u(x_0))
+      if (state == 1) {
+	gmm::mult(gradinv_y0, lambda, vv);
+	
+	cout << "tgradu_y0 =" << tgradu_y0 << endl;
+	
+	gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
+	
+	mat_elem_assembly(cf.UU_matrix(nbound_y0, boundary_num),
+			  Melem, mfu_y0, cv_y0, mfu, cv);
+	
+	gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	  for (size_type j = 0; j < cvnbdofu_y0; ++j)
+	    Melem(i, j) = vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
+	
+	mat_elem_assembly(cf.UU_matrix(nbound_y0, nbound_y0),
+			  Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
+      }
+      
+      
+      
+      // Tangent term \int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(x_0)(\nabla P(zeta) n . \mu)
+      gmm::mult(grad, n, vv);
+      gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
+      for (size_type i = 0; i < cvnbdofl; ++i)
+	for (size_type j = 0; j < cvnbdofu; ++j)
+	  Melem(i, j) = tl[i/N]*vv[i%N]*tu[j/N]
+	    *((state == 1) ? ntilde_y0[j%N] : grad_obs[j%N])*weight;
+      mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
+			Melem, mfl, cv, mfu, cv);
+      
+      // Tangent term -\int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(y_0)(\nabla P(zeta) n . \mu)
+      if (state == 1) {
+	gmm::mult(grad, n, vv);
+	gmm::resize(Melem, cvnbdofl, cvnbdofu_y0); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu_y0; ++j)
+	    Melem(i, j) = -tl[i/N]*vv[i%N]*tu_y0[j/N]*ntilde_y0[j%N]*weight;
+	mat_elem_assembly(cf.LU_matrix(boundary_num, nbound_y0),
+			  Melem, mfl, cv, mfu_y0, cv_y0);
+      }
+	
+     // Tangent term (1/r)\int \nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
+     gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+     for (size_type i = 0; i < cvnbdofl; ++i)
+       for (size_type j = 0; j < cvnbdofl; ++j)
+	 Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
+     mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+		       Melem, mfl, cv, mfl, cv);
+     
+      
+
+
+      // Tangent term \int d_0(\nabla P)(I+\nabla u(x_0))^{-T}(\nabla \delta u)^T n).\mu
+     gmm::mult(gradinv, gmm::transposed(grad), gradaux);
+     gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
+     for (size_type i = 0; i < cvnbdofl; ++i)
+       for (size_type j = 0; j < cvnbdofu; ++j)
+	 for (size_type k = 0; k < N; ++k)
+	   Melem(i,j) += d0*tl[i/N]*tgradu[j-(j%N)+k]
+	     *gradaux(j%N,i%N)*n[j%N]*weight;
+     gmm::mult(grad, n, vv);
+     gmm::mult(gradinv, n, vvv);
+     for (size_type i = 0; i < cvnbdofl; ++i)
+       for (size_type j = 0; j < cvnbdofu; ++j)
+	 for (size_type k = 0; k < N; ++k)
+	   Melem(i,j) -= d0*tl[i/N]*vv[i%N]
+	     *tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight;
+      
+
+     // Tangent term (1/r)\int \nabla_n P(zeta) (dn/du)(\delta u) . \mu
+     // On peut certainement factoriser d'avantage ce terme avec le précédent.
+     // Attendre la version avec frottement.
+     De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
+     gmm::mult(gradinv, gmm::transposed(grad), gradaux);
+     // gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
+     for (size_type i = 0; i < cvnbdofl; ++i)
+       for (size_type j = 0; j < cvnbdofu; ++j)
+	 for (size_type k = 0; k < N; ++k)
+	   Melem(i,j) += tl[i/N]*tgradu[j-(j%N)+k]
+	     *gradaux(j%N,i%N)*n[j%N]*weight/r;
+     gmm::mult(grad, n, vv);
+     gmm::mult(gradinv, n, vvv);
+     for (size_type i = 0; i < cvnbdofl; ++i)
+       for (size_type j = 0; j < cvnbdofu; ++j)
+	 for (size_type k = 0; k < N; ++k)
+	   Melem(i,j) -= tl[i/N]*vv[i%N]
+	     *tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
+     mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
+		       Melem, mfl, cv, mfu, cv);
+    }
+
+  }
+
+
+
   void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2) {
-    contact_pairs cp(cf);
+    contact_elements cp(cf);
     cp.init();
     fem_precomp_pool fppool;
     base_matrix G;
