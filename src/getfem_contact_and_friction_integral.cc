@@ -3619,7 +3619,7 @@ namespace getfem {
 
     }
 
-    large_sliding_integral_contact_brick(void) {
+    large_sliding_integral_contact_brick(dim_type N) : cf(N) {
       set_flags("Large sliding integral contact brick",
                 false /* is linear*/, false /* is symmetric */,
                 false /* is coercive */, true /* is real */,
@@ -3634,16 +3634,15 @@ namespace getfem {
   size_type add_large_sliding_integral_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_r,
-   const std::string &dataname_friction_coeff,
-   const std::string &dataname_mult, size_type region) {
+   const std::string &dataname_friction_coeff, size_type region) {
 
-    pbrick pbr = new large_sliding_integral_contact_brick;
+    dim_type N = md.mesh_fem_of_variable(varname_u).linked_mesh().dim();
+    pbrick pbr = new large_sliding_integral_contact_brick(N);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
 
-    model::varnamelist dl(1, dataname_obs);
-    dl.push_back(dataname_r);
+    model::varnamelist dl(1, dataname_r);
     dl.push_back(dataname_friction_coeff);
 
     model::varnamelist vl(1, varname_u);
