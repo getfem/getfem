@@ -3537,6 +3537,130 @@ namespace getfem {
 
 
 
+
+
+
+
+  struct large_sliding_integral_contact_brick : public virtual_brick {
+
+    contact_frame cf;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      // Integration method
+      GMM_ASSERT1(mims.size() == 1, "Large sliding integral contact "
+		  "bricks need a single mesh_im");
+      const mesh_im &mim = *mims[0];
+
+      // Variables : u
+      GMM_ASSERT1(vl.size() == 1,
+                  "Large sliding integral contact bricks need a "
+		  "single variable");
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+
+      // Data : obs, r, [lambda,] [friction_coeff,] [alpha,] [WT]
+      GMM_ASSERT1(dl.size() == 5, "Wrong number of data for large sliding "
+		  "integral contact brick");
+
+      const model_real_plain_vector &obs = md.real_variable(dl[0]);
+      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
+      size_type sl = gmm::vect_size(obs) * mf_obs.get_qdim() / mf_obs.nb_dof();
+      GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
+                  "the right format");
+
+      const model_real_plain_vector &vr = md.real_variable(dl[1]);
+      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+
+      const model_real_plain_vector *f_coeff = 0;
+      const mesh_fem *pmf_coeff = 0;
+      
+      f_coeff = &(md.real_variable(dl[2]));
+      pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
+      sl = gmm::vect_size(*f_coeff);
+      if (pmf_coeff) { sl*= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
+      GMM_ASSERT1(sl == 1, "the data corresponding to the friction "
+		  "coefficient has not the right format");
+      
+      const model_real_plain_vector &vlambda = md.real_variable(dl[3]);
+      GMM_ASSERT1(gmm::vect_size(vlambda) == 1,
+		  "Parameter lambda should be a scalar");
+      const model_real_plain_vector &vmu = md.real_variable(dl[4]);
+      GMM_ASSERT1(gmm::vect_size(vmu) == 1, "Parameter mu should be a scalar");
+
+
+      GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
+                  "large sliding integral contact with rigid obstacle brick");
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (version & model::BUILD_MATRIX) {
+        GMM_TRACE2("Large sliding integral contact tangent term");
+        gmm::clear(matl[0]);
+	asm_Nitsche_contact_rigid_obstacle_tangent_matrix
+	  (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
+	   vr[0], vlambda[0], vmu[0], rg);
+      }
+
+      if (version & model::BUILD_RHS) {
+        gmm::clear(vecl[0]);
+	asm_Nitsche_contact_rigid_obstacle_rhs
+	  (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
+	   vr[0], vlambda[0], vmu[0], rg);
+      }
+
+    }
+
+    large_sliding_integral_contact_brick(void) {
+      set_flags("Large sliding integral contact brick",
+                false /* is linear*/, false /* is symmetric */,
+                false /* is coercive */, true /* is real */,
+                false /* is complex */);
+    }
+
+  };
+
+  // à remodeler complètement doit accepter un seul bord par défaut puis
+  // une fonction d'ajout de bord et d'obstacles rigides
+
+  size_type add_large_sliding_integral_contact_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &multname, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_mult, size_type region) {
+
+    pbrick pbr = new large_sliding_integral_contact_brick;
+
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, false));
+
+    model::varnamelist dl(1, dataname_obs);
+    dl.push_back(dataname_r);
+    dl.push_back(dataname_friction_coeff);
+
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(multname);
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+
+
+
+
+
+
+
+
   void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2) {
     contact_elements cp(cf);
     cp.init();
