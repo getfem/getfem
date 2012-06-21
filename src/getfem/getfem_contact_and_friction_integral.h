@@ -649,158 +649,45 @@ namespace getfem {
 
 
 
-
-}
-
-
-
-  // will not remain here ....
-
-
-
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
-
-namespace getfem {
-
-
-  struct contact_frame {
-    bool frictionless;
-    size_type N;
-    scalar_type friction_coef; // could depend on the surfaces ...
-    std::vector<const model_real_plain_vector *> Us;
-    std::vector<model_real_plain_vector> ext_Us;
-    std::vector<const model_real_plain_vector *> lambdas;
-    std::vector<model_real_plain_vector> ext_lambdas;
-    struct contact_boundary {
-      size_type region;                 // Boundary number
-      const getfem::mesh_fem *mfu;      // F.e.m. for the displacement.
-      size_type ind_U;                  // Index of displacement.
-      const getfem::mesh_fem *mflambda; // F.e.m. for the multiplier.
-      size_type ind_lambda;             // Index of multiplier.
-    };
-    std::vector<contact_boundary> contact_boundaries;
-
-    gmm::dense_matrix< model_real_sparse_matrix * > UU;
-    gmm::dense_matrix< model_real_sparse_matrix * > UL;
-    gmm::dense_matrix< model_real_sparse_matrix * > LU;
-    gmm::dense_matrix< model_real_sparse_matrix * > LL;
-
-    std::vector< model_real_plain_vector *> Urhs;
-    std::vector< model_real_plain_vector *> Lrhs;
-    
-    
-
-    std::vector<std::string> coordinates;
-    base_node pt_eval;
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-    std::vector<mu::Parser> obstacles_parsers;
-#endif
-    std::vector<std::string> obstacles;
-    std::vector<std::string> obstacles_velocities;
-
-    size_type add_U(const getfem::mesh_fem &mfu,
-		    const model_real_plain_vector &U) {
-      size_type i = 0;
-      for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
-      Us.push_back(&U);
-      model_real_plain_vector ext_U(mfu.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
-      mfu.extend_vector(U, ext_U);
-      ext_Us.push_back(ext_U);
-      return i;
-    }
-
-    size_type add_lambda(const getfem::mesh_fem &mfl,
-			 const model_real_plain_vector &l) {
-      size_type i = 0;
-      for (; i < lambdas.size(); ++i) if (lambdas[i] == &l) return i;
-      lambdas.push_back(&l);
-      model_real_plain_vector ext_l(mfl.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
-      mfl.extend_vector(l, ext_l);
-      ext_lambdas.push_back(ext_l);
-      return i;
-    }
+  /** Add a large sliding contact with friction brick to the model.
+      This brick is able to deal with auto-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      The condition is applied on the variable `varname_u` on the
+      boundary corresponding to `region`. `dataname_r` is the augmentation
+      parameter of the augmented Lagrangian. `dataname_friction_coeff`
+      is the friction coefficient. `mim` is an integration method on the
+      boundary. `varname_u` is the variable on which the contact condition 
+      will be prescribed (should be of displacement type). `multname` is 
+      a multiplier defined on the boundary which will represent the contact
+      force. If no additional boundary or rigid
+      obstacle is added, only auto-contact will be detected. Use
+      `add_boundary_to_large_sliding_contact_brick` and
+      `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
+      boundaries and rigid obstacles.
+  */
+  size_type add_large_sliding_integral_contact_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &multname, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff, size_type region);
 
 
-    const getfem::mesh_fem &mfu_of_boundary(size_type n) const
-    { return *(contact_boundaries[n].mfu); }
-    const getfem::mesh_fem &mflambda_of_boundary(size_type n) const
-    { return *(contact_boundaries[n].mflambda); }
-    const model_real_plain_vector &disp_of_boundary(size_type n) const
-    { return ext_Us[contact_boundaries[n].ind_U]; }
-    const model_real_plain_vector &lambda_of_boundary(size_type n) const
-    { return ext_lambdas[contact_boundaries[n].ind_lambda]; }
-    size_type region_of_boundary(size_type n) const
-    { return contact_boundaries[n].region; }
-    model_real_sparse_matrix &UU_matrix(size_type n, size_type m) const
-    { return *(UU(contact_boundaries[n].ind_U, contact_boundaries[m].ind_U)); }
-    model_real_sparse_matrix &LU_matrix(size_type n, size_type m) const {
-      return *(LU(contact_boundaries[n].ind_lambda,
-		  contact_boundaries[m].ind_U));
-    }
-    model_real_sparse_matrix &UL_matrix(size_type n, size_type m) const {
-      return *(UL(contact_boundaries[n].ind_U,
-		  contact_boundaries[m].ind_lambda));
-    }
-    model_real_sparse_matrix &LL_matrix(size_type n, size_type m) const {
-      return *(LL(contact_boundaries[n].ind_lambda,
-		  contact_boundaries[m].ind_lambda));
-    }
-    model_real_plain_vector &U_vector(size_type n) const
-    { return *(Urhs[contact_boundaries[n].ind_U]); }
-    model_real_plain_vector &L_vector(size_type n) const
-    { return *(Lrhs[contact_boundaries[n].ind_lambda]); }
+  /** Add a contact boundary to an existing large sliding contact brick.
+      `indbrick` is the brick index.
+  */
+  void add_boundary_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, const mesh_im &mim,
+   const std::string &varname_u, const std::string &multname,
+   size_type region);
 
-    contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
-      if (N > 0) coordinates[0] = "x";
-      if (N > 1) coordinates[1] = "y";
-      if (N > 2) coordinates[3] = "z";
-      if (N > 3) coordinates[4] = "w";
-      GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
-		  "dimension greater than 4");
-    }
-
-    size_type add_obstacle(const std::string &obs) {
-      size_type ind = obstacles.size();
-      obstacles.push_back(obs);
-      obstacles_velocities.push_back("");
-      mu::Parser mu;
-      obstacles_parsers.push_back(mu);
-      obstacles_parsers[ind].SetExpr(obstacles[ind]);
-      for (size_type k = 0; k < N; ++k)
-	obstacles_parsers[ind].DefineVar(coordinates[k], &pt_eval[k]);
-      return ind;
-    }
-
-    size_type add_boundary(const getfem::mesh_fem &mfu,
-			   const model_real_plain_vector &U,
-			   const getfem::mesh_fem &mfl,
-			   const model_real_plain_vector &l,
-			   size_type reg) {
-      contact_boundary cb;
-      cb.region = reg;
-      cb.mfu = &mfu;
-      cb.mflambda = &mfl;
-      cb.ind_U = add_U(mfu, U);
-      cb.ind_lambda = add_lambda(mfl, l);
-      size_type ind = contact_boundaries.size();
-      contact_boundaries.push_back(cb);
-      gmm::resize(UU, ind+1, ind+1);
-      gmm::resize(UL, ind+1, ind+1);
-      gmm::resize(LU, ind+1, ind+1);
-      gmm::resize(LL, ind+1, ind+1);
-      gmm::resize(Urhs, ind+1);
-      gmm::resize(Lrhs, ind+1);
-      return ind;
-    }
-
-  };
+  /** Add a rigid obstacle to an existing large sliding contact brick.
+      `indbrick` is the brick index, `obs` is the expression of a
+      function which should be closed to a signed distance to the obstacle.
+  */
+  void add_rigid_obstacle_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, const std::string &obs);
 
 
-  void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2);
+
 
 
 

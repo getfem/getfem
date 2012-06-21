@@ -425,6 +425,37 @@ namespace getfem {
     return ib;
   }
 
+  void model::add_mim_to_brick(size_type ib, const mesh_im &mim) {
+    GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+    touch_brick(ib);
+    bricks[ib].mims.push_back(&mim);
+    add_dependency(mim);
+  }
+
+  void model::change_terms_of_brick(size_type ib, const termlist &terms) {
+    GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+    touch_brick(ib);
+    bricks[ib].tlist = terms;
+    if (is_complex() && bricks[ib].pbr->is_complex()) {
+      bricks.back().cmatlist.resize(terms.size());
+      bricks.back().cveclist[0].resize(terms.size());
+      bricks.back().cveclist_sym[0].resize(terms.size());
+    } else {
+      bricks.back().rmatlist.resize(terms.size());
+      bricks.back().rveclist[0].resize(terms.size());
+      bricks.back().rveclist_sym[0].resize(terms.size());
+    }
+  }
+
+  void model::change_variables_of_brick(size_type ib, const varnamelist &vl) {
+    GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+    touch_brick(ib);
+    bricks[ib].vlist = vl;
+    for (size_type i=0; i < vl.size(); ++i)
+      GMM_ASSERT1(variables.find(vl[i]) != variables.end(),
+                  "Undefined model variable " << vl[i]);
+  }
+
 
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
 

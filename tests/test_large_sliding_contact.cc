@@ -63,9 +63,11 @@ struct contact_problem {
   getfem::mesh mesh1, mesh2;  /* the mesh */
   getfem::mesh_im  mim1, mim2; /* integration methods.                       */
   getfem::mesh_fem mf_u1, mf_u2; /* main mesh_fems.                          */
+  getfem::mesh_fem mf_lambda1, mf_lambda2; /* mesh_fems for multipliers.     */
   getfem::mesh_fem mf_rhs1, mf_rhs2;   /* mesh_fems for the right hand side. */
   scalar_type lambda, mu;    /* Lamé coefficients.                           */
   scalar_type friction_coef; /* friction coefficient.                        */
+  scalar_type R;           /* Augmentation parameter.                        */
 
   scalar_type residual;      /* max residual for the iterative solvers       */
   size_type N, noisy;
@@ -75,7 +77,7 @@ struct contact_problem {
 
   void solve(void);
   void init(void);
-  contact_problem(void) : mim1(mesh1), mim2(mesh2), mf_u1(mesh1), mf_u2(mesh2), mf_rhs1(mesh1), mf_rhs2(mesh2) {}
+  contact_problem(void) : mim1(mesh1), mim2(mesh2), mf_u1(mesh1), mf_u2(mesh2), mf_lambda1(mesh1), mf_lambda2(mesh2), mf_rhs1(mesh1), mf_rhs2(mesh2) {}
 };
 
 /* Read parameters from the .param file, build the mesh, set finite element
@@ -83,8 +85,11 @@ struct contact_problem {
  */
 void contact_problem::init(void) {
   std::string FEM_TYPE  = PARAM.string_value("FEM_TYPE","FEM name");
+  std::string MULT_FEM_TYPE  = PARAM.string_value("MULT_FEM_TYPE",
+						  "FEM name for multipliers");
   INTEGRATION = PARAM.string_value("INTEGRATION","Name of integration method");
   cout << "FEM_TYPE="  << FEM_TYPE << "\n";
+  cout << "MULT_FEM_TYPE="  << MULT_FEM_TYPE << "\n";
   cout << "INTEGRATION=" << INTEGRATION << "\n";
 
   std::string meshname1
@@ -102,6 +107,7 @@ void contact_problem::init(void) {
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
 
   residual = PARAM.real_value("RESIDUAL");
+  R = PARAM.real_value("R", "Augmentation parameter");
   if (residual == 0.) residual = 1e-10;
 
   mu = PARAM.real_value("MU", "Lamé coefficient mu");
@@ -112,9 +118,12 @@ void contact_problem::init(void) {
   
   mf_u1.set_qdim(dim_type(N));
   mf_u2.set_qdim(dim_type(N));
+  mf_lambda1.set_qdim(dim_type(N));
+  mf_lambda2.set_qdim(dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
+  getfem::pfem pf_lambda = getfem::fem_descriptor(MULT_FEM_TYPE);
   getfem::pintegration_method ppi = 
     getfem::int_method_descriptor(INTEGRATION);
 
@@ -122,7 +131,9 @@ void contact_problem::init(void) {
   mim2.set_integration_method(mesh2.convex_index(), ppi);
   mf_u1.set_finite_element(mesh1.convex_index(), pf_u);
   mf_u2.set_finite_element(mesh2.convex_index(), pf_u);
- 
+  mf_lambda1.set_finite_element(mesh1.convex_index(), pf_lambda);
+  mf_lambda2.set_finite_element(mesh2.convex_index(), pf_lambda);
+
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -150,6 +161,11 @@ void contact_problem::init(void) {
   getfem::outer_faces_of_mesh(mesh2, border_faces2);
   for (getfem::mr_visitor i(border_faces2); !i.finished(); ++i)
     mesh2.region(CONTACT_BOUNDARY2).add(i.cv(), i.f());
+
+  dal::bit_vector dol1 = mf_lambda1.basic_dof_on_region(CONTACT_BOUNDARY1);
+  mf_lambda1.reduce_to_basic_dof(dol1);
+  dal::bit_vector dol2 = mf_lambda2.basic_dof_on_region(CONTACT_BOUNDARY2);
+  mf_lambda1.reduce_to_basic_dof(dol2);
 }
 
 
@@ -157,20 +173,39 @@ void contact_problem::init(void) {
 /*  Model.                                                                */
 /**************************************************************************/
 
+base_small_vector vol_f(const base_node &x) {
+  int N = x.size();
+  base_small_vector res(N); res[N-1] = -1.0;
+  return res;
+}
+
 void contact_problem::solve(void) {
   cout << "Number of dof for u: " << mf_u1.nb_dof() + mf_u2.nb_dof() << endl;
 
   getfem::model model;
+  size_type N = mesh1.dim();
+  std::vector<scalar_type> F;
 
   // Main unknowns of the problem.
   model.add_fem_variable("u1", mf_u1);
   model.add_fem_variable("u2", mf_u2);
-  model.add_fem_variable("lambda1", mf_u1); // il faudrait réduire ...
-  model.add_fem_variable("lambda2", mf_u2);
+  model.add_fem_variable("lambda1", mf_lambda1);
+  model.add_fem_variable("lambda2", mf_lambda2);
+  
+  gmm::resize(F, mf_rhs1.nb_dof() * N);
+  getfem::interpolation_function(mf_rhs1, F, vol_f);
+  model.add_initialized_fem_data("VolumicData1", mf_rhs1, F);
+  getfem::add_source_term_brick(model, mim1, "u1", "VolumicData1");
+  gmm::resize(F, mf_rhs2.nb_dof() * N);
+  getfem::interpolation_function(mf_rhs2, F, vol_f);
+  model.add_initialized_fem_data("VolumicData2", mf_rhs2, F);
+  getfem::add_source_term_brick(model, mim2, "u2", "VolumicData2");
 
   // Linearized elasticity bricks.
   model.add_initialized_scalar_data("lambda", lambda);
   model.add_initialized_scalar_data("mu", mu);
+  model.add_initialized_scalar_data("r", R);
+  model.add_initialized_scalar_data("f", friction_coef);
   getfem::add_isotropic_linearized_elasticity_brick
     (model, mim1, "u1", "lambda", "mu");
   getfem::add_isotropic_linearized_elasticity_brick
@@ -178,14 +213,18 @@ void contact_problem::solve(void) {
   
   cout << "Number of dof of the model: " << model.nb_dof() << endl;
 
-  getfem::contact_frame cf(N);
-  cf.add_obstacle("y");
-  cf.add_boundary(mf_u1, model.real_variable("u1"),
-		  mf_u1, model.real_variable("lambda1"), CONTACT_BOUNDARY1);
-  cf.add_boundary(mf_u2, model.real_variable("u2"),
-		  mf_u2, model.real_variable("lambda2"), CONTACT_BOUNDARY2);
+  size_type indb = add_large_sliding_integral_contact_brick
+    (model, mim1, "u1", "lambda1", "r", "f", CONTACT_BOUNDARY1);
 
-  getfem::test_contact_frame(cf, mim1, mim2);
+  getfem::add_boundary_to_large_sliding_contact_brick
+    (model, indb, mim2, "u2", "lambda2", CONTACT_BOUNDARY2);
+  
+  getfem::add_rigid_obstacle_to_large_sliding_contact_brick(model, indb, "y");
+
+
+  gmm::iteration iter(residual, 1, 40000);
+  getfem::standard_solve(model, iter);
+
 }
   
 /**************************************************************************/

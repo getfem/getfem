@@ -7,9 +7,9 @@ N = 2;
 %%%%% pde parameters :	        				      %%%%%
 MU = 7700;	        % Lamé coefficient.
 LAMBDA = 11500;   	% Lamé coefficient.
-
+R = 1;                  % Augmentation parameter
 FRICTION_COEF = 0.1;    % Friction coefficient.
- 
+
 NOISY = 1;
 
 
@@ -17,14 +17,16 @@ if (N == 2)
   MESHNAME1='meshes/disc_with_a_hole.mesh';
   MESHNAME2='structured:GT="GT_PK(2,1)";SIZES=[1,0.1];NSUBDIV=[20,2]';
   FEM_TYPE = 'FEM_PK(2, 2)';      % Main FEM
-  DATA_FEM_TYPE = 'FEM_PK(2,2)';  % must be defined for non-Lagrangian main FEM
+  MULT_FEM_TYPE = 'FEM_PK(2, 1)'; % FEM for multipiers
+  DATA_FEM_TYPE = 'FEM_PK(2, 2)'; % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TRIANGLE(4)'; % Quadrature rule
 end;
 
 if (N == 3)
   error('to be completed');
-  FEM_TYPE = 'FEM_PK(3, 2)';     % Main FEM
-  DATA_FEM_TYPE = 'FEM_PK(3,2)'; % must be defined for non-Lagrangian main FEM
+  FEM_TYPE = 'FEM_PK(3, 2)';      % Main FEM
+  MULT_FEM_TYPE = 'FEM_PK(3, 1)'; % FEM for multipiers
+  DATA_FEM_TYPE = 'FEM_PK(3, 2)'; % must be defined for non-Lagrangian main FEM
   INTEGRATION = 'IM_TETRAHEDRON(4)'; % Quadrature rule
 end;
 

@@ -2940,10 +2940,146 @@ namespace getfem {
     }
   }
   
-  
 
   //=========================================================================
-  // 1)- Structure which computes the contact pairs, rhs and tangent terms
+  // 1)- Structure which stores the contact boundaries and rigid obstacles
+  //=========================================================================
+
+  struct contact_frame {
+    bool frictionless;
+    size_type N;
+    scalar_type friction_coef;
+    std::vector<const model_real_plain_vector *> Us;
+    std::vector<model_real_plain_vector> ext_Us;
+    std::vector<const model_real_plain_vector *> lambdas;
+    std::vector<model_real_plain_vector> ext_lambdas;
+    struct contact_boundary {
+      size_type region;                 // Boundary number
+      const getfem::mesh_fem *mfu;      // F.e.m. for the displacement.
+      size_type ind_U;                  // Index of displacement.
+      const getfem::mesh_fem *mflambda; // F.e.m. for the multiplier.
+      size_type ind_lambda;             // Index of multiplier.
+    };
+    std::vector<contact_boundary> contact_boundaries;
+
+    gmm::dense_matrix< model_real_sparse_matrix * > UU;
+    gmm::dense_matrix< model_real_sparse_matrix * > UL;
+    gmm::dense_matrix< model_real_sparse_matrix * > LU;
+    gmm::dense_matrix< model_real_sparse_matrix * > LL;
+
+    std::vector< model_real_plain_vector *> Urhs;
+    std::vector< model_real_plain_vector *> Lrhs;
+    
+    
+
+    std::vector<std::string> coordinates;
+    base_node pt_eval;
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    std::vector<mu::Parser> obstacles_parsers;
+#endif
+    std::vector<std::string> obstacles;
+    std::vector<std::string> obstacles_velocities;
+
+    size_type add_U(const getfem::mesh_fem &mfu,
+		    const model_real_plain_vector &U) {
+      size_type i = 0;
+      for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
+      Us.push_back(&U);
+      model_real_plain_vector ext_U(mfu.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
+      mfu.extend_vector(U, ext_U);
+      ext_Us.push_back(ext_U);
+      return i;
+    }
+
+    size_type add_lambda(const getfem::mesh_fem &mfl,
+			 const model_real_plain_vector &l) {
+      size_type i = 0;
+      for (; i < lambdas.size(); ++i) if (lambdas[i] == &l) return i;
+      lambdas.push_back(&l);
+      model_real_plain_vector ext_l(mfl.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
+      mfl.extend_vector(l, ext_l);
+      ext_lambdas.push_back(ext_l);
+      return i;
+    }
+
+
+    const getfem::mesh_fem &mfu_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mfu); }
+    const getfem::mesh_fem &mflambda_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mflambda); }
+    const model_real_plain_vector &disp_of_boundary(size_type n) const
+    { return ext_Us[contact_boundaries[n].ind_U]; }
+    const model_real_plain_vector &lambda_of_boundary(size_type n) const
+    { return ext_lambdas[contact_boundaries[n].ind_lambda]; }
+    size_type region_of_boundary(size_type n) const
+    { return contact_boundaries[n].region; }
+    model_real_sparse_matrix &UU_matrix(size_type n, size_type m) const
+    { return *(UU(contact_boundaries[n].ind_U, contact_boundaries[m].ind_U)); }
+    model_real_sparse_matrix &LU_matrix(size_type n, size_type m) const {
+      return *(LU(contact_boundaries[n].ind_lambda,
+		  contact_boundaries[m].ind_U));
+    }
+    model_real_sparse_matrix &UL_matrix(size_type n, size_type m) const {
+      return *(UL(contact_boundaries[n].ind_U,
+		  contact_boundaries[m].ind_lambda));
+    }
+    model_real_sparse_matrix &LL_matrix(size_type n, size_type m) const {
+      return *(LL(contact_boundaries[n].ind_lambda,
+		  contact_boundaries[m].ind_lambda));
+    }
+    model_real_plain_vector &U_vector(size_type n) const
+    { return *(Urhs[contact_boundaries[n].ind_U]); }
+    model_real_plain_vector &L_vector(size_type n) const
+    { return *(Lrhs[contact_boundaries[n].ind_lambda]); }
+
+    contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
+      if (N > 0) coordinates[0] = "x";
+      if (N > 1) coordinates[1] = "y";
+      if (N > 2) coordinates[3] = "z";
+      if (N > 3) coordinates[4] = "w";
+      GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
+		  "dimension greater than 4");
+    }
+
+    size_type add_obstacle(const std::string &obs) {
+      size_type ind = obstacles.size();
+      obstacles.push_back(obs);
+      obstacles_velocities.push_back("");
+      mu::Parser mu;
+      obstacles_parsers.push_back(mu);
+      obstacles_parsers[ind].SetExpr(obstacles[ind]);
+      for (size_type k = 0; k < N; ++k)
+	obstacles_parsers[ind].DefineVar(coordinates[k], &pt_eval[k]);
+      return ind;
+    }
+
+    size_type add_boundary(const getfem::mesh_fem &mfu,
+			   const model_real_plain_vector &U,
+			   const getfem::mesh_fem &mfl,
+			   const model_real_plain_vector &l,
+			   size_type reg) {
+      contact_boundary cb;
+      cb.region = reg;
+      cb.mfu = &mfu;
+      cb.mflambda = &mfl;
+      cb.ind_U = add_U(mfu, U);
+      cb.ind_lambda = add_lambda(mfl, l);
+      size_type ind = contact_boundaries.size();
+      contact_boundaries.push_back(cb);
+      gmm::resize(UU, ind+1, ind+1);
+      gmm::resize(UL, ind+1, ind+1);
+      gmm::resize(LU, ind+1, ind+1);
+      gmm::resize(LL, ind+1, ind+1);
+      gmm::resize(Urhs, ind+1);
+      gmm::resize(Lrhs, ind+1);
+      return ind;
+    }
+
+  };
+
+
+  //=========================================================================
+  // 2)- Structure which computes the contact pairs, rhs and tangent terms
   //=========================================================================
 
   struct contact_elements {
@@ -2963,7 +3099,8 @@ namespace getfem {
     void add_point_contribution(size_type boundary_num,
 				getfem::fem_interpolation_context &ctxu,
 				getfem::fem_interpolation_context &ctxl,
-				scalar_type weight);
+				scalar_type weight, scalar_type f_coeff,
+				scalar_type r, model::build_version version);
   };
 
 
@@ -3082,7 +3219,8 @@ namespace getfem {
 
   void contact_elements::add_point_contribution
   (size_type boundary_num, getfem::fem_interpolation_context &ctxu,
-   getfem::fem_interpolation_context &ctxl, scalar_type weight) {
+   getfem::fem_interpolation_context &ctxl, scalar_type weight,
+   scalar_type f_coeff, scalar_type r, model::build_version version) {
     const mesh_fem &mfu = cf.mfu_of_boundary(boundary_num);
     const mesh_fem &mfl = cf.mflambda_of_boundary(boundary_num);
     const model_real_plain_vector &U = cf.disp_of_boundary(boundary_num);
@@ -3331,7 +3469,6 @@ namespace getfem {
     // Éviter les calculs inutiles dans le cas state == 2 ... à voir à la fin
     // regarder aussi si on peut factoriser des mat_elem_assembly ...
     
-    scalar_type r = scalar_type(1); // à mettre en paramêtre
     base_matrix Melem;
     base_vector Velem;
     base_tensor tl, tu;
@@ -3346,34 +3483,41 @@ namespace getfem {
     ctxu.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
     
     // Tangent term (1/r)\int \delta\lambda.\mu
-    gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
-    for (size_type i = 0; i < cvnbdofl; ++i)
-      for (size_type j = 0; j < cvnbdofl; ++j)
-	if (i%N == j%N) Melem(i,j) = -tl[i/N]*tl[j/N]*weight/r;
-    mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
-		      Melem, mfl, cv, mfl, cv);
+    if (version & model::BUILD_MATRIX) {
+      gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+      for (size_type i = 0; i < cvnbdofl; ++i)
+	for (size_type j = 0; j < cvnbdofl; ++j)
+	  if (i%N == j%N) Melem(i,j) = -tl[i/N]*tl[j/N]*weight/r;
+      mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+			Melem, mfl, cv, mfl, cv);
+    }
     
     // Rhs term \int \lambda.\psi(x_0)
-    gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
-    for (size_type i = 0; i < cvnbdofu; ++i)
-      Velem[i] = tu[i/N] * lambda[i%N]*weight;
-    vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
+    if (version & model::BUILD_RHS) {
+      gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
+      for (size_type i = 0; i < cvnbdofu; ++i)
+	Velem[i] = tu[i/N] * lambda[i%N]*weight;
+      vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
+    }
     
     
     // Rhs term -(1/r)\int (\lambda - P(\zeta)).\mu
     // Unstabilized frictionless case for the moment
-    gmm::clear(vv);
-    if (state) {
-      gmm::add(lambda, gmm::scaled(n, d0), zeta);
-      gmm::copy(zeta, vv);
-      De_Saxce_projection(vv, n, scalar_type(0));
-      gmm::scaled(vv, -scalar_type(1));
-      gmm::add(lambda, vv);
-    } else gmm::copy(lambda, vv);
-    gmm::resize(Velem,  cvnbdofl); gmm::clear(Velem);
-    for (size_type i = 0; i < cvnbdofl; ++i)
-      Velem[i] = (tl[i/N] * vv[i%N])*weight/r;
-    vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
+    if (state) gmm::add(lambda, gmm::scaled(n, d0), zeta);
+
+    if (version & model::BUILD_RHS) {
+      gmm::clear(vv);
+      if (state) {
+	gmm::copy(zeta, vv);
+	De_Saxce_projection(vv, n, scalar_type(0));
+	gmm::scaled(vv, -scalar_type(1));
+	gmm::add(lambda, vv);
+      } else gmm::copy(lambda, vv);
+      gmm::resize(Velem,  cvnbdofl); gmm::clear(Velem);
+      for (size_type i = 0; i < cvnbdofl; ++i)
+	Velem[i] = (tl[i/N] * vv[i%N])*weight/r;
+      vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
+    }
     
     
     if (state) {
@@ -3409,141 +3553,170 @@ namespace getfem {
       }
       
       // Rhs term -\int \lambda.\psi(y_0)
-      if (state == 1) {
+      if (state == 1 && (version & model::BUILD_RHS)) {
 	gmm::resize(Velem,  cvnbdofu_y0);gmm::clear(Velem);
 	for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	  Velem[i] = -tu_y0[i/N] * lambda[i%N]*weight;
 	vec_elem_assembly(cf.U_vector(nbound_y0), Velem, mfu_y0, cv_y0);
       }	
       
-      // Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
-      gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
-      for (size_type i = 0; i < cvnbdofu; ++i)
-	for (size_type j = 0; j < cvnbdofl; ++j)
-	  if (i%N == j%N) Melem(i,j) = -tu[i/N]*tl[j/N]*weight;
-      
-      cout << "Melem = " << Melem << endl;
-      mat_elem_assembly(cf.UL_matrix(boundary_num, boundary_num),
-			Melem, mfu, cv, mfl, cv);
-      
-      if (state == 1) {
-	gmm::resize(Melem, cvnbdofu_y0, cvnbdofl); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofu_y0; ++i)
+      if (version & model::BUILD_MATRIX) {
+	// Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
+	gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofu; ++i)
 	  for (size_type j = 0; j < cvnbdofl; ++j)
-	    if (i%N == j%N) Melem(i,j) = -tu_y0[i/N]*tl[j/N]*weight;
+	    if (i%N == j%N) Melem(i,j) = -tu[i/N]*tl[j/N]*weight;
 	
-	cout << "Melem2 = " << Melem << endl;
-	mat_elem_assembly(cf.UL_matrix(nbound_y0, boundary_num),
-			  Melem, mfu_y0, cv_y0, mfl, cv);
-      }
+	cout << "Melem = " << Melem << endl;
+	mat_elem_assembly(cf.UL_matrix(boundary_num, boundary_num),
+			  Melem, mfu, cv, mfl, cv);
+	
+	if (state == 1) {
+	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofl); gmm::clear(Melem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    for (size_type j = 0; j < cvnbdofl; ++j)
+	      if (i%N == j%N) Melem(i,j) = -tu_y0[i/N]*tl[j/N]*weight;
+	  
+	  cout << "Melem2 = " << Melem << endl;
+	  mat_elem_assembly(cf.UL_matrix(nbound_y0, boundary_num),
+			    Melem, mfu_y0, cv_y0, mfl, cv);
+	}
+	
+	// Tangent term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta u(y_0) - \delta u(x_0))
+	if (state == 1) {
+	  gmm::mult(gradinv_y0, lambda, vv);
+	  
+	  cout << "tgradu_y0 =" << tgradu_y0 << endl;
+	  
+	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    for (size_type j = 0; j < cvnbdofu; ++j)
+	      Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
+	  
+	  mat_elem_assembly(cf.UU_matrix(nbound_y0, boundary_num),
+			    Melem, mfu_y0, cv_y0, mfu, cv);
+	  
+	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
+	      Melem(i, j) =vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
+	  
+	  mat_elem_assembly(cf.UU_matrix(nbound_y0, nbound_y0),
+			    Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
+	}
+	
+	
       
-      // Tangent term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta u(y_0) - \delta u(x_0))
-      if (state == 1) {
-	gmm::mult(gradinv_y0, lambda, vv);
-	
-	cout << "tgradu_y0 =" << tgradu_y0 << endl;
-	
-	gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	  for (size_type j = 0; j < cvnbdofu; ++j)
-	    Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
-	
-	mat_elem_assembly(cf.UU_matrix(nbound_y0, boundary_num),
-			  Melem, mfu_y0, cv_y0, mfu, cv);
-	
-	gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	  for (size_type j = 0; j < cvnbdofu_y0; ++j)
-	    Melem(i, j) = vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
-	
-	mat_elem_assembly(cf.UU_matrix(nbound_y0, nbound_y0),
-			  Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
-      }
-      
-      
-      
-      // Tangent term \int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(x_0)(\nabla P(zeta) n . \mu)
-      gmm::mult(grad, n, vv);
-      gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
-      for (size_type i = 0; i < cvnbdofl; ++i)
-	for (size_type j = 0; j < cvnbdofu; ++j)
-	  Melem(i, j) = tl[i/N]*vv[i%N]*tu[j/N]
-	    *((state == 1) ? ntilde_y0[j%N] : grad_obs[j%N])*weight;
-      mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
-			Melem, mfl, cv, mfu, cv);
-      
-      // Tangent term -\int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(y_0)(\nabla P(zeta) n . \mu)
-      if (state == 1) {
+	// Tangent term \int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(x_0)(\nabla P(zeta) n . \mu)
 	gmm::mult(grad, n, vv);
-	gmm::resize(Melem, cvnbdofl, cvnbdofu_y0); gmm::clear(Melem);
+	gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
 	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofu_y0; ++j)
-	    Melem(i, j) = -tl[i/N]*vv[i%N]*tu_y0[j/N]*ntilde_y0[j%N]*weight;
-	mat_elem_assembly(cf.LU_matrix(boundary_num, nbound_y0),
-			  Melem, mfl, cv, mfu_y0, cv_y0);
-      }
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    Melem(i, j) = tl[i/N]*vv[i%N]*tu[j/N]
+	      *((state == 1) ? ntilde_y0[j%N] : grad_obs[j%N])*weight;
+	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
+			  Melem, mfl, cv, mfu, cv);
 	
-     // Tangent term (1/r)\int \nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
-     gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
-     for (size_type i = 0; i < cvnbdofl; ++i)
-       for (size_type j = 0; j < cvnbdofl; ++j)
-	 Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
-     mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
-		       Melem, mfl, cv, mfl, cv);
-     
+	// Tangent term -\int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(y_0)(\nabla P(zeta) n . \mu)
+	if (state == 1) {
+	  gmm::mult(grad, n, vv);
+	  gmm::resize(Melem, cvnbdofl, cvnbdofu_y0); gmm::clear(Melem);
+	  for (size_type i = 0; i < cvnbdofl; ++i)
+	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
+	      Melem(i, j) = -tl[i/N]*vv[i%N]*tu_y0[j/N]*ntilde_y0[j%N]*weight;
+	  mat_elem_assembly(cf.LU_matrix(boundary_num, nbound_y0),
+			    Melem, mfl, cv, mfu_y0, cv_y0);
+	}
+	
+	// Tangent term (1/r)\int \nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
+	gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofl; ++j)
+	    Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
+	mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+			  Melem, mfl, cv, mfl, cv);
+	
+	// Tangent term \int d_0(\nabla P)(I+\nabla u(x_0))^{-T}(\nabla \delta u)^T n).\mu
+	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
+	gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) += d0*tl[i/N]*tgradu[j-(j%N)+k]
+		*gradaux(j%N,i%N)*n[j%N]*weight;
+	gmm::mult(grad, n, vv);
+	gmm::mult(gradinv, n, vvv);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) -= d0*tl[i/N]*vv[i%N]
+		*tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight;
+	
+	
+	// Tangent term (1/r)\int \nabla_n P(zeta) (dn/du)(\delta u) . \mu
+	// On peut certainement factoriser d'avantage ce terme avec le précédent.
+	// Attendre la version avec frottement.
+	De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
+	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
+	// gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) += tl[i/N]*tgradu[j-(j%N)+k]
+		*gradaux(j%N,i%N)*n[j%N]*weight/r;
+	gmm::mult(grad, n, vv);
+	gmm::mult(gradinv, n, vvv);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) -= tl[i/N]*vv[i%N]
+		*tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
+	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
+			  Melem, mfl, cv, mfu, cv);
+      }
       
-
-
-      // Tangent term \int d_0(\nabla P)(I+\nabla u(x_0))^{-T}(\nabla \delta u)^T n).\mu
-     gmm::mult(gradinv, gmm::transposed(grad), gradaux);
-     gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
-     for (size_type i = 0; i < cvnbdofl; ++i)
-       for (size_type j = 0; j < cvnbdofu; ++j)
-	 for (size_type k = 0; k < N; ++k)
-	   Melem(i,j) += d0*tl[i/N]*tgradu[j-(j%N)+k]
-	     *gradaux(j%N,i%N)*n[j%N]*weight;
-     gmm::mult(grad, n, vv);
-     gmm::mult(gradinv, n, vvv);
-     for (size_type i = 0; i < cvnbdofl; ++i)
-       for (size_type j = 0; j < cvnbdofu; ++j)
-	 for (size_type k = 0; k < N; ++k)
-	   Melem(i,j) -= d0*tl[i/N]*vv[i%N]
-	     *tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight;
-      
-
-     // Tangent term (1/r)\int \nabla_n P(zeta) (dn/du)(\delta u) . \mu
-     // On peut certainement factoriser d'avantage ce terme avec le précédent.
-     // Attendre la version avec frottement.
-     De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
-     gmm::mult(gradinv, gmm::transposed(grad), gradaux);
-     // gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
-     for (size_type i = 0; i < cvnbdofl; ++i)
-       for (size_type j = 0; j < cvnbdofu; ++j)
-	 for (size_type k = 0; k < N; ++k)
-	   Melem(i,j) += tl[i/N]*tgradu[j-(j%N)+k]
-	     *gradaux(j%N,i%N)*n[j%N]*weight/r;
-     gmm::mult(grad, n, vv);
-     gmm::mult(gradinv, n, vvv);
-     for (size_type i = 0; i < cvnbdofl; ++i)
-       for (size_type j = 0; j < cvnbdofu; ++j)
-	 for (size_type k = 0; k < N; ++k)
-	   Melem(i,j) -= tl[i/N]*vv[i%N]
-	     *tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
-     mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
-		       Melem, mfl, cv, mfu, cv);
     }
-
   }
 
-
-
-
-
-
+  //=========================================================================
+  // 3)- Large sliding contact brick
+  //=========================================================================
 
   struct large_sliding_integral_contact_brick : public virtual_brick {
 
-    contact_frame cf;
+    
+    struct contact_boundary {
+      size_type region;
+      std::string varname;
+      std::string multname;
+      const mesh_im *mim;
+    };
+
+    std::vector<contact_boundary> boundaries;
+    std::vector<std::string> obstacles;
+
+    void add_boundary(const std::string &varn, const std::string &multn,
+		      const mesh_im &mim, size_type region) {
+      contact_boundary cb;
+      cb.region = region; cb.varname = varn; cb.multname = multn; cb.mim=&mim;
+      boundaries.push_back(cb);
+    }
+
+    void add_obstacle(const std::string &obs) 
+    { obstacles.push_back(obs); }
+
+    void build_contact_frame(const model &md, contact_frame &cf) const {
+      for (size_type i = 0; i < boundaries.size(); ++i) {
+	const contact_boundary &cb = boundaries[i];
+	cf.add_boundary(md.mesh_fem_of_variable(cb.varname),
+			md.real_variable(cb.varname),
+			md.mesh_fem_of_variable(cb.multname),
+			md.real_variable(cb.multname), cb.region);
+      }
+      for (size_type i = 0; i < obstacles.size(); ++i)
+	cf.add_obstacle(obstacles[i]);
+    }
+
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -3553,73 +3726,9 @@ namespace getfem {
                                         model::real_veclist &vecl,
                                         model::real_veclist &,
                                         size_type region,
-                                        build_version version) const {
-      // Integration method
-      GMM_ASSERT1(mims.size() == 1, "Large sliding integral contact "
-		  "bricks need a single mesh_im");
-      const mesh_im &mim = *mims[0];
+                                        build_version version) const;
 
-      // Variables : u
-      GMM_ASSERT1(vl.size() == 1,
-                  "Large sliding integral contact bricks need a "
-		  "single variable");
-      const model_real_plain_vector &u = md.real_variable(vl[0]);
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-
-      // Data : obs, r, [lambda,] [friction_coeff,] [alpha,] [WT]
-      GMM_ASSERT1(dl.size() == 5, "Wrong number of data for large sliding "
-		  "integral contact brick");
-
-      const model_real_plain_vector &obs = md.real_variable(dl[0]);
-      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
-      size_type sl = gmm::vect_size(obs) * mf_obs.get_qdim() / mf_obs.nb_dof();
-      GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
-                  "the right format");
-
-      const model_real_plain_vector &vr = md.real_variable(dl[1]);
-      GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
-
-      const model_real_plain_vector *f_coeff = 0;
-      const mesh_fem *pmf_coeff = 0;
-      
-      f_coeff = &(md.real_variable(dl[2]));
-      pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
-      sl = gmm::vect_size(*f_coeff);
-      if (pmf_coeff) { sl*= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
-      GMM_ASSERT1(sl == 1, "the data corresponding to the friction "
-		  "coefficient has not the right format");
-      
-      const model_real_plain_vector &vlambda = md.real_variable(dl[3]);
-      GMM_ASSERT1(gmm::vect_size(vlambda) == 1,
-		  "Parameter lambda should be a scalar");
-      const model_real_plain_vector &vmu = md.real_variable(dl[4]);
-      GMM_ASSERT1(gmm::vect_size(vmu) == 1, "Parameter mu should be a scalar");
-
-
-      GMM_ASSERT1(matl.size() == 1, "Wrong number of terms for "
-                  "large sliding integral contact with rigid obstacle brick");
-
-      mesh_region rg(region);
-      mf_u.linked_mesh().intersect_with_mpi_region(rg);
-
-      if (version & model::BUILD_MATRIX) {
-        GMM_TRACE2("Large sliding integral contact tangent term");
-        gmm::clear(matl[0]);
-	asm_Nitsche_contact_rigid_obstacle_tangent_matrix
-	  (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
-	   vr[0], vlambda[0], vmu[0], rg);
-      }
-
-      if (version & model::BUILD_RHS) {
-        gmm::clear(vecl[0]);
-	asm_Nitsche_contact_rigid_obstacle_rhs
-	  (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
-	   vr[0], vlambda[0], vmu[0], rg);
-      }
-
-    }
-
-    large_sliding_integral_contact_brick(dim_type N) : cf(N) {
+    large_sliding_integral_contact_brick() {
       set_flags("Large sliding integral contact brick",
                 false /* is linear*/, false /* is symmetric */,
                 false /* is coercive */, true /* is real */,
@@ -3628,19 +3737,113 @@ namespace getfem {
 
   };
 
-  // à remodeler complètement doit accepter un seul bord par défaut puis
-  // une fonction d'ajout de bord et d'obstacles rigides
+
+
+
+  void large_sliding_integral_contact_brick::asm_real_tangent_terms
+  (const model &md, size_type /* ib */, const model::varnamelist &vl,
+   const model::varnamelist &dl, const model::mimlist &mims,
+   model::real_matlist &matl, model::real_veclist &vecl,
+   model::real_veclist &, size_type region, build_version version) const {
+
+    fem_precomp_pool fppool;
+    base_matrix G;
+    size_type N = md.mesh_fem_of_variable(vl[0]).linked_mesh().dim();
+    contact_frame cf(N);
+    build_contact_frame(md, cf);
+    
+    size_type Nvar = vl.size(), Nu = cf.Urhs.size(), Nl = cf.Lrhs.size();
+    GMM_ASSERT1(Nvar == Nu+Nl, "Wrong size of variable list for large "
+		"sliding integral contact brick");
+    GMM_ASSERT1(matl.size() == Nvar*Nvar, "Wrong size of terms for "
+		"large sliding integral contact brick");
+    
+    if (version & model::BUILD_MATRIX) {
+      for (size_type i = 0; i < Nvar; ++i)
+	for (size_type j = 0; j < Nvar; ++j) {
+	  if (i <  Nu && j <  Nu) cf.UU(i,j)       = &(matl[i*Nvar+j]);
+	  if (i >= Nu && j <  Nu) cf.LU(i-Nu,j)    = &(matl[i*Nvar+j]);
+	  if (i <  Nu && j >= Nu) cf.UL(i,j-Nu)    = &(matl[i*Nvar+j]);
+	  if (i >= Nu && j >= Nu) cf.LL(i-Nu,j-Nu) = &(matl[i*Nvar+j]);
+	}
+    }
+    if (version & model::BUILD_RHS) {
+      for (size_type i = 0; i < vl.size(); ++i)
+	if (i < cf.Urhs.size()) cf.Urhs[i] = &(vecl[i]);
+	else cf.Lrhs[i-cf.Urhs.size()] = &(vecl[i]);
+    }
+    
+    // Data : r, [friction_coeff,]
+    GMM_ASSERT1(dl.size() == 2, "Wrong number of data for large sliding "
+		"integral contact brick");
+    
+    const model_real_plain_vector &vr = md.real_variable(dl[0]);
+    GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+    
+    const model_real_plain_vector &f_coeff = md.real_variable(dl[1]);
+    GMM_ASSERT1(gmm::vect_size(f_coeff) == 1,
+		"Friction coefficient should be a scalar");
+    
+    contact_elements ce(cf);
+    ce.init();
+    
+    for (size_type bnum = 0; bnum < boundaries.size(); ++bnum) {
+      mesh_region rg(boundaries[bnum].region);
+      const mesh_fem &mfu=md.mesh_fem_of_variable(boundaries[bnum].varname);
+      const mesh_fem &mfl=md.mesh_fem_of_variable(boundaries[bnum].multname);
+      const mesh_im &mim = *(boundaries[bnum].mim);
+      const mesh &m = mfu.linked_mesh();
+      mfu.linked_mesh().intersect_with_mpi_region(rg);
+      
+      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
+	cout << "boundary " << bnum << " element " << v.cv() << endl;
+	size_type cv = v.cv();
+	bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+	pfem pf_s = mfu.fem_of_element(cv);
+	pfem pf_sl = mfl.fem_of_element(cv);
+	pintegration_method pim = mim.int_method_of_element(cv);
+	bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
+	
+	pfem_precomp pfpu
+	  = fppool(pf_s,&(pim->approx_method()->integration_points()));
+	pfem_precomp pfpl
+	  = fppool(pf_sl,&(pim->approx_method()->integration_points()));
+	fem_interpolation_context ctxu(pgt,pfpu,size_type(-1), G, cv, v.f());
+	fem_interpolation_context ctxl(pgt,pfpl,size_type(-1), G, cv, v.f());
+	
+	for (size_type k = 0;
+	     k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
+	  size_type ind
+	    = pim->approx_method()->ind_first_point_on_face(v.f()) + k;
+	  ctxu.set_ii(ind);
+	  ctxl.set_ii(ind);
+	  ce.add_point_contribution
+	    (bnum, ctxu, ctxl,pim->approx_method()->coeff(ind),
+	     f_coeff[0], vr[0], version);
+	}
+      }
+    }
+  }
+  
+
+  // r ne peut pas être variable pour le moment.
+  // dataname_friction_coeff ne peut pas être variable non plus ...
 
   size_type add_large_sliding_integral_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_r,
    const std::string &dataname_friction_coeff, size_type region) {
 
-    dim_type N = md.mesh_fem_of_variable(varname_u).linked_mesh().dim();
-    pbrick pbr = new large_sliding_integral_contact_brick(N);
+    large_sliding_integral_contact_brick *pbr
+      = new large_sliding_integral_contact_brick();
+    
+    pbr->add_boundary(varname_u, multname, mim, region);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
+    tl.push_back(model::term_description(varname_u, multname,  false));
+    tl.push_back(model::term_description(multname,  varname_u, false));
+    tl.push_back(model::term_description(multname,  multname,  false));
 
     model::varnamelist dl(1, dataname_r);
     dl.push_back(dataname_friction_coeff);
@@ -3652,104 +3855,52 @@ namespace getfem {
   }
 
 
+  void add_boundary_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, const mesh_im &mim,
+   const std::string &varname_u, const std::string &multname,
+   size_type region) {
+    dim_type N = md.mesh_fem_of_variable(varname_u).linked_mesh().dim();
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    large_sliding_integral_contact_brick *p
+      = dynamic_cast<large_sliding_integral_contact_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    p->add_boundary(varname_u, multname, mim, region);
+    md.add_mim_to_brick(indbrick, mim);
 
+    contact_frame cf(N);
+    p->build_contact_frame(md, cf);
 
+    model::varnamelist vl;
+    size_type nvaru = 0;
+    for (size_type i = 0; i < cf.contact_boundaries.size(); ++i)
+      if (cf.contact_boundaries[i].ind_U >= nvaru)
+	{ vl.push_back(p->boundaries[i].varname); ++nvaru; }
 
+    size_type nvarl = 0;
+    for (size_type i = 0; i < cf.contact_boundaries.size(); ++i)
+      if (cf.contact_boundaries[i].ind_lambda >= nvarl)
+	{ vl.push_back(p->boundaries[i].multname); ++nvarl; }
+    md.change_variables_of_brick(indbrick, vl);
 
+    model::termlist tl;
+    for (size_type i = 0; i < vl.size(); ++i)
+      for (size_type j = 0; j < vl.size(); ++j)
+	tl.push_back(model::term_description(vl[i], vl[j], false));
 
-
-
-
-  void test_contact_frame(contact_frame &cf, mesh_im &mim1, mesh_im &mim2) {
-    contact_elements cp(cf);
-    cp.init();
-    fem_precomp_pool fppool;
-    base_matrix G;
-
-
-    for (size_type i = 0; i < cf.contact_boundaries.size(); ++i) {
-      cf.Urhs[i] = new model_real_plain_vector(cf.mfu_of_boundary(i).nb_dof());
-      cf.Lrhs[i]
-	= new model_real_plain_vector(cf.mflambda_of_boundary(i).nb_dof());
-      for (size_type j = 0; j < cf.contact_boundaries.size(); ++j) {
-	cf.UU(i,j) = new model_real_sparse_matrix
-	  (cf.mfu_of_boundary(i).nb_dof(), cf.mfu_of_boundary(j).nb_dof());
-	cf.LU(i,j) = new model_real_sparse_matrix
-	  (cf.mflambda_of_boundary(i).nb_dof(),cf.mfu_of_boundary(j).nb_dof());
-	cf.UL(i,j) = new model_real_sparse_matrix
-	  (cf.mfu_of_boundary(i).nb_dof(),cf.mflambda_of_boundary(j).nb_dof());
-	cf.LL(i,j) = new model_real_sparse_matrix
-	  (cf.mflambda_of_boundary(i).nb_dof(),
-	   cf.mflambda_of_boundary(j).nb_dof());
-      }
-    }
-
-
-    const mesh_fem &mfu1 = cf.mfu_of_boundary(0);
-    const mesh_fem &mfu2 = cf.mfu_of_boundary(1);
-    const mesh_fem &mfl1 = cf.mflambda_of_boundary(0);
-    const mesh_fem &mfl2 = cf.mflambda_of_boundary(1);
-    const mesh &m1 = mfu1.linked_mesh();
-    const mesh &m2 = mfu2.linked_mesh();
-    size_type r1 = cf.region_of_boundary(0);
-    size_type r2 = cf.region_of_boundary(1);
-    mesh_region mr1 = m1.region(r1);
-    mesh_region mr2 = m2.region(r2);
-    
-    for (getfem::mr_visitor v(mr1, m1); !v.finished(); ++v) {
-      cout << "boundary 0, element " << v.cv() << endl;
-      size_type cv = v.cv();
-      bgeot::pgeometric_trans pgt = m1.trans_of_convex(cv);
-      pfem pf_s = mfu1.fem_of_element(cv);
-      pfem pf_sl = mfl1.fem_of_element(cv);
-      pintegration_method pim = mim1.int_method_of_element(cv);
-      bgeot::vectors_to_base_matrix
-	(G, mfu1.linked_mesh().points_of_convex(cv));
-	
-      pfem_precomp pfpu = fppool(pf_s,&(pim->approx_method()->integration_points()));
-      pfem_precomp pfpl = fppool(pf_sl,&(pim->approx_method()->integration_points()));
-      fem_interpolation_context ctxu(pgt,pfpu,size_type(-1), G, cv, v.f());
-      fem_interpolation_context ctxl(pgt,pfpl,size_type(-1), G, cv, v.f());
-
-      for (size_type k = 0; k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
-	size_type ind = pim->approx_method()->ind_first_point_on_face(v.f())+k;
-	ctxu.set_ii(ind);
-	ctxl.set_ii(ind);
-	cp.add_point_contribution
-	  (0, ctxu, ctxl,pim->approx_method()->coeff(ind));
-      }
-    }
-
-
-    for (getfem::mr_visitor v(mr2, m2); !v.finished(); ++v) {
-      cout << "boundary 1, element " << v.cv() << endl;
-      size_type cv = v.cv();
-      bgeot::pgeometric_trans pgt = m2.trans_of_convex(cv);
-      pfem pf_s = mfu2.fem_of_element(cv);
-      pfem pf_sl = mfl2.fem_of_element(cv);
-      pintegration_method pim = mim2.int_method_of_element(cv);
-      bgeot::vectors_to_base_matrix
-	(G, mfu2.linked_mesh().points_of_convex(cv));
-      
-      pfem_precomp pfpu = fppool(pf_s,&(pim->approx_method()->integration_points()));
-      pfem_precomp pfpl = fppool(pf_sl,&(pim->approx_method()->integration_points()));
-      fem_interpolation_context ctxu(pgt,pfpu,size_type(-1), G, cv, v.f());
-      fem_interpolation_context ctxl(pgt,pfpl,size_type(-1), G, cv, v.f());
-      
-      for (size_type k = 0; k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {
-	size_type ind = pim->approx_method()->ind_first_point_on_face(v.f())+k;
-	ctxu.set_ii(ind);
-	ctxl.set_ii(ind);
-	cp.add_point_contribution
-	  (1, ctxu, ctxl,pim->approx_method()->coeff(ind));
-      }
-    }
-
-
-
-
+    md.change_terms_of_brick(indbrick, tl);
   }
 
-
+  void add_rigid_obstacle_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionaly represented by a rigid motion only ... the velocity should be modifiable ...
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+     large_sliding_integral_contact_brick *p
+       = dynamic_cast<large_sliding_integral_contact_brick *>
+       (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    p->add_obstacle(obs);
+  }
 
 }  /* end of namespace getfem.                                             */

@@ -625,6 +625,17 @@ namespace getfem {
                         const varnamelist &datanames,
                         const termlist &terms, const mimlist &mims,
                         size_type region);
+    
+    /** Add an integration method to a brick. */
+    void add_mim_to_brick(size_type ib, const mesh_im &mim);
+
+    /** Change the term list of a brick. Used for very special bricks only. */
+    void change_terms_of_brick(size_type ib, const termlist &terms);
+
+    /** Change the variable list of a brick. Used for very special bricks only.
+     */
+    void change_variables_of_brick(size_type ib, const varnamelist &vl);
+
 
     /** Add a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
