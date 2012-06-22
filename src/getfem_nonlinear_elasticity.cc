@@ -586,7 +586,7 @@ namespace getfem {
     A(2, 0) = A(0, 2) = nnz * a * y;
     A(1, 1) = nnz * c * c / gmm::sqr(ci.i3());
     A(2, 1) = A(1, 2) = nnz * y * c / ci.i3() - nz * c / gmm::sqr(ci.i3());
-    A(2, 2) = nnz * y * y + nz * (2. * c * ci.i2() / pow(ci.i3(), 4.) - b / (4. * pow(ci.i3(), 1.5)));
+    A(2, 2) = nnz * y * y + nz * (2. * c * ci.i2() / pow(ci.i3(), 3.) - b / (4. * pow(ci.i3(), 1.5)));
 
     typedef const base_matrix * pointer_base_matrix__;
     pointer_base_matrix__ di[3];
@@ -612,7 +612,6 @@ namespace getfem {
     nb_params_ = 5;
     base_vector V(5);
     V[0] = 1.0;  V[1] = 1.0, V[2] = 1.5; V[3] = -0.5; V[4] = 1.5;
-    test_derivatives(3, 1e-8, V);
   }
 
 
