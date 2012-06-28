@@ -131,6 +131,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_models.h                  	\
 	getfem/getfem_model_solvers.h             	\
 	getfem/getfem_linearized_plates.h         	\
+	getfem/getfem_contact_and_friction_common.h	\
 	getfem/getfem_contact_and_friction_nodal.h	\
 	getfem/getfem_contact_and_friction_integral.h	\
 	getfem/getfem_Coulomb_friction.h          	\

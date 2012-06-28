@@ -105,41 +105,42 @@ INCLUDES = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm $(SUPLDFLAGS)
 
 TESTS = \
-	$(top_srcdir)/tests/dynamic_array.pl           \
-	$(top_srcdir)/tests/dynamic_tas.pl             \
-	$(top_srcdir)/tests/test_int_set.pl            \
-	$(top_srcdir)/tests/test_tree_sorted.pl        \
-	$(top_srcdir)/tests/poly.pl                    \
-	$(top_srcdir)/tests/test_small_vector.pl       \
-	$(top_srcdir)/tests/test_kdtree.pl             \
-	$(top_srcdir)/tests/test_rtree.pl              \
-	$(top_srcdir)/tests/geo_trans_inv.pl           \
-	$(top_srcdir)/tests/test_norm.pl               \
-	$(top_srcdir)/tests/test_mesh.pl               \
-	$(top_srcdir)/tests/test_interpolation.pl      \
-	$(top_srcdir)/tests/test_mat_elem.pl           \
-	$(top_srcdir)/tests/test_slice.pl              \
-	$(top_srcdir)/tests/integration.pl             \
-	$(top_srcdir)/tests/test_assembly.pl           \
-	$(top_srcdir)/tests/test_interpolated_fem.pl   \
-	$(top_srcdir)/tests/test_range_basis.pl        \
-	$(top_srcdir)/tests/laplacian.pl               \
-	$(top_srcdir)/tests/laplacian_with_bricks.pl   \
-	$(top_srcdir)/tests/elastostatic.pl            \
-	$(top_srcdir)/tests/stokes.pl                  \
-	$(top_srcdir)/tests/plate.pl                   \
-	$(optpl)                                       \
-	$(top_srcdir)/tests/nonlinear_elastostatic.pl  \
-	$(top_srcdir)/tests/nonlinear_membrane.pl      \
-	$(top_srcdir)/tests/dynamic_friction.pl        \
-	$(top_srcdir)/tests/plasticity.pl              \
-	$(top_srcdir)/tests/plasticity_old_brick.pl    \
-	$(top_srcdir)/tests/helmholtz.pl               \
-	$(top_srcdir)/tests/schwarz_additive.pl        \
-	$(top_srcdir)/tests/bilaplacian.pl    	       \
-	$(top_srcdir)/tests/heat_equation.pl   	       \
-	$(top_srcdir)/tests/wave_equation.pl   	       \
-	$(top_srcdir)/tests/cyl_slicer.pl	       \
+	$(top_srcdir)/tests/dynamic_array.pl              \
+	$(top_srcdir)/tests/dynamic_tas.pl                \
+	$(top_srcdir)/tests/test_int_set.pl               \
+	$(top_srcdir)/tests/test_tree_sorted.pl           \
+	$(top_srcdir)/tests/poly.pl                       \
+	$(top_srcdir)/tests/test_small_vector.pl          \
+	$(top_srcdir)/tests/test_kdtree.pl                \
+	$(top_srcdir)/tests/test_rtree.pl                 \
+	$(top_srcdir)/tests/geo_trans_inv.pl              \
+	$(top_srcdir)/tests/test_norm.pl                  \
+	$(top_srcdir)/tests/test_mesh.pl                  \
+	$(top_srcdir)/tests/test_interpolation.pl         \
+	$(top_srcdir)/tests/test_mat_elem.pl              \
+	$(top_srcdir)/tests/test_slice.pl                 \
+	$(top_srcdir)/tests/integration.pl                \
+	$(top_srcdir)/tests/test_assembly.pl              \
+	$(top_srcdir)/tests/test_interpolated_fem.pl      \
+	$(top_srcdir)/tests/test_range_basis.pl           \
+	$(top_srcdir)/tests/laplacian.pl                  \
+	$(top_srcdir)/tests/laplacian_with_bricks.pl      \
+	$(top_srcdir)/tests/elastostatic.pl               \
+	$(top_srcdir)/tests/stokes.pl                     \
+	$(top_srcdir)/tests/plate.pl                      \
+	$(optpl)                                          \
+	$(top_srcdir)/tests/nonlinear_elastostatic.pl     \
+	$(top_srcdir)/tests/nonlinear_membrane.pl         \
+	$(top_srcdir)/tests/dynamic_friction.pl           \
+	$(top_srcdir)/tests/plasticity.pl                 \
+	$(top_srcdir)/tests/plasticity_old_brick.pl       \
+	$(top_srcdir)/tests/helmholtz.pl                  \
+	$(top_srcdir)/tests/schwarz_additive.pl           \
+	$(top_srcdir)/tests/bilaplacian.pl    	          \
+	$(top_srcdir)/tests/heat_equation.pl              \
+	$(top_srcdir)/tests/wave_equation.pl   	          \
+	$(top_srcdir)/tests/test_large_sliding_contact.pl \
+	$(top_srcdir)/tests/cyl_slicer.pl	          \
 	$(top_srcdir)/tests/make_gmm_test.pl
 
 EXTRA_DIST =                               			\
@@ -192,6 +193,8 @@ EXTRA_DIST =                               			\
 	plasticity_old_brick.param             			\
 	nonlinear_elastostatic.param       			\
 	test_interpolated_fem.param        			\
+	test_large_sliding_contact.pl                           \
+	test_large_sliding_contact.param                        \
 	geo_trans_inv.param                			\
 	heat_equation.pl                   			\
 	heat_equation.param                			\

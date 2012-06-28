@@ -21,6 +21,7 @@
 
 #include "getfem/bgeot_rtree.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
+#include "getfem/getfem_contact_and_friction_common.h"
 #include "getfem/getfem_projected_fem.h"
 
 #include <getfem/getfem_arch_config.h>
@@ -32,116 +33,7 @@
 
 namespace getfem {
 
-  //=========================================================================
-  //
-  //  Projection on a ball and gradient of the projection.
-  //
-  //=========================================================================
 
-  template<typename VEC> static void ball_projection(const VEC &x,
-                                                     scalar_type radius) {
-    scalar_type a = gmm::vect_norm2(x);
-    if (radius <= 0) gmm::clear(const_cast<VEC&>(x));
-    else if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a);
-  }
-
-  template<typename VEC, typename VECR>
-  static void ball_projection_grad_r(const VEC &x, scalar_type radius,
-                                     VECR &g) {
-    scalar_type a = gmm::vect_norm2(x);
-    if (radius > 0 && a >= radius) {
-      gmm::copy(x, g); gmm::scale(g, scalar_type(1)/a);
-    }
-    else gmm::clear(g);
-  }
-
-  template <typename VEC, typename MAT>
-  static void ball_projection_grad(const VEC &x, double radius, MAT &g) {
-    if (radius <= scalar_type(0)) { gmm::clear(g); return; }
-    gmm::copy(gmm::identity_matrix(), g);
-    scalar_type a = gmm::vect_norm2(x);
-    if (a >= radius) {
-      gmm::scale(g, radius/a);
-      // gmm::rank_one_update(g, gmm::scaled(x, -radius/(a*a*a)), x);
-      for (size_type i = 0; i < x.size(); ++i)
-        for (size_type j = 0; j < x.size(); ++j)
-          g(i,j) -= radius*x[i]*x[j] / (a*a*a);
-    }
-  }
-
-  template<typename VEC>
-  static void De_Saxce_projection(const VEC &x, const VEC &n, scalar_type f) {
-    scalar_type xn = gmm::vect_sp(x, n);
-    scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
-    if (xn >= scalar_type(0) && f * nxt <= xn) {
-      gmm::clear(const_cast<VEC&>(x));
-    } else if (xn > scalar_type(0) || nxt > -f*xn) {
-      gmm::add(gmm::scaled(n, -xn), const_cast<VEC&>(x));
-      gmm::scale(const_cast<VEC&>(x), -f / nxt);
-      gmm::add(n, const_cast<VEC&>(x));
-      gmm::scale(const_cast<VEC&>(x), (xn - f * nxt) / (f*f+scalar_type(1)));
-    }
-  }
-
-  template<typename VEC, typename MAT>
-  static void De_Saxce_projection_grad(const VEC &x, const VEC &n,
-                                       scalar_type f, MAT &g) {
-    // Verified and correct in 2D and 3D.
-    scalar_type xn = gmm::vect_sp(x, n);
-    scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
-    size_type N = gmm::vect_size(x);
-
-    if (xn > scalar_type(0) && f * nxt <= xn) {
-      gmm::clear(g);
-    } else if (xn > scalar_type(0) || nxt > -f*xn) {
-      static VEC xt;
-      gmm::resize(xt, N);
-      gmm::add(x, gmm::scaled(n, -xn), xt);
-      gmm::scale(xt, scalar_type(1)/nxt);
-
-      if (N > 2) {
-        gmm::copy(gmm::identity_matrix(), g);
-        gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
-        gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
-        gmm::scale(g, f*(f - xn/nxt));
-      } else {
-        gmm::clear(g);
-      }
-
-      gmm::scale(xt, -f); gmm::add(n, xt);
-      gmm::rank_one_update(g, xt, xt);
-      gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
-    } else {
-      gmm::copy(gmm::identity_matrix(), g);
-    }
-  }
-
-  template<typename VEC, typename MAT> // à vérifier
-  static void De_Saxce_projection_gradn(const VEC &x, const VEC &n,
-					scalar_type f, MAT &g) {
-    scalar_type xn = gmm::vect_sp(x, n);
-    scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
-    size_type N = gmm::vect_size(x);
-    gmm::clear(g);
-
-    if (!(xn > scalar_type(0) && f * nxt <= xn)
-	&& (xn > scalar_type(0) || nxt > -f*xn)) {
-      static VEC xt;
-      gmm::resize(xt, N);
-      gmm::add(x, gmm::scaled(n, -xn), xt);
-      gmm::scale(xt, scalar_type(1)/nxt);
-
-      gmm::copy(gmm::identity_matrix(), g);
-      gmm::scale(g, (scalar_type(1)+f*xn/nxt));
-      gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)/nxt), xt);
-      gmm::scale(g, xn - f*nxt);
-      
-      gmm::rank_one_update(g, gmm::scaled(xt, -f*(nxt+f*xn)), xt);
-      gmm::rank_one_update(g, gmm::scaled(n, nxt+scalar_type(2)*f*xn-f*f*nxt),
-			   xt);
-      gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
-    }
-  }
 
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
@@ -3227,7 +3119,8 @@ namespace getfem {
     const model_real_plain_vector &L = cf.lambda_of_boundary(boundary_num);
     size_type N = mfu.get_qdim();
     base_node x0 = ctxu.xreal();
-    
+    bool noisy = false;
+
     // ----------------------------------------------------------
     // Computation of the point coordinates and the unit normal
     // vector in real configuration
@@ -3261,7 +3154,7 @@ namespace getfem {
     bgeot::rtree::pbox_set bset;
     element_boxes.find_boxes_at_point(x, bset);
     
-    cout << "Number of boxes found : " << bset.size() << endl; 
+    if (noisy) cout << "Number of boxes found : " << bset.size() << endl; 
     
     // ----------------------------------------------------------
     // Eliminates some influence boxes with the mean normal
@@ -3275,8 +3168,9 @@ namespace getfem {
 	  >= scalar_type(0)) bset.erase(it);
     }
     
-    cout << "Number of boxes satisfying the unit normal criterion : "
-	 << bset.size() << endl; 
+    if (noisy)
+      cout << "Number of boxes satisfying the unit normal criterion : "
+	   << bset.size() << endl; 
     
     
     // ----------------------------------------------------------
@@ -3381,8 +3275,8 @@ namespace getfem {
       // Eliminates wrong auto-contact situations
       if (d0 < scalar_type(0) && &(U_y0) == &U
 	  && gmm::vect_dist2(y0, x0) < -d0 / scalar_type(3)) {
-	cout << "Eliminated x0 = " << x0 << " y0 = " << y0
-	     << " d0 = " << d0 << endl;
+	if (noisy) cout << "Eliminated x0 = " << x0 << " y0 = " << y0
+			<< " d0 = " << d0 << endl;
 	continue;
       }
       
@@ -3395,8 +3289,8 @@ namespace getfem {
       n0_y0 /= gmm::vect_norm2(n0_y0);
       n0_y0s.push_back(n0_y0);
       
-      cout << "dist0 = " << d0
-	   << " dist1 = " << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
+      if (noisy) cout << "dist0 = " << d0 << " dist1 = "
+		      << pgt_y0->convex_ref()->is_in(y0_ref) << endl;
     }
     
     // ----------------------------------------------------------
@@ -3421,7 +3315,7 @@ namespace getfem {
       if (d0_o < d0) { d0 = d0_o; irigid_obstacle = i; state = 2; }
     }
     if (state == 2) {
-      scalar_type EPS = face_factor * 1E-10;
+      scalar_type EPS = face_factor * 1E-9;
       for (size_type k = 0; k < N; ++k) {
 	cf.pt_eval[k] += EPS;
 	grad_obs[k] = 
@@ -3442,21 +3336,21 @@ namespace getfem {
     // ----------------------------------------------------------
     
     
-    cout  << "Point : " << x0 << " of boundary " << boundary_num
-	  << " state = " << int(state);
+    if (noisy) cout  << "Point : " << x0 << " of boundary " << boundary_num
+		     << " state = " << int(state);
     if (state == 1) {
       size_type nbo = boundary_of_elements[elt_nums[ibound]];
       const mesh_fem &mfu_y0 = cf.mfu_of_boundary(nbo);
       const mesh &m = mfu_y0.linked_mesh();
       size_type icv = ind_of_elements[elt_nums[ibound]];
       
-      cout << " y0 = " << y0s[ibound] << " of element "
-	   << icv  << " of boundary " << nbo << endl;
+      if (noisy) cout << " y0 = " << y0s[ibound] << " of element "
+		      << icv  << " of boundary " << nbo << endl;
       for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
-	cout << "point " << k << " : "
-	     << m.points()[m.ind_points_of_convex(icv)[k]] << endl;
+	if (noisy) cout << "point " << k << " : "
+			<< m.points()[m.ind_points_of_convex(icv)[k]] << endl;
     }
-    cout << " d0 = " << d0 << endl;
+    if (noisy) cout << " d0 = " << d0 << endl;
     
     // ----------------------------------------------------------
     // Add the contributions to the tangent matrices and rhs
@@ -3480,9 +3374,15 @@ namespace getfem {
     gmm::copy(gmm::sub_vector
 	      (L, gmm::sub_index
 	       (mfl.ind_basic_dof_of_element(cv))), coeff);
-    ctxu.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
+    ctxl.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
+    GMM_ASSERT1(!(std::isnan(lambda[0])), "internal error");
+
+    bool TERM1 = true;
+    bool TERM2 = true;
+
+    if (TERM1) {
     
-    // Tangent term (1/r)\int \delta\lambda.\mu
+    // Tangent term -(1/r)\int \delta\lambda.\mu
     if (version & model::BUILD_MATRIX) {
       gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
       for (size_type i = 0; i < cvnbdofl; ++i)
@@ -3490,27 +3390,20 @@ namespace getfem {
 	  if (i%N == j%N) Melem(i,j) = -tl[i/N]*tl[j/N]*weight/r;
       mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
 			Melem, mfl, cv, mfl, cv);
+    }    
     }
     
-    // Rhs term \int \lambda.\psi(x_0)
-    if (version & model::BUILD_RHS) {
-      gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
-      for (size_type i = 0; i < cvnbdofu; ++i)
-	Velem[i] = tu[i/N] * lambda[i%N]*weight;
-      vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
-    }
-    
-    
-    // Rhs term -(1/r)\int (\lambda - P(\zeta)).\mu
+    // Rhs term (1/r)\int (\lambda - P(\zeta)).\mu
     // Unstabilized frictionless case for the moment
-    if (state) gmm::add(lambda, gmm::scaled(n, d0), zeta);
+    if (state) gmm::add(lambda, gmm::scaled(n, r*d0), zeta);
 
+    if (TERM1) {
     if (version & model::BUILD_RHS) {
       gmm::clear(vv);
       if (state) {
 	gmm::copy(zeta, vv);
 	De_Saxce_projection(vv, n, scalar_type(0));
-	gmm::scaled(vv, -scalar_type(1));
+	gmm::scale(vv, -scalar_type(1));
 	gmm::add(lambda, vv);
       } else gmm::copy(lambda, vv);
       gmm::resize(Velem,  cvnbdofl); gmm::clear(Velem);
@@ -3518,7 +3411,7 @@ namespace getfem {
 	Velem[i] = (tl[i/N] * vv[i%N])*weight/r;
       vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
     }
-    
+    }
     
     if (state) {
       base_matrix grad_y0(N, N), gradinv_y0(N, N), gradaux(N,N);
@@ -3526,16 +3419,17 @@ namespace getfem {
       base_small_vector vvv(N), ntilde_y0(N);
       base_tensor tgradu, tu_y0, tgradu_y0;
       size_type cv_y0 = 0, cvnbdofu_y0 = 0;
-      size_type nbound_y0
+      size_type boundary_num_y0
 	= (state == 1) ? boundary_of_elements[elt_nums[ibound]] : 0;
       const mesh_fem &mfu_y0
-	= (state == 1) ? cf.mfu_of_boundary(nbound_y0) : mfu;
+	= (state == 1) ? cf.mfu_of_boundary(boundary_num_y0) : mfu;
       ctxu.grad_base_value(tgradu);
       
       if (state == 1) {
 	cv_y0 = ind_of_elements[elt_nums[ibound]];
 	cvnbdofu_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
-	const model_real_plain_vector &U_y0 = cf.disp_of_boundary(nbound_y0);
+	const model_real_plain_vector &U_y0
+	  = cf.disp_of_boundary(boundary_num_y0);
 	mesh_fem::ind_dof_ct::const_iterator
 	  itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
 	coeff_y0.resize(cvnbdofu_y0);
@@ -3552,22 +3446,30 @@ namespace getfem {
 	gmm::mult(gmm::transposed(gradinv_y0), n0_y0s[ibound], ntilde_y0); // (not unit) normal vector
       }
       
-      // Rhs term -\int \lambda.\psi(y_0)
-      if (state == 1 && (version & model::BUILD_RHS)) {
-	gmm::resize(Velem,  cvnbdofu_y0);gmm::clear(Velem);
-	for (size_type i = 0; i < cvnbdofu_y0; ++i)
-	  Velem[i] = -tu_y0[i/N] * lambda[i%N]*weight;
-	vec_elem_assembly(cf.U_vector(nbound_y0), Velem, mfu_y0, cv_y0);
+      if (TERM2) {
+      // Rhs term \int \lambda.(\psi(x_0) - \psi(y_0))
+      if (version & model::BUILD_RHS) {
+	gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
+	for (size_type i = 0; i < cvnbdofu; ++i)
+	  Velem[i] = tu[i/N] * lambda[i%N]*weight;
+	vec_elem_assembly(cf.U_vector(boundary_num), Velem, mfu, cv);
+	
+	if (state == 1) {
+	  gmm::resize(Velem,  cvnbdofu_y0); gmm::clear(Velem);
+	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
+	    Velem[i] = -tu_y0[i/N] * lambda[i%N]*weight;
+	  vec_elem_assembly(cf.U_vector(boundary_num_y0), Velem, mfu_y0,cv_y0);
+	}
       }	
+      }
       
       if (version & model::BUILD_MATRIX) {
+	if (TERM2) {
 	// Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
 	gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
 	for (size_type i = 0; i < cvnbdofu; ++i)
 	  for (size_type j = 0; j < cvnbdofl; ++j)
 	    if (i%N == j%N) Melem(i,j) = -tu[i/N]*tl[j/N]*weight;
-	
-	cout << "Melem = " << Melem << endl;
 	mat_elem_assembly(cf.UL_matrix(boundary_num, boundary_num),
 			  Melem, mfu, cv, mfl, cv);
 	
@@ -3575,39 +3477,46 @@ namespace getfem {
 	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofl); gmm::clear(Melem);
 	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	    for (size_type j = 0; j < cvnbdofl; ++j)
-	      if (i%N == j%N) Melem(i,j) = -tu_y0[i/N]*tl[j/N]*weight;
-	  
-	  cout << "Melem2 = " << Melem << endl;
-	  mat_elem_assembly(cf.UL_matrix(nbound_y0, boundary_num),
+	      if (i%N == j%N) Melem(i,j) = tu_y0[i/N]*tl[j/N]*weight;
+	  mat_elem_assembly(cf.UL_matrix(boundary_num_y0, boundary_num),
 			    Melem, mfu_y0, cv_y0, mfl, cv);
 	}
+	}
+       
+	if (TERM1) {
 	
-	// Tangent term \int \lambda.(I+\nabla u(y_0))^{-T}(\nabla \psi(y_0))^T(\delta u(y_0) - \delta u(x_0))
+	// Tangent term \int \lambda.((\nabla \psi(y_0))(I+\nabla u(y_0))^{-1}(\delta u(x_0) - \delta u(y_0)))
 	if (state == 1) {
-	  gmm::mult(gradinv_y0, lambda, vv);
-	  
-	  cout << "tgradu_y0 =" << tgradu_y0 << endl;
-	  
 	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu); gmm::clear(Melem);
 	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	    for (size_type j = 0; j < cvnbdofu; ++j)
-	      Melem(i, j) = -vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu[j/N]*weight;
-	  
-	  mat_elem_assembly(cf.UU_matrix(nbound_y0, boundary_num),
+	      for (size_type k = 0; k < N; ++k)
+		Melem(i, j) += lambda[i%N] * tgradu_y0[i-(i%N)+k]
+		  * gradinv_y0(k, j%N) * tu[j/N]*weight;
+	  mat_elem_assembly(cf.UU_matrix(boundary_num_y0, boundary_num),
 			    Melem, mfu_y0, cv_y0, mfu, cv);
 	  
 	  gmm::resize(Melem, cvnbdofu_y0, cvnbdofu_y0); gmm::clear(Melem);
 	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
-	      Melem(i, j) =vv[i%N]*gradinv_y0[i-(i%N)+(j%N)]*tu_y0[j/N]*weight;
-	  
-	  mat_elem_assembly(cf.UU_matrix(nbound_y0, nbound_y0),
+	      for (size_type k = 0; k < N; ++k)
+		Melem(i, j) -= lambda[i%N] * tgradu_y0[i-(i%N)+k]
+		  * gradinv_y0(k, j%N) * tu_y0[j/N]*weight;
+	  mat_elem_assembly(cf.UU_matrix(boundary_num_y0, boundary_num_y0),
 			    Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
 	}
 	
-	
+	// Tangent term (1/r)\int \nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
+	De_Saxce_projection_grad(zeta, n, scalar_type(0), grad);
+	gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofl; ++j)
+	    Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
+	mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
+			  Melem, mfl, cv, mfl, cv);
+
       
-	// Tangent term \int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(x_0)(\nabla P(zeta) n . \mu)
+	// Tangent term \int (I+\nabla u(y_0))^{-T}\nabla delta(y_0).\delta u(x_0)(\nabla P(zeta) n . \mu)
 	gmm::mult(grad, n, vv);
 	gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
 	for (size_type i = 0; i < cvnbdofl; ++i)
@@ -3617,40 +3526,32 @@ namespace getfem {
 	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
 			  Melem, mfl, cv, mfu, cv);
 	
-	// Tangent term -\int (I+\nabla u(y_0))^{-T}dzeta/du)\nabla delta(y_0).\delta u(y_0)(\nabla P(zeta) n . \mu)
+	// Tangent term -\int (I+\nabla u(y_0))^{-T}\nabla delta(y_0).\delta u(y_0)(\nabla P(zeta) n . \mu)
 	if (state == 1) {
-	  gmm::mult(grad, n, vv);
 	  gmm::resize(Melem, cvnbdofl, cvnbdofu_y0); gmm::clear(Melem);
 	  for (size_type i = 0; i < cvnbdofl; ++i)
 	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
 	      Melem(i, j) = -tl[i/N]*vv[i%N]*tu_y0[j/N]*ntilde_y0[j%N]*weight;
-	  mat_elem_assembly(cf.LU_matrix(boundary_num, nbound_y0),
+	  mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num_y0),
 			    Melem, mfl, cv, mfu_y0, cv_y0);
 	}
 	
-	// Tangent term (1/r)\int \nabla P(zeta) (dzeta/dlambda)(\delta lambda) . \mu
-	gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofl; ++j)
-	    Melem(i,j) = tl[i/N]*tl[j/N]*grad(i%N,j%N)*weight/r;
-	mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
-			  Melem, mfl, cv, mfl, cv);
-	
-	// Tangent term \int d_0(\nabla P)(I+\nabla u(x_0))^{-T}(\nabla \delta u)^T n).\mu
-	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
+	// Tangent term \int d_0(\nabla P)(dn/du)(\delta u).\mu
 	gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofu; ++j)
-	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) += d0*tl[i/N]*tgradu[j-(j%N)+k]
-		*gradaux(j%N,i%N)*n[j%N]*weight;
 	gmm::mult(grad, n, vv);
 	gmm::mult(gradinv, n, vvv);
+	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
 	for (size_type i = 0; i < cvnbdofl; ++i)
 	  for (size_type j = 0; j < cvnbdofu; ++j)
 	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) -= d0*tl[i/N]*vv[i%N]
+	      Melem(i,j) += d0*tl[i/N]*vv[i%N]
 		*tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight;
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) -= d0*tl[i/N]*gradaux(k,i%N)*tgradu[j-(j%N)+k]
+		*n[j%N]*weight;
+
 	
 	
 	// Tangent term (1/r)\int \nabla_n P(zeta) (dn/du)(\delta u) . \mu
@@ -3658,23 +3559,23 @@ namespace getfem {
 	// Attendre la version avec frottement.
 	De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
 	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
-	// gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
-	for (size_type i = 0; i < cvnbdofl; ++i)
-	  for (size_type j = 0; j < cvnbdofu; ++j)
-	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) += tl[i/N]*tgradu[j-(j%N)+k]
-		*gradaux(j%N,i%N)*n[j%N]*weight/r;
 	gmm::mult(grad, n, vv);
 	gmm::mult(gradinv, n, vvv);
+	// gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);factorised
 	for (size_type i = 0; i < cvnbdofl; ++i)
 	  for (size_type j = 0; j < cvnbdofu; ++j)
 	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) -= tl[i/N]*vv[i%N]
+	      Melem(i,j) += tl[i/N]*vv[i%N]
 		*tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
+	for (size_type i = 0; i < cvnbdofl; ++i)
+	  for (size_type j = 0; j < cvnbdofu; ++j)
+	    for (size_type k = 0; k < N; ++k)
+	      Melem(i,j) -= tl[i/N]*gradaux(k,i%N)*tgradu[j-(j%N)+k]
+		*n[j%N]*weight/r;
 	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
 			  Melem, mfl, cv, mfu, cv);
       }
-      
+      }
     }
   }
 
@@ -3742,9 +3643,10 @@ namespace getfem {
 
   void large_sliding_integral_contact_brick::asm_real_tangent_terms
   (const model &md, size_type /* ib */, const model::varnamelist &vl,
-   const model::varnamelist &dl, const model::mimlist &mims,
+   const model::varnamelist &dl, const model::mimlist &/* mims */,
    model::real_matlist &matl, model::real_veclist &vecl,
-   model::real_veclist &, size_type region, build_version version) const {
+   model::real_veclist &, size_type /* region */,
+   build_version version) const {
 
     fem_precomp_pool fppool;
     base_matrix G;
@@ -3761,6 +3663,7 @@ namespace getfem {
     if (version & model::BUILD_MATRIX) {
       for (size_type i = 0; i < Nvar; ++i)
 	for (size_type j = 0; j < Nvar; ++j) {
+	  gmm::clear(matl[i*Nvar+j]);
 	  if (i <  Nu && j <  Nu) cf.UU(i,j)       = &(matl[i*Nvar+j]);
 	  if (i >= Nu && j <  Nu) cf.LU(i-Nu,j)    = &(matl[i*Nvar+j]);
 	  if (i <  Nu && j >= Nu) cf.UL(i,j-Nu)    = &(matl[i*Nvar+j]);
@@ -3768,9 +3671,10 @@ namespace getfem {
 	}
     }
     if (version & model::BUILD_RHS) {
-      for (size_type i = 0; i < vl.size(); ++i)
-	if (i < cf.Urhs.size()) cf.Urhs[i] = &(vecl[i]);
-	else cf.Lrhs[i-cf.Urhs.size()] = &(vecl[i]);
+      for (size_type i = 0; i < vl.size(); ++i) {
+	if (i < Nu) cf.Urhs[i] = &(vecl[i*Nvar]);
+	else cf.Lrhs[i-Nu] = &(vecl[i*Nvar]);
+      }
     }
     
     // Data : r, [friction_coeff,]
@@ -3796,7 +3700,7 @@ namespace getfem {
       mfu.linked_mesh().intersect_with_mpi_region(rg);
       
       for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
-	cout << "boundary " << bnum << " element " << v.cv() << endl;
+	// cout << "boundary " << bnum << " element " << v.cv() << endl;
 	size_type cv = v.cv();
 	bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
 	pfem pf_s = mfu.fem_of_element(cv);

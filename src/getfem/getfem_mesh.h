@@ -332,6 +332,12 @@ namespace getfem {
     template<class ITER>
     size_type add_prism_by_points(dim_type di, const ITER &ps);
 
+    size_type add_face_of_convex(size_type, short_type)
+    { GMM_ASSERT1(false, "Sorry, to be done"); }
+
+    void add_faces_of_convex(size_type)
+    { GMM_ASSERT1(false, "Sorry, to be done"); }
+
     /// Delete the convex of index ic from the mesh.
     void sup_convex(size_type ic, bool sup_points = false);
     /** Swap the indexes of the convex of indexes i and j

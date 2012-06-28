@@ -32,6 +32,7 @@
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
+#include "getfem/getfem_contact_and_friction_common.h"
 #include "getfem/getfem_model_solvers.h"
 #include "gmm/gmm.h"
 #include <fstream>
@@ -51,6 +52,50 @@ using bgeot::base_matrix; /* small dense matrix. */
 typedef getfem::modeling_standard_sparse_vector sparse_vector;
 typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
 typedef getfem::modeling_standard_plain_vector  plain_vector;
+
+
+
+// Test the validity of the two gradients of the De Saxce's projection
+void De_Saxce_projection_test(void) {
+
+  size_type N = 3;
+  base_small_vector x(N), n(N), dir(N), grad1(N), grad2(N);
+  base_matrix g(N, N);
+  scalar_type f, EPS = 1E-8;
+  
+  
+  for (size_type i = 0; i < 1000; ++i) {
+    // The normal vector n is not supposed to be unitary
+    gmm::fill_random(x); gmm::fill_random(dir); gmm::fill_random(n);
+    f = gmm::random();
+    
+    base_small_vector xx = x, xxe = x;
+    base_small_vector ne = n + dir*EPS;
+    
+    getfem::De_Saxce_projection(xx, n, f);
+    getfem::De_Saxce_projection(xxe, ne, f);
+    grad1 = (xxe-xx)/EPS;
+    getfem::De_Saxce_projection_gradn(x, n, f, g);
+    gmm::mult(g, dir, grad2);
+    
+    scalar_type err = gmm::vect_norm2(grad1 - grad2);
+    GMM_ASSERT1(err < 1e-6, "Erroneous gradient of De Saxcé projection "
+		"with respect to the normal vector"); 
+    
+    xx = x; xxe = x + dir*EPS;
+    getfem::De_Saxce_projection(xx, n, f);
+    getfem::De_Saxce_projection(xxe, n, f);
+    grad1 = (xxe-xx)/EPS;
+    getfem::De_Saxce_projection_grad(x, n, f, g);
+    gmm::mult(g, dir, grad2);
+    err = gmm::vect_norm2(grad1 - grad2);
+    GMM_ASSERT1(err < 1e-6, "Erroneous gradient of De Saxcé projection"); 
+    
+  }
+
+}
+
+
 
 /*
  * structure for the friction problem
@@ -169,6 +214,63 @@ void contact_problem::init(void) {
 }
 
 
+
+void test_tangent_matrix(getfem::model &md) {
+
+  size_type nbdof = md.nb_dof();
+  scalar_type EPS = 1E-5;
+  scalar_type errmax = scalar_type(0);
+  size_type NN = 10;
+  scalar_type scale = 0.0001;
+
+
+  if (md.is_linear()) cout << "Non relevant test" << endl;
+  else {
+    std::vector<scalar_type> U(nbdof), DIR(nbdof);
+    std::vector<scalar_type> D1(nbdof), D2(nbdof), Ddiff(nbdof);
+    for (size_type i = 0; i < NN; ++i) {
+      gmm::fill_random(U); gmm::scale(U, scale);
+      gmm::fill_random(DIR); gmm::scale(DIR, scale);
+      md.to_variables(U);
+      md.assembly(getfem::model::BUILD_ALL);
+      gmm::copy(md.real_rhs(), D2);
+      gmm::mult(md.real_tangent_matrix(), DIR, D1);
+      gmm::add(gmm::scaled(DIR, EPS), U);
+      md.to_variables(U);
+      md.assembly(getfem::model::BUILD_RHS);
+      gmm::add(gmm::scaled(md.real_rhs(), -scalar_type(1)), D2);
+      gmm::scale(D2, scalar_type(1)/EPS);
+      scalar_type err = gmm::vect_dist2(D1, D2);
+      scalar_type ratio = 0;
+      for (size_type j = 0; j < nbdof; ++j) {
+	scalar_type r = (D1[j] - D2[j]) / (gmm::abs(D1[j]) + 1E-10);
+	ratio = std::max(ratio, r);
+	if (r > 0.01) {
+	  cout << "WARNING, ratio " << r << " D1 = "
+	       << D1[j] << " D2 = " << D2[j] << endl; getchar();
+	}
+      }
+      
+
+      gmm::add(gmm::scaled(D1, -1.), D2, Ddiff);
+      gmm::clean(Ddiff, 1E-9); // à enlever ?
+      cout << "Ddiff = " << Ddiff << endl;
+      cout << "norminf(Ddiff) = " << gmm::vect_norminf(Ddiff) << endl;
+      cout << "D1 = " << gmm::sub_vector(D1, gmm::sub_interval(0, 300)) << endl;
+      cout << "D2 = " << gmm::sub_vector(D2, gmm::sub_interval(0, 300)) << endl;
+      cout << "norm(D1) = " << gmm::vect_norm2(D1)
+	   << " norm(D2) = " << gmm::vect_norm2(D2) << endl;
+      cout << "Max ratio " << ratio << endl;
+      cout << "Error at step " << i << " : " << err << endl; getchar();
+      errmax = std::max(err, errmax);
+    }
+  }
+}
+
+
+
+
+
 /**************************************************************************/
 /*  Model.                                                                */
 /**************************************************************************/
@@ -183,49 +285,81 @@ void contact_problem::solve(void) {
   cout << "Number of dof for u: " << mf_u1.nb_dof() + mf_u2.nb_dof() << endl;
 
   getfem::model model;
-  size_type N = mesh1.dim();
   std::vector<scalar_type> F;
 
+  bool two_bodies = false;
+
   // Main unknowns of the problem.
-  model.add_fem_variable("u1", mf_u1);
+  if (two_bodies) model.add_fem_variable("u1", mf_u1);
   model.add_fem_variable("u2", mf_u2);
-  model.add_fem_variable("lambda1", mf_lambda1);
+  if (two_bodies) model.add_fem_variable("lambda1", mf_lambda1);
   model.add_fem_variable("lambda2", mf_lambda2);
   
   gmm::resize(F, mf_rhs1.nb_dof() * N);
   getfem::interpolation_function(mf_rhs1, F, vol_f);
   model.add_initialized_fem_data("VolumicData1", mf_rhs1, F);
-  getfem::add_source_term_brick(model, mim1, "u1", "VolumicData1");
+  if (two_bodies)
+    getfem::add_source_term_brick(model, mim1, "u1", "VolumicData1");
   gmm::resize(F, mf_rhs2.nb_dof() * N);
   getfem::interpolation_function(mf_rhs2, F, vol_f);
   model.add_initialized_fem_data("VolumicData2", mf_rhs2, F);
   getfem::add_source_term_brick(model, mim2, "u2", "VolumicData2");
 
+
+  // Pointwise constraints for frictionless problems
+  GMM_ASSERT1(N == 2, "Pointwises constraints have to be adapted for 3D");
+  std::vector<scalar_type> cpoints(N);
+  cpoints[0] = 0.0; cpoints[1] = 0.1;
+  std::vector<scalar_type> cunitv(N);
+  cunitv[0] = 1.0; cunitv[1] = 0.0;
+  model.add_initialized_fixed_size_data("cpoints1", cpoints);
+  model.add_initialized_fixed_size_data("cunitv1", cunitv);
+  if (two_bodies)
+    getfem::add_pointwise_constraints_with_multipliers
+      (model, "u1", "cpoints1", "cunitv1");
+  cpoints[0] = 0.0; cpoints[1] = 0.0;
+  model.add_initialized_fixed_size_data("cpoints2", cpoints);
+  model.add_initialized_fixed_size_data("cunitv2", cunitv);
+  getfem::add_pointwise_constraints_with_multipliers
+    (model, "u2", "cpoints2", "cunitv2");
+  
+  
   // Linearized elasticity bricks.
   model.add_initialized_scalar_data("lambda", lambda);
   model.add_initialized_scalar_data("mu", mu);
-  model.add_initialized_scalar_data("r", R);
-  model.add_initialized_scalar_data("f", friction_coef);
-  getfem::add_isotropic_linearized_elasticity_brick
-    (model, mim1, "u1", "lambda", "mu");
+  if (two_bodies)
+    getfem::add_isotropic_linearized_elasticity_brick
+      (model, mim1, "u1", "lambda", "mu");
   getfem::add_isotropic_linearized_elasticity_brick
     (model, mim2, "u2", "lambda", "mu");
   
   cout << "Number of dof of the model: " << model.nb_dof() << endl;
 
+  // Contact brick.
+  model.add_initialized_scalar_data("r", R);
+  model.add_initialized_scalar_data("f", friction_coef);
   size_type indb = add_large_sliding_integral_contact_brick
-    (model, mim1, "u1", "lambda1", "r", "f", CONTACT_BOUNDARY1);
+    (model, mim1, "u2", "lambda2", "r", "f", CONTACT_BOUNDARY2);
 
-  getfem::add_boundary_to_large_sliding_contact_brick
-    (model, indb, mim2, "u2", "lambda2", CONTACT_BOUNDARY2);
+  if (two_bodies) 
+    getfem::add_boundary_to_large_sliding_contact_brick
+      (model, indb, mim2, "u1", "lambda1", CONTACT_BOUNDARY1);
   
   getfem::add_rigid_obstacle_to_large_sliding_contact_brick(model, indb, "y");
+
+
+  test_tangent_matrix(model);
 
 
   gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(model, iter);
 
 }
+
+
+
+
+
   
 /**************************************************************************/
 /*  main program.                                                         */
@@ -236,6 +370,9 @@ int main(int argc, char *argv[]) {
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+
+  De_Saxce_projection_test();
+
 
   contact_problem p;
   p.PARAM.read_command_line(argc, argv);

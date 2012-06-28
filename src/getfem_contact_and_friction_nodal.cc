@@ -21,6 +21,7 @@
 
 
 #include "getfem/getfem_contact_and_friction_nodal.h"
+#include "getfem/getfem_contact_and_friction_common.h"
 #include "getfem/getfem_assembling.h"
 
 #include <getfem/getfem_arch_config.h>
@@ -44,90 +45,6 @@ namespace getfem {
 
   typedef bgeot::convex<base_node>::dref_convex_pt_ct dref_convex_pt_ct;
   typedef bgeot::basic_mesh::ref_mesh_face_pt_ct ref_mesh_face_pt_ct;
-
-  //=========================================================================
-  //
-  //  Projection on a ball and gradient of the projection.
-  //
-  //=========================================================================
-
-  template<typename VEC> static void ball_projection(const VEC &x,
-                                                     scalar_type radius) {
-    scalar_type a = gmm::vect_norm2(x);
-    if (radius <= 0) gmm::clear(const_cast<VEC&>(x));
-    else if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a);
-  }
-
-  template<typename VEC, typename VECR>
-  static void ball_projection_grad_r(const VEC &x, scalar_type radius,
-                                     VECR &g) {
-    scalar_type a = gmm::vect_norm2(x);
-    if (radius > 0 && a >= radius) {
-      gmm::copy(x, g); gmm::scale(g, scalar_type(1)/a);
-    }
-    else gmm::clear(g);
-  }
-
-  template <typename VEC, typename MAT>
-  static void ball_projection_grad(const VEC &x, double radius, MAT &g) {
-    if (radius <= scalar_type(0)) { gmm::clear(g); return; }
-    gmm::copy(gmm::identity_matrix(), g);
-    scalar_type a = gmm::vect_norm2(x);
-    if (a >= radius) {
-      gmm::scale(g, radius/a);
-      // gmm::rank_one_update(g, gmm::scaled(x, -radius/(a*a*a)), x);
-      for (size_type i = 0; i < x.size(); ++i)
-        for (size_type j = 0; j < x.size(); ++j)
-          g(i,j) -= radius*x[i]*x[j] / (a*a*a);
-    }
-  }
-
-  template<typename VEC>
-  static void De_Saxce_projection(const VEC &x, const VEC &n, scalar_type f) {
-    scalar_type xn = gmm::vect_sp(x, n);
-    scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
-    if (xn >= scalar_type(0) && f * nxt <= xn) {
-      gmm::clear(const_cast<VEC&>(x));
-    } else if (xn > scalar_type(0) || nxt > -f*xn) {
-      gmm::add(gmm::scaled(n, -xn), const_cast<VEC&>(x));
-      gmm::scale(const_cast<VEC&>(x), -f / nxt);
-      gmm::add(n, const_cast<VEC&>(x));
-      gmm::scale(const_cast<VEC&>(x), (xn - f * nxt) / (f*f+scalar_type(1)));
-    }
-  }
-
-  template<typename VEC, typename MAT>
-  static void De_Saxce_projection_grad(const VEC &x, const VEC &n,
-                                       scalar_type f, MAT &g) {
-    // Verified and correct in 2D and 3D.
-    scalar_type xn = gmm::vect_sp(x, n);
-    scalar_type nxt = sqrt(gmm::abs(gmm::vect_norm2_sqr(x) - xn*xn));
-    size_type N = gmm::vect_size(x);
-
-    if (xn > scalar_type(0) && f * nxt <= xn) {
-      gmm::clear(g);
-    } else if (xn > scalar_type(0) || nxt > -f*xn) {
-      static VEC xt;
-      gmm::resize(xt, N);
-      gmm::add(x, gmm::scaled(n, -xn), xt);
-      gmm::scale(xt, scalar_type(1)/nxt);
-
-      if (N > 2) {
-        gmm::copy(gmm::identity_matrix(), g);
-        gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
-        gmm::rank_one_update(g, gmm::scaled(xt, -scalar_type(1)), xt);
-        gmm::scale(g, f*(f - xn/nxt));
-      } else {
-        gmm::clear(g);
-      }
-
-      gmm::scale(xt, -f); gmm::add(n, xt);
-      gmm::rank_one_update(g, xt, xt);
-      gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
-    } else {
-      gmm::copy(gmm::identity_matrix(), g);
-    }
-  }
 
 
   // Computation of an orthonormal basis to a unit vector.

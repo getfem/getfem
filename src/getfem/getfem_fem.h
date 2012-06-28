@@ -721,11 +721,14 @@ namespace getfem {
                                   const CVEC& coeff, VVEC &val,
                                   dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    GMM_ASSERT1(gmm::vect_size(val) == Qdim, "dimensions mismatch");
     size_type R = nb_dof(c.convex_num());
+    GMM_ASSERT1(gmm::vect_size(val) == Qdim, "dimensions mismatch");
+    GMM_ASSERT1(gmm::vect_size(coeff) == R*Qmult,
+		"Wrong size for coeff vector");
 
     gmm::clear(val);
     base_tensor Z; real_base_value(c, Z);
+    
     for (size_type j = 0; j < R; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
         typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
