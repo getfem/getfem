@@ -126,9 +126,9 @@ bool state_problem::cont(plain_vector &U) {
     eps = PARAM.real_value("EPSILON"),
     maxres_solve = PARAM.real_value("RESIDUAL_SOLVE");
   int noisy = PARAM.int_value("NOISY");
-  getfem::S_getfem_model s(model, "lambda", ls, scfac, maxit, thrit, maxres,
-			   maxdiff, minang, h_init, h_max, h_min, h_inc,
-			   h_dec, eps, maxres_solve, noisy);
+  getfem::cont_struct_getfem_model
+    s(model, "lambda", ls, scfac, maxit, thrit, maxres, maxdiff, minang,
+      h_init, h_max, h_min, h_inc, h_dec, eps, maxres_solve, noisy);
 
   if (noisy > 0) cout << "computing initial point" << endl;
   gmm::iteration iter(maxres_solve, noisy, 40000);

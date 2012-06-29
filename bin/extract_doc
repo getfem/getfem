@@ -300,6 +300,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = string.replace(d, '@tpoly',  'poly')
 
     # Authorized abbreviations
+    d = string.replace(d, '@tcs',    'cont_struct')
     d = string.replace(d, '@tmf',    'mesh_fem')
     d = string.replace(d, '@tbrick', 'mdbrick')
     d = string.replace(d, '@tstate', 'mdstate')
@@ -382,6 +383,7 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = string.replace(d, '@tpoly',  'poly')
 
     # Authorized abbreviations
+    d = string.replace(d, '@tcs',    'ContStruct')
     d = string.replace(d, '@tmf',    'MeshFem')
     d = string.replace(d, '@tbrick', 'MdBrick')
     d = string.replace(d, '@tstate', 'MdState')
@@ -895,6 +897,7 @@ elif (option == 'matlab-doc'):
   print '`model`            model descriptor (or gfModel object)'
   print '`global_function`  global function descriptor'
   print '`mesher_object`    mesher object descriptor'
+  print '`cont_struct`      continuation-structure descriptor'
   print '=================  =================================================='
   print ''  
   print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'
@@ -1184,6 +1187,14 @@ elif (option == 'scilab-com'):
   mfile.write('      </varlistentry>\n\n')
   mfile.write('    </variablelist>\n\n')
 
+  mfile.write('      <varlistentry>\n')
+  mfile.write('        <term>cont_struct</term>\n')
+  mfile.write('        <listitem>\n')
+  mfile.write('          <para>continuation-structure descriptor</para>\n')
+  mfile.write('        </listitem>\n')
+  mfile.write('      </varlistentry>\n\n')
+  mfile.write('    </variablelist>\n\n')
+
   mfile.write('    <para>Arguments listed between square brackets are optional. Lists between braces indicate</para>\n')
   mfile.write('    <para>that the argument must match one of the elements of the list. For example:</para>\n\n')
 
@@ -1376,6 +1387,7 @@ elif (option == 'scilab-doc-rst'):
   print '`model`            model descriptor (or gfModel object)'
   print '`global_function`  global function descriptor'
   print '`mesher_object`    mesher object descriptor'
+  print '`cont_struct`      continuation-structure descriptor'
   print '=================  =================================================='
   print ''  
   print 'Arguments listed between square brackets are optional. Lists between braces indicate that the argument must match one of the elements of the list. For example::'

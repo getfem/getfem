@@ -392,7 +392,12 @@ EXTRA_DIST=builddoc.sce \
         src/c/MACHINES/SGI/machine.h \
         src/c/MACHINES/SGI/makefile \
         src/c/MACHINES/SPARC/machine.h \
-        src/c/MACHINES/SPARC/makefile
+        src/c/MACHINES/SPARC/makefile \
+	tests/unit_tests/mesh_generation.sce \
+        tests/unit_tests/test_contact_grd_trans_anim.sce \
+        tests/unit_tests/test_contact_grd_trans.sce \
+        tests/unit_tests/test_continuation_contact_grd_trans_anim.sce \
+        tests/unit_tests/test_continuation_contact_grd_trans.sce
 
 .NOTPARALLEL: *
 

@@ -53,34 +53,34 @@ namespace getfem {
 
   enum build_data { BUILD_F = 1, BUILD_F_x = 2, BUILD_ALL = 3 };
 
-  template <typename S, typename VECT> 
-  double norm_(S &s, const VECT &x) {
+  template <typename CONT_S, typename VECT> 
+  double norm_(CONT_S &s, const VECT &x) {
     double no = sqrt(s.sp(x, x));
     return no;
   }
   
-  template <typename S, typename VECT> 
-  double w_sp_(S &s, const VECT &x1, const VECT &x2) {
+  template <typename CONT_S, typename VECT> 
+  double w_sp_(CONT_S &s, const VECT &x1, const VECT &x2) {
     double r = s.scfac() * s.sp(x1, x2);
     return r;
   }
 
-  template <typename S, typename VECT> 
-  double sp_(S &s, const VECT &x1, const VECT &x2,
+  template <typename CONT_S, typename VECT> 
+  double sp_(CONT_S &s, const VECT &x1, const VECT &x2,
 	     double gamma1, double gamma2) {
     double r = w_sp_(s, x1, x2) + gamma1 * gamma2;
     return r;
   }
 
-  template <typename S, typename VECT> 
-  double norm_(S &s, const VECT &x, double gamma) {
+  template <typename CONT_S, typename VECT> 
+  double norm_(CONT_S &s, const VECT &x, double gamma) {
     double no = sqrt(sp_(s, x, x, gamma, gamma));
     return no;
   }
 
 
-  template <typename S, typename VECT>
-  void compute_tangent(S &s, const VECT &x, double gamma,
+  template <typename CONT_S, typename VECT>
+  void compute_tangent(CONT_S &s, const VECT &x, double gamma,
 		       VECT &t_x, double &t_gamma) {
     VECT g(x), y(x);
     s.F_gamma(x, gamma, g);
@@ -101,8 +101,8 @@ namespace getfem {
 
   /* Compute the test function for bifurcations corresponding to the system
      where the augmented Jacobian is bordered by b = c = e_1, d = 0. */
-  template <typename S, typename VECT>
-  double test_function(S &s, const VECT &x, double gamma,
+  template <typename CONT_S, typename VECT>
+  double test_function(CONT_S &s, const VECT &x, double gamma,
 		       const VECT &t_x, double t_gamma) {
     double q, r, v_gamma, tau;
     VECT b_x(x), g(x), v_x(x), y(x), z(x);
@@ -115,19 +115,19 @@ namespace getfem {
     s.scaled_add(z, y, -v_gamma, v_x);
     tau = -1. / v_x[0]; s.scale(v_x, -tau); v_gamma *= -tau;
 
-    if (s.noisy() > 1) {
-      s.mult_grad(x, gamma, v_x, y);
-      s.scaled_add(y, g, v_gamma, y); y[0] += tau;
-      r = s.sp(y, y);
-      q = s.sp(t_x, v_x) + t_gamma * v_gamma; r += q * q;
-      q = v_x[0] - 1.; r += q * q;
-      cout << "test function computed with the residual " << sqrt(r) << endl;
-    }
+    s.mult_grad(x, gamma, v_x, y);
+    s.scaled_add(y, g, v_gamma, y); y[0] += tau;
+    r = s.sp(y, y);
+    q = s.sp(t_x, v_x) + t_gamma * v_gamma; r += q * q;
+    q = v_x[0] - 1.; r += q * q; r = sqrt(r);
+    if (r > 1e-10)
+      GMM_WARNING1("Test function evaluated with the residual " << r);
+
     return tau;
   }
 
-  template <typename S, typename VECT>
-  bool test_smooth_bifurcation(S &s, const VECT &x, double gamma,
+  template <typename CONT_S, typename VECT>
+  bool test_smooth_bifurcation(CONT_S &s, const VECT &x, double gamma,
 			       const VECT &t_x, double t_gamma) {
     double tau1 = s.tau2(), tau2 = s.tau3(),
       tau3 = test_function(s, x, gamma, t_x, t_gamma);
@@ -137,10 +137,10 @@ namespace getfem {
   }
   
 
-  template <typename S, typename VECT>
-  int test_direction(S &s, const VECT &x, double gamma,
-		   const VECT &t_x, double t_gamma,
-		   VECT &T_x, double &T_gamma, double h) {
+  template <typename CONT_S, typename VECT>
+  int test_direction(CONT_S &s, const VECT &x, double gamma,
+		     const VECT &t_x, double t_gamma,
+		     VECT &T_x, double &T_gamma, double h) {
     int res = 1;
     double Gamma, T_Gamma = T_gamma, ang;
     VECT X(x), T_X(T_x);
@@ -166,10 +166,10 @@ namespace getfem {
   }
 
 
-  template <typename S, typename VECT>
-  void init_Moore_Penrose_continuation(S &s, const VECT &x, double gamma,
-				       VECT &t_x, double &t_gamma,
-				       double &h) {
+  template <typename CONT_S, typename VECT>
+  void init_Moore_Penrose_continuation(CONT_S &s, const VECT &x,
+				       double gamma, VECT &t_x,
+				       double &t_gamma, double &h) {
     s.set_build(BUILD_ALL);
     s.clear(t_x); t_gamma = (t_gamma >= 0) ? 1. : -1.;
     if (s.noisy() > 0) cout << "computing initial tangent" << endl;
@@ -181,9 +181,9 @@ namespace getfem {
   
   /* Perform one step of the Moore-Penrose continuation. If a new point 
      (x, gamma) is found, it has to be saved in the model in the end! */
-  template <typename S, typename VECT>
-    void Moore_Penrose_continuation(S &s, VECT &x, double &gamma, VECT &t_x,
-				    double &t_gamma, double &h) {
+  template <typename CONT_S, typename VECT>
+    void Moore_Penrose_continuation(CONT_S &s, VECT &x, double &gamma,
+				    VECT &t_x, double &t_gamma, double &h) {
     bool bifurcation = false, converged, finished = false;
     int tangent_status = 0;
       /* 0: no manipulation with tangent direction so far;
@@ -316,7 +316,7 @@ namespace getfem {
 
 #ifdef GETFEM_MODELS_H__
  
-  struct S_getfem_model {
+  struct cont_struct_getfem_model {
 
     model *md;  // for real models only
     std::string parameter_name;
@@ -334,15 +334,13 @@ namespace getfem {
 
     typedef base_vector VECT;
 
-    S_getfem_model(model &m, const std::string &pn, rmodel_plsolver_type ls,
-		   double sfac, unsigned long mit = 10,
-		   unsigned long tit = 8, double mres = 1.e-6,
-		   double mdiff = 1.e-9, double mang = 0.9,
-		   double hin = 1.e-2, double hmax = 1.e-1,
-		   double hmin = 1.e-5, double hinc = 1.3,
-		   double hdec = 0.5, double eps = 1.e-8,
-		   double mress = 1.e-7, int noi = 0, double t1 = 1.e4,
-		   double t2 = 1.e4, double t3 = 1.e4)
+    cont_struct_getfem_model
+    (model &m, const std::string &pn, rmodel_plsolver_type ls, double sfac,
+     unsigned long mit = 10, unsigned long tit = 8, double mres = 1.e-6,
+     double mdiff = 1.e-9, double mang = 0.9, double hin = 1.e-2,
+     double hmax = 1.e-1, double hmin = 1.e-5, double hinc = 1.3,
+     double hdec = 0.5, double eps = 1.e-8, double mress = 1.e-7,
+     int noi = 0, double t1 = 1.e4, double t2 = 1.e4, double t3 = 1.e4)
       : md(&m), parameter_name(pn), lsolver(ls), scfac_(sfac), maxit_(mit),
 	thrit_(tit), maxres_(mres), maxdiff_(mdiff), minang_(mang),
 	h_init_(hin), h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
@@ -350,17 +348,16 @@ namespace getfem {
 	with_parametrized_data(false), build(BUILD_ALL), tau1_(t1),
 	tau2_(t2), tau3_(t3)
     {}
-
-    S_getfem_model(model &m, const std::string &pn, const std::string &in,
-		   const std::string &fn, const std::string &cn,
-		   rmodel_plsolver_type ls, double sfac,
-		   unsigned long mit = 10, unsigned long tit = 8,
-		   double mres = 1.e-6, double mdiff = 1.e-9,
-		   double mang = 0.9, double hin = 1.e-2,
-		   double hmax = 1.e-1, double hmin = 1.e-5,
-		   double hinc = 1.3, double hdec = 0.5, double eps = 1.e-8,
-		   double mress = 1.e-7, int noi = 0, double t1 = 1.e4,
-		   double t2 = 1.e4, double t3 = 1.e4)
+    
+    cont_struct_getfem_model
+    (model &m, const std::string &pn, const std::string &in,
+     const std::string &fn, const std::string &cn, rmodel_plsolver_type ls,
+     double sfac, unsigned long mit = 10, unsigned long tit = 8,
+     double mres = 1.e-6, double mdiff = 1.e-9, double mang = 0.9,
+     double hin = 1.e-2, double hmax = 1.e-1, double hmin = 1.e-5,
+     double hinc = 1.3, double hdec = 0.5, double eps = 1.e-8,
+     double mress = 1.e-7, int noi = 0, double t1 = 1.e4,
+     double t2 = 1.e4, double t3 = 1.e4)
       : md(&m), parameter_name(pn), lsolver(ls), scfac_(sfac), maxit_(mit),
 	thrit_(tit), maxres_(mres), maxdiff_(mdiff), minang_(mang),
 	h_init_(hin), h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
@@ -370,7 +367,7 @@ namespace getfem {
 	tau2_(t2), tau3_(t3)
     {}
 
-    S_getfem_model(void) {}
+    cont_struct_getfem_model(void) {}
     
 
     // Linear algebra functions
@@ -438,6 +435,7 @@ namespace getfem {
     }
 
     // solve F_x(x, gamma) * (g1|g2) = (L1|L2)
+    // can be optimised!
     void solve_grad(const VECT &x, double gamma, const VECT &L1,
 		    const VECT &L2, VECT &g1, VECT &g2) {
       update_matrix(x, gamma);
@@ -458,6 +456,7 @@ namespace getfem {
 
     
     // Misc.
+    model &linked_model(void) { return *md; }
     double scfac(void) { return scfac_; }
     unsigned long thrit(void) { return thrit_; }
     unsigned long maxit(void) { return maxit_; }

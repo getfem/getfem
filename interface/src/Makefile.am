@@ -21,6 +21,8 @@ PSEUDO_MFUNCTIONS = \
 	gf_spmat_get.cc \
 	gf_linsolve.cc \
 	gf_util.cc \
+	gf_cont_struct.cc \
+	gf_cont_struct_get.cc \
 	gf_cvstruct_get.cc \
 	gf_geotrans.cc \
 	gf_geotrans_get.cc \
@@ -93,6 +95,7 @@ libgetfemint_la_SOURCES = \
 	getfemint_pgt.cc \
 	getfemint_convex_structure.cc \
 	gfi_array.h \
+	getfemint_cont_struct.h \
 	getfemint_convex_structure.h \
 	getfemint_mesh.h \
 	getfemint_mesher_object.h \

@@ -10,42 +10,44 @@ function res = gf_typeof(gf_var)
 
   select gf_var('cid')
   case 0 then
-    res = 'gfCvStruct';
+    res = 'gfContStruct';
   case 1 then
-    res =  'gfEltm';
+    res = 'gfCvStruct';
   case 2 then
-    res = 'gfFem';
+    res =  'gfEltm';
   case 3 then
-    res = 'gfGeoTrans';
+    res = 'gfFem';
   case 4 then
-    res = 'gfGlobalFunction';
+    res = 'gfGeoTrans';
   case 5 then
-    res = 'gfInteg';
+    res = 'gfGlobalFunction';
   case 6 then
-    res = 'gfLevelSet';
+    res = 'gfInteg';
   case 7 then
-    res = 'gfMdBrick';
+    res = 'gfLevelSet';
   case 8 then
-    res = 'gfMdState';
+    res = 'gfMdBrick';
   case 9 then
-    res = 'gfMesh';
+    res = 'gfMdState';
   case 10 then
-    res = 'gfMeshFem';
+    res = 'gfMesh';
   case 11 then
-    res = 'gfMeshIm';
+    res = 'gfMeshFem';
   case 12 then
-    res = 'gfMeshLevelSet';
+    res = 'gfMeshIm';
   case 13 then
-    res = 'gfMesherObject';
+    res = 'gfMeshLevelSet';
   case 14 then
-    res = 'gfModel';
+    res = 'gfMesherObject';
   case 15 then
-    res = 'gfPrecond';
+    res = 'gfModel';
   case 16 then
-    res = 'gfSlice';
+    res = 'gfPrecond';
   case 17 then
-    res = 'gfSpmat';
+    res = 'gfSlice';
   case 18 then
+    res = 'gfSpmat';
+  case 19 then
     res = 'gfPoly';
   else
     error('wrong object ID');

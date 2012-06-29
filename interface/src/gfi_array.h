@@ -41,10 +41,11 @@
 #endif
 
 /* This is very important that the following classes respects the
-   alphabetic order. The order have to be the same than in getfem.py !!!
+   alphabetic order. The order has to be the same as in getfem.py !!!
    Do not forget to modify also 'name_of_getfemint_class_id' in getfemint.cc
 */
-typedef enum { CVSTRUCT_CLASS_ID,
+typedef enum { CONT_STRUCT_CLASS_ID,
+	       CVSTRUCT_CLASS_ID,
 	       ELTM_CLASS_ID,
 	       FEM_CLASS_ID,
 	       GEOTRANS_CLASS_ID,

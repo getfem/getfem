@@ -424,8 +424,8 @@ Description
  
 All sources are located in the :file:`interface/src` directory. The interface is
 composed of one large library ``getfemint`` (which stands for getfem
-interaction), which is acts as a layer above the |gf| library, and is used by
-both the python and matlab interfaces.
+interaction), which acts as a layer above the |gf| library, and is used by
+the python, matlab and scilab interfaces.
 
 This interface is not something that is generated automatically from c++ sources
 (as that could be the case with tools such as swig). It is something that has
@@ -480,7 +480,7 @@ Here is a list of the various files, with a short description:
   ``getfemint_mesh`` and a ``getfemint_mesh_fem``. It makes sure that no object 
   will be destroyed while there is still another getfem_object using it. The goal 
   is to make sure that under no circumstances the user is able to crash getfem 
-  (and the host program, matlab or python) by passing incorrect argument to the 
+  (and the host program, matlab, scilab or python) by passing incorrect argument to the 
   getfem interface.
 
   It also provides a kind of workspace stack, which was designed to simplify 
@@ -519,7 +519,7 @@ Here is a list of the various files, with a short description:
 
   The python interface is available as a ":file:`getfem.py`" file which is
   produced during compilation by the python script
-  ":file:`bin\extract_doc.py`".
+  ":file:`bin/extract_doc.py`".
 
 
 
@@ -529,12 +529,12 @@ Objects, methods and functions of the interface
 The main concepts manipulated by the interface are a limited number of objects
 (Fem, Mesh, MeshFem, Model ...), the associated methods and some functions defined on these objects.
 
-A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separetaly for each partsupported script langage (Python, Scilab, Matlab).
+A special effort has been done to facilitate the addition of new objects, methods and functions to the interface without doing it separetaly for each partsupported script language (Python, Scilab, Matlab).
 
 
 All the information needed to build the interface for the different objects, methods and functions is contained in the files `interface/src/gf*.cc`. A python script (`bin/extract_doc`) produces all the necessary files from the information it takes there. In particular, it produces the python file getfem.py, the matlab m-files for the different functions and objects (including subdirectories) and it also produces the automatic documentations.
 
-To make all the thing works automatically, a certain number of rules have to be respected:
+To make all the things work automatically, a certain number of rules have to be respected:
 
 
 * An object have to be defined by three files on the interface
@@ -572,10 +572,10 @@ To make all the thing works automatically, a certain number of rules have to be 
   method/function with a special syntax and also gives a description of the
   method/function which will be included in the documentations. The first
   line of this commentary is important since it will be analyzed to produce
-  the right interface for Python and Matlab.
+  the right interface for Python, Matlab and Scilab.
 
   The syntax for the description of the call of a method/function is the
-  following: After ``/\*@`` a special keyword should be present. It is either
+  following: After ``/*@`` a special keyword should be present. It is either
   ``INIT``, ``GET``, ``SET``, ``RDATTR`` or ``FUNC``. The keyword
   ``INIT`` means that
   this is the description of a constructor of an object. ``RDATTR`` is for
@@ -589,10 +589,10 @@ To make all the thing works automatically, a certain number of rules have to be 
   The parameters of the method/function are described. For a method, the
   object itself is not mentionned. The first parameter should be the method
   or sub-command name between single quotes (a speical case is when
-  this name begin with a dot this means that it correspond to a
+  this name begins with a dot; this means that it corresponds to a
   method/function where the command name is not required).
 
-  The other parameters, if any, should be declared with a type. predefined
+  The other parameters, if any, should be declared with a type. Predefined
   types are the following:
 
         - ``@CELL``   : a cell array,
@@ -613,21 +613,23 @@ To make all the thing works automatically, a certain number of rules have to be 
 
   Moreover, ``@tobj`` refers to an object defined by the interface.
   For instance, ou can refer to ``@tmesh``, ``@tmesh_fem``, ``@tfem``, etc.
-  There is some authorized abreviations:
+  There are some authorized abreviations:
 
-        - ``@tmf  for  ``@tmesh_fem``
+        - ``@tmf``  for  ``@tmesh_fem``
         - ``@tbrick``  for  ``@tmdbrick``
         - ``@tstate``  for  ``@tmdstate``
         - ``@tgt``  for  ``@tgeotrans``
         - ``@tgf``  for  ``@tglobal_function``
+	- ``@tmo``  for  ``@tmesher_object``
         - ``@tmls``  for  ``@tmesh_levelset``
+	- ``@tmim``  for  ``@tmesh_im``
         - ``@tls``  for  ``@tlevelset``
         - ``@tsl``  for  ``@tslice``
         - ``@tsp``  for  ``@tspmat``
         - ``@tpre``  for  ``@tprecond``
 
 
-  Three dots at the end of the parameter list (``...``) means that the 
+  Three dots at the end of the parameter list (``...``) mean that 
   additional parameters are possible. Optional parameters can be described
   with brackets. For instance ``/*@SET v = ('name'[, @int i])``. But
   be carreful how it is interpreted by the :file:`extract_doc` script
@@ -658,12 +660,12 @@ To make all the thing works automatically, a certain number of rules have to be 
   with the syntax ``INIT::OBJNAME('method-name', ...)``,
   ``GET::OBJNAME('method-name', ...)``, ``SET::OBJNAME('method-name', ...)``,
   ``FUNC::FUNCNAME('subcommand-name', ...)``. This will be replaced with
-  the right syntax depending on the langage (Matlab, Scilab or Python).
+  the right syntax depending on the language (Matlab, Scilab or Python).
 
-* Still in the documentations, parts for a specific langage can be added by
+* Still in the documentations, parts for a specific language can be added by
   ``@MATLAB{specific part ...}``, ``@SCILAB{specific part ...}`` and
   ``@PYTHON{specific part ...}``.
-  If a method/sub-command is specific to an interface, it cen be added,
+  If a method/sub-command is specific to an interface, it can be added,
   for instance for Matlab,
   replacing `GET` by `MATLABGET`, `FUNC` by `MATLABFUNC`, etc.
   If a specific code is needed for this additional function, it can be added
@@ -695,7 +697,7 @@ IMPORTANT. Note that the array indices start at 0 in Python and 1 in Matlab and 
 
    config::base_index()
 
-whose value is 0 in python and 1 in Matlab and Scilab have to be used to exchange indices and array of indices. Take care not to make the correction twice. Some Array of indices are automatically shifted.
+whose value is 0 in python and 1 in Matlab and Scilab has to be used to exchange indices and array of indices. Take care not to make the correction twice. Some Array of indices are automatically shifted.
 
 Adding a new object to the getfem interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -703,13 +705,13 @@ Adding a new object to the getfem interface
 In order to add a new object to the interface, you have to build the new corresponding sources :file:`gf_obj.cc`, :file:`gf_obj_get.cc` and :file:`gf_obj_set.cc`. Of course you can take the existing ones as a model.
 
 A structure name `getfemint_object_name` has to be defined (see getfemint_mesh.h for instance).
-Moreover, for the management of the object, you have to declare the class in :file:`getfemint.cc` and :file:`getfemint.h` and add the methods `is_object()`, `to_const_object()`, `to_object()` and `to_getfemint_global_function()`. You have to set its ``class_id`` in :file:`gfi_array.h` (with respect to the alphabetic order of its name).
+Moreover, for the management of the object, you have to declare the class in :file:`getfemint.cc` and :file:`getfemint.h` and add the methods `is_object()`, `to_const_object()`, `to_object()` and `to_getfemint_object()`. You have to set its ``class_id`` in :file:`gfi_array.h` (with respect to the alphabetic order of its name).
 
-You have also to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin\extract_doc` and run the configure file.
+You have also to add the call of the interface function in :file:`getfem_interface.cc` and modifiy the file :file:`bin/extract_doc` and run the configure file.
 
-The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing te object to be saved in a file and the second one is to give some informations about the object. Additionnaly, a constructor from a string is necessary to load the object from a file.
+The methods ``get('char')`` and ``get('display')`` should be defined for each object. The first one should give a string allowing the object to be saved in a file and the second one is to give some information about the object. Additionnaly, a constructor from a string is necessary to load the object from a file.
 
-For the Scilab interface the file :file:`sci_gateway\c\builder_gateway_c.sce.in` has to be modified and the file in the directory :file:`macros\overload`.
+For the Scilab interface the file :file:`sci_gateway/c/builder_gateway_c.sce.in` has to be modified and the files in the directory :file:`macros/overload`.
 
 Perspectives
 ^^^^^^^^^^^^

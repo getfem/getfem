@@ -8,60 +8,63 @@ function varargout = %objid_e(varargin)
   
   select gf_obj('cid')
   case 0 then
+    // gfContStruct
+    varargout = gf_cont_struct_get(gf_obj,other_param);
+  case 1 then
     // gfCvStruct
     varargout = gf_cvstruct_get(gf_obj,other_param);
-  case 1 then
+  case 2 then
     // gfEltm
     // No gf_eltm_get function
-  case 2 then
+  case 3 then
     // gfFem
     varargout = gf_fem_get(gf_obj,other_param);
-  case 3 then
+  case 4 then
     // gfGeoTrans
     varargout = gf_geotrans_get(gf_obj,other_param);
-  case 4 then
+  case 5 then
     // gfGlobalFunction
     varargout = gf_global_function_get(gf_obj,other_param);
-  case 5 then
+  case 6 then
     // gfInteg
     varargout = gf_integ_get(gf_obj,other_param);
-  case 6 then
+  case 7 then
     // gfLevelSet
     varargout = gf_levelset_get(gf_obj,other_param);
-  case 7 then
+  case 8 then
     // gfMdBrick
     varargout = gf_mdbrick_get(gf_obj,other_param);
-  case 8 then
+  case 9 then
     // gfMdState
     varargout = gf_mdstate_get(gf_obj,other_param);
-  case 9 then
+  case 10 then
     // gfMesh
     varargout = gf_mesh_get(gf_obj,other_param);
-  case 10 then
+  case 11 then
     // gfMeshFem
     varargout = gf_mesh_fem_get(gf_obj,other_param);
-  case 11 then
+  case 12 then
     // gfMeshIm
     varargout = gf_mesh_im_get(gf_obj,other_param);
-  case 12 then
+  case 13 then
     // gfMeshLevelSet
     varargout = gf_mesh_levelset_get(gf_obj,other_param);
-  case 13 then
+  case 14 then
     // gfMesherObject
     varargout = gf_mesher_object_get(gf_obj,other_param);
-  case 14 then
+  case 15 then
     // gfModel
     varargout = gf_model_get(gf_obj,other_param);
-  case 15 then
+  case 16 then
     // gfPrecond
     varargout = gf_precond_get(gf_obj,other_param);
-  case 16 then
+  case 17 then
     // gfSlice
     varargout = gf_slice_get(gf_obj,other_param);
-  case 17 then
+  case 18 then
     // gfSpmat
     varargout = gf_spmat_get(gf_obj,other_param);
-  case 18 then
+  case 19 then
     // gfPoly
     // No gf_poly_get function
   else

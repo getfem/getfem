@@ -481,8 +481,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-
-
     /*@FUNC E = ('init Moore-Penrose continuation', @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar sc_fac, @scalar init_dir[, ...])
     Initialise the Moore-Penrose continuation (for more details about the
     continuation see the Getfem++ user documentation): The variable
@@ -571,18 +569,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (md->model().is_complex())
          THROW_BADARG("Sorry, Moore-Penrose continuation "
                       "has only a real version.");
-
-       getfem::S_getfem_model S;
+       
+       getfem::cont_struct_getfem_model S;
        if (with_parametrized_data) {
-          getfem::S_getfem_model S1
-           (md->model(), dataname_parameter, dataname_init, dataname_final,
+	 getfem::cont_struct_getfem_model S1
+	    (md->model(), dataname_parameter, dataname_init, dataname_final,
             dataname_current,
             getfem::rselect_linear_solver(md->model(), lsolver), scfac,
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
 	    h_inc, h_dec, epsilon, maxres_solve, noisy);
           S = S1;
        }  else {
-         getfem::S_getfem_model S1
+         getfem::cont_struct_getfem_model S1
            (md->model(), dataname_parameter,
             getfem::rselect_linear_solver(md->model(), lsolver), scfac,
             maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
@@ -775,9 +773,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
                    "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
 
-       getfem::S_getfem_model S;
+       getfem::cont_struct_getfem_model S;
        if (with_parametrized_data) {
-         getfem::S_getfem_model S1
+         getfem::cont_struct_getfem_model S1
            (md->model(), dataname_parameter, dataname_init, dataname_final,
             dataname_current,
             getfem::rselect_linear_solver(md->model(), lsolver), scfac,
@@ -786,7 +784,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          S = S1;
        }
        else {
-         getfem::S_getfem_model S1
+         getfem::cont_struct_getfem_model S1
            (md->model(), dataname_parameter,
             getfem::rselect_linear_solver(md->model(), lsolver), scfac,
             maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,

@@ -17,4 +17,5 @@ gfPrecond        = gf_precond;
 gfLevelSet       = gf_levelset;
 gfMeshLevelSet   = gf_mesh_levelset;
 gfMesherObject   = gf_mesher_object;
+gfContStruct  	 = gf_cont_struct;
 gfGlobalFunction = gf_global_function;

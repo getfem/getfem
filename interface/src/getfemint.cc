@@ -43,6 +43,7 @@
 #include <getfemint_mesh_levelset.h>
 #include <getfemint_global_function.h>
 #include <getfemint_mesher_object.h>
+#include <getfemint_cont_struct.h>
 
 #include <getfemint_misc.h>
 //#ifdef MAINTAINER_MODE
@@ -64,6 +65,7 @@ namespace getfemint {
   */
   const char *name_of_getfemint_class_id(unsigned cid) {
     static const char *cname[GETFEMINT_NB_CLASS] = {
+      "gfContStruct",
       "gfCvStruct",
       "gfEltm",
       "gfFem",
@@ -407,6 +409,15 @@ namespace getfemint {
   }
 
   bool
+  mexarg_in::is_cont_struct() {
+    id_type id, cid;
+    if (is_object_id(&id, &cid) && cid == CONT_STRUCT_CLASS_ID) {
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
+      return (object_is_cont_struct(o));
+    } else return false;
+  }
+
+  bool
   mexarg_in::is_gsparse() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == GSPARSE_CLASS_ID) {
@@ -729,6 +740,33 @@ namespace getfemint {
   const getfem::mesher_signed_distance *
   mexarg_in::to_const_mesher_object() {
     return &to_getfemint_mesher_object(false)->mesher_object();
+  }
+
+  /*
+    check if the argument is a valid handle to a cont_struct,
+    and return it
+  */
+  getfemint_cont_struct *
+  mexarg_in::to_getfemint_cont_struct(bool writeable) {
+    id_type id, cid;
+    to_object_id(&id,&cid);
+    if (cid != CONT_STRUCT_CLASS_ID) {
+      THROW_BADARG("argument " << argnum << " should be a cont_struct " <<
+                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
+    }
+    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
+    error_if_nonwritable(o, writeable);
+    return object_to_cont_struct(o);
+  }
+
+  const getfem::cont_struct_getfem_model *
+  mexarg_in::to_const_cont_struct() {
+    return &to_getfemint_cont_struct(false)->cont_struct();
+  }
+
+  getfem::cont_struct_getfem_model *
+  mexarg_in::to_cont_struct() {
+    return &to_getfemint_cont_struct(true)->cont_struct();
   }
 
 
