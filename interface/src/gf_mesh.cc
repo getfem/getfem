@@ -24,6 +24,7 @@
 #include <getfemint_mesh.h>
 #include <getfem/getfem_import.h>
 #include <getfem/getfem_regular_meshes.h>
+#include <getfem/getfem_mesher.h>
 
 using namespace getfemint;
 
