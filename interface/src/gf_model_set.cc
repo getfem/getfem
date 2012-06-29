@@ -772,7 +772,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     function has an undefined behavior.@*/
     sub_command
       ("change penalization coeff", 2, 2, 0, 0,
-       size_type ind_brick = in.pop().to_integer();
+       size_type ind_brick = in.pop().to_integer() - config::base_index();
        double coeff = in.pop().to_scalar();
        getfem::change_penalization_coeff(md->model(), ind_brick, coeff);
        );
@@ -1740,7 +1740,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Can be used to set the BN matrix of a basic contact/friction brick. @*/
      sub_command
        ("contact brick set BN", 2, 2, 0, 0,
-        size_type ind = in.pop().to_integer();
+        size_type ind = in.pop().to_integer() - config::base_index();
         dal::shared_ptr<gsparse> B = in.pop().to_sparse();
 
         if (B->is_complex())
@@ -1762,7 +1762,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       friction brick. @*/
      sub_command
        ("contact brick set BT", 2, 2, 0, 0,
-        size_type ind = in.pop().to_integer();
+        size_type ind = in.pop().to_integer() - config::base_index();
         dal::shared_ptr<gsparse> B = in.pop().to_sparse();
 
         if (B->is_complex())
@@ -2156,6 +2156,71 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           workspace().set_dependance(md, gfi_mim2);
         out.pop().from_integer(int(ind + config::base_index()));
         );
+
+     /*@SET ind = ('add integral large sliding contact brick',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)
+       (still experimental brick)
+       Add a large sliding contact with friction brick to the model.
+       This brick is able to deal with auto-contact, contact between
+       several deformable bodies and contact with rigid obstacles.
+       The condition is applied on the variable `varname_u` on the
+       boundary corresponding to `region`. `dataname_r` is the augmentation
+       parameter of the augmented Lagrangian. `dataname_friction_coeff`
+       is the friction coefficient. `mim` is an integration method on the
+       boundary. `varname_u` is the variable on which the contact condition 
+       will be prescribed (should be of displacement type). `multname` is 
+       a multiplier defined on the boundary which will represent the contact
+       force. If no additional boundary or rigid
+       obstacle is added, only auto-contact will be detected. Use
+       `add_boundary_to_large_sliding_contact_brick` and
+       `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
+       boundaries and rigid obstacles. @*/
+     sub_command
+       ("add integral large sliding contact brick", 6, 6, 0, 1,
+
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u = in.pop().to_string();
+        std::string multname = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+        std::string dataname_fr = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+        
+        size_type  ind = getfem::add_integral_large_sliding_contact_brick
+            (md->model(), gfi_mim->mesh_im(), varname_u, multname, dataname_r,
+             dataname_fr, region);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+     /*@SET ind = ('add boundary to large sliding contact brick',  @int indbrick, @tmim mim, @str varname_u, @str multname, @int rg)
+       Add a contact boundary to an existing large sliding contact brick.
+      `indbrick` is the brick index. @*/
+     sub_command
+       ("add boundary to large sliding contact brick", 5, 5, 0, 0,
+
+        size_type indbrick = in.pop().to_integer() - config::base_index();
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+	std::string varname_u = in.pop().to_string();
+        std::string multname = in.pop().to_string();
+        size_type region = in.pop().to_integer();
+        
+	getfem::add_boundary_to_large_sliding_contact_brick
+	(md->model(), indbrick, gfi_mim->mesh_im(), varname_u,multname,region);
+        );
+
+
+     /*@SET ind = ('add rigid obstacle to large sliding contact brick',  @int indbrick, @str obs)
+       Add a rigid obstacle to an existing large sliding contact brick.
+      `indbrick` is the brick index, `obs` is the expression of a
+      function which should be closed to a signed distance to the obstacle. @*/
+     sub_command
+       ("add rigid obstacle to large sliding contact brick", 2, 2, 0, 0,
+	
+        size_type indbrick = in.pop().to_integer() - config::base_index();
+	std::string obs = in.pop().to_string();
+        
+	getfem::add_rigid_obstacle_to_large_sliding_contact_brick
+	(md->model(), indbrick, obs);
+        );
+
 
   }
 

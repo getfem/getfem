@@ -133,8 +133,7 @@ namespace getfem {
     { md.to_variables(state); md.assembly(model::BUILD_PSEUDO_POTENTIAL); }
 
     void perturbation(void) {
-      R res = gmm::vect_norm2(state), ampl = res * R(1E-20);
-      if (res == R(0)) ampl = R(1E-50);
+      R res = gmm::vect_norm2(state), ampl = std::max(res*R(1E-20), R(1E-50));
       std::vector<R> V(gmm::vect_size(state));
       gmm::fill_random(V);
       gmm::add(gmm::scaled(V, ampl), state);

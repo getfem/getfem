@@ -665,7 +665,7 @@ namespace getfem {
       `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
       boundaries and rigid obstacles.
   */
-  size_type add_large_sliding_integral_contact_brick
+  size_type add_integral_large_sliding_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_r,
    const std::string &dataname_friction_coeff, size_type region);

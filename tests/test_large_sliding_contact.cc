@@ -55,6 +55,63 @@ typedef getfem::modeling_standard_plain_vector  plain_vector;
 
 
 
+
+
+base_small_vector normal_vect(base_matrix A, base_small_vector n0) {
+  base_small_vector n = n0;
+  gmm::lu_inverse(A);
+  gmm::mult(gmm::transposed(A), n0, n);
+  n /= gmm::vect_norm2(n);
+  return n;
+}
+
+
+
+base_small_vector grad_normal_vect(base_matrix A, base_small_vector n0, base_matrix Dir) {
+
+  base_small_vector d = n0, d2 = n0;
+  base_small_vector n = normal_vect(A, n0);
+
+  gmm::lu_inverse(A);
+  gmm::mult(gmm::transposed(Dir), n, d);
+  gmm::mult(gmm::transposed(A), gmm::scaled(d, -1.), d2);
+  gmm::add(d2, gmm::scaled(n, -gmm::vect_sp(d2, n)), d);
+  return d;
+}
+
+
+void grad_normal_test(void) {
+
+  size_type N = 3;
+  base_small_vector n0(N), grad1(N), grad2(N);
+  base_matrix dir(N, N), x(N, N);
+  scalar_type EPS = 1E-8;
+  
+  
+  for (size_type i = 0; i < 1000; ++i) {
+    // The normal vector n is not supposed to be unitary
+    gmm::fill_random(x); gmm::fill_random(dir); gmm::fill_random(n0);
+    
+    
+    base_matrix xe = x;
+    gmm::add(gmm::scaled(dir, EPS), xe);
+    
+    base_small_vector n1 = normal_vect(x, n0);
+    base_small_vector n2 = normal_vect(xe, n0);
+    grad1 = (n2-n1)/EPS;
+    grad2 = grad_normal_vect(x, n0, dir);
+    
+    scalar_type err = gmm::vect_norm2(grad1 - grad2);
+
+    // cout << "grad1 = " << grad1 << "grad2 = " << grad2 << endl;
+    // cout << "test " << i << " err = " << err << endl; getchar();
+    GMM_ASSERT1(err < 4e-6, "Erroneous gradient of normal vector ");
+  }
+}
+
+
+
+
 // Test the validity of the two gradients of the De Saxce's projection
 void De_Saxce_projection_test(void) {
 
@@ -89,10 +146,8 @@ void De_Saxce_projection_test(void) {
     getfem::De_Saxce_projection_grad(x, n, f, g);
     gmm::mult(g, dir, grad2);
     err = gmm::vect_norm2(grad1 - grad2);
-    GMM_ASSERT1(err < 1e-6, "Erroneous gradient of De Saxcé projection"); 
-    
+    GMM_ASSERT1(err < 1e-6, "Erroneous gradient of De Saxcé projection");
   }
-
 }
 
 
@@ -210,7 +265,7 @@ void contact_problem::init(void) {
   dal::bit_vector dol1 = mf_lambda1.basic_dof_on_region(CONTACT_BOUNDARY1);
   mf_lambda1.reduce_to_basic_dof(dol1);
   dal::bit_vector dol2 = mf_lambda2.basic_dof_on_region(CONTACT_BOUNDARY2);
-  mf_lambda1.reduce_to_basic_dof(dol2);
+  mf_lambda2.reduce_to_basic_dof(dol2);
 }
 
 
@@ -218,9 +273,9 @@ void contact_problem::init(void) {
 void test_tangent_matrix(getfem::model &md) {
 
   size_type nbdof = md.nb_dof();
-  scalar_type EPS = 1E-5;
+  scalar_type EPS = 1E-6;
   scalar_type errmax = scalar_type(0);
-  size_type NN = 10;
+  size_type NN = 5;
   scalar_type scale = 0.0001;
 
 
@@ -246,22 +301,24 @@ void test_tangent_matrix(getfem::model &md) {
 	scalar_type r = (D1[j] - D2[j]) / (gmm::abs(D1[j]) + 1E-10);
 	ratio = std::max(ratio, r);
 	if (r > 0.01) {
-	  cout << "WARNING, ratio " << r << " D1 = "
-	       << D1[j] << " D2 = " << D2[j] << endl; getchar();
+	  cout << "WARNING, ratio " << r << " j = " << j << " D1 = "
+	       << D1[j] << " D2 = " << D2[j] << " D1[j-1] = " << D1[j-1]
+	       << " D1[j+1] = " << D1[j+1] << endl; // getchar();
 	}
       }
       
 
       gmm::add(gmm::scaled(D1, -1.), D2, Ddiff);
       gmm::clean(Ddiff, 1E-9); // à enlever ?
-      cout << "Ddiff = " << Ddiff << endl;
-      cout << "norminf(Ddiff) = " << gmm::vect_norminf(Ddiff) << endl;
-      cout << "D1 = " << gmm::sub_vector(D1, gmm::sub_interval(0, 300)) << endl;
-      cout << "D2 = " << gmm::sub_vector(D2, gmm::sub_interval(0, 300)) << endl;
-      cout << "norm(D1) = " << gmm::vect_norm2(D1)
-	   << " norm(D2) = " << gmm::vect_norm2(D2) << endl;
-      cout << "Max ratio " << ratio << endl;
-      cout << "Error at step " << i << " : " << err << endl; getchar();
+      // cout << "Ddiff = " << Ddiff << endl;
+      // cout << "norminf(Ddiff) = " << gmm::vect_norminf(Ddiff) << endl;
+      // cout << "D1 = " << gmm::sub_vector(D1, gmm::sub_interval(0, 300)) << endl;
+      // cout << "D2 = " << gmm::sub_vector(D2, gmm::sub_interval(0, 300)) << endl;
+      // cout << "norm(D1) = " << gmm::vect_norm2(D1)
+      //   << " norm(D2) = " << gmm::vect_norm2(D2) << endl;
+      // cout << "Max ratio " << ratio << endl;
+      // cout << "Error at step " << i << " : " << err << endl; // getchar();
+      GMM_ASSERT1(err < 1e-6, "Erroneous tangent matrix");
       errmax = std::max(err, errmax);
     }
   }
@@ -338,12 +395,12 @@ void contact_problem::solve(void) {
   // Contact brick.
   model.add_initialized_scalar_data("r", R);
   model.add_initialized_scalar_data("f", friction_coef);
-  size_type indb = add_large_sliding_integral_contact_brick
-    (model, mim1, "u2", "lambda2", "r", "f", CONTACT_BOUNDARY2);
+  size_type indb = add_integral_large_sliding_contact_brick
+    (model, mim2, "u2", "lambda2", "r", "f", CONTACT_BOUNDARY2);
 
   if (two_bodies) 
     getfem::add_boundary_to_large_sliding_contact_brick
-      (model, indb, mim2, "u1", "lambda1", CONTACT_BOUNDARY1);
+      (model, indb, mim1, "u1", "lambda1", CONTACT_BOUNDARY1);
   
   getfem::add_rigid_obstacle_to_large_sliding_contact_brick(model, indb, "y");
 
@@ -353,6 +410,11 @@ void contact_problem::solve(void) {
 
   gmm::iteration iter(residual, 1, 40000);
   getfem::standard_solve(model, iter);
+  
+//   gmm::col_matrix<gmm::wsvector<double> > T(model.nb_dof(), model.nb_dof());
+//   gmm::copy(model.real_tangent_matrix(), T);
+//   gmm::clean(T, 1E-10);
+//   cout << T << endl;
 
 }
 
@@ -369,10 +431,10 @@ int main(int argc, char *argv[]) {
 
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
-  FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
+  // FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
 
   De_Saxce_projection_test();
-
+  grad_normal_test();
 
   contact_problem p;
   p.PARAM.read_command_line(argc, argv);

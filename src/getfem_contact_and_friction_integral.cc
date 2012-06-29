@@ -3377,11 +3377,6 @@ namespace getfem {
     ctxl.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
     GMM_ASSERT1(!(std::isnan(lambda[0])), "internal error");
 
-    bool TERM1 = true;
-    bool TERM2 = true;
-
-    if (TERM1) {
-    
     // Tangent term -(1/r)\int \delta\lambda.\mu
     if (version & model::BUILD_MATRIX) {
       gmm::resize(Melem, cvnbdofl, cvnbdofl); gmm::clear(Melem);
@@ -3390,14 +3385,11 @@ namespace getfem {
 	  if (i%N == j%N) Melem(i,j) = -tl[i/N]*tl[j/N]*weight/r;
       mat_elem_assembly(cf.LL_matrix(boundary_num, boundary_num),
 			Melem, mfl, cv, mfl, cv);
-    }    
     }
     
     // Rhs term (1/r)\int (\lambda - P(\zeta)).\mu
     // Unstabilized frictionless case for the moment
     if (state) gmm::add(lambda, gmm::scaled(n, r*d0), zeta);
-
-    if (TERM1) {
     if (version & model::BUILD_RHS) {
       gmm::clear(vv);
       if (state) {
@@ -3410,7 +3402,6 @@ namespace getfem {
       for (size_type i = 0; i < cvnbdofl; ++i)
 	Velem[i] = (tl[i/N] * vv[i%N])*weight/r;
       vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
-    }
     }
     
     if (state) {
@@ -3446,7 +3437,6 @@ namespace getfem {
 	gmm::mult(gmm::transposed(gradinv_y0), n0_y0s[ibound], ntilde_y0); // (not unit) normal vector
       }
       
-      if (TERM2) {
       // Rhs term \int \lambda.(\psi(x_0) - \psi(y_0))
       if (version & model::BUILD_RHS) {
 	gmm::resize(Velem,  cvnbdofu);gmm::clear(Velem);
@@ -3461,10 +3451,8 @@ namespace getfem {
 	  vec_elem_assembly(cf.U_vector(boundary_num_y0), Velem, mfu_y0,cv_y0);
 	}
       }	
-      }
       
       if (version & model::BUILD_MATRIX) {
-	if (TERM2) {
 	// Tangent term \int (\delta \lambda).(\psi(y_0) - \psi(x_0))
 	gmm::resize(Melem, cvnbdofu, cvnbdofl); gmm::clear(Melem);
 	for (size_type i = 0; i < cvnbdofu; ++i)
@@ -3481,9 +3469,6 @@ namespace getfem {
 	  mat_elem_assembly(cf.UL_matrix(boundary_num_y0, boundary_num),
 			    Melem, mfu_y0, cv_y0, mfl, cv);
 	}
-	}
-       
-	if (TERM1) {
 	
 	// Tangent term \int \lambda.((\nabla \psi(y_0))(I+\nabla u(y_0))^{-1}(\delta u(x_0) - \delta u(y_0)))
 	if (state == 1) {
@@ -3555,8 +3540,8 @@ namespace getfem {
 	
 	
 	// Tangent term (1/r)\int \nabla_n P(zeta) (dn/du)(\delta u) . \mu
-	// On peut certainement factoriser d'avantage ce terme avec le précédent.
-	// Attendre la version avec frottement.
+	// On peut certainement factoriser d'avantage ce terme avec le
+	// précédent. Attendre la version avec frottement.
 	De_Saxce_projection_gradn(zeta, n, scalar_type(0), grad);
 	gmm::mult(gradinv, gmm::transposed(grad), gradaux);
 	gmm::mult(grad, n, vv);
@@ -3575,7 +3560,6 @@ namespace getfem {
 	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
 			  Melem, mfl, cv, mfu, cv);
       }
-      }
     }
   }
 
@@ -3583,7 +3567,7 @@ namespace getfem {
   // 3)- Large sliding contact brick
   //=========================================================================
 
-  struct large_sliding_integral_contact_brick : public virtual_brick {
+  struct integral_large_sliding_contact_brick : public virtual_brick {
 
     
     struct contact_boundary {
@@ -3629,8 +3613,8 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const;
 
-    large_sliding_integral_contact_brick() {
-      set_flags("Large sliding integral contact brick",
+    integral_large_sliding_contact_brick() {
+      set_flags("Integral large sliding contact brick",
                 false /* is linear*/, false /* is symmetric */,
                 false /* is coercive */, true /* is real */,
                 false /* is complex */);
@@ -3641,7 +3625,7 @@ namespace getfem {
 
 
 
-  void large_sliding_integral_contact_brick::asm_real_tangent_terms
+  void integral_large_sliding_contact_brick::asm_real_tangent_terms
   (const model &md, size_type /* ib */, const model::varnamelist &vl,
    const model::varnamelist &dl, const model::mimlist &/* mims */,
    model::real_matlist &matl, model::real_veclist &vecl,
@@ -3655,10 +3639,10 @@ namespace getfem {
     build_contact_frame(md, cf);
     
     size_type Nvar = vl.size(), Nu = cf.Urhs.size(), Nl = cf.Lrhs.size();
-    GMM_ASSERT1(Nvar == Nu+Nl, "Wrong size of variable list for large "
-		"sliding integral contact brick");
+    GMM_ASSERT1(Nvar == Nu+Nl, "Wrong size of variable list for integral "
+		"large sliding contact brick");
     GMM_ASSERT1(matl.size() == Nvar*Nvar, "Wrong size of terms for "
-		"large sliding integral contact brick");
+		"integral large sliding contact brick");
     
     if (version & model::BUILD_MATRIX) {
       for (size_type i = 0; i < Nvar; ++i)
@@ -3678,8 +3662,8 @@ namespace getfem {
     }
     
     // Data : r, [friction_coeff,]
-    GMM_ASSERT1(dl.size() == 2, "Wrong number of data for large sliding "
-		"integral contact brick");
+    GMM_ASSERT1(dl.size() == 2, "Wrong number of data for integral large "
+		"sliding contact brick");
     
     const model_real_plain_vector &vr = md.real_variable(dl[0]);
     GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
@@ -3733,13 +3717,13 @@ namespace getfem {
   // r ne peut pas être variable pour le moment.
   // dataname_friction_coeff ne peut pas être variable non plus ...
 
-  size_type add_large_sliding_integral_contact_brick
+  size_type add_integral_large_sliding_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_r,
    const std::string &dataname_friction_coeff, size_type region) {
 
-    large_sliding_integral_contact_brick *pbr
-      = new large_sliding_integral_contact_brick();
+    integral_large_sliding_contact_brick *pbr
+      = new integral_large_sliding_contact_brick();
     
     pbr->add_boundary(varname_u, multname, mim, region);
 
@@ -3766,8 +3750,8 @@ namespace getfem {
     dim_type N = md.mesh_fem_of_variable(varname_u).linked_mesh().dim();
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
-    large_sliding_integral_contact_brick *p
-      = dynamic_cast<large_sliding_integral_contact_brick *>
+    integral_large_sliding_contact_brick *p
+      = dynamic_cast<integral_large_sliding_contact_brick *>
       (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
     p->add_boundary(varname_u, multname, mim, region);
@@ -3800,8 +3784,8 @@ namespace getfem {
   (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionaly represented by a rigid motion only ... the velocity should be modifiable ...
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
-     large_sliding_integral_contact_brick *p
-       = dynamic_cast<large_sliding_integral_contact_brick *>
+     integral_large_sliding_contact_brick *p
+       = dynamic_cast<integral_large_sliding_contact_brick *>
        (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
     p->add_obstacle(obs);

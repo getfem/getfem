@@ -50,6 +50,7 @@ EXTRA_DIST= \
 	demo_fictitious_domains.m \
 	demo_fictitious_domains_laplacian.m \
 	demo_static_contact.m \
+	demo_large_sliding_contact.m \
 	demo_wave2D.m \
 	demo_wave2D_alt.m \
 	demo_wave_equation.m \
