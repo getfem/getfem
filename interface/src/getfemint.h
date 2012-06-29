@@ -41,18 +41,20 @@
 #include <getfem/getfem_mesh_fem.h>
 #include <gfi_array.h>
 #include <getfem/dal_shared_ptr.h>
-#include <getfem/getfem_mat_elem_type.h>
-#include <getfem/getfem_mesh_fem_global_function.h>
-#include <getfem/getfem_mesher.h>
-#include <getfem/getfem_continuation.h>
+
 
 namespace getfem {
   class stored_mesh_slice;
   class mesh;
   class mesh_fem;
   class mat_elem_type;
+  typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
   class level_set;
   class mesh_level_set;
+  class cont_struct_getfem_model;
+
+  class abstract_xy_function;
+  class mesher_signed_distance;
 }
 
 namespace getfemint

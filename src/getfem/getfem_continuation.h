@@ -29,8 +29,8 @@
 ===========================================================================*/
 
 /** @file getfem_continuation.h
-    @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @author Tomas Ligursky <tomas.ligursky@gmail.com>
+    @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @date October 17, 2011.
     @brief (approximate) Moore-Penrose (also called Gauss-Newton) continuation method.
 

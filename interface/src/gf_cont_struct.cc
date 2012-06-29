@@ -21,7 +21,9 @@
 
 #include <getfemint.h>
 #include <getfemint_workspace.h>
+#include <getfemint_models.h>
 #include <getfemint_cont_struct.h>
+
 
 using namespace getfemint;
 
