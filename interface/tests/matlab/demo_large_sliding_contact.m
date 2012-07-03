@@ -18,9 +18,9 @@ gf_workspace('clear all');
 clear all;
 
 lambda = 1.; mu = 1.;   % Elasticity parameters
-r = 1.0;                % Augmentation parameter
+r = 1000.0;                % Augmentation parameter
 f_coeff = 1.;           % Friction coefficient
-vf = 5.;                % Vertical force
+vf = 10.;                % Vertical force
 
 mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
 mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
@@ -88,7 +88,10 @@ gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y')
 % gf_model_get(md, 'test tangent matrix', 1E-6, 10, 0.00001);
 
 
-gf_model_get(md, 'solve', 'noisy', 'max_iter', 100, 'max_res', 1e-10); % , 'lsearch', 'simplest');
+
+for i=1:30
+
+gf_model_get(md, 'solve', 'noisy', 'max_iter', 10, 'max_res', 1e-10); % , 'lsearch', 'simplest');
 
 
 if (two_bodies) 
@@ -105,6 +108,9 @@ VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 gf_plot(mfvm2,VM2,'mesh','off', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
 hold off;
 
+pause;
+
+end;
 
 
 

@@ -3068,9 +3068,9 @@ namespace getfem {
 	    pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
 	    gmm::add(gmm::identity_matrix(), grad);
 	    scalar_type J = gmm::lu_inverse(grad);
-	    if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
+	    if (J <= scalar_type(0)) GMM_WARNING1("Inverted element ! " << J);
 	    gmm::mult(gmm::transposed(grad), n0, n);
-	    n /= gmm::vect_norm2(n);
+	    n /= gmm::vect_norm2(n) * gmm::sgn(J);
 	    n_mean += n;
 	    ++nb_pt_on_face;
 	  }
@@ -3145,7 +3145,7 @@ namespace getfem {
     scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une résolution...
     if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
     gmm::mult(gmm::transposed(gradinv), n0, n);
-    n /= gmm::vect_norm2(n);
+    n /= gmm::vect_norm2(n) * gmm::sgn(J);
     
     // ----------------------------------------------------------
     // Selection of influence boxes
@@ -3165,7 +3165,7 @@ namespace getfem {
     for (; it != bset.end(); it = itnext) {
       itnext = it; ++itnext;
       if (gmm::vect_sp(unit_normal_of_elements[(*it)->id], n)
-	  >= scalar_type(0)) bset.erase(it);
+	  >= -scalar_type(1)/scalar_type(20)) bset.erase(it);
     }
     
     if (noisy)
@@ -3269,13 +3269,31 @@ namespace getfem {
       
       base_node y0 = ctx_y0.xreal();
       base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
+      n0_y0 *= gmm::sgn(ctx_y0.J());
       scalar_type d0
 	= pgt_y0->convex_ref()->is_in_face(short_type(face_y0), y0_ref)
-	/ gmm::vect_norm2(n0_y0); // vérifier la cohérence
+	/ gmm::vect_norm2(n0_y0);
+
+     // calcul alternatif de d0 ... doit être amélioré pour les bords courbes ...
+      scalar_type d1 = 1E300;
+      for (size_type k = 0;
+	   k<pgt_y0->structure()->nb_points_of_face(short_type(face_y0)); ++k)
+	d1 = std::min(d1, gmm::vect_dist2(y0, m.points_of_face_of_convex(cv_y0, short_type(face_y0))[k]));
+
+
+      size_type iptf = m.ind_points_of_face_of_convex(cv_y0, short_type(face_y0))[0];
+      base_node ptf = y0 - m.points()[iptf];
+      scalar_type d0p = gmm::vect_sp(ptf, n0_y0) / gmm::vect_norm2(n0_y0);
+      
+      
+      
+      cout << "gmm::vect_norm2(n0_y0) = " << gmm::vect_norm2(n0_y0) << endl;
       // Eliminates wrong auto-contact situations
+      cout << "autocontact status : x0 = " << x0 << " y0 = " << y0 << "  " <<  gmm::vect_dist2(y0, x0) << " : " << d0*0.75 << " : " << d0p*0.75 << " : " << d1 << endl;
+      cout << "n = " << n << " unit_normal_of_elements[(*it)->id] = " << unit_normal_of_elements[(*it)->id] << endl;
       if (d0 < scalar_type(0) && &(U_y0) == &U
-	  && gmm::vect_dist2(y0, x0) < -d0 / scalar_type(3)) {
-	if (noisy) cout << "Eliminated x0 = " << x0 << " y0 = " << y0
+	  && gmm::vect_dist2(y0, x0) < -d0 * scalar_type(3)/scalar_type(4)) {
+	/*if (noisy) */ cout << "Eliminated x0 = " << x0 << " y0 = " << y0
 			<< " d0 = " << d0 << endl;
 	continue;
       }
@@ -3336,21 +3354,27 @@ namespace getfem {
     // ----------------------------------------------------------
     
     
-    if (noisy) cout  << "Point : " << x0 << " of boundary " << boundary_num
-		     << " state = " << int(state);
+    //if (noisy)
+    if (state == 1) {
+      cout  << "Point : " << x0 << " of boundary " << boundary_num
+	    << " and element " << cv << " state = " << int(state);
+      if (version & model::BUILD_RHS) cout << " RHS";
+      if (version & model::BUILD_MATRIX) cout << " MATRIX";
+    }
     if (state == 1) {
       size_type nbo = boundary_of_elements[elt_nums[ibound]];
       const mesh_fem &mfu_y0 = cf.mfu_of_boundary(nbo);
       const mesh &m = mfu_y0.linked_mesh();
       size_type icv = ind_of_elements[elt_nums[ibound]];
       
-      if (noisy) cout << " y0 = " << y0s[ibound] << " of element "
-		      << icv  << " of boundary " << nbo << endl;
+      /* if (noisy) */ cout << " y0 = " << y0s[ibound] << " of element "
+			    << icv  << " of boundary " << nbo << endl;
       for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
-	if (noisy) cout << "point " << k << " : "
+	/* if (noisy) */ cout << "point " << k << " : "
 			<< m.points()[m.ind_points_of_convex(icv)[k]] << endl;
     }
-    if (noisy) cout << " d0 = " << d0 << endl;
+    /* if (noisy) */  if (state == 1) cout << " d0 = " << d0 << endl;
+    if (state == 1 && (version & model::BUILD_MATRIX)) GMM_ASSERT1(false, "oups");
     
     // ----------------------------------------------------------
     // Add the contributions to the tangent matrices and rhs
