@@ -101,7 +101,7 @@ drawnow;
 
 // continue from the initial point
 for step = 1:nbstep
-  sleep(1000);
+  //sleep(1000);
   printf('\nbeginning of step %d\n', step);
   [T_U, T_lambda, h] = gf_cont_struct_get(S, 'Moore-Penrose continuation', T_U, T_lambda, h);
   if (h == 0) then

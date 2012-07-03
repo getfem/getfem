@@ -99,27 +99,27 @@ namespace getfem {
   }
 
 
-  /* Compute the test function for bifurcations corresponding to the system
-     where the augmented Jacobian is bordered by b = c = e_1, d = 0. */
   template <typename CONT_S, typename VECT>
   double test_function(CONT_S &S, const VECT &x, double gamma,
 		       const VECT &t_x, double t_gamma) {
     double q, r, v_gamma, tau;
-    VECT b_x(x), g(x), v_x(x), y(x), z(x);
+    VECT g(x), v_x(x), y(x), z(x);
 
     if (S.noisy() > 1) cout << "starting computing test function" << endl;
-    S.clear(b_x); b_x[0] = 1.;
     S.F_gamma(x, gamma, g);
-    S.solve_grad(x, gamma, g, b_x, y, z);
-    v_gamma = S.sp(t_x, z) / (S.sp(t_x, y) - t_gamma);
+    S.solve_grad(x, gamma, g, S.b_x(), y, z);
+    v_gamma = (S.b_gamma() - S.sp(t_x, z)) / (t_gamma - S.sp(t_x, y));
     S.scaled_add(z, y, -v_gamma, v_x);
-    tau = -1. / v_x[0]; S.scale(v_x, -tau); v_gamma *= -tau;
+    tau = 1. / (S.d() - S.sp(S.c_x(), v_x) - S.c_gamma() * v_gamma);
+    S.scale(v_x, -tau); v_gamma *= -tau;
 
+    // evaluate the norm of the residual for control
     S.mult_grad(x, gamma, v_x, y);
-    S.scaled_add(y, g, v_gamma, y); y[0] += tau;
+    S.scaled_add(y, g, v_gamma, y); S.scaled_add(y, S.b_x(), tau, y); 
     r = S.sp(y, y);
-    q = S.sp(t_x, v_x) + t_gamma * v_gamma; r += q * q;
-    q = v_x[0] - 1.; r += q * q; r = sqrt(r);
+    q = S.sp(t_x, v_x) + t_gamma * v_gamma + S.b_gamma() * tau; r += q * q;
+    q = S.sp(S.c_x(), v_x) + S.c_gamma() * v_gamma + S.d() * tau - 1.;
+    r += q * q; r = sqrt(r);
     if (r > 1e-10)
       GMM_WARNING1("Test function evaluated with the residual " << r);
 
@@ -175,6 +175,7 @@ namespace getfem {
     if (S.noisy() > 0) cout << "computing initial tangent" << endl;
     compute_tangent(S, x, gamma, t_x, t_gamma);
     h = S.h_init();
+    S.init_border(x);
     double tau = test_function(S, x, gamma, t_x, t_gamma); S.set_tau3(tau);
   }
 
@@ -318,6 +319,8 @@ namespace getfem {
  
   struct cont_struct_getfem_model {
 
+    typedef base_vector VECT;
+
     model *md;  // for real models only
     std::string parameter_name_;
     rmodel_plsolver_type lsolver;
@@ -330,9 +333,8 @@ namespace getfem {
     std::string initdata_name_, finaldata_name_, currentdata_name_;
     build_data build;
     double tau1_, tau2_, tau3_;
-
-
-    typedef base_vector VECT;
+    VECT b_x_, c_x_;
+    double b_gamma_, c_gamma_, d_;
 
     cont_struct_getfem_model
     (model &m, const std::string &pn, rmodel_plsolver_type ls, double sfac,
@@ -456,6 +458,14 @@ namespace getfem {
 
     
     // Misc.
+    void init_border(const VECT &v) {
+      srand(time(NULL));
+      gmm::resize(b_x_, gmm::vect_size(v)); gmm::fill_random(b_x_);
+      gmm::resize(c_x_, gmm::vect_size(v)); gmm::fill_random(c_x_);
+      b_gamma_ = gmm::random(1.); c_gamma_ = gmm::random(1.);
+      d_ = gmm::random(1.);
+    }
+
     model &linked_model(void) { return *md; }
     std::string parameter_name(void) { return parameter_name_; }
     double scfac(void) { return scfac_; }
@@ -478,7 +488,11 @@ namespace getfem {
     double tau2(void) { return tau2_; }
     void set_tau3(double tau) { tau3_ = tau; }
     double tau3(void) { return tau3_; }
-
+    VECT &b_x(void) { return b_x_; }
+    VECT &c_x(void) { return c_x_; }
+    double b_gamma(void) { return b_gamma_; }
+    double c_gamma(void) { return c_gamma_; }
+    double d(void) { return d_; }
   };
 
 #endif
