@@ -160,26 +160,28 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        if (md->model().is_complex())
 	 THROW_BADARG("Sorry, the continuation has only a real version.");
 
-       getfem::cont_struct_getfem_model s;
+       getfem::cont_struct_getfem_model *ps;
        if (with_parametrized_data) {
-         getfem::cont_struct_getfem_model s1
-           (md->model(), dataname_parameter, dataname_init, dataname_final,
-            dataname_current,
+	 getfem::cont_struct_getfem_model *ps1 =
+	   new getfem::cont_struct_getfem_model
+	   (md->model(), dataname_parameter, dataname_init, dataname_final,
+	    dataname_current,
 	    getfem::rselect_linear_solver(md->model(), lsolver), scfac,
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
 	    h_inc, h_dec, epsilon, maxres_solve, noisy);
-         s = s1;
+	 ps = ps1;
        }
        else {
-         getfem::cont_struct_getfem_model s1
+	 getfem::cont_struct_getfem_model *ps1 =
+	   new getfem::cont_struct_getfem_model
            (md->model(), dataname_parameter,
 	    getfem::rselect_linear_solver(md->model(), lsolver), scfac,
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
 	    h_inc, h_dec, epsilon, maxres_solve, noisy);
-         s = s1;
+	 ps = ps1;
        }
 
-       pgs = getfemint_cont_struct::get_from(&s);
+       pgs = getfemint_cont_struct::get_from(ps);
        workspace().set_dependance(pgs, md);
   }
   out.pop().from_object_id(pgs->get_id(), CONT_STRUCT_CLASS_ID);

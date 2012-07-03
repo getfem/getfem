@@ -55,31 +55,35 @@ mf = gf_mesh_fem(m, 1);
 // assign the Q1 fem to all convexes of the mesh_fem,
 gf_mesh_fem_set(mf, 'classical fem', 1);
 
-// Integration which will be used
+// integration which will be used
 mim = gf_mesh_im(m, 4);
 
-
+// define the model
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
 gf_model_set(md, 'add basic nonlinear brick', mim, 'u', 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 
+// initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
+S = gf_cont_struct(md, 'lambda', scfac, 'max_iter', maxit, 'thr_iter', thrit, 'min_ang', minang, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min, noisy);
 
-
+// compute an initial point
 if (~isempty(noisy)) then
-    printf('computing initial point\n');
+    printf('computing an initial point\n');
 end
 gf_model_get(md, 'solve', noisy, 'max_iter', 100, 'max_res', maxres_solve);
-[T_U, T_lambda, h, tau1, tau2, tau3] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', scfac, direction, noisy, 'h_init', h_init);
+[T_U, T_lambda, h] = gf_cont_struct_get(S, 'init Moore-Penrose continuation', direction);
+
 U = gf_model_get(md, 'variable', 'u');
+tau = gf_cont_struct_get(S, 'test function');
 //printf('U = '); disp(U); printf('lambda = %e\n', lambda);
 //printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
 U_hist = zeros(1, nbstep + 1); lambda_hist = zeros(1, nbstep + 1);
 U_hist(1) = U(1); lambda_hist(1) = lambda;
-//tau_hist = zeros(1, nbstep + 1); tau_hist(1) = tau3;
+tau_hist = zeros(1, nbstep + 1); tau_hist(1) = tau;
 
 scf(0); drawlater; clf();
 subplot(2,1,1);
@@ -90,17 +94,16 @@ gf_plot_1D(mf, U, 'style', 'k.-');
 xtitle('', 'x', 'u');
 drawnow;
 
-//scf(1); drawlater; clf();
-//plot(0, tau_hist(1), 'k.');
-//xtitle('', 'iteration', 'tau');
-//drawnow;
+scf(1); drawlater; clf();
+plot(0, tau_hist(1), 'k.');
+xtitle('', 'iteration', 'tau');
+drawnow;
 
-
+// continue from the initial point
 for step = 1:nbstep
   sleep(1000);
   printf('\nbeginning of step %d\n', step);
-  [T_U, T_lambda, h, tau1, tau2, tau3] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', scfac, T_U, T_lambda, h, noisy, 'max_iter', maxit, 'thr_iter', thrit, 'min_ang', minang, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min, 'tau1', tau1, 'tau2', tau2, 'tau3', tau3);
-  
+  [T_U, T_lambda, h] = gf_cont_struct_get(S, 'Moore-Penrose continuation', T_U, T_lambda, h);
   if (h == 0) then
     printf('Continuation has failed');
     break;
@@ -108,12 +111,12 @@ for step = 1:nbstep
   
   U = gf_model_get(md, 'variable', 'u');
   lambda = gf_model_get(md, 'variable', 'lambda');
-  
+  tau = gf_cont_struct_get(S, 'test function');
+  U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
+  tau_hist(step + 1) = tau;
 //  printf('U = '); disp(U); printf('lambda = %e\n', lambda);
 //  printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
-  U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
-//  tau_hist(step + 1) = tau3;
 
   scf(0); drawlater; clf();
   subplot(2,1,1);
@@ -126,10 +129,10 @@ for step = 1:nbstep
   xtitle('', 'x', 'u');
   drawnow;
 
-//  scf(1); drawlater; clf();
-//  plot(0:step, tau_hist(1:step + 1), 'k.-');
-//  xtitle('', 'iteration', 'tau');
-//  drawnow;
+  scf(1); drawlater; clf();
+  plot(0:step, tau_hist(1:step + 1), 'k.-');
+  xtitle('', 'iteration', 'tau');
+  drawnow;
   
   // calculate the determinant of the augmented Jacobian directly
 //  lambda = lambda + 1e-8; gf_model_set(md, 'variable', 'lambda', [lambda]);

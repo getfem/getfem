@@ -22,7 +22,6 @@
 #include <getfemint_misc.h>
 #include <getfemint_workspace.h>
 #include <getfemint_cont_struct.h>
-#include <getfemint_models.h>
 
 using namespace getfemint;
 
@@ -80,7 +79,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        size_type nbdof = ps->linked_model().nb_dof();
        std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
        const getfem::model_real_plain_vector &GAMMA
-       = ps->linked_model().real_variable(ps->parameter_name);
+       = ps->linked_model().real_variable(ps->parameter_name());
        GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
                    "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
@@ -109,7 +108,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        size_type nbdof = ps->linked_model().nb_dof();
        std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
        const getfem::model_real_plain_vector &GAMMA
-       = ps->linked_model().real_variable(ps->parameter_name);
+       = ps->linked_model().real_variable(ps->parameter_name());
        GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
                    "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
@@ -122,6 +121,14 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
+       );
+
+
+    /*@GET t = ('test function')
+      Return the last value of the test function.@*/
+    sub_command
+      ("test function", 0, 0, 0, 1,
+       out.pop().from_scalar(ps->tau3());
        );
 
 

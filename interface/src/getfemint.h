@@ -35,7 +35,6 @@
 #ifndef GETFEMINT_H__
 #define GETFEMINT_H__
 
-
 #include <getfemint_std.h>
 #include <set>
 #include <getfem/getfem_mesh_fem.h>
@@ -51,10 +50,9 @@ namespace getfem {
   typedef boost::intrusive_ptr<const mat_elem_type> pmat_elem_type;
   class level_set;
   class mesh_level_set;
-  class cont_struct_getfem_model;
-
   class abstract_xy_function;
   class mesher_signed_distance;
+  class cont_struct_getfem_model;
 }
 
 namespace getfemint

@@ -22,18 +22,19 @@
 
 gf_workspace('clear all');
 
-lambda0 = 0;
+lambda = 0;
 direction = 1;
-nbstep = 70;
+nbstep = 80;
 
 maxit = 5;
 thrit = 4;
+minang = 0.993;
 maxres_solve = 1.e-7;
 noisy = 'very_noisy'
 
 h_init = 1e-3;
 h_max = 2e-1;
-h_min = 1e-6;
+h_min = 1e-5;
 
 with_dirichlet = true;
 
@@ -45,7 +46,7 @@ mf = gf_mesh_fem(m,1);
 % assign the P1 fem to all convexes of the mesh_fem,
 gf_mesh_fem_set(mf, 'classical fem', 1);
 
-% Integration which will be used
+% integration which will be used
 mim = gf_mesh_im(m, 4);
 
 % detect the border of the mesh
@@ -53,23 +54,26 @@ border = gf_mesh_get(m,'outer faces');
 % mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
 
-
-md=gf_model('real');
+% define the model
+md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
-gf_model_set(md, 'add initialized data', 'lambda', [lambda0]);
+gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
 gf_model_set(md, 'add basic nonlinear brick', mim, 'u', 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 if (with_dirichlet)
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
 end;
 
+% initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
+S = gf_cont_struct(md, 'lambda', scfac, 'max_iter', maxit, 'thr_iter', thrit, 'min_ang', minang, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min, noisy);
 
+% compute an initial point
 if (noisy) disp('computing initial point\n'); end
 gf_model_get(md, 'solve', noisy, 'max iter', 100, 'max_res', maxres_solve);
-[T_U, T_lambda, h] = gf_model_get(md, 'init Moore-Penrose continuation', 'lambda', scfac, direction, noisy);
+[T_U, T_lambda, h] = gf_cont_struct_get(S, 'init Moore-Penrose continuation', direction);
+
 U = gf_model_get(md, 'variable', 'u');
-lambda = gf_model_get(md, 'variable', 'lambda');
 disp('U = '); disp(U); disp(sprintf('lambda = %e\n', lambda));
 disp(sprintf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1))));
 
@@ -87,11 +91,10 @@ if (with_dirichlet) axis([0 1 0 10]); else axis([0 1 0 11]); end
 xlabel('x'); ylabel('u');
 pause(1);
 
-
+% continue from the initial point
 for step = 1:nbstep
   disp(sprintf('\nbeginning of step %d\n', step));
-  [T_U, T_lambda, h] = gf_model_get(md, 'Moore-Penrose continuation', 'lambda', scfac, T_U, T_lambda, h, ...
-      noisy, 'max_iter', maxit, 'thr_iter', thrit, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min);
+  [T_U, T_lambda, h] = gf_cont_struct_get(S, 'Moore-Penrose continuation', T_U, T_lambda, h);
   U = gf_model_get(md, 'variable', 'u');
   lambda = gf_model_get(md, 'variable', 'lambda');
   % disp('U = '); disp(U);

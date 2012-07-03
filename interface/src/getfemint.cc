@@ -44,8 +44,6 @@
 #include <getfemint_global_function.h>
 #include <getfemint_mesher_object.h>
 #include <getfemint_cont_struct.h>
-#include <getfem/getfem_continuation.h>
-
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_mesher.h>

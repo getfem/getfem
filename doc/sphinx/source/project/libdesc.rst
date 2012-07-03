@@ -615,6 +615,7 @@ To make all the things work automatically, a certain number of rules have to be 
   For instance, ou can refer to ``@tmesh``, ``@tmesh_fem``, ``@tfem``, etc.
   There are some authorized abreviations:
 
+        - ``@tcs``  for  ``@tcont_struct``
         - ``@tmf``  for  ``@tmesh_fem``
         - ``@tbrick``  for  ``@tmdbrick``
         - ``@tstate``  for  ``@tmdstate``

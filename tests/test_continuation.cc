@@ -127,7 +127,7 @@ bool state_problem::cont(plain_vector &U) {
     maxres_solve = PARAM.real_value("RESIDUAL_SOLVE");
   int noisy = PARAM.int_value("NOISY");
   getfem::cont_struct_getfem_model
-    s(model, "lambda", ls, scfac, maxit, thrit, maxres, maxdiff, minang,
+    S(model, "lambda", ls, scfac, maxit, thrit, maxres, maxdiff, minang,
       h_init, h_max, h_min, h_inc, h_dec, eps, maxres_solve, noisy);
 
   if (noisy > 0) cout << "computing initial point" << endl;
@@ -142,13 +142,13 @@ bool state_problem::cont(plain_vector &U) {
 
   plain_vector T_U(U);
   scalar_type T_lambda = PARAM.real_value("DIRECTION"), h;
-  getfem::init_Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
+  getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
 
   // Continuation
   for (size_type step = 0; step < nb_step; ++step) {
     cout << endl << "beginning of step " << step + 1 << endl;
     
-    getfem::Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
+    getfem::Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
     if (h == 0) break;
 
     cout << "U = " << U << endl;
