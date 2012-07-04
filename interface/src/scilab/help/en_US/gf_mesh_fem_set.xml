@@ -22,6 +22,7 @@
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'qdim', int Q)</synopsis>
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'reduction matrices', mat R, mat E)</synopsis>
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'reduction', int s)</synopsis>
+    <synopsis>gf_mesh_fem_set(mesh_fem MF, 'reduce meshfem', mat RM)</synopsis>
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'dof partition', ivec DOFP)</synopsis>
     <synopsis>gf_mesh_fem_set(mesh_fem MF, 'set partial', ivec DOFs[, ivec RCVs])</synopsis>
   </refsynopsisdiv>
@@ -95,12 +96,23 @@
     </listitem>
 
     <listitem>
+    <para><literal>gf_mesh_fem_set(mesh_fem MF, 'reduce meshfem', mat RM)</literal></para>
+
+    <para>         Set reduction mesh fem
+      This function selects the degrees of freedom of the finite element
+      method by selecting a set of independent vectors of the matrix RM.
+      The numer of columns of RM should corresponds to the number of degrees
+      of fredoom of the finite element method.  
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>gf_mesh_fem_set(mesh_fem MF, 'dof partition', ivec DOFP)</literal></para>
 
-    <para>       Change the 'dof_partition' array.
-
-    <literal>DOFP</literal> is a vector holding a integer value for each convex of the mesh_fem.
-    See gf_mesh_fem_get(mesh_fem MF, 'dof partition') for a description of "dof partition".
+    <para>         Change the 'dof_partition' array.
+      
+      <literal>DOFP</literal> is a vector holding a integer value for each convex of the mesh_fem.
+      See gf_mesh_fem_get(mesh_fem MF, 'dof partition') for a description of "dof partition".
     </para>
     </listitem>
 

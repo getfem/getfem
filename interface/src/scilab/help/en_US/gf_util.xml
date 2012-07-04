@@ -18,8 +18,8 @@
 
     <synopsis>gf_util('save matrix', string FMT, string FILENAME, mat A)</synopsis>
     <synopsis>A = gf_util('load matrix', string FMT, string FILENAME)</synopsis>
-    <synopsis>gf_util('trace level', int level)</synopsis>
-    <synopsis>gf_util('warning level', int level)</synopsis>
+    <synopsis>tl = gf_util('trace level' [, int level])</synopsis>
+    <synopsis>tl = gf_util('warning level', int level)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -48,21 +48,23 @@
     </listitem>
 
     <listitem>
-    <para><literal>gf_util('trace level', int level)</literal></para>
+    <para><literal>tl = gf_util('trace level' [, int level])</literal></para>
 
     <para>         Set the verbosity of some getfem++ routines.
 
       Typically the messages printed by the model bricks, 0 means no
-      trace message (default is 3).
+      trace message (default is 3). if no level is given,
+      the current trace level is returned. 
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>gf_util('warning level', int level)</literal></para>
+    <para><literal>tl = gf_util('warning level', int level)</literal></para>
 
     <para>         Filter the less important warnings displayed by getfem.
 
-      0 means no warnings, default level is 3.
+      0 means no warnings, default level is 3. if no level is given,
+      the current warning level is returned. 
     </para>
     </listitem>
 

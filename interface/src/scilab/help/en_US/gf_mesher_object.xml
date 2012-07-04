@@ -22,6 +22,7 @@
     <synopsis>MF = gf_mesher_object('cylinder', vec origin, vec n, scalar length, scalar radius)</synopsis>
     <synopsis>MF = gf_mesher_object('cone', vec origin, vec n, scalar length, scalar half_angle)</synopsis>
     <synopsis>MF = gf_mesher_object('torus', scalar R, scalar r)</synopsis>
+    <synopsis>MF = gf_mesher_object('rectangle', vec rmin, vec rmax)</synopsis>
     <synopsis>MF = gf_mesher_object('intersect', mesher_object object1 , mesher_object object2, ...)</synopsis>
     <synopsis>MF = gf_mesher_object('union', mesher_object object1 , mesher_object object2, ...)</synopsis>
     <synopsis>MF = gf_mesher_object('set minus', mesher_object object1 , mesher_object object2)</synopsis>
@@ -81,6 +82,14 @@
     <para>         Represents a torus in 3d of axis along the z axis with a great radius
       equal to <literal>R</literal> and small radius equal to <literal>r</literal>. For the moment, the
       possibility to change the axis is not given.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>MF = gf_mesher_object('rectangle', vec rmin, vec rmax)</literal></para>
+
+    <para>         Represents a rectangle (or parallelepiped in 3D) parallel to the axes.
       
     </para>
     </listitem>

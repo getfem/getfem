@@ -17,19 +17,24 @@
     <title>Calling Sequence</title>
 
     <synopsis>b = gf_model_get(model M, 'is_complex')</synopsis>
+    <synopsis>T = gf_model_get(model M, 'nbdof')</synopsis>
     <synopsis>T = gf_model_get(model M, 'tangent_matrix')</synopsis>
     <synopsis>gf_model_get(model M, 'rhs')</synopsis>
+    <synopsis>gf_model_get(model M, 'brick term rhs', int ind_brick[, int ind_term, int sym, int ind_iter])</synopsis>
     <synopsis>z = gf_model_get(model M, 'memsize')</synopsis>
     <synopsis>gf_model_get(model M, 'listvar')</synopsis>
     <synopsis>gf_model_get(model M, 'listbricks')</synopsis>
     <synopsis>V = gf_model_get(model M, 'variable', string name[, int niter])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'mesh fem of variable', string name)</synopsis>
     <synopsis>name = gf_model_get(model M, 'mult varname Dirichlet', int ind_brick)</synopsis>
     <synopsis>I = gf_model_get(model M, 'interval of variable', string varname)</synopsis>
     <synopsis>V = gf_model_get(model M, 'from variables')</synopsis>
     <synopsis>gf_model_get(model M, 'assembly'[, string option])</synopsis>
     <synopsis>{nbit, converged} = gf_model_get(model M, 'solve'[, ...])</synopsis>
+    <synopsis>gf_model_get(model M, 'test tangent matrix'[, scalar EPS[, int NB[, scalar scale]]])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute second Piola Kirchhoff tensor', string varname, string lawname, string dataname, mesh_fem mf_sigma)</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>gf_model_get(model M, 'compute plasticity constraints', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
@@ -56,6 +61,13 @@
     </listitem>
 
     <listitem>
+    <para><literal>T = gf_model_get(model M, 'nbdof')</literal></para>
+
+    <para>         Return the total number of degrees of freedom of the model.
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>T = gf_model_get(model M, 'tangent_matrix')</literal></para>
 
     <para>         Return the tangent matrix stored in the model .
@@ -66,6 +78,22 @@
     <para><literal>gf_model_get(model M, 'rhs')</literal></para>
 
     <para>         Return the right hand side of the tangent problem.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_get(model M, 'brick term rhs', int ind_brick[, int ind_term, int sym, int ind_iter])</literal></para>
+
+    <para>         Gives the access to the part of the right hand side of a term
+      of a particular nonlinear brick. Does not account of the eventual
+      time dispatcher. An assembly of the rhs has to be done first.
+      <literal>ind_brick</literal> is the brick index. <literal>ind_term</literal> is the index of the
+      term inside the brick (default value : 1).
+      <literal>sym</literal> is to access to the second right hand side of for symmetric
+      terms acting on two different variables (default is 0).
+      <literal>ind_iter</literal> is the iteration number when time dispatchers are
+      used (default is 1).
+      
     </para>
     </listitem>
 
@@ -95,6 +123,13 @@
     <para><literal>V = gf_model_get(model M, 'variable', string name[, int niter])</literal></para>
 
     <para>         Gives the value of a variable or data.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'mesh fem of variable', string name)</literal></para>
+
+    <para>         Gives access to the <literal>mesh_fem</literal> of a variable or data.
     </para>
     </listitem>
 
@@ -155,6 +190,9 @@
        set the maximum iterations numbers.
     - 'max_res', @float RES
        set the target residual value.
+    - 'diverged_res', @float RES
+       set the threshold value of the residual beyond which the iterative
+       method is considered to diverge (default is 1e200).
     - 'lsolver', string SOLVER_NAME
        select explicitely the solver used for the linear systems (the
        default value is 'auto', which lets getfem choose itself).
@@ -169,7 +207,29 @@
       be a pseudo potential instead of the residual. Still experimental since
       not all bricks define a pseudo potential.
 
-      Return the number of iterations, if a iterative method is used. 
+      Return the number of iterations, if a iterative method is used.
+      
+      Note that it is possible to disable some variables
+      (see gf_model_set(model M, 'disable variable') ) in order to
+      solve the problem only with respect to a subset of variables (the
+      disabled variables are the considered as data) for instance to
+      replace the global Newton strategy with a fixed point one.
+
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_get(model M, 'test tangent matrix'[, scalar EPS[, int NB[, scalar scale]]])</literal></para>
+
+    <para>         Test the consistency of the tangent matrix in some random positions
+      and random directions (usefull to test newly created bricks).
+      <literal>EPS</literal> is the value of the small parameter for the finite difference
+      computation of the derivative is the random direction (default is 1E-6).
+      <literal>NN</literal> is the number of tests (default is 100). <literal>scale</literal> is a parameter
+      for the random position (default is 1). Each dof od the random
+      position is chosen in the range [-scale, scale].
+      
     </para>
     </listitem>
 
@@ -196,10 +256,24 @@
     </listitem>
 
     <listitem>
+    <para><literal>V = gf_model_get(model M, 'compute second Piola Kirchhoff tensor', string varname, string lawname, string dataname, mesh_fem mf_sigma)</literal></para>
+
+    <para>         Compute on <literal>mf_sigma</literal> the second Piola Kirchhoff stress tensor of a field
+      for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
+      depends on the law. It could be a short vector of constant values or a
+      vector field described on a finite element method for variable
+      coefficients.
+     
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</literal></para>
 
     <para>         Compute on <literal>mf_vm</literal> the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
-      <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.  
+      <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
       <literal>version</literal> should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).
     </para>
     </listitem>
@@ -207,7 +281,7 @@
     <listitem>
     <para><literal>gf_model_get(model M, 'compute plasticity constraints', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
 
-    <para>         Compute and save the stress constraints sigma for other hypothetical iterations. 
+    <para>         Compute and save the stress constraints sigma for other hypothetical iterations.
       'mim' is the integration method to use for the computation.
       'varname' is the main variable of the problem.
       'projname' is the type of projection to use. For the moment it could only be 'Von Mises' or 'VM'.

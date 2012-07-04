@@ -9,6 +9,7 @@
           xmlns:db="http://docbook.org/ns/docbook">
   <refnamediv>
     <refname>getfem types</refname>
+    <refpurpose>Types reference</refpurpose>
   </refnamediv>
 
   <refsection>
@@ -165,6 +166,13 @@
         <term>mesher_object</term>
         <listitem>
           <para>mesher object descriptor</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>cont_struct</term>
+        <listitem>
+          <para>continuation-structure descriptor</para>
         </listitem>
       </varlistentry>
 

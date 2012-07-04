@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_cont_struct_get" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_cont_struct_get</refname>
+    <refpurpose>  General function for querying information about cont_struct objects and for
+  applying them to numerical continuation.
+</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', scalar init_dir)</synopsis>
+    <synopsis>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec tangent, scalar tangent_parameter, scalar h)</synopsis>
+    <synopsis>t = gf_cont_struct_get(cont_struct CS, 'test function')</synopsis>
+    <synopsis>s = gf_cont_struct_get(cont_struct CS, 'char')</synopsis>
+    <synopsis>gf_cont_struct_get(cont_struct CS, 'display')</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>  General function for querying information about cont_struct objects and for
+  applying them to numerical continuation.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', scalar init_dir)</literal></para>
+
+    <para>         Initialise the Moore-Penrose continuation: Return a unit tangent
+      corresponding to the solution branch at the solution and the
+      value of the parameter saved in the corresponding model object,
+      and an initial step size for the continuation. Direction of the
+      computed tangent with respect to the parameter is determined by the
+      sign of <literal>init_dir</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec tangent, scalar tangent_parameter, scalar h)</literal></para>
+
+    <para>         Compute one step of the Moore-Penrose continuation: Take the solution
+      and the value of the parameter saved in the corresponding model object,
+      the tangent given by <literal>tangent</literal> and <literal>tangent_parameter</literal>, and the step
+      size <literal>h</literal>, save a new point on the solution curve into the model object,
+      and return a new tangent and a step size for the next step. If the
+      returned step size equals zero, the continuation has failed.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>t = gf_cont_struct_get(cont_struct CS, 'test function')</literal></para>
+
+    <para>         Return the last value of the test function.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_cont_struct_get(cont_struct CS, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the cont_struct.
+
+      This can be used to perform comparisons between two
+      different cont_struct objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_cont_struct_get(cont_struct CS, 'display')</literal></para>
+
+    <para>         Display a short summary for a cont_struct object.
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>

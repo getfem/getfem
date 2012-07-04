@@ -73,6 +73,12 @@
       The <literal>where</literal> argument define the domain of integration with respect to
       the levelset, it has to be chosen among 'ALL', 'INSIDE', 'OUTSIDE' and
       'BOUNDARY'.
+
+      CAUTION: this integration method will be defined only on the element
+      cut by the level-set. For the 'ALL', 'INSIDE' and 'OUTSIDE' options
+      it is mandatory to use the method <literal></literal>gf_mesh_im_set(mesh_im MI, 'integ')<literal></literal> to define
+      the integration method on the remaining elements.
+      
     </para>
     </listitem>
 

@@ -193,7 +193,11 @@
       quality of the elements. This operation may be time consuming.
       Note that if the mesh generation fails, because of some random
       procedure used, it will not give necessarily the same result due
-      to random procedures used. 
+      to random procedures used.
+      The messages send to the console by the mesh generation can be
+      desactivated using <literal>gf_util('trace level', 2)</literal>. More information
+      can be obtained by <literal>gf_util('trace level', 4)</literal>.
+      
     </para>
     </listitem>
 

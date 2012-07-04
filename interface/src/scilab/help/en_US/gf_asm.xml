@@ -25,6 +25,9 @@
     <title>Calling Sequence</title>
 
     <synopsis>M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2[, boundary_num]])</synopsis>
+    <synopsis>M = gf_asm('lsneuman matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</synopsis>
+    <synopsis>M = gf_asm('nlsgrad matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</synopsis>
+    <synopsis>M = gf_asm('stabilization patch matrix', @tm mesh, mesh_fem mf,  mesh_im mim, real ratio, real h)</synopsis>
     <synopsis>L = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</synopsis>
     <synopsis>Le = gf_asm('linear elasticity', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec lambda_d, vec mu_d)</synopsis>
     <synopsis>TRHS = gf_asm('nonlinear elasticity', mesh_im mim, mesh_fem mf_u, vec U, string law, mesh_fem mf_d, mat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', mesh_fem mf_p, vec P|'incompressible rhs', mesh_fem mf_p, vec P})</synopsis>
@@ -41,7 +44,7 @@
     <synopsis>Mi = gf_asm('interpolation matrix', mesh_fem mf, mesh_fem mfi)</synopsis>
     <synopsis>Me = gf_asm('extrapolation matrix',mesh_fem mf, mesh_fem mfe)</synopsis>
     <synopsis>B = gf_asm('contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r)</synopsis>
-    <synopsis>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, scalar alpha, vec W])</synopsis>
+    <synopsis>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]])</synopsis>
     <synopsis>B = gf_asm('level set normal source term', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_levelset, vec levelset)</synopsis>
   </refsynopsisdiv>
 
@@ -67,21 +70,51 @@
     <para><literal>M = gf_asm('mass matrix', mesh_im mim, mesh_fem mf1[, mesh_fem mf2[, boundary_num]])</literal></para>
 
     <para>       Assembly of a mass matrix.
-
+    
     Return a spmat object.
     
     </para>
     </listitem>
 
     <listitem>
+    <para><literal>M = gf_asm('lsneuman matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</literal></para>
+
+    <para>         Assembly of a level set Neuman  matrix.
+      
+      Return a spmat object.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_asm('nlsgrad matrix', mesh_im mim, mesh_fem mf1, mesh_fem mf2, levelset ls)</literal></para>
+
+    <para>         Assembly of a nlsgrad matrix.
+      
+      Return a spmat object.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>M = gf_asm('stabilization patch matrix', @tm mesh, mesh_fem mf,  mesh_im mim, real ratio, real h)</literal></para>
+
+    <para>         Assembly of stabilization patch matrix .
+      
+      Return a spmat object.
+      
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>L = gf_asm('laplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</literal></para>
 
-    <para>       Assembly of the matrix for the Laplacian problem.
-
-    <latex style="text"><![CDATA[\nabla\cdot(a(x)\nabla u)]]></latex>  with <literal>a</literal> a scalar.
-
-    Return a spmat object.
-    
+    <para>         Assembly of the matrix for the Laplacian problem.
+      
+      <latex style="text"><![CDATA[\nabla\cdot(a(x)\nabla u)]]></latex>  with <literal>a</literal> a scalar.
+      
+      Return a spmat object.
+      
     </para>
     </listitem>
 
@@ -92,7 +125,7 @@
 
     <latex style="text"><![CDATA[\nabla\cdot(C(x):\nabla u)]]></latex>
     with <latex style="text"><![CDATA[C]]></latex> defined via <literal>lambda_d</literal> and <literal>mu_d</literal>.
-
+    
     Return a spmat object.
     
     </para>
@@ -101,21 +134,21 @@
     <listitem>
     <para><literal>TRHS = gf_asm('nonlinear elasticity', mesh_im mim, mesh_fem mf_u, vec U, string law, mesh_fem mf_d, mat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', mesh_fem mf_p, vec P|'incompressible rhs', mesh_fem mf_p, vec P})</literal></para>
 
-    <para>       Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
-
-    The solution <literal>U</literal> is required at the current time-step. The <literal>law</literal>
-    may be choosen among:
-     
-     - 'SaintVenant Kirchhoff':
-       Linearized law, should be avoided). This law has the two usual
-       Lame coefficients as parameters, called lambda and mu.
-     - 'Mooney Rivlin':
-       Only for incompressibility. This law has two parameters,
-       called C1 and C2.
-     - 'Ciarlet Geymonat':
-       This law has 3 parameters, called lambda, mu and gamma, with
-       gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
-
+    <para>         Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
+      
+      The solution <literal>U</literal> is required at the current time-step. The <literal>law</literal>
+      may be choosen among:
+      
+      - 'SaintVenant Kirchhoff':
+      Linearized law, should be avoided). This law has the two usual
+      Lame coefficients as parameters, called lambda and mu.
+      - 'Mooney Rivlin':
+      Only for incompressibility. This law has two parameters,
+      called C1 and C2.
+      - 'Ciarlet Geymonat':
+      This law has 3 parameters, called lambda, mu and gamma, with
+      gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
+      
     The parameters of the material law are described on the mesh_fem <literal>mf_d</literal>.
     The matrix <literal>params</literal> should have <literal>nbdof(mf_d)</literal> columns, each row
     correspounds to a parameter.
@@ -167,9 +200,9 @@
     <para><literal>A = gf_asm('bilaplacian', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a)</literal></para>
 
     <para>         Assembly of the matrix for the Bilaplacian problem.
-      
+
       <latex style="text"><![CDATA[\Delta(a(x)\Delta u) = 0]]></latex>   with <literal>a</literal> scalar.
-      
+
       Return a spmat object.
       
     </para>
@@ -179,9 +212,9 @@
     <para><literal>A = gf_asm('bilaplacian KL', mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec a, vec nu)</literal></para>
 
     <para>         Assembly of the matrix for the Bilaplacian problem with Kirchoff-Love formulation.
-      
+
       <latex style="text"><![CDATA[\Delta(a(x)\Delta u) = 0]]></latex>   with <literal>a</literal> scalar.
-      
+
       Return a spmat object.
       
     </para>
@@ -261,23 +294,23 @@
     <para><literal>{...} = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])</literal></para>
 
     <para>         Generic assembly procedure for volumic assembly.
-      
+
       The expression <literal>expr</literal> is evaluated over the mesh_fem's listed in the
       arguments (with optional data) and assigned to the output arguments.
       For details about the syntax of assembly expressions, please refer
       to the getfem user manual (or look at the file getfem_assembling.h
       in the getfem++ sources).
-      
+
       For example, the L2 norm of a field can be computed with::
-      
+
         gf_compute('L2 norm') or with:
-      
+
         gf_asm('volumic','u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)
-      
+
       The Laplacian stiffness matrix can be evaluated with::
-      
+
         gf_asm('laplacian',mim, mf, A) or equivalently with:
-      
+
         gf_asm('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf, A);
     </para>
     </listitem>
@@ -286,7 +319,7 @@
     <para><literal>{...} = gf_asm('boundary', int bnum, string expr [, mesh_im mim, mesh_fem mf, data...])</literal></para>
 
     <para>         Generic boundary assembly.
-      
+
       See the help for gf_asm('volumic').
     </para>
     </listitem>
@@ -335,7 +368,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, scalar alpha, vec W])</literal></para>
+    <para><literal>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]])</literal></para>
 
     <para>       Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
@@ -350,7 +383,7 @@
     <para><literal>B = gf_asm('level set normal source term', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_levelset, vec levelset)</literal></para>
 
     <para>       Performs an assembly of the source term represented by <literal>vec_lambda</literal>
-    on <literal>mf_lambda</literal> considerd to be a component in the direction of the
+    on <literal>mf_lambda</literal> considered to be a component in the direction of the
     gradient of a levelset function (normal to the levelset) of a vector
     field defined on <literal>mf_u</literal> on the boundary <literal>bnum</literal>.
 

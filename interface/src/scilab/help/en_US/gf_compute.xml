@@ -18,14 +18,16 @@
     <title>Calling Sequence</title>
 
     <synopsis>n = gf_compute(mesh_fem MF, vec U, 'L2 norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'L2 dist', mesh_im mim, mesh_fem mf2, vec U2[, mat CVids])</synopsis>
     <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H1 semi norm', mesh_im mim[, mat CVids])</synopsis>
+    <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H1 semi dist', mesh_im mim, mesh_fem mf2, vec U2[, mat CVids])</synopsis>
     <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H1 norm', mesh_im mim[, mat CVids])</synopsis>
     <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H2 semi norm', mesh_im mim[, mat CVids])</synopsis>
     <synopsis>n = gf_compute(mesh_fem MF, vec U, 'H2 norm', mesh_im mim[, mat CVids])</synopsis>
     <synopsis>DU = gf_compute(mesh_fem MF, vec U, 'gradient', mesh_fem mf_du)</synopsis>
     <synopsis>HU = gf_compute(mesh_fem MF, vec U, 'hessian', mesh_fem mf_h)</synopsis>
     <synopsis>UP = gf_compute(mesh_fem MF, vec U, 'eval on triangulated surface', int Nrefine, [vec CVLIST])</synopsis>
-    <synopsis>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli})</synopsis>
+    <synopsis>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli | vec pts})</synopsis>
     <synopsis>Ue = gf_compute(mesh_fem MF, vec U, 'extrapolate on', mesh_fem mfe)</synopsis>
     <synopsis>E = gf_compute(mesh_fem MF, vec U, 'error estimate', mesh_im mim)</synopsis>
     <synopsis>E = gf_compute(mesh_fem MF, vec U, 'convect', mesh_fem mf_v, vec V, scalar dt, int nt[, string option])</synopsis>
@@ -53,9 +55,29 @@
     </listitem>
 
     <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'L2 dist', mesh_im mim, mesh_fem mf2, vec U2[, mat CVids])</literal></para>
+
+    <para>       Compute the L2 distance between <literal>U</literal> and <literal>U2</literal>.
+
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>n = gf_compute(mesh_fem MF, vec U, 'H1 semi norm', mesh_im mim[, mat CVids])</literal></para>
 
     <para>       Compute the L2 norm of grad(<literal>U</literal>).
+
+    If <literal>CVids</literal> is given, the norm will be computed only on the listed
+    convexes.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>n = gf_compute(mesh_fem MF, vec U, 'H1 semi dist', mesh_im mim, mesh_fem mf2, vec U2[, mat CVids])</literal></para>
+
+    <para>       Compute the semi H1 distance between <literal>U</literal> and <literal>U2</literal>.
 
     If <literal>CVids</literal> is given, the norm will be computed only on the listed
     convexes.
@@ -141,9 +163,9 @@
     </listitem>
 
     <listitem>
-    <para><literal>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli})</literal></para>
+    <para><literal>Ui = gf_compute(mesh_fem MF, vec U, 'interpolate on', {mesh_fem mfi | slice sli | vec pts})</literal></para>
 
-    <para>       Interpolate a field on another mesh_fem or a slice.
+    <para>       Interpolate a field on another mesh_fem or a slice or a list of points.
 
     - Interpolation on another mesh_fem <literal>mfi</literal>:
        <literal>mfi</literal> has to be Lagrangian. If <literal>mf</literal> and <literal>mfi</literal> share the same
@@ -153,6 +175,7 @@
        mesh, but it is much faster. This can also be used with
        gf_slice('points') to obtain field values at a given set of
        points.
+    - Interpolation on a set of points <literal>pts</literal>
 
     See also gf_asm('interpolation matrix')
     
