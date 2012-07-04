@@ -31,7 +31,7 @@ extern "C" {
 #include <stack-c.h>
 #include <sciprint.h>
 #include <Scierror.h>
-#include <api_common.h>
+#include <api_scilab.h>
 #include <MALLOC.h>
 }
 

@@ -19,9 +19,7 @@
 ===========================================================================*/
 #include <stdio.h>
 
-#include <api_common.h>
-#include <api_sparse.h>
-#include <api_double.h>
+#include <api_scilab.h>
 #include <MALLOC.h>
 #include <stack-c.h>
 #include <Scierror.h>

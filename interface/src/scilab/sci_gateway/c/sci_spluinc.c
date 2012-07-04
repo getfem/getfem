@@ -18,10 +18,8 @@
  
 ===========================================================================*/
 
+#include <api_scilab.h>
 #include <stack-c.h>
-#include <api_common.h>
-#include <api_sparse.h>
-#include <api_double.h>
 #include <MALLOC.h>
 #include <Scierror.h>
 #include <sciprint.h>

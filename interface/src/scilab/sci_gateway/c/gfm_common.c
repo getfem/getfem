@@ -27,13 +27,7 @@
 #include <Scierror.h>
 #include <sciprint.h>
 #include <MALLOC.h>
-#include <api_common.h>
-#include <api_string.h>
-#include <api_double.h>
-#include <api_int.h>
-#include <api_sparse.h>
-#include <api_list.h>
-#include <api_boolean.h>
+#include <api_scilab.h>
 
 #include "gfm_common.h"
 

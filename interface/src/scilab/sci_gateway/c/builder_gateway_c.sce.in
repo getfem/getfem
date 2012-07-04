@@ -89,7 +89,8 @@ if getos()=='Windows' then
   cflags = ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + '/../../src/c';
   cflags = cflags + ' /I' + getfem_path + '/interface/src/' + ' /I' + getfem_path + '/src/getfem';
   cflags = cflags + ' /I' + SCI + '/../../include/scilab'; // For the binary distribution
-  
+  cflags = cflags + ' /D__USE_DEPRECATED_STACK_FUNCTIONS__';
+
   ldflags = getfem_path + 'msvc2010\Release\libgetfemint.lib ';
   ldflags = ldflags + getfem_path + 'msvc2010\Release\libgetfem.lib ';
   ldflags = ldflags + getfem_path + 'msvc2010\Release\superlu.lib ';
@@ -120,6 +121,7 @@ else
   cflags = ' -g -I' + sci_getfem_path + ' -I' + sci_getfem_path + ' -I' + sci_getfem_path + '/../../src/c';
   cflags = cflags + ' -I' + getfem_path + '/interface/src/' + ' -I' + getfem_path + '/src/getfem';
   cflags = cflags + ' -I' + SCI + '/../../include/scilab'; // For the binary distribution
+  cflags = cflags + ' -D__USE_DEPRECATED_STACK_FUNCTIONS__';
   
   ldflags = sci_getfem_path + '/../../../.libs/libgetfemint.a ' + sci_getfem_path + '/../../../../../src/.libs/libgetfem.a';
 end
