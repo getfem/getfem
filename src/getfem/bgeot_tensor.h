@@ -187,7 +187,7 @@ namespace bgeot {
 	sizes_ = c; coeff.resize(c.size());
 	multi_index::iterator p = coeff.begin(), pe = coeff.end();
 	for ( ; p != pe; ++p, ++it) { *p = short_type(d); d *= *it; }
-	resize(d);
+	this->resize(d);
       }
 
       void adjust_sizes(const multi_index &mi) {

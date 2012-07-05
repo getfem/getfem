@@ -2988,7 +2988,7 @@ namespace getfem {
 
     contact_elements(contact_frame &ccf) : cf(ccf) {}
     void init(void);
-    void add_point_contribution(size_type boundary_num,
+    bool add_point_contribution(size_type boundary_num,
 				getfem::fem_interpolation_context &ctxu,
 				getfem::fem_interpolation_context &ctxl,
 				scalar_type weight, scalar_type f_coeff,
@@ -3070,7 +3070,7 @@ namespace getfem {
 	    scalar_type J = gmm::lu_inverse(grad);
 	    if (J <= scalar_type(0)) GMM_WARNING1("Inverted element ! " << J);
 	    gmm::mult(gmm::transposed(grad), n0, n);
-	    n /= gmm::vect_norm2(n) * gmm::sgn(J);
+	    n /= gmm::vect_norm2(n);
 	    n_mean += n;
 	    ++nb_pt_on_face;
 	  }
@@ -3109,7 +3109,7 @@ namespace getfem {
   
 
 
-  void contact_elements::add_point_contribution
+  bool contact_elements::add_point_contribution
   (size_type boundary_num, getfem::fem_interpolation_context &ctxu,
    getfem::fem_interpolation_context &ctxl, scalar_type weight,
    scalar_type f_coeff, scalar_type r, model::build_version version) {
@@ -3143,9 +3143,21 @@ namespace getfem {
     ctxu.pf()->interpolation_grad(ctxu, coeff, gradinv, dim_type(N));
     gmm::add(gmm::identity_matrix(), gradinv);
     scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une résolution...
-    if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !");
+    if (J <= scalar_type(0)) {
+      GMM_WARNING1("Inverted element !");
+      
+      GMM_ASSERT1(!(version & model::BUILD_MATRIX), "Impossible to build "
+		  "tangent matrix for large sliding contact");
+      if (version & model::BUILD_RHS) {
+	base_vector Velem(cvnbdofl);
+	for (size_type i = 0; i < cvnbdofl; ++i) Velem[i] = 1E200;
+	vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
+	return false;
+      }
+    }
+
     gmm::mult(gmm::transposed(gradinv), n0, n);
-    n /= gmm::vect_norm2(n) * gmm::sgn(J);
+    n /= gmm::vect_norm2(n);
     
     // ----------------------------------------------------------
     // Selection of influence boxes
@@ -3189,7 +3201,7 @@ namespace getfem {
     for (; it != bset.end(); ++it) {
       size_type boundary_num_y0 = boundary_of_elements[(*it)->id];
       size_type cv_y0 = ind_of_elements[(*it)->id];
-      size_type face_y0 = face_of_elements[(*it)->id];
+      short_type face_y0 = short_type(face_of_elements[(*it)->id]);
       const mesh_fem &mfu_y0 = cf.mfu_of_boundary(boundary_num_y0);
       pfem pf_s = mfu_y0.fem_of_element(cv_y0);
       const model_real_plain_vector &U_y0
@@ -3204,8 +3216,8 @@ namespace getfem {
       for (; ind_dep_point < cvs_y0->nb_points(); ++ind_dep_point) {
 	bool is_on_face = false;
 	for (size_type k = 0;
-	     k < cvs_y0->nb_points_of_face(short_type(face_y0)); ++k)
-	  if (cvs_y0->ind_points_of_face(short_type(face_y0))[k]
+	     k < cvs_y0->nb_points_of_face(face_y0); ++k)
+	  if (cvs_y0->ind_points_of_face(face_y0)[k]
 	      == ind_dep_point) is_on_face = true;
 	if (!is_on_face) break;
       }
@@ -3235,8 +3247,17 @@ namespace getfem {
 	scalar_type init_res = gmm::vect_norm2(val);
 	
 	if (init_res < 1E-12) break;
-	GMM_ASSERT1(newton_iter < 200,
-		    "Newton has failed to invert transformation"); // il faudrait faire qlq chose d'autre ... !
+	if (newton_iter > 100) {
+	  GMM_WARNING1("Newton has failed to invert transformation"); // il faudrait faire qlq chose d'autre ... !
+	  GMM_ASSERT1(!(version & model::BUILD_MATRIX), "Impossible to build "
+		    "tangent matrix for large sliding contact");
+	  if (version & model::BUILD_RHS) {
+	    base_vector Velem(cvnbdofl);
+	    for (size_type i = 0; i < cvnbdofl; ++i) Velem[i] = 1E200;
+	    vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
+	    return false;
+	  }
+	}
 	
 	pf_s->interpolation_grad(ctx_y0, coeff, grad, dim_type(N));
 	
@@ -3252,7 +3273,7 @@ namespace getfem {
 	// line search
 	bool ok = false;
 	scalar_type alpha;
-	for (alpha = 1; alpha >= 1E-4; alpha/=scalar_type(2)) {
+	for (alpha = 1; alpha >= 1E-5; alpha/=scalar_type(2)) {
 	  
 	  ctx_y0.set_xref(y0_ref - alpha*h);
 	  pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
@@ -3269,40 +3290,62 @@ namespace getfem {
       
       base_node y0 = ctx_y0.xreal();
       base_node n0_y0 = bgeot::compute_normal(ctx_y0, face_y0);
-      n0_y0 *= gmm::sgn(ctx_y0.J());
-      scalar_type d0
-	= pgt_y0->convex_ref()->is_in_face(short_type(face_y0), y0_ref)
-	/ gmm::vect_norm2(n0_y0);
-
-     // calcul alternatif de d0 ... doit être amélioré pour les bords courbes ...
-      scalar_type d1 = 1E300;
-      for (size_type k = 0;
-	   k<pgt_y0->structure()->nb_points_of_face(short_type(face_y0)); ++k)
-	d1 = std::min(d1, gmm::vect_dist2(y0, m.points_of_face_of_convex(cv_y0, short_type(face_y0))[k]));
+      scalar_type d0_ref = pgt_y0->convex_ref()->is_in_face(face_y0, y0_ref);
+      scalar_type d0 = d0_ref / gmm::vect_norm2(n0_y0);
 
 
-      size_type iptf = m.ind_points_of_face_of_convex(cv_y0, short_type(face_y0))[0];
-      base_node ptf = y0 - m.points()[iptf];
-      scalar_type d0p = gmm::vect_sp(ptf, n0_y0) / gmm::vect_norm2(n0_y0);
+	
+
+      scalar_type d1 = d0_ref; // approximatively a distance to the element
+      short_type ifd = short_type(-1);
+
+      for (short_type k = 0; k <  pgt_y0->structure()->nb_faces(); ++k) {
+	scalar_type dd = pgt_y0->convex_ref()->is_in_face(k, y0_ref);
+	if (dd > scalar_type(0) && dd > gmm::abs(d1)) { d1 = dd; ifd = k; }
+      }
       
+      if (ifd != short_type(-1)) {
+	d1 /= gmm::vect_norm2(bgeot::compute_normal(ctx_y0, ifd));
+	if (gmm::abs(d1) < gmm::abs(d0)) d1 = d0;
+      } else d1 = d0;
+
       
+//       size_type iptf = m.ind_points_of_face_of_convex(cv_y0, face_y0)[0];
+//       base_node ptf = x0 - m.points()[iptf];
+//       scalar_type d2 = gmm::vect_sp(ptf, n0_y0) / gmm::vect_norm2(n0_y0);
+
+
       
-      cout << "gmm::vect_norm2(n0_y0) = " << gmm::vect_norm2(n0_y0) << endl;
+      if (noisy) cout << "gmm::vect_norm2(n0_y0) = " << gmm::vect_norm2(n0_y0) << endl;
       // Eliminates wrong auto-contact situations
-      cout << "autocontact status : x0 = " << x0 << " y0 = " << y0 << "  " <<  gmm::vect_dist2(y0, x0) << " : " << d0*0.75 << " : " << d0p*0.75 << " : " << d1 << endl;
-      cout << "n = " << n << " unit_normal_of_elements[(*it)->id] = " << unit_normal_of_elements[(*it)->id] << endl;
-      if (d0 < scalar_type(0) && &(U_y0) == &U
-	  && gmm::vect_dist2(y0, x0) < -d0 * scalar_type(3)/scalar_type(4)) {
-	/*if (noisy) */ cout << "Eliminated x0 = " << x0 << " y0 = " << y0
+      if (noisy) cout << "autocontact status : x0 = " << x0 << " y0 = " << y0 << "  " <<  gmm::vect_dist2(y0, x0) << " : " << d0*0.75 << " : " << d1*0.75 << endl;
+      if (noisy) cout << "n = " << n << " unit_normal_of_elements[(*it)->id] = " << unit_normal_of_elements[(*it)->id] << endl;
+
+
+
+      if (d0 < scalar_type(0)
+	  && ((&(U_y0) == &U
+	       && (gmm::vect_dist2(y0, x0) < gmm::abs(d1)*scalar_type(3)/scalar_type(4)))
+	      || gmm::abs(d1) > 0.05)) {
+	if (noisy)  cout << "Eliminated x0 = " << x0 << " y0 = " << y0
 			<< " d0 = " << d0 << endl;
 	continue;
       }
+
+
+//       if (d0 < scalar_type(0) && &(U_y0) == &U
+// 	  && gmm::vect_dist2(y0, x0) < gmm::abs(d1) * scalar_type(2)
+// 	  && d2 < -ctxu.J() / scalar_type(2)) {
+// 	/*if (noisy) */ cout << "Eliminated x0 = " << x0 << " y0 = " << y0
+// 			<< " d0 = " << d0 << endl;
+// 	continue;
+//       }
       
       y0s.push_back(ctx_y0.xreal()); // Usefull ?
       y0_refs.push_back(y0_ref);
       elt_nums.push_back((*it)->id);
       d0s.push_back(d0);
-      d1s.push_back(pgt_y0->convex_ref()->is_in(y0_ref));
+      d1s.push_back(d1);
       ctx_y0s.push_back(ctx_y0);
       n0_y0 /= gmm::vect_norm2(n0_y0);
       n0_y0s.push_back(n0_y0);
@@ -3354,8 +3397,7 @@ namespace getfem {
     // ----------------------------------------------------------
     
     
-    //if (noisy)
-    if (state == 1) {
+    if (noisy && state == 1) {
       cout  << "Point : " << x0 << " of boundary " << boundary_num
 	    << " and element " << cv << " state = " << int(state);
       if (version & model::BUILD_RHS) cout << " RHS";
@@ -3367,14 +3409,15 @@ namespace getfem {
       const mesh &m = mfu_y0.linked_mesh();
       size_type icv = ind_of_elements[elt_nums[ibound]];
       
-      /* if (noisy) */ cout << " y0 = " << y0s[ibound] << " of element "
+      if (noisy) cout << " y0 = " << y0s[ibound] << " of element "
 			    << icv  << " of boundary " << nbo << endl;
       for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
-	/* if (noisy) */ cout << "point " << k << " : "
+	if (noisy) cout << "point " << k << " : "
 			<< m.points()[m.ind_points_of_convex(icv)[k]] << endl;
+      if (nbo == 0 && boundary_num == 0 && d0 < 0.0 && (version & model::BUILD_MATRIX)) GMM_ASSERT1(false, "oups");
     }
-    /* if (noisy) */  if (state == 1) cout << " d0 = " << d0 << endl;
-    if (state == 1 && (version & model::BUILD_MATRIX)) GMM_ASSERT1(false, "oups");
+    if (noisy) cout << " d0 = " << d0 << endl;
+    
     
     // ----------------------------------------------------------
     // Add the contributions to the tangent matrices and rhs
@@ -3427,7 +3470,7 @@ namespace getfem {
 	Velem[i] = (tl[i/N] * vv[i%N])*weight/r;
       vec_elem_assembly(cf.L_vector(boundary_num), Velem, mfl, cv);
     }
-    
+
     if (state) {
       base_matrix grad_y0(N, N), gradinv_y0(N, N), gradaux(N,N);
       base_vector coeff_y0;
@@ -3585,6 +3628,7 @@ namespace getfem {
 			  Melem, mfl, cv, mfu, cv);
       }
     }
+    return true;
   }
 
   //=========================================================================
@@ -3729,9 +3773,9 @@ namespace getfem {
 	    = pim->approx_method()->ind_first_point_on_face(v.f()) + k;
 	  ctxu.set_ii(ind);
 	  ctxl.set_ii(ind);
-	  ce.add_point_contribution
-	    (bnum, ctxu, ctxl,pim->approx_method()->coeff(ind),
-	     f_coeff[0], vr[0], version);
+	  if (!(ce.add_point_contribution
+	       (bnum, ctxu, ctxl,pim->approx_method()->coeff(ind),
+		f_coeff[0], vr[0], version))) return;
 	}
       }
     }

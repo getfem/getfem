@@ -863,7 +863,7 @@ namespace getfem {
 				     const mesh_fem &mf_vm, 
 				     VECTVM &VM, bool tresca) {
       getfem::interpolation_von_mises_or_tresca
-	(this->mf_u,mf_vm,get_solution(MS),VM,
+	(this->mf_u,mf_vm,this->get_solution(MS),VM,
 	 lambda().mf(),lambda().get(),mu().mf(),mu().get(),tresca);
     }
   };

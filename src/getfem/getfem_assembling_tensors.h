@@ -499,7 +499,7 @@ namespace getfem {
     : public base_mat_factory, private std::deque<asm_mat<MAT> > {
   public:
     base_asm_mat* create_mat(size_type m, size_type n) { 
-      push_back(asm_mat<MAT>(new MAT(m, n))); return &this->back();
+      this->push_back(asm_mat<MAT>(new MAT(m, n))); return &this->back();
     }
     ~mat_factory() { 
       for (size_type i=0; i < this->size(); ++i) {
