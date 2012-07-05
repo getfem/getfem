@@ -124,7 +124,9 @@ namespace getfem {
 
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
-      if (it->second.is_fem_dofs && it->second.filter == VDESCRFILTER_INFSUP) {
+      if (it->second.is_fem_dofs
+	  && (it->second.filter == VDESCRFILTER_CTERM
+	      || it->second.filter == VDESCRFILTER_INFSUP)) {
         VAR_SET::iterator it2 = variables.find(it->second.filter_var);
         GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
                     "multiplier does not exist");
@@ -192,56 +194,61 @@ namespace getfem {
 
         // Obtening the coupling matrix between the multipier and
         // the primal variable. A search is done on all the terms of the
-        // model. The corresponding terms are added. If no term is available
-        // a warning is printed and the variable is cancelled.
+        // model. Only the the corresponding linear terms are added.
+	// If no linear term is available, a mass matrix is used.
 
         gmm::col_matrix< gmm::rsvector<scalar_type> >
           MM(it2->second.mf->nb_dof(), it->second.mf->nb_dof());
         bool termadded = false;
 
-        for (size_type ib = 0; ib < bricks.size(); ++ib) {
-          const brick_description &brick = bricks[ib];
-          bool bupd = false;
-          bool cplx = is_complex() && brick.pbr->is_complex();
+	if (it->second.filter == VDESCRFILTER_CTERM) {
 
-          for (size_type j = 0; j < brick.tlist.size(); ++j) {
+	  for (size_type ib = 0; ib < bricks.size(); ++ib) {
+	    const brick_description &brick = bricks[ib];
+	    bool bupd = false;
+	    bool cplx = is_complex() && brick.pbr->is_complex();
+	    
+	    for (size_type j = 0; j < brick.tlist.size(); ++j) {
+	      
+	      const term_description &term = brick.tlist[j];
+	      
+	      if (term.is_matrix_term && !mults[k].compare(term.var1) &&
+		  !it2->first.compare(term.var2)) {
+		if (!bupd) {
+		  brick.terms_to_be_computed = true;
+		  update_brick(ib, BUILD_MATRIX);
+		  bupd = true;
+		}
+		if (cplx)
+		  gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
+			   MM);
+		else
+		  gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
+		termadded = true;
+		
+	      } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
+			 !it2->first.compare(term.var1)) {
+		if (!bupd) {
+		  brick.terms_to_be_computed = true;
+		  update_brick(ib, BUILD_MATRIX);
+		  bupd = true;
+		}
+		if (cplx)
+		  gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
+		else
+		  gmm::add(brick.rmatlist[j], MM);
+		termadded = true;
+	      }
+	    }
+	  }
 
-            const term_description &term = brick.tlist[j];
-
-            if (term.is_matrix_term && !mults[k].compare(term.var1) &&
-                !it2->first.compare(term.var2)) {
-              if (!bupd) {
-                brick.terms_to_be_computed = true;
-                update_brick(ib, BUILD_MATRIX);
-                bupd = true;
-              }
-              if (cplx)
-                gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
-                         MM);
-              else
-                gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
-              termadded = true;
-
-            } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
-                        !it2->first.compare(term.var1)) {
-              if (!bupd) {
-                brick.terms_to_be_computed = true;
-                update_brick(ib, BUILD_MATRIX);
-                bupd = true;
-              }
-              if (cplx)
-                gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
-              else
-                gmm::add(brick.rmatlist[j], MM);
-              termadded = true;
-            }
-          }
-        }
-
-        if (!termadded)
-          GMM_WARNING1("No term present to filter the multiplier " << mults[k]
-                       << ". The multiplier is cancelled.");
-
+	  if (!termadded) 
+	    GMM_WARNING1("No term found to filter multiplier " << it->first
+			 << ". Variable is cancelled");
+	} else if (it->second.filter == VDESCRFILTER_INFSUP) {
+	  asm_mass_matrix(MM, *(it->second.mim), *(it2->second.mf),
+			  *(it->second.mf), it->second.m_region);
+	}
         //
         // filtering
         //
@@ -368,6 +375,17 @@ namespace getfem {
     leading_dim = std::max(leading_dim, mf.linked_mesh().dim());
   }
 
+  void model::add_filtered_fem_variable(const std::string &name,
+					const mesh_fem &mf,
+					size_type region, size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(true, is_complex(), true, niter,
+                                      VDESCRFILTER_REGION, &mf, region);
+    variables[name].set_size(mf.nb_dof());
+    act_size_to_be_done = true;
+    add_dependency(mf);
+  }
+
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
                                dim_type qdim, size_type niter) {
     check_name_valitity(name);
@@ -382,8 +400,20 @@ namespace getfem {
                              size_type niter) {
     check_name_valitity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
-                                      VDESCRFILTER_INFSUP, &mf, 0,
+                                      VDESCRFILTER_CTERM, &mf, 0,
                                       1, primal_name);
+    variables[name].set_size(mf.nb_dof());
+    act_size_to_be_done = true;
+    add_dependency(mf);
+  }
+
+  void model::add_multiplier(const std::string &name, const mesh_fem &mf,
+                             const std::string &primal_name,const mesh_im &mim,
+			     size_type region, size_type niter) {
+    check_name_valitity(name);
+    variables[name] = var_description(true, is_complex(), true, niter,
+                                      VDESCRFILTER_INFSUP, &mf, region,
+                                      1, primal_name, &mim);
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;
     add_dependency(mf);

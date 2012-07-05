@@ -116,9 +116,12 @@ namespace getfem {
       VDESCRFILTER_NO,     // Variable being directly the dofs of a given fem
       VDESCRFILTER_REGION, /* Variable being the dofs of a fem on a mesh region
                             * (uses mf.dof_on_region). */
-      VDESCRFILTER_INFSUP  /* Variable being the dofs of a fem on a mesh region
+      VDESCRFILTER_INFSUP, /* Variable being the dofs of a fem on a mesh region
                             * with an additional filter on a mass matrix with
                             * respect to another fem. */
+      VDESCRFILTER_CTERM   /* Variable being the dofs of a fem on a mesh region
+                            * with an additional filter with the coupling
+			    * termson with respect to another variable. */
     };
 
     struct var_description {
@@ -134,8 +137,9 @@ namespace getfem {
       size_type default_iter; // default iteration number.
 
       // fem description of the variable
-      const mesh_fem *mf;           // Principal fem of the variable.
-      size_type m_region;           // Optional region for the filter
+      const mesh_fem *mf;        // Principal fem of the variable.
+      size_type m_region;        // Optional region for the filter
+      const mesh_im *mim;        // Optional integration method for the filter
       ppartial_mesh_fem partial_mf; // Filter with respect to mf.
       std::string filter_var;       // Optional variable name for the filter
 
@@ -155,12 +159,13 @@ namespace getfem {
                       var_description_filter fil = VDESCRFILTER_NO,
                       const mesh_fem *mmf = 0,
                       size_type m_reg = size_type(-1), dim_type Q = 1,
-                      const std::string &filter_v = std::string(""))
+                      const std::string &filter_v = std::string(""),
+		      const mesh_im *mim_ = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_com),
 	  is_fem_dofs(is_fem), filter(fil),
 	  n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
-          default_iter(0), mf(mmf), m_region(m_reg), filter_var(filter_v),
-          qdim(Q), v_num(0), v_num_data(act_counter()) {
+          default_iter(0), mf(mmf), m_region(m_reg), mim(mim_),
+	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()) {
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = new partial_mesh_fem(*mf);
         // v_num_data = v_num;
@@ -501,6 +506,13 @@ namespace getfem {
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           size_type niter = 1);
 
+    /** Add a variable linked to a fem with the dof filtered with respect 
+	to a mesh region. Only the dof returned by the dof_on_region
+	method of `mf` will be kept. niter is the number of version
+	of the data stored, for time integration schemes. */
+    void add_filtered_fem_variable(const std::string &name, const mesh_fem &mf,
+				   size_type region, size_type niter = 1);
+
     /** Add a data being the dofs of a finite element method to the model.
         The data is initialized with V. */
     void add_fem_data(const std::string &name, const mesh_fem &mf,
@@ -528,6 +540,16 @@ namespace getfem {
     void add_multiplier(const std::string &name, const mesh_fem &mf,
                         const std::string &primal_name,
                         size_type niter = 1);
+
+    /** Add a particular variable linked to a fem being a multiplier with
+        respect to a primal variable. The dof will be filtered with the
+        gmm::range_basis function applied on the mass matrix between the fem
+	of the multiplier and the one of the primal variable.
+	Optimized for boundary multipliers. niter is the number of version
+	of the data stored, for time integration schemes. */
+    void add_multiplier(const std::string &name, const mesh_fem &mf,
+                        const std::string &primal_name, const mesh_im &mim,
+			size_type region, size_type niter = 1);
 
     /** Gives the access to the mesh_fem of a variable if any. Throw an
         exception otherwise. */

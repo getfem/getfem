@@ -196,7 +196,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
     
-    /*@GET V = ('mesh fem of variable', @str name)
+    /*@GET mf = ('mesh fem of variable', @str name)
       Gives access to the `mesh_fem` of a variable or data.@*/
     sub_command
       ("mesh fem of variable", 1, 1, 0, 1,

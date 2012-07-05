@@ -418,6 +418,10 @@ namespace getfem {
     generic_assembly assem;
     if (mf_u1.get_qdim() == 1 && mf_u2.get_qdim() == 1)
       assem.set("M(#1,#2)+=comp(Base(#1).Base(#2))");
+    else if (mf_u1.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(Base(#1).vBase(#2))(:,:,1);"); // could be i in place of 1
+    else if (mf_u2.get_qdim() == 1)
+      assem.set("M(#1,#2)+=comp(vBase(#1).Base(#2))(:,1,:);");
     else
       assem.set("M(#1,#2)+=comp(vBase(#1).vBase(#2))(:,i,:,i);");
     assem.push_mi(mim);

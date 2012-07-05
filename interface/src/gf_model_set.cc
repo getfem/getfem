@@ -100,6 +100,22 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mf);
        );
 
+    /*@SET ('add filtered fem variable', @str name, @tmf mf, @int region[, @int niter])
+      Add a variable to the model linked to a @tmf. The variable is filtered
+      in the sense that only the dof on the region are considered.
+      `name` is the variable name and `niter` is the optional number of
+      version of the data stored, for time integration schemes.@*/
+    sub_command
+      ("add filtered fem variable", 3, 4, 0, 0,
+       std::string name = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       size_type region = in.pop().to_integer();
+       size_type niter = 1;
+       if (in.remaining()) niter = in.pop().to_integer(1,10);
+       md->model().add_filtered_fem_variable(name, gfi_mf->mesh_fem(), region, niter);
+       workspace().set_dependance(md, gfi_mf);
+       );
+
 
     /*@SET ('add variable', @str name, @int size[, @int niter])
       Add a variable to the model of constant size. `name` is the variable
@@ -126,7 +142,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('add multiplier', @str name, @tmf mf, @str primalname[, @int niter])
+    /*@SET ('add multiplier', @str name, @tmf mf, @str primalname[, @tmim mim, @int region][, @int niter])
     Add a particular variable linked to a fem being a multiplier with
     respect to a primal variable. The dof will be filtered with the
     ``gmm::range_basis`` function applied on the terms of the model
@@ -135,13 +151,28 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Optimized for boundary multipliers. `niter` is the optional number
     of version of the data stored, for time integration schemes. @*/
     sub_command
-      ("add multiplier", 3, 4, 0, 0,
+      ("add multiplier", 3, 6, 0, 0,
        std::string name = in.pop().to_string();
        getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
        std::string primalname = in.pop().to_string();
+
+       getfemint_mesh_im *gfi_mim = 0;
+       size_type region = size_type(-1);
        size_type niter = 1;
+       if (in.remaining()) {
+	 mexarg_in argin = in.pop();
+	 if (argin.is_mesh_im()) {
+	   gfi_mim = argin.to_getfemint_mesh_im();
+	   region = in.pop().to_integer();
+	 } 
+	 else niter =  argin.to_integer(1,10);
+       }
        if (in.remaining()) niter = in.pop().to_integer(1,10);
-       md->model().add_multiplier(name, gfi_mf->mesh_fem(), primalname, niter);
+       if (gfi_mim)
+	 md->model().add_multiplier(name, gfi_mf->mesh_fem(), primalname,
+				    gfi_mim->mesh_im(), region, niter);
+       else
+	 md->model().add_multiplier(name, gfi_mf->mesh_fem(),primalname,niter);
        workspace().set_dependance(md, gfi_mf);
        );
 

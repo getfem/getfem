@@ -33,8 +33,8 @@ clear all;
 
 % Import the mesh : sphere
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_8_elts.mesh');
-% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
-m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
+m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_2000_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_16000_elts.mesh');
 
@@ -62,7 +62,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 13; % 1 : frictionless contact and the basic contact brick
+version = 13;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -238,9 +238,7 @@ elseif (version == 3 || version == 4) % BN and BT defined by contact brick
 
 elseif (version >= 5 && version <= 8) % The integral version, Newton
  
-  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
-  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
-  gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+  gf_model_set(md, 'add multiplier', 'lambda_n', mflambda, 'u', mim, GAMMAC);
   gf_model_set(md, 'add initialized data', 'r', [r]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
@@ -248,6 +246,7 @@ elseif (version >= 5 && version <= 8) % The integral version, Newton
       mim_friction, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, version-4);
           
 elseif (version == 9) % The integral version, Uzawa on the augmented Lagrangian
+    
     
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -279,9 +278,7 @@ elseif (version == 9) % The integral version, Uzawa on the augmented Lagrangian
 elseif (version >= 10 && version <= 13) % The integral version with friction, Newton
  
   gf_mesh_fem_set(mflambda, 'qdim', d);
-  ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
-  mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
-  gf_model_set(md, 'add fem variable', 'lambda', mflambda_partial);
+  gf_model_set(md, 'add multiplier', 'lambda', mflambda, 'u', mim, GAMMAC);
   gf_model_set(md, 'add initialized data', 'r', [r]);
   gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
