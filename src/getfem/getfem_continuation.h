@@ -459,7 +459,7 @@ namespace getfem {
     
     // Misc.
     void init_border(const VECT &v) {
-      srand(time(NULL));
+      srand(unsigned(time(NULL)));
       gmm::resize(b_x_, gmm::vect_size(v)); gmm::fill_random(b_x_);
       gmm::resize(c_x_, gmm::vect_size(v)); gmm::fill_random(c_x_);
       b_gamma_ = gmm::random(1.); c_gamma_ = gmm::random(1.);
