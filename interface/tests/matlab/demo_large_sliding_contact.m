@@ -18,9 +18,11 @@ gf_workspace('clear all');
 clear all;
 
 lambda = 1.; mu = 1.;   % Elasticity parameters
-r = 1000.0;                % Augmentation parameter
+r = 1.0;                % Augmentation parameter
 f_coeff = 1.;           % Friction coefficient
-vf = 10.;                % Vertical force
+vf = 0.01;                % Vertical force
+penalty_parameter = 0.1;
+
 
 mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
 mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
@@ -48,7 +50,7 @@ dol2 = gf_mesh_fem_get(pre_mflambda2, 'basic dof on region', CONTACT_BOUNDARY2);
 mflambda2 = gf_mesh_fem('partial',  pre_mflambda2, dol2);
 mim2 = gf_mesh_im(mesh2, 8);
 
-two_bodies = 0;
+two_bodies = 1;
 
 md=gf_model('real');
 gf_model_set(md, 'add initialized data', 'lambda', lambda);
@@ -58,11 +60,18 @@ if (two_bodies)
   gf_model_set(md, 'add fem variable', 'u1', mfu1);
   gf_model_set(md, 'add fem variable', 'lambda1', mflambda1);
   gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1', 'lambda', 'mu');
-  gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.1]);
-  gf_model_set(md, 'add initialized data', 'cunitv1', [1 0]);
-  gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints1', 'cunitv1');
+%   gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.5 0 1.5 0 0.5 0 1.5]);
+%   gf_model_set(md, 'add initialized data', 'cunitv1', [1 0 1 0 0 1 0 1]);
+%   gf_model_set(md, 'add initialized data', 'cdata', [0 0 -0.01 -0.01]);
+%   gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints1', 'cunitv1', 'cdata');
+  gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.5 0 1.5]);
+  gf_model_set(md, 'add initialized data', 'cunitv1', [1 0 1 0]);
+  gf_model_set(md, 'add initialized data', 'cdata', [0 0]);
+  gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints1', 'cunitv1', 'cdata');
   gf_model_set(md, 'add initialized data', 'data1', [0 -vf]);
   gf_model_set(md, 'add source term brick', mim1, 'u1', 'data1');
+  gf_model_set(md, 'add initialized data', 'penalty_param1', [penalty_parameter]);          
+  gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
 end;
 
 gf_model_set(md, 'add fem variable', 'u2', mfu2);
@@ -73,6 +82,8 @@ gf_model_set(md, 'add initialized data', 'cunitv2', [1 0]);
 gf_model_set(md, 'add pointwise constraints with multipliers', 'u2', 'cpoints2', 'cunitv2');
 gf_model_set(md, 'add initialized data', 'data2', [0 -vf]);
 gf_model_set(md, 'add source term brick', mim2, 'u2', 'data2');
+gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);          
+gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
 
 gf_model_set(md, 'add initialized data', 'r', r);
 gf_model_set(md, 'add initialized data', 'f', f_coeff);
@@ -89,26 +100,33 @@ gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y')
 
 
 
-for i=1:30
+for i=1:100
 
-gf_model_get(md, 'solve', 'noisy', 'max_iter', 10, 'max_res', 1e-10); % , 'lsearch', 'simplest');
+   
+    
+gf_model_get(md, 'solve', 'noisy', 'max_iter', 50, 'max_res', 1e-8); % , 'lsearch', 'simplest');
 
-
-if (two_bodies) 
-   U1 = gf_model_get(md, 'variable', 'u1');
-   VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u1', 'lambda', 'mu', mfvm1);
-   gf_plot(mfvm1,VM1,'mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
-   hold on
-end;
 U2 = gf_model_get(md, 'variable', 'u2');
 VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 		  'u2', 'lambda', 'mu', mfvm2);
 
 gf_plot(mfvm2,VM2,'mesh','off', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
-hold off;
 
-pause;
+if (two_bodies)
+   hold on
+   U1 = gf_model_get(md, 'variable', 'u1');
+   VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		  'u1', 'lambda', 'mu', mfvm1);
+   gf_plot(mfvm1,VM1,'mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
+   hold off
+end;
+
+axis([-2, 2, -0.2, 3]);
+pause(1);
+
+ vf = vf + 0.001;
+ gf_model_set(md, 'variable', 'data1', [0 -vf]);
+ gf_model_set(md, 'variable', 'data2', [0 -vf]);
 
 end;
 
