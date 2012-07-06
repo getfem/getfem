@@ -1,23 +1,23 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2009-2012 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-//===========================================================================
+/*===========================================================================
+ 
+ Copyright (C) 2009-2012 Yves Renard
+ 
+ This file is a part of GETFEM++
+ 
+ Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
+===========================================================================*/
 
 #include <iomanip>
 #include "gmm/gmm_range_basis.h"
@@ -1605,6 +1605,18 @@ namespace getfem {
       else
         asm_homogeneous_normal_source_term(vecl[0], mim, mf_u, A, rg);
 
+    }
+
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+                                                  const model::varnamelist &vl,
+                                                  const model::varnamelist &,
+                                                  const model::mimlist &,
+                                                  model::real_matlist &,
+                                                  model::real_veclist &vecl,
+                                                  model::real_veclist &,
+                                                  size_type) const {
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      return -gmm::vect_sp(vecl[0], u);
     }
 
     normal_source_term_brick(void) {
