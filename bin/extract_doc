@@ -1185,7 +1185,6 @@ elif (option == 'scilab-com'):
   mfile.write('          <para>mesher object descriptor</para>\n')
   mfile.write('        </listitem>\n')
   mfile.write('      </varlistentry>\n\n')
-  mfile.write('    </variablelist>\n\n')
 
   mfile.write('      <varlistentry>\n')
   mfile.write('        <term>cont_struct</term>\n')
