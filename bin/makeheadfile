@@ -5,12 +5,13 @@
 #
 # Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
-# by  the  Free Software Foundation;  either version 2.1 of the License,  or
-# (at your option) any later version.
+# by  the  Free Software Foundation; either version 3 of the License,  or
+# (at your option) any later version along with the GCC Runtime Library
+# Exception either version 3.1 or (at your option) any later version.
 # This program  is  distributed  in  the  hope  that it will be useful,  but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-# License for more details.
+# License and GCC Runtime Library Exception for more details.
 # You  should  have received a copy of the GNU Lesser General Public License
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -41,12 +42,13 @@ sub print_license  {
 #
 # Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
 # under  the  terms  of the  GNU  Lesser General Public License as published
-# by  the  Free Software Foundation;  either version 2.1 of the License,  or
-# (at your option) any later version.
+# by  the  Free Software Foundation;  either version 3 of the License,  or
+# (at your option) any later version along with the GCC Runtime Library
+# Exception either version 3.1 or (at your option) any later version.
 # This program  is  distributed  in  the  hope  that it will be useful,  but
 # WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-# License for more details.
+# License and GCC Runtime Library Exception for more details.
 # You  should  have received a copy of the GNU Lesser General Public License
 # along  with  this program;  if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -62,12 +64,13 @@ sub print_license  {
 %
 % Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
 % under  the  terms  of the  GNU  Lesser General Public License as published
-% by  the  Free Software Foundation;  either version 2.1 of the License,  or
-% (at your option) any later version.
+% by  the  Free Software Foundation;  either version 3 of the License,  or
+% (at your option) any later version along with the GCC Runtime Library
+% Exception either version 3.1 or (at your option) any later version.
 % This program  is  distributed  in  the  hope  that it will be useful,  but
 % WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 % or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-% License for more details.
+% License and GCC Runtime Library Exception for more details.
 % You  should  have received a copy of the GNU Lesser General Public License
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -86,12 +89,13 @@ sub print_license  {
  
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 2.1 of the License,  or
- (at your option) any later version.
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- License for more details.
+ License and GCC Runtime Library Exception for more details.
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -192,7 +196,7 @@ sub process_file  {
   }
 
 
-  if ($option == 2) {
+  if ($option == 3) {
 
     do {
 
@@ -211,7 +215,7 @@ sub process_file  {
 
   }
 
-  if ($option == 1 && $year2 != $year && $license < 3) {
+  if (($option == 2 || ($option == 1 && $year2 != $year)) && $license < 3) {
 
     if ($license == 0) {
       print "Copyright notice has to be added : adding LGPL License ?\n";
@@ -289,10 +293,12 @@ chomp $year;
 $options = $ARGV[0];
 
 if ($options eq "make") { $option = 1; }
-elsif ($options eq "info") { $option = 2; }
+elsif ($options eq "makeall") { $option = 2; }
+elsif ($options eq "info") { $option = 3; }
 else {
   print "Valid options are:\n";
   print "  make: change the header files where necessary,\n";
+  print "  makeall: change the header files everywhere (use with care),\n";
   print "  info: show information.\n";
   print "Should be run on the top of Getfem tree\n";
   exit(1);
