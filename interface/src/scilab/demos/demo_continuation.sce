@@ -83,7 +83,6 @@ tau = gf_cont_struct_get(S, 'test function');
 
 U_hist = zeros(1, nbstep + 1); lambda_hist = zeros(1, nbstep + 1);
 U_hist(1) = U(1); lambda_hist(1) = lambda;
-tau_hist = zeros(1, nbstep + 1); tau_hist(1) = tau;
 
 scf(0); drawlater; clf();
 subplot(2,1,1);
@@ -95,7 +94,7 @@ xtitle('', 'x', 'u');
 drawnow;
 
 scf(1); drawlater; clf();
-plot(0, tau_hist(1), 'k.');
+plot(0, tau, 'k.');
 xtitle('', 'iteration', 'tau');
 drawnow;
 
@@ -113,7 +112,6 @@ for step = 1:nbstep
   lambda = gf_model_get(md, 'variable', 'lambda');
   tau = gf_cont_struct_get(S, 'test function');
   U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
-  tau_hist(step + 1) = tau;
 //  printf('U = '); disp(U); printf('lambda = %e\n', lambda);
 //  printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
@@ -129,9 +127,8 @@ for step = 1:nbstep
   xtitle('', 'x', 'u');
   drawnow;
 
-  scf(1); drawlater; clf();
-  plot(0:step, tau_hist(1:step + 1), 'k.-');
-  xtitle('', 'iteration', 'tau');
+  scf(1); drawlater;
+  plot(step, tau, 'k.');
   drawnow;
   
   // calculate the determinant of the augmented Jacobian directly

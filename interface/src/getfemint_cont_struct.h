@@ -51,7 +51,10 @@ namespace getfemint {
     ~getfemint_cont_struct() {}
     id_type class_id() const { return CONT_STRUCT_CLASS_ID; }
     size_type memsize() const {
-      return sizeof(getfem::cont_struct_getfem_model); // ??
+      size_type szd = sizeof(double);
+      return 2* gmm::vect_size(s->b_x()) * szd
+	+ gmm::vect_size(s->get_tau_hist()) * szd
+	+ sizeof(getfem::cont_struct_getfem_model);
     }
 
     static getfemint_cont_struct*

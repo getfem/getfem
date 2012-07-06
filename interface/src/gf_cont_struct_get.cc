@@ -66,6 +66,30 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
   if (subc_tab.size() == 0) {
   
 
+    /*@FUNC t = ('init test function', @vec tangent, @scalar tangent_parameter)
+      Initialise the border of the bordered system that serves for calculating
+      the test function. Return the value of test function for the solution
+      and the value of the parameter saved in the corresponding model object
+      and the tangent given by `tangent` and `tangent_parameter`.@*/
+    sub_command
+      ("init test function", 2, 2, 0, 1,
+
+       size_type nbdof = ps->linked_model().nb_dof();
+       std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
+       const getfem::model_real_plain_vector &GAMMA =
+       ps->linked_model().real_variable(ps->parameter_name());
+       GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
+                   "The continuation parameter should be a real scalar!");
+       scalar_type gamma = GAMMA[0];
+       darray t_y = in.pop().to_darray();
+       std::vector<double> tt_y(nbdof); gmm::copy(t_y, tt_y);
+       scalar_type t_gamma = in.pop().to_scalar();
+
+       getfem::init_test_function(*ps, yy, gamma, tt_y, t_gamma);
+       out.pop().from_scalar(ps->tau2());
+       );
+  
+
     /*@FUNC E = ('init Moore-Penrose continuation', @scalar init_dir)
       Initialise the Moore-Penrose continuation: Return a unit tangent
       corresponding to the solution branch at the solution and the
@@ -113,10 +137,10 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
                    "The continuation parameter should be a real scalar!");
        scalar_type gamma = GAMMA[0];
        darray t_y = in.pop().to_darray();
+       std::vector<double> tt_y(nbdof); gmm::copy(t_y, tt_y);
        scalar_type t_gamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
 
-       std::vector<double> tt_y(nbdof); gmm::copy(t_y, tt_y);
        getfem::Moore_Penrose_continuation(*ps, yy, gamma, tt_y, t_gamma, h);
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
@@ -125,10 +149,13 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET t = ('test function')
-      Return the last value of the test function.@*/
+      Return the last value of the test function and eventaully all the
+      values calculated when passing through a boundary between different
+      smooth pieces.@*/
     sub_command
-      ("test function", 0, 0, 0, 1,
-       out.pop().from_scalar(ps->tau3());
+      ("test function", 0, 0, 0, 2,
+       out.pop().from_scalar(ps->tau2());
+       if (out.remaining()) out.pop().from_dcvector(ps->get_tau_hist());
        );
 
 

@@ -35,7 +35,7 @@ using namespace getfemint;
 
 void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   getfemint_cont_struct *pgs = NULL;  
-  if (check_cmd("ContStruct", "ContStruct", in, out, 3, 33, 0, 1)) {
+  if (check_cmd("ContStruct", "ContStruct", in, out, 3, 35, 0, 1)) {
     
     /*@INIT S = ('.init', @tmodel md, @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar sc_fac[, ...])
     The variable `dataname_parameter` should parametrise the model given by
@@ -83,6 +83,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     - 'max_res_solve', @scalar RES_SOLVE
        target residual value for the linear systems to be solved (the
        default value is 1e-7);
+    - 'nb_test', @int NTEST
+       number of evaluations of the test function when passing through
+       a boundary between different smooth pieces;
     - 'noisy' or 'very_noisy'
        determines how detailed information has to be displayed during the
        process (residual values etc.).@*/
@@ -108,6 +111,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        scalar_type h_max = 1.e-1; scalar_type h_min = 1.e-5;
        scalar_type h_inc = 1.3; scalar_type h_dec = 0.5;
        scalar_type epsilon = 1.e-8; scalar_type maxres_solve = 1.e-7;
+       size_type nb_test = 50;
        int noisy = 0;
 
        while (in.remaining() && in.front().is_string()) {
@@ -151,6 +155,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
          } else if (cmd_strmatch(opt, "max_res_solve")) {
            if (in.remaining()) maxres_solve = in.pop().to_scalar();
            else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "nb_test")) {
+           if (in.remaining()) nb_test = in.pop().to_integer();
+           else THROW_BADARG("missing value for " << opt);
          } else if (cmd_strmatch(opt, "noisy")) noisy = 1;
          else if (cmd_strmatch(opt, "very noisy") ||
                   cmd_strmatch(opt, "very_noisy")) noisy = 2;
@@ -168,7 +175,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 	    dataname_current,
 	    getfem::rselect_linear_solver(md->model(), lsolver), scfac,
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-	    h_inc, h_dec, epsilon, maxres_solve, noisy);
+	    h_inc, h_dec, epsilon, maxres_solve, noisy, nb_test);
 	 ps = ps1;
        }
        else {
@@ -177,7 +184,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
            (md->model(), dataname_parameter,
 	    getfem::rselect_linear_solver(md->model(), lsolver), scfac,
 	    maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-	    h_inc, h_dec, epsilon, maxres_solve, noisy);
+	    h_inc, h_dec, epsilon, maxres_solve, noisy, nb_test);
 	 ps = ps1;
        }
 
