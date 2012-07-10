@@ -68,12 +68,26 @@ namespace getfem {
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params,
 				      scalar_type det_trans) const = 0;
+	/**True Cauchy stress (for Updated Lagrangian formulation)*/
+	virtual void cauchy_updated_lagrangian(const base_matrix& F, 
+			const base_matrix &E, 
+			base_matrix &cauchy_stress,
+			const base_vector &params,
+			scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
 		       const base_vector &params,
 		       scalar_type det_trans) const = 0;
     // the result of grad_sigma has to be completely symmetric.
     virtual void grad_sigma(const base_matrix &E, base_tensor &result, 
 		 const base_vector &params, scalar_type det_trans) const = 0;
+
+	/**cauchy-truesdel tangent moduli, used in updated lagrangian*/
+	virtual void grad_sigma_updated_lagrangian(const base_matrix& F, 
+			const base_matrix& E,
+			const base_vector &params,
+			scalar_type det_trans,
+			base_tensor &grad_sigma_ul)const;
+
     size_type nb_params(void) const { return nb_params_; }
     abstract_hyperelastic_law() { nb_params_ = 0; pl = 0; }
     virtual ~abstract_hyperelastic_law() {}
@@ -98,6 +112,11 @@ namespace getfem {
 		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 		      const base_vector &params, scalar_type det_trans) const;
+	virtual void grad_sigma_updated_lagrangian(const base_matrix& F, 
+				const base_matrix& E,
+				const base_vector &params,
+				scalar_type det_trans,
+				base_tensor &grad_sigma_ul)const;
     SaintVenant_Kirchhoff_hyperelastic_law(void);
   };
 

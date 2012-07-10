@@ -344,6 +344,51 @@ namespace getfem {
     GMM_ASSERT1(ok, "Derivative test has failed");
   }
     
+	void abstract_hyperelastic_law::cauchy_updated_lagrangian(const base_matrix& F, 
+		const base_matrix &E, 
+		base_matrix &cauchy_stress,
+		const base_vector &params,
+		scalar_type det_trans) const
+	{
+		size_type N = E.ncols();
+		base_matrix PK2(N,N);
+		sigma(E,PK2,params,det_trans);//second Piola-Kirchhoff stress
+		base_matrix aux(N,N);
+		gmm::mult(F,PK2,aux);
+		gmm::mult(aux,gmm::transposed(F),cauchy_stress);
+		gmm::scale(cauchy_stress,scalar_type(1.0/det_trans)); //cauchy = 1/J*F*PK2*F^T
+	};
+
+
+	void abstract_hyperelastic_law::grad_sigma_updated_lagrangian(const base_matrix& F, 
+		const base_matrix& E,
+		const base_vector &params,
+		scalar_type det_trans,
+		base_tensor &grad_sigma_ul)const
+	{
+		size_type N = E.ncols();
+		base_tensor Cse(N,N,N,N);
+		grad_sigma(E,Cse,params,det_trans);
+		scalar_type mult = 1.0/det_trans;
+		// this is a general transformation for an anisotropic material, very non-efficient;
+		// more effiecient calculations can be overloaded for every specific material
+		for(size_type i = 0; i < N; ++i)
+			for(size_type j = 0; j < N; ++j)
+				for(size_type k = 0; k < N; ++k)
+					for(size_type l = 0; l < N; ++l)
+					{
+						grad_sigma_ul(i,j,k,l) = 0.0;
+						for(size_type m = 0; m < N; ++m)
+						{    for(size_type n = 0; n < N; ++n)
+								for(size_type p = 0; p < N; ++p)
+									for(size_type q = 0; q < N; ++q)
+										grad_sigma_ul(i,j,k,l)+= 
+										F(i,m)*F(j,n)*F(k,p)*F(l,q)*Cse(m,n,p,q);
+						}
+						grad_sigma_ul(i,j,k,l) *= mult;
+					}
+	}
+
   scalar_type SaintVenant_Kirchhoff_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params, scalar_type) const {
     return gmm::sqr(gmm::mat_trace(E)) * params[0] / scalar_type(2)
@@ -367,6 +412,26 @@ namespace getfem {
 	result(i, l, l, i) += params[1];
       }
   }
+
+	void SaintVenant_Kirchhoff_hyperelastic_law::grad_sigma_updated_lagrangian(const base_matrix& F, 
+		const base_matrix& E,
+		const base_vector &params,
+		scalar_type det_trans,
+		base_tensor &grad_sigma_ul)const
+	{
+		size_type N = E.ncols();
+		base_tensor Cse(N,N,N,N);
+		grad_sigma(E,Cse,params,det_trans);
+		base_matrix Cinv(N,N); // left Cauchy-Green deform. tens. 
+		gmm::mult(F,gmm::transposed(F),Cinv);
+		scalar_type mult=1.0/det_trans;
+		for(size_type i = 0; i < N; ++i)
+			for(size_type j = 0; j < N; ++j)
+				for(size_type k = 0; k < N; ++k)
+					for(size_type l = 0; l < N; ++l)
+						grad_sigma_ul(i, j, k, l)= (Cinv(i,j)*Cinv(k,l)*params[0] +
+						params[1]*(Cinv(i,k)*Cinv(j,l) + Cinv(i,l)*Cinv(j,k)))*mult;
+	}
 
   SaintVenant_Kirchhoff_hyperelastic_law::SaintVenant_Kirchhoff_hyperelastic_law(void) {
     // an attempt, the first term is missing grad(h)sigma:grad(v)
