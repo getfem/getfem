@@ -214,6 +214,7 @@ regular_simplices_mesh(getfem::mesh *pmesh, getfemint::mexargs_in &in) {
 	p[k] += diff[k] * gmm::random(double()) * 0.2 / K;
     }
   }
+  pmesh->points().resort();
 }
 
 static void
