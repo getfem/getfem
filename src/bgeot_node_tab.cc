@@ -134,8 +134,12 @@ namespace bgeot {
 
   void node_tab::sup_node(size_type i) {
     if (index().is_in(i)) {
-      for (size_type is = 0; is < sorters.size(); ++is) sorters[is].erase(i);
+      for (size_type is = 0; is < sorters.size(); ++is) {
+	sorters[is].erase(i);
+	GMM_ASSERT3(sorters[is].size()+1 == card(), "internal error");
+      }
       dal::dynamic_tas<base_node>::sup(i);
+      
     }
   }
 

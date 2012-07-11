@@ -132,6 +132,8 @@ namespace getfem {
     void error_if_not_faces() const;
     void error_if_not_convexes() const;
     void error_if_not_homogeneous() const;
+    const mesh *get_parent_mesh(void) const { return parent_mesh; }
+    void set_parent_mesh(mesh *pm) { parent_mesh = pm; }
     
     /** "iterator" class for regions. Usage similar to bv_visitor:
 	for (mr_visitor i(region); !i.finished(); ++i) {

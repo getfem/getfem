@@ -381,6 +381,11 @@ namespace getfem {
   void mesh::copy_from(const mesh& m) {
     clear();
     bgeot::basic_mesh::operator=(m);
+    cvf_sets = m.cvf_sets;
+    valid_cvf_sets = m.valid_cvf_sets;
+    for (std::map<size_type, mesh_region>::iterator it = cvf_sets.begin();
+	 it != cvf_sets.end(); ++it)
+      if (it->second.get_parent_mesh() != 0) it->second.set_parent_mesh(this);
     cvs_v_num.clear();
     gmm::uint64_type d = act_counter();
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
