@@ -702,6 +702,12 @@ namespace getfem {
       leading_dim = 0;
     }
 
+	/**check consistency of RHS and Stiffness matrix for brick with 
+	* @param  ind_brick  - index of the brick
+	*/
+	void check_brick_stiffness_rhs(size_type ind_brick) const;
+
+
   };
 
   //=========================================================================
@@ -923,7 +929,22 @@ namespace getfem {
       return scalar_type(0);
     }
 
+	/**check consistency of stiffness matrix and rhs*/
+	void check_stiffness_matrix_and_rhs(const model &, size_type,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::real_matlist &,
+                                        model::real_veclist &,
+                                        model::real_veclist &, size_type rg,
+										const scalar_type delta = 1e-8) const;
+
+
+
+
   };
+
+
 
   //=========================================================================
   //

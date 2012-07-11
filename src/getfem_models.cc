@@ -1154,6 +1154,17 @@ namespace getfem {
                 << niter << " for " << name);
     return it->second.complex_value[niter];
   }
+    void model::check_brick_stiffness_rhs(size_type ind_brick) const
+	{
+
+	  
+	  const brick_description &brick = bricks[ind_brick];
+	  update_brick(ind_brick, model::BUILD_ALL);
+
+	  brick.pbr->check_stiffness_matrix_and_rhs(*this, ind_brick, 
+		  brick.vlist, brick.dlist, brick.mims, brick.rmatlist,
+            brick.rveclist[0], brick.rveclist_sym[0], brick.region);
+  }
 
 
   // ----------------------------------------------------------------------
@@ -1163,6 +1174,86 @@ namespace getfem {
   //
   //
   // ----------------------------------------------------------------------
+  	void virtual_brick::check_stiffness_matrix_and_rhs(const model &md, size_type s,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &rvc1,
+                                        model::real_veclist &rvc2, 
+										size_type rg,
+										const scalar_type TINY) const
+	{
+		asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2, rg, model::BUILD_MATRIX);
+		model_real_sparse_matrix SM(matl[0]);
+		gmm::fill(rvc1[0], 0.0);
+		asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2, rg, model::BUILD_RHS);
+		model_real_plain_vector RHS0(rvc1[0]);
+
+		//finite difference stiffness		
+		model_real_sparse_matrix fdSM(matl[0].nrows(),matl[0].ncols());
+
+		for (size_type i=0;i<rvc1[0].size();i++){
+			model_real_plain_vector U(md.real_variable(vl[0]));
+			U[i]+=TINY;
+			gmm::copy(U, md.set_real_variable(vl[0]));
+			gmm::fill(rvc1[0], 0.0);
+			asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2, rg, model::BUILD_RHS);
+			model_real_plain_vector RHS1(rvc1[0]);
+			for (size_type j=0;j<rvc1[0].size();j++){
+    			fdSM(i,j)=(RHS0[j]-RHS1[j])/TINY;
+			}
+			U[i]-=TINY;
+			gmm::copy(U, md.set_real_variable(vl[0]));
+		}
+		model_real_sparse_matrix diffSM(matl[0].nrows(),matl[0].ncols());
+		gmm::add(matl[0],gmm::scaled(fdSM,-1.0),diffSM);
+		scalar_type norm_error_euc = gmm::mat_euclidean_norm(diffSM)/gmm::mat_euclidean_norm(matl[0])*100;
+		scalar_type norm_error_1 = gmm::mat_norm1(diffSM)/gmm::mat_norm1(matl[0])*100;
+		scalar_type norm_error_max = gmm::mat_maxnorm(diffSM)/gmm::mat_maxnorm(matl[0])*100;
+		
+		model_real_sparse_matrix diffSMtransposed(matl[0].nrows(),matl[0].ncols());
+		gmm::add(gmm::transposed(fdSM),gmm::scaled(fdSM,-1.0),diffSMtransposed);
+		scalar_type nsym_norm_error_euc = gmm::mat_euclidean_norm(diffSMtransposed)/gmm::mat_euclidean_norm(fdSM)*100;
+		scalar_type nsym_norm_error_1 = gmm::mat_norm1(diffSMtransposed)/gmm::mat_norm1(fdSM)*100;
+		scalar_type nsym_norm_error_max = gmm::mat_maxnorm(diffSMtransposed)/gmm::mat_maxnorm(fdSM)*100;
+
+		//print matrix if the size is small
+		if(rvc1[0].size()<8){
+			std::cout << "RHS Stiffness Matrix: \n";
+			std::cout << "------------------------\n";
+			for(size_type i=0; i < rvc1[0].size(); ++i){
+				std::cout << "[";
+				for(size_type j=0; j < rvc1[0].size(); ++j){
+					std::cout << fdSM(i,j) << "  ";
+				}
+				std::cout << "]\n";
+			}
+			std::cout << "Analytical Stiffness Matrix: \n";
+			std::cout << "------------------------\n";
+			for(size_type i=0; i < rvc1[0].size(); ++i){
+				std::cout << "[";
+				for(size_type j=0; j < rvc1[0].size(); ++j){
+					std::cout << matl[0](i,j) << "  ";
+				}
+				std::cout << "]\n";
+			}
+			std::cout << "Vector U: \n";
+			std::cout << "------------------------\n";
+			for(size_type i=0; i < rvc1[0].size(); ++i){
+				std::cout << "[";
+					std::cout << md.real_variable(vl[0])[i] << "  ";
+				std::cout << "]\n";
+			}
+		}
+
+		std::cout<<"\n\nfinite diff test error_norm_eucl: "<<norm_error_euc <<"%"<<std::endl;
+		std::cout<<"finite diff test error_norm1: "<<norm_error_1 <<"%"<<std::endl;
+		std::cout<<"finite diff test error_max_norm: "<<norm_error_max <<"%"<<std::endl;
+		std::cout<<"\n\nNonsymmetrical test error_norm_eucl: "<<nsym_norm_error_euc <<"%"<<std::endl;
+		std::cout<<"Nonsymmetrical test error_norm1: "<<nsym_norm_error_1 <<"%"<<std::endl;
+		std::cout<<"Nonsymmetrical test error_max_norm: "<<nsym_norm_error_max <<"%"<<std::endl;
+	}
 
 
   // ----------------------------------------------------------------------
