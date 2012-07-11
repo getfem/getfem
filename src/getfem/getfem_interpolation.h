@@ -96,7 +96,7 @@ namespace getfem {
                                        F &f, const dal::bit_vector &dofs,
                                        const M &, gmm::abstract_null_type) {
     size_type Q = mf.get_qdim();
-    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof() && Q == 1,
+    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_basic_dof() && Q == 1,
                 "Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       V[i] = f(mf.point_of_basic_dof(i));
@@ -107,7 +107,7 @@ namespace getfem {
                                        F &f, const dal::bit_vector &dofs,
                                        const M &v, gmm::abstract_vector) {
     size_type N = gmm::vect_size(v),  Q = mf.get_qdim();
-    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof()*N/Q,
+    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_basic_dof()*N/Q,
                 "Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       if (i % Q == 0)
@@ -123,7 +123,7 @@ namespace getfem {
     size_type Nr = gmm::mat_nrows(mm), Nc = gmm::mat_ncols(mm), N = Nr*Nc;
     size_type Q = mf.get_qdim();
     base_matrix m(Nr, Nc);
-    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_dof()*N/Q,
+    GMM_ASSERT1(gmm::vect_size(V) == mf.nb_basic_dof()*N/Q,
                 "Dof vector has not the right size");
     for (dal::bv_visitor i(dofs); !i.finished(); ++i)
       if (i % Q == 0) {
