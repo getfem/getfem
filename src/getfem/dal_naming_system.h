@@ -111,7 +111,7 @@ namespace dal {
 		   bool throw_if_not_found = true)
     { gmm::standard_locale sl; return method_(name, i, throw_if_not_found); }
     naming_system(std::string pr) : prefix(pr) {}
-
+    bool delete_method(std::string name);
   };
 
   template <class METHOD>
@@ -307,6 +307,23 @@ namespace dal {
       }
     }
 
+  }
+
+  /**deletion of static_stored_object in the naming system*/
+  template <class METHOD>
+  bool naming_system<METHOD>::delete_method(std::string name) 
+  {
+
+    pmethod pm = 0;
+
+	method_key nname(name);
+	pstatic_stored_object o = search_stored_object(nname);
+
+	if (!o) return false;
+	pm = stored_cast<METHOD>(o);
+	pstatic_stored_object_key k = key_of_stored_object(pm);
+	dal::del_stored_object(pm, false);
+	return true;
   }
 
 }
