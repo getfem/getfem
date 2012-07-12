@@ -1,0 +1,34 @@
+.. include:: ../replaces.txt
+
+****************************
+  What's New in |gf| 4.2
+****************************
+
+The New brick system is now mature and several coumplig brick has been developped.
+Released version, 2012/07/31.
+
+The main changes are:
+
+   * The license of Getfem has moved to LGPL 3 with GCC Runtime Exception
+     allowing commercial codes to use Getfem.
+
+   * Contact/friction bricks has been extented to non-matching meshes and
+     to integral contact condition with different augmentations (Alart Curnier,
+     De Saxce projection, augmented multiliers). A large sliding contact
+     brick is in progress.
+
+   * A complete tool to perform continuation of the solution to a model with
+     respect to one of its parameter and to detect bifurcation has been
+     developped.
+   * Some additional model bricks : pointwise constraint brick (to prescribe a constraint on a point eventually inside an element), basic nonlinear brick (for instance, for semi-linear equations)
+
+   * The experimental mesher of Getfem is now (partially) interfaced with
+     python/scilab/matlab.
+     
+   * Some tools to verify the consistence (tangent term) of a brick or
+     the whole model has been added.
+
+   * Many bug fixes.
+
+
+
