@@ -171,6 +171,38 @@ namespace getfem {
    const std::string &dataname_r,
    size_type region1, size_type region2, int option = 1);
 
+  /** Add a contact with friction condition between nonmatching meshes
+      to the model. This brick adds a contact which is defined
+      in an integral way. It is the direct approximation of an augmented
+      Lagrangian formulation (see Getfem user documentation) defined at the
+      continuous level. The advantage should be a better scalability:
+      the number of Newton iterations should be more or less independent
+      of the mesh size.
+      The condition is applied on the variables `varname_u1` and `varname_u2`
+      on the boundaries corresponding to `region1` and `region2`.
+      `multname` should be a fem variable representing the contact and
+      friction stress.
+      An inf-sup condition between `multname` and `varname_u1` and
+      `varname_u2` is required.
+      The augmentation parameter `dataname_r` should be chosen in a
+      range of acceptable values. `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      The possible value for `option` is 1 for the non-symmetric
+      Alart-Curnier version, 2 for the symmetric one and 3 for the
+      non-symmetric Alart-Curnier with an additional augmentation.
+      `dataname_alpha`, `dataname_wt1` and `dataname_wt2` are optional
+      parameters to solve evolutionary friction problems.
+  */
+  size_type add_integral_contact_between_nonmatching_meshes_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &multname,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   size_type region1, size_type region2, int option = 1,
+   const std::string &dataname_alpha = "",
+   const std::string &dataname_wt1 = "",
+   const std::string &dataname_wt2 = "");
+
 
   /** Add a penalized contact frictionless condition between nonmatching
       meshes to the model.
@@ -189,6 +221,30 @@ namespace getfem {
    const std::string &varname_u2, const std::string &dataname_r,
    size_type region1, size_type region2,
    int option = 1, const std::string &dataname_n = "");
+
+
+  /** Add a penalized contact condition with Coulomb friction between
+      nonmatching meshes to the model.
+      The condition is applied on the variables `varname_u1` and  `varname_u2`
+      on the boundaries corresponding to `region1` and `region2`.
+      The penalization parameter `dataname_r` should be chosen
+      large enough to prescribe approximate non-penetration and friction
+      conditions but not too large not to deteriorate too much the
+      conditionning of the tangent system.
+      `dataname_lambda` is an optional parameter used if option
+      is 2. In that case, the penalization term is shifted by lambda (this
+      allows the use of an Uzawa algorithm on the corresponding augmented
+      Lagrangian formulation)
+  */
+  size_type add_penalized_contact_between_nonmatching_meshes_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &dataname_r,
+   const std::string &dataname_friction_coeff,
+   size_type region1, size_type region2, int option = 1,
+   const std::string &dataname_lambda = "",
+   const std::string &dataname_alpha = "",
+   const std::string &dataname_wt1 = "",
+   const std::string &dataname_wt2 = "");
 
 
   enum contact_nonlinear_term_version {  RHS_L_V1,
