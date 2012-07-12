@@ -636,9 +636,9 @@ namespace getfem {
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
-   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   const VECT1 *WT, const VECT1 *VT,
-   scalar_type r, scalar_type alpha, scalar_type gamma,
+   const getfem::mesh_fem *pmf_coeff, const VECT1 *f_coeff, scalar_type r,
+   scalar_type alpha, const VECT1 *WT,
+   scalar_type gamma, const VECT1 *VT,
    const mesh_region &rg, int option = 1) {
 
     size_type subterm1, subterm2, subterm3;
@@ -662,13 +662,13 @@ namespace getfem {
 
     contact_rigid_obstacle_nonlinear_term
       nterm1(subterm1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha, VT, gamma),
+             pmf_coeff, f_coeff, alpha, WT, gamma, VT),
       nterm2(subterm2, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha, VT, gamma),
+             pmf_coeff, f_coeff, alpha, WT, gamma, VT),
       nterm3(subterm3, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha, VT, gamma),
+             pmf_coeff, f_coeff, alpha, WT, gamma, VT),
       nterm4(subterm4, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha, VT, gamma);
+             pmf_coeff, f_coeff, alpha, WT, gamma, VT);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4" : "#1,#2,#3";
 
@@ -750,9 +750,9 @@ namespace getfem {
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
-   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   const VECT1 *WT, const VECT1 *VT,
-   scalar_type r, scalar_type alpha, scalar_type gamma,
+   const getfem::mesh_fem *pmf_coeff, const VECT1 *f_coeff, scalar_type r,
+   scalar_type alpha, const VECT1 *WT,
+   scalar_type gamma, const VECT1 *VT,
    const mesh_region &rg, int option = 1) {
 
     size_type subterm1, subterm2;
@@ -768,9 +768,9 @@ namespace getfem {
 
     contact_rigid_obstacle_nonlinear_term
       nterm1(subterm1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha, VT, gamma),
+             pmf_coeff, f_coeff, alpha, WT, gamma, VT),
       nterm2(subterm2, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha, VT, gamma);
+             pmf_coeff, f_coeff, alpha, WT, gamma, VT);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4" : "#1,#2,#3";
 
@@ -895,7 +895,7 @@ namespace getfem {
           asm_Alart_Curnier_contact_rigid_obstacle_tangent_matrix
             (matl[0], matl[1], matl[2], matl[fourthmat], mim,
              mf_u, u, mf_obstacle, obstacle, mf_lambda, lambda,
-             pmf_coeff, friction_coeff, WT, VT, vr[0], alpha, gamma,
+             pmf_coeff, &friction_coeff, vr[0], alpha, WT, gamma, VT,
              rg, option);
       }
 
@@ -912,7 +912,7 @@ namespace getfem {
           asm_Alart_Curnier_contact_rigid_obstacle_rhs
             (vecl[0], vecl[2], mim,
              mf_u, u, mf_obstacle, obstacle, mf_lambda, lambda,
-             pmf_coeff, friction_coeff, WT, VT, vr[0], alpha, gamma,
+             pmf_coeff, &friction_coeff, vr[0], alpha, WT, gamma, VT,
              rg, option);
       }
 
@@ -1052,11 +1052,9 @@ namespace getfem {
       nterm((option == 1) ? K_UU_V1 : K_UU_V2, r,
             mf_u, U, mf_obs, obs, pmf_lambda, lambda);
 
+    const std::string aux_fems = pmf_lambda ? "#1,#2,#3": "#1,#2";
     getfem::generic_assembly assem;
-    if (pmf_lambda)
-      assem.set("M(#1,#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
-    else
-      assem.set("M(#1,#1)+=comp(NonLin(#1,#1,#2).vBase(#1).vBase(#1))(i,j,:,i,:,j)");
+    assem.set("M(#1,#1)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_obs);
@@ -1081,11 +1079,9 @@ namespace getfem {
       nterm((option == 1) ? RHS_U_V5 : RHS_U_V2, r,
             mf_u, U, mf_obs, obs, pmf_lambda, lambda);
 
+    const std::string aux_fems = pmf_lambda ? "#1,#2,#3": "#1,#2";
     getfem::generic_assembly assem;
-    if (pmf_lambda)
-      assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
-    else
-      assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2).vBase(#1))(i,:,i); ");
+    assem.set("V(#1)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_obs);
@@ -1103,8 +1099,9 @@ namespace getfem {
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem *pmf_lambda, const VECT1 *lambda,
-   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff, const VECT1 *WT,
-   scalar_type r, scalar_type alpha, const mesh_region &rg, int option = 1) {
+   const getfem::mesh_fem *pmf_coeff, const VECT1 *f_coeff, scalar_type r,
+   scalar_type alpha, const VECT1 *WT,
+   const mesh_region &rg, int option = 1) {
 
     size_type subterm = 0;
     switch (option) {
@@ -1115,11 +1112,10 @@ namespace getfem {
 
     contact_rigid_obstacle_nonlinear_term
       nterm(subterm, r, mf_u, U, mf_obs, obs, pmf_lambda, lambda,
-            pmf_coeff, &f_coeff, WT, alpha);
+            pmf_coeff, f_coeff, alpha, WT);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4"
                                            : (pmf_lambda ? "#1,#2,#3": "#1,#2");
-
     getfem::generic_assembly assem;
     assem.set("M(#1,#1)+=comp(NonLin(#1," + aux_fems + ").vBase(#1).vBase(#1))(i,j,:,i,:,j)");
     assem.push_mi(mim);
@@ -1147,8 +1143,9 @@ namespace getfem {
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem *pmf_lambda, const VECT1 *lambda,
-   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff, const VECT1 *WT,
-   scalar_type r, scalar_type alpha, const mesh_region &rg, int option = 1) {
+   const getfem::mesh_fem *pmf_coeff, const VECT1 *f_coeff, scalar_type r,
+   scalar_type alpha, const VECT1 *WT,
+   const mesh_region &rg, int option = 1) {
 
     size_type subterm = 0;
     switch (option) {
@@ -1159,15 +1156,12 @@ namespace getfem {
 
     contact_rigid_obstacle_nonlinear_term
       nterm(subterm, r, mf_u, U, mf_obs, obs, pmf_lambda, lambda,
-            pmf_coeff, &f_coeff, WT, alpha);
+            pmf_coeff, f_coeff, alpha, WT);
 
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4"
+                                           : (pmf_lambda ? "#1,#2,#3": "#1,#2");
     getfem::generic_assembly assem;
-    if (pmf_coeff)
-      assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3,#4).vBase(#1))(i,:,i); ");
-    else if (pmf_lambda)
-      assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
-    else
-      assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2).vBase(#1))(i,:,i); ");
+    assem.set("V(#1)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1))(i,:,i); ");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_obs);
@@ -1286,7 +1280,7 @@ namespace getfem {
         else
           asm_penalized_contact_rigid_obstacle_tangent_matrix
             (matl[0], mim, mf_u, u, mf_obs, obs, pmf_lambda, lambda,
-             pmf_coeff, *f_coeff, WT, vr[0], alpha, rg, option);
+             pmf_coeff, f_coeff, vr[0], alpha, WT, rg, option);
       }
 
       if (version & model::BUILD_RHS) {
@@ -1298,7 +1292,7 @@ namespace getfem {
         else
           asm_penalized_contact_rigid_obstacle_rhs
             (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_lambda, lambda,
-             pmf_coeff, *f_coeff, WT, vr[0], alpha, rg, option);
+             pmf_coeff, f_coeff, vr[0], alpha, WT, rg, option);
       }
 
     }
@@ -1473,8 +1467,8 @@ namespace getfem {
    const getfem::mesh_fem &mf_u2, const VEC &U2,
    const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    const getfem::mesh_fem *pmf_coeff, const VEC &f_coeff,
-   const VEC *WT1, const VEC *WT2,
    scalar_type r, scalar_type alpha,
+   const VEC *WT1, const VEC *WT2,
    const mesh_region &rg, int option = 1) {
 
     size_type subterm1, subterm2, subterm3;
@@ -1504,13 +1498,13 @@ namespace getfem {
 
     contact_nonmatching_meshes_nonlinear_term
       nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+             pmf_coeff, &f_coeff, alpha, WT1, WT2),
       nterm2(subterm2, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+             pmf_coeff, &f_coeff, alpha, WT1, WT2),
       nterm3(subterm3, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+             pmf_coeff, &f_coeff, alpha, WT1, WT2),
       nterm4(subterm4, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT1, WT2, alpha);
+             pmf_coeff, &f_coeff, alpha, WT1, WT2);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4" : "#1,#2,#3";
 
@@ -1610,8 +1604,8 @@ namespace getfem {
    const getfem::mesh_fem &mf_u2, const VECT1 &U2,
    const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   const VECT1 *WT1, const VECT1 *WT2,
    scalar_type r, scalar_type alpha,
+   const VECT1 *WT1, const VECT1 *WT2,
    const mesh_region &rg, int option = 1) {
 
     size_type subterm1, subterm2;
@@ -1627,9 +1621,9 @@ namespace getfem {
 
     contact_nonmatching_meshes_nonlinear_term
       nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT1, WT2, alpha),
+             pmf_coeff, &f_coeff, alpha, WT1, WT2),
       nterm2(subterm2, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT1, WT2, alpha);
+             pmf_coeff, &f_coeff, alpha, WT1, WT2);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3,#4" : "#1,#2,#3";
 
@@ -1810,8 +1804,7 @@ namespace getfem {
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
             (matl[U1L], matl[LU1], Ku2l, Klu2, matl[LL], matl[U1U1], Ku2u2, Ku1u2,
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
-             pmf_coeff, *f_coeff, WT1, WT2,
-             vr[0], alpha, rg, option);
+             pmf_coeff, *f_coeff, vr[0], alpha, WT1, WT2, rg, option);
 
         if (mf_u2.is_reduced()) {
           gmm::mult(Rsub, Ku2l, matl[U2L]);
@@ -1848,8 +1841,7 @@ namespace getfem {
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
             (vecl[U1L], Ru2, vecl[LL], // u1, u2, lambda
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
-             pmf_coeff, *f_coeff, WT1, WT2,
-             vr[0], alpha, rg, option);
+             pmf_coeff, *f_coeff, vr[0], alpha, WT1, WT2, rg, option);
 
         if (mf_u2.is_reduced())
           gmm::mult(Rsub, Ru2, vecl[U2L]);
@@ -1925,8 +1917,8 @@ namespace getfem {
       break;
     default : GMM_ASSERT1(false,
                           "Incorrect option for integral contact brick");
-
     }
+
     model::varnamelist dl(1, dataname_r);
 
     model::varnamelist vl(1, varname_u1);
@@ -1989,13 +1981,10 @@ namespace getfem {
       nterm((option == 1) ? RHS_U_V5 : RHS_U_V2, r,
             mf_u1, U1, mf_u2, U2, pmf_lambda, lambda);
 
+    const std::string aux_fems = pmf_lambda ? "#1,#2,#3": "#1,#2";
     getfem::generic_assembly assem;
-    if (pmf_lambda)
-      assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); "
-                "V$2(#2)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2))(i,:,i)");
-    else
-      assem.set("V$1(#1)+=comp(NonLin$1(#1,#1,#2).vBase(#1))(i,:,i); "
-                "V$2(#2)+=comp(NonLin$1(#1,#1,#2).vBase(#2))(i,:,i)");
+    assem.set("V$1(#1)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1))(i,:,i); "
+              "V$2(#2)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#2))(i,:,i)");
     assem.push_mi(mim);
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2);
@@ -2005,6 +1994,7 @@ namespace getfem {
     assem.push_vec(Ru1);
     assem.push_vec(Ru2);
     assem.assembly(rg);
+
     gmm::scale(Ru2, scalar_type(-1));
   }
 
@@ -2220,7 +2210,7 @@ namespace getfem {
    int option, const std::string &dataname_n) {
 
     pbrick pbr = new penalized_contact_nonmatching_meshes_brick
-                     (region1, region2, /* contact_only */ true, option);
+                     (region1, region2, true /* contact_only */, option);
     model::termlist tl;
     tl.push_back(model::term_description(varname_u1, varname_u1, true));
     tl.push_back(model::term_description(varname_u2, varname_u2, true));

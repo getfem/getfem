@@ -155,7 +155,7 @@ namespace getfem {
       the number of Newton iterations should be more or less independent
       of the mesh size.
       The condition is applied on the variables `varname_u1` and `varname_u2`
-      on the boundaries corresponding to `region1` and `region1`.
+      on the boundaries corresponding to `region1` and `region2`.
       `multname_n` should be a fem variable representing the contact stress.
       An inf-sup condition between `multname_n` and `varname_u1` and
       `varname_u2` is required.
@@ -174,7 +174,7 @@ namespace getfem {
 
   /** Add a penalized contact frictionless condition between nonmatching
       meshes to the model.
-      The condition is applied on the variabls `varname_u1` and  `varname_u2`
+      The condition is applied on the variables `varname_u1` and  `varname_u2`
       on the boundaries corresponding to `region1` and `region2`.
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe an approximate non-penetration condition
@@ -315,8 +315,8 @@ namespace getfem {
      const mesh_fem &mf_obs_, const VECT1 &obs_,
      const mesh_fem *pmf_lambda_ = 0, const VECT1 *lambda_ = 0,
      const mesh_fem *pmf_coeff_ = 0, const VECT1 *f_coeff_ = 0,
-     const VECT1 *WT_ = 0, scalar_type alpha_ = scalar_type(1),
-     const VECT1 *VT_ = 0, scalar_type gamma_ = scalar_type(1)
+     scalar_type alpha_ = scalar_type(1), const VECT1 *WT_ = 0,
+     scalar_type gamma_ = scalar_type(1), const VECT1 *VT_ = 0
     )
       : contact_nonlinear_term(mf_u_.linked_mesh().dim(), option_, r_,
                                (f_coeff_ == 0), alpha_
@@ -387,8 +387,8 @@ namespace getfem {
      const mesh_fem &mf_u2_, const VECT1 &U2_,
      const mesh_fem *pmf_lambda_ = 0, const VECT1 *lambda_ = 0,
      const mesh_fem *pmf_coeff_ = 0, const VECT1 *f_coeff_ = 0,
-     const VECT1 *WT1_ = 0, const VECT1 *WT2_ = 0,
-     scalar_type alpha_ = scalar_type(1)
+     scalar_type alpha_ = scalar_type(1),
+     const VECT1 *WT1_ = 0, const VECT1 *WT2_ = 0
     )
       : contact_nonlinear_term(mf_u1_.linked_mesh().dim(), option_, r_,
                                (f_coeff_ == 0), alpha_
@@ -453,7 +453,7 @@ namespace getfem {
     contact_rigid_obstacle_nonlinear_term
       nterm1((option == 1) ? UZAWA_PROJ_FRICT : UZAWA_PROJ_FRICT_SAXCE, r,
              mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-             pmf_coeff, &f_coeff, WT, alpha);
+             pmf_coeff, &f_coeff, alpha, WT);
 
     getfem::generic_assembly assem;
     if (pmf_coeff) // variable coefficient of friction
