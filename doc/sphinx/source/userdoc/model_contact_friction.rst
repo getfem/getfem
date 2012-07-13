@@ -58,7 +58,7 @@ Given an augmentation parameter :math:`r`, the contact and friction conditions c
 
   \frac{1}{r}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - r (u_N(a_i) - \text{gap}_i))) = 0,
 
-  \frac{1}{r}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}\lambda_N^i)}(\lambda_T^i - r \dot{u}_T(a_i))) = 0,
+  \frac{1}{r}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - r(u_N(a_i) - \text{gap}_i))}(\lambda_T^i - r \dot{u}_T(a_i))) = 0,
 
 where :math:`P_K` is the projection on the convex :math:`K` and :math:`{\mathscr B}(-{\mathscr F}\lambda_N^i)` is the ball of center :math:`0` and radius :math:`-{\mathscr F}\lambda_N^i`.
 These expressions will be used to perform a semi-smooth Newton method.
@@ -77,9 +77,9 @@ where :math:`d` is the dimension of the domain and :math:`k = 1..d-1`. The expre
  
   K U = L + B_N^T \lambda_N + B_T^T \lambda_T,
 
-  \frac{1}{r}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
+  \frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
 
-  \frac{1}{r}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}\lambda_N^i)}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
+  \frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - r (u_N(a_i) - \text{gap}_i))))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
 
 where :math:`\alpha_i` is a parameter which can be added for the homogenization of the augmentation parameter, :math:`(B_T U)_i` denotes here the sub-vector of indices from :math:`(d-1)(i-1)+1` to :math:`(d-1)i` for the sake of simplicity and the sliding velocity :math:`B_T \dot{U}` have been discretized into :math:`\frac{(B_T U - B_T U^{0})}{\Delta t}` with :math:`U^{0}` the displacement at the previous time step. Note that of course another discretization of the sliding velocity is possible and that the time step :math:`\Delta t` do not appear in the expression of the friction condition since it does not influence the direction of the sliding velocity.
 
@@ -130,9 +130,9 @@ Finally, the expression of the direct nodal contact condition are recovered
  
   K U = L + B_N^T \lambda_N + B_T^T \lambda_T,
 
-  \frac{1}{r}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
+  \frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
 
-  \frac{1}{r}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}\lambda_N^i)}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
+  \frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i)))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
 
 except that now :math:`\lambda_N^i` and :math:`\lambda_T^i` are force densities, and a good value for :math:`\alpha_i` is now
 
@@ -172,7 +172,7 @@ where :math:`gap` is a given initial gap in reference configuration, :math:`r` i
 
 .. math::
 
-  \displaystyle \int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  \displaystyle \int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
 
 where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`\rho` and :math:`P_{B(\rho)}` is the orthogonal projection on it. The term :math:`\alpha(u^h_T-w^h_T)` represent here an approximation of the sliding velocity. The parameter :math:`\alpha` and the field :math:`w^h_T` have to be adapted with respect to the chosen approximation. For instance, if the standard finite difference
 
@@ -190,7 +190,7 @@ Getfem++ bricks implement four versions of the contact condition derived from th
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
-  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
 where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
@@ -215,9 +215,9 @@ The second version corresponds to the "symmetric" version. It is in fact symmetr
 
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} (\lambda^h_N - r(u^h_N-gap))_- v^h_N d\Gamma \\
-  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
-  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
 and the tangent system:
@@ -237,30 +237,7 @@ and the tangent system:
   \end{array}\right.
 
 
-The third version is closed to the non-symmetric version with an additional augmentation of the contact condition. It reads:
-
-.. math::
-
-  \left\{\begin{array}{l}
-  a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma +\int_{\Gamma_c} r(u^h_N-gap)_+ v^h_Nd\Gamma  = l(v^h) ~~~~ \forall v^h \in V^h, \\
-  \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
-  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
-  \end{array}\right.
-
-and the tangent system:
-
-.. math::
-
-  \left\{\begin{array}{l}
-  \cdots - \displaystyle \int_{\Gamma_c} \delta_{\lambda} \cdot v d\Gamma + \int_{\Gamma_c} r H(u^h_N-gap)\delta_{u_N}\delta_{v_N}d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
-  \displaystyle -\frac{1}{r}\int_{\Gamma_c}(1-H(r(u^h_N-gap)-\lambda_N))\delta_{\lambda_N}\mu^h_N d\Gamma
-  \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
-  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
-  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
-  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
-  \end{array}\right.
-
-The fourth version corresponds to a penalized contact and friction condition. It does not require the use of a multiplier. In this version, the parameter :math:`r` is a penalization parameter and as to be large enough to perform a good approximation of the non-penetration and the Coulomb friction conditions. The formulation reads:
+The third version corresponds to a penalized contact and friction condition. It does not require the use of a multiplier. In this version, the parameter :math:`r` is a penalization parameter and as to be large enough to perform a good approximation of the non-penetration and the Coulomb friction conditions. The formulation reads:
 
 .. math::
 
@@ -307,7 +284,7 @@ In order to add a frictionless contact brick you call the model object method::
      getfem::add_basic_contact_brick
           (md, varname_u, multname_n, dataname_r, BN,dataname_gap , dataname_alpha, aug_version );
 
-This function adds a frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, the matrix :math:`B_N` have to be such that this condition is defined by :math:`B_N U \le 0`. The constraint is prescribed thank to a multiplier ``multname_n`` whose dimension should be equal to the number of lines of :math:`B_N`. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter `aug_version` indicates the augmentation strategy : 0 for the non-symmetric Alart-Curnier augmented Lagrangian, 1 for the symmetric one, 2 for the symmetric one with an additional term and 3 for the new unsymmetric method.
+This function adds a frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, the matrix :math:`B_N` have to be such that this condition is defined by :math:`B_N U \le 0`. The constraint is prescribed thank to a multiplier ``multname_n`` whose dimension should be equal to the number of lines of :math:`B_N`. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter `aug_version` indicates the augmentation strategy : 1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers.
 Note that is possible to change the basic contact matrix :math:`BN` by use::
 
      getfem::contact_brick_set_BN(md, indbrick);
@@ -340,11 +317,7 @@ The augmentation parameter
 optional parameter representing the initial gap. It can be a single value
 or a vector of value. ``dataname_alpha`` is an optional homogenization
 parameter for the augmentation parameter. The parameter `aug_version`
-indicates the augmentation strategy : 0 for the non-symmetric
-Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
-2 for the symmetric
-one with an additional term, 3 for the new unsymmetric method
-and 4 for the new unsymmetric method with De Saxce projection.
+indicates the augmentation strategy : 1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers and 4 for the unsymmetric method based on augmented multipliers with De Saxce projection.
 
 Note that is possible to change the basic contact matrices :math:`BN` and :math:`BT` by use::
 
@@ -369,8 +342,7 @@ the number of degrees of freedom on boundary ``region``. It represents the
 contact equivalent nodal forces. 
 The augmentation parameter ``r`` should be chosen in a
 range of acceptable values (close to the Young modulus of the elastic
-body, see Getfem user documentation). The parameter `aug_version` indicates the augmentation strategy : 0 for the non-symmetric Alart-Curnier augmented Lagrangian, 1 for the symmetric one, 2 for the symmetric one with an additional term and 3 for the new unsymmetric method.
-
+body, see Getfem user documentation). 1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers.
 
 Contact with friction brick with a rigid obstacle
 +++++++++++++++++++++++++++++++++++++++++++++++++
@@ -399,11 +371,84 @@ range of acceptable values (close to the Young modulus of the elastic
 body, see Getfem user documentation). ``dataname_friction_coeff`` is
 the friction coefficient. It could be a scalar or a vector of values
 representing the friction coefficient on each contact node. The parameter `aug_version`
-indicates the augmentation strategy : 0 for the non-symmetric
-Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
-2 for the symmetric
-one with an additional term, 3 for the new unsymmetric method
-and 4 for the new unsymmetric method with De Saxce projection.
+indicates the augmentation strategy :  1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers and 3 for the unsymmetric method based on augmented multipliers with De Saxce projection.
+
+
+Frictionless contact brick between two faces with non-matching meshes
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+     getfem::add_nonmatching_meshes_contact_brick
+	(md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
+	rg1, rg2, slave1=true, slave2=false, aug_version=1);
+
+This function adds a frictionless contact condition between two faces of one
+or two elastic bodies. The condition is applied on the variable `varname_u` or
+the variables `varname_u1` and `varname_u2` depending if a single or
+two distinct displacement fields are given. Vectors `rg1` and `rg2`
+contain pairs of regions expected to come in contact with each other. In
+case of a single region per side, `rg1` and `rg2` can be given as normal
+integers. In the single displacement variable case the regions defined in
+both `rg1` and `rg2` refer to the variable `varname_u`. In the case of
+two displacement variables, `rg1` refers to `varname_u1` and `rg2` refers
+to `varname_u2`. `multname_n` should be a fixed size variable whose size
+is the number of degrees of freedom on those regions among the ones
+defined in `rg1` and `rg2` which are characterized as "slaves". It
+represents the contact equivalent nodal forces. The augmentation
+parameter `r` should be chosen in a range of acceptabe values (close to
+the Young modulus of the elastic body, see Getfem user documentation).
+The optional parameters `slave1` and `slave2` declare if the regions
+defined in `rg1` and `rg2` are correspondingly considered as "slaves".
+By default `slave1` is true and `slave2` is false, i.e. `rg1` contains
+the slave surfaces, while 'rg2' the master surfaces. Preferably only
+one of `slave1` and `slave2` is set to true. The parameter `aug_version`
+indicates the augmentation strategy : 1 for the non-symmetric
+Alart-Curnier augmented Lagrangian, 2 for the symmetric one,
+3 for the unsymmetric method with augmented multiplier.
+Basically, this brick computes the matrix BN and the vectors gap and
+alpha and calls the basic contact brick.
+
+
+Contact with friction brick between two faces with non-matching meshes
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+     getfem::add_nonmatching_meshes_contact_with_friction_brick
+	(md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
+        dataname_r, dataname_friction_coeff, rg1, rg2, slave1=true,
+	slave2=false, aug_version=1);
+
+This function adds a contact with friction condition between two faces of
+one or two elastic bodies. The condition is applied on the variable
+`varname_u` or the variables `varname_u1` and `varname_u2` depending if a
+single or two distinct displacement fields are given. Vectors `rg1` and `rg2`
+contain pairs of regions expected to come in contact with each other. In
+case of a single region per side, `rg1` and `rg2` can be given as normal
+integers. In the single displacement variable case the regions defined in
+both `rg1` and `rg2` refer to the variable `varname_u`. In the case of
+two displacement variables, `rg1` refers to `varname_u1` and `rg2` refers
+to `varname_u2`. `multname_n` should be a fixed size variable whose size
+is the number of degrees of freedom on those regions among the ones
+defined in `rg1` and `rg2` which are characterized as "slaves". It
+represents the contact equivalent nodal normal forces. `multname_t`
+should be a fixed size variable whose size corresponds to the size of
+multname_n` multiplied by qdim - 1 . It represents the contact
+equivalent nodal tangent (frictional) forces. The augmentation parameter
+`r` should be chosen in a range of acceptabe values (close to the Young
+modulus of the elastic body, see Getfem user documentation). The friction
+coefficient stored in the parameter `friction_coeff` is either a single
+value or a vector of the same size as `multname_n`. The optional
+parameters `slave1` and `slave2` declare if the regions defined in `rg1`
+and `rg2` are correspondingly considered as "slaves". By default `slave1`
+is true and `slave2` is false, i.e. `rg1` contains the slave surfaces,
+while 'rg2' the master surfaces. Preferably only one of `slave1` and
+`slave2` is set to true.  The parameter `aug_version`
+indicates the augmentation strategy : 1 for the non-symmetric
+Alart-Curnier augmented Lagrangian, 2 for the symmetric one,
+3 for the unsymmetric
+method with augmented multiplier and 4 for the unsymmetric
+method with augmented multiplier and De Saxce projection.
+Basically, this brick computes the matrices BN and BT as well the vectors
+gap and alpha and calls the basic contact brick.
 
 
 
@@ -417,11 +462,7 @@ In order to add a Hughes stabilized frictionless contact brick you call the mode
           (md, varname_u, multname_n, dataname_r, BN, DN, dataname_gap, dataname_alpha, aug_version);
 
 This function adds a Hughes stabilized frictionless contact brick on ``varname_u`` thanks to a multiplier variable ``multname_n``. If we take :math:`U` is the vector of degrees of freedom on which the unilateral constraint is applied, and :math:`\lambda` the multiplier Vector of contact force. Then Hughes stabilized frictionless contact condition is defined by the matrix :math:`BN` and :math:`DN` have to be such that this condition is defined by :math:`B_N U - D_N \lambda \le 0`. Where :math:`DN` is the mass matrix relative to stabilized term. The variable ``dataname_r`` is the name of the augmentation parameter :math:`r` should be chosen in a range of acceptable values. ``dataname_gap`` is an optional parameter representing the initial gap. It can be a single value or a vector of value. ``dataname_alpha`` is an optional homogenization parameter for the augmentation parameter. The parameter `aug_version`
-indicates the augmentation strategy : 0 for the non-symmetric
-Alart-Curnier augmented Lagrangian, 1 for the symmetric one,
-2 for the symmetric
-one with an additional term, 3 for the new unsymmetric method
-and 4 for the new unsymmetric method with De Saxce projection.
+indicates the augmentation strategy :  1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers.
 Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughes stabilised term. You can change it with::
 
       getfem::contact_brick_set_DN(md, indbrick);

@@ -1721,8 +1721,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         dataname_gap = in.pop().to_string();
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
-        int augmented_version = 0;
-        if (in.remaining()) augmented_version = in.pop().to_integer(1,5);
+        int augmented_version = 1;
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
 
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
@@ -1756,11 +1756,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (friction) {
           ind = getfem::add_basic_contact_with_friction_brick
             (md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
-             friction_coeff, dataname_gap, dataname_alpha, augmented_version-1);
+             friction_coeff, dataname_gap, dataname_alpha, augmented_version);
         } else {
           ind = getfem::add_basic_contact_brick
             (md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,
-             dataname_alpha, augmented_version-1);
+             dataname_alpha, augmented_version);
         }
 
         out.pop().from_integer(int(ind + config::base_index()));
@@ -1859,8 +1859,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         size_type region = argin.to_integer();
         std::string obstacle = in.pop().to_string();
-        int augmented_version = 0;
-        if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
+        int augmented_version = 1;
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
 
         size_type ind;
 
@@ -1868,11 +1868,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
           ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
              multname_t, dataname_r, dataname_fr, region, obstacle,
-             augmented_version-1);
+             augmented_version);
         else
           ind = getfem::add_contact_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
-             dataname_r, region, obstacle, augmented_version-1);
+             dataname_r, region, obstacle, augmented_version);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
@@ -2138,7 +2138,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string varname_u1;
         std::string varname_u2;
         bool slave1=true; bool slave2=false;
-        int augmented_version = 0;
+        int augmented_version = 1;
 
         gfi_mim1 = in.pop().to_getfemint_mesh_im();
         mexarg_in argin = in.pop();
@@ -2168,20 +2168,20 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::vector<size_type> vrg2(1,in.pop().to_integer());
         if (in.remaining()) slave1 = (in.pop().to_integer(0,1)) != 0;
         if (in.remaining()) slave2 = (in.pop().to_integer(0,1)) != 0;
-        if (in.remaining()) augmented_version = in.pop().to_integer(1,3);
+        if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
 
         size_type ind;
         if (!friction)
           ind = getfem::add_nonmatching_meshes_contact_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, dataname_r,
-             vrg1, vrg2, slave1, slave2, augmented_version-1);
+             vrg1, vrg2, slave1, slave2, augmented_version);
         else
           ind = getfem::add_nonmatching_meshes_contact_with_friction_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, multname_t,
              dataname_r, dataname_fr,
-             vrg1, vrg2, slave1, slave2, augmented_version-1);
+             vrg1, vrg2, slave1, slave2, augmented_version);
         workspace().set_dependance(md, gfi_mim1);
         if (two_variables)
           workspace().set_dependance(md, gfi_mim2);

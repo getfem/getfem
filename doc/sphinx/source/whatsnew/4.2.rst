@@ -4,7 +4,8 @@
   What's New in |gf| 4.2
 ****************************
 
-The New brick system is now mature and several coumplig brick has been developped.
+The New brick system is now mature and several coupling bricks has been developped.
+
 Released version, 2012/07/31.
 
 The main changes are:
@@ -14,13 +15,18 @@ The main changes are:
 
    * Contact/friction bricks has been extented to non-matching meshes and
      to integral contact condition with different augmentations (Alart Curnier,
-     De Saxce projection, augmented multiliers). A large sliding contact
+     De Saxce projection, augmented multipliers). A large sliding contact
      brick is in progress.
 
    * A complete tool to perform continuation of the solution to a model with
      respect to one of its parameter and to detect bifurcation has been
      developped.
-   * Some additional model bricks : pointwise constraint brick (to prescribe a constraint on a point eventually inside an element), basic nonlinear brick (for instance, for semi-linear equations)
+
+   * Some additional model bricks : pointwise constraint brick (to prescribe
+     a constraint on a point eventually inside an element), basic nonlinear
+     brick (for instance, for semi-linear equations).
+
+   * It is now possible to solve a model with respect to a subset of variables.
 
    * The experimental mesher of Getfem is now (partially) interfaced with
      python/scilab/matlab.

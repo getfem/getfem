@@ -357,7 +357,7 @@ namespace getfem {
 		gmm::mult(F,PK2,aux);
 		gmm::mult(aux,gmm::transposed(F),cauchy_stress);
 		gmm::scale(cauchy_stress,scalar_type(1.0/det_trans)); //cauchy = 1/J*F*PK2*F^T
-	};
+	}
 
 
 	void abstract_hyperelastic_law::grad_sigma_updated_lagrangian(const base_matrix& F, 

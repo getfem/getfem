@@ -795,12 +795,23 @@ namespace getfem {
     bool Tresca_version, contact_only;
     int option;
 
+    // old options
     // option = 1 : Alart-Curnier
     // option = 2 : symmetric Alart-Curnier (almost with friction)
     // option = 3 : Alart Curnier "over-augmented"
     // option = 4 : New method
     // option = 5 : De-Saxce
     // option = 6 : New method based on De-Saxce.
+
+    // new options
+    // option = 1 : Alart-Curnier
+    // option = 2 : symmetric Alart-Curnier (with friction, almost symmetric),
+    // option = 3 : Unsymmetric method based on augmented multipliers
+    // option = 4 : Unsymmetric method based on augmented multipliers 
+    //              with De-Saxce projection.
+
+    
+
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,

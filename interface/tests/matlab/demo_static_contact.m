@@ -63,7 +63,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 13;  % 1 : frictionless contact and the basic contact brick
+version = 2;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -213,7 +213,7 @@ if (version == 1 || version == 2) % defining the matrices BN and BT by hand
                  [friction_coeff]);
   end;
   gf_model_set(md, 'add initialized data', 'ngap', ngap);
-  gf_model_set(md, 'add initialized data', 'alpha', ones(nbc, 1));
+  gf_model_set(md, 'add initialized data', 'alpha', 2*ones(nbc, 1));
   if (version == 1)
     gf_model_set(md, 'add basic contact brick', 'u', 'lambda_n', 'r', ...
         BN, 'ngap', 'alpha', 1);
