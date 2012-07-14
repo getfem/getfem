@@ -136,7 +136,8 @@ namespace getfem {
      structure: $Nodes list_of_nodes $EndNodes $Elements list_of_elt
      $EndElements
   */
-  static void import_gmsh_msh_file(std::ifstream& f, mesh& m, int deprecate=0)
+  static void import_gmsh_msh_file(std::ifstream& f, mesh& m, int deprecate=0,
+                            std::map<std::string, size_type> *region_map=NULL)
   {
     gmm::stream_standard_locale sl(f);
     /* print general warning */
@@ -166,6 +167,20 @@ namespace getfem {
     else
       GMM_ASSERT1(false, "can't read Gmsh format: " << header);
 
+    /* read the region names */
+    if (region_map != NULL) {
+      if (version == 2) {
+        bgeot::read_until(f, "$PhysicalNames");
+        size_type nb_regions;
+        f >> nb_regions;
+        size_type rt,ri;
+        std::string region_name;
+        for (size_type region_cnt=0; region_cnt < nb_regions; ++ region_cnt) {
+          f >> rt >> ri >> region_name;
+          (*region_map)[region_name] = ri;
+        }
+      }
+    }
     /* read the node list */
     if (version == 2)
       bgeot::read_until(f, "$Nodes"); /* Format version 2 */
@@ -692,6 +707,33 @@ namespace getfem {
     }
   }
 
+  void import_mesh_gmsh(std::ifstream& f, mesh &m, 
+                  std::map<std::string, size_type> &region_map) {
+    import_gmsh_msh_file(f,m, 0, &region_map);
+  }
+
+  void import_mesh_gmsh(const std::string& filename,
+                   mesh& m, std::map<std::string, size_type> &region_map) {
+    m.clear();
+    try {
+      std::ifstream f(filename.c_str());
+      GMM_ASSERT1(f.good(), "can't open file " << filename);
+      /* throw exceptions when an error occurs */
+      f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
+      import_mesh_gmsh(f,m,region_map);
+      f.close();
+    }
+    catch (failure_error& exc) {
+      m.clear();
+      throw exc;
+    }
+    catch (std::ios_base::failure& exc) {
+      m.clear();
+      GMM_ASSERT1(false, "error while importing " << "gmsh"
+                  << " mesh file \"" << filename << "\" : " << exc.what());
+    }
+  }
+                                                     
   void import_mesh(std::ifstream& f, const std::string& format,
                    mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
