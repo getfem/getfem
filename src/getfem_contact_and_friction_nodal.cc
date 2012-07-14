@@ -655,7 +655,7 @@ namespace getfem {
       if (!is_init) init_BBN_BBT();
       gmm::resize(RLN, nbc);
       if (!contact_only) gmm::resize(RLT, nbc*d);
-      if (augmentation_version <= 1)
+      if (augmentation_version <= 2)
         precomp(u1, u2, lambda_n, lambda_t, wt1, wt2);
 
       if (version & model::BUILD_MATRIX) {
@@ -797,10 +797,10 @@ namespace getfem {
 
 		  if (augmentation_version == 2) {
 
-		    gmm::add(gmm::scaled(gmm::mat_row(BBT1,i*d+k),
+		    gmm::add(gmm::scaled(gmm::mat_row(BT1,i*d+k),
 			   vg[k]*friction_coeff[i]), gmm::mat_col(T_u1_n, i));
 		    if (two_variables)
-		      gmm::add(gmm::scaled(gmm::mat_row(BBT2,i*d+k),
+		      gmm::add(gmm::scaled(gmm::mat_row(BT2,i*d+k),
 			   vg[k]*friction_coeff[i]), gmm::mat_col(T_u2_n, i));
 		  
 		    gmm::copy(gmm::scaled(gmm::mat_row(BBT1,i*d+k),

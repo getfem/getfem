@@ -77,9 +77,9 @@ where :math:`d` is the dimension of the domain and :math:`k = 1..d-1`. The expre
  
   K U = L + B_N^T \lambda_N + B_T^T \lambda_T,
 
-  \frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
+  -\frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
 
-  \frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - r (u_N(a_i) - \text{gap}_i))))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
+  -\frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
 
 where :math:`\alpha_i` is a parameter which can be added for the homogenization of the augmentation parameter, :math:`(B_T U)_i` denotes here the sub-vector of indices from :math:`(d-1)(i-1)+1` to :math:`(d-1)i` for the sake of simplicity and the sliding velocity :math:`B_T \dot{U}` have been discretized into :math:`\frac{(B_T U - B_T U^{0})}{\Delta t}` with :math:`U^{0}` the displacement at the previous time step. Note that of course another discretization of the sliding velocity is possible and that the time step :math:`\Delta t` do not appear in the expression of the friction condition since it does not influence the direction of the sliding velocity.
 
@@ -130,9 +130,9 @@ Finally, the expression of the direct nodal contact condition are recovered
  
   K U = L + B_N^T \lambda_N + B_T^T \lambda_T,
 
-  \frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
+  -\frac{1}{r\alpha_i}(\lambda_N^i - P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i))) = 0, ~~ i = 1..N_c,
 
-  \frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i)))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
+  -\frac{1}{r\alpha_i}(\lambda_T^i - P_{{\mathscr B}(-{\mathscr F}P_{]-\infty, 0]}(\lambda_N^i - \alpha_i r ((B_N U)_i - \text{gap}_i)))}(\lambda_T^i - \alpha_i r (B_T U - B_T U^{0})_i)) = 0, ~~ i = 1..N_c,
 
 except that now :math:`\lambda_N^i` and :math:`\lambda_T^i` are force densities, and a good value for :math:`\alpha_i` is now
 

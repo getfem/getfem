@@ -63,7 +63,7 @@ gf_plot
 
 
   The function expects ``U`` to be a row vector. If ``U`` is a scalar
-  field, then ``gf\_plot(mf,U)`` will fill the mesh with colors
+  field, then ``gf_plot(mf,U)`` will fill the mesh with colors
   representing the values of ``U``. If ``U`` is a vector field, then
   the default behavior of ``gf_plot`` is to draw vectors representing
   the values of ``U``.
