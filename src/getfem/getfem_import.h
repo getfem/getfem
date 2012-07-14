@@ -41,6 +41,7 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include "bgeot_config.h" /* for bgeot::size_type */
 
 namespace getfem {
   class mesh;
@@ -93,7 +94,7 @@ namespace getfem {
       and their numbers:
       @code
         getfem::mesh myMesh;
-        typedef std::map<std::string, getfem::size_type> RegMap;
+        typedef std::map<std::string, bgeot::size_type> RegMap;
         typedef RegMap::iterator RegMapIter;
         RegMap regmap;
         getfem::import_mesh_gmsh("mesh.msh", myMesh, regmap);
