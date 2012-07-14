@@ -3948,7 +3948,7 @@ namespace getfem {
       // coefficient for the standard rhs
       md.rhs_coeffs_of_brick(ib)[0] = theta;
       // coefficient for the additional rhs
-      md.rhs_coeffs_of_brick(ib)[1] = -(scalar_type(1) - theta);
+      md.rhs_coeffs_of_brick(ib)[1] = (scalar_type(1) - theta);
     }
 
 
