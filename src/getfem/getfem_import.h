@@ -105,9 +105,9 @@ namespace getfem {
 
   */
   void import_mesh_gmsh(const std::string& filename, mesh& m, 
-                   std::map<std::string, size_type> &region_map);
+                   std::map<std::string, bgeot::size_type> &region_map);
   void import_mesh_gmsh(std::ifstream& f, mesh& m, 
-                   std::map<std::string, size_type> &region_map);
+                   std::map<std::string, bgeot::size_type> &region_map);
 
 
   /** for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
