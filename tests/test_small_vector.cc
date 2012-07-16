@@ -32,6 +32,9 @@
 #include "getfem/bgeot_small_vector.h"
 #include "getfem/getfem_mesh.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 bool quick = false;
 
 #ifdef GETFEM_HAVE_SYS_TIMES

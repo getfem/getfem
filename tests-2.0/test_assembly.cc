@@ -29,6 +29,9 @@
 #endif
 #include <unistd.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 using bgeot::base_vector;
 using bgeot::base_matrix;
 using bgeot::base_small_vector;

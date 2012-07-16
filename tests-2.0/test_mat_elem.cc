@@ -28,7 +28,8 @@
 #include <getfem/getfem_export.h>
 #include <getfem/getfem_regular_meshes.h>
 #include <getfem/getfem_mat_elem.h>
-
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using bgeot::base_vector;
 using bgeot::base_small_vector;
 using bgeot::base_node;

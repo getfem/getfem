@@ -20,6 +20,8 @@
 ===========================================================================*/
 #include <getfem/bgeot_poly.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using bgeot::short_type;
 
 std::string horner_print(bgeot::short_type degree, bgeot::power_index &mi,

@@ -26,6 +26,9 @@
 #include <iomanip>
 #include <map>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 using getfem::size_type;
 using bgeot::base_tensor;
 using bgeot::base_matrix;

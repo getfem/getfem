@@ -24,6 +24,8 @@
 
 #include "gmm/gmm_kernel.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using gmm::size_type;
 bool print_debug = false;
 

@@ -23,8 +23,8 @@
 // VECTOR_PARAM;
 // ENDPARAM;
 
-using namespace std; // in order to test a using namespace std;
 #include "gmm/gmm.h"
+using namespace std; // in order to test a using namespace std;
 
 using gmm::size_type;
 

@@ -21,6 +21,8 @@
 #include <getfem/bgeot_rtree.h>
 #include <getfem/bgeot_rtree.h>
 #include <getfem/dal_bit_vector.h>
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using bgeot::base_node;
 using bgeot::size_type;
 using bgeot::dim_type;

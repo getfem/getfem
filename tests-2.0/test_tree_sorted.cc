@@ -24,6 +24,8 @@
 #endif
 
 #include <getfem/dal_tree_sorted.h>
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 
 
 int main(void)

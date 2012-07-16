@@ -63,7 +63,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 11;  % 1 : frictionless contact and the basic contact brick
+version = 1;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -332,8 +332,6 @@ if (~solved)
   gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.01);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
-
-return;
 
 U = gf_model_get(md, 'variable', 'u');
 % lambda_n = gf_model_get(md, 'variable', 'lambda_n');

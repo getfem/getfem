@@ -27,6 +27,8 @@
 #include "getfem/getfem_superlu.h"
 #include "getfem/getfem_derivatives.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 
 namespace getfem {
   /* build a "ring" of convexes of given center and radius */

@@ -21,7 +21,8 @@
 #include "getfem/getfem_mesher.h"
 
 #include "getfem/getfem_mesher.h"
-
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using getfem::base_node;
 using getfem::scalar_type;
 

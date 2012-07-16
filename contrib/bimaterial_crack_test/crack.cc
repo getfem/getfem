@@ -42,6 +42,9 @@
 
 #include "crack_exact_solution.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 /* definition of some matrix/vector types. These ones are built
  * using the predefined types in Gmm++
  */

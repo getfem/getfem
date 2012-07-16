@@ -42,6 +42,9 @@
 
 namespace dal {
 
+  using std::endl; using std::cout; using std::cerr;
+  using std::ends; using std::cin;
+
   // For compatibility with Getfem 2.0
 
   using gmm::dimension_error;
@@ -62,7 +65,6 @@ namespace dal {
   using gmm::lexicographical_less;
   using gmm::approx_less;
   using gmm::uclock_sec;
-
   
   inline void DAL_THROW() IS_DEPRECATED;
   inline void DAL_THROW() {}

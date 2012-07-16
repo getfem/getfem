@@ -21,6 +21,10 @@
 
 #include "crack_bilaplacian.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 void bilaplacian_singular_functions::update_mls(size_type cv_) const { 
   if (cv_ != cv) { 
     cv=cv_; 

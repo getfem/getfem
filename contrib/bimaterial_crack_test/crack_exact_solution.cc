@@ -21,6 +21,9 @@
 
 #include "crack_exact_solution.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 /* returns sin(theta/2) where theta is the angle
    of 0-(x,y) with the axis Ox */
 static scalar_type sint2(scalar_type x, scalar_type y) {

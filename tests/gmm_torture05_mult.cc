@@ -31,6 +31,8 @@
 #include "gmm/gmm_dense_qr.h"
 #include "gmm/gmm_condition_number.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using gmm::size_type;
 
 template <typename MAT1 , typename MAT2, typename VECT1, typename VECT2,

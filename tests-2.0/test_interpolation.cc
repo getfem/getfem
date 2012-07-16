@@ -27,6 +27,9 @@
 #include <unistd.h>
 #include <iomanip>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 
 using getfem::scalar_type;
 using getfem::size_type;

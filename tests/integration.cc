@@ -25,6 +25,9 @@
 #include "getfem/getfem_mat_elem.h"
 #include <iomanip>
 #include <map>
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 
 using getfem::size_type;
 using getfem::short_type;

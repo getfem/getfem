@@ -23,7 +23,8 @@
 #include <getfem/bgeot_comma_init.h>
 #include <getfem/getfem_export.h>
 
-
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using getfem::size_type;
 using getfem::short_type;
 using getfem::dim_type;

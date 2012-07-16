@@ -22,6 +22,10 @@
 #include <deque>
 #include <complex>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 typedef std::deque<int>::size_type size_type;
 template<typename T> struct dyndeque : public std::deque<T> {
   T &operator[](unsigned i) { 

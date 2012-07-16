@@ -25,6 +25,10 @@
 #include "getfem/getfem_Coulomb_friction.h"
 #include "gmm/gmm.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 /* some Getfem++ types that we will be using */
 using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */

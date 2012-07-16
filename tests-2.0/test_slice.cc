@@ -22,6 +22,9 @@
 #include <getfem/bgeot_comma_init.h>
 #include <getfem/getfem_mesh_slice.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 using getfem::size_type;
 namespace getfem {
   std::ostream& operator<<(std::ostream& o, const bgeot::mesh_structure& m) {

@@ -39,6 +39,10 @@
 #include "getfem/bgeot_mesh_structure.h"
 #include "getfem/getfem_config.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
 			    int *, int *, int *, int *, int *);
 extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,

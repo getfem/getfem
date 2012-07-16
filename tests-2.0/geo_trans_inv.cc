@@ -27,6 +27,10 @@
 #include <getfem/bgeot_geotrans_inv.h>
 #include <getfem/getfem_regular_meshes.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 using bgeot::size_type;
 using bgeot::dim_type;
 using bgeot::scalar_type;

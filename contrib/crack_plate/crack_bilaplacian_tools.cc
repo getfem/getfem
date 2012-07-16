@@ -26,6 +26,9 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_superlu.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 // In this file :
 
 // void asm_normal_derivative_dirichlet_constraints_bis

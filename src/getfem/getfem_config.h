@@ -234,6 +234,10 @@ extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
 /// GEneric Tool for Finite Element Methods.
 namespace getfem {
 
+  using std::endl; using std::cout; using std::cerr;
+  using std::ends; using std::cin;
+
+
 #if GETFEM_PARA_LEVEL > 1
   template <typename T> inline T MPI_SUM_SCALAR(T a)
   { T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a),MPI_SUM,MPI_COMM_WORLD); return b; }

@@ -177,9 +177,9 @@ void asm_stabilization_patch_matrix
       size_of_crack=size_of_crack + Patch_Vector[i];
     }
   }
-  // cout<<"Path_element_list="<< Patch_element_list <<endl;
-  //cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
-  cout<<"number of element in patch="<< ne <<endl;
+  // std::cout<<"Path_element_list="<< Patch_element_list << std::endl;
+  // std::cout<<"Path_dof_ind="<< Patch_dof_ind << std::endl;
+  std::cout << "number of element in patch=" << ne << std::endl;
   std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);
   std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
   std::vector<double> vwgtt(ne);
@@ -203,11 +203,12 @@ void asm_stabilization_patch_matrix
   
   xadj[j] = k;
   std::vector<int> adjwgt(k);
-  // cout<<"xadj="<<xadj<<endl;
-  //cout<<"adjncy="<<adjncy<<endl;
-  //cout<<"vwgt="<<vwgt<<endl;
+  // std::cout<<"xadj="<<xadj<<std::endl;
+  //std::cout<<"adjncy="<<adjncy<<std::endl;
+  //std::cout<<"vwgt="<<vwgt<<std::endl;
   
-  cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
+  std::cout << "ratio size beween mesh and coarse mesh= " << ratio_size
+	    << std::endl;
   
   int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
       // float ubvec[1] = {1.03f};
@@ -224,11 +225,11 @@ void asm_stabilization_patch_matrix
   #else
     GMM_ASSERT1(false, "Metis not present ...");
   #endif
-  //cout<<"size_of_mesh="<<h<<endl;
-  //cout<<"size_of_crack="<< size_of_crack <<endl;
-  cout<<"nb_partition="<<nparts<<endl;
-  // cout<<"partition="<<part<<endl;
-  //cout<<"edgecut="<<edgecut<<endl;
+  //std::cout<<"size_of_mesh="<<h<<std::endl;
+  //std::cout<<"size_of_crack="<< size_of_crack <<std::endl;
+  std::cout<<"nb_partition="<<nparts<<std::endl;
+  // std::cout<<"partition="<<part<<std::endl;
+  //std::cout<<"edgecut="<<edgecut<<std::endl;
   
 
   /**************************************************************/
@@ -245,7 +246,7 @@ void asm_stabilization_patch_matrix
     size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];	  
   }
   
-  //cout<<"size_patch="<<size_patch<<endl;
+  //std::cout<<"size_patch="<<size_patch<<std::endl;
   
   gmm::row_matrix<getfem::modeling_standard_sparse_vector> MAT_aux(nparts, nb_dof_mult);
   for (bgeot::size_type r=0; r < nbe; r++) {

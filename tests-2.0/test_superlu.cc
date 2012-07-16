@@ -28,6 +28,8 @@
 
 #include <getfem_superlu.h>
 #include <gmm_inoutput.h>
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using gmm::size_type;
 
 template <class T> void test_with(T) {

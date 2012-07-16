@@ -37,6 +37,8 @@
 #include <mpi++.h>
 #endif
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using bgeot::base_vector;
 using bgeot::base_node;
 using bgeot::size_type;

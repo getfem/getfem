@@ -23,8 +23,8 @@
 #include "getfem/bgeot_comma_init.h"
 #include "getfem/getfem_export.h"
 #include "getfem/bgeot_node_tab.h"
-
-
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 using getfem::size_type;
 using getfem::base_node;
 using getfem::base_small_vector;

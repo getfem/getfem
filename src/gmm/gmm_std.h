@@ -131,10 +131,11 @@
 #include <numeric>
 
 
-using std::endl; using std::cout; using std::cerr;
-using std::ends; using std::cin;
-
 namespace gmm {
+
+  using std::endl; using std::cout; using std::cerr;
+  using std::ends; using std::cin;
+
 
   /* ********************************************************************* */
   /*       Change locale temporarily.                                      */

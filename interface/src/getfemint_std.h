@@ -38,6 +38,9 @@
 
 namespace getfemint
 {  
+  using std::endl; using std::cout; using std::cerr;
+  using std::ends; using std::cin;
+
   const char *name_of_getfemint_class_id(unsigned cid);
 
   void attach_gdb();

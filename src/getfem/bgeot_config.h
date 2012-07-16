@@ -69,6 +69,10 @@
 /// Basic Geometric Tools
 namespace bgeot {
 
+  using std::endl; using std::cout; using std::cerr;
+  using std::ends; using std::cin;
+  
+
   static const size_t ST_NIL = size_t(-1);
   /// Dimension type (<255)
   typedef gmm::uint8_type dim_type;

@@ -38,6 +38,9 @@
 #include "getfem/getfem_mesh_fem_global_function.h"
 #include "getfem/getfem_mesh_fem_sum.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 //#include "../tests/crack.cc"
 
 

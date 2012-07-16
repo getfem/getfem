@@ -37,6 +37,9 @@
 #include "getfem/getfem_modeling.h"
 #include "gmm/gmm.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 namespace getfem {
 
 

@@ -32,6 +32,10 @@
 #include <getfem/bgeot_small_vector.h>
 #include <unistd.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 using bgeot::size_type;
 using bgeot::short_type;
 using bgeot::dim_type;

@@ -26,6 +26,8 @@
 #include "gmm/gmm.h"
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_regular_meshes.h"
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */

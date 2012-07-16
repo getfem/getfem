@@ -31,6 +31,9 @@
 #include <getfem/getfem_interpolated_fem.h>
 #include <getfem/getfem_mesh_fem_sum.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 using bgeot::base_vector;
 using bgeot::base_small_vector;
 using bgeot::base_node;

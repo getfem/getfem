@@ -30,6 +30,8 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 
 using bgeot::base_vector;
 using bgeot::base_matrix;

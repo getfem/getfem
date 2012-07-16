@@ -33,6 +33,10 @@
 #include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_export.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/

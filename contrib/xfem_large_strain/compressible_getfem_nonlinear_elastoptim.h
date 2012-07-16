@@ -51,7 +51,8 @@
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
 
-
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
 
 
 namespace getfem {

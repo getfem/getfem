@@ -39,6 +39,10 @@
 #include <getfem/getfem_regular_meshes.h>
 #include <getfem/bgeot_config.h>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 bgeot::scalar_type func(const bgeot::base_node& x) {
   return x[0];
 }

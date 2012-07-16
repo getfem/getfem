@@ -26,6 +26,9 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_superlu.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 size_type is_global_dof_type_bis(getfem::pdof_description dof){
 size_type global_dof = 0 ;
    for (dim_type d = 0; d < 4 ; ++d){

@@ -42,6 +42,10 @@
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "gmm/gmm_inoutput.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */

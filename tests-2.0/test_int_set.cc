@@ -21,6 +21,10 @@
 #include <getfem/dal_bit_vector.h>
 #include <deque>
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
+
 typedef size_t size_type;
 
 bool quick = false;

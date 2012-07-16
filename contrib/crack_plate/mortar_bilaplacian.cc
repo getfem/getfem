@@ -23,6 +23,9 @@
 
 #include "mortar_bilaplacian.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 
 int main(int argc, char *argv[]) {
 

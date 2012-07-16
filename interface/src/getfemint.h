@@ -42,7 +42,6 @@
 #include <gfi_array.h>
 #include <getfem/dal_shared_ptr.h>
 
-
 namespace getfem {
   class stored_mesh_slice;
   class mesh;

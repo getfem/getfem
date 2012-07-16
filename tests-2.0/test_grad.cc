@@ -19,7 +19,10 @@
  
 ===========================================================================*/
 #include <gmm.h>
-#include <gmm.h>
+
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 
 // scalar product working also for matrices (to be done in GMM++ ...
 template<class VAR> 

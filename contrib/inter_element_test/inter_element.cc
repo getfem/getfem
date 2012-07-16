@@ -26,6 +26,9 @@
 #include "getfem/getfem_export.h"
 #include "gmm/gmm_superlu_interface.h"
 
+using std::endl; using std::cout; using std::cerr;
+using std::ends; using std::cin;
+
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_node;  /* geometrical nodes(derived from base_small_vector)*/
 using bgeot::scalar_type; /* = double */
