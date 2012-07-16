@@ -50,8 +50,8 @@ namespace getfem {
     switch (option) {
       // one-dimensional tensors [N]
     case RHS_U_V1:       case RHS_U_V2:       case RHS_U_V3: case RHS_U_V4:
-    case RHS_U_V5:       case RHS_U_V6:       case RHS_U_V7: case RHS_U_V8:
-    case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
+    case RHS_U_V5:       case RHS_U_FRICT_V6: case RHS_U_FRICT_V7:
+    case RHS_U_FRICT_V8: case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
     case RHS_U_FRICT_V3: case RHS_U_FRICT_V4: case RHS_U_FRICT_V5:
     case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
     case RHS_L_FRICT_V3: case RHS_L_FRICT_V4:
@@ -80,7 +80,7 @@ namespace getfem {
   (fem_interpolation_context &/* ctx */, bgeot::base_tensor &t) {
 
     t.adjust_sizes(sizes_);
-    scalar_type e, augm_ln;
+    scalar_type e, f, augm_ln;
     dim_type i, j;
 
     switch (option) {
@@ -126,17 +126,17 @@ namespace getfem {
       e = - gmm::pos(un-g) * r;
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-    case RHS_U_V6:
+    case RHS_U_FRICT_V6:
       e = - gmm::neg(ln-r*(un - g));
       auxN = lt - zt;  ball_projection(auxN, -f_coeff*e );
       for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i]);
       break;
-    case RHS_U_V7:
+    case RHS_U_FRICT_V7:
       e = - gmm::neg(-r*(un - g));
       auxN = - zt;  ball_projection(auxN, -f_coeff *e );
       for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i]);
       break;
-    case RHS_U_V8:
+    case RHS_U_FRICT_V8:
       auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
       De_Saxce_projection(auxN, no, f_coeff);
       for (i=0; i<N; ++i) t[i] = auxN[i];
@@ -166,9 +166,9 @@ namespace getfem {
       for (i=0; i<N; ++i) t[i] = auxN[i];
       break;
     case RHS_L_FRICT_V1:
-      e = ln+gmm::neg(ln-r*(un-g));
-      auxN = zt - lt;  ball_projection(auxN, -f_coeff * ln); auxN += lt;
-      for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i])/ r;
+      e = gmm::neg(ln-r*(un-g));
+      auxN = zt - lt;  ball_projection(auxN, f_coeff * e); auxN += lt;
+      for (i=0; i<N; ++i) t[i] = ((e+ln)*no[i] + auxN[i])/ r;
       break;
     case RHS_L_FRICT_V2:
       e = r*(un-g) + gmm::pos(ln);
@@ -236,18 +236,21 @@ namespace getfem {
       break;
     case K_UL_FRICT_V3:
       e = -Heav(r*(un-g)-ln);
-      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
+      augm_ln = gmm::neg(ln - r*(un-g));
+      auxN = lt - zt; ball_projection_grad(auxN, f_coeff * augm_ln, GP);
       e += gmm::vect_sp(GP, no, no);
       ball_projection_grad_r(auxN, -f_coeff * ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - GP(i,j) - f_coeff * V[j] * no[i];
+        t[i*N+j] = no[i]*no[j]*e - GP(i,j) - f_coeff * V[i] * no[j] * r;
       break;
     case K_UL_FRICT_V4:
-      e = -Heav(r*(un-g)-ln);
-      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
-      e += alpha * gmm::vect_sp(GP, no, no);
+      f = Heav(r*(un-g)-ln);
+      augm_ln = gmm::neg(ln - r*(un-g));
+      auxN = lt - zt; ball_projection_grad(auxN, f_coeff * augm_ln, GP);
+      e = alpha * gmm::vect_sp(GP, no, no) - f;
+      ball_projection_grad_r(auxN, f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - alpha*GP(i,j);
+        t[i*N+j] = no[i]*no[j]*e - alpha*GP(i,j) + f_coeff * f * V[i] * no[j];
       break;
     case K_UL_FRICT_V5:
       e = (alpha-scalar_type(1));
@@ -283,14 +286,15 @@ namespace getfem {
       }
       break;
     case K_LL_FRICT_V1:
-      e = (Heav(r*(un-g)-ln))/r;
-      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * ln, GP);
-      e -= gmm::vect_sp(GP, no, no) / r;
-      ball_projection_grad_r(auxN, -f_coeff * ln, V);
+      f = Heav(r*(un-g)-ln);
+      augm_ln = gmm::neg(ln - r*(un-g));
+      auxN = lt - zt; ball_projection_grad(auxN, f_coeff * augm_ln, GP);
+      e = f/r - gmm::vect_sp(GP, no, no) / r;
+      ball_projection_grad_r(auxN, f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e
           - (((i == j) ? scalar_type(1) : scalar_type(0)) - GP(i,j))/r
-          - f_coeff * V[j] * no[i] / r;
+          - f_coeff * f * V[j] * no[i] / r;
       break;
     case K_LL_FRICT_V2:
       e = -Heav(ln) + scalar_type(1);
@@ -323,21 +327,20 @@ namespace getfem {
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j));
       break;
     case K_UU_FRICT_V3:
-      e = Heav(r*(un-g)-ln);
-      augm_ln = -gmm::neg(ln - r*(un-g));
-      auxN = lt - zt; ball_projection_grad(auxN, -f_coeff * augm_ln, GP);
-      e -= alpha*gmm::vect_sp(GP, no, no);
-      ball_projection_grad_r(auxN, -f_coeff * augm_ln, V);
+      f = Heav(r*(un-g)-ln);
+      augm_ln = gmm::neg(ln - r*(un-g));
+      auxN = lt - zt; ball_projection_grad(auxN, f_coeff * augm_ln, GP);
+      e = f - alpha*gmm::vect_sp(GP, no, no);
+      ball_projection_grad_r(auxN, f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
-                      - f_coeff*Heav(r*(un-g)-ln)*no[i]*V[j]);
+        t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j) - f_coeff*f*no[i]*V[j]);
       break;
     case K_UU_FRICT_V4:
       e = Heav(r*(un-g));
-      augm_ln = -gmm::neg(- r*(un-g));
-      auxN = - zt; ball_projection_grad(auxN, -f_coeff * augm_ln, GP);
+      augm_ln = gmm::neg(- r*(un-g));
+      auxN = - zt; ball_projection_grad(auxN, f_coeff * augm_ln, GP);
       e -= alpha*gmm::vect_sp(GP, no, no);
-      ball_projection_grad_r(auxN, -f_coeff * augm_ln, V);
+      ball_projection_grad_r(auxN, f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = r*(no[i]*no[j]*e + alpha*GP(i,j)
                       - f_coeff*Heav(r*(un-g))*no[i]*V[j]);
@@ -581,9 +584,9 @@ namespace getfem {
    const getfem::mesh_fem &mf_lambda, const VECT1 &lambda,
    scalar_type r, const mesh_region &rg, int option = 1) {
 
-    size_type subterm1 = (option == 4) ? K_UL_V2 : K_UL_V1;
-    size_type subterm2 = (option == 4) ? K_UL_V4 : K_UL_V3;
-    size_type subterm3 = (option == 4) ? K_LL_V2 : K_LL_V1;
+    size_type subterm1 = (option == 3) ? K_UL_V2 : K_UL_V1;
+    size_type subterm2 = (option == 3) ? K_UL_V4 : K_UL_V3;
+    size_type subterm3 = (option == 3) ? K_LL_V2 : K_LL_V1;
     size_type subterm4 = (option == 2) ? K_UU_V2 : K_UU_V1;
 
     contact_rigid_obstacle_nonlinear_term
@@ -594,7 +597,7 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1: case 4:
+    case 1: case 3:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); " // UL
         "M$2(#3,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#1))(i,:,:,i); " // LU
@@ -605,13 +608,6 @@ namespace getfem {
        ("M$1(#1,#3)+=comp(NonLin$2(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); "      // UL
         "M$3(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:);"          // LL
         "M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)"); // UU
-      break;
-    case 3:
-      assem.set
-      ("M$1(#1,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); "      // UL
-       "M$2(#3,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#1))(i,:,:,i); "      // LU
-       "M$3(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:); "         // LL
-       "M$4(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j)"); // UU
       break;
     }
     assem.push_mi(mim);
@@ -647,18 +643,14 @@ namespace getfem {
       subterm3 = K_LL_FRICT_V1; break;
     case 2 : subterm1 = K_UL_FRICT_V3; subterm2 = K_UL_FRICT_V4;
       subterm3 = K_LL_FRICT_V1; break;
-    case 3 : subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V4;
-      subterm3 = K_LL_FRICT_V1; break;
-    case 4 : subterm1 = K_UL_FRICT_V2; subterm2 = K_UL_FRICT_V5;
+    case 3 : subterm1 = K_UL_FRICT_V2; subterm2 = K_UL_FRICT_V5;
       subterm3 = K_LL_FRICT_V2; break;
-    case 5 : subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V6;
-      subterm3 = K_LL_FRICT_V3; break;
-    case 6 : subterm1 = K_UL_FRICT_V7; subterm2 = K_UL_FRICT_V8;
+    case 4 : subterm1 = K_UL_FRICT_V7; subterm2 = K_UL_FRICT_V8;
       subterm3 = K_LL_FRICT_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
-    size_type subterm4 = (option == 2) ? K_UU_FRICT_V2 : K_UU_FRICT_V1;
+    size_type subterm4 = K_UU_FRICT_V3;
 
     contact_rigid_obstacle_nonlinear_term
       nterm1(subterm1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
@@ -674,13 +666,13 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1: case 4: case 5: case 6:
+    case 1: case 3: case 4:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // UL
         "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU
         "M$3(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j)"); // LL
       break;
-    case 2: case 3:
+    case 2:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // UL
         "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU
@@ -718,11 +710,10 @@ namespace getfem {
     switch (option) {
     case 1 : subterm1 = RHS_U_V1; break;
     case 2 : subterm1 = RHS_U_V2; break;
-    case 3 : subterm1 = RHS_U_V3; break;
-    case 4 : subterm1 = RHS_U_V4; break;
+    case 3 : subterm1 = RHS_U_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
-    size_type subterm2 = (option == 4) ? RHS_L_V2 : RHS_L_V1;
+    size_type subterm2 = (option == 3) ? RHS_L_V2 : RHS_L_V1;
 
     contact_rigid_obstacle_nonlinear_term
       nterm1(subterm1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda),
@@ -758,11 +749,9 @@ namespace getfem {
     size_type subterm1, subterm2;
     switch (option) {
     case 1 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V1; break;
-    case 2 : subterm1 = RHS_U_FRICT_V2; subterm2 = RHS_L_FRICT_V1; break;
-    case 3 : subterm1 = RHS_U_FRICT_V3; subterm2 = RHS_L_FRICT_V1; break;
-    case 4 : subterm1 = RHS_U_FRICT_V4; subterm2 = RHS_L_FRICT_V2; break;
-    case 5 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V3; break;
-    case 6 : subterm1 = RHS_U_FRICT_V5; subterm2 = RHS_L_FRICT_V4; break;
+    case 2 : subterm1 = RHS_U_FRICT_V6; subterm2 = RHS_L_FRICT_V1; break;
+    case 3 : subterm1 = RHS_U_FRICT_V4; subterm2 = RHS_L_FRICT_V2; break;
+    case 4 : subterm1 = RHS_U_FRICT_V5; subterm2 = RHS_L_FRICT_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
@@ -795,23 +784,11 @@ namespace getfem {
     bool Tresca_version, contact_only;
     int option;
 
-    // old options
-    // option = 1 : Alart-Curnier
-    // option = 2 : symmetric Alart-Curnier (almost with friction)
-    // option = 3 : Alart Curnier "over-augmented"
-    // option = 4 : New method
-    // option = 5 : De-Saxce
-    // option = 6 : New method based on De-Saxce.
-
-    // new options
     // option = 1 : Alart-Curnier
     // option = 2 : symmetric Alart-Curnier (with friction, almost symmetric),
     // option = 3 : Unsymmetric method based on augmented multipliers
     // option = 4 : Unsymmetric method based on augmented multipliers 
     //              with De-Saxce projection.
-
-    
-
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -829,8 +806,7 @@ namespace getfem {
       GMM_ASSERT1(dl.size() >= 2 && dl.size() <= 7,
                   "Wrong number of data for integral contact with rigid obstacle "
                   << "brick, " << dl.size() << " should be between 2 and 7.");
-      GMM_ASSERT1(matl.size() == size_type(3 + (option == 3)
-                                           + (option == 2 && !contact_only)),
+      GMM_ASSERT1(matl.size() == size_type(3 + (option == 2 && !contact_only)),
                   "Wrong number of terms for "
                   "integral contact with rigid obstacle brick");
 
@@ -960,7 +936,7 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1 : case 4 :
+    case 1 : case 3 :
       tl.push_back(model::term_description(varname_u, multname_n, false)); // UL
       tl.push_back(model::term_description(multname_n, varname_u, false)); // LU
       tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
@@ -969,12 +945,6 @@ namespace getfem {
       tl.push_back(model::term_description(varname_u, multname_n, true));  // UL
       tl.push_back(model::term_description(varname_u, varname_u, true));   // UU (fourthmat == 1)
       tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
-      break;
-    case 3 :
-      tl.push_back(model::term_description(varname_u, multname_n, false)); // UL
-      tl.push_back(model::term_description(multname_n, varname_u, false)); // LU
-      tl.push_back(model::term_description(multname_n, multname_n, true)); // LL
-      tl.push_back(model::term_description(varname_u, varname_u, true));   // UU
       break;
     default :GMM_ASSERT1(false,
                          "Incorrect option for integral contact brick");
@@ -1009,12 +979,12 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1: case 4: case 5: case 6:
+    case 1: case 3: case 4:
       tl.push_back(model::term_description(varname_u, multname, false)); // UL
       tl.push_back(model::term_description(multname, varname_u, false)); // LU
       tl.push_back(model::term_description(multname, multname, true));   // LL
       break;
-    case 2: case 3:
+    case 2:
       tl.push_back(model::term_description(varname_u, multname, false)); // UL
       tl.push_back(model::term_description(multname, varname_u, false)); // LU
       tl.push_back(model::term_description(multname, multname, true));   // LL
@@ -1160,9 +1130,9 @@ namespace getfem {
 
     size_type subterm = 0;
     switch (option) {
-    case 1 : subterm =  RHS_U_V7; break;
-    case 2 : subterm =  RHS_U_V6; break;
-    case 3 : subterm =  RHS_U_V8; break;
+    case 1 : subterm =  RHS_U_FRICT_V7; break;
+    case 2 : subterm =  RHS_U_FRICT_V6; break;
+    case 3 : subterm =  RHS_U_FRICT_V8; break;
     }
 
     contact_rigid_obstacle_nonlinear_term
@@ -1403,9 +1373,9 @@ namespace getfem {
    const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    scalar_type r, const mesh_region &rg, int option = 1) {
 
-    size_type subterm1 = (option == 4) ? K_UL_V2 : K_UL_V1;
-    size_type subterm2 = (option == 4) ? K_UL_V4 : K_UL_V3;
-    size_type subterm3 = (option == 4) ? K_LL_V2 : K_LL_V1;
+    size_type subterm1 = (option == 3) ? K_UL_V2 : K_UL_V1;
+    size_type subterm2 = (option == 3) ? K_UL_V4 : K_UL_V3;
+    size_type subterm3 = (option == 3) ? K_LL_V2 : K_LL_V1;
     size_type subterm4 = (option == 2) ? K_UU_V2 : K_UU_V1;
 
     contact_nonmatching_meshes_nonlinear_term
@@ -1416,7 +1386,7 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1: case 4:
+    case 1: case 3:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); " // U1L
         "M$2(#3,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#1))(i,:,:,i); " // LU1
@@ -1432,17 +1402,6 @@ namespace getfem {
         "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
         "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j); " // U2U2
         "M$8(#1,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#2))(i,j,:,i,:,j)"); // U1U2
-      break;
-    case 3:
-      assem.set
-      ("M$1(#1,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1).Base(#3))(i,:,i,:); "      // U1L
-       "M$2(#3,#1)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#1))(i,:,:,i); "      // LU1
-       "M$3(#2,#3)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#2).Base(#3))(i,:,i,:); "      // U2L
-       "M$4(#3,#2)+=comp(NonLin$2(#1,#1,#2,#3).Base(#3).vBase(#2))(i,:,:,i); "      // LU2
-       "M$5(#3,#3)+=comp(NonLin$3(#1,#1,#2,#3).Base(#3).Base(#3))(i,:,:); "         // LL
-       "M$6(#1,#1)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#1))(i,j,:,i,:,j); " // U1U1
-       "M$7(#2,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#2).vBase(#2))(i,j,:,i,:,j); " // U2U2
-       "M$8(#1,#2)+=comp(NonLin$4(#1,#1,#2,#3).vBase(#1).vBase(#2))(i,j,:,i,:,j)"); // U1U2
       break;
     }
     assem.push_mi(mim);
@@ -1491,21 +1450,15 @@ namespace getfem {
       subterm1 = K_UL_FRICT_V3; subterm2 = K_UL_FRICT_V4; subterm3 = K_LL_FRICT_V1;
       break;
     case 3 :
-      subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V4; subterm3 = K_LL_FRICT_V1;
-      break;
-    case 4 :
       subterm1 = K_UL_FRICT_V2; subterm2 = K_UL_FRICT_V5; subterm3 = K_LL_FRICT_V2;
       break;
-    case 5 :
-      subterm1 = K_UL_FRICT_V1; subterm2 = K_UL_FRICT_V6; subterm3 = K_LL_FRICT_V3;
-      break;
-    case 6 :
+    case 4 :
       subterm1 = K_UL_FRICT_V7; subterm2 = K_UL_FRICT_V8; subterm3 = K_LL_FRICT_V4;
       break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
-    size_type subterm4 = (option == 2) ? K_UU_FRICT_V2 : K_UU_FRICT_V1;
+    size_type subterm4 = K_UU_FRICT_V3;
 
     contact_nonmatching_meshes_nonlinear_term
       nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda,
@@ -1521,7 +1474,7 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     switch (option) {
-    case 1: case 4: case 5: case 6:
+    case 1: case 3: case 4:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // U1L
         "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU1
@@ -1529,7 +1482,7 @@ namespace getfem {
         "M$4(#3,#2)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#2))(i,j,:,j,:,i); " // LU2
         "M$5(#3,#3)+=comp(NonLin$3(#1," + aux_fems + ").vBase(#3).vBase(#3))(i,j,:,i,:,j)"); // LL
       break;
-    case 2: case 3:
+    case 2:
       assem.set
        ("M$1(#1,#3)+=comp(NonLin$1(#1," + aux_fems + ").vBase(#1).vBase(#3))(i,j,:,i,:,j); " // U1L
         "M$2(#3,#1)+=comp(NonLin$2(#1," + aux_fems + ").vBase(#3).vBase(#1))(i,j,:,j,:,i); " // LU1
@@ -1579,11 +1532,10 @@ namespace getfem {
     switch (option) {
     case 1 : subterm1 = RHS_U_V1; break;
     case 2 : subterm1 = RHS_U_V2; break;
-    case 3 : subterm1 = RHS_U_V3; break;
-    case 4 : subterm1 = RHS_U_V4; break;
+    case 3 : subterm1 = RHS_U_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
-    size_type subterm2 = (option == 4) ? RHS_L_V2 : RHS_L_V1;
+    size_type subterm2 = (option == 3) ? RHS_L_V2 : RHS_L_V1;
 
     contact_nonmatching_meshes_nonlinear_term
       nterm1(subterm1, r, mf_u1, U1, mf_u2, U2, &mf_lambda, &lambda),
@@ -1622,11 +1574,9 @@ namespace getfem {
     size_type subterm1, subterm2;
     switch (option) {
     case 1 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V1; break;
-    case 2 : subterm1 = RHS_U_FRICT_V2; subterm2 = RHS_L_FRICT_V1; break;
-    case 3 : subterm1 = RHS_U_FRICT_V3; subterm2 = RHS_L_FRICT_V1; break;
-    case 4 : subterm1 = RHS_U_FRICT_V4; subterm2 = RHS_L_FRICT_V2; break;
-    case 5 : subterm1 = RHS_U_FRICT_V1; subterm2 = RHS_L_FRICT_V3; break;
-    case 6 : subterm1 = RHS_U_FRICT_V5; subterm2 = RHS_L_FRICT_V4; break;
+    case 2 : subterm1 = RHS_U_FRICT_V6; subterm2 = RHS_L_FRICT_V1; break;
+    case 3 : subterm1 = RHS_U_FRICT_V4; subterm2 = RHS_L_FRICT_V2; break;
+    case 4 : subterm1 = RHS_U_FRICT_V5; subterm2 = RHS_L_FRICT_V4; break;
     default : GMM_ASSERT1(false, "Incorrect option");
     }
 
@@ -1668,11 +1618,9 @@ namespace getfem {
     int option;
 
     // option = 1 : Alart-Curnier
-    // option = 2 : symmetric Alart-Curnier (almost with friction)
-    // option = 3 : Alart Curnier "over-augmented"
-    // option = 4 : New method
-    // option = 5 : De-Saxce
-    // option = 6 : New method based on De-Saxce.
+    // option = 2 : symmetric Alart-Curnier (almost symmetric with friction)
+    // option = 3 : New method
+    // option = 4 : New method based on De-Saxce.
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -1746,7 +1694,7 @@ namespace getfem {
       // Matrix terms (T_u1l, T_lu1, T_u2l, T_lu2, T_ll, T_u1u1, T_u2u2, T_u1u2)
       GMM_ASSERT1(matl.size() == size_type(3 +                                // U1L, U2L, LL
                                            2 * !is_symmetric() +              // LU1, LU2
-                                           3 * (option == 3 || option == 2)), // U1U1, U2U2, U1U2
+                                           3 * (option == 2)), // U1U1, U2U2, U1U2
                   "Wrong number of terms for "
                   "integral contact between nonmatching meshes brick");
 
@@ -1792,9 +1740,9 @@ namespace getfem {
       size_type U2L = LU1 + 1;
       size_type LU2 = U2L + (is_symmetric() ? 0 : 1);
       size_type LL  = LU2 + 1;
-      size_type U1U1 = (option == 1 || option == 4) ? U1L : LL + 1;
-      size_type U2U2 = (option == 1 || option == 4) ? U2L : LL + 2;
-      size_type U1U2 = (option == 1 || option == 4) ? U1L : LL + 3;
+      size_type U1U1 = (option == 1 || option == 3) ? U1L : LL + 1;
+      size_type U2U2 = (option == 1 || option == 3) ? U2L : LL + 2;
+      size_type U1U2 = (option == 1 || option == 3) ? U1L : LL + 3;
 
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Integral contact between nonmatching meshes "
@@ -1901,7 +1849,7 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1 : case 4 :
+    case 1 : case 3 :
       tl.push_back(model::term_description(varname_u1, multname_n, false)); // U1L
       tl.push_back(model::term_description(multname_n, varname_u1, false)); // LU1
       tl.push_back(model::term_description(varname_u2, multname_n, false)); // U2L
@@ -1915,16 +1863,6 @@ namespace getfem {
       tl.push_back(model::term_description(varname_u1, varname_u1, true)); // U1U1
       tl.push_back(model::term_description(varname_u2, varname_u2, true)); // U2U2
       tl.push_back(model::term_description(varname_u1, varname_u2, true)); // U1U2
-      break;
-    case 3 :
-      tl.push_back(model::term_description(varname_u1, multname_n, false)); // U1L
-      tl.push_back(model::term_description(multname_n, varname_u1, false)); // LU1
-      tl.push_back(model::term_description(varname_u2, multname_n, false)); // U2L
-      tl.push_back(model::term_description(multname_n, varname_u2, false)); // LU2
-      tl.push_back(model::term_description(multname_n, multname_n, true));  // LL
-      tl.push_back(model::term_description(varname_u1, varname_u1, true));  // U1U1
-      tl.push_back(model::term_description(varname_u2, varname_u2, true));  // U2U2
-      tl.push_back(model::term_description(varname_u1, varname_u2, true));  // U1U2
       break;
     default : GMM_ASSERT1(false,
                           "Incorrect option for integral contact brick");
@@ -1959,14 +1897,14 @@ namespace getfem {
     model::termlist tl;
 
     switch (option) {
-    case 1 : case 4 : case 5 : case 6 :
+    case 1 : case 3 : case 4 :
       tl.push_back(model::term_description(varname_u1, multname, false));  // 0: U1L
       tl.push_back(model::term_description(multname, varname_u1, false));  // 1: LU1
       tl.push_back(model::term_description(varname_u2, multname, false));  // 2: U2L
       tl.push_back(model::term_description(multname, varname_u2, false));  // 3: LU2
       tl.push_back(model::term_description(multname, multname, true));     // 4: LL
       break;
-    case 2 : case 3 :
+    case 2 :
       tl.push_back(model::term_description(varname_u1, multname, false));  // 0: U1L
       tl.push_back(model::term_description(multname, varname_u1, false));  // 1: LU1
       tl.push_back(model::term_description(varname_u2, multname, false));  // 2: U2L
@@ -2139,9 +2077,9 @@ namespace getfem {
 
     size_type subterm = 0;
     switch (option) {
-    case 1 : subterm =  RHS_U_V7; break;
-    case 2 : subterm =  RHS_U_V6; break;
-    case 3 : subterm =  RHS_U_V8; break;
+    case 1 : subterm =  RHS_U_FRICT_V7; break;
+    case 2 : subterm =  RHS_U_FRICT_V6; break;
+    case 3 : subterm =  RHS_U_FRICT_V8; break;
     }
 
     contact_nonmatching_meshes_nonlinear_term

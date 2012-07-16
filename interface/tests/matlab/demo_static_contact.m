@@ -27,14 +27,14 @@ clear all;
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');
 
 % Import the mesh : sphere
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_8_elts.mesh');
-m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_80_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_2000_elts.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_16000_elts.mesh');
@@ -48,8 +48,8 @@ clambda = 1;           % Lame coefficient
 cmu = 1;               % Lame coefficient
 friction_coeff = 0.4;  % coefficient of friction
 vertical_force = 0.05; % Volumic load in the vertical direction
-r = 10;                % Augmentation parameter
-condition_type = 0; % 0 = Explicitely kill horizontal rigid displacements
+r = 0.01;                % Augmentation parameter
+condition_type = 2; % 0 = Explicitely kill horizontal rigid displacements
                     % 1 = Kill rigid displacements using a global penalization
                     % 2 = Add a Dirichlet condition on the top of the structure
 penalty_parameter = 1E-6;    % Penalization coefficient for the global penalization
@@ -63,7 +63,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 2;  % 1 : frictionless contact and the basic contact brick
+version = 11;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -76,9 +76,6 @@ version = 2;  % 1 : frictionless contact and the basic contact brick
               %     Newton and Alart-Curnier augmented lagrangian, symmetric
               %     version.
               % 7 : frictionless contact and the integral brick
-              %     Newton and Alart-Curnier augmented lagrangian,
-              %     unsymmetric version with an additional augmentation.
-              % 8 : frictionless contact and the integral brick
               %     New unsymmetric method.
               % 9 : frictionless contact and the integral brick : Uzawa
               %     on the Lagrangian augmented by the penalization term.
@@ -89,10 +86,9 @@ version = 2;  % 1 : frictionless contact and the basic contact brick
               %     Newton and Alart-Curnier augmented lagrangian,
               %     nearly symmetric version.
               % 12 : contact with 'static' Coulomb friction and the integral brick
-              %     Newton and Alart-Curnier augmented lagrangian,
-              %     unsymmetric version with an additional augmentation.
-              % 13 : contact with 'static' Coulomb friction and the integral brick
               %     New unsymmetric method.
+              % 13 : contact with 'static' Coulomb friction and the integral brick
+              %     New unsymmetric method with De Saxce projection.
               % 14 : contact with 'static' Coulomb friction and the integral brick : Uzawa
               %     on the Lagrangian augmented by the penalization term.
               % 15 : penalized contact with 'static' Coulomb friction (r is the penalization
@@ -333,6 +329,7 @@ end
 
 % Solve the problem
 if (~solved)
+  % gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.000001);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
 
