@@ -26,8 +26,8 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh : disc
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');
@@ -48,7 +48,7 @@ clambda = 1;           % Lame coefficient
 cmu = 1;               % Lame coefficient
 friction_coeff = 0.4;  % coefficient of friction
 vertical_force = 0.05; % Volumic load in the vertical direction
-r = 0.01;                % Augmentation parameter
+r = 1;                % Augmentation parameter
 condition_type = 2; % 0 = Explicitely kill horizontal rigid displacements
                     % 1 = Kill rigid displacements using a global penalization
                     % 2 = Add a Dirichlet condition on the top of the structure
@@ -329,9 +329,11 @@ end
 
 % Solve the problem
 if (~solved)
-  % gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.000001);
+  gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.01);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
+
+return;
 
 U = gf_model_get(md, 'variable', 'u');
 % lambda_n = gf_model_get(md, 'variable', 'lambda_n');

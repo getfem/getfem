@@ -49,22 +49,20 @@ namespace getfem {
     sizes_.resize(1); sizes_[0] = 1;
     switch (option) {
       // one-dimensional tensors [N]
-    case RHS_U_V1:       case RHS_U_V2:       case RHS_U_V3: case RHS_U_V4:
+    case RHS_U_V1:       case RHS_U_V2:       case RHS_U_V4:
     case RHS_U_V5:       case RHS_U_FRICT_V6: case RHS_U_FRICT_V7:
-    case RHS_U_FRICT_V8: case RHS_U_FRICT_V1: case RHS_U_FRICT_V2:
-    case RHS_U_FRICT_V3: case RHS_U_FRICT_V4: case RHS_U_FRICT_V5:
-    case RHS_L_FRICT_V1: case RHS_L_FRICT_V2:
-    case RHS_L_FRICT_V3: case RHS_L_FRICT_V4:
+    case RHS_U_FRICT_V8: case RHS_U_FRICT_V1:
+    case RHS_U_FRICT_V4: case RHS_U_FRICT_V5:
+    case RHS_L_FRICT_V1: case RHS_L_FRICT_V2: case RHS_L_FRICT_V4:
     case K_UL_V1:        case K_UL_V2:        case K_UL_V3:  case K_UL_V4:
     case UZAWA_PROJ_FRICT: case UZAWA_PROJ_FRICT_SAXCE:
       sizes_[0] = N; break;
       // two-dimensional tensors [N x N]
     case K_UU_V1: case K_UU_V2:
     case K_UL_FRICT_V1: case K_UL_FRICT_V2: case K_UL_FRICT_V3:
-    case K_UL_FRICT_V4: case K_UL_FRICT_V5: case K_UL_FRICT_V6:
+    case K_UL_FRICT_V4: case K_UL_FRICT_V5:
     case K_UL_FRICT_V7: case K_UL_FRICT_V8:
-    case K_LL_FRICT_V1: case K_LL_FRICT_V2:
-    case K_LL_FRICT_V3: case K_LL_FRICT_V4:
+    case K_LL_FRICT_V1: case K_LL_FRICT_V2: case K_LL_FRICT_V4:
     case K_UU_FRICT_V1: case K_UU_FRICT_V2:
     case K_UU_FRICT_V3: case K_UU_FRICT_V4: case K_UU_FRICT_V5:
       sizes_.resize(2); sizes_[0] = sizes_[1] = N;  break;
@@ -114,10 +112,6 @@ namespace getfem {
       e = -gmm::neg(ln-r*(un - g));
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
-    case RHS_U_V3:
-      e = ln - gmm::pos(un-g) * r;
-      for (i=0; i<N; ++i) t[i] = e * no[i];
-      break;
     case RHS_U_V4:
       e = -gmm::neg(ln);
       for (i=0; i<N; ++i) t[i] = e * no[i];
@@ -127,9 +121,9 @@ namespace getfem {
       for (i=0; i<N; ++i) t[i] = e * no[i];
       break;
     case RHS_U_FRICT_V6:
-      e = - gmm::neg(ln-r*(un - g));
-      auxN = lt - zt;  ball_projection(auxN, -f_coeff*e );
-      for (i=0; i<N; ++i) t[i] = (e*no[i] + auxN[i]);
+      e = gmm::neg(ln-r*(un - g));
+      auxN = lt - zt;  ball_projection(auxN, f_coeff*e );
+      for (i=0; i<N; ++i) t[i] = (auxN[i] - e*no[i]);
       break;
     case RHS_U_FRICT_V7:
       e = - gmm::neg(-r*(un - g));
@@ -143,15 +137,6 @@ namespace getfem {
       break;
     case RHS_U_FRICT_V1:
       for (i=0; i<N; ++i) t[i] = lnt[i]; break;
-    case RHS_U_FRICT_V2:
-      e = gmm::neg(ln - r*(un-g));
-      auxN = lt - zt;  ball_projection(auxN, -f_coeff * ln);
-      for (i=0; i<N; ++i) t[i] = auxN[i] - e*no[i];
-      break;
-    case RHS_U_FRICT_V3:
-      e = r*gmm::pos(un-g);
-      for (i=0; i<N; ++i) t[i] = lnt[i] - e*no[i];
-      break;
     case RHS_U_FRICT_V4:
       e = -gmm::neg(ln);
       // if (e < 0. && ctx.xreal()[1] > 1.)
@@ -174,11 +159,6 @@ namespace getfem {
       e = r*(un-g) + gmm::pos(ln);
       auxN = lt;  ball_projection(auxN, f_coeff * gmm::neg(ln));
       for (i=0; i<N; ++i) t[i] = (no[i]*e + zt[i] + lt[i] - auxN[i])/r;
-      break;
-    case RHS_L_FRICT_V3:
-      auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
-      De_Saxce_projection(auxN, no, f_coeff);
-      for (i=0; i<N; ++i) t[i] = (lnt[i] - auxN[i])/r;
       break;
     case RHS_L_FRICT_V4:
       auxN = lnt;
@@ -235,13 +215,13 @@ namespace getfem {
         t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*Heav(-ln)*no[i]*V[j];
       break;
     case K_UL_FRICT_V3:
-      e = -Heav(r*(un-g)-ln);
+      f = Heav(r*(un-g)-ln);
       augm_ln = gmm::neg(ln - r*(un-g));
       auxN = lt - zt; ball_projection_grad(auxN, f_coeff * augm_ln, GP);
-      e += gmm::vect_sp(GP, no, no);
-      ball_projection_grad_r(auxN, -f_coeff * ln, V);
+      e = gmm::vect_sp(GP, no, no) - f;
+      ball_projection_grad_r(auxN, f_coeff * augm_ln, V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = no[i]*no[j]*e - GP(i,j) - f_coeff * V[i] * no[j] * r;
+        t[i*N+j] = no[i]*no[j]*e - GP(i,j) + f_coeff*f*V[j]*no[i];
       break;
     case K_UL_FRICT_V4:
       f = Heav(r*(un-g)-ln);
@@ -256,20 +236,6 @@ namespace getfem {
       e = (alpha-scalar_type(1));
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = no[i]*no[j]*e - ((i == j) ? alpha : scalar_type(0));
-      break;
-    case K_UL_FRICT_V6:
-      {
-        scalar_type nzt = gmm::vect_norm2(zt);
-        auxN = lnt - (r*(un-g) - f_coeff * nzt) * no - zt;
-        base_matrix A(N, N), B(N, N);
-        De_Saxce_projection_grad(auxN, no, f_coeff, A);
-        gmm::copy(gmm::identity_matrix(), B); gmm::scale(B, alpha);
-        gmm::rank_one_update(B, gmm::scaled(no, scalar_type(1)-alpha), no);
-        if (nzt != scalar_type(0))
-          gmm::rank_one_update(B, gmm::scaled(no, -f_coeff*alpha/nzt), zt);
-        gmm::mult(A, B, GP);
-        for (i=0; i<N; ++i) for (j=0; j<N; ++j) t[i*N+j] = -GP(i,j);
-      }
       break;
     case K_UL_FRICT_V7:
       De_Saxce_projection_grad(lnt, no, f_coeff, GP);
@@ -303,12 +269,6 @@ namespace getfem {
       ball_projection_grad_r(lt, f_coeff * gmm::neg(ln), V);
       for (i=0; i<N; ++i) for (j=0; j<N; ++j)
         t[i*N+j] = (no[i]*no[j]*e - ((i == j) ? scalar_type(1) : scalar_type(0)) + GP(i,j) - f_coeff*Heav(-ln)*no[i]*V[j])/r;
-      break;
-    case K_LL_FRICT_V3:
-      auxN = lnt - (r*(un-g) - f_coeff * gmm::vect_norm2(zt)) * no - zt;
-      De_Saxce_projection_grad(auxN, no, f_coeff, GP);
-      for (i=0; i<N; ++i) for (j=0; j<N; ++j)
-        t[i*N+j] = (GP(i,j) - scalar_type((i == j) ? 1 : 0))/r;
       break;
     case K_LL_FRICT_V4:
       De_Saxce_projection_grad(lnt, no, f_coeff, GP);
