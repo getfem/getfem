@@ -176,7 +176,15 @@ namespace getfem {
         size_type rt,ri;
         std::string region_name;
         for (size_type region_cnt=0; region_cnt < nb_regions; ++ region_cnt) {
-          f >> rt >> ri >> region_name;
+          f >> rt >> ri;
+          std::getline(f, region_name);
+          /* trim the string to the quote character front and back*/
+          size_t pos = region_name.find_first_of("\"");
+          if (pos != region_name.npos) {
+            region_name.erase(0, pos+1);
+            pos = region_name.find_last_of("\"");
+            region_name.erase(pos); 
+          }
           (*region_map)[region_name] = ri;
         }
       }
