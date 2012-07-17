@@ -1098,7 +1098,7 @@ if (!contact_only){
       getfem::add_explicit_matrix(model, "u", "u", KAT);
       // Defining the contact condition.
       gmm::add(CAT, BT); 
-      getfem::add_Hughes_stab_with_friction_contact_brick
+      getfem::add_Hughes_stab_basic_contact_brick
 	(model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
 	 BN, BT, MA, MAT, "friction_coeff","","",1, Tresca_version);
                 }
@@ -1107,7 +1107,7 @@ if (!contact_only){
 				    "augmentation_parameter", BN);
     
     if (!contact_only){
-      getfem::add_basic_contact_with_friction_brick
+      getfem::add_basic_contact_brick
 	(model, "u", "Lambda", "Lambda_t",
 	 "augmentation_parameter", BN, BT, "friction_coeff","","",1, Tresca_version, false);
       

@@ -293,7 +293,7 @@ Note that is possible to change the basic contact matrix :math:`BN` by use::
 Basic contact brick with friction
 +++++++++++++++++++++++++++++++++
 
-getfem::add_basic_contact_with_friction_brick
+getfem::add_basic_contact_brick
           (md, varname_u, multname_n, multname_t, dataname_r, BN, dataname_friction_coeff, dataname_gap , dataname_alpha, aug_version  );
 
 This function adds a contact brick with friction on ``varname_u`` thanks to two
@@ -347,7 +347,7 @@ body, see Getfem user documentation). 1 for the non-symmetric Alart-Curnier augm
 Contact with friction brick with a rigid obstacle
 +++++++++++++++++++++++++++++++++++++++++++++++++
 
-     getfem::add_contact_with_friction_with_rigid_obstacle_brick
+     getfem::add_contact_with_rigid_obstacle_brick
           (md, mim, varname_u, multname_n, multname_t, dataname_r,
           dataname_friction_coeff, region, obstacle, aug_version);
 
@@ -412,7 +412,7 @@ Contact with friction brick between two faces with non-matching meshes
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-     getfem::add_nonmatching_meshes_contact_with_friction_brick
+     getfem::add_nonmatching_meshes_contact_brick
 	(md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
         dataname_r, dataname_friction_coeff, rg1, rg2, slave1=true,
 	slave2=false, aug_version=1);

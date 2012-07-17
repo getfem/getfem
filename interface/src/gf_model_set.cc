@@ -1754,7 +1754,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         size_type ind;
         if (friction) {
-          ind = getfem::add_basic_contact_with_friction_brick
+          ind = getfem::add_basic_contact_brick
             (md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
              friction_coeff, dataname_gap, dataname_alpha, augmented_version);
         } else {
@@ -1865,7 +1865,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type ind;
 
         if (friction)
-          ind = getfem::add_contact_with_friction_with_rigid_obstacle_brick
+          ind = getfem::add_contact_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
              multname_t, dataname_r, dataname_fr, region, obstacle,
              augmented_version);
@@ -2177,7 +2177,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
              varname_u1, varname_u2, multname_n, dataname_r,
              vrg1, vrg2, slave1, slave2, augmented_version);
         else
-          ind = getfem::add_nonmatching_meshes_contact_with_friction_brick
+          ind = getfem::add_nonmatching_meshes_contact_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, multname_t,
              dataname_r, dataname_fr,
