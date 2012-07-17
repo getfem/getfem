@@ -72,14 +72,14 @@ namespace gmm {
 				const char *errormsg) {
     std::stringstream msg;
     msg << "Error in " << file << ", line " << line << " " << func
-	<< ": \n" << errormsg << ends;
+	<< ": \n" << errormsg << std::ends;
     throw gmm::gmm_error(msg.str());	
   }
 # define GMM_THROW_(type, errormsg) {					\
     std::stringstream msg;						\
     msg << "Error in " << __FILE__ << ", line "				\
 	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
-	<< errormsg << ends;						\
+	<< errormsg << std::ends;						\
     throw (type)(msg.str());						\
   }
 #else
@@ -94,7 +94,7 @@ namespace gmm {
 				const char *errormsg) {
     std::stringstream msg;
     msg << "Error in " << file << ", line " << line << " " << func
-	<< ": \n" << errormsg << ends;
+	<< ": \n" << errormsg << std::ends;
     std::cerr << msg.str() << std::endl;
     abort_no_return();	
   }
@@ -282,7 +282,7 @@ namespace gmm {
       cerr << "============================================\n";	\
       cerr << "|      An error has been detected !!!      |\n";	\
       cerr << "============================================\n";	\
-      cerr << e.what() << endl << endl;				\
+      cerr << e.what() << std::endl << std::endl;				\
       exit(1);							\
     }								\
   catch(std::runtime_error e)					\
@@ -290,7 +290,7 @@ namespace gmm {
       cerr << "============================================\n";	\
       cerr << "|      An error has been detected !!!      |\n";	\
       cerr << "============================================\n";	\
-      cerr << e.what() << endl << endl;				\
+      cerr << e.what() << std::endl << std::endl;				\
       exit(1);							\
     }								\
   catch(std::bad_alloc) {					\
