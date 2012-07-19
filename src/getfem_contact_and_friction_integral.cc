@@ -3603,8 +3603,8 @@ namespace getfem {
 	cvnbdofu_y0 = mfu_y0.nb_basic_dof_of_element(cv_y0);
 	const model_real_plain_vector &U_y0
 	  = cf.disp_of_boundary(boundary_num_y0);
-	mesh_fem::ind_dof_ct::const_iterator
-	  itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
+	//mesh_fem::ind_dof_ct::const_iterator
+	//  itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
 	coeff_y0.resize(cvnbdofu_y0);
 	gmm::copy(gmm::sub_vector
 		  (U_y0, gmm::sub_index

@@ -293,7 +293,7 @@ Note that is possible to change the basic contact matrix :math:`BN` by use::
 Basic contact brick with friction
 +++++++++++++++++++++++++++++++++
 
-getfem::add_basic_contact_brick
+    getfem::add_basic_contact_brick
           (md, varname_u, multname_n, multname_t, dataname_r, BN, dataname_friction_coeff, dataname_gap , dataname_alpha, aug_version  );
 
 This function adds a contact brick with friction on ``varname_u`` thanks to two
@@ -325,8 +325,8 @@ Note that is possible to change the basic contact matrices :math:`BN` and :math:
      getfem::contact_brick_set_BT(md, indbrick);
 
 
-Frictionless contact brick with a rigid obstacle
-++++++++++++++++++++++++++++++++++++++++++++++++
+Frictionless nodal contact with a rigid obstacle brick
+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
      getfem::add_contact_with_rigid_obstacle_brick
           (md, mim, varname_u, multname_n, dataname_r, region, obstacle, aug_version);
@@ -344,8 +344,9 @@ The augmentation parameter ``r`` should be chosen in a
 range of acceptable values (close to the Young modulus of the elastic
 body, see Getfem user documentation). 1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers.
 
-Contact with friction brick with a rigid obstacle
-+++++++++++++++++++++++++++++++++++++++++++++++++
+
+Nodal contact with a rigid obstacle brick with friction
++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
      getfem::add_contact_with_rigid_obstacle_brick
           (md, mim, varname_u, multname_n, multname_t, dataname_r,
@@ -374,8 +375,8 @@ representing the friction coefficient on each contact node. The parameter `aug_v
 indicates the augmentation strategy :  1 for the non-symmetric Alart-Curnier augmented Lagrangian, 2 for the symmetric one, 3 for the unsymmetric method based on augmented multipliers and 3 for the unsymmetric method based on augmented multipliers with De Saxce projection.
 
 
-Frictionless contact brick between two faces with non-matching meshes
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Frictionless nodal contact between non-matching meshes brick
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
      getfem::add_nonmatching_meshes_contact_brick
 	(md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
@@ -408,14 +409,13 @@ Basically, this brick computes the matrix BN and the vectors gap and
 alpha and calls the basic contact brick.
 
 
-Contact with friction brick between two faces with non-matching meshes
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Nodal contact between non-matching meshes brick with friction
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-
-     getfem::add_nonmatching_meshes_contact_brick
-	(md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
-        dataname_r, dataname_friction_coeff, rg1, rg2, slave1=true,
-	slave2=false, aug_version=1);
+    getfem::add_nonmatching_meshes_contact_brick
+        (md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
+         dataname_r, dataname_friction_coeff, rg1, rg2, slave1=true,
+         slave2=false, aug_version=1);
 
 This function adds a contact with friction condition between two faces of
 one or two elastic bodies. The condition is applied on the variable
@@ -452,7 +452,6 @@ gap and alpha and calls the basic contact brick.
 
 
 
-
 Hughes stabilized frictionless contact condition
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -468,15 +467,15 @@ Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughe
       getfem::contact_brick_set_DN(md, indbrick);
 
 
-Integral frictionless contact brick with a rigid obstacle
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Frictionless integral contact with a rigid obstacle brick
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
      getfem::add_integral_contact_with_rigid_obstacle_brick
-     (md, mim, varname_u, multname_n, dataname_obs, dataname_r, region, option);
+         (md, mim, varname_u, multname_n, dataname_obs, dataname_r, region, option = 1);
 
-Adds a frictionless contact condition with a rigid obstacle
+This function adds a frictionless contact condition with a rigid obstacle
 to the model. This brick add a contact which is defined
-in an integral way. Is it the direct approximation of an augmented
+in an integral way. It is the direct approximation of an augmented
 Lagrangian formulation defined at the
 continuous level. The advantage should be a better scalability:
 the number of
@@ -489,27 +488,29 @@ the obstacle (interpolated on a finite element method).
 An inf-sup condition between ``multname_n`` and ``varname_u`` is required.
 The augmentation parameter ``dataname_r`` should be chosen in a
 range of acceptable values.
-The possible value for ``option`` is 1 for the non-symmetric
-Alart-Curnier version, 2 for the symmetric one and 3 for the
-non-symmetric Alart-Curnier with an additional augmentation. ``mim`` represents
-of course the integration method. Note that it should be accurate enough to integrate efficiently the nonlinear terms involved.
+Possible values for ``option`` is 1 for the non-symmetric Alart-Curnier
+augmented Lagrangian method, 2 for the symmetric one, 3 for the
+non-symmetric Alart-Curnier method with an additional augmentation
+and 4 for a new unsymmetric method. The default value is 1.
+``mim`` represents of course the integration method. Note that it should
+be accurate enough to integrate efficiently the nonlinear terms involved.
 
-Integral contact with friction brick with a rigid obstacle
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Integral contact with a rigid obstacle brick with friction
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
      getfem::add_integral_contact_with_rigid_obstacle_brick
-     (md, mim, varname_u, multname_n, dataname_obs, dataname_r,
-     dataname_friction_coeff, region, option, dataname_alpha = "",
-     dataname_wt = "", dataname_gamma = "", dataname_vt = "");
+         (md, mim, varname_u, multname_n, dataname_obs, dataname_r,
+          dataname_friction_coeff, region, option = 1, dataname_alpha = "",
+          dataname_wt = "", dataname_gamma = "", dataname_vt = "");
 
 
-Adds a contact with friction condition with a rigid obstacle
-to the model. This brick add a contact which is defined
-in an integral way. Is it the direct approximation of an augmented
-Lagrangian formulation defined at the
-continuous level. The advantage should be a better scalability:
-the number of
-Newton iterations should be more or less independent of the mesh size.
+This function adds a contact with friction condition with a rigid obstacle
+to the model, which is defined in an integral way. It is the direct
+approximation of an augmented Lagrangian formulation defined at the
+continuous level.
+The advantage should be a better scalability: the number of Newton
+iterations should be more or less independent of the mesh size.
 The condition is applied on the variable ``varname_u``
 on the boundary corresponding to ``region``. The rigid obstacle should
 be described with the data ``dataname_obstacle`` being a signed distance to
@@ -520,57 +521,63 @@ The augmentation parameter ``dataname_r`` should be chosen in a
 range of acceptable values. ``dataname_friction_coeff`` is the friction
 coefficient which could be constant or defined on a finite element
 method. 
-The possible value for ``option`` is 1 for the non-symmetric
-Alart-Curnier version, 2 for the symmetric one and 3 for the
-non-symmetric Alart-Curnier with an additional augmentation.
+Possible values for ``option`` is 1 for the non-symmetric Alart-Curnier
+augmented Lagrangian method, 2 for the symmetric one, 3 for the
+non-symmetric Alart-Curnier method with an additional augmentation
+and 4 for a new unsymmetric method. The default value is 1.
 ``dataname_alpha`` and ``dataname_wt`` are optional parameters to solve
 evolutionary friction problems. ``dataname_gamma`` and ``dataname_vt`` denote
 optional data for adding a parameter-dependent sliding velocity to the friction
 condition. ``mim`` represents of course the integration method. Note that it
 should be accurate enough to integrate efficiently the nonlinear terms involved.
 
-Penalized contact brick with a rigid obstacle
-+++++++++++++++++++++++++++++++++++++++++++++
+Frictionless penalized contact with a rigid obstacle brick
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-  ind_brick = add_penalized_contact_with_rigid_obstacle_brick(md, mim,
-	 varname_u, dataname_obs, dataname_r, region, option = 1,
-	 dataname_n = "");
+    getfem::add_penalized_contact_with_rigid_obstacle_brick
+        (md, mim, varname_u, dataname_obs, dataname_r, region,
+         option = 1, dataname_n = "");
 
-Adds a penalized contact frictionless condition with a rigid obstacle
-to the model.
-The condition is applied on the variable `varname_u`
-on the boundary corresponding to `region`. The rigid obstacle should
-be described with the data `dataname_obstacle` being a signed distance to
+This function adds a frictionless penalized contact condition
+with a rigid obstacle to the model.
+The condition is applied on the variable ``varname_u``
+on the boundary corresponding to ``region``. The rigid obstacle should
+be described with the data ``dataname_obstacle`` being a signed distance to
 the obstacle (interpolated on a finite element method).
-The penalization parameter `dataname_r` should be chosen
+The penalization parameter ``dataname_r`` should be chosen
 large enough to prescribe an approximate non-penetration condition
-but not too large not to deteriorate to much the conditioning of
-the tangent system. `dataname_n` is an optional parameter used if option
-is 2. In that case, the penalization term is shifted by lambda_n (this allows
-the use of an Uzawa algorithm on the corresponding augmented Lagrangian formulation)
+but not too large not to deteriorate too much the conditioning of
+the tangent system. ``dataname_n`` is an optional parameter used if option
+is 2. In that case, the penalization term is shifted by lambda_n (this
+allows the use of an Uzawa algorithm on the corresponding augmented
+dLagrangian formulation)
 
 
-Penalized contact with friction brick with a rigid obstacle
+Penalized contact with a rigid obstacle brick with friction
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+    getfem::add_penalized_contact_with_friction_with_rigid_obstacle_brick
+        (md, mim, varname_u, dataname_obs, dataname_r, dataname_friction_coeff, 
+         region, option = 1, dataname_lambda = "", dataname_alpha = "",
+         dataname_wt = "");
 
-  ind_brick = add_penalized_contact_with_friction_with_rigid_obstacle_brick
-       (md, mim, varname_u, dataname_obs, dataname_r, dataname_friction_coeff, 
-        region, option = 1, dataname_lambda = "", dataname_alpha = "",
-	dataname_wt = "");
-
-Adds a penalized contact condition with Coulomb friction with a
+This function adds a penalized contact condition with Coulomb friction with a
 rigid obstacle to the model.
-The condition is applied on the variable `varname_u`
-on the boundary corresponding to `region`. The rigid obstacle should
+The condition is applied on the variable ``varname_u``
+on the boundary corresponding to ``region``. The rigid obstacle should
 be described with the data `dataname_obstacle` being a signed distance to
 the obstacle (interpolated on a finite element method).
-The penalization parameter `dataname_r` should be chosen
+``dataname_friction_coeff`` is the friction coefficient which could be constant
+or defined on a finite element method.
+The penalization parameter ``dataname_r`` should be chosen
 large enough to prescribe approximate non-penetration and friction
-conditions but not too large not to deteriorate to much the
+conditions but not too large not to deteriorate too much the
 conditioning of the tangent system.
-`dataname_lambda` is an optional parameter used if option
-is 2. In that case, the penalization term is shifted by lambda (this allows
-the use of an Uzawa algorithm on the corresponding augmented Lagrangian formulation).
+``dataname_lambda`` is an optional parameter used if ``option``
+is 2. In that case, the penalization term is shifted by lambda (this
+allows the use of an Uzawa algorithm on the corresponding augmented
+Lagrangian formulation).
+``dataname_alpha`` and ``dataname_wt`` are optional parameters to solve
+evolutionary friction problems.
 
  

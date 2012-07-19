@@ -46,7 +46,7 @@ namespace getfem {
 
   /** Add a frictionless contact condition with a rigid obstacle
       to the model. This brick adds a contact which is defined
-      in an integral way. Is it the direct approximation of an augmented
+      in an integral way. It is the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
       continuous level. The advantage should be a better scalability:
       the number of
@@ -59,9 +59,10 @@ namespace getfem {
       An inf-sup condition between `multname_n` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptable values.
-      The possible value for `option` is 1 for the non-symmetric
-      Alart-Curnier version, 2 for the symmetric one and 3 for the
-      non-symmetric Alart-Curnier with an additional augmentation.
+      Possible values for `option` is 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian method, 2 for the symmetric one, 3 for the
+      non-symmetric Alart-Curnier method with an additional augmentation
+      and 4 for a new unsymmetric method. The default value is 1.
   */
   size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -86,9 +87,10 @@ namespace getfem {
       range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method.
-      The possible value for `option` is 1 for the non-symmetric
-      Alart-Curnier version, 2 for the symmetric one and 3 for the
-      non-symmetric Alart-Curnier with an additional augmentation.
+      Possible values for `option` is 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian method, 2 for the symmetric one, 3 for the
+      non-symmetric Alart-Curnier method with an additional augmentation
+      and 4 for a new unsymmetric method. The default value is 1.
       `dataname_alpha` and `dataname_wt` are optional parameters to solve
       evolutionary friction problems. `dataname_gamma` and `dataname_vt`
       represent optional data for adding a parameter-dependent sliding
@@ -129,6 +131,8 @@ namespace getfem {
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
+      `dataname_friction_coeff`` is the friction coefficient which could
+      be constant or defined on a finite element method.
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe approximate non-penetration and friction
       conditions but not too large not to deteriorate too much the
@@ -137,6 +141,8 @@ namespace getfem {
       is 2. In that case, the penalization term is shifted by lambda (this
       allows the use of an Uzawa algorithm on the corresponding augmented
       Lagrangian formulation)
+      `dataname_alpha` and `dataname_wt` are optional parameters to solve
+      evolutionary friction problems.
   */
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -149,7 +155,7 @@ namespace getfem {
 
   /** Add a frictionless contact condition between nonmatching meshes
       to the model. This brick adds a contact which is defined
-      in an integral way. Is it the direct approximation of an augmented
+      in an integral way. It is the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
       continuous level. The advantage should be a better scalability:
       the number of Newton iterations should be more or less independent
@@ -161,9 +167,10 @@ namespace getfem {
       `varname_u2` is required.
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptable values.
-      The possible value for `option` is 1 for the non-symmetric
-      Alart-Curnier version, 2 for the symmetric one and 3 for the
-      non-symmetric Alart-Curnier with an additional augmentation.
+      Possible values for `option` is 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian method, 2 for the symmetric one, 3 for the
+      non-symmetric Alart-Curnier method with an additional augmentation
+      and 4 for a new unsymmetric method. The default value is 1.
   */
   size_type add_integral_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
@@ -187,10 +194,11 @@ namespace getfem {
       The augmentation parameter `dataname_r` should be chosen in a
       range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
-      method.
-      The possible value for `option` is 1 for the non-symmetric
-      Alart-Curnier version, 2 for the symmetric one and 3 for the
-      non-symmetric Alart-Curnier with an additional augmentation.
+      method on the same mesh as `varname_u1`.
+      Possible values for `option` is 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian method, 2 for the symmetric one, 3 for the
+      non-symmetric Alart-Curnier method with an additional augmentation
+      and 4 for a new unsymmetric method. The default value is 1.
       `dataname_alpha`, `dataname_wt1` and `dataname_wt2` are optional
       parameters to solve evolutionary friction problems.
   */
@@ -231,10 +239,14 @@ namespace getfem {
       large enough to prescribe approximate non-penetration and friction
       conditions but not too large not to deteriorate too much the
       conditionning of the tangent system.
+      `dataname_friction_coeff` is the friction coefficient which could be constant
+      or defined on a finite element method on the same mesh as `varname_u1`.
       `dataname_lambda` is an optional parameter used if option
       is 2. In that case, the penalization term is shifted by lambda (this
       allows the use of an Uzawa algorithm on the corresponding augmented
       Lagrangian formulation)
+      `dataname_alpha`, `dataname_wt1` and `dataname_wt2` are optional parameters
+      to solve evolutionary friction problems.
   */
   size_type add_penalized_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
