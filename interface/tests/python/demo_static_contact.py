@@ -247,7 +247,7 @@ elif version == 9: # The integral version, Uzawa on the augmented Lagrangian
       md.solve('max_res', 1E-9, 'max_iter', niter)
       U = md.get('variable', 'u')
       lambda_n_old = lambda_n
-      sol = gf.linsolve_superlu(M, gf.asm_contact_Uzawa_projection(GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, r))
+      sol = gf.linsolve_superlu(M, gf.asm_integral_contact_Uzawa_projection(GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, r))
       lambda_n = sol[0].transpose()
       md.set_variable('lambda_n', lambda_n)
       difff = max(abs(lambda_n-lambda_n_old))[0]/max(abs(lambda_n))[0]
@@ -292,7 +292,7 @@ elif version == 14: # The integral version, Uzawa on the augmented Lagrangian wi
       U = md.get('variable', 'u')
       lambda_nt_old = lambda_nt
       sol = gf.linsolve_superlu(M,
-        gf.asm_contact_with_friction_Uzawa_projection(
+        gf.asm_integral_contact_Uzawa_projection(
         GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_nt, mfd, OBS, r, friction_coeff))
       lambda_nt = sol[0].transpose()
       md.set_variable('lambda', lambda_nt)

@@ -43,8 +43,7 @@
     <synopsis>{...} = gf_asm('boundary', int bnum, string expr [, mesh_im mim, mesh_fem mf, data...])</synopsis>
     <synopsis>Mi = gf_asm('interpolation matrix', mesh_fem mf, mesh_fem mfi)</synopsis>
     <synopsis>Me = gf_asm('extrapolation matrix',mesh_fem mf, mesh_fem mfe)</synopsis>
-    <synopsis>B = gf_asm('contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r)</synopsis>
-    <synopsis>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]])</synopsis>
+    <synopsis>B = gf_asm('integral contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</synopsis>
     <synopsis>B = gf_asm('level set normal source term', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_levelset, vec levelset)</synopsis>
   </refsynopsisdiv>
 
@@ -356,19 +355,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>B = gf_asm('contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r)</literal></para>
-
-    <para>       Specific assembly procedure for the use of an Uzawa algorithm to solve
-      contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
-      finite element space of $\lambda$.
-
-    Return a vec object.
-    
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]])</literal></para>
+    <para><literal>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</literal></para>
 
     <para>       Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the

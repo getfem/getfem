@@ -388,7 +388,7 @@ elseif (version == 9) % The integral version, Uzawa on the augmented Lagrangian
       end
       U = gf_model_get(md, 'variable', 'u');
       lambda_n_old = lambda_n;
-      lambda_n = (M\ gf_asm('contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, real_r))';
+      lambda_n = (M\ gf_asm('integral contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda_n, mfd, OBS, real_r))';
       gf_model_set(md, 'variable', 'lambda_n', lambda_n);
       difff = max(abs(lambda_n-lambda_n_old)) / max(abs(lambda_n));
       disp(sprintf('diff: %g   threshold: %g', difff, uzawa_residual));
@@ -441,7 +441,7 @@ elseif (version == 16 || version == 17) % The integral version, Uzawa on the aug
       end
       U = gf_model_get(md, 'variable', 'u');
       lambda_old = lambda;
-      lambda = (M\ gf_asm('contact with friction Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda, mfd, OBS, real_r, friction_coeff, version-15))';
+      lambda = (M\ gf_asm('integral contact Uzawa projection', GAMMAC, mim_friction, mfu, U, mflambda_partial, lambda, mfd, OBS, real_r, friction_coeff, version-15))';
       gf_model_set(md, 'variable', 'lambda', lambda);
       difff = max(abs(lambda-lambda_old))/max(abs(lambda));
       disp(sprintf('diff: %g   threshold: %g', difff, uzawa_residual));
