@@ -215,17 +215,17 @@ model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p3, mim_2, 'u_p3', 
 nbc = size(mfu_p1.basic_dof_on_region(RG_CONTACT_p1)) / qdim
 model.add_variable('lambda_p1', nbc)
 model.add_nodal_contact_with_rigid_obstacle_brick \
-  (mim_p1, 'u_p1', 'lambda_p1', 'r', RG_CONTACT_p1, '(x-%e)^2+(y-%e)^2-%e' % (0., a, R_i**2), 0)
+  (mim_p1, 'u_p1', 'lambda_p1', 'r', RG_CONTACT_p1, '(x-%e)^2+(y-%e)^2-%e' % (0., a, R_i**2), 1)
 
 nbc = size(mfu_p2.basic_dof_on_region(RG_CONTACT_p2)) / qdim
 model.add_variable('lambda_p2', nbc)
 model.add_nodal_contact_with_rigid_obstacle_brick \
-  (mim_p2, 'u_p2', 'lambda_p2', 'r', RG_CONTACT_p2, '(x-%e)^2+(y-%e)^2-%e' % (a*cos(7*pi/6), a*sin(7*pi/6), R_i**2), 0)
+  (mim_p2, 'u_p2', 'lambda_p2', 'r', RG_CONTACT_p2, '(x-%e)^2+(y-%e)^2-%e' % (a*cos(7*pi/6), a*sin(7*pi/6), R_i**2), 1)
 
 nbc = size(mfu_p3.basic_dof_on_region(RG_CONTACT_p3)) / qdim
 model.add_variable('lambda_p3', nbc)
 model.add_nodal_contact_with_rigid_obstacle_brick \
-  (mim_p3, 'u_p3', 'lambda_p3', 'r', RG_CONTACT_p3, '(x-%e)^2+(y-%e)^2-%e' % (a*cos(11*pi/6), a*sin(11*pi/6), R_i**2), 0)
+  (mim_p3, 'u_p3', 'lambda_p3', 'r', RG_CONTACT_p3, '(x-%e)^2+(y-%e)^2-%e' % (a*cos(11*pi/6), a*sin(11*pi/6), R_i**2), 1)
 
 print('nbdof_1', mfu_1.nbdof())
 print('nbdof_2', mfu_2.nbdof())
