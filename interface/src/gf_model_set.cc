@@ -2219,6 +2219,142 @@ void gf_model_set(getfemint::mexargs_in& m_in,
             it->second->run(in, out, md);
         );
 
+    /*@SET ind = ('add integral contact between nonmatching meshes brick',  @tmim mim, @str varname_u1, @str varname_u2, @str multname, @str dataname_r [, @str dataname_friction_coeff], @int region1, @int region2 [, @int option [, @str dataname_alpha [, @str dataname_wt1 , @str dataname_wt2]]])
+
+    Add a contact with or without friction condition between nonmatching
+    meshes to the model. This brick adds a contact which is defined
+    in an integral way. It is the direct approximation of an augmented
+    agrangian formulation (see Getfem user documentation) defined at the
+    continuous level. The advantage should be a better scalability:
+    the number of Newton iterations should be more or less independent
+    of the mesh size.
+    The condition is applied on the variables `varname_u1` and `varname_u2`
+    on the boundaries corresponding to `region1` and `region2`.
+    `multname` should be a fem variable representing the contact stress
+    for the frictionless case and the contact and friction stress for the
+    case with friction. An inf-sup condition between `multname` and
+    `varname_u1` and `varname_u2` is required.
+    The augmentation parameter `dataname_r` should be chosen in a
+    range of acceptable values.
+    The optional parameter `dataname_friction_coeff` is the friction
+    coefficient which could be constant or defined on a finite element
+    method on the same mesh as `varname_u1`.
+    Possible values for `option` is 1 for the non-symmetric Alart-Curnier
+    augmented Lagrangian method, 2 for the symmetric one, 3 for the
+    non-symmetric Alart-Curnier method with an additional augmentation
+    and 4 for a new unsymmetric method. The default value is 1.
+    In case of contact with friction, `dataname_alpha`, `dataname_wt1` and
+    `dataname_wt2` are optional parameters to solve evolutionary friction
+    problems.
+    @*/
+     sub_command
+       ("add integral contact between nonmatching meshes brick", 7, 12, 0, 1,
+
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u1 = in.pop().to_string();
+        std::string varname_u2 = in.pop().to_string();
+        std::string multname = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+
+        size_type ind;
+        int option = 1;
+        mexarg_in argin = in.pop();
+        if (argin.is_integer()) { // without friction
+            size_type region1 = argin.to_integer();
+            size_type region2 = in.pop().to_integer();
+            if (in.remaining()) option = in.pop().to_integer();
+
+            ind = getfem::add_integral_contact_between_nonmatching_meshes_brick
+                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                     multname, dataname_r, region1, region2, option);
+        } else { // with friction
+            std::string dataname_coeff = argin.to_string();
+            size_type region1 = in.pop().to_integer();
+            size_type region2 = in.pop().to_integer();
+            if (in.remaining()) option = in.pop().to_integer();
+            std::string dataname_alpha = "";
+            if (in.remaining()) dataname_alpha = in.pop().to_string();
+            std::string dataname_wt1 = "";
+            if (in.remaining()) dataname_wt1 = in.pop().to_string();
+            std::string dataname_wt2 = "";
+            if (in.remaining()) dataname_wt2 = in.pop().to_string();
+
+            ind = getfem::add_integral_contact_between_nonmatching_meshes_brick
+                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                     multname, dataname_r, dataname_coeff, region1, region2,
+                     option, dataname_alpha, dataname_wt1, dataname_wt2);
+        }
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+    /*@SET ind = ('add penalized contact between nonmatching meshes brick',  @tmim mim, @str varname_u1, @str varname_u2, @str dataname_r [, @str dataname_coeff], @int region1, @int region2 [, @int option [, @str dataname_lambda, [, @str dataname_alpha [, @str dataname_wt1, @str dataname_wt2]]]])
+
+    Add a penalized contact condition with or without friction between
+    nonmatching meshes to the model.
+    The condition is applied on the variables `varname_u1` and  `varname_u2`
+    on the boundaries corresponding to `region1` and `region2`.
+    The penalization parameter `dataname_r` should be chosen
+    large enough to prescribe approximate non-penetration and friction
+    conditions but not too large not to deteriorate too much the
+    conditionning of the tangent system.
+    The optional parameter `dataname_friction_coeff` is the friction
+    coefficient which could be constant or defined on a finite element
+    method on the same mesh as `varname_u1`.
+    `dataname_lambda` is an optional parameter used if option
+    is 2. In that case, the penalization term is shifted by lambda (this
+    allows the use of an Uzawa algorithm on the corresponding augmented
+    Lagrangian formulation)
+    In case of contact with friction, `dataname_alpha`, `dataname_wt1` and
+    `dataname_wt2` are optional parameters to solve evolutionary friction
+    problems.
+    @*/
+     sub_command
+       ("add penalized contact between nonmatching meshes brick", 6, 12, 0, 1,
+
+        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+        std::string varname_u1 = in.pop().to_string();
+        std::string varname_u2 = in.pop().to_string();
+        std::string dataname_r = in.pop().to_string();
+
+        size_type ind;
+        int option = 1;
+        mexarg_in argin = in.pop();
+        if (argin.is_integer()) { // without friction
+            size_type region1 = argin.to_integer();
+            size_type region2 = in.pop().to_integer();
+            if  (in.remaining()) option = in.pop().to_integer();
+            std::string dataname_n = "";
+            if (in.remaining()) dataname_n = in.pop().to_string();
+
+            ind = getfem::add_penalized_contact_between_nonmatching_meshes_brick
+                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                     dataname_r, region1, region2, option, dataname_n);
+        } else { // with friction
+            std::string dataname_coeff = argin.to_string();
+            size_type region1 = in.pop().to_integer();
+            size_type region2 = in.pop().to_integer();
+            if (in.remaining()) option = in.pop().to_integer();
+            std::string dataname_lambda = "";
+            if (in.remaining()) dataname_lambda = in.pop().to_string();
+            std::string dataname_alpha = "";
+            if (in.remaining()) dataname_alpha = in.pop().to_string();
+            std::string dataname_wt1 = "";
+            if (in.remaining()) dataname_wt1 = in.pop().to_string();
+            std::string dataname_wt2 = "";
+            if (in.remaining()) dataname_wt2 = in.pop().to_string();
+
+            ind = getfem::add_penalized_contact_between_nonmatching_meshes_brick
+                    (md->model(), gfi_mim->mesh_im(), varname_u1, varname_u2,
+                     dataname_r, dataname_coeff, region1, region2, option,
+                     dataname_lambda, dataname_alpha, dataname_wt1, dataname_wt2);
+        }
+
+        workspace().set_dependance(md, gfi_mim);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+
      /*@SET ind = ('add integral large sliding contact brick',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)
        (still experimental brick)
        Add a large sliding contact with friction brick to the model.

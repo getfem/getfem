@@ -531,6 +531,69 @@ optional data for adding a parameter-dependent sliding velocity to the friction
 condition. ``mim`` represents of course the integration method. Note that it
 should be accurate enough to integrate efficiently the nonlinear terms involved.
 
+
+Frictionless integral contact between non-matching meshes brick
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    getfem::add_integral_contact_between_nonmatching_meshes_brick
+        (md, mim, varname_u1, varname_u2, multname_n, dataname_r,
+         region1, region2, option = 1);
+
+This function adds a frictionless contact condition between nonmatching meshes
+to the model, which is defined in an integral way. It is the direct
+approximation of an augmented Lagrangian formulation defined at the
+continuous level.
+The advantage should be a better scalability: the number of Newton
+iterations should be more or less independent of the mesh size.
+The condition is applied on the variables ``varname_u1`` and
+``varname_u2`` on the boundaries corresponding to ``region1`` and
+``region2``.
+``multname_n`` should be a fem variable representing the contact stress.
+An inf-sup condition between ``multname_n`` and ``varname_u1`` and
+``varname_u2`` is required.
+The augmentation parameter ``dataname_r`` should be chosen in a
+range of acceptable values.
+Possible values for ``option`` is 1 for the non-symmetric Alart-Curnier
+augmented Lagrangian method, 2 for the symmetric one, 3 for the
+non-symmetric Alart-Curnier method with an additional augmentation
+and 4 for a new unsymmetric method. The default value is 1.
+``mim`` represents of course the integration method. Note that it should
+be accurate enough to integrate efficiently the nonlinear terms involved.
+
+
+Integral contact between non-matching meshes brick with friction
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    getfem::add_integral_contact_between_nonmatching_meshes_brick
+        (md, mim, varname_u1, varname_u2, multname, dataname_r,
+         dataname_friction_coeff, region1, region2, option = 1,
+         dataname_alpha = "", dataname_wt1 = "", dataname_wt2 = "");
+
+This function adds a contact with friction condition between nonmatching meshes
+to the model. This brick adds a contact which is defined in an integral way.
+It is the direct approximation of an augmented Lagrangian formulation
+defined at the continuous level. The advantage should be a better scalability:
+the number of Newton iterations should be more or less independent of the mesh size.
+The condition is applied on the variables ``varname_u1`` and ``varname_u2``
+on the boundaries corresponding to ``region1`` and ``region2``.
+``multname`` should be a fem variable representing the contact and friction stress.
+An inf-sup condition between ``multname`` and ``varname_u1`` and
+``varname_u2`` is required.
+The augmentation parameter ``dataname_r`` should be chosen in a
+range of acceptable values.
+``dataname_friction_coeff`` is the friction coefficient which could be constant
+or defined on a finite element method on the same mesh as ``varname_u1``.
+Possible values for `option` is 1 for the non-symmetric Alart-Curnier
+augmented Lagrangian method, 2 for the symmetric one, 3 for the
+non-symmetric Alart-Curnier method with an additional augmentation
+and 4 for a new unsymmetric method. The default value is 1.
+``dataname_alpha``, ``dataname_wt1`` and ``dataname_wt2`` are optional
+parameters to solve evolutionary friction problems.
+``mim`` represents the integration method on the same mesh as ``varname_u1``.
+Note that it should be accurate enough to integrate efficiently the nonlinear
+terms involved.
+
+
 Frictionless penalized contact with a rigid obstacle brick
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -556,7 +619,7 @@ dLagrangian formulation)
 Penalized contact with a rigid obstacle brick with friction
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    getfem::add_penalized_contact_with_friction_with_rigid_obstacle_brick
+    getfem::add_penalized_contact_with_rigid_obstacle_brick
         (md, mim, varname_u, dataname_obs, dataname_r, dataname_friction_coeff, 
          region, option = 1, dataname_lambda = "", dataname_alpha = "",
          dataname_wt = "");
@@ -580,4 +643,52 @@ Lagrangian formulation).
 ``dataname_alpha`` and ``dataname_wt`` are optional parameters to solve
 evolutionary friction problems.
 
- 
+
+Frictionless penalized contact between non-matching meshes brick
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    getfem::add_penalized_contact_between_nonmatching_meshes_brick
+        (md, mim, varname_u1, varname_u2, dataname_r,
+         region1, region2, option = 1, dataname_n = "");
+
+This function adds a penalized contact frictionless condition between nonmatching
+meshes to the model.
+The condition is applied on the variables ``varname_u1`` and ``varname_u2``
+on the boundaries corresponding to ``region1` and ``region2`.
+The penalization parameter ``dataname_r`` should be chosen
+large enough to prescribe an approximate non-penetration condition
+but not too large not to deteriorate too much the conditionning of
+the tangent system. ``dataname_n`` is an optional parameter used if
+option is 2. In that case, the penalization term is shifted by lambda_n
+(this allows the use of an Uzawa algorithm on the corresponding augmented
+Lagrangian formulation)
+
+
+Penalized contact between non-matching meshes brick with friction
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    getfem::add_penalized_contact_between_nonmatching_meshes_brick
+        (md, mim, varname_u1, varname_u2, dataname_r, dataname_friction_coeff,
+         region1, region2, option = 1, dataname_lambda = "",
+         dataname_alpha = "", dataname_wt1 = "", dataname_wt2 = "");
+
+This function adds a penalized contact condition with Coulomb friction between
+nonmatching meshes to the model.
+The condition is applied on the variables ``varname_u1`` and ``varname_u2``
+on the boundaries corresponding to ``region1` and ``region2`.
+The penalization parameter ``dataname_r`` should be chosen
+large enough to prescribe an approximate non-penetration condition
+but not too large not to deteriorate too much the conditionning of
+the tangent system.
+``dataname_friction_coeff`` is the friction coefficient which could be constant
+or defined on a finite element method on the same mesh as ``varname_u1``.
+``dataname_lambda`` is an optional parameter used if
+``option`` is 2. In that case, the penalization term is shifted by lambda
+(this allows the use of an Uzawa algorithm on the corresponding augmented
+Lagrangian formulation)
+``dataname_alpha``, ``dataname_wt1`` and ``dataname_wt2`` are optional
+parameters to solve evolutionary friction problems.
+``mim`` represents the integration method on the same mesh as ``varname_u1``.
+Note that it should be accurate enough to integrate efficiently the nonlinear
+terms involved.
+
