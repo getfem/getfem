@@ -295,7 +295,7 @@ elseif (version >= 10 & version <= 13) then // The integral version with frictio
   gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   OBS = gf_mesh_fem_get_eval(mfd, list(obstacle));
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  gf_model_set(md, 'add integral contact with friction with rigid obstacle brick', mim_friction, 'u', ...
+  gf_model_set(md, 'add integral contact with rigid obstacle brick', mim_friction, 'u', ...
 	         'lambda', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9);
 
 elseif (version == 14) then // The integral version, Uzawa on the augmented Lagrangian with friction
@@ -312,7 +312,7 @@ elseif (version == 14) then // The integral version, Uzawa on the augmented Lagr
   gf_model_set(md, 'add initialized data', 'r', [r]);
   OBS = gf_mesh_fem_get_eval(mfd, list(obstacle));
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  gf_model_set(md, 'add penalized contact with friction with rigid obstacle brick', mim_friction, 'u', ...
+  gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
 	         'obstacle', 'r', 'friction_coeff', GAMMAC, 2, 'lambda');
   
   for ii=1:100
@@ -336,7 +336,7 @@ elseif (version == 15) then
   gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
   OBS = gf_mesh_fem_get_eval(mfd, list(obstacle));
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  gf_model_set(md, 'add penalized contact with friction with rigid obstacle brick', mim_friction, 'u', ...
+  gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
 	         'obstacle', 'r', 'friction_coeff', GAMMAC);
     
 else

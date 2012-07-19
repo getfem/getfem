@@ -267,7 +267,7 @@ elif version >= 10 and version <= 13: # The integral version with friction, Newt
    md.add_initialized_data('friction_coeff', [friction_coeff])
    OBS = mfd.eval(obstacle)
    md.add_initialized_fem_data('obstacle', mfd, OBS)
-   md.add_integral_contact_with_friction_with_rigid_obstacle_brick \
+   md.add_integral_contact_with_rigid_obstacle_brick \
      (mim_friction, 'u', 'lambda', 'obstacle', 'r', 'friction_coeff', GAMMAC, version-9)
 
 elif version == 14: # The integral version, Uzawa on the augmented Lagrangian with friction
@@ -283,7 +283,7 @@ elif version == 14: # The integral version, Uzawa on the augmented Lagrangian wi
    md.add_initialized_data('r', [r])
    OBS = mfd.eval(obstacle)
    md.add_initialized_fem_data('obstacle', mfd, OBS)
-   md.add_penalized_contact_with_friction_with_rigid_obstacle_brick \
+   md.add_penalized_contact_with_rigid_obstacle_brick \
      (mim_friction, 'u', 'obstacle', 'r', 'friction_coeff', GAMMAC, 2, 'lambda')
 
    for ii in range(100):
@@ -309,7 +309,7 @@ elif version == 15:
    md.add_initialized_data('friction_coeff', [friction_coeff])
    OBS = mfd.eval(obstacle)
    md.add_initialized_fem_data('obstacle', mfd, OBS);
-   md.add_penalized_contact_with_friction_with_rigid_obstacle_brick \
+   md.add_penalized_contact_with_rigid_obstacle_brick \
      (mim_friction, 'u', 'obstacle', 'r', 'friction_coeff', GAMMAC)
 
 else:

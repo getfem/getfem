@@ -78,11 +78,9 @@
     <synopsis>gf_model_set(model M, 'contact brick set BN', int indbrick, spmat BN)</synopsis>
     <synopsis>gf_model_set(model M, 'contact brick set BT', int indbrick, spmat BT)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nodal contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add integral contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n, string dataname_obstacle, string dataname_r, int region [,int option])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add Nitsche contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add integral contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string multname, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, int region [, int option [, string dataname_alpha [, string dataname_wt [, string dataname_gamma [, string dataname_vt]]]]])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add penalized contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, int region [, int option, string dataname_n])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add penalized contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_coeff, int region [, int option, string dataname_lambda, [, string dataname_alpha [, string dataname_wt]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add integral contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname, string dataname_obstacle, string dataname_r [, string dataname_friction_coeff], int region [, int option [, string dataname_alpha [, string dataname_wt [, string dataname_gamma [, string dataname_vt]]]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add penalized contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r [, string dataname_coeff], int region [, int option, string dataname_lambda, [, string dataname_alpha [, string dataname_wt]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Nitsche contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nodal contact between nonmatching meshes brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add integral large sliding contact brick',  mesh_im mim, string varname_u, string multname, string dataname_r, string dataname_fr, int rg)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add boundary to large sliding contact brick',  int indbrick, mesh_im mim, string varname_u, string multname, int rg)</synopsis>
@@ -972,56 +970,10 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add integral contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n, string dataname_obstacle, string dataname_r, int region [,int option])</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add integral contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname, string dataname_obstacle, string dataname_r [, string dataname_friction_coeff], int region [, int option [, string dataname_alpha [, string dataname_wt [, string dataname_gamma [, string dataname_vt]]]]])</literal></para>
 
     <para>   
-    Add a frictionless contact condition with a rigid obstacle
-    to the model. This brick add a contact which is defined
-    in an integral way. Is it the direct approximation of an augmented
-    Lagrangian formulation (see Getfem user documentation) defined at the
-    continuous level. The advantage is a better scalability: the number of
-    Newton iterations should be more or less independent of the mesh size.
-    The contact condition is applied on the variable <literal>varname_u</literal>
-    on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
-    be described with the data <literal>dataname_obstacle</literal> being a signed distance to
-    the obstacle (interpolated on a finite element method).
-    <literal>multname_n</literal> should be a fem variable representing the contact stress.
-    An inf-sup condition beetween <literal>multname_n</literal> and <literal>varname_u</literal> is required.
-    The augmentation parameter <literal>dataname_r</literal> should be chosen in a
-    range of acceptabe values. <literal>option</literal> is 1 for
-    non symmetric Alart-Curnier augmented Lagrangian method, 2 for the
-    symmetric one, 3 for the non-symmetric Alart-Curnier method with
-    an additional augmentation and 4 for a new unsymmetric method. The
-    default value is 1.
-    
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add Nitsche contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</literal></para>
-
-    <para>   
-      Add a contact with friction condition with a rigid obstacle
-      to the model with  Nitsche strategy (no multiplier) in an integral way.
-      This is an experimental brick, which works only for linear homogeneous
-      isotropic elasticity.
-      The condition is applied on the variable <literal>varname_u</literal>
-      on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
-      be described with the data <literal>dataname_obstacle</literal> being a signed distance
-      to the obstacle (interpolated on a finite element method).
-      The Nitsche parameter <literal>dataname_r</literal> should be chosen in a
-      range of acceptable values. <literal>dataname_friction_coeff</literal> is the friction
-      coefficient which could be constant or defined on a finite element
-      method. <literal>dataname_lambda</literal> and <literal>dataname_mu</literal> are the Lame coefficients.
-    
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add integral contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string multname, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, int region [, int option [, string dataname_alpha [, string dataname_wt [, string dataname_gamma [, string dataname_vt]]]]])</literal></para>
-
-    <para>   
-      Add a contact with friction condition with a rigid obstacle
+      Add a contact with or without friction condition with a rigid obstacle
       to the model. This brick adds a contact which is defined
       in an integral way. It is the direct approximation of an augmented
       Lagrangian formulation (see Getfem user documentation) defined at the
@@ -1038,10 +990,10 @@
       range of acceptable values. <literal>dataname_friction_coeff</literal> is the friction
       coefficient which could be constant or defined on a finite element
       method.
-      The possible value for <literal>option</literal> is 1 for the non-symmetric
-      Alart-Curnier version, 2 for the symmetric one and 3 for the
-      non-symmetric Alart-Curnier with an additional augmentation and 4 for
-      a new unsymmetric method. The default value is 1.
+      Possible values for <literal>option</literal> is 1 for the non-symmetric Alart-Curnier
+      augmented Lagrangian method, 2 for the symmetric one, 3 for the
+      non-symmetric Alart-Curnier method with an additional augmentation
+      and 4 for a new unsymmetric method. The default value is 1.
       <literal>dataname_alpha</literal> and <literal>dataname_wt</literal> are optional parameters to solve
       evolutionary friction problems. <literal>dataname_gamma</literal> and <literal>dataname_vt</literal>
       represent optional data for adding a parameter-dependent sliding
@@ -1051,30 +1003,10 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add penalized contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, int region [, int option, string dataname_n])</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add penalized contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r [, string dataname_coeff,] int region [, int option, string dataname_lambda, [, string dataname_alpha [, string dataname_wt]]])</literal></para>
 
-    <para>   
-      Adds a penalized contact frictionless condition with a rigid obstacle
-      to the model.
-      The condition is applied on the variable <literal>varname_u</literal>
-      on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
-      be described with the data <literal>dataname_obstacle</literal> being a signed distance to
-      the obstacle (interpolated on a finite element method).
-      The penalization parameter <literal>dataname_r</literal> should be chosen
-      large enough to prescribe an approximate non-penetration condition
-      but not too large not to deteriorate to much the conditionning of
-      the tangent system. <literal>dataname_n</literal> is an optional parameter used if option
-      is 2. In that case, the penalization term is shifted by lambda_n (this
-      allows the use of an Uzawa algorithm on the corresponding augmented
-      Lagrangian formulation)
-    
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add penalized contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_coeff, int region [, int option, string dataname_lambda, [, string dataname_alpha [, string dataname_wt]]])</literal></para>
-
-    <para>         Adds a penalized contact with Coulomb friction condition with a
+    <para>
+      Adds a penalized contact with or without friction condition with a
       rigid obstacle to the model.
       The condition is applied on the variable <literal>varname_u</literal>
       on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
@@ -1082,12 +1014,31 @@
       the obstacle (interpolated on a finite element method).
       The penalization parameter <literal>dataname_r</literal> should be chosen
       large enough to prescribe approximate non-penetration and friction
-      conditions but not too large not to deteriorate to much the
+      conditions but not too large not to deteriorate too much the
       conditionning of the tangent system.
       <literal>dataname_lambda</literal> is an optional parameter used if option
       is 2. In that case, the penalization term is shifted by lambda (this
       allows the use of an Uzawa algorithm on the corresponding augmented
       Lagrangian formulation)
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add Nitsche contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</literal></para>
+
+    <para>   
+      Add a contact with friction condition with a rigid obstacle
+      to the model with  Nitsche strategy (no multiplier) in an integral way.
+      This is an experimental brick, which works only for linear homogeneous
+      isotropic elasticity.
+      The condition is applied on the variable <literal>varname_u</literal>
+      on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
+      be described with the data <literal>dataname_obstacle</literal> being a signed distance
+      to the obstacle (interpolated on a finite element method).
+      The Nitsche parameter <literal>dataname_r</literal> should be chosen in a
+      range of acceptable values. <literal>dataname_friction_coeff</literal> is the friction
+      coefficient which could be constant or defined on a finite element
+      method. <literal>dataname_lambda</literal> and <literal>dataname_mu</literal> are the Lame coefficients.
     
     </para>
     </listitem>
