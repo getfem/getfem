@@ -77,13 +77,13 @@
     <synopsis>ind = gf_model_set(model M, 'add basic contact brick', string varname_u, string multname_n[, string multname_t], string dataname_r, spmat BN[, spmat BT, string dataname_friction_coeff][, string dataname_gap[, string dataname_alpha[, int augmented_version]])</synopsis>
     <synopsis>gf_model_set(model M, 'contact brick set BN', int indbrick, spmat BN)</synopsis>
     <synopsis>gf_model_set(model M, 'contact brick set BT', int indbrick, spmat BT)</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add nodal contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add integral contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n, string dataname_obstacle, string dataname_r, int region [,int option])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add Nitsche contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add integral contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string multname, string dataname_obstacle, string dataname_r, string dataname_friction_coeff, int region [, int option [, string dataname_alpha [, string dataname_wt [, string dataname_gamma [, string dataname_vt]]]]])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add penalized contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, int region [, int option, string dataname_n])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add penalized contact with friction with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_coeff, int region [, int option, string dataname_lambda, [, string dataname_alpha [, string dataname_wt]]])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add nonmatching meshes contact brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add nodal contact between nonmatching meshes brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add integral large sliding contact brick',  mesh_im mim, string varname_u, string multname, string dataname_r, string dataname_fr, int rg)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add boundary to large sliding contact brick',  int indbrick, mesh_im mim, string varname_u, string multname, int rg)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add rigid obstacle to large sliding contact brick',  int indbrick, string obs)</synopsis>
@@ -938,7 +938,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add nodal contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</literal></para>
 
     <para>   
     Add a contact with or without friction condition with a rigid obstacle
@@ -1093,7 +1093,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add nonmatching meshes contact brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add nodal contact between nonmatching meshes brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</literal></para>
 
     <para>   
     Add a contact with or without friction condition between two faces of

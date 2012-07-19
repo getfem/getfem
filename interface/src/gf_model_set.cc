@@ -1808,7 +1808,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int augmented_version])
+    // CONTACT WITH RIGID OBSTACLE
+
+
+    /*@SET ind = ('add nodal contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int augmented_version])
 
     Add a contact with or without friction condition with a rigid obstacle
     to the model. The condition is applied on the variable `varname_u`
@@ -1838,7 +1841,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Basically, this brick compute the matrix BN
     and the vectors gap and alpha and calls the basic contact brick. @*/
      sub_command
-       ("add contact with rigid obstacle brick", 6, 9, 0, 1,
+       ("add nodal contact with rigid obstacle brick", 6, 9, 0, 1,
 
         bool friction = false;
 
@@ -1865,16 +1868,28 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type ind;
 
         if (friction)
-          ind = getfem::add_contact_with_rigid_obstacle_brick
+          ind = getfem::add_nodal_contact_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
              multname_t, dataname_r, dataname_fr, region, obstacle,
              augmented_version);
         else
-          ind = getfem::add_contact_with_rigid_obstacle_brick
+          ind = getfem::add_nodal_contact_with_rigid_obstacle_brick
             (md->model(), gfi_mim->mesh_im(), varname_u, multname_n,
              dataname_r, region, obstacle, augmented_version);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+    /*@SET ind = ('add contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_friction_coeff], @int region, @str obstacle[,  @int augmented_version])
+    DEPRECATED FUNCTION. Use 'add nodal contact with rigid obstacle brick' instead.@*/
+     sub_command
+       ("add contact with rigid obstacle brick", 6, 9, 0, 1,
+        infomsg() << "WARNING : gf_mesh_fem_get('add contact with rigid obstacle "
+        << "brick', ...) is a deprecated command.\n          Use gf_mesh_fem_get("
+        << "'add nodal contact with rigid obstacle brick', ...) instead." << endl;
+        SUBC_TAB::iterator it = subc_tab.find("add nodal contact with rigid obstacle brick");
+        if (it != subc_tab.end())
+            it->second->run(in, out, md);
         );
 
     /*@SET ind = ('add integral contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str multname_n, @str dataname_obstacle, @str dataname_r, @int region [,@int option])
@@ -2095,7 +2110,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-    /*@SET ind = ('add nonmatching meshes contact brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int augmented_version])
+    // CONTACT BETWEEN NON-MATCHING MESHES
+
+
+    /*@SET ind = ('add nodal contact between nonmatching meshes brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int augmented_version])
 
     Add a contact with or without friction condition between two faces of
     one or two elastic bodies. The condition is applied on the variable
@@ -2128,7 +2146,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     Basically, this brick computes the matrices BN and BT and the vectors
     gap and alpha and calls the basic contact brick. @*/
      sub_command
-       ("add nonmatching meshes contact brick", 6, 13, 0, 1,
+       ("add nodal contact between nonmatching meshes brick", 6, 13, 0, 1,
 
         bool two_variables = true;
         bool friction = false;
@@ -2172,12 +2190,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
         size_type ind;
         if (!friction)
-          ind = getfem::add_nonmatching_meshes_contact_brick
+          ind = getfem::add_nodal_contact_between_nonmatching_meshes_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, dataname_r,
              vrg1, vrg2, slave1, slave2, augmented_version);
         else
-          ind = getfem::add_nonmatching_meshes_contact_brick
+          ind = getfem::add_nodal_contact_between_nonmatching_meshes_brick
             (md->model(), gfi_mim1->mesh_im(), gfi_mim2->mesh_im(),
              varname_u1, varname_u2, multname_n, multname_t,
              dataname_r, dataname_fr,
@@ -2186,6 +2204,19 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (two_variables)
           workspace().set_dependance(md, gfi_mim2);
         out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+    /*@SET ind = ('add nonmatching meshes contact brick',  @tmim mim1[, @tmim mim2], @str varname_u1[, @str varname_u2], @str multname_n[, @str multname_t], @str dataname_r[, @str dataname_fr], @int rg1, @int rg2[, @int slave1, @int slave2,  @int augmented_version])
+    DEPRECATED FUNCTION. Use 'add nodal contact between nonmatching meshes brick' instead.@*/
+     sub_command
+       ("add nonmatching meshes contact brick", 6, 13, 0, 1,
+        infomsg() << "WARNING : gf_mesh_fem_get('add nonmatching meshes "
+        << "contact brick', ...) is a deprecated command.\n          Use "
+        << "gf_mesh_fem_get('add nodal contact between nonmatching meshes "
+        << "brick', ...) instead." << endl;
+        SUBC_TAB::iterator it = subc_tab.find("add nodal contact between nonmatching meshes brick");
+        if (it != subc_tab.end())
+            it->second->run(in, out, md);
         );
 
      /*@SET ind = ('add integral large sliding contact brick',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)

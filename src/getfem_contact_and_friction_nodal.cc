@@ -1586,7 +1586,7 @@ namespace getfem {
   //  by a signed distance.
   //=========================================================================
 
-  size_type add_contact_with_rigid_obstacle_brick
+  size_type add_nodal_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_r,
    size_type region, const std::string &obstacle, int aug_version) {
@@ -1612,7 +1612,7 @@ namespace getfem {
   //  by a signed distance.
   //=========================================================================
 
-  size_type add_contact_with_rigid_obstacle_brick
+  size_type add_nodal_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
@@ -1802,7 +1802,7 @@ namespace getfem {
   //  elastic bodies.
   //=========================================================================
 
-  size_type add_nonmatching_meshes_contact_brick
+  size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
@@ -1872,7 +1872,7 @@ namespace getfem {
   //  elastic bodies.
   //=========================================================================
 
-  size_type add_nonmatching_meshes_contact_brick
+  size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, std::string &multname_t,

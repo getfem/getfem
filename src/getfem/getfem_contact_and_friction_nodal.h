@@ -216,7 +216,7 @@ namespace getfem {
       Basically, this brick computes the matrix BN
       and the vectors gap and alpha and calls the basic contact brick.
   */
-  size_type add_contact_with_rigid_obstacle_brick
+  size_type add_nodal_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &dataname_r,
    size_type region, const std::string &obstacle, int aug_version=1);
@@ -250,7 +250,7 @@ namespace getfem {
       Basically, this brick computes the matrix BN
       and the vectors gap and alpha and calls the basic contact brick.
   */
-  size_type add_contact_with_rigid_obstacle_brick
+  size_type add_nodal_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname_n, const std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
@@ -284,14 +284,14 @@ namespace getfem {
       Basically, this brick computes the matrix BN and the vectors gap and
       alpha and calls the basic contact brick.
   */
-  size_type add_nonmatching_meshes_contact_brick
+  size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, int aug_version=1);
 
-  inline size_type add_nonmatching_meshes_contact_brick
+  inline size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, const std::string &dataname_r,
@@ -300,23 +300,23 @@ namespace getfem {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
-    return add_nonmatching_meshes_contact_brick
+    return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
        vrg1, vrg2, slave1, slave2, aug_version);
   }
 
-  inline size_type add_nonmatching_meshes_contact_brick
+  inline size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, const std::string &dataname_r,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, int aug_version=1) {
 
-    return add_nonmatching_meshes_contact_brick
+    return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
        rg1, rg2, slave1, slave2, aug_version);
   }
 
-  inline size_type add_nonmatching_meshes_contact_brick
+  inline size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, const std::string &dataname_r,
    size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
@@ -324,7 +324,7 @@ namespace getfem {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
-    return add_nonmatching_meshes_contact_brick
+    return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim, mim, varname_u, varname_u, multname_n, dataname_r,
        vrg1, vrg2, slave1, slave2, aug_version);
   }
@@ -363,7 +363,7 @@ namespace getfem {
       Basically, this brick computes the matrices BN and BT as well the vectors
       gap and alpha and calls the basic contact brick.
   */
-  size_type add_nonmatching_meshes_contact_brick
+  size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, std::string &multname_t,
@@ -371,7 +371,7 @@ namespace getfem {
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, int aug_version=1);
 
-  inline size_type add_nonmatching_meshes_contact_brick
+  inline size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim1, const mesh_im &mim2,
    const std::string &varname_u1, const std::string &varname_u2,
    std::string &multname_n, std::string &multname_t,
@@ -381,26 +381,26 @@ namespace getfem {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
-    return add_nonmatching_meshes_contact_brick
+    return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
        vrg1, vrg2, slave1, slave2, aug_version);
   }
 
-  inline size_type add_nonmatching_meshes_contact_brick
+  inline size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
    bool slave1=true, bool slave2=false, int aug_version=1) {
 
-    return add_nonmatching_meshes_contact_brick
+    return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
        rg1, rg2, slave1, slave2, aug_version);
   }
 
-  inline size_type add_nonmatching_meshes_contact_brick
+  inline size_type add_nodal_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    std::string &multname_n, std::string &multname_t,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
@@ -409,7 +409,7 @@ namespace getfem {
 
     std::vector<size_type> vrg1(1,rg1);
     std::vector<size_type> vrg2(1,rg2);
-    return add_nonmatching_meshes_contact_brick
+    return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim, mim, varname_u, varname_u, multname_n, multname_t,
        dataname_r, dataname_friction_coeff,
        vrg1, vrg2, slave1, slave2, aug_version);
@@ -439,15 +439,63 @@ namespace getfem {
       (md, varname_u, multname_n, multname_t, dataname_r, BN, BT, DN, DT,
        dataname_friction_coeff, dataname_gap, dataname_alpha, aug_version, Tresca_version); }
 
+  // rigid obstacle
+  IS_DEPRECATED inline size_type add_contact_with_rigid_obstacle_brick
+    (model &md, const mesh_im &mim, const std::string &varname_u,
+     const std::string &multname_n, const std::string &dataname_r,
+     size_type region, const std::string &obstacle, int aug_version=1)
+  { return add_nodal_contact_with_rigid_obstacle_brick
+      (md, mim, varname_u, multname_n, dataname_r, region, obstacle, aug_version); }
+
   IS_DEPRECATED inline size_type add_contact_with_friction_with_rigid_obstacle_brick
     (model &md, const mesh_im &mim, const std::string &varname_u,
      const std::string &multname_n, const std::string &multname_t,
      const std::string &dataname_r, const std::string &dataname_friction_coeff,
      size_type region, const std::string &obstacle, int aug_version=1)
-  { return add_contact_with_rigid_obstacle_brick
+  { return add_nodal_contact_with_rigid_obstacle_brick
       (md, mim, varname_u, multname_n, multname_t, dataname_r,
        dataname_friction_coeff, region, obstacle, aug_version); }
 
+  // non-matching meshes
+  IS_DEPRECATED inline size_type add_nonmatching_meshes_contact_brick
+    (model &md, const mesh_im &mim1, const mesh_im &mim2,
+     const std::string &varname_u1, const std::string &varname_u2,
+     std::string &multname_n, const std::string &dataname_r,
+     const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
+     bool slave1=true, bool slave2=false, int aug_version=1)
+  { return add_nodal_contact_between_nonmatching_meshes_brick
+      (md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
+       rg1, rg2, slave1, slave2, aug_version); }
+
+  IS_DEPRECATED inline size_type add_nonmatching_meshes_contact_brick
+    (model &md, const mesh_im &mim1, const mesh_im &mim2,
+     const std::string &varname_u1, const std::string &varname_u2,
+     std::string &multname_n, const std::string &dataname_r,
+     size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
+     int aug_version=0)
+  { return add_nodal_contact_between_nonmatching_meshes_brick
+      (md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
+       rg1, rg2, slave1, slave2, aug_version); }
+
+  IS_DEPRECATED inline size_type add_nonmatching_meshes_contact_brick
+    (model &md, const mesh_im &mim, const std::string &varname_u,
+     std::string &multname_n, const std::string &dataname_r,
+     const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
+     bool slave1=true, bool slave2=false, int aug_version=1)
+  { return add_nodal_contact_between_nonmatching_meshes_brick
+      (md, mim, varname_u, multname_n, dataname_r,
+       rg1, rg2, slave1, slave2, aug_version); }
+
+  IS_DEPRECATED inline size_type add_nonmatching_meshes_contact_brick
+    (model &md, const mesh_im &mim, const std::string &varname_u,
+     std::string &multname_n, const std::string &dataname_r,
+     size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
+     int aug_version=1)
+  { return add_nodal_contact_between_nonmatching_meshes_brick
+      (md, mim, varname_u, multname_n, dataname_r,
+       rg1, rg2, slave1, slave2, aug_version); }
+
+  // non-matching meshes with friction
   IS_DEPRECATED inline size_type add_nonmatching_meshes_contact_with_friction_brick
     (model &md, const mesh_im &mim1, const mesh_im &mim2,
      const std::string &varname_u1, const std::string &varname_u2,
@@ -455,7 +503,7 @@ namespace getfem {
      const std::string &dataname_r, const std::string &dataname_friction_coeff,
      const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
      bool slave1=true, bool slave2=false, int aug_version=1)
-  { return add_nonmatching_meshes_contact_brick
+  { return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t, dataname_r,
        dataname_friction_coeff, rg1, rg2, slave1, slave2, aug_version); }
 
@@ -466,7 +514,7 @@ namespace getfem {
      const std::string &dataname_r, const std::string &dataname_friction_coeff,
      size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
      int aug_version=1)
-  { return add_nonmatching_meshes_contact_brick
+  { return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
        dataname_r, dataname_friction_coeff, rg1, rg2, slave1, slave2, aug_version); }
 
@@ -476,7 +524,7 @@ namespace getfem {
      const std::string &dataname_r, const std::string &dataname_friction_coeff,
      const std::vector<size_type> &rg1, const std::vector<size_type> &rg2,
      bool slave1=true, bool slave2=false, int aug_version=1)
-  { return add_nonmatching_meshes_contact_brick
+  { return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim, varname_u, multname_n, multname_t, dataname_r,
        dataname_friction_coeff, rg1, rg2, slave1, slave2, aug_version); }
 
@@ -486,7 +534,7 @@ namespace getfem {
      const std::string &dataname_r, const std::string &dataname_friction_coeff,
      size_type rg1, size_type rg2, bool slave1=true, bool slave2=false,
      int aug_version=1)
-  { return add_nonmatching_meshes_contact_brick
+  { return add_nodal_contact_between_nonmatching_meshes_brick
       (md, mim, varname_u, multname_n, multname_t, dataname_r,
        dataname_friction_coeff, rg1, rg2, slave1, slave2, aug_version); }
 

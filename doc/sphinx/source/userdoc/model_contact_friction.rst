@@ -328,7 +328,7 @@ Note that is possible to change the basic contact matrices :math:`BN` and :math:
 Frictionless nodal contact with a rigid obstacle brick
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-     getfem::add_contact_with_rigid_obstacle_brick
+     getfem::add_nodal_contact_with_rigid_obstacle_brick
           (md, mim, varname_u, multname_n, dataname_r, region, obstacle, aug_version);
 
 This function adds a direct nodal frictionless contact condition with a rigid obstacle to the model. The condition is applied on the variable ``varname_u``
@@ -348,7 +348,7 @@ body, see Getfem user documentation). 1 for the non-symmetric Alart-Curnier augm
 Nodal contact with a rigid obstacle brick with friction
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-     getfem::add_contact_with_rigid_obstacle_brick
+     getfem::add_nodal_contact_with_rigid_obstacle_brick
           (md, mim, varname_u, multname_n, multname_t, dataname_r,
           dataname_friction_coeff, region, obstacle, aug_version);
 
@@ -378,7 +378,7 @@ indicates the augmentation strategy :  1 for the non-symmetric Alart-Curnier aug
 Frictionless nodal contact between non-matching meshes brick
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-     getfem::add_nonmatching_meshes_contact_brick
+     getfem::add_nodal_contact_between_nonmatching_meshes_brick
 	(md, mim1, mim2, varname_u1, varname_u2, multname_n, dataname_r,
 	rg1, rg2, slave1=true, slave2=false, aug_version=1);
 
@@ -412,7 +412,7 @@ alpha and calls the basic contact brick.
 Nodal contact between non-matching meshes brick with friction
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-    getfem::add_nonmatching_meshes_contact_brick
+    getfem::add_nodal_contact_between_nonmatching_meshes_brick
         (md, mim1, mim2, varname_u1, varname_u2, multname_n, multname_t,
          dataname_r, dataname_friction_coeff, rg1, rg2, slave1=true,
          slave2=false, aug_version=1);
