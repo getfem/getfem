@@ -279,54 +279,54 @@ namespace gmm {
 
 #define GMM_STANDARD_CATCH_ERROR   catch(std::logic_error e)	\
     {								\
-      cerr << "============================================\n";	\
-      cerr << "|      An error has been detected !!!      |\n";	\
-      cerr << "============================================\n";	\
-      cerr << e.what() << std::endl << std::endl;				\
+      std::cerr << "============================================\n";	\
+      std::cerr << "|      An error has been detected !!!      |\n";	\
+      std::cerr << "============================================\n";	\
+      std::cerr << e.what() << std::endl << std::endl;				\
       exit(1);							\
     }								\
   catch(std::runtime_error e)					\
     {								\
-      cerr << "============================================\n";	\
-      cerr << "|      An error has been detected !!!      |\n";	\
-      cerr << "============================================\n";	\
-      cerr << e.what() << std::endl << std::endl;				\
+      std::cerr << "============================================\n";	\
+      std::cerr << "|      An error has been detected !!!      |\n";	\
+      std::cerr << "============================================\n";	\
+      std::cerr << e.what() << std::endl << std::endl;				\
       exit(1);							\
     }								\
   catch(std::bad_alloc) {					\
-    cerr << "============================================\n";	\
-    cerr << "|  A bad allocation has been detected !!!  |\n";	\
-    cerr << "============================================\n";	\
+    std::cerr << "============================================\n";	\
+    std::cerr << "|  A bad allocation has been detected !!!  |\n";	\
+    std::cerr << "============================================\n";	\
     exit(1);							\
   }								\
   catch(std::bad_typeid) {					\
-    cerr << "============================================\n";	\
-    cerr << "|  A bad typeid     has been detected !!!  |\n";	\
-    cerr << "============================================\n";	\
+    std::cerr << "============================================\n";	\
+    std::cerr << "|  A bad typeid     has been detected !!!  |\n";	\
+    std::cerr << "============================================\n";	\
     exit(1);							\
   }								\
   catch(std::bad_exception) {					\
-    cerr << "============================================\n";	\
-    cerr << "|  A bad exception  has been detected !!!  |\n";	\
-    cerr << "============================================\n";	\
+    std::cerr << "============================================\n";	\
+    std::cerr << "|  A bad exception  has been detected !!!  |\n";	\
+    std::cerr << "============================================\n";	\
     exit(1);							\
   }								\
   catch(std::bad_cast) {					\
-    cerr << "============================================\n";	\
-    cerr << "|    A bad cast  has been detected !!!     |\n";	\
-    cerr << "============================================\n";	\
+    std::cerr << "============================================\n";	\
+    std::cerr << "|    A bad cast  has been detected !!!     |\n";	\
+    std::cerr << "============================================\n";	\
     exit(1);							\
   }								\
   catch(...) {							\
-    cerr << "============================================\n";	\
-    cerr << "|  An unknown error has been detected !!!  |\n";	\
-    cerr << "============================================\n";	\
+    std::cerr << "============================================\n";	\
+    std::cerr << "|  An unknown error has been detected !!!  |\n";	\
+    std::cerr << "============================================\n";	\
     exit(1);							\
   }
   //   catch(ios_base::failure) { 
-  //     cerr << "============================================\n";
-  //     cerr << "| A ios_base::failure has been detected !!!|\n";
-  //     cerr << "============================================\n";
+  //     std::cerr << "============================================\n";
+  //     std::cerr << "| A ios_base::failure has been detected !!!|\n";
+  //     std::cerr << "============================================\n";
   //     exit(1);
   //   } 
 
