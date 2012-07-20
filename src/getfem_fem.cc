@@ -30,8 +30,8 @@
 #include "gmm/gmm_algobase.h"
 #include "getfem/dal_naming_system.h"
 #include "getfem/getfem_fem.h"
-#include "getfem/getfem_gauss_lobatto_fem_coef.h"
-#include "getfem/getfem_integration.h" /* for gauss-lobatto points */
+#include "getfem/getfem_gauss_lobatto_fem_coef.h" /* for gauss-lobatto points*/
+#include "getfem/getfem_integration.h"
 
 namespace getfem {
 
@@ -1463,8 +1463,14 @@ namespace getfem {
     init_cvs_node();
     std::stringstream sstr; sstr << "IM_GAUSSLOBATTO1D(" << k*2-1 << ")";
     pintegration_method gl_im = int_method_descriptor(sstr.str());
+    std::vector<base_node> points(k+1);
     for (size_type i = 0; i < k+1; ++i) {
-      add_node(lagrange_dof(1), gl_im->approx_method()->point(i));
+      points[i] = gl_im->approx_method()->point(i); 
+    }
+    std::sort(points.begin(),points.end());
+    for (size_type i = 0; i < k+1; ++i) {
+      // cout << points[i][0] << endl;
+      add_node(lagrange_dof(1), points[i]);
     }
     base_.resize(k+1);
     const double *coefs = fem_coeff_gausslob[k];
