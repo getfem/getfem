@@ -23,7 +23,7 @@ mf = gf_mesh_fem('load', 'xfem_dirichlet_ls.mf');
 lsU = load('xfem_dirichlet_ls.U')';
 lsU1 = load('xfem_dirichlet_exact.U')';
 mf1 = gf_mesh_fem('load', 'xfem_dirichlet.mfE');
-nn=5;  % 0 : plot the exported mf
+nn=4;  % 0 : plot the exported mf
        % 1 : 
        % 2 : 
        % 3 : 
@@ -35,7 +35,7 @@ nn=5;  % 0 : plot the exported mf
 clf
 if nn==0,
   disp('plot the exported mf');
-  [hsur, hcont] = gf_plot(mf,lsU,'refine',20,'contour',0.,'mesh','on', 'pcolor','off');
+  [hsur, hcont] = gf_plot(mf,lsU,'refine',2,'contour',0.,'mesh','on', 'pcolor','off');
   set(hcont{1}, 'LineWidth', 3);
   set(hcont{1}, 'Color', 'black');
 elseif nn==1
@@ -48,9 +48,9 @@ elseif nn==1
   
   [hsur, hcont] = gf_plot(mf, lsU, 'refine', 2, 'zplot', 'on');
   hold on;
-  [hsur, hcont] = gf_plot(mfc, lsUc.*(lsUc<0), 'refine', 1, 'mesh','on', 'pcolor','off','zplot', 'on'); hold on;
+  [hsur, hcont] = gf_plot(mfc, lsUc.*(lsUc<0), 'refine', 1, 'mesh','on', 'pcolor','on','zplot', 'on'); hold on;
   %colormap([.8 1 .8]);
-  [hsur, hcont] = gf_plot(mf,lsU,'refine',1,'mesh','on','zplot', 'on','contour',0.,'pcolor','off');
+  [hsur, hcont] = gf_plot(mf,lsU,'refine',1,'mesh','on','zplot', 'on','contour',0.,'pcolor','off','zplot', 'on');
   
   %set(hcont{1}, 'LineWidth', 2);
   %set(hcont{1}, 'Color', 'read');
@@ -58,7 +58,7 @@ elseif nn==1
 elseif nn==2 || nn==3,
   disp('plot the solution, with the 0 isovalue');
   sl=gfSlice('load','xfem_dirichlet.sl');
-  slU=load('xfem_dirichlet.slU')';
+  slU=-load('xfem_dirichlet.slU')';
   P=gf_slice_get(sl,'pts'); P=[P(1:2,:);slU];
   gf_slice_set(sl,'pts',P);
   gf_plot_slice(sl, 'data', slU, 'mesh','on','mesh_edges','off');
@@ -75,7 +75,7 @@ elseif nn==2 || nn==3,
   
   if (nn == 2),
 %    set(hcont{1}, 'Color', 'black');
-    view(3); camlight; 
+    view(3); camlight; axis off;camzoom(1.8);
   else
     slc2=gfSlice('load', 'xfem_dirichlet.sl0');
     hold on;
@@ -90,12 +90,12 @@ elseif nn==4,
   sll=gf_Slice('load','xfem_dirichlet.sll');
   slL=load('xfem_dirichlet.slL')';
   P0=gf_slice_get(sll, 'pts');
-  [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','red');
+  [h1,h2,h3,h4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black');
   hold on;
-  gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*3]);
-  [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','on','mesh_slice_edges_color','black','mesh_slice_edges_width',1.5,'showoptions','on');
+  gf_slice_set(sll,'pts',[P0 ; max(slL,-100)*0.05]);
+  [hh1,hh2,hh3,hh4]=gf_plot_slice(sll, 'tube','off','mesh_slice_edges_color','black','mesh_slice_edges_width',2,'showoptions','on');
   sl=gf_Slice('load','xfem_dirichlet.sl');
-  gf_plot_slice(sl,'mesh','off');
+  gf_plot_slice(sl,'mesh','on');
   
   npt = size(P0, 2);
   P0 = [P0;zeros(1,npt)];
@@ -105,14 +105,15 @@ elseif nn==4,
   %F=[lseg; npt+lseg(2,:)];
   h=patch('Vertices',[P0 P1]', 'Faces', F');
   hold on;
-  %set(h,'FaceAlpha',0.3);
-  %set(h,'LineStyle','none');
-  %set(gcf,'renderer','opengl');
+  set(h,'FaceAlpha',0.3);
+  set(h,'LineStyle','none');
+  set(gcf,'renderer','zbuffer');
   set(gcf,'color','white');
-  axis on;
+  set(h,'facecolor',[.5 .5 .5]);
+  axis off;
   view(3);
-  camzoom(1);
-  axis([-0.5000    0.5000   -0.5000    0.5000 -.5 .5]);
+  camzoom(2.5);
+  %axis([-0.5000    0.5000   -0.5000    0.5000 -.5 .5]);
   % print(gcf,'-dpng','-r300', 'lagrange_multipliers.png');
 elseif nn==5,
   disp('plot the solution');

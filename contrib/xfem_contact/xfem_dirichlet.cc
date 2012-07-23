@@ -1117,8 +1117,10 @@ int main(int argc, char *argv[]) {
   //Solving the problem
   cout<< "Stabilized_parameter="<< dir_gamma0 <<endl;
   gmm::iteration iter(1e-9, 1, 40000);
+
   //getfem::standard_solve(model, iter);
-  
+
+
   getfem::default_newton_line_search lsear;
   getfem::standard_solve(model, iter, getfem::rselect_linear_solver(model,"mumps"), lsear);
 
@@ -1239,7 +1241,7 @@ int main(int argc, char *argv[]) {
   // cout << "L2^2 max on multipliers: " << gmm::vect_sp(KA, Vint, Vint);
   // cout << "  LAMBDA^2: " << gmm::vect_sp(B, LAMBDA, LAMBDA);
   // cout << "  Double produit: " <<  2*gmm::vect_sp(BA, Vint, LAMBDA)<<endl;
-  if(0){
+  if(1){
     
     /*********************************************************************/  
     /*         exporting solution in vtk format.                         */
