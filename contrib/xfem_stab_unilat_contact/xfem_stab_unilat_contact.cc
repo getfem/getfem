@@ -42,10 +42,16 @@
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "gmm/gmm_inoutput.h"
 
-using std::endl; using std::cout; using std::cerr;
-using std::ends; using std::cin;
+extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
+			    int *, int *, int *, int *, int *);
+extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
+			    int *, int *, int *, int *, int *);
 
 
+extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
+				      int *, int *, float *, int *, int *, int *);
+extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
+				      int *, int *, int *, int *, int *);
 
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
@@ -317,7 +323,7 @@ void asm_mass_matrix_tang_mixed_term
   ls.set_shift(-1e-7);
   assem.assembly(rg);
   ls.set_shift(0.);
-  cout << "RM = " << RM << endl;
+  //cout << "RM = " << RM << endl;
 
 }
 
@@ -404,6 +410,148 @@ void asm_stabilization_symm_tang_term
   ls.set_shift(0.);
 }
 
+
+
+
+/**************************************************************/
+/* assembling patch vector                                     */
+/**************************************************************/
+
+template<class VEC>
+void asm_patch_vector     
+(const VEC &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_mult,
+ const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
+  VEC &RM = const_cast<VEC &>(RM_);
+    
+  getfem::generic_assembly assem("t=comp(Base(#1)); V(#1)+= t(:);");
+  assem.push_mi(mim);
+  assem.push_mf(mf_mult);
+  assem.push_vec(RM);
+  // assem.set("RM(#1)+=comp(Base(#1))()");
+  assem.assembly(rg);
+
+}
+/**************************************************************/
+/* assembling patch matrix                                     */
+/**************************************************************/
+
+template<class MAT>
+void asm_stabilization_patch_term
+(const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_im &mimbounddown, const getfem::mesh_fem &mf_mult,
+ scalar_type ratio_size, scalar_type h ){
+  MAT &M1 = const_cast<MAT &>(RM_);
+  
+  /****************************************************/
+  /*        " select patch "                          */
+  /****************************************************/
+  
+  
+  
+  // assemby patch vector
+  const getfem::mesh_fem &mf_P0 = getfem::classical_mesh_fem(mesh, 0);
+  size_type nbe = mf_P0.nb_dof();
+  int ne = 0;
+  double size_of_crack = 0;
+  plain_vector Patch_Vector(nbe);
+  asm_patch_vector(Patch_Vector, mimbounddown, mf_P0);
+  // cout<<"patch_vectot="<< Patch_Vector<<endl;
+  dal::bit_vector  Patch_element_list, Patch_dof_ind;
+  for (size_type i = 0; i < nbe; ++i) {
+    if (Patch_Vector[i] != scalar_type(0)){
+      size_type cv = mf_P0.first_convex_of_basic_dof(i);
+      Patch_element_list.add(cv);
+      Patch_dof_ind.add(i);
+      ne++;
+      size_of_crack=size_of_crack + Patch_Vector[i];
+    }
+  }
+   cout<<"Path_element_list="<< Patch_element_list <<endl;
+  //cout<<"Path_dof_ind="<< Patch_dof_ind <<endl;
+  cout<<"number of element in patch="<< ne <<endl;
+  std::vector<int> xadj(ne+1), adjncy, numelt(ne), part(ne);
+  std::vector<int> vwgt(ne), indelt(mesh.convex_index().last_true()+1);
+  std::vector<double> vwgtt(ne);
+  int j = 0, k = 0;
+  for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+    numelt[j] = int(ic);
+    indelt[ic] = j;
+  }
+  j = 0;
+  for (dal::bv_visitor ic(Patch_element_list); !ic.finished(); ++ic, j++) {
+    size_type ind_dof_patch = mf_P0.ind_basic_dof_of_element(ic)[0];
+    vwgt[indelt[ic]] = int(1000000*Patch_Vector[ind_dof_patch]);
+    vwgtt[indelt[ic]] = Patch_Vector[ind_dof_patch];
+    xadj[j] = k;
+    bgeot::mesh_structure::ind_set s;
+    mesh.neighbours_of_convex(ic, s);
+    for (bgeot::mesh_structure::ind_set::iterator it = s.begin(); it != s.end(); ++it) {
+      if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
+    }
+  }
+  
+  xadj[j] = k;
+  std::vector<int> adjwgt(k);
+  // cout<<"xadj="<<xadj<<endl;
+  //cout<<"adjncy="<<adjncy<<endl;
+  //cout<<"vwgt="<<vwgt<<endl;
+  
+  cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
+  
+  int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
+      // float ubvec[1] = {1.03f};
+  int  options[5] = {0,0,0,0,0};
+  //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
+  // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
+  //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //	  &numflag, &nparts, options, &edgecut, &(part[0]));
+  METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+			   &numflag, &nparts, options, &edgecut, &(part[0]));
+  
+  //cout<<"size_of_mesh="<<h<<endl;
+  cout<<"size_of_crack="<< size_of_crack <<endl;
+  cout<<"nb_partition="<<nparts<<endl;
+  cout<<"partition="<<part<<endl;
+  cout<<"edgecut="<<edgecut<<endl;
+  
+
+  /**************************************************************/
+  /*        Assembly matrices                                   */
+  /**************************************************************/
+  
+  
+  std::vector<double> size_patch(nparts);
+  size_type nb_dof_mult=mf_mult.nb_dof();
+  sparse_matrix M0(nb_dof_mult, nbe);
+  getfem::asm_mass_matrix(M0, mimbounddown, mf_mult, mf_P0);
+  
+  for (size_type i=0; i < size_type(ne); i++) {
+    size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];	  
+  }
+  
+  //cout<<"size_patch="<<size_patch<<endl;
+  
+  sparse_row_matrix MAT_aux(nparts, nb_dof_mult);
+  for (size_type r=0; r < nbe; r++) {
+    size_type cv = mf_P0.first_convex_of_basic_dof(r);
+    gmm::add(gmm::mat_col(M0, r), gmm::mat_row(MAT_aux, part[indelt[cv]]));
+  }
+  
+  sparse_row_matrix MAT_proj(nbe, nb_dof_mult);
+  
+  for (size_type r=0; r < nbe; r++) {
+    size_type cv = mf_P0.first_convex_of_basic_dof(r);
+    int p=part[indelt[cv]];
+    gmm::copy(gmm::scaled(gmm::mat_row(MAT_aux, p), 1./size_patch[p]),
+	      gmm::mat_row(MAT_proj, r));
+  }
+  
+  gmm::mult(M0, MAT_proj, M1);
+  
+}
+
+
 /**************************************************************************************/
 /* asembling masse matrix for  inf-sup condition                                            */
 /**************************************************************************************/
@@ -470,8 +618,11 @@ struct unilateral_contact_problem {
   
   scalar_type mu, lambda;    /* Lame coeff                   */
   
-  int dgr;          /* Order of enrichement for u */
+  int dgr;                   /* Order of enrichement for u */ 
+  scalar_type stabilized_problem;         
   scalar_type  friction_coeff;
+  scalar_type tresca_threshold;
+  scalar_type ratio_size;
   
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   
@@ -479,7 +630,7 @@ struct unilateral_contact_problem {
   scalar_type residual;      /* max residual for the iterative solvers      */
   bool contact_only;
   bool Tresca_version;
-  bool stabilized_problem, Test_of_coer, strmesh, rangeP_P;
+  bool Test_of_coer, strmesh, rangeP_P;
   scalar_type cutoff_radius, cutoff_radius1, cutoff_radius0, enr_area_radius;
   
   size_type cutoff_func;
@@ -632,6 +783,8 @@ void  unilateral_contact_problem::init(void) {
   mesh.write_to_file("toto.mesh");
   
   h = mesh.maximal_convex_radius_estimate();
+  // h = 2. * mesh.minimal_convex_radius_estimate();
+
   cout << "h = " << h << endl;
   
   cont_gamma0 = PARAM.real_value("CONTACT_GAMMA0",
@@ -657,6 +810,8 @@ void  unilateral_contact_problem::init(void) {
   
 
   friction_coeff= PARAM.real_value("FRICTION_COEFF", "Friction_coeff");
+  tresca_threshold= PARAM.real_value("TRESCA_THRESHOLD", "Tresca_threshold");
+  ratio_size= PARAM.real_value("RATIO_SIZE", "ratio size beween mesh and coarse mesh");
   
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = 
@@ -690,9 +845,9 @@ void  unilateral_contact_problem::init(void) {
   
   
   contact_only = (PARAM.int_value("CONTACT_ONLY"," contact_only or not.") != 0);
-  Tresca_version=(PARAM.int_value("TRESCA_VIRSION"," tresca version or not.") != 0);
+  Tresca_version=(PARAM.int_value("TRESCA_VERSION"," tresca version or not.") != 0);
   cout<< "Tresca Version="<< Tresca_version<< endl;
-  stabilized_problem =  (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
+  stabilized_problem = PARAM.real_value("STABILIZED_PROBLEM"," stabilized_problem or not.");
   Test_of_coer= (PARAM.int_value("STABILIZED_PROBLEM"," stabilized_problem or not.") != 0);
   rangeP_P =
     (PARAM.int_value("rangeP_P"," The creteria of choise in range bases is performed by comparison to p  or not.") != 0);
@@ -1013,9 +1168,10 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   // if (!contact_only){
  getfem::CONTACT_B_MATRIX CAT(nb_dof_cont, nb_dof);
  // }
-  if (stabilized_problem) {
-    cout<<"Cont_gamma0="<< cont_gamma0 <<endl;
-    cout<< "Assembling stabilized mixed term for contact problem"<<endl;
+ cout<<"Cont_gamma0="<< cont_gamma0 <<endl;
+  if (stabilized_problem==1) {
+    cout<<"stabilized_problem="<<stabilized_problem<<endl;
+        cout<< "Assembling stabilized mixed term for contact problem"<<endl;
     asm_stabilization_mixed_term(CA, mimbound, mf_u(), mf_cont(), ls, lambda, mu);
     gmm::scale(CA, -cont_gamma0 * h);
     if (!contact_only){
@@ -1031,7 +1187,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   // if (!contact_only){
   sparse_matrix KAT(nb_dof, nb_dof);
     //}
-  if (stabilized_problem) {
+  if (stabilized_problem==1) {
     cout<<"Assembling symetrique term for stabilized contact problem"<<endl;
     asm_stabilization_symm_term(KA, mimbound, mf_u(), ls, lambda, mu);
     gmm::scale(KA, -cont_gamma0 * h);
@@ -1046,15 +1202,38 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   
   getfem::CONTACT_B_MATRIX MA(nb_dof_cont, nb_dof_cont);
   getfem::CONTACT_B_MATRIX MAT(nb_dof_cont, nb_dof_cont);
-  if (stabilized_problem) {
+  getfem::CONTACT_B_MATRIX M1(nb_dof_cont, nb_dof_cont);
+  getfem::CONTACT_B_MATRIX M1T(nb_dof_cont, nb_dof_cont);
+  if (stabilized_problem!=0) {
     cout<<"Assembling mass term for stabilized problem"<<endl;
     getfem::asm_mass_matrix(MA, mimbound, mf_cont());
-    gmm::scale(MA, cont_gamma0 * h);
-    cout << "MA = " << MA << endl;
     if (!contact_only){
       cout<<"Assembling mass tangent term for stabilized problem"<<endl;
       getfem::asm_mass_matrix(MAT, mimbound, mf_cont());
-      gmm::scale(MAT, cont_gamma0 * h);
+     
+    }
+    if (stabilized_problem==1) {
+      gmm::scale(MA, cont_gamma0 * h);
+      //cout << "MA = " << MA << endl;
+      if (!contact_only){ 
+	gmm::scale(MAT, cont_gamma0 * h);
+      }
+    }
+    if (stabilized_problem==2) {
+      cout<<"Patch Stabilization"<<endl;
+      //gmm::scale(MA, cont_gamma0);
+      asm_stabilization_patch_term(M1, mesh, mimbound, mf_cont(), ratio_size, 2.*h);
+      gmm::scale(M1, -cont_gamma0);
+      gmm::scale(MA, cont_gamma0);
+      gmm::add(M1, MA);
+      // cout << "MA = " << MA << endl;
+      if (!contact_only){ 
+	//gmm::scale(MAT, cont_gamma0);
+	asm_stabilization_patch_term(M1T, mesh, mimbound, mf_cont(), ratio_size, 2.*h);
+	gmm::scale(M1T, -cont_gamma0);
+	gmm::scale(MAT, cont_gamma0);
+	gmm::add(M1T, MAT);
+      }
     }
   }
   
@@ -1071,11 +1250,18 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
   // Linearized elasticity brick.
   model.add_initialized_scalar_data("lambda", lambda);
   model.add_initialized_scalar_data("mu", mu);
-if (!contact_only){
-  cout<<"Friction coeff="<< friction_coeff<<endl;
-  model.add_initialized_scalar_data("friction_coeff", friction_coeff);
- }
- model.add_initialized_scalar_data("augmentation_parameter", R/h);
+  if (!contact_only){
+    cout<<"Friction coeff="<< friction_coeff<<endl;
+    model.add_initialized_scalar_data("Friction_coeff", friction_coeff);
+    if (Tresca_version){
+      cout<<"tresca_threshold="<<tresca_threshold <<endl;
+      model.add_initialized_scalar_data("Tresca_threshold", tresca_threshold);
+    }
+    
+    
+  }
+  model.add_initialized_scalar_data("augmentation_parameter", R/h);
+  //model.add_initialized_scalar_data("augmentation_parameter", R);
   getfem::add_isotropic_linearized_elasticity_brick
     (model, mim, "u", "lambda", "mu");
   //  model.add_initialized_scalar_data("augmentation_parameter", R/h);
@@ -1083,36 +1269,85 @@ if (!contact_only){
   //("augmentation_parameter", mu * (3*lambda + 2*mu) / (h*(lambda + mu)) );  // r ~= Young modulus
   
   
-  
-  if (stabilized_problem) {
-    // cout << "KA = " << KA << endl;
-    cout << "gamma = " << cont_gamma0 * h << endl;
-    getfem::add_explicit_matrix(model, "u", "u", KA);
-    // Defining the contact condition.
-    gmm::add(CA, BN); 
+    
+  if (stabilized_problem!=0) {
+    if (stabilized_problem==1){
+      // cout << "KA = " << KA << endl;
+      cout << "gamma = " << cont_gamma0 * h << endl;
+      getfem::add_explicit_matrix(model, "u", "u", KA);
+      // Defining the contact condition.
+      gmm::add(CA, BN);
+      if (!contact_only){
+	getfem::add_explicit_matrix(model, "u", "u", KAT);
+	gmm::add(CAT, BT); 
+      }
+
+    }
+
     if (contact_only){
       getfem::add_Hughes_stab_basic_contact_brick(model, "u", "Lambda",
-						  "augmentation_parameter",
-						  BN, MA);
-    }else { 
-      getfem::add_explicit_matrix(model, "u", "u", KAT);
-      // Defining the contact condition.
-      gmm::add(CAT, BT); 
-      getfem::add_Hughes_stab_basic_contact_brick
-	(model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
-	 BN, BT, MA, MAT, "friction_coeff","","",1, Tresca_version);
-                }
-  }  else {		
-    getfem::add_basic_contact_brick(model, "u", "Lambda",
-				    "augmentation_parameter", BN);
-    
-    if (!contact_only){
-      getfem::add_basic_contact_brick
-	(model, "u", "Lambda", "Lambda_t",
-	 "augmentation_parameter", BN, BT, "friction_coeff","","",1, Tresca_version, false);
+						  "augmentation_parameter", BN, MA);
+    }else{
+      if (Tresca_version){
+	getfem::add_Hughes_stab_with_friction_contact_brick
+	  (model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
+	   BN, BT, MA, MAT, "Friction_coeff","","",1, Tresca_version, "Tresca_threshold");
+      }else{
+	getfem::add_Hughes_stab_with_friction_contact_brick
+	  (model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
+	   BN, BT, MA, MAT, "Friction_coeff");
+      }
+    }
+
+  }else{
+    if (contact_only){		
+      getfem::add_basic_contact_brick(model, "u", "Lambda",
+				      "augmentation_parameter", BN);
+    }else{
+      if (Tresca_version){
+     	getfem::add_basic_contact_with_friction_brick
+	  (model, "u", "Lambda", "Lambda_t",
+	   "augmentation_parameter", BN, BT, "Friction_coeff","","",1,Tresca_version,"Tresca_threshold");
+      }else{
+	getfem::add_basic_contact_with_friction_brick
+	  (model, "u", "Lambda", "Lambda_t",
+	   "augmentation_parameter", BN, BT, "Friction_coeff");
+      }
       
     }
+    
   }
+  
+
+ // if (stabilized_problem) {
+//     // cout << "KA = " << KA << endl;
+//     cout << "gamma = " << cont_gamma0 * h << endl;
+//     getfem::add_explicit_matrix(model, "u", "u", KA);
+//     // Defining the contact condition.
+//     gmm::add(CA, BN); 
+//     if (contact_only){
+//       getfem::add_Hughes_stab_basic_contact_brick(model, "u", "Lambda",
+// 						  "augmentation_parameter",
+// 						  BN, MA);
+//     }else { 
+//       getfem::add_explicit_matrix(model, "u", "u", KAT);
+//       // Defining the contact condition.
+//       gmm::add(CAT, BT); 
+//       getfem::add_Hughes_stab_with_friction_contact_brick
+// 	(model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
+// 	 BN, BT, MA, MAT, "friction_coeff");
+//     }
+//   }  else {		
+//     getfem::add_basic_contact_brick(model, "u", "Lambda",
+// 				    "augmentation_parameter", BN);
+    
+//     if (!contact_only){
+//       getfem::add_basic_contact_with_friction_brick
+// 	(model, "u", "Lambda", "Lambda_t",
+// 	 "augmentation_parameter", BN, BT, "friction_coeff","","",0);
+      
+//     }
+//   }
   
   
   // Defining the Neumann condition right hand side.
@@ -1124,7 +1359,7 @@ if (!contact_only){
   
   for(size_type i = 0; i < F.size(); i=i+N*N) {
     base_node pt = mf_rhs.point_of_basic_dof(i / (N*N));
-    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.04;}
+    for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =sin(2*M_PI*pt[1])*0.4;}
     
     // scalar_type coeff = pt[1] > 0. ? -1 : 1;
     // for(size_type j = 0; j < N; ++j){ F[i+j+j*N] =  coeff*0.1; FF[i+j+j*N] = (pt[0]-0.5)*2.0;}
@@ -1237,10 +1472,11 @@ if (!contact_only){
   //getfem::standard_solve(model, iter);
 
   getfem::simplest_newton_line_search lse; // (size_t(-1), 6.0/5.0, 0.2, 3.0/5.0);
-  getfem::standard_solve(model, iter,
-	getfem::default_linear_solver<getfem::model_real_sparse_matrix,
-			 getfem::model_real_plain_vector>(model) , lse);
+  //getfem::standard_solve(model, iter,
+  //	getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+  //			 getfem::model_real_plain_vector>(model) , lse);
 
+  getfem::standard_solve(model, iter, getfem::rselect_linear_solver(model,"mumps"), lse);
 
   gmm::Harwell_Boeing_save("toto.hb", model.real_tangent_matrix());
 
@@ -1415,8 +1651,9 @@ int main(int argc, char *argv[]) {
     plain_vector PPP(mf_cont.nb_dof());
     getfem::interpolation(p.mf_cont(), mf_cont, Lambda, PPP);
     
-    
-    
+    //if (!p.contact_only) {
+     
+    //}
     getfem::level_set ls(mcut, 1, true);
     for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
       ls.values(0)[d] =ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
@@ -1425,8 +1662,8 @@ int main(int argc, char *argv[]) {
     ls.touch();
     
     const getfem::mesh_fem &lsmf = ls.get_mesh_fem();
-    lsmf.write_to_file("xfem_stab_unilat_contact_ls.mf", true);
-    gmm::vecsave("xfem_stab_unilat_contact_ls.U", ls.values());
+    lsmf.write_to_file(p.datafilename + "_ls.mf", true);
+    gmm::vecsave(p.datafilename + "_ls.U", ls.values());
     
     
     
@@ -1454,18 +1691,53 @@ int main(int argc, char *argv[]) {
     slicer2.push_back_action(iso2);     // extract isosurface 0
     slicer2.push_back_action(sbuildl); // store it into sl0
     slicer2.exec(nrefine, mf.convex_index());
-    
-    sl.write_to_file("xfem_stab_unilat_contact.sl", true);
-    sl0.write_to_file("xfem_stab_unilat_contact.sl0", true);
-    sll.write_to_file("xfem_stab_unilat_contact.sll", true);
+
+    if (p.reference_test) {
+    sl.write_to_file(p.datafilename + "_ref.sl", true);
+    sl0.write_to_file(p.datafilename + "_ref.sl0", true);
+    sll.write_to_file(p.datafilename + "_ref.sll", true);
     plain_vector LL(sll.nb_points()); 
     //  gmm::scale(PP, 0.005);
     sll.interpolate(mf_cont, PPP, LL);
-    gmm::vecsave("xfem_stab_unilat_contact.slL", LL);
+    gmm::vecsave(p.datafilename + "_ref.slL", LL);
+
+    if (!p.contact_only) {
+      getfem::mesh_fem mf_tang_cont(mcut, 1);
+      mf_tang_cont.set_classical_discontinuous_finite_element(2, 1E-5);
+      plain_vector PPPT(mf_tang_cont.nb_dof());
+      getfem::interpolation(p.mf_cont(), mf_tang_cont, Lambda_t, PPPT);
+
+
+      plain_vector LLT(sll.nb_points()); 
+      sll.interpolate(mf_tang_cont, PPPT, LLT);
+      gmm::vecsave(p.datafilename + "_ref.slLT", LLT);
+    }
     //    plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
     //    sl.interpolate(mf, V, UU);
     //    gmm::vecsave("xfem_stab_unilat_contact.slU", UU);
-    
+    }else{
+      sl.write_to_file(p.datafilename + ".sl", true);
+      sl0.write_to_file(p.datafilename + ".sl0", true);
+      sll.write_to_file(p.datafilename + ".sll", true);
+      plain_vector LL(sll.nb_points()); 
+           //  gmm::scale(PP, 0.005);
+      sll.interpolate(mf_cont, PPP, LL);
+      gmm::vecsave(p.datafilename + ".slL", LL);
+
+      if (!p.contact_only) {
+	getfem::mesh_fem mf_tang_cont(mcut, 1);
+	mf_tang_cont.set_classical_discontinuous_finite_element(2, 1E-5);
+	plain_vector PPPT(mf_tang_cont.nb_dof());
+	getfem::interpolation(p.mf_cont(), mf_tang_cont, Lambda_t, PPPT);
+	
+	plain_vector LLT(sll.nb_points()); 
+	sll.interpolate(mf_tang_cont, PPPT, LLT);
+	gmm::vecsave(p.datafilename + ".slLT", LLT);
+      }
+      //    plain_vector UU(sl.nb_points()), LL(sll.nb_points()); 
+      //    sl.interpolate(mf, V, UU);
+      //    gmm::vecsave("xfem_stab_unilat_contact.slU", UU);
+    }
   } 	  
   
 
@@ -1591,12 +1863,12 @@ int main(int argc, char *argv[]) {
   
   if(p.PARAM.int_value("ERROR_TO_REF_SOL") == 1){
     cout << "Computing error with respect to a reference solution..." << endl;
-    std::string REFERENCE_MF = "xfem_stab_unilat_contact.meshfem_refined";
-    std::string REFERENCE_U = "xfem_stab_unilat_contact.U_refined";
-    std::string REFERENCE_MF_cont = "xfem_stab_unilat_contact.cont_meshfem_refined";
-    std::string REFERENCE_cont = "xfem_stab_unilat_contact.cont_refined";
-    std::string REFERENCE_MF_tang_cont = "xfem_stab_unilat_contact.tang_cont_meshfem_refined";
-    std::string REFERENCE_tang_cont = "xfem_stab_unilat_contact.tang_cont_refined";
+    std::string REFERENCE_MF = p.datafilename + ".meshfem_refined";
+    std::string REFERENCE_U = p.datafilename + ".U_refined";
+    std::string REFERENCE_MF_cont = p.datafilename + ".cont_meshfem_refined";
+    std::string REFERENCE_cont = p.datafilename + ".cont_refined";
+    std::string REFERENCE_MF_tang_cont = p.datafilename + ".tang_cont_meshfem_refined";
+    std::string REFERENCE_tang_cont = p.datafilename + ".tang_cont_refined";
     
     
     cout << "Load reference displacement from "
@@ -1617,24 +1889,23 @@ int main(int argc, char *argv[]) {
     plain_vector ref_cont(ref_mf_cont.nb_dof());
     gmm::vecload(REFERENCE_cont, ref_cont);
 
-    getfem::mesh ref_m_tang_cont; 
-    getfem::mesh_fem ref_mf_tang_cont(ref_m_tang_cont);
+   
+    
    
 
-    if (!p.contact_only) {
+    // if (!p.contact_only) {
     
-      cout << "Load reference tangent pressure from "
-	   << REFERENCE_MF_tang_cont << " and " << REFERENCE_tang_cont << "\n";
-     
-      ref_m_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
-     
-      ref_mf_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
-      
-    }
+    cout << "Load reference tangent pressure from "
+	 << REFERENCE_MF_tang_cont << " and " << REFERENCE_tang_cont << "\n";
+    getfem::mesh ref_m_tang_cont; 
+    ref_m_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
+    getfem::mesh_fem ref_mf_tang_cont(ref_m_tang_cont);
+    ref_mf_tang_cont.read_from_file(REFERENCE_MF_tang_cont);
+    
     plain_vector ref_tang_cont(ref_mf_tang_cont.nb_dof());
     gmm::vecload(REFERENCE_tang_cont, ref_tang_cont);
-
-
+    // }
+    
     getfem::level_set ls(ref_m_cont, 1, true);
     
     
