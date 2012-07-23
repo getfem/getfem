@@ -15,12 +15,12 @@ The main changes are:
 
    * Contact/friction bricks has been extented to non-matching meshes and
      to integral contact condition with different augmentations (Alart Curnier,
-     De Saxce projection, augmented multipliers). A large sliding contact
-     brick is in progress.
+     De Saxce projection, augmented multipliers) (work of Konstantinos Poulios
+     and Yves Renard). A large sliding contact brick is in progress.
 
    * A complete tool to perform continuation of the solution to a model with
      respect to one of its parameter and to detect bifurcation has been
-     developped.
+     developped by Tomas Ligursky.
 
    * Some additional model bricks : pointwise constraint brick (to prescribe
      a constraint on a point eventually inside an element), basic nonlinear

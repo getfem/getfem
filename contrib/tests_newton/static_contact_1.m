@@ -399,6 +399,7 @@ elseif (version == 9) % The integral version, Uzawa on the augmented Lagrangian
   solved = true;
   
 elseif (version >= 10 && version <= 15) % The integral version with friction, Newton
+  if (version >= 13) version = version - 1; end;
  
   gf_mesh_fem_set(mflambda, 'qdim', d);
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
