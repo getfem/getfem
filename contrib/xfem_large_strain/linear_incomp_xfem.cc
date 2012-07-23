@@ -346,10 +346,10 @@ void crack_problem::init(void) {
 }
 
 
-base_small_vector ls_function(const base_node P, int num = 0) {
-  scalar_type x = P[0], y = P[1], x0=0, y0=0, phi, ll;
+base_small_vector ls_function(const base_node P, int num = 1) {
+  scalar_type x = P[0], y = P[1], x0=0., y0=0.025, phi, ll;
   base_small_vector res(2), cracktip(2), t(2), xx(2);
-  cracktip[0]=0.5; cracktip[1]= 0.;
+  cracktip[0]=0.5; cracktip[1]= 0.025;
   switch (num) {
 
     case 0: {
@@ -364,8 +364,8 @@ base_small_vector ls_function(const base_node P, int num = 0) {
     } break;
 
     case 1: {
-      res[0] = y;
-      res[1] = -0.5 + x;
+      res[0] = y - cracktip[1];
+      res[1] = x- cracktip[0];
     } break;
     case 2: {
       res[0] = x - 0.25;
@@ -449,8 +449,8 @@ bool crack_problem::solve(plain_vector &U, plain_vector &P) {
   ls.reinit();  
   
   for (size_type d = 0; d < ls.get_mesh_fem().nb_basic_dof(); ++d) {
-    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[0];
-    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d), 0)[1];
+    ls.values(0)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d))[0];
+    ls.values(1)[d] = ls_function(ls.get_mesh_fem().point_of_basic_dof(d))[1];
   }
   ls.touch();
 

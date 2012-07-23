@@ -18,10 +18,10 @@ if BIMATERIAL
 end
 
 REFINEMENT_RADIUS = 0.;  % REF: 0.4;  % 0 for no refinement
-REFINEMENT_PROCESS = 0;  % nb of desired refinement steps
+REFINEMENT_PROCESS = 1;  % nb of desired refinement steps
 
 REFERENCE_TEST =0 ;   % 1 to compute a reference solution exported into files
-ERROR_TO_REF_SOL =1; % 1 to compute errors wrt the reference solution
+ERROR_TO_REF_SOL =0; % 1 to compute errors wrt the reference solution
 INF_SUP_COMP = 1;   % Compute or not the inf_sup condition
 
 %%%%%   discretisation parameters  :                     	      %%%%%
