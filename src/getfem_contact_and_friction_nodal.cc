@@ -1096,8 +1096,9 @@ namespace getfem {
       size_type nbvar = 2 + (contact_only ? 0 : 1) + (two_variables ? 1 : 0);
       GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick");
-      size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
+           size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
         + (friction_dynamic_term ? 1 : 0);
+     
       GMM_ASSERT1(dl.size() == nbdl, "Wrong number of data for contact brick, "
                   << dl.size() << " should be " << nbdl);
 
@@ -1288,7 +1289,7 @@ namespace getfem {
    std::string dataname_gap, std::string dataname_alpha,
    int aug_version, bool Hughes_stabilized) {
     Coulomb_friction_brick *pbr_
-      = new Coulomb_friction_brick(aug_version, true, false,Hughes_stabilized);
+      = new Coulomb_friction_brick(aug_version, true, false,false, Hughes_stabilized);
     pbr_->set_BN1(BN);
     pbrick pbr = pbr_;
 
@@ -1330,7 +1331,7 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap, std::string dataname_alpha,
-   int aug_version, bool Tresca_version, bool Hughes_stabilized) {
+   int aug_version, bool Tresca_version, std::string dataname_threshold, bool Hughes_stabilized) {
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version,false, false,
                                    Tresca_version, Hughes_stabilized);
@@ -1363,6 +1364,8 @@ namespace getfem {
     }
     dl.push_back(dataname_alpha);
     dl.push_back(dataname_friction_coeff);
+    if (Tresca_version)
+      dl.push_back(dataname_threshold);
 
     model::varnamelist vl(1, varname_u);
     vl.push_back(multname_n);
