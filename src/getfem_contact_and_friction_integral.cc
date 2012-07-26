@@ -3042,8 +3042,8 @@ namespace getfem {
     contact_frame(size_type NN) : N(NN), coordinates(N), pt_eval(N) {
       if (N > 0) coordinates[0] = "x";
       if (N > 1) coordinates[1] = "y";
-      if (N > 2) coordinates[3] = "z";
-      if (N > 3) coordinates[4] = "w";
+      if (N > 2) coordinates[2] = "z";
+      if (N > 3) coordinates[3] = "w";
       GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
 		  "dimension greater than 4");
     }
