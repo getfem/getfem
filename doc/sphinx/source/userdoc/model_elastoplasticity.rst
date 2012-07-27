@@ -436,8 +436,8 @@ Be carefull : ``datalambda``, ``datamu`` and ``datathreshold`` could be constant
 This function assembles the tangent matrix and the right hand side vector which will be solve using a Newton algorithm.
 
 
-Others usefull function
-+++++++++++++++++++++++
+Other useful functions
+++++++++++++++++++++++
 
 The function : ::
 

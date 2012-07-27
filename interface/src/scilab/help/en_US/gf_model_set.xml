@@ -193,7 +193,7 @@
 
     <para>         Set the value of the variables of the model with the vector <literal>V</literal>.
       Typically, the vector <literal>V</literal> results of the solve of the tangent
-      linear system (usefull to solve your problem with you own solver).
+      linear system (useful to solve your problem with you own solver).
     </para>
     </listitem>
 

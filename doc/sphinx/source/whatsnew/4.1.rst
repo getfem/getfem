@@ -34,7 +34,7 @@ The main changes are:
      Documentation for the interfaces are now fully automatic.
      
    * A convection scheme based on Characteristic Galerkin method has been
-     added. Usefull to update the level-sets.
+     added. Useful to update the level-sets.
 
    * Muparser can now be used to specify some parametrable enrichments in Xfem.
      A contribution of Luis Saavedra.

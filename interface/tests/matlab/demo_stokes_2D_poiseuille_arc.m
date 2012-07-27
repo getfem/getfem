@@ -59,7 +59,7 @@ mfulag=gf_mesh_fem(m,2);
 pde.mf_p=gf_mesh_fem(m,1);
 pde.mf_d=gf_mesh_fem(m,1);
 pde.mim=gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,10)'));
-% this is a good example of the usefullness of the cubic bubble
+% this is a good example of the usefulness of the cubic bubble
 % -> if not used, the pression has strange values
 gf_mesh_fem_set(pde.mf_u,'fem',fem_u);
 gf_mesh_fem_set(pde.mf_p,'fem',fem_u);

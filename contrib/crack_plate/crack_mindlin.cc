@@ -74,7 +74,7 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
   const getfem::level_set &ls;
   mutable getfem::mesher_level_set mls0, mls1;
   mutable size_type cv;
-  scalar_type lambda, mu, epsilon; // lame coefficient and half-thickness, usefull for exact solution
+  scalar_type lambda, mu, epsilon; // lame coefficient and half-thickness, useful for exact solution
   
   void update_mls(size_type cv_) const { 
     if (cv_ != cv) { 
@@ -106,13 +106,13 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     case 3: {
       return sqrt(r)*sin(theta/2);
     } break;
-    case 4: {   // usefull for isotropic_linear_elasticity_2D
+    case 4: {   // useful for isotropic_linear_elasticity_2D
       return sqrt(r)*sin(theta/2)*cos(theta);
     } break;
-    case 5: {   // usefull for isotropic_linear_elasticity_2D
+    case 5: {   // useful for isotropic_linear_elasticity_2D
       return sqrt(r)*cos(theta/2)*cos(theta);
     } break;
-    case 6: {   // usefull for Yves's exact solution only (not for finite element computation)
+    case 6: {   // useful for Yves's exact solution only (not for finite element computation)
       return  sqrt(r) * (  10. * mu_ * sin(theta/2.) * ( 12. * mu_ + 6. * lambda_ - gamma * r * r) - 2. * r * r * gamma *  sin(5. * theta / 2.) * (4. * lambda_ + 3. * mu_) ) ;
     } break;
     case 7: {   // same comment as case 6
@@ -164,11 +164,11 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
       g[0] = - sin(theta/2.0)  / 2.0   / sqrt(r) ; 
       g[1] =   cos(theta/2.0)  / 2.0   / sqrt(r) ; 
     } break;
-    case 4: {  // usefull for isotropic_linear_elasticity_2D   -> expression to check with maple !
+    case 4: {  // useful for isotropic_linear_elasticity_2D   -> expression to check with maple !
       g[0] =   ( 3./4. * sin(theta/2.0) - 1./4. * sin(5.0/2.0*theta) )    / sqrt(r) ; 
       g[1] =   (   cos(theta/2.0) + cos(5.0/2.0*theta) )  / 4.0   / sqrt(r) ; 
     } break;
-    case 5: {  // usefull for isotropic_linear_elasticity_2D   -> expression to check with maple !
+    case 5: {  // useful for isotropic_linear_elasticity_2D   -> expression to check with maple !
       g[0] = (  3./4.* cos(theta/2.0) - 1./4. * cos(5.0/2.0*theta) )   / sqrt(r) ; 
       g[1] = (       - sin(theta/2.0) - sin(5.0/2.0*theta)      )   / 4.0   / sqrt(r) ; 
     } break;
@@ -375,7 +375,7 @@ struct crack_mindlin_problem{
 				                4 boundaries of the plate. The exact solution
 						is equal to the singularities.   */
   size_type dx_export ;        /* dx_export = 1 : exporting the "finite element solution"
-                                  dx_export = 2 : exporting the "exact solution" (usefull in the case of sol_ref = 3) */
+                                  dx_export = 2 : exporting the "exact solution" (useful in the case of sol_ref = 3) */
 
   scalar_type h_crack_length ;  // half-crack-length
 

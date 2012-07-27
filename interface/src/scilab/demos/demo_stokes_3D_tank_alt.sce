@@ -62,7 +62,7 @@ pde('mf_p') = gf_mesh_fem(m,1);
 pde('mf_d') = gf_mesh_fem(m,1);
 pde('mim')  = gf_mesh_im(m, gf_integ('IM_TETRAHEDRON(5)'));
 
-// this is a good example of the usefullness of the cubic bubble
+// this is a good example of the usefulness of the cubic bubble
 // -> if not used, the pression has strange values
 //gf_mesh_fem_set(pde('mf_u'),'fem',gf_fem('FEM_PK_WITH_CUBIC_BUBBLE(3,2)')
 gf_mesh_fem_set(pde('mf_u'),'fem',gf_fem('FEM_PK(3,2)'));

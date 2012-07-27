@@ -261,7 +261,7 @@ namespace getfem {
   };
 
   /*
-   * some usefull global functions
+   * some useful global functions
    */
   class level_set;
 

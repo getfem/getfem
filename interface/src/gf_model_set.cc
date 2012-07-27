@@ -280,7 +280,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ('to variables', @vec V)
       Set the value of the variables of the model with the vector `V`.
       Typically, the vector `V` results of the solve of the tangent
-      linear system (usefull to solve your problem with you own solver).@*/
+      linear system (useful to solve your problem with you own solver).@*/
     sub_command
       ("to variables", 1, 1, 0, 0,
        if (!md->is_complex()) {

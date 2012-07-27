@@ -238,7 +238,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
     /*@GET V = ('from variables')
       Return the vector of all the degrees of freedom of the model consisting
-      of the concatenation of the variables of the model (usefull
+      of the concatenation of the variables of the model (useful
       to solve your problem with you own solver). @*/
     sub_command
       ("from variables", 0, 0, 0, 1,
@@ -260,7 +260,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       'build_rhs', 'build_matrix' or 'pseudo_potential' (in that case,
       the pseudo_potential is returned).
       The default is to build the whole
-      tangent linear system (matrix and rhs). This function is usefull
+      tangent linear system (matrix and rhs). This function is useful
       to solve your problem with you own solver. @*/
     sub_command
       ("assembly", 0, 1, 0, 1,
@@ -410,7 +410,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
     /*@GET ('test tangent matrix'[, @scalar EPS[, @int NB[, @scalar scale]]])
       Test the consistency of the tangent matrix in some random positions
-      and random directions (usefull to test newly created bricks).
+      and random directions (useful to test newly created bricks).
       `EPS` is the value of the small parameter for the finite difference
       computation of the derivative is the random direction (default is 1E-6).
       `NN` is the number of tests (default is 100). `scale` is a parameter

@@ -26,7 +26,7 @@
 namespace getfem {
 
 
-  /* Usefull functions to compute the invariants and their derivatives
+  /* Useful functions to compute the invariants and their derivatives
      Note that the second derivative is symmetrized (see the user
      documentation for more details). The matrix E is assumed to be symmetric.
   */
@@ -69,7 +69,7 @@ namespace getfem {
       di1_c = true;
     }
 
-    void compute_ddi1(void) { // not very usefull, null tensor
+    void compute_ddi1(void) { // not very useful, null tensor
       ddi1 = base_tensor(N, N, N, N); 
       ddi1_c = true;
     }

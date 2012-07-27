@@ -29,15 +29,15 @@ STUDY_FLAG = 0 ;	% if equal to 1 then all the loadings applied are chosen
 			% in order to have a maximum vertical displacement equal to 1.
 
 PRESSURE = 0.0005;       % pressure on the top surface of the plate 
-			% (only usefull if SOL_REF = 0 or 1)  
+			% (only useful if SOL_REF = 0 or 1)  
 			% will be multiplied by EPSILON^3.
 			  
-ETA = 1e-4;             % only usefull if SOL_REF = 2 :
+ETA = 1e-4;             % only useful if SOL_REF = 2 :
 			% if eta  = 0 => solution of the Kirchoff-Love model
 			% if eta != 0 => solution of the Mindlin-Reissner model
 			% To be taken of order epsilon^2 ?
 
-N_Four = 100             % only usefull if SOL_REF = 4
+N_Four = 100             % only useful if SOL_REF = 4
 			
 %%%%% parameters for computation :
 

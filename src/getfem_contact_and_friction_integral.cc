@@ -3456,7 +3456,7 @@ namespace getfem {
 // 	continue;
 //       }
       
-      y0s.push_back(ctx_y0.xreal()); // Usefull ?
+      y0s.push_back(ctx_y0.xreal()); // useful ?
       y0_refs.push_back(y0_ref);
       elt_nums.push_back((*it)->id);
       d0s.push_back(d0);

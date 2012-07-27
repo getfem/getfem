@@ -467,7 +467,7 @@ namespace gmm {
 
   /** Range Basis :
     Extract a basis of the range of a (large sparse) matrix selecting some
-    column vectors of this matrix. This is in particular usefull to select
+    column vectors of this matrix. This is in particular useful to select
     an independent set of linear constraints.
 
     The algorithm is optimized for two cases :

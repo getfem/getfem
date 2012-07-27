@@ -2819,14 +2819,14 @@ this function has an undefined behavior.
 
 \sep{@@V=gf_model_get(md,'from variables')@@} :
 Return the vector of all the degrees of freedom of the model consisting
-of the concatenation of the variables of the model (usefull
+of the concatenation of the variables of the model (useful
 solve your problem with you own solver).
 
 \sep{@@gf_model_get(md,'assembly'[, \tstr option])@@} :
 Assembly of the tangent system taking into account the terms
 from all bricks. @@option@@, if specified, should be 'build all',
 'build rhs' or 'build matrix'. The default is to build the whole
-tangent linear system (matrix and rhs). This function is usefull to solve
+tangent linear system (matrix and rhs). This function is useful to solve
 your problem with you own solver.
 
 \sep{@@gf_model_get(md,'solve' [,...])@@} :
@@ -2948,7 +2948,7 @@ of the data stored, for time integration schemes.
 \sep{@@gf_model_set(md,'to variables', \tvec V))@@} :
 Set the value of the variables of the model with the vector @@V@@.
 Typically, the vector @@V@@ results of the solve of the tangent linear
-system (usefull to solve your problem with you own solver). @*/
+system (useful to solve your problem with you own solver). @*/
 
 \sep{@@ind_brick=gf_model_set(md,'add Laplacian brick', \tmim mim, \tstr varname[, \tint region])@@} :
 Add a Laplacian term to the model relatively to the variable @@varname@@.

@@ -111,7 +111,7 @@ SEUIL = 1e-26 ;    % threshold for elimination of dofs at the end of the integra
 CUTOFF_FUNC = 3; % 0 for the exponential cutoff. 
                  % 1 for a 3rd degree polynomial cutoff.
                  % 2 for a 5th degree polynomial cutoff. 
-CUTOFF = 0.4;  % usefull only for exponential cutoff (parameter of the speed of decreasing)
+CUTOFF = 0.4;  % useful only for exponential cutoff (parameter of the speed of decreasing)
 CUTOFF1 = 0.01; % radius
 CUTOFF0 = 0.25;
 

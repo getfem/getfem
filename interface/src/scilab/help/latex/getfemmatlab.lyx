@@ -30211,7 +30211,7 @@ status collapsed
 \end_inset
 
  : Return the vector of all the degrees of freedom of the model consisting
- of the concatenation of the variables of the model (usefull solve your
+ of the concatenation of the variables of the model (useful solve your
  problem with you own solver).
 \end_layout
 
@@ -30257,7 +30257,7 @@ status collapsed
  @@option@@, if specified, should be 'build all', 'build rhs' or 'build
  matrix'.
  The default is to build the whole tangent linear system (matrix and rhs).
- This function is usefull to solve your problem with you own solver.
+ This function is useful to solve your problem with you own solver.
 \end_layout
 
 \begin_layout Standard
@@ -32758,7 +32758,7 @@ status collapsed
 
  : Set the value of the variables of the model with the vector @@V@@.
  Typically, the vector @@V@@ results of the solve of the tangent linear
- system (usefull to solve your problem with you own solver).
+ system (useful to solve your problem with you own solver).
  @*/
 \end_layout
 

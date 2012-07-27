@@ -99,7 +99,7 @@ cg_eps          = 1e-8;
 cg_iter         = 100000;
 
 if (N == 2) then
-  CF = k*NY/40.; // Correction factor. Usefull ?
+  CF = k*NY/40.; // Correction factor. Useful ?
 else
   CF = k*NY/8;
 end
