@@ -146,9 +146,6 @@ namespace getfem {
    *  @see mesh_im
    */
   class mesh_fem : public context_dependencies {
-  private:
-	    /**copying of the existing object is not allowed*/
-	  	mesh_fem& operator=(const mesh_fem&);
   protected :
     
     typedef gmm::csc_matrix<scalar_type> REDUCTION_MATRIX;
@@ -546,8 +543,6 @@ namespace getfem {
     */
     explicit mesh_fem(const mesh &me, dim_type Q = 1);
     mesh_fem(void);
-	/**copying*/
-    mesh_fem(const mesh_fem&);
     virtual ~mesh_fem();
     virtual void clear(void);
     /** Read the mesh_fem from a stream. 

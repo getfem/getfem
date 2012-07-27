@@ -25,12 +25,6 @@
 #include "getfem/getfem_mesh_fem.h"
 
 namespace getfem {
-	mesh_fem::mesh_fem(const mesh_fem& mf)
-	{
-	  linked_mesh_ = 0; init_with_mesh(mf.linked_mesh(), mf.get_qdim());
-  	  for(size_type i=0;i<mf.linked_mesh().nb_convex();i++)
-		  this->set_finite_element(i,mf.fem_of_element(i));
-	}
 
   void mesh_fem::update_from_context(void) const {
     for (dal::bv_visitor i(fe_convex); !i.finished(); ++i) {
