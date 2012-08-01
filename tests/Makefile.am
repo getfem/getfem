@@ -54,7 +54,8 @@ CLEANFILES = \
 	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk                \
 	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk     \
 	plasticity.meshfem plasticity.coef elasto_static_err.vtk            \
-	ii_files/* auto_gmm* dyn*.txt dynamic_friction.data *.sl time FN0   \
+	ii_files/* auto_gmm* dyn*.txt dynamic_friction.data                 \
+	dynamic_friction.U dynamic_friction.mfu  *.sl time FN0              \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
 	nonlinear_membrane.vtk feminterpolation.vtk circleslice.vtk

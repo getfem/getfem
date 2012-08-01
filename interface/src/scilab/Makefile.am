@@ -224,7 +224,6 @@ EXTRA_DIST=builddoc.sce \
         help/mml/step_by_step_eq4.mml \
         help/mml/step_by_step_eq5.mml \
         jar/scilab_en_US_help.jar \
-        jar/scilab_fr_FR_help.jar \
         macros/add_empty_bound.sci \
         macros/asserterr.sci \
         macros/assert_field.sci \
