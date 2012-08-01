@@ -99,6 +99,8 @@ heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
 cyl_slicer_SOURCES = cyl_slicer.cc
 test_continuation_SOURCES = test_continuation.cc
+test_large_sliding_contact_SOURCES = test_large_sliding_contact.cc
+
 
 SUPLDFLAGS = @SUPLDFLAGS@
 INCLUDES = -I$(top_srcdir)/src -I../src
@@ -226,7 +228,7 @@ EXTRA_DIST =                               			\
 	meshes/sphere_with_quadratic_tetra_80_elts.mesh		\
 	meshes/donut_regulier_32_elements.mesh			\
 	meshes/sphere_with_quadratic_tetra_8_elts.mesh		\
-	meshes/disk_with_a_hole.mesh				\
+	meshes/disc_with_a_hole.mesh				\
 	meshes/donut_regulier_512_elements.mesh
 
 
