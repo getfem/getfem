@@ -6,7 +6,7 @@
 
 The New brick system is now mature and several coupling bricks has been developped.
 
-Released version, 2012/07/31.
+Released version, 2012/08/02.
 
 The main changes are:
 
