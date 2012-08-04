@@ -3658,7 +3658,7 @@ namespace getfem {
 	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	    for (size_type j = 0; j < cvnbdofu; ++j)
 	      for (size_type k = 0; k < N; ++k)
-		Melem(i, j) += lambda[i%N] * tgradu_y0[i-(i%N)+k]
+		Melem(i, j) += lambda[i%N] * tgradu_y0[i/N+k*N]
 		  * gradinv_y0(k, j%N) * tu[j/N]*weight;
 	  mat_elem_assembly(cf.UU_matrix(boundary_num_y0, boundary_num),
 			    Melem, mfu_y0, cv_y0, mfu, cv);
@@ -3667,7 +3667,7 @@ namespace getfem {
 	  for (size_type i = 0; i < cvnbdofu_y0; ++i)
 	    for (size_type j = 0; j < cvnbdofu_y0; ++j)
 	      for (size_type k = 0; k < N; ++k)
-		Melem(i, j) -= lambda[i%N] * tgradu_y0[i-(i%N)+k]
+		Melem(i, j) -= lambda[i%N] * tgradu_y0[i/N+k*N]
 		  * gradinv_y0(k, j%N) * tu_y0[j/N]*weight;
 	  mat_elem_assembly(cf.UU_matrix(boundary_num_y0, boundary_num_y0),
 			    Melem, mfu_y0, cv_y0, mfu_y0, cv_y0);
@@ -3712,11 +3712,11 @@ namespace getfem {
 	  for (size_type j = 0; j < cvnbdofu; ++j)
 	    for (size_type k = 0; k < N; ++k)
 	      Melem(i,j) += d0*tl[i/N]*vv[i%N]
-		*tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight;
+		*tgradu[j/N+k*N]*n[j%N]*vvv[k]*weight;
 	for (size_type i = 0; i < cvnbdofl; ++i)
 	  for (size_type j = 0; j < cvnbdofu; ++j)
 	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) -= d0*tl[i/N]*gradaux(k,i%N)*tgradu[j-(j%N)+k]
+	      Melem(i,j) -= d0*tl[i/N]*gradaux(k,i%N)*tgradu[j/N+k*N]
 		*n[j%N]*weight;
 
 	
@@ -3733,11 +3733,11 @@ namespace getfem {
 	  for (size_type j = 0; j < cvnbdofu; ++j)
 	    for (size_type k = 0; k < N; ++k)
 	      Melem(i,j) += tl[i/N]*vv[i%N]
-		*tgradu[j-(j%N)+k]*n[j%N]*vvv[k]*weight/r;
+		*tgradu[j/N+k*N]*n[j%N]*vvv[k]*weight/r;
 	for (size_type i = 0; i < cvnbdofl; ++i)
 	  for (size_type j = 0; j < cvnbdofu; ++j)
 	    for (size_type k = 0; k < N; ++k)
-	      Melem(i,j) -= tl[i/N]*gradaux(k,i%N)*tgradu[j-(j%N)+k]
+	      Melem(i,j) -= tl[i/N]*gradaux(k,i%N)*tgradu[j/N+k*N]
 		*n[j%N]*weight/r;
 	mat_elem_assembly(cf.LU_matrix(boundary_num, boundary_num),
 			  Melem, mfl, cv, mfu, cv);
