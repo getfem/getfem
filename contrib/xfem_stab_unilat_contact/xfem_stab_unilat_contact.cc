@@ -53,6 +53,8 @@ extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, 
 extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
 				      int *, int *, int *, int *, int *);
 
+using std::endl; using std::cout; using std::cerr;
+
 /* some Getfem++ types that we will be using */
 using bgeot::base_small_vector; /* special class for small (dim<16) vectors */
 using bgeot::base_vector;
@@ -1289,11 +1291,11 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
 						  "augmentation_parameter", BN, MA);
     }else{
       if (Tresca_version){
-	getfem::add_Hughes_stab_with_friction_contact_brick
+	getfem::add_Hughes_stab_basic_contact_brick
 	  (model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
 	   BN, BT, MA, MAT, "Friction_coeff","","",1, Tresca_version, "Tresca_threshold");
       }else{
-	getfem::add_Hughes_stab_with_friction_contact_brick
+	getfem::add_Hughes_stab_basic_contact_brick
 	  (model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
 	   BN, BT, MA, MAT, "Friction_coeff");
       }
@@ -1305,11 +1307,11 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
 				      "augmentation_parameter", BN);
     }else{
       if (Tresca_version){
-     	getfem::add_basic_contact_with_friction_brick
+     	getfem::add_basic_contact_brick
 	  (model, "u", "Lambda", "Lambda_t",
 	   "augmentation_parameter", BN, BT, "Friction_coeff","","",1,Tresca_version,"Tresca_threshold");
       }else{
-	getfem::add_basic_contact_with_friction_brick
+	getfem::add_basic_contact_brick
 	  (model, "u", "Lambda", "Lambda_t",
 	   "augmentation_parameter", BN, BT, "Friction_coeff");
       }
@@ -1333,7 +1335,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
 //       getfem::add_explicit_matrix(model, "u", "u", KAT);
 //       // Defining the contact condition.
 //       gmm::add(CAT, BT); 
-//       getfem::add_Hughes_stab_with_friction_contact_brick
+//       getfem::add_Hughes_stab_basic_contact_brick
 // 	(model, "u", "Lambda", "Lambda_t", "augmentation_parameter",
 // 	 BN, BT, MA, MAT, "friction_coeff");
 //     }
@@ -1342,7 +1344,7 @@ bool  unilateral_contact_problem::solve(plain_vector &U, plain_vector &LAMBDA, p
 // 				    "augmentation_parameter", BN);
     
 //     if (!contact_only){
-//       getfem::add_basic_contact_with_friction_brick
+//       getfem::add_basic_contact_brick
 // 	(model, "u", "Lambda", "Lambda_t",
 // 	 "augmentation_parameter", BN, BT, "friction_coeff","","",0);
       

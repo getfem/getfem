@@ -1096,9 +1096,8 @@ namespace getfem {
       size_type nbvar = 2 + (contact_only ? 0 : 1) + (two_variables ? 1 : 0);
       GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick");
-           size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
+      size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
         + (friction_dynamic_term ? 1 : 0);
-     
       GMM_ASSERT1(dl.size() == nbdl, "Wrong number of data for contact brick, "
                   << dl.size() << " should be " << nbdl);
 
