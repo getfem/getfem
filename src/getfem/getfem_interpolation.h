@@ -69,10 +69,10 @@ namespace getfem {
     void points_on_convex(size_type i, std::vector<size_type> &itab) const;
     const std::vector<base_node> &reference_coords(void) { return ref_coords; }
 
-    /* extrapolation = 1 : Only the points inside the mesh are distributed.
-     * extrapolation = 2 : Try to extrapolate the exterior points near the
+    /* extrapolation = 0 : Only the points inside the mesh are distributed.
+     * extrapolation = 1 : Try to extrapolate the exterior points near the
      *                     boundary.
-     * extrapolation = 3 : Extrapolate all the exterior points. Could be
+     * extrapolation = 2 : Extrapolate all the exterior points. Could be
      *                     expensive.
      * 
      */
@@ -213,6 +213,10 @@ namespace getfem {
      - U.size() >= mf_source.get_qdim()
      - V.size() >= (mf_target.nb_dof() / mf_target.get_qdim())
                    * mf_source.get_qdim()
+
+     With extrapolation = 0 a strict interpolation is done, with extrapolation = 1
+     an extrapolation of the exterior points near the boundary is done (if any)
+     and with extrapolation = 2 all  exterior points are extrapolated (could be expensive).
 
      If both mesh_fem shared the same mesh object, a fast interpolation
      will be used.
