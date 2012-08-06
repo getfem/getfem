@@ -343,7 +343,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          else if (cmd_strmatch(opt, "with pseudo potential"))
            with_pseudo_pot = true;
          else if (cmd_strmatch(opt, "very noisy") ||
-                  cmd_strmatch(opt, "very_noisy")) iter.set_noisy(2);
+                  cmd_strmatch(opt, "very_noisy")) iter.set_noisy(3);
          else if (cmd_strmatch(opt, "max_iter")) {
            if (in.remaining()) iter.set_maxiter(in.pop().to_integer());
            else THROW_BADARG("missing value for " << opt);

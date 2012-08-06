@@ -2020,7 +2020,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
-     /*@SET ind = ('add Nitsche contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
+     /*@SET ind = ('add Nitsche contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region[, @int option])
 
       Add a contact with friction condition with a rigid obstacle
       to the model with  Nitsche strategy (no multiplier) in an integral way.
@@ -2034,9 +2034,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       range of acceptable values. `dataname_friction_coeff` is the friction
       coefficient which could be constant or defined on a finite element
       method. `dataname_lambda` and `dataname_mu` are the Lame coefficients.
+      `option` is 1 for the symmetric version, 2 for simplest unsymmetric
+      and 3 for the fully coercive unsymmetric version (default is 2).
+      for the 
     @*/
      sub_command
-       ("add Nitsche contact with rigid obstacle brick", 8, 8, 0, 1,
+       ("add Nitsche contact with rigid obstacle brick", 8, 9, 0, 1,
 
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -2046,11 +2049,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_lambda = in.pop().to_string();
         std::string dataname_mu = in.pop().to_string();
         size_type region = in.pop().to_integer();
+	int option = 2;
+	if (in.remaining()) option = in.pop().to_integer();
 
         size_type ind=
         getfem::add_Nitsche_contact_with_rigid_obstacle_brick
         (md->model(), gfi_mim->mesh_im(), varname_u, dataname_obs, dataname_r,
-	 dataname_coeff, dataname_lambda, dataname_mu, region);
+	 dataname_coeff, dataname_lambda, dataname_mu, region, option);
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );

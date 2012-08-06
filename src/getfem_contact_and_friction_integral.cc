@@ -2687,7 +2687,7 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
    scalar_type gamma, scalar_type lambda, scalar_type mu,
-   const mesh_region &rg, int option = 1) {
+   const mesh_region &rg, int option) {
 
     contact_nitsche_nonlinear_term
       nterm1(6, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
@@ -2699,11 +2699,11 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     std::string as_str
-      = ((option == 0) ? "w1=comp(NonLin$1(#1,"+aux_fems+")(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l));" : "")
+      = ((option != 2) ? "w1=comp(NonLin$1(#1,"+aux_fems+")(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l));" : "")
       + "w2=comp(NonLin$2(#1,"+aux_fems+").vBase(#1).vBase(#1))(i,j,:,i,:,j);"
       + "w3=comp(NonLin$3(#1,"+aux_fems+").vBase(#1).vGrad(#1))(i,j,k,:,i,:,j,k);"
-      + ((option == 0) ? "w4=comp(NonLin$4(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);" : "")
-      + ((option == 0) ? "M(#1,#1)+=w1+w2+w3+w4;" : "M(#1,#1)+=w2+w3;");
+      + ((option != 2) ? "w4=comp(NonLin$4(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);" : "")
+      + ((option == 1) ? "M(#1,#1)+=w1+w2+w3+w4;" : ((option == 3) ? "M(#1,#1)+=w2+w3-w4-w1;" : "M(#1,#1)+=w2+w3;"));
 
     assem.set(as_str);
     assem.push_mi(mim);
@@ -2727,7 +2727,7 @@ namespace getfem {
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
    scalar_type gamma, scalar_type lambda, scalar_type mu,
-   const mesh_region &rg, int option = 1) {
+   const mesh_region &rg, int option) {
 
     contact_nitsche_nonlinear_term
       nterm1(1, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
@@ -2737,8 +2737,11 @@ namespace getfem {
 
     getfem::generic_assembly assem;
     std::string as_str =
-      "V(#1)+=comp(NonLin$1(#1,"+aux_fems+").vBase(#1))(i,:,i); "
-      + ((option == 0) ? "V(#1)+=comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j)" : "");
+      "V(#1)+=comp(NonLin$1(#1,"+aux_fems+").vBase(#1))(i,:,i); ";
+    if (option == 1)
+      as_str += "V(#1)+=comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j)";
+    if (option == 3)
+      as_str += "V(#1)+=-comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j)";
 
     assem.set(as_str);
     assem.push_mi(mim);
@@ -2753,6 +2756,8 @@ namespace getfem {
 
 
   struct Nitsche_contact_rigid_obstacle_brick : public virtual_brick {
+
+    int option;
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -2814,21 +2819,22 @@ namespace getfem {
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Nitsche contact with rigid obstacle tangent term");
         gmm::clear(matl[0]);
-        asm_Nitsche_contact_rigid_obstacle_tangent_matrix
-          (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
-           vr[0], vlambda[0], vmu[0], rg);
+	asm_Nitsche_contact_rigid_obstacle_tangent_matrix
+	  (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
+	   vr[0], vlambda[0], vmu[0], rg, option);
       }
 
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
-        asm_Nitsche_contact_rigid_obstacle_rhs
-          (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
-           vr[0], vlambda[0], vmu[0], rg);
+	asm_Nitsche_contact_rigid_obstacle_rhs
+	  (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
+	   vr[0], vlambda[0], vmu[0], rg, option);
       }
 
     }
 
-    Nitsche_contact_rigid_obstacle_brick(void) {
+    Nitsche_contact_rigid_obstacle_brick(int option_) {
+      option = option_;
       set_flags("Integral Nitsche contact and friction with rigid "
                 "obstacle brick",
                 false /* is linear*/, false /* is symmetric */,
@@ -2844,9 +2850,9 @@ namespace getfem {
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_friction_coeff,
    const std::string &dataname_lambda, const std::string &dataname_mu,
-   size_type region) {
+   size_type region, int option) {
 
-    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick;
+    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick(option);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));

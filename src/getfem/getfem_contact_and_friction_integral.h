@@ -764,7 +764,7 @@ namespace getfem {
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_friction_coeff,
    const std::string &dataname_lambda, const std::string &dataname_mu,
-   size_type region);
+   size_type region, int option = 2);
 #endif
 
 }  /* end of namespace getfem.                                             */
