@@ -1029,6 +1029,35 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        
        );
 
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+
+    /*@FUNC B = ('Nitsche contact rigid obstacle rhs', @int bnum, @tmim mim, @tmf mf_u, @dvec U, @tmf mf_obs, @dvec obs, @scalar fcoeff, @scalar r, @scalar clambda, @scalar cmu)
+    Compute the right hand side (residual) of the Nitsche term for contact
+    with friction on a rigid obstacle of a linearly elastic body. Experimental.
+
+    Return a @dcvec object.
+    @*/
+    sub_command
+      ("Nitsche contact rigid obstacle rhs", 10, 10, 0, 1,
+       int boundary_num = in.pop().to_integer();
+       const getfem::mesh_im *mim = get_mim(in);
+       const getfem::mesh_fem *mf_u = in.pop().to_const_mesh_fem();
+       darray vec_u = in.pop().to_darray();
+       const getfem::mesh_fem *mf_obs = in.pop().to_const_mesh_fem();
+       darray vec_obs = in.pop().to_darray();
+       darray fcoeff = in.pop().to_darray();
+       scalar_type r = in.pop().to_scalar();
+       scalar_type lambda = in.pop().to_scalar();
+       scalar_type mu = in.pop().to_scalar();
+       darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
+      
+       getfem::asm_Nitsche_contact_rigid_obstacle_rhs
+       (F, *mim, *mf_u, vec_u, *mf_obs, vec_obs, 0, fcoeff, r, lambda,
+	mu, boundary_num, 2);
+       );
+
+#endif
+
 
   }
 
