@@ -133,24 +133,24 @@ parametrisation of the model:
 
 In order to use the continuation, one has to do its initialisation first::
 
-  getfem::S_getfem_model s(model, parameter_name[, initdata_name, finaldata_name, currentdata_name],
-                           ls, sfac, maxit, thrit, maxres, maxdiff, minang, h_init, h_max, h_min,
-			   h_inc, h_dec, eps, maxres_solve, noisy);
-  getfem::init_Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
+  getfem::cont_struct_getfem_model S(model, parameter_name[, initdata_name, finaldata_name, currentdata_name],
+                           	     sfac, ls, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres,
+				     maxdiff, minang, maxres_solve, eps, noisy);
+  getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
 
 where ``parameter_name`` is the name of the model datum representing
-:math:`\lambda`, ``ls`` is the name of the solver to be used for the linear
-systems incorporated in the process (e.g.
-``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``),
-``sfac`` represents the scale factor :math:`\kappa`, the integers ``maxit`` and
-``thrit`` stand for the maximal number of iterations allowed in the correction
-and :math:`l_{\mathrm{thr}}`, respectively, the real numbers ``maxres``,
-``maxdiff``, ``minang``, ``h_init``, ``h_max``, ``h_min``, ``h_inc``, ``h_dec``,
-``eps``, ``maxres_solve`` denote :math:`\varepsilon`, :math:`\varepsilon'`,
-:math:`\vartheta_{\mathrm{min}}`, :math:`h_{\mathrm{init}}`,
-:math:`h_{\mathrm{max}}`, :math:`h_{\mathrm{min}}`, :math:`h_{\mathrm{inc}}`,
-:math:`h_{\mathrm{dec}}`, :math:`\epsilon` and the target residual value for the
-linear systems to be solved, and the non-negative integer ``noisy`` determines
+:math:`\lambda`, ``sfac`` represents the scale factor :math:`\kappa`, ``ls`` is
+the name of the solver to be used for the linear systems incorporated in the
+process (e.g., ``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``),
+the real numbers ``h_init``, ``h_max``, ``h_min``, ``h_inc``, ``h_dec`` denote
+:math:`h_{\mathrm{init}}`, :math:`h_{\mathrm{max}}`, :math:`h_{\mathrm{min}}`,
+:math:`h_{\mathrm{inc}}` and :math:`h_{\mathrm{dec}}`, the
+integers ``maxit`` and ``thrit`` are the maximal number of iterations
+allowed in the correction and :math:`l_{\mathrm{thr}}`, respectively, 
+``maxres``, ``maxdiff``, ``minang``, ``maxres_solve`` and ``eps`` denote
+:math:`\varepsilon`, :math:`\varepsilon'`, :math:`\vartheta_{\mathrm{min}}`,
+the target residual value for the linear systems to be solved, and
+:math:`\epsilon`. Finally, the non-negative integer ``noisy`` determines
 how detailed information has to be displayed in the course of the continuation
 process (the larger value the more details). Under the optional data names
 ``initdata_name`` and ``finaldata_name``, :math:`V^{0}` and :math:`V^{1}`
@@ -166,7 +166,7 @@ the sign of the initial value ``T_lambda``, an initial unit tangent
 
 Consequently, one step of the continuation can be called by ::
 
-  getfem::Moore_Penrose_continuation(s, U, lambda, T_U, T_lambda, h);
+  getfem::Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
 
 After each call, a new point on the solution curve and the corresponding tangent
 are returned in the variables ``U``, ``lambda`` and ``T_U``, ``T_lambda``. Step

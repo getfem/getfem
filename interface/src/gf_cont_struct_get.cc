@@ -67,10 +67,11 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
   
 
     /*@FUNC t = ('init test function', @vec tangent, @scalar tangent_parameter)
-      Initialise the border of the bordered system that serves for calculating
-      the test function. Return the value of test function for the solution
-      and the value of the parameter saved in the corresponding model object
-      and the tangent given by `tangent` and `tangent_parameter`.@*/
+      Initialise the border of the bordered system that serves for
+      calculating the test function. Return the value of the test function
+      for the current point (i.e., the solution and the parameter saved in
+      the corresponding model object) and the tangent given by `tangent` and
+      `tangent_parameter`.@*/
     sub_command
       ("init test function", 2, 2, 0, 1,
 
@@ -86,7 +87,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        scalar_type t_gamma = in.pop().to_scalar();
 
        getfem::init_test_function(*ps, yy, gamma, tt_y, t_gamma);
-       out.pop().from_scalar(ps->tau2());
+       out.pop().from_scalar(ps->get_tau2());
        );
   
 
@@ -125,9 +126,10 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       the tangent given by `tangent` and `tangent_parameter`, and the step
       size `h`, save a new point on the solution curve into the model object,
       and return a new tangent and a step size for the next step. If the
-      returned step size equals zero, the continuation has failed.@*/
+      returned step size equals zero, the continuation has failed.
+      Eventually, return a message.@*/
     sub_command
-      ("Moore-Penrose continuation", 3, 3, 0, 3,
+      ("Moore-Penrose continuation", 3, 3, 0, 4,
 
        size_type nbdof = ps->linked_model().nb_dof();
        std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
@@ -145,16 +147,18 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(tt_y);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
+       if (out.remaining()) out.pop().from_string(ps->get_message().c_str());
        );
 
 
     /*@GET t = ('test function')
       Return the last value of the test function and eventaully all the
-      values calculated when passing through a boundary between different
-      smooth pieces.@*/
+      points and the corresponding values calculated when passing through a
+      boundary between different smooth pieces.@*/
     sub_command
-      ("test function", 0, 0, 0, 2,
-       out.pop().from_scalar(ps->tau2());
+      ("test function", 0, 0, 0, 3,
+       out.pop().from_scalar(ps->get_tau2());
+       if (out.remaining()) out.pop().from_dcvector(ps->get_alpha_hist());
        if (out.remaining()) out.pop().from_dcvector(ps->get_tau_hist());
        );
 

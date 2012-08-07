@@ -374,7 +374,7 @@ namespace getfem {
       gmm::copy(M, AUG_M);
     }
 
-    void clear_character_matrix(void) { resize(CH_M, 0, 0); }
+    void clear_character_matrix(void) { gmm::resize(CH_M, 0, 0); }
     template<typename MAT> void set_character_matrix(const MAT &M) {
       gmm::resize(CH_M, gmm::mat_nrows(M), gmm::mat_ncols(M));
       gmm::copy(M, CH_M);

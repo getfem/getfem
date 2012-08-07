@@ -15,7 +15,7 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 %
-% Simple exemple othe f bifurcation problem: -Delta(u) + u = lambda exp(u)
+% Simple example of the bifurcation problem: -Delta(u) + u = lambda * exp(u)
 %
 % This program is used to check that matlab-getfem is working. This is also
 % a good example of use of GetFEM++.
@@ -27,22 +27,18 @@ lambda = 0;
 direction = 1;
 nbstep = 80;
 
-maxit = 5;
-thrit = 4;
-minang = 0.993;
-maxres_solve = 1.e-7;
-noisy = 'very_noisy'
-
-h_init = 1e-3;
+h_init = 2e-2;
 h_max = 2e-1;
-h_min = 1e-5;
+h_min = 2e-5;
+minang = 0.993;
+noisy = 'noisy'
 
 with_dirichlet = true;
 
 % create a simple cartesian mesh
 m = gf_mesh('cartesian', [0:.1:1]);
 
-% create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
+% create a mesh_fem for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
 % assign the P1 fem to all convexes of the mesh_fem,
 gf_mesh_fem_set(mf, 'classical fem', 1);
@@ -67,11 +63,11 @@ end;
 
 % initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
-S = gf_cont_struct(md, 'lambda', scfac, 'max_iter', maxit, 'thr_iter', thrit, 'min_ang', minang, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min, noisy);
+S = gf_cont_struct(md, 'lambda', scfac, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min, 'min_ang', minang, noisy);
 
 % compute an initial point
 if (noisy) disp('computing initial point\n'); end
-gf_model_get(md, 'solve', noisy, 'max iter', 100, 'max_res', maxres_solve);
+gf_model_get(md, 'solve', noisy, 'max iter', 100);
 [T_U, T_lambda, h] = gf_cont_struct_get(S, 'init Moore-Penrose continuation', direction);
 
 U = gf_model_get(md, 'variable', 'u');

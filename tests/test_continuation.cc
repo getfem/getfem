@@ -55,7 +55,6 @@ struct state_problem {
   getfem::mesh_im mim;       /* the integration method */
   scalar_type lambda;
 
-  std::string datafilename;
   bgeot::md_param PARAM;
 
   bool cont(plain_vector &U);
@@ -78,9 +77,6 @@ void state_problem::init(void) {
   std::vector<getfem::size_type> nsubdiv(1);
   nsubdiv[0] = PARAM.int_value("NX", "Number of the space steps ");
   regular_unit_mesh(mesh, nsubdiv, bgeot::simplex_geotrans(1, 1));
-  
-  datafilename = PARAM.string_value("ROOTFILENAME",
-				    "Base name of data files.");
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE);
@@ -113,25 +109,25 @@ bool state_problem::cont(plain_vector &U) {
   getfem::rmodel_plsolver_type ls =
     getfem::default_linear_solver<getfem::model_real_sparse_matrix,
                                   getfem::model_real_plain_vector>(model);
-  size_type nb_step = int(PARAM.int_value("NBSTEP")),
-    maxit = PARAM.int_value("MAXITER"),
-    thrit = PARAM.int_value("THR_ITER"),
-    nb_dof = mf_u.nb_dof();
-  scalar_type scfac = 1./ nb_dof,
-    maxres = PARAM.real_value("RESIDUAL"),
-    maxdiff = PARAM.real_value("DIFFERENCE"),
-    minang = PARAM.real_value("ANGLE"),
-    h_init = PARAM.real_value("H_INIT"),
+  size_type nb_dof = mf_u.nb_dof();
+  scalar_type scfac = 1./ nb_dof;
+  size_type nb_step = int(PARAM.int_value("NBSTEP"));
+  scalar_type  h_init = PARAM.real_value("H_INIT"),
     h_max = PARAM.real_value("H_MAX"),
     h_min = PARAM.real_value("H_MIN"),
     h_inc = PARAM.real_value("H_INC"),
-    h_dec = PARAM.real_value("H_DEC"),
-    eps = PARAM.real_value("EPSILON"),
-    maxres_solve = PARAM.real_value("RESIDUAL_SOLVE");
+    h_dec = PARAM.real_value("H_DEC");
+  size_type  maxit = PARAM.int_value("MAXITER"),
+    thrit = PARAM.int_value("THR_ITER");
+  scalar_type maxres = PARAM.real_value("RESIDUAL"),
+    maxdiff = PARAM.real_value("DIFFERENCE"),
+    minang = PARAM.real_value("ANGLE"),
+    maxres_solve = PARAM.real_value("RESIDUAL_SOLVE"),
+    eps = PARAM.real_value("EPSILON");
   int noisy = PARAM.int_value("NOISY");
   getfem::cont_struct_getfem_model
-    S(model, "lambda", ls, scfac, maxit, thrit, maxres, maxdiff, minang,
-      h_init, h_max, h_min, h_inc, h_dec, eps, maxres_solve, noisy);
+    S(model, "lambda", scfac, ls, h_init, h_max, h_min, h_inc, h_dec, maxit,
+      thrit, maxres, maxdiff, minang, maxres_solve, eps, noisy);
 
   if (noisy > 0) cout << "computing initial point" << endl;
   gmm::iteration iter(maxres_solve, noisy, 40000);

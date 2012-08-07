@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2011-2011 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2011-2012 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //
@@ -15,7 +15,7 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// Simple example of the bifurcation problem: -Delta(u) + u = lambda exp(u)
+// Simple example of the bifurcation problem: -Delta(u) + u = lambda * exp(u)
 //
 // This program is used to check that scilab-getfem is working. This is also
 // a good example of use of GetFEM++.
@@ -26,26 +26,22 @@ stacksize('max');
 
 if getos()=='Windows' then
   // Under Windows, all the trace messages are available in the dos console
-  // Under Linuxs, all the trace messages are redirected to the Scilab console
+  // Under Linux, all the trace messages are redirected to the Scilab console
   consolebox('on');
 end
-gf_util('trace level',3);
-gf_util('warning level',3);
+gf_util('trace level', 1);
+gf_util('warning level', 3);
 
 gf_workspace('clear all');
 lambda = 0;
 direction = 1;
 nbstep = 80;
 
-maxit = 5;
-thrit = 4;
-minang = 0.993;
-maxres_solve = 1.e-7;
-noisy = 'very_noisy';
-
-h_init = 1e-3;
+h_init = 2e-2;
 h_max = 2e-1;
-h_min = 1e-5;
+h_min = 2e-5;
+minang = 0.993;
+noisy = 'noisy';
 
 // create a simple cartesian mesh
 m = gf_mesh('cartesian', [0:.1:1]);
@@ -63,18 +59,21 @@ md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
-gf_model_set(md, 'add basic nonlinear brick', mim, 'u', 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
+gf_model_set(md, 'add basic nonlinear brick', mim, 'u', ...
+                 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 
 // initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
-S = gf_cont_struct(md, 'lambda', scfac, 'max_iter', maxit, 'thr_iter', thrit, 'min_ang', minang, 'h_init', h_init, 'h_max', h_max, 'h_min', h_min, noisy);
+S = gf_cont_struct(md, 'lambda', scfac, 'h_init', h_init, 'h_max', h_max, ...
+                   'h_min', h_min, 'min_ang', minang, noisy);
 
 // compute an initial point
 if (~isempty(noisy)) then
     printf('computing an initial point\n');
 end
-gf_model_get(md, 'solve', noisy, 'max_iter', 100, 'max_res', maxres_solve);
-[T_U, T_lambda, h] = gf_cont_struct_get(S, 'init Moore-Penrose continuation', direction);
+gf_model_get(md, 'solve', noisy, 'max_iter', 100);
+[T_U, T_lambda, h] ...
+  = gf_cont_struct_get(S, 'init Moore-Penrose continuation', direction);
 
 U = gf_model_get(md, 'variable', 'u');
 tau = gf_cont_struct_get(S, 'test function');
@@ -102,10 +101,11 @@ drawnow;
 for step = 1:nbstep
   //sleep(1000);
   printf('\nbeginning of step %d\n', step);
-  [T_U, T_lambda, h] = gf_cont_struct_get(S, 'Moore-Penrose continuation', T_U, T_lambda, h);
+  [T_U, T_lambda, h] = ...
+    gf_cont_struct_get(S, 'Moore-Penrose continuation', T_U, T_lambda, h);
   if (h == 0) then
     printf('Continuation has failed');
-    break;
+    return
   end
   
   U = gf_model_get(md, 'variable', 'u');
