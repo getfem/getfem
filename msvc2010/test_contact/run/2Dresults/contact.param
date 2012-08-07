@@ -1,0 +1,53 @@
+% This program (test_contact) is used for as a demo of
+% Level set contact functionality in Getfem
+% It simulates a contact betwen a maste and a slave
+% the contact itself occures between the master surface
+% and zero contour of level set function, defined on the slave
+%
+RESIDUAL = 1e-8;
+
+N = 2;
+
+NSTEP = 500;
+
+APPLIED_DISP = -1;
+LS_OFFSET = -0.12;
+%
+%
+% Master contact body
+DIVxM = 4;
+DIVyM = 8;
+DIVzM = 1;
+
+xM = 0.3;
+yM = 0.92;
+zM = 0.1;
+LxM = 0.4;
+LyM = 0.5;
+LzM = 0.1;
+APPROX_ORDER_MASTER = 1;
+LM_INT_TYPE = 'IM_STRUCTURED_COMPOSITE(IM_GAUSS1D(2),4)';
+INT_ORDER_MASTER = 2;
+MESH_TYPE_MASTER = 'QK';
+LAMBDA_MASTER = 110.0;
+MU_MASTER = 70.0;
+%
+%
+% Slave contact body
+DIVxS = 20;
+DIVyS = 
+20;
+DIVzS = 4;
+
+xS = 0;
+yS = 0;
+zS = 0;
+LxS = 1;
+LyS = 1;
+LzS = 0.3;
+APPROX_ORDER_SLAVE = 1;
+INT_ORDER_SLAVE = 2;
+MESH_TYPE_SLAVE = 'QK';
+LAMBDA_SLAVE = 0;
+MU_SLAVE = 7;
+
