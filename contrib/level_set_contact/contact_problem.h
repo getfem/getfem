@@ -1,10 +1,11 @@
 #pragma once
 #include <getfem/getfem_deformable_mesh.h>
+#include <getfem/getfem_models.h>
 
 using getfem::size_type;
 using getfem::scalar_type;
 using bgeot::base_matrix;
-typedef getfem::modeling_standard_plain_vector  plain_vector;
+typedef getfem::model_real_plain_vector  plain_vector;
 
 	enum  {NORTH = 1, EAST = 2, WEST = 3, SOUTH = 4, FRONT = 5, BACK = 6};
 struct contact_problem{

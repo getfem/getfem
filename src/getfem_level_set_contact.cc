@@ -1,20 +1,40 @@
-#include <getfem\level_set_contact.h> 
-#include <getfem\getfem_interpolated_fem.h> 
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+ 
+ Copyright (C) 2012-2012 Andriy Andreykiv
+ 
+ This file is a part of GETFEM++
+ 
+ Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
+===========================================================================*/
+
+#include <getfem/getfem_level_set_contact.h> 
+#include <getfem/getfem_interpolated_fem.h> 
 #include <algorithm>
 #include <getfem/getfem_level_set.h>
 #include <getfem/getfem_mesh_level_set.h>
 #include <getfem/getfem_mesh_im_level_set.h>
 #include <math.h>
 
-
-
 level_set_contact::contact_body::contact_body(model& _md, std::string _var_name):
-var_name(_var_name),
+        var_name(_var_name),
+	is_deformed(false),
 	own_mesh(const_cast<mesh&>(_md.mesh_fem_of_variable(_var_name).
 	linked_mesh())),
 	own_mesh_fem(_md.mesh_fem_of_variable(_var_name)),
-	md(_md),
-	is_deformed(false)
+	md(_md)
 {}
 
 
@@ -52,12 +72,12 @@ level_set_contact::master_contact_body::master_contact_body(
 	model& _md, 
 	const std::string& _var_name,
 	size_type _mult_order, 
-	size_type _mult_mim_order): 
+	size_type _mult_mim_order) : 
 
-contact_body(_md,_var_name),
-	mult_mf_order(_mult_order),
+        contact_body(_md,_var_name),
 	mult_mim_order(_mult_mim_order),
 	mult_int_method(""),
+	mult_mf_order(_mult_order),
 	integration(PER_ELEMENT),
 	regularized_tollerance(0),
 	small_weight_multiplier(0),
@@ -87,9 +107,9 @@ level_set_contact::master_contact_body::master_contact_body(
 	scalar_type _max_contact_angle): 
 
 		contact_body(_md,_var_name),
-		mult_mf_order(_mult_order),
 		mult_mim_order(-1),
 		mult_int_method(_mult_mim_method),
+		mult_mf_order(_mult_order),
 		integration(_integration),
 		regularized_tollerance(_regularized_tollerance),
 		small_weight_multiplier(_small_weight_multiplier),
@@ -112,7 +132,7 @@ const level_set_contact::contact_pair_info&
 	level_set_contact::master_contact_body::get_pair_info(
 	const std::string& slave_var_name) const
 {   
-	std::map<std::string, std::shared_ptr<contact_pair_info>>
+	std::map<std::string, dal::shared_ptr<contact_pair_info> >
 		::const_iterator it = contact_table.find(slave_var_name);
 	if (it!=contact_table.end()) return *(it->second);
 	GMM_ASSERT1(false,"did not find info on slave contact body, \
@@ -123,7 +143,7 @@ level_set_contact::contact_pair_info&
 	level_set_contact::master_contact_body::get_pair_info(
 	const std::string& slave_var_name)
 {   
-	std::map<std::string, std::shared_ptr<contact_pair_info>>
+	std::map<std::string, dal::shared_ptr<contact_pair_info> >
 		::iterator it = contact_table.find(slave_var_name);
 	if (it!=contact_table.end()) return *(it->second);
 	GMM_ASSERT1(false,"did not find info on slave contact body, \
@@ -146,7 +166,7 @@ void level_set_contact::master_contact_body::
 	//check input
 	GMM_ASSERT1(&md==&scb.get_model(),
 		"Model objects of master and slave are not the same");
-	if (assumed_contact_region!=-1) 
+	if (assumed_contact_region!=size_type(-1)) 
 		GMM_ASSERT1(get_mesh().region(assumed_contact_region).is_boundary(),
 		"Assumed_contact_region must be on the boundary");
 
@@ -154,12 +174,12 @@ void level_set_contact::master_contact_body::
 	size_type assumed_contact_elems = free_region_num(get_mesh());
 	getfem::mesh_region& contact_elems = get_mesh().region(assumed_contact_elems);
 	getfem::mesh_region& boundary_elems = get_mesh().region(BOUNDARY_ELEMENTS);
-	std::shared_ptr<getfem::mr_visitor> i;
+	dal::shared_ptr<getfem::mr_visitor> i;
 	getfem::mesh_region outer_faces;
 	outer_faces.clear();
 	getfem::outer_faces_of_mesh(get_mesh(), outer_faces);
 
-	if (assumed_contact_region==-1){ //all faces will be searched for contact
+	if (assumed_contact_region==size_type(-1)){ //all faces will be searched for contact
 		i.reset(new getfem::mr_visitor(outer_faces));
 	}
 	else // only specified faces will be searched
@@ -194,19 +214,19 @@ void level_set_contact::master_contact_body::
 		"_and_"+scb.get_var_name());
 	const mesh_fem &mf_mult = 
 		getfem::classical_mesh_fem(get_mesh(),
-		mult_mf_order, bgeot::dim_type(1));
+		bgeot::dim_type(mult_mf_order), bgeot::dim_type(1));
 	md.add_multiplier(mult_name,mf_mult,get_var_name());
 
 	//adding variable to store level set, projected from the slave
 	const mesh_fem& mf_ls = 
-			getfem::classical_mesh_fem(get_mesh(),mult_mf_order+1);
+	  getfem::classical_mesh_fem(get_mesh(),bgeot::dim_type(mult_mf_order+1));
 	plain_vector LS(mf_ls.nb_dof());
 	md.add_initialized_fem_data("ls_on"+get_var_name()+
 			"_from_"+scb.get_var_name(),mf_ls,LS);
 
 	//register contact pair
 	contact_table[scb.get_var_name()] = 
-		std::shared_ptr<contact_pair_info>
+		dal::shared_ptr<contact_pair_info>
 		(new contact_pair_info(*this,scb,mult_name,assumed_contact_elems)); 
 
 }
@@ -237,7 +257,7 @@ void level_set_contact::master_contact_body::clear_all_contact_history()
 
 void level_set_contact::master_contact_body::clear_contact_history()
 {
-	std::map<std::string, std::shared_ptr<contact_pair_info>>::
+	std::map<std::string, dal::shared_ptr<contact_pair_info> >::
 		iterator it = contact_table.begin();
 	for(;it!=contact_table.end();it++)
 		it->second->clear_contact_history();
@@ -246,7 +266,7 @@ void level_set_contact::master_contact_body::clear_contact_history()
 bool level_set_contact::master_contact_body::master_contact_changed()
 {
 	bool contact_surfaces_changed = false;
-	std::map<std::string, std::shared_ptr<contact_pair_info>>::
+	std::map<std::string, dal::shared_ptr<contact_pair_info> >::
 		iterator it = contact_table.begin();
 	for(;it!=contact_table.end();it++)
 		if (it->second->contact_changed()) 
@@ -255,14 +275,14 @@ bool level_set_contact::master_contact_body::master_contact_changed()
 	return contact_surfaces_changed;
 }
 
-std::shared_ptr<getfem::mesh_im> level_set_contact::master_contact_body::
+dal::shared_ptr<getfem::mesh_im> level_set_contact::master_contact_body::
 	build_mesh_im_on_boundary(size_type region_id)
 {
 
-	std::shared_ptr<getfem::mesh_im> pmim_contact;
+	dal::shared_ptr<getfem::mesh_im> pmim_contact;
 
 		pmim_contact.reset(new mesh_im(get_mesh()));
-		if (mult_mim_order!=-1){
+		if (mult_mim_order!=size_type(-1)){
 			pmim_contact->set_integration_method(
 			get_mesh().region(region_id).index(),contact_mim_order());
 		}
@@ -292,8 +312,8 @@ mcb(_mcb), scb(_scb)
 
 	const modeling_standard_plain_vector& 
 		Umaster=mcb.get_model().real_variable(mcb.get_var_name());
-	size_type dof_check = Umaster.size();
-	size_type node_check = mcb.get_mesh().nb_points();
+	// size_type dof_check = Umaster.size();
+	// size_type node_check = mcb.get_mesh().nb_points();
 	def_master.reset(new getfem::temporary_mesh_deformator<>
 		(mcb.get_mesh(),mcb.get_mesh_fem(),Umaster));
 	mcb.is_deformed=true;
@@ -336,8 +356,8 @@ master_cb(underformed_mcb),
 
 {
 	//input check (if mult_name is incorrect, exception will be generated)
-	const mesh_fem& mf_mult=
-		master_cb.get_model().mesh_fem_of_variable(mult_name);
+	// const mesh_fem& mf_mult=
+	//	master_cb.get_model().mesh_fem_of_variable(mult_name);
 	GMM_ASSERT1(master_cb.get_mesh().
 		region(GIVEN_CONTACT_REGION).index().card()!=0,
 		"provided contact region for contact_pair_info class is empty!!!");
@@ -376,7 +396,7 @@ bool level_set_contact::contact_pair_info::contact_changed()
 	// interpolate the gradient of the level set onto the master surfaces
 	// (this is to obtain the normal direction of the level set)
 	mesh_fem mf_gradient_ls(slave_cb.get_mesh());
-	mf_gradient_ls.set_classical_discontinuous_finite_element(master_cb.mult_mf_order);
+	mf_gradient_ls.set_classical_discontinuous_finite_element(bgeot::dim_type(master_cb.mult_mf_order));
     mesh_fem mf_gradient_ls_vect(mf_gradient_ls);
 	mf_gradient_ls_vect.set_qdim(slave_cb.get_mesh().dim());
 	plain_vector GradLS(mf_gradient_ls.nb_dof()*slave_cb.get_mesh().dim());
@@ -413,14 +433,14 @@ bool level_set_contact::contact_pair_info::contact_changed()
 	bgeot::size_type o;
 	for (o << cc; o != bgeot::size_type(-1); o << cc) {
 		getfem::mesh_fem::ind_dof_ct dof_ls = 
-			mf_scalar.ind_dof_of_element(o);
+			mf_scalar.ind_basic_dof_of_element(o);
 		getfem::mesh_fem::ind_dof_ct dof_lm = 
 			mf_mult.ind_basic_dof_of_element(o);
 
 		//measure the angle between ls countour and the master face
 		face_type face = master_cb.ext_face_of_elem(o);
 		bgeot::base_node unit_face_normal = 
-			master_cb.get_mesh().normal_of_face_of_convex(face.cv,face.f);
+		  master_cb.get_mesh().normal_of_face_of_convex(face.cv,bgeot::dim_type(face.f));
 		unit_face_normal/=gmm::vect_norm2(unit_face_normal);
 		scalar_type cosine_alpha = 0;
 		for (size_type j = 0; j < dof_ls.size(); j++){ 
@@ -446,8 +466,8 @@ bool level_set_contact::contact_pair_info::contact_changed()
 		for (size_type j = 0; j < dof_lm.size(); j++) 
 			LM_sum+=lambda_full[dof_lm[j]];
 
-		const scalar_type TINY = 1e-9;
-		if (LS_extreeme+LM_sum < TINY || alpha > master_cb.max_contact_angle) 
+		const scalar_type TINY_2 = 1e-9;
+		if (LS_extreeme+LM_sum < TINY_2 || alpha > master_cb.max_contact_angle) 
 			master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).sup(o);
 	}
 
@@ -527,9 +547,9 @@ void level_set_contact::contact_pair_info::update() const
 	dal::bit_vector cc = 
 		master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).index();
 	for (dal::bv_visitor icv(cc); !icv.finished(); ++icv){
-		for (size_type j = 0; j < pinterpolated_fem->nb_dof_of_element(icv); 
+		for (size_type j = 0; j < pinterpolated_fem->nb_basic_dof_of_element(icv); 
 			++j) 
-		{index[pinterpolated_fem->ind_dof_of_element(icv)[j]]
+		{index[pinterpolated_fem->ind_basic_dof_of_element(icv)[j]]
 			= ifem_srf->index_of_global_dof(icv, j);}
 	}
 
@@ -603,9 +623,9 @@ md(_md),mcb(_mcb),scb(_scb), given_contact_id(rg)
 
 	//Reduce computation to own MPI region
 	contact_region_id = mcb.get_pair_info(scb.get_var_name()).contact_region();
-	getfem::mesh_region& contact_region = mcb.get_mesh().region(contact_region_id);
-	mcb.get_mesh().intersect_with_mpi_region(contact_region);
-	contact_region_id = contact_region.id(); //probably not needed, but still
+	getfem::mesh_region& contact_region_ = mcb.get_mesh().region(contact_region_id);
+	mcb.get_mesh().intersect_with_mpi_region(contact_region_);
+	contact_region_id = contact_region_.id(); //probably not needed, but still
 
 
 	set_flags("Level set contact brick", 
@@ -619,10 +639,10 @@ md(_md),mcb(_mcb),scb(_scb), given_contact_id(rg)
 
 void level_set_contact::level_set_contact_brick::
 	asm_real_tangent_terms(
-	const model &md, size_type /* ib */,
+	const model &mdd, size_type /* ib */,
 	const model::varnamelist &vl,
-	const model::varnamelist &dl,
-	const model::mimlist &mims,
+	const model::varnamelist &/* dl */,
+	const model::mimlist &/* mims */,
 	model::real_matlist &matl,
 	model::real_veclist &vecl,
 	model::real_veclist &,
@@ -655,7 +675,7 @@ void level_set_contact::level_set_contact_brick::
 	contact_pair_update cp_update(mcb,scb,FULL_UPDATE);
 
 	//extract DOF vectors
-	const plain_vector &LM = md.real_variable(vl[2]);
+	const plain_vector &LM = mdd.real_variable(vl[2]);
 
 	//Assemble Tangent Matrix
 	if (version & model::BUILD_MATRIX ) {
@@ -682,8 +702,8 @@ void level_set_contact::NormalTerm::compute(
 	size_type cv = ctx.convex_num();
 	size_type cv_volume = mcb.ext_face_of_elem(cv).cv;
 	size_type f_volume  = mcb.ext_face_of_elem(cv).f;
-	bgeot::base_node un = mcb.get_mesh().normal_of_face_of_convex(
-		cv_volume, f_volume, ctx.xref());
+	bgeot::base_node un = mcb.get_mesh().normal_of_face_of_convex
+	  (cv_volume, bgeot::short_type(f_volume), ctx.xref());
 	un /= gmm::vect_norm2(un);
 
 	if (version == 1) {
@@ -714,24 +734,24 @@ const bgeot::multi_index& level_set_contact::HFunction::
 	sizes() const {return sizes_;}
 
 void level_set_contact::HFunction::
-	prepare(getfem::fem_interpolation_context& ctx, size_type nl_part) {}
+prepare(getfem::fem_interpolation_context& /*ctx*/, size_type /*nl_part*/) {}
 
 void  level_set_contact::HFunction::compute(getfem::fem_interpolation_context& ctx, 
 	bgeot::base_tensor &t)
 {
 	size_type cv = ctx.convex_num();
-	plain_vector U(lsmf.nb_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(LS_U,gmm::sub_index(lsmf.ind_dof_of_element(cv))),U);
+	plain_vector U(lsmf.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector(LS_U,gmm::sub_index(lsmf.ind_basic_dof_of_element(cv))),U);
 	plain_vector ls_interpolated(1);
 	ctx.pf()->interpolation(ctx,U,ls_interpolated,1);
 	t[0] = hRegularized(ls_interpolated[0],m_Epsilon,small_h);
 } 
 
 bgeot::scalar_type level_set_contact::HFunction::
-	hRegularized(scalar_type f, scalar_type epsilon, scalar_type small_h)
+	hRegularized(scalar_type f, scalar_type epsilon, scalar_type small_h_)
 {
 	if (f>epsilon) return 1.0;
-	if (f<(-epsilon)) return small_h;
+	if (f<(-epsilon)) return small_h_;
 	return 0.5+0.125*(9.0*f/(epsilon)-5.0*pow(f/(epsilon),3));
 }
 
@@ -740,9 +760,9 @@ level_set_contact::Unity::Unity(const mesh_fem &mf_):mf(mf_),sizes_(1)
 {sizes_[0]=1;}
 const bgeot::multi_index& level_set_contact::Unity::sizes() const {return sizes_;}
 void level_set_contact::Unity::
-	prepare(getfem::fem_interpolation_context& ctx, size_type nl_part) {}
+prepare(getfem::fem_interpolation_context& /*ctx*/, size_type /*nl_part*/) {}
 void level_set_contact::Unity::
-	compute(getfem::fem_interpolation_context& ctx, bgeot::base_tensor &t){t[0]=1.0;}
+compute(getfem::fem_interpolation_context& /*ctx*/, bgeot::base_tensor &t){t[0]=1.0;}
 
 
 void level_set_contact::

@@ -14,7 +14,7 @@
 
 
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 
 	GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
@@ -33,18 +33,18 @@ void main(int argc, char *argv[])
 		//must use set_classical_finite_element
 		// for the master, so that it has "auto_add" feature
 		// contact algorithm will fail otherwise
-		mf_master.set_classical_finite_element(p.app_order_master);
+		mf_master.set_classical_finite_element(bgeot::dim_type(p.app_order_master));
 		mf_master.set_qdim(p.mesh_master.dim());
 		getfem::mesh_fem mf_slave(p.mesh_slave);
 		//set_classical_finite_element is not mandatory for slaves
-		mf_slave.set_classical_finite_element(p.app_order_slave);
+		mf_slave.set_classical_finite_element(bgeot::dim_type(p.app_order_slave));
 		mf_slave.set_qdim(p.mesh_slave.dim());
 
 		//mims
 		getfem::mesh_im mim_master(p.mesh_master);
-		mim_master.set_integration_method(p.mesh_master.convex_index(),p.int_order_master);
+		mim_master.set_integration_method(p.mesh_master.convex_index(),bgeot::dim_type(p.int_order_master));
 		getfem::mesh_im mim_slave(p.mesh_slave);
-		mim_slave.set_integration_method(p.mesh_slave.convex_index(),p.int_order_slave);
+		mim_slave.set_integration_method(p.mesh_slave.convex_index(),bgeot::dim_type(p.int_order_slave));
 
 		//variables
 		model.add_fem_variable("U_master",mf_master);
@@ -66,26 +66,32 @@ void main(int argc, char *argv[])
 
 		//Fixed Dirichlet on slaves bottom
 		getfem::add_Dirichlet_condition_with_multipliers(model,mim_slave,
-			"U_slave",p.app_order_slave,SOUTH);
+								 "U_slave",bgeot::dim_type(p.app_order_slave),SOUTH);
 
 		//normal Dirichet's on all vertical wals of the master and the slave
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_master,"U_master",
-			p.app_order_master,EAST);
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_master,"U_master",
-			p.app_order_master,WEST);
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_slave,"U_slave",
-			p.app_order_slave,EAST);
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_slave,"U_slave",
-			p.app_order_slave,WEST);
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model,mim_master,"U_master",
+		   bgeot::dim_type(p.app_order_master),EAST);
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model,mim_master,"U_master",
+		   bgeot::dim_type(p.app_order_master),WEST);
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model,mim_slave,"U_slave",
+		   bgeot::dim_type(p.app_order_slave),EAST);
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model,mim_slave,"U_slave",
+		   bgeot::dim_type(p.app_order_slave),WEST);
 		if (p.model_dim==3){
 			getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_master,"U_master",
-				p.app_order_master,FRONT);
+										bgeot::dim_type(p.app_order_master),FRONT);
 			getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_master,"U_master",
-				p.app_order_master,BACK);
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_slave,"U_slave",
-			p.app_order_slave,FRONT);
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,mim_slave,"U_slave",
-			p.app_order_slave,BACK);
+										bgeot::dim_type(p.app_order_master),BACK);
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model,mim_slave,"U_slave",
+		   bgeot::dim_type(p.app_order_slave),FRONT);
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model,mim_slave,"U_slave",
+		   bgeot::dim_type(p.app_order_slave),BACK);
 
 		}
 
@@ -93,8 +99,8 @@ void main(int argc, char *argv[])
 		// it gives the actual movement of the model
 		bgeot::base_vector moving_dirichlet(1); moving_dirichlet[0]=0;
 		model.add_initialized_fixed_size_data("moving_dirichlet",moving_dirichlet);
-		getfem::add_normal_Dirichlet_condition_with_multipliers(model,
-			mim_master,"U_master",p.app_order_master,NORTH,"moving_dirichlet");
+		getfem::add_normal_Dirichlet_condition_with_multipliers
+		  (model, mim_master,"U_master",bgeot::dim_type(p.app_order_master),NORTH,"moving_dirichlet");
 
 
 
@@ -161,6 +167,8 @@ void main(int argc, char *argv[])
 	}
 
 	GMM_STANDARD_CATCH_ERROR;
-	system("PAUSE");
+	// system("PAUSE");
+
+	return 0;
 
 }

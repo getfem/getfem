@@ -19,7 +19,7 @@ gf_workspace('clear all');
 clear all;
 
 lambda = 1.; mu = 1.;   % Elasticity parameters
-r = 1.0;                % Augmentation parameter
+r = 0.1;                % Augmentation parameter
 f_coeff = 1.;           % Friction coefficient
 vf = 0.01;                % Vertical force
 penalty_parameter = 0.1;
@@ -97,13 +97,12 @@ end;
 
 gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y');
 
-% gf_model_get(md, 'test tangent matrix', 1E-6, 10, 0.00001);
-
 
 
 for i=1:100
 
-   
+% gf_model_get(md, 'test tangent matrix', 1E-6, 10, 0.0001);
+ 
     
 gf_model_get(md, 'solve', 'noisy', 'max_iter', 50, 'max_res', 1e-8); % , 'lsearch', 'simplest');
 

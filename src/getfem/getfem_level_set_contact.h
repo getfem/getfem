@@ -1,24 +1,55 @@
-/**@file Level_set_contact.h
-@author  Andriy Andreykiv, <andriy.andreykiv@gmail.com>
-@date July, 2012.
-@brief Non frictional level set based large sliding contact;
-for details see: 
-A. Andreykiv et al. A level set based large sliding contact
-algorithm for an easy analysis of implant positioning 
-2012 International Journal for Numerical Methods in Engineering, 
-89, pp. 1317-1336
-2D and 3D Examples of the usage: test_contact.cpp
-*/
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+ 
+ Copyright (C) 2012-2012 Andriy Andreykiv
+ 
+ This file is a part of GETFEM++
+ 
+ Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+ 
+===========================================================================*/
+
+/** @file getfem_level_set_contact.h
+    @author "Andriy Andreykiv" <andriy.andreykiv@gmail.com>
+    @date July, 2012.
+    @brief Non frictional level set based large sliding contact;
+      for details see: 
+      A. Andreykiv et al. A level set based large sliding contact
+      algorithm for an easy analysis of implant positioning 
+      2012 International Journal for Numerical Methods in Engineering, 
+      89, pp. 1317-1336
+      2D and 3D Examples of the usage: test_contact.cpp
+ */
+
 
 #pragma once
-#include <getfem/getfem_modeling.h>
+// #include <string>
+// #include <memory>
+// #include <map>
 #include <getfem/getfem_models.h>
 #include <getfem/getfem_model_solvers.h>
-#include <string>
-#include <memory>
-#include <map>
-#include <getfem/deformable_mesh.h>
-#include <gmm\gmm_except.h>
+#include <getfem/getfem_deformable_mesh.h>
+#include <gmm/gmm_except.h>
 
 namespace level_set_contact {
 
@@ -159,12 +190,12 @@ namespace level_set_contact {
 		dal::bit_vector old_contact_elm_list;
 		dal::bit_vector pre_old_ct_list;
 		size_type ACTIVE_CONTACT_REGION;
-		mutable std::shared_ptr<mesh_im> pmim_contact;
+		mutable dal::shared_ptr<mesh_im> pmim_contact;
 		mutable getfem::pfem ifem_srf;
-		mutable std::shared_ptr<mesh_fem> pinterpolated_fem;
-		mutable std::shared_ptr<mesh_fem> pinterpolated_fem_U;
-		mutable std::shared_ptr<gmm::unsorted_sub_index> slave_ls_dofs;
-		mutable std::shared_ptr<gmm::unsorted_sub_index> slave_U_dofs;
+		mutable dal::shared_ptr<mesh_fem> pinterpolated_fem;
+		mutable dal::shared_ptr<mesh_fem> pinterpolated_fem_U;
+		mutable dal::shared_ptr<gmm::unsorted_sub_index> slave_ls_dofs;
+		mutable dal::shared_ptr<gmm::unsorted_sub_index> slave_U_dofs;
 		mutable size_type n_integrated_elems;
 
 		// state of the object
@@ -264,7 +295,7 @@ namespace level_set_contact {
 		size_type BOUNDARY_ELEMENTS, VOLUME_ELEMENTS;
 		std::vector<size_type> face_to_belem_ind;
 		static std::vector<master_contact_body*> masters;
-		std::map<std::string, std::shared_ptr<contact_pair_info>> contact_table;
+		std::map<std::string, dal::shared_ptr<contact_pair_info> > contact_table;
 		std::map<size_type,face_type> border_faces;
 
 	protected:
@@ -337,19 +368,20 @@ namespace level_set_contact {
 		/** order of integration of boundary contact terms*/
 		inline size_type contact_mim_order() const 
 		{
-			GMM_ASSERT1(mult_mim_order!=-1,"master body was not created with \
-										   order of integration for contact area" );
-			return mult_mim_order;
+		  GMM_ASSERT1(mult_mim_order!=size_type(-1),
+			      "master body was not created with "					      "order of integration for contact area");
+		  return mult_mim_order;
 		}
 
 		/** integration method on the contact surface, 
 		* use it when the master is created with a specific
 		* integration method and not the approx_order*/
-		inline getfem::pintegration_method& contact_int_method() const 
-		{
-			GMM_ASSERT1(mult_mim_order==-1,"master body was not created with \
-										   integration method for contact area" );
-			return getfem::int_method_descriptor(mult_int_method);
+		inline getfem::pintegration_method contact_int_method() const
+	        {
+		  GMM_ASSERT1(mult_mim_order==size_type(-1),
+			      "master body was not created with integration "
+			      "method for contact area");
+		  return getfem::int_method_descriptor(mult_int_method);
 		}
 
 		/** region of all volume elements without the boundary*/
@@ -389,7 +421,7 @@ namespace level_set_contact {
 
 		/** return a pointer to mesh_im used for contact surface calculations
 		*/
-		std::shared_ptr<mesh_im> build_mesh_im_on_boundary(
+		dal::shared_ptr<mesh_im> build_mesh_im_on_boundary(
 			size_type region);
 
 		/**gives a face, corresponding to newly created 
@@ -408,14 +440,14 @@ namespace level_set_contact {
 	/**temporary object that updates contact pair, 
 	deformes meshes and undeformes when it selfdestructs*/
 	class contact_pair_update{
-		std::shared_ptr<getfem::temporary_mesh_deformator<>> def_master;
-		std::shared_ptr<getfem::temporary_mesh_deformator<>> def_slave;
+		dal::shared_ptr<getfem::temporary_mesh_deformator<> > def_master;
+		dal::shared_ptr<getfem::temporary_mesh_deformator<> > def_slave;
 		master_contact_body& mcb;
 		slave_contact_body& scb;
 	public:
 		contact_pair_update(master_contact_body& _mcb,
-			slave_contact_body& _scb,
-			update_depth ud = FULL_UPDATE);
+				    slave_contact_body& _scb,
+				    update_depth ud = FULL_UPDATE);
 
 		~contact_pair_update();
 	};
@@ -492,9 +524,9 @@ namespace level_set_contact {
 
 		NormalTerm(const master_contact_body& _mcb, size_type version_ = 1) :
 		  mcb(_mcb),
-			  version(version_),
-			  dim(_mcb.get_mesh().dim()),
-			  sizes_(version_) {
+		  sizes_(version_),
+		  version(version_),
+		  dim(_mcb.get_mesh().dim()) {
 
 				  GMM_ASSERT1(dim==2 || dim==3, "NormalTerm: wrong space dimension ");
 				  GMM_ASSERT1(version==1 || version==2,"NormalTerm:: wrong version ");
@@ -516,7 +548,7 @@ namespace level_set_contact {
 		  }
 		  const bgeot::multi_index &sizes() const {return sizes_;};
 		  void compute(getfem::fem_interpolation_context& ctx, bgeot::base_tensor &t);
-		  void prepare(getfem::fem_interpolation_context& ctx, size_type nl_part) {}
+	          void prepare(getfem::fem_interpolation_context& /* ctx */, size_type /* nl_part */) {}
 
 	};
 
@@ -604,7 +636,7 @@ namespace level_set_contact {
 		NormalTerm R_matrix(mcb,2);
 
 		//nonlinear term that describes regularized integration or dummy (unity) multiplier
-		std::shared_ptr<getfem::nonlinear_elem_term> integration=0;
+		dal::shared_ptr<getfem::nonlinear_elem_term> integration(0);
 		if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET){
 			integration.reset(new HFunction(mf_master_ls,mcb.get_model().real_variable(ls_name),
 				mcb.regularized_tollerance,mcb.small_weight_multiplier));
@@ -707,7 +739,7 @@ namespace level_set_contact {
 		NormalTerm R_matrix(mcb,2);
 
 		//nonlinear term that describes regularized integration or dummy (unity) multiplier
-		std::shared_ptr<getfem::nonlinear_elem_term> integration=0;
+		dal::shared_ptr<getfem::nonlinear_elem_term> integration(0);
 		if (mcb.integration==master_contact_body::REGULARIZED_LEVEL_SET){
 			integration.reset(new HFunction(mf_master_ls,mcb.get_model().real_variable(ls_name),
 				mcb.regularized_tollerance,mcb.small_weight_multiplier));

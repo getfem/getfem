@@ -1081,6 +1081,7 @@ AC_CONFIG_FILES(\
 	contrib/crack_plate/Makefile \
 	contrib/inter_element_test/Makefile \
 	contrib/aposteriori/Makefile \
+	contrib/level_set_contact/Makefile \
 	contrib/static_contact_gears/Makefile \
 	bin/Makefile \
 	interface/Makefile \

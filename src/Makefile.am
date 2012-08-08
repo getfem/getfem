@@ -142,7 +142,9 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_plasticity.h                	\
 	getfem/getfem_continuation.h                    \
 	getfem/getfem_mesher.h                          \
-	getfem/getfem_convect.h                    	
+	getfem/getfem_convect.h                    	\
+	getfem/getfem_deformable_mesh.h                        \
+	getfem/getfem_level_set_contact.h                   	
 
 SRC =                                      		\
 	dal_backtrace.cc                   		\
@@ -203,8 +205,10 @@ SRC =                                      		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
 	getfem_contact_and_friction_nodal.cc		\
-	getfem_contact_and_friction_integral.cc	\
-	getfem_plasticity.cc				
+	getfem_contact_and_friction_integral.cc	        \
+	getfem_plasticity.cc				\
+	getfem_deformable_mesh.cc				\
+	getfem_level_set_contact.cc
 #	getfem_enumeration_dof_para.cc
 
 lib_LTLIBRARIES = libgetfem.la

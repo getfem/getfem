@@ -1,10 +1,46 @@
-#pragma once
-#include <getfem\getfem_mesh.h>
-#include <getfem/getfem_mesh_fem.h>
-#include <getfem\getfem_modeling.h>
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+ 
+ Copyright (C) 2012-2012 Andriy Andreykiv
+ 
+ This file is a part of GETFEM++
+ 
+ Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+ 
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+ 
+===========================================================================*/
 
-namespace getfem
-{
+/** @file getfem_deformable_mesh.h
+    @author "Andriy Andreykiv" <andriy.andreykiv@gmail.com>
+    @date August 7, 2012.
+    @brief This is a normal mesh, whith one extra method, allowing to displace points.
+ */
+
+#pragma once
+#include <getfem/getfem_mesh.h>
+#include <getfem/getfem_mesh_fem.h>
+#include <getfem/getfem_models.h>
+
+namespace getfem {
 
 	template<class VECTOR> class temporary_mesh_deformator;
 
@@ -30,40 +66,41 @@ namespace getfem
 		@param &mf mesh_fem object that corresponds to &U, should be compatible with the mesh
 		*/
 		template<typename VEC>
-		void deform_mesh(VEC &dU, const mesh_fem& mf)
+		void deform_mesh(const VEC &dU, const mesh_fem& mf)
 		{   
-			PT_TAB& pts = points();
-			size_type dim = pts.dim();
+			PT_TAB& ppts = points();
+			size_type ddim = ppts.dim();
 
 			GMM_ASSERT1((&mf.linked_mesh())==this,"in deform_mesh mf should be defined on the same mesh");
 
-			GMM_ASSERT1(mf.get_qdim() == dim, 
+			GMM_ASSERT1(mf.get_qdim() == ddim, 
 				"input mesh_fem and the mesh dim are not compatible");
-			GMM_ASSERT1(mf.nb_dof() == this->nb_points()*dim,
+			GMM_ASSERT1(mf.nb_dof() == this->nb_points()*ddim,
 				"mesh_fem should be isoparametric to the mesh, with qdim == mesh dim");
 			dal::bit_vector conv_indices = mf.convex_index(); 
 			//this vector will track if a point can be deformed
-			std::vector<bool> deform_pt_flag(pts.size(), true);
+			std::vector<bool> deform_pt_flag(ppts.size(), true);
 			size_type cv;
 			for(cv << conv_indices; 
 				cv!=bgeot::size_type(-1); cv << conv_indices) 
 			{
 				getfem::mesh::ind_cv_ct pt_index
 					=  mf.linked_mesh().ind_points_of_convex(cv);
-				getfem::mesh_fem::ind_dof_ct dof=mf.ind_dof_of_element(cv);
+				getfem::mesh_fem::ind_dof_ct dof=mf.ind_basic_dof_of_element(cv);
 				bgeot::size_type num_points = 
 					mf.linked_mesh().structure_of_convex(cv)->nb_points(); 
 				for(size_type pt = 0; pt < num_points; ++pt) 
 				{ 
 					/** iterate through each components of point [pt]and deform the component*/
 					if(deform_pt_flag[pt_index[pt]])
-						for (size_type comp = 0; comp < dim; ++comp)
+						for (size_type comp = 0; comp < ddim; ++comp)
 							//move pts by dU;
-							pts[pt_index[pt]][comp] += dU[dof[pt*dim + comp]];
+							ppts[pt_index[pt]][comp] += dU[dof[pt*ddim + comp]];
 
 					//flag current [pt] to deformed
 					deform_pt_flag[pt_index[pt]] = false;
 				}
+				ppts.resort();
 			}
 		}
 
@@ -85,9 +122,9 @@ namespace getfem
 		deformable_mesh& m;
 	public:
 		temporary_mesh_deformator(const mesh& _m, const mesh_fem &_mf, const VECTOR &_dU) : 
-		  m(make_deformable_mesh(_m)), 
+		  dU(_dU),
 		  mf(_mf), 
-		  dU(_dU) 
+		  m(make_deformable_mesh(_m))
 		  {m.deform_mesh(dU,mf);}
 
 		  ~temporary_mesh_deformator(){
