@@ -144,7 +144,7 @@ for i in range(100):
    # axis([-2, 2, -0.2, 3])
    # pause(1)
 
-   vf = vf + 0.001;
+   vf = vf + 0.01;
    md.set_variable('data1', [0,-vf]);
    md.set_variable('data2', [0,-vf]);
 

@@ -2458,7 +2458,7 @@ namespace getfem {
 
   // Experimental implementation of contact condition with Nitsche method.
   // To be deleted when a more general implementation will be designed.
-  
+
   void contact_nitsche_nonlinear_term::adjust_tensor_size(void) {
     sizes_.resize(4); sizes_[0] = sizes_[1] = sizes_[2] = sizes_[3] = N;
     switch (option) {
@@ -2470,8 +2470,8 @@ namespace getfem {
     lnt.resize(N); lt.resize(N); ut.resize(N); no.resize(N); n.resize(N);
     aux1.resize(1); auxN.resize(N); V.resize(N);
     gmm::resize(GP, N, N);
-  }   
-    
+  }
+
 
   void contact_nitsche_nonlinear_term::compute
   (fem_interpolation_context &/* ctx */, bgeot::base_tensor &t) {
@@ -2661,7 +2661,7 @@ namespace getfem {
 
 
 
-  
+
 
 
   struct Nitsche_contact_rigid_obstacle_brick : public virtual_brick {
@@ -2728,16 +2728,16 @@ namespace getfem {
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Nitsche contact with rigid obstacle tangent term");
         gmm::clear(matl[0]);
-	asm_Nitsche_contact_rigid_obstacle_tangent_matrix
-	  (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
-	   vr[0], vlambda[0], vmu[0], rg, option);
+        asm_Nitsche_contact_rigid_obstacle_tangent_matrix
+          (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
+           vr[0], vlambda[0], vmu[0], rg, option);
       }
 
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
-	asm_Nitsche_contact_rigid_obstacle_rhs
-	  (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
-	   vr[0], vlambda[0], vmu[0], rg, option);
+        asm_Nitsche_contact_rigid_obstacle_rhs
+          (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
+           vr[0], vlambda[0], vmu[0], rg, option);
       }
 
     }
@@ -3222,7 +3222,7 @@ namespace getfem {
     // ----------------------------------------------------------
 
     it = bset.begin();
-    std::vector<base_node> y0s, y0_refs;
+    std::vector<base_node> y0s;
     std::vector<base_small_vector> n0_y0s;
     std::vector<scalar_type> d0s;
     std::vector<scalar_type> d1s;
@@ -3233,11 +3233,11 @@ namespace getfem {
       size_type cv_y0 = ind_of_elements[(*it)->id];
       short_type face_y0 = short_type(face_of_elements[(*it)->id]);
       const mesh_fem &mfu_y0 = cf.mfu_of_boundary(boundary_num_y0);
-      pfem pf_s = mfu_y0.fem_of_element(cv_y0);
+      pfem pf_s_y0 = mfu_y0.fem_of_element(cv_y0);
       const model_real_plain_vector &U_y0
         = cf.disp_of_boundary(boundary_num_y0);
-      const mesh &m = mfu_y0.linked_mesh();
-      bgeot::pgeometric_trans pgt_y0 = m.trans_of_convex(cv_y0);
+      const mesh &m_y0 = mfu_y0.linked_mesh();
+      bgeot::pgeometric_trans pgt_y0 = m_y0.trans_of_convex(cv_y0);
       bgeot::pconvex_structure cvs_y0 = pgt_y0->structure();
 
       // Find an interior point (in order to promote the more interior
@@ -3262,17 +3262,17 @@ namespace getfem {
         itdof = mfu_y0.ind_basic_dof_of_element(cv_y0).begin();
       for (size_type k = 0; k < cvnbdof_y0; ++k, ++itdof)
         coeff[k] = U_y0[*itdof];
-      // if (pf_s->need_G())
+      // if (pf_s_y0->need_G())
       bgeot::vectors_to_base_matrix
         (G, mfu_y0.linked_mesh().points_of_convex(cv_y0));
 
-      fem_interpolation_context ctx_y0(pgt_y0, pf_s, y0_ref, G, cv_y0,
+      fem_interpolation_context ctx_y0(pgt_y0, pf_s_y0, y0_ref, G, cv_y0,
                                        size_type(-1));
 
       size_type newton_iter = 0;
       for(;;) { // Newton algorithm to invert geometric transformation
 
-        pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
+        pf_s_y0->interpolation(ctx_y0, coeff, val, dim_type(N));
         val += ctx_y0.xreal() - x;
         scalar_type init_res = gmm::vect_norm2(val);
 
@@ -3289,10 +3289,8 @@ namespace getfem {
           }
         }
 
-        pf_s->interpolation_grad(ctx_y0, coeff, grad, dim_type(N));
-
+        pf_s_y0->interpolation_grad(ctx_y0, coeff, grad, dim_type(N));
         gmm::add(gmm::identity_matrix(), grad);
-
         gmm::mult(grad, ctx_y0.K(), gradtot);
 
         std::vector<int> ipvt(N);
@@ -3306,7 +3304,7 @@ namespace getfem {
         for (alpha = 1; alpha >= 1E-5; alpha/=scalar_type(2)) {
 
           ctx_y0.set_xref(y0_ref - alpha*h);
-          pf_s->interpolation(ctx_y0, coeff, val, dim_type(N));
+          pf_s_y0->interpolation(ctx_y0, coeff, val, dim_type(N));
           val += ctx_y0.xreal() - x;
 
           if (gmm::vect_norm2(val) < init_res) { ok = true; break; }
@@ -3337,8 +3335,8 @@ namespace getfem {
         if (gmm::abs(d1) < gmm::abs(d0)) d1 = d0;
       } else d1 = d0;
 
-//       size_type iptf = m.ind_points_of_face_of_convex(cv_y0, face_y0)[0];
-//       base_node ptf = x0 - m.points()[iptf];
+//       size_type iptf = m_y0.ind_points_of_face_of_convex(cv_y0, face_y0)[0];
+//       base_node ptf = x0 - m_y0.points()[iptf];
 //       scalar_type d2 = gmm::vect_sp(ptf, n0_y0) / gmm::vect_norm2(n0_y0);
 
       if (noisy) cout << "gmm::vect_norm2(n0_y0) = " << gmm::vect_norm2(n0_y0) << endl;
@@ -3347,7 +3345,7 @@ namespace getfem {
       if (noisy) cout << "n = " << n << " unit_normal_of_elements[(*it)->id] = " << unit_normal_of_elements[(*it)->id] << endl;
 
       if (d0 < scalar_type(0)
-          && ((&(U_y0) == &U
+          && ((&U_y0 == &U
                && (gmm::vect_dist2(y0, x0) < gmm::abs(d1)*scalar_type(3)/scalar_type(4)))
               || gmm::abs(d1) > 0.05)) {
         if (noisy)  cout << "Eliminated x0 = " << x0 << " y0 = " << y0
@@ -3364,7 +3362,6 @@ namespace getfem {
 //       }
 
       y0s.push_back(ctx_y0.xreal()); // useful ?
-      y0_refs.push_back(y0_ref);
       elt_nums.push_back((*it)->id);
       d0s.push_back(d0);
       d1s.push_back(d1);
@@ -3386,7 +3383,7 @@ namespace getfem {
     base_small_vector grad_obs(N);
 
     size_type ibound = size_type(-1);
-    for (size_type k = 0; k < y0_refs.size(); ++k)
+    for (size_type k = 0; k < y0s.size(); ++k)
       if (d1s[k] < d1) { d0 = d0s[k]; d1 = d1s[k]; ibound = k; state = 1; }
 
 
@@ -3426,17 +3423,17 @@ namespace getfem {
       if (version & model::BUILD_MATRIX) cout << " MATRIX";
     }
     if (state == 1) {
-      size_type nbo = boundary_of_elements[elt_nums[ibound]];
-      const mesh_fem &mfu_y0 = cf.mfu_of_boundary(nbo);
-      const mesh &m = mfu_y0.linked_mesh();
-      size_type icv = ind_of_elements[elt_nums[ibound]];
+      size_type boundary_num_y0 = boundary_of_elements[elt_nums[ibound]];
+      const mesh_fem &mfu_y0 = cf.mfu_of_boundary(boundary_num_y0);
+      const mesh &m_y0 = mfu_y0.linked_mesh();
+      size_type cv_y0 = ind_of_elements[elt_nums[ibound]];
 
       if (noisy) cout << " y0 = " << y0s[ibound] << " of element "
-                            << icv  << " of boundary " << nbo << endl;
-      for (size_type k = 0; k < m.nb_points_of_convex(icv); ++k)
+                            << cv_y0  << " of boundary " << boundary_num_y0 << endl;
+      for (size_type k = 0; k < m_y0.nb_points_of_convex(cv_y0); ++k)
         if (noisy) cout << "point " << k << " : "
-                        << m.points()[m.ind_points_of_convex(icv)[k]] << endl;
-      if (nbo == 0 && boundary_num == 0 && d0 < 0.0 && (version & model::BUILD_MATRIX)) GMM_ASSERT1(false, "oups");
+                        << m_y0.points()[m_y0.ind_points_of_convex(cv_y0)[k]] << endl;
+      if (boundary_num_y0 == 0 && boundary_num == 0 && d0 < 0.0 && (version & model::BUILD_MATRIX)) GMM_ASSERT1(false, "oups");
     }
     if (noisy) cout << " d0 = " << d0 << endl;
 
@@ -3609,7 +3606,7 @@ namespace getfem {
                             Melem, mfl, cv, mfu_y0, cv_y0);
         }
 
-	if (0) {
+        if (0) {
 
         // Tangent term \int d_0(\nabla P)(dn/du)(\delta u).\mu
         gmm::resize(Melem, cvnbdofl, cvnbdofu); gmm::clear(Melem);
@@ -3652,6 +3649,7 @@ namespace getfem {
       }
       }
     }
+
     return true;
   }
 
