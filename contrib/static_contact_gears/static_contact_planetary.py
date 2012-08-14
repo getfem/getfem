@@ -52,6 +52,8 @@ Mu = 0.83e5
 qdim = 2
 degree = 1
 
+contact_algo = 0
+
 # displacement meshfems
 mfu_1 = MeshFem(m_1, qdim)
 mfu_2 = MeshFem(m_2, qdim)
@@ -176,6 +178,28 @@ m_p3.set_region(RG_CONTACT_p3_2, m_p3.region(500013+100*1))
 m_p3.set_region(RG_CONTACT_p3_2, m_p3.region(500013+100*2))
 m_p3.set_region(RG_CONTACT_p3_2, m_p3.region(500013+100*3))
 
+if contact_algo != 0:
+   RG_CONTACT_TOTAL_1 = 16
+   RG_CONTACT_TOTAL_2 = 26
+   RG_CONTACT_TOTAL_p1 = 33
+   RG_CONTACT_TOTAL_p2 = 43
+   RG_CONTACT_TOTAL_p3 = 53
+   m_1.set_region(RG_CONTACT_TOTAL_1, m_1.region(RG_CONTACT_1_p1))
+   m_1.set_region(RG_CONTACT_TOTAL_1, m_1.region(RG_CONTACT_1_p2))
+   m_1.set_region(RG_CONTACT_TOTAL_1, m_1.region(RG_CONTACT_1_p3))
+   m_2.set_region(RG_CONTACT_TOTAL_2, m_2.region(RG_CONTACT_2_p1))
+   m_2.set_region(RG_CONTACT_TOTAL_2, m_2.region(RG_CONTACT_2_p2))
+   m_2.set_region(RG_CONTACT_TOTAL_2, m_2.region(RG_CONTACT_2_p3))
+   m_p1.set_region(RG_CONTACT_TOTAL_p1, m_p1.region(RG_CONTACT_p1))
+   m_p1.set_region(RG_CONTACT_TOTAL_p1, m_p1.region(RG_CONTACT_p1_1))
+   m_p1.set_region(RG_CONTACT_TOTAL_p1, m_p1.region(RG_CONTACT_p1_2))
+   m_p2.set_region(RG_CONTACT_TOTAL_p2, m_p2.region(RG_CONTACT_p2))
+   m_p2.set_region(RG_CONTACT_TOTAL_p2, m_p2.region(RG_CONTACT_p2_1))
+   m_p2.set_region(RG_CONTACT_TOTAL_p2, m_p2.region(RG_CONTACT_p2_2))
+   m_p3.set_region(RG_CONTACT_TOTAL_p3, m_p3.region(RG_CONTACT_p3))
+   m_p3.set_region(RG_CONTACT_TOTAL_p3, m_p3.region(RG_CONTACT_p3_1))
+   m_p3.set_region(RG_CONTACT_TOTAL_p3, m_p3.region(RG_CONTACT_p3_2))
+
 # model definition
 model=Model('real')
 model.add_fem_variable('u_1', mfu_1)
@@ -184,13 +208,22 @@ model.add_fem_variable('u_p1', mfu_p1)
 model.add_fem_variable('u_p2', mfu_p2)
 model.add_fem_variable('u_p3', mfu_p3)
 
-model.add_initialized_data('lambda', Lambda)
-model.add_initialized_data('mu', Mu)
-model.add_isotropic_linearized_elasticity_brick(mim_1, 'u_1', 'lambda', 'mu')
-model.add_isotropic_linearized_elasticity_brick(mim_2, 'u_2', 'lambda', 'mu')
-model.add_isotropic_linearized_elasticity_brick(mim_p1, 'u_p1', 'lambda', 'mu')
-model.add_isotropic_linearized_elasticity_brick(mim_p2, 'u_p2', 'lambda', 'mu')
-model.add_isotropic_linearized_elasticity_brick(mim_p3, 'u_p3', 'lambda', 'mu')
+if contact_algo == 0:
+   model.add_initialized_data('lambda', Lambda)
+   model.add_initialized_data('mu', Mu)
+   model.add_isotropic_linearized_elasticity_brick(mim_1, 'u_1', 'lambda', 'mu')
+   model.add_isotropic_linearized_elasticity_brick(mim_2, 'u_2', 'lambda', 'mu')
+   model.add_isotropic_linearized_elasticity_brick(mim_p1, 'u_p1', 'lambda', 'mu')
+   model.add_isotropic_linearized_elasticity_brick(mim_p2, 'u_p2', 'lambda', 'mu')
+   model.add_isotropic_linearized_elasticity_brick(mim_p3, 'u_p3', 'lambda', 'mu')
+else:
+   elast_law = 'SaintVenant Kirchhoff'
+   model.add_initialized_data('elast_params', [Lambda, Mu])
+   model.add_nonlinear_elasticity_brick(mim_1, 'u_1', elast_law, 'elast_params')
+   model.add_nonlinear_elasticity_brick(mim_2, 'u_2', elast_law, 'elast_params')
+   model.add_nonlinear_elasticity_brick(mim_p1, 'u_p1', elast_law, 'elast_params')
+   model.add_nonlinear_elasticity_brick(mim_p2, 'u_p2', elast_law, 'elast_params')
+   model.add_nonlinear_elasticity_brick(mim_p3, 'u_p3', elast_law, 'elast_params')
 
 #F = mfrhs_1.eval('-y*%e,x*%e' % (rot_angle,rot_angle) )
 #model.add_initialized_fem_data('dirichlet_1', mfrhs_1, F)
@@ -202,46 +235,107 @@ M = torsion / size(mfrhs_1.basic_dof_on_region(RG_NEUMANN_1))
 F = mfrhs_1.eval('-y*%e/(x**2+y**2),x*%e/(x**2+y**2)' % (M, M) )
 model.add_initialized_fem_data('neumann_1', mfrhs_1, F)
 model.add_source_term_brick(mim_1, 'u_1', 'neumann_1', RG_NEUMANN_1)
-model.add_mass_brick(mim_1, 'u_1')
 
-model.add_initialized_data( 'r', Mu * (3*Lambda + 2*Mu) / (Lambda + Mu) )
-model.add_nodal_contact_between_nonmatching_meshes_brick(mim_1, mim_p1, 'u_1', 'u_p1', 'lambda_1_p1_n', 'r', RG_CONTACT_1_p1, RG_CONTACT_p1_1)
-model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p1, mim_2, 'u_p1', 'u_2', 'lambda_p1_2_n', 'r', RG_CONTACT_p1_2, RG_CONTACT_2_p1)
-model.add_nodal_contact_between_nonmatching_meshes_brick(mim_1, mim_p2, 'u_1', 'u_p2', 'lambda_1_p2_n', 'r', RG_CONTACT_1_p2, RG_CONTACT_p2_1)
-model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p2, mim_2, 'u_p2', 'u_2', 'lambda_p2_2_n', 'r', RG_CONTACT_p2_2, RG_CONTACT_2_p2)
-model.add_nodal_contact_between_nonmatching_meshes_brick(mim_1, mim_p3, 'u_1', 'u_p3', 'lambda_1_p3_n', 'r', RG_CONTACT_1_p3, RG_CONTACT_p3_1)
-model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p3, mim_2, 'u_p3', 'u_2', 'lambda_p3_2_n', 'r', RG_CONTACT_p3_2, RG_CONTACT_2_p3)
+model.add_initialized_data('penalty_param', 1e0)
+model.add_mass_brick(mim_1, 'u_1', 'penalty_param')
+model.add_mass_brick(mim_p1, 'u_p1', 'penalty_param')
+model.add_mass_brick(mim_p2, 'u_p2', 'penalty_param')
+model.add_mass_brick(mim_p3, 'u_p3', 'penalty_param')
 
-nbc = size(mfu_p1.basic_dof_on_region(RG_CONTACT_p1)) / qdim
-model.add_variable('lambda_p1', nbc)
-model.add_nodal_contact_with_rigid_obstacle_brick \
-  (mim_p1, 'u_p1', 'lambda_p1', 'r', RG_CONTACT_p1, '(x-%e)^2+(y-%e)^2-%e' % (0., a, R_i**2), 1)
+bearing_p1 = 'sqrt((x-(%e))^2+(y-(%e))^2)-(%e)' % (0., a, R_i)
+bearing_p2 = 'sqrt((x-(%e))^2+(y-(%e))^2)-(%e)' % (a*cos(7*pi/6), a*sin(7*pi/6), R_i)
+bearing_p3 = 'sqrt((x-(%e))^2+(y-(%e))^2)-(%e)' % (a*cos(11*pi/6), a*sin(11*pi/6), R_i)
 
-nbc = size(mfu_p2.basic_dof_on_region(RG_CONTACT_p2)) / qdim
-model.add_variable('lambda_p2', nbc)
-model.add_nodal_contact_with_rigid_obstacle_brick \
-  (mim_p2, 'u_p2', 'lambda_p2', 'r', RG_CONTACT_p2, '(x-%e)^2+(y-%e)^2-%e' % (a*cos(7*pi/6), a*sin(7*pi/6), R_i**2), 1)
+if contact_algo == 0:
+   model.add_initialized_data( 'r', Mu * (3*Lambda + 2*Mu) / (Lambda + Mu) )
+   model.add_nodal_contact_between_nonmatching_meshes_brick(mim_1, mim_p1, 'u_1', 'u_p1', 'lambda_1_p1_n', 'r', RG_CONTACT_1_p1, RG_CONTACT_p1_1)
+   model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p1, mim_2, 'u_p1', 'u_2', 'lambda_p1_2_n', 'r', RG_CONTACT_p1_2, RG_CONTACT_2_p1)
+   model.add_nodal_contact_between_nonmatching_meshes_brick(mim_1, mim_p2, 'u_1', 'u_p2', 'lambda_1_p2_n', 'r', RG_CONTACT_1_p2, RG_CONTACT_p2_1)
+   model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p2, mim_2, 'u_p2', 'u_2', 'lambda_p2_2_n', 'r', RG_CONTACT_p2_2, RG_CONTACT_2_p2)
+   model.add_nodal_contact_between_nonmatching_meshes_brick(mim_1, mim_p3, 'u_1', 'u_p3', 'lambda_1_p3_n', 'r', RG_CONTACT_1_p3, RG_CONTACT_p3_1)
+   model.add_nodal_contact_between_nonmatching_meshes_brick(mim_p3, mim_2, 'u_p3', 'u_2', 'lambda_p3_2_n', 'r', RG_CONTACT_p3_2, RG_CONTACT_2_p3)
 
-nbc = size(mfu_p3.basic_dof_on_region(RG_CONTACT_p3)) / qdim
-model.add_variable('lambda_p3', nbc)
-model.add_nodal_contact_with_rigid_obstacle_brick \
-  (mim_p3, 'u_p3', 'lambda_p3', 'r', RG_CONTACT_p3, '(x-%e)^2+(y-%e)^2-%e' % (a*cos(11*pi/6), a*sin(11*pi/6), R_i**2), 1)
+   nbc = size(mfu_p1.basic_dof_on_region(RG_CONTACT_p1)) / qdim
+   model.add_variable('lambda_p1', nbc)
+   model.add_nodal_contact_with_rigid_obstacle_brick \
+     (mim_p1, 'u_p1', 'lambda_p1', 'r', RG_CONTACT_p1, bearing_p1, 1)
+
+   nbc = size(mfu_p2.basic_dof_on_region(RG_CONTACT_p2)) / qdim
+   model.add_variable('lambda_p2', nbc)
+   model.add_nodal_contact_with_rigid_obstacle_brick \
+     (mim_p2, 'u_p2', 'lambda_p2', 'r', RG_CONTACT_p2, bearing_p2, 1)
+
+   nbc = size(mfu_p3.basic_dof_on_region(RG_CONTACT_p3)) / qdim
+   model.add_variable('lambda_p3', nbc)
+   model.add_nodal_contact_with_rigid_obstacle_brick \
+     (mim_p3, 'u_p3', 'lambda_p3', 'r', RG_CONTACT_p3, bearing_p3, 1)
+else:
+   aug_factor = 0.1;
+   model.add_initialized_data( 'r', aug_factor * Mu * (3*Lambda + 2*Mu) / (Lambda + Mu) )
+   model.add_initialized_data( 'f_coeff', 0.)
+
+   pre_mflambda_1 = MeshFem(m_1, qdim)
+   pre_mflambda_1.set_classical_fem(1)
+   dol_1 = pre_mflambda_1.basic_dof_on_region(RG_CONTACT_TOTAL_1)
+   mflambda_1 = MeshFem('partial', pre_mflambda_1, dol_1)
+
+   pre_mflambda_2 = MeshFem(m_2, qdim)
+   pre_mflambda_2.set_classical_fem(1)
+   dol_2 = pre_mflambda_2.basic_dof_on_region(RG_CONTACT_TOTAL_2)
+   mflambda_2 = MeshFem('partial', pre_mflambda_2, dol_2)
+
+   pre_mflambda_p1 = MeshFem(m_p1, qdim)
+   pre_mflambda_p1.set_classical_fem(1)
+   dol_p1 = pre_mflambda_p1.basic_dof_on_region(RG_CONTACT_TOTAL_p1)
+   mflambda_p1 = MeshFem('partial', pre_mflambda_p1, dol_p1)
+
+   pre_mflambda_p2 = MeshFem(m_p2, qdim)
+   pre_mflambda_p2.set_classical_fem(1)
+   dol_p2 = pre_mflambda_p2.basic_dof_on_region(RG_CONTACT_TOTAL_p2)
+   mflambda_p2 = MeshFem('partial', pre_mflambda_p2, dol_p2)
+
+   pre_mflambda_p3 = MeshFem(m_p3, qdim)
+   pre_mflambda_p3.set_classical_fem(1)
+   dol_p3 = pre_mflambda_p3.basic_dof_on_region(RG_CONTACT_TOTAL_p3)
+   mflambda_p3 = MeshFem('partial', pre_mflambda_p3, dol_p3)
+
+   model.add_fem_variable('lambda_1', mflambda_1)
+   model.add_fem_variable('lambda_2', mflambda_2)
+   model.add_fem_variable('lambda_p1', mflambda_p1)
+   model.add_fem_variable('lambda_p2', mflambda_p2)
+   model.add_fem_variable('lambda_p3', mflambda_p3)
+
+   ib_lsc = model.add_integral_large_sliding_contact_brick(mim_1, 'u_1', 'lambda_1', 'r', 'f_coeff', RG_CONTACT_TOTAL_1)
+   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_2, 'u_2', 'lambda_2', RG_CONTACT_TOTAL_2)
+   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p1, 'u_p1', 'lambda_p1', RG_CONTACT_TOTAL_p1)
+   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p2, 'u_p2', 'lambda_p2', RG_CONTACT_TOTAL_p2)
+   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p3, 'u_p3', 'lambda_p3', RG_CONTACT_TOTAL_p3)
+   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p1)
+   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p2)
+   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p3)
 
 print('nbdof_1', mfu_1.nbdof())
 print('nbdof_2', mfu_2.nbdof())
 print('nbdof_p1', mfu_p1.nbdof())
-model.solve('noisy', 'lsolver','superlu','max_res',1e-6)
+model.solve('noisy', 'lsolver','mumps','max_res',1e-6)
 
 U_1 = model.variable('u_1')
-VM_1 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_1', 'lambda', 'mu', mfrhs_1)
 U_2 = model.variable('u_2')
-VM_2 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_2', 'lambda', 'mu', mfrhs_2)
 U_p1 = model.variable('u_p1')
-VM_p1 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p1', 'lambda', 'mu', mfrhs_p1)
 U_p2 = model.variable('u_p2')
-VM_p2 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p2', 'lambda', 'mu', mfrhs_p2)
 U_p3 = model.variable('u_p3')
-VM_p3 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p3', 'lambda', 'mu', mfrhs_p3)
+if contact_algo == 0:
+   VM_1 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_1', 'lambda', 'mu', mfrhs_1)
+   VM_2 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_2', 'lambda', 'mu', mfrhs_2)
+   VM_p1 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p1', 'lambda', 'mu', mfrhs_p1)
+   VM_p2 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p2', 'lambda', 'mu', mfrhs_p2)
+   VM_p3 = model.compute_isotropic_linearized_Von_Mises_or_Tresca('u_p3', 'lambda', 'mu', mfrhs_p3)
+else:
+   VM_1 = model.compute_Von_Mises_or_Tresca('u_1', elast_law, 'elast_params', mfrhs_1)
+   VM_2 = model.compute_Von_Mises_or_Tresca('u_2', elast_law, 'elast_params', mfrhs_2)
+   VM_p1 = model.compute_Von_Mises_or_Tresca('u_p1', elast_law, 'elast_params', mfrhs_p1)
+   VM_p2 = model.compute_Von_Mises_or_Tresca('u_p2', elast_law, 'elast_params', mfrhs_p2)
+   VM_p3 = model.compute_Von_Mises_or_Tresca('u_p3', elast_law, 'elast_params', mfrhs_p3)
 
 mfu_1.export_to_vtk('static_contact_planetary_1.vtk', 'ascii',
                     mfrhs_1,  VM_1, 'Von Mises Stress', mfu_1, U_1, 'Displacement')

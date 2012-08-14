@@ -24,3 +24,12 @@ INTEGRATION = 'IM_HEXAHEDRON(5)'; % Quadrature rule
 
 %%%%%   saving parameters                                             %%%%%
 ROOTFILENAME = 'static_contact_gears_2teeth';     % Root of data files
+
+% CONTACT_ALGO = 0 % nodal contact
+CONTACT_ALGO = 1 % integral contact (non-symmetric Alart-Curnier)
+% CONTACT_ALGO = 2 % integral contact (symmetric one Alart-Curnier)
+% CONTACT_ALGO = 3 % integral contact (non-symmetric Alart-Curnier method with an additional augmentation
+% CONTACT_ALGO = 4 % integral contact (new unsymmetric method)
+% CONTACT_ALGO = 5 % integral large sliding contact
+
+MULT_FEM_TYPE = 'FEM_QK(3, 1)';
