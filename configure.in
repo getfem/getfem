@@ -47,15 +47,34 @@ AC_ARG_WITH(optimization,
 	    [with_optimization='-O3']
 	    )
 
+
+dnl ---------------------------PARA LEVEL--------------------------
+paralevel=0
+AC_ARG_ENABLE(paralevel,
+   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version fo Getfem (use MPI and METIS)])],
+   [ case $enableval in
+        yes | "") paralevel=2;;
+        no) ;;
+        *) paralevel=$enableval ;;
+     esac
+])
+
+if test $paralevel -ge 1; then
+  CPPFLAGS="$CPPFLAGS -DGETFEM_PARA_LEVEL=$paralevel"
+fi;
+dnl ---------------------------END OF PARA LEVEL--------------------------
+
+
+
 dnl -----------------------------------------------
 dnl test du c++
 dnl -----------------------------------------------
 
 USER_CXXFLAGS="$CXXFLAGS"
 USER_CFLAGS="$CFLAGS"
-AC_PROG_CXX(g++ cxx KCC CC cc++ xlC aCC c++ icpc)
-AC_PROG_CC(gcc icc cc)
-AC_PROG_FC
+AX_PROG_CXX_MPI([test $paralevel -ge 1],[usempi=yes],[usempi=no])
+AX_PROG_CC_MPI([test "x$usempi" = "xyes"],,[usempi=no])
+AX_PROG_FC_MPI([test "x$usempi" = "xyes"],[CPPFLAGS="$CPPFLAGS -DGMM_USES_MPI=1"],[usempi=no])
 
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
@@ -544,7 +563,10 @@ AC_ARG_ENABLE(par-mumps,
  [case $enableval in
    yes | "") usemumps="yes"; MUMPS_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps";;
    no) usemumps="no";;
-  esac]
+  esac],
+ [if test $paralevel -ge 1; then
+    usemumps="test"; acx_mumps_ok="test"; MUMPS_LIBS="-lsmumps -ldmumps -lcmumps -lzmumps"
+  fi;]
 )
 
 AC_ARG_WITH(mumps,
@@ -609,28 +631,7 @@ AC_SUBST([MUMPS_LIBS])
 echo "Configuration of MUMPS done"
 dnl ---------------------------END OF MUMPS TEST--------------------------
 
-dnl ---------------------------PARA LEVEL--------------------------
-paralevel=0
-AC_ARG_ENABLE(paralevel,
-   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version fo Getfem (use MPI and METIS)])],
-   [ case $enableval in
-        yes | "") paralevel=2;;
-        no) ;;
-        *) paralevel=$enableval ;;
-     esac
-])
-
-if test $paralevel -ge 1; then
-  CPPFLAGS="$CPPFLAGS -DGETFEM_PARA_LEVEL=$paralevel"
-fi;
-dnl ---------------------------END OF PARA LEVEL--------------------------
-
 dnl ---------------------------METIS--------------------------
-usemetis="no"
-if test $paralevel -ge 2; then
-  usemetis="yes"
-fi;
-
 METIS_LIBS=""
 AC_ARG_ENABLE(metis,
  [AS_HELP_STRING([--enable-metis],[enable the use of the METIS library.])],
@@ -641,15 +642,28 @@ AC_ARG_ENABLE(metis,
  [usemetis="test"]
 )
 
+if test $paralevel -ge 2 -a "x$usemetis" = "xno"; then
+  echo "Parallel getfem requires the METIS library, --enable-metis=no will be ignored";
+  usemetis="yes"
+fi;
+
 if test "x$usemetis" = "xno"; then
   echo "Building without METIS";
 else
-  AC_CHECK_LIB(metis, SelectQueueOneWay, [usemetis="yes"], [usemetis="no"])
-dnl  AC_CHECK_HEADERS(metis.h, [usemetis="yes"],
-dnl    [ 
-dnl      AC_MSG_ERROR([header file metis.h not found]);
-dnl      usemetis="no"
-dnl    ])
+  AC_CHECK_LIB(metis, METIS_PartGraphRecursive,
+               [usemetis="yes"],
+               [usemetis="no";
+                if test $paralevel -ge 2; then
+                  AC_MSG_ERROR([METIS library required for parallel getfem was not found])
+                fi
+               ])
+dnl  AC_CHECK_HEADERS(metis.h,
+dnl                   [usemetis="yes"],
+dnl                   [usemetis="no";
+dnl                    if test $paralevel -ge 2; then
+dnl                      AC_MSG_ERROR([metis.h header required for parallel getfem was not found])
+dnl                    fi
+dnl                   ])
 
   if test "x$usemetis" = "xyes"; then
     METIS_LIBS="-lmetis"
@@ -657,7 +671,7 @@ dnl    ])
     AC_DEFINE_UNQUOTED([HAVE_METIS],1,[defined if the Metis library was found and is working])
     echo "Building with METIS (use --enable-metis=no to disable it)"
   else
-    echo "Building without METIS";
+    echo "METIS library could not be found, building without METIS";
   fi;
 fi;
 
@@ -666,43 +680,6 @@ AC_SUBST([METIS_LIBS])
 
 
 dnl ---------------------------END OF METIS--------------------------
-
-
-dnl ---------------------------MPI--------------------------
-
-usempi="no"
-MPI_LIBS=""
-
-if test $paralevel -ge 2; then
-  usempi="yes"
-  MPI_LIBS=""
-  AC_CHECK_LIB(mpich, MPI_Test)
-  AC_CHECK_LIB(mpichcxx, MPI_Test)
-dnl   AC_CHECK_HEADERS(mpi/mpi.h, [usempi="yes"],
-dnl    [ 
-dnl      AC_CHECK_HEADERS(mpi.h, [usempi="yes"],
-dnl      [
-dnl        AC_CHECK_HEADERS(mpich2/mpi.h, [usempi="yes"],
-dnl        [
-dnl          if test "x$usempi" = "xyes"; then
-dnl      	   AC_MSG_ERROR([header file mpi.h not found.]);
-dnl 	   usempi="no"
-dnl    	 fi;
-dnl        ])
-dnl      ])
-dnl    ])
-  CPPFLAGS="$CPPFLAGS -DGETFEM_HAVE_MPI_MPI_H=1 -I/usr/include/mpi"
-  if test "x$usempi" = "xyes"; then
-    MPI_LIBS="-lmpi -lmpi++"
-  fi;
-  echo "Building with MPI (use --enable-mpi=no to disable it)"
-fi;
-
-AM_CONDITIONAL(MPI, test x$usempi = xyes)
-AC_SUBST([MPI_LIBS])
-
-
-dnl ---------------------------END OF MPI--------------------------
 
 
 dnl ------------------------------LAPACK TEST--------------------------------
@@ -723,25 +700,6 @@ if test x"$acx_blas_ok" = xyes; then
 fi
 
 dnl -----------------------------END OF LAPACK TEST--------------------------
-
-
-dnl ------------------------------MPI TEST--------------------------------
-if test "$MPI_CFLAGS" -o "$MPI_LIBS"; then
-  echo "You are using MPI! Trying to build a parallelised version of getfem (require METIS)"
-  dnl AC_DEFINE_UNQUOTED([PARA_LEVEL], 2, [getfem parallelisation flag])
-  LIBS="$LIBS $MPI_LIBS -lmetis"
-  CXXFLAGS="$CXXFLAGS $MPI_CFLAGS -DGETFEM_PARA_LEVEL=2"
-dnl   AC_CHECK_LIB(metis, METIS_PartMeshNodal, [metis_ok="yes"], [metis_ok="no"])
-dnl   if test "x$metis_ok" = "xno"; then
-dnl     AC_MSG_ERROR([Parallel getfem requires the METIS ( http://www-users.cs.umn.edu/~karypis/metis/metis/ ) library
-dnl  ----------> Please add the path to libmetis.a to the MPI_LIBS variable.])
-dnl   fi
-  AC_SUBST(MPI_LIBS)
-  AC_SUBST(MPI_CFLAGS)
-fi
-
-
-dnl -----------------------------END OF MPI TEST--------------------------
 
 
 AC_CHECK_HEADERS(sys/times.h,[],[SUPERLU_CPPFLAGS="$SUPERLU_CPPFLAGS -DNO_TIMER"])

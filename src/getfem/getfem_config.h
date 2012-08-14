@@ -174,17 +174,8 @@
 #endif
 
 
-#if GETFEM_PARA_LEVEL > 0
-
-# if defined(GETFEM_HAVE_MPI_H)
-#   include <mpi.h>
-# endif
-# if defined(GETFEM_HAVE_MPI_MPI_H)
-#   include <mpi/mpi.h>
-# endif
-# if defined(GETFEM_HAVE_MPICH2_MPI_H)
-#   include <mpich2/mpi.h>
-# endif
+#if GMM_USES_MPI > 0
+# include <mpi.h>
 
 # undef GMM_TRACE_MSG_MPI
 # define GMM_TRACE_MSG_MPI					         \

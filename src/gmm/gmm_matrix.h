@@ -943,17 +943,7 @@ namespace gmm
   /* ******************************************************************** */
 
 #ifdef GMM_USES_MPI
-
-// Problem : GETFEM_HAVE_MPI_H not defined in gmm : NOT SATIFACTORY !!
-#include<getfem/getfem_arch_config.h>
-
-# if defined(GETFEM_HAVE_MPI_H)
-#   include <mpi.h>
-# elif defined(GETFEM_HAVE_MPI_MPI_H)
-#   include <mpi/mpi.h>
-# elif defined(GETFEM_HAVE_MPICH2_MPI_H)
-#   include <mpich2/mpi.h>
-# endif
+# include <mpi.h>
 
 namespace gmm {
 

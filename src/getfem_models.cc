@@ -1087,6 +1087,14 @@ namespace getfem {
 //         }
 
     }
+
+#if GETFEM_PARA_LEVEL > 1
+    if (version & BUILD_RHS)
+      if (is_complex())
+        MPI_SUM_VECTOR(crhs);
+      else
+        MPI_SUM_VECTOR(rrhs);
+#endif
   }
 
   const mesh_fem &model::mesh_fem_of_variable(const std::string &name) const {

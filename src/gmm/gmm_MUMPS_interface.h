@@ -196,6 +196,10 @@ namespace gmm {
     id.job = JOB_END;
     mumps_interf<T>::mumps_c(id);
 
+#ifdef GMM_USES_MPI
+    MPI_Bcast(&(rhs[0]),id.n,gmm::mpi_type(T()),0,MPI_COMM_WORLD);
+#endif
+
     gmm::copy(rhs, X);
 
     return ok;
@@ -255,9 +259,9 @@ namespace gmm {
 
 #define ICNTL(I) icntl[(I)-1]
     id.ICNTL(1) = -1; // output stream for error messages
-    id.ICNTL(2) = 6;  // id.ICNTL(2) = -1; // output stream for other messages
-    id.ICNTL(3) = 6;  // id.ICNTL(3) = -1; // output stream for global information
-    id.ICNTL(4) = 2;  // verbosity level
+    id.ICNTL(2) = -1; // output stream for other messages
+    id.ICNTL(3) = -1; // output stream for global information
+    id.ICNTL(4) = 0;  // verbosity level
 
     id.ICNTL(5) = 0;  // assembled input matrix (default)
     id.ICNTL(18) = 3; // strategy for distributed input matrix

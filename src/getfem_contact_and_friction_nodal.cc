@@ -1180,6 +1180,11 @@ namespace getfem {
                            bool two_variables_=false,
                            bool Tresca_version_=false,
                            bool Hughes_stabilized_=false) {
+
+#if GETFEM_PARA_LEVEL > 1
+    if (!getfem::MPI_IS_MASTER()) GMM_WARNING1("Nodal contact bricks don't support GETFEM_PARA_LEVEL > 1 yet!!!");
+#endif
+
       if (aug_version == 4 && contact_only_) aug_version = 3;
       augmentation_version = aug_version;
       GMM_ASSERT1(aug_version >= 1 && aug_version <= 4,
@@ -1287,6 +1292,7 @@ namespace getfem {
    const std::string &dataname_r, CONTACT_B_MATRIX &BN,
    std::string dataname_gap, std::string dataname_alpha,
    int aug_version, bool Hughes_stabilized) {
+
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version, true, false, false, Hughes_stabilized);
     pbr_->set_BN1(BN);
@@ -1331,6 +1337,7 @@ namespace getfem {
    std::string dataname_friction_coeff,
    std::string dataname_gap, std::string dataname_alpha,
    int aug_version, bool Tresca_version, const std::string dataname_threshold, bool Hughes_stabilized) {
+
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version,false, false,
                                    Tresca_version, Hughes_stabilized);
