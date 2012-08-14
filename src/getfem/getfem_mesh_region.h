@@ -110,6 +110,8 @@ namespace getfem {
     */
     const mesh_region& from_mesh(const mesh &m) const;
 
+    mesh_region& operator=(const mesh_region &mr);
+
     face_bitset operator[](size_t cv) const;
     const dal::bit_vector &index() const;
     void add(const dal::bit_vector &bv);

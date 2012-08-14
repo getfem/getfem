@@ -44,6 +44,17 @@ namespace getfem {
     return *this;
   }
 
+  mesh_region& mesh_region::operator=(const mesh_region &mr) {
+    p = mr.p;
+    if (!parent_mesh || mr.parent_mesh) {
+      // move to a different mesh, assuming that mr contains consistent data
+      id_ = mr.id_;
+      parent_mesh = mr.parent_mesh;
+    }
+    touch_parent_mesh();
+    return *this;
+  }
+
   face_bitset mesh_region::operator[](size_t cv) const {
     map_t::const_iterator it = rp().m.find(cv);
     if (it != rp().m.end()) return (*it).second;
@@ -165,9 +176,18 @@ namespace getfem {
        for these operations as there are not intended to be manipulated
        (they only exist to provide a default argument to the mesh_region
        parameters of assembly procedures etc. */
-    GMM_ASSERT1(a.id() != all_convexes().id() &&
+    GMM_ASSERT1(a.id() != all_convexes().id() ||
 		b.id() != all_convexes().id(), "the 'all_convexes' regions "
 		"are not supported for set operations");
+    if (a.id() == all_convexes().id()) {
+      r.wp() = b.rp();
+      return r;
+    }
+    else if (b.id() == all_convexes().id()) {
+      r.wp() = a.rp();
+      return r;
+    }
+
     map_t::const_iterator 
       ita = a.rp().m.begin(), enda = a.rp().m.end(),
       itb = b.rp().m.begin(), endb = b.rp().m.end();
