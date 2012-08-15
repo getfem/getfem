@@ -263,7 +263,7 @@ bool elastostatic_contact_problem::solve() {
       std::string dataname_frict_coeff="friction_coefficient";
       md.add_initialized_scalar_data(dataname_frict_coeff, frict_coeff);
       getfem::add_nodal_contact_between_nonmatching_meshes_brick
-        (md, mim, mim, "u", "u", multname_n, multname_t,
+        (md, mim, "u", multname_n, multname_t,
          "r", dataname_frict_coeff, cb_rgs1, cb_rgs2);
     }
   } else {
