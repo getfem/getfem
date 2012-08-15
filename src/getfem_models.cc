@@ -192,10 +192,10 @@ namespace getfem {
         it->second.partial_mf->adapt(alldof);
         it->second.set_size(it->second.partial_mf->nb_dof());
 
-        // Obtening the coupling matrix between the multipier and
+        // Obtaining the coupling matrix between the multipier and
         // the primal variable. A search is done on all the terms of the
         // model. Only the the corresponding linear terms are added.
-	// If no linear term is available, a mass matrix is used.
+        // If no linear term is available, a mass matrix is used.
 
         gmm::col_matrix< gmm::rsvector<scalar_type> >
           MM(it2->second.mf->nb_dof(), it->second.mf->nb_dof());
@@ -242,9 +242,24 @@ namespace getfem {
 	    }
 	  }
 
-	  if (!termadded) 
+	  if (!termadded)
 	    GMM_WARNING1("No term found to filter multiplier " << it->first
 			 << ". Variable is cancelled");
+#if GETFEM_PARA_LEVEL > 1
+	  if (termadded) {
+            // we assume that all bricks take mpi_region into account but it
+            // would be better if the brick itself could report if it supports
+            // distributed assembly
+            // This is only a reference implementation, it needs to be optimized
+            // maybe by using gmm::mpi_distributed_matrix
+            std::vector<scalar_type> tmpvec1(gmm::mat_nrows(MM)), tmpvec2(gmm::mat_nrows(MM));
+            for (size_type k = 0; k < gmm::mat_ncols(MM); ++k) {
+                gmm::copy(gmm::mat_col(MM,k),tmpvec1);
+                MPI_SUM_VECTOR(tmpvec1,tmpvec2);
+                gmm::copy(tmpvec2,gmm::mat_col(MM,k));
+            }
+          }
+#endif
 	} else if (it->second.filter == VDESCRFILTER_INFSUP) {
 	  asm_mass_matrix(MM, *(it->second.mim), *(it2->second.mf),
 			  *(it->second.mf), it->second.m_region);
@@ -274,7 +289,7 @@ namespace getfem {
       }
 
       if (mults.size() > 1) {
-        range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
+        gmm::range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
 
         s = 0;
         for (size_type k = 0; k < mults.size(); ++k) {
@@ -1860,9 +1875,9 @@ namespace getfem {
           assem.push_mf(mf_u);
           assem.push_mf(mf_mult);
           assem.push_mat(*B);
-          assem.assembly(region);
+          assem.assembly(rg);
         } else {
-          asm_mass_matrix(*B, mim, mf_mult, mf_u, region);
+          asm_mass_matrix(*B, mim, mf_mult, mf_u, rg);
         }
 
         if (penalized && (&mf_mult != &mf_u)) {
@@ -2001,9 +2016,9 @@ namespace getfem {
           assem.push_mf(mf_u);
           assem.push_mf(mf_mult);
           assem.push_mat(gmm::real_part(*B));
-          assem.assembly(region);
+          assem.assembly(rg);
         } else {
-          asm_mass_matrix(*B, mim, mf_mult, mf_u, region);
+          asm_mass_matrix(*B, mim, mf_mult, mf_u, rg);
         }
         if (penalized && (&mf_mult != &mf_u)) {
           gmm::mult(gmm::transposed(cB), cB, matl[0]);
