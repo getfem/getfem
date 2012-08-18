@@ -25,6 +25,11 @@
 namespace getfem {
   typedef mesh_region::face_bitset face_bitset;
 
+  mesh_region::mesh_region(const mesh_region &other)
+    : p(new impl), id_(size_type(-2)), parent_mesh(0) {
+    this->operator=(other);
+  }
+
   void mesh_region::touch_parent_mesh() {
     if (parent_mesh) {
       parent_mesh->touch_from_region(id_);
@@ -44,14 +49,31 @@ namespace getfem {
     return *this;
   }
 
-  mesh_region& mesh_region::operator=(const mesh_region &mr) {
-    p = mr.p;
-    if (!parent_mesh || mr.parent_mesh) {
-      // move to a different mesh, assuming that mr contains consistent data
-      id_ = mr.id_;
-      parent_mesh = mr.parent_mesh;
+  mesh_region& mesh_region::operator=(const mesh_region &from) {
+
+    if (!this->parent_mesh && !from.parent_mesh) {
+      this->id_ = from.id_;
+      if (from.p.get()) {
+        if (!this->p.get()) this->p.reset(new impl); 
+        this->wp() = from.rp();
+      }
+      else
+        this->p.release();
     }
-    touch_parent_mesh();
+    else if (!this->parent_mesh) {
+      this->p = from.p;
+      this->id_ = from.id_;
+      this->parent_mesh = from.parent_mesh;
+    }
+    else {
+      if (from.p.get())
+        this->wp() = from.rp();
+      else if (from.id_ == size_type(-1)) {
+        this->clear();
+        this->add(this->parent_mesh->convex_index());
+      }
+      touch_parent_mesh();
+    }
     return *this;
   }
 

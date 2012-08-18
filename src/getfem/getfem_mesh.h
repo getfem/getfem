@@ -112,8 +112,7 @@ namespace getfem {
      */
 
     mutable std::map<size_type, mesh_region> cvf_sets;
-    // dal::dynamic_array<mesh_region> cvf_sets;
-    dal::bit_vector valid_cvf_sets;
+    mutable dal::bit_vector valid_cvf_sets;
     void handle_region_refinement(size_type, const std::vector<size_type> &,
 				  bool);
 
@@ -407,21 +406,23 @@ namespace getfem {
     /** Return the bounding box [Pmin - Pmax] of the mesh. */
     void bounding_box(base_node& Pmin, base_node &Pmax) const;
     /** Return the region of index 'id'. Regions stored in mesh are
-	automagically created on their first use. Moreover, they are
 	updated when the mesh is modified (i.e. when a convex is
 	removed from the mesh, it is also removed from all regions of
 	the mesh.
     */
     const mesh_region region(size_type id) const {
-      if (has_region(id)) return cvf_sets[id];
-      else return mesh_region(const_cast<mesh&>(*this),id);
+      if (!has_region(id)) {
+        valid_cvf_sets.add(id);
+        cvf_sets[id] = mesh_region(const_cast<mesh&>(*this),id);
+      }
+      return cvf_sets[id];
     }
     /* Return a reference such that operator= works as expected */
     mesh_region &region(size_type id) {
-      if (!has_region(id))
-	/* will be added into valid_cvf_sets
-	   later via mesh_region::maybe_notify_parent_mesh */
-	cvf_sets[id] = mesh_region(*this,id);
+      if (!has_region(id)) {
+        valid_cvf_sets.add(id);
+        cvf_sets[id] = mesh_region(*this,id);
+      }
       return cvf_sets[id];
     }
     /** Return true if the region of index 's' exists in the mesh */
@@ -475,7 +476,7 @@ namespace getfem {
     friend class mesh_region;
   private:
     void swap_convex_in_regions(size_type c1, size_type c2);
-    void touch_from_region(size_type id) { valid_cvf_sets.add(id); touch(); }
+    void touch_from_region(size_type id) { touch(); }
     void to_edges() {} /* to be done, the to_edges of mesh_structure does   */
                        /* not handle geotrans */
 

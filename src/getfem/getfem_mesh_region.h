@@ -74,20 +74,21 @@ namespace getfem {
     /** tells the owner mesh that the region is valid */
     void touch_parent_mesh();
   public:
-    mesh_region() : p(new impl), id_(size_type(-3)), parent_mesh(0) {}
+    mesh_region(const mesh_region &other);
+    mesh_region() : p(new impl), id_(size_type(-2)), parent_mesh(0) {}
     /** a mesh_region can be built from a integer parameter 
 	(a region number in a mesh),
 	but it won't be usable until 'from_mesh(m)' has been called 
 	Note that these regions are read-only, this constructor is
-	mostly used for backward-compatibiliy.
+	mostly used for backward-compatibility.
     */
-    mesh_region(size_type boundid) : id_(boundid), parent_mesh(0) {}
+    mesh_region(size_type id__) : id_(id__), parent_mesh(0) {}
     /** internal constructor. You should used m.region(id) instead. */
     mesh_region(mesh& m, size_type id__) : 
       p(new impl), id_(id__), parent_mesh(&m) {}
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv) : 
-      p(new impl), id_(size_type(-3)), parent_mesh(0) { add(bv); }
+      p(new impl), id_(size_type(-2)), parent_mesh(0) { add(bv); }
     /** provide a default value for the mesh_region parameters of assembly
         procedures etc. */
     static mesh_region all_convexes() {
