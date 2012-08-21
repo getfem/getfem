@@ -490,12 +490,14 @@ namespace getfem {
 		  "Works only for pure Lagrange fems");
 	
       const mesh_im &mim = *mims[0];
+      mesh_region rg(region);
+      mim.linked_mesh().intersect_with_mpi_region(rg);
 
       if (version & model::BUILD_MATRIX) {
 	gmm::clear(matl[0]);
 	asm_elastoplasticity_tangent_matrix
 	  (matl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
-	   u_np1, sigma_n, lambda, mu, threshold, t_proj, region);
+	   u_np1, sigma_n, lambda, mu, threshold, t_proj, rg);
       }
       
       if (version & model::BUILD_RHS) {
@@ -503,7 +505,7 @@ namespace getfem {
 	  (vecl[0], mim, mf_u, mf_sigma, *mf_data, u_n,
 	   u_np1, sigma_n, (model_real_plain_vector *)(0), 
 	   lambda, mu, threshold, t_proj, (model_real_plain_vector *)(0),
-	   false, false, region);
+	   false, false, rg);
 	gmm::scale(vecl[0], scalar_type(-1));
       }
 
@@ -603,15 +605,17 @@ namespace getfem {
 
     std::vector<scalar_type> V(mf_u.nb_dof());
 
+    mesh_region rg = mim.linked_mesh().get_mpi_region();
+
     asm_elastoplasticity_rhs
       (V, mim, mf_u, mf_sigma, *mf_data, u_n,
        u_np1, sigma_n, &sigma_np1, 
-       lambda, mu, threshold, ACP, (model_real_plain_vector *)(0), true, false);
-    
+       lambda, mu, threshold, ACP, (model_real_plain_vector *)(0), true, false, rg);
+
     // upload sigma and u : u_np1 -> u_n, sigma_np1 -> sigma_n 
     // be careful to use this function 
     // only if the computation is over
-    gmm::copy(sigma_np1, md.set_real_variable(datasigma));
+    MPI_SUM_VECTOR(sigma_np1, md.set_real_variable(datasigma));
     gmm::copy(u_np1, u_n);
 
  
@@ -715,6 +719,7 @@ namespace getfem {
     
     unsigned N = unsigned(mf_sigma.linked_mesh().dim());
 
+    mesh_region rg = mesh_region::all_convexes(); // mim.linked_mesh().get_mpi_region();
 
     std::vector<scalar_type> V(mf_u.nb_dof());
     std::vector<scalar_type> saved_plast(mf_sigma.nb_dof());
@@ -722,8 +727,9 @@ namespace getfem {
     asm_elastoplasticity_rhs
       (V, mim, mf_u, mf_sigma, *mf_data, u_n,
        u_np1, sigma_n, (model_real_plain_vector *)(0), 
-       lambda, mu, threshold, ACP, &saved_plast, false, true);
- 
+       lambda, mu, threshold, ACP, &saved_plast, false, true, rg);
+
+    //MPI_SUM_VECTOR(saved_plast);
 
     /* Retrieve and save the plastic part */
     GMM_ASSERT1(gmm::vect_size(plast) == mf_pl.nb_dof(),
