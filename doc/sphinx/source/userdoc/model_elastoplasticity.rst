@@ -431,7 +431,7 @@ where :
       - ``ACP`` corresponds to the type of projection to be used. It has an `abstract_constraints_projection` type and for the moment, only exists the `VM_projection` corresponding to the Von Mises one.
 
 
-Be carefull : ``datalambda``, ``datamu`` and ``datathreshold`` could be constants or described on the same finite element method.
+Be careful : ``datalambda``, ``datamu`` and ``datathreshold`` could be constants or described on the same finite element method.
 
 This function assembles the tangent matrix and the right hand side vector which will be solve using a Newton algorithm.
 

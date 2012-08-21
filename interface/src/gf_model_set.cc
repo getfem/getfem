@@ -1203,7 +1203,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       we want to use. For the moment, only the Von Mises projection is
       computing that we could entering 'VM' or 'Von Mises'.
       `datasigma` is the variable representing the constraints on the material.
-      Be carefull that `varname` and `datasigma` are composed of two iterates
+      Be careful that `varname` and `datasigma` are composed of two iterates
       for the time scheme needed for the Newton algorithm used.
       Moreover, the finite element method on which `varname` is described
       is an K ordered mesh_fem, the `datasigma` one have to be at least

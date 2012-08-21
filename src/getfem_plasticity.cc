@@ -609,7 +609,7 @@ namespace getfem {
        lambda, mu, threshold, ACP, (model_real_plain_vector *)(0), true, false);
     
     // upload sigma and u : u_np1 -> u_n, sigma_np1 -> sigma_n 
-    // be carefull to use this function 
+    // be careful to use this function 
     // only if the computation is over
     gmm::copy(sigma_np1, md.set_real_variable(datasigma));
     gmm::copy(u_np1, u_n);

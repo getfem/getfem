@@ -628,7 +628,7 @@
       we want to use. For the moment, only the Von Mises projection is
       computing that we could entering 'VM' or 'Von Mises'.
       <literal>datasigma</literal> is the variable representing the constraints on the material.
-      Be carefull that <literal>varname</literal> and <literal>datasigma</literal> are composed of two iterates
+      Be careful that <literal>varname</literal> and <literal>datasigma</literal> are composed of two iterates
       for the time scheme needed for the Newton algorithm used.
       Moreover, the finite element method on which <literal>varname</literal> is described
       is an K ordered mesh_fem, the <literal>datasigma</literal> one have to be at least

@@ -240,7 +240,7 @@ gmm::resize( H, mf_mortar_deriv.nb_dof(), mf_u().nb_dof());
       /* other version of the integral matching.
        * version 2 :
        *     \int_Gamma        (u-v) \lambda  = 0, for all \lambda in \Lambda
-       *     \int_Gamma \nabla (u-v).\mu      = 0, for all \mu in M    (be carefull : \mu is vectorial.
+       *     \int_Gamma \nabla (u-v).\mu      = 0, for all \mu in M    (be careful : \mu is vectorial.
        * version 3 : only second constraint is different.   
        *     \int_Gamma \partial_n (u-v)\mu  = 0, for all \mu in M
       */

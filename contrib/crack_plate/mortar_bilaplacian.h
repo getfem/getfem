@@ -653,7 +653,7 @@ bool bilaplacian_mortar_problem::solve(plain_vector &U) {
      *     \int_Gamma \nabla (u-v).\mu  = 0, for all \mu in M 
      */
 
-    // Be carefull : the multiplier is vectorial.
+    // Be careful : the multiplier is vectorial.
     mf_mortar_deriv.set_qdim(2) ;
     
     // selecting nodes indices on the two meth. mult.
