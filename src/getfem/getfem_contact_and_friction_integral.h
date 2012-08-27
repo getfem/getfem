@@ -762,21 +762,23 @@ namespace getfem {
   size_type add_Nitsche_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
+   const std::string &dataname_theta,
    const std::string &dataname_friction_coeff,
    const std::string &dataname_lambda, const std::string &dataname_mu,
-   size_type region, int option = 2);
+   size_type region);
   
   
   class contact_nitsche_nonlinear_term : public nonlinear_elem_term {
 
   protected:
-    base_small_vector lnt, lt; // multiplier lambda and its tangential component lambda_t
+    base_small_vector lnt, lt; // multiplier lambda and its tangential
+                               // component lambda_t
     scalar_type ln;            // normal component lambda_n of the multiplier
     base_small_vector ut;      // tangential relative displacement
-    scalar_type un;            // normal relative displacement (positive when the first
-                               // elastic body surface moves outwards)
-    base_small_vector no, n;   // surface normal, pointing outwards with respect
-                               // to the (first) elastic body
+    scalar_type un;            // normal relative displacement (positive when
+                               //  the first elas. body surface moves outwards)
+    base_small_vector no, n;   // surface normal, pointing outwards with 
+                               // respect to the (first) elastic body
     scalar_type g, f_coeff;    // gap and coefficient of friction values
     scalar_type lambda, mu;    // Lame coefficients
 
@@ -793,19 +795,21 @@ namespace getfem {
   public:
     dim_type N;
     size_type option;
-    scalar_type r;
+    scalar_type r, theta;
 
     bgeot::multi_index sizes_;
 
     template <typename VECT1>
     contact_nitsche_nonlinear_term
-    ( size_type option_, scalar_type r_, scalar_type lambda_, scalar_type mu_,
+    ( size_type option_, scalar_type r_, scalar_type theta_,
+      scalar_type lambda_, scalar_type mu_,
       const mesh_fem &mf_u_, const VECT1 &U_, const mesh_fem &mf_obs_,
       const VECT1 &obs_, const mesh_fem *pmf_coeff_ = 0,
       const VECT1 *f_coeff_ = 0)
       : lambda(lambda_), mu(mu_), mf_u(mf_u_),
 	mf_obs(mf_obs_), pmf_coeff(pmf_coeff_), U(mf_u.nb_basic_dof()),
-	obs(mf_obs.nb_basic_dof()), friction_coeff(0), option(option_), r(r_) {
+	obs(mf_obs.nb_basic_dof()), friction_coeff(0), option(option_),
+	r(r_), theta(theta_) {
       N = mf_u_.linked_mesh().dim();
       adjust_tensor_size();
       
@@ -833,22 +837,19 @@ namespace getfem {
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   scalar_type gamma, scalar_type lambda, scalar_type mu,
-   const mesh_region &rg, int option) {
+   scalar_type gamma, scalar_type theta, scalar_type lambda, scalar_type mu,
+   const mesh_region &rg) {
 
     contact_nitsche_nonlinear_term
-      nterm1(1, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
-      nterm2(2, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff);
+      nterm1(1,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff),
+      nterm2(2,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
 
     getfem::generic_assembly assem;
     std::string as_str =
-      "V(#1)+=comp(NonLin$1(#1,"+aux_fems+").vBase(#1))(i,:,i); ";
-    if (option == 1)
-      as_str += "V(#1)+=comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j)";
-    if (option == 3)
-      as_str += "V(#1)+=-comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j)";
+      "V(#1)+=comp(NonLin$1(#1,"+aux_fems+").vBase(#1))(i,:,i); "
+      "V(#1)+=comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j);";
 
     assem.set(as_str);
     assem.push_mi(mim);

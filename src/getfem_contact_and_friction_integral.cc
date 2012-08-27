@@ -2504,14 +2504,18 @@ namespace getfem {
 
       // two-dimensional tensors [N x N]
     case 2:
-      V -= lnt;
-      gmm::scale(V, -1./r);
-      e = gmm::vect_sp(V, n);
-      for (i=0; i < N; ++i)
-        for (j=0; j < N; ++j) {
-          t(i,j) = mu*(V[i]*n[j]+V[j]*n[i]);
-          if (i == j) t(i,j) += lambda*e;
-        }
+      {
+	V -= lnt;
+	scalar_type c = -theta;
+	if (r != scalar_type(0)) c /= r; 
+	gmm::scale(V, c);
+	e = gmm::vect_sp(V, n);
+	for (i=0; i < N; ++i)
+	  for (j=0; j < N; ++j) {
+	    t(i,j) = mu*(V[i]*n[j]+V[j]*n[i]);
+	    if (i == j) t(i,j) += lambda*e;
+	  }
+      }
       break;
 
     case 3:
@@ -2536,8 +2540,8 @@ namespace getfem {
       for (i=0; i < N; ++i)
         for (j=0; j < N; ++j)
           for (k=0; k < N; ++k) {
-            t(i,j,k) = -r*mu*(GP(k,i)*n[j] + GP(k,j)*n[i]);
-            if (i == j) t(i,j,k) -= r*lambda*V[k];
+            t(i,j,k) = -theta*r*mu*(GP(k,i)*n[j] + GP(k,j)*n[i]);
+            if (i == j) t(i,j,k) -= theta*r*lambda*V[k];
           }
       break;
 
@@ -2545,7 +2549,7 @@ namespace getfem {
 
     case 6:
 
-      for (i=0; i < N; ++i) GP(i,i) -= 1./r;  // matrix B
+      for (i=0; i < N; ++i) GP(i,i) -= scalar_type(1)/r;  // matrix B
 
       e = gmm::vect_sp(GP, n, n);
       gmm::mult(gmm::transposed(GP), n, auxN);
@@ -2555,11 +2559,13 @@ namespace getfem {
         for (j=0; j < N; ++j)
           for (k=0; k < N; ++k)
             for (l=0; l < N; ++l) {
-              t(i,j,k,l) = mu*mu*(n[i]*GP(k,j)*n[l] + n[j]*GP(k,i)*n[l]
+              t(i,j,k,l) = theta*mu*mu*(n[i]*GP(k,j)*n[l] + n[j]*GP(k,i)*n[l]
                                   + n[j]*GP(l,i)*n[k] + n[i]*GP(l,j)*n[k]);
-              if (i == j && k == l) t(i,j,k,l) += lambda*lambda*e;
-              if (i == j) t(i,j,k,l) += lambda*mu*(V[k]*n[l] + V[l]*n[k]);
-              if (k == l) t(i,j,k,l) += lambda*mu*(auxN[j]*n[i]+auxN[i]*n[j]);
+              if (i == j && k == l) t(i,j,k,l) += theta*lambda*lambda*e;
+              if (i == j)
+		t(i,j,k,l) += theta*lambda*mu*(V[k]*n[l] + V[l]*n[k]);
+              if (k == l)
+		t(i,j,k,l) += theta*lambda*mu*(auxN[j]*n[i]+auxN[i]*n[j]);
             }
 
       break;
@@ -2627,24 +2633,24 @@ namespace getfem {
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
    const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   scalar_type gamma, scalar_type lambda, scalar_type mu,
-   const mesh_region &rg, int option) {
+   scalar_type gamma, scalar_type theta, scalar_type lambda, scalar_type mu,
+   const mesh_region &rg) {
 
     contact_nitsche_nonlinear_term
-      nterm1(6, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
-      nterm2(3, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
-      nterm3(4, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff),
-      nterm4(5, gamma, lambda, mu, mf_u, U, mf_obs, obs, pmf_coeff, &f_coeff);
+      nterm1(6,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff),
+      nterm2(3,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff),
+      nterm3(4,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff),
+      nterm4(5,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff);
 
     const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
 
     getfem::generic_assembly assem;
     std::string as_str
-      = ((option != 2) ? "w1=comp(NonLin$1(#1,"+aux_fems+")(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l));" : "")
+      = "w1=comp(NonLin$1(#1,"+aux_fems+")(i,j,k,l).vGrad(#1)(:,i,j).vGrad(#1)(:,k,l));"
       + "w2=comp(NonLin$2(#1,"+aux_fems+").vBase(#1).vBase(#1))(i,j,:,i,:,j);"
       + "w3=comp(NonLin$3(#1,"+aux_fems+").vBase(#1).vGrad(#1))(i,j,k,:,i,:,j,k);"
-      + ((option != 2) ? "w4=comp(NonLin$4(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);" : "")
-      + ((option == 1) ? "M(#1,#1)+=w1+w2+w3+w4;" : ((option == 3) ? "M(#1,#1)+=w2+w3-w4-w1;" : "M(#1,#1)+=w2+w3;"));
+      + "w4=comp(NonLin$4(#1,"+aux_fems+").vGrad(#1).vBase(#1))(i,j,k,:,i,j,:,k);"
+      + "M(#1,#1)+=w1+w2+w3+w4;";
 
     assem.set(as_str);
     assem.push_mi(mim);
@@ -2665,8 +2671,6 @@ namespace getfem {
 
 
   struct Nitsche_contact_rigid_obstacle_brick : public virtual_brick {
-
-    int option;
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -2689,8 +2693,8 @@ namespace getfem {
       const model_real_plain_vector &u = md.real_variable(vl[0]);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
 
-      // Data : obs, r, [lambda,] [friction_coeff,] [alpha,] [WT]
-      GMM_ASSERT1(dl.size() == 5, "Wrong number of data for Nitsche "
+      // Data : obs, r, theta, [lambda,] [friction_coeff,] [alpha,] [WT]
+      GMM_ASSERT1(dl.size() == 6, "Wrong number of data for Nitsche "
                   "contact with rigid obstacle brick");
 
       const model_real_plain_vector &obs = md.real_variable(dl[0]);
@@ -2702,20 +2706,24 @@ namespace getfem {
       const model_real_plain_vector &vr = md.real_variable(dl[1]);
       GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
 
+      const model_real_plain_vector &vtheta = md.real_variable(dl[2]);
+      GMM_ASSERT1(gmm::vect_size(vtheta) == 1,
+		  "Parameter theta should be a scalar");
+
       const model_real_plain_vector *f_coeff = 0;
       const mesh_fem *pmf_coeff = 0;
 
-      f_coeff = &(md.real_variable(dl[2]));
-      pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
+      f_coeff = &(md.real_variable(dl[3]));
+      pmf_coeff = md.pmesh_fem_of_variable(dl[3]);
       sl = gmm::vect_size(*f_coeff);
       if (pmf_coeff) { sl*= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
       GMM_ASSERT1(sl == 1, "the data corresponding to the friction "
                   "coefficient has not the right format");
 
-      const model_real_plain_vector &vlambda = md.real_variable(dl[3]);
+      const model_real_plain_vector &vlambda = md.real_variable(dl[4]);
       GMM_ASSERT1(gmm::vect_size(vlambda) == 1,
                   "Parameter lambda should be a scalar");
-      const model_real_plain_vector &vmu = md.real_variable(dl[4]);
+      const model_real_plain_vector &vmu = md.real_variable(dl[5]);
       GMM_ASSERT1(gmm::vect_size(vmu) == 1, "Parameter mu should be a scalar");
 
 
@@ -2730,20 +2738,19 @@ namespace getfem {
         gmm::clear(matl[0]);
         asm_Nitsche_contact_rigid_obstacle_tangent_matrix
           (matl[0], mim, mf_u, u, mf_obs, obs,  pmf_coeff, *f_coeff,
-           vr[0], vlambda[0], vmu[0], rg, option);
+           vr[0], vtheta[0], vlambda[0], vmu[0], rg);
       }
 
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
         asm_Nitsche_contact_rigid_obstacle_rhs
           (vecl[0], mim, mf_u, u, mf_obs, obs, pmf_coeff, *f_coeff,
-           vr[0], vlambda[0], vmu[0], rg, option);
+           vr[0], vtheta[0], vlambda[0], vmu[0], rg);
       }
 
     }
 
-    Nitsche_contact_rigid_obstacle_brick(int option_) {
-      option = option_;
+    Nitsche_contact_rigid_obstacle_brick(void) {
       set_flags("Integral Nitsche contact and friction with rigid "
                 "obstacle brick",
                 false /* is linear*/, false /* is symmetric */,
@@ -2757,17 +2764,19 @@ namespace getfem {
   size_type add_Nitsche_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
+   const std::string &dataname_theta,
    const std::string &dataname_friction_coeff,
    const std::string &dataname_lambda, const std::string &dataname_mu,
-   size_type region, int option) {
+   size_type region) {
 
-    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick(option);
+    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick();
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u, varname_u, false));
 
     model::varnamelist dl(1, dataname_obs);
     dl.push_back(dataname_r);
+    dl.push_back(dataname_theta);
     dl.push_back(dataname_friction_coeff);
     dl.push_back(dataname_lambda);
     dl.push_back(dataname_mu);
