@@ -21,6 +21,7 @@
 
 
 #include <getfem/getfem_assembling.h>
+#include <getfem/getfem_level_set.h>
 #include <getfemint_misc.h>
 #include <getfemint_gsparse.h>
 #include <getfem/getfem_interpolation.h>

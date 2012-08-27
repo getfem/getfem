@@ -42,8 +42,6 @@
 #define GETFEM_ASSEMBLING_H__
 
 #include "getfem_assembling_tensors.h"
-#include "getfem/getfem_mesh_im_level_set.h"
-
 
 namespace getfem {
   
