@@ -45,6 +45,7 @@
     <synopsis>Me = gf_asm('extrapolation matrix',mesh_fem mf, mesh_fem mfe)</synopsis>
     <synopsis>B = gf_asm('integral contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</synopsis>
     <synopsis>B = gf_asm('level set normal source term', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_levelset, vec levelset)</synopsis>
+    <synopsis>B = gf_asm('Nitsche contact rigid obstacle rhs', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_obs, vec obs, scalar fcoeff, scalar r, scalar theta, scalar clambda, scalar cmu)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -355,7 +356,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>B = gf_asm('contact with friction Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</literal></para>
+    <para><literal>B = gf_asm('integral contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</literal></para>
 
     <para>       Specific assembly procedure for the use of an Uzawa algorithm to solve
       contact problems. Projects the term $-(\lambda - r (u_N-g))_-$ on the
@@ -373,6 +374,17 @@
     on <literal>mf_lambda</literal> considered to be a component in the direction of the
     gradient of a levelset function (normal to the levelset) of a vector
     field defined on <literal>mf_u</literal> on the boundary <literal>bnum</literal>.
+
+    Return a vec object.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>B = gf_asm('Nitsche contact rigid obstacle rhs', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_obs, vec obs, scalar fcoeff, scalar r, scalar theta, scalar clambda, scalar cmu)</literal></para>
+
+    <para>       Compute the right hand side (residual) of the Nitsche term for contact
+    with friction on a rigid obstacle of a linearly elastic body. Experimental.
 
     Return a vec object.
     

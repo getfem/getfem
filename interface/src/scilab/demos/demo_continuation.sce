@@ -21,6 +21,7 @@
 // a good example of use of GetFEM++.
 //
 
+gf_workspace('clear all');
 lines(0);
 stacksize('max');
 
@@ -32,15 +33,24 @@ end
 gf_util('trace level', 1);
 gf_util('warning level', 3);
 
-gf_workspace('clear all');
-lambda = 0;
+// continuation data
+datapath = get_absolute_file_path('demo_continuation.sce') + 'data/';
+// If the file name bp_char is non-empty, the continuation will be started
+// from the bifurcation point and the tangent with the index ind_tangent
+// saved there, direction of that tangent will be determined by direction.
+// Otherwise, the continuation will be initialised according to direction and
+// lambda0.
+bp_char = '';
+//bp_char = 'continuation_step_62_bp.mat';
+ind_tangent = 2;
 direction = 1;
+lambda0 = 0;
 nbstep = 80;
 
 h_init = 2e-2;
 h_max = 2e-1;
 h_min = 2e-5;
-minang = 0.993;
+mincos = 0.997;
 noisy = 'noisy';
 
 // create a simple cartesian mesh
@@ -58,30 +68,38 @@ mim = gf_mesh_im(m, 4);
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
-gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
+gf_model_set(md, 'add data', 'lambda', 1);
 gf_model_set(md, 'add basic nonlinear brick', mim, 'u', ...
-                 'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
+             'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 
 // initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
-S = gf_cont_struct(md, 'lambda', scfac, 'h_init', h_init, 'h_max', h_max, ...
-                   'h_min', h_min, 'min_ang', minang, noisy);
+S = gf_cont_struct(md, 'lambda', scfac, 'bifurcations', 'h_init', h_init, ...
+                   'h_max', h_max, 'h_min', h_min, 'min_cos', mincos, noisy);
 
-// compute an initial point
-if (~isempty(noisy)) then
-    printf('computing an initial point\n');
+if (~isempty(bp_char)) then
+  load(datapath + bp_char);
+  U = U_bp; lambda = lambda_bp;
+  T_U = direction * T_U_bp(:, ind_tangent);
+  T_lambda = direction * T_lambda_bp(ind_tangent);
+  h = gf_cont_struct_get(S, 'init step size');
+else
+  lambda = lambda0;
+  gf_model_set(md, 'variable', 'lambda', [lambda]);
+  
+  if (~isempty(noisy)) then
+    printf('starting computing an initial point\n');
+  end
+  gf_model_get(md, 'solve', noisy, 'max_iter', 100);
+  U = gf_model_get(md, 'variable', 'u');
+  [T_U, T_lambda, h] = ...
+    gf_cont_struct_get(S, 'init Moore-Penrose continuation', ...
+                       U, lambda, direction);
 end
-gf_model_get(md, 'solve', noisy, 'max_iter', 100);
-[T_U, T_lambda, h] ...
-  = gf_cont_struct_get(S, 'init Moore-Penrose continuation', direction);
-
-U = gf_model_get(md, 'variable', 'u');
-tau = gf_cont_struct_get(S, 'test function');
-//printf('U = '); disp(U); printf('lambda = %e\n', lambda);
-//printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
 
 U_hist = zeros(1, nbstep + 1); lambda_hist = zeros(1, nbstep + 1);
 U_hist(1) = U(1); lambda_hist(1) = lambda;
+//tau = gf_cont_struct_get(S, 'test function');
 
 scf(0); drawlater; clf();
 subplot(2,1,1);
@@ -92,29 +110,33 @@ gf_plot_1D(mf, U, 'style', 'k.-');
 xtitle('', 'x', 'u');
 drawnow;
 
-scf(1); drawlater; clf();
-plot(0, tau, 'k.');
-xtitle('', 'iteration', 'tau');
-drawnow;
+//scf(1); drawlater; clf();
+//plot(0, tau, 'k.');
+//xtitle('', 'iteration', 'test function');
+//drawnow;
 
+sing_out = [];
 // continue from the initial point
 for step = 1:nbstep
   //sleep(1000);
   printf('\nbeginning of step %d\n', step);
-  [T_U, T_lambda, h] = ...
-    gf_cont_struct_get(S, 'Moore-Penrose continuation', T_U, T_lambda, h);
+  [U, lambda, T_U, T_lambda, h, sing_label] = ...
+    gf_cont_struct_get(S, 'Moore-Penrose continuation',...
+                       U, lambda, T_U, T_lambda, h);
   if (h == 0) then
-    printf('Continuation has failed');
     return
+  elseif (sing_label == 'smooth bifurcation point') then
+     [U_bp, lambda_bp, T_U_bp, T_lambda_bp]...
+       = gf_cont_struct_get(S, 'sing_data');
+     save(datapath + 'continuation_step_' + sci2exp(step) + '_bp.mat',...
+       U_bp, lambda_bp, T_U_bp, T_lambda_bp);
+     s = 'step ' + sci2exp(step) + ': '...
+         + sci2exp(size(T_U_bp, 2)) + ' branch(es) located';
+     sing_out = [sing_out; s];
   end
   
-  U = gf_model_get(md, 'variable', 'u');
-  lambda = gf_model_get(md, 'variable', 'lambda');
-  tau = gf_cont_struct_get(S, 'test function');
   U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
-//  printf('U = '); disp(U); printf('lambda = %e\n', lambda);
-//  printf('lambda - U(1) * exp(-U(1)) = %e\n', lambda - U(1) * exp(-U(1)));
-
+//  tau = gf_cont_struct_get(S, 'test function');
 
   scf(0); drawlater; clf();
   subplot(2,1,1);
@@ -127,25 +149,19 @@ for step = 1:nbstep
   xtitle('', 'x', 'u');
   drawnow;
 
-  scf(1); drawlater;
-  plot(step, tau, 'k.');
-  drawnow;
-  
-  // calculate the determinant of the augmented Jacobian directly
-//  lambda = lambda + 1e-8; gf_model_set(md, 'variable', 'lambda', [lambda]);
-//  gf_model_get(md, 'assembly', 'build_rhs');
-//  F1 = gf_model_get(md, 'rhs');
-//  lambda = lambda - 1e-8; gf_model_set(md, 'variable', 'lambda', [lambda]);
-//  gf_model_get(md, 'assembly', 'build_all');
-//  F0 = gf_model_get(md, 'rhs');
-//  J(1:11,1:11) = gf_model_get(md, 'tangent_matrix');
-//  J(1:11,12) = ((1 / 1e-8) * (F0 - F1))';
-//  J(12,1:11) = T_U; J(12,12) = T_lambda; detJ = det(J);
-//  printf('J = '); disp(J); printf('det(J) = %e\n', detJ);
-//  scf(2); drawlater;
-//  plot(step, detJ, 'k.');
-//  xtitle('', 'iteration', 'tau');
+//  scf(1); drawlater;
+//  plot(step, tau, 'k.');
 //  drawnow;
   
-  printf('end of step n° %d', step); printf(' / %d\n', nbstep);
+  printf('end of step n° %d / %d\n', step, nbstep)
+end
+
+nsing = size(sing_out, 1);
+if (nsing > 0) then
+  printf('\n----------------------------------------------------------\n')
+  printf('   detected bifurcation points on the continuation curve\n')
+  printf('----------------------------------------------------------\n')
+  for i = 1:nsing
+    printf(sing_out(i) + '\n')
+  end
 end

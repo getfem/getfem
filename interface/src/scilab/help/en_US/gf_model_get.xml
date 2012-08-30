@@ -25,7 +25,7 @@
     <synopsis>gf_model_get(model M, 'listvar')</synopsis>
     <synopsis>gf_model_get(model M, 'listbricks')</synopsis>
     <synopsis>V = gf_model_get(model M, 'variable', string name[, int niter])</synopsis>
-    <synopsis>V = gf_model_get(model M, 'mesh fem of variable', string name)</synopsis>
+    <synopsis>mf = gf_model_get(model M, 'mesh fem of variable', string name)</synopsis>
     <synopsis>name = gf_model_get(model M, 'mult varname Dirichlet', int ind_brick)</synopsis>
     <synopsis>I = gf_model_get(model M, 'interval of variable', string varname)</synopsis>
     <synopsis>V = gf_model_get(model M, 'from variables')</synopsis>
@@ -127,7 +127,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'mesh fem of variable', string name)</literal></para>
+    <para><literal>mf = gf_model_get(model M, 'mesh fem of variable', string name)</literal></para>
 
     <para>         Gives access to the <literal>mesh_fem</literal> of a variable or data.
     </para>

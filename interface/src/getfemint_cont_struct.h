@@ -30,7 +30,7 @@
 ===========================================================================*/
 
 /**\file getfemint_cont_struct.h
-   \brief interface for the continuation in Getfem models
+   \brief getfem::cont_struct_getfem_model interface
 */
 
 #include <getfemint_std.h>
@@ -53,9 +53,12 @@ namespace getfemint {
     id_type class_id() const { return CONT_STRUCT_CLASS_ID; }
     size_type memsize() const {
       size_type szd = sizeof(double);
-      return 2* gmm::vect_size(s->b_x()) * szd
-	+ gmm::vect_size(s->get_tau_hist()) * szd
-	+ sizeof(getfem::cont_struct_getfem_model);
+      return sizeof(getfem::cont_struct_getfem_model) 
+	+ ((int) s->bifurcations())
+	  * (2 * gmm::vect_size(s->b_x()) * szd
+	     + 4 * gmm::vect_size(s->get_tau_hist()) * szd
+	     + (1 + s->nb_tangent_sing()) * gmm::vect_size(s-> get_x_sing())
+	       * szd);
     }
 
     static getfemint_cont_struct*

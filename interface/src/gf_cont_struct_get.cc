@@ -65,96 +65,97 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
 
   if (subc_tab.size() == 0) {
   
-
-    /*@FUNC t = ('init test function', @vec tangent, @scalar tangent_parameter)
-      Initialise the border of the bordered system that serves for
-      calculating the test function. Return the value of the test function
-      for the current point (i.e., the solution and the parameter saved in
-      the corresponding model object) and the tangent given by `tangent` and
-      `tangent_parameter`.@*/
+    
+    /*@FUNC h = ('init step size')
+      Return an initial step size for continuation.@*/
     sub_command
-      ("init test function", 2, 2, 0, 1,
-
+      ("init step size", 0, 0, 0, 1,
+       
+       out.pop().from_scalar(ps->h_init());
+       );
+  
+    
+    /*@FUNC t = ('init test function', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par)
+      Initialise the border of the bordered system that serves for
+      calculating the test function for bifurcations. Return the value of the
+      test function for the point given by `solution` and `parameter` and the
+      tangent given by `tangent_sol` and `tangent_par`.@*/
+    sub_command
+      ("init test function", 4, 4, 0, 1,
+       
        size_type nbdof = ps->linked_model().nb_dof();
-       std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
-       const getfem::model_real_plain_vector &GAMMA =
-       ps->linked_model().real_variable(ps->parameter_name());
-       GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-                   "The continuation parameter should be a real scalar!");
-       scalar_type gamma = GAMMA[0];
-       darray t_y = in.pop().to_darray();
-       std::vector<double> tt_y(nbdof); gmm::copy(t_y, tt_y);
+       darray x = in.pop().to_darray();
+       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       scalar_type gamma = in.pop().to_scalar();
+       darray t_x = in.pop().to_darray();
+       std::vector<double> tt_x(nbdof); gmm::copy(t_x, tt_x);
        scalar_type t_gamma = in.pop().to_scalar();
 
-       getfem::init_test_function(*ps, yy, gamma, tt_y, t_gamma);
+       getfem::init_test_function(*ps, xx, gamma, tt_x, t_gamma);
        out.pop().from_scalar(ps->get_tau2());
        );
   
 
-    /*@FUNC E = ('init Moore-Penrose continuation', @scalar init_dir)
-      Initialise the Moore-Penrose continuation: Return a unit tangent
-      corresponding to the solution branch at the solution and the
-      value of the parameter saved in the corresponding model object,
-      and an initial step size for the continuation. Direction of the
+    /*@FUNC E = ('init Moore-Penrose continuation', @vec solution, @scalar parameter, @scalar init_dir)
+      Initialise the Moore-Penrose continuation: Return a unit tangent to
+      the solution curve at the point given by `solution` and `parameter`,
+      and an initial step size for the continuation. Orientation of the
       computed tangent with respect to the parameter is determined by the
       sign of `init_dir`.@*/
     sub_command
-      ("init Moore-Penrose continuation", 1, 1, 0, 3,
+      ("init Moore-Penrose continuation", 3, 3, 0, 3,
 
        size_type nbdof = ps->linked_model().nb_dof();
-       std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
-       const getfem::model_real_plain_vector &GAMMA
-       = ps->linked_model().real_variable(ps->parameter_name());
-       GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-                   "The continuation parameter should be a real scalar!");
-       scalar_type gamma = GAMMA[0];
-       std::vector<double> tt_y(nbdof);
+       darray x = in.pop().to_darray();
+       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       scalar_type gamma = in.pop().to_scalar();
+       std::vector<double> tt_x(nbdof);
        scalar_type t_gamma = in.pop().to_scalar();
        scalar_type h;
 
-       getfem::init_Moore_Penrose_continuation(*ps, yy, gamma,
-					       tt_y, t_gamma, h);
-       out.pop().from_dcvector(tt_y);
+       getfem::init_Moore_Penrose_continuation(*ps, xx, gamma,
+					       tt_x, t_gamma, h);
+       out.pop().from_dcvector(tt_x);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
        );
 
 
-    /*@FUNC E = ('Moore-Penrose continuation', @vec tangent, @scalar tangent_parameter, @scalar h)
-      Compute one step of the Moore-Penrose continuation: Take the solution
-      and the value of the parameter saved in the corresponding model object,
-      the tangent given by `tangent` and `tangent_parameter`, and the step
-      size `h`, save a new point on the solution curve into the model object,
-      and return a new tangent and a step size for the next step. If the
-      returned step size equals zero, the continuation has failed.
-      Eventually, return a message.@*/
+    /*@FUNC E = ('Moore-Penrose continuation', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par, @scalar h)
+      Compute one step of the Moore-Penrose continuation: Take the point
+      given by `solution` and `parameter`, the tangent given by `tangent_sol`
+      and `tangent_par`, and the step size `h`. Return a new point on the
+      solution curve, the corresponding tangent and a step size for the next
+      step. If the returned step size equals zero, the continuation has
+      failed. Optionally, return the type of any detected bifurcation point.
+      NOTE: The new point need not to be saved in the model in the end!@*/
     sub_command
-      ("Moore-Penrose continuation", 3, 3, 0, 4,
+      ("Moore-Penrose continuation", 5, 5, 0, 6,
 
        size_type nbdof = ps->linked_model().nb_dof();
-       std::vector<double> yy(nbdof); ps->linked_model().from_variables(yy);
-       const getfem::model_real_plain_vector &GAMMA
-       = ps->linked_model().real_variable(ps->parameter_name());
-       GMM_ASSERT1(gmm::vect_size(GAMMA) == 1,
-                   "The continuation parameter should be a real scalar!");
-       scalar_type gamma = GAMMA[0];
-       darray t_y = in.pop().to_darray();
-       std::vector<double> tt_y(nbdof); gmm::copy(t_y, tt_y);
+       darray x = in.pop().to_darray();
+       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       scalar_type gamma = in.pop().to_scalar();
+       darray t_x = in.pop().to_darray();
+       std::vector<double> tt_x(nbdof); gmm::copy(t_x, tt_x);
        scalar_type t_gamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
 
-       getfem::Moore_Penrose_continuation(*ps, yy, gamma, tt_y, t_gamma, h);
-       out.pop().from_dcvector(tt_y);
+       getfem::Moore_Penrose_continuation(*ps, xx, gamma, tt_x, t_gamma, h);
+       out.pop().from_dcvector(xx);
+       out.pop().from_scalar(gamma);
+       out.pop().from_dcvector(tt_x);
        out.pop().from_scalar(t_gamma);
        out.pop().from_scalar(h);
-       if (out.remaining()) out.pop().from_string(ps->get_message().c_str());
+       if (out.remaining())
+	 out.pop().from_string(ps->get_sing_label().c_str());
        );
 
 
     /*@GET t = ('test function')
-      Return the last value of the test function and eventaully all the
-      points and the corresponding values calculated when passing through a
-      boundary between different smooth pieces.@*/
+      Return the last value of the test function and eventaully the whole
+      calculated graph when passing between subdomains of different smooth
+      pieces.@*/
     sub_command
       ("test function", 0, 0, 0, 3,
        out.pop().from_scalar(ps->get_tau2());
@@ -163,10 +164,23 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET @CELL{X, gamma, T_X, T_gamma} = ('sing_data')
+      Return a singular point (`X`, `gamma`) encountered in the last
+      continuation step (if any) and a couple of arrays (`T_X`, `T_gamma`) of
+      tangents to all located solution branches, which emanate from there.@*/
+    sub_command
+      ("sing_data", 0, 0, 0, 4,
+       out.pop().from_dcvector(ps->get_x_sing());
+       out.pop().from_scalar(ps->get_gamma_sing());
+       out.pop().from_vector_container(ps->get_t_x_sing());
+       out.pop().from_dcvector(ps->get_t_gamma_sing());
+       );
+
+
     /*@GET s = ('char')
       Output a (unique) string representation of the @tcs.
 
-      This can be used to perform comparisons between two
+      This can be used for performing comparisons between two
       different @tcs objects.
       This function is to be completed.
       @*/

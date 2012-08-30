@@ -17,9 +17,12 @@
   <refsynopsisdiv>
     <title>Calling Sequence</title>
 
-    <synopsis>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', scalar init_dir)</synopsis>
-    <synopsis>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec tangent, scalar tangent_parameter, scalar h)</synopsis>
+    <synopsis>h = gf_cont_struct_get(cont_struct CS, 'init step size')</synopsis>
+    <synopsis>t = gf_cont_struct_get(cont_struct CS, 'init test function', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par)</synopsis>
+    <synopsis>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', vec solution, scalar parameter, scalar init_dir)</synopsis>
+    <synopsis>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par, scalar h)</synopsis>
     <synopsis>t = gf_cont_struct_get(cont_struct CS, 'test function')</synopsis>
+    <synopsis>{X, gamma, T_X, T_gamma} = gf_cont_struct_get(cont_struct CS, 'sing_data')</synopsis>
     <synopsis>s = gf_cont_struct_get(cont_struct CS, 'char')</synopsis>
     <synopsis>gf_cont_struct_get(cont_struct CS, 'display')</synopsis>
   </refsynopsisdiv>
@@ -36,33 +39,61 @@
 
     <itemizedlist>
     <listitem>
-    <para><literal>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', scalar init_dir)</literal></para>
+    <para><literal>h = gf_cont_struct_get(cont_struct CS, 'init step size')</literal></para>
 
-    <para>         Initialise the Moore-Penrose continuation: Return a unit tangent
-      corresponding to the solution branch at the solution and the
-      value of the parameter saved in the corresponding model object,
-      and an initial step size for the continuation. Direction of the
+    <para>         Return an initial step size for continuation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>t = gf_cont_struct_get(cont_struct CS, 'init test function', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par)</literal></para>
+
+    <para>         Initialise the border of the bordered system that serves for
+      calculating the test function for bifurcations. Return the value of the
+      test function for the point given by <literal>solution</literal> and <literal>parameter</literal> and the
+      tangent given by <literal>tangent_sol</literal> and <literal>tangent_par</literal>.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', vec solution, scalar parameter, scalar init_dir)</literal></para>
+
+    <para>         Initialise the Moore-Penrose continuation: Return a unit tangent to
+      the solution curve at the point given by <literal>solution</literal> and <literal>parameter</literal>,
+      and an initial step size for the continuation. Orientation of the
       computed tangent with respect to the parameter is determined by the
       sign of <literal>init_dir</literal>.
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec tangent, scalar tangent_parameter, scalar h)</literal></para>
+    <para><literal>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par, scalar h)</literal></para>
 
-    <para>         Compute one step of the Moore-Penrose continuation: Take the solution
-      and the value of the parameter saved in the corresponding model object,
-      the tangent given by <literal>tangent</literal> and <literal>tangent_parameter</literal>, and the step
-      size <literal>h</literal>, save a new point on the solution curve into the model object,
-      and return a new tangent and a step size for the next step. If the
-      returned step size equals zero, the continuation has failed.
+    <para>         Compute one step of the Moore-Penrose continuation: Take the point
+      given by <literal>solution</literal> and <literal>parameter</literal>, the tangent given by <literal>tangent_sol</literal>
+      and <literal>tangent_par</literal>, and the step size <literal>h</literal>. Return a new point on the
+      solution curve, the corresponding tangent and a step size for the next
+      step. If the returned step size equals zero, the continuation has
+      failed. Optionally, return the type of any detected bifurcation point.
+      NOTE: The new point need not to be saved in the model in the end!
     </para>
     </listitem>
 
     <listitem>
     <para><literal>t = gf_cont_struct_get(cont_struct CS, 'test function')</literal></para>
 
-    <para>         Return the last value of the test function.
+    <para>         Return the last value of the test function and eventaully the whole
+      calculated graph when passing between subdomains of different smooth
+      pieces.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{X, gamma, T_X, T_gamma} = gf_cont_struct_get(cont_struct CS, 'sing_data')</literal></para>
+
+    <para>         Return a singular point (<literal>X</literal>, <literal>gamma</literal>) encountered in the last
+      continuation step (if any) and a couple of arrays (<literal>T_X</literal>, <literal>T_gamma</literal>) of
+      tangents to all located solution branches, which emanate from there.
     </para>
     </listitem>
 
@@ -71,7 +102,7 @@
 
     <para>         Output a (unique) string representation of the cont_struct.
 
-      This can be used to perform comparisons between two
+      This can be used for performing comparisons between two
       different cont_struct objects.
       This function is to be completed.
       

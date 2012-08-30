@@ -8,6 +8,9 @@ References
 .. [AL-CU1991] P. Alart, A. Curnier.
    *A mixed formulation for frictional contact problems prone to newton like solution methods*, Computer Methods in Applied Mechanics and Engineering 92, 353--375, (1991).
 
+.. [all-ge1997] E.L. Allgower and K. Georg,
+   *Numerical Path Following*, Handbook of Numerical Analysis, Vol. V (P.G. Ciarlet and J.L. Lions, eds.), Elsevier, 1997, pp. 3-207.
+
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser,
    *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, (1983).
 
@@ -27,6 +30,9 @@ References
 
 .. [dh-go-ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov,
    *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*, ACM Trans. Math. Software 31 (2003), 141-164.
+
+.. [georg2001] K. Georg,
+   *Matrix-free numerical continuation and bifurcation*, Numer. Funct. Anal. Optimization 22 (2001), 303-320.
 
 .. [LA-RE2006] P. Laborde, Y. Renard.
    *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
