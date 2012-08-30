@@ -24,6 +24,8 @@ sys.path.append('../../../interface/src/python/')      # getfem
 from getfem import getfem_env
 user_preamble = """\n% begin user_preamble:
 \\usepackage{mathrsfs}
+\\usepackage{amsmath}
+\\usepackage{amssymb}
 \\usepackage[utf8]{inputenc}
 \\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
 \\newcommand{\\ds}{\\displaystyle}
