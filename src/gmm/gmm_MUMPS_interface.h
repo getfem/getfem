@@ -264,6 +264,12 @@ namespace gmm {
     id.ICNTL(4) = 0;  // verbosity level
 
     id.ICNTL(5) = 0;  // assembled input matrix (default)
+
+    id.ICNTL(14) += 80; /* small boost to the workspace size as we have encountered some problem
+                           who did not fit in the default settings of mumps.. 
+                           by default, ICNTL(14) = 15 or 20
+                        */
+
     id.ICNTL(18) = 3; // strategy for distributed input matrix
 
     id.job = 6;
