@@ -131,7 +131,63 @@ pause(1);
 end;
 
 
+return;
 
 
+% Part which allows to see the steps of the line search with the trace
+% option of the standard solve.
 
+for i = 0:1000
+    
+  filename = sprintf('line_search_state%03d_000_init', i);
+  fid = fopen(filename);
+  if (fid < 0) break; end
+  
+  disp(sprintf('Newton iteration %d init state', i));
+  V = fscanf(fid, '%g');
+  gf_model_set(md, 'to variables', V);
+  
+  U2 = gf_model_get(md, 'variable', 'u2');
+  VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+          		     'u2', 'lambda', 'mu', mfvm2);
+  gf_plot(mfvm2,VM2,'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
+  if (two_bodies)
+     hold on
+     U1 = gf_model_get(md, 'variable', 'u1');
+     VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		                'u1', 'lambda', 'mu', mfvm1);
+     gf_plot(mfvm1,VM1,'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
+     hold off
+  end;
+  axis([-1.1, 1.1, -0.1, 2.1]);
+  pause;
+  
+  
+  for j=1:100
+        
+    filename = sprintf('line_search_state%03d_%03d', i, j);
+    fid = fopen(filename);
+    if (fid < 0) break; end
 
+    disp(sprintf('Newton iteration %d line-search iteration %d', i, j));
+    V = fscanf(fid, '%g');
+    gf_model_set(md, 'to variables', V);
+    
+    U2 = gf_model_get(md, 'variable', 'u2');
+    VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+          		     'u2', 'lambda', 'mu', mfvm2);
+    gf_plot(mfvm2,VM2,'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
+    if (two_bodies)
+       hold on
+       U1 = gf_model_get(md, 'variable', 'u1');
+       VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		                'u1', 'lambda', 'mu', mfvm1);
+       gf_plot(mfvm1,VM1,'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
+       hold off
+    end;
+    axis([-1.1, 1.1, -0.1, 2.1]);
+    pause;
+    
+  end
+    
+end

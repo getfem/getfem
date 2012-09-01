@@ -2976,11 +2976,17 @@ namespace getfem {
       size_type ind = obstacles.size();
       obstacles.push_back(obs);
       obstacles_velocities.push_back("");
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    
       mu::Parser mu;
       obstacles_parsers.push_back(mu);
       obstacles_parsers[ind].SetExpr(obstacles[ind]);
       for (size_type k = 0; k < N; ++k)
         obstacles_parsers[ind].DefineVar(coordinates[k], &pt_eval[k]);
+#else
+      GMM_ASSERT1(false, "You have to link muparser with getfem to deal "
+		  "with rigid body obstacles");
+#endif
       return ind;
     }
 

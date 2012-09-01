@@ -20,7 +20,8 @@
 ===========================================================================*/
 
 #include "getfem/getfem_model_solvers.h"
-
+#include "gmm/gmm_inoutput.h"
+#include <iomanip>
 
 namespace getfem {
 
@@ -86,6 +87,8 @@ namespace getfem {
   /* ***************************************************************** */
   /*     Intermediary structure for Newton algorithms.                 */
   /* ***************************************************************** */
+
+  #define TRACE_SOL 0
 
   template <typename MAT, typename VEC> 
   struct model_pb {
@@ -164,9 +167,9 @@ namespace getfem {
       size_type nit = 0;
       gmm::resize(stateinit, md.nb_dof());
       gmm::copy(state, stateinit);
-      R alpha(1), res, res_init, R0;
+      R alpha(1), res, /* res_init, */ R0;
 	  
-      res_init = res = compute_res(false);      
+      /* res_init = */ res = compute_res(false);      
       // cout << "first residual = " << residual() << endl << endl;
       R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
 	               : gmm::real(gmm::vect_sp(dr, rhs)));
@@ -207,13 +210,34 @@ namespace getfem {
 //       cout << "res = " << res << " res2 = " << res2 << endl;
 //       cout << "a = " << (res2 + EPS * res - res) / gmm::sqr(EPS) << endl;
 //       cout << "aa = " << (res2 + EPS * res - res) << endl;
-
       
+#if TRACE_SOL  
+      static int trace_number = 0;
+      int trace_iter = 0;
+      {
+	std::stringstream trace_name;
+	trace_name << "line_search_state" << std::setfill('0')
+		   << std::setw(3) << trace_number << "_000_init";
+	gmm::vecsave(trace_name.str(),stateinit);
+      }
+      trace_number++;
+#endif 
+
       ls.init_search(res, iter.get_iteration(), R0);
       do {
 	alpha = ls.next_try();
 	gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
 		 gmm::sub_vector(state, I));
+#if TRACE_SOL
+	{
+	  trace_iter++;
+	  std::stringstream trace_name;
+	  trace_name  << "line_search_state" << std::setfill('0')
+		      << std::setw(3) << trace_number << "_"
+		      << std::setfill('0') << std::setw(3) << trace_iter;
+	  gmm::vecsave(trace_name.str(), state);
+	}
+#endif 
 	res = compute_res();
 	// cout << "residual = " << residual() << endl << endl;
 	R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
