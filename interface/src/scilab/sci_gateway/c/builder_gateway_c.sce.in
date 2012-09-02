@@ -86,6 +86,20 @@ Libraries = ['../../src/c/libsp_get'];
 if getos()=='Windows' then
   getfem_path = pwd() + '\..\..\..\';
   
+  // rebuild parameters.lib
+  exec(path_builder + 'rebuild_lib_windows.sci');
+  // We need to use Visual studio 10.0
+  if win64() then
+    machine = 'X64';
+  else
+    machine = 'X86';
+  end
+  status = rebuild_lib_windows(filtersd_path,'sparse_f',machine,'10.0');
+  if ~status then
+    printf('Error: problem while rebuilding parameters.lib\n');
+    abort();
+  end
+
   cflags = ' /I' + sci_getfem_path + ' /I' + sci_getfem_path + '/../../src/c';
   cflags = cflags + ' /I' + getfem_path + '/interface/src/' + ' /I' + getfem_path + '/src/getfem';
   cflags = cflags + ' /I' + SCI + '/../../include/scilab'; // For the binary distribution
@@ -100,21 +114,8 @@ if getos()=='Windows' then
   if (isfile(getfem_path + 'msvc2010\muparser_v134\lib\muparser.lib')) then
     ldflags = ldflags + getfem_path + 'msvc2010\muparser_v134\lib\muparser.lib ';
   end  
-
-  // Under windows, scilab ships only sparse_f.dll
-  // We need first to recreate the lib part 
-
-  // * Here are the mingw commands necessary to produce this lib library:
-  //   echo EXPORT > sparse_f.def
-  //   nm sparse_f.dll | grep 'T_' | sed 's/.* T _//' > sparse_f.def
-  //   dll_tool --def sparse_f.def --dllname sparse_f.dll --outputfile sparse_f.lib
-  // * Here are the visual commands necessary to produce this lib library:
-  //   dumpbin /exports sparse_f.dll > sparse_f.def
-  //   Edit sparse_f.def, add 'EXPORTS' on the first line and remove all the
-  //   cryptic symbols except the symbol name.
-  //   Now produce the lib file: lib /def:sparse_f.def /OUT:sparse_f.lib
     
-  ldflags = ldflags + ' ' + SCI + '/bin/sparse_f.lib';
+  ldflags = ldflags + ' sparse_f.lib ';
 
   // ldflags = ldflags + ' /NODEFAULTLIB:LIBCMT';
 else
