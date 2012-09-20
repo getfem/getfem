@@ -476,7 +476,7 @@ namespace getfem {
     friend class mesh_region;
   private:
     void swap_convex_in_regions(size_type c1, size_type c2);
-    void touch_from_region(size_type id) { touch(); }
+    void touch_from_region(size_type /*id*/) { touch(); }
     void to_edges() {} /* to be done, the to_edges of mesh_structure does   */
                        /* not handle geotrans */
 
