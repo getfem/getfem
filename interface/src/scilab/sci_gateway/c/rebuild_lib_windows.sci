@@ -13,10 +13,15 @@ function result = rebuild_lib_windows(path, lib_name, machine, vc_version)
 
   if getos()=='Windows' then
     try
-      value = winqueryreg('HKEY_LOCAL_MACHINE', 'SOFTWARE\Wow6432Node\Microsoft\VisualStudio\' + vc_version + '\Setup\VC\', 'ProductDir');
+		  if win64() then
+        value = winqueryreg('HKEY_LOCAL_MACHINE', 'SOFTWARE\Microsoft\VisualStudio\' + vc_version + '\Setup\VC\', 'ProductDir');
+			else
+        value = winqueryreg('HKEY_LOCAL_MACHINE', 'SOFTWARE\Wow6432Node\Microsoft\VisualStudio\' + vc_version + '\Setup\VC\', 'ProductDir');
+		  end
     catch
       printf('Error: can''t find Visual Studio %s\n', vc_version);
       result = %f;
+			return;
     end
     msvc_dir = """" + value + 'bin' + filesep();
     
@@ -36,4 +41,3 @@ function result = rebuild_lib_windows(path, lib_name, machine, vc_version)
     result = %f;
   end
 endfunction
-
