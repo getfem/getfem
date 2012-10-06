@@ -153,7 +153,7 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
       plot(X, Y);
       hmesh = gce();
       hmesh.children(:).thickness  = o_edges_width;
-      hmesh.children(:).line_style = 0; // Continous lines
+      hmesh.children(:).line_style = 1; // Continous lines
       hmesh.children(:).foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3)));
       drawnow;
     end
@@ -162,7 +162,7 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
       plot(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2));
       hbound(bnum) = gce();
       hbound(bnum).children(:).thickness  = 2;
-      hbound(bnum).children(:).line_style = 0; // Continous lines
+      hbound(bnum).children(:).line_style = 1; // Continous lines
       hbound(bnum).children(:).foreground = 5;
       drawnow;
     end
@@ -197,7 +197,7 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
       plot3d(X, Y, Z); // 'Color',o_edges_color,'LineWidth',o_edges_width
       hmesh = gce();
       hmesh.thickness  = o_edges_width;
-      //hmesh.children(:).line_style = 0; // Continuous line
+      //hmesh.children(:).line_style = 1; // Continuous line
       hmesh.foreground = color(round(255*o_edges_color(1)),round(255*o_edges_color(2)),round(255*o_edges_color(3)));
       drawnow;
     end
@@ -206,7 +206,7 @@ if (mdim > 3) then error('sorry, only mesh of dimension <= 3 allowed'); end;
       plot3d(bedge(bnum)(:,:,1), bedge(bnum)(:,:,2), bedge(bnum)(:,:,3)); // 'Color','red','LineWidth',2);
       hbound(bnum) = gce();
       hbound(bnum).thickness  = 2;
-      hbound(bnum).line_style = 0; // Continuous line
+      hbound(bnum).line_style = 1; // Continuous line
       hbound(bnum).foreground = 5; // Red
       drawnow;
     end

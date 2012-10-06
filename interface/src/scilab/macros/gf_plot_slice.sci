@@ -390,7 +390,7 @@ if (length(T)) then
       case 'flat'   then  hfaces.color_flag = 2;
     end
     hfaces.thickness  = 0; ///o_msh_edges_width;
-    hfaces.line_style = 0;
+    hfaces.line_style = 1;
     hfaces.foreground = color(round(255*o_msh_edges_color(1)), ...
                               round(255*o_msh_edges_color(2)), ...
                               round(255*o_msh_edges_color(3)));
@@ -423,7 +423,7 @@ if (ison(o_msh) & (ison(o_msh_edges) | ison(o_msh_slice_edges))) then
     end
     hmesh = gce();
     hmesh.thickness = o_msh_edges_width;
-    hmesh.line_style = 0;
+    hmesh.line_style = 1;
     hmesh.foreground = color(round(255*o_msh_edges_color(1)), ...
                              round(255*o_msh_edges_color(2)), ...
                              round(255*o_msh_edges_color(3)));
@@ -447,7 +447,7 @@ if (ison(o_msh) & (ison(o_msh_edges) | ison(o_msh_slice_edges))) then
     
     hmesh_tmp = gce();
     hmesh_tmp.thickness = o_msh_slice_edges_width;
-    hmesh_tmp.line_style = 0;
+    hmesh_tmp.line_style = 1;
     hmesh_tmp.foreground = color(round(255*o_msh_slice_edges_color(1)), ...
                                  round(255*o_msh_slice_edges_color(2)), ...
                                  round(255*o_msh_slice_edges_color(3)));
