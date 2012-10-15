@@ -232,6 +232,8 @@ namespace getfem {
      such that (V = M*U) == interpolation(mf_source, mf_target, U, V).
 
      Useful for repeated interpolations.
+     For perfomance reasons the matrix M is recommended to be either
+     a row or a row and column matrix.
    */
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,

@@ -416,8 +416,10 @@ gf_dirichlet(getfemint::mexargs_out& out,
 void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolate) {
   const getfem::mesh_fem *mf1 = in.pop().to_const_mesh_fem();
   const getfem::mesh_fem *mf2 = in.pop().to_const_mesh_fem();
+  gmm::row_matrix<getfem::model_real_sparse_vector> Maux(mf2->nb_dof(), mf1->nb_dof());
+  getfem::interpolation(*mf1, *mf2, Maux, extrapolate);
   gf_real_sparse_by_col M(mf2->nb_dof(), mf1->nb_dof());
-  getfem::interpolation(*mf1, *mf2, M, extrapolate);
+  gmm::copy(Maux, M);
   out.pop().from_sparse(M);
 }
 
