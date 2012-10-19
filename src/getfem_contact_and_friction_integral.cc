@@ -3157,7 +3157,7 @@ namespace getfem {
   bool contact_elements::add_point_contribution
   (size_type boundary_num, getfem::fem_interpolation_context &ctxu,
    getfem::fem_interpolation_context &ctxl, scalar_type weight,
-   scalar_type f_coeff, scalar_type r, model::build_version version) {
+   scalar_type /*f_coeff*/, scalar_type r, model::build_version version) {
     const mesh_fem &mfu = cf.mfu_of_boundary(boundary_num);
     const mesh_fem &mfl = cf.mflambda_of_boundary(boundary_num);
     const model_real_plain_vector &U = cf.disp_of_boundary(boundary_num);

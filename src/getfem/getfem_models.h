@@ -45,10 +45,13 @@ namespace getfem {
 
   class virtual_brick;
   /** type of pointer on a brick */
-  typedef boost::intrusive_ptr<const getfem::virtual_brick> pbrick;
+  typedef boost::intrusive_ptr<const virtual_brick> pbrick;
 
   class virtual_dispatcher;
-  typedef boost::intrusive_ptr<const getfem::virtual_dispatcher> pdispatcher;
+  typedef boost::intrusive_ptr<const virtual_dispatcher> pdispatcher;
+
+  class Neumann_elem_term;
+  typedef boost::intrusive_ptr<const Neumann_elem_term> pNeumann_elem_term;
 
   // Event management : The model has to react when something has changed in
   //    the context and ask for corresponding (linear) bricks to recompute
@@ -133,7 +136,7 @@ namespace getfem {
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
       size_type n_iter; //  Number of version of the variable stored for time
-                        // integration schemes.
+      // integration schemes.
       size_type n_temp_iter; // Number of additional temporary versions
       size_type default_iter; // default iteration number.
 
@@ -145,7 +148,7 @@ namespace getfem {
       std::string filter_var;       // Optional variable name for the filter
 
       dim_type qdim;  // A data could have a qdim != of the fem.
-                      // dim per dof for dof data.
+      // dim per dof for dof data.
       gmm::uint64_type v_num, v_num_data;
 
       gmm::sub_interval I; // For a variable : indices on the whole system
@@ -227,7 +230,7 @@ namespace getfem {
                          BUILD_WITH_COMPLETE_RHS = 8,
                          BUILD_COMPLETE_RHS = 9,
                          BUILD_PSEUDO_POTENTIAL = 16
-                       };
+    };
 
   private :
 
@@ -247,17 +250,17 @@ namespace getfem {
       mutable model_real_plain_vector coeffs;
       mutable scalar_type matrix_coeff;
       mutable real_matlist rmatlist;    // Matrices the brick have to fill in
-                                        // (real version).
+      // (real version).
       mutable std::vector<real_veclist> rveclist; // Rhs the brick have to
-                                        // fill in (real version).
+      // fill in (real version).
       mutable std::vector<real_veclist> rveclist_sym; // additional rhs for
-                                        //  symmetric terms (real version).
+      //  symmetric terms (real version).
       mutable complex_matlist cmatlist; // Matrices the brick have to fill in
-                                        // (complex version).
+      // (complex version).
       mutable std::vector<complex_veclist> cveclist; // Rhs the brick have to
-                                        // fill in (complex version).
+      // fill in (complex version).
       mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs
-                                        // for symmetric terms (real version).
+      // for symmetric terms (real version).
 
       brick_description(pbrick p, const varnamelist &vl,
                         const varnamelist &dl, const termlist &tl,
@@ -269,15 +272,19 @@ namespace getfem {
     };
 
     typedef std::map<std::string, var_description> VAR_SET;
-    mutable VAR_SET variables;
-    std::vector<brick_description> bricks;
+    mutable VAR_SET variables;             // Variables list of the model
+    std::vector<brick_description> bricks; // Bricks list of the model
     dal::bit_vector active_bricks;
+    typedef std::pair<std::string, size_type> Neumann_pair;
+    typedef std::map<Neumann_pair, pNeumann_elem_term> Neumann_SET;
+    mutable Neumann_SET Neumann_term_list; // Neumann terms list (mainly for
+    // Nitsche's method)
 
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
                              bool assert = true) const;
     void brick_init(size_type ib, build_version version,
-                      size_type rhs_ind = 0) const;
+		    size_type rhs_ind = 0) const;
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
@@ -307,6 +314,21 @@ namespace getfem {
       return bricks[ind_brick].pbr;
     }
 
+    void add_Neumann_term(pNeumann_elem_term p,
+			  const std::string &varname,
+			  size_type brick_num) const
+    { Neumann_term_list[Neumann_pair(varname, brick_num)] = p; }
+
+    /** Compute the approximation of the Neumann condition for a variable
+	with the declared terms.
+	The output tensor has to have the right size. No verification.
+    */
+    void compute_Neumann_terms(int version, const std::string &varname,
+			       const mesh_fem &mfvar,    
+			       const model_real_plain_vector &var,
+			       fem_interpolation_context &ctx,
+			       base_small_vector &n,
+			       bgeot::base_tensor &output) const;
 
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
 
@@ -702,10 +724,10 @@ namespace getfem {
       leading_dim = 0;
     }
 
-	/**check consistency of RHS and Stiffness matrix for brick with 
-	* @param  ind_brick  - index of the brick
-	*/
-	void check_brick_stiffness_rhs(size_type ind_brick) const;
+    /**check consistency of RHS and Stiffness matrix for brick with 
+     * @param  ind_brick  - index of the brick
+     */
+    void check_brick_stiffness_rhs(size_type ind_brick) const;
 
 
   };
@@ -856,7 +878,7 @@ namespace getfem {
     bool iscomplex;   // The brick admits a complex version or not.
     bool isinit;      // internal flag.
     bool compute_each_time; // The brick is linear but needs to be computed
-                            // each time it is evaluated.
+    // each time it is evaluated.
     std::string name; // Name of the brick.
 
   public :
@@ -929,20 +951,53 @@ namespace getfem {
       return scalar_type(0);
     }
 
-	/**check consistency of stiffness matrix and rhs*/
-	void check_stiffness_matrix_and_rhs(const model &, size_type,
+    /**check consistency of stiffness matrix and rhs*/
+    void check_stiffness_matrix_and_rhs(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
                                         const model::mimlist &,
                                         model::real_matlist &,
                                         model::real_veclist &,
                                         model::real_veclist &, size_type rg,
-										const scalar_type delta = 1e-8) const;
-
-
-
+					const scalar_type delta = 1e-8) const;
 
   };
+
+  //=========================================================================
+  //
+  //  Neumann term object.
+  //
+  //=========================================================================
+
+  /* For a PDE in a weak form, the Neumann condition correspond to
+     prescribe a certain derivative of the unkown (the normal derivative
+     for the Poisson problem for instance). The Neumann term objects allows
+     to compute the finite element approximation of this certain derivative.
+     This allows, first ot have an estimate of this term (for instance, it can
+     give an approximation of the stress at the boundary in a problem of
+     linear elasticity) but also it allows to prescribe some boundary
+     conditions with Nitsch's method (For dirichlet or contact boundary
+     conditions for instance).
+  */
+
+  struct Neumann_elem_term : virtual public dal::static_stored_object {
+
+    // The function should return the Neumann term when version = 1,
+    // its derivative when version = 2 and its second derivative
+    // when version = 3.
+    // CAUTION : The output tensor has the right size and the reult has to
+    //           be ADDED. previous additions of other term have not to be
+    //           erased.
+
+    virtual void compute_Neumann_term
+    (int version, const mesh_fem &/*mfvar*/,
+     const model_real_plain_vector &/*var*/,
+     fem_interpolation_context& /*ctx*/,
+     base_small_vector &/*n*/, base_tensor &/*output*/) const = 0;
+
+  };
+
+
 
 
 
@@ -1038,17 +1093,41 @@ namespace getfem {
   /** Same function as the previous one but the `mf_mult` parameter is
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
-   */
+  */
   size_type add_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
    const std::string &dataname = std::string());
 
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with Nitsche's method. `dataname` is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. `gamma0name` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary. 
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+  */
+  size_type add_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &gamma0name, size_type region,
+   scalar_type theta = scalar_type(1),
+   const std::string &dataname = std::string());
+
+
   /** When `ind_brick` is the index of a Dirichlet brick with multiplier on
       the model `md`, the function return the name of the multiplier variable.
       Otherwise, it has an undefined behavior.
   */
-  const std::string &mult_varname_Dirichlet(model &md, size_type ind_brick);
+    const std::string &mult_varname_Dirichlet(model &md, size_type ind_brick);
 
   /** Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
@@ -1069,7 +1148,7 @@ namespace getfem {
    const mesh_fem *mf_mult = 0);
 
   /** Add a Dirichlet condition to the normal component of the vector
-     (or tensor) valued variable `varname` and the mesh
+      (or tensor) valued variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with a multiplier variable `multname` which
       should be first declared as a multiplier
@@ -1100,14 +1179,14 @@ namespace getfem {
   /** Same function as the previous one but the `mf_mult` parameter is
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
-   */
+  */
   size_type add_normal_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
    const std::string &dataname = std::string());
 
   /** Add a Dirichlet condition to the normal component of the vector
-     (or tensor) valued variable `varname` and the mesh
+      (or tensor) valued variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
       condition is prescribed with penalization. The penalization coefficient
       is intially `penalization_coeff` and will be added to the data of
@@ -1235,7 +1314,7 @@ namespace getfem {
   /** Same function as the preceeding one but the `mf_mult` parameter is
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
-   */
+  */
   size_type add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
@@ -1303,7 +1382,7 @@ namespace getfem {
       optional mesh region on which the term is added. `dataname` represents
       the optional real scalar parameter $\lambda$ in the model. Return the
       brick index in the model.
-   */
+  */
   size_type add_basic_nonlinear_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &f, const std::string &dfdu,
@@ -1326,7 +1405,7 @@ namespace getfem {
 
   template <typename VECT, typename T>
   void set_private_data_rhs(model &md, size_type ind,
-                                const VECT &L, T) {
+			    const VECT &L, T) {
     model_real_plain_vector &LL = set_private_data_brick_real_rhs(md, ind);
     gmm::resize(LL, gmm::vect_size(L));
     gmm::copy(L, LL);
@@ -1334,7 +1413,7 @@ namespace getfem {
 
   template <typename VECT, typename T>
   void set_private_data_rhs(model &md, size_type ind, const VECT &L,
-                           std::complex<T>) {
+			    std::complex<T>) {
     model_complex_plain_vector &LL=set_private_data_brick_complex_rhs(md, ind);
     gmm::resize(LL, gmm::vect_size(L));
     gmm::copy(L, LL);
@@ -1352,7 +1431,7 @@ namespace getfem {
 
   template <typename MAT, typename T>
   void set_private_data_matrix(model &md, size_type ind,
-                                   const MAT &B, T) {
+			       const MAT &B, T) {
     model_real_sparse_matrix &BB = set_private_data_brick_real_matrix(md, ind);
     gmm::resize(BB, gmm::mat_nrows(B), gmm::mat_ncols(B));
     gmm::copy(B, BB);
@@ -1360,7 +1439,7 @@ namespace getfem {
 
   template <typename MAT, typename T>
   void set_private_data_matrix(model &md, size_type ind, const MAT &B,
-                              std::complex<T>) {
+			       std::complex<T>) {
     model_complex_sparse_matrix &BB
       = set_private_data_brick_complex_matrix(md, ind);
     gmm::resize(BB, gmm::mat_nrows(B), gmm::mat_ncols(B));
@@ -1372,7 +1451,7 @@ namespace getfem {
       set this matrix. @*/
   template <typename MAT>
   void set_private_data_matrix(model &md, size_type indbrick,
-                                   const MAT &B) {
+			       const MAT &B) {
     typedef typename gmm::linalg_traits<MAT>::value_type T;
     set_private_data_matrix(md, indbrick, B, T());
   }
@@ -1398,12 +1477,12 @@ namespace getfem {
   }
 
   /** Add an additional explicit constraint on the variable `varname` thank to
-    a multiplier `multname` peviously added to the model (should be a fixed
-    size variable).
-    The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
-    It is possible to change the constraint
-    at any time whith the methods set_private_matrix
-    and set_private_rhs.
+      a multiplier `multname` peviously added to the model (should be a fixed
+      size variable).
+      The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
+      It is possible to change the constraint
+      at any time whith the methods set_private_matrix
+      and set_private_rhs.
   */
   template <typename MAT, typename VECT>
   size_type add_constraint_with_multipliers

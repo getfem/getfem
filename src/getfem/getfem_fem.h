@@ -667,7 +667,7 @@ namespace getfem {
     mutable base_matrix M_; // optional transformation matrix (for non tau-equivalent fems)
     pfem pf_;               // current fem
     pfem_precomp pfp_;      // optional fem_precomp_ (speed up the computations)
-    size_type convex_num_;  // the convex number (info needed by some specific FEMs)
+    size_type convex_num_;  // The element (convex) number
     size_type face_num_;    // Face number for boundary integration
   public:
     /// true if a fem_precomp_ has been supplied.

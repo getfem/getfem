@@ -365,6 +365,9 @@ namespace gmm
       return *(this->begin() + c*nbl+l);
     }
 
+    std::vector<T> &as_vector(void) { return *this; }
+    const std::vector<T> &as_vector(void) const { return *this; }
+
     void resize(size_type, size_type);
     void reshape(size_type, size_type);
     

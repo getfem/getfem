@@ -201,6 +201,7 @@ namespace getfem {
                   mat_elem_integration_callback *icb,
 		  bgeot::multi_index sizes) const {
       mat_elem_type::const_iterator it = pme->begin(), ite = pme->end();
+      bgeot::multi_index aux_ind;
 
       for (size_type k = 0; it != ite; ++it, ++k) {
 	if ((*it).t == GETFEM_NONLINEAR_)
@@ -235,18 +236,18 @@ namespace getfem {
 	    }
 	    else {
 	      base_tensor tt = pfp[k]->hess(ctx.ii());
-	      bgeot::multi_index mim(3);
-	      mim[2] = gmm::sqr(tt.sizes()[2]); mim[1] = tt.sizes()[1];
-	      mim[0] = tt.sizes()[0];
-	      tt.adjust_sizes(mim);
+	      aux_ind.resize(3);
+	      aux_ind[2] = gmm::sqr(tt.sizes()[2]); aux_ind[1] = tt.sizes()[1];
+	      aux_ind[0] = tt.sizes()[0];
+	      tt.adjust_sizes(aux_ind);
 	      elmt_stored[k] = tt;
 	    }
 	    break;
 	  case GETFEM_UNIT_NORMAL_ :
 	    *(mit-1) = short_type(ctx.N());
 	    { 
-	      bgeot::multi_index sz(1); sz[0] = short_type(ctx.N());
-	      elmt_stored[k].adjust_sizes(sz);
+	      aux_ind.resize(1); aux_ind[0] = short_type(ctx.N());
+	      elmt_stored[k].adjust_sizes(aux_ind);
 	    }
 	    std::copy(up.begin(), up.end(), elmt_stored[k].begin());
 	    break;
@@ -258,10 +259,10 @@ namespace getfem {
 	      Bt.resize(P,N); gmm::copy(gmm::transposed(ctx.B()),Bt);
 	    }
 	    const base_matrix &A = (it->t==GETFEM_GRAD_GEOTRANS_) ? ctx.K():Bt;
-	    bgeot::multi_index sz(2);
-	    *(mit-1) = sz[0] = short_type(gmm::mat_nrows(A));
-	    *mit++ = sz[1] = short_type(gmm::mat_ncols(A));
-	    elmt_stored[k].adjust_sizes(sz);
+	    aux_ind.resize(2);
+	    *(mit-1) = aux_ind[0] = short_type(gmm::mat_nrows(A));
+	    *mit++ = aux_ind[1] = short_type(gmm::mat_ncols(A));
+	    elmt_stored[k].adjust_sizes(aux_ind);
 	    std::copy(A.begin(), A.end(), elmt_stored[k].begin());
 	  } break;
 	  case GETFEM_NONLINEAR_ :
@@ -272,21 +273,27 @@ namespace getfem {
 		/* the dummy assistant multiplies everybody by 1
 		   -> not efficient ! */
 	      }
-	      bgeot::multi_index sz(1); sz[0] = 1;
-	      elmt_stored[k].adjust_sizes(sz); elmt_stored[k][0] = 1.;
+	      aux_ind.resize(1); aux_ind[0] = 1;
+	      elmt_stored[k].adjust_sizes(aux_ind); elmt_stored[k][0] = 1.;
 	    } else {
 	      // cout << "Term size = " << (*it).nlt->term().size() << endl;
+	      size_type ns = (*it).nlt->sizes().size();
 	      if ((*it).nlt->term_num() == size_type(-1)) {
-		elmt_stored[k].adjust_sizes((*it).nlt->sizes());
+		bool known_size = true;
+		for (dim_type ii = 0; ii < ns; ++ii) {
+		  if ((*it).nlt->sizes()[ii] == short_type(-1))
+		    { known_size = false; break; }
+		}
+		if (known_size)
+		  elmt_stored[k].adjust_sizes((*it).nlt->sizes());
 		(*it).nlt->compute(ctx, elmt_stored[k]);
 		(*it).nlt->term_num() = k;
+		--mit;
+		for (dim_type ii = 0; ii < (*it).nlt->sizes().size(); ++ii)
+		  *mit++ = elmt_stored[k].sizes()[ii];
 	      } else {
 		elmt_stored[k] = elmt_stored[(*it).nlt->term_num()];
 	      }
-	      // elmt_stored[k].adjust_sizes((*it).nlt->sizes());
-	      // (*it).nlt->compute(ctx, elmt_stored[k]);
-	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii)
-		++mit;
 	    }
 	    break;
 	}
@@ -376,6 +383,7 @@ namespace getfem {
         do {
           for (V = Vtab[k]; k; --k)
             Vtab[k-1] = V = *pts[k] * V;
+	  GMM_ASSERT1(pt+n0 <= t.end(), "Internal error");
           daxpy_(&n0, &V, const_cast<double*>(&(pts0[0])), &one,
 		 (double*)&(*pt), &one); 
           pt+=n0;

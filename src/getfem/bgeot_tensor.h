@@ -228,6 +228,9 @@ namespace bgeot {
     
     tensor<T>& operator *=(const scalar_type w)
     { gmm::scale(this->as_vector(), w); return *this; }
+
+    tensor<T>& operator /=(const scalar_type w)
+    { gmm::scale(this->as_vector(), scalar_type(1)/w); return *this; }
   };
 
   template<class T> void tensor<T>::mat_transp_reduction
@@ -285,7 +288,7 @@ namespace bgeot {
       tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
     }
     *mi = t.sizes();
-    size_type dimt = (*mi)[ni], dim = m.ncols();
+    short_type dimt = (*mi)[ni], dim = short_type(m.ncols());
     GMM_ASSERT2(dimt == m.nrows(), "dimensions mismatch");
     GMM_ASSERT2(&t != this, "does not work when t and *this are the same");
     
@@ -299,7 +302,8 @@ namespace bgeot {
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
       if ((*mi)[ni] != 0) { 
-	for (short_type k = 0; k <= ni; ++k) (*mi)[k] = sizes()[k] - 1;
+	for (short_type k = 0; k <= short_type(ni); ++k)
+	  (*mi)[k] = short_type(sizes()[k] - 1);
 	pf += dd; pft += ddt;
       }
       else {

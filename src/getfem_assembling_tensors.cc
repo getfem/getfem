@@ -450,8 +450,13 @@ namespace getfem {
     switch (op) {
       case NONLIN:
 	for (unsigned j=0; j < nlt->sizes().size(); ++j)
-	  if (!only_reduced || !reduced(j)) 
-	    rng.push_back(nlt->sizes()[j]);
+	  if (!only_reduced || !reduced(j)) {
+	    short_type s = nlt->sizes()[j];
+	    if (s == short_type(-1)) // nbdof in that case
+	      rng.push_back(pmf->nb_basic_dof_of_element(cv));
+	    else 
+	      rng.push_back(s);
+	  }
 	break;
       case DATA:
 	for (unsigned i=0; i < data->ranges().size(); ++i) 
@@ -938,12 +943,11 @@ namespace getfem {
 				  has_inline_reduction ? &icb : 0);
       }
       
-
       if (has_inline_reduction && icb.was_called == false) {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
-      GMM_ASSERT3(t.size() == size_type(tsize), "");
+      GMM_ASSERT3(t.size() == size_type(tsize), "Internal error");
     }
   };
 
@@ -1853,7 +1857,6 @@ namespace getfem {
       mesh_region::face_bitset nf = r[cv[i]];
       dim_type f = dim_type(-1);
       while (nf.any()) {
-	//cerr << "generic_assembly::exec(" << cv[i] << ")\n";
 	if (nf[0]) exec(cv[i],f);
 	nf >>= 1; f++;
       }

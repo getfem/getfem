@@ -17,8 +17,7 @@
 
 
 disp('This demo is an adaption of the original tripod demo')
-disp('which uses the new "brick" framework of getfem')
-disp('The code is shorter, faster and much more powerful')
+disp('which uses the old "brick" framework of getfem')
 disp('You can easily switch between linear/non linear')
 disp('compressible/incompressible elasticity!')
 

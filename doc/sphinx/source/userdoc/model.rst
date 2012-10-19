@@ -44,6 +44,7 @@ The kernel of the model description is contained in the file
    model_source_term.rst
    model_solvers.rst
    model_poisson.rst
+   model_Nitsche.rst
    model_constraint.rst
    model_explicit.rst
    model_helmholtz.rst

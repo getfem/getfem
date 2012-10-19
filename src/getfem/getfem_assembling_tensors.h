@@ -326,15 +326,7 @@ namespace getfem {
 				     mf_r.ind_basic_dof_of_element(cv).end());
       std::vector<size_type> cvdof_c(mf_c.ind_basic_dof_of_element(cv).begin(),
 				     mf_c.ind_basic_dof_of_element(cv).end());
-      /*mti.rewind();
-      do {
-	if (mti.p(0)) {
-	  size_type dof_i = cvdof_r[mti.index(0)];
-	  size_type dof_j = cvdof_c[mti.index(1)];
-	  m(dof_i, dof_j) += mti.p(0);
-	}
-      } while (mti.qnext1());
-      */
+
       if (it.size() == 0) {
 	mti.rewind();
 	do {

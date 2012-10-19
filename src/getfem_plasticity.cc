@@ -178,7 +178,7 @@ namespace getfem {
 
         // Store the projected or plastic sigma
         if (store_sigma) {
-          size_type sigma_dof = mf_sigma.ind_basic_dof_of_element(cv)[ii*qdim_sigma];
+          sigma_dof = mf_sigma.ind_basic_dof_of_element(cv)[ii*qdim_sigma];
           for (dim_type j = 0; j < qdim; ++j) {
             for (dim_type i = 0; i < qdim; ++i) {
               cumulated_count[sigma_dof] += 1;
@@ -543,7 +543,7 @@ namespace getfem {
     const model_real_plain_vector &sigma_n = md.real_variable(datasigma);
     const mesh_fem &mf_sigma = *(md.pmesh_fem_of_variable(datasigma));
 
-    dim_type N = mf_sigma.linked_mesh().dim();
+    // dim_type N = mf_sigma.linked_mesh().dim();
 
     mesh_region rg = mim.linked_mesh().get_mpi_region();
 

@@ -449,7 +449,7 @@ bool level_set_contact::contact_pair_info::contact_changed()
 				ls_grad_node[k]=normLS_master[dim*dof_ls[j]+k];
 			cosine_alpha+= gmm::vect_sp(ls_grad_node,unit_face_normal);
 		}
-		cosine_alpha/=dof_ls.size(); 
+		cosine_alpha/=scalar_type(dof_ls.size()); 
 		scalar_type alpha = acos(cosine_alpha)*360/(2*M_PI);	//now this is average angle
 		                             // between master surface and ls zero contour
 
