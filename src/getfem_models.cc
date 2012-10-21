@@ -2289,12 +2289,10 @@ namespace getfem {
   // Attention, la brique est non-linéaire si les modèles sont non-linéaires ... ---> il faudra estimer cela !
 
 
-  // A externaliser dans un fichier à part ...
-
   struct dirichlet_nitsche_nonlinear_term : public nonlinear_elem_term {
     // Option:
     // 1 : matrix term H^TH/gamma
-    // 2 : matrix term -(DG(u)[w])^TH^TH ...
+    // 2 : matrix term -(DG(u)[w])^TH^TH
     // 3 : matrix term theta(g-Hu)^TH(D^2G(u)[w,v])
     // 4 : rhs term (H^Tg)/gamma
     // 5 : rhs term H^T((g-Hu)/gamma + HG(u))
@@ -2394,7 +2392,6 @@ namespace getfem {
       dim_type i;
       size_type cv = ctx.convex_num();
       short_type ndof = short_type(ctx.pf()->nb_dof(cv) * qdim / ctx.pf()->target_dim());
-      cout << "begin compute for term " << option << endl;
       
       switch (option) {
       case 1:
@@ -2405,11 +2402,8 @@ namespace getfem {
 	tp.adjust_sizes(sizes_); t.adjust_sizes(sizes_);
 	sizes_[0] = short_type(-1);
 	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
-	cout << "HTH = " << HTH << endl;
-	cout << "sizes = " << sizes_ << endl;
 	t.mat_reduction(tp, HTH, 1);
-	// t /= -gamma;
-	cout << t << endl;
+	t /= -1;
 	break;
       case 3:
 	sizes_[0] = sizes_[1] = ndof;
@@ -2431,7 +2425,7 @@ namespace getfem {
 	gmm::scaled(auxn, scalar_type(1)/gamma);
 	tp.adjust_sizes(sizes_);
 	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
-	gmm::add(tp.as_vector(), auxn);
+	gmm::mult_add(H, tp.as_vector(), auxn);
 	gmm::mult(gmm::transposed(H), auxn, t.as_vector());
 	break;
       case 6:
@@ -2440,27 +2434,27 @@ namespace getfem {
 	sizes_[1] = qdim;
 	tp.adjust_sizes(sizes_);
 	sizes_[0] = short_type(-1); sizes_[1] = 1;
-	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
+	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
 	gmm::copy(gmm::scaled(g, -theta), auxn);
 	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
 	t.mat_reduction(tp, auxH, 1);
 	break;
       case 7:
-	sizes_[1] = qdim; tp.adjust_sizes(sizes_); sizes_[1] = 1;
-	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
+	sizes_[0] = ndof;
+	t.adjust_sizes(sizes_);
+	sizes_[1] = qdim;
+	tp.adjust_sizes(sizes_);
+	sizes_[0] = short_type(-1); sizes_[1] = 1;
+	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
 	gmm::mult(H, gmm::scaled(u, theta), gmm::scaled(g, -theta), auxn);
 	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
 	t.mat_reduction(tp, auxH, 1);
 	break;
       }
-      cout << "end compute" << endl;
-
     }
 
     void prepare(fem_interpolation_context& ctx, size_type nb) {
       size_type cv = ctx.convex_num();
-
-      cout << "begin prepare" << endl;
       
       switch (nb) { // last is computed first
       case 1 : // mandatory. calculate [u], [n], [gamma], [HTH]
@@ -2477,7 +2471,10 @@ namespace getfem {
 	    for (size_type j = 0; j < qdim; ++j)
 	      HTH(i,j) = H(i,j) = n[i]*n[j];
 	}
-	else if (!H_version) HTH[0] = H[0] = scalar_type(1);
+	else if (!H_version) {
+	  gmm::copy(gmm::identity_matrix(), HTH);
+	  gmm::copy(gmm::identity_matrix(), H);
+	}
 	else {
 	  GMM_ASSERT1(gmm::vect_size(HH), "Need H in this case !");
 	  if (!mf_H) gmm::copy(HH, H.as_vector());
@@ -2536,11 +2533,8 @@ namespace getfem {
 	
       default : GMM_ASSERT1(false, "Invalid option");
       }
-      cout << "end prepare" << endl;
 
     }
-
-
   };
 
   void asm_Dirichlet_Nitsche_first_tangent_term
@@ -2551,13 +2545,11 @@ namespace getfem {
    bool normal_component, const mesh_fem *mf_H,
    const model_real_plain_vector *H, const mesh_region &rg) {
     
-    cout << "Begin asm" << endl;
     
     dirichlet_nitsche_nonlinear_term nterm(2, &md, &varname, &mfu, U, theta,
 					   gamma0, H_version, normal_component,
 					   0, 0, mf_H, H);
 
-    cout << "1" << endl;
     
     getfem::generic_assembly assem;
     
@@ -2573,10 +2565,8 @@ namespace getfem {
     assem.push_nonlinear_term(&nterm);
   
     assem.push_mat(M);
-    cout << "2" << endl;
     
     assem.assembly(rg);
-    cout << "end asm" << endl;
   }
 
   void asm_Dirichlet_Nitsche_second_tangent_term
@@ -2732,17 +2722,15 @@ namespace getfem {
                   "Wrong number of variables for Dirichlet condition brick");
 
       
-      cout << "begining of Nitsche assembly" << endl;
-
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
       const model_real_plain_vector *U = &(md.real_variable(vl[0]));
       const mesh_im &mim = *mims[0];
       const model_real_plain_vector *G = 0, *H = 0;
       const mesh_fem *mf_data = 0, *mf_H = 0;
-      bool recompute_matrix = !is_linear() ||
-	!((version & model::BUILD_ON_DATA_CHANGE) != 0)
-        || md.is_var_newer_than_brick(dl[0], ib)
-	|| md.is_var_newer_than_brick(dl[1], ib);
+      bool recompute_matrix = (!is_linear() && (version & model::BUILD_MATRIX))
+	|| (is_linear() && (!((version & model::BUILD_ON_DATA_CHANGE) != 0)
+			    || md.is_var_newer_than_brick(dl[0], ib)
+			    || md.is_var_newer_than_brick(dl[1], ib)));
 
       GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[0])) == 1,
 		  "Parameter gamma0 for Nitsche's method should be a scalar");
@@ -2782,11 +2770,11 @@ namespace getfem {
       mim.linked_mesh().intersect_with_mpi_region(rg);
 
       if (recompute_matrix) {
-	cout << "recompute matrix for Nitsche assembly, first term" << endl;
 
 	gmm::clear(matl[0]);
      
-        GMM_TRACE2("Assembly of Nitsche's terms for Dirichlet condition");
+        GMM_TRACE2("Assembly of Nitsche's tangent terms "
+		   "for Dirichlet condition");
 	asm_Dirichlet_Nitsche_first_tangent_term
 	  (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
 	   normal_component, mf_H, H, rg);
@@ -2797,26 +2785,21 @@ namespace getfem {
 	  gmm::add(gmm::transposed(B), matl[0]);
 	}
 
-	cout << "second term" << endl;
-
 	asm_Dirichlet_Nitsche_second_tangent_term
 	  (matl[0], mim, mf_u, theta, gamma0, H_version, normal_component,
 	   mf_H, H, rg);
-
-	cout << "third term" << endl;
 
 	if (theta != scalar_type(0) && !linear_version) {
 	  asm_Dirichlet_Nitsche_third_tangent_term
 	    (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
 	     normal_component, mf_H, H, mf_data, G, rg);
 	}
-	cout << "Matrix computed" << endl;
       }
-      
-      
 
-      if (!linear_version || G) {
-	GMM_TRACE2("Source term assembly for Dirichlet condition");
+      if ((!linear_version && (version & model::BUILD_RHS))
+	  || (linear_version && G)) {
+	GMM_TRACE2("Assembly of Nitsche's source terms "
+		   "for Dirichlet condition");
 	asm_Dirichlet_Nitsche_first_rhs_term
 	  (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
 	   normal_component, mf_H, H, mf_data, G, linear_version, rg);
@@ -2827,9 +2810,6 @@ namespace getfem {
 	     normal_component, mf_H, H, mf_data, G, linear_version, rg);
 	}
       }
- 
-      cout << "end of Nitsche assembly" << endl;
-
     }
 
 
@@ -2855,7 +2835,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname) {
-    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, false, false, theta);
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, false, true, theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
@@ -3973,10 +3953,6 @@ namespace getfem {
 	  //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
 	  ctx.pf()->real_grad_base_value(ctx, t);
 
-	  cout << "4" << endl;
-	  cout << output << endl;
-	  cout << "n = " << n << endl;
-	  cout << "qdim = " << int(qdim) << endl;
 	  for (size_type l = 0; l < qmult; ++l) {
 	    base_tensor::const_iterator it = t.begin();
 	    for (size_type k = 0; k < qdim; ++k)
@@ -3990,8 +3966,6 @@ namespace getfem {
 	}
 	break;
       }
-
-      cout << "end compute Neumann term" << endl;
 
     }
 
