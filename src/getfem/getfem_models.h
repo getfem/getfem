@@ -1099,29 +1099,6 @@ namespace getfem {
    dim_type degree, size_type region,
    const std::string &dataname = std::string());
 
-  /** Add a Dirichlet condition on the variable `varname` and the mesh
-      region `region`. This region should be a boundary. The Dirichlet
-      condition is prescribed with Nitsche's method. `dataname` is the optional
-      right hand side of the Dirichlet condition. It could be constant or
-      described on a fem; scalar or vector valued, depending on the variable
-      on which the Dirichlet condition is prescribed. `gamma0name` is the
-      Nitsche's method parameter. `theta` is a scalar value which can be
-      positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
-      `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
-      for which the second derivative of the Neumann term is not necessary. 
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
-  */
-  size_type add_Dirichlet_condition_with_Nitsche_method
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &gamma0name, size_type region,
-   scalar_type theta = scalar_type(1),
-   const std::string &dataname = std::string());
-
 
   /** When `ind_brick` is the index of a Dirichlet brick with multiplier on
       the model `md`, the function return the name of the multiplier variable.
@@ -1146,6 +1123,30 @@ namespace getfem {
    scalar_type penalization_coeff, size_type region,
    const std::string &dataname = std::string(),
    const mesh_fem *mf_mult = 0);
+
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`. This region should be a boundary. The Dirichlet
+      condition is prescribed with Nitsche's method. `dataname` is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. `gamma0name` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. . 
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+  */
+  size_type add_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &gamma0name, size_type region,
+   scalar_type theta = scalar_type(1),
+   const std::string &dataname = std::string());
 
   /** Add a Dirichlet condition to the normal component of the vector
       (or tensor) valued variable `varname` and the mesh
@@ -1204,6 +1205,32 @@ namespace getfem {
    scalar_type penalization_coeff, size_type region,
    const std::string &dataname = std::string(),
    const mesh_fem *mf_mult = 0);
+
+
+  /** Add a Dirichlet condition to the normal component of the vector
+      (or tensor) valued variable `varname` and the mesh region `region`.
+      This region should be a boundary. The Dirichlet
+      condition is prescribed with Nitsche's method. `dataname` is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem. `gamma0name` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. 
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+      (This brick is not fully tested)
+  */
+  size_type add_normal_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &gamma0name, size_type region,
+   scalar_type theta = scalar_type(1),
+   const std::string &dataname = std::string());
 
 
   /** Add some pointwise constraints on the variable `varname` thanks to
@@ -1342,7 +1369,34 @@ namespace getfem {
    const std::string &dataname, const std::string &Hname,
    const mesh_fem *mf_mult = 0);
 
-
+  /** Add a Dirichlet condition on the variable `varname` and the mesh
+      region `region`.
+      This version is for vector field. It prescribes a condition
+      @f$ Hu = r @f$ where `H` is a matrix field. The region should be a
+      boundary. This region should be a boundary.  The Dirichlet
+      condition is prescribed with Nitsche's method. `dataname` is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem. `gamma0name` is the
+      Nitsche's method parameter. `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. `Hname' is the data
+      corresponding to the matrix field `H`. It has to be a constant matrix
+      or described on a scalar fem.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+      (This brick is not fully tested)
+  */
+  size_type add_generalized_Dirichlet_condition_with_Nitsche_method
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &gamma0name, size_type region, scalar_type theta,
+   const std::string &dataname, const std::string &Hname);
+    
 
   /** Add a Helmoltz brick to the model. This corresponds to the scalar
       equation (@f$\Delta u + k^2u = 0@f$, with @f$K=k^2@f$).

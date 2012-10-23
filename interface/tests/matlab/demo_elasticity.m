@@ -21,12 +21,12 @@ d = 2; % dimension (cannot be changed for the moment)
 clambda = 1; cmu = 1; % Lame coefficients
 dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
 theta = 0;   % Nitsche's method parameter theta
-gamma0 = 0.0001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
+gamma0 = 0.01;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 
 % trace on;
 gf_workspace('clear all');
-d = 2
-NX = 10;
+d = 2;
+NX = 20;
 m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 %m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
 

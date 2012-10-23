@@ -15,10 +15,16 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
+% Options for prescribing the Dirichlet condition
+dirichlet_version = 3; % 1 = With multipliers, 2, penalization,  3 = Nitsche's method
+theta = 1;        % Nitsche's method parameter theta
+gamma0 = 0.001; % Nitsche's method parameter gamma0 (gamma = gamma0*h)
+r = 1e8;        % Penalization parameter
 
 % trace on;
 gf_workspace('clear all');
-m = gf_mesh('cartesian',[0:.1:1],[0:.1:1]);
+NX = 20;
+m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 %m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
 
 % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
@@ -48,8 +54,15 @@ gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
-gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
-
+switch (dirichlet_version)
+  case 1, 
+    gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
+  case 2,
+    gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, 1, 'DirichletData');
+  case 3,
+    gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
+    gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
+end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
@@ -63,10 +76,12 @@ U = gf_model_get(md, 'variable', 'u');
 % gf_mdbrick_get(b2, 'solve', mds)
 % U=gf_mdstate_get(mds, 'state');
 
-disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
-
 subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
 colorbar; title('computed solution');
 
 subplot(2,1,2); gf_plot(mf,U-Uexact,'mesh','on'); 
 colorbar;title('difference with exact solution');
+
+disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
+
+

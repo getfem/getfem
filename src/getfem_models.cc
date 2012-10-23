@@ -1307,9 +1307,201 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
+
+  struct generic_elliptic_Neumann_elem_term : public Neumann_elem_term {
+
+    const mesh_fem *mf_a;
+    const model_real_plain_vector *A;
+
+    mutable fem_interpolation_context ctx_a;
+    mutable base_vector coeff, val;
+    mutable base_matrix grad, G;
+    mutable fem_precomp_pool fppool;
+
+    void compute_Neumann_term
+    (int version, const mesh_fem &mfvar, const model_real_plain_vector &var,
+     fem_interpolation_context& ctx, base_small_vector &n,
+     base_tensor &output) const {
+
+      if (version == 3) return;  // No contribution because the term is linear
+
+      const mesh &m = mfvar.linked_mesh();
+      size_type N = m.dim(), Q = mfvar.get_qdim(), s = 1, cv=ctx.convex_num();
+
+      if (A) {
+	s = gmm::vect_size(*A);
+        if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
+      }
+      gmm::resize(val, s);
+
+      if (mf_a) {
+	GMM_ASSERT1(!(mf_a->is_reduced()),
+		    "Sorry, to be adapted for reduced mesh fems");
+
+	if (!(ctx_a.have_pf()) || ctx_a.convex_num() != cv
+	    || (ctx_a.have_pfp() != ctx.have_pfp())
+	    || (ctx_a.have_pfp()
+		&& (&(ctx.pfp()->get_point_tab())
+		    != &(ctx_a.pfp()->get_point_tab())))) {
+
+	  cout << "cv = " << cv << endl; // pour vérifier que ça ne le fait pas à chaque coup ...
+
+	  bgeot::vectors_to_base_matrix
+	    (G, mf_a->linked_mesh().points_of_convex(cv));
+	  
+	  pfem_precomp pfp = fppool(mf_a->fem_of_element(cv),
+				    &(ctx.pfp()->get_point_tab()));
+
+	  if (ctx.have_pfp())
+	    ctx_a = fem_interpolation_context
+	      (mf_a->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
+	       G, cv, ctx.face_num());
+	  else
+	    ctx_a = fem_interpolation_context
+	      (mf_a->linked_mesh().trans_of_convex(cv),
+	       mf_a->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
+
+	} else {
+	  if (ctx.have_pfp())  ctx_a.set_ii(ctx.ii());
+	  else ctx_a.set_xref(ctx.xref());
+	}
+
+	coeff.resize(mf_a->nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector(var, gmm::sub_index
+			      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+	ctx_a.pf()->interpolation(ctx_a, coeff, val, dim_type(s));
+      } else if (A) {
+	gmm::copy(*A, val);
+      } else {
+	val[0] = scalar_type(1);
+      }
+
+      switch (version) {
+      case 1:
+	gmm::resize(grad, Q, N);
+	coeff.resize(mfvar.nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector(var, gmm::sub_index
+			      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+	ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(Q));
+
+	if (s == 1)
+	  gmm::mult_add(grad, gmm::scaled(n, val[0]), output.as_vector());
+	else if (s == N*N) {
+	  base_vector::const_iterator it = val.begin();
+	  for (size_type j = 0; j < N; ++j)
+	    for (size_type i = 0; i < N; ++i, ++it)
+	      for (size_type k = 0; k < Q; ++k)
+		output[k] += (*it)*grad(k,j)*n[i];
+	}
+	else if (s == N*N*Q*Q) {
+	  base_vector::const_iterator it = val.begin();
+	  for (size_type l = 0; l < N; ++l)
+	    for (size_type k = 0; k < Q; ++k)
+	      for (size_type j = 0; j < N; ++j)
+		for (size_type i = 0; i < Q; ++i, ++it)
+		  output[i] += (*it) * grad(k, l) * n[j];
+	}
+	break;
+      case 2:
+	{
+	  base_tensor t;
+	  dim_type tdim = ctx.pf()->target_dim(), qmult = dim_type(Q) / tdim;
+	  size_type ndof = ctx.pf()->nb_dof(cv);
+	  // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
+	  // 0<=k<dim. In order to iterate on the tensor values, i should
+	  // increment the faster, then j, then k.
+	  // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
+	  // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
+	  // General case, psi_{i*qmult+l} = phi_i * e_l  and
+	  //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
+	  ctx.pf()->real_grad_base_value(ctx, t);
+
+	  if (s == 1) {
+// 	    for (size_type l = 0; l < qmult; ++l) {
+// 	      for (size_type p = 0; p < Q; ++p) {
+// 		base_tensor::const_iterator it = t.begin();
+// 		for (size_type k = 0; k < Q; ++k)
+// 		  for (size_type j = 0; j < tdim; ++j)
+// 		    for (size_type i = 0; i < ndof; ++i, ++it) {
+// 		      size_type jj = j + tdim*l;
+// 		      if (p == jj) output(i*qmult+l, p) += val[0]*(*it)*n[k];
+// 		    }
+// 		GMM_ASSERT1(it ==  t.end(), "Internal error");
+// 	      }
+// 	    }
+	    if (Q == 1) {
+		base_tensor::const_iterator it = t.begin();
+		for (size_type k = 0; k < N; ++k)
+		  for (size_type i = 0; i < ndof; ++i, ++it)
+		    output[i] += val[0]*(*it)*n[k];
+		GMM_ASSERT1(it ==  t.end(), "Internal error");
+	    } else {
+	      for (size_type l = 0; l < qmult; ++l) {
+		base_tensor::const_iterator it = t.begin();
+		for (size_type k = 0; k < N; ++k)
+		  for (size_type j = 0; j < tdim; ++j)
+		    for (size_type i = 0; i < ndof; ++i, ++it) {
+		      size_type jj = j + tdim*l;
+		      output(i*qmult+l, jj) += val[0]*(*it)*n[k];
+		    }
+		GMM_ASSERT1(it ==  t.end(), "Internal error");
+	      }
+	    }
+	  } else if (s == N*N) {
+	    if (Q == 1) {
+	      base_tensor::const_iterator it = t.begin();
+	      for (size_type k = 0; k < N; ++k)
+		for (size_type i = 0; i < ndof; ++i, ++it) {
+		  for (size_type q = 0; q < N; ++q)
+		    output[i] += val[q+k*N]*(*it)*n[q];
+		}
+	      GMM_ASSERT1(it ==  t.end(), "Internal error");
+	    } else {
+	      for (size_type l = 0; l < qmult; ++l) {
+		base_tensor::const_iterator it = t.begin();
+		for (size_type k = 0; k < N; ++k)
+		  for (size_type j = 0; j < tdim; ++j)
+		    for (size_type i = 0; i < ndof; ++i, ++it) {
+		      size_type jj = j + tdim*l;
+		      for (size_type q = 0; q < N; ++q)
+			output(i*qmult+l, jj) += val[q+k*N]*(*it)*n[q];
+		    }
+		GMM_ASSERT1(it ==  t.end(), "Internal error");
+	      } 
+	    }
+	  } else if (s == N*N*Q*Q) {
+	    for (size_type l = 0; l < qmult; ++l) {
+	      for (size_type p = 0; p < Q; ++p) {
+		base_tensor::const_iterator it = t.begin();
+		for (size_type k = 0; k < N; ++k)
+		  for (size_type j = 0; j < tdim; ++j)
+		    for (size_type i = 0; i < ndof; ++i, ++it) {
+		      size_type jj = j + tdim*l; 
+		      for (size_type q = 0; q < N; ++q)
+			output(i*qmult+l, p)
+			  += val[p+q*Q+jj*N*Q+k*N*Q*Q]*(*it)*n[q];
+		    }
+		GMM_ASSERT1(it ==  t.end(), "Internal error");
+	      }
+	    }
+	  } 
+	}
+	break;
+      }
+    }
+
+    generic_elliptic_Neumann_elem_term
+    (const mesh_fem *mf_a_, const model_real_plain_vector *A_)
+      : mf_a(mf_a_), A(A_) {}
+
+  };
+
+
+
+
   struct generic_elliptic_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -1386,6 +1578,9 @@ namespace getfem {
       } else
         GMM_ASSERT1(false,
                     "Bad format generic elliptic brick coefficient");
+
+      pNeumann_elem_term pNt = new generic_elliptic_Neumann_elem_term(mf_a, A);
+      md.add_Neumann_term(pNt, vl[0], ib);
     }
 
     virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
@@ -2347,7 +2542,6 @@ namespace getfem {
       gmm::resize(u, qdim);
       gmm::resize(auxg, 1);
       gmm::resize(auxn, qdim);
-      gmm::resize(u, N);
       gmm::resize(g, normal_component ? 1 : qdim); 
       gmm::resize(H, qdim, qdim); gmm::resize(HTH, qdim, qdim);
       gmm::resize(auxH, qdim, 1);
@@ -2398,12 +2592,20 @@ namespace getfem {
 	for (i = 0; i < qdim*qdim; ++i) t[i] = HTH[i]/gamma;
 	break;
       case 2:
-	sizes_[0] = ndof;
-	tp.adjust_sizes(sizes_); t.adjust_sizes(sizes_);
-	sizes_[0] = short_type(-1);
-	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
-	t.mat_reduction(tp, HTH, 1);
-	t /= -1;
+	if (qdim == 1) {
+	  sizes_[0] = ndof;
+	  t.adjust_sizes(sizes_);
+	  sizes_[0] = short_type(-1);
+	  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, t);
+	  t *= -scalar_type(1);
+	} else {
+	  sizes_[0] = ndof;
+	  tp.adjust_sizes(sizes_); t.adjust_sizes(sizes_);
+	  sizes_[0] = short_type(-1);
+	  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
+	  t.mat_reduction(tp, HTH, 1);
+	  t *= -scalar_type(1);
+	}
 	break;
       case 3:
 	sizes_[0] = sizes_[1] = ndof;
@@ -2422,7 +2624,7 @@ namespace getfem {
 	break;	
       case 5:
 	gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn);
-	gmm::scaled(auxn, scalar_type(1)/gamma);
+	gmm::scale(auxn, scalar_type(1)/gamma);
 	tp.adjust_sizes(sizes_);
 	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
 	gmm::mult_add(H, tp.as_vector(), auxn);
@@ -2464,9 +2666,10 @@ namespace getfem {
 	  coeff.resize(mf_u->nb_basic_dof_of_element(cv));
 	  gmm::copy(gmm::sub_vector(U, gmm::sub_index
 			       (mf_u->ind_basic_dof_of_element(cv))), coeff);
-	  ctx.pf()->interpolation(ctx, coeff, u, N);
+	  ctx.pf()->interpolation(ctx, coeff, u, qdim);
 	}
 	if (normal_component) {
+	  GMM_ASSERT1(qdim == N, "dimensions mismatch");
 	  for (size_type i = 0; i < qdim; ++i)
 	    for (size_type j = 0; j < qdim; ++j)
 	      HTH(i,j) = H(i,j) = n[i]*n[j];
@@ -2495,17 +2698,6 @@ namespace getfem {
 	// computation of h for gamma = gamma0*h
 	scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
 	gamma = gamma0 * emax / sqrt(scalar_type(N));
-
-	// adjust the size of the non-linear term to the number of dofs ...
-	
-	
-
-// 	switch (option) { /* ... correct ? faut-il le faire avant ? ... nécéssairement, mais quand ? au prepare suffit-il ou s'est déjà trop tard ?*/
-// 	case 2: sizes_[0] = nbdof; break;
-// 	case 3: sizes_[0] = sizes_[1] = nbdof; break;
-// 	case 6: case 7: sizes_[0] = nbdof; break;
-// 	}
-// 	break;
 	
       case 2 : // calculate [g]
 	if (gmm::vect_size(G)) {
@@ -2533,7 +2725,6 @@ namespace getfem {
 	
       default : GMM_ASSERT1(false, "Invalid option");
       }
-
     }
   };
 
@@ -2563,9 +2754,7 @@ namespace getfem {
     assem.push_mf(mfu);
     if (mf_H) assem.push_mf(*mf_H);
     assem.push_nonlinear_term(&nterm);
-  
     assem.push_mat(M);
-    
     assem.assembly(rg);
   }
 
@@ -2835,7 +3024,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname) {
-    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, false, true, theta);
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, false, false, theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
@@ -2846,41 +3035,37 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
-#if 0
 
-  // to be adapted ...
-
-
-  size_type add_normal_Dirichlet_condition_with_multipliers
+  size_type add_normal_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &multname, size_type region,
+   const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname) {
-    pbrick pbr = new Dirichlet_condition_brick(false, false, true);
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, true, false, theta);
     model::termlist tl;
-    tl.push_back(model::term_description(multname, varname, true));
+    tl.push_back(model::term_description(varname, varname,
+					 theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
-    vl.push_back(multname);
     model::varnamelist dl;
+    dl.push_back(gamma0name);
     if (dataname.size()) dl.push_back(dataname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
-  size_type add_generalized_Dirichlet_condition_with_multipliers
+  size_type add_generalized_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &multname, size_type region,
+   const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname, const std::string &Hname) {
-    pbrick pbr = new Dirichlet_condition_brick(false, true, false);
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick(true, false, false, theta);
     model::termlist tl;
-    tl.push_back(model::term_description(multname, varname, true));
+    tl.push_back(model::term_description(varname, varname,
+					 theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
-    vl.push_back(multname);
     model::varnamelist dl;
+    dl.push_back(gamma0name);
     dl.push_back(dataname);
     dl.push_back(Hname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
-
-#endif
 
   // ----------------------------------------------------------------------
   //
@@ -3875,7 +4060,7 @@ namespace getfem {
      fem_interpolation_context& ctx, base_small_vector &n,
      base_tensor &output) const {
 
-      if (version == 3) return;  // Zero because the term is linear
+      if (version == 3) return;  // No contribution because the term is linear
 
       dim_type qdim = mfvar.linked_mesh().dim();
       gmm::resize(grad, qdim, qdim);
@@ -3885,6 +4070,8 @@ namespace getfem {
       scalar_type val_lambda = scalar_type(0), val_mu = scalar_type(0);
 
       if (mf_mu) {
+	GMM_ASSERT1(!(mf_mu->is_reduced()),
+		    "Sorry, to be adapted for reduced mesh fems");
 
 	if (!(ctx_mu.have_pf()) || ctx_mu.convex_num() != cv
 	    || (ctx_mu.have_pfp() != ctx.have_pfp())
@@ -3945,7 +4132,7 @@ namespace getfem {
 	  dim_type tdim = ctx.pf()->target_dim(), qmult = qdim / tdim;
 	  size_type ndof = ctx.pf()->nb_dof(cv);
 	  // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
-	  // 0<=j<dim. In order to iterate on the tensor values, i should
+	  // 0<=k<dim. In order to iterate on the tensor values, i should
 	  // increment the faster, then j, then k.
 	  // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
 	  // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
@@ -3954,14 +4141,18 @@ namespace getfem {
 	  ctx.pf()->real_grad_base_value(ctx, t);
 
 	  for (size_type l = 0; l < qmult; ++l) {
-	    base_tensor::const_iterator it = t.begin();
-	    for (size_type k = 0; k < qdim; ++k)
-	      for (size_type j = 0; j < tdim; ++j)
-		for (size_type i = 0; i < ndof; ++i, ++it) {
-		  size_type jj = j + tdim*l;
-		  if (k == jj) output(i*qmult+l,k) += val_lambda*(*it)*n[jj];
-		  output(i*qmult+l,k) += val_mu*(*it)*(n[k]+n[jj]);
-	      }
+	    for (size_type p = 0; p < qdim; ++p) {
+	      base_tensor::const_iterator it = t.begin();
+	      for (size_type k = 0; k < qdim; ++k)
+		for (size_type j = 0; j < tdim; ++j)
+		  for (size_type i = 0; i < ndof; ++i, ++it) {
+		    size_type jj = j + tdim*l;
+		    if (k == jj) output(i*qmult+l, p) += val_lambda*(*it)*n[p];
+		    if (p == jj) output(i*qmult+l, p) += val_mu*(*it)*n[k];
+		    if (k == p) output(i*qmult+l, p) += val_mu*(*it)*n[jj];
+		  }
+	      GMM_ASSERT1(it ==  t.end(), "Internal error");
+	    }
 	  }
 	}
 	break;
