@@ -136,7 +136,7 @@ namespace getfem {
     f[0].nlt = nlt;
     if (nl_part) {
       f.get_mi().resize(1); f.get_mi()[0] = 1;
-    } else f.get_mi() = nlt->sizes();
+    } else f.get_mi() = nlt->sizes(size_type(-1));
     pmat_elem_type ret = add_to_met_tab(f);
     return ret;
   }
@@ -165,6 +165,7 @@ namespace getfem {
   pmat_elem_type mat_elem_empty() {
     return add_to_met_tab(mat_elem_type());
   }
+
   bgeot::multi_index mat_elem_type::sizes(size_type cv) const {
     bgeot::multi_index mii = mi;
     for (size_type i = 0, j = 0; i < size(); ++i, ++j) {
@@ -185,7 +186,7 @@ namespace getfem {
 	  break;
 	case GETFEM_NONLINEAR_ :
 	  if ((*this)[i].nl_part == 0)
-	    { j+=(*this)[i].nlt->sizes().size(); --j; }
+	    { j+=(*this)[i].nlt->sizes(size_type(-1)).size(); --j; }
 	  break;
 	case GETFEM_GRAD_GEOTRANS_:
 	case GETFEM_GRAD_GEOTRANS_INV_: 

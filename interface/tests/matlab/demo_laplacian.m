@@ -16,10 +16,10 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 % Options for prescribing the Dirichlet condition
-dirichlet_version = 3; % 1 = With multipliers, 2, penalization,  3 = Nitsche's method
-theta = 1;        % Nitsche's method parameter theta
-gamma0 = 0.001; % Nitsche's method parameter gamma0 (gamma = gamma0*h)
-r = 1e8;        % Penalization parameter
+dirichlet_version = 3; % 1 = with multipliers, 2 = penalization,  3 = Nitsche's method
+theta = 1;       % Nitsche's method parameter theta
+gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
+r = 1e8;         % Penalization parameter
 
 % trace on;
 gf_workspace('clear all');

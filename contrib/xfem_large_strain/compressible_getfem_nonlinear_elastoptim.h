@@ -107,7 +107,7 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
-    const bgeot::multi_index &sizes() const { return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const { return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
@@ -261,7 +261,7 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
@@ -404,7 +404,7 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
@@ -507,7 +507,7 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
@@ -602,7 +602,7 @@ namespace getfem {
       if (gmm::vect_size(PARAMS) == AHL_.nb_params())
 	gmm::copy(PARAMS, params);
     }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();

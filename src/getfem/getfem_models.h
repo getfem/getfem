@@ -319,6 +319,9 @@ namespace getfem {
 			  size_type brick_num) const
     { Neumann_term_list[Neumann_pair(varname, brick_num)] = p; }
 
+    void auxilliary_variables_of_Neumann_terms
+    (const std::string &varname, std::vector<std::string> &aux_var) const;
+
     /** Compute the approximation of the Neumann condition for a variable
 	with the declared terms.
 	The output tensor has to have the right size. No verification.
@@ -329,6 +332,13 @@ namespace getfem {
 			       fem_interpolation_context &ctx,
 			       base_small_vector &n,
 			       bgeot::base_tensor &output) const;
+
+    void compute_auxilliary_Neumann_terms
+    (int version, const std::string &varname,
+     const mesh_fem &mfvar, const model_real_plain_vector &var,
+     const std::string &aux_varname,
+     fem_interpolation_context &ctx, base_small_vector &n,
+     bgeot::base_tensor &output) const;
 
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
 
@@ -457,6 +467,10 @@ namespace getfem {
       context_check(); if (act_size_to_be_done) actualize_sizes();
       from_variables(V, T());
     }
+
+    const gmm::uint64_type &version_number_of_data_variable
+    (const std::string &varname) const
+    { return variables[varname].v_num_data; }
 
 
     template<typename VECTOR, typename T>
@@ -976,11 +990,13 @@ namespace getfem {
      This allows, first ot have an estimate of this term (for instance, it can
      give an approximation of the stress at the boundary in a problem of
      linear elasticity) but also it allows to prescribe some boundary
-     conditions with Nitsch's method (For dirichlet or contact boundary
+     conditions with Nitsche's method (For dirichlet or contact boundary
      conditions for instance).
   */
 
   struct Neumann_elem_term : virtual public dal::static_stored_object {
+
+    std::vector<std::string> auxilliary_variables;
 
     // The function should return the Neumann term when version = 1,
     // its derivative when version = 2 and its second derivative
@@ -993,7 +1009,8 @@ namespace getfem {
     (int version, const mesh_fem &/*mfvar*/,
      const model_real_plain_vector &/*var*/,
      fem_interpolation_context& /*ctx*/,
-     base_small_vector &/*n*/, base_tensor &/*output*/) const = 0;
+     base_small_vector &/*n*/, base_tensor &/*output*/,
+     size_type /*auxilliary_ind*/ = 0) const = 0;
 
   };
 
@@ -1136,11 +1153,11 @@ namespace getfem {
       `theta = -1` corresponds to the skew-symmetric method which is
       inconditionnaly coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. . 
+      even for nonlinear problems. Returns the brick index in the model.
       CAUTION: This brick has to be added in the model after all the bricks
       corresponding to partial differential terms having a Neumann term.
       Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      Neumann terms.
   */
   size_type add_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
@@ -1219,11 +1236,11 @@ namespace getfem {
       `theta = -1` corresponds to the skew-symmetric method which is
       inconditionnaly coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. 
+      even for nonlinear problems. Returns the brick index in the model.
       CAUTION: This brick has to be added in the model after all the bricks
       corresponding to partial differential terms having a Neumann term.
       Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      Neumann terms. 
       (This brick is not fully tested)
   */
   size_type add_normal_Dirichlet_condition_with_Nitsche_method
@@ -1385,11 +1402,11 @@ namespace getfem {
       for which the second derivative of the Neumann term is not necessary
       even for nonlinear problems. `Hname' is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
-      or described on a scalar fem.
+      or described on a scalar fem. Returns the brick index in the model.
       CAUTION: This brick has to be added in the model after all the bricks
       corresponding to partial differential terms having a Neumann term.
       Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+      Neumann terms.
       (This brick is not fully tested)
   */
   size_type add_generalized_Dirichlet_condition_with_Nitsche_method

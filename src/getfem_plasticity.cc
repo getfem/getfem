@@ -269,7 +269,7 @@ namespace getfem {
     }
 
 
-    const bgeot::multi_index &sizes() const { return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const { return sizes_; }
 
 
     // method from nonlinear_elem_term, gives on output the tensor

@@ -59,7 +59,7 @@ public:
     sizes_.resize(1); sizes_[0] = bgeot::short_type(N);
     mf.extend_vector(U_, U);
   }
-  const bgeot::multi_index &sizes() const {  return sizes_; }
+  const bgeot::multi_index &sizes(getfem::size_type) const {  return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& ctx,
 		       bgeot::base_tensor &t) {
     bgeot::size_type cv = ctx.convex_num();

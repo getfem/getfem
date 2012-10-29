@@ -728,6 +728,18 @@ namespace getfem {
     return (vd.v_num > brick.v_num);
   }
 
+  void model::auxilliary_variables_of_Neumann_terms
+  (const std::string &varname, std::vector<std::string> &aux_var) const {
+    Neumann_SET::const_iterator it
+      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
+    
+    while (it != Neumann_term_list.end()
+	   && !(it->first.first.compare(varname))) {
+      for (size_type i = 0; i < it->second->auxilliary_variables.size(); ++i)
+	aux_var.push_back(it->second->auxilliary_variables[i]);
+      ++it;    }
+  }
+
   void model::compute_Neumann_terms(int version, const std::string &varname,
 				    const mesh_fem &mfvar,
 				    const model_real_plain_vector &var,
@@ -744,6 +756,32 @@ namespace getfem {
 	   && !(it->first.first.compare(varname))) {
       if (active_bricks.is_in(it->first.second))
 	it->second->compute_Neumann_term(version, mfvar, var, ctx, n, t);
+      ++it;
+    }
+  }
+
+  void model::compute_auxilliary_Neumann_terms
+  (int version, const std::string &varname, 
+   const mesh_fem &mfvar, const model_real_plain_vector &var,
+   const std::string &aux_varname,
+   fem_interpolation_context &ctx, base_small_vector &n,
+   bgeot::base_tensor &t) const {
+    
+    // The output tensor has to have the right size. No verification.
+    Neumann_SET::const_iterator it
+      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
+    
+    gmm::clear(t.as_vector());
+    while (it != Neumann_term_list.end()
+	   && !(it->first.first.compare(varname))) {
+      if (active_bricks.is_in(it->first.second)) {
+	size_type ind = size_type(-1);
+	for (size_type i = 0; i < it->second->auxilliary_variables.size(); ++i)
+	  if (!(aux_varname.compare(it->second->auxilliary_variables[i])))
+	      ind = i;
+	if (ind != size_type(-1))
+	  it->second->compute_Neumann_term(version,mfvar,var,ctx,n,t,ind+1);
+      }
       ++it;
     }
   }
@@ -1219,86 +1257,96 @@ namespace getfem {
   //
   //
   // ----------------------------------------------------------------------
-  	void virtual_brick::check_stiffness_matrix_and_rhs(const model &md, size_type s,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &rvc1,
-                                        model::real_veclist &rvc2, 
-										size_type rg,
-										const scalar_type TINY) const
-	{
-		asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2, rg, model::BUILD_MATRIX);
-		model_real_sparse_matrix SM(matl[0]);
-		gmm::fill(rvc1[0], 0.0);
-		asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2, rg, model::BUILD_RHS);
-		model_real_plain_vector RHS0(rvc1[0]);
-
-		//finite difference stiffness		
-		model_real_sparse_matrix fdSM(matl[0].nrows(),matl[0].ncols());
-
-		for (size_type i=0;i<rvc1[0].size();i++){
-			model_real_plain_vector U(md.real_variable(vl[0]));
-			U[i]+=TINY;
-			gmm::copy(U, md.set_real_variable(vl[0]));
-			gmm::fill(rvc1[0], 0.0);
-			asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2, rg, model::BUILD_RHS);
-			model_real_plain_vector RHS1(rvc1[0]);
-			for (size_type j=0;j<rvc1[0].size();j++){
-    			fdSM(i,j)=(RHS0[j]-RHS1[j])/TINY;
-			}
-			U[i]-=TINY;
-			gmm::copy(U, md.set_real_variable(vl[0]));
-		}
-		model_real_sparse_matrix diffSM(matl[0].nrows(),matl[0].ncols());
-		gmm::add(matl[0],gmm::scaled(fdSM,-1.0),diffSM);
-		scalar_type norm_error_euc = gmm::mat_euclidean_norm(diffSM)/gmm::mat_euclidean_norm(matl[0])*100;
-		scalar_type norm_error_1 = gmm::mat_norm1(diffSM)/gmm::mat_norm1(matl[0])*100;
-		scalar_type norm_error_max = gmm::mat_maxnorm(diffSM)/gmm::mat_maxnorm(matl[0])*100;
-		
-		model_real_sparse_matrix diffSMtransposed(matl[0].nrows(),matl[0].ncols());
-		gmm::add(gmm::transposed(fdSM),gmm::scaled(fdSM,-1.0),diffSMtransposed);
-		scalar_type nsym_norm_error_euc = gmm::mat_euclidean_norm(diffSMtransposed)/gmm::mat_euclidean_norm(fdSM)*100;
-		scalar_type nsym_norm_error_1 = gmm::mat_norm1(diffSMtransposed)/gmm::mat_norm1(fdSM)*100;
-		scalar_type nsym_norm_error_max = gmm::mat_maxnorm(diffSMtransposed)/gmm::mat_maxnorm(fdSM)*100;
-
-		//print matrix if the size is small
-		if(rvc1[0].size()<8){
-			std::cout << "RHS Stiffness Matrix: \n";
-			std::cout << "------------------------\n";
-			for(size_type i=0; i < rvc1[0].size(); ++i){
-				std::cout << "[";
-				for(size_type j=0; j < rvc1[0].size(); ++j){
-					std::cout << fdSM(i,j) << "  ";
-				}
-				std::cout << "]\n";
-			}
-			std::cout << "Analytical Stiffness Matrix: \n";
-			std::cout << "------------------------\n";
-			for(size_type i=0; i < rvc1[0].size(); ++i){
-				std::cout << "[";
-				for(size_type j=0; j < rvc1[0].size(); ++j){
-					std::cout << matl[0](i,j) << "  ";
-				}
-				std::cout << "]\n";
-			}
-			std::cout << "Vector U: \n";
-			std::cout << "------------------------\n";
-			for(size_type i=0; i < rvc1[0].size(); ++i){
-				std::cout << "[";
-					std::cout << md.real_variable(vl[0])[i] << "  ";
-				std::cout << "]\n";
-			}
-		}
-
-		std::cout<<"\n\nfinite diff test error_norm_eucl: "<<norm_error_euc <<"%"<<std::endl;
-		std::cout<<"finite diff test error_norm1: "<<norm_error_1 <<"%"<<std::endl;
-		std::cout<<"finite diff test error_max_norm: "<<norm_error_max <<"%"<<std::endl;
-		std::cout<<"\n\nNonsymmetrical test error_norm_eucl: "<<nsym_norm_error_euc <<"%"<<std::endl;
-		std::cout<<"Nonsymmetrical test error_norm1: "<<nsym_norm_error_1 <<"%"<<std::endl;
-		std::cout<<"Nonsymmetrical test error_max_norm: "<<nsym_norm_error_max <<"%"<<std::endl;
+  void virtual_brick::check_stiffness_matrix_and_rhs
+  (const model &md, size_type s,
+   const model::varnamelist &vl,
+   const model::varnamelist &dl,
+   const model::mimlist &mims,
+   model::real_matlist &matl,
+   model::real_veclist &rvc1,
+   model::real_veclist &rvc2, 
+   size_type rg,
+   const scalar_type TINY) const {
+    asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+			   rg, model::BUILD_MATRIX);
+    model_real_sparse_matrix SM(matl[0]);
+    gmm::fill(rvc1[0], 0.0);
+    asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+			   rg, model::BUILD_RHS);
+    model_real_plain_vector RHS0(rvc1[0]);
+    
+    //finite difference stiffness		
+    model_real_sparse_matrix fdSM(matl[0].nrows(),matl[0].ncols());
+    
+    for (size_type i=0; i < rvc1[0].size(); i++){
+      model_real_plain_vector U(md.real_variable(vl[0]));
+      U[i]+=TINY;
+      gmm::copy(U, md.set_real_variable(vl[0]));
+      gmm::fill(rvc1[0], 0.0);
+      asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+			     rg, model::BUILD_RHS);
+      model_real_plain_vector RHS1(rvc1[0]);
+      for (size_type j=0;j<rvc1[0].size();j++){
+	fdSM(i,j)=(RHS0[j]-RHS1[j])/TINY;
+      }
+      U[i]-=TINY;
+      gmm::copy(U, md.set_real_variable(vl[0]));
+    }
+    model_real_sparse_matrix diffSM(matl[0].nrows(),matl[0].ncols());
+    gmm::add(matl[0],gmm::scaled(fdSM,-1.0),diffSM);
+    scalar_type norm_error_euc
+      = gmm::mat_euclidean_norm(diffSM)/gmm::mat_euclidean_norm(matl[0])*100;
+    scalar_type norm_error_1
+      = gmm::mat_norm1(diffSM)/gmm::mat_norm1(matl[0])*100;
+    scalar_type norm_error_max
+      = gmm::mat_maxnorm(diffSM)/gmm::mat_maxnorm(matl[0])*100;
+    
+    model_real_sparse_matrix diffSMtransposed(matl[0].nrows(),matl[0].ncols());
+    gmm::add(gmm::transposed(fdSM),gmm::scaled(fdSM,-1.0),diffSMtransposed);
+    scalar_type nsym_norm_error_euc
+      = gmm::mat_euclidean_norm(diffSMtransposed)/gmm::mat_euclidean_norm(fdSM)*100;
+    scalar_type nsym_norm_error_1
+      = gmm::mat_norm1(diffSMtransposed)/gmm::mat_norm1(fdSM)*100;
+    scalar_type nsym_norm_error_max
+      = gmm::mat_maxnorm(diffSMtransposed)/gmm::mat_maxnorm(fdSM)*100;
+    
+    //print matrix if the size is small
+    if(rvc1[0].size()<8){
+      std::cout << "RHS Stiffness Matrix: \n";
+      std::cout << "------------------------\n";
+      for(size_type i=0; i < rvc1[0].size(); ++i){
+	std::cout << "[";
+	for(size_type j=0; j < rvc1[0].size(); ++j){
+	  std::cout << fdSM(i,j) << "  ";
 	}
+	std::cout << "]\n";
+      }
+      std::cout << "Analytical Stiffness Matrix: \n";
+      std::cout << "------------------------\n";
+      for(size_type i=0; i < rvc1[0].size(); ++i){
+	std::cout << "[";
+	for(size_type j=0; j < rvc1[0].size(); ++j){
+	  std::cout << matl[0](i,j) << "  ";
+	}
+	std::cout << "]\n";
+      }
+      std::cout << "Vector U: \n";
+      std::cout << "------------------------\n";
+      for(size_type i=0; i < rvc1[0].size(); ++i){
+	std::cout << "[";
+	std::cout << md.real_variable(vl[0])[i] << "  ";
+	std::cout << "]\n";
+      }
+    }
+    std::cout
+      << "\n\nfinite diff test error_norm_eucl: " << norm_error_euc << "%\n"
+      << "finite diff test error_norm1: " << norm_error_1 << "%\n"
+      << "finite diff test error_max_norm: " << norm_error_max << "%\n\n\n"
+      << "Nonsymmetrical test error_norm_eucl: "<< nsym_norm_error_euc<< "%\n"
+      << "Nonsymmetrical test error_norm1: " << nsym_norm_error_1 << "%\n"
+      << "Nonsymmetrical test error_max_norm: " << nsym_norm_error_max << "%"
+      << std::endl;
+  }
 
 
   // ----------------------------------------------------------------------
@@ -1316,12 +1364,11 @@ namespace getfem {
     mutable fem_interpolation_context ctx_a;
     mutable base_vector coeff, val;
     mutable base_matrix grad, G;
-    mutable fem_precomp_pool fppool;
 
     void compute_Neumann_term
     (int version, const mesh_fem &mfvar, const model_real_plain_vector &var,
      fem_interpolation_context& ctx, base_small_vector &n,
-     base_tensor &output) const {
+     base_tensor &output, size_type /*auxilliary_ind*/ = 0) const {
 
       if (version == 3) return;  // No contribution because the term is linear
 
@@ -1344,13 +1391,11 @@ namespace getfem {
 		&& (&(ctx.pfp()->get_point_tab())
 		    != &(ctx_a.pfp()->get_point_tab())))) {
 
-	  cout << "cv = " << cv << endl; // pour vérifier que ça ne le fait pas à chaque coup ...
-
 	  bgeot::vectors_to_base_matrix
 	    (G, mf_a->linked_mesh().points_of_convex(cv));
 	  
-	  pfem_precomp pfp = fppool(mf_a->fem_of_element(cv),
-				    &(ctx.pfp()->get_point_tab()));
+	  pfem_precomp pfp = fem_precomp(mf_a->fem_of_element(cv),
+					 &(ctx.pfp()->get_point_tab()), 0);
 
 	  if (ctx.have_pfp())
 	    ctx_a = fem_interpolation_context
@@ -1576,8 +1621,7 @@ namespace getfem {
           asm_stiffness_matrix_for_homogeneous_vector_elliptic
             (matl[0], mim, mf_u, *A, rg);
       } else
-        GMM_ASSERT1(false,
-                    "Bad format generic elliptic brick coefficient");
+        GMM_ASSERT1(false, "Bad format generic elliptic brick coefficient");
 
       pNeumann_elem_term pNt = new generic_elliptic_Neumann_elem_term(mf_a, A);
       md.add_Neumann_term(pNt, vl[0], ib);
@@ -2487,17 +2531,19 @@ namespace getfem {
   struct dirichlet_nitsche_nonlinear_term : public nonlinear_elem_term {
     // Option:
     // 1 : matrix term H^TH/gamma
-    // 2 : matrix term -(DG(u)[w])^TH^TH
-    // 3 : matrix term theta(g-Hu)^TH(D^2G(u)[w,v])
+    // 2 : matrix term -(D_u G(u,lambda)[w])^TH^TH
+    // 3 : matrix term theta(g-Hu)^TH(D^2_uu G(u,lambda)[w,v])
     // 4 : rhs term (H^Tg)/gamma
-    // 5 : rhs term H^T((g-Hu)/gamma + HG(u))
-    // 6 : rhs term -theta(g)^TH(DG(u)[v])
-    // 7 : rhs term theta(Hu-g)^TH(DG(u)[v])
+    // 5 : rhs term H^T((g-Hu)/gamma + HG(u,lambda))
+    // 6 : rhs term -theta(g)^TH(D_uG(u, lambda)[v])
+    // 7 : rhs term theta(Hu-g)^TH(DG(u, lambda)[v])
+    // 8 : matrix term theta(g-Hu)^TH(D^2_{u,lambda}G(u, lambda)[w,v])
+    // 9 : matrix term -(D_lambda G(u,lambda)[w])^TH^TH
 
     dim_type N, qdim;
     size_type option;
     const model *md;
-    const std::string *varname;
+    const std::string *varname, *auxvarname;
     bool H_version, normal_component;
     scalar_type theta, gamma0;
 
@@ -2507,13 +2553,13 @@ namespace getfem {
     scalar_type gamma;
     base_vector coeff;
     base_matrix H, HTH, auxH;
-    const mesh_fem *mf_u;    
+    const mesh_fem *mf_u, *mf_lambda;    
     const mesh_fem *mf_data;
     const mesh_fem *mf_H;
     
     base_vector U, HH, G;
 
-    bgeot::multi_index sizes_;
+    mutable bgeot::multi_index sizes_;
 
 
     void adjust_tensor_size(void) {
@@ -2522,20 +2568,20 @@ namespace getfem {
 	if (qdim > 1) { sizes_.resize(2); sizes_[0] = sizes_[1] = qdim; }
 	else { sizes_.resize(1); sizes_[0] = 1; }
 	break;
-      case 2:
+      case 2: case 9:
 	if (qdim > 1)
-	  { sizes_.resize(2); sizes_[0] = short_type(-1); sizes_[1] = qdim; }
-	else { sizes_.resize(1); sizes_[0] = short_type(-1); }
+	  { sizes_.resize(2); sizes_[0] = 0; sizes_[1] = qdim; }
+	else { sizes_.resize(1); sizes_[0] = 0; }
 	break;
-      case 3:
+      case 3: case 8:
 	sizes_.resize(3);
-	sizes_[0] = sizes_[1] = short_type(-1); sizes_[2] = 1;
+	sizes_[0] = sizes_[1] = 0; sizes_[2] = 1;
 	break;
       case 4: case 5:
 	sizes_.resize(1); sizes_[0] = qdim;
 	break;
       case 6: case 7:
-	sizes_.resize(2); sizes_[0] = short_type(-1); sizes_[1] = 1;
+	sizes_.resize(2); sizes_[0] = 0; sizes_[1] = 1;
 	break;
       }
 
@@ -2547,6 +2593,28 @@ namespace getfem {
       gmm::resize(auxH, qdim, 1);
     }
     
+    const bgeot::multi_index &sizes(size_type cv) const {
+      if (cv != size_type(-1))
+	switch(option) {
+	case 2:
+	  sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
+	  break;
+	case 9:
+	  sizes_[0] = short_type(mf_lambda->nb_basic_dof_of_element(cv));
+	  break;
+	case 3:
+	  sizes_[0] = sizes_[1] = short_type(mf_u->nb_basic_dof_of_element(cv));
+	  break;
+	case 8:
+	  sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
+	  sizes_[1] = short_type(mf_lambda->nb_basic_dof_of_element(cv));
+	  break;
+	case 6: case 7:
+	  sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
+	  break;
+	}
+      return sizes_;
+    }
 
     dirichlet_nitsche_nonlinear_term
     (size_type option_, const model *md_, const std::string *varname_,
@@ -2554,10 +2622,13 @@ namespace getfem {
      scalar_type theta_, scalar_type gamma0_, bool H_version_,
      bool normal_component_, const mesh_fem *mf_data_ = 0,
      const model_real_plain_vector *G_ = 0, const mesh_fem *mf_H_ = 0,
-     const model_real_plain_vector *H_ = 0)
-      : option(option_), md(md_), varname(varname_), H_version(H_version_),
-	normal_component(normal_component_), theta(theta_), gamma0(gamma0_),
-	mf_u(mfu_), mf_data(mf_data_), mf_H(mf_H_) {
+     const model_real_plain_vector *H_ = 0,
+     const std::string *auxvarname_ = 0, const mesh_fem *mf_lambda_ = 0
+     )
+      : option(option_), md(md_), varname(varname_), auxvarname(auxvarname_),
+	H_version(H_version_), normal_component(normal_component_),
+	theta(theta_), gamma0(gamma0_), mf_u(mfu_), mf_lambda(mf_lambda_),
+	mf_data(mf_data_), mf_H(mf_H_) {
 
       N = mf_u->linked_mesh().dim();
       qdim = mf_u->get_qdim();
@@ -2577,15 +2648,10 @@ namespace getfem {
       }
     }
     
-
-    const bgeot::multi_index &sizes() const { return sizes_; }
-
-
     void compute(fem_interpolation_context &ctx, bgeot::base_tensor &t) {
       
       dim_type i;
-      size_type cv = ctx.convex_num();
-      short_type ndof = short_type(ctx.pf()->nb_dof(cv) * qdim / ctx.pf()->target_dim());
+      // size_type cv = ctx.convex_num();
       
       switch (option) {
       case 1:
@@ -2593,27 +2659,43 @@ namespace getfem {
 	break;
       case 2:
 	if (qdim == 1) {
-	  sizes_[0] = ndof;
-	  t.adjust_sizes(sizes_);
-	  sizes_[0] = short_type(-1);
 	  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, t);
 	  t *= -scalar_type(1);
 	} else {
-	  sizes_[0] = ndof;
-	  tp.adjust_sizes(sizes_); t.adjust_sizes(sizes_);
-	  sizes_[0] = short_type(-1);
+	  tp.adjust_sizes(sizes_);
 	  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
 	  t.mat_reduction(tp, HTH, 1);
 	  t *= -scalar_type(1);
 	}
 	break;
+      case 9:
+	if (qdim == 1) {
+	  md->compute_auxilliary_Neumann_terms(2, *varname, *mf_u, U,
+					       *auxvarname, ctx, n, t);
+	  t *= -scalar_type(1);
+	} else {
+	  tp.adjust_sizes(sizes_);
+	  md->compute_auxilliary_Neumann_terms(2, *varname, *mf_u, U,
+					       *auxvarname,ctx, n, tp);
+	  t.mat_reduction(tp, HTH, 1);
+	  t *= -scalar_type(1);
+	}
+	break;
       case 3:
-	sizes_[0] = sizes_[1] = ndof;
-	t.adjust_sizes(sizes_);
 	sizes_[2] = qdim;
 	tp.adjust_sizes(sizes_);
-	sizes_[0] = sizes_[1] = short_type(-1); sizes_[2] = 1;
+	sizes_[2] = 1;
 	md->compute_Neumann_terms(3, *varname, *mf_u, U, ctx, n, tp);
+	gmm::mult(H, gmm::scaled(u, -theta), gmm::scaled(g, theta), auxn);
+	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
+	t.mat_reduction(tp, auxH, 2);
+	break;
+      case 8:
+	sizes_[2] = qdim;
+	tp.adjust_sizes(sizes_);
+	sizes_[2] = 1;
+	md->compute_auxilliary_Neumann_terms(3, *varname,  *mf_u, U,
+					     *auxvarname, ctx, n, tp);
 	gmm::mult(H, gmm::scaled(u, -theta), gmm::scaled(g, theta), auxn);
 	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
 	t.mat_reduction(tp, auxH, 2);
@@ -2631,22 +2713,18 @@ namespace getfem {
 	gmm::mult(gmm::transposed(H), auxn, t.as_vector());
 	break;
       case 6:
-	sizes_[0] = ndof;
-	t.adjust_sizes(sizes_);
 	sizes_[1] = qdim;
 	tp.adjust_sizes(sizes_);
-	sizes_[0] = short_type(-1); sizes_[1] = 1;
+	sizes_[1] = 1;
 	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
 	gmm::copy(gmm::scaled(g, -theta), auxn);
 	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
 	t.mat_reduction(tp, auxH, 1);
 	break;
       case 7:
-	sizes_[0] = ndof;
-	t.adjust_sizes(sizes_);
 	sizes_[1] = qdim;
 	tp.adjust_sizes(sizes_);
-	sizes_[0] = short_type(-1); sizes_[1] = 1;
+	sizes_[1] = 1;
 	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
 	gmm::mult(H, gmm::scaled(u, theta), gmm::scaled(g, -theta), auxn);
 	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
@@ -2657,7 +2735,7 @@ namespace getfem {
 
     void prepare(fem_interpolation_context& ctx, size_type nb) {
       size_type cv = ctx.convex_num();
-      
+
       switch (nb) { // last is computed first
       case 1 : // mandatory. calculate [u], [n], [gamma], [HTH]
 	n = bgeot::compute_normal(ctx, ctx.face_num());
@@ -2725,6 +2803,7 @@ namespace getfem {
 	
       default : GMM_ASSERT1(false, "Invalid option");
       }
+
     }
   };
 
@@ -2819,6 +2898,72 @@ namespace getfem {
   }
 
 
+  void asm_Dirichlet_Nitsche_fourth_tangent_term
+  (model_real_sparse_matrix &M, const mesh_im &mim, const model &md,
+   const std::string &varname, const mesh_fem &mfu,
+   const model_real_plain_vector *U,
+   const std::string &auxvarname, const mesh_fem &mf_lambda,
+   scalar_type theta,
+   scalar_type gamma0, bool H_version, bool normal_component,
+   const mesh_fem *mf_H, const model_real_plain_vector *H,
+   const mesh_fem *mf_data, const model_real_plain_vector *G,
+   const mesh_region &rg) {
+    
+    dirichlet_nitsche_nonlinear_term nterm(8, &md, &varname, &mfu, U, theta,
+					   gamma0, H_version, normal_component,
+					   mf_data, G, mf_H, H, &auxvarname,
+					   &mf_lambda);
+    getfem::generic_assembly assem;
+
+    std::string Nlinfems = "#1", lambdafem = "#2";
+    if (mf_H && mf_data) { Nlinfems = "#1,#2,#3"; lambdafem = "#4"; }
+    else if (mf_H) { Nlinfems = "#1,#1,#2"; lambdafem = "#3"; }
+    else if (mf_data) { Nlinfems = "#1,#2"; lambdafem = "#3"; }
+    
+    assem.set("M(#1,"+lambdafem+")+=comp(NonLin$1(#1,"+Nlinfems+"))(:,:,i);");
+    assem.push_mi(mim);
+    assem.push_mf(mfu);
+    if (mf_H) assem.push_mf(*mf_H);
+    if (mf_data) assem.push_mf(*mf_data);
+    assem.push_mf(mf_lambda);
+    assem.push_nonlinear_term(&nterm);
+  
+    assem.push_mat(M);
+    assem.assembly(rg);
+  }
+
+  void asm_Dirichlet_Nitsche_fifth_tangent_term
+  (model_real_sparse_matrix &M, const mesh_im &mim, const model &md,
+   const std::string &varname, const mesh_fem &mfu,
+   const model_real_plain_vector *U,
+   const std::string &auxvarname, const mesh_fem &mf_lambda,
+   scalar_type theta, scalar_type gamma0, bool H_version,
+   bool normal_component, const mesh_fem *mf_H,
+   const model_real_plain_vector *H, const mesh_region &rg) {
+    
+    dirichlet_nitsche_nonlinear_term nterm(9, &md, &varname, &mfu, U, theta,
+					   gamma0, H_version, normal_component,
+					   0, 0, mf_H, H, &auxvarname,
+					   &mf_lambda);
+    getfem::generic_assembly assem;
+    
+    std::string Nlinfems = mf_H ? "#1,#1,#2" : "#1";
+    std::string lambdafem = mf_H ? "#3" : "#2";
+    
+    if (mfu.get_qdim() > 1)
+      assem.set("M(#1,"+lambdafem+")+=comp(vBase(#1).NonLin$1(#1,"+Nlinfems+"))(:,i,:,i);");
+    else
+      assem.set("M(#1,"+lambdafem+")+=comp(Base(#1).NonLin$1(#1,#1))(:,:);");
+    assem.push_mi(mim);
+    assem.push_mf(mfu);
+    if (mf_H) assem.push_mf(*mf_H);
+    assem.push_mf(mf_lambda);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(M);
+    assem.assembly(rg);
+  }
+
+
   void asm_Dirichlet_Nitsche_first_rhs_term
   (model_real_plain_vector &V, const mesh_im &mim, const model &md,
    const std::string &varname, const mesh_fem &mfu,
@@ -2903,11 +3048,11 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Dirichlet condition brick has one and only one term");
+      GMM_ASSERT1(vecl.size() == vl.size() && matl.size() == vl.size(),
+                  "Wrong number of terms for Dirichlet condition brick");
       GMM_ASSERT1(mims.size() == 1,
                   "Dirichlet condition brick need one and only one mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() >= 1 && dl.size() <= 3,
+      GMM_ASSERT1(vl.size() >= 1 && dl.size() >= 1 && dl.size() <= 3,
                   "Wrong number of variables for Dirichlet condition brick");
 
       
@@ -2983,6 +3128,20 @@ namespace getfem {
 	    (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
 	     normal_component, mf_H, H, mf_data, G, rg);
 	}
+
+	if (vl.size() > 1) { // presence of auxilliary variables
+	  for (size_type i = 1; i < vl.size(); ++i) {
+	    if (theta != scalar_type(0) && !linear_version)
+	      asm_Dirichlet_Nitsche_fourth_tangent_term
+		(matl[i], mim, md, vl[0], mf_u, U, vl[i],
+		 md.mesh_fem_of_variable(vl[i]), theta, gamma0, 
+		 H_version, normal_component, mf_H, H, mf_data, G, rg);
+	    asm_Dirichlet_Nitsche_fifth_tangent_term
+	      (matl[i], mim, md, vl[0], mf_u, U, vl[i],
+	       md.mesh_fem_of_variable(vl[i]), theta, gamma0,
+	       H_version, normal_component, mf_H, H, rg);
+	  }
+	}
       }
 
       if ((!linear_version && (version & model::BUILD_RHS))
@@ -3029,6 +3188,16 @@ namespace getfem {
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
+
+    std::vector<std::string> aux_vars;
+    md.auxilliary_variables_of_Neumann_terms(varname, aux_vars);
+    cout << "Auxilliary variables : " << aux_vars << endl;
+    aux_vars.push_back("p");
+    for (size_type i = 0; i < aux_vars.size(); ++i) {
+      vl.push_back(aux_vars[i]);
+      tl.push_back(model::term_description(varname, aux_vars[i], false));
+    }
+
     model::varnamelist dl;
     dl.push_back(gamma0name);
     if (dataname.size()) dl.push_back(dataname);
@@ -3045,6 +3214,14 @@ namespace getfem {
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
+
+    std::vector<std::string> aux_vars;
+    md.auxilliary_variables_of_Neumann_terms(varname, aux_vars);
+    for (size_type i = 0; i < aux_vars.size(); ++i) {
+      vl.push_back(aux_vars[i]);
+      tl.push_back(model::term_description(varname, aux_vars[i], false));
+    }
+
     model::varnamelist dl;
     dl.push_back(gamma0name);
     if (dataname.size()) dl.push_back(dataname);
@@ -3060,6 +3237,14 @@ namespace getfem {
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
+
+    std::vector<std::string> aux_vars;
+    md.auxilliary_variables_of_Neumann_terms(varname, aux_vars);
+    for (size_type i = 0; i < aux_vars.size(); ++i) {
+      vl.push_back(aux_vars[i]);
+      tl.push_back(model::term_description(varname, aux_vars[i], false));
+    }
+
     model::varnamelist dl;
     dl.push_back(gamma0name);
     dl.push_back(dataname);
@@ -3592,7 +3777,7 @@ namespace getfem {
       if (paramname.size()) parser.DefineVar(paramname, &param);
     }
 
-    const bgeot::multi_index &sizes() const { return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const { return sizes_; }
 
     virtual void compute(fem_interpolation_context &ctx,
 			 bgeot::base_tensor &t) {
@@ -4053,12 +4238,11 @@ namespace getfem {
     mutable fem_interpolation_context ctx_mu;
     mutable base_vector coeff, val;
     mutable base_matrix grad, E, G;
-    mutable fem_precomp_pool fppool;
 
     void compute_Neumann_term
     (int version, const mesh_fem &mfvar, const model_real_plain_vector &var,
      fem_interpolation_context& ctx, base_small_vector &n,
-     base_tensor &output) const {
+     base_tensor &output, size_type /*auxilliary_ind*/ = 0) const {
 
       if (version == 3) return;  // No contribution because the term is linear
 
@@ -4079,13 +4263,11 @@ namespace getfem {
 		&& (&(ctx.pfp()->get_point_tab())
 		    != &(ctx_mu.pfp()->get_point_tab())))) {
 
-	  cout << "cv = " << cv << endl; // pour vérifier que ça ne le fait pas à chaque coup ...
-
 	  bgeot::vectors_to_base_matrix
 	    (G, mf_mu->linked_mesh().points_of_convex(cv));
 	  
-	  pfem_precomp pfp = fppool(mf_mu->fem_of_element(cv),
-				    &(ctx.pfp()->get_point_tab()));
+	  pfem_precomp pfp = fem_precomp(mf_mu->fem_of_element(cv),
+					 &(ctx.pfp()->get_point_tab()), 0);
 
 	  if (ctx.have_pfp())
 	    ctx_mu = fem_interpolation_context
@@ -4333,9 +4515,113 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
+  struct lin_incomp_Neumann_elem_term : public Neumann_elem_term {
+
+    const gmm::uint64_type &var_vnum; 
+    const mesh_fem *mf_p;
+    const model_real_plain_vector *org_P;
+    mutable model_real_plain_vector P;
+    mutable gmm::uint64_type vnum;
+    
+    mutable fem_interpolation_context ctx_p;
+    mutable base_vector coeff, val;
+    mutable base_matrix G;
+   
+    void compute_Neumann_term
+    (int version, const mesh_fem &mfvar,
+     const model_real_plain_vector &/* var */,
+     fem_interpolation_context& ctx, base_small_vector &n,
+     base_tensor &output, size_type auxilliary_ind = 0) const {
+
+      if (version == 3) return;  // No contribution because the term is linear
+      if (version == 2 && auxilliary_ind == 0) return;
+
+      dim_type qdim = mfvar.linked_mesh().dim();
+      gmm::resize(val, 1);
+      size_type cv = ctx.convex_num();
+      scalar_type val_p = scalar_type(0);
+
+      if (version == 1) {
+   
+	if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
+	    || (ctx_p.have_pfp() != ctx.have_pfp())
+	    || (ctx_p.have_pfp()
+		&& (&(ctx.pfp()->get_point_tab())
+		    != &(ctx_p.pfp()->get_point_tab())))) {
+
+	  if (vnum != var_vnum) {
+	    gmm::resize(P, mf_p->nb_basic_dof());
+	    mf_p->extend_vector(*org_P, P);
+	    vnum = var_vnum;
+	  }
+	  
+	  bgeot::vectors_to_base_matrix
+	    (G, mf_p->linked_mesh().points_of_convex(cv));
+	  
+	  pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
+					 &(ctx.pfp()->get_point_tab()), 0);
+	  
+	  if (ctx.have_pfp())
+	    ctx_p = fem_interpolation_context
+	      (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
+	       G, cv, ctx.face_num());
+	  else
+	    ctx_p = fem_interpolation_context
+	      (mf_p->linked_mesh().trans_of_convex(cv),
+	       mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
+	  
+	} else {
+	  if (ctx.have_pfp())  ctx_p.set_ii(ctx.ii());
+	  else ctx_p.set_xref(ctx.xref());
+	}
+	
+	coeff.resize(mf_p->nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector(P, gmm::sub_index
+				 (mf_p->ind_basic_dof_of_element(cv))), coeff);
+	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
+	val_p = val[0];
+      }
+
+      switch (version) {
+      case 1:
+	gmm::copy(gmm::scaled(n, -val_p), output.as_vector());
+	break;
+      case 2:
+	{
+	  base_tensor t;
+	  size_type ndof = ctx_p.pf()->nb_dof(cv);
+	  ctx_p.pf()->real_base_value(ctx_p, t);
+
+	  base_tensor::const_iterator it = t.begin();
+	  for (size_type i = 0; i < ndof; ++i, ++it) {
+	    for (size_type p = 0; p < qdim; ++p)
+	      output(i, p) -= (*it)*n[p];
+	  }
+	  GMM_ASSERT1(it ==  t.end(), "Internal error");
+	}
+	break;
+      }
+
+    }
+
+    lin_incomp_Neumann_elem_term
+    (const gmm::uint64_type &var_vnum_, const mesh_fem *mf_p_, 
+     const model_real_plain_vector *P_,
+     const std::string &auxvarname)
+      : var_vnum(var_vnum_), mf_p(mf_p_), org_P(P_)  {
+      auxilliary_variables.push_back(auxvarname);
+      gmm::resize(P, mf_p->nb_basic_dof());
+      mf_p->extend_vector(*P_, P);
+      vnum = var_vnum;
+    }
+
+  };
+
+
+
   struct linear_incompressibility_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -4375,6 +4661,11 @@ namespace getfem {
       GMM_TRACE2("Stokes term assembly");
       gmm::clear(matl[0]);
       asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
+
+      pNeumann_elem_term pNt = new lin_incomp_Neumann_elem_term
+	(md.version_number_of_data_variable( vl[1]), &mf_p,
+	 &(md.real_variable(vl[1])), vl[1]);
+      md.add_Neumann_term(pNt, vl[0], ib);
 
       if (penalized) {
         gmm::clear(matl[1]);

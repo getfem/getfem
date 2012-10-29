@@ -191,7 +191,7 @@ public:
   level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
     : mf(mf_), U(U_), N(mf_.linked_mesh().dim()), gradU(1, N)
   { sizes_.resize(1); sizes_[0] = short_type(N); }
-  const bgeot::multi_index &sizes() const {  return sizes_; }
+  const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
   virtual void compute(getfem::fem_interpolation_context& ctx,
 		       bgeot::base_tensor &t) {
     size_type cv = ctx.convex_num();

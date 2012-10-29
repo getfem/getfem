@@ -731,7 +731,7 @@ lsmf(lsmf_),
 {sizes_[0]=1;}
 
 const bgeot::multi_index& level_set_contact::HFunction::
-	sizes() const {return sizes_;}
+	sizes(size_type) const { return sizes_;}
 
 void level_set_contact::HFunction::
 prepare(getfem::fem_interpolation_context& /*ctx*/, size_type /*nl_part*/) {}
@@ -758,7 +758,7 @@ bgeot::scalar_type level_set_contact::HFunction::
 
 level_set_contact::Unity::Unity(const mesh_fem &mf_):mf(mf_),sizes_(1)
 {sizes_[0]=1;}
-const bgeot::multi_index& level_set_contact::Unity::sizes() const {return sizes_;}
+const bgeot::multi_index& level_set_contact::Unity::sizes(size_type) const {return sizes_;}
 void level_set_contact::Unity::
 prepare(getfem::fem_interpolation_context& /*ctx*/, size_type /*nl_part*/) {}
 void level_set_contact::Unity::

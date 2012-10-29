@@ -345,7 +345,7 @@ namespace getfem {
       adjust_tensor_size();
     }
 
-    const bgeot::multi_index &sizes() const { return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const { return sizes_; }
 
     virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
     virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nb*/)
@@ -825,7 +825,7 @@ namespace getfem {
     }
     
 
-    const bgeot::multi_index &sizes() const { return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const { return sizes_; }
 
     virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
     virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nb*/);

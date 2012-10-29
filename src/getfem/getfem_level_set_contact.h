@@ -546,7 +546,7 @@ namespace level_set_contact {
 						  sizes_[1] = 3;
 					  } 
 		  }
-		  const bgeot::multi_index &sizes() const {return sizes_;};
+		  const bgeot::multi_index &sizes(size_type) const {return sizes_;};
 		  void compute(getfem::fem_interpolation_context& ctx, bgeot::base_tensor &t);
 	          void prepare(getfem::fem_interpolation_context& /* ctx */, size_type /* nl_part */) {}
 
@@ -574,7 +574,7 @@ namespace level_set_contact {
 			const plain_vector &LS_U_,
 			scalar_type epsilon=1e-9, 
 			scalar_type small_h_=0);
-		  const bgeot::multi_index &sizes() const;
+		  const bgeot::multi_index &sizes(size_type) const;
 		  void prepare(getfem::fem_interpolation_context& ctx, size_type nl_part);
 		  void compute(getfem::fem_interpolation_context& ctx, bgeot::base_tensor &t);
 		  scalar_type hRegularized(scalar_type x, scalar_type epsion, scalar_type small);
@@ -589,7 +589,7 @@ namespace level_set_contact {
 
 	public:
 		Unity(const mesh_fem &mf_);
-		const bgeot::multi_index &sizes() const;
+		const bgeot::multi_index &sizes(size_type) const;
 		void prepare(getfem::fem_interpolation_context& ctx, size_type nl_part);
 		void compute(getfem::fem_interpolation_context& ctx, bgeot::base_tensor &t);
 	};

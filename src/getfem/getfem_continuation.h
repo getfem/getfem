@@ -457,7 +457,7 @@ namespace getfem {
 
     do {
       for (unsigned long i = 0; i < S.nbdir(); i++) {
-	a = (2 * M_PI * i) / S.nbdir();
+	a = (2 * M_PI * double(i)) / double(S.nbdir());
 	a1 = h * sin(a); a2 = h * cos(a);
 	S.scaled_add(x_end, t_x1, a1, X); Gamma = gamma_end + a1 * t_gamma1;
 	S.scaled_add(X, t_x2, a2, X); Gamma += a2 * t_gamma2;

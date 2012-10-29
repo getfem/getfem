@@ -442,7 +442,7 @@ namespace getfem {
       sizes_.resize(1); sizes_[0] = short_type(N); /*assert(N == 2);*/
       mf.extend_vector(U_, U);
     }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();

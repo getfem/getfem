@@ -69,8 +69,9 @@ namespace getfem {
 						 * be destroyed by
 						 * ~nonlinear_elem_term */
     mutable size_type term_num_;
+    
   public :
-    virtual const bgeot::multi_index &sizes() const = 0;
+    virtual const bgeot::multi_index &sizes(size_type icv) const = 0;
     virtual void compute(fem_interpolation_context& /*ctx*/,
                          base_tensor &/*output*/) = 0;
     virtual void prepare(fem_interpolation_context& /*ctx*/,

@@ -175,7 +175,7 @@ namespace getfem {
 	  } break;
 	  case GETFEM_NONLINEAR_ : {
 	    if ((*it).nl_part == 0) {
-	      for (dim_type ii = 1; ii < (*it).nlt->sizes().size(); ++ii) ++k;
+	      k = short_type(k+(*it).nlt->sizes(size_type(-1)).size()-1);
 	      GMM_ASSERT1(!is_ppi, "For nonlinear terms you have "
 			  "to use approximated integration");
 	      computed_on_real_element = true;
@@ -276,20 +276,14 @@ namespace getfem {
 	      aux_ind.resize(1); aux_ind[0] = 1;
 	      elmt_stored[k].adjust_sizes(aux_ind); elmt_stored[k][0] = 1.;
 	    } else {
-	      // cout << "Term size = " << (*it).nlt->term().size() << endl;
-	      size_type ns = (*it).nlt->sizes().size();
 	      if ((*it).nlt->term_num() == size_type(-1)) {
-		bool known_size = true;
-		for (dim_type ii = 0; ii < ns; ++ii) {
-		  if ((*it).nlt->sizes()[ii] == short_type(-1))
-		    { known_size = false; break; }
-		}
-		if (known_size)
-		  elmt_stored[k].adjust_sizes((*it).nlt->sizes());
+		const bgeot::multi_index &nltsizes
+		  = (*it).nlt->sizes(ctx.convex_num());
+		elmt_stored[k].adjust_sizes(nltsizes);
 		(*it).nlt->compute(ctx, elmt_stored[k]);
 		(*it).nlt->term_num() = k;
 		--mit;
-		for (dim_type ii = 0; ii < (*it).nlt->sizes().size(); ++ii)
+		for (dim_type ii = 0; ii < nltsizes.size(); ++ii)
 		  *mit++ = elmt_stored[k].sizes()[ii];
 	      } else {
 		elmt_stored[k] = elmt_stored[(*it).nlt->term_num()];

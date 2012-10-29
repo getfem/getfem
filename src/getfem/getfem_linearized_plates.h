@@ -117,7 +117,7 @@ namespace getfem {
   public:
 
      mitc4_projection_term(void) : sizes_(8,8)  { }
-     const bgeot::multi_index &sizes() const {  return sizes_; }
+     const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
      virtual void compute(getfem::fem_interpolation_context & ctx,
 			  bgeot::base_tensor &t) {
        

@@ -115,7 +115,7 @@ namespace getfem {
   public:
     position_vector(unsigned NN) : N(NN)
     { sizes_.resize(1); sizes_[0] = short_type(N); }
-    const bgeot::multi_index &sizes() const {  return sizes_; }
+    const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t)
     { for (size_type i = 0; i < N; ++i) t[i] = ctx.xreal()[i]; }

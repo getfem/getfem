@@ -449,14 +449,12 @@ namespace getfem {
 				     bool only_reduced) const {
     switch (op) {
       case NONLIN:
-	for (unsigned j=0; j < nlt->sizes().size(); ++j)
-	  if (!only_reduced || !reduced(j)) {
-	    short_type s = nlt->sizes()[j];
-	    if (s == short_type(-1)) // nbdof in that case
-	      rng.push_back(pmf->nb_basic_dof_of_element(cv));
-	    else 
-	      rng.push_back(s);
-	  }
+	{
+	  const bgeot::multi_index &sizes = nlt->sizes(cv);
+	  for (unsigned j=0; j < sizes.size(); ++j)
+	    if (!only_reduced || !reduced(j))
+	      rng.push_back(sizes[j]);
+	}
 	break;
       case DATA:
 	for (unsigned i=0; i < data->ranges().size(); ++i) 
@@ -738,7 +736,7 @@ namespace getfem {
 				unsigned &d, const bgeot::tensor_ranges &rng,
 				bgeot::tensor_ref &tref, size_type tsz=1) {
       if (mc.op == mf_comp::NONLIN) {
-	for (size_type j=0; j < mc.nlt->sizes().size(); ++j)
+	for (size_type j=0; j < mc.nlt->sizes(cv).size(); ++j)
 	  tsz = add_dim(rng, dim_type(d++), stride_type(tsz), tref);
       } else if (mc.op == mf_comp::DATA) {
         assert(tsz == 1);
@@ -803,10 +801,11 @@ namespace getfem {
           tref.set_base(icb.tensor_bases[i]);
         tref.update_idx2mask();
 	if (mfcomp[i].reduction.size() != tref.ndim()) {
-	  ASM_THROW_TENSOR_ERROR("wrong number of indexes for the " << int(i+1) 
-				 << "th argument of the reduction " << name() 
+	  ASM_THROW_TENSOR_ERROR("wrong number of indices for the "<< int(i+1) 
+				 << "th argument of the reduction "<< name() 
 				 << " (expected " << int(tref.ndim()) 
-                                 << " indexes, got " << mfcomp[i].reduction.size());
+                                 << " indexes, got "
+				 << mfcomp[i].reduction.size());
 	}
 	icb.red.insert(tref, mfcomp[i].reduction);
       }
@@ -817,7 +816,8 @@ namespace getfem {
       r_.resize(tensor().ndim()); 
       for (dim_type i=0; i < tensor().ndim(); ++i) r_[i] = tensor().dim(i);
       tsize = tensor().card();
-      //cerr << "update_shape_with_inline_reduction: tensor=" << tensor() << "\nr_=" << r_ << ", tsize=" << tsize << "\n";
+      //cerr << "update_shape_with_inline_reduction: tensor=" << tensor()
+      //     << "\nr_=" << r_ << ", tsize=" << tsize << "\n";
     }
     
     void update_shape_with_expanded_tensor(size_type cv) {
@@ -947,7 +947,8 @@ namespace getfem {
         do_post_reduction(cv);
         data_base = &fallback_red.out_data[0];
       } else data_base = &(*t.begin());
-      GMM_ASSERT3(t.size() == size_type(tsize), "Internal error");
+      GMM_ASSERT1(t.size() == size_type(tsize),
+		  "Internal error: bad size " << t.size() << " should be " << tsize);
     }
   };
 
