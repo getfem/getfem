@@ -23,7 +23,7 @@ dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
 theta = -1;            % Nitsche's method parameter theta
 gamma0 = 0.0001;       % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 incompressible = 1;    % Test with incompressibility or not
-NX = 40;
+NX = 80;
 
 % trace on;
 gf_workspace('clear all');

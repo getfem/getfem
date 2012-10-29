@@ -278,7 +278,9 @@ namespace getfem {
     typedef std::pair<std::string, size_type> Neumann_pair;
     typedef std::map<Neumann_pair, pNeumann_elem_term> Neumann_SET;
     mutable Neumann_SET Neumann_term_list; // Neumann terms list (mainly for
-    // Nitsche's method)
+                                           // Nitsche's method)
+    std::map<std::string, std::vector<std::string> >
+      Neumann_terms_auxilliary_variables;
 
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
@@ -321,6 +323,12 @@ namespace getfem {
 
     void auxilliary_variables_of_Neumann_terms
     (const std::string &varname, std::vector<std::string> &aux_var) const;
+
+    void add_auxilliary_variables_of_Neumann_terms
+    (const std::string &varname, const std::vector<std::string> &aux_vars);
+
+    void add_auxilliary_variables_of_Neumann_terms
+    (const std::string &varname, const std::string &aux_var);
 
     /** Compute the approximation of the Neumann condition for a variable
 	with the declared terms.
@@ -893,6 +901,7 @@ namespace getfem {
     bool isinit;      // internal flag.
     bool compute_each_time; // The brick is linear but needs to be computed
     // each time it is evaluated.
+    bool hasNeumannterm; // The brick declares at list a Neumann term.
     std::string name; // Name of the brick.
 
   public :
@@ -901,11 +910,12 @@ namespace getfem {
 
     virtual_brick(void) { isinit = false; }
     void set_flags(const std::string &bname, bool islin, bool issym,
-                   bool iscoer, bool ire, bool isco, bool each_time = false) {
+                   bool iscoer, bool ire, bool isco, bool each_time = false,
+		   bool hasNeumannt = true) {
       name = bname;
       islinear = islin; issymmetric = issym; iscoercive = iscoer;
       isreal = ire; iscomplex = isco; isinit = true;
-      compute_each_time = each_time;
+      compute_each_time = each_time; hasNeumannterm = hasNeumannt;
     }
 
 #   define BRICK_NOT_INIT GMM_ASSERT1(isinit, "Set brick flags !")
@@ -914,6 +924,7 @@ namespace getfem {
     bool is_coercive(void)  const { BRICK_NOT_INIT; return iscoercive;  }
     bool is_real(void)      const { BRICK_NOT_INIT; return isreal;      }
     bool is_complex(void)   const { BRICK_NOT_INIT; return iscomplex;   }
+    bool has_Neumann_term(void) const { BRICK_NOT_INIT;return hasNeumannterm; }
     bool is_to_be_computed_each_time(void) const
     { BRICK_NOT_INIT; return compute_each_time; }
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }

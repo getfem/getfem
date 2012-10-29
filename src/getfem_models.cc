@@ -729,15 +729,34 @@ namespace getfem {
   }
 
   void model::auxilliary_variables_of_Neumann_terms
-  (const std::string &varname, std::vector<std::string> &aux_var) const {
-    Neumann_SET::const_iterator it
-      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
-    
-    while (it != Neumann_term_list.end()
-	   && !(it->first.first.compare(varname))) {
-      for (size_type i = 0; i < it->second->auxilliary_variables.size(); ++i)
-	aux_var.push_back(it->second->auxilliary_variables[i]);
-      ++it;    }
+  (const std::string &varname, std::vector<std::string> &aux_vars) const {
+    std::map<std::string, std::vector<std::string> >::const_iterator
+      it = Neumann_terms_auxilliary_variables.find(varname);
+    if (it !=  Neumann_terms_auxilliary_variables.end())
+      aux_vars = it->second;
+    else
+      aux_vars.resize(0);
+  }
+
+  void model::add_auxilliary_variables_of_Neumann_terms
+  (const std::string &varname, const std::vector<std::string> &aux_vars) {
+
+    for (size_type i = 0; i < aux_vars.size(); ++i) {
+      bool found = false;
+      for (size_type j = 0;
+	   j < Neumann_terms_auxilliary_variables[varname].size(); ++j) 
+	if (!(Neumann_terms_auxilliary_variables[varname][j].compare
+	      (aux_vars[i])))
+	  found = true;
+      if (!found)
+	Neumann_terms_auxilliary_variables[varname].push_back(aux_vars[i]);
+    }
+  }
+
+  void model::add_auxilliary_variables_of_Neumann_terms
+  (const std::string &varname, const std::string &aux_var) {
+    std::vector<std::string> aux_vars(1,  aux_var);
+    add_auxilliary_variables_of_Neumann_terms(varname, aux_vars);
   }
 
   void model::compute_Neumann_terms(int version, const std::string &varname,
@@ -3191,8 +3210,6 @@ namespace getfem {
 
     std::vector<std::string> aux_vars;
     md.auxilliary_variables_of_Neumann_terms(varname, aux_vars);
-    cout << "Auxilliary variables : " << aux_vars << endl;
-    aux_vars.push_back("p");
     for (size_type i = 0; i < aux_vars.size(); ++i) {
       vl.push_back(aux_vars[i]);
       tl.push_back(model::term_description(varname, aux_vars[i], false));
@@ -4704,6 +4721,7 @@ namespace getfem {
       dl.push_back(dataname);
       tl.push_back(model::term_description(multname, multname, true));
     }
+    md.add_auxilliary_variables_of_Neumann_terms(varname, multname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
