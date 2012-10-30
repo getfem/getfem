@@ -534,10 +534,8 @@ namespace getfem {
     }
   }
 
-
-
   const std::string &model::varname_of_brick(size_type ind_brick,
-                                      size_type ind_var) {
+					     size_type ind_var) {
     GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
     GMM_ASSERT1(ind_var < bricks[ind_brick].vlist.size(),
                "Inexistent brick variable");
@@ -758,6 +756,36 @@ namespace getfem {
     std::vector<std::string> aux_vars(1,  aux_var);
     add_auxilliary_variables_of_Neumann_terms(varname, aux_vars);
   }
+
+  size_type
+  model::check_Neumann_terms_consistency(const std::string &varname) const {
+    
+    dal::bit_vector bnum;
+    Neumann_SET::const_iterator it = Neumann_term_list.begin();
+    for (; it != Neumann_term_list.end(); ++it) bnum.add(it->first.second);
+    
+    for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
+      if (bricks[ib].pbr->has_Neumann_term() && !(bnum.is_in(ib))) {
+	for (size_type j = 0; j < bricks[ib].vlist.size(); ++j)
+	  if (!(bricks[ib].vlist[j].compare(varname))) return ib;
+      } 
+    }
+    return size_type(-1);
+
+  }
+
+  bool model::check_Neumann_terms_linearity(const std::string &varname) const {
+    
+    Neumann_SET::const_iterator it
+      = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
+
+    while (it != Neumann_term_list.end()
+	   && !(it->first.first.compare(varname))) {
+      if (!(bricks[it->first.second].pbr->is_linear())) return false;
+    }
+    return true;
+  }
+
 
   void model::compute_Neumann_terms(int version, const std::string &varname,
 				    const mesh_fem &mfvar,
@@ -1898,7 +1926,8 @@ namespace getfem {
     source_term_brick(void) {
       set_flags("Source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
 
@@ -2016,7 +2045,8 @@ namespace getfem {
     normal_source_term_brick(void) {
       set_flags("Normal source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
 
@@ -2344,7 +2374,8 @@ namespace getfem {
                           : "Dirichlet with multipliers brick",
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -2543,10 +2574,6 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-
-  // Attention, la brique est non-linéaire si les modèles sont non-linéaires ... ---> il faudra estimer cela !
-
-
   struct dirichlet_nitsche_nonlinear_term : public nonlinear_elem_term {
     // Option:
     // 1 : matrix term H^TH/gamma
@@ -2576,7 +2603,8 @@ namespace getfem {
     const mesh_fem *mf_data;
     const mesh_fem *mf_H;
     
-    base_vector U, HH, G;
+    base_vector U;
+    const base_vector &HH, &G;
 
     mutable bgeot::multi_index sizes_;
 
@@ -2647,7 +2675,7 @@ namespace getfem {
       : option(option_), md(md_), varname(varname_), auxvarname(auxvarname_),
 	H_version(H_version_), normal_component(normal_component_),
 	theta(theta_), gamma0(gamma0_), mf_u(mfu_), mf_lambda(mf_lambda_),
-	mf_data(mf_data_), mf_H(mf_H_) {
+	mf_data(mf_data_), mf_H(mf_H_), HH(*H_), G(*G_) {
 
       N = mf_u->linked_mesh().dim();
       qdim = mf_u->get_qdim();
@@ -2657,14 +2685,11 @@ namespace getfem {
 	gmm::resize(U, mf_u->nb_basic_dof());
 	mf_u->extend_vector(*U_, U);
       }
-      if (mf_data && G_) {
-	gmm::resize(G, mf_data->nb_basic_dof());
-	mf_data->extend_vector(*G_, G);
-      }
-      if (mf_H && H_) {
-	gmm::resize(HH, mf_H->nb_basic_dof());
-	mf_H->extend_vector(*H_, HH);
-      }
+
+      if (mf_data) GMM_ASSERT1(!(mf_data->is_reduced()),
+			       "Reduced fem not allowed for data");
+      if (mf_H) GMM_ASSERT1(!(mf_H->is_reduced()),
+			    "Reduced fem not allowed for data");
     }
     
     void compute(fem_interpolation_context &ctx, bgeot::base_tensor &t) {
@@ -2776,7 +2801,7 @@ namespace getfem {
 	  gmm::copy(gmm::identity_matrix(), H);
 	}
 	else {
-	  GMM_ASSERT1(gmm::vect_size(HH), "Need H in this case !");
+	  GMM_ASSERT1(&HH && gmm::vect_size(HH), "Need H in this case !");
 	  if (!mf_H) gmm::copy(HH, H.as_vector());
 	  gmm::clear(HTH);
 	  for (size_type i = 0; i < qdim; ++i)
@@ -2785,23 +2810,26 @@ namespace getfem {
 		HTH(i,j) += H(k,i) * H(k,j);
 	}
 	if (!mf_data) {
-	  if (gmm::vect_size(G))
+	  if (&G && gmm::vect_size(G))
 	    if (normal_component) gmm::copy(G, auxg); else gmm::copy(G, g);
 	  else
 	    if (normal_component) gmm::clear(auxg); else gmm::clear(g);
 	}
 	if (normal_component) gmm::copy(gmm::scaled(n, auxg[0]), g);
-
 	// computation of h for gamma = gamma0*h
 	scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
 	gamma = gamma0 * emax / sqrt(scalar_type(N));
+	break;
 	
       case 2 : // calculate [g]
-	if (gmm::vect_size(G)) {
-	  coeff.resize(mf_data->nb_basic_dof_of_element(cv));
-	  gmm::copy(gmm::sub_vector
-		    (G, gmm::sub_index
-		     (mf_data->ind_basic_dof_of_element(cv))), coeff);
+	if (&G && gmm::vect_size(G)) {
+	  size_type ndof = mf_data->nb_basic_dof_of_element(cv);
+	  size_type qmult = qdim / mf_data->get_qdim();
+	  coeff.resize(ndof * qmult);
+	  mesh_fem::ind_dof_ct ct = mf_data->ind_basic_dof_of_element(cv);
+	  for (size_type i = 0; i < ndof; ++i)
+	    for (size_type j = 0; j < qmult; ++j)
+	      coeff[i*qmult+j] = G[ct[i]*qmult+j];
 	  if (normal_component)
 	    ctx.pf()->interpolation(ctx, coeff, auxg, 1);
 	  else
@@ -2810,11 +2838,14 @@ namespace getfem {
 	break;
 	
       case 3 :// calculate [H]
-	if (gmm::vect_size(HH)) {
-	  coeff.resize(mf_H->nb_basic_dof_of_element(cv));
-	  gmm::copy(gmm::sub_vector
-		    (HH, gmm::sub_index
-		     (mf_H->ind_basic_dof_of_element(cv))), coeff);
+	if (&HH && gmm::vect_size(HH)) {
+	  size_type ndof = mf_H->nb_basic_dof_of_element(cv);
+	  size_type qmult = qdim*qdim / mf_H->get_qdim();
+	  coeff.resize(ndof * qmult);
+	  mesh_fem::ind_dof_ct ct = mf_H->ind_basic_dof_of_element(cv);
+	  for (size_type i = 0; i < ndof; ++i)
+	    for (size_type j = 0; j < qmult; ++j)
+	      coeff[i*qmult+j] = HH[ct[i]*qmult+j];
 	  ctx.pf()->interpolation(ctx, coeff, H.as_vector(),
 				  dim_type(qdim*qdim));
 	}
@@ -2822,7 +2853,6 @@ namespace getfem {
 	
       default : GMM_ASSERT1(false, "Invalid option");
       }
-
     }
   };
 
@@ -2834,12 +2864,10 @@ namespace getfem {
    bool normal_component, const mesh_fem *mf_H,
    const model_real_plain_vector *H, const mesh_region &rg) {
     
-    
     dirichlet_nitsche_nonlinear_term nterm(2, &md, &varname, &mfu, U, theta,
 					   gamma0, H_version, normal_component,
 					   0, 0, mf_H, H);
 
-    
     getfem::generic_assembly assem;
     
     std::string Nlinfems = mf_H ? "#1,#1,#2" : "#1";
@@ -2908,8 +2936,8 @@ namespace getfem {
     assem.set("M(#1,#1)+=comp(NonLin$1(#1,"+Nlinfems+"))(:,:,i);");
     assem.push_mi(mim);
     assem.push_mf(mfu);
-    if (mf_H) assem.push_mf(*mf_H);
     if (mf_data) assem.push_mf(*mf_data);
+    if (mf_H) assem.push_mf(*mf_H);
     assem.push_nonlinear_term(&nterm);
   
     assem.push_mat(M);
@@ -2942,8 +2970,8 @@ namespace getfem {
     assem.set("M(#1,"+lambdafem+")+=comp(NonLin$1(#1,"+Nlinfems+"))(:,:,i);");
     assem.push_mi(mim);
     assem.push_mf(mfu);
-    if (mf_H) assem.push_mf(*mf_H);
     if (mf_data) assem.push_mf(*mf_data);
+    if (mf_H) assem.push_mf(*mf_H);
     assem.push_mf(mf_lambda);
     assem.push_nonlinear_term(&nterm);
   
@@ -2959,7 +2987,7 @@ namespace getfem {
    scalar_type theta, scalar_type gamma0, bool H_version,
    bool normal_component, const mesh_fem *mf_H,
    const model_real_plain_vector *H, const mesh_region &rg) {
-    
+
     dirichlet_nitsche_nonlinear_term nterm(9, &md, &varname, &mfu, U, theta,
 					   gamma0, H_version, normal_component,
 					   0, 0, mf_H, H, &auxvarname,
@@ -3010,8 +3038,8 @@ namespace getfem {
       assem.set("V(#1)+=comp(NonLin$1(#1,"+Nlinfems+").Base(#1))(i,:);");
     assem.push_mi(mim);
     assem.push_mf(mfu);
-    if (mf_H) assem.push_mf(*mf_H);
     if (mf_data) assem.push_mf(*mf_data);
+    if (mf_H) assem.push_mf(*mf_H);
     assem.push_nonlinear_term(&nterm);
   
     assem.push_vec(V);
@@ -3042,8 +3070,8 @@ namespace getfem {
     assem.set("V(#1)+=comp(NonLin$1(#1,"+Nlinfems+"))(:,i);");
     assem.push_mi(mim);
     assem.push_mf(mfu);
-    if (mf_H) assem.push_mf(*mf_H);
     if (mf_data) assem.push_mf(*mf_data);
+    if (mf_H) assem.push_mf(*mf_H);
     assem.push_nonlinear_term(&nterm);
   
     assem.push_vec(V);
@@ -3110,8 +3138,8 @@ namespace getfem {
         s = gmm::vect_size(*H);
 	if (mf_H) {
 	  s = s * mf_H->get_qdim() / mf_H->nb_dof();
-	  GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
-		      "a scalar finite element method");
+	  // GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
+	  //	      "a scalar finite element method");
 	}
         GMM_ASSERT1(s = gmm::sqr(mf_u.get_qdim()),
                     dl[ind] << ": bad format of Dirichlet data. "
@@ -3121,6 +3149,17 @@ namespace getfem {
 
       mesh_region rg(region);
       mim.linked_mesh().intersect_with_mpi_region(rg);
+
+      // Test Neumann term consistency if some computation are needed
+      if (recompute_matrix || (!linear_version && (version & model::BUILD_RHS))
+	  || (linear_version && G)) {
+	size_type ifb = md.check_Neumann_terms_consistency(vl[0]);
+	GMM_ASSERT1(ifb == size_type(-1),
+		    "Impossible to build Nitsche's terms for Dirichlet "
+		    " condition. At least '"
+		    << md.brick_pointer(ifb)->brick_name() << "' is declared "
+		    "after Nitsche's brick or do not declare a Neumann term.");
+      }
 
       if (recompute_matrix) {
 
@@ -3165,6 +3204,7 @@ namespace getfem {
 
       if ((!linear_version && (version & model::BUILD_RHS))
 	  || (linear_version && G)) {
+
 	GMM_TRACE2("Assembly of Nitsche's source terms "
 		   "for Dirichlet condition");
 	asm_Dirichlet_Nitsche_first_rhs_term
@@ -3182,18 +3222,20 @@ namespace getfem {
 
     Nitsche_Dirichlet_condition_brick(bool H_version_,
 				      bool normal_component_,
-				      bool is_linear_, /* TODO: to be determined ! */
+				      bool is_linear_,
 				      scalar_type theta_) {
       H_version = H_version_;
       normal_component = normal_component_;
       linear_version = is_linear_;
       theta = theta_;
       GMM_ASSERT1(!(H_version && normal_component), "Bad Dirichlet version");
-      set_flags("Dirichlet with Nitsche's method brick",
+      set_flags(is_linear_ ? "Dirichlet with Nitsche's method linear brick"
+		: "Dirichlet with Nitsche's method nonlinear brick",
                 linear_version /* is linear*/,
                 (theta==scalar_type(1)) /* is symmetric */,
 		(theta==scalar_type(1)) /* is coercive */,
-                true /* is real */, false /* is complex */);
+                true /* is real */, false /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -3202,7 +3244,9 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname) {
-    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, false, false, theta);
+
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick
+      (false, false, md.check_Neumann_terms_linearity(varname), theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
@@ -3226,7 +3270,8 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname) {
-    pbrick pbr = new Nitsche_Dirichlet_condition_brick(false, true, false, theta);
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick
+      (false, true, md.check_Neumann_terms_linearity(varname), theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
@@ -3249,7 +3294,8 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname, const std::string &Hname) {
-    pbrick pbr = new Nitsche_Dirichlet_condition_brick(true, false, false, theta);
+    pbrick pbr = new Nitsche_Dirichlet_condition_brick
+      (true, false, md.check_Neumann_terms_linearity(varname), theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
 					 theta == scalar_type(1)));
@@ -3474,7 +3520,8 @@ namespace getfem {
                           : "Pointwise cosntraints with multipliers brick",
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -3735,7 +3782,8 @@ namespace getfem {
     Fourier_Robin_brick(void) {
       set_flags("Fourier Robin condition", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -3934,7 +3982,8 @@ namespace getfem {
       : f(f_), dfdu(dfdu_)
     { set_flags("basic nonlinear brick", false /* is linear*/,
 		true /* is symmetric */, false /* is coercive */,
-		true /* is real */, false /* is complex */);
+		true /* is real */, false /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
     
   };
@@ -4041,7 +4090,8 @@ namespace getfem {
                           : "Constraint with multipliers brick",
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -4160,7 +4210,8 @@ namespace getfem {
                 true /* is linear*/,
                 symmetric_ /* is symmetric */, coercive_ /* is coercive */,
                 true /* is real */, true /* is complex */,
-                true /* is to be computed each time */);
+                true /* is to be computed each time */,
+		false /* has a Neumann term */);
     }
   };
 
@@ -4223,7 +4274,8 @@ namespace getfem {
                 true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-                true /* is to be computed each time */);
+                true /* is to be computed each time */,
+		false /* has a Neumann term */);
     }
 
   };
@@ -4557,44 +4609,43 @@ namespace getfem {
       gmm::resize(val, 1);
       size_type cv = ctx.convex_num();
       scalar_type val_p = scalar_type(0);
-
-      if (version == 1) {
    
-	if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
-	    || (ctx_p.have_pfp() != ctx.have_pfp())
-	    || (ctx_p.have_pfp()
-		&& (&(ctx.pfp()->get_point_tab())
-		    != &(ctx_p.pfp()->get_point_tab())))) {
-
-	  if (vnum != var_vnum) {
-	    gmm::resize(P, mf_p->nb_basic_dof());
-	    mf_p->extend_vector(*org_P, P);
-	    vnum = var_vnum;
-	  }
-	  
-	  bgeot::vectors_to_base_matrix
-	    (G, mf_p->linked_mesh().points_of_convex(cv));
-	  
-	  pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
-					 &(ctx.pfp()->get_point_tab()), 0);
-	  
-	  if (ctx.have_pfp())
-	    ctx_p = fem_interpolation_context
-	      (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-	       G, cv, ctx.face_num());
-	  else
-	    ctx_p = fem_interpolation_context
-	      (mf_p->linked_mesh().trans_of_convex(cv),
-	       mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
-	  
-	} else {
-	  if (ctx.have_pfp())  ctx_p.set_ii(ctx.ii());
-	  else ctx_p.set_xref(ctx.xref());
+      if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
+	  || (ctx_p.have_pfp() != ctx.have_pfp())
+	  || (ctx_p.have_pfp()
+	      && (&(ctx.pfp()->get_point_tab())
+		  != &(ctx_p.pfp()->get_point_tab())))) {
+	
+	if (vnum != var_vnum) {
+	  gmm::resize(P, mf_p->nb_basic_dof());
+	  mf_p->extend_vector(*org_P, P);
+	  vnum = var_vnum;
 	}
 	
+	bgeot::vectors_to_base_matrix
+	  (G, mf_p->linked_mesh().points_of_convex(cv));
+	
+	pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
+				       &(ctx.pfp()->get_point_tab()), 0);
+	
+	if (ctx.have_pfp())
+	  ctx_p = fem_interpolation_context
+	    (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
+	     G, cv, ctx.face_num());
+	else
+	  ctx_p = fem_interpolation_context
+	    (mf_p->linked_mesh().trans_of_convex(cv),
+	     mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
+	
+      } else {
+	if (ctx.have_pfp())  ctx_p.set_ii(ctx.ii());
+	else ctx_p.set_xref(ctx.xref());
+      }
+      
+      if (version == 1) {
 	coeff.resize(mf_p->nb_basic_dof_of_element(cv));
 	gmm::copy(gmm::sub_vector(P, gmm::sub_index
-				 (mf_p->ind_basic_dof_of_element(cv))), coeff);
+			     (mf_p->ind_basic_dof_of_element(cv))), coeff);
 	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
 	val_p = val[0];
       }
@@ -4849,7 +4900,8 @@ namespace getfem {
     mass_brick(void) {
       set_flags("Mass brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -5002,7 +5054,8 @@ namespace getfem {
     basic_d_on_dt_brick(void) {
       set_flags("Basic d/dt brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -5170,7 +5223,8 @@ namespace getfem {
     basic_d2_on_dt2_brick(void) {
       set_flags("Basic d2/dt2 brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
-                true /* is real */, true /* is complex */);
+                true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
   };

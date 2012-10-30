@@ -307,10 +307,6 @@ namespace getfem {
                                  size_type ib) const;
     bool is_var_mf_newer_than_brick(const std::string &varname,
                                     size_type ib) const;
-    pbrick get_brick(size_type ib) const IS_DEPRECATED {
-      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
-      return bricks[ib].pbr;
-    }
     pbrick brick_pointer(size_type ind_brick) const { 
       GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
       return bricks[ind_brick].pbr;
@@ -320,6 +316,10 @@ namespace getfem {
 			  const std::string &varname,
 			  size_type brick_num) const
     { Neumann_term_list[Neumann_pair(varname, brick_num)] = p; }
+
+    size_type check_Neumann_terms_consistency(const std::string &varname)const;
+
+    bool check_Neumann_terms_linearity(const std::string &varname) const;
 
     void auxilliary_variables_of_Neumann_terms
     (const std::string &varname, std::vector<std::string> &aux_var) const;

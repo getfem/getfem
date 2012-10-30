@@ -20,10 +20,10 @@
 d = 2;                 % dimension (cannot be changed for the moment)
 clambda = 1; cmu = 1;  % Lame coefficients
 dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
-theta = -1;            % Nitsche's method parameter theta
+theta = 0;            % Nitsche's method parameter theta
 gamma0 = 0.0001;       % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 incompressible = 1;    % Test with incompressibility or not
-NX = 80;
+NX = 40;
 
 % trace on;
 gf_workspace('clear all');
@@ -40,6 +40,9 @@ if (incompressible)
   mfp = gf_mesh_fem(m,1);
   gf_mesh_fem_set(mfp, 'fem', gf_fem('FEM_QK(2,1)'));
 end
+
+mf_H = gf_mesh_fem(m,1);
+gf_mesh_fem_set(mf_H, 'fem', gf_fem('FEM_QK(2,1)'));
 
 mfdu=gf_mesh_fem(m,1); gf_mesh_fem_set(mfdu, 'fem', gf_fem('FEM_QK_DISCONTINUOUS(2,2)'));
 

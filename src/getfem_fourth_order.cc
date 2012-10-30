@@ -275,7 +275,8 @@ namespace getfem {
     normal_derivative_source_term_brick(void) {
       set_flags("Normal derivative source term", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
-		true /* is real */, true /* is complex */);
+		true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
 
@@ -369,7 +370,8 @@ namespace getfem {
     KL_source_term_brick(void) {
       set_flags("Kirchoff Love Neumann term", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
-		true /* is real */, false /* is complex */);
+		true /* is real */, false /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
 
 
@@ -647,7 +649,8 @@ namespace getfem {
 		: "Normal derivative Dirichlet with multipliers brick",
 		true /* is linear*/,
 		true /* is symmetric */, penalized /* is coercive */,
-		true /* is real */, true /* is complex */);
+		true /* is real */, true /* is complex */,
+		false /* compute each time */, false /* has a Neumann term */);
     }
   };
 

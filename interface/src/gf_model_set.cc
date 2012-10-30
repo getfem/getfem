@@ -775,7 +775,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`.
       This version is for vector field. It prescribes a condition
-      @f$ Hu = r @f$ where `H` is a matrix field. The region should be a
+      @f$ Hu = r @f$ where `H` is a matrix field.
+      CAUTION : the matrix H should have all eigenvalues equal to 1 or 0.
+      The region should be a
       boundary. This region should be a boundary.  The Dirichlet
       condition is prescribed with Nitsche's method. `dataname` is the optional
       right hand side of the Dirichlet condition. It could be constant or
