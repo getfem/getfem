@@ -204,9 +204,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        const getfem::mesh_fem &mf = md->model().mesh_fem_of_variable(name);
        getfem::mesh_fem *mmf = const_cast<getfem::mesh_fem *>(&mf);
        getfem_object *o =
-       getfemint::workspace().object(getfem_object::internal_key_type(mmf));
+         getfemint::workspace().object(getfem_object::internal_key_type(mmf));
        getfemint_mesh_fem *gmf = getfemint_mesh_fem::get_from(mmf);
-       if (!o) workspace().set_dependance(gmf, md);
+       if (!o) {
+         gmf->set_flags(STATIC_OBJ);
+         workspace().set_dependance(gmf, md);
+       }
        out.pop().from_object_id(gmf->get_id(), MESHFEM_CLASS_ID);
        );
 
