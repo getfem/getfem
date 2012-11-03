@@ -359,8 +359,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     constant or described on a fem. `region` is an optional mesh region
     on which the term is added. An additional optional data `directdataname`
     can be provided. The corresponding data vector will be directly added
-    to the right hand side without assembly. Return the brick index in the
-    model.@*/
+    to the right hand side without assembly. Note that when region is a
+    boundary, this brick allows to prescribe a nonzero Neumann boundary
+    condition. Return the brick index in the model.@*/
     sub_command
       ("add source term brick", 3, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
