@@ -68,8 +68,8 @@ images:
 	-cd $(srcdir)/source/scilab/images/; make png
 
 build: $(srcdir)/source/matlab/cmdref.rst $(srcdir)/source/python/cmdref.rst $(srcdir)/source/scilab/cmdref.rst checkout images
-	rm -fr build/$(BUILDER)/_images
-	rm -fr build/$(BUILDER)/*.png
+	echo # rm -fr build/$(BUILDER)/_images
+	echo # rm -fr build/$(BUILDER)/*.png
 	mkdir -p build/$(BUILDER) build/doctrees
 	PYTHONPATH=../../interface/src/python && $(SPHINXBUILD) $(ALLSPHINXOPTS)
 	@echo
@@ -127,6 +127,7 @@ $(srcdir)/source/python/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcd
 	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/cmdref.rst || (rm -f $(srcdir)/source/python/cmdref.rst; /bin/false )
 
 upload:
+	rm -fr build
 	make html
 	-rm -fr homepage *.tar.gz
 	-mv build/html homepage
@@ -146,7 +147,6 @@ upload:
 	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete getfem_project.pdf)
 	(export srcdir=$(srcdir) && $(top_srcdir)/bin/upload_documentation --delete gmm_userdoc.pdf)
 	rm -fr *.pdf
-	rm -fr build
 
 
 EXTRA_DIST = \

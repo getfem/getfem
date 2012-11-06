@@ -468,7 +468,7 @@ namespace bgeot {
   
   const std::string &md_param::string_value(const std::string &name,
 				     const char *comment) {
-    static std::string empty_string;
+    static const std::string empty_string;
     if (parameters.find(name) == parameters.end()) {
       if (comment == 0) return empty_string;
       else {

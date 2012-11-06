@@ -28,6 +28,7 @@ user_preamble = """\n% begin user_preamble:
 \\usepackage{amssymb}
 \\usepackage[utf8]{inputenc}
 \\newcommand\\Reel{\\rm I\\hspace{-0.15em}R}
+\\newcommand\\R{\\rm I\\hspace{-0.15em}R}
 \\newcommand{\\ds}{\\displaystyle}
 \\newcommand{\\Frac}[2]{{\\ds \\frac{\\ds #1}{\\ds #2}}}
 % end user_preamble

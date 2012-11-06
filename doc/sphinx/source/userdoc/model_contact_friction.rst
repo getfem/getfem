@@ -146,10 +146,12 @@ where :math:`\psi_i` is the shape function of the multiplier for the node :math:
 Note that without additional stabilization technique (see [HI-RE2010]_) an inf-sup condition have to be satisfied between the finite element of the displacement and the one for the multipliers. This means in particular that the finite element for the multiplier have to be "less rich" than the one for the displacement.
 
 
+.. _weak_integral_contact_section:
+
 Weak integral contact condition
 +++++++++++++++++++++++++++++++++
 
-The weak integral contact formulation allows not to explicitly describe the discrete set of admissible stress. The contact stress (including the friction one) is described on a finite element space :math:`W^h` on the contact boundary :math:`\Gamma_c`:
+The weak integral contact formulation allows not to explicitly describe the discrete set of admissible stress. See also :ref:`nitsche_contact_small_def_section`. The contact stress (including the friction one) is described on a finite element space :math:`W^h` on the contact boundary :math:`\Gamma_c`:
 
 .. math::
 
@@ -470,6 +472,8 @@ Note that the matrix :math:`DN` is a sum of the basic contact term and the Hughe
 Frictionless integral contact with a rigid obstacle brick
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+::
+
      getfem::add_integral_contact_with_rigid_obstacle_brick
          (md, mim, varname_u, multname_n, dataname_obs, dataname_r, region, option = 1);
 
@@ -498,6 +502,8 @@ be accurate enough to integrate efficiently the nonlinear terms involved.
 
 Integral contact with a rigid obstacle brick with friction
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
 
      getfem::add_integral_contact_with_rigid_obstacle_brick
          (md, mim, varname_u, multname_n, dataname_obs, dataname_r,
@@ -535,6 +541,8 @@ should be accurate enough to integrate efficiently the nonlinear terms involved.
 Frictionless integral contact between non-matching meshes brick
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+::
+
     getfem::add_integral_contact_between_nonmatching_meshes_brick
         (md, mim, varname_u1, varname_u2, multname_n, dataname_r,
          region1, region2, option = 1);
@@ -563,6 +571,8 @@ be accurate enough to integrate efficiently the nonlinear terms involved.
 
 Integral contact between non-matching meshes brick with friction
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
 
     getfem::add_integral_contact_between_nonmatching_meshes_brick
         (md, mim, varname_u1, varname_u2, multname, dataname_r,
@@ -597,6 +607,8 @@ terms involved.
 Frictionless penalized contact with a rigid obstacle brick
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+::
+
     getfem::add_penalized_contact_with_rigid_obstacle_brick
         (md, mim, varname_u, dataname_obs, dataname_r, region,
          option = 1, dataname_n = "");
@@ -619,8 +631,10 @@ dLagrangian formulation)
 Penalized contact with a rigid obstacle brick with friction
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+::
+
     getfem::add_penalized_contact_with_rigid_obstacle_brick
-        (md, mim, varname_u, dataname_obs, dataname_r, dataname_friction_coeff, 
+        (md, mim, varname_u, dataname_obs, dataname_r, dataname_friction_coeff,
          region, option = 1, dataname_lambda = "", dataname_alpha = "",
          dataname_wt = "");
 
@@ -647,6 +661,8 @@ evolutionary friction problems.
 Frictionless penalized contact between non-matching meshes brick
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+::
+
     getfem::add_penalized_contact_between_nonmatching_meshes_brick
         (md, mim, varname_u1, varname_u2, dataname_r,
          region1, region2, option = 1, dataname_n = "");
@@ -666,6 +682,8 @@ Lagrangian formulation)
 
 Penalized contact between non-matching meshes brick with friction
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+::
 
     getfem::add_penalized_contact_between_nonmatching_meshes_brick
         (md, mim, varname_u1, varname_u2, dataname_r, dataname_friction_coeff,

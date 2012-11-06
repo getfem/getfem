@@ -69,7 +69,7 @@ while(1)
 
 
   S = gf_asm('volumic','V()+=comp()',mim);
-  disp('surface restante :'); disp(S);
+  disp('remaining surface :'); disp(S);
 
 
   % Problem definition (Laplace(u) + u = f)
