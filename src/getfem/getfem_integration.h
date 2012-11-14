@@ -92,6 +92,7 @@
 #include "bgeot_convex_ref.h"
 #include "bgeot_geometric_trans.h"
 #include "bgeot_node_tab.h"
+#include "getfem/dal_naming_system.h"
 
 namespace getfem
 {
@@ -328,6 +329,14 @@ namespace getfem
   scalar_type test_integration_error(papprox_integration pim, dim_type order);
 
   papprox_integration get_approx_im_or_fail(pintegration_method pim);
+
+  /* Function allowing the add of an integration method outwards
+     of getfem_integration.cc */
+  
+  typedef dal::naming_system<integration_method>::param_list im_param_list;
+
+  void add_integration_name(std::string name,
+		         dal::naming_system<integration_method>::pfunction f);
 
 }  /* end of namespace getfem.                                            */
 

@@ -30,8 +30,6 @@
 
 namespace getfem {
 
-  typedef dal::naming_system<integration_method>::param_list im_param_list;
-
   /*
    * dummy integration method 
    */
@@ -1057,6 +1055,13 @@ namespace getfem {
     if (!p) return "IM_NONE";
     return dal::singleton<im_naming_system>::instance().shorter_name_of_method(p);
   }
+
+  // allows the add of an integration method.
+  void add_integration_name(std::string name,
+			dal::naming_system<integration_method>::pfunction f) {
+    dal::singleton<im_naming_system>::instance().add_suffix(name, f);
+  }
+
 
   /* Fonctions pour la ref. directe.                                     */
   
