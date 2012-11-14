@@ -22,11 +22,11 @@
 
 #include "getfem/dal_singleton.h"
 #include "getfem/getfem_integration.h"
-#include "getfem/dal_naming_system.h"
 #include "gmm/gmm_dense_lu.h"
 #include "getfem/bgeot_permutations.h"
 #include "getfem/bgeot_geotrans_inv.h"
 #include "getfem/getfem_im_list.h"
+#include "getfem/dal_naming_system.h"
 
 namespace getfem {
 

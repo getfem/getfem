@@ -41,6 +41,7 @@
 #include <set>
 #include "bgeot_config.h"
 #include "bgeot_convex_ref.h"
+#include "getfem/dal_naming_system.h"
 
 namespace bgeot {
 
@@ -437,6 +438,15 @@ namespace bgeot {
                                    const base_node& xref__,
                                    const base_matrix& G__);
   };
+
+  /* Function allowing the add of an geometric transformation method outwards
+     of getfem_integration.cc */
+  
+  typedef dal::naming_system<geometric_trans>::param_list gt_param_list;
+
+  void add_geometric_trans_name
+  (std::string name, dal::naming_system<geometric_trans>::pfunction f);
+
 
 }  /* end of namespace bgeot.                                             */
 

@@ -22,7 +22,6 @@
 
 #include "getfem/dal_singleton.h"
 #include "getfem/dal_tree_sorted.h"
-#include "getfem/dal_naming_system.h"
 #include "getfem/bgeot_geometric_trans.h"
 #include "getfem/bgeot_poly_composite.h"
 
@@ -176,8 +175,6 @@ namespace bgeot {
     ii_(size_type(-1)), J_(-1) {}
 
 
-  typedef dal::naming_system<geometric_trans>::param_list gt_param_list;
-
   base_node geometric_trans::transform(const base_node &pt,
                                        const base_matrix &G) const {
     size_type N = G.nrows(), k = nb_points();
@@ -239,7 +236,8 @@ namespace bgeot {
         }
     }
 
-    virtual void poly_vector_grad(const base_node &pt, const convex_ind_ct &ind_ct,
+    virtual void poly_vector_grad(const base_node &pt,
+				  const convex_ind_ct &ind_ct,
                                   base_matrix &pc) const {
       FUNC PP;
       size_type nb_funcs=ind_ct.size();
@@ -543,6 +541,12 @@ namespace bgeot {
       add_suffix("LINEAR_QK", linear_qk);
     }
   };
+
+  void add_geometric_trans_name
+    (std::string name, dal::naming_system<geometric_trans>::pfunction f) {
+    dal::singleton<geometric_trans_naming_system>::instance().add_suffix(name,
+									 f);
+  }
 
   pgeometric_trans geometric_trans_descriptor(std::string name) {
     size_type i=0;
