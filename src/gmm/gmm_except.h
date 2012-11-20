@@ -146,7 +146,7 @@ namespace gmm {
   inline void set_warning_level(int l) { warning_level::level(std::max(0,l)); }
   inline int  get_warning_level(void)  { return warning_level::level(-2); }
 
-  // This allow not too compile some Warnings
+  // This allows not to compile some Warnings
 #ifndef GMM_WARNING_LEVEL
 # define GMM_WARNING_LEVEL 4
 #endif
@@ -177,21 +177,21 @@ namespace gmm {
 # define GMM_WARNING2(thestr)                                           \
   { if (2 <= gmm::warning_level::level()) GMM_WARNING_MSG(2, thestr) } 
 #else
-# define GMM_WARNING1(thestr) {}
+# define GMM_WARNING2(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 2
 # define GMM_WARNING3(thestr)                                           \
   { if (3 <= gmm::warning_level::level()) GMM_WARNING_MSG(3, thestr) } 
 #else
-# define GMM_WARNING1(thestr) {}
+# define GMM_WARNING3(thestr) {}
 #endif
 
 #if GMM_WARNING_LEVEL > 3
 # define GMM_WARNING4(thestr)                                           \
   { if (4 <= gmm::warning_level::level()) GMM_WARNING_MSG(4, thestr) } 
 #else
-# define GMM_WARNING1(thestr) {}
+# define GMM_WARNING4(thestr) {}
 #endif
 
 /* *********************************************************************** */
