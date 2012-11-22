@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- python -*-
 #
-# Copyright (C) 2004-2012 Yves Renard.
+# Copyright (C) 2004-2012 Yves Renard, Konstantinos Poulios.
 #                                                       
 # This file is a part of GETFEM++                                         
 #                                                                         
@@ -29,48 +29,164 @@ import sys
 
 # Works for a quadratic 2D mesh. 
 
-if (len(sys.argv) != 4):
-    raise SystemExit, 'Format : ansys2getfem_mesh nodes elements mesh_name'
+import_cdb_file = False
+if (len(sys.argv) == 3):
+    import_cdb_file = True
+elif (len(sys.argv) != 4):
+    raise SystemExit, 'Format :\n' + \
+                      'ansys2getfem_mesh nodes_file elements_file output_mesh_file\n' + \
+                      'or\n' + \
+                      'ansys2getfem_mesh cdb_file output_mesh_file'
 
-nodes = sys.argv[1]
-elements = sys.argv[2]
-getfem_file = sys.argv[3]
+if import_cdb_file:
+    cdb_file = sys.argv[1]
+    output_mesh_file = sys.argv[2]
 
-mesh_file = open(getfem_file, 'w');
-nfile = open(nodes);
-efile = open(elements);
+    mfile = open(output_mesh_file, 'w');
+    cfile = open(cdb_file);
 
-mesh_file.write("% GETFEM MESH FILE\n");
-mesh_file.write("% FROM ANSYS FILE\n\n");
+    mfile.write("% GETFEM MESH FILE\n");
+    mfile.write("% FROM ANSYS FILE\n\n");
 
+    reading_nodes_block = False
+    nodes_format = ''
+    cdb_id_2_gf_id = {}
+    pt_cnt = 0
+    mfile.write("BEGIN POINTS LIST\n\n");
+    for l in cfile:
+        if reading_nodes_block:
+            if not nodes_format:
+                # (3i8,6e20.13)
+                nodes_format = l
+            else:
+                #       1       0       0-3.0000000000000E+00 2.0000000000000E+00 1.0000000000000E+00
+                cdb_id = int(l[0:8])
+                x = float(l[24:44])
+                y = float(l[44:64])
+                z = float(l[64:84])
+                mfile.write("POINT  %d  %.15e  %.15e  %.15e\n" %
+                            (pt_cnt,x,y,z));
+                cdb_id_2_gf_id[cdb_id] = pt_cnt
+                pt_cnt += 1
+                nodes2read -= 1
+                if not nodes2read:
+                    break
+        elif l[0:6] == 'NBLOCK':
+            # NBLOCK,6,SOLID,     45876,     45876
+            entries = l.split(',')
+            nodes2read = int(entries[4])
+            reading_nodes_block = True
+    mfile.write("\nEND POINTS LIST\n\n\n\n");
 
+    reading_elements_block = False
+    elements_format = ''
+    el_cnt = 0
+    mfile.write("BEGIN MESH STRUCTURE DESCRIPTION\n\n");
+    continued_lines2read = 0
+    for l in cfile:
+        if reading_elements_block:
+            if not elements_format:
+                # (19i8)
+                elements_format = l
+            else:
+                if not continued_lines2read:
+                    mat_id = int(l[0:8])
+                    eltype = int(l[8:16])
+                    realconst = int(l[16:24])
+                    sectionid = int(l[24:32])
+                    coordsys = int(l[32:40])
+                    deathflag = int(l[40:48])
+                    modelref = int(l[48:56])
+                    shapeflag = int(l[56:64])
+                    nodesno = int(l[64:72])
+                    notused = int(l[72:80])
+                    elid = int(l[80:88])
 
-#
-# read node file and produces node list for getfem mesh.
-#
+                if nodesno == 4:
+                    #TODO
+                    # [II,JJ,KK,LL] = [int(l[i:i+8]) for i in range(88,120,8)]
+                    pass
+                elif nodesno == 8: # assume SOLID45
+                    [II,JJ,KK,LL,MM,NN,OO,PP] = [int(l[i:i+8]) for i in range(88,152,8)]
+                    if KK == LL:
+                        if MM == NN == OO == PP: # 4-node tetrahedral
+                            [II,JJ,KK,MM,] = [cdb_id_2_gf_id[i]
+                                              for i in [II,JJ,KK,MM,]]
+                            mfile.write("CONVEX  %d   'GT_PK(3,1)'   %d  %d  %d  %d\n" %
+                                        (el_cnt,II,KK,JJ,MM))
+                            el_cnt += 1
+                        elif OO == PP and MM != NN: # 6-node prism
+                            [II,JJ,KK,MM,NN,OO] = [cdb_id_2_gf_id[i]
+                                                  for i in [II,JJ,KK,MM,NN,OO]]
+                            mfile.write("CONVEX  %d   'GT_PRISM(3,1)'   %d  %d  %d  %d\n" %
+                                        (el_cnt,II,KK,JJ,MM,OO,NN))
+                            el_cnt += 1
+                    else:  # assume 8-node hexahedral
+                        [II,JJ,KK,LL,MM,NN,OO,PP] = [cdb_id_2_gf_id[i]
+                                                     for i in [II,JJ,KK,LL,MM,NN,OO,PP]]
+                        mfile.write("CONVEX  %d   'GT_QK(3,1)'   %d  %d  %d  %d  %d  %d  %d  %d\n" %
+                                    (el_cnt,II,LL,JJ,KK,MM,PP,NN,OO))
+                        el_cnt += 1
+                elif nodesno == 10: # assume SOLID92
+                    if continued_lines2read:
+                        [QQ,RR] = [int(l[i:i+8]) for i in range(0,16,8)]
+                        [II,JJ,KK,LL,MM,NN,OO,PP,QQ,RR] = [cdb_id_2_gf_id[i]
+                                                           for i in [II,JJ,KK,LL,MM,NN,OO,PP,QQ,RR]]
+                        mfile.write("CONVEX  %d   'GT_PK(3,2)'   %d  %d  %d  %d  %d  %d  %d  %d  %d  %d\n" %
+                                    (el_cnt,II,MM,JJ,OO,NN,KK,PP,QQ,RR,LL))
+                        el_cnt += 1
+                        continued_lines2read = 0
+                    else:
+                        [II,JJ,KK,LL,MM,NN,OO,PP] = [int(l[i:i+8]) for i in range(88,152,8)]
+                        continued_lines2read = 1
 
-mesh_file.write("BEGIN POINTS LIST\n\n");
+                if not continued_lines2read:
+                    elements2read -= 1
+                    if not elements2read:
+                        break
+        elif l[0:6] == 'EBLOCK':
+            # EBLOCK,19,SOLID,    825431,    110833
+            entries = l.split(',')
+            elements2read = int(entries[4])
+            reading_elements_block = True
+    mfile.write("\nEND MESH STRUCTURE DESCRIPTION\n\n");
 
-for l in nfile:
-    v = l.split();
-    if (len(v) == 4):
-#      if (float(v[1]) == float(0) and  float(v[2]) == float(0) and int(v[0]) < 100):
-#          v[1] = '1.000000E-7';
-      mesh_file.write("POINT  " + v[0] + "  " + v[1] + "  " + v[2] + "\n");
+else:
+    nodes_file = sys.argv[1]
+    elements_file = sys.argv[2]
+    output_mesh_file = sys.argv[3]
 
-mesh_file.write("\nEND POINTS LIST\n\n\n\n");
+    mfile = open(output_mesh_file, 'w');
+    nfile = open(nodes_file);
+    efile = open(elements_file);
 
+    mfile.write("% GETFEM MESH FILE\n");
+    mfile.write("% FROM ANSYS FILE\n\n");
 
-#
-# read element file and produces element list for getfem mesh.
-#
+    #
+    # read node file and produces node list for getfem mesh.
+    #
+    mfile.write("BEGIN POINTS LIST\n\n");
 
-mesh_file.write("BEGIN MESH STRUCTURE DESCRIPTION\n\n");
+    for l in nfile:
+        v = l.split();
+        if (len(v) == 4):
+#           if (float(v[1]) == float(0) and  float(v[2]) == float(0) and int(v[0]) < 100):
+#               v[1] = '1.000000E-7';
+            mfile.write("POINT  " + v[0] + "  " + v[1] + "  " + v[2] + "\n");
 
-for l in efile:
-    v = l.split();
-    if (len(v) == 13):
-      mesh_file.write("CONVEX  " + v[0] + "   'GT_PK(2,2)'   " + v[5] + "  " + v[9] + "  " + v[6]  + "  " + v[12] + "  " + v[10] + "  " + v[7] + "\n");
+    mfile.write("\nEND POINTS LIST\n\n\n\n");
 
-mesh_file.write("\nEND MESH STRUCTURE DESCRIPTION\n\n");
+    #
+    # read element file and produces element list for getfem mesh.
+    #
+
+    mfile.write("BEGIN MESH STRUCTURE DESCRIPTION\n\n");
+
+    for l in efile:
+        v = l.split();
+        if (len(v) == 13):
+          mfile.write("CONVEX  " + v[0] + "   'GT_PK(2,2)'   " + v[5] + "  " + v[9] + "  " + v[6]  + "  " + v[12] + "  " + v[10] + "  " + v[7] + "\n");
+
+    mfile.write("\nEND MESH STRUCTURE DESCRIPTION\n\n");
 

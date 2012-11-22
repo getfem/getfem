@@ -77,6 +77,7 @@ namespace getfem {
 
       - "am_fmt" for 2D meshes from emc2
         [http://pauillac.inria.fr/cdrom/prog/unix/emc2/eng.htm]
+      - "cdb" for meshes genereted by ANSYS (in blocked format).
   */
   void import_mesh(const std::string& filename, const std::string& format,
 		   mesh& m);
