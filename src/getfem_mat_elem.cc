@@ -216,6 +216,7 @@ namespace getfem {
 
         switch ((*it).t) {
           case GETFEM_BASE_    :
+            if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
             if (trans)
               (*it).pfi->real_base_value(ctx, elmt_stored[k], icb != 0);
             else
@@ -223,7 +224,7 @@ namespace getfem {
             break;
           case GETFEM_GRAD_    :
             ++mit;
-            if ((*it).pfi->target_dim() > 1) ++mit;
+            if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
             if (trans) {
               (*it).pfi->real_grad_base_value(ctx, elmt_stored[k], icb != 0);
               *mit = short_type(ctx.N());
@@ -233,7 +234,7 @@ namespace getfem {
             break;
           case GETFEM_HESSIAN_ :
             ++mit;
-            if ((*it).pfi->target_dim() > 1) ++mit;
+            if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
             if (trans) {
               (*it).pfi->real_hess_base_value(ctx, elmt_stored[k], icb != 0);
               *mit = short_type(gmm::sqr(ctx.N()));
