@@ -450,7 +450,7 @@ namespace getfem {
       if (sz == 0)
 	ASM_THROW_TENSOR_ERROR("can't create a vector of size " << r);
       asm_vec<VEC> v(new VEC(sz));
-      push_back(v); return &this->back();
+      this->push_back(v); return &this->back();
     }
     ~vec_factory() { 
       for (size_type i=0; i < this->size(); ++i) {

@@ -130,6 +130,32 @@ namespace gmm {
   };
 
 
+  template <typename MUMPS_STRUCT>
+  static inline bool mumps_error_check(MUMPS_STRUCT &id) {
+#define INFO(I) info[(I)-1]
+    if (id.INFO(1) < 0) {
+      switch (id.INFO(1)) {
+        case -2:
+          GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
+                      << " is out of range");
+        case -6 : case -10 :
+          GMM_WARNING1("Solve with MUMPS failed: matrix is singular");
+          return false;
+        case -9:
+          GMM_ASSERT1(false, "Solve with MUMPS failed: error "
+                      << id.INFO(1) << ", increase ICNTL(14)");
+        case -13 :
+          GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+        default :
+          GMM_ASSERT1(false, "Solve with MUMPS failed with error "
+                      << id.INFO(1));
+      }
+    }
+    return true;
+#undef INFO
+  }
+
+
   /** MUMPS solve interface  
    *  Works only with sparse or skyline matrices
    */
@@ -287,32 +313,6 @@ namespace gmm {
 
 #undef ICNTL
 
-  }
-
-
-  template <typename MUMPS_STRUCT>
-  static inline bool mumps_error_check(MUMPS_STRUCT &id) {
-#define INFO(I) info[(I)-1]
-    if (id.INFO(1) < 0) {
-      switch (id.INFO(1)) {
-        case -2:
-          GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
-                      << " is out of range");
-        case -6 : case -10 :
-          GMM_WARNING1("Solve with MUMPS failed: matrix is singular");
-          return false;
-        case -9:
-          GMM_ASSERT1(false, "Solve with MUMPS failed: error "
-                      << id.INFO(1) << ", increase ICNTL(14)");
-        case -13 :
-          GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
-        default :
-          GMM_ASSERT1(false, "Solve with MUMPS failed with error "
-                      << id.INFO(1));
-      }
-    }
-    return true;
-#undef INFO
   }
 
 

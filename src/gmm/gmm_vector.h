@@ -236,14 +236,14 @@ namespace gmm {
   template<typename T>  void wsvector<T>::clean(double eps) {
     iterator it = this->begin(), itf = it, ite = this->end();
     while (it != ite) {
-      ++itf; if (gmm::abs(it->second) <= eps) erase(it); it = itf;
+      ++itf; if (gmm::abs(it->second) <= eps) base_type::erase(it); it = itf;
     }
   }
 
   template<typename T>  void wsvector<T>::resize(size_type n) {
     if (n < nbl) {
       iterator it = this->begin(), itf = it, ite = this->end();
-      while (it != ite) { ++itf; if (it->first >= n) this->erase(it); it=itf; }
+      while (it != ite) { ++itf; if (it->first >= n) base_type::erase(it); it=itf; }
     }
     nbl = n;
   }
