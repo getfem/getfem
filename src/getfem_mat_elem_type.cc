@@ -189,7 +189,8 @@ namespace getfem {
 	    { j+=(*this)[i].nlt->sizes(size_type(-1)).size(); --j; }
 	  break;
 	case GETFEM_GRAD_GEOTRANS_:
-	case GETFEM_GRAD_GEOTRANS_INV_: 
+	case GETFEM_GRAD_GEOTRANS_INV_:
+          ++j;
 	  break;
       }
     }

@@ -209,11 +209,11 @@ namespace getfem {
       }
       it = pme->begin(); 
 
+      // incrementing "mit" should match increments of "j" in mat_elem_type::sizes
       bgeot::multi_index::iterator mit = sizes.begin();
-      for (size_type k = 0; it != ite; ++it, ++k) {
+      for (size_type k = 0; it != ite; ++it, ++k, ++mit) {
 	if (pfp[k]) ctx.set_pfp(pfp[k]);
-	++mit; if ((*it).pfi && (*it).pfi->target_dim() > 1) ++mit;
-	
+
 	switch ((*it).t) {
 	  case GETFEM_BASE_    :
 	    if (trans)
@@ -222,17 +222,21 @@ namespace getfem {
 	      elmt_stored[k] = pfp[k]->val(ctx.ii());
 	    break;
 	  case GETFEM_GRAD_    :
+            ++mit;
+            if ((*it).pfi->target_dim() > 1) ++mit;
 	    if (trans) {
 	      (*it).pfi->real_grad_base_value(ctx, elmt_stored[k], icb != 0);
-	      *mit++ = short_type(ctx.N());
+	      *mit = short_type(ctx.N());
 	    }
 	    else
 	      elmt_stored[k] = pfp[k]->grad(ctx.ii());
 	    break;
 	  case GETFEM_HESSIAN_ :
+            ++mit;
+            if ((*it).pfi->target_dim() > 1) ++mit;
 	    if (trans) {
 	      (*it).pfi->real_hess_base_value(ctx, elmt_stored[k], icb != 0);
-	      *mit++ = short_type(gmm::sqr(ctx.N()));
+	      *mit = short_type(gmm::sqr(ctx.N()));
 	    }
 	    else {
 	      base_tensor tt = pfp[k]->hess(ctx.ii());
@@ -244,7 +248,7 @@ namespace getfem {
 	    }
 	    break;
 	  case GETFEM_UNIT_NORMAL_ :
-	    *(mit-1) = short_type(ctx.N());
+	    *mit = short_type(ctx.N());
 	    { 
 	      aux_ind.resize(1); aux_ind[0] = short_type(ctx.N());
 	      elmt_stored[k].adjust_sizes(aux_ind);
@@ -260,8 +264,8 @@ namespace getfem {
 	    }
 	    const base_matrix &A = (it->t==GETFEM_GRAD_GEOTRANS_) ? ctx.K():Bt;
 	    aux_ind.resize(2);
-	    *(mit-1) = aux_ind[0] = short_type(gmm::mat_nrows(A));
-	    *mit++ = aux_ind[1] = short_type(gmm::mat_ncols(A));
+	    *mit++ = aux_ind[0] = short_type(gmm::mat_nrows(A));
+	    *mit = aux_ind[1] = short_type(gmm::mat_ncols(A));
 	    elmt_stored[k].adjust_sizes(aux_ind);
 	    std::copy(A.begin(), A.end(), elmt_stored[k].begin());
 	  } break;
@@ -282,9 +286,9 @@ namespace getfem {
 		elmt_stored[k].adjust_sizes(nltsizes);
 		(*it).nlt->compute(ctx, elmt_stored[k]);
 		(*it).nlt->term_num() = k;
-		--mit;
 		for (dim_type ii = 0; ii < nltsizes.size(); ++ii)
 		  *mit++ = elmt_stored[k].sizes()[ii];
+		--mit;
 	      } else {
 		elmt_stored[k] = elmt_stored[(*it).nlt->term_num()];
 	      }
@@ -505,7 +509,6 @@ namespace getfem {
       dim_type P = dim_type(dim), N = dim_type(G.nrows());
       short_type NP = short_type(pgt->nb_points());
       fem_interpolation_context ctx(pgp,0,0,G,elt, ir-1);
-      bgeot::multi_index sizes = pme->sizes(elt);
 
       GMM_ASSERT1(G.ncols() == NP, "dimensions mismatch");
       if (ir > 0) {
@@ -556,8 +559,9 @@ namespace getfem {
 	}
 	
       } else { // non linear transformation and methods defined on real elements
-	bool first = true;
+        bgeot::multi_index sizes = pme->sizes(elt);
 
+	bool first = true;
 	for (size_type ip=(ir == 0) ? 0 : pai->repart()[ir-1];
 	     ip < pai->repart()[ir]; ++ip, first = false) {
 	  ctx.set_ii(ip);
