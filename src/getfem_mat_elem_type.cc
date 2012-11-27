@@ -1,9 +1,9 @@
 /*===========================================================================
- 
+
  Copyright (C) 2000-2012 Yves Renard
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
 ===========================================================================*/
 
 #include "getfem/dal_singleton.h"
@@ -29,7 +29,7 @@ namespace getfem {
     if (m.t < n.t) return true; if (m.t > n.t) return false;
     if (m.t == GETFEM_NONLINEAR_) {
       if (m.nlt < n.nlt) return true; if (n.nlt < m.nlt) return false;
-      if (m.nl_part < n.nl_part) return true; if (m.nl_part > n.nl_part) return false; 
+      if (m.nl_part < n.nl_part) return true; if (m.nl_part > n.nl_part) return false;
     }
     if (m.pfi < n.pfi) return true;
     return false;
@@ -40,9 +40,9 @@ namespace getfem {
   public :
     virtual bool compare(const static_stored_object_key &oo) const {
       const mat_elem_type_key &o
-	= dynamic_cast<const mat_elem_type_key &>(oo);
+        = dynamic_cast<const mat_elem_type_key &>(oo);
       if (gmm::lexicographical_less<mat_elem_type>()(*pmet, *(o.pmet)) < 0)
-	return true;
+        return true;
       return false;
     }
     mat_elem_type_key(const mat_elem_type *p) : pmet(p) {}
@@ -54,11 +54,11 @@ namespace getfem {
     if (o) return dal::stored_cast<mat_elem_type>(o);
     pmat_elem_type p = new mat_elem_type(f);
     dal::add_stored_object(new mat_elem_type_key(p.get()), p,
-			   dal::AUTODELETE_STATIC_OBJECT);
+                           dal::AUTODELETE_STATIC_OBJECT);
     for (size_type i=0; i < f.size(); ++i) {
       if (f[i].pfi) dal::add_dependency(p, f[i].pfi);
       if (f[i].t == GETFEM_NONLINEAR_ && f[i].nl_part==0)
-	f[i].nlt->register_mat_elem(p);
+        f[i].nlt->register_mat_elem(p);
     }
     return p;
   }
@@ -67,7 +67,7 @@ namespace getfem {
      from the mat_elem_type cache; */
   nonlinear_elem_term::~nonlinear_elem_term() {
     for (std::set<pmat_elem_type>::iterator it=melt_list.begin();
-	 it != melt_list.end(); ++it)
+         it != melt_list.end(); ++it)
     if (exists_stored_object(*it)) dal::del_stored_object(*it);
   }
 
@@ -91,17 +91,17 @@ namespace getfem {
   }
 
   pmat_elem_type mat_elem_grad_geotrans(bool inverted) {
-    mat_elem_type f; f.resize(1); 
+    mat_elem_type f; f.resize(1);
     f[0].t = (!inverted) ? GETFEM_GRAD_GEOTRANS_ : GETFEM_GRAD_GEOTRANS_INV_;
     f[0].pfi = 0; f[0].nlt = 0;
     f.get_mi().resize(2); f.get_mi()[0] = f.get_mi()[1] = 1;
-    return add_to_met_tab(f);    
+    return add_to_met_tab(f);
   }
 
   pmat_elem_type mat_elem_grad(pfem pfi) {
     mat_elem_type f; f.resize(1); f[0].t = GETFEM_GRAD_; f[0].pfi = pfi;
     f[0].nlt = 0;
-    if (pfi->target_dim() == 1) { 
+    if (pfi->target_dim() == 1) {
       f.get_mi().resize(2); f.get_mi()[0] = 1;
       f.get_mi()[1] = pfi->dim();
     }
@@ -116,7 +116,7 @@ namespace getfem {
   pmat_elem_type mat_elem_hessian(pfem pfi) {
     mat_elem_type f; f.resize(1);  f[0].t = GETFEM_HESSIAN_; f[0].pfi = pfi;
     f[0].nlt = 0;
-    if (pfi->target_dim() == 1) { 
+    if (pfi->target_dim() == 1) {
       f.get_mi().resize(2); f.get_mi()[0] = 1;
       f.get_mi()[1] = gmm::sqr(pfi->dim());
     }
@@ -129,8 +129,8 @@ namespace getfem {
   }
 
   static pmat_elem_type mat_elem_nonlinear_(pnonlinear_elem_term nlt,
-					    pfem pfi, unsigned nl_part) {
-    mat_elem_type f; f.resize(1); 
+                                            pfem pfi, unsigned nl_part) {
+    mat_elem_type f; f.resize(1);
     f[0].t = GETFEM_NONLINEAR_; f[0].nl_part = nl_part;
     f[0].pfi = pfi;
     f[0].nlt = nlt;
@@ -142,7 +142,7 @@ namespace getfem {
   }
 
   pmat_elem_type mat_elem_nonlinear(pnonlinear_elem_term nlt,
-				    std::vector<pfem> pfi) {
+                                    std::vector<pfem> pfi) {
     GMM_ASSERT1(pfi.size() != 0, "mat_elem_nonlinear with no pfem!");
     pmat_elem_type me = mat_elem_nonlinear_(nlt, pfi[0], 0);
     for (unsigned i=1; i < pfi.size(); ++i)
@@ -156,9 +156,9 @@ namespace getfem {
     f.insert(f.end(), (*a).begin(), (*a).end());
     f.insert(f.end(), (*b).begin(), (*b).end());
     f.get_mi().insert(f.get_mi().end(), (*a).get_mi().begin(),
-		      (*a).get_mi().end());
+                      (*a).get_mi().end());
     f.get_mi().insert(f.get_mi().end(), (*b).get_mi().begin(),
-		      (*b).get_mi().end());
+                      (*b).get_mi().end());
     return add_to_met_tab(f);
   }
 
@@ -170,28 +170,28 @@ namespace getfem {
     bgeot::multi_index mii = mi;
     for (size_type i = 0, j = 0; i < size(); ++i, ++j) {
       switch ((*this)[i].t) {
-	case GETFEM_BASE_ :
-	  mii[j] = short_type((*this)[i].pfi->nb_base(cv));
-	  if ((*this)[i].pfi->target_dim() != 1) ++j;
-	  break;
-	case GETFEM_GRAD_ :
-	  mii[j] = short_type((*this)[i].pfi->nb_base(cv)); ++j;
-	  if ((*this)[i].pfi->target_dim() != 1) ++j;
-	  break;     
-	case GETFEM_HESSIAN_   :
-	  mii[j] = short_type((*this)[i].pfi->nb_base(cv)); ++j;
-	  if ((*this)[i].pfi->target_dim() != 1) ++j;
-	  break;
-	case GETFEM_UNIT_NORMAL_ :
-	  break;
-	case GETFEM_NONLINEAR_ :
-	  if ((*this)[i].nl_part == 0)
-	    { j+=(*this)[i].nlt->sizes(size_type(-1)).size(); --j; }
-	  break;
-	case GETFEM_GRAD_GEOTRANS_:
-	case GETFEM_GRAD_GEOTRANS_INV_:
+        case GETFEM_BASE_ :
+          mii[j] = short_type((*this)[i].pfi->nb_base(cv));
+          if ((*this)[i].pfi->target_dim() != 1) ++j;
+          break;
+        case GETFEM_GRAD_ :
+          mii[j] = short_type((*this)[i].pfi->nb_base(cv)); ++j;
+          if ((*this)[i].pfi->target_dim() != 1) ++j;
+          break;
+        case GETFEM_HESSIAN_   :
+          mii[j] = short_type((*this)[i].pfi->nb_base(cv)); ++j;
+          if ((*this)[i].pfi->target_dim() != 1) ++j;
+          break;
+        case GETFEM_UNIT_NORMAL_ :
+          break;
+        case GETFEM_NONLINEAR_ :
+          if ((*this)[i].nl_part == 0)
+            { j+=(*this)[i].nlt->sizes(size_type(-1)).size(); --j; }
+          break;
+        case GETFEM_GRAD_GEOTRANS_:
+        case GETFEM_GRAD_GEOTRANS_INV_:
           ++j;
-	  break;
+          break;
       }
     }
     return mii;
