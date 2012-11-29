@@ -48,8 +48,10 @@ clambda = 1;           % Lame coefficient
 cmu = 1;               % Lame coefficient
 friction_coeff = 0.4;  % coefficient of friction
 vertical_force = 0.05; % Volumic load in the vertical direction
-r = 1;                % Augmentation parameter
-condition_type = 2; % 0 = Explicitely kill horizontal rigid displacements
+r = 10;                 % Augmentation parameter
+theta = -1;             % Nitsche's method theta parameter
+
+condition_type = 0; % 0 = Explicitely kill horizontal rigid displacements
                     % 1 = Kill rigid displacements using a global penalization
                     % 2 = Add a Dirichlet condition on the top of the structure
 penalty_parameter = 1E-6;    % Penalization coefficient for the global penalization
@@ -63,7 +65,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 1;  % 1 : frictionless contact and the basic contact brick
+version = 17;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -93,6 +95,8 @@ version = 1;  % 1 : frictionless contact and the basic contact brick
               %     on the Lagrangian augmented by the penalization term.
               % 15 : penalized contact with 'static' Coulomb friction (r is the penalization
               %     coefficient).
+              % 16 : contact without friction and integral Nitsche approach
+              % 17 : contact with friction and integral Nitsche approach
  % Signed distance representing the obstacle
 if (d == 2) obstacle = 'y'; else obstacle = 'z'; end;
 
@@ -323,13 +327,32 @@ elseif (version == 15)
   gf_model_set(md, 'add penalized contact with rigid obstacle brick', mim_friction, 'u', ...
 	         'obstacle', 'r', 'friction_coeff', GAMMAC);
     
+         
+elseif (version == 16 || version == 17)
+ 
+  gf_model_set(md, 'add initialized data', 'gamma', [1/r]);
+  gf_model_set(md, 'add initialized data', 'theta', [theta]);
+  
+  if (version == 16)
+    gf_model_set(md, 'add initialized data', 'friction_coeff', [0]);
+  else
+    gf_model_set(md, 'add initialized data', 'friction_coeff', [friction_coeff]);
+  end
+  OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
+  gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
+  % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick old', mim_friction, 'u', 'obstacle', 'gamma', 'theta', 'friction_coeff', 'clambda', 'cmu', GAMMAC);    
+  if (version == 16)
+    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', 'obstacle', 'gamma', GAMMAC, theta);    
+  else
+    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', 'obstacle', 'gamma', GAMMAC, theta, 'friction_coeff'); 
+  end
 else
   error('Inexistent version');
 end
 
 % Solve the problem
 if (~solved)
-  gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.01);
+  gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
 end;
 

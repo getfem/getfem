@@ -2161,10 +2161,64 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         workspace().set_dependance(md, gfi_mim);
         out.pop().from_integer(int(ind + config::base_index()));
         );
+     
+     /*@SET ind = ('add Nitsche contact with rigid obstacle brick', @tmim mim, @str varname, @str dataname_obstacle, @str gamma0name,  @int region[, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
+      Adds a contact condition with or without Coulomb friction on the variable
+      `varname` and the mesh boundary `region`. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `gamma0name` is the Nitsche's method parameter.
+      `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+    @*/
+    sub_command
+      ("add Nitsche contact with rigid obstacle brick", 5, 9, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname_obs = in.pop().to_string();
+       std::string gamma0name = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+
+       scalar_type theta = scalar_type(1);
+       std::string dataname_fr;
+       if (in.remaining()) {
+	 mexarg_in argin = in.pop();
+	 if (argin.is_string())
+	   dataname_fr = argin.to_string();
+	 else
+	   theta = argin.to_scalar();
+       }
+       if (in.remaining()) dataname_fr = in.pop().to_string();
+       std::string dataname_alpha;
+       if (in.remaining()) dataname_alpha = in.pop().to_string();
+       std::string dataname_wt;
+       if (in.remaining()) dataname_wt = in.pop().to_string();
+
+       size_type ind = config::base_index();
+       ind += getfem::add_Nitsche_contact_with_rigid_obstacle_brick
+       (md->model(), gfi_mim->mesh_im(), varname, dataname_obs,
+	gamma0name, theta,
+	dataname_fr, dataname_alpha, dataname_wt, region);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
 
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
-     /*@SET ind = ('add Nitsche contact with rigid obstacle brick',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_r, @str dataname_theta, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
+     /*@SET ind = ('add Nitsche contact with rigid obstacle brick old',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_gamma0, @str dataname_theta, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
 
       Add a contact with friction condition with a rigid obstacle
       to the model with  Nitsche strategy (no multiplier) in an integral way.
@@ -2183,7 +2237,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       method. `dataname_lambda` and `dataname_mu` are the Lame coefficients.
     @*/
      sub_command
-       ("add Nitsche contact with rigid obstacle brick", 9, 9, 0, 1,
+       ("add Nitsche contact with rigid obstacle brick old", 9, 9, 0, 1,
 
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -2196,7 +2250,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         size_type region = in.pop().to_integer();
 
         size_type ind=
-        getfem::add_Nitsche_contact_with_rigid_obstacle_brick
+        getfem::add_Nitsche_contact_with_rigid_obstacle_brick_old
         (md->model(), gfi_mim->mesh_im(), varname_u, dataname_obs, dataname_r,
 	 dataname_theta, dataname_coeff, dataname_lambda, dataname_mu,
 	 region);

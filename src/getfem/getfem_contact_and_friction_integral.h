@@ -713,7 +713,7 @@ namespace getfem {
 
 
 
-  /** Add a large sliding contact with friction brick to the model.
+  /** Adds a large sliding contact with friction brick to the model.
       This brick is able to deal with auto-contact, contact between
       several deformable bodies and contact with rigid obstacles.
       The condition is applied on the variable `varname_u` on the
@@ -735,7 +735,7 @@ namespace getfem {
    const std::string &dataname_friction_coeff, size_type region);
 
 
-  /** Add a contact boundary to an existing large sliding contact brick.
+  /** Adds a contact boundary to an existing large sliding contact brick.
       `indbrick` is the brick index.
   */
   void add_boundary_to_large_sliding_contact_brick
@@ -743,7 +743,7 @@ namespace getfem {
    const std::string &varname_u, const std::string &multname,
    size_type region);
 
-  /** Add a rigid obstacle to an existing large sliding contact brick.
+  /** Adds a rigid obstacle to an existing large sliding contact brick.
       `indbrick` is the brick index, `obs` is the expression of a
       function which should be closed to a signed distance to the obstacle.
   */
@@ -753,13 +753,39 @@ namespace getfem {
 
 
 
-
-
+  /** Adds a contact condition with or without Coulomb friction on the variable
+      `varname_u` and the mesh boundary `region`. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `gamma0name` is the Nitsche's method parameter.
+      `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+  */
+  size_type add_Nitsche_contact_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_gamma0,
+   scalar_type theta,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_alpha,
+   const std::string &dataname_wt,
+   size_type region);
 
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
   // Experimental implementation of contact condition with Nitsche method.
   // To be deleted when a more general implementation will be designed.
-  size_type add_Nitsche_contact_with_rigid_obstacle_brick
+  size_type add_Nitsche_contact_with_rigid_obstacle_brick_old
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
    const std::string &dataname_theta,
@@ -768,7 +794,7 @@ namespace getfem {
    size_type region);
   
   
-  class contact_nitsche_nonlinear_term : public nonlinear_elem_term {
+  class contact_nitsche_nonlinear_term_old : public nonlinear_elem_term {
 
   protected:
     base_small_vector lnt, lt; // multiplier lambda and its tangential
@@ -800,7 +826,7 @@ namespace getfem {
     bgeot::multi_index sizes_;
 
     template <typename VECT1>
-    contact_nitsche_nonlinear_term
+    contact_nitsche_nonlinear_term_old
     ( size_type option_, scalar_type r_, scalar_type theta_,
       scalar_type lambda_, scalar_type mu_,
       const mesh_fem &mf_u_, const VECT1 &U_, const mesh_fem &mf_obs_,
@@ -832,7 +858,7 @@ namespace getfem {
 
   };
 
-  template<typename VECT1> void asm_Nitsche_contact_rigid_obstacle_rhs
+  template<typename VECT1> void asm_Nitsche_contact_rigid_obstacle_rhs_old
   (VECT1 &R, const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VECT1 &U,
    const getfem::mesh_fem &mf_obs, const VECT1 &obs,
@@ -840,7 +866,7 @@ namespace getfem {
    scalar_type gamma, scalar_type theta, scalar_type lambda, scalar_type mu,
    const mesh_region &rg) {
 
-    contact_nitsche_nonlinear_term
+    contact_nitsche_nonlinear_term_old
       nterm1(1,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff),
       nterm2(2,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff);
 

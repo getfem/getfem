@@ -188,11 +188,11 @@ In order to simplify notations, let use denote by :math:`P_{n,\mathscr{F}}` the 
 
 This application make the projection of the normal part of :math:`x` on :math:`\Reel_-` and the tangential part on the ball of center :math:`0` and radius :math:`\mathscr{F}(x.n)_-`, where :math:`\mathscr{F}` is the friction coefficient.
 
-Using this, and considering that the sliding velocity is approximated by :math:`\alpha(u_{_T} - w_{_T}` where the expression of :math:`\alpha` and :math:`w_{_T}` depend on the time integration scheme used (see :ref:`weak_integral_contact_section`), Nitsche's term for contact with friction reads as:
+Using this, and considering that the sliding velocity is approximated by :math:`\alpha(u_{_T} - w_{_T})` where the expression of :math:`\alpha` and :math:`w_{_T}` depend on the time integration scheme used (see :ref:`weak_integral_contact_section`), Nitsche's term for contact with friction reads as:
 
 .. math::
 	&-\int_{\Gamma_C} \theta \gamma G(u,p)\cdot D_u G(u,p)[v] d\Gamma \\
-	&+\int_{\Gamma_C} \gamma P_{n,\mathscr{F}}(G(u,p) - \Frac{Au}{\gamma} + \Frac{gap}{\gamma}n + \Frac{\alpha w_{_T}}{\gamma})\cdot(\theta D_u G(u,p)[v] - \Frac{Av}{\gamma}) d\Gamma.
+	&+\int_{\Gamma_C} \gamma P_{n,\mathscr{F}}(G(u,p) - \Frac{Au}{\gamma} + \Frac{gap}{\gamma}n + \Frac{\alpha w_{_T}}{\gamma})\cdot(\theta D_u G(u,p)[v] - \Frac{v}{\gamma}) d\Gamma.
 
 where :math:`\Gamma_C` is the contact boundary, :math:`G(u,p)` is the Neumann term which represents here :math:`\sigma n` the stress at the contact boundary and :math:`A` is the :math:`d\times d` matrix
 
@@ -202,16 +202,11 @@ where :math:`\Gamma_C` is the contact boundary, :math:`G(u,p)` is the Neumann te
 The corresponding tangent terms can be written as follows denoting :math:`\zeta(u,p) = G(u,p) - \Frac{Au}{\gamma} + \Frac{gap}{\gamma}n + \Frac{\alpha w_{_T}}{\gamma}`:
 
 .. math::
-	&+\int_{\Gamma_C}\theta(\nabla P_{n,\mathscr{F}}(\zeta(u,p)) - \gamma I_d)(D_uG(u,p)[\delta_u])\cdot D_u G(u,p)[v] d\Gamma \\
-	&-\int_{\Gamma_C}\Frac{1}{\gamma} \nabla P_{n,\mathscr{F}}(\zeta(u,p))(D_uG(u,p)[\delta_u])\cdot(Av) d\Gamma \\
-	&-\int_{\Gamma_C}\Frac{\theta}{\gamma}\nabla P_{n,\mathscr{F}}(\zeta(u,p))(A\delta_u)\cdot D_u G(u,p)[v] d\Gamma \\
-	&+\int_{\Gamma_C}\Frac{1}{\gamma^2}\nabla P_{n,\mathscr{F}}(\zeta(u,p))(A\delta_u)\cdot(Av) d\Gamma \\
-	&+\int_{\Gamma_C} \theta\left( P_{n,\mathscr{F}}(\zeta(u,p))-\gamma G(u,p)\right)\cdot D^2_{uu} G(u,p)[v,\delta_u] d\Gamma \\
-	&+\int_{\Gamma_C}\theta (\nabla P_{n,\mathscr{F}}(\zeta(u,p))+\gamma I_d)(D_pG(u,p)[\delta_p])\cdot D_u G(u,p)[v] d\Gamma \\
-	&-\int_{\Gamma_C}\Frac{1}{\gamma}\nabla P_{n,\mathscr{F}}(\zeta(u,p))(D_pG(u,p)[\delta_p])\cdot(Av) d\Gamma \\
-	&+\int_{\Gamma_C} \theta\left( P_{n,\mathscr{F}}(\zeta(u,p)) -\gamma G(u,p)\right)\cdot D^2_{up} G(u,p)[v,\delta_p] d\Gamma,
-
-	
+	&-\int_{\Gamma_C}\theta\gamma(D_uG(u,p)[\delta_u])\cdot D_u G(u,p)[v] d\Gamma \\
+	&+\int_{\Gamma_C}\gamma(\nabla P_{n,\mathscr{F}}(\zeta(u,p)))(D_uG(u,p)[\delta_u] - \Frac{A\delta u}{\gamma})\cdot (\theta D_u G(u,p)[v] - \Frac{v}{\gamma}) d\Gamma \\
+	&+\int_{\Gamma_C} \theta\gamma\left( P_{n,\mathscr{F}}(\zeta(u,p))-G(u,p)\right)\cdot D^2_{uu} G(u,p)[v,\delta_u] d\Gamma \\
+	&+\int_{\Gamma_C}\gamma (\nabla P_{n,\mathscr{F}}(\zeta(u,p))+I_d)(D_pG(u,p)[\delta_p])\cdot (\theta D_u G(u,p)[v] - \Frac{v}{\gamma}) d\Gamma \\
+	&+\int_{\Gamma_C} \theta\gamma\left( P_{n,\mathscr{F}}(\zeta(u,p)) - G(u,p)\right)\cdot D^2_{up} G(u,p)[v,\delta_p] d\Gamma,
 
 still considering that the Neumann term depends both on the variable  :math:`u` and on an auxilliary variable :math:`p` and with
 

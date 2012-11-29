@@ -1055,7 +1055,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        scalar_type mu = in.pop().to_scalar();
        darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
       
-       getfem::asm_Nitsche_contact_rigid_obstacle_rhs
+       getfem::asm_Nitsche_contact_rigid_obstacle_rhs_old
        (F, *mim, *mf_u, vec_u, *mf_obs, vec_obs, 0, fcoeff, r, theta, lambda,
 	mu, boundary_num);
        );

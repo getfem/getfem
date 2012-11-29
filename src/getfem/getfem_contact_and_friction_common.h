@@ -80,6 +80,60 @@ namespace getfem {
     }
   }
 
+
+
+  template <typename VEC, typename VECR>
+  void coupled_projection(const VEC &x, const VEC &n,
+			  scalar_type f, VECR &g) {
+    scalar_type xn = gmm::vect_sp(x, n);
+    scalar_type xnm = gmm::neg(xn);
+    scalar_type th = f * xnm;
+    scalar_type xtn = gmm::sqrt(gmm::vect_norm2_sqr(x) - xn*xn);
+    
+    gmm::copy(gmm::scaled(n, -xnm), g);
+    if (th > scalar_type(0)) {
+      if (xtn <= th) {
+	gmm::add(x, g);
+	gmm::add(gmm::scaled(n, -xn), g);
+      } else {
+	gmm::add(gmm::scaled(x, f*xnm/xtn), g);
+	gmm::add(gmm::scaled(n, -f*xnm*xn/xtn), g);
+      }
+    }
+  }
+
+
+  template <typename VEC, typename MAT>
+  void coupled_projection_grad(const VEC &x, const VEC &n,
+			       scalar_type f, MAT &g) {
+    scalar_type xn = gmm::vect_sp(x, n);
+    scalar_type xnm = gmm::neg(xn);
+    scalar_type th = f * xnm;
+    scalar_type xtn = gmm::sqrt(gmm::vect_norm2_sqr(x) - xn*xn);
+    size_type N = gmm::vect_size(x);
+    gmm::clear(g);
+    
+    if (th > scalar_type(0)) {
+      if (xtn <= th) {
+	gmm::copy(gmm::identity_matrix(), g);
+	gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
+      } else if (xn < scalar_type(0)) {
+	static base_small_vector t; gmm::resize(t, N);
+	gmm::add(x, gmm::scaled(n, -xn), t);
+        gmm::scale(t, scalar_type(1)/xtn);
+	if (N > 2) {
+	  gmm::copy(gmm::identity_matrix(), g);
+	  gmm::rank_one_update(g, gmm::scaled(t, -scalar_type(1)), t);
+	  gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
+	  gmm::scale(g, -xn*th/xtn);
+        }
+        gmm::rank_one_update(g, gmm::scaled(t, -f), n);
+      }
+    }
+
+    if (xn < scalar_type(0)) gmm::rank_one_update(g, n, n);
+  }
+
   //=========================================================================
   //
   //  De Saxce projection and its gradients.
@@ -89,7 +143,7 @@ namespace getfem {
 
   template<typename VEC>
   void De_Saxce_projection(const VEC &x, const VEC &n_, scalar_type f) {
-    static VEC n; // For more robustness, n_ is not supposed unitary
+    static base_small_vector n; // For more robustness, n_ is not supposed unitary
     size_type N = gmm::vect_size(x);
     gmm::resize(n, N);
     gmm::copy(gmm::scaled(n_, scalar_type(1)/gmm::vect_norm2(n_)), n);
@@ -108,7 +162,7 @@ namespace getfem {
   template<typename VEC, typename MAT>
   void De_Saxce_projection_grad(const VEC &x, const VEC &n_,
 				scalar_type f, MAT &g) {
-    static VEC n;
+    static base_small_vector n;
     size_type N = gmm::vect_size(x);
     gmm::resize(n, N);
     gmm::copy(gmm::scaled(n_, scalar_type(1)/gmm::vect_norm2(n_)), n);
@@ -119,7 +173,7 @@ namespace getfem {
     if (xn > scalar_type(0) && f * nxt <= xn) {
       gmm::clear(g);
     } else if (xn > scalar_type(0) || nxt > -f*xn) {
-      static VEC xt;
+      static base_small_vector xt;
       gmm::resize(xt, N);
       gmm::add(x, gmm::scaled(n, -xn), xt);
       gmm::scale(xt, scalar_type(1)/nxt);
@@ -145,7 +199,7 @@ namespace getfem {
   template<typename VEC, typename MAT>
   static void De_Saxce_projection_gradn(const VEC &x, const VEC &n_,
 					scalar_type f, MAT &g) {
-    static VEC n;
+    static base_small_vector n;
     size_type N = gmm::vect_size(x);
     scalar_type nn = gmm::vect_norm2(n_);
     gmm::resize(n, N);
@@ -156,7 +210,7 @@ namespace getfem {
 
     if (!(xn > scalar_type(0) && f * nxt <= xn)
 	&& (xn > scalar_type(0) || nxt > -f*xn)) {
-      static VEC xt, aux;
+      static base_small_vector xt, aux;
       gmm::resize(xt, N); gmm::resize(aux, N);
       gmm::add(x, gmm::scaled(n, -xn), xt);
       gmm::scale(xt, scalar_type(1)/nxt);
