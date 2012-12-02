@@ -74,7 +74,7 @@ md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
-gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
+% gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
 if (incompressible)
   gf_model_set(md, 'add fem variable', 'p', mfp);
   gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');

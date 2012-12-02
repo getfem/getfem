@@ -3224,8 +3224,8 @@ namespace getfem {
 				      scalar_type theta_) {
       H_version = H_version_;
       normal_component = normal_component_;
-      // linear_version = false;
-      linear_version = is_linear_;
+      linear_version = false;
+      // linear_version = is_linear_;
       theta = theta_;
       GMM_ASSERT1(!(H_version && normal_component), "Bad Dirichlet version");
       set_flags(is_linear_ ? "Dirichlet with Nitsche's method linear brick"
