@@ -20,10 +20,10 @@
 d = 2;                 % dimension (cannot be changed for the moment)
 clambda = 1; cmu = 1;  % Lame coefficients
 dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
-theta = 0;            % Nitsche's method parameter theta
+theta = 0;             % Nitsche's method parameter theta
 gamma0 = 0.0001;       % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 incompressible = 1;    % Test with incompressibility or not
-NX = 40;
+NX = 80;
 
 % trace on;
 gf_workspace('clear all');
@@ -91,6 +91,7 @@ else
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
   gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
 end
+
 gf_model_get(md, 'solve', 'noisy', 'max iter', 1);
 U = gf_model_get(md, 'variable', 'u');
 

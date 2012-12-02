@@ -3187,19 +3187,17 @@ namespace getfem {
 	     normal_component, mf_H, H, mf_data, G, rg);
 	}
 
-	if (vl.size() > 1) { // presence of auxilliary variables
-	  for (size_type i = 1; i < vl.size(); ++i) {
-	    if (theta != scalar_type(0) && !linear_version)
-	      asm_Dirichlet_Nitsche_fourth_tangent_term
-		(matl[i], mim, md, vl[0], mf_u, U, vl[i],
-		 md.mesh_fem_of_variable(vl[i]), theta, gamma0, 
-		 H_version, normal_component, mf_H, H, mf_data, G, rg);
-	    asm_Dirichlet_Nitsche_fifth_tangent_term
-	      (matl[i], mim, md, vl[0], mf_u, U, vl[i],
-	       md.mesh_fem_of_variable(vl[i]), theta, gamma0,
-	       H_version, normal_component, mf_H, H, rg);
-	  }
-	}
+	for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
+          if (theta != scalar_type(0) && !linear_version)
+            asm_Dirichlet_Nitsche_fourth_tangent_term
+              (matl[i], mim, md, vl[0], mf_u, U, vl[i],
+               md.mesh_fem_of_variable(vl[i]), theta, gamma0, 
+               H_version, normal_component, mf_H, H, mf_data, G, rg);
+          asm_Dirichlet_Nitsche_fifth_tangent_term
+            (matl[i], mim, md, vl[0], mf_u, U, vl[i],
+             md.mesh_fem_of_variable(vl[i]), theta, gamma0,
+             H_version, normal_component, mf_H, H, rg);
+        }
       }
 
       if ((!linear_version && (version & model::BUILD_RHS))
@@ -4605,17 +4603,18 @@ namespace getfem {
       if (version == 3) return;  // No contribution because the term is linear
       if (version == 2 && auxilliary_ind == 0) return;
 
+      cout << "version = " << version << " aux_ind = " << auxilliary_ind << endl;
+
       dim_type qdim = mfvar.linked_mesh().dim();
       gmm::resize(val, 1);
       size_type cv = ctx.convex_num();
-      scalar_type val_p = scalar_type(0);
    
       if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
 	  || (ctx_p.have_pfp() != ctx.have_pfp())
 	  || (ctx_p.have_pfp()
 	      && (&(ctx.pfp()->get_point_tab())
 		  != &(ctx_p.pfp()->get_point_tab())))) {
-	
+
 	if (vnum != var_vnum) {
 	  gmm::resize(P, mf_p->nb_basic_dof());
 	  mf_p->extend_vector(*org_P, P);
@@ -4625,34 +4624,34 @@ namespace getfem {
 	bgeot::vectors_to_base_matrix
 	  (G, mf_p->linked_mesh().points_of_convex(cv));
 	
-	pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
-				       &(ctx.pfp()->get_point_tab()), 0);
-	
-	if (ctx.have_pfp())
+	if (ctx.have_pfp()) {
+          pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
+                                         &(ctx.pfp()->get_point_tab()), 0);
 	  ctx_p = fem_interpolation_context
 	    (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
 	     G, cv, ctx.face_num());
-	else
+        } else
 	  ctx_p = fem_interpolation_context
 	    (mf_p->linked_mesh().trans_of_convex(cv),
 	     mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
-	
       } else {
-	if (ctx.have_pfp())  ctx_p.set_ii(ctx.ii());
+	if (ctx_p.have_pfp()) ctx_p.set_ii(ctx.ii());
 	else ctx_p.set_xref(ctx.xref());
+       
       }
-      
-      if (version == 1) {
-	coeff.resize(mf_p->nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(P, gmm::sub_index
-			     (mf_p->ind_basic_dof_of_element(cv))), coeff);
-	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
-	val_p = val[0];
-      }
+      // cout << "xreal = " << ctx.xreal() << " : " << ctx_p.xreal() << endl;
 
       switch (version) {
       case 1:
-	gmm::copy(gmm::scaled(n, -val_p), output.as_vector());
+        coeff.resize(mf_p->nb_basic_dof_of_element(cv));
+	gmm::copy(gmm::sub_vector(P, gmm::sub_index
+                                 (mf_p->ind_basic_dof_of_element(cv))), coeff);
+	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
+
+        // cout << "val_p = " << val[0] << endl;
+        // cout << "output = " <<  output.as_vector() << endl;
+	// gmm::add(gmm::scaled(n, -val[0]), output.as_vector());
+        for (size_type k = 0; k < qdim; ++k) output[k] -= val[0] * n[k];
 	break;
       case 2:
 	{
@@ -4662,8 +4661,8 @@ namespace getfem {
 
 	  base_tensor::const_iterator it = t.begin();
 	  for (size_type i = 0; i < ndof; ++i, ++it) {
-	    for (size_type p = 0; p < qdim; ++p)
-	      output(i, p) -= (*it)*n[p];
+	    for (size_type k = 0; k < qdim; ++k)
+	      output(i, k) -= (*it)*n[k];
 	  }
 	  GMM_ASSERT1(it ==  t.end(), "Internal error");
 	}

@@ -431,9 +431,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type scale = scalar_type(1);
        if (in.remaining()) scale = in.pop().to_scalar();
 
-       if (md->model().is_linear())
-	 cout << "Problem is linear, the test is not relevant";
-       else {
+       if (md->model().is_linear()) {
+	 GMM_WARNING1("Problem is linear, the test is not relevant");
+       } else {
 	 if (md->is_complex()) {
 	   std::vector<complex_type> U(nbdof);
 	   std::vector<complex_type> DIR(nbdof);

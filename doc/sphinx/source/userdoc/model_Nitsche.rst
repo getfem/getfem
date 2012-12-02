@@ -205,7 +205,8 @@ The corresponding tangent terms can be written as follows denoting :math:`\zeta(
 	&-\int_{\Gamma_C}\theta\gamma(D_uG(u,p)[\delta_u])\cdot D_u G(u,p)[v] d\Gamma \\
 	&+\int_{\Gamma_C}\gamma(\nabla P_{n,\mathscr{F}}(\zeta(u,p)))(D_uG(u,p)[\delta_u] - \Frac{A\delta u}{\gamma})\cdot (\theta D_u G(u,p)[v] - \Frac{v}{\gamma}) d\Gamma \\
 	&+\int_{\Gamma_C} \theta\gamma\left( P_{n,\mathscr{F}}(\zeta(u,p))-G(u,p)\right)\cdot D^2_{uu} G(u,p)[v,\delta_u] d\Gamma \\
-	&+\int_{\Gamma_C}\gamma (\nabla P_{n,\mathscr{F}}(\zeta(u,p))+I_d)(D_pG(u,p)[\delta_p])\cdot (\theta D_u G(u,p)[v] - \Frac{v}{\gamma}) d\Gamma \\
+        &-\int_{\Gamma_C}\theta\gamma(D_pG(u,p)[\delta_p])\cdot D_u G(u,p)[v] d\Gamma \\
+	&+\int_{\Gamma_C}\gamma (\nabla P_{n,\mathscr{F}}(\zeta(u,p)))(D_pG(u,p)[\delta_p])\cdot (\theta D_u G(u,p)[v] - \Frac{v}{\gamma}) d\Gamma \\
 	&+\int_{\Gamma_C} \theta\gamma\left( P_{n,\mathscr{F}}(\zeta(u,p)) - G(u,p)\right)\cdot D^2_{up} G(u,p)[v,\delta_p] d\Gamma,
 
 still considering that the Neumann term depends both on the variable  :math:`u` and on an auxilliary variable :math:`p` and with

@@ -48,8 +48,13 @@ clambda = 1;           % Lame coefficient
 cmu = 1;               % Lame coefficient
 friction_coeff = 0.4;  % coefficient of friction
 vertical_force = 0.05; % Volumic load in the vertical direction
-r = 10;                 % Augmentation parameter
-theta = -1;             % Nitsche's method theta parameter
+u_degree = 2;
+lambda_degree = 2;
+incompressibility = 1;
+p_degree = 1;
+r = 1;                 % Augmentation parameter
+gamma0 = 1/r;          % Nitsche's method gamma0 parameter
+theta = 0;             % Nitsche's method theta parameter
 
 condition_type = 0; % 0 = Explicitely kill horizontal rigid displacements
                     % 1 = Kill rigid displacements using a global penalization
@@ -63,9 +68,9 @@ else
     cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];  % corresponding constrained directions for 3d
 end;
 
-niter = 100;   % Maximum number of iterations for Newton's algorithm.
+niter = 10;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 17;  % 1 : frictionless contact and the basic contact brick
+version = 16;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
@@ -114,11 +119,13 @@ gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 
 
 % Finite element methods
-u_degree = 2;
-lambda_degree = 2;
 
 mfu=gf_mesh_fem(m, d);
 gf_mesh_fem_set(mfu, 'classical fem', u_degree);
+if (incompressibility)
+  mfp=gf_mesh_fem(m, 1);
+  gf_mesh_fem_set(mfp, 'classical fem', p_degree);
+end
 mfd=gf_mesh_fem(m, 1);
 gf_mesh_fem_set(mfd, 'classical fem', u_degree);
 mflambda=gf_mesh_fem(m, 1); % used only by versions 5 to 13
@@ -157,6 +164,10 @@ gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
                  'clambda', 'cmu');
+if (incompressibility)
+  gf_model_set(md, 'add fem variable', 'p', mfp);
+  gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');
+end
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
@@ -330,7 +341,7 @@ elseif (version == 15)
          
 elseif (version == 16 || version == 17)
  
-  gf_model_set(md, 'add initialized data', 'gamma', [1/r]);
+  gf_model_set(md, 'add initialized data', 'gamma0', [gamma0]);
   gf_model_set(md, 'add initialized data', 'theta', [theta]);
   
   if (version == 16)
@@ -340,11 +351,11 @@ elseif (version == 16 || version == 17)
   end
   OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
   gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
-  % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick old', mim_friction, 'u', 'obstacle', 'gamma', 'theta', 'friction_coeff', 'clambda', 'cmu', GAMMAC);    
+  % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick old', mim_friction, 'u', 'obstacle', 'gamma0', 'theta', 'friction_coeff', 'clambda', 'cmu', GAMMAC);    
   if (version == 16)
-    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', 'obstacle', 'gamma', GAMMAC, theta);    
+    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', 'obstacle', 'gamma0', GAMMAC, theta);    
   else
-    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', 'obstacle', 'gamma', GAMMAC, theta, 'friction_coeff'); 
+    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', 'obstacle', 'gamma0', GAMMAC, theta, 'friction_coeff'); 
   end
 else
   error('Inexistent version');
