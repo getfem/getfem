@@ -2749,11 +2749,12 @@ namespace getfem {
 	t /= gamma;
 	break;	
       case 5:
-        gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn);
-	gmm::scale(auxn, scalar_type(1)/gamma);
+        // gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn); TODO: A REMETTRE !!!
+	// gmm::scale(auxn, scalar_type(1)/gamma);TODO: A REMETTRE !!!
+        gmm::clear(auxn); // TODO : a enlever !!
 	tp.adjust_sizes(sizes_);
 	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
-	// gmm::mult_add(H, tp.as_vector(), auxn); TODO: A REMETTRE !!!
+	gmm::mult_add(H, tp.as_vector(), auxn); 
 	gmm::mult(gmm::transposed(H), auxn, t.as_vector());
 	break;
       case 6:
