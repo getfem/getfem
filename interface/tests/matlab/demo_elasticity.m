@@ -92,6 +92,7 @@ else
   gf_model_set(md, 'add Dirichlet condition with Nitsche method', mim, 'u', 'gamma0', 1, theta, 'DirichletData');
 end
 
+gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
 gf_model_get(md, 'solve', 'noisy', 'max iter', 1);
 U = gf_model_get(md, 'variable', 'u');
 

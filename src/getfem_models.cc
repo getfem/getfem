@@ -2749,7 +2749,7 @@ namespace getfem {
 	t /= gamma;
 	break;	
       case 5:
-	gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn);
+        gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn);
 	gmm::scale(auxn, scalar_type(1)/gamma);
 	tp.adjust_sizes(sizes_);
 	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
@@ -3224,6 +3224,7 @@ namespace getfem {
 				      scalar_type theta_) {
       H_version = H_version_;
       normal_component = normal_component_;
+      // linear_version = false;
       linear_version = is_linear_;
       theta = theta_;
       GMM_ASSERT1(!(H_version && normal_component), "Bad Dirichlet version");
@@ -4603,10 +4604,7 @@ namespace getfem {
       if (version == 3) return;  // No contribution because the term is linear
       if (version == 2 && auxilliary_ind == 0) return;
 
-      cout << "version = " << version << " aux_ind = " << auxilliary_ind << endl;
-
       dim_type qdim = mfvar.linked_mesh().dim();
-      gmm::resize(val, 1);
       size_type cv = ctx.convex_num();
    
       if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
@@ -4617,8 +4615,8 @@ namespace getfem {
 
 	if (vnum != var_vnum) {
 	  gmm::resize(P, mf_p->nb_basic_dof());
-	  mf_p->extend_vector(*org_P, P);
-	  vnum = var_vnum;
+          mf_p->extend_vector(*org_P, P);
+          vnum = var_vnum;
 	}
 	
 	bgeot::vectors_to_base_matrix
@@ -4647,7 +4645,7 @@ namespace getfem {
 	gmm::copy(gmm::sub_vector(P, gmm::sub_index
                                  (mf_p->ind_basic_dof_of_element(cv))), coeff);
 	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
-
+        
         // cout << "val_p = " << val[0] << endl;
         // cout << "output = " <<  output.as_vector() << endl;
 	// gmm::add(gmm::scaled(n, -val[0]), output.as_vector());
@@ -4659,12 +4657,9 @@ namespace getfem {
 	  size_type ndof = ctx_p.pf()->nb_dof(cv);
 	  ctx_p.pf()->real_base_value(ctx_p, t);
 
-	  base_tensor::const_iterator it = t.begin();
-	  for (size_type i = 0; i < ndof; ++i, ++it) {
+          for (size_type i = 0; i < ndof; ++i)
 	    for (size_type k = 0; k < qdim; ++k)
-	      output(i, k) -= (*it)*n[k];
-	  }
-	  GMM_ASSERT1(it ==  t.end(), "Internal error");
+              output(i, k) -= t[i]*n[k];
 	}
 	break;
       }
@@ -4680,6 +4675,7 @@ namespace getfem {
       gmm::resize(P, mf_p->nb_basic_dof());
       mf_p->extend_vector(*P_, P);
       vnum = var_vnum;
+      gmm::resize(val, 1);
     }
 
   };
