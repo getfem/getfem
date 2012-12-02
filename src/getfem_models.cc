@@ -2753,7 +2753,7 @@ namespace getfem {
 	gmm::scale(auxn, scalar_type(1)/gamma);
 	tp.adjust_sizes(sizes_);
 	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
-	gmm::mult_add(H, tp.as_vector(), auxn);
+	// gmm::mult_add(H, tp.as_vector(), auxn); TODO: A REMETTRE !!!
 	gmm::mult(gmm::transposed(H), auxn, t.as_vector());
 	break;
       case 6:
@@ -3026,7 +3026,6 @@ namespace getfem {
 					   G, mf_H, H);
     
     getfem::generic_assembly assem;
-
     std::string Nlinfems = "#1";
     if (mf_H && mf_data) Nlinfems = "#1,#2,#3";
     else if (mf_H) Nlinfems = "#1,#1,#2";
@@ -3044,7 +3043,34 @@ namespace getfem {
   
     assem.push_vec(V);
     assem.assembly(rg);
+    cout << "V = " << V << endl;
   }
+
+  void asm_Dirichlet_Nitsche_first_rhs_term_bis
+  (model_real_plain_vector &V, const mesh_im &mim, const model &md,
+   const std::string &varname, const mesh_fem &mfu,
+   const model_real_plain_vector *U,
+   const mesh_fem *mf_P, const model_real_plain_vector *P, scalar_type gamma0,
+   const mesh_region &rg) {
+    
+    
+    getfem::generic_assembly assem;
+
+    model_real_plain_vector W(gmm::vect_size(V));
+
+    assem.set("P=data(#2);V(#1)+=comp(Normal().Base(#2).vBase(#1))(i,j,:,i).P(j);");
+   
+    assem.push_mi(mim);
+    assem.push_mf(mfu);
+    assem.push_mf(*mf_P);
+    assem.push_data(*P);
+  
+    assem.push_vec(W);
+    assem.assembly(rg);
+    gmm::scale(W, 1./gamma0);
+    cout << "W = " << W << endl;
+  }
+
 
   void asm_Dirichlet_Nitsche_second_rhs_term
   (model_real_plain_vector &V, const mesh_im &mim, const model &md,
@@ -3208,6 +3234,9 @@ namespace getfem {
 	asm_Dirichlet_Nitsche_first_rhs_term
 	  (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
 	   normal_component, mf_H, H, mf_data, G, linear_version, rg);
+
+	asm_Dirichlet_Nitsche_first_rhs_term_bis // TODO: A SUPPRIMER !!!
+	  (vecl[0], mim, md, vl[0], mf_u, U, &(md.mesh_fem_of_variable(vl[1])), &(md.real_variable(vl[1])), gamma0, rg);
 	
 	if (theta != scalar_type(0)) {
 	  asm_Dirichlet_Nitsche_second_rhs_term

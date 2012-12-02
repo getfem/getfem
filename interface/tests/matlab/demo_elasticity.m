@@ -23,7 +23,7 @@ dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
 theta = 0;             % Nitsche's method parameter theta
 gamma0 = 0.0001;       % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 incompressible = 1;    % Test with incompressibility or not
-NX = 80;
+NX = 5;
 
 % trace on;
 gf_workspace('clear all');
@@ -74,6 +74,7 @@ md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
+% TODO : a remmettre !!
 % gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
 if (incompressible)
   gf_model_set(md, 'add fem variable', 'p', mfp);
