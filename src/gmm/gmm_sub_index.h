@@ -153,7 +153,7 @@ namespace gmm {
     template <typename CONT> unsorted_sub_index(const CONT &c)
       : sub_index(c) {}
     unsorted_sub_index() {}
-    unsorted_sub_index(const unsorted_sub_index &si) : sub_index((sub_index &)(si)) { }
+    unsorted_sub_index(const unsorted_sub_index &si) : sub_index((const sub_index &)(si)) { }
     unsorted_sub_index &operator =(const unsorted_sub_index &si)
     { sub_index::operator =(si); return *this; }
     void swap(size_type i, size_type j) {
