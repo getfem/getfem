@@ -2749,9 +2749,8 @@ namespace getfem {
 	t /= gamma;
 	break;	
       case 5:
-        // gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn); TODO: A REMETTRE !!!
-	// gmm::scale(auxn, scalar_type(1)/gamma);TODO: A REMETTRE !!!
-        gmm::clear(auxn); // TODO : a enlever !!
+        gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn);
+        gmm::scale(auxn, scalar_type(1)/gamma);
 	tp.adjust_sizes(sizes_);
 	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
 	gmm::mult_add(H, tp.as_vector(), auxn); 
@@ -3044,34 +3043,7 @@ namespace getfem {
   
     assem.push_vec(V);
     assem.assembly(rg);
-    cout << "V = " << V << endl;
   }
-
-  void asm_Dirichlet_Nitsche_first_rhs_term_bis
-  (model_real_plain_vector &V, const mesh_im &mim, const model &md,
-   const std::string &varname, const mesh_fem &mfu,
-   const model_real_plain_vector *U,
-   const mesh_fem *mf_P, const model_real_plain_vector *P, scalar_type gamma0,
-   const mesh_region &rg) {
-    
-    
-    getfem::generic_assembly assem;
-
-    model_real_plain_vector W(gmm::vect_size(V));
-
-    assem.set("P=data(#2);V(#1)+=comp(Normal().Base(#2).vBase(#1))(i,j,:,i).P(j);");
-   
-    assem.push_mi(mim);
-    assem.push_mf(mfu);
-    assem.push_mf(*mf_P);
-    assem.push_data(*P);
-  
-    assem.push_vec(W);
-    assem.assembly(rg);
-    gmm::scale(W, 1./gamma0);
-    cout << "W = " << W << endl;
-  }
-
 
   void asm_Dirichlet_Nitsche_second_rhs_term
   (model_real_plain_vector &V, const mesh_im &mim, const model &md,
@@ -3215,6 +3187,7 @@ namespace getfem {
 	}
 
 	for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
+          gmm::clear(matl[i]);
           if (theta != scalar_type(0) && !linear_version)
             asm_Dirichlet_Nitsche_fourth_tangent_term
               (matl[i], mim, md, vl[0], mf_u, U, vl[i],
@@ -3235,9 +3208,6 @@ namespace getfem {
 	asm_Dirichlet_Nitsche_first_rhs_term
 	  (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
 	   normal_component, mf_H, H, mf_data, G, linear_version, rg);
-
-	asm_Dirichlet_Nitsche_first_rhs_term_bis // TODO: A SUPPRIMER !!!
-	  (vecl[0], mim, md, vl[0], mf_u, U, &(md.mesh_fem_of_variable(vl[1])), &(md.real_variable(vl[1])), gamma0, rg);
 	
 	if (theta != scalar_type(0)) {
 	  asm_Dirichlet_Nitsche_second_rhs_term
@@ -3254,8 +3224,8 @@ namespace getfem {
 				      scalar_type theta_) {
       H_version = H_version_;
       normal_component = normal_component_;
-      linear_version = false;
-      // linear_version = is_linear_;
+      // linear_version = false;
+      linear_version = is_linear_;
       theta = theta_;
       GMM_ASSERT1(!(H_version && normal_component), "Bad Dirichlet version");
       set_flags(is_linear_ ? "Dirichlet with Nitsche's method linear brick"
@@ -4667,7 +4637,6 @@ namespace getfem {
 	else ctx_p.set_xref(ctx.xref());
        
       }
-      // cout << "xreal = " << ctx.xreal() << " : " << ctx_p.xreal() << endl;
 
       switch (version) {
       case 1:
@@ -4675,10 +4644,7 @@ namespace getfem {
 	gmm::copy(gmm::sub_vector(P, gmm::sub_index
                                  (mf_p->ind_basic_dof_of_element(cv))), coeff);
 	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
-        
-        // cout << "val_p = " << val[0] << endl;
-        // cout << "output = " <<  output.as_vector() << endl;
-	// gmm::add(gmm::scaled(n, -val[0]), output.as_vector());
+       
         for (size_type k = 0; k < qdim; ++k) output[k] -= val[0] * n[k];
 	break;
       case 2:

@@ -2933,7 +2933,7 @@ namespace getfem {
             t[i] = scalar_type(0);
 	    for (size_type j = 0; j < N; ++j) {
 	      if (theta != scalar_type(0))
-		t[i] -= gamma*pgg[i]*theta*tp(i,j);
+		t[i] -= gamma*pgg[j]*theta*tp(i,j);
 	      if (qmult == 1) t[i] += Pr[j]*tbv(i,j);
             }
             if (qmult > 1) t[i] += Pr[i%N] * tbv(i/N,0);
@@ -3018,19 +3018,6 @@ namespace getfem {
 	  ctx.pf()->real_base_value(ctx, tbv);
 	  size_type qmult = N / ctx.pf()->target_dim();
 	  coupled_projection_grad(zeta, no, f_coeff, GPr);
-
-//           { // test de coupled_projection_grad
-//             base_small_vector hzeta(N), P1(N), P2(N);
-//             scalar_type EPS = 1E-6;
-//             gmm::fill_random(hzeta);
-//             coupled_projection(zeta, no, f_coeff, P1);
-//             base_small_vector zeta2 = zeta + EPS*hzeta;
-//             coupled_projection(zeta2, no, f_coeff, P2);
-//             base_small_vector err = (P2-P1)/EPS;
-//             gmm::mult_add(GPr, gmm::scaled(hzeta, -1.), err);
-//             cout << "zeta = " << zeta << " f_coeff = " << f_coeff
-//                  << " no = " << no << " error = " << err << endl;
-//           }
 
 	  for (size_type i = 0; i < nbdofu; ++i)
 	    for (size_type j = 0; j < nbdofp; ++j) {
@@ -3278,6 +3265,7 @@ namespace getfem {
 	   f_coeff, WT, gamma0, theta, alpha, rg);
         
         for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
+          gmm::clear(matl[i]);
           asm_Nitsche_contact_rigid_obstacle_tangent_matrix_auxilliary
             (matl[i], mim, md, vl[0], mf_u, u, mf_obs, obs, pmf_coeff,
              f_coeff, WT, gamma0, theta, alpha, vl[i],

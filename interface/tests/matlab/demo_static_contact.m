@@ -50,9 +50,9 @@ friction_coeff = 0.4;  % coefficient of friction
 vertical_force = 0.05; % Volumic load in the vertical direction
 u_degree = 2;
 lambda_degree = 2;
-incompressibility = 1;
+incompressibility = 0;
 p_degree = 1;
-r = 1;                 % Augmentation parameter
+r = 40;                 % Augmentation parameter
 gamma0 = 1/r;          % Nitsche's method gamma0 parameter
 theta = 0;             % Nitsche's method theta parameter
 
@@ -68,7 +68,7 @@ else
     cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];  % corresponding constrained directions for 3d
 end;
 
-niter = 10;   % Maximum number of iterations for Newton's algorithm.
+niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
 version = 16;  % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
