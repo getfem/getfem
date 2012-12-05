@@ -874,8 +874,8 @@ namespace gmm {
       bool r = (gmm::abs((*it).real()) < T(threshold));
       bool i = (gmm::abs((*it).imag()) < T(threshold));
       if (r && i) ind.push_back(it.index());
-      else if (r) (*it).real() = T(0);
-      else if (i) (*it).imag() = T(0);
+      else if (r) *it = std::complex<T>(T(0), (*it).imag());
+      else if (i) *it = std::complex<T>((*it).real(), T(0));
     }
     for (size_type i = 0; i < ind.size(); ++i)
       l[ind[i]] = std::complex<T>(T(0),T(0));
