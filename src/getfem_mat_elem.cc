@@ -288,15 +288,21 @@ namespace getfem {
                 (*it).nlt->compute(ctx, elmt_stored[k]);
                 (*it).nlt->term_num() = k;
                 for (dim_type ii = 0; ii < nltsizes.size(); ++ii)
-                  *mit++ = elmt_stored[k].sizes()[ii];
+                  *mit++ = nltsizes[ii];
                 --mit;
               } else {
                 elmt_stored[k] = elmt_stored[(*it).nlt->term_num()];
+                const bgeot::multi_index &nltsizes = elmt_stored[k].sizes();
+                for (dim_type ii = 0; ii < nltsizes.size(); ++ii)
+                  *mit++ = nltsizes[ii];
+                --mit;
               }
             }
             break;
         }
       }
+
+      GMM_ASSERT1(mit == sizes.end(), "internal error");
 
       //expand_product_old(t,J*pai->coeff(ctx.ii()), first);
       scalar_type c = J*pai->coeff(ctx.ii());
