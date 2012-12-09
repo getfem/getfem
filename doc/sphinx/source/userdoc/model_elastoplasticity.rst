@@ -305,17 +305,17 @@ and the relations :
 .. math::
 
    \begin{array}{c}
-   (u \oplus v)w = (v.w)u \\
-   Tr(\tau) I = (I_S \otimes I_S)\tau \\   
+   (u \otimes v)w = (v.w)u \\
+   Tr(\tau) I = (I \otimes I)\tau \\   
    \end{array}
 
 the derivative of the projection becomes :
 
 .. math::
 
-   <\nabla P_K(\tau), \tau^*> = \frac{1}{N}(I_S \otimes I_S)\tau^* + \frac{s}{|\tau^D|}[I_S - n \otimes n]I^D {\tau^D}^*
+   <\nabla P_K(\tau), \tau^*> = \frac{1}{N}(I \otimes I)\tau^* + \frac{s}{|\tau^D|}[I_S - n \otimes n]I^D {\tau^D}^*
 
-Thus, :math:`\nabla P_K(\tau) = \frac{1}{N}(I_S \otimes I_S) + \frac{s}{|\tau^D|}[I_S - n \otimes n]I^D` .
+Thus, :math:`\nabla P_K(\tau) = \frac{1}{N}(I \otimes I) + \frac{s}{|\tau^D|}[I_S - n \otimes n]I^D` .
 
 
 
