@@ -23,7 +23,7 @@
 #include "getfem/dal_singleton.h"
 #include "getfem/dal_static_stored_objects.h"
 #include "getfem/bgeot_convex_structure.h"
-
+#include "getfem/bgeot_comma_init.h"
 
 namespace bgeot {
 
@@ -353,7 +353,89 @@ namespace bgeot {
     return p->p;
   }
 
-  // generic convex with n global nodes
+
+  /* ******************************************************************** */
+  /*	Incomplete Q2 structure for n=2 or 3.                             */
+  /* ******************************************************************** */
+  /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
+
+  struct Q2_incomplete_structure_ : public convex_structure {
+    friend pconvex_structure Q2_incomplete_structure(dim_type nc);
+  };
+  
+  DAL_SIMPLE_KEY(Q2_incomplete_structure_key_, dim_type);
+  
+  pconvex_structure Q2_incomplete_structure(dim_type nc) {
+    GMM_ASSERT1(nc == 2 || nc == 3, "Bad parameter, expected value 2 or 3");
+    dal::pstatic_stored_object o = dal::search_stored_object(Q2_incomplete_structure_key_(nc));
+    if (o) return dal::stored_cast<Q2_incomplete_structure_>(o);
+    
+    Q2_incomplete_structure_ *p = new Q2_incomplete_structure_;
+    p->Nc = nc;
+    p->nbpt = (nc == 2) ? 8 : 20;
+    p->nbf =  (nc == 2) ? 4 : 6;
+    p->basic_pcvs =  parallelepiped_structure(nc).get();
+    p->faces_struct = std::vector<const convex_structure *>(p->nbf);
+    p->faces = std::vector< std::vector<short_type> >(p->nbf);
+    p->dir_points_ = std::vector<short_type>(p->Nc + 1);
+    
+    if (nc == 2) {
+      // 6--5--4
+      // |     |
+      // 7     3
+      // |     |
+      // 0--1--2
+      sc(p->faces[0]) = 2,3,4;
+      sc(p->faces[1]) = 0,7,6;
+      sc(p->faces[2]) = 6,5,4;
+      sc(p->faces[3]) = 0,1,2;
+      
+      p->dir_points_[0] = 0;
+      p->dir_points_[1] = 2;
+      p->dir_points_[2] = 6;
+    } else {
+      //      18---17----16
+      //      /|        /|
+      //     /19       / 15
+      //   11  |      10 |
+      //   /  12---13/---14
+      //  /   /     /   /
+      // 6----5----4   /
+      // |  8      |  9
+      // 7 /       3 /
+      // |/        |/
+      // 0----1----2
+      
+      sc(p->faces[0]) = 2,3,4,9,10,14,15,16;
+      sc(p->faces[1]) = 0,7,6,8,11,12,19,18;
+      
+      sc(p->faces[2]) = 6,5,4,11,10,18,17,16;
+      sc(p->faces[3]) = 0,1,2,8,9,12,13,14;
+      
+      sc(p->faces[4]) = 12,13,14,19,15,18,17,16;
+      sc(p->faces[5]) = 0,1,2,7,3,6,5,4;
+      
+      p->dir_points_[0] = 0;
+      p->dir_points_[1] = 2;
+      p->dir_points_[2] = 6;
+      p->dir_points_[3] = 12;
+    }
+    
+    for (int i = 0; i < p->nbf; i++) {
+      p->faces_struct[i] = (nc == 2) ? simplex_structure(1, 2).get()
+        : Q2_incomplete_structure(2).get();
+    }
+    
+    dal::add_stored_object(new Q2_incomplete_structure_key_(nc), p,
+                           parallelepiped_structure(dim_type(nc-1)),
+                           dal::PERMANENT_STATIC_OBJECT);
+    return p;
+  }
+
+
+  /* ******************************************************************** */
+  /*	Generic dummy convex with n global nodes.                         */
+  /* ******************************************************************** */
 
   struct dummy_structure_ : public convex_structure {
     friend pconvex_structure generic_dummy_structure(dim_type, size_type,

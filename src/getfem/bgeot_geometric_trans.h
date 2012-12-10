@@ -214,6 +214,7 @@ namespace bgeot {
                                     pgeometric_trans pg2);
   pgeometric_trans linear_product_geotrans(pgeometric_trans pg1,
                                            pgeometric_trans pg2);
+  pgeometric_trans Q2_incomplete_geotrans(dim_type nc);
 
   /**
      Get the geometric transformation from its string name.
@@ -223,14 +224,16 @@ namespace bgeot {
   /**
      Get the string name of a geometric transformation.
 
-  List of possible names:
-   * GT_PK(N,K)   : Transformation on simplexes, dim N, degree K
-   * GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
-   * GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
-   * GT_PRODUCT(a,b)        : tensorial product of two transformations
-   * GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
-   * GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),
-   *                                                  GT_PK(1,1))
+     List of possible names:
+     GT_PK(N,K)   : Transformation on simplexes, dim N, degree K
+     
+     GT_QK(N,K)   : Transformation on parallelepipeds, dim N, degree K
+     GT_PRISM(N,K)          : Transformation on prisms, dim N, degree K
+     GT_Q2_INCOMPLETE(N)    : Q2 incomplete transformation in dim N=2 or 3.
+     GT_PRODUCT(a,b)        : tensorial product of two transformations
+     GT_LINEAR_PRODUCT(a,b) : Linear tensorial product of two transformations
+     GT_LINEAR_QK(N) : shortcut for GT_LINEAR_PRODUCT(GT_LINEAR_QK(N-1),
+                                                      GT_PK(1,1))
    */
 
   std::string name_of_geometric_trans(pgeometric_trans p);

@@ -529,6 +529,109 @@ void test_search_point() {
   assert(m.search_point(P) == size_type(-1));
 }
 
+
+
+void test_incomplete_Q2(void) {
+  // By Yao Koutsawa <yao.koutsawa@tudor.lu> 2012-12-10
+  bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor("GT_Q2_INCOMPLETE(2)");
+  
+  const char *s =
+    "BEGIN POINTS LIST\n"
+    "  POINT  1  -4  6  2\n"
+    "  POINT  2  0  6  0\n"
+    "  POINT  3  0  2  0\n"
+    "  POINT  4  -2  6  2\n"
+    "  POINT  5  0  4  0\n"
+    "  POINT  6  -1.5  4.5  0.5\n"
+    "  POINT  7  1  2  0\n"
+    "  POINT  8  1.5  1.5  0\n"
+    "  POINT  9  5  5  0\n"
+    "  POINT  10  2  1  0\n"
+    "  POINT  11  6  3  0\n"
+    "  POINT  12  2  0  0\n"
+    "  POINT  13  6  0  0\n"
+    "  POINT  14  2  4  0\n"
+    "  POINT  15  4  2  0\n"
+    "  POINT  17  3  6  0\n"
+    "  POINT  18  2  -2  2\n"
+    "  POINT  19  2  -2  -2\n"
+    "  POINT  20  6  -2  2\n"
+    "  POINT  21  6  -2  -2\n"
+    "  POINT  22  2  -1  1\n"
+    "  POINT  23  2  -2.5  0\n"
+    "  POINT  24  2  -1  -1\n"
+    "  POINT  25  6  -1  1\n"
+    "  POINT  26  6  -2.5  0\n"
+    "  POINT  27  6  -1  -1\n"
+    "  POINT  28  -1  6  -1\n"
+    "  POINT  29  -1  2  -1\n"
+    "  POINT  30  1  6  -2\n"
+    "  POINT  31  1  2  -2\n"
+    "  POINT  32  0  6  -3\n"
+    "  POINT  33  0  2  -3\n"
+    "  POINT  34  2  -5  -2\n"
+    "  POINT  35  2  -4  0\n"
+    "  POINT  36  4  -5  2\n"
+    "  POINT  37  6  -5  -2\n"
+    "  POINT  38  6  -5  0\n"
+    "  POINT  46  4  4  0\n"
+    "  POINT  49  6  -5  2\n"
+    "  POINT 100  7 0 0 \n"
+    "  POINT 200  8 0 0 \n"
+    "  POINT 300  8 1 0\n"
+    "  POINT 400  7 1 0\n"
+    "  POINT 500  7 0 1\n"
+    "  POINT 600  8 0 1\n"
+    "  POINT 700  8 1 1\n"
+    "  POINT 800  7 1 1\n"
+    "  POINT 900  7.5 0 0 \n"
+    "  POINT 1000  8 0.5 0 \n"
+    "  POINT 1100  7.5 1 0\n"
+    "  POINT 1200  7 0.5 0\n"
+    "  POINT 1300  7.5 0 1\n"
+    "  POINT 1400  8 0.5 1\n"
+    "  POINT 1500  7.5 1 1\n"
+    "  POINT 1600  7 0.5 1\n"
+    "  POINT 1700  7 0 0.5\n"
+    "  POINT 1800  8 0 0.5\n"
+    "  POINT 1900  8 1 0.5\n"
+    "  POINT 2000  7 1 0.5\n"
+    "\n"
+    "END POINTS LIST\n"
+    "\n"
+    "\n"
+    "\n"
+    "BEGIN MESH STRUCTURE DESCRIPTION\n"
+    "\n"
+    "CONVEX 0    'GT_PK(2,2)'      1  4  2  6  5  3\n"
+    "CONVEX 1    'GT_QK(2,1)'      2  17  3  7\n"
+    "CONVEX 2    'GT_Q2_INCOMPLETE(2)'  7  8  10  15 11 9 17 14\n"
+    "CONVEX 3    'GT_QK(2,1)'      10  12  11  13\n"
+    "CONVEX 4    'GT_PRODUCT(GT_PK(2,2),GT_PK(1,1))'      12  22  18  24  23  19  13  25  20  27  26  21\n"
+    "CONVEX 5    'GT_PRODUCT(GT_PK(1,1),GT_PK(1,3))'      2  3  28  29  30  31  32  33\n"
+    "CONVEX 6    'GT_Q2_INCOMPLETE(3)'  100 900 200 1200 300 1400 400 1000 1100 1300 1500 1600 500 1700 600 1900 700 2000 800 1800\n"
+    "\n"
+    "END MESH STRUCTURE DESCRIPTION\n";
+  
+  std::stringstream ss(s);
+  getfem::mesh m;
+  m.read_from_file(ss);
+  m.write_to_file("Q2_incomplete.msh");
+  getfem::pos_export exp("Q2_incomplete.pos");
+  exp.write(m,"mesh");
+}
+
+
+
+
+
+
+
+
+
+
+
+
 int main(void) {
 
   test_mesh_building(2, 100); 
@@ -554,6 +657,8 @@ int main(void) {
   test_refinable(3, 1);
   test_refinable(3, 2);
   test_refinable(3, 3);
+
+  test_incomplete_Q2();
   
   return 0;
 }

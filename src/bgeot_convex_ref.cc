@@ -22,6 +22,7 @@
 #include "getfem/dal_singleton.h"
 #include "getfem/bgeot_convex_ref.h"
 #include "getfem/bgeot_mesh_structure.h"
+#include "getfem/bgeot_comma_init.h"
 
 namespace bgeot {
 
@@ -205,7 +206,108 @@ namespace bgeot {
     return p;
   }
 
-  /* products.                                                             */
+  /* ******************************************************************** */
+  /*	Incomplete Q2 quadrilateral or hexahedral of reference.           */
+  /* ******************************************************************** */
+  /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
+
+  class Q2_incomplete_of_ref_ : public convex_of_reference {
+  public :
+    scalar_type is_in(const base_node& pt) const {
+      // return a negative or null number if pt is in the convex
+      if (pt.size() != cvs->dim())
+        throw dimension_error
+          ("Q2_incomplete_of_ref_::is_in : Dimension does not match");
+      scalar_type e = -1.0, r = (pt.size() > 0) ? -pt[0] : 0.0;
+      base_node::const_iterator it = pt.begin(), ite = pt.end();
+      for (; it != ite; e += *it, ++it) r = std::max(r, -(*it));
+      return std::max(r, e);
+    }
+    scalar_type is_in_face(short_type f, const base_node& pt) const {
+      // return a null number if pt is in the face of the convex
+      // negative if the point is on the side of the face where the element is
+      if (pt.size() != cvs->dim())
+        throw dimension_error
+          ("Q2_incomplete_of_ref_::is_in_face : Dimension does not match");
+      if (f > 0) return -pt[f-1];
+      scalar_type e = -1.0;
+      base_node::const_iterator it = pt.begin(), ite = pt.end();
+      for (; it != ite; e += *it, ++it) {};
+      return e / sqrt(scalar_type(pt.size()));
+    }
+    
+    Q2_incomplete_of_ref_(dim_type nc) {
+      cvs = Q2_incomplete_structure(nc);
+      convex<base_node>::points().resize(cvs->nb_points());
+      normals_.resize(nc == 2 ? 4: 6);
+      
+      if(nc==2) {
+        sc(normals_[0]) =  1, 0;
+        sc(normals_[1]) = -1, 0;
+        sc(normals_[2]) =  0, 1;
+        sc(normals_[3]) =  0,-1;
+        
+        convex<base_node>::points()[0] = base_node(0.0, 0.0);
+        convex<base_node>::points()[1] = base_node(0.5, 0.0);
+        convex<base_node>::points()[2] = base_node(1.0, 0.0);
+        convex<base_node>::points()[3] = base_node(1.0, 0.5);
+        convex<base_node>::points()[4] = base_node(1.0, 1.0);
+        convex<base_node>::points()[5] = base_node(0.5, 1.0);
+        convex<base_node>::points()[6] = base_node(0.0, 1.0);
+        convex<base_node>::points()[7] = base_node(0.0, 0.5);
+        
+      } else {
+        sc(normals_[0]) =  1, 0, 0;
+        sc(normals_[1]) = -1, 0, 0;
+        sc(normals_[2]) =  0, 1, 0;
+        sc(normals_[3]) =  0,-1, 0;
+        sc(normals_[4]) =  0, 0, 1;
+        sc(normals_[5]) =  0, 0,-1;
+        
+        convex<base_node>::points()[0] = base_node(0.0, 0.0, 0.0);
+        convex<base_node>::points()[1] = base_node(0.5, 0.0, 0.0);
+        convex<base_node>::points()[2] = base_node(1.0, 0.0, 0.0);
+        convex<base_node>::points()[3] = base_node(1.0, 0.5, 0.0);
+        convex<base_node>::points()[4] = base_node(1.0, 1.0, 0.0);
+        convex<base_node>::points()[5] = base_node(0.5, 1.0, 0.0);
+        convex<base_node>::points()[6] = base_node(0.0, 1.0, 0.0);
+        convex<base_node>::points()[7] = base_node(0.0, 0.5, 0.0);
+        
+        convex<base_node>::points()[8] = base_node(0.0, 0.0, 0.5);
+        convex<base_node>::points()[9] = base_node(1.0, 0.0, 0.5);
+        convex<base_node>::points()[10] = base_node(1.0, 1.0, 0.5);
+        convex<base_node>::points()[11] = base_node(0.0, 1.0, 0.5);
+        
+        convex<base_node>::points()[12] = base_node(0.0, 0.0, 1.0);
+        convex<base_node>::points()[13] = base_node(0.5, 0.0, 1.0);
+        convex<base_node>::points()[14] = base_node(1.0, 0.0, 1.0);
+        convex<base_node>::points()[15] = base_node(1.0, 0.5, 1.0);
+        convex<base_node>::points()[16] = base_node(1.0, 1.0, 1.0);
+        convex<base_node>::points()[17] = base_node(0.5, 1.0, 1.0);
+        convex<base_node>::points()[18] = base_node(0.0, 1.0, 1.0);
+        convex<base_node>::points()[19] = base_node(0.0, 0.5, 1.0);
+      }
+      ppoints = store_point_tab(convex<base_node>::points());
+    }
+  };
+  
+  
+  DAL_SIMPLE_KEY(Q2_incomplete_reference_key_, dim_type);
+  
+  pconvex_ref Q2_incomplete_reference(dim_type nc) {
+    dal::pstatic_stored_object o = dal::search_stored_object(Q2_incomplete_reference_key_(nc));
+    if (o) return dal::stored_cast<convex_of_reference>(o);
+    pconvex_ref p = new Q2_incomplete_of_ref_(nc);
+    dal::add_stored_object(new Q2_incomplete_reference_key_(nc), p,
+                           p->structure(), &(p->points()),
+                           dal::PERMANENT_STATIC_OBJECT);
+    return p;
+  }
+
+
+  /* ******************************************************************** */
+  /*	Products.                                                         */
+  /* ******************************************************************** */
 
   DAL_DOUBLE_KEY(product_ref_key_, pconvex_ref, pconvex_ref);
 

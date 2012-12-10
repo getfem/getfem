@@ -134,10 +134,16 @@ namespace bgeot {
   pconvex_ref parallelepiped_of_reference(dim_type nc);
   /** prism of reference of dimension nc (and degree 1) */
   pconvex_ref prism_of_reference(dim_type nc);
+  /** incomplete Q2 quadrilateral/hexahedral of reference of dimension
+      d = 2 or 3
+  */
+  pconvex_ref Q2_incomplete_reference(dim_type d);
   /** tensorial product of two convex ref.
-      in order to ensure unicity, it is required the a->dim() >= b->dim() */
+      in order to ensure unicity, it is required the a->dim() >= b->dim()
+  */
   pconvex_ref convex_ref_product(pconvex_ref a, pconvex_ref b);
-  /** equilateral simplex (degree 1). used only for mesh quality estimations */
+  /** equilateral simplex (degree 1). used only for mesh quality estimations
+   */
   pconvex_ref equilateral_simplex_of_reference(dim_type nc);
 
   /** generic convex with n global nodes      */

@@ -159,6 +159,10 @@ namespace bgeot {
   pconvex_structure parallelepiped_structure(dim_type d);
   /// Give a pointer on the structures of a polygon with n vertex.
   pconvex_structure polygon_structure(short_type);
+  /** Give a pointer on the structures of a incomplete Q2
+      quadrilateral/hexahedral of dimension d = 2 or 3.
+  */
+  pconvex_structure Q2_incomplete_structure(dim_type d);
   /** Give a pointer on the structures of a convex which is the direct
    *   product of the convexes represented by *pcvs1 and *pcvs2.
    */

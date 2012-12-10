@@ -467,6 +467,93 @@ namespace bgeot {
     return parallelepiped_linear_geotrans(n);
   }
 
+
+  /* ******************************************************************** */
+  /*	Incomplete Q2 geometric transformation for n=2 or 3.              */
+  /* ******************************************************************** */
+  /* By Yao Koutsawa  <yao.koutsawa@tudor.lu> 2012-12-10                  */
+
+  struct Q2_incomplete_trans_: public poly_geometric_trans  {
+    Q2_incomplete_trans_(dim_type nc) {
+      cvr = Q2_incomplete_reference(nc);
+      size_type R = cvr->structure()->nb_points();
+      is_lin = false;
+      complexity_ = 2;
+      trans.resize(R);
+      
+      if (nc == 2) {
+        std::stringstream s
+          ( "1 - 2*x^2*y - 2*x*y^2 + 2*x^2 + 5*x*y + 2*y^2 - 3*x - 3*y;"
+            "4*(x^2*y - x^2 - x*y + x);"
+            "2*x*y*y - 2*x*x*y + 2*x*x - x*y - x;"
+            "4*(x*y - x*y*y);"
+            "2*x*x*y + 2*x*y*y - 3*x*y;"
+            "4*(x*y - x*x*y);"
+            "2*x*x*y - 2*x*y*y - x*y + 2*y*y - y;"
+            "4*(x*y*y - x*y - y*y + y);");
+        
+        for (int i = 0; i < 8; ++i)
+          trans[i] = bgeot::read_base_poly(2, s);
+      } else {
+        std::stringstream s
+          ("1 + 2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2"
+           " - 2*x^2*y - 2*x^2*z - 2*x*y^2 - 2*y^2*z - 2*y*z^2 - 2*x*z^2 - 7*x*y*z"
+           " + 2*x^2 + 2*y^2 + 2*z^2 + 5*y*z + 5*x*z + 5*x*y - 3*x - 3*y - 3*z;"
+           "4*( - x^2*y*z + x*y*z + x^2*z - x*z + x^2*y - x*y - x^2 + x);"
+           "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2"
+           " - 2*x^2*y - 2*x^2*z + 2*x*y^2 + 2*x*z^2 + 3*x*y*z + 2*x^2 - x*y - x*z - x;"
+           "4*(x*y^2*z - x*y^2 - x*y*z + x*y);"
+           " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2 + 2*x^2*y + 2*x*y^2 + x*y*z - 3*x*y;"
+           "4*(x^2*y*z - x^2*y - x*y*z + x*y);"
+           " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2"
+           " + 2*x^2*y - 2*x*y^2 - 2*y^2*z + 2*y*z^2 + 3*x*y*z - x*y + 2*y^2 - y*z - y;"
+           "4*( - x*y^2*z + x*y^2 + y^2*z + x*y*z - x*y - y^2 - y*z + y);"
+           "4*( - x*y*z^2 + x*z^2 + y*z^2 + x*y*z - x*z - y*z - z^2 + z);"
+           "4*(x*y*z^2 - x*y*z - x*z^2 + x*z);"
+           "4*( - x*y*z^2 + x*y*z);"
+           "4*(x*y*z^2 - x*y*z - y*z^2 + y*z);"
+           " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2"
+           " + 2*x^2*z + 2*y^2*z - 2*x*z^2 - 2*y*z^2 + 3*x*y*z - x*z - y*z + 2*z^2 - z;"
+           "4*(x^2*y*z - x^2*z - x*y*z + x*z);"
+           " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2 + 2*x^2*z + 2*x*z^2 + x*y*z - 3*x*z;"
+           "4*( - x*y^2*z + x*y*z);"
+           "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;"
+           "4*( - x^2*y*z + x*y*z);"
+           "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2 + 2*y^2*z + 2*y*z^2 + x*y*z - 3*y*z;"
+           "4*(x*y^2*z - y^2*z - x*y*z + y*z);");
+        
+        for (int i = 0; i < 20; ++i)
+          trans[i] = bgeot::read_base_poly(3, s);
+      }
+      fill_standard_vertices();
+    }
+  };
+  
+  static pgeometric_trans
+    Q2_incomplete_gt(gt_param_list& params,
+                     std::vector<dal::pstatic_stored_object> &dependencies) {
+    GMM_ASSERT1(params.size() == 1, "Bad number of parameters : " << params.size() << " should be 1.");
+    GMM_ASSERT1(params[0].type() == 0, "Bad type of parameters");
+    int n = int(::floor(params[0].num() + 0.01));
+    GMM_ASSERT1(n == 2 || n == 3, "Bad parameter, expected value 2 or 3");
+    
+    dependencies.push_back(Q2_incomplete_reference(dim_type(n)));
+    return new Q2_incomplete_trans_(dim_type(n));
+  }
+  
+  pgeometric_trans Q2_incomplete_geotrans(dim_type nc) {
+    static pgeometric_trans pgt = 0;
+    std::stringstream name;
+    name << "GT_Q2_INCOMPLETE(" << nc << ")";
+    pgt = geometric_trans_descriptor(name.str());
+    return pgt;
+  }
+
+
+  /* ******************************************************************** */
+  /*    Misc function.                                                    */
+  /* ******************************************************************** */
+
   /* norm of returned vector is the ratio between the face surface on
      the real element and the face surface on the reference element
      IT IS NOT UNITARY
@@ -525,6 +612,8 @@ namespace bgeot {
   }
 
 
+
+
   /* ******************************************************************** */
   /*    Naming system                                                     */
   /* ******************************************************************** */
@@ -539,6 +628,7 @@ namespace bgeot {
       add_suffix("PRODUCT", product_gt);
       add_suffix("LINEAR_PRODUCT", linear_product_gt);
       add_suffix("LINEAR_QK", linear_qk);
+      add_suffix("Q2_INCOMPLETE", Q2_incomplete_gt);
     }
   };
 
