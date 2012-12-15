@@ -452,7 +452,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*    C1 composite element on quadrilateral (piecewise P3).             */
+  /*   C1 composite element on quadrilateral (piecewise P3, FVS element). */
   /* ******************************************************************** */
 
   struct quadc1p3__ : public fem<bgeot::polynomial_composite> {

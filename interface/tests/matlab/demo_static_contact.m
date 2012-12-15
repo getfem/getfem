@@ -112,8 +112,8 @@ border = gf_mesh_get(m,'outer faces');
 normals = gf_mesh_get(m, 'normal of faces', border);
 contact_boundary=border(:, find(normals(d, :) < -0.01));
 gf_mesh_set(m, 'region', GAMMAC, contact_boundary);
-contact_boundary=border(:, find(normals(d, :) > 0.01));
-gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
+dirichlet_boundary=border(:, find(normals(d, :) > 0.01));
+gf_mesh_set(m, 'region', GAMMAD, dirichlet_boundary);
 
 
 
