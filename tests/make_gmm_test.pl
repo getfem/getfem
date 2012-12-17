@@ -352,8 +352,8 @@ for ($iter = 1; $iter <= $nb_iter; ++$iter) {
 
     `rm -f $root_name`;
 
-    $compilo=`../gmm-config --cxx` || die('cannot execute ../gmm-config --cxx'); chomp($compilo);
-    $compile_options=`../gmm-config --build-flags`;
+    $compilo=`sh ../gmm-config --cxx` || die('cannot execute ../gmm-config --cxx'); chomp($compilo);
+    $compile_options=`sh ../gmm-config --build-flags`;
     chomp($compile_options);
     $compile_options="$compile_options -I$srcdir/../src -I$srcdir/../include -I../src -I../include";
     $compile_libs="-lm";

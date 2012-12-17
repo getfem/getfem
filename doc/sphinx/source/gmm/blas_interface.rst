@@ -22,11 +22,13 @@ to use this interface you have first to define ``GMM_USES_LAPACK`` before includ
 
 or specify -DGMM_USES_LAPACK on the command line of your compiler. Of course, you have also to link ``LAPACK`` or ``ATLAS`` libraries. For example on a standard linux configuration and g++ compiler the adding libraries to link ``LAPACK`` are::
 
-  g++ ...  -llapack -lblas -lg2c
+  g++ ...  -llapack -lblas -lgfortanbegin -lgfortran
 
 and to link  ``ATLAS``::
 
-  g++ ... /usr/lib/atlas/liblapack.a /usr/lib/atlas/libblas.a -latlas -lg2c
+  g++ ... /usr/lib/atlas/liblapack.a /usr/lib/atlas/libblas.a -latlas -lgfortranbegin -lgfortran
+
+The library ``libgfortranbegin`` and ``libgfortran`` are specific to g++ compiler and may vary for other compilers.
 
 
 Ask your system administrator if this configuration does not work.

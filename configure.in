@@ -1005,7 +1005,7 @@ AC_SUBST(SCILAB_TOOLBOX_DIR)
 
 
 dnl -----------------------------------------------
-dnl sorties
+dnl Outputs
 dnl -----------------------------------------------
 
 IM_METHODS=`$srcdir/bin/extract_doc $srcdir/interface/src cubature`
