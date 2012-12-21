@@ -26,14 +26,12 @@ gf_workspace('clear all');
 clear all;
 
 
-
-NX = 20;
-% m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+% NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');
 
@@ -77,10 +75,10 @@ else
   friction = 0;            % Friction coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.1;                % Time step
+  dt = 0.01;               % Time step
   T = 100;                 % Simulation time
-  dt_plot = 0.1;           % Drawing step;
-  beta = 0.5;              % Newmark scheme coefficient
+  dt_plot = 0.5;           % Drawing step;
+  beta = 0.25;             % Newmark scheme coefficient
   gamma = 0.5;             % Newmark scheme coefficient
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
@@ -90,16 +88,16 @@ else
   v_degree = 1;
   lambda_degree = 1;
   Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
-  theta_N = -1.0;          % Parameter theta for Nitsche's method
+  gamma0_N = 0.1;          % Parameter gamma0 for Nitsche's method
+  theta_N =  0.0;          % Parameter theta for Nitsche's method
 end
   
-singular_mass = 0;         % 0 = standard method
+singular_mass = 1;         % 0 = standard method
                            % 1 = Mass elimination on boundary
                            % 2 = Mixed displacement/velocity
 niter = 100;               % Maximum number of iterations for Newton's algorithm.
 plot_mesh = false;
-make_movie = 1;
+make_movie = 0;
 residual = 1E-8;
 
 if (friction ~= 0 && d == 1)
@@ -218,7 +216,6 @@ if (dirichlet)
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, GAMMAD, 'dirichletdata');
 end
 
-
 OBS = gf_mesh_fem_get(mfd, 'eval', { obstacle });
 gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
@@ -271,6 +268,7 @@ MA0 = FF-K*U0;
 nit = 0; tplot = 0;
 if (make_movie)
   nim = 0;
+  figure('position', [100 100 800 600]); % Necessary for the movie to be read by vlc
   mov = avifile('toto.avi');
 end
 
@@ -345,7 +343,7 @@ for t = 0:dt:T
         hold off;
         axis([-0.4 0.4 0.0 1.5]);
       elseif (d == 2)
-        gf_plot(mfvm, VM, 'deformed_mesh', 'off', 'deformation', U1', ...
+        gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U1', ...
             'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
         xlabel('x'); ylabel('y');
         % title('Deformed configuration (not really a small deformation of course ...)');
@@ -355,7 +353,7 @@ for t = 0:dt:T
         r = reshape(repmat(gg',6,1),3,60)';
         colormap(r);
         colorbar;
-        caxis([0 16]);
+        caxis([0 32]);
         axis([-25 25 -1 50]);
       else
         c=[0.1;0;20]; x=[1;0;0]; y=[0;1;0]; z=[0;0;1];
@@ -389,9 +387,9 @@ for t = 0:dt:T
     pause(0.1);
     if (make_movie)
       nim = nim + 1;
-      F = getframe(gca);
+      F = getframe(gcf);
       mov = addframe(mov,F);
-      % Mov(:,nim) = getframe;
+      Mov(:,nim) = getframe;
     end
     tplot = tplot + dt_plot;
   end;

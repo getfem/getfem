@@ -111,7 +111,7 @@ fi
 
 AC_CANONICAL_HOST
 
-echo "you are compiling getfem++ on a $host"
+echo "you are compiling GetFEM++ on a $host"
 
 case $CXX in
  cxx)
@@ -373,7 +373,14 @@ if test x$usesuperlu = xYES; then
   esac
   SUPERLU_CPPFLAGS="$CPPFLAGS -DUSE_VENDOR_BLAS -DF77_CALL_C=$F77_CALL_C"
   SUPERLU_SRC="superlu"
-  SUPERLU_LIBS="`readlink -f .`/$SUPERLU_SRC/libsuperlu.la"
+  case $host in
+    *apple*)
+        SUPERLU_LIBS="../$SUPERLU_SRC/libsuperlu.la"*
+        ;;
+    *)
+        SUPERLU_LIBS="`readlink -f .`/$SUPERLU_SRC/libsuperlu.la"
+        ;;
+  esac
   SUPERLU_MAKEFILE="$SUPERLU_SRC/Makefile"
 else
   echo "Building without SuperLU support (use --enable-superlu=yes to enable it)"
