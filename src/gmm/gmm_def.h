@@ -1051,7 +1051,7 @@ namespace gmm {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
     for (; it != ite; ++it) 
-      o << " (r" << it.index() << "," << cast_char(*it) << ")";
+      o << " (r" << it.index() << ", " << cast_char(*it) << ")";
   }
 
   template <typename L> void write(std::ostream &o, const L &l,
