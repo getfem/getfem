@@ -26,10 +26,10 @@ gf_workspace('clear all');
 clear all;
 
 
-% NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+NX = 5; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
@@ -54,7 +54,7 @@ if (d == 1)
   friction = 0;            % Friction coefficient
   vertical_force = 1.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.005;              % Time step
+  dt = 0.000005;            % Time step
   T = 10;                  % Simulation time
   dt_plot = 0.01;          % Drawing step;
   beta = 0.5;              % Newmark scheme coefficient
@@ -75,7 +75,7 @@ else
   friction = 0;            % Friction coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.01;               % Time step
+  dt = 0.005;               % Time step
   T = 100;                 % Simulation time
   dt_plot = 0.5;           % Drawing step;
   beta = 0.25;             % Newmark scheme coefficient
@@ -83,22 +83,26 @@ else
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 2;              % 1 = theta-method, 2 = Newmark
+  scheme = 3;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
-  Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.1;          % Parameter gamma0 for Nitsche's method
+  Nitsche = 0;             % Use Nitsche's method or not
+  gamma0_N = 0.001;          % Parameter gamma0 for Nitsche's method
   theta_N =  0.0;          % Parameter theta for Nitsche's method
 end
   
-singular_mass = 1;         % 0 = standard method
+singular_mass = 0;         % 0 = standard method
                            % 1 = Mass elimination on boundary
                            % 2 = Mixed displacement/velocity
 niter = 100;               % Maximum number of iterations for Newton's algorithm.
 plot_mesh = false;
 make_movie = 0;
-residual = 1E-8;
+residual = 1E-5;
+
+if (scheme == 3 && (Nitsche ~= 1 || singular_mass ~= 0))
+    error('Incompatibility');
+end
 
 if (friction ~= 0 && d == 1)
     error('Not taken into account');
@@ -179,7 +183,7 @@ nbdofd = gf_mesh_fem_get(mfd, 'nbdof');
 nbdofu = gf_mesh_fem_get(mfu, 'nbdof');
 
 % Volumic density of force
-F = zeros(2, nbdofd);
+F = zeros(d, nbdofd);
 F(d,:) = -vertical_force;
 
 % Elasticity model
@@ -193,7 +197,7 @@ if (singular_mass == 2)
   gf_model_set(md, 'add fem variable', 'v', mfv);
   if (scheme==1)
       gf_model_set(md, 'add explicit matrix', 'u', 'v', (B')/(dt*dt*theta*theta));
-  else
+  elseif (scheme==2)
       gf_model_set(md, 'add explicit matrix', 'u', 'v', (B')/(dt*dt*beta));
   end
   gf_model_set(md, 'add explicit matrix', 'v', 'v', C);
@@ -201,7 +205,7 @@ if (singular_mass == 2)
 else           
   if (scheme==1)
       gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*theta*theta));
-  else
+  elseif (scheme==2)
       gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*beta));
   end
 end
@@ -278,17 +282,29 @@ for t = 0:dt:T
   
   if (scheme == 1)
       LL = (MU0 + dt*MV0)/(dt*dt*theta*theta) + (1-theta)*MA0/theta;
-  else
+  elseif (scheme == 2)
       LL = (MU0 + dt*MV0 + dt*dt*(1/2-beta)*MA0)/(beta*dt*dt);
+  else
+      LL = 0*MU0;
   end
   
   if (friction ~= 0)
     gf_model_set(md, 'variable', 'wt', U0);
   end
-  gf_model_set(md, 'set private rhs', ind_rhs, LL);
-  gf_model_get(md, 'solve', 'max_res', residual, 'noisy', 'max_iter', niter);
+  
+  if (scheme == 3)
+    A0 = M \ MA0;
+    V0 = M \ MV0;
+    U1 = U0 + dt*dt*A0/2 + dt*V0;
+    gf_model_set(md, 'variable', 'u', U1);
+    gf_model_get(md, 'assembly', 'build_rhs');
+  else
+    gf_model_set(md, 'set private rhs', ind_rhs, LL);
+    gf_model_get(md, 'solve', 'max_res', residual, 'noisy', 'max_iter', niter);
+    U1 = (gf_model_get(md, 'variable', 'u'))';
+  end
 
-  U1 = (gf_model_get(md, 'variable', 'u'))';
+  
   if (singular_mass == 2)
     MU1 = (B')*(gf_model_get(md, 'variable', 'v'))';
   else
@@ -311,9 +327,12 @@ for t = 0:dt:T
   if (scheme == 1)
      MV1 = ((MU1 - MU0)/dt -(1-theta)*MV0)/theta;
      MA1 = ((MV1-MV0)/dt - (1-theta)*MA0)/theta;
-  else
+  elseif (scheme == 2)
      MA1 = (MU1-MU0-dt*MV0-dt*dt*(1/2-beta)*MA0)/(dt*dt*beta);
      MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
+  else
+     MA1 = (gf_model_get(md, 'rhs'))';
+     MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
   end
 
   if (singular_mass == 1)
@@ -330,8 +349,10 @@ for t = 0:dt:T
   
   nit = nit + 1;
   if (t >= tplot)
-      VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u', 'clambda', 'cmu', mfvm);
+      if (d >= 2)
+        VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		    'u', 'clambda', 'cmu', mfvm);
+      end
       if (d == 1)
         X = [0:1/NX:1]';
         plot(zeros(1, Msize)-0.05, X+U1, '-b');

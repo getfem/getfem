@@ -375,7 +375,7 @@ if test x$usesuperlu = xYES; then
   SUPERLU_SRC="superlu"
   case $host in
     *apple*)
-        SUPERLU_LIBS="../$SUPERLU_SRC/libsuperlu.la"*
+        SUPERLU_LIBS="../$SUPERLU_SRC/libsuperlu.la"
         ;;
     *)
         SUPERLU_LIBS="`readlink -f .`/$SUPERLU_SRC/libsuperlu.la"
