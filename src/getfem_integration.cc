@@ -493,10 +493,10 @@ namespace getfem {
     for (short_type i = 0; i < nbpt; ++i) {
       int_points[i].resize(1);
       long_scalar_type lr = lp.roots[nbpt][i];
-      int_points[i][0] = 0.5 + 0.5 * lr;
-      int_coeffs[i] = (1.0 - gmm::sqr(lr))
+      int_points[i][0] = 0.5 + 0.5 * bgeot::to_scalar(lr);
+      int_coeffs[i] = bgeot::to_scalar((1.0 - gmm::sqr(lr))
 	/ gmm::sqr( long_scalar_type(nbpt)
-		    * (lp.polynomials[nbpt-1].eval(&lr)));
+		    * (lp.polynomials[nbpt-1].eval(&lr))));
     }
     
     int_points[nbpt].resize(1);
@@ -548,7 +548,7 @@ namespace getfem {
 
     base_node c(nc); 
     if (nc == 0) {
-      add_point(c, LONG_SCAL(1));
+      add_point(c, scalar_type(1));
     }
     else {
       
@@ -613,7 +613,7 @@ namespace getfem {
       
       gmm::lu_solve(M, U, F);
       for (size_type r = 0; r < R; ++r)
-	add_point(nodes[r], U[r]);
+	add_point(nodes[r], bgeot::to_scalar(U[r]));
       
       std::stringstream name2;
       name2 << "IM_NC(" << int(nc-1) << "," << int(k) << ")";
@@ -1223,7 +1223,7 @@ namespace getfem {
       realsum = exact->exact_method()->int_monomial(idx);
       error = std::max(error, gmm::abs(realsum-sum));
     }
-    return error;
+    return bgeot::to_scalar(error);
   }
 
   papprox_integration get_approx_im_or_fail(pintegration_method pim) {

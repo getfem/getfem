@@ -60,7 +60,7 @@ namespace getfemint {
     ls->values(idx).resize(mf.nb_dof());
     for (unsigned i=0; i < mf.nb_dof(); ++i) {
       const getfem::base_node x = mf.point_of_basic_dof(i);
-      ls->values(idx)[i] = p.eval(x.begin());
+      ls->values(idx)[i] =  bgeot::to_scalar(p.eval(x.begin()));
     }
   }
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H

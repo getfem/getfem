@@ -48,7 +48,7 @@ namespace getfem {
     if (initialized < 1) init_grad();
     gmm::resize(G, P.size());
     for (size_type i = 0; i < P.size(); ++i)
-      G[i] = gradient[i].eval(P.begin());
+      G[i] = bgeot::to_scalar(gradient[i].eval(P.begin()));
     return (*this)(P);
   }
 
@@ -57,7 +57,7 @@ namespace getfem {
     gmm::resize(H, P.size(), P.size()); 
     for (size_type i = 0; i < base.dim(); ++i)
       for (size_type j = 0; j < base.dim(); ++j) {
-	H(i,j) = hessian[i*P.size()+j].eval(P.begin());
+	H(i,j) =  bgeot::to_scalar(hessian[i*P.size()+j].eval(P.begin()));
       }
   }
 

@@ -141,7 +141,7 @@ namespace getfem {
     bool bounding_box(base_node &, base_node &) const
     { return false; }
     virtual scalar_type operator()(const base_node &P) const
-    {  return base.eval(P.begin()) + shift_ls; }
+    {  return bgeot::to_scalar(base.eval(P.begin())) + shift_ls; }
     virtual scalar_type operator()(const base_node &P,
 				   dal::bit_vector &bv) const
     { scalar_type d = (*this)(P); bv[id] = (gmm::abs(d) < SEPS); return d; }

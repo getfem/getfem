@@ -752,7 +752,7 @@ bgeot::scalar_type level_set_contact::HFunction::
 {
 	if (f>epsilon) return 1.0;
 	if (f<(-epsilon)) return small_h_;
-	return 0.5+0.125*(9.0*f/(epsilon)-5.0*pow(f/(epsilon),3));
+	return 0.5+0.125*(9.0*f/(epsilon)-5.0*pow(f/(epsilon),scalar_type(3)));
 }
 
 

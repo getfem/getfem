@@ -488,9 +488,9 @@ namespace getfem {
             }
           }
           R = P * Q;
-          if (volumic) mref[0](mi) = ppi->int_poly(R);
+          if (volumic) mref[0](mi) = bgeot::to_scalar(ppi->int_poly(R));
           for (f = 0; f < nbf && !volumic; ++f)
-            mref[f+1](mi) = ppi->int_poly_on_face(R, short_type(f));
+            mref[f+1](mi) = bgeot::to_scalar(ppi->int_poly_on_face(R, short_type(f)));
         }
       }
       else {

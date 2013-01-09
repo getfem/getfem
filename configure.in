@@ -434,8 +434,8 @@ if test "x$useQDlib" = "xyes" ; then
   CPPFLAGS="$CPPFLAGS $QDINC"
 dnl #define NO_INLINE
   AC_RUN_IFELSE([AC_LANG_SOURCE([[
-#include <qd/qd.h>
-#include <qd/dd.h>
+#include <qd/qd_real.h>
+#include <qd/dd_real.h>
 #include <qd/fpu.h>
 #include <iostream>
 int main() {
@@ -1100,7 +1100,7 @@ if test "x$useQDlib" = "xyes" ; then
   echo "- QD library found. High precision (${QD_PREC}-double precision) polynomials"
   echo "  and integration methods are enabled.";
 else
-  echo "- QD library not found (not recommended)."
+  echo "- QD library not found (don't worry, this library is only recommended for very specific uses)."
 fi;
 
 if test "x$useQHULL" = "xyes"; then

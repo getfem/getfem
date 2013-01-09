@@ -557,7 +557,7 @@ namespace getfem {
       
       w[0] = K;
       for (short_type nn = 1; nn <= N; ++nn) { 
-	w[nn]=short_type(floor(0.5+((cv_node.points()[i])[nn-1]*opt_long_scalar_type(K))));
+	w[nn]=short_type(floor(0.5+bgeot::to_scalar((cv_node.points()[i])[nn-1]*opt_long_scalar_type(K))));
 	w[0]=short_type(w[0] - w[nn]);
       }
       

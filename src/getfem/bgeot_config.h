@@ -59,9 +59,9 @@
 #ifdef GETFEM_HAVE_QDLIB
 // #  define NO_INLINE
 #  ifdef GETFEM_QDLIB_USE_QUAD
-#    include <qd/qd.h>
+#    include <qd/qd_real.h>
 #  else
-#    include <qd/dd.h>
+#    include <qd/dd_real.h>
 #  endif
 #  include <qd/fpu.h>
 #endif
@@ -80,6 +80,9 @@ namespace bgeot {
   typedef size_t size_type;
   typedef double scalar_type;
   typedef std::complex<double> complex_type;
+  inline double to_double(double &a) { return a; }
+  inline scalar_type to_scalar(const scalar_type &a) { return a; }
+
 #ifndef GETFEM_HAVE_QDLIB
   typedef double long_scalar_type;
   typedef double opt_long_scalar_type;
@@ -90,16 +93,20 @@ namespace bgeot {
 #  ifdef GETFEM_QDLIB_USE_QUAD
   typedef qd_real long_scalar_type;
   typedef qd_real opt_long_scalar_type;
+  inline scalar_type to_scalar(const qd_real &a) { return to_double(a); }
 # define LONG_SCALAR_ATOF(st) (long_scalar_type(st))
 # define LONG_SCALAR_EPS 1E-64
 #  else
   typedef dd_real long_scalar_type;
   typedef dd_real opt_long_scalar_type;
+  inline scalar_type to_scalar(const dd_real &a) { return to_double(a); }
 # define LONG_SCALAR_ATOF(st) (long_scalar_type(st))
 # define LONG_SCALAR_EPS 1E-32
 #  endif
 #  define LONG_SCAL(xx) long_scalar_type(#xx) /* string assignment to preserve the precision */
 #endif
+
+
 
   // For compatibility with Getfem 2.0
 

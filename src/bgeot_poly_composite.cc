@@ -81,8 +81,8 @@ namespace bgeot {
 	    p0 = pt; p0 -= mp->orgs[ii];
 	    gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
 	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-	      return local_coordinate ? polytab[ii].eval(p1.begin())
-		: polytab[ii].eval(pt.begin());
+	      return local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
+		: to_scalar(polytab[ii].eval(pt.begin()));
 	  }
 	}
 	++it1; i1 = it1.index();
@@ -98,8 +98,8 @@ namespace bgeot {
 	    p0 = pt; p0 -= mp->orgs[ii];
 	    gmm::mult(gmm::transposed(mp->gtrans[ii]), p0, p1);
 	    if (mp->trans_of_convex(ii)->convex_ref()->is_in(p1) < 1E-10)
-	      return  local_coordinate ? polytab[ii].eval(p1.begin())
-		: polytab[ii].eval(pt.begin());
+	      return  local_coordinate ? to_scalar(polytab[ii].eval(p1.begin()))
+		: to_scalar(polytab[ii].eval(pt.begin()));
 	  }
 	}
 	--it2; i2 = it2.index();

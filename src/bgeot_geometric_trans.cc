@@ -214,7 +214,7 @@ namespace bgeot {
     virtual void poly_vector_val(const base_node &pt, base_vector &val) const {
       val.resize(nb_points());
       for (size_type k = 0; k < nb_points(); ++k)
-        val[k] = trans[k].eval(pt.begin());
+        val[k] = to_scalar(trans[k].eval(pt.begin()));
     }
 
     virtual void poly_vector_val(const base_node &pt, const convex_ind_ct &ind_ct,
@@ -222,7 +222,7 @@ namespace bgeot {
       size_type nb_funcs=ind_ct.size();
       val.resize(nb_funcs);
       for (size_type k = 0; k < nb_funcs; ++k)
-        val[k] = trans[ind_ct[k]].eval(pt.begin());
+        val[k] = to_scalar(trans[ind_ct[k]].eval(pt.begin()));
     }
 
     virtual void poly_vector_grad(const base_node &pt, base_matrix &pc) const {
@@ -232,7 +232,7 @@ namespace bgeot {
         for (dim_type n = 0; n < dim(); ++n) {
           PP = trans[i];
           PP.derivative(n);
-          pc(i, n) = PP.eval(pt.begin());
+          pc(i, n) = to_scalar(PP.eval(pt.begin()));
         }
     }
 
@@ -246,7 +246,7 @@ namespace bgeot {
         for (dim_type n = 0; n < dim(); ++n) {
           PP = trans[ind_ct[i]];
           PP.derivative(n);
-          pc(i, n) = PP.eval(pt.begin());
+          pc(i, n) = to_scalar(PP.eval(pt.begin()));
         }
     }
 
@@ -258,7 +258,7 @@ namespace bgeot {
           QP = trans[i]; QP.derivative(n);
           for (dim_type m = 0; m <= n; ++m) {
             PP = QP; PP.derivative(m);
-            pc(i, n*dim()+m) = pc(i, m*dim()+n) = PP.eval(pt.begin());
+            pc(i, n*dim()+m) = pc(i, m*dim()+n) = to_scalar(PP.eval(pt.begin()));
           }
         }
     }

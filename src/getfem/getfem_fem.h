@@ -495,7 +495,7 @@ namespace getfem {
       size_type R = nb_base_components(0);
       base_tensor::iterator it = t.begin();
       for (size_type  i = 0; i < R; ++i, ++it)
-        *it = base_[i].eval(x.begin());
+        *it = bgeot::to_scalar(base_[i].eval(x.begin()));
     }
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
@@ -506,7 +506,7 @@ namespace getfem {
       base_tensor::iterator it = t.begin();
       for (dim_type j = 0; j < n; ++j)
         for (size_type i = 0; i < R; ++i, ++it)
-          { FUNC f = base_[i]; f.derivative(j); *it = f.eval(x.begin()); }
+          { FUNC f = base_[i]; f.derivative(j); *it = bgeot::to_scalar(f.eval(x.begin())); }
     }
     void hess_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(4);
@@ -521,7 +521,7 @@ namespace getfem {
           for (size_type i = 0; i < R; ++i, ++it) {
             FUNC f = base_[i];
             f.derivative(j); f.derivative(k);
-            *it = f.eval(x.begin());
+            *it = bgeot::to_scalar(f.eval(x.begin()));
           }
     }
 

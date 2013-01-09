@@ -758,9 +758,9 @@ namespace getfem {
     int kk=k+1;	//i,j,k from 0 to 2 !
     return static_cast<int>
       (int(- 1)*(static_cast<int>(pow(double(ii-jj),2.))%3)
-       * (static_cast<int> (pow(double(ii-kk),2))%3 )
-       * (static_cast<int> (pow(double(jj-kk),2))%3)
-       * (pow(double(jj-(ii%3))-double(0.5),2)-double(1.25)));
+       * (static_cast<int> (pow(double(ii-kk),double(2)))%3 )
+       * (static_cast<int> (pow(double(jj-kk),double(2)))%3)
+       * (pow(double(jj-(ii%3))-double(0.5),double(2))-double(1.25)));
   }
 
 
