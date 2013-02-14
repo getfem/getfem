@@ -169,12 +169,11 @@ namespace getfem {
   };
 
 
-  /** Ciarlet-Geymonat hyperelastic law ( @f$ W=~_1i_1(L) + \frac{~}{2}i_2(L) + 8ci_3(L) - \frac{~_1}{2} \textrm{log}~\textrm{det}~C @f$ )
-      
+  /** Ciarlet-Geymonat hyperelastic law
    */
   struct Ciarlet_Geymonat_hyperelastic_law : public abstract_hyperelastic_law {
-    // parameters are lambda=params[0], mu=params[1], gamma'(1)=params[2]
-    // The parameter gamma'(1) has to verify gamma'(1) in ]max{-lambda/2-mu, -2mu}, -mu[
+    // parameters are lambda=params[0], mu=params[1], a=params[2]
+    // The parameter a has to verify a in ]0, mu/2[
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,

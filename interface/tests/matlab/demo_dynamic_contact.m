@@ -26,7 +26,7 @@ gf_workspace('clear all');
 clear all;
 
 
-NX = 5; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
@@ -54,41 +54,41 @@ if (d == 1)
   friction = 0;            % Friction coefficient
   vertical_force = 1.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.000005;            % Time step
-  T = 10;                  % Simulation time
-  dt_plot = 0.01;          % Drawing step;
-  beta = 0.5;              % Newmark scheme coefficient
+  dt = 0.01;              % Time step
+  T = 4;                   % Simulation time
+  dt_plot = 0.1;           % Drawing step;
+  beta = 0.25;             % Newmark scheme coefficient
   gamma = 0.5;             % Newmark scheme coefficient
-  theta = 0.5;             % Theta-method scheme coefficient
+  theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 1;              % 1 = theta-method, 2 = Newmark
+  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
-  Nitsche = 0;             % Use Nitsche's method or not
-  gamma0_N = 1;            % Parameter gamma0 for Nitsche's method
-  theta_N = 1;             % Parameter theta for Nitsche's method
+  Nitsche = 1;             % Use Nitsche's method or not
+  gamma0_N = 0.001;          % Parameter gamma0 for Nitsche's method
+  theta_N = -1;             % Parameter theta for Nitsche's method
 else
   clambda = 20;            % Lame coefficient
   cmu = 20;                % Lame coefficient
   friction = 0;            % Friction coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.005;               % Time step
-  T = 100;                 % Simulation time
+  dt = 0.1;                % Time step
+  T = 40;                  % Simulation time
   dt_plot = 0.5;           % Drawing step;
   beta = 0.25;             % Newmark scheme coefficient
   gamma = 0.5;             % Newmark scheme coefficient
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 3;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0
+  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
-  Nitsche = 0;             % Use Nitsche's method or not
-  gamma0_N = 0.001;          % Parameter gamma0 for Nitsche's method
+  Nitsche = 1;             % Use Nitsche's method or not
+  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
   theta_N =  0.0;          % Parameter theta for Nitsche's method
 end
   
@@ -98,7 +98,7 @@ singular_mass = 0;         % 0 = standard method
 niter = 100;               % Maximum number of iterations for Newton's algorithm.
 plot_mesh = false;
 make_movie = 0;
-residual = 1E-5;
+residual = 1E-8;
 
 if (scheme == 3 && (Nitsche ~= 1 || singular_mass ~= 0))
     error('Incompatibility');

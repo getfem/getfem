@@ -241,7 +241,9 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 
 .. math::
 
-  {W} &= \gamma_1i_1( E) + \frac{\lambda}{2}i_2( E) + 8ci_3( E) - \frac{\gamma_1}{2} \log \det  C
+  {W} &= a\; i_1(C) + (\frac{\mu}{2} - a)i_2(C) + (\frac{\lambda}{4} - \frac{\mu}{2} + a)i_3(C) - (\frac{\mu}{2}+\frac{\lambda}{4})\log \det(C)
+
+with  :math:`\lambda, \mu` the Lame coefficients and :math:`0<a<\frac{\mu}{2}` (see [ciarlet1988]_).
 
 
 ``Generalized Blatz-Ko law``

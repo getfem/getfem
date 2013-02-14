@@ -20,6 +20,9 @@ References
 .. [ciarlet1978] P.G. Ciarlet,
    *The finite element method for elliptic problems*, Studies in Mathematics and its Applications vol. 4 (1978), North-Holland.
 
+.. [ciarlet1988] P.G. Ciarlet,
+   *Mathematical Elasticity*, Volume 1: Three-Dimensional Elasticity. North-Holland, 1988.
+
 .. [EncyclopCubature]
    R. Cools, `An Encyclopedia of Cubature Formulas
    <http://www.cs.kuleuven.ac.be/~ines/research/ecf/ecf.html>`_, J. Complexity.
