@@ -33,7 +33,7 @@ new_bricks = 1; // new brick system or old one.
 incompressible = 1;
 
 lawname = 'Ciarlet Geymonat';
-params  = [1;1;-1.4];
+params  = [1;1;0.5];
 params = [0;1];
 if (incompressible) then
   lawname = 'Mooney Rivlin';
