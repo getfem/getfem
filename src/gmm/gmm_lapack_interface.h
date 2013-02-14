@@ -376,7 +376,7 @@ namespace gmm {
     sigma.resize(mn_min);						\
     std::vector<base_type> work(15 * mn_min);				\
     int lwork = int(work.size());	       				\
-    resize(U, m, n);							\
+    resize(U, m, m);							\
     resize(Vtransposed, n, n);						\
     char job = 'A';							\
     int info = -1;							\
@@ -396,7 +396,7 @@ namespace gmm {
     std::vector<base_type> work(15 * mn_min);				\
     std::vector<base_type2> rwork(5 * mn_min);				\
     int lwork = int(work.size());			       		\
-    resize(U, m, n);							\
+    resize(U, m, m);							\
     resize(Vtransposed, n, n);						\
     char job = 'A';							\
     int info = -1;							\
