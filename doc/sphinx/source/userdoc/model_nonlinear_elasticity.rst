@@ -243,7 +243,7 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 
   {W} &= a\; i_1(C) + (\frac{\mu}{2} - a)i_2(C) + (\frac{\lambda}{4} - \frac{\mu}{2} + a)i_3(C) - (\frac{\mu}{2}+\frac{\lambda}{4})\log \det(C)
 
-with  :math:`\lambda, \mu` the Lame coefficients and :math:`0<a<\frac{\mu}{2}` (see [ciarlet1988]_).
+with  :math:`\lambda, \mu` the Lame coefficients and :math:`\max(0,\frac{\mu}{2}-\frac{\lambda}{4})<a<\frac{\mu}{2}` (see [ciarlet1988]_).
 
 
 ``Generalized Blatz-Ko law``
@@ -290,7 +290,7 @@ where ``AHL`` is an object of type ``getfem::abstract_hyperelastic_law`` which r
   getfem::plane_strain_hyperelastic_law AHL(pAHL);
   getfem::generalized_Blatz_Ko_hyperelastic_law AHL;
 
-The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition. The plane strain hyperelastic law take a pointer on an hyperelastic law as a parameter and performs a 2D plane strain approximation.
+The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient (:math:`\lambda, \mu, a`) and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition. The plane strain hyperelastic law take a pointer on an hyperelastic law as a parameter and performs a 2D plane strain approximation.
 
 ``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or decribe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh). 
 

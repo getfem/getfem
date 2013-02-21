@@ -709,6 +709,10 @@ namespace getfem {
                     + params[2];
     scalar_type d = params[0]/scalar_type(2) + params[1];
     base_matrix C(N, N);
+    if (a > params[1]/scalar_type(2)
+        || a < params[1]/scalar_type(2) - params[0]/scalar_type(4) || a < 0)
+      GMM_WARNING1("Inconsistent third parameter for Ciarlet-Geymonat "
+                   "hyperelastic law");
     gmm::copy(gmm::scaled(E, scalar_type(2)), C);
     gmm::add(gmm::identity_matrix(), C);
     gmm::copy(gmm::identity_matrix(), result);
