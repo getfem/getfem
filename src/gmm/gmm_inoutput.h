@@ -1144,16 +1144,31 @@ namespace gmm {
     MatrixMarket_IO::write(filename, tmp);
   }
 
-  template<typename VEC> static void vecsave(std::string fname, const VEC& V) {
-    std::ofstream f(fname.c_str()); f.precision(16); f.imbue(std::locale("C"));
-    for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n"; 
+  template<typename VEC> static void vecsave(std::string fname, const VEC& V,
+                                             bool binary=false) {
+    if (binary) {
+      std::ofstream f(fname.c_str(), std::ofstream::binary);
+      for (size_type i=0; i < gmm::vect_size(V); ++i)
+        f.write(reinterpret_cast<const char*>(&V[i]), sizeof(V[i]));
+    }
+    else {
+      std::ofstream f(fname.c_str()); f.precision(16); f.imbue(std::locale("C"));
+      for (size_type i=0; i < gmm::vect_size(V); ++i) f << V[i] << "\n";
+    }
   } 
 
-  template<typename VEC> static void vecload(std::string fname,
-					     const VEC& V_) {
+  template<typename VEC> static void vecload(std::string fname, const VEC& V_,
+                                             bool binary=false) {
     VEC &V(const_cast<VEC&>(V_));
-    std::ifstream f(fname.c_str()); f.imbue(std::locale("C"));
-    for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i]; 
+    if (binary) {
+      std::ifstream f(fname.c_str(), std::ifstream::binary);
+      for (size_type i=0; i < gmm::vect_size(V); ++i)
+        f.read(reinterpret_cast<char*>(&V[i]), sizeof(V[i]));
+    }
+    else {
+      std::ifstream f(fname.c_str()); f.imbue(std::locale("C"));
+      for (size_type i=0; i < gmm::vect_size(V); ++i) f >> V[i];
+    }
   }
 }
 
