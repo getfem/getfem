@@ -2381,8 +2381,16 @@ namespace getfem {
       area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg, -1e-3);
 
       gmm::resize(F, mf_u.nb_dof());
-      asm_level_set_normal_source_term
-        (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, reg);
+      if (p->contact_only)
+        asm_level_set_normal_source_term
+          (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, reg);
+      else {
+        GMM_ASSERT1(dl.size() >= 3, "Wrong size");
+        const model_real_plain_vector *f_coeff = &(md.real_variable(dl[2]));
+        const mesh_fem *pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
+        asm_level_set_normal_source_term
+          (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, pmf_coeff, f_coeff, reg);
+	  }
     }
     else if (pbr->brick_name() == "Integral penalized contact with rigid obstacle brick" ||
              pbr->brick_name() == "Integral penalized contact and friction with rigid "
@@ -2391,6 +2399,7 @@ namespace getfem {
         = dynamic_cast<penalized_contact_rigid_obstacle_brick *>
          (const_cast<virtual_brick *>(pbr.get()));
       GMM_ASSERT1(p, "Wrong type of brick");
+      GMM_ASSERT1(false, "Not implemented yet");
     }
     else if (pbr->brick_name() == "Integral contact between nonmatching meshes brick" ||
              pbr->brick_name() == "Integral contact and friction between nonmatching "
@@ -2430,8 +2439,16 @@ namespace getfem {
              (*ml[0], mf_u1, u1, *(p->pmf_u2_proj), u2_proj, reg, -1e-3);
 
       gmm::resize(F, mf_u1.nb_dof());
-      asm_nonmatching_meshes_normal_source_term
-        (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, reg);
+      if (p->contact_only)
+        asm_nonmatching_meshes_normal_source_term
+          (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, reg);
+	  else {
+        GMM_ASSERT1(dl.size() >= 2, "Wrong size");
+        const model_real_plain_vector *f_coeff = &(md.real_variable(dl[1]));
+        const mesh_fem *pmf_coeff = md.pmesh_fem_of_variable(dl[1]);
+        asm_nonmatching_meshes_normal_source_term
+          (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, pmf_coeff, f_coeff, reg);
+	  }
 
     }
     else if (pbr->brick_name() == "Integral penalized contact between nonmatching meshes brick" ||
@@ -2441,6 +2458,7 @@ namespace getfem {
         = dynamic_cast<penalized_contact_nonmatching_meshes_brick *>
          (const_cast<virtual_brick *>(pbr.get()));
       GMM_ASSERT1(p, "Wrong type of brick");
+      GMM_ASSERT1(false, "Not implemented yet");
     }
 
   }
