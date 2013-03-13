@@ -193,13 +193,12 @@ namespace getfem {
 
   void projected_fem::build_kdtree(void) const {
     tree.clear();
-    dal::bit_vector dofs=mf_source.dof_on_region(-1);
+    dal::bit_vector dofs=mf_source.basic_dof_on_region(rg_source);
     dofs.setminus(blocked_dofs);
     dim_type qdim=target_dim();
-    for (size_type dof=0; dof < mf_source.nb_dof(); dof += qdim) {
-        if (dofs.is_in(dof))
+    for (dal::bv_visitor dof(dofs); !dof.finished(); ++dof)
+        if (dof % qdim == 0)
             tree.add_point_with_id(mf_source.point_of_basic_dof(dof), dof);
-    }
   }
 
   bool projected_fem::find_a_projected_point(base_node pt, base_node &ptr_proj,
