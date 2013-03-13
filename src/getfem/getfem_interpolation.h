@@ -54,13 +54,13 @@ namespace getfem {
   class mesh_trans_inv : public bgeot::geotrans_inv {
 
   protected :
-    typedef gmm::abstract_null_type void_type;
+    typedef std::set<size_type>::const_iterator set_iterator;
+    typedef std::map<size_type,size_type>::const_iterator map_iterator;
+
     const mesh &msh;
-    std::vector<std::map<size_type, void_type> > pts_cvx;
-    typedef std::map<size_type, void_type>::const_iterator map_iterator;
+    std::vector<std::set<size_type> > pts_cvx;
     std::vector<base_node> ref_coords;
-    std::vector<double> dist;
-    std::vector<size_type> cvx_pts;
+    std::map<size_type,size_type> ids;
 
   public :
 
@@ -69,18 +69,24 @@ namespace getfem {
     void points_on_convex(size_type i, std::vector<size_type> &itab) const;
     const std::vector<base_node> &reference_coords(void) { return ref_coords; }
 
+    void add_point_with_id(base_node n, size_type id)
+    { size_type ipt = add_point(n); ids[ipt] = id; }
+    size_type id_of_point(size_type ipt) const;
+
     /* extrapolation = 0 : Only the points inside the mesh are distributed.
      * extrapolation = 1 : Try to extrapolate the exterior points near the
      *                     boundary.
      * extrapolation = 2 : Extrapolate all the exterior points. Could be
      *                     expensive.
-     * 
+     *
+     * if rg_source is provided only the corresponding part of the mesh is
+     * taken into account and extrapolation is done with respect to the
+     * boundary of the specified region. rg_source must contain only convexes.
      */
-    void distribute(int extrapolation = 0);
+    void distribute(int extrapolation = 0,
+                    mesh_region rg_source=mesh_region::all_convexes());
     mesh_trans_inv(const mesh &m, double EPS_ = 1E-12)
       : bgeot::geotrans_inv(EPS_), msh(m) {}
-  private :
-    void add_point_with_id(base_node, size_type) {}
   };
   
 
@@ -220,11 +226,16 @@ namespace getfem {
 
      If both mesh_fem shared the same mesh object, a fast interpolation
      will be used.
+
+     If rg_source and rg_target are provided the operation is restricted to
+     these regions. rg_source must contain only convexes.
   */
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
                      const VECTU &U, VECTV &V, int extrapolation = 0,
-                     double EPS = 1E-10);
+                     double EPS = 1E-10,
+                     mesh_region rg_source=mesh_region::all_convexes(),
+                     mesh_region rg_target=mesh_region::all_convexes());
 
   /**
      @brief Build the interpolation matrix of mf_source on mf_target.
@@ -232,12 +243,17 @@ namespace getfem {
      such that (V = M*U) == interpolation(mf_source, mf_target, U, V).
 
      Useful for repeated interpolations.
-     For perfomance reasons the matrix M is recommended to be either
+     For performance reasons the matrix M is recommended to be either
      a row or a row and column matrix.
+
+     If rg_source and rg_target are provided the operation is restricted to
+     these regions. rg_source must contain only convexes.
    */
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-                     MAT &M, int extrapolation = 0, double EPS = 1E-10);
+                     MAT &M, int extrapolation = 0, double EPS = 1E-10,
+                     mesh_region rg_source=mesh_region::all_convexes(),
+                     mesh_region rg_target=mesh_region::all_convexes());
 
 
   /* --------------------------- Implementation ---------------------------*/
@@ -374,7 +390,8 @@ namespace getfem {
                      mesh_trans_inv &mti,
                      const VECTU &UU, VECTV &V, MAT &MM,
                      int version, int extrapolation = 0,
-                     dal::bit_vector *dof_untouched = 0) {
+                     dal::bit_vector *dof_untouched = 0,
+                     mesh_region rg_source=mesh_region::all_convexes()) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     const mesh &msh(mf_source.linked_mesh());
@@ -387,12 +404,12 @@ namespace getfem {
 
     if (version == 0) mf_source.extend_vector(UU, U);
 
-    mti.distribute(extrapolation);
+    mti.distribute(extrapolation, rg_source);
     std::vector<size_type> itab;    
     base_matrix G;
 
     /* interpolation */
-    dal::bit_vector dof_done; dof_done.add(0, mti.nb_points());
+    dal::bit_vector points_to_do; points_to_do.add(0, mti.nb_points());
     std::vector<T> val(qdim_s);
     std::vector<std::vector<T> > coeff;
     base_tensor Z;
@@ -423,10 +440,11 @@ namespace getfem {
         dof_source.assign(idct.begin(), idct.end());
       }
       for (size_type i = 0; i < itab.size(); ++i) {
-        size_type dof_t = itab[i];
-        if (dof_done.is_in(dof_t)) {
-          dof_done.sup(dof_t);
-          ctx.set_xref(mti.reference_coords()[dof_t]);
+        size_type ipt = itab[i];
+        if (points_to_do.is_in(ipt)) {
+          points_to_do.sup(ipt);
+          ctx.set_xref(mti.reference_coords()[ipt]);
+          size_type dof_t = mti.id_of_point(ipt);
           size_type pos = dof_t * qdim_s;
           if (version == 0) {
             for (size_type qq=0; qq < qqdim; ++qq) {           
@@ -458,13 +476,20 @@ namespace getfem {
         }
       }
     }
-    if (dof_done.card() != 0) {
-      if (dof_untouched)
-        *dof_untouched = dof_done;
-      else
+    if (points_to_do.card() != 0) {
+      if (dof_untouched) {
+        dof_untouched->clear();
+        for (dal::bv_visitor ipt(points_to_do); !ipt.finished(); ++ipt)
+          dof_untouched->add(mti.id_of_point(ipt));
+      }
+      else {
+        dal::bit_vector dofs_to_do;
+        for (dal::bv_visitor ipt(points_to_do); !ipt.finished(); ++ipt)
+          dofs_to_do.add(mti.id_of_point(ipt));
         GMM_WARNING2("in interpolation (different meshes),"
-                     << dof_done.card() << " dof of target mesh_fem have "
-                     << " been missed\nmissing dofs : " << dof_done);
+                     << dofs_to_do.card() << " dof of target mesh_fem have "
+                     << " been missed\nmissing dofs : " << dofs_to_do);
+      }
     }
 
     if (version != 0) {
@@ -479,11 +504,12 @@ namespace getfem {
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, mesh_trans_inv &mti,
                      const VECTU &U, VECTV &V, int extrapolation = 0,
-                     dal::bit_vector *dof_untouched = 0) {
+                     dal::bit_vector *dof_untouched = 0,
+                     mesh_region rg_source=mesh_region::all_convexes()) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0 &&
                 gmm::vect_size(V)!=0, "Dimension of vector mismatch");
-    interpolation(mf_source, mti, U, V, M, 0, extrapolation, dof_untouched);
+    interpolation(mf_source, mti, U, V, M, 0, extrapolation, dof_untouched, rg_source);
   }
 
 
@@ -494,10 +520,12 @@ namespace getfem {
      - the solution should be continuous..
    */
   template<typename VECTU, typename VECTV, typename MAT>
-    void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-                       const VECTU &U, VECTV &VV, MAT &MM,
-                       int version, int extrapolation,
-                       double EPS) {
+  void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
+                     const VECTU &U, VECTV &VV, MAT &MM,
+                     int version, int extrapolation,
+                     double EPS,
+                     mesh_region rg_source=mesh_region::all_convexes(),
+                     mesh_region rg_target=mesh_region::all_convexes()) {
 
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
@@ -520,10 +548,18 @@ namespace getfem {
                   "Target fem not convenient for interpolation");
     }
     /* initialisation of the mesh_trans_inv */
-    size_type nbpts = mf_target.nb_basic_dof() / qdim_t;
-    for (size_type i = 0; i < nbpts; ++i)
-      mti.add_point(mf_target.point_of_basic_dof(i * qdim_t));
-    interpolation(mf_source, mti, U, V, M, version, extrapolation);
+    if (rg_target.id() == mesh_region::all_convexes().id()) {
+      size_type nbpts = mf_target.nb_basic_dof() / qdim_t;
+      for (size_type i = 0; i < nbpts; ++i)
+        mti.add_point(mf_target.point_of_basic_dof(i * qdim_t));
+      interpolation(mf_source, mti, U, V, M, version, extrapolation);
+    }
+    else {
+      for (dal::bv_visitor_c dof(mf_target.basic_dof_on_region(rg_target)); !dof.finished(); ++dof)
+        if (dof % qdim_t == 0)
+          mti.add_point_with_id(mf_target.point_of_basic_dof(dof), dof/qdim_t);
+      interpolation(mf_source, mti, U, V, M, version, extrapolation, 0, rg_source);
+    }
 
     if (version == 0)
       mf_target.reduce_vector(V, VV);
@@ -539,29 +575,36 @@ namespace getfem {
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
                      const VECTU &U, VECTV &V, int extrapolation,
-                     double EPS) {
+                     double EPS,
+                     mesh_region rg_source, mesh_region rg_target) {
     base_matrix M;
     GMM_ASSERT1((gmm::vect_size(U) % mf_source.nb_dof()) == 0
                 && (gmm::vect_size(V) % mf_target.nb_dof()) == 0
                 && gmm::vect_size(V) != 0, "Dimensions mismatch");
-    if (&mf_source.linked_mesh() == &mf_target.linked_mesh()) {
+    if (&mf_source.linked_mesh() == &mf_target.linked_mesh() &&
+        rg_source.id() == mesh_region::all_convexes().id() &&
+        rg_target.id() == mesh_region::all_convexes().id())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 0);
-    }
     else 
-      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation, EPS);
+      interpolation(mf_source, mf_target, U, V, M, 0, extrapolation, EPS,
+                    rg_source, rg_target);
   }
 
   template<typename MAT>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
-                     MAT &M, int extrapolation, double EPS) {
+                     MAT &M, int extrapolation, double EPS,
+                     mesh_region rg_source, mesh_region rg_target) {
     GMM_ASSERT1(mf_source.nb_dof() == gmm::mat_ncols(M)
                 && (gmm::mat_nrows(M) % mf_target.nb_dof()) == 0
                 && gmm::mat_nrows(M) != 0, "Dimensions mismatch");
     std::vector<scalar_type> U, V;
-    if (&mf_source.linked_mesh() == &mf_target.linked_mesh())
+    if (&mf_source.linked_mesh() == &mf_target.linked_mesh() &&
+        rg_source.id() == mesh_region::all_convexes().id() &&
+        rg_target.id() ==mesh_region::all_convexes().id())
       interpolation_same_mesh(mf_source, mf_target, U, V, M, 1);
     else 
-      interpolation(mf_source, mf_target, U, V, M, 1, extrapolation, EPS);
+      interpolation(mf_source, mf_target, U, V, M, 1, extrapolation, EPS,
+                    rg_source, rg_target);
   }
 
 }  /* end of namespace getfem.                                             */

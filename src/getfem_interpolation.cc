@@ -24,17 +24,35 @@
 
 namespace getfem {
 
+  size_type mesh_trans_inv::id_of_point(size_type ipt) const {
+
+    if (!ids.empty()) {
+      map_iterator it=ids.find(ipt);
+      if (it != ids.end())
+        return it->second;
+    }
+    // otherwise assume that the point id is the point index
+    return ipt;
+  }
+
   void mesh_trans_inv::points_on_convex(size_type i,
                                         std::vector<size_type> &itab) const {
     itab.resize(pts_cvx[i].size()); size_type j = 0;
-    for (map_iterator it = pts_cvx[i].begin(); it != pts_cvx[i].end(); ++it)
-      itab[j++] = it->first;
+    for (set_iterator it = pts_cvx[i].begin(); it != pts_cvx[i].end(); ++it)
+      itab[j++] = *it;
   }
-  
-  void mesh_trans_inv::distribute(int extrapolation) {
+
+  void mesh_trans_inv::distribute(int extrapolation, mesh_region rg_source) {
+
+    rg_source.from_mesh(msh);
+    rg_source.error_if_not_convexes();
+    bool all_convexes = (rg_source.id() == mesh_region::all_convexes().id());
+
     size_type nbpts = nb_points();
     size_type nbcvx = msh.convex_index().last_true() + 1;
-    ref_coords.resize(nbpts); dist.resize(nbpts); cvx_pts.resize(nbpts);
+    ref_coords.resize(nbpts);
+    std::vector<double> dist(nbpts);
+    std::vector<size_type> cvx_pts(nbpts);
     pts_cvx.clear(); pts_cvx.resize(nbcvx);
     base_node min, max, pt_ref; /* bound of the box enclosing the convex */
     bgeot::kdtree_tab_type boxpts;
@@ -43,15 +61,23 @@ namespace getfem {
     scalar_type mult = scalar_type(1);
 
     do {
-      for (dal::bv_visitor j(msh.convex_index()); !j.finished(); ++j) {
+      for (dal::bv_visitor j(rg_source.index()); !j.finished(); ++j) {
         if (mult > scalar_type(1) && !(cv_on_bound.is_in(j))) continue;
         bgeot::pgeometric_trans pgt = msh.trans_of_convex(j);
         bounding_box(min, max, msh.points_of_convex(j), pgt);
         for (size_type k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
         if (extrapolation == 2) {
           if (mult == scalar_type(1))
-            for (short_type f = 0; f < msh.nb_faces_of_convex(j); ++f)
-              if (!(msh.is_convex_having_neighbour(j, f))) cv_on_bound.add(j);
+            for (short_type f = 0; f < msh.nb_faces_of_convex(j); ++f) {
+              size_type neighbour_cv = msh.neighbour_of_convex(j, f);
+              if (!all_convexes && neighbour_cv != size_type(-1)) {
+                // check if the neighbour is also contained in rg_source ...
+                if (!rg_source.is_in(neighbour_cv)) 
+                  cv_on_bound.add(j); // ... if not, treat the element as a boundary one
+              }
+              else // boundary element of the overall mesh
+                cv_on_bound.add(j);
+            }
           if (cv_on_bound.is_in(j)) {
             scalar_type h = scalar_type(0);
             for (size_type k=0; k < min.size(); ++k)
@@ -83,7 +109,7 @@ namespace getfem {
 //               }
               ref_coords[ind] = pt_ref;
               dist[ind] = isin; cvx_pts[ind] = j;
-              pts_cvx[j][ind] = void_type();
+              pts_cvx[j].insert(ind);
               npt.sup(ind);
             }
           }
