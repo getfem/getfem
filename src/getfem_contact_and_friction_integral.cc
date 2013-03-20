@@ -2144,19 +2144,19 @@ namespace getfem {
                   "the data corresponding to the friction coefficient "
                   "has not the right format");
 
-        if (dl.size() > nd) {
+        if (dl.size() > nd+1) {
           nd++;
           alpha = md.real_variable(dl[nd])[0];
           GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[nd])) == 1,
                       "Parameter alpha should be a scalar");
         }
 
-        if (dl.size() > nd) {
+        if (dl.size() > nd+1) {
           nd++;
           WT1 = &(md.real_variable(dl[nd]));
         }
 
-        if (dl.size() > nd) {
+        if (dl.size() > nd+1) {
           nd++;
           WT2 = &(md.real_variable(dl[nd]));
         }
