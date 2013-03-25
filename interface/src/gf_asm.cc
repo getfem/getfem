@@ -618,14 +618,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       may be choosen among:
       
       - 'SaintVenant Kirchhoff':
-      Linearized law, should be avoided). This law has the two usual
-      Lame coefficients as parameters, called lambda and mu.
+        Linearized law, should be avoided). This law has the two usual
+        Lame coefficients as parameters, called lambda and mu.
       - 'Mooney Rivlin':
-      Only for incompressibility. This law has two parameters,
-      called C1 and C2.
+        Only for incompressibility. This law has two parameters,
+        called C1 and C2.
       - 'Ciarlet Geymonat':
-      This law has 3 parameters, called lambda, mu and gamma, with
-      gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
+        This law has 3 parameters, called lambda, mu and gamma, with
+        gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
       
     The parameters of the material law are described on the @tmf `mf_d`.
     The matrix `params` should have `nbdof(mf_d)` columns, each row
