@@ -61,8 +61,8 @@ namespace getfem {
       range of acceptable values.
       Possible values for `option` is 1 for the non-symmetric Alart-Curnier
       augmented Lagrangian method, 2 for the symmetric one, 3 for the
-      non-symmetric Alart-Curnier method with an additional augmentation
-      and 4 for a new unsymmetric method. The default value is 1.
+      non-symmetric Alart-Curnier method with an additional augmentation.
+      The default value is 1.
   */
   size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
@@ -169,8 +169,8 @@ namespace getfem {
       range of acceptable values.
       Possible values for `option` is 1 for the non-symmetric Alart-Curnier
       augmented Lagrangian method, 2 for the symmetric one, 3 for the
-      non-symmetric Alart-Curnier method with an additional augmentation
-      and 4 for a new unsymmetric method. The default value is 1.
+      non-symmetric Alart-Curnier method with an additional augmentation.
+      The default value is 1.
   */
   size_type add_integral_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
