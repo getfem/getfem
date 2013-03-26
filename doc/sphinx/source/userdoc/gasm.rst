@@ -172,7 +172,7 @@ available operations inside the ``comp`` command
 * ``Normal()``: evaluate the unit normal (should not be used for volumic
   integrations !)
 
-* ``NonLinear$x(#mf1,... #mfn)``: evaluate the *xth* non-linear term (inserted
+* ``NonLin$x(#mf1,... #mfn)``: evaluate the *xth* non-linear term (inserted
   with ``push_nonlinear_term(pnonlinear_elem_term)``) using the listed |mf|
   objects.
 
