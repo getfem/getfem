@@ -3507,6 +3507,16 @@ namespace getfem {
       return i;
     }
 
+    void extend_vectors(void) {
+      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
+        size_type ind_U = contact_boundaries[i].ind_U;
+        contact_boundaries[i].mfu->extend_vector(*(Us[ind_U]), ext_Us[ind_U]);
+        size_type ind_lambda = contact_boundaries[i].ind_lambda;
+        contact_boundaries[i].mflambda->extend_vector(*(lambdas[ind_lambda]),
+                                                      ext_lambdas[ind_lambda]);
+      }
+    }
+
 
     const getfem::mesh_fem &mfu_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mfu); }
@@ -3628,6 +3638,7 @@ namespace getfem {
     size_type N = 0;
     base_matrix G;
     model_real_plain_vector coeff;
+    cf.extend_vectors();
     for (size_type i = 0; i < cf.contact_boundaries.size(); ++i) {
       size_type bnum = cf.region_of_boundary(i);
       const mesh_fem &mfu = cf.mfu_of_boundary(i);
