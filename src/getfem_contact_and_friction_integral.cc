@@ -1667,6 +1667,15 @@ namespace getfem {
       else
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
+      model_real_plain_vector WT2_proj(0);
+      if (WT2) {
+        gmm::resize(WT2_proj, nbsub);
+        if (mf_u2.is_reduced())
+          gmm::mult(Esub, *WT2, WT2_proj);
+        else
+          gmm::copy(gmm::sub_vector(*WT2, SUBI), WT2_proj);
+      }
+
       size_type U1L = 0;
       size_type LU1 = is_symmetric() ? size_type(-1) : 1;
       size_type U2L = is_symmetric() ? 1 : 2;
@@ -1701,7 +1710,7 @@ namespace getfem {
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
             (matl[U1L], Klu1, Ku2l, Klu2, matl[LL], Ku1u1, Ku2u2, Ku1u2, Ku2u1,
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
-             pmf_coeff, f_coeff, vr[0], alpha, WT1, WT2, rg, option);
+             pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
 
         if (mf_u2.is_reduced()) {
           gmm::mult(gmm::transposed(Esub), Ku2l, matl[U2L]);
@@ -1741,14 +1750,13 @@ namespace getfem {
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
             (vecl[U1L], Ru2, vecl[LL], // u1, u2, lambda
              mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
-             pmf_coeff, f_coeff, vr[0], alpha, WT1, WT2, rg, option);
+             pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
 
         if (mf_u2.is_reduced())
           gmm::mult(gmm::transposed(Esub), Ru2, vecl[U2L]);
         else
           gmm::copy(Ru2, gmm::sub_vector(vecl[U2L], SUBI));
       }
-
     }
 
     integral_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
@@ -1768,7 +1776,10 @@ namespace getfem {
     }
 
     ~integral_contact_nonmatching_meshes_brick()
-    { if (pmf_u2_proj) delete pmf_u2_proj; }
+    {
+      if (pmf_u2_proj) delete pmf_u2_proj;
+      if (pfem_proj) del_projected_fem(pfem_proj);
+    }
 
   };
 
@@ -2179,6 +2190,15 @@ namespace getfem {
       else
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
+      model_real_plain_vector WT2_proj(0);
+      if (WT2) {
+        gmm::resize(WT2_proj, nbsub);
+        if (mf_u2.is_reduced())
+          gmm::mult(Esub, *WT2, WT2_proj);
+        else
+          gmm::copy(gmm::sub_vector(*WT2, SUBI), WT2_proj);
+      }
+
       if (version & model::BUILD_MATRIX) {
         GMM_TRACE2("Penalized contact between nonmatching meshes tangent term");
         gmm::clear(matl[0]);
@@ -2198,7 +2218,7 @@ namespace getfem {
           model_real_sparse_matrix Ku2u1(nbsub,nbdof1);
           asm_penalized_contact_nonmatching_meshes_tangent_matrix
             (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, *pmf_u2_proj, u2_proj,
-             pmf_lambda, lambda, pmf_coeff, f_coeff, vr[0], alpha, WT1, WT1, rg, option);
+             pmf_lambda, lambda, pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
           if (mf_u2.is_reduced())
             gmm::mult(gmm::transposed(Esub), Ku2u1, matl[3]);
           else
@@ -2230,7 +2250,7 @@ namespace getfem {
         else
           asm_penalized_contact_nonmatching_meshes_rhs
             (vecl[0], Ru2, mim, mf_u1, u1, *pmf_u2_proj, u2_proj, pmf_lambda, lambda,
-             pmf_coeff, f_coeff, vr[0], alpha, WT1, WT2, rg, option);
+             pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
 
         if (mf_u2.is_reduced())
           gmm::mult(gmm::transposed(Esub), Ru2, vecl[1]);
@@ -2254,7 +2274,10 @@ namespace getfem {
     }
 
     ~penalized_contact_nonmatching_meshes_brick()
-    { if (pmf_u2_proj) delete pmf_u2_proj; }
+    {
+      if (pmf_u2_proj) delete pmf_u2_proj;
+      if (pfem_proj) del_projected_fem(pfem_proj);
+    }
 
   };
 
