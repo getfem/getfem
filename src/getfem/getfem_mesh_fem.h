@@ -584,6 +584,26 @@ namespace getfem {
   const mesh_fem &dummy_mesh_fem(void);
 
 
+  /** Given a mesh_fem @param mf and a vector @param vec of size equal to
+   *  mf.nb_basic_dof(), the output vector @param coeff will contain the
+   *  values of @param vec corresponding to the basic dofs of element
+   *  @param cv . The size of @param coeff is adjusted if necessary.
+   */
+  template <typename VEC1, typename VEC2>
+  void slice_vector_on_basic_dof_of_element(const mesh_fem &mf, const VEC1 &vec,
+                                            size_type cv, VEC2 &coeff) {
+    size_type cvnbdof = mf.nb_basic_dof_of_element(cv);
+    gmm::resize(coeff, cvnbdof);
+    mesh_fem::ind_dof_ct::const_iterator
+      itdof = mf.ind_basic_dof_of_element(cv).begin();
+    for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k] = vec[*itdof];
+    // alternative implementation:
+    // gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
+    // gmm::copy(gmm::sub_vector
+    //          (vec, gmm::sub_index
+    //              (mf.ind_basic_dof_of_element(cv))), coeff);
+  }
+
 }  /* end of namespace getfem.                                             */
 
 
