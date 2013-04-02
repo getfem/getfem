@@ -214,11 +214,12 @@ namespace getfem {
   }
 
   void mesh::translation(const base_small_vector &V)
-  { pts.translation(V); }
+  { pts.translation(V); touch(); }
 
   void mesh::transformation(const base_matrix &M) {
     pts.transformation(M);
     if (Bank_info) { delete Bank_info; Bank_info = 0; }
+    touch();
   }
 
   void mesh::bounding_box(base_node& Pmin, base_node& Pmax) const {
@@ -390,7 +391,7 @@ namespace getfem {
     gmm::uint64_type d = act_counter();
     for (dal::bv_visitor i(convex_index()); !i.finished(); ++i)
       cvs_v_num[i] = d;
-    if (Bank_info) delete Bank_info;
+    if (Bank_info) { delete Bank_info; Bank_info = 0; }
     if (m.Bank_info) {
       Bank_info = new Bank_info_struct;
       *Bank_info = *(m.Bank_info);
