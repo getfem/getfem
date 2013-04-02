@@ -1547,8 +1547,7 @@ namespace getfem {
 
     size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
                         // expected to come in contact.
-    mutable getfem::pfem pfem_proj;        // cached fem and mesh_fem for the
-    mutable getfem::mesh_fem *pmf_u2_proj; // projection between nonmatching meshes
+    mutable getfem::pfem pfem_proj; // cached fem for the projection between nonmatching meshes
     bool Tresca_version, contact_only;
     int option;
 
@@ -1640,19 +1639,19 @@ namespace getfem {
       size_type N = mf_u1.linked_mesh().dim();
 
       // projection of the second mesh_fem onto the mesh of the first mesh_fem
-      if (!pmf_u2_proj) {
-        pmf_u2_proj = new getfem::mesh_fem(mim.linked_mesh(), dim_type(N));
+      if (!pfem_proj)
         pfem_proj = new_projected_fem(mf_u2, mim, rg2, rg1);
-        pmf_u2_proj->set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
-      }
+
+      getfem::mesh_fem mf_u2_proj(mim.linked_mesh(), dim_type(N));
+      mf_u2_proj.set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
 
       size_type nbdof1 = mf_u1.nb_dof();
       size_type nbdof_lambda = mf_lambda.nb_dof();
       size_type nbdof2 = mf_u2.nb_dof();
-      size_type nbsub = pmf_u2_proj->nb_basic_dof();
+      size_type nbsub = mf_u2_proj.nb_basic_dof();
 
       std::vector<size_type> ind;
-      pmf_u2_proj->get_global_dof_index(ind);
+      mf_u2_proj.get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
       gmm::csc_matrix<scalar_type> Esub(nbsub, nbdof2);
@@ -1704,12 +1703,12 @@ namespace getfem {
         if (contact_only)
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
             (matl[U1L], Klu1, Ku2l, Klu2, matl[LL], Ku1u1, Ku2u2, Ku1u2,
-             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
+             mim, mf_u1, u1, mf_u2_proj, u2_proj, mf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_Alart_Curnier_contact_nonmatching_meshes_tangent_matrix
             (matl[U1L], Klu1, Ku2l, Klu2, matl[LL], Ku1u1, Ku2u2, Ku1u2, Ku2u1,
-             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
+             mim, mf_u1, u1, mf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
 
         if (mf_u2.is_reduced()) {
@@ -1744,12 +1743,12 @@ namespace getfem {
         if (contact_only)
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
             (vecl[U1L], Ru2, vecl[LL], // u1, u2, lambda
-             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
+             mim, mf_u1, u1, mf_u2_proj, u2_proj, mf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_Alart_Curnier_contact_nonmatching_meshes_rhs
             (vecl[U1L], Ru2, vecl[LL], // u1, u2, lambda
-             mim, mf_u1, u1, *pmf_u2_proj, u2_proj, mf_lambda, lambda,
+             mim, mf_u1, u1, mf_u2_proj, u2_proj, mf_lambda, lambda,
              pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
 
         if (mf_u2.is_reduced())
@@ -1761,7 +1760,7 @@ namespace getfem {
 
     integral_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
                                                 bool contact_only_, int option_)
-    : rg1(rg1_), rg2(rg2_), pfem_proj(0), pmf_u2_proj(0),
+    : rg1(rg1_), rg2(rg2_), pfem_proj(0),
       contact_only(contact_only_), option(option_)
     {
       Tresca_version = false;   // for future version ...
@@ -1776,10 +1775,7 @@ namespace getfem {
     }
 
     ~integral_contact_nonmatching_meshes_brick()
-    {
-      if (pmf_u2_proj) delete pmf_u2_proj;
-      if (pfem_proj) del_projected_fem(pfem_proj);
-    }
+    { if (pfem_proj) del_projected_fem(pfem_proj); }
 
   };
 
@@ -2069,8 +2065,7 @@ namespace getfem {
 
     size_type rg1, rg2; // ids of mesh regions on mf_u1 and mf_u2 that are
                         // expected to come in contact.
-    mutable getfem::pfem pfem_proj;        // cached fem and mesh_fem for the
-    mutable getfem::mesh_fem *pmf_u2_proj; // projection between nonmatching meshes
+    mutable getfem::pfem pfem_proj; // cached fem for the projection between nonmatching meshes
     bool Tresca_version, contact_only;
     int option;
 
@@ -2164,18 +2159,18 @@ namespace getfem {
       mf_u1.linked_mesh().intersect_with_mpi_region(rg); // FIXME: mfu_2?
 
       // projection of the second mesh_fem onto the mesh of the first mesh_fem
-      if (!pmf_u2_proj) {
-        pmf_u2_proj = new getfem::mesh_fem(mim.linked_mesh(), dim_type(N));
+      if (!pfem_proj)
         pfem_proj = new_projected_fem(mf_u2, mim, rg2, rg1);
-        pmf_u2_proj->set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
-      }
+
+      getfem::mesh_fem mf_u2_proj(mim.linked_mesh(), dim_type(N));
+      mf_u2_proj.set_finite_element(mim.linked_mesh().convex_index(), pfem_proj);
 
       size_type nbdof1 = mf_u1.nb_dof();
       size_type nbdof2 = mf_u2.nb_dof();
-      size_type nbsub = pmf_u2_proj->nb_dof();
+      size_type nbsub = mf_u2_proj.nb_dof();
 
       std::vector<size_type> ind;
-      pmf_u2_proj->get_global_dof_index(ind);
+      mf_u2_proj.get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
       gmm::csc_matrix<scalar_type> Esub(nbsub, nbdof2);
@@ -2210,14 +2205,14 @@ namespace getfem {
 
         if (contact_only) {
           asm_penalized_contact_nonmatching_meshes_tangent_matrix
-            (matl[0], Ku2u2, Ku1u2, mim, mf_u1, u1, *pmf_u2_proj, u2_proj,
+            (matl[0], Ku2u2, Ku1u2, mim, mf_u1, u1, mf_u2_proj, u2_proj,
              pmf_lambda, lambda, vr[0], rg, option);
         }
         else {
           gmm::clear(matl[3]);
           model_real_sparse_matrix Ku2u1(nbsub,nbdof1);
           asm_penalized_contact_nonmatching_meshes_tangent_matrix
-            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, *pmf_u2_proj, u2_proj,
+            (matl[0], Ku2u2, Ku1u2, Ku2u1, mim, mf_u1, u1, mf_u2_proj, u2_proj,
              pmf_lambda, lambda, pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
           if (mf_u2.is_reduced())
             gmm::mult(gmm::transposed(Esub), Ku2u1, matl[3]);
@@ -2245,11 +2240,11 @@ namespace getfem {
 
         if (contact_only)
           asm_penalized_contact_nonmatching_meshes_rhs
-            (vecl[0], Ru2, mim, mf_u1, u1, *pmf_u2_proj, u2_proj, pmf_lambda, lambda,
+            (vecl[0], Ru2, mim, mf_u1, u1, mf_u2_proj, u2_proj, pmf_lambda, lambda,
              vr[0], rg, option);
         else
           asm_penalized_contact_nonmatching_meshes_rhs
-            (vecl[0], Ru2, mim, mf_u1, u1, *pmf_u2_proj, u2_proj, pmf_lambda, lambda,
+            (vecl[0], Ru2, mim, mf_u1, u1, mf_u2_proj, u2_proj, pmf_lambda, lambda,
              pmf_coeff, f_coeff, vr[0], alpha, WT1, &WT2_proj, rg, option);
 
         if (mf_u2.is_reduced())
@@ -2261,7 +2256,7 @@ namespace getfem {
 
     penalized_contact_nonmatching_meshes_brick(size_type rg1_, size_type rg2_,
                                                bool contact_only_, int option_)
-    : rg1(rg1_), rg2(rg2_), pfem_proj(0), pmf_u2_proj(0),
+    : rg1(rg1_), rg2(rg2_), pfem_proj(0),
       contact_only(contact_only_), option(option_) {
       Tresca_version = false;   // for future version ...
       set_flags(contact_only
@@ -2274,10 +2269,7 @@ namespace getfem {
     }
 
     ~penalized_contact_nonmatching_meshes_brick()
-    {
-      if (pmf_u2_proj) delete pmf_u2_proj;
-      if (pfem_proj) del_projected_fem(pfem_proj);
-    }
+    { if (pfem_proj) del_projected_fem(pfem_proj); }
 
   };
 
@@ -2426,12 +2418,15 @@ namespace getfem {
       const model_real_plain_vector &lambda = md.real_variable(vl[2]);
       const mesh_fem &mf_lambda = md.mesh_fem_of_variable(vl[2]);
 
+      getfem::mesh_fem mf_u2_proj(mf_u1.linked_mesh(), mf_u1.linked_mesh().dim());
+      mf_u2_proj.set_finite_element(mf_u1.linked_mesh().convex_index(), p->pfem_proj);
+
       std::vector<size_type> ind;
-      p->pmf_u2_proj->get_global_dof_index(ind);
+      mf_u2_proj.get_global_dof_index(ind);
       gmm::unsorted_sub_index SUBI(ind);
 
       size_type nbdof2 = mf_u2.nb_dof();
-      size_type nbsub = p->pmf_u2_proj->nb_basic_dof();
+      size_type nbsub = mf_u2_proj.nb_basic_dof();
       model_real_plain_vector u2_proj(nbsub);
 
       if (mf_u2.is_reduced()) {
@@ -2445,18 +2440,18 @@ namespace getfem {
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
       area = asm_nonmatching_meshes_contact_area
-             (*ml[0], mf_u1, u1, *(p->pmf_u2_proj), u2_proj, reg, -1e-3);
+             (*ml[0], mf_u1, u1, mf_u2_proj, u2_proj, reg, -1e-3);
 
       gmm::resize(F, mf_u1.nb_dof());
       if (p->contact_only)
         asm_nonmatching_meshes_normal_source_term
-          (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, reg);
+          (F, *ml[0], mf_u1, mf_u2_proj, mf_lambda, lambda, reg);
       else {
         GMM_ASSERT1(dl.size() >= 2, "Wrong size");
         const model_real_plain_vector *f_coeff = &(md.real_variable(dl[1]));
         const mesh_fem *pmf_coeff = md.pmesh_fem_of_variable(dl[1]);
         asm_nonmatching_meshes_normal_source_term
-          (F, *ml[0], mf_u1, *(p->pmf_u2_proj), mf_lambda, lambda, pmf_coeff, f_coeff, reg);
+          (F, *ml[0], mf_u1, mf_u2_proj, mf_lambda, lambda, pmf_coeff, f_coeff, reg);
       }
 
     }
