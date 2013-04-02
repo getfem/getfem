@@ -3331,6 +3331,541 @@ namespace getfem {
 
 
 
+  //=========================================================================
+  //
+  //  Fictitious domain contact condition (HPP) : generic Nitsche's method
+  //
+  //=========================================================================
+
+
+  class fict_contact_nitsche_nonlinear_term : public nonlinear_elem_term {
+    // Option:
+    // 1 : rhs term
+    // 2 : tangent term in main unknown (u)
+    // 3 : tangent term in auxilliary variable (p)
+
+  protected:
+    base_small_vector u;      // tangential relative displacement
+    scalar_type un;            // normal relative displacement (positive when
+                               //  the first elas. body surface moves outwards)
+    base_small_vector no, n;   // surface normal, pointing outwards with
+                               // respect to the (first) elastic body
+    scalar_type g, f_coeff;    // gap and friction coefficient
+
+    base_small_vector aux1, wt, V, Pr, pgg, zeta;
+    base_matrix GPr, grad;
+    base_vector coeff;
+    const model *md;
+    const std::string *varname;
+    const std::string *auxvarname;
+    const mesh_fem &mf_u;       // mandatory
+    const mesh_fem &mf_obs;     // mandatory
+    const mesh_fem *pmf_coeff;
+    const mesh_fem *mf_p;
+    base_vector U, obs, friction_coeff, WT;
+    dim_type N;
+    size_type option;
+    scalar_type gamma, gamma0, theta, alpha;
+    base_tensor tG, tp, tpp, tbv, tpaux;
+    mutable bgeot::multi_index sizes_;
+
+    void adjust_tensor_size(void) {
+      sizes_.resize(1); sizes_[0] = N;
+      tG.adjust_sizes(sizes_);
+      sizes_.resize(2); sizes_[0] = sizes_[1] = 1;
+      switch (option) {
+      case 1 : sizes_.resize(1); break;
+      case 2 : case 3 :  break;
+      }
+      gmm::resize(grad, 1, N);
+      u.resize(N); no.resize(N); n.resize(N);
+      aux1.resize(1); wt.resize(N); V.resize(N); zeta.resize(N);
+      gmm::resize(GPr, N, N); gmm::resize(Pr, N); gmm::resize(pgg, N);
+    }
+
+  public:
+    const bgeot::multi_index &sizes(size_type cv) const {
+      if (cv != size_type(-1))
+        switch(option) {
+        case 1:
+          sizes_[0] = short_type(mf_u.nb_basic_dof_of_element(cv));
+          break;
+        case 2:
+          sizes_[0] = sizes_[1]= short_type(mf_u.nb_basic_dof_of_element(cv));
+          break;
+        case 3:
+          sizes_[0] = short_type(mf_u.nb_basic_dof_of_element(cv));
+          sizes_[1] = short_type(mf_p->nb_basic_dof_of_element(cv));
+          break;
+        }
+      return sizes_;
+    }
+
+
+    fict_contact_nitsche_nonlinear_term
+      (size_type option_, scalar_type gamma0_, scalar_type theta_,
+       scalar_type alpha_, const model &md_, const std::string &varname_,
+       const mesh_fem &mf_u_, const model_real_plain_vector &U_,
+       const mesh_fem &mf_obs_,
+       const model_real_plain_vector &obs_,
+       const std::string &auxvarname_,
+       const mesh_fem *pmf_p_ = 0,
+       const mesh_fem *pmf_coeff_ = 0,
+       const model_real_plain_vector *f_coeff_ = 0,
+       const model_real_plain_vector *WT_ = 0)
+      : md(&md_), varname(&varname_), auxvarname(&auxvarname_),
+        mf_u(mf_u_), mf_obs(mf_obs_),
+        pmf_coeff(pmf_coeff_), mf_p(pmf_p_), U(mf_u.nb_basic_dof()),
+        obs(mf_obs.nb_basic_dof()),
+        friction_coeff(0), option(option_),
+        gamma0(gamma0_), theta(theta_), alpha(alpha_) {
+      N = mf_u_.linked_mesh().dim();
+      adjust_tensor_size();
+
+      mf_u.extend_vector(U_, U);
+      mf_obs.extend_vector(obs_, obs);
+
+      if (!pmf_coeff)
+        if (f_coeff_) f_coeff = (*f_coeff_)[0]; else f_coeff = scalar_type(0);
+      else {
+        friction_coeff.resize(pmf_coeff->nb_basic_dof());
+        pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
+        if (WT_) {
+          WT.resize(mf_u.nb_basic_dof());
+          mf_u_.extend_vector(*WT_, WT);
+        }
+      }
+    }
+
+
+    void compute(fem_interpolation_context &ctx, bgeot::base_tensor &t) {
+
+      md->compute_Neumann_terms(1, *varname, mf_u, U, ctx, n, tG);
+      for (size_type i = 0; i < N; ++i)
+        zeta[i] = tG[i]
+          + ((g-un+alpha*un) * no[i] + alpha*wt[i] - alpha*u[i] ) / gamma;
+      if ((option == 1) || (theta != scalar_type(0))) {
+        coupled_projection(zeta, no, f_coeff, Pr);
+        gmm::add(Pr, gmm::scaled(tG.as_vector(), -scalar_type(1)), pgg);
+      }
+
+      switch (option) {
+      case 1:
+        {
+          ctx.pf()->real_base_value(ctx, tbv);
+          size_type qmult = N / ctx.pf()->target_dim();
+          short_type nbdofu = sizes_[0];
+          if (theta != scalar_type(0)) {
+            sizes_.resize(2);
+            sizes_[1] = N;
+            tp.adjust_sizes(sizes_);
+            sizes_.resize(1);
+            md->compute_Neumann_terms(2, *varname, mf_u, U, ctx, n, tp);
+          }
+          for (size_type i = 0; i < nbdofu; ++i) {
+            t[i] = scalar_type(0);
+            for (size_type j = 0; j < N; ++j) {
+              if (theta != scalar_type(0))
+                t[i] -= gamma*pgg[j]*theta*tp(i,j);
+              if (qmult == 1) t[i] += Pr[j]*tbv(i,j);
+            }
+            if (qmult > 1) t[i] += Pr[i%N] * tbv(i/N,0);
+          }
+        }
+        break;
+
+      case 2:
+        {
+          short_type nbdofu = sizes_[1];
+          sizes_[1] = N;
+          tp.adjust_sizes(sizes_);
+          sizes_[1] = nbdofu;
+          md->compute_Neumann_terms(2, *varname, mf_u, U, ctx, n, tp);
+          if (theta != scalar_type(0)) {
+            sizes_.resize(3); sizes_[2] = N;
+            tpp.adjust_sizes(sizes_);
+            sizes_.resize(2);
+            md->compute_Neumann_terms(3, *varname, mf_u, U, ctx, n, tpp);
+          }
+
+          ctx.pf()->real_base_value(ctx, tbv);
+          size_type qmult = N / ctx.pf()->target_dim();
+          coupled_projection_grad(zeta, no, f_coeff, GPr);
+
+          for (size_type i = 0; i < nbdofu; ++i)
+            for (size_type j = 0; j < nbdofu; ++j) {
+              scalar_type res(0);
+              for (size_type k = 0; k < N; ++k) {
+                if (theta != scalar_type(0))
+                  res -= gamma * theta * tp(i,k) * tp(j,k);
+                scalar_type tbvvi(0), tbvvjn(0);
+                if (qmult == 1) {
+                  tbvvi = tbv(i,k);
+                  for (size_type l = 0; l < N; ++l) tbvvjn += no[l]*tbv(j,l);
+                } else {
+                  tbvvi = ((i%N)==k) ? tbv(i/N,0) : scalar_type(0);
+                  tbvvjn = no[j%N]*tbv(j/N,0);
+                }
+                for (size_type l = 0; l < N; ++l) {
+                  scalar_type tbvvj(0);
+                  if (qmult == 1)
+                    tbvvj = tbv(j,l);
+                  else
+                    tbvvj=(((j%N)==l) ? tbv(j/N,0):scalar_type(0));
+                  res += GPr(k,l)
+                    * (gamma*tp(j,l) - alpha*tbvvj
+                       - (scalar_type(1)-alpha)*no[l]*tbvvjn)
+                    * (theta * tp(i,k) - tbvvi/gamma);
+                }
+
+                if (theta != scalar_type(0))
+                  res += theta*gamma*pgg[k] * tpp(i,j,k);
+              }
+              t(i,j) = res;
+            }
+        }
+        break;
+
+      case 3:
+        {
+          short_type nbdofu = sizes_[0];
+          short_type nbdofp = sizes_[1];
+          sizes_[0] = nbdofp; sizes_[1] = N;
+          tpaux.adjust_sizes(sizes_);
+          sizes_[0] = nbdofu; sizes_[1] = nbdofp;
+          md->compute_auxilliary_Neumann_terms(2, *varname, mf_u, U,
+                                               *auxvarname, ctx, n, tpaux);
+
+          if (theta != scalar_type(0)) {
+            sizes_[1] = N;
+            tp.adjust_sizes(sizes_);
+            sizes_[1] = nbdofp;
+            md->compute_Neumann_terms(2, *varname, mf_u, U, ctx, n, tp);
+            sizes_.resize(3); sizes_[2] = N;
+            tpp.adjust_sizes(sizes_);
+            sizes_.resize(2);
+            md->compute_auxilliary_Neumann_terms(3, *varname, mf_u, U,
+                                                 *auxvarname, ctx, n, tpp);
+          }
+
+          ctx.pf()->real_base_value(ctx, tbv);
+          size_type qmult = N / ctx.pf()->target_dim();
+          coupled_projection_grad(zeta, no, f_coeff, GPr);
+
+          for (size_type i = 0; i < nbdofu; ++i)
+            for (size_type j = 0; j < nbdofp; ++j) {
+              scalar_type res(0);
+              for (size_type k = 0; k < N; ++k) {
+                if (theta != scalar_type(0))
+                  res -= gamma * theta * tp(i,k) * tpaux(j,k);
+                scalar_type gttpik(0), tbvvi(0);
+                if (theta != scalar_type(0)) gttpik = gamma*theta*tp(i,k);
+                if (qmult == 1) tbvvi = tbv(i,k);
+                else tbvvi=(((i%N)==k) ? tbv(i/N,0):scalar_type(0));
+                for (size_type l = 0; l < N; ++l)
+                  res += GPr(k,l) * tpaux(j,l) * (gttpik - tbvvi);
+                if (theta != scalar_type(0))
+                  res += theta*gamma*pgg[k] * tpp(i,j,k);
+              }
+              t(i,j) = res;
+            }
+        }
+        break;
+
+      default : GMM_ASSERT1(false, "Invalid option");
+      }
+    }
+
+
+    void prepare(fem_interpolation_context& ctx, size_type nb) {
+
+      size_type cv = ctx.convex_num();
+
+      switch (nb) { // last is computed first
+      case 1 : // calculate [u] and [un] interpolating [U] and [WT] on [mf_u]
+        slice_vector_on_basic_dof_of_element(mf_u, U, cv, coeff);
+        ctx.pf()->interpolation(ctx, coeff, u, N);
+        un = gmm::vect_sp(u, no);
+        if (gmm::vect_size(WT) == gmm::vect_size(U)) {
+          slice_vector_on_basic_dof_of_element(mf_u, WT, cv, coeff);
+          ctx.pf()->interpolation(ctx, coeff, wt, N);
+          wt -= gmm::vect_sp(wt, no) * no;
+        }
+        // computation of h for gamma = gamma0*h
+        scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
+        gamma = gamma0 * emax / sqrt(scalar_type(N));
+        break;
+
+      case 2 : // calculate [g], [n] and [no] interpolating [obs] on [mf_obs]
+        slice_vector_on_basic_dof_of_element(mf_obs, obs, cv, coeff);
+        ctx.pf()->interpolation_grad(ctx, coeff, grad, 1);
+        gmm::copy(gmm::mat_row(grad, 0), no);
+        no /= -gmm::vect_norm2(no);
+        ctx.pf()->interpolation(ctx, coeff, aux1, 1);
+        g = aux1[0];
+        n = bgeot::compute_normal(ctx, ctx.face_num());
+        n /= gmm::vect_norm2(n);
+        break;
+
+      case 3 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+        if (pmf_coeff) {
+      slice_vector_on_basic_dof_of_element(*pmf_coeff, friction_coeff, cv, coeff);
+          ctx.pf()->interpolation(ctx, coeff, aux1, 1);
+          f_coeff = aux1[0];
+        }
+        break;
+
+      default : GMM_ASSERT1(false, "Invalid option");
+      }
+    }
+  };
+
+
+
+  void asm_Nitsche_contact_rigid_obstacle_rhs_fict
+    (model_real_plain_vector &R, const mesh_im &mim, const model &md,
+     const std::string &varname,
+     const getfem::mesh_fem &mf_u, const model_real_plain_vector &U,
+     const getfem::mesh_fem &mf_obs, const model_real_plain_vector &obs,
+     const getfem::mesh_fem *pmf_coeff, const model_real_plain_vector *f_coeff,
+     const model_real_plain_vector *WT,
+     scalar_type gamma0, scalar_type theta, scalar_type alpha,
+     const mesh_region &rg) {
+
+    fict_contact_nitsche_nonlinear_term
+      nterm(1, gamma0, theta, alpha, md, varname, mf_u, U, mf_obs,
+            obs, "", 0, pmf_coeff, f_coeff, WT);
+
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
+
+    getfem::generic_assembly assem("V(#1)+=comp(NonLin$1(#1,"+aux_fems+"));");
+
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    if (pmf_coeff) assem.push_mf(*pmf_coeff);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_vec(R);
+    assem.assembly(rg);
+  }
+
+
+  template<typename MAT>
+  void asm_Nitsche_contact_rigid_obstacle_tangent_matrix_fict
+  (MAT &K, const mesh_im &mim, const model &md, const std::string &varname,
+   const getfem::mesh_fem &mf_u, const model_real_plain_vector &U,
+   const getfem::mesh_fem &mf_obs, const model_real_plain_vector &obs,
+   const getfem::mesh_fem *pmf_coeff, const model_real_plain_vector *f_coeff,
+   const model_real_plain_vector *WT,
+   scalar_type gamma0, scalar_type theta, scalar_type alpha,
+   const mesh_region &rg) {
+
+    fict_contact_nitsche_nonlinear_term
+      nterm(2, gamma0, theta, alpha, md, varname, mf_u, U, mf_obs,
+            obs, "", 0, pmf_coeff, f_coeff, WT);
+
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
+
+    getfem::generic_assembly
+      assem("M(#1,#1)+=comp(NonLin$1(#1,"+aux_fems+"));");
+
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    if (pmf_coeff) assem.push_mf(*pmf_coeff);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(K);
+    assem.assembly(rg);
+  }
+
+  template<typename MAT>
+  void asm_Nitsche_contact_rigid_obstacle_tangent_matrix_auxilliary_fict
+  (MAT &K, const mesh_im &mim, const model &md, const std::string &varname,
+   const getfem::mesh_fem &mf_u, const model_real_plain_vector &U,
+   const getfem::mesh_fem &mf_obs, const model_real_plain_vector &obs,
+   const getfem::mesh_fem *pmf_coeff, const model_real_plain_vector *f_coeff,
+   const model_real_plain_vector *WT,
+   scalar_type gamma0, scalar_type theta, scalar_type alpha,
+   const std::string &auxvarname, const getfem::mesh_fem &mf_p,
+   const mesh_region &rg) {
+
+    fict_contact_nitsche_nonlinear_term
+      nterm(3, gamma0, theta, alpha, md, varname, mf_u, U, mf_obs,
+            obs, auxvarname, &mf_p, pmf_coeff, f_coeff, WT);
+
+    const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
+    const std::string p_fem = pmf_coeff ? "#4" : "#3";
+
+    getfem::generic_assembly
+      assem("M(#1,"+p_fem+")+=comp(NonLin$1(#1,"+aux_fems+"));");
+
+    assem.push_mi(mim);
+    assem.push_mf(mf_u);
+    assem.push_mf(mf_obs);
+    if (pmf_coeff) assem.push_mf(*pmf_coeff);
+    assem.push_mf(mf_p);
+    assem.push_nonlinear_term(&nterm);
+    assem.push_mat(K);
+    assem.assembly(rg);
+  }
+
+
+  struct Nitsche_fictitious_domain_contact_brick : public virtual_brick {
+
+    scalar_type theta;
+    bool contact_only;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      // Integration method
+      GMM_ASSERT1(mims.size() == 1, "Nitsche contact with rigid obstacle "
+                  "bricks need a single mesh_im");
+      const mesh_im &mim = *mims[0];
+
+
+      const model_real_plain_vector &u = md.real_variable(vl[0]);
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+
+      // Data : obs, r, theta, [alpha,] [WT]
+      GMM_ASSERT1(dl.size() >= (contact_only ? 2:3),
+                  "Wrong number of data for Nitsche "
+                  "contact with rigid obstacle brick");
+
+      const model_real_plain_vector &obs = md.real_variable(dl[0]);
+      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
+      size_type sl = gmm::vect_size(obs) * mf_obs.get_qdim() / mf_obs.nb_dof();
+      GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
+                  "the right format");
+
+      const model_real_plain_vector &vgamma0 = md.real_variable(dl[1]);
+      GMM_ASSERT1(gmm::vect_size(vgamma0) == 1,
+                  "Parameter gamma0 should be a scalar");
+      scalar_type gamma0 = vgamma0[0];
+
+      const model_real_plain_vector *f_coeff = 0;
+      const mesh_fem *pmf_coeff = 0;
+
+      if (!contact_only) {
+        f_coeff = &(md.real_variable(dl[2]));
+        pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
+        sl = gmm::vect_size(*f_coeff);
+        if (pmf_coeff)
+          { sl*= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
+        GMM_ASSERT1(sl == 1, "the data corresponding to the friction "
+                    "coefficient has not the right format");
+      }
+
+      scalar_type alpha = 1;
+      if (!contact_only && dl.size() >= 4) {
+        GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3])) == 1,
+                    "Parameter alpha should be a scalar");
+        alpha = md.real_variable(dl[3])[0];
+      }
+
+      const model_real_plain_vector *WT
+        = (!contact_only && dl.size()>=5) ? &(md.real_variable(dl[4])) : 0;
+
+
+      GMM_ASSERT1(matl.size() == vl.size(), "Wrong number of terms for "
+                  "Nitsche contact with rigid obstacle brick");
+
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (version & model::BUILD_MATRIX) {
+        GMM_TRACE2("Nitsche contact with rigid obstacle tangent term");
+        gmm::clear(matl[0]);
+        asm_Nitsche_contact_rigid_obstacle_tangent_matrix
+          (matl[0], mim, md, vl[0], mf_u, u, mf_obs, obs,  pmf_coeff,
+           f_coeff, WT, gamma0, theta, alpha, rg);
+
+        for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
+          gmm::clear(matl[i]);
+          asm_Nitsche_contact_rigid_obstacle_tangent_matrix_auxilliary
+            (matl[i], mim, md, vl[0], mf_u, u, mf_obs, obs, pmf_coeff,
+             f_coeff, WT, gamma0, theta, alpha, vl[i],
+             md.mesh_fem_of_variable(vl[i]), rg);
+        }
+      }
+
+      if (version & model::BUILD_RHS) {
+        gmm::clear(vecl[0]);
+        asm_Nitsche_contact_rigid_obstacle_rhs
+          (vecl[0], mim, md, vl[0], mf_u, u, mf_obs, obs,  pmf_coeff,
+           f_coeff, WT, gamma0, theta, alpha, rg);
+      }
+
+    }
+
+    Nitsche_fictitious_domain_contact_brick(scalar_type theta_, bool nofriction) {
+      theta = theta_;
+      contact_only = nofriction;
+      bool co = (theta_ == scalar_type(1)) && nofriction;
+      set_flags("Integral Nitsche contact and friction with rigid "
+                "obstacle brick",
+                false /* is linear*/, co /* is symmetric */,
+                co /* is coercive */, true /* is real */,
+                false /* is complex */, false /* compute each time */,
+                false /* has a Neumann term */);
+    }
+
+  };
+
+
+  size_type add_Nitsche_fictitious_domain_contact_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_gamma0,
+   scalar_type theta,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_alpha,
+   const std::string &dataname_wt,
+   size_type region) {
+
+    bool nofriction = (dataname_friction_coeff.size() == 0);
+    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick(theta, nofriction);
+
+    bool co = (theta == scalar_type(1)) && nofriction;
+    model::termlist tl;
+    tl.push_back(model::term_description(varname_u, varname_u, co));
+
+    model::varnamelist dl(1, dataname_obs);
+    dl.push_back(dataname_gamma0);
+    if (!nofriction) dl.push_back(dataname_friction_coeff);
+    if (dataname_alpha.size() > 0) {
+      dl.push_back(dataname_alpha);
+      if (dataname_wt.size() > 0) dl.push_back(dataname_wt);
+    }
+
+    model::varnamelist vl(1, varname_u);
+
+    std::vector<std::string> aux_vars;
+    md.auxilliary_variables_of_Neumann_terms(varname_u, aux_vars);
+    for (size_type i = 0; i < aux_vars.size(); ++i) {
+      vl.push_back(aux_vars[i]);
+      tl.push_back(model::term_description(varname_u, aux_vars[i], false));
+    }
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+
+
+
+
+
+
+
+
+
 
   //=========================================================================
   //
