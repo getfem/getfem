@@ -23,19 +23,7 @@
 #include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_contact_and_friction_common.h"
 #include "getfem/getfem_assembling.h"
-
-#include <getfem/getfem_arch_config.h>
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
-
-#ifdef GETFEM_HAVE_QHULL_QHULL_H
-#include <getfem/getfem_mesher.h>
-#else
 #include <getfem/bgeot_kdtree.h>
-#endif
 
 #ifdef _MSC_VER
 #define xor ^

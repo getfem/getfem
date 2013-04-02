@@ -40,6 +40,17 @@
 
 #include "getfem_models.h"
 #include "getfem_assembling_tensors.h"
+#include "getfem/bgeot_rtree.h"
+#include <getfem/getfem_mesher.h>
+
+
+#include <getfem/getfem_arch_config.h>
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#include <muParser/muParser.h>
+#elif GETFEM_HAVE_MUPARSER_H
+#include <muParser.h>
+#endif
+
 
 namespace getfem {
 
@@ -228,6 +239,443 @@ namespace getfem {
       gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
     }
   }
+
+
+#if 0
+
+  //=========================================================================
+  //
+  //  Structure which store the contact boundaries, rigid obstacles and
+  //  computes the contact pairs in large sliding/large deformation
+  //
+  //=========================================================================
+
+
+  
+  // TODO:
+  // - algo de detection des paires de contact dans les deux cas (boites et
+  //   delaunay)
+  // - algo de présélection des zones d'influences/pts de gauss
+  // - algo de projection
+  // - Dans le cas Delaunay, un passage éventuel à l'élément voisin est-il
+  //   envisageable ?
+  // - algo de selection des paires de contact valides
+
+
+
+  // - penser à eliminer le stockage non necessaire après la detection des
+  //   paires de contact
+  // - A la fin, revoir éventuellement si la stratégie de calcul des
+  //   extensions des déplacement est la bonne (calcul en début de
+  //   construction de la liste des boites ou points des bords de contact).
+  // - Dans la structure finale, penser à séparer mieux les données (bords
+  //   de contact, obstacles) et les résultats stockés. Ajouter les zones
+  //   d'influence d'éléments, les distances de coupure, l'algo de ...
+
+
+
+
+  class multi_contact_frame {
+
+    // Structure describing a contact boundary
+    struct contact_boundary {
+      size_type region;                 // Boundary number
+      const getfem::mesh_fem *mfu;      // F.e.m. for the displacement.
+      const getfem::mesh_im *mim;       // Integration method for the boundary.
+      size_type ind_U;                  // Index of displacement.
+      contact_boundary(void) {}
+      contact_boundary(size_type r, const mesh_fem &mf,
+                       const mesh_im &mi, size_type i)
+        : region(r), mfu(&mf), mim(&mi), ind_U(i) {}
+    };
+
+
+    size_type N;          // Meshes dimensions
+    bool auto_contact;    // auto-contact is searched or not.
+    bool ref_conf;        // contact in reference configuration
+                          // for linear elasticity small sliding contact.
+    bool use_delaunay;    // Use delaunay to detect the contact pairs instead
+                          // of influence boxes.
+    bool use_fem_nodes;   // Use finite element nodes instead of Gauss points
+                          // for master contact boundaries.
+    scalar_type release_distance;  // Limit distance beyond which the contact
+    // will not be considered. CAUTION: should be comparable to the element
+    // size (if it is too large, a too large set of influence boxes will be
+    // detected and the computation will be slow) 
+
+    // distances de coupure ...
+
+    typedef model_real_plain_vector VECTOR;
+    std::vector<const VECTOR *> Us;  // Displacement vectors
+    std::vector<VECTOR> ext_Us;      // Unreduced displacement vectors
+                                     // CAUTION : they have to be updated
+
+    // Contact pairs are seached for a certain boundary (slave or master,
+    // depending on the contact algorithm) on the slave ones. If contact pairs
+    // are searched for a slave boundary, auto-contact is taken into account
+    // if the flag 'auto_contact' is set to 'true'. Auto-contact is never taken
+    // into account for a master boundary.
+    dal::bit_vector master_boundaries;
+    std::vector<contact_boundary> contact_boundaries;
+
+    std::vector<std::string> coordinates;
+    base_node pt_eval;
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    std::vector<mu::Parser> obstacles_parsers;
+#endif
+    std::vector<std::string> obstacles;
+    std::vector<std::string> obstacles_velocities;
+
+    // 
+    // Influende boxes part
+    //
+    bgeot::rtree element_boxes;                  // influence boxes
+
+    // 
+    // Delaunay part
+    //
+    std::vector<base_node> pts; // Il faudrait éliminer les doublons ...
+
+    // 
+    // Common part
+    //
+    std::vector<size_type> boundary_of_elements; // boundary number each box
+    std::vector<size_type> ind_of_elements;  // element index in the boundary
+    std::vector<size_type> face_of_elements; // face of the element
+    std::vector<base_node> unit_normals;     // mean outward unit normal
+    
+    
+
+
+
+    size_type add_U(const getfem::mesh_fem &mfu,
+                    const model_real_plain_vector &U) {
+      size_type i = 0;
+      for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
+      Us.push_back(&U);
+      model_real_plain_vector ext_U(mfu.nb_basic_dof());
+      mfu.extend_vector(U, ext_U);
+      ext_Us.push_back(ext_U);
+      return i;
+    }
+
+    void extend_vectors(void) {
+      dal::bit_vector iU;
+      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
+        size_type ind_U = contact_boundaries[i].ind_U;
+        if (!(iU[ind_U])) {
+          const mesh_fem &mf = *(contact_boundaries[i].mfu);
+          gmm::resize(ext_Us[ind_U], mf.nb_basic_dof());
+          mf.extend_vector(*(Us[ind_U]), ext_Us[ind_U]);
+          iU.add(ind_U);
+        }
+      }
+    }
+
+  public:
+
+    const getfem::mesh_fem &mfu_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mfu); }
+    const getfem::mesh_im  &mim_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mim); }
+    const model_real_plain_vector &disp_of_boundary(size_type n) const
+    { return ext_Us[contact_boundaries[n].ind_U]; }
+    size_type region_of_boundary(size_type n) const
+    { return contact_boundaries[n].region; }
+
+    multi_contact_frame(size_type NN, scalar_type r_dist,
+                        bool fem_nodes = false, bool dela = true,
+                        bool refc = false, bool autoc = true)
+      : N(NN), auto_contact(autoc), ref_conf(refc), use_delaunay(dela), 
+        use_fem_nodes(fem_nodes), release_distance(r_dist),
+        coordinates(N), pt_eval(N) {
+      if (N > 0) coordinates[0] = "x";
+      if (N > 1) coordinates[1] = "y";
+      if (N > 2) coordinates[2] = "z";
+      if (N > 3) coordinates[3] = "w";
+      GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
+                  "dimension greater than 4");
+    }
+
+    size_type add_obstacle(const std::string &obs) {
+      size_type ind = obstacles.size();
+      obstacles.push_back(obs);
+      obstacles_velocities.push_back("");
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+    
+      mu::Parser mu;
+      obstacles_parsers.push_back(mu);
+      obstacles_parsers[ind].SetExpr(obstacles[ind]);
+      for (size_type k = 0; k < N; ++k)
+        obstacles_parsers[ind].DefineVar(coordinates[k], &pt_eval[k]);
+#else
+      GMM_ASSERT1(false, "You have to link muparser with getfem to deal "
+		  "with rigid body obstacles");
+#endif
+      return ind;
+    }
+
+    size_type add_master_boundary(const getfem::mesh_im &mim,
+                                  const getfem::mesh_fem &mfu,
+                                  const model_real_plain_vector &U,
+                                  size_type reg) {
+      GMM_ASSERT1(mfu.linked_mesh().dim() == N,
+                  "Mesh dimension is " << mfu.linked_mesh().dim()
+                  << "should be " << N << ".");
+      contact_boundary cb(reg, mfu, mim, add_U(mfu, U));
+      size_type ind = contact_boundaries.size();
+      contact_boundaries.push_back(cb);
+      master_boundaries.add(ind);
+      return ind;
+    }
+
+    size_type add_slave_boundary(const getfem::mesh_im &mim,
+                                 const getfem::mesh_fem &mfu,
+                                 const model_real_plain_vector &U,
+                                 size_type reg) {
+      GMM_ASSERT1(mfu.linked_mesh().dim() == N,
+                  "Mesh dimension is " << mfu.linked_mesh().dim()
+                  << "should be " << N << ".");
+      contact_boundary cb(reg, mfu, mim, add_U(mfu, U));
+      contact_boundaries.push_back(cb);
+      return size_type(contact_boundaries.size() - 1);
+    }
+
+    // Compute the influence boxes of slave boundary elements. To be run
+    // before the detection of contact pairs. The influence box is the
+    // bounding box extended by a distance equal to the release distance.
+    void compute_influence_boxes(void) {
+      fem_precomp_pool fppool;
+      base_matrix G;
+      model_real_plain_vector coeff;
+
+      element_boxes.clear();
+      unit_normals.resize(0);
+      boundary_of_elements.resize(0);
+      ind_of_elements.resize(0);
+      face_of_elements.resize(0);
+      
+      extend_vectors();
+      
+      for (size_type i = 0; i < contact_boundaries.size(); ++i)
+        if (!(master_boundaries[i])) {
+          size_type bnum = region_of_slave_boundary(i);
+          const mesh_fem &mfu = mfu_of_slave_boundary(i);
+          const model_real_plain_vector &U = disp_of_slave_boundary(i);
+          const mesh &m = mfu.linked_mesh();
+          
+          base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
+          base_matrix grad(N,N);
+          mesh_region region = m.region(bnum);
+          GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
+          
+          // Continuer à vérifier à partir de là
+          // adapter au cas en conf. ref.
+          // penser à la validité de la normale ...
+          // bien commenter
+          
+          dal::bit_vector points_already_interpolated;
+          std::vector<base_node> transformed_points(m.nb_max_points());
+          for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+            size_type cv = v.cv();
+            bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+            pfem pf_s = mfu.fem_of_element(cv);
+            size_type nbd_t = pgt->nb_points();
+            slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+            bgeot::vectors_to_base_matrix
+              (G, mfu.linked_mesh().points_of_convex(cv));
+            
+            pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+                                          size_type(-1));
+            
+            size_type nb_pt_on_face = 0;
+            gmm::clear(n_mean);
+            for (short_type ip = 0; ip < nbd_t; ++ip) {
+              size_type ind = m.ind_points_of_convex(cv)[ip];
+              
+              // computation of transformed vertex
+              if (!(points_already_interpolated.is_in(ind))) {
+                ctx.set_ii(ip);
+                pf_s->interpolation(ctx, coeff, val, dim_type(N));
+                val += ctx.xreal();
+                transformed_points[ind] = val;
+                points_already_interpolated.add(ind);
+              } else {
+                val = transformed_points[ind];
+              }
+              // computation of unit normal vector if the vertex is on the face
+              bool is_on_face = false;
+              bgeot::pconvex_structure cvs = pgt->structure();
+              for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
+                if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
+              if (is_on_face) {
+                ctx.set_ii(ip);
+                n0 = bgeot::compute_normal(ctx, v.f());
+                pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+                gmm::add(gmm::identity_matrix(), grad);
+                scalar_type J = gmm::lu_inverse(grad);
+                if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+                gmm::mult(gmm::transposed(grad), n0, n);
+                n /= gmm::vect_norm2(n);
+                n_mean += n;
+                ++nb_pt_on_face;
+              }
+              
+              if (ip == 0) // computation of bounding box
+                bmin = bmax = val;
+              else {
+                for (size_type k = 0; k < N; ++k) {
+                  bmin[k] = std::min(bmin[k], val[k]);
+                  bmax[k] = std::max(bmax[k], val[k]);
+                }
+              }
+            }
+            
+            GMM_ASSERT1(nb_pt_on_face,
+                        "This element has not vertex on considered face !");
+            
+            // Computation of influence box :
+            // offset of the bounding box relatively to the release distance
+            scalar_type h = bmax[0] - bmin[0];
+            for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k] - bmin[k]);
+            if (h < release_distance/scalar_type(20))
+              GMM_WARNING1("Found an element whose size is smaller than 1/20 "
+                           "of the release distance. You should probably "
+                           "adapt the release distance.");
+            for (size_type k = 0; k < N; ++k)
+              { bmin[k] -= release_distance; bmax[k] += release_distance; }
+            
+            // Store the influence box and additional information.
+            element_boxes.add_box(bmin, bmax, unit_normals.size());
+            n_mean /= gmm::vect_norm2(n_mean);
+            unit_normals.push_back(n_mean);
+            boundary_of_elements.push_back(i);
+            ind_of_elements.push_back(cv);
+            face_of_elements.push_back(v.f());
+          }
+        }
+    }
+    
+    // For delaunay triangulation. Advantages compared to influence boxes:
+    // No degeneration of the algorithm complexity with refinement and
+    // more easy to extend to fictitious domain with contact.
+    void compute_boundary_points(void) {
+      fem_precomp_pool fppool;
+      base_matrix G;
+      model_real_plain_vector coeff;
+
+      pts.clear();
+      unit_normals.resize(0);
+      boundary_of_elements.resize(0);
+      ind_of_elements.resize(0);
+      face_of_elements.resize(0);
+      
+      extend_vectors();
+      
+      // should store all the boundary deformed points relatively to
+      // an integration method (for the slave boundaries) and
+      // relatively to an integration method or to finite element
+      // nodes for a master boundary.
+      // Storing sufficient information to perform a Delaunay triangulation
+      // and to be able to recover the boundary number, element number,
+      // face number, mean normal ...
+
+      // Il faut gérer les points coincidents ...
+      
+      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
+
+        size_type bnum = region_of_slave_boundary(i);
+        const mesh_fem &mfu = mfu_of_slave_boundary(i);
+        const mesh_fem &mim = mim_of_slave_boundary(i);
+        const model_real_plain_vector &U = disp_of_slave_boundary(i);
+        const mesh &m = mfu.linked_mesh();
+        
+        base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
+        base_matrix grad(N,N);
+        mesh_region region = m.region(bnum);
+        GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
+        
+        
+        dal::bit_vector points_already_interpolated;
+        std::vector<base_node> transformed_points(m.nb_max_points());
+        for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+          size_type cv = v.cv();
+          bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+          pfem pf_s = mfu.fem_of_element(cv);
+          pintegration_method pim = mim.int_method_of_element(cv);
+          size_type nbd_t = pgt->nb_points();
+          slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+          bgeot::vectors_to_base_matrix
+            (G, mfu.linked_mesh().points_of_convex(cv));
+          
+          pfem_precomp pfp(0); size_type nbptf(0);
+          if (master_boundaries[i]) {
+            pfp = fppool(pf_s, pf_s->node_tab(cv));
+            nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
+          }
+          else {
+            pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
+            nbptf = pim->approx_method()->nb_points_on_face(v.f());
+          }
+          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
+          
+          
+          for (short_type ip = 0; ip < nbptf; ++ip) {
+            size_type ind(0);
+            if (master_boundaries[i])
+              ind = pf_s->node_convex->structure()->ind_points_of_face(v.f())[ip];
+            else
+              ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
+            ctx.set_ii(ind);
+            pf_s->interpolation(ctx, coeff, val, dim_type(N));
+            val += ctx.xreal();
+            
+            pts.push_back(val);
+            
+            // unit normal vector computation
+            n0 = bgeot::compute_normal(ctx, v.f());
+            pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+            gmm::add(gmm::identity_matrix(), grad);
+            scalar_type J = gmm::lu_inverse(grad);
+            if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+            gmm::mult(gmm::transposed(grad), n0, n);
+            n /= gmm::vect_norm2(n);
+            
+            unit_normals.push_back(n);
+            boundary_of_elements.resize(i);
+            ind_of_elements.resize(cv);
+            face_of_elements.resize(v.f());
+            
+          }
+        }
+        
+      }
+      
+      
+    }
+
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
+
+
+
+
 
 
 }  /* end of namespace getfem.                                             */
