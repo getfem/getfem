@@ -571,27 +571,15 @@ namespace getfem {
    const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    const mesh_region &rg) {
 
-    const getfem::mesh_fem *pmf_coeff = 0;
-    const VEC *f_coeff = 0;
-    asm_level_set_normal_source_term(R, mim, mf_u, mf_obs, obs,
-                                     mf_lambda, lambda, pmf_coeff, f_coeff, rg);
-  }
-
-  template<typename VEC>
-  void asm_level_set_normal_source_term
-  (VEC &R, const mesh_im &mim,
-   const getfem::mesh_fem &mf_u, // const VEC &U,
-   const getfem::mesh_fem &mf_obs, const VEC &obs,
-   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
-   const getfem::mesh_fem *pmf_coeff, const VEC *f_coeff,
-   const mesh_region &rg) {
+    bool contact_only = (mf_lambda.get_qdim() == 1);
 
     VEC U;
     gmm::resize(U, mf_u.nb_dof());
-    scalar_type r(0.);
+    scalar_type dummy_r(0.);
+    VEC dummy_f_coeff; gmm::resize(dummy_f_coeff,1);
     contact_rigid_obstacle_nonlinear_term
-      nterm(RHS_U_V1, r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
-            pmf_coeff, f_coeff);
+      nterm(RHS_U_V1, dummy_r, mf_u, U, mf_obs, obs, &mf_lambda, &lambda,
+            0, contact_only ? 0 : &dummy_f_coeff);
 
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin$1(#1,#1,#2,#3).vBase(#1))(i,:,i); ");
@@ -658,28 +646,16 @@ namespace getfem {
    const getfem::mesh_fem &mf_lambda, const VEC &lambda,
    const mesh_region &rg) {
 
-    const getfem::mesh_fem *pmf_coeff = 0;
-    const VEC *f_coeff = 0;
-    asm_nonmatching_meshes_normal_source_term(R, mim, mf_u1, mf_u2_proj,
-                                              mf_lambda, lambda, pmf_coeff, f_coeff, rg);
-  }
-
-  template<typename VEC>
-  void asm_nonmatching_meshes_normal_source_term
-  (VEC &R, const mesh_im &mim,
-   const getfem::mesh_fem &mf_u1, // const VEC &U1,
-   const getfem::mesh_fem &mf_u2_proj, // const VEC &U2_proj,
-   const getfem::mesh_fem &mf_lambda, const VEC &lambda,
-   const getfem::mesh_fem *pmf_coeff, const VEC *f_coeff,
-   const mesh_region &rg) {
+    bool contact_only = (mf_lambda.get_qdim() == 1);
 
     VEC U1, U2_proj;
     gmm::resize(U1, mf_u1.nb_dof());
     gmm::resize(U2_proj, mf_u2_proj.nb_dof());
-    scalar_type r(0);
+    scalar_type dummy_r(0);
+    VEC dummy_f_coeff; gmm::resize(dummy_f_coeff,1);
     contact_nonmatching_meshes_nonlinear_term
-      nterm(RHS_U_V1, r, mf_u1, U1, mf_u2_proj, U2_proj, &mf_lambda, &lambda,
-            pmf_coeff, f_coeff);
+      nterm(RHS_U_V1, dummy_r, mf_u1, U1, mf_u2_proj, U2_proj, &mf_lambda, &lambda,
+            0, contact_only ? 0 : &dummy_f_coeff);
 
     getfem::generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin(#1,#1,#2,#3).vBase(#1))(i,:,i)");

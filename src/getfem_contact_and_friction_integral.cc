@@ -2387,16 +2387,8 @@ namespace getfem {
       area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg, -1e-3);
 
       gmm::resize(F, mf_u.nb_dof());
-      if (p->contact_only)
-        asm_level_set_normal_source_term
-          (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, reg);
-      else {
-        GMM_ASSERT1(dl.size() >= 3, "Wrong size");
-        const model_real_plain_vector *f_coeff = &(md.real_variable(dl[2]));
-        const mesh_fem *pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
-        asm_level_set_normal_source_term
-          (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, pmf_coeff, f_coeff, reg);
-      }
+      asm_level_set_normal_source_term
+        (F, *ml[0], mf_u, mf_obs, obs, mf_lambda, lambda, reg);
     }
     else if (pbr->brick_name() == "Integral penalized contact with rigid obstacle brick" ||
              pbr->brick_name() == "Integral penalized contact and friction with rigid "
@@ -2448,16 +2440,8 @@ namespace getfem {
              (*ml[0], mf_u1, u1, mf_u2_proj, u2_proj, reg, -1e-3);
 
       gmm::resize(F, mf_u1.nb_dof());
-      if (p->contact_only)
-        asm_nonmatching_meshes_normal_source_term
-          (F, *ml[0], mf_u1, mf_u2_proj, mf_lambda, lambda, reg);
-      else {
-        GMM_ASSERT1(dl.size() >= 2, "Wrong size");
-        const model_real_plain_vector *f_coeff = &(md.real_variable(dl[1]));
-        const mesh_fem *pmf_coeff = md.pmesh_fem_of_variable(dl[1]);
-        asm_nonmatching_meshes_normal_source_term
-          (F, *ml[0], mf_u1, mf_u2_proj, mf_lambda, lambda, pmf_coeff, f_coeff, reg);
-      }
+      asm_nonmatching_meshes_normal_source_term
+        (F, *ml[0], mf_u1, mf_u2_proj, mf_lambda, lambda, reg);
 
     }
     else if (pbr->brick_name() == "Integral penalized contact between nonmatching meshes brick" ||
