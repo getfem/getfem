@@ -35,7 +35,12 @@
 
 namespace getfem {
 
-
+#ifdef _WIN32
+  //this is because MSVC or Intel C++ under Windows doesn't support it
+  bool isnan(scalar_type x) {return x!=x;} 
+#else
+    using std::isnan;
+#endif
 
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
@@ -4549,7 +4554,7 @@ namespace getfem {
     base_small_vector lambda(N);
     slice_vector_on_basic_dof_of_element(mfl, L, cv, coeff);
     ctxl.pf()->interpolation(ctxl, coeff, lambda, dim_type(N));
-    GMM_ASSERT1(!(std::isnan(lambda[0])), "internal error");
+    GMM_ASSERT1(!(isnan(lambda[0])), "internal error");
 
     // Unstabilized frictionless case for the moment
 
