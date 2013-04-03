@@ -978,6 +978,7 @@ namespace getfem {
 
     /**check consistency of stiffness matrix and rhs*/
     void check_stiffness_matrix_and_rhs(const model &, size_type,
+                                        const model::termlist& tlist,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
                                         const model::mimlist &,
