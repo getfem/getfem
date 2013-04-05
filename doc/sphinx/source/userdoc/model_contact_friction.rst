@@ -176,7 +176,7 @@ where :math:`gap` is a given initial gap in reference configuration, :math:`r` i
 
   \displaystyle \int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
 
-where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`\rho` and :math:`P_{B(\rho)}` is the orthogonal projection on it. The term :math:`\alpha(u^h_T-w^h_T)` represent here an approximation of the sliding velocity. The parameter :math:`\alpha` and the field :math:`w^h_T` have to be adapted with respect to the chosen approximation. For instance, if the standard finite difference
+where :math:`B(\rho)` is the closed ball of center  :math:`0` and radius :math:`\rho` and :math:`P_{B(\rho)}` is the orthogonal projection on it (By convenyion, the ball reduces to the origin dor :math:`\rho \le 0`). The term :math:`\alpha(u^h_T-w^h_T)` represent here an approximation of the sliding velocity. The parameter :math:`\alpha` and the field :math:`w^h_T` have to be adapted with respect to the chosen approximation. For instance, if the standard finite difference
 
 .. math::
 
@@ -192,10 +192,10 @@ Getfem++ bricks implement four versions of the contact condition derived from th
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} \lambda^h \cdot v^h d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
-  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
-where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
+where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity and :math:`\rho={\mathscr F}(r(u^h_N-gap) - \lambda^h_N)`. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
 
 .. math::
 
@@ -203,23 +203,24 @@ where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of 
   \cdots - \displaystyle \int_{\Gamma_c} \delta_{\lambda} \cdot v d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c}(1-H(r(u^h_N-gap)-\lambda_N))\delta_{\lambda_N}\mu^h_N d\Gamma
   \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
-  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
-  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
-  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
+  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_rP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{\mathscr F}{r} D_rP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
   \end{array}\right.
   
-where :math:`H(\cdot)` is the Heaviside function (0 for a negative argument and 1 for a non-negative argument), :math:`D_xP_{B(r)}(x)` and :math:`D_rP_{B(r)}(x)` are the derivatives of the projection on :math:`B(r)` and :math:`\delta_{\lambda}` and :math:`\delta_{u}` are the unknown corresponding to the tangent problem.
+where :math:`H(\cdot)` is the Heaviside function (0 for a negative argument and 1 for a non-negative argument), :math:`D_xP_{B(\rho)}(x)` and :math:`D_{\rho}P_{B(\rho)}(x)` are the derivatives of the projection on :math:`B(\rho)` (assumed to vanish for :math:`\rho \le 0`) and :math:`\delta_{\lambda}`and :math:`\delta_{u}` are the unknown corresponding to the tangent problem.
 
 
-The second version corresponds to the "symmetric" version. It is in fact symmetric in the frictionless case only (because in this case it directly derives from the augmented Lagrangian formulation). It reads:
+The second version corresponds to the "symmetric" version. It is in fact symmetric in the frictionless case only (because in this case it directly derives from the augmented Lagrangian formulation). It reads still with :math:`\rho={\mathscr F}(r(u^h_N-gap) - \lambda^h_N)`:
 
 .. math::
 
   \left\{\begin{array}{l}
   a(u^h, v^h) + \displaystyle \int_{\Gamma_c} (\lambda^h_N - r(u^h_N-gap))_- v^h_N d\Gamma \\
-  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
+  ~~~~~~ - \displaystyle \int_{\Gamma_c} P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot v^h_T d\Gamma = l(v^h) ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_N + (\lambda^h_N - r(u^h_N-gap))_-)\mu^h_N d\Gamma \\
-  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\mathscr F(\lambda^h_N - r(u^h_N-gap))_-)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
+  ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
 and the tangent system:
@@ -228,16 +229,19 @@ and the tangent system:
 
   \left\{\begin{array}{l}
   \cdots + \displaystyle \int_{\Gamma_c} rH(r(u^h_N-gap)-\lambda_N)\delta_{u_N} v_N -  H(r(u^h_N-gap)-\lambda_N)\delta_{\lambda_N} v_N d\Gamma \\
-  ~~~~~~+ \displaystyle \int_{\Gamma_c} r \alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{u_T}\cdot v^h_T d\Gamma \\
-  ~~~~~~- \displaystyle \int_{\Gamma_c} D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{\lambda_T}\cdot v^h_T d\Gamma \\
-  ~~~~~~+ \displaystyle \int_{\Gamma_c} ({-\mathscr F} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{\lambda_N})\cdot v^h_T d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
+  ~~~~~~+ \displaystyle \int_{\Gamma_c} r \alpha D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{u_T}\cdot v^h_T d\Gamma \\
+  ~~~~~~- \displaystyle \int_{\Gamma_c} D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{\lambda_T}\cdot v^h_T d\Gamma \\
+  ~~~~~~- \displaystyle \int_{\Gamma_c} (r{\mathscr F} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{u_N})\cdot v^h_T d\Gamma \\
+  ~~~~~~- \displaystyle \int_{\Gamma_c} ({\mathscr F} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)) \delta_{\lambda_N})\cdot v^h_T d\Gamma = \cdots  ~~~~ \forall v^h \in V^h, \\
   \displaystyle -\frac{1}{r}\int_{\Gamma_c}(1-H(r(u^h_N-gap)-\lambda_N))\delta_{\lambda_N}\mu^h_N d\Gamma
   \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
-  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
-  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
-  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{-\mathscr F}{r} D_rP_{B(-\mathscr F\lambda^h_N)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
+  ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_rP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{\mathscr F}{r} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
+still with :math:`\rho=\mathscr F(\lambda^h_N - r(u^h_N-gap))_-`.
 
 The third version corresponds to a penalized contact and friction condition. It does not require the use of a multiplier. In this version, the parameter :math:`r` is a penalization parameter and as to be large enough to perform a good approximation of the non-penetration and the Coulomb friction conditions. The formulation reads:
 
@@ -255,7 +259,7 @@ and the tangent system:
   \left\{\begin{array}{l}
   \cdots + \displaystyle \int_{\Gamma_c} rH(u^h_N-gap)\delta_{u_N} v_N d\Gamma \\
   ~~~~~~- \displaystyle \int_{\Gamma_c} r \alpha D_xP_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T)) \delta_{u_T}\cdot v^h_T d\Gamma \\
-  ~~~~~~+ \displaystyle \int_{\Gamma_c} ({r\mathscr F} H(u^h_N-gap) D_rP_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T)) \delta_{u_N})\cdot v^h_T d\Gamma = \cdots  ~~~~ \forall v^h \in V^h,
+  ~~~~~~+ \displaystyle \int_{\Gamma_c} ({r\mathscr F} H(u^h_N-gap) D_{\rho}P_{B(\mathscr F r(u^h_N-gap)_+)}(r\alpha(u^h_T-w^h_T)) \delta_{u_N})\cdot v^h_T d\Gamma = \cdots  ~~~~ \forall v^h \in V^h,
   \end{array}\right.
 
 
