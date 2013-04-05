@@ -712,7 +712,7 @@ void level_set_contact::NormalTerm::compute(
 		for (size_type i = 0; i < dim; i++)
 			for (size_type j = 0; j < dim; j++)
 				if (i == j) t(i, j) = 1.0 - un[i] * un[j];
-				else t(i, j) =un[i] * un[j];
+				else t(i, j) =-un[i] * un[j];
 	}
 }
 
