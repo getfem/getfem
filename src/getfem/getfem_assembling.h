@@ -65,7 +65,7 @@ namespace getfem {
     v.push_back(w[0]);
     w.resize(2);
     MPI_SUM_VECTOR(v, w);
-    return v[1]/v[0];
+    return w[1]/w[0];
   }
 
   /**
