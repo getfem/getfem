@@ -271,6 +271,9 @@ namespace getfem {
   // - Dans la structure finale, penser à séparer mieux les données (bords
   //   de contact, obstacles) et les résultats stockés. Ajouter les zones
   //   d'influence d'éléments, les distances de coupure, l'algo de ...
+  // - Gerer le cas configuration de référence
+  // - Dans le cas Delaunay, gérer les points coincidents ... ou voir si le
+  //   delaunay les gère correctement, ou les perturber infinitesimalement ....
 
 
 
@@ -291,31 +294,33 @@ namespace getfem {
 
 
     size_type N;          // Meshes dimensions
-    bool auto_contact;    // auto-contact is searched or not.
+    bool self_contact;    // self-contact is searched or not.
     bool ref_conf;        // contact in reference configuration
                           // for linear elasticity small sliding contact.
     bool use_delaunay;    // Use delaunay to detect the contact pairs instead
                           // of influence boxes.
-    bool use_fem_nodes;   // Use finite element nodes instead of Gauss points
-                          // for master contact boundaries.
+    int fem_nodes_mode;   // 0 = Use Gauss points for both slave and master
+                          // 1 = Use finite element nodes for slave and
+                          //     Gauss points for master.
+                          // 2 = Use finite element nodes for both slave
+                          //     and master
+                          
     scalar_type release_distance;  // Limit distance beyond which the contact
     // will not be considered. CAUTION: should be comparable to the element
     // size (if it is too large, a too large set of influence boxes will be
-    // detected and the computation will be slow) 
-
-    // distances de coupure ...
+    // detected and the computation will be slow, except for delaunay option) 
 
     typedef model_real_plain_vector VECTOR;
     std::vector<const VECTOR *> Us;  // Displacement vectors
     std::vector<VECTOR> ext_Us;      // Unreduced displacement vectors
                                      // CAUTION : they have to be updated
 
-    // Contact pairs are seached for a certain boundary (slave or master,
-    // depending on the contact algorithm) on the slave ones. If contact pairs
-    // are searched for a slave boundary, auto-contact is taken into account
-    // if the flag 'auto_contact' is set to 'true'. Auto-contact is never taken
-    // into account for a master boundary.
-    dal::bit_vector master_boundaries;
+    // Contact pairs are seached for a certain boundary (master or slave,
+    // depending on the contact algorithm) on the master ones. If contact pairs
+    // are searched for a master boundary, self-contact is taken into account
+    // if the flag 'self_contact' is set to 'true'. Self-contact is never taken
+    // into account for a slave boundary.
+    dal::bit_vector slave_boundaries;
     std::vector<contact_boundary> contact_boundaries;
 
     std::vector<std::string> coordinates;
@@ -384,10 +389,10 @@ namespace getfem {
     { return contact_boundaries[n].region; }
 
     multi_contact_frame(size_type NN, scalar_type r_dist,
-                        bool fem_nodes = false, bool dela = true,
-                        bool refc = false, bool autoc = true)
-      : N(NN), auto_contact(autoc), ref_conf(refc), use_delaunay(dela), 
-        use_fem_nodes(fem_nodes), release_distance(r_dist),
+                        int fem_nodes = 0, bool dela = true,
+                        bool refc = false, bool selfc = true)
+      : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela), 
+        fem_nodes_mode(fem_nodes), release_distance(r_dist),
         coordinates(N), pt_eval(N) {
       if (N > 0) coordinates[0] = "x";
       if (N > 1) coordinates[1] = "y";
@@ -415,7 +420,7 @@ namespace getfem {
       return ind;
     }
 
-    size_type add_master_boundary(const getfem::mesh_im &mim,
+    size_type add_slave_boundary(const getfem::mesh_im &mim,
                                   const getfem::mesh_fem &mfu,
                                   const model_real_plain_vector &U,
                                   size_type reg) {
@@ -425,11 +430,11 @@ namespace getfem {
       contact_boundary cb(reg, mfu, mim, add_U(mfu, U));
       size_type ind = contact_boundaries.size();
       contact_boundaries.push_back(cb);
-      master_boundaries.add(ind);
+      slave_boundaries.add(ind);
       return ind;
     }
 
-    size_type add_slave_boundary(const getfem::mesh_im &mim,
+    size_type add_master_boundary(const getfem::mesh_im &mim,
                                  const getfem::mesh_fem &mfu,
                                  const model_real_plain_vector &U,
                                  size_type reg) {
@@ -441,7 +446,7 @@ namespace getfem {
       return size_type(contact_boundaries.size() - 1);
     }
 
-    // Compute the influence boxes of slave boundary elements. To be run
+    // Compute the influence boxes of master boundary elements. To be run
     // before the detection of contact pairs. The influence box is the
     // bounding box extended by a distance equal to the release distance.
     void compute_influence_boxes(void) {
@@ -455,13 +460,11 @@ namespace getfem {
       ind_of_elements.resize(0);
       face_of_elements.resize(0);
       
-      extend_vectors();
-      
       for (size_type i = 0; i < contact_boundaries.size(); ++i)
-        if (!(master_boundaries[i])) {
-          size_type bnum = region_of_slave_boundary(i);
-          const mesh_fem &mfu = mfu_of_slave_boundary(i);
-          const model_real_plain_vector &U = disp_of_slave_boundary(i);
+        if (!(slave_boundaries[i])) {
+          size_type bnum = region_of_boundary(i);
+          const mesh_fem &mfu = mfu_of_boundary(i);
+          const model_real_plain_vector &U = disp_of_boundary(i);
           const mesh &m = mfu.linked_mesh();
           
           base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
@@ -571,24 +574,20 @@ namespace getfem {
       ind_of_elements.resize(0);
       face_of_elements.resize(0);
       
-      extend_vectors();
-      
       // should store all the boundary deformed points relatively to
-      // an integration method (for the slave boundaries) and
+      // an integration method (for the master boundaries) and
       // relatively to an integration method or to finite element
-      // nodes for a master boundary.
+      // nodes for a slave boundary.
       // Storing sufficient information to perform a Delaunay triangulation
       // and to be able to recover the boundary number, element number,
       // face number, mean normal ...
-
-      // Il faut gérer les points coincidents ...
       
       for (size_type i = 0; i < contact_boundaries.size(); ++i) {
 
-        size_type bnum = region_of_slave_boundary(i);
-        const mesh_fem &mfu = mfu_of_slave_boundary(i);
-        const mesh_fem &mim = mim_of_slave_boundary(i);
-        const model_real_plain_vector &U = disp_of_slave_boundary(i);
+        size_type bnum = region_of_boundary(i);
+        const mesh_fem &mfu = mfu_of_boundary(i);
+        const mesh_fem &mim = mim_of_boundary(i);
+        const model_real_plain_vector &U = disp_of_boundary(i);
         const mesh &m = mfu.linked_mesh();
         
         base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
@@ -598,7 +597,6 @@ namespace getfem {
         
         
         dal::bit_vector points_already_interpolated;
-        std::vector<base_node> transformed_points(m.nb_max_points());
         for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
           size_type cv = v.cv();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -610,7 +608,8 @@ namespace getfem {
             (G, mfu.linked_mesh().points_of_convex(cv));
           
           pfem_precomp pfp(0); size_type nbptf(0);
-          if (master_boundaries[i]) {
+          if (fem_nodes_mode == 2
+              || (fem_nodes_mode == 1 && slave_boundaries[i])) {
             pfp = fppool(pf_s, pf_s->node_tab(cv));
             nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
           }
@@ -622,8 +621,13 @@ namespace getfem {
           
           
           for (short_type ip = 0; ip < nbptf; ++ip) {
+
+            // dans le cas nodal, il faut utiliser points_already_interpolated pour ne pas introduire des doublons inutilement ...
+            // MAIS ... dans le cas nodal, quel normale prendre ?
+
             size_type ind(0);
-            if (master_boundaries[i])
+            if (fem_nodes_mode == 2
+                || (fem_nodes_mode == 1 && slave_boundaries[i])) {
               ind = pf_s->node_convex->structure()->ind_points_of_face(v.f())[ip];
             else
               ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
@@ -648,12 +652,85 @@ namespace getfem {
             face_of_elements.resize(v.f());
             
           }
-        }
-        
-      }
-      
-      
+        } 
+      } 
     }
+
+
+
+    // The whole process of the computation of contact pairs
+    void compute_contact_pairs(void) {
+      extend_vectors();
+
+      if (use_delaunay)
+        compute_boundary_points();
+      else
+        compute_influence_boxes();
+
+      // Loop over contact points on slave surfaces
+      for (size_type i = 0; i < contact_boundaries.size(); ++i)
+        if (slave_boundaries[i] || self_contact) {
+          
+          size_type bnum = region_of_boundary(i);
+          const mesh_fem &mfu = mfu_of_boundary(i);
+          const mesh_fem &mim = mim_of_boundary(i);
+          const model_real_plain_vector &U = disp_of_boundary(i);
+          const mesh &m = mfu.linked_mesh();
+          
+          base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
+          base_matrix grad(N,N);
+          mesh_region region = m.region(bnum);
+          GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
+          
+          dal::bit_vector points_already_interpolated;
+          for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+            size_type cv = v.cv();
+            bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+            pfem pf_s = mfu.fem_of_element(cv);
+            pintegration_method pim = mim.int_method_of_element(cv);
+            size_type nbd_t = pgt->nb_points();
+            slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+            bgeot::vectors_to_base_matrix
+              (G, mfu.linked_mesh().points_of_convex(cv));
+            
+            pfem_precomp pfp(0); size_type nbptf(0);
+            if (slave_boundaries[i] && use_fem_nodes) {
+              pfp = fppool(pf_s, pf_s->node_tab(cv));
+              nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
+            }
+            else {
+              pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
+              nbptf = pim->approx_method()->nb_points_on_face(v.f());
+            }
+            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
+            
+            for (short_type ip = 0; ip < nbptf; ++ip) {
+
+              // ici la liste des points ...
+
+
+            }
+          }
+        }
+
+
+
+      // boucle sur les noeuds/points de Gauss surface esclaves et maitres eventuellement
+
+      //   - calcul des paires potentielles par l'un ou l'autre moyen
+
+      //   - calcul de la projection
+
+      //   - éventuel passage au voisin
+
+      //   - discrimination
+
+
+    }
+
+
+
+
 
   };
 
