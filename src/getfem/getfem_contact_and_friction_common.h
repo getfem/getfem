@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2011-2012 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
  
  This file is a part of GETFEM++
  
@@ -331,8 +331,10 @@ namespace getfem {
     std::vector<std::string> obstacles;
     std::vector<std::string> obstacles_velocities;
 
+      
+
     // 
-    // Influende boxes part
+    // Influence boxes part
     //
     bgeot::rtree element_boxes;                  // influence boxes
 
@@ -344,10 +346,18 @@ namespace getfem {
     // 
     // Common part
     //
+    struct normal_cone {
+      std::vector<base_node> unit_normals;
+      
+      void add_normal(const base_node &n) { unit_normals.push_back(n); }
+      // et faire des fonctions de tests de coincidence, de reduction si tout
+      // le cone est conpris dans un certain angle ...
+      void normal_cone(const base_node &n) : unit_normals(1, n) { }
+    };
     std::vector<size_type> boundary_of_elements; // boundary number each box
     std::vector<size_type> ind_of_elements;  // element index in the boundary
     std::vector<size_type> face_of_elements; // face of the element
-    std::vector<base_node> unit_normals;     // mean outward unit normal
+    std::vector<normal_cone> normal_cones;     // mean outward unit normal
     
     
 
@@ -455,7 +465,7 @@ namespace getfem {
       model_real_plain_vector coeff;
 
       element_boxes.clear();
-      unit_normals.resize(0);
+      normal_cones.resize(0);
       boundary_of_elements.resize(0);
       ind_of_elements.resize(0);
       face_of_elements.resize(0);
@@ -471,11 +481,6 @@ namespace getfem {
           base_matrix grad(N,N);
           mesh_region region = m.region(bnum);
           GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
-          
-          // Continuer à vérifier à partir de là
-          // adapter au cas en conf. ref.
-          // penser à la validité de la normale ...
-          // bien commenter
           
           dal::bit_vector points_already_interpolated;
           std::vector<base_node> transformed_points(m.nb_max_points());
@@ -518,7 +523,8 @@ namespace getfem {
                 pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
                 gmm::add(gmm::identity_matrix(), grad);
                 scalar_type J = gmm::lu_inverse(grad);
-                if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+                if (J <= scalar_type(0))
+                  GMM_WARNING1("Inverted element !" << J);
                 gmm::mult(gmm::transposed(grad), n0, n);
                 n /= gmm::vect_norm2(n);
                 n_mean += n;
@@ -541,7 +547,7 @@ namespace getfem {
             // Computation of influence box :
             // offset of the bounding box relatively to the release distance
             scalar_type h = bmax[0] - bmin[0];
-            for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k] - bmin[k]);
+            for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
             if (h < release_distance/scalar_type(20))
               GMM_WARNING1("Found an element whose size is smaller than 1/20 "
                            "of the release distance. You should probably "
@@ -550,9 +556,9 @@ namespace getfem {
               { bmin[k] -= release_distance; bmax[k] += release_distance; }
             
             // Store the influence box and additional information.
-            element_boxes.add_box(bmin, bmax, unit_normals.size());
+            element_boxes.add_box(bmin, bmax, normal_cones.size());
             n_mean /= gmm::vect_norm2(n_mean);
-            unit_normals.push_back(n_mean);
+            unit_normals.push_back(normal_cone(n_mean));
             boundary_of_elements.push_back(i);
             ind_of_elements.push_back(cv);
             face_of_elements.push_back(v.f());
@@ -569,7 +575,7 @@ namespace getfem {
       model_real_plain_vector coeff;
 
       pts.clear();
-      unit_normals.resize(0);
+      normal_cones.resize(0);
       boundary_of_elements.resize(0);
       ind_of_elements.resize(0);
       face_of_elements.resize(0);
@@ -589,6 +595,8 @@ namespace getfem {
         const mesh_fem &mim = mim_of_boundary(i);
         const model_real_plain_vector &U = disp_of_boundary(i);
         const mesh &m = mfu.linked_mesh();
+        bool on_fem_nodes = (fem_nodes_mode == 2
+                             || (fem_nodes_mode == 1 && slave_boundaries[i]));
         
         base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
         base_matrix grad(N,N);
@@ -596,7 +604,8 @@ namespace getfem {
         GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
         
         
-        dal::bit_vector points_already_interpolated;
+        dal::bit_vector dof_already_interpolated;
+        std::vector<size_type> dof_ind(mfu.nb_basic_dof());
         for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
           size_type cv = v.cv();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -606,10 +615,10 @@ namespace getfem {
           slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
           bgeot::vectors_to_base_matrix
             (G, mfu.linked_mesh().points_of_convex(cv));
+          dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();;
           
           pfem_precomp pfp(0); size_type nbptf(0);
-          if (fem_nodes_mode == 2
-              || (fem_nodes_mode == 1 && slave_boundaries[i])) {
+          if (on_fem_nodes) {
             pfp = fppool(pf_s, pf_s->node_tab(cv));
             nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
           }
@@ -622,20 +631,22 @@ namespace getfem {
           
           for (short_type ip = 0; ip < nbptf; ++ip) {
 
-            // dans le cas nodal, il faut utiliser points_already_interpolated pour ne pas introduire des doublons inutilement ...
-            // MAIS ... dans le cas nodal, quel normale prendre ?
-
-            size_type ind(0);
-            if (fem_nodes_mode == 2
-                || (fem_nodes_mode == 1 && slave_boundaries[i])) {
-              ind = pf_s->node_convex->structure()->ind_points_of_face(v.f())[ip];
+            size_type ind(0), inddof(0);
+            if (on_fem_nodes) {
+              inddof = mfu.ind_dof_of_element(cv)[ip*qqdim];
+              ind =
+                pf_s->node_convex->structure()->ind_points_of_face(v.f())[ip];
+            }
             else
               ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
             ctx.set_ii(ind);
-            pf_s->interpolation(ctx, coeff, val, dim_type(N));
-            val += ctx.xreal();
-            
-            pts.push_back(val);
+
+            if (!(on_fem_nodes && dof_already_interpolated[inddof])) {
+              pf_s->interpolation(ctx, coeff, val, dim_type(N));
+              val += ctx.xreal();            
+              if (on_fem_nodes)  dof_ind[inddof] = pts.size();
+              pts.push_back(val);
+            }
             
             // unit normal vector computation
             n0 = bgeot::compute_normal(ctx, v.f());
@@ -646,11 +657,16 @@ namespace getfem {
             gmm::mult(gmm::transposed(grad), n0, n);
             n /= gmm::vect_norm2(n);
             
-            unit_normals.push_back(n);
-            boundary_of_elements.resize(i);
-            ind_of_elements.resize(cv);
-            face_of_elements.resize(v.f());
-            
+            if (on_fem_nodes && dof_already_interpolated[inddof]) {
+              normal_cones[dof_ind[inddof]].add_normal(n);
+            } else {
+              normal_cones.push_back(normal_cone(n));
+              boundary_of_elements.push_back(i);
+              ind_of_elements.push_back(cv);
+              face_of_elements.push_back(v.f());
+            }
+
+            if (on_fem_nodes)  dof_already_interpolated.add(inddof);
           }
         } 
       } 
@@ -715,7 +731,10 @@ namespace getfem {
 
 
 
-      // boucle sur les noeuds/points de Gauss surface esclaves et maitres eventuellement
+      // boucle sur les noeuds/points de Gauss surface esclaves et
+      // maitres eventuellement
+
+      //   - simplification éventuelle des normales si nodal 
 
       //   - calcul des paires potentielles par l'un ou l'autre moyen
 
