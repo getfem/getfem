@@ -282,13 +282,12 @@ namespace getfem {
                                          K_UL_V1,
                                          K_UL_V2,
                                          K_UL_V3,
-                                         K_UL_V4,
                                          UZAWA_PROJ_FRICT,
                                          UZAWA_PROJ_FRICT_SAXCE,
 
                                          K_UU_V1,
                                          K_UU_V2,
-                                         K_UL_FRICT_V1, // EYE
+                                         K_UL_FRICT_V1, // negative EYE
                                          K_UL_FRICT_V2,
                                          K_UL_FRICT_V3,
                                          K_UL_FRICT_V4,
@@ -851,10 +850,10 @@ namespace getfem {
       mf_obs.extend_vector(obs_, obs);
       
       if (!pmf_coeff)
-	f_coeff = (*f_coeff_)[0];
+        f_coeff = (*f_coeff_)[0];
       else {
-	friction_coeff.resize(pmf_coeff->nb_basic_dof());
-	pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
+        friction_coeff.resize(pmf_coeff->nb_basic_dof());
+        pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
       }
     }
     

@@ -56,7 +56,7 @@ namespace getfem {
     case RHS_U_FRICT_V8: case RHS_U_FRICT_V1:
     case RHS_U_FRICT_V4: case RHS_U_FRICT_V5:
     case RHS_L_FRICT_V1: case RHS_L_FRICT_V2: case RHS_L_FRICT_V4:
-    case K_UL_V1:        case K_UL_V2:        case K_UL_V3:  case K_UL_V4:
+    case K_UL_V1:        case K_UL_V2:        case K_UL_V3:
     case UZAWA_PROJ_FRICT: case UZAWA_PROJ_FRICT_SAXCE:
       sizes_[0] = N; break;
       // two-dimensional tensors [N x N]
@@ -178,9 +178,6 @@ namespace getfem {
     case K_UL_V3:
       e = -Heav(r*(un-g)-ln);
       for (i=0; i<N; ++i) t[i] = e*no[i];
-      break;
-    case K_UL_V4:
-      for (i=0; i<N; ++i) t[i] = -no[i];
       break;
     case UZAWA_PROJ_FRICT:
       e = -gmm::neg(ln - r*(un - g));
@@ -391,7 +388,7 @@ namespace getfem {
       }
       break;
 
-    case 4 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+    case 4 : // calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
       GMM_ASSERT1(!contact_only, "Invalid friction option");
       if (pmf_coeff) {
         slice_vector_on_basic_dof_of_element(*pmf_coeff, friction_coeff, cv, coeff);
@@ -487,7 +484,7 @@ namespace getfem {
       }
       break;
 
-    case 4 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+    case 4 : // calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
       GMM_ASSERT1(!contact_only, "Invalid friction option");
       if (pmf_coeff) {
         slice_vector_on_basic_dof_of_element(*pmf_coeff, friction_coeff, cv, coeff);
@@ -518,7 +515,7 @@ namespace getfem {
    scalar_type r, const mesh_region &rg, int option = 1) {
 
     size_type subterm1 = (option == 3) ? K_UL_V2 : K_UL_V1;
-    size_type subterm2 = (option == 3) ? K_UL_V4 : K_UL_V3;
+    size_type subterm2 = (option == 3) ? K_UL_V1 : K_UL_V3;
     size_type subterm3 = (option == 3) ? K_LL_V2 : K_LL_V1;
     size_type subterm4 = (option == 2) ? K_UU_V2 : K_UU_V1;
 
@@ -1307,7 +1304,7 @@ namespace getfem {
    scalar_type r, const mesh_region &rg, int option = 1) {
 
     size_type subterm1 = (option == 3) ? K_UL_V2 : K_UL_V1;
-    size_type subterm2 = (option == 3) ? K_UL_V4 : K_UL_V3;
+    size_type subterm2 = (option == 3) ? K_UL_V1 : K_UL_V3;
     size_type subterm3 = (option == 3) ? K_LL_V2 : K_LL_V1;
     size_type subterm4 = (option == 2) ? K_UU_V2 : K_UU_V1;
 
@@ -2604,7 +2601,7 @@ namespace getfem {
       n /= gmm::vect_norm2(n);
       break;
 
-    case 3 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+    case 3 : // calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
       if (pmf_coeff) {
         slice_vector_on_basic_dof_of_element(*pmf_coeff, friction_coeff, cv, coeff);
         ctx.pf()->interpolation(ctx, coeff, aux1, 1);
@@ -3064,9 +3061,9 @@ namespace getfem {
         n /= gmm::vect_norm2(n);
         break;
 
-      case 3 :// calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
+      case 3 : // calculate [f_coeff] interpolating [friction_coeff] on [mf_coeff]
         if (pmf_coeff) {
-      slice_vector_on_basic_dof_of_element(*pmf_coeff, friction_coeff, cv, coeff);
+          slice_vector_on_basic_dof_of_element(*pmf_coeff, friction_coeff, cv, coeff);
           ctx.pf()->interpolation(ctx, coeff, aux1, 1);
           f_coeff = aux1[0];
         }
