@@ -97,8 +97,6 @@ namespace getfem {
     }
   }
 
-
-
   template <typename VEC, typename VECR>
   void coupled_projection(const VEC &x, const VEC &n,
 			  scalar_type f, VECR &g) {
@@ -338,20 +336,6 @@ namespace getfem {
     std::vector<std::string> obstacles_velocities;
 
       
-
-    // 
-    // Influence boxes part
-    //
-    bgeot::rtree element_boxes;                  // influence boxes
-
-    // 
-    // Delaunay part
-    //
-    std::vector<base_node> pts; // Il faudrait éliminer les doublons ...
-
-    // 
-    // Common part
-    //
     struct normal_cone {
       std::vector<base_node> unit_normals;
       
@@ -360,13 +344,41 @@ namespace getfem {
       // le cone est conpris dans un certain angle ...
       void normal_cone(const base_node &n) : unit_normals(1, n) { }
     };
-    std::vector<size_type> boundary_of_elements; // boundary number each box
-    std::vector<size_type> ind_of_elements;  // element index in the boundary
-    std::vector<size_type> face_of_elements; // face of the element
-    std::vector<normal_cone> normal_cones;     // mean outward unit normal
-    
-    
+    // 
+    // Influence boxes
+    //
+    struct influence_box {     // Additional information for an influence box
+      size_type ind_boundary;  // Boundary number
+      size_type ind_element;   // Element number
+      short_type ind_face;     // Face number in element
+      base_node mean_normal;   // Mean outward normal unit vector
+      influence_box(void) {}
+      influence_box(size_type ib, size_type ie,
+                    short_type if, const base_node &n)
+        : ind_boundary(ib), ind_element(ie), ind_face(if), mean_normal(n) {}
+    };
 
+    bgeot::rtree element_boxes;                  // influence boxes
+    std::vector<influence_box> element_boxes_info;
+
+    // 
+    // Stored points (for Delaunay and slave nodal boundaries)
+    //
+    
+    struct boundary_point {    // Additional information for a boundary point
+      size_type ind_boundary;  // Boundary number
+      size_type ind_element;   // Element number
+      short_type ind_face;     // Face number in element
+      normal_cone normals;     // Set of outward unit normal vectors
+      boundary_point(void) {}
+      boundary_point(size_type ib, size_type ie,
+                     short_type if, const base_node &n)
+        : point(pt), ind_boundary(ib), ind_element(ie), ind_face(if),
+          normals(n) {}
+    };
+      
+    std::vector<base_node> boundary_points
+    std::vector<boundary_point> boundary_points_info;   
 
 
     size_type add_U(const getfem::mesh_fem &mfu,
@@ -391,6 +403,13 @@ namespace getfem {
           iU.add(ind_U);
         }
       }
+    }
+
+    void clear_infos(void) { // Delete information for memory release
+      boundary_points = std::vector<base_node>();
+      boundary_points_info = std::vector<boundary_point>();
+      element_boxes = bgeot::rtree();
+      element_boxes_info = std::vector<influence_box>();
     }
 
   public:
@@ -471,10 +490,7 @@ namespace getfem {
       model_real_plain_vector coeff;
 
       element_boxes.clear();
-      normal_cones.resize(0);
-      boundary_of_elements.resize(0);
-      ind_of_elements.resize(0);
-      face_of_elements.resize(0);
+      element_boxes_info.resize(0);
       
       for (size_type i = 0; i < contact_boundaries.size(); ++i)
         if (!(slave_boundaries[i])) {
@@ -564,10 +580,7 @@ namespace getfem {
             // Store the influence box and additional information.
             element_boxes.add_box(bmin, bmax, normal_cones.size());
             n_mean /= gmm::vect_norm2(n_mean);
-            unit_normals.push_back(normal_cone(n_mean));
-            boundary_of_elements.push_back(i);
-            ind_of_elements.push_back(cv);
-            face_of_elements.push_back(v.f());
+            element_boxes_info.push_back(influence_box(i, cv, v.f(), n_mean));
           }
         }
     }
@@ -575,119 +588,120 @@ namespace getfem {
     // For delaunay triangulation. Advantages compared to influence boxes:
     // No degeneration of the algorithm complexity with refinement and
     // more easy to extend to fictitious domain with contact.
-    void compute_boundary_points(void) {
+    // Stores all the boundary deformed points relatively to
+    // an integration method or to finite element nodes (depending on
+    // fem_nodes_mode flag). Storing sufficient information to perform
+    // a Delaunay triangulation and to be able to recover the boundary
+    // number, element number, face number, unit normal vector ...
+    void compute_boundary_points(bool slave_only = false) {
       fem_precomp_pool fppool;
       base_matrix G;
       model_real_plain_vector coeff;
 
-      pts.clear();
-      normal_cones.resize(0);
-      boundary_of_elements.resize(0);
-      ind_of_elements.resize(0);
-      face_of_elements.resize(0);
+      boundary_points.resize(0);
+      boundary_points_info.resize(0);
       
-      // should store all the boundary deformed points relatively to
-      // an integration method (for the master boundaries) and
-      // relatively to an integration method or to finite element
-      // nodes for a slave boundary.
-      // Storing sufficient information to perform a Delaunay triangulation
-      // and to be able to recover the boundary number, element number,
-      // face number, mean normal ...
-      
-      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
-
-        size_type bnum = region_of_boundary(i);
-        const mesh_fem &mfu = mfu_of_boundary(i);
-        const mesh_fem &mim = mim_of_boundary(i);
-        const model_real_plain_vector &U = disp_of_boundary(i);
-        const mesh &m = mfu.linked_mesh();
-        bool on_fem_nodes = (fem_nodes_mode == 2
-                             || (fem_nodes_mode == 1 && slave_boundaries[i]));
-        
-        base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
-        base_matrix grad(N,N);
-        mesh_region region = m.region(bnum);
-        GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
-        
-        
-        dal::bit_vector dof_already_interpolated;
-        std::vector<size_type> dof_ind(mfu.nb_basic_dof());
-        for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
-          size_type cv = v.cv();
-          bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-          pfem pf_s = mfu.fem_of_element(cv);
-          pintegration_method pim = mim.int_method_of_element(cv);
-          size_type nbd_t = pgt->nb_points();
-          slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
-          bgeot::vectors_to_base_matrix
-            (G, mfu.linked_mesh().points_of_convex(cv));
-          dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();;
+      for (size_type i = 0; i < contact_boundaries.size(); ++i)
+        if (!slave_only || slave_boundaries[i]) {
+          size_type bnum = region_of_boundary(i);
+          const mesh_fem &mfu = mfu_of_boundary(i);
+          const mesh_fem &mim = mim_of_boundary(i);
+          const model_real_plain_vector &U = disp_of_boundary(i);
+          const mesh &m = mfu.linked_mesh();
+          bool on_fem_nodes = (fem_nodes_mode == 2 ||
+                               (fem_nodes_mode == 1 && slave_boundaries[i]));
           
-          pfem_precomp pfp(0); size_type nbptf(0);
-          if (on_fem_nodes) {
-            pfp = fppool(pf_s, pf_s->node_tab(cv));
-            nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
-          }
-          else {
-            pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
-            nbptf = pim->approx_method()->nb_points_on_face(v.f());
-          }
-          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
+          base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
+          base_matrix grad(N,N);
+          mesh_region region = m.region(bnum);
+          GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
           
           
-          for (short_type ip = 0; ip < nbptf; ++ip) {
-
-            size_type ind(0), inddof(0);
+          dal::bit_vector dof_already_interpolated;
+          std::vector<size_type> dof_ind(mfu.nb_basic_dof());
+          for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+            size_type cv = v.cv();
+            bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+            pfem pf_s = mfu.fem_of_element(cv);
+            pintegration_method pim = mim.int_method_of_element(cv);
+            size_type nbd_t = pgt->nb_points();
+            slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+            bgeot::vectors_to_base_matrix
+              (G, mfu.linked_mesh().points_of_convex(cv));
+            dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();;
+            
+            pfem_precomp pfp(0); size_type nbptf(0);
             if (on_fem_nodes) {
-              inddof = mfu.ind_dof_of_element(cv)[ip*qqdim];
-              ind =
-                pf_s->node_convex->structure()->ind_points_of_face(v.f())[ip];
+              pfp = fppool(pf_s, pf_s->node_tab(cv));
+              nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
             }
-            else
-              ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
-            ctx.set_ii(ind);
-
-            if (!(on_fem_nodes && dof_already_interpolated[inddof])) {
-              pf_s->interpolation(ctx, coeff, val, dim_type(N));
-              val += ctx.xreal();            
-              if (on_fem_nodes)  dof_ind[inddof] = pts.size();
-              pts.push_back(val);
+            else {
+              pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
+              nbptf = pim->approx_method()->nb_points_on_face(v.f());
             }
+            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
             
-            // unit normal vector computation
-            n0 = bgeot::compute_normal(ctx, v.f());
-            pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
-            gmm::add(gmm::identity_matrix(), grad);
-            scalar_type J = gmm::lu_inverse(grad);
-            if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
-            gmm::mult(gmm::transposed(grad), n0, n);
-            n /= gmm::vect_norm2(n);
             
-            if (on_fem_nodes && dof_already_interpolated[inddof]) {
-              normal_cones[dof_ind[inddof]].add_normal(n);
-            } else {
-              normal_cones.push_back(normal_cone(n));
-              boundary_of_elements.push_back(i);
-              ind_of_elements.push_back(cv);
-              face_of_elements.push_back(v.f());
+            for (short_type ip = 0; ip < nbptf; ++ip) {
+              
+              size_type ind(0), inddof(0);
+              if (on_fem_nodes) {
+                inddof = mfu.ind_dof_of_element(cv)[ip*qqdim];
+                ind =
+                 pf_s->node_convex->structure()->ind_points_of_face(v.f())[ip];
+              }
+              else
+                ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
+              ctx.set_ii(ind);
+              
+              if (!(on_fem_nodes && dof_already_interpolated[inddof])) {
+                pf_s->interpolation(ctx, coeff, val, dim_type(N));
+                val += ctx.xreal();            
+                if (on_fem_nodes)  dof_ind[inddof] = boundary_points.size();
+                
+              }
+              
+              // unit normal vector computation
+              n0 = bgeot::compute_normal(ctx, v.f());
+              pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+              gmm::add(gmm::identity_matrix(), grad);
+              scalar_type J = gmm::lu_inverse(grad);
+              if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+              gmm::mult(gmm::transposed(grad), n0, n);
+              n /= gmm::vect_norm2(n);
+              
+              if (on_fem_nodes && dof_already_interpolated[inddof]) {
+                boundary_points_info[dof_ind[inddof]].normals.add_normal(n);
+              } else {
+                boundary_points.push_back(val);
+                boundary_points_info.push_back(boundary_point(i, cv, v.f(),n));
+              }
+              
+              if (on_fem_nodes)  dof_already_interpolated.add(inddof);
             }
-
-            if (on_fem_nodes)  dof_already_interpolated.add(inddof);
-          }
+          } 
         } 
-      } 
     }
-
-
+    
+    
 
     // The whole process of the computation of contact pairs
     void compute_contact_pairs(void) {
       extend_vectors();
 
-      if (use_delaunay)
+      if (use_delaunay) {
         compute_boundary_points();
-      else
+        normal_cone_simplicication(); // with some criteria ... TODO
+
+        gmm::dense_matrix<size_type> simplexes;
+        getfem::delaunay(boundary_points, simplexes);
+
+      }
+      else {
         compute_influence_boxes();
+        if (fem_nodes_mode > 0) 
+          compute_boundary_points(true);
+      }
 
       // Loop over contact points on slave surfaces
       for (size_type i = 0; i < contact_boundaries.size(); ++i)
@@ -698,6 +712,8 @@ namespace getfem {
           const mesh_fem &mim = mim_of_boundary(i);
           const model_real_plain_vector &U = disp_of_boundary(i);
           const mesh &m = mfu.linked_mesh();
+          bool on_fem_nodes = (fem_nodes_mode == 2
+                             || (fem_nodes_mode == 1 && slave_boundaries[i]));
           
           base_node val(N), bmin(N), bmax(N), n0(N), n(N), n_mean(N);
           base_matrix grad(N,N);
@@ -716,7 +732,7 @@ namespace getfem {
               (G, mfu.linked_mesh().points_of_convex(cv));
             
             pfem_precomp pfp(0); size_type nbptf(0);
-            if (slave_boundaries[i] && use_fem_nodes) {
+            if (on_fem_nodes) {
               pfp = fppool(pf_s, pf_s->node_tab(cv));
               nbptf = pf_s->node_convex->structure()->nb_points_on_face(v.f());
             }
@@ -727,6 +743,8 @@ namespace getfem {
             fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
             
             for (short_type ip = 0; ip < nbptf; ++ip) {
+
+              // Si nodal, il faut le cone des normales pour juger ... (si Delaunay alors déja calculé ...)
 
               // ici la liste des points ...
 
@@ -740,7 +758,7 @@ namespace getfem {
       // boucle sur les noeuds/points de Gauss surface esclaves et
       // maitres eventuellement
 
-      //   - simplification éventuelle des normales si nodal 
+      //   - simplification éventuelle des normales si nodal (TODO)
 
       //   - calcul des paires potentielles par l'un ou l'autre moyen
 
@@ -751,6 +769,7 @@ namespace getfem {
       //   - discrimination
 
 
+      clear_infos(); // à controler ...
     }
 
 
