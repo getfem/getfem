@@ -62,23 +62,29 @@ namespace getfem {
 
   template<typename VEC> void ball_projection(const VEC &x,
 					      scalar_type radius) {
-    scalar_type a = gmm::vect_norm2(x);
-    if (radius <= 0) gmm::clear(const_cast<VEC&>(x));
-    else if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a);
+    if (radius <= scalar_type(0))
+      gmm::clear(const_cast<VEC&>(x));
+    else {
+      scalar_type a = gmm::vect_norm2(x);
+      if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a);
+    }
   }
   
   template<typename VEC, typename VECR>
   void ball_projection_grad_r(const VEC &x, scalar_type radius,
-                                     VECR &g) {
-    scalar_type a = gmm::vect_norm2(x);
-    if (radius > 0 && a >= radius) {
-      gmm::copy(x, g); gmm::scale(g, scalar_type(1)/a);
+                              VECR &g) {
+    if (radius > scalar_type(0)) {
+      scalar_type a = gmm::vect_norm2(x);
+      if (a >= radius) {
+        gmm::copy(x, g); gmm::scale(g, scalar_type(1)/a);
+        return;
+      }
     }
-    else gmm::clear(g);
+    gmm::clear(g);
   }
 
   template <typename VEC, typename MAT>
-  void ball_projection_grad(const VEC &x, double radius, MAT &g) {
+  void ball_projection_grad(const VEC &x, scalar_type radius, MAT &g) {
     if (radius <= scalar_type(0)) { gmm::clear(g); return; }
     gmm::copy(gmm::identity_matrix(), g);
     scalar_type a = gmm::vect_norm2(x);
