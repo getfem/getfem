@@ -289,6 +289,12 @@ namespace getfem {
   using gmm::to_be_done_error;
   using gmm::failure_error;
 
+#if defined(__GNUC__)
+  using std::isnan;
+#else
+  bool isnan(scalar_type x) { return x != x; } 
+#endif
+
 }  /* end of namespace getfem.                                             */
 
 

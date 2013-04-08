@@ -23,10 +23,9 @@
 #include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_contact_and_friction_common.h"
 #include "getfem/getfem_assembling.h"
-#include <getfem/bgeot_kdtree.h>
 
-#ifdef _MSC_VER
-#define xor ^
+#ifndef GETFEM_HAVE_QHULL_QHULL_H
+#include <getfem/bgeot_kdtree.h>
 #endif
 
 namespace getfem {
@@ -194,7 +193,7 @@ namespace getfem {
           for (size_type iv2 = iv1 + 1; iv2 < nb_vertices; ++iv2) {
             size_type v2 = facet_vertices[iv2];
             bool v2_on_surface1 = (v2 < size1);
-            if (v1_on_surface1 xor v2_on_surface1) {
+            if (v1_on_surface1 ^ v2_on_surface1) {
               bool already_in = false;
               size_type vv1 = (v1_on_surface1 ? v1 : v2);
               size_type vv2 = (v2_on_surface1 ? v1 : v2);

@@ -232,13 +232,13 @@ void sol_ref_infinite_plane(scalar_type nu, scalar_type E, scalar_type sigma,
 				+9*cost*s2*mu*c2*c2)/(lambda-3*mu);
     }
   } else assert(0);
-  if (std::isnan(U[0]))
+  if (isnan(U[0]))
     cerr << "raaah not a number ... nu=" << nu << ", E=" << E << ", sig="
 	 << sigma << ", a=" << a << ", xx=" << xx << ", y=" << y << ", r="
 	 << r << ", sqrtr=" << sqrtr << ", cost=" << cost << ", U=" << U[0]
 	 << "," << U[1] << endl;
-  assert(!std::isnan(U[0]));
-  assert(!std::isnan(U[1]));
+  assert(!isnan(U[0]));
+  assert(!isnan(U[1]));
 }
 
 struct exact_solution {

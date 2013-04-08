@@ -35,12 +35,7 @@
 
 namespace getfem {
 
-#ifdef _WIN32
-  //this is because MSVC or Intel C++ under Windows doesn't support it
-  bool isnan(scalar_type x) {return x!=x;} 
-#else
-    using std::isnan;
-#endif
+
 
   template <typename T> inline static T Heav(T a)
   { return (a < T(0)) ? T(0) : T(1); }
