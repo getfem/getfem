@@ -278,6 +278,9 @@ namespace getfem {
   // - Gerer le cas configuration de référence
   // - Dans le cas Delaunay, gérer les points coincidents ... ou voir si le
   //   delaunay les gère correctement, ou les perturber infinitesimalement ....
+  // - Dans le cas des boites d'influence, doit on stocker un cone de normale ?
+  //   Si les normales sont très differentes, que doit-on faire ?  La moyenne
+  //   ne semble plus valable.
 
 
 
@@ -410,6 +413,16 @@ namespace getfem {
       boundary_points_info = std::vector<boundary_point>();
       element_boxes = bgeot::rtree();
       element_boxes_info = std::vector<influence_box>();
+    }
+
+    bool test_normal_cones_compatibility(const normal_cone &nc1,
+                                         const normal_cone &nc2) {
+      for (size_type i = 0; i < nc1.unit_normals.size(); ++i)
+        for (size_type j = 0; j < nc2.unit_normals.size(); ++j)
+          if (gmm::vect_sp(nc1.unit_normals[i], nc2.unit_normals[j])
+              < scalar_type(0))
+            return true;
+      return false;
     }
 
   public:
@@ -687,14 +700,63 @@ namespace getfem {
 
     // The whole process of the computation of contact pairs
     void compute_contact_pairs(void) {
+      fem_precomp_pool fppool;
+      base_matrix G;
+      model_real_plain_vector coeff;
+      gmm::dense_matrix<size_type> simplexes;
+      // + stockage de la connectivité
+
       extend_vectors();
+      
 
       if (use_delaunay) {
         compute_boundary_points();
         normal_cone_simplicication(); // with some criteria ... TODO
 
-        gmm::dense_matrix<size_type> simplexes;
         getfem::delaunay(boundary_points, simplexes);
+
+        // connectivity analysis
+        for (size_type is = 0; is < gmm::mat_ncols(simplexes); ++is) {
+          // il faut tester ce qui se passe en cas de points répétés !!
+          
+          for (size_type i = 1; i <= N; ++i)
+            for (size_type j = 0; j < i; ++j) {
+              size_type ipt1 = simplexes(i, is), ipt2 = simplexes(j, is);
+              boundary_point *pt_info1 = &(boundary_points_info[ipt1]);
+              boundary_point *pt_info2 = &(boundary_points_info[ipt2]);
+              bool sl1 = slave_boundaries[pt_info1->ind_boundary];
+              bool sl2 = slave_boundaries[pt_info2->ind_boundary];
+              if (!sl1 && sl2) { // The slave in first if any
+                std::swap(ipt1, ipt2);
+                std::swap(pt_info1, pt_info2);
+                std::swap(sl1, sl2);
+              }
+
+              if (
+                  // slave-master case
+                  ((sl1 && !sl2)
+                   // master-master self-contact case
+                   || (self_contact && !sl1 && !sl2))
+                  // test of unit normal vectors or cones
+                  && test_normal_cones_compatibility(pt_info1->normals,
+                                                     pt_info2->normals)
+                  // In case of self-contact test if the two points share the
+                  // same face. CAUTION: should be adapted to nodal version
+                  && (sl1 || (pt_info1->ind_boundary != pt_info2->ind_boundary)
+                      || (pt_info1->ind_element != pt_info2->ind_element)
+                      || (pt_info1->ind_face != pt_info2->ind_face))
+                  // Pour le test dans le cas nodal il faut tester si les deux points n'appartiennent pas à un élément commun. Il faudrait une table des voisins de chaque noeud ... Domage de devoir construire ça uniquement pour le test. Mais on doit pouvoir passer par le mesh_fem pour regarder les éléments communs à deux dof pour savoir s'ils sont voisin ou non : faire une fonction.
+                  ) {
+                
+                // stockage de la paire potentielle point-surface de manière à ne pas faire de doublons. Si le maitre est en nodal, alors il faut stocker toute les paires correspondant aux surfaces liées au point maitre. Si self-contact  il faut faire un stockage dans les deux sens si !sl1
+
+              
+
+              }
+
+            }
+       
+        }
 
       }
       else {
@@ -743,6 +805,24 @@ namespace getfem {
             fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
             
             for (short_type ip = 0; ip < nbptf; ++ip) {
+
+              if (use_delaunay) {
+                // Par les simplexes du Delaunay, on selectionne les faces d'éléments que l'on préselctionne par les normales, le fait de ne pas appartenir à un bord esclave et un nombre minimal de connexions dans le cas nodal
+                // On calcule la projection pour les faces restantes
+                // On élimine par les critères prédéfinis
+                // On choisi la plus proche dans les faces restantes.
+                
+              } else {
+
+                // On selectionne les boites d'influence et on préselectionne par les normales (en éliminant l'élément courant aussi)
+                // On calcule la projection pour les faces restantes
+                // On élimine par les critères prédéfinis
+                // On choisi la plus proche dans les faces restantes.
+
+
+              }
+
+
 
               // Si nodal, il faut le cone des normales pour juger ... (si Delaunay alors déja calculé ...)
 
