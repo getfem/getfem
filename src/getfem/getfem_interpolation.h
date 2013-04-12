@@ -287,15 +287,13 @@ namespace getfem {
     size_type qmult = mf_source.get_qdim()/mf_target.get_qdim();
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
     fem_precomp_pool fppool;
-    dal::bit_vector dof_t_done;
+    std::vector<size_type> dof_t_passes(mf_target.nb_basic_dof());
     std::vector<T> U(mf_source.nb_basic_dof()*qqdim);
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
     gmm::row_matrix<gmm::rsvector<scalar_type> >
       M(mf_target.nb_basic_dof(), mf_source.nb_basic_dof());
 
     if (version == 0) mf_source.extend_vector(UU, U);
-      
-    dof_t_done.sup(0, mf_target.nb_basic_dof());
 
     /* we should sort convexes by their fem */
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
@@ -308,6 +306,13 @@ namespace getfem {
       size_type nbd_t = pf_t->nb_dof(cv);
       mesh_fem::ind_dof_ct::const_iterator itdof;
       size_type cvnbdof = mf_source.nb_basic_dof_of_element(cv);
+
+      bool discontinuous_source = false;
+      for (size_type dof=0; dof < nbd_s; ++dof)
+        if (!dof_linkable(pf_s->dof_types()[dof])) {
+          discontinuous_source = true;
+          break;
+        }
 
       if (version == 0) {
         coeff.resize(qqdim);
@@ -336,14 +341,14 @@ namespace getfem {
       }
       for (size_type i = 0; i < nbd_t; ++i, itdof+=mf_target.get_qdim()) {
         size_type dof_t = *itdof*qmult;
-        if (dof_t_done.is_in(*itdof)) continue;
-        dof_t_done.add(*itdof);
+        if (!discontinuous_source && dof_t_passes[*itdof] > 0) continue;
+        dof_t_passes[*itdof] += 1;
         ctx.set_ii(i);
         if (version == 0) {
           for (size_type qq=0; qq < qqdim; ++qq) {
             pf_s->interpolation(ctx, coeff[qq], val, qdim);
             for (size_type k=0; k < qdim; ++k)
-              V[(dof_t + k)*qqdim+qq] = val[k];
+              V[(dof_t + k)*qqdim+qq] += val[k];
           }
         }
         else {
@@ -351,13 +356,26 @@ namespace getfem {
           pf_s->interpolation(ctx, Mloc, qdim);
           for (size_type k=0; k < qdim; ++k) {
             for (size_type j=0; j < dof_source.size(); ++j) {
-              M(dof_t + k, dof_source[j]) = Mloc(k, j);
+              M(dof_t + k, dof_source[j]) += Mloc(k, j);
             }
           }
         }
       }
     }
 
+    // calculate averages for discontinuous source and continuous target
+    for (size_type i = 0; i < mf_target.nb_basic_dof(); ++i) {
+      size_type dof_t = i*qmult;
+      scalar_type passes = scalar_type(dof_t_passes[i]);
+      if (version == 0 && passes > scalar_type(0))
+        for (size_type qq=0; qq < qqdim; ++qq)
+          for (size_type k=0; k < qdim; ++k)
+            V[(dof_t + k)*qqdim+qq] /= passes;
+      else if (passes > scalar_type(0))
+        for (size_type k=0; k < qdim; ++k)
+          for (size_type j=0; j < dof_source.size(); ++j)
+            gmm::scale(gmm::mat_row(M, dof_t + k), scalar_type(1)/passes);
+    }
     
     if (version == 0)
       mf_target.reduce_vector(V, VV);
