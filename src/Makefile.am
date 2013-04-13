@@ -204,10 +204,11 @@ SRC =                                      		\
 	getfem_model_solvers.cc                		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
+	getfem_contact_and_friction_common.cc		\
 	getfem_contact_and_friction_nodal.cc		\
 	getfem_contact_and_friction_integral.cc	        \
 	getfem_plasticity.cc				\
-	getfem_deformable_mesh.cc				\
+	getfem_deformable_mesh.cc			\
 	getfem_level_set_contact.cc
 #	getfem_enumeration_dof_para.cc
 
