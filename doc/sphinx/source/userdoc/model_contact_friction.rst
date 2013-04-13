@@ -195,7 +195,7 @@ Getfem++ bricks implement four versions of the contact condition derived from th
   ~~~~~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c} (\lambda^h_T -P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T)))\cdot \mu^h_T d\Gamma = 0 ~~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
-where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity and :math:`\rho={\mathscr F}(r(u^h_N-gap) - \lambda^h_N)`. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
+where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of the problem in  :math:`u`, for instance linear elasticity and :math:`\rho={\mathscr F}(\lambda^h_N - r(u^h_N-gap))_-`. In order to write a Newton iteration, one has to derive the tangent system. It can be written, reporting only the contact and friction terms and not the right hand side:
 
 .. math::
 
@@ -205,14 +205,14 @@ where :math:`a(\cdot, \cdot)` and :math:`l(v)` represent the remaining parts of 
   \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
   ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
   ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
-  ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_rP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
-  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{\mathscr F}{r} D_rP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
+  ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{\mathscr F}{r} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
   \end{array}\right.
   
-where :math:`H(\cdot)` is the Heaviside function (0 for a negative argument and 1 for a non-negative argument), :math:`D_xP_{B(\rho)}(x)` and :math:`D_{\rho}P_{B(\rho)}(x)` are the derivatives of the projection on :math:`B(\rho)` (assumed to vanish for :math:`\rho \le 0`) and :math:`\delta_{\lambda}`and :math:`\delta_{u}` are the unknown corresponding to the tangent problem.
+where :math:`H(\cdot)` is the Heaviside function (0 for a negative argument and 1 for a non-negative argument), :math:`D_xP_{B(\rho)}(x)` and :math:`D_{\rho}P_{B(\rho)}(x)` are the derivatives of the projection on :math:`B(\rho)` (assumed to vanish for :math:`\rho \le 0`) and :math:`\delta_{\lambda}` and :math:`\delta_{u}` are the unknown corresponding to the tangent problem.
 
 
-The second version corresponds to the "symmetric" version. It is in fact symmetric in the frictionless case only (because in this case it directly derives from the augmented Lagrangian formulation). It reads still with :math:`\rho={\mathscr F}(r(u^h_N-gap) - \lambda^h_N)`:
+The second version corresponds to the "symmetric" version. It is in fact symmetric in the frictionless case only (because in this case it directly derives from the augmented Lagrangian formulation). It reads:
 
 .. math::
 
@@ -237,11 +237,11 @@ and the tangent system:
   \displaystyle -\int_{\Gamma_c}H(r(u^h_N-gap)-\lambda_N)\delta_{u_N}\mu^h_N d\Gamma \\
   ~~~~~~\displaystyle -\frac{1}{r}\int_{\Gamma_c}(\delta_{\lambda_T} - D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_T})\cdot\mu^h_T d\Gamma \\
   ~~~~~~\displaystyle -\int_{\Gamma_c}\alpha D_xP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_T}\cdot\mu^h_T d\Gamma \\
-  ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_rP_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
+  ~~~~~~ \displaystyle +\int_{\Gamma_c}({\mathscr F} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{u_N})\cdot\mu^h_T d\Gamma \\
   ~~~~~~ \displaystyle -\int_{\Gamma_c}(\frac{\mathscr F}{r} D_{\rho}P_{B(\rho)}(\lambda^h_T - r\alpha(u^h_T-w^h_T))\delta_{\lambda_N})\cdot\mu^h_T d\Gamma = \cdots ~~~ \forall \mu^h \in W^h,
   \end{array}\right.
 
-still with :math:`\rho=\mathscr F(\lambda^h_N - r(u^h_N-gap))_-`.
+still with :math:`\rho={\mathscr F}(\lambda^h_N - r(u^h_N-gap))_-`.
 
 The third version corresponds to a penalized contact and friction condition. It does not require the use of a multiplier. In this version, the parameter :math:`r` is a penalization parameter and as to be large enough to perform a good approximation of the non-penetration and the Coulomb friction conditions. The formulation reads:
 

@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2011-2012 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
  
  This file is a part of GETFEM++
  
@@ -84,13 +84,18 @@ namespace getfem {
       friction stress.
       An inf-sup condition between `multname` and `varname_u` is required.
       The augmentation parameter `dataname_r` should be chosen in a
-      range of acceptable values. `dataname_friction_coeff` is the friction
-      coefficient which could be constant or defined on a finite element
-      method.
+      range of acceptable values.
+      The parameter `dataname_friction_coeffs` contains the Coulomb friction
+      coefficient and optionally an adhesional shear stress threshold and the
+      tresca limit shear stress. For constant coefficients its size is from
+      1 to 3. For coefficients described on a finite element method, this
+      vector contains a number of single values, value pairs or triplets
+      equal to the number of the corresponding mesh_fem's basic dofs.
       Possible values for `option` is 1 for the non-symmetric Alart-Curnier
       augmented Lagrangian method, 2 for the symmetric one, 3 for the
       non-symmetric Alart-Curnier method with an additional augmentation
       and 4 for a new unsymmetric method. The default value is 1.
+      (Option 4 ignores any adhesional stress and tresca limit coefficients.)
       `dataname_alpha` and `dataname_wt` are optional parameters to solve
       evolutionary friction problems. `dataname_gamma` and `dataname_vt`
       represent optional data for adding a parameter-dependent sliding
@@ -99,7 +104,7 @@ namespace getfem {
   size_type add_integral_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_obs,
-   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   const std::string &dataname_r, const std::string &dataname_friction_coeffs,
    size_type region, int option = 1, const std::string &dataname_alpha = "",
    const std::string &dataname_wt = "",
    const std::string &dataname_gamma = "",
@@ -131,8 +136,12 @@ namespace getfem {
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance to
       the obstacle (interpolated on a finite element method).
-      `dataname_friction_coeff`` is the friction coefficient which could
-      be constant or defined on a finite element method.
+      The parameter `dataname_friction_coeffs` contains the Coulomb friction
+      coefficient and optionally an adhesional shear stress threshold and the
+      tresca limit shear stress. For constant coefficients its size is from
+      1 to 3. For coefficients described on a finite element method, this
+      vector contains a number of single values, value pairs or triplets
+      equal to the number of the corresponding mesh_fem's basic dofs.
       The penalization parameter `dataname_r` should be chosen
       large enough to prescribe approximate non-penetration and friction
       conditions but not too large not to deteriorate too much the
@@ -147,7 +156,7 @@ namespace getfem {
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   const std::string &dataname_friction_coeff,
+   const std::string &dataname_friction_coeffs,
    size_type region, int option = 1, const std::string &dataname_lambda = "",
    const std::string &dataname_alpha = "",
    const std::string &dataname_wt = "");
@@ -192,20 +201,26 @@ namespace getfem {
       An inf-sup condition between `multname` and `varname_u1` and
       `varname_u2` is required.
       The augmentation parameter `dataname_r` should be chosen in a
-      range of acceptable values. `dataname_friction_coeff` is the friction
-      coefficient which could be constant or defined on a finite element
-      method on the same mesh as `varname_u1`.
+      range of acceptable values.
+      The parameter `dataname_friction_coeffs` contains the Coulomb friction
+      coefficient and optionally an adhesional shear stress threshold and the
+      tresca limit shear stress. For constant coefficients its size is from
+      1 to 3. For coefficients described on a finite element method on the
+      same mesh as `varname_u1`, this vector contains a number of single 
+      values, value pairs or triplets equal to the number of the
+      corresponding mesh_fem's basic dofs.
       Possible values for `option` is 1 for the non-symmetric Alart-Curnier
       augmented Lagrangian method, 2 for the symmetric one, 3 for the
       non-symmetric Alart-Curnier method with an additional augmentation
       and 4 for a new unsymmetric method. The default value is 1.
+      (Option 4 ignores any adhesional stress and tresca limit coefficients.)
       `dataname_alpha`, `dataname_wt1` and `dataname_wt2` are optional
       parameters to solve evolutionary friction problems.
   */
   size_type add_integral_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
    const std::string &varname_u2, const std::string &multname,
-   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   const std::string &dataname_r, const std::string &dataname_friction_coeffs,
    size_type region1, size_type region2, int option = 1,
    const std::string &dataname_alpha = "",
    const std::string &dataname_wt1 = "",
@@ -239,8 +254,13 @@ namespace getfem {
       large enough to prescribe approximate non-penetration and friction
       conditions but not too large not to deteriorate too much the
       conditionning of the tangent system.
-      `dataname_friction_coeff` is the friction coefficient which could be constant
-      or defined on a finite element method on the same mesh as `varname_u1`.
+      The parameter `dataname_friction_coeffs` contains the Coulomb friction
+      coefficient and optionally an adhesional shear stress threshold and the
+      tresca limit shear stress. For constant coefficients its size is from
+      1 to 3. For coefficients described on a finite element method on the
+      same mesh as `varname_u1`, this vector contains a number of single
+      values, value pairs or triplets equal to the number of the
+      corresponding mesh_fem's basic dofs.
       `dataname_lambda` is an optional parameter used if option
       is 2. In that case, the penalization term is shifted by lambda (this
       allows the use of an Uzawa algorithm on the corresponding augmented
@@ -251,7 +271,7 @@ namespace getfem {
   size_type add_penalized_contact_between_nonmatching_meshes_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
    const std::string &varname_u2, const std::string &dataname_r,
-   const std::string &dataname_friction_coeff,
+   const std::string &dataname_friction_coeffs,
    size_type region1, size_type region2, int option = 1,
    const std::string &dataname_lambda = "",
    const std::string &dataname_alpha = "",
@@ -318,7 +338,10 @@ namespace getfem {
                                // elastic body surface moves outwards)
     base_small_vector no;      // surface normal, pointing outwards with respect
                                // to the (first) elastic body
-    scalar_type g, f_coeff;    // gap and coefficient of friction values
+    scalar_type g;             // gap value
+    scalar_type f_coeff;       // coefficient of friction value
+    scalar_type tau_adh;       // adhesional shear resistance of the interface
+    scalar_type tresca_lim;    // tresca shear limit for the interface
 
     // these variables are used as temporary storage and they will usually contain
     // garbage from previous calculations
@@ -339,12 +362,16 @@ namespace getfem {
     contact_nonlinear_term(dim_type N_, size_type option_, scalar_type r_,
                            bool contact_only_ = true,
                            scalar_type alpha_ = scalar_type(1)) :
+      tau_adh(0), tresca_lim(gmm::default_max(scalar_type())),
       N(N_), option(option_), r(r_), contact_only(contact_only_), alpha(alpha_) {
 
       adjust_tensor_size();
     }
 
     const bgeot::multi_index &sizes(size_type) const { return sizes_; }
+
+    virtual void friction_law(scalar_type p, scalar_type &tau);
+    virtual void friction_law(scalar_type p, scalar_type &tau, scalar_type &tau_grad);
 
     virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
     virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nb*/)
@@ -367,7 +394,7 @@ namespace getfem {
     const mesh_fem &mf_obs;     // mandatory
     const mesh_fem *pmf_lambda; // optional for terms involving lagrange multipliers
     const mesh_fem *pmf_coeff;  // optional for terms involving fem described coefficient of friction
-    base_vector U, obs, lambda, friction_coeff, WT, VT;
+    base_vector U, obs, lambda, friction_coeff, tau_adhesion, tresca_limit, WT, VT;
     scalar_type gamma;
 
     template <typename VECT1>
@@ -376,17 +403,18 @@ namespace getfem {
      const mesh_fem &mf_u_, const VECT1 &U_,
      const mesh_fem &mf_obs_, const VECT1 &obs_,
      const mesh_fem *pmf_lambda_ = 0, const VECT1 *lambda_ = 0,
-     const mesh_fem *pmf_coeff_ = 0, const VECT1 *f_coeff_ = 0,
+     const mesh_fem *pmf_coeff_ = 0, const VECT1 *f_coeffs_ = 0,
      scalar_type alpha_ = scalar_type(1), const VECT1 *WT_ = 0,
      scalar_type gamma_ = scalar_type(1), const VECT1 *VT_ = 0
     )
       : contact_nonlinear_term(mf_u_.linked_mesh().dim(), option_, r_,
-                               (f_coeff_ == 0), alpha_
+                               (f_coeffs_ == 0), alpha_
                               ),
         mf_u(mf_u_), mf_obs(mf_obs_),
         pmf_lambda(pmf_lambda_), pmf_coeff(pmf_coeff_), 
         U(mf_u.nb_basic_dof()), obs(mf_obs.nb_basic_dof()),
-        lambda(0), friction_coeff(0), WT(0), VT(0), gamma(gamma_)
+        lambda(0), friction_coeff(0), tau_adhesion(0), tresca_limit(0),
+        WT(0), VT(0), gamma(gamma_)
     {
 
       mf_u.extend_vector(U_, U);
@@ -398,11 +426,27 @@ namespace getfem {
       }
 
       if (!contact_only) {
-        if (!pmf_coeff)
-          f_coeff = (*f_coeff_)[0];
+        if (!pmf_coeff) {
+          f_coeff = (*f_coeffs_)[0];
+          if (gmm::vect_size(*f_coeffs_) > 1) tau_adh = (*f_coeffs_)[1];
+          if (gmm::vect_size(*f_coeffs_) > 2) tresca_lim = (*f_coeffs_)[2];
+        }
         else {
-          friction_coeff.resize(pmf_coeff->nb_basic_dof());
-          pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
+          size_type ncoeffs = gmm::vect_size(*f_coeffs_)/pmf_coeff->nb_dof();
+          GMM_ASSERT1(ncoeffs >= 1 && ncoeffs <= 3, "Wrong vector dimension for friction coefficients");
+          gmm::resize(friction_coeff, pmf_coeff->nb_basic_dof());
+          pmf_coeff->extend_vector(gmm::sub_vector(*f_coeffs_, gmm::sub_slice(0,pmf_coeff->nb_dof(),ncoeffs)),
+                                   friction_coeff);
+          if (ncoeffs > 1) {
+            gmm::resize(tau_adhesion, pmf_coeff->nb_basic_dof());
+            pmf_coeff->extend_vector(gmm::sub_vector(*f_coeffs_, gmm::sub_slice(1,pmf_coeff->nb_dof(),ncoeffs)),
+                                     tau_adhesion);
+          }
+          if (ncoeffs > 2) {
+            gmm::resize(tresca_limit, pmf_coeff->nb_basic_dof());
+            pmf_coeff->extend_vector(gmm::sub_vector(*f_coeffs_, gmm::sub_slice(2,pmf_coeff->nb_dof(),ncoeffs)),
+                                     tresca_limit);
+          }
         }
 
         if (WT_ && gmm::vect_size(*WT_)) {
@@ -440,7 +484,7 @@ namespace getfem {
     const mesh_fem &mf_u2;      // displacements of the mortar side projected on the non-mortar side
     const mesh_fem *pmf_lambda; // Lagrange multipliers defined on the non-mortar side
     const mesh_fem *pmf_coeff;  // coefficient of friction defined on the non-mortar side
-    base_vector U1, U2, lambda, friction_coeff, WT1, WT2;
+    base_vector U1, U2, lambda, friction_coeff, tau_adhesion, tresca_limit, WT1, WT2;
 
     template <typename VECT1>
     contact_nonmatching_meshes_nonlinear_term
@@ -448,17 +492,18 @@ namespace getfem {
      const mesh_fem &mf_u1_, const VECT1 &U1_,
      const mesh_fem &mf_u2_, const VECT1 &U2_,
      const mesh_fem *pmf_lambda_ = 0, const VECT1 *lambda_ = 0,
-     const mesh_fem *pmf_coeff_ = 0, const VECT1 *f_coeff_ = 0,
+     const mesh_fem *pmf_coeff_ = 0, const VECT1 *f_coeffs_ = 0,
      scalar_type alpha_ = scalar_type(1),
      const VECT1 *WT1_ = 0, const VECT1 *WT2_ = 0
     )
       : contact_nonlinear_term(mf_u1_.linked_mesh().dim(), option_, r_,
-                               (f_coeff_ == 0), alpha_
+                               (f_coeffs_ == 0), alpha_
                               ),
         mf_u1(mf_u1_), mf_u2(mf_u2_),
         pmf_lambda(pmf_lambda_), pmf_coeff(pmf_coeff_),
         U1(mf_u1.nb_basic_dof()), U2(mf_u2.nb_basic_dof()),
-        lambda(0), friction_coeff(0), WT1(0), WT2(0)
+        lambda(0), friction_coeff(0), tau_adhesion(0), tresca_limit(0),
+        WT1(0), WT2(0)
     {
 
       GMM_ASSERT1(mf_u2.linked_mesh().dim() == N,
@@ -473,11 +518,27 @@ namespace getfem {
       }
 
       if (!contact_only) {
-        if (!pmf_coeff)
-          f_coeff = (*f_coeff_)[0];
+        if (!pmf_coeff) {
+          f_coeff = (*f_coeffs_)[0];
+          if (gmm::vect_size(*f_coeffs_) > 1) tau_adh = (*f_coeffs_)[1];
+          if (gmm::vect_size(*f_coeffs_) > 2) tresca_lim = (*f_coeffs_)[2];
+        }
         else {
-          friction_coeff.resize(pmf_coeff->nb_basic_dof());
-          pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
+          size_type ncoeffs = gmm::vect_size(*f_coeffs_)/pmf_coeff->nb_dof();
+          GMM_ASSERT1(ncoeffs >= 1 && ncoeffs <= 3, "Wrong vector dimension for friction coefficients");
+          gmm::resize(friction_coeff, pmf_coeff->nb_basic_dof());
+          pmf_coeff->extend_vector(gmm::sub_vector(*f_coeffs_, gmm::sub_slice(0,pmf_coeff->nb_dof(),ncoeffs)),
+                                   friction_coeff);
+          if (ncoeffs > 1) {
+            gmm::resize(tau_adhesion, pmf_coeff->nb_basic_dof());
+            pmf_coeff->extend_vector(gmm::sub_vector(*f_coeffs_, gmm::sub_slice(1,pmf_coeff->nb_dof(),ncoeffs)),
+                                     tau_adhesion);
+          }
+          if (ncoeffs > 2) {
+            gmm::resize(tresca_limit, pmf_coeff->nb_basic_dof());
+            pmf_coeff->extend_vector(gmm::sub_vector(*f_coeffs_, gmm::sub_slice(2,pmf_coeff->nb_dof(),ncoeffs)),
+                                     tresca_limit);
+          }
         }
         if (WT1_ && WT2_ && gmm::vect_size(*WT1_) && gmm::vect_size(*WT2_)) {
           WT1.resize(mf_u1.nb_basic_dof());
