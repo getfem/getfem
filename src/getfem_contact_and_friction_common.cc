@@ -383,8 +383,8 @@ namespace getfem {
               boundary_points_info[dof_ind[inddof]].normals.add_normal(n);
             } else {
               boundary_points.push_back(val);
-              boundary_points_info.push_back(boundary_point(i, cv, v.f(),
-                                                            inddof, n));
+              boundary_points_info.push_back(boundary_point(ctx.xreal(), i, cv,
+                                                            v.f(), inddof, n));
             }
             
             if (on_fem_nodes)  dof_already_interpolated.add(inddof);
@@ -425,6 +425,8 @@ namespace getfem {
           const mesh_fem &mf1 = mfu_of_boundary(ib1);
           const mesh_fem &mf2 = mfu_of_boundary(ib2);
           
+          // CRITERION 1 : The unit normal cone / vector are compatible
+          //               and the two points are not in the same element.
           if (
               // slave-master case
               ((sl1 && !sl2)
@@ -514,7 +516,8 @@ namespace getfem {
         size_type ib1 = ibx.ind_boundary;
         const mesh_fem &mf2 = mfu_of_boundary(ib1);
         
-        
+        // CRITERION 1 : The unit normal cone / vector are compatible
+        //               and the two points are not in the same element.
         if (
             test_normal_cones_compatibility(ibx.mean_normal,
                                             pt_info->normals)
@@ -580,9 +583,9 @@ namespace getfem {
   };
   
   void multi_contact_frame::compute_contact_pairs(void) {
-    base_matrix G;
+    base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
-     base_small_vector xref(N);
+    base_small_vector xref(N), n(N);
     
     
     contact_pairs = std::vector<contact_pair>();
@@ -596,7 +599,26 @@ namespace getfem {
     
     
     // Scan of potential pairs
-    for (size_type ip = 0; ip < potential_pairs.size(); ++ip)
+    for (size_type ip = 0; ip < potential_pairs.size(); ++ip) {
+      const base_node &y0 = boundary_points[ip];
+      // Detect here the nearest rigid obstacle (taking into account
+      // the release distance)
+      size_type irigid_obstacle(-1);
+      scalar_type d0 = 1E300;
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+      gmm::copy(y0, pt_eval);
+      for (size_type i = 0; i < obstacles.size(); ++i) {
+        scalar_type d0_o = scalar_type(obstacles_parsers[i].Eval());
+        if (gmm::abs(d0_o) < release_distance && d0_o < d0)
+          { d0 = d0_o; irigid_obstacle = i; }
+      }
+#else
+      if (obstacles.size() > 0)
+        GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
+                     "muParser to account for rigid obstacles");
+#endif
+      
+      bool first_pair = true;
       for (size_type ipf = 0; ipf < potential_pairs[ip].size(); ++ipf) {
         // Point to surface projection. Principle :
         //  - One parametrizes first the face on the reference element by
@@ -615,7 +637,6 @@ namespace getfem {
         //                       . (\nabla \phi(x0 + a_i t_i) t_j
         //  - A BFGS is called.           
         
-        const base_node &y0 = boundary_points[ip];
         const face_info &fi = potential_pairs[ip][ipf];
         size_type ib = fi.ind_boundary;
         size_type cv = fi.ind_element;
@@ -653,39 +674,83 @@ namespace getfem {
         gmm::iteration iter(1E-9, 0/* noisy*/, 200 /*maxiter*/);
         gmm::bfgs(pps, pps, xref, 10, iter);
         // Projection could be ameliorated by finding a starting point near
-        // y0 (with respect to the integration method, for instance.
+        // y0 (with respect to the integration method, for instance).
         
-        // Projection analysis : apply criteria to determine if this is
-        //   a valid contact pair or not. Retainonly the nearest contact
-        //   pair.
+        // CRITERION 2 : The contact pair is eliminated when bfgs
+        //               do not converge.
         if (!(iter.converged())) {
-          GMM_WARNING1("Projection did not converge for point " << y0);
-        } else {
-          ctx.set_xref(xref);
-          
-          if (pf_s->ref_convex(cv)->is_in(xref) < 1E-5) {
-            base_node y(N);
-            
-            ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
-            y += ctx.xreal();
-            // appliquer les critères
-            // Comparer aux obstacles rigides
-            if (true /* ...*/ ) {
-              contact_pair ct(y0, boundary_points_info[ip], ctx.xref(),
-                              y,  fi);
-              if (true /*new_ct ...*/) contact_pairs.push_back(ct);
-              else contact_pairs.back() = ct;
-            }
-          } else { 
-              // To add : If the point is outside the element, a rapid reprojection on the face (on the reference element, with a linear algorithm) can be applied and a test with a neigbhour element to decide if the point is in fact ok ... (to be done only if there is no projection on other element which coincides and with a test on the distance ... ? To be specified
-          }
+          GMM_WARNING2("Projection did not converge for point " << y0);
+          continue;
         }
-    
+          
+        // CRITERION 3 : The projected point is inside the element
+        //               The test should be completed: If the point is outside
+        //               the element, a rapid reprojection on the face
+        //               (on the reference element, with a linear algorithm)
+        //               can be applied and a test with a neigbhour element
+        //               to decide if the point is in fact ok ... 
+        //               (to be done only if there is no projection on other
+        //               element which coincides and with a test on the
+        //               distance ... ?) To be specified (in this case,
+        //               change xref).
+        if (pf_s->ref_convex(cv)->is_in(xref) > 1E-5) continue;
+        
+        base_node y(N);
+        ctx.set_xref(xref);    
+        ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
+        y += ctx.xreal();
+
+        // CRITERION 4 : Apply the release distance
+        if (gmm::vect_dist2(y, y0) > release_distance) continue;
+
+        // compute the unit_normal and the signed distance ...
+        base_small_vector n00 = bgeot::compute_normal(ctx, i_f);
+        ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
+        gmm::add(gmm::identity_matrix(), grad);
+        scalar_type J = gmm::lu_inverse(grad);
+        if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+        gmm::mult(gmm::transposed(grad), n00, n);
+        n /= gmm::vect_norm2(n);
+
+        scalar_type signed_dist = gmm::vect_sp(y - y0, n);
+        // CRITERION 5 : comparison with rigid obstacles
+        if (irigid_obstacle != size_type(-1) && signed_dist  > d0)
+          continue;
+
+        // CRITERION 6 : for self-contact only : apply a test on
+        //               unit normals in reference configuration.
+        size_type iby0 = boundary_points_info[ip].ind_boundary;
+        if (&m == &(mfu_of_boundary(iby0).linked_mesh())) {
+          
+          base_small_vector diff = boundary_points_info[ip].ref_point
+            - ctx.xreal();
+          scalar_type ref_dist = gmm::vect_norm2(diff);
+          
+          if ( (ref_dist < scalar_type(4) * release_distance)
+               && (gmm::vect_sp(diff, n00) < - 0.01 * ref_dist) )
+            continue;
+        }
+        
+        contact_pair ct(y0, boundary_points_info[ip], ctx.xref(),
+                        y,  fi, signed_dist);
+        if (first_pair) {
+          contact_pairs.push_back(ct);
+          first_pair = false;
+        }
+        else { 
+          // CRITERION 7 : smallest signed distance on contact pairs
+          if (contact_pairs.back().signed_dist > signed_dist)
+            contact_pairs.back() = ct;
+        }
 
       }
+      if (first_pair && irigid_obstacle != size_type(-1)) {
+        contact_pair ct(y0, boundary_points_info[ip], irigid_obstacle, d0);
+        contact_pairs.push_back(ct);
+      }
+    }
       
-     
-
+      
     clear_aux_info();
   }
 

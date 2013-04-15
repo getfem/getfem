@@ -258,25 +258,17 @@ namespace getfem {
   // TODO:
   // - Dans le cas Delaunay, un passage éventuel à l'élément voisin est-il
   //   envisageable ?
-  // - Algo de reduction des cones dans le cas nodal.
-  // - algo de selection des paires de contact valides
-
-
-
-  // - penser à eliminer le stockage non necessaire après la detection des
-  //   paires de contact
   // - A la fin, revoir éventuellement si la stratégie de calcul des
   //   extensions des déplacement est la bonne (calcul en début de
   //   construction de la liste des boites ou points des bords de contact).
-  // - Dans la structure finale, penser à séparer mieux les données (bords
-  //   de contact, obstacles) et les résultats stockés. Ajouter les zones
-  //   d'influence d'éléments, les distances de coupure, l'algo de ...
   // - Gerer le cas configuration de référence
   // - Dans le cas Delaunay, gérer les points coincidents ... ou voir si le
   //   delaunay les gère correctement, ou les perturber infinitesimalement ....
   // - Dans le cas des boites d'influence, doit on stocker un cone de normale ?
   //   Si les normales sont très differentes, que doit-on faire ?  La moyenne
   //   ne semble plus valable.
+  // - Simplifier le calcul quand il n'y a que des obstacles rigides et pas
+  //   d'auto-contact
 
 
 
@@ -362,15 +354,16 @@ namespace getfem {
     //
     
     struct boundary_point {    // Additional information for a boundary point
+      base_node ref_point;     // Point coordinate in reference configuration
       size_type ind_boundary;  // Boundary number
       size_type ind_element;   // Element number
       short_type ind_face;     // Face number in element
       size_type ind_dof;       // Dof number for fem_nodes_mode only
       normal_cone normals;     // Set of outward unit normal vectors
       boundary_point(void) {}
-      boundary_point(size_type ib, size_type ie,
+      boundary_point(const base_node &rp, size_type ib, size_type ie,
                      short_type i_f, size_type id, const base_small_vector &n)
-        : ind_boundary(ib), ind_element(ie), ind_face(i_f),
+        : ref_point(rp), ind_boundary(ib), ind_element(ie), ind_face(i_f),
           ind_dof(id), normals(n) {}
     };
       
@@ -426,14 +419,26 @@ namespace getfem {
       base_node master_point;        // The transformed master point
       face_info master_face_info;
 
+      scalar_type signed_dist;
+      
+      size_type irigid_obstacle;
+
       contact_pair(void) {}
       contact_pair(const base_node &spt, const boundary_point &bp,
                    const base_node &mptr,  const base_node &mpt,
-                   const face_info &mfi)
+                   const face_info &mfi, scalar_type sd)
         : slave_point(spt), slave_ind_boundary(bp.ind_boundary),
           slave_ind_element(bp.ind_element), slave_ind_face(bp.ind_face),
           slave_ind_dof(bp.ind_dof), master_point_ref(mptr),
-          master_point(mpt), master_face_info(mfi) {}
+          master_point(mpt), master_face_info(mfi), signed_dist(sd),
+          irigid_obstacle(-1) {}
+      contact_pair(const base_node &spt, const boundary_point &bp,
+                   size_type ir, scalar_type sd)
+        : slave_point(spt), slave_ind_boundary(bp.ind_boundary),
+          slave_ind_element(bp.ind_element), slave_ind_face(bp.ind_face),
+          slave_ind_dof(bp.ind_dof), signed_dist(sd),
+          irigid_obstacle(ir) {}
+      
     };
       
     std::vector<contact_pair> contact_pairs;
