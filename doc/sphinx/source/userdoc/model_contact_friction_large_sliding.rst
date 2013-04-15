@@ -30,6 +30,15 @@ Basically, in order to detect the contact pairs, Gauss points or f.e.m. nodes of
 The use of multi-contact frame object
 *************************************
 
+A multi-contact fram object is initialized as follows::
+
+  multi_contact_frame mcf(size_type N, scalar_type release_distance,
+                          int fem_nodes_mode = 0, bool use_delaunay = true,
+                          bool refc = false, bool selfc = true,
+                          scalar_type cut_a = 0.3);
+
+where `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay algorithm on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces.
+
 
 
 The contact pair detection algorithm
