@@ -72,7 +72,8 @@ FIGS=getfemlistargyris.fig                   \
      getfemuserelem.fig                      \
      getfemuserlinearsys.fig                 \
      getfemuserlinsysDir.fig                 \
-     getfemuserrefine.fig
+     getfemuserrefine.fig		     \
+     getfemusermasterslave.fig
 
 EPSFIGS=$(FIGS:.fig=.eps)
 PNGFIGS=$(FIGS:.fig=.png)

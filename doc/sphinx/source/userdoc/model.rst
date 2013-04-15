@@ -54,6 +54,7 @@ The kernel of the model description is contained in the file
    model_time_dispatch.rst
    model_basic_nonlinear.rst
    model_contact_friction.rst
+   model_contact_friction_large_sliding.rst
    model_elastoplasticity.rst
    model_nonlinear_elasticity.rst
    model_bilaplacian.rst
