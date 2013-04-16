@@ -45,12 +45,11 @@ namespace getfem {
 
 
   /** Add a frictionless contact condition with a rigid obstacle
-      to the model. This brick adds a contact which is defined
-      in an integral way. It is the direct approximation of an augmented
-      Lagrangian formulation (see Getfem user documentation) defined at the
-      continuous level. The advantage should be a better scalability:
-      the number of
-      Newton iterations should be more or less independent of the mesh size.
+      to the model, which is defined in an integral way. It is the direct
+      approximation of an augmented  Lagrangian formulation (see Getfem user
+      documentation) defined at the continuous level. The advantage should be
+      a better scalability: the number of Newton iterations should be more or
+      less independent of the mesh size.
       The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance to
@@ -70,12 +69,11 @@ namespace getfem {
    const std::string &dataname_r, size_type region, int option = 1);
 
   /** Add a contact with friction condition with a rigid obstacle
-      to the model. This brick adds a contact which is defined
-      in an integral way. It is the direct approximation of an augmented
-      Lagrangian formulation (see Getfem user documentation) defined at the
-      continuous level. The advantage should be a better scalability:
-      the number of the
-      Newton iterations should be more or less independent of the mesh size.
+      to the model, which is defined in an integral way. It is the direct
+      approximation of an augmented  Lagrangian formulation (see Getfem user
+      documentation) defined at the continuous level. The advantage should be
+      a better scalability: the number of Newton iterations should be more or
+      less independent of the mesh size.
       The condition is applied on the variable `varname_u`
       on the boundary corresponding to `region`. The rigid obstacle should
       be described with the data `dataname_obstacle` being a signed distance
@@ -128,7 +126,7 @@ namespace getfem {
   size_type add_penalized_contact_with_rigid_obstacle_brick
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &dataname_obs, const std::string &dataname_r,
-   size_type region, int option = 1, const std::string &dataname_n = "");
+   size_type region, int option = 1, const std::string &dataname_lambda_n = "");
 
   /** Add a penalized contact condition with Coulomb friction with a
       rigid obstacle to the model.
@@ -243,7 +241,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname_u1,
    const std::string &varname_u2, const std::string &dataname_r,
    size_type region1, size_type region2,
-   int option = 1, const std::string &dataname_n = "");
+   int option = 1, const std::string &dataname_lambda_n = "");
 
 
   /** Add a penalized contact condition with Coulomb friction between
