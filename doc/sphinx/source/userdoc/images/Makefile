@@ -73,7 +73,10 @@ FIGS=getfemlistargyris.fig                   \
      getfemuserlinearsys.fig                 \
      getfemuserlinsysDir.fig                 \
      getfemuserrefine.fig		     \
-     getfemusermasterslave.fig
+     getfemusermodelmasterslave.fig          \
+     getfemusermodeldetectcontact.fig        \
+     getfemusermodelfalsecontact1.fig        \
+     getfemusermodelfalsecontact2.fig
 
 EPSFIGS=$(FIGS:.fig=.eps)
 PNGFIGS=$(FIGS:.fig=.png)
@@ -84,7 +87,7 @@ PNGFIGS=$(FIGS:.fig=.png)
 	../../../../../bin/fig2eps $(@:.eps=.fig)
 
 .eps.png:
-	convert $(@:.png=.eps) $@
+	convert -density 100 $(@:.png=.eps) $@
 
 png: $(PNGFIGS)
 

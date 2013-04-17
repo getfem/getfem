@@ -41,7 +41,7 @@ References
    *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
 
-.. [Xfem] N. Moës, J. Dolbow and T. Belytschko,
+.. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
    *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.
 
 .. [KH-PO-RE2006] Khenous H., Pommier J., Renard Y.
@@ -56,7 +56,10 @@ References
    *Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics.* Numer. Math. 15:1 (2010), 101--129.
 
 .. [nedelec1991] J.-C. Nedelec.
-   *Notions sur les techniques d'éléments finis*, Ellipses, SMAI, Mathématiques & Applications n°7, (1991).
+   *Notions sur les techniques d'elements finis*, Ellipses, SMAI, Mathematiques & Applications no 7, (1991).
+
+.. [Pantz2008] O. Pantz
+   *The Modeling of Deformable Bodies with Frictionless (Self-)Contacts*, Archive for Rational Mechanics and Analysis, Volume 188, Issue 2, pp 183-212, 2008 
 
 .. [SCHADD] L.F. Pavarino.
    *Domain decomposition algorithms for the p-version finite element method for elliptic problems*, Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.

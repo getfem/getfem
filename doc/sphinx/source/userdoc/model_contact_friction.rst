@@ -10,8 +10,8 @@
 
 
 
-Contact with Coulomb friction bricks
-------------------------------------
+Small sliding contact with friction bricks
+------------------------------------------
 
 The aim of these bricks is to take into account a contact condition with or without friction of an elastic structure on a rigid foundation or between two elastic structures. These bricks are restricted to small deformation approximation of contact (this may include large deformations on a flat obstacle).
 

@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2011-2012 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
 
  This file is a part of GETFEM++
 
@@ -635,7 +635,7 @@ namespace getfem {
         //  - The gradient of J with respect to a_i is
         //    \partial_{a_j} J = (\phi(x0 + a_i t_i) - y0)
         //                       . (\nabla \phi(x0 + a_i t_i) t_j
-        //  - A BFGS is called.           
+        //  - BFGS is called.           
         
         const face_info &fi = potential_pairs[ip][ipf];
         size_type ib = fi.ind_boundary;
