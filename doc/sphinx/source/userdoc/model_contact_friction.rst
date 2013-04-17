@@ -302,6 +302,11 @@ normal stress :math:`\sigma_n`, :math:`{\mathscr F}` is the coefficient of frict
 :math:`\tau_{adh}` is an adhesional (load-independent) shear stress and
 :math:`\tau_{tresca}` is a maximum shear stress limit.
 
+.. ud-fig-frictionlaw:
+.. figure:: images/getfemuserfrictionlaw.png
+   :align: center
+   :scale: 50
+
 
 Add a contact with or without friction to a model
 +++++++++++++++++++++++++++++++++++++++++++++++++
