@@ -3370,7 +3370,7 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
-
+#if 0
 
   //=========================================================================
   //
@@ -3750,6 +3750,7 @@ namespace getfem {
     assem.assembly(rg);
   }
 
+#endif
 
   struct Nitsche_fictitious_domain_contact_brick : public virtual_brick {
 
@@ -3765,6 +3766,8 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
+#if 0
+
       // Integration method
       GMM_ASSERT1(mims.size() == 1, "Nitsche contact with rigid obstacle "
                   "bricks need a single mesh_im");
@@ -3843,17 +3846,18 @@ namespace getfem {
           (vecl[0], mim, md, vl[0], mf_u, u, mf_obs, obs,  pmf_coeff,
            f_coeff, WT, gamma0, theta, alpha, rg);
       }
+#endif
 
     }
 
-    Nitsche_fictitious_domain_contact_brick(scalar_type theta_, bool nofriction) {
+    Nitsche_fictitious_domain_contact_brick(scalar_type theta_,
+                                            bool nofriction) {
       theta = theta_;
       contact_only = nofriction;
-      bool co = (theta_ == scalar_type(1)) && nofriction;
       set_flags("Integral Nitsche contact and friction with rigid "
                 "obstacle brick",
-                false /* is linear*/, co /* is symmetric */,
-                co /* is coercive */, true /* is real */,
+                false /* is linear*/, false /* is symmetric */,
+                false /* is coercive */, true /* is real */,
                 false /* is complex */, false /* compute each time */,
                 false /* has a Neumann term */);
     }
@@ -3861,23 +3865,28 @@ namespace getfem {
   };
 
 
+
   size_type add_Nitsche_fictitious_domain_contact_brick
-  (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &dataname_obs, const std::string &dataname_gamma0,
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &dataname_d1,
+   const std::string &dataname_d2, const std::string &dataname_gamma0,
    scalar_type theta,
    const std::string &dataname_friction_coeff,
    const std::string &dataname_alpha,
-   const std::string &dataname_wt,
-   size_type region) {
+   const std::string &dataname_wt) {
 
     bool nofriction = (dataname_friction_coeff.size() == 0);
-    pbrick pbr = new Nitsche_contact_rigid_obstacle_brick(theta, nofriction);
+    pbrick pbr = new Nitsche_fictitious_domain_contact_brick(theta,nofriction);
 
-    bool co = (theta == scalar_type(1)) && nofriction;
     model::termlist tl;
-    tl.push_back(model::term_description(varname_u, varname_u, co));
+    tl.push_back(model::term_description(varname_u1, varname_u1, false));
+    tl.push_back(model::term_description(varname_u1, varname_u2, false));
+    tl.push_back(model::term_description(varname_u2, varname_u1, false));
+    tl.push_back(model::term_description(varname_u2, varname_u2, false));
 
-    model::varnamelist dl(1, dataname_obs);
+
+    model::varnamelist dl(1, dataname_d1);
+    dl.push_back(dataname_d2);
     dl.push_back(dataname_gamma0);
     if (!nofriction) dl.push_back(dataname_friction_coeff);
     if (dataname_alpha.size() > 0) {
@@ -3885,16 +3894,24 @@ namespace getfem {
       if (dataname_wt.size() > 0) dl.push_back(dataname_wt);
     }
 
-    model::varnamelist vl(1, varname_u);
+    model::varnamelist vl(1, varname_u1);
+    vl.push_back(varname_u2);
 
     std::vector<std::string> aux_vars;
-    md.auxilliary_variables_of_Neumann_terms(varname_u, aux_vars);
+    md.auxilliary_variables_of_Neumann_terms(varname_u1, aux_vars);
     for (size_type i = 0; i < aux_vars.size(); ++i) {
       vl.push_back(aux_vars[i]);
-      tl.push_back(model::term_description(varname_u, aux_vars[i], false));
+      tl.push_back(model::term_description(varname_u1, aux_vars[i], false));
+    }
+    aux_vars.resize(0);
+    md.auxilliary_variables_of_Neumann_terms(varname_u2, aux_vars);
+    for (size_type i = 0; i < aux_vars.size(); ++i) {
+      vl.push_back(aux_vars[i]);
+      tl.push_back(model::term_description(varname_u2, aux_vars[i], false));
     }
 
-    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim),
+                        size_type(-1));
   }
 
 

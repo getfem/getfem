@@ -848,6 +848,39 @@ namespace getfem {
    const std::string &dataname_wt,
    size_type region);
 
+
+  /** Adds a contact condition with or without Coulomb friction on the variable
+      `varname_u` and the mesh boundary `region`. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `gamma0name` is the Nitsche's method parameter.
+      `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+  */
+  size_type add_Nitsche_fictitious_domain_contact_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &dataname_d1,
+   const std::string &dataname_d2, const std::string &dataname_gamma0,
+   scalar_type theta,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_alpha,
+   const std::string &dataname_wt);
+
+
+
+
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
   // Experimental implementation of contact condition with Nitsche method.
   // To be deleted when a more general implementation will be designed.
