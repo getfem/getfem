@@ -637,7 +637,7 @@ namespace getfem {
       // Detect here the nearest rigid obstacle (taking into account
       // the release distance)
       size_type irigid_obstacle(-1);
-      scalar_type d0 = 1E300;
+      scalar_type d0 = 1E300, d1;
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
       gmm::copy(y0, pt_eval);
       for (size_type i = 0; i < obstacles.size(); ++i) {
@@ -784,23 +784,23 @@ namespace getfem {
       gmm::copy(y0, pt_eval);
       scalar_type EPS = 1E-8;
       size_type nit = 0;
-      do {
+      while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
         for (size_type k = 0; k < N; ++k) {
           pt_eval[k] += EPS;
-          scalar_type d1=scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+          d1 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
           n[k] = (d1 - d0) / EPS;
           pt_eval[k] -= EPS;
         }
         
-        pt_eval -= d0 * n;
+        gmm::add(gmm::scaled(n, -d0), pt_eval);
         d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-      }  while (gmm::abs(d0) > 1E-10 && ++nit < 1000);
+      }
       GMM_ASSERT1(nit < 1000, "Projection on rigid obstacle did not converge");
-      ct.master_point = pt_eval;
+
+      ct.master_point.resize(N);
+      gmm::copy(pt_eval, ct.master_point);
       
 #endif
-
-
         contact_pairs.push_back(ct);
       }
     }
