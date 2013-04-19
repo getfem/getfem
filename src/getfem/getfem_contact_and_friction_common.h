@@ -306,6 +306,7 @@ namespace getfem {
     // detected and the computation will be slow, except for delaunay option) 
 
     scalar_type cut_angle; // Cut angle (in radian) for normal cones
+    const model *md;       // The model if the structure is linked to a model.
 
     typedef model_real_plain_vector VECTOR;
     std::vector<const VECTOR *> Us;  // Displacement vectors
@@ -405,6 +406,7 @@ namespace getfem {
 
     void add_potential_contact_face(size_type ip, size_type ib, size_type ie,
                                     short_type i_f);
+  public:
 
     // stored information for contact pair
     struct contact_pair {
@@ -440,12 +442,19 @@ namespace getfem {
           irigid_obstacle(ir) {}
       
     };
+
+  protected:
       
     std::vector<contact_pair> contact_pairs;
 
     void clear_aux_info(void); // Delete auxillairy information
 
   public:
+
+    size_type dim(void) const { return N; }
+    const std::vector<contact_pair> &ct_pairs(void) const
+    { return contact_pairs; }
+
 
     const getfem::mesh_fem &mfu_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mfu); }
@@ -460,6 +469,10 @@ namespace getfem {
                         int fem_nodes = 0, bool dela = true,
                         bool refc = false, bool selfc = true,
                         scalar_type cut_a = 0.3);
+    multi_contact_frame(const model &md, size_type NN, scalar_type r_dist,
+                        int fem_nodes = 0, bool dela = true,
+                        bool refc = false, bool selfc = true,
+                        scalar_type cut_a = 0.3);
 
     size_type add_obstacle(const std::string &obs);
 
@@ -468,11 +481,20 @@ namespace getfem {
                                  const model_real_plain_vector &U,
                                  size_type reg);
 
+    size_type add_slave_boundary(const getfem::mesh_im &mim,
+                                 const std::string &varname,
+                                 size_type reg);
+    
+
     size_type add_master_boundary(const getfem::mesh_im &mim,
                                   const getfem::mesh_fem &mfu,
                                   const model_real_plain_vector &U,
                                   size_type reg);
 
+    size_type add_master_boundary(const getfem::mesh_im &mim,
+                                  const std::string &varname,
+                                  size_type reg);
+    
 
     // Compute the influence boxes of master boundary elements. To be run
     // before the detection of contact pairs. The influence box is the

@@ -146,7 +146,23 @@ namespace getfem {
                                            scalar_type cut_a)
     : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela), 
       fem_nodes_mode(fem_nodes), release_distance(r_dist), cut_angle(cut_a),
-      coordinates(N), pt_eval(N) {
+      md(0), coordinates(N), pt_eval(N) {
+    if (N > 0) coordinates[0] = "x";
+    if (N > 1) coordinates[1] = "y";
+    if (N > 2) coordinates[2] = "z";
+    if (N > 3) coordinates[3] = "w";
+    GMM_ASSERT1(N <= 4, "Complete the definition for contact in "
+                  "dimension greater than 4");
+  }
+
+  multi_contact_frame::multi_contact_frame(const model &mdd, size_type NN,
+                                           scalar_type r_dist,
+                                           int fem_nodes, bool dela,
+                                           bool refc, bool selfc,
+                                           scalar_type cut_a)
+    : N(NN), self_contact(selfc), ref_conf(refc),
+      use_delaunay(dela), fem_nodes_mode(fem_nodes), release_distance(r_dist),
+      cut_angle(cut_a), md(&mdd), coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -174,7 +190,7 @@ namespace getfem {
   }
 
   size_type multi_contact_frame::add_slave_boundary
-  (const getfem::mesh_im &mim, const getfem::mesh_fem &mfu,
+  (const mesh_im &mim, const mesh_fem &mfu,
    const model_real_plain_vector &U, size_type reg) {
     GMM_ASSERT1(mfu.linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu.linked_mesh().dim()
@@ -186,8 +202,16 @@ namespace getfem {
     return ind;
   }
 
+  size_type multi_contact_frame::add_slave_boundary
+  (const mesh_im &mim, const std::string &varname, size_type reg) {
+    GMM_ASSERT1(md, "This multi contact frame object is not linked "
+                "to a model");
+    return add_slave_boundary(mim, md->mesh_fem_of_variable(varname),
+                       md->real_variable(varname), reg);
+  }
+
   size_type multi_contact_frame::add_master_boundary
-  (const getfem::mesh_im &mim, const getfem::mesh_fem &mfu,
+  (const mesh_im &mim, const mesh_fem &mfu,
    const model_real_plain_vector &U, size_type reg) {
     GMM_ASSERT1(mfu.linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu.linked_mesh().dim()
@@ -196,6 +220,15 @@ namespace getfem {
     contact_boundaries.push_back(cb);
     return size_type(contact_boundaries.size() - 1);
   }
+
+  size_type multi_contact_frame::add_master_boundary
+  (const mesh_im &mim, const std::string &varname, size_type reg) {
+    GMM_ASSERT1(md, "This multi contact frame object is not linked "
+                "to a model");
+    return add_master_boundary(mim, md->mesh_fem_of_variable(varname),
+                       md->real_variable(varname), reg);
+  }
+
 
   // --- verif limit
 

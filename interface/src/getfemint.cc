@@ -44,6 +44,7 @@
 #include <getfemint_global_function.h>
 #include <getfemint_mesher_object.h>
 #include <getfemint_cont_struct.h>
+#include <getfemint_multi_contact_frame.h>
 #include <getfem/getfem_mat_elem_type.h>
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_mesher.h>
@@ -421,6 +422,15 @@ namespace getfemint {
   }
 
   bool
+  mexarg_in::is_multi_contact_frame() {
+    id_type id, cid;
+    if (is_object_id(&id, &cid) && cid == MULTI_CONTACT_FRAME_CLASS_ID) {
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
+      return (object_is_multi_contact_frame(o));
+    } else return false;
+  }
+
+  bool
   mexarg_in::is_gsparse() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == GSPARSE_CLASS_ID) {
@@ -772,6 +782,32 @@ namespace getfemint {
     return &to_getfemint_cont_struct(true)->cont_struct();
   }
 
+  /*
+    check if the argument is a valid handle to a multi_contact_frame object,
+    and return it
+  */
+  getfemint_multi_contact_frame *
+  mexarg_in::to_getfemint_multi_contact_frame(bool writeable) {
+    id_type id, cid;
+    to_object_id(&id,&cid);
+    if (cid != MULTI_CONTACT_FRAME_CLASS_ID) {
+      THROW_BADARG("argument " << argnum << " should be a cont_struct " <<
+                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
+    }
+    getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
+    error_if_nonwritable(o, writeable);
+    return object_to_multi_contact_frame(o);
+  }
+
+  const getfem::multi_contact_frame *
+  mexarg_in::to_const_multi_contact_frame() {
+    return &to_getfemint_multi_contact_frame(false)->multi_contact_frame();
+  }
+
+  getfem::multi_contact_frame *
+  mexarg_in::to_multi_contact_frame() {
+    return &to_getfemint_multi_contact_frame(true)->multi_contact_frame();
+  }
 
   getfemint_precond *
   mexarg_in::to_precond() {

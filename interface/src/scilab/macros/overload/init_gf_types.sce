@@ -7,6 +7,7 @@ gfMeshIm         = gf_mesh_im;
 gfMdBrick        = gf_mdbrick;
 gfMdState        = gf_mdstate;
 gfModel          = gf_model;
+gfMultiContactFrame = gf_multi_contact_frame;
 gfGeoTrans       = gf_geotrans;
 gfFem            = gf_fem;
 gfInteg          = gf_integ;

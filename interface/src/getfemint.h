@@ -53,6 +53,7 @@ namespace getfem {
   class abstract_xy_function;
   class mesher_signed_distance;
   class cont_struct_getfem_model;
+  class multi_contact_frame;
 }
 
 namespace getfemint
@@ -101,6 +102,7 @@ namespace getfemint
   class getfemint_global_function;
   class getfemint_mesher_object;
   class getfemint_cont_struct;
+  class getfemint_multi_contact_frame;
   class gsparse;
 
   class sub_index : public gmm::unsorted_sub_index{
@@ -403,6 +405,7 @@ namespace getfemint {
     bool                                 is_global_function();
     bool                                 is_mesher_object();
     bool                                 is_cont_struct();
+    bool                                 is_multi_contact_frame();
     bool                                 is_sparse() { return (gfi_array_get_class(arg) == GFI_SPARSE || is_gsparse()); };
     bool                                 is_gsparse();
     bool                                 is_complex(); /* true for complex garrays AND complex sparse matrices (native or gsparse) */
@@ -442,9 +445,12 @@ namespace getfemint {
     getfem::mesher_signed_distance *     to_mesher_object();
     const getfem::cont_struct_getfem_model * to_const_cont_struct();
     getfem::cont_struct_getfem_model *   to_cont_struct();
+    const getfem::multi_contact_frame *  to_const_multi_contact_frame();
+    getfem::multi_contact_frame *        to_multi_contact_frame();
     getfemint_global_function *          to_getfemint_global_function(bool writeable=false);
     getfemint_mesher_object *            to_getfemint_mesher_object(bool writeable=false);
     getfemint_cont_struct *              to_getfemint_cont_struct(bool writable=false);
+    getfemint_multi_contact_frame *      to_getfemint_multi_contact_frame(bool writable=false);
     getfem::pintegration_method          to_integration_method();
     getfemint_pfem*                      to_getfemint_pfem();
     getfem::pfem                         to_fem();

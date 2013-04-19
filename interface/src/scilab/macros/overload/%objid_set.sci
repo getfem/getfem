@@ -55,15 +55,18 @@ function %objid_set(varargin)
     // gfModel
     gf_model_set(gf_obj,other_param(:));
   case 16 then
+    // gfMultiContactFrame
+    gf_multi_contact_frame_set(gf_obj,other_param(:));
+  case 17 then
     // gfPrecond
     // No gf_precond_set function
-  case 17 then
+  case 18 then
     // gfSlice
     gf_slice_set(gf_obj,other_param(:));
-  case 18 then
+  case 19 then
     // gfSpmat
     gf_spmat_set(gf_obj,other_param(:));
-  case 19 then
+  case 20 then
     // gfPoly
     // No gf_poly_set function
   else

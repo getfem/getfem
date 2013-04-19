@@ -38,7 +38,14 @@ A multi-contact frame object is initialized as follows::
                           bool ref_conf = false, bool self_contact = true,
                           scalar_type cut_angle = 0.3);
 
-where `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement) CAUTION: not fully implemented for the moment.  If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. The parameter `cut_angle` is an angle in radian wich is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection.
+  multi_contact_frame mcf(const model &md, size_type N,
+                          scalar_type release_distance,
+                          int fem_nodes_mode = 0, bool use_delaunay = true,
+                          bool ref_conf = false, bool self_contact = true,
+                          scalar_type cut_angle = 0.3);
+
+  
+where `md` is a Getfem model. In this case, the multi contact frame object is linked to a model. `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement) CAUTION: not fully implemented for the moment.  If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. The parameter `cut_angle` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection.
 
 Once a multi-contact frame is build, one adds slave or master surfaces, or rigid obstacles. Note that rigid obstacles are defined by a level-set expression which is evaluated by the `MuParser <http://muparser.beltoforion.de/>`_ package. The methods of multi-contact frame object adding a contact boundary are::
 
@@ -55,7 +62,16 @@ Once a multi-contact frame is build, one adds slave or master surfaces, or rigid
                                 const model_real_plain_vector &U,
                                 size_type region);
 
-where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number.
+  size_type add_slave_boundary(const getfem::mesh_im &mim,
+                               const std::string &varname,
+                               size_type region);
+
+  size_type add_master_boundary(const getfem::mesh_im &mim,
+                               const std::string &varname,
+                               size_type region);
+
+
+where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model.
 
 
 The contact pair detection algorithm
@@ -70,7 +86,7 @@ A contact pair is formed by a point of a slave (or master in case of self-contac
    :scale: 100
 
 
-It is impossible to distinguish between valid and invalid contact situations without a global topological criterion (such as in [Pantz2008]_), a fortiori for self-contact detection. However, this kind of criterion can be very costly to implement. Thus, one generally implements some simple heuristic criteria which cannot cover all the possible cases. We present such a set of criteria here. They are of course perfectible and subject to change. First, in :ref:`figure<ud-fig-invalidcontact>` one can see a certain number of situations of valid or invalid contact that criteria have to distinguish.
+It is impossible to distinguish without fail between valid and invalid contact situations without a global topological criterion (such as in [Pantz2008]_), a fortiori for self-contact detection. However, this kind of criterion can be very costly to implement. Thus, one generally implements some simple heuristic criteria which cannot cover all the possible cases. We present such a set of criteria here. They are of course perfectible and subject to change. First, in :ref:`figure<ud-fig-invalidcontact>` one can see a certain number of situations of valid or invalid contact that criteria have to distinguish.
 
 
 .. _ud-fig-invalidcontact:

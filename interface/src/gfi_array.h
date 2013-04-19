@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2013 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -61,6 +61,7 @@ typedef enum { CONT_STRUCT_CLASS_ID,
                MESH_LEVELSET_CLASS_ID,
                MESHER_OBJECT_CLASS_ID,
                MODEL_CLASS_ID,
+               MULTI_CONTACT_FRAME_CLASS_ID,
                PRECOND_CLASS_ID,
 	       SLICE_CLASS_ID,
 	       GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order */
