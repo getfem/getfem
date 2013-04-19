@@ -22,6 +22,8 @@
 #include <getfemint.h>
 #include <getfemint_multi_contact_frame.h>
 #include <getfemint_workspace.h>
+#include <getfemint_models.h>
+#include <getfemint_mesh_im.h>
 
 using namespace getfemint;
 
@@ -69,14 +71,44 @@ void gf_multi_contact_frame_set(getfemint::mexargs_in& m_in,
   
   if (subc_tab.size() == 0) {
 
-    /*@SET ('add boundary', ...)
-    To be done ...
+    /*@SET ('add obstacle', @str obs)
+    Add a rigid obstacle. The string `obs` is the expression of a
+    function which should be closed to a signed distance to the obstacle.
     @*/
     sub_command
-      ("add boundary", 1, 1, 0, 0,
-       cout << "to be done" << endl; // to be done.
+      ("add obstacle", 1, 1, 0, 1,
+       std::string obs = in.pop().to_string();
+       size_type ind = ps->add_obstacle(obs);
+       out.pop().from_integer(int(ind + config::base_index()));
        );
 
+    /*@SET ('add slave boundary', @tmim mim, @str varname, @int region)
+    Add a slave contact bounary.
+    @*/
+    
+    sub_command
+      ("add slave boundary", 3, 3, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       size_type ind = ps->add_slave_boundary(gfi_mim->mesh_im(),
+                                              varname, region);
+       out.pop().from_integer(int(ind + config::base_index()));
+       );
+
+    /*@SET ('add master boundary', @tmim mim, @str varname, @int region)
+    Add a master contact bounary.
+    @*/
+    
+    sub_command
+      ("add master boundary", 3, 3, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       size_type ind = ps->add_master_boundary(gfi_mim->mesh_im(),
+                                               varname, region);
+       out.pop().from_integer(int(ind + config::base_index()));
+       );
   }
 
 

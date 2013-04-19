@@ -779,6 +779,28 @@ namespace getfem {
       }
       if (first_pair && irigid_obstacle != size_type(-1)) {
         contact_pair ct(y0, boundary_points_info[ip], irigid_obstacle, d0);
+        
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+      gmm::copy(y0, pt_eval);
+      scalar_type EPS = 1E-8;
+      size_type nit = 0;
+      do {
+        for (size_type k = 0; k < N; ++k) {
+          pt_eval[k] += EPS;
+          scalar_type d1=scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+          n[k] = (d1 - d0) / EPS;
+          pt_eval[k] -= EPS;
+        }
+        
+        pt_eval -= d0 * n;
+        d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+      }  while (gmm::abs(d0) > 1E-10 && ++nit < 1000);
+      GMM_ASSERT1(nit < 1000, "Projection on rigid obstacle did not converge");
+      ct.master_point = pt_eval;
+      
+#endif
+
+
         contact_pairs.push_back(ct);
       }
     }

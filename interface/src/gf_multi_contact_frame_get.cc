@@ -65,6 +65,47 @@ void gf_multi_contact_frame_get(getfemint::mexargs_in& m_in,
   if (subc_tab.size() == 0) {
   
 
+    
+    /*@GET s = ('compute pairs')
+      Compute the contact pairs
+      @*/
+    sub_command
+      ("compute pairs", 0, 0, 0, 0,
+       ps->compute_contact_pairs();
+       );
+
+    /*@GET s = ('slave points')
+      Get the slave points computed.
+      @*/
+    sub_command
+      ("slave points", 0, 0, 0, 1,
+
+       size_type nbp = ps->ct_pairs().size();
+       size_type N = ps->dim();
+       darray w1 = out.pop().create_darray(uint(N), uint(nbp));
+
+       for (size_type i = 0; i < nbp; ++i)
+         for (size_type k = 0; k < N; ++k)
+           w1(k, i) = ps->ct_pairs()[i].slave_point[k];
+
+       );
+
+    /*@GET s = ('master points')
+      Get the master points computed.
+      @*/
+    sub_command
+      ("master points", 0, 0, 0, 1,
+
+       size_type nbp = ps->ct_pairs().size();
+       size_type N = ps->dim();
+       darray w1 = out.pop().create_darray(uint(N), uint(nbp));
+
+       for (size_type i = 0; i < nbp; ++i)
+         for (size_type k = 0; k < N; ++k)
+           w1(k, i) = ps->ct_pairs()[i].master_point[k];
+
+       );
+
     /*@GET s = ('char')
       Output a (unique) string representation of the @tmcf.
       
