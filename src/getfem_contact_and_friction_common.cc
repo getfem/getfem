@@ -146,7 +146,7 @@ namespace getfem {
                                            scalar_type cut_a)
     : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela), 
       fem_nodes_mode(fem_nodes), release_distance(r_dist), cut_angle(cut_a),
-      md(0), coordinates(N), pt_eval(N) {
+      EPS(1E-8), md(0), coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -162,7 +162,7 @@ namespace getfem {
                                            scalar_type cut_a)
     : N(NN), self_contact(selfc), ref_conf(refc),
       use_delaunay(dela), fem_nodes_mode(fem_nodes), release_distance(r_dist),
-      cut_angle(cut_a), md(&mdd), coordinates(N), pt_eval(N) {
+      cut_angle(cut_a), EPS(1E-8), md(&mdd), coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -446,7 +446,7 @@ namespace getfem {
           boundary_point *pt_info1 = &(boundary_points_info[ipt1]);
           boundary_point *pt_info2 = &(boundary_points_info[ipt2]);
           size_type ib1 = pt_info1->ind_boundary;
-          size_type ib2 = pt_info1->ind_boundary;
+          size_type ib2 = pt_info2->ind_boundary;
           bool sl1 = slave_boundaries[ib1];
           bool sl2 = slave_boundaries[ib2];
           if (!sl1 && sl2) { // The slave in first if any
@@ -584,15 +584,17 @@ namespace getfem {
     base_matrix grad, gradtot;
     
     scalar_type operator()(const base_small_vector& a) {
+      // cout << "a = " << a << endl;
       base_node x = x0;
       for (size_type i= 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
-      // Il faut determiner coeff qui est constant dans l'élément ...
       ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
       base_node y = val + ctx.xreal();
+      // cout << "val = " << gmm::vect_dist2(y, y0)/scalar_type(2) << endl;
       return gmm::vect_dist2(y, y0)/scalar_type(2);
     }
     void operator()(const base_small_vector& a, base_small_vector &grada) {
+      // cout << "a = " << a << endl;
       base_node x = x0;
       for (size_type i = 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
@@ -600,9 +602,11 @@ namespace getfem {
       base_node dy = val + ctx.xreal() - y0;
       ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
       gmm::add(gmm::identity_matrix(), grad);
+      // cout << "grad = " << grad << endl;
       gmm::mult(grad, ctx.K(), gradtot);
       for (size_type i = 0; i < N-1; ++i)
-        grada[i] = gmm::vect_sp(gradtot, dy, ti[i]);
+        grada[i] = gmm::vect_sp(gradtot, ti[i], dy);
+      // cout << "grad = " << grada << endl;
     }
     
     proj_pt_surf_cost_function_object
@@ -618,8 +622,8 @@ namespace getfem {
   void multi_contact_frame::compute_contact_pairs(void) {
     base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
-    base_small_vector xref(N), n(N);
-    
+    base_small_vector a(N-1), n(N);
+    size_type count = 0;
     
     contact_pairs = std::vector<contact_pair>();
     
@@ -634,16 +638,24 @@ namespace getfem {
     // Scan of potential pairs
     for (size_type ip = 0; ip < potential_pairs.size(); ++ip) {
       const base_node &y0 = boundary_points[ip];
+      boundary_point &bpinfo = boundary_points_info[ip];
       // Detect here the nearest rigid obstacle (taking into account
       // the release distance)
       size_type irigid_obstacle(-1);
-      scalar_type d0 = 1E300, d1;
+      scalar_type d0 = 1E300, d1, d2;
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
       gmm::copy(y0, pt_eval);
       for (size_type i = 0; i < obstacles.size(); ++i) {
-        scalar_type d0_o = scalar_type(obstacles_parsers[i].Eval());
-        if (gmm::abs(d0_o) < release_distance && d0_o < d0)
-          { d0 = d0_o; irigid_obstacle = i; }
+        d1 = scalar_type(obstacles_parsers[i].Eval());
+        if (gmm::abs(d1) < release_distance && d1 < d0) {
+          
+          for (size_type j=0; j < bpinfo.normals.size(); ++j) {
+            gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt_eval);
+            d2 =  scalar_type(obstacles_parsers[i].Eval());
+            if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
+            gmm::copy(y0, pt_eval);
+          }
+        }
       }
 #else
       if (obstacles.size() > 0)
@@ -692,7 +704,7 @@ namespace getfem {
         for (size_type k = 0; k < N-1; ++k) { // A basis for the face
           gmm::resize(ti[k], N);
           scalar_type norm(0);
-          while(norm < 1E-3) {
+          while(norm < 1E-5) {
             gmm::fill_random(ti[k]);
             ti[k] -= gmm::vect_sp(ti[k], n0) * n0;
             for (size_type l = 0; l < k; ++l)
@@ -701,11 +713,18 @@ namespace getfem {
           }
           ti[k] /= norm;
         }
+
+        cout << "normale = " << bgeot::compute_normal(ctx, i_f) << endl;
+        base_small_vector n000(N);
+        gmm::mult(ctx.B(), n0, n000);
+        cout << "normal bis = " << n000 << endl;
         
         proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti);
         
-        gmm::iteration iter(1E-9, 0/* noisy*/, 200 /*maxiter*/);
-        gmm::bfgs(pps, pps, xref, 10, iter);
+        gmm::iteration iter(1E-7, 1/* noisy*/, 200 /*maxiter*/);
+        gmm::clear(a);
+        gmm::bfgs(pps, pps, a, 10, iter);
+        // if (++count > 10) return;
         // Projection could be ameliorated by finding a starting point near
         // y0 (with respect to the integration method, for instance).
         
@@ -715,6 +734,10 @@ namespace getfem {
           GMM_WARNING2("Projection did not converge for point " << y0);
           continue;
         }
+        cout << "BFGS did converge : " << ctx.xreal() << endl;
+        cout << "xref : " << ctx.xref() << endl;
+        cout << "xref : " << a << endl;
+
           
         // CRITERION 3 : The projected point is inside the element
         //               The test should be completed: If the point is outside
@@ -726,10 +749,9 @@ namespace getfem {
         //               element which coincides and with a test on the
         //               distance ... ?) To be specified (in this case,
         //               change xref).
-        if (pf_s->ref_convex(cv)->is_in(xref) > 1E-5) continue;
+        if (pf_s->ref_convex(cv)->is_in(ctx.xref()) > 1E-5) continue;
         
         base_node y(N);
-        ctx.set_xref(xref);    
         ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
         y += ctx.xreal();
 
@@ -752,11 +774,10 @@ namespace getfem {
 
         // CRITERION 6 : for self-contact only : apply a test on
         //               unit normals in reference configuration.
-        size_type iby0 = boundary_points_info[ip].ind_boundary;
+        size_type iby0 = bpinfo.ind_boundary;
         if (&m == &(mfu_of_boundary(iby0).linked_mesh())) {
           
-          base_small_vector diff = boundary_points_info[ip].ref_point
-            - ctx.xreal();
+          base_small_vector diff = bpinfo.ref_point - ctx.xreal();
           scalar_type ref_dist = gmm::vect_norm2(diff);
           
           if ( (ref_dist < scalar_type(4) * release_distance)
@@ -764,8 +785,7 @@ namespace getfem {
             continue;
         }
         
-        contact_pair ct(y0, boundary_points_info[ip], ctx.xref(),
-                        y,  fi, signed_dist);
+        contact_pair ct(y0, bpinfo, ctx.xref(), y,  fi, signed_dist);
         if (first_pair) {
           contact_pairs.push_back(ct);
           first_pair = false;
@@ -778,11 +798,10 @@ namespace getfem {
 
       }
       if (first_pair && irigid_obstacle != size_type(-1)) {
-        contact_pair ct(y0, boundary_points_info[ip], irigid_obstacle, d0);
+        contact_pair ct(y0, bpinfo, irigid_obstacle, d0);
         
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
       gmm::copy(y0, pt_eval);
-      scalar_type EPS = 1E-8;
       size_type nit = 0;
       while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
         for (size_type k = 0; k < N; ++k) {
@@ -792,7 +811,8 @@ namespace getfem {
           pt_eval[k] -= EPS;
         }
         
-        gmm::add(gmm::scaled(n, -d0), pt_eval);
+        gmm::add(gmm::scaled(n, -d0 / gmm::vect_norm2_sqr(n)), pt_eval);
+        // A simple line search could be added
         d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
       }
       GMM_ASSERT1(nit < 1000, "Projection on rigid obstacle did not converge");

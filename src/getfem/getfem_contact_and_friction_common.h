@@ -306,6 +306,8 @@ namespace getfem {
     // detected and the computation will be slow, except for delaunay option) 
 
     scalar_type cut_angle; // Cut angle (in radian) for normal cones
+    scalar_type EPS;       // Should be typically hmin/1000 (for computing
+                           // gradients with finite differences 
     const model *md;       // The model if the structure is linked to a model.
 
     typedef model_real_plain_vector VECTOR;

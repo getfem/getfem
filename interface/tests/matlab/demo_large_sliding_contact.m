@@ -99,11 +99,10 @@ gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y')
 
 
 
-mcff=gf_multi_contact_frame(md, 2, 0.5);
-gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1, 'u1', CONTACT_BOUNDARY1);
+mcff=gf_multi_contact_frame(md, 2, 0.2, 0, false);
+gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u1', CONTACT_BOUNDARY1);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u2', CONTACT_BOUNDARY2);
 gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
-gf_multi_contact_frame_get(mcff, 'compute pairs');
 
 
 
@@ -112,19 +111,20 @@ U2 = gf_model_get(md, 'variable', 'u2');
 VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 		  'u2', 'lambda', 'mu', mfvm2);
 
-gf_plot(mfvm2,VM2,'mesh','off', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
+gf_plot(mfvm2,VM2,'mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
 
 if (two_bodies)
    hold on
    U1 = gf_model_get(md, 'variable', 'u1');
    VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 		  'u1', 'lambda', 'mu', mfvm1);
-   gf_plot(mfvm1,VM1,'mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
+   gf_plot(mfvm1,VM1,'mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
    hold off
 end;
 
 
 hold on
+ gf_multi_contact_frame_get(mcff, 'compute pairs');
  slpt = gf_multi_contact_frame_get(mcff, 'slave points');
  mapt = gf_multi_contact_frame_get(mcff, 'master points');
  if (N == 2)
@@ -138,9 +138,7 @@ hold on
  end
 hold off
 
-
-return;
-
+pause;
 
 
 
@@ -169,8 +167,24 @@ if (two_bodies)
    hold off
 end;
 
+hold on
+ gf_multi_contact_frame_get(mcff, 'compute pairs');
+ slpt = gf_multi_contact_frame_get(mcff, 'slave points');
+ mapt = gf_multi_contact_frame_get(mcff, 'master points');
+ if (N == 2)
+   line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
+   scatter(slpt(1,:), slpt(2, :), 20, 'red');
+   scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
+ elseif (N == 3)
+   line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
+   scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
+   scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
+ end
+hold off
+
+
 axis([-2, 2, -0.2, 3]);
-pause(1);
+pause;
 
  vf = vf + 0.01;
  gf_model_set(md, 'variable', 'data1', [0 -vf]);

@@ -174,7 +174,8 @@ namespace gmm {
       ++iter;
       if (!grad_computed) grad(y, r2);
       gmm::add(scaled(r2, -1), r);
-      if (iter.get_iteration() % restart == 0 || blocked) { 
+      if ((iter.get_iteration() % restart) == 0
+          || (blocked && ((iter.get_iteration() % restart) > 5))) { 
 	if (iter.get_noisy() >= 1) cout << "Restart\n";
 	invhessian.restart();
 	if (++nb_restart > 10) {
