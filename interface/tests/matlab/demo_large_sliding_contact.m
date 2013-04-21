@@ -99,7 +99,7 @@ gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y')
 
 
 
-mcff=gf_multi_contact_frame(md, 2, 0.2, 0, false);
+mcff=gf_multi_contact_frame(md, 2, 0.15, 0, true);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u1', CONTACT_BOUNDARY1);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u2', CONTACT_BOUNDARY2);
 gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
@@ -124,7 +124,9 @@ end;
 
 
 hold on
+ tic;
  gf_multi_contact_frame_get(mcff, 'compute pairs');
+ toc
  slpt = gf_multi_contact_frame_get(mcff, 'slave points');
  mapt = gf_multi_contact_frame_get(mcff, 'master points');
  if (N == 2)
@@ -168,18 +170,20 @@ if (two_bodies)
 end;
 
 hold on
- gf_multi_contact_frame_get(mcff, 'compute pairs');
- slpt = gf_multi_contact_frame_get(mcff, 'slave points');
- mapt = gf_multi_contact_frame_get(mcff, 'master points');
- if (N == 2)
-   line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
-   scatter(slpt(1,:), slpt(2, :), 20, 'red');
-   scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
- elseif (N == 3)
-   line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
-   scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
-   scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
- end
+  tic;
+  gf_multi_contact_frame_get(mcff, 'compute pairs');
+  toc
+  slpt = gf_multi_contact_frame_get(mcff, 'slave points');
+  mapt = gf_multi_contact_frame_get(mcff, 'master points');
+  if (N == 2)
+    line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
+    scatter(slpt(1,:), slpt(2, :), 20, 'red');
+    scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
+  elseif (N == 3)
+    line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
+    scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
+    scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
+  end
 hold off
 
 

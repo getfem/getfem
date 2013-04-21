@@ -230,16 +230,10 @@ namespace getfem {
   }
 
 
-  // --- verif limit
-
-
   void multi_contact_frame::compute_influence_boxes(void) {
     fem_precomp_pool fppool;
     base_matrix G;
     model_real_plain_vector coeff;
-    
-    element_boxes.clear();
-    element_boxes_info.resize(0);
     
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
       if (!(slave_boundaries[i])) {
@@ -339,9 +333,6 @@ namespace getfem {
     fem_precomp_pool fppool;
     base_matrix G;
     model_real_plain_vector coeff;
-    
-    boundary_points.resize(0);
-    boundary_points_info.resize(0);
     
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
       if (!slave_only || slave_boundaries[i]) {
@@ -584,17 +575,14 @@ namespace getfem {
     base_matrix grad, gradtot;
     
     scalar_type operator()(const base_small_vector& a) {
-      // cout << "a = " << a << endl;
       base_node x = x0;
       for (size_type i= 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
       ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
       base_node y = val + ctx.xreal();
-      // cout << "val = " << gmm::vect_dist2(y, y0)/scalar_type(2) << endl;
       return gmm::vect_dist2(y, y0)/scalar_type(2);
     }
     void operator()(const base_small_vector& a, base_small_vector &grada) {
-      // cout << "a = " << a << endl;
       base_node x = x0;
       for (size_type i = 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
@@ -602,11 +590,9 @@ namespace getfem {
       base_node dy = val + ctx.xreal() - y0;
       ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
       gmm::add(gmm::identity_matrix(), grad);
-      // cout << "grad = " << grad << endl;
       gmm::mult(grad, ctx.K(), gradtot);
       for (size_type i = 0; i < N-1; ++i)
         grada[i] = gmm::vect_sp(gradtot, ti[i], dy);
-      // cout << "grad = " << grada << endl;
     }
     
     proj_pt_surf_cost_function_object
@@ -623,8 +609,8 @@ namespace getfem {
     base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
     base_small_vector a(N-1), n(N);
-    size_type count = 0;
-    
+   
+    clear_aux_info();
     contact_pairs = std::vector<contact_pair>();
     
     extend_vectors();
@@ -714,29 +700,24 @@ namespace getfem {
           ti[k] /= norm;
         }
 
-        cout << "normale = " << bgeot::compute_normal(ctx, i_f) << endl;
-        base_small_vector n000(N);
-        gmm::mult(ctx.B(), n0, n000);
-        cout << "normal bis = " << n000 << endl;
-        
         proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti);
         
-        gmm::iteration iter(1E-7, 1/* noisy*/, 200 /*maxiter*/);
+        gmm::iteration iter(2E-7, 0/* noisy*/, 200 /*maxiter*/);
         gmm::clear(a);
         gmm::bfgs(pps, pps, a, 10, iter);
-        // if (++count > 10) return;
         // Projection could be ameliorated by finding a starting point near
         // y0 (with respect to the integration method, for instance).
-        
+   
+
         // CRITERION 2 : The contact pair is eliminated when bfgs
         //               do not converge.
         if (!(iter.converged())) {
           GMM_WARNING2("Projection did not converge for point " << y0);
           continue;
         }
-        cout << "BFGS did converge : " << ctx.xreal() << endl;
-        cout << "xref : " << ctx.xref() << endl;
-        cout << "xref : " << a << endl;
+//         cout << "BFGS did converge : " << ctx.xreal() << endl;
+//         cout << "xref : " << ctx.xref() << endl;
+//         cout << "xref : " << a << endl;
 
           
         // CRITERION 3 : The projected point is inside the element

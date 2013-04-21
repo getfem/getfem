@@ -93,6 +93,8 @@ namespace gmm {
     
     template<typename VECT1, typename VECT2>
     void update(const VECT1 &deltak, const VECT2 &gammak) {
+      T vsp = vect_sp(deltak, gammak);
+      if (vsp == T(0)) return;
       size_type N = vect_size(deltak), k = delta.size();
       VECTOR Y(N);
       hmult(gammak, Y);
@@ -101,7 +103,7 @@ namespace gmm {
       resize(delta[k], N); resize(gamma[k], N); resize(zeta[k], N); 
       gmm::copy(deltak, delta[k]);
       gmm::copy(gammak, gamma[k]);
-      rho[k] = R(1) / vect_sp(deltak, gammak);
+      rho[k] = R(1) / vsp;
       if (version == 0)
 	add(delta[k], scaled(Y, -1), zeta[k]);
       else
@@ -174,8 +176,7 @@ namespace gmm {
       ++iter;
       if (!grad_computed) grad(y, r2);
       gmm::add(scaled(r2, -1), r);
-      if ((iter.get_iteration() % restart) == 0
-          || (blocked && ((iter.get_iteration() % restart) > 5))) { 
+      if ((iter.get_iteration() % restart) == 0 || blocked) { 
 	if (iter.get_noisy() >= 1) cout << "Restart\n";
 	invhessian.restart();
 	if (++nb_restart > 10) {
