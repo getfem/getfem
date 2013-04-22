@@ -569,7 +569,7 @@ namespace getfem {
     size_type N;
     scalar_type EPS;
     const base_node &x0, &y0;
-    mutable fem_interpolation_context &ctx;
+    fem_interpolation_context &ctx;
     const model_real_plain_vector &coeff;
     const std::vector<base_small_vector> &ti;
     mutable base_node val;
