@@ -116,7 +116,7 @@ namespace gmm {
 
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
-  void bfgs(FUNCTION f, DERIVATIVE grad, VECTOR &x,
+  void bfgs(const FUNCTION &f, const DERIVATIVE &grad, VECTOR &x,
 	    int restart, iteration& iter, int version = 0,
 	    double lambda_init=0.001, double print_norm=1.0) {
 
@@ -197,7 +197,7 @@ namespace gmm {
 
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
-  inline void dfp(FUNCTION f, DERIVATIVE grad, VECTOR &x,
+  inline void dfp(const FUNCTION &f, const DERIVATIVE &grad, VECTOR &x,
 	    int restart, iteration& iter, int version = 1) {
     bfgs(f, grad, x, restart, iter, version);
 

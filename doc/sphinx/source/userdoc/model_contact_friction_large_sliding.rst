@@ -123,7 +123,7 @@ Some details on the algorithm:
     the element face, which means that the element face is prolongated
     analytically. The projection is performed by minimizing the distance
     between the slave point and the projected one using the parametrization
-    and a BFGS algorithm.
+    and Newton's and/or BFGS algorithms.
 
 The list of criteria:
 
@@ -141,13 +141,13 @@ The list of criteria:
 
   - **Criterion 2: the contact pair is eliminated when the search of the
     projection point do not converge.**
-    When the BFGS algorithm used to compute the projection of the slave
-    point on the master element surface fails to converge, the pair is
-    not considered. A warning is generated.
+    When Newton's and BFGS algorithms used to compute the projection of the
+    slave point on the master element surface both fail to converge,
+    the pair is not considered. A warning is generated.
     
   - **Criterion 3 : the projected point should be inside the element.**
-    The slave point is projected on the surface of the master element by
-    a BFGS algorithm without the constraint to remain inside the face
+    The slave point is projected on the surface of the master element
+    without the constraint to remain inside the face
     (which means that the face is prolongated). If the orthogonal
     projection is outside the face, the pair is not considered. This
     is the present state, however, to treat case (J3) an aditional

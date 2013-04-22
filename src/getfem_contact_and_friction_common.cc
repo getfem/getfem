@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2013-2013 Yves Renard, Konstantinos Poulios.
 
  This file is a part of GETFEM++
 
@@ -29,7 +29,7 @@ namespace getfem {
   //=========================================================================
   //
   //  Structure which store the contact boundaries, rigid obstacles and
-  //  computes the contact pairs in large sliding/large deformation
+  //  computes the contact pairs in large sliding/large deformation.
   //
   //=========================================================================
 
@@ -567,14 +567,15 @@ namespace getfem {
   
   struct proj_pt_surf_cost_function_object {
     size_type N;
+    scalar_type EPS;
     const base_node &x0, &y0;
-    fem_interpolation_context &ctx;
+    mutable fem_interpolation_context &ctx;
     const model_real_plain_vector &coeff;
     const std::vector<base_small_vector> &ti;
-    base_node val;
-    base_matrix grad, gradtot;
+    mutable base_node val;
+    mutable base_matrix grad, gradtot;
     
-    scalar_type operator()(const base_small_vector& a) {
+    scalar_type operator()(const base_small_vector& a) const {
       base_node x = x0;
       for (size_type i= 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
@@ -582,7 +583,8 @@ namespace getfem {
       base_node y = val + ctx.xreal();
       return gmm::vect_dist2(y, y0)/scalar_type(2);
     }
-    void operator()(const base_small_vector& a, base_small_vector &grada) {
+    scalar_type operator()(const base_small_vector& a,
+                           base_small_vector &grada) const {
       base_node x = x0;
       for (size_type i = 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
@@ -593,15 +595,30 @@ namespace getfem {
       gmm::mult(grad, ctx.K(), gradtot);
       for (size_type i = 0; i < N-1; ++i)
         grada[i] = gmm::vect_sp(gradtot, ti[i], dy);
+      return gmm::vect_norm2(dy)/scalar_type(2);
+    }
+    void operator()(const base_small_vector& a,
+                    base_matrix &hessa) const {
+      base_small_vector b = a;
+      base_small_vector grada(N-1), gradb(N-1);
+      (*this)(b, grada);
+      for (size_type i = 0; i < N-1; ++i) {
+        b[i] += EPS;
+        (*this)(b, gradb);
+        for (size_type j = 0; j < N-1; ++j)
+          hessa(j, i) = (gradb[j] - grada[j])/EPS;
+        b[i] -= EPS;
+      }
     }
     
     proj_pt_surf_cost_function_object
     (const base_node &x00, const base_node &y00,
      fem_interpolation_context &ctxx,
      const model_real_plain_vector &coefff,
-     const std::vector<base_small_vector> &tii)
-      : N(gmm::vect_size(x00)), x0(x00), y0(y00), ctx(ctxx),
-        coeff(coefff), ti(tii), val(N), grad(N,N), gradtot(N,N) {}
+     const std::vector<base_small_vector> &tii,
+     scalar_type EPSS)
+      : N(gmm::vect_size(x00)), EPS(EPSS), x0(x00), y0(y00),
+        ctx(ctxx), coeff(coefff), ti(tii), val(N), grad(N,N), gradtot(N,N) {}
     
   };
   
@@ -609,16 +626,20 @@ namespace getfem {
     base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
     base_small_vector a(N-1), n(N);
-   
+    double time = dal::uclock_sec();
+    
     clear_aux_info();
     contact_pairs = std::vector<contact_pair>();
     
     extend_vectors();
+    cout << "Time for extend vector: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
     
     if (use_delaunay)
       compute_potential_contact_pairs_delaunay();
     else
       compute_potential_contact_pairs_influence_boxes();
+
+    cout << "Time for computing potential pairs: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
     
     
     // Scan of potential pairs
@@ -649,6 +670,7 @@ namespace getfem {
                      "muParser to account for rigid obstacles");
 #endif
       
+      cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
       bool first_pair = true;
       for (size_type ipf = 0; ipf < potential_pairs[ip].size(); ++ipf) {
         // Point to surface projection. Principle :
@@ -666,7 +688,8 @@ namespace getfem {
         //  - The gradient of J with respect to a_i is
         //    \partial_{a_j} J = (\phi(x0 + a_i t_i) - y0)
         //                       . (\nabla \phi(x0 + a_i t_i) t_j
-        //  - BFGS is called.           
+        //  - A Newton algorithm is applied.
+        //  - If it fails, a BFGS is called.           
         
         const face_info &fi = potential_pairs[ip][ipf];
         size_type ib = fi.ind_boundary;
@@ -700,25 +723,67 @@ namespace getfem {
           ti[k] /= norm;
         }
 
-        proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti);
+        proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti, EPS);
         
-        gmm::iteration iter(2E-7, 0/* noisy*/, 200 /*maxiter*/);
-        gmm::clear(a);
-        gmm::bfgs(pps, pps, a, 10, iter);
         // Projection could be ameliorated by finding a starting point near
         // y0 (with respect to the integration method, for instance).
-   
-
-        // CRITERION 2 : The contact pair is eliminated when bfgs
-        //               do not converge.
-        if (!(iter.converged())) {
-          GMM_WARNING2("Projection did not converge for point " << y0);
-          continue;
+    
+        // A specific newton algorithm for computing the projection
+        base_small_vector grada(N-1), dir(N-1), b(N-1);
+        gmm::clear(a);
+        base_matrix hessa(N-1, N-1);
+        scalar_type det(0);
+        
+        scalar_type dist = pps(a, grada);
+        size_type niter = 0;
+        while (gmm::vect_norm2(grada) > 2E-7) {
+          // cout << "Newton residual : " << gmm::vect_norm2(grada) << endl;
+          
+          for(;;) {
+            pps(a, hessa);
+            det = gmm::abs(gmm::lu_inverse(hessa));
+            if (det > 1E-15) break;
+            for (size_type i = 0; i < N-1; ++i)
+              a[i] += gmm::random() * 1E-7;
+          }
+          // Descent direction
+          gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
+          
+          // Line search
+          scalar_type lambda(1);
+          for(;;) {
+            gmm::add(a, gmm::scaled(dir, lambda), b);
+            scalar_type dist2 = pps(b);
+            if (dist2 < dist) { dist = dist2; break; }
+            gmm::add(a, gmm::scaled(dir, -lambda), b);
+            dist2 = pps(b);
+            if (dist2 < dist) { dist = dist2; break; }
+            
+            lambda /= scalar_type(2);
+            if (lambda < 1E-3) break;
+          }
+          gmm::copy(b, a);
+          pps(a, grada);
+          
+          ++niter; if (niter > 100) break;
         }
-//         cout << "BFGS did converge : " << ctx.xreal() << endl;
-//         cout << "xref : " << ctx.xref() << endl;
-//         cout << "xref : " << a << endl;
+        // cout << "Newton residual : " << gmm::vect_norm2(grada) << endl;
 
+
+        if (gmm::vect_norm2(grada) > 2E-6) {
+          GMM_WARNING2("Newton algorithm for projection did not converge for point " << y0);
+          gmm::iteration iter(2E-7, 0/* noisy*/, 200 /*maxiter*/);
+          gmm::clear(a);
+          gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
+
+          // CRITERION 2 : The contact pair is eliminated when bfgs
+          //               do not converge.
+          if (!(iter.converged())) {
+            GMM_WARNING2("BFGS algorithm for projection did not converge for point " << y0);
+            continue;
+          }
+          
+        }
           
         // CRITERION 3 : The projected point is inside the element
         //               The test should be completed: If the point is outside
@@ -805,7 +870,8 @@ namespace getfem {
         contact_pairs.push_back(ct);
       }
     }
-      
+    
+    cout << "Time for computing pairs: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
       
     clear_aux_info();
   }

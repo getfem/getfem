@@ -21,12 +21,19 @@ clear all;
 lambda = 1.; mu = 1.;   % Elasticity parameters
 r = 0.1;                % Augmentation parameter
 f_coeff = 1.;           % Friction coefficient
-vf = 0.01;                % Vertical force
+vf = 0.01;              % Vertical force
 penalty_parameter = 0.1;
 
+test_case = 2; % 1 = two differente meshes
+               % 2 = multi body with one mesh
 
-mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
-mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
+
+if (test_case == 1)
+  mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
+  mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
+else
+  mesh1 = gf_mesh('load', '../../../tests/meshes/multi_body.mesh');
+end
 
 N = gf_mesh_get(mesh1, 'dim');
 
@@ -40,87 +47,93 @@ dol1 = gf_mesh_fem_get(pre_mflambda1, 'basic dof on region', CONTACT_BOUNDARY1);
 mflambda1 = gf_mesh_fem('partial',  pre_mflambda1, dol1);
 mim1 = gf_mesh_im(mesh1, 4);
 
-
-mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 1);
-pre_mflambda2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(pre_mflambda2, 'classical fem', 1);
-mfvm2 = gf_mesh_fem(mesh2); gf_mesh_fem_set(mfvm2, 'classical discontinuous fem', 1);
-fb2 = gf_mesh_get(mesh2, 'outer faces');
-CONTACT_BOUNDARY2 = 2;
-gf_mesh_set(mesh2,'boundary', CONTACT_BOUNDARY2, fb2);
-dol2 = gf_mesh_fem_get(pre_mflambda2, 'basic dof on region', CONTACT_BOUNDARY2);
-mflambda2 = gf_mesh_fem('partial',  pre_mflambda2, dol2);
-mim2 = gf_mesh_im(mesh2, 8);
-
-two_bodies = 1;
+if (test_case == 1) 
+  mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 1);
+  pre_mflambda2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(pre_mflambda2, 'classical fem', 1);
+  mfvm2 = gf_mesh_fem(mesh2); gf_mesh_fem_set(mfvm2, 'classical discontinuous fem', 1);
+  fb2 = gf_mesh_get(mesh2, 'outer faces');
+  CONTACT_BOUNDARY2 = 2;
+  gf_mesh_set(mesh2,'boundary', CONTACT_BOUNDARY2, fb2);
+  dol2 = gf_mesh_fem_get(pre_mflambda2, 'basic dof on region', CONTACT_BOUNDARY2);
+  mflambda2 = gf_mesh_fem('partial',  pre_mflambda2, dol2);
+  mim2 = gf_mesh_im(mesh2, 8);
+end
 
 md=gf_model('real');
 gf_model_set(md, 'add initialized data', 'lambda', lambda);
 gf_model_set(md, 'add initialized data', 'mu', mu);
 
-if (two_bodies) 
-  gf_model_set(md, 'add fem variable', 'u1', mfu1);
-  gf_model_set(md, 'add fem variable', 'lambda1', mflambda1);
-  gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1', 'lambda', 'mu');
-%   gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.5 0 1.5 0 0.5 0 1.5]);
-%   gf_model_set(md, 'add initialized data', 'cunitv1', [1 0 1 0 0 1 0 1]);
-%   gf_model_set(md, 'add initialized data', 'cdata', [0 0 -0.01 -0.01]);
-%   gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints1', 'cunitv1', 'cdata');
+
+gf_model_set(md, 'add fem variable', 'u1', mfu1);
+gf_model_set(md, 'add fem variable', 'lambda1', mflambda1);
+gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1', 'lambda', 'mu');
+if (test_case == 1)
+  %   gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.5 0 1.5 0 0.5 0 1.5]);
+  %   gf_model_set(md, 'add initialized data', 'cunitv1', [1 0 1 0 0 1 0 1]);
+  %   gf_model_set(md, 'add initialized data', 'cdata', [0 0 -0.01 -0.01]);
+  %   gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints1', 'cunitv1', 'cdata');
   gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.5 0 1.5]);
   gf_model_set(md, 'add initialized data', 'cunitv1', [1 0 1 0]);
   gf_model_set(md, 'add initialized data', 'cdata', [0 0]);
   gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints1', 'cunitv1', 'cdata');
-  gf_model_set(md, 'add initialized data', 'data1', [0 -vf]);
-  gf_model_set(md, 'add source term brick', mim1, 'u1', 'data1');
-  gf_model_set(md, 'add initialized data', 'penalty_param1', [penalty_parameter]);          
-  gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
-end;
+end
+gf_model_set(md, 'add initialized data', 'penalty_param1', [penalty_parameter]);
+gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
+gf_model_set(md, 'add initialized data', 'data1', [0 -vf]);
+gf_model_set(md, 'add source term brick', mim1, 'u1', 'data1');
 
-gf_model_set(md, 'add fem variable', 'u2', mfu2);
-gf_model_set(md, 'add fem variable', 'lambda2', mflambda2);
-gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2', 'lambda', 'mu');
-gf_model_set(md, 'add initialized data', 'cpoints2', [0 0]);
-gf_model_set(md, 'add initialized data', 'cunitv2', [1 0]);
-gf_model_set(md, 'add pointwise constraints with multipliers', 'u2', 'cpoints2', 'cunitv2');
-gf_model_set(md, 'add initialized data', 'data2', [0 -vf]);
-gf_model_set(md, 'add source term brick', mim2, 'u2', 'data2');
-gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);          
-gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
-
+if (test_case == 1)
+  gf_model_set(md, 'add fem variable', 'u2', mfu2);
+  gf_model_set(md, 'add fem variable', 'lambda2', mflambda2);
+  gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2', 'lambda', 'mu');
+  gf_model_set(md, 'add initialized data', 'cpoints2', [0 0]);
+  gf_model_set(md, 'add initialized data', 'cunitv2', [1 0]);
+  gf_model_set(md, 'add pointwise constraints with multipliers', 'u2', 'cpoints2', 'cunitv2');
+  gf_model_set(md, 'add initialized data', 'data2', [0 -vf]);
+  gf_model_set(md, 'add source term brick', mim2, 'u2', 'data2');
+  gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);          
+  gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
+end
+  
 gf_model_set(md, 'add initialized data', 'r', r);
 gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
-indb = gf_model_set(md, 'add integral large sliding contact brick', mim2, 'u2', 'lambda2', 'r', 'f', CONTACT_BOUNDARY2);
 
-if (two_bodies) 
-  gf_model_set(md, 'add boundary to large sliding contact brick', indb, mim1, 'u1', 'lambda1', CONTACT_BOUNDARY1);
+indb = gf_model_set(md, 'add integral large sliding contact brick', mim1, 'u1', 'lambda1', 'r', 'f', CONTACT_BOUNDARY1);
+
+if (test_case == 1) 
+  gf_model_set(md, 'add boundary to large sliding contact brick', indb, mim2, 'u2', 'lambda2', CONTACT_BOUNDARY2);
+  gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y');
+else
+  gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, '2-sqrt(x^2+(y-1)^2)');
 end;
 
-gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, 'y');
 
 
 
-mcff=gf_multi_contact_frame(md, 2, 0.15, 0, true);
+mcff=gf_multi_contact_frame(md, 2, 0.10, 0, true);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u1', CONTACT_BOUNDARY1);
-gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u2', CONTACT_BOUNDARY2);
-gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
+if (test_case == 1) 
+  gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u2', CONTACT_BOUNDARY2);
+  gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
+else
+  gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');
+  % gf_model_set(md, 'add rigid obstacle to large sliding contact brick', indb, '11-sqrt(x^2+(y-10)^2)');
+end
 
+U1 = gf_model_get(md, 'variable', 'u1');
+VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+         		  'u1', 'lambda', 'mu', mfvm1);
+gf_plot(mfvm1,VM1,'mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
 
-
-
-U2 = gf_model_get(md, 'variable', 'u2');
-VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u2', 'lambda', 'mu', mfvm2);
-
-gf_plot(mfvm2,VM2,'mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
-
-if (two_bodies)
-   hold on
-   U1 = gf_model_get(md, 'variable', 'u1');
-   VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u1', 'lambda', 'mu', mfvm1);
-   gf_plot(mfvm1,VM1,'mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
-   hold off
-end;
+if (test_case == 1)
+  hold on
+  U2 = gf_model_get(md, 'variable', 'u2');
+  VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		            'u2', 'lambda', 'mu', mfvm2);
+  gf_plot(mfvm2,VM2,'mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
+  hold off
+end
 
 
 hold on
@@ -138,12 +151,16 @@ hold on
    scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
    scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
  end
+ if (test_case == 2)
+   rectangle('position', [-2, -1, 4, 4], 'Curvature', [1 1]);  % draw the obstacle
+   axis([-1.3 1.3 -1.1 0.8]);
+ end
 hold off
 
-pause;
+% pause;
 
 
-
+return;
 
 
 
@@ -196,64 +213,3 @@ pause;
 
 end;
 
-
-return;
-
-
-% Part which allows to see the steps of the line search with the trace
-% option of the standard solve.
-
-for i = 0:1000
-    
-  filename = sprintf('line_search_state%03d_000_init', i);
-  fid = fopen(filename);
-  if (fid < 0) break; end
-  
-  disp(sprintf('Newton iteration %d init state', i));
-  V = fscanf(fid, '%g');
-  gf_model_set(md, 'to variables', V);
-  
-  U2 = gf_model_get(md, 'variable', 'u2');
-  VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-          		     'u2', 'lambda', 'mu', mfvm2);
-  gf_plot(mfvm2,VM2,'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
-  if (two_bodies)
-     hold on
-     U1 = gf_model_get(md, 'variable', 'u1');
-     VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		                'u1', 'lambda', 'mu', mfvm1);
-     gf_plot(mfvm1,VM1,'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
-     hold off
-  end;
-  axis([-1.1, 1.1, -0.1, 2.1]);
-  pause;
-  
-  
-  for j=1:100
-        
-    filename = sprintf('line_search_state%03d_%03d', i, j);
-    fid = fopen(filename);
-    if (fid < 0) break; end
-
-    disp(sprintf('Newton iteration %d line-search iteration %d', i, j));
-    V = fscanf(fid, '%g');
-    gf_model_set(md, 'to variables', V);
-    
-    U2 = gf_model_get(md, 'variable', 'u2');
-    VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-          		     'u2', 'lambda', 'mu', mfvm2);
-    gf_plot(mfvm2,VM2,'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
-    if (two_bodies)
-       hold on
-       U1 = gf_model_get(md, 'variable', 'u1');
-       VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		                'u1', 'lambda', 'mu', mfvm1);
-       gf_plot(mfvm1,VM1,'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8, 'disp_options', 'off'); colorbar;
-       hold off
-    end;
-    axis([-1.1, 1.1, -0.1, 2.1]);
-    pause;
-    
-  end
-    
-end

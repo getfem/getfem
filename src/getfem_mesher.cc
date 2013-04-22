@@ -431,14 +431,14 @@ namespace getfem {
     struct fbcond_cost_function_object {
       mesher &m;
       fbcond_cost_function_object(mesher &m_) : m(m_) {}
-      scalar_type operator()(const base_vector& c)
+      scalar_type operator()(const base_vector& c) const
       { return m.fbcond_cost_function(c); }
     };
 
     struct fbcond_cost_function_derivative_object {
       mesher &m;
       fbcond_cost_function_derivative_object(mesher &m_) : m(m_) {}
-      void operator()(const base_vector& c, base_vector &grad)
+      void operator()(const base_vector& c, base_vector &grad) const
       { m.fbcond_cost_function_derivative(c, grad); }
     };
 
