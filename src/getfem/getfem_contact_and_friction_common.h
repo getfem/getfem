@@ -253,26 +253,6 @@ namespace getfem {
   //
   //=========================================================================
 
-
-  
-  // TODO:
-  // - Dans le cas Delaunay, un passage éventuel à l'élément voisin est-il
-  //   envisageable ?
-  // - A la fin, revoir éventuellement si la stratégie de calcul des
-  //   extensions des déplacement est la bonne (calcul en début de
-  //   construction de la liste des boites ou points des bords de contact).
-  // - Gerer le cas configuration de référence
-  // - Dans le cas Delaunay, gérer les points coincidents ... ou voir si le
-  //   delaunay les gère correctement, ou les perturber infinitesimalement ....
-  // - Dans le cas des boites d'influence, doit on stocker un cone de normale ?
-  //   Si les normales sont très differentes, que doit-on faire ?  La moyenne
-  //   ne semble plus valable.
-  // - Simplifier le calcul quand il n'y a que des obstacles rigides et pas
-  //   d'auto-contact
-
-
-
-
   class multi_contact_frame {
 
     // Structure describing a contact boundary

@@ -195,6 +195,8 @@ namespace getfem {
     GMM_ASSERT1(mfu.linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu.linked_mesh().dim()
                 << "should be " << N << ".");
+    GMM_ASSERT1(&(mfu.linked_mesh()) == &(mim.linked_mesh()),
+                "Integration and finite element are not on the same mesh !");
     contact_boundary cb(reg, mfu, mim, add_U(U));
     size_type ind = contact_boundaries.size();
     contact_boundaries.push_back(cb);
@@ -216,6 +218,8 @@ namespace getfem {
     GMM_ASSERT1(mfu.linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu.linked_mesh().dim()
                 << "should be " << N << ".");
+    GMM_ASSERT1(&(mfu.linked_mesh()) == &(mim.linked_mesh()),
+                "Integration and finite element are not on the same mesh !");
     contact_boundary cb(reg, mfu, mim, add_U(U));
     contact_boundaries.push_back(cb);
     return size_type(contact_boundaries.size() - 1);
@@ -227,106 +231,6 @@ namespace getfem {
                 "to a model");
     return add_master_boundary(mim, md->mesh_fem_of_variable(varname),
                        md->real_variable(varname), reg);
-  }
-
-
-  void multi_contact_frame::compute_influence_boxes(void) {
-    fem_precomp_pool fppool;
-    base_matrix G;
-    model_real_plain_vector coeff;
-    
-    for (size_type i = 0; i < contact_boundaries.size(); ++i)
-      if (!(slave_boundaries[i])) {
-        size_type bnum = region_of_boundary(i);
-        const mesh_fem &mfu = mfu_of_boundary(i);
-        const model_real_plain_vector &U = disp_of_boundary(i);
-        const mesh &m = mfu.linked_mesh();
-        
-        base_node val(N), bmin(N), bmax(N);
-        base_small_vector n0(N), n(N), n_mean(N);
-        base_matrix grad(N,N);
-        mesh_region region = m.region(bnum);
-        GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
-        
-        dal::bit_vector points_already_interpolated;
-        std::vector<base_node> transformed_points(m.nb_max_points());
-        for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
-          size_type cv = v.cv();
-          bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-          pfem pf_s = mfu.fem_of_element(cv);
-          size_type nbd_t = pgt->nb_points();
-          slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
-          bgeot::vectors_to_base_matrix
-            (G, mfu.linked_mesh().points_of_convex(cv));
-          
-          pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
-          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                        size_type(-1));
-          
-          size_type nb_pt_on_face = 0;
-          gmm::clear(n_mean);
-          for (short_type ip = 0; ip < nbd_t; ++ip) {
-            size_type ind = m.ind_points_of_convex(cv)[ip];
-            
-            // computation of transformed vertex
-            if (!(points_already_interpolated.is_in(ind))) {
-              ctx.set_ii(ip);
-              pf_s->interpolation(ctx, coeff, val, dim_type(N));
-              val += ctx.xreal();
-              transformed_points[ind] = val;
-              points_already_interpolated.add(ind);
-            } else {
-              val = transformed_points[ind];
-            }
-            // computation of unit normal vector if the vertex is on the face
-            bool is_on_face = false;
-            bgeot::pconvex_structure cvs = pgt->structure();
-            for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
-              if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
-            if (is_on_face) {
-              ctx.set_ii(ip);
-              n0 = bgeot::compute_normal(ctx, v.f());
-              pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
-              gmm::add(gmm::identity_matrix(), grad);
-              scalar_type J = gmm::lu_inverse(grad);
-              if (J <= scalar_type(0))
-                GMM_WARNING1("Inverted element !" << J);
-              gmm::mult(gmm::transposed(grad), n0, n);
-              n /= gmm::vect_norm2(n);
-              n_mean += n;
-              ++nb_pt_on_face;
-            }
-            
-            if (ip == 0) // computation of bounding box
-              bmin = bmax = val;
-            else {
-              for (size_type k = 0; k < N; ++k) {
-                bmin[k] = std::min(bmin[k], val[k]);
-                bmax[k] = std::max(bmax[k], val[k]);
-              }
-            }
-          }
-          
-          GMM_ASSERT1(nb_pt_on_face,
-                      "This element has not vertex on considered face !");
-          
-          // Computation of influence box :
-          // offset of the bounding box relatively to the release distance
-          scalar_type h = bmax[0] - bmin[0];
-          for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
-          if (h < release_distance/scalar_type(20))
-            GMM_WARNING1("Found an element whose size is smaller than 1/20 "
-                         "of the release distance. You should probably "
-                         "adapt the release distance.");
-          for (size_type k = 0; k < N; ++k)
-            { bmin[k] -= release_distance; bmax[k] += release_distance; }
-          
-          // Store the influence box and additional information.
-          element_boxes.add_box(bmin, bmax, element_boxes_info.size());
-          n_mean /= gmm::vect_norm2(n_mean);
-          element_boxes_info.push_back(influence_box(i, cv, v.f(), n_mean));
-        }
-      }
   }
   
   void multi_contact_frame::compute_boundary_points(bool slave_only) {
@@ -358,10 +262,13 @@ namespace getfem {
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_s = mfu.fem_of_element(cv);
           pintegration_method pim = mim.int_method_of_element(cv);
-          slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+          GMM_ASSERT1(pim, "Integration method should be defined");
+          dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();
+
+          if (!ref_conf)
+            slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
           bgeot::vectors_to_base_matrix
             (G, mfu.linked_mesh().points_of_convex(cv));
-          dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();;
           
           pfem_precomp pfp(0); size_type nbptf(0);
           if (on_fem_nodes) {
@@ -369,17 +276,16 @@ namespace getfem {
             nbptf =pf_s->node_convex(cv).structure()->nb_points_of_face(v.f());
           }
           else {
+            
             pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
             nbptf = pim->approx_method()->nb_points_on_face(v.f());
           }
-          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, v.f());
-          
+          fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv,v.f());
           
           for (short_type ip = 0; ip < nbptf; ++ip) {
-              
             size_type ind(0), inddof(0);
             if (on_fem_nodes) {
-              inddof = mfu.ind_basic_dof_of_element(cv)[ip*qqdim];
+              inddof = mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
               ind = pf_s->node_convex(cv).structure()
                 ->ind_points_of_face(v.f())[ip];
             }
@@ -388,19 +294,27 @@ namespace getfem {
             ctx.set_ii(ind);
             
             if (!(on_fem_nodes && dof_already_interpolated[inddof])) {
-              pf_s->interpolation(ctx, coeff, val, dim_type(N));
-              val += ctx.xreal();            
+              if (!ref_conf) {
+                pf_s->interpolation(ctx, coeff, val, dim_type(N));
+                val += ctx.xreal();
+              } else {
+                val = ctx.xreal();
+              }
               if (on_fem_nodes)  dof_ind[inddof] = boundary_points.size();
               
             }
             
             // unit normal vector computation
-            n0 = bgeot::compute_normal(ctx, v.f());
-            pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
-            gmm::add(gmm::identity_matrix(), grad);
-            scalar_type J = gmm::lu_inverse(grad);
-            if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
-            gmm::mult(gmm::transposed(grad), n0, n);
+            if (!ref_conf) {
+              n0 = bgeot::compute_normal(ctx, v.f());
+              pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+              gmm::add(gmm::identity_matrix(), grad);
+              scalar_type J = gmm::lu_inverse(grad);
+              if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+              gmm::mult(gmm::transposed(grad), n0, n);
+            } else {
+              n = bgeot::compute_normal(ctx, v.f());
+            }
             n /= gmm::vect_norm2(n);
             
             if (on_fem_nodes && dof_already_interpolated[inddof]) {
@@ -413,7 +327,7 @@ namespace getfem {
             
             if (on_fem_nodes)  dof_already_interpolated.add(inddof);
           }
-        } 
+        }
       } 
   }
   
@@ -425,6 +339,12 @@ namespace getfem {
     potential_pairs.resize(boundary_points.size());
     
     gmm::dense_matrix<size_type> simplexes;
+    base_small_vector rr(N);
+    // Necessary ?
+    // for (size_type i = 0; i < boundary_points.size(); ++i) {
+    //   gmm::fill_random(rr);
+    //   boundary_points[i] += 1E-9*rr;
+    // }
     getfem::delaunay(boundary_points, simplexes);
     
     // connectivity analysis
@@ -519,6 +439,114 @@ namespace getfem {
     }
   }
   
+
+  void multi_contact_frame::compute_influence_boxes(void) {
+    fem_precomp_pool fppool;
+    base_matrix G;
+    model_real_plain_vector coeff;
+    
+    for (size_type i = 0; i < contact_boundaries.size(); ++i)
+      if (!(slave_boundaries[i])) {
+        size_type bnum = region_of_boundary(i);
+        const mesh_fem &mfu = mfu_of_boundary(i);
+        const model_real_plain_vector &U = disp_of_boundary(i);
+        const mesh &m = mfu.linked_mesh();
+        
+        base_node val(N), bmin(N), bmax(N);
+        base_small_vector n0(N), n(N), n_mean(N);
+        base_matrix grad(N,N);
+        mesh_region region = m.region(bnum);
+        GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
+        
+        dal::bit_vector points_already_interpolated;
+        std::vector<base_node> transformed_points(m.nb_max_points());
+        for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+          size_type cv = v.cv();
+          bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+          pfem pf_s = mfu.fem_of_element(cv);
+          size_type nbd_t = pgt->nb_points();
+          pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+          if (!ref_conf)
+            slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+          bgeot::vectors_to_base_matrix
+            (G, mfu.linked_mesh().points_of_convex(cv));
+          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+                                        size_type(-1));
+          
+          size_type nb_pt_on_face = 0;
+          gmm::clear(n_mean);
+          for (short_type ip = 0; ip < nbd_t; ++ip) {
+            size_type ind = m.ind_points_of_convex(cv)[ip];
+            
+            // computation of transformed vertex
+            if (!(points_already_interpolated.is_in(ind))) {
+              ctx.set_ii(ip);
+              if (!ref_conf) {
+                pf_s->interpolation(ctx, coeff, val, dim_type(N));
+                val += ctx.xreal();
+                transformed_points[ind] = val;
+              } else {
+                transformed_points[ind] = ctx.xreal();
+              }
+              points_already_interpolated.add(ind);
+            } else {
+              val = transformed_points[ind];
+            }
+            // computation of unit normal vector if the vertex is on the face
+            bool is_on_face = false;
+            bgeot::pconvex_structure cvs = pgt->structure();
+            for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
+              if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
+            if (is_on_face) {
+              ctx.set_ii(ip);
+              if (!ref_conf) {
+                n0 = bgeot::compute_normal(ctx, v.f());
+                pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
+                gmm::add(gmm::identity_matrix(), grad);
+                scalar_type J = gmm::lu_inverse(grad);
+                if (J <= scalar_type(0))
+                  GMM_WARNING1("Inverted element !" << J);
+                gmm::mult(gmm::transposed(grad), n0, n);
+              } else {
+                n =  bgeot::compute_normal(ctx, v.f());
+              }
+              n /= gmm::vect_norm2(n);
+              n_mean += n;
+              ++nb_pt_on_face;
+            }
+            
+            if (ip == 0) // computation of bounding box
+              bmin = bmax = val;
+            else {
+              for (size_type k = 0; k < N; ++k) {
+                bmin[k] = std::min(bmin[k], val[k]);
+                bmax[k] = std::max(bmax[k], val[k]);
+              }
+            }
+          }
+          
+          GMM_ASSERT1(nb_pt_on_face,
+                      "This element has not vertex on considered face !");
+          
+          // Computation of influence box :
+          // offset of the bounding box relatively to the release distance
+          scalar_type h = bmax[0] - bmin[0];
+          for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
+          if (h < release_distance/scalar_type(20))
+            GMM_WARNING1("Found an element whose size is smaller than 1/20 "
+                         "of the release distance. You should probably "
+                         "adapt the release distance.");
+          for (size_type k = 0; k < N; ++k)
+            { bmin[k] -= release_distance; bmax[k] += release_distance; }
+          
+          // Store the influence box and additional information.
+          element_boxes.add_box(bmin, bmax, element_boxes_info.size());
+          n_mean /= gmm::vect_norm2(n_mean);
+          element_boxes_info.push_back(influence_box(i, cv, v.f(), n_mean));
+        }
+      }
+  }
+
   void multi_contact_frame::compute_potential_contact_pairs_influence_boxes(void) {
     compute_influence_boxes();
     compute_boundary_points(!self_contact); // vraiment nécessaire ?
@@ -532,13 +560,13 @@ namespace getfem {
       element_boxes.find_boxes_at_point(boundary_points[ip], bset);
       boundary_point *pt_info = &(boundary_points_info[ip]);
       const mesh_fem &mf1 = mfu_of_boundary(pt_info->ind_boundary);
-      
+      size_type ib1 = pt_info->ind_boundary;
+        
       bgeot::rtree::pbox_set::iterator it = bset.begin();
       for (; it != bset.end(); ++it) {
-        // - faire un test de normale et de non élément courant
         influence_box &ibx = element_boxes_info[(*it)->id];
-        size_type ib1 = ibx.ind_boundary;
-        const mesh_fem &mf2 = mfu_of_boundary(ib1);
+        size_type ib2 = ibx.ind_boundary;
+        const mesh_fem &mf2 = mfu_of_boundary(ib2);
         
         // CRITERION 1 : The unit normal cone / vector are compatible
         //               and the two points are not in the same element.
@@ -562,7 +590,6 @@ namespace getfem {
       }
       
     }
-    
   }
   
   struct proj_pt_surf_cost_function_object {
@@ -572,6 +599,7 @@ namespace getfem {
     fem_interpolation_context &ctx;
     const model_real_plain_vector &coeff;
     const std::vector<base_small_vector> &ti;
+    bool ref_conf;
     mutable base_node val;
     mutable base_matrix grad, gradtot;
     
@@ -579,8 +607,11 @@ namespace getfem {
       base_node x = x0;
       for (size_type i= 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
-      ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
-      base_node y = val + ctx.xreal();
+      base_node y = ctx.xreal();
+      if (!ref_conf) {
+        ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
+        y += val;
+      }
       return gmm::vect_dist2(y, y0)/scalar_type(2);
     }
     scalar_type operator()(const base_small_vector& a,
@@ -588,11 +619,16 @@ namespace getfem {
       base_node x = x0;
       for (size_type i = 0; i < N-1; ++i) x += a[i] * ti[i];
       ctx.set_xref(x);
-      ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
-      base_node dy = val + ctx.xreal() - y0;
-      ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
-      gmm::add(gmm::identity_matrix(), grad);
-      gmm::mult(grad, ctx.K(), gradtot);
+      base_node dy = ctx.xreal() - y0;
+      if (!ref_conf) {
+        ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
+        dy += val;
+        ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
+        gmm::add(gmm::identity_matrix(), grad);
+        gmm::mult(grad, ctx.K(), gradtot);
+      } else {
+        gmm::copy(ctx.K(), gradtot);
+      }
       for (size_type i = 0; i < N-1; ++i)
         grada[i] = gmm::vect_sp(gradtot, ti[i], dy);
       return gmm::vect_norm2(dy)/scalar_type(2);
@@ -616,11 +652,19 @@ namespace getfem {
      fem_interpolation_context &ctxx,
      const model_real_plain_vector &coefff,
      const std::vector<base_small_vector> &tii,
-     scalar_type EPSS)
+     scalar_type EPSS, bool rc)
       : N(gmm::vect_size(x00)), EPS(EPSS), x0(x00), y0(y00),
-        ctx(ctxx), coeff(coefff), ti(tii), val(N), grad(N,N), gradtot(N,N) {}
+        ctx(ctxx), coeff(coefff), ti(tii), ref_conf(rc),
+        val(N), grad(N,N), gradtot(N,N) {}
     
   };
+
+  // Ideas to improve efficiency :
+  // - From an iteration to another, is it possible to simplify the
+  //   computation ? For instance in testing the old contact pairs ...
+  //   But how to detect new contact situations ?
+  // - A pre-test before projection (for Delaunay) : if the distance to a
+  //   node is greater than the release distance + h then give up.
   
   void multi_contact_frame::compute_contact_pairs(void) {
     base_matrix G, grad(N,N);
@@ -631,7 +675,7 @@ namespace getfem {
     clear_aux_info();
     contact_pairs = std::vector<contact_pair>();
     
-    extend_vectors();
+    if (!ref_conf) extend_vectors();
     cout << "Time for extend vector: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
     
     if (use_delaunay)
@@ -701,13 +745,15 @@ namespace getfem {
         pfem pf_s = mfu.fem_of_element(cv);
         bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
         
-        
-        slice_vector_on_basic_dof_of_element(mfu, disp_of_boundary(ib),
-                                             cv, coeff);
-        const base_node &x0 = pf_s->ref_convex(cv)->points_of_face(i_f)[0];
+        if (!ref_conf)
+          slice_vector_on_basic_dof_of_element(mfu, disp_of_boundary(ib),
+                                               cv, coeff);
+
         bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
-        fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, i_f);
         
+        const base_node &x0 = pf_s->ref_convex(cv)->points_of_face(i_f)[0];
+        fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, i_f);
+
         const base_small_vector &n0 = pf_s->ref_convex(cv)->normals()[i_f];
         std::vector<base_small_vector> ti(N-1);
         for (size_type k = 0; k < N-1; ++k) { // A basis for the face
@@ -723,7 +769,8 @@ namespace getfem {
           ti[k] /= norm;
         }
 
-        proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti, EPS);
+        proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti,
+                                              EPS, ref_conf);
         
         // Projection could be ameliorated by finding a starting point near
         // y0 (with respect to the integration method, for instance).
@@ -798,19 +845,27 @@ namespace getfem {
         if (pf_s->ref_convex(cv)->is_in(ctx.xref()) > 1E-5) continue;
         
         base_node y(N);
-        ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
-        y += ctx.xreal();
+        if (!ref_conf) {
+          ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
+          y += ctx.xreal();
+        } else {
+          y = ctx.xreal();
+        }
 
         // CRITERION 4 : Apply the release distance
         if (gmm::vect_dist2(y, y0) > release_distance) continue;
 
         // compute the unit_normal and the signed distance ...
         base_small_vector n00 = bgeot::compute_normal(ctx, i_f);
-        ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
-        gmm::add(gmm::identity_matrix(), grad);
-        scalar_type J = gmm::lu_inverse(grad);
-        if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
-        gmm::mult(gmm::transposed(grad), n00, n);
+        if (!ref_conf) {
+          ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
+          gmm::add(gmm::identity_matrix(), grad);
+          scalar_type J = gmm::lu_inverse(grad);
+          if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+          gmm::mult(gmm::transposed(grad), n00, n);
+        } else {
+          n = n00;
+        }
         n /= gmm::vect_norm2(n);
 
         scalar_type signed_dist = gmm::vect_sp(y - y0, n);
