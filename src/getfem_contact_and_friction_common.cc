@@ -438,6 +438,8 @@ namespace getfem {
           boundary_point *pt_info2 = &(boundary_points_info[ipt2]);
           size_type ib1 = pt_info1->ind_boundary;
           size_type ib2 = pt_info2->ind_boundary;
+          size_type ir1 = region_of_boundary(ib1);
+          size_type ir2 = region_of_boundary(ib2);
           bool sl1 = slave_boundaries[ib1];
           bool sl2 = slave_boundaries[ib2];
           if (!sl1 && sl2) { // The slave in first if any
@@ -477,9 +479,8 @@ namespace getfem {
               const mesh::ind_cv_ct &ic2
                 = mf2.convex_to_basic_dof(pt_info2->ind_dof);
               for (size_type k = 0; k < ic2.size(); ++k) {
-                size_type ir1 = region_of_boundary(ib1);
                 mesh_region::face_bitset fbs
-                  = mf2.linked_mesh().region(ir1).faces_of_convex(ic2[k]);
+                  = mf2.linked_mesh().region(ir2).faces_of_convex(ic2[k]);
                 for (short_type f = 0;
                      f < mf2.linked_mesh().nb_faces_of_convex(ic2[k]); ++f)
                   if (fbs.test(f))
@@ -496,9 +497,8 @@ namespace getfem {
                 const mesh::ind_cv_ct &ic1
                   = mf1.convex_to_basic_dof(pt_info1->ind_dof);
                 for (size_type k = 0; k < ic1.size(); ++k) {
-                  size_type ir2 = region_of_boundary(ib2);
                   mesh_region::face_bitset fbs
-                    = mf1.linked_mesh().region(ir2).faces_of_convex(ic1[k]);
+                    = mf1.linked_mesh().region(ir1).faces_of_convex(ic1[k]);
                   for (short_type f = 0;
                        f < mf1.linked_mesh().nb_faces_of_convex(ic1[k]);
                        ++f)
