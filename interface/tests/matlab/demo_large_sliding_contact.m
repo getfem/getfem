@@ -24,14 +24,14 @@ f_coeff = 1.;           % Friction coefficient
 vf = 0.01;              % Vertical force
 penalty_parameter = 0.1;
 
-test_case = 1; % 1 = 2D with two differente meshes
+test_case = 2; % 1 = 2D with two differente meshes
                % 2 = 2D with multi-body and only one mesh
                % 3 = 3D case (sphere / parallelepiped) (two meshes)
 
 
 if (test_case == 1)
-  mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
-  % mesh1 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0.1];SIZES=[1,0.1];NSUBDIV=[20,2]');
+  % mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
+  mesh1 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0.1];SIZES=[1,0.1];NSUBDIV=[20,2]');
   mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
 elseif (test_case == 2)
   mesh1 = gf_mesh('load', '../../../tests/meshes/multi_body.mesh');
@@ -126,7 +126,7 @@ if (test_case < 3)
 else
   dist = 2;
 end
-mcff=gf_multi_contact_frame(md, N, dist, 0, true, false);
+mcff=gf_multi_contact_frame(md, N, dist, 0, true, false, true);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u1', CONTACT_BOUNDARY1);
 if (test_case == 1) 
   gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, 'u2', CONTACT_BOUNDARY2);

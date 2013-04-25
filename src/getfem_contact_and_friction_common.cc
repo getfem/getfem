@@ -349,7 +349,6 @@ namespace getfem {
     
     // connectivity analysis
     for (size_type is = 0; is < gmm::mat_ncols(simplexes); ++is) {
-      // il faut tester ce qui se passe en cas de points répétés !!
       
       for (size_type i = 1; i <= N; ++i)
         for (size_type j = 0; j < i; ++j) {
@@ -665,11 +664,14 @@ namespace getfem {
   //   But how to detect new contact situations ?
   // - A pre-test before projection (for Delaunay) : if the distance to a
   //   node is greater than the release distance + h then give up.
+  // - Case J3 of valid/invalid contact situations is not really taken into
+  //   account. How to take it into account in a cheap way ?
   
   void multi_contact_frame::compute_contact_pairs(void) {
     base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
     base_small_vector a(N-1), n(N);
+    base_node y(N);
     double time = dal::uclock_sec();
     
     clear_aux_info();
@@ -677,8 +679,21 @@ namespace getfem {
     
     if (!ref_conf) extend_vectors();
     cout << "Time for extend vector: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
-    
-    if (use_delaunay)
+
+    bool only_slave(true), only_master(true);
+    for (size_type i = 0; i < contact_boundaries.size(); ++i)
+      if (!(slave_boundaries[i])) only_slave = false; else only_master = false;
+
+    if (only_master && !self_contact) {
+      GMM_WARNING1("There is only master boundary and no auto-contact to detect. Exiting");
+      return;
+    }
+
+    if (only_slave) {
+      compute_boundary_points();
+      potential_pairs.resize(boundary_points.size());
+    }
+    else if (use_delaunay)
       compute_potential_contact_pairs_delaunay();
     else
       compute_potential_contact_pairs_influence_boxes();
@@ -690,31 +705,37 @@ namespace getfem {
     for (size_type ip = 0; ip < potential_pairs.size(); ++ip) {
       const base_node &y0 = boundary_points[ip];
       boundary_point &bpinfo = boundary_points_info[ip];
+      size_type iby0 = bpinfo.ind_boundary;
+      bool sly0 = slave_boundaries[iby0];
       // Detect here the nearest rigid obstacle (taking into account
       // the release distance)
       size_type irigid_obstacle(-1);
       scalar_type d0 = 1E300, d1, d2;
+      
+      if (self_contact || sly0) {
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-      gmm::copy(y0, pt_eval);
-      for (size_type i = 0; i < obstacles.size(); ++i) {
-        d1 = scalar_type(obstacles_parsers[i].Eval());
-        if (gmm::abs(d1) < release_distance && d1 < d0) {
-          
-          for (size_type j=0; j < bpinfo.normals.size(); ++j) {
-            gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt_eval);
-            d2 =  scalar_type(obstacles_parsers[i].Eval());
-            if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
-            gmm::copy(y0, pt_eval);
+        gmm::copy(y0, pt_eval);
+        for (size_type i = 0; i < obstacles.size(); ++i) {
+          d1 = scalar_type(obstacles_parsers[i].Eval());
+          if (gmm::abs(d1) < release_distance && d1 < d0) {
+            
+            for (size_type j=0; j < bpinfo.normals.size(); ++j) {
+              gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt_eval);
+              d2 =  scalar_type(obstacles_parsers[i].Eval());
+              if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
+              gmm::copy(y0, pt_eval);
+            }
           }
         }
-      }
 #else
-      if (obstacles.size() > 0)
-        GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
-                     "muParser to account for rigid obstacles");
+        if (obstacles.size() > 0)
+          GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
+                       "muParser to account for rigid obstacles");
 #endif
-      
-      cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
+      }
+
+      if (potential_pairs[ip].size())
+        cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
       bool first_pair = true;
       for (size_type ipf = 0; ipf < potential_pairs[ip].size(); ++ipf) {
         // Point to surface projection. Principle :
@@ -775,7 +796,7 @@ namespace getfem {
         // Projection could be ameliorated by finding a starting point near
         // y0 (with respect to the integration method, for instance).
     
-        // A specific newton algorithm for computing the projection
+        // A specific (Quasi) Newton algorithm for computing the projection
         base_small_vector grada(N-1), dir(N-1), b(N-1);
         gmm::clear(a);
         base_matrix hessa(N-1, N-1);
@@ -784,7 +805,6 @@ namespace getfem {
         scalar_type dist = pps(a, grada);
         size_type niter = 0;
         while (gmm::vect_norm2(grada) > 2E-7) {
-          // cout << "Newton residual : " << gmm::vect_norm2(grada) << endl;
           
           for(;;) {
             pps(a, hessa);
@@ -793,7 +813,7 @@ namespace getfem {
             for (size_type i = 0; i < N-1; ++i)
               a[i] += gmm::random() * 1E-7;
           }
-          // Descent direction
+          // Computation of the descent direction
           gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
           
           // Line search
@@ -812,24 +832,39 @@ namespace getfem {
           gmm::copy(b, a);
           pps(a, grada);
           
-          ++niter; if (niter > 100) break;
+          ++niter; if (niter > 50) break;
         }
         // cout << "Newton residual : " << gmm::vect_norm2(grada) << endl;
 
+        bool converged = (gmm::vect_norm2(grada) < 2E-6);
+        scalar_type residual(0);
 
-        if (gmm::vect_norm2(grada) > 2E-6) {
-          GMM_WARNING2("Newton algorithm for projection did not converge for point " << y0);
-          gmm::iteration iter(2E-7, 0/* noisy*/, 200 /*maxiter*/);
+        if (!converged) { // Try with BFGS
+          gmm::iteration iter(2E-7, 0/* noisy*/, 100 /*maxiter*/);
           gmm::clear(a);
           gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
+          residual = gmm::abs(iter.get_res());
+          converged = (residual < 2E-5);
+        }
 
-          // CRITERION 2 : The contact pair is eliminated when bfgs
-          //               do not converge.
-          if (!(iter.converged())) {
-            GMM_WARNING2("BFGS algorithm for projection did not converge for point " << y0);
-            continue;
+        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5);
+
+        if (is_in || !converged) {
+          if (!ref_conf) {
+            ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
+            y += ctx.xreal();
+          } else {
+            y = ctx.xreal();
           }
-          
+        }
+
+        // CRITERION 2 : The contact pair is eliminated when bfgs
+        //               do not converge.
+        if (!converged) {
+          GMM_WARNING3("BFGS algorithm for projection did not converge for "
+                       "point " << y0 << " residual " << residual
+                       << " projection computed " << y);
+          continue;
         }
           
         // CRITERION 3 : The projected point is inside the element
@@ -842,15 +877,7 @@ namespace getfem {
         //               element which coincides and with a test on the
         //               distance ... ?) To be specified (in this case,
         //               change xref).
-        if (pf_s->ref_convex(cv)->is_in(ctx.xref()) > 1E-5) continue;
-        
-        base_node y(N);
-        if (!ref_conf) {
-          ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
-          y += ctx.xreal();
-        } else {
-          y = ctx.xreal();
-        }
+        if (!is_in) continue;
 
         // CRITERION 4 : Apply the release distance
         if (gmm::vect_dist2(y, y0) > release_distance) continue;
@@ -875,7 +902,6 @@ namespace getfem {
 
         // CRITERION 6 : for self-contact only : apply a test on
         //               unit normals in reference configuration.
-        size_type iby0 = bpinfo.ind_boundary;
         if (&m == &(mfu_of_boundary(iby0).linked_mesh())) {
           
           base_small_vector diff = bpinfo.ref_point - ctx.xreal();
