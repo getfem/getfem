@@ -821,16 +821,16 @@ namespace getfem {
           for(;;) {
             gmm::add(a, gmm::scaled(dir, lambda), b);
             scalar_type dist2 = pps(b);
-            if (dist2 < dist) { dist = dist2; break; }
+            if (dist2 < dist) break;
             gmm::add(a, gmm::scaled(dir, -lambda), b);
             dist2 = pps(b);
-            if (dist2 < dist) { dist = dist2; break; }
+            if (dist2 < dist) break;
             
             lambda /= scalar_type(2);
             if (lambda < 1E-3) break;
           }
           gmm::copy(b, a);
-          pps(a, grada);
+          dist = pps(a, grada);
           
           ++niter; if (niter > 50) break;
         }
@@ -847,7 +847,7 @@ namespace getfem {
           converged = (residual < 2E-5);
         }
 
-        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5);
+        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-3);
 
         if (is_in || !converged) {
           if (!ref_conf) {
@@ -880,9 +880,10 @@ namespace getfem {
         if (!is_in) continue;
 
         // CRITERION 4 : Apply the release distance
-        if (gmm::vect_dist2(y, y0) > release_distance) continue;
+        scalar_type signed_dist = gmm::vect_dist2(y, y0);
+        if (signed_dist > release_distance) continue;
 
-        // compute the unit_normal and the signed distance ...
+        // compute the unit_normal and the signed distance.
         base_small_vector n00 = bgeot::compute_normal(ctx, i_f);
         if (!ref_conf) {
           ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
@@ -893,9 +894,9 @@ namespace getfem {
         } else {
           n = n00;
         }
-        n /= gmm::vect_norm2(n);
+        // n /= gmm::vect_norm2(n); // Usefull only if the unit normal is kept
+        signed_dist *= gmm::sgn(gmm::vect_sp(y0 - y, n));
 
-        scalar_type signed_dist = gmm::vect_sp(y - y0, n);
         // CRITERION 5 : comparison with rigid obstacles
         if (irigid_obstacle != size_type(-1) && signed_dist  > d0)
           continue;
