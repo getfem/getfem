@@ -30,8 +30,8 @@ test_case = 2; % 1 = 2D with two differente meshes
 
 
 if (test_case == 1)
-  % mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
-  mesh1 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0.1];SIZES=[1,0.1];NSUBDIV=[20,2]');
+  mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
+  % mesh1 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0.1];SIZES=[1,0.1];NSUBDIV=[20,2]');
   mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
 elseif (test_case == 2)
   mesh1 = gf_mesh('load', '../../../tests/meshes/multi_body.mesh');
@@ -181,8 +181,7 @@ hold on
  end
 hold off
 
-
-
+gf_workspace('stats')
 
 return;
 

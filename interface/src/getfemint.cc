@@ -85,6 +85,7 @@ namespace getfemint {
       "gfMeshLevelSet",
       "gfMesherObject",
       "gfModel",
+      "gfMultiContactFrame",
       "gfPrecond",
       "gfSlice",
       "gfSpmat",
