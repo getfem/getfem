@@ -3766,12 +3766,162 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
-#if 0
-
       // Integration method
-      GMM_ASSERT1(mims.size() == 1, "Nitsche contact with rigid obstacle "
+      GMM_ASSERT1(mims.size() == 1, "Nitsche fictitious domain contact "
                   "bricks need a single mesh_im");
       const mesh_im &mim = *mims[0];
+      const mesh &m = mim.linked_mesh();
+      size_type N = m.dim();
+
+      GMM_ASSERT1(vl.size() == 2, "Nitsche fictitious domain contact "
+                  "bricks need two variables");
+      
+      const model_real_plain_vector &u1 = md.real_variable(vl[0]);
+      const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
+      const model_real_plain_vector &u2 = md.real_variable(vl[1]);
+      const mesh_fem &mf_u2 = md.mesh_fem_of_variable(vl[1]);
+
+
+      GMM_ASSERT1(dl.size() > 2, "Nitsche fictitious domain contact "
+                  "bricks need at least 2 data");
+      
+      const model_real_plain_vector &D1 = md.real_variable(dl[0]);
+      const mesh_fem &mf_d1 = md.mesh_fem_of_variable(dl[0]);
+      const model_real_plain_vector &D2 = md.real_variable(dl[1]);
+      const mesh_fem &mf_d2 = md.mesh_fem_of_variable(dl[1]);
+
+
+      GMM_ASSERT1(&(mf_u1.linked_mesh()) == &m && &(mf_u2.linked_mesh()) == &m
+                  && &(mf_d1.linked_mesh()) == &m
+                  && &(mf_d2.linked_mesh()) == &m,
+                  "All data and variables should be defined on the same mesh");
+      
+
+      bgeot::rtree tree;
+
+      for (dal::bv_visitor cv(mf_d2.convex_index()); !cv.finished(); ++cv) {
+
+        base_node min = m.points_of_convex(cv)[0], max = min;
+        for (size_type i = 1; i <  m.nb_points_of_convex(cv);
+             ++i) {
+          for (size_type k = 0; k < N; ++k) {
+            const base_node &x = m.points_of_convex(cv)[k];
+            min[k] = std::min(min[k], x[k]);
+            max[k] = std::max(max[k], x[k]);
+          }
+        }
+        for (size_type k = 0; k < N; ++k) {
+          min[k] -= (max[k] - min[k]) / 5.;
+          max[k] += (max[k] - min[k]) / 5.;
+        }
+        tree.add_box(min, max, cv);
+      }
+      
+
+
+      base_matrix G;
+      base_vector coeff;
+      base_matrix grad_d2(1, N);
+      base_small_vector d2(1);
+
+      for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
+        
+        pintegration_method pim = mim.int_method_of_element(cv);
+        
+        size_type nbpt = pim->approx_method()->nb_points();
+        for (size_type j = 0; j < nbpt; ++j) {
+
+          bgeot::vectors_to_base_matrix
+            (G, m.points_of_convex(cv));
+
+          bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+          pfem pf_u1 = mf_u1.fem_of_element(cv);
+          
+          const base_node &x0 =  pim->approx_method()->integration_points()[j];
+
+
+          fem_interpolation_context ctx_u1(pgt, pf_u1, x0, G, cv);
+
+          cout << "Element " << cv << " point " << j << " : " <<
+            pim->approx_method()->integration_points()[j] << " : " << ctx_u1.xreal();
+
+
+          pfem pf_d2 = mf_d2.fem_of_element(cv);
+
+          fem_interpolation_context ctx_d2(pgt, pf_d2, x0, G, cv);
+
+          slice_vector_on_basic_dof_of_element(mf_d2, D2, cv, coeff);
+
+          ctx_d2.pf()->interpolation(ctx_d2, coeff, d2, 1);
+          
+          ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
+          
+          base_node y0 = x0, yref(N);
+          gmm::add(gmm::scaled(gmm::mat_row(grad_d2, 0),
+                   D2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
+                   y0);
+          
+
+          
+
+          bgeot::rtree::pbox_set pbs;
+          tree.find_boxes_at_point(y0, pbs);
+
+          bgeot::rtree::pbox_set::const_iterator it = pbs.begin();
+          bool found = false;
+          for (; it != pbs.end(); ++it) {
+
+            bgeot::pgeometric_trans pgty =  m.trans_of_convex((*it)->id);
+
+            bgeot::geotrans_inv_convex gic;
+            gic.init(m.points_of_convex((*it)->id), pgty);
+
+            gic.invert(y0, yref);
+            if (pgty->convex_ref()->is_in(yref) < 1E-10)
+              { found = true; break; }
+          }
+
+          GMM_ASSERT1(found, "Projection not found ...");
+          
+          cout << "Found element : " << (*it)->id << " yref = " << yref << endl;
+    
+
+       
+//           size_type nit = 0;
+//           while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
+//             for (size_type k = 0; k < N; ++k) {
+//               pt_eval[k] += EPS;
+//               d1 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+//               n[k] = (d1 - d0) / EPS;
+//               pt_eval[k] -= EPS;
+//             }
+            
+//             gmm::add(gmm::scaled(n, -d0 / gmm::vect_norm2_sqr(n)), pt_eval);
+//             // A simple line search could be added
+//             d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+//           }
+//           GMM_ASSERT1(nit < 1000, "Projection on rigid obstacle did not converge");
+
+//           ct.master_point.resize(N);
+//           gmm::copy(pt_eval, ct.master_point);
+
+
+
+
+
+
+
+
+          
+
+
+
+        }
+
+      }
+      
+
+#if 0
 
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);

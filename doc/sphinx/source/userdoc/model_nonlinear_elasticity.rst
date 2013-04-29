@@ -16,7 +16,7 @@ This brick implements some classical hyperelastic constitutive law for large def
 Some recalls on nonlinear elasticity
 ++++++++++++++++++++++++++++++++++++
 
-Let :math:`\Omega` be the reference configuration and :math:`\Omega_t` the deformed configuration of an elastic media. Then for :math:`x \in \Omega` we will denote by :math:`\Phi(x) = u(x) + x` the deformation. the vector field :math:`u` is the displacement with respect to the initial position.
+Let :math:`\Omega` be the reference configuration and :math:`\Omega_t` the deformed configuration of an elastic media. Then for :math:`X \in \Omega` we will denote by :math:`\Phi(x) = u(X) + X` the deformation. the vector field :math:`u` is the displacement with respect to the initial position.
 
 The Cauchy-Green tensor is defined by
 
@@ -119,13 +119,13 @@ where :math:`{W}` is the density of strain energy of the material. The total str
 
 .. math::
 
-  \mathcal{I}(u) = \int_\Omega W( E(u)) dx
+  \mathcal{I}(u) = \int_{\Omega} W( E(u)) dX
 
 and the derivative of the energy in a direction :math:`v` can be writen
 
 .. math::
 
-  D\mathcal{I}(u;v) = \int_{\Omega} \frac{\partial W}{\partial E}( E(u)):(I+{\nabla u^T}){\nabla v}  dx
+  D\mathcal{I}(u;v) = \int_{\Omega} \frac{\partial W}{\partial E}( E(u)):(I+{\nabla u^T}){\nabla v}  dX
 
 because in particular
 
@@ -146,7 +146,7 @@ Integrating by parts, one obtains:
 
 .. math::
 
-  \int_\Omega(I + {\nabla u}){\hat{\hat{\sigma}}} : {\nabla v}  dx = l(v).
+  \int_{\Omega}(I + {\nabla u}){\hat{\hat{\sigma}}} : {\nabla v}  dX = l(v).
 
 
 Tangent matrix
@@ -156,21 +156,21 @@ The displacement :math:`u` is fixed. In order to obtain the tangent matrix, one 
 
 .. math::
 
-  \int_\Omega(I + {\nabla u} + {\nabla h}){\hat{\hat{\sigma}}}( E(u)+ E(h) + \frac{1}{2}({\nabla h^T}{\nabla u}+{\nabla u^T}{\nabla h})) : {\nabla v}  dx = l(v)
+  \int_\Omega(I + {\nabla u} + {\nabla h}){\hat{\hat{\sigma}}}( E(u)+ E(h) + \frac{1}{2}({\nabla h^T}{\nabla u}+{\nabla u^T}{\nabla h})) : {\nabla v}  dX = l(v)
 
 and considers the linear part w.r.t. :math:`h`, which is
 
 .. math::
 
-  \int_\Omega{\nabla h}~{\hat{\hat{\sigma}}}( E(u)) : {\nabla v}  dx +\\
-  \int_\Omega \frac{\partial^2 W}{\partial E^2}\left(\frac{{\nabla h}+{\nabla h^T}+{\nabla h^T}{\nabla u}+{\nabla u^T}{\nabla h}}{2}\right) : (I+{\nabla u}^T){\nabla v}  dx
+  \int_\Omega{\nabla h}~{\hat{\hat{\sigma}}}( E(u)) : {\nabla v}  dX +\\
+  \int_\Omega \frac{\partial^2 W}{\partial E^2}\left(\frac{{\nabla h}+{\nabla h^T}+{\nabla h^T}{\nabla u}+{\nabla u^T}{\nabla h}}{2}\right) : (I+{\nabla u}^T){\nabla v}  dX
 
 
 which is symmetric w.r.t. :math:`v` and :math:`h`. It can be rewritten as
 
 .. math::
 
-  \int_\Omega {\nabla h}~{\hat{\hat{\sigma}}}( E(u)) : {\nabla v}  + \mathcal{A}((I+{\nabla u^T}){\nabla h}):(I+{\nabla u}^T){\nabla v}~ dx
+  \int_\Omega {\nabla h}~{\hat{\hat{\sigma}}}( E(u)) : {\nabla v}  + \mathcal{A}((I+{\nabla u^T}){\nabla h}):(I+{\nabla u}^T){\nabla v}~ dX
 
 where :math:`\mathcal{A}` is the symmetric :math:`3\times3\times3\times3` tensor given by :math:`\mathcal{A}_{ijkl} = ((\frac{\partial^2 W}{\partial E^2})_{ijkl} + (\frac{\partial^2 W}{\partial E^2})_{jikl})/2`.
 
@@ -226,15 +226,15 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 .. math::
 
   1 - i_3(\nabla\Phi) &= 0 \\
-  -\int_{\Omega_0} (\det\nabla\Phi  -1) q  dx &= 0 ~~~ \forall q
+  -\int_{\Omega_0} (\det\nabla\Phi  -1) q  dX &= 0 ~~~ \forall q
 
 
 .. math::
 
-  B &= -\int_{\Omega_0} p(\nabla\Phi)^{-T} \det \nabla\Phi : \nabla v  dx \\
-  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v  dx - 
-  p(\nabla\Phi)^{-T}(\det \nabla\Phi(\nabla\Phi)^{-T}:\nabla h) : \nabla v \right)  dx\\
-  &= \int_{\Omega_0} p(\nabla h^T\nabla\Phi^{-T}):(\nabla\Phi^{-1}\nabla v)\det\nabla\Phi dx - \int_{\Omega_0} p(\nabla\Phi^{-T}:\nabla h)(\nabla\Phi^{-T}:\nabla v)\det\nabla\Phi dx
+  B &= -\int_{\Omega_0} p(\nabla\Phi)^{-T} \det \nabla\Phi : \nabla v  dX \\
+  K &= \int_{\Omega_0} \left( p(\nabla\Phi)^{-T}(\nabla h)^{T}(\nabla\Phi)^{-T}\det\nabla\Phi : \nabla v  dX - 
+  p(\nabla\Phi)^{-T}(\det \nabla\Phi(\nabla\Phi)^{-T}:\nabla h) : \nabla v \right)  dX\\
+  &= \int_{\Omega_0} p(\nabla h^T\nabla\Phi^{-T}):(\nabla\Phi^{-1}\nabla v)\det\nabla\Phi dX - \int_{\Omega_0} p(\nabla\Phi^{-T}:\nabla h)(\nabla\Phi^{-T}:\nabla v)\det\nabla\Phi dX
 
 
 ``Ciarlet-Geymonat law``
