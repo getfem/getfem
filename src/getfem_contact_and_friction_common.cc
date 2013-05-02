@@ -191,13 +191,14 @@ namespace getfem {
 
   size_type multi_contact_frame::add_slave_boundary
   (const mesh_im &mim, const mesh_fem &mfu,
-   const model_real_plain_vector &U, size_type reg) {
+   const model_real_plain_vector &U, size_type reg, const std::string &varname,
+   const std::string &multname) {
     GMM_ASSERT1(mfu.linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu.linked_mesh().dim()
                 << "should be " << N << ".");
     GMM_ASSERT1(&(mfu.linked_mesh()) == &(mim.linked_mesh()),
                 "Integration and finite element are not on the same mesh !");
-    contact_boundary cb(reg, mfu, mim, add_U(U));
+    contact_boundary cb(reg, mfu, mim, add_U(U), varname, multname);
     size_type ind = contact_boundaries.size();
     contact_boundaries.push_back(cb);
     slave_boundaries.add(ind);
@@ -205,32 +206,35 @@ namespace getfem {
   }
 
   size_type multi_contact_frame::add_slave_boundary
-  (const mesh_im &mim, const std::string &varname, size_type reg) {
+  (const mesh_im &mim, size_type reg, const std::string &varname,
+   const std::string &multname) {
     GMM_ASSERT1(md, "This multi contact frame object is not linked "
                 "to a model");
     return add_slave_boundary(mim, md->mesh_fem_of_variable(varname),
-                       md->real_variable(varname), reg);
+                 md->real_variable(varname), reg, varname, multname);
   }
 
   size_type multi_contact_frame::add_master_boundary
   (const mesh_im &mim, const mesh_fem &mfu,
-   const model_real_plain_vector &U, size_type reg) {
+   const model_real_plain_vector &U, size_type reg, const std::string &varname,
+   const std::string &multname) {
     GMM_ASSERT1(mfu.linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu.linked_mesh().dim()
                 << "should be " << N << ".");
     GMM_ASSERT1(&(mfu.linked_mesh()) == &(mim.linked_mesh()),
                 "Integration and finite element are not on the same mesh !");
-    contact_boundary cb(reg, mfu, mim, add_U(U));
+    contact_boundary cb(reg, mfu, mim, add_U(U), varname, multname);
     contact_boundaries.push_back(cb);
     return size_type(contact_boundaries.size() - 1);
   }
 
   size_type multi_contact_frame::add_master_boundary
-  (const mesh_im &mim, const std::string &varname, size_type reg) {
+  (const mesh_im &mim, size_type reg, const std::string &varname,
+   const std::string &multname) {
     GMM_ASSERT1(md, "This multi contact frame object is not linked "
                 "to a model");
     return add_master_boundary(mim, md->mesh_fem_of_variable(varname),
-                       md->real_variable(varname), reg);
+                    md->real_variable(varname), reg, varname, multname);
   }
   
   void multi_contact_frame::compute_boundary_points(bool slave_only) {

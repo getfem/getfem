@@ -257,14 +257,19 @@ namespace getfem {
 
     // Structure describing a contact boundary
     struct contact_boundary {
-      size_type region;                 // Boundary number
-      const getfem::mesh_fem *mfu;      // F.e.m. for the displacement.
-      const getfem::mesh_im *mim;       // Integration method for the boundary.
-      size_type ind_U;                  // Index of displacement.
+      size_type region;            // Boundary number
+      const getfem::mesh_fem *mfu; // F.e.m. for the displacement.
+      const getfem::mesh_im *mim;  // Integration method for the boundary.
+      std::string varname;         // Name of displacement variable when
+                                   // linked to a model.
+      std::string multname;        // Name of the optional contact stress
+                                   // multiplier when linked to a model.
+      size_type ind_U;             // Index of displacement.
       contact_boundary(void) {}
       contact_boundary(size_type r, const mesh_fem &mf,
-                       const mesh_im &mi, size_type i)
-        : region(r), mfu(&mf), mim(&mi), ind_U(i) {}
+                       const mesh_im &mi, size_type i, const std::string &vn,
+                       const std::string &mn)
+        : region(r), mfu(&mf), mim(&mi), varname(vn), multname(mn), ind_U(i) {}
     };
 
 
@@ -425,6 +430,24 @@ namespace getfem {
       
     };
 
+
+    // Compute the influence boxes of master boundary elements. To be run
+    // before the detection of contact pairs. The influence box is the
+    // bounding box extended by a distance equal to the release distance.
+    void compute_influence_boxes(void);
+    
+    // For delaunay triangulation. Advantages compared to influence boxes:
+    // No degeneration of the algorithm complexity with refinement and
+    // more easy to extend to fictitious domain with contact.
+    // Stores all the boundary deformed points relatively to
+    // an integration method or to finite element nodes (depending on
+    // fem_nodes_mode flag). Storing sufficient information to perform
+    // a Delaunay triangulation and to be able to recover the boundary
+    // number, element number, face number, unit normal vector ...
+    void compute_boundary_points(bool slave_only = false);
+    void compute_potential_contact_pairs_delaunay(void);
+    void compute_potential_contact_pairs_influence_boxes(void);
+
   protected:
       
     std::vector<contact_pair> contact_pairs;
@@ -446,6 +469,10 @@ namespace getfem {
     { return ext_Us[contact_boundaries[n].ind_U]; }
     size_type region_of_boundary(size_type n) const
     { return contact_boundaries[n].region; }
+    const std::string &varname_of_boundary(size_type n) const
+    { return contact_boundaries[n].varname; }
+    const std::string &multname_of_boundary(size_type n) const
+    { return contact_boundaries[n].multname; }
 
     multi_contact_frame(size_type NN, scalar_type r_dist,
                         int fem_nodes = 0, bool dela = true,
@@ -461,39 +488,27 @@ namespace getfem {
     size_type add_slave_boundary(const getfem::mesh_im &mim,
                                  const getfem::mesh_fem &mfu,
                                  const model_real_plain_vector &U,
-                                 size_type reg);
+                                 size_type reg,
+                                 const std::string &varname = std::string(),
+                                 const std::string &multname = std::string());
 
-    size_type add_slave_boundary(const getfem::mesh_im &mim,
+    size_type add_slave_boundary(const getfem::mesh_im &mim, size_type reg,
                                  const std::string &varname,
-                                 size_type reg);
+                                 const std::string &multname = std::string());
     
 
     size_type add_master_boundary(const getfem::mesh_im &mim,
                                   const getfem::mesh_fem &mfu,
                                   const model_real_plain_vector &U,
-                                  size_type reg);
+                                  size_type reg,
+                                  const std::string &varname = std::string(),
+                                  const std::string &multname = std::string());
 
-    size_type add_master_boundary(const getfem::mesh_im &mim,
+    size_type add_master_boundary(const getfem::mesh_im &mim, size_type reg,
                                   const std::string &varname,
-                                  size_type reg);
+                                  const std::string &multname = std::string());
     
 
-    // Compute the influence boxes of master boundary elements. To be run
-    // before the detection of contact pairs. The influence box is the
-    // bounding box extended by a distance equal to the release distance.
-    void compute_influence_boxes(void);
-    
-    // For delaunay triangulation. Advantages compared to influence boxes:
-    // No degeneration of the algorithm complexity with refinement and
-    // more easy to extend to fictitious domain with contact.
-    // Stores all the boundary deformed points relatively to
-    // an integration method or to finite element nodes (depending on
-    // fem_nodes_mode flag). Storing sufficient information to perform
-    // a Delaunay triangulation and to be able to recover the boundary
-    // number, element number, face number, unit normal vector ...
-    void compute_boundary_points(bool slave_only = false);
-    void compute_potential_contact_pairs_delaunay(void);
-    void compute_potential_contact_pairs_influence_boxes(void);
 
     // The whole process of the computation of contact pairs
     // Contact pairs are seached for a certain boundary (master or slave,

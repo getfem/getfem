@@ -72,5 +72,8 @@ References
 .. [so-se-do2004] P. Solin, K. Segeth, I. Dolezel,
    *Higher-Order Finite Element Methods*, Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
 
+.. [renard2013] Y. Renard,
+   *Generalized Newton's methods for the approximation and resolution of frictional contact problems in elasticity*,  Comp. Meth. Appl. Mech. Engng., 256:38-55, 2013.
+
 .. [ZT1989] Zienkiewicz and Taylor "The finite element method" 5th edition
     volume 3 : Fluids Dynamics, section 2.6 

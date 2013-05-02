@@ -63,15 +63,17 @@ Once a multi-contact frame is build, one adds slave or master surfaces, or rigid
                                 size_type region);
 
   size_type add_slave_boundary(const getfem::mesh_im &mim,
+                               size_type region,
                                const std::string &varname,
-                               size_type region);
+                               const std::string &multname = "");
 
   size_type add_master_boundary(const getfem::mesh_im &mim,
+                               size_type region,
                                const std::string &varname,
-                               size_type region);
+                               const std::string &multname = "");
 
 
-where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model.
+where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model. `multname` is the optional name of a multiplier variable to represent the contact stress.
 
 
 The contact pair detection algorithm
@@ -183,7 +185,36 @@ The list of criteria:
 
 
 
-The available bricks
-++++++++++++++++++++
+Nodal contact brick with projection
++++++++++++++++++++++++++++++++++++
 
-Sorry, for the moment no brick is fully working. Coming soon ...
+Notations: :math:`\Omega \subset \Reel^d` denotes the reference configuration of a deformable body, possibly constituted by several unconnected parts (see  :ref:`figure<ud-fig-masterslave>`). :math:`\Omega_t` is the deformed configuration and :math:`\varphi^h: \Omega \rightarrow \Omega_t` is the approximated deformation on a finite element space :math:`V^h`. The displacement  :math:`u^h: \Omega \rightarrow \Reel^d` is defined by :math:`\varphi^h(X) = X + u^h(X)`. A generic point of the reference configuration :math:`\Omega` is denoted by :math:`X` while the corresponding point of the deformed configuration is denoted by :math:`x = \varphi^h(X)`. :math:`\Gamma^S` denotes a slave boundary of :math:`\Omega` and :math:`\Gamma^M` a master one. The corresponding boundaries on the deformed configuration are :math:`\Gamma_t^S` and :math:`\Gamma_t^M`, respectively. The outward unit normal vector to the boundary (in the deformed configuration) at a point :math:`x = \varphi^h(X)` of that boundary is denoted by :math:`n_x`. Finally, the notation :math:`\delta A[B]` denotes the directional derivative of the quantity :math:`A` with respect to the deformation and in the direction :math:`B`. Similarly, The notation :math:`\delta^2 A[B,C]` is the second derivative in the directions  :math:`B` and :math:`C`.
+
+
+
+Let :math:`J(\varphi^h)` be the potential energy of the system, without taking into account contact and friction contributions. Typically, it includes elastic and external load potential energy. Let :math:`X_i` for  :math:`i \in I_{\text{nodes}}` the set of finite element nodes on the slave boundary in the reference configuration. Let :math:`X_i` for  :math:`i \in I_{\text{def}}` be the contact nodes in potential contact with the master surface of a deformable body. Let  :math:`X_i` for  :math:`i \in I_{\text{rig}}` be the contact nodes in potential contact with a rigid obstacle.
+
+We denote by :math:`x_i = \varphi^h(X_i)` the corresponding node on the deformed configuration and :math:`y_i` the projection on the master surface (or rigid obstacle) on the deformed configuration. Let :math:`Y_i` the point on the master surface verifying :math:`y_i = \varphi^h(Y_i)`. This allows to define the normal gap as
+
+.. math::
+
+  g_i = n_y . (\varphi^h(X_i) - \varphi^h(Y_i)) = \|\varphi^h(X_i) - \varphi^h(Y_i)\| \text{Sign}(n_y . (\varphi^h(X_i) - \varphi^h(Y_i))),
+
+where :math:`n_y` is the outward unit normal vector of the master surface at :math:`y`. 
+
+Considering only stationnary rigid obstacles and applying the principle of Alart-Curnier augmented Lagrangian [AL-CU1991]_, the problem with nodal contact with friction condition can be expressed as follows in an unsymmetric version (see [renard2013]_ for the linear elasticity case)
+
+.. math::
+
+  \left\{\begin{array}{l}
+  \mbox{Find } \varphi^h \in V^h \mbox{ such that } \\
+  \displaystyle \delta J(\varphi^h)[\delta u^h] - \sum_{i \in I_{\text{def}}} \lambda_i \cdot (\delta u^h(X_i) - \delta u^h(Y_i)) - \sum_{i \in I_{\text{rig}}} \lambda_i \delta u^h(X_i) = 0 ~~~ \forall \delta u^h \in V^h, \\
+  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_x, {\mathscr F}}(\lambda_i + r\left(g_i n_x - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
+  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_x, {\mathscr F}}(\lambda_i + r\left(g_i n_x - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
+  \end{array}\right.
+
+where :math:`W_T, \alpha, P_{n_x, {\mathscr F}}` ... + tangent system
+
+
+
+Sorry, for the moment the brick is not fully working. Coming soon ...

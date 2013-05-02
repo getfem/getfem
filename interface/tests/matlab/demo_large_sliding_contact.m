@@ -127,14 +127,14 @@ else
   dist = 2;
 end
 mcff=gf_multi_contact_frame(md, N, dist, 0, true, false, true);
-gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, 'u1', CONTACT_BOUNDARY1);
+gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1');
 if (test_case == 1) 
-  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, 'u2', CONTACT_BOUNDARY2);
+  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
 elseif (test_case == 2) 
   gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');
 else
-  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, 'u2', CONTACT_BOUNDARY2);
+  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
 end
 
