@@ -62,15 +62,18 @@ namespace getfem {
         if (nc.size() > 1) {
           base_small_vector n_mean = nc[0];
           for (size_type j = 1; j < nc.size(); ++j) n_mean += nc[j];
-          n_mean /= scalar_type(nc.size());
           scalar_type nn_mean = gmm::vect_norm2(n_mean);
+          GMM_ASSERT1(nn_mean != scalar_type(0), "oupssss");
           if (nn_mean != scalar_type(0)) {
             gmm::scale(n_mean, scalar_type(1)/nn_mean);
             bool reduce = true;
             for (size_type j = 0; j < nc.size(); ++j)
               if (gmm::vect_sp(n_mean, nc[j]) < threshold)
                 { reduce = false; break; }
-            if (reduce) boundary_points_info[i].normals = normal_cone(n_mean);
+            if (reduce) {
+              cout << nc[0] << " replaced by " << n_mean << endl;
+              boundary_points_info[i].normals = normal_cone(n_mean);
+            }
           }
         }
       }
@@ -870,7 +873,6 @@ namespace getfem {
           if (bpinfo.normals.size() > 1) { // take the mean normal vector
             for (size_type i = 1; i < bpinfo.normals.size(); ++i)
               gmm::add(bpinfo.normals[i], nx);
-            gmm::scale(nx, scalar_type(1)/scalar_type(bpinfo.normals.size()));
             scalar_type nnx = gmm::vect_norm2(nx);
             GMM_ASSERT1(nnx != scalar_type(0), "Unvalid normal cone");
             gmm::scale(nx, scalar_type(1)/nnx);
@@ -1042,6 +1044,11 @@ namespace getfem {
         }
         // n /= gmm::vect_norm2(n); // Usefull only if the unit normal is kept
         signed_dist *= gmm::sgn(gmm::vect_sp(x - y, n));
+
+        // CRITERION 1 again on found unit normal vector
+        if (!(test_normal_cones_compatibility(n, bpinfo.normals)))
+            continue;
+        
 
         // CRITERION 5 : comparison with rigid obstacles
         if (irigid_obstacle != size_type(-1) && signed_dist  > d0)
