@@ -63,11 +63,15 @@ namespace getfem {
           base_small_vector n_mean = nc[0];
           for (size_type j = 1; j < nc.size(); ++j) n_mean += nc[j];
           n_mean /= scalar_type(nc.size());
-          bool reduce = true;
-          for (size_type j = 0; j < nc.size(); ++j)
-            if (gmm::vect_sp(n_mean, nc[j]) < threshold)
-              { reduce = false; break; }
-          if (reduce) boundary_points_info[i].normals = normal_cone(n_mean);
+          scalar_type nn_mean = gmm::vect_norm2(n_mean);
+          if (nn_mean != scalar_type(0)) {
+            gmm::scale(n_mean, scalar_type(1)/nn_mean);
+            bool reduce = true;
+            for (size_type j = 0; j < nc.size(); ++j)
+              if (gmm::vect_sp(n_mean, nc[j]) < threshold)
+                { reduce = false; break; }
+            if (reduce) boundary_points_info[i].normals = normal_cone(n_mean);
+          }
         }
       }
     }
@@ -143,10 +147,11 @@ namespace getfem {
   multi_contact_frame::multi_contact_frame(size_type NN, scalar_type r_dist,
                                            int fem_nodes, bool dela,
                                            bool refc, bool selfc,
-                                           scalar_type cut_a)
+                                           scalar_type cut_a,
+                                           bool rayt)
     : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela), 
-      fem_nodes_mode(fem_nodes), release_distance(r_dist), cut_angle(cut_a),
-      EPS(1E-8), md(0), coordinates(N), pt_eval(N) {
+      fem_nodes_mode(fem_nodes), raytrace(rayt), release_distance(r_dist),
+      cut_angle(cut_a), EPS(1E-8), md(0), coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -159,10 +164,12 @@ namespace getfem {
                                            scalar_type r_dist,
                                            int fem_nodes, bool dela,
                                            bool refc, bool selfc,
-                                           scalar_type cut_a)
+                                           scalar_type cut_a,
+                                           bool rayt)
     : N(NN), self_contact(selfc), ref_conf(refc),
-      use_delaunay(dela), fem_nodes_mode(fem_nodes), release_distance(r_dist),
-      cut_angle(cut_a), EPS(1E-8), md(&mdd), coordinates(N), pt_eval(N) {
+      use_delaunay(dela), fem_nodes_mode(fem_nodes), raytrace(rayt),
+      release_distance(r_dist), cut_angle(cut_a), EPS(1E-8), md(&mdd),
+      coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -598,7 +605,7 @@ namespace getfem {
   struct proj_pt_surf_cost_function_object {
     size_type N;
     scalar_type EPS;
-    const base_node &x0, &y0;
+    const base_node &x0, &x;
     fem_interpolation_context &ctx;
     const model_real_plain_vector &coeff;
     const std::vector<base_small_vector> &ti;
@@ -607,22 +614,22 @@ namespace getfem {
     mutable base_matrix grad, gradtot;
     
     scalar_type operator()(const base_small_vector& a) const {
-      base_node x = x0;
-      for (size_type i= 0; i < N-1; ++i) x += a[i] * ti[i];
-      ctx.set_xref(x);
+      base_node xx = x0;
+      for (size_type i= 0; i < N-1; ++i) xx += a[i] * ti[i];
+      ctx.set_xref(xx);
       base_node y = ctx.xreal();
       if (!ref_conf) {
         ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
         y += val;
       }
-      return gmm::vect_dist2(y, y0)/scalar_type(2);
+      return gmm::vect_dist2(y, x)/scalar_type(2);
     }
     scalar_type operator()(const base_small_vector& a,
                            base_small_vector &grada) const {
-      base_node x = x0;
-      for (size_type i = 0; i < N-1; ++i) x += a[i] * ti[i];
-      ctx.set_xref(x);
-      base_node dy = ctx.xreal() - y0;
+      base_node xx = x0;
+      for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
+      ctx.set_xref(xx);
+      base_node dy = ctx.xreal() - x;
       if (!ref_conf) {
         ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
         dy += val;
@@ -651,13 +658,69 @@ namespace getfem {
     }
     
     proj_pt_surf_cost_function_object
-    (const base_node &x00, const base_node &y00,
+    (const base_node &x00, const base_node &xx,
      fem_interpolation_context &ctxx,
      const model_real_plain_vector &coefff,
      const std::vector<base_small_vector> &tii,
      scalar_type EPSS, bool rc)
-      : N(gmm::vect_size(x00)), EPS(EPSS), x0(x00), y0(y00),
+      : N(gmm::vect_size(x00)), EPS(EPSS), x0(x00), x(xx),
         ctx(ctxx), coeff(coefff), ti(tii), ref_conf(rc),
+        val(N), grad(N,N), gradtot(N,N) {}
+    
+  };
+
+  struct raytrace_pt_surf_cost_function_object {
+    size_type N;
+    const base_node &x0, &x;
+    fem_interpolation_context &ctx;
+    const model_real_plain_vector &coeff;
+    const std::vector<base_small_vector> &ti;
+    const std::vector<base_small_vector> &Ti;
+    bool ref_conf;
+    mutable base_node val;
+    mutable base_matrix grad, gradtot;
+    
+    void operator()(const base_small_vector& a,
+                           base_small_vector &res) const {
+      base_node xx = x0;
+      for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
+      ctx.set_xref(xx);
+      base_node y = ctx.xreal();
+      if (!ref_conf) {
+        ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
+        y += val;
+      }
+      for (size_type i = 0; i < N-1; ++i)
+        res[i] = gmm::vect_sp(y, Ti[i]) - gmm::vect_sp(x, Ti[i]);
+    }
+
+    void operator()(const base_small_vector& a,
+                    base_matrix &hessa) const {
+      base_node xx = x0;
+      for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
+      ctx.set_xref(xx);
+      if (!ref_conf) {
+        ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
+        gmm::add(gmm::identity_matrix(), grad);
+        gmm::mult(grad, ctx.K(), gradtot);
+      } else {
+        gmm::copy(ctx.K(), gradtot);
+      }
+      for (size_type i = 0; i < N-1; ++i)
+        for (size_type j = 0; j < N-1; ++j)
+          hessa(j, i) = gmm::vect_sp(gradtot, ti[i], Ti[j]);
+    }
+    
+    
+    raytrace_pt_surf_cost_function_object
+    (const base_node &x00, const base_node &xx,
+     fem_interpolation_context &ctxx,
+     const model_real_plain_vector &coefff,
+     const std::vector<base_small_vector> &tii,
+     const std::vector<base_small_vector> &Tii,
+     bool rc)
+      : N(gmm::vect_size(x00)), x0(x00), x(xx),
+        ctx(ctxx), coeff(coefff), ti(tii), Ti(Tii), ref_conf(rc),
         val(N), grad(N,N), gradtot(N,N) {}
     
   };
@@ -676,6 +739,8 @@ namespace getfem {
     model_real_plain_vector coeff;
     base_small_vector a(N-1), n(N);
     base_node y(N);
+    std::vector<base_small_vector> ti(N-1), Ti(N-1);
+
     double time = dal::uclock_sec();
     
     clear_aux_info();
@@ -707,18 +772,18 @@ namespace getfem {
     
     // Scan of potential pairs
     for (size_type ip = 0; ip < potential_pairs.size(); ++ip) {
-      const base_node &y0 = boundary_points[ip];
+      const base_node &x = boundary_points[ip];
       boundary_point &bpinfo = boundary_points_info[ip];
-      size_type iby0 = bpinfo.ind_boundary;
-      bool sly0 = slave_boundaries[iby0];
+      size_type ibx = bpinfo.ind_boundary;
+      bool slx = slave_boundaries[ibx];
       // Detect here the nearest rigid obstacle (taking into account
       // the release distance)
       size_type irigid_obstacle(-1);
       scalar_type d0 = 1E300, d1, d2;
       
-      if (self_contact || sly0) {
+      if (self_contact || slx) {
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-        gmm::copy(y0, pt_eval);
+        gmm::copy(x, pt_eval);
         for (size_type i = 0; i < obstacles.size(); ++i) {
           d1 = scalar_type(obstacles_parsers[i].Eval());
           if (gmm::abs(d1) < release_distance && d1 < d0) {
@@ -727,7 +792,7 @@ namespace getfem {
               gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt_eval);
               d2 =  scalar_type(obstacles_parsers[i].Eval());
               if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
-              gmm::copy(y0, pt_eval);
+              gmm::copy(x, pt_eval);
             }
           }
         }
@@ -748,14 +813,14 @@ namespace getfem {
         //    orthonormals tangent vectors to the face.
         //  - Let y_0 be the point ot be projected and y the searched
         //    projected point. Then one searches for the minimum of
-        //    J = (1/2)|| y - y0 ||
+        //    J = (1/2)|| y - x ||
         //    with
         //    y = \phi(x0 + a_i t_i)
         //    (with a summation on i), where \phi = I+u(\tau(x)), and \tau 
         //    the geometric transformation between reference and real
         //    elements.
         //  - The gradient of J with respect to a_i is
-        //    \partial_{a_j} J = (\phi(x0 + a_i t_i) - y0)
+        //    \partial_{a_j} J = (\phi(x0 + a_i t_i) - x)
         //                       . (\nabla \phi(x0 + a_i t_i) t_j
         //  - A Newton algorithm is applied.
         //  - If it fails, a BFGS is called.           
@@ -780,7 +845,6 @@ namespace getfem {
         fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, i_f);
 
         const base_small_vector &n0 = pf_s->ref_convex(cv)->normals()[i_f];
-        std::vector<base_small_vector> ti(N-1);
         for (size_type k = 0; k < N-1; ++k) { // A basis for the face
           gmm::resize(ti[k], N);
           scalar_type norm(0);
@@ -794,65 +858,143 @@ namespace getfem {
           ti[k] /= norm;
         }
 
-        proj_pt_surf_cost_function_object pps(x0, y0, ctx, coeff, ti,
-                                              EPS, ref_conf);
-        
-        // Projection could be ameliorated by finding a starting point near
-        // y0 (with respect to the integration method, for instance).
-    
-        // A specific (Quasi) Newton algorithm for computing the projection
-        base_small_vector grada(N-1), dir(N-1), b(N-1);
-        gmm::clear(a);
-        base_matrix hessa(N-1, N-1);
-        scalar_type det(0);
-        
-        scalar_type dist = pps(a, grada);
-        size_type niter = 0;
-        while (gmm::vect_norm2(grada) > 2E-7) {
-          
-          for(;;) {
-            pps(a, hessa);
-            det = gmm::abs(gmm::lu_inverse(hessa));
-            if (det > 1E-15) break;
-            for (size_type i = 0; i < N-1; ++i)
-              a[i] += gmm::random() * 1E-7;
-          }
-          // Computation of the descent direction
-          gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
-          
-          // Line search
-          scalar_type lambda(1);
-          for(;;) {
-            gmm::add(a, gmm::scaled(dir, lambda), b);
-            scalar_type dist2 = pps(b);
-            if (dist2 < dist) break;
-            gmm::add(a, gmm::scaled(dir, -lambda), b);
-            dist2 = pps(b);
-            if (dist2 < dist) break;
-            
-            lambda /= scalar_type(2);
-            if (lambda < 1E-3) break;
-          }
-          gmm::copy(b, a);
-          dist = pps(a, grada);
-          
-          ++niter; if (niter > 50) break;
-        }
-        // cout << "Newton residual : " << gmm::vect_norm2(grada) << endl;
-
-        bool converged = (gmm::vect_norm2(grada) < 2E-6);
+        bool converged = false;
         scalar_type residual(0);
 
-        if (!converged) { // Try with BFGS
-          gmm::iteration iter(2E-7, 0/* noisy*/, 100 /*maxiter*/);
+
+        if (raytrace) { // Raytrace search for y by a Newton algorithm
+          
+          base_small_vector res(N-1), res2(N-1), dir(N-1), b(N-1);
+
+          base_small_vector nx = bpinfo.normals[0];
+          if (bpinfo.normals.size() > 1) { // take the mean normal vector
+            for (size_type i = 1; i < bpinfo.normals.size(); ++i)
+              gmm::add(bpinfo.normals[i], nx);
+            gmm::scale(nx, scalar_type(1)/scalar_type(bpinfo.normals.size()));
+            scalar_type nnx = gmm::vect_norm2(nx);
+            GMM_ASSERT1(nnx != scalar_type(0), "Unvalid normal cone");
+            gmm::scale(nx, scalar_type(1)/nnx);
+          }  
+
+          base_matrix hessa(N-1, N-1);
           gmm::clear(a);
-          gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
-          residual = gmm::abs(iter.get_res());
-          converged = (residual < 2E-5);
+
+          for (size_type k = 0; k < N-1; ++k) {
+            gmm::resize(Ti[k], N);
+            scalar_type norm(0);
+            while(norm < 1E-5) {
+              gmm::fill_random(Ti[k]);
+              Ti[k] -= gmm::vect_sp(Ti[k], nx) * nx;
+              for (size_type l = 0; l < k; ++l)
+                Ti[k] -= gmm::vect_sp(Ti[k], Ti[l]) * Ti[l];
+              norm = gmm::vect_norm2(Ti[k]);
+            }
+            Ti[k] /= norm;
+          }
+          
+          raytrace_pt_surf_cost_function_object pps(x0, x, ctx, coeff, ti, Ti,
+                                                    ref_conf);
+          
+          pps(a, res);
+          residual = gmm::vect_norm2(res);
+          scalar_type residual2(0), det(0);
+          size_type niter = 0;
+          while (residual > 2E-7) {
+          
+            size_type subiter(0);
+            for(;;) {
+              pps(a, hessa);
+              det = gmm::abs(gmm::lu_inverse(hessa, false));
+              if (det > 1E-15) break;
+              for (size_type i = 0; i < N-1; ++i)
+                a[i] += gmm::random() * 1E-7;
+              if (++subiter > 4) break;
+            }
+            if (det <= 1E-15) break;
+            // Computation of the descent direction
+            gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
+            
+            // Line search
+            scalar_type lambda(1);
+            for(;;) {
+              gmm::add(a, gmm::scaled(dir, lambda), b);
+              pps(b, res2);
+              residual2 = gmm::vect_norm2(res2);
+              if (residual2 < residual) break;
+              lambda /= scalar_type(2);
+              if (lambda < 1E-3) break;
+            }
+            residual = residual2;
+            gmm::copy(res2, res);
+            gmm::copy(b, a);
+            ++niter; if (niter > 50) break;
+          }
+          converged = (gmm::vect_norm2(res) < 2E-6);
+
+        } else { // Classical projection for y
+
+          proj_pt_surf_cost_function_object pps(x0, x, ctx, coeff, ti,
+                                                EPS, ref_conf);
+          
+          // Projection could be ameliorated by finding a starting point near
+          // x (with respect to the integration method, for instance).
+          
+          // A specific (Quasi) Newton algorithm for computing the projection
+          base_small_vector grada(N-1), dir(N-1), b(N-1);
+          gmm::clear(a);
+          base_matrix hessa(N-1, N-1);
+          scalar_type det(0);
+          
+          scalar_type dist = pps(a, grada);
+          size_type niter = 0;
+
+          while (gmm::vect_norm2(grada) > 2E-7) {
+            
+            size_type subiter(0);
+            for(;;) {
+              pps(a, hessa);
+              det = gmm::abs(gmm::lu_inverse(hessa, false));
+              if (det > 1E-15) break;
+              for (size_type i = 0; i < N-1; ++i)
+                a[i] += gmm::random() * 1E-7;
+              if (++subiter > 4) break;
+            }
+            if (det <= 1E-15) break;
+            // Computation of the descent direction
+            gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
+            
+            // Line search
+            scalar_type lambda(1);
+            for(;;) {
+              gmm::add(a, gmm::scaled(dir, lambda), b);
+              scalar_type dist2 = pps(b);
+              if (dist2 < dist) break;
+              gmm::add(a, gmm::scaled(dir, -lambda), b);
+              dist2 = pps(b);
+              if (dist2 < dist) break;
+              
+              lambda /= scalar_type(2);
+              if (lambda < 1E-3) break;
+            }
+            gmm::copy(b, a);
+            dist = pps(a, grada);
+            
+            ++niter; if (niter > 50) break;
+          }
+          
+          converged = (gmm::vect_norm2(grada) < 2E-6);
+          
+          if (!converged) { // Try with BFGS
+            gmm::iteration iter(2E-7, 0/* noisy*/, 100 /*maxiter*/);
+            gmm::clear(a);
+            gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
+            residual = gmm::abs(iter.get_res());
+            converged = (residual < 2E-5);
+          }
         }
-
+          
         bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-3);
-
+        
         if (is_in || !converged) {
           if (!ref_conf) {
             ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
@@ -861,12 +1003,12 @@ namespace getfem {
             y = ctx.xreal();
           }
         }
-
+        
         // CRITERION 2 : The contact pair is eliminated when bfgs
         //               do not converge.
         if (!converged) {
-          GMM_WARNING3("BFGS algorithm for projection did not converge for "
-                       "point " << y0 << " residual " << residual
+          GMM_WARNING3("Projection or raytrace algorithm did not converge for "
+                       "point " << x << " residual " << residual
                        << " projection computed " << y);
           continue;
         }
@@ -884,7 +1026,7 @@ namespace getfem {
         if (!is_in) continue;
 
         // CRITERION 4 : Apply the release distance
-        scalar_type signed_dist = gmm::vect_dist2(y, y0);
+        scalar_type signed_dist = gmm::vect_dist2(y, x);
         if (signed_dist > release_distance) continue;
 
         // compute the unit_normal and the signed distance.
@@ -899,7 +1041,7 @@ namespace getfem {
           n = n00;
         }
         // n /= gmm::vect_norm2(n); // Usefull only if the unit normal is kept
-        signed_dist *= gmm::sgn(gmm::vect_sp(y0 - y, n));
+        signed_dist *= gmm::sgn(gmm::vect_sp(x - y, n));
 
         // CRITERION 5 : comparison with rigid obstacles
         if (irigid_obstacle != size_type(-1) && signed_dist  > d0)
@@ -907,7 +1049,7 @@ namespace getfem {
 
         // CRITERION 6 : for self-contact only : apply a test on
         //               unit normals in reference configuration.
-        if (&m == &(mfu_of_boundary(iby0).linked_mesh())) {
+        if (&m == &(mfu_of_boundary(ibx).linked_mesh())) {
           
           base_small_vector diff = bpinfo.ref_point - ctx.xreal();
           scalar_type ref_dist = gmm::vect_norm2(diff);
@@ -917,7 +1059,7 @@ namespace getfem {
             continue;
         }
         
-        contact_pair ct(y0, bpinfo, ctx.xref(), y,  fi, signed_dist);
+        contact_pair ct(x, bpinfo, ctx.xref(), y,  fi, signed_dist);
         if (first_pair) {
           contact_pairs.push_back(ct);
           first_pair = false;
@@ -930,10 +1072,10 @@ namespace getfem {
 
       }
       if (first_pair && irigid_obstacle != size_type(-1)) {
-        contact_pair ct(y0, bpinfo, irigid_obstacle, d0);
+        contact_pair ct(x, bpinfo, irigid_obstacle, d0);
         
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-      gmm::copy(y0, pt_eval);
+      gmm::copy(x, pt_eval);
       size_type nit = 0;
       while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
         for (size_type k = 0; k < N; ++k) {

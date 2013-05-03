@@ -69,7 +69,7 @@ namespace gmm {
   }
 
 
-  template <typename T> T lu_inverse(const dense_matrix<T> &A_) {
+  template <typename T> T lu_inverse(const dense_matrix<T> &A_, bool doassert = true) {
     dense_matrix<T>& A = const_cast<dense_matrix<T> &>(A_);
     size_type N = mat_nrows(A);
     T det(1);
@@ -79,12 +79,14 @@ namespace gmm {
 	switch (N) {
 	  case 1 : {
 	    det = *p;
-	    GMM_ASSERT1(det!=T(0), "non invertible matrix");
+	    if (doassert) GMM_ASSERT1(det!=T(0), "non invertible matrix");
+            if (det == T(0)) break;
 	    *p = T(1) / det; 
 	  } break;
 	  case 2 : {
 	    det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
-	    GMM_ASSERT1(det!=T(0), "non invertible matrix");
+	    if (doassert) GMM_ASSERT1(det!=T(0), "non invertible matrix");
+            if (det == T(0)) break;
 	    std::swap(*p, *(p+3));
 	    *p++ /= det; *p++ /= -det; *p++ /= -det; *p++ /= det; 
 	  } break;

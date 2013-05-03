@@ -284,6 +284,7 @@ namespace getfem {
                           //     Gauss points for master.
                           // 2 = Use finite element nodes for both slave
                           //     and master
+    bool raytrace;        // Use raytrace instead of projection.
                           
     scalar_type release_distance;  // Limit distance beyond which the contact
     // will not be considered. CAUTION: should be comparable to the element
@@ -477,11 +478,11 @@ namespace getfem {
     multi_contact_frame(size_type NN, scalar_type r_dist,
                         int fem_nodes = 0, bool dela = true,
                         bool refc = false, bool selfc = true,
-                        scalar_type cut_a = 0.3);
+                        scalar_type cut_a = 0.3, bool rayt = false);
     multi_contact_frame(const model &md, size_type NN, scalar_type r_dist,
                         int fem_nodes = 0, bool dela = true,
                         bool refc = false, bool selfc = true,
-                        scalar_type cut_a = 0.3);
+                        scalar_type cut_a = 0.3, bool rayt = false);
 
     size_type add_obstacle(const std::string &obs);
 

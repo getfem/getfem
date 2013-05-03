@@ -36,16 +36,16 @@ A multi-contact frame object is initialized as follows::
   multi_contact_frame mcf(size_type N, scalar_type release_distance,
                           int fem_nodes_mode = 0, bool use_delaunay = true,
                           bool ref_conf = false, bool self_contact = true,
-                          scalar_type cut_angle = 0.3);
+                          scalar_type cut_angle = 0.3, bool raytrace = false);
 
   multi_contact_frame mcf(const model &md, size_type N,
                           scalar_type release_distance,
                           int fem_nodes_mode = 0, bool use_delaunay = true,
                           bool ref_conf = false, bool self_contact = true,
-                          scalar_type cut_angle = 0.3);
+                          scalar_type cut_angle = 0.3, bool raytrace = false);
 
   
-where `md` is a Getfem model. In this case, the multi contact frame object is linked to a model. `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement).  If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. The parameter `cut_angle` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection.
+where `md` is a Getfem model. In this case, the multi contact frame object is linked to a model. `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement).  If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. The parameter `cut_angle` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection. If `raytrace` is true, raytracing is used instead of projection.
 
 Once a multi-contact frame is build, one adds slave or master surfaces, or rigid obstacles. Note that rigid obstacles are defined by a level-set expression which is evaluated by the `MuParser <http://muparser.beltoforion.de/>`_ package. The methods of multi-contact frame object adding a contact boundary are::
 
@@ -120,12 +120,15 @@ Some details on the algorithm:
  
   - **Projection algorithm.** The projection of the slave point onto a
     master element face is done by a parametrization of the surface on the
-    reference element via the geometric transformation and the displasement
+    reference element via the geometric transformation and the displacement
     field. During the projection, no constraint is applied to remain inside
     the element face, which means that the element face is prolongated
     analytically. The projection is performed by minimizing the distance
     between the slave point and the projected one using the parametrization
-    and Newton's and/or BFGS algorithms.
+    and Newton's and/or BFGS algorithms. If `raytrace` is set to true, then
+    no projection is computed. Instead a ray tracing from the point x in
+    the direction of the unit normal vector at x to find y. This means
+    the reverse of the usual situation (x will be the projection of y).
 
 The list of criteria:
 
@@ -209,11 +212,11 @@ Considering only stationnary rigid obstacles and applying the principle of Alart
   \left\{\begin{array}{l}
   \mbox{Find } \varphi^h \in V^h \mbox{ such that } \\
   \displaystyle \delta J(\varphi^h)[\delta u^h] - \sum_{i \in I_{\text{def}}} \lambda_i \cdot (\delta u^h(X_i) - \delta u^h(Y_i)) - \sum_{i \in I_{\text{rig}}} \lambda_i \delta u^h(X_i) = 0 ~~~ \forall \delta u^h \in V^h, \\
-  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_x, {\mathscr F}}(\lambda_i + r\left(g_i n_x - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
-  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_x, {\mathscr F}}(\lambda_i + r\left(g_i n_x - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
+  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - \varphi^h(Y_i) - W_T(X_i)+W_T(Y_i)))\right)\right]= 0  ~~\forall i \in I_{\text{def}}, \\[1em]
+  \displaystyle \Frac{1}{r} \left[\lambda_i + P_{n_y, {\mathscr F}}(\lambda_i + r\left(g_i n_y - \alpha(\varphi^h(X_i) - W_T(X_i)))\right)\right]= 0  ~~\forall i \in I_{\text{rig}},
   \end{array}\right.
 
-where :math:`W_T, \alpha, P_{n_x, {\mathscr F}}` ... + tangent system
+where :math:`W_T, \alpha, P_{n_y, {\mathscr F}}` ... + tangent system
 
 
 

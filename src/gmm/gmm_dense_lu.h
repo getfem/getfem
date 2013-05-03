@@ -208,15 +208,15 @@ namespace gmm {
       return the determinant */
   template <typename DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
-  lu_inverse(const DenseMatrix& A_) {
+  lu_inverse(const DenseMatrix& A_, bool doassert = true) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
     std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
-    GMM_ASSERT1(!info, "Non invertible matrix, pivot = " << info);
-    lu_inverse(B, ipvt, A);
+    if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
+    if (!info) lu_inverse(B, ipvt, A);
     return lu_det(B, ipvt);
   }
 
