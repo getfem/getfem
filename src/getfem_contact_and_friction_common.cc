@@ -783,6 +783,18 @@ namespace getfem {
       // the release distance)
       size_type irigid_obstacle(-1);
       scalar_type d0 = 1E300, d1, d2;
+
+
+      base_small_vector nx = bpinfo.normals[0];
+      if (raytrace) {
+        if (bpinfo.normals.size() > 1) { // take the mean normal vector
+          for (size_type i = 1; i < bpinfo.normals.size(); ++i)
+            gmm::add(bpinfo.normals[i], nx);
+          scalar_type nnx = gmm::vect_norm2(nx);
+          GMM_ASSERT1(nnx != scalar_type(0), "Unvalid normal cone");
+          gmm::scale(nx, scalar_type(1)/nnx);
+        }
+      }
       
       if (self_contact || slx) {
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
@@ -867,16 +879,7 @@ namespace getfem {
 
         if (raytrace) { // Raytrace search for y by a Newton algorithm
           
-          base_small_vector res(N-1), res2(N-1), dir(N-1), b(N-1);
-
-          base_small_vector nx = bpinfo.normals[0];
-          if (bpinfo.normals.size() > 1) { // take the mean normal vector
-            for (size_type i = 1; i < bpinfo.normals.size(); ++i)
-              gmm::add(bpinfo.normals[i], nx);
-            scalar_type nnx = gmm::vect_norm2(nx);
-            GMM_ASSERT1(nnx != scalar_type(0), "Unvalid normal cone");
-            gmm::scale(nx, scalar_type(1)/nnx);
-          }  
+          base_small_vector res(N-1), res2(N-1), dir(N-1), b(N-1);  
 
           base_matrix hessa(N-1, N-1);
           gmm::clear(a);
@@ -1082,27 +1085,36 @@ namespace getfem {
         contact_pair ct(x, bpinfo, irigid_obstacle, d0);
         
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-      gmm::copy(x, pt_eval);
-      size_type nit = 0;
-      while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
-        for (size_type k = 0; k < N; ++k) {
-          pt_eval[k] += EPS;
-          d1 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-          n[k] = (d1 - d0) / EPS;
-          pt_eval[k] -= EPS;
+        gmm::copy(x, pt_eval);
+        size_type nit = 0;
+        scalar_type alpha(0);
+
+        while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
+          for (size_type k = 0; k < N; ++k) {
+            pt_eval[k] += EPS;
+            d1 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+            n[k] = (d1 - d0) / EPS;
+            pt_eval[k] -= EPS;
+          }
+
+          if (raytrace) {
+            alpha -= d0 / gmm::vect_sp(n, nx);
+            gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
+          } else {
+            gmm::add(gmm::scaled(n, -d0 / gmm::vect_norm2_sqr(n)), pt_eval);
+          }
+          // A simple line search could be added
+          d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
         }
         
-        gmm::add(gmm::scaled(n, -d0 / gmm::vect_norm2_sqr(n)), pt_eval);
-        // A simple line search could be added
-        d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-      }
-      GMM_ASSERT1(nit < 1000, "Projection on rigid obstacle did not converge");
+        GMM_ASSERT1(nit<1000, "Projection/raytrace on rigid obstacle failed");
+        ct.master_point.resize(N);
+        gmm::copy(pt_eval, ct.master_point);
 
-      ct.master_point.resize(N);
-      gmm::copy(pt_eval, ct.master_point);
-      
 #endif
-        contact_pairs.push_back(ct);
+        // CRITERION 4 for rigid bodies : Apply the release distance
+        if (gmm::vect_dist2(ct.master_point, x) <= release_distance)
+          contact_pairs.push_back(ct);
       }
     }
     

@@ -122,7 +122,7 @@ end;
 
 
 if (test_case < 3)
-  dist = 0.1;
+  dist = 0.2;
 else
   dist = 2;
 end
