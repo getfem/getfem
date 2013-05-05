@@ -2559,7 +2559,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-     /*@SET ind = ('add integral large sliding contact brick',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)
+     /*@SET ind = ('add integral large sliding contact brick with field extension',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)
        (still experimental brick)
        Add a large sliding contact with friction brick to the model.
        This brick is able to deal with auto-contact, contact between
@@ -2577,7 +2577,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
        boundaries and rigid obstacles. @*/
      sub_command
-       ("add integral large sliding contact brick", 6, 6, 0, 1,
+       ("add integral large sliding contact brick with field extension", 6, 6, 0, 1,
 
         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
         std::string varname_u = in.pop().to_string();
@@ -2586,7 +2586,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_fr = in.pop().to_string();
         size_type region = in.pop().to_integer();
         
-        size_type  ind = getfem::add_integral_large_sliding_contact_brick
+        size_type  ind = getfem::add_integral_large_sliding_contact_brick_field_extension
             (md->model(), gfi_mim->mesh_im(), varname_u, multname, dataname_r,
              dataname_fr, region);
         out.pop().from_integer(int(ind + config::base_index()));

@@ -79,7 +79,7 @@ namespace getfem {
     
     virtual base_matrix hess(const Xfem_func_context &c) {
       base_matrix m(2,2); 
-      m(0,0) = (1./::pow(sqrt(c.xreal[0]),3)) * (  ((-1./4.) - pow(eps,2)) *  cos( eps*log(c.xreal[0]) ) );
+      m(0,0) = (1./::pow(sqrt(c.xreal[0]),3.)) * (  ((-1./4.) - ::pow(eps,2.)) *  cos( eps*log(c.xreal[0]) ) );
       return m;
     }
   };
@@ -100,7 +100,7 @@ namespace getfem {
       
     virtual base_matrix hess(const Xfem_func_context &c) {
       base_matrix m(2,2); 
-      m(0,0) = (1./::pow(sqrt(c.xreal[0]),3)) * (  ((-1./4.) - pow(eps,2)) *  sin( eps*log(c.xreal[0]) ) );
+      m(0,0) = (1./::pow(sqrt(c.xreal[0]),3.)) * (  ((-1./4.) - ::pow(eps,2.)) *  sin( eps*log(c.xreal[0]) ) );
       return m;
     }
   };

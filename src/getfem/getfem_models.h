@@ -213,12 +213,17 @@ namespace getfem {
     struct term_description {
       bool is_matrix_term; // tangent matrix term or rhs term.
       bool is_symmetric;   // Term have to be symmetrized.
+      bool is_global;      // Specific global term for highly coupling bricks
       std::string var1, var2;
       term_description(const std::string &v)
-        : is_matrix_term(false), is_symmetric(false), var1(v) {}
+        : is_matrix_term(false), is_symmetric(false),
+          is_global(false), var1(v) {}
       term_description(const std::string &v1, const std::string &v2,
                        bool issym)
-        : is_matrix_term(true), is_symmetric(issym), var1(v1), var2(v2) {}
+        : is_matrix_term(true), is_symmetric(issym), is_global(false), 
+          var1(v1), var2(v2) {}
+      term_description(bool ism, bool issym)
+        : is_matrix_term(ism), is_symmetric(issym), is_global(true) {}
     };
 
     typedef std::vector<term_description> termlist;

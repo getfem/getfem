@@ -44,6 +44,26 @@ namespace getfem {
 
 
   /** Adds a large sliding contact with friction brick to the model.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It takes a variable of type multi_contact_frame wich describe
+      the contact situation (master and slave contact boundaries,
+      self-contact detection or not, and a few parameter).
+      For each slave boundary (and also master boundaries if self-contact
+      is asked) a multiplier variable should be defined.
+  */
+  size_type add_integral_large_sliding_contact_brick
+  (model &md, const mesh_im &mim, multi_contact_frame &mcf,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff);
+
+
+
+
+  // Old brick, to be adapted ...
+
+
+
+  /** Adds a large sliding contact with friction brick to the model.
       This brick is able to deal with auto-contact, contact between
       several deformable bodies and contact with rigid obstacles.
       The condition is applied on the variable `varname_u` on the
@@ -59,7 +79,7 @@ namespace getfem {
       `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
       boundaries and rigid obstacles.
   */
-  size_type add_integral_large_sliding_contact_brick
+  size_type add_integral_large_sliding_contact_brick_field_extension
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_r,
    const std::string &dataname_friction_coeff, size_type region);

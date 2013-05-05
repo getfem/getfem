@@ -108,7 +108,7 @@ gf_model_set(md, 'add initialized data', 'r', r);
 gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
 
-indb = gf_model_set(md, 'add integral large sliding contact brick', mim1, 'u1', 'lambda1', 'r', 'f', CONTACT_BOUNDARY1);
+indb = gf_model_set(md, 'add integral large sliding contact brick with field extension', mim1, 'u1', 'lambda1', 'r', 'f', CONTACT_BOUNDARY1);
 
 if (test_case == 1) 
   gf_model_set(md, 'add boundary to large sliding contact brick', indb, mim2, 'u2', 'lambda2', CONTACT_BOUNDARY2);

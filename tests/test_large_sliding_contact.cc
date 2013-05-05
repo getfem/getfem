@@ -33,6 +33,7 @@
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
 #include "getfem/getfem_contact_and_friction_common.h"
+#include "getfem/getfem_contact_and_friction_large_sliding.h"
 #include "getfem/getfem_model_solvers.h"
 #include "gmm/gmm.h"
 #include <fstream>
@@ -398,7 +399,7 @@ void contact_problem::solve(void) {
   // Contact brick.
   model.add_initialized_scalar_data("r", R);
   model.add_initialized_scalar_data("f", friction_coef);
-  size_type indb = add_integral_large_sliding_contact_brick
+  size_type indb = add_integral_large_sliding_contact_brick_field_extension
     (model, mim2, "u2", "lambda2", "r", "f", CONTACT_BOUNDARY2);
 
   if (two_bodies) 

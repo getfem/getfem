@@ -583,9 +583,12 @@ namespace getfem {
     // Initialization of vector and matrices.
     for (size_type j = 0; j < brick.tlist.size(); ++j) {
       const term_description &term = brick.tlist[j];
-      size_type nbd1 = variables[term.var1].size();
-      size_type nbd2 = term.is_matrix_term ?
-        variables[term.var2].size() : 0;
+      bool isg = term.is_global;
+      size_type nbgdof = is_complex() ?
+        gmm::vect_size(crhs) : gmm::vect_size(rrhs);
+      size_type nbd1 = isg ? nbgdof : variables[term.var1].size();
+      size_type nbd2 = isg ? nbgdof : (term.is_matrix_term ?
+                                      variables[term.var2].size() : 0);
       if (term.is_matrix_term &&
           (brick.pbr->is_linear() || (version | BUILD_MATRIX))) {
         if (version | BUILD_ON_DATA_CHANGE) {
@@ -937,7 +940,6 @@ namespace getfem {
   }
 
 
-
   void model::linear_brick_add_to_rhs(size_type ib, size_type ind_data,
                                       size_type n_iter) const {
     const brick_description &brick = bricks[ib];
@@ -947,26 +949,61 @@ namespace getfem {
 
       for (size_type j = 0; j < brick.tlist.size(); ++j) {
         const term_description &term = brick.tlist[j];
+        bool isg = term.is_global;
+        size_type nbgdof = nb_dof();
 
         size_type n_iter_1 = n_iter, n_iter_2 = n_iter;
-        if (n_iter == size_type(-1)) {
+        if (!isg && n_iter == size_type(-1)) {
           n_iter_1 = variables[term.var1].default_iter;
           if (term.is_matrix_term)
             n_iter_2 = variables[term.var2].default_iter;
         }
+        
+        
 
         if (term.is_matrix_term) {
-          if (cplx)
-            gmm::mult_add
-              (brick.cmatlist[j],
-               gmm::scaled(variables[term.var2].complex_value[n_iter_2],
-                           std::complex<scalar_type>(-1)),
-               brick.cveclist[ind_data][j]);
-          else
-            gmm::mult_add
-              (brick.rmatlist[j],
-               gmm::scaled(variables[term.var2].real_value[n_iter_2],
-                           scalar_type(-1)), brick.rveclist[ind_data][j]);
+          if (cplx) {
+            if (isg) {
+              model_complex_plain_vector V(nbgdof);
+              for (VAR_SET::iterator it = variables.begin();
+                   it != variables.end(); ++it) 
+                if (it->second.is_variable) {
+                  size_type n_iter_i = (n_iter == size_type(-1))
+                    ? it->second.default_iter : n_iter;
+                  gmm::copy(it->second.complex_value[n_iter_i],
+                            gmm::sub_vector(V, it->second.I));
+                }
+              gmm::mult_add
+                (brick.cmatlist[j],
+                 gmm::scaled(V,  std::complex<scalar_type>(-1)),
+                 brick.cveclist[ind_data][j]);
+            } else
+              gmm::mult_add
+                (brick.cmatlist[j],
+                 gmm::scaled(variables[term.var2].complex_value[n_iter_2],
+                             std::complex<scalar_type>(-1)),
+                 brick.cveclist[ind_data][j]);
+          }
+          else {
+            if (isg) {
+              model_real_plain_vector V(nbgdof);
+              for (VAR_SET::iterator it = variables.begin();
+                   it != variables.end(); ++it) 
+                if (it->second.is_variable) {
+                  size_type n_iter_i = (n_iter == size_type(-1))
+                    ? it->second.default_iter : n_iter;
+                  gmm::copy(it->second.real_value[n_iter_i],
+                            gmm::sub_vector(V, it->second.I));
+                }
+              gmm::mult_add
+                (brick.rmatlist[j], gmm::scaled(V,  scalar_type(-1)),
+                 brick.rveclist[ind_data][j]);
+            } else
+              gmm::mult_add
+                (brick.rmatlist[j],
+                 gmm::scaled(variables[term.var2].real_value[n_iter_2],
+                             scalar_type(-1)), brick.rveclist[ind_data][j]);
+          }
 
           if (term.is_symmetric && term.var1.compare(term.var2)) {
             if (cplx)
@@ -1051,8 +1088,8 @@ namespace getfem {
 
         pseudo_potential_ += pseudop * coeff0;
 
-        GMM_ASSERT1(!(brick.pdispatch),
-                    "Pseudo potential not supported by brick dispatcher, sorry");
+        GMM_ASSERT1(!(brick.pdispatch), "Pseudo potential not "
+                    "supported by brick dispatcher, sorry");
 
       }
 
@@ -1060,9 +1097,11 @@ namespace getfem {
 
       for (size_type j = 0; j < brick.tlist.size(); ++j) {
         term_description &term = brick.tlist[j];
-        gmm::sub_interval I1 = variables[term.var1].I;
-        gmm::sub_interval I2(0,0);
-        if (term.is_matrix_term) I2 = variables[term.var2].I;
+        bool isg = term.is_global;
+        size_type nbgdof = nb_dof();
+        gmm::sub_interval I1(0,nbgdof), I2(0,nbgdof);
+        if (!isg) I1 = variables[term.var1].I;
+        if (term.is_matrix_term && !isg) I2 = variables[term.var2].I;
 
         if (cplx) {
           if (term.is_matrix_term && (version & BUILD_MATRIX)) {
@@ -1084,7 +1123,15 @@ namespace getfem {
               gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
             if (term.is_matrix_term && brick.pbr->is_linear()
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
-              gmm::mult_add(brick.cmatlist[j],
+              if (isg) {
+                model_complex_plain_vector V(nbgdof);
+                from_variables(V);
+                gmm::mult_add(brick.cmatlist[j],
+                            gmm::scaled(V, std::complex<scalar_type>(-coeff0)),
+                            crhs);
+              }
+              else
+                gmm::mult_add(brick.cmatlist[j],
                             gmm::scaled(variables[term.var2].complex_value[0],
                                         std::complex<scalar_type>(-coeff0)),
                             gmm::sub_vector(crhs, I1));
@@ -1103,7 +1150,7 @@ namespace getfem {
                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
                             gmm::scaled(variables[term.var1].complex_value[0],
                                         std::complex<scalar_type>(-coeff0)),
-                               gmm::sub_vector(crhs, I2));
+                            gmm::sub_vector(crhs, I2));
                }
             }
           }
@@ -1127,7 +1174,15 @@ namespace getfem {
               gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
             if (term.is_matrix_term && brick.pbr->is_linear()
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
-              gmm::mult_add(brick.rmatlist[j],
+              if (isg) {
+                model_complex_plain_vector V(nbgdof);
+                from_variables(V);
+                gmm::mult_add(brick.rmatlist[j],
+                            gmm::scaled(V, std::complex<scalar_type>(-coeff0)),
+                            crhs);
+              }
+              else
+                gmm::mult_add(brick.rmatlist[j],
                             gmm::scaled(variables[term.var2].complex_value[0],
                                         std::complex<scalar_type>(-coeff0)),
                             gmm::sub_vector(crhs, I1));
@@ -1170,6 +1225,12 @@ namespace getfem {
               gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
             if (term.is_matrix_term && brick.pbr->is_linear()
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
+              if (isg) {
+                model_real_plain_vector V(nbgdof);
+                from_variables(V);
+                gmm::mult_add(brick.rmatlist[j],
+                              gmm::scaled(V, -coeff0), rrhs);
+              }
               gmm::mult_add(brick.rmatlist[j],
                             gmm::scaled(variables[term.var2].real_value[0],
                                         -coeff0),

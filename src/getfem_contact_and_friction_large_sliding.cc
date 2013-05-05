@@ -35,10 +35,150 @@
 
 namespace getfem {
 
+  //=========================================================================
+  //
+  //  Large sliding brick. Work in progress 
+  //
+  //=========================================================================
+
+  // For the moment, with raytrace detection and integral unsymmetric
+  // Alart-Curnier augmented Lagrangian
+
+#if 0
+
+
+  struct integral_large_sliding_contact_brick : public virtual_brick {
+
+    multi_contact_frame &mcf;
+    
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const;
+
+    integral_large_sliding_contact_brick(multi_contact_frame &mcff)
+      : mcf(mcff) {
+      set_flags("Integral large sliding contact brick",
+                false /* is linear*/, false /* is symmetric */,
+                false /* is coercive */, true /* is real */,
+                false /* is complex */);
+    }
+
+  };
+
+
+
+
+  void integral_large_sliding_contact_brick::asm_real_tangent_terms
+  (const model &md, size_type /* ib */, const model::varnamelist &vl,
+   const model::varnamelist &dl, const model::mimlist &/* mims */,
+   model::real_matlist &matl, model::real_veclist &vecl,
+   model::real_veclist &, size_type /* region */,
+   build_version version) const {
+
+    fem_precomp_pool fppool;
+    base_matrix G;
+    size_type N = md.mesh_fem_of_variable(vl[0]).linked_mesh().dim();
+    contact_frame cf(N);
+    build_contact_frame(md, cf);
+
+    size_type Nvar = vl.size(), Nu = cf.Urhs.size(), Nl = cf.Lrhs.size();
+    GMM_ASSERT1(Nvar == Nu+Nl, "Wrong size of variable list for integral "
+                "large sliding contact brick");
+    GMM_ASSERT1(matl.size() == Nvar*Nvar, "Wrong size of terms for "
+                "integral large sliding contact brick");
+
+    if (version & model::BUILD_MATRIX) {
+      for (size_type i = 0; i < Nvar; ++i)
+        for (size_type j = 0; j < Nvar; ++j) {
+          gmm::clear(matl[i*Nvar+j]);
+          if (i <  Nu && j <  Nu) cf.UU(i,j)       = &(matl[i*Nvar+j]);
+          if (i >= Nu && j <  Nu) cf.LU(i-Nu,j)    = &(matl[i*Nvar+j]);
+          if (i <  Nu && j >= Nu) cf.UL(i,j-Nu)    = &(matl[i*Nvar+j]);
+          if (i >= Nu && j >= Nu) cf.LL(i-Nu,j-Nu) = &(matl[i*Nvar+j]);
+        }
+    }
+    if (version & model::BUILD_RHS) {
+      for (size_type i = 0; i < vl.size(); ++i) {
+        if (i < Nu) cf.Urhs[i] = &(vecl[i*Nvar]);
+        else cf.Lrhs[i-Nu] = &(vecl[i*Nvar]);
+      }
+    }
+
+    // Data : r, [friction_coeff,]
+    GMM_ASSERT1(dl.size() == 2, "Wrong number of data for integral large "
+                "sliding contact brick");
+
+    const model_real_plain_vector &vr = md.real_variable(dl[0]);
+    GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+
+    const model_real_plain_vector &f_coeff = md.real_variable(dl[1]);
+    GMM_ASSERT1(gmm::vect_size(f_coeff) == 1,
+                "Friction coefficient should be a scalar");
+
+    // ...
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+  size_type add_integral_large_sliding_contact_brick
+  (model &md, const mesh_im &mim, multi_contact_frame &mcf,
+   const std::string &dataname_r, const std::string &dataname_friction_coeff) {
+
+    integral_large_sliding_contact_brick *pbr
+      = new integral_large_sliding_contact_brick(mcf);
+
+    model::termlist tl; // A unique global unsymmetric term
+    tl.push_back(model::term_description(true, false));
+
+    model::varnamelist dl(1, dataname_r);
+    dl.push_back(dataname_friction_coeff);
+
+    model::varnamelist vl(1, varname_u);
+    vl.push_back(multname);
+
+    bool selfcontact = mcf.is_self_contact();
+
+    for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
+      if (selfcontact || mcf.is_slave_boundary(i)) {
+        vl.push_back(mcf.varname_of_boundary(i));
+        vl.push_back(mcf.multname_of_boundary(i));
+      }
+
+    mcf.set_raytrace(true);
+    mcf.set_fem_nodes_mode(0);
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+#endif
+
+
+
+
+
+
+
 
   //=========================================================================
   //
-  //  Large sliding brick with field extension principle. To be adpated with
+  //  Large sliding brick with field extension principle. To be adapated with
   //  the new structure for contact pairs. 
   //
   //=========================================================================
@@ -982,7 +1122,7 @@ namespace getfem {
   // 3)- Large sliding contact brick
   //=========================================================================
 
-  struct integral_large_sliding_contact_brick : public virtual_brick {
+  struct integral_large_sliding_contact_brick_field_extension : public virtual_brick {
 
 
     struct contact_boundary {
@@ -1028,7 +1168,7 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const;
 
-    integral_large_sliding_contact_brick() {
+    integral_large_sliding_contact_brick_field_extension() {
       set_flags("Integral large sliding contact brick",
                 false /* is linear*/, false /* is symmetric */,
                 false /* is coercive */, true /* is real */,
@@ -1040,7 +1180,7 @@ namespace getfem {
 
 
 
-  void integral_large_sliding_contact_brick::asm_real_tangent_terms
+  void integral_large_sliding_contact_brick_field_extension::asm_real_tangent_terms
   (const model &md, size_type /* ib */, const model::varnamelist &vl,
    const model::varnamelist &dl, const model::mimlist &/* mims */,
    model::real_matlist &matl, model::real_veclist &vecl,
@@ -1132,13 +1272,13 @@ namespace getfem {
   // r ne peut pas être variable pour le moment.
   // dataname_friction_coeff ne peut pas être variable non plus ...
 
-  size_type add_integral_large_sliding_contact_brick
+  size_type add_integral_large_sliding_contact_brick_field_extension
   (model &md, const mesh_im &mim, const std::string &varname_u,
    const std::string &multname, const std::string &dataname_r,
    const std::string &dataname_friction_coeff, size_type region) {
 
-    integral_large_sliding_contact_brick *pbr
-      = new integral_large_sliding_contact_brick();
+    integral_large_sliding_contact_brick_field_extension *pbr
+      = new integral_large_sliding_contact_brick_field_extension();
 
     pbr->add_boundary(varname_u, multname, mim, region);
 
@@ -1165,8 +1305,8 @@ namespace getfem {
     dim_type N = md.mesh_fem_of_variable(varname_u).linked_mesh().dim();
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
-    integral_large_sliding_contact_brick *p
-      = dynamic_cast<integral_large_sliding_contact_brick *>
+    integral_large_sliding_contact_brick_field_extension *p
+      = dynamic_cast<integral_large_sliding_contact_brick_field_extension *>
       (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
     p->add_boundary(varname_u, multname, mim, region);
@@ -1199,8 +1339,8 @@ namespace getfem {
   (model &md, size_type indbrick, const std::string &obs) { // The velocity field should be added to an (optional) parameter ... (and optionaly represented by a rigid motion only ... the velocity should be modifiable ...
     pbrick pbr = md.brick_pointer(indbrick);
     md.touch_brick(indbrick);
-    integral_large_sliding_contact_brick *p
-      = dynamic_cast<integral_large_sliding_contact_brick *>
+    integral_large_sliding_contact_brick_field_extension *p
+      = dynamic_cast<integral_large_sliding_contact_brick_field_extension *>
       (const_cast<virtual_brick *>(pbr.get()));
     GMM_ASSERT1(p, "Wrong type of brick");
     p->add_obstacle(obs);

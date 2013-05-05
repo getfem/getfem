@@ -474,6 +474,11 @@ namespace getfem {
     { return contact_boundaries[n].varname; }
     const std::string &multname_of_boundary(size_type n) const
     { return contact_boundaries[n].multname; }
+    size_type nb_boundaries(void) const { return contact_boundaries.size(); }
+    bool is_self_contact(void) const { return self_contact; }
+    bool is_slave_boundary(size_type n) const { return slave_boundaries[n]; }
+    void set_raytrace(bool b) { raytrace = b; }
+    void set_fem_nodes_mode(int m) { fem_nodes_mode = m; }
 
     multi_contact_frame(size_type NN, scalar_type r_dist,
                         bool dela = true, bool selfc = true,
