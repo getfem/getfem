@@ -148,10 +148,9 @@ namespace getfem {
   }
 
   multi_contact_frame::multi_contact_frame(size_type NN, scalar_type r_dist,
-                                           int fem_nodes, bool dela,
-                                           bool refc, bool selfc,
+                                           bool dela, bool selfc,
                                            scalar_type cut_a,
-                                           bool rayt)
+                                           bool rayt, int fem_nodes, bool refc)
     : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela), 
       fem_nodes_mode(fem_nodes), raytrace(rayt), release_distance(r_dist),
       cut_angle(cut_a), EPS(1E-8), md(0), coordinates(N), pt_eval(N) {
@@ -165,10 +164,9 @@ namespace getfem {
 
   multi_contact_frame::multi_contact_frame(const model &mdd, size_type NN,
                                            scalar_type r_dist,
-                                           int fem_nodes, bool dela,
-                                           bool refc, bool selfc,
+                                           bool dela, bool selfc,
                                            scalar_type cut_a,
-                                           bool rayt)
+                                           bool rayt, int fem_nodes, bool refc)
     : N(NN), self_contact(selfc), ref_conf(refc),
       use_delaunay(dela), fem_nodes_mode(fem_nodes), raytrace(rayt),
       release_distance(r_dist), cut_angle(cut_a), EPS(1E-8), md(&mdd),
@@ -998,7 +996,7 @@ namespace getfem {
           }
         }
           
-        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-3);
+        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5);
         
         if (is_in || !converged) {
           if (!ref_conf) {
@@ -1009,8 +1007,8 @@ namespace getfem {
           }
         }
         
-        // CRITERION 2 : The contact pair is eliminated when bfgs
-        //               do not converge.
+        // CRITERION 2 : The contact pair is eliminated when
+        //               projection/raytrace do not converge.
         if (!converged) {
           GMM_WARNING3("Projection or raytrace algorithm did not converge for "
                        "point " << x << " residual " << residual

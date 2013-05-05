@@ -132,6 +132,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_model_solvers.h             	\
 	getfem/getfem_linearized_plates.h         	\
 	getfem/getfem_contact_and_friction_common.h	\
+	getfem/getfem_contact_and_friction_large_sliding.h \
 	getfem/getfem_contact_and_friction_nodal.h	\
 	getfem/getfem_contact_and_friction_integral.h	\
 	getfem/getfem_Coulomb_friction.h          	\
@@ -143,7 +144,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_continuation.h                    \
 	getfem/getfem_mesher.h                          \
 	getfem/getfem_convect.h                    	\
-	getfem/getfem_deformable_mesh.h                        \
+	getfem/getfem_deformable_mesh.h                 \
 	getfem/getfem_level_set_contact.h                   	
 
 SRC =                                      		\
@@ -207,6 +208,7 @@ SRC =                                      		\
 	getfem_contact_and_friction_common.cc		\
 	getfem_contact_and_friction_nodal.cc		\
 	getfem_contact_and_friction_integral.cc	        \
+	getfem_contact_and_friction_large_sliding.cc    \
 	getfem_plasticity.cc				\
 	getfem_deformable_mesh.cc			\
 	getfem_level_set_contact.cc

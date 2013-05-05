@@ -145,10 +145,10 @@ The list of criteria:
     This criterion allows to treat cases (B) and (K1).
 
   - **Criterion 2: the contact pair is eliminated when the search of the
-    projection point do not converge.**
-    When Newton's and BFGS algorithms used to compute the projection of the
-    slave point on the master element surface both fail to converge,
-    the pair is not considered. A warning is generated.
+    projection/raytrace point do not converge.**
+    When Newton's algorithms (and BFGS one for projection) used to compute the
+    projection/raytrace of the slave point on the master element surface
+    fails to converge, the pair is not considered. A warning is generated.
     
   - **Criterion 3 : the projected point should be inside the element.**
     The slave point is projected on the surface of the master element

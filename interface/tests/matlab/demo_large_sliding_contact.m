@@ -126,8 +126,8 @@ if (test_case < 3)
 else
   dist = 2;
 end
-% delaunay = dist + 2
-mcff=gf_multi_contact_frame(md, N, dist, 2, true, false, true, 0.2, true);
+% delaunay: after dist 
+mcff=gf_multi_contact_frame(md, N, dist, true, true, 0.2, true, 0, false);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1');
 if (test_case == 1) 
   gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2');

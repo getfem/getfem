@@ -37,7 +37,7 @@ void gf_multi_contact_frame(getfemint::mexargs_in& in, getfemint::mexargs_out& o
   getfemint_multi_contact_frame *pgs = NULL;  
   if (check_cmd("MultiContactFrame", "MultiContactFrame", in, out, 3, 9, 0, 1)) {
     
-    /*@INIT S = ('.init', @tmodel md, @int N, @scalar release_distance[, @int fem_nodes_mode[, @bool delaunay[, @bool ref_conf[, @bool self_contact[, @scalar cut_angle[, @bool use_raytrace]]]]]])
+    /*@INIT S = ('.init', @tmodel md, @int N, @scalar release_distance[, @bool delaunay[, @bool self_contact[, @scalar cut_angle[, @bool use_raytrace[, @int fem_nodes_mode[, @bool ref_conf]]]]]])
     Build a new multi contact frame object linked to the model `md`.
     with `N` the space dimension (typically, 2 or 3), `release_distance` is
     the limit distance beyond which two points are not considered in
@@ -72,23 +72,23 @@ void gf_multi_contact_frame(getfemint::mexargs_in& in, getfemint::mexargs_out& o
     getfemint_model *md = in.pop().to_getfemint_model();
     int N = in.pop().to_integer(1, 4);
     scalar_type rd = in.pop().to_scalar();
-    int fem_node_mode = 0;
-    if (in.remaining()) fem_node_mode = in.pop().to_integer(0, 2);
     bool delaunay = true;
     if (in.remaining()) delaunay = in.pop().to_bool();
-    bool ref_conf = false;
-    if (in.remaining()) ref_conf = in.pop().to_bool();
     bool self_contact = true;
     if (in.remaining()) self_contact = in.pop().to_bool();
     scalar_type cut_angle = 0.2;
     if (in.remaining()) cut_angle = in.pop().to_scalar();
     bool raytrace = false;
     if (in.remaining()) raytrace = in.pop().to_bool();
+    int fem_node_mode = 0;
+    if (in.remaining()) fem_node_mode = in.pop().to_integer(0, 2);
+    bool ref_conf = false;
+    if (in.remaining()) ref_conf = in.pop().to_bool();
     
     getfem::multi_contact_frame *ps
-      = new getfem::multi_contact_frame(md->model(), N, rd, fem_node_mode,
-                                        delaunay, ref_conf, self_contact,
-                                        cut_angle, raytrace);
+      = new getfem::multi_contact_frame(md->model(), size_type(N), rd,
+                                        delaunay, self_contact, cut_angle,
+                                        raytrace, fem_node_mode, ref_conf);
 
        pgs = getfemint_multi_contact_frame::get_from(ps);
        workspace().set_dependance(pgs, md);

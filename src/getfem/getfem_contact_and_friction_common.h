@@ -268,7 +268,7 @@ namespace getfem {
       contact_boundary(void) {}
       contact_boundary(size_type r, const mesh_fem &mf,
                        const mesh_im &mi, size_type i, const std::string &vn,
-                       const std::string &mn)
+                      const std::string &mn)
         : region(r), mfu(&mf), mim(&mi), varname(vn), multname(mn), ind_U(i) {}
     };
 
@@ -476,13 +476,13 @@ namespace getfem {
     { return contact_boundaries[n].multname; }
 
     multi_contact_frame(size_type NN, scalar_type r_dist,
-                        int fem_nodes = 0, bool dela = true,
-                        bool refc = false, bool selfc = true,
-                        scalar_type cut_a = 0.3, bool rayt = false);
+                        bool dela = true, bool selfc = true,
+                        scalar_type cut_a = 0.3, bool rayt = false,
+                        int fem_nodes = 0, bool refc = false);
     multi_contact_frame(const model &md, size_type NN, scalar_type r_dist,
-                        int fem_nodes = 0, bool dela = true,
-                        bool refc = false, bool selfc = true,
-                        scalar_type cut_a = 0.3, bool rayt = false);
+                        bool dela = true, bool selfc = true,
+                        scalar_type cut_a = 0.3, bool rayt = false,
+                        int fem_nodes = 0, bool refc = false);
 
     size_type add_obstacle(const std::string &obs);
 

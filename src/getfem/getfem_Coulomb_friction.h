@@ -44,6 +44,7 @@
 
 #include "getfem_contact_and_friction_nodal.h"
 #include "getfem_contact_and_friction_integral.h"
+#include "getfem_contact_and_friction_large_sliding.h"
 
 namespace getfem {
 

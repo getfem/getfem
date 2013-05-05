@@ -778,47 +778,6 @@ namespace getfem {
 
 
 
-
-  /** Adds a large sliding contact with friction brick to the model.
-      This brick is able to deal with auto-contact, contact between
-      several deformable bodies and contact with rigid obstacles.
-      The condition is applied on the variable `varname_u` on the
-      boundary corresponding to `region`. `dataname_r` is the augmentation
-      parameter of the augmented Lagrangian. `dataname_friction_coeff`
-      is the friction coefficient. `mim` is an integration method on the
-      boundary. `varname_u` is the variable on which the contact condition 
-      will be prescribed (should be of displacement type). `multname` is 
-      a multiplier defined on the boundary which will represent the contact
-      force. If no additional boundary or rigid
-      obstacle is added, only auto-contact will be detected. Use
-      `add_boundary_to_large_sliding_contact_brick` and
-      `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
-      boundaries and rigid obstacles.
-  */
-  size_type add_integral_large_sliding_contact_brick
-  (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &multname, const std::string &dataname_r,
-   const std::string &dataname_friction_coeff, size_type region);
-
-
-  /** Adds a contact boundary to an existing large sliding contact brick.
-      `indbrick` is the brick index.
-  */
-  void add_boundary_to_large_sliding_contact_brick
-  (model &md, size_type indbrick, const mesh_im &mim,
-   const std::string &varname_u, const std::string &multname,
-   size_type region);
-
-  /** Adds a rigid obstacle to an existing large sliding contact brick.
-      `indbrick` is the brick index, `obs` is the expression of a
-      function which should be closed to a signed distance to the obstacle.
-  */
-  void add_rigid_obstacle_to_large_sliding_contact_brick
-  (model &md, size_type indbrick, const std::string &obs);
-
-
-
-
   /** Adds a contact condition with or without Coulomb friction on the variable
       `varname_u` and the mesh boundary `region`. The contact condition
       is prescribed with Nitsche's method. The rigid obstacle should
