@@ -97,19 +97,28 @@ namespace getfem {
                 "Friction coefficient should be a scalar"); // TODO : vector of size 2 or 3 for extended friction law
 
     mcf.compute_contact_pairs();
+    fem_precomp_pool fppool;
+    base_matrix G;
+    size_type N = mcf.dim();
 
     // Iterations on the contact pairs
     for (size_type i = 0; i < mcf.nb_contact_pairs(); ++i) {
       const multi_contact_frame::contact_pair &cp = mcf.get_contact_pair(i);
 
-      // TODO: Deal also with the rigid case ...
+      // TODO: Deal also with the rigid obstacles ...
 
+      // Extract information on slave and master points and fems
+      //  (could be done by an intermediate structure)
       size_type ibx = cp.slave_ind_boundary;
       size_type cvx = cp.slave_ind_element;
       size_type fx = cp.slave_ind_face;
       const mesh_fem *mf_ux=&(mcf.mfu_of_boundary(ibx));
+      pfem pf_ux = mf_ux->fem_of_element(cvx);
       const mesh_fem *mf_lx=&(mcf.mflambda_of_boundary(ibx));
+      pfem pf_lx = mf_lx->fem_of_element(cvx);
       const mesh_im &mim = mcf.mim_of_boundary(ibx);
+      pintegration_method pim = mim.int_method_of_element(cvx);
+      size_type ii = cp.slave_ind_pt;
       const mesh &mx = mim.linked_mesh();
       bgeot::pgeometric_trans pgtx = mx.trans_of_convex(cvx);
 
@@ -117,26 +126,43 @@ namespace getfem {
       size_type cvy = cp.master_face_info.ind_element;
       size_type fy = cp.master_face_info.ind_face;
       const mesh_fem *mf_uy=&(mcf.mfu_of_boundary(iby));
+      pfem pf_uy = mf_uy->fem_of_element(cvy);
       const mesh_fem *mf_ly=&(mcf.mflambda_of_boundary(iby));
+      pfem pf_ly = mf_ly->fem_of_element(cvy);
       const mesh &my = mf_uy->linked_mesh();
       bgeot::pgeometric_trans pgty = my.trans_of_convex(cvy);
+      const base_node &y_ref = cp.master_point_ref;
+      
+      // Fem interpolation context objects
+      bgeot::vectors_to_base_matrix(G, mx.points_of_convex(cvx));
+      pfem_precomp pfp_ux
+        = fppool(pf_ux,&(pim->approx_method()->integration_points()));
+      pfem_precomp pfp_lx
+        = fppool(pf_lx,&(pim->approx_method()->integration_points()));
+      fem_interpolation_context ctx_ux(pgtx, pfp_ux, ii, G, cvx, fx);
+      fem_interpolation_context ctx_lx(pgtx, pfp_lx, ii, G, cvx, fx);
+
+      bgeot::vectors_to_base_matrix(G, my.points_of_convex(cvy));
+      fem_interpolation_context ctx_uy(pgty, pf_uy, y_ref, G, cvy, fy);
+      fem_interpolation_context ctx_ly(pgty, pf_ly, y_ref, G, cvy, fy);
+      
+      // Base tensors
+      base_tensor base_lx, base_ux, base_ly, base_uy;
+      ctx_lx.base_value(base_lx);
+      ctx_ux.base_value(base_ux);
+      ctx_ly.base_value(base_ly);
+      ctx_uy.base_value(base_uy);
+      base_tensor grad_ux, grad_uy;
+      ctx_ux.grad_base_value(grad_ux);
+      ctx_uy.grad_base_value(grad_uy);
       
 
-      // fem_interpolation_context ctx_ux(pgt,pfp,size_type(-1),G,cv,v.f());
-    
 
-      // fem_interpolation_context ctx_uy(pgt, pf_s, x0, G, cv, i_f);
-
-      // 1- Four ctx for slave and master boundaries
-      // 2- Collect the necessary terms: base and grad values, tensorisation
+      // 2- Collect the necessary terms: base and grad values, vectorisation
       // 3- Description of terms
       // 4- Add to rigidity matrix and rhs
 
 
-
-//     fem_precomp_pool fppool;
-//     base_matrix G;
-//     size_type N = md.mesh_fem_of_variable(vl[0]).linked_mesh().dim();
 
 //     if (version & model::BUILD_MATRIX) {
 //       ...

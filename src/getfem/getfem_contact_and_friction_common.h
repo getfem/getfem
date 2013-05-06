@@ -352,13 +352,14 @@ namespace getfem {
       size_type ind_boundary;  // Boundary number
       size_type ind_element;   // Element number
       short_type ind_face;     // Face number in element
-      size_type ind_dof;       // Dof number for fem_nodes_mode only
+      size_type ind_pt;        // Dof number for fem_nodes_mode or point number
+                               // of integration method 
       normal_cone normals;     // Set of outward unit normal vectors
       boundary_point(void) {}
       boundary_point(const base_node &rp, size_type ib, size_type ie,
                      short_type i_f, size_type id, const base_small_vector &n)
         : ref_point(rp), ind_boundary(ib), ind_element(ie), ind_face(i_f),
-          ind_dof(id), normals(n) {}
+          ind_pt(id), normals(n) {}
     };
       
     std::vector<base_node> boundary_points;
@@ -412,7 +413,8 @@ namespace getfem {
       size_type slave_ind_boundary;  // Boundary number
       size_type slave_ind_element;   // Element number
       short_type slave_ind_face;     // Face number in element
-      size_type slave_ind_dof;       // Dof number for fem_nodes_mode only
+      size_type slave_ind_pt;        // Dof number for fem_nodes_mode
+                                     // or integration point number otherwise
 
       base_node master_point_ref;    // The master point on ref element
       base_node master_point;        // The transformed master point
@@ -428,14 +430,14 @@ namespace getfem {
                    const face_info &mfi, scalar_type sd)
         : slave_point(spt), slave_ind_boundary(bp.ind_boundary),
           slave_ind_element(bp.ind_element), slave_ind_face(bp.ind_face),
-          slave_ind_dof(bp.ind_dof), master_point_ref(mptr),
+          slave_ind_pt(bp.ind_pt), master_point_ref(mptr),
           master_point(mpt), master_face_info(mfi), signed_dist(sd),
           irigid_obstacle(-1) {}
       contact_pair(const base_node &spt, const boundary_point &bp,
                    size_type ir, scalar_type sd)
         : slave_point(spt), slave_ind_boundary(bp.ind_boundary),
           slave_ind_element(bp.ind_element), slave_ind_face(bp.ind_face),
-          slave_ind_dof(bp.ind_dof), signed_dist(sd),
+          slave_ind_pt(bp.ind_pt), signed_dist(sd),
           irigid_obstacle(ir) {}
       
     };

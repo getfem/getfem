@@ -37,7 +37,7 @@ function check_asm(iverbose,idebug)
   clear z;
   zzz=rand(200,22);
   zz=zz+zz;
-  pack;
+  
   mf=gf_mesh_fem(m,1);
   mim=gf_mesh_im(m,gf_integ('IM_EXACT_SIMPLEX(2)'));
   asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf)');
@@ -61,17 +61,29 @@ function check_asm(iverbose,idebug)
   gfassert('size(X)==[4 4 4 4]');
   X=gf_asm('volumic','M(#1,#2)+=comp(Grad(#1).vBase(#2))(:,z,:,i)',mim,mf,mf3);
 
-  pack;
   gfassert('size(X)==[4 27]');
   gfassert('abs(sum(sum(abs(X)))-10.5) < 8e-15');
   asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf3)');
   X=gf_asm('volumic','V(qdim(#1),#1)+=comp(vBase(#1)){2,1}',mim,mf3);
-  gfassert('nnz(X)==27');
+  for i=1:size(X,1)
+    for  j=1:size(X,2)
+       if (abs(X(i,j)) < 1E-10)
+           X(i,j) = 0;
+       end
+    end
+  end
+  gfassert('nnz(X)==15');
   xnnz=find(X);
-  zz=[1 5 9 10 14 18 19 23 27 28 32 36 37 41 45 46 50 54 55 59 63 64 68 72 ...
-      73 77 81];
+  zz=[10 14 18 28 32 36 37 41 45 55 59 63 64 68 72];
   gfassert('xnnz(:)==zz(:)');
   X2=gf_asm('volumic','V(3,#1)+=comp(vBase(#1)){2,1}',mim,mf3);
+  for i=1:size(X2,1)
+    for  j=1:size(X2,2)
+       if (abs(X2(i,j)) < 1E-10)
+           X2(i,j) = 0;
+       end
+    end
+  end
   gfassert('X2==X');
   X=gf_asm('volumic','V(#1,mdim(#1),mdim(#1))+=comp(Hess(#1))',mim,mf);
   gfassert('X==0');

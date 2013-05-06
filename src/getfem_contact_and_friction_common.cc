@@ -337,24 +337,25 @@ namespace getfem {
           fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv,v.f());
           
           for (short_type ip = 0; ip < nbptf; ++ip) {
-            size_type ind(0), inddof(0);
+            size_type ind(0), indpt(0);
             if (on_fem_nodes) {
-              inddof= mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
+              indpt= mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
               ind = pf_s->node_convex(cv).structure()
                 ->ind_points_of_face(v.f())[ip];
             }
-            else
-              ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
+            else {
+              indpt = ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
+            }
             ctx.set_ii(ind);
             
-            if (!(on_fem_nodes && dof_already_interpolated[inddof])) {
+            if (!(on_fem_nodes && dof_already_interpolated[indpt])) {
               if (!ref_conf) {
                 pf_s->interpolation(ctx, coeff, val, dim_type(N));
                 val += ctx.xreal();
               } else {
                 val = ctx.xreal();
               }
-              if (on_fem_nodes)  dof_ind[inddof] = boundary_points.size();
+              if (on_fem_nodes)  dof_ind[indpt] = boundary_points.size();
               
             }
             
@@ -371,15 +372,15 @@ namespace getfem {
             }
             n /= gmm::vect_norm2(n);
             
-            if (on_fem_nodes && dof_already_interpolated[inddof]) {
-              boundary_points_info[dof_ind[inddof]].normals.add_normal(n);
+            if (on_fem_nodes && dof_already_interpolated[indpt]) {
+              boundary_points_info[dof_ind[indpt]].normals.add_normal(n);
             } else {
               boundary_points.push_back(val);
               boundary_points_info.push_back(boundary_point(ctx.xreal(), i, cv,
-                                                            v.f(), inddof, n));
+                                                            v.f(), indpt, n));
             }
             
-            if (on_fem_nodes)  dof_already_interpolated.add(inddof);
+            if (on_fem_nodes)  dof_already_interpolated.add(indpt);
           }
         }
       } 
@@ -441,8 +442,8 @@ namespace getfem {
                       && (( &(mf1.linked_mesh()) != &(mf2.linked_mesh()))
                           || (pt_info1->ind_element != pt_info2->ind_element)))
                   || ((fem_nodes_mode == 2)
-                      && !(are_dof_linked(ib1, pt_info1->ind_dof,
-                                          ib2, pt_info2->ind_dof)))
+                      && !(are_dof_linked(ib1, pt_info1->ind_pt,
+                                          ib2, pt_info2->ind_pt)))
                   )
               ) {
             
@@ -450,7 +451,7 @@ namespace getfem {
             
             if ((sl2 && fem_nodes_mode) || (!sl2 && fem_nodes_mode == 2)) {
               const mesh::ind_cv_ct &ic2
-                = mf2.convex_to_basic_dof(pt_info2->ind_dof);
+                = mf2.convex_to_basic_dof(pt_info2->ind_pt);
               for (size_type k = 0; k < ic2.size(); ++k) {
                 mesh_region::face_bitset fbs
                   = mf2.linked_mesh().region(ir2).faces_of_convex(ic2[k]);
@@ -468,7 +469,7 @@ namespace getfem {
             if (self_contact && !sl1 && !sl2) {
               if ((sl2 && fem_nodes_mode) || (!sl2 && fem_nodes_mode==2)) {
                 const mesh::ind_cv_ct &ic1
-                  = mf1.convex_to_basic_dof(pt_info1->ind_dof);
+                  = mf1.convex_to_basic_dof(pt_info1->ind_pt);
                 for (size_type k = 0; k < ic1.size(); ++k) {
                   mesh_region::face_bitset fbs
                     = mf1.linked_mesh().region(ir1).faces_of_convex(ic1[k]);
@@ -632,7 +633,7 @@ namespace getfem {
                  && (( &(mf1.linked_mesh()) != &(mf2.linked_mesh()))
                      || (pt_info->ind_element != ibx.ind_element)))
                 || ((fem_nodes_mode == 2)
-                    && !(is_dof_linked(ib1, pt_info->ind_dof,
+                    && !(is_dof_linked(ib1, pt_info->ind_pt,
                                        ibx.ind_boundary, ibx.ind_element)))
                 )
             ) {
