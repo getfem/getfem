@@ -259,17 +259,18 @@ namespace getfem {
     struct contact_boundary {
       size_type region;            // Boundary number
       const getfem::mesh_fem *mfu; // F.e.m. for the displacement.
+      const getfem::mesh_fem *mflambda; // F.e.m. for the displacement.
       const getfem::mesh_im *mim;  // Integration method for the boundary.
-      std::string varname;         // Name of displacement variable when
-                                   // linked to a model.
       std::string multname;        // Name of the optional contact stress
                                    // multiplier when linked to a model.
       size_type ind_U;             // Index of displacement.
+      size_type ind_lambda;        // Index of multiplier (if any).
       contact_boundary(void) {}
-      contact_boundary(size_type r, const mesh_fem &mf,
-                       const mesh_im &mi, size_type i, const std::string &vn,
-                      const std::string &mn)
-        : region(r), mfu(&mf), mim(&mi), varname(vn), multname(mn), ind_U(i) {}
+      contact_boundary(size_type r, const mesh_fem *mf,
+                       const mesh_im &mi, size_type i, const mesh_fem *mfl,
+                       size_type j = size_type(-1))
+        : region(r), mfu(mf), mflambda(mfl), mim(&mi), ind_U(i),
+          ind_lambda(j) {}
     };
 
 
@@ -298,7 +299,11 @@ namespace getfem {
 
     typedef model_real_plain_vector VECTOR;
     std::vector<const VECTOR *> Us;  // Displacement vectors
+    std::vector<std::string> Unames; // Displacement vectors names. 
     std::vector<VECTOR> ext_Us;      // Unreduced displacement vectors
+    std::vector<const VECTOR *> lambdas;  // Displacement vectors
+    std::vector<std::string> lambdanames; // Displacement vectors names. 
+    std::vector<VECTOR> ext_lambdas;      // Unreduced displacement vectors
 
     dal::bit_vector slave_boundaries;
     std::vector<contact_boundary> contact_boundaries;
@@ -360,7 +365,8 @@ namespace getfem {
     std::vector<boundary_point> boundary_points_info;   
 
 
-    size_type add_U(const model_real_plain_vector &U);
+    size_type add_U(const model_real_plain_vector &U, const std::string &name);
+    size_type add_lambda(const model_real_plain_vector &lambda, const std::string &name);
 
     void extend_vectors(void);
 
@@ -380,6 +386,7 @@ namespace getfem {
 
     bool is_dof_linked(size_type ib1, size_type idof1,
                        size_type ib2, size_type cv);
+  public:
 
     struct face_info {
       size_type ind_boundary;
@@ -389,6 +396,8 @@ namespace getfem {
       face_info(size_type ib, size_type ie, short_type iff)
         : ind_boundary(ib), ind_element(ie), ind_face(iff) {}
     };
+    
+  protected:
 
     std::vector<std::vector<face_info> > potential_pairs;
 
@@ -464,21 +473,37 @@ namespace getfem {
 
     const getfem::mesh_fem &mfu_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mfu); }
+    const getfem::mesh_fem &mflambda_of_boundary(size_type n) const
+    { return *(contact_boundaries[n].mflambda); }
     const getfem::mesh_im  &mim_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mim); }
+    size_type nb_variables(void) const { return Us.size(); }
+    size_type nb_multipliers(void) const { return lambdas.size(); }
+    const std::string &varname(size_type i) const { return Unames[i]; }
+    const std::string &multname(size_type i) const { return lambdanames[i]; }
     const model_real_plain_vector &disp_of_boundary(size_type n) const
     { return ext_Us[contact_boundaries[n].ind_U]; }
     size_type region_of_boundary(size_type n) const
     { return contact_boundaries[n].region; }
     const std::string &varname_of_boundary(size_type n) const
-    { return contact_boundaries[n].varname; }
-    const std::string &multname_of_boundary(size_type n) const
-    { return contact_boundaries[n].multname; }
+    { return Unames[contact_boundaries[n].ind_U]; }
+    size_type ind_varname_of_boundary(size_type n) const
+    { return contact_boundaries[n].ind_U; }
+    const std::string &multname_of_boundary(size_type n) const {
+      static const std::string vname;
+      size_type ind = contact_boundaries[n].ind_lambda;
+      return (ind == size_type(-1)) ? vname : lambdanames[ind];
+    }
+    size_type ind_multname_of_boundary(size_type n) const
+    { return contact_boundaries[n].ind_lambda; }
     size_type nb_boundaries(void) const { return contact_boundaries.size(); }
     bool is_self_contact(void) const { return self_contact; }
     bool is_slave_boundary(size_type n) const { return slave_boundaries[n]; }
     void set_raytrace(bool b) { raytrace = b; }
     void set_fem_nodes_mode(int m) { fem_nodes_mode = m; }
+    size_type nb_contact_pairs(void) const { return contact_pairs.size(); }
+    const contact_pair &get_contact_pair(size_type i)
+    { return contact_pairs[i]; }
 
     multi_contact_frame(size_type NN, scalar_type r_dist,
                         bool dela = true, bool selfc = true,
@@ -492,9 +517,11 @@ namespace getfem {
     size_type add_obstacle(const std::string &obs);
 
     size_type add_slave_boundary(const getfem::mesh_im &mim,
-                                 const getfem::mesh_fem &mfu,
-                                 const model_real_plain_vector &U,
+                                 const getfem::mesh_fem *mfu,
+                                 const model_real_plain_vector *U,
                                  size_type reg,
+                                 const getfem::mesh_fem *mflambda,
+                                 const model_real_plain_vector *lambda,   
                                  const std::string &varname = std::string(),
                                  const std::string &multname = std::string());
 
@@ -504,9 +531,11 @@ namespace getfem {
     
 
     size_type add_master_boundary(const getfem::mesh_im &mim,
-                                  const getfem::mesh_fem &mfu,
-                                  const model_real_plain_vector &U,
+                                  const getfem::mesh_fem *mfu,
+                                  const model_real_plain_vector *U,
                                   size_type reg,
+                                  const getfem::mesh_fem *mflambda,
+                                  const model_real_plain_vector *lambda,   
                                   const std::string &varname = std::string(),
                                   const std::string &multname = std::string());
 

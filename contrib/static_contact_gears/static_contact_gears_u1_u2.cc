@@ -24,6 +24,7 @@
 #include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
 #include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
+#include "getfem/getfem_contact_and_friction_large_sliding.h"
 #include "gmm/gmm.h"
 
 using std::endl; using std::cout; using std::cerr;
@@ -297,7 +298,7 @@ bool elastostatic_contact_problem::solve() {
     else { // large sliding is for the moment always frictionless
       md.add_fem_variable("mult2", mf_mult2);
       md.add_initialized_scalar_data("f_coeff", frict_coeff);
-      size_type indb = getfem::add_integral_large_sliding_contact_brick
+      size_type indb = getfem::add_integral_large_sliding_contact_brick_field_extension
         (md, mim1, "u1", "mult1", "r", "f_coeff", CONTACT_BOUNDARY_1);
       getfem::add_boundary_to_large_sliding_contact_brick
         (md, indb, mim2, "u2", "mult2", CONTACT_BOUNDARY_2);

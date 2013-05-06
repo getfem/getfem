@@ -33,16 +33,28 @@ namespace getfem {
   //
   //=========================================================================
 
-  size_type multi_contact_frame::add_U(const model_real_plain_vector &U) {
+  size_type multi_contact_frame::add_U(const model_real_plain_vector &U, 
+                                       const std::string &name) {
     size_type i = 0;
     for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
     Us.push_back(&U);
+    Unames.push_back(name);
     ext_Us.resize(Us.size());
     return i;
   }
   
+  size_type multi_contact_frame::add_lambda
+  (const model_real_plain_vector &lambda, const std::string &name) {
+    size_type i = 0;
+    for (; i < lambdas.size(); ++i) if (lambdas[i] == &lambda) return i;
+    lambdas.push_back(&lambda);
+    lambdanames.push_back(name);
+    ext_lambdas.resize(lambdas.size());
+    return i;
+  }
+  
   void multi_contact_frame::extend_vectors(void) {
-    dal::bit_vector iU;
+    dal::bit_vector iU, ilambda;
     for (size_type i = 0; i < contact_boundaries.size(); ++i) {
       size_type ind_U = contact_boundaries[i].ind_U;
       if (!(iU[ind_U])) {
@@ -50,6 +62,13 @@ namespace getfem {
         gmm::resize(ext_Us[ind_U], mf.nb_basic_dof());
         mf.extend_vector(*(Us[ind_U]), ext_Us[ind_U]);
         iU.add(ind_U);
+      }
+      size_type ind_lambda = contact_boundaries[i].ind_lambda;
+      if (ind_lambda != size_type(-1) && !(ilambda[ind_lambda])) {
+        const mesh_fem &mf = *(contact_boundaries[i].mflambda);
+        gmm::resize(ext_lambdas[ind_lambda], mf.nb_basic_dof());
+        mf.extend_vector(*(lambdas[ind_lambda]), ext_lambdas[ind_lambda]);
+        ilambda.add(ind_lambda);
       }
     }
   }
@@ -197,53 +216,76 @@ namespace getfem {
     return ind;
   }
 
-  size_type multi_contact_frame::add_slave_boundary
-  (const mesh_im &mim, const mesh_fem &mfu,
-   const model_real_plain_vector &U, size_type reg, const std::string &varname,
-   const std::string &multname) {
-    GMM_ASSERT1(mfu.linked_mesh().dim() == N,
-                "Mesh dimension is " << mfu.linked_mesh().dim()
-                << "should be " << N << ".");
-    GMM_ASSERT1(&(mfu.linked_mesh()) == &(mim.linked_mesh()),
-                "Integration and finite element are not on the same mesh !");
-    contact_boundary cb(reg, mfu, mim, add_U(U), varname, multname);
-    size_type ind = contact_boundaries.size();
-    contact_boundaries.push_back(cb);
-    slave_boundaries.add(ind);
-    return ind;
-  }
 
-  size_type multi_contact_frame::add_slave_boundary
-  (const mesh_im &mim, size_type reg, const std::string &varname,
-   const std::string &multname) {
-    GMM_ASSERT1(md, "This multi contact frame object is not linked "
-                "to a model");
-    return add_slave_boundary(mim, md->mesh_fem_of_variable(varname),
-                 md->real_variable(varname), reg, varname, multname);
-  }
 
   size_type multi_contact_frame::add_master_boundary
-  (const mesh_im &mim, const mesh_fem &mfu,
-   const model_real_plain_vector &U, size_type reg, const std::string &varname,
-   const std::string &multname) {
-    GMM_ASSERT1(mfu.linked_mesh().dim() == N,
-                "Mesh dimension is " << mfu.linked_mesh().dim()
+  (const mesh_im &mim, const mesh_fem *mfu,
+   const model_real_plain_vector *U, size_type reg,
+   const mesh_fem *mflambda, const model_real_plain_vector *lambda,    
+   const std::string &vvarname,
+   const std::string &mmultname) {
+    GMM_ASSERT1(mfu->linked_mesh().dim() == N,
+                "Mesh dimension is " << mfu->linked_mesh().dim()
                 << "should be " << N << ".");
-    GMM_ASSERT1(&(mfu.linked_mesh()) == &(mim.linked_mesh()),
+    GMM_ASSERT1(&(mfu->linked_mesh()) == &(mim.linked_mesh()),
                 "Integration and finite element are not on the same mesh !");
-    contact_boundary cb(reg, mfu, mim, add_U(U), varname, multname);
+    size_type j = size_type(-1);
+    if (mflambda) {
+      j =  add_lambda(*lambda, mmultname);
+      GMM_ASSERT1(&(mflambda->linked_mesh()) == &(mim.linked_mesh()),
+                  "Integration and finite element are not on the same mesh !");
+    }
+    contact_boundary cb(reg, mfu, mim, add_U(*U, vvarname), mflambda, j);
     contact_boundaries.push_back(cb);
     return size_type(contact_boundaries.size() - 1);
   }
 
+  size_type multi_contact_frame::add_slave_boundary
+  (const mesh_im &mim, const mesh_fem *mfu,
+   const model_real_plain_vector *U, size_type reg, 
+   const mesh_fem *mflambda, const model_real_plain_vector *lambda, 
+   const std::string &vvarname,
+   const std::string &mmultname) {
+    size_type ind
+      = add_master_boundary(mim, mfu, U, reg, mflambda, lambda,
+                            vvarname, mmultname);
+    slave_boundaries.add(ind);
+    return ind;
+  }
+
+
   size_type multi_contact_frame::add_master_boundary
-  (const mesh_im &mim, size_type reg, const std::string &varname,
-   const std::string &multname) {
+  (const mesh_im &mim, size_type reg, const std::string &vvarname,
+   const std::string &mmultname) {
     GMM_ASSERT1(md, "This multi contact frame object is not linked "
                 "to a model");
-    return add_master_boundary(mim, md->mesh_fem_of_variable(varname),
-                    md->real_variable(varname), reg, varname, multname);
+    const mesh_fem *mfl(0);
+    const model_real_plain_vector *l(0);
+    if (mmultname.size()) {
+      mfl = &(md->mesh_fem_of_variable(mmultname));
+      l = &(md->real_variable(mmultname));
+    }
+    return add_master_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
+                               &(md->real_variable(vvarname)), reg, mfl, l,
+                               vvarname, mmultname);
   }
+
+  size_type multi_contact_frame::add_slave_boundary
+  (const mesh_im &mim, size_type reg, const std::string &vvarname,
+   const std::string &mmultname) {
+    GMM_ASSERT1(md, "This multi contact frame object is not linked "
+                "to a model");
+    const mesh_fem *mfl(0);
+    const model_real_plain_vector *l(0);
+    if (mmultname.size()) {
+      mfl = &(md->mesh_fem_of_variable(mmultname));
+      l = &(md->real_variable(mmultname));
+    }
+    return add_slave_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
+                              &(md->real_variable(vvarname)), reg, mfl, l,
+                              vvarname, mmultname);
+  }
+
   
   void multi_contact_frame::compute_boundary_points(bool slave_only) {
     fem_precomp_pool fppool;
@@ -297,7 +339,7 @@ namespace getfem {
           for (short_type ip = 0; ip < nbptf; ++ip) {
             size_type ind(0), inddof(0);
             if (on_fem_nodes) {
-              inddof = mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
+              inddof= mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
               ind = pf_s->node_convex(cv).structure()
                 ->ind_points_of_face(v.f())[ip];
             }

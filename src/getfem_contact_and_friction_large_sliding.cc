@@ -44,8 +44,6 @@ namespace getfem {
   // For the moment, with raytrace detection and integral unsymmetric
   // Alart-Curnier augmented Lagrangian
 
-#if 0
-
 
   struct integral_large_sliding_contact_brick : public virtual_brick {
 
@@ -82,63 +80,81 @@ namespace getfem {
    model::real_veclist &, size_type /* region */,
    build_version version) const {
 
-    fem_precomp_pool fppool;
-    base_matrix G;
-    size_type N = md.mesh_fem_of_variable(vl[0]).linked_mesh().dim();
-    contact_frame cf(N);
-    build_contact_frame(md, cf);
-
-    size_type Nvar = vl.size(), Nu = cf.Urhs.size(), Nl = cf.Lrhs.size();
-    GMM_ASSERT1(Nvar == Nu+Nl, "Wrong size of variable list for integral "
-                "large sliding contact brick");
-    GMM_ASSERT1(matl.size() == Nvar*Nvar, "Wrong size of terms for "
-                "integral large sliding contact brick");
-
-    if (version & model::BUILD_MATRIX) {
-      for (size_type i = 0; i < Nvar; ++i)
-        for (size_type j = 0; j < Nvar; ++j) {
-          gmm::clear(matl[i*Nvar+j]);
-          if (i <  Nu && j <  Nu) cf.UU(i,j)       = &(matl[i*Nvar+j]);
-          if (i >= Nu && j <  Nu) cf.LU(i-Nu,j)    = &(matl[i*Nvar+j]);
-          if (i <  Nu && j >= Nu) cf.UL(i,j-Nu)    = &(matl[i*Nvar+j]);
-          if (i >= Nu && j >= Nu) cf.LL(i-Nu,j-Nu) = &(matl[i*Nvar+j]);
-        }
-    }
-    if (version & model::BUILD_RHS) {
-      for (size_type i = 0; i < vl.size(); ++i) {
-        if (i < Nu) cf.Urhs[i] = &(vecl[i*Nvar]);
-        else cf.Lrhs[i-Nu] = &(vecl[i*Nvar]);
-      }
-    }
-
-    // Data : r, [friction_coeff,]
+    // Data : r, friction_coeff.
     GMM_ASSERT1(dl.size() == 2, "Wrong number of data for integral large "
                 "sliding contact brick");
+
+    GMM_ASSERT1(vl.size() == mcf.nb_variables() + mcf.nb_multipliers(),
+                "For the moment, it is not allowed to add boundaries to "
+                "the multi contact frame object after the model bric has "
+                "been added.");
 
     const model_real_plain_vector &vr = md.real_variable(dl[0]);
     GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
 
     const model_real_plain_vector &f_coeff = md.real_variable(dl[1]);
     GMM_ASSERT1(gmm::vect_size(f_coeff) == 1,
-                "Friction coefficient should be a scalar");
+                "Friction coefficient should be a scalar"); // TODO : vector of size 2 or 3 for extended friction law
 
-    // ...
+    mcf.compute_contact_pairs();
+
+    // Iterations on the contact pairs
+    for (size_type i = 0; i < mcf.nb_contact_pairs(); ++i) {
+      const multi_contact_frame::contact_pair &cp = mcf.get_contact_pair(i);
+
+      // TODO: Deal also with the rigid case ...
+
+      size_type ibx = cp.slave_ind_boundary;
+      size_type cvx = cp.slave_ind_element;
+      size_type fx = cp.slave_ind_face;
+      const mesh_fem *mf_ux=&(mcf.mfu_of_boundary(ibx));
+      const mesh_fem *mf_lx=&(mcf.mflambda_of_boundary(ibx));
+      const mesh_im &mim = mcf.mim_of_boundary(ibx);
+      const mesh &mx = mim.linked_mesh();
+      bgeot::pgeometric_trans pgtx = mx.trans_of_convex(cvx);
+
+      size_type iby = cp.master_face_info.ind_boundary;
+      size_type cvy = cp.master_face_info.ind_element;
+      size_type fy = cp.master_face_info.ind_face;
+      const mesh_fem *mf_uy=&(mcf.mfu_of_boundary(iby));
+      const mesh_fem *mf_ly=&(mcf.mflambda_of_boundary(iby));
+      const mesh &my = mf_uy->linked_mesh();
+      bgeot::pgeometric_trans pgty = my.trans_of_convex(cvy);
+      
+
+      // fem_interpolation_context ctx_ux(pgt,pfp,size_type(-1),G,cv,v.f());
+    
+
+      // fem_interpolation_context ctx_uy(pgt, pf_s, x0, G, cv, i_f);
+
+      // 1- Four ctx for slave and master boundaries
+      // 2- Collect the necessary terms: base and grad values, tensorisation
+      // 3- Description of terms
+      // 4- Add to rigidity matrix and rhs
+
+
+
+//     fem_precomp_pool fppool;
+//     base_matrix G;
+//     size_type N = md.mesh_fem_of_variable(vl[0]).linked_mesh().dim();
+
+//     if (version & model::BUILD_MATRIX) {
+//       ...
+//     }
+//     if (version & model::BUILD_RHS) {
+//       ...
+//     }
+
+
+    }
+
 
   }
 
 
 
-
-
-
-
-
-
-
-
-
   size_type add_integral_large_sliding_contact_brick
-  (model &md, const mesh_im &mim, multi_contact_frame &mcf,
+  (model &md, multi_contact_frame &mcf,
    const std::string &dataname_r, const std::string &dataname_friction_coeff) {
 
     integral_large_sliding_contact_brick *pbr
@@ -150,29 +166,33 @@ namespace getfem {
     model::varnamelist dl(1, dataname_r);
     dl.push_back(dataname_friction_coeff);
 
-    model::varnamelist vl(1, varname_u);
-    vl.push_back(multname);
+    model::varnamelist vl;
 
     bool selfcontact = mcf.is_self_contact();
 
-    for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
-      if (selfcontact || mcf.is_slave_boundary(i)) {
-        vl.push_back(mcf.varname_of_boundary(i));
-        vl.push_back(mcf.multname_of_boundary(i));
+    dal::bit_vector uvar, mvar;
+    for (size_type i = 0; i < mcf.nb_boundaries(); ++i) {
+      size_type ind_u = mcf.ind_varname_of_boundary(i);
+      if (!(uvar.is_in(ind_u))) {
+        vl.push_back(mcf.varname(ind_u));
+        uvar.add(ind_u);
       }
+      size_type ind_lambda = mcf.ind_multname_of_boundary(i);
 
+      if (selfcontact || mcf.is_slave_boundary(i))
+        GMM_ASSERT1(ind_lambda != size_type(-1), "For this brick, a "
+                    "multiplier should be associated to each slave boundary");
+      if (ind_lambda != size_type(-1) && !(mvar.is_in(ind_lambda))) {
+        vl.push_back(mcf.multname(ind_lambda));
+        mvar.add(ind_u);
+      }
+    }
+    
     mcf.set_raytrace(true);
     mcf.set_fem_nodes_mode(0);
 
-    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), size_type(-1));
   }
-
-#endif
-
-
-
-
-
 
 
 

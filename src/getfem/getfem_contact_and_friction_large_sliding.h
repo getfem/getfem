@@ -53,7 +53,7 @@ namespace getfem {
       is asked) a multiplier variable should be defined.
   */
   size_type add_integral_large_sliding_contact_brick
-  (model &md, const mesh_im &mim, multi_contact_frame &mcf,
+  (model &md, multi_contact_frame &mcf,
    const std::string &dataname_r, const std::string &dataname_friction_coeff);
 
 
