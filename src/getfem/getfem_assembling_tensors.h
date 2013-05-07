@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2003-2012 Julien Pommier
+ Copyright (C) 2003-2013 Julien Pommier
  
  This file is a part of GETFEM++
  
@@ -262,8 +262,9 @@ namespace getfem {
   };
 
   template <typename MAT, typename ROW, typename COL>
-  void asmrankoneupdate(MAT &m, const ROW &row, const COL &col,
+  void asmrankoneupdate(const MAT &m_, const ROW &row, const COL &col,
 			scalar_type r) {
+    MAT &m = const_cast<MAT &>(m_);
     typename gmm::linalg_traits<ROW>::const_iterator itr = row.begin();
     for (; itr != row.end(); ++itr) {
       typename gmm::linalg_traits<COL>::const_iterator itc = col.begin();
@@ -273,13 +274,15 @@ namespace getfem {
   }
   
   template <typename MAT, typename ROW>
-  void asmrankoneupdate(MAT &m, const ROW &row, size_type j, scalar_type r) {
+  void asmrankoneupdate(const MAT &m_, const ROW &row, size_type j, scalar_type r) {
+    MAT &m = const_cast<MAT &>(m_);
     typename gmm::linalg_traits<ROW>::const_iterator itr = row.begin();
     for (; itr != row.end(); ++itr) m(itr.index(), j) += (*itr) * r;
   }
 
   template <typename MAT, typename COL>
-  void asmrankoneupdate(MAT &m, size_type j, const COL &col, scalar_type r) {
+  void asmrankoneupdate(const MAT &m_, size_type j, const COL &col, scalar_type r) {
+    MAT &m = const_cast<MAT &>(m_);
     typename gmm::linalg_traits<COL>::const_iterator itc = col.begin();
     for (; itc != col.end(); ++itc) m(j, itc.index()) += (*itc) * r;
   }

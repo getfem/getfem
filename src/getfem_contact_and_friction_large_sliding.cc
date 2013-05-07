@@ -35,6 +35,64 @@
 
 namespace getfem {
 
+
+  //=========================================================================
+  // Some basic assembly functions
+  //=========================================================================
+
+
+  template <typename MAT1, typename MAT2>
+  void mat_elem_assembly(const MAT1 &M_, const gmm::sub_interval &I1,
+                         const gmm::sub_interval &I2,
+                         const MAT2 &Melem,
+                         const mesh_fem &mf1, size_type cv1,
+                         const mesh_fem &mf2, size_type cv2) {
+    MAT1 &M = const_cast<MAT1 &>(M_);
+    typedef typename gmm::linalg_traits<MAT1>::value_type T;
+    T val;
+
+    mesh_fem::ind_dof_ct cvdof1 = mf1.ind_basic_dof_of_element(cv1);
+    mesh_fem::ind_dof_ct cvdof2 = mf2.ind_basic_dof_of_element(cv2);
+
+    GMM_ASSERT1(cvdof1.size() == gmm::mat_nrows(Melem)
+                && cvdof2.size() == gmm::mat_ncols(Melem),
+                "Dimensions mismatch");
+
+    if (mf1.is_reduced()) {
+      if (mf2.is_reduced()) {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (gmm::sub_matrix(M, I1, I2),
+                 gmm::mat_row(mf1.extension_matrix(), cvdof1[i]),
+                 gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+      } else {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (gmm::sub_matrix(M, I1, I2),
+                 gmm::mat_row(mf1.extension_matrix(), cvdof1[i]),
+                 cvdof2[j], val);
+      }
+    } else {
+      if (mf2.is_reduced()) {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (gmm::sub_matrix(M, I1, I2), cvdof1[i],
+                 gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+      } else {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              M(cvdof1[i]+I1.first(), cvdof2[j]+I2.first()) += val;
+      }
+    }
+  }
+
   //=========================================================================
   //
   //  Large sliding brick. Work in progress 
@@ -70,7 +128,37 @@ namespace getfem {
 
   };
 
+  static void vectorize_base_tensor(const base_tensor &t, base_matrix &vt,
+                             size_type ndof, size_type qdim, size_type N) {
+    gmm::resize(vt, ndof*N/qdim, N);
+    GMM_ASSERT1(qdim == N || qdim == 1, "mixed intrinsic vector and "
+                  "tensorised fem is not supported");
+    if (qdim == 1) {
+      gmm::clear(vt);
+      base_tensor::const_iterator it = t.begin();
+      for (size_type i = 0; i < ndof; ++i, ++it)
+        for (size_type j = 0; j < N; ++j) vt(i*N+j, j) = *it;
+    } else if (qdim == N) {
+      gmm::copy(t.as_vector(), vt.as_vector());
+    }
+  }
 
+  static void vectorize_grad_base_tensor(const base_tensor &t, base_tensor &vt,
+                                         size_type ndof, size_type qdim,
+                                         size_type N) {
+    vt.adjust_sizes(bgeot::multi_index(ndof, N, N));
+    GMM_ASSERT1(qdim == N || qdim == 1, "mixed intrinsic vector and "
+                  "tensorised fem is not supported");
+    if (qdim == 1) {
+      gmm::clear(vt.as_vector());
+      base_tensor::const_iterator it = t.begin();
+      for (size_type k = 0; k < N; ++k) 
+        for (size_type i = 0; i < ndof; ++i, ++it)
+          for (size_type j = 0; j < N; ++j) vt(i*N+j, j, k) = *it;
+    } else if (qdim == N) {
+      gmm::copy(t.as_vector(), vt.as_vector());
+    }
+  }
 
 
   void integral_large_sliding_contact_brick::asm_real_tangent_terms
@@ -96,81 +184,151 @@ namespace getfem {
     GMM_ASSERT1(gmm::vect_size(f_coeff) == 1,
                 "Friction coefficient should be a scalar"); // TODO : vector of size 2 or 3 for extended friction law
 
+    GMM_ASSERT1(matl.size() == 1,
+                "Large sliding contact brick should have only one term");
+    model_real_sparse_matrix &M = matl[0]; gmm::clear(M);
+    model_real_plain_vector &V = vecl[0]; gmm::clear(V);
+    
+
     mcf.compute_contact_pairs();
     fem_precomp_pool fppool;
-    base_matrix G;
+    base_matrix G, Melem;
     size_type N = mcf.dim();
+
+    base_tensor base_lx, base_ux, base_uy; // , base_ly;
+    base_tensor grad_ux, grad_uy;
+    base_matrix vbase_lx, vbase_ux, vbase_uy;  // , vbase_ly;
+    base_tensor vgrad_ux, vgrad_uy;
+    
+    // TODO : il faut penser à stabilizer les multiplicateurs orphelins
 
     // Iterations on the contact pairs
     for (size_type i = 0; i < mcf.nb_contact_pairs(); ++i) {
       const multi_contact_frame::contact_pair &cp = mcf.get_contact_pair(i);
 
-      // TODO: Deal also with the rigid obstacles ...
-
       // Extract information on slave and master points and fems
-      //  (could be done by an intermediate structure)
+      // Could be done by a structure, on demand ...
+      const base_node &x = cp.slave_point;
+      size_type irigid = cp.irigid_obstacle;
+      bool isrigid = (irigid != size_type(-1));
       size_type ibx = cp.slave_ind_boundary;
+      const std::string &name_ux = mcf.varname_of_boundary(ibx);
+      const std::string &name_lx = mcf.multname_of_boundary(ibx);
       size_type cvx = cp.slave_ind_element;
       size_type fx = cp.slave_ind_face;
-      const mesh_fem *mf_ux=&(mcf.mfu_of_boundary(ibx));
+      const mesh_fem *mf_ux = &(mcf.mfu_of_boundary(ibx));
+      const gmm::sub_interval &I_ux = md.interval_of_variable(name_ux);
       pfem pf_ux = mf_ux->fem_of_element(cvx);
-      const mesh_fem *mf_lx=&(mcf.mflambda_of_boundary(ibx));
+      size_type ndof_ux = pf_ux->nb_dof(cvx);
+      size_type qdim_ux = pf_ux->target_dim();
+      const mesh_fem *mf_lx = &(mcf.mflambda_of_boundary(ibx));
+      const gmm::sub_interval &I_lx = md.interval_of_variable(name_lx);
       pfem pf_lx = mf_lx->fem_of_element(cvx);
+      size_type ndof_lx = pf_lx->nb_dof(cvx);
+      size_type qdim_lx = pf_lx->target_dim();
       const mesh_im &mim = mcf.mim_of_boundary(ibx);
       pintegration_method pim = mim.int_method_of_element(cvx);
       size_type ii = cp.slave_ind_pt;
+      scalar_type weight = pim->approx_method()->coeff(ii);
       const mesh &mx = mim.linked_mesh();
       bgeot::pgeometric_trans pgtx = mx.trans_of_convex(cvx);
 
-      size_type iby = cp.master_face_info.ind_boundary;
-      size_type cvy = cp.master_face_info.ind_element;
-      size_type fy = cp.master_face_info.ind_face;
-      const mesh_fem *mf_uy=&(mcf.mfu_of_boundary(iby));
-      pfem pf_uy = mf_uy->fem_of_element(cvy);
-      const mesh_fem *mf_ly=&(mcf.mflambda_of_boundary(iby));
-      pfem pf_ly = mf_ly->fem_of_element(cvy);
-      const mesh &my = mf_uy->linked_mesh();
-      bgeot::pgeometric_trans pgty = my.trans_of_convex(cvy);
+      const base_node &y = isrigid ? x : cp.master_point;
+      size_type iby = isrigid ? 0 : cp.master_face_info.ind_boundary;
+      const std::string &name_uy
+        = isrigid ? name_ux : mcf.varname_of_boundary(iby);
+      // const std::string &name_ly
+      //   = isrigid ? name_ux : mcf.multname_of_boundary(iby);
+      const gmm::sub_interval &I_uy
+        = isrigid ? I_ux : md.interval_of_variable(name_uy);
+      // const gmm::sub_interval &I_ly
+      //   = isrigid ? I_lx : md.interval_of_variable(name_ly);
+      const mesh_fem *mf_uy = isrigid ? mf_ux : &(mcf.mfu_of_boundary(iby));
+      const mesh &my = isrigid ? mx : mf_uy->linked_mesh();
+      size_type cvy(0), fy(0), ndof_uy(0), qdim_uy(0);
+      pfem pf_uy(0);
+      bgeot::pgeometric_trans pgty(0);
+      if (!isrigid) {
+        cvy = cp.master_face_info.ind_element;
+        fy = cp.master_face_info.ind_face;
+        pf_uy = mf_uy->fem_of_element(cvy);
+        ndof_uy = pf_uy->nb_dof(cvy);
+        qdim_uy = pf_uy->target_dim();
+        // const mesh_fem *mf_ly = &(mcf.mflambda_of_boundary(iby));
+        // pfem pf_ly = mf_ly->fem_of_element(cvy);
+        // size_type ndof_ly = pf_ly->nb_dof(cvy);
+        // size_type qdim_ly = pf_ly->target_dim();
+        pgty = my.trans_of_convex(cvy);
+      }
       const base_node &y_ref = cp.master_point_ref;
+      scalar_type g = cp.signed_dist;
       
       // Fem interpolation context objects
       bgeot::vectors_to_base_matrix(G, mx.points_of_convex(cvx));
       pfem_precomp pfp_ux
-        = fppool(pf_ux,&(pim->approx_method()->integration_points()));
+        = fppool(pf_ux, &(pim->approx_method()->integration_points()));
       pfem_precomp pfp_lx
-        = fppool(pf_lx,&(pim->approx_method()->integration_points()));
+        = fppool(pf_lx, &(pim->approx_method()->integration_points()));
       fem_interpolation_context ctx_ux(pgtx, pfp_ux, ii, G, cvx, fx);
       fem_interpolation_context ctx_lx(pgtx, pfp_lx, ii, G, cvx, fx);
 
-      bgeot::vectors_to_base_matrix(G, my.points_of_convex(cvy));
-      fem_interpolation_context ctx_uy(pgty, pf_uy, y_ref, G, cvy, fy);
-      fem_interpolation_context ctx_ly(pgty, pf_ly, y_ref, G, cvy, fy);
+      fem_interpolation_context ctx_uy;
+      // fem_interpolation_context ctx_ly;
+      if (!isrigid) {
+        bgeot::vectors_to_base_matrix(G, my.points_of_convex(cvy));
+        ctx_uy = fem_interpolation_context(pgty, pf_uy, y_ref, G, cvy, fy);
+        // ctx_ly = fem_interpolation_context(pgty, pf_ly, y_ref, G, cvy, fy);
+      }
       
       // Base tensors
-      base_tensor base_lx, base_ux, base_ly, base_uy;
       ctx_lx.base_value(base_lx);
       ctx_ux.base_value(base_ux);
-      ctx_ly.base_value(base_ly);
-      ctx_uy.base_value(base_uy);
-      base_tensor grad_ux, grad_uy;
+      // ctx_ly.base_value(base_ly);
+      if (!isrigid) ctx_uy.base_value(base_uy);
       ctx_ux.grad_base_value(grad_ux);
-      ctx_uy.grad_base_value(grad_uy);
+      if (!isrigid) ctx_uy.grad_base_value(grad_uy);
+
+      // Vectorisation of tensor (to facilitate the treatment)      
+      vectorize_base_tensor(base_lx, vbase_lx, ndof_lx, qdim_lx, N);
+      vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
+      // vectorize_base_tensor(base_ly, vbase_ly, ndof_ly, qdim_ly, N);
+      if (!isrigid)
+        vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
+      vectorize_grad_base_tensor(grad_ux, vgrad_ux, ndof_ux, qdim_ux, N);
+      if (!isrigid)
+        vectorize_grad_base_tensor(grad_uy, vgrad_uy, ndof_uy, qdim_uy, N);
+      ndof_lx = ndof_lx*N/qdim_lx;
+      ndof_ux = ndof_ux*N/qdim_ux;
+      // ndof_ly = ndof_ly*N/qdim_ly;
+      if (!isrigid) ndof_uy = ndof_uy*N/qdim_uy;
       
+      if (version & model::BUILD_MATRIX) {
+        
+        // Term  \delta\lambda(X) . \delta v(X)
+        gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
+        gmm::mult(vbase_ux, gmm::transposed(vbase_lx), Melem);
+        gmm::scale(Melem, weight);
+        mat_elem_assembly(M, I_ux, I_lx, Melem, *mf_ux, cvx, *mf_lx, cvx);
 
+        if (!isrigid) {
+          // Term  -\delta\lambda(X) . \delta v(Y)
+          gmm::resize(Melem, ndof_uy, ndof_lx); gmm::clear(Melem);
+          gmm::mult(vbase_uy, gmm::transposed(vbase_lx), Melem);
+          gmm::scale(Melem, weight);
+          mat_elem_assembly(M, I_uy, I_lx, Melem, *mf_uy, cvy, *mf_lx, cvx);
+        }
 
-      // 2- Collect the necessary terms: base and grad values, vectorisation
-      // 3- Description of terms
-      // 4- Add to rigidity matrix and rhs
+        // Term \lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
+        // ...
 
+        // Il faut:
+        // Les normales (peuvent être stockées), les gradients de transformation, la valeur de lambda(X)  ... et ne pas se tromper  on a les ctx, il manque les coeff et c'et bon 
+        
+      }
 
-
-//     if (version & model::BUILD_MATRIX) {
-//       ...
-//     }
-//     if (version & model::BUILD_RHS) {
-//       ...
-//     }
-
+      if (version & model::BUILD_RHS) {
+        // ...
+      }
 
     }
 
@@ -240,10 +398,8 @@ namespace getfem {
     MAT1 &M = const_cast<MAT1 &>(M_);
     typedef typename gmm::linalg_traits<MAT1>::value_type T;
     T val;
-    std::vector<size_type> cvdof1(mf1.ind_basic_dof_of_element(cv1).begin(),
-                                  mf1.ind_basic_dof_of_element(cv1).end());
-    std::vector<size_type> cvdof2(mf2.ind_basic_dof_of_element(cv2).begin(),
-                                  mf2.ind_basic_dof_of_element(cv2).end());
+    mesh_fem::ind_dof_ct cvdof1 = mf1.ind_basic_dof_of_element(cv1);
+    mesh_fem::ind_dof_ct cvdof2 = mf2.ind_basic_dof_of_element(cv2);
 
     GMM_ASSERT1(cvdof1.size() == gmm::mat_nrows(Melem)
                 && cvdof2.size() == gmm::mat_ncols(Melem),

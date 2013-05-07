@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2000-2012 Yves Renard
+ Copyright (C) 2000-2013 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -66,10 +66,14 @@ namespace bgeot {
     
     multi_index(size_t n) : std::vector<short_type>(n)
     { std::fill(begin(), end(), short_type(0)); }
-    
     multi_index(size_type i, size_type j)
       : std::vector<short_type>(2) {
       (*this)[0] = short_type(i); (*this)[1] = short_type(j); 
+    }
+    multi_index(size_type i, size_type j, size_type k)
+      : std::vector<short_type>(3) {
+      (*this)[0] = short_type(i); (*this)[1] = short_type(j);
+      (*this)[2] = short_type(k); 
     } 
     multi_index(size_type i, size_type j, size_type k, size_type l)
       : std::vector<short_type>(4) {
