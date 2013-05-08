@@ -23,7 +23,7 @@
 #include "getfem/bgeot_rtree.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
 #include "getfem/getfem_contact_and_friction_common.h"
-#include "getfem/getfem_projected_fem.h"
+#include "getfem/getfem_assembling.h"
 #include "gmm/gmm_condition_number.h"
 
 #include <getfem/getfem_arch_config.h>
@@ -34,6 +34,83 @@
 #endif
 
 namespace getfem {
+
+
+  //=========================================================================
+  // Augmented friction law
+  //=========================================================================
+
+  template <typename VEC, typename VEC2, typename VECR>
+  void aug_friction(const VEC &lambda, scalar_type g, const VEC &Vs,
+                    const VEC &n, scalar_type r, const VEC2 &f, VECR &F) {
+    scalar_type lambdan_aug = gmm::neg( gmm::vect_sp(lambda, n) + r * g);
+    size_type i = gmm::vect_size(f);
+    scalar_type tau = ((i >= 2) ? f[2] : scalar_type(0)) - f[0]*lambdan_aug;
+    if (i >= 1) tau = std::min(tau, f[1]);
+
+
+    if (tau > scalar_type(0)) {
+      gmm::add(lambda, gmm::scaled(Vs, -r), F);
+      scalar_type mu = gmm::vect_sp(F, n);
+      gmm::add(gmm::scaled(n, -mu), F);
+      scalar_type norm = gmm::vect_norm2(F);
+      if (norm > tau) gmm::scale(F, tau / norm);
+    } else gmm::clear(F);
+
+    gmm::add(gmm::scaled(n, -lambdan_aug), F);
+  }
+
+  template <typename VEC, typename VEC2, typename VECR, typename MAT>
+  void aug_friction_grad(const VEC &lambda, scalar_type g, const VEC &Vs,
+                         const VEC &n, scalar_type r, const VEC2 &f, VECR &F,
+                         MAT &dlambda, VECR &dg, MAT &dn, MAT &dVs) {
+    size_type N = gmm::vect_size(lambda);
+    scalar_type lambdan = gmm::vect_sp(lambda, n);
+    scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
+    size_type i = gmm::vect_size(f);
+    scalar_type tau = ((i >= 2) ? f[2] : scalar_type(0)) + f[0]*lambdan_aug;
+    if (i >= 1) tau = std::min(tau, f[1]);
+    scalar_type norm(0);
+
+    if (tau > scalar_type(0)) {
+      gmm::add(lambda, gmm::scaled(Vs, -r), F);
+      scalar_type mu = gmm::vect_sp(F, n);
+      gmm::copy(gmm::identity_matrix(), dn);
+      gmm::scale(dn, -tau*mu);
+      gmm::rank_one_update(dn, gmm::scaled(n, -tau), F);
+      gmm::add(gmm::scaled(n, -mu), F);
+      norm = gmm::vect_norm2(F);
+      gmm::copy(gmm::identity_matrix(), dVs);
+      gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)));
+
+      if (norm > tau) {
+        gmm::rank_one_update(dVs, F,
+                             gmm::scaled(F, scalar_type(-1)/(norm*norm)));
+        gmm::scale(dVs, tau / norm);
+        gmm::copy(F, dg);
+        gmm::scale(dg,  scalar_type(1)/norm);
+        gmm::rank_one_update(dn, gmm::scaled(F, tau*mu/(norm*norm)), F);
+      } else gmm::clear(dg);
+      
+    } else { gmm::clear(dg); gmm::clear(dVs); gmm::clear(F); gmm::clear(dn); }
+    // At this stage, F = lambda_T, dVs = d_v P_{B_T}, dn = d_n P_{B_T}
+    // and dg = d_tau P_{B_T}.
+
+    gmm::copy(dVs, dlambda);
+    if (norm > tau && ((i <= 1) || tau < f[1])) {
+      gmm::rank_one_update(dn, dg, gmm::scaled(lambda, -f[0]));
+      gmm::rank_one_update(dlambda, dg, gmm::scaled(n, -f[0]));
+      gmm::scale(dg, -f[0]*r);
+    } else gmm::clear(dg);
+    if (lambdan_aug > scalar_type(0)) { 
+      gmm::add(gmm::scaled(n, r), dg); 
+      gmm::rank_one_update(dlambda, n, n);
+      gmm::rank_one_update(dn, n, lambda);
+      for (size_type j = 0; j < N; ++j) dn(j,j) += lambdan;
+    }
+    gmm::add(gmm::scaled(n, -lambdan_aug), F);
+    gmm::scale(dVs, -r);
+  }
 
 
   //=========================================================================
@@ -93,6 +170,28 @@ namespace getfem {
     }
   }
 
+  template <typename VEC1, typename VEC2>
+  void vec_elem_assembly(const VEC1 &V_, const gmm::sub_interval &I,
+                         const VEC2 &Velem, const mesh_fem &mf, size_type cv) {
+    VEC1 &V = const_cast<VEC1 &>(V_);
+    typedef typename gmm::linalg_traits<VEC1>::value_type T;
+    std::vector<size_type> cvdof(mf.ind_basic_dof_of_element(cv).begin(),
+                                 mf.ind_basic_dof_of_element(cv).end());
+
+    GMM_ASSERT1(cvdof.size() == gmm::vect_size(Velem), "Dimensions mismatch");
+
+    if (mf.is_reduced()) {
+      T val;
+      for (size_type i = 0; i < cvdof.size(); ++i)
+        if ((val = Velem[i]) != T(0))
+          gmm::add(gmm::scaled(gmm::mat_row(mf.extension_matrix(), cvdof[i]),
+                               val), gmm::sub_vector(V, I));
+    } else {
+      for (size_type i = 0; i < cvdof.size(); ++i)
+        V[I.first()+cvdof[i]] += Velem[i];
+    }
+  }
+
   //=========================================================================
   //
   //  Large sliding brick. Work in progress 
@@ -106,6 +205,7 @@ namespace getfem {
   struct integral_large_sliding_contact_brick : public virtual_brick {
 
     multi_contact_frame &mcf;
+    bool with_friction;
     
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
@@ -118,8 +218,9 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const;
 
-    integral_large_sliding_contact_brick(multi_contact_frame &mcff)
-      : mcf(mcff) {
+    integral_large_sliding_contact_brick(multi_contact_frame &mcff,
+                                         bool with_fric)
+      : mcf(mcff), with_friction(with_fric) {
       set_flags("Integral large sliding contact brick",
                 false /* is linear*/, false /* is symmetric */,
                 false /* is coercive */, true /* is real */,
@@ -169,8 +270,9 @@ namespace getfem {
    build_version version) const {
 
     // Data : r, friction_coeff.
-    GMM_ASSERT1(dl.size() == 2, "Wrong number of data for integral large "
-                "sliding contact brick");
+    GMM_ASSERT1((with_friction && dl.size() >= 2 && dl.size() <= 3)
+                || (!with_friction && dl.size() >= 1 && dl.size() <= 2),
+            "Wrong number of data for integral large sliding contact brick");
 
     GMM_ASSERT1(vl.size() == mcf.nb_variables() + mcf.nb_multipliers(),
                 "For the moment, it is not allowed to add boundaries to "
@@ -179,10 +281,24 @@ namespace getfem {
 
     const model_real_plain_vector &vr = md.real_variable(dl[0]);
     GMM_ASSERT1(gmm::vect_size(vr) == 1, "Parameter r should be a scalar");
+    scalar_type r = vr[0];
 
-    const model_real_plain_vector &f_coeff = md.real_variable(dl[1]);
-    GMM_ASSERT1(gmm::vect_size(f_coeff) == 1,
-                "Friction coefficient should be a scalar"); // TODO : vector of size 2 or 3 for extended friction law
+    model_real_plain_vector f_coeff;
+    if (with_friction) {
+      f_coeff = md.real_variable(dl[1]);
+      GMM_ASSERT1(gmm::vect_size(f_coeff) <= 3,
+                  "The friction law has less than 3 parameters");
+    }
+    if (gmm::vect_size(f_coeff) == 0) // default: no friction
+      { f_coeff.resize(1); f_coeff[0] = scalar_type(0); }
+    
+    scalar_type alpha(0);
+    size_type ind = with_friction ? 2:1;
+    if (dl.size() >= ind+1) {
+      GMM_ASSERT1(md.real_variable(dl[ind]).size() == 1,
+                  "Parameter alpha should be a scalar");
+      alpha = md.real_variable(dl[ind])[0];
+    }
 
     GMM_ASSERT1(matl.size() == 1,
                 "Large sliding contact brick should have only one term");
@@ -191,29 +307,68 @@ namespace getfem {
     
 
     mcf.compute_contact_pairs();
-    fem_precomp_pool fppool;
-    base_matrix G, Melem;
     size_type N = mcf.dim();
+    fem_precomp_pool fppool;
+    base_vector coeff;
+    base_matrix G, Melem, Inx(N, N), Iny(N, N), Inxy(N, N);
+    base_matrix dlambdaF(N, N), dnF(N, N), dVsF(N, N);
+    base_matrix grad_phix(N, N), grad_phix_inv(N, N);
+    base_matrix grad_phiy(N, N), grad_phiy_inv(N, N);
+    base_matrix grad_phi_ny(N, N);
 
     base_tensor base_lx, base_ux, base_uy; // , base_ly;
-    base_tensor grad_ux, grad_uy;
+    base_tensor grad_base_ux, grad_base_uy;
     base_matrix vbase_lx, vbase_ux, vbase_uy;  // , vbase_ly;
-    base_tensor vgrad_ux, vgrad_uy;
-    
-    // TODO : il faut penser à stabilizer les multiplicateurs orphelins
+    base_tensor vgrad_base_ux, vgrad_base_uy;
+    base_small_vector lambda(N), Vs(N), F(N), dgF(N), wx(N), wy(N);
+    base_small_vector aux8(N), aux9(N);
+        
+    // Stabilization for non-contact zone
+    for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
+      if (mcf.is_self_contact() || mcf.is_slave_boundary(i)) {
+        size_type region = mcf.region_of_boundary(i);
+        const std::string &name_lx = mcf.multname_of_boundary(i);
+        GMM_ASSERT1(name_lx.size() > 0, "This brick need "
+                    "multipliers defined on the multi_contact_frame object");
+        const mesh_fem &mflambda = mcf.mflambda_of_boundary(i);
+        const mesh_im &mim = mcf.mim_of_boundary(i);
+        const gmm::sub_interval &I = md.interval_of_variable(name_lx);
+
+        if (version & model::BUILD_MATRIX) {
+          model_real_sparse_matrix M1(mflambda.nb_dof(), mflambda.nb_dof());
+          asm_mass_matrix(M1, mim, mflambda, region);
+          gmm::scale(M1, scalar_type(1)/r);
+          gmm::add(M1, gmm::sub_matrix(M, I, I));
+        }
+
+        if (version & model::BUILD_RHS) {
+          model_real_plain_vector V1(mflambda.nb_dof());
+          asm_source_term(V1, mim, mflambda, mflambda,
+                          mcf.mult_of_boundary(i), region);
+          gmm::scale(V1, scalar_type(-1)/r);
+          gmm::add(V1, gmm::sub_vector(V, I));
+        }
+      }
+
 
     // Iterations on the contact pairs
-    for (size_type i = 0; i < mcf.nb_contact_pairs(); ++i) {
-      const multi_contact_frame::contact_pair &cp = mcf.get_contact_pair(i);
+    for (size_type icp = 0; icp < mcf.nb_contact_pairs(); ++icp) {
+      const multi_contact_frame::contact_pair &cp = mcf.get_contact_pair(icp);
 
       // Extract information on slave and master points and fems
       // Could be done by a structure, on demand ...
       const base_node &x = cp.slave_point;
+      const base_small_vector &nx = cp.slave_n;
+      gmm::copy(gmm::identity_matrix(), Inx);
+      gmm::rank_one_update(Inx, nx, gmm::scaled(nx, scalar_type(-1)));
       size_type irigid = cp.irigid_obstacle;
       bool isrigid = (irigid != size_type(-1));
       size_type ibx = cp.slave_ind_boundary;
       const std::string &name_ux = mcf.varname_of_boundary(ibx);
       const std::string &name_lx = mcf.multname_of_boundary(ibx);
+      GMM_ASSERT1(name_lx.size(), "This brick need multipliers defined "
+                  "on the multi_contact_frame object");
+      const model_real_plain_vector &all_wx = mcf.w_of_boundary(ibx);
       size_type cvx = cp.slave_ind_element;
       size_type fx = cp.slave_ind_face;
       const mesh_fem *mf_ux = &(mcf.mfu_of_boundary(ibx));
@@ -233,10 +388,18 @@ namespace getfem {
       const mesh &mx = mim.linked_mesh();
       bgeot::pgeometric_trans pgtx = mx.trans_of_convex(cvx);
 
-      const base_node &y = isrigid ? x : cp.master_point;
+      const base_node &y = cp.master_point;
+      const base_small_vector &ny = cp.master_n;
+      scalar_type nxny = gmm::vect_sp(nx, ny);
+      gmm::copy(gmm::identity_matrix(), Iny);
+      gmm::rank_one_update(Iny, ny, gmm::scaled(ny, scalar_type(-1)));
+      gmm::copy(gmm::identity_matrix(), Inxy);
+      gmm::rank_one_update(Inxy, nx, gmm::scaled(ny,scalar_type(-1)/nxny));
       size_type iby = isrigid ? 0 : cp.master_face_info.ind_boundary;
       const std::string &name_uy
         = isrigid ? name_ux : mcf.varname_of_boundary(iby);
+      const model_real_plain_vector &all_wy
+        = isrigid ? all_wx:mcf.w_of_boundary(iby);
       // const std::string &name_ly
       //   = isrigid ? name_ux : mcf.multname_of_boundary(iby);
       const gmm::sub_interval &I_uy
@@ -285,8 +448,8 @@ namespace getfem {
       ctx_ux.base_value(base_ux);
       // ctx_ly.base_value(base_ly);
       if (!isrigid) ctx_uy.base_value(base_uy);
-      ctx_ux.grad_base_value(grad_ux);
-      if (!isrigid) ctx_uy.grad_base_value(grad_uy);
+      ctx_ux.grad_base_value(grad_base_ux);
+      if (!isrigid) ctx_uy.grad_base_value(grad_base_uy);
 
       // Vectorisation of tensor (to facilitate the treatment)      
       vectorize_base_tensor(base_lx, vbase_lx, ndof_lx, qdim_lx, N);
@@ -294,21 +457,89 @@ namespace getfem {
       // vectorize_base_tensor(base_ly, vbase_ly, ndof_ly, qdim_ly, N);
       if (!isrigid)
         vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
-      vectorize_grad_base_tensor(grad_ux, vgrad_ux, ndof_ux, qdim_ux, N);
+      vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux, ndof_ux,
+                                 qdim_ux, N);
       if (!isrigid)
-        vectorize_grad_base_tensor(grad_uy, vgrad_uy, ndof_uy, qdim_uy, N);
+        vectorize_grad_base_tensor(grad_base_uy, vgrad_base_uy, ndof_uy,
+                                   qdim_uy, N);
       ndof_lx = ndof_lx*N/qdim_lx;
       ndof_ux = ndof_ux*N/qdim_ux;
       // ndof_ly = ndof_ly*N/qdim_ly;
       if (!isrigid) ndof_uy = ndof_uy*N/qdim_uy;
       
+      // Value of lambda on the slave surface
+      slice_vector_on_basic_dof_of_element(*mf_lx, mcf.mult_of_boundary(ibx),
+                                           cvx, coeff);
+      ctx_lx.pf()->interpolation(ctx_lx, coeff, lambda, dim_type(N));
+
+      // Value of grad phi on the slave surface
+      slice_vector_on_basic_dof_of_element(*mf_ux, mcf.disp_of_boundary(ibx),
+                                           cvx, coeff);
+      ctx_ux.pf()->interpolation_grad(ctx_ux, coeff, grad_phix, dim_type(N));
+      gmm::add(gmm::identity_matrix(), grad_phix);
+      gmm::copy(grad_phix, grad_phix_inv);
+      scalar_type J = gmm::lu_inverse(grad_phix_inv);
+      if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+
+      // Value of w on the slave surface
+      if (all_wx.size()) {
+        slice_vector_on_basic_dof_of_element(*mf_ux, all_wx, cvx, coeff);
+        ctx_ux.pf()->interpolation(ctx_ux, coeff, wx, dim_type(N));
+      }  else gmm::clear(wx);
+      gmm::add(ctx_ux.xreal(), wx);
+
+      // Value of grad phi on the master surface
+      slice_vector_on_basic_dof_of_element(*mf_uy, mcf.disp_of_boundary(iby),
+                                           cvy, coeff);
+      ctx_uy.pf()->interpolation_grad(ctx_uy, coeff, grad_phiy, dim_type(N));
+      gmm::add(gmm::identity_matrix(), grad_phiy);
+      gmm::copy(grad_phiy, grad_phiy_inv);
+      J = gmm::lu_inverse(grad_phiy_inv);
+      if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+
+      // Value of w on the master surface
+      if (all_wy.size()) {
+        slice_vector_on_basic_dof_of_element(*mf_uy, all_wy, cvy, coeff);
+        ctx_uy.pf()->interpolation(ctx_uy, coeff, wy, dim_type(N));
+      } else gmm::clear(wy);
+      gmm::add(ctx_uy.xreal(), wy);
+
+      // Value of grad phi(n-1) on the master surface
+      if (all_wy.size()) {
+        ctx_uy.pf()->interpolation_grad(ctx_uy, coeff,grad_phi_ny,dim_type(N));
+        gmm::add(gmm::identity_matrix(), grad_phi_ny);
+      } else gmm::copy(gmm::identity_matrix(), grad_phi_ny);
+
+      // Value of Vs (sliding velocity)
+      gmm::add(x, gmm::scaled(y, scalar_type(-1)), Vs);
+      gmm::add(gmm::scaled(wx, scalar_type(-1)), Vs);
+      gmm::add(wy, Vs);
+      gmm::scale(Vs, alpha);
+
+      base_vector aux6(ndof_uy), aux7(ndof_ux), aux12(ndof_lx);
+
+
       if (version & model::BUILD_MATRIX) {
+
+        aug_friction_grad(lambda, g, Vs, nx, r, f_coeff, F, dlambdaF,
+                          dgF, dnF, dVsF);
+
+        base_matrix graddeltaunx(ndof_ux, N);
+        for (size_type i = 0; i < ndof_ux; ++i)
+          for (size_type j = 0; j < N; ++j)
+            for (size_type k = 0; k < N; ++k)
+              graddeltaunx(i, j) += nx[k] * vgrad_base_ux(i, j, k);
+        
         
         // Term  \delta\lambda(X) . \delta v(X)
         gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
         gmm::mult(vbase_ux, gmm::transposed(vbase_lx), Melem);
         gmm::scale(Melem, weight);
         mat_elem_assembly(M, I_ux, I_lx, Melem, *mf_ux, cvx, *mf_lx, cvx);
+        base_matrix aux1(ndof_uy, N), aux4(ndof_uy, ndof_ux);
+        base_matrix aux5(ndof_lx, N), aux10(ndof_lx, N);
+        base_matrix aux11(ndof_lx, ndof_ux);
+        base_matrix aux2(N, N), aux3(N, N);
 
         if (!isrigid) {
           // Term  -\delta\lambda(X) . \delta v(Y)
@@ -316,39 +547,172 @@ namespace getfem {
           gmm::mult(vbase_uy, gmm::transposed(vbase_lx), Melem);
           gmm::scale(Melem, weight);
           mat_elem_assembly(M, I_uy, I_lx, Melem, *mf_uy, cvy, *mf_lx, cvx);
+
+          // Term -\lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
+          base_matrix lgraddeltav(ndof_uy, N);
+          for (size_type i = 0; i < ndof_uy; ++i)
+            for (size_type j = 0; j < N; ++j)
+              for (size_type k = 0; k < N; ++k)
+                lgraddeltav(i, j) += lambda[k] * vgrad_base_uy(i, k, j);
+          base_matrix lgraddeltavgradphiyinv(ndof_uy, N);
+          gmm::mult(lgraddeltav, gmm::transposed(grad_phiy_inv),
+                    lgraddeltavgradphiyinv);
+
+          // first sub term
+          gmm::resize(Melem, ndof_uy, ndof_uy); gmm::clear(Melem);
+          base_matrix aux(ndof_uy, N);
+          gmm::mult(lgraddeltavgradphiyinv, Inxy, aux);
+          gmm::mult(aux, gmm::transposed(vbase_uy), Melem);
+          gmm::scale(Melem, weight);
+          mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
+
+          // Second sub term
+          gmm::resize(Melem, ndof_uy, ndof_ux); gmm::clear(Melem);
+          gmm::add(gmm::identity_matrix(), Inxy);
+          gmm::scale(Inxy, scalar_type(-1));
+          gmm::mult(lgraddeltavgradphiyinv, Inxy, aux1);
+          gmm::mult(aux1, gmm::transposed(vbase_ux), Melem);
+
+          // Third sub term
+          gmm::mult(Iny, Inx, aux2);
+          gmm::mult(aux2, grad_phix_inv, aux3);
+          gmm::mult(lgraddeltavgradphiyinv, aux3, aux1);
+          gmm::mult(aux1, gmm::transposed(graddeltaunx), aux4);
+          gmm::scale(aux4, g/(nxny*nxny));
+          gmm::add(aux4, Melem);
+          gmm::scale(Melem, weight);
+          mat_elem_assembly(M, I_uy, I_ux, Melem, *mf_uy, cvy, *mf_ux, cvx);
         }
 
-        // Term \lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
-        // ...
+        // Term (1/r)(I-dlambdaF)\delta\lambda\delta\mu
+        //   the I of (I-dlambdaF) is skipped because already put
+        gmm::resize(Melem, ndof_lx, ndof_lx); gmm::clear(Melem);
+        // gmm::copy(identity_matrix(), aux2);
+        gmm::copy(gmm::scaled(dlambdaF, scalar_type(-1)), aux2);
+        gmm::scale(aux2, scalar_type(1)/r);
+        gmm::mult(vbase_lx, gmm::transposed(aux2), aux5);
+        gmm::mult(aux5, gmm::transposed(vbase_lx), Melem);
+        gmm::scale(Melem, weight);
+        mat_elem_assembly(M, I_lx, I_lx, Melem, *mf_lx, cvx, *mf_lx, cvx);
 
-        // Il faut:
-        // Les normales (peuvent être stockées), les gradients de transformation, la valeur de lambda(X)  ... et ne pas se tromper  on a les ctx, il manque les coeff et c'et bon 
+        // Term -(1/r)dgF\delta nx\delta\mu
+        gmm::resize(Melem, ndof_lx, ndof_ux);
+        gmm::mult(vbase_lx, Inx, aux5);
+        gmm::mult(aux5, grad_phix_inv, aux10);
+        gmm::mult(aux10, gmm::transposed(graddeltaunx), Melem);
+        // assembly factorized with the next term
+
+        // Term -(1/r)dgF\delta g\delta\mu
+        base_vector deltamudgF(ndof_lx);
+        gmm::mult(vbase_lx, gmm::scaled(dgF, scalar_type(1)/(r*nxny)),
+                  deltamudgF);
+
+        // first sub term
+        gmm::mult(vbase_ux, gmm::scaled(ny, scalar_type(-1)), aux7);
+
+        // second sub term
+        gmm::mult(Inx, gmm::scaled(ny, scalar_type(-1)), aux8);
+        gmm::mult(grad_phix_inv, aux8, aux9);
+        for (size_type i = 0; i < ndof_ux; ++i)
+          for (size_type j = 0; j < N; ++j)
+            for (size_type k = 0; k < N; ++k)
+              aux7[i] += aux9[j] *  vgrad_base_ux(i, j, k) * nx[k];
+        gmm::rank_one_update(Melem, deltamudgF,  aux7);
+        gmm::scale(Melem, weight);
+        mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
+
+        if (!isrigid) {
+          // third sub term
+          gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
+          gmm::mult(vbase_uy, ny, aux6);
+          gmm::rank_one_update(Melem, deltamudgF,  aux6);
+          gmm::scale(Melem, weight);
+          mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
+        }
+
+        // Term -(1/r) d_Vs F \delta Vs\delta\mu
+        base_matrix I_gphingphiyinv(N, N);
+        if (!isrigid) 
+          gmm::mult(gmm::scaled(grad_phi_ny, scalar_type(-1)),
+                    grad_phiy_inv, I_gphingphiyinv);
+        gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
+
+        // first sub term
+        gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
+        gmm::mult(I_gphingphiyinv, Inxy, aux2);
+        for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
+        gmm::mult(dVsF, aux2, aux3);
+        gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
+        gmm::mult(aux5, gmm::transposed(vbase_ux), Melem);
         
+        // second sub term
+        gmm::mult(dVsF, I_gphingphiyinv, aux2);
+        gmm::mult(aux2, Iny, aux3);
+        gmm::mult(aux3, gmm::scaled(Inx, scalar_type(-1)), aux2);
+        gmm::mult(aux2, gmm::transposed(grad_phix_inv), aux3);
+        gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
+        gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
+        gmm::scale(aux11, g/(nxny*nxny));
+        gmm::add(aux11, Melem);
+        gmm::scale(Melem, weight*alpha/r);
+        mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
+
+        if (!isrigid) {
+          // third sub term
+          gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
+          gmm::mult(dVsF, I_gphingphiyinv, aux2);
+          gmm::mult(aux2, nx, aux8);
+          gmm::mult(vbase_lx, aux8, aux12);
+          gmm::mult(vbase_uy, gmm::scaled(ny, scalar_type(1)/nxny), aux6);
+          gmm::rank_one_update(Melem, aux12, aux6);
+          gmm::scale(Melem, weight*alpha/r);
+          mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
+        }
+
       }
 
       if (version & model::BUILD_RHS) {
-        // ...
+
+        if (!(version & model::BUILD_MATRIX))
+          aug_friction(lambda, g, Vs, nx, r, f_coeff, F);
+
+        // Term lambda.\delta v(X)
+        gmm::mult(vbase_ux, lambda, aux7);
+        gmm::scale(aux7, -weight);
+        vec_elem_assembly(V, I_ux, aux7, *mf_ux, cvx);
+        
+        // Term -lambda.\delta v(X)
+        gmm::mult(vbase_uy, lambda, aux6);
+        gmm::scale(aux6, -weight);
+        vec_elem_assembly(V, I_uy, aux6, *mf_uy, cvy);
+
+        // Term (1/r)(lambda - F).\delta \mu
+        //      (1/r)(lambda).\delta \mu is skipped because already put 
+        gmm::mult(vbase_lx, gmm::scaled(F, scalar_type(-1)), aux12);
+        gmm::scale(aux12, -weight);
+        vec_elem_assembly(V, I_lx, aux12, *mf_lx, cvx);
       }
 
     }
-
-
   }
 
 
 
   size_type add_integral_large_sliding_contact_brick
   (model &md, multi_contact_frame &mcf,
-   const std::string &dataname_r, const std::string &dataname_friction_coeff) {
+   const std::string &dataname_r, const std::string &dataname_friction_coeff,
+   const std::string &dataname_alpha) {
 
+    bool with_friction = (dataname_friction_coeff.size() > 0);
     integral_large_sliding_contact_brick *pbr
-      = new integral_large_sliding_contact_brick(mcf);
+      = new integral_large_sliding_contact_brick(mcf, with_friction);
 
     model::termlist tl; // A unique global unsymmetric term
     tl.push_back(model::term_description(true, false));
 
     model::varnamelist dl(1, dataname_r);
-    dl.push_back(dataname_friction_coeff);
+    if (with_friction) dl.push_back(dataname_friction_coeff);
+    if (dataname_alpha.size()) dl.push_back(dataname_alpha);
 
     model::varnamelist vl;
 

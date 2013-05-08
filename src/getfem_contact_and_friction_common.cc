@@ -33,13 +33,18 @@ namespace getfem {
   //
   //=========================================================================
 
-  size_type multi_contact_frame::add_U(const model_real_plain_vector &U, 
-                                       const std::string &name) {
+  size_type multi_contact_frame::add_U(const model_real_plain_vector *U, 
+                                       const std::string &name,
+                                       const model_real_plain_vector *w,
+                                       const std::string &wname) {
     size_type i = 0;
-    for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
-    Us.push_back(&U);
+    for (; i < Us.size(); ++i) if (Us[i] == U) return i;
+    Us.push_back(U);
+    Ws.push_back(w);
     Unames.push_back(name);
+    Wnames.push_back(wname);
     ext_Us.resize(Us.size());
+    ext_Ws.resize(Us.size());
     return i;
   }
   
@@ -61,6 +66,10 @@ namespace getfem {
         const mesh_fem &mf = *(contact_boundaries[i].mfu);
         gmm::resize(ext_Us[ind_U], mf.nb_basic_dof());
         mf.extend_vector(*(Us[ind_U]), ext_Us[ind_U]);
+        if (Ws[ind_U]) {
+          gmm::resize(ext_Ws[ind_U], mf.nb_basic_dof());
+          mf.extend_vector(*(Ws[ind_U]), ext_Ws[ind_U]);
+        } else gmm::resize(ext_Ws[ind_U], 0);
         iU.add(ind_U);
       }
       size_type ind_lambda = contact_boundaries[i].ind_lambda;
@@ -221,9 +230,10 @@ namespace getfem {
   size_type multi_contact_frame::add_master_boundary
   (const mesh_im &mim, const mesh_fem *mfu,
    const model_real_plain_vector *U, size_type reg,
-   const mesh_fem *mflambda, const model_real_plain_vector *lambda,    
+   const mesh_fem *mflambda, const model_real_plain_vector *lambda,
+   const model_real_plain_vector *w,
    const std::string &vvarname,
-   const std::string &mmultname) {
+   const std::string &mmultname, const std::string &wname) {
     GMM_ASSERT1(mfu->linked_mesh().dim() == N,
                 "Mesh dimension is " << mfu->linked_mesh().dim()
                 << "should be " << N << ".");
@@ -235,7 +245,8 @@ namespace getfem {
       GMM_ASSERT1(&(mflambda->linked_mesh()) == &(mim.linked_mesh()),
                   "Integration and finite element are not on the same mesh !");
     }
-    contact_boundary cb(reg, mfu, mim, add_U(*U, vvarname), mflambda, j);
+    contact_boundary cb(reg, mfu, mim, add_U(U, vvarname, w, wname),
+                        mflambda, j);
     contact_boundaries.push_back(cb);
     return size_type(contact_boundaries.size() - 1);
   }
@@ -243,12 +254,13 @@ namespace getfem {
   size_type multi_contact_frame::add_slave_boundary
   (const mesh_im &mim, const mesh_fem *mfu,
    const model_real_plain_vector *U, size_type reg, 
-   const mesh_fem *mflambda, const model_real_plain_vector *lambda, 
+   const mesh_fem *mflambda, const model_real_plain_vector *lambda,
+   const model_real_plain_vector *w,
    const std::string &vvarname,
-   const std::string &mmultname) {
+   const std::string &mmultname, const std::string &wname) {
     size_type ind
-      = add_master_boundary(mim, mfu, U, reg, mflambda, lambda,
-                            vvarname, mmultname);
+      = add_master_boundary(mim, mfu, U, reg, mflambda, lambda, w,
+                            vvarname, mmultname, wname);
     slave_boundaries.add(ind);
     return ind;
   }
@@ -256,7 +268,7 @@ namespace getfem {
 
   size_type multi_contact_frame::add_master_boundary
   (const mesh_im &mim, size_type reg, const std::string &vvarname,
-   const std::string &mmultname) {
+   const std::string &mmultname, const std::string &wname) {
     GMM_ASSERT1(md, "This multi contact frame object is not linked "
                 "to a model");
     const mesh_fem *mfl(0);
@@ -265,14 +277,21 @@ namespace getfem {
       mfl = &(md->mesh_fem_of_variable(mmultname));
       l = &(md->real_variable(mmultname));
     }
+    const model_real_plain_vector *w(0);
+    if (wname.size()) {
+      GMM_ASSERT1(&(md->mesh_fem_of_variable(mmultname))
+                 == &(md->mesh_fem_of_variable(vvarname)), "The velocity "
+                 "should be defined on the same mesh as the displacement");
+      w = &(md->real_variable(wname));
+    }
     return add_master_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
-                               &(md->real_variable(vvarname)), reg, mfl, l,
-                               vvarname, mmultname);
+                               &(md->real_variable(vvarname)), reg, mfl, l, w,
+                               vvarname, mmultname, wname);
   }
 
   size_type multi_contact_frame::add_slave_boundary
   (const mesh_im &mim, size_type reg, const std::string &vvarname,
-   const std::string &mmultname) {
+   const std::string &mmultname, const std::string &wname) {
     GMM_ASSERT1(md, "This multi contact frame object is not linked "
                 "to a model");
     const mesh_fem *mfl(0);
@@ -281,9 +300,16 @@ namespace getfem {
       mfl = &(md->mesh_fem_of_variable(mmultname));
       l = &(md->real_variable(mmultname));
     }
+    const model_real_plain_vector *w(0);
+    if (wname.size()) {
+      GMM_ASSERT1(&(md->mesh_fem_of_variable(mmultname))
+                 == &(md->mesh_fem_of_variable(vvarname)), "The velocity "
+                 "should be defined on the same mesh as the displacement");
+      w = &(md->real_variable(wname));
+    }
     return add_slave_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
-                              &(md->real_variable(vvarname)), reg, mfl, l,
-                              vvarname, mmultname);
+                              &(md->real_variable(vvarname)), reg, mfl, l, w,
+                              vvarname, mmultname, wname);
   }
 
   
@@ -1075,7 +1101,7 @@ namespace getfem {
         scalar_type signed_dist = gmm::vect_dist2(y, x);
         if (signed_dist > release_distance) continue;
 
-        // compute the unit_normal and the signed distance.
+        // compute the unit normal vector at y and the signed distance.
         base_small_vector n00 = bgeot::compute_normal(ctx, i_f);
         if (!ref_conf) {
           ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
@@ -1110,7 +1136,7 @@ namespace getfem {
             continue;
         }
         
-        contact_pair ct(x, bpinfo, ctx.xref(), y,  fi, signed_dist);
+        contact_pair ct(x, nx, bpinfo, ctx.xref(), y, n, fi, signed_dist);
         if (first_pair) {
           contact_pairs.push_back(ct);
           first_pair = false;
@@ -1123,7 +1149,6 @@ namespace getfem {
 
       }
       if (first_pair && irigid_obstacle != size_type(-1)) {
-        contact_pair ct(x, bpinfo, irigid_obstacle, d0);
         
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
         gmm::copy(x, pt_eval);
@@ -1149,10 +1174,12 @@ namespace getfem {
         }
         
         GMM_ASSERT1(nit<1000, "Projection/raytrace on rigid obstacle failed");
-        ct.master_point.resize(N);
-        gmm::copy(pt_eval, ct.master_point);
+        gmm::copy(pt_eval, y);
+        n /= gmm::vect_norm2(n);
 
-#endif
+#endif 
+        contact_pair ct(x, nx, bpinfo, y, n, irigid_obstacle, d0);
+
         // CRITERION 4 for rigid bodies : Apply the release distance
         if (gmm::vect_dist2(ct.master_point, x) <= release_distance)
           contact_pairs.push_back(ct);

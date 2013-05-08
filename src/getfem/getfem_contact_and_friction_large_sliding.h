@@ -54,7 +54,9 @@ namespace getfem {
   */
   size_type add_integral_large_sliding_contact_brick
   (model &md, multi_contact_frame &mcf,
-   const std::string &dataname_r, const std::string &dataname_friction_coeff);
+   const std::string &dataname_r,
+   const std::string &dataname_friction_coeff = std::string(),
+   const std::string &dataname_alpha = std::string());
 
 
 

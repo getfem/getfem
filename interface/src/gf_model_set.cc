@@ -2559,6 +2559,32 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
+     /*@SET ind = ('add integral large sliding contact brick', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @dataname_alpha]])
+      Adds a large sliding contact with friction brick to the model.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It takes a variable of type multi_contact_frame wich describe
+      the contact situation (master and slave contact boundaries,
+      self-contact detection or not, and a few parameter).
+      For each slave boundary (and also master boundaries if self-contact
+      is asked) a multiplier variable should be defined. @*/
+
+     sub_command
+       ("add integral large sliding contact brick", 2, 4, 0, 1,
+
+        getfem::multi_contact_frame *mcf = in.pop().to_multi_contact_frame();
+        std::string dataname_r = in.pop().to_string();
+        std::string dataname_fr;
+        if (in.remaining()) dataname_fr = in.pop().to_string();
+        std::string dataname_alpha;
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        
+        size_type  ind = getfem::add_integral_large_sliding_contact_brick
+        (md->model(), *mcf, dataname_r, dataname_fr, dataname_alpha);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+
      /*@SET ind = ('add integral large sliding contact brick with field extension',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)
        (still experimental brick)
        Add a large sliding contact with friction brick to the model.
