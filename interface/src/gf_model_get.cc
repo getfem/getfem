@@ -417,8 +417,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       `EPS` is the value of the small parameter for the finite difference
       computation of the derivative is the random direction (default is 1E-6).
       `NN` is the number of tests (default is 100). `scale` is a parameter
-      for the random position (default is 1). Each dof od the random
-      position is chosen in the range [-scale, scale].
+      for the random position (default is 1) around the current position.
+      Each dof of the random position is chosen in the range
+      [current-scale, current+scale].
       @*/
     sub_command
       ("test tangent matrix", 0, 3, 0, 1,
@@ -436,18 +437,21 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        } else {
 	 if (md->is_complex()) {
 	   std::vector<complex_type> U(nbdof);
+	   std::vector<complex_type> dU(nbdof);
 	   std::vector<complex_type> DIR(nbdof);
 	   std::vector<complex_type> D1(nbdof);
 	   std::vector<complex_type> D2(nbdof);
+           md->model().from_variables(U);
 	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(U); gmm::scale(U, scale);
+	     gmm::fill_random(dU); gmm::scale(dU, scale);
+             gmm::add(U, dU);
 	     gmm::fill_random(DIR); gmm::scale(DIR, scale);
-	     md->model().to_variables(U);
+	     md->model().to_variables(dU);
 	     md->model().assembly(getfem::model::BUILD_ALL);
 	     gmm::copy(md->model().complex_rhs(), D2);
 	     gmm::mult(md->model().complex_tangent_matrix(), DIR, D1);
-	     gmm::add(gmm::scaled(DIR, complex_type(EPS)), U);
-	     md->model().to_variables(U);
+	     gmm::add(gmm::scaled(DIR, complex_type(EPS)), dU);
+	     md->model().to_variables(dU);
 	     md->model().assembly(getfem::model::BUILD_RHS);
 	     gmm::add(gmm::scaled(md->model().complex_rhs(),
 				  -complex_type(1)), D2);
@@ -456,20 +460,24 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	     cout << "Error at step " << i << " : " << err << endl;
 	     errmax = std::max(err, errmax);
 	   }
+           md->model().to_variables(U);
 	 } else {
 	   std::vector<scalar_type> U(nbdof);
+	   std::vector<scalar_type> dU(nbdof);
 	   std::vector<scalar_type> DIR(nbdof);
 	   std::vector<scalar_type> D1(nbdof);
 	   std::vector<scalar_type> D2(nbdof);
+           md->model().from_variables(U);
 	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(U); gmm::scale(U, scale);
+	     gmm::fill_random(dU); gmm::scale(dU, scale);
+             gmm::add(U, dU);
 	     gmm::fill_random(DIR); gmm::scale(DIR, scale);
-	     md->model().to_variables(U);
+	     md->model().to_variables(dU);
 	     md->model().assembly(getfem::model::BUILD_ALL);
 	     gmm::copy(md->model().real_rhs(), D2);
 	     gmm::mult(md->model().real_tangent_matrix(), DIR, D1);
-	     gmm::add(gmm::scaled(DIR, EPS), U);
-	     md->model().to_variables(U);
+	     gmm::add(gmm::scaled(DIR, EPS), dU);
+	     md->model().to_variables(dU);
 	     md->model().assembly(getfem::model::BUILD_RHS);
 	     gmm::add(gmm::scaled(md->model().real_rhs(),-scalar_type(1)), D2);
 	     gmm::scale(D2, scalar_type(1)/EPS);
@@ -477,6 +485,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	     cout << "Error at step " << i << " : " << err << endl;
 	     errmax = std::max(err, errmax);
 	   }
+           md->model().to_variables(U);
 	 }
        }
        out.pop().from_scalar(errmax);

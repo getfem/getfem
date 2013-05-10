@@ -25,10 +25,10 @@ test_case = 2; % 1 = 2D with two differente meshes
 
 lambda = 1.; mu = 1.;   % Elasticity parameters
 r = 0.1;                % Augmentation parameter
-f_coeff = 1.;           % Friction coefficient
+f_coeff = 0;            % Friction coefficient
 
 if (test_case == 2)
-  vf = 0.0005;              % Vertical force
+  vf = 0.002;              % Vertical force
   vf_mult = 1.5;
   penalty_parameter = 0.01;
 else
@@ -118,20 +118,20 @@ gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
 
 if (test_case < 3)
-  dist = 0.05;
+  dist = 0.1;
 else
   dist = 2;
 end
 % delaunay: after dist 
 mcff=gf_multi_contact_frame(md, N, dist, false, true, 0.2, true, 0, false);
-gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
+gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
 if (test_case == 1) 
-  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
 elseif (test_case == 2) 
   gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');
 else
-  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
 end
 
@@ -140,8 +140,10 @@ gf_model_set(md, 'add integral large sliding contact brick', mcff, 'r', 'f');
 
 for i=1:100
 
-% gf_model_get(md, 'test tangent matrix', 1E-6, 10, 0.0001);
- 
+errmax = gf_model_get(md, 'test tangent matrix', 1E-6, 3, 0.0001);
+disp(sprintf('errmax = %g', errmax));
+if (errmax > 1E-3) error('bad tangent matrix'); end;
+pause;
     
 gf_model_get(md, 'solve', 'noisy', 'max_iter', 10, 'max_res', 1e-8); % , 'lsearch', 'simplest');
 

@@ -335,7 +335,7 @@ namespace getfem {
     base_small_vector lambda(N), Vs(N), F(N), dgF(N), wx(N), wy(N);
     base_small_vector aux8(N), aux9(N);
         
-    // Stabilization for non-contact zone
+    // Stabilization for non-contact zones
     for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
       if (mcf.is_self_contact() || mcf.is_slave_boundary(i)) {
         size_type region = mcf.region_of_boundary(i);
@@ -349,16 +349,15 @@ namespace getfem {
         if (version & model::BUILD_MATRIX) {
           model_real_sparse_matrix M1(mflambda.nb_dof(), mflambda.nb_dof());
           asm_mass_matrix(M1, mim, mflambda, region);
-          gmm::scale(M1, scalar_type(1)/r);
-          gmm::add(M1, gmm::sub_matrix(M, I, I));
+          gmm::add(gmm::scaled(M1,scalar_type(1)/r), gmm::sub_matrix(M, I, I));
         }
 
         if (version & model::BUILD_RHS) {
           model_real_plain_vector V1(mflambda.nb_dof());
-          asm_source_term(V1, mim, mflambda, mflambda,
-                          md.real_variable(mcf.multname_of_boundary(i)), region);
-          gmm::scale(V1, scalar_type(-1)/r);
-          gmm::add(V1, gmm::sub_vector(V, I));
+          asm_source_term
+            (V1, mim, mflambda, mflambda,
+             md.real_variable(mcf.multname_of_boundary(i)), region);
+          gmm::add(gmm::scaled(V1, scalar_type(-1)/r), gmm::sub_vector(V, I));
         }
       }
 
@@ -535,6 +534,8 @@ namespace getfem {
 
       base_vector aux6(ndof_uy), aux7(ndof_ux), aux12(ndof_lx);
 
+
+
       if (version & model::BUILD_MATRIX) {
 
 //         cout << "begining test" << endl;
@@ -603,7 +604,11 @@ namespace getfem {
 
 //         }
 
-        cout << "pair " << icp << " g = " << g << endl;
+        // cout << "pair " << icp << " g = " << g << endl;
+        base_matrix aux1(ndof_uy, N), aux4(ndof_uy, ndof_ux);
+        base_matrix aux5(ndof_lx, N), aux10(ndof_lx, N);
+        base_matrix aux11(ndof_lx, ndof_ux);
+        base_matrix aux2(N, N), aux3(N, N);
 
         aug_friction_grad(lambda, g, Vs, nx, r, f_coeff, F, dlambdaF,
                           dgF, dnF, dVsF);
@@ -615,16 +620,19 @@ namespace getfem {
             for (size_type k = 0; k < N; ++k)
               graddeltaunx(i, j) += nx[k] * vgrad_base_ux(i, j, k);
         
-        
+#define CONSIDER_TERM3
+
+
+#ifdef CONSIDER_TERM1
         // Term  \delta\lambda(X) . \delta v(X)
         gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
         gmm::mult(vbase_ux, gmm::transposed(vbase_lx), Melem);
         gmm::scale(Melem, weight);
         mat_elem_assembly(M, I_ux, I_lx, Melem, *mf_ux, cvx, *mf_lx, cvx);
-        base_matrix aux1(ndof_uy, N), aux4(ndof_uy, ndof_ux);
-        base_matrix aux5(ndof_lx, N), aux10(ndof_lx, N);
-        base_matrix aux11(ndof_lx, ndof_ux);
-        base_matrix aux2(N, N), aux3(N, N);
+#endif
+
+
+#ifdef CONSIDER_TERM2
 
         if (!isrigid) {
           // Term  -\delta\lambda(X) . \delta v(Y)
@@ -669,8 +677,12 @@ namespace getfem {
           mat_elem_assembly(M, I_uy, I_ux, Melem, *mf_uy, cvy, *mf_ux, cvx);
         }
 
+#endif
+
+#ifdef CONSIDER_TERM3
+
         // Term (1/r)(I-dlambdaF)\delta\lambda\delta\mu
-        //   the I of (I-dlambdaF) is skipped because already put
+        //   the I of (I-dlambdaF) is skipped because globally added before
         gmm::resize(Melem, ndof_lx, ndof_lx); gmm::clear(Melem);
         // gmm::copy(identity_matrix(), aux2);
         gmm::copy(gmm::scaled(dlambdaF, scalar_type(-1)), aux2);
@@ -754,6 +766,8 @@ namespace getfem {
           mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
         }
 
+#endif
+
       }
 
       if (version & model::BUILD_RHS) {
@@ -761,23 +775,32 @@ namespace getfem {
         if (!(version & model::BUILD_MATRIX))
           aug_friction(lambda, g, Vs, nx, r, f_coeff, F);
 
+#ifdef CONSIDER_TERM1
+
         // Term lambda.\delta v(X)
         gmm::mult(vbase_ux, lambda, aux7);
         gmm::scale(aux7, -weight);
         vec_elem_assembly(V, I_ux, aux7, *mf_ux, cvx);
+#endif
+
+#ifdef CONSIDER_TERM2
         
-        // Term -lambda.\delta v(X)
+        // Term -lambda.\delta v(Y)
         if (!isrigid) {
           gmm::mult(vbase_uy, lambda, aux6);
           gmm::scale(aux6, -weight);
           vec_elem_assembly(V, I_uy, aux6, *mf_uy, cvy);
         }
+#endif
+
+#ifdef CONSIDER_TERM3
 
         // Term (1/r)(lambda - F).\delta \mu
-        //      (1/r)(lambda).\delta \mu is skipped because already put 
+        // (1/r)(lambda).\delta \mu is skipped because globally added before
         gmm::mult(vbase_lx, gmm::scaled(F, scalar_type(-1)), aux12);
         gmm::scale(aux12, -weight);
         vec_elem_assembly(V, I_lx, aux12, *mf_lx, cvx);
+#endif
       }
 
     }

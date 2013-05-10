@@ -812,6 +812,7 @@ namespace getfem {
     base_small_vector a(N-1), n(N);
     base_node y(N);
     std::vector<base_small_vector> ti(N-1), Ti(N-1);
+    size_type nbwarn(0);
 
     double time = dal::uclock_sec();
     
@@ -1080,9 +1081,12 @@ namespace getfem {
         // CRITERION 2 : The contact pair is eliminated when
         //               projection/raytrace do not converge.
         if (!converged) {
-          GMM_WARNING3("Projection or raytrace algorithm did not converge for "
-                       "point " << x << " residual " << residual
-                       << " projection computed " << y);
+          if (nbwarn < 4) {
+            GMM_WARNING3("Projection or raytrace algorithm did not converge "
+                         "for point " << x << " residual " << residual
+                         << " projection computed " << y);
+            ++nbwarn;
+          }
           continue;
         }
           
@@ -1154,11 +1158,11 @@ namespace getfem {
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
         gmm::copy(x, pt_eval);
         gmm::copy(x, y);
-        size_type nit = 0;
+        size_type nit = 0, nb_fail = 0;
         scalar_type alpha(0), beta(0);
         d1 = d0;
 
-        while (gmm::abs(d1) > 1E-10 && ++nit < 50) {
+        while (gmm::abs(d1) > 1E-10 && ++nit < 50 && nb_fail < 3) {
           for (size_type k = 0; k < N; ++k) {
             pt_eval[k] += EPS;
             d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
@@ -1179,14 +1183,20 @@ namespace getfem {
               cout << "nit = " << nit << " lambda = " << lambda
                    << " alpha = " << alpha << " d2 = " << d2
                    << " d1  = " << d1 << endl;
-            if (gmm::abs(d2) < gmm::abs(d1) || lambda < 1E-3) break;
+            if (gmm::abs(d2) < gmm::abs(d1)) break;
+            if (lambda < 1E-3) {
+              if (raytrace) {
+                if (gmm::abs(beta - d1 / gmm::vect_sp(n, nx))
+                    > scalar_type(50)*gmm::abs(d1)) nb_fail++;
+              }
+              break;
+            }
             lambda /= scalar_type(2);
           }
           gmm::copy(pt_eval, y); beta = alpha; d1 = d2;
         }
-        // sleep(1);
 
-        if (nit >= 50) {
+        if (gmm::abs(d1) > 1E-8) {
           GMM_WARNING1("Projection/raytrace on rigid obstacle failed");
           continue;
         }
