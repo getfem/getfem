@@ -82,7 +82,7 @@ void gf_multi_contact_frame_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
-    /*@SET ('add slave boundary', @tmim mim, @int region, @str varname [, @str mulname])
+    /*@SET ('add slave boundary', @tmim mim, @int region, @str varname [, @str multname])
     Add a slave contact bounary.
     @*/
     
@@ -98,7 +98,7 @@ void gf_multi_contact_frame_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
-    /*@SET ('add master boundary', @tmim mim, @int region, @str varname [, @str mulname])
+    /*@SET ('add master boundary', @tmim mim, @int region, @str varname [, @str multname])
     Add a master contact bounary.
     @*/
     

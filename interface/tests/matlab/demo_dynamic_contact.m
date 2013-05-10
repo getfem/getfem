@@ -26,11 +26,11 @@ gf_workspace('clear all');
 clear all;
 
 
-NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+% NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');

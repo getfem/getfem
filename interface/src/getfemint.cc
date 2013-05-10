@@ -792,8 +792,9 @@ namespace getfemint {
     id_type id, cid;
     to_object_id(&id,&cid);
     if (cid != MULTI_CONTACT_FRAME_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a cont_struct " <<
-                   "descriptor, its class is " << name_of_getfemint_class_id(cid));
+      THROW_BADARG("argument " << argnum << " should be a multi_contact_frame "
+                   << "descriptor, its class is "
+                   << name_of_getfemint_class_id(cid));
     }
     getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
     error_if_nonwritable(o, writeable);

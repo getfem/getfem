@@ -21,7 +21,7 @@
 ===========================================================================*/
 
 #include "getfem/getfem_contact_and_friction_common.h"
-
+#include <unistd.h>
 
 namespace getfem {
 
@@ -99,7 +99,6 @@ namespace getfem {
               if (gmm::vect_sp(n_mean, nc[j]) < threshold)
                 { reduce = false; break; }
             if (reduce) {
-              cout << nc[0] << " replaced by " << n_mean << endl;
               boundary_points_info[i].normals = normal_cone(n_mean);
             }
           }
@@ -817,8 +816,7 @@ namespace getfem {
     contact_pairs = std::vector<contact_pair>();
     
     if (!ref_conf) extend_vectors();
-    cout << "Time for extend vector: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
-
+    
     bool only_slave(true), only_master(true);
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
       if (!(slave_boundaries[i])) only_slave = false; else only_master = false;
@@ -885,8 +883,8 @@ namespace getfem {
 #endif
       }
 
-      if (potential_pairs[ip].size())
-        cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
+      // if (potential_pairs[ip].size())
+      //  cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
       bool first_pair = true;
       for (size_type ipf = 0; ipf < potential_pairs[ip].size(); ++ipf) {
         // Point to surface projection. Principle :
@@ -1152,36 +1150,52 @@ namespace getfem {
         
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
         gmm::copy(x, pt_eval);
+        gmm::copy(x, y);
         size_type nit = 0;
-        scalar_type alpha(0);
+        scalar_type alpha(0), beta(0);
+        d1 = d0;
 
-        while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
+        while (gmm::abs(d1) > 1E-10 && ++nit < 50) {
           for (size_type k = 0; k < N; ++k) {
             pt_eval[k] += EPS;
-            d1 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-            n[k] = (d1 - d0) / EPS;
+            d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+            n[k] = (d2 - d1) / EPS;
             pt_eval[k] -= EPS;
           }
 
-          if (raytrace) {
-            alpha -= d0 / gmm::vect_sp(n, nx);
-            gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
-          } else {
-            gmm::add(gmm::scaled(n, -d0 / gmm::vect_norm2_sqr(n)), pt_eval);
+          scalar_type lambda(1); // ajouter un test de divergence ...
+          for(;;) {
+            if (raytrace) {
+              alpha = beta - lambda * d1 / gmm::vect_sp(n, nx);
+              gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
+            } else {
+              gmm::add(gmm::scaled(n, -d1/gmm::vect_norm2_sqr(n)), y, pt_eval);
+            }
+            d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+            if (nit > 10)
+              cout << "nit = " << nit << " lambda = " << lambda
+                   << " alpha = " << alpha << " d2 = " << d2
+                   << " d1  = " << d1 << endl;
+            if (gmm::abs(d2) < gmm::abs(d1) || lambda < 1E-3) break;
+            lambda /= scalar_type(2);
           }
-          // A simple line search could be added
-          d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+          gmm::copy(pt_eval, y); beta = alpha; d1 = d2;
         }
-        
-        GMM_ASSERT1(nit<1000, "Projection/raytrace on rigid obstacle failed");
+        // sleep(1);
+
+        if (nit >= 50) {
+          GMM_WARNING1("Projection/raytrace on rigid obstacle failed");
+          continue;
+        }
         gmm::copy(pt_eval, y);
         n /= gmm::vect_norm2(n);
 
 #endif 
+        d0 = gmm::vect_dist2(y, x) * gmm::sgn(d0);
         contact_pair ct(x, nx, bpinfo, y, n, irigid_obstacle, d0);
 
         // CRITERION 4 for rigid bodies : Apply the release distance
-        if (gmm::vect_dist2(ct.master_point, x) <= release_distance)
+        if (gmm::vect_dist2(y, x) <= release_distance)
           contact_pairs.push_back(ct);
       }
     }

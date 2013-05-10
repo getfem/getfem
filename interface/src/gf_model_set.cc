@@ -30,6 +30,7 @@
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_gsparse.h>
+#include <getfemint_multi_contact_frame.h>
 #include <getfem/getfem_Coulomb_friction.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
@@ -2571,8 +2572,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
      sub_command
        ("add integral large sliding contact brick", 2, 4, 0, 1,
-
-        getfem::multi_contact_frame *mcf = in.pop().to_multi_contact_frame();
+        
+        getfemint_multi_contact_frame *gfi_mcf
+          = in.pop().to_getfemint_multi_contact_frame();
         std::string dataname_r = in.pop().to_string();
         std::string dataname_fr;
         if (in.remaining()) dataname_fr = in.pop().to_string();
@@ -2580,8 +2582,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         
         size_type  ind = getfem::add_integral_large_sliding_contact_brick
-        (md->model(), *mcf, dataname_r, dataname_fr, dataname_alpha);
+        (md->model(), gfi_mcf->multi_contact_frame(), dataname_r,
+         dataname_fr, dataname_alpha);
         out.pop().from_integer(int(ind + config::base_index()));
+        workspace().set_dependance(md, gfi_mcf);
         );
 
 

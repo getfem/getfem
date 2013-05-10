@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2013 Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -54,23 +54,25 @@ namespace getfemint
     // }
   }
 
-
   /* throw recursively anonymous objects in the zombie workspace */
-  void workspace_stack::mark_deletable_objects(id_type id, dal::bit_vector &lst) const {
+  void workspace_stack::mark_deletable_objects(id_type id, dal::bit_vector &lst, dal::bit_vector &glst) const {
     if (!obj.index().is_in(id)) THROW_INTERNAL_ERROR;
     getfem_object *o = obj[id];
     if (!o) THROW_INTERNAL_ERROR;
-    if (lst.is_in(id)) return; // already inspected
+    if (glst.is_in(id) || lst.is_in(id)) return; // already inspected
     if (!o->is_anonymous()) return;
     bool it_is_possible  = true;
+    glst.add(id);
     for (unsigned i=0; i < o->used_by.size(); ++i) {
-      mark_deletable_objects(o->used_by[i], lst);
+      mark_deletable_objects(o->used_by[i], lst, glst);
       if (!lst.is_in(o->used_by[i])) it_is_possible = false;
     }
     if (it_is_possible) lst.add(id);
   }
 
-  /* this is an experimental function... (there are a petite bug in python interface gc).
+
+
+  /* this is an experimental function... (there is a small bug in python interface gc).
 
      unmark the object for future deletion (object becomes from anonymous to current),
      and what else is needed?

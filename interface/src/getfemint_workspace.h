@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2002-2012 Julien Pommier
+ Copyright (C) 2002-2013 Julien Pommier
  
  This file is a part of GETFEM++
  
@@ -75,7 +75,10 @@ namespace getfemint
     /* check if object 'id' can be deleted 
        (all objects which depend on it should be marked as anonymous)
      */
-    void mark_deletable_objects(id_type id, dal::bit_vector& v) const;
+    void mark_deletable_objects(id_type id, dal::bit_vector& v,
+                                dal::bit_vector& g) const;
+    void mark_deletable_objects(id_type id, dal::bit_vector& v) const
+    { dal::bit_vector g; mark_deletable_objects(id, v, g); }
   public:
 
     /* inserts a new object (and gives it an id) */
