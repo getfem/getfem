@@ -521,6 +521,7 @@ namespace getfem {
 
   void multi_contact_frame::compute_influence_boxes(void) {
     fem_precomp_pool fppool;
+    bool avert = false;
     base_matrix G;
     model_real_plain_vector coeff;
     
@@ -611,10 +612,12 @@ namespace getfem {
           // offset of the bounding box relatively to the release distance
           scalar_type h = bmax[0] - bmin[0];
           for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
-          if (h < release_distance/scalar_type(20))
-            GMM_WARNING1("Found an element whose size is smaller than 1/20 "
+          if (h < release_distance/scalar_type(40) && !avert) {
+            GMM_WARNING1("Found an element whose size is smaller than 1/40 "
                          "of the release distance. You should probably "
                          "adapt the release distance.");
+            avert = true;
+          }
           for (size_type k = 0; k < N; ++k)
             { bmin[k] -= release_distance; bmax[k] += release_distance; }
           

@@ -537,71 +537,73 @@ namespace getfem {
 
       if (version & model::BUILD_MATRIX) {
 
-        cout << "begining test" << endl;
-        scalar_type EPS = 1E-8;
-        for (size_type k = 0; k < 100; ++k) {
-          base_small_vector lambda_r(N), Vs_r(N), nx_r(N), f_coeff_r(3), F2(N), F3(N);
-          scalar_type g_r = gmm::random(1.), r_r = gmm::random();
-          gmm::fill_random(lambda_r);
-          gmm::fill_random(Vs_r);
-          gmm::fill_random(nx_r);
-          // gmm::scale(nx_r, 1./gmm::vect_norm2(nx_r));
-          f_coeff_r[0] = gmm::random(); // tester les autres options aussi
-          f_coeff_r[1] = gmm::random();
-          f_coeff_r[2] = gmm::random();
+//         cout << "begining test" << endl;
+//         scalar_type EPS = 1E-8;
+//         for (size_type k = 0; k < 100; ++k) {
+//           base_small_vector lambda_r(N), Vs_r(N), nx_r(N), f_coeff_r(3), F2(N), F3(N);
+//           scalar_type g_r = gmm::random(1.), r_r = gmm::random();
+//           gmm::fill_random(lambda_r);
+//           gmm::fill_random(Vs_r);
+//           gmm::fill_random(nx_r);
+//           // gmm::scale(nx_r, 1./gmm::vect_norm2(nx_r));
+//           f_coeff_r[0] = gmm::random();
+//           f_coeff_r[1] = gmm::random();
+//           f_coeff_r[2] = gmm::random();
           
-          cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r << " nx_r = " << nx_r << endl;
-          cout << "g_r = " << g_r << " r_r = " << r_r << " f = " << f_coeff_r << endl;
+//           cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r << " nx_r = " << nx_r << endl;
+//           cout << "g_r = " << g_r << " r_r = " << r_r << " f = " << f_coeff_r << endl;
 
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
-          aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
-                            dlambdaF, dgF, dnF, dVsF);
-          GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
+//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
+//           aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
+//                             dlambdaF, dgF, dnF, dVsF);
+//           GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
 
-          base_small_vector dlambda(N);
-          gmm::fill_random(dlambda);
-
-
-          gmm::add(gmm::scaled(dlambda, EPS), nx_r);
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-
-          gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
-          cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-          GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-7,
-                      "bad n derivative for F");
-
-          gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
+//           base_small_vector dlambda(N);
+//           gmm::fill_random(dlambda);
 
 
-          gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-          gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
-          cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-          GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
-                      "bad lambda derivative");
-          gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
+//           gmm::add(gmm::scaled(dlambda, EPS), nx_r);
+//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+
+//           gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
+//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-4,
+//                       "bad n derivative");
+
+//           gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
 
 
-          gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-          gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
-          cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-          GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
-                      "bad Vs derivative");
-          gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
+//           gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
+//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+//           gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
+//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
+//                       "bad lambda derivative");
+//           gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
 
 
-          g_r += EPS;
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-          gmm::add(gmm::scaled(dgF, EPS), F, F3);
-          cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-          GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
-                      "bad g derivative");
-          g_r -= EPS;
+//           gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
+//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+//           gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
+//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
+//                       "bad Vs derivative");
+//           gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
+
+
+//           g_r += EPS;
+//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+//           gmm::add(gmm::scaled(dgF, EPS), F, F3);
+//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
+//                       "bad g derivative");
+//           g_r -= EPS;
 
 
 
-        }
+//         }
+
+        cout << "pair " << icp << " g = " << g << endl;
 
         aug_friction_grad(lambda, g, Vs, nx, r, f_coeff, F, dlambdaF,
                           dgF, dnF, dVsF);

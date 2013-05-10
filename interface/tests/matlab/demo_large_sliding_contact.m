@@ -123,7 +123,7 @@ else
   dist = 2;
 end
 % delaunay: after dist 
-mcff=gf_multi_contact_frame(md, N, dist, true, true, 0.2, true, 0, false);
+mcff=gf_multi_contact_frame(md, N, dist, false, true, 0.2, true, 0, false);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
 if (test_case == 1) 
   gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
