@@ -392,6 +392,7 @@ namespace getfem {
               scalar_type J = gmm::lu_inverse(grad);
               if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
               gmm::mult(gmm::transposed(grad), n0, n);
+              gmm::scale(n, gmm::sgn(J)); // Test
             } else {
               n = bgeot::compute_normal(ctx, v.f());
             }
@@ -587,6 +588,7 @@ namespace getfem {
                 if (J <= scalar_type(0))
                   GMM_WARNING1("Inverted element !" << J);
                 gmm::mult(gmm::transposed(grad), n0, n);
+                gmm::scale(n, gmm::sgn(J)); // Test
               } else {
                 n =  bgeot::compute_normal(ctx, v.f());
               }
@@ -814,7 +816,7 @@ namespace getfem {
     std::vector<base_small_vector> ti(N-1), Ti(N-1);
     size_type nbwarn(0);
 
-    double time = dal::uclock_sec();
+    //    double time = dal::uclock_sec();
     
     clear_aux_info();
     contact_pairs = std::vector<contact_pair>();
@@ -839,7 +841,7 @@ namespace getfem {
     else
       compute_potential_contact_pairs_influence_boxes();
 
-    cout << "Time for computing potential pairs: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
+    // cout << "Time for computing potential pairs: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
     
     
     // Scan of potential pairs
@@ -1114,6 +1116,7 @@ namespace getfem {
           scalar_type J = gmm::lu_inverse(grad);
           if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
           gmm::mult(gmm::transposed(grad), n00, n);
+          gmm::scale(n, gmm::sgn(J)); // Test
         } else {
           n = n00;
         }
@@ -1179,10 +1182,10 @@ namespace getfem {
               gmm::add(gmm::scaled(n, -d1/gmm::vect_norm2_sqr(n)), y, pt_eval);
             }
             d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-            if (nit > 10)
-              cout << "nit = " << nit << " lambda = " << lambda
-                   << " alpha = " << alpha << " d2 = " << d2
-                   << " d1  = " << d1 << endl;
+//             if (nit > 10)
+//               cout << "nit = " << nit << " lambda = " << lambda
+//                    << " alpha = " << alpha << " d2 = " << d2
+//                    << " d1  = " << d1 << endl;
             if (gmm::abs(d2) < gmm::abs(d1)) break;
             if (lambda < 1E-3) {
               if (raytrace) {
@@ -1213,7 +1216,7 @@ namespace getfem {
       }
     }
     
-    cout << "Time for computing pairs: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
+    // cout << "Time for computing pairs: " << dal::uclock_sec() - time << endl; time = dal::uclock_sec();
       
     clear_aux_info();
   }

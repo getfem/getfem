@@ -40,6 +40,12 @@ namespace getfem {
   // Augmented friction law
   //=========================================================================
 
+
+#define FRICTION_LAW 2
+
+
+#if FRICTION_LAW == 1 // Complete law with friction
+
   template <typename VEC, typename VEC2, typename VECR>
   void aug_friction(const VEC &lambda, scalar_type g, const VEC &Vs,
                     const VEC &n, scalar_type r, const VEC2 &f, VECR &F) {
@@ -119,6 +125,118 @@ namespace getfem {
 
     gmm::scale(dVs, -r);
   }
+
+#elif FRICTION_LAW == 2 // Contact only
+
+  template <typename VEC, typename VEC2, typename VECR>
+  void aug_friction(const VEC &lambda, scalar_type g, const VEC &,
+                    const VEC &n, scalar_type r, const VEC2 &, VECR &F) {
+    scalar_type nn = gmm::vect_norm2(n);
+    scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
+    scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
+    gmm::copy(gmm::scaled(n, -lambdan_aug/nn), F);   
+  }
+
+  template <typename VEC, typename VEC2, typename VECR, typename MAT>
+  void aug_friction_grad(const VEC &lambda, scalar_type g, const VEC &,
+                         const VEC &n, scalar_type r, const VEC2 &, VECR &F,
+                         MAT &dlambda, VECR &dg, MAT &dn, MAT &dVs) {
+    size_type N = gmm::vect_size(lambda);
+    scalar_type nn = gmm::vect_norm2(n);
+    scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
+    scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
+
+    gmm::clear(dg); gmm::clear(dVs); gmm::clear(F);
+    gmm::clear(dn); gmm::clear(dlambda);
+    // At this stage, F = P_{B_T}, dVs = d_v P_{B_T}, dn = d_n P_{B_T}
+    // and dg = d_tau P_{B_T}.
+
+    if (lambdan_aug > scalar_type(0)) { 
+      gmm::add(gmm::scaled(n, r/nn), dg); 
+      gmm::rank_one_update(dlambda, n, gmm::scaled(n, scalar_type(1)/(nn*nn)));
+      gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(1)/(nn*nn)), lambda);
+      gmm::rank_one_update(dn,
+                           gmm::scaled(n,(lambdan_aug-lambdan)/(nn*nn*nn)), n);
+      for (size_type j = 0; j < N; ++j) dn(j,j) -= lambdan_aug/nn;
+    }
+    gmm::add(gmm::scaled(n, -lambdan_aug/nn), F);
+
+    gmm::scale(dVs, -r);
+  }
+
+
+
+#elif FRICTION_LAW == 3 // Dummy law for test
+
+  template <typename VEC, typename VEC2, typename VECR>
+  void aug_friction(const VEC &lambda, scalar_type g, const VEC &Vs,
+                    const VEC &n, scalar_type r, const VEC2 &f, VECR &F) {
+    gmm::copy(gmm::scaled(lambda, g*r*f[0]), F); // dummy
+    gmm::copy(gmm::scaled(Vs, g*r*f[0]), F);     // dummy
+    
+    gmm::copy(n, F);
+  }
+
+  template <typename VEC, typename VEC2, typename VECR, typename MAT>
+  void aug_friction_grad(const VEC &lambda, scalar_type g, const VEC &Vs,
+                         const VEC &n, scalar_type r, const VEC2 &f, VECR &F,
+                         MAT &dlambda, VECR &dg, MAT &dn, MAT &dVs) {
+    gmm::copy(gmm::scaled(lambda, g*r*f[0]), F); // dummy
+    gmm::copy(gmm::scaled(Vs, g*r*f[0]), F);     // dummy
+    
+    gmm::copy(n, F);
+    gmm::clear(dlambda);
+    gmm::clear(dg);
+    gmm::clear(dVs);
+    gmm::copy(gmm::identity_matrix(), dn);
+  }
+
+#elif FRICTION_LAW == 4 // Dummy law for test
+
+  template <typename VEC, typename VEC2, typename VECR>
+  void aug_friction(const VEC &lambda, scalar_type g, const VEC &Vs,
+                    const VEC &n, scalar_type r, const VEC2 &f, VECR &F) {
+    gmm::copy(gmm::scaled(lambda, g*r*f[0]*n[0]*Vs[0]), F); // dummy
+    gmm::copy(lambda, F);
+  }
+
+  template <typename VEC, typename VEC2, typename VECR, typename MAT>
+  void aug_friction_grad(const VEC &lambda, scalar_type g, const VEC &Vs,
+                         const VEC &n, scalar_type r, const VEC2 &f, VECR &F,
+                         MAT &dlambda, VECR &dg, MAT &dn, MAT &dVs) {
+    gmm::copy(gmm::scaled(lambda, g*r*f[0]*n[0]*Vs[0]), F); // dummy
+    gmm::clear(dn);
+    gmm::clear(dg);
+    gmm::clear(dVs);
+    gmm::copy(lambda, F);
+    gmm::copy(gmm::identity_matrix(), dlambda);
+  }
+
+#elif FRICTION_LAW == 5 // Dummy law for test
+
+  template <typename VEC, typename VEC2, typename VECR>
+  void aug_friction(const VEC &lambda, scalar_type g, const VEC &Vs,
+                    const VEC &n, scalar_type r, const VEC2 &f, VECR &F) {
+    gmm::copy(gmm::scaled(lambda, g*r*f[0]*n[0]*Vs[0]), F); // dummy
+    gmm::clear(F); F[0] = g;
+  }
+
+  template <typename VEC, typename VEC2, typename VECR, typename MAT>
+  void aug_friction_grad(const VEC &lambda, scalar_type g, const VEC &Vs,
+                         const VEC &n, scalar_type r, const VEC2 &f, VECR &F,
+                         MAT &dlambda, VECR &dg, MAT &dn, MAT &dVs) {
+    gmm::copy(gmm::scaled(lambda, g*r*f[0]*n[0]*Vs[0]), F); // dummy
+    gmm::clear(dlambda);
+    gmm::clear(dn);
+    gmm::clear(dg);
+    gmm::clear(dVs);
+    gmm::clear(F); F[0] = g;
+    dg[0] = 1.;
+  }
+
+#endif
+
+
 
 
   //=========================================================================
@@ -493,13 +611,6 @@ namespace getfem {
       scalar_type J = gmm::lu_inverse(grad_phix_inv);
       if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
 
-      // Value of w on the slave surface
-      if (all_wx.size()) {
-        slice_vector_on_basic_dof_of_element(*mf_ux, all_wx, cvx, coeff);
-        ctx_ux.pf()->interpolation(ctx_ux, coeff, wx, dim_type(N));
-      }  else gmm::clear(wx);
-      gmm::add(ctx_ux.xreal(), wx);
-
       // Value of grad phi on the master surface
       if (!isrigid) {
         slice_vector_on_basic_dof_of_element(*mf_uy, mcf.disp_of_boundary(iby),
@@ -511,98 +622,120 @@ namespace getfem {
         if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
       }
 
-      // Value of w on the master surface
-      if (!isrigid) {
-        if (all_wy.size()) {
-          slice_vector_on_basic_dof_of_element(*mf_uy, all_wy, cvy, coeff);
-          ctx_uy.pf()->interpolation(ctx_uy, coeff, wy, dim_type(N)); 
-        } else gmm::clear(wy);
-        gmm::add(ctx_uy.xreal(), wy);
-      } else gmm::copy(y, wy);
-
-      // Value of grad phi(n-1) on the master surface
-      if (!isrigid && all_wy.size()) {
-        ctx_uy.pf()->interpolation_grad(ctx_uy, coeff,grad_phi_ny,dim_type(N));
-        gmm::add(gmm::identity_matrix(), grad_phi_ny);
-      } else gmm::copy(gmm::identity_matrix(), grad_phi_ny);
-
-      // Value of Vs (sliding velocity)
-      gmm::add(x, gmm::scaled(y, scalar_type(-1)), Vs);
-      gmm::add(gmm::scaled(wx, scalar_type(-1)), Vs);
-      gmm::add(wy, Vs);
-      gmm::scale(Vs, alpha);
-
+      if (alpha != scalar_type(0)) {
+        // Value of w on the slave surface
+        if (all_wx.size()) {
+          slice_vector_on_basic_dof_of_element(*mf_ux, all_wx, cvx, coeff);
+          ctx_ux.pf()->interpolation(ctx_ux, coeff, wx, dim_type(N));
+        }  else gmm::clear(wx);
+        gmm::add(ctx_ux.xreal(), wx);
+        
+        // Value of w on the master surface
+        if (!isrigid) {
+          if (all_wy.size()) {
+            slice_vector_on_basic_dof_of_element(*mf_uy, all_wy, cvy, coeff);
+            ctx_uy.pf()->interpolation(ctx_uy, coeff, wy, dim_type(N)); 
+          } else gmm::clear(wy);
+          gmm::add(ctx_uy.xreal(), wy);
+        } else gmm::copy(y, wy);
+        
+        // Value of grad phi(n-1) on the master surface
+        if (!isrigid && all_wy.size()) {
+          ctx_uy.pf()->interpolation_grad(ctx_uy, coeff, grad_phi_ny,
+                                          dim_type(N));
+          gmm::add(gmm::identity_matrix(), grad_phi_ny);
+        } else gmm::copy(gmm::identity_matrix(), grad_phi_ny);
+        
+        // Value of Vs (sliding velocity)
+        gmm::add(x, gmm::scaled(y, scalar_type(-1)), Vs);
+        gmm::add(gmm::scaled(wx, scalar_type(-1)), Vs);
+        gmm::add(wy, Vs);
+        gmm::scale(Vs, alpha);
+      } else gmm::clear(Vs);
+      
       base_vector aux6(ndof_uy), aux7(ndof_ux), aux12(ndof_lx);
-
 
 
       if (version & model::BUILD_MATRIX) {
 
-//         cout << "begining test" << endl;
-//         scalar_type EPS = 1E-8;
-//         for (size_type k = 0; k < 100; ++k) {
-//           base_small_vector lambda_r(N), Vs_r(N), nx_r(N), f_coeff_r(3), F2(N), F3(N);
-//           scalar_type g_r = gmm::random(1.), r_r = gmm::random();
-//           gmm::fill_random(lambda_r);
-//           gmm::fill_random(Vs_r);
-//           gmm::fill_random(nx_r);
-//           // gmm::scale(nx_r, 1./gmm::vect_norm2(nx_r));
-//           f_coeff_r[0] = gmm::random();
-//           f_coeff_r[1] = gmm::random();
-//           f_coeff_r[2] = gmm::random();
+#define DO_TEST_F
+
+#ifdef DO_TEST_F
+
+        scalar_type EPS = 5E-9;
+        for (size_type k = 0; k < 100; ++k) {
+          base_small_vector lambda_r(N), Vs_r(N), nx_r(N), f_coeff_r(3);
+          base_small_vector F2(N), F3(N);
+          scalar_type g_r = gmm::random(1.), r_r = gmm::random();
+          gmm::fill_random(lambda_r);
+          gmm::fill_random(Vs_r);
+          gmm::fill_random(nx_r);
+          gmm::scale(nx_r, 1./gmm::vect_norm2(nx_r));
+          f_coeff_r[0] = gmm::random();
+          f_coeff_r[1] = gmm::random();
+          f_coeff_r[2] = gmm::random();
           
-//           cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r << " nx_r = " << nx_r << endl;
-//           cout << "g_r = " << g_r << " r_r = " << r_r << " f = " << f_coeff_r << endl;
+          // cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r
+          //      << " nx_r = " << nx_r << endl << "g_r = " << g_r
+          //      << " r_r = " << r_r << " f = " << f_coeff_r << endl;
 
-//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
-//           aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
-//                             dlambdaF, dgF, dnF, dVsF);
-//           GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
+          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
+          aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
+                            dlambdaF, dgF, dnF, dVsF);
+          GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
 
-//           base_small_vector dlambda(N);
-//           gmm::fill_random(dlambda);
-
-
-//           gmm::add(gmm::scaled(dlambda, EPS), nx_r);
-//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-
-//           gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
-//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-4,
-//                       "bad n derivative");
-
-//           gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
+          base_small_vector dlambda(N);
+          gmm::fill_random(dlambda);
 
 
-//           gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
-//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-//           gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
-//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
-//                       "bad lambda derivative");
-//           gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
+          gmm::add(gmm::scaled(dlambda, EPS), nx_r);
+          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+
+          gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
+          if (gmm::vect_dist2(F2, F3)/EPS > 1E-4) {
+            cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r
+                 << " nx_r = " << nx_r << endl << "g_r = " << g_r
+                 << " r_r = " << r_r << " f = " << f_coeff_r << endl;
+            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+            GMM_ASSERT1(false, "bad n derivative");
+          }
+
+          gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
 
 
-//           gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
-//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-//           gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
-//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
-//                       "bad Vs derivative");
-//           gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
+          gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
+          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+          gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
+          if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
+            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+            GMM_ASSERT1(false, "bad lambda derivative");
+          }
+          gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
 
 
-//           g_r += EPS;
-//           aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-//           gmm::add(gmm::scaled(dgF, EPS), F, F3);
-//           cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-//           GMM_ASSERT1(gmm::vect_dist2(F2, F3)/EPS < 1E-6,
-//                       "bad g derivative");
-//           g_r -= EPS;
+          gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
+          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+          gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
+          if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
+            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+            GMM_ASSERT1(false, "bad Vs derivative");
+          }
+          gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
+
+
+          g_r += EPS;
+          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+          gmm::add(gmm::scaled(dgF, EPS), F, F3);
+          if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
+            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+            GMM_ASSERT1(false, "bad g derivative");
+          }
+          g_r -= EPS;
 
 
 
-//         }
+        }
+#endif
 
         // cout << "pair " << icp << " g = " << g << endl;
         base_matrix aux1(ndof_uy, N), aux4(ndof_uy, ndof_ux);
@@ -618,13 +751,14 @@ namespace getfem {
         for (size_type i = 0; i < ndof_ux; ++i)
           for (size_type j = 0; j < N; ++j)
             for (size_type k = 0; k < N; ++k)
-              graddeltaunx(i, j) += nx[k] * vgrad_base_ux(i, j, k);
+              graddeltaunx(i, j) += nx[k] * vgrad_base_ux(i, k, j);
         
 #define CONSIDER_TERM3
+#define CONSIDER_TERM1
 
 
 #ifdef CONSIDER_TERM1
-        // Term  \delta\lambda(X) . \delta v(X)
+        // Term  \delta\lambda(X) . \delta v(X)  .. validated ..
         gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
         gmm::mult(vbase_ux, gmm::transposed(vbase_lx), Melem);
         gmm::scale(Melem, weight);
@@ -681,41 +815,54 @@ namespace getfem {
 
 #ifdef CONSIDER_TERM3
 
-        // Term (1/r)(I-dlambdaF)\delta\lambda\delta\mu
+        // cout << "dlambdaF = " << dlambdaF << endl;
+        // cout << "lambda = " << lambda << endl;
+
+        // Term (1/r)(I-dlambdaF)\delta\lambda\delta\mu  .. validated for dlambdaF = Id ..
         //   the I of (I-dlambdaF) is skipped because globally added before
         gmm::resize(Melem, ndof_lx, ndof_lx); gmm::clear(Melem);
-        // gmm::copy(identity_matrix(), aux2);
-        gmm::copy(gmm::scaled(dlambdaF, scalar_type(-1)), aux2);
-        gmm::scale(aux2, scalar_type(1)/r);
-        gmm::mult(vbase_lx, gmm::transposed(aux2), aux5);
+        gmm::copy(gmm::scaled(dlambdaF, scalar_type(-1)/r), aux2);
+        gmm::mult(vbase_lx, aux2, aux5);
         gmm::mult(aux5, gmm::transposed(vbase_lx), Melem);
         gmm::scale(Melem, weight);
+        // cout << "Melem1 " << Melem << endl;
         mat_elem_assembly(M, I_lx, I_lx, Melem, *mf_lx, cvx, *mf_lx, cvx);
 
-        // Term -(1/r)dgF\delta nx\delta\mu
-        gmm::resize(Melem, ndof_lx, ndof_ux);
-        gmm::mult(vbase_lx, Inx, aux5);
-        gmm::mult(aux5, grad_phix_inv, aux10);
-        gmm::mult(aux10, gmm::transposed(graddeltaunx), Melem);
+        // cout << "dnF = " << dnF << endl;
+        // cout << "nx = " << nx << endl;
+        // cout << "Inx = " << Inx << endl;
+
+        // Term -(1/r)dnF\delta nx\delta\mu  .. validated for dnF = Id ..
+        gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
+        gmm::mult(vbase_lx, dnF, aux5);
+        gmm::mult(aux5, Inx, aux10);
+        gmm::mult(aux10,  gmm::transposed(grad_phix_inv), aux5);
+        gmm::mult(aux5, gmm::transposed(graddeltaunx), Melem);
+        gmm::scale(Melem, scalar_type(1)/r);
+        // cout << "Melem1.5 " << Melem << endl;
         // assembly factorized with the next term
 
+        // cout << "dgF = " << dgF << endl;
         // Term -(1/r)dgF\delta g\delta\mu
         base_vector deltamudgF(ndof_lx);
         gmm::mult(vbase_lx, gmm::scaled(dgF, scalar_type(1)/(r*nxny)),
                   deltamudgF);
+        // cout << "deltamudgF = " << deltamudgF << endl;
 
         // first sub term
-        gmm::mult(vbase_ux, gmm::scaled(ny, scalar_type(-1)), aux7);
+        gmm::mult(vbase_ux, ny, aux7);
 
         // second sub term
-        gmm::mult(Inx, gmm::scaled(ny, scalar_type(-1)), aux8);
+        gmm::mult(Inx, gmm::scaled(ny, -g), aux8);
         gmm::mult(grad_phix_inv, aux8, aux9);
-        for (size_type i = 0; i < ndof_ux; ++i)
-          for (size_type j = 0; j < N; ++j)
-            for (size_type k = 0; k < N; ++k)
-              aux7[i] += aux9[j] *  vgrad_base_ux(i, j, k) * nx[k];
+        gmm::mult_add(graddeltaunx, aux9, aux7);
+//         for (size_type i = 0; i < ndof_ux; ++i)
+//           for (size_type j = 0; j < N; ++j)
+//             for (size_type k = 0; k < N; ++k)
+//               aux7[i] += aux9[j] *  vgrad_base_ux(i, k, j) * nx[k];
         gmm::rank_one_update(Melem, deltamudgF,  aux7);
         gmm::scale(Melem, weight);
+        // cout << "Melem2 " << Melem << endl;
         mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
 
         if (!isrigid) {
@@ -723,47 +870,49 @@ namespace getfem {
           gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
           gmm::mult(vbase_uy, ny, aux6);
           gmm::rank_one_update(Melem, deltamudgF,  aux6);
-          gmm::scale(Melem, weight);
+          gmm::scale(Melem, -weight);
           mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
         }
 
-        // Term -(1/r) d_Vs F \delta Vs\delta\mu
-        base_matrix I_gphingphiyinv(N, N);
-        if (!isrigid) 
-          gmm::mult(gmm::scaled(grad_phi_ny, scalar_type(-1)),
-                    grad_phiy_inv, I_gphingphiyinv);
-        gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
-
-        // first sub term
-        gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
-        gmm::mult(I_gphingphiyinv, Inxy, aux2);
-        for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
-        gmm::mult(dVsF, aux2, aux3);
-        gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
-        gmm::mult(aux5, gmm::transposed(vbase_ux), Melem);
+        if (alpha != scalar_type(0)) {
+          // Term -(1/r) d_Vs F \delta Vs\delta\mu
+          base_matrix I_gphingphiyinv(N, N);
+          if (!isrigid) 
+            gmm::mult(gmm::scaled(grad_phi_ny, scalar_type(-1)),
+                      grad_phiy_inv, I_gphingphiyinv);
+          gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
+          
+          // first sub term
+          gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
+          gmm::mult(I_gphingphiyinv, Inxy, aux2);
+          for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
+          gmm::mult(dVsF, aux2, aux3);
+          gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
+          gmm::mult(aux5, gmm::transposed(vbase_ux), Melem);
         
-        // second sub term
-        gmm::mult(dVsF, I_gphingphiyinv, aux2);
-        gmm::mult(aux2, Iny, aux3);
-        gmm::mult(aux3, gmm::scaled(Inx, scalar_type(-1)), aux2);
-        gmm::mult(aux2, gmm::transposed(grad_phix_inv), aux3);
-        gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
-        gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
-        gmm::scale(aux11, g/(nxny*nxny));
-        gmm::add(aux11, Melem);
-        gmm::scale(Melem, weight*alpha/r);
-        mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
-
-        if (!isrigid) {
-          // third sub term
-          gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
+          // second sub term
           gmm::mult(dVsF, I_gphingphiyinv, aux2);
-          gmm::mult(aux2, nx, aux8);
-          gmm::mult(vbase_lx, aux8, aux12);
-          gmm::mult(vbase_uy, gmm::scaled(ny, scalar_type(1)/nxny), aux6);
-          gmm::rank_one_update(Melem, aux12, aux6);
+          gmm::mult(aux2, Iny, aux3);
+          gmm::mult(aux3, gmm::scaled(Inx, scalar_type(-1)), aux2);
+          gmm::mult(aux2, gmm::transposed(grad_phix_inv), aux3);
+          gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
+          gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
+          gmm::scale(aux11, g/(nxny*nxny));
+          gmm::add(aux11, Melem);
           gmm::scale(Melem, weight*alpha/r);
-          mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
+          mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
+
+          if (!isrigid) {
+            // third sub term
+            gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
+            gmm::mult(dVsF, I_gphingphiyinv, aux2);
+            gmm::mult(aux2, nx, aux8);
+            gmm::mult(vbase_lx, aux8, aux12);
+            gmm::mult(vbase_uy, gmm::scaled(ny, scalar_type(1)/nxny), aux6);
+            gmm::rank_one_update(Melem, aux12, aux6);
+            gmm::scale(Melem, weight*alpha/r);
+            mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
+          }
         }
 
 #endif
@@ -777,7 +926,7 @@ namespace getfem {
 
 #ifdef CONSIDER_TERM1
 
-        // Term lambda.\delta v(X)
+        // Term lambda.\delta v(X)  .. validated ..
         gmm::mult(vbase_ux, lambda, aux7);
         gmm::scale(aux7, -weight);
         vec_elem_assembly(V, I_ux, aux7, *mf_ux, cvx);
@@ -788,16 +937,16 @@ namespace getfem {
         // Term -lambda.\delta v(Y)
         if (!isrigid) {
           gmm::mult(vbase_uy, lambda, aux6);
-          gmm::scale(aux6, -weight);
+          gmm::scale(aux6, weight);
           vec_elem_assembly(V, I_uy, aux6, *mf_uy, cvy);
         }
 #endif
 
 #ifdef CONSIDER_TERM3
 
-        // Term (1/r)(lambda - F).\delta \mu
+        // Term (1/r)(lambda - F).\delta \mu .. validated ..
         // (1/r)(lambda).\delta \mu is skipped because globally added before
-        gmm::mult(vbase_lx, gmm::scaled(F, scalar_type(-1)), aux12);
+        gmm::mult(vbase_lx, gmm::scaled(F, scalar_type(-1)/r), aux12);
         gmm::scale(aux12, -weight);
         vec_elem_assembly(V, I_lx, aux12, *mf_lx, cvx);
 #endif
