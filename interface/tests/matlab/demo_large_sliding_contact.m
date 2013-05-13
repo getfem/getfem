@@ -25,10 +25,11 @@ test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 3 = 3D case (sphere / parallelepiped) (two meshes)
 
 lambda = 1.; mu = 1.;   % Elasticity parameters
-r = 10;               % Augmentation parameter
+r = 10;                 % Augmentation parameter
 f_coeff = 0;            % Friction coefficient
 test_tangent_matrix = false;
 nonlinear_elasticity = false;
+max_iter = 2000;
 
 if (test_case == 2)
   vf = 0.01;              % Vertical force
@@ -85,7 +86,7 @@ end
 
 % dol1 = gf_mesh_fem_get(pre_mflambda1, 'basic dof on region', CONTACT_BOUNDARY1);
 % mflambda1 = gf_mesh_fem('partial',  pre_mflambda1, dol1);
-mim1 = gf_mesh_im(mesh1, 2);
+mim1 = gf_mesh_im(mesh1, 8);
 
 if (test_case ~= 2 && test_case ~= 0) 
   mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 1);
@@ -96,7 +97,7 @@ if (test_case ~= 2 && test_case ~= 0)
   gf_mesh_set(mesh2,'boundary', CONTACT_BOUNDARY2, fb2);
   % dol2 = gf_mesh_fem_get(pre_mflambda2, 'basic dof on region', CONTACT_BOUNDARY2);
   % mflambda2 = gf_mesh_fem('partial',  pre_mflambda2, dol2);
-  mim2 = gf_mesh_im(mesh2, 2);
+  mim2 = gf_mesh_im(mesh2, 4);
 end
 
 md=gf_model('real');
@@ -183,7 +184,7 @@ end
 gf_model_set(md, 'add integral large sliding contact brick', mcff, 'r', 'f');
 
 
-for i=1:100
+for nit=1:100
 
   if (test_tangent_matrix) 
     errmax = gf_model_get(md, 'test tangent matrix', 1E-6, 20, 0.0001);
@@ -192,7 +193,10 @@ for i=1:100
     pause;
   end
     
-  gf_model_get(md, 'solve', 'noisy', 'max_iter', 40, 'max_res', 4e-8); % , 'lsearch', 'simplest');
+  if (nit > 6) % a supprimer
+      max_iter = 2;
+  end
+  gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', 4e-8); % , 'lsearch', 'simplest');
 
   U1 = gf_model_get(md, 'variable', 'u1');
   VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
@@ -250,10 +254,12 @@ for i=1:100
 
   pause;
 
-  vf = vf * vf_mult; F(N) = -vf;
-  gf_model_set(md, 'variable', 'data1', F);
-  if (test_case ~= 2 && test_case ~= 0)
-    gf_model_set(md, 'variable', 'data2', F);
+  if (nit < 5) % Test a supprimer à terme
+    vf = vf * vf_mult; F(N) = -vf;
+    gf_model_set(md, 'variable', 'data1', F);
+    if (test_case ~= 2 && test_case ~= 0)
+      gf_model_set(md, 'variable', 'data2', F);
+    end
   end
 
 end;

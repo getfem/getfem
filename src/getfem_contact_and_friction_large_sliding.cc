@@ -41,7 +41,7 @@ namespace getfem {
   //=========================================================================
 
 
-#define FRICTION_LAW 2
+#define FRICTION_LAW 1
 
 
 #if FRICTION_LAW == 1 // Complete law with friction
@@ -761,7 +761,7 @@ namespace getfem {
         // Term  \delta\lambda(X) . \delta v(X)  .. validated ..
         gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
         gmm::mult(vbase_ux, gmm::transposed(vbase_lx), Melem);
-        gmm::scale(Melem, weight);
+        gmm::scale(Melem, -weight);
         mat_elem_assembly(M, I_ux, I_lx, Melem, *mf_ux, cvx, *mf_lx, cvx);
 #endif
 
@@ -772,7 +772,7 @@ namespace getfem {
           // Term  -\delta\lambda(X) . \delta v(Y)
           gmm::resize(Melem, ndof_uy, ndof_lx); gmm::clear(Melem);
           gmm::mult(vbase_uy, gmm::transposed(vbase_lx), Melem);
-          gmm::scale(Melem, weight);
+          gmm::scale(Melem, -weight);
           mat_elem_assembly(M, I_uy, I_lx, Melem, *mf_uy, cvy, *mf_lx, cvx);
 
           // Term -\lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
@@ -790,7 +790,7 @@ namespace getfem {
           base_matrix aux(ndof_uy, N);
           gmm::mult(lgraddeltavgradphiyinv, Inxy, aux);
           gmm::mult(aux, gmm::transposed(vbase_uy), Melem);
-          gmm::scale(Melem, weight);
+          gmm::scale(Melem, -weight);
           mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
 
           // Second sub term
@@ -807,7 +807,7 @@ namespace getfem {
           gmm::mult(aux1, gmm::transposed(graddeltaunx), aux4);
           gmm::scale(aux4, g/(nxny*nxny));
           gmm::add(aux4, Melem);
-          gmm::scale(Melem, weight);
+          gmm::scale(Melem, -weight);
           mat_elem_assembly(M, I_uy, I_ux, Melem, *mf_uy, cvy, *mf_ux, cvx);
         }
 
@@ -926,18 +926,18 @@ namespace getfem {
 
 #ifdef CONSIDER_TERM1
 
-        // Term lambda.\delta v(X)  .. validated ..
+        // Term -lambda.\delta v(X)  .. validated ..
         gmm::mult(vbase_ux, lambda, aux7);
-        gmm::scale(aux7, -weight);
+        gmm::scale(aux7, weight);
         vec_elem_assembly(V, I_ux, aux7, *mf_ux, cvx);
 #endif
 
 #ifdef CONSIDER_TERM2
 
-        // Term -lambda.\delta v(Y)
+        // Term lambda.\delta v(Y)
         if (!isrigid) {
           gmm::mult(vbase_uy, lambda, aux6);
-          gmm::scale(aux6, weight);
+          gmm::scale(aux6, -weight);
           vec_elem_assembly(V, I_uy, aux6, *mf_uy, cvy);
         }
 #endif
