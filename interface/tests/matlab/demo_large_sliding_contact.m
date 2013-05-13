@@ -28,22 +28,32 @@ lambda = 1.; mu = 1.;   % Elasticity parameters
 r = 10;                 % Augmentation parameter
 f_coeff = 0;            % Friction coefficient
 test_tangent_matrix = false;
-nonlinear_elasticity = false;
-max_iter = 2000;
+nonlinear_elasticity = true;
+max_iter = 100;
 
 if (test_case == 2)
   vf = 0.01;              % Vertical force
-  vf_mult = 1.1;
+  vf_mult = 1.05;
   penalty_parameter = 0.1;
+  release_dist = 0.05;
+  max_res = 1E-9;
 elseif (test_case == 0)
   vf = 0.001;
   vf_mult = 1.1;
   penalty_parameter = 0;
   dirichlet_translation = 0.5;
+  max_res = 1E-8;
+  release_dist = 5;
 else
   vf = 0.01;              % Vertical force
   vf_mult = 1.5;
   penalty_parameter = 0.01;
+  max_res = 1E-8;
+  if (test_case == 1)
+    release_dist = 0.1;
+  else
+    release_dist = 5;
+  end
 end;    
 
 if (test_case == 0)
@@ -62,8 +72,8 @@ end
 
 N = gf_mesh_get(mesh1, 'dim');
 
-mfu1 = gf_mesh_fem(mesh1, N); gf_mesh_fem_set(mfu1, 'classical fem', 1);
-pre_mflambda1 = gf_mesh_fem(mesh1, N); gf_mesh_fem_set(pre_mflambda1, 'classical fem', 2);
+mfu1 = gf_mesh_fem(mesh1, N); gf_mesh_fem_set(mfu1, 'classical fem', 2);
+pre_mflambda1 = gf_mesh_fem(mesh1, N); gf_mesh_fem_set(pre_mflambda1, 'classical fem', 1);
 mfvm1 = gf_mesh_fem(mesh1); gf_mesh_fem_set(mfvm1, 'classical discontinuous fem', 1);
 CONTACT_BOUNDARY1 = 1;
 DIRICHLET_BOUNDARY1 = 3;
@@ -86,10 +96,10 @@ end
 
 % dol1 = gf_mesh_fem_get(pre_mflambda1, 'basic dof on region', CONTACT_BOUNDARY1);
 % mflambda1 = gf_mesh_fem('partial',  pre_mflambda1, dol1);
-mim1 = gf_mesh_im(mesh1, 8);
+mim1 = gf_mesh_im(mesh1, 4);
 
 if (test_case ~= 2 && test_case ~= 0) 
-  mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 1);
+  mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 2);
   pre_mflambda2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(pre_mflambda2, 'classical fem', 1);
   mfvm2 = gf_mesh_fem(mesh2); gf_mesh_fem_set(mfvm2, 'classical discontinuous fem', 1);
   fb2 = gf_mesh_get(mesh2, 'outer faces');
@@ -161,14 +171,10 @@ gf_model_set(md, 'add initialized data', 'r', r);
 gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
 
-if (test_case == 1 || test_case == 2)
-  dist = 0.1;
-else
-  dist = 5;
-end
+
 % delaunay: after dist 
-mcff=gf_multi_contact_frame(md, N, dist, false, true, 0.2, true, 0, false);
-gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
+mcff=gf_multi_contact_frame(md, N, release_dist, false, true, 0.2, true, 0, false);
+gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
 if (test_case == 1) 
   gf_multi_contact_frame_set(mcff, 'add slave boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
@@ -177,7 +183,7 @@ elseif (test_case == 0)
 elseif (test_case == 2) 
   gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');      
 else
-  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
 end
 
@@ -193,10 +199,7 @@ for nit=1:100
     pause;
   end
     
-  if (nit > 6) % a supprimer
-      max_iter = 2;
-  end
-  gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', 4e-8); % , 'lsearch', 'simplest');
+  gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', max_res); % , 'lsearch', 'simplest');
 
   U1 = gf_model_get(md, 'variable', 'u1');
   VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
@@ -205,7 +208,7 @@ for nit=1:100
   gf_plot(mfvm1,VM1,'mesh', 'off', 'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
 
   hold on % quiver plot of the multiplier
-  lambda1 = gf_model_get(md, 'variable', 'lambda1')
+  lambda1 = gf_model_get(md, 'variable', 'lambda1');
   mf_lambda1 = gf_model_get(md, 'mesh fem of variable', 'lambda1');
   sl=gf_slice({'boundary'}, mf_lambda1, CONTACT_BOUNDARY1);
   bound_lambda1=gf_compute(mf_lambda1, lambda1,'interpolate on', sl);
@@ -254,12 +257,16 @@ for nit=1:100
 
   pause;
 
-  if (nit < 5) % Test a supprimer à terme
-    vf = vf * vf_mult; F(N) = -vf;
-    gf_model_set(md, 'variable', 'data1', F);
-    if (test_case ~= 2 && test_case ~= 0)
-      gf_model_set(md, 'variable', 'data2', F);
-    end
+  vf = vf * vf_mult; F(N) = -vf;
+  gf_model_set(md, 'variable', 'data1', F);
+  if (test_case ~= 2 && test_case ~= 0)
+    gf_model_set(md, 'variable', 'data2', F);
   end
+  
+  if (test_case == 0)
+    Ddata(N) = Ddata(N) - 0.25;
+    gf_model_set(md, 'variable', 'Ddata', Ddata);
+  end
+  
 
 end;

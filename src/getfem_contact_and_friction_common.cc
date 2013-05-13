@@ -438,8 +438,6 @@ namespace getfem {
           boundary_point *pt_info2 = &(boundary_points_info[ipt2]);
           size_type ib1 = pt_info1->ind_boundary;
           size_type ib2 = pt_info2->ind_boundary;
-          size_type ir1 = region_of_boundary(ib1);
-          size_type ir2 = region_of_boundary(ib2);
           bool sl1 = slave_boundaries[ib1];
           bool sl2 = slave_boundaries[ib2];
           if (!sl1 && sl2) { // The slave in first if any
@@ -448,6 +446,8 @@ namespace getfem {
             std::swap(sl1, sl2);
             std::swap(ib1, ib2);
           }
+          size_type ir1 = region_of_boundary(ib1);
+          size_type ir2 = region_of_boundary(ib2);
           const mesh_fem &mf1 = mfu_of_boundary(ib1);
           const mesh_fem &mf2 = mfu_of_boundary(ib2);
 
@@ -1055,7 +1055,7 @@ namespace getfem {
             gmm::copy(b, a);
             dist = pps(a, grada);
 
-            ++niter; if (niter > 50) break;
+            if (++niter > 50) break;
           }
 
           converged = (gmm::vect_norm2(grada) < 2E-6);

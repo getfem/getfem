@@ -41,7 +41,7 @@ namespace getfem {
   //=========================================================================
 
 
-#define FRICTION_LAW 1
+#define FRICTION_LAW 2
 
 
 #if FRICTION_LAW == 1 // Complete law with friction
@@ -753,8 +753,9 @@ namespace getfem {
             for (size_type k = 0; k < N; ++k)
               graddeltaunx(i, j) += nx[k] * vgrad_base_ux(i, k, j);
 
-#define CONSIDER_TERM3
 #define CONSIDER_TERM1
+#define CONSIDER_TERM2
+#define CONSIDER_TERM3
 
 
 #ifdef CONSIDER_TERM1
