@@ -25,11 +25,11 @@ test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 3 = 3D case (sphere / parallelepiped) (two meshes)
 
 lambda = 1.; mu = 1.;   % Elasticity parameters
-r = 10;                 % Augmentation parameter
+r = 100;                 % Augmentation parameter
 f_coeff = 0;            % Friction coefficient
 test_tangent_matrix = false;
 nonlinear_elasticity = true;
-max_iter = 100;
+max_iter = 50;
 
 if (test_case == 2)
   vf = 0.01;              % Vertical force
@@ -176,7 +176,7 @@ gf_model_set(md, 'add initialized data', 'f', f_coeff);
 mcff=gf_multi_contact_frame(md, N, release_dist, false, true, 0.2, true, 0, false);
 gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
 if (test_case == 1) 
-  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+  gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
   gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
 elseif (test_case == 0) 
   gf_multi_contact_frame_set(mcff, 'add obstacle', '80-sqrt(x^2+(y-80)^2)');

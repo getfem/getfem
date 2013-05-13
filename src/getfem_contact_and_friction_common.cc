@@ -974,7 +974,7 @@ namespace getfem {
           pps(a, res);
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
-          size_type niter = 0;
+          size_type niter = 0, nbfail = 0;
           while (residual > 2E-7) {
 
             size_type subiter(0);
@@ -998,12 +998,13 @@ namespace getfem {
               residual2 = gmm::vect_norm2(res2);
               if (residual2 < residual) break;
               lambda /= scalar_type(2);
-              if (lambda < 1E-3) break;
+              if (lambda < 1E-3) { nbfail++; break; }
             }
             residual = residual2;
             gmm::copy(res2, res);
             gmm::copy(b, a);
-            ++niter; if (niter > 50) break;
+            if (nbfail > 6) break;
+            if (++niter > 50) break;
           }
           converged = (gmm::vect_norm2(res) < 2E-6);
 

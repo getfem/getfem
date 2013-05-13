@@ -41,7 +41,7 @@ namespace getfem {
   //=========================================================================
 
 
-#define FRICTION_LAW 2
+#define FRICTION_LAW 1
 
 
 #if FRICTION_LAW == 1 // Complete law with friction
