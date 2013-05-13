@@ -59,12 +59,12 @@ namespace getfem {
     if (tau > scalar_type(0)) {
       gmm::add(lambda, gmm::scaled(Vs, -r), F);
       scalar_type mu = gmm::vect_sp(F, n)/nn;
-      gmm::add(gmm::scaled(n, -mu/nn), F); 
+      gmm::add(gmm::scaled(n, -mu/nn), F);
       scalar_type norm = gmm::vect_norm2(F);
       if (norm > tau) gmm::scale(F, tau / norm);
     } else { gmm::clear(F); }
 
-    gmm::add(gmm::scaled(n, -lambdan_aug/nn), F);   
+    gmm::add(gmm::scaled(n, -lambdan_aug/nn), F);
   }
 
   template <typename VEC, typename VEC2, typename VECR, typename MAT>
@@ -91,7 +91,7 @@ namespace getfem {
       gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);
       gmm::copy(gmm::identity_matrix(), dVs);
       gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn)));
-      
+
       if (norm > tau) {
         gmm::rank_one_update(dVs, F,
                              gmm::scaled(F, scalar_type(-1)/(norm*norm)));
@@ -101,7 +101,7 @@ namespace getfem {
         gmm::scale(dn, tau / norm);
         gmm::scale(F, tau / norm);
       } else gmm::clear(dg);
-      
+
     } else { gmm::clear(dg); gmm::clear(dVs); gmm::clear(F); gmm::clear(dn); }
     // At this stage, F = P_{B_T}, dVs = d_v P_{B_T}, dn = d_n P_{B_T}
     // and dg = d_tau P_{B_T}.
@@ -113,8 +113,8 @@ namespace getfem {
       gmm::rank_one_update(dlambda, dg, gmm::scaled(n, -f[0]/nn));
       gmm::scale(dg, -f[0]*r);
     } else gmm::clear(dg);
-    if (lambdan_aug > scalar_type(0)) { 
-      gmm::add(gmm::scaled(n, r/nn), dg); 
+    if (lambdan_aug > scalar_type(0)) {
+      gmm::add(gmm::scaled(n, r/nn), dg);
       gmm::rank_one_update(dlambda, n, gmm::scaled(n, scalar_type(1)/(nn*nn)));
       gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(1)/(nn*nn)), lambda);
       gmm::rank_one_update(dn,
@@ -134,7 +134,7 @@ namespace getfem {
     scalar_type nn = gmm::vect_norm2(n);
     scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
     scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
-    gmm::copy(gmm::scaled(n, -lambdan_aug/nn), F);   
+    gmm::copy(gmm::scaled(n, -lambdan_aug/nn), F);
   }
 
   template <typename VEC, typename VEC2, typename VECR, typename MAT>
@@ -151,8 +151,8 @@ namespace getfem {
     // At this stage, F = P_{B_T}, dVs = d_v P_{B_T}, dn = d_n P_{B_T}
     // and dg = d_tau P_{B_T}.
 
-    if (lambdan_aug > scalar_type(0)) { 
-      gmm::add(gmm::scaled(n, r/nn), dg); 
+    if (lambdan_aug > scalar_type(0)) {
+      gmm::add(gmm::scaled(n, r/nn), dg);
       gmm::rank_one_update(dlambda, n, gmm::scaled(n, scalar_type(1)/(nn*nn)));
       gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(1)/(nn*nn)), lambda);
       gmm::rank_one_update(dn,
@@ -173,7 +173,7 @@ namespace getfem {
                     const VEC &n, scalar_type r, const VEC2 &f, VECR &F) {
     gmm::copy(gmm::scaled(lambda, g*r*f[0]), F); // dummy
     gmm::copy(gmm::scaled(Vs, g*r*f[0]), F);     // dummy
-    
+
     gmm::copy(n, F);
   }
 
@@ -183,7 +183,7 @@ namespace getfem {
                          MAT &dlambda, VECR &dg, MAT &dn, MAT &dVs) {
     gmm::copy(gmm::scaled(lambda, g*r*f[0]), F); // dummy
     gmm::copy(gmm::scaled(Vs, g*r*f[0]), F);     // dummy
-    
+
     gmm::copy(n, F);
     gmm::clear(dlambda);
     gmm::clear(dg);
@@ -320,7 +320,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Large sliding brick. Work in progress 
+  //  Large sliding brick. Work in progress
   //
   //=========================================================================
 
@@ -332,7 +332,7 @@ namespace getfem {
 
     multi_contact_frame &mcf;
     bool with_friction;
-    
+
 
     virtual void asm_real_tangent_terms(const model &md, size_type /* ib */,
                                         const model::varnamelist &vl,
@@ -379,7 +379,7 @@ namespace getfem {
     if (qdim == 1) {
       gmm::clear(vt.as_vector());
       base_tensor::const_iterator it = t.begin();
-      for (size_type k = 0; k < N; ++k) 
+      for (size_type k = 0; k < N; ++k)
         for (size_type i = 0; i < ndof; ++i, ++it)
           for (size_type j = 0; j < N; ++j) vt(i*N+j, j, k) = *it;
     } else if (qdim == N) {
@@ -419,7 +419,7 @@ namespace getfem {
     }
     if (gmm::vect_size(f_coeff) == 0) // default: no friction
       { f_coeff.resize(1); f_coeff[0] = scalar_type(0); }
-    
+
     scalar_type alpha(0);
     size_type ind = with_friction ? 2:1;
     if (dl.size() >= ind+1) {
@@ -433,7 +433,7 @@ namespace getfem {
                 "Large sliding contact brick should have only one term");
     model_real_sparse_matrix &M = matl[0]; gmm::clear(M);
     model_real_plain_vector &V = vecl[0]; gmm::clear(V);
-    
+
     mcf.set_raytrace(true);
     mcf.set_fem_nodes_mode(0);
     mcf.compute_contact_pairs();
@@ -452,7 +452,7 @@ namespace getfem {
     base_tensor vgrad_base_ux, vgrad_base_uy;
     base_small_vector lambda(N), Vs(N), F(N), dgF(N), wx(N), wy(N);
     base_small_vector aux8(N), aux9(N);
-        
+
     // Stabilization for non-contact zones
     for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
       if (mcf.is_self_contact() || mcf.is_slave_boundary(i)) {
@@ -486,7 +486,7 @@ namespace getfem {
 
       // Extract information on slave and master points and fems
       // TODO : Could be done by a structure, on demand ... (certain
-      // computations are not necessary for rhs only) 
+      // computations are not necessary for rhs only)
       const base_node &x = cp.slave_point;
       const base_small_vector &nx = cp.slave_n;
       gmm::copy(gmm::identity_matrix(), Inx);
@@ -555,7 +555,7 @@ namespace getfem {
       }
       const base_node &y_ref = cp.master_point_ref;
       scalar_type g = cp.signed_dist;
-      
+
       // Fem interpolation context objects
       bgeot::vectors_to_base_matrix(G, mx.points_of_convex(cvx));
       pfem_precomp pfp_ux
@@ -572,7 +572,7 @@ namespace getfem {
         ctx_uy = fem_interpolation_context(pgty, pf_uy, y_ref, G, cvy, fy);
         // ctx_ly = fem_interpolation_context(pgty, pf_ly, y_ref, G, cvy, fy);
       }
-      
+
       // Base tensors
       ctx_lx.base_value(base_lx);
       ctx_ux.base_value(base_ux);
@@ -581,7 +581,7 @@ namespace getfem {
       ctx_ux.grad_base_value(grad_base_ux);
       if (!isrigid) ctx_uy.grad_base_value(grad_base_uy);
 
-      // Vectorisation of tensor (to facilitate the treatment)      
+      // Vectorisation of tensor (to facilitate the treatment)
       vectorize_base_tensor(base_lx, vbase_lx, ndof_lx, qdim_lx, N);
       vectorize_base_tensor(base_ux, vbase_ux, ndof_ux, qdim_ux, N);
       // vectorize_base_tensor(base_ly, vbase_ly, ndof_ly, qdim_ly, N);
@@ -596,7 +596,7 @@ namespace getfem {
       ndof_ux = ndof_ux*N/qdim_ux;
       // ndof_ly = ndof_ly*N/qdim_ly;
       if (!isrigid) ndof_uy = ndof_uy*N/qdim_uy;
-      
+
       // Value of lambda on the slave surface
       slice_vector_on_basic_dof_of_element(*mf_lx, mcf.mult_of_boundary(ibx),
                                            cvx, coeff);
@@ -629,30 +629,30 @@ namespace getfem {
           ctx_ux.pf()->interpolation(ctx_ux, coeff, wx, dim_type(N));
         }  else gmm::clear(wx);
         gmm::add(ctx_ux.xreal(), wx);
-        
+
         // Value of w on the master surface
         if (!isrigid) {
           if (all_wy.size()) {
             slice_vector_on_basic_dof_of_element(*mf_uy, all_wy, cvy, coeff);
-            ctx_uy.pf()->interpolation(ctx_uy, coeff, wy, dim_type(N)); 
+            ctx_uy.pf()->interpolation(ctx_uy, coeff, wy, dim_type(N));
           } else gmm::clear(wy);
           gmm::add(ctx_uy.xreal(), wy);
         } else gmm::copy(y, wy);
-        
+
         // Value of grad phi(n-1) on the master surface
         if (!isrigid && all_wy.size()) {
           ctx_uy.pf()->interpolation_grad(ctx_uy, coeff, grad_phi_ny,
                                           dim_type(N));
           gmm::add(gmm::identity_matrix(), grad_phi_ny);
         } else gmm::copy(gmm::identity_matrix(), grad_phi_ny);
-        
+
         // Value of Vs (sliding velocity)
         gmm::add(x, gmm::scaled(y, scalar_type(-1)), Vs);
         gmm::add(gmm::scaled(wx, scalar_type(-1)), Vs);
         gmm::add(wy, Vs);
         gmm::scale(Vs, alpha);
       } else gmm::clear(Vs);
-      
+
       base_vector aux6(ndof_uy), aux7(ndof_ux), aux12(ndof_lx);
 
 
@@ -674,7 +674,7 @@ namespace getfem {
           f_coeff_r[0] = gmm::random();
           f_coeff_r[1] = gmm::random();
           f_coeff_r[2] = gmm::random();
-          
+
           // cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r
           //      << " nx_r = " << nx_r << endl << "g_r = " << g_r
           //      << " r_r = " << r_r << " f = " << f_coeff_r << endl;
@@ -752,7 +752,7 @@ namespace getfem {
           for (size_type j = 0; j < N; ++j)
             for (size_type k = 0; k < N; ++k)
               graddeltaunx(i, j) += nx[k] * vgrad_base_ux(i, k, j);
-        
+
 #define CONSIDER_TERM3
 #define CONSIDER_TERM1
 
@@ -877,11 +877,11 @@ namespace getfem {
         if (alpha != scalar_type(0)) {
           // Term -(1/r) d_Vs F \delta Vs\delta\mu
           base_matrix I_gphingphiyinv(N, N);
-          if (!isrigid) 
+          if (!isrigid)
             gmm::mult(gmm::scaled(grad_phi_ny, scalar_type(-1)),
                       grad_phiy_inv, I_gphingphiyinv);
           gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
-          
+
           // first sub term
           gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
           gmm::mult(I_gphingphiyinv, Inxy, aux2);
@@ -889,7 +889,7 @@ namespace getfem {
           gmm::mult(dVsF, aux2, aux3);
           gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
           gmm::mult(aux5, gmm::transposed(vbase_ux), Melem);
-        
+
           // second sub term
           gmm::mult(dVsF, I_gphingphiyinv, aux2);
           gmm::mult(aux2, Iny, aux3);
@@ -933,7 +933,7 @@ namespace getfem {
 #endif
 
 #ifdef CONSIDER_TERM2
-        
+
         // Term -lambda.\delta v(Y)
         if (!isrigid) {
           gmm::mult(vbase_uy, lambda, aux6);
@@ -1004,7 +1004,7 @@ namespace getfem {
   //=========================================================================
   //
   //  Large sliding brick with field extension principle. To be adapated with
-  //  the new structure for contact pairs. 
+  //  the new structure for contact pairs.
   //
   //=========================================================================
 

@@ -1,10 +1,10 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
- 
+
  Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -17,7 +17,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
  instantiate  templates  or  use macros or inline functions from this file,
@@ -26,7 +26,7 @@
  to be covered  by the GNU Lesser General Public License.  This   exception
  does not  however  invalidate  any  other  reasons why the executable file
  might be covered by the GNU Lesser General Public License.
- 
+
 ===========================================================================*/
 
 /** @file getfem_contact_and_friction_common.h
@@ -61,7 +61,7 @@ namespace getfem {
   //=========================================================================
 
   template<typename VEC> void ball_projection(const VEC &x,
-					      scalar_type radius) {
+                                              scalar_type radius) {
     if (radius <= scalar_type(0))
       gmm::clear(const_cast<VEC&>(x));
     else {
@@ -69,7 +69,7 @@ namespace getfem {
       if (a > radius) gmm::scale(const_cast<VEC&>(x), radius/a);
     }
   }
-  
+
   template<typename VEC, typename VECR>
   void ball_projection_grad_r(const VEC &x, scalar_type radius,
                               VECR &g) {
@@ -99,20 +99,20 @@ namespace getfem {
 
   template <typename VEC, typename VECR>
   void coupled_projection(const VEC &x, const VEC &n,
-			  scalar_type f, VECR &g) {
+                          scalar_type f, VECR &g) {
     scalar_type xn = gmm::vect_sp(x, n);
     scalar_type xnm = gmm::neg(xn);
     scalar_type th = f * xnm;
     scalar_type xtn = gmm::sqrt(gmm::vect_norm2_sqr(x) - xn*xn);
-    
+
     gmm::copy(gmm::scaled(n, -xnm), g);
     if (th > scalar_type(0)) {
       if (xtn <= th) {
-	gmm::add(x, g);
-	gmm::add(gmm::scaled(n, -xn), g);
+        gmm::add(x, g);
+        gmm::add(gmm::scaled(n, -xn), g);
       } else {
-	gmm::add(gmm::scaled(x, f*xnm/xtn), g);
-	gmm::add(gmm::scaled(n, -f*xnm*xn/xtn), g);
+        gmm::add(gmm::scaled(x, f*xnm/xtn), g);
+        gmm::add(gmm::scaled(n, -f*xnm*xn/xtn), g);
       }
     }
   }
@@ -120,27 +120,27 @@ namespace getfem {
 
   template <typename VEC, typename MAT>
   void coupled_projection_grad(const VEC &x, const VEC &n,
-			       scalar_type f, MAT &g) {
+                               scalar_type f, MAT &g) {
     scalar_type xn = gmm::vect_sp(x, n);
     scalar_type xnm = gmm::neg(xn);
     scalar_type th = f * xnm;
     scalar_type xtn = gmm::sqrt(gmm::vect_norm2_sqr(x) - xn*xn);
     size_type N = gmm::vect_size(x);
     gmm::clear(g);
-    
+
     if (th > scalar_type(0)) {
       if (xtn <= th) {
-	gmm::copy(gmm::identity_matrix(), g);
-	gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
+        gmm::copy(gmm::identity_matrix(), g);
+        gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
       } else if (xn < scalar_type(0)) {
-	static base_small_vector t; gmm::resize(t, N);
-	gmm::add(x, gmm::scaled(n, -xn), t);
+        static base_small_vector t; gmm::resize(t, N);
+        gmm::add(x, gmm::scaled(n, -xn), t);
         gmm::scale(t, scalar_type(1)/xtn);
-	if (N > 2) {
-	  gmm::copy(gmm::identity_matrix(), g);
-	  gmm::rank_one_update(g, gmm::scaled(t, -scalar_type(1)), t);
-	  gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
-	  gmm::scale(g, -xn*th/xtn);
+        if (N > 2) {
+          gmm::copy(gmm::identity_matrix(), g);
+          gmm::rank_one_update(g, gmm::scaled(t, -scalar_type(1)), t);
+          gmm::rank_one_update(g, gmm::scaled(n, -scalar_type(1)), n);
+          gmm::scale(g, -xn*th/xtn);
         }
         gmm::rank_one_update(g, gmm::scaled(t, -f), n);
       }
@@ -176,7 +176,7 @@ namespace getfem {
 
   template<typename VEC, typename MAT>
   void De_Saxce_projection_grad(const VEC &x, const VEC &n_,
-				scalar_type f, MAT &g) {
+                                scalar_type f, MAT &g) {
     static base_small_vector n;
     size_type N = gmm::vect_size(x);
     gmm::resize(n, N);
@@ -213,7 +213,7 @@ namespace getfem {
 
   template<typename VEC, typename MAT>
   static void De_Saxce_projection_gradn(const VEC &x, const VEC &n_,
-					scalar_type f, MAT &g) {
+                                        scalar_type f, MAT &g) {
     static base_small_vector n;
     size_type N = gmm::vect_size(x);
     scalar_type nn = gmm::vect_norm2(n_);
@@ -224,7 +224,7 @@ namespace getfem {
     gmm::clear(g);
 
     if (!(xn > scalar_type(0) && f * nxt <= xn)
-	&& (xn > scalar_type(0) || nxt > -f*xn)) {
+        && (xn > scalar_type(0) || nxt > -f*xn)) {
       static base_small_vector xt, aux;
       gmm::resize(xt, N); gmm::resize(aux, N);
       gmm::add(x, gmm::scaled(n, -xn), xt);
@@ -239,7 +239,7 @@ namespace getfem {
 
       gmm::add(gmm::scaled(xt, -f), n, aux);
       gmm::rank_one_update(g, aux, gmm::scaled(xt, (nxt+f*xn)/nn));
-     
+
       gmm::scale(g, scalar_type(1) / (f*f+scalar_type(1)));
     }
   }
@@ -286,26 +286,26 @@ namespace getfem {
                           // 2 = Use finite element nodes for both slave
                           //     and master
     bool raytrace;        // Use raytrace instead of projection.
-                          
+
     scalar_type release_distance;  // Limit distance beyond which the contact
     // will not be considered. CAUTION: should be comparable to the element
     // size (if it is too large, a too large set of influence boxes will be
-    // detected and the computation will be slow, except for delaunay option) 
+    // detected and the computation will be slow, except for delaunay option)
 
     scalar_type cut_angle; // Cut angle (in radian) for normal cones
     scalar_type EPS;       // Should be typically hmin/1000 (for computing
-                           // gradients with finite differences 
+                           // gradients with finite differences
     const model *md;       // The model if the structure is linked to a model.
 
     typedef model_real_plain_vector VECTOR;
     std::vector<const VECTOR *> Us;  // Displacement vectors
     std::vector<const VECTOR *> Ws;  // "Velocity" vectors
-    std::vector<std::string> Unames; // Displacement vectors names. 
-    std::vector<std::string> Wnames; // "Velocity" vectors names. 
+    std::vector<std::string> Unames; // Displacement vectors names.
+    std::vector<std::string> Wnames; // "Velocity" vectors names.
     std::vector<VECTOR> ext_Us;      // Unreduced displacement vectors
     std::vector<VECTOR> ext_Ws;      // Unreduced "velocity" vectors
     std::vector<const VECTOR *> lambdas;  // Displacement vectors
-    std::vector<std::string> lambdanames; // Displacement vectors names. 
+    std::vector<std::string> lambdanames; // Displacement vectors names.
     std::vector<VECTOR> ext_lambdas;      // Unreduced displacement vectors
 
     dal::bit_vector slave_boundaries;
@@ -319,9 +319,9 @@ namespace getfem {
     std::vector<std::string> obstacles;
     std::vector<std::string> obstacles_velocities;
 
-      
+
     struct normal_cone : public std::vector<base_small_vector> {
-      
+
       void add_normal(const base_small_vector &n)
       { std::vector<base_small_vector>::push_back(n);}
       normal_cone(void) {}
@@ -329,7 +329,7 @@ namespace getfem {
         : std::vector<base_small_vector>(1, n) { }
     };
 
-    // 
+    //
     // Influence boxes
     //
     struct influence_box {     // Additional information for an influence box
@@ -346,17 +346,17 @@ namespace getfem {
     bgeot::rtree element_boxes;                  // influence boxes
     std::vector<influence_box> element_boxes_info;
 
-    // 
+    //
     // Stored points (for Delaunay and slave nodal boundaries)
     //
-    
+
     struct boundary_point {    // Additional information for a boundary point
       base_node ref_point;     // Point coordinate in reference configuration
       size_type ind_boundary;  // Boundary number
       size_type ind_element;   // Element number
       short_type ind_face;     // Face number in element
       size_type ind_pt;        // Dof number for fem_nodes_mode or point number
-                               // of integration method 
+                               // of integration method
       normal_cone normals;     // Set of outward unit normal vectors
       boundary_point(void) {}
       boundary_point(const base_node &rp, size_type ib, size_type ie,
@@ -364,9 +364,9 @@ namespace getfem {
         : ref_point(rp), ind_boundary(ib), ind_element(ie), ind_face(i_f),
           ind_pt(id), normals(n) {}
     };
-      
+
     std::vector<base_node> boundary_points;
-    std::vector<boundary_point> boundary_points_info;   
+    std::vector<boundary_point> boundary_points_info;
 
 
     size_type add_U(const model_real_plain_vector *U, const std::string &name,
@@ -402,7 +402,7 @@ namespace getfem {
       face_info(size_type ib, size_type ie, short_type iff)
         : ind_boundary(ib), ind_element(ie), ind_face(iff) {}
     };
-    
+
   protected:
 
     std::vector<std::vector<face_info> > potential_pairs;
@@ -413,7 +413,7 @@ namespace getfem {
 
     // stored information for contact pair
     struct contact_pair {
-      
+
       base_node slave_point;         // The transformed slave point
       base_small_vector slave_n;     // Normal unit vector to slave surface
       size_type slave_ind_boundary;  // Boundary number
@@ -428,14 +428,14 @@ namespace getfem {
       face_info master_face_info;
 
       scalar_type signed_dist;
-      
+
       size_type irigid_obstacle;
 
       contact_pair(void) {}
-      contact_pair(const base_node &spt, const base_small_vector &nx, 
+      contact_pair(const base_node &spt, const base_small_vector &nx,
                    const boundary_point &bp,
                    const base_node &mptr,  const base_node &mpt,
-                   const base_small_vector &ny, 
+                   const base_small_vector &ny,
                    const face_info &mfi, scalar_type sd)
         : slave_point(spt), slave_n(nx), slave_ind_boundary(bp.ind_boundary),
           slave_ind_element(bp.ind_element), slave_ind_face(bp.ind_face),
@@ -451,7 +451,7 @@ namespace getfem {
           slave_ind_pt(bp.ind_pt), master_point(mpt), master_n(ny),
           signed_dist(sd),
           irigid_obstacle(ir) {}
-      
+
     };
 
 
@@ -459,7 +459,7 @@ namespace getfem {
     // before the detection of contact pairs. The influence box is the
     // bounding box extended by a distance equal to the release distance.
     void compute_influence_boxes(void);
-    
+
     // For delaunay triangulation. Advantages compared to influence boxes:
     // No degeneration of the algorithm complexity with refinement and
     // more easy to extend to fictitious domain with contact.
@@ -473,7 +473,7 @@ namespace getfem {
     void compute_potential_contact_pairs_influence_boxes(void);
 
   protected:
-      
+
     std::vector<contact_pair> contact_pairs;
 
     void clear_aux_info(void); // Delete auxillairy information
@@ -549,14 +549,14 @@ namespace getfem {
                                  const std::string &varname,
                                  const std::string &multname = std::string(),
                                  const std::string &wname = std::string());
-    
+
 
     size_type add_master_boundary(const getfem::mesh_im &mim,
                                   const getfem::mesh_fem *mfu,
                                   const model_real_plain_vector *U,
                                   size_type reg,
                                   const getfem::mesh_fem *mflambda = 0,
-                                  const model_real_plain_vector *lambda = 0,   
+                                  const model_real_plain_vector *lambda = 0,
                                   const model_real_plain_vector *w = 0,
                                   const std::string &varname = std::string(),
                                   const std::string &multname = std::string(),
@@ -566,7 +566,7 @@ namespace getfem {
                                   const std::string &varname,
                                   const std::string &multname = std::string(),
                                   const std::string &wname = std::string());
-    
+
 
 
     // The whole process of the computation of contact pairs
