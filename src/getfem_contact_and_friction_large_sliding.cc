@@ -488,7 +488,15 @@ namespace getfem {
       // TODO : Could be done by a structure, on demand ... (certain
       // computations are not necessary for rhs only)
       const base_node &x = cp.slave_point;
-      const base_small_vector &nx = cp.slave_n;
+
+      bool test_fixed_normal = false;
+      base_small_vector nx(N);
+      if (test_fixed_normal) {
+        nx[0] = 0; nx[1] = -1.;
+      } else {
+        nx = cp.slave_n;
+      }
+
       gmm::copy(gmm::identity_matrix(), Inx);
       gmm::rank_one_update(Inx, nx, gmm::scaled(nx, scalar_type(-1)));
       size_type irigid = cp.irigid_obstacle;
@@ -658,7 +666,7 @@ namespace getfem {
 
       if (version & model::BUILD_MATRIX) {
 
-#define DO_TEST_F
+// #define DO_TEST_F
 
 #ifdef DO_TEST_F
 
@@ -759,7 +767,7 @@ namespace getfem {
 
 
 #ifdef CONSIDER_TERM1
-        // Term  \delta\lambda(X) . \delta v(X)  .. validated ..
+        // Term  -\delta\lambda(X) . \delta v(X) 
         gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
         gmm::mult(vbase_ux, gmm::transposed(vbase_lx), Melem);
         gmm::scale(Melem, -weight);
@@ -770,45 +778,45 @@ namespace getfem {
 #ifdef CONSIDER_TERM2
 
         if (!isrigid) {
-          // Term  -\delta\lambda(X) . \delta v(Y)
+          // Term  \delta\lambda(X) . \delta v(Y)
           gmm::resize(Melem, ndof_uy, ndof_lx); gmm::clear(Melem);
           gmm::mult(vbase_uy, gmm::transposed(vbase_lx), Melem);
-          gmm::scale(Melem, -weight);
+          gmm::scale(Melem, weight);
           mat_elem_assembly(M, I_uy, I_lx, Melem, *mf_uy, cvy, *mf_lx, cvx);
 
           // Term -\lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
-          base_matrix lgraddeltav(ndof_uy, N);
+          gmm::clear(aux1);
           for (size_type i = 0; i < ndof_uy; ++i)
             for (size_type j = 0; j < N; ++j)
               for (size_type k = 0; k < N; ++k)
-                lgraddeltav(i, j) += lambda[k] * vgrad_base_uy(i, k, j);
+                aux1(i, j) += lambda[k] * vgrad_base_uy(i, k, j);
           base_matrix lgraddeltavgradphiyinv(ndof_uy, N);
-          gmm::mult(lgraddeltav, gmm::transposed(grad_phiy_inv),
-                    lgraddeltavgradphiyinv);
+          gmm::mult(aux1, grad_phiy_inv, lgraddeltavgradphiyinv);
 
           // first sub term
           gmm::resize(Melem, ndof_uy, ndof_uy); gmm::clear(Melem);
-          base_matrix aux(ndof_uy, N);
-          gmm::mult(lgraddeltavgradphiyinv, Inxy, aux);
-          gmm::mult(aux, gmm::transposed(vbase_uy), Melem);
-          gmm::scale(Melem, -weight);
+          gmm::clear(aux2); 
+          gmm::rank_one_update(aux2, nx, gmm::scaled(ny,scalar_type(1)/nxny));
+          gmm::mult(lgraddeltavgradphiyinv, aux2, aux1);
+          gmm::mult(aux1, gmm::transposed(vbase_uy), Melem);
+          gmm::scale(Melem, weight);
           mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
 
           // Second sub term
           gmm::resize(Melem, ndof_uy, ndof_ux); gmm::clear(Melem);
-          gmm::add(gmm::identity_matrix(), Inxy);
-          gmm::scale(Inxy, scalar_type(-1));
           gmm::mult(lgraddeltavgradphiyinv, Inxy, aux1);
           gmm::mult(aux1, gmm::transposed(vbase_ux), Melem);
 
           // Third sub term
-          gmm::mult(Iny, Inx, aux2);
-          gmm::mult(aux2, grad_phix_inv, aux3);
-          gmm::mult(lgraddeltavgradphiyinv, aux3, aux1);
-          gmm::mult(aux1, gmm::transposed(graddeltaunx), aux4);
-          gmm::scale(aux4, g/(nxny*nxny));
-          gmm::add(aux4, Melem);
-          gmm::scale(Melem, -weight);
+          if (!test_fixed_normal) {
+            gmm::mult(Iny, Inx, aux2);
+            gmm::mult(aux2, gmm::transposed(grad_phix_inv), aux3);
+            gmm::mult(lgraddeltavgradphiyinv, aux3, aux1);
+            gmm::mult(aux1, gmm::transposed(graddeltaunx), aux4);
+            gmm::scale(aux4, -g/(nxny*nxny));
+            gmm::add(aux4, Melem);
+          }
+          gmm::scale(Melem, weight);
           mat_elem_assembly(M, I_uy, I_ux, Melem, *mf_uy, cvy, *mf_ux, cvx);
         }
 
@@ -819,7 +827,7 @@ namespace getfem {
         // cout << "dlambdaF = " << dlambdaF << endl;
         // cout << "lambda = " << lambda << endl;
 
-        // Term (1/r)(I-dlambdaF)\delta\lambda\delta\mu  .. validated for dlambdaF = Id ..
+        // Term (1/r)(I-dlambdaF)\delta\lambda\delta\mu
         //   the I of (I-dlambdaF) is skipped because globally added before
         gmm::resize(Melem, ndof_lx, ndof_lx); gmm::clear(Melem);
         gmm::copy(gmm::scaled(dlambdaF, scalar_type(-1)/r), aux2);
@@ -833,15 +841,16 @@ namespace getfem {
         // cout << "nx = " << nx << endl;
         // cout << "Inx = " << Inx << endl;
 
-        // Term -(1/r)dnF\delta nx\delta\mu  .. validated for dnF = Id ..
+        // Term -(1/r)dnF\delta nx\delta\mu
         gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
-        gmm::mult(vbase_lx, dnF, aux5);
-        gmm::mult(aux5, Inx, aux10);
-        gmm::mult(aux10,  gmm::transposed(grad_phix_inv), aux5);
-        gmm::mult(aux5, gmm::transposed(graddeltaunx), Melem);
-        gmm::scale(Melem, scalar_type(1)/r);
-        // cout << "Melem1.5 " << Melem << endl;
-        // assembly factorized with the next term
+        if (!test_fixed_normal) {
+          gmm::mult(vbase_lx, dnF, aux5);
+          gmm::mult(aux5, Inx, aux10);
+          gmm::mult(aux10,  gmm::transposed(grad_phix_inv), aux5);
+          gmm::mult(aux5, gmm::transposed(graddeltaunx), Melem);
+          gmm::scale(Melem, scalar_type(1)/r);
+          // assembly factorized with the next term
+        }
 
         // cout << "dgF = " << dgF << endl;
         // Term -(1/r)dgF\delta g\delta\mu
@@ -854,16 +863,13 @@ namespace getfem {
         gmm::mult(vbase_ux, ny, aux7);
 
         // second sub term
-        gmm::mult(Inx, gmm::scaled(ny, -g), aux8);
-        gmm::mult(grad_phix_inv, aux8, aux9);
-        gmm::mult_add(graddeltaunx, aux9, aux7);
-//         for (size_type i = 0; i < ndof_ux; ++i)
-//           for (size_type j = 0; j < N; ++j)
-//             for (size_type k = 0; k < N; ++k)
-//               aux7[i] += aux9[j] *  vgrad_base_ux(i, k, j) * nx[k];
-        gmm::rank_one_update(Melem, deltamudgF,  aux7);
+        if (!test_fixed_normal) {
+          gmm::mult(Inx, gmm::scaled(ny, -g), aux8);
+          gmm::mult(grad_phix_inv, aux8, aux9);
+          gmm::mult_add(graddeltaunx, aux9, aux7);
+          gmm::rank_one_update(Melem, deltamudgF,  aux7);
+        }
         gmm::scale(Melem, weight);
-        // cout << "Melem2 " << Melem << endl;
         mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
 
         if (!isrigid) {
@@ -892,14 +898,16 @@ namespace getfem {
           gmm::mult(aux5, gmm::transposed(vbase_ux), Melem);
 
           // second sub term
-          gmm::mult(dVsF, I_gphingphiyinv, aux2);
-          gmm::mult(aux2, Iny, aux3);
-          gmm::mult(aux3, gmm::scaled(Inx, scalar_type(-1)), aux2);
-          gmm::mult(aux2, gmm::transposed(grad_phix_inv), aux3);
-          gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
-          gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
-          gmm::scale(aux11, g/(nxny*nxny));
-          gmm::add(aux11, Melem);
+          if (!test_fixed_normal) {
+            gmm::mult(dVsF, I_gphingphiyinv, aux2);
+            gmm::mult(aux2, Iny, aux3);
+            gmm::mult(aux3, gmm::scaled(Inx, scalar_type(-1)), aux2);
+            gmm::mult(aux2, gmm::transposed(grad_phix_inv), aux3);
+            gmm::mult(vbase_lx, gmm::transposed(aux3), aux5);
+            gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
+            gmm::scale(aux11, g/(nxny*nxny));
+            gmm::add(aux11, Melem);
+          }
           gmm::scale(Melem, weight*alpha/r);
           mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
 
@@ -927,7 +935,7 @@ namespace getfem {
 
 #ifdef CONSIDER_TERM1
 
-        // Term -lambda.\delta v(X)  .. validated ..
+        // Term lambda.\delta v(X)
         gmm::mult(vbase_ux, lambda, aux7);
         gmm::scale(aux7, weight);
         vec_elem_assembly(V, I_ux, aux7, *mf_ux, cvx);
@@ -935,7 +943,7 @@ namespace getfem {
 
 #ifdef CONSIDER_TERM2
 
-        // Term lambda.\delta v(Y)
+        // Term -lambda.\delta v(Y)
         if (!isrigid) {
           gmm::mult(vbase_uy, lambda, aux6);
           gmm::scale(aux6, -weight);
@@ -945,7 +953,7 @@ namespace getfem {
 
 #ifdef CONSIDER_TERM3
 
-        // Term (1/r)(lambda - F).\delta \mu .. validated ..
+        // Term -(1/r)(lambda - F).\delta \mu
         // (1/r)(lambda).\delta \mu is skipped because globally added before
         gmm::mult(vbase_lx, gmm::scaled(F, scalar_type(-1)/r), aux12);
         gmm::scale(aux12, -weight);

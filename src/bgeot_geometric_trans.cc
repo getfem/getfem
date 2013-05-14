@@ -577,7 +577,6 @@ namespace bgeot {
                       size_type face) {
     GMM_ASSERT1(c.G().ncols() == c.pgt()->nb_points(), "dimensions mismatch");
     base_small_vector up = c.pgt()->normals()[face];
-    base_small_vector un(c.N());
     size_type P = c.pgt()->structure()->dim();
 
     base_matrix baseP(P, P);
@@ -591,7 +590,7 @@ namespace bgeot {
     base_matrix baseN(c.N(), P);
     gmm::mult(c.B(), baseP, baseN);
 
-    /* modified gram-schmidt */
+    /* Modified Gram-Schmidt */
     for (size_type k=0; k < P; ++k) {
       for (size_type l=0; l < k; ++l) {
         gmm::add(gmm::scaled(gmm::mat_col(baseN,l),
@@ -602,9 +601,9 @@ namespace bgeot {
       gmm::scale(gmm::mat_col(baseN,k),
                  1./gmm::vect_norm2(gmm::mat_col(baseN,k)));
     }
-    /* TODO: for cases where P < N,
-       complete the basis */
-    /* ensure that the baseN is direct */
+    /* TODO: for cases where P < N, complete the basis */
+
+    /* Ensure that the baseN is direct */
     if (c.N() == P && c.N()>1 && gmm::lu_det(baseN) < 0) {
       gmm::scale(gmm::mat_col(baseN,1),-1.);
     }
