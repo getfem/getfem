@@ -25,9 +25,10 @@ test_case = 1; % 0 = 2D punch on a rigid obstacle
                % 3 = 2D with multi-body and only one mesh
                % 4 = 3D case (sphere / parallelepiped) (two meshes)
 
-lambda = 1.; mu = 1.;   % Elasticity parameters
-r = 10;                 % Augmentation parameter
-f_coeff = 0;            % Friction coefficient
+clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
+clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
+r = 10.;                   % Augmentation parameter
+f_coeff = 0;              % Friction coefficient
 
 test_tangent_matrix = true;
 nonlinear_elasticity = false;
@@ -43,10 +44,10 @@ switch(test_case)
     max_res = 1E-9;
     self_contact = true;
   case {0,1}
-    vf = 0.001;
-    vf_mult = 1.05;
+    vf = 0.0;
+    vf_mult = 1.0;
     penalty_parameter = 0;
-    dirichlet_translation = 0.5;
+    dirichlet_translation = -0.5;
     max_res = 1E-8;
     release_dist = 2.5;
     self_contact = false;
@@ -121,7 +122,7 @@ if (test_case ~= 3 && test_case ~= 0)
   else
     border = gf_mesh_get(mesh2,'outer faces');
     normals = gf_mesh_get(mesh2, 'normal of faces', border);
-    contact_boundary=border(:, find(normals(N, :) > 0.01))
+    contact_boundary=border(:, find(normals(N, :) > 0.01));
     gf_mesh_set(mesh2, 'region', CONTACT_BOUNDARY2, contact_boundary);
     dirichlet_boundary=border(:, find(normals(N, :) < -0.01));
     DIRICHLET_BOUNDARY2 = 5;
@@ -142,8 +143,6 @@ end
 
 
 md=gf_model('real');
-gf_model_set(md, 'add initialized data', 'lambda', lambda);
-gf_model_set(md, 'add initialized data', 'mu', mu);
 
 F = zeros(1, N); F(N) = -vf;
 
@@ -152,11 +151,13 @@ gf_model_set(md, 'add filtered fem variable', 'lambda1', pre_mflambda1, CONTACT_
 
 if (nonlinear_elasticity)
   lawname = 'Ciarlet Geymonat';
-  params = [lambda;mu;mu/2-lambda/8];
-  gf_model_set(md,'add initialized data','params', params);
-  gf_model_set(md, 'add nonlinear elasticity brick', mim1, 'u1', lawname, 'params');
+  params1 = [clambda1;cmu1;cmu1/2-clambda1/8];
+  gf_model_set(md,'add initialized data','params1', params1);
+  gf_model_set(md, 'add nonlinear elasticity brick', mim1, 'u1', lawname, 'params1');
 else
-  gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1', 'lambda', 'mu');
+  gf_model_set(md, 'add initialized data', 'clambda1', clambda1);
+  gf_model_set(md, 'add initialized data', 'cmu1', cmu1);
+  gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1', 'clambda1', 'cmu1');
 end
 if (test_case == 2)
   %   gf_model_set(md, 'add initialized data', 'cpoints1', [0 0.5 0 1.5 0 0.5 0 1.5]);
@@ -178,10 +179,16 @@ if (test_case ~= 3 && test_case ~= 0)
   if (self_contact)
     gf_model_set(md, 'add filtered fem variable', 'lambda2', pre_mflambda2, CONTACT_BOUNDARY2);
   end
+  
   if (nonlinear_elasticity)
-    gf_model_set(md, 'add nonlinear elasticity brick', mim2, 'u2', lawname, 'params');
+    lawname = 'Ciarlet Geymonat';
+    params2 = [clambda2;cmu2;cmu2/2-clambda2/8];
+    gf_model_set(md,'add initialized data','params2', params2);
+    gf_model_set(md, 'add nonlinear elasticity brick', mim2, 'u2', lawname, 'params2');
   else
-    gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2', 'lambda', 'mu');
+    gf_model_set(md, 'add initialized data', 'clambda2', clambda2);
+    gf_model_set(md, 'add initialized data', 'cmu2', cmu2);
+    gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2', 'clambda2', 'cmu2');
   end
   if (test_case == 2)
     gf_model_set(md, 'add initialized data', 'cpoints2', [0 0]);
@@ -209,8 +216,6 @@ gf_model_set(md, 'add initialized data', 'r', r);
 gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
 
-
-% delaunay: after dist 
 
 mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
 if (self_contact)
@@ -245,7 +250,7 @@ gf_model_set(md, 'add integral large sliding contact brick', mcff, 'r', 'f');
 for nit=1:100
 
   if (test_tangent_matrix) 
-    errmax = gf_model_get(md, 'test tangent matrix', 1E-6, 20, 0.0001);
+    errmax = gf_model_get(md, 'test tangent matrix', 1E-5, 20, 0.0001);
     disp(sprintf('errmax = %g', errmax));
     if (errmax > 1E-3) error('bad tangent matrix'); end;
     pause;
@@ -255,7 +260,7 @@ for nit=1:100
 
   U1 = gf_model_get(md, 'variable', 'u1');
   VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u1', 'lambda', 'mu', mfvm1);
+		  'u1', 'clambda1', 'cmu1', mfvm1); % a adapter en non-lineaire
 
   gf_plot(mfvm1,VM1,'mesh', 'off', 'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
 
@@ -277,7 +282,7 @@ for nit=1:100
      hold on
      U2 = gf_model_get(md, 'variable', 'u2');
      VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u2', 'lambda', 'mu', mfvm2);
+		  'u2', 'clambda2', 'cmu2', mfvm2);
      gf_plot(mfvm2,VM2,'mesh', 'off', 'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
      hold off
   end;
@@ -316,7 +321,7 @@ for nit=1:100
   end
   
   if (test_case <= 1)
-    Ddata(N) = Ddata(N) - 0.25;
+    Ddata(N) = Ddata(N) - 1;
     gf_model_set(md, 'variable', 'Ddata', Ddata);
   end
   
