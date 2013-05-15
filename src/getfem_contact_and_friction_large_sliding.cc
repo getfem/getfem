@@ -533,7 +533,7 @@ namespace getfem {
       gmm::rank_one_update(Iny, ny, gmm::scaled(ny, scalar_type(-1)));
       gmm::copy(gmm::identity_matrix(), Inxy);
       gmm::rank_one_update(Inxy, nx, gmm::scaled(ny,scalar_type(-1)/nxny));
-      size_type iby = isrigid ? 0 : cp.master_face_info.ind_boundary;
+      size_type iby = isrigid ? 0 : cp.master_ind_boundary;
       const std::string &name_uy
         = isrigid ? name_ux : mcf.varname_of_boundary(iby);
       const model_real_plain_vector &all_wy
@@ -550,8 +550,8 @@ namespace getfem {
       pfem pf_uy(0);
       bgeot::pgeometric_trans pgty(0);
       if (!isrigid) {
-        cvy = cp.master_face_info.ind_element;
-        fy = cp.master_face_info.ind_face;
+        cvy = cp.master_ind_element;
+        fy = cp.master_ind_face;
         pf_uy = mf_uy->fem_of_element(cvy);
         ndof_uy = pf_uy->nb_dof(cvy);
         qdim_uy = pf_uy->target_dim();

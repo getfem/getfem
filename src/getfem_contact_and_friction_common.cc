@@ -33,10 +33,10 @@ namespace getfem {
   //
   //=========================================================================
 
-  size_type multi_contact_frame::add_U(const model_real_plain_vector *U,
-                                       const std::string &name,
-                                       const model_real_plain_vector *w,
-                                       const std::string &wname) {
+  size_type multi_contact_frame::add_U
+  (const model_real_plain_vector *U, const std::string &name,
+   const model_real_plain_vector *w, const std::string &wname) {
+    if (!U) return size_type(-1);
     size_type i = 0;
     for (; i < Us.size(); ++i) if (Us[i] == U) return i;
     Us.push_back(U);
@@ -49,10 +49,11 @@ namespace getfem {
   }
 
   size_type multi_contact_frame::add_lambda
-  (const model_real_plain_vector &lambda, const std::string &name) {
+  (const model_real_plain_vector *lambda, const std::string &name) {
+    if (!lambda) return size_type(-1);
     size_type i = 0;
-    for (; i < lambdas.size(); ++i) if (lambdas[i] == &lambda) return i;
-    lambdas.push_back(&lambda);
+    for (; i < lambdas.size(); ++i) if (lambdas[i] == lambda) return i;
+    lambdas.push_back(lambda);
     lambdanames.push_back(name);
     ext_lambdas.resize(lambdas.size());
     return i;
@@ -155,15 +156,15 @@ namespace getfem {
   }
 
   void multi_contact_frame::add_potential_contact_face
-  (size_type ip, size_type ib, size_type ie, short_type i_f) {
+  (size_type ip, size_type ib, size_type ie, short_type iff) {
     bool found = false;
     std::vector<face_info> &sfi = potential_pairs[ip];
     for (size_type k = 0; k < sfi.size(); ++k)
       if (sfi[k].ind_boundary == ib &&
           sfi[k].ind_element == ie &&
-          sfi[k].ind_face == i_f) found = true;
+          sfi[k].ind_face == iff) found = true;
 
-    if (!found) sfi.push_back(face_info(ib, ie, i_f));
+    if (!found) sfi.push_back(face_info(ib, ie, iff));
   }
 
   void multi_contact_frame::clear_aux_info(void) {
@@ -238,14 +239,11 @@ namespace getfem {
                 << "should be " << N << ".");
     GMM_ASSERT1(&(mfu->linked_mesh()) == &(mim.linked_mesh()),
                 "Integration and finite element are not on the same mesh !");
-    size_type j = size_type(-1);
-    if (mflambda) {
-      j =  add_lambda(*lambda, mmultname);
+    if (mflambda)
       GMM_ASSERT1(&(mflambda->linked_mesh()) == &(mim.linked_mesh()),
                   "Integration and finite element are not on the same mesh !");
-    }
     contact_boundary cb(reg, mfu, mim, add_U(U, vvarname, w, wname),
-                        mflambda, j);
+                        mflambda, add_lambda(lambda, mmultname));
     contact_boundaries.push_back(cb);
     return size_type(contact_boundaries.size() - 1);
   }
@@ -260,7 +258,7 @@ namespace getfem {
     size_type ind
       = add_master_boundary(mim, mfu, U, reg, mflambda, lambda, w,
                             vvarname, mmultname, wname);
-    slave_boundaries.add(ind);
+    contact_boundaries[ind].slave = true;
     return ind;
   }
 
@@ -318,14 +316,14 @@ namespace getfem {
     model_real_plain_vector coeff;
 
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
-      if (!slave_only || slave_boundaries[i]) {
+      if (!slave_only || is_slave_boundary(i)) {
         size_type bnum = region_of_boundary(i);
         const mesh_fem &mfu = mfu_of_boundary(i);
         const mesh_im &mim = mim_of_boundary(i);
         const model_real_plain_vector &U = disp_of_boundary(i);
         const mesh &m = mfu.linked_mesh();
         bool on_fem_nodes = (fem_nodes_mode == 2 ||
-                             (fem_nodes_mode == 1 && slave_boundaries[i]));
+                             (fem_nodes_mode == 1 && is_slave_boundary(i)));
 
         base_node val(N), bmin(N), bmax(N);
         base_small_vector n0(N), n(N), n_mean(N);
@@ -349,10 +347,11 @@ namespace getfem {
           bgeot::vectors_to_base_matrix
             (G, mfu.linked_mesh().points_of_convex(cv));
 
-          pfem_precomp pfp(0); size_type nbptf(0);
+          pfem_precomp pfp(0);
+          size_type nbptf(0);
           if (on_fem_nodes) {
             pfp = fppool(pf_s, pf_s->node_tab(cv));
-            nbptf =pf_s->node_convex(cv).structure()->nb_points_of_face(v.f());
+            nbptf = pf_s->node_convex(cv).structure()->nb_points_of_face(v.f());
           }
           else {
 
@@ -380,7 +379,7 @@ namespace getfem {
               } else {
                 val = ctx.xreal();
               }
-              if (on_fem_nodes)  dof_ind[indpt] = boundary_points.size();
+              if (on_fem_nodes) dof_ind[indpt] = boundary_points.size();
 
             }
 
@@ -406,7 +405,7 @@ namespace getfem {
                                                             v.f(), indpt, n));
             }
 
-            if (on_fem_nodes)  dof_already_interpolated.add(indpt);
+            if (on_fem_nodes) dof_already_interpolated.add(indpt);
           }
         }
       }
@@ -438,13 +437,13 @@ namespace getfem {
           boundary_point *pt_info2 = &(boundary_points_info[ipt2]);
           size_type ib1 = pt_info1->ind_boundary;
           size_type ib2 = pt_info2->ind_boundary;
-          bool sl1 = slave_boundaries[ib1];
-          bool sl2 = slave_boundaries[ib2];
+          bool sl1 = is_slave_boundary(ib1);
+          bool sl2 = is_slave_boundary(ib2);
           if (!sl1 && sl2) { // The slave in first if any
             std::swap(ipt1, ipt2);
             std::swap(pt_info1, pt_info2);
-            std::swap(sl1, sl2);
             std::swap(ib1, ib2);
+            std::swap(sl1, sl2);
           }
           size_type ir1 = region_of_boundary(ib1);
           size_type ir2 = region_of_boundary(ib2);
@@ -481,10 +480,11 @@ namespace getfem {
               for (size_type k = 0; k < ic2.size(); ++k) {
                 mesh_region::face_bitset fbs
                   = mf2.linked_mesh().region(ir2).faces_of_convex(ic2[k]);
-                for (short_type f = 0;
-                     f < mf2.linked_mesh().nb_faces_of_convex(ic2[k]); ++f)
+                short_type nbf = mf2.linked_mesh().nb_faces_of_convex(ic2[k]);
+                for (short_type f = 0; f < nbf; ++f)
                   if (fbs.test(f))
-                    add_potential_contact_face(ipt1,pt_info2->ind_boundary,
+                    add_potential_contact_face(ipt1,
+                                               pt_info2->ind_boundary,
                                                ic2[k], f);
               }
             } else
@@ -499,9 +499,8 @@ namespace getfem {
                 for (size_type k = 0; k < ic1.size(); ++k) {
                   mesh_region::face_bitset fbs
                     = mf1.linked_mesh().region(ir1).faces_of_convex(ic1[k]);
-                  for (short_type f = 0;
-                       f < mf1.linked_mesh().nb_faces_of_convex(ic1[k]);
-                       ++f)
+                  short_type nbf = mf1.linked_mesh().nb_faces_of_convex(ic1[k]);
+                  for (short_type f = 0; f < nbf; ++f)
                     if (fbs.test(f))
                       add_potential_contact_face(ipt2,
                                                  pt_info1->ind_boundary,
@@ -527,7 +526,7 @@ namespace getfem {
     model_real_plain_vector coeff;
 
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
-      if (!(slave_boundaries[i])) {
+      if (!is_slave_boundary(i)) {
         size_type bnum = region_of_boundary(i);
         const mesh_fem &mfu = mfu_of_boundary(i);
         const model_real_plain_vector &U = disp_of_boundary(i);
@@ -811,7 +810,7 @@ namespace getfem {
   void multi_contact_frame::compute_contact_pairs(void) {
     base_matrix G, grad(N,N);
     model_real_plain_vector coeff;
-    base_small_vector a(N-1), n(N);
+    base_small_vector a(N-1), ny(N);
     base_node y(N);
     std::vector<base_small_vector> ti(N-1), Ti(N-1);
     size_type nbwarn(0);
@@ -825,7 +824,8 @@ namespace getfem {
 
     bool only_slave(true), only_master(true);
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
-      if (!(slave_boundaries[i])) only_slave = false; else only_master = false;
+      if (is_slave_boundary(i)) only_master = false;
+      else only_slave = false;
 
     if (only_master && !self_contact) {
       GMM_WARNING1("There is only master boundary and no auto-contact to detect. Exiting");
@@ -849,12 +849,11 @@ namespace getfem {
       const base_node &x = boundary_points[ip];
       boundary_point &bpinfo = boundary_points_info[ip];
       size_type ibx = bpinfo.ind_boundary;
-      bool slx = slave_boundaries[ibx];
+      bool slx = is_slave_boundary(ibx);
       // Detect here the nearest rigid obstacle (taking into account
       // the release distance)
       size_type irigid_obstacle(-1);
       scalar_type d0 = 1E300, d1, d2;
-
 
       base_small_vector nx = bpinfo.normals[0];
       if (raytrace) {
@@ -914,7 +913,7 @@ namespace getfem {
         const face_info &fi = potential_pairs[ip][ipf];
         size_type ib = fi.ind_boundary;
         size_type cv = fi.ind_element;
-        short_type i_f = fi.ind_face;
+        short_type iff = fi.ind_face;
 
         const mesh_fem &mfu = mfu_of_boundary(ib);
         const mesh &m = mfu.linked_mesh();
@@ -927,10 +926,10 @@ namespace getfem {
 
         bgeot::vectors_to_base_matrix(G, m.points_of_convex(cv));
 
-        const base_node &x0 = pf_s->ref_convex(cv)->points_of_face(i_f)[0];
-        fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, i_f);
+        const base_node &x0 = pf_s->ref_convex(cv)->points_of_face(iff)[0];
+        fem_interpolation_context ctx(pgt, pf_s, x0, G, cv, iff);
 
-        const base_small_vector &n0 = pf_s->ref_convex(cv)->normals()[i_f];
+        const base_small_vector &n0 = pf_s->ref_convex(cv)->normals()[iff];
         for (size_type k = 0; k < N-1; ++k) { // A basis for the face
           gmm::resize(ti[k], N);
           scalar_type norm(0);
@@ -958,7 +957,7 @@ namespace getfem {
           for (size_type k = 0; k < N-1; ++k) {
             gmm::resize(Ti[k], N);
             scalar_type norm(0);
-            while(norm < 1E-5) {
+            while (norm < 1E-5) {
               gmm::fill_random(Ti[k]);
               Ti[k] -= gmm::vect_sp(Ti[k], nx) * nx;
               for (size_type l = 0; l < k; ++l)
@@ -1110,22 +1109,22 @@ namespace getfem {
         if (signed_dist > release_distance) continue;
 
         // compute the unit normal vector at y and the signed distance.
-        base_small_vector n00 = bgeot::compute_normal(ctx, i_f);
+        base_small_vector ny0 = bgeot::compute_normal(ctx, iff);
         if (!ref_conf) {
           ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
           gmm::add(gmm::identity_matrix(), grad);
           scalar_type J = gmm::lu_inverse(grad);
           if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
-          gmm::mult(gmm::transposed(grad), n00, n);
-          gmm::scale(n, gmm::sgn(J)); // Test
+          gmm::mult(gmm::transposed(grad), ny0, ny);
+          gmm::scale(ny, gmm::sgn(J)); // Test
         } else {
-          n = n00;
+          ny = ny0;
         }
-        // n /= gmm::vect_norm2(n); // Useful only if the unit normal is kept
-        signed_dist *= gmm::sgn(gmm::vect_sp(x - y, n));
+        // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
+        signed_dist *= gmm::sgn(gmm::vect_sp(x - y, ny));
 
         // CRITERION 1 again on found unit normal vector
-        if (!(test_normal_cones_compatibility(n, bpinfo.normals)))
+        if (!(test_normal_cones_compatibility(ny, bpinfo.normals)))
             continue;
 
 
@@ -1141,11 +1140,11 @@ namespace getfem {
           scalar_type ref_dist = gmm::vect_norm2(diff);
 
           if ( (ref_dist < scalar_type(4) * release_distance)
-               && (gmm::vect_sp(diff, n00) < - 0.01 * ref_dist) )
+               && (gmm::vect_sp(diff, ny0) < - 0.01 * ref_dist) )
             continue;
         }
 
-        contact_pair ct(x, nx, bpinfo, ctx.xref(), y, n, fi, signed_dist);
+        contact_pair ct(x, nx, bpinfo, ctx.xref(), y, ny, fi, signed_dist);
         if (first_pair) {
           contact_pairs.push_back(ct);
           first_pair = false;
@@ -1170,17 +1169,17 @@ namespace getfem {
           for (size_type k = 0; k < N; ++k) {
             pt_eval[k] += EPS;
             d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-            n[k] = (d2 - d1) / EPS;
+            ny[k] = (d2 - d1) / EPS;
             pt_eval[k] -= EPS;
           }
 
           scalar_type lambda(1); // ajouter un test de divergence ...
           for(;;) {
             if (raytrace) {
-              alpha = beta - lambda * d1 / gmm::vect_sp(n, nx);
+              alpha = beta - lambda * d1 / gmm::vect_sp(ny, nx);
               gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
             } else {
-              gmm::add(gmm::scaled(n, -d1/gmm::vect_norm2_sqr(n)), y, pt_eval);
+              gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt_eval);
             }
             d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
 //             if (nit > 10)
@@ -1190,7 +1189,7 @@ namespace getfem {
             if (gmm::abs(d2) < gmm::abs(d1)) break;
             if (lambda < 1E-3) {
               if (raytrace) {
-                if (gmm::abs(beta - d1 / gmm::vect_sp(n, nx))
+                if (gmm::abs(beta - d1 / gmm::vect_sp(ny, nx))
                     > scalar_type(50)*gmm::abs(d1)) nb_fail++;
               }
               break;
@@ -1205,11 +1204,11 @@ namespace getfem {
           continue;
         }
         gmm::copy(pt_eval, y);
-        n /= gmm::vect_norm2(n);
+        ny /= gmm::vect_norm2(ny);
 
 #endif
         d0 = gmm::vect_dist2(y, x) * gmm::sgn(d0);
-        contact_pair ct(x, nx, bpinfo, y, n, irigid_obstacle, d0);
+        contact_pair ct(x, nx, bpinfo, y, ny, irigid_obstacle, d0);
 
         // CRITERION 4 for rigid bodies : Apply the release distance
         if (gmm::vect_dist2(y, x) <= release_distance)

@@ -248,7 +248,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Structure which store the contact boundaries, rigid obstacles and
+  //  Structure which stores the contact boundaries, rigid obstacles and
   //  computes the contact pairs in large sliding/large deformation
   //
   //=========================================================================
@@ -265,12 +265,13 @@ namespace getfem {
                                    // multiplier when linked to a model.
       size_type ind_U;             // Index of displacement.
       size_type ind_lambda;        // Index of multiplier (if any).
+      bool slave;
       contact_boundary(void) {}
       contact_boundary(size_type r, const mesh_fem *mf,
-                       const mesh_im &mi, size_type i, const mesh_fem *mfl,
-                       size_type j = size_type(-1))
-        : region(r), mfu(mf), mflambda(mfl), mim(&mi), ind_U(i),
-          ind_lambda(j) {}
+                       const mesh_im &mi, size_type i_U, const mesh_fem *mfl,
+                       size_type i_l = size_type(-1))
+        : region(r), mfu(mf), mflambda(mfl), mim(&mi),
+          ind_U(i_U), ind_lambda(i_l), slave(false) {}
     };
 
 
@@ -308,7 +309,6 @@ namespace getfem {
     std::vector<std::string> lambdanames; // Displacement vectors names.
     std::vector<VECTOR> ext_lambdas;      // Unreduced displacement vectors
 
-    dal::bit_vector slave_boundaries;
     std::vector<contact_boundary> contact_boundaries;
 
     std::vector<std::string> coordinates;
@@ -339,8 +339,8 @@ namespace getfem {
       base_small_vector mean_normal;   // Mean outward normal unit vector
       influence_box(void) {}
       influence_box(size_type ib, size_type ie,
-                    short_type i_f, const base_small_vector &n)
-        : ind_boundary(ib), ind_element(ie), ind_face(i_f), mean_normal(n) {}
+                    short_type iff, const base_small_vector &n)
+        : ind_boundary(ib), ind_element(ie), ind_face(iff), mean_normal(n) {}
     };
 
     bgeot::rtree element_boxes;                  // influence boxes
@@ -360,8 +360,8 @@ namespace getfem {
       normal_cone normals;     // Set of outward unit normal vectors
       boundary_point(void) {}
       boundary_point(const base_node &rp, size_type ib, size_type ie,
-                     short_type i_f, size_type id, const base_small_vector &n)
-        : ref_point(rp), ind_boundary(ib), ind_element(ie), ind_face(i_f),
+                     short_type iff, size_type id, const base_small_vector &n)
+        : ref_point(rp), ind_boundary(ib), ind_element(ie), ind_face(iff),
           ind_pt(id), normals(n) {}
     };
 
@@ -370,8 +370,8 @@ namespace getfem {
 
 
     size_type add_U(const model_real_plain_vector *U, const std::string &name,
-                    const model_real_plain_vector *w,const std::string &wname);
-    size_type add_lambda(const model_real_plain_vector &lambda,
+                    const model_real_plain_vector *w, const std::string &wname);
+    size_type add_lambda(const model_real_plain_vector *lambda,
                          const std::string &name);
 
     void extend_vectors(void);
@@ -408,7 +408,7 @@ namespace getfem {
     std::vector<std::vector<face_info> > potential_pairs;
 
     void add_potential_contact_face(size_type ip, size_type ib, size_type ie,
-                                    short_type i_f);
+                                    short_type iff);
   public:
 
     // stored information for contact pair
@@ -425,7 +425,9 @@ namespace getfem {
       base_node master_point_ref;    // The master point on ref element
       base_node master_point;        // The transformed master point
       base_small_vector master_n;    // Normal unit vector to master surface
-      face_info master_face_info;
+      size_type master_ind_boundary; // Boundary number
+      size_type master_ind_element;  // Element number
+      short_type master_ind_face;    // Face number in element
 
       scalar_type signed_dist;
 
@@ -437,10 +439,12 @@ namespace getfem {
                    const base_node &mptr,  const base_node &mpt,
                    const base_small_vector &ny,
                    const face_info &mfi, scalar_type sd)
-        : slave_point(spt), slave_n(nx), slave_ind_boundary(bp.ind_boundary),
-          slave_ind_element(bp.ind_element), slave_ind_face(bp.ind_face),
-          slave_ind_pt(bp.ind_pt), master_point_ref(mptr),
-          master_point(mpt), master_n(ny), master_face_info(mfi),
+        : slave_point(spt), slave_n(nx),
+          slave_ind_boundary(bp.ind_boundary), slave_ind_element(bp.ind_element),
+          slave_ind_face(bp.ind_face), slave_ind_pt(bp.ind_pt),
+          master_point_ref(mptr), master_point(mpt), master_n(ny),
+          master_ind_boundary(mfi.ind_boundary), master_ind_element(mfi.ind_element),
+          master_ind_face(mfi.ind_face),
           signed_dist(sd), irigid_obstacle(-1) {}
       contact_pair(const base_node &spt, const base_small_vector &nx,
                    const boundary_point &bp,
@@ -516,7 +520,7 @@ namespace getfem {
     { return contact_boundaries[n].ind_lambda; }
     size_type nb_boundaries(void) const { return contact_boundaries.size(); }
     bool is_self_contact(void) const { return self_contact; }
-    bool is_slave_boundary(size_type n) const { return slave_boundaries[n]; }
+    bool is_slave_boundary(size_type n) const { return contact_boundaries[n].slave; }
     void set_raytrace(bool b) { raytrace = b; }
     void set_fem_nodes_mode(int m) { fem_nodes_mode = m; }
     size_type nb_contact_pairs(void) const { return contact_pairs.size(); }
