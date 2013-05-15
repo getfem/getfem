@@ -134,6 +134,8 @@ namespace getfem {
 
     void projection_data(const fem_interpolation_context& c,
                          base_node &normal, scalar_type &gap) const;
+    void projection_data(const base_node &pt,
+                         base_node &normal, scalar_type &gap) const;
 
     /** return the list of convexes of the projected mesh_fem which
      *  contain at least one gauss point (should be all convexes)! */
@@ -149,7 +151,7 @@ namespace getfem {
     projected_fem(const mesh_fem &mf_source_, const mesh_im &mim_target_,
                   size_type rg_source_, size_type rg_target_,
                   dal::bit_vector blocked_dofs_,
-                  bool store_val = true);
+                  bool store_val);
 
     friend pfem new_projected_fem(const mesh_fem &mf_source_,
                                   const mesh_im &mim_target_,

@@ -1,9 +1,9 @@
 /*===========================================================================
- 
+
  Copyright (C) 2012-2012 Yves Renard, Konstantinos Poulios
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
 ===========================================================================*/
 
 #include "getfem/getfem_projected_fem.h"
@@ -37,7 +37,7 @@ namespace getfem {
   */
   void projection_on_convex_face
     (const bgeot::pgeometric_trans pgt, const base_matrix &G_cv,
-     const short_type fc, const base_node &pt, 
+     const short_type fc, const base_node &pt,
      base_node &proj_ref) {
 
     size_type N = gmm::mat_nrows(G_cv); // dimension of the target space
@@ -115,8 +115,8 @@ namespace getfem {
    *   fc    : the face of the convex to project on
    *   ref_pt: the point in the reference element
    * Output:
-   *   normal  : the surface normal in the real element corresponding at
-   *             the location of ref_pt in the refernce element
+   *   normal: the surface normal in the real element corresponding at
+   *           the location of ref_pt in the reference element
   */
   void normal_on_convex_face
     (const bgeot::pgeometric_trans pgt, const base_matrix &G_cv,
@@ -178,7 +178,7 @@ namespace getfem {
 
     // normalizing
     gmm::scale(normal, 1/gmm::vect_norm2(normal));
- 
+
     // ensure that normal points outwards
     base_node cv_center(N), fc_center(N);
     for (size_type i=0; i < nb_pts_cv; i++)
@@ -189,6 +189,56 @@ namespace getfem {
     gmm::scale(fc_center, scalar_type(1)/scalar_type(nb_pts_fc));
     if (gmm::vect_sp(normal, fc_center -cv_center) < 0)
       gmm::scale(normal, scalar_type(-1));
+  }
+
+  /* calculates the normal at a specific point of a convex in a higher
+   * dimension space
+   * Input:
+   *   pgt   : the geometric transformation of the convex
+   *   G_cv  : the nodes of the convex, stored in columns
+   *   ref_pt: the point in the reference element
+   * Output:
+   *   normal: the surface normal in the real element corresponding at
+   *           the location of ref_pt in the reference element
+   *           (or one of the possible normals if the space dimension
+   *           is more than one higher than the convex dimension)
+  */
+  void normal_on_convex
+    (const bgeot::pgeometric_trans pgt, const base_matrix &G_cv,
+     const base_node &ref_pt, base_node &normal) {
+
+    size_type N = gmm::mat_nrows(G_cv); // dimension of the target space
+    size_type P = pgt->dim();           // dimension of the reference element space
+
+    GMM_ASSERT1( N == 2 || N == 3, "Normal on convexes calculation is supported "
+                                   "only for space dimension equal to 2 or 3.");
+    GMM_ASSERT1( P < N, "Normal on convex is defined only in a space of"
+                        "higher dimension.");
+
+    size_type nb_pts = gmm::mat_ncols(G_cv);
+    base_matrix K(N,P);
+    { // calculate K at the final point
+      base_matrix grad_cv(nb_pts, P);
+      pgt->poly_vector_grad(ref_pt, grad_cv);
+      gmm::mult(G_cv, grad_cv, K);
+    }
+
+    gmm::resize(normal,N);
+    if (P==1 && N == 2) {
+      normal[0] = -K(1,0);
+      normal[1] = K(0,0);
+    }
+    else if (P==1 && N == 3) {
+      normal[0] = K(2,0)-K(1,0);
+      normal[1] = K(0,0)-K(2,0);
+      normal[2] = K(1,0)-K(0,0);
+    }
+    else if (P==2) {
+      normal[0] = K(1,0)*K(2,1)-K(2,0)*K(1,1);
+      normal[1] = K(2,0)*K(0,1)-K(0,0)*K(2,1);
+      normal[2] = K(0,0)*K(1,1)-K(1,0)*K(0,1);
+    }
+    gmm::scale(normal, 1/gmm::vect_norm2(normal));
   }
 
   void projected_fem::build_kdtree(void) const {
@@ -205,7 +255,7 @@ namespace getfem {
                                              size_type &cv_proj, short_type &fc_proj) const {
 
     bgeot::index_node_pair ipt;
-    //scalar_type dist = 
+    //scalar_type dist =
     tree.nearest_neighbor(ipt, pt);
 
     size_type cv_sel(-1);
@@ -232,10 +282,10 @@ namespace getfem {
       }
       else { // project on convex faces
         mesh_region::face_bitset faces = rg_source.faces_of_convex(cv);
-        if (faces.count() > 0) {
+        if (faces.count() > 0) { // this should rarely be more than one face
           bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
-          // this should rarely be more than one face
-          for (short_type f = 0; f < faces.size(); ++f) {
+          short_type nbf = mf_source.linked_mesh().nb_faces_of_convex(cv);
+          for (short_type f = 0; f < nbf; ++f) {
             if (faces.test(f)) {
               projection_on_convex_face(pgt, G, f, pt, proj_ref);
               scalar_type is_in = pgt->convex_ref()->is_in(proj_ref);
@@ -299,24 +349,28 @@ namespace getfem {
                   "You have to use approximated integration to project a fem");
       papprox_integration pai = pim->approx_method();
       bgeot::pgeometric_trans pgt = mim_target.linked_mesh().trans_of_convex(cv);
+      bgeot::pgeotrans_precomp pgp =
+        bgeot::geotrans_precomp(pgt, &(pai->integration_points()), 0);
       dal::bit_vector dofs;
       size_type last_cv(-1); // refers to the source mesh
       short_type last_f(-1); // refers to the source mesh
       size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f) : pai->nb_points();
       size_type start_pt = i.is_face() ? pai->ind_first_point_on_face(f) : 0;
       elt_projection_data &e = elements[cv];
+      base_node gpt(N);
       for (size_type k = 0; k < nb_pts; ++k) {
+        pgp->transform(mim_target.linked_mesh().points_of_convex(cv),
+                       start_pt + k, gpt);
         gausspt_projection_data &gppd = e.gausspt[start_pt + k];
-        /* todo: use a geotrans_interpolation_context */
-        base_node gpt = pgt->transform(i.is_face() ? pai->point_on_face(f,k) : pai->point(k),
-                                       mim_target.linked_mesh().points_of_convex(cv));
-
         gppd.iflags = find_a_projected_point(gpt, gppd.ptref, gppd.cv, gppd.f) ? 1 : 0;
         if (gppd.iflags) {
           // calculate gppd.normal
           const bgeot::pgeometric_trans pgt_source = mf_source.linked_mesh().trans_of_convex(gppd.cv);
           bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(gppd.cv));
-          normal_on_convex_face(pgt_source, G, gppd.f, gppd.ptref, gppd.normal);
+          if (gppd.f != short_type(-1))
+            normal_on_convex_face(pgt_source, G, gppd.f, gppd.ptref, gppd.normal);
+          else
+            normal_on_convex(pgt_source, G, gppd.ptref, gppd.normal);
           // calculate gppd.gap
           base_node ppt = pgt_source->transform(gppd.ptref, G);
           gppd.gap = gmm::vect_sp(gpt-ppt, gppd.normal);
@@ -652,44 +706,54 @@ namespace getfem {
                                       base_node &normal, scalar_type &gap) const {
     std::map<size_type,elt_projection_data>::iterator eit;
     eit = elements.find(c.convex_num());
-    GMM_ASSERT1(eit != elements.end(), "Wrong convex number: " << c.convex_num());
-    elt_projection_data &e = eit->second;
-    if (e.nb_dof == 0) { // return undefined normal vector and huge gap
+
+    if (eit != elements.end()) {
+      elt_projection_data &e = eit->second;
+      if (e.nb_dof == 0) { // return undefined normal vector and huge gap
         normal = base_node(c.N());
         gap = 1e12;
         return;
+      }
+      std::map<size_type,gausspt_projection_data>::iterator git;
+      git = e.gausspt.find(c.ii());
+      if (c.have_pgp() &&
+          (&c.pgp()->get_point_tab()
+           == &e.pim->approx_method()->integration_points()) &&
+          git != e.gausspt.end()) {
+        gausspt_projection_data &gppd = git->second;
+        if (gppd.iflags & 1) {
+          normal = gppd.normal;
+          gap = gppd.gap;
+        }
+        else { // return undefined normal vector and huge gap
+          normal = base_node(c.N());
+          gap = 1e12;
+        }
+        return;
+      }
     }
 
-    std::map<size_type,gausspt_projection_data>::iterator git;
-    git = e.gausspt.find(c.ii());
-    if (c.have_pgp() &&
-        (&c.pgp()->get_point_tab()
-         == &e.pim->approx_method()->integration_points()) &&
-        git != e.gausspt.end()) {
-      gausspt_projection_data &gppd = git->second;
-      if (gppd.iflags & 1) {
-        normal = gppd.normal;
-        gap = gppd.gap;
-      }
-      else { // return undefined normal vector and huge gap
-        normal = base_node(c.N());
-        gap = 1e12;
-      }
-    }
-    else {
-      size_type cv;
-      short_type f;
-      if (find_a_projected_point(c.xreal(), ptref, cv, f)) {
-        const bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
-        bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
+    // new projection
+    projection_data(c.xreal(), normal, gap);
+  }
+
+  void projected_fem::projection_data(const base_node& pt,
+                                      base_node &normal, scalar_type &gap) const {
+    size_type cv;
+    short_type f;
+    if (find_a_projected_point(pt, ptref, cv, f)) {
+      const bgeot::pgeometric_trans pgt = mf_source.linked_mesh().trans_of_convex(cv);
+      bgeot::vectors_to_base_matrix(G, mf_source.linked_mesh().points_of_convex(cv));
+      if (f != short_type(-1))
         normal_on_convex_face(pgt, G, f, ptref, normal);
-        base_node ppt = pgt->transform(ptref, G);
-        gap = gmm::vect_sp(c.xreal()-ppt, normal);
-      }
-      else { // return undefined normal vector and huge gap
-        normal = base_node(c.N());
-        gap = 1e12;
-      }
+      else
+        normal_on_convex(pgt, G, ptref, normal);
+      base_node ppt = pgt->transform(ptref, G);
+      gap = gmm::vect_sp(pt-ppt, normal);
+    }
+    else { // return undefined normal vector and huge gap
+      normal = base_node(pt.size());
+      gap = 1e12;
     }
 
   }
@@ -726,7 +790,7 @@ namespace getfem {
       ming = std::min(ming, v[cv]);
       maxg = std::max(maxg, v[cv]);
       meang += v[cv];
-      if (v[cv] > 0) ++cntg; 
+      if (v[cv] > 0) ++cntg;
     }
     meang /= scalar_type(cntg);
   }
