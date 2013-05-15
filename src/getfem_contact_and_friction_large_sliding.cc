@@ -797,7 +797,7 @@ namespace getfem {
           gmm::mult(lgraddeltavgradphiyinv, aux2, aux1);
           gmm::mult(aux1, gmm::transposed(vbase_uy), Melem);
           gmm::scale(Melem, weight);
-          // mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
+          mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
 
           // Second sub term
           gmm::resize(Melem, ndof_uy, ndof_ux); gmm::clear(Melem);

@@ -19,7 +19,7 @@
 clear all;
 % gf_workspace('clear all');
 
-test_case = 1; % 0 = 2D punch on a rigid obstacle
+test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two differente meshes
                % 3 = 2D with multi-body and only one mesh
@@ -30,8 +30,8 @@ clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
 r = 10.;                   % Augmentation parameter
 f_coeff = 0;              % Friction coefficient
 
-test_tangent_matrix = true;
-nonlinear_elasticity = false;
+test_tangent_matrix = false;
+nonlinear_elasticity = true;
 max_iter = 50;
 draw_mesh = false;
 
@@ -64,22 +64,23 @@ switch(test_case)
     self_contact = true;
 end;    
 
-if (test_case == 0)
-  % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
-  mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
-elseif (test_case == 1)
-  % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
-  mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
-  mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-14,-5];SIZES=[28,5];NSUBDIV=[28,5]');
-elseif (test_case == 2)
-  mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
-  % mesh1 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0.1];SIZES=[1,0.1];NSUBDIV=[20,2]');
-  mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
-elseif (test_case == 3)
-  mesh1 = gf_mesh('load', '../../../tests/meshes/multi_body.mesh');
-else
-  mesh1 = gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
-  mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(3,1)";ORG=[-15,-15,-4];SIZES=[30,30,4];NSUBDIV=[10,10,2]');
+switch (test_case) 
+  case 0
+    mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
+    % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
+  case 1
+    % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
+    mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
+    mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-14,-5];SIZES=[28,5];NSUBDIV=[28,5]');
+  case 2
+    mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
+    % mesh1 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0.1];SIZES=[1,0.1];NSUBDIV=[20,2]');
+    mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-0.5,0];SIZES=[1,0.1];NSUBDIV=[20,2]');
+  case 3
+    mesh1 = gf_mesh('load', '../../../tests/meshes/multi_body.mesh');
+  case 4
+    mesh1 = gf_mesh('load', '../../../tests/meshes/sphere_with_quadratic_tetra_400_elts.mesh');
+    mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(3,1)";ORG=[-15,-15,-4];SIZES=[30,30,4];NSUBDIV=[10,10,2]');
 end
 
 N = gf_mesh_get(mesh1, 'dim');
@@ -259,9 +260,12 @@ for nit=1:100
   gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', max_res); % , 'lsearch', 'simplest');
 
   U1 = gf_model_get(md, 'variable', 'u1');
-  VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u1', 'clambda1', 'cmu1', mfvm1); % a adapter en non-lineaire
-
+  if (nonlinear_elasticity)
+    VM1 = gf_model_get(md, 'compute Von Mises or Tresca', 'u1', lawname, 'params1', mfvm1);
+  else
+    VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+	  	  'u1', 'clambda1', 'cmu1', mfvm1);
+  end
   gf_plot(mfvm1,VM1,'mesh', 'off', 'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
 
   hold on % quiver plot of the multiplier
@@ -281,8 +285,12 @@ for nit=1:100
   if (test_case ~= 3 && test_case ~= 0)
      hold on
      U2 = gf_model_get(md, 'variable', 'u2');
-     VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		  'u2', 'clambda2', 'cmu2', mfvm2);
+     if (nonlinear_elasticity)
+       VM2 = gf_model_get(md, 'compute Von Mises or Tresca', 'u2', lawname, 'params2', mfvm2);
+     else
+       VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		    'u2', 'clambda2', 'cmu2', mfvm2);
+     end
      gf_plot(mfvm2,VM2,'mesh', 'off', 'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
      hold off
   end;
