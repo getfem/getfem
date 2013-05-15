@@ -127,8 +127,8 @@ namespace getfem {
 
   bool multi_contact_frame::are_dof_linked(size_type ib1, size_type idof1,
                                            size_type ib2, size_type idof2) {
-    const mesh_fem &mf1 = mfu_of_boundary(ib1);
-    const mesh_fem &mf2 = mfu_of_boundary(ib2);
+    const mesh_fem &mf1 = mfdisp_of_boundary(ib1);
+    const mesh_fem &mf2 = mfdisp_of_boundary(ib2);
     if ( &(mf1.linked_mesh()) != &(mf2.linked_mesh())) return false;
     GMM_ASSERT1(!(mf1.is_reduced()) && !(mf2.is_reduced()),
                 "Nodal strategy can only be applied for non reduced fems");
@@ -144,8 +144,8 @@ namespace getfem {
 
   bool multi_contact_frame::is_dof_linked(size_type ib1, size_type idof1,
                                           size_type ib2, size_type cv) {
-    const mesh_fem &mf1 = mfu_of_boundary(ib1);
-    const mesh_fem &mf2 = mfu_of_boundary(ib2);
+    const mesh_fem &mf1 = mfdisp_of_boundary(ib1);
+    const mesh_fem &mf2 = mfdisp_of_boundary(ib2);
     if ( &(mf1.linked_mesh()) != &(mf2.linked_mesh())) return false;
     GMM_ASSERT1(!(mf1.is_reduced()) && !(mf2.is_reduced()),
                 "Nodal strategy can only be applied for non reduced fems");
@@ -318,7 +318,7 @@ namespace getfem {
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
       if (!slave_only || is_slave_boundary(i)) {
         size_type bnum = region_of_boundary(i);
-        const mesh_fem &mfu = mfu_of_boundary(i);
+        const mesh_fem &mfu = mfdisp_of_boundary(i);
         const mesh_im &mim = mim_of_boundary(i);
         const model_real_plain_vector &U = disp_of_boundary(i);
         const mesh &m = mfu.linked_mesh();
@@ -447,8 +447,8 @@ namespace getfem {
           }
           size_type ir1 = region_of_boundary(ib1);
           size_type ir2 = region_of_boundary(ib2);
-          const mesh_fem &mf1 = mfu_of_boundary(ib1);
-          const mesh_fem &mf2 = mfu_of_boundary(ib2);
+          const mesh_fem &mf1 = mfdisp_of_boundary(ib1);
+          const mesh_fem &mf2 = mfdisp_of_boundary(ib2);
 
           // CRITERION 1 : The unit normal cone / vector are compatible
           //               and the two points are not in the same element.
@@ -528,7 +528,7 @@ namespace getfem {
     for (size_type i = 0; i < contact_boundaries.size(); ++i)
       if (!is_slave_boundary(i)) {
         size_type bnum = region_of_boundary(i);
-        const mesh_fem &mfu = mfu_of_boundary(i);
+        const mesh_fem &mfu = mfdisp_of_boundary(i);
         const model_real_plain_vector &U = disp_of_boundary(i);
         const mesh &m = mfu.linked_mesh();
 
@@ -642,14 +642,14 @@ namespace getfem {
       bgeot::rtree::pbox_set bset;
       element_boxes.find_boxes_at_point(boundary_points[ip], bset);
       boundary_point *pt_info = &(boundary_points_info[ip]);
-      const mesh_fem &mf1 = mfu_of_boundary(pt_info->ind_boundary);
+      const mesh_fem &mf1 = mfdisp_of_boundary(pt_info->ind_boundary);
       size_type ib1 = pt_info->ind_boundary;
 
       bgeot::rtree::pbox_set::iterator it = bset.begin();
       for (; it != bset.end(); ++it) {
         influence_box &ibx = element_boxes_info[(*it)->id];
         size_type ib2 = ibx.ind_boundary;
-        const mesh_fem &mf2 = mfu_of_boundary(ib2);
+        const mesh_fem &mf2 = mfdisp_of_boundary(ib2);
 
         // CRITERION 1 : The unit normal cone / vector are compatible
         //               and the two points are not in the same element.
@@ -915,7 +915,7 @@ namespace getfem {
         size_type cv = fi.ind_element;
         short_type iff = fi.ind_face;
 
-        const mesh_fem &mfu = mfu_of_boundary(ib);
+        const mesh_fem &mfu = mfdisp_of_boundary(ib);
         const mesh &m = mfu.linked_mesh();
         pfem pf_s = mfu.fem_of_element(cv);
         bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -1134,7 +1134,7 @@ namespace getfem {
 
         // CRITERION 6 : for self-contact only : apply a test on
         //               unit normals in reference configuration.
-        if (&m == &(mfu_of_boundary(ibx).linked_mesh())) {
+        if (&m == &(mfdisp_of_boundary(ibx).linked_mesh())) {
 
           base_small_vector diff = bpinfo.ref_point - ctx.xreal();
           scalar_type ref_dist = gmm::vect_norm2(diff);

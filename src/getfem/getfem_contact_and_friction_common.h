@@ -489,9 +489,9 @@ namespace getfem {
     { return contact_pairs; }
 
 
-    const getfem::mesh_fem &mfu_of_boundary(size_type n) const
+    const getfem::mesh_fem &mfdisp_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mfu); }
-    const getfem::mesh_fem &mflambda_of_boundary(size_type n) const
+    const getfem::mesh_fem &mfmult_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mflambda); }
     const getfem::mesh_im  &mim_of_boundary(size_type n) const
     { return *(contact_boundaries[n].mim); }
