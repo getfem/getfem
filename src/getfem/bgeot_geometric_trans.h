@@ -337,7 +337,7 @@ namespace bgeot {
          itk != G.end(); ++itk, ++k)
       gmm::add(gmm::scaled(*itk, c[j][k]), pt);
     GMM_ASSERT1(k == pgt->nb_points(),
-                "Wrong number of points in tranformation");
+                "Wrong number of points in transformation");
   }
 
   template <typename CONT>

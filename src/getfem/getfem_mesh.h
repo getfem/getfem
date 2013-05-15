@@ -411,7 +411,9 @@ namespace getfem {
 	the mesh.
     */
     const mesh_region region(size_type id) const {
-      if (!has_region(id)) {
+      if (id == mesh_region::all_convexes().id())
+        return mesh_region::all_convexes();
+      else if (!has_region(id)) {
         valid_cvf_sets.add(id);
         cvf_sets[id] = mesh_region(const_cast<mesh&>(*this),id);
       }
