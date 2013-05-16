@@ -21,7 +21,7 @@ clear all;
 
 test_case = 3; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
-               % 2 = 2D with two differente meshes
+               % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
                % 4 = 3D case (sphere / parallelepiped) (two meshes)
 
@@ -66,11 +66,11 @@ end;
 
 switch (test_case) 
   case 0
-    % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
-    mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
+    % mesh1 = gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
+    mesh1 = gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
   case 1
-    % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
-    mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
+    % mesh1 = gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
+    mesh1 = gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
     mesh2 = gf_mesh('import', 'structured', 'GT="GT_PK(2,1)";ORG=[-14,-5];SIZES=[28,5];NSUBDIV=[28,5]');
   case 2
     mesh1 = gf_mesh('load', '../../../tests/meshes/disc_with_a_hole.mesh');
@@ -92,7 +92,7 @@ CONTACT_BOUNDARY1 = 1;
 DIRICHLET_BOUNDARY1 = 3;
 if (test_case >= 2)
   fb1 = gf_mesh_get(mesh1, 'outer faces');
-  gf_mesh_set(mesh1,'boundary', CONTACT_BOUNDARY1, fb1);
+  gf_mesh_set(mesh1,'region', CONTACT_BOUNDARY1, fb1);
 else
   border = gf_mesh_get(mesh1,'outer faces');
   normals = gf_mesh_get(mesh1, 'normal of faces', border);
@@ -120,7 +120,7 @@ if (test_case ~= 3 && test_case ~= 0)
   CONTACT_BOUNDARY2 = 2;
   if (test_case ~= 1)
     fb2 = gf_mesh_get(mesh2, 'outer faces');
-    gf_mesh_set(mesh2,'boundary', CONTACT_BOUNDARY2, fb2);
+    gf_mesh_set(mesh2,'region', CONTACT_BOUNDARY2, fb2);
   else
     border = gf_mesh_get(mesh2,'outer faces');
     normals = gf_mesh_get(mesh2, 'normal of faces', border);
@@ -198,10 +198,10 @@ if (test_case ~= 3 && test_case ~= 0)
     gf_model_set(md, 'add initialized data', 'cunitv2', [1 0]);
     gf_model_set(md, 'add pointwise constraints with multipliers', 'u2', 'cpoints2', 'cunitv2');
   end
-  gf_model_set(md, 'add initialized data', 'data2', F);
-  gf_model_set(md, 'add source term brick', mim2, 'u2', 'data2');
   gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);          
   gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
+  gf_model_set(md, 'add initialized data', 'data2', F);
+  gf_model_set(md, 'add source term brick', mim2, 'u2', 'data2');
   if (test_case == 1)
     Ddata = zeros(1, N);
     gf_model_set(md, 'add initialized data', 'Ddata2', Ddata);
