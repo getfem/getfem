@@ -387,6 +387,174 @@ namespace getfem {
     }
   }
 
+#ifdef GAUSS_POINT_PRECOMP
+
+  struct gauss_point_precomp {
+    size_type N;
+    fem_precomp_pool fppool;
+    const multi_contact_frame &mcf;
+    const model &md;
+    const multi_contact_frame::contact_pair *cp;
+
+    const base_node &x(void) const { return cp->slave_point; }
+    const base_node &nx(void) const { return cp->slave_n; }
+    const base_node &y(void) const { return cp->master_point; }
+    const base_node &nx(void) const { return cp->master_n; }
+
+    base_matrix I_nxnx_;
+    bool I_nxnx_computed;    
+    const base_matrix &I_nxnx(void) {
+      if (!I_nxnx_computed) {
+        gmm::copy(gmm::identity_matrix(), I_nxnx_);
+        gmm::rank_one_update(I_nxnx_, nx(), gmm::scaled(nx(),scalar_type(-1)));
+        I_nxnx_computed = true;
+      }
+      return I_nxnx_;
+    }
+
+    base_matrix I_nyny_;
+    bool I_nyny_computed;    
+    const base_matrix &I_nyny(void) {
+      if (!I_nyny_computed) {
+        gmm::copy(gmm::identity_matrix(), I_nyny_);
+        gmm::rank_one_update(I_nyny_, ny(), gmm::scaled(ny(),scalar_type(-1)));
+        I_nyny_computed = true;
+      }
+      return I_nyny_;
+    }
+    
+    base_matrix I_nxny_;
+    bool I_nxny_computed;    
+    const base_matrix &I_nxny(void) {
+      if (!I_nxny_computed) {
+        gmm::copy(gmm::identity_matrix(), I_nxny_);
+        gmm::rank_one_update(I_nxny_, nx(),
+                             gmm::scaled(ny(),scalar_type(-1)/nxny));
+        I_nxny_computed = true;
+      }
+      return I_nxny_;
+    }
+
+    scalar_type nxny;
+    scalar_type nxdotny(void) const { return nxny; }
+
+    bool isrigid_;
+    bool isrigid(void) { return isrigid_; }
+
+    base_tensor base_ux, base_uy, base_lx, base_ly;
+    base_matrix vbase_ux_, vbase_uy_, vbase_lx_, vbase_ly_;
+    bool vbase_ux_init, vbase_uy_init, vbase_lx_init, vbase_ly_init;
+    base_tensor grad_base_ux, grad_base_uy, vgrad_base_ux_, vgrad_base_uy_;
+    bool vgrad_base_ux_init, vgrad_base_uy_init;
+    bool have_lx, have_ly;
+    
+    fem_interpolation_context ctx_ux_, ctx_uy_, ctx_lx_, ctx_ly_;
+    bool ctx_ux_init, ctx_uy_init, ctx_lx_init, ctx_ly_init;
+    base_matrix Gx, Gy;
+    mesh_fem *mf_ux, *mf_uy, *mf_lx, *mf_ly;
+    gmm::sub_interval I_ux, I_uy, I_lx, I_ly;
+    pfem pf_ux, pf_uy, pf_lx, pf_ly;
+    size_type ndof_ux, qdim_ux, ndof_uy, qdim_uy, ndof_lx, qdim_lx;
+    size_type ndof_ly, qdim_ly, cvx, cvy, fx, fy;
+    bgeot::pgeometric_trans pgtx, pgty;
+    const mesh_im *mim;
+    pintegration_method pim;
+    scalar_type weight_;
+
+    scalar_type weight(void) { return weight_; }
+
+    fem_interpolation_context &ctx_ux(void) {
+      if (!ctx_ux_init) {
+        bgeot::vectors_to_base_matrix(Gx, mx.points_of_convex(cvx));
+        pfem_precomp pfp_ux
+          = fppool(pf_ux, &(pim->approx_method()->integration_points()));
+        ctx_ux_ = fem_interpolation_context(pgtx, pfp_ux, cp->slave_ind_pt,
+                                            Gx, cvx, fx);
+        ctx_ux_init = true;
+      }
+      return ctx_ux_;
+    }
+
+    const base_matrix &vbase_ux(void) {
+      if (!vbase_ux_init) {
+        ctx_ux().base_value(base_ux);
+        vectorize_base_tensor(base_ux, vbase_ux_, ndof_ux, qdim_ux, N);
+        vbase_ux_init = true;
+      }
+      return vbase_ux_;
+    }
+
+    const base_matrix &vgrad_base_ux(void) {
+      if (!vgrad_base_ux_init) {
+        ctx_ux().base_grad_value(grad_base_ux);
+        vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux_, ndof_ux,
+                                   qdim_ux, N);
+        vgrad_base_ux_init = true;
+      }
+      return vgrad_base_ux_;
+    }
+
+
+    const mesh &meshx(void) { return mf_ux->linked_mesh(); }
+    const mesh &meshy(void) { return mf_uy->linked_mesh(); }
+    
+    init(const multi_contact_frame::contact_pair &cp_) {
+      cp = &cp_;
+      N = gmm::vect_size(x());
+      I_nxnx_computed = I_nyny_computed = I_nxny_computed = false;
+      ctx_ux_init = ctx_uy_init = ctx_lx_init = ctx_ly_init = false;
+      vbase_ux_init = vbase_uy_init = vbase_lx_init = vbase_ly_init = false;
+      vgrad_base_ux_init = vgrad_base_uy_init = false;
+      have_lx = have_ly = false;
+      nxny = gmm::vect_sp(nx(), ny());
+      isrigid_ = (cp->irigid_obstacle != size_type(-1));
+      
+      cvx = cp->slave_ind_element;
+      size_type ibx = cp->slave_ind_boundary, iby(0);
+      mf_ux = &(mcf.mfdisp_of_boundary(ibx));
+      pf_ux = mf_ux->fem_of_element(cvx);
+      ndof_ux = pf_ux->nb_dof(cvx);
+      qdim_ux = pf_ux->target_dim();
+      fx = cp.slave_ind_face;
+      pgtx = meshx().trans_of_convex(cvx);
+      mim = &(mcf.mim_of_boundary(ibx));
+      pim = mim->int_method_of_element(cvx);
+      weight_ = pim->approx_method()->coeff(cp->slave_ind_pt);
+      const std::string &name_ux = mcf.varname_of_boundary(ibx);
+      I_ux = md.interval_of_variable(name_ux);
+      const std::string &name_lx = mcf.multname_of_boundary(ibx);
+      have_lx = (name_lx.size() > 0);
+      if (have_lx) {
+        // ...
+      }
+
+      if (!isrigid_) {
+        cvy = cp.master_ind_element;
+        iby = cp->master_ind_boundary;
+        fy = cp.master_ind_face;
+        pf_uy = mf_uy->fem_of_element(cvy);
+        ndof_uy = pf_uy->nb_dof(cvy);
+        qdim_uy = pf_uy->target_dim();
+        pgty = meshy().trans_of_convex(cvy);
+
+        const std::string &name_uy = mcf.varname_of_boundary(iby);
+        I_uy = md.interval_of_variable(name_uy);
+        const std::string &name_ly = mcf.multname_of_boundary(iby);
+        have_ly = (name_ly.size() > 0);
+        if (have_ly) {
+          // ...
+        }
+      }
+
+
+    }
+    
+    gauss_point_precomp(const model &md_, const multi_contact_frame &mcf_)
+      md(md_), mcf(mcf_) {}
+
+  };
+
+#endif
 
   void integral_large_sliding_contact_brick::asm_real_tangent_terms
   (const model &md, size_type /* ib */, const model::varnamelist &vl,
