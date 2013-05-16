@@ -19,7 +19,7 @@
 clear all;
 % gf_workspace('clear all');
 
-test_case = 0; % 0 = 2D punch on a rigid obstacle
+test_case = 3; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two differente meshes
                % 3 = 2D with multi-body and only one mesh
@@ -27,15 +27,23 @@ test_case = 0; % 0 = 2D punch on a rigid obstacle
 
 clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
 clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
-r = 10.;                   % Augmentation parameter
+r = 1;                   % Augmentation parameter
 f_coeff = 0;              % Friction coefficient
 
 test_tangent_matrix = false;
-nonlinear_elasticity = true;
+nonlinear_elasticity = false;
 max_iter = 50;
 draw_mesh = false;
 
 switch(test_case)
+  case {0,1}
+    vf = 0.0;
+    vf_mult = 1.0;
+    penalty_parameter = 0;
+    dirichlet_translation = -0.5;
+    max_res = 1E-8;
+    release_dist = 1.5;
+    self_contact = false;
   case 3
     vf = 0.01;              % Vertical force
     vf_mult = 1.05;
@@ -43,15 +51,7 @@ switch(test_case)
     release_dist = 0.05;
     max_res = 1E-9;
     self_contact = true;
-  case {0,1}
-    vf = 0.0;
-    vf_mult = 1.0;
-    penalty_parameter = 0;
-    dirichlet_translation = -0.5;
-    max_res = 1E-8;
-    release_dist = 2.5;
-    self_contact = false;
-  case {2,3,4}
+  case {2,4}
     vf = 0.01;              % Vertical force
     vf_mult = 1.5;
     penalty_parameter = 0.01;
@@ -66,8 +66,8 @@ end;
 
 switch (test_case) 
   case 0
-    mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
-    % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
+    % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
+    mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
   case 1
     % mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_1.mesh');
     mesh1=gf_mesh('load', '../../../tests/meshes/punch2D_2.mesh');
@@ -110,6 +110,7 @@ end
 % dol1 = gf_mesh_fem_get(pre_mflambda1, 'basic dof on region', CONTACT_BOUNDARY1);
 % mflambda1 = gf_mesh_fem('partial',  pre_mflambda1, dol1);
 mim1 = gf_mesh_im(mesh1, 4);
+mim1_contact = gf_mesh_im(mesh1, 2);
 
 if (test_case ~= 3 && test_case ~= 0) 
   mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 2);
@@ -130,6 +131,7 @@ if (test_case ~= 3 && test_case ~= 0)
     gf_mesh_set(mesh2, 'region', DIRICHLET_BOUNDARY2, dirichlet_boundary);
   end
   mim2 = gf_mesh_im(mesh2, 4);
+  mim2_contact = gf_mesh_im(mesh2, 4);
 end
 
 if (draw_mesh)
@@ -220,9 +222,9 @@ gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
 mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
 if (self_contact)
-  gf_multi_contact_frame_set(mcff, 'add master boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1');
+  gf_multi_contact_frame_set(mcff, 'add master boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1');
 else
-  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1, CONTACT_BOUNDARY1, 'u1', 'lambda1'); 
+  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1'); 
 end
 
 switch(test_case)
@@ -230,17 +232,17 @@ switch(test_case)
     gf_multi_contact_frame_set(mcff, 'add obstacle', '80-sqrt(x^2+(y-80)^2)'); 
   case 1
     if (self_contact)
-      gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+      gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
     else
-      gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2');
+      gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2');
     end
    case 2
-    gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+    gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
     gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
   case 3
     gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');  
   case 4
-    gf_multi_contact_frame_set(mcff, 'add master boundary', mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+    gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
     gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
 end
 

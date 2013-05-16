@@ -721,6 +721,7 @@ namespace getfem {
       return grad_phi_ny_;
     }
     
+    base_small_vector un;
     
     void set_pair(const multi_contact_frame::contact_pair &cp_) {
       cp = &cp_;
@@ -746,7 +747,9 @@ namespace getfem {
       pgtx = meshx().trans_of_convex(cvx_);
       mim = &(mcf.mim_of_boundary(ibx));
       pim = mim->int_method_of_element(cvx_);
-      weight_ = pim->approx_method()->coeff(cp->slave_ind_pt);
+      weight_ = pim->approx_method()->coeff(cp->slave_ind_pt) * ctx_ux().J();
+      gmm::mult(ctx_ux().B(), pgtx->normals()[fx], un);
+      weight_ *= gmm::vect_norm2(un);
       const std::string &name_ux = mcf.varname_of_boundary(ibx);
       I_ux_ = md.interval_of_variable(name_ux);
 
@@ -791,9 +794,82 @@ namespace getfem {
       lambda_x_(N), lambda_y_(N),
       grad_phix_(N, N), grad_phix_inv_(N, N),
       grad_phiy_(N, N), grad_phiy_inv_(N, N), alpha(alpha_),
-      wx_(N), wy_(N), Vs_(N), grad_phi_ny_(N, N) {}
+      wx_(N), wy_(N), Vs_(N), grad_phi_ny_(N, N), un(N) {}
 
   };
+
+  static void do_test_F(size_type N) {
+
+    base_matrix dlambdaF(N, N), dnF(N, N), dVsF(N, N);
+    base_small_vector F(N), dgF(N);
+
+    scalar_type EPS = 5E-9;
+    for (size_type k = 0; k < 100; ++k) {
+      base_small_vector lambda_r(N), Vs_r(N), nx_r(N), f_coeff_r(3);
+      base_small_vector F2(N), F3(N);
+      scalar_type g_r = gmm::random(1.), r_r = gmm::random();
+      gmm::fill_random(lambda_r);
+      gmm::fill_random(Vs_r);
+      gmm::fill_random(nx_r);
+      gmm::scale(nx_r, 1./gmm::vect_norm2(nx_r));
+      f_coeff_r[0] = gmm::random();
+      f_coeff_r[1] = gmm::random();
+      f_coeff_r[2] = gmm::random();
+      
+      aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
+      aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
+                        dlambdaF, dgF, dnF, dVsF);
+      GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
+      
+      base_small_vector dlambda(N);
+      gmm::fill_random(dlambda);
+      
+      
+      gmm::add(gmm::scaled(dlambda, EPS), nx_r);
+      aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+      
+      gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
+      if (gmm::vect_dist2(F2, F3)/EPS > 1E-4) {
+        cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r
+             << " nx_r = " << nx_r << endl << "g_r = " << g_r
+             << " r_r = " << r_r << " f = " << f_coeff_r << endl;
+        cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+        GMM_ASSERT1(false, "bad n derivative");
+      }
+      
+      gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
+      
+      
+      gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
+      aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+      gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
+      if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
+        cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+        GMM_ASSERT1(false, "bad lambda derivative");
+      }
+      gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
+      
+      
+      gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
+      aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+      gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
+      if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
+        cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+        GMM_ASSERT1(false, "bad Vs derivative");
+      }
+      gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
+      
+      
+      g_r += EPS;
+      aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
+      gmm::add(gmm::scaled(dgF, EPS), F, F3);
+      if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
+        cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
+        GMM_ASSERT1(false, "bad g derivative");
+      }
+      g_r -= EPS; 
+    }
+  }
 
 
   void integral_large_sliding_contact_brick::asm_real_tangent_terms
@@ -853,7 +929,8 @@ namespace getfem {
     base_matrix aux2(N, N), aux3(N, N);
     base_small_vector aux8(N), aux9(N); 
 
-
+    scalar_type FMULT = 10.;
+    
     // Stabilization for non-contact zones
     for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
       if (mcf.is_self_contact() || mcf.is_slave_boundary(i)) {
@@ -868,7 +945,7 @@ namespace getfem {
         if (version & model::BUILD_MATRIX) {
           model_real_sparse_matrix M1(mflambda.nb_dof(), mflambda.nb_dof());
           asm_mass_matrix(M1, mim, mflambda, region);
-          gmm::add(gmm::scaled(M1,scalar_type(1)/r), gmm::sub_matrix(M, I, I));
+          gmm::add(gmm::scaled(M1, FMULT/r), gmm::sub_matrix(M, I, I));
         }
 
         if (version & model::BUILD_RHS) {
@@ -876,14 +953,13 @@ namespace getfem {
           asm_source_term
             (V1, mim, mflambda, mflambda,
              md.real_variable(mcf.multname_of_boundary(i)), region);
-          gmm::add(gmm::scaled(V1, scalar_type(-1)/r), gmm::sub_vector(V, I));
+          gmm::add(gmm::scaled(V1, -FMULT/r), gmm::sub_vector(V, I));
         }
       }
 
-    scalar_type FMULT = 1.;
-
     gauss_point_precomp gpp(N, md, mcf, alpha);
 
+    // do_test_F(2); do_test_F(3);
 
     // Iterations on the contact pairs
     for (size_type icp = 0; icp < mcf.nb_contact_pairs(); ++icp) {
@@ -913,80 +989,7 @@ namespace getfem {
 
       if (version & model::BUILD_MATRIX) {
 
-// #define DO_TEST_F
-
-#ifdef DO_TEST_F
-
-        scalar_type EPS = 5E-9;
-        for (size_type k = 0; k < 100; ++k) {
-          base_small_vector lambda_r(N), Vs_r(N), nx_r(N), f_coeff_r(3);
-          base_small_vector F2(N), F3(N);
-          scalar_type g_r = gmm::random(1.), r_r = gmm::random();
-          gmm::fill_random(lambda_r);
-          gmm::fill_random(Vs_r);
-          gmm::fill_random(nx_r);
-          gmm::scale(nx_r, 1./gmm::vect_norm2(nx_r));
-          f_coeff_r[0] = gmm::random();
-          f_coeff_r[1] = gmm::random();
-          f_coeff_r[2] = gmm::random();
-
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
-          aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
-                            dlambdaF, dgF, dnF, dVsF);
-          GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
-
-          base_small_vector dlambda(N);
-          gmm::fill_random(dlambda);
-
-
-          gmm::add(gmm::scaled(dlambda, EPS), nx_r);
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-
-          gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
-          if (gmm::vect_dist2(F2, F3)/EPS > 1E-4) {
-            cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r
-                 << " nx_r = " << nx_r << endl << "g_r = " << g_r
-                 << " r_r = " << r_r << " f = " << f_coeff_r << endl;
-            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-            GMM_ASSERT1(false, "bad n derivative");
-          }
-
-          gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
-
-
-          gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-          gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
-          if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
-            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-            GMM_ASSERT1(false, "bad lambda derivative");
-          }
-          gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
-
-
-          gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-          gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
-          if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
-            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-            GMM_ASSERT1(false, "bad Vs derivative");
-          }
-          gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
-
-
-          g_r += EPS;
-          aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-          gmm::add(gmm::scaled(dgF, EPS), F, F3);
-          if (gmm::vect_dist2(F2, F3)/EPS > 1E-6) {
-            cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
-            GMM_ASSERT1(false, "bad g derivative");
-          }
-          g_r -= EPS;
-
-
-
-        }
-#endif
+        
 
         base_matrix aux1(ndof_uy, N), aux4(ndof_uy, ndof_ux);
         base_matrix aux5(ndof_lx, N), aux10(ndof_lx, N);
@@ -1176,11 +1179,10 @@ namespace getfem {
 #endif
 
 #ifdef CONSIDER_TERM3
-
+        
         // Term -(1/r)(lambda - F).\delta \mu
         // (1/r)(lambda).\delta \mu is skipped because globally added before
-        gmm::mult(gpp.vbase_lx(), gmm::scaled(F, scalar_type(-1)/r), aux12);
-        gmm::scale(aux12, -weight*FMULT);
+        gmm::mult(gpp.vbase_lx(), gmm::scaled(F, weight*FMULT/r), aux12);
         vec_elem_assembly(V, I_lx, aux12, *mf_lx, cvx);
 #endif
       }
