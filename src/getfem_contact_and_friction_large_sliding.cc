@@ -964,22 +964,17 @@ namespace getfem {
     // Iterations on the contact pairs
     for (size_type icp = 0; icp < mcf.nb_contact_pairs(); ++icp) {
       const multi_contact_frame::contact_pair &cp = mcf.get_contact_pair(icp);
-
       gpp.set_pair(cp);
-      const base_small_vector &nx = gpp.nx();
-      const base_small_vector &ny = gpp.ny();
+      const base_small_vector &nx = gpp.nx(), &ny = gpp.ny();
       const mesh_fem *mf_ux = gpp.mf_ux(), *mf_lx = gpp.mf_lx(), *mf_uy(0);
-      size_type ndof_ux = gpp.ndof_ux(), ndof_uy(0);
-      size_type ndof_lx = gpp.ndof_lx();
+      size_type ndof_ux = gpp.ndof_ux(), ndof_uy(0), ndof_lx = gpp.ndof_lx();
       size_type cvx = gpp.cvx(), cvy(0);
       const gmm::sub_interval &I_ux = gpp.I_ux(), &I_lx = gpp.I_lx();
       gmm::sub_interval I_uy;
       bool isrigid = gpp.isrigid();
       if (!isrigid) {
-        ndof_uy = gpp.ndof_uy();
-        I_uy = gpp.I_uy();
-        mf_uy = gpp.mf_uy();
-        cvy =  gpp.cvy();
+        ndof_uy = gpp.ndof_uy(); I_uy = gpp.I_uy();
+        mf_uy = gpp.mf_uy(); cvy =  gpp.cvy();
       }
       scalar_type weight = gpp.weight(), g = gpp.g();
       const base_small_vector &lambda = gpp.lx();
@@ -988,8 +983,6 @@ namespace getfem {
 
 
       if (version & model::BUILD_MATRIX) {
-
-        
 
         base_matrix aux1(ndof_uy, N), aux4(ndof_uy, ndof_ux);
         base_matrix aux5(ndof_lx, N), aux10(ndof_lx, N);

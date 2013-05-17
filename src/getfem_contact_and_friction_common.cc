@@ -974,7 +974,7 @@ namespace getfem {
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
           size_type niter = 0;
-          while (residual > 2E-7) {
+          while (residual > 2E-12) {
 
             size_type subiter(0);
             for(;;) {
@@ -1024,7 +1024,7 @@ namespace getfem {
           scalar_type dist = pps(a, grada);
           size_type niter = 0;
 
-          while (gmm::vect_norm2(grada) > 2E-7) {
+          while (gmm::vect_norm2(grada) > 1E-12) {
 
             size_type subiter(0);
             for(;;) {
@@ -1061,7 +1061,7 @@ namespace getfem {
           converged = (gmm::vect_norm2(grada) < 2E-6);
 
           if (!converged) { // Try with BFGS
-            gmm::iteration iter(2E-7, 0 /* noisy*/, 100 /*maxiter*/);
+            gmm::iteration iter(1E-12, 0 /* noisy*/, 100 /*maxiter*/);
             gmm::clear(a);
             gmm::bfgs(pps, pps, a, 10, iter, 0, 0.5);
             residual = gmm::abs(iter.get_res());
@@ -1165,7 +1165,7 @@ namespace getfem {
         scalar_type alpha(0), beta(0);
         d1 = d0;
 
-        while (gmm::abs(d1) > 1E-10 && ++nit < 50 && nb_fail < 3) {
+        while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
           for (size_type k = 0; k < N; ++k) {
             pt_eval[k] += EPS;
             d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
