@@ -815,7 +815,7 @@ namespace getfem {
     std::vector<base_small_vector> ti(N-1), Ti(N-1);
     size_type nbwarn(0);
 
-    //    double time = dal::uclock_sec();
+    // double time = dal::uclock_sec();
 
     clear_aux_info();
     contact_pairs = std::vector<contact_pair>();
@@ -973,7 +973,7 @@ namespace getfem {
           pps(a, res);
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
-          size_type niter = 0, nbfail = 0;
+          size_type niter = 0;
           while (residual > 2E-7) {
 
             size_type subiter(0);
@@ -997,12 +997,12 @@ namespace getfem {
               residual2 = gmm::vect_norm2(res2);
               if (residual2 < residual) break;
               lambda /= scalar_type(2);
-              if (lambda < 1E-3) { nbfail++; break; }
+              if (lambda < 1E-3) break;
             }
             residual = residual2;
             gmm::copy(res2, res);
             gmm::copy(b, a);
-            if (nbfail > 6) break;
+            if (niter > 5 && gmm::vect_norm2(a) > 30) break;
             if (++niter > 50) break;
           }
           converged = (gmm::vect_norm2(res) < 2E-6);
@@ -1190,7 +1190,7 @@ namespace getfem {
             if (lambda < 1E-3) {
               if (raytrace) {
                 if (gmm::abs(beta - d1 / gmm::vect_sp(ny, nx))
-                    > scalar_type(50)*gmm::abs(d1)) nb_fail++;
+                    > scalar_type(500)) nb_fail++;
               }
               break;
             }
