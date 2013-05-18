@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard.
+ Copyright (C) 2009-2013 Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -417,7 +417,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       `EPS` is the value of the small parameter for the finite difference
       computation of the derivative is the random direction (default is 1E-6).
       `NN` is the number of tests (default is 100). `scale` is a parameter
-      for the random position (default is 1) around the current position.
+      for the random position (default is 1, 0 is an acceptable value) around
+      the current position.
       Each dof of the random position is chosen in the range
       [current-scale, current+scale].
       @*/
@@ -429,8 +430,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type errmax = scalar_type(0);
        size_type NN = 100;
        if (in.remaining()) NN = in.pop().to_integer();
-       scalar_type scale = scalar_type(1);
-       if (in.remaining()) scale = in.pop().to_scalar();
+       scalar_type scalef = scalar_type(1);
+       if (in.remaining()) scalef = in.pop().to_scalar();
 
        if (md->model().is_linear()) {
 	 GMM_WARNING1("Problem is linear, the test is not relevant");
@@ -443,9 +444,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   std::vector<complex_type> D2(nbdof);
            md->model().from_variables(U);
 	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(dU); gmm::scale(dU, scale);
+	     gmm::fill_random(dU); gmm::scale(dU, complex_type(scalef));
              gmm::add(U, dU);
-	     gmm::fill_random(DIR); gmm::scale(DIR, scale);
+	     gmm::fill_random(DIR);
 	     md->model().to_variables(dU);
 	     md->model().assembly(getfem::model::BUILD_ALL);
 	     gmm::copy(md->model().complex_rhs(), D2);
@@ -469,9 +470,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	   std::vector<scalar_type> D2(nbdof);
            md->model().from_variables(U);
 	   for (size_type i = 0; i < NN; ++i) {
-	     gmm::fill_random(dU); gmm::scale(dU, scale);
+	     gmm::fill_random(dU); gmm::scale(dU, scalef);
              gmm::add(U, dU);
-	     gmm::fill_random(DIR); gmm::scale(DIR, scale);
+	     gmm::fill_random(DIR);
 	     md->model().to_variables(dU);
 	     md->model().assembly(getfem::model::BUILD_ALL);
 	     gmm::copy(md->model().real_rhs(), D2);
@@ -486,6 +487,101 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 	     errmax = std::max(err, errmax);
 	   }
            md->model().to_variables(U);
+	 }
+       }
+       out.pop().from_scalar(errmax);
+       );
+
+
+    /*@GET ('test tangent matrix term', @str varname1, @str varname2[, @scalar EPS[, @int NB[, @scalar scale]]])
+      Test the consistency of a part of the tangent matrix in some
+      random positions and random directions
+      (useful to test newly created bricks).
+      The increment is only made on variable `varname2` and tested on the
+      part of the residual corresponding to `varname1`. This means that
+      only the term (`varname1`, `varname2`) of the tangent matrix is tested.
+      `EPS` is the value of the small parameter for the finite difference
+      computation of the derivative is the random direction (default is 1E-6).
+      `NN` is the number of tests (default is 100). `scale` is a parameter
+      for the random position (default is 1, 0 is an acceptable value)
+      around the current position.
+      Each dof of the random position is chosen in the range
+      [current-scale, current+scale].
+      @*/
+    sub_command
+      ("test tangent matrix term", 2, 5, 0, 1,
+       std::string varname1 = in.pop().to_string();
+       std::string varname2 = in.pop().to_string();
+       gmm::sub_interval I1 = md->model().interval_of_variable(varname1);
+       gmm::sub_interval I2 = md->model().interval_of_variable(varname2);
+       size_type nbdof1 = I1.size();
+       size_type nbdof2 = I2.size();
+
+       scalar_type EPS = 1E-6;
+       if (in.remaining()) EPS = in.pop().to_scalar();
+       scalar_type errmax = scalar_type(0);
+       size_type NN = 100;
+       if (in.remaining()) NN = in.pop().to_integer();
+       scalar_type scalef = scalar_type(1);
+       if (in.remaining()) scalef = in.pop().to_scalar();
+
+       if (md->model().is_linear()) {
+	 GMM_WARNING1("Problem is linear, the test is not relevant");
+       } else {
+	 if (md->is_complex()) {
+	   std::vector<complex_type> U2(nbdof2);
+	   std::vector<complex_type> dU2(nbdof2);
+	   std::vector<complex_type> DIR2(nbdof2);
+	   std::vector<complex_type> D1(nbdof1);
+	   std::vector<complex_type> D2(nbdof1);
+           gmm::copy(md->model().complex_variable(varname2), U2);
+	   for (size_type i = 0; i < NN; ++i) {
+	     gmm::fill_random(dU2); gmm::scale(dU2, complex_type(scalef));
+             gmm::add(U2, dU2);
+             gmm::copy(dU2, md->model().set_complex_variable(varname2));
+	     gmm::fill_random(DIR2);
+	     md->model().assembly(getfem::model::BUILD_ALL);
+	     gmm::copy(gmm::sub_vector(md->model().complex_rhs(), I1), D2);
+	     gmm::mult(gmm::sub_matrix(md->model().complex_tangent_matrix(),
+                                       I1, I2), DIR2, D1);
+	     gmm::add(gmm::scaled(DIR2, complex_type(EPS)), dU2);
+	     gmm::copy(dU2, md->model().set_complex_variable(varname2));
+	     md->model().assembly(getfem::model::BUILD_RHS);
+	     gmm::add(gmm::scaled(gmm::sub_vector(md->model().complex_rhs(),
+                                                  I1), complex_type(-1)), D2);
+	     gmm::scale(D2, complex_type(1)/complex_type(EPS));
+	     scalar_type err = gmm::vect_dist2(D1, D2);
+	     cout << "Error at step " << i << " : " << err << endl;
+	     errmax = std::max(err, errmax);
+	   }
+           gmm::copy(U2, md->model().set_complex_variable(varname2));
+	 } else {
+	   std::vector<scalar_type> U2(nbdof2);
+	   std::vector<scalar_type> dU2(nbdof2);
+	   std::vector<scalar_type> DIR2(nbdof2);
+	   std::vector<scalar_type> D1(nbdof1);
+	   std::vector<scalar_type> D2(nbdof1);
+           gmm::copy(md->model().real_variable(varname2), U2);
+	   for (size_type i = 0; i < NN; ++i) {
+	     gmm::fill_random(dU2); gmm::scale(dU2, scalef);
+             gmm::add(U2, dU2);
+             gmm::copy(dU2, md->model().set_real_variable(varname2));
+	     gmm::fill_random(DIR2);
+	     md->model().assembly(getfem::model::BUILD_ALL);
+	     gmm::copy(gmm::sub_vector(md->model().real_rhs(), I1), D2);
+	     gmm::mult(gmm::sub_matrix(md->model().real_tangent_matrix(),
+                                       I1, I2), DIR2, D1);
+	     gmm::add(gmm::scaled(DIR2, scalar_type(EPS)), dU2);
+	     gmm::copy(dU2, md->model().set_real_variable(varname2));
+	     md->model().assembly(getfem::model::BUILD_RHS);
+	     gmm::add(gmm::scaled(gmm::sub_vector(md->model().real_rhs(),
+                                                  I1), scalar_type(-1)), D2);
+	     gmm::scale(D2, scalar_type(1)/EPS);
+	     scalar_type err = gmm::vect_dist2(D1, D2);
+	     cout << "Error at step " << i << " : " << err << endl;
+	     errmax = std::max(err, errmax);
+	   }
+           gmm::copy(U2, md->model().set_real_variable(varname2));
 	 }
        }
        out.pop().from_scalar(errmax);
