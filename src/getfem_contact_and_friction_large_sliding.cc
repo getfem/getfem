@@ -1021,7 +1021,7 @@ namespace getfem {
           gmm::scale(Melem, weight);
           mat_elem_assembly(M, I_uy, I_lx, Melem, *mf_uy, cvy, *mf_lx, cvx);
 
-          // Term -\lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
+          // Term \lambda(X) . (\nabla \delta v(Y) (\nabla phi)^(-1)\delta y
           gmm::clear(aux1);
           const base_tensor &vgrad_base_uy = gpp.vgrad_base_uy();
           for (size_type i = 0; i < ndof_uy; ++i)
@@ -1033,12 +1033,9 @@ namespace getfem {
 
           // first sub term
           gmm::resize(Melem, ndof_uy, ndof_uy); gmm::clear(Melem);
-          gmm::clear(aux2); 
-          gmm::rank_one_update(aux2, nx,
-                               gmm::scaled(ny,scalar_type(1)/gpp.nxdotny()));
-          gmm::mult(lgraddeltavgradphiyinv, aux2, aux1);
+          gmm::mult(lgraddeltavgradphiyinv, gpp.I_nxny(), aux1);
           gmm::mult(aux1, gmm::transposed(gpp.vbase_uy()), Melem);
-          gmm::scale(Melem, weight);
+          gmm::scale(Melem, -weight);
           mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
 
           // Second sub term
