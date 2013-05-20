@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright (C) 1998-2009 Yves Renard
+# Copyright (C) 1998-2013 Yves Renard
 #
 # This file is a part of GETFEM++
 #
@@ -28,15 +28,10 @@ do_delete=0
 do_mrproper=0
 
 where="html"
-
-if [ "$srcdir" == "" ]; then
-  srcdir="."
-fi
-echo "srcdir = $srcdir"
-me=$(cd $srcdir/.svn && grep "svn+ssh" entries | sed "1,1d" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
+me=$(svn info | grep "svn+ssh" | sed "1,1d" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
 echo "gna login : $me"
 if [ "$me" == "" ]; then
-  die "Cannot determine gna login"
+  die "Cannot determine gna login in upload_html"
 fi
 
 while test "$#" -gt 0; do
