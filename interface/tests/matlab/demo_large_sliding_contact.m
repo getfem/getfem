@@ -17,9 +17,9 @@
 
 
 clear all;
-% gf_workspace('clear all');
+gf_workspace('clear all');
 
-test_case = 1; % 0 = 2D punch on a rigid obstacle
+test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -27,10 +27,11 @@ test_case = 1; % 0 = 2D punch on a rigid obstacle
 
 clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
 clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
-r = 1;                      % Augmentation parameter
-f_coeff = 0;                % Friction coefficient
+r = 0.1;                    % Augmentation parameter
+alpha = 1;                  % Alpha coefficient for "sliding velocity"
+f_coeff = 1;                % Friction coefficient
 
-test_tangent_matrix = false;
+test_tangent_matrix = true;
 nonlinear_elasticity = false;
 max_iter = 50;
 draw_mesh = false;
@@ -46,10 +47,10 @@ switch(test_case)
     self_contact = false;
   case 3
     vf = 0.01;              % Vertical force
-    vf_mult = 1.05;
+    vf_mult = 1.01;
     penalty_parameter = 0.1;
     release_dist = 0.05;
-    max_res = 1E-7;
+    max_res = 1E-9;
     self_contact = true;
   case {2,4}
     vf = 0.01;              % Vertical force
@@ -215,8 +216,6 @@ if (test_case <= 1)
   gf_model_set(md, 'add Dirichlet condition with multipliers', mim1, 'u1', 1, DIRICHLET_BOUNDARY1, 'Ddata');
 end
   
-gf_model_set(md, 'add initialized data', 'r', r);
-gf_model_set(md, 'add initialized data', 'f', f_coeff);
 
 
 
@@ -246,15 +245,17 @@ switch(test_case)
     gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
 end
 
+gf_model_set(md, 'add initialized data', 'r', r);
+gf_model_set(md, 'add initialized data', 'alpha', alpha);
+gf_model_set(md, 'add initialized data', 'f', f_coeff);
+gf_model_set(md, 'add integral large sliding contact brick raytrace', mcff, 'r', 'f', 'alpha');
 
-gf_model_set(md, 'add integral large sliding contact brick', mcff, 'r', 'f');
 
-
-for nit=1:100
+for nit=1:10000
 
   if (test_tangent_matrix) 
     errmax = gf_model_get(md, 'test tangent matrix', 1E-8, 20, 0.0001);
-    % errmax = gf_model_get(md, 'test tangent matrix term', 'u2', 'u2', 1E-8, 20, 0.0001);
+    % errmax = gf_model_get(md, 'test tangent matrix term', 'lambda1', 'u1', 1E-8, 20, 0.0001);
     disp(sprintf('errmax = %g', errmax));
     if (errmax > 1E-3) error('bad tangent matrix'); end;
     pause;

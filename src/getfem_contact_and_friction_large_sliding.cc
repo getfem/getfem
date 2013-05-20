@@ -929,7 +929,7 @@ namespace getfem {
     base_matrix aux2(N, N), aux3(N, N);
     base_small_vector aux8(N), aux9(N); 
 
-    scalar_type FMULT = 10.;
+    scalar_type FMULT = 1.;
     
     // Stabilization for non-contact zones
     for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
@@ -1035,12 +1035,14 @@ namespace getfem {
           gmm::resize(Melem, ndof_uy, ndof_uy); gmm::clear(Melem);
           gmm::mult(lgraddeltavgradphiyinv, gpp.I_nxny(), aux1);
           gmm::mult(aux1, gmm::transposed(gpp.vbase_uy()), Melem);
+          // Caution: re-use of aux1 in second sub term
           gmm::scale(Melem, -weight);
           mat_elem_assembly(M, I_uy, I_uy, Melem, *mf_uy, cvy, *mf_uy, cvy);
 
           // Second sub term
           gmm::resize(Melem, ndof_uy, ndof_ux); gmm::clear(Melem);
-          gmm::mult(lgraddeltavgradphiyinv, gpp.I_nxny(), aux1);
+          // Caution: re-use of aux1
+          // gmm::mult(lgraddeltavgradphiyinv, gpp.I_nxny(), aux1);
           gmm::mult(aux1, gmm::transposed(gpp.vbase_ux()), Melem);
 
           // Third sub term
@@ -1104,42 +1106,48 @@ namespace getfem {
 
         if (alpha != scalar_type(0)) {
           // Term -(1/r) d_Vs F \delta Vs\delta\mu
-          base_matrix I_gphingphiyinv(N, N);
-          if (!isrigid)
-            gmm::mult(gmm::scaled(gpp.grad_phi_ny(), scalar_type(-1)),
-                      gpp.grad_phiy_inv(), I_gphingphiyinv);
-          gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
-
-          // first sub term
-          gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
-          gmm::mult(I_gphingphiyinv, gpp.I_nxny(), aux2);
-          for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
-          gmm::mult(dVsF, aux2, aux3);
-          gmm::mult(gpp.vbase_lx(), gmm::transposed(aux3), aux5);
-          gmm::mult(aux5, gmm::transposed(gpp.vbase_ux()), Melem);
-
-          // second sub term
-          gmm::mult(dVsF, I_gphingphiyinv, aux2);
-          gmm::mult(aux2, gpp.I_nxny(), aux3);
-          gmm::mult(aux3, gmm::transposed(gpp.grad_phix_inv()), aux2);
-          gmm::mult(gpp.vbase_lx(), gmm::transposed(aux2), aux5);
-          gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
-          gmm::scale(aux11, -g);
-          gmm::add(aux11, Melem);
-          gmm::scale(Melem, weight*alpha*FMULT/r);
-          mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
 
           if (!isrigid) {
-            // third sub term
-            gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
+            base_matrix I_gphingphiyinv(N, N);
+            gmm::mult(gmm::scaled(gpp.grad_phi_ny(), scalar_type(-1)),
+                      gpp.grad_phiy_inv(), I_gphingphiyinv);
+            gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
+            
+            // first sub term
+            gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
+            gmm::mult(I_gphingphiyinv, gpp.I_nxny(), aux2);
+            for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
+            gmm::mult(dVsF, aux2, aux3);
+            gmm::mult(gpp.vbase_lx(), gmm::transposed(aux3), aux10);
+            // Caution: aux10 re-used in the third sub term  
+            gmm::mult(aux10, gmm::transposed(gpp.vbase_ux()), Melem);
+            
+            // second sub term
             gmm::mult(dVsF, I_gphingphiyinv, aux2);
-            gmm::mult(aux2, nx, aux8);
-            gmm::mult(gpp.vbase_lx(), aux8, aux12);
-            gmm::mult(gpp.vbase_uy(),
-                      gmm::scaled(ny, scalar_type(1)/gpp.nxdotny()), aux6);
-            gmm::rank_one_update(Melem, aux12, aux6);
+            gmm::mult(aux2, gpp.I_nxny(), aux3);
+            gmm::mult(aux3, gmm::transposed(gpp.grad_phix_inv()), aux2);
+            gmm::mult(gpp.vbase_lx(), gmm::transposed(aux2), aux5);
+            gmm::mult(aux5, gmm::transposed(graddeltaunx), aux11);
+            gmm::scale(aux11, -g);
+            gmm::add(aux11, Melem);
             gmm::scale(Melem, weight*alpha*FMULT/r);
+            mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
+            
+            // third sub term
+//             gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
+//             gmm::mult(I_gphingphiyinv, gpp.I_nxny(), aux2);
+//             for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
+//             gmm::mult(dVsF, aux2, aux3);
+//             gmm::mult(gpp.vbase_lx(), gmm::transposed(aux3), aux10);
+            // Caution: aux10 re-used
+            gmm::mult(aux10, gmm::transposed(gpp.vbase_uy()), Melem);
+            gmm::scale(Melem, -weight*alpha*FMULT/r);
             mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
+          } else {
+            gmm::mult(gpp.vbase_lx(), gmm::transposed(dVsF), aux5);
+            gmm::mult(aux5, gmm::transposed(gpp.vbase_ux()), Melem);
+            gmm::scale(Melem, -weight*alpha*FMULT/r);
+            mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
           }
         }
 #endif
@@ -1181,8 +1189,7 @@ namespace getfem {
   }
 
 
-
-  size_type add_integral_large_sliding_contact_brick
+  size_type add_integral_large_sliding_contact_brick_raytrace
   (model &md, multi_contact_frame &mcf,
    const std::string &dataname_r, const std::string &dataname_friction_coeff,
    const std::string &dataname_alpha) {

@@ -430,8 +430,11 @@ namespace getfem {
     std::string new_name(const std::string &name);
 
     const gmm::sub_interval
-    &interval_of_variable(const std::string &name) const
-    { return variables[name].I; }
+    &interval_of_variable(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+      return it->second.I;
+    }
 
     /** Gives the access to the vector value of a variable. For the real
         version. */

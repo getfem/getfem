@@ -236,7 +236,7 @@ elif test_case == 4:
    mcff.add_master_boundary(mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2')
    mcff.add_obstacle('z+5')
 
-md.add_integral_large_sliding_contact_brick(mcff, 'r', 'f')
+md.add_integral_large_sliding_contact_brick_raytrace(mcff, 'r', 'f')
 
 import time
 

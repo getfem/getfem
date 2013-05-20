@@ -34,18 +34,18 @@ The use of multi-contact frame object
 A multi-contact frame object is initialized as follows::
 
   multi_contact_frame mcf(size_type N, scalar_type release_distance,
-                          int fem_nodes_mode = 0, bool use_delaunay = true,
-                          bool ref_conf = false, bool self_contact = true,
-                          scalar_type cut_angle = 0.3, bool raytrace = false);
+                          bool use_delaunay = true, bool self_contact = true,
+                          scalar_type cut_angle = 0.3, bool raytrace = false,
+                          int fem_nodes_mode = 0, bool ref_conf = false);
 
   multi_contact_frame mcf(const model &md, size_type N,
                           scalar_type release_distance,
-                          int fem_nodes_mode = 0, bool use_delaunay = true,
-                          bool ref_conf = false, bool self_contact = true,
-                          scalar_type cut_angle = 0.3, bool raytrace = false);
+                          bool use_delaunay = true, bool self_contact = true,
+                          scalar_type cut_angle = 0.3, bool raytrace = false,
+                          int fem_nodes_mode = 0, bool ref_conf = false);
 
   
-where `md` is a Getfem model. In this case, the multi contact frame object is linked to a model. `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement).  If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. The parameter `cut_angle` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection. If `raytrace` is true, raytracing is used instead of projection.
+where `md` is a Getfem model. In this case, the multi contact frame object is linked to a model. `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement). The parameter `cut_angle` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection. If `raytrace` is true, raytracing is used instead of projection. If `fem_node_mode=0` (default value), then contact is considered on Gauss points, `fem_node_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `fem_node_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. 
 
 Once a multi-contact frame is build, one adds slave or master surfaces, or rigid obstacles. Note that rigid obstacles are defined by a level-set expression which is evaluated by the `MuParser <http://muparser.beltoforion.de/>`_ package. The methods of multi-contact frame object adding a contact boundary are::
 
@@ -65,15 +65,17 @@ Once a multi-contact frame is build, one adds slave or master surfaces, or rigid
   size_type add_slave_boundary(const getfem::mesh_im &mim,
                                size_type region,
                                const std::string &varname,
-                               const std::string &multname = "");
+                               const std::string &multname = "",
+                               const std::string &wname = "");
 
   size_type add_master_boundary(const getfem::mesh_im &mim,
                                size_type region,
                                const std::string &varname,
-                               const std::string &multname = "");
+                               const std::string &multname = "",
+                               const std::string &wname = "");
+                               
 
-
-where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model. `multname` is the optional name of a multiplier variable to represent the contact stress.
+where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model. `multname` is the optional name of a multiplier variable to represent the contact stress. `wname` is the optional name of a variable representing the displacement at previous time step to compute the sliding velocity.
 
 
 The contact pair detection algorithm
@@ -220,4 +222,21 @@ where :math:`W_T, \alpha, P_{n_y, {\mathscr F}}` ... + tangent system
 
 
 
-Sorry, for the moment the brick is not fully working. Coming soon ...
+Sorry, for the moment the brick is not working.
+
+
+
+Integral contact brick with raytrace
+++++++++++++++++++++++++++++++++++++
+
+Add of the brick::
+
+  size_type add_integral_large_sliding_contact_brick_raytrace
+    (model &md, multi_contact_frame &mcf,
+     const std::string &dataname_r,
+     const std::string &dataname_friction_coeff = std::string(),
+     const std::string &dataname_alpha = std::string());
+
+
+
+

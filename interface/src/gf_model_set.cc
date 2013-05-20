@@ -2571,7 +2571,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       is asked) a multiplier variable should be defined. @*/
 
      sub_command
-       ("add integral large sliding contact brick", 2, 4, 0, 1,
+       ("add integral large sliding contact brick raytrace", 2, 4, 0, 1,
         
         getfemint_multi_contact_frame *gfi_mcf
           = in.pop().to_getfemint_multi_contact_frame();
@@ -2580,8 +2580,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (in.remaining()) dataname_fr = in.pop().to_string();
         std::string dataname_alpha;
         if (in.remaining()) dataname_alpha = in.pop().to_string();
-        
-        size_type  ind = getfem::add_integral_large_sliding_contact_brick
+
+        size_type  ind
+        = getfem::add_integral_large_sliding_contact_brick_raytrace
         (md->model(), gfi_mcf->multi_contact_frame(), dataname_r,
          dataname_fr, dataname_alpha);
         out.pop().from_integer(int(ind + config::base_index()));

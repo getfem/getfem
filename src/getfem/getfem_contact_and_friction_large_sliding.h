@@ -52,7 +52,7 @@ namespace getfem {
       For each slave boundary (and also master boundaries if self-contact
       is asked) a multiplier variable should be defined.
   */
-  size_type add_integral_large_sliding_contact_brick
+  size_type add_integral_large_sliding_contact_brick_raytrace
   (model &md, multi_contact_frame &mcf,
    const std::string &dataname_r,
    const std::string &dataname_friction_coeff = std::string(),
