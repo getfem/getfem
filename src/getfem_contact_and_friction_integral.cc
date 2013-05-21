@@ -2489,8 +2489,9 @@ namespace getfem {
       const model_real_plain_vector &lambda = md.real_variable(vl[2]);
       const mesh_fem &mf_lambda = md.mesh_fem_of_variable(vl[2]);
 
+      getfem::pfem pfem_proj = new_projected_fem(mf_u2, *ml[0], p->rg2, p->rg1);
       getfem::mesh_fem mf_u2_proj(mf_u1.linked_mesh(), mf_u1.linked_mesh().dim());
-      mf_u2_proj.set_finite_element(mf_u1.linked_mesh().convex_index(), p->pfem_proj);
+      mf_u2_proj.set_finite_element(mf_u1.linked_mesh().convex_index(), pfem_proj);
 
       std::vector<size_type> ind;
       mf_u2_proj.get_global_dof_index(ind);
@@ -2517,6 +2518,7 @@ namespace getfem {
       asm_nonmatching_meshes_normal_source_term
         (F, *ml[0], mf_u1, mf_u2_proj, mf_lambda, lambda, reg);
 
+      del_projected_fem(pfem_proj);
     }
     else if (pbr->brick_name() == "Integral penalized contact between nonmatching meshes brick" ||
              pbr->brick_name() == "Integral penalized contact and friction between nonmatching "
