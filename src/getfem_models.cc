@@ -1300,7 +1300,7 @@ namespace getfem {
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
-                "Unvalid iteration number "
+                "Invalid iteration number "
                 << niter << " for " << name);
     return it->second.real_value[niter];
   }
@@ -1313,7 +1313,7 @@ namespace getfem {
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
-                "Unvalid iteration number "
+                "Invalid iteration number "
                 << niter << " for " << name);
     return it->second.complex_value[niter];
   }
@@ -1327,7 +1327,7 @@ namespace getfem {
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
-                "Unvalid iteration number "
+                "Invalid iteration number "
                 << niter << " for " << name);
     return it->second.real_value[niter];
   }
@@ -1341,7 +1341,7 @@ namespace getfem {
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
-                "Unvalid iteration number "
+                "Invalid iteration number "
                 << niter << " for " << name);
     return it->second.complex_value[niter];
   }

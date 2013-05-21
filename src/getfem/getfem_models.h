@@ -135,7 +135,7 @@ namespace getfem {
       bool is_complex;   // The variable is complex numbers
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
-      size_type n_iter; //  Number of version of the variable stored for time
+      size_type n_iter; //  Number of versions of the variable stored for time
       // integration schemes.
       size_type n_temp_iter; // Number of additional temporary versions
       size_type default_iter; // default iteration number.
@@ -202,7 +202,6 @@ namespace getfem {
 
   public :
 
-    typedef var_description *pvariable;
     typedef std::vector<std::string> varnamelist;
     typedef std::vector<const mesh_im *> mimlist;
     typedef std::vector<model_real_sparse_matrix> real_matlist;
@@ -369,6 +368,12 @@ namespace getfem {
 
     bool temporary_uptodate(const std::string &varname,
                             gmm::uint64_type  id_num, size_type &ind) const;
+
+    size_type n_iter_of_variable(const std::string &name) const {
+      return (variables.find(name) == variables.end()) ?
+             size_type(0) : variables[name].n_iter;
+    }
+
     void set_default_iter_of_variable(const std::string &varname,
                                       size_type ind) const;
     void reset_default_iter_of_variables(const varnamelist &vl) const;
@@ -429,10 +434,10 @@ namespace getfem {
     /** Gives a non already existing variable name begining by `name`. */
     std::string new_name(const std::string &name);
 
-    const gmm::sub_interval
-    &interval_of_variable(const std::string &name) const {
+    const gmm::sub_interval &
+    interval_of_variable(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
-      GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
       return it->second.I;
     }
 

@@ -845,8 +845,13 @@ namespace getfem {
                     "Parameter alpha should be a scalar");
       }
 
-      const model_real_plain_vector *WT
-        = (!contact_only && dl.size()>=5) ? &(md.real_variable(dl[4])) : 0;
+      const model_real_plain_vector *WT = 0;
+      if (!contact_only && dl.size() >= 5) {
+        if (dl[4].compare(vl[0]) != 0)
+          WT = &(md.real_variable(dl[4]));
+        else if (md.n_iter_of_variable(vl[0]) > 1)
+          WT = &(md.real_variable(vl[0],1));
+      }
 
       scalar_type gamma = 1;
       if (!contact_only && dl.size() >= 6) {
@@ -1233,7 +1238,10 @@ namespace getfem {
 
         if (dl.size() > nd+1) {
           nd++;
-          WT = &(md.real_variable(dl[nd]));
+          if (dl[nd].compare(vl[0]) != 0)
+            WT = &(md.real_variable(dl[nd]));
+          else if (md.n_iter_of_variable(vl[0]) > 1)
+            WT = &(md.real_variable(vl[0],1));
         }
       }
 
@@ -1676,11 +1684,19 @@ namespace getfem {
                       "Parameter alpha should be a scalar");
         }
 
-        if (dl.size() >= 4)
-          WT1 = &(md.real_variable(dl[3]));
+        if (dl.size() >= 4) {
+          if (dl[3].compare(vl[0]) != 0)
+            WT1 = &(md.real_variable(dl[3]));
+          else if (md.n_iter_of_variable(vl[0]) > 1)
+            WT1 = &(md.real_variable(vl[0],1));
+        }
 
-        if (dl.size() >= 5)
-          WT2 = &(md.real_variable(dl[4]));
+        if (dl.size() >= 5) {
+          if (dl[4].compare(vl[1]) != 0)
+            WT2 = &(md.real_variable(dl[4]));
+          else if (md.n_iter_of_variable(vl[1]) > 1)
+            WT2 = &(md.real_variable(vl[1],1));
+        }
       }
 
       // Matrix terms (T_u1l, T_lu1, T_u2l, T_lu2, T_ll, T_u1u1, T_u2u2, T_u1u2)
@@ -2199,12 +2215,18 @@ namespace getfem {
 
         if (dl.size() > nd+1) {
           nd++;
-          WT1 = &(md.real_variable(dl[nd]));
+          if (dl[nd].compare(vl[0]) != 0)
+            WT1 = &(md.real_variable(dl[nd]));
+          else if (md.n_iter_of_variable(vl[0]) > 1)
+            WT1 = &(md.real_variable(vl[0],1));
         }
 
         if (dl.size() > nd+1) {
           nd++;
-          WT2 = &(md.real_variable(dl[nd]));
+          if (dl[nd].compare(vl[1]) != 0)
+            WT2 = &(md.real_variable(dl[nd]));
+          else if (md.n_iter_of_variable(vl[1]) > 1)
+            WT2 = &(md.real_variable(vl[1],1));
         }
       }
 
