@@ -1807,7 +1807,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
      /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]])
        
-     Add a contact with  or without friction brick to the model.
+     Add a contact with or without friction brick to the model.
      If U is the vector
      of degrees of freedom on which the unilateral constraint is applied,
      the matrix `BN` have to be such that this constraint is defined by
@@ -2560,7 +2560,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-     /*@SET ind = ('add integral large sliding contact brick', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @dataname_alpha]])
+     /*@SET ind = ('add integral large sliding contact brick raytrace', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @dataname_alpha]])
       Adds a large sliding contact with friction brick to the model.
       This brick is able to deal with self-contact, contact between
       several deformable bodies and contact with rigid obstacles.

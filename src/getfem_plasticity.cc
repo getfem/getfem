@@ -149,15 +149,13 @@ namespace getfem {
         // Compute sigma_hat = D*(eps_np1 - eps_n) + sigma_n
         // where D represents the elastic stiffness tensor
         base_matrix sigma_hat(qdim, qdim);
-        // Compute sigma_hat
         size_type sigma_dof = mf_sigma.ind_basic_dof_of_element(cv)[ii*qdim_sigma];
-        for(dim_type j = 0; j < qdim; ++j)
-          for (dim_type i = 0; i < qdim; ++i) {
+        for (dim_type j = 0; j < qdim; ++j) {
+          for (dim_type i = 0; i < qdim; ++i)
             sigma_hat(i,j) = Sigma_n[sigma_dof++]
                              + params[1]*(G_du(i,j) + G_du(j,i));
-            if (i==j)
-              sigma_hat(i,j) += ltrace_deps;
-          }
+          sigma_hat(j,j) += ltrace_deps;
+        }
 
         // Compute the projection or its grad
         base_matrix proj;
@@ -165,12 +163,11 @@ namespace getfem {
 
         // Compute the plastic part if required
         if (option == PLAST)
-          for (dim_type i = 0; i < qdim; ++i)
-            for (dim_type j = 0; j < qdim; ++j) {
+          for (dim_type i = 0; i < qdim; ++i) {
+            for (dim_type j = 0; j < qdim; ++j)
               proj(i,j) -= params[1]*(G_u_np1(i,j) + G_u_np1(j,i));
-              if (i==j)
-                  proj(i,j) -= ltrace_eps_np1;
-            }
+            proj(i,i) -= ltrace_eps_np1;
+          }
 
         // Fill in convex_coeffs with sigma or its grad
         std::copy(proj.begin(), proj.end(),
@@ -576,7 +573,7 @@ namespace getfem {
      bool tresca) {
 
     GMM_ASSERT1(gmm::vect_size(VM) == mf_vm.nb_dof(),
-                "The vector has not the good size");
+                "The vector has not the right size");
 
     const model_real_plain_vector &sigma_np1 = md.real_variable(datasigma, 0);
     const mesh_fem &mf_sigma = *(md.pmesh_fem_of_variable(datasigma));
@@ -661,7 +658,7 @@ namespace getfem {
     GMM_ASSERT1(gmm::vect_size(plast) == mf_pl.nb_dof(),
                 "The vector has not the right size");
     GMM_ASSERT1(mf_pl.get_qdim() == 1,
-                "Target dimension of mf_vm should be 1");
+                "Target dimension of mf_pl should be 1");
 
     base_vector saved_pl(mf_pl.nb_dof()*N*N);
     interpolation(mf_sigma, mf_pl, saved_plast, saved_pl);
