@@ -973,6 +973,7 @@ namespace getfem {
           pps(a, res);
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
+          bool exited = false;
           size_type niter = 0;
           while (residual > 2E-12) {
 
@@ -1002,10 +1003,15 @@ namespace getfem {
             residual = residual2;
             gmm::copy(res2, res);
             gmm::copy(b, a);
-            if (niter > 5 && gmm::vect_norm2(a) > 30) break;
+            // if (niter == 30) cout << "more than 30 !! " << a << " dir " << dir << endl;
+            if (niter > 0 && gmm::vect_norm2(a) > 15) break;
+            if (gmm::vect_norm2(a) > 10) exited = true;
             if (++niter > 50) break;
           }
           converged = (gmm::vect_norm2(res) < 2E-6);
+          GMM_ASSERT1(!((exited && converged &&
+                         pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5)),
+                      "A non conformal case !! " << gmm::vect_norm2(res));
 
         } else { // Classical projection for y
 
@@ -1070,8 +1076,8 @@ namespace getfem {
         }
 
         bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5);
-
-        if (is_in || !converged) {
+        
+        if (is_in || (!converged && !raytrace)) {
           if (!ref_conf) {
             ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
             y += ctx.xreal();
@@ -1083,7 +1089,7 @@ namespace getfem {
         // CRITERION 2 : The contact pair is eliminated when
         //               projection/raytrace do not converge.
         if (!converged) {
-          if (nbwarn < 4) {
+          if (!raytrace && nbwarn < 4) {
             GMM_WARNING3("Projection or raytrace algorithm did not converge "
                          "for point " << x << " residual " << residual
                          << " projection computed " << y);
