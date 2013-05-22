@@ -1323,7 +1323,7 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap, std::string dataname_alpha,
-   int aug_version, bool Tresca_version, const std::string dataname_threshold, bool Hughes_stabilized) {
+   int aug_version, bool Tresca_version, const std::string dataname_threshold, std::string dataname_gamma, std::string dataname_wt, bool Hughes_stabilized) {
 
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version,false, false,
@@ -1357,6 +1357,10 @@ namespace getfem {
     }
     dl.push_back(dataname_alpha);
     dl.push_back(dataname_friction_coeff);
+    if (dataname_gamma.size()) {
+      dl.push_back(dataname_gamma);
+      dl.push_back(dataname_wt);
+    }
     if (Tresca_version)
       dl.push_back(dataname_threshold);
 

@@ -98,7 +98,7 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap="", std::string dataname_alpha="",
-   int aug_version=1, bool Tresca_version=false, const std::string dataname_threshold="", bool Hughes_stabilized=false);
+   int aug_version=1, bool Tresca_version=false, const std::string dataname_threshold="",  std::string dataname_gamma="", std::string dataname_wt="", bool Hughes_stabilized=false);
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */
@@ -183,7 +183,7 @@ namespace getfem {
     size_type indbrick = add_basic_contact_brick
       (md, varname_u, multname_n, multname_t, dataname_r, BN, BT,
        dataname_friction_coeff, dataname_gap, dataname_alpha,
-       aug_version, Tresca_version, dataname_threshold, true);
+       aug_version, Tresca_version, dataname_threshold, "", "", true);
     gmm::resize(contact_brick_set_DN(md, indbrick),
                 gmm::mat_nrows(DN), gmm::mat_ncols(DN));
     gmm::copy(DN, contact_brick_set_DN(md, indbrick));
@@ -427,7 +427,7 @@ namespace getfem {
      int aug_version=1, bool Tresca_version=false, bool Hughes_stabilized=false)
   { return add_basic_contact_brick
       (md, varname_u, multname_n, multname_t, dataname_r, BN, BT, dataname_friction_coeff,
-       dataname_gap, dataname_alpha, aug_version, Tresca_version, "", Hughes_stabilized); }
+       dataname_gap, dataname_alpha, aug_version, Tresca_version, "", "", "", Hughes_stabilized); }
 
   IS_DEPRECATED inline size_type add_Hughes_stab_with_friction_contact_brick
     (model &md, const std::string &varname_u, const std::string &multname_n,

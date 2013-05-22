@@ -889,7 +889,7 @@ namespace getfem {
       }
 
       // if (potential_pairs[ip].size())
-      //  cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
+      // cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
       bool first_pair = true;
       for (size_type ipf = 0; ipf < potential_pairs[ip].size(); ++ipf) {
         // Point to surface projection. Principle :
@@ -974,6 +974,7 @@ namespace getfem {
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
           bool exited = false;
+          size_type nbfail = 0;
           size_type niter = 0;
           while (residual > 2E-12) {
 
@@ -990,23 +991,31 @@ namespace getfem {
             // Computation of the descent direction
             gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
 
+            if (gmm::vect_norm2(dir) > scalar_type(10)) nbfail++;
+            if (nbfail >= 3) break;
+
             // Line search
             scalar_type lambda(1);
-            for(;;) {
+            for(size_type j = 0; j < 10; ++j) {
               gmm::add(a, gmm::scaled(dir, lambda), b);
               pps(b, res2);
               residual2 = gmm::vect_norm2(res2);
-              if (residual2 < residual) break;
-              lambda /= scalar_type(2);
-              if (lambda < 1E-3) break;
+              if (residual2 < residual) break; 
+              lambda /= ((j < 3) ? scalar_type(2) : scalar_type(5));
+              if (lambda < 5E-3) break;
             }
+
             residual = residual2;
             gmm::copy(res2, res);
             gmm::copy(b, a);
-            // if (niter == 30) cout << "more than 30 !! " << a << " dir " << dir << endl;
-            if (niter > 0 && gmm::vect_norm2(a) > 15) break;
-            if (gmm::vect_norm2(a) > 10) exited = true;
-            if (++niter > 50) break;
+            scalar_type dist_ref = gmm::vect_norm2(a);
+//             if (niter == 15)
+//               cout << "more than 15 iterations " << a
+//                    << " dir " << dir << " nbfail : " << nbfail << endl;
+            if (niter > 1 && dist_ref > 15) break;
+            if (niter > 5 && dist_ref > 5) break;
+            if (dist_ref > 4 || nbfail == 2) exited = true;
+            if (++niter > 30) break;
           }
           converged = (gmm::vect_norm2(res) < 2E-6);
           GMM_ASSERT1(!((exited && converged &&
