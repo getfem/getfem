@@ -34,11 +34,12 @@ clambda1 = 1.   # Elasticity parameters
 cmu1 = 1.
 clambda2 = 1.   # Elasticity parameters
 cmu2 = 1.
-r = 1.          # Augmentation parameter
+r = 0.1         # Augmentation parameter
+alpha = 1.      # Alpha coefficient for "sliding velocity"
 f_coeff = 0.    # Friction coefficient
 
 test_tangent_matrix = False
-nonlinear_elasticity = True
+nonlinear_elasticity = False
 max_iter = 50
 
 if test_case in [0,1]:
@@ -49,13 +50,15 @@ if test_case in [0,1]:
    max_res = 1e-8
    release_dist = 1.5
    self_contact = False
+   load_steps = 40
 elif test_case == 3:
    vf = 0.01       # Vertical force
-   vf_mult = 1.05
+   vf_mult = 1.01
    penalty_parameter = 0.1
    release_dist = 0.05
    max_res = 1e-9
    self_contact = True
+   load_steps = 250
 elif test_case in [2,4]:
    vf = 0.01
    vf_mult = 1.5
@@ -66,6 +69,7 @@ elif test_case in [2,4]:
    else:
       release_dist = 5.
    self_contact = True
+   load_steps = 10000
 
 if test_case == 0:
    #mesh1 = gf.Mesh('load', '../../../tests/meshes/punch2D_1.mesh')
@@ -183,11 +187,12 @@ if test_case not in [0,3]:
       lawname = 'Ciarlet Geymonat'
       params2 = [clambda2, cmu2, cmu2/2-clambda2/8]
       md.add_initialized_data('params2', params2)
-      md.add_nonlinear_elasticity_brick(mim1, 'u2', lawname, 'params2')
+      md.add_nonlinear_elasticity_brick(mim2, 'u2', lawname, 'params2')
    else:
       md.add_initialized_data('clambda2', clambda2)
       md.add_initialized_data('cmu2', cmu2)
-      md.add_isotropic_linearized_elasticity_brick(mim1, 'u2', 'clambda2', 'cmu2')
+
+      md.add_isotropic_linearized_elasticity_brick(mim2, 'u2', 'clambda2', 'cmu2')
 
    if test_case == 2:
       md.add_initialized_data('cpoints2', [0,0])
@@ -204,16 +209,13 @@ if test_case not in [0,3]:
       md.add_initialized_data('Ddata2', Ddata)
       md.add_Dirichlet_condition_with_multipliers(mim2, 'u2', 1, DIRICHLET_BOUNDARY2, 'Ddata2')
 
-if test_case == 0:
+if test_case <= 1:
    Ddata = np.zeros(N)
    Ddata[N-1] = dirichlet_translation
    md.add_initialized_data('Ddata1', Ddata)
    md.add_Dirichlet_condition_with_multipliers(mim1, 'u1', 1, DIRICHLET_BOUNDARY1, 'Ddata1')
 
-md.add_initialized_data('r', r)
-md.add_initialized_data('f', f_coeff)
 
-# delaunay: after dist
 mcff = gf.MultiContactFrame(md, N, release_dist, False, self_contact, 0.2, True, 0, False)
 if self_contact:
    mcff.add_master_boundary(mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1')
@@ -226,31 +228,31 @@ elif test_case == 1:
    if self_contact:
       mcff.add_master_boundary(mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2')
    else:
-      mcff.add_slave_boundary(mim2_contact, CONTACT_BOUNDARY2, 'u2')
+      mcff.add_master_boundary(mim2_contact, CONTACT_BOUNDARY2, 'u2')
 elif test_case == 2:
-   mcff.add_master_boundary(mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2')
+   mcff.add_master_boundary(mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2')
    mcff.add_obstacle('y')
 elif test_case == 3:
    mcff.add_obstacle('2-sqrt(x^2+(y-1)^2)')
 elif test_case == 4:
-   mcff.add_master_boundary(mim2, CONTACT_BOUNDARY2, 'u2', 'lambda2')
+   mcff.add_master_boundary(mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2')
    mcff.add_obstacle('z+5')
 
-md.add_integral_large_sliding_contact_brick_raytrace(mcff, 'r', 'f')
+md.add_initialized_data('r', r)
+md.add_initialized_data('alpha', alpha)
+md.add_initialized_data('f', f_coeff)
+md.add_integral_large_sliding_contact_brick_raytrace(mcff, 'r', 'f', 'alpha')
 
-import time
-
-for nit in range(100):
+for nit in range(load_steps):
 
    if test_tangent_matrix:
-      errmax = md.test_tangent_matrix(1E-5, 20, 0.0001)
+      errmax = md.test_tangent_matrix(1E-8, 20, 0.0001)
+      #errmax = md.test_tangent_matrix_term('lambda1', 'u1', 1E-8, 20, 0.0001)
       print('errmax = %g' % errmax)
       if errmax > 1e-3:
          print('bad tangent matrix')
 
-#   starttime = time.clock()
    md.solve('noisy', 'max_iter', max_iter, 'max_res', max_res) # , 'lsearch', 'simplest')
-#   print('solution time for iteration %i is %f sec' % (nit, time.clock()-starttime)) 
 
    U1 = md.variable('u1')
    if nonlinear_elasticity:
@@ -275,6 +277,10 @@ for nit in range(100):
          VM2 = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u2', 'clambda2', 'cmu2', mfvm2)
       mfvm2.export_to_vtk('lsc_2_%i.vtk' % nit, mfvm2,  VM2,
                           'Von Mises Stresses 2', mfu2, U2, 'Displacements 2')
+
+      sl = gf.Slice(('boundary',), mfu2, CONTACT_BOUNDARY2)
+      sl.export_to_vtk('lsc_2_boundary_%i.vtk' % nit,
+                       mfu2, U2, 'BDisplacements 2')
 
    #slpt = mcff.slave_points()
    #mapt = mcff.master_points()

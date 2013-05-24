@@ -384,7 +384,7 @@ namespace getfem {
     bool test_normal_cones_compatibility(const base_small_vector &n,
                                          const normal_cone &nc2);
 
-    dal::bit_vector aux_dof_cv; // An auxilliary variable for are_dof_linked
+    dal::bit_vector aux_dof_cv; // An auxiliary variable for are_dof_linked
     // function (in order to be of constant complexity).
 
     bool are_dof_linked(size_type ib1, size_type idof1,
@@ -480,7 +480,7 @@ namespace getfem {
 
     std::vector<contact_pair> contact_pairs;
 
-    void clear_aux_info(void); // Delete auxillairy information
+    void clear_aux_info(void); // Delete auxiliary information
 
   public:
 

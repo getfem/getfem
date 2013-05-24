@@ -404,7 +404,7 @@ namespace getfem {
     scalar_type g(void) const { return cp->signed_dist; }
 
     base_matrix I_nxnx_;
-    bool I_nxnx_computed;    
+    bool I_nxnx_computed;
     const base_matrix &I_nxnx(void) {
       if (!I_nxnx_computed) {
         gmm::copy(gmm::identity_matrix(), I_nxnx_);
@@ -415,7 +415,7 @@ namespace getfem {
     }
 
     base_matrix I_nyny_;
-    bool I_nyny_computed;    
+    bool I_nyny_computed;
     const base_matrix &I_nyny(void) {
       if (!I_nyny_computed) {
         gmm::copy(gmm::identity_matrix(), I_nyny_);
@@ -424,9 +424,9 @@ namespace getfem {
       }
       return I_nyny_;
     }
-    
+
     base_matrix I_nxny_;
-    bool I_nxny_computed;    
+    bool I_nxny_computed;
     const base_matrix &I_nxny(void) {
       if (!I_nxny_computed) {
         gmm::copy(gmm::identity_matrix(), I_nxny_);
@@ -449,7 +449,7 @@ namespace getfem {
     base_tensor grad_base_ux, grad_base_uy, vgrad_base_ux_, vgrad_base_uy_;
     bool vgrad_base_ux_init, vgrad_base_uy_init;
     bool have_lx, have_ly;
-    
+
     fem_interpolation_context ctx_ux_, ctx_uy_, ctx_lx_, ctx_ly_;
     bool ctx_ux_init, ctx_uy_init, ctx_lx_init, ctx_ly_init;
     base_matrix Gx, Gy;
@@ -481,7 +481,7 @@ namespace getfem {
     const gmm::sub_interval I_uy(void) const { return I_uy_; }
     const gmm::sub_interval I_lx(void) const { return I_lx_; }
     const gmm::sub_interval I_ly(void) const { return I_ly_; }
-    
+
 
     fem_interpolation_context &ctx_ux(void) {
       if (!ctx_ux_init) {
@@ -562,7 +562,7 @@ namespace getfem {
       }
       return vbase_ly_;
     }
- 
+
     const base_tensor &vgrad_base_ux(void) {
       if (!vgrad_base_ux_init) {
         ctx_ux().grad_base_value(grad_base_ux);
@@ -676,7 +676,7 @@ namespace getfem {
       }
       return wx_;
     }
-    
+
     const base_small_vector &wy(void) {
       if (!wy_init) {
         if (!isrigid()) {
@@ -720,9 +720,9 @@ namespace getfem {
       }
       return grad_phi_ny_;
     }
-    
+
     base_small_vector un;
-    
+
     void set_pair(const multi_contact_frame::contact_pair &cp_) {
       cp = &cp_;
       I_nxnx_computed = I_nyny_computed = I_nxny_computed = false;
@@ -736,7 +736,7 @@ namespace getfem {
       wx_init = wy_init = Vs_init = grad_phi_ny_init = false;
       nxny = gmm::vect_sp(nx(), ny());
       isrigid_ = (cp->irigid_obstacle != size_type(-1));
-      
+
       cvx_ = cp->slave_ind_element;
       ibx = cp->slave_ind_boundary;
       mf_ux_ = &(mcf.mfdisp_of_boundary(ibx));
@@ -786,10 +786,10 @@ namespace getfem {
         }
       }
     }
-    
+
     gauss_point_precomp(size_type N_, const model &md_,
                         const multi_contact_frame &mcf_, scalar_type alpha_) :
-      N(N_), mcf(mcf_), md(md_), 
+      N(N_), mcf(mcf_), md(md_),
       I_nxnx_(N,N), I_nyny_(N,N), I_nxny_(N,N),
       lambda_x_(N), lambda_y_(N),
       grad_phix_(N, N), grad_phix_inv_(N, N),
@@ -815,19 +815,19 @@ namespace getfem {
       f_coeff_r[0] = gmm::random();
       f_coeff_r[1] = gmm::random();
       f_coeff_r[2] = gmm::random();
-      
+
       aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F);
       aug_friction_grad(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2,
                         dlambdaF, dgF, dnF, dVsF);
       GMM_ASSERT1(gmm::vect_dist2(F2, F) < 1E-7, "bad F");
-      
+
       base_small_vector dlambda(N);
       gmm::fill_random(dlambda);
-      
-      
+
+
       gmm::add(gmm::scaled(dlambda, EPS), nx_r);
       aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
-      
+
       gmm::mult(dnF, gmm::scaled(dlambda, EPS), F, F3);
       if (gmm::vect_dist2(F2, F3)/EPS > 1E-4) {
         cout << "lambda_r = " << lambda_r << " Vs_r = " << Vs_r
@@ -836,10 +836,10 @@ namespace getfem {
         cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
         GMM_ASSERT1(false, "bad n derivative");
       }
-      
+
       gmm::add(gmm::scaled(dlambda, -EPS), nx_r);
-      
-      
+
+
       gmm::add(gmm::scaled(dlambda, EPS), lambda_r);
       aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
       gmm::mult(dlambdaF, gmm::scaled(dlambda, EPS), F, F3);
@@ -848,8 +848,8 @@ namespace getfem {
         GMM_ASSERT1(false, "bad lambda derivative");
       }
       gmm::add(gmm::scaled(dlambda, -EPS), lambda_r);
-      
-      
+
+
       gmm::add(gmm::scaled(dlambda, EPS), Vs_r);
       aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
       gmm::mult(dVsF, gmm::scaled(dlambda, EPS), F, F3);
@@ -858,8 +858,8 @@ namespace getfem {
         GMM_ASSERT1(false, "bad Vs derivative");
       }
       gmm::add(gmm::scaled(dlambda, -EPS), Vs_r);
-      
-      
+
+
       g_r += EPS;
       aug_friction(lambda_r, g_r, Vs_r, nx_r, r_r, f_coeff_r, F2);
       gmm::add(gmm::scaled(dgF, EPS), F, F3);
@@ -867,7 +867,7 @@ namespace getfem {
         cout << "diff = " << gmm::vect_dist2(F2, F3)/EPS << endl;
         GMM_ASSERT1(false, "bad g derivative");
       }
-      g_r -= EPS; 
+      g_r -= EPS;
     }
   }
 
@@ -927,10 +927,10 @@ namespace getfem {
     base_matrix dlambdaF(N, N), dnF(N, N), dVsF(N, N);
     base_small_vector F(N), dgF(N);
     base_matrix aux2(N, N), aux3(N, N);
-    base_small_vector aux8(N), aux9(N); 
+    base_small_vector aux8(N), aux9(N);
 
     scalar_type FMULT = 1.;
-    
+
     // Stabilization for non-contact zones
     for (size_type i = 0; i < mcf.nb_boundaries(); ++i)
       if (mcf.is_self_contact() || mcf.is_slave_boundary(i)) {
@@ -991,7 +991,7 @@ namespace getfem {
         aug_friction_grad(lambda, g, gpp.Vs(), nx, r, f_coeff, F, dlambdaF,
                           dgF, dnF, dVsF);
 
-        
+
         const base_tensor &vgrad_base_ux = gpp.vgrad_base_ux();
         base_matrix graddeltaunx(ndof_ux, N);
         for (size_type i = 0; i < ndof_ux; ++i)
@@ -1005,7 +1005,7 @@ namespace getfem {
 
 
 #ifdef CONSIDER_TERM1
-        // Term  -\delta\lambda(X) . \delta v(X) 
+        // Term  -\delta\lambda(X) . \delta v(X)
         gmm::resize(Melem, ndof_ux, ndof_lx); gmm::clear(Melem);
         gmm::mult(gpp.vbase_ux(), gmm::transposed(gpp.vbase_lx()), Melem);
         gmm::scale(Melem, -weight);
@@ -1112,16 +1112,16 @@ namespace getfem {
             gmm::mult(gmm::scaled(gpp.grad_phi_ny(), scalar_type(-1)),
                       gpp.grad_phiy_inv(), I_gphingphiyinv);
             gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
-            
+
             // first sub term
             gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
             gmm::mult(I_gphingphiyinv, gpp.I_nxny(), aux2);
             for (size_type j = 0; j < N; ++j) aux2(j,j) -= scalar_type(1);
             gmm::mult(dVsF, aux2, aux3);
             gmm::mult(gpp.vbase_lx(), gmm::transposed(aux3), aux10);
-            // Caution: aux10 re-used in the third sub term  
+            // Caution: aux10 re-used in the third sub term
             gmm::mult(aux10, gmm::transposed(gpp.vbase_ux()), Melem);
-            
+
             // second sub term
             gmm::mult(dVsF, I_gphingphiyinv, aux2);
             gmm::mult(aux2, gpp.I_nxny(), aux3);
@@ -1132,7 +1132,7 @@ namespace getfem {
             gmm::add(aux11, Melem);
             gmm::scale(Melem, weight*alpha*FMULT/r);
             mat_elem_assembly(M, I_lx, I_ux, Melem, *mf_lx, cvx, *mf_ux, cvx);
-            
+
             // third sub term
 //             gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
 //             gmm::mult(I_gphingphiyinv, gpp.I_nxny(), aux2);
@@ -1151,7 +1151,7 @@ namespace getfem {
           }
         }
 #endif
-      }   
+      }
 
       if (version & model::BUILD_RHS) {
 
@@ -1177,7 +1177,7 @@ namespace getfem {
 #endif
 
 #ifdef CONSIDER_TERM3
-        
+
         // Term -(1/r)(lambda - F).\delta \mu
         // (1/r)(lambda).\delta \mu is skipped because globally added before
         gmm::mult(gpp.vbase_lx(), gmm::scaled(F, weight*FMULT/r), aux12);
