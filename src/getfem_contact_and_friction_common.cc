@@ -25,6 +25,23 @@
 
 namespace getfem {
 
+  void compute_normal(const fem_interpolation_context &ctx,
+                      size_type face, bool in_reference_conf,
+                      base_node &n0, base_node &n,
+                      model_real_plain_vector &coeff,
+                      base_matrix &grad) {
+      n0 = bgeot::compute_normal(ctx, face);
+      if (in_reference_conf) {
+        n = n0;
+      } else {
+        ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(ctx.N()));
+        gmm::add(gmm::identity_matrix(), grad);
+        scalar_type J = gmm::lu_inverse(grad);
+        if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
+        gmm::mult(gmm::transposed(grad), n0, n);
+        gmm::scale(n, gmm::sgn(J)); // Test
+      }
+  }
 
   //=========================================================================
   //
@@ -384,17 +401,8 @@ namespace getfem {
             }
 
             // unit normal vector computation
-            if (!ref_conf) {
-              n0 = bgeot::compute_normal(ctx, v.f());
-              pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
-              gmm::add(gmm::identity_matrix(), grad);
-              scalar_type J = gmm::lu_inverse(grad);
-              if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
-              gmm::mult(gmm::transposed(grad), n0, n);
-              gmm::scale(n, gmm::sgn(J)); // Test
-            } else {
-              n = bgeot::compute_normal(ctx, v.f());
-            }
+            compute_normal(ctx, v.f(), ref_conf,
+                           n0, n, coeff, grad);
             n /= gmm::vect_norm2(n);
 
             if (on_fem_nodes && dof_already_interpolated[indpt]) {
@@ -579,18 +587,8 @@ namespace getfem {
               if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
             if (is_on_face) {
               ctx.set_ii(ip);
-              if (!ref_conf) {
-                n0 = bgeot::compute_normal(ctx, v.f());
-                pf_s->interpolation_grad(ctx, coeff, grad, dim_type(N));
-                gmm::add(gmm::identity_matrix(), grad);
-                scalar_type J = gmm::lu_inverse(grad);
-                if (J <= scalar_type(0))
-                  GMM_WARNING1("Inverted element !" << J);
-                gmm::mult(gmm::transposed(grad), n0, n);
-                gmm::scale(n, gmm::sgn(J)); // Test
-              } else {
-                n =  bgeot::compute_normal(ctx, v.f());
-              }
+              compute_normal(ctx, v.f(), ref_conf,
+                             n0, n, coeff, grad);
               n /= gmm::vect_norm2(n);
               n_mean += n;
               ++nb_pt_on_face;
@@ -1000,7 +998,7 @@ namespace getfem {
               gmm::add(a, gmm::scaled(dir, lambda), b);
               pps(b, res2);
               residual2 = gmm::vect_norm2(res2);
-              if (residual2 < residual) break; 
+              if (residual2 < residual) break;
               lambda /= ((j < 3) ? scalar_type(2) : scalar_type(5));
               if (lambda < 5E-3) break;
             }
@@ -1085,7 +1083,7 @@ namespace getfem {
         }
 
         bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5);
-        
+
         if (is_in || (!converged && !raytrace)) {
           if (!ref_conf) {
             ctx.pf()->interpolation(ctx, coeff, y, dim_type(N));
@@ -1124,17 +1122,8 @@ namespace getfem {
         if (signed_dist > release_distance) continue;
 
         // compute the unit normal vector at y and the signed distance.
-        base_small_vector ny0 = bgeot::compute_normal(ctx, iff);
-        if (!ref_conf) {
-          ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
-          gmm::add(gmm::identity_matrix(), grad);
-          scalar_type J = gmm::lu_inverse(grad);
-          if (J <= scalar_type(0)) GMM_WARNING1("Inverted element !" << J);
-          gmm::mult(gmm::transposed(grad), ny0, ny);
-          gmm::scale(ny, gmm::sgn(J)); // Test
-        } else {
-          ny = ny0;
-        }
+        base_small_vector ny0(N);
+        compute_normal(ctx, iff, ref_conf, ny0, ny, coeff, grad);
         // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
         signed_dist *= gmm::sgn(gmm::vect_sp(x - y, ny));
 
