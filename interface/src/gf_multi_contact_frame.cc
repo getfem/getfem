@@ -37,17 +37,17 @@ void gf_multi_contact_frame(getfemint::mexargs_in& in, getfemint::mexargs_out& o
   getfemint_multi_contact_frame *pgs = NULL;  
   if (check_cmd("MultiContactFrame", "MultiContactFrame", in, out, 3, 9, 0, 1)) {
     
-    /*@INIT S = ('.init', @tmodel md, @int N, @scalar release_distance[, @bool delaunay[, @bool self_contact[, @scalar cut_angle[, @bool use_raytrace[, @int fem_nodes_mode[, @bool ref_conf]]]]]])
+    /*@INIT S = ('.init', @tmodel md, @int N, @scalar release_distance[, @bool delaunay[, @bool self_contact[, @scalar cut_angle[, @bool use_raytrace[, @int nodes_mode[, @bool ref_conf]]]]]])
     Build a new multi contact frame object linked to the model `md`.
     with `N` the space dimension (typically, 2 or 3), `release_distance` is
     the limit distance beyond which two points are not considered in
     potential contact (should be typically comparable to element sizes).
     There is several optional parameters.
-    If `fem_node_mode=0` (default value), then contact is considered
-    on Gauss points, `fem_node_mode=1` then contact is considered on
+    If `nodes_mode=0` (default value), then contact is considered
+    on Gauss points, `nodes_mode=1` then contact is considered on
     Gauss points for slave surfaces and on f.e.m. nodes for master surfaces
     (in that case, the f.e.m. should be of Lagrange type) and
-    `fem_node_mode=2` then contact is considered on f.e.m. nodes for
+    `nodes_mode=2` then contact is considered on f.e.m. nodes for
     both slave and master surfaces. if `use_delaunay` is true (default value),
     then contact detection is done calling
     `Qhull <http://www.qhull.org>`_ package to perform a Delaunay
@@ -80,15 +80,15 @@ void gf_multi_contact_frame(getfemint::mexargs_in& in, getfemint::mexargs_out& o
     if (in.remaining()) cut_angle = in.pop().to_scalar();
     bool raytrace = false;
     if (in.remaining()) raytrace = in.pop().to_bool();
-    int fem_node_mode = 0;
-    if (in.remaining()) fem_node_mode = in.pop().to_integer(0, 2);
+    int nodes_mode = 0;
+    if (in.remaining()) nodes_mode = in.pop().to_integer(0, 2);
     bool ref_conf = false;
     if (in.remaining()) ref_conf = in.pop().to_bool();
     
     getfem::multi_contact_frame *ps
       = new getfem::multi_contact_frame(md->model(), size_type(N), rd,
                                         delaunay, self_contact, cut_angle,
-                                        raytrace, fem_node_mode, ref_conf);
+                                        raytrace, nodes_mode, ref_conf);
 
        pgs = getfemint_multi_contact_frame::get_from(ps);
        workspace().set_dependance(pgs, md);

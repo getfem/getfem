@@ -25,6 +25,11 @@
 
 namespace getfem {
 
+  bool boundary_has_fem_nodes(bool slave_flag, int nodes_mode) {
+    return (slave_flag && nodes_mode) ||
+           (!slave_flag && nodes_mode == 2);
+  }
+
   void compute_normal(const fem_interpolation_context &ctx,
                       size_type face, bool in_reference_conf,
                       base_node &n0, base_node &n,
@@ -101,7 +106,7 @@ namespace getfem {
   }
 
   void multi_contact_frame::normal_cone_simplicication(void) {
-    if (fem_nodes_mode) {
+    if (nodes_mode) {
       scalar_type threshold = ::cos(cut_angle);
       for (size_type i = 0; i < boundary_points_info.size(); ++i) {
         normal_cone &nc = boundary_points_info[i].normals;
@@ -195,9 +200,9 @@ namespace getfem {
   multi_contact_frame::multi_contact_frame(size_type NN, scalar_type r_dist,
                                            bool dela, bool selfc,
                                            scalar_type cut_a,
-                                           bool rayt, int fem_nodes, bool refc)
+                                           bool rayt, int nmode, bool refc)
     : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela),
-      fem_nodes_mode(fem_nodes), raytrace(rayt), release_distance(r_dist),
+      nodes_mode(nmode), raytrace(rayt), release_distance(r_dist),
       cut_angle(cut_a), EPS(1E-8), md(0), coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
@@ -211,9 +216,9 @@ namespace getfem {
                                            scalar_type r_dist,
                                            bool dela, bool selfc,
                                            scalar_type cut_a,
-                                           bool rayt, int fem_nodes, bool refc)
+                                           bool rayt, int nmode, bool refc)
     : N(NN), self_contact(selfc), ref_conf(refc),
-      use_delaunay(dela), fem_nodes_mode(fem_nodes), raytrace(rayt),
+      use_delaunay(dela), nodes_mode(nmode), raytrace(rayt),
       release_distance(r_dist), cut_angle(cut_a), EPS(1E-8), md(&mdd),
       coordinates(N), pt_eval(N) {
     if (N > 0) coordinates[0] = "x";
@@ -339,8 +344,8 @@ namespace getfem {
         const mesh_im &mim = mim_of_boundary(i);
         const model_real_plain_vector &U = disp_of_boundary(i);
         const mesh &m = mfu.linked_mesh();
-        bool on_fem_nodes = (fem_nodes_mode == 2 ||
-                             (fem_nodes_mode == 1 && is_slave_boundary(i)));
+        bool on_fem_nodes =
+          boundary_has_fem_nodes(is_slave_boundary(i), nodes_mode);
 
         base_node val(N), bmin(N), bmax(N);
         base_small_vector n0(N), n(N), n_mean(N);
@@ -471,10 +476,10 @@ namespace getfem {
               // In case of self-contact, test if the two points share the
               // same element.
               && (sl1
-                  || ((fem_nodes_mode < 2)
+                  || ((nodes_mode < 2)
                       && (( &(mf1.linked_mesh()) != &(mf2.linked_mesh()))
                           || (pt_info1->ind_element != pt_info2->ind_element)))
-                  || ((fem_nodes_mode == 2)
+                  || ((nodes_mode == 2)
                       && !(are_dof_linked(ib1, pt_info1->ind_pt,
                                           ib2, pt_info2->ind_pt)))
                   )
@@ -482,7 +487,7 @@ namespace getfem {
 
             // Store the potential contact pairs
 
-            if ((sl2 && fem_nodes_mode) || (!sl2 && fem_nodes_mode == 2)) {
+            if (boundary_has_fem_nodes(sl2, nodes_mode)) {
               const mesh::ind_cv_ct &ic2
                 = mf2.convex_to_basic_dof(pt_info2->ind_pt);
               for (size_type k = 0; k < ic2.size(); ++k) {
@@ -501,7 +506,7 @@ namespace getfem {
                                          pt_info2->ind_face);
 
             if (self_contact && !sl1 && !sl2) {
-              if ((sl2 && fem_nodes_mode) || (!sl2 && fem_nodes_mode==2)) {
+              if (boundary_has_fem_nodes(sl2, nodes_mode)) {
                 const mesh::ind_cv_ct &ic1
                   = mf1.convex_to_basic_dof(pt_info1->ind_pt);
                 for (size_type k = 0; k < ic1.size(); ++k) {
@@ -604,6 +609,7 @@ namespace getfem {
             }
           }
 
+          // is nb_pt_on_face really necessary, is this possible to occur?
           GMM_ASSERT1(nb_pt_on_face,
                       "This element has not vertex on considered face !");
 
@@ -656,10 +662,10 @@ namespace getfem {
                                             pt_info->normals)
             // In case of self-contact, test if the points and the face
             // share the same element.
-            && (((fem_nodes_mode < 2)
+            && (((nodes_mode < 2)
                  && (( &(mf1.linked_mesh()) != &(mf2.linked_mesh()))
                      || (pt_info->ind_element != ibx.ind_element)))
-                || ((fem_nodes_mode == 2)
+                || ((nodes_mode == 2)
                     && !(is_dof_linked(ib1, pt_info->ind_pt,
                                        ibx.ind_boundary, ibx.ind_element)))
                 )
@@ -681,38 +687,39 @@ namespace getfem {
     const model_real_plain_vector &coeff;
     const std::vector<base_small_vector> &ti;
     bool ref_conf;
-    mutable base_node val;
+    mutable base_node dxy;
     mutable base_matrix grad, gradtot;
 
     scalar_type operator()(const base_small_vector& a) const {
       base_node xx = x0;
       for (size_type i= 0; i < N-1; ++i) xx += a[i] * ti[i];
       ctx.set_xref(xx);
-      base_node y = ctx.xreal();
       if (!ref_conf) {
-        ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
-        y += val;
-      }
-      return gmm::vect_dist2(y, x)/scalar_type(2);
+        ctx.pf()->interpolation(ctx, coeff, dxy, dim_type(N));
+        dxy += ctx.xreal() - x;
+      } else
+        dxy = ctx.xreal() - x;
+      return gmm::vect_norm2(dxy)/scalar_type(2);
     }
+
     scalar_type operator()(const base_small_vector& a,
                            base_small_vector &grada) const {
       base_node xx = x0;
       for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
       ctx.set_xref(xx);
-      base_node dy = ctx.xreal() - x;
       if (!ref_conf) {
-        ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
-        dy += val;
+        ctx.pf()->interpolation(ctx, coeff, dxy, dim_type(N));
+        dxy += ctx.xreal() - x;
         ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(N));
         gmm::add(gmm::identity_matrix(), grad);
         gmm::mult(grad, ctx.K(), gradtot);
       } else {
+        dxy = ctx.xreal() - x;
         gmm::copy(ctx.K(), gradtot);
       }
       for (size_type i = 0; i < N-1; ++i)
-        grada[i] = gmm::vect_sp(gradtot, ti[i], dy);
-      return gmm::vect_norm2(dy)/scalar_type(2);
+        grada[i] = gmm::vect_sp(gradtot, ti[i], dxy);
+      return gmm::vect_norm2(dxy)/scalar_type(2);
     }
     void operator()(const base_small_vector& a,
                     base_matrix &hessa) const {
@@ -736,7 +743,7 @@ namespace getfem {
      scalar_type EPSS, bool rc)
       : N(gmm::vect_size(x00)), EPS(EPSS), x0(x00), x(xx),
         ctx(ctxx), coeff(coefff), ti(tii), ref_conf(rc),
-        val(N), grad(N,N), gradtot(N,N) {}
+        dxy(N), grad(N,N), gradtot(N,N) {}
 
   };
 
@@ -748,7 +755,7 @@ namespace getfem {
     const std::vector<base_small_vector> &ti;
     const std::vector<base_small_vector> &Ti;
     bool ref_conf;
-    mutable base_node val;
+    mutable base_node dxy;
     mutable base_matrix grad, gradtot;
 
     void operator()(const base_small_vector& a,
@@ -756,13 +763,13 @@ namespace getfem {
       base_node xx = x0;
       for (size_type i = 0; i < N-1; ++i) xx += a[i] * ti[i];
       ctx.set_xref(xx);
-      base_node y = ctx.xreal();
       if (!ref_conf) {
-        ctx.pf()->interpolation(ctx, coeff, val, dim_type(N));
-        y += val;
-      }
+        ctx.pf()->interpolation(ctx, coeff, dxy, dim_type(N));
+        dxy += ctx.xreal() - x;
+      } else
+        dxy = ctx.xreal() - x;
       for (size_type i = 0; i < N-1; ++i)
-        res[i] = gmm::vect_sp(y, Ti[i]) - gmm::vect_sp(x, Ti[i]);
+        res[i] = gmm::vect_sp(dxy, Ti[i]);
     }
 
     void operator()(const base_small_vector& a,
@@ -792,7 +799,7 @@ namespace getfem {
      bool rc)
       : N(gmm::vect_size(x00)), x0(x00), x(xx),
         ctx(ctxx), coeff(coefff), ti(tii), Ti(Tii), ref_conf(rc),
-        val(N), grad(N,N), gradtot(N,N) {}
+        dxy(N), grad(N,N), gradtot(N,N) {}
 
   };
 

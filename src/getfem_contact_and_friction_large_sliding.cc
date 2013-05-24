@@ -919,7 +919,7 @@ namespace getfem {
     model_real_plain_vector &V = vecl[0]; gmm::clear(V);
 
     mcf.set_raytrace(true);
-    mcf.set_fem_nodes_mode(0);
+    mcf.set_nodes_mode(0);
     mcf.compute_contact_pairs();
 
     size_type N = mcf.dim();

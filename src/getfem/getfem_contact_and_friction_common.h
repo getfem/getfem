@@ -281,7 +281,7 @@ namespace getfem {
                           // for linear elasticity small sliding contact.
     bool use_delaunay;    // Use delaunay to detect the contact pairs instead
                           // of influence boxes.
-    int fem_nodes_mode;   // 0 = Use Gauss points for both slave and master
+    int nodes_mode;       // 0 = Use Gauss points for both slave and master
                           // 1 = Use finite element nodes for slave and
                           //     Gauss points for master.
                           // 2 = Use finite element nodes for both slave
@@ -355,8 +355,8 @@ namespace getfem {
       size_type ind_boundary;  // Boundary number
       size_type ind_element;   // Element number
       short_type ind_face;     // Face number in element
-      size_type ind_pt;        // Dof number for fem_nodes_mode or point number
-                               // of integration method
+      size_type ind_pt;        // Dof number for fem nodes or point number
+                               // of integration method (depending on nodes_mode)
       normal_cone normals;     // Set of outward unit normal vectors
       boundary_point(void) {}
       boundary_point(const base_node &rp, size_type ib, size_type ie,
@@ -419,8 +419,8 @@ namespace getfem {
       size_type slave_ind_boundary;  // Boundary number
       size_type slave_ind_element;   // Element number
       short_type slave_ind_face;     // Face number in element
-      size_type slave_ind_pt;        // Dof number for fem_nodes_mode
-                                     // or integration point number otherwise
+      size_type slave_ind_pt;        // Dof number for fem nodes or point number
+                                     // of integration method (depending on nodes_mode)
 
       base_node master_point_ref;    // The master point on ref element
       base_node master_point;        // The transformed master point
@@ -469,7 +469,7 @@ namespace getfem {
     // more easy to extend to fictitious domain with contact.
     // Stores all the boundary deformed points relatively to
     // an integration method or to finite element nodes (depending on
-    // fem_nodes_mode flag). Storing sufficient information to perform
+    // nodes_mode). Storing sufficient information to perform
     // a Delaunay triangulation and to be able to recover the boundary
     // number, element number, face number, unit normal vector ...
     void compute_boundary_points(bool slave_only = false);
@@ -522,7 +522,7 @@ namespace getfem {
     bool is_self_contact(void) const { return self_contact; }
     bool is_slave_boundary(size_type n) const { return contact_boundaries[n].slave; }
     void set_raytrace(bool b) { raytrace = b; }
-    void set_fem_nodes_mode(int m) { fem_nodes_mode = m; }
+    void set_nodes_mode(int m) { nodes_mode = m; }
     size_type nb_contact_pairs(void) const { return contact_pairs.size(); }
     const contact_pair &get_contact_pair(size_type i)
     { return contact_pairs[i]; }

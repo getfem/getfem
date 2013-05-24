@@ -98,7 +98,8 @@ namespace getfem {
    CONTACT_B_MATRIX &BN, CONTACT_B_MATRIX &BT,
    std::string dataname_friction_coeff,
    std::string dataname_gap="", std::string dataname_alpha="",
-   int aug_version=1, bool Tresca_version=false, const std::string dataname_threshold="",  std::string dataname_gamma="", std::string dataname_wt="", bool Hughes_stabilized=false);
+   int aug_version=1, bool Tresca_version=false, const std::string dataname_threshold="",
+   std::string dataname_gamma="", std::string dataname_wt="", bool Hughes_stabilized=false);
 
   /** Can be used to change the matrix BN of a basic contact/friction brick
    */
