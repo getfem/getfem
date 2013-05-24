@@ -838,7 +838,7 @@ namespace getfem {
       else only_slave = false;
 
     if (only_master && !self_contact) {
-      GMM_WARNING1("There is only master boundary and no auto-contact to detect. Exiting");
+      GMM_WARNING1("There is only master boundary and no self-contact to detect. Exiting");
       return;
     }
 
@@ -856,13 +856,11 @@ namespace getfem {
 
     // Scan of potential pairs
     for (size_type ip = 0; ip < potential_pairs.size(); ++ip) {
+      bool first_pair_found = false;
       const base_node &x = boundary_points[ip];
       boundary_point &bpinfo = boundary_points_info[ip];
       size_type ibx = bpinfo.ind_boundary;
       bool slx = is_slave_boundary(ibx);
-      // Detect here the nearest rigid obstacle (taking into account
-      // the release distance)
-      size_type irigid_obstacle(-1);
       scalar_type d0 = 1E300, d1, d2;
 
       base_small_vector nx = bpinfo.normals[0];
@@ -878,6 +876,9 @@ namespace getfem {
 
       if (self_contact || slx) {
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
+        // Detect here the nearest rigid obstacle (taking into account
+        // the release distance)
+        size_type irigid_obstacle(-1);
         gmm::copy(x, pt_eval);
         for (size_type i = 0; i < obstacles.size(); ++i) {
           d1 = scalar_type(obstacles_parsers[i].Eval());
@@ -891,6 +892,60 @@ namespace getfem {
             }
           }
         }
+
+        if (irigid_obstacle != size_type(-1)) {
+
+          gmm::copy(x, pt_eval);
+          gmm::copy(x, y);
+          size_type nit = 0, nb_fail = 0;
+          scalar_type alpha(0), beta(0);
+          d1 = d0;
+
+          while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
+            for (size_type k = 0; k < N; ++k) {
+              pt_eval[k] += EPS;
+              d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+              ny[k] = (d2 - d1) / EPS;
+              pt_eval[k] -= EPS;
+            }
+
+            // ajouter un test de divergence ...
+            for (scalar_type lambda(1); lambda >= 1E-3; lambda /= scalar_type(2)) {
+              if (raytrace) {
+                alpha = beta - lambda * d1 / gmm::vect_sp(ny, nx);
+                gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
+              } else {
+                gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt_eval);
+              }
+              d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+//               if (nit > 10)
+//                 cout << "nit = " << nit << " lambda = " << lambda
+//                      << " alpha = " << alpha << " d2 = " << d2
+//                      << " d1  = " << d1 << endl;
+              if (gmm::abs(d2) < gmm::abs(d1)) break;
+            }
+            if (raytrace &&
+                gmm::abs(beta - d1 / gmm::vect_sp(ny, nx)) > scalar_type(500))
+              nb_fail++;
+            gmm::copy(pt_eval, y); beta = alpha; d1 = d2;
+          }
+
+          if (gmm::abs(d1) > 1E-8) {
+            GMM_WARNING1("Projection/raytrace on rigid obstacle failed");
+            continue;
+          }
+          gmm::copy(pt_eval, y);
+          ny /= gmm::vect_norm2(ny);
+
+          d0 = gmm::vect_dist2(y, x) * gmm::sgn(d0);
+          contact_pair ct(x, nx, bpinfo, y, ny, irigid_obstacle, d0);
+
+          // CRITERION 4 for rigid bodies : Apply the release distance
+          if (gmm::vect_dist2(y, x) <= release_distance) {
+            contact_pairs.push_back(ct);
+            first_pair_found = true;
+          }
+        }
 #else
         if (obstacles.size() > 0)
           GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
@@ -900,7 +955,6 @@ namespace getfem {
 
       // if (potential_pairs[ip].size())
       // cout << "number of potential pairs for point " << ip << " : " << potential_pairs[ip].size() << endl;
-      bool first_pair = true;
       for (size_type ipf = 0; ipf < potential_pairs[ip].size(); ++ipf) {
         // Point to surface projection. Principle :
         //  - One parametrizes first the face on the reference element by
@@ -984,12 +1038,10 @@ namespace getfem {
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
           bool exited = false;
-          size_type nbfail = 0;
-          size_type niter = 0;
-          while (residual > 2E-12) {
+          for (size_type niter = 0, nbfail = 0;
+               residual > 2E-12 && niter <= 30; ++niter) {
 
-            size_type subiter(0);
-            for(;;) {
+            for (size_type subiter(0);;) {
               pps(a, hessa);
               det = gmm::abs(gmm::lu_inverse(hessa, false));
               if (det > 1E-15) break;
@@ -1006,13 +1058,12 @@ namespace getfem {
 
             // Line search
             scalar_type lambda(1);
-            for(size_type j = 0; j < 10; ++j) {
+            for (size_type j = 0; j < 5; ++j) {
               gmm::add(a, gmm::scaled(dir, lambda), b);
               pps(b, res2);
               residual2 = gmm::vect_norm2(res2);
               if (residual2 < residual) break;
               lambda /= ((j < 3) ? scalar_type(2) : scalar_type(5));
-              if (lambda < 5E-3) break;
             }
 
             residual = residual2;
@@ -1025,7 +1076,6 @@ namespace getfem {
             if (niter > 1 && dist_ref > 15) break;
             if (niter > 5 && dist_ref > 5) break;
             if (dist_ref > 4 || nbfail == 2) exited = true;
-            if (++niter > 30) break;
           }
           converged = (gmm::vect_norm2(res) < 2E-6);
           GMM_ASSERT1(!((exited && converged &&
@@ -1047,12 +1097,10 @@ namespace getfem {
           scalar_type det(0);
 
           scalar_type dist = pps(a, grada);
-          size_type niter = 0;
+          for (size_type niter = 0;
+               gmm::vect_norm2(grada) > 1E-12 && niter <= 50; ++niter) {
 
-          while (gmm::vect_norm2(grada) > 1E-12) {
-
-            size_type subiter(0);
-            for(;;) {
+            for (size_type subiter(0);;) {
               pps(a, hessa);
               det = gmm::abs(gmm::lu_inverse(hessa, false));
               if (det > 1E-15) break;
@@ -1065,22 +1113,15 @@ namespace getfem {
             gmm::mult(hessa, gmm::scaled(grada, scalar_type(-1)), dir);
 
             // Line search
-            scalar_type lambda(1);
-            for(;;) {
+            for (scalar_type lambda(1);
+                 lambda >= 1E-3; lambda /= scalar_type(2)) {
               gmm::add(a, gmm::scaled(dir, lambda), b);
-              scalar_type dist2 = pps(b);
-              if (dist2 < dist) break;
+              if (pps(b) < dist) break;
               gmm::add(a, gmm::scaled(dir, -lambda), b);
-              dist2 = pps(b);
-              if (dist2 < dist) break;
-
-              lambda /= scalar_type(2);
-              if (lambda < 1E-3) break;
+              if (pps(b) < dist) break;
             }
             gmm::copy(b, a);
             dist = pps(a, grada);
-
-            if (++niter > 50) break;
           }
 
           converged = (gmm::vect_norm2(grada) < 2E-6);
@@ -1139,14 +1180,14 @@ namespace getfem {
         // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
         signed_dist *= gmm::sgn(gmm::vect_sp(x - y, ny));
 
-        // CRITERION 1 again on found unit normal vector
-        if (!(test_normal_cones_compatibility(ny, bpinfo.normals)))
+        // CRITERION 5 : comparison with rigid obstacles
+        // CRITERION 7 : smallest signed distance on contact pairs
+        if (first_pair_found && contact_pairs.back().signed_dist > signed_dist)
             continue;
 
-
-        // CRITERION 5 : comparison with rigid obstacles
-        if (irigid_obstacle != size_type(-1) && signed_dist  > d0)
-          continue;
+        // CRITERION 1 : again on found unit normal vector
+        if (!(test_normal_cones_compatibility(ny, bpinfo.normals)))
+            continue;
 
         // CRITERION 6 : for self-contact only : apply a test on
         //               unit normals in reference configuration.
@@ -1161,74 +1202,13 @@ namespace getfem {
         }
 
         contact_pair ct(x, nx, bpinfo, ctx.xref(), y, ny, fi, signed_dist);
-        if (first_pair) {
+        if (first_pair_found) {
+          contact_pairs.back() = ct;
+        } else {
           contact_pairs.push_back(ct);
-          first_pair = false;
-        }
-        else {
-          // CRITERION 7 : smallest signed distance on contact pairs
-          if (contact_pairs.back().signed_dist > signed_dist)
-            contact_pairs.back() = ct;
+          first_pair_found = true;
         }
 
-      }
-      if (first_pair && irigid_obstacle != size_type(-1)) {
-
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-        gmm::copy(x, pt_eval);
-        gmm::copy(x, y);
-        size_type nit = 0, nb_fail = 0;
-        scalar_type alpha(0), beta(0);
-        d1 = d0;
-
-        while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
-          for (size_type k = 0; k < N; ++k) {
-            pt_eval[k] += EPS;
-            d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-            ny[k] = (d2 - d1) / EPS;
-            pt_eval[k] -= EPS;
-          }
-
-          scalar_type lambda(1); // ajouter un test de divergence ...
-          for(;;) {
-            if (raytrace) {
-              alpha = beta - lambda * d1 / gmm::vect_sp(ny, nx);
-              gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
-            } else {
-              gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt_eval);
-            }
-            d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
-//             if (nit > 10)
-//               cout << "nit = " << nit << " lambda = " << lambda
-//                    << " alpha = " << alpha << " d2 = " << d2
-//                    << " d1  = " << d1 << endl;
-            if (gmm::abs(d2) < gmm::abs(d1)) break;
-            if (lambda < 1E-3) {
-              if (raytrace) {
-                if (gmm::abs(beta - d1 / gmm::vect_sp(ny, nx))
-                    > scalar_type(500)) nb_fail++;
-              }
-              break;
-            }
-            lambda /= scalar_type(2);
-          }
-          gmm::copy(pt_eval, y); beta = alpha; d1 = d2;
-        }
-
-        if (gmm::abs(d1) > 1E-8) {
-          GMM_WARNING1("Projection/raytrace on rigid obstacle failed");
-          continue;
-        }
-        gmm::copy(pt_eval, y);
-        ny /= gmm::vect_norm2(ny);
-
-#endif
-        d0 = gmm::vect_dist2(y, x) * gmm::sgn(d0);
-        contact_pair ct(x, nx, bpinfo, y, ny, irigid_obstacle, d0);
-
-        // CRITERION 4 for rigid bodies : Apply the release distance
-        if (gmm::vect_dist2(y, x) <= release_distance)
-          contact_pairs.push_back(ct);
       }
     }
 
