@@ -360,9 +360,6 @@ namespace getfem {
           size_type cv = v.cv();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_s = mfu.fem_of_element(cv);
-          pintegration_method pim = mim.int_method_of_element(cv);
-          GMM_ASSERT1(pim, "Integration method should be defined");
-          dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();
 
           if (!ref_conf)
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
@@ -371,37 +368,43 @@ namespace getfem {
 
           pfem_precomp pfp(0);
           size_type nbptf(0);
+          std::vector<size_type> indpt, indpfp;
           if (on_fem_nodes) {
+            dim_type qqdim = mfu.get_qdim() / pf_s->target_dim();
             pfp = fppool(pf_s, pf_s->node_tab(cv));
             nbptf = pf_s->node_convex(cv).structure()->nb_points_of_face(v.f());
+            indpt.resize(nbptf); indpfp.resize(nbptf);
+            for (short_type ip = 0; ip < nbptf; ++ip) {
+              indpt[ip] =
+                mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
+              indpfp[ip] =
+                pf_s->node_convex(cv).structure()->ind_points_of_face(v.f())[ip];
+            }
           }
           else {
-
+            pintegration_method pim = mim.int_method_of_element(cv);
+            GMM_ASSERT1(pim, "Integration method should be defined");
             pfp = fppool(pf_s,&(pim->approx_method()->integration_points()));
             nbptf = pim->approx_method()->nb_points_on_face(v.f());
+            indpt.resize(nbptf); indpfp.resize(nbptf);
+            for (short_type ip = 0; ip < nbptf; ++ip)
+              indpt[ip] = indpfp[ip] =
+                pim->approx_method()->ind_first_point_on_face(v.f())+ip;
           }
           fem_interpolation_context ctx(pgt,pfp,size_type(-1),G,cv,v.f());
 
           for (short_type ip = 0; ip < nbptf; ++ip) {
-            size_type ind(0), indpt(0);
-            if (on_fem_nodes) {
-              indpt= mfu.ind_basic_dof_of_face_of_element(cv,v.f())[ip*qqdim];
-              ind = pf_s->node_convex(cv).structure()
-                ->ind_points_of_face(v.f())[ip];
-            }
-            else {
-              indpt = ind = pim->approx_method()->ind_first_point_on_face(v.f())+ip;
-            }
-            ctx.set_ii(ind);
+            ctx.set_ii(indpfp[ip]);
 
-            if (!(on_fem_nodes && dof_already_interpolated[indpt])) {
+            size_type ind = indpt[ip];
+            if (!(on_fem_nodes && dof_already_interpolated[ind])) {
               if (!ref_conf) {
                 pf_s->interpolation(ctx, coeff, val, dim_type(N));
                 val += ctx.xreal();
               } else {
                 val = ctx.xreal();
               }
-              if (on_fem_nodes) dof_ind[indpt] = boundary_points.size();
+              if (on_fem_nodes) dof_ind[ind] = boundary_points.size();
 
             }
 
@@ -410,15 +413,15 @@ namespace getfem {
                            n0, n, coeff, grad);
             n /= gmm::vect_norm2(n);
 
-            if (on_fem_nodes && dof_already_interpolated[indpt]) {
-              boundary_points_info[dof_ind[indpt]].normals.add_normal(n);
+            if (on_fem_nodes && dof_already_interpolated[ind]) {
+              boundary_points_info[dof_ind[ind]].normals.add_normal(n);
             } else {
               boundary_points.push_back(val);
               boundary_points_info.push_back(boundary_point(ctx.xreal(), i, cv,
-                                                            v.f(), indpt, n));
+                                                            v.f(), ind, n));
             }
 
-            if (on_fem_nodes) dof_already_interpolated.add(indpt);
+            if (on_fem_nodes) dof_already_interpolated.add(ind);
           }
         }
       }
@@ -557,7 +560,6 @@ namespace getfem {
           size_type cv = v.cv();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_s = mfu.fem_of_element(cv);
-          size_type nbd_t = pgt->nb_points();
           pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
           if (!ref_conf)
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
@@ -567,7 +569,13 @@ namespace getfem {
                                         size_type(-1));
 
           size_type nb_pt_on_face = 0;
+          dal::bit_vector points_on_face;
+          bgeot::pconvex_structure cvs = pgt->structure();
+          for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
+            points_on_face.add(cvs->ind_points_of_face(v.f())[k]);
+
           gmm::clear(n_mean);
+          size_type nbd_t = pgt->nb_points();
           for (short_type ip = 0; ip < nbd_t; ++ip) {
             size_type ind = m.ind_points_of_convex(cv)[ip];
 
@@ -585,19 +593,6 @@ namespace getfem {
             } else {
               val = transformed_points[ind];
             }
-            // computation of unit normal vector if the vertex is on the face
-            bool is_on_face = false;
-            bgeot::pconvex_structure cvs = pgt->structure();
-            for (size_type k = 0; k < cvs->nb_points_of_face(v.f()); ++k)
-              if (cvs->ind_points_of_face(v.f())[k] == ip) is_on_face = true;
-            if (is_on_face) {
-              ctx.set_ii(ip);
-              compute_normal(ctx, v.f(), ref_conf,
-                             n0, n, coeff, grad);
-              n /= gmm::vect_norm2(n);
-              n_mean += n;
-              ++nb_pt_on_face;
-            }
 
             if (ip == 0) // computation of bounding box
               bmin = bmax = val;
@@ -607,6 +602,16 @@ namespace getfem {
                 bmax[k] = std::max(bmax[k], val[k]);
               }
             }
+
+            // computation of unit normal vector if the vertex is on the face
+            if (points_on_face[ip]) {
+              compute_normal(ctx, v.f(), ref_conf,
+                             n0, n, coeff, grad);
+              n /= gmm::vect_norm2(n);
+              n_mean += n;
+              ++nb_pt_on_face;
+            }
+
           }
 
           // is nb_pt_on_face really necessary, is this possible to occur?
