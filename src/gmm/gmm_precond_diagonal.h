@@ -113,7 +113,7 @@ namespace gmm {
 
   template <typename Matrix, typename V1, typename V2> inline
   void right_mult(const diagonal_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    typedef typename linalg_traits<Matrix>::value_type T;
+    // typedef typename linalg_traits<Matrix>::value_type T;
     GMM_ASSERT2(P.diag.size() == vect_size(v2), "dimensions mismatch");
     copy(v1, v2);
 #   ifdef DIAG_LEFT_MULT_SQRT    

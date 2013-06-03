@@ -327,7 +327,7 @@ namespace gmm {
   template <typename T, int shift> void
   HarwellBoeing_IO::read(csc_matrix<T, shift>& A) {
 
-    typedef typename csc_matrix<T, shift>::IND_TYPE IND_TYPE;
+    // typedef typename csc_matrix<T, shift>::IND_TYPE IND_TYPE;
 
     GMM_ASSERT1(f, "no file opened!");
     GMM_ASSERT1(Type[0] != 'P',

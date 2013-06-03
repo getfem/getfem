@@ -125,7 +125,7 @@ namespace getfem {
   inline void interpolation_function__(const mesh_fem &mf, VECT &V,
                                        F &f, const dal::bit_vector &dofs,
                                        const M &mm, gmm::abstract_matrix) {
-    typedef typename gmm::linalg_traits<VECT>::value_type T;
+    // typedef typename gmm::linalg_traits<VECT>::value_type T;
     size_type Nr = gmm::mat_nrows(mm), Nc = gmm::mat_ncols(mm), N = Nr*Nc;
     size_type Q = mf.get_qdim();
     base_matrix m(Nr, Nc);

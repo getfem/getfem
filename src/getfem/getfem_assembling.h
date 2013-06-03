@@ -1134,7 +1134,7 @@ namespace getfem {
    const VECT2 &r_data, const mesh_region &region,
    int version =  ASMDIR_BUILDALL) {
     typedef typename gmm::linalg_traits<VECT1>::value_type value_type;
-    typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
+    // typedef typename gmm::number_traits<value_type>::magnitude_type magn_type;
 
     if ((version & ASMDIR_SIMPLIFY) &&
 	(mf_u.is_reduced() || mf_mult.is_reduced() || mf_r.is_reduced())) {
