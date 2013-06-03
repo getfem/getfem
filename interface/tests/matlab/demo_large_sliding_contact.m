@@ -19,7 +19,7 @@
 clear all;
 gf_workspace('clear all');
 
-test_case = 0; % 0 = 2D punch on a rigid obstacle
+test_case = 1; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -28,8 +28,8 @@ test_case = 0; % 0 = 2D punch on a rigid obstacle
 clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
 clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
 r = 0.1;                    % Augmentation parameter
-alpha = 1;                  % Alpha coefficient for "sliding velocity"
-f_coeff = 1;                % Friction coefficient
+alpha = 0;                  % Alpha coefficient for "sliding velocity"
+f_coeff = 0;                % Friction coefficient
 
 test_tangent_matrix = true;
 nonlinear_elasticity = false;
@@ -47,10 +47,10 @@ switch(test_case)
     self_contact = false;
   case 3
     vf = 0.01;              % Vertical force
-    vf_mult = 1.01;
+    vf_mult = 1.05;
     penalty_parameter = 0.1;
     release_dist = 0.05;
-    max_res = 1E-9;
+    max_res = 1E-8;
     self_contact = true;
   case {2,4}
     vf = 0.01;              % Vertical force
@@ -111,7 +111,7 @@ end
 % dol1 = gf_mesh_fem_get(pre_mflambda1, 'basic dof on region', CONTACT_BOUNDARY1);
 % mflambda1 = gf_mesh_fem('partial',  pre_mflambda1, dol1);
 mim1 = gf_mesh_im(mesh1, 4);
-mim1_contact = gf_mesh_im(mesh1, 2);
+mim1_contact = gf_mesh_im(mesh1, 4);
 
 if (test_case ~= 3 && test_case ~= 0) 
   mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 2);
@@ -252,6 +252,7 @@ gf_model_set(md, 'add integral large sliding contact brick raytrace', mcff, 'r',
 
 
 for nit=1:10000
+  disp(sprintf('Iteration %d', nit));
 
   if (test_tangent_matrix) 
     errmax = gf_model_get(md, 'test tangent matrix', 1E-8, 20, 0.0001);
@@ -324,7 +325,7 @@ for nit=1:10000
   end
   hold off
 
-  pause(1);
+  pause(0.1);
 
   vf = vf * vf_mult; F(N) = -vf;
   gf_model_set(md, 'variable', 'data1', F);

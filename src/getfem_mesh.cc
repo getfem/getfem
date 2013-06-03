@@ -695,7 +695,7 @@ namespace getfem {
       scalar_type emax, emin; gmm::condition_number(K,emax,emin);
       q = std::max(q, emax);
     }
-    return q * sqrt(scalar_type(N)) / scalar_type(N);
+    return q * sqrt(scalar_type(N)) / scalar_type(2);
   }
 
   /* extract faces of convexes which are not shared

@@ -244,6 +244,154 @@ namespace getfem {
     }
   }
 
+  //=========================================================================
+  //
+  //  Some basic assembly functions.
+  //
+  //=========================================================================
+
+  template <typename MAT1, typename MAT2>
+  void mat_elem_assembly(const MAT1 &M_, const MAT2 &Melem,
+                         const mesh_fem &mf1, size_type cv1,
+                         const mesh_fem &mf2, size_type cv2) {
+    MAT1 &M = const_cast<MAT1 &>(M_);
+    typedef typename gmm::linalg_traits<MAT1>::value_type T;
+    T val;
+    mesh_fem::ind_dof_ct cvdof1 = mf1.ind_basic_dof_of_element(cv1);
+    mesh_fem::ind_dof_ct cvdof2 = mf2.ind_basic_dof_of_element(cv2);
+
+    GMM_ASSERT1(cvdof1.size() == gmm::mat_nrows(Melem)
+                && cvdof2.size() == gmm::mat_ncols(Melem),
+                "Dimensions mismatch");
+
+    if (mf1.is_reduced()) {
+      if (mf2.is_reduced()) {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (M, gmm::mat_row(mf1.extension_matrix(), cvdof1[i]),
+                 gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+      } else {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (M, gmm::mat_row(mf1.extension_matrix(), cvdof1[i]),
+                 cvdof2[j], val);
+      }
+    } else {
+      if (mf2.is_reduced()) {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (M, cvdof1[i],
+                 gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+      } else {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              M(cvdof1[i], cvdof2[j]) += val;
+      }
+    }
+  }
+
+
+  template <typename VEC1, typename VEC2>
+  void vec_elem_assembly(const VEC1 &V_, const VEC2 &Velem,
+                         const mesh_fem &mf, size_type cv) {
+    VEC1 &V = const_cast<VEC1 &>(V_);
+    typedef typename gmm::linalg_traits<VEC1>::value_type T;
+    std::vector<size_type> cvdof(mf.ind_basic_dof_of_element(cv).begin(),
+                                 mf.ind_basic_dof_of_element(cv).end());
+
+    GMM_ASSERT1(cvdof.size() == gmm::vect_size(Velem), "Dimensions mismatch");
+
+    if (mf.is_reduced()) {
+      T val;
+      for (size_type i = 0; i < cvdof.size(); ++i)
+        if ((val = Velem[i]) != T(0))
+          gmm::add(gmm::scaled(gmm::mat_row(mf.extension_matrix(), cvdof[i]),
+                               val), V);
+    } else {
+      for (size_type i = 0; i < cvdof.size(); ++i) V[cvdof[i]] += Velem[i];
+    }
+  }
+
+  template <typename MAT1, typename MAT2>
+  void mat_elem_assembly(const MAT1 &M_, const gmm::sub_interval &I1,
+                         const gmm::sub_interval &I2,
+                         const MAT2 &Melem,
+                         const mesh_fem &mf1, size_type cv1,
+                         const mesh_fem &mf2, size_type cv2) {
+    MAT1 &M = const_cast<MAT1 &>(M_);
+    typedef typename gmm::linalg_traits<MAT1>::value_type T;
+    T val;
+
+    mesh_fem::ind_dof_ct cvdof1 = mf1.ind_basic_dof_of_element(cv1);
+    mesh_fem::ind_dof_ct cvdof2 = mf2.ind_basic_dof_of_element(cv2);
+
+    GMM_ASSERT1(cvdof1.size() == gmm::mat_nrows(Melem)
+                && cvdof2.size() == gmm::mat_ncols(Melem),
+                "Dimensions mismatch");
+
+    if (mf1.is_reduced()) {
+      if (mf2.is_reduced()) {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (gmm::sub_matrix(M, I1, I2),
+                 gmm::mat_row(mf1.extension_matrix(), cvdof1[i]),
+                 gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+      } else {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (gmm::sub_matrix(M, I1, I2),
+                 gmm::mat_row(mf1.extension_matrix(), cvdof1[i]),
+                 cvdof2[j], val);
+      }
+    } else {
+      if (mf2.is_reduced()) {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              asmrankoneupdate
+                (gmm::sub_matrix(M, I1, I2), cvdof1[i],
+                 gmm::mat_row(mf2.extension_matrix(), cvdof2[j]), val);
+      } else {
+        for (size_type i = 0; i < cvdof1.size(); ++i)
+          for (size_type j = 0; j < cvdof2.size(); ++j)
+            if ((val = Melem(i,j)) != T(0))
+              M(cvdof1[i]+I1.first(), cvdof2[j]+I2.first()) += val;
+      }
+    }
+  }
+
+  template <typename VEC1, typename VEC2>
+  void vec_elem_assembly(const VEC1 &V_, const gmm::sub_interval &I,
+                         const VEC2 &Velem, const mesh_fem &mf, size_type cv) {
+    VEC1 &V = const_cast<VEC1 &>(V_);
+    typedef typename gmm::linalg_traits<VEC1>::value_type T;
+    std::vector<size_type> cvdof(mf.ind_basic_dof_of_element(cv).begin(),
+                                 mf.ind_basic_dof_of_element(cv).end());
+
+    GMM_ASSERT1(cvdof.size() == gmm::vect_size(Velem), "Dimensions mismatch");
+
+    if (mf.is_reduced()) {
+      T val;
+      for (size_type i = 0; i < cvdof.size(); ++i)
+        if ((val = Velem[i]) != T(0))
+          gmm::add(gmm::scaled(gmm::mat_row(mf.extension_matrix(), cvdof[i]),
+                               val), gmm::sub_vector(V, I));
+    } else {
+      for (size_type i = 0; i < cvdof.size(); ++i)
+        V[I.first()+cvdof[i]] += Velem[i];
+    }
+  }
 
 
   //=========================================================================

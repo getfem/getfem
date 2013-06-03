@@ -1805,7 +1805,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-     /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version]])
+     /*@SET ind = ('add basic contact brick', @str varname_u, @str multname_n[, @str multname_t], @str dataname_r, @tspmat BN[, @tspmat BT, @str dataname_friction_coeff][, @str dataname_gap[, @str dataname_alpha[, @int augmented_version[, @str dataname_gamma, @str dataname_wt]]])
        
      Add a contact with or without friction brick to the model.
      If U is the vector
@@ -1836,7 +1836,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
      unsymmetric method with augmented multipliers, 4 for the unsymmetric
      method with augmented multipliers and De Saxce projection. @*/
      sub_command
-       ("add basic contact brick", 4, 10, 0, 1,
+       ("add basic contact brick", 4, 12, 0, 1,
 
         bool friction = false;
 
@@ -1868,6 +1868,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         int augmented_version = 1;
         if (in.remaining()) augmented_version = in.pop().to_integer(1,4);
+
+        std::string dataname_gamma;
+        std::string dataname_wt;
+        if (in.remaining()) {
+          GMM_ASSERT1(friction,
+                      "gamma and wt parameters are for the frictional brick only");
+          dataname_gamma = in.pop().to_string();
+          dataname_wt = in.pop().to_string();
+        }
 
         getfem::CONTACT_B_MATRIX BBN;
         getfem::CONTACT_B_MATRIX BBT;
@@ -1901,7 +1910,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (friction) {
           ind = getfem::add_basic_contact_brick
             (md->model(), varname_u, multname_n, multname_t, dataname_r, BBN, BBT,
-             friction_coeff, dataname_gap, dataname_alpha, augmented_version);
+             friction_coeff, dataname_gap, dataname_alpha, augmented_version,
+             false, "", dataname_gamma, dataname_wt);
         } else {
           ind = getfem::add_basic_contact_brick
             (md->model(), varname_u, multname_n, dataname_r, BBN, dataname_gap,

@@ -3131,7 +3131,7 @@ namespace getfem {
         }
         // computation of h for gamma = gamma0*h
         scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
-        gamma = gamma0 * emax / sqrt(scalar_type(N));
+        gamma = gamma0 * emax * sqrt(scalar_type(N));
         break;
 
       case 2 : // calculate [g], [n] and [no] interpolating [obs] on [mf_obs]
@@ -3814,6 +3814,11 @@ namespace getfem {
       const model_real_plain_vector &D2 = md.real_variable(dl[1]);
       const mesh_fem &mf_d2 = md.mesh_fem_of_variable(dl[1]);
 
+      const model_real_plain_vector &GAMMA0 = md.real_variable(dl[2]);
+      GMM_ASSERT1(GAMMA0.size() == 1, "Gamma0 should be a scalar parameter");
+      scalar_type gamma0 = GAMMA0[0];
+      
+
 
       GMM_ASSERT1(&(mf_u1.linked_mesh()) == &m && &(mf_u2.linked_mesh()) == &m
                   && &(mf_d1.linked_mesh()) == &m
@@ -3842,32 +3847,71 @@ namespace getfem {
       }
       
 
+      if (version & model::BUILD_MATRIX) {
+        gmm::clear(matl[0]);
+        gmm::clear(matl[1]);
+        gmm::clear(matl[2]);
+        gmm::clear(matl[3]);
+      }
+
+      if (version & model::BUILD_RHS) {
+        gmm::clear(vecl[0]);
+        gmm::clear(vecl[1]);
+        gmm::clear(vecl[2]);
+        gmm::clear(vecl[3]);
+      }
+      
+
 
       base_matrix G;
-      base_vector coeff;
-      base_matrix grad_d2(1, N);
-      base_small_vector d2(1);
+      base_vector coeff, Velem;
+      base_matrix Melem, grad_d2(1, N), grad_d1(1, N);
+      base_small_vector d2(1), n1(N);
+      base_tensor tG1, tGdu1;
 
       for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
         
         pintegration_method pim = mim.int_method_of_element(cv);
         
         size_type nbpt = pim->approx_method()->nb_points();
-        for (size_type j = 0; j < nbpt; ++j) {
+        for (size_type ipt = 0; ipt < nbpt; ++ipt) {
 
           bgeot::vectors_to_base_matrix
             (G, m.points_of_convex(cv));
 
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_u1 = mf_u1.fem_of_element(cv);
+          pfem pf_d1 = mf_d1.fem_of_element(cv);
           
-          const base_node &x0 =  pim->approx_method()->integration_points()[j];
+          const base_node &x0 =  pim->approx_method()->integration_points()[ipt];
 
-
+          size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
           fem_interpolation_context ctx_u1(pgt, pf_u1, x0, G, cv);
+          
+          scalar_type weight = pim->approx_method()->coeff(ipt) * ctx_u1.J();
+         
+          // computation of h for gamma = gamma0*h
+          scalar_type gamma(0);
+          if (ipt == 0) {
+            scalar_type emax, emin;
+            gmm::condition_number(ctx_u1.K(),emax,emin);
+            gamma = gamma0 * emax * sqrt(scalar_type(N));
+          }
 
-          cout << "Element " << cv << " point " << j << " : " <<
-            pim->approx_method()->integration_points()[j] << " : " << ctx_u1.xreal();
+
+
+          // Computation of n1
+          fem_interpolation_context ctx_d1(pgt, pf_d1, x0, G, cv);
+          slice_vector_on_basic_dof_of_element(mf_d1, D1, cv, coeff);
+          ctx_d1.pf()->interpolation_grad(ctx_d1, coeff, grad_d1, 1);
+          gmm::copy(grad_d1.as_vector(), n1);
+          gmm::scale(n1, 1./gmm::vect_norm2(n1));
+          
+          
+
+
+          cout << "Element " << cv << " point " << ipt << " : " <<
+            pim->approx_method()->integration_points()[ipt] << " : " << ctx_u1.xreal();
 
 
           pfem pf_d2 = mf_d2.fem_of_element(cv);
@@ -3909,6 +3953,30 @@ namespace getfem {
           
           cout << "Found element : " << (*it)->id << " yref = " << yref << endl;
     
+
+          if (version & model::BUILD_MATRIX) {
+            gmm::resize(Melem, nbdof1, nbdof1); gmm::clear(Melem);
+             md.compute_Neumann_terms(2, vl[0], mf_u1, u1, ctx_u1, n1, tGdu1);
+             for (size_type j = 0; j < nbdof1; ++j)
+               for (size_type k = 0; k < nbdof1; ++k)
+                 for (size_type i = 0; i < N; ++i)
+                   Melem(j, k) += tGdu1(j, i) * tGdu1(k, i);
+             gmm::scale(Melem, -theta*gamma*weight);
+             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
+          }
+
+          if (version & model::BUILD_RHS) {
+            gmm::resize(Velem, nbdof1); gmm::clear(Velem);
+            md.compute_Neumann_terms(1, vl[0], mf_u1, u1, ctx_u1, n1, tG1);
+            md.compute_Neumann_terms(2, vl[0], mf_u1, u1, ctx_u1, n1, tGdu1);
+            for (size_type j = 0; j < nbdof1; ++j)
+              for (size_type i = 0; i < N; ++i)
+                Velem[j] += tG1[i] * tGdu1(j, i);
+            gmm::scale(Velem, theta*gamma*weight);
+            vec_elem_assembly(vecl[0], Velem, mf_u1, cv);
+          }
+          
+
 
        
 //           size_type nit = 0;

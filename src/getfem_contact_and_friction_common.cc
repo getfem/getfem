@@ -1038,8 +1038,8 @@ namespace getfem {
           residual = gmm::vect_norm2(res);
           scalar_type residual2(0), det(0);
           bool exited = false;
-          for (size_type niter = 0, nbfail = 0;
-               residual > 2E-12 && niter <= 30; ++niter) {
+          size_type nbfail = 0, niter = 0;
+          for (;residual > 2E-12 && niter <= 30; ++niter) {
 
             for (size_type subiter(0);;) {
               pps(a, hessa);
@@ -1054,7 +1054,7 @@ namespace getfem {
             gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
 
             if (gmm::vect_norm2(dir) > scalar_type(10)) nbfail++;
-            if (nbfail >= 3) break;
+            if (nbfail >= 4) break;
 
             // Line search
             scalar_type lambda(1);
@@ -1074,13 +1074,14 @@ namespace getfem {
 //               cout << "more than 15 iterations " << a
 //                    << " dir " << dir << " nbfail : " << nbfail << endl;
             if (niter > 1 && dist_ref > 15) break;
-            if (niter > 5 && dist_ref > 5) break;
-            if (dist_ref > 4 || nbfail == 2) exited = true;
+            if (niter > 5 && dist_ref > 8) break;
+            if ((niter > 1 && dist_ref > 7) || nbfail == 3) exited = true;
           }
           converged = (gmm::vect_norm2(res) < 2E-6);
           GMM_ASSERT1(!((exited && converged &&
-                         pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5)),
-                      "A non conformal case !! " << gmm::vect_norm2(res));
+                         pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-6)),
+                      "A non conformal case !! " << gmm::vect_norm2(res)
+                      << " : " << nbfail << " : " << niter);
 
         } else { // Classical projection for y
 
@@ -1135,7 +1136,7 @@ namespace getfem {
           }
         }
 
-        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-5);
+        bool is_in = (pf_s->ref_convex(cv)->is_in(ctx.xref()) < 1E-6);
 
         if (is_in || (!converged && !raytrace)) {
           if (!ref_conf) {

@@ -25,7 +25,7 @@ gf_workspace('clear all');
 
   
 
-NX=30
+NX= 10
 N = 3
 ls_degree = 1
 R = 0.4;
