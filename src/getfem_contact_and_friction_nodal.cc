@@ -1084,7 +1084,7 @@ namespace getfem {
       GMM_ASSERT1(vl.size() == nbvar,
                   "Wrong number of variables for contact brick");
       size_type nbdl = 3 + (contact_only ? 0 : 1) + (Tresca_version ? 1 : 0)
-        + (friction_dynamic_term ? 1 : 0);
+        + (friction_dynamic_term ? 2 : 0);
       GMM_ASSERT1(dl.size() == nbdl, "Wrong number of data for contact brick, "
                   << dl.size() << " should be " << nbdl);
 
@@ -1166,7 +1166,8 @@ namespace getfem {
     Coulomb_friction_brick(int aug_version, bool contact_only_,
                            bool two_variables_=false,
                            bool Tresca_version_=false,
-                           bool Hughes_stabilized_=false) {
+                           bool Hughes_stabilized_=false,
+                           bool friction_dynamic_term_=false) {
 
 #if GETFEM_PARA_LEVEL > 1
     if (!getfem::MPI_IS_MASTER()) GMM_WARNING1("Nodal contact bricks don't support GETFEM_PARA_LEVEL > 1 yet!!!");
@@ -1183,7 +1184,7 @@ namespace getfem {
       is_init = false;
       Tresca_version = Tresca_version_;
       really_stationary = false;   // for future version ...
-      friction_dynamic_term = false;  // for future version ...
+      friction_dynamic_term = friction_dynamic_term_;
       two_variables = two_variables_;
       Hughes_stabilized = Hughes_stabilized_;
       set_flags("Coulomb friction brick", false /* is linear*/,
@@ -1326,9 +1327,11 @@ namespace getfem {
    int aug_version, bool Tresca_version, const std::string dataname_threshold,
    std::string dataname_gamma, std::string dataname_wt, bool Hughes_stabilized) {
 
+    bool dynamic_terms = (dataname_gamma.size() > 0);
+
     Coulomb_friction_brick *pbr_
       = new Coulomb_friction_brick(aug_version,false, false,
-                                   Tresca_version, Hughes_stabilized);
+                            Tresca_version, Hughes_stabilized, dynamic_terms);
     pbr_->set_BN1(BN);
     pbr_->set_BT1(BT);
     pbrick pbr = pbr_;
