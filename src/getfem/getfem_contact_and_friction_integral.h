@@ -807,6 +807,40 @@ namespace getfem {
    const std::string &dataname_wt,
    size_type region);
 
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+
+  /** Adds a contact condition with or without Coulomb friction on the variable
+      `varname_u` and the mesh boundary `region`. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `gamma0name` is the Nitsche's method parameter.
+      `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+  */
+  size_type add_Nitsche_midpoint_contact_with_rigid_obstacle_brick
+  (model &md, const mesh_im &mim, const std::string &varname_u,
+   const std::string &dataname_obs, const std::string &dataname_gamma0,
+   scalar_type theta,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_alpha,
+   const std::string &dataname_wt,
+   size_type region, size_type option);
+
+#endif
+
+
 
   /** Adds a contact condition with or without Coulomb friction on the variable
       `varname_u` and the mesh boundary `region`. The contact condition
@@ -837,116 +871,6 @@ namespace getfem {
    const std::string &dataname_alpha,
    const std::string &dataname_wt);
 
-
-
-
-#ifdef EXPERIMENTAL_PURPOSE_ONLY
-  // Experimental implementation of contact condition with Nitsche method.
-  // To be deleted when a more general implementation will be designed.
-  size_type add_Nitsche_contact_with_rigid_obstacle_brick_old
-  (model &md, const mesh_im &mim, const std::string &varname_u,
-   const std::string &dataname_obs, const std::string &dataname_r,
-   const std::string &dataname_theta,
-   const std::string &dataname_friction_coeff,
-   const std::string &dataname_lambda, const std::string &dataname_mu,
-   size_type region);
-  
-  
-  class contact_nitsche_nonlinear_term_old : public nonlinear_elem_term {
-
-  protected:
-    base_small_vector lnt, lt; // multiplier lambda and its tangential
-                               // component lambda_t
-    scalar_type ln;            // normal component lambda_n of the multiplier
-    base_small_vector ut;      // tangential relative displacement
-    scalar_type un;            // normal relative displacement (positive when
-                               //  the first elas. body surface moves outwards)
-    base_small_vector no, n;   // surface normal, pointing outwards with 
-                               // respect to the (first) elastic body
-    scalar_type g, f_coeff;    // gap and coefficient of friction values
-    scalar_type lambda, mu;    // Lame coefficients
-
-    base_small_vector aux1, auxN, V;
-    base_matrix GP, grad;
-    base_vector coeff;
-    const mesh_fem &mf_u;       // mandatory
-    const mesh_fem &mf_obs;     // mandatory
-    const mesh_fem *pmf_coeff;
-    base_vector U, obs, friction_coeff;
-
-    void adjust_tensor_size(void);
-
-  public:
-    dim_type N;
-    size_type option;
-    scalar_type r, theta;
-
-    bgeot::multi_index sizes_;
-
-    template <typename VECT1>
-    contact_nitsche_nonlinear_term_old
-    ( size_type option_, scalar_type r_, scalar_type theta_,
-      scalar_type lambda_, scalar_type mu_,
-      const mesh_fem &mf_u_, const VECT1 &U_, const mesh_fem &mf_obs_,
-      const VECT1 &obs_, const mesh_fem *pmf_coeff_ = 0,
-      const VECT1 *f_coeff_ = 0)
-      : lambda(lambda_), mu(mu_), mf_u(mf_u_),
-	mf_obs(mf_obs_), pmf_coeff(pmf_coeff_), U(mf_u.nb_basic_dof()),
-	obs(mf_obs.nb_basic_dof()), friction_coeff(0), option(option_),
-	r(r_), theta(theta_) {
-      N = mf_u_.linked_mesh().dim();
-      adjust_tensor_size();
-      
-      mf_u.extend_vector(U_, U);
-      mf_obs.extend_vector(obs_, obs);
-      
-      if (!pmf_coeff)
-        f_coeff = (*f_coeff_)[0];
-      else {
-        friction_coeff.resize(pmf_coeff->nb_basic_dof());
-        pmf_coeff->extend_vector(*f_coeff_, friction_coeff);
-      }
-    }
-    
-
-    const bgeot::multi_index &sizes(size_type) const { return sizes_; }
-
-    virtual void compute(fem_interpolation_context&, bgeot::base_tensor &t);
-    virtual void prepare(fem_interpolation_context& /*ctx*/, size_type /*nb*/);
-
-  };
-
-  template<typename VECT1> void asm_Nitsche_contact_rigid_obstacle_rhs_old
-  (VECT1 &R, const mesh_im &mim,
-   const getfem::mesh_fem &mf_u, const VECT1 &U,
-   const getfem::mesh_fem &mf_obs, const VECT1 &obs,
-   const getfem::mesh_fem *pmf_coeff, const VECT1 &f_coeff,
-   scalar_type gamma, scalar_type theta, scalar_type lambda, scalar_type mu,
-   const mesh_region &rg) {
-
-    contact_nitsche_nonlinear_term_old
-      nterm1(1,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff),
-      nterm2(2,gamma,theta,lambda,mu,mf_u,U,mf_obs,obs,pmf_coeff,&f_coeff);
-
-    const std::string aux_fems = pmf_coeff ? "#1,#2,#3" : "#1,#2";
-
-    getfem::generic_assembly assem;
-    std::string as_str =
-      "V(#1)+=comp(NonLin$1(#1,"+aux_fems+").vBase(#1))(i,:,i); "
-      "V(#1)+=comp(NonLin$2(#1,"+aux_fems+").vGrad(#1))(i,j,:,i,j);";
-
-    assem.set(as_str);
-    assem.push_mi(mim);
-    assem.push_mf(mf_u);
-    assem.push_mf(mf_obs);
-    if (pmf_coeff) assem.push_mf(*pmf_coeff);
-    assem.push_nonlinear_term(&nterm1);
-    assem.push_nonlinear_term(&nterm2);
-    assem.push_vec(R);
-    assem.assembly(rg);
-  }
-
-#endif
 
 }  /* end of namespace getfem.                                             */
 

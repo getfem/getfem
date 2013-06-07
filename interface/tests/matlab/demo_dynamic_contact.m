@@ -26,11 +26,11 @@ gf_workspace('clear all');
 clear all;
 
 
-% NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+NX = 5; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');
@@ -54,21 +54,21 @@ if (d == 1)
   friction = 0;            % Friction coefficient
   vertical_force = 1.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.01;              % Time step
+  dt = 0.001;               % Time step
   T = 4;                   % Simulation time
-  dt_plot = 0.1;           % Drawing step;
+  dt_plot = 0.01;           % Drawing step;
   beta = 0.25;             % Newmark scheme coefficient
   gamma = 0.5;             % Newmark scheme coefficient
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0
+  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
   Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.001;          % Parameter gamma0 for Nitsche's method
-  theta_N = -1;             % Parameter theta for Nitsche's method
+  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
+  theta_N = 1;            % Parameter theta for Nitsche's method
 else
   clambda = 20;            % Lame coefficient
   cmu = 20;                % Lame coefficient
@@ -83,7 +83,7 @@ else
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0
+  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
@@ -100,7 +100,7 @@ plot_mesh = false;
 make_movie = 0;
 residual = 1E-8;
 
-if (scheme == 3 && (Nitsche ~= 1 || singular_mass ~= 0))
+if (scheme >= 3 && (Nitsche ~= 1 || singular_mass ~= 0))
     error('Incompatibility');
 end
 
@@ -195,23 +195,28 @@ gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', ...
                  'clambda', 'cmu');
 if (singular_mass == 2)
   gf_model_set(md, 'add fem variable', 'v', mfv);
-  if (scheme==1)
+  switch(scheme)
+    case 1
       gf_model_set(md, 'add explicit matrix', 'u', 'v', (B')/(dt*dt*theta*theta));
-  elseif (scheme==2)
+    case 2
       gf_model_set(md, 'add explicit matrix', 'u', 'v', (B')/(dt*dt*beta));
   end
   gf_model_set(md, 'add explicit matrix', 'v', 'v', C);
   gf_model_set(md, 'add explicit matrix', 'v', 'u', -B);
-else           
-  if (scheme==1)
+else
+  switch(scheme)
+    case 1
       gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*theta*theta));
-  elseif (scheme==2)
+    case 2
       gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*beta));
+    case 4
+      gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*0.25));
   end
 end
 ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nbdofu,1));
 
 gf_model_set(md, 'add initialized fem data', 'volumicload', mfd, F);
+
 gf_model_set(md, 'add source term brick', mim, 'u', 'volumicload');
 
 if (dirichlet)
@@ -225,6 +230,23 @@ gf_model_set(md, 'add initialized fem data', 'obstacle', mfd, OBS);
 
 if (Nitsche)
   gf_model_set(md, 'add initialized data', 'gamma0', [gamma0_N]);
+  if (scheme == 4)
+      if (friction ~= 0)
+         error('To be adapted for friction');
+      end
+      gf_model_set(md, 'add initialized data', 'friction_coeff', [0]);
+      gf_model_set(md, 'add initialized data', 'alpha_f', [0]);
+      gf_model_set(md, 'add fem data', 'wt', mfu);
+      
+      % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
+      %  'obstacle', 'gamma0', GAMMAC, theta_N);
+      
+      gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
+       'obstacle', 'gamma0', GAMMAC, theta, 'friction_coeff', 'alpha_f', 'wt', 2);
+      gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
+       'obstacle', 'gamma0', GAMMAC, theta, 'friction_coeff', 'alpha_f', 'wt', 1);
+  end
+  
   if (friction == 0)
     gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
         'obstacle', 'gamma0', GAMMAC, theta_N);
@@ -280,16 +302,20 @@ for t = 0:dt:T
   disp(sprintf('t=%g', t));
   % calcul de LL
   
-  if (scheme == 1)
+  switch(scheme)
+    case 1
       LL = (MU0 + dt*MV0)/(dt*dt*theta*theta) + (1-theta)*MA0/theta;
-  elseif (scheme == 2)
+    case 2
       LL = (MU0 + dt*MV0 + dt*dt*(1/2-beta)*MA0)/(beta*dt*dt);
-  else
+    case 3
       LL = 0*MU0;
+    case 4
+      LL = MU0/(dt*dt*0.25) + MV0/(dt*0.5);
   end
   
-  if (friction ~= 0)
+  if (friction ~= 0 || scheme == 4)
     gf_model_set(md, 'variable', 'wt', U0);
+    disp(gf_model_get(md, 'variable', 'wt'));
   end
   
   if (scheme == 3)
@@ -324,17 +350,25 @@ for t = 0:dt:T
     disp(sprintf('MV0(N) = %g', MV0(Msize)));
   end
   
-  if (scheme == 1)
-     MV1 = ((MU1 - MU0)/dt -(1-theta)*MV0)/theta;
-     MA1 = ((MV1-MV0)/dt - (1-theta)*MA0)/theta;
-  elseif (scheme == 2)
-     MA1 = (MU1-MU0-dt*MV0-dt*dt*(1/2-beta)*MA0)/(dt*dt*beta);
-     MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
-  else
-     MA1 = (gf_model_get(md, 'rhs'))';
-     MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
+  switch(scheme)
+    case 1
+      MV1 = ((MU1 - MU0)/dt -(1-theta)*MV0)/theta;
+      MA1 = ((MV1-MV0)/dt - (1-theta)*MA0)/theta;
+    case 2
+      MA1 = (MU1-MU0-dt*MV0-dt*dt*(1/2-beta)*MA0)/(dt*dt*beta);
+      MV1 = MV0 + dt*(gamma*MA1 + (1-gamma)*MA0);
+    case 3
+      MA1 = (gf_model_get(md, 'rhs'))';
+      MV1 = MV0 + dt*(gamma*MA1+(1-gamma)*MA0);
+    case 4
+      U1_2 = U1;
+      U1 = 2*U1_2 - U0;
+      V1_2 = 2*(U1_2 - U0)/dt;
+      MV1 = 2*M*V1_2 - MV0;
+      MA1 = 0*MV1;
+      MU1 = M*U1;
   end
-
+      
   if (singular_mass == 1)
     V1 = cgs(M, MV1); % Pseudo inverse ...
   elseif (singular_mass == 2)

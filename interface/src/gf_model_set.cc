@@ -505,8 +505,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-
-
     /*@SET ind = ('add Dirichlet condition with penalization', @tmim mim, @str varname, @scalar coeff, @int region[, @str dataname, @tmf mf_mult])
     Add a Dirichlet condition on the variable `varname` and the mesh
     region `region`. This region should be a boundary. The Dirichlet
@@ -2226,6 +2224,59 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+     
+     /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick', @tmim mim, @str varname, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt, @int option)
+      EXPERIMENTAL BRICK: for midpoint scheme only !!
+      Adds a contact condition with or without Coulomb friction on the variable
+      `varname` and the mesh boundary `region`. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data `dataname_obstacle` being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      `gamma0name` is the Nitsche's method parameter.
+      `theta` is a scalar value which can be
+      positive or negative. `theta = 1` corresponds to the standard symmetric
+      method which is conditionnaly coercive for  `gamma0` small.
+      `theta = -1` corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. `theta = 0` is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter `dataname_friction_coeff` is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+    @*/
+    sub_command
+      ("add Nitsche midpoint contact with rigid obstacle brick", 9, 10, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string dataname_obs = in.pop().to_string();
+       std::string gamma0name = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+
+       scalar_type theta = scalar_type(1);
+       std::string dataname_fr;
+       mexarg_in argin = in.pop();
+       if (argin.is_string())
+         dataname_fr = argin.to_string();
+       else
+         theta = argin.to_scalar();
+       dataname_fr = in.pop().to_string();
+       std::string dataname_alpha = in.pop().to_string();
+       std::string dataname_wt = in.pop().to_string();
+       size_type option = in.pop().to_integer();
+
+       size_type ind = config::base_index();
+       ind += getfem::add_Nitsche_midpoint_contact_with_rigid_obstacle_brick
+       (md->model(), gfi_mim->mesh_im(), varname, dataname_obs,
+	gamma0name, theta,
+	dataname_fr, dataname_alpha, dataname_wt, region, option);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
     /*@SET ind = ('add Nitsche fictitious domain contact brick', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
       Adds a contact condition with or without Coulomb friction on the variable
       `varname` and the mesh boundary `region`. The contact condition
@@ -2279,51 +2330,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
-
-
-
-#ifdef EXPERIMENTAL_PURPOSE_ONLY
-     /*@SET ind = ('add Nitsche contact with rigid obstacle brick old',  @tmim mim, @str varname_u, @str dataname_obstacle, @str dataname_gamma0, @str dataname_theta, @str dataname_friction_coeff, @str dataname_lambda, @str dataname_mu, @int region)
-
-      Add a contact with friction condition with a rigid obstacle
-      to the model with  Nitsche strategy (no multiplier) in an integral way.
-      This is an experimental brick, which works only for linear homogeneous
-      isotropic elasticity.
-      The condition is applied on the variable `varname_u`
-      on the boundary corresponding to `region`. The rigid obstacle should
-      be described with the data `dataname_obstacle` being a signed distance
-      to the obstacle (interpolated on a finite element method).
-      The Nitsche parameter `dataname_r` should be chosen in a
-      range of acceptable values. `dataname_theta` corresponds to the real
-      parameter (1 for the classical symmetric version, 0 for the simplest
-      non symmetric one, -1 for the classical unconditionally coercive
-      non-symmetric one). `dataname_friction_coeff` is the friction
-      coefficient which could be constant or defined on a finite element
-      method. `dataname_lambda` and `dataname_mu` are the Lame coefficients.
-    @*/
-     sub_command
-       ("add Nitsche contact with rigid obstacle brick old", 9, 9, 0, 1,
-
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-        std::string varname_u = in.pop().to_string();
-        std::string dataname_obs = in.pop().to_string();
-        std::string dataname_r = in.pop().to_string();
-        std::string dataname_theta = in.pop().to_string();
-        std::string dataname_coeff = in.pop().to_string();
-        std::string dataname_lambda = in.pop().to_string();
-        std::string dataname_mu = in.pop().to_string();
-        size_type region = in.pop().to_integer();
-
-        size_type ind=
-        getfem::add_Nitsche_contact_with_rigid_obstacle_brick_old
-        (md->model(), gfi_mim->mesh_im(), varname_u, dataname_obs, dataname_r,
-	 dataname_theta, dataname_coeff, dataname_lambda, dataname_mu,
-	 region);
-        workspace().set_dependance(md, gfi_mim);
-        out.pop().from_integer(int(ind + config::base_index()));
-        );
-#endif
-
 
     // CONTACT BETWEEN NON-MATCHING MESHES
 
