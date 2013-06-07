@@ -2224,6 +2224,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
      
      /*@SET ind = ('add Nitsche midpoint contact with rigid obstacle brick', @tmim mim, @str varname, @str dataname_obstacle, @str gamma0name,  @int region, @scalar theta, @str dataname_friction_coeff, @str dataname_alpha, @str dataname_wt, @int option)
       EXPERIMENTAL BRICK: for midpoint scheme only !!
@@ -2276,6 +2277,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
+#endif
 
     /*@SET ind = ('add Nitsche fictitious domain contact brick', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt]]])
       Adds a contact condition with or without Coulomb friction on the variable

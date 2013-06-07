@@ -26,7 +26,7 @@ gf_workspace('clear all');
 clear all;
 
 
-NX = 5; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
@@ -62,7 +62,7 @@ if (d == 1)
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  scheme = 1;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
