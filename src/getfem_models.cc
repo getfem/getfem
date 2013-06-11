@@ -1271,14 +1271,123 @@ namespace getfem {
 
     }
 
-#if GETFEM_PARA_LEVEL > 1
-    if (version & BUILD_RHS)
-      if (is_complex())
-        MPI_SUM_VECTOR(crhs);
-      else
-        MPI_SUM_VECTOR(rrhs);
-#endif
+    if (version & BUILD_RHS) {
+      if (is_complex()) MPI_SUM_VECTOR(crhs); else MPI_SUM_VECTOR(rrhs);
+    }
+
+
+    // Post simplification for dof constraints
+    if ((version & BUILD_RHS) || (version & BUILD_MATRIX)) {
+      if (is_complex()) {
+        std::vector<size_type> dof_indices;
+        std::vector<complex_type> dof_pr_values;
+        std::vector<complex_type> dof_go_values;
+        std::map<std::string, complex_dof_constraints_var>::const_iterator it;
+        
+        for (it = complex_dof_constraints.begin();
+             it != complex_dof_constraints.end(); ++it) {
+          const gmm::sub_interval &I = interval_of_variable(it->first);
+          const model_complex_plain_vector &V = complex_variable(it->first);
+          complex_dof_constraints_var::const_iterator itv;
+          for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
+            dof_indices.push_back(itv->first + I.first());
+            dof_go_values.push_back(itv->second);
+            dof_pr_values.push_back(V[itv->first]);
+          }
+        }
+        
+        if (dof_indices.size()) {
+          gmm::sub_index SI(dof_indices);
+          gmm::sub_interval II(0, nb_dof());
+          
+          if (version & BUILD_RHS) {
+            if (is_linear_) {
+              if (is_symmetric_) {
+                scalar_type valnorm = gmm::vect_norm2(dof_go_values);
+                if (valnorm > scalar_type(0)) {
+                  GMM_ASSERT1(version & BUILD_MATRIX, "Rhs only for a "
+                              "symmetric linear problem with dof "
+                              "constraint not allowed");
+                  model_complex_plain_vector vv(gmm::vect_size(rrhs));
+                  gmm::mult(gmm::sub_matrix(cTM, II, SI), dof_go_values, vv);
+                  MPI_SUM_VECTOR(vv);
+                  gmm::add(gmm::scaled(vv, scalar_type(-1)), crhs);
+                }
+              }
+              gmm::copy(dof_go_values, gmm::sub_vector(crhs, SI));
+            } else {
+              gmm::add(dof_go_values,
+                       gmm::scaled(dof_pr_values, complex_type(-1)),
+                       gmm::sub_vector(crhs, SI));
+            }
+          }
+          if (version & BUILD_MATRIX) {
+            gmm::clear(gmm::sub_matrix(cTM, SI, II));
+            if (is_symmetric_) gmm::clear(gmm::sub_matrix(cTM, II, SI));
+
+            if (MPI_IS_MASTER()) {
+              for (size_type i = 0; i < dof_indices.size(); ++i)
+                cTM(i,i) = complex_type(1);
+            }
+          }
+        }
+      } else {
+        std::vector<size_type> dof_indices;
+        std::vector<scalar_type> dof_pr_values;
+        std::vector<scalar_type> dof_go_values;
+        std::map<std::string, real_dof_constraints_var>::const_iterator it;
+        
+        for (it = real_dof_constraints.begin();
+             it != real_dof_constraints.end(); ++it) {
+          const gmm::sub_interval &I = interval_of_variable(it->first);
+          const model_real_plain_vector &V = real_variable(it->first);
+          real_dof_constraints_var::const_iterator itv;
+          for (itv = it->second.begin(); itv != it->second.end(); ++itv) {
+            dof_indices.push_back(itv->first + I.first());
+            dof_go_values.push_back(itv->second);
+            dof_pr_values.push_back(V[itv->first]);
+          }
+        }
+        
+        if (dof_indices.size()) {
+          gmm::sub_index SI(dof_indices);
+          gmm::sub_interval II(0, nb_dof());
+          
+          if (version & BUILD_RHS) {
+            if (is_linear_) {
+              if (is_symmetric_) {
+                scalar_type valnorm = gmm::vect_norm2(dof_go_values);
+                if (valnorm > scalar_type(0)) {
+                  GMM_ASSERT1(version & BUILD_MATRIX, "Rhs only for a "
+                              "symmetric linear problem with dof "
+                              "constraint not allowed");
+                  model_real_plain_vector vv(gmm::vect_size(rrhs));
+                  gmm::mult(gmm::sub_matrix(rTM, II, SI), dof_go_values, vv);
+                  MPI_SUM_VECTOR(vv);
+                  gmm::add(gmm::scaled(vv, scalar_type(-1)), rrhs);
+                }
+              }
+              gmm::copy(dof_go_values, gmm::sub_vector(rrhs, SI));
+            } else {
+              gmm::add(dof_go_values,
+                       gmm::scaled(dof_pr_values, scalar_type(-1)),
+                       gmm::sub_vector(rrhs, SI));
+            }
+          }
+          if (version & BUILD_MATRIX) {
+            gmm::clear(gmm::sub_matrix(rTM, SI, II));
+            if (is_symmetric_) gmm::clear(gmm::sub_matrix(rTM, II, SI));
+
+            if (MPI_IS_MASTER()) {
+              for (size_type i = 0; i < dof_indices.size(); ++i)
+                rTM(i,i) = scalar_type(1);
+            }
+          }
+        }
+      }
+    }
   }
+
 
   const mesh_fem &model::mesh_fem_of_variable(const std::string &name) const {
     VAR_SET::const_iterator it = variables.find(name);

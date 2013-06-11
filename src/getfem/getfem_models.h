@@ -286,6 +286,18 @@ namespace getfem {
     std::map<std::string, std::vector<std::string> >
       Neumann_terms_auxilliary_variables;
 
+    // Structure dealing with simple dof constraints
+    typedef std::map<size_type, scalar_type> real_dof_constraints_var;
+    typedef std::map<size_type, complex_type> complex_dof_constraints_var;
+    mutable std::map<std::string, real_dof_constraints_var>
+      real_dof_constraints;
+    mutable std::map<std::string, complex_dof_constraints_var>
+      complex_dof_constraints;
+    void clear_dof_constraints(void)
+    { real_dof_constraints.clear(); complex_dof_constraints.clear(); }
+
+
+
     void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
                              bool assert = true) const;
@@ -334,7 +346,7 @@ namespace getfem {
     void add_auxilliary_variables_of_Neumann_terms
     (const std::string &varname, const std::string &aux_var);
 
-    /** Compute the approximation of the Neumann condition for a variable
+    /* Compute the approximation of the Neumann condition for a variable
 	with the declared terms.
 	The output tensor has to have the right size. No verification.
     */
@@ -351,6 +363,16 @@ namespace getfem {
      const std::string &aux_varname,
      fem_interpolation_context &ctx, base_small_vector &n,
      bgeot::base_tensor &output) const;
+
+    /* function to be called by Dirichlet bricks */
+    void add_real_dof_constraint(const std::string &varname, size_type dof,
+                            scalar_type val)
+    { (real_dof_constraints[varname])[dof] = val; }
+    /* function to be called by Dirichlet bricks */
+    void add_complex_dof_constraint(const std::string &varname, size_type dof,
+                               complex_type val)
+    { (complex_dof_constraints[varname])[dof] = val; }
+
 
     void add_temporaries(const varnamelist &vl, gmm::uint64_type id_num) const;
 
