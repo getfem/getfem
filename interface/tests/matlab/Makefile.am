@@ -1,7 +1,7 @@
 SUBDIRS = private
 
 if BUILDMEX
-TESTS = $(srcdir)/check_all.sh
+TESTS = $(abs_srcdir)/check_all.sh
 else
 TESTS = 
 endif

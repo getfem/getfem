@@ -19,11 +19,11 @@ EXTRA_DIST= 				\
 
 if BUILDPYTHON
 TESTS = 						\
-	$(srcdir)/check_export.py			\
-	$(srcdir)/check_global_functions.py		\
-	$(srcdir)/demo_wave.py				\
-	$(srcdir)/demo_laplacian.py			\
-	$(srcdir)/check_levelset.py
+	$(abs_srcdir)/check_export.py			\
+	$(abs_srcdir)/check_global_functions.py		\
+	$(abs_srcdir)/demo_wave.py				\
+	$(abs_srcdir)/demo_laplacian.py			\
+	$(abs_srcdir)/check_levelset.py
 
 TESTS_ENVIRONMENT = \
 	PYTHONPATH=$(srcdir):$(srcdir)/../../src/python:.:../../src/python \

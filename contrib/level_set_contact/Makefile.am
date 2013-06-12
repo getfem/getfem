@@ -7,10 +7,10 @@ CLEANFILES =
 
 test_contact_SOURCES = contact_problem.ccp test_contact.cpp
 
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = contact_problem.o ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
-TESTS = $(top_srcdir)/contrib/level_set_contact/contact_problem.pl
+TESTS = $(abs_top_srcdir)/contrib/level_set_contact/contact_problem.pl
 
 EXTRA_DIST = \
 	contact_problem.pl              \

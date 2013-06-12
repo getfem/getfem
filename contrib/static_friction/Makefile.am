@@ -7,10 +7,10 @@ CLEANFILES = normal_stress tangential_stress
 
 static_friction_SOURCES = static_friction.cc
 
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
-TESTS = $(top_srcdir)/contrib/static_friction/static_friction.pl
+TESTS = $(abs_top_srcdir)/contrib/static_friction/static_friction.pl
 
 EXTRA_DIST = \
 	static_friction.pl                  \

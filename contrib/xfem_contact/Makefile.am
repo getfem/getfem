@@ -15,10 +15,10 @@ endif
 xfem_stokes_SOURCES = xfem_stokes.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
-TESTS = $(top_srcdir)/contrib/xfem_contact/xfem_contact.pl
+TESTS = $(abs_top_srcdir)/contrib/xfem_contact/xfem_contact.pl
 
 EXTRA_DIST = \
 	xfem_contact.pl                  \

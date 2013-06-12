@@ -1,6 +1,6 @@
 GETFEM_LIB_LA = ../../../src/libgetfem.la
 
-INCLUDES = $(PYTHON_CPPFLAGS) -I@srcdir@ -I@srcdir@/..
+AM_CPPFLAGS = $(PYTHON_CPPFLAGS) -I@srcdir@ -I@srcdir@/..
 
 gfpythondir=$(pythondir)/getfem
 gfpyexecdir=$(pyexecdir)/getfem

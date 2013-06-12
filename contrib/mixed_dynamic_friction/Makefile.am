@@ -8,10 +8,10 @@ mixed_dynamic_friction_SOURCES = mixed_dynamic_friction.cc
 mixed_scalar_hyperbolic_SOURCES = mixed_scalar_hyperbolic.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
-TESTS = $(top_srcdir)/contrib/mixed_dynamic_friction/mixed_dynamic_friction.pl
+TESTS = $(abs_top_srcdir)/contrib/mixed_dynamic_friction/mixed_dynamic_friction.pl
 EXTRA_DIST = \
 	mixed_dynamic_friction.pl                  \
 	mixed_dynamic_friction.param               \

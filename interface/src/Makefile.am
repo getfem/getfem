@@ -132,7 +132,7 @@ libgetfemint_la_SOURCES = \
 	getfemint_poly.h
 
 #libgetfemint_la_INCLUDES = @GETFEM_CPPFLAGS@ #fails with automake 1.6 on macos x tiger
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 
 # -rdynamic for backtraces
 #AM_LDFLAGS = -rdynamic

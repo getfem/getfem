@@ -218,7 +218,7 @@ lib_LTLIBRARIES = libgetfem.la
 libgetfem_la_SOURCES = $(SRC)
 libgetfem_la_LDFLAGS = ${LIBTOOL_VERSION_INFO}
 libgetfem_la_LIBADD = @SUPERLU_LIBS@ @MUMPS_LIBS@
-INCLUDES = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
 
 CLEANFILES = ii_files/* *.o.d
 DISTCLEANFILES = getfem/getfem_im_list.h getfem/getfem_arch_config.h

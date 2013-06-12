@@ -8,7 +8,7 @@ static_contact_gears_SOURCES = static_contact_gears.cc
 static_contact_gears_u1_u2_SOURCES = static_contact_gears_u1_u2.cc
 
 SUPLDFLAGS = @SUPLDFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
 TESTS = 

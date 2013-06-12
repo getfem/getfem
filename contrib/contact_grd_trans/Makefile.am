@@ -8,10 +8,11 @@ contact_SOURCES = contact.cc
 contact_continuation_load_SOURCES = contact_continuation_load.cc
 contact_continuation_time_SOURCES = contact_continuation_time.cc
 SUPLDFLAGS = @SUPLDFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
-TESTS = $(top_srcdir)/contrib/contact_grd_trans/contact.pl
+TESTS = $(abs_top_srcdir)/contrib/contact_grd_trans/contact.pl
+
 EXTRA_DIST = \
 	contact.pl                  \
 	contact.param 

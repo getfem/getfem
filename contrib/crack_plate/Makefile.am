@@ -15,11 +15,11 @@ crack_bilaplacian_SOURCES = crack_bilaplacian.cc crack_bilaplacian_singularities
 endif
 
 SUPLDFLAGS = @SUPLDFLAGS@
-INCLUDES = -I$(top_srcdir)/src -I../../src
+AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
 
 if QHULL
-TESTS = $(top_srcdir)/contrib/crack_plate/crack_mindlin.pl
+TESTS = $(abs_top_srcdir)/contrib/crack_plate/crack_mindlin.pl
 else
 TESTS =
 endif
