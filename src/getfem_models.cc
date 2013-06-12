@@ -2811,7 +2811,7 @@ namespace getfem {
       const model_real_plain_vector *A = 0;
       const mesh_fem *mf_data = 0;
       size_type s = 0;
-       
+
       if (dl.size() == 1) {
         A = &(md.real_variable(dl[0]));
         mf_data = md.pmesh_fem_of_variable(dl[0]);
@@ -2828,12 +2828,14 @@ namespace getfem {
       }
 
       mesh_region rg(region);
-      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+      // mf_u.linked_mesh().intersect_with_mpi_region(rg);
 
       if (mf_u.get_qdim() > 1) {
-        for (mr_visitor i(rg); !i.finished(); ++i)
-          GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() ==1,
-                      "Intrinsically vectorial fems are not allowed");
+        for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
+          if (mf_u.fem_of_element(i.cv()))
+            GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() == 1,
+                        "Intrinsically vectorial fems are not allowed");
+        }
       }
 
       dal::bit_vector dofs = mf_u.dof_on_region(rg);

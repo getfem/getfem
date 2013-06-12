@@ -57,12 +57,12 @@ if (d == 1)
   dt = 0.001;               % Time step
   T = 4;                   % Simulation time
   dt_plot = 0.01;           % Drawing step;
-  beta = 0.25;             % Newmark scheme coefficient
-  gamma = 0.5;             % Newmark scheme coefficient
+  beta = 0.5;             % Newmark scheme coefficient
+  gamma = 1.0;             % Newmark scheme coefficient
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 1;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
