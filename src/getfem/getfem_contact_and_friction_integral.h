@@ -1,10 +1,10 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
- 
+
  Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -17,7 +17,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
  instantiate  templates  or  use macros or inline functions from this file,
@@ -26,7 +26,7 @@
  to be covered  by the GNU Lesser General Public License.  This   exception
  does not  however  invalidate  any  other  reasons why the executable file
  might be covered by the GNU Lesser General Public License.
- 
+
 ===========================================================================*/
 
 /** @file getfem_contact_and_friction_integral.h
@@ -204,7 +204,7 @@ namespace getfem {
       coefficient and optionally an adhesional shear stress threshold and the
       tresca limit shear stress. For constant coefficients its size is from
       1 to 3. For coefficients described on a finite element method on the
-      same mesh as `varname_u1`, this vector contains a number of single 
+      same mesh as `varname_u1`, this vector contains a number of single
       values, value pairs or triplets equal to the number of the
       corresponding mesh_fem's basic dofs.
       Possible values for `option` is 1 for the non-symmetric Alart-Curnier
@@ -283,6 +283,7 @@ namespace getfem {
                                          K_LL_V2,
                                          UZAWA_PROJ,
                                          CONTACT_FLAG,
+                                         CONTACT_PRESSURE,
 
                                          RHS_U_V1,
                                          RHS_U_V2,
@@ -409,7 +410,7 @@ namespace getfem {
                                (f_coeffs_ == 0), alpha_
                               ),
         mf_u(mf_u_), mf_obs(mf_obs_),
-        pmf_lambda(pmf_lambda_), pmf_coeff(pmf_coeff_), 
+        pmf_lambda(pmf_lambda_), pmf_coeff(pmf_coeff_),
         U(mf_u.nb_basic_dof()), obs(mf_obs.nb_basic_dof()),
         lambda(0), friction_coeff(0), tau_adhesion(0), tresca_limit(0),
         WT(0), VT(0), gamma(gamma_)
@@ -419,7 +420,7 @@ namespace getfem {
       mf_obs.extend_vector(obs_, obs);
 
       if (pmf_lambda) {
-        lambda.resize(pmf_lambda->nb_basic_dof()); 
+        lambda.resize(pmf_lambda->nb_basic_dof());
         pmf_lambda->extend_vector(*lambda_, lambda);
       }
 
@@ -511,7 +512,7 @@ namespace getfem {
       mf_u2.extend_vector(U2_, U2);
 
       if (pmf_lambda) {
-        lambda.resize(pmf_lambda->nb_basic_dof()); 
+        lambda.resize(pmf_lambda->nb_basic_dof());
         pmf_lambda->extend_vector(*lambda_, lambda);
       }
 
@@ -655,39 +656,85 @@ namespace getfem {
   (const mesh_im &mim,
    const getfem::mesh_fem &mf_u, const VEC &U,
    const getfem::mesh_fem &mf_obs, const VEC &obs,
-   const mesh_region &rg, scalar_type threshold_factor=0.0) {
+   const mesh_region &rg, scalar_type threshold_factor=0.0,
+   const getfem::mesh_fem *mf_lambda=0, const VEC *lambda=0,
+   scalar_type threshold_pressure_factor=0.0) {
 
-    //FIXME: use an adapted integration method
+    if (!rg.get_parent_mesh())
+      rg.from_mesh(mim.linked_mesh());
+    getfem::mesh_fem mf_ca(mf_u.linked_mesh());
+    mf_ca.set_classical_finite_element(rg.index(),1);
 
-    // assemble an estimator of the mesh size
-    getfem::mesh_fem mf_mesh_size(mf_u.linked_mesh());
-    mf_mesh_size.set_qdim(1);
-    mf_mesh_size.set_classical_finite_element(1);
-    VEC vec_mesh_size(mf_mesh_size.nb_dof());
+    VEC mesh_size(mf_ca.nb_dof());
+    VEC mesh_size2(mf_ca.nb_dof());
+    { // assemble an estimator of the mesh size
+      getfem::generic_assembly assem_mesh_size;
+      assem_mesh_size.set("V(#1)+=comp(Base(#1))");
+      assem_mesh_size.push_mi(mim);
+      assem_mesh_size.push_mf(mf_ca);
+      assem_mesh_size.push_vec(mesh_size2);
+      assem_mesh_size.assembly(rg);
+      for (dal::bv_visitor_c dof(mf_ca.basic_dof_on_region(rg));
+           !dof.finished(); ++dof)
+        mesh_size[dof] = sqrt(mesh_size2[dof]);
+    }
 
-    getfem::generic_assembly assem_mesh_size;
-    assem_mesh_size.set("V(#1)+=comp(Base(#1))");
-    assem_mesh_size.push_mi(mim);
-    assem_mesh_size.push_mf(mf_mesh_size);
-    assem_mesh_size.push_vec(vec_mesh_size);
-    assem_mesh_size.assembly(rg);
-    if (mf_u.get_qdim() == 3)
-      for (size_type i=0; i < gmm::vect_size(vec_mesh_size); i++)
-        vec_mesh_size[i] = sqrt(vec_mesh_size[i]);
+    VEC threshold(mf_ca.nb_dof());
+    if (mf_lambda && lambda) {
+      VEC pressure(mf_ca.nb_dof());
+      VEC dummy_f_coeff(1);
+      bool contact_only = (mf_lambda->get_qdim() == 1);
+      contact_rigid_obstacle_nonlinear_term
+        nterm_pressure(CONTACT_PRESSURE, 0., mf_u, U, mf_obs, obs,
+                       mf_lambda, lambda, 0, contact_only ? 0 : &dummy_f_coeff);
+
+      getfem::generic_assembly assem_pressure;
+      assem_pressure.set("V(#4)+=comp(NonLin(#1,#1,#2,#3).Base(#4))(i,:)");
+      assem_pressure.push_mi(mim);
+      assem_pressure.push_mf(mf_u);
+      assem_pressure.push_mf(mf_obs);
+      assem_pressure.push_mf(*mf_lambda);
+      assem_pressure.push_mf(mf_ca);
+      assem_pressure.push_nonlinear_term(&nterm_pressure);
+      assem_pressure.push_vec(pressure);
+      assem_pressure.assembly(rg);
+      for (dal::bv_visitor_c dof(mf_ca.basic_dof_on_region(rg));
+           !dof.finished(); ++dof)
+        pressure[dof] /= mesh_size2[dof];
+
+      // in areas where pressure is clearly non-zero set a low threshold
+      // in order to avoid false negative contact detection
+      scalar_type threshold_pressure(threshold_pressure_factor *
+                                     gmm::vect_norminf(pressure));
+      gmm::copy(gmm::scaled(mesh_size, scalar_type(-1)), threshold);
+      for (getfem::mr_visitor v(rg); !v.finished(); ++v) {
+        size_type nbdof = mf_ca.nb_basic_dof_of_face_of_element(v.cv(), v.f());
+        mesh_fem::ind_dof_face_ct::const_iterator
+          itdof = mf_ca.ind_basic_dof_of_face_of_element(v.cv(), v.f()).begin();
+        bool all_positive = true;
+        for (size_type k=0; k < nbdof; ++k, ++itdof)
+          if (pressure[*itdof] < threshold_pressure) { all_positive = false; break; }
+        if (!all_positive) {
+          itdof = mf_ca.ind_basic_dof_of_face_of_element(v.cv(), v.f()).begin();
+          for (size_type k=0; k < nbdof; ++k, ++itdof)
+            threshold[*itdof] = threshold_factor * mesh_size[*itdof];
+        }
+      }
+    }
+    else
+      gmm::copy(gmm::scaled(mesh_size, threshold_factor), threshold);
 
     // compute the total contact area
-    // remark: the CONTACT_FLAG option misuses r as threshold factor and mf_lambda
-    //         as mesh size estimation
-    scalar_type r(threshold_factor);
+    // remark: the CONTACT_FLAG option misuses lambda as a threshold field
     contact_rigid_obstacle_nonlinear_term
-      nterm(CONTACT_FLAG, r, mf_u, U, mf_obs, obs, &mf_mesh_size, &vec_mesh_size);
+      nterm(CONTACT_FLAG, 0., mf_u, U, mf_obs, obs, &mf_ca, &threshold);
 
     getfem::generic_assembly assem;
     assem.set("V()+=comp(NonLin(#1,#1,#2,#3))(i)");
     assem.push_mi(mim);
     assem.push_mf(mf_u);
     assem.push_mf(mf_obs);
-    assem.push_mf(mf_mesh_size);
+    assem.push_mf(mf_ca);
     assem.push_nonlinear_term(&nterm);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);
@@ -731,39 +778,86 @@ namespace getfem {
   (const mesh_im &mim,
    const getfem::mesh_fem &mf_u1, const VEC &U1,
    const getfem::mesh_fem &mf_u2_proj, const VEC &U2_proj,
-   const mesh_region &rg, scalar_type threshold_factor=0.0) {
+   const mesh_region &rg, scalar_type threshold_factor=0.0,
+   const getfem::mesh_fem *mf_lambda=0, const VEC *lambda=0,
+   scalar_type threshold_pressure_factor=0.0) {
 
-    //FIXME: use an adapted integration method
+    if (!rg.get_parent_mesh())
+      rg.from_mesh(mim.linked_mesh());
+    getfem::mesh_fem mf_ca(mf_u1.linked_mesh());
+    mf_ca.set_classical_finite_element(rg.index(),1);
 
-    // assemble an estimator of the mesh size
-    getfem::mesh_fem mf_mesh_size(mf_u1.linked_mesh());
-    mf_mesh_size.set_qdim(1);
-    mf_mesh_size.set_classical_finite_element(1);
-    VEC vec_mesh_size(mf_mesh_size.nb_dof());
+    VEC mesh_size(mf_ca.nb_dof());
+    VEC mesh_size2(mf_ca.nb_dof());
+    { // assemble an estimator of the mesh size
+      getfem::generic_assembly assem_mesh_size;
+      assem_mesh_size.set("V(#1)+=comp(Base(#1))");
+      assem_mesh_size.push_mi(mim);
+      assem_mesh_size.push_mf(mf_ca);
+      assem_mesh_size.push_vec(mesh_size2);
+      assem_mesh_size.assembly(rg);
+      for (dal::bv_visitor_c dof(mf_ca.basic_dof_on_region(rg));
+           !dof.finished(); ++dof)
+        mesh_size[dof] = sqrt(mesh_size2[dof]);
+    }
 
-    getfem::generic_assembly assem_mesh_size;
-    assem_mesh_size.set("V(#1)+=comp(Base(#1))");
-    assem_mesh_size.push_mi(mim);
-    assem_mesh_size.push_mf(mf_mesh_size);
-    assem_mesh_size.push_vec(vec_mesh_size);
-    assem_mesh_size.assembly(rg);
-    if (mf_u1.get_qdim() == 3)
-      for (size_type i=0; i < gmm::vect_size(vec_mesh_size); i++)
-        vec_mesh_size[i] = sqrt(vec_mesh_size[i]);
-    
+    VEC threshold(mf_ca.nb_dof());
+    if (mf_lambda && lambda) {
+      VEC pressure(mf_ca.nb_dof());
+      VEC dummy_f_coeff(1);
+      bool contact_only = (mf_lambda->get_qdim() == 1);
+      contact_nonmatching_meshes_nonlinear_term
+        nterm_pressure(CONTACT_PRESSURE, 0., mf_u1, U1, mf_u2_proj, U2_proj,
+                       mf_lambda, lambda, 0, contact_only ? 0 : &dummy_f_coeff);
+
+      getfem::generic_assembly assem_pressure;
+      assem_pressure.set("V(#4)+=comp(NonLin(#1,#1,#2,#3).Base(#4))(i,:)");
+      assem_pressure.push_mi(mim);
+      assem_pressure.push_mf(mf_u1);
+      assem_pressure.push_mf(mf_u2_proj);
+      assem_pressure.push_mf(*mf_lambda);
+      assem_pressure.push_mf(mf_ca);
+      assem_pressure.push_nonlinear_term(&nterm_pressure);
+      assem_pressure.push_vec(pressure);
+      assem_pressure.assembly(rg);
+      for (dal::bv_visitor_c dof(mf_ca.basic_dof_on_region(rg));
+           !dof.finished(); ++dof)
+        pressure[dof] /= mesh_size2[dof];
+
+      // in areas where pressure is clearly non-zero set a low threshold
+      // in order to avoid false negative contact detection
+      scalar_type threshold_pressure(threshold_pressure_factor *
+                                     gmm::vect_norminf(pressure));
+      gmm::copy(gmm::scaled(mesh_size, scalar_type(-1)), threshold);
+      for (getfem::mr_visitor v(rg); !v.finished(); ++v) {
+        size_type nbdof = mf_ca.nb_basic_dof_of_face_of_element(v.cv(), v.f());
+        mesh_fem::ind_dof_face_ct::const_iterator
+          itdof = mf_ca.ind_basic_dof_of_face_of_element(v.cv(), v.f()).begin();
+        bool all_positive = true;
+        for (size_type k=0; k < nbdof; ++k, ++itdof)
+          if (pressure[*itdof] < threshold_pressure) { all_positive = false; break; }
+        if (!all_positive) {
+          itdof = mf_ca.ind_basic_dof_of_face_of_element(v.cv(), v.f()).begin();
+          for (size_type k=0; k < nbdof; ++k, ++itdof)
+            threshold[*itdof] = threshold_factor * mesh_size[*itdof];
+        }
+      }
+    }
+    else
+      gmm::copy(gmm::scaled(mesh_size, threshold_factor), threshold);
+
+
     // compute the total contact area
-    // remark: the CONTACT_FLAG option misuses r as threshold factor and mf_lambda
-    //         as mesh size estimation
-    scalar_type r(threshold_factor);
+    // remark: the CONTACT_FLAG option misuses lambda as a threshold field
     contact_nonmatching_meshes_nonlinear_term
-      nterm(CONTACT_FLAG, r, mf_u1, U1, mf_u2_proj, U2_proj, &mf_mesh_size, &vec_mesh_size);
+      nterm(CONTACT_FLAG, 0., mf_u1, U1, mf_u2_proj, U2_proj, &mf_ca, &threshold);
 
     getfem::generic_assembly assem;
     assem.set("V()+=comp(NonLin(#1,#1,#2,#3))(i)");
     assem.push_mi(mim);
     assem.push_mf(mf_u1);
     assem.push_mf(mf_u2_proj);
-    assem.push_mf(mf_mesh_size);
+    assem.push_mf(mf_ca);
     assem.push_nonlinear_term(&nterm);
     std::vector<scalar_type> v(1);
     assem.push_vec(v);

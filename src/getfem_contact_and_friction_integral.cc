@@ -125,10 +125,11 @@ namespace getfem {
       t[0] = -gmm::neg(ln - r*(un - g)); break;
 
     case CONTACT_FLAG:
-      // here ln is expected to be an estimation of the mesh size
-      // and r should be a threshold coefficient expressing a penetration
-      // or separation distance as percentage of the mesh size
-      t[0] = Heav(un-g - r*ln);  break;
+      // here ln is expected to be a threshold value expressing a penetration
+      // (positive value) or separation (negative value) distance
+      t[0] = Heav(un-g - ln);  break;
+    case CONTACT_PRESSURE:
+      t[0] = -ln;  break;
 
     // one-dimensional tensors [N]
 
@@ -2458,7 +2459,9 @@ namespace getfem {
       const model_real_plain_vector &obs = md.real_variable(dl[0]);
       const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
 
-      area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg, -1e-3);
+      //FIXME: use an adapted integration method
+      area = asm_level_set_contact_area(*ml[0], mf_u, u, mf_obs, obs, reg, -1e-3,
+                                        &mf_lambda, &lambda, 1e-1);
 
       gmm::resize(F, mf_u.nb_dof());
       asm_level_set_normal_source_term
@@ -2511,8 +2514,10 @@ namespace getfem {
       else
         gmm::copy(gmm::sub_vector(u2, SUBI), u2_proj);
 
+      //FIXME: use an adapted integration method
       area = asm_nonmatching_meshes_contact_area
-             (*ml[0], mf_u1, u1, mf_u2_proj, u2_proj, reg, -1e-3);
+             (*ml[0], mf_u1, u1, mf_u2_proj, u2_proj, reg, -1e-3,
+              &mf_lambda, &lambda, 1e-1);
 
       gmm::resize(F, mf_u1.nb_dof());
       asm_nonmatching_meshes_normal_source_term
