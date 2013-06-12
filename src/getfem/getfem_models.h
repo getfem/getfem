@@ -366,11 +366,11 @@ namespace getfem {
 
     /* function to be called by Dirichlet bricks */
     void add_real_dof_constraint(const std::string &varname, size_type dof,
-                            scalar_type val)
+                            scalar_type val) const
     { (real_dof_constraints[varname])[dof] = val; }
     /* function to be called by Dirichlet bricks */
     void add_complex_dof_constraint(const std::string &varname, size_type dof,
-                               complex_type val)
+                               complex_type val) const
     { (complex_dof_constraints[varname])[dof] = val; }
 
 
@@ -1127,6 +1127,30 @@ namespace getfem {
   size_type add_normal_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region);
+
+
+  /** Adds a (simple) Dirichlet condition on the variable `varname` and
+      the mesh region `region`. The Dirichlet condition is prescribed by
+      a simple post-treatment of the final linear system (tangent system
+      for nonlinear problems) consisting of modifying the lines corresponding
+      to the degree of freedom of the variable on `region` (0 outside the
+      diagonal, 1 on the diagonal of the matrix and the expected value on
+      the right hand side).
+      The symmetry of the linear system is kept if all other bricks are
+      symmetric.
+      This brick is to be reserved for simple Dirichlet conditions (only dof
+      declared on the correspodning boundary are prescribed). The application
+      of this brick on reduced f.e.m. may be problematic. Intrinsic vectorial
+      finite element method are not supported.
+      `dataname` is the optional right hand side of  the Dirichlet condition.
+      It could be constant or (important) described on the same finite
+      element method as `varname`.
+      Returns the brick index in the model.
+  */
+  size_type add_Dirichlet_condition_with_simplification
+  (model &md, const std::string &varname, size_type region,
+   const std::string &dataname = std::string());
+
 
   /** Adds a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet

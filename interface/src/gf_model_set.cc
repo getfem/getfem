@@ -404,6 +404,38 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ind = ('add Dirichlet condition with simplification', @str varname, @int region[, @str dataname])
+      Adds a (simple) Dirichlet condition on the variable `varname` and
+      the mesh region `region`. The Dirichlet condition is prescribed by
+      a simple post-treatment of the final linear system (tangent system
+      for nonlinear problems) consisting of modifying the lines corresponding
+      to the degree of freedom of the variable on `region` (0 outside the
+      diagonal, 1 on the diagonal of the matrix and the expected value on
+      the right hand side).
+      The symmetry of the linear system is kept if all other bricks are
+      symmetric.
+      This brick is to be reserved for simple Dirichlet conditions (only dof
+      declared on the correspodning boundary are prescribed). The application
+      of this brick on reduced dof may be problematic. Intrinsic vectorial
+      finite element method are not supported. 
+      `dataname` is the optional right hand side of  the Dirichlet condition.
+      It could be constant or (important) described on the same finite
+      element method as `varname`.
+      Returns the brick index in the model. @*/
+    sub_command
+      ("add Dirichlet condition with simplification", 2, 3, 0, 1,
+       std::string varname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       std::string dataname;
+       if (in.remaining()) dataname = in.pop().to_string();
+
+       size_type ind = config::base_index();
+       ind += getfem::add_Dirichlet_condition_with_simplification
+           (md->model(), varname, region, dataname);
+       out.pop().from_integer(int(ind));
+       );
+
+
     /*@SET ind = ('add Dirichlet condition with multipliers', @tmim mim, @str varname, mult_description, @int region[, @str dataname])
       Add a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet

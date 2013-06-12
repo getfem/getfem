@@ -1054,6 +1054,7 @@ namespace getfem {
       if (version & BUILD_RHS) gmm::clear(rrhs);
       if (version & BUILD_PSEUDO_POTENTIAL) pseudo_potential_ = scalar_type(0);
     }
+    clear_dof_constraints();
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
 
@@ -1327,7 +1328,7 @@ namespace getfem {
 
             if (MPI_IS_MASTER()) {
               for (size_type i = 0; i < dof_indices.size(); ++i)
-                cTM(i,i) = complex_type(1);
+                cTM(dof_indices[i], dof_indices[i]) = complex_type(1);
             }
           }
         }
@@ -1348,6 +1349,9 @@ namespace getfem {
             dof_pr_values.push_back(V[itv->first]);
           }
         }
+        // In parallel, a unification of the indices and values could be done
+        // in order to allow the bricks to compute dof constraints in a
+        // distributed way. Not done for the moment.
         
         if (dof_indices.size()) {
           gmm::sub_index SI(dof_indices);
@@ -1380,7 +1384,7 @@ namespace getfem {
 
             if (MPI_IS_MASTER()) {
               for (size_type i = 0; i < dof_indices.size(); ++i)
-                rTM(i,i) = scalar_type(1);
+                rTM(dof_indices[i], dof_indices[i]) = scalar_type(1);
             }
           }
         }
@@ -2777,6 +2781,155 @@ namespace getfem {
     }
   }
 
+  // ----------------------------------------------------------------------
+  //
+  // Dirichlet condition brick with simplification
+  //
+  // ----------------------------------------------------------------------
+
+  struct simplification_Dirichlet_condition_brick : public virtual_brick {
+
+    virtual void asm_real_tangent_terms(const model &md, size_type /*ib*/,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version /*version*/) const {
+      GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
+                  "Dirichlet condition brick by simplification has no term");
+      GMM_ASSERT1(mims.size() == 0,
+                  "Dirichlet condition brick by simplification need no "
+                  "mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+                  "Wrong number of variables for Dirichlet condition brick "
+                  "by simplification");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const model_real_plain_vector *A = 0;
+      const mesh_fem *mf_data = 0;
+      size_type s = 0;
+       
+      if (dl.size() == 1) {
+        A = &(md.real_variable(dl[0]));
+        mf_data = md.pmesh_fem_of_variable(dl[0]);
+
+        if (mf_data) {
+          GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has "
+                     "to be define on the same f.e.m. than the unknown");
+        } else {
+          s = gmm::vect_size(*A);
+          GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "
+		    "Dirichlet data. Detected dimension is " << s
+		    << " should be " << size_type(mf_u.get_qdim())); 
+        }
+      }
+
+      mesh_region rg(region);
+      mf_u.linked_mesh().intersect_with_mpi_region(rg);
+
+      if (mf_u.get_qdim() > 1) {
+        for (mr_visitor i(rg); !i.finished(); ++i)
+          GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() ==1,
+                      "Intrinsically vectorial fems are not allowed");
+      }
+
+      dal::bit_vector dofs = mf_u.dof_on_region(rg);
+
+      if (A && !mf_data) {
+        GMM_ASSERT1(dofs.card() % s == 0, "Problem with dof vectorization");
+      }
+
+      for (dal::bv_visitor i(dofs); !i.finished(); ++i) {
+        scalar_type val(0);
+        if (A) val = (mf_data ? (*A)[i] :  (*A)[i%s]);
+        md.add_real_dof_constraint(vl[0], i, val);
+      }
+    }
+
+    virtual void asm_complex_tangent_terms(const model &md, size_type /*ib*/,
+                                           const model::varnamelist &vl,
+                                           const model::varnamelist &dl,
+                                           const model::mimlist &mims,
+                                           model::complex_matlist &matl,
+                                           model::complex_veclist &vecl,
+                                           model::complex_veclist &,
+                                           size_type region,
+                                           build_version /*version*/) const {
+      GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
+                  "Dirichlet condition brick by simplification has no term");
+      GMM_ASSERT1(mims.size() == 0,
+                  "Dirichlet condition brick by simplification need no "
+                  "mesh_im");
+      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+                  "Wrong number of variables for Dirichlet condition brick "
+                  "by simplification");
+
+      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+      const model_complex_plain_vector *A = 0;
+      const mesh_fem *mf_data = 0;
+      size_type s = 0;
+       
+      if (dl.size() == 1) {
+        A = &(md.complex_variable(dl[0]));
+        mf_data = md.pmesh_fem_of_variable(dl[0]);
+
+        if (mf_data) {
+          GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has "
+                     "to be define on the same f.e.m. than the unknown");
+        } else {
+          s = gmm::vect_size(*A);
+          GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "
+		    "Dirichlet data. Detected dimension is " << s
+		    << " should be " << size_type(mf_u.get_qdim())); 
+        }
+      }
+
+      mesh_region rg(region);
+      // mf_u.linked_mesh().intersect_with_mpi_region(rg); // Not distributed
+      // for the moment. To distribute, model::assembly should gather the 
+      // dof constraints.
+
+      if (mf_u.get_qdim() > 1) {
+        for (mr_visitor i(rg); !i.finished(); ++i)
+          GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() ==1,
+                      "Intrinsically vectorial fems are not allowed");
+      }
+
+      dal::bit_vector dofs = mf_u.dof_on_region(rg);
+
+      if (A && !mf_data) {
+        GMM_ASSERT1(dofs.card() % s == 0, "Problem with dof vectorization");
+      }
+
+      for (dal::bv_visitor i(dofs); !i.finished(); ++i) {
+        complex_type val(0);
+        if (A) val = (mf_data ? (*A)[i] :  (*A)[i%s]);
+        md.add_complex_dof_constraint(vl[0], i, val);
+      }
+    }
+
+    simplification_Dirichlet_condition_brick(void) {
+      set_flags("Dirichlet with simplification brick",
+                true /* is linear*/,
+                true /* is symmetric */, true /* is coercive */,
+                true /* is real */, true /* is complex */,
+		true /* compute each time */, false /* has a Neumann term */);
+    }
+  };
+
+  size_type add_Dirichlet_condition_with_simplification
+  (model &md, const std::string &varname,
+   size_type region, const std::string &dataname) {
+    pbrick pbr = new simplification_Dirichlet_condition_brick();
+    model::termlist tl;
+    model::varnamelist vl(1, varname);
+    model::varnamelist dl;
+    if (dataname.size()) dl.push_back(dataname);
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(), region);
+  }
 
   // ----------------------------------------------------------------------
   //

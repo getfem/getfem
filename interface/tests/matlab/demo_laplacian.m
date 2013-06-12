@@ -16,10 +16,11 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 % Options for prescribing the Dirichlet condition
-dirichlet_version = 3; % 1 = with multipliers, 2 = penalization,  3 = Nitsche's method
+dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization,  3 = Nitsche's method
 theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter
+draw = true;
 
 % trace on;
 gf_workspace('clear all');
@@ -39,8 +40,10 @@ mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
 border = gf_mesh_get(m,'outer faces');
 % mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
-gf_plot_mesh(m, 'regions', [1]); % the boundary edges appears in red
-pause(1);
+if (draw)
+  gf_plot_mesh(m, 'regions', [1]); % the boundary edges appears in red
+  pause(1);
+end
 
 % interpolate the exact solution
 Uexact = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1)+x.^5' });
@@ -55,6 +58,8 @@ gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
 switch (dirichlet_version)
+  case 0,
+     gf_model_set(md, 'add Dirichlet condition with simplification', 'u', 1, 'DirichletData');   
   case 1, 
     gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'DirichletData');
   case 2,
@@ -76,12 +81,14 @@ U = gf_model_get(md, 'variable', 'u');
 % gf_mdbrick_get(b2, 'solve', mds)
 % U=gf_mdstate_get(mds, 'state');
 
-subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
-colorbar; title('computed solution');
+if (draw)
+  subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
+  colorbar; title('computed solution');
 
-subplot(2,1,2); gf_plot(mf,U-Uexact,'mesh','on'); 
-colorbar;title('difference with exact solution');
+  subplot(2,1,2); gf_plot(mf,U-Uexact,'mesh','on'); 
+  colorbar;title('difference with exact solution');
+end
 
-disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
+disp(sprintf('H1 norm of error: %g', gf_compute(mf, U-Uexact, 'H1 norm', mim)));
 
 
