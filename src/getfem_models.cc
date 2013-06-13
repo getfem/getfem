@@ -2828,7 +2828,9 @@ namespace getfem {
       }
 
       mesh_region rg(region);
-      // mf_u.linked_mesh().intersect_with_mpi_region(rg);
+      // mf_u.linked_mesh().intersect_with_mpi_region(rg); // Not distributed
+      // for the moment. To distribute, model::assembly should gather the 
+      // dof constraints.
 
       if (mf_u.get_qdim() > 1) {
         for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
@@ -2895,9 +2897,11 @@ namespace getfem {
       // dof constraints.
 
       if (mf_u.get_qdim() > 1) {
-        for (mr_visitor i(rg); !i.finished(); ++i)
-          GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() ==1,
-                      "Intrinsically vectorial fems are not allowed");
+        for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
+          if (mf_u.fem_of_element(i.cv()))
+            GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() == 1,
+                        "Intrinsically vectorial fems are not allowed");
+        }
       }
 
       dal::bit_vector dofs = mf_u.dof_on_region(rg);
