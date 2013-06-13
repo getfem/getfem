@@ -419,7 +419,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       of this brick on reduced dof may be problematic. Intrinsic vectorial
       finite element method are not supported. 
       `dataname` is the optional right hand side of  the Dirichlet condition.
-      It could be constant or (important) described on the same finite
+      It could be constant (but in that case, it can only be applied to
+      Lagrange f.e.m.) or (important) described on the same finite
       element method as `varname`.
       Returns the brick index in the model. @*/
     sub_command

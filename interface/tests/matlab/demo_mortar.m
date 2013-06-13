@@ -20,6 +20,7 @@
 
 gf_workspace('clear all'); 
 NX=9;
+dirichlet_version = 1; % 1 = with simplification, 2 = with multipliers
 radius = 0.3; xc = .5; yc = .5;
 m=gfMesh('cartesian', 0:1/NX:1, 0:1/NX:1);
 [pid,idx] = get(m, 'pid_from_cvid');
@@ -81,8 +82,12 @@ gf_model_set(md, 'add initialized data', 'lambda', [1]);
 gf_model_set(md, 'add initialized data', 'mu', [1]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', ...
 	     mim, 'u', 'lambda', 'mu');
-gf_model_set(md, 'add Dirichlet condition with multipliers', ...
+if (dirichlet_version == 1)
+  gf_model_set(md, 'add Dirichlet condition with simplification', 'u', 1);
+else
+  gf_model_set(md, 'add Dirichlet condition with multipliers', ...
 	     mim, 'u', mfu, 1);
+end
 F=get(mfd, 'eval', {0; 'y+2'});
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');

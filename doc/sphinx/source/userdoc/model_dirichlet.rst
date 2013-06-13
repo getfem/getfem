@@ -14,8 +14,8 @@ Dirichlet condition brick
 
 The aim of the Dirichlet condition brick is to prescribe a Dirichlet condition on
 a part of the boundary of the domain for a variable of the model. This means that
-the value of this variable is prescribed on the boundary. There is two versions of
-this brick. The first version prescribe the Dirichlet thank to a multiplier. The
+the value of this variable is prescribed on the boundary. There is three versions of
+this brick (see also the section :ref:`ud-model-Nitsche`). The first version prescribe the Dirichlet thank to a multiplier. The
 associated weak form of the term is the following:
 
 .. math::
@@ -88,6 +88,13 @@ changed thanks to the function::
 
   change_penalization_coeff(md, ind_brick, penalisation_coeff);
 
+The third version of the Dirichlet condition brick use a simplification of the linear system (tangent linear system for nonlinear problems). Basically, it enforces a 1 on the diagonal components of the lines corresponding to prescribed degrees of freedom, it completes the lines with some zeros (for symmetric problems, it also complete the columns with some zeros) and it adapts the right-hand side accordingly. This is a rather simple and economic way to prescribe a Dirichlet condition. However, it can only be applied when one can identify the degrees of freedom prescribed by the the Dirichlet condition. So, it has to be use with care with reduced finite element methods, Hermite element methods and cannot be applied for a normal (or generalized) Dirichlet condition on vectorial problems. The function allowing to add this brick is::
+
+
+  add_Dirichlet_condition_with_simplification(md, varname, region,
+                                            dataname = std::string());
+
+If `dataname` is ommited, an homogeneous Dirichlet condition is applied. If `dataname` is given, the constraint is that it has to be constant or described on the same finite element method as the variable `varname` on which the Dirichlet condition is applied. Additionnaly, If `dataname` is constant, it can only be applied to Lagrange finite element methods.
 
 Generalized Dirichlet condition brick
 -------------------------------------
