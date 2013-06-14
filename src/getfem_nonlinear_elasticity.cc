@@ -511,8 +511,10 @@ namespace getfem {
   }
 
   scalar_type Mooney_Rivlin_hyperelastic_law::strain_energy
-  (const base_matrix &E, const base_vector &params, scalar_type) const {
-    scalar_type C1 = params[0], C2 = params[1];
+  (const base_matrix &E, const base_vector &params,
+   scalar_type /* det_trans*/) const {
+// shouldn't negative det_trans be handled here???
+//    if (compressible && det_trans <= scalar_type(0)) return 1e200;
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
 		"on dimension 3, sorry");
@@ -521,13 +523,23 @@ namespace getfem {
     gmm::add(gmm::identity_matrix(), C);
     compute_invariants ci(C);
 
-    return C1*(ci.j1() - scalar_type(3)) + C2*(ci.j2() - scalar_type(3));
+    size_type i=0;
+    scalar_type C1 = params[i++]; // C10
+    scalar_type W = C1 * (ci.j1() - scalar_type(3));
+    if (!neohookean) {
+      scalar_type C2 = params[i++]; // C01
+      W += C2 * (ci.j2() - scalar_type(3));
+    }
+    if (compressible) {
+      scalar_type D1 = params[i++];
+      W += D1 * gmm::sqr(sqrt(gmm::abs(ci.i3())) - scalar_type(1));
+    }
+    return W;
   }
 
   void Mooney_Rivlin_hyperelastic_law::sigma
   (const base_matrix &E, base_matrix &result,
-   const base_vector &params, scalar_type) const {
-    scalar_type C1 = params[0], C2 = params[1];
+   const base_vector &params, scalar_type /*det_trans*/) const {
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
 		"on dimension 3, sorry");
@@ -536,15 +548,26 @@ namespace getfem {
     gmm::add(gmm::identity_matrix(), C);
     compute_invariants ci(C);
 
-    gmm::copy(gmm::scaled(ci.grad_j1(), scalar_type(2)*C1), result);
-    gmm::add(gmm::scaled(ci.grad_j2(), scalar_type(2)*C2), result);
-
+    size_type i=0;
+    scalar_type C1 = params[i++]; // C10
+    gmm::copy(gmm::scaled(ci.grad_j1(), scalar_type(2) * C1), result);
+    if (!neohookean) {
+      scalar_type C2 = params[i++]; // C01
+      gmm::add(gmm::scaled(ci.grad_j2(), scalar_type(2) * C2), result);
+    }
+    if (compressible) {
+      scalar_type D1 = params[i++];
+      scalar_type di3 = D1 - D1 / sqrt(gmm::abs(ci.i3()));
+      gmm::add(gmm::scaled(ci.grad_i3(), scalar_type(2) * di3), result);
+// shouldn't negative det_trans be handled here???
+//      if (det_trans <= scalar_type(0))
+//        gmm::add(gmm::scaled(C, 1e200), result);
+    }
   }
 
   void Mooney_Rivlin_hyperelastic_law::grad_sigma
   (const base_matrix &E, base_tensor &result,
    const base_vector &params, scalar_type) const {
-    scalar_type C1 = params[0], C2 = params[1];
     size_type N = gmm::mat_nrows(E);
     GMM_ASSERT1(N == 3, "Mooney Rivlin hyperelastic law only defined "
 		"on dimension 3, sorry");
@@ -553,17 +576,43 @@ namespace getfem {
     gmm::add(gmm::identity_matrix(), C);
     compute_invariants ci(C);
 
+    size_type i=0;
+    scalar_type C1 = params[i++]; // C10
     gmm::copy(gmm::scaled(ci.sym_grad_grad_j1().as_vector(),
 			  scalar_type(4)*C1), result.as_vector());
-    gmm::add(gmm::scaled(ci.sym_grad_grad_j2().as_vector(),
-			 scalar_type(4)*C2), result.as_vector());
-    
+    if (!neohookean) {
+      scalar_type C2 = params[i++]; // C01
+      gmm::add(gmm::scaled(ci.sym_grad_grad_j2().as_vector(),
+               scalar_type(4)*C2), result.as_vector());
+    }
+    if (compressible) {
+      scalar_type D1 = params[i++];
+      scalar_type di3 = D1 - D1 / sqrt(gmm::abs(ci.i3()));
+      gmm::add(gmm::scaled(ci.sym_grad_grad_i3().as_vector(),
+	                       scalar_type(4)*di3), result.as_vector());
+
+      // second derivatives of W with respect to the third invariant
+      scalar_type A22 = D1 / (scalar_type(2) * pow(gmm::abs(ci.i3()), 1.5));
+      const base_matrix &di = ci.grad_i3();
+      for (size_type l1 = 0; l1 < N; ++l1)
+        for (size_type l2 = 0; l2 < N; ++l2)
+          for (size_type l3 = 0; l3 < N; ++l3)
+            for (size_type l4 = 0; l4 < N; ++l4)
+              result(l1, l2, l3, l4) +=
+                scalar_type(4) * A22 * di(l1, l2) * di(l3, l4);
+    }
+
 //     GMM_ASSERT1(check_symmetry(result) == 7,
 // 		"Fourth order tensor not symmetric : " << result);
   }
 
-  Mooney_Rivlin_hyperelastic_law::Mooney_Rivlin_hyperelastic_law(void) {
+  Mooney_Rivlin_hyperelastic_law::Mooney_Rivlin_hyperelastic_law
+  (bool compressible_, bool neohookean_)
+  : compressible(compressible_), neohookean(neohookean_)
+  {
     nb_params_ = 2;
+    if (compressible) ++nb_params_; // D1 != 0
+    if (neohookean) --nb_params_;   // C2 == 0
   }
 
 
@@ -583,7 +632,7 @@ namespace getfem {
     compute_invariants ci(C);
 
     return pow(a*ci.i1() + b*sqrt(gmm::abs(ci.i3()))
-	       + c*ci.i2() / ci.i3() + d, n);
+               + c*ci.i2() / ci.i3() + d, n);
   }
 
   void generalized_Blatz_Ko_hyperelastic_law::sigma

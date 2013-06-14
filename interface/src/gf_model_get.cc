@@ -618,7 +618,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET V = ('compute Von Mises or Tresca', @str varname, @str lawname, @str dataname, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises stress or the Tresca stress of a field
       for nonlinear elasticity in 3D. `lawname` is the constitutive law which
-      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or
+      'Ciarlet Geymonat'.
       `dataname` is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable coefficients.
@@ -651,7 +652,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET V = ('compute second Piola Kirchhoff tensor', @str varname, @str lawname, @str dataname, @tmf mf_sigma)
       Compute on `mf_sigma` the second Piola Kirchhoff stress tensor of a field
       for nonlinear elasticity in 3D. `lawname` is the constitutive law which
-      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or
+      'Ciarlet Geymonat'.
       `dataname` is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable

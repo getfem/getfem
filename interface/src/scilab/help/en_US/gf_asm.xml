@@ -143,8 +143,13 @@
       Linearized law, should be avoided). This law has the two usual
       Lame coefficients as parameters, called lambda and mu.
       - 'Mooney Rivlin':
-      Only for incompressibility. This law has two parameters,
-      called C1 and C2.
+      This law has three parameters, called C1, C2 and D1.
+      Can be preceded with the words 'compressible' or 'incompressible' to force
+      a specific version. By default, the incompressible version is considered
+      which requires only the first two material coefficients.
+      - 'neo Hookean':
+      A special case of the 'Mooney Rivlin' law that requires one material
+      coefficient less (C2 = 0). By default, its compressible version is used.
       - 'Ciarlet Geymonat':
       This law has 3 parameters, called lambda, mu and gamma, with
       gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.

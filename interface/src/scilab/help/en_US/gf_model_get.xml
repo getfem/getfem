@@ -247,7 +247,7 @@
 
     <para>         Compute on <literal>mf_vm</literal> the Von-Mises stress or the Tresca stress of a field
       for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
-      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or 'Ciarlet Geymonat'.
       <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable coefficients.
@@ -260,7 +260,7 @@
 
     <para>         Compute on <literal>mf_sigma</literal> the second Piola Kirchhoff stress tensor of a field
       for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
-      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin' or 'Ciarlet Geymonat'.
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or 'Ciarlet Geymonat'.
       <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable

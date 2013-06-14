@@ -401,7 +401,13 @@ void gf_mdbrick(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     - 'SaintVenant Kirchhoff' :
       Linearized material law.
     - 'Mooney Rivlin' :
-      To be used with the nonlinear incompressibily term.
+      Can be preceded with the words 'compressible' or 'incompressible' to force
+      a specific version. By default, the incompressible version is considered,
+      which has to be used with the nonlinear incompressibily term.
+      The compressible version requires one additional material coefficient.
+    - 'neo Hookean' :
+      A special case of the 'Mooney Rivlin' law that requires one material
+      coefficient less. By default, its compressible version is used.
     - 'Ciarlet Geymonat'@*/
     getfem::mesh_im &mim = pop_mesh_im(in, b);
     getfem::mesh_fem &mf_u = pop_mesh_fem(in, b);

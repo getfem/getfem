@@ -1344,8 +1344,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     /*@SET ind = ('add nonlinear elasticity brick', @tmim mim, @str varname, @str constitutive_law, @str dataname[, @int region])
     Add a nonlinear elasticity term to the model relatively to the
     variable `varname`. `lawname` is the constitutive law which
-    could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'Ciarlet Geymonat'
-    or 'generalized Blatz Ko'.
+    could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean',
+    'Ciarlet Geymonat' or 'generalized Blatz Ko'.
+    'Mooney Rivlin' and 'neo Hookean' law names can be preceded with the word
+    'compressible' or 'incompressible' to force using the corresponding version.
+    The compressible version of these laws requires one additional material
+    coefficient. By default, the incompressible version of 'Mooney Rivlin' law
+    and the compressible one of the 'neo Hookean' law are considered. In general,
+    'neo Hookean' is a special case of the 'Mooney Rivlin' law that requires one
+    coefficient less.
     IMPORTANT : if the variable is defined on a 2D mesh, the plane strain
     approximation is automatically used.
     `dataname` is a vector of parameters for the constitutive law. Its length

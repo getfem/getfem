@@ -140,17 +140,24 @@ namespace getfem {
 
 
   /** Mooney-Rivlin hyperelastic law 
-      
-      To be used for incompressible problems (with getfem::mdbrick_nonlinear_incomp).
+
+      To be used for compressible and incompressible problems.
+      Following combinations are possible:
+        not compressible, not neohookean (default): 2 parameters (C1,C2)
+        not compressible, neohookean: 1 parameter (C1)
+        compressible, not neohookean: 3 parameters (C1,C2,D1)
+        compressible, neohookean: 2 parameters (C1,D1)
   */
   struct Mooney_Rivlin_hyperelastic_law : public abstract_hyperelastic_law {
+    const bool compressible, neohookean;
     virtual scalar_type strain_energy(const base_matrix &E,
 				      const base_vector &params, scalar_type det_trans) const;
     virtual void sigma(const base_matrix &E, base_matrix &result,
 		       const base_vector &params, scalar_type det_trans) const;
     virtual void grad_sigma(const base_matrix &E, base_tensor &result,
 			    const base_vector &params, scalar_type det_trans) const;
-    Mooney_Rivlin_hyperelastic_law(void);
+    Mooney_Rivlin_hyperelastic_law(bool compressible_=false,
+                                   bool neohookean_=false);
   };
 
 

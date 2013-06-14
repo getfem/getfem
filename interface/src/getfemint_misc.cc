@@ -696,35 +696,57 @@ namespace getfemint {
   abstract_hyperelastic_law_from_name(const std::string &lawname,
 				      size_type N) {
     static getfem::SaintVenant_Kirchhoff_hyperelastic_law SVK_AHL;
-    static getfem::Mooney_Rivlin_hyperelastic_law MR_AHL;
+    static getfem::Mooney_Rivlin_hyperelastic_law IMR_AHL(false,false);
+    static getfem::Mooney_Rivlin_hyperelastic_law CMR_AHL(true,false);
+    static getfem::Mooney_Rivlin_hyperelastic_law INH_AHL(false,true);
+    static getfem::Mooney_Rivlin_hyperelastic_law CNH_AHL(true,true);
     static getfem::Ciarlet_Geymonat_hyperelastic_law CG_AHL;
     static getfem::generalized_Blatz_Ko_hyperelastic_law GBK_AHL;
     static getfem::plane_strain_hyperelastic_law PS_SVK_AHL(&SVK_AHL);
-    static getfem::plane_strain_hyperelastic_law PS_MR_AHL(&MR_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_IMR_AHL(&IMR_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_CMR_AHL(&CMR_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_INH_AHL(&INH_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_CNH_AHL(&CNH_AHL);
     static getfem::plane_strain_hyperelastic_law PS_CG_AHL(&CG_AHL);
     static getfem::plane_strain_hyperelastic_law PS_GBK_AHL(&GBK_AHL);
     
     if (cmd_strmatch(lawname, "SaintVenant Kirchhoff") ||
-	cmd_strmatch(lawname, "svk"))
+        cmd_strmatch(lawname, "svk"))
       { if (N == 2) return PS_SVK_AHL; else return SVK_AHL; }
 
     if (cmd_strmatch(lawname, "Mooney Rivlin") ||
-	cmd_strmatch(lawname, "mr"))
-      { if (N == 2) return PS_MR_AHL; else return MR_AHL; }
+        cmd_strmatch(lawname, "mr") ||
+        cmd_strmatch(lawname, "incompressible Mooney Rivlin") ||
+        cmd_strmatch(lawname, "imr"))
+      { if (N == 2) return PS_IMR_AHL; else return IMR_AHL; }
+
+    if (cmd_strmatch(lawname, "compressible Mooney Rivlin") ||
+        cmd_strmatch(lawname, "cmr"))
+      { if (N == 2) return PS_CMR_AHL; else return CMR_AHL; }
+
+    if (cmd_strmatch(lawname, "neo Hookean") ||
+        cmd_strmatch(lawname, "nh") ||
+        cmd_strmatch(lawname, "compressible neo Hookean") ||
+        cmd_strmatch(lawname, "cnh"))
+      { if (N == 2) return PS_CNH_AHL; else return CNH_AHL; }
+
+    if (cmd_strmatch(lawname, "incompressible neo Hookean") ||
+        cmd_strmatch(lawname, "inh"))
+      { if (N == 2) return PS_INH_AHL; else return INH_AHL; }
 
     if (cmd_strmatch(lawname, "Ciarlet Geymonat") ||
-	cmd_strmatch(lawname, "cg"))
+        cmd_strmatch(lawname, "cg"))
       { if (N == 2) return PS_CG_AHL; else return CG_AHL; }
 
     if (cmd_strmatch(lawname, "generalized Blatz Ko") ||
-	cmd_strmatch(lawname, "gbk"))
+        cmd_strmatch(lawname, "gbk"))
       {	if (N == 2) return PS_GBK_AHL; else return GBK_AHL; }
     
 
     THROW_BADARG(lawname <<
 		 " is not the name of a known hyperelastic law. \\"
-		 "Valid names are: SaintVenant Kirchhoff, Mooney Rivlin "
-		 "or Ciarlet Geymonat");
+		 "Valid names are: SaintVenant Kirchhoff, Mooney Rivlin, "
+		 "neo Hookean or Ciarlet Geymonat");
     return SVK_AHL;
   }
 

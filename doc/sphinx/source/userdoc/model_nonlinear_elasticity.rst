@@ -103,7 +103,7 @@ Note also that
 
   \frac{\partial i_j}{\partial E}(C;H) = 2 \frac{\partial i_j}{\partial C}(C;H).
 
-This property enables us to write the constitutive laws as a function of the Cauchy-Green tensor invariants, espacially for the case of the generalized Blatz-Ko strain energy.
+This property enables us to write the constitutive laws as a function of the Cauchy-Green tensor invariants, especially for the case of the generalized Blatz-Ko strain energy.
 
 
 Potential elastic energy and its derivative
@@ -179,7 +179,7 @@ Some classical constitutive laws
 
 
 ``Linearized: Saint-Venant Kirchhoff  law (small deformations)``
-
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 .. math::
 
@@ -187,17 +187,16 @@ Some classical constitutive laws
   {\hat{\hat{\sigma}}}   &= \lambda i_1( E)I + 2\mu E\\
   \mathcal{A} &= \lambda i_1(H)I + \mu (H + H^T)
 
-``Two parameters Mooney-Rivlin law``
+``Three parameters Mooney-Rivlin law``
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-Incompressible material.
+Compressible material.
 
 .. math::
 
-  {W} = c_1(j_1( C) - 3) + c_2(j_2( C)-3)
-  \intertext{with the additional constraint:}
-  i_3( C) = 1
+  {W} = c_1(j_1( C) - 3) + c_2(j_2( C)-3) + d_1(i_3( C)^{1/2}-1)^2
 
-where :math:`c_1` and :math:`c_2` are given coefficients and
+where :math:`c_1`, :math:`c_2` and :math:`d_1` are given coefficients and
 
 .. math::
 
@@ -214,10 +213,17 @@ and then
 
 .. math::
 
-  {\hat{\hat{\sigma}}}   &= 2c_1 \frac{\partial j_1}{\partial C}(C) + 2c_2 \frac{\partial j_2}{\partial C}(C)  \\
-  \mathcal{B} &= 4 c_1 \frac{\partial^2 j_1}{\partial C^2}(C) + 4c_2 \frac{\partial^2 j_2}{\partial C^2}(C) \\
+  {\hat{\hat{\sigma}}}   &= 2c_1 \frac{\partial j_1}{\partial C}(C) + 2c_2 \frac{\partial j_2}{\partial C}(C)  + 2d_1\left(1-i_3(C)^{-1/2}\right)\frac{\partial i_3}{\partial C}(C) \\
+  \mathcal{B} &= 4 c_1 \frac{\partial^2 j_1}{\partial C^2}(C) + 4c_2 \frac{\partial^2 j_2}{\partial C^2}(C) + 4d_1\left(\left(1-i_3(C)^{-1/2}\right)\frac{\partial^2 i_3}{\partial C^2}(C) + \frac{1}{2}i_3(C)^{-3/2} \frac{\partial i_3}{\partial C}(C) \otimes \frac{\partial i_3}{\partial C}(C)\right) \\
   \mathcal{A}_{ijkl} &= (\mathcal{B}_{ijkl} + \mathcal{B}_{jikl})/2
 
+Incompressible material.
+
+.. math::
+
+  {d_1} = 0
+  \intertext{with the additional constraint:}
+  i_3( C) = 1
 
 The incompressibility constraint :math:`i_3( C) = 1` is handled with a Lagrange multiplier :math:`p` (the pressure) 
 
@@ -238,6 +244,7 @@ constraint: :math:`\sigma = -pI \Rightarrow {\hat{\hat{\sigma}}} = -p\nabla\Phi\
 
 
 ``Ciarlet-Geymonat law``
+<<<<<<<<<<<<<<<<<<<<<<<<
 
 .. math::
 
@@ -247,6 +254,7 @@ with  :math:`\lambda, \mu` the Lame coefficients and :math:`\max(0,\frac{\mu}{2}
 
 
 ``Generalized Blatz-Ko law``
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 .. math::
 
@@ -269,8 +277,9 @@ Since :math:`\frac{\partial}{\partial C} {W}(C) = \displaystyle\sum_{j}\frac{\pa
   \end{array}
 
 ``Plane strain hyper-elasticity``
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
-previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.  
+All previous models are valid in volumic domains. Corresponding plane strain 2D models can be obtained by restricting the stress tensor and the fourth order tensor :math:`\mathcal{A}` to their plane components.  
 
 
 
@@ -286,11 +295,15 @@ where ``AHL`` is an object of type ``getfem::abstract_hyperelastic_law`` which r
 
   getfem::SaintVenant_Kirchhoff_hyperelastic_law AHL;
   getfem::Ciarlet_Geymonat_hyperelastic_law AHL;
-  getfem::Mooney_Rivlin_hyperelastic_law AHL;
+  getfem::Mooney_Rivlin_hyperelastic_law AHL(compressible, neohookean);
   getfem::plane_strain_hyperelastic_law AHL(pAHL);
   getfem::generalized_Blatz_Ko_hyperelastic_law AHL;
 
-The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient (:math:`\lambda, \mu, a`) and the Mooney-Rivlin law is defined with two coefficients and is to be used with the large strain incompressibility condition. The plane strain hyperelastic law take a pointer on an hyperelastic law as a parameter and performs a 2D plane strain approximation.
+The Saint-Venant Kirchhoff law is a linearized law defined with the two Lame coefficients, Ciarlet Geymonat law is defined with the two Lame coefficients and an additional coefficient (:math:`\lambda, \mu, a`).
+
+The Mooney-Rivlin law accepts two optional flags, the first one determines if the material will be compressible (:math:`d_1 \neq 0`) and the second one determines if the material is neo Hookean (:math:`c_2 = 0`). Depending on these flags one to three coefficients may be necessary. By default it is defined as incompressible and non neo Hookean, thus it needs two material coefficients (:math:`c_1`, :math:`c_2`). In this case, it is to be used with the large strain incompressibility condition.
+
+The plane strain hyperelastic law takes a pointer on a hyperelastic law as a parameter and performs a 2D plane strain approximation.
 
 ``md`` is the model variable, ``mim`` the integration method, ``varname`` the string being the name of the variable on which the term is added, ``dataname`` the string being the name of the data in the model representing the coefficients of the law (can be constant or decribe on a finite element method) and ``region`` is the region on which the term is considered (by default, all the mesh). 
 
