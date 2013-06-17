@@ -337,9 +337,9 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string lsolver = "auto";
        std::string lsearch = "default";
        bool with_pseudo_pot = false;
-       scalar_type alpha_mult = 0.5;
-       scalar_type alpha_min = 1.0/1000.0;
-       scalar_type alpha_max_ratio = 6.0/5.0;
+       scalar_type alpha_max_ratio(-1);
+       scalar_type alpha_min(-1);
+       scalar_type alpha_mult(-1);
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();
          if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
@@ -374,10 +374,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          } else THROW_BADARG("bad option: " << opt);
        }
 
+       // default values in sync with getfem_model_solvers.h
+       if (alpha_max_ratio < scalar_type(0))
+         alpha_max_ratio = (lsearch == "basic") ?  5.0/3.0 : 6.0/5.0;
+       if (alpha_min < scalar_type(0))
+         alpha_min = (lsearch == "systematic") ? 1.0/10000.0 : 1.0/1000.0;
+       if (alpha_mult < scalar_type(0))
+         alpha_mult = 3.0/5.0;
+
        getfem::default_newton_line_search default_ls;
        getfem::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
        getfem::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
-       getfem::basic_newton_line_search basic_ls(size_type(-1), alpha_min, alpha_mult);
+       getfem::basic_newton_line_search basic_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
        getfem::quadratic_newton_line_search quadratic_ls(size_type(-1));
 
        getfem::abstract_newton_line_search *ls = 0;
