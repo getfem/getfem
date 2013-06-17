@@ -56,7 +56,7 @@ namespace getfem {
       gmm::copy(gmm::mat_col(G_cv,ind_pts_fc[i]),gmm::mat_col(G_fc,i));
 
     // Local base on reference face
-    base_matrix base_ref_fc(N,P-1);
+    base_matrix base_ref_fc(P,P-1);
     {
       dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
       GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
@@ -137,7 +137,7 @@ namespace getfem {
       gmm::copy(gmm::mat_col(G_cv,ind_pts_fc[i]),gmm::mat_col(G_fc,i));
 
     // Local base on reference face
-    base_matrix base_ref_fc(N,P-1);
+    base_matrix base_ref_fc(P,P-1);
     {
       dref_convex_pt_ct dref_pts_fc = pgt->convex_ref()->dir_points_of_face(fc);
       GMM_ASSERT1( dref_pts_fc.size() == P, "Dimensions mismatch");
