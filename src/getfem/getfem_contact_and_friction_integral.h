@@ -936,25 +936,28 @@ namespace getfem {
 
 
 
-  /** Adds a contact condition with or without Coulomb friction on the variable
-      `varname_u` and the mesh boundary `region`. The contact condition
-      is prescribed with Nitsche's method. The rigid obstacle should
-      be described with the data `dataname_obstacle` being a signed distance to
-      the obstacle (interpolated on a finite element method).
-      `gamma0name` is the Nitsche's method parameter.
-      `theta` is a scalar value which can be
-      positive or negative. `theta = 1` corresponds to the standard symmetric
-      method which is conditionnaly coercive for  `gamma0` small.
-      `theta = -1` corresponds to the skew-symmetric method which is
-      inconditionnaly coercive. `theta = 0` is the simplest method
-      for which the second derivative of the Neumann term is not necessary.
-      The optional parameter `dataname_friction_coeff` is the friction
-      coefficient which could be constant or defined on a finite element
-      method.
-      CAUTION: This brick has to be added in the model after all the bricks
-      corresponding to partial differential terms having a Neumann term.
-      Moreover, This brick can only be applied to bricks declaring their
-      Neumann terms. Returns the brick index in the model.
+  /** Adds a contact condition with or without Coulomb friction between
+ two bodies in a fictitious domain. The contact condition is applied on
+ the variable `varname_u1` corresponds with the first
+ and slave body with Nitsche's method and on the variable `varname_u2`
+ corresponds with the second and master body with Nitsche's method.
+ The contact condition is evaluated on the fictitious slave bondary.
+ The first body should be described by the level-set `dataname_d1`
+ and the second body should be described by the level-set
+`dataname_d2`. `gamma0name` is the Nitsche's method parameter.
+ `theta` is a scalar value which can be positive or negative.
+ `theta = 1` corresponds to the standard symmetric method which
+ is conditionnaly coercive for  `gamma0` small.
+ `theta = -1` corresponds to the skew-symmetric method which is
+ inconditionnaly coercive. `theta = 0` is the simplest method for
+ which the second derivative of the Neumann term is not necessary. 
+The optional parameter `dataname_friction_coeff` is the friction 
+coefficient which could be constant or defined on a finite element method. 
+CAUTION: This brick has to be added in the model
+ after all the bricks corresponding to partial differential
+ terms having a Neumann term. Moreover, This brick can only
+ be applied to bricks declaring their Neumann terms. Returns the brick index in the model. 
+
   */
   size_type add_Nitsche_fictitious_domain_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
