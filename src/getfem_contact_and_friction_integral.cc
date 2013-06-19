@@ -3657,7 +3657,7 @@ namespace getfem {
 
 
 
-#if 0
+
 
 
 #if 0
@@ -4112,7 +4112,7 @@ namespace getfem {
       }
 
       
-
+#if 0
 
       GMM_ASSERT1(&(mf_u1.linked_mesh()) == &m && &(mf_u2.linked_mesh()) == &m
                   && &(mf_d1.linked_mesh()) == &m
@@ -4490,7 +4490,7 @@ namespace getfem {
 #endif
 
     }
-
+#endif
     Nitsche_fictitious_domain_contact_brick(scalar_type theta_,
                                             bool nofriction) {
       theta = theta_;
@@ -4557,9 +4557,6 @@ namespace getfem {
   }
 
 
-
-
-#endif
 
 
 
