@@ -963,7 +963,7 @@ namespace getfem {
    scalar_type theta,
    const std::string &dataname_friction_coeff,
    const std::string &dataname_alpha,
-   const std::string &dataname_wt);
+   const std::string &dataname_wt1, const std::string &dataname_wt2);
 
 
 }  /* end of namespace getfem.                                             */
