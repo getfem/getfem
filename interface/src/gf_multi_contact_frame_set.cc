@@ -82,35 +82,39 @@ void gf_multi_contact_frame_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
-    /*@SET ('add slave boundary', @tmim mim, @int region, @str varname [, @str multname])
+    /*@SET ('add slave boundary', @tmim mim, @int region, @str varname [, @str multname [, @str wname]])
     Add a slave contact bounary.
     @*/
     
     sub_command
-      ("add slave boundary", 3, 4, 0, 1,
+      ("add slave boundary", 3, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        size_type region = in.pop().to_integer();
        std::string varname = in.pop().to_string();
        std::string multname;
+       std::string wname;
        if (in.remaining()) multname = in.pop().to_string();
+       if (in.remaining()) wname = in.pop().to_string();
        size_type ind = ps->add_slave_boundary(gfi_mim->mesh_im(), region,
-                                              varname, multname);
+                                              varname, multname, wname);
        out.pop().from_integer(int(ind + config::base_index()));
        );
 
-    /*@SET ('add master boundary', @tmim mim, @int region, @str varname [, @str multname])
+    /*@SET ('add master boundary', @tmim mim, @int region, @str varname [, @str multname [, @str wname]])
     Add a master contact bounary.
     @*/
     
     sub_command
-      ("add master boundary", 3, 4, 0, 1,
+      ("add master boundary", 3, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        size_type region = in.pop().to_integer();
        std::string varname = in.pop().to_string();
        std::string multname;
+       std::string wname;
        if (in.remaining()) multname = in.pop().to_string();
+       if (in.remaining()) wname = in.pop().to_string();
        size_type ind = ps->add_master_boundary(gfi_mim->mesh_im(), region,
-                                               varname, multname);
+                                               varname, multname, wname);
        out.pop().from_integer(int(ind + config::base_index()));
        );
   }
