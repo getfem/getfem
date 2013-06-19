@@ -2832,11 +2832,15 @@ namespace getfem {
       // for the moment. To distribute, model::assembly should gather the 
       // dof constraints.
 
-      if (mf_u.get_qdim() > 1) {
+      if (mf_u.get_qdim() > 1 || (!mf_data && A)) {
         for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
-          if (mf_u.fem_of_element(i.cv()))
-            GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() == 1,
+          pfem pf = mf_u.fem_of_element(i.cv());
+          if (pf) {
+            GMM_ASSERT1(pf->target_dim() == 1,
                         "Intrinsically vectorial fems are not allowed");
+            GMM_ASSERT1(mf_data || pf->is_lagrange(),
+                   "Constant Dirichlet data allowed for lagrange fems only");
+          }
         }
       }
 
@@ -2896,11 +2900,15 @@ namespace getfem {
       // for the moment. To distribute, model::assembly should gather the 
       // dof constraints.
 
-      if (mf_u.get_qdim() > 1) {
+      if (mf_u.get_qdim() > 1 || (!mf_data && A)) {
         for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
-          if (mf_u.fem_of_element(i.cv()))
-            GMM_ASSERT1((mf_u.fem_of_element(i.cv()))->target_dim() == 1,
+          pfem pf = mf_u.fem_of_element(i.cv());
+          if (pf) {
+            GMM_ASSERT1(pf->target_dim() == 1,
                         "Intrinsically vectorial fems are not allowed");
+            GMM_ASSERT1(mf_data || pf->is_lagrange(),
+                   "Constant Dirichlet data allowed for lagrange fems only");
+          }
         }
       }
 

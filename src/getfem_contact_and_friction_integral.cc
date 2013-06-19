@@ -4488,9 +4488,9 @@ namespace getfem {
            f_coeff, WT, gamma0, theta, alpha, rg);
       }
 #endif
+#endif
 
     }
-#endif
     Nitsche_fictitious_domain_contact_brick(scalar_type theta_,
                                             bool nofriction) {
       theta = theta_;

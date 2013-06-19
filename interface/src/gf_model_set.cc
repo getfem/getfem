@@ -2320,7 +2320,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 #endif
 
     /*@SET ind = ('add Nitsche fictitious domain contact brick', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt1,@str dataname_wt2]]])
-     /** Adds a contact condition with or without Coulomb friction between
+     Adds a contact condition with or without Coulomb friction between
      two bodies in a fictitious domain. The contact condition is applied on 
      the variable `varname_u1` corresponds with the first and slave body 
      with Nitsche's method and on the variable `varname_u2` corresponds 
