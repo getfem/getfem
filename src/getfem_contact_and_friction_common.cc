@@ -901,13 +901,16 @@ namespace getfem {
           scalar_type alpha(0), beta(0);
           d1 = d0;
 
-          while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
+          while (++nit < 50 && nb_fail < 3) {
             for (size_type k = 0; k < N; ++k) {
               pt_eval[k] += EPS;
               d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
               ny[k] = (d2 - d1) / EPS;
               pt_eval[k] -= EPS;
             }
+
+            if (gmm::abs(d1) < 1E-13)
+              break; // point already lies on the rigid obstacle surface
 
             // ajouter un test de divergence ...
             for (scalar_type lambda(1); lambda >= 1E-3; lambda /= scalar_type(2)) {
@@ -934,17 +937,19 @@ namespace getfem {
             GMM_WARNING1("Projection/raytrace on rigid obstacle failed");
             continue;
           }
+
+          // CRITERION 4 for rigid bodies : Apply the release distance
+          if (gmm::vect_dist2(y, x) > release_distance)
+            continue;
+
           gmm::copy(pt_eval, y);
           ny /= gmm::vect_norm2(ny);
 
           d0 = gmm::vect_dist2(y, x) * gmm::sgn(d0);
           contact_pair ct(x, nx, bpinfo, y, ny, irigid_obstacle, d0);
 
-          // CRITERION 4 for rigid bodies : Apply the release distance
-          if (gmm::vect_dist2(y, x) <= release_distance) {
-            contact_pairs.push_back(ct);
-            first_pair_found = true;
-          }
+          contact_pairs.push_back(ct);
+          first_pair_found = true;
         }
 #else
         if (obstacles.size() > 0)
