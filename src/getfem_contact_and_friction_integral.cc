@@ -3187,7 +3187,7 @@ namespace getfem {
       scalar_type Pw = wn - gamma * gmm::vect_sp(tG.as_vector(), no);
       cout << "Pw = " << Pw << endl;
 
-        
+
       if (option_midpoint == 2)
         md->compute_Neumann_terms(1, *varname, mf_u, UPLUSWT, ctx, n, tG);
       else
@@ -3302,7 +3302,7 @@ namespace getfem {
           if (option_midpoint == 2)
             md->compute_auxilliary_Neumann_terms(2, *varname, mf_u, UPLUSWT,
                                                  *auxvarname, ctx, n, tpaux);
-          else 
+          else
             md->compute_auxilliary_Neumann_terms(2, *varname, mf_u, U,
                                                  *auxvarname, ctx, n, tpaux);
 
@@ -3351,7 +3351,7 @@ namespace getfem {
 
       default : GMM_ASSERT1(false, "Invalid option");
       }
-      
+
       switch (option_midpoint) {
       case 1:
         gmm::scale(t.as_vector(), gmm::Heaviside(Pw));
@@ -4068,7 +4068,7 @@ namespace getfem {
 
       GMM_ASSERT1(vl.size() >= 2, "Nitsche fictitious domain contact "
                   "bricks need two variables");
-      
+
       const model_real_plain_vector &U1 = md.real_variable(vl[0]);
       const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
       const model_real_plain_vector &U2 = md.real_variable(vl[1]);
@@ -4077,7 +4077,7 @@ namespace getfem {
 
       GMM_ASSERT1(dl.size() > 2, "Nitsche fictitious domain contact "
                   "bricks need at least 2 data");
-      
+
       const model_real_plain_vector &D1 = md.real_variable(dl[0]);
       const mesh_fem &mf_d1 = md.mesh_fem_of_variable(dl[0]);
       const model_real_plain_vector &D2 = md.real_variable(dl[1]);
@@ -4094,7 +4094,7 @@ namespace getfem {
         GMM_ASSERT1(FRICT.size() == 1, "The friction coefficient should "
                     "be a scalar parameter");
         friction_coeff = FRICT[0];
-        
+
         if (dl.size() > 4) {
           const model_real_plain_vector &ALPHA = md.real_variable(dl[4]);
           GMM_ASSERT1(ALPHA.size() == 1, "Alpha should be a scalar parameter");
@@ -4111,14 +4111,14 @@ namespace getfem {
         }
       }
 
-      
+
 #if 0
 
       GMM_ASSERT1(&(mf_u1.linked_mesh()) == &m && &(mf_u2.linked_mesh()) == &m
                   && &(mf_d1.linked_mesh()) == &m
                   && &(mf_d2.linked_mesh()) == &m,
                   "All data and variables should be defined on the same mesh");
-      
+
 
       bgeot::rtree tree;
 
@@ -4139,7 +4139,7 @@ namespace getfem {
         }
         tree.add_box(min, max, cv);
       }
-      
+
 
       if (version & model::BUILD_MATRIX) {
         gmm::clear(matl[0]);
@@ -4154,7 +4154,7 @@ namespace getfem {
         gmm::clear(vecl[2]);
         gmm::clear(vecl[3]);
       }
-      
+
 
 
       base_matrix G1, G2, GPr(N,N);
@@ -4170,15 +4170,15 @@ namespace getfem {
 // wt?     base_small_vector  wt;
 //
 // for( size_type i=0; i<N; ++i)
-// 		wt[i]=0;
+//   wt[i]=0;
 //ctx.pf()->interpolation(ctx, coeff, wt, N);
 //          wt -= gmm::vect_sp(wt, no) * no;
 
 
       for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
-        
+
         pintegration_method pim = mim.int_method_of_element(cv);
-        
+
         size_type nbpt = pim->approx_method()->nb_points();
         for (size_type ipt = 0; ipt < nbpt; ++ipt) {
 
@@ -4188,14 +4188,14 @@ namespace getfem {
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_u1 = mf_u1.fem_of_element(cv);
           pfem pf_d1 = mf_d1.fem_of_element(cv);
-          
+
           const base_node &x0 =  pim->approx_method()->integration_points()[ipt];
 
           size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
           fem_interpolation_context ctx_u1(pgt, pf_u1, x0, G1, cv);
-          
+
           scalar_type weight = pim->approx_method()->coeff(ipt) * ctx_u1.J();
-         
+
           // computation of h for gamma = gamma0*h
           scalar_type gamma(0);
           if (ipt == 0) {
@@ -4220,8 +4220,8 @@ namespace getfem {
           ctx_d1.pf()->interpolation_grad(ctx_d1, coeff, grad_d1, 1);
           gmm::copy(grad_d1.as_vector(), n1);
           gmm::scale(n1, 1./gmm::vect_norm2(n1));
-          
-          
+
+
 
 
           cout << "Element " << cv << " point " << ipt << " : " <<
@@ -4235,16 +4235,16 @@ namespace getfem {
           slice_vector_on_basic_dof_of_element(mf_d2, D2, cv, coeff);
 
           ctx_d2.pf()->interpolation(ctx_d2, coeff, d2, 1);
-          
+
           ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
-          
+
           base_node y0 = x0, yref(N);
           gmm::add(gmm::scaled(gmm::mat_row(grad_d2, 0),
                    D2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
                    y0);
-          
 
-          
+
+
 
           bgeot::rtree::pbox_set pbs;
           tree.find_boxes_at_point(y0, pbs);
@@ -4252,11 +4252,11 @@ namespace getfem {
           bgeot::rtree::pbox_set::const_iterator it = pbs.begin();
           bool found = false;
           for (; it != pbs.end(); ++it) {
-	    cv2 = (*it)->id;
+            cv2 = (*it)->id;
             bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2);
-	    size_type nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
+            size_type nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
             bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
-            
+
             bgeot::geotrans_inv_convex gic;
             gic.init(m.points_of_convex(cv2, pgty));
 
@@ -4266,17 +4266,15 @@ namespace getfem {
           }
           GMM_ASSERT1(found && cv2 != size_type(-1),
                       "Projection not found ...");
-          
+
           cout << "Found element : " << cv2 << " yref = " << yref << endl;
-  
-	 
-	  
+
           gap = scalar_type(0);
-	  for( size_type i=0; i<N; ++i)
+          for( size_type i=0; i<N; ++i)
             gap += (y0[i]-x0[i])*n1[i];
-          
+
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
-	  fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
+          fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
 
           // computation of u2
           slice_vector_on_basic_dof_of_element(mf_u2, U2, cv2, coeff);
@@ -4295,95 +4293,95 @@ namespace getfem {
           ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
           ctx_u2.pf()->real_base_value(ctx_u2, tbv2);
           for(size_type i=0; i<N; ++i)
-            zeta[i] = tG1[i] + 
+            zeta[i] = tG1[i] +
               ( (gap + (alpha-1.)*u1n-(alpha-1.)*u2n)*n2[i]
-                + alpha*(wt1[i]-wt2[i]) - alpha*u1[i] + alpha*u2[i]) / gamma; 
+                + alpha*(wt1[i]-wt2[i]) - alpha*u1[i] + alpha*u2[i]) / gamma;
 
           coupled_projection(zeta, no, f_coeff, Pr);
-	  coupled_projection_grad(zeta, no, f_coeff, GPr);
+          coupled_projection_grad(zeta, no, f_coeff, GPr);
 
           scalar_type tbv1n(0);scalar_type tbv2n(0);
-                    for (size_type l = 0; l < N; ++l){
-                      tbv1n += n2[l]*tbv1(k,l);
-		      tbv2n += n2[l]*tbv2(k,l);
-		    }
-            
-            // Plan tangent 
-          if (version & model::BUILD_MATRIX){
-            
-	    // Matrice en u1,u1
+          for (size_type l = 0; l < N; ++l){
+            tbv1n += n2[l]*tbv1(k,l);
+            tbv2n += n2[l]*tbv2(k,l);
+          }
+
+          // Plan tangent
+          if (version & model::BUILD_MATRIX) {
+
+            // Matrice en u1,u1
             gmm::resize(Melem, nbdof1, nbdof1); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type k = 0; k < nbdof1; ++k)
                 for (size_type i = 0; i < N; ++i) {
-                  if (theta != scalar_type(0)) { 
+                  if (theta != scalar_type(0)) {
                     Melem(j, k) -= theta*gamma*weight* tGdu1(j, i) * tGdu1(k, i);
                     Melem(j, k) += theta*gamma*weight* (Pr[i]-tG1[i])*(tGddu1(j,k,i));
                     for (size_type l =0; l<N;++l)
                       Melem(j, k) += theta*GPr[i,l]*(gamma*weight*tGdu1[k,l]-alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)*tGdu1[j,i];
-						}
-		  for (size_type l =0; l<N;++l)
-                      Melem(j, k) -= GPr[i,l]*(tGdu1[k,l]+(-alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv1[j,i];				
-						   }        
+                  }
+                  for (size_type l =0; l<N;++l)
+                    Melem(j, k) -= GPr[i,l]*(tGdu1[k,l]+(-alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv1[j,i];
+                }
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
-	    
-	    // Matrice en fontion de u1,u2
-	    gmm::resize(Melem, nbdof1, nbdof2); gmm::clear(Melem);
-	    for (size_type j = 0; j < nbdof1; ++j)
+
+            // Matrice en fontion de u1,u2
+            gmm::resize(Melem, nbdof1, nbdof2); gmm::clear(Melem);
+            for (size_type j = 0; j < nbdof1; ++j)
               for (size_type k = 0; k < nbdof1; ++k)
-                for (size_type i = 0; i < N; ++i) 
-		  for (size_type l =0; l<N;++l)
-                      Melem(j, k) += GPr[i,l]*(tGdu1[k,l]+(-alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv2[j,i];										           
+                for (size_type i = 0; i < N; ++i)
+                  for (size_type l =0; l<N;++l)
+                      Melem(j, k) += GPr[i,l]*(tGdu1[k,l]+(-alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv2[j,i];
             mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);
-	    
-	    // Matrice en u2,u1
+
+            // Matrice en u2,u1
             gmm::resize(Melem, nbdof2, nbdof1); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type k = 0; k < nbdof1; ++k)
                 for (size_type i = 0; i < N; ++i) {
-                  if (theta != scalar_type(0)) { 
+                  if (theta != scalar_type(0)) {
                     for (size_type l =0; l<N;++l)
                       Melem(j, k) += theta*GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tGdu1[j,i];
-						}
-		  for (size_type l =0; l<N;++l)
-                      Melem(j, k) -= GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tvb1[j,i]/(gamma*weight);;				
-						   }        
-            mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);	    
-	    
-	    // Matrice en u2,u2
+                  }
+                  for (size_type l =0; l<N;++l)
+                    Melem(j, k) -= GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tvb1[j,i]/(gamma*weight);
+                }
+            mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);
+
+            // Matrice en u2,u2
             gmm::resize(Melem, nbdof2, nbdof2); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type k = 0; k < nbdof1; ++k)
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
-                      Melem(j, k) += GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tvb2[j,i]/(gamma*weight);;				
-						   }        
-            mat_elem_assembly(matl[3], Melem, mf_u2, cv2, mf_u2, cv2);	
-				             }
-				             
-		// Matrice du second Membre		             
-          if (version & model::BUILD_RHS){
-            
+                    Melem(j, k) += GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tvb2[j,i]/(gamma*weight);
+                }
+            mat_elem_assembly(matl[3], Melem, mf_u2, cv2, mf_u2, cv2);
+          }
+
+          // Matrice du second Membre
+          if (version & model::BUILD_RHS) {
+
             gmm::resize(Velem, nbdof1); gmm::clear(Velem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type i = 0; i < N; ++i){
-		if (theta != scalar_type(0)){
+                if (theta != scalar_type(0)){
                   Velem[j] += theta*gamma*weight*tG1[i] * tGdu1(j, i); // A supprimer si theta==0
                   Velem[j] -=theta*gamma*weight*Pr[i]*tGdu1(i,j); // A supprimer si theta==0
                 }
-		Velem[j] -=weight*Pr[i]*tbv1[j,i]; 
+                Velem[j] -=weight*Pr[i]*tbv1[j,i];
               }
             vec_elem_assembly(vecl[0], Velem, mf_u1, cv);
-            
+
             gmm::resize(Velem, nbdof2);gmm::clear(Velem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type i = 0; i < N; ++i)
                 Velem[j] -= Pr[i]*tbv2[j,i];
-            
-            vec_elem_assembly(vecl[1], Velem, mf_u1, cv); 
-			        }
 
-       
+            vec_elem_assembly(vecl[1], Velem, mf_u1, cv);
+          }
+
+
 //           size_type nit = 0;
 //           while (gmm::abs(d0) > 1E-10 && ++nit < 1000) {
 //             for (size_type k = 0; k < N; ++k) {
@@ -4392,7 +4390,7 @@ namespace getfem {
 //               n[k] = (d1 - d0) / EPS;
 //               pt_eval[k] -= EPS;
 //             }
-            
+
 //             gmm::add(gmm::scaled(n, -d0 / gmm::vect_norm2_sqr(n)), pt_eval);
 //             // A simple line search could be added
 //             d0 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
@@ -4410,7 +4408,7 @@ namespace getfem {
         }
 
       }
-      
+
 
 #if 0
 
@@ -4507,7 +4505,7 @@ namespace getfem {
 
 
 
-  size_type add_Nitsche_fictitious_domain_contact_brick                        
+  size_type add_Nitsche_fictitious_domain_contact_brick
   (model &md, const mesh_im &mim, const std::string &varname_u1,
    const std::string &varname_u2, const std::string &dataname_d1,
    const std::string &dataname_d2, const std::string &dataname_gamma0,
