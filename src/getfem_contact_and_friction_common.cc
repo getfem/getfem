@@ -21,7 +21,9 @@
 ===========================================================================*/
 
 #include "getfem/getfem_contact_and_friction_common.h"
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 namespace getfem {
 
