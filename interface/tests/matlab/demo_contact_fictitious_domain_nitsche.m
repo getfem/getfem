@@ -1,5 +1,5 @@
-disp('Résolution d un problème de contact en 2D de deux corps élastiques');
-disp('par une méthode de domain fictif et Méthode de Nitsche');
+disp('Resolution of a contact problem in 2D with two elastics bodies');
+disp('with a fictitious domain method and Nitsche's method');
 
 
 clear all;
@@ -34,6 +34,8 @@ gf_levelset_set(ls1, 'values', ULS1);
 
 %définition de Omega 2 (rectangle)
 
+P=get(mf_ls2, 'basic dof nodes');
+x = P(1,:); y = P(2,:);
 ULS2=1000*ones(1,numel(x));
 yc = -0.375;xc=0; 
 R2=0.125;R1=0.5;
@@ -67,7 +69,7 @@ hold on; gf_plot_mesh(get(mls2,'cut mesh'));
 %hold on; gf_plot(mf_ls,ULS);
 
 gf_plot_mesh(m, 'regions', GAMMAD); %plot de bord avec condition de type Dirichlet
-title('bord avec condition de type Dirichlet en rouge');
+title('boundary with Dirichlet's condition in red');
 
 %méthode d'élements finis sur mls1 et mls2
 
@@ -75,7 +77,7 @@ mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_QUAD(5)'));
 mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_QUAD(5)'));
 set(mim, 'integ', 4);
 
-
+%c'est suffisant?
 
 
 
