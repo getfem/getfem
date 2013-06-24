@@ -1,5 +1,5 @@
 disp('Resolution of a contact problem in 2D with two elastics bodies');
-disp('with a fictitious domain method and Nitsche's method');
+disp('with a fictitious domain method and Nitsche s method');
 
 
 clear all;
