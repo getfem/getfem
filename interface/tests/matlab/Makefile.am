@@ -49,6 +49,7 @@ EXTRA_DIST= \
 	demo_tripod_slice_anim.m \
 	demo_fictitious_domains.m \
 	demo_fictitious_domains_laplacian.m \
+	demo_contact_fictitious_domain_nitsche.m \
 	demo_static_contact.m \
 	demo_large_sliding_contact.m \
 	demo_wave2D.m \

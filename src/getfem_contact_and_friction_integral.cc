@@ -4054,13 +4054,11 @@ namespace getfem {
                                         model::real_matlist &matl,
                                         model::real_veclist &vecl,
                                         model::real_veclist &,
-                                        size_type region,
+                                        size_type /* region */,
                                         build_version version) const {
 					  
-	//size_type region néccessaire????	plus friction ou f_coeff			  
-					  
-					  
-					  
+      cout << "begining assembly" << endl;
+
       // Integration method
       GMM_ASSERT1(mims.size() == 1, "Nitsche fictitious domain contact "
                   "bricks need a single mesh_im");
@@ -4092,13 +4090,13 @@ namespace getfem {
       GMM_ASSERT1(GAMMA0.size() == 1, "Gamma0 should be a scalar parameter");
       scalar_type gamma0 = GAMMA0[0];
 
-      scalar_type friction_coeff(0), alpha(0);
+      scalar_type f_coeff(0), alpha(0);
       const model_real_plain_vector *WT1 = 0, *WT2 = 0;
       if (dl.size() > 3) {
         const model_real_plain_vector &FRICT = md.real_variable(dl[3]);
         GMM_ASSERT1(FRICT.size() == 1, "The friction coefficient should "
                     "be a scalar parameter");
-        friction_coeff = FRICT[0];
+        f_coeff = FRICT[0];
 
         if (dl.size() > 4) {
           const model_real_plain_vector &ALPHA = md.real_variable(dl[4]);
@@ -4124,6 +4122,7 @@ namespace getfem {
                   && &(mf_d2.linked_mesh()) == &m,
                   "All data and variables should be defined on the same mesh");
 
+      cout << "Computing projection ..." << endl;
 
       bgeot::rtree tree;
 
@@ -4145,6 +4144,7 @@ namespace getfem {
         tree.add_box(min, max, cv);
       }
 
+       cout << "Projection computed." << endl;
 
       if (version & model::BUILD_MATRIX) {
         gmm::clear(matl[0]);
@@ -4167,31 +4167,46 @@ namespace getfem {
       base_matrix Melem, grad_d2(1, N), grad_d1(1, N);
       base_small_vector d2(1), n1(N), n2(N), Pr(N), zeta(N), u1(N), u2(N);
       base_tensor tG1, tGdu1, tGddu1, tbv1, tbv2;
-      scalar_type f_coeff(0), gap, u1n, u2n, tbv1n(0), tbv2n(0);
+      scalar_type gap, u1n, u2n, tbv1n(0), tbv2n(0);
       size_type cv2(-1);
 
      
       
-      
+      cout << "begining gauss points loop" << endl;
       
       for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
+
+        cout << "element " << cv << endl;
      
         pintegration_method pim = mim.int_method_of_element(cv);
+        if (pim->type() != IM_APPROX) continue; 
+
+
+        cout << "pim = " << int(pim->type()) << endl;
+        cout << "pim = " << pim->approx_method() << endl;
+
 
         size_type nbpt = pim->approx_method()->nb_points();
+        cout << "0.0" << endl;
         for (size_type ipt = 0; ipt < nbpt; ++ipt) {
-
+          
+          cout << "0" << endl;
           bgeot::vectors_to_base_matrix
             (G1, m.points_of_convex(cv));
+
+          cout << "1" << endl;
 
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_u1 = mf_u1.fem_of_element(cv);
           pfem pf_d1 = mf_d1.fem_of_element(cv);
 
-          const base_node &x0 =  pim->approx_method()->integration_points()[ipt];
-
+          const base_node &xref = pim->approx_method()->integration_points()[ipt];
+          
           size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
-          fem_interpolation_context ctx_u1(pgt, pf_u1, x0, G1, cv);
+          fem_interpolation_context ctx_u1(pgt, pf_u1, xref, G1, cv);
+          base_node x0 = ctx_u1.xreal();
+          cout << "x0 = " << x0 << endl;
+
 
           scalar_type weight = pim->approx_method()->coeff(ipt) * ctx_u1.J();
        
@@ -4205,21 +4220,21 @@ namespace getfem {
 
           // computation of u1, w1, f_friction
           slice_vector_on_basic_dof_of_element(mf_u1, U1, cv, coeff);
-          ctx_u1.pf()->interpolation(ctx_u1, coeff, u1, N);
+          ctx_u1.pf()->interpolation(ctx_u1, coeff, u1, bgeot::dim_type(N));
           if (WT1) {
             slice_vector_on_basic_dof_of_element(mf_u1, *WT1, cv, coeff);
-            ctx_u1.pf()->interpolation(ctx_u1, coeff, wt1, N);
+            ctx_u1.pf()->interpolation(ctx_u1, coeff, wt1, bgeot::dim_type(N));
           }
 	
 	  
 
           // Computation of n1
-          fem_interpolation_context ctx_d1(pgt, pf_d1, x0, G1, cv);
+          fem_interpolation_context ctx_d1(pgt, pf_d1, xref, G1, cv);
           slice_vector_on_basic_dof_of_element(mf_d1, D1, cv, coeff);
           ctx_d1.pf()->interpolation_grad(ctx_d1, coeff, grad_d1, 1);
           gmm::copy(grad_d1.as_vector(), n1);
           gmm::scale(n1, 1./gmm::vect_norm2(n1));
-          //  if(friction_coeff != 0){ slice_vector_on_basic_dof_of_element(mf_d1, *friction_coeff, cv, coeff);
+          //  if(f_coeff != 0){ slice_vector_on_basic_dof_of_element(mf_d1, *f_coeff, cv, coeff);
           //   ctx_d1.pf()->interpolation(ctx_d1, coeff, f_coeff, 1);
 	  //}
 
@@ -4233,14 +4248,13 @@ namespace getfem {
 	  
 	  
 	 
-	    
-	    
+     
 	    
            //Definition de la projection
 
           pfem pf_d2 = mf_d2.fem_of_element(cv);
 
-          fem_interpolation_context ctx_d2(pgt, pf_d2, x0, G1, cv);
+          fem_interpolation_context ctx_d2(pgt, pf_d2, xref, G1, cv);
 
           slice_vector_on_basic_dof_of_element(mf_d2, D2, cv, coeff);
 
@@ -4260,19 +4274,19 @@ namespace getfem {
 	  
 	  
 	  
-	  // Problème +rajout ligne suivante obligatoire
+	  // Probleme +rajout ligne suivante obligatoire
 	   
-	  #if 0
           bgeot::rtree::pbox_set::const_iterator it = pbs.begin();
           bool found = false;
+          size_type nbdof2(0);
           for (; it != pbs.end(); ++it) {
 	    cv2 = ((*it)->id);
             bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2);
-            size_type nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
+            nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
             bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
 
             bgeot::geotrans_inv_convex gic;
-            gic.init(m.points_of_convex(cv2, pgty));
+            gic.init(m.points_of_convex(cv2), pgty);
 
             gic.invert(y0, yref);
             if (pgty->convex_ref()->is_in(yref) < 1E-10)
@@ -4282,11 +4296,11 @@ namespace getfem {
           GMM_ASSERT1(found && (cv2 != size_type(-1)),
                       "Projection not found ...");
 
+          cout << "y0 = " << y0 << endl;
           cout << "Found element : " << cv2 << " yref = " << yref << endl;
      
-	 #endif
 	  
-	  size_type nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
+	  // size_type nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
 	  
 	  
           gap = scalar_type(0);
@@ -4298,10 +4312,10 @@ namespace getfem {
 
           // computation of u2
           slice_vector_on_basic_dof_of_element(mf_u2, U2, cv2, coeff);
-          ctx_u2.pf()->interpolation(ctx_u2, coeff, u2, N);
+          ctx_u2.pf()->interpolation(ctx_u2, coeff, u2, bgeot::dim_type(N));
           if (WT2) {
             slice_vector_on_basic_dof_of_element(mf_u2, *WT2, cv2, coeff);
-            ctx_u2.pf()->interpolation(ctx_u2, coeff, wt2, N);
+            ctx_u2.pf()->interpolation(ctx_u2, coeff, wt2, bgeot::dim_type(N));
           }
 
 
@@ -4337,16 +4351,16 @@ namespace getfem {
 	            tbv2n += n2[l]*tbv2(k,l);
 		    }
                   if (theta != scalar_type(0)) { 
-                    Melem(j, k) -= theta*gamma*weight* tGdu1(j, i) * tGdu1(k, i);
-                    Melem(j, k) += theta*gamma*weight* (Pr[i]-tG1[i])*(tGddu1(j,k,i));
-                    for (size_type l =0; l<N;++l){
-                      Melem(j, k) += theta*GPr[i,l]*(gamma*weight*tGdu1[k,l]
-                      -alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)*tGdu1[j,i];
+                    Melem(j, k) -= theta*gamma*weight*tGdu1(j, i) * tGdu1(k, i);
+                    Melem(j, k) += theta*gamma*weight*(Pr[i]-tG1[i])*(tGddu1(j,k,i));
+                    for (size_type l =0; l<N; ++l){
+                      Melem(j, k) += theta*GPr(i,l)*(gamma*weight*tGdu1(k,l)
+                                                     -alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)*tGdu1(j,i);
 		    }
 		    }
 		  for (size_type l =0; l<N;++l){
-                      Melem(j, k) -= GPr[i,l]*(tGdu1[k,l]+(-alpha*tbv1(k,l)-(scalar_type(1)
-                      -alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv1[j,i];
+                    Melem(j, k) -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tbv1(k,l)-(scalar_type(1)
+                                                                           -alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv1(j,i);
 		  }
 						   }        
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
@@ -4357,8 +4371,8 @@ namespace getfem {
               for (size_type k = 0; k < nbdof2; ++k)
                 for (size_type i = 0; i < N; ++i) 
 		  for (size_type l =0; l<N;++l)
-                      Melem(j, k) += GPr[i,l]*(tGdu1[k,l]+(-alpha*tbv1(k,l)
-                      -(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv2[j,i];										           
+                    Melem(j, k) += GPr(i,l)*(tGdu1(k,l)+(-alpha*tbv1(k,l)
+                                                         -(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma*weight))*tbv2(j,i);										           
             mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);
 
             // Matrice en u2,u1
@@ -4368,10 +4382,10 @@ namespace getfem {
                 for (size_type i = 0; i < N; ++i) {
                   if (theta != scalar_type(0)) {
                     for (size_type l =0; l<N;++l)
-                      Melem(j, k) += theta*GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tGdu1[j,i];
+                      Melem(j, k) += theta*GPr(i,l)*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tGdu1(j,i);
 						}
 		  for (size_type l =0; l<N;++l)
-                      Melem(j, k) -= GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tbv1[j,i]/(gamma*weight);;				
+                    Melem(j, k) -= GPr(i,l)*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tbv1(j,i)/(gamma*weight);				
 						   }        
             mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);	    
 	    
@@ -4381,7 +4395,7 @@ namespace getfem {
               for (size_type k = 0; k < nbdof2; ++k)
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
-                      Melem(j, k) += GPr[i,l]*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tbv2[j,i]/(gamma*weight);;				
+                    Melem(j, k) += GPr(i,l)*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tbv2(j,i)/(gamma*weight);			
 						   }        
             mat_elem_assembly(matl[3], Melem, mf_u2, cv2, mf_u2, cv2);	
 				             }
@@ -4396,14 +4410,14 @@ namespace getfem {
                   Velem[j] += theta*gamma*weight*tG1[i] * tGdu1(j, i); // A supprimer si theta==0
                   Velem[j] -=theta*gamma*weight*Pr[i]*tGdu1(i,j); // A supprimer si theta==0
                 }
-                Velem[j] -=weight*Pr[i]*tbv1[j,i];
+                Velem[j] -=weight*Pr[i]*tbv1(j,i);
               }
             vec_elem_assembly(vecl[0], Velem, mf_u1, cv);
 
             gmm::resize(Velem, nbdof2);gmm::clear(Velem);
             for (size_type j = 0; j < nbdof2; ++j)
               for (size_type i = 0; i < N; ++i)
-                Velem[j] -= Pr[i]*tbv2[j,i];
+                Velem[j] -= Pr[i]*tbv2(j,i);
 			        
 
             vec_elem_assembly(vecl[1], Velem, mf_u1, cv);
@@ -4438,82 +4452,7 @@ namespace getfem {
       }
 
 
-#if 0
-
-
-      const model_real_plain_vector &u = md.real_variable(vl[0]);
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-
-      // Data : obs, r, theta, [alpha,] [WT]
-      GMM_ASSERT1(dl.size() >= (contact_only ? 2:3),
-                  "Wrong number of data for Nitsche "
-                  "contact with rigid obstacle brick");
-
-      const model_real_plain_vector &obs = md.real_variable(dl[0]);
-      const mesh_fem &mf_obs = md.mesh_fem_of_variable(dl[0]);
-      size_type sl = gmm::vect_size(obs) * mf_obs.get_qdim() / mf_obs.nb_dof();
-      GMM_ASSERT1(sl == 1, "the data corresponding to the obstacle has not "
-                  "the right format");
-
-      const model_real_plain_vector &vgamma0 = md.real_variable(dl[1]);
-      GMM_ASSERT1(gmm::vect_size(vgamma0) == 1,
-                  "Parameter gamma0 should be a scalar");
-      scalar_type gamma0 = vgamma0[0];
-
-      const model_real_plain_vector *f_coeff = 0;
-      const mesh_fem *pmf_coeff = 0;
-
-      if (!contact_only) {
-        f_coeff = &(md.real_variable(dl[2]));
-        pmf_coeff = md.pmesh_fem_of_variable(dl[2]);
-        sl = gmm::vect_size(*f_coeff);
-        if (pmf_coeff)
-          { sl*= pmf_coeff->get_qdim(); sl /= pmf_coeff->nb_dof(); }
-        GMM_ASSERT1(sl == 1, "the data corresponding to the friction "
-                    "coefficient has not the right format");
-      }
-
-      scalar_type alpha = 1;
-      if (!contact_only && dl.size() >= 4) {
-        GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[3])) == 1,
-                    "Parameter alpha should be a scalar");
-        alpha = md.real_variable(dl[3])[0];
-      }
-
-      const model_real_plain_vector *WT
-        = (!contact_only && dl.size()>=5) ? &(md.real_variable(dl[4])) : 0;
-
-
-      GMM_ASSERT1(matl.size() == vl.size(), "Wrong number of terms for "
-                  "Nitsche contact with rigid obstacle brick");
-
-
-      mesh_region rg(region);
-      mf_u.linked_mesh().intersect_with_mpi_region(rg);
-
-      if (version & model::BUILD_MATRIX) {
-        GMM_TRACE2("Nitsche contact with rigid obstacle tangent term");
-        gmm::clear(matl[0]);
-        asm_Nitsche_contact_rigid_obstacle_tangent_matrix
-          (matl[0], mim, md, vl[0], mf_u, u, mf_obs, obs,  pmf_coeff,
-           f_coeff, WT, gamma0, theta, alpha, rg);
-
-        for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
-          gmm::clear(matl[i]);
-          asm_Nitsche_contact_rigid_obstacle_tangent_matrix_auxilliary
-            (matl[i], mim, md, vl[0], mf_u, u, mf_obs, obs, pmf_coeff,
-             f_coeff, WT, gamma0, theta, alpha, vl[i],
-             md.mesh_fem_of_variable(vl[i]), rg);
-        }
-      }
-
-      if (version & model::BUILD_RHS) {
-        gmm::clear(vecl[0]);
-        asm_Nitsche_contact_rigid_obstacle_rhs
-          (vecl[0], mim, md, vl[0], mf_u, u, mf_obs, obs,  pmf_coeff,
-           f_coeff, WT, gamma0, theta, alpha, rg);
-      }
-#endif
+      cout << "end assembly" << endl;
 
 
     }
