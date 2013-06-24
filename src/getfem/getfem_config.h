@@ -292,7 +292,7 @@ namespace getfem {
 #if defined(__GNUC__)
   using std::isnan;
 #else
-  bool isnan(scalar_type x) { return x != x; } 
+  inline bool isnan(scalar_type x) { return x != x; } 
 #endif
 
 }  /* end of namespace getfem.                                             */
