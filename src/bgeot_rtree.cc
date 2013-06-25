@@ -205,7 +205,7 @@ namespace bgeot {
       }
       //cout << "  -> left : " << cnt1 << " boxes, right : " << cnt2 << " boxes\n";
       assert(cnt1); assert(cnt2);
-      GMM_ASSERT1(cnt1+cnt2 >= b.size(), "internal error"));
+      GMM_ASSERT1(cnt1+cnt2 >= b.size(), "internal error");
       rtree::pbox_cont v1(cnt1), v2(cnt2);
       base_node bmin1(bmax), bmax1(bmin); 
       base_node bmin2(bmax), bmax2(bmin);
