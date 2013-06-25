@@ -124,6 +124,12 @@ namespace getfem {
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
 
+    // In case of change in fems or mims, linear terms have to be recomputed
+    // We couls select which brick is to be recomputed if we would be able
+    // to know which fem or mim is changed.
+    for (size_type ib = 0; ib < bricks.size(); ++ib)
+      bricks[ib].terms_to_be_computed = true;
+
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
       if (it->second.is_fem_dofs
