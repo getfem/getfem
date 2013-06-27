@@ -93,6 +93,16 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        out.pop().from_scalar(double(fem->nb_dof(cv)));
        );
 
+    /*@RDATTR n = ('index of global dof', cv)
+    Return the index of global dof for special fems such as interpolated fem.
+    @*/
+    sub_command
+      ("index of global dof", 2, 2, 0, 1,
+       size_type cv = in.pop().to_integer() - config::base_index();
+       size_type i = in.pop().to_integer() - config::base_index();
+       out.pop().from_scalar(double(fem->index_of_global_dof(cv, i)));
+       );
+
 
     /*@RDATTR d = ('dim')
       Return the dimension (dimension of the reference convex) of the @tfem.@*/
