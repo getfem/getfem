@@ -12,7 +12,9 @@ gamma0 = 1;
 theta = 0;
 %N = 2 %la dimension
 
-%définition du maillage du Domaine fictif avec des quadrangles avec une ls d'ordre 1
+
+%definition of fictitious domain's mesh with quadrangles and order 1 of level-set
+
 
 m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
 ls1=gf_levelset(m, ls_degree);
@@ -24,7 +26,7 @@ set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
 mls1=gfMeshLevelSet(m);
 mls2=gfMeshLevelSet(m);
 
-%définition de Omega 1 (cercle)
+%definition of Omega 1 (circle)
  
 P=get(mf_ls1, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
@@ -32,7 +34,7 @@ ULS1=1000*ones(1,numel(x));
 ULS1 = min(ULS1,((x.^2 + y.^2 ) - R^2));
 gf_levelset_set(ls1, 'values', ULS1);
 
-%définition de Omega 2 (rectangle)
+%definition of Omega 2 (rectangle)
 
 P=get(mf_ls2, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
@@ -50,7 +52,7 @@ set(mls1, 'adapt');
 set(mls2, 'add', ls2);
 set(mls2, 'adapt');
 
-%bord de Dirichlet
+%Dirichlet's boundary
  
 GAMMAC = 1; GAMMAD = 2;
 
@@ -69,9 +71,9 @@ hold on; gf_plot_mesh(get(mls2,'cut mesh'));
 %hold on; gf_plot(mf_ls,ULS);
 
 gf_plot_mesh(m, 'regions', GAMMAD); %plot de bord avec condition de type Dirichlet
-title('boundary with Dirichlet's condition in red');
+title('boundary with Dirichlet s condition in red');
 
-%méthode d'élements finis sur mls1 et mls2
+%Finites elements' method on mls1 and mls2
 
 mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_QUAD(5)'));
 mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_QUAD(5)'));
@@ -86,7 +88,7 @@ set(mim, 'integ', 4);
 %mfu=gfMeshFem(m,2); set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
 %mfdu=gfMeshFem(m,1); set(mfdu, 'fem', gf_fem('FEM_QK_DISCONTINUOUS(2,2)'));
 
-%modèle élastique
+%Elastic model 
 
 md=gf_model('real');
 gf_model_set(md,'add fem variable', 'u1',mfu);
@@ -116,7 +118,7 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
 
 
 
-
+ 
 
 
 
@@ -131,27 +133,13 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 
 niter= 1000; solve=true;
 disp('solve');
-pause;
+
+%pause;
+
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter); % , 'very noisy');
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%Appelle à la fonction
 
 
 
