@@ -101,6 +101,8 @@ namespace getfem {
   */
   class model : public context_dependencies {
 
+  protected:
+
     // State variables of the model
     bool complex_version;
     bool is_linear_;
@@ -125,7 +127,7 @@ namespace getfem {
                             * respect to another fem. */
       VDESCRFILTER_CTERM   /* Variable being the dofs of a fem on a mesh region
                             * with an additional filter with the coupling
-			    * termson with respect to another variable. */
+			    * term with respect to another variable. */
     };
 
     struct var_description {
@@ -236,7 +238,7 @@ namespace getfem {
                          BUILD_PSEUDO_POTENTIAL = 16
     };
 
-  private :
+  protected:
 
     // rmatlist and cmatlist could be csc_matrix vectors to reduced the
     // amount of memory (but this should add a supplementary copy).
@@ -273,17 +275,19 @@ namespace getfem {
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
           rveclist(1), rveclist_sym(1), cveclist(1),
           cveclist_sym(1)  { }
+
+      brick_description(void) {}      
     };
 
     typedef std::map<std::string, var_description> VAR_SET;
     mutable VAR_SET variables;             // Variables list of the model
     std::vector<brick_description> bricks; // Bricks list of the model
-    dal::bit_vector active_bricks;
+    dal::bit_vector valid_bricks, active_bricks;
     typedef std::pair<std::string, size_type> Neumann_pair;
     typedef std::map<Neumann_pair, pNeumann_elem_term> Neumann_SET;
     mutable Neumann_SET Neumann_term_list; // Neumann terms list (mainly for
                                            // Nitsche's method)
-    std::map<std::string, std::vector<std::string> >
+    mutable std::map<std::string, std::vector<std::string> >
       Neumann_terms_auxilliary_variables;
 
     // Structure dealing with simple dof constraints
@@ -295,7 +299,6 @@ namespace getfem {
       complex_dof_constraints;
     void clear_dof_constraints(void)
     { real_dof_constraints.clear(); complex_dof_constraints.clear(); }
-
 
 
     void actualize_sizes(void) const;
@@ -323,9 +326,9 @@ namespace getfem {
                                  size_type ib) const;
     bool is_var_mf_newer_than_brick(const std::string &varname,
                                     size_type ib) const;
-    pbrick brick_pointer(size_type ind_brick) const { 
-      GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
-      return bricks[ind_brick].pbr;
+    pbrick brick_pointer(size_type ib) const {
+      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+      return bricks[ib].pbr;
     }
 
     void add_Neumann_term(pNeumann_elem_term p,
@@ -341,10 +344,10 @@ namespace getfem {
     (const std::string &varname, std::vector<std::string> &aux_var) const;
 
     void add_auxilliary_variables_of_Neumann_terms
-    (const std::string &varname, const std::vector<std::string> &aux_vars);
+    (const std::string &varname, const std::vector<std::string> &aux_vars) const;
 
     void add_auxilliary_variables_of_Neumann_terms
-    (const std::string &varname, const std::string &aux_var);
+    (const std::string &varname, const std::string &aux_var) const;
 
     /* Compute the approximation of the Neumann condition for a variable
 	with the declared terms.
@@ -410,13 +413,13 @@ namespace getfem {
 
     /** Disable a brick.  */
     void disable_brick(size_type ib) {
-      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
-      active_bricks.sup(ib);
+      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+      active_bricks.del(ib);
     }
 
     /** Enable a brick.  */
     void enable_brick(size_type ib) {
-      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
       active_bricks.add(ib);
     }
 
@@ -631,6 +634,9 @@ namespace getfem {
                         const std::string &primal_name, const mesh_im &mim,
 			size_type region, size_type niter = 1);
 
+    /** Delete a variable or data of the model. */
+    void delete_variable(const std::string &varnamename);
+
     /** Gives the access to the mesh_fem of a variable if any. Throw an
         exception otherwise. */
     const mesh_fem &mesh_fem_of_variable(const std::string &name) const;
@@ -665,7 +671,7 @@ namespace getfem {
     const model_real_plain_vector &real_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
       GMM_ASSERT1(ind_term < bricks[ib].tlist.size(), "Inexistent term");
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
@@ -695,7 +701,7 @@ namespace getfem {
     const model_complex_plain_vector &complex_brick_term_rhs(size_type ib, size_type ind_term = 0, bool sym = false, size_type ind_iter = 0) const {
       GMM_ASSERT1(!complex_version, "This model is a complex one");
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
       GMM_ASSERT1(ind_term < bricks[ib].tlist.size(), "Inexistent term");
       GMM_ASSERT1(ind_iter < bricks[ib].nbrhs, "Inexistent iter");
       GMM_ASSERT1(!sym || bricks[ib].tlist[ind_term].is_symmetric,
@@ -714,19 +720,22 @@ namespace getfem {
     void listbricks(std::ostream &ost, size_type base_id = 0) const;
 
     /** Force the re-computation of a brick for the next assembly. */
-    void touch_brick(size_type ind_brick) {
-      GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
-      bricks[ind_brick].terms_to_be_computed = true;
+    void touch_brick(size_type ib) {
+      GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+      bricks[ib].terms_to_be_computed = true;
     }
 
     /** Adds a brick to the model. varname is the list of variable used
         and datanames the data used. If a variable is used as a data, it
         should be declared in the datanames (it will depend on the value of
-        the variable not only on the fem). */
+        the variable not only on the fem). Returns the brick index. */
     size_type add_brick(pbrick pbr, const varnamelist &varnames,
                         const varnamelist &datanames,
                         const termlist &terms, const mimlist &mims,
                         size_type region);
+
+    /** Delete the brick of index ib from the model. */
+    void delete_brick(size_type ib);
     
     /** Adds an integration method to a brick. */
     void add_mim_to_brick(size_type ib, const mesh_im &mim);
@@ -769,6 +778,11 @@ namespace getfem {
     void clear(void) {
       variables.clear();
       active_bricks.clear();
+      valid_bricks.clear();
+      Neumann_term_list.clear();
+      real_dof_constraints.clear();
+      complex_dof_constraints.clear();
+      bricks.resize(0);
       rTM = model_real_sparse_matrix();
       cTM = model_complex_sparse_matrix();
       rrhs = model_real_plain_vector();
@@ -926,7 +940,7 @@ namespace getfem {
       model object.
   **/
   class virtual_brick : virtual public dal::static_stored_object {
-  private :
+  protected :
     bool islinear;    // The brick add a linear term or not.
     bool issymmetric; // The brick add a symmetric term or not.
     bool iscoercive;  // The brick add a potentialy coercive terms or not.

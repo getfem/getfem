@@ -131,6 +131,14 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        md->model().add_fixed_size_variable(name, s, niter);
        );
 
+    /*@SET ('delete variable', @str name)
+      Delete a variable or a data from the model. @*/
+    sub_command
+      ("delete variable", 1, 1, 0, 0,
+       std::string name = in.pop().to_string();
+       md->model().delete_variable(name);
+       );
+
 
     /*@SET ('resize variable', @str name, @int size)
       Resize a  constant size variable of the model. `name` is the variable
@@ -297,6 +305,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        }
        );
 
+    /*@SET ('delete brick', @int ind_brick)
+      Delete a variable or a data from the model. @*/
+    sub_command
+      ("delete brick", 1, 1, 0, 0,
+       size_type ib = in.pop().to_integer() - config::base_index();
+       md->model().delete_brick(ib);
+       );
 
     /*@SET ind = ('add Laplacian brick', @tmim mim, @str varname[, @int region])
     Add a Laplacian term to the model relatively to the variable `varname`

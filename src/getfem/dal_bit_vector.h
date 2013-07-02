@@ -306,9 +306,11 @@ namespace dal {
     void add(size_type i) { (*this)[i] = true; }
     /** set the interval [i .. i+nb-1] to true */
     void add(size_type i, size_type nb);
-    void sup(size_type i) { (*this)[i] = false; }
+    void sup(size_type i) { (*this)[i] = false; } /* deprecated ...*/
+    void del(size_type i) { (*this)[i] = false; }
     /** set the interval [i .. i+nb-1] to false */
-    void sup(size_type i, size_type nb);
+    void sup(size_type i, size_type nb); /* deprecated ...*/
+    void del(size_type i, size_type nb);
     int first(void) const { return (card() == 0) ? -1 : int(first_true()); }
     int last(void) const { return (card() == 0) ? -1 : int(last_true()); }
     inline int take_first(void)

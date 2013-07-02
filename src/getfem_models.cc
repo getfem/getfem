@@ -127,7 +127,7 @@ namespace getfem {
     // In case of change in fems or mims, linear terms have to be recomputed
     // We couls select which brick is to be recomputed if we would be able
     // to know which fem or mim is changed.
-    for (size_type ib = 0; ib < bricks.size(); ++ib)
+    for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib)
       bricks[ib].terms_to_be_computed = true;
 
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
@@ -211,7 +211,7 @@ namespace getfem {
 
 	if (it->second.filter == VDESCRFILTER_CTERM) {
 
-	  for (size_type ib = 0; ib < bricks.size(); ++ib) {
+          for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
 	    const brick_description &brick = bricks[ib];
 	    bool bupd = false;
 	    bool cplx = is_complex() && brick.pbr->is_complex();
@@ -442,27 +442,122 @@ namespace getfem {
     add_dependency(mf);
   }
 
+
+  void model::delete_brick(size_type ib) {
+     GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+     valid_bricks.del(ib);
+     active_bricks.del(ib);
+
+     for  (size_type i = 0; i < bricks[ib].mims.size(); ++i) {
+       const mesh_im *mim = bricks[ib].mims[i];
+       bool found = false;
+       for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
+         for  (size_type j = 0; j < bricks[ibb].mims.size(); ++j)
+           if (bricks[ibb].mims[j] == mim) found = true;
+       }
+       for(VAR_SET::iterator it2 = variables.begin();
+           it2 != variables.end(); ++it2) {
+         if (it2->second.is_fem_dofs &&
+             it2->second.filter == VDESCRFILTER_INFSUP &&
+             mim == it2->second.mim) found = true;
+        }
+       if (!found) sup_dependency(*mim);
+     }
+     
+     is_linear_ = is_symmetric_ = is_coercive_ = true;
+     for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
+       is_linear_ = is_linear_ && bricks[ibb].pbr->is_linear();
+       is_symmetric_ = is_symmetric_ &&  bricks[ibb].pbr->is_symmetric();
+       is_coercive_ = is_coercive_ &&  bricks[ibb].pbr->is_coercive();
+     }
+
+     Neumann_SET::iterator it = Neumann_term_list.begin(), it2 = it;
+     for (; it != Neumann_term_list.end(); it = it2) {
+       it2++;
+       if (it->first.second == ib) Neumann_term_list.erase(it);
+     }
+
+     bricks[ib] = brick_description();
+  }
+
+  void model::delete_variable(const std::string &varname) {
+    for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
+      for (size_type i = 0; i < bricks[ibb].vlist.size(); ++i)
+        GMM_ASSERT1(varname.compare(bricks[ibb].vlist[i]),
+                    "Cannot delete a variable which is still use by a brick");
+      for (size_type i = 0; i < bricks[ibb].dlist.size(); ++i)
+        GMM_ASSERT1(varname.compare(bricks[ibb].dlist[i]),
+                    "Cannot delete a data which is still use by a brick");
+    }
+
+    VAR_SET::const_iterator it = variables.find(varname);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << varname);
+    
+    if (it->second.is_fem_dofs) {
+      const mesh_fem *mf = it->second.mf;
+      bool found = false;
+      for(VAR_SET::iterator it2 = variables.begin();
+          it2 != variables.end(); ++it2) {
+        if (it != it2 && it2->second.is_fem_dofs && mf == it2->second.mf)
+          found = true;
+      }
+      if (!found) sup_dependency(*mf);
+      
+      if (it->second.filter == VDESCRFILTER_INFSUP) {
+        const mesh_im *mim = it->second.mim;
+        found = false;
+        for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
+          for  (size_type j = 0; j < bricks[ibb].mims.size(); ++j)
+            if (bricks[ibb].mims[j] == mim) found = true;
+        }
+        for(VAR_SET::iterator it2 = variables.begin();
+            it2 != variables.end(); ++it2) {
+          if (it != it2 && it2->second.is_fem_dofs &&
+              it2->second.filter == VDESCRFILTER_INFSUP &&
+              mim == it2->second.mim) found = true;
+        }
+        if (!found) sup_dependency(*mim);
+      }
+    }
+    
+    Neumann_SET::iterator itn = Neumann_term_list.begin(), itn2 = itn;
+    for (; itn != Neumann_term_list.end(); itn = itn2) {
+      itn2++;
+      if (!(varname.compare(itn->first.first))) Neumann_term_list.erase(itn);
+    }
+    Neumann_terms_auxilliary_variables.erase(varname);
+    
+    variables.erase(varname);
+    act_size_to_be_done = true;
+  }
+
   size_type model::add_brick(pbrick pbr, const varnamelist &varnames,
                              const varnamelist &datanames,
                              const termlist &terms,
                              const mimlist &mims, size_type region) {
-    bricks.push_back(brick_description(pbr, varnames, datanames, terms,
-                                       mims, region));
-    size_type ib = bricks.size() - 1;
+    size_type ib = valid_bricks.first_false();
+    if (ib == bricks.size())
+      bricks.push_back(brick_description(pbr, varnames, datanames, terms,
+                                         mims, region));
+    else
+      bricks[ib] = brick_description(pbr, varnames, datanames, terms,
+                                     mims, region);
     active_bricks.add(ib);
-    for  (size_type i = 0; i < bricks.back().mims.size(); ++i)
-      add_dependency(*(bricks.back().mims[i]));
+    valid_bricks.add(ib);
+    
+    for (size_type i = 0; i < bricks[ib].mims.size(); ++i)
+      add_dependency(*(bricks[ib].mims[i]));
 
     GMM_ASSERT1(pbr->is_real() || is_complex(),
                 "Impossible to add a complex brick to a real model");
     if (is_complex() && pbr->is_complex()) {
-      bricks.back().cmatlist.resize(terms.size());
-      bricks.back().cveclist[0].resize(terms.size());
-      bricks.back().cveclist_sym[0].resize(terms.size());
+      bricks[ib].cmatlist.resize(terms.size());
+      bricks[ib].cveclist[0].resize(terms.size());
+      bricks[ib].cveclist_sym[0].resize(terms.size());
     } else {
-      bricks.back().rmatlist.resize(terms.size());
-      bricks.back().rveclist[0].resize(terms.size());
-      bricks.back().rveclist_sym[0].resize(terms.size());
+      bricks[ib].rmatlist.resize(terms.size());
+      bricks[ib].rveclist[0].resize(terms.size());
+      bricks[ib].rveclist_sym[0].resize(terms.size());
     }
     is_linear_ = is_linear_ && pbr->is_linear();
     is_symmetric_ = is_symmetric_ && pbr->is_symmetric();
@@ -479,14 +574,14 @@ namespace getfem {
   }
 
   void model::add_mim_to_brick(size_type ib, const mesh_im &mim) {
-    GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].mims.push_back(&mim);
     add_dependency(mim);
   }
 
   void model::change_terms_of_brick(size_type ib, const termlist &terms) {
-    GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].tlist = terms;
     if (is_complex() && bricks[ib].pbr->is_complex()) {
@@ -501,7 +596,7 @@ namespace getfem {
   }
 
   void model::change_variables_of_brick(size_type ib, const varnamelist &vl) {
-    GMM_ASSERT1(ib < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
     touch_brick(ib);
     bricks[ib].vlist = vl;
     for (size_type i=0; i < vl.size(); ++i)
@@ -511,9 +606,7 @@ namespace getfem {
 
 
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
-
-    GMM_ASSERT1(ibrick < bricks.size(), "Inexistent brick");
-
+    GMM_ASSERT1(valid_bricks[ibrick], "Inexistent brick");
     pbrick pbr = bricks[ibrick].pbr;
 
     bricks[ibrick].pdispatch = pdispatch;
@@ -542,7 +635,7 @@ namespace getfem {
 
   const std::string &model::varname_of_brick(size_type ind_brick,
 					     size_type ind_var) {
-    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(valid_bricks[ind_brick], "Inexistent brick");
     GMM_ASSERT1(ind_var < bricks[ind_brick].vlist.size(),
                "Inexistent brick variable");
     return bricks[ind_brick].vlist[ind_var];
@@ -550,18 +643,18 @@ namespace getfem {
 
   const std::string &model::dataname_of_brick(size_type ind_brick,
                                               size_type ind_data) {
-    GMM_ASSERT1(ind_brick < bricks.size(), "Inexistent brick");
+    GMM_ASSERT1(valid_bricks[ind_brick], "Inexistent brick");
     GMM_ASSERT1(ind_data < bricks[ind_brick].dlist.size(),
                 "Inexistent brick data");
     return bricks[ind_brick].dlist[ind_data];
   }
 
   void model::listbricks(std::ostream &ost, size_type base_id) const {
-    if (bricks.size() == 0)
+    if (valid_bricks.card() == 0)
       ost << "Model with no bricks" << endl;
     else {
       ost << "List of model bricks:" << endl;
-      for (size_type i = 0; i < bricks.size(); ++i) {
+      for (dal::bv_visitor i(valid_bricks); !i.finished(); ++i) {
         ost << "Brick " << std::setw(3) << std::right << i + base_id
             << " " << std::setw(20) << std::right
             << bricks[i].pbr->brick_name();
@@ -745,8 +838,11 @@ namespace getfem {
       aux_vars.resize(0);
   }
 
+  /* Pb on this function: depend only on the variable and not on the term
+     and brick. Not well managed at brick deletion. 
+  */
   void model::add_auxilliary_variables_of_Neumann_terms
-  (const std::string &varname, const std::vector<std::string> &aux_vars) {
+  (const std::string &varname, const std::vector<std::string> &aux_vars) const {
 
     for (size_type i = 0; i < aux_vars.size(); ++i) {
       bool found = false;
@@ -761,7 +857,7 @@ namespace getfem {
   }
 
   void model::add_auxilliary_variables_of_Neumann_terms
-  (const std::string &varname, const std::string &aux_var) {
+  (const std::string &varname, const std::string &aux_var) const {
     std::vector<std::string> aux_vars(1,  aux_var);
     add_auxilliary_variables_of_Neumann_terms(varname, aux_vars);
   }
@@ -5108,6 +5204,7 @@ namespace getfem {
 	(md.version_number_of_data_variable( vl[1]), &mf_p,
 	 &(md.real_variable(vl[1])), vl[1]);
       md.add_Neumann_term(pNt, vl[0], ib);
+      md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
 
       if (penalized) {
         gmm::clear(matl[1]);
@@ -5146,7 +5243,6 @@ namespace getfem {
       dl.push_back(dataname);
       tl.push_back(model::term_description(multname, multname, true));
     }
-    md.add_auxilliary_variables_of_Neumann_terms(varname, multname);
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 

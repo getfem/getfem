@@ -118,7 +118,7 @@ namespace dal {
   }
   
   bit_vector &bit_vector::setminus(const bit_vector& b) {
-    for (bv_visitor i(b); !i.finished(); ++i) sup(i); 
+    for (bv_visitor i(b); !i.finished(); ++i) del(i); 
     return *this;
   }
 
@@ -165,7 +165,12 @@ namespace dal {
 
   void bit_vector::sup(size_type i, size_type nb) {
     if (nb)
-      { sup(i+nb-1); std::fill(this->begin()+i, this->begin()+(i+nb), false); }
+      { del(i+nb-1); std::fill(this->begin()+i, this->begin()+(i+nb), false); }
+  }
+
+  void bit_vector::del(size_type i, size_type nb) {
+    if (nb)
+      { del(i+nb-1); std::fill(this->begin()+i, this->begin()+(i+nb), false); }
   }
 
   bool bit_vector::contains(const dal::bit_vector& other) const {
