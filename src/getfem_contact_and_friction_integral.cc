@@ -3755,22 +3755,42 @@ namespace getfem {
 
       bgeot::rtree tree;
 
-      for (dal::bv_visitor cv(mf_d2.convex_index()); !cv.finished(); ++cv) {
 
-        base_node min = m.points_of_convex(cv)[0], max = min;
-        for (size_type i = 1; i <  m.nb_points_of_convex(cv);
-             ++i) {
-          for (size_type k = 0; k < N; ++k) {
-            const base_node &x = m.points_of_convex(cv)[k];
-            min[k] = std::min(min[k], x[k]);
-            max[k] = std::max(max[k], x[k]);
-          }
-        }
-        for (size_type k = 0; k < N; ++k) {
-          min[k] -= (max[k] - min[k]) / 5.;
-          max[k] += (max[k] - min[k]) / 5.;
-        }
+	    
+	    
+      
+      for (dal::bv_visitor cv(mf_d2.convex_index()); !cv.finished(); ++cv) {
+	base_node min,max;
+//      base_node min = m.points_of_convex(cv)[0], max = min;
+//      for (size_type i = 1; i <  m.nb_points_of_convex(cv); // pourquoi ça?
+//          ++i) {
+//       cout << " cv = " << cv << ", min = " << min << ", max = " << max << endl;
+//       for (size_type k = 0; k < N; ++k) {
+//            const base_node &x = m.points_of_convex(cv)[k];
+//           min[k] = std::min(min[k], x[k]);
+//           max[k] = std::max(max[k], x[k]);
+//         }
+//       cout << " cv = " << cv << ", min = " << min << ", max = " << max << endl;
+//               }
+//    
+//       for (size_type k = 0; k < N; ++k) {
+//         min[k] -= (max[k] - min[k]) / 5.;
+//         max[k] += (max[k] - min[k]) / 5.;
+//          }
+       scalar_type EPS = 1E-13;
+       bounding_box(min, max, mf_d2.linked_mesh().points_of_convex(cv),
+                   mf_d2.linked_mesh().trans_of_convex(cv));
+       for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
+
+ 
+ 
+ 
+ 
+ 
         tree.add_box(min, max, cv);
+//	       cout << " cv = " << cv << ", min = " << min << ", max = " << max << endl;
+
+
       }
 
        cout << "Projection computed." << endl;
@@ -3816,14 +3836,11 @@ namespace getfem {
 
 
         size_type nbpt = pim->approx_method()->nb_points();
-        cout << "0.0" << endl;
         for (size_type ipt = 0; ipt < nbpt; ++ipt) {
           
-          cout << "0" << endl;
           bgeot::vectors_to_base_matrix
             (G1, m.points_of_convex(cv));
 
-          cout << "1" << endl;
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
           pfem pf_u1 = mf_u1.fem_of_element(cv);
           pfem pf_d1 = mf_d1.fem_of_element(cv);
@@ -3834,7 +3851,6 @@ namespace getfem {
           fem_interpolation_context ctx_u1(pgt, pf_u1, xref, G1, cv);
           base_node x0 = ctx_u1.xreal();
 
-          cout << "x0 = " << x0 << endl;
 
 	  
           scalar_type weight = pim->approx_method()->coeff(ipt) * ctx_u1.J();
@@ -3848,9 +3864,7 @@ namespace getfem {
             gmm::condition_number(ctx_u1.K(),emax,emin);
             gamma = gamma0 * emax * sqrt(scalar_type(N));
           }
-
-          cout << " gamma0 = " << gamma0 << endl;
-	  cout << " gamma = " << gamma << endl;
+          
 	  
           // computation of u1, w1, f_friction
           slice_vector_on_basic_dof_of_element(mf_u1, U1, cv, coeff);
@@ -3859,9 +3873,7 @@ namespace getfem {
             slice_vector_on_basic_dof_of_element(mf_u1, *WT1, cv, coeff);
             ctx_u1.pf()->interpolation(ctx_u1, coeff, wt1, bgeot::dim_type(N));
           }
-	
-	  cout << " WT1 = " << WT1 << endl;
-	  
+		  
 
           // Computation of n1
           fem_interpolation_context ctx_d1(pgt, pf_d1, xref, G1, cv);
@@ -3870,7 +3882,6 @@ namespace getfem {
           gmm::copy(grad_d1.as_vector(), n1);
           gmm::scale(n1, 1./gmm::vect_norm2(n1));
 	  
-	  cout << " n1 = " << n1 << endl;
 
           cout << " weight ="  << weight << endl;
           cout << " Element " << cv << " point " << ipt << " conf ref : " <<
@@ -3900,32 +3911,21 @@ namespace getfem {
                    D2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
                    y0);
 
-	  cout << " y0 = " << y0 << endl;
 	  
-	  // Pb ici
-	  
-	  
-	  
-	  cout << " 2.0  " << endl;
 	  
 	  
           bgeot::rtree::pbox_set pbs;
 	  
           tree.find_boxes_at_point(y0, pbs);
-	
-
-	  cout << " 1111 " << endl;
 	   
           bgeot::rtree::pbox_set::const_iterator it = pbs.begin();
 	  
 	  
           bool found = false;
           size_type nbdof2(0);
-	  
-	  cout << " nbdof2 = " << nbdof2 << endl;
           
 	  for (; it != pbs.end(); ++it) {
-	    cv2 = ((*it)->id);
+	    cv2 = (*it)->id;
             bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2);
             nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
             bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
@@ -3951,6 +3951,9 @@ namespace getfem {
           for( size_type i=0; i<N; ++i)
             gap += (y0[i]-x0[i])*n1[i];
 
+          cout << "gap = " << gap << endl;
+	  
+	  
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
           fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
 
@@ -3962,18 +3965,30 @@ namespace getfem {
             ctx_u2.pf()->interpolation(ctx_u2, coeff, wt2, bgeot::dim_type(N));
           }
 
+	  cout << "1" << endl;
 
           u1n = gmm::vect_sp(u1, n2); u2n = gmm::vect_sp(u2, n2);
 
+	  cout << "2" << endl;	  
           md.compute_Neumann_terms(1, vl[0], mf_u1, U1, ctx_u1, n1, tG1);
+	  cout << " tG1 = " << tG1 << endl; 
           md.compute_Neumann_terms(2, vl[0], mf_u1, U1, ctx_u1, n1, tGdu1);
           md.compute_Neumann_terms(3, vl[0], mf_u1, U1, ctx_u1, n1, tGddu1);
+	  cout << "2.0" << endl;
+	  cout << " tGdu1 = " << tGdu1 << endl;
+	  cout << " tGddu1 = " << tGddu1 << endl;
           ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
+  	  cout << "2.1" << endl;	
+
           ctx_u2.pf()->real_base_value(ctx_u2, tbv2);
+  	  cout << "2.2" << endl;	
+
           for(size_type i=0; i<N; ++i)
             zeta[i] = tG1[i] +
               ( (gap + (alpha-1.)*u1n-(alpha-1.)*u2n)*n2[i]
                 + alpha*(wt1[i]-wt2[i]) - alpha*u1[i] + alpha*u2[i]) / gamma;
+
+	  cout << "3" << endl;
 
           coupled_projection(zeta, n2, f_coeff, Pr);
 	  coupled_projection_grad(zeta, n2, f_coeff, GPr);
@@ -3984,6 +3999,7 @@ namespace getfem {
 	       tbv2n += n2[l]*tbv2(k,l);
 	    }
 
+	  cout << "4" << endl;
 
 
             // Plan tangent 
