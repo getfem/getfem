@@ -261,6 +261,8 @@ namespace getfem {
     for (dal::bv_visitor i(msh.convex_index()); !i.finished(); ++i) {
       papprox_integration pai = regular_simplex_pim->approx_method();
       
+      GMM_ASSERT1(regular_simplex_pim->structure() == bgeot::simplex_structure(n), "Base integration method should be defined on a simplex of same dimension than the mesh");
+      
       if ((integrate_where != INTEGRATE_ALL) &&
 	  !convexes_arein[i]) continue;
       
@@ -431,52 +433,6 @@ namespace getfem {
     }
     is_adapted = true; touch();
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   void mesh_im_cross_level_set::update_from_context(void) const
