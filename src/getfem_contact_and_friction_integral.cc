@@ -3779,7 +3779,7 @@ namespace getfem {
 //          }
        scalar_type EPS = 1E-13;
        bounding_box(min, max, mf_d2.linked_mesh().points_of_convex(cv),
-                   mf_d2.linked_mesh().trans_of_convex(cv));
+                    mf_d2.linked_mesh().trans_of_convex(cv));
        for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
 
  
@@ -3819,7 +3819,11 @@ namespace getfem {
       scalar_type gap, u1n, u2n, tbv1n(0), tbv2n(0);
       size_type cv2(-1);
 
-     
+      bgeot::multi_index sizes_tGdu1(1), sizes_tGddu1(3);
+      sizes_tGdu1[0] = N;
+      tG1.adjust_sizes(sizes_tGdu1);
+      sizes_tGdu1.push_back(N);
+      sizes_tGddu1[2] = N;
       
       cout << "begining gauss points loop" << endl;
       
@@ -3834,20 +3838,23 @@ namespace getfem {
         cout << "pim = " << int(pim->type()) << endl;
         cout << "pim = " << pim->approx_method() << endl;
 
-
+        bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv));
+        
+        bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+        pfem pf_u1 = mf_u1.fem_of_element(cv);
+        pfem pf_d1 = mf_d1.fem_of_element(cv);
+        size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
+        sizes_tGddu1[0] = sizes_tGddu1[1] = sizes_tGdu1[0] = nbdof1;
+        tGdu1.adjust_sizes(sizes_tGdu1);
+        tGddu1.adjust_sizes(sizes_tGddu1);
+        
+          
         size_type nbpt = pim->approx_method()->nb_points();
         for (size_type ipt = 0; ipt < nbpt; ++ipt) {
           
-          bgeot::vectors_to_base_matrix
-            (G1, m.points_of_convex(cv));
-
-          bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
-          pfem pf_u1 = mf_u1.fem_of_element(cv);
-          pfem pf_d1 = mf_d1.fem_of_element(cv);
-	  
-          const base_node &xref = pim->approx_method()->integration_points()[ipt];
+          const base_node xref = pim->approx_method()->integration_points()[ipt];
+          cout << "xref = " << xref << endl;
           
-          size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
           fem_interpolation_context ctx_u1(pgt, pf_u1, xref, G1, cv);
           base_node x0 = ctx_u1.xreal();
 
@@ -3884,15 +3891,11 @@ namespace getfem {
 	  
 
           cout << " weight ="  << weight << endl;
-          cout << " Element " << cv << " point " << ipt << " conf ref : " <<
-          pim->approx_method()->integration_points()[ipt] << " conf reel : " << ctx_u1.xreal() << endl;
+          cout << " Element " << cv << " point " << ipt << " elt ref : " <<
+          pim->approx_method()->integration_points()[ipt] << " elt reel : " << x0 << endl;
 
  	  // REMARQUE : on peut faire  ctx_u1.xref() plutôt que  pim->approx_method()->integration_points()[ipt]      
 
-	  
-	  
-	 
-     
 	    
            //Definition de la projection
 
@@ -3906,11 +3909,13 @@ namespace getfem {
 
           ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
 
+          cout << "grad_d2 = " << grad_d2 << endl;
+          cout << "d2 = " << d2[0] << endl;
+ 
           base_node y0 = x0, yref(N);
           gmm::add(gmm::scaled(gmm::mat_row(grad_d2, 0),
-                   D2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
+                   -d2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
                    y0);
-
 	  
 	  
 	  
@@ -3947,11 +3952,7 @@ namespace getfem {
 	  
 	  
 	  
-          gap = scalar_type(0);
-          for( size_type i=0; i<N; ++i)
-            gap += (y0[i]-x0[i])*n1[i];
-
-          cout << "gap = " << gap << endl;
+         
 	  
 	  
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
@@ -3969,7 +3970,9 @@ namespace getfem {
 
           u1n = gmm::vect_sp(u1, n2); u2n = gmm::vect_sp(u2, n2);
 
-	  cout << "2" << endl;	  
+	  cout << "2" << endl;
+
+          
           md.compute_Neumann_terms(1, vl[0], mf_u1, U1, ctx_u1, n1, tG1);
 	  cout << " tG1 = " << tG1 << endl; 
           md.compute_Neumann_terms(2, vl[0], mf_u1, U1, ctx_u1, n1, tGdu1);
@@ -3998,6 +4001,13 @@ namespace getfem {
 	       tbv1n += n2[l]*tbv1(k,l);
 	       tbv2n += n2[l]*tbv2(k,l);
 	    }
+
+
+          gap = scalar_type(0);
+          for( size_type i=0; i<N; ++i)
+            gap += (y0[i]-x0[i])*n2[i];
+
+          cout << "gap = " << gap << endl;
 
 	  cout << "4" << endl;
 

@@ -4,7 +4,7 @@ disp('with a fictitious domain method and Nitsche s method');
 
 clear all;
 % gf_workspace('clear all');
-NX=25;
+NX=10;
 ls_degree = 1;
 R=0.25;
 dirichlet_val = 0;
@@ -16,13 +16,15 @@ theta = 0;
 %definition of fictitious domain's mesh with quadrangles and order 1 of level-set
 
 
-m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
+m=gf_mesh('regular simplices', -.5:(1/NX):.5, -.5:(1/NX):.5);
+%m=gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
 ls1=gf_levelset(m, ls_degree);
 ls2=gf_levelset(m, ls_degree);
 mf_ls1=gfObject(gf_levelset_get(ls1, 'mf'));
 mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));
 mfu=gfMeshFem(m,2);
-set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
+set(mfu, 'fem', gf_fem('FEM_PK(2,1)'));
+% set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
 mls1=gfMeshLevelSet(m);
 mls2=gfMeshLevelSet(m);
 
@@ -31,7 +33,7 @@ mls2=gfMeshLevelSet(m);
 P=get(mf_ls1, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 ULS1=1000*ones(1,numel(x));
-ULS1 = min(ULS1,((x.^2 + y.^2 ) - R^2));
+ULS1 = min(ULS1, sqrt(x.^2 + y.^2) - R);
 gf_levelset_set(ls1, 'values', ULS1);
 
 %definition of Omega 2 (rectangle)
@@ -39,9 +41,9 @@ gf_levelset_set(ls1, 'values', ULS1);
 P=get(mf_ls2, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 ULS2=1000*ones(1,numel(x));
-yc = -0.375;xc=0; 
-R2=0.125;R1=0.5;
-ULS2=min(ULS2,(y-yc) - R2);
+yc = -0.25; xc=0; 
+% R2=0.125;R1=0.5;
+ULS2=min(ULS2,y-yc);
 gf_levelset_set(ls2, 'values', ULS2); 
 
 %figure
@@ -65,18 +67,19 @@ gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 
 
 clf; gf_plot_mesh(get(mls1,'cut mesh'));
-hold on; gf_plot_mesh(get(mls2,'cut mesh'));
+hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
 
 %gf_plot_mesh(get(mls, 'cut_mesh'), 'curved', 'on');
 %hold on; gf_plot(mf_ls,ULS);
 
-gf_plot_mesh(m, 'regions', GAMMAD); %plot de bord avec condition de type Dirichlet
-title('boundary with Dirichlet s condition in red');
+hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
+title('boundary with Dirichlet condition in red');
+hold off;
 
 %Finites elements' method on mls1 and mls2
 
-mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_QUAD(5)'));
-mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_QUAD(5)')); 
+mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_TRIANGLE(5)'));
+mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_TRIANGLE(5)')); 
 set(mim, 'integ', 4);
 
 %c'est suffisant?
