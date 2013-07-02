@@ -167,18 +167,18 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET ('listvar')
+    /*@GET ('variable list')
       print to the output the list of variables and constants of the model.@*/
     sub_command
-      ("listvar", 0, 0, 0, 0,
+      ("variable list", 0, 0, 0, 0,
        md->model().listvar(infomsg());
        );
 
 
-    /*@GET ('listbricks')
+    /*@GET ('brick list')
       print to the output the list of bricks of the model.@*/
     sub_command
-      ("listbricks", 0, 0, 0, 0,
+      ("brick list", 0, 0, 0, 0,
        md->model().listbricks(infomsg(), config::base_index());
        );
 
