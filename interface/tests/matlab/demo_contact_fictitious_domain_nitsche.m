@@ -76,7 +76,7 @@ title('boundary with Dirichlet s condition in red');
 %Finites elements' method on mls1 and mls2
 
 mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_QUAD(5)'));
-mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_QUAD(5)'));
+mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_QUAD(5)')); 
 set(mim, 'integ', 4);
 
 %c'est suffisant?
@@ -131,7 +131,7 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 
 
 
-niter= 1000; solve=true;
+niter= 1000; solve=true; 
 disp('solve');
 
 %pause;
