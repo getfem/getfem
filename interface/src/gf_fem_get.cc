@@ -100,7 +100,7 @@ void gf_fem_get(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       ("index of global dof", 2, 2, 0, 1,
        size_type cv = in.pop().to_integer() - config::base_index();
        size_type i = in.pop().to_integer() - config::base_index();
-       out.pop().from_scalar(double(fem->index_of_global_dof(cv, i)));
+       out.pop().from_scalar(double(fem->index_of_global_dof(cv, i) + config::base_index()));
        );
 
 
