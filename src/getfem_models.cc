@@ -724,6 +724,76 @@ namespace getfem {
     }
   }
 
+  
+  
+	/**takes a list (more often it's a std::vector) of matrices 
+	or vectors, creates an empty copy for each thread. When the 
+	thread computations are done (in the distructor), accumulates 
+	the assembled copies into the original. Note: the matrices or 
+	vectors in the list are gmm::cleared, deleting the content 
+	in the constructor*/
+	template <class C> class list_distro{
+		C& original_list;
+		omp_distribute<C> th_list;
+		typedef typename C::value_type value_type;
+
+		//template<class L> void build_distro(L);
+
+		void build_distro(gmm::abstract_matrix m)
+		{
+			for(size_type thread = 0; thread<num_threads(); thread++)
+			{
+				typename C::iterator it_org=original_list.begin();
+				typename C::iterator it_distro=th_list(thread).begin();
+				for(;it_org!=original_list.end();++it_org,++it_distro)
+				{
+					gmm::resize(*it_distro,gmm::mat_nrows(*it_org),gmm::mat_ncols(*it_org));
+					if (thread==0) {
+						gmm::copy(*it_org,*it_distro);
+						gmm::clear(*it_org);
+					}
+				}
+			}
+		}
+
+		void build_distro(gmm::abstract_vector v)
+		{
+			for(size_type thread = 0; thread<num_threads(); thread++)
+			{
+				typename C::iterator it_org=original_list.begin();
+				typename C::iterator it_distro=th_list(thread).begin();
+				for(;it_org!=original_list.end();++it_org,++it_distro){
+					gmm::resize(*it_distro,gmm::vect_size(*it_org));
+					if (thread==0) {
+						gmm::copy(*it_org,*it_distro);
+						gmm::clear(*it_org);
+					}
+				}
+			}
+		}
+
+	public:
+		list_distro(C& l) : original_list(l)
+		{
+			for(size_type thread=0;thread<num_threads();thread++) 
+				th_list(thread).resize(original_list.size());
+			build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
+		}
+
+		operator C&(){return th_list(this_thread());}
+
+		~list_distro(){
+			GMM_ASSERT1(!me_is_multithreaded_now(),
+				"List accumulation should not run in parallel");
+			for(size_type thread = 0; thread<num_threads(); thread++){ 
+				typename C::iterator it_org=original_list.begin();
+				typename C::iterator it_distro=th_list(thread).begin();
+				for(;it_org!=original_list.end();++it_org,++it_distro) 
+							gmm::add(*it_distro,*it_org);
+			}
+		}
+	};
+
 
   void model::brick_call(size_type ib, build_version version,
                          size_type rhs_ind) const {
@@ -739,14 +809,39 @@ namespace getfem {
                                            brick.cveclist[rhs_ind],
                                            brick.cveclist_sym[rhs_ind],
                                            brick.region, version);
-    else
-      brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
-                                        brick.mims,
-                                        brick.rmatlist,
-                                        brick.rveclist[rhs_ind],
-                                        brick.rveclist_sym[rhs_ind],
-                                        brick.region, version);
-  }
+    else{
+
+        /*distributing the resulting vectors and matrices
+        for individual threads. This is done every time assembly is performed,
+        hence, not effective. Will try to include this distribution into the
+        brick description, to avoid their re-allocation (Andriy)*/
+	    list_distro<real_matlist> rmatlist(brick.rmatlist);
+	    list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
+	    list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
+
+
+        /*running the assembly in parallel*/
+	    gmm::standard_locale locale;
+	    open_mp_is_running_properly check; 
+#pragma omp parallel default(shared)  
+            { 
+#pragma omp for schedule(static) 
+            for(int i=0;i<num_threads();i++){
+                 brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
+                                                brick.mims,
+                                                rmatlist,
+                                                rveclist,
+                                                rveclist_sym,
+                                                brick.partition.thread_local_partition(), 
+                                                version);
+                }
+	     }
+        //the memory, allocated dynamically with boost::intrusive_pointer
+        //is realised only after this call. I hope this doesn't blow memory with some bricks
+	     dal::collect_static_stored_objects_garbage();
+         }
+
+ }
 
   void model::set_dispatch_coeff(void) {
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
@@ -2394,10 +2489,10 @@ namespace getfem {
     bool H_version; // The version hu = r for vector fields.
     bool normal_component; // Dirichlet on normal component for vector field.
     const mesh_fem *mf_mult_;
-    mutable model_real_sparse_matrix rB;
-    mutable model_real_plain_vector rV;
-    mutable model_complex_sparse_matrix cB;
-    mutable model_complex_plain_vector cV;
+    mutable getfem::omp_distribute<model_real_sparse_matrix> rB_th;
+    mutable getfem::omp_distribute<model_real_plain_vector> rV_th;
+    mutable getfem::omp_distribute<model_complex_sparse_matrix> cB_th;
+    mutable getfem::omp_distribute<model_complex_plain_vector> cV_th;
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &vl,
@@ -2414,6 +2509,9 @@ namespace getfem {
                   "Dirichlet condition brick need one and only one mesh_im");
       GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 3,
                   "Wrong number of variables for Dirichlet condition brick");
+
+      model_real_sparse_matrix& rB = rB_th;
+      model_real_plain_vector&  rV = rV_th;
 
       bool penalized = (vl.size() == 1);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
@@ -2555,6 +2653,9 @@ namespace getfem {
                   "Dirichlet condition brick need one and only one mesh_im");
       GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 3,
                   "Wrong number of variables for Dirichlet condition brick");
+
+      model_complex_sparse_matrix& cB = cB_th;
+      model_complex_plain_vector&  cV = cV_th;
 
       bool penalized = (vl.size() == 1);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
@@ -5033,9 +5134,9 @@ namespace getfem {
     size_type sm = gmm::vect_size(*mu);
     if (mf_mu) sm = sm * mf_mu->get_qdim() / mf_mu->nb_dof();
 
-    GMM_ASSERT1(sl == 1 && sm == 1, "Bad format for Lamé coefficients");
+    GMM_ASSERT1(sl == 1 && sm == 1, "Bad format for Lamï¿½ coefficients");
     GMM_ASSERT1(mf_lambda == mf_mu,
-                "The two Lamé coefficients should be described on the same "
+                "The two Lamï¿½ coefficients should be described on the same "
                 "finite element method.");
 
     if (mf_lambda) {

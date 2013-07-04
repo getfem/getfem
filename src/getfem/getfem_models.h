@@ -40,6 +40,7 @@
 #define GETFEM_MODELS_H__
 
 #include "getfem_partial_mesh_fem.h"
+#include "getfem_omp.h"
 
 namespace getfem {
 
@@ -253,6 +254,10 @@ namespace getfem {
       termlist tlist;           // List of terms build by the brick
       mimlist mims;             // List of integration methods.
       size_type region;         // Optional region size_type(-1) for all.
+
+      //varibables, dealing with a multithreaded assembly		
+	  region_partition partition;// partition of the applied region
+
       mutable model_real_plain_vector coeffs;
       mutable scalar_type matrix_coeff;
       mutable real_matlist rmatlist;    // Matrices the brick have to fill in
@@ -274,7 +279,8 @@ namespace getfem {
         : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
           rveclist(1), rveclist_sym(1), cveclist(1),
-          cveclist_sym(1)  { }
+          cveclist_sym(1), 
+          partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  region)  { }
 
       brick_description(void) {}      
     };
@@ -1789,4 +1795,4 @@ namespace getfem {
 }  /* end of namespace getfem.                                             */
 
 
-#endif /* GETFEM_MODELS_H__  */
+#endif /* GETFEM_MODELS_H_*/

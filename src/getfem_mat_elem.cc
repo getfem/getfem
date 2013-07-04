@@ -24,6 +24,7 @@
 #include "getfem/dal_singleton.h"
 #include "getfem/getfem_fem.h"
 #include "getfem/getfem_mat_elem.h"
+#include "getfem/getfem_omp.h"
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
                        const int *incx, double *y, const int *incy);
@@ -71,7 +72,7 @@ namespace getfem {
     std::deque<short_type> grad_reduction, hess_reduction, trans_reduction;
     std::deque<short_type> K_reduction;
     std::deque<pfem> trans_reduction_pfi;
-    mutable base_small_vector un, up;
+    mutable base_vector un, up;
     mutable bool faces_computed;
     mutable bool volume_computed;
     bool is_linear;
@@ -361,8 +362,10 @@ namespace getfem {
     void expand_product_daxpy(base_tensor &t, scalar_type J, bool first)const {
       size_type k;
       base_tensor::iterator pt = t.begin();
-      static std::vector<base_tensor::const_iterator> pts, es_beg, es_end;
-      static std::vector<scalar_type> Vtab;
+	  DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,pts);
+	  DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_beg);
+	  DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_end);
+	  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>,Vtab);
       pts.resize(pme->size()); es_beg.resize(pme->size());
       es_end.resize(pme->size()); Vtab.resize(pme->size());
       size_type nm = 0;
@@ -520,7 +523,8 @@ namespace getfem {
       GMM_ASSERT1(G.ncols() == NP, "dimensions mismatch");
       if (ir > 0) {
         up.resize(N); un.resize(P);
-        un = pgt->normals()[ir-1];
+        //un = pgt->normals()[ir-1];
+        gmm::copy(pgt->normals()[ir-1],un);
       }
       base_tensor taux;
       bool flag = false;
@@ -532,7 +536,8 @@ namespace getfem {
         if (ir > 0) {
           gmm::mult(B, un, up);
           scalar_type nup = gmm::vect_norm2(up);
-          J *= nup; up /= nup;
+	  J *= nup; //up /= nup;
+	  gmm::scale(up,1.0/nup);
         }
 
         t = mref[ir]; gmm::scale(t.as_vector(), J);
@@ -577,7 +582,7 @@ namespace getfem {
           if (ir > 0) {
             gmm::mult(B, un, up);
             scalar_type nup = gmm::vect_norm2(up);
-            J *= nup; up /= nup;
+	    J *= nup; /*up /= nup;*/gmm::scale(up,1.0/nup);
           }
           add_elem(t, ctx, J, first, true, icb, sizes);
         }

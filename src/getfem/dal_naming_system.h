@@ -35,6 +35,7 @@
 #include <deque>
 #include <map>
 #include "dal_static_stored_objects.h"
+#include "getfem_omp.h"
 
 
 namespace dal {
@@ -253,7 +254,8 @@ namespace dal {
       GMM_ASSERT1(!error, "Syntax error on position " << i
 		  << " of the string : " << name);
       if (isend) {
-	std::stringstream norm_name; norm_name.imbue(std::locale("C"));
+	std::stringstream norm_name; //norm_name.imbue(std::locale("C"));
+	gmm::standard_locale loc;
 	norm_name << suff;
 	if (params.size() > 0) {
 	  norm_name << '(';
@@ -284,7 +286,6 @@ namespace dal {
 	  }
 	  pm = (*(functions[ind_suff]))(params, dependencies);
 	}
-	
 	pstatic_stored_object_key k = key_of_stored_object(pm);
 	if (!k) {
 	  add_stored_object(new method_key(nname), pm,
@@ -315,7 +316,6 @@ namespace dal {
   {
 
     pmethod pm = 0;
-
 	method_key nname(name);
 	pstatic_stored_object o = search_stored_object(nname);
 

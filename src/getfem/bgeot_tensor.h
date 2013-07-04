@@ -38,6 +38,8 @@
 #define BGEOT_TENSOR_H__
 
 #include "bgeot_vector.h"
+#include "getfem/getfem_omp.h"
+
 
 namespace bgeot {
 
@@ -242,9 +244,10 @@ namespace bgeot {
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
     
-    static std::vector<T> *tmp;
-    static multi_index *mi;
-    static bool isinit = false;
+	DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
+	DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
+	DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
+
     if (!isinit) {
       tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
     }
@@ -285,9 +288,9 @@ namespace bgeot {
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
-    static std::vector<T> *tmp;
-    static multi_index *mi;
-    static bool isinit = false;
+	DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
+	DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
+	DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
     if (!isinit) {
       tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
     }
@@ -337,4 +340,4 @@ namespace bgeot {
 }  /* end of namespace bgeot.                                              */
 
 
-#endif  /* BGEOT_TENSOR_H__ */
+#endif  /* BGEOT_TENSOR_H */

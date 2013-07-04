@@ -1,39 +1,39 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
- 
- Copyright (C) 2002-2012 Yves Renard
- 
- This file is a part of GETFEM++
- 
- Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it will be useful,  but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- License and GCC Runtime Library Exception for more details.
- You  should  have received a copy of the GNU Lesser General Public License
- along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
- As a special exception, you  may use  this file  as it is a part of a free
- software  library  without  restriction.  Specifically,  if   other  files
- instantiate  templates  or  use macros or inline functions from this file,
- or  you compile this  file  and  link  it  with other files  to produce an
- executable, this file  does  not  by itself cause the resulting executable
- to be covered  by the GNU Lesser General Public License.  This   exception
- does not  however  invalidate  any  other  reasons why the executable file
- might be covered by the GNU Lesser General Public License.
- 
+
+Copyright (C) 2002-2012 Yves Renard
+
+This file is a part of GETFEM++
+
+Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+under  the  terms  of the  GNU  Lesser General Public License as published
+by  the  Free Software Foundation;  either version 3 of the License,  or
+(at your option) any later version along with the GCC Runtime Library
+Exception either version 3.1 or (at your option) any later version.
+This program  is  distributed  in  the  hope  that it will be useful,  but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+License and GCC Runtime Library Exception for more details.
+You  should  have received a copy of the GNU Lesser General Public License
+along  with  this program;  if not, write to the Free Software Foundation,
+Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+As a special exception, you  may use  this file  as it is a part of a free
+software  library  without  restriction.  Specifically,  if   other  files
+instantiate  templates  or  use macros or inline functions from this file,
+or  you compile this  file  and  link  it  with other files  to produce an
+executable, this file  does  not  by itself cause the resulting executable
+to be covered  by the GNU Lesser General Public License.  This   exception
+does not  however  invalidate  any  other  reasons why the executable file
+might be covered by the GNU Lesser General Public License.
+
 ===========================================================================*/
 
 /**@file gmm_std.h
-   @author  Yves Renard <Yves.Renard@insa-lyon.fr>,
-   @author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
-   @date June 01, 1995.
-   @brief basic setup for gmm (includes, typedefs etc.)
+@author  Yves Renard <Yves.Renard@insa-lyon.fr>,
+@author  Julien Pommier <Julien.Pommier@insa-toulouse.fr>
+@date June 01, 1995.
+@brief basic setup for gmm (includes, typedefs etc.)
 */
 #ifndef GMM_STD_H__
 #define GMM_STD_H__
@@ -87,9 +87,9 @@
 #endif 
 */
 /* for VISUAL C++ ...
-   #if defined(_MSC_VER) //  && !defined(__MWERKS__)
-   #define _GETFEM_MSVCPP_ _MSC_VER
-   #endif
+#if defined(_MSC_VER) //  && !defined(__MWERKS__)
+#define _GETFEM_MSVCPP_ _MSC_VER
+#endif
 */
 
 #if defined(__GNUC__)
@@ -125,17 +125,67 @@
 #include <limits>
 #include <sstream>
 #include <numeric>
+#include <locale.h>
+#include <omp.h>
 
+#ifdef _OPENMP	
+	/**number of OpenMP threads*/
+	inline size_t num_threads(){return omp_get_max_threads();}
+	/**index of the current thread*/
+	inline size_t this_thread() {return omp_get_thread_num();}
+	/**is the program running in the parallel section*/
+	inline bool me_is_multithreaded_now(){return static_cast<bool>(omp_in_parallel());}
+#else
+	inline size_t num_threads(){return size_t(1);}
+	inline size_t this_thread() {return size_t(0);}
+	inline bool me_is_multithreaded_now(){return false;}
+#endif
 
 namespace gmm {
 
-  using std::endl; using std::cout; using std::cerr;
-  using std::ends; using std::cin;
+	using std::endl; using std::cout; using std::cerr;
+	using std::ends; using std::cin;
 
+#ifdef _WIN32
 
-  /* ********************************************************************* */
-  /*       Change locale temporarily.                                      */
-  /* ********************************************************************* */
+	class standard_locale {
+		std::string cloc;
+		std::locale cinloc;
+	public :
+		inline standard_locale(void) : cinloc(cin.getloc())
+		{
+			if (!me_is_multithreaded_now()){ 
+				 cloc=setlocale(LC_NUMERIC, 0);
+				 setlocale(LC_NUMERIC,"C"); 
+			}
+		}
+
+		inline ~standard_locale() {
+			if (!me_is_multithreaded_now()) 
+					setlocale(LC_NUMERIC, cloc.c_str()); 
+			
+		}
+	};
+#else
+	/**this is the above solutions for linux, but I still needs to be tested.*/
+	//class standard_locale {
+	//	locale_t oldloc;
+	//	locale_t temploc;
+
+	//public :
+	//	inline standard_locale(void) : oldloc(uselocale((locale_t)0))
+	//	{       
+	//			temploc = newlocale(LC_NUMERIC, "C", NULL);
+    //              uselocale(temploc);
+	//	}
+
+	//	inline ~standard_locale()
+	//	{
+	//		    uselocale(oldloc);
+	//			freelocale(temploc);
+	//	}
+	//};
+
 
   class standard_locale {
     std::string cloc;
@@ -149,134 +199,137 @@ namespace gmm {
     { setlocale(LC_NUMERIC, cloc.c_str()); cin.imbue(cinloc); }
   };
 
-  class stream_standard_locale {
-    std::locale cloc;
-    std::ios &io;
-    
-  public :
-    inline stream_standard_locale(std::ios &i)
-      : cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
-    inline ~stream_standard_locale() { io.imbue(cloc); }
-  };
+
+#endif
+
+	class stream_standard_locale {
+		std::locale cloc;
+		std::ios &io;
+
+	public :
+		inline stream_standard_locale(std::ios &i)
+			: cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
+		inline ~stream_standard_locale() { io.imbue(cloc); }
+	};
 
 
 
 
-  /* ******************************************************************* */
-  /*       Clock functions.                                              */
-  /* ******************************************************************* */
-  
+	/* ******************************************************************* */
+	/*       Clock functions.                                              */
+	/* ******************************************************************* */
+
 # if  defined(HAVE_SYS_TIMES)
-  inline double uclock_sec(void) {
-    static double ttclk = 0.;
-    if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
-    tms t; times(&t); return double(t.tms_utime) / ttclk;
-  }
+	inline double uclock_sec(void) {
+		static double ttclk = 0.;
+		if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
+		tms t; times(&t); return double(t.tms_utime) / ttclk;
+	}
 # else
-  inline double uclock_sec(void)
-  { return double(clock())/double(CLOCKS_PER_SEC); }
+	inline double uclock_sec(void)
+	{ return double(clock())/double(CLOCKS_PER_SEC); }
 # endif
-  
-  /* ******************************************************************** */
-  /*	Fixed size integer types.                     			  */
-  /* ******************************************************************** */
-  // Remark : the test program dynamic_array tests the lenght of
-  //          resulting integers
 
-  template <size_t s> struct fixed_size_integer_generator {
-    typedef void int_base_type;
-    typedef void uint_base_type;  
-  };
+	/* ******************************************************************** */
+	/*	Fixed size integer types.                     			  */
+	/* ******************************************************************** */
+	// Remark : the test program dynamic_array tests the lenght of
+	//          resulting integers
 
-  template <> struct fixed_size_integer_generator<sizeof(char)> {
-    typedef signed char int_base_type;
-    typedef unsigned char uint_base_type;
-  };
+	template <size_t s> struct fixed_size_integer_generator {
+		typedef void int_base_type;
+		typedef void uint_base_type;  
+	};
 
-  template <> struct fixed_size_integer_generator<sizeof(short int)
-    - ((sizeof(short int) == sizeof(char)) ? 78 : 0)> {
-    typedef signed short int int_base_type;
-    typedef unsigned short int uint_base_type;
-  };
+	template <> struct fixed_size_integer_generator<sizeof(char)> {
+		typedef signed char int_base_type;
+		typedef unsigned char uint_base_type;
+	};
 
-  template <> struct fixed_size_integer_generator<sizeof(int)
-    - ((sizeof(int) == sizeof(short int)) ? 59 : 0)> {
-    typedef signed int int_base_type;
-    typedef unsigned int uint_base_type;
-  };
- 
-  template <> struct fixed_size_integer_generator<sizeof(long)
-    - ((sizeof(int) == sizeof(long)) ? 93 : 0)> {
-    typedef signed long int_base_type;
-    typedef unsigned long uint_base_type;
-  };
+	template <> struct fixed_size_integer_generator<sizeof(short int)
+		- ((sizeof(short int) == sizeof(char)) ? 78 : 0)> {
+			typedef signed short int int_base_type;
+			typedef unsigned short int uint_base_type;
+	};
 
-  template <> struct fixed_size_integer_generator<sizeof(long long)
-    - ((sizeof(long long) == sizeof(long)) ? 99 : 0)> {
-    typedef signed long long int_base_type;
-    typedef unsigned long long uint_base_type;
-  };
- 
-  typedef fixed_size_integer_generator<1>::int_base_type int8_type;
-  typedef fixed_size_integer_generator<1>::uint_base_type uint8_type;
-  typedef fixed_size_integer_generator<2>::int_base_type int16_type;
-  typedef fixed_size_integer_generator<2>::uint_base_type uint16_type;
-  typedef fixed_size_integer_generator<4>::int_base_type int32_type;
-  typedef fixed_size_integer_generator<4>::uint_base_type uint32_type;
-  typedef fixed_size_integer_generator<8>::int_base_type int64_type;
-  typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
+	template <> struct fixed_size_integer_generator<sizeof(int)
+		- ((sizeof(int) == sizeof(short int)) ? 59 : 0)> {
+			typedef signed int int_base_type;
+			typedef unsigned int uint_base_type;
+	};
 
-// #if INT_MAX == 32767
-//   typedef signed int    int16_type;
-//   typedef unsigned int uint16_type;
-// #elif  SHRT_MAX == 32767
-//   typedef signed short int    int16_type;
-//   typedef unsigned short int uint16_type;
-// #else
-// # error "impossible to build a 16 bits integer"
-// #endif
+	template <> struct fixed_size_integer_generator<sizeof(long)
+		- ((sizeof(int) == sizeof(long)) ? 93 : 0)> {
+			typedef signed long int_base_type;
+			typedef unsigned long uint_base_type;
+	};
 
-// #if INT_MAX == 2147483647
-//   typedef signed int    int32_type;
-//   typedef unsigned int uint32_type;
-// #elif  SHRT_MAX == 2147483647
-//   typedef signed short int    int32_type;
-//   typedef unsigned short int uint32_type;
-// #elif LONG_MAX == 2147483647
-//   typedef signed long int    int32_type;
-//   typedef unsigned long int uint32_type;
-// #else
-// # error "impossible to build a 32 bits integer"
-// #endif
+	template <> struct fixed_size_integer_generator<sizeof(long long)
+		- ((sizeof(long long) == sizeof(long)) ? 99 : 0)> {
+			typedef signed long long int_base_type;
+			typedef unsigned long long uint_base_type;
+	};
 
-// #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
-//   typedef signed int    int64_type;
-//   typedef unsigned int uint64_type;
-// #elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
-//   typedef signed long int    int64_type;
-//   typedef unsigned long int uint64_type;
-// #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
-//   typedef signed long long int int64_type;
-//   typedef unsigned long long int uint64_type;
-// #else
-// # error "impossible to build a 64 bits integer"
-// #endif
+	typedef fixed_size_integer_generator<1>::int_base_type int8_type;
+	typedef fixed_size_integer_generator<1>::uint_base_type uint8_type;
+	typedef fixed_size_integer_generator<2>::int_base_type int16_type;
+	typedef fixed_size_integer_generator<2>::uint_base_type uint16_type;
+	typedef fixed_size_integer_generator<4>::int_base_type int32_type;
+	typedef fixed_size_integer_generator<4>::uint_base_type uint32_type;
+	typedef fixed_size_integer_generator<8>::int_base_type int64_type;
+	typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
+
+	// #if INT_MAX == 32767
+	//   typedef signed int    int16_type;
+	//   typedef unsigned int uint16_type;
+	// #elif  SHRT_MAX == 32767
+	//   typedef signed short int    int16_type;
+	//   typedef unsigned short int uint16_type;
+	// #else
+	// # error "impossible to build a 16 bits integer"
+	// #endif
+
+	// #if INT_MAX == 2147483647
+	//   typedef signed int    int32_type;
+	//   typedef unsigned int uint32_type;
+	// #elif  SHRT_MAX == 2147483647
+	//   typedef signed short int    int32_type;
+	//   typedef unsigned short int uint32_type;
+	// #elif LONG_MAX == 2147483647
+	//   typedef signed long int    int32_type;
+	//   typedef unsigned long int uint32_type;
+	// #else
+	// # error "impossible to build a 32 bits integer"
+	// #endif
+
+	// #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
+	//   typedef signed int    int64_type;
+	//   typedef unsigned int uint64_type;
+	// #elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
+	//   typedef signed long int    int64_type;
+	//   typedef unsigned long int uint64_type;
+	// #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
+	//   typedef signed long long int int64_type;
+	//   typedef unsigned long long int uint64_type;
+	// #else
+	// # error "impossible to build a 64 bits integer"
+	// #endif
 
 #if defined(__GNUC__) && !defined(__ICC)
-/* 
-   g++ can issue a warning at each usage of a function declared with this special attribute 
-   (also works with typedefs and variable declarations)
-*/
+	/* 
+	g++ can issue a warning at each usage of a function declared with this special attribute 
+	(also works with typedefs and variable declarations)
+	*/
 # define IS_DEPRECATED __attribute__ ((__deprecated__))
-/*
-   the specified function is inlined at any optimization level 
-*/
+	/*
+	the specified function is inlined at any optimization level 
+	*/
 # define ALWAYS_INLINE __attribute__((always_inline))
 #else
 # define IS_DEPRECATED
 # define ALWAYS_INLINE
 #endif
-  
+
 }
 
 #endif /* GMM_STD_H__ */
