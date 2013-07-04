@@ -394,6 +394,13 @@ namespace getfem {
   }
 
 
+  void vectorize_base_tensor(const base_tensor &t, base_matrix &vt,
+                             size_type ndof, size_type qdim, size_type N);
+
+  void vectorize_grad_base_tensor(const base_tensor &t, base_tensor &vt,
+                                  size_type ndof, size_type qdim, size_type N);
+
+
   //=========================================================================
   //
   //  Structure which stores the contact boundaries, rigid obstacles and
