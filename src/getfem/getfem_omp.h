@@ -36,6 +36,9 @@ might be covered by the GNU Lesser General Public License.
 This is the kernel of getfem..
 */
 #pragma once
+#ifndef GETFEM_OMP
+#define GETFEM_OMP
+
 #ifdef _OPENMP
 #ifndef GETFEM_HAVE_BOOST
 #error OpenMP compilation relies on Boost \
@@ -322,4 +325,6 @@ namespace getfem
 
 
 }
+
+#endif //GETFEM_OMP
 
