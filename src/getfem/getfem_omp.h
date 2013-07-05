@@ -266,7 +266,7 @@ namespace getfem
 		static bool is_it();
 	};
 
-#ifdef _WIN32
+#if defined _WIN32 && !defined (__GNUC__)
 	/**parallelization function for a for loop*/
 	template<class LOOP_BODY> 
 	inline void open_mp_for(int begin, int end, 
