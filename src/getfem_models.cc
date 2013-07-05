@@ -772,17 +772,25 @@ namespace getfem {
 			}
 		}
 
+        inline bool not_multithreaded() const {return num_threads()==1;}
+
 	public:
 		list_distro(C& l) : original_list(l)
 		{
+            if (not_multithreaded()) return;
+
 			for(size_type thread=0;thread<num_threads();thread++) 
 				th_list(thread).resize(original_list.size());
 			build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
 		}
 
-		operator C&(){return th_list(this_thread());}
+		operator C&(){
+            if (not_multithreaded()) return original_list;
+            else return th_list(this_thread());
+        }
 
 		~list_distro(){
+             if (not_multithreaded()) return;
 			GMM_ASSERT1(!me_is_multithreaded_now(),
 				"List accumulation should not run in parallel");
 			for(size_type thread = 0; thread<num_threads(); thread++){ 
