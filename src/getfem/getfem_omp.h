@@ -33,7 +33,7 @@ might be covered by the GNU Lesser General Public License.
 @date May 14th, 2013.
 @brief Tools for multithreaded, OpenMP and Boost based parallelization.
 
-This is the kernel of getfem..
+This is the kernel of getfem.
 */
 #pragma once
 #ifndef GETFEM_OMP

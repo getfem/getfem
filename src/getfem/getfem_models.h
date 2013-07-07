@@ -256,7 +256,7 @@ namespace getfem {
       size_type region;         // Optional region size_type(-1) for all.
 
       //varibables, dealing with a multithreaded assembly		
-	  region_partition partition;// partition of the applied region
+      region_partition partition;// partition of the applied region
 
       mutable model_real_plain_vector coeffs;
       mutable scalar_type matrix_coeff;
@@ -278,9 +278,9 @@ namespace getfem {
                         const mimlist &mms, size_type reg)
         : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
+          partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  region),
           rveclist(1), rveclist_sym(1), cveclist(1),
-          cveclist_sym(1), 
-          partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  region)  { }
+          cveclist_sym(1)  { }
 
       brick_description(void) {}      
     };

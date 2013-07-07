@@ -739,7 +739,7 @@ namespace getfem {
 
 		//template<class L> void build_distro(L);
 
-		void build_distro(gmm::abstract_matrix m)
+                void build_distro(gmm::abstract_matrix /* m */)
 		{
 			for(size_type thread = 0; thread<num_threads(); thread++)
 			{
@@ -756,7 +756,7 @@ namespace getfem {
 			}
 		}
 
-		void build_distro(gmm::abstract_vector v)
+                void build_distro(gmm::abstract_vector /*v*/)
 		{
 			for(size_type thread = 0; thread<num_threads(); thread++)
 			{
@@ -834,7 +834,7 @@ namespace getfem {
 #pragma omp parallel default(shared)  
             { 
 #pragma omp for schedule(static) 
-            for(int i=0;i<num_threads();i++){
+            for(size_type i=0;i<num_threads();i++){
                  brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
                                                 brick.mims,
                                                 rmatlist,

@@ -207,8 +207,8 @@ namespace gmm {
 
     inline void w(size_type c, const T &e) {
       GMM_ASSERT2(c < nbl, "out of range");
-      if (e == T(0)) { base_type::erase(c); }
-      else base_type::operator [](c) = e;
+      if (e == T(0)) { this->erase(c); }
+      else this->operator [](c) = e;
     }
 
     inline T r(size_type c) const {
@@ -220,7 +220,7 @@ namespace gmm {
 
     inline T operator [](size_type c) const { return r(c); }
     
-    size_type nb_stored(void) const { return base_type::size(); }
+    size_type nb_stored(void) const { return this->size(); }
     size_type size(void) const { return nbl; }
 
     void swap(wsvector<T> &v)
@@ -236,14 +236,14 @@ namespace gmm {
   template<typename T>  void wsvector<T>::clean(double eps) {
     iterator it = this->begin(), itf = it, ite = this->end();
     while (it != ite) {
-      ++itf; if (gmm::abs(it->second) <= eps) base_type::erase(it); it = itf;
+      ++itf; if (gmm::abs(it->second) <= eps) this->erase(it); it = itf;
     }
   }
 
   template<typename T>  void wsvector<T>::resize(size_type n) {
     if (n < nbl) {
       iterator it = this->begin(), itf = it, ite = this->end();
-      while (it != ite) { ++itf; if (it->first >= n) base_type::erase(it); it=itf; }
+      while (it != ite) { ++itf; if (it->first >= n) this->erase(it); it=itf; }
     }
     nbl = n;
   }
