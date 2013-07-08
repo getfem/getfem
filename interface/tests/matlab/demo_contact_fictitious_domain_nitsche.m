@@ -4,7 +4,7 @@ disp('with a fictitious domain method and Nitsche s method');
 
 clear all;
 % gf_workspace('clear all');
-NX=10;
+NX=5;
 ls_degree = 1;
 R=0.25;
 dirichlet_val = 0;
@@ -134,14 +134,64 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 
 
 
-niter= 1000; solve=true; 
+niter= 10; solve=true; 
 disp('solve');
 
 %pause;
 
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter); % , 'very noisy');
 
-
+% 
+% % Solve the problem
+% if (~solved)
+%   gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
+%   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
+% end;
+% 
+% U = gf_model_get(md, 'variable', 'u');
+% % lambda_n = gf_model_get(md, 'variable', 'lambda_n');
+% VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+% 		  'u', 'clambda', 'cmu', mfvm);
+%     
+% 
+% % set a custom colormap
+% % r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
+% 
+% figure(2);
+% if (d == 3)
+%   c=[0.1;0;20]; x=[1;0;0]; y=[0;1;0]; z=[0;0;1];
+%   % Whole boundary
+%   % sl2=gf_slice({'boundary',{'none'}}, m, 5);
+%   % Slice, 3 planes
+%   % sl2=gf_slice({'boundary',{'union',{'planar',+1,c,x},{'planar',+1,c,y},{'planar',+1,c,z}}},m,5);
+%   % Slice, 2 planes
+%   % sl2=gf_slice({'boundary',{'union',{'planar',+1,c,x},{'planar',+1,c,y}}},m,5);
+%   % Slice, 1 plane
+%   sl2=gf_slice({'boundary',{'planar',+1,c,x}}, m, 5);
+% 
+%   P=gf_slice_get(sl2,'pts'); dP=gf_compute(mfu,U,'interpolate on',sl2);
+%   gf_slice_set(sl2, 'pts', P+dP);
+%   VMsl=gf_compute(mfvm,VM,'interpolate on',sl2);
+%   set(gcf,'renderer','zbuffer');
+%   h=gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
+%   view(-80,-15); axis on; camlight; gf_colormap('chouette');
+%   % map=[1:-1/10:0]'*[1 1 1]; colormap(map); % for NB
+%     
+%   % gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...
+%   %        gf_mesh_get(mfu,'outer faces'), 'deformation', U, ...
+%   %        'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+%   % view(-5,-10); camlight; colormap(map);
+%   xlabel('x'); ylabel('y'); zlabel('z');
+%   title('Sliced deformed configuration (not really a small deformation of course ...)');
+% else
+%   gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U, ...
+%           'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+%   xlabel('x'); ylabel('y');
+%   title('Deformed configuration (not really a small deformation of course ...)');
+% end;
+% 
+% colorbar;
+% pause(0.1);
 
 
 
