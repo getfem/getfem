@@ -24,6 +24,9 @@ mf_ls1=gfObject(gf_levelset_get(ls1, 'mf'));
 mf_ls2=gfObject(gf_levelset_get(ls2, 'mf'));
 mfu=gfMeshFem(m,2);
 set(mfu, 'fem', gf_fem('FEM_PK(2,1)'));
+mfvm=gfMeshFem(m,1);
+set(mfvm, 'fem', gf_fem('FEM_PK(2,0)'));
+
 % set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
 mls1=gfMeshLevelSet(m);
 mls2=gfMeshLevelSet(m);
@@ -128,18 +131,31 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
 gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
 
 
-
-
-
-
-
-
-niter= 10; solve=true; 
 disp('solve');
+niter= 10; solve=true;
 
-%pause;
 
-gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter); % , 'very noisy');
+gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
+
+% gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
+
+
+
+
+
+
+
+U1 = gf_model_get(md, 'variable', 'u1');
+
+sl2=gf_slice({'isovalues', -1, mf_ls1, ULS1, 0}, m, 5);
+P=gf_slice_get(sl2,'pts'); dP=gf_compute(mfu,U1,'interpolate on',sl2);
+gf_slice_set(sl2, 'pts', P+dP);
+VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+    		      'u1', 'clambda', 'cmu', mfvm);
+VMsl=gf_compute(mfvm,VM,'interpolate on',sl2);
+gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
+% view(-80,-15); axis on; camlight; gf_colormap('chouette');
+
 
 % 
 % % Solve the problem

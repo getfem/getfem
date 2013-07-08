@@ -3820,10 +3820,10 @@ namespace getfem {
       size_type cv2(-1),qdim1,qdim2;
 
       bgeot::multi_index sizes_tGdu1(1), sizes_tGddu1(3);
-      sizes_tGdu1[0] = N;
+      sizes_tGdu1[0] = short_type(N);
       tG1.adjust_sizes(sizes_tGdu1);
-      sizes_tGdu1.push_back(N);
-      sizes_tGddu1[2] = N;
+      sizes_tGdu1.push_back(short_type(N));
+      sizes_tGddu1[2] = short_type(N);
       
       cout << "begining gauss points loop" << endl;
       
@@ -3844,7 +3844,7 @@ namespace getfem {
         pfem pf_u1 = mf_u1.fem_of_element(cv);
         pfem pf_d1 = mf_d1.fem_of_element(cv);
         size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
-        sizes_tGddu1[0] = sizes_tGddu1[1] = sizes_tGdu1[0] = nbdof1;
+        sizes_tGddu1[0] = sizes_tGddu1[1] = sizes_tGdu1[0]= short_type(nbdof1);
         tGdu1.adjust_sizes(sizes_tGdu1);
         tGddu1.adjust_sizes(sizes_tGddu1);
  	
@@ -4031,10 +4031,10 @@ namespace getfem {
 		  for (size_type l =0; l<N;++l){
                     res -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n)/(gamma))*tv1(j,i);
 		  }				   
+                }
+                Melem(j, k)=res;
 	      }
-	      Melem(j, k)=res;
-	      }
-	      gmm::scale(Melem,weight);
+            gmm::scale(Melem,weight);
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
 
             // Matrice en fontion de u1,u2
@@ -4099,7 +4099,7 @@ namespace getfem {
               }
               Velem[j]=res;
 	    }
-              gmm::scale(Velem,weight);
+            gmm::scale(Velem,weight);
             vec_elem_assembly(vecl[0], Velem, mf_u1, cv);
 
             gmm::resize(Velem, nbdof2);gmm::clear(Velem);
