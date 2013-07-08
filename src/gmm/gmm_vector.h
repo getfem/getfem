@@ -208,7 +208,7 @@ namespace gmm {
     inline void w(size_type c, const T &e) {
       GMM_ASSERT2(c < nbl, "out of range");
       if (e == T(0)) { this->erase(c); }
-      else this->operator [](c) = e;
+      else base_type::operator [](c) = e;
     }
 
     inline T r(size_type c) const {
@@ -220,7 +220,7 @@ namespace gmm {
 
     inline T operator [](size_type c) const { return r(c); }
     
-    size_type nb_stored(void) const { return this->size(); }
+    size_type nb_stored(void) const { return base_type::size(); }
     size_type size(void) const { return nbl; }
 
     void swap(wsvector<T> &v)
