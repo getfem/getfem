@@ -3813,11 +3813,11 @@ namespace getfem {
 
       base_matrix G1, G2, GPr(N,N);
       base_vector coeff, Velem, wt1(N), wt2(N);
-      base_matrix Melem, grad_d2(1, N), grad_d1(1, N);
+      base_matrix Melem, grad_d2(1, N), grad_d1(1, N), tv1, tv2;
       base_small_vector d2(1), n1(N), n2(N), Pr(N), zeta(N), u1(N), u2(N);
       base_tensor tG1, tGdu1, tGddu1, tbv1, tbv2;
-      scalar_type gap, u1n, u2n, tbv1n(0), tbv2n(0);
-      size_type cv2(-1);
+      scalar_type gap, u1n, u2n, tv1n, tv2n;
+      size_type cv2(-1),qdim1,qdim2;
 
       bgeot::multi_index sizes_tGdu1(1), sizes_tGddu1(3);
       sizes_tGdu1[0] = N;
@@ -3835,8 +3835,8 @@ namespace getfem {
         if (pim->type() != IM_APPROX) continue; 
 
 
-        cout << "pim = " << int(pim->type()) << endl;
-        cout << "pim = " << pim->approx_method() << endl;
+        // cout << "pim = " << int(pim->type()) << endl;
+        // cout << "pim = " << pim->approx_method() << endl;
 
         bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv));
         
@@ -3847,13 +3847,14 @@ namespace getfem {
         sizes_tGddu1[0] = sizes_tGddu1[1] = sizes_tGdu1[0] = nbdof1;
         tGdu1.adjust_sizes(sizes_tGdu1);
         tGddu1.adjust_sizes(sizes_tGddu1);
-        
+ 	
+	
+	
           
         size_type nbpt = pim->approx_method()->nb_points();
         for (size_type ipt = 0; ipt < nbpt; ++ipt) {
           
           const base_node xref = pim->approx_method()->integration_points()[ipt];
-          cout << "xref = " << xref << endl;
           
           fem_interpolation_context ctx_u1(pgt, pf_u1, xref, G1, cv);
           base_node x0 = ctx_u1.xreal();
@@ -3862,7 +3863,7 @@ namespace getfem {
 	  
           scalar_type weight = pim->approx_method()->coeff(ipt) * ctx_u1.J();
        
-	  cout << "pim->approx_method()=" << pim->approx_method()->coeff(ipt) * ctx_u1.J()<< endl;
+	  // cout << "pim->approx_method()=" << pim->approx_method()->coeff(ipt) * ctx_u1.J()<< endl;
 	  
           // computation of h for gamma = gamma0*h
           scalar_type gamma(0);
@@ -3890,14 +3891,13 @@ namespace getfem {
           gmm::scale(n1, 1./gmm::vect_norm2(n1));
 	  
 
-          cout << " weight ="  << weight << endl;
-          cout << " Element " << cv << " point " << ipt << " elt ref : " <<
-          pim->approx_method()->integration_points()[ipt] << " elt reel : " << x0 << endl;
+          // cout << " Element " << cv << " point " << ipt << " elt ref : " <<
+          // pim->approx_method()->integration_points()[ipt] << " elt reel : " << x0 << endl; // Attention cv+1 pour matlab
 
  	  // REMARQUE : on peut faire  ctx_u1.xref() plutôt que  pim->approx_method()->integration_points()[ipt]      
 
 	    
-           //Definition de la projection
+           //Definition de la projection et computation of n2
 
           pfem pf_d2 = mf_d2.fem_of_element(cv);
 
@@ -3908,16 +3908,16 @@ namespace getfem {
           ctx_d2.pf()->interpolation(ctx_d2, coeff, d2, 1);
 
           ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
-
-          cout << "grad_d2 = " << grad_d2 << endl;
-          cout << "d2 = " << d2[0] << endl;
+          gmm::copy(grad_d2.as_vector(), n2);
+          gmm::scale(n2, 1./gmm::vect_norm2(n2));
+	  // cout << " n2 ="  << n2 << endl;	   
+          // cout << "d2 = " << d2[0] << endl;
  
           base_node y0 = x0, yref(N);
           gmm::add(gmm::scaled(gmm::mat_row(grad_d2, 0),
                    -d2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
                    y0);
-	  
-	  
+	     
 	  
           bgeot::rtree::pbox_set pbs;
 	  
@@ -3946,10 +3946,16 @@ namespace getfem {
           GMM_ASSERT1(found && (cv2 != size_type(-1)),
                       "Projection not found ...");
 
-          cout << "y0 = " << y0 << endl;
-          cout << "Found element : " << cv2 << " yref = " << yref << endl;
+        //  cout << "Found element : " << cv2 << " yref = " << yref << "y0 = " << y0 << endl; // Attention cv2+1 pour matlab
      
 	  
+	  
+	  // Computation of gap
+	  gap = 0;
+          for( size_type i=0; i<N; ++i)
+            gap += (x0[i]-y0[i])*n2[i];
+
+         // cout << "gap = " << gap << endl;	  
 	  
 	  
          
@@ -3966,50 +3972,43 @@ namespace getfem {
             ctx_u2.pf()->interpolation(ctx_u2, coeff, wt2, bgeot::dim_type(N));
           }
 
-	  cout << "1" << endl;
-
           u1n = gmm::vect_sp(u1, n2); u2n = gmm::vect_sp(u2, n2);
-
-	  cout << "2" << endl;
 
           
           md.compute_Neumann_terms(1, vl[0], mf_u1, U1, ctx_u1, n1, tG1);
-	  cout << " tG1 = " << tG1 << endl; 
           md.compute_Neumann_terms(2, vl[0], mf_u1, U1, ctx_u1, n1, tGdu1);
           md.compute_Neumann_terms(3, vl[0], mf_u1, U1, ctx_u1, n1, tGddu1);
-	  cout << "2.0" << endl;
-	  cout << " tGdu1 = " << tGdu1 << endl;
-	  cout << " tGddu1 = " << tGddu1 << endl;
           ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
-  	  cout << "2.1" << endl;	
-
           ctx_u2.pf()->real_base_value(ctx_u2, tbv2);
-  	  cout << "2.2" << endl;	
 
+	  
+
+	  qdim1=  ctx_u1.pf()->target_dim();
+	  qdim2=  ctx_u2.pf()->target_dim();
+	  
+	  
+	  vectorize_base_tensor(tbv1, tv1, nbdof1, qdim1, N);
+	  vectorize_base_tensor(tbv2, tv2, nbdof2, qdim2, N);
+	  
+	  
+	  
           for(size_type i=0; i<N; ++i)
             zeta[i] = tG1[i] +
               ( (gap + (alpha-1.)*u1n-(alpha-1.)*u2n)*n2[i]
-                + alpha*(wt1[i]-wt2[i]) - alpha*u1[i] + alpha*u2[i]) / gamma;
+                + alpha*(wt1[i]-wt2[i]) - alpha*u1[i] + alpha*u2[i]) / gamma;	  
 
-	  cout << "3" << endl;
 
           coupled_projection(zeta, n2, f_coeff, Pr);
 	  coupled_projection_grad(zeta, n2, f_coeff, GPr);
 
+	  tv1n = 0;
+	  tv2n = 0;
 	  for (size_type k = 0; k < nbdof1; ++k)
 	    for (size_type l = 0; l < N; ++l){
-	       tbv1n += n2[l]*tbv1(k,l);
-	       tbv2n += n2[l]*tbv2(k,l);
+	       tv1n += n2[l]*tv1(k,l);
+	       tv2n += n2[l]*tv2(k,l);
 	    }
 
-
-          gap = scalar_type(0);
-          for( size_type i=0; i<N; ++i)
-            gap += (y0[i]-x0[i])*n2[i];
-
-          cout << "gap = " << gap << endl;
-
-	  cout << "4" << endl;
 
 
             // Plan tangent 
@@ -4026,11 +4025,11 @@ namespace getfem {
                     res += theta*gamma*(Pr[i]-tG1[i])*(tGddu1(j,k,i));
                     for (size_type l =0; l<N; ++l){
                       res += theta*GPr(i,l)*(gamma*tGdu1(k,l)
-                                                     -alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)*tGdu1(j,i);
+                                                     -alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n)*tGdu1(j,i);
 		    }
 		    }
 		  for (size_type l =0; l<N;++l){
-                    res -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tbv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma))*tbv1(j,i);
+                    res -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n)/(gamma))*tv1(j,i);
 		  }				   
 	      }
 	      Melem(j, k)=res;
@@ -4045,8 +4044,8 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) 
 		  for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(tGdu1(k,l)+(-alpha*tbv1(k,l)
-                                                         -(scalar_type(1)-alpha)*n2[l]*tbv1n)/(gamma))*tbv2(j,i);
+                    res += GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)
+                                                         -(scalar_type(1)-alpha)*n2[l]*tv1n)/(gamma))*tv2(j,i);
 		Melem(j, k)=res;
 	      }
 	     gmm::scale(Melem,weight);
@@ -4060,10 +4059,10 @@ namespace getfem {
                 for (size_type i = 0; i < N; ++i) {
                   if (theta != scalar_type(0)) {
                     for (size_type l =0; l<N;++l)
-                      res += theta*GPr(i,l)*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tGdu1(j,i);
+                      res += theta*GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n)*tGdu1(j,i);
 						}
 		  for (size_type l =0; l<N;++l)
-                    res -= GPr(i,l)*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tbv1(j,i)/(gamma);				
+                    res -= GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n)*tv1(j,i)/(gamma);				
 						   } 
 		Melem(j, k)=res;				   
 	      }
@@ -4077,7 +4076,7 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(alpha*tbv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tbv2n)*tbv2(j,i)/(gamma);			
+                    res += GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n)*tv2(j,i)/(gamma);			
 						   } 
 		Melem(j, k)=res;				   
 	      }
@@ -4096,7 +4095,7 @@ namespace getfem {
                   res += theta*gamma*tG1[i] * tGdu1(j, i); // A supprimer si theta==0
                   res -=theta*gamma*Pr[i]*tGdu1(i,j); // A supprimer si theta==0
                 }
-                res -=Pr[i]*tbv1(j,i);
+                res -=Pr[i]*tv1(j,i);
               }
               Velem[j]=res;
 	    }
@@ -4107,7 +4106,7 @@ namespace getfem {
             for (size_type j = 0; j < nbdof2; ++j){
 	      scalar_type res(0);
               for (size_type i = 0; i < N; ++i)
-                res -= Pr[i]*tbv2(j,i);
+                res -= Pr[i]*tv2(j,i);
 	      Velem[j]=res;
 	    }
 			        
@@ -4145,7 +4144,6 @@ namespace getfem {
 
 
       cout << "end assembly" << endl;
-
 
     }
     
