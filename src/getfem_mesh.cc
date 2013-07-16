@@ -123,9 +123,9 @@ namespace getfem {
     Bank_info = 0;
   }
 
-  mesh::mesh(void)  { init(); }
+  mesh::mesh(const std::string name) : name_(name)  { init(); }
 
-  mesh::mesh(const bgeot::basic_mesh &m) : bgeot::basic_mesh(m) { init(); }
+  mesh::mesh(const bgeot::basic_mesh &m, const std::string name) : bgeot::basic_mesh(m), name_(name)  { init(); }
 
 #if GETFEM_PARA_LEVEL > 1
 
@@ -379,8 +379,11 @@ namespace getfem {
     return r;
   }
 
+  void mesh::set_name(const std::string& name){name_=name;}
+
   void mesh::copy_from(const mesh& m) {
     clear();
+    set_name(m.name_);
     bgeot::basic_mesh::operator=(m);
     cvf_sets = m.cvf_sets;
     valid_cvf_sets = m.valid_cvf_sets;

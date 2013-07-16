@@ -160,8 +160,9 @@ namespace getfem {
 #endif
 
     /// Constructor.
-    mesh(void);
-    mesh(const bgeot::basic_mesh &m);
+    mesh(const std::string name = "");
+    mesh(const bgeot::basic_mesh &m, const std::string name = "");
+    inline std::string get_name() const {return name_;}
     void update_from_context(void) const {}
     /// Mesh dimension.
     dim_type dim(void) const { return pts.dim(); }
@@ -511,6 +512,9 @@ namespace getfem {
     };
 
     Bank_info_struct *Bank_info;
+
+    std::string name_; //optional name of the mesh
+    void set_name(const std::string&);
 
     void Bank_convex_with_edge(size_type, size_type,
 			       std::vector<size_type> &);
