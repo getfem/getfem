@@ -5,11 +5,11 @@ disp('with a fictitious domain method and Nitsche s method');
 clear all;
 % gf_workspace('clear all');
 NX=5;
-ls_degree = 1;
+ls_degree = 1; % pour 2 tous les matrices ne sont pas nulles
 R=0.25;
 dirichlet_val = 0;
 gamma0 = 1;
-theta = 0;
+theta = 0; %Pb theta = 1;
 %N = 2 %la dimension
 
 
@@ -69,6 +69,8 @@ gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 %gf_model_set(md,'add inialized data', 'dirichlet data',[dirichlet_val])
 
 
+% figure 1 : plot figure
+
 clf; gf_plot_mesh(get(mls1,'cut mesh'));
 hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
 
@@ -76,19 +78,14 @@ hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
 %hold on; gf_plot(mf_ls,ULS);
 
 hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
-title('boundary with Dirichlet condition in red');
-hold off;
+title('boundary with Dirichlet condition in red');hold off;
+
 
 %Finites elements' method on mls1 and mls2
 
 mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_TRIANGLE(5)'));
 mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_TRIANGLE(5)')); 
 set(mim, 'integ', 4);
-
-%c'est suffisant?
-
-
-
 
 
 %mfu=gfMeshFem(m,2); set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
@@ -132,11 +129,13 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 
 
 disp('solve');
-niter= 10; solve=true;
+niter= 1; solve=true;
 
 
-gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
 
+gf_model_get(md, 'test tangent matrix term','u1','u1', 1e-6, niter, 0.0);
+
+%gf_model_get(md, 'test tangent matrix', 1e-6, niter, 0.1);
 % gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
 
 
@@ -144,70 +143,34 @@ gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
 
 
 
+figure(2);
 
 U1 = gf_model_get(md, 'variable', 'u1');
 
-sl2=gf_slice({'isovalues', -1, mf_ls1, ULS1, 0}, m, 5);
-P=gf_slice_get(sl2,'pts'); dP=gf_compute(mfu,U1,'interpolate on',sl2);
-gf_slice_set(sl2, 'pts', P+dP);
-VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+sl1=gf_slice({'isovalues', -1, mf_ls1, ULS1, 0}, m, 5);
+P1=gf_slice_get(sl1,'pts'); dP1=gf_compute(mfu,U1,'interpolate on',sl1);
+gf_slice_set(sl1, 'pts', P1 + dP1);
+VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
     		      'u1', 'clambda', 'cmu', mfvm);
-VMsl=gf_compute(mfvm,VM,'interpolate on',sl2);
-gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
-% view(-80,-15); axis on; camlight; gf_colormap('chouette');
+VMsl1=gf_compute(mfvm,VM1,'interpolate on',sl1);
 
 
-% 
-% % Solve the problem
-% if (~solved)
-%   gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
-%   gf_model_get(md, 'solve', 'max_res', 1E-9, 'very noisy', 'max_iter', niter); % ,  'lsearch', 'simplest'); % , 'with pseudo potential');
-% end;
-% 
-% U = gf_model_get(md, 'variable', 'u');
-% % lambda_n = gf_model_get(md, 'variable', 'lambda_n');
-% VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-% 		  'u', 'clambda', 'cmu', mfvm);
-%     
-% 
-% % set a custom colormap
-% % r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
-% 
-% figure(2);
-% if (d == 3)
-%   c=[0.1;0;20]; x=[1;0;0]; y=[0;1;0]; z=[0;0;1];
-%   % Whole boundary
-%   % sl2=gf_slice({'boundary',{'none'}}, m, 5);
-%   % Slice, 3 planes
-%   % sl2=gf_slice({'boundary',{'union',{'planar',+1,c,x},{'planar',+1,c,y},{'planar',+1,c,z}}},m,5);
-%   % Slice, 2 planes
-%   % sl2=gf_slice({'boundary',{'union',{'planar',+1,c,x},{'planar',+1,c,y}}},m,5);
-%   % Slice, 1 plane
-%   sl2=gf_slice({'boundary',{'planar',+1,c,x}}, m, 5);
-% 
-%   P=gf_slice_get(sl2,'pts'); dP=gf_compute(mfu,U,'interpolate on',sl2);
-%   gf_slice_set(sl2, 'pts', P+dP);
-%   VMsl=gf_compute(mfvm,VM,'interpolate on',sl2);
-%   set(gcf,'renderer','zbuffer');
-%   h=gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
-%   view(-80,-15); axis on; camlight; gf_colormap('chouette');
-%   % map=[1:-1/10:0]'*[1 1 1]; colormap(map); % for NB
-%     
-%   % gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...
-%   %        gf_mesh_get(mfu,'outer faces'), 'deformation', U, ...
-%   %        'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
-%   % view(-5,-10); camlight; colormap(map);
-%   xlabel('x'); ylabel('y'); zlabel('z');
-%   title('Sliced deformed configuration (not really a small deformation of course ...)');
-% else
-%   gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U, ...
-%           'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
-%   xlabel('x'); ylabel('y');
-%   title('Deformed configuration (not really a small deformation of course ...)');
-% end;
-% 
-% colorbar;
-% pause(0.1);
+
+U2 = gf_model_get(md, 'variable', 'u2');
+
+sl2=gf_slice({'isovalues', -1, mf_ls2, ULS2, 0}, m, 5);
+P2=gf_slice_get(sl2,'pts'); dP2=gf_compute(mfu,U1,'interpolate on',sl2);
+gf_slice_set(sl2, 'pts', P2+dP2);
+VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+    		      'u2', 'clambda', 'cmu', mfvm);
+VMsl2=gf_compute(mfvm,VM2,'interpolate on',sl2);
+
+
+hold on;
+gf_plot_slice(sl1,'mesh','on','mesh_slice_edges','off','data',VMsl1);
+gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl2);
+hold off;
+
 
 
 
