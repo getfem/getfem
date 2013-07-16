@@ -105,6 +105,13 @@ namespace getfem {
                                  const mesh_region &b);
     size_type id() const { return id_; }
 
+    /**extract a next region number 
+    that does not yet exists in the mesh*/
+    static size_type free_region_id(const getfem::mesh& m){
+      return m.regions_index().last_true()+1;
+    }
+
+
     /** for regions which have been built with just a number 'id',
 	from_mesh(m) sets the current region to 'm.region(id)'.  
 	(works only once) 

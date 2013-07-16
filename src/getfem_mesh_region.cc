@@ -260,6 +260,11 @@ namespace getfem {
     return r;
   }
 
+  size_type mesh_region::free_region_id(const getfem::mesh& m){
+    return m.regions_index().last_true()+1;
+  }
+
+
   void mesh_region::error_if_not_faces() const {
     GMM_ASSERT1(is_only_faces(), "Expecting a set of faces, not convexes");
   }
