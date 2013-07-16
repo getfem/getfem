@@ -104,9 +104,6 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
 
 
 
-
-
-
  clambda = 1;           % Lame coefficient
  cmu = 1;               % Lame coefficient
  gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
@@ -114,14 +111,21 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u1','clambda', 'cmu');
  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u2','clambda', 'cmu');
   
- Ddata = zeros(1, 2); Ddata(2) = -5; u1_degree=2; u2_degree=2;%Dimension 2
+ gf_model_set(md, 'add initialized data', 'Fdata', [0 -1]);
+ gf_model_set(md, 'add source term brick', mim, 'u1', 'Fdata');
+ Ddata = zeros(1, 2); u1_degree=2; u2_degree=2;%Dimension 2
  gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
- gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u1', u1_degree, GAMMAD, 'Ddata'); %neccessaire?
- gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u2', u2_degree, GAMMAD, 'Ddata'); %neccessaire?
+ % gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u1', u1_degree, GAMMAD, 'Ddata'); %neccessaire?
+ % gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u2', u2_degree, GAMMAD, 'Ddata'); %neccessaire?
+ gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); %neccessaire?
 
 
+ cpoints = [0, 0];   % constrained points for 2d
+ cunitv  = [0.1, 0];   % corresponding constrained directions for 2d
+ gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
+ gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
+ gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
 
- 
 
 
 
@@ -129,14 +133,19 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 
 
 disp('solve');
-niter= 1; solve=true;
+niter= 10; solve=true;
 
 
 
-gf_model_get(md, 'test tangent matrix term','u1','u1', 1e-6, niter, 0.0);
+gf_model_get(md, 'test tangent matrix term','u1','u1', 1e-6, niter, 2);
 
-%gf_model_get(md, 'test tangent matrix', 1e-6, niter, 0.1);
-% gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
+% gf_model_get(md, 'test tangent matrix', 1e-6, niter, 02);
+
+pause;
+
+niter= 1;
+
+gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
 
 
 

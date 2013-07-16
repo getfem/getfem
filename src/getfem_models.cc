@@ -2543,10 +2543,10 @@ namespace getfem {
         mf_data = md.pmesh_fem_of_variable(dl[ind]);
         s = gmm::vect_size(*A);
         if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	size_type ss = s * ((normal_component) ? mf_u.linked_mesh().dim() : 1);
-        GMM_ASSERT1(mf_u.get_qdim() == ss, dl[ind] << ": bad format of "
-		    "Dirichlet data. Detected dimension is " << ss
-		    << " should be " << size_type(mf_u.get_qdim()));
+        size_type ss = ((normal_component) ? 1 :  mf_u.get_qdim());
+        GMM_ASSERT1(s == ss, dl[ind] << ": bad format of "
+		    "Dirichlet data. Detected dimension is " << s
+		    << " should be " << ss);
       }
 
       if (dl.size() > ind + 1) {
