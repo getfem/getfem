@@ -85,12 +85,12 @@ level_set_contact::master_contact_body::master_contact_body(
 {
 	//store existing elements in VOLUME_ELEMENTS region
 	//before boundary elements are created
-	VOLUME_ELEMENTS = free_region_num(get_mesh()); 
+	VOLUME_ELEMENTS = getfem::mesh_region::free_region_id(get_mesh()); 
 	get_mesh().region(VOLUME_ELEMENTS).add(get_mesh().convex_index());
 
 	//create boundary elements (current mesh_fem should be automatically
 	// extended with these elements)
-	BOUNDARY_ELEMENTS = free_region_num(get_mesh()); 
+	BOUNDARY_ELEMENTS = getfem::mesh_region::free_region_id(get_mesh()); 
 	get_mesh().region(BOUNDARY_ELEMENTS).clear();
 
 	masters.push_back(this);
@@ -117,12 +117,12 @@ level_set_contact::master_contact_body::master_contact_body(
 {
 	//store existing elements in VOLUME_ELEMENTS region
 	//before boundary elements are created
-	VOLUME_ELEMENTS = free_region_num(get_mesh()); 
+	VOLUME_ELEMENTS = getfem::mesh_region::free_region_id(get_mesh()); 
 	get_mesh().region(VOLUME_ELEMENTS).add(get_mesh().convex_index());
 
 	//create boundary elements (current mesh_fem should be automatically
 	// extended with these elements)
-	BOUNDARY_ELEMENTS = free_region_num(get_mesh()); 
+	BOUNDARY_ELEMENTS = getfem::mesh_region::free_region_id(get_mesh()); 
 	get_mesh().region(BOUNDARY_ELEMENTS).clear();
 	masters.push_back(this);
 }
@@ -171,7 +171,7 @@ void level_set_contact::master_contact_body::
 		"Assumed_contact_region must be on the boundary");
 
 	//add surface elements where contact will be computed
-	size_type assumed_contact_elems = free_region_num(get_mesh());
+	size_type assumed_contact_elems = getfem::mesh_region::free_region_id(get_mesh());
 	getfem::mesh_region& contact_elems = get_mesh().region(assumed_contact_elems);
 	getfem::mesh_region& boundary_elems = get_mesh().region(BOUNDARY_ELEMENTS);
 	dal::shared_ptr<getfem::mr_visitor> i;
@@ -346,7 +346,7 @@ master_cb(underformed_mcb),
 	mult_name(_mult_name),
 	GIVEN_CONTACT_REGION(_GIVEN_CONTACT_REGION),
 
-	ACTIVE_CONTACT_REGION(free_region_num(master_cb.get_mesh())),
+	ACTIVE_CONTACT_REGION(getfem::mesh_region::free_region_id(master_cb.get_mesh())),
 	pmim_contact(0),
 	ifem_srf(0),
 	pinterpolated_fem(0),
