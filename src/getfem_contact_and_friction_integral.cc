@@ -3788,7 +3788,6 @@ namespace getfem {
  
  
         tree.add_box(min, max, cv);
-//	       cout << " cv = " << cv << ", min = " << min << ", max = " << max << endl;
 
 
       }
@@ -3805,8 +3804,8 @@ namespace getfem {
       if (version & model::BUILD_RHS) {
         gmm::clear(vecl[0]);
         gmm::clear(vecl[1]);
-        gmm::clear(vecl[2]);
-        gmm::clear(vecl[3]);
+        //  gmm::clear(vecl[2]);    Pourquoi besoin????
+        //  gmm::clear(vecl[3]);
       }
 
 
@@ -3830,7 +3829,8 @@ namespace getfem {
       for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
 
         cout << "element " << cv << endl;
-     
+
+
         pintegration_method pim = mim.int_method_of_element(cv);
         if (pim->type() != IM_APPROX) continue; 
 
@@ -3850,7 +3850,7 @@ namespace getfem {
  	
 	
 	
-          
+        scalar_type gamma(0); 
         size_type nbpt = pim->approx_method()->nb_points();
         for (size_type ipt = 0; ipt < nbpt; ++ipt) {
           
@@ -3862,11 +3862,9 @@ namespace getfem {
 
 	  
           scalar_type weight = pim->approx_method()->coeff(ipt) * ctx_u1.J();
-       
-	  // cout << "pim->approx_method()=" << pim->approx_method()->coeff(ipt) * ctx_u1.J()<< endl;
-	  
+       	  
           // computation of h for gamma = gamma0*h
-          scalar_type gamma(0);
+
           if (ipt == 0) {
             scalar_type emax, emin;
             gmm::condition_number(ctx_u1.K(),emax,emin);
@@ -3894,8 +3892,6 @@ namespace getfem {
           // cout << " Element " << cv << " point " << ipt << " elt ref : " <<
           // pim->approx_method()->integration_points()[ipt] << " elt reel : " << x0 << endl; // Attention cv+1 pour matlab
 
- 	  // REMARQUE : on peut faire  ctx_u1.xref() plutôt que  pim->approx_method()->integration_points()[ipt]      
-
 	    
            //Definition de la projection et computation of n2
 
@@ -3910,8 +3906,7 @@ namespace getfem {
           ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
           gmm::copy(grad_d2.as_vector(), n2);
           gmm::scale(n2, 1./gmm::vect_norm2(n2));
-	  // cout << " n2 ="  << n2 << endl;	   
-          // cout << "d2 = " << d2[0] << endl;
+
  
           base_node y0 = x0, yref(N);
           gmm::add(gmm::scaled(gmm::mat_row(grad_d2, 0),
@@ -3954,12 +3949,7 @@ namespace getfem {
 	  gap = 0;
           for( size_type i=0; i<N; ++i)
             gap += (x0[i]-y0[i])*n2[i];
-
-         // cout << "gap = " << gap << endl;	  
-	  
-	  
-         
-	  
+	  	  
 	  
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
           fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
@@ -3973,7 +3963,6 @@ namespace getfem {
           }
 
           u1n = gmm::vect_sp(u1, n2); u2n = gmm::vect_sp(u2, n2);
-
           
           md.compute_Neumann_terms(1, vl[0], mf_u1, U1, ctx_u1, n1, tG1);
           md.compute_Neumann_terms(2, vl[0], mf_u1, U1, ctx_u1, n1, tGdu1);
@@ -3991,7 +3980,8 @@ namespace getfem {
 	  vectorize_base_tensor(tbv2, tv2, nbdof2, qdim2, N);
 	  
 	  
-	  
+	  	  
+
           for(size_type i=0; i<N; ++i)
             zeta[i] = tG1[i] +
               ( (gap + (alpha-1.)*u1n-(alpha-1.)*u2n)*n2[i]
@@ -4035,8 +4025,10 @@ namespace getfem {
                 Melem(j, k)=res;
 	      }
             gmm::scale(Melem,weight);
+	    cout << "Melem final 1" << Melem << endl;
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
 
+	    
             // Matrice en fontion de u1,u2
             gmm::resize(Melem, nbdof1, nbdof2); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
@@ -4044,13 +4036,14 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) 
 		  for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)
-                                                         -(scalar_type(1)-alpha)*n2[l]*tv1n)/(gamma))*tv2(j,i);
+                    res += GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n)/(gamma))*tv2(j,i);
 		Melem(j, k)=res;
 	      }
 	     gmm::scale(Melem,weight);
+	    cout << "Melem final 2" << Melem << endl;
             mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);
 
+	    
             // Matrice en u2,u1
             gmm::resize(Melem, nbdof2, nbdof1); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof2; ++j)
@@ -4066,8 +4059,10 @@ namespace getfem {
 						   } 
 		Melem(j, k)=res;				   
 	      }
-		gmm::scale(Melem,weight);				   
+		gmm::scale(Melem,weight);
+		cout << "Melem final 3" << Melem << endl;
             mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);	    
+	    
 	    
 	    // Matrice en u2,u2
             gmm::resize(Melem, nbdof2, nbdof2); gmm::clear(Melem);
@@ -4080,38 +4075,44 @@ namespace getfem {
 						   } 
 		Melem(j, k)=res;				   
 	      }
-		gmm::scale(Melem,weight);				   
+		gmm::scale(Melem,weight);
+		cout << "Melem final 4" << Melem << endl;
             mat_elem_assembly(matl[3], Melem, mf_u2, cv2, mf_u2, cv2);	
 				             }
-				             
+				           
+				           
 		// Matrice du second Membre		             
           if (version & model::BUILD_RHS){
-            
-            gmm::resize(Velem, nbdof1); gmm::clear(Velem);
+	    
+	    // Second membre en u1
+	    gmm::resize(Velem, nbdof1); gmm::clear(Velem);
             for (size_type j = 0; j < nbdof1; ++j){
 	      scalar_type res(0);
               for (size_type i = 0; i < N; ++i){
                 if (theta != scalar_type(0)){
-                  res += theta*gamma*tG1[i] * tGdu1(j, i); // A supprimer si theta==0
-                  res -=theta*gamma*Pr[i]*tGdu1(i,j); // A supprimer si theta==0
+                  res += theta*gamma*tG1[i] * tGdu1(j, i); 
+                  res -=theta*gamma*Pr[i]*tGdu1(i,j);
                 }
                 res -=Pr[i]*tv1(j,i);
               }
               Velem[j]=res;
 	    }
             gmm::scale(Velem,weight);
+	    cout << "Velem final 1" << Velem << endl;
             vec_elem_assembly(vecl[0], Velem, mf_u1, cv);
+	    
 
+	    // Second membre en u2	    
             gmm::resize(Velem, nbdof2);gmm::clear(Velem);
             for (size_type j = 0; j < nbdof2; ++j){
 	      scalar_type res(0);
               for (size_type i = 0; i < N; ++i)
                 res -= Pr[i]*tv2(j,i);
 	      Velem[j]=res;
-	    }
-			        
+	    }	        
 	    gmm::scale(Velem,weight);
-            vec_elem_assembly(vecl[1], Velem, mf_u1, cv);
+	    cout << "Velem final 2" << Velem << endl;
+            vec_elem_assembly(vecl[1], Velem, mf_u2, cv2);
           }
 
 
