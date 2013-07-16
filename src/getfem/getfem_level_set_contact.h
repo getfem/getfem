@@ -64,12 +64,6 @@ namespace level_set_contact {
 	typedef getfem::model_real_sparse_matrix sparse_matrix;
 
 
-	/**extract a next region number that does not yet exists in the mesh*/
-	inline bgeot::size_type free_region_num(const getfem::mesh& m){
-		for(bgeot::size_type i=1; ;i++) if (!m.has_region(i)) return i;
-	}
-
-
 	/**build a level set function on mesh with zero on the boundary.
 	Solves Laplace equation with zero Dirichlet on the boundary.
 	Used to create simple level sets for contact testing*/
@@ -96,7 +90,7 @@ namespace level_set_contact {
 		//border region
 		getfem::mesh_region border_faces;
 		getfem::outer_faces_of_mesh(mesh, border_faces); 
-		bgeot::size_type BORDER=free_region_num(mesh);
+    bgeot::size_type BORDER=getfem::mesh_region::free_region_id(mesh);
 		for (getfem::mr_visitor i(border_faces); !i.finished(); ++i) mesh.region(BORDER).add(i.cv(),i.f());
 
 		//describing the PDE problem

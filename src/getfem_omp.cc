@@ -97,8 +97,8 @@ namespace getfem{
         size_type dummy_=0;
 		for(size_type thread = 0; thread<num_threads();thread++)
 		{
-			partitions[thread] = level_set_contact:: 
-				free_region_num(*(original_region->get_parent_mesh()));
+			partitions[thread] = 
+        getfem::mesh_region::free_region_id(*(original_region->get_parent_mesh()));
 			mesh_region& partition = pparent_mesh->region(partitions[thread]);
 			for(size_type i=thread*psize;i<(thread+1)*psize && !mr.finished();i++,++mr)
 			{
