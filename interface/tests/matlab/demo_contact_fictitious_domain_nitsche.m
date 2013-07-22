@@ -124,7 +124,7 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
  
  
  
- gf_model_set(md, 'add initialized data', 'Fdata', [0 1]); % initiale [0 -1]
+ gf_model_set(md, 'add initialized data', 'Fdata', [0 -0.0001]); % initiale [0 -1]
  gf_model_set(md, 'add source term brick', mim, 'u1', 'Fdata');
  Ddata = zeros(1, 2); u1_degree=2; u2_degree=2;%Dimension 2
  gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
@@ -185,7 +185,7 @@ VMsl1=gf_compute(mfvm,VM1,'interpolate on',sl1);
 U2 = gf_model_get(md, 'variable', 'u2');
 
 sl2=gf_slice({'isovalues', -1, mf_ls2, ULS2, 0}, m, 5);
-P2=gf_slice_get(sl2,'pts'); dP2=gf_compute(mfu,U1,'interpolate on',sl2);
+P2=gf_slice_get(sl2,'pts'); dP2=gf_compute(mfu,U2,'interpolate on',sl2);
 gf_slice_set(sl2, 'pts', P2+dP2);
 VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
     		      'u2', 'clambda', 'cmu', mfvm);
