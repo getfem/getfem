@@ -3921,11 +3921,12 @@ namespace getfem {
                                         const model::mimlist &mims,
                                         model::real_matlist &matl,
                                         model::real_veclist &vecl,
-                                        model::real_veclist &,
+                                        model::real_veclist &rvecl,
                                         size_type,
                                         build_version version) const {
+
       GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Pointwize constraints brick only one term");
+                  "Pointwize constraints brick has only one term");
       GMM_ASSERT1(mims.size() == 0,
                   "Pointwize constraints brick does not need a mesh_im");
       GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
@@ -3960,7 +3961,6 @@ namespace getfem {
       GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
 		  "Wrong size for vector of rhs");
 
-      
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
         || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
 			  || md.is_var_newer_than_brick(dl[ind_unitv], ib)

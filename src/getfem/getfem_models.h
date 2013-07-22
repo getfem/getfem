@@ -453,10 +453,7 @@ namespace getfem {
     /** Total number of degrees of freedom in the model. */
     size_type nb_dof(void) const {
       context_check(); if (act_size_to_be_done) actualize_sizes();
-      if (complex_version)
-        return gmm::vect_size(crhs);
-      else
-        return gmm::vect_size(rrhs);
+      return (complex_version) ? gmm::vect_size(crhs) : gmm::vect_size(rrhs);
     }
 
     /** Leading dimension of the meshes used in the model. */
@@ -467,6 +464,7 @@ namespace getfem {
 
     const gmm::sub_interval &
     interval_of_variable(const std::string &name) const {
+      context_check(); if (act_size_to_be_done) actualize_sizes();
       VAR_SET::const_iterator it = variables.find(name);
       GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
       return it->second.I;

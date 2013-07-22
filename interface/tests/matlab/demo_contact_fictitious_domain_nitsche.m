@@ -118,43 +118,29 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
 
 
 
- clambda = 1;           % Lame coefficient
- cmu = 1;               % Lame coefficient
- gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
- gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
- gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1','clambda', 'cmu');
- gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2','clambda', 'cmu');
+clambda = 1;           % Lame coefficient
+cmu = 1;               % Lame coefficient
+gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
+gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
+gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1','clambda', 'cmu');
+gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2','clambda', 'cmu');
   
  
- gf_model_set(md, 'add initialized data', 'Fdata', [0 -1]); % initiale [0 -1]
- gf_model_set(md, 'add source term brick', mim1, 'u1', 'Fdata');
- Ddata = zeros(1, 2); u1_degree=2; u2_degree=2; %Dimension 2
- gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
- % gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u1', u1_degree, GAMMAD, 'Ddata'); %neccessaire?
- % gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u2', u2_degree, GAMMAD, 'Ddata'); %neccessaire?
- gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); %neccessaire?
+gf_model_set(md, 'add initialized data', 'Fdata', [0 -1]); % initiale [0 -1]
+gf_model_set(md, 'add source term brick', mim1, 'u1', 'Fdata');
+Ddata = zeros(1, 2); u1_degree=2; u2_degree=2; %Dimension 2
+gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
+% gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u1', u1_degree, GAMMAD, 'Ddata'); %neccessaire?
+% gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u2', u2_degree, GAMMAD, 'Ddata'); %neccessaire?
+gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); %neccessaire?
  
   
- cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
- cunitv  = [1, 0,   1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
- gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
- gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
- % gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
- gf_model_set(md, 'add pointwise constraints with penalization', 'u1', 1E10, 'cpoints', 'cunitv');
-
- 
- 
- 
- 
- % marche pas
-
-% cpoints2 = [0, 0.4];   % constrained points for 2d
-%  cunitv2  = [0.1, 0.4];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
-%  gf_model_set(md, 'add initialized data', 'cpoints2', cpoints2);
-%  gf_model_set(md, 'add initialized data', 'cunitv2', cunitv2);
-%  gf_model_set(md, 'add pointwise constraints with multipliers', 'u2', 'cpoints2', 'cunitv2');
- 
- 
+cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
+cunitv  = [1, 0,   1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
+gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
+gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
+% gf_model_set(md, 'add pointwise constraints with penalization', 'u1', 100, 'cpoints', 'cunitv');
  
 
 gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
@@ -163,21 +149,15 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 disp('solve');
 niter= 10; solve=true;
 
+gf_model_get(md, 'test tangent matrix term', 'u1', 'u1', 1e-6, niter, 10.0);
 
-
-% gf_model_get(md, 'test tangent matrix term','u1', 'u1', 1e-6, niter, 10.0);
-
-gf_model_get(md, 'test tangent matrix', 1e-6, niter, 02);
+% gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
 
 pause;
 
 niter= 10;
 
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
-
-
-
-
 
 
 figure(2);
