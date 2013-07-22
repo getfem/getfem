@@ -3701,26 +3701,32 @@ namespace getfem {
       GMM_ASSERT1(vl.size() >= 2, "Nitsche fictitious domain contact "
                   "bricks need two variables");
 
-      const model_real_plain_vector &U1 = md.real_variable(vl[0]);
+      const model_real_plain_vector &UU1 = md.real_variable(vl[0]);
       const mesh_fem &mf_u1 = md.mesh_fem_of_variable(vl[0]);
-      const model_real_plain_vector &U2 = md.real_variable(vl[1]);
+      const model_real_plain_vector &UU2 = md.real_variable(vl[1]);
       const mesh_fem &mf_u2 = md.mesh_fem_of_variable(vl[1]);
 
+      model_real_plain_vector U1(mf_u1.nb_basic_dof()), U2(mf_u2.nb_basic_dof());
+      mf_u1.extend_vector(UU1, U1); mf_u2.extend_vector(UU2, U2);
 
       GMM_ASSERT1(dl.size() > 2, "Nitsche fictitious domain contact "
                   "bricks need at least 2 data");
 
-      const model_real_plain_vector &D1 = md.real_variable(dl[0]);
+      const model_real_plain_vector &DD1 = md.real_variable(dl[0]);
       const mesh_fem &mf_d1 = md.mesh_fem_of_variable(dl[0]);
-      const model_real_plain_vector &D2 = md.real_variable(dl[1]);
+      const model_real_plain_vector &DD2 = md.real_variable(dl[1]);
       const mesh_fem &mf_d2 = md.mesh_fem_of_variable(dl[1]);
+
+      model_real_plain_vector D1(mf_d1.nb_basic_dof()), D2(mf_d2.nb_basic_dof());
+      mf_d1.extend_vector(DD1, D1); mf_d2.extend_vector(DD2, D2);
 
       const model_real_plain_vector &GAMMA0 = md.real_variable(dl[2]);
       GMM_ASSERT1(GAMMA0.size() == 1, "Gamma0 should be a scalar parameter");
       scalar_type gamma0 = GAMMA0[0];
 
       scalar_type f_coeff(0), alpha(0);
-      const model_real_plain_vector *WT1 = 0, *WT2 = 0;
+      const model_real_plain_vector *WWT1 = 0, *WWT2 = 0;
+      model_real_plain_vector WT1(mf_u1.nb_basic_dof()), WT2(mf_u2.nb_basic_dof());
       if (dl.size() > 3) {
         const model_real_plain_vector &FRICT = md.real_variable(dl[3]);
         GMM_ASSERT1(FRICT.size() == 1, "The friction coefficient should "
@@ -3733,16 +3739,18 @@ namespace getfem {
           alpha = ALPHA[0];
 
           if (dl.size() > 6) {
-            WT1 = &(md.real_variable(dl[5]));
+            WWT1 = &(md.real_variable(dl[5]));
             GMM_ASSERT1(&mf_u1 == &(md.mesh_fem_of_variable(dl[5])),
                         "wt1 should be described on the same fem than u1");
-            WT2 = &(md.real_variable(dl[6]));
+            WWT2 = &(md.real_variable(dl[6]));
             GMM_ASSERT1(&mf_u2 == &(md.mesh_fem_of_variable(dl[6])),
                         "wt2 should be described on the same fem than u2");
+            mf_u1.extend_vector(*WWT1, WT1); mf_u2.extend_vector(*WWT2, WT2);
           }
         }
       }
 
+      
 
 
 
@@ -3807,7 +3815,6 @@ namespace getfem {
         gmm::clear(vecl[2]);
         gmm::clear(vecl[3]);
       }
-
 
 
       base_matrix G1, G2, GPr(N,N);
@@ -3875,8 +3882,8 @@ namespace getfem {
           // computation of u1, w1, f_friction
           slice_vector_on_basic_dof_of_element(mf_u1, U1, cv, coeff);
           ctx_u1.pf()->interpolation(ctx_u1, coeff, u1, bgeot::dim_type(N));
-          if (WT1) {
-            slice_vector_on_basic_dof_of_element(mf_u1, *WT1, cv, coeff);
+          if (WWT1) {
+            slice_vector_on_basic_dof_of_element(mf_u1, WT1, cv, coeff);
             ctx_u1.pf()->interpolation(ctx_u1, coeff, wt1, bgeot::dim_type(N));
           }
 		  
@@ -3957,8 +3964,8 @@ namespace getfem {
           // computation of u2
           slice_vector_on_basic_dof_of_element(mf_u2, U2, cv2, coeff);
           ctx_u2.pf()->interpolation(ctx_u2, coeff, u2, bgeot::dim_type(N));
-          if (WT2) {
-            slice_vector_on_basic_dof_of_element(mf_u2, *WT2, cv2, coeff);
+          if (WWT2) {
+            slice_vector_on_basic_dof_of_element(mf_u2, WT2, cv2, coeff);
             ctx_u2.pf()->interpolation(ctx_u2, coeff, wt2, bgeot::dim_type(N));
           }
 
@@ -4002,9 +4009,8 @@ namespace getfem {
 
 
 
-            // Plan tangent 
-          if (version & model::BUILD_MATRIX){
-            
+          // Plan tangent 
+          if (version & model::BUILD_MATRIX){         
 	    // Matrice en u1,u1
             gmm::resize(Melem, nbdof1, nbdof1); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
@@ -4048,8 +4054,6 @@ namespace getfem {
 		gmm::scale(Melem,weight);
 		cout << "Melem final 2" << Melem << endl;
             mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);	
-	    
-	    
 	    
 	    
             // Matrice en fonction de u2,u1

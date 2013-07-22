@@ -85,8 +85,22 @@ title('boundary with Dirichlet condition in red');hold off;
 
 mim_bound = gfMeshIm('levelset',mls1,'boundary', gf_integ('IM_TRIANGLE(5)'));
 mim = gfMeshIm('levelset',mls1,'all', gf_integ('IM_TRIANGLE(5)')); 
+mim1 = gfMeshIm('levelset', mls1, 'inside', gf_integ('IM_TRIANGLE(5)')); 
+mim2 = gfMeshIm('levelset', mls2, 'inside', gf_integ('IM_TRIANGLE(5)')); 
 set(mim, 'integ', 4);
+set(mim1, 'integ', 4);
+set(mim2, 'integ', 4);
 
+
+dof_out = get(mfu, 'dof from im', mim1);
+cv_out = get(mim1, 'convex_index');
+cv_in = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
+mfu1 = gfMeshFem('partial', mfu, dof_out, cv_in);
+
+dof_out = get(mfu, 'dof from im', mim2);
+cv_out = get(mim2, 'convex_index');
+cv_in = setdiff(gf_mesh_get(m, 'cvid'), cv_out);
+mfu2 = gfMeshFem('partial', mfu, dof_out, cv_in);
 
 %mfu=gfMeshFem(m,2); set(mfu, 'fem', gf_fem('FEM_QK(2,1)'));
 %mfdu=gfMeshFem(m,1); set(mfdu, 'fem', gf_fem('FEM_QK_DISCONTINUOUS(2,2)'));
@@ -94,8 +108,8 @@ set(mim, 'integ', 4);
 %Elastic model 
 
 md=gf_model('real');
-gf_model_set(md,'add fem variable', 'u1',mfu);
-gf_model_set(md,'add fem variable', 'u2',mfu);
+gf_model_set(md,'add fem variable', 'u1', mfu1);
+gf_model_set(md,'add fem variable', 'u2', mfu2);
 gf_model_set(md,'add initialized fem data', 'd1', mf_ls1, ULS1);
 gf_model_set(md,'add initialized fem data', 'd2', mf_ls2, ULS2);
 gf_model_set(md,'add initialized data', 'gamma0', gamma0);
@@ -108,32 +122,29 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
  cmu = 1;               % Lame coefficient
  gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
  gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
- gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u1','clambda', 'cmu');
- gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u2','clambda', 'cmu');
+ gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1','clambda', 'cmu');
+ gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2','clambda', 'cmu');
   
  
- 
-  cpoints = [0, 0];   % constrained points for 2d
- cunitv  = [0.1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
- gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
- gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
- gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
-
- 
- 
- 
- 
- 
- gf_model_set(md, 'add initialized data', 'Fdata', [0 -0.0001]); % initiale [0 -1]
- gf_model_set(md, 'add source term brick', mim, 'u1', 'Fdata');
- Ddata = zeros(1, 2); u1_degree=2; u2_degree=2;%Dimension 2
+ gf_model_set(md, 'add initialized data', 'Fdata', [0 -1]); % initiale [0 -1]
+ gf_model_set(md, 'add source term brick', mim1, 'u1', 'Fdata');
+ Ddata = zeros(1, 2); u1_degree=2; u2_degree=2; %Dimension 2
  gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
  % gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u1', u1_degree, GAMMAD, 'Ddata'); %neccessaire?
  % gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u2', u2_degree, GAMMAD, 'Ddata'); %neccessaire?
  gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); %neccessaire?
+ 
+  
+ cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
+ cunitv  = [1, 0,   1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+ gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
+ gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
+ % gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
+ gf_model_set(md, 'add pointwise constraints with penalization', 'u1', 1E10, 'cpoints', 'cunitv');
 
-
-
+ 
+ 
+ 
  
  % marche pas
 
@@ -154,13 +165,13 @@ niter= 10; solve=true;
 
 
 
-gf_model_get(md, 'test tangent matrix term','u1','u1', 1e-6, niter, 2);
+% gf_model_get(md, 'test tangent matrix term','u1', 'u1', 1e-6, niter, 10.0);
 
-% gf_model_get(md, 'test tangent matrix', 1e-6, niter, 02);
+gf_model_get(md, 'test tangent matrix', 1e-6, niter, 02);
 
 pause;
 
-niter= 1;
+niter= 10;
 
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
 
@@ -174,7 +185,7 @@ figure(2);
 U1 = gf_model_get(md, 'variable', 'u1');
 
 sl1=gf_slice({'isovalues', -1, mf_ls1, ULS1, 0}, m, 5);
-P1=gf_slice_get(sl1,'pts'); dP1=gf_compute(mfu,U1,'interpolate on',sl1);
+P1=gf_slice_get(sl1,'pts'); dP1=gf_compute(mfu1,U1,'interpolate on',sl1);
 gf_slice_set(sl1, 'pts', P1 + dP1);
 VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
     		      'u1', 'clambda', 'cmu', mfvm);
@@ -185,7 +196,7 @@ VMsl1=gf_compute(mfvm,VM1,'interpolate on',sl1);
 U2 = gf_model_get(md, 'variable', 'u2');
 
 sl2=gf_slice({'isovalues', -1, mf_ls2, ULS2, 0}, m, 5);
-P2=gf_slice_get(sl2,'pts'); dP2=gf_compute(mfu,U2,'interpolate on',sl2);
+P2=gf_slice_get(sl2,'pts'); dP2=gf_compute(mfu2,U2,'interpolate on',sl2);
 gf_slice_set(sl2, 'pts', P2+dP2);
 VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
     		      'u2', 'clambda', 'cmu', mfvm);
