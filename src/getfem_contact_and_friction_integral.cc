@@ -4012,7 +4012,7 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) {
                   if (theta != scalar_type(0)) { 
-                    res -= theta*gamma*tGdu1(j, i) * tGdu1(k, i);
+                    res -= theta*gamma*tGdu1(k, i) * tGdu1(j, i); // l'inverse était écrit
                     res += theta*gamma*(Pr[i]-tG1[i])*(tGddu1(j,k,i));
                     for (size_type l =0; l<N; ++l){
                       res += theta*GPr(i,l)*(gamma*tGdu1(k,l)
@@ -4020,7 +4020,7 @@ namespace getfem {
 		    }
 		    }
 		  for (size_type l =0; l<N;++l){
-                    res -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i);
+                    res -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici
 		  }				   
                 }
                 Melem(j, k)=res;
@@ -4029,6 +4029,28 @@ namespace getfem {
 	    cout << "Melem final 1" << Melem << endl;
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
 
+	    
+            // Matrice en u1,u2
+            gmm::resize(Melem, nbdof1, nbdof2); gmm::clear(Melem);
+            for (size_type j = 0; j < nbdof2; ++j)
+              for (size_type k = 0; k < nbdof1; ++k){
+		scalar_type res(0);
+                for (size_type i = 0; i < N; ++i) {
+                  if (theta != scalar_type(0)) {
+                    for (size_type l =0; l<N;++l)
+                      res += theta*GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tGdu1(k,i);
+						}
+		  for (size_type l =0; l<N;++l)
+                    res -= GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
+						   } 
+		Melem(k, j)=res;				   
+	      }
+		gmm::scale(Melem,weight);
+		cout << "Melem final 2" << Melem << endl;
+            mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);	
+	    
+	    
+	    
 	    
             // Matrice en fonction de u2,u1
             gmm::resize(Melem, nbdof2, nbdof1); gmm::clear(Melem);
@@ -4041,28 +4063,8 @@ namespace getfem {
 		Melem(k, j)=res;
 	      }
 	     gmm::scale(Melem,weight);
-	    cout << "Melem final 2" << Melem << endl;
-            mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);
-
-	    
-            // Matrice en u1,u2
-            gmm::resize(Melem, nbdof1, nbdof2); gmm::clear(Melem);
-            for (size_type j = 0; j < nbdof2; ++j)
-              for (size_type k = 0; k < nbdof1; ++k){
-		scalar_type res(0);
-                for (size_type i = 0; i < N; ++i) {
-                  if (theta != scalar_type(0)) {
-                    for (size_type l =0; l<N;++l)
-                      res += theta*GPr(i,l)*(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])*tGdu1(j,i);
-						}
-		  for (size_type l =0; l<N;++l)
-                    res -= GPr(i,l)*(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])*tv2(j,i)/(gamma);				
-						   } 
-		Melem(k, j)=res;				   
-	      }
-		gmm::scale(Melem,weight);
-		cout << "Melem final 3" << Melem << endl;
-            mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);	    
+	    cout << "Melem final 3" << Melem << endl;
+            mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);    
 	    
 	    
 	    // Matrice en u2,u2
