@@ -111,7 +111,20 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u1','clambda', 'cmu');
  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u2','clambda', 'cmu');
   
- gf_model_set(md, 'add initialized data', 'Fdata', [0 -1]);
+ 
+ 
+  cpoints = [0, 0];   % constrained points for 2d
+ cunitv  = [0.1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+ gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
+ gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
+ gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
+
+ 
+ 
+ 
+ 
+ 
+ gf_model_set(md, 'add initialized data', 'Fdata', [0 1]); % initiale [0 -1]
  gf_model_set(md, 'add source term brick', mim, 'u1', 'Fdata');
  Ddata = zeros(1, 2); u1_degree=2; u2_degree=2;%Dimension 2
  gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
@@ -120,14 +133,18 @@ gf_model_set(md,'add initialized data', 'gamma0', gamma0);
  gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); %neccessaire?
 
 
- cpoints = [0, 0];   % constrained points for 2d
- cunitv  = [0.1, 0];   % corresponding constrained directions for 2d
- gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
- gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
- gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
 
+ 
+ % marche pas
 
-
+% cpoints2 = [0, 0.4];   % constrained points for 2d
+%  cunitv2  = [0.1, 0.4];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+%  gf_model_set(md, 'add initialized data', 'cpoints2', cpoints2);
+%  gf_model_set(md, 'add initialized data', 'cunitv2', cunitv2);
+%  gf_model_set(md, 'add pointwise constraints with multipliers', 'u2', 'cpoints2', 'cunitv2');
+ 
+ 
+ 
 
 gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
 
