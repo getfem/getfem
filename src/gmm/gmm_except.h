@@ -39,6 +39,11 @@
 #ifndef GMM_EXCEPT_H__
 #define GMM_EXCEPT_H__
 
+//provides external implementation of gmm_exception and logging.
+#ifdef EXTERNAL_EXCEPT_
+#include "feedback/external_except.h"
+#else
+
 #include "gmm_std.h"
 
 namespace gmm {
@@ -339,5 +344,5 @@ namespace gmm {
 
 }
 
-
+#endif /* EXTERNAL_EXCEPT_*/
 #endif /* GMM_EXCEPT_H__ */
