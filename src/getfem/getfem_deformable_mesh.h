@@ -106,7 +106,7 @@ namespace getfem {
 
 	public:
 
-		deformable_mesh(bool _must_be_restored = true);
+		deformable_mesh(bool _must_be_restored = true, const std::string &name = std::string());
 		deformable_mesh(const deformable_mesh&);
 	};
 

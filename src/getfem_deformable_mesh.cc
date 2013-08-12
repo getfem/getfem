@@ -24,7 +24,8 @@
 
 #include <getfem/getfem_deformable_mesh.h>
 
-getfem::deformable_mesh::deformable_mesh(bool _must_be_restored) : mesh(), must_be_restored(_must_be_restored){}
+getfem::deformable_mesh::deformable_mesh(bool _must_be_restored, const std::string &name) 
+  : mesh(name), must_be_restored(_must_be_restored){}
 
 getfem::deformable_mesh::deformable_mesh(
 	const getfem::deformable_mesh& _mesh) : 
