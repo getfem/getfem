@@ -788,7 +788,7 @@ namespace getfem {
   void virtual_fem::interpolation_hess(const fem_interpolation_context& c,
                                        const CVEC& coeff, VMAT &val,
                                        dim_type Qdim) const {
-    typedef typename gmm::linalg_traits<CVEC>::value_type T;
+    //    typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
     dim_type N = dim_type(c.N());
     GMM_ASSERT1(gmm::mat_ncols(val) == gmm::size_type(N*N)
