@@ -3686,7 +3686,7 @@ namespace getfem {
                                         size_type /* region */,
                                         build_version version) const {
 					  
-      cout << "begining assembly" << endl;
+      // cout << "begining assembly" << endl;
 
       // Integration method
       GMM_ASSERT1(mims.size() == 1, "Nitsche fictitious domain contact "
@@ -3759,7 +3759,7 @@ namespace getfem {
                   && &(mf_d2.linked_mesh()) == &m,
                   "All data and variables should be defined on the same mesh");
 
-      cout << "Computing projection ..." << endl;
+      // cout << "Computing projection ..." << endl;
 
       bgeot::rtree tree;
 
@@ -3800,7 +3800,7 @@ namespace getfem {
 
       }
 
-       cout << "Projection computed." << endl;
+      // cout << "Projection computed." << endl;
 
       if (version & model::BUILD_MATRIX) {
         gmm::clear(matl[0]);
@@ -3816,7 +3816,6 @@ namespace getfem {
         gmm::clear(vecl[3]);
       }
 
-
       base_matrix G1, G2, GPr(N,N);
       base_vector coeff, Velem, wt1(N), wt2(N), tv1n, tv2n;
       base_matrix Melem, grad_d2(1, N), grad_d1(1, N), tv1, tv2;
@@ -3831,11 +3830,11 @@ namespace getfem {
       sizes_tGdu1.push_back(short_type(N));
       sizes_tGddu1[2] = short_type(N);
       
-      cout << "begining gauss points loop" << endl;
+      // cout << "begining gauss points loop" << endl;
       
       for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
 
-        cout << "element " << cv << endl;
+        // cout << "element " << cv << endl;
 
 
         pintegration_method pim = mim.int_method_of_element(cv);
@@ -3877,7 +3876,6 @@ namespace getfem {
             gmm::condition_number(ctx_u1.K(),emax,emin);
             gamma = gamma0 * emax * sqrt(scalar_type(N));
           }
-          
 	  
           // computation of u1, w1, f_friction
           slice_vector_on_basic_dof_of_element(mf_u1, U1, cv, coeff);
@@ -3974,6 +3972,8 @@ namespace getfem {
           md.compute_Neumann_terms(1, vl[0], mf_u1, U1, ctx_u1, n1, tG1);
           md.compute_Neumann_terms(2, vl[0], mf_u1, U1, ctx_u1, n1, tGdu1);
           md.compute_Neumann_terms(3, vl[0], mf_u1, U1, ctx_u1, n1, tGddu1);
+          // gmm::clear(tG1.as_vector()); gmm::clear(tGdu1.as_vector()); gmm::clear(tGddu1.as_vector()); // A supprimer
+
           ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
           ctx_u2.pf()->real_base_value(ctx_u2, tbv2);
 
@@ -4009,7 +4009,7 @@ namespace getfem {
 
 
 
-          // Plan tangent 
+          // Matrice tangente 
           if (version & model::BUILD_MATRIX){         
 	    // Matrice en u1,u1
             gmm::resize(Melem, nbdof1, nbdof1); gmm::clear(Melem);
@@ -4024,15 +4024,14 @@ namespace getfem {
                       res += theta*GPr(i,l)*(gamma*tGdu1(k,l)
                                              -alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[k])*tGdu1(j,i);
 		    }
-		    }
-		  for (size_type l =0; l<N;++l){
-                    res -= GPr(i,l)*(tGdu1(k,l)+(-alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici
-		  }				   
+                  }
+		  for (size_type l =0; l<N;++l)
+                    res += GPr(i,l)*(-tGdu1(k,l)+(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici   
                 }
                 Melem(j, k)=res;
 	      }
             gmm::scale(Melem,weight);
-	    cout << "Melem final 1" << Melem << endl;
+	    // cout << "Melem final 1" << Melem << endl;
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
 
 	    
@@ -4048,11 +4047,11 @@ namespace getfem {
 						}
 		  for (size_type l =0; l<N;++l)
                     res -= GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
-						   } 
+                } 
 		Melem(k, j)=res;				   
 	      }
-		gmm::scale(Melem,weight);
-		cout << "Melem final 2" << Melem << endl;
+            gmm::scale(Melem,weight);
+            // cout << "Melem final 2" << Melem << endl;
             mat_elem_assembly(matl[1], Melem, mf_u1, cv, mf_u2, cv2);	
 	    
 	    
@@ -4066,8 +4065,8 @@ namespace getfem {
                     res += GPr(i,l)*(tGdu1(j,l)+(-alpha*tv1(j,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[j])/(gamma))*tv2(k,i);
 		Melem(k, j)=res;
 	      }
-	     gmm::scale(Melem,weight);
-	    cout << "Melem final 3" << Melem << endl;
+            gmm::scale(Melem,weight);
+            // cout << "Melem final 3" << Melem << endl;
             mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);    
 	    
 	    
@@ -4079,13 +4078,13 @@ namespace getfem {
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
                     res += GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[k])*tv2(j,i)/(gamma);			
-						   } 
+                } 
 		Melem(j, k)=res;				   
 	      }
             gmm::scale(Melem,weight);
-            cout << "Melem final 4" << Melem << endl;
+            // cout << "Melem final 4" << Melem << endl;
             mat_elem_assembly(matl[3], Melem, mf_u2, cv2, mf_u2, cv2);	
-				             }
+          }
 				           
 				           
           // Matrice du second Membre		             
@@ -4099,12 +4098,12 @@ namespace getfem {
                   res += theta*gamma*tG1[i] * tGdu1(j, i); 
                   res -= theta*gamma*Pr[i] * tGdu1(j, i);
                 }
-                res -=Pr[i]*tv1(j,i);
+                res +=Pr[i]*tv1(j,i);
               }
               Velem[j]=res;
 	    }
             gmm::scale(Velem, weight);
-	    cout << "Velem final 1" << Velem << endl;
+	    // cout << "Velem final 1" << Velem << endl;
             vec_elem_assembly(vecl[0], Velem, mf_u1, cv);
 	    
 
@@ -4117,7 +4116,7 @@ namespace getfem {
 	      Velem[j]=res;
 	    }	        
 	    gmm::scale(Velem, weight);
-	    cout << "Velem final 2" << Velem << endl;
+	    // cout << "Velem final 2" << Velem << endl;
             vec_elem_assembly(vecl[3], Velem, mf_u2, cv2);
           }
 
@@ -4150,7 +4149,7 @@ namespace getfem {
       }
 
 
-      cout << "end assembly" << endl;
+      // cout << "end assembly" << endl;
 
     }
     

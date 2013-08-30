@@ -11,7 +11,7 @@ dirichlet_val = 0;
 gamma0 = 1;
 theta = 0; %Pb theta = 1;
 %N = 2 %la dimension
-
+penalty_parameter = 1E-4;
 
 %definition of fictitious domain's mesh with quadrangles and order 1 of level-set
 
@@ -139,9 +139,12 @@ cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
 cunitv  = [1, 0,   1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
 gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
 gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
-gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
+% gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
 % gf_model_set(md, 'add pointwise constraints with penalization', 'u1', 100, 'cpoints', 'cunitv');
- 
+gf_model_set(md, 'add initialized data', 'penalty_param1', [penalty_parameter]);
+indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
+gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);
+indmass = gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
 
 gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
 
@@ -149,15 +152,15 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 disp('solve');
 niter= 10; solve=true;
 
-gf_model_get(md, 'test tangent matrix term', 'u1', 'u1', 1e-6, niter, 10.0);
+% gf_model_get(md, 'test tangent matrix term', 'u1', 'u2', 1e-6, niter, 10.0);
 
-% gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
+gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
 
-pause;
+% pause;
 
-niter= 10;
+niter= 20;
 
-gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'very noisy');
+gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy');
 
 
 figure(2);
