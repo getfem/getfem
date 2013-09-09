@@ -4,14 +4,15 @@ disp('with a fictitious domain method and Nitsche s method');
 
 clear all;
 % gf_workspace('clear all');
-NX=5;
+NX=20;
 ls_degree = 1; % pour 2 tous les matrices ne sont pas nulles
 R=0.25;
 dirichlet_val = 0;
 gamma0 = 1;
 theta = 0; %Pb theta = 1;
 %N = 2 %la dimension
-penalty_parameter = 1E-4;
+penalty_parameter = 10E-4;
+vertical_force = -0.1;
 
 %definition of fictitious domain's mesh with quadrangles and order 1 of level-set
 
@@ -126,7 +127,7 @@ gf_model_set(md, 'add isotropic linearized elasticity brick', mim1, 'u1','clambd
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim2, 'u2','clambda', 'cmu');
   
  
-gf_model_set(md, 'add initialized data', 'Fdata', [0 -1]); % initiale [0 -1]
+gf_model_set(md, 'add initialized data', 'Fdata', [0 vertical_force]); % initiale [0 -1]
 gf_model_set(md, 'add source term brick', mim1, 'u1', 'Fdata');
 Ddata = zeros(1, 2); u1_degree=2; u2_degree=2; %Dimension 2
 gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
@@ -158,7 +159,7 @@ gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
 
 % pause;
 
-niter= 20;
+niter= 50;
 
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy');
 

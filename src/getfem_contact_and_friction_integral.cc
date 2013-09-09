@@ -3750,8 +3750,6 @@ namespace getfem {
         }
       }
 
-      
-
 
 
       GMM_ASSERT1(&(mf_u1.linked_mesh()) == &m && &(mf_u2.linked_mesh()) == &m
@@ -3953,8 +3951,7 @@ namespace getfem {
 	  // Computation of gap
 	  gap = 0;
           for( size_type i=0; i<N; ++i)
-            gap += (x0[i]-y0[i])*n2[i];
-	  	  
+            gap += (x0[i]-y0[i])*n2[i];	  	  
 	  
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
           fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
@@ -3991,8 +3988,8 @@ namespace getfem {
 
           for(size_type i=0; i<N; ++i)
             zeta[i] = tG1[i] +
-              ( (gap + (alpha-1.)*u1n-(alpha-1.)*u2n)*n2[i]
-                + alpha*(wt1[i]-wt2[i]) - alpha*u1[i] + alpha*u2[i]) / gamma;	  
+              ( (gap - (alpha-1.)*u1n+(alpha-1.)*u2n)*n2[i]
+                + alpha*(wt1[i]-wt2[i]) + alpha*u1[i] - alpha*u2[i]) / gamma;	  
 
 
           coupled_projection(zeta, n2, f_coeff, Pr);
@@ -4022,11 +4019,11 @@ namespace getfem {
                     res += theta*gamma*(Pr[i]-tG1[i])*(tGddu1(j,k,i));
                     for (size_type l =0; l<N; ++l){
                       res += theta*GPr(i,l)*(gamma*tGdu1(k,l)
-                                             -alpha*tv1(k,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[k])*tGdu1(j,i);
+                                             +alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])*tGdu1(j,i);
 		    }
                   }
 		  for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(-tGdu1(k,l)+(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici   
+                    res += GPr(i,l)*(-tGdu1(k,l)-(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici   
                 }
                 Melem(j, k)=res;
 	      }
@@ -4043,10 +4040,10 @@ namespace getfem {
                 for (size_type i = 0; i < N; ++i) {
                   if (theta != scalar_type(0)) {
                     for (size_type l =0; l<N;++l)
-                      res += theta*GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tGdu1(k,i);
+                      res -= theta*GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tGdu1(k,i);
 						}
 		  for (size_type l =0; l<N;++l)
-                    res -= GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
+                    res += GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
                 } 
 		Melem(k, j)=res;				   
 	      }
@@ -4062,7 +4059,7 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) 
 		  for (size_type l = 0; l < N; ++l)
-                    res += GPr(i,l)*(tGdu1(j,l)+(-alpha*tv1(j,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[j])/(gamma))*tv2(k,i);
+                    res += GPr(i,l)*(tGdu1(j,l)-(-alpha*tv1(j,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[j])/(gamma))*tv2(k,i);
 		Melem(k, j)=res;
 	      }
             gmm::scale(Melem,weight);
@@ -4077,7 +4074,7 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[k])*tv2(j,i)/(gamma);			
+                    res -= GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[k])*tv2(j,i)/(gamma);			
                 } 
 		Melem(j, k)=res;				   
 	      }
