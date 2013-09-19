@@ -204,9 +204,11 @@ namespace getfem {
         // the primal variable. A search is done on all the terms of the
         // model. Only the the corresponding linear terms are added.
         // If no linear term is available, a mass matrix is used.
-
+        size_type nrowsMM = it2->second.mf->nb_dof();
+        if (it2->second.filter == VDESCRFILTER_REGION) 
+                    nrowsMM = it2->second.partial_mf->nb_dof();
         gmm::col_matrix< gmm::rsvector<scalar_type> >
-          MM(it2->second.mf->nb_dof(), it->second.mf->nb_dof());
+          MM(nrowsMM, it->second.mf->nb_dof());        
         bool termadded = false;
 
 	if (it->second.filter == VDESCRFILTER_CTERM) {
