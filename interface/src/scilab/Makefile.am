@@ -71,7 +71,9 @@ EXTRA_DIST=builddoc.sce \
         tests/unit_tests/check_spmat.sce \
         tests/unit_tests/check_workspace.sce \
         demos/demo_bilaplacian.sce \
+	demos/demo_continuation_block.sce \
         demos/demo_continuation.sce \
+	demos/demo_continuation_vee.sce \
         demos/demo_convection_rotating_cavity.sce \
         demos/demo_crack.sce \
         demos/demo_fictitious_domains.sce \
@@ -119,6 +121,7 @@ EXTRA_DIST=builddoc.sce \
         demos/data/tripod.GiD.msh \
         demos/data/tripod.mesh \
         demos/data/tube_2D_spline.GiD.msh \
+	demos/data/vee_h_0.03.mesh \
         etc/sci_getfem.quit \
         etc/sci_getfem.start \
         help/builder_help.sce \

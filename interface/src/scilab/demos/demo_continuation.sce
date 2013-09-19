@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2011-2012 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2011-2013 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //
@@ -15,7 +15,8 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// Simple example of the bifurcation problem: -Delta(u) + u = lambda * exp(u)
+// Simple example of the bifurcation problem:
+// -Delta(u) + u = lambda * exp(u).
 //
 // This program is used to check that scilab-getfem is working. This is also
 // a good example of use of GetFEM++.
@@ -37,7 +38,7 @@ gf_util('warning level', 3);
 datapath = get_absolute_file_path('demo_continuation.sce') + 'data/';
 // If the file name bp_char is non-empty, the continuation will be started
 // from the bifurcation point and the tangent with the index ind_tangent
-// saved there, direction of that tangent will be determined by direction.
+// saved there, direction of this tangent will be determined by direction.
 // Otherwise, the continuation will be initialised according to direction and
 // lambda0.
 bp_char = '';

@@ -76,10 +76,9 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
   
     
     /*@FUNC t = ('init test function', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par)
-      Initialise the border of the bordered system that serves for
-      calculating the test function for bifurcations. Return the value of the
-      test function for the point given by `solution` and `parameter` and the
-      tangent given by `tangent_sol` and `tangent_par`.@*/
+      Save the value of a test function for the point given by `solution` and
+      `parameter` and the tangent given by `tangent_sol` and `tangent_par`
+      into the @tcs object and return it.@*/
     sub_command
       ("init test function", 4, 4, 0, 1,
        

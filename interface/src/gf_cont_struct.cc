@@ -52,8 +52,6 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        (the default value is 'auto', which lets getfem choose itself);
        possible values are 'superlu', 'mumps' (if supported), 'cg/ildlt',
        'gmres/ilu' and 'gmres/ilut';
-    - 'bifurcations'
-       activates tools for detection and treatment of bifurcation points;
     - 'h_init', @scalar HIN
        initial step size (the default value is 1e-2);
     - 'h_max', @scalar HMAX
@@ -83,6 +81,8 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     - 'max_res_solve', @scalar RES_SOLVE
        target residual value for the linear systems to be solved (the
        default value is 1e-8);
+    - 'bifurcations'
+       activates tools for detection and treatment of bifurcation points;
     - 'non-smooth'
        determines that some special methods for non-smooth problems can be
        used;

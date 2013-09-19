@@ -322,7 +322,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       be a pseudo potential instead of the residual. Still experimental since
       not all bricks define a pseudo potential.
 
-      Return the number of iterations, if a iterative method is used.
+      Return the number of iterations, if an iterative method is used.
       
       Note that it is possible to disable some variables
       (see MODEL:SET('disable variable') ) in order to

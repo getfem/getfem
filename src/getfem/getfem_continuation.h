@@ -51,7 +51,7 @@ namespace getfem {
   enum build_data { BUILD_F = 1, BUILD_F_x = 2, BUILD_ALL = 3 };
 
   /* Compute a unit tangent at (x, gamma) that is accute to the incoming
-     tangent. */
+     vector. */
   template <typename CONT_S, typename VECT>
   void compute_tangent(CONT_S &S, const VECT &x, double gamma,
 		       VECT &t_x, double &t_gamma) {
@@ -107,18 +107,21 @@ namespace getfem {
     VECT t_x0(t_x), T_x(t_x), X(x);
 
     if (S.noisy() > 0) cout  << "trying simple tangent switch" << endl;
-
     if (S.noisy() > 0) cout << "starting computing a new tangent" << endl;
+    h *= 1.5;
     S.scaled_add(x, T_x, h, X); Gamma = gamma + h * T_gamma;
     S.set_build(BUILD_ALL);
     compute_tangent(S, X, Gamma, T_x, T_gamma);
+    // One can test the cosine of the angle between (T_x, T_gamma) and
+    // (t_x, t_gamma), for sure, and increase h_min if it were greater or
+    // equal to S.mincos(). However, this seems to be superfluous.
     
     if (S.noisy() > 0)
       cout << "starting testing the computed tangent" << endl;
     double h_test = (-0.9) * S.h_min();
     do {
       h_test = -h_test
-	+ pow(10., floor(log10(- h_test / S.h_min()))) * S.h_min();
+	+ pow(10., floor(log10(-h_test / S.h_min()))) * S.h_min();
       accepted = test_tangent(S, x, gamma, T_x, T_gamma,
 			      t_x, t_gamma, h_test);
       if (!accepted) {
@@ -397,9 +400,10 @@ namespace getfem {
   
   /* A tool for approximating a non-smooth point close to (x, gamma) and
      locating (preferably) all smooth one-sided solution branches emanating
-     from there. It is supposed that (x, gamma) is up to the distance of
-     S.h_min() a last point of some smooth solution branch and (t_x, t_gamma)
-     is the corresponding tangent that directs to the end of this branch. */
+     from there. It is supposed that (x, gamma) is a point on the previously
+     traversed smooth solution branch within the distance of S.h_min() from
+     the end point of this branch and (t_x, t_gamma) is the corresponding
+     tangent that is directed towards the end point. */
   template <typename CONT_S, typename VECT>
   void treat_nonsmooth_point(CONT_S &S, const VECT &x, double gamma,
 			     const VECT &t_x, double t_gamma, int version) {
@@ -435,7 +439,8 @@ namespace getfem {
     S.scaled_add(x_end, t_x0, h, x_end); gamma_end += h * t_gamma0;
     S.set_sing_point(x_end, gamma_end);
 
-    // take two different vectors to span a subspace of perturbations
+    // take two vectors to span a subspace of perturbations for the
+    // non-smooth point
     if (S.noisy() > 0)
       cout  << "starting a thorough search for other branches" << endl;
     double t_gamma1 = t_gamma0, t_gamma2 = t_gamma0;
@@ -450,7 +455,6 @@ namespace getfem {
 
     // perturb the non-smooth point systematically to find new tangent
     // predictions
-    bool index_changed;
     unsigned long i1 = 0, i2 = 0, ncomb = 0;
     double a, a1, a2, no;
     S.clear(t_x0); t_gamma0 = 0.;
@@ -492,6 +496,7 @@ namespace getfem {
       }
       
       // heuristics for varying the spanning vectors
+      bool index_changed;
       if (i1 + 1 < i2) { ++i1; index_changed = true; }
       else if(i2 + 1 < S.nb_tangent_sing())
 	{ ++i2; i1 = 0; index_changed = true; }
@@ -593,6 +598,7 @@ namespace getfem {
 	  cout << "classical continuation has failed" << endl;
 	if (switch_tangent(S, x, gamma, t_x, t_gamma, h)) {
 	  tangent_switched = true;
+	  step_dec = (h >= S.h_init()) ? 0 : 1;
 	  if (S.noisy() > 0)
 	    cout << "restarting the classical continuation" << endl;
 	} else break;
