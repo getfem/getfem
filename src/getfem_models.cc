@@ -204,11 +204,8 @@ namespace getfem {
         // the primal variable. A search is done on all the terms of the
         // model. Only the the corresponding linear terms are added.
         // If no linear term is available, a mass matrix is used.
-        size_type nrowsMM = it2->second.mf->nb_dof();
-        if (it2->second.filter == VDESCRFILTER_REGION) 
-                    nrowsMM = it2->second.partial_mf->nb_dof();
         gmm::col_matrix< gmm::rsvector<scalar_type> >
-          MM(nrowsMM, it->second.mf->nb_dof());        
+          MM(it2->second.associated_mf().nb_dof(), it->second.mf->nb_dof());        
         bool termadded = false;
 
 	if (it->second.filter == VDESCRFILTER_CTERM) {
@@ -271,7 +268,7 @@ namespace getfem {
           }
 #endif
 	} else if (it->second.filter == VDESCRFILTER_INFSUP) {
-	  asm_mass_matrix(MM, *(it->second.mim), *(it2->second.mf),
+	  asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
 			  *(it->second.mf), it->second.m_region);
 	}
         //
@@ -281,7 +278,8 @@ namespace getfem {
         gmm::range_basis(MM, columns);
         if (mults.size() > 1) {
           gmm::copy(MM, gmm::sub_matrix
-                    (MGLOB,gmm::sub_interval(0, it2->second.mf->nb_dof()),
+                    (MGLOB, gmm::sub_interval(0,
+                                        it2->second.associated_mf().nb_dof()),
                      gmm::sub_interval(s, it->second.mf->nb_dof())));
           for (std::set<size_type>::iterator itt = columns.begin();
              itt != columns.end(); ++itt)
@@ -3923,7 +3921,7 @@ namespace getfem {
                                         const model::mimlist &mims,
                                         model::real_matlist &matl,
                                         model::real_veclist &vecl,
-                                        model::real_veclist &rvecl,
+                                        model::real_veclist &/*rvecl*/,
                                         size_type,
                                         build_version version) const {
 
