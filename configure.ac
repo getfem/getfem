@@ -76,6 +76,10 @@ AX_PROG_CXX_MPI([test $paralevel -ge 1],[usempi=yes],[usempi=no])
 AX_PROG_CC_MPI([test "x$usempi" = "xyes"],,[usempi=no])
 AX_PROG_FC_MPI([test "x$usempi" = "xyes"],[CPPFLAGS="$CPPFLAGS -DGMM_USES_MPI"],[usempi=no])
 
+if  test "x$usempi" = "xyes"; then
+AC_CHECK_LIB(mpi_cxx, _init,,)
+fi
+
 AC_PROG_CXXCPP
 CXXFLAGS="${USER_CXXFLAGS}"
 CFLAGS="${USER_CFLAGS}"
