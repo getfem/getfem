@@ -124,6 +124,13 @@ namespace getfem {
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
 
+    #if GETFEM_PARA_LEVEL > 1
+    int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    double t_ref = MPI_Wtime();
+    cout << "Actualize size called from thread " << rk << endl;
+    #endif
+
+
     // In case of change in fems or mims, linear terms have to be recomputed
     // We couls select which brick is to be recomputed if we would be able
     // to know which fem or mim is changed.
@@ -332,6 +339,11 @@ namespace getfem {
       gmm::resize(rTM, tot_size, tot_size);
       gmm::resize(rrhs, tot_size);
     }
+
+    #if GETFEM_PARA_LEVEL > 1
+    cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
+    
+    #endif
   }
 
 
@@ -1248,6 +1260,11 @@ namespace getfem {
 
   void model::assembly(build_version version) {
 
+#if GETFEM_PARA_LEVEL > 1
+    double t_ref = MPI_Wtime();
+    cout << "Assembly called" << endl;
+#endif
+
     context_check(); if (act_size_to_be_done) actualize_sizes();
     if (is_complex()) {
       if (version & BUILD_MATRIX) gmm::clear(cTM);
@@ -1595,6 +1612,11 @@ namespace getfem {
         }
       }
     }
+
+    #if GETFEM_PARA_LEVEL > 1
+    cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
+    #endif
+
   }
 
 
@@ -1613,9 +1635,11 @@ namespace getfem {
   const model_real_plain_vector &
   model::real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
-    context_check(); if (act_size_to_be_done) actualize_sizes();
+    context_check(); 
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+      actualize_sizes();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
                 "Invalid iteration number "
@@ -1626,9 +1650,11 @@ namespace getfem {
   const model_complex_plain_vector &
   model::complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
-    context_check(); if (act_size_to_be_done) actualize_sizes();
+    context_check();
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+      actualize_sizes();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
                 "Invalid iteration number "
@@ -1639,9 +1665,11 @@ namespace getfem {
   model_real_plain_vector &
   model::set_real_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(!complex_version, "This model is a complex one");
-    context_check(); if (act_size_to_be_done) actualize_sizes();
+    context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+      actualize_sizes();
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
@@ -1653,9 +1681,11 @@ namespace getfem {
   model_complex_plain_vector &
   model::set_complex_variable(const std::string &name, size_type niter) const {
     GMM_ASSERT1(complex_version, "This model is a real one");
-    context_check(); if (act_size_to_be_done) actualize_sizes();
+    context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+      actualize_sizes();
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
