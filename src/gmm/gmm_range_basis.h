@@ -484,7 +484,7 @@ namespace gmm {
     The LU decomposition has been tested for local elimination but gives bad
     results : the algorithm is unstable and do not permit to give the right
     number of vector at the end of the process. Moreover, the number of final
-    vector depend greatly on the number of vectors in a block of the local
+    vectors depends greatly on the number of vectors in a block of the local
     analysis.
   */
   template <typename Mat>

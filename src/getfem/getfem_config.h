@@ -230,14 +230,16 @@ namespace getfem {
 
 
 #if GETFEM_PARA_LEVEL > 1
-  template <typename T> inline T MPI_SUM_SCALAR(T a)
-  { T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a),MPI_SUM,MPI_COMM_WORLD); return b; }
+  template <typename T> inline T MPI_SUM_SCALAR(T a) {
+    T b; MPI_Allreduce(&a,&b,1,gmm::mpi_type(a), MPI_SUM, MPI_COMM_WORLD);
+    return b;
+  }
   template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &VV) {
     VECT &V = const_cast<VECT &>(VV);
     typedef typename gmm::linalg_traits<VECT>::value_type T;
     std::vector<T> W(gmm::vect_size(V));
-    MPI_Allreduce((void *)(&(V[0])), &(W[0]), gmm::vect_size(V), gmm::mpi_type(T()),
-		  MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce((void *)(&(V[0])), &(W[0]), gmm::vect_size(V),
+                  gmm::mpi_type(T()), MPI_SUM, MPI_COMM_WORLD);
     gmm::copy(W, V);
   }
   template <typename VECT1, typename VECT2>
@@ -251,9 +253,106 @@ namespace getfem {
   }
   inline bool MPI_IS_MASTER(void)
   { int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk); return !rk; }
+
+  template <typename T> inline
+  void MPI_SUM_SPARSE_MATRIX(const gmm::col_matrix< gmm::rsvector<T> > &M) {
+    typedef typename gmm::col_matrix< gmm::rsvector<T> > MAT;
+    MAT &MM = const_cast<MAT &>(M);
+    int rk, nbp;
+    MPI_Status status;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    MPI_Comm_size(MPI_COMM_WORLD, &nbp);
+    if (nbp < 2) return;
+    size_type nr = gmm::mat_nrows(MM), nc = gmm::mat_ncols(MM);
+
+    gmm::dense_matrix<int> all_nnz(nc, nbp);
+    std::vector<int> my_nnz(nc), owner(nc);
+    gmm::rsvector<T> V(nr);
+    
+    // Step 1 : each process fill the corresponding nnz line
+    for (size_type i = 0; i < nc; ++i)
+      my_nnz[i] = gmm::nnz(gmm::mat_col(MM, i));
+
+    // Step 2 : All gather : each proc has all the information
+    MPI_Allgather((void *)(&(my_nnz[0])), nc, MPI_INT,
+                  (void *)(&(all_nnz(0,0))), nc, MPI_INT, MPI_COMM_WORLD);   
+    
+    // Step 3 : Scan each column and message send/receive
+    std::vector<int> contributors(nc);
+    for (int i = 0; i < nc; ++i) {
+      if (my_nnz[i]) {
+        int column_master = -1, max_nnz = 0;
+        contributors.resize(0);
+        
+        // Determine who is the master for the column
+        for (int j = nbp-1; j >= 0; --j) {
+          if (all_nnz(i, j)) {
+            if (rk != j) contributors.push_back(j);
+            if (column_master == -1 || all_nnz(i, j) > max_nnz)
+              { column_master = j; max_nnz = all_nnz(i, j); }
+          }
+        }
+
+        for (int j = 0; j < int(contributors.size()); ++j) {
+          if (column_master == rk) { // receive a column and store
+            typename gmm::rsvector<T>::base_type_ &VV = V;
+            int si = all_nnz(i, contributors[j]);
+            VV.resize(si);
+            MPI_Recv((void *)(&(VV[0])),
+                     si*sizeof(gmm::elt_rsvector_<T>),
+                     MPI_BYTE, contributors[j], 0,
+                     MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            gmm::add(V, gmm::mat_col(MM, i));
+          } else { // send the column to the column master
+            typename gmm::rsvector<T>::base_type_ &VV = MM.col(i);
+            MPI_Send((void *)(&(VV[0])),
+                     my_nnz[i]*sizeof(gmm::elt_rsvector_<T>),
+                     MPI_BYTE, column_master, 0,
+                     MPI_COMM_WORLD);
+            MM.col(i).clear();
+          }
+        }
+      }
+    }
+
+    // Step 3 : gather the total nnz
+    for (size_type i = 0; i < nc; ++i) {
+      my_nnz[i] = gmm::nnz(gmm::mat_col(MM, i));
+      owner[i] = (my_nnz[i]) ? rk : 0;
+    }
+    MPI_SUM_VECTOR(my_nnz);
+    MPI_SUM_VECTOR(owner);
+    
+    // Step 4 : distribute each column to all the processes
+    // Would it be more efficient to perform a global MPI_SUM on a compressed
+    // storage ?
+    for (size_type i = 0; i < nc; ++i) {
+      if (my_nnz[i]) {
+        typename gmm::rsvector<T>::base_type_ &VV = MM.col(i);
+        if (owner[i] != rk) VV.resize(my_nnz[i]);
+        MPI_Bcast((void *)(&(VV[0])), my_nnz[i]*sizeof(gmm::elt_rsvector_<T>),
+                  MPI_BYTE, owner[i], MPI_COMM_WORLD);
+      }
+    }
+  }
+  
+  template <typename MAT> inline void MPI_SUM_SPARSE_MATRIX(const MAT &M) {
+    typedef typename gmm::linalg_traits<MAT>::value_type T;
+    int nbp; MPI_Comm_size(MPI_COMM_WORLD, &nbp);
+    if (nbp < 2) return;
+    size_type nr = gmm::mat_nrows(M), nc = gmm::mat_ncols(M);
+    gmm::col_matrix< gmm::rsvector<T> > MM(nr, nc);
+    GMM_WARNING2("MPI_SUM_SPARSE_MATRIX: A copy of the matrix is done. "
+               "To avoid it, adapt MPI_SUM_SPARSE_MATRIX to "
+               "your matrix type.");
+    gmm::copy(M, MM);
+    MPI_SUM_SPARSE_MATRIX(MM);
+    gmm::copy(MM, const_cast<MAT &>(M));
+  }
 #else
   template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
-  template <typename VECT> inline void MPI_SUM_VECTOR(VECT) {}
+  template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &) {}
+  template <typename MAT> inline void MPI_SUM_SPARSE_MATRIX(const MAT &) {}
   template <typename VECT1, typename VECT2>
   inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &WW)
   {

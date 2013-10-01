@@ -154,8 +154,7 @@ namespace getfem {
       }
     }
 
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-          ++it) {
+    for (VAR_SET::iterator it=variables.begin(); it!=variables.end(); ++it) {
       if (it->second.is_fem_dofs) {
         switch (it->second.filter) {
         case VDESCRFILTER_NO:
@@ -182,6 +181,11 @@ namespace getfem {
 
     for (std::map<std::string, bool >::iterator itbd = tobedone.begin();
          itbd != tobedone.end(); ++itbd) {
+      #if GETFEM_PARA_LEVEL > 1
+      double tt_ref = MPI_Wtime();
+      if (!rk) cout << "compute size of multipliers for " << itbd->first << endl;
+      #endif
+
       std::vector<std::string> &mults = multipliers[itbd->first];
       VAR_SET::iterator it2 = variables.find(itbd->first);
 
@@ -259,25 +263,15 @@ namespace getfem {
 	  if (!termadded)
 	    GMM_WARNING1("No term found to filter multiplier " << it->first
 			 << ". Variable is cancelled");
-#if GETFEM_PARA_LEVEL > 1
-	  if (termadded) {
-            // we assume that all bricks take mpi_region into account but it
-            // would be better if the brick itself could report if it supports
-            // distributed assembly
-            // This is only a reference implementation, it needs to be optimized
-            // maybe by using gmm::mpi_distributed_matrix
-            std::vector<scalar_type> tmpvec1(gmm::mat_nrows(MM)), tmpvec2(gmm::mat_nrows(MM));
-            for (size_type k = 0; k < gmm::mat_ncols(MM); ++k) {
-                gmm::copy(gmm::mat_col(MM,k),tmpvec1);
-                MPI_SUM_VECTOR(tmpvec1,tmpvec2);
-                gmm::copy(tmpvec2,gmm::mat_col(MM,k));
-            }
-          }
-#endif
 	} else if (it->second.filter == VDESCRFILTER_INFSUP) {
+          mesh_region rg(it->second.m_region);
+          it->second.mim->linked_mesh().intersect_with_mpi_region(rg);
 	  asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
-			  *(it->second.mf), it->second.m_region);
+			  *(it->second.mf), rg);
 	}
+
+        MPI_SUM_SPARSE_MATRIX(MM);
+
         //
         // filtering
         //
@@ -303,8 +297,19 @@ namespace getfem {
         }
       }
 
+        #if GETFEM_PARA_LEVEL > 1
+        if (!rk) cout << "Range basis for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+    
+        #endif
+
       if (mults.size() > 1) {
         gmm::range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
+
+
+        #if GETFEM_PARA_LEVEL > 1
+        if (!rk) cout << "Producing partial mf for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+    
+        #endif
 
         s = 0;
         for (size_type k = 0; k < mults.size(); ++k) {
@@ -320,6 +325,10 @@ namespace getfem {
           s += it->second.mf->nb_dof();
         }
       }
+      #if GETFEM_PARA_LEVEL > 1
+      if (!rk) cout << "End compute size of  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+    
+      #endif
     }
 
     size_type tot_size = 0;
@@ -1693,16 +1702,15 @@ namespace getfem {
                 << niter << " for " << name);
     return it->second.complex_value[niter];
   }
-    void model::check_brick_stiffness_rhs(size_type ind_brick) const
-	{
-
-	  
-	  const brick_description &brick = bricks[ind_brick];
-	  update_brick(ind_brick, model::BUILD_ALL);
-
-      brick.pbr->check_stiffness_matrix_and_rhs(*this, ind_brick, brick.tlist,
-		  brick.vlist, brick.dlist, brick.mims, brick.rmatlist,
-            brick.rveclist[0], brick.rveclist_sym[0], brick.region);
+  
+  void model::check_brick_stiffness_rhs(size_type ind_brick) const {
+    
+    const brick_description &brick = bricks[ind_brick];
+    update_brick(ind_brick, model::BUILD_ALL);
+    
+    brick.pbr->check_stiffness_matrix_and_rhs(*this, ind_brick, brick.tlist,
+                      brick.vlist, brick.dlist, brick.mims, brick.rmatlist,
+                      brick.rveclist[0], brick.rveclist_sym[0], brick.region);
   }
 
 

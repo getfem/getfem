@@ -31,7 +31,7 @@ import getfem as gf
 import numpy as np
 
 ## Parameters
-NX = 40                            # Mesh parameter.
+NX = 100                           # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient

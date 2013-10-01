@@ -24,7 +24,10 @@
   This program is used to check that python-getfem is working in parallel.
   This is also a good example of use of GetFEM++.
 
-  $Id: demo_laplacian.py 3809 2011-09-26 20:38:56Z logari81 $
+  Run this script by invoking
+  mpiexec -n 4 python demo_parallel_laplacian.py
+
+  $Id: demo_parallel_laplacian.py 3809 2011-09-26 20:38:56Z logari81 $
 """
 # import basic modules
 import mpi4py.MPI as mpi
@@ -38,13 +41,14 @@ if (rank == 0):
 print 'Hello from thread ', rank
 
 ## Parameters
-NX = 100                            # Mesh parameter.
+NX = 500                           # Mesh parameter.
 Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
 
 # creation of a simple cartesian mesh
 m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
+print 'Mesh built on thread ', rank
 
 # create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
@@ -73,12 +77,19 @@ m.set_region(DIRICHLET_BOUNDARY_NUM1, fleft)
 m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
 
+nb_dof = mfu.nbdof()
+if (rank == 0):
+  print 'Nb dof = ', nb_dof
+
 # interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
+print 'Eval1 done on thread ', rank
 
 # interpolate the source term
 F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
+print 'Eval2 done on thread ', rank
 F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
+print 'Eval3 done on thread ', rank
 
 # model
 md = gf.Model('real')
@@ -121,13 +132,19 @@ else:
   md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
                                                DIRICHLET_BOUNDARY_NUM2,
                                                'DirichletData')
-if (rank == 0):
-  gf.memstats()
+# if (rank == 0):
+#   gf.memstats()
 # md.listvar()
 # md.listbricks()
 
 # assembly of the linear system and solve.
+
+if (rank == 0):
+  print 'begin solve';
 md.solve()
+if (rank == 0):
+  print 'solve done';
+
 
 # main unknown
 U = md.variable('u')
