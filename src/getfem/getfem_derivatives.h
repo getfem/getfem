@@ -109,9 +109,10 @@ namespace getfem
 
       gmm::dense_matrix<T> grad(N,qdim), gradt(qdim,N);
       fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
-      gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-                (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+      slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
+      // gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
+      // gmm::copy(gmm::sub_vector
+      //          (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
         size_type dof_t =
           mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;
@@ -187,9 +188,10 @@ namespace getfem
 
       gmm::dense_matrix<T> hess(N*N,qdim), hesst(qdim,N*N);
       fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
-      gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-                (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+      slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);      
+      // gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
+      // gmm::copy(gmm::sub_vector
+      //          (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       for (size_type j = 0; j < pf_target->nb_dof(cv); ++j) {
         size_type dof_t
           = mf_target.ind_basic_dof_of_element(cv)[j*target_qdim] * qqdimt;

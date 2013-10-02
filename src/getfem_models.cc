@@ -1623,7 +1623,7 @@ namespace getfem {
 
     #if GETFEM_PARA_LEVEL > 1
     // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-    if (MPI_IS_MASTER) cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
+    if (MPI_IS_MASTER()) cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
     #endif
 
   }
@@ -1915,9 +1915,10 @@ namespace getfem {
 	  else ctx_a.set_xref(ctx.xref());
 	}
 
-	coeff.resize(mf_a->nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(var, gmm::sub_index
-			      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+        slice_vector_on_basic_dof_of_element(*mf_a, *A, cv, coeff);
+	// coeff.resize(mf_a->nb_basic_dof_of_element(cv));
+	// gmm::copy(gmm::sub_vector(*A, gmm::sub_index
+	//		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
 	ctx_a.pf()->interpolation(ctx_a, coeff, val, dim_type(s));
       } else if (A) {
 	gmm::copy(*A, val);
@@ -1928,9 +1929,10 @@ namespace getfem {
       switch (version) {
       case 1:
 	gmm::resize(grad, Q, N);
-	coeff.resize(mfvar.nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(var, gmm::sub_index
-			      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+        slice_vector_on_basic_dof_of_element(mfvar, var, cv, coeff);
+	// coeff.resize(mfvar.nb_basic_dof_of_element(cv));
+	// gmm::copy(gmm::sub_vector(var, gmm::sub_index
+	//		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
 	ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(Q));
 
 	if (s == 1)
@@ -3411,9 +3413,10 @@ namespace getfem {
 	n = bgeot::compute_normal(ctx, ctx.face_num());
 	n /= gmm::vect_norm2(n);
 	if (mf_u && gmm::vect_size(U)) {
-	  coeff.resize(mf_u->nb_basic_dof_of_element(cv));
-	  gmm::copy(gmm::sub_vector(U, gmm::sub_index
-			       (mf_u->ind_basic_dof_of_element(cv))), coeff);
+          slice_vector_on_basic_dof_of_element(*mf_u, U, cv, coeff);
+	  // coeff.resize(mf_u->nb_basic_dof_of_element(cv));
+	  // gmm::copy(gmm::sub_vector(U, gmm::sub_index
+          //           (mf_u->ind_basic_dof_of_element(cv))), coeff);
 	  ctx.pf()->interpolation(ctx, coeff, u, qdim);
 	}
 	if (normal_component) {
@@ -4473,10 +4476,11 @@ namespace getfem {
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
       t.adjust_sizes(sizes_);
-      coeff.resize(mf_u.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-                (U, gmm::sub_index
-                 (mf_u.ind_basic_dof_of_element(cv))), coeff);
+      slice_vector_on_basic_dof_of_element(mf_u, U, cv, coeff);
+      // coeff.resize(mf_u.nb_basic_dof_of_element(cv));
+      // gmm::copy(gmm::sub_vector
+      //          (U, gmm::sub_index
+      //           (mf_u.ind_basic_dof_of_element(cv))), coeff);
       ctx.pf()->interpolation(ctx, coeff, V, 1);
 
       try {
@@ -4976,14 +4980,15 @@ namespace getfem {
 	  if (ctx.have_pfp())  ctx_mu.set_ii(ctx.ii());
 	  else ctx_mu.set_xref(ctx.xref());
 	}
-
-	coeff.resize(mf_mu->nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(*mu, gmm::sub_index
-			      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
+        slice_vector_on_basic_dof_of_element(*mf_mu, *mu, cv, coeff);
+	// coeff.resize(mf_mu->nb_basic_dof_of_element(cv));
+	// gmm::copy(gmm::sub_vector(*mu, gmm::sub_index
+	//		      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
 	ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
 	val_mu = val[0];
-	gmm::copy(gmm::sub_vector(*lambda, gmm::sub_index
-			      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
+        slice_vector_on_basic_dof_of_element(*mf_mu, *lambda, cv, coeff);
+	// gmm::copy(gmm::sub_vector(*lambda, gmm::sub_index
+	//		      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
 	ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
 	val_mu = val[0];
       } else {
@@ -4992,9 +4997,10 @@ namespace getfem {
 
       switch (version) {
       case 1:
-	coeff.resize(mfvar.nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(var, gmm::sub_index
-			      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+        slice_vector_on_basic_dof_of_element(mfvar, var, cv, coeff);
+	// coeff.resize(mfvar.nb_basic_dof_of_element(cv));
+	// gmm::copy(gmm::sub_vector(var, gmm::sub_index
+	//		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
 	ctx.pf()->interpolation_grad(ctx, coeff, grad, qdim);
 	gmm::copy(gmm::identity_matrix(), E);
 	gmm::scale(E, val_lambda * gmm::mat_trace(grad));
@@ -5266,9 +5272,10 @@ namespace getfem {
 
       switch (version) {
       case 1:
-        coeff.resize(mf_p->nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(P, gmm::sub_index
-                                 (mf_p->ind_basic_dof_of_element(cv))), coeff);
+        slice_vector_on_basic_dof_of_element(*mf_p, P, cv, coeff);
+        // coeff.resize(mf_p->nb_basic_dof_of_element(cv));
+	// gmm::copy(gmm::sub_vector(P, gmm::sub_index
+        //                      (mf_p->ind_basic_dof_of_element(cv))), coeff);
 	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
        
         for (size_type k = 0; k < qdim; ++k) output[k] -= val[0] * n[k];

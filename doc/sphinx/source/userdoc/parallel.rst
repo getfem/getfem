@@ -15,27 +15,31 @@ mesh regions to parallelize assembly procedures.
 
 Nevertheless, the brick system offers a generic parallelization based on MPI
 (communication between processes), `METIS
-<http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_ (partition of the mesh)
-and `MUMPS <http://graal.ens-lyon.fr/MUMPS>`_ (parallel sparse direct solver). One
-has to compile |gf| with the option ``-D GETFEM_PARA_LEVEL=2`` to use it.
+<http://glaros.dtc.umn.edu/gkhome/metis/metis/overview>`_ 
+(partition of the mesh)
+and `MUMPS <http://graal.ens-lyon.fr/MUMPS>`_ (parallel sparse direct solver).
+One has to compile |gf| with the option ``-D GETFEM_PARA_LEVEL=2`` to use it.
 
-Instead, the configure script can be run with the option ``--enable-paralevel=2``. The configure script will search for MPI and METIS libraries.
+When the configure script is run with the option ``--enable-paralevel=2``,
+it searches for MPI and METIS libraries. If the pythn interface is built,
+it searches also for MPI4PY library. In that case, the python interface can
+be used to drive the parallel version of getfem (the other interfaces has
+not been parallelized for the moment). See demo_parallel_laplacian.py in
+the interface/test/python directory.
 
-With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitely partitionned (using METIS) into a
+With the option ``-D GETFEM_PARA_LEVEL=2``, each mesh used is implicitely
+partitionned (using METIS) into a
 number of regions corresponding to the number of processors and the assembly
-procedures are parallelized. This means that the tangent matrix and the constraint
-matrix assembled in the model_state variable are distributed. The choice made (for
-the moment) is not to distribute the vectors. So that the right hand side vectors
-in the model_state variable are communicated to each processor (the sum of each
-contribution is made at the end of the assembly and each processor has the
-complete vector). Note that you have to think to the fact that the matrices stored
-by the bricks are all distributed.
+procedures are parallelized. This means that the tangent matrix and the
+constraint matrix assembled in the model_state variable are distributed.
+The choice made (for the moment) is not to distribute the vectors.
+So that the right hand side vectors in the model_state variable
+are communicated to each processor (the sum of each contribution is made
+at the end of the assembly and each processor has the complete vector).
+Note that you have to think to the fact that the matrices stored by the
+bricks are all distributed.
 
-Concerning the constraints, it is preferable to avoid the
-``getfem::ELIMINATED_CONSTRAINTS`` option for a better parallelization (i.e. not
-to use the constraint matrix).
-
-A model of parallelized program is :file:`tests/elastostatic.cc`.
+A model of C++ parallelized program is :file:`tests/elastostatic.cc`.
 
 The following functions are also implicitely parallelized using the option ``-D
 GETFEM_PARA_LEVEL=2``:
@@ -50,3 +54,6 @@ GETFEM_PARA_LEVEL=2``:
 This means that these functions have to be called on each processor.
 
 Parallelization of getfem is still considered a "work in progress"...
+
+
++ comment lancer un prog ... y compris python

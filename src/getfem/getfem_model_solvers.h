@@ -174,7 +174,7 @@ namespace getfem {
       double tt_ref=MPI_Wtime();
       bool ok = MUMPS_distributed_matrix_solve(M, x, b);
       iter.enforce_converged(ok);
-      if (MPI_IS_MASTER) cout<<"temps MUMPS "<< MPI_Wtime() - tt_ref<<endl;
+      if (MPI_IS_MASTER()) cout<<"MUMPS time "<< MPI_Wtime() - tt_ref<<endl;
     }
   };
 #endif

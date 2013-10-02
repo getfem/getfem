@@ -33,7 +33,7 @@
    @file getfem_modeling.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date June 15, 2004.
-   @brief Model Bricks (old system)
+   @brief Model Bricks (old system, deprecated)
    @see model_state
    @see mdbrick_abstract
 */

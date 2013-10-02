@@ -740,8 +740,10 @@ void  level_set_contact::HFunction::compute(getfem::fem_interpolation_context& c
 	bgeot::base_tensor &t)
 {
 	size_type cv = ctx.convex_num();
-	plain_vector U(lsmf.nb_basic_dof_of_element(cv));
-	gmm::copy(gmm::sub_vector(LS_U,gmm::sub_index(lsmf.ind_basic_dof_of_element(cv))),U);
+        plain_vector U;
+        slice_vector_on_basic_dof_of_element(lsmf, LS_U, cv, U);
+	// plain_vector U(lsmf.nb_basic_dof_of_element(cv));
+	// gmm::copy(gmm::sub_vector(LS_U,gmm::sub_index(lsmf.ind_basic_dof_of_element(cv))),U);
 	plain_vector ls_interpolated(1);
 	ctx.pf()->interpolation(ctx,U,ls_interpolated,1);
 	t[0] = hRegularized(ls_interpolated[0],m_Epsilon,small_h);

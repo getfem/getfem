@@ -294,8 +294,15 @@ bool elastostatic_problem::solve(plain_vector &U) {
     cout << "step " << step << ", number of variables : " << model.nb_dof() << endl;
     iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")), maxit ? maxit : 40000);
 
-    /* let the default non-linear solve (Newton) do its job */
-    getfem::standard_solve(model, iter);
+    /* let the non-linear solve (Newton) do its job */
+    // getfem::default_newton_line_search ls;
+    getfem::simplest_newton_line_search ls(100000, 1.4, 0.001, 0.8);
+
+    getfem::standard_solve
+      (model, iter,
+       getfem::default_linear_solver<getfem::model_real_sparse_matrix,
+       getfem::model_real_plain_vector>(model),
+       ls);
 
     pl->reset_unvalid_flag();
     model.assembly(getfem::model::BUILD_RHS);

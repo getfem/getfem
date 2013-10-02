@@ -888,9 +888,10 @@ namespace getfem {
       base_matrix G;
       vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
       fem_interpolation_context fic(pgt, pf, ptref, G, cv, size_type(-1));
-      coeff.resize(mf.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-                (U,gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+      slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
+      // coeff.resize(mf.nb_basic_dof_of_element(cv));
+      // gmm::copy(gmm::sub_vector
+      //          (U,gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
       val.resize(q);
       pf->interpolation(fic, coeff, val, q);
       grad.resize(q, N);

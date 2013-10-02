@@ -126,14 +126,18 @@ namespace getfem {
 	for (size_type k=0; k < nodes1.size(); ++k) 
 	  nodes1[k] = gp->transform(k,G);
 	
-	base_vector coeff1(mf1.nb_basic_dof_of_element(ms.cv)),
-	  coeff2(mf2.nb_basic_dof_of_element(slmcv));
-	gmm::copy(gmm::sub_vector
-		  (U1,gmm::sub_index(mf1.ind_basic_dof_of_element(ms.cv))),
-		  coeff1);
-	gmm::copy(gmm::sub_vector
-		  (U2,gmm::sub_index(mf2.ind_basic_dof_of_element(slmcv))),
-		  coeff2);
+	// base_vector coeff1(mf1.nb_basic_dof_of_element(ms.cv)),
+	//             coeff2(mf2.nb_basic_dof_of_element(slmcv));
+        base_vector coeff1, coeff2;
+        slice_vector_on_basic_dof_of_element(mf1, U1, ms.cv, coeff1);
+        slice_vector_on_basic_dof_of_element(mf2, U2, slmcv, coeff2);
+      
+	// gmm::copy(gmm::sub_vector
+	//	  (U1,gmm::sub_index(mf1.ind_basic_dof_of_element(ms.cv))),
+	//	  coeff1);
+	// gmm::copy(gmm::sub_vector
+	//	  (U2,gmm::sub_index(mf2.ind_basic_dof_of_element(slmcv))),
+	//	  coeff2);
 
 	for (size_type i=0; i < pai->nb_points_on_convex(); ++i) {
 	  ctx1.set_xref(nodes1[i]); ctx2.set_xref(nodes2[i]);

@@ -364,10 +364,12 @@ namespace getfem {
           std::vector<size_type> ind(0);
           for (size_type j = 0; j < P; ++j)
             if (j != i ) ind.push_back(j);
-          scalar_type det = gmm::lu_det(gmm::sub_matrix(bases_product,
-                                                        gmm::sub_interval(0, P-1),
-                                                        gmm::sub_index(ind)      ) );
-          gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ), un);
+          gmm::sub_index SUBI(ind);
+          scalar_type det
+            = gmm::lu_det(gmm::sub_matrix(bases_product,
+                                          gmm::sub_interval(0, P-1), SUBI));
+          gmm::add(gmm::scaled(gmm::mat_col(KK, i), (i % 2) ? -det : +det ),
+                   un);
         }
       }
       // normalizing

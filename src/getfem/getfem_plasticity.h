@@ -426,13 +426,15 @@ namespace getfem {
       size_type ii = ctx.ii();
       pfem pf = ctx.pf();
 
-      coeff.resize(mf.nb_basic_dof_of_element(cv));
-
+      
       base_matrix gradU(N, N), sigma(N,N);
 
-      gmm::copy(gmm::sub_vector
-                (U, gmm::sub_index
-                 (mf.ind_basic_dof_of_element(cv))),coeff);
+      slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
+      
+      // coeff.resize(mf.nb_basic_dof_of_element(cv));
+      // gmm::copy(gmm::sub_vector
+      //          (U, gmm::sub_index
+      //           (mf.ind_basic_dof_of_element(cv))),coeff);
 
       pf->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
 

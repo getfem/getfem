@@ -74,14 +74,16 @@ namespace getfem {
       if (cv1 > cv2) {
 
 	unsigned qdim = mf.get_qdim(), N = mf.linked_mesh().dim();
-	coeff1.resize(mf.nb_basic_dof_of_element(cv1));
-	gmm::copy(gmm::sub_vector
-		  (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv1))),
-		  coeff1);
-	coeff2.resize(mf.nb_basic_dof_of_element(cv2));
-	gmm::copy(gmm::sub_vector
-		  (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv2))),
-		  coeff2);
+        slice_vector_on_basic_dof_of_element(mf, U, cv1, coeff1);
+	// coeff1.resize(mf.nb_basic_dof_of_element(cv1));
+	// gmm::copy(gmm::sub_vector
+	//	  (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv1))),
+	//	  coeff1);
+        slice_vector_on_basic_dof_of_element(mf, U, cv2, coeff2);
+	// coeff2.resize(mf.nb_basic_dof_of_element(cv2));
+	// gmm::copy(gmm::sub_vector
+	//	  (U, gmm::sub_index(mf.ind_basic_dof_of_element(cv2))),
+	//	  coeff2);
 	
 	gmm::resize(grad1, qdim, N); gmm::resize(grad2, qdim, N);
 	pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));

@@ -447,9 +447,10 @@ namespace getfem {
       if (version == 0) {
         coeff.resize(qqdim);
         for (size_type qq=0; qq < qqdim; ++qq) {
-          coeff[qq].resize(mf_source.nb_basic_dof_of_element(cv));
-          gmm::sub_index SUBI(mf_source.ind_basic_dof_of_element(cv));
-          gmm::copy(gmm::sub_vector(U, SUBI), coeff[qq]);
+          slice_vector_on_basic_dof_of_element(mf_source, U, cv, coeff[qq]);
+          // coeff[qq].resize(mf_source.nb_basic_dof_of_element(cv));
+          // gmm::sub_index SUBI(mf_source.ind_basic_dof_of_element(cv));
+          // gmm::copy(gmm::sub_vector(U, SUBI), coeff[qq]);
         }
       }
       if (version != 0) {

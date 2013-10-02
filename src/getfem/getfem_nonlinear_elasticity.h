@@ -247,10 +247,7 @@ namespace getfem {
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
-      // cout << "compute cv " << cv << " pt " << ctx.xref() << endl;
-      coeff.resize(mf.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+      slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradU, mf.get_qdim());
       
       for (unsigned int alpha = 0; alpha < N; ++alpha)
@@ -466,9 +463,7 @@ namespace getfem {
     virtual void compute(getfem::fem_interpolation_context& ctx,
 			 bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
-      coeff.resize(mf.nb_basic_dof_of_element(cv));
-      gmm::copy(gmm::sub_vector
-		(U, gmm::sub_index(mf.ind_basic_dof_of_element(cv))), coeff);
+      slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
       ctx.pf()->interpolation_grad(ctx, coeff, gradPhi, mf.get_qdim());
       gmm::add(gmm::identity_matrix(), gradPhi);
       scalar_type det = gmm::lu_inverse(gradPhi);
