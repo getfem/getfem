@@ -916,25 +916,40 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
     """
     P = self.basic_dof_nodes()
     nbd = P.shape[1]
+    if (getfem_python_par):
+      rk = mpi.COMM_WORLD.rank
+      nbp = mpi.COMM_WORLD.size
+    else:
+      rk = 0
+      nbp = 1
 
     if not self.is_lagrangian:
       raise RuntimeError('cannot eval on a non-Lagragian MeshFem')
     if self.qdim() != 1:
-      Ind = numpy.arange(0,nbd,self.qdim()) # = sdof
+      Ind = numpy.arange(0,nbd,self.qdim())
       P   = P[:,Ind]
-      nbd = P.shape[1] # = nb_sdof
+      nbd = P.shape[1]
     vars = ('x','y','z','u','v','w')
     nbvars = min(P.shape[0],len(vars))
     for i in xrange(0,nbvars):
       gl[vars[i]] = P[i,0]
       lo[vars[i]] = P[i,0]
-    r = numpy.array(eval(expression,gl,lo))
+    ccode = compile(expression, '<string>', 'eval');
+    r = numpy.array(eval(ccode,gl,lo))
     Z = numpy.zeros(r.shape + (nbd,), r.dtype)
-    for j in xrange(0,nbd):
+    nbd_p = nbd/nbp
+    nbd_end = nbd_p*(rk+1)
+    if (rk == nbp-1):
+      nbd_end = nbd
+    for j in xrange(nbd_p*rk,nbd_end):
       for i in xrange(0,nbvars):
         gl[vars[i]] = P[i,j]
         lo[vars[i]] = P[i,j]
-      Z[...,j] = eval(expression,gl,lo)
+      Z[...,j] = eval(ccode,gl,lo)
+    if (nbp > 1):
+      W = numpy.zeros(r.shape + (nbd,), r.dtype)
+      mpi.COMM_WORLD.Allreduce(Z, W, op=mpi.SUM)
+      Z = W
     return Z
   @*/
 

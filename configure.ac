@@ -36,6 +36,7 @@ dnl ------------------------------------------------------------------------
 
 dnl AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
 AM_INIT_AUTOMAKE(1.10.1) 
+WARNING_MSG=""
 
 dnl --------------------------
 dnl set the optimization level
@@ -792,8 +793,9 @@ dnl -----------------------------------------------
 dnl MATLAB Interface
 dnl -----------------------------------------------
 
-# list of pseud functions
+# list of pseudo functions
 PSEUDO_FUNCTIONS_LOC=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_loc`
+echo $PSEUDO_FUNCTIONS_LOC
 PSEUDO_FUNCTIONS=`$srcdir/bin/extract_doc $srcdir/interface/src pseudo_gen`
 MATLAB_OBJ_DIRS=`$srcdir/bin/extract_doc $srcdir/interface/src mobj_dirs`
 AC_SUBST(PSEUDO_FUNCTIONS)
@@ -967,16 +969,41 @@ dnl ----------------------------------------------
 if test x$usepython = xYES; then
   AM_PATH_PYTHON(2.2, usepython=YES, usepython=NO)
 fi
+echo $PYTHON
 
-AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
 
-if test x$usepython = xYES; then
+if test "x$usepython" = "xYES"; then
   echo "Building with python support (use --enable-python=no to disable it)"
   echo "You will need the python-numpy and python-scipy packages."
 dnl  AM_PATH_PYTHON(2.2)
   AC_PYTHON_DEVEL
+  ac_python_numpy=`$PYTHON -c 'import numpy; print "YES"' 2>/dev/null`
+  if  test "x$ac_python_numpy" != "xYES"; then
+    usepython=NO
+    MSG="PYTHON DISABLED: numpy not found. You need to install the python-numpy package."
+    echo $MSG
+    WARNING_MSG="$WARNING_MSG\n$MSG"
+  fi
+  ac_python_scipy=`$PYTHON -c 'import scipy; print "YES"' 2>/dev/null`
+  if  test "x$ac_python_scipy" != "xYES"; then
+    usepython=NO
+    MSG="PYTHON DISABLED: scipy not found. You need to install the python-scipy package."
+    echo $MSG
+    WARNING_MSG="$WARNING_MSG\n$MSG"
+  fi
+  if  test $paralevel -ge 1; then
+    ac_python_mpi4py=`$PYTHON -c 'import mpi4py; print "YES"' 2>/dev/null`
+    if test "x$ac_python_mpi4py" != "xYES"; then
+      usepython=NO
+      MSG="PARALLEL PYTHON DISABLED: mpi4py not found. You need to install the python-mpi4py package."
+      echo $MSG
+      WARNING_MSG="$WARNING_MSG\n$MSG"
+    fi
+  fi
 fi
 
+AM_CONDITIONAL(BUILDPYTHON, test x$usepython = xYES)
+AM_CONDITIONAL(BUILDPYTHONPAR, test x$ac_python_mpi4py = xYES)
 
 dnl -----------------------------------------------
 dnl SCILAB Interface
@@ -1142,14 +1169,13 @@ fi;
 echo "  You can give the location of your prefered blas library with either"
 echo "  the --with-blas=<lib> option, or the BLAS_LIBS environment variable"
 echo '  for example: ./configure BLAS_LIBS="-L/usr/lib/sse2/atlas/ -lblas"'
-echo
-echo
+echo -e "\n\n"
 
 
 echo "-----------------------------------------------------------------------"
 echo "Ready to build getfem"
 echo "  building MATLAB interface: $usematlab"
-echo "  building PYTHON interface: $usepython (requires numpy and scipy)"
+echo "  building PYTHON interface: $usepython (requires numpy, scipy and also mpi4py for the parallel version)"
 echo "  building SCILAB interface: $usescilab"
 echo "  If you want to build the shared library of getfem++, use --enable-shared"
 echo "  (by default, only the static one will be built)"
@@ -1168,4 +1194,6 @@ case $host in
   ;;
 esac
 
-echo $shared_mode
+if test "x$MSG" != "x"; then
+  echo -e "\n\nWARNINGS during the configure:\n$MSG\n\n"
+fi

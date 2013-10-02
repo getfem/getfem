@@ -12,12 +12,23 @@ EXTRA_DIST = getfem_python.c
 
 # $(warning PSEUDO_FUNCTIONS= $(PSEUDO_FUNCTIONS))
 
-getfem.py: @PSEUDO_FUNCTIONS@ $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(srcdir)/.. python-com > getfem.py || ( rm getfem.py ; /bin/false )
-
 CLEANFILES = getfem.py _getfem.so *.o getfem_python_c.o getfem_python_c.c
 
+if BUILDPYTHONPAR
+
+pythoncom=python-com-par
+
+else
+
+pythoncom=python-com
+
+endif
+
 if BUILDPYTHON
+
+getfem.py: ../libgetfemint.la $(top_srcdir)/bin/extract_doc
+	$(top_srcdir)/bin/extract_doc $(srcdir)/.. $(pythoncom) > getfem.py || ( rm getfem.py ; /bin/false )
+
 
 PYTHON_CC=$(CC)
 

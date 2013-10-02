@@ -9,7 +9,7 @@ AUTO_M_FILES = $(PSEUDO_FUNCTIONS_LOC:.cc=.m)
 
 
 
-gf_mesh.m : @PSEUDO_FUNCTIONS@ $(top_srcdir)/bin/extract_doc
+gf_mesh.m : ../libgetfemint.la $(top_srcdir)/bin/extract_doc
 	$(top_srcdir)/bin/extract_doc @srcdir@/.. matlab-com || (rm -f gf_mesh.m; /bin/false )
 
 

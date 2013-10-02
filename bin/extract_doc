@@ -1504,8 +1504,7 @@ elif (option == 'scilab-doc-rst'):
 #
 #######################################################################
 
-elif (option == 'python-com'):
-
+elif (option == 'python-com' or option == 'python-com-par'):
   langage = 'python'
 
   print """#!/usr/bin/env python
@@ -1539,6 +1538,14 @@ elif (option == 'python-com'):
 
 import sys
 import numpy
+"""
+  if (option == 'python-com-par'):
+      print "import mpi4py.MPI as mpi"
+      print "getfem_python_par=True"
+  else:
+      print "getfem_python_par=False"
+
+  print """
 
 try:
   import numbers

@@ -33,6 +33,7 @@
 import mpi4py.MPI as mpi
 import numpy as np
 import getfem as gf
+import time
 
 rank = mpi.COMM_WORLD.rank
 if (rank == 0):
@@ -46,9 +47,13 @@ Dirichlet_with_multipliers = True  # Dirichlet condition with multipliers
                                    # or penalization
 dirichlet_coefficient = 1e10       # Penalization coefficient
 
+t = time.clock()
+
 # creation of a simple cartesian mesh
 m = gf.Mesh('regular_simplices', np.arange(0,1+1./NX,1./NX), np.arange(0,1+1./NX,1./NX))
-print 'Mesh built on thread ', rank
+if (rank == 0):
+  print 'Time for building mesh', time.clock()-t
+t = time.clock()
 
 # create a MeshFem for u and rhs fields of dimension 1 (i.e. a scalar field)
 mfu   = gf.MeshFem(m, 1)
@@ -77,19 +82,29 @@ m.set_region(DIRICHLET_BOUNDARY_NUM1, fleft)
 m.set_region(DIRICHLET_BOUNDARY_NUM2, ftop)
 m.set_region(NEUMANN_BOUNDARY_NUM, fneum)
 
+if (rank == 0):
+  print 'Time for building fem and im', time.clock()-t
+t = time.clock()
+
 nb_dof = mfu.nbdof()
 if (rank == 0):
-  print 'Nb dof = ', nb_dof
+  print 'Nb dof for the main unknown: ', nb_dof
+
+if (rank == 0):
+  print 'Time for dof numbering', time.clock()-t
+t = time.clock()
+  
 
 # interpolate the exact solution (Assuming mfu is a Lagrange fem)
 Ue = mfu.eval('y*(y-1)*x*(x-1)+x*x*x*x*x')
-print 'Eval1 done on thread ', rank
 
 # interpolate the source term
 F1 = mfrhs.eval('-(2*(x*x+y*y)-2*x-2*y+20*x*x*x)')
-print 'Eval2 done on thread ', rank
 F2 = mfrhs.eval('[y*(y-1)*(2*x-1) + 5*x*x*x*x, x*(x-1)*(2*y-1)]')
-print 'Eval3 done on thread ', rank
+
+if (rank == 0):
+  print 'Time for python interpolation', time.clock()-t
+t = time.clock()
 
 # model
 md = gf.Model('real')
@@ -132,19 +147,26 @@ else:
   md.add_Dirichlet_condition_with_penalization(mim, 'u', dirichlet_coefficient,
                                                DIRICHLET_BOUNDARY_NUM2,
                                                'DirichletData')
-# if (rank == 0):
-#   gf.memstats()
-# md.listvar()
-# md.listbricks()
+
+if (rank == 0):
+  print 'Time for model building', time.clock()-t
+t = time.clock()
+
+md.nbdof
+nb_dof = md.nbdof()
+if (rank == 0):
+  print 'Nb dof for the model: ', nb_dof
+
+if (rank == 0):
+  print 'Time for model actualize sizes', time.clock()-t
+t = time.clock()
 
 # assembly of the linear system and solve.
-
-if (rank == 0):
-  print 'begin solve';
 md.solve()
-if (rank == 0):
-  print 'solve done';
 
+if (rank == 0):
+  print 'Time for model solve', time.clock()-t
+t = time.clock()
 
 # main unknown
 U = md.variable('u')
@@ -154,6 +176,11 @@ H1error = gf.compute(mfu, U-Ue, 'H1 norm', mim)
 if (rank == 0):
   print 'Error in L2 norm : ', L2error
   print 'Error in H1 norm : ', H1error
+
+if (rank == 0):
+  print 'Time for error computation', time.clock()-t
+t = time.clock()
+
 
 # export data
 # if (rank == 0):

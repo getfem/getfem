@@ -124,11 +124,11 @@ namespace getfem {
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
 
-    #if GETFEM_PARA_LEVEL > 1
-    int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
-    double t_ref = MPI_Wtime();
-    cout << "Actualize size called from thread " << rk << endl;
-    #endif
+//     #if GETFEM_PARA_LEVEL > 1
+//     int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+//     double t_ref = MPI_Wtime();
+//     cout << "Actualize size called from thread " << rk << endl;
+//     #endif
 
 
     // In case of change in fems or mims, linear terms have to be recomputed
@@ -181,10 +181,10 @@ namespace getfem {
 
     for (std::map<std::string, bool >::iterator itbd = tobedone.begin();
          itbd != tobedone.end(); ++itbd) {
-      #if GETFEM_PARA_LEVEL > 1
-      double tt_ref = MPI_Wtime();
-      if (!rk) cout << "compute size of multipliers for " << itbd->first << endl;
-      #endif
+//       #if GETFEM_PARA_LEVEL > 1
+//       double tt_ref = MPI_Wtime();
+//       if (!rk) cout << "compute size of multipliers for " << itbd->first << endl;
+//       #endif
 
       std::vector<std::string> &mults = multipliers[itbd->first];
       VAR_SET::iterator it2 = variables.find(itbd->first);
@@ -297,19 +297,19 @@ namespace getfem {
         }
       }
 
-        #if GETFEM_PARA_LEVEL > 1
-        if (!rk) cout << "Range basis for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+//         #if GETFEM_PARA_LEVEL > 1
+//         if (!rk) cout << "Range basis for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
     
-        #endif
+//         #endif
 
       if (mults.size() > 1) {
         gmm::range_basis(MGLOB, glob_columns, 1E-12, gmm::col_major(), true);
 
 
-        #if GETFEM_PARA_LEVEL > 1
-        if (!rk) cout << "Producing partial mf for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+//         #if GETFEM_PARA_LEVEL > 1
+//         if (!rk) cout << "Producing partial mf for  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
     
-        #endif
+//         #endif
 
         s = 0;
         for (size_type k = 0; k < mults.size(); ++k) {
@@ -325,10 +325,10 @@ namespace getfem {
           s += it->second.mf->nb_dof();
         }
       }
-      #if GETFEM_PARA_LEVEL > 1
-      if (!rk) cout << "End compute size of  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
+//       #if GETFEM_PARA_LEVEL > 1
+//       if (!rk) cout << "End compute size of  multipliers for " << itbd->first << " time : " << MPI_Wtime()-tt_ref << endl;
     
-      #endif
+//       #endif
     }
 
     size_type tot_size = 0;
@@ -349,10 +349,10 @@ namespace getfem {
       gmm::resize(rrhs, tot_size);
     }
 
-    #if GETFEM_PARA_LEVEL > 1
-    cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
+//     #if GETFEM_PARA_LEVEL > 1
+//     cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
     
-    #endif
+//     #endif
   }
 
 
@@ -1271,7 +1271,6 @@ namespace getfem {
 
 #if GETFEM_PARA_LEVEL > 1
     double t_ref = MPI_Wtime();
-    cout << "Assembly called" << endl;
 #endif
 
     context_check(); if (act_size_to_be_done) actualize_sizes();
@@ -1623,7 +1622,8 @@ namespace getfem {
     }
 
     #if GETFEM_PARA_LEVEL > 1
-    cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
+    // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
+    if (MPI_IS_MASTER) cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
     #endif
 
   }
