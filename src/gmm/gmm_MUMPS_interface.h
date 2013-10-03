@@ -69,13 +69,17 @@ namespace gmm {
   template <typename T> struct ij_sparse_matrix {
     std::vector<int> irn;
     std::vector<int> jcn;
-    std::vector<T>        a;
+    std::vector<T> a;
+    bool sym;
     
     template <typename L> void store(const L& l, size_type i) {
        typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
          ite = vect_const_end(l);
-       for (; it != ite; ++it)
-         { irn.push_back((int)i + 1); jcn.push_back((int)it.index() + 1); a.push_back(*it); }
+       for (; it != ite; ++it) {
+         int ir = (int)i + 1, jc = (int)it.index() + 1;
+         if (*it != T(0) && (!sym || ir >= jc)) 
+         { irn.push_back(ir); jcn.push_back(jc); a.push_back(*it); }
+       }
     }
 
     template <typename L> void build_from(const L& l, row_major) {
@@ -89,18 +93,18 @@ namespace gmm {
       irn.swap(jcn);
     }
 
-    template <typename L> ij_sparse_matrix(const L& A) {
+    template <typename L> ij_sparse_matrix(const L& A, bool sym_) {
       size_type nz = nnz(A);
+      sym = sym_;
       irn.reserve(nz); jcn.reserve(nz); a.reserve(nz);
       build_from(A,  typename principal_orientation_type<typename
-               linalg_traits<L>::sub_orientation>::potype());
+                 linalg_traits<L>::sub_orientation>::potype());
     }
   };
 
   /* ********************************************************************* */
   /*   MUMPS solve interface                                               */
   /* ********************************************************************* */
-
 
   template <typename T> struct mumps_interf {};
 
@@ -160,7 +164,8 @@ namespace gmm {
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
-  bool MUMPS_solve(const MAT &A, const VECTX &X_, const VECTB &B) {
+  bool MUMPS_solve(const MAT &A, const VECTX &X_, const VECTB &B,
+                   bool sym = false) {
     VECTX &X = const_cast<VECTX &>(X_);
 
     typedef typename linalg_traits<MAT>::value_type T;
@@ -169,7 +174,7 @@ namespace gmm {
   
     std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
   
-    ij_sparse_matrix<T> AA(A);
+    ij_sparse_matrix<T> AA(A, sym);
   
     const int JOB_INIT = -1;
     const int JOB_END = -2;
@@ -184,7 +189,7 @@ namespace gmm {
     
     id.job = JOB_INIT;
     id.par = 1;
-    id.sym = 0;
+    id.sym = sym ? 2 : 0;
     id.comm_fortran = USE_COMM_WORLD;
     mumps_interf<T>::mumps_c(id);
     
@@ -241,7 +246,7 @@ namespace gmm {
    */
   template <typename MAT, typename VECTX, typename VECTB>
   bool MUMPS_distributed_matrix_solve(const MAT &A, const VECTX &X_,
-                                      const VECTB &B) {
+                                      const VECTB &B, bool sym = false) {
     VECTX &X = const_cast<VECTX &>(X_);
 
     typedef typename linalg_traits<MAT>::value_type T;
@@ -250,7 +255,7 @@ namespace gmm {
   
     std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
 
-    ij_sparse_matrix<T> AA(A);
+    ij_sparse_matrix<T> AA(A, sym);
   
     const int JOB_INIT = -1;
     const int JOB_END = -2;
@@ -265,7 +270,7 @@ namespace gmm {
     
     id.job = JOB_INIT;
     id.par = 1;
-    id.sym = 0;
+    id.sym = sym ? 2 : 0;
     id.comm_fortran = USE_COMM_WORLD;
     mumps_interf<T>::mumps_c(id);
     

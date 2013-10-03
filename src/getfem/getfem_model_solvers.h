@@ -159,7 +159,15 @@ namespace getfem {
   struct linear_solver_mumps : public abstract_linear_solver<MAT, VECT> {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
                      gmm::iteration &iter) const {
-      bool ok = gmm::MUMPS_solve(M, x, b);
+      bool ok = gmm::MUMPS_solve(M, x, b, false);
+      iter.enforce_converged(ok);
+    }
+  };
+  template <typename MAT, typename VECT>
+  struct linear_solver_mumps_sym : public abstract_linear_solver<MAT, VECT> {
+    void operator ()(const MAT &M, VECT &x, const VECT &b,
+                     gmm::iteration &iter) const {
+      bool ok = gmm::MUMPS_solve(M, x, b, true);
       iter.enforce_converged(ok);
     }
   };
@@ -172,9 +180,21 @@ namespace getfem {
     void operator ()(const MAT &M, VECT &x, const VECT &b,
                      gmm::iteration &iter) const {
       double tt_ref=MPI_Wtime();
-      bool ok = MUMPS_distributed_matrix_solve(M, x, b);
+      bool ok = MUMPS_distributed_matrix_solve(M, x, b, false);
       iter.enforce_converged(ok);
-      if (MPI_IS_MASTER()) cout<<"MUMPS time "<< MPI_Wtime() - tt_ref<<endl;
+      if (MPI_IS_MASTER()) cout<<"UNSYMMETRIC MUMPS time "<< MPI_Wtime() - tt_ref<<endl;
+    }
+  };
+
+  template <typename MAT, typename VECT>
+  struct linear_solver_distributed_mumps_sym
+    : public abstract_linear_solver<MAT, VECT> {
+    void operator ()(const MAT &M, VECT &x, const VECT &b,
+                     gmm::iteration &iter) const {
+      double tt_ref=MPI_Wtime();
+      bool ok = MUMPS_distributed_matrix_solve(M, x, b, true);
+      iter.enforce_converged(ok);
+      if (MPI_IS_MASTER()) cout<<"SYMMETRIC MUMPS time "<< MPI_Wtime() - tt_ref<<endl;
     }
   };
 #endif
@@ -415,10 +435,16 @@ namespace getfem {
   dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
   default_linear_solver(const model &md) {
     dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
-
+    
 #if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+    if (md.is_symmetric())
+      p.reset(new linear_solver_mumps_sym<MATRIX, VECTOR>);
+    else
       p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
 #elif GETFEM_PARA_LEVEL > 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
+    if (md.is_symmetric())
+      p.reset(new linear_solver_distributed_mumps_sym<MATRIX, VECTOR>);
+    else
       p.reset(new linear_solver_distributed_mumps<MATRIX, VECTOR>);
 #else
     size_type ndof = md.nb_dof(), max3d = 15000, dim = md.leading_dimension();
@@ -427,7 +453,10 @@ namespace getfem {
 # endif
     if ((ndof<300000 && dim<=2) || (ndof<max3d && dim<=3) || (ndof<1000)) {
 # ifdef GMM_USES_MUMPS
-      p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
+      if (md.is_symmetric())
+        p.reset(new linear_solver_mumps_sym<MATRIX, VECTOR>);
+      else
+        p.reset(new linear_solver_mumps<MATRIX, VECTOR>);
 # else
       p.reset(new linear_solver_superlu<MATRIX, VECTOR>);
 # endif

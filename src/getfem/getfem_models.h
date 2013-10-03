@@ -447,6 +447,10 @@ namespace getfem {
         the whole tangent system. */
     bool is_coercive(void) const { return is_coercive_; }
 
+    /** Return true if all the model terms do not affect the coercivity of
+        the whole tangent system. */
+    bool is_symmetric(void) const { return is_symmetric_; }
+
     /** Return true if all the model terms are linear. */
     bool is_linear(void) const { return is_linear_; }
 
