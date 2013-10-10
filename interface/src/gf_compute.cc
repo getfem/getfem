@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2013 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -514,15 +514,19 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	 getfem::error_estimate(mim, *mf, U.cplx(), err, mim.convex_index());
        );
 
-    /*@FUNC E = ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option])
+    /*@FUNC E = ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
     Compute a convection of `U` with regards to a steady state velocity
     field `V` with a Characteristic-Galerkin method. This
     method is restricted to pure Lagrange fems for U. `mf_v` should represent
     a continuous finite element method. `dt` is the integration time and `nt`
     is the number of integration step on the caracteristics. `option` is an
     option for the part of the boundary where there is a re-entrant convection.
-    `option = 'extrapolation'` for an extrapolation on the nearest element
-    or `option = 'unchanged'` for a constant value on that boundary.
+    `option = 'extrapolation'` for an extrapolation on the nearest element,
+    `option = 'unchanged'` for a constant value on that boundary or
+    `option = 'periodicity'` for a peridiodic boundary. For this latter option
+    the two vectors per_min, per_max has to be given and represent the limits
+    of the periodic domain (on components where per_max[k] < per_min[k]
+    no operation is done).
     This method is rather dissipative, but stable.
     @*/
     sub_command
@@ -538,15 +542,31 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	 opt = getfem::CONVECT_EXTRAPOLATION;
        else if (cmd_strmatch(option, "extrapolation"))
 	 opt = getfem::CONVECT_EXTRAPOLATION;
+       else if (cmd_strmatch(option, "periodicity"))
+	 opt = getfem::CONVECT_PERIODICITY;
        else if (cmd_strmatch(option, "unchanged"))
 	 opt = getfem::CONVECT_UNCHANGED;
        else 
 	 THROW_BADARG("Bad option " << option<< " for convect command. "
-		      "should be 'extrapolation' or 'unchanged'");
+		      "should be 'extrapolation', 'unchanged' or "
+                      "'periodicity'");
+
+       getfem::base_node per_min;
+       getfem::base_node per_max;
+       if (in.remaining()) {
+         rcarray pmin = in.pop().to_rcarray();
+         rcarray pmax = in.pop().to_rcarray();
+         size_type N = mf_v->linked_mesh().dim();
+         per_min.resize(N);
+         per_max.resize(N); 
+         gmm::copy(pmin.real(), per_min);
+         gmm::copy(pmax.real(), per_max);
+       }
 
        if (U.is_complex() || V.is_complex())
 	 THROW_BADARG("Sorry, complex version of convect to be interfaced");
-       getfem::convect(*mf, U.real(), *mf_v, V.real(), dt, nt, opt);
+       getfem::convect(*mf, U.real(), *mf_v, V.real(),
+                       dt, nt, opt, per_min, per_max);
 
        );
 

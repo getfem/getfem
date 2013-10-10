@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard
+ Copyright (C) 2009-2013 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -43,7 +43,7 @@
 
 namespace getfem {
 
-  enum convect_boundary_option { CONVECT_EXTRAPOLATION, CONVECT_UNCHANGED };
+  enum convect_boundary_option { CONVECT_EXTRAPOLATION, CONVECT_UNCHANGED, CONVECT_PERIODICITY };
 
   /** Compute the convection of a quantity on a getfem::mesh_fem with respect
       to a velocity field
@@ -52,11 +52,15 @@ namespace getfem {
       @param mf_v the mesh_fem on which the vector field is described
       @param V contains the vector field described on mf_v.
       @param nt number of time integration step.
+      @param option concerns the entrant boundary.
+      @param per_min, per_max : the periodicity box for the PERIODICITY option
   */
   template<class VECT1, class VECT2>
   void convect(const mesh_fem &mf, VECT1 &U, const mesh_fem &mf_v,
 	       const VECT2 &V, scalar_type dt, size_type nt,
-	       convect_boundary_option option = CONVECT_EXTRAPOLATION) {
+	       convect_boundary_option option = CONVECT_EXTRAPOLATION,
+               base_node &per_min = base_node(),
+               base_node &per_max = base_node()) {
     // Should be robustified on the boundaries -> control of the nodes going
     //   out the mesh.
     // Should control that the point do not move to fast ( < h/2 for instance).
@@ -82,6 +86,10 @@ namespace getfem {
     // Get the nodes of mf
     const mesh &msh(mf.linked_mesh());
     size_type N = msh.dim();
+    if (option == CONVECT_PERIODICITY)
+      GMM_ASSERT1(per_min.size() == N && per_max.size() == N,
+                  "Wrong size of box extremity for PERIODICITY option");
+
     getfem::mesh_trans_inv mti(msh, 1E-10);
     size_type qdim = mf.get_qdim();
     size_type nbpts = mf.nb_basic_dof() / qdim;
@@ -105,14 +113,24 @@ namespace getfem {
 	gmm::clear(VI);
 	dal::bit_vector dof_untouched; 
 	interpolation(mf_v, mti, V, VI, extra, &dof_untouched);
+        for (dal::bv_visitor j(dof_untouched); !j.finished();++j)
+          VI[j] = V[j]; 
       }
 
-      for (size_type j = 0; j < nbpts; ++j)
+      for (size_type j = 0; j < nbpts; ++j) {
 	gmm::add(gmm::scaled(gmm::sub_vector(VI, gmm::sub_interval(N*j, N)),
 			     -ddt), nodes[j]);
+        if (option == CONVECT_PERIODICITY) {
+          for (size_type k = 0; k < N; ++k) 
+            if (per_max[k] > per_min[k]) {
+              while (nodes[j][k] > per_max[k]) nodes[j][k] -= per_max[k];
+              while (nodes[j][k] < per_min[k]) nodes[j][k] += per_max[k];
+            }
+        }
+      }
     }
 
-    // 3 interpolation finale
+    // 3 final interpolation
     std::vector<T> UI(nbpts*qdim);
     mti.clear();
     mti.add_points(nodes);
