@@ -220,43 +220,47 @@ namespace getfem {
     void reinit_() {
       mti = multi_tensor_iterator(child(0).tensor(),true);
     }
+
     void exec_(size_type cv, dim_type) {
       tensor_ranges r;
       std::vector< tensor_strides > str;
       vdim.build_strides_for_cv(cv, r, str);
       if (child(0).ranges() != r) {
-	ASM_THROW_TENSOR_ERROR("can't output a tensor of dimensions "
-			       << child(0).ranges() << 
-			       " into an output array of size " << r);
+        ASM_THROW_TENSOR_ERROR("can't output a tensor of dimensions "
+          << child(0).ranges() << 
+          " into an output array of size " << r);
       }
       mti.rewind();
       if (pmf && pmf->is_reduced()) {
-	do {
-	  size_type nb_dof =  pmf->nb_dof();
-	  dim_type qqdim = dim_type(gmm::vect_size(v) / nb_dof);
-	 
-	  if (qqdim == 1) {
-	    size_type i = 0;
-	    for (dim_type j=0; j < mti.ndim(); ++j) i += str[j][mti.index(j)];
-	    gmm::add(gmm::scaled(gmm::mat_row(pmf->extension_matrix(), i),
-				 mti.p(0)), v);
-	  }
-	  else {
-	    GMM_ASSERT1(false, "To be verified ... ");
-	    size_type i = 0;
-	    for (dim_type j=0; j < mti.ndim(); ++j) i += str[j][mti.index(j)];
-	    gmm::add(gmm::scaled(gmm::mat_row(pmf->extension_matrix(),i/qqdim),
-				 mti.p(0)),
-		     gmm::sub_vector(v, gmm::sub_slice(i%qqdim,nb_dof,qqdim)));
-	  }
-	} while (mti.qnext1());
+        if ( pmf->nb_dof() != 0)
+        {
+          do {
+            size_type nb_dof =  pmf->nb_dof();
+            dim_type qqdim = dim_type(gmm::vect_size(v) / nb_dof);
+
+            if (qqdim == 1) {
+              size_type i = 0;
+              for (dim_type j=0; j < mti.ndim(); ++j) i += str[j][mti.index(j)];
+              gmm::add(gmm::scaled(gmm::mat_row(pmf->extension_matrix(), i),
+                mti.p(0)), v);
+            }
+            else {
+              GMM_ASSERT1(false, "To be verified ... ");
+              size_type i = 0;
+              for (dim_type j=0; j < mti.ndim(); ++j) i += str[j][mti.index(j)];
+              gmm::add(gmm::scaled(gmm::mat_row(pmf->extension_matrix(),i/qqdim),
+                mti.p(0)),
+                gmm::sub_vector(v, gmm::sub_slice(i%qqdim,nb_dof,qqdim)));
+            }
+          } while (mti.qnext1());
+        }
       }
       else {
-	do {
-	  typename gmm::linalg_traits<VEC>::iterator it = gmm::vect_begin(v);
-	  for (dim_type j = 0; j < mti.ndim(); ++j) it += str[j][mti.index(j)];
-	  *it += mti.p(0);
-	} while (mti.qnext1());
+        do {
+          typename gmm::linalg_traits<VEC>::iterator it = gmm::vect_begin(v);
+          for (dim_type j = 0; j < mti.ndim(); ++j) it += str[j][mti.index(j)];
+          *it += mti.p(0);
+        } while (mti.qnext1());
       }
     }
   };
