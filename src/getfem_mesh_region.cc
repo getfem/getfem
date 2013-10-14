@@ -53,6 +53,7 @@ namespace getfem {
 
     if (!this->parent_mesh && !from.parent_mesh) {
       this->id_ = from.id_;
+      this->type_ = from.type_;
       if (from.p.get()) {
         if (!this->p.get()) this->p.reset(new impl); 
         this->wp() = from.rp();
@@ -63,6 +64,7 @@ namespace getfem {
     else if (!this->parent_mesh) {
       this->p = from.p;
       this->id_ = from.id_;
+      this->type_ = from.type_;
       this->parent_mesh = from.parent_mesh;
     }
     else {
@@ -71,6 +73,7 @@ namespace getfem {
       else if (from.id_ == size_type(-1)) {
         this->clear();
         this->add(this->parent_mesh->convex_index());
+        this->type_ = -1;
       }
       touch_parent_mesh();
     }
