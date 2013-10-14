@@ -165,7 +165,8 @@ namespace getfem {
 	for (size_type i = 0; i < size_type(ne); ++i)
 	  if (npart[i] == rank) mpi_region.add(numelt[i]);
 
-	cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
+	if (MPI_IS_MASTER())
+          cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
       }
       modified = false;
       valid_sub_regions.clear();

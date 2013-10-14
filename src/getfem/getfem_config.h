@@ -242,6 +242,18 @@ namespace getfem {
                   gmm::mpi_type(T()), MPI_SUM, MPI_COMM_WORLD);
     gmm::copy(W, V);
   }
+
+  template <typename T> void MPI_BCAST0_SCALAR(T a) {
+    MPI_Bcast((void *)(&a), 1, gmm::mpi_type(a), 0, MPI_COMM_WORLD);
+  }
+
+  template <typename VECT> inline void MPI_BCAST0_VECTOR(const VECT &VV) {
+    VECT &V = const_cast<VECT &>(VV);
+    typedef typename gmm::linalg_traits<VECT>::value_type T;
+    MPI_Bcast((void *)(&(V[0])), gmm::vect_size(V), gmm::mpi_type(T()), 0,
+              MPI_COMM_WORLD);
+  }
+
   template <typename VECT1, typename VECT2>
   inline void MPI_SUM_VECTOR(const VECT1 &VV, const VECT2 &WW) {
     VECT1 &V = const_cast<VECT1 &>(VV);
@@ -352,6 +364,8 @@ namespace getfem {
 #else
   template <typename T> inline T MPI_SUM_SCALAR(T a) { return a; }
   template <typename VECT> inline void MPI_SUM_VECTOR(const VECT &) {}
+  template <typename T> void MPI_BCAST0_SCALAR(T a) {}
+  template <typename VECT> inline void MPI_BCAST0_VECTOR(const VECT &VV) {}
   template <typename MAT> inline void MPI_SUM_SPARSE_MATRIX(const MAT &) {}
   template <typename VECT1, typename VECT2>
   inline void MPI_SUM_VECTOR(const VECT1 &V, const VECT2 &WW)

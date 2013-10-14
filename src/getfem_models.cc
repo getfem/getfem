@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard
+ Copyright (C) 2009-2013 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -1579,9 +1579,20 @@ namespace getfem {
             dof_pr_values.push_back(V[itv->first]);
           }
         }
-        // In parallel, a unification of the indices and values could be done
-        // in order to allow the bricks to compute dof constraints in a
-        // distributed way. Not done for the moment.
+
+        #if GETFEM_PARA_LEVEL > 1
+        GMM_ASSERT1(MPI_IS_MASTER() || (dof_indices.size() == 0),
+                    "Sorry, for the moment, the dof constraints have to be "
+                    "added on the master process only");
+        size_type dof_indices_size = dof_indices.size();
+        MPI_BCAST0_SCALAR(dof_indices_size);
+        dof_indices.resize(dof_indices_size);
+        MPI_BCAST0_VECTOR(dof_indices);
+        dof_pr_values.resize(dof_indices_size);
+        MPI_BCAST0_VECTOR(dof_pr_values);
+        dof_go_values.resize(dof_indices_size);
+        MPI_BCAST0_VECTOR(dof_go_values);
+        #endif
         
         if (dof_indices.size()) {
           gmm::sub_index SI(dof_indices);
@@ -1721,138 +1732,139 @@ namespace getfem {
   //
   //
   // ----------------------------------------------------------------------
-    void virtual_brick::check_stiffness_matrix_and_rhs
-        (const model &md, size_type s,
-        const model::termlist& tlist,
-        const model::varnamelist &vl,
-        const model::varnamelist &dl,
-        const model::mimlist &mims,
-        model::real_matlist &matl,
-        model::real_veclist &rvc1,
-        model::real_veclist &rvc2, 
-        size_type rg,
-        const scalar_type TINY) const {
-            std::cout<<"******Verifying stiffnesses of *******"<<std::endl;
-            std::cout<<"*** "<<brick_name()<<std::endl;
 
-            //Build the index for the corresponding RHS
-            std::map<std::string,size_type> rhs_index;
-            for(size_type iterm=0;iterm<matl.size();iterm++)
-                if (tlist[iterm].var1==tlist[iterm].var2) rhs_index[tlist[iterm].var1]=iterm;
-
-            if (rhs_index.size()==0){
-                GMM_WARNING0("*** cannot verify stiffness for this brick***");
-                return;
-            }
-            asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
-                rg, model::BUILD_MATRIX);
-            for(size_type iterm=0;iterm<matl.size();iterm++){
-
-                std::cout<<std::endl;
-                std::cout<<"    Stiffness["<<tlist[iterm].var1
-                    <<","<<tlist[iterm].var2<<"]:"<<std::endl;
-                if (md.real_variable(tlist[iterm].var1).size()==0)
-                {
-                    std::cout<<"    "<<tlist[iterm].var1<<" has zero size. Skipping this term"<<std::endl;
-                    continue;
-                }
-                if (md.real_variable(tlist[iterm].var2).size()==0)
-                {
-                    std::cout<<"    "<<tlist[iterm].var2<<" has zero size. Skipping this term"<<std::endl;
-                    continue;
-                }
-
-                model_real_sparse_matrix SM(matl[iterm]);
-                gmm::fill(rvc1[rhs_index[tlist[iterm].var1]], 0.0);
-                asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
-                    rg, model::BUILD_RHS);
-                if (gmm::mat_euclidean_norm(matl[iterm])<1e-12){
-                    std::cout<<"    The assembled matrix is nearly zero, skipping."<<std::endl;
-                    continue;
-                }
-                model_real_plain_vector RHS0(rvc1[rhs_index[tlist[iterm].var1]]);
-
-                //finite difference stiffness		
-                model_real_sparse_matrix fdSM(matl[iterm].nrows(),matl[iterm].ncols());
-                model_real_plain_vector&U = md.set_real_variable(tlist[iterm].var2);
-                model_real_plain_vector& RHS1 =rvc1[rhs_index[tlist[iterm].var1]];
-                for (size_type j=0; j < matl[iterm].ncols(); j++){
-                    U[j]+=TINY;
-                    gmm::fill(RHS1, 0.0);
-                    asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
-                        rg, model::BUILD_RHS);
-                    for (size_type i=0;i<matl[iterm].nrows();i++)
-                        fdSM(i,j) = (RHS0[i]-RHS1[i])/TINY;
-                    U[j]-=TINY;
-                }
-
-                model_real_sparse_matrix diffSM(matl[iterm].nrows(),matl[iterm].ncols());
-                gmm::add(SM,gmm::scaled(fdSM,-1.0),diffSM);
-                scalar_type norm_error_euc
-                    = gmm::mat_euclidean_norm(diffSM)/gmm::mat_euclidean_norm(SM)*100;
-                scalar_type norm_error_1
-                    = gmm::mat_norm1(diffSM)/gmm::mat_norm1(SM)*100;
-                scalar_type norm_error_max
-                    = gmm::mat_maxnorm(diffSM)/gmm::mat_maxnorm(SM)*100;
-
-                //checking symmetry of diagonal terms
-                scalar_type nsym_norm_error_euc=0.0;
-                scalar_type nsym_norm_error_1=0.0;
-                scalar_type nsym_norm_error_max=0.0;
-                if (tlist[iterm].var1==tlist[iterm].var2){
-                    model_real_sparse_matrix diffSMtransposed(matl[iterm].nrows(),matl[iterm].ncols());
-                    gmm::add(gmm::transposed(fdSM),gmm::scaled(fdSM,-1.0),diffSMtransposed);
-                    nsym_norm_error_euc
-                        = gmm::mat_euclidean_norm(diffSMtransposed)/gmm::mat_euclidean_norm(fdSM)*100;
-                    nsym_norm_error_1
-                        = gmm::mat_norm1(diffSMtransposed)/gmm::mat_norm1(fdSM)*100;
-                    nsym_norm_error_max
-                        = gmm::mat_maxnorm(diffSMtransposed)/gmm::mat_maxnorm(fdSM)*100;
-                }
-
-                //print matrix if the size is small
-                if(rvc1[0].size()<8){
-                    std::cout << "RHS Stiffness Matrix: \n";
-                    std::cout << "------------------------\n";
-                    for(size_type i=0; i < rvc1[iterm].size(); ++i){
-                        std::cout << "[";
-                        for(size_type j=0; j < rvc1[iterm].size(); ++j){
-                            std::cout << fdSM(i,j) << "  ";
-                        }
-                        std::cout << "]\n";
-                    }
-                    std::cout << "Analytical Stiffness Matrix: \n";
-                    std::cout << "------------------------\n";
-                    for(size_type i=0; i < rvc1[iterm].size(); ++i){
-                        std::cout << "[";
-                        for(size_type j=0; j < rvc1[iterm].size(); ++j){
-                            std::cout << matl[iterm](i,j) << "  ";
-                        }
-                        std::cout << "]\n";
-                    }
-                    std::cout << "Vector U: \n";
-                    std::cout << "------------------------\n";
-                    for(size_type i=0; i < rvc1[iterm].size(); ++i){
-                        std::cout << "[";
-                        std::cout << md.real_variable(tlist[iterm].var2)[i] << "  ";
-                        std::cout << "]\n";
-                    }
-                }
-                std::cout
-                    << "\n\nfinite diff test error_norm_eucl: " << norm_error_euc << "%\n"
-                    << "finite diff test error_norm1: " << norm_error_1 << "%\n"
-                    << "finite diff test error_max_norm: " << norm_error_max << "%\n\n\n";
-
-                if (tlist[iterm].var1==tlist[iterm].var2){
-                std::cout
-                    << "Nonsymmetrical test error_norm_eucl: "<< nsym_norm_error_euc<< "%\n"
-                    << "Nonsymmetrical test error_norm1: " << nsym_norm_error_1 << "%\n"
-                    << "Nonsymmetrical test error_max_norm: " << nsym_norm_error_max << "%"
-                    << std::endl;
-                }
-            }
+  void virtual_brick::check_stiffness_matrix_and_rhs
+  (const model &md, size_type s,
+   const model::termlist& tlist,
+   const model::varnamelist &vl,
+   const model::varnamelist &dl,
+   const model::mimlist &mims,
+   model::real_matlist &matl,
+   model::real_veclist &rvc1,
+   model::real_veclist &rvc2, 
+   size_type rg,
+   const scalar_type TINY) const {
+    std::cout<<"******Verifying stiffnesses of *******"<<std::endl;
+    std::cout<<"*** "<<brick_name()<<std::endl;
+    
+    //Build the index for the corresponding RHS
+    std::map<std::string,size_type> rhs_index;
+    for(size_type iterm=0;iterm<matl.size();iterm++)
+      if (tlist[iterm].var1==tlist[iterm].var2) rhs_index[tlist[iterm].var1]=iterm;
+    
+    if (rhs_index.size()==0){
+      GMM_WARNING0("*** cannot verify stiffness for this brick***");
+      return;
     }
-
+    asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+                           rg, model::BUILD_MATRIX);
+    for(size_type iterm=0;iterm<matl.size();iterm++){
+      
+      std::cout<<std::endl;
+      std::cout<<"    Stiffness["<<tlist[iterm].var1
+               <<","<<tlist[iterm].var2<<"]:"<<std::endl;
+      if (md.real_variable(tlist[iterm].var1).size()==0)
+        {
+          std::cout<<"    "<<tlist[iterm].var1<<" has zero size. Skipping this term"<<std::endl;
+          continue;
+        }
+      if (md.real_variable(tlist[iterm].var2).size()==0)
+        {
+          std::cout<<"    "<<tlist[iterm].var2<<" has zero size. Skipping this term"<<std::endl;
+          continue;
+        }
+      
+      model_real_sparse_matrix SM(matl[iterm]);
+      gmm::fill(rvc1[rhs_index[tlist[iterm].var1]], 0.0);
+      asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+                             rg, model::BUILD_RHS);
+      if (gmm::mat_euclidean_norm(matl[iterm])<1e-12){
+        std::cout<<"    The assembled matrix is nearly zero, skipping."<<std::endl;
+        continue;
+      }
+      model_real_plain_vector RHS0(rvc1[rhs_index[tlist[iterm].var1]]);
+      
+      //finite difference stiffness		
+      model_real_sparse_matrix fdSM(matl[iterm].nrows(),matl[iterm].ncols());
+      model_real_plain_vector&U = md.set_real_variable(tlist[iterm].var2);
+      model_real_plain_vector& RHS1 =rvc1[rhs_index[tlist[iterm].var1]];
+      for (size_type j=0; j < matl[iterm].ncols(); j++){
+        U[j]+=TINY;
+        gmm::fill(RHS1, 0.0);
+        asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+                               rg, model::BUILD_RHS);
+        for (size_type i=0;i<matl[iterm].nrows();i++)
+          fdSM(i,j) = (RHS0[i]-RHS1[i])/TINY;
+        U[j]-=TINY;
+      }
+      
+      model_real_sparse_matrix diffSM(matl[iterm].nrows(),matl[iterm].ncols());
+      gmm::add(SM,gmm::scaled(fdSM,-1.0),diffSM);
+      scalar_type norm_error_euc
+        = gmm::mat_euclidean_norm(diffSM)/gmm::mat_euclidean_norm(SM)*100;
+      scalar_type norm_error_1
+        = gmm::mat_norm1(diffSM)/gmm::mat_norm1(SM)*100;
+      scalar_type norm_error_max
+        = gmm::mat_maxnorm(diffSM)/gmm::mat_maxnorm(SM)*100;
+      
+      //checking symmetry of diagonal terms
+      scalar_type nsym_norm_error_euc=0.0;
+      scalar_type nsym_norm_error_1=0.0;
+      scalar_type nsym_norm_error_max=0.0;
+      if (tlist[iterm].var1==tlist[iterm].var2){
+        model_real_sparse_matrix diffSMtransposed(matl[iterm].nrows(),matl[iterm].ncols());
+        gmm::add(gmm::transposed(fdSM),gmm::scaled(fdSM,-1.0),diffSMtransposed);
+        nsym_norm_error_euc
+          = gmm::mat_euclidean_norm(diffSMtransposed)/gmm::mat_euclidean_norm(fdSM)*100;
+        nsym_norm_error_1
+          = gmm::mat_norm1(diffSMtransposed)/gmm::mat_norm1(fdSM)*100;
+        nsym_norm_error_max
+          = gmm::mat_maxnorm(diffSMtransposed)/gmm::mat_maxnorm(fdSM)*100;
+      }
+      
+      //print matrix if the size is small
+      if(rvc1[0].size()<8){
+        std::cout << "RHS Stiffness Matrix: \n";
+        std::cout << "------------------------\n";
+        for(size_type i=0; i < rvc1[iterm].size(); ++i){
+          std::cout << "[";
+          for(size_type j=0; j < rvc1[iterm].size(); ++j){
+            std::cout << fdSM(i,j) << "  ";
+          }
+          std::cout << "]\n";
+        }
+        std::cout << "Analytical Stiffness Matrix: \n";
+        std::cout << "------------------------\n";
+        for(size_type i=0; i < rvc1[iterm].size(); ++i){
+          std::cout << "[";
+          for(size_type j=0; j < rvc1[iterm].size(); ++j){
+            std::cout << matl[iterm](i,j) << "  ";
+          }
+          std::cout << "]\n";
+        }
+        std::cout << "Vector U: \n";
+        std::cout << "------------------------\n";
+        for(size_type i=0; i < rvc1[iterm].size(); ++i){
+          std::cout << "[";
+          std::cout << md.real_variable(tlist[iterm].var2)[i] << "  ";
+          std::cout << "]\n";
+        }
+      }
+      std::cout
+        << "\n\nfinite diff test error_norm_eucl: " << norm_error_euc << "%\n"
+        << "finite diff test error_norm1: " << norm_error_1 << "%\n"
+        << "finite diff test error_max_norm: " << norm_error_max << "%\n\n\n";
+      
+      if (tlist[iterm].var1==tlist[iterm].var2){
+        std::cout
+          << "Nonsymmetrical test error_norm_eucl: "<< nsym_norm_error_euc<< "%\n"
+          << "Nonsymmetrical test error_norm1: " << nsym_norm_error_1 << "%\n"
+          << "Nonsymmetrical test error_max_norm: " << nsym_norm_error_max << "%"
+          << std::endl;
+      }
+    }
+  }
+  
   // ----------------------------------------------------------------------
   //
   // Generic elliptic brick
@@ -2652,6 +2664,8 @@ namespace getfem {
         }
 
         if (penalized && (&mf_mult != &mf_u)) {
+          GMM_ASSERT1(MPI_IS_MASTER(), "Sorry, the penalized option "
+                      "filtered by a multiplier space is not parallelized");
           gmm::mult(gmm::transposed(rB), rB, matl[0]);
           gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
         } else if (penalized) {
@@ -3049,62 +3063,63 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version /*version*/) const {
-      GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
-                  "Dirichlet condition brick by simplification has no term");
-      GMM_ASSERT1(mims.size() == 0,
-                  "Dirichlet condition brick by simplification need no "
-                  "mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
-                  "Wrong number of variables for Dirichlet condition brick "
-                  "by simplification");
+      if (MPI_IS_MASTER()) {
 
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-      const model_real_plain_vector *A = 0;
-      const mesh_fem *mf_data = 0;
-      size_type s = 0;
-
-      if (dl.size() == 1) {
-        A = &(md.real_variable(dl[0]));
-        mf_data = md.pmesh_fem_of_variable(dl[0]);
-
-        if (mf_data) {
-          GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has "
-                     "to be define on the same f.e.m. than the unknown");
-        } else {
-          s = gmm::vect_size(*A);
-          GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "
-		    "Dirichlet data. Detected dimension is " << s
-		    << " should be " << size_type(mf_u.get_qdim())); 
-        }
-      }
-
-      mesh_region rg(region);
-      // mf_u.linked_mesh().intersect_with_mpi_region(rg); // Not distributed
-      // for the moment. To distribute, model::assembly should gather the 
-      // dof constraints.
-
-      if (mf_u.get_qdim() > 1 || (!mf_data && A)) {
-        for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
-          pfem pf = mf_u.fem_of_element(i.cv());
-          if (pf) {
-            GMM_ASSERT1(pf->target_dim() == 1,
-                        "Intrinsically vectorial fems are not allowed");
-            GMM_ASSERT1(mf_data || pf->is_lagrange(),
-                   "Constant Dirichlet data allowed for lagrange fems only");
+        GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
+                    "Dirichlet condition brick by simplification has no term");
+        GMM_ASSERT1(mims.size() == 0,
+                    "Dirichlet condition brick by simplification need no "
+                    "mesh_im");
+        GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+                    "Wrong number of variables for Dirichlet condition brick "
+                    "by simplification");
+        
+        const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+        const model_real_plain_vector *A = 0;
+        const mesh_fem *mf_data = 0;
+        size_type s = 0;
+        
+        if (dl.size() == 1) {
+          A = &(md.real_variable(dl[0]));
+          mf_data = md.pmesh_fem_of_variable(dl[0]);
+          
+          if (mf_data) {
+            GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has"
+                        " to be define on the same f.e.m. than the unknown");
+          } else {
+            s = gmm::vect_size(*A);
+            GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "
+                        "Dirichlet data. Detected dimension is " << s
+                        << " should be " << size_type(mf_u.get_qdim())); 
           }
         }
-      }
+        
+        mesh_region rg(region);
+        // mf_u.linked_mesh().intersect_with_mpi_region(rg); // Not distributed
 
-      dal::bit_vector dofs = mf_u.dof_on_region(rg);
-
-      if (A && !mf_data) {
-        GMM_ASSERT1(dofs.card() % s == 0, "Problem with dof vectorization");
-      }
-
-      for (dal::bv_visitor i(dofs); !i.finished(); ++i) {
-        scalar_type val(0);
-        if (A) val = (mf_data ? (*A)[i] :  (*A)[i%s]);
-        md.add_real_dof_constraint(vl[0], i, val);
+        if (mf_u.get_qdim() > 1 || (!mf_data && A)) {
+          for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
+            pfem pf = mf_u.fem_of_element(i.cv());
+            if (pf) {
+              GMM_ASSERT1(pf->target_dim() == 1,
+                          "Intrinsically vectorial fems are not allowed");
+              GMM_ASSERT1(mf_data || pf->is_lagrange(), "Constant Dirichlet "
+                          "data allowed for lagrange fems only");
+            }
+          }
+        }
+        
+        dal::bit_vector dofs = mf_u.dof_on_region(rg);
+        
+        if (A && !mf_data) {
+          GMM_ASSERT1(dofs.card() % s == 0, "Problem with dof vectorization");
+        }
+        
+        for (dal::bv_visitor i(dofs); !i.finished(); ++i) {
+          scalar_type val(0);
+          if (A) val = (mf_data ? (*A)[i] :  (*A)[i%s]);
+          md.add_real_dof_constraint(vl[0], i, val);
+        }
       }
     }
 
@@ -3117,62 +3132,62 @@ namespace getfem {
                                            model::complex_veclist &,
                                            size_type region,
                                            build_version /*version*/) const {
-      GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
-                  "Dirichlet condition brick by simplification has no term");
-      GMM_ASSERT1(mims.size() == 0,
-                  "Dirichlet condition brick by simplification need no "
-                  "mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
-                  "Wrong number of variables for Dirichlet condition brick "
-                  "by simplification");
-
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-      const model_complex_plain_vector *A = 0;
-      const mesh_fem *mf_data = 0;
-      size_type s = 0;
-       
-      if (dl.size() == 1) {
-        A = &(md.complex_variable(dl[0]));
-        mf_data = md.pmesh_fem_of_variable(dl[0]);
-
-        if (mf_data) {
-          GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has "
-                     "to be define on the same f.e.m. than the unknown");
-        } else {
-          s = gmm::vect_size(*A);
-          GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "
-		    "Dirichlet data. Detected dimension is " << s
-		    << " should be " << size_type(mf_u.get_qdim())); 
-        }
-      }
-
-      mesh_region rg(region);
-      // mf_u.linked_mesh().intersect_with_mpi_region(rg); // Not distributed
-      // for the moment. To distribute, model::assembly should gather the 
-      // dof constraints.
-
-      if (mf_u.get_qdim() > 1 || (!mf_data && A)) {
-        for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
-          pfem pf = mf_u.fem_of_element(i.cv());
-          if (pf) {
-            GMM_ASSERT1(pf->target_dim() == 1,
-                        "Intrinsically vectorial fems are not allowed");
-            GMM_ASSERT1(mf_data || pf->is_lagrange(),
-                   "Constant Dirichlet data allowed for lagrange fems only");
+      if (MPI_IS_MASTER()) {
+        GMM_ASSERT1(vecl.size() == 0 && matl.size() == 0,
+                    "Dirichlet condition brick by simplification has no term");
+        GMM_ASSERT1(mims.size() == 0,
+                    "Dirichlet condition brick by simplification need no "
+                    "mesh_im");
+        GMM_ASSERT1(vl.size() == 1 && dl.size() <= 1,
+                    "Wrong number of variables for Dirichlet condition brick "
+                    "by simplification");
+        
+        const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+        const model_complex_plain_vector *A = 0;
+        const mesh_fem *mf_data = 0;
+        size_type s = 0;
+        
+        if (dl.size() == 1) {
+          A = &(md.complex_variable(dl[0]));
+          mf_data = md.pmesh_fem_of_variable(dl[0]);
+          
+          if (mf_data) {
+            GMM_ASSERT1(mf_data == &mf_u, "Sorry, for this brick, the data has"
+                        " to be define on the same f.e.m. than the unknown");
+          } else {
+            s = gmm::vect_size(*A);
+            GMM_ASSERT1(mf_u.get_qdim() == s, ": bad format of "
+                        "Dirichlet data. Detected dimension is " << s
+                        << " should be " << size_type(mf_u.get_qdim())); 
           }
         }
-      }
+        
+        mesh_region rg(region);
+        // mf_u.linked_mesh().intersect_with_mpi_region(rg); // Not distributed
 
-      dal::bit_vector dofs = mf_u.dof_on_region(rg);
-
-      if (A && !mf_data) {
-        GMM_ASSERT1(dofs.card() % s == 0, "Problem with dof vectorization");
-      }
-
-      for (dal::bv_visitor i(dofs); !i.finished(); ++i) {
-        complex_type val(0);
-        if (A) val = (mf_data ? (*A)[i] :  (*A)[i%s]);
-        md.add_complex_dof_constraint(vl[0], i, val);
+        if (mf_u.get_qdim() > 1 || (!mf_data && A)) {
+          for (mr_visitor i(rg, mf_u.linked_mesh()); !i.finished(); ++i) {
+            pfem pf = mf_u.fem_of_element(i.cv());
+            if (pf) {
+              GMM_ASSERT1(pf->target_dim() == 1,
+                          "Intrinsically vectorial fems are not allowed");
+              GMM_ASSERT1(mf_data || pf->is_lagrange(), "Constant Dirichlet "
+                          "data allowed for lagrange fems only");
+            }
+          }
+        }
+        
+        dal::bit_vector dofs = mf_u.dof_on_region(rg);
+        
+        if (A && !mf_data) {
+          GMM_ASSERT1(dofs.card() % s == 0, "Problem with dof vectorization");
+        }
+        
+        for (dal::bv_visitor i(dofs); !i.finished(); ++i) {
+          complex_type val(0);
+          if (A) val = (mf_data ? (*A)[i] :  (*A)[i%s]);
+          md.add_complex_dof_constraint(vl[0], i, val);
+        }
       }
     }
 
@@ -3965,87 +3980,89 @@ namespace getfem {
                                         model::real_veclist &/*rvecl*/,
                                         size_type,
                                         build_version version) const {
+      if (MPI_IS_MASTER()) {
 
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Pointwize constraints brick has only one term");
-      GMM_ASSERT1(mims.size() == 0,
-                  "Pointwize constraints brick does not need a mesh_im");
-      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
+        GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                    "Pointwize constraints brick has only one term");
+        GMM_ASSERT1(mims.size() == 0,
+                    "Pointwize constraints brick does not need a mesh_im");
+        GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
                   "Wrong number of variables for pointwize constraints brick");
-      bool penalized = (vl.size() == 1);
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-      dim_type N = mf_u.linked_mesh().dim(), Q = mf_u.get_qdim(), ind_pt = 0;
-      size_type dlsize = size_type((penalized ? 1 : 0) + 1 + (Q > 1 ? 1 : 0));
-      GMM_ASSERT1(dl.size() == dlsize || dl.size() == dlsize+1,
-		  "Wrong number of data for pointwize constraints brick");
+        bool penalized = (vl.size() == 1);
+        const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+        dim_type N = mf_u.linked_mesh().dim(), Q = mf_u.get_qdim(), ind_pt = 0;
+        size_type dlsize = size_type((penalized ? 1 : 0) + 1 + (Q > 1 ? 1 : 0));
+        GMM_ASSERT1(dl.size() == dlsize || dl.size() == dlsize+1,
+                    "Wrong number of data for pointwize constraints brick");
 
       
-      const model_real_plain_vector *COEFF = 0;
-      if (penalized) {
-        COEFF = &(md.real_variable(dl[0]));
-	ind_pt = 1;
-        GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
-                    "Data for coefficient should be a scalar");
-      }
-
-      const model_real_plain_vector &PT = md.real_variable(dl[ind_pt]);
-      size_type nb_co = gmm::vect_size(PT) / N;
-      
-      dim_type ind_unitv = dim_type((Q > 1) ? ind_pt+1 : 0);
-      const model_real_plain_vector &unitv =md.real_variable(dl[ind_unitv]);
-      GMM_ASSERT1((!ind_unitv || gmm::vect_size(unitv) == nb_co * Q),
-		  "Wrong size for vector of unit vectors");
-      
-      dim_type ind_rhs = dim_type((Q > 1) ? ind_pt+2 : ind_pt+1);
-      if (dl.size() < size_type(ind_rhs + 1)) ind_rhs = 0;
-      const model_real_plain_vector &rhs =  md.real_variable(dl[ind_rhs]);
-      GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
-		  "Wrong size for vector of rhs");
-
-      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
-        || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
-			  || md.is_var_newer_than_brick(dl[ind_unitv], ib)
-			  || md.is_var_newer_than_brick(dl[ind_rhs], ib)));
-      
-      if (recompute_matrix) {
-	gmm::row_matrix<model_real_sparse_vector> BB(nb_co*Q, mf_u.nb_dof());
-	gmm::clear(rB); gmm::resize(rB, nb_co, mf_u.nb_dof());
-
-	dal::bit_vector dof_untouched;
-	getfem::mesh_trans_inv mti(mf_u.linked_mesh());
-	base_node pt(N);
-	for (size_type i = 0; i < nb_co; ++i) {
-	  gmm::copy(gmm::sub_vector(PT, gmm::sub_interval(i*N, N)), pt);
-	  mti.add_point(pt);
-	}
-	gmm::row_matrix<model_real_sparse_vector> &BBB = ((Q > 1) ? BB : rB);
-	model_real_plain_vector vv;
-	interpolation(mf_u, mti, vv, vv, BBB,  1, 1, &dof_untouched);
-	GMM_ASSERT1(dof_untouched.card() == 0,
-		    "Pointwize constraints : some of the points are outside "
-		    "the mesh: " << dof_untouched);
-	
-	if (Q > 1) {
-	  for (size_type i = 0; i < nb_co; ++i)
-	    for (size_type q = 0; q < Q; ++q)
-	      gmm::add(gmm::scaled(gmm::mat_row(BB, i*Q+q), unitv[i*Q+q]),
-		       gmm::mat_row(rB, i));
-	}
+        const model_real_plain_vector *COEFF = 0;
         if (penalized) {
+          COEFF = &(md.real_variable(dl[0]));
+          ind_pt = 1;
+          GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+                      "Data for coefficient should be a scalar");
+        }
+        
+        const model_real_plain_vector &PT = md.real_variable(dl[ind_pt]);
+        size_type nb_co = gmm::vect_size(PT) / N;
+        
+        dim_type ind_unitv = dim_type((Q > 1) ? ind_pt+1 : 0);
+        const model_real_plain_vector &unitv =md.real_variable(dl[ind_unitv]);
+        GMM_ASSERT1((!ind_unitv || gmm::vect_size(unitv) == nb_co * Q),
+                    "Wrong size for vector of unit vectors");
+      
+        dim_type ind_rhs = dim_type((Q > 1) ? ind_pt+2 : ind_pt+1);
+        if (dl.size() < size_type(ind_rhs + 1)) ind_rhs = 0;
+        const model_real_plain_vector &rhs =  md.real_variable(dl[ind_rhs]);
+        GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
+                    "Wrong size for vector of rhs");
+        
+        bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+          || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
+                            || md.is_var_newer_than_brick(dl[ind_unitv], ib)
+                            || md.is_var_newer_than_brick(dl[ind_rhs], ib)));
+        
+        if (recompute_matrix) {
+          gmm::row_matrix<model_real_sparse_vector> BB(nb_co*Q, mf_u.nb_dof());
+          gmm::clear(rB); gmm::resize(rB, nb_co, mf_u.nb_dof());
+          
+          dal::bit_vector dof_untouched;
+          getfem::mesh_trans_inv mti(mf_u.linked_mesh());
+          base_node pt(N);
+          for (size_type i = 0; i < nb_co; ++i) {
+            gmm::copy(gmm::sub_vector(PT, gmm::sub_interval(i*N, N)), pt);
+            mti.add_point(pt);
+          }
+          gmm::row_matrix<model_real_sparse_vector> &BBB = ((Q > 1) ? BB : rB);
+          model_real_plain_vector vv;
+          interpolation(mf_u, mti, vv, vv, BBB,  1, 1, &dof_untouched);
+          GMM_ASSERT1(dof_untouched.card() == 0,
+                      "Pointwize constraints : some of the points are outside "
+                      "the mesh: " << dof_untouched);
+          
+          if (Q > 1) {
+            for (size_type i = 0; i < nb_co; ++i)
+              for (size_type q = 0; q < Q; ++q)
+                gmm::add(gmm::scaled(gmm::mat_row(BB, i*Q+q), unitv[i*Q+q]),
+                         gmm::mat_row(rB, i));
+          }
+          if (penalized) {
           gmm::mult(gmm::transposed(rB), rB, matl[0]);
           gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
-        } else
-	  gmm::copy(rB, matl[0]);
-      }
-
-      if (ind_rhs) {
-        if (penalized) {
-          gmm::mult(gmm::transposed(rB), rhs, vecl[0]);
-          gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+          } else
+            gmm::copy(rB, matl[0]);
         }
-	else gmm::copy(rhs, vecl[0]);
+        
+        if (ind_rhs) {
+          if (penalized) {
+            gmm::mult(gmm::transposed(rB), rhs, vecl[0]);
+            gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+          }
+          else gmm::copy(rhs, vecl[0]);
+        }
+        else gmm::clear(vecl[0]);
       }
-      else gmm::clear(vecl[0]);
     }
 
     virtual void asm_complex_tangent_terms(const model &md, size_type ib,
@@ -4057,90 +4074,93 @@ namespace getfem {
                                            model::complex_veclist &,
                                            size_type,
                                            build_version version) const {
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Pointwize constraints brick only one term");
-      GMM_ASSERT1(mims.size() == 0,
-                  "Pointwize constraints brick does not need a mesh_im");
-      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
+      if (MPI_IS_MASTER()) {
+        GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                    "Pointwize constraints brick only one term");
+        GMM_ASSERT1(mims.size() == 0,
+                    "Pointwize constraints brick does not need a mesh_im");
+        GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2,
                   "Wrong number of variables for pointwize constraints brick");
-      bool penalized = (vl.size() == 1);
-      const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
-      dim_type N = mf_u.linked_mesh().dim(), Q = mf_u.get_qdim(), ind_pt = 0;
-      size_type dlsize = size_type((penalized ? 1 : 0) + 1 + (Q > 1 ? 1 : 0));
-      GMM_ASSERT1(dl.size() == dlsize || dl.size() == dlsize+1,
-		  "Wrong number of data for pointwize constraints brick");
-
+        bool penalized = (vl.size() == 1);
+        const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
+        dim_type N = mf_u.linked_mesh().dim(), Q = mf_u.get_qdim(), ind_pt = 0;
+        size_type dlsize = size_type((penalized ? 1 : 0) + 1 + (Q > 1 ? 1 :0));
+        GMM_ASSERT1(dl.size() == dlsize || dl.size() == dlsize+1,
+                    "Wrong number of data for pointwize constraints brick");
+        
       
-      const model_complex_plain_vector *COEFF = 0;
-      if (penalized) {
-        COEFF = &(md.complex_variable(dl[0]));
-	ind_pt = 1;
-        GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
-                    "Data for coefficient should be a scalar");
-      }
-
-      const model_complex_plain_vector &PT = md.complex_variable(dl[ind_pt]);
-      size_type nb_co = gmm::vect_size(PT) / N;
-      
-      dim_type ind_unitv = dim_type((Q > 1) ? ind_pt+1 : 0);
-      const model_complex_plain_vector &unitv
-	= md.complex_variable(dl[ind_unitv]);
-      GMM_ASSERT1((!ind_unitv || gmm::vect_size(unitv) == nb_co * Q),
-		  "Wrong size for vector of unit vectors");
-      
-      dim_type ind_rhs = dim_type((Q > 1) ? ind_pt+2 : ind_pt+1);
-      if (dl.size() < size_type(ind_rhs + 1)) ind_rhs = 0;
-      const model_complex_plain_vector &rhs
-	= md.complex_variable(dl[ind_rhs]);
-      GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
-		  "Wrong size for vector of rhs");
-      
-      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
-        || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
-			  || md.is_var_newer_than_brick(dl[ind_unitv], ib)
-			  || md.is_var_newer_than_brick(dl[ind_rhs], ib)));
-
-      if (recompute_matrix) {
-	gmm::row_matrix<model_complex_sparse_vector> BB(nb_co*Q,mf_u.nb_dof());
-	gmm::clear(cB); gmm::resize(cB, nb_co, mf_u.nb_dof());
-	dal::bit_vector dof_untouched;
-	getfem::mesh_trans_inv mti(mf_u.linked_mesh());
-	base_node pt(N);
-	for (size_type i = 0; i < nb_co; ++i) {
-	  gmm::copy(gmm::real_part(gmm::sub_vector(PT,
-				   gmm::sub_interval(i*N, N))), pt);
-	  mti.add_point(pt);
-	}
-	gmm::row_matrix<model_complex_sparse_vector> &BBB = ((Q > 1) ? BB :cB);
-	model_complex_plain_vector vv;
-	interpolation(mf_u, mti, vv, vv, BBB,  1, 1, &dof_untouched);
-	GMM_ASSERT1(dof_untouched.card() == 0,
-		    "Pointwize constraints : some of the points are outside "
-		    "the mesh: " << dof_untouched);
-	
-	if (Q > 1) {
-	  for (size_type i = 0; i < nb_co; ++i)
-	    for (size_type q = 0; q < Q; ++q)
-	      gmm::add(gmm::scaled(gmm::mat_row(BB, i*Q+q), unitv[i*Q+q]),
-		       gmm::mat_row(cB, i));
-	}
-
+        const model_complex_plain_vector *COEFF = 0;
         if (penalized) {
-          gmm::mult(gmm::transposed(cB), cB, matl[0]);
-          gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
-        } else
-	  gmm::copy(cB, matl[0]);
-      }
-
-      
-      if (ind_rhs) {
-        if (penalized) {
-          gmm::mult(gmm::transposed(cB), rhs, vecl[0]);
-          gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+          COEFF = &(md.complex_variable(dl[0]));
+          ind_pt = 1;
+          GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+                      "Data for coefficient should be a scalar");
         }
-	else gmm::copy(rhs, vecl[0]);
+        
+        const model_complex_plain_vector &PT = md.complex_variable(dl[ind_pt]);
+        size_type nb_co = gmm::vect_size(PT) / N;
+        
+        dim_type ind_unitv = dim_type((Q > 1) ? ind_pt+1 : 0);
+        const model_complex_plain_vector &unitv
+          = md.complex_variable(dl[ind_unitv]);
+        GMM_ASSERT1((!ind_unitv || gmm::vect_size(unitv) == nb_co * Q),
+                    "Wrong size for vector of unit vectors");
+        
+        dim_type ind_rhs = dim_type((Q > 1) ? ind_pt+2 : ind_pt+1);
+        if (dl.size() < size_type(ind_rhs + 1)) ind_rhs = 0;
+        const model_complex_plain_vector &rhs
+          = md.complex_variable(dl[ind_rhs]);
+        GMM_ASSERT1((!ind_rhs || gmm::vect_size(rhs) == nb_co),
+                    "Wrong size for vector of rhs");
+        
+        bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+          || (penalized && (md.is_var_newer_than_brick(dl[ind_pt], ib)
+                            || md.is_var_newer_than_brick(dl[ind_unitv], ib)
+                            || md.is_var_newer_than_brick(dl[ind_rhs], ib)));
+        
+        if (recompute_matrix) {
+          gmm::row_matrix<model_complex_sparse_vector>
+            BB(nb_co*Q,mf_u.nb_dof());
+          gmm::clear(cB); gmm::resize(cB, nb_co, mf_u.nb_dof());
+          dal::bit_vector dof_untouched;
+          getfem::mesh_trans_inv mti(mf_u.linked_mesh());
+          base_node pt(N);
+          for (size_type i = 0; i < nb_co; ++i) {
+            gmm::copy(gmm::real_part
+                      (gmm::sub_vector(PT, gmm::sub_interval(i*N, N))), pt);
+            mti.add_point(pt);
+          }
+          gmm::row_matrix<model_complex_sparse_vector> &BBB = ((Q > 1) ? BB :cB);
+          model_complex_plain_vector vv;
+          interpolation(mf_u, mti, vv, vv, BBB,  1, 1, &dof_untouched);
+          GMM_ASSERT1(dof_untouched.card() == 0,
+                      "Pointwize constraints : some of the points are outside "
+                      "the mesh: " << dof_untouched);
+          
+          if (Q > 1) {
+            for (size_type i = 0; i < nb_co; ++i)
+              for (size_type q = 0; q < Q; ++q)
+                gmm::add(gmm::scaled(gmm::mat_row(BB, i*Q+q), unitv[i*Q+q]),
+                         gmm::mat_row(cB, i));
+          }
+          
+          if (penalized) {
+            gmm::mult(gmm::transposed(cB), cB, matl[0]);
+            gmm::scale(matl[0], gmm::abs((*COEFF)[0]));
+          } else
+            gmm::copy(cB, matl[0]);
+        }
+
+        
+        if (ind_rhs) {
+          if (penalized) {
+            gmm::mult(gmm::transposed(cB), rhs, vecl[0]);
+            gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
+          }
+          else gmm::copy(rhs, vecl[0]);
+        }
+        else gmm::clear(vecl[0]);
       }
-      else gmm::clear(vecl[0]);
     }
 
     pointwise_constraints_brick(bool penalized) {
@@ -4655,28 +4675,31 @@ namespace getfem {
                                         model::real_veclist &vecl,
                                         model::real_veclist &,
                                         size_type, build_version) const {
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Constraint brick has one and only one term");
-      GMM_ASSERT1(mims.size() == 0,
-                  "Constraint brick need no mesh_im");
-      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 1,
-                  "Wrong number of variables for constraint brick");
+      if (MPI_IS_MASTER()) {
 
-      bool penalized = (vl.size() == 1);
-      const model_real_plain_vector *COEFF = 0;
-
-      if (penalized) {
-        COEFF = &(md.real_variable(dl[0]));
-        GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
-                    "Data for coefficient should be a scalar");
-
-        gmm::mult(gmm::transposed(rB), gmm::scaled(rL, gmm::abs((*COEFF)[0])),
-                  vecl[0]);
-        gmm::mult(gmm::transposed(rB), gmm::scaled(rB, gmm::abs((*COEFF)[0])),
-                  matl[0]);
-      } else {
-        gmm::copy(rL, vecl[0]);
-        gmm::copy(rB, matl[0]);
+        GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                    "Constraint brick has one and only one term");
+        GMM_ASSERT1(mims.size() == 0,
+                    "Constraint brick need no mesh_im");
+        GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 1,
+                    "Wrong number of variables for constraint brick");
+        
+        bool penalized = (vl.size() == 1);
+        const model_real_plain_vector *COEFF = 0;
+        
+        if (penalized) {
+          COEFF = &(md.real_variable(dl[0]));
+          GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+                      "Data for coefficient should be a scalar");
+          
+          gmm::mult(gmm::transposed(rB),
+                    gmm::scaled(rL, gmm::abs((*COEFF)[0])), vecl[0]);
+          gmm::mult(gmm::transposed(rB),
+                    gmm::scaled(rB, gmm::abs((*COEFF)[0])), matl[0]);
+        } else {
+          gmm::copy(rL, vecl[0]);
+          gmm::copy(rB, matl[0]);
+        }
       }
     }
 
@@ -4689,28 +4712,31 @@ namespace getfem {
                                            model::complex_veclist &,
                                            size_type,
                                            build_version) const {
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Constraint brick has one and only one term");
-      GMM_ASSERT1(mims.size() == 0,
-                  "Constraint brick need no mesh_im");
-      GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 1,
-                  "Wrong number of variables for constraint brick");
+      if (MPI_IS_MASTER()) {
 
-      bool penalized = (vl.size() == 1);
-      const model_complex_plain_vector *COEFF = 0;
-
-      if (penalized) {
-        COEFF = &(md.complex_variable(dl[0]));
-        GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
-                    "Data for coefficient should be a scalar");
-
-        gmm::mult(gmm::transposed(cB), gmm::scaled(cL, gmm::abs((*COEFF)[0])),
-                  vecl[0]);
-        gmm::mult(gmm::transposed(cB), gmm::scaled(cB, gmm::abs((*COEFF)[0])),
-                  matl[0]);
-      } else {
-        gmm::copy(cL, vecl[0]);
-        gmm::copy(cB, matl[0]);
+        GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                    "Constraint brick has one and only one term");
+        GMM_ASSERT1(mims.size() == 0,
+                    "Constraint brick need no mesh_im");
+        GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 1,
+                    "Wrong number of variables for constraint brick");
+        
+        bool penalized = (vl.size() == 1);
+        const model_complex_plain_vector *COEFF = 0;
+        
+        if (penalized) {
+          COEFF = &(md.complex_variable(dl[0]));
+          GMM_ASSERT1(gmm::vect_size(*COEFF) == 1,
+                      "Data for coefficient should be a scalar");
+          
+          gmm::mult(gmm::transposed(cB),
+                    gmm::scaled(cL, gmm::abs((*COEFF)[0])), vecl[0]);
+          gmm::mult(gmm::transposed(cB),
+                    gmm::scaled(cB, gmm::abs((*COEFF)[0])), matl[0]);
+        } else {
+          gmm::copy(cL, vecl[0]);
+          gmm::copy(cB, matl[0]);
+        }
       }
     }
 
@@ -4872,12 +4898,14 @@ namespace getfem {
                                         model::real_veclist &vecl,
                                         model::real_veclist &,
                                         size_type, build_version) const {
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Explicit rhs has one and only one term");
-      GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() == 0,
-                  "Wrong number of variables for explicit rhs brick");
-      gmm::copy(rL, vecl[0]);
+      if (MPI_IS_MASTER()) {
+        GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                    "Explicit rhs has one and only one term");
+        GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
+        GMM_ASSERT1(vl.size() == 1 && dl.size() == 0,
+                    "Wrong number of variables for explicit rhs brick");
+        gmm::copy(rL, vecl[0]);
+      }
     }
 
     virtual void asm_complex_tangent_terms(const model &, size_type,
@@ -4889,12 +4917,14 @@ namespace getfem {
                                            model::complex_veclist &,
                                            size_type,
                                            build_version) const {
-      GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
-                  "Explicit rhs has one and only one term");
-      GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
-      GMM_ASSERT1(vl.size() == 1 && dl.size() == 0,
-                  "Wrong number of variables for explicit rhs brick");
-      gmm::copy(cL, vecl[0]);
+      if (MPI_IS_MASTER()) {
+        GMM_ASSERT1(vecl.size() == 1 && matl.size() == 1,
+                    "Explicit rhs has one and only one term");
+        GMM_ASSERT1(mims.size() == 0, "Explicit rhs need no mesh_im");
+        GMM_ASSERT1(vl.size() == 1 && dl.size() == 0,
+                    "Wrong number of variables for explicit rhs brick");
+        gmm::copy(cL, vecl[0]);
+      }
 
     }
 
