@@ -109,6 +109,8 @@ namespace getfem {
 
     size_type get_type() const {return type_;}
 
+    void  set_type(size_type type)  { type_ = type;}
+
     /**extract the next region number 
     that does not yet exists in the mesh*/
     static size_type free_region_id(const getfem::mesh& m);
