@@ -3,6 +3,8 @@
 Installation
 ============
 
+For the parallel version of the interface, see also :ref:`ud-parallel`.
+
 In a debian/ubuntu system
 -------------------------
 

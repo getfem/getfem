@@ -1081,6 +1081,7 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type /* region */,
                                         build_version version) const {
+      if (MPI_IS_MASTER()) {
       GMM_ASSERT1(mims.size() == 0, "Contact brick need no mesh_im");
       size_type nbvar = 2 + (contact_only ? 0 : 1) + (two_variables ? 1 : 0);
       GMM_ASSERT1(vl.size() == nbvar,
@@ -1162,6 +1163,7 @@ namespace getfem {
       basic_asm_real_tangent_terms
         (u1, u2, lambda_n, lambda_t, md.real_variable(dl[np_wt1]),
          md.real_variable(dl[np_wt2]), matl, vecl, version);
+      }
 
     }
 
@@ -1170,10 +1172,6 @@ namespace getfem {
                            bool Tresca_version_=false,
                            bool Hughes_stabilized_=false,
                            bool friction_dynamic_term_=false) {
-
-#if GETFEM_PARA_LEVEL > 1
-    if (!getfem::MPI_IS_MASTER()) GMM_WARNING1("Nodal contact bricks don't support GETFEM_PARA_LEVEL > 1 yet!!!");
-#endif
 
       if (aug_version == 4 && contact_only_) aug_version = 3;
       augmentation_version = aug_version;
@@ -1401,6 +1399,7 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
+      if (MPI_IS_MASTER()) {
       GMM_ASSERT1(mims.size() == 1, "This contact brick needs one mesh_im");
       size_type nbvar = 2 + (contact_only ? 0 : 1);
       GMM_ASSERT1(vl.size() == nbvar,
@@ -1577,6 +1576,7 @@ namespace getfem {
       basic_asm_real_tangent_terms
         (u1, u1, lambda_n, lambda_t, md.real_variable(dl[np_wt1]),
          md.real_variable(dl[np_wt1]), matl, vecl, version);
+      }
 
     }
 
@@ -1676,7 +1676,7 @@ namespace getfem {
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
-
+      if (MPI_IS_MASTER()) {
       GMM_ASSERT1(mims.size() == 2, "This contact brick needs two mesh_im");
       const mesh_im &mim1 = *mims[0];
       const mesh_im &mim2 = *mims[1];
@@ -1791,6 +1791,7 @@ namespace getfem {
       const model_real_plain_vector dummy_wt;
       basic_asm_real_tangent_terms
         (u1, u2, lambda_n, lambda_t, dummy_wt, dummy_wt, matl, vecl, version);
+      }
     }
 
     Coulomb_friction_brick_nonmatching_meshes

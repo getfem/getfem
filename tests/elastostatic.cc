@@ -374,10 +374,10 @@ void elastostatic_problem::compute_error(plain_vector &U) {
 	 << "H1 error = " << h1 << endl
 	 << "Linfty error = " << gmm::vect_norminf(V) << endl;
   
-  getfem::vtk_export exp(datafilename + "_err.vtk",
-			 PARAM.int_value("VTK_EXPORT")==1);
-  exp.exporting(mf_rhs); 
-  exp.write_point_data(mf_rhs, V, "elastostatic_displacement");
+/*   getfem::vtk_export exp(datafilename + "_err.vtk", */
+/* 			 PARAM.int_value("VTK_EXPORT")==1); */
+/*   exp.exporting(mf_rhs);  */
+/*   exp.write_point_data(mf_rhs, V, "elastostatic_displacement"); */
 
   mf_rhs.set_qdim(1);
 }

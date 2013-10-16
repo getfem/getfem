@@ -9,7 +9,7 @@
 MU = 1.0;	        % Lamé coefficient.
 LAMBDA = 1.0;   	% Lamé coefficient.
 N = 2;
-NX = 20;               % number of subdivisions for structured meshes.
+NX = 100;               % number of subdivisions for structured meshes.
 QUAD = 0;
 FT = 3.0;               % parameter for the exact solution.
 SOL_SING = 0;           % 0 : Regular exact solution.

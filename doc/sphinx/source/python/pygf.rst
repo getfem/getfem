@@ -33,6 +33,12 @@ environnement variable to its location. For example with::
   import sys
   sys.path.append('.../getfem/getfem++/interface/src/python/')
 
+
+Parallel version
+----------------
+
+The python interface is the only one for the moment to interface the mpi based parallel version of Getfem. See :ref:`ud-parallel`.
+
 Memory Management
 -----------------
 
