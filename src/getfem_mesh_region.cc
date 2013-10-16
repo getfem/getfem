@@ -69,7 +69,10 @@ namespace getfem {
     }
     else {
       if (from.p.get())
+      {
         this->wp() = from.rp();
+        this->type_= from.get_type();
+      }
       else if (from.id_ == size_type(-1)) {
         this->clear();
         this->add(this->parent_mesh->convex_index());
