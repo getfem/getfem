@@ -84,7 +84,7 @@ namespace getfem {
 	Note that these regions are read-only, this constructor is
 	mostly used for backward-compatibility.
     */
-    mesh_region(size_type id__) : id_(id__), parent_mesh(0), type_(-1) {}
+    mesh_region(size_type id__) : id_(id__), type_(-1), parent_mesh(0) {}
     /** internal constructor. You should used m.region(id) instead. */
     mesh_region(mesh& m, size_type id__, size_type type = -1) : 
       p(new impl), id_(id__), type_(type), parent_mesh(&m)  {}

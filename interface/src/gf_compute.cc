@@ -530,7 +530,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     This method is rather dissipative, but stable.
     @*/
     sub_command
-      ("convect", 4, 5, 0, 0,
+      ("convect", 4, 7, 0, 0,
        const getfem::mesh_fem *mf_v = in.pop().to_const_mesh_fem();
        rcarray V              = in.pop().to_rcarray();
        scalar_type dt = in.pop().to_scalar();
