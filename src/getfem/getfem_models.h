@@ -307,7 +307,7 @@ namespace getfem {
     { real_dof_constraints.clear(); complex_dof_constraints.clear(); }
 
 
-    void actualize_sizes(void) const;
+    virtual void actualize_sizes(void) const;
     bool check_name_valitity(const std::string &name,
                              bool assert = true) const;
     void brick_init(size_type ib, build_version version,
@@ -781,9 +781,9 @@ namespace getfem {
 
     /** Assembly of the tangent system taking into account the terms
         from all bricks. */
-    void assembly(build_version version);
+    virtual void assembly(build_version version);
 
-    void clear(void) {
+    virtual void clear(void) {
       variables.clear();
       active_bricks.clear();
       valid_bricks.clear();
