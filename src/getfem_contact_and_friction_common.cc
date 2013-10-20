@@ -334,9 +334,9 @@ namespace getfem {
     }
     const model_real_plain_vector *w(0);
     if (wname.size()) {
-      GMM_ASSERT1(&(md->mesh_fem_of_variable(mmultname))
+      GMM_ASSERT1(&(md->mesh_fem_of_variable(wname))
                  == &(md->mesh_fem_of_variable(vvarname)), "The velocity "
-                 "should be defined on the same mesh as the displacement");
+                 "should be defined on the same mesh_fem as the displacement");
       w = &(md->real_variable(wname));
     }
     return add_master_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
@@ -357,9 +357,9 @@ namespace getfem {
     }
     const model_real_plain_vector *w(0);
     if (wname.size()) {
-      GMM_ASSERT1(&(md->mesh_fem_of_variable(mmultname))
+      GMM_ASSERT1(&(md->mesh_fem_of_variable(wname))
                  == &(md->mesh_fem_of_variable(vvarname)), "The velocity "
-                 "should be defined on the same mesh as the displacement");
+                 "should be defined on the same mesh_fem as the displacement");
       w = &(md->real_variable(wname));
     }
     return add_slave_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
