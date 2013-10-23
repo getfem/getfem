@@ -52,11 +52,11 @@ u_degree = 2;
 lambda_degree = 2;
 incompressibility = 0;
 p_degree = 1;
-r = 40;                 % Augmentation parameter
-gamma0 = 1/r;          % Nitsche's method gamma0 parameter
-theta = 0;             % Nitsche's method theta parameter
+r = 40;                % Augmentation parameter
+gamma0 = 0.001;          % Nitsche's method gamma0 parameter
+theta = 1;             % Nitsche's method theta parameter
 
-condition_type = 0; % 0 = Explicitely kill horizontal rigid displacements
+condition_type = 1; % 0 = Explicitely kill horizontal rigid displacements
                     % 1 = Kill rigid displacements using a global penalization
                     % 2 = Add a Dirichlet condition on the top of the structure
 penalty_parameter = 1E-6;    % Penalization coefficient for the global penalization
@@ -70,7 +70,7 @@ end;
 
 niter = 100;   % Maximum number of iterations for Newton's algorithm.
 plot_mesh = true;
-version = 16;  % 1 : frictionless contact and the basic contact brick
+version = 16; % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick

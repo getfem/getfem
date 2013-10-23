@@ -5,10 +5,10 @@ check_PROGRAMS =                 \
 
 CLEANFILES = 
 
-test_contact_SOURCES = contact_problem.ccp test_contact.cpp
+test_contact_SOURCES = contact_problem.cpp test_contact.cpp contact_problem.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = contact_problem.o ../../src/libgetfem.la -lm @SUPLDFLAGS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
 
 TESTS = $(abs_top_srcdir)/contrib/level_set_contact/contact_problem.pl
 

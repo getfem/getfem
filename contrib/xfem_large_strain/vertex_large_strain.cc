@@ -1013,6 +1013,10 @@ namespace getfem {
     const VECTOR &residual(void) { return rhs; }
 
     R residual_norm(void) { return gmm::vect_norm2(rhs); }
+    R state_norm(void) const { return gmm::vect_norm1(state); }
+    R approx_external_load_norm(void)
+    { return md.approx_external_load(); }
+
 
     R line_search(VECTOR &dr, const gmm::iteration &iter) {
       gmm::resize(stateinit, md.nb_dof());
@@ -1160,6 +1164,11 @@ namespace getfem {
     const VECTOR &residual(void) { return rhs; }
 
     R residual_norm(void) { return gmm::vect_norm2(rhs); }
+    R state_norm(void) const { return gmm::vect_norm1(state); }
+    R approx_external_load_norm(void)
+    { return md.approx_external_load(); }
+
+
 
     R line_search(VECTOR &dr, const gmm::iteration &iter) {
       gmm::resize(stateinit, md.nb_dof());

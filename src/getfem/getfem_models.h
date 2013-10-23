@@ -246,14 +246,15 @@ namespace getfem {
     struct brick_description {
       mutable bool terms_to_be_computed;
       mutable gmm::uint64_type v_num;
-      pbrick pbr;               // brick pointer
-      pdispatcher pdispatch;    // Optional dispatcher
-      size_type nbrhs;          // Additional rhs for dispatcher.
-      varnamelist vlist;        // List of variables used by the brick.
-      varnamelist dlist;        // List of data used by the brick.
-      termlist tlist;           // List of terms build by the brick
-      mimlist mims;             // List of integration methods.
-      size_type region;         // Optional region size_type(-1) for all.
+      pbrick pbr;                // brick pointer
+      pdispatcher pdispatch;     // Optional dispatcher
+      size_type nbrhs;           // Additional rhs for dispatcher.
+      varnamelist vlist;         // List of variables used by the brick.
+      varnamelist dlist;         // List of data used by the brick.
+      termlist tlist;            // List of terms build by the brick
+      mimlist mims;              // List of integration methods.
+      size_type region;          // Optional region size_type(-1) for all.
+      mutable scalar_type external_load; // External load computed in assembly
 
       //varibables, dealing with a multithreaded assembly		
       region_partition partition;// partition of the applied region
@@ -278,6 +279,7 @@ namespace getfem {
                         const mimlist &mms, size_type reg)
         : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
+          external_load(0),
           partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  region),
           rveclist(1), rveclist_sym(1), cveclist(1),
           cveclist_sym(1)  { }
@@ -315,8 +317,15 @@ namespace getfem {
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
+
+    scalar_type approx_external_load_; // Computed by assembly procedure
+                                       // with BUILD_RHS option.
+    
   public :
 
+    void add_external_load(size_type ib, scalar_type e) const
+    { bricks[ib].external_load = e; }
+    scalar_type approx_external_load(void) { return approx_external_load_; }
     // call the brick if necessary
     void update_brick(size_type ib, build_version version) const;
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data,

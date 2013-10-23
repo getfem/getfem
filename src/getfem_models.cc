@@ -1146,6 +1146,7 @@ namespace getfem {
     }
 
     if (tobecomputed) {
+      brick.external_load = scalar_type(0);
 
       if (!(brick.pdispatch))
         { brick_call(ib, version, 0); }
@@ -1285,6 +1286,8 @@ namespace getfem {
       if (version & BUILD_PSEUDO_POTENTIAL) pseudo_potential_ = scalar_type(0);
     }
     clear_dof_constraints();
+
+    if (version & BUILD_RHS) approx_external_load_ = scalar_type(0);
 
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
 
@@ -1500,6 +1503,8 @@ namespace getfem {
 //           brick.rveclist[0] = real_veclist(brick.tlist.size());
 //         }
 
+      
+      if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
 
     if (version & BUILD_RHS) {
@@ -1532,6 +1537,8 @@ namespace getfem {
           gmm::sub_interval II(0, nb_dof());
           
           if (version & BUILD_RHS) {
+            if (MPI_IS_MASTER())
+              approx_external_load_ += gmm::vect_norm1(dof_go_values);
             if (is_linear_) {
               if (is_symmetric_) {
                 scalar_type valnorm = gmm::vect_norm2(dof_go_values);
@@ -1599,6 +1606,8 @@ namespace getfem {
           gmm::sub_interval II(0, nb_dof());
           
           if (version & BUILD_RHS) {
+            if (MPI_IS_MASTER())
+              approx_external_load_ += gmm::vect_norm1(dof_go_values);
             if (is_linear_) {
               if (is_symmetric_) {
                 scalar_type valnorm = gmm::vect_norm2(dof_go_values);
@@ -1632,11 +1641,13 @@ namespace getfem {
       }
     }
 
+    if (version & BUILD_RHS) { MPI_SUM_SCALAR(approx_external_load_); }
+
+
     #if GETFEM_PARA_LEVEL > 1
     // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
     if (MPI_IS_MASTER()) cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
     #endif
-
   }
 
 
@@ -2290,7 +2301,7 @@ namespace getfem {
 
   struct source_term_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -2329,6 +2340,7 @@ namespace getfem {
 
       if (dl.size() > 1) gmm::add(md.real_variable(dl[1]), vecl[0]);
 
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
     virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
@@ -2343,7 +2355,7 @@ namespace getfem {
       return -gmm::vect_sp(vecl[0], u);
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type,
+    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,
@@ -2379,6 +2391,7 @@ namespace getfem {
 
       if (dl.size() > 1) gmm::add(md.complex_variable(dl[1]), vecl[0]);
 
+     md. add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
     virtual scalar_type asm_complex_pseudo_potential(const model &md,size_type,
@@ -2426,7 +2439,7 @@ namespace getfem {
 
   struct normal_source_term_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type,
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -2463,9 +2476,10 @@ namespace getfem {
       else
         asm_homogeneous_normal_source_term(vecl[0], mim, mf_u, A, rg);
 
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type,
+    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,
@@ -2498,7 +2512,7 @@ namespace getfem {
         asm_normal_source_term(vecl[0], mim, mf_u, *mf_data, A, rg);
       else
         asm_homogeneous_normal_source_term(vecl[0], mim, mf_u, A, rg);
-
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
     virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
@@ -2690,6 +2704,8 @@ namespace getfem {
             asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
         }
 
+        md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
+
         if (penalized && (&mf_mult != &mf_u))  {
           gmm::mult(gmm::transposed(rB), rV, vecl[0]);
           gmm::scale(vecl[0], gmm::abs((*COEFF)[0]));
@@ -2832,6 +2848,8 @@ namespace getfem {
           else
             asm_homogeneous_source_term(vecl[0], mim, mf_mult, *A, rg);
         }
+
+        md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
 
         if (penalized && (&mf_mult != &mf_u))  {
           gmm::mult(gmm::transposed(cB), cV, vecl[0]);

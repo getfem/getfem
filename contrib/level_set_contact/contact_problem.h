@@ -7,7 +7,8 @@ using getfem::scalar_type;
 using bgeot::base_matrix;
 typedef getfem::model_real_plain_vector  plain_vector;
 
-	enum  {NORTH = 1, EAST = 2, WEST = 3, SOUTH = 4, FRONT = 5, BACK = 6};
+enum  { NORTH = 1, EAST = 2, WEST = 3, SOUTH = 4, FRONT = 5, BACK = 6};
+
 struct contact_problem{
 	getfem::deformable_mesh mesh_master, mesh_slave;
 	bgeot::md_param PARAM;
@@ -21,4 +22,5 @@ struct contact_problem{
 	contact_problem(int argc, char *argv[]);
 	
 };
+
 void mark_boundary(getfem::mesh& m);
