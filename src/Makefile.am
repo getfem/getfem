@@ -200,6 +200,7 @@ SRC =                                      		\
 	getfem_interpolation.cc            		\
 	getfem_export.cc                   		\
 	getfem_assembling_tensors.cc       		\
+	getfem_generic_assembly.cc       		\
 	getfem_mesher.cc		   		\
 	getfem_modeling.cc                 		\
 	getfem_models.cc                 		\
