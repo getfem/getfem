@@ -73,17 +73,17 @@ namespace gmm {
 #if defined(__EXCEPTIONS) || defined(_CPPUNWIND)
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
-    std::stringstream msg;
-    msg << "Error in " << file << ", line " << line << " " << func
-	<< ": \n" << errormsg << std::ends;
-    throw gmm::gmm_error(msg.str());	
+    std::stringstream msg__;
+    msg__ << "Error in " << file << ", line " << line << " " << func
+	  << ": \n" << errormsg << std::ends;
+    throw gmm::gmm_error(msg__.str());	
   }
 # define GMM_THROW_(type, errormsg) {					\
-    std::stringstream msg;						\
-    msg << "Error in " << __FILE__ << ", line "				\
-	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
-	<< errormsg << std::ends;						\
-    throw (type)(msg.str());						\
+    std::stringstream msg__;						\
+    msg__ << "Error in " << __FILE__ << ", line "                       \
+	  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
+	  << errormsg << std::ends;				       	\
+    throw (type)(msg__.str());						\
   }
 #else
 #ifndef _MSC_VER
@@ -95,19 +95,19 @@ namespace gmm {
 
   inline void short_error_throw(const char *file, int line, const char *func,
 				const char *errormsg) {
-    std::stringstream msg;
-    msg << "Error in " << file << ", line " << line << " " << func
-	<< ": \n" << errormsg << std::ends;
-    std::cerr << msg.str() << std::endl;
+    std::stringstream msg__;
+    msg__ << "Error in " << file << ", line " << line << " " << func
+	  << ": \n" << errormsg << std::ends;
+    std::cerr << msg__.str() << std::endl;
     abort_no_return();	
   }
 
 # define GMM_THROW_(type, errormsg) {					\
-    std::stringstream msg;						\
-    msg << "Error in " << __FILE__ << ", line "				\
-	<< __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
-	<< errormsg;						\
-    std::cerr << msg.str() << std::endl;                                \
+    std::stringstream msg__;						\
+    msg__ << "Error in " << __FILE__ << ", line "	       		\
+	  << __LINE__ << " " << GMM_PRETTY_FUNCTION << ": \n"		\
+	  << errormsg;					        	\
+    std::cerr << msg__.str() << std::endl;                              \
     abort_no_return();							\
   }
 #endif
@@ -160,11 +160,11 @@ namespace gmm {
   //                  3 remark
   //                  4 ignored by default.
 
-#define GMM_WARNING_MSG(level_, thestr)  {			       \
-      std::stringstream msg;                                           \
-      msg << "Level " << level_ << " Warning in " << __FILE__ << ", line " \
-          << __LINE__ << ": " << thestr;		       \
-       std::cerr << msg.str() << std::endl;                            \
+#define GMM_WARNING_MSG(level_, thestr)  {			             \
+      std::stringstream msg__;                                               \
+      msg__ << "Level " << level_ << " Warning in " << __FILE__ << ", line " \
+            << __LINE__ << ": " << thestr;		                     \
+       std::cerr << msg__.str() << std::endl;                                \
     }
 
 #define GMM_WARNING0(thestr) GMM_WARNING_MSG(0, thestr)
@@ -223,10 +223,10 @@ namespace gmm {
 #define GMM_TRACE_MSG_MPI     // for Parallelized version
 #define GMM_TRACE_MSG(level_, thestr)  {			       \
     GMM_TRACE_MSG_MPI {						       \
-      std::stringstream msg;                                           \
-      msg << "Trace " << level_ << " in " << __FILE__ << ", line "     \
-          << __LINE__ << ": " << thestr;        		       \
-      std::cout << msg.str() << std::endl;			       \
+      std::stringstream msg__;                                         \
+      msg__ << "Trace " << level_ << " in " << __FILE__ << ", line "   \
+            << __LINE__ << ": " << thestr;        		       \
+      std::cout << msg__.str() << std::endl;			       \
     }                                                                  \
   }        
 
