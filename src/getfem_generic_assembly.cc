@@ -23,6 +23,7 @@
 #include "getfem/getfem_config.h"
 #include "gmm/gmm_blas.h"
 #include <iomanip>
+#include "getfem/getfem_omp.h"
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
 		       const int *incx, double *y, const int *incy);
@@ -61,7 +62,7 @@ namespace getfem {
   static int ga_operator_priorities[GA_NB_TOKEN_TYPE];
 
   // Initialize ga_char_type and ga_operator_priorities arrays
-  static void init_ga_char_type(void) {
+  static bool init_ga_char_type(void) {
     for (int i = 0; i < 256; ++i) ga_char_type[i] = GA_INVALID;
     ga_char_type['+'] = GA_PLUS;        ga_char_type['-'] = GA_MINUS;
     ga_char_type['*'] = GA_MULT;        ga_char_type['/'] = GA_DIV;
@@ -84,8 +85,11 @@ namespace getfem {
     ga_operator_priorities[GA_DOT] = 2;
     ga_operator_priorities[GA_TMULT] = 2;
     ga_operator_priorities[GA_UNARY_MINUS] = 3;
+
+    return true;
   }
 
+static bool initialized = init_ga_char_type();
 
   // Get the next token in the string at position 'pos' end return its type
   static GA_TOKEN_TYPE ga_get_token(const std::string &expr,
@@ -93,8 +97,6 @@ namespace getfem {
                                     size_type &token_pos,
                                     size_type &token_length) {
     bool fdot = false, fE = false;
-    static bool initialized = false;
-    if (!initialized) { init_ga_char_type(); initialized = true; }
 
     // Ignore white spaces
     while (expr[pos] == ' ' && pos < expr.size()) ++pos;
