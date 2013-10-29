@@ -54,10 +54,10 @@ if (d == 1)
   friction = 0;            % Friction coefficient
   vertical_force = 1.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.001;               % Time step
+  dt = 0.001;              % Time step
   T = 4;                   % Simulation time
-  dt_plot = 0.01;           % Drawing step;
-  beta = 0.5;             % Newmark scheme coefficient
+  dt_plot = 0.01;          % Drawing step;
+  beta = 0.5;              % Newmark scheme coefficient
   gamma = 1.0;             % Newmark scheme coefficient
   theta = 1.0;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
@@ -68,7 +68,7 @@ if (d == 1)
   lambda_degree = 1;
   Nitsche = 1;             % Use Nitsche's method or not
   gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
-  theta_N = 1;            % Parameter theta for Nitsche's method
+  theta_N = 1;             % Parameter theta for Nitsche's method
 else
   clambda = 20;            % Lame coefficient
   cmu = 20;                % Lame coefficient
@@ -291,6 +291,15 @@ V1 = zeros(nbdofu, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F);
 K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
 MA0 = FF-K*U0;
+if (singular_mass ==1)
+  if (d == 1)
+    MA0(1) = 0;
+  else
+    error('Take it into account !');
+  end
+else if (singular_mass == 2) % to be verified
+  VV1 = (B') \ MA0; VV2 = C*VV1; A0 = B\VV2; VV1 = B*A0; VV2 = C\VV1; MA0 = (B')*VV2;
+end
 nit = 0; tplot = 0;
 if (make_movie)
   nim = 0;

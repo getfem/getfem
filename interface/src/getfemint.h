@@ -136,7 +136,7 @@ namespace getfemint
     }
     explicit array_dimensions(unsigned sz_) { sz = sz_; ndim_=1; sizes_[0]=sz_; }
     template <typename IVECT> void assign(const IVECT &v) {
-      for (unsigned i=0; i < v.size(); ++i) push_back(v[i]);
+      for (unsigned i=0; i < v.size(); ++i) push_back(unsigned(v[i]));
     }
     unsigned size() const { return sz; }
     unsigned ndim() const { return ndim_; }
