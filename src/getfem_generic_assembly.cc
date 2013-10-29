@@ -50,7 +50,9 @@ namespace getfem {
     GA_DOT,        // '.'
     GA_TMULT,      // '@' tensor product
     GA_COMMA,      // ','
+    GA_DCOMMA,     // ',,'
     GA_SEMICOLON,  // ';'
+    GA_DSEMICOLON, // ';;'
     GA_LPAR,       // '('
     GA_RPAR,       // ')'
     GA_LBRACKET,   // '['
@@ -89,7 +91,7 @@ namespace getfem {
     return true;
   }
 
-static bool initialized = init_ga_char_type();
+  static bool initialized = init_ga_char_type();
 
   // Get the next token in the string at position 'pos' end return its type
   static GA_TOKEN_TYPE ga_get_token(const std::string &expr,
@@ -147,6 +149,18 @@ static bool initialized = init_ga_char_type();
         ++pos; ++token_length;
       }
       return type;
+    case GA_COMMA:
+      if (pos < expr.size() &&
+          ga_char_type[unsigned(expr[pos])] == GA_COMMA) {
+        ++pos; return GA_DCOMMA;
+      }
+      return type;
+    case GA_SEMICOLON:
+      if (pos < expr.size() &&
+          ga_char_type[unsigned(expr[pos])] == GA_SEMICOLON) {
+        ++pos; return GA_DSEMICOLON;
+      }
+      return type;
     default: return type;
     }
   }
@@ -173,7 +187,8 @@ static bool initialized = init_ga_char_type();
     scalar_type val;
     base_vector vec;
     base_matrix mat;
-    size_type nbc, pos;
+    base_tensor t;
+    size_type nbc1, nbc2, nbc3, pos;
     std::string name;
     GA_TOKEN_TYPE op_type;
     bool valid;
@@ -181,8 +196,8 @@ static bool initialized = init_ga_char_type();
     std::vector<ga_tree_node *> children;
 
     ga_tree_node(void): node_type(GA_NODE_VOID), valid(true) {}
-    ga_tree_node(GA_NODE_TYPE t, size_type p)
-      : node_type(t), pos(p), valid(true) {}
+    ga_tree_node(GA_NODE_TYPE ty, size_type p)
+      : node_type(ty), pos(p), valid(true) {}
     ga_tree_node(scalar_type v, size_type p)
       : node_type(GA_NODE_SCALAR), val(v), pos(p), valid(true) {}
     ga_tree_node(const char *n, size_type l, size_type p)
@@ -299,7 +314,7 @@ static bool initialized = init_ga_char_type();
         current_node = root = new ga_tree_node(GA_NODE_C_MATRIX, pos);
         root->parent = 0;
       }
-      current_node->nbc = 0;
+      current_node->nbc1 = current_node->nbc2 = current_node->nbc3 = 0;
     }
     
     void add_op(GA_TOKEN_TYPE op_type, size_type pos) {
@@ -388,7 +403,7 @@ static bool initialized = init_ga_char_type();
     case GA_NODE_VECTOR:
       cout << "[[";
       for (size_type i = 0; i < gmm::vect_size(pnode->vec); ++i)
-        { if (i != 0) cout << ", "; cout << pnode->vec[i]; }
+        { if (i != 0) cout << "; "; cout << pnode->vec[i]; }
       cout << "]]";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
@@ -399,6 +414,23 @@ static bool initialized = init_ga_char_type();
         if (i != 0) cout << "; ";
         for (size_type j = 0; j < gmm::mat_ncols(pnode->mat); ++j)
           { if (j != 0) cout << ", "; cout << pnode->mat(i,j); }
+      }
+      cout << "]]";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
+    case GA_NODE_TENSOR:
+      cout << "[[";
+      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+        if (i != 0) cout << ";; ";
+        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+          if (j != 0) cout << ",, "; 
+          for (size_type k = 0; k < pnode->t.size(2); ++k) {
+            if (k != 0) cout << "; "; 
+            for (size_type l = 0; l < pnode->t.size(3); ++l)
+              { if (l != 0) cout << ", "; cout << pnode->t(i,j,k,l); }
+          }
+        }
       }
       cout << "]]";
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
@@ -427,8 +459,17 @@ static bool initialized = init_ga_char_type();
       GMM_ASSERT1(pnode->children.size(), "Invalid tree");
       cout << "[";
       for (size_type i = 0; i < pnode->children.size(); ++i) {
-        if (i%pnode->nbc != 0) cout << ", ";
-        else if (i > 0 && (i%pnode->nbc) == 0) cout << "; ";
+        if (i > 0) {
+          if (i%pnode->nbc1 != 0) cout << ", ";
+          else {
+            if (pnode->nbc2 > 1 || pnode->nbc3 > 1) {
+              if (i%(pnode->nbc1*pnode->nbc2) != 0) cout << "; ";
+              else if (i%(pnode->nbc1*pnode->nbc2*pnode->nbc3) != 0)
+                cout << ",, ";
+              else cout << ";; ";
+            } else cout << "; ";
+          }
+        }
         ga_print_node(pnode->children[i]);
       }
       cout << "]";
@@ -440,7 +481,7 @@ static bool initialized = init_ga_char_type();
  
 
   static void ga_print_tree(const ga_tree &tree) {
-    verify_tree(tree.root, 0);
+    if (tree.root) verify_tree(tree.root, 0);
     if (tree.root) ga_print_node(tree.root); else cout << "Empty tree";
     cout << endl;
   }
@@ -519,33 +560,50 @@ static bool initialized = init_ga_char_type();
           }
           break;
 
-        case GA_LBRACKET: // Constant matrix
+        case GA_LBRACKET: // Constant vector/matrix or tensor
           {
             ga_tree sub_tree;
             GA_TOKEN_TYPE r_type;
-            size_type nbc = 0, n = 0;
-            bool foundsemi = false;
+            size_type nbc1 = 0, nbc2 = 0, nbc3 = 0, n1 = 0, n2 = 0, n3 = 0;
+            bool foundsemi = false, founddcomma = false, founddsemi = false;
             tree.add_matrix(token_pos);
             for(;;) {
               r_type = ga_read_term(expr, pos, sub_tree);
-              ++n; if (!foundsemi) ++nbc;
-              if (r_type != GA_RBRACKET && r_type != GA_COMMA
-                  && r_type != GA_SEMICOLON)
-                ga_syntax_error(expr, pos-1, "The constant matrix components "
-                                "should be separated by ',' and ';' and "
-                                "the constant matrix should be ended by ']'.");
-              if (((r_type == GA_SEMICOLON || r_type==GA_RBRACKET) && n != nbc)
-                  || (n > nbc))
-                ga_syntax_error(expr, pos-1, "Bad constant matrix format. "
-                                "The number of components should be equal "
-                                "on each line.");
-              
-              if (r_type == GA_SEMICOLON) { foundsemi = true; n = 0; }
-              tree.add_sub_tree(sub_tree);
-              if (r_type == GA_RBRACKET) { 
-                tree.current_node->nbc = nbc;
+              ++n1; ++n2; ++n3;
+              if (!foundsemi) ++nbc1;
+              if (!founddcomma) ++nbc2;
+              if (!founddsemi) ++nbc3;
+
+              switch(r_type) {
+              case GA_COMMA: break;
+              case GA_SEMICOLON: foundsemi = true; n1 = 0; break;
+              case GA_DCOMMA: founddcomma = true; n2 = 0; n1 = 0; break;
+              case GA_DSEMICOLON:
+                founddsemi = true; n3 = 0; n2 = 0; n1 = 0; break;
+              case GA_RBRACKET:
+                if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
+                    (founddcomma && !founddsemi) ||
+                    (!founddcomma && founddsemi))
+                  ga_syntax_error(expr, pos-1, "Bad constant "
+                                  "vector/matrix/tensor format. ");
+                tree.current_node->nbc1 = nbc1;
+                if (founddcomma) {
+                  tree.current_node->nbc2 = nbc2/nbc1;
+                  tree.current_node->nbc3 = nbc3/nbc2;
+                } else {
+                  tree.current_node->nbc2 = tree.current_node->nbc3 = 1;
+                }
+                break;
+              default:
+                ga_syntax_error(expr, pos-1, "The constant "
+                                "vector/matrix/tensor components should be "
+                                "separated by ',', ';', ',,' and ';;' and "
+                                "be ended by ']'.");
                 break;
               }
+         
+              tree.add_sub_tree(sub_tree);
+              if (r_type == GA_RBRACKET) break;
             }
             state = 2;
           }
@@ -561,8 +619,8 @@ static bool initialized = init_ga_char_type();
         case GA_COLON: case GA_DOT: case GA_TMULT:
           tree.add_op(t_type, token_pos);
           state = 1; break;
-        case GA_END: case GA_RPAR: case GA_COMMA:
-        case GA_RBRACKET: case GA_SEMICOLON:
+        case GA_END: case GA_RPAR: case GA_COMMA: case GA_DCOMMA:
+        case GA_RBRACKET: case GA_SEMICOLON: case GA_DSEMICOLON:
           return t_type;
         case GA_LPAR: // Parameter list
           {
@@ -605,20 +663,23 @@ static bool initialized = init_ga_char_type();
   }         
 
   //=========================================================================
-  // Semantic analysis and ? compilation.
+  // Semantic analysis, simplification  (and compilation ?).
   //=========================================================================
 
   static void ga_node_analysis(const std::string &expr, ga_tree &tree,
                                pga_tree_node pnode) {
 
-    bool all_sc = true;
+    bool all_sc = true, all_sc_but_first = true;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(expr, tree, pnode->children[i]);
       all_sc = all_sc && (pnode->children[i]->node_type == GA_NODE_SCALAR);
+      if (i > 0)
+        all_sc_but_first = all_sc_but_first
+          && (pnode->children[i]->node_type == GA_NODE_SCALAR);
     }
     
     switch (pnode->node_type) {
-    case GA_NODE_SCALAR: break;
+    case GA_NODE_SCALAR: case GA_NODE_ALLINDICES: break;
     case GA_NODE_OP:
       switch(pnode->op_type) {
       case GA_PLUS: case GA_MINUS: // + traiter les cas qui ne marceh pas
@@ -635,7 +696,11 @@ static bool initialized = init_ga_char_type();
               != gmm::vect_size(pnode->children[1]->vec))
             ga_syntax_error(expr, pnode->pos, "Addition or substraction "
                             "of vectors of different sizes");
-          gmm::add(pnode->children[1]->vec, pnode->vec);
+          if (pnode->op_type == GA_MINUS)
+            gmm::add(pnode->children[1]->vec, pnode->vec);
+          else
+            gmm::add(gmm::scaled(pnode->children[1]->vec, scalar_type(-1)),
+                     pnode->vec);
           tree.clear_children(pnode);
         } else if (pnode->children[0]->node_type == GA_NODE_MATRIX &&
                    pnode->children[1]->node_type == GA_NODE_MATRIX) {
@@ -647,9 +712,28 @@ static bool initialized = init_ga_char_type();
               != gmm::mat_ncols(pnode->children[1]->mat))
             ga_syntax_error(expr, pnode->pos, "Addition or substraction "
                             "of matrices of different sizes");
-          gmm::add(pnode->children[1]->mat, pnode->mat);
+          if (pnode->op_type == GA_MINUS)
+            gmm::add(gmm::scaled(pnode->children[1]->mat, scalar_type(-1)),
+                     pnode->mat);
+          else
+            gmm::add(pnode->children[1]->mat, pnode->mat);
           tree.clear_children(pnode);
-        }
+        } else if (pnode->children[0]->node_type == GA_NODE_TENSOR &&
+                   pnode->children[1]->node_type == GA_NODE_TENSOR) {
+          pnode->node_type = GA_NODE_TENSOR;
+          pnode->t = pnode->children[0]->t;
+          if (pnode->t.size(0) != pnode->children[1]->t.size(0) ||
+              pnode->t.size(1) != pnode->children[1]->t.size(1) ||
+              pnode->t.size(2) != pnode->children[1]->t.size(2) ||
+              pnode->t.size(3) != pnode->children[1]->t.size(3))
+            ga_syntax_error(expr, pnode->pos, "Addition or substraction "
+                            "of tensors of different sizes");
+          if (pnode->op_type == GA_MINUS)
+            pnode->t -= pnode->children[1]->t;
+          else
+            pnode->t += pnode->children[1]->t;
+          tree.clear_children(pnode);
+        } 
         break;
 
       case GA_DOT:
@@ -682,6 +766,39 @@ static bool initialized = init_ga_char_type();
         }
         break;
 
+      case GA_TMULT:
+        if (all_sc) {
+          pnode->node_type = GA_NODE_SCALAR;
+          pnode->val = pnode->children[0]->val * pnode->children[1]->val;
+          tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_VECTOR &&
+                   pnode->children[1]->node_type == GA_NODE_VECTOR) {
+          pnode->node_type = GA_NODE_MATRIX;
+          size_type nbl = gmm::vect_size(pnode->children[0]->vec);
+          size_type nbc = gmm::vect_size(pnode->children[1]->vec);
+          gmm::resize(pnode->mat, nbl, nbc);
+          for (size_type i = 0; i < nbl; ++i)
+            for (size_type j = 0; j < nbc; ++j)
+              pnode->mat(i,j) = pnode->children[0]->vec[i]
+                * pnode->children[1]->vec[j];
+          tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_MATRIX &&
+                   pnode->children[1]->node_type == GA_NODE_MATRIX) {
+          pnode->node_type = GA_NODE_TENSOR;
+          bgeot::multi_index mi(gmm::mat_nrows(pnode->children[0]->mat),
+                                gmm::mat_ncols(pnode->children[0]->mat),
+                                gmm::mat_nrows(pnode->children[1]->mat),
+                                gmm::mat_ncols(pnode->children[1]->mat));
+          pnode->t.adjust_sizes(mi);
+          for (size_type i = 0; i < mi[0]; ++i)
+            for (size_type j = 0; j < mi[1]; ++j)
+              for (size_type k = 0; k < mi[2]; ++k)
+                for (size_type l = 0; l < mi[3]; ++l)
+                  pnode->t(i,j,k,l) = pnode->children[0]->mat(i,j)
+                    * pnode->children[1]->mat(k,l);
+          tree.clear_children(pnode);
+        }
+
       case GA_MULT:
         if (all_sc) {
           pnode->node_type = GA_NODE_SCALAR;
@@ -711,6 +828,18 @@ static bool initialized = init_ga_char_type();
           pnode->mat = pnode->children[1]->mat;
           gmm::scale(pnode->mat, pnode->children[0]->val);
           tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_SCALAR &&
+                   pnode->children[1]->node_type == GA_NODE_TENSOR) {
+          pnode->node_type = GA_NODE_TENSOR;
+          pnode->t = pnode->children[1]->t;
+          gmm::scale(pnode->t.as_vector(), pnode->children[0]->val);
+          tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_TENSOR &&
+                   pnode->children[1]->node_type == GA_NODE_SCALAR) {
+          pnode->node_type = GA_NODE_TENSOR;
+          pnode->t = pnode->children[0]->t;
+          gmm::scale(pnode->t.as_vector(), pnode->children[1]->val);
+          tree.clear_children(pnode);
         } else if (pnode->children[0]->node_type == GA_NODE_MATRIX &&
                    pnode->children[1]->node_type == GA_NODE_VECTOR) {
           pnode->node_type = GA_NODE_VECTOR;
@@ -734,31 +863,48 @@ static bool initialized = init_ga_char_type();
           gmm::mult(pnode->children[0]->mat, pnode->children[1]->mat,
                     pnode->mat);
           tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_TENSOR &&
+                   pnode->children[1]->node_type == GA_NODE_MATRIX) {
+          pnode->node_type = GA_NODE_MATRIX;
+          gmm::resize(pnode->mat, pnode->children[0]->t.size(0),
+                      pnode->children[0]->t.size(1));
+          if (pnode->children[0]->t.size(2)
+              != gmm::mat_nrows(pnode->children[1]->mat) &&
+              pnode->children[0]->t.size(3)
+              != gmm::mat_ncols(pnode->children[1]->mat))
+            ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+                            "tensor-matrix multiplication.");
+          pnode->children[0]->t.mat_mult(pnode->children[1]->mat, pnode->mat);
+          tree.clear_children(pnode);
         }
         break;
 
       case GA_DIV: // should control that the second argument is scalar valued
+        if (pnode->children[1]->node_type == GA_NODE_SCALAR &&
+            pnode->children[1]->val == scalar_type(0))
+          ga_syntax_error(expr, pnode->children[1]->pos, "Division by zero");
         if (all_sc) {
           pnode->node_type = GA_NODE_SCALAR;
-          if (pnode->children[1]->val == scalar_type(0))
-            ga_syntax_error(expr, pnode->children[1]->pos, "Division by zero");
           pnode->val = pnode->children[0]->val / pnode->children[1]->val;
           tree.clear_children(pnode);
         } else if (pnode->children[0]->node_type == GA_NODE_VECTOR &&
                    pnode->children[1]->node_type == GA_NODE_SCALAR) {
           pnode->node_type = GA_NODE_VECTOR;
           pnode->vec = pnode->children[0]->vec;
-          if (pnode->children[1]->val == scalar_type(0))
-            ga_syntax_error(expr, pnode->children[1]->pos, "Division by zero");
           gmm::scale(pnode->vec, scalar_type(1)/pnode->children[1]->val);
           tree.clear_children(pnode);
         } else if (pnode->children[0]->node_type == GA_NODE_MATRIX &&
                    pnode->children[1]->node_type == GA_NODE_SCALAR) {
           pnode->node_type = GA_NODE_MATRIX;
           pnode->mat = pnode->children[0]->mat;
-          if (pnode->children[1]->val == scalar_type(0))
-            ga_syntax_error(expr, pnode->children[1]->pos, "Division by zero");
           gmm::scale(pnode->mat, scalar_type(1)/pnode->children[1]->val);
+          tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_TENSOR &&
+                   pnode->children[1]->node_type == GA_NODE_SCALAR) {
+          pnode->node_type = GA_NODE_TENSOR;
+          pnode->t = pnode->children[0]->t;
+          gmm::scale(pnode->t.as_vector(),
+                     scalar_type(1)/pnode->children[1]->val);
           tree.clear_children(pnode);
         }
         break;
@@ -779,6 +925,11 @@ static bool initialized = init_ga_char_type();
           pnode->mat = pnode->children[0]->mat;
           gmm::scale(pnode->mat, scalar_type(-1));
           tree.clear_children(pnode);
+        } else if (pnode->children[0]->node_type == GA_NODE_TENSOR) {
+          pnode->node_type = GA_NODE_TENSOR;
+          pnode->t = pnode->children[0]->t;
+          gmm::scale(pnode->t.as_vector(), scalar_type(-1));
+          tree.clear_children(pnode);
         }
         break;
 
@@ -787,55 +938,196 @@ static bool initialized = init_ga_char_type();
       }
       break;
 
-    case GA_NODE_C_MATRIX: // should control that all is scalar valued
+    case GA_NODE_C_MATRIX: // Should control that all is scalar valued
       if (all_sc) {
-        size_type nbc = pnode->nbc;
-        size_type nbl = pnode->children.size() / nbc;
-        if (nbc == 1 && nbl == 1) {
+        size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
+        size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
+        if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
           pnode->node_type = GA_NODE_SCALAR;
           pnode->val = pnode->children[0]->val;
-        } else if (nbc == 1) {
+        } else if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
           pnode->node_type = GA_NODE_VECTOR;
           gmm::resize(pnode->vec, nbl);
           for (size_type i = 0; i < nbl; ++i)
             pnode->vec[i] = pnode->children[i]->val;
-        } else {
+        } else if (nbc2 == 1 && nbc3 == 1) {
           pnode->node_type = GA_NODE_MATRIX;
-          gmm::resize(pnode->mat, nbl, nbc);
+          gmm::resize(pnode->mat, nbl, nbc1);
           for (size_type i = 0; i < nbl; ++i)
-            for (size_type j = 0; j < nbc; ++j)
-              pnode->mat(i,j) = pnode->children[i*nbc+j]->val;
+            for (size_type j = 0; j < nbc1; ++j)
+              pnode->mat(i,j) = pnode->children[i*nbc1+j]->val;
+        } else {
+          pnode->node_type = GA_NODE_TENSOR;
+          bgeot::multi_index mi(nbl, nbc3, nbc2, nbc1);
+          pnode->t.adjust_sizes(mi);
+          size_type n = 0;
+          for (size_type i = 0; i < nbl; ++i)
+            for (size_type j = 0; j < nbc3; ++j)
+              for (size_type k = 0; k < nbc2; ++k)
+                for (size_type l = 0; l < nbc1; ++l)
+                  pnode->t(i,j,k,l) = pnode->children[n++]->val;
         }
         tree.clear_children(pnode);
       }
       break;
       
+    case GA_NODE_PARAMS:
+      switch(pnode->children[0]->node_type) {
+      case GA_NODE_SCALAR:
+        if (pnode->children.size() != 2 ||
+            (all_sc_but_first && size_type(pnode->children[1]->val) != 1)
+            || (!all_sc_but_first &&
+                pnode->children[1]->node_type != GA_NODE_ALLINDICES))
+          ga_syntax_error(expr, pnode->pos, "Bad index format for a scalar");
+        pnode->node_type = GA_NODE_SCALAR;
+        pnode->val = pnode->children[0]->val;
+        tree.clear_children(pnode);
+        break;
+      case GA_NODE_VECTOR:
+        if (pnode->children.size() != 2)
+            ga_syntax_error(expr, pnode->pos,
+                            "Bad index format for a vector");
+        if (all_sc_but_first) {
+          pnode->node_type = GA_NODE_SCALAR;
+          size_type i = size_type(::round(pnode->children[1]->val)-1);
+          if (i >= gmm::vect_size(pnode->children[0]->vec))
+            ga_syntax_error(expr, pnode->pos, "Index out of range");
+          pnode->val = pnode->children[0]->vec[i];
+          
+        } else if (pnode->children[1]->node_type == GA_NODE_ALLINDICES) {
+          pnode->node_type = GA_NODE_VECTOR;
+          pnode->vec = pnode->children[0]->vec;
+        } else ga_syntax_error(expr, pnode->pos, "Not constant index values");
+        tree.clear_children(pnode);
+        break;
+      case GA_NODE_MATRIX:
+        if (pnode->children.size() != 3)
+          ga_syntax_error(expr, pnode->pos,
+                          "Bad index format for a matrix");
+        if (all_sc_but_first) {
+          pnode->node_type = GA_NODE_SCALAR;
+          size_type i = size_type(::round(pnode->children[1]->val)-1);
+          size_type j = size_type(::round(pnode->children[2]->val)-1);
+          if (i >= gmm::mat_nrows(pnode->children[0]->mat) ||
+              j >= gmm::mat_ncols(pnode->children[0]->mat))
+            ga_syntax_error(expr, pnode->pos, "Index out of range");
+          pnode->val = pnode->children[0]->mat(i,j);
+        } else if (pnode->children[1]->node_type == GA_NODE_ALLINDICES &&
+                   pnode->children[2]->node_type == GA_NODE_ALLINDICES) {
+          pnode->node_type = GA_NODE_MATRIX;
+          pnode->mat = pnode->children[0]->mat;
+        } else if (pnode->children[1]->node_type == GA_NODE_ALLINDICES &&
+                   pnode->children[2]->node_type == GA_NODE_SCALAR) {
+          size_type j = size_type(::round(pnode->children[2]->val)-1);
+          if (j >= gmm::mat_ncols(pnode->children[0]->mat))
+            ga_syntax_error(expr, pnode->pos, "Index out of range");
+          pnode->node_type = GA_NODE_VECTOR;
+          gmm::resize(pnode->vec, gmm::mat_nrows(pnode->children[0]->mat));
+          gmm::copy(gmm::mat_col(pnode->children[0]->mat, j), pnode->vec);
+        } else if (pnode->children[1]->node_type == GA_NODE_SCALAR &&
+                   pnode->children[2]->node_type == GA_NODE_ALLINDICES) {
+          size_type i = size_type(::round(pnode->children[1]->val)-1);
+          if (i >= gmm::mat_nrows(pnode->children[0]->mat))
+            ga_syntax_error(expr, pnode->pos, "Index out of range");
+          pnode->node_type = GA_NODE_VECTOR;
+          gmm::resize(pnode->vec, gmm::mat_ncols(pnode->children[0]->mat));
+          gmm::copy(gmm::mat_row(pnode->children[0]->mat, i), pnode->vec);
+        } else ga_syntax_error(expr, pnode->pos, "Not constant index values");
+        tree.clear_children(pnode);
+        break;
+      case GA_NODE_TENSOR:
+        {
+          if (pnode->children.size() != 5)
+            ga_syntax_error(expr, pnode->pos,
+                          "Bad index format for a tensor");
+          bool ai1 = (pnode->children[1]->node_type == GA_NODE_ALLINDICES);
+          bool ai2 = (pnode->children[2]->node_type == GA_NODE_ALLINDICES);
+          bool ai3 = (pnode->children[3]->node_type == GA_NODE_ALLINDICES);
+          bool ai4 = (pnode->children[4]->node_type == GA_NODE_ALLINDICES);
+          size_type nai = (ai1 ? 1:0)+(ai2 ? 1:0)+(ai3 ? 1:0)+(ai4 ? 1:0);
+          if ((!ai1 && pnode->children[1]->node_type != GA_NODE_SCALAR) ||
+              (!ai2 && pnode->children[2]->node_type != GA_NODE_SCALAR) ||
+              (!ai3 && pnode->children[3]->node_type != GA_NODE_SCALAR) ||
+              (!ai4 && pnode->children[4]->node_type != GA_NODE_SCALAR))
+            ga_syntax_error(expr, pnode->pos, "Not constant index values");
+          size_type i = size_type(::round(pnode->children[1]->val)-1);
+          size_type j = size_type(::round(pnode->children[2]->val)-1);
+          size_type k = size_type(::round(pnode->children[3]->val)-1);
+          size_type l = size_type(::round(pnode->children[4]->val)-1);
+          if ((!ai1 && i >= pnode->children[0]->t.size(0)) ||
+              (!ai2 && j >= pnode->children[0]->t.size(1)) ||
+              (!ai3 && k >= pnode->children[0]->t.size(2)) ||
+              (!ai4 && l >= pnode->children[0]->t.size(3)))
+            ga_syntax_error(expr, pnode->pos, "Index out of range");
 
+          switch (nai) {
+          case 0:
+            pnode->node_type = GA_NODE_SCALAR;
+            pnode->val = pnode->children[0]->t(i,j,k,l);
+            break;
+          case 1:
+            {
+              pnode->node_type = GA_NODE_VECTOR;
+              size_type i1 = (ai1 ? 0:0)+(ai2 ? 1:0)+(ai3 ? 2:0)+(ai4 ? 3:0);
+              cout << "i1 = " << i1 << endl;
+              cout << "size(short_type)=" << sizeof(short_type) << endl;
+              bgeot::multi_index mi(i,j,k,l);
+              gmm::resize(pnode->vec, pnode->children[0]->t.size(i1));
+              for (size_type n = 0; n < gmm::vect_size(pnode->vec); ++n) {
+                mi[i1] = n;
+                cout << "mi = " << mi << endl;
+                pnode->vec[i] = pnode->children[0]->t(mi);
+              }
+            }
+            break;
+          case 2:
+            {
+              size_type i1 = 0, i2 = 1;
+              if (ai1) { ++i1; ++i2; }
+              if (ai2) { if (i1 == 1) ++i1; ++i2; }
+              if (ai3) { if (i2 == 2) ++i2; }
+              // ...
+              GMM_ASSERT1(false, "To be done");
+            }
+            break;
+          case 3: ga_syntax_error(expr, pnode->pos, "Reduction to an order 3 "
+                                  "tensor is not allowed.");
+          case 4:
+            pnode->node_type = GA_NODE_TENSOR;
+            pnode->t = pnode->children[0]->t;
+            break;
+          }
+          tree.clear_children(pnode);
+        }
+        break;
+      default: ga_syntax_error(expr, pnode->pos,
+                               "Index on unexpected node type.");
+      }
+      break;
+
+      
     default:GMM_ASSERT1(false, "Unexpected node type. Internal error.");
     }
-
+    
   }
-
-  //=========================================================================
-  // Tree simplification
-  //=========================================================================
-  
-  // Reduce all constant operations, gather identical terms
 
   //=========================================================================
   // Small test for debug
   //=========================================================================
 
-  static  std::string my_expr = "[1,1;1,2]:[1,2;2,1]+[6]";
-  // static  std::string my_expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
-  // static  std::string my_expr = "-(at+(2*3)+2)/3";
+  
+  static std::string expr="([1,2;3,4]@[1,2;1,2])(:,2,1,1)(1)+ [1,2;3,4](1,:)(2)";
+  // static std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]";
+  // static std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3]";
+  // static std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
+  // static std::string expr = "-(5+(2*3)+2)/3";
 
 
   void lex_analysis(void) {
     ga_tree tree;
-    ga_read_string(my_expr, tree);
+    ga_read_string(expr, tree);
     ga_print_tree(tree);
-    ga_node_analysis(my_expr, tree, tree.root);
+    ga_node_analysis(expr, tree, tree.root);
     ga_print_tree(tree);
   }
   

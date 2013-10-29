@@ -453,7 +453,7 @@ namespace getfem {
 	  const bgeot::multi_index &sizes = nlt->sizes(cv);
 	  for (unsigned j=0; j < sizes.size(); ++j)
 	    if (!only_reduced || !reduced(j))
-	      rng.push_back(sizes[j]);
+	      rng.push_back(short_type(sizes[j]));
 	}
 	break;
       case DATA:

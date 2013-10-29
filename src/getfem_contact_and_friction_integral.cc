@@ -2660,7 +2660,7 @@ namespace getfem {
         {
           ctx.pf()->real_base_value(ctx, tbv);
           size_type qmult = N / ctx.pf()->target_dim();
-          short_type nbdofu = sizes_[0];
+          size_type nbdofu = sizes_[0];
           if (theta != scalar_type(0)) {
             sizes_.resize(2);
             sizes_[1] = N;
@@ -2682,7 +2682,7 @@ namespace getfem {
 
       case 2:
         {
-          short_type nbdofu = sizes_[1];
+          size_type nbdofu = sizes_[1];
           sizes_[1] = N;
           tp.adjust_sizes(sizes_);
           sizes_[1] = nbdofu;
@@ -2734,8 +2734,8 @@ namespace getfem {
 
       case 3:
         {
-          short_type nbdofu = sizes_[0];
-          short_type nbdofp = sizes_[1];
+          size_type nbdofu = sizes_[0];
+          size_type nbdofp = sizes_[1];
           sizes_[0] = nbdofp; sizes_[1] = N;
           tpaux.adjust_sizes(sizes_);
           sizes_[0] = nbdofu; sizes_[1] = nbdofp;
@@ -3127,14 +3127,14 @@ namespace getfem {
       if (cv != size_type(-1))
         switch(option) {
         case 1:
-          sizes_[0] = short_type(mf_u.nb_basic_dof_of_element(cv));
+          sizes_[0] = mf_u.nb_basic_dof_of_element(cv);
           break;
         case 2:
-          sizes_[0] = sizes_[1]= short_type(mf_u.nb_basic_dof_of_element(cv));
+          sizes_[0] = sizes_[1]= mf_u.nb_basic_dof_of_element(cv);
           break;
         case 3:
-          sizes_[0] = short_type(mf_u.nb_basic_dof_of_element(cv));
-          sizes_[1] = short_type(mf_p->nb_basic_dof_of_element(cv));
+          sizes_[0] = mf_u.nb_basic_dof_of_element(cv);
+          sizes_[1] = mf_p->nb_basic_dof_of_element(cv);
           break;
         }
       return sizes_;
@@ -3214,7 +3214,7 @@ namespace getfem {
         {
           ctx.pf()->real_base_value(ctx, tbv);
           size_type qmult = N / ctx.pf()->target_dim();
-          short_type nbdofu = sizes_[0];
+          size_type nbdofu = sizes_[0];
           if (theta != scalar_type(0)) {
             sizes_.resize(2);
             sizes_[1] = N;
@@ -3236,7 +3236,7 @@ namespace getfem {
 
       case 2:
         {
-          short_type nbdofu = sizes_[1];
+          size_type nbdofu = sizes_[1];
           sizes_[1] = N;
           tp.adjust_sizes(sizes_);
           sizes_[1] = nbdofu;
@@ -3294,8 +3294,8 @@ namespace getfem {
 
       case 3:
         {
-          short_type nbdofu = sizes_[0];
-          short_type nbdofp = sizes_[1];
+          size_type nbdofu = sizes_[0];
+          size_type nbdofp = sizes_[1];
           sizes_[0] = nbdofp; sizes_[1] = N;
           tpaux.adjust_sizes(sizes_);
           sizes_[0] = nbdofu; sizes_[1] = nbdofp;
@@ -3823,10 +3823,10 @@ namespace getfem {
       size_type cv2(-1),qdim1,qdim2;
 
       bgeot::multi_index sizes_tGdu1(1), sizes_tGddu1(3);
-      sizes_tGdu1[0] = short_type(N);
+      sizes_tGdu1[0] = N;
       tG1.adjust_sizes(sizes_tGdu1);
-      sizes_tGdu1.push_back(short_type(N));
-      sizes_tGddu1[2] = short_type(N);
+      sizes_tGdu1.push_back(N);
+      sizes_tGddu1[2] = N;
       
       // cout << "begining gauss points loop" << endl;
       
@@ -3848,7 +3848,7 @@ namespace getfem {
         pfem pf_u1 = mf_u1.fem_of_element(cv);
         pfem pf_d1 = mf_d1.fem_of_element(cv);
         size_type nbdof1 = mf_u1.nb_basic_dof_of_element(cv);
-        sizes_tGddu1[0] = sizes_tGddu1[1] = sizes_tGdu1[0]= short_type(nbdof1);
+        sizes_tGddu1[0] = sizes_tGddu1[1] = sizes_tGdu1[0]= nbdof1;
         tGdu1.adjust_sizes(sizes_tGdu1);
         tGddu1.adjust_sizes(sizes_tGddu1);
  	

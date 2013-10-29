@@ -50,7 +50,7 @@ namespace bgeot {
   typedef size_t size_type;
   typedef gmm::uint16_type short_type;
 
-  class multi_index : public std::vector<short_type> {
+  class multi_index : public std::vector<size_type> {
   public :
     
     void incrementation(const multi_index &m) { /* a compiler ... */
@@ -66,27 +66,22 @@ namespace bgeot {
     inline bool finished(const multi_index &m)
     { return ((*this)[size()-1] >= m[size()-1]); }
     
-    multi_index(size_t n) : std::vector<short_type>(n)
-    { std::fill(begin(), end(), short_type(0)); }
+    multi_index(size_t n) : std::vector<size_type>(n)
+    { std::fill(begin(), end(), size_type(0)); }
     multi_index(size_type i, size_type j)
-      : std::vector<short_type>(2) {
-      (*this)[0] = short_type(i); (*this)[1] = short_type(j); 
-    }
+      : std::vector<size_type>(2)
+    { (*this)[0] = i; (*this)[1] = j; }
     multi_index(size_type i, size_type j, size_type k)
-      : std::vector<short_type>(3) {
-      (*this)[0] = short_type(i); (*this)[1] = short_type(j);
-      (*this)[2] = short_type(k); 
-    } 
+      : std::vector<size_type>(3)
+    { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; }
     multi_index(size_type i, size_type j, size_type k, size_type l)
-      : std::vector<short_type>(4) {
-      (*this)[0] = short_type(i); (*this)[1] = short_type(j);
-      (*this)[2] = short_type(k); (*this)[3] = short_type(l); 
-    } 
+      : std::vector<size_type>(4)
+    { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; } 
 
     multi_index(void) {}
     
     size_type memsize() const {
-      return std::vector<short_type>::capacity()*sizeof(short_type) + 
+      return std::vector<size_type>::capacity()*sizeof(size_type) + 
 	sizeof(multi_index);
     }
   };
@@ -105,7 +100,7 @@ namespace bgeot {
   template<class T> class tensor : public std::vector<T> {
     protected:
 
-      multi_index sizes_, coeff;
+    multi_index sizes_, coeff;
       
     public:
 
@@ -113,96 +108,96 @@ namespace bgeot {
     typedef typename std::vector<T>::iterator iterator;
     typedef typename std::vector<T>::const_iterator const_iterator;
 
-      template<class CONT> inline const T& operator ()(const CONT &c) const
-      {
-	typename CONT::const_iterator it = c.begin();
-	multi_index::const_iterator q = coeff.begin(), e = coeff.end();
+    template<class CONT> inline const T& operator ()(const CONT &c) const
+    {
+      typename CONT::const_iterator it = c.begin();
+      multi_index::const_iterator q = coeff.begin(), e = coeff.end();
 #ifndef NDEBUG
-	multi_index::const_iterator qv = sizes_.begin();
+      multi_index::const_iterator qv = sizes_.begin();
 #endif
-	size_type d = 0;
-	for ( ; q != e; ++q, ++it) { 
-	  d += (*q) * (*it);
-	  GMM_ASSERT2(*it < *qv++, "index out of range");
-	}
-	return *(this->begin() + d);
+      size_type d = 0;
+      for ( ; q != e; ++q, ++it) { 
+        d += (*q) * (*it);
+        GMM_ASSERT2(*it < *qv++, "Index out of range.");
       }
-
-      inline T& operator ()(size_type i, size_type j, size_type k,
-			    size_type l) {
-	GMM_ASSERT2(order() == 4, "Bad tensor order");
-	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
-	GMM_ASSERT2(d < size(), "index out of range");
-	return *(this->begin() + d);
-      }
+      return *(this->begin() + d);
+    }
     
-      inline T& operator ()(size_type i, size_type j, size_type k) {
-	GMM_ASSERT2(order() == 3, "Bad tensor order");
-	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
-	GMM_ASSERT2(d < size(), "index out of range");
-	return *(this->begin() + d);
-      }
+    inline T& operator ()(size_type i, size_type j, size_type k,
+                          size_type l) {
+      GMM_ASSERT2(order() == 4, "Bad tensor order.");
+      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+      GMM_ASSERT2(d < size(), "Index out of range.");
+      return *(this->begin() + d);
+    }
     
-      inline T& operator ()(size_type i, size_type j) {
-	GMM_ASSERT2(order() == 2, "Bad tensor order");
+    inline T& operator ()(size_type i, size_type j, size_type k) {
+      GMM_ASSERT2(order() == 3, "Bad tensor order.");
+      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
+      GMM_ASSERT2(d < size(), "Index out of range.");
+      return *(this->begin() + d);
+    }
+    
+    inline T& operator ()(size_type i, size_type j) {
+      GMM_ASSERT2(order() == 2, "Bad tensor order");
 	size_type d = coeff[0]*i + coeff[1]*j;
-	GMM_ASSERT2(d < size(), "index out of range");
+	GMM_ASSERT2(d < size(), "Index out of range.");
 	return *(this->begin() + d);
-      }
-
-      inline const T& operator ()(size_type i, size_type j, size_type k,
-			    size_type l) const {
-	GMM_ASSERT2(order() == 4, "Bad tensor order");
-	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
-	GMM_ASSERT2(d < size(), "index out of range");
-	return *(this->begin() + d);
-      }
+    }
     
-      inline const T& operator ()(size_type i, size_type j,
-				  size_type k) const {
-	GMM_ASSERT2(order() == 3, "Bad tensor order");
-	size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
-	GMM_ASSERT2(d < size(), "index out of range");
-	return *(this->begin() + d);
-      }
+    inline const T& operator ()(size_type i, size_type j, size_type k,
+                                size_type l) const {
+      GMM_ASSERT2(order() == 4, "Bad tensor order.");
+      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k + coeff[3]*l;
+      GMM_ASSERT2(d < size(), "Index out of range.");
+      return *(this->begin() + d);
+    }
     
-      inline const T& operator ()(size_type i, size_type j) const {
-	GMM_ASSERT2(order() == 2, "Bad tensor order");
-	size_type d = coeff[0]*i + coeff[1]*j;
-	GMM_ASSERT2(d < size(), "index out of range");
-	return *(this->begin() + d);
-      }
+    inline const T& operator ()(size_type i, size_type j,
+                                size_type k) const {
+      GMM_ASSERT2(order() == 3, "Bad tensor order.");
+      size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
+      GMM_ASSERT2(d < size(), "Index out of range.");
+      return *(this->begin() + d);
+    }
+    
+    inline const T& operator ()(size_type i, size_type j) const {
+      GMM_ASSERT2(order() == 2, "Bad tensor order.");
+      size_type d = coeff[0]*i + coeff[1]*j;
+      GMM_ASSERT2(d < size(), "Index out of range.");
+      return *(this->begin() + d);
+    }
 
-      template<class CONT> inline T& operator ()(const CONT &c) {
-	typename CONT::const_iterator it = c.begin();
-	multi_index::iterator q = coeff.begin(), e = coeff.end();
-	size_type d = 0;
-	for ( ; q != e; ++q, ++it) d += (*q) * (*it);
-	
-	GMM_ASSERT2(d < size(), "index out of range");
-	return *(this->begin() + d);
-      }
-
+    template<class CONT> inline T& operator ()(const CONT &c) {
+      typename CONT::const_iterator it = c.begin();
+      multi_index::iterator q = coeff.begin(), e = coeff.end();
+      size_type d = 0;
+      for ( ; q != e; ++q, ++it) d += (*q) * (*it);
+      
+      GMM_ASSERT2(d < size(), "Index out of range.");
+      return *(this->begin() + d);
+    }
+    
     inline size_type size(void) const { return std::vector<T>::size(); }
-      inline size_type size(int i) const { return sizes_[i]; }
-      inline const multi_index &sizes(void) const { return sizes_; }
-      inline size_type order(void) const { return sizes_.size(); }
-
-      void init(const multi_index &c) {
-	multi_index::const_iterator it = c.begin();
-	size_type d = 1;
-	sizes_ = c; coeff.resize(c.size());
-	multi_index::iterator p = coeff.begin(), pe = coeff.end();
-	for ( ; p != pe; ++p, ++it) { *p = short_type(d); d *= *it; }
-	this->resize(d);
-      }
-
-      void adjust_sizes(const multi_index &mi) {
-	if (!mi.size() || (mi.size() != sizes().size())
-	    || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
-	  init(mi);
-      }
-
+    inline size_type size(size_type i) const { return sizes_[i]; }
+    inline const multi_index &sizes(void) const { return sizes_; }
+    inline size_type order(void) const { return sizes_.size(); }
+    
+    void init(const multi_index &c) {
+      multi_index::const_iterator it = c.begin();
+      size_type d = 1;
+      sizes_ = c; coeff.resize(c.size());
+      multi_index::iterator p = coeff.begin(), pe = coeff.end();
+      for ( ; p != pe; ++p, ++it) { *p = d; d *= *it; }
+      this->resize(d);
+    }
+    
+    void adjust_sizes(const multi_index &mi) {
+      if (!mi.size() || (mi.size() != sizes().size())
+          || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
+        init(mi);
+    }
+    
     tensor(const multi_index &c) { init(c); }
     tensor(size_type i, size_type j, size_type k, size_type l)
     { init(multi_index(i, j, k, l)); }
@@ -214,6 +209,9 @@ namespace bgeot {
     void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
     void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m,
 			      int ni);
+    /** mm(i,j) = t(i,j,k,l) * m(k,l); For order four tensor. */
+    void mat_mult(const gmm::dense_matrix<T> &m, gmm::dense_matrix<T> &mm);
+    
 
     size_type memsize() const {
       return sizeof(T) * this->size()
@@ -255,10 +253,10 @@ namespace bgeot {
     *mi = t.sizes();
     size_type dimt = (*mi)[ni], dim = m.nrows();
     
-    GMM_ASSERT2(dimt == m.ncols(), "dimensions mismatch");
-    GMM_ASSERT2(&t != this, "does not work when t and *this are the same");
+    GMM_ASSERT2(dimt == m.ncols(), "Dimensions mismatch.");
+    GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
 
-    (*mi)[ni] = short_type(dim);
+    (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
     adjust_sizes(*mi);
     const_iterator pft = t.begin();
@@ -268,8 +266,8 @@ namespace bgeot {
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
       if ((*mi)[ni] != 0) { 
-	for (short_type k = 0; k <= ni; ++k)
-	  (*mi)[k] = short_type(sizes()[k] - 1);
+	for (size_type k = 0; k <= size_type(ni); ++k)
+	  (*mi)[k] = size_type(sizes()[k] - 1);
 	pf += dd; pft += ddt;
       }
       else {
@@ -284,6 +282,27 @@ namespace bgeot {
 	}
       }
   }
+
+  template<class T> void tensor<T>::mat_mult(const gmm::dense_matrix<T> &m,
+                                             gmm::dense_matrix<T> &mm) {
+    GMM_ASSERT2(order() == 4,
+                "This operation is for order four tensors only.");
+    GMM_ASSERT2(sizes_[2] == gmm::mat_nrows(m) &&
+                sizes_[3] == gmm::mat_ncols(m), "Dimensions mismatch.");
+    gmm::resize(mm, sizes_[0], sizes_[1]);
+    gmm::clear(mm);
+
+    const_iterator pt = this->begin();
+    const_iterator pm = m.begin();
+    for (size_type l = 0; l < sizes_[3]; ++l)
+      for (size_type k = 0; k < sizes_[2]; ++k) {
+        iterator pmm = mm.begin();
+        for (size_type j = 0; j < sizes_[1]; ++j)
+          for (size_type i = 0; i < sizes_[0]; ++i)
+            *pmm++ += *pt++ * (*pm);
+        ++pm;
+      }
+  }
   
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
@@ -295,9 +314,9 @@ namespace bgeot {
       tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
     }
     *mi = t.sizes();
-    short_type dimt = (*mi)[ni], dim = short_type(m.ncols());
-    GMM_ASSERT2(dimt == m.nrows(), "dimensions mismatch");
-    GMM_ASSERT2(&t != this, "does not work when t and *this are the same");
+    size_type dimt = (*mi)[ni], dim = m.ncols();
+    GMM_ASSERT2(dimt == m.nrows(), "Dimensions mismatch.");
+    GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
     
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
@@ -309,8 +328,8 @@ namespace bgeot {
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
       if ((*mi)[ni] != 0) { 
-	for (short_type k = 0; k <= short_type(ni); ++k)
-	  (*mi)[k] = short_type(sizes()[k] - 1);
+	for (size_type k = 0; k <= size_type(ni); ++k)
+	  (*mi)[k] = size_type(sizes()[k] - 1);
 	pf += dd; pft += ddt;
       }
       else {

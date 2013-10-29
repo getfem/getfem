@@ -447,20 +447,20 @@ namespace getfem {
           }
 
           switch ((*it).t) {
-            case GETFEM_GRAD_    : Q.derivative(*mit); ++mit; break;
-            case GETFEM_HESSIAN_ :
-              Q.derivative(short_type(*mit % dim));
-              Q.derivative(short_type(*mit / dim));
-              ++mit; break;
-            case GETFEM_BASE_ : break;
-            case GETFEM_GRAD_GEOTRANS_:
-            case GETFEM_GRAD_GEOTRANS_INV_:
-            case GETFEM_UNIT_NORMAL_ :
-            case GETFEM_NONLINEAR_ :
-              GMM_ASSERT1(false,
-                          "Normals, gradients of geotrans and non linear "
-                          "terms are not compatible with exact integration, "
-                          "use an approximate method instead");
+          case GETFEM_GRAD_    : Q.derivative(short_type(*mit)); ++mit; break;
+          case GETFEM_HESSIAN_ :
+            Q.derivative(short_type(*mit % dim));
+            Q.derivative(short_type(*mit / dim));
+            ++mit; break;
+          case GETFEM_BASE_ : break;
+          case GETFEM_GRAD_GEOTRANS_:
+          case GETFEM_GRAD_GEOTRANS_INV_:
+          case GETFEM_UNIT_NORMAL_ :
+          case GETFEM_NONLINEAR_ :
+            GMM_ASSERT1(false,
+                        "Normals, gradients of geotrans and non linear "
+                        "terms are not compatible with exact integration, "
+                        "use an approximate method instead");
           }
           ++it;
 
@@ -475,7 +475,9 @@ namespace getfem {
               R = ((ppolyfem)((*it).pfi).get())->base()[ind];
 
               switch ((*it).t) {
-              case GETFEM_GRAD_    : R.derivative(*mit); ++mit; break;
+              case GETFEM_GRAD_    :
+                R.derivative(short_type(*mit)); ++mit;
+                break;
               case GETFEM_HESSIAN_ :
                 R.derivative(short_type(*mit % dim));
                 R.derivative(short_type(*mit / dim));
