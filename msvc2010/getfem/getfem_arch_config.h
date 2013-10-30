@@ -5,4 +5,9 @@
 //#define GETFEM_HAVE_LIBQHULL
 #define GETFEM_USES_BLAS
 #define GETFEM_VERSION "4.0"
+#if !defined(__GNUC__)
+#include <math.h>
+inline double round(double d) { return floor(d + 0.5);}
+#endif
+
 #endif
