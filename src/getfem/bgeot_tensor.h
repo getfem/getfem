@@ -53,18 +53,23 @@ namespace bgeot {
   class multi_index : public std::vector<size_type> {
   public :
     
-    void incrementation(const multi_index &m) { /* a compiler ... */
+    void incrementation(const multi_index &m) {
       iterator it = begin(), ite = end();
       const_iterator itm = m.begin();
-      
-      ++(*it);
-      while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it);}
+      if (it != ite) {
+        ++(*it);
+        while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it);}
+      } else resize(1);
     }
     
     void reset(void) { std::fill(begin(), end(), 0); }
     
-    inline bool finished(const multi_index &m)
-    { return ((*this)[size()-1] >= m[size()-1]); }
+    inline bool finished(const multi_index &m) {
+      if (m.size() == 0)
+        return  (size() == 1);
+      else
+        return ((*this)[size()-1] >= m[size()-1]);
+    }
     
     multi_index(size_t n) : std::vector<size_type>(n)
     { std::fill(begin(), end(), size_type(0)); }
@@ -108,8 +113,7 @@ namespace bgeot {
     typedef typename std::vector<T>::iterator iterator;
     typedef typename std::vector<T>::const_iterator const_iterator;
 
-    template<class CONT> inline const T& operator ()(const CONT &c) const
-    {
+    template<class CONT> inline const T& operator ()(const CONT &c) const {
       typename CONT::const_iterator it = c.begin();
       multi_index::const_iterator q = coeff.begin(), e = coeff.end();
 #ifndef NDEBUG
@@ -173,7 +177,6 @@ namespace bgeot {
       multi_index::iterator q = coeff.begin(), e = coeff.end();
       size_type d = 0;
       for ( ; q != e; ++q, ++it) d += (*q) * (*it);
-      
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
@@ -347,7 +350,7 @@ namespace bgeot {
   
 
   template<class T> std::ostream &operator <<
-    (std::ostream &o, const tensor<T>& t) { // a ameliorer ...
+    (std::ostream &o, const tensor<T>& t) {
     o << "sizes " << t.sizes() << endl;
     o << t.as_vector();
     return o;

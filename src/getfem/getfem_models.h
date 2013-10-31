@@ -144,7 +144,7 @@ namespace getfem {
       size_type default_iter; // default iteration number.
 
       // fem description of the variable
-      const mesh_fem *mf;        // Principal fem of the variable.
+      const mesh_fem *mf;        // Main fem of the variable.
       size_type m_region;        // Optional region for the filter
       const mesh_im *mim;        // Optional integration method for the filter
       ppartial_mesh_fem partial_mf; // Filter with respect to mf.
@@ -441,6 +441,18 @@ namespace getfem {
     /** Disable a variable.  */
     void disable_variable(const std::string &name) {
       variables[name].is_disabled = true;
+    }
+
+    /** Says if a name corresponds to a declared variable.  */
+    bool variable_exists(const std::string &name) const {
+      return (variables.find(name) != variables.end());
+    }
+
+    /** Says if a name corresponds to a declared data or disabled variable.  */
+    bool is_data(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      return (!(it->second.is_variable) || it->second.is_disabled);    
     }
 
     /** Enable a variable.  */
