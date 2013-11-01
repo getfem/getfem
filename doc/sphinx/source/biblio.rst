@@ -27,33 +27,35 @@ References
    R. Cools, `An Encyclopedia of Cubature Formulas
    <http://www.cs.kuleuven.ac.be/~ines/research/ecf/ecf.html>`_, J. Complexity.
 
-
 .. [dh-to1984] G. Dhatt, G. Touzot,
    *The Finite Element Method Displayed*, J. Wiley & Sons, New York, (1984).
 
 .. [dh-go-ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov,
    *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*, ACM Trans. Math. Software 31 (2003), 141-164.
 
+.. [fa-pa2003] F. Facchinei and J.-S. Pang,
+   *Finite-Dimensional Variational Inequalities and Complementarity Problems, Vol. II*, Springer Series in Operations Research, Springer, New York, 2003.
+
 .. [georg2001] K. Georg,
    *Matrix-free numerical continuation and bifurcation*, Numer. Funct. Anal. Optimization 22 (2001), 303-320.
 
-.. [LA-RE2006] P. Laborde, Y. Renard.
-   *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
-
-
-.. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
-   *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.
+.. [HI-RE2010] Hild P., Renard Y.
+   *Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics.* Numer. Math. 15:1 (2010), 101--129.
 
 .. [KH-PO-RE2006] Khenous H., Pommier J., Renard Y.
    *Hybrid discretization of the Signorini problem with Coulomb friction, theoretical aspects and comparison of some numerical solvers*. Applied Numerical Mathematics, 56/2:163-192, 2006.
 
-
 .. [KI-OD1988] Kikuchi N., Oden J.T.,
    *Contact problems in elasticity*, SIAM, 1988.
 
+.. [LA-RE2006] P. Laborde, Y. Renard.
+   *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
-.. [HI-RE2010] Hild P., Renard Y.
-   *Stabilized lagrange multiplier method for the finite element approximation of contact problems in elastostatics.* Numer. Math. 15:1 (2010), 101--129.
+.. [li-re] |ligursky|  and Y. Renard,
+   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems. Part I -- Abstract Frame.* Submitted (2013). [`hal-00877716 - version 1 <http://hal.archives-ouvertes.fr/hal-00877716>`_]
+
+.. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
+   *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.
 
 .. [nedelec1991] J.-C. Nedelec.
    *Notions sur les techniques d'elements finis*, Ellipses, SMAI, Mathematiques & Applications no 7, (1991).
@@ -64,12 +66,10 @@ References
 .. [SCHADD] L.F. Pavarino.
    *Domain decomposition algorithms for the p-version finite element method for elliptic problems*, Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
 
-
 .. [remacle2002] J-F. Remacle, M. Shephard,
    *An algorithm oriented database*,  Int. J. Num. Meth. Engng. 58 (2003), 349-374.
 
-
-.. [so-se-do2004] P. Solin, K. Segeth, I. Dolezel,
+.. [so-se-do2004] |solin| , K. Segeth, |dolezel| ,
    *Higher-Order Finite Element Methods*, Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
 
 .. [renard2013] Y. Renard,
@@ -77,3 +77,10 @@ References
 
 .. [ZT1989] Zienkiewicz and Taylor "The finite element method" 5th edition
     volume 3 : Fluids Dynamics, section 2.6 
+
+
+.. |dolezel| unicode:: I. U+00A0 Dole U+017E el 
+   :rtrim:
+.. |ligursky| unicode:: T. U+00A0 Ligursk U+00FD
+.. |solin| unicode:: P. U+00A0 U+0160 ol U+00ED n 
+   :rtrim:

@@ -33,7 +33,7 @@
     @author Tomas Ligursky <tomas.ligursky@gmail.com>
     @author Yves Renard <Yves.Renard@insa-lyon.fr>
     @date October 17, 2011.
-    @brief (approximate) Moore-Penrose (also called Gauss-Newton) continuation method.
+    @brief inexact Moore-Penrose continuation method.
 */
 #ifndef GETFEM_CONTINUATION_H__
 #define GETFEM_CONTINUATION_H__
