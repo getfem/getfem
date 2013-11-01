@@ -1126,19 +1126,24 @@ namespace getfem {
   
   // static std::string expr="([1,2;3,4]@[1,2;1,2])(:,2,1,1)(1)+ [1,2;3,4](1,:)(2)"; // should give 4
   // static std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [[4, 8; 12, 13]]
-  static std::string expr="[1,2;3,4](1,1)";
   // static std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3]";
   // static std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
   // static std::string expr = "-(5+(2*3)+2)/3";
 
   ga_variables vars; 
+  std::string expr;
 
-  model_real_plain_vector a(1); a[0] = 3.0;
-  vars. add_fixed_size_constant("a", a);
-  model_real_plain_vector b(2); b[0] = 3.0; b[1] = 6.0;
-  vars. add_fixed_size_constant("b", b);
+  void init_test_for_var()
+  {
+    expr="[1,2;3,4](1,1)";
+    model_real_plain_vector a(1); a[0] = 3.0;
+    vars.add_fixed_size_constant("a", a);
+    model_real_plain_vector b(2); b[0] = 3.0; b[1] = 6.0;
+    vars.add_fixed_size_constant("b", b);
+  }
 
   void lex_analysis(void) {
+    init_test_for_var();
     ga_tree tree;
     ga_read_string(expr, tree);
     ga_print_tree(tree);
