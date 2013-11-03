@@ -927,25 +927,25 @@ namespace gmm {
   }
 
 
-  inline int mm_read_mtx_crd_data(FILE *f, int, int, int nz, int I[],
+  inline int mm_read_mtx_crd_data(FILE *f, int, int, int nz, int II[],
 				  int J[], double val[], MM_typecode matcode) {
     int i;
     if (mm_is_complex(matcode)) {
       for (i=0; i<nz; i++)
-	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg %lg", &I[i], &J[i],
+	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg %lg", &II[i], &J[i],
 				  &val[2*i], &val[2*i+1])
 	    != 4) return MM_PREMATURE_EOF;
     }
     else if (mm_is_real(matcode)) {
       for (i=0; i<nz; i++) {
-	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg\n", &I[i], &J[i], &val[i])
+	if (SECURE_NONCHAR_FSCANF(f, "%d %d %lg\n", &II[i], &J[i], &val[i])
 	    != 3) return MM_PREMATURE_EOF;
 	
       }
     }
     else if (mm_is_pattern(matcode)) {
       for (i=0; i<nz; i++)
-	if (SECURE_NONCHAR_FSCANF(f, "%d %d", &I[i], &J[i])
+	if (SECURE_NONCHAR_FSCANF(f, "%d %d", &II[i], &J[i])
 	    != 2) return MM_PREMATURE_EOF;
     }
     else return MM_UNSUPPORTED_TYPE;
@@ -954,7 +954,7 @@ namespace gmm {
   }
 
   inline int mm_write_mtx_crd(const char *fname, int M, int N, int nz,
-			      int I[], int J[], const double val[],
+			      int II[], int J[], const double val[],
 			      MM_typecode matcode) {
     FILE *f;
     int i;
@@ -979,15 +979,15 @@ namespace gmm {
     /* print values */
     if (mm_is_pattern(matcode))
       for (i=0; i<nz; i++)
-	fprintf(f, "%d %d\n", I[i], J[i]);
+	fprintf(f, "%d %d\n", II[i], J[i]);
     else
       if (mm_is_real(matcode))
         for (i=0; i<nz; i++)
-	  fprintf(f, "%d %d %20.16g\n", I[i], J[i], val[i]);
+	  fprintf(f, "%d %d %20.16g\n", II[i], J[i], val[i]);
       else
 	if (mm_is_complex(matcode))
 	  for (i=0; i<nz; i++)
-            fprintf(f, "%d %d %20.16g %20.16g\n", I[i], J[i], val[2*i], 
+            fprintf(f, "%d %d %20.16g %20.16g\n", II[i], J[i], val[2*i], 
 		    val[2*i+1]);
 	else {
 	  if (f != stdout) fclose(f);
@@ -1083,25 +1083,25 @@ namespace gmm {
     A = Matrix(row, col);
     gmm::clear(A);
     
-    std::vector<int> I(nz), J(nz);
+    std::vector<int> II(nz), J(nz);
     std::vector<typename Matrix::value_type> PR(nz);
-    mm_read_mtx_crd_data(f, row, col, nz, &I[0], &J[0],
+    mm_read_mtx_crd_data(f, row, col, nz, &II[0], &J[0],
 			 (double*)&PR[0], matcode);
     
     for (size_type i = 0; i < size_type(nz); ++i) {
-        A(I[i]-1, J[i]-1) = PR[i];
+        A(II[i]-1, J[i]-1) = PR[i];
 
         // FIXED MM Format
-        if (mm_is_hermitian(matcode) && (I[i] != J[i]) ) {
-            A(J[i]-1, I[i]-1) = gmm::conj(PR[i]);
+        if (mm_is_hermitian(matcode) && (II[i] != J[i]) ) {
+            A(J[i]-1, II[i]-1) = gmm::conj(PR[i]);
         }
 
-        if (mm_is_symmetric(matcode) && (I[i] != J[i]) ) {
-            A(J[i]-1, I[i]-1) = PR[i];
+        if (mm_is_symmetric(matcode) && (II[i] != J[i]) ) {
+            A(J[i]-1, II[i]-1) = PR[i];
         }
 
-        if (mm_is_skew(matcode) && (I[i] != J[i]) ) {
-            A(J[i]-1, I[i]-1) = -PR[i];
+        if (mm_is_skew(matcode) && (II[i] != J[i]) ) {
+            A(J[i]-1, II[i]-1) = -PR[i];
         }
     }
   }
@@ -1124,15 +1124,15 @@ namespace gmm {
     if (is_complex_double__(T())) std::copy(&(t2[0]), &(t2[0])+4, &(t[0]));
     else std::copy(&(t1[0]), &(t1[0])+4, &(t[0]));
     size_type nz = A.jc[mat_ncols(A)];
-    std::vector<int> I(nz), J(nz);
+    std::vector<int> II(nz), J(nz);
     for (size_type j=0; j < mat_ncols(A); ++j) {      
       for (size_type i = A.jc[j]; i < A.jc[j+1]; ++i) {
-	I[i] = A.ir[i] + 1 - shift;
+	II[i] = A.ir[i] + 1 - shift;
 	J[i] = int(j + 1);
       }
     }
     mm_write_mtx_crd(filename, int(mat_nrows(A)), int(mat_ncols(A)),
-		     int(nz), &I[0], &J[0], (const double *)A.pr, t);
+		     int(nz), &II[0], &J[0], (const double *)A.pr, t);
   }
 
 

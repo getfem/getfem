@@ -732,8 +732,7 @@ namespace getfem {
     
     for (size_type j = 0; j < R; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
-        typename gmm::linalg_traits<CVEC>::value_type co = 0.0;
-        co = coeff[j*Qmult+q];
+        typename gmm::linalg_traits<CVEC>::value_type co = coeff[j*Qmult+q];
         for (size_type r = 0; r < target_dim(); ++r)
           val[r + q*target_dim()] += co * Z[j + r*R];
       }

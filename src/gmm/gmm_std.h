@@ -128,6 +128,7 @@ might be covered by the GNU Lesser General Public License.
 #include <locale.h>
 #include <omp.h>
 
+
 #ifdef _OPENMP	
 	/**number of OpenMP threads*/
 	inline size_t num_threads(){return omp_get_max_threads();}
@@ -202,128 +203,128 @@ namespace gmm {
 
 #endif
 
-	class stream_standard_locale {
-		std::locale cloc;
-		std::ios &io;
-
-	public :
-		inline stream_standard_locale(std::ios &i)
-			: cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
-		inline ~stream_standard_locale() { io.imbue(cloc); }
-	};
-
-
-
-
-	/* ******************************************************************* */
-	/*       Clock functions.                                              */
-	/* ******************************************************************* */
-
+  class stream_standard_locale {
+    std::locale cloc;
+    std::ios &io;
+    
+  public :
+    inline stream_standard_locale(std::ios &i)
+      : cloc(i.getloc()), io(i) { io.imbue(std::locale("C")); }
+    inline ~stream_standard_locale() { io.imbue(cloc); }
+  };
+  
+  
+  
+  
+  /* ******************************************************************* */
+  /*       Clock functions.                                              */
+  /* ******************************************************************* */
+  
 # if  defined(HAVE_SYS_TIMES)
-	inline double uclock_sec(void) {
-		static double ttclk = 0.;
-		if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
-		tms t; times(&t); return double(t.tms_utime) / ttclk;
-	}
+  inline double uclock_sec(void) {
+    static double ttclk = 0.;
+    if (ttclk == 0.) ttclk = sysconf(_SC_CLK_TCK);
+    tms t; times(&t); return double(t.tms_utime) / ttclk;
+  }
 # else
-	inline double uclock_sec(void)
-	{ return double(clock())/double(CLOCKS_PER_SEC); }
+  inline double uclock_sec(void)
+  { return double(clock())/double(CLOCKS_PER_SEC); }
 # endif
+  
+  /* ******************************************************************** */
+  /*	Fixed size integer types.                     			  */
+  /* ******************************************************************** */
+  // Remark : the test program dynamic_array tests the lenght of
+  //          resulting integers
+  
+  template <size_t s> struct fixed_size_integer_generator {
+    typedef void int_base_type;
+    typedef void uint_base_type;  
+  };
+  
+  template <> struct fixed_size_integer_generator<sizeof(char)> {
+    typedef signed char int_base_type;
+    typedef unsigned char uint_base_type;
+  };
+  
+  template <> struct fixed_size_integer_generator<sizeof(short int)
+    - ((sizeof(short int) == sizeof(char)) ? 78 : 0)> {
+  typedef signed short int int_base_type;
+  typedef unsigned short int uint_base_type;
+};
 
-	/* ******************************************************************** */
-	/*	Fixed size integer types.                     			  */
-	/* ******************************************************************** */
-	// Remark : the test program dynamic_array tests the lenght of
-	//          resulting integers
+template <> struct fixed_size_integer_generator<sizeof(int)
+  - ((sizeof(int) == sizeof(short int)) ? 59 : 0)> {
+    typedef signed int int_base_type;
+    typedef unsigned int uint_base_type;
+  };
 
-	template <size_t s> struct fixed_size_integer_generator {
-		typedef void int_base_type;
-		typedef void uint_base_type;  
-	};
+template <> struct fixed_size_integer_generator<sizeof(long)
+  - ((sizeof(int) == sizeof(long)) ? 93 : 0)> {
+    typedef signed long int_base_type;
+    typedef unsigned long uint_base_type;
+  };
 
-	template <> struct fixed_size_integer_generator<sizeof(char)> {
-		typedef signed char int_base_type;
-		typedef unsigned char uint_base_type;
-	};
+template <> struct fixed_size_integer_generator<sizeof(long long)
+  - ((sizeof(long long) == sizeof(long)) ? 99 : 0)> {
+    typedef signed long long int_base_type;
+    typedef unsigned long long uint_base_type;
+  };
 
-	template <> struct fixed_size_integer_generator<sizeof(short int)
-		- ((sizeof(short int) == sizeof(char)) ? 78 : 0)> {
-			typedef signed short int int_base_type;
-			typedef unsigned short int uint_base_type;
-	};
+typedef fixed_size_integer_generator<1>::int_base_type int8_type;
+typedef fixed_size_integer_generator<1>::uint_base_type uint8_type;
+typedef fixed_size_integer_generator<2>::int_base_type int16_type;
+typedef fixed_size_integer_generator<2>::uint_base_type uint16_type;
+typedef fixed_size_integer_generator<4>::int_base_type int32_type;
+typedef fixed_size_integer_generator<4>::uint_base_type uint32_type;
+typedef fixed_size_integer_generator<8>::int_base_type int64_type;
+typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 
-	template <> struct fixed_size_integer_generator<sizeof(int)
-		- ((sizeof(int) == sizeof(short int)) ? 59 : 0)> {
-			typedef signed int int_base_type;
-			typedef unsigned int uint_base_type;
-	};
+// #if INT_MAX == 32767
+//   typedef signed int    int16_type;
+//   typedef unsigned int uint16_type;
+// #elif  SHRT_MAX == 32767
+//   typedef signed short int    int16_type;
+//   typedef unsigned short int uint16_type;
+// #else
+// # error "impossible to build a 16 bits integer"
+// #endif
 
-	template <> struct fixed_size_integer_generator<sizeof(long)
-		- ((sizeof(int) == sizeof(long)) ? 93 : 0)> {
-			typedef signed long int_base_type;
-			typedef unsigned long uint_base_type;
-	};
+// #if INT_MAX == 2147483647
+//   typedef signed int    int32_type;
+//   typedef unsigned int uint32_type;
+// #elif  SHRT_MAX == 2147483647
+//   typedef signed short int    int32_type;
+//   typedef unsigned short int uint32_type;
+// #elif LONG_MAX == 2147483647
+//   typedef signed long int    int32_type;
+//   typedef unsigned long int uint32_type;
+// #else
+// # error "impossible to build a 32 bits integer"
+// #endif
 
-	template <> struct fixed_size_integer_generator<sizeof(long long)
-		- ((sizeof(long long) == sizeof(long)) ? 99 : 0)> {
-			typedef signed long long int_base_type;
-			typedef unsigned long long uint_base_type;
-	};
-
-	typedef fixed_size_integer_generator<1>::int_base_type int8_type;
-	typedef fixed_size_integer_generator<1>::uint_base_type uint8_type;
-	typedef fixed_size_integer_generator<2>::int_base_type int16_type;
-	typedef fixed_size_integer_generator<2>::uint_base_type uint16_type;
-	typedef fixed_size_integer_generator<4>::int_base_type int32_type;
-	typedef fixed_size_integer_generator<4>::uint_base_type uint32_type;
-	typedef fixed_size_integer_generator<8>::int_base_type int64_type;
-	typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
-
-	// #if INT_MAX == 32767
-	//   typedef signed int    int16_type;
-	//   typedef unsigned int uint16_type;
-	// #elif  SHRT_MAX == 32767
-	//   typedef signed short int    int16_type;
-	//   typedef unsigned short int uint16_type;
-	// #else
-	// # error "impossible to build a 16 bits integer"
-	// #endif
-
-	// #if INT_MAX == 2147483647
-	//   typedef signed int    int32_type;
-	//   typedef unsigned int uint32_type;
-	// #elif  SHRT_MAX == 2147483647
-	//   typedef signed short int    int32_type;
-	//   typedef unsigned short int uint32_type;
-	// #elif LONG_MAX == 2147483647
-	//   typedef signed long int    int32_type;
-	//   typedef unsigned long int uint32_type;
-	// #else
-	// # error "impossible to build a 32 bits integer"
-	// #endif
-
-	// #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
-	//   typedef signed int    int64_type;
-	//   typedef unsigned int uint64_type;
-	// #elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
-	//   typedef signed long int    int64_type;
-	//   typedef unsigned long int uint64_type;
-	// #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
-	//   typedef signed long long int int64_type;
-	//   typedef unsigned long long int uint64_type;
-	// #else
-	// # error "impossible to build a 64 bits integer"
-	// #endif
+// #if INT_MAX == 9223372036854775807L || INT_MAX == 9223372036854775807
+//   typedef signed int    int64_type;
+//   typedef unsigned int uint64_type;
+// #elif LONG_MAX == 9223372036854775807L || LONG_MAX == 9223372036854775807
+//   typedef signed long int    int64_type;
+//   typedef unsigned long int uint64_type;
+// #elif LLONG_MAX == 9223372036854775807LL || LLONG_MAX == 9223372036854775807L || LLONG_MAX == 9223372036854775807
+//   typedef signed long long int int64_type;
+//   typedef unsigned long long int uint64_type;
+// #else
+// # error "impossible to build a 64 bits integer"
+// #endif
 
 #if defined(__GNUC__) && !defined(__ICC)
-	/* 
-	g++ can issue a warning at each usage of a function declared with this special attribute 
-	(also works with typedefs and variable declarations)
-	*/
+/* 
+   g++ can issue a warning at each usage of a function declared with this special attribute 
+   (also works with typedefs and variable declarations)
+*/
 # define IS_DEPRECATED __attribute__ ((__deprecated__))
-	/*
-	the specified function is inlined at any optimization level 
-	*/
+/*
+  the specified function is inlined at any optimization level 
+*/
 # define ALWAYS_INLINE __attribute__((always_inline))
 #else
 # define IS_DEPRECATED

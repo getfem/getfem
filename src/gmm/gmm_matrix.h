@@ -64,8 +64,8 @@ namespace gmm
       v1(i,i) += typename linalg_traits<M>::value_type(1);
   }
   template <typename M> inline
-  void add(const identity_matrix &I, const M &v1)
-  { add(I, linalg_const_cast(v1)); }
+  void add(const identity_matrix &II, const M &v1)
+  { add(II, linalg_const_cast(v1)); }
 
   template <typename V1, typename V2> inline
   void mult(const identity_matrix&, const V1 &v1, V2 &v2)

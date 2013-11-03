@@ -944,7 +944,7 @@ namespace getfem {
       base_node weights(N+1);
       for (size_type i=0; i < gmm::mat_ncols(t); )  {
 	bool ext_simplex = false;
-	bool boundary_simplex = true;
+	// bool boundary_simplex = true;
 	bool on_boundary_simplex = false;
 	bool is_bridge_simplex = false;
 	scalar_type q(0), dG(0);
@@ -963,10 +963,10 @@ namespace getfem {
 	  q = quality_of_element(i);
 	  
 	  for (size_type k=0; k <= N; ++k) {
-	    if (pts_attr[t(k,i)]->constraints.card() == 0)
-	      boundary_simplex = false;
-	    else
+	    if (!(pts_attr[t(k,i)]->constraints.card() == 0))
 	      on_boundary_simplex = true;
+            // else
+            //  boundary_simplex = false;
 	  }
 	  
 	  if (version == 1 && on_boundary_simplex) 
