@@ -51,7 +51,7 @@ References
 .. [LA-RE2006] P. Laborde, Y. Renard.
    *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
-.. [li-re] |ligursky|  and Y. Renard,
+.. [li-re] T. |ligursky|  and Y. Renard,
    *A Continuation Problem for Computing Solutions of Discretised Evolution Problems. Part I -- Abstract Frame.* Submitted (2013). [`hal-00877716 - version 1 <http://hal.archives-ouvertes.fr/hal-00877716>`_]
 
 .. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
@@ -69,7 +69,7 @@ References
 .. [remacle2002] J-F. Remacle, M. Shephard,
    *An algorithm oriented database*,  Int. J. Num. Meth. Engng. 58 (2003), 349-374.
 
-.. [so-se-do2004] |solin| , K. Segeth, |dolezel| ,
+.. [so-se-do2004] P. |solin|, K. Segeth, I. |dolezel| ,
    *Higher-Order Finite Element Methods*, Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
 
 .. [renard2013] Y. Renard,
@@ -79,8 +79,8 @@ References
     volume 3 : Fluids Dynamics, section 2.6 
 
 
-.. |dolezel| unicode:: I. U+00A0 Dole U+017E el 
+.. |dolezel| unicode:: Dole U+017E el 
    :rtrim:
-.. |ligursky| unicode:: T. U+00A0 Ligursk U+00FD
-.. |solin| unicode:: P. U+00A0 U+0160 ol U+00ED n 
+.. |ligursky| unicode:: Ligursk U+00FD
+.. |solin| unicode:: U+0160 ol U+00ED n 
    :rtrim:
