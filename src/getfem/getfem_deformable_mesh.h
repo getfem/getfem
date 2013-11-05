@@ -73,11 +73,9 @@ namespace getfem {
 
 			GMM_ASSERT1((&mf.linked_mesh())==this,"in deform_mesh mf should be defined on the same mesh");
 
-			GMM_ASSERT1(mf.get_qdim() == ddim, 
-				"input mesh_fem and the mesh dim are not compatible");
-			GMM_ASSERT1(mf.nb_dof() == this->nb_points()*ddim,
-				"mesh_fem should be isoparametric to the mesh, with qdim == mesh dim");
-			dal::bit_vector conv_indices = mf.convex_index(); 
+			GMM_ASSERT1(mf.get_qdim() == ddim, "input mesh_fem and the mesh dim are not compatible");
+
+      dal::bit_vector conv_indices = mf.convex_index(); 
 			//this vector will track if a point can be deformed
 			std::vector<bool> deform_pt_flag(ppts.size(), true);
 			size_type cv;
@@ -89,6 +87,11 @@ namespace getfem {
 				getfem::mesh_fem::ind_dof_ct dof=mf.ind_basic_dof_of_element(cv);
 				bgeot::size_type num_points = 
 					mf.linked_mesh().structure_of_convex(cv)->nb_points(); 
+
+        GMM_ASSERT2(dof.size() == num_points*ddim, 
+                    "mesh_fem should be isoparametric to the mesh, "
+                    "with nb_points() of convex * dim == size of ind_basic_dof_of_element");
+
 				for(size_type pt = 0; pt < num_points; ++pt) 
 				{ 
 					/** iterate through each components of point [pt]and deform the component*/
