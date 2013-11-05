@@ -170,6 +170,25 @@ namespace getfem {
   // Tree structure for syntax analysis
   //=========================================================================
 
+  static void ga_syntax_error(const std::string &expr, size_type pos,
+                              const std::string &msg) {
+    int first = std::max(0, int(pos)-40);
+    int last = std::min(int(pos)+20, int(expr.size()));
+    if (last - first < 60)
+      first = std::max(0, int(pos)-40-(60-last+first));
+    if (last - first < 60)
+      last = std::min(int(pos)+20+(60-last+first),int(expr.size()));
+    
+    if (first > 0) cerr << "...";
+    cerr << expr.substr(first, last-first);
+    if (last < int(expr.size())) cerr << "...";
+    cerr << endl;
+    if (first > 0) cerr << "   ";
+    if (int(pos) > first) cerr << std::setw(int(pos)-first) << ' ';
+    cerr << '|' << endl << msg << endl;
+    GMM_ASSERT1(false, "Error in assembly string" );
+  }
+
   enum GA_NODE_TYPE {
     GA_NODE_VOID = 0,
     GA_NODE_OP,
@@ -186,21 +205,75 @@ namespace getfem {
     GA_NODE_GRAD_TEST,
     GA_NODE_HESS_TEST};
 
+  struct ga_tree_node;
+
+  typedef ga_tree_node *pga_tree_node;
+
   struct ga_tree_node {
     GA_NODE_TYPE node_type;
     base_tensor t;
     size_type test_function_type; // 0 = no_type function, 1 = first order
                                   // 2 = second order, 3 = both
+    std::string name_test0, name_test1; // variable names corresponding to
+                              // test functions when test_function_type != 0.
     size_type nbc1, nbc2, nbc3, pos;
-    std::string name;
+    std::string name;             // variable/constant/function/operator name 
     GA_TOKEN_TYPE op_type;
     bool valid;
-    ga_tree_node *parent; // only one for the moment ...
-    std::vector<ga_tree_node *> children;
+    pga_tree_node parent; // only one for the moment ...
+    std::vector<pga_tree_node> children;
     
-    inline size_type tensor_order(void) const {
-      return t.sizes().size() - test_function_type
-        + (test_function_type >= 2 ? 1 : 0);
+    inline size_type nb_test_functions(void) const
+    { return test_function_type - (test_function_type >= 2 ? 1 : 0); }
+
+    inline size_type tensor_order(void) const
+    { return t.sizes().size() - nb_test_functions(); }
+
+    inline size_type tensor_test_size(void) const {
+      size_type st = nb_test_functions();
+      return (st >= 1 ? t.sizes()[0] : 1) * (st == 2 ? t.sizes()[1] : 1);
+    }
+
+    inline size_type tensor_proper_size(void) const
+    { return t.size() / tensor_test_size(); }
+
+    inline size_type tensor_proper_size(size_type i) const
+    { return t.sizes()[nb_test_functions()+i]; }
+    
+
+    void mult_test(pga_tree_node n0, pga_tree_node n1,
+                   const std::string &expr) {
+      size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
+      if (test0 && test1 && (test0 == test1 ||
+                             test0 == 3 || test1 == 3))
+        ga_syntax_error(expr, pos, "Incompatibility of test functions "
+                        " in product.");
+
+      test_function_type = test0 + test1;
+      size_type st = nb_test_functions();
+      bgeot::multi_index mi(st);
+      
+      switch (test0) {
+      case 1: mi[0] = n0->t.sizes()[0]; break;
+      case 2: mi[st-1] = n0->t.sizes()[0]; break;
+      case 3: mi[0] = n0->t.sizes()[0]; mi[1] = n0->t.sizes()[1]; break;
+      }
+      switch (test1) {
+      case 1: mi[0] = n1->t.sizes()[0]; break;
+      case 2: mi[st-1] = n1->t.sizes()[0]; break;
+      case 3: mi[0] = n1->t.sizes()[0]; mi[1] = n1->t.sizes()[1]; break;
+      }
+      t.adjust_sizes(mi);
+      
+      if (n0->name_test0.size())
+        name_test0 = n0->name_test0;
+      else
+        name_test0 = n1->name_test0;
+      
+      if (n0->name_test1.size())
+        name_test1 = n0->name_test1;
+      else
+        name_test1 = n1->name_test1;
     }
     
     void init_scalar_tensor(scalar_type v) {
@@ -242,8 +315,6 @@ namespace getfem {
         op_type(op), valid(true) {}
     
   };
-
-  typedef ga_tree_node *pga_tree_node;
 
   struct ga_tree {
     pga_tree_node root, current_node;
@@ -549,26 +620,6 @@ namespace getfem {
   //=========================================================================
   // Syntax analysis for the generic assembly langage
   //=========================================================================
-  
-  
-  static void ga_syntax_error(const std::string &expr, size_type pos,
-                              const std::string &msg) {
-    int first = std::max(0, int(pos)-40);
-    int last = std::min(int(pos)+20, int(expr.size()));
-    if (last - first < 60)
-      first = std::max(0, int(pos)-40-(60-last+first));
-    if (last - first < 60)
-      last = std::min(int(pos)+20+(60-last+first),int(expr.size()));
-    
-    if (first > 0) cerr << "...";
-    cerr << expr.substr(first, last-first);
-    if (last < int(expr.size())) cerr << "...";
-    cerr << endl;
-    if (first > 0) cerr << "   ";
-    if (int(pos) > first) cerr << std::setw(int(pos)-first) << ' ';
-    cerr << '|' << endl << msg << endl;
-    GMM_ASSERT1(false, "Error in assembly string" );
-  }
              
   // Read a term with a pushdown automaton.
   static GA_TOKEN_TYPE ga_read_term(const std::string &expr,
@@ -833,18 +884,29 @@ namespace getfem {
   //=========================================================================
 
   // TODO: should also detect and eliminate void operations such as
-  //       0+expr, 1*expr, 1@expr, I*expr, 0*expr (all elinitate in that case)
-    static void ga_node_analysis(const std::string &expr, ga_tree &tree,
-                                 const ga_variables &vars,
-                                 pga_tree_node pnode) {
-
-    bool all_cte = true, all_sc = true;
+  //       0+expr, 1*expr, 1@expr, I*expr, 0*expr (all elimitate in that case)
+  //       0.expr, 0:expr, 0@expr ...
+  static void ga_node_analysis(const std::string &expr, ga_tree &tree,
+                               const ga_variables &vars,
+                               pga_tree_node pnode) {
+    
+    bool all_cte = true, all_sc = true, all_primal = true;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(expr, tree, vars, pnode->children[i]);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && pnode->children[i]->t.size() == 1;
+      all_primal = all_primal && (pnode->children[i]->test_function_type == 0);
     }
     
+    size_type nbch = pnode->children.size();
+    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+    pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+    bgeot::multi_index mi;
+    const bgeot::multi_index &size0 = child0 ? child0->t.sizes() : mi;
+    const bgeot::multi_index &size1 = child1 ? child1->t.sizes() : mi;
+    size_type dim0 = child0 ? child0->tensor_order() : 0;
+    size_type dim1 = child1 ? child1->tensor_order() : 0;
+
     switch (pnode->node_type) {
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_VAL:
     case GA_NODE_GRAD: case GA_NODE_HESS: case GA_NODE_FIXED_SIZE_TEST:
@@ -859,7 +921,7 @@ namespace getfem {
         else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
           { val_grad_or_hess = 2; name = name.substr(5); }
         int test = 0;
-        if (name.size() >= 6 && name.compare(0, 5, "Test2_") == 0)
+        if (name.size() >= 6 && name.compare(0, 5, "Test1_") == 0)
           { test = 2; name = name.substr(6); }
         else if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
           { test = 1; name = name.substr(5); }
@@ -920,6 +982,11 @@ namespace getfem {
             ga_syntax_error(expr, pnode->pos, "Test functions of constant are "
                             "not allowed.");
           pnode->name = name;
+          if (test == 1)
+            pnode->name_test0 = name;
+          else
+            pnode->name_test1 = name;
+          
           if (!mf) {
             if (val_grad_or_hess)
               ga_syntax_error(expr, pnode->pos, "Gradient or hessian cannot "
@@ -986,10 +1053,9 @@ namespace getfem {
 
     case GA_NODE_OP:
       switch(pnode->op_type) {
+
       case GA_PLUS: case GA_MINUS:
         {
-          const bgeot::multi_index &size0 = pnode->children[0]->t.sizes();
-          const bgeot::multi_index &size1 = pnode->children[1]->t.sizes();
           size_type c_size = std::min(size0.size(), size1.size());
           bool compatible = true;
           for (size_type i = 0; i < c_size; ++i)
@@ -998,9 +1064,22 @@ namespace getfem {
             if (size0[i] != 1) compatible = false;
           for (size_type i = c_size; i < size1.size(); ++i)
             if (size1[i] != 1) compatible = false;
+
+          cout << "size0 = " << size0 << endl;
+          cout << "size1 = " << size1 << endl;
+          
+          if (child0->test_function_type || child1->test_function_type) {
+            if (child0->test_function_type != child1->test_function_type ||
+                child0->name_test0.compare(child1->name_test0) ||
+                child0->name_test1.compare(child1->name_test1))
+              compatible = false;
+          }
+          // TODO: prendre en compte l'addition de différentes parties
+          // de formulation faible avec différentes fonctions test.
+          // Dans ce cas, c'est l'assemblage qui gère l'addition. 
           if (!compatible)
-            ga_syntax_error(expr, pnode->pos, "Addition or substraction "
-                            "of expressions of different sizes");
+            ga_syntax_error(expr, pnode->pos, "Addition or substraction of "
+                            "incompatible expressions or of different sizes");
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->t = pnode->children[0]->t;
@@ -1009,152 +1088,158 @@ namespace getfem {
             else
               pnode->t += pnode->children[1]->t;
             tree.clear_children(pnode);
+          } else {
+            pnode->t = child1->t;
+            pnode->test_function_type = child1->test_function_type;
+            pnode->name_test0 = child1->name_test0;
+            pnode->name_test1 = child1->name_test1;
           }
         }
         break;
 
       case GA_UNARY_MINUS:
+        pnode->t = child0->t;
+        pnode->test_function_type = child0->test_function_type;
+        pnode->name_test0 = child0->name_test0;
+        pnode->name_test1 = child0->name_test1;
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
-          pnode->t = pnode->children[0]->t;
+          pnode->test_function_type = 0;
           gmm::scale(pnode->t.as_vector(), scalar_type(-1));
           tree.clear_children(pnode);
         }
         break;
 
       case GA_DOT:
-        {
-          size_type dim0 = pnode->children[0]->tensor_order();
-          size_type dim1 = pnode->children[1]->tensor_order();
-          if (dim0 > 1 || dim1 > 1)
-            ga_syntax_error(expr, pnode->pos,
-                            "Dot product acts only on vectors.");
-          const bgeot::multi_index &size0 = pnode->children[0]->t.sizes();
-          const bgeot::multi_index &size1 = pnode->children[1]->t.sizes();
-          size_type c_size = std::min(dim0, dim1);
-          bool compatible = true;
-          for (size_type i = 0; i < c_size; ++i)
-            if (size0[i] != size1[i]) compatible = false; 
-          for (size_type i = c_size; i < dim0; ++i)
-            if (size0[i] != 1) compatible = false;
-          for (size_type i = c_size; i < dim1; ++i)
-            if (size1[i] != 1) compatible = false;
-          if (!compatible)
+        if (dim0 > 1 || dim1 > 1)
+          ga_syntax_error(expr, pnode->pos,
+                          "Dot product acts only on vectors.");
+        else {
+          size_type s0 = dim0 == 0 ? 1 : size0.back();
+          size_type s1 = dim1 == 0 ? 1 : size1.back();
+          if (s0 != s1)
             ga_syntax_error(expr, pnode->pos, "Dot product "
-                            "of expressions of different sizes");
-
-          if (all_cte) {
-            pnode->node_type = GA_NODE_CONSTANT;
-            pnode->init_scalar_tensor
-              (gmm::vect_sp(pnode->children[0]->t.as_vector(),
-                            pnode->children[1]->t.as_vector()));
-            tree.clear_children(pnode);
-          }
-        }
-        break;
-
-      case GA_COLON:
-        {
-          size_type dim0 = pnode->children[0]->tensor_order();
-          size_type dim1 = pnode->children[1]->tensor_order();
-          if (dim0 > 2 || dim1 > 2)
-            ga_syntax_error(expr, pnode->pos,
-                            "Frobenius product acts only on matrices.");
-          const bgeot::multi_index &size0 = pnode->children[0]->t.sizes();
-          const bgeot::multi_index &size1 = pnode->children[1]->t.sizes();
-          size_type c_size = std::min(dim0, dim1);
-          bool compatible = true;
-          for (size_type i = 0; i < c_size; ++i)
-            if (size0[i] != size1[i]) compatible = false; 
-          for (size_type i = c_size; i < dim0; ++i)
-            if (size0[i] != 1) compatible = false;
-          for (size_type i = c_size; i < dim1; ++i)
-            if (size1[i] != 1) compatible = false;
-          if (!compatible)
-            ga_syntax_error(expr, pnode->pos, "Frobenius product "
                             "of expressions of different sizes");
           
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->init_scalar_tensor
+              (gmm::vect_sp(child0->t.as_vector(), child1->t.as_vector()));
+            tree.clear_children(pnode);
+          } else {
+            pnode->mult_test(child0, child1, expr);
+          }
+        }
+        break;
+
+      case GA_COLON:
+        if (dim0 > 2 || dim1 > 2)
+          ga_syntax_error(expr, pnode->pos,
+                          "Frobenius product acts only on matrices.");
+        else {
+          size_type s00 = (dim0 == 0) ? 1
+            : (dim0 == 1 ? size0.back() : size0[size0.size()-2]);
+          size_type s01 = (dim0 == 2) ? size0.back() : 1;
+          size_type s10 = (dim1 == 0) ? 1
+            : (dim1 == 1 ? size1.back() : size1[size1.size()-2]);
+          size_type s11 = (dim1 == 2) ? size1.back() : 1;
+          if (s00 != s10 || s01 != s11)
+            ga_syntax_error(expr, pnode->pos, "Frobenius product "
+                            "of expressions of different sizes");
+
+          if (all_cte) {
+            pnode->node_type = GA_NODE_CONSTANT;
+            pnode->init_scalar_tensor
               (gmm::vect_sp(pnode->children[0]->t.as_vector(),
                             pnode->children[1]->t.as_vector()));
             tree.clear_children(pnode);
+          } else {
+            pnode->mult_test(child0, child1, expr);
           }
-
         }
         break;
 
       case GA_TMULT:
         if (all_cte) {
-          size_type dim0 = pnode->children[0]->tensor_order();
-          size_type dim1 = pnode->children[1]->tensor_order();
           pnode->node_type = GA_NODE_CONSTANT;
-          if (pnode->children[0]->t.size() == 1 &&
-              pnode->children[0]->t.size() == 0) {
+          if (child0->t.size() == 1 && child1->t.size() == 1) {
             pnode->init_scalar_tensor
-              (pnode->children[0]->t[0] * pnode->children[1]->t[0]);
-          } else if (pnode->children[0]->t.size() == 1) {
-            pnode->t = pnode->children[1]->t;
-            gmm::scale(pnode->t.as_vector(),
-                       scalar_type(pnode->children[0]->t[0]));
-          } else if (pnode->children[1]->t.size() == 1) {
-            pnode->t = pnode->children[0]->t;
-            gmm::scale(pnode->t.as_vector(),
-                       scalar_type(pnode->children[1]->t[0]));
+              (child0->t[0] * child1->t[0]);
+          } else if (child0->t.size() == 1) {
+            pnode->t = child1->t;
+            gmm::scale(pnode->t.as_vector(), scalar_type(child0->t[0]));
+          } else if (child1->t.size() == 1) {
+            pnode->t = child0->t;
+            gmm::scale(pnode->t.as_vector(), scalar_type(child1->t[0]));
           } else {
             if (dim0+dim1 == 3 || dim0+dim1 > 4)
               ga_syntax_error(expr, pnode->pos, "Unauthorized "
                               "tensor multiplication.");
-            bgeot::multi_index mi(dim0 + dim1);
             for (size_type i = 0; i < dim0; ++i)
-              mi[i] = pnode->children[0]->t.size(i);
+              mi.push_back(child0->t.size(i));
             for (size_type i = 0; i < dim1; ++i)
-              mi[i+dim0] = pnode->children[1]->t.size(i);
+              mi.push_back(child1->t.size(i));
             pnode->t.adjust_sizes(mi);
-            size_type n0 = pnode->children[0]->t.size();
-            size_type n1 = pnode->children[1]->t.size();
+            size_type n0 = child0->t.size();
+            size_type n1 = child1->t.size();
             for (size_type i = 0; i < n0; ++i)
               for (size_type j = 0; j < n1; ++j)
-                pnode->t[i+j*n0] =
-                  pnode->children[0]->t[i] * pnode->children[1]->t[j];
+                pnode->t[i+j*n0] = child0->t[i] * child1->t[j];
           }
           tree.clear_children(pnode);
+        } else {
+          pnode->mult_test(child0, child1, expr);
+          mi = pnode->t.sizes();
+          if (child0->tensor_proper_size() != 1
+              || child1->tensor_proper_size() != 1) {
+            if (child0->tensor_proper_size() == 1) {
+              for (size_type i = 0; i < dim1; ++i)
+                mi.push_back(child1->tensor_proper_size(i));
+            } else if (child1->t.size() == 1) {
+              for (size_type i = 0; i < dim0; ++i)
+                mi.push_back(child0->tensor_proper_size(i));
+            } else {
+              if (dim0+dim1 == 3 || dim0+dim1 > 4)
+                ga_syntax_error(expr, pnode->pos, "Unauthorized "
+                                "tensor multiplication.");
+              for (size_type i = 0; i < dim0; ++i)
+                mi.push_back(child0->t.size(i));
+              for (size_type i = 0; i < dim1; ++i)
+                mi.push_back(child1->t.size(i));
+            }
+            pnode->t.adjust_sizes(mi);
+          }
         }
         break;
-
+        
       case GA_MULT:
+                
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
-          if (pnode->children[0]->t.size() == 1 &&
-              pnode->children[0]->t.size() == 0) {
-            pnode->init_scalar_tensor
-              (pnode->children[0]->t[0] * pnode->children[1]->t[0]);
-          }           if (pnode->children[0]->t.size() == 1) {
-            pnode->t = pnode->children[1]->t;
-            gmm::scale(pnode->t.as_vector(), pnode->children[0]->t[0]);
-          } else if (pnode->children[1]->t.size() == 1) {
-            pnode->t = pnode->children[0]->t;
-            gmm::scale(pnode->t.as_vector(), pnode->children[1]->t[0]);
-          } else if (pnode->children[0]->tensor_order() == 2 &&
-                     pnode->children[1]->tensor_order() == 1) {
-            size_type m = pnode->children[0]->t.size(0);
-            size_type n = pnode->children[0]->t.size(1);
-            if (n != pnode->children[1]->t.size(0))
+          if (child0->tensor_proper_size() == 1 &&
+              child1->tensor_proper_size() == 1) {
+            pnode->init_scalar_tensor(child0->t[0]*child1->t[0]);
+          } else if (child0->tensor_proper_size() == 1) {
+            pnode->t = child1->t;
+            gmm::scale(pnode->t.as_vector(), child0->t[0]);
+          } else if (child1->tensor_proper_size() == 1) {
+            pnode->t = child0->t;
+            gmm::scale(pnode->t.as_vector(), child1->t[0]);
+          } else if (dim0 == 2 && dim1 == 1) {
+            size_type m = child0->t.size(0), n = child0->t.size(1);
+            if (n != child1->t.size(0))
               ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
                               "matrix-vector multiplication.");
             pnode->init_vector_tensor(m);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
               for (size_type j = 0; j < n; ++j)
-                pnode->t[i] += pnode->children[0]->t(i,j)
-                  * pnode->children[1]->t[j];
-          } else if (pnode->children[0]->tensor_order() == 2 &&
-                     pnode->children[1]->tensor_order() == 2) {
-            size_type m = pnode->children[0]->t.size(0);
-            size_type n = pnode->children[0]->t.size(1);
-            size_type p = pnode->children[1]->t.size(1);
-            if (n != pnode->children[1]->t.size(0))
+                pnode->t[i] += child0->t(i,j) * child1->t[j];
+          } else if (dim0 == 2 && dim1 == 2) {
+            size_type m = child0->t.size(0);
+            size_type n = child0->t.size(1);
+            size_type p = child1->t.size(1);
+            if (n != child1->t.size(0))
               ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
                               "matrix-matrix multiplication.");
             pnode->init_matrix_tensor(m,p);
@@ -1162,17 +1247,12 @@ namespace getfem {
             for (size_type i = 0; i < m; ++i)
               for (size_type j = 0; j < n; ++j)
                 for (size_type k = 0; k < p; ++k)
-                  pnode->t(i,k) += pnode->children[0]->t(i,j)
-                    * pnode->children[1]->t(j,k);
+                  pnode->t(i,k) += child0->t(i,j) * child1->t(j,k);
           }
-          else if (pnode->children[0]->tensor_order() == 4 &&
-                   pnode->children[1]->tensor_order() == 2) {
-            size_type m = pnode->children[0]->t.size(0);
-            size_type n = pnode->children[0]->t.size(1);
-            size_type o = pnode->children[0]->t.size(2);
-            size_type p = pnode->children[0]->t.size(3);
-            if (o != pnode->children[1]->t.size(0) ||
-                p != pnode->children[1]->t.size(1))
+          else if (dim0 == 4 && dim1 == 2) {
+            size_type m = child0->t.size(0), n = child0->t.size(1);
+            size_type o = child0->t.size(2), p = child0->t.size(3);
+            if (o != child1->t.size(0) || p != child1->t.size(1))
               ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
                               "tensor-matrix multiplication.");
             pnode->init_matrix_tensor(m,n);
@@ -1181,73 +1261,134 @@ namespace getfem {
               for (size_type j = 0; j < n; ++j)
                 for (size_type k = 0; k < o; ++k)
                   for (size_type l = 0; l < p; ++l)
-                    pnode->t(i,j) += pnode->children[0]->t(i,j,k,l)
-                      * pnode->children[1]->t(k,l);
+                    pnode->t(i,j) += child0->t(i,j,k,l) * child1->t(k,l);
           } else ga_syntax_error(expr, pnode->pos,
                                  "Unauthorized multiplication.");
           tree.clear_children(pnode);
+        } else {
+          pnode->mult_test(child0, child1, expr);
+          mi = pnode->t.sizes();
+
+          if (child0->tensor_proper_size() == 1 &&
+              child1->tensor_proper_size() == 1) {
+          } else if (child0->tensor_proper_size() == 1) {
+            for (size_type i = 0; i < dim1; ++i)
+                mi.push_back(child1->tensor_proper_size(i));
+          } else if (child1->tensor_proper_size() == 1) {
+            for (size_type i = 0; i < dim0; ++i)
+                mi.push_back(child0->tensor_proper_size(i));
+          } else if (child0->tensor_order() == 2 &&
+                     child1->tensor_order() == 1) {
+            size_type m = child0->tensor_proper_size(0);
+            size_type n = child0->tensor_proper_size(1);
+            mi.push_back(m);
+            if (n != child1->tensor_proper_size(0))
+              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+                              "matrix-vector multiplication.");
+          } else if (child0->tensor_order() == 2 &&
+                     child1->tensor_order() == 2) {
+            size_type m = child0->tensor_proper_size(0);
+            size_type n = child0->tensor_proper_size(1);
+            size_type p = child1->tensor_proper_size(1);
+            mi.push_back(m); mi.push_back(p);
+            if (n != child1->tensor_proper_size(0))
+              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+                              "matrix-matrix multiplication.");
+          }
+          else if (pnode->children[0]->tensor_order() == 4 &&
+                   pnode->children[1]->tensor_order() == 2) {
+            size_type m = child0->tensor_proper_size(0);
+            size_type n = child0->tensor_proper_size(1);
+            size_type o = child0->tensor_proper_size(2);
+            size_type p = child0->tensor_proper_size(3);
+            mi.push_back(m); mi.push_back(n);
+            if (o != child1->tensor_proper_size(0) ||
+                p != child1->tensor_proper_size(1))
+              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+                              "tensor-matrix multiplication.");
+          } else ga_syntax_error(expr, pnode->pos,
+                                 "Unauthorized multiplication.");
+          pnode->t.adjust_sizes(mi);
         }
         break;
 
       case GA_DIV:
-        if (pnode->children[1]->tensor_order() > 0)
+        if (child1->tensor_order() > 0)
           ga_syntax_error(expr, pnode->pos, "Only the division by a scalar "
                           "is allowed.");
-        if (pnode->children[1]->node_type == GA_NODE_CONSTANT &&
-            pnode->children[1]->t[0] == scalar_type(0))
+        if (child1->test_function_type)
+          ga_syntax_error(expr, pnode->pos, "Division by test functions "
+                          "is not allowed.");
+        if (child1->node_type == GA_NODE_CONSTANT &&
+            child1->t[0] == scalar_type(0))
           ga_syntax_error(expr, pnode->children[1]->pos, "Division by zero");
+        
+        pnode->t = child0->t;
+        pnode->test_function_type = child0->test_function_type;
+        pnode->name_test0 = child0->name_test0;
+        pnode->name_test1 = child0->name_test1;
         
         if (all_cte) {          
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->t = pnode->children[0]->t;
+          pnode->test_function_type = 0;
           gmm::scale(pnode->t.as_vector(),
                      scalar_type(1) / pnode->children[1]->t[0]);
           tree.clear_children(pnode);
         }
         break;
-
+        
       default:GMM_ASSERT1(false, "Unexpected operation. Internal error.");
       }
       break;
 
     case GA_NODE_C_MATRIX:
-      if (!all_sc) 
-        ga_syntax_error(expr, pnode->pos, "Constant vector/matrix/tensor "
-                        "components should be scalar valued.");
-      if (all_cte) {
+      {
+        if (!all_sc) 
+          ga_syntax_error(expr, pnode->pos, "Constant vector/matrix/tensor "
+                          "components should be scalar valued.");
+        if (!all_primal)
+          ga_syntax_error(expr, pnode->pos, "Test functions are not allowed "
+                          "in constant vector/matrix/tensor components.");
+        
         size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
         size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
-        pnode->node_type = GA_NODE_CONSTANT;
+        if (all_cte) pnode->node_type = GA_NODE_CONSTANT;
         if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
-          pnode->init_scalar_tensor(pnode->children[0]->t[0]);
+          pnode->init_scalar_tensor(child0->t[0]);
         } else if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
           pnode->init_vector_tensor(nbl);
-          for (size_type i = 0; i < nbl; ++i)
-            pnode->t[i] = pnode->children[i]->t[0];
+          if (all_cte)
+            for (size_type i = 0; i < nbl; ++i)
+              pnode->t[i] = pnode->children[i]->t[0];
         } else if (nbc2 == 1 && nbc3 == 1) {
           pnode->init_matrix_tensor(nbl, nbc1);
-          for (size_type i = 0; i < nbl; ++i)
-            for (size_type j = 0; j < nbc1; ++j)
-              pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
+          if (all_cte)
+            for (size_type i = 0; i < nbl; ++i)
+              for (size_type j = 0; j < nbc1; ++j)
+                pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
         } else {
           pnode->init_order_four_tensor(nbl, nbc3, nbc2, nbc1);
           size_type n = 0;
-          for (size_type i = 0; i < nbl; ++i)
-            for (size_type j = 0; j < nbc3; ++j)
-              for (size_type k = 0; k < nbc2; ++k)
-                for (size_type l = 0; l < nbc1; ++l)
-                  pnode->t(i,j,k,l) = pnode->children[n++]->t[0];
+          if (all_cte)
+            for (size_type i = 0; i < nbl; ++i)
+              for (size_type j = 0; j < nbc3; ++j)
+                for (size_type k = 0; k < nbc2; ++k)
+                  for (size_type l = 0; l < nbc1; ++l)
+                    pnode->t(i,j,k,l) = pnode->children[n++]->t[0];
         }
-        tree.clear_children(pnode);
+        if (all_cte) tree.clear_children(pnode);
       }
       break;
 
     case GA_NODE_PARAMS:
-      // Should treat the params of a function and the index on
-      // non constant terms
-      
-      if (pnode->children[0]->node_type == GA_NODE_CONSTANT) {
-        if (pnode->children.size() != pnode->children[0]->tensor_order() + 1)
+      all_cte = (child0->node_type == GA_NODE_CONSTANT);
+
+      // if (child0->node_type == GA_NODE_FUNCTION) {
+      //  TODO;
+      // else
+      {
+        if (pnode->children.size() != child0->tensor_order() + 1)
           ga_syntax_error(expr, pnode->pos, "Bad number of indices.");
         for (size_type i = 1; i < pnode->children.size(); ++i)
           if (pnode->children[i]->node_type != GA_NODE_ALLINDICES &&
@@ -1256,14 +1397,15 @@ namespace getfem {
             ga_syntax_error(expr, pnode->children[i]->pos,
                             "Indices should be constant integers or colon.");
         
-        const bgeot::multi_index &mi0 = pnode->children[0]->t.sizes();
-        bgeot::multi_index mi1(mi0.size()), mi2, indices;
-        for (size_type i = 0; i < mi0.size(); ++i) {
-          if (pnode->children[i+1]->node_type == GA_NODE_ALLINDICES)
-            { mi2.push_back(mi0[i]); indices.push_back(i); mi1[i] = 0; }
-          else {
+        bgeot::multi_index mi1(size0.size()), mi2, indices;
+        for (size_type i = 0; i < child0->tensor_order(); ++i) {
+          if (pnode->children[i+1]->node_type == GA_NODE_ALLINDICES) {
+            mi2.push_back(child0->tensor_proper_size(i));
+            indices.push_back(i);
+            mi1[i] = 0;
+          } else {
             mi1[i] = size_type(::round(pnode->children[i+1]->t[0])-1);
-            if (mi1[i] >= mi0[i])
+            if (mi1[i] >= child0->tensor_proper_size(i))
               ga_syntax_error(expr, pnode->children[i+1]->pos,
                               "Index out of range.");
           }
@@ -1271,18 +1413,25 @@ namespace getfem {
         if (mi2.size() == 3)
           ga_syntax_error(expr, pnode->pos,
                           "Sorry, order three tensors are not allowed.");
+        mi = size0; mi.resize(child0->nb_test_functions());
+        for (size_type i = 0; i < mi2.size(); ++i) mi.push_back(mi2[i]);
+        pnode->t.adjust_sizes(mi);
+        pnode->test_function_type = child0->test_function_type;
+        pnode->name_test0 = child0->name_test0;
+        pnode->name_test1 = child0->name_test1;
         
-        pnode->node_type = GA_NODE_CONSTANT;
-        pnode->t.adjust_sizes(mi2);
-
-        for (bgeot::multi_index mi3(mi2.size()); !mi3.finished(mi2);
-             mi3.incrementation(mi2)) {
-          for (size_type j = 0; j < mi2.size(); ++j) {
-            mi1[indices[j]] = mi3[j];
+        if (all_cte) {
+          pnode->node_type = GA_NODE_CONSTANT;
+          
+          for (bgeot::multi_index mi3(mi2.size()); !mi3.finished(mi2);
+               mi3.incrementation(mi2)) {
+            for (size_type j = 0; j < mi2.size(); ++j) {
+              mi1[indices[j]] = mi3[j];
+            }
+            pnode->t(mi3) = pnode->children[0]->t(mi1);
           }
-          pnode->t(mi3) = pnode->children[0]->t(mi1);
+          tree.clear_children(pnode);
         }
-        tree.clear_children(pnode);
       }
       break;
 
@@ -1291,11 +1440,12 @@ namespace getfem {
     
   }
 
-  //=========================================================================
-  // Small test for debug
-  //=========================================================================
+} // end of namespace getfem
 
-}
+
+//=========================================================================
+// Small test for debug
+//=========================================================================
 
 #include "getfem/getfem_regular_meshes.h"
 
@@ -1308,7 +1458,7 @@ namespace getfem {
     // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [[6, 9]]
     // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3]";
     // std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
-    std::string expr = "Grad_u.Grad_Test_u";
+    std::string expr = "Grad_u.Grad_Test_u + 0*[1;2].Grad_Test_u + Grad_Test_u(1) + [u;1](1)*Test_u";
     // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
     
     ga_variables vars; 
