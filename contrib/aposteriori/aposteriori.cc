@@ -710,7 +710,7 @@ try{
     getfem::mesh mcut_refined;
 
     
-    unsigned NX = p.PARAM.int_value("NX"), nn;
+    unsigned NX = unsigned(p.PARAM.int_value("NX")), nn;
     if (NX < 6) nn = 24;
     else if (NX < 12) nn = 8;
     else if (NX < 30) nn = 3;

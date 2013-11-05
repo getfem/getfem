@@ -952,7 +952,7 @@ bool friction_problem::solve(plain_vector &U) {
   scalar_type dxv = PARAM.real_value("DIRICHLET_X_SPEED",
 				     "Prescribed velocity in x");
   scalar_type x_min = PARAM.real_value("X_MIN");
-  int noisy = PARAM.int_value("NOISY");
+  int noisy = int(PARAM.int_value("NOISY"));
 
 
   plain_vector U0 = U, UT0 = UT, V0(gmm::vect_size(U)), DF(gmm::vect_size(U));
