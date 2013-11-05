@@ -1669,7 +1669,7 @@ namespace getfem {
     context_check(); 
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
       actualize_sizes();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter > niter,
@@ -1684,7 +1684,7 @@ namespace getfem {
     context_check();
     VAR_SET::const_iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
       actualize_sizes();
     if (niter == size_type(-1)) niter = it->second.default_iter;
     GMM_ASSERT1(it->second.n_iter + it->second.n_temp_iter  > niter,
@@ -1699,7 +1699,7 @@ namespace getfem {
     context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
       actualize_sizes();
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
@@ -1715,7 +1715,7 @@ namespace getfem {
     context_check();
     VAR_SET::iterator it = variables.find(name);
     GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
-    if (act_size_to_be_done && it->second.filter != VDESCRFILTER_NO)
+    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
       actualize_sizes();
     it->second.v_num_data = act_counter();
     if (niter == size_type(-1)) niter = it->second.default_iter;
