@@ -4,15 +4,21 @@ disp('with a fictitious domain method and Nitsche s method');
 
 clear all;
 % gf_workspace('clear all');
-NX=20;
-ls_degree = 1; % pour 2 tous les matrices ne sont pas nulles
+NX=100;
+ls_degree = 2; % pour 2 tous les matrices ne sont pas nulles
 R=0.25;
 dirichlet_val = 0;
-gamma0 = 1;
-theta = 0; %Pb theta = 1;
+gamma0 = 1/10;
+theta = -1;
 %N = 2 %la dimension
 penalty_parameter = 10E-4;
 vertical_force = -0.1;
+
+
+%nxy = [100];%  18 26 34 42 50 58 66 74 82 90 98
+ %zz = 1;
+%for zz=1:1:size(nxy,2)
+%NX=nxy(zz);
 
 %definition of fictitious domain's mesh with quadrangles and order 1 of level-set
 
@@ -72,14 +78,14 @@ gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 
 % figure 1 : plot figure
 
-clf; gf_plot_mesh(get(mls1,'cut mesh'));
-hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
+clf; %gf_plot_mesh(get(mls1,'cut mesh'));
+%hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
 
 %gf_plot_mesh(get(mls, 'cut_mesh'), 'curved', 'on');
 %hold on; gf_plot(mf_ls,ULS);
 
-hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
-title('boundary with Dirichlet condition in red');hold off;
+%hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
+%title('boundary with Dirichlet condition in red');hold off;
 
 
 %Finites elements' method on mls1 and mls2
@@ -151,20 +157,20 @@ gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 
 
 
 disp('solve');
-niter= 10; solve=true;
+%niter= 50; solve=true;
 
 % gf_model_get(md, 'test tangent matrix term', 'u1', 'u2', 1e-6, niter, 10.0);
 
-gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
+%gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
 
 % pause;
 
-niter= 50;
+niter= 100;
 
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy');
 
 
-figure(2);
+%figure(2);
 
 U1 = gf_model_get(md, 'variable', 'u1');
 
@@ -193,6 +199,47 @@ gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl2);
 hold off;
 
 
+
+
+% save the reference solution
+% 
+% V1e = VM1;
+% V2e = VM2;
+% gf_mesh_fem_get(mfvm, 'save', 'sol_ref_mesh_fem','with_mesh');
+% save sol_de_reference V1e;
+% save sol_de_reference V2e;
+%  
+% % errors in L2 and H1  
+% 
+% Discrétisation de réf N > n/4
+% % 
+meshref = gf_mesh('load', 'sol_ref_mesh_fem');
+mfref = gf_mesh_fem('load', 'sol_ref_mesh_fem',meshref)
+Vref1 = load('sol_de_reference', 'V1e');
+Vref2 = load('sol_de_reference', 'V2e');
+% mim2 = gf_mesh_im(meshref, 2);
+% Ve1 = gf_compute(mfu1, U1, 'interpolate_on', mfref);
+% Ve2 = gf_compute(mfu2, U2, 'interpolate_on', mfref);
+% n_tot = gf_compute(mfref, Ve1-Vref1.VMsl1, 'L2
+% norm',mim2)+gf_compute(mfref, Ve2-Vref2.VMsl2, 'L2 norm',  mim2);% plutot sur chaque corps
+% n_ref = gf_compute(mfref, Vref1.VMsl1, 'L2 norm',  mim2)+gf_compute(mfref, Vref2.VMsl2, 'L2 norm',  mim2);
+% m_tot = gf_compute(mfref, Ve1-Vref1.VMsl1, 'H1 norm',  mim2)+gf_compute(mfref, Ve2-Vref2.VMsl2, 'H1 norm',  mim2);
+% m_ref = gf_compute(mfref, Vref1.VMsl1, 'H1 norm',  mim2)+gf_compute(mfref, Vref2.VMsl2, 'H1 norm',  mim2);
+% n = 100*n_tot/n_ref
+% m = 100*m_tot/m_ref
+% nddl(zz)= gf_model_get(md,'nbdof')
+% Y1(zz)=n % tab contenant les err en norme L2
+% Y2(zz)=m % tab contenant les err en norme H1
+% end
+% X12=1./nxy; % [1/10 1/16 1/22 1/28 1/34 1/40];
+% 
+% % figure(2);
+% loglog(X12,Y1);
+% polyfit(log(X12),log(Y1),1)
+% 
+% % figure(3);
+% loglog(X12,Y2);
+% polyfit(log(X12),log(Y2),1)
 
 
 
