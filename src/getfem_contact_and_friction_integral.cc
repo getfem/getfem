@@ -4023,7 +4023,7 @@ namespace getfem {
 		    }
                   }
 		  for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(-tGdu1(k,l)-(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici   
+                    res += GPr(i,l)*(tGdu1(k,l)+(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici   
                 }
                 Melem(j, k)=res;
 	      }
@@ -4043,7 +4043,7 @@ namespace getfem {
                       res -= theta*GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tGdu1(k,i);
 						}
 		  for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
+                    res -= GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
                 } 
 		Melem(k, j)=res;				   
 	      }
@@ -4059,7 +4059,7 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) 
 		  for (size_type l = 0; l < N; ++l)
-                    res += GPr(i,l)*(tGdu1(j,l)-(-alpha*tv1(j,l)-(scalar_type(1)-alpha)*n2[l]*tv1n[j])/(gamma))*tv2(k,i);
+                    res -= GPr(i,l)*(tGdu1(j,l)+(alpha*tv1(j,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[j])/(gamma))*tv2(k,i);
 		Melem(k, j)=res;
 	      }
             gmm::scale(Melem,weight);
@@ -4074,7 +4074,7 @@ namespace getfem {
 		scalar_type res(0);
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
-                    res -= GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[k])*tv2(j,i)/(gamma);			
+                    res += GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[k])*tv2(j,i)/(gamma);			
                 } 
 		Melem(j, k)=res;				   
 	      }
@@ -4095,7 +4095,7 @@ namespace getfem {
                   res += theta*gamma*tG1[i] * tGdu1(j, i); 
                   res -= theta*gamma*Pr[i] * tGdu1(j, i);
                 }
-                res +=Pr[i]*tv1(j,i);
+                res -=Pr[i]*tv1(j,i);
               }
               Velem[j]=res;
 	    }
@@ -4109,7 +4109,7 @@ namespace getfem {
             for (size_type j = 0; j < nbdof2; ++j){
 	      scalar_type res(0);
               for (size_type i = 0; i < N; ++i)
-                res -= Pr[i]*tv2(j,i);
+                res += Pr[i]*tv2(j,i);
 	      Velem[j]=res;
 	    }	        
 	    gmm::scale(Velem, weight);
