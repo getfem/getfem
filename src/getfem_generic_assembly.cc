@@ -91,7 +91,7 @@ namespace getfem {
     return true;
   }
 
-  static bool initialized = init_ga_char_type();
+  static bool ga_initialized = init_ga_char_type();
 
   // Get the next token in the string at position 'pos' end return its type
   static GA_TOKEN_TYPE ga_get_token(const std::string &expr,
@@ -203,7 +203,8 @@ namespace getfem {
     GA_NODE_FIXED_SIZE_TEST,
     GA_NODE_TEST,
     GA_NODE_GRAD_TEST,
-    GA_NODE_HESS_TEST};
+    GA_NODE_HESS_TEST,
+    GA_NODE_ZERO};
 
   struct ga_tree_node;
 
@@ -212,19 +213,22 @@ namespace getfem {
   struct ga_tree_node {
     GA_NODE_TYPE node_type;
     base_tensor t;
-    size_type test_function_type; // 0 = no_type function, 1 = first order
+    size_type test_function_type; // -1 = undetermined
+                                  // 0 = no test function, 1 = first order
                                   // 2 = second order, 3 = both
     std::string name_test0, name_test1; // variable names corresponding to
-                              // test functions when test_function_type != 0.
+                              // test functions when test_function_type > 0.
+    size_type qdim0, qdim1;   // Qdims when test_function_type > 0.
     size_type nbc1, nbc2, nbc3, pos;
     std::string name;             // variable/constant/function/operator name 
     GA_TOKEN_TYPE op_type;
-    bool valid;
     pga_tree_node parent; // only one for the moment ...
     std::vector<pga_tree_node> children;
     
-    inline size_type nb_test_functions(void) const
-    { return test_function_type - (test_function_type >= 2 ? 1 : 0); }
+    inline size_type nb_test_functions(void) const {
+      if (test_function_type == size_type(-1)) return 0;
+      return test_function_type - (test_function_type >= 2 ? 1 : 0);
+    }
 
     inline size_type tensor_order(void) const
     { return t.sizes().size() - nb_test_functions(); }
@@ -248,6 +252,8 @@ namespace getfem {
                              test0 == 3 || test1 == 3))
         ga_syntax_error(expr, pos, "Incompatibility of test functions "
                         " in product.");
+      GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
+                  "internal error");
 
       test_function_type = test0 + test1;
       size_type st = nb_test_functions();
@@ -266,14 +272,22 @@ namespace getfem {
       t.adjust_sizes(mi);
       
       if (n0->name_test0.size())
-        name_test0 = n0->name_test0;
+        { name_test0 = n0->name_test0; qdim0 = n0->qdim0; }
       else
-        name_test0 = n1->name_test0;
+        { name_test0 = n1->name_test0; qdim0 = n1->qdim0; }
       
       if (n0->name_test1.size())
-        name_test1 = n0->name_test1;
+        { name_test1 = n0->name_test1; qdim1 = n0->qdim1; }
       else
-        name_test1 = n1->name_test1;
+        { name_test1 = n1->name_test1; qdim1 = n1->qdim1; }
+    }
+
+    bool tensor_is_zero(void) {
+      if (node_type == GA_NODE_ZERO) return true;
+      if (node_type != GA_NODE_CONSTANT) return false;
+      for (size_type i = 0; i < t.size(); ++i)
+        if (t[i] != scalar_type(0)) return false;
+      return true;
     }
     
     void init_scalar_tensor(scalar_type v) {
@@ -290,29 +304,30 @@ namespace getfem {
       t.adjust_sizes(bgeot::multi_index(n,m));
       test_function_type = 0;
     }
-    void init_order_three_tensor(size_type n, size_type m,  size_type l) {
+    void init_third_order_tensor(size_type n, size_type m,  size_type l) {
       t.adjust_sizes(bgeot::multi_index(n,m,l));
       test_function_type = 0;
     }
-    void init_order_four_tensor(size_type n, size_type m,
+    void init_fourth_order_tensor(size_type n, size_type m,
                                 size_type l, size_type k) {
       t.adjust_sizes(bgeot::multi_index(n,m,l,k));
       test_function_type = 0;
     }
 
-    ga_tree_node(void): node_type(GA_NODE_VOID), test_function_type(0),
-                        valid(true)  {}
+    ga_tree_node(void): node_type(GA_NODE_VOID), test_function_type(-1),
+                        qdim0(0), qdim1(0)  {}
     ga_tree_node(GA_NODE_TYPE ty, size_type p)
-      : node_type(ty), test_function_type(0), pos(p), valid(true) {}
+      : node_type(ty), test_function_type(-1), qdim0(0), qdim1(0), pos(p) {}
     ga_tree_node(scalar_type v, size_type p)
-      : node_type(GA_NODE_CONSTANT), test_function_type(0), pos(p), valid(true)
+      : node_type(GA_NODE_CONSTANT), test_function_type(-1), qdim0(0),
+        qdim1(0), pos(p)
     { init_scalar_tensor(v); }
     ga_tree_node(const char *n, size_type l, size_type p)
-      : node_type(GA_NODE_NAME), test_function_type(0), pos(p),
-        name(n, l), valid(true) {}
+      : node_type(GA_NODE_NAME), test_function_type(-1), qdim0(0), qdim1(0),
+        pos(p), name(n, l) {}
     ga_tree_node(GA_TOKEN_TYPE op, size_type p)
-      : node_type(GA_NODE_OP), test_function_type(0), pos(p),
-        op_type(op), valid(true) {}
+      : node_type(GA_NODE_OP), test_function_type(-1), qdim0(0), qdim1(0),
+        pos(p), op_type(op) {}
     
   };
 
@@ -456,13 +471,10 @@ namespace getfem {
     }
 
     void clear_node(pga_tree_node pnode) {
-      if (pnode->valid) {
-        pnode->valid = false;
-        for (size_type i = 0; i < pnode->children.size(); ++i)
-          clear_node(pnode->children[i]);
-        delete pnode;
-        current_node = 0;
-      }
+      for (size_type i = 0; i < pnode->children.size(); ++i)
+        clear_node(pnode->children[i]);
+      delete pnode;
+      current_node = 0;
     }
 
     void clear(void)
@@ -474,6 +486,22 @@ namespace getfem {
       pnode->children.resize(0);
     }
 
+    void replace_node_by_child(pga_tree_node pnode, size_type i) {
+      GMM_ASSERT1(i < pnode->children.size(), "Internal error");
+      pga_tree_node child = pnode->children[i];
+      if (pnode->parent) {
+        bool found = false;
+        for (size_type j = 0; j < pnode->parent->children.size(); ++j)
+          if (pnode->parent->children[j] == pnode)
+            { pnode->parent->children[j] = child; found = true; }
+        GMM_ASSERT1(found, "Internal error");
+      } else root = child;
+      current_node = 0;
+      child->parent = pnode->parent;
+      for (size_type j = 0; j < pnode->children.size(); ++j)
+        if (j != i) clear_node(pnode->children[j]);
+      delete pnode;
+    }
 
     ga_tree(void) : root(0), current_node(0) {}
     ~ga_tree() { clear(); }
@@ -486,6 +514,67 @@ namespace getfem {
       verify_tree(pnode->children[i], pnode);
   }
 
+  static void ga_print_constant_tensor(pga_tree_node pnode) {
+    size_type nt = pnode->nb_test_functions(); // for printing zero tensors
+    switch (pnode->tensor_order()) {
+    case 0:
+      cout << pnode->t[0];
+      break;
+    case 1:
+      cout << "[";
+      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+        if (i != 0) cout << "; ";
+        cout << (nt ? scalar_type(0) : pnode->t[i]);
+      }
+      cout << "]";
+      break;
+    case 2:
+      cout << "[";
+      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+        if (i != 0) cout << "; ";
+        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+          if (j != 0) cout << ", ";
+          cout << (nt ? scalar_type(0) : pnode->t(i,j));
+        }
+      }
+      cout << "]";
+      break;
+    case 3:
+      cout << "[";
+      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+        if (i != 0) cout << ",, ";
+        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+          if (j != 0) cout << "; "; 
+          for (size_type k = 0; k < pnode->t.size(2); ++k) {
+            if (k != 0) cout << ", "; 
+            cout << (nt ? scalar_type(0) : pnode->t(i,j,k));
+          }
+        }
+      }
+      cout << "]";
+      break;
+    case 4:
+      cout << "[";
+      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+        if (i != 0) cout << ";; ";
+        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+          if (j != 0) cout << ",, "; 
+          for (size_type k = 0; k < pnode->t.size(2); ++k) {
+            if (k != 0) cout << "; "; 
+            for (size_type l = 0; l < pnode->t.size(3); ++l) {
+              if (l != 0) cout << ", ";
+              cout << (nt ? scalar_type(0) : pnode->t(i,j,k,l));
+            }
+          }
+        }
+      }
+      cout << "]";
+      break;
+    default: GMM_ASSERT1(false, "Invalid tensor dimension");
+    }
+    GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+  }
+
   static void ga_print_node(pga_tree_node pnode) {
     
     switch(pnode->node_type) {
@@ -493,14 +582,20 @@ namespace getfem {
       {
         bool par = (pnode->parent &&
                     pnode->parent->node_type == GA_NODE_OP &&
-                    ga_operator_priorities[pnode->op_type]
-                    < ga_operator_priorities[pnode->parent->op_type]);
+                    (ga_operator_priorities[pnode->op_type] >= 2 ||
+                     ga_operator_priorities[pnode->op_type]
+                     < ga_operator_priorities[pnode->parent->op_type]));
         if (par) cout << "(";
         if (pnode->op_type == GA_UNARY_MINUS) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           cout << "-"; ga_print_node(pnode->children[0]);
         } else {
           GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
+          if (pnode->op_type == GA_MULT &&
+              (pnode->test_function_type == size_type(-1) ||
+               (pnode->children[0]->tensor_order() == 4 &&
+                pnode->children[1]->tensor_order() == 2)))
+            { par = true; cout << "("; }
           ga_print_node(pnode->children[0]);
           switch (pnode->op_type) {
           case GA_PLUS: cout << "+"; break;
@@ -526,46 +621,35 @@ namespace getfem {
     case GA_NODE_TEST: cout << "Test_" << pnode->name; break;
     case GA_NODE_GRAD_TEST: cout << "Grad_Test_" << pnode->name; break;
     case GA_NODE_HESS_TEST: cout << "Hess_Test_" << pnode->name; break;
-
-    case GA_NODE_CONSTANT:
-      switch (pnode->tensor_order()) {
-      case 0:
-        cout << pnode->t[0];
-        break;
-      case 1:
-        cout << "[[";
-        for (size_type i = 0; i < pnode->t.size(0); ++i)
-          { if (i != 0) cout << "; "; cout << pnode->t[i]; }
-        cout << "]]";
-        break;
-      case 2:
-        cout << "[[";
-        for (size_type i = 0; i < pnode->t.size(0); ++i) {
-          if (i != 0) cout << "; ";
-          for (size_type j = 0; j < pnode->t.size(1); ++j)
-            { if (j != 0) cout << ", "; cout << pnode->t(i,j); }
+    case GA_NODE_ZERO:
+      GMM_ASSERT1(pnode->test_function_type != size_type(-1),
+                  "Internal error");
+      if (pnode->test_function_type) cout << "(";
+      ga_print_constant_tensor(pnode);
+      if (pnode->test_function_type & 1) {
+        GMM_ASSERT1(pnode->qdim0 > 0, "Internal error");
+        if (pnode->qdim0 == 1)
+          cout << "*Test_" << pnode->name_test0;
+        else {
+          cout << "*([ 0";
+          for (size_type i = 1; i < pnode->qdim0; ++i) cout << ", 0";
+          cout << "].Test_" << pnode->name_test0 << ")";
         }
-        cout << "]]";
-        break;
-      case 4:
-        cout << "[[";
-        for (size_type i = 0; i < pnode->t.size(0); ++i) {
-          if (i != 0) cout << ";; ";
-          for (size_type j = 0; j < pnode->t.size(1); ++j) {
-            if (j != 0) cout << ",, "; 
-            for (size_type k = 0; k < pnode->t.size(2); ++k) {
-              if (k != 0) cout << "; "; 
-              for (size_type l = 0; l < pnode->t.size(3); ++l)
-                { if (l != 0) cout << ", "; cout << pnode->t(i,j,k,l); }
-            }
-          }
-        }
-        cout << "]]";
-        break;
-      default: GMM_ASSERT1(false, "Invalid tensor dimension");
       }
-      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      if (pnode->test_function_type & 2) {
+        GMM_ASSERT1(pnode->qdim1 > 0, "Internal error");
+        if (pnode->qdim1 == 1)
+          cout << "*Test2_" << pnode->name_test1;
+        else {
+          cout << "*([ 0";
+          for (size_type i = 1; i < pnode->qdim1; ++i) cout << ", 0";
+          cout << "].Test2_" << pnode->name_test1 << ")";
+        }
+      }
+      if (pnode->test_function_type) cout << ")";
       break;
+
+    case GA_NODE_CONSTANT: ga_print_constant_tensor(pnode); break;
 
     case GA_NODE_ALLINDICES:
       cout << ":";
@@ -606,7 +690,10 @@ namespace getfem {
       cout << "]";
       break;
 
-    default: cout << "Invalid or not taken into account node type"; break;
+    default:
+      cout << "Invalid or not taken into account node type "
+           << pnode->node_type;
+      break;
     }
   }
  
@@ -621,7 +708,7 @@ namespace getfem {
   // Syntax analysis for the generic assembly langage
   //=========================================================================
              
-  // Read a term with a pushdown automaton.
+  // Read a term with an (implicit) pushdown automaton.
   static GA_TOKEN_TYPE ga_read_term(const std::string &expr,
                                     size_type &pos, ga_tree &tree) {
     size_type token_pos, token_length;
@@ -883,9 +970,6 @@ namespace getfem {
   // Semantic analysis, tree simplification and tree enrichment
   //=========================================================================
 
-  // TODO: should also detect and eliminate void operations such as
-  //       0+expr, 1*expr, 1@expr, I*expr, 0*expr (all elimitate in that case)
-  //       0.expr, 0:expr, 0@expr ...
   static void ga_node_analysis(const std::string &expr, ga_tree &tree,
                                const ga_variables &vars,
                                pga_tree_node pnode) {
@@ -895,6 +979,8 @@ namespace getfem {
       ga_node_analysis(expr, tree, vars, pnode->children[i]);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && pnode->children[i]->t.size() == 1;
+      GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
+                  "internal error on child " << i);
       all_primal = all_primal && (pnode->children[i]->test_function_type == 0);
     }
     
@@ -909,6 +995,8 @@ namespace getfem {
 
     switch (pnode->node_type) {
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_VAL:
+      pnode->test_function_type = 0; break;
+
     case GA_NODE_GRAD: case GA_NODE_HESS: case GA_NODE_FIXED_SIZE_TEST:
     case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST: break;
 
@@ -965,15 +1053,15 @@ namespace getfem {
               else
                 pnode->init_matrix_tensor(q, n);
               break;
-            case 2: // hessian
+            case 2: // Hessian
               // TODO: sortir une instruction d'évaluation de Hessien
               pnode->node_type = GA_NODE_HESS;
               if (q == 1 && n == 1)
                 pnode->init_scalar_tensor(scalar_type(0));
               else if (q == 1)
-                pnode->init_vector_tensor(n*n);
+                pnode->init_matrix_tensor(n,n);
               else
-                pnode->init_matrix_tensor(q, n*n);
+                pnode->init_third_order_tensor(q, n, n);
               break;
             }
           }
@@ -982,14 +1070,19 @@ namespace getfem {
             ga_syntax_error(expr, pnode->pos, "Test functions of constant are "
                             "not allowed.");
           pnode->name = name;
-          if (test == 1)
+          if (test == 1) {
             pnode->name_test0 = name;
-          else
+            pnode->qdim0
+              = (mf ? vars.qdim(name) : gmm::vect_size(vars.value(name)));
+          } else {
             pnode->name_test1 = name;
+            pnode->qdim1
+              = (mf ? vars.qdim(name) : gmm::vect_size(vars.value(name)));
+          }
           
           if (!mf) {
             if (val_grad_or_hess)
-              ga_syntax_error(expr, pnode->pos, "Gradient or hessian cannot "
+              ga_syntax_error(expr, pnode->pos, "Gradient or Hessian cannot "
                               "be evaluated for fixed size variables.");
             pnode->node_type = GA_NODE_FIXED_SIZE_TEST;
             // TODO: Instruction : mise à l'identité du tenseur (init).
@@ -1029,7 +1122,7 @@ namespace getfem {
               else if (q == 1)
                 pnode->init_matrix_tensor(1,n);
               else
-                pnode->init_order_three_tensor(1,q,n);
+                pnode->init_third_order_tensor(1,q,n);
               pnode->test_function_type = test;
               break;
             case 2: // hessian
@@ -1040,9 +1133,9 @@ namespace getfem {
               if (q == 1 && n == 1)
                 pnode->init_vector_tensor(1);
               else if (q == 1)
-                pnode->init_matrix_tensor(1,n*n);
+                pnode->init_third_order_tensor(1,n,n);
               else
-                pnode->init_order_three_tensor(1,q,n*n);
+                pnode->init_fourth_order_tensor(1,q,n,n);
               pnode->test_function_type = test;
               break;
             }
@@ -1065,9 +1158,6 @@ namespace getfem {
           for (size_type i = c_size; i < size1.size(); ++i)
             if (size1[i] != 1) compatible = false;
 
-          cout << "size0 = " << size0 << endl;
-          cout << "size1 = " << size1 << endl;
-          
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
                 child0->name_test0.compare(child1->name_test0) ||
@@ -1082,6 +1172,7 @@ namespace getfem {
                             "incompatible expressions or of different sizes");
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
+            pnode->test_function_type = 0;
             pnode->t = pnode->children[0]->t;
             if (pnode->op_type == GA_MINUS)
               pnode->t -= pnode->children[1]->t;
@@ -1093,6 +1184,14 @@ namespace getfem {
             pnode->test_function_type = child1->test_function_type;
             pnode->name_test0 = child1->name_test0;
             pnode->name_test1 = child1->name_test1;
+            pnode->qdim0 = child1->qdim0;
+            pnode->qdim1 = child1->qdim1;
+
+            // simplification if one of the two operand is constant and zero
+            if (child0->tensor_is_zero())
+              tree.replace_node_by_child(pnode, 1);
+            else if (child1->tensor_is_zero())
+              tree.replace_node_by_child(pnode, 0);
           }
         }
         break;
@@ -1102,11 +1201,15 @@ namespace getfem {
         pnode->test_function_type = child0->test_function_type;
         pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
+        pnode->qdim0 = child0->qdim0;
+        pnode->qdim1 = child0->qdim1;
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->test_function_type = 0;
           gmm::scale(pnode->t.as_vector(), scalar_type(-1));
           tree.clear_children(pnode);
+        } else if (child0->node_type == GA_NODE_ZERO) {
+          tree.replace_node_by_child(pnode, 0);
         }
         break;
 
@@ -1128,6 +1231,11 @@ namespace getfem {
             tree.clear_children(pnode);
           } else {
             pnode->mult_test(child0, child1, expr);
+            if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
+              gmm::clear(pnode->t.as_vector());
+              pnode->node_type = GA_NODE_ZERO;
+              tree.clear_children(pnode);
+            }
           }
         }
         break;
@@ -1155,6 +1263,11 @@ namespace getfem {
             tree.clear_children(pnode);
           } else {
             pnode->mult_test(child0, child1, expr);
+            if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
+              gmm::clear(pnode->t.as_vector());
+              pnode->node_type = GA_NODE_ZERO;
+              tree.clear_children(pnode);
+            }
           }
         }
         break;
@@ -1162,6 +1275,7 @@ namespace getfem {
       case GA_TMULT:
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
+          pnode->test_function_type = 0;
           if (child0->t.size() == 1 && child1->t.size() == 1) {
             pnode->init_scalar_tensor
               (child0->t[0] * child1->t[0]);
@@ -1172,7 +1286,7 @@ namespace getfem {
             pnode->t = child0->t;
             gmm::scale(pnode->t.as_vector(), scalar_type(child1->t[0]));
           } else {
-            if (dim0+dim1 == 3 || dim0+dim1 > 4)
+            if (dim0+dim1 > 4)
               ga_syntax_error(expr, pnode->pos, "Unauthorized "
                               "tensor multiplication.");
             for (size_type i = 0; i < dim0; ++i)
@@ -1199,7 +1313,7 @@ namespace getfem {
               for (size_type i = 0; i < dim0; ++i)
                 mi.push_back(child0->tensor_proper_size(i));
             } else {
-              if (dim0+dim1 == 3 || dim0+dim1 > 4)
+              if (dim0+dim1 > 4)
                 ga_syntax_error(expr, pnode->pos, "Unauthorized "
                                 "tensor multiplication.");
               for (size_type i = 0; i < dim0; ++i)
@@ -1209,13 +1323,18 @@ namespace getfem {
             }
             pnode->t.adjust_sizes(mi);
           }
+          if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
+            gmm::clear(pnode->t.as_vector());
+            pnode->node_type = GA_NODE_ZERO;
+            tree.clear_children(pnode);
+          }
         }
         break;
         
       case GA_MULT:
-                
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
+          pnode->test_function_type = 0;
           if (child0->tensor_proper_size() == 1 &&
               child1->tensor_proper_size() == 1) {
             pnode->init_scalar_tensor(child0->t[0]*child1->t[0]);
@@ -1309,6 +1428,18 @@ namespace getfem {
           } else ga_syntax_error(expr, pnode->pos,
                                  "Unauthorized multiplication.");
           pnode->t.adjust_sizes(mi);
+          // Simplifications
+          if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
+            gmm::clear(pnode->t.as_vector());
+            pnode->node_type = GA_NODE_ZERO;
+            tree.clear_children(pnode);
+          } else if (child0->node_type == GA_NODE_CONSTANT &&
+                     child0->t.size() == 1 && child0->t[0] == scalar_type(1)) {
+            tree.replace_node_by_child(pnode, 1);
+          } else if (child1->node_type == GA_NODE_CONSTANT &&
+                     child1->t.size() == 1 && child1->t[0] == scalar_type(1)) {
+            tree.replace_node_by_child(pnode, 0);
+          }
         }
         break;
 
@@ -1327,6 +1458,8 @@ namespace getfem {
         pnode->test_function_type = child0->test_function_type;
         pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
+        pnode->qdim0 = child0->qdim0;
+        pnode->qdim1 = child0->qdim1;
         
         if (all_cte) {          
           pnode->node_type = GA_NODE_CONSTANT;
@@ -1335,6 +1468,14 @@ namespace getfem {
           gmm::scale(pnode->t.as_vector(),
                      scalar_type(1) / pnode->children[1]->t[0]);
           tree.clear_children(pnode);
+        }
+        if (child0->tensor_is_zero()) {
+          gmm::clear(pnode->t.as_vector());
+          pnode->node_type = GA_NODE_ZERO;
+          tree.clear_children(pnode);
+        } else if (child1->node_type == GA_NODE_CONSTANT &&
+                   child1->t.size() == 1 && child1->t[0] == scalar_type(1)) {
+          tree.replace_node_by_child(pnode, 0);
         }
         break;
         
@@ -1354,6 +1495,7 @@ namespace getfem {
         size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
         size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
         if (all_cte) pnode->node_type = GA_NODE_CONSTANT;
+        pnode->test_function_type = 0;
         if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
           pnode->init_scalar_tensor(child0->t[0]);
         } else if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
@@ -1368,7 +1510,7 @@ namespace getfem {
               for (size_type j = 0; j < nbc1; ++j)
                 pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
         } else {
-          pnode->init_order_four_tensor(nbl, nbc3, nbc2, nbc1);
+          pnode->init_fourth_order_tensor(nbl, nbc3, nbc2, nbc1);
           size_type n = 0;
           if (all_cte)
             for (size_type i = 0; i < nbl; ++i)
@@ -1410,19 +1552,17 @@ namespace getfem {
                               "Index out of range.");
           }
         }
-        if (mi2.size() == 3)
-          ga_syntax_error(expr, pnode->pos,
-                          "Sorry, order three tensors are not allowed.");
         mi = size0; mi.resize(child0->nb_test_functions());
         for (size_type i = 0; i < mi2.size(); ++i) mi.push_back(mi2[i]);
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
         pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
+        pnode->qdim0 = child0->qdim0;
+        pnode->qdim1 = child0->qdim1;
         
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
-          
           for (bgeot::multi_index mi3(mi2.size()); !mi3.finished(mi2);
                mi3.incrementation(mi2)) {
             for (size_type j = 0; j < mi2.size(); ++j) {
@@ -1431,6 +1571,12 @@ namespace getfem {
             pnode->t(mi3) = pnode->children[0]->t(mi1);
           }
           tree.clear_children(pnode);
+        } else {
+          if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
+            gmm::clear(pnode->t.as_vector());
+            pnode->node_type = GA_NODE_ZERO;
+            tree.clear_children(pnode);
+          }
         }
       }
       break;
@@ -1454,12 +1600,14 @@ namespace getfem {
   void lex_analysis(void) {
 
     // std::string expr="([1,2;3,4]@[1,2;1,2])(:,2,1,1)(1)+ [1,2;3,4](1,:)(2)"; // should give 4
-    // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [[4, 8; 12, 13]]
-    // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [[6, 9]]
-    // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3]";
+    // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [4, 8; 12, 13]
+    // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [6, 9]
+    // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3](:,:,:,2)";
+    std::string expr="[1,1;1,2]@[2;3]";
     // std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
-    std::string expr = "Grad_u.Grad_Test_u + 0*[1;2].Grad_Test_u + Grad_Test_u(1) + [u;1](1)*Test_u";
+    // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
     // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
+    // std::string expr="[1,2;3,4]@[1,2;1,2]*(Grad_u@Grad_u)/4 + [1,2;3,1]*[1;1](1)";
     
     ga_variables vars; 
 
@@ -1467,6 +1615,8 @@ namespace getfem {
     vars.add_fixed_size_constant("a", a);
     model_real_plain_vector b(2); b[0] = 3.0; b[1] = 6.0;
     vars.add_fixed_size_constant("b", b);
+    model_real_plain_vector c(1); c[0] = 1.0;
+    vars.add_fixed_size_constant("c", c);
     
     getfem::mesh m;
 
