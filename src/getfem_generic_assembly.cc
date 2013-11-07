@@ -20,10 +20,32 @@
  
 ===========================================================================*/
 
+/** 
+    Intel C++ keeps hyperbolic trygonometric functions 
+    in <mathimf.h>, while it's incompatible with <math.h>
+*/
+#ifdef __INTEL_COMPILER
+  #include <limits>
+  #define INFINITY std::numeric_limits<scalar_type>::infinity()
+  double asinh__(double);
+  double acosh__(double);
+  double atanh__(double);
+  double acosh__(double);
+  double erf__(double);
+  double erfc__(double);
+  #define asinh asinh__
+  #define atanh atanh__
+  #define acosh acosh__
+  #define erf   erf__
+  #define erfc  erfc__
+#endif 
+
 #include "getfem/getfem_models.h"
 #include "gmm/gmm_blas.h"
 #include <iomanip>
 #include "getfem/getfem_omp.h"
+
+
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
 		       const int *incx, double *y, const int *incy);
