@@ -30,7 +30,6 @@
   double asinh__(double);
   double acosh__(double);
   double atanh__(double);
-  double acosh__(double);
   double erf__(double);
   double erfc__(double);
   #define asinh asinh__
