@@ -170,7 +170,7 @@ namespace getfem {
   // Tree structure for syntax analysis
   //=========================================================================
 
-  static void ga_syntax_error(const std::string &expr, size_type pos,
+  static void ga_throw_error(const std::string &expr, size_type pos,
                               const std::string &msg) {
     int first = std::max(0, int(pos)-40);
     int last = std::min(int(pos)+20, int(expr.size()));
@@ -192,6 +192,7 @@ namespace getfem {
   enum GA_NODE_TYPE {
     GA_NODE_VOID = 0,
     GA_NODE_OP,
+    GA_NODE_PREDEF_FUNC,
     GA_NODE_CONSTANT,
     GA_NODE_NAME,
     GA_NODE_PARAMS,
@@ -250,7 +251,7 @@ namespace getfem {
       size_type test0 = n0->test_function_type, test1 = n1->test_function_type;
       if (test0 && test1 && (test0 == test1 ||
                              test0 == 3 || test1 == 3))
-        ga_syntax_error(expr, pos, "Incompatibility of test functions "
+        ga_throw_error(expr, pos, "Incompatibility of test functions "
                         " in product.");
       GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
                   "internal error");
@@ -621,6 +622,7 @@ namespace getfem {
     case GA_NODE_TEST: cout << "Test_" << pnode->name; break;
     case GA_NODE_GRAD_TEST: cout << "Grad_Test_" << pnode->name; break;
     case GA_NODE_HESS_TEST: cout << "Hess_Test_" << pnode->name; break;
+    case GA_NODE_PREDEF_FUNC: cout << pnode->name; break;
     case GA_NODE_ZERO:
       GMM_ASSERT1(pnode->test_function_type != size_type(-1),
                   "Internal error");
@@ -728,7 +730,7 @@ namespace getfem {
             char *endptr; const char *nptr = &(expr[token_pos]);
             scalar_type s_read = ::strtod(nptr, &endptr);
             if (endptr == nptr)
-              ga_syntax_error(expr, token_pos, "Bad numeric format.");
+              ga_throw_error(expr, token_pos, "Bad numeric format.");
             tree.add_scalar(s_read, token_pos);
           }
           state = 2; break;
@@ -752,7 +754,7 @@ namespace getfem {
             GA_TOKEN_TYPE r_type;
             r_type = ga_read_term(expr, pos, sub_tree);
             if (r_type != GA_RPAR)
-              ga_syntax_error(expr, pos-1, "Unbalanced parenthesis.");
+              ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
             tree.add_sub_tree(sub_tree);
             state = 2;
           }
@@ -782,7 +784,7 @@ namespace getfem {
                 if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
                     (founddcomma && !founddsemi) ||
                     (!founddcomma && founddsemi))
-                  ga_syntax_error(expr, pos-1, "Bad constant "
+                  ga_throw_error(expr, pos-1, "Bad constant "
                                   "vector/matrix/tensor format. ");
                 tree.current_node->nbc1 = nbc1;
                 if (founddcomma) {
@@ -793,7 +795,7 @@ namespace getfem {
                 }
                 break;
               default:
-                ga_syntax_error(expr, pos-1, "The constant "
+                ga_throw_error(expr, pos-1, "The constant "
                                 "vector/matrix/tensor components should be "
                                 "separated by ',', ';', ',,' and ';;' and "
                                 "be ended by ']'.");
@@ -807,7 +809,7 @@ namespace getfem {
           }
           break;
 
-        default: ga_syntax_error(expr, token_pos, "Unexpected token.");
+        default: ga_throw_error(expr, token_pos, "Unexpected token.");
         }
         break;
 
@@ -828,7 +830,7 @@ namespace getfem {
             for(;;) {
               r_type = ga_read_term(expr, pos, sub_tree);
               if (r_type != GA_RPAR && r_type != GA_COMMA)
-                ga_syntax_error(expr, pos-((r_type != GA_END)?1:0),
+                ga_throw_error(expr, pos-((r_type != GA_END)?1:0),
                                "Parameters should be separated "
                                "by ',' and parameter list ended by ')'.");
               tree.add_sub_tree(sub_tree);
@@ -838,7 +840,7 @@ namespace getfem {
           }
           break;
           
-        default: ga_syntax_error(expr, token_pos, "Unexpected token.");
+        default: ga_throw_error(expr, token_pos, "Unexpected token.");
         }
         break;
       }
@@ -853,12 +855,253 @@ namespace getfem {
     tree.clear();
     GA_TOKEN_TYPE t = ga_read_term(expr, pos, tree);
     switch (t) {
-    case GA_RPAR: ga_syntax_error(expr, pos-1, "Unbalanced parenthesis.");
-    case GA_RBRACKET: ga_syntax_error(expr, pos-1, "Unbalanced braket.");
+    case GA_RPAR: ga_throw_error(expr, pos-1, "Unbalanced parenthesis.");
+    case GA_RBRACKET: ga_throw_error(expr, pos-1, "Unbalanced braket.");
     case GA_END: break;
-    default: ga_syntax_error(expr, pos-1, "Unexpected token.");
+    default: ga_throw_error(expr, pos-1, "Unexpected token.");
     }
   }
+
+  //=========================================================================
+  // Structure dealing with predefined scalar functions.
+  //=========================================================================
+  
+  typedef scalar_type (*pscalar_func_onearg)(scalar_type);
+  typedef scalar_type (*pscalar_func_twoargs)(scalar_type, scalar_type);
+  struct ga_interval {
+    scalar_type min, max;
+    ga_interval(void) { min = -INFINITY; max = +INFINITY; }
+    ga_interval(scalar_type a, scalar_type b) { min = a; max = b; }
+  };
+ 
+
+  struct ga_predef_function {
+    size_type ftype; // 0 : C++ function with a derivative
+                     // 1 : C++ function with an expression to be derived
+                     // 2 : function defined by an expression
+    size_type nbargs;         // One or two arguments
+    pscalar_func_onearg f1;   // Function pointer for a one argument function
+    pscalar_func_twoargs f2;  // Function pointer for a two arguments function
+    std::string expr;
+    ga_interval support1, support2;
+    ga_interval domain1, domain2;  // Domain of definition of the function
+    std::string derivative1, derivative2;
+    
+    ga_predef_function(void) {}
+    ga_predef_function(pscalar_func_onearg f, const ga_interval &s,
+                       const ga_interval &dom, const std::string &der)
+      : ftype(0), nbargs(1), f1(f), support1(s), domain1(dom),
+        derivative1(der) {}
+    ga_predef_function(pscalar_func_onearg f, const std::string &e,
+                       const ga_interval &s, const ga_interval &dom)
+      : ftype(1), nbargs(1), f1(f), expr(e), support1(s), domain1(dom) {}
+    ga_predef_function(pscalar_func_twoargs f, const ga_interval &s1,
+                       const ga_interval &s2, const ga_interval &dom1,
+                       const ga_interval &dom2, const std::string &der1,
+                       const std::string &der2)
+      : ftype(0), nbargs(2), f2(f), support1(s1), support2(s2), domain1(dom1),
+        domain2(dom2), derivative1(der1), derivative2(der2) {}
+    ga_predef_function(pscalar_func_twoargs f, const std::string &e,
+                       const ga_interval &s1, const ga_interval &s2,
+                       const ga_interval &dom1, const ga_interval &dom2)
+      : ftype(0), nbargs(2), f2(f), expr(e), support1(s1), support2(s2),
+        domain1(dom1), domain2(dom2) {}
+  };
+
+  static scalar_type ga_Heaveside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
+  static scalar_type ga_pos_part(scalar_type t) { return (t >= 0.) ? t : 0.; }
+  static scalar_type ga_neg_part(scalar_type t) { return (t >= 0.) ? 0. : -t; }
+  static scalar_type ga_sqr(scalar_type t) { return t*t; }
+  static scalar_type ga_max(scalar_type t, scalar_type u)
+  { return std::max(t,u); }
+  static scalar_type ga_min(scalar_type t, scalar_type u)
+  { return std::min(t,u); }
+  static scalar_type ga_abs(scalar_type t) { return gmm::abs(t); }
+  static scalar_type ga_sign(scalar_type t) { return (t >= 0.) ? 1.: -1.; }
+  
+  // Derivatives of predefined functions
+  static scalar_type ga_der_sqrt(scalar_type t) { return -0.5/sqrt(t); }
+  static scalar_type ga_der_sqr(scalar_type t) { return 2*t; }
+  static scalar_type ga_der_pow1(scalar_type t, scalar_type u)
+  { return u*pow(t,u-1.); }
+  static scalar_type ga_der_pow2(scalar_type t, scalar_type u)
+  { return pow(t,u)*log(gmm::abs(t)); }
+  static scalar_type ga_der_log(scalar_type t) { return 1./t; }
+  static scalar_type ga_der_log10(scalar_type t) { return 1./(t*log(10.)); }
+  static scalar_type ga_der_tanh(scalar_type t)
+  { return 1.-gmm::sqr(tanh(t)); }
+  static scalar_type ga_der_asinh(scalar_type t)
+  { return 1./(sqrt(t*t+1.)); }
+  static scalar_type ga_der_acosh(scalar_type t)
+  { return 1./(sqrt(t*t-1.)); }
+  static scalar_type ga_der_atanh(scalar_type t)
+  { return 1./(1.-t*t); }
+  static scalar_type ga_der_cos(scalar_type t)
+  { return -sin(t); }
+  static scalar_type ga_der_tan(scalar_type t)
+  { return 1.+gmm::sqr(tan(t)); }
+  static scalar_type ga_der_asin(scalar_type t)
+  { return 1./(sqrt(1.-t*t)); }
+  static scalar_type ga_der_acos(scalar_type t)
+  { return -1./(sqrt(1.-t*t)); }
+  static scalar_type ga_der_atan(scalar_type t)
+  { return 1./(1.+t*t); }
+  static scalar_type ga_der_erf(scalar_type t)
+  { return exp(-t*t)*2./sqrt(M_PI); }
+  static scalar_type ga_der_erfc(scalar_type t)
+  { return -exp(-t*t)*2./sqrt(M_PI); }
+  static scalar_type ga_der_heaviside(scalar_type t)
+  { return (t == 0) ? INFINITY : 0.; }
+  static scalar_type ga_der_neg_part(scalar_type t)
+  { return (t >= 0) ? 0. : -1.; }
+  static scalar_type ga_der_max1(scalar_type t, scalar_type u)
+  { return (t-u >= 0) ? 1. : 0.; }
+  static scalar_type ga_der_max2(scalar_type t, scalar_type u)
+  { return (u-t >= 0) ? 1. : 0.; }
+
+  
+
+  typedef std::map<std::string, ga_predef_function> ga_predef_function_tab;
+
+  static ga_predef_function_tab PREDEF_FUNCTIONS;
+
+  bool init_predef_functions(void) {
+    ga_interval R;
+    // Power functions and their derivatives
+    PREDEF_FUNCTIONS["sqrt"] =
+      ga_predef_function(sqrt, R, ga_interval(0, INFINITY),
+                         "DER_PDFUNC_SQRT_");
+    PREDEF_FUNCTIONS["sqr"] =
+      ga_predef_function(ga_sqr, R, R, "DER_PDFUNC_SQR_");
+    PREDEF_FUNCTIONS["pow"] =
+      ga_predef_function(pow, R, R, R, R, "DER_PDFUNC_POW1_",
+                         "DER_PDFUNC_POW2_");
+
+    PREDEF_FUNCTIONS["DER_PDFUNC_SQRT_"] =
+      ga_predef_function(ga_der_sqrt, "-0.5/sqrt(t)", R,
+                         ga_interval(0, INFINITY));
+    PREDEF_FUNCTIONS["DER_PDFUNC_SQR_"] =
+      ga_predef_function(ga_der_sqr, "2*t", R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_POW1_"] =
+      ga_predef_function(ga_der_pow1, "u*pow(t,u-1)", R, R, R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_POW2_"] =
+      ga_predef_function(ga_der_pow2, "pow(t,u)*log(t)", R, R,
+                         ga_interval(0, INFINITY), R);
+
+
+    // Hyperbolic functions
+    PREDEF_FUNCTIONS["exp"] = ga_predef_function(exp, R, R, "exp");
+    PREDEF_FUNCTIONS["log"] =
+      ga_predef_function(log, R, ga_interval(0, INFINITY), "1/t");
+    PREDEF_FUNCTIONS["log10"] =
+      ga_predef_function(log10, R, ga_interval(0, INFINITY),
+                         "1/(t*log(10))");
+    PREDEF_FUNCTIONS["sinh"] = ga_predef_function(sinh, R, R, "cosh");
+    PREDEF_FUNCTIONS["cosh"] = ga_predef_function(cosh, R, R, "sinh");
+    PREDEF_FUNCTIONS["tanh"] =
+      ga_predef_function(tanh, R, R, "DER_PDFUNC_TANH_");
+    PREDEF_FUNCTIONS["asinh"]
+      = ga_predef_function(asinh, R, R, "DER_PDFUNC_ASINH_");
+    PREDEF_FUNCTIONS["acosh"] =
+      ga_predef_function(acosh, R, ga_interval(1, INFINITY),
+                         "DER_PDFUNC_ACOSH_");
+    PREDEF_FUNCTIONS["atanh"]
+      = ga_predef_function(atanh, R, R,"DER_PDFUNC_ATANH_");
+
+
+    PREDEF_FUNCTIONS["DER_PDFUNC_LOG_"] =
+      ga_predef_function(ga_der_log, "1/t", R, ga_interval(0, INFINITY));
+    PREDEF_FUNCTIONS["DER_PDFUNC_LOG10_"] =
+      ga_predef_function(ga_der_log10, "1/(t*log(10))", R,
+                         ga_interval(0, INFINITY));
+    PREDEF_FUNCTIONS["DER_PDFUNC_TANH_"] =
+      ga_predef_function(ga_der_tanh, "1-sqr(tanh(t))", R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_ASINH_"] =
+      ga_predef_function(ga_der_asinh, "1/(sqrt(t*t+1))", R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_ACOSH_"] =
+      ga_predef_function(ga_der_acosh, "1/(sqrt(t*t-1))", R,
+                         ga_interval(1, INFINITY));
+    PREDEF_FUNCTIONS["DER_PDFUNC_ATANH_"] =
+      ga_predef_function(ga_der_atanh, "1/(1-t*t)", R, R);
+
+
+    // Trigonometric functions
+    PREDEF_FUNCTIONS["sin"] = ga_predef_function(sin, R, R, "cos");
+    PREDEF_FUNCTIONS["cos"] = ga_predef_function(cos, R, R, "DER_PDFUNC_COS_");
+    PREDEF_FUNCTIONS["tan"] = ga_predef_function(tan, R, R, "DER_PDFUNC_TAN_");
+    PREDEF_FUNCTIONS["asin"]
+      = ga_predef_function(asin, R, ga_interval(-1., 1.), "DER_PDFUNC_ASIN_");
+    PREDEF_FUNCTIONS["acos"]
+      = ga_predef_function(acos, R, ga_interval(-1., 1.), "DER_PDFUNC_ACOS_");
+    PREDEF_FUNCTIONS["atan"]
+      = ga_predef_function(atan, R, R, "DER_PDFUNC_ATAN_");
+    
+    PREDEF_FUNCTIONS["DER_PDFUNC_COS_"] =
+      ga_predef_function(ga_der_cos, "-sin(t)", R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_TAN_"] =
+      ga_predef_function(ga_der_tan, "1+sqr(tan(t))", R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_ASIN_"] =
+      ga_predef_function(ga_der_asin, "1/(sqrt(1-t*t))", R,
+                         ga_interval(-1., 1.));
+    PREDEF_FUNCTIONS["DER_PDFUNC_ACOS_"] =
+      ga_predef_function(ga_der_acos, "-1/(sqrt(1-t*t))", R,
+                         ga_interval(-1., 1.));
+    PREDEF_FUNCTIONS["DER_PDFUNC_ATAN_"] =
+      ga_predef_function(ga_der_atan, "1/(1+t*t)", R, R);
+
+
+    // Error functions
+    PREDEF_FUNCTIONS["erf"]
+      = ga_predef_function(erf, R, R, "DER_PDFUNC_ERF_");
+    PREDEF_FUNCTIONS["erfc"]
+      = ga_predef_function(erfc, R, R, "DER_PDFUNC_ERFC_");
+
+    PREDEF_FUNCTIONS["DER_PDFUNC_ERF_"] =
+      ga_predef_function(ga_der_erf, "exp(-t*t)*2/sqrt(pi)", R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_ERFC_"] =
+      ga_predef_function(ga_der_erfc, "-exp(-t*t)*2/sqrt(pi)", R, R);
+
+    
+
+    // Miscellaneous functions
+    PREDEF_FUNCTIONS["Heaveside"]
+      = ga_predef_function(ga_Heaveside, ga_interval(0., INFINITY), R,
+                           "DER_PDFUNC_HEAVISIDE_");
+    PREDEF_FUNCTIONS["sign"]
+      = ga_predef_function(ga_sign, R, R, "DER_PDFUNC_SIGN_");
+    PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, R, R, "sign");    
+    PREDEF_FUNCTIONS["pos_part"]
+      = ga_predef_function(ga_pos_part, ga_interval(0., INFINITY), R,
+                           "Heaveside");
+    PREDEF_FUNCTIONS["neg_part"]
+      = ga_predef_function(ga_neg_part, ga_interval(-INFINITY, 0.), R,
+                           "DER_PDFUNC_NEG_PART_");
+    PREDEF_FUNCTIONS["max"] // TODO: the intervals could be precised
+      = ga_predef_function(ga_max, R, R, R, R,
+                           "DER_PDFUNC_MAX1_", "DER_PDFUNC_MAX2_");
+    PREDEF_FUNCTIONS["min"] // TODO: the intervals could be precised
+      = ga_predef_function(ga_min, R, R, R, R,
+                           "DER_PDFUNC_MAX2_", "DER_PDFUNC_MAX1_");
+
+    PREDEF_FUNCTIONS["DER_PDFUNC_HEAVISIDE_"] =
+      ga_predef_function(ga_der_heaviside, "Dirac(0)", ga_interval(0., 0.), R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_SIGN_"] =
+      ga_predef_function(ga_der_heaviside, "2*Dirac(0)",
+                         ga_interval(0., 0.), R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_NEG_PART_"] =
+      ga_predef_function(ga_der_neg_part, "-Heaveside(-t)",
+                         ga_interval(-INFINITY, 0.), R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_MAX1_"] =
+      ga_predef_function(ga_der_max1, "Heaveside(t-u)", R, R, R, R);
+    PREDEF_FUNCTIONS["DER_PDFUNC_MAX2_"] =
+      ga_predef_function(ga_der_max2, "Heaveside(u-t)", R, R, R, R);
+
+    return true;
+  }
+
+
+  static bool predef_functions_initialized = init_predef_functions();
+
 
   //=========================================================================
   // Structure dealing with variables and constants.
@@ -1000,144 +1243,159 @@ namespace getfem {
     case GA_NODE_GRAD: case GA_NODE_HESS: case GA_NODE_FIXED_SIZE_TEST:
     case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST: break;
 
-    case GA_NODE_NAME: // TODO: gerer les noms de fonctions
+    case GA_NODE_NAME: // TODO: gerer les noms de fonctions et d'opérateur
       {
         std::string name = pnode->name;
-        int val_grad_or_hess = 0;
-        if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
-          { val_grad_or_hess = 1; name = name.substr(5); }
-        else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
-          { val_grad_or_hess = 2; name = name.substr(5); }
-        int test = 0;
-        if (name.size() >= 6 && name.compare(0, 5, "Test1_") == 0)
-          { test = 2; name = name.substr(6); }
-        else if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
-          { test = 1; name = name.substr(5); }
-        
-        if (!(vars.variable_exists(name)))
-          ga_syntax_error(expr, pnode->pos, "Unknown variable or constant");
 
-        const mesh_fem *mf = vars.associated_mf(name);
-        if (!test) {
-          if (!mf) {
-            if (val_grad_or_hess)
-              ga_syntax_error(expr, pnode->pos, "Gradient or Hessian cannot "
-                              "be evaluated for fixed size data.");
-            pnode->node_type = GA_NODE_CONSTANT;
-            size_type n = gmm::vect_size(vars.value(name));
-            if (n == 1) {
-              pnode->init_scalar_tensor(vars.value(name)[0]);
-            } else {
-              pnode->init_vector_tensor(n);
-              gmm::copy(vars.value(name), pnode->t.as_vector());
-            }
-          } else {
-            size_type q = vars.qdim(name), n = mf->linked_mesh().dim();
-            pnode->name = name;
-            switch (val_grad_or_hess) {
-            case 0: // value
-              // TODO: sortir une instruction d'évaluation de variable
-              pnode->node_type = GA_NODE_VAL;
-              if (q == 1)
-                pnode->init_scalar_tensor(scalar_type(0));
-              else
-                pnode->init_vector_tensor(q);
-              break;
-            case 1: // grad
-              // TODO: sortir une instruction d'évaluation de grad
-              pnode->node_type = GA_NODE_GRAD;
-              if (q == 1 && n == 1)
-                pnode->init_scalar_tensor(scalar_type(0));
-              else if (q == 1)
-                pnode->init_vector_tensor(n);
-              else
-                pnode->init_matrix_tensor(q, n);
-              break;
-            case 2: // Hessian
-              // TODO: sortir une instruction d'évaluation de Hessien
-              pnode->node_type = GA_NODE_HESS;
-              if (q == 1 && n == 1)
-                pnode->init_scalar_tensor(scalar_type(0));
-              else if (q == 1)
-                pnode->init_matrix_tensor(n,n);
-              else
-                pnode->init_third_order_tensor(q, n, n);
-              break;
-            }
-          }
-        } else {
-          if (vars.is_constant(name))
-            ga_syntax_error(expr, pnode->pos, "Test functions of constant are "
-                            "not allowed.");
+        // Search for a predefined function
+        ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
+        if (it != PREDEF_FUNCTIONS.end()) {
+          pnode->node_type = GA_NODE_PREDEF_FUNC;
           pnode->name = name;
-          if (test == 1) {
-            pnode->name_test0 = name;
-            pnode->qdim0
-              = (mf ? vars.qdim(name) : gmm::vect_size(vars.value(name)));
-          } else {
-            pnode->name_test1 = name;
-            pnode->qdim1
-              = (mf ? vars.qdim(name) : gmm::vect_size(vars.value(name)));
-          }
+          pnode->test_function_type = 0;
+        } else if (!name.compare("pi")) {
+          // Predefined constant pi
+          pnode->node_type = GA_NODE_CONSTANT;
+          pnode->init_scalar_tensor(M_PI);
+        } else {
+          // Search for a variable name with optional gradient, Hessian 
+          // or test functions
+          int val_grad_or_hess = 0;
+          if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
+            { val_grad_or_hess = 1; name = name.substr(5); }
+          else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
+            { val_grad_or_hess = 2; name = name.substr(5); }
+          int test = 0;
+          if (name.size() >= 6 && name.compare(0, 5, "Test1_") == 0)
+            { test = 2; name = name.substr(6); }
+          else if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
+            { test = 1; name = name.substr(5); }
           
-          if (!mf) {
-            if (val_grad_or_hess)
-              ga_syntax_error(expr, pnode->pos, "Gradient or Hessian cannot "
-                              "be evaluated for fixed size variables.");
-            pnode->node_type = GA_NODE_FIXED_SIZE_TEST;
-            // TODO: Instruction : mise à l'identité du tenseur (init).
-            size_type n = gmm::vect_size(vars.value(name));
-            if (n == 1) {
-              pnode->init_vector_tensor(1);
-              pnode->t[0] = scalar_type(1);
-              pnode->test_function_type = test;
+          if (!(vars.variable_exists(name)))
+            ga_throw_error(expr, pnode->pos, "Unknown variable or constant");
+          
+          const mesh_fem *mf = vars.associated_mf(name);
+          if (!test) {
+            if (!mf) {
+              if (val_grad_or_hess)
+                ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
+                                "be evaluated for fixed size data.");
+              pnode->node_type = GA_NODE_CONSTANT;
+              size_type n = gmm::vect_size(vars.value(name));
+              if (n == 1) {
+                pnode->init_scalar_tensor(vars.value(name)[0]);
+              } else {
+                pnode->init_vector_tensor(n);
+                gmm::copy(vars.value(name), pnode->t.as_vector());
+              }
             } else {
-              pnode->init_matrix_tensor(n,n);
-              pnode->test_function_type = test;
-              for (size_type i = 0; i < n; ++i)
-                for (size_type j = 0; j < n; ++j)
-                  pnode->t(i,j) = (i == j) ? scalar_type(1) : scalar_type(0);
+              size_type q = vars.qdim(name), n = mf->linked_mesh().dim();
+              pnode->name = name;
+              switch (val_grad_or_hess) {
+              case 0: // value
+                // TODO: sortir une instruction d'évaluation de variable
+                pnode->node_type = GA_NODE_VAL;
+                if (q == 1)
+                  pnode->init_scalar_tensor(scalar_type(0));
+                else
+                  pnode->init_vector_tensor(q);
+                break;
+              case 1: // grad
+                // TODO: sortir une instruction d'évaluation de grad
+                pnode->node_type = GA_NODE_GRAD;
+                if (q == 1 && n == 1)
+                  pnode->init_scalar_tensor(scalar_type(0));
+                else if (q == 1)
+                  pnode->init_vector_tensor(n);
+                else
+                  pnode->init_matrix_tensor(q, n);
+                break;
+              case 2: // Hessian
+                // TODO: sortir une instruction d'évaluation de Hessien
+                pnode->node_type = GA_NODE_HESS;
+                if (q == 1 && n == 1)
+                  pnode->init_scalar_tensor(scalar_type(0));
+                else if (q == 1)
+                  pnode->init_matrix_tensor(n,n);
+                else
+                  pnode->init_third_order_tensor(q, n, n);
+                break;
+              }
             }
           } else {
-            size_type q = vars.qdim(name), n = mf->linked_mesh().dim();
-            switch (val_grad_or_hess) {
-            case 0: // value
-              // TODO: sortir une instruction type Base_value
-              // et un tenseur intermédiaire
-              // TODO gérer la taille locale du fem (inconnu) (mise à 1)
-              pnode->node_type = GA_NODE_TEST;
-              if (q == 1)
+            if (vars.is_constant(name))
+              ga_throw_error(expr, pnode->pos, "Test functions of constant "
+                              "are not allowed.");
+            pnode->name = name;
+            if (test == 1) {
+              pnode->name_test0 = name;
+              pnode->qdim0
+                = (mf ? vars.qdim(name) : gmm::vect_size(vars.value(name)));
+            } else {
+              pnode->name_test1 = name;
+              pnode->qdim1
+                = (mf ? vars.qdim(name) : gmm::vect_size(vars.value(name)));
+            }
+          
+            if (!mf) {
+              if (val_grad_or_hess)
+                ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
+                                "be evaluated for fixed size variables.");
+              pnode->node_type = GA_NODE_FIXED_SIZE_TEST;
+              // TODO: Instruction : mise à l'identité du tenseur (init).
+              size_type n = gmm::vect_size(vars.value(name));
+              if (n == 1) {
                 pnode->init_vector_tensor(1);
-              else
-                pnode->init_matrix_tensor(1,q);
-              pnode->test_function_type = test;
-              break;
-            case 1: // grad
-              // TODO: sortir une instruction type Grad_Base_value
-              // et un tenseur intermédiaire
-              // TODO gérer la taille locale du fem (inconnu) (mise à 1)
-              pnode->node_type = GA_NODE_GRAD_TEST;
-              if (q == 1 && n == 1)
-                pnode->init_vector_tensor(1);
-              else if (q == 1)
-                pnode->init_matrix_tensor(1,n);
-              else
-                pnode->init_third_order_tensor(1,q,n);
-              pnode->test_function_type = test;
-              break;
-            case 2: // hessian
-              // TODO: sortir une instruction type Hess_Base_value
-              // et un tenseur intermédiaire
-              // TODO gérer la taille locale du fem (inconnu) (mise à 1)
-              pnode->node_type = GA_NODE_HESS_TEST;
-              if (q == 1 && n == 1)
-                pnode->init_vector_tensor(1);
-              else if (q == 1)
-                pnode->init_third_order_tensor(1,n,n);
-              else
-                pnode->init_fourth_order_tensor(1,q,n,n);
-              pnode->test_function_type = test;
-              break;
+                pnode->t[0] = scalar_type(1);
+                pnode->test_function_type = test;
+              } else {
+                pnode->init_matrix_tensor(n,n);
+                pnode->test_function_type = test;
+                for (size_type i = 0; i < n; ++i)
+                  for (size_type j = 0; j < n; ++j)
+                    pnode->t(i,j) = (i == j) ? scalar_type(1) : scalar_type(0);
+              }
+            } else {
+              size_type q = vars.qdim(name), n = mf->linked_mesh().dim();
+              switch (val_grad_or_hess) {
+              case 0: // value
+                // TODO: sortir une instruction type Base_value
+                // et un tenseur intermédiaire
+                // TODO gérer la taille locale du fem (inconnu) (mise à 1)
+                pnode->node_type = GA_NODE_TEST;
+                if (q == 1)
+                  pnode->init_vector_tensor(1);
+                else
+                  pnode->init_matrix_tensor(1,q);
+                pnode->test_function_type = test;
+                break;
+              case 1: // grad
+                // TODO: sortir une instruction type Grad_Base_value
+                // et un tenseur intermédiaire
+                // TODO gérer la taille locale du fem (inconnu) (mise à 1)
+                pnode->node_type = GA_NODE_GRAD_TEST;
+                if (q == 1 && n == 1)
+                  pnode->init_vector_tensor(1);
+                else if (q == 1)
+                  pnode->init_matrix_tensor(1,n);
+                else
+                  pnode->init_third_order_tensor(1,q,n);
+                pnode->test_function_type = test;
+                break;
+              case 2: // hessian
+                // TODO: sortir une instruction type Hess_Base_value
+                // et un tenseur intermédiaire
+                // TODO gérer la taille locale du fem (inconnu) (mise à 1)
+                pnode->node_type = GA_NODE_HESS_TEST;
+                if (q == 1 && n == 1)
+                  pnode->init_vector_tensor(1);
+                else if (q == 1)
+                  pnode->init_third_order_tensor(1,n,n);
+                else
+                  pnode->init_fourth_order_tensor(1,q,n,n);
+                pnode->test_function_type = test;
+                break;
+              }
             }
           }
         }
@@ -1168,7 +1426,7 @@ namespace getfem {
           // de formulation faible avec différentes fonctions test.
           // Dans ce cas, c'est l'assemblage qui gère l'addition. 
           if (!compatible)
-            ga_syntax_error(expr, pnode->pos, "Addition or substraction of "
+            ga_throw_error(expr, pnode->pos, "Addition or substraction of "
                             "incompatible expressions or of different sizes");
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
@@ -1215,13 +1473,13 @@ namespace getfem {
 
       case GA_DOT:
         if (dim0 > 1 || dim1 > 1)
-          ga_syntax_error(expr, pnode->pos,
+          ga_throw_error(expr, pnode->pos,
                           "Dot product acts only on vectors.");
         else {
           size_type s0 = dim0 == 0 ? 1 : size0.back();
           size_type s1 = dim1 == 0 ? 1 : size1.back();
           if (s0 != s1)
-            ga_syntax_error(expr, pnode->pos, "Dot product "
+            ga_throw_error(expr, pnode->pos, "Dot product "
                             "of expressions of different sizes");
           
           if (all_cte) {
@@ -1242,7 +1500,7 @@ namespace getfem {
 
       case GA_COLON:
         if (dim0 > 2 || dim1 > 2)
-          ga_syntax_error(expr, pnode->pos,
+          ga_throw_error(expr, pnode->pos,
                           "Frobenius product acts only on matrices.");
         else {
           size_type s00 = (dim0 == 0) ? 1
@@ -1252,7 +1510,7 @@ namespace getfem {
             : (dim1 == 1 ? size1.back() : size1[size1.size()-2]);
           size_type s11 = (dim1 == 2) ? size1.back() : 1;
           if (s00 != s10 || s01 != s11)
-            ga_syntax_error(expr, pnode->pos, "Frobenius product "
+            ga_throw_error(expr, pnode->pos, "Frobenius product "
                             "of expressions of different sizes");
 
           if (all_cte) {
@@ -1287,7 +1545,7 @@ namespace getfem {
             gmm::scale(pnode->t.as_vector(), scalar_type(child1->t[0]));
           } else {
             if (dim0+dim1 > 4)
-              ga_syntax_error(expr, pnode->pos, "Unauthorized "
+              ga_throw_error(expr, pnode->pos, "Unauthorized "
                               "tensor multiplication.");
             for (size_type i = 0; i < dim0; ++i)
               mi.push_back(child0->t.size(i));
@@ -1314,7 +1572,7 @@ namespace getfem {
                 mi.push_back(child0->tensor_proper_size(i));
             } else {
               if (dim0+dim1 > 4)
-                ga_syntax_error(expr, pnode->pos, "Unauthorized "
+                ga_throw_error(expr, pnode->pos, "Unauthorized "
                                 "tensor multiplication.");
               for (size_type i = 0; i < dim0; ++i)
                 mi.push_back(child0->t.size(i));
@@ -1347,7 +1605,7 @@ namespace getfem {
           } else if (dim0 == 2 && dim1 == 1) {
             size_type m = child0->t.size(0), n = child0->t.size(1);
             if (n != child1->t.size(0))
-              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
                               "matrix-vector multiplication.");
             pnode->init_vector_tensor(m);
             gmm::clear(pnode->t.as_vector());
@@ -1359,7 +1617,7 @@ namespace getfem {
             size_type n = child0->t.size(1);
             size_type p = child1->t.size(1);
             if (n != child1->t.size(0))
-              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
                               "matrix-matrix multiplication.");
             pnode->init_matrix_tensor(m,p);
             gmm::clear(pnode->t.as_vector());
@@ -1372,7 +1630,7 @@ namespace getfem {
             size_type m = child0->t.size(0), n = child0->t.size(1);
             size_type o = child0->t.size(2), p = child0->t.size(3);
             if (o != child1->t.size(0) || p != child1->t.size(1))
-              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
                               "tensor-matrix multiplication.");
             pnode->init_matrix_tensor(m,n);
             gmm::clear(pnode->t.as_vector());
@@ -1381,7 +1639,7 @@ namespace getfem {
                 for (size_type k = 0; k < o; ++k)
                   for (size_type l = 0; l < p; ++l)
                     pnode->t(i,j) += child0->t(i,j,k,l) * child1->t(k,l);
-          } else ga_syntax_error(expr, pnode->pos,
+          } else ga_throw_error(expr, pnode->pos,
                                  "Unauthorized multiplication.");
           tree.clear_children(pnode);
         } else {
@@ -1402,7 +1660,7 @@ namespace getfem {
             size_type n = child0->tensor_proper_size(1);
             mi.push_back(m);
             if (n != child1->tensor_proper_size(0))
-              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
                               "matrix-vector multiplication.");
           } else if (child0->tensor_order() == 2 &&
                      child1->tensor_order() == 2) {
@@ -1411,7 +1669,7 @@ namespace getfem {
             size_type p = child1->tensor_proper_size(1);
             mi.push_back(m); mi.push_back(p);
             if (n != child1->tensor_proper_size(0))
-              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
                               "matrix-matrix multiplication.");
           }
           else if (pnode->children[0]->tensor_order() == 4 &&
@@ -1423,9 +1681,9 @@ namespace getfem {
             mi.push_back(m); mi.push_back(n);
             if (o != child1->tensor_proper_size(0) ||
                 p != child1->tensor_proper_size(1))
-              ga_syntax_error(expr, pnode->pos, "Incompatible sizes in "
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
                               "tensor-matrix multiplication.");
-          } else ga_syntax_error(expr, pnode->pos,
+          } else ga_throw_error(expr, pnode->pos,
                                  "Unauthorized multiplication.");
           pnode->t.adjust_sizes(mi);
           // Simplifications
@@ -1445,14 +1703,14 @@ namespace getfem {
 
       case GA_DIV:
         if (child1->tensor_order() > 0)
-          ga_syntax_error(expr, pnode->pos, "Only the division by a scalar "
+          ga_throw_error(expr, pnode->pos, "Only the division by a scalar "
                           "is allowed.");
         if (child1->test_function_type)
-          ga_syntax_error(expr, pnode->pos, "Division by test functions "
+          ga_throw_error(expr, pnode->pos, "Division by test functions "
                           "is not allowed.");
         if (child1->node_type == GA_NODE_CONSTANT &&
             child1->t[0] == scalar_type(0))
-          ga_syntax_error(expr, pnode->children[1]->pos, "Division by zero");
+          ga_throw_error(expr, pnode->children[1]->pos, "Division by zero");
         
         pnode->t = child0->t;
         pnode->test_function_type = child0->test_function_type;
@@ -1486,10 +1744,10 @@ namespace getfem {
     case GA_NODE_C_MATRIX:
       {
         if (!all_sc) 
-          ga_syntax_error(expr, pnode->pos, "Constant vector/matrix/tensor "
+          ga_throw_error(expr, pnode->pos, "Constant vector/matrix/tensor "
                           "components should be scalar valued.");
         if (!all_primal)
-          ga_syntax_error(expr, pnode->pos, "Test functions are not allowed "
+          ga_throw_error(expr, pnode->pos, "Test functions are not allowed "
                           "in constant vector/matrix/tensor components.");
         
         size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
@@ -1524,19 +1782,67 @@ namespace getfem {
       break;
 
     case GA_NODE_PARAMS:
-      all_cte = (child0->node_type == GA_NODE_CONSTANT);
 
-      // if (child0->node_type == GA_NODE_FUNCTION) {
-      //  TODO;
-      // else
-      {
+      if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+        // Évaluation of predefined function
+        std::string name = child0->name;
+        ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
+        GMM_ASSERT1(it != PREDEF_FUNCTIONS.end(), "internal error");
+        size_type nbargs = it->second.nbargs;
+        GMM_ASSERT1(it->second.ftype != 2, "Not already taken into account");
+        if (nbargs+1 != pnode->children.size()) {
+            std::stringstream msg;
+            msg << "Bad number of arguments for predefined function "
+                << name << ". Found " << pnode->children.size()-1
+                << " should be " << nbargs << ".";
+            ga_throw_error(expr, pnode->pos, msg.str());
+        }
+        pnode->test_function_type = 0;
+        pga_tree_node child2 = (nbargs == 2) ? pnode->children[2] : child1;
+        all_cte = child1->node_type == GA_NODE_CONSTANT;
+        if (nbargs == 2)
+          all_cte = all_cte && (child2->node_type == GA_NODE_CONSTANT);
+        if (child1->test_function_type || child2->test_function_type)
+          ga_throw_error(expr, pnode->pos, "Test functions cannot be passed "
+                         "as argument of a predefined function.");
+        size_type s1 = child1->t.size();
+        size_type s2 = (nbargs == 2) ? child2->t.size() : s1;
+        if (s1 != s2 && (s1 != 1 || s2 != 1))
+          ga_throw_error(expr, pnode->pos,
+                         "Invalid argument size for a scalar function.");
+
+        if (all_cte) {
+          pnode->node_type = GA_NODE_CONSTANT;
+          if (nbargs == 1) {
+            pnode->t = child1->t;
+            for (size_type i = 0; i < s1; ++i)
+              pnode->t[i] = (*(it->second.f1))(child1->t[i]);
+          } else {
+            if (s1 == s2) {
+              pnode->t = child1->t;
+              for (size_type i = 0; i < s1; ++i)
+                pnode->t[i] = (*(it->second.f2))(child1->t[i], child2->t[i]);
+            } else if (s1 == 1) {
+              pnode->t = child2->t;
+              for (size_type i = 0; i < s2; ++i)
+                pnode->t[i] = (*(it->second.f2))(child1->t[0], child2->t[i]);
+            } else {
+              pnode->t = child1->t;
+              for (size_type i = 0; i < s1; ++i)
+                pnode->t[i] = (*(it->second.f2))(child1->t[i], child2->t[0]);
+            }
+          }
+          tree.clear_children(pnode);
+        }
+      } else { // Access to components of a tensor
+        all_cte = (child0->node_type == GA_NODE_CONSTANT);
         if (pnode->children.size() != child0->tensor_order() + 1)
-          ga_syntax_error(expr, pnode->pos, "Bad number of indices.");
+          ga_throw_error(expr, pnode->pos, "Bad number of indices.");
         for (size_type i = 1; i < pnode->children.size(); ++i)
           if (pnode->children[i]->node_type != GA_NODE_ALLINDICES &&
               (pnode->children[i]->node_type != GA_NODE_CONSTANT ||
                pnode->children[i]->t.size() != 1))
-            ga_syntax_error(expr, pnode->children[i]->pos,
+            ga_throw_error(expr, pnode->children[i]->pos,
                             "Indices should be constant integers or colon.");
         
         bgeot::multi_index mi1(size0.size()), mi2, indices;
@@ -1548,7 +1854,7 @@ namespace getfem {
           } else {
             mi1[i] = size_type(::round(pnode->children[i+1]->t[0])-1);
             if (mi1[i] >= child0->tensor_proper_size(i))
-              ga_syntax_error(expr, pnode->children[i+1]->pos,
+              ga_throw_error(expr, pnode->children[i+1]->pos,
                               "Index out of range.");
           }
         }
@@ -1603,7 +1909,7 @@ namespace getfem {
     // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [4, 8; 12, 13]
     // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [6, 9]
     // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3](:,:,:,2)";
-    std::string expr="[1,1;1,2]@[2;3]";
+    std::string expr="sin([pi;2*pi])";
     // std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
     // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
     // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
