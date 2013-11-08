@@ -214,6 +214,8 @@ namespace getfem {
     GA_NODE_VOID = 0,
     GA_NODE_OP,
     GA_NODE_PREDEF_FUNC,
+    GA_NODE_SPEC_FUNC,
+    GA_NODE_OPERATOR,
     GA_NODE_CONSTANT,
     GA_NODE_NAME,
     GA_NODE_PARAMS,
@@ -643,6 +645,8 @@ namespace getfem {
     case GA_NODE_TEST: cout << "Test_" << pnode->name; break;
     case GA_NODE_GRAD_TEST: cout << "Grad_Test_" << pnode->name; break;
     case GA_NODE_HESS_TEST: cout << "Hess_Test_" << pnode->name; break;
+    case GA_NODE_SPEC_FUNC:
+    case GA_NODE_OPERATOR:
     case GA_NODE_PREDEF_FUNC: cout << pnode->name; break;
     case GA_NODE_ZERO:
       GMM_ASSERT1(pnode->test_function_type != size_type(-1),
@@ -884,9 +888,17 @@ namespace getfem {
   }
 
   //=========================================================================
+  // Structure dealing with predefined special functions
+  // such as mesh_dim, pi, qdim ...
+  //=========================================================================
+
+  typedef std::set<std::string> ga_spec_function_tab;
+  static ga_spec_function_tab SPEC_FUNCTIONS;
+
+  //=========================================================================
   // Structure dealing with predefined scalar functions.
   //=========================================================================
-  
+
   typedef scalar_type (*pscalar_func_onearg)(scalar_type);
   typedef scalar_type (*pscalar_func_twoargs)(scalar_type, scalar_type);
   struct ga_interval {
@@ -980,13 +992,86 @@ namespace getfem {
   static scalar_type ga_der_max2(scalar_type t, scalar_type u)
   { return (u-t >= 0) ? 1. : 0.; }
 
-  
-
   typedef std::map<std::string, ga_predef_function> ga_predef_function_tab;
 
   static ga_predef_function_tab PREDEF_FUNCTIONS;
 
+  //=========================================================================
+  // Structure dealing with predefined operators.
+  //=========================================================================
+
+  struct pde_operator {
+
+    typedef std::vector<base_tensor *> arg_list;
+
+    virtual bool result_size(const arg_list &args,
+                             bgeot::multi_index &sizes) = 0;
+
+    virtual void value(const arg_list &args, base_tensor &result) = 0;
+    
+    virtual void derivative(const arg_list &args, size_type i,
+                            base_tensor &result) = 0;
+
+    virtual void second_derivative(const arg_list &args, size_type i,
+                                   size_type j, base_tensor &result) = 0;
+  };
+
+  typedef std::map<std::string, pde_operator*> ga_predef_operator_tab;
+
+  static ga_predef_operator_tab PREDEF_OPERATORS;
+
+  void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
+
+  // Norm Operator
+  struct norm_operator : public pde_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) {
+      if (args.size() != 1 || args[0]->sizes().size() > 1) return false;
+      ga_init_scalar(sizes);
+      return true;
+    }
+    
+    void value(const arg_list &args, base_tensor &result)
+    { result[0] = gmm::vect_norm2(args[0]->as_vector()); }
+
+    // Derivative : u/|u|
+    void derivative(const arg_list &args, size_type, base_tensor &result) {
+      scalar_type no = gmm::vect_norm2(args[0]->as_vector());
+      gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
+                result.as_vector());
+    }
+
+    // Second derivative : (|u|^2 Id - u x u)/|u|^3
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) { // To be verified
+      const base_tensor &t = *args[0];
+      size_type N = t.size();
+      scalar_type no = gmm::vect_norm2(t.as_vector());
+      scalar_type no2 = no*no, no3 = no*no2;
+      
+      for (size_type i = 0; i < N; ++i)
+        for (size_type j = 0; j < N; ++j) {
+          result[j*N+i] = - t[i]*t[j] / no3;
+          if (i == j) result[j*N+i] += scalar_type(1)/no;
+        }
+    }
+    
+
+  };
+
+
+
+
+
+
+  //=========================================================================
+  // Initialization of predefiened functions and operators.
+  //=========================================================================
+
+  
   bool init_predef_functions(void) {
+
+    // Predefined functions
+
     ga_interval R;
     // Power functions and their derivatives
     PREDEF_FUNCTIONS["sqrt"] =
@@ -1117,11 +1202,24 @@ namespace getfem {
     PREDEF_FUNCTIONS["DER_PDFUNC_MAX2_"] =
       ga_predef_function(ga_der_max2, "Heaveside(u-t)", R, R, R, R);
 
+
+    // Predefined special functions
+
+    SPEC_FUNCTIONS.insert("pi");
+    SPEC_FUNCTIONS.insert("meshdim");
+    SPEC_FUNCTIONS.insert("qdim");
+    SPEC_FUNCTIONS.insert("Id");
+
+    // Predefined operators
+
+    PREDEF_OPERATORS["Norm"] = new norm_operator();
+
     return true;
   }
 
-
   static bool predef_functions_initialized = init_predef_functions();
+
+
 
 
   //=========================================================================
@@ -1268,16 +1366,25 @@ namespace getfem {
       {
         std::string name = pnode->name;
 
-        // Search for a predefined function
-        ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
-        if (it != PREDEF_FUNCTIONS.end()) {
+        if (PREDEF_FUNCTIONS.find(name) != PREDEF_FUNCTIONS.end()) {
+          // Search for a predefined function
           pnode->node_type = GA_NODE_PREDEF_FUNC;
           pnode->name = name;
           pnode->test_function_type = 0;
-        } else if (!name.compare("pi")) {
-          // Predefined constant pi
-          pnode->node_type = GA_NODE_CONSTANT;
-          pnode->init_scalar_tensor(M_PI);
+        } else if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end()) {
+          // Search for a special function
+          pnode->node_type = GA_NODE_SPEC_FUNC;
+          pnode->name = name;
+          pnode->test_function_type = 0;
+          if (!name.compare("pi")) {
+            pnode->node_type = GA_NODE_CONSTANT;
+            pnode->init_scalar_tensor(M_PI);
+          }
+        } else if (PREDEF_OPERATORS.find(name) != PREDEF_OPERATORS.end()) {
+          // Search for a pde operator
+          pnode->node_type = GA_NODE_OPERATOR;
+          pnode->name = name;
+          pnode->test_function_type = 0;
         } else {
           // Search for a variable name with optional gradient, Hessian 
           // or test functions
@@ -1293,7 +1400,8 @@ namespace getfem {
             { test = 1; name = name.substr(5); }
           
           if (!(vars.variable_exists(name)))
-            ga_throw_error(expr, pnode->pos, "Unknown variable or constant");
+            ga_throw_error(expr, pnode->pos,
+                           "Unknown variable, function or constant");
           
           const mesh_fem *mf = vars.associated_mf(name);
           if (!test) {
@@ -1805,7 +1913,9 @@ namespace getfem {
     case GA_NODE_PARAMS:
 
       if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+        
         // Évaluation of predefined function
+        
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         GMM_ASSERT1(it != PREDEF_FUNCTIONS.end(), "internal error");
@@ -1855,7 +1965,56 @@ namespace getfem {
           }
           tree.clear_children(pnode);
         }
-      } else { // Access to components of a tensor
+      } else if (child0->node_type == GA_NODE_SPEC_FUNC) {
+
+        // Special constant functions: meshdim(u), qdim(u) ...
+        
+        if (pnode->children.size() != 2)
+          ga_throw_error(expr, pnode->pos,
+                         "One and only one argument is allowed for function "
+                         +child0->name+".");
+
+        if (!(child0->name.compare("meshdim"))) {
+          bool valid = (child1->node_type == GA_NODE_VAL);
+          const mesh_fem *mf = valid ? vars.associated_mf(child1->name) : 0;
+          if (!mf)
+            ga_throw_error(expr, pnode->pos, "The argument of mesh_dim "
+                           "function can only be a fem variable name.");
+          pnode->node_type = GA_NODE_CONSTANT;
+          pnode->init_scalar_tensor(scalar_type(mf->linked_mesh().dim()));
+        } else if (!(child0->name.compare("qdim"))) {
+          if (child1->node_type != GA_NODE_VAL)
+            ga_throw_error(expr, pnode->pos, "The argument of qdim "
+                           "function can only be a variable name.");
+          pnode->node_type = GA_NODE_CONSTANT;
+          pnode->init_scalar_tensor(scalar_type(vars.qdim(child1->name)));
+        } else if (!(child0->name.compare("Id"))) {
+          bool valid = (child1->node_type == GA_NODE_CONSTANT);
+          int n = valid ? int(round(child1->t[0])) : -1;
+          if (n <= 0 || n > 100 || child1->tensor_order() > 0)
+            ga_throw_error(expr, pnode->pos, "The argument of Id "
+                           "should be a (small) positive integer.");
+          pnode->node_type = GA_NODE_CONSTANT;
+          if (n == 1)
+            pnode->init_scalar_tensor(scalar_type(1));
+          else {
+            pnode->init_matrix_tensor(n,n);
+            for (int i = 0; i < n; ++i) pnode->t(i,i) = scalar_type(1);
+          }
+        } else ga_throw_error(expr, pnode->children[0]->pos,
+                              "Unknown special function.");
+        tree.clear_children(pnode);
+      } else if (child0->node_type == GA_NODE_OPERATOR) {
+
+        // Call to an operator
+        
+        pnode->test_function_type = 0;
+
+
+      } else {
+
+        // Access to components of a tensor
+        
         all_cte = (child0->node_type == GA_NODE_CONSTANT);
         if (pnode->children.size() != child0->tensor_order() + 1)
           ga_throw_error(expr, pnode->pos, "Bad number of indices.");
@@ -1873,7 +2032,7 @@ namespace getfem {
             indices.push_back(i);
             mi1[i] = 0;
           } else {
-            mi1[i] = size_type(::round(pnode->children[i+1]->t[0])-1);
+            mi1[i] = size_type(round(pnode->children[i+1]->t[0])-1);
             if (mi1[i] >= child0->tensor_proper_size(i))
               ga_throw_error(expr, pnode->children[i+1]->pos,
                               "Index out of range.");
@@ -1930,7 +2089,9 @@ namespace getfem {
     // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [4, 8; 12, 13]
     // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [6, 9]
     // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3](:,:,:,2)";
-    std::string expr="sin([pi;2*pi])";
+    // std::string expr="sin([pi;2*pi])";
+    // std::string expr="Id(meshdim(u)+qdim(u))";
+    std::string expr="Norm(u) + Norm(b)";
     // std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
     // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
     // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
