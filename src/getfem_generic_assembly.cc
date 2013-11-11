@@ -21,23 +21,16 @@
 ===========================================================================*/
 
 /** 
-    Intel C++ keeps hyperbolic trygonometric functions 
-    in <mathimf.h>, while it's incompatible with <math.h>
+  Provising for special Math functions unavailable on Intel or MSVS C++
+  compilers
 */
-#ifdef __INTEL_COMPILER
-  #include <limits>
-  #define INFINITY std::numeric_limits<scalar_type>::infinity()
-  double asinh__(double);
-  double acosh__(double);
-  double atanh__(double);
-  double erf__(double);
-  double erfc__(double);
-  #define asinh asinh__
-  #define atanh atanh__
-  #define acosh acosh__
-  #define erf   erf__
-  #define erfc  erfc__
-#endif 
+#ifdef _WIN32
+#include <limits>
+#include <boost/math/special_functions/acosh.hpp>
+#include <boost/math/special_functions/asinh.hpp>
+#include <boost/math/special_functions/atanh.hpp>
+#include <boost/math/special_functions/erf.hpp>
+#endif
 
 #include "getfem/getfem_models.h"
 #include "gmm/gmm_blas.h"
@@ -51,6 +44,17 @@ extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
 
 
 namespace getfem {
+
+#ifdef _WIN32
+#define INFINITY std::numeric_limits<scalar_type>::infinity()
+typedef double (*BoostMathFunction)(double);
+BoostMathFunction const acosh = boost::math::acosh<double>;
+BoostMathFunction const asinh = boost::math::asinh<double>;
+BoostMathFunction const atanh = boost::math::atanh<double>;
+BoostMathFunction const erf = boost::math::erf<double>;
+BoostMathFunction const erfc = boost::math::erfc<double>;
+#endif
+
 
   //=========================================================================
   // Lexical analysis for the generic assembly langage
