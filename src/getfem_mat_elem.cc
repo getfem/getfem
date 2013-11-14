@@ -28,9 +28,6 @@
 
 extern "C" void daxpy_(const int *n, const double *alpha, const double *x,
                        const int *incx, double *y, const int *incy);
-extern "C" void dger_(const int *m, const int *n, const double *alpha,
-                      const double *x, const int *incx, const double *y,
-                      const int *incy, double *A, const int *lda);
 
 namespace getfem {
   /* ********************************************************************* */

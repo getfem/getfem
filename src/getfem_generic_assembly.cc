@@ -73,7 +73,10 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     GA_DIV,         // '/'
     GA_COLON,       // ':'
     GA_QUOTE,       // ''' transpose
+    GA_TRACE,       // 'Trace' Trace operator
     GA_DOT,         // '.'
+    GA_DOTMULT,     // '.*' componentwize multiplication
+    GA_DOTDIV,      // './' componentwize division
     GA_TMULT,       // '@' tensor product
     GA_COMMA,       // ','
     GA_DCOMMA,      // ',,'
@@ -112,8 +115,11 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     ga_operator_priorities[GA_DIV] = 2;
     ga_operator_priorities[GA_COLON] = 2;
     ga_operator_priorities[GA_DOT] = 2;
+    ga_operator_priorities[GA_DOTMULT] = 2;
+    ga_operator_priorities[GA_DOTDIV] = 2;
     ga_operator_priorities[GA_TMULT] = 2;
     ga_operator_priorities[GA_QUOTE] = 3;
+    ga_operator_priorities[GA_TRACE] = 3;
     ga_operator_priorities[GA_UNARY_MINUS] = 3;
 
     return true;
@@ -137,11 +143,14 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     if (pos >= expr.size()) return GA_END;
 
     // Treating the different cases (Operation, name or number)
-    GA_TOKEN_TYPE type = ga_char_type[unsigned(expr[pos++])];
-    ++token_length;
+    GA_TOKEN_TYPE type = ga_char_type[unsigned(expr[pos])];
+    ++pos; ++token_length;
     switch (type) {
     case GA_DOT:
-      if (pos >= expr.size() || ga_char_type[unsigned(expr[pos])] != GA_SCALAR)
+      if (pos >= expr.size()) return type;
+      if (expr[pos] == '*') { ++pos; ++token_length; return GA_DOTMULT; }
+      if (expr[pos] == '/') { ++pos; ++token_length; return GA_DOTDIV; }
+      if (ga_char_type[unsigned(expr[pos])] != GA_SCALAR)
         return type;
       fdot = true; type = GA_SCALAR;
     case GA_SCALAR:
@@ -176,7 +185,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         if (ctype != GA_SCALAR && ctype != GA_NAME) break;
         ++pos; ++token_length;
       }
-      return type;
+      if (expr.compare(token_pos, token_length, "Trace") == 0)
+        return GA_TRACE; else return type;
     case GA_COMMA:
       if (pos < expr.size() &&
           ga_char_type[unsigned(expr[pos])] == GA_COMMA) {
@@ -198,23 +208,32 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
   // Tree structure for syntax analysis
   //=========================================================================
 
-  static void ga_throw_error(const std::string &expr, size_type pos,
-                              const std::string &msg) {
-    int first = std::max(0, int(pos)-40);
-    int last = std::min(int(pos)+20, int(expr.size()));
-    if (last - first < 60)
+  
+
+  static void ga_throw_error_msg(const std::string &expr, size_type pos,
+                                 const std::string &msg) {
+    if (expr.size()) {
+      int first = std::max(0, int(pos)-40);
+      int last = std::min(int(pos)+20, int(expr.size()));
+      if (last - first < 60)
       first = std::max(0, int(pos)-40-(60-last+first));
-    if (last - first < 60)
-      last = std::min(int(pos)+20+(60-last+first),int(expr.size()));
-    
-    if (first > 0) cerr << "...";
-    cerr << expr.substr(first, last-first);
-    if (last < int(expr.size())) cerr << "...";
-    cerr << endl;
-    if (first > 0) cerr << "   ";
-    if (int(pos) > first) cerr << std::setw(int(pos)-first) << ' ';
-    cerr << '|' << endl << msg << endl;
-    GMM_ASSERT1(false, "Error in assembly string" );
+      if (last - first < 60)
+        last = std::min(int(pos)+20+(60-last+first),int(expr.size()));
+      
+      if (first > 0) cerr << "...";
+      cerr << expr.substr(first, last-first);
+      if (last < int(expr.size())) cerr << "...";
+      cerr << endl;
+      if (first > 0) cerr << "   ";
+      if (int(pos) > first) cerr << std::setw(int(pos)-first) << ' ';
+      cerr << '|' << endl;
+    }
+    cerr << msg << endl;
+  }
+
+#define ga_throw_error(expr, pos, msg)               \
+  { ga_throw_error_msg(expr, pos, msg);              \
+    GMM_ASSERT1(false, "Error in assembly string" ); \
   }
 
   enum GA_NODE_TYPE {
@@ -231,7 +250,6 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     GA_NODE_VAL,
     GA_NODE_GRAD,
     GA_NODE_HESS,
-    GA_NODE_FIXED_SIZE_TEST,
     GA_NODE_TEST,
     GA_NODE_GRAD_TEST,
     GA_NODE_HESS_TEST,
@@ -247,9 +265,9 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     size_type test_function_type; // -1 = undetermined
                                   // 0 = no test function, 1 = first order
                                   // 2 = second order, 3 = both
-    std::string name_test0, name_test1; // variable names corresponding to test
+    std::string name_test1, name_test2; // variable names corresponding to test
                                   // functions when test_function_type > 0.
-    size_type qdim0, qdim1;       // Qdims when test_function_type > 0.
+    size_type qdim1, qdim2;       // Qdims when test_function_type > 0.
     size_type nbc1, nbc2, nbc3;   // For explicit matrices.
     size_type pos;                // Position of the first character in string
     std::string name;             // variable/constant/function/operator name 
@@ -259,6 +277,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     pga_tree_node parent;         // Parent node
     std::vector<pga_tree_node> children; // Children nodes
     scalar_type hash_value;       // Hash value to identify nodes.
+    bool marked;                  // For specific use of some algorithms
     
     inline size_type nb_test_functions(void) const {
       if (test_function_type == size_type(-1)) return 0;
@@ -306,15 +325,15 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       }
       t.adjust_sizes(mi);
       
-      if (n0->name_test0.size())
-        { name_test0 = n0->name_test0; qdim0 = n0->qdim0; }
-      else
-        { name_test0 = n1->name_test0; qdim0 = n1->qdim0; }
-      
       if (n0->name_test1.size())
         { name_test1 = n0->name_test1; qdim1 = n0->qdim1; }
       else
         { name_test1 = n1->name_test1; qdim1 = n1->qdim1; }
+      
+      if (n0->name_test2.size())
+        { name_test2 = n0->name_test2; qdim2 = n0->qdim2; }
+      else
+        { name_test2 = n1->name_test2; qdim2 = n1->qdim2; }
     }
 
     bool tensor_is_zero(void) {
@@ -350,20 +369,20 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     }
 
     ga_tree_node(void)
-      : node_type(GA_NODE_VOID), test_function_type(-1), qdim0(0), qdim1(0),
+      : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
         der1(0), der2(0), hash_value(0) {}
     ga_tree_node(GA_NODE_TYPE ty, size_type p)
-      : node_type(ty), test_function_type(-1), qdim0(0), qdim1(0),
+      : node_type(ty), test_function_type(-1), qdim1(0), qdim2(0),
         pos(p), der1(0), der2(0), hash_value(0) {}
     ga_tree_node(scalar_type v, size_type p)
-      : node_type(GA_NODE_CONSTANT), test_function_type(-1), qdim0(0),
-        qdim1(0), pos(p), der1(0), der2(0), hash_value(0)
+      : node_type(GA_NODE_CONSTANT), test_function_type(-1), qdim1(0),
+        qdim2(0), pos(p), der1(0), der2(0), hash_value(0)
     { init_scalar_tensor(v); }
     ga_tree_node(const char *n, size_type l, size_type p)
-      : node_type(GA_NODE_NAME), test_function_type(-1), qdim0(0), qdim1(0),
+      : node_type(GA_NODE_NAME), test_function_type(-1), qdim1(0), qdim2(0),
         pos(p), name(n, l), der1(0), der2(0), hash_value(0) {}
     ga_tree_node(GA_TOKEN_TYPE op, size_type p)
-      : node_type(GA_NODE_OP), test_function_type(-1), qdim0(0), qdim1(0),
+      : node_type(GA_NODE_OP), test_function_type(-1), qdim1(0), qdim2(0),
         pos(p), der1(0), der2(0), op_type(op), hash_value(0) {}
     
   };
@@ -484,7 +503,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         current_node = current_node->parent;
       pga_tree_node new_node = new ga_tree_node(op_type, pos);
       if (current_node) {
-        if (op_type == GA_UNARY_MINUS) {
+        if (op_type == GA_UNARY_MINUS || op_type == GA_TRACE) {
           current_node->children.push_back(new_node);
           new_node->parent = current_node;
         } else {
@@ -507,19 +526,34 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       current_node = new_node;
     }
 
+    void clear_node_rec(pga_tree_node pnode) {
+      if (pnode) {
+        for (size_type i = 0; i < pnode->children.size(); ++i)
+          clear_node_rec(pnode->children[i]);
+        delete pnode;
+        current_node = 0;
+      }
+    }
+
     void clear_node(pga_tree_node pnode) {
-      for (size_type i = 0; i < pnode->children.size(); ++i)
-        clear_node(pnode->children[i]);
-      delete pnode;
-      current_node = 0;
+      if (pnode) {
+        pga_tree_node parent = pnode->parent;
+        if (parent) {
+          for (size_type i = 0, j = 0; i < parent->children.size(); ++i)
+            if (parent->children[i] != pnode)
+              { parent->children[j] = parent->children[i]; ++j; }
+          parent->children.pop_back();
+        } else root = 0;
+      }
+      clear_node_rec(pnode);
     }
 
     void clear(void)
-    { if (root) clear_node(root); root = current_node = 0; }
+    { if (root) clear_node_rec(root); root = current_node = 0; }
     
     void clear_children(pga_tree_node pnode) {
       for (size_type i = 0; i < pnode->children.size(); ++i)
-        clear_node(pnode->children[i]);
+        clear_node_rec(pnode->children[i]);
       pnode->children.resize(0);
     }
 
@@ -536,40 +570,138 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       current_node = 0;
       child->parent = pnode->parent;
       for (size_type j = 0; j < pnode->children.size(); ++j)
-        if (j != i) clear_node(pnode->children[j]);
+        if (j != i) clear_node_rec(pnode->children[j]);
       delete pnode;
     }
 
+    void copy_node(pga_tree_node pnode, pga_tree_node parent,
+                   pga_tree_node &child) {
+      child = new ga_tree_node();
+      *child = *pnode;
+      child->parent = parent;
+      for (size_type j = 0; j < child->children.size(); ++j)
+        child->children[j] = 0;
+      for (size_type j = 0; j < child->children.size(); ++j)
+        copy_node(pnode->children[j], child, child->children[j]);
+    }
+
+    void duplicate_with_addition(pga_tree_node pnode) {
+      pga_tree_node plus = new ga_tree_node(GA_PLUS, pnode->pos);
+      plus->children.resize(2);
+      plus->children[0] = pnode;
+      plus->parent = pnode->parent;
+      if (pnode->parent) {
+        for (size_type j = 0; j < pnode->parent->children.size(); ++j)
+          if (pnode->parent->children[j] == pnode)
+            pnode->parent->children[j] = plus;
+      } else root = plus; 
+      pnode->parent = plus;
+      copy_node(pnode, plus, plus->children[1]);
+    }
+
+    void insert_node(pga_tree_node pnode) {
+      pga_tree_node newnode = new ga_tree_node;
+      newnode->parent = pnode->parent;
+      if (pnode->parent) {
+        for (size_type j = 0; j < pnode->parent->children.size(); ++j)
+          if (pnode->parent->children[j] == pnode)
+            pnode->parent->children[j] = newnode;
+      } else root = newnode;
+      newnode->children.push_back(pnode);
+      pnode->parent = newnode;
+    }
+
+    void add_children(pga_tree_node pnode) {
+      pga_tree_node newnode = new ga_tree_node;
+      newnode->parent = pnode;
+      pnode->children.push_back(newnode);
+    }
+
+    void swap(ga_tree &tree)
+    { std::swap(root, tree.root); std::swap(current_node, tree.current_node); }
+
     ga_tree(void) : root(0), current_node(0) {}
+
+    ga_tree(const ga_tree &tree) : root(0), current_node(0)
+    { if (tree.root) copy_node(tree.root, 0, root); }
+    
+    ga_tree &operator = (const ga_tree &tree)
+    { clear(); if (tree.root) copy_node(tree.root, 0, root); return *this; }
+
     ~ga_tree() { clear(); }
   };
+
+
+  static bool sub_tree_are_equal(pga_tree_node pnode1, pga_tree_node pnode2) {
+    if (pnode1->node_type != pnode2->node_type) return false; // TODO: Cas des constant nulles
+    if (pnode1->children.size() != pnode2->children.size()) return false;
+
+    switch(pnode1->node_type) {
+    case GA_NODE_OP:
+      if (pnode1->op_type != pnode2->op_type) return false;
+      break;
+    case GA_NODE_OPERATOR:
+      if (pnode1->der1 != pnode2->der1 || pnode1->der2 != pnode2->der2)
+        return false;
+    case GA_NODE_PREDEF_FUNC: case GA_NODE_SPEC_FUNC:
+      if (pnode1->name.compare(pnode2->name)) return false;
+      break;
+    case GA_NODE_CONSTANT: case GA_NODE_ZERO:
+      if (pnode1->t.size() != pnode2->t.size()) return false;
+      if (pnode1->t.size() != 1 &&
+          pnode1->t.sizes().size() != pnode2->t.sizes().size()) return false;
+      for (size_type i = 0; i < pnode1->t.sizes().size(); ++i)
+        if (pnode1->t.sizes()[i] != pnode2->t.sizes()[i]) return false;
+      for (size_type i = 0; i < pnode1->t.size(); ++i)
+        if (gmm::abs(pnode1->t[i] - pnode2->t[i]) > 1E-25) return false;
+      break;
+    case GA_NODE_C_MATRIX:
+      if (pnode1->nbc1 != pnode2->nbc1 || pnode1->nbc2 != pnode2->nbc2
+          ||   pnode1->nbc3 != pnode2->nbc3)  return false;
+      break;
+    case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
+      if (pnode2->test_function_type != pnode2->test_function_type)
+        return false;
+    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
+      if (pnode1->name.compare(pnode2->name)) return false;
+      break;
+
+    default:break;
+    }
+    for (size_type i = 0; i < pnode1->children.size(); ++i)
+      if (!(sub_tree_are_equal(pnode1->children[i], pnode2->children[i])))
+          return false;
+    return true;
+
+  }
 
   static void verify_tree(pga_tree_node pnode, pga_tree_node parent) {
     GMM_ASSERT1(pnode->parent == parent,
                 "Invalid tree node " << pnode->node_type);
-    for (size_type i = 1; i < pnode->children.size(); ++i)
+    for (size_type i = 0; i < pnode->children.size(); ++i)
       verify_tree(pnode->children[i], pnode);
   }
 
 
-  static void ga_valid_operand(const std::string &expr, pga_tree_node pnode) {
-    if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC ||
-                  pnode->node_type == GA_NODE_SPEC_FUNC ||
-                  pnode->node_type == GA_NODE_NAME ||
-                  pnode->node_type == GA_NODE_OPERATOR ||
-                  pnode->node_type == GA_NODE_ALLINDICES))
-      ga_throw_error(expr, pnode->pos, "Invalid term");
-  }
+  #define ga_valid_operand(expr, pnode)                        \
+    {                                                          \
+      if (pnode && (pnode->node_type == GA_NODE_PREDEF_FUNC || \
+                    pnode->node_type == GA_NODE_SPEC_FUNC ||   \
+                    pnode->node_type == GA_NODE_NAME ||        \
+                    pnode->node_type == GA_NODE_OPERATOR ||    \
+                    pnode->node_type == GA_NODE_ALLINDICES))   \
+        ga_throw_error(expr, pnode->pos, "Invalid term");      \
+    }
 
   static void ga_print_constant_tensor(pga_tree_node pnode) {
     size_type nt = pnode->nb_test_functions(); // for printing zero tensors
     switch (pnode->tensor_order()) {
     case 0:
-      cout << pnode->t[0];
+      cout << (nt ? scalar_type(0) : pnode->t[0]);
       break;
     case 1:
       cout << "[";
-      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
         if (i != 0) cout << "; ";
         cout << (nt ? scalar_type(0) : pnode->t[i]);
       }
@@ -577,9 +709,9 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       break;
     case 2:
       cout << "[";
-      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
         if (i != 0) cout << "; ";
-        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+        for (size_type j = 0; j < pnode->tensor_proper_size(1); ++j) {
           if (j != 0) cout << ", ";
           cout << (nt ? scalar_type(0) : pnode->t(i,j));
         }
@@ -588,11 +720,11 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       break;
     case 3:
       cout << "[";
-      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
         if (i != 0) cout << ",, ";
-        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+        for (size_type j = 0; j < pnode->tensor_proper_size(1); ++j) {
           if (j != 0) cout << "; "; 
-          for (size_type k = 0; k < pnode->t.size(2); ++k) {
+          for (size_type k = 0; k < pnode->tensor_proper_size(2); ++k) {
             if (k != 0) cout << ", "; 
             cout << (nt ? scalar_type(0) : pnode->t(i,j,k));
           }
@@ -602,13 +734,13 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       break;
     case 4:
       cout << "[";
-      for (size_type i = 0; i < pnode->t.size(0); ++i) {
+      for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
         if (i != 0) cout << ";; ";
-        for (size_type j = 0; j < pnode->t.size(1); ++j) {
+        for (size_type j = 0; j < pnode->tensor_proper_size(1); ++j) {
           if (j != 0) cout << ",, "; 
-          for (size_type k = 0; k < pnode->t.size(2); ++k) {
+          for (size_type k = 0; k < pnode->tensor_proper_size(2); ++k) {
             if (k != 0) cout << "; "; 
-            for (size_type l = 0; l < pnode->t.size(3); ++l) {
+            for (size_type l = 0; l < pnode->tensor_proper_size(3); ++l) {
               if (l != 0) cout << ", ";
               cout << (nt ? scalar_type(0) : pnode->t(i,j,k,l));
             }
@@ -627,18 +759,27 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     switch(pnode->node_type) {
     case GA_NODE_OP: 
       {
-        bool par = (pnode->parent &&
-                    pnode->parent->node_type == GA_NODE_OP &&
-                    (ga_operator_priorities[pnode->op_type] >= 2 ||
-                     ga_operator_priorities[pnode->op_type]
-                     < ga_operator_priorities[pnode->parent->op_type]));
+        bool par = false;
+        if (pnode->parent) {
+          if (pnode->parent->node_type == GA_NODE_OP &&
+              (ga_operator_priorities[pnode->op_type] >= 2 ||
+               ga_operator_priorities[pnode->op_type]
+               < ga_operator_priorities[pnode->parent->op_type]))
+            par = true;
+          if (pnode->parent->node_type == GA_NODE_PARAMS) par = true;
+        }
+
+        
         if (par) cout << "(";
         if (pnode->op_type == GA_UNARY_MINUS) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
-          cout << "-"; ga_print_node(pnode->children[0]);
+          cout << "-"; ga_print_node(pnode->children[0]); 
         } else if (pnode->op_type == GA_QUOTE) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           ga_print_node(pnode->children[0]); cout << "'";
+        } else if (pnode->op_type == GA_TRACE) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          cout << "Trace("; ga_print_node(pnode->children[0]); cout << ")";
         } else {
           GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
           if (pnode->op_type == GA_MULT &&
@@ -654,6 +795,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
           case GA_DIV: cout << "/"; break;
           case GA_COLON: cout << ":"; break;
           case GA_DOT: cout << "."; break;
+          case GA_DOTMULT: cout << ".*"; break;
+          case GA_DOTDIV: cout << "./"; break;
           case GA_TMULT: cout << "@"; break;
           default: GMM_ASSERT1(false, "Invalid or not taken into account "
                                "operation");
@@ -667,10 +810,18 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     case GA_NODE_VAL: cout << pnode->name; break;
     case GA_NODE_GRAD: cout << "Grad_" << pnode->name; break;
     case GA_NODE_HESS: cout << "Hess_" << pnode->name; break;
-    case GA_NODE_FIXED_SIZE_TEST: cout << "Test_" << pnode->name; break;
-    case GA_NODE_TEST: cout << "Test_" << pnode->name; break;
-    case GA_NODE_GRAD_TEST: cout << "Grad_Test_" << pnode->name; break;
-    case GA_NODE_HESS_TEST: cout << "Hess_Test_" << pnode->name; break;
+    case GA_NODE_TEST: 
+      if (pnode->test_function_type == 1) cout << "Test_" << pnode->name;
+      else cout << "Test2_" << pnode->name;
+      break;
+    case GA_NODE_GRAD_TEST:
+      if (pnode->test_function_type == 1) cout << "Grad_Test_" << pnode->name;
+      else cout << "Grad_Test2_" << pnode->name;
+      break;
+    case GA_NODE_HESS_TEST:
+      if (pnode->test_function_type == 1) cout << "Hess_Test_" << pnode->name;
+      else cout << "Hess_Test2_" << pnode->name;
+      break;
     case GA_NODE_SPEC_FUNC: cout << pnode->name; break;
     case GA_NODE_OPERATOR:
     case GA_NODE_PREDEF_FUNC:
@@ -685,23 +836,23 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       if (pnode->test_function_type) cout << "(";
       ga_print_constant_tensor(pnode);
       if (pnode->test_function_type & 1) {
-        GMM_ASSERT1(pnode->qdim0 > 0, "Internal error");
-        if (pnode->qdim0 == 1)
-          cout << "*Test_" << pnode->name_test0;
-        else {
-          cout << "*([ 0";
-          for (size_type i = 1; i < pnode->qdim0; ++i) cout << ", 0";
-          cout << "].Test_" << pnode->name_test0 << ")";
-        }
-      }
-      if (pnode->test_function_type & 2) {
         GMM_ASSERT1(pnode->qdim1 > 0, "Internal error");
         if (pnode->qdim1 == 1)
-          cout << "*Test2_" << pnode->name_test1;
+          cout << "*Test_" << pnode->name_test1;
         else {
           cout << "*([ 0";
           for (size_type i = 1; i < pnode->qdim1; ++i) cout << ", 0";
-          cout << "].Test2_" << pnode->name_test1 << ")";
+          cout << "].Test_" << pnode->name_test1 << ")";
+        }
+      }
+      if (pnode->test_function_type & 2) {
+        GMM_ASSERT1(pnode->qdim2 > 0, "Internal error");
+        if (pnode->qdim2 == 1)
+          cout << "*Test2_" << pnode->name_test2;
+        else {
+          cout << "*([ 0";
+          for (size_type i = 1; i < pnode->qdim2; ++i) cout << ", 0";
+          cout << "].Test2_" << pnode->name_test2 << ")";
         }
       }
       if (pnode->test_function_type) cout << ")";
@@ -757,7 +908,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
  
 
   static void ga_print_tree(const ga_tree &tree) {
-    int pr = cout.precision(16); // Not exception safe
+    size_type pr = cout.precision(16); // Not exception safe
     if (tree.root) verify_tree(tree.root, 0);
     if (tree.root) ga_print_node(tree.root); else cout << "Empty tree";
     cout << endl;
@@ -772,7 +923,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
   }
 
   static void ga_print_hash_values(const ga_tree &tree) {
-    int pr = cout.precision(16); // Not exception safe
+    size_type pr = cout.precision(16); // Not exception safe
     if (tree.root) ga_print_hash_value_node(tree.root);
     else cout << "Empty tree";
     cout << endl;
@@ -822,6 +973,10 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         case GA_PLUS:  // unary +
           state = 1; break;
 
+        case GA_TRACE:
+          tree.add_op(GA_TRACE, token_pos);
+          state = 1; break;
+
         case GA_LPAR: // Parenthesed expression
           {
             ga_tree sub_tree;
@@ -834,7 +989,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
           }
           break;
 
-        case GA_LBRACKET: // Constant vector/matrix or tensor
+        case GA_LBRACKET: // Explicit vector/matrix or tensor
           {
             ga_tree sub_tree;
             GA_TOKEN_TYPE r_type;
@@ -858,7 +1013,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
                 if (n1 != nbc1 || n2 != nbc2 || n3 != nbc3 ||
                     (founddcomma && !founddsemi) ||
                     (!founddcomma && founddsemi))
-                  ga_throw_error(expr, pos-1, "Bad constant "
+                  ga_throw_error(expr, pos-1, "Bad explicit "
                                   "vector/matrix/tensor format. ");
                 tree.current_node->nbc1 = nbc1;
                 if (founddcomma) {
@@ -869,7 +1024,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
                 }
                 break;
               default:
-                ga_throw_error(expr, pos-1, "The constant "
+                ga_throw_error(expr, pos-1, "The explicit "
                                 "vector/matrix/tensor components should be "
                                 "separated by ',', ';', ',,' and ';;' and "
                                 "be ended by ']'.");
@@ -890,7 +1045,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       case 2:
         switch (t_type) {
         case GA_PLUS: case GA_MINUS: case GA_MULT: case GA_DIV:
-        case GA_COLON: case GA_DOT: case GA_TMULT:
+        case GA_COLON: case GA_DOT: case GA_DOTMULT: case GA_DOTDIV:
+        case GA_TMULT:
           tree.add_op(t_type, token_pos);
           state = 1; break;
         case GA_QUOTE:
@@ -967,7 +1123,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     size_type ftype; // 0 : C++ function with a derivative
                      // 1 : C++ function with an expression to be derived
                      // 2 : function defined by an expression
-    size_type nbargs;         // One or two arguments
+   size_type nbargs;         // One or two arguments
     pscalar_func_onearg f1;   // Function pointer for a one argument function
     pscalar_func_twoargs f2;  // Function pointer for a two arguments function
     std::string expr;
@@ -1283,6 +1439,28 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
   // functions, operators.
   //=========================================================================
   
+  class ga_workspace;
+
+  static void ga_semantic_analysis(const std::string &, ga_tree &,
+                                   const ga_workspace &, bool);
+  static void ga_split_tree(const std::string &, ga_tree &,
+                            ga_workspace &, pga_tree_node);
+  static void ga_derivation(ga_tree &, const ga_workspace &,
+                            const std::string &, size_type);
+  static bool ga_node_mark_tree_for_variable(pga_tree_node,
+                                             const std::string &);
+
+  static void ga_extract_variables(pga_tree_node pnode,
+                                   std::set<std::string> &vars) {
+    if (pnode->node_type == GA_NODE_VAL ||
+        pnode->node_type == GA_NODE_GRAD ||
+        pnode->node_type == GA_NODE_HESS)
+      vars.insert(pnode->name);
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_extract_variables(pnode->children[i], vars);
+  }
+
+  
   class ga_workspace {
     
     const getfem::model *model;
@@ -1305,13 +1483,121 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
     };
 
+  public:
+
+    struct tree_description {
+      size_type order; // 0: potential, 1: weak form, 2: tangent operator
+      std::string name_test1, name_test2;
+      const mesh_im *mim;
+      size_type region;
+      ga_tree tree;
+    };
+
+  private:
+
     typedef std::map<std::string, var_description> VAR_SET;
 
     VAR_SET variables;
     ga_predef_operator_tab user_operators;
     ga_predef_function_tab user_functions;
+    std::vector<tree_description> trees;
+    std::list<ga_tree> aux_trees;
+
+    void add_tree(ga_tree &tree, const mesh_im &mim, size_type region,
+                  const std::string expr) {
+      if (tree.root) {
+
+        cout << "adding tree: "; ga_print_tree(tree);
+        cout << "With tests functions of " <<  tree.root->name_test1
+             << " and " << tree.root->name_test2 << endl;
+        bool remain = true;
+        size_type order = 0, ind_tree = 0;
+        switch(tree.root->test_function_type) {
+        case 0: order = 0; break;
+        case 1: order = 1; break;
+        case 3: order = 2; break;
+        default: GMM_ASSERT1(false, "Inconsistent term");
+        }
+
+        bool found = false;
+        for (size_type i = 0; i < trees.size(); ++i) {
+          if (trees[i].mim == &mim && trees[i].order == order &&
+              trees[i].name_test1.compare(tree.root->name_test1) == 0 &&
+              trees[i].name_test2.compare(tree.root->name_test2) == 0) {
+            ga_tree &ftree = trees[i].tree;
+            
+            ftree.insert_node(ftree.root);
+            ftree.root->node_type = GA_NODE_OP;
+            ftree.root->op_type = GA_PLUS;
+            ftree.add_children(ftree.root);
+            ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
+            ga_semantic_analysis("", ftree, *this, false);
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          ind_tree = trees.size(); remain = false;
+          trees.push_back(tree_description());
+          trees.back().mim = &mim; trees.back().region = region;
+          trees.back().tree.swap(tree);
+          pga_tree_node root = trees.back().tree.root;
+          trees.back().name_test1 = root->name_test1;
+          trees.back().name_test2 = root->name_test2;
+          trees.back().order = order;
+        }
+        
+
+        if (order <= 1) {
+          std::set<std::string> expr_variables;
+          ga_extract_variables((remain ? tree : trees[ind_tree].tree).root,
+                               expr_variables);
+
+          for (std::set<std::string>::iterator it = expr_variables.begin();
+               it != expr_variables.end(); ++it) {
+            if (!(is_constant(*it))) {
+              ga_tree dtree = (remain ? tree : trees[ind_tree].tree);
+              cout << (order == 0 ? "First " : "Second ");
+              cout << "derivative of tree: "; ga_print_tree(dtree);
+              cout << "with respect to " << *it << endl;
+              ga_derivation(dtree, *this, *it, 1+order);
+              cout << "result: "; ga_print_tree(dtree);
+              ga_semantic_analysis(expr, dtree, *this, false);
+              add_tree(dtree, mim, region, expr);
+            }
+          }
+        }
+      }
+    }
 
   public:
+
+    void add_expression(const std::string expr, const mesh_im &mim,
+                   size_type region = size_type(-1)) {
+      ga_tree tree;
+      ga_read_string(expr, tree);
+      ga_semantic_analysis(expr, tree, *this, false);
+      if (tree.root) {
+        ga_split_tree(expr, tree, *this, tree.root);
+
+        for (std::list<ga_tree>::iterator it = aux_trees.begin();
+             it != aux_trees.end(); ++it)
+          add_tree(*it, mim, region, expr);
+
+        add_tree(tree, mim, region, expr);
+        aux_trees.clear();
+        
+        // recombinaison des différents termes d'une même variable
+
+      }
+    }
+
+    void add_aux_tree(ga_tree &tree) { aux_trees.push_back(tree); }
+
+    size_type nb_trees(void) { return trees.size(); }
+   
+    tree_description &tree_info(size_type i) { return trees[i]; }
 
     bool user_operator_exists(const std::string &name) const {
       return user_operators.find(name) != user_operators.end();
@@ -1438,7 +1724,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       c += ga_hash_code(pnode->t); break;
       
     case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
-    case GA_NODE_FIXED_SIZE_TEST: case GA_NODE_TEST:
+    case GA_NODE_TEST:
     case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
       c += ga_hash_code(pnode->name); break;
 
@@ -1456,21 +1742,26 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
   //=========================================================================
   // Semantic analysis, tree simplification and tree enrichment
+  //    - Control tensor sizes for operations, operator or function call
+  //    - Compute all constant operations (i.e. non element dependent)
+  //    - Build a ready to use tree for derivation/compilation
   //=========================================================================
 
   static void ga_node_analysis(const std::string &expr, ga_tree &tree,
                                const ga_workspace &workspace,
-                               pga_tree_node pnode) {
+                               pga_tree_node pnode, bool eval_fixed_size) {
     
-    bool all_cte = true, all_sc = true, all_primal = true;
+    bool all_cte = true, all_sc = true; // all_primal = true;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
-      ga_node_analysis(expr, tree, workspace, pnode->children[i]);
+      ga_node_analysis(expr, tree, workspace, pnode->children[i],
+                       eval_fixed_size);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && pnode->children[i]->t.size() == 1;
       GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
                   "internal error on child " << i);
-      all_primal = all_primal && (pnode->children[i]->test_function_type == 0);
-      if (i) ga_valid_operand(expr, pnode->children[i]);
+      // all_primal = all_primal &&(pnode->children[i]->test_function_type==0);
+      if (pnode->node_type != GA_NODE_PARAMS)
+        ga_valid_operand(expr, pnode->children[i]);
     }
     
     size_type nbch = pnode->children.size();
@@ -1482,18 +1773,45 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     size_type dim0 = child0 ? child0->tensor_order() : 0;
     size_type dim1 = child1 ? child1->tensor_order() : 0;
 
+    if (pnode->node_type != GA_NODE_OP ||
+        (pnode->op_type != GA_PLUS && pnode->op_type != GA_MINUS))
+      pnode->marked = false;
+    else {
+      if (pnode->parent) pnode->marked = pnode->parent->marked;
+      else pnode->marked = true;
+    }
+
     switch (pnode->node_type) {
-    case GA_NODE_CONSTANT: break;
+    case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
+    case GA_NODE_CONSTANT:
+      pnode->test_function_type = 0; break;
 
     case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
+    case GA_NODE_VAL:
+      if (eval_fixed_size && !(workspace.associated_mf(pnode->name))) {
+        gmm::copy(workspace.value(pnode->name), pnode->t.as_vector());
+        pnode->node_type = GA_NODE_CONSTANT;
+      }
+      break;
 
-    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
-    case GA_NODE_FIXED_SIZE_TEST: case GA_NODE_TEST:
-    case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST: break;
+    case GA_NODE_ZERO: case GA_NODE_GRAD: case GA_NODE_HESS: break;
+
+    case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST: {
+      const mesh_fem *mf = workspace.associated_mf(pnode->name);
+      if (pnode->test_function_type == 1) {
+        pnode->name_test1 = pnode->name;
+        pnode->name_test2 = "";
+        pnode->qdim1 = (mf ? workspace.qdim(pnode->name)
+                        : gmm::vect_size(workspace.value(pnode->name)));
+      } else {
+        pnode->name_test1 = "";
+        pnode->name_test2 = pnode->name;
+        pnode->qdim2 = (mf ? workspace.qdim(pnode->name)
+                        : gmm::vect_size(workspace.value(pnode->name)));
+      }
+    }  break;
 
     case GA_NODE_OP:
-      ga_valid_operand(expr, child0);
-        
       switch(pnode->op_type) {
 
       case GA_PLUS: case GA_MINUS:
@@ -1509,13 +1827,11 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
-                child0->name_test0.compare(child1->name_test0) ||
-                child0->name_test1.compare(child1->name_test1))
+                (!(pnode->marked) && 
+                 (child0->name_test1.compare(child1->name_test1) ||
+                  child0->name_test2.compare(child1->name_test2))))
               compatible = false;
           }
-          // TODO: prendre en compte l'addition de différentes parties
-          // de formulation faible avec différentes fonctions test.
-          // Dans ce cas, c'est l'assemblage qui gère l'addition. 
           if (!compatible)
             ga_throw_error(expr, pnode->pos, "Addition or substraction of "
                             "incompatible expressions or of different sizes");
@@ -1529,14 +1845,14 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
               pnode->t += pnode->children[1]->t;
             tree.clear_children(pnode);
           } else {
-            pnode->t = child1->t;
-            pnode->test_function_type = child1->test_function_type;
-            pnode->name_test0 = child1->name_test0;
-            pnode->name_test1 = child1->name_test1;
-            pnode->qdim0 = child1->qdim0;
-            pnode->qdim1 = child1->qdim1;
+            pnode->t = child0->t;
+            pnode->test_function_type = child0->test_function_type;
+            pnode->name_test1 = child0->name_test1;
+            pnode->name_test2 = child0->name_test2;
+            pnode->qdim1 = child0->qdim1;
+            pnode->qdim2 = child0->qdim2;
 
-            // simplification if one of the two operand is constant and zero
+            // simplification if one of the two operands is constant and zero
             if (child0->tensor_is_zero())
               tree.replace_node_by_child(pnode, 1);
             else if (child1->tensor_is_zero())
@@ -1545,13 +1861,64 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         }
         break;
 
+      case GA_DOTMULT: case GA_DOTDIV:
+        {
+          bool compatible = true;
+          if (child0->tensor_proper_size() != child1->tensor_proper_size())
+            compatible = false;
+
+          if (child0->tensor_proper_size() != 1) {
+            if (child0->tensor_order() != child1->tensor_order())
+              compatible = false;
+            
+            for (size_type i = 0; i < child0->tensor_order(); ++i)
+              if (child0->tensor_proper_size(i)!=child1->tensor_proper_size(i))
+                compatible = false;
+          }
+
+          if (!compatible)
+            ga_throw_error(expr, pnode->pos, "Arguments of different sizes"
+                           "for .* or ./");
+          
+          pnode->mult_test(child0, child1, expr);
+          mi = pnode->t.sizes();
+          for (size_type i = 0; i < child0->tensor_order(); ++i)
+            mi.push_back(child0->tensor_proper_size(i));
+          pnode->t.adjust_sizes(mi);
+          
+          if (all_cte) {
+            pnode->node_type = GA_NODE_CONSTANT;
+            pnode->test_function_type = 0;
+            if (pnode->op_type == GA_DOTMULT) {
+              for (size_type i = 0; i < child0->t.size(); ++i)
+                pnode->t[i] = child0->t[i] * child1->t[i];
+            } else {
+              for (size_type i = 0; i < child0->t.size(); ++i) {
+                if (child1->t[i] == scalar_type(0))
+                  ga_throw_error(expr, pnode->pos, "Division by zero.");
+                pnode->t[i] = child0->t[i] / child1->t[i];
+              }
+            }
+            tree.clear_children(pnode);
+          } else {
+            if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
+              gmm::clear(pnode->t.as_vector());
+              pnode->node_type = GA_NODE_ZERO;
+              tree.clear_children(pnode);
+            }
+            if (child1->tensor_is_zero() && pnode->op_type == GA_DOTDIV)
+              ga_throw_error(expr, pnode->pos, "Division by zero.");
+          }
+        }
+        break;
+          
       case GA_UNARY_MINUS:
         pnode->t = child0->t;
         pnode->test_function_type = child0->test_function_type;
-        pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
-        pnode->qdim0 = child0->qdim0;
+        pnode->name_test2 = child0->name_test2;
         pnode->qdim1 = child0->qdim1;
+        pnode->qdim2 = child0->qdim2;
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->test_function_type = 0;
@@ -1564,8 +1931,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
       case GA_QUOTE:
         if (dim0 > 2)
-          ga_throw_error(expr, pnode->pos,
-                         "Transpose operator is for vector or matrix only.");
+          ga_throw_error(expr, pnode->pos, "Transpose operator is for "
+                         "vectors or matrices only.");
         mi = size0;
         if (child0->tensor_proper_size() == 1)
           { tree.replace_node_by_child(pnode, 0); break; }
@@ -1574,10 +1941,10 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
-        pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
-        pnode->qdim0 = child0->qdim0;
+        pnode->name_test2 = child0->name_test2;
         pnode->qdim1 = child0->qdim1;
+        pnode->qdim2 = child0->qdim2;
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->test_function_type = 0;
@@ -1593,29 +1960,74 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         } else if (child0->node_type == GA_NODE_ZERO) {
           pnode->node_type = GA_NODE_ZERO;
           gmm::clear(pnode->t.as_vector());
-          pnode->test_function_type = 0;
           tree.clear_children(pnode);
         }
         break;
 
+      case GA_TRACE:
+        {
+          mi = size0;
+          size_type N = (child0->tensor_proper_size() == 1) ? 1 : mi.back();
+          
+          if ((dim0 != 2 && child0->tensor_proper_size() != 1) ||
+              (dim0 == 2 && mi[mi.size()-2] != N))
+            ga_throw_error(expr, pnode->pos,
+                           "Trace operator is for square matrices only.");
+          
+          if (dim0 == 2) { mi.pop_back(); mi.pop_back(); }
+          pnode->t.adjust_sizes(mi);
+          pnode->test_function_type = child0->test_function_type;
+          pnode->name_test1 = child0->name_test1;
+          pnode->name_test2 = child0->name_test2;
+          pnode->qdim1 = child0->qdim1;
+          pnode->qdim2 = child0->qdim2;
+          if (all_cte) {
+            pnode->node_type = GA_NODE_CONSTANT;
+            pnode->test_function_type = 0;
+            if (dim0 == 2) {
+              pnode->t[0] = scalar_type(0);
+              for (size_type i = 0; i < N; ++i)
+                pnode->t[0] += child0->t(i,i);
+            } else {
+              pnode->t[0] += child0->t[0];
+            }
+            tree.clear_children(pnode);
+          } else if (child0->node_type == GA_NODE_ZERO) {
+            pnode->node_type = GA_NODE_ZERO;
+            gmm::clear(pnode->t.as_vector());
+            tree.clear_children(pnode);
+          }
+        }
+        break;
+
       case GA_DOT:
-        if (dim0 > 1 || dim1 > 1)
-          ga_throw_error(expr, pnode->pos,
-                          "Dot product acts only on vectors.");
+        if (dim1 > 1)
+          ga_throw_error(expr, pnode->pos, "The second argument of the dot "
+                         "product have to be a vector.")
         else {
           size_type s0 = dim0 == 0 ? 1 : size0.back();
           size_type s1 = dim1 == 0 ? 1 : size1.back();
-          if (s0 != s1)
-            ga_throw_error(expr, pnode->pos, "Dot product "
-                            "of expressions of different sizes");
-          
+          if (s0 != s1) ga_throw_error(expr, pnode->pos, "Dot product "
+                                       "of expressions of different sizes");
+          pnode->mult_test(child0, child1, expr);
+          if (dim0 > 1) {
+            mi = pnode->t.sizes();
+            for (size_type i = 1; i < dim0; ++i)
+              mi.push_back(child0->tensor_proper_size(i-1));
+            pnode->t.adjust_sizes(mi);
+          }
+
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
-            pnode->init_scalar_tensor
-              (gmm::vect_sp(child0->t.as_vector(), child1->t.as_vector()));
+            gmm::clear(pnode->t.as_vector());
+            size_type k = 0;
+            for (size_type i = 0, j = 0; i < child0->t.size(); ++i) {
+             pnode->t[j] += child0->t[i] * child1->t[k];
+             ++j; if (j == pnode->t.size()) { j = 0; ++k; }
+            }
+            GMM_ASSERT1(k == child1->t.size(), "Internal error");
             tree.clear_children(pnode);
           } else {
-            pnode->mult_test(child0, child1, expr);
             if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
               gmm::clear(pnode->t.as_vector());
               pnode->node_type = GA_NODE_ZERO;
@@ -1626,28 +2038,37 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         break;
 
       case GA_COLON:
-        if (dim0 > 2 || dim1 > 2)
+        if (dim1 > 2)
           ga_throw_error(expr, pnode->pos,
-                          "Frobenius product acts only on matrices.");
+                          "Frobenius product acts only on matrices.")
         else {
           size_type s00 = (dim0 == 0) ? 1
             : (dim0 == 1 ? size0.back() : size0[size0.size()-2]);
-          size_type s01 = (dim0 == 2) ? size0.back() : 1;
+          size_type s01 = (dim0 >= 2) ? size0.back() : 1;
           size_type s10 = (dim1 == 0) ? 1
             : (dim1 == 1 ? size1.back() : size1[size1.size()-2]);
-          size_type s11 = (dim1 == 2) ? size1.back() : 1;
+          size_type s11 = (dim1 >= 2) ? size1.back() : 1;
           if (s00 != s10 || s01 != s11)
             ga_throw_error(expr, pnode->pos, "Frobenius product "
                             "of expressions of different sizes");
-
+          pnode->mult_test(child0, child1, expr);
+          if (dim0 > 2) {
+            mi = pnode->t.sizes();
+            for (size_type i = 2; i < dim0; ++i)
+              mi.push_back(child0->tensor_proper_size(i-2));
+            pnode->t.adjust_sizes(mi);
+          }
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
-            pnode->init_scalar_tensor
-              (gmm::vect_sp(pnode->children[0]->t.as_vector(),
-                            pnode->children[1]->t.as_vector()));
+            gmm::clear(pnode->t.as_vector());
+            size_type k = 0;
+            for (size_type i = 0, j = 0; i < child0->t.size(); ++i) {
+             pnode->t[j] += child0->t[i] * child1->t[k];
+             ++j; if (j == pnode->t.size()) { j = 0; ++k; }
+            }
+            GMM_ASSERT1(k == child1->t.size(), "Internal error");
             tree.clear_children(pnode);
           } else {
-            pnode->mult_test(child0, child1, expr);
             if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
               gmm::clear(pnode->t.as_vector());
               pnode->node_type = GA_NODE_ZERO;
@@ -1841,10 +2262,10 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         
         pnode->t = child0->t;
         pnode->test_function_type = child0->test_function_type;
-        pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
-        pnode->qdim0 = child0->qdim0;
+        pnode->name_test2 = child0->name_test2;
         pnode->qdim1 = child0->qdim1;
+        pnode->qdim2 = child0->qdim2;
         
         if (all_cte) {          
           pnode->node_type = GA_NODE_CONSTANT;
@@ -1873,31 +2294,57 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         if (!all_sc) 
           ga_throw_error(expr, pnode->pos, "Constant vector/matrix/tensor "
                           "components should be scalar valued.");
-        if (!all_primal)
-          ga_throw_error(expr, pnode->pos, "Test functions are not allowed "
-                          "in constant vector/matrix/tensor components.");
-
-        ga_valid_operand(expr, child0);
+//         if (!all_primal)
+//           ga_throw_error(expr, pnode->pos, "Test functions are not allowed "
+//                           "in constant vector/matrix/tensor components.");
         
         size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
         size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
         if (all_cte) pnode->node_type = GA_NODE_CONSTANT;
         pnode->test_function_type = 0;
+        for (size_type i = 0; i < pnode->children.size(); ++i) {
+          if (pnode->children[i]->test_function_type) {
+            if (pnode->test_function_type == 0) {
+              pnode->test_function_type=pnode->children[i]->test_function_type;
+              pnode->name_test1 = pnode->children[i]->name_test1;
+              pnode->name_test2 = pnode->children[i]->name_test2;
+              pnode->qdim1 = pnode->children[i]->qdim1;
+              pnode->qdim2 = pnode->children[i]->qdim2;
+            } else {
+              if (pnode->test_function_type
+                  != pnode->children[i]->test_function_type ||
+                  pnode->name_test1.compare(pnode->children[i]->name_test1)
+                  != 0 ||
+                  pnode->name_test2.compare(pnode->children[i]->name_test2)
+                  != 0)
+                ga_throw_error(expr, pnode->pos, "Inconsistent use of test "
+                               "function in constant matrix.");
+            }
+          }
+        }
+        mi.resize(0);
+        if (pnode->test_function_type) mi.push_back(1);
+        if (pnode->test_function_type == 3) mi.push_back(1);
         if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
-          pnode->init_scalar_tensor(child0->t[0]);
+          pnode->t.adjust_sizes(mi);
+          if (all_cte) pnode->t[0] = child0->t[0];
         } else if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
-          pnode->init_vector_tensor(nbl);
+          mi.push_back(nbl);
+          pnode->t.adjust_sizes(mi);
           if (all_cte)
             for (size_type i = 0; i < nbl; ++i)
               pnode->t[i] = pnode->children[i]->t[0];
         } else if (nbc2 == 1 && nbc3 == 1) {
-          pnode->init_matrix_tensor(nbl, nbc1);
+          mi.push_back(nbl); mi.push_back(nbc1); 
+          pnode->t.adjust_sizes(mi);
           if (all_cte)
             for (size_type i = 0; i < nbl; ++i)
               for (size_type j = 0; j < nbc1; ++j)
                 pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
         } else {
-          pnode->init_fourth_order_tensor(nbl, nbc3, nbc2, nbc1);
+          mi.push_back(nbl); mi.push_back(nbc3);
+          mi.push_back(nbc2); mi.push_back(nbc1);
+          pnode->t.adjust_sizes(mi);
           size_type n = 0;
           if (all_cte)
             for (size_type i = 0; i < nbl; ++i)
@@ -1993,12 +2440,12 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
           
           if (!(workspace.variable_exists(name)))
             ga_throw_error(expr, pnode->pos,
-                           "Unknown variable, function or constant");
+                           "Unknown variable, function, operator or data");
 
           if (pnode->der1)
             ga_throw_error(expr, pnode->pos, "Derivative is for functions or "
                            "operators, not for variables. Use Grad instead.");
-
+          pnode->name = name;
           
           const mesh_fem *mf = workspace.associated_mf(name);
           if (!test) {
@@ -2006,7 +2453,10 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
               if (val_grad_or_hess)
                 ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
                                 "be evaluated for fixed size data.");
-              pnode->node_type = GA_NODE_CONSTANT;
+              if (eval_fixed_size)
+                pnode->node_type = GA_NODE_CONSTANT;
+              else
+                pnode->node_type = GA_NODE_VAL;
               size_type n = gmm::vect_size(workspace.value(name));
               if (n == 1) {
                 pnode->init_scalar_tensor(workspace.value(name)[0]);
@@ -2016,10 +2466,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
               }
             } else {
               size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
-              pnode->name = name;
               switch (val_grad_or_hess) {
               case 0: // value
-                // TODO: sortir une instruction d'évaluation de variable
                 pnode->node_type = GA_NODE_VAL;
                 if (q == 1)
                   pnode->init_scalar_tensor(scalar_type(0));
@@ -2027,7 +2475,6 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
                   pnode->init_vector_tensor(q);
                 break;
               case 1: // grad
-                // TODO: sortir une instruction d'évaluation de grad
                 pnode->node_type = GA_NODE_GRAD;
                 if (q == 1 && n == 1)
                   pnode->init_scalar_tensor(scalar_type(0));
@@ -2037,7 +2484,6 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
                   pnode->init_matrix_tensor(q, n);
                 break;
               case 2: // Hessian
-                // TODO: sortir une instruction d'évaluation de Hessien
                 pnode->node_type = GA_NODE_HESS;
                 if (q == 1 && n == 1)
                   pnode->init_scalar_tensor(scalar_type(0));
@@ -2052,15 +2498,14 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
             if (workspace.is_constant(name))
               ga_throw_error(expr, pnode->pos, "Test functions of constant "
                               "are not allowed.");
-            pnode->name = name;
             if (test == 1) {
-              pnode->name_test0 = name;
-              pnode->qdim0
+              pnode->name_test1 = name;
+              pnode->qdim1
                 = (mf ? workspace.qdim(name)
                    : gmm::vect_size(workspace.value(name)));
             } else {
-              pnode->name_test1 = name;
-              pnode->qdim1
+              pnode->name_test2 = name;
+              pnode->qdim2
                 = (mf ? workspace.qdim(name)
                    : gmm::vect_size(workspace.value(name)));
             }
@@ -2069,7 +2514,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
               if (val_grad_or_hess)
                 ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
                                 "be evaluated for fixed size variables.");
-              pnode->node_type = GA_NODE_FIXED_SIZE_TEST;
+              pnode->node_type = GA_NODE_TEST;
               // TODO: Instruction : mise à l'identité du tenseur (init).
               size_type n = gmm::vect_size(workspace.value(name));
               if (n == 1) {
@@ -2127,6 +2572,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         
         // Évaluation of predefined function
         
+        for (size_type i = 1; i < pnode->children.size(); ++i)
+          ga_valid_operand(expr, pnode->children[i]);
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = (it != PREDEF_FUNCTIONS.end()) ?
@@ -2148,31 +2595,42 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         if (child1->test_function_type || child2->test_function_type)
           ga_throw_error(expr, pnode->pos, "Test functions cannot be passed "
                          "as argument of a predefined function.");
+        if (child1->tensor_order() > 2 || child2->tensor_order() > 2)
+          ga_throw_error(expr, pnode->pos, "Sorry, function can be applied "
+                         "to scalar, vector and matrices only.");
         size_type s1 = child1->t.size();
         size_type s2 = (nbargs == 2) ? child2->t.size() : s1;
         if (s1 != s2 && (s1 != 1 || s2 != 1))
           ga_throw_error(expr, pnode->pos,
                          "Invalid argument size for a scalar function.");
 
+        if (nbargs == 1) {
+          pnode->t = child1->t;
+        } else {
+          if (s1 == s2) {
+            pnode->t = child1->t;
+          } else if (s1 == 1) {
+            pnode->t = child2->t;
+          } else {
+            pnode->t = child1->t;
+          }
+        }
+
         if (all_cte) {
           if (pnode->der1)
             GMM_ASSERT1(false, "Sorry, to be done");
           pnode->node_type = GA_NODE_CONSTANT;
           if (nbargs == 1) {
-            pnode->t = child1->t;
             for (size_type i = 0; i < s1; ++i)
               pnode->t[i] = (*(F.f1))(child1->t[i]);
           } else {
             if (s1 == s2) {
-              pnode->t = child1->t;
               for (size_type i = 0; i < s1; ++i)
                 pnode->t[i] = (*(F.f2))(child1->t[i], child2->t[i]);
             } else if (s1 == 1) {
-              pnode->t = child2->t;
               for (size_type i = 0; i < s2; ++i)
                 pnode->t[i] = (*(F.f2))(child1->t[0], child2->t[i]);
             } else {
-              pnode->t = child1->t;
               for (size_type i = 0; i < s1; ++i)
                 pnode->t[i] = (*(F.f2))(child1->t[i], child2->t[0]);
             }
@@ -2183,6 +2641,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
         // Special constant functions: meshdim(u), qdim(u) ...
         
+        for (size_type i = 1; i < pnode->children.size(); ++i)
+          ga_valid_operand(expr, pnode->children[i]);
         if (pnode->children.size() != 2)
           ga_throw_error(expr, pnode->pos,
                          "One and only one argument is allowed for function "
@@ -2190,7 +2650,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
         if (!(child0->name.compare("meshdim"))) {
           bool valid = (child1->node_type == GA_NODE_VAL);
-          const mesh_fem *mf = valid ? workspace.associated_mf(child1->name) : 0;
+          const mesh_fem *mf = valid ? workspace.associated_mf(child1->name):0;
           if (!mf)
             ga_throw_error(expr, pnode->pos, "The argument of mesh_dim "
                            "function can only be a fem variable name.");
@@ -2222,6 +2682,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
         // Call to a nonlinear operator
 
+        for (size_type i = 1; i < pnode->children.size(); ++i)
+          ga_valid_operand(expr, pnode->children[i]);
         all_cte = true;
         nonlinear_operator::arg_list args;
         for (size_type i = 1; i < pnode->children.size(); ++i) {
@@ -2235,6 +2697,9 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
           if (pnode->children[i]->test_function_type)
             ga_throw_error(expr, pnode->pos, "Test functions cannot be passed "
                            "as argument of a nonlinear operator.");
+          if (pnode->children[i]->tensor_order() > 2)
+            ga_throw_error(expr, pnode->pos, "Sorry, arguments to nonlinear "
+                        "operators should only be scalar, vector or matrices");
         }
         ga_predef_operator_tab::iterator it
           = PREDEF_OPERATORS.find(child0->name);
@@ -2313,10 +2778,10 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
         for (size_type i = 0; i < mi2.size(); ++i) mi.push_back(mi2[i]);
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
-        pnode->name_test0 = child0->name_test0;
         pnode->name_test1 = child0->name_test1;
-        pnode->qdim0 = child0->qdim0;
+        pnode->name_test2 = child0->name_test2;
         pnode->qdim1 = child0->qdim1;
+        pnode->qdim2 = child0->qdim2;
         
         if (all_cte) {
           pnode->node_type = GA_NODE_CONSTANT;
@@ -2338,7 +2803,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
       }
       break;
 
-    default:GMM_ASSERT1(false, "Unexpected node type. Internal error.");
+    default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
+                        << " in semantic analysis. Internal error.");
     }
     pnode->hash_value = ga_hash_code(pnode);
     for (size_type i = 0; i < pnode->children.size(); ++i) {
@@ -2347,16 +2813,406 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
     }
   }
 
-  void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
-                            const ga_workspace &workspace) {
+  static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
+                                   const ga_workspace &workspace,
+                                   bool eval_fixed_size) {
     if (!(tree.root)) return;
-    ga_node_analysis(expr, tree, workspace, tree.root);
+    ga_node_analysis(expr, tree, workspace, tree.root, eval_fixed_size);
     ga_valid_operand(expr, tree.root);
+  }
+
+  //=========================================================================
+  // Splitting of the terms which depend on different test functions.
+  // To be performed just after a semantic analysis.
+  //=========================================================================
+
+  static void ga_split_tree(const std::string &expr, ga_tree &tree,
+                            ga_workspace &workspace,
+                            pga_tree_node pnode) {
+    
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_split_tree(expr, tree, workspace, pnode->children[i]);
+    
+    size_type nbch = pnode->children.size();
+    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+    pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+
+    switch (pnode->node_type) {
+
+    case GA_NODE_OP:
+      switch(pnode->op_type) {
+
+      case GA_PLUS: case GA_MINUS:
+        {
+          bool compatible = true;
+          if (child0->test_function_type || child1->test_function_type) {
+            if (child0->test_function_type != child1->test_function_type ||
+                (child0->name_test1.compare(child1->name_test1) ||
+                 child0->name_test2.compare(child1->name_test2)))
+              compatible = false;
+          }
+          
+          if (!compatible) {
+            ga_tree aux_tree;
+            aux_tree.root = child1;
+            child1->parent = 0;
+            
+            pnode->children.pop_back();
+            tree.replace_node_by_child(pnode, 0);
+            
+            workspace.add_aux_tree(aux_tree);
+          }
+        }
+        break;
+      default: break;
+      }
+      break;
+    default: break;
+    }
+  }
+
+
+  //=========================================================================
+  // Derivation algorithm: derivation of a tree with respect to a variable
+  //   The result tree is not ready to use. It has to be passed again in
+  //   ga_semantic_analysis for enrichment.
+  //=========================================================================
+
+  static bool ga_node_mark_tree_for_variable(pga_tree_node pnode,
+                                             const std::string &varname) {
+    bool marked = false;
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      if (ga_node_mark_tree_for_variable(pnode->children[i], varname))
+        marked = true;
+    
+    if ((pnode->node_type == GA_NODE_VAL ||
+        pnode->node_type == GA_NODE_GRAD ||
+        pnode->node_type == GA_NODE_HESS) &&
+        (pnode->name.compare(varname) == 0)) marked = true;
+
+    pnode->marked = marked;
+    return marked;
+  }
+  
+
+  static void ga_node_derivation(ga_tree &tree, const ga_workspace &workspace,
+                                 pga_tree_node pnode,
+                                 const std::string &varname, size_type order) {
+
+    size_type nbch = pnode->children.size();
+    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+    pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+    bool mark0 = ((nbch > 0) ? child0->marked : false);
+    bool mark1 = ((nbch > 1) ? child1->marked : false);
+    bgeot::multi_index mi;
+
+    switch (pnode->node_type) {
+    case GA_NODE_VAL:
+      mi.resize(1); mi[0] = 1;
+      for (size_type i = 0; i < pnode->tensor_order(); ++i)
+        mi.push_back(pnode->tensor_proper_size(i));
+      pnode->t.adjust_sizes(mi);
+      pnode->node_type = GA_NODE_TEST;
+      pnode->test_function_type = order;
+      break;
+    case GA_NODE_GRAD:
+      mi.resize(1); mi[0] = 1;
+      for (size_type i = 0; i < pnode->tensor_order(); ++i)
+        mi.push_back(pnode->tensor_proper_size(i));
+      pnode->t.adjust_sizes(mi);   
+      pnode->node_type = GA_NODE_GRAD_TEST;
+      pnode->test_function_type = order;
+      break;
+    case GA_NODE_HESS:
+      mi.resize(1); mi[0] = 1;
+      for (size_type i = 0; i < pnode->tensor_order(); ++i)
+        mi.push_back(pnode->tensor_proper_size(i));
+      pnode->t.adjust_sizes(mi);   
+      pnode->node_type = GA_NODE_HESS_TEST;
+      pnode->test_function_type = order;
+      break;
+    case GA_NODE_OP:
+      switch(pnode->op_type) {
+        case GA_PLUS: case GA_MINUS:
+          if (mark0 && mark1) {
+            ga_node_derivation(tree, workspace, child0, varname, order);
+            ga_node_derivation(tree, workspace, child1, varname, order);
+          } else if (mark0) {
+            ga_node_derivation(tree, workspace, child0, varname, order);
+            tree.replace_node_by_child(pnode, 0);
+          } else {
+            ga_node_derivation(tree, workspace, child1, varname, order);
+            if (pnode->op_type == GA_MINUS) {
+              pnode->op_type = GA_UNARY_MINUS;
+              tree.clear_node(child0);
+            }
+            else
+              tree.replace_node_by_child(pnode, 1);
+          }
+          break;
+
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE:
+        ga_node_derivation(tree, workspace, child0, varname, order);
+        break;
+
+      case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
+      case GA_DOTMULT:
+        if (mark0 && mark1) {
+          if (sub_tree_are_equal(child0, child1) &&
+              (pnode->op_type != GA_MULT || child0->tensor_order() < 2)) {
+            ga_node_derivation(tree, workspace, child1, varname, order);
+            tree.insert_node(pnode);
+            pnode->parent->node_type = GA_NODE_OP;
+            pnode->parent->op_type = GA_MULT;
+            tree.add_children(pnode->parent);
+            pga_tree_node pnode_cte = pnode->parent->children[1];
+            pnode_cte->node_type = GA_NODE_CONSTANT;
+            pnode_cte->init_scalar_tensor(scalar_type(2));
+          } else {
+            tree.duplicate_with_addition(pnode);
+            if ((pnode->op_type == GA_COLON && child0->tensor_order() == 2) ||
+                (pnode->op_type == GA_DOT && child0->tensor_order() == 1) ||
+                pnode->op_type == GA_DOTMULT ||
+                (child0->tensor_proper_size()== 1 &&
+                 child1->tensor_proper_size()== 1))
+              std::swap(pnode->children[0], pnode->children[1]);
+            ga_node_derivation(tree, workspace, child0, varname, order);
+            ga_node_derivation(tree, workspace,
+                               pnode->parent->children[1]->children[1],
+                               varname, order);
+          }
+        } else if (mark0) {
+          ga_node_derivation(tree, workspace, child0, varname, order);
+        } else
+          ga_node_derivation(tree, workspace, child1, varname, order);
+        break;
+          
+      case GA_DIV: case GA_DOTDIV:
+        if (mark1) {
+          if (mark0) {
+            tree.duplicate_with_addition(pnode);
+            ga_node_derivation(tree, workspace, child0, varname, order);
+            pnode->parent->op_type = GA_MINUS;
+            pnode = pnode->parent->children[1];
+          }
+          tree.insert_node(pnode->children[1]);
+          pga_tree_node pnode_param = pnode->children[1];
+          pnode_param->node_type = GA_NODE_PARAMS;
+          tree.add_children(pnode_param);
+          std::swap(pnode_param->children[0], pnode_param->children[1]);
+          pnode_param->children[0]->node_type = GA_NODE_PREDEF_FUNC;
+          pnode_param->children[0]->name = "sqr";
+          tree.insert_node(pnode);
+          pga_tree_node pnode_mult = pnode->parent;
+          pnode_mult->node_type = GA_NODE_OP;
+          if (pnode->op_type == GA_DOTDIV)
+            pnode_mult->op_type = GA_DOTMULT;
+          else
+            pnode_mult->op_type = GA_MULT;
+          pnode_mult->children.push_back(0);
+          tree.copy_node(pnode_param->children[1],
+                         pnode_mult, pnode_mult->children[1]);
+          ga_node_derivation(tree, workspace,pnode_mult->children[1],
+                             varname, order);
+        } else {
+          ga_node_derivation(tree, workspace, child0, varname, order);
+        }
+        break;
+
+      default: GMM_ASSERT1(false, "Unexpected operation. Internal error.");
+      }
+      break;
+
+    case GA_NODE_C_MATRIX:
+      for (size_type i = 0; i < pnode->children.size(); ++i) {
+        if (pnode->children[i]->marked)
+          ga_node_derivation(tree, workspace, pnode->children[i],
+                             varname, order);
+        else {
+          pnode->children[i]->init_scalar_tensor(scalar_type(0));
+          pnode->children[i]->node_type = GA_NODE_ZERO;
+          tree.clear_children(pnode->children[i]);
+        }
+      }
+      break;
+
+    case GA_NODE_PARAMS:
+      if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+        std::string name = child0->name;
+        ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
+        const ga_predef_function &F = (it != PREDEF_FUNCTIONS.end()) ?
+          it->second : workspace.user_function(name);
+
+        GMM_ASSERT1(F.ftype == 0, "Not already taken into account");
+
+        if (F.nbargs == 1) {
+          child0->name = F.derivative1;
+          tree.insert_node(pnode);
+          pga_tree_node pnode_op = pnode->parent;
+          pnode_op->node_type = GA_NODE_OP;
+          if (child1->tensor_order() == 0)
+            pnode_op->op_type = GA_MULT;
+          else
+            pnode_op->op_type = GA_DOTMULT;
+          pnode_op->children.push_back(0);
+          tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+          ga_node_derivation(tree, workspace, pnode_op->children[1],
+                             varname, order);
+        } else {
+          pga_tree_node child2 = pnode->children[2];
+          
+          if (child1->marked && child2->marked)
+            tree.duplicate_with_addition(pnode);
+          
+          if (child1->marked) {
+            child0->name = F.derivative1;
+            tree.insert_node(pnode);
+            pga_tree_node pnode_op = pnode->parent;
+            pnode_op->node_type = GA_NODE_OP;
+            if (child1->tensor_order() == 0)
+              pnode_op->op_type = GA_MULT;
+            else
+              pnode_op->op_type = GA_DOTMULT;
+            pnode_op->children.push_back(0);
+            tree.copy_node(child1, pnode_op, pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, pnode_op->children[1],
+                               varname, order);
+          }
+          if (child2->marked) {
+            if (child1->marked && child2->marked)
+              pnode = pnode->parent->parent->children[1];
+            child0 = pnode->children[0]; child1 = pnode->children[1];
+            child2 = pnode->children[2];
+            child0->name = F.derivative2;
+            tree.insert_node(pnode);
+            pga_tree_node pnode_op = pnode->parent;
+            pnode_op->node_type = GA_NODE_OP;
+            if (child2->tensor_order() == 0)
+              pnode_op->op_type = GA_MULT;
+            else
+              pnode_op->op_type = GA_DOTMULT;
+            pnode_op->children.push_back(0);
+            tree.copy_node(child2, pnode_op, pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, pnode_op->children[1],
+                               varname, order);
+          }
+        }
+      } else if (child0->node_type == GA_NODE_SPEC_FUNC) {
+        GMM_ASSERT1(false, "internal error");
+      } else if (child0->node_type == GA_NODE_OPERATOR) {
+        if (child0->der2)
+          GMM_ASSERT1(false, "Error in derivation of the assembly string. "
+                      "Cannot derive again operator " <<  child0->name);
+
+        size_type nbargs_der = 0;
+        for (size_type i = 1; i < pnode->children.size(); ++i)
+          if (pnode->children[i]->marked) ++nbargs_der;
+        pga_tree_node pnode2 = 0;
+
+        size_type j = 0;
+        for (size_type i = 1; i < pnode->children.size(); ++i) {
+          if (pnode->children[i]->marked) {
+            ++j;
+            if (j != nbargs_der) {
+              tree.insert_node(pnode);
+              pga_tree_node pnode_op = pnode->parent;
+              pnode_op->node_type = GA_NODE_OP;
+              pnode_op->op_type = GA_PLUS;
+              pnode_op->children.push_back(0);
+              tree.copy_node(pnode, pnode_op , pnode_op->children[1]); 
+              pnode2 = pnode_op->children[1];
+            }
+            else pnode2 = pnode;
+            
+            if (child0->der1) 
+              pnode2->children[0]->der2 = i;
+            else
+              pnode2->children[0]->der1 = i;
+            tree.insert_node(pnode2);
+            pga_tree_node pnode_op = pnode2->parent;
+            pnode_op->node_type = GA_NODE_OP;
+            // calcul de l'ordre de reduction
+            size_type red = pnode->children[i]->tensor_order();
+            switch (red) {
+            case 0 : pnode_op->op_type = GA_MULT; break;
+            case 1 : pnode_op->op_type = GA_DOT; break;
+            case 2 : pnode_op->op_type = GA_COLON; break;
+            default: GMM_ASSERT1(false, "Error in derivation of the assembly "
+                                 "string. Bad reduction order.")
+            }
+            pnode_op->children.push_back(0);
+            tree.copy_node(pnode->children[i], pnode_op ,
+                           pnode_op->children[1]);
+            ga_node_derivation(tree, workspace, pnode_op->children[1], 
+                               varname, order);
+          }
+        }
+
+      } else {
+        ga_node_derivation(tree, workspace, child0, varname, order);
+      }
+      break;
+
+    default: GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
+                         << " in derivation. Internal error.");
+    }
+  }
+
+  // The tree is modified. Should be copied first and passed to
+  // ga_semantic_analysis after for enrichment
+  static void ga_derivation(ga_tree &tree, const ga_workspace &workspace,
+                     const std::string &varname, size_type order) {
+    if (!(tree.root)) return;
+    if (ga_node_mark_tree_for_variable(tree.root, varname))
+      ga_node_derivation(tree, workspace, tree.root, varname, order);
+    else
+      tree.clear();
+  }
+
+
+
+  //=========================================================================
+  // Compilation of assembly trees into a list of basic instructions
+  //=========================================================================
+
+  static void ga_compile(ga_workspace &workspace, size_type order) {
+    
+    for (size_type i = 0; i < workspace.nb_trees(); ++i) {
+      ga_workspace::tree_description &td = workspace.tree_info(i);
+      if (td.order == order) {
+        ga_tree tree = td.tree;
+        // semantic analysis mainly to evaluate fixed size variables and data
+        ga_semantic_analysis("", tree, workspace, true);
+        cout << "compiling tree: "; ga_print_tree(tree);
+        
+        
+        
+
+        // add of instructions for the corresponding mim
+
+
+      }
+    }
   }
   
 
 
+  //=========================================================================
+  // Execution of a compiled set of assembly terms
+  //=========================================================================
+
+  
+  static void ga_exec(void) {
+    // ...
+  }
+
+
+
+
 } // end of namespace getfem
+
+
+
 
 
 //=========================================================================
@@ -2376,9 +3232,10 @@ namespace getfem {
     // std::string expr="sin([pi;2*pi])";
     // std::string expr="Id(meshdim(u)+qdim(u))";
     // std::string expr="[sin(pi);-2] + Derivative_Norm(Grad_u) + Derivative_Norm(b) + Derivative_sin(pi)*[0;2]";
-    std::string expr="-[1]'*u";
-    // std::string expr = " ";
-    // std::string expr = "p*Trace(Grad_Test_u) + Test_u(1,2)+1.0E-1";
+    // std::string expr="Trace([1,2;3,5;5,6]')";
+    // std::string expr = "([1,2;3,4]@[1,2;1,2]).[1;2]";
+    std::string expr = "[u.u; u(1); (u./u)(1); a*Norm(u); c]";
+    // std::string expr = "Test_u+Test_p";
     // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
     // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
     // std::string expr="[1,2;3,4]@[1,2;1,2]*(Grad_u@Grad_u)/4 + [1,2;3,1]*[1;1](1)";
@@ -2390,11 +3247,11 @@ namespace getfem {
     model_real_plain_vector b(2); b[0] = 3.0; b[1] = 6.0;
     workspace.add_fixed_size_constant("b", b);
     model_real_plain_vector c(1); c[0] = 1.0;
-    workspace.add_fixed_size_constant("c", c);
+    workspace.add_fixed_size_variable("c", c);
     
     getfem::mesh m;
 
-    bgeot::pgeometric_trans pgt = 
+    bgeot::pgeometric_trans pgt =
       bgeot::geometric_trans_descriptor("GT_PK(2,1)");
     size_type N = pgt->dim();
     std::vector<size_type> nsubdiv(N);
@@ -2404,18 +3261,40 @@ namespace getfem {
     getfem::mesh_fem mf(m);
     getfem::pfem pf_u = getfem::fem_descriptor("FEM_PK(2,1)");
     mf.set_finite_element(m.convex_index(), pf_u);
+    mf.set_qdim(dim_type(N));
+
+    getfem::mesh_im mim(m);
+    mim.set_integration_method(m.convex_index(), 4);
 
     std::vector<scalar_type> U(mf.nb_dof());
 
     workspace.add_fem_variable("u", mf, U);
+    workspace.add_fem_variable("p", mf, U);
+    
+    workspace.add_expression(expr, mim);
+    ga_compile(workspace, 1);
+
+//     ga_tree tree;
+//     ga_read_string(expr, tree);
+//     ga_print_tree(tree);
+//     ga_semantic_analysis(expr, tree, workspace, false);
+//     ga_print_tree(tree);
+//     // ga_print_hash_values(tree);
+
+//     cout << "Performing derivation with respect to u" << endl;
+//     ga_tree tree1 = tree;
+//     ga_derivation(tree1, workspace, "u", 1);
+//     ga_print_tree(tree1);
+//      cout << "Tree re-enrichment" << endl;
+//     ga_semantic_analysis(expr, tree1, workspace, true);
+//     ga_print_tree(tree1);
 
 
-    ga_tree tree;
-    ga_read_string(expr, tree);
-    ga_print_tree(tree);
-    ga_semantic_analysis(expr, tree, workspace);
-    ga_print_tree(tree);
-    ga_print_hash_values(tree);
+//     cout << "Performing derivation with respect to c" << endl;
+//     ga_derivation(tree, workspace, "c", 2);
+//     ga_print_tree(tree);
+
+    // ga_print_hash_values(tree);
   }
   
 

@@ -183,7 +183,7 @@ namespace bgeot {
 				     const base_node& bmin, const base_node& bmax,
 				     unsigned last_dir) {
     size_type N=bmin.size();
-    scalar_type split_v; 
+    scalar_type split_v(0); 
     unsigned split_dir = unsigned((last_dir+1)%N);
     //cout << " build_tree_ [b.size=" << b.size() << "], bmin=" << bmin << ", bmax=" << bmax << "\n";
     bool split_ok = false;

@@ -822,7 +822,7 @@ namespace getfem {
 
     cvlst.from_mesh(m);
     size_type prev_nrefine = 0;
-    size_type prev_cv = size_type(-1);
+    // size_type prev_cv = size_type(-1);
     for (mr_visitor it(cvlst); !it.finished(); ++it) {
       size_type nrefine = pnrefine[it.cv()*nref_stride];
       update_cv_data(it.cv(),it.f());
@@ -909,7 +909,7 @@ namespace getfem {
       //cerr << "cv = " << cv << ", cvm.nb_points_ = "<< cvm->points().size() << ", nbnodes = " << nodes.size() << ", nb_simpl=" << simplexes.size() << "\n";
 
       apply_slicers();
-      prev_cv = it.cv();
+      // prev_cv = it.cv();
       prev_discont = discont;
     }
   }

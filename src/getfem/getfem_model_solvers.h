@@ -1073,7 +1073,14 @@ namespace getfem {
    typename useful_types<MODEL_STATE>::plsolver_type lsolver,
    abstract_newton_line_search &ls) {
 
-    TYPEDEF_MODEL_STATE_TYPES;
+    typedef typename MODEL_STATE::vector_type VECTOR;
+    // typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
+    // typedef typename MODEL_STATE::constraints_matrix_type C_MATRIX;
+    typedef typename MODEL_STATE::value_type value_type;
+    // typedef typename gmm::number_traits<value_type>::magnitude_type R;
+    // typedef typename gmm::sub_vector_type<VECTOR *,
+    //			     gmm::sub_interval>::vector_type SUBVECTOR
+
     model_problem<MODEL_STATE> mdpb(MS, problem, ls);
 
     MS.adapt_sizes(problem); // to be sure it is ok, but should be done before

@@ -225,7 +225,8 @@ namespace bgeot {
       : id(allocate(a.size())) { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
     bool empty() const { return id==0; }
     unsigned char refcnt() const { return allocator().refcnt(id); }
-    dim_type size() const { return allocator().obj_sz(id)/sizeof(value_type); }
+    dim_type size() const
+    { return dim_type(allocator().obj_sz(id)/sizeof(value_type)); }
     small_vector<T> operator+(const small_vector<T>& other) const 
     { return small_vector<T>(*this,other,std::plus<T>()); }
     small_vector<T> operator-(const small_vector<T>& other) const 

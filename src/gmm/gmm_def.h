@@ -961,7 +961,7 @@ namespace gmm {
       if (numeric_limits<T>::is_specialized)
 	tol = numeric_limits<T>::epsilon();
       else {
-	int i=sizeof(T)/4; while(i-- > 0) tol*=T(1E-8); 
+	int i=int(sizeof(T)/4); while(i-- > 0) tol*=T(1E-8); 
 	GMM_WARNING1("The numeric type " << typeid(T).name()
 		    << " has no numeric_limits defined !!\n"
 		    << "Taking " << tol << " as default tolerance");
