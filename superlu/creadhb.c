@@ -62,11 +62,11 @@ int cParseFloatFormat(char *buf, int *num, int *size)
 int cReadVector(FILE *fp, int n, int *where, int perline, int persize)
 {
     register int i, j, item;
-    char tmp, buf[100];
-    
+    char tmp, buf[100], *dummy;
+    dummy = 0;
     i = 0;
     while (i < n) {
-	fgets(buf, 100, fp);    /* read a line at a time */
+	dummy = fgets(buf, 100, fp);    /* read a line at a time */
 	for (j=0; j<perline && i<n; j++) {
 	    tmp = buf[(j+1)*persize];     /* save the char at that place */
 	    buf[(j+1)*persize] = 0;       /* null terminate */
@@ -82,34 +82,33 @@ int cReadVector(FILE *fp, int n, int *where, int perline, int persize)
 /* Read complex numbers as pairs of (real, imaginary) */
 int cReadValues(FILE *fp, int n, complex *destination, int perline, int persize)
 {
-    register int i, j, k, s, pair;
-    register float realpart;
-    char tmp, buf[100];
-    
-    i = pair = 0;
-    while (i < n) {
-	fgets(buf, 100, fp);    /* read a line at a time */
-	for (j=0; j<perline && i<n; j++) {
-	    tmp = buf[(j+1)*persize];     /* save the char at that place */
-	    buf[(j+1)*persize] = 0;       /* null terminate */
-	    s = j*persize;
-	    for (k = 0; k < persize; ++k) /* No D_ format in C */
-		if ( buf[s+k] == 'D' || buf[s+k] == 'd' ) buf[s+k] = 'E';
-	    if ( pair == 0 ) {
-	  	/* The value is real part */
-		realpart = atof(&buf[s]);
-		pair = 1;
-	    } else {
-		/* The value is imaginary part */
-	        destination[i].r = realpart;
-		destination[i++].i = atof(&buf[s]);
-		pair = 0;
-	    }
-	    buf[(j+1)*persize] = tmp;     /* recover the char at that place */
-	}
+  register int i, j, k, s, pair;
+  register float realpart;
+  char tmp, buf[100], *dummy;
+  
+  i = pair = 0;
+  while (i < n) {
+    dummy = fgets(buf, 100, fp);    /* read a line at a time */
+    for (j=0; j<perline && i<n; j++) {
+      tmp = buf[(j+1)*persize];     /* save the char at that place */
+      buf[(j+1)*persize] = 0;       /* null terminate */
+      s = j*persize;
+      for (k = 0; k < persize; ++k) /* No D_ format in C */
+        if ( buf[s+k] == 'D' || buf[s+k] == 'd' ) buf[s+k] = 'E';
+      if ( pair == 0 ) {
+        /* The value is real part */
+        realpart = atof(&buf[s]);
+        pair = 1;
+      } else {
+        /* The value is imaginary part */
+        destination[i].r = realpart;
+        destination[i++].i = atof(&buf[s]);
+        pair = 0;
+      }
+      buf[(j+1)*persize] = tmp;     /* recover the char at that place */
     }
-
-    return 0;
+  }
+  return 0;
 }
 
 
@@ -185,26 +184,28 @@ creadhb(int *nrow, int *ncol, int *nonz,
  */
 
     register int i, numer_lines = 0, rhscrd = 0;
-    int tmp, colnum, colsize, rownum, rowsize, valnum, valsize;
-    char buf[100], type[4], key[10];
+    int tmp, colnum, colsize, rownum, rowsize, valnum, valsize, dummy;
+    char buf[100], type[4], key[10], *dummyc;
     FILE *fp;
+    
+    dummy = 0;
 
     fp = stdin;
 
     /* Line 1 */
-    fgets(buf, 100, fp);
-    fputs(buf, stdout);
+    dummyc = fgets(buf, 100, fp);
+    dummy += fputs(buf, stdout);
 #if 0
-    fscanf(fp, "%72c", buf); buf[72] = 0;
+    dummy += fscanf(fp, "%72c", buf); buf[72] = 0;
     printf("Title: %s", buf);
-    fscanf(fp, "%8c", key);  key[8] = 0;
+    dummy += fscanf(fp, "%8c", key);  key[8] = 0;
     printf("Key: %s\n", key);
     cDumpLine(fp);
 #endif
 
     /* Line 2 */
     for (i=0; i<5; i++) {
-	fscanf(fp, "%14c", buf); buf[14] = 0;
+	dummy += fscanf(fp, "%14c", buf); buf[14] = 0;
 	sscanf(buf, "%d", &tmp);
 	if (i == 3) numer_lines = tmp;
 	if (i == 4 && tmp) rhscrd = tmp;
@@ -212,17 +213,17 @@ creadhb(int *nrow, int *ncol, int *nonz,
     cDumpLine(fp);
 
     /* Line 3 */
-    fscanf(fp, "%3c", type);
-    fscanf(fp, "%11c", buf); /* pad */
+    dummy += fscanf(fp, "%3c", type);
+    dummy += fscanf(fp, "%11c", buf); /* pad */
     type[3] = 0;
 #ifdef DEBUG
     printf("Matrix type %s\n", type);
 #endif
     
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", nrow);
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", ncol);
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", nonz);
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", &tmp);
+    dummy += fscanf(fp, "%14c", buf); sscanf(buf, "%d", nrow);
+    dummy += fscanf(fp, "%14c", buf); sscanf(buf, "%d", ncol);
+    dummy += fscanf(fp, "%14c", buf); sscanf(buf, "%d", nonz);
+    dummy += fscanf(fp, "%14c", buf); sscanf(buf, "%d", &tmp);
     
     if (tmp != 0)
 	  printf("This is not an assembled matrix!\n");
@@ -234,13 +235,13 @@ creadhb(int *nrow, int *ncol, int *nonz,
     callocateA(*ncol, *nonz, nzval, rowind, colptr);
 
     /* Line 4: format statement */
-    fscanf(fp, "%16c", buf);
+    dummy += fscanf(fp, "%16c", buf);
     cParseIntFormat(buf, &colnum, &colsize);
-    fscanf(fp, "%16c", buf);
+    dummy += fscanf(fp, "%16c", buf);
     cParseIntFormat(buf, &rownum, &rowsize);
-    fscanf(fp, "%20c", buf);
+    dummy += fscanf(fp, "%20c", buf);
     cParseFloatFormat(buf, &valnum, &valsize);
-    fscanf(fp, "%20c", buf);
+    dummy += fscanf(fp, "%20c", buf);
     cDumpLine(fp);
 
     /* Line 5: right-hand side */    
