@@ -514,8 +514,10 @@ namespace gmm {
 	if (it != this->end() && it->c == c) it->e = e;
 	else {
 	  size_type ind = it - this->begin();
+          if (this->nb_stored() - ind > 300)
+            GMM_WARNING2("Inefficient addition of element in rsvector");
 	  base_type_::resize(nb_stored()+1, ev);
-	  if (ind != nb_stored() - 1) {
+	  if (ind != this->nb_stored() - 1) {
 	    it = this->begin() + ind;
 	    for (iterator ite = this->end() - 1; ite != it; --ite)
 	      *ite = *(ite-1);

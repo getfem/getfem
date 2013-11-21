@@ -4,12 +4,14 @@
 
 .. highlightlang:: c++
 
-.. index:: asm, generic assemnly
+.. index:: asm, generic assembly
 
-.. _ud-gasm:
+.. _ud-gasm-low:
 
-Compute arbitrary elementary matrices - generic assembly procedures
-===================================================================
+Compute arbitrary elementary matrices - low-level generic assembly procedures
+=============================================================================
+
+This section present the first version of generic assembly procedure which has been implemented in |gf|. It is quite a low-level one. It allows to easily make the assembly of arbitrary matrices in the linear case. In the nonlinear case, some special "non_linear_term" object have to be implemented, which could be a bit tricky and obliges to use very low-level internal tools of |gf|. The high-level generic assembly has been developped to circumvent these difficulties (see :ref:`ud-gasm-high`).
 
 As it can be seen in the file :file:`getfem/getfem_assembling.h`, all the
 previous assembly procedures use a |gf_gasm| object and provide it an adequate

@@ -211,10 +211,11 @@ void asm_stabilization_patch_matrix
   std::cout << "ratio size beween mesh and coarse mesh= " << ratio_size
 	    << std::endl;
   
-  int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
+  int nparts=int(size_of_crack/(ratio_size*h));
       // float ubvec[1] = {1.03f};
+  #ifdef GETFEM_HAVE_METIS
+  int wgtflag = 2, edgecut, numflag = 0;
   int  options[5] = {0,0,0,0,0};
-  #ifdef GETFEM_HAVE_METIS 
   //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
   // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,

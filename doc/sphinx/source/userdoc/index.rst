@@ -4,8 +4,8 @@
 
 .. _ud:
 
-Short User Documentation
-########################
+User Documentation
+##################
 
 .. toctree::
    :maxdepth: 2
@@ -21,7 +21,8 @@ Short User Documentation
    binteg
    rmesh
    asm
-   gasm
+   gasm_high
+   gasm_low
    ifem
    iinteg
    xfem

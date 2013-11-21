@@ -19,7 +19,7 @@
  
 ===========================================================================*/
 #include "getfem/getfem_assembling.h"
-#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_generic_assembly.h"
 #include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_mat_elem.h"
@@ -114,7 +114,8 @@ public:
 #endif
 
 std::ostream& operator<<(std::ostream& o, const chrono& c) {
-  o << "[elapsed=" << int(c.elapsed()*1000) << "ms, cpu=" << int(c.cpu()*1000) << "ms, system=" << int(c.system()*1000) << "ms]";
+  o << "[elapsed=" << int(c.elapsed()*1000) << "ms, cpu="
+    << int(c.cpu()*1000) << "ms, system=" << int(c.system()*1000) << "ms]";
   return o;
 }
 
@@ -148,10 +149,12 @@ void g_params::init(int argc, char *argv[]) {
   mesh_type = int(PARAM.int_value("MESH_TYPE", "Mesh type "));
   K = int(PARAM.int_value("K", "Finite element degree"));
   K2 = int(PARAM.int_value("K", "Finite element degree"));
-  Kdata = int(PARAM.int_value("KDATA", "Finite element degree for data meshfem"));
+  Kdata = int(PARAM.int_value("KDATA",
+                              "Finite element degree for data meshfem"));
   do_new = PARAM.int_value("BENCH_NEW", "bench new assembly routines");
   do_old = PARAM.int_value("BENCH_OLD", "bench old assembly routines");
-  do_what = int(PARAM.int_value("BENCH_WHAT", "which test do you want to run?"));
+  do_what = int(PARAM.int_value("BENCH_WHAT",
+                                "which test do you want to run?"));
 }
 
 namespace getfem {
@@ -173,19 +176,21 @@ namespace getfem {
 		  "This assembling procedure only works on a single mesh");
   
     for (cv << nn; cv != ST_NIL; cv << nn) {
-      nf = dal::bit_vector(mf.linked_mesh().region(boundary).faces_of_convex(cv));
+      nf =
+        dal::bit_vector(mf.linked_mesh().region(boundary).faces_of_convex(cv));
       if (nf.card() > 0) {
 	pf1 =     mf.fem_of_element(cv); nbd1 = pf1->nb_dof(cv);
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mim.int_method_of_element(cv);
-	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec!=pgt || pimprec != pim) {
+	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec!=pgt || pimprec!=pim) {
 	  pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
 	  pmec = mat_elem(pme, pim, pgt);
 	  pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
 	}
 	for (f << nf; f != ST_NIL; f << nf) {
-	  pmec->gen_compute_on_face(t,mf.linked_mesh().points_of_convex(cv),f, cv);
+	  pmec->gen_compute_on_face(t,mf.linked_mesh().points_of_convex(cv),
+                                    f, cv);
 	  base_tensor::iterator p = t.begin();
 	  for (size_type i = 0; i < nbd2; i++)
 	    {
@@ -205,8 +210,10 @@ namespace getfem {
   }
 
   template<class VECT1, class VECT2>
-  void old_asm_volumic_source_term(VECT1 &B, const mesh_im &mim, const mesh_fem &mf,
-				   const mesh_fem &mfdata, const VECT2 &F, dim_type N)
+  void old_asm_volumic_source_term(VECT1 &B, const mesh_im &mim,
+                                   const mesh_fem &mf,
+				   const mesh_fem &mfdata,
+                                   const VECT2 &F, dim_type N)
   {
     size_type cv, nbd1, nbd2;
     dal::bit_vector nn = mf.convex_index();
@@ -226,23 +233,22 @@ namespace getfem {
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mim.int_method_of_element(cv);
-	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
-	  {
-	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
-	    pmec = mat_elem(pme, pim, pgt);
-	    pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
-	  }
+	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt ||
+            pimprec != pim) {
+          pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
+          pmec = mat_elem(pme, pim, pgt);
+          pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
+        }
 	pmec->gen_compute(t, mf.linked_mesh().points_of_convex(cv), cv);
 	base_tensor::iterator p = t.begin();
-	for (size_type i = 0; i < nbd2; i++)
-	  {
-	    size_type dof2 = mfdata.ind_basic_dof_of_element(cv)[i];
-	    for (size_type j = 0; j < nbd1; j++, ++p)
-	      {
-		size_type dof1 = mf.ind_basic_dof_of_element(cv)[j];
-		for (size_type k = 0; k < N; k++) B[dof1*N + k] += F[dof2*N+k]*(*p);
-	      }
-	  }
+	for (size_type i = 0; i < nbd2; i++) {
+          size_type dof2 = mfdata.ind_basic_dof_of_element(cv)[i];
+          for (size_type j = 0; j < nbd1; j++, ++p) {
+            size_type dof1 = mf.ind_basic_dof_of_element(cv)[j];
+            for (size_type k = 0; k < N; k++)
+              B[dof1*N + k] += F[dof2*N+k]*(*p);
+          }
+        }
 	if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
       }
   }
@@ -322,7 +328,8 @@ namespace getfem {
 	pf2 = mf2.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf1.linked_mesh().trans_of_convex(cv);
 	pim = mim.int_method_of_element(cv);
-	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
+	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt ||
+            pimprec != pim)
 	  {
 	    pme = mat_elem_product(mat_elem_base(pf1), mat_elem_base(pf2));
 	    pmec = mat_elem(pme, pim, pgt);
@@ -351,8 +358,8 @@ namespace getfem {
   void old_asm_boundary_qu_term(MAT &M, 
 				const mesh_im &mim, 
 				const mesh_fem &mf_u, size_type boundary, 
-				const mesh_fem &mf_d, const VECT &Q, dim_type N)
-  {
+				const mesh_fem &mf_d, const VECT &Q,
+                                dim_type N) {
     size_type cv;
     dal::bit_vector nn = mf_u.convex_index(), nf;
     base_tensor t;
@@ -365,76 +372,60 @@ namespace getfem {
       GMM_ASSERT1(false,
 		  "This assembling procedure only works on a single mesh");
 
-    for (cv << nn; cv != ST_NIL; cv << nn)
-      {
-	nf = dal::bit_vector(mf_u.linked_mesh().region(boundary).faces_of_convex(cv));
-	if (nf.card() > 0)
-	  {
-	    size_type f, nbdof_u, nbdof_d;
-
-	    pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof(cv);
-	    pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof(cv);
-	    pgt = mf_u.linked_mesh().trans_of_convex(cv);
-	    pim = mim.int_method_of_element(cv);
-	    if (pf_u_prec != pf_u || pf_d_prec != pf_d || pgtprec!=pgt 
-		|| pimprec != pim)
-	      {
-		pme = mat_elem_product(mat_elem_base(pf_d), 
-				       mat_elem_product(mat_elem_base(pf_u),
-							mat_elem_base(pf_u)));
-		pmec = mat_elem(pme, pim, pgt);
-		pf_u_prec = pf_u; pf_d_prec = pf_d; pgtprec = pgt; pimprec = pim;
-	      }
-	    for (f << nf; f != ST_NIL; f << nf)
-	      {
-		pmec->gen_compute_on_face(t,
-				       mf_u.linked_mesh().points_of_convex(cv),
-					  f, cv);
-		base_tensor::iterator p = t.begin();
-		scalar_type vmax = gmm::vect_norminf(base_vector(t));
-
-		for (size_type j = 0; j < nbdof_u; j++) {
-		  size_type dof_j = mf_u.ind_dof_of_element(cv)[j];
-		  for (size_type i = 0; i < nbdof_u; i++) {
-		    size_type dof_i = mf_u.ind_dof_of_element(cv)[i];
-		    for (size_type id = 0; id < nbdof_d; id++) {
-
-		      size_type dof_d = mf_d.ind_dof_of_element(cv)[id];
-
-		      /* for every element of the matrix Q */
-		      for (int ii=0; ii < N; ii++) {
-			for (int jj=0; jj < N; jj++) {
-			  /* get Q[ii][jj] for the degree of freedom 'dof_d' */
-			  scalar_type data = Q[(jj*N+ii) + N*N*(dof_d)];
-
-			  /* we filter out noise since this matrix can be used 
-			     as a constraints matrix for dirichlet conditions,
-			     noise may lead to 'fictive' dirichlet condition
-			     (this is the case for ex. with laplace/PK(1,4)) 
-
-			     NON NON ET NON !!
-			     finaly we DON'T FILTER NOISE since it breaks 
-			     the assembling of dirichlet conditions against
-			     hierarchical FEMS ...
-			  */
-			  if (data != 0.) {// && vmax != .0 && (*p)/vmax > 1e-5) {
-			    /*
-			      cerr << "QU : adding " << data << "*" << (*p) << " at dof_i=" << 
-			      dof_i << "*" << N << "+" << ii << ", dof_j=" << dof_i << "*" << 
-			      N << "+" << ii << endl;
-			    */
-			    M(dof_i*N+ii, dof_j*N+jj) += data* (*p);
-			  }
-			}
-		      }
-		      p++;
-		    }
-		  }
-		}
-		if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
-	      }
-	  }
-      }
+    for (cv << nn; cv != ST_NIL; cv << nn)  {
+      nf =
+      dal::bit_vector(mf_u.linked_mesh().region(boundary).faces_of_convex(cv));
+      if (nf.card() > 0)
+        {
+          size_type f, nbdof_u, nbdof_d;
+          
+          pf_u = mf_u.fem_of_element(cv); nbdof_u = pf_u->nb_dof(cv);
+          pf_d = mf_d.fem_of_element(cv); nbdof_d = pf_d->nb_dof(cv);
+          pgt = mf_u.linked_mesh().trans_of_convex(cv);
+          pim = mim.int_method_of_element(cv);
+          if (pf_u_prec != pf_u || pf_d_prec != pf_d || pgtprec!=pgt 
+              || pimprec != pim)
+            {
+              pme = mat_elem_product(mat_elem_base(pf_d), 
+                                     mat_elem_product(mat_elem_base(pf_u),
+                                                      mat_elem_base(pf_u)));
+              pmec = mat_elem(pme, pim, pgt);
+              pf_u_prec = pf_u; pf_d_prec = pf_d; pgtprec = pgt; pimprec = pim;
+            }
+          for (f << nf; f != ST_NIL; f << nf)
+            {
+              pmec->gen_compute_on_face
+                (t, mf_u.linked_mesh().points_of_convex(cv), f, cv);
+              base_tensor::iterator p = t.begin();
+              scalar_type vmax = gmm::vect_norminf(base_vector(t));
+              
+              for (size_type j = 0; j < nbdof_u; j++) {
+                size_type dof_j = mf_u.ind_dof_of_element(cv)[j];
+                for (size_type i = 0; i < nbdof_u; i++) {
+                  size_type dof_i = mf_u.ind_dof_of_element(cv)[i];
+                  for (size_type id = 0; id < nbdof_d; id++) {
+                    
+                    size_type dof_d = mf_d.ind_dof_of_element(cv)[id];
+                    
+                    /* for every element of the matrix Q */
+                    for (int ii=0; ii < N; ii++) {
+                      for (int jj=0; jj < N; jj++) {
+                        /* get Q[ii][jj] for the degree of freedom 'dof_d' */
+                        scalar_type data = Q[(jj*N+ii) + N*N*(dof_d)];
+                        
+                        if (data != 0.) {
+                          M(dof_i*N+ii, dof_j*N+jj) += data* (*p);
+                        }
+                      }
+                    }
+                    p++;
+                  }
+                }
+              }
+              if (p != t.end()) GMM_ASSERT1(false, "internal error"); 
+            }
+        }
+    }
   }
 
   template<class MAT, class VECT>
@@ -584,8 +575,10 @@ namespace getfem {
   }
 
   template<class MAT, class VECT>
-  void old_asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_im &mim, const mesh_fem &mf,
-					     const mesh_fem &mfdata, const VECT &A)
+  void old_asm_stiffness_matrix_for_laplacian(MAT &RM, const mesh_im &mim,
+                                              const mesh_fem &mf,
+                                              const mesh_fem &mfdata,
+                                              const VECT &A)
   { // optimisable
     size_type cv, nbd1, nbd2, N = mf.linked_mesh().dim();
     dal::bit_vector nn = mf.convex_index();
@@ -605,10 +598,13 @@ namespace getfem {
 	pf2 = mfdata.fem_of_element(cv); nbd2 = pf2->nb_dof(cv);
 	pgt = mf.linked_mesh().trans_of_convex(cv);
 	pim = mim.int_method_of_element(cv);
-	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt || pimprec != pim)
+	if (pf1prec != pf1 || pf2prec != pf2 || pgtprec != pgt
+            || pimprec != pim)
 	  {
-	    pmat_elem_type pme = mat_elem_product(mat_elem_product(
-								   mat_elem_grad(pf1), mat_elem_grad(pf1)), mat_elem_base(pf2));
+	    pmat_elem_type pme
+              = mat_elem_product(mat_elem_product(mat_elem_grad(pf1),
+                                                  mat_elem_grad(pf1)),
+                                 mat_elem_base(pf2));
 	    pmec = mat_elem(pme, pim, pgt);
 	    pf1prec = pf1; pf2prec = pf2; pgtprec = pgt; pimprec = pim;
 	  }
@@ -637,7 +633,8 @@ namespace getfem {
   }
 
   template<class MESH_FEM, class VECT>
-  scalar_type old_L2_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector &cvlst)
+  scalar_type old_L2_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U,
+                          size_type N, const dal::bit_vector &cvlst)
   { /* optimisable */
     size_type cv;
     scalar_type no = 0.0;
@@ -681,7 +678,9 @@ namespace getfem {
   }
 
   template<class MESH_FEM, class VECT>
-  scalar_type old_H1_semi_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst)
+  scalar_type old_H1_semi_norm(const mesh_im &mim, MESH_FEM &mf,
+                               const VECT &U, size_type N,
+                               const dal::bit_vector& cvlst)
   { /* optimisable */
     size_type cv, NN = mf.linked_mesh().dim();
     scalar_type no = 0.0;
@@ -724,7 +723,8 @@ namespace getfem {
   }
 
   template<class MESH_FEM, class VECT>
-  scalar_type old_H1_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U, size_type N, const dal::bit_vector& cvlst) {
+  scalar_type old_H1_norm(const mesh_im &mim, MESH_FEM &mf, const VECT &U,
+                          size_type N, const dal::bit_vector& cvlst) {
     return sqrt( gmm::sqr(old_L2_norm(mim, mf, U, N, cvlst)) 
 		 + gmm::sqr(old_H1_semi_norm(mim, mf, U, N, cvlst)));
   }
@@ -895,7 +895,6 @@ void comp_mat(const sparse_matrix_type& M1, const sparse_matrix_type& M2) {
       cout << "\nrow(" << i+1 << "),\nM1=" << r1 << "\nM2=" << r2 << endl;
       fail_cnt++;
       GMM_ASSERT1(false, "Failed ! ");
-      // cout << " FAILED !";
       break;
     }
   }
@@ -1713,23 +1712,18 @@ void testbug() {
   getfem::mesh_fem mf1(m,3), mf2(m,3);
   mf1.set_classical_finite_element(m.convex_index(), 1);
   mf2.set_classical_finite_element(m.convex_index(), 1);
-  /*mf1.set_finite_element(12, getfem::fem_descriptor("FEM_PK(3,2)"));
-    mf2.set_finite_element(15, getfem::fem_descriptor("FEM_PK(3,2)"));*/
   getfem::mesh_im mim(m); mim.set_integration_method(m.convex_index(), 5);
   std::vector<scalar_type> U(mf1.nb_dof()), SD(mf2.nb_dof());
   gmm::fill_random(U);
 
   shape_der_nonlinear_term<std::vector<scalar_type> > nl(mf1, U, 0, 1);
   
-  // trigers a real bug: printing an empty (because of the "vectorization" of vBase)
-  // subtensor will crash
+  // trigers a real bug: printing an empty (because of the "vectorization"
+  // of vBase) subtensor will crash
   getfem::generic_assembly assem2
     ("t=comp(vBase(#1).vBase(#2));"
      "print(t(:,:,2,3)); ");
 
-  
-
-  //"V(#2) += t(:,:,2,3)"); //0.5*t(i,i,:,j,j) - t(i,j,:,j,i);");
   assem2.push_mi(mim);
   assem2.push_mf(mf1);
   assem2.push_nonlinear_term(&nl);
@@ -1769,17 +1763,128 @@ void test_gradgt(const getfem::mesh_im &mim, const getfem::mesh_fem &mf1) {
 
 #endif /* ASSEMBLY_CHECK */
 
+
+
+void test_new_assembly(void) {
+
+    // std::string expr="([1,2;3,4]@[1,2;1,2])(:,2,1,1)(1)+ [1,2;3,4](1,:)(2)"; // should give 4
+    // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [4, 8; 12, 13]
+    // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [6, 9]
+    // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3](:,:,:,2)";
+    // std::string expr="sin([pi;2*pi])";
+    // std::string expr="Id(meshdim(u)+qdim(u))";
+    // std::string expr="[sin(pi);-2] + Derivative_Norm(Grad_u) + Derivative_Norm(b) + Derivative_sin(pi)*[0;2]";
+    // std::string expr="Trace([1,2;3,5;5,6]')";
+    // std::string expr = "([1,2;3,4]@[1,2;1,2]).[1;2]";
+    // std::string expr = "[u.u; u(1); (u./u)(1); a*Norm(u); c]";
+    // std::string expr = "Test_u+Test_p";
+    // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
+    // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
+    // std::string expr="[1,2;3,4]@[1,2;1,2]*(Grad_u@Grad_u)/4 + [1,2;3,1]*[1;1](1)";
+    std::string expr = "Test_u.Test2_u";
+
+    getfem::ga_workspace workspace;
+
+    base_vector a(1); a[0] = 3.0;
+    workspace.add_fixed_size_constant("a", a);
+    base_vector b(2); b[0] = 3.0; b[1] = 6.0;
+    workspace.add_fixed_size_constant("b", b);
+    base_vector c(1); c[0] = 1.0;
+    workspace.add_fixed_size_variable("c", c);
+    
+    getfem::mesh m;
+
+    bgeot::pgeometric_trans pgt =
+      bgeot::geometric_trans_descriptor("GT_PK(2,1)");
+    size_type N = pgt->dim();
+    std::vector<size_type> nsubdiv(N);
+    std::fill(nsubdiv.begin(),nsubdiv.end(), 500);
+    getfem::regular_unit_mesh(m, nsubdiv, pgt);
+
+    getfem::mesh_fem mf_u(m);
+    getfem::pfem pf_u = getfem::fem_descriptor("FEM_PK(2,2)");
+    mf_u.set_finite_element(m.convex_index(), pf_u);
+    // mf_u.set_qdim(dim_type(N));
+
+    getfem::mesh_fem mf_p(m);
+    getfem::pfem pf_p = getfem::fem_descriptor("FEM_PK(2,1)");
+    mf_p.set_finite_element(m.convex_index(), pf_p);
+    mf_p.set_qdim(dim_type(N));
+
+    getfem::mesh_im mim(m);
+    mim.set_integration_method(m.convex_index(), 4);
+    
+    std::vector<scalar_type> U(mf_u.nb_dof());
+    std::vector<scalar_type> P(mf_p.nb_dof(), 1.);
+    
+    workspace.add_fem_variable("u", mf_u, U);
+    workspace.add_fem_variable("p", mf_p, P);
+    
+    workspace.add_expression("Test_u.Test2_u", mim);
+
+
+    chrono ch;
+    ch.init(); ch.tic();
+    workspace.assembly(2);
+    ch.toc();
+    cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
+    getfem::model_real_sparse_matrix K = workspace.K; gmm::clear(K);
+    ch.init(); ch.tic();
+    getfem::asm_mass_matrix(K, mim, mf_u);
+    ch.toc();
+    cout << "Elapsed time for old assembly " << ch.elapsed() << endl;
+    gmm::add(gmm::scaled(workspace.K, scalar_type(-1)), K);
+    scalar_type norm_error = gmm::mat_norminf(K);
+    cout << "Error : " << norm_error << endl;
+    // GMM_ASSERT1(norm_error < 1E-12,
+    //            "Error in high or low level generic assembly");
+    
+
+    
+    getfem::mesh_im mim2(m);
+    mim2.set_integration_method(m.convex_index(), 2);
+    workspace.clear_expressions();
+    workspace.add_expression("Grad_Test_u:Grad_Test2_u", mim2);
+
+    
+    ch.init(); ch.tic();
+    workspace.assembly(2);
+    ch.toc();
+    cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
+    K = workspace.K; gmm::clear(K);
+    ch.init(); ch.tic();
+    cout << "starting old asm ..." << endl;
+    getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim2, mf_u);
+    ch.toc();
+    cout << "Elapsed time for old assembly " << ch.elapsed() << endl;
+    gmm::add(gmm::scaled(workspace.K, scalar_type(-1)), K);
+    norm_error = gmm::mat_norminf(K);
+    cout << "Error : " << norm_error << endl;
+    GMM_ASSERT1(norm_error < 1E-12,
+                "Error in high or low level generic assembly");
+
+
+}
+
+
+
+
 int main(int argc, char *argv[]) {
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
-
+  
+  test_new_assembly();
+  return 0;
+  
   try {
 
-    // getfem::pfem pf = getfem::fem_descriptor("FEM_PK_PRISM_HIERARCHICAL(3,3)");
+    
     
 
-    //testbug();
+
+
+    // testbug();
     do_general_check();
 
 #ifdef ASSEMBLY_CHECK
@@ -1792,7 +1897,8 @@ int main(int argc, char *argv[]) {
     }
 
 
-   cerr << "\n\n-----------------------------SIMPLE MESH TESTS---------------------\n\n";
+    cerr << "\n\n-----------------------------SIMPLE MESH TESTS----------"
+         << "-----------\n\n";
    {
      getfem::mesh m;
      m.add_triangle_by_points(mknode(0.,0.),mknode(1.2,0.),mknode(0.1,1.5));     
@@ -1838,7 +1944,8 @@ int main(int argc, char *argv[]) {
      run_tests(mim,mfne,mfqne,mfd,mfdq,do_new,do_old,tests,1,1);
    }
 
-   cerr << "\n\n-----------------------------PERFORMANCE TESTS---------------------\n\n";   
+   cerr << "\n\n-----------------------------PERFORMANCE TESTS------------"
+        << "---------\n\n";   
    {
      getfem::mesh m; 
      gen_mesh(m);
@@ -1864,9 +1971,6 @@ int main(int argc, char *argv[]) {
      getfem::mesh_fem mfdq(m); 
      mfdq.set_qdim(m.dim());
      init_mesh_fem(mfdq,true);
-     
-     //mf.write_to_file("toto1.mf",true);
-     //mfq.write_to_file("totoq.mf",true);
 
      run_tests(mim,mf,mfq,mfd,mfdq,param.do_new,param.do_old,tests,1,1);
    }

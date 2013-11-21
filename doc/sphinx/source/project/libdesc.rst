@@ -323,19 +323,38 @@ Perspectives
 ^^^^^^^^^^^^
 
 
-ASSEMBLE module
----------------
+The generic assembly module in |gf|
+-----------------------------------
 
-to be done
+Some implementation details of the (high level version of the) generic assembly are descibed in this section. 
 
-Description
-^^^^^^^^^^^
+
+Predefined functions
+^^^^^^^^^^^^^^^^^^^^
+
+Some predefined scalar functions are available in |gf| generic assembly langage in order to describe a weak formulation (or also to make basic algebraic computations). This is limited to scalar functions of one or two arguments. Due to the automatic differentiation used to obtain the tangent system of described problems, the derivative each function have to be available. The principle retained is the following: For each predefined function is available:
+  - A C++ function which computes the value given the argument(s).
+  - The support of the function in the first each argument in term of a
+    (possibly infinite) interval (this is for simplification of expressions).
+  - The string corresponding of the derivative in terms of already known
+    functions
+
+A new predefined function is easy to add. See init_predefined_functions() in file :file:`src/getfem_generic_assembly.cc`. + describe how to give the dérivative ...
+
+
+
+
+
+
 
 State
 ^^^^^
+to be done
 
 Perspectives
 ^^^^^^^^^^^^
+
+to be done
 
 
 BRICK module

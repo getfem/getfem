@@ -91,6 +91,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_integration.h        		\
 	getfem/getfem_assembling.h         		\
 	getfem/getfem_assembling_tensors.h 		\
+	getfem/getfem_generic_assembly.h 		\
 	getfem/getfem_context.h 			\
 	getfem/getfem_external_data_fem.h  		\
 	getfem/getfem_config.h             		\
@@ -141,7 +142,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_Navier_Stokes.h             	\
 	getfem/getfem_superlu.h		   		\
 	getfem/getfem_plasticity.h                	\
-	getfem/getfem_omp.h                         \
+	getfem/getfem_omp.h                             \
 	getfem/getfem_continuation.h                    \
 	getfem/getfem_mesher.h                          \
 	getfem/getfem_convect.h                    	\

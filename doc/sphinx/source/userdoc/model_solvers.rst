@@ -11,8 +11,8 @@
 Predefined solvers
 ------------------
 
-Of course, for some problems, it will be more convenient to build a specific
-solver. Even so, a generic solver is available to test your models quickly. It
+Although it will be more convenient to build a specific
+solver for some problems, a generic solver is available to test your models quickly. It
 can also be taken as an example to build your own solver. It is defined in
 :file:`src/getfem/getfem_model_solvers.h` and :file:`src/getfem_model_solvers.cc` and the call is::
 
@@ -33,13 +33,13 @@ Let us recall that a standard initialization for the iter object is the folowwin
 
   gmm::iteration iter(1E-7, 1, 200);
 
-where ``1E-7`` is the relative tolerance for the stopping criterion, `1` is the noisy option and `200` is the mas number of iterations. The stopping criterion of Newton's method is build as follows. For a relative tolerance :math:`\varepsilon`, the algorithm stops when:
+where ``1E-7`` is the relative tolerance for the stopping criterion, `1` is the noisy option and `200` is the maximum number of iterations. The stopping criterion of Newton's method is build as follows. For a relative tolerance :math:`\varepsilon`, the algorithm stops when:
 
 .. math::
 
   \min\left( \|F(u)\|_1 / \max(L, 10^{-25}) ~, ~~ \|h\|_1 / \max(\|u\|_1, 10^{-25})\right) < \varepsilon
 
-where :math:`F(u)` is the nonlinear system to be solved, :math:`\|\cdot\|_1` is the classical 1-norm in :math:`\R^n`, :math:`h` is the search direction given by Nexton's algorithm, :math:`L` is the norm of an estimated external loads (coming from source term and Dirichlet bricks) and :math:`u` is the current state of the searched variable. The maximum taken with :math:`10^{-25}` is to avoid pathological cases when :math:`L` and/or :math:`u` are vanishing.
+where :math:`F(u)` is the residual vector, :math:`\|\cdot\|_1` is the classical 1-norm in :math:`\R^n`, :math:`h` is the search direction given by Newton's algorithm, :math:`L` is the norm of an estimated external loads (coming from source term and Dirichlet bricks) and :math:`u` is the current state of the searched variable. The maximum taken with :math:`10^{-25}` is to avoid pathological cases when :math:`L` and/or :math:`u` are vanishing.
 
 
 

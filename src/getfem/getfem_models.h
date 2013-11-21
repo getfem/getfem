@@ -81,8 +81,8 @@ namespace getfem {
   //=========================================================================
 
 
-  typedef gmm::wsvector<scalar_type> model_real_sparse_vector;
-  typedef gmm::wsvector<complex_type> model_complex_sparse_vector;
+  typedef gmm::rsvector<scalar_type> model_real_sparse_vector;
+  typedef gmm::rsvector<complex_type> model_complex_sparse_vector;
   typedef std::vector<scalar_type> model_real_plain_vector;
   typedef std::vector<complex_type> model_complex_plain_vector;
 

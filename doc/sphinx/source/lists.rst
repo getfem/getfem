@@ -1,8 +1,10 @@
+
+.. index:: mailing lists
+
 .. _mailing-lists:
 
-**************************
 GetFEM++ Mailing Lists
-**************************
+======================
 
 Getfem++ is maintened on the Gna! collaborative development platform for free software http://gna.org. See  http://gna.org/projects/getfem for additional information on Getfem++ development.
 

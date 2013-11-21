@@ -252,6 +252,7 @@ namespace getfem {
        "Base integration method for quasi polar integration not convenient");
 
     approx_integration *new_approx = new approx_integration(pgt->convex_ref());
+    new_approx->set_built_on_the_fly();
     base_matrix KK(n,n), CS(n,n);
     base_matrix pc(pgt2->nb_points(), n);
     std::vector<size_type> ptsing;
@@ -540,6 +541,7 @@ namespace getfem {
     dim_type n = pgt->dim();
 
     approx_integration *new_approx = new approx_integration(pgt->convex_ref());
+    new_approx->set_built_on_the_fly();
     base_matrix KK(n,n), CS(n,n);
     base_matrix pc(pgt2->nb_points(), n);
     std::vector<size_type> ptsing;

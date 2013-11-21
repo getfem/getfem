@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2000-2012 Yves Renard
+ Copyright (C) 2000-2013 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -156,6 +156,7 @@ namespace getfem
     // index 0 : points for volumic integration, index > 0 : points for faces
     std::vector<PT_TAB> pt_to_store; 
     bool valid;
+    bool built_on_the_fly;
     
   public :
     
@@ -169,6 +170,8 @@ namespace getfem
     { return repartition[f+1] - repartition[f]; }
     size_type ind_first_point_on_face(short_type f) const 
     { return repartition[f]; }
+    bool is_built_on_the_fly(void) const { return built_on_the_fly; }
+    void set_built_on_the_fly(void)  { built_on_the_fly = true; }
     /// Structure of the reference element.
     bgeot::pconvex_structure structure(void) const
     { return cvr->structure()->basic_structure(); }
@@ -204,10 +207,11 @@ namespace getfem
     void add_method_on_face(pintegration_method ppi, short_type f);
     void valid_method(void);
     
-    approx_integration(void) : valid(false) { }
+    approx_integration(void) : valid(false), built_on_the_fly(false) { }
     approx_integration(bgeot::pconvex_ref cr)
       : cvr(cr), repartition(cr->structure()->nb_faces()+1),
-	pt_to_store(cr->structure()->nb_faces()+1), valid(false)
+	pt_to_store(cr->structure()->nb_faces()+1), valid(false),
+        built_on_the_fly(false)
     { std::fill(repartition.begin(), repartition.end(), 0); } 
     
   };

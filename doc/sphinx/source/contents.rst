@@ -24,6 +24,7 @@
    copyright.rst
    license.rst
    links.rst
+   lists.rst
    screenshots/shots.rst
    screenshots/tripod_source.rst
    screenshots/stokes-source.rst
