@@ -142,13 +142,15 @@ namespace getfem {
       bool is_variable;
       bool is_fem_dofs;
       const mesh_fem *mf;
+      gmm::sub_interval I;
       const model_real_plain_vector *V;
 
       var_description(bool is_var,
                       bool is_fem, 
                       const mesh_fem *mmf,
+                      gmm::sub_interval I_,
                       const model_real_plain_vector *v)
-        : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), V(v) {}
+        : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v) {}
       var_description() : is_variable(false), is_fem_dofs(false),
                           mf(0), V(0) {}
     };
@@ -179,11 +181,28 @@ namespace getfem {
                   const std::string expr);
     void clear_aux_trees(void);
 
+    model_real_sparse_matrix unreduced_K, *K;
+    base_vector unreduced_V, *V;
+    scalar_type E;
+    bool K_to_delete, V_to_delete;
+
   public:
 
-    model_real_sparse_matrix K;
-    base_vector V;
-    scalar_type E;
+    const model_real_sparse_matrix &assembled_matrix(void) const { return *K; }
+    model_real_sparse_matrix &assembled_matrix(void) { return *K; }
+    scalar_type &assembled_potential(void) { return E; }
+    const scalar_type &assembled_potential(void) const { return E; }
+    const base_vector &assembled_vector(void) const { return *V; }
+    base_vector &assembled_vector(void) { return *V; }
+    void set_assembled_matrix(model_real_sparse_matrix &K_)
+    { if (K_to_delete) delete K; K = &K_; K_to_delete = false; }
+    void set_assembled_vector(base_vector &V_)
+    { if (V_to_delete) delete V; V = &V_; V_to_delete = false; }
+
+    model_real_sparse_matrix &unreduced_matrix(void)
+    { return unreduced_K; }
+    base_vector &unreduced_vector(void) { return unreduced_V; }
+    
 
     void add_expression(const std::string expr, const mesh_im &mim,
                         size_type region = size_type(-1));
@@ -209,27 +228,31 @@ namespace getfem {
     // TODO: methods to add a function or an operator
     
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
+                          const gmm::sub_interval &I,
                           const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(true, true, &mf, &VV);
+      variables[name] = var_description(true, true, &mf, I, &VV);
     }
     
     void add_fixed_size_variable(const std::string &name,
+                                 const gmm::sub_interval &I,
                                  const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(true, false, 0, &VV);
+      variables[name] = var_description(true, false, 0, I, &VV);
     }
 
     void add_fem_constant(const std::string &name, const mesh_fem &mf,
                           const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(false, true, &mf, &VV);
+      variables[name] = var_description(false, true, &mf,
+                                        gmm::sub_interval(), &VV);
     }
     
     void add_fixed_size_constant(const std::string &name,
                                  const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(false, false, 0, &VV);
+      variables[name] = var_description(false, false, 0,
+                                        gmm::sub_interval(), &VV);
     }
 
     bool variable_exists(const std::string &name) const {
@@ -246,6 +269,17 @@ namespace getfem {
         VAR_SET::const_iterator it = variables.find(name);
         GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
         return !(it->second.is_variable);
+      }
+    }
+
+    const gmm::sub_interval &
+    interval_of_variable(const std::string &name) const {
+      if (model)
+        return model->interval_of_variable(name);
+      else {
+        VAR_SET::const_iterator it = variables.find(name);
+        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+        return it->second.I;
       }
     }
 

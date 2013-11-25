@@ -89,7 +89,7 @@ Classical examples ("u" the variable name, "a" a coefficient):
   - Simple componentwize Laplace operator for a vector field "Grad_u:Grad_Test_u"
   - Laplace operator with a scalar coefficient for a scalar field "a*Grad_u.Grad_Test_u"
   - Laplace operator with a matrix coefficient for a vector field "(a*Grad_u).Grad_Test_u" or "([2,1;1,4]*Grad_u).Grad_Test_u" for a constant coefficient in 2D.
-  - Linear isotropic elasticity "(lambda*Trace(Grad_u)*Idmat(mesh_dim) + mu*Sym(Grad_u)):Grad_Test_u" ou "lambda*Trace(Grad_u)*Trace(Grad_Test_u) + mu*Sym(Grad_u):Grad_Test_u" ou "lambda*Trace(Grad_u)*Trace(Grad_Test_u) + mu*Grad_u:Grad_Test_u + mu*Transposed(Grad_u):Grad_Test_u"
+  - Linear isotropic elasticity "(lambda*Trace(Grad_u)*Id(mesh_dim(u)) + mu*(Grad_u+Grad_u')):Grad_Test_u" ou "lambda*Trace(Grad_u)*Trace(Grad_Test_u) + mu*(Grad_u + Grad_u'):Grad_Test_u"
   
 
 The assembly string is transformed in an assembly tree by a set of function in :file:`src/getfem_generic_assembly.cc`. The process has 4 steps:
