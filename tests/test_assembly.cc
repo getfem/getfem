@@ -769,6 +769,111 @@ void testbug() {
 
 
 
+#define SCAL_TEST_0(title, expr, mim_, val)                             \
+  cout << "\n" << title << endl;                                        \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(0); ch.toc();                 \
+  cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
+  { scalar_type E1 = workspace.assembled_potential();                   \
+    scalar_type error = gmm::abs(E1-val);                               \
+    cout << "Error : " << error << endl;                                \
+    GMM_ASSERT1(error < 1E-10,                                          \
+                "Error in high or low level generic assembly");         \
+  }
+
+#define SCAL_TEST_1(title, expr, mim_, old_asm)                         \
+  cout << "\n" << title << endl;                                        \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(0); ch.toc();                 \
+  cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
+  scalar_type E1 = workspace.assembled_potential();                     \
+  ch.init(); ch.tic(); scalar_type E2 = old_asm; ch.toc();              \
+  cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
+  scalar_type error = gmm::abs(E1-E2);                                  \
+  cout << "Error : " << error << endl;                                  \
+  GMM_ASSERT1(error < 1E-10,                                            \
+              "Error in high or low level generic assembly");
+
+#define SCAL_TEST_2(expr, mim_, old_asm)                                \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(0); ch.toc();                 \
+  cout << "Elapsed time for new assembly, alternative expression "      \
+       << ch.elapsed() << endl;                                         \
+  E1 = workspace.assembled_potential();                                 \
+  error = gmm::abs(E1-E2) / (E1+E2);                        \
+  cout << "Error : " << error << endl;                                  \
+  GMM_ASSERT1(error < 1E-10,                                            \
+              "Error in high or low level generic assembly");
+
+#define VEC_TEST_1(title, ndof, expr, mim_, I_, old_asm)                \
+  cout << "\n" << title << endl;                                        \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(1); ch.toc();                 \
+  cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
+  getfem::base_vector V(ndof), V2(ndof);                                \
+  ch.init(); ch.tic(); old_asm; ch.toc();                               \
+  gmm::copy(V, V2);                                                     \
+  cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
+  gmm::add(gmm::scaled(gmm::sub_vector(workspace.assembled_vector(),    \
+                                       I_), scalar_type(-1)), V);       \
+  scalar_type norm_error = gmm::vect_norminf(V);                        \
+  cout << "Error : " << norm_error << endl;                             \
+  GMM_ASSERT1(norm_error < 1E-10,                                       \
+              "Error in high or low level generic assembly");
+
+#define VEC_TEST_2(ndof, expr, mim_, I_)                                \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(1); ch.toc();                 \
+  cout << "Elapsed time for new assembly, alternative expression "      \
+          << ch.elapsed() << endl;                                      \
+  gmm::copy(V2, V);                                                     \
+  gmm::add(gmm::scaled(gmm::sub_vector(workspace.assembled_vector(),    \
+                                       I_), scalar_type(-1)), V);       \
+  scalar_type norm_error = gmm::vect_norminf(V);                        \
+  cout << "Error : " << norm_error << endl;                             \
+  GMM_ASSERT1(norm_error < 1E-10,                                       \
+              "Error in high or low level generic assembly");
+
+
+#define MAT_TEST_1(title, ndof1, ndof2, expr, mim_, I1_, I2_, old_asm)  \
+  cout << "\n" << title << endl;                                        \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(2); ch.toc();                 \
+  cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
+  getfem::model_real_sparse_matrix K(ndof1, ndof2), K2(ndof1, ndof2);   \
+  ch.init(); ch.tic(); old_asm; ch.toc();                               \
+  gmm::copy(K, K2);                                                     \
+  cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
+  gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),    \
+                                       I1_, I2_), scalar_type(-1)), K); \
+  scalar_type norm_error = gmm::mat_norminf(K);                         \
+  cout << "Error : " << norm_error << endl;                             \
+  GMM_ASSERT1(norm_error < 1E-10,                                       \
+              "Error in high or low level generic assembly");
+
+
+#define MAT_TEST_2(nbdof1, nbdof2, expr, mim_, I1_, I2_)                \
+  workspace.clear_expressions();                                        \
+  workspace.add_expression(expr, mim_);                                 \
+  ch.init(); ch.tic(); workspace.assembly(2);   ch.toc();               \
+  cout << "Elapsed time for new assembly, alternative expression "      \
+          << ch.elapsed() << endl;                                      \
+  gmm::copy(K2, K);                                                     \
+  gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),    \
+                                       I1_, I1_), scalar_type(-1)), K); \
+  norm_error = gmm::mat_norminf(K);                                     \
+  cout << "Error : " << norm_error << endl;                             \
+  GMM_ASSERT1(norm_error < 1E-10,                                       \
+              "Error in high or low level generic assembly");
+
+
+
 static void test_new_assembly(void) {
 
     // std::string expr="([1,2;3,4]@[1,2;1,2])(:,2,1,1)(1)+ [1,2;3,4](1,:)(2)"; // should give 4
@@ -776,7 +881,7 @@ static void test_new_assembly(void) {
     // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [6, 9]
     // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3](:,:,:,2)";
     // std::string expr="sin([0;pi;2*pi])";
-    // std::string expr="Id(meshdim(u)+qdim(u))";
+    // std::string expr="Id(meshdim+qdim(u))";
     // std::string expr="[sin(pi);-2] + Derivative_Norm(Grad_u) + Derivative_Norm(b) + Derivative_sin(pi)*[0;2]";
     // std::string expr="Trace([1,2;3,5;5,6]')";
     // std::string expr = "([1,2;3,4]@[1,2;1,2]).[1;2]";
@@ -797,20 +902,28 @@ static void test_new_assembly(void) {
     
     getfem::mesh m;
 
+    size_type N = 2;
+    size_type NX = 150;
+    size_type pK = 1;
+
+    char Ns[5]; sprintf(Ns, "%ld", N);
+    char Ks[5]; sprintf(Ks, "%ld", pK);
     bgeot::pgeometric_trans pgt =
-      bgeot::geometric_trans_descriptor("GT_PK(2,1)");
-    size_type N = pgt->dim();
+      bgeot::geometric_trans_descriptor
+      ((std::string("GT_PK(") + Ns + ",1)").c_str());
     std::vector<size_type> nsubdiv(N);
-    std::fill(nsubdiv.begin(),nsubdiv.end(), 200);
+    std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
     getfem::regular_unit_mesh(m, nsubdiv, pgt);
 
     getfem::mesh_fem mf_u(m);
-    getfem::pfem pf_u = getfem::fem_descriptor("FEM_PK(2,2)");
+    getfem::pfem pf_u = getfem::fem_descriptor
+      ((std::string("FEM_PK(") + Ns + "," + Ks + ")").c_str());
     mf_u.set_finite_element(m.convex_index(), pf_u);
     mf_u.set_qdim(dim_type(N));
 
     getfem::mesh_fem mf_p(m);
-    getfem::pfem pf_p = getfem::fem_descriptor("FEM_PK(2,2)");
+    getfem::pfem pf_p = getfem::fem_descriptor
+      ((std::string("FEM_PK(") + Ns + "," + Ks + ")").c_str());
     mf_p.set_finite_element(m.convex_index(), pf_p);
     // mf_p.set_qdim(dim_type(N));
 
@@ -821,7 +934,9 @@ static void test_new_assembly(void) {
     mim2.set_integration_method(m.convex_index(), 2);
 
     std::vector<scalar_type> U(mf_u.nb_dof());
+    gmm::fill_random(U);
     std::vector<scalar_type> P(mf_p.nb_dof(), 1.);
+    gmm::fill_random(P);
     size_type ndofu = mf_u.nb_dof(), ndofp = mf_p.nb_dof();
     cout << "ndofu = " << ndofu << " ndofp = " << ndofp << endl;
     
@@ -833,119 +948,150 @@ static void test_new_assembly(void) {
     
     chrono ch;
 
+    cout << "\n\nTests in dimension " << N << endl << endl;
+
+
+    if (1) {
+      SCAL_TEST_0("Test on function integration", "cos(pi*x(1))", mim, 0);
+      SCAL_TEST_0("Test on function integration", "cos(pi*x).exp(x*0)", mim,0);
+    }
+
     if (0) {
-      cout << "\nTest for Mass matrix" << endl;
-      workspace.clear_expressions();
-      workspace.add_expression("Test_u.Test2_u", mim);
+      SCAL_TEST_1("Test on L2 norm", "u.u", mim,
+                  gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+
+      if (N == 2) {
+        SCAL_TEST_2("u(1)*u(1) + u(2)*u(2)", mim,
+                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+        SCAL_TEST_2("[u(2);u(1)].[u(2);u(1)]", mim,
+                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+      }
+      if (N == 3) {
+        SCAL_TEST_2("u(1)*u(1) + u(2)*u(2) + u(3)*u(3)", mim,
+                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+        SCAL_TEST_2("[u(2);u(1);u(3)].[u(2);u(1);u(3)]", mim,
+                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+      }
+    }
+
+    if (0) {
+      SCAL_TEST_1("Test on H1 semi-norm", "Grad_u:Grad_u", mim2,
+                  gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+
+      SCAL_TEST_2("Id(meshdim)*Grad_u:Grad_u", mim2,
+                  gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+
+      if (N == 2) {
+        SCAL_TEST_2("Grad_u(1,:).Grad_u(1,:) + Grad_u(2,:).Grad_u(2,:)", mim2,
+                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+        SCAL_TEST_2("Grad_u(:,1).Grad_u(:,1) + Grad_u(:,2).Grad_u(:,2)", mim2,
+                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+        SCAL_TEST_2("Grad_u(1,1)*Grad_u(1,1) + Grad_u(1,2)*Grad_u(1,2)"
+                    "+ Grad_u(2,1)*Grad_u(2,1) + Grad_u(2,2)*Grad_u(2,2)",
+                    mim2, gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+      }
       
-      ch.init(); ch.tic();
-      workspace.assembly(2);
-      ch.toc();
-      cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
-      getfem::model_real_sparse_matrix K(ndofu, ndofu);
-      ch.init(); ch.tic();
-      getfem::asm_mass_matrix(K, mim, mf_u);
-      ch.toc();
-      cout << "Elapsed time for old assembly " << ch.elapsed() << endl;
-      gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),Iu,Iu),
-                           scalar_type(-1)), K);
-      scalar_type norm_error = gmm::mat_norminf(K);
-      cout << "Error : " << norm_error << endl;
-      GMM_ASSERT1(norm_error < 1E-11,
-                  "Error in high or low level generic assembly");
+      if (N == 3) {
+        SCAL_TEST_2("Grad_u(1,:).Grad_u(1,:) + Grad_u(2,:).Grad_u(2,:) +"
+                    "Grad_u(3,:).Grad_u(3,:)", mim2,
+                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+        SCAL_TEST_2("Grad_u(:,1).Grad_u(:,1) + Grad_u(:,2).Grad_u(:,2) +"
+                    "Grad_u(:,3).Grad_u(:,3)", mim2,
+                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+      }
     }
-    
+
 
     if (1) {
-      cout << "\nTest for Laplacian stiffness matrix" << endl;
-      workspace.clear_expressions();
-      workspace.add_expression("Grad_Test_p:Grad_Test2_p", mim2);
-      // workspace.add_expression("(Grad_p:Grad_p)/2", mim2);
-      // workspace.add_expression("sqr(Norm(Grad_p))/2", mim2);
+      VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim,
+                 Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
 
-      ch.init(); ch.tic();
-      workspace.assembly(2);
-      ch.toc();
-      cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
-      getfem::model_real_sparse_matrix K(ndofp, ndofp);
-      ch.init(); ch.tic();
-      getfem::asm_stiffness_matrix_for_homogeneous_laplacian(K, mim2, mf_p);
-      ch.toc();
-      cout << "Elapsed time for old assembly " << ch.elapsed() << endl;
-      gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),Ip,Ip),
-                           scalar_type(-1)), K);
-      scalar_type norm_error = gmm::mat_norminf(K);
-      cout << "Error : " << norm_error << endl;
-      GMM_ASSERT1(norm_error < 1E-11,
-                  "Error in high or low level generic assembly");
+
+
+    }
+
+
+
+
+
+    if (1) {
+      MAT_TEST_1("Test for Mass matrix", ndofu, ndofu, "Test_u.Test2_u", mim,
+                 Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
     }
 
     if (1) {
-      cout << "\nTest for linear homogeneous elasticity stiffness matrix"
-           << endl;
-      workspace.clear_expressions();
+      MAT_TEST_1("Test for Laplacian stiffness matrix", ndofp, ndofp,
+             "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
+             getfem::asm_stiffness_matrix_for_homogeneous_laplacian
+             (K, mim2, mf_p));
+      MAT_TEST_2(ndofp, ndofp, "(Grad_p:Grad_p)/2", mim2, Ip, Ip);
+      if (N == 2) {
+        MAT_TEST_2(ndofp, ndofp,
+                   "(Grad_p(1)*Grad_p(1) + Grad_p(2)*Grad_p(2))/2",
+                   mim2, Ip, Ip);
+        MAT_TEST_2(ndofp, ndofp,
+                   "([Grad_p(2); Grad_p(1)].[Grad_p(2); Grad_p(1)])/2",
+                   mim2, Ip, Ip);
+      }
+      if (N == 3) {
+        MAT_TEST_2(ndofp, ndofp,
+                   "(Grad_p(1)*Grad_p(1) + Grad_p(2)*Grad_p(2)"
+                   "+ Grad_p(3)*Grad_p(3))/2", mim2, Ip, Ip);
+        MAT_TEST_2(ndofp, ndofp,
+                   "([Grad_p(1); Grad_p(3); Grad_p(2)].[Grad_p(1); Grad_p(3); Grad_p(2)])/2",
+                   mim2, Ip, Ip);
+      }
+    }
+
+    if (1) {
       base_vector lambda(1); lambda[0] = 3.0;
       workspace.add_fixed_size_constant("lambda", lambda);
       base_vector mu(1); mu[0] = 2.0;
       workspace.add_fixed_size_constant("mu", mu);
 
-//       workspace.add_expression
-//         ("lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
-//          "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2);
-
-      workspace.add_expression // Slighly better
-        ("(lambda*Trace(Grad_Test_u)*Id(meshdim(u)) "
-         "+ mu*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2);
-
+//       TEST_1("Test for linear homogeneous elasticity stiffness matrix",
+//              ndofu, ndofu, "lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+//              "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u" , mim2,
+//              Iu, Iu,
+//              getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
+//              (K, mim2, mf_u, lambda, mu));
       
-      ch.init(); ch.tic();
-      workspace.assembly(2);
-      ch.toc();
-      cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
-      getfem::model_real_sparse_matrix K(ndofu, ndofu);
-      ch.init(); ch.tic();
-      getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
-        (K, mim2, mf_u, lambda, mu);
-      ch.toc();
-      cout << "Elapsed time for old assembly " << ch.elapsed() << endl;
-      gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),Iu,Iu),
-                           scalar_type(-1)), K);
-      scalar_type norm_error = gmm::mat_norminf(K);
-      cout << "Error : " << norm_error << endl;
-      GMM_ASSERT1(norm_error < 1E-10,
-                  "Error in high or low level generic assembly");
+      // Slighly better
+      MAT_TEST_1("Test for linear homogeneous elasticity stiffness matrix",
+                 ndofu, ndofu, "(lambda*Trace(Grad_Test_u)*Id(qdim(u)) "
+                 "+ mu*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2, Iu, Iu,
+                 getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
+                 (K, mim2, mf_u, lambda, mu));
+      
+      MAT_TEST_2(ndofu, ndofu,
+                 "lambda*((Grad_Test2_u@Grad_Test_u):Id(meshdim))"
+                 ":Id(meshdim) + mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
+                 mim2, Iu, Iu);
+      
+      MAT_TEST_2(ndofu, ndofu,
+                 "lambda*Id(meshdim)@Id(meshdim)*Grad_Test_u"
+                 ":Grad_Test2_u + mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
+                 mim2, Iu, Iu);
+      
+      MAT_TEST_2(ndofu, ndofu,
+                 "lambda*(Id(meshdim)*Id(meshdim))@Id(meshdim)"
+                 "*Grad_Test_u:Grad_Test2_u"
+                 "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
+                 mim2, Iu, Iu);
     }
 
     if (1) {
-      cout << "\nTest for linear non homogeneous elasticity stiffness matrix"
-           << endl;
-      workspace.clear_expressions();
       base_vector lambda2(ndofp, 3.0);
       workspace.add_fem_constant("lambda2", mf_p, lambda2);
       base_vector mu2(ndofp, 2.0);
       workspace.add_fem_constant("mu2", mf_p, mu2);
 
-      workspace.add_expression
-        ("(lambda2*Trace(Grad_Test_u)*Id(meshdim(u)) "
-         "+ mu2*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2);
-
-      
-      ch.init(); ch.tic();
-      workspace.assembly(2);
-      ch.toc();
-      cout << "Elapsed time for new assembly " << ch.elapsed() << endl;
-      getfem::model_real_sparse_matrix K(ndofu, ndofu);
-      ch.init(); ch.tic();
-      getfem::asm_stiffness_matrix_for_linear_elasticity
-        (K, mim2, mf_u, mf_p, lambda2, mu2);
-      ch.toc();
-      cout << "Elapsed time for old assembly " << ch.elapsed() << endl;
-      gmm::add(gmm::scaled(gmm::sub_matrix(workspace.assembled_matrix(),Iu,Iu),
-                           scalar_type(-1)), K);
-      scalar_type norm_error = gmm::mat_norminf(K);
-      cout << "Error : " << norm_error << endl;
-      GMM_ASSERT1(norm_error < 1E-10,
-                  "Error in high or low level generic assembly");
+      MAT_TEST_1("Test for linear non homogeneous elasticity stiffness matrix",
+                 ndofu, ndofu, "(lambda2*Trace(Grad_Test_u)*Id(meshdim) "
+                 "+ mu2*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u",
+                 mim2, Iu, Iu,
+                 getfem::asm_stiffness_matrix_for_linear_elasticity
+                 (K, mim2, mf_u, mf_p, lambda2, mu2));
     }
 
 

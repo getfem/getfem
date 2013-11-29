@@ -590,18 +590,24 @@ namespace getfem {
    *  @param cv . The size of @param coeff is adjusted if necessary.
    */
   template <typename VEC1, typename VEC2>
-  void slice_vector_on_basic_dof_of_element(const mesh_fem &mf, const VEC1 &vec,
+  void slice_vector_on_basic_dof_of_element(const mesh_fem &mf,
+                                            const VEC1 &vec,
                                             size_type cv, VEC2 &coeff) {
+    size_type nbdof = mf.nb_basic_dof();
+    size_type qmult = gmm::vect_size(vec) / nbdof;
+    GMM_ASSERT1(gmm::vect_size(vec) == qmult * nbdof, "Bad dof vector size");
     size_type cvnbdof = mf.nb_basic_dof_of_element(cv);
-    gmm::resize(coeff, cvnbdof);
+    gmm::resize(coeff, cvnbdof*qmult);
     mesh_fem::ind_dof_ct::const_iterator
       itdof = mf.ind_basic_dof_of_element(cv).begin();
-    for (size_type k = 0; k < cvnbdof; ++k, ++itdof) coeff[k] = vec[*itdof];
-    // alternative implementation:
-    // gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
-    // gmm::copy(gmm::sub_vector
-    //          (vec, gmm::sub_index
-    //              (mf.ind_basic_dof_of_element(cv))), coeff);
+    if (qmult == 1) {
+      for (size_type k = 0; k < cvnbdof; ++k, ++itdof)
+          coeff[k] = vec[*itdof];
+    } else {
+      for (size_type k = 0; k < cvnbdof; ++k, ++itdof)
+        for (size_type l = 0; l < qmult; ++l)
+          coeff[l+k*qmult] = vec[l+(*itdof)*qmult];
+    }
   }
 
 }  /* end of namespace getfem.                                             */

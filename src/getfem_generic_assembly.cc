@@ -39,6 +39,12 @@
 
 // #define GA_USES_BLAS // not so interesting, at leat for debian blas
 
+// #define GA_DEBUG_INFO(a) { cout << a << endl; }
+#define GA_DEBUG_INFO(a)
+#define GA_DEBUG_ASSERT(a, b) GMM_ASSERT1(a, b)
+// #define GA_DEBUG_ASSERT(a, b)
+
+
 namespace getfem {
   
   //=========================================================================
@@ -238,6 +244,8 @@ namespace getfem {
     GA_NODE_PARAMS,
     GA_NODE_ALLINDICES,
     GA_NODE_C_MATRIX,
+    GA_NODE_X,
+    GA_NODE_NORMAL,
     GA_NODE_VAL,
     GA_NODE_GRAD,
     GA_NODE_HESS,
@@ -259,7 +267,7 @@ namespace getfem {
     std::string name_test1, name_test2; // variable names corresponding to test
                                   // functions when test_function_type > 0.
     size_type qdim1, qdim2;       // Qdims when test_function_type > 0.
-    size_type nbc1, nbc2, nbc3;   // For explicit matrices.
+    size_type nbc1, nbc2, nbc3;   // For explicit matrices and x.
     size_type pos;                // Position of the first character in string
     std::string name;             // variable/constant/function/operator name 
     size_type der1, der2;         // For functions and nonlinear operators,
@@ -659,6 +667,9 @@ namespace getfem {
     case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
       if (pnode1->name.compare(pnode2->name)) return false;
       break;
+    case GA_NODE_X:
+      if (pnode1->nbc1 != pnode2->nbc1) return false;
+      break;
 
     default:break;
     }
@@ -804,6 +815,10 @@ namespace getfem {
       }
       break;
       
+    case GA_NODE_X:
+      if (pnode->nbc1) cout << "x(" << pnode->nbc1 << ")"; else cout << "x";
+      break;
+    case GA_NODE_NORMAL: cout << "Normal"; break;
     case GA_NODE_VAL: cout << pnode->name; break;
     case GA_NODE_GRAD: cout << "Grad_" << pnode->name; break;
     case GA_NODE_HESS: cout << "Hess_" << pnode->name; break;
@@ -1376,9 +1391,6 @@ namespace getfem {
   // Instructions for compilation: basic optimized operations on tensors
   //=========================================================================
 
-  // #define GA_DEBUG_INSTRUCTION(a) { cout << a << endl; }
-  #define GA_DEBUG_INSTRUCTION(a)
-
   struct ga_instruction {
     virtual void exec(void) = 0;
   };
@@ -1390,7 +1402,7 @@ namespace getfem {
     fem_interpolation_context &ctx;
     base_vector &coeff;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: Slice");
+      GA_DEBUG_INFO("Instruction: Slice");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
@@ -1407,7 +1419,7 @@ namespace getfem {
     pfem_precomp &pfp;
 
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: Pfp update");
+      GA_DEBUG_INFO("Instruction: Pfp update");
       if (ctx.have_pgp()) {
         pfem pf = mf.fem_of_element(ctx.convex_num());
         if (!pfp || pf != pfp->get_pfem() ||
@@ -1437,7 +1449,7 @@ namespace getfem {
     const mesh_fem &mf;
     
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: Adapt first index of tensor");
+      GA_DEBUG_INFO("Instruction: Adapt first index of tensor");
       pfem pf = mf.fem_of_element(ctx.convex_num());
       size_type Qmult = qdim / pf->target_dim();
       size_type s = pf->nb_dof(ctx.convex_num()) * Qmult;
@@ -1460,7 +1472,7 @@ namespace getfem {
     const mesh_fem &mf2;
 
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: Adapt two first indices of tensor");
+      GA_DEBUG_INFO("Instruction: Adapt two first indices of tensor");
       pfem pf1 = mf1.fem_of_element(ctx.convex_num());
       pfem pf2 = mf2.fem_of_element(ctx.convex_num());
       size_type Qmult1 = qdim1 / pf1->target_dim();
@@ -1483,13 +1495,56 @@ namespace getfem {
   };
 
 
+  struct ga_instruction_x_component : public ga_instruction {
+    scalar_type &t;
+    fem_interpolation_context &ctx;
+    size_type n;
+   
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: x component");
+      t = ctx.xreal()[n];
+    }
+    ga_instruction_x_component(scalar_type &t_, 
+                               fem_interpolation_context &ctx_, size_type n_)
+      : t(t_),  ctx(ctx_), n(n_) {}
+  };
+
+  struct ga_instruction_x : public ga_instruction {
+    base_tensor &t;
+    fem_interpolation_context &ctx;
+   
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: x");
+      GA_DEBUG_ASSERT(t.size() == ctx.xreal().size(), "dimensions mismatch");
+      gmm::copy(ctx.xreal(), t.as_vector());
+    }
+    ga_instruction_x(base_tensor &t_, fem_interpolation_context &ctx_)
+      : t(t_),  ctx(ctx_) {}
+  };
+
+  struct ga_instruction_Normal : public ga_instruction {
+    base_tensor &t;
+    base_small_vector &Normal;
+   
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: Normal");
+      GMM_ASSERT1(Normal.size(), "Outward unit normal vector can only be "
+                  "evalued on a boundary. Error in expression.");
+      GA_DEBUG_ASSERT(t.size() == Normal.size(), "dimensions mismatch");
+      gmm::copy(Normal, t.as_vector());
+    }
+    ga_instruction_Normal(base_tensor &t_, base_small_vector &Normal_)
+      : t(t_), Normal(Normal_)  {}
+  };
+
+
   struct ga_instruction_base : public ga_instruction {
     base_tensor &t;
     fem_interpolation_context &ctx;
     const mesh_fem &mf;
     pfem_precomp &pfp;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: compute value of base functions");
+      GA_DEBUG_INFO("Instruction: compute value of base functions");
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       ctx.pf()->real_base_value(ctx, t);
@@ -1505,7 +1560,7 @@ namespace getfem {
     const mesh_fem &mf;
     pfem_precomp &pfp;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: compute gradient of base functions");
+      GA_DEBUG_INFO("Instruction: compute gradient of base functions");
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       ctx.pf()->real_grad_base_value(ctx, t);
@@ -1522,7 +1577,7 @@ namespace getfem {
     const mesh_fem &mf;
     pfem_precomp &pfp;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: compute Hessian of base functions");
+      GA_DEBUG_INFO("Instruction: compute Hessian of base functions");
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       ctx.pf()->real_hess_base_value(ctx, t);
@@ -1539,13 +1594,13 @@ namespace getfem {
     const base_vector &coeff;
     size_type qdim;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: variable value");
+      GA_DEBUG_INFO("Instruction: variable value");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
-      GMM_ASSERT1(t.size() == qdim, "dimensions mismatch"); // à supprimer ?
-      GMM_ASSERT1(gmm::vect_size(coeff) == ndof*Qmult,      // à supprimer ?
-                  "Wrong size for coeff vector");
+      GA_DEBUG_ASSERT(t.size() == qdim, "dimensions mismatch");
+      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+                      "Wrong size for coeff vector");
       gmm::clear(t.as_vector());
       for (size_type j = 0; j < ndof; ++j) {
         for (size_type q = 0; q < Qmult; ++q) {
@@ -1567,13 +1622,15 @@ namespace getfem {
     const base_vector &coeff;
     size_type qdim;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: gradient");
+      GA_DEBUG_INFO("Instruction: gradient");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
       size_type N = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
-      GMM_ASSERT1(t.sizes()[1] == N && t.sizes()[0] == qdim, // à supprimer ?
-                  "dimensions mismatch");
+      GA_DEBUG_ASSERT(t.sizes()[1] == N && t.sizes()[0] == qdim,
+                      "dimensions mismatch");
+      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+                      "Wrong size for coeff vector");
       gmm::clear(t.as_vector());
       for (size_type q = 0; q < Qmult; ++q) {
         base_tensor::const_iterator it = Z.begin();
@@ -1595,13 +1652,15 @@ namespace getfem {
     const base_vector &coeff;
     size_type qdim;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: Hessian");
+      GA_DEBUG_INFO("Instruction: Hessian");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
       size_type N = size_type(round(sqrt(scalar_type(Z.sizes()[2]))));
       size_type Qmult = qdim / target_dim;
-      GMM_ASSERT1(t.sizes()[1] == N && t.sizes()[2] == N // à supprimer ?
-                  && t.sizes()[0] == qdim, "dimensions mismatch");
+      GA_DEBUG_ASSERT(t.sizes()[1] == N && t.sizes()[2] == N
+                      && t.sizes()[0] == qdim, "dimensions mismatch");
+      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+                      "Wrong size for coeff vector");
       gmm::clear(t.as_vector());
       for (size_type q = 0; q < Qmult; ++q) {
         base_tensor::const_iterator it = Z.begin();
@@ -1623,10 +1682,12 @@ namespace getfem {
     base_tensor &Z;
     size_type qdim;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: value of test functions");
+      GA_DEBUG_INFO("Instruction: value of test functions");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                      "Wrong size for base vector");
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
@@ -1654,11 +1715,13 @@ namespace getfem {
     base_tensor &Z;
     size_type qdim;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: gradient of test functions");
+      GA_DEBUG_INFO("Instruction: gradient of test functions");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
       size_type N = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                      "Wrong size for gradient vector");
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
@@ -1688,11 +1751,13 @@ namespace getfem {
     base_tensor &Z;
     size_type qdim;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: Hessian of test functions");
+      GA_DEBUG_INFO("Instruction: Hessian of test functions");
       size_type ndof = Z.sizes()[0];
       size_type target_dim = Z.sizes()[1];
       size_type N2 = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                      "Wrong size for Hessian vector");
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
@@ -1721,8 +1786,8 @@ namespace getfem {
   struct ga_instruction_add : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: addition");
-      GMM_ASSERT1(t.size() == tc1.size() && t.size() == tc2.size(),
+      GA_DEBUG_INFO("Instruction: addition");
+      GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
                   "internal error");
       gmm::add(tc1.as_vector(), tc2.as_vector(), t.as_vector());
     }
@@ -1733,8 +1798,8 @@ namespace getfem {
   struct ga_instruction_sub : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: substraction");
-      GMM_ASSERT1(t.size() == tc1.size() && t.size() == tc2.size(),
+      GA_DEBUG_INFO("Instruction: substraction");
+      GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
                   "internal error");
       gmm::add(tc1.as_vector(), gmm::scaled(tc2.as_vector(), scalar_type(-1)),
                t.as_vector());
@@ -1746,7 +1811,7 @@ namespace getfem {
   struct ga_instruction_opposite : public ga_instruction {
     base_tensor &t;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: multiplication with -1");
+      GA_DEBUG_INFO("Instruction: multiplication with -1");
       gmm::scale(t.as_vector(), scalar_type(-1));
     }
     ga_instruction_opposite(base_tensor &t_) : t(t_) {}
@@ -1757,7 +1822,7 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type &nbpt, &ipt;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: tensor print");
+      GA_DEBUG_INFO("Instruction: tensor print");
       cout << "Print term "; ga_print_node(pnode);
       cout << " on Gauss point " << ipt << "/" << nbpt << " of element "
            << ctx.convex_num() << ": " << t << endl;
@@ -1771,18 +1836,31 @@ namespace getfem {
   struct ga_instruction_copy_tensor : public ga_instruction {
     base_tensor &t, &tc1;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: tensor copy");
+      GA_DEBUG_INFO("Instruction: tensor copy");
       gmm::copy(tc1.as_vector(), t.as_vector());
     }
     ga_instruction_copy_tensor(base_tensor &t_, base_tensor &tc1_)
       : t(t_), tc1(tc1_) {}
   };
 
+  struct ga_instruction_copy_scalar : public ga_instruction {
+    scalar_type &t, &t1;
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: scalar copy");
+      t = t1;
+    }
+    ga_instruction_copy_scalar(scalar_type &t_, scalar_type &t1_)
+      : t(t_), t1(t1_) {}
+  };
+
+
   struct ga_instruction_trace : public ga_instruction {
     base_tensor &t, &tc1;
     size_type n;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: trace");
+      GA_DEBUG_INFO("Instruction: trace");
+      GA_DEBUG_ASSERT(t.size()*n*n == tc1.size(), "Wrong sizes");
+
       size_type s = t.size() * (n+1);
       for (base_tensor::iterator it = t.begin(), it1 = tc1.begin();
            it != t.end(); ++it, ++it1) {
@@ -1798,7 +1876,8 @@ namespace getfem {
   struct ga_instruction_transpose : public ga_instruction {
     base_tensor &t, &tc1;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: transpose");
+      GA_DEBUG_INFO("Instruction: transpose");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
       size_type order = t.sizes().size();
       size_type s1 = t.sizes()[order-2], s2 = t.sizes()[order-1];
       size_type s = t.size() / (s1*s2);
@@ -1818,11 +1897,11 @@ namespace getfem {
     scalar_type &t;
     const scalar_type &c, &d;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: scalar addition");
+      GA_DEBUG_INFO("Instruction: scalar addition");
       t = c + d;
     }
     ga_instruction_scalar_add(scalar_type &t_, const scalar_type &c_,
-                                      const  scalar_type &d_)
+                              const  scalar_type &d_)
       : t(t_), c(c_), d(d_) {}
   };
 
@@ -1830,7 +1909,7 @@ namespace getfem {
     scalar_type &t;
     const scalar_type &c, &d;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: scalar subtraction");
+      GA_DEBUG_INFO("Instruction: scalar subtraction");
       t = c - d;
     }
     ga_instruction_scalar_sub(scalar_type &t_, const scalar_type &c_,
@@ -1842,7 +1921,7 @@ namespace getfem {
     scalar_type &t;
     const scalar_type &c, &d;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: scalar multiplication");
+      GA_DEBUG_INFO("Instruction: scalar multiplication");
       t = c * d;
     }
     ga_instruction_scalar_scalar_mult(scalar_type &t_, const scalar_type &c_,
@@ -1854,7 +1933,7 @@ namespace getfem {
     scalar_type &t;
     const scalar_type &c, &d;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: scalar division");
+      GA_DEBUG_INFO("Instruction: scalar division");
       t = c / d;
     }
     ga_instruction_scalar_scalar_div(scalar_type &t_, const scalar_type &c_,
@@ -1866,7 +1945,7 @@ namespace getfem {
     base_tensor &t, &tc1;
     const scalar_type &c;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: multiplication of a tensor by a "
+      GA_DEBUG_INFO("Instruction: multiplication of a tensor by a "
                            "scalar ");
       gmm::copy(gmm::scaled(tc1.as_vector(), c), t.as_vector());
     }
@@ -1879,8 +1958,10 @@ namespace getfem {
     base_tensor &t, &tc1;
     const scalar_type &c;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: division of a tensor by a "
+      GA_DEBUG_INFO("Instruction: division of a tensor by a "
                            "scalar ");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+
       base_tensor::iterator it = t.begin(), it1 = tc1.begin();
       for (; it != t.end(); ++it, ++it1) *it = *it1/c;
     }
@@ -1892,12 +1973,13 @@ namespace getfem {
   struct ga_instruction_dotmult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: componentwise multiplication");
+      GA_DEBUG_INFO("Instruction: componentwise multiplication");
       size_type s2 = tc2.size(), s1_1 = tc1.size() / s2;
-      
+      GA_DEBUG_ASSERT(t.size() == s1_1*s2, "Wrong sizes");
+
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s1_1; ++m)
-        for (size_type i = 0; i < s2; ++i, ++it)
+      for (size_type i = 0; i < s2; ++i)
+        for (size_type m = 0; m < s1_1; ++m, ++it)
           *it = tc1[m+s1_1*i] * tc2[i];
     }
     ga_instruction_dotmult(base_tensor &t_, base_tensor &tc1_,
@@ -1908,12 +1990,13 @@ namespace getfem {
   struct ga_instruction_dotdiv : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: componentwise division");
+      GA_DEBUG_INFO("Instruction: componentwise division");
       size_type s2 = tc2.size(), s1_1 = tc1.size() / s2;
+      GA_DEBUG_ASSERT(t.size() == s1_1*s2, "Wrong sizes");
       
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s1_1; ++m)
-        for (size_type i = 0; i < s2; ++i, ++it)
+      for (size_type i = 0; i < s2; ++i)
+        for (size_type m = 0; m < s1_1; ++m, ++it)
           *it = tc1[m+s1_1*i] / tc2[i];
     }
     ga_instruction_dotdiv(base_tensor &t_, base_tensor &tc1_,
@@ -1925,27 +2008,28 @@ namespace getfem {
   struct ga_instruction_dotmult_spec : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: specific componentwise "
+      GA_DEBUG_INFO("Instruction: specific componentwise "
                            "multiplication");
       size_type s2_1 = tc2.sizes()[0], s2_2 = tc2.size() / s2_1; 
       size_type s1_1 = tc1.size() / s2_2;
       
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s1_1; ++m)
+      for (size_type i = 0; i < s2_2; ++i)
         for (size_type n = 0; n < s2_1; ++n)
-          for (size_type i = 0; i < s2_2; ++i, ++it)
+          for (size_type m = 0; m < s1_1; ++m, ++it)
             *it = tc1[m+s1_1*i] * tc2[n+s2_1*i];
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
     }
     ga_instruction_dotmult_spec(base_tensor &t_, base_tensor &tc1_,
                            base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
-
+  // Performs Amij Bjk -> Cmik
   struct ga_instruction_matrix_mult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: matrix multiplication");
+      GA_DEBUG_INFO("Instruction: matrix multiplication");
       size_type order = tc2.sizes().size();
       size_type s2_1 = tc2.sizes()[order-2];
       size_type s2_2 = tc2.sizes()[order-1];
@@ -1953,23 +2037,25 @@ namespace getfem {
       size_type s2 = tc2.size() / (s2_1*s2_2);
 
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s2; ++m)
+      for (size_type k = 0; k < s2_2; ++k)
         for (size_type i = 0; i < s1; ++i)
-          for (size_type k = 0; k < s2_2; ++k, ++it) {
+          for (size_type m = 0; m < s2; ++m, ++it) {
             *it = scalar_type(0);
             for (size_type j = 0; j < s2_1; ++j)
               *it += tc1[i+j*s1] * tc2[m+j*s2+k*s2_1*s2];
           }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
     }
     ga_instruction_matrix_mult(base_tensor &t_, base_tensor &tc1_,
                                base_tensor &tc2_)
       : t(t_), tc1(tc1_), tc2(tc2_) {}
   };
 
+  // Performs Amij Bnjk -> Cmnik
   struct ga_instruction_matrix_mult_spec : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: specific matrix multiplication");
+      GA_DEBUG_INFO("Instruction: specific matrix multiplication");
       size_type s1_1 = tc1.sizes()[0];
       size_type s1_2 = tc1.sizes()[1];
       // size_type s1_3 = tc1.sizes()[2];
@@ -1978,14 +2064,15 @@ namespace getfem {
       size_type s2_3 = tc2.sizes()[2];
 
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s1_1; ++m)
-        for (size_type n = 0; n < s2_1; ++n)
-          for (size_type i = 0; i < s1_2; ++i)
-            for (size_type k = 0; k < s2_3; ++k, ++it) {
+      for (size_type k = 0; k < s2_3; ++k)
+        for (size_type i = 0; i < s1_2; ++i)
+          for (size_type n = 0; n < s2_1; ++n)
+            for (size_type m = 0; m < s1_1; ++m, ++it) {
               *it = scalar_type(0);
               for (size_type j = 0; j < s2_2; ++j)
                 *it += tc1[m+i*s1_1+j*s1_1*s1_2] * tc2[n+j*s2_1+k*s2_1*s2_2];
             }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
     }
     ga_instruction_matrix_mult_spec(base_tensor &t_, base_tensor &tc1_,
                                base_tensor &tc2_)
@@ -1993,13 +2080,31 @@ namespace getfem {
   };
 
 
+  // Performs Ani Bmi -> Cmn for i index of size 2  Unroll loop test.
+  struct ga_instruction_reduction_2 : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: reduction operation of size 2 optimized ");
+      size_type s1 = tc1.size()/2, s2 = tc2.size()/2;
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
+      
+      base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
+      for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
+        *it = (*it1)*(*it2) + it1[s1] * it2[s2];  
+        ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
+      }
+    }
+    ga_instruction_reduction_2(base_tensor &t_, base_tensor &tc1_,
+                               base_tensor &tc2_)
+      : t(t_), tc1(tc1_), tc2(tc2_) {}
+  };
 
   // Performs Ani Bmi -> Cmn
   struct ga_instruction_reduction : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: reduction operation of size " << nn);
+      GA_DEBUG_INFO("Instruction: reduction operation of size " << nn);
       #ifdef GA_USES_BLAS
       int m = int(tc1.size()/nn), k = int(nn), n = int(tc2.size()/nn);
       int lda = m, ldb = n, ldc = m;
@@ -2009,7 +2114,7 @@ namespace getfem {
                   &beta, &(t[0]), &ldc);
       #else
       size_type s1 = tc1.size()/nn, s2 = tc2.size()/nn;
-      GMM_ASSERT1(t.size() == s1*s2, "internal error");
+      GA_DEBUG_ASSERT(t.size() == s1*s2, "Internal error");
       
       base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
@@ -2027,23 +2132,25 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
+  // Performs Amij Bnj -> Cmni
   struct ga_instruction_spec_reduction : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: specific reduction operation of size "
+      GA_DEBUG_INFO("Instruction: specific reduction operation of size "
                            << nn);
       size_type s1 = tc1.sizes()[0], s11 = tc1.size() / (s1*nn), s111 = s1*s11;
       size_type s2 = tc2.sizes()[0];
       
       base_tensor::iterator it = t.begin();
-      for (size_type l = 0; l < s1; ++l)
-        for (size_type k = 0; k < s2; ++k)
-          for (size_type i = 0; i < s11; ++i, ++it) {
+      for (size_type i = 0; i < s11; ++i)
+        for (size_type n = 0; n < s2; ++n)
+          for (size_type m = 0; m < s1; ++m, ++it) {
             *it = scalar_type(0);
             for (size_type j = 0; j < nn; ++j)
-              *it += tc1[l+i*s1+j*s111] * tc2[k+j*s2];
+              *it += tc1[m+i*s1+j*s111] * tc2[n+j*s2];
           }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
     }
     ga_instruction_spec_reduction(base_tensor &t_, base_tensor &tc1_,
                              base_tensor &tc2_, size_type n_)
@@ -2054,8 +2161,9 @@ namespace getfem {
   struct ga_instruction_simple_tmult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: simple tensor product");
+      GA_DEBUG_INFO("Instruction: simple tensor product");
       size_type s1 = tc1.size();
+      GA_DEBUG_ASSERT(t.size() == s1 * tc2.size(), "Wrong sizes");
       base_tensor::iterator it2=tc2.begin(), it1=tc1.begin(), it1end=it1 + s1;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
         *it = *(it2) * (*it1);  
@@ -2072,16 +2180,18 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     size_type s1_2, s2_2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: specific tensor product");
+      GA_DEBUG_INFO("Instruction: specific tensor product");
+      GA_DEBUG_ASSERT(t.size() == tc1.size() * tc2.size(), "Wrong sizes");
       size_type s1_1 = tc1.size() / s1_2;
       size_type s2_1 = tc2.size() / s2_2;
 
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s1_1; ++m)
-        for (size_type n = 0; n < s2_1; ++n)
-          for (size_type i = 0; i < s1_2; ++i)
-            for (size_type j = 0; j < s2_2; ++j, ++it)
+      for (size_type j = 0; j < s2_2; ++j)
+        for (size_type i = 0; i < s1_2; ++i)
+          for (size_type n = 0; n < s2_1; ++n)
+            for (size_type m = 0; m < s1_1; ++m, ++it)
               *it = tc1[m+i*s1_1] * tc2[n+j*s2_1];
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
     }
     ga_instruction_spec_tmult(base_tensor &t_, base_tensor &tc1_,
                               base_tensor &tc2_, size_type s1_2_,
@@ -2093,15 +2203,17 @@ namespace getfem {
   struct ga_instruction_spec2_tmult : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: specific tensor product");
+      GA_DEBUG_INFO("Instruction: second specific tensor product");
+      GA_DEBUG_ASSERT(t.size() == tc1.size() * tc2.size(), "Wrong sizes");
       size_type s1 = tc1.size();
       size_type s2_1 = tc2.sizes()[0], s2_2 = tc2.size() / s2_1;
 
       base_tensor::iterator it = t.begin();
-      for (size_type m = 0; m < s2_1; ++m)
+      for (size_type j = 0; j < s2_2; ++j)
         for (size_type i = 0; i < s1; ++i)
-          for (size_type j = 0; j < s2_2; ++j, ++it)
+          for (size_type m = 0; m < s2_1; ++m, ++it)
             *it = tc1[i] * tc2[m+j*s2_1];
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
     }
     ga_instruction_spec2_tmult(base_tensor &t_, base_tensor &tc1_,
                               base_tensor &tc2_)
@@ -2114,8 +2226,9 @@ namespace getfem {
     base_tensor &t;
     std::vector<scalar_type *> components;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: gathering components for explicit "
+      GA_DEBUG_INFO("Instruction: gathering components for explicit "
                            "matrix");
+      GA_DEBUG_ASSERT(t.size() == components.size(), "Wrong sizes");
       for (size_type i = 0; i < components.size(); ++i)
         t[i] = *(components[i]);
     }
@@ -2128,13 +2241,15 @@ namespace getfem {
     base_tensor &t;
     std::vector<base_tensor *> components;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: gathering components for explicit "
+      GA_DEBUG_INFO("Instruction: gathering components for explicit "
                            "matrix with tests functions");
       size_type s = t.size() / components.size();
+      GA_DEBUG_ASSERT(s, "Wrong sizes");
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < components.size(); ++i) {
         base_tensor &t1 = *(components[i]);
         if (t1.size() > 1) {
+          GA_DEBUG_ASSERT(t1.size() == s, "Wrong sizes");
           for (size_type j = 0; j < s; ++j) *it++ = t1[j];
         } else {
           for (size_type j = 0; j < s; ++j) *it++ = t1[0];
@@ -2151,7 +2266,7 @@ namespace getfem {
     const scalar_type &c;
     pscalar_func_onearg f1;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: evaluation of a one argument "
+      GA_DEBUG_INFO("Instruction: evaluation of a one argument "
                            "predefined function on a scalar");
       t = (*f1)(c);
     }
@@ -2164,8 +2279,9 @@ namespace getfem {
     base_tensor &t, &tc1;
     pscalar_func_onearg f1;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: evaluation of a one argument "
+      GA_DEBUG_INFO("Instruction: evaluation of a one argument "
                            "predefined function on tensor");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
       for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f1)(tc1[i]);
     }
    ga_instruction_eval_func_1arg(base_tensor &t_, base_tensor &c_,
@@ -2178,7 +2294,7 @@ namespace getfem {
     const scalar_type &c, &d;
     pscalar_func_twoargs f2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: evaluation of a two arguments "
+      GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                            "predefined function on two scalar");
       t = (*f2)(c, d);
     }
@@ -2192,8 +2308,9 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     pscalar_func_twoargs f2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: evaluation of a two arguments "
+      GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                            "predefined function on one scalar and one tensor");
+      GA_DEBUG_ASSERT(t.size() == tc2.size(), "Wrong sizes");
       for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f2)(tc1[0], tc2[i]);
     }
    ga_instruction_eval_func_2arg_first_scalar(base_tensor &t_, base_tensor &c_,
@@ -2206,8 +2323,9 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     pscalar_func_twoargs f2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: evaluation of a two arguments "
+      GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                            "predefined function on one tensor and one scalar");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
       for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f2)(tc1[i], tc2[0]);
     }
    ga_instruction_eval_func_2arg_second_scalar(base_tensor &t_,
@@ -2221,8 +2339,11 @@ namespace getfem {
     base_tensor &t, &tc1, &tc2;
     pscalar_func_twoargs f2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: evaluation of a two arguments "
+      GA_DEBUG_INFO("Instruction: evaluation of a two arguments "
                            "predefined function on two tensors");
+      GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
+                      "Wrong sizes");
+
       for (size_type i = 0; i < t.size(); ++i)  t[i] = (*f2)(tc1[i], tc2[i]);
     }
    ga_instruction_eval_func_2arg(base_tensor &t_,
@@ -2237,7 +2358,7 @@ namespace getfem {
     const ga_nonlinear_operator &OP;
     ga_nonlinear_operator::arg_list args;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: operator evaluation");
+      GA_DEBUG_INFO("Instruction: operator evaluation");
       OP.value(args, t);
     }
     ga_instruction_eval_OP(base_tensor &t_, const ga_nonlinear_operator &OP_,
@@ -2251,7 +2372,7 @@ namespace getfem {
     ga_nonlinear_operator::arg_list args;
     size_type der1;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: operator derivative evaluation");
+      GA_DEBUG_INFO("Instruction: operator derivative evaluation");
       OP.derivative(args, der1, t);
     }
     ga_instruction_eval_derivative_OP(base_tensor &t_,
@@ -2267,7 +2388,7 @@ namespace getfem {
     ga_nonlinear_operator::arg_list args;
     size_type der1, der2;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: operator second derivative "
+      GA_DEBUG_INFO("Instruction: operator second derivative "
                            "evaluation");
       OP.second_derivative(args, der1, der2, t);
     }
@@ -2277,23 +2398,11 @@ namespace getfem {
       : t(t_), OP(OP_), args(args_), der1(der1_), der2(der2_) {}
   };
 
-  struct ga_instruction_tensor_component : public ga_instruction {
-    base_tensor &t, &tc1;
-    bgeot::multi_index mi;
-    virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: tensor component evaluation");
-      t[0] = tc1(mi);
-    }
-    ga_instruction_tensor_component(base_tensor &t_, base_tensor &tc1_,
-                                    bgeot::multi_index &mi_)
-      : t(t_), tc1(tc1_), mi(mi_) {}
-  };
-
   struct ga_instruction_tensor_slice : public ga_instruction {
     base_tensor &t, &tc1;
     bgeot::multi_index mi, indices;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: tensor slice");
+      GA_DEBUG_INFO("Instruction: tensor slice");
       size_type order = t.sizes().size();
       for (bgeot::multi_index mi3(order); !mi3.finished(t.sizes());
            mi3.incrementation(t.sizes())) {
@@ -2314,7 +2423,7 @@ namespace getfem {
     base_tensor &t;
     scalar_type &E, &coeff;
      virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: scalar term assembly\n");
+      GA_DEBUG_INFO("Instruction: scalar term assembly\n");
       E += t[0] * coeff;
      }
     ga_instruction_scalar_assembly(base_tensor &t_, scalar_type &E_,
@@ -2330,7 +2439,7 @@ namespace getfem {
     const mesh_fem &mf;
     scalar_type &coeff;
      virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: vector term assembly\n");
+      GA_DEBUG_INFO("Instruction: vector term assembly\n");
       mesh_fem::ind_dof_ct ct = mf.ind_basic_dof_of_element(ctx.convex_num());
       for (size_type i = 0; i < ct.size(); ++i)
         V[I.first()+ct[i]] += t[i] * coeff;
@@ -2355,7 +2464,7 @@ namespace getfem {
     size_type &nbpt, &ipt;
     base_vector &elem;
     virtual void exec(void) {
-      GA_DEBUG_INSTRUCTION("Instruction: matrix term assembly\n");
+      GA_DEBUG_INFO("Instruction: matrix term assembly\n");
       if (nbpt == 1) {
         mesh_fem::ind_dof_ct ct1
           = mf1.ind_basic_dof_of_element(ctx.convex_num());
@@ -2412,7 +2521,7 @@ namespace getfem {
 //     size_type &nbpt, &ipt;
 //     base_vector &elem;
 //     virtual void exec(void) {
-//       GA_DEBUG_INSTRUCTION("Instruction: (transposed) matrix term assembly ");
+//       GA_DEBUG_INFO("Instruction: (transposed) matrix term assembly ");
 //       if (nbpt == 1) {
 //         mesh_fem::ind_dof_ct ct1
 //           = mf1.ind_basic_dof_of_element(ctx.convex_num());
@@ -2471,6 +2580,8 @@ namespace getfem {
 
     papprox_integration pai;       // Current approximation method
     fem_interpolation_context ctx; // Current fem interpolation context.
+    base_small_vector Normal;      // Outward unit normal vector to the
+                                   // boundary in case of boundary integration
     scalar_type coeff;             // Coefficient for the Gauss point
     size_type nbpt, ipt;           // Number and index of Gauss point
     bgeot::geotrans_precomp_pool gp_pool;
@@ -2520,7 +2631,7 @@ namespace getfem {
   class ga_instruction_set;
 
   static void ga_semantic_analysis(const std::string &, ga_tree &,
-                                   const ga_workspace &, bool);
+                                   const ga_workspace &, size_type, bool);
   static void ga_split_tree(const std::string &, ga_tree &,
                             ga_workspace &, pga_tree_node);
   static void ga_derivation(ga_tree &, const ga_workspace &,
@@ -2548,9 +2659,9 @@ namespace getfem {
                               size_type region, const std::string expr) {
     if (tree.root) {
       
-      cout << "adding tree: "; ga_print_tree(tree);
-      cout << "With tests functions of " <<  tree.root->name_test1
-           << " and " << tree.root->name_test2 << endl;
+      // cout << "adding tree: "; ga_print_tree(tree);
+      // cout << "With tests functions of " <<  tree.root->name_test1
+      //     << " and " << tree.root->name_test2 << endl;
       bool remain = true;
       size_type order = 0, ind_tree = 0;
       switch(tree.root->test_function_type) {
@@ -2577,7 +2688,8 @@ namespace getfem {
           ftree.root->op_type = GA_PLUS;
           ftree.add_children(ftree.root);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
-          ga_semantic_analysis("", ftree, *this, false);
+          ga_semantic_analysis("", ftree, *this, mim.linked_mesh().dim(),
+                               false);
           found = true;
           break;
         }
@@ -2604,12 +2716,13 @@ namespace getfem {
              it != expr_variables.end(); ++it) {
           if (!(is_constant(*it))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
-            cout << (order == 0 ? "First " : "Second ");
-            cout << "derivative of tree: "; ga_print_tree(dtree);
-            cout << "with respect to " << *it << endl;
+            // cout << (order == 0 ? "First " : "Second ");
+            // cout << "derivative of tree: "; ga_print_tree(dtree);
+            // cout << "with respect to " << *it << endl;
             ga_derivation(dtree, *this, *it, 1+order);
-            cout << "result: "; ga_print_tree(dtree);
-            ga_semantic_analysis(expr, dtree, *this, false);
+            // cout << "result: "; ga_print_tree(dtree);
+            ga_semantic_analysis(expr, dtree, *this, mim.linked_mesh().dim(),
+                                 false);
             add_tree(dtree, mim, region, expr);
           }
         }
@@ -2628,7 +2741,7 @@ namespace getfem {
                                     const mesh_im &mim, size_type region) {
     ga_tree tree;
     ga_read_string(expr, tree);
-    ga_semantic_analysis(expr, tree, *this, false);
+    ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(), false);
     if (tree.root) {
       ga_split_tree(expr, tree, *this, tree.root);
       
@@ -2775,6 +2888,7 @@ namespace getfem {
     case GA_NODE_CONSTANT: case GA_NODE_ZERO:
       c += ga_hash_code(pnode->t); break;
       
+    case GA_NODE_X: c += scalar_type(pnode->nbc1) + M_E*M_PI;
     case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
     case GA_NODE_TEST:
     case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
@@ -2801,14 +2915,15 @@ namespace getfem {
 
   static void ga_node_analysis(const std::string &expr, ga_tree &tree,
                                const ga_workspace &workspace,
-                               pga_tree_node pnode, bool eval_fixed_size) {
+                               pga_tree_node pnode, size_type meshdim,
+                               bool eval_fixed_size) {
     
-    bool all_cte = true, all_sc = true; // all_primal = true;
+    bool all_cte = true, all_sc = true;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
-      ga_node_analysis(expr, tree, workspace, pnode->children[i],
+      ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
                        eval_fixed_size);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
-      all_sc = all_sc && pnode->children[i]->t.size() == 1;
+      all_sc = all_sc && pnode->children[i]->tensor_proper_size() == 1;
       GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
                   "internal error on child " << i);
       if (pnode->node_type != GA_NODE_PARAMS)
@@ -2834,7 +2949,7 @@ namespace getfem {
 
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
-    case GA_NODE_CONSTANT:
+    case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_NORMAL:
       pnode->test_function_type = 0; break;
 
     case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
@@ -3218,12 +3333,13 @@ namespace getfem {
                 ga_throw_error(expr, pnode->pos, "Unauthorized "
                                 "tensor multiplication.");
               for (size_type i = 0; i < dim0; ++i)
-                mi.push_back(child0->t.size(i));
+                mi.push_back(child0->tensor_proper_size(i));
               for (size_type i = 0; i < dim1; ++i)
-                mi.push_back(child1->t.size(i));
+                mi.push_back(child1->tensor_proper_size(i));
             }
             pnode->t.adjust_sizes(mi);
           }
+          // cout << "mi = " << mi << endl;
           if (child0->tensor_is_zero() || child1->tensor_is_zero()) {
             gmm::clear(pnode->t.as_vector());
             pnode->node_type = GA_NODE_ZERO;
@@ -3386,12 +3502,10 @@ namespace getfem {
 
     case GA_NODE_C_MATRIX:
       {
-        if (!all_sc) 
+        if (!all_sc) {
           ga_throw_error(expr, pnode->pos, "Constant vector/matrix/tensor "
-                          "components should be scalar valued.");
-//         if (!all_primal)
-//           ga_throw_error(expr, pnode->pos, "Test functions are not allowed "
-//                           "in constant vector/matrix/tensor components.");
+                         "components should be scalar valued.");
+        }
         
         size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
         size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
@@ -3418,8 +3532,8 @@ namespace getfem {
           }
         }
         mi.resize(0);
-        if (pnode->test_function_type) mi.push_back(1);
-        if (pnode->test_function_type >= 3) mi.push_back(1);
+        if (pnode->test_function_type) mi.push_back(2);
+        if (pnode->test_function_type >= 3) mi.push_back(2);
         if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1 && nbl == 1) {
           pnode->t.adjust_sizes(mi);
           if (all_cte) pnode->t[0] = child0->t[0];
@@ -3456,6 +3570,18 @@ namespace getfem {
     case GA_NODE_NAME:
       {
         std::string name = pnode->name;
+
+        if (!(name.compare("x"))) {
+          pnode->node_type = GA_NODE_X;
+          pnode->nbc1 = 0;
+          pnode->init_vector_tensor(meshdim);
+          break;
+        }
+        if (!(name.compare("Normal"))) {
+          pnode->node_type = GA_NODE_NORMAL;
+          pnode->init_vector_tensor(meshdim);
+          break;
+        }
 
         if (name.compare(0, 11, "Derivative_") == 0) {
           name = name.substr(11);
@@ -3511,6 +3637,9 @@ namespace getfem {
           if (!name.compare("pi")) {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->init_scalar_tensor(M_PI);
+          } else if (!name.compare("meshdim")) {
+            pnode->node_type = GA_NODE_CONSTANT;
+            pnode->init_scalar_tensor(scalar_type(meshdim));
           }
         } else if (PREDEF_OPERATORS.find(name) != PREDEF_OPERATORS.end()
                    || workspace.user_operator_exists(name)) {
@@ -3662,9 +3791,22 @@ namespace getfem {
 
     case GA_NODE_PARAMS:
 
-      if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+      if (child0->node_type == GA_NODE_X) {
+        child0->init_scalar_tensor(0);
+        if (pnode->children.size() != 2)
+          ga_throw_error(expr, child1->pos, "x stands for the coordinates on "
+                         "the real elements. It accepts only one index.");
+        if (!(child1->node_type == GA_NODE_CONSTANT) || child1->t.size() != 1)
+          ga_throw_error(expr, child1->pos, "Index for x has to be constant "
+                         "and of size 1.");
+        child0->nbc1 = size_type(round(child1->t[0]));
+        if (child0->nbc1 == 0 || child0->nbc1 > meshdim)
+          ga_throw_error(expr, child1->pos, "Index for x not convenient.");
+        tree.replace_node_by_child(pnode, 0);
+
+      } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
         
-        // Évaluation of predefined function
+        // Évaluation of a predefined function
         
         for (size_type i = 1; i < pnode->children.size(); ++i)
           ga_valid_operand(expr, pnode->children[i]);
@@ -3742,15 +3884,7 @@ namespace getfem {
                          "One and only one argument is allowed for function "
                          +child0->name+".");
 
-        if (!(child0->name.compare("meshdim"))) {
-          bool valid = (child1->node_type == GA_NODE_VAL);
-          const mesh_fem *mf = valid ? workspace.associated_mf(child1->name):0;
-          if (!mf)
-            ga_throw_error(expr, pnode->pos, "The argument of meshdim "
-                           "function can only be a fem variable name.");
-          pnode->node_type = GA_NODE_CONSTANT;
-          pnode->init_scalar_tensor(scalar_type(mf->linked_mesh().dim()));
-        } else if (!(child0->name.compare("qdim"))) {
+        if (!(child0->name.compare("qdim"))) {
           if (child1->node_type != GA_NODE_VAL)
             ga_throw_error(expr, pnode->pos, "The argument of qdim "
                            "function can only be a variable name.");
@@ -3868,7 +4002,9 @@ namespace getfem {
                               "Index out of range.");
           }
         }
-        mi = size0; mi.resize(child0->nb_test_functions());
+        mi.resize(0);
+        for (size_type i = 0; i < child0->nb_test_functions(); ++i)
+          mi.push_back(2);
         for (size_type i = 0; i < mi2.size(); ++i) mi.push_back(mi2[i]);
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
@@ -3909,10 +4045,11 @@ namespace getfem {
 
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
                                    const ga_workspace &workspace,
-                                   bool eval_fixed_size) {
+                                   size_type meshdim, bool eval_fixed_size) {
     GMM_ASSERT1(predef_functions_initialized, "Internal error");
     if (!(tree.root)) return;
-    ga_node_analysis(expr, tree, workspace, tree.root, eval_fixed_size);
+    ga_node_analysis(expr, tree, workspace, tree.root, meshdim,
+                     eval_fixed_size);
     ga_valid_operand(expr, tree.root);
   }
 
@@ -4311,6 +4448,28 @@ namespace getfem {
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_ZERO:
       break;
 
+    case GA_NODE_X:
+      if (pnode->nbc1) {
+        GA_DEBUG_ASSERT(pnode->t.size() == 1, "dimensions mismatch");
+        GMM_ASSERT1(pnode->nbc1 <= mim->linked_mesh().dim(),
+                    "Bad index for x in expression");
+        pgai = new ga_instruction_x_component
+            (pnode->t[0], gis.ctx, pnode->nbc1-1);
+      } else {
+        if (pnode->t.size() != mim->linked_mesh().dim())
+          pnode->init_vector_tensor(mim->linked_mesh().dim());
+        pgai = new ga_instruction_x(pnode->t, gis.ctx);
+      }
+      rmi.instructions.push_back(pgai);
+      break;
+
+    case GA_NODE_NORMAL:
+      if (pnode->t.size() != mim->linked_mesh().dim())
+        pnode->init_vector_tensor(mim->linked_mesh().dim());
+      pgai = new ga_instruction_Normal(pnode->t, gis.Normal);
+      rmi.instructions.push_back(pgai);
+      break;
+
     case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
@@ -4443,29 +4602,40 @@ namespace getfem {
        switch(pnode->op_type) {
 
        case GA_PLUS:
-         if (pnode->t.size() == 1)
+         if (pnode->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0 && 
+                           child0->t.size() == 1 && child1->t.size() == 1,
+                           "Internal error");
            pgai = new ga_instruction_scalar_add
              (pnode->t[0], child0->t[0], child1->t[0]);
-         else
+         } else {
            pgai = new ga_instruction_add(pnode->t, child0->t, child1->t);
+         }
          rmi.instructions.push_back(pgai);
          break;
 
        case GA_MINUS:
-         if (pnode->t.size() == 1)
+         if (pnode->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0 &&
+                           child0->t.size() == 1 && child1->t.size() == 1,
+                           "Internal error");
            pgai = new ga_instruction_scalar_sub
              (pnode->t[0], child0->t[0], child1->t[0]);
-         else
+         } else {
            pgai = new ga_instruction_sub(pnode->t, child0->t, child1->t);
+         }
          rmi.instructions.push_back(pgai);
          break;
 
        case GA_UNARY_MINUS:
-         if (pnode->t.size() == 1)
+         if (pnode->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0 &&
+                           child0->t.size() == 1, "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], minus);
-         else
+         } else {
            pgai = new ga_instruction_scalar_mult(pnode->t, child0->t, minus);
+         }
          rmi.instructions.push_back(pgai);
          break;
 
@@ -4480,10 +4650,12 @@ namespace getfem {
                (pnode->op_type == GA_MULT && dim0 == 4) ||
                child0->t.size() == 1 || child1->t.size() == 1) {
 
-             if (child0->t.size() == 1 && child1->t.size() == 1)
+             if (child0->t.size() == 1 && child1->t.size() == 1) {
+               GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                               "Internal error");
                pgai = new ga_instruction_scalar_scalar_mult
                  (pnode->t[0], child0->t[0], child1->t[0]);
-             else if (child0->t.size() == 1)
+             } else if (child0->t.size() == 1)
                pgai = new ga_instruction_scalar_mult
                  (pnode->t, child1->t, child0->t[0]);
              else if (child1->t.size() == 1)
@@ -4493,21 +4665,34 @@ namespace getfem {
                if (child0->tensor_proper_size() == 1)
                  pgai = new ga_instruction_simple_tmult
                    (pnode->t, child1->t, child0->t);
-               else
-                 pgai = new ga_instruction_reduction
-                   (pnode->t, child0->t, child1->t, s2);
+               else {
+                 if (s2 == 2) // Unroll loop test ... to be extended 
+                   pgai = new ga_instruction_reduction_2
+                     (pnode->t, child0->t, child1->t);
+                 else
+                   pgai = new ga_instruction_reduction
+                     (pnode->t, child0->t, child1->t, s2);
+               }
              } else {
                if (child1->test_function_type == 1 ||
-                   child1->test_function_type == 3)
-                 pgai = new ga_instruction_reduction
-                   (pnode->t, child0->t, child1->t, s2);
-               else if (child1->test_function_type == 0 ||
-                        child0->tensor_proper_size()
-                        == child1->tensor_proper_size())
-                 pgai = new ga_instruction_reduction
+                   child1->test_function_type == 3) {
+                 if (s2 == 2) // Unroll loop test ... to be extended 
+                   pgai = new ga_instruction_reduction_2
+                     (pnode->t, child0->t, child1->t);
+                 else
+                   pgai = new ga_instruction_reduction
+                     (pnode->t, child0->t, child1->t, s2);
+               } else if (child1->test_function_type == 0 ||
+                          child0->tensor_proper_size()
+                          == child1->tensor_proper_size()) {
+                 if (s2 == 2) // Unroll loop test ... to be extended 
+                   pgai = new ga_instruction_reduction_2
+                     (pnode->t, child1->t, child0->t);
+                 else
+                   pgai = new ga_instruction_reduction
+                     (pnode->t, child1->t, child0->t, s2);
+               } else pgai = new ga_instruction_spec_reduction
                    (pnode->t, child1->t, child0->t, s2);
-               else pgai = new ga_instruction_spec_reduction
-                 (pnode->t, child1->t, child0->t, s2);
              }
 
 
@@ -4564,6 +4749,8 @@ namespace getfem {
 
        case GA_DIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                           "Internal error");
            pgai = new ga_instruction_scalar_scalar_div
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
@@ -4583,8 +4770,11 @@ namespace getfem {
          break;
 
        case GA_TRACE:
-         pgai = new ga_instruction_trace(pnode->t, child0->t, size0.back());
-         rmi.instructions.push_back(pgai);
+         {
+           size_type N = (child0->tensor_proper_size() == 1) ? 1:size0.back();
+           pgai = new ga_instruction_trace(pnode->t, child0->t, N);
+           rmi.instructions.push_back(pgai);
+         }
          break;
 
        case GA_QUOTE:
@@ -4599,10 +4789,12 @@ namespace getfem {
 
        case GA_DOTMULT:
          
-         if (child0->t.size() == 1 && child1->t.size() == 1)
+         if (child0->t.size() == 1 && child1->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                           "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], child1->t[0]);
-         else if (child0->t.size() == 1)
+         } else if (child0->t.size() == 1)
            pgai = new ga_instruction_scalar_mult
              (pnode->t, child1->t, child0->t[0]);
          else if (child1->t.size() == 1)
@@ -4627,6 +4819,8 @@ namespace getfem {
 
        case GA_DOTDIV:
          if (child0->t.size() == 1 && child1->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                           "Internal error");
            pgai = new ga_instruction_scalar_scalar_div
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else if (child1->t.size() == 1) {
@@ -4641,10 +4835,12 @@ namespace getfem {
 
          
        case GA_TMULT:
-         if (child0->t.size() == 1 && child1->t.size() == 1)
+         if (child0->t.size() == 1 && child1->t.size() == 1) {
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                           "Internal error");
            pgai = new ga_instruction_scalar_scalar_mult
              (pnode->t[0], child0->t[0], child1->t[0]);
-         else if (child0->t.size() == 1)
+         } else if (child0->t.size() == 1)
            pgai = new ga_instruction_scalar_mult
              (pnode->t, child1->t, child0->t[0]);
          else if (child1->t.size() == 1)
@@ -4747,7 +4943,7 @@ namespace getfem {
         if (pnode->t.size() == 1) {
           for (size_type i = 0; i < child0->tensor_order(); ++i)
             mi1[i] = size_type(round(pnode->children[i+1]->t[0])-1);
-          pgai = new ga_instruction_tensor_component(pnode->t, child0->t, mi1);
+          pgai = new ga_instruction_copy_scalar(pnode->t[0], child0->t(mi1));
         } else {
           size_type nb_test = pnode->nb_test_functions();
           for (size_type i = 0; i < nb_test; ++i) indices.push_back(i);
@@ -4779,10 +4975,11 @@ namespace getfem {
         gis.trees.push_back(*(td.ptree));
         
         // Semantic analysis mainly to evaluate fixed size variables and data
-        ga_semantic_analysis("", gis.trees.back(), workspace, true);
+        ga_semantic_analysis("", gis.trees.back(), workspace,
+                             td.mim->linked_mesh().dim(), true);
         pga_tree_node root = gis.trees.back().root;
         if (root) {
-          cout << "compiling tree: "; ga_print_tree(gis.trees.back());
+          // cout << "compiling tree: "; ga_print_tree(gis.trees.back());
           // Compiling tree
           ga_instruction_set::region_mim rm(td.mim, td.region);
           ga_compile_node(root, workspace, gis,
@@ -4898,7 +5095,8 @@ namespace getfem {
               scalar_type nup = gmm::vect_norm2(up);
               J *= nup;
               gmm::scale(up,1.0/nup); // A stocker up sera utile plus tard ...
-            }
+              gis.Normal = up;
+            } else gis.Normal.resize(0);
 
             // iterations on Gauss points
             gis.nbpt = gis.pai->nb_points_on_convex();

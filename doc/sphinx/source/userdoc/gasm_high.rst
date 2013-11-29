@@ -30,7 +30,7 @@ A specific language has been developped to describe the weak formulation of boun
 
   - A certain number of predefined scalar functions (sin(t), cos(t), pow(t,u), sqrt(t), sqr(t), Heaviside(t) to be described ...). A scalar function can be appile to scalar or vector/matrix/tensor expression. It applies componentwise. For functions having two arguments (pow(t,u), min(t,u) ...) if two non-scalar arguments are passed, the dimension have to be the same. For instance "max([1;2],[0;3])" will return "[0;3]".
 
-  - The constant pi and some special functions: meshdim(u) (for u a fem variable, the dimension of the corresponding mesh), qdim(u) (for u a mesh variable, the dimension of the vector field corresponding to the variable, 1 for a scalar field), Id(n) (indentity nxn matrix).
+  - The constant pi and meshdim and some special functions: qdim(u) (for u a mesh variable, the dimension of the vector field corresponding to the variable, 1 for a scalar field), Id(n) (indentity nxn matrix).
 
   - Variable names: A list of variables should be given. The variables are described on a finite element method or can be a simple vector of unknows. For instance "u", "v", "p", "pressure", "electric_field" are valid variable names. A variable name should begin by a letter (case sensitive) or un underscore followed by a letter, a number or an undescore. The name should not begin by "Test\_", "Grad\_" or "Hess\_". The variable name should not correspond to a predefined function (sin, cos, acos ...). In case of conflict, the name is understand as a function name.
 
@@ -42,7 +42,7 @@ A specific language has been developped to describe the weak formulation of boun
 
   - Constant names: A list of constants could be given. The rule are the same as for the variables but no test function can be associated to constants.
 
-  - Constant expressions: numbers, C_PI, mesh_dim,  ...
+  - Constant expressions: numbers, pi, meshdim  ...
 
   - A certain number of operators: "+", "-", "*", "/", ":", ".", ".*", "./", "@", "'".
     
@@ -72,7 +72,9 @@ A specific language has been developped to describe the weak formulation of boun
 
   - Constant fourth order tensors. It is also possible to give a constant fourth order tensor with a syntax close to the one for the matrices. Additionnal separators for the two supplementary dimensions are ',,' and ';;'. For instance "[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]" is a 2x2x2x2 valid tensor. Note that constant fourth order tensors can also be obtained by the tensorial product of two constant matrices. Note also that constant third order tensors are not supported.
 
+  - x is the current coordinate on the real element, x(i) is the ith component.
 
+  - Normal the outward unit normal vector to a boundary when integration on a boundary.
 
   - The access to a component of a vector/matrix/tensor can be done by following a term by a left parenthesis, the list of components and a right parenthesis. For instance "[1,1,2](3)" is correct and will return "2". Note that indices are assumed to begin by 1 for the compatibility with matlab (even in C++ and with the python interface). The expressions "[1,1;2,3](2,2)" and "Grad_u(2,2)" are also correct provided that "u" is a vector valued declared variable. Note that the components can be the result of a constant computation. For instance "[1,1;2,3](1+1,a)" is correct provided that "a" is a declared constant but not if it is declared as a variable. A colon can replace the value of an index in a matlab like syntax for instance to access to a line or a column of a matrix. "[1,1;2,3](1,:)" denotes the first line of the matrix "[1,1;2,3]". It can also be used for a fourth order tensor.
 
@@ -80,7 +82,7 @@ A specific language has been developped to describe the weak formulation of boun
 
   - Print command : for debugging, print the tensor and pass it unchanged. "Grad_u.Print(Grad_Test_u)" will have the same effect as "Grad_u.Grad_Test_u" but printing the tensor "Grad_Test_u" for each Gauss point of each element. Note that constant terms are printed only once at the begining of the assembly. Note also that the expression could be derived so that the derivative of the term may be printed instead of the term itself.
 
-  - A certain number of predefined nonlinear operator (tr, norm, Idmat, det, target_dim(u) ...). Cannot be applied to test functions.
+  - A certain number of predefined nonlinear operator (tr, Norm, Idmat, det, target_dim(u) ...). Cannot be applied to test functions.
 
 
 Classical examples ("u" the variable name, "a" a coefficient):
@@ -89,7 +91,7 @@ Classical examples ("u" the variable name, "a" a coefficient):
   - Simple componentwize Laplace operator for a vector field "Grad_u:Grad_Test_u"
   - Laplace operator with a scalar coefficient for a scalar field "a*Grad_u.Grad_Test_u"
   - Laplace operator with a matrix coefficient for a vector field "(a*Grad_u).Grad_Test_u" or "([2,1;1,4]*Grad_u).Grad_Test_u" for a constant coefficient in 2D.
-  - Linear isotropic elasticity "(lambda*Trace(Grad_u)*Id(mesh_dim(u)) + mu*(Grad_u+Grad_u')):Grad_Test_u" ou "lambda*Trace(Grad_u)*Trace(Grad_Test_u) + mu*(Grad_u + Grad_u'):Grad_Test_u"
+  - Linear isotropic elasticity "(lambda*Trace(Grad_u)*Id(qdim(u)) + mu*(Grad_u+Grad_u')):Grad_Test_u" ou "lambda*Trace(Grad_u)*Trace(Grad_Test_u) + mu*(Grad_u + Grad_u'):Grad_Test_u"
   
 
 The assembly string is transformed in an assembly tree by a set of function in :file:`src/getfem_generic_assembly.cc`. The process has 4 steps:
