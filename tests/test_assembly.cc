@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2007-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2007-2013 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -808,10 +808,10 @@ void testbug() {
   GMM_ASSERT1(error < 1E-10,                                            \
               "Error in high or low level generic assembly");
 
-#define VEC_TEST_1(title, ndof, expr, mim_, I_, old_asm)                \
+#define VEC_TEST_1(title, ndof, expr, mim_, region, I_, old_asm)        \
   cout << "\n" << title << endl;                                        \
   workspace.clear_expressions();                                        \
-  workspace.add_expression(expr, mim_);                                 \
+  workspace.add_expression(expr, mim_, region);                         \
   ch.init(); ch.tic(); workspace.assembly(1); ch.toc();                 \
   cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
   getfem::base_vector V(ndof), V2(ndof);                                \
@@ -825,9 +825,9 @@ void testbug() {
   GMM_ASSERT1(norm_error < 1E-10,                                       \
               "Error in high or low level generic assembly");
 
-#define VEC_TEST_2(ndof, expr, mim_, I_)                                \
+#define VEC_TEST_2(ndof, expr, mim_, region, I_)                        \
   workspace.clear_expressions();                                        \
-  workspace.add_expression(expr, mim_);                                 \
+  workspace.add_expression(expr, mim_, region);                         \
   ch.init(); ch.tic(); workspace.assembly(1); ch.toc();                 \
   cout << "Elapsed time for new assembly, alternative expression "      \
           << ch.elapsed() << endl;                                      \
@@ -880,10 +880,7 @@ static void test_new_assembly(void) {
     // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [4, 8; 12, 13]
     // std::string expr="[1,2;3,a](2,:) + b(:)"; // should give [6, 9]
     // std::string expr="[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,3](:,:,:,2)";
-    // std::string expr="sin([0;pi;2*pi])";
-    // std::string expr="Id(meshdim+qdim(u))";
     // std::string expr="[sin(pi);-2] + Derivative_Norm(Grad_u) + Derivative_Norm(b) + Derivative_sin(pi)*[0;2]";
-    // std::string expr="Trace([1,2;3,5;5,6]')";
     // std::string expr = "([1,2;3,4]@[1,2;1,2]).[1;2]";
     // std::string expr = "[u.u; u(1); (u./u)(1); a*Norm(u); c]";
     // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
@@ -902,18 +899,30 @@ static void test_new_assembly(void) {
     
     getfem::mesh m;
 
-    size_type N = 2;
-    size_type NX = 150;
-    size_type pK = 1;
+    size_type N = 3;
+    size_type NX = 10;
+    size_type pK = 2;
 
-    char Ns[5]; sprintf(Ns, "%ld", N);
-    char Ks[5]; sprintf(Ks, "%ld", pK);
+    char Ns[5]; sprintf(Ns, "%d", N);
+    char Ks[5]; sprintf(Ks, "%d", pK);
     bgeot::pgeometric_trans pgt =
       bgeot::geometric_trans_descriptor
       ((std::string("GT_PK(") + Ns + ",1)").c_str());
     std::vector<size_type> nsubdiv(N);
     std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
     getfem::regular_unit_mesh(m, nsubdiv, pgt);
+
+    const size_type NEUMANN_BOUNDARY_NUM = 1;
+    const size_type DIRICHLET_BOUNDARY_NUM = 2;
+
+    base_small_vector Dir(0.0, 0.0, 1.0);
+    getfem::mesh_region border_faces = getfem::outer_faces_of_mesh(m);
+    getfem::mesh_region Neumann_faces
+      = getfem::select_faces_of_normal(m, border_faces, Dir, 0.1);
+    m.region(NEUMANN_BOUNDARY_NUM) = Neumann_faces;
+    m.region(DIRICHLET_BOUNDARY_NUM)
+      = getfem::mesh_region::substract(border_faces, Neumann_faces);
+
 
     getfem::mesh_fem mf_u(m);
     getfem::pfem pf_u = getfem::fem_descriptor
@@ -935,6 +944,8 @@ static void test_new_assembly(void) {
 
     std::vector<scalar_type> U(mf_u.nb_dof());
     gmm::fill_random(U);
+    std::vector<scalar_type> A(mf_u.nb_dof()*N);
+    gmm::fill_random(A);
     std::vector<scalar_type> P(mf_p.nb_dof(), 1.);
     gmm::fill_random(P);
     size_type ndofu = mf_u.nb_dof(), ndofp = mf_p.nb_dof();
@@ -944,6 +955,7 @@ static void test_new_assembly(void) {
     gmm::sub_interval Ip(ndofu, ndofp);
     
     workspace.add_fem_variable("u", mf_u, Iu, U);
+    workspace.add_fem_constant("A", mf_u, A);
     workspace.add_fem_variable("p", mf_p, Ip, P);
     
     chrono ch;
@@ -952,11 +964,17 @@ static void test_new_assembly(void) {
 
 
     if (1) {
-      SCAL_TEST_0("Test on function integration", "cos(pi*x(1))", mim, 0);
-      SCAL_TEST_0("Test on function integration", "cos(pi*x).exp(x*0)", mim,0);
+      SCAL_TEST_0("Test on function integration 1",
+                  "1", mim, 1);
+      SCAL_TEST_0("Test on function integration 1",
+                  "cos(pi*x(1))", mim, 0);
+      SCAL_TEST_0("Test on function integration 2",
+                  "cos(pi*x).exp(x*0)", mim,0);
+      SCAL_TEST_0("Test on function integration 3",
+                  "cos(pi*x).Id(meshdim)(:,1)", mim,0);
     }
 
-    if (0) {
+    if (1) {
       SCAL_TEST_1("Test on L2 norm", "u.u", mim,
                   gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
 
@@ -974,7 +992,7 @@ static void test_new_assembly(void) {
       }
     }
 
-    if (0) {
+    if (1) {
       SCAL_TEST_1("Test on H1 semi-norm", "Grad_u:Grad_u", mim2,
                   gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
 
@@ -1003,8 +1021,47 @@ static void test_new_assembly(void) {
 
 
     if (1) {
-      VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim,
+      VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
                  Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
+
+
+
+    }
+
+    if (1) {
+
+      {VEC_TEST_1("Test for Neumann term", ndofu, "u.Test_u",
+                  mim, NEUMANN_BOUNDARY_NUM,
+                  Iu, getfem::asm_source_term(V, mim, mf_u, mf_u,
+                                              U, NEUMANN_BOUNDARY_NUM));}
+
+//       {VEC_TEST_1("Test for Neumann term", ndofu,
+//                   "(Print(Print((Reshape(Print(A),meshdim,meshdim))')*Normal)+Print(Print([A(1), A(4), A(7); A(2), A(5), A(8); A(3), A(6), A(9)])*Normal)).Test_u/2",
+//                   mim, NEUMANN_BOUNDARY_NUM,
+//                   Iu, getfem::asm_source_term(V, mim, mf_u, mf_u,
+//                                               U, NEUMANN_BOUNDARY_NUM));}
+
+
+      {VEC_TEST_1("Test for Neumann term", ndofu,
+                  "(((Reshape(A,meshdim,meshdim))')*Normal).Test_u",
+                  mim, NEUMANN_BOUNDARY_NUM,
+                  Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
+                                              A, NEUMANN_BOUNDARY_NUM));}
+      
+      if (N == 2)
+      {VEC_TEST_1("Test for Neumann term", ndofu,
+                  "([A(1), A(3); A(2), A(4)]'*Normal).Test_u", mim,
+                  NEUMANN_BOUNDARY_NUM,
+                  Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
+                                                 A, NEUMANN_BOUNDARY_NUM));}
+      if (N == 3)
+      {VEC_TEST_1("Test for Neumann term", ndofu,
+                  "([A(1), A(4), A(7); A(2), A(5), A(8); A(3), A(6), A(9)]'"
+                  "*Normal).Test_u", mim, NEUMANN_BOUNDARY_NUM,
+                  Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
+                                                 A, NEUMANN_BOUNDARY_NUM));}
+      
+      
 
 
 
@@ -1049,19 +1106,15 @@ static void test_new_assembly(void) {
       base_vector mu(1); mu[0] = 2.0;
       workspace.add_fixed_size_constant("mu", mu);
 
-//       TEST_1("Test for linear homogeneous elasticity stiffness matrix",
-//              ndofu, ndofu, "lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
-//              "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u" , mim2,
-//              Iu, Iu,
-//              getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
-//              (K, mim2, mf_u, lambda, mu));
-      
-      // Slighly better
       MAT_TEST_1("Test for linear homogeneous elasticity stiffness matrix",
                  ndofu, ndofu, "(lambda*Trace(Grad_Test_u)*Id(qdim(u)) "
-                 "+ mu*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2, Iu, Iu,
+                 "+ mu*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2,
+                 Iu, Iu,
                  getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
                  (K, mim2, mf_u, lambda, mu));
+      
+      MAT_TEST_2(ndofu, ndofu, "lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+                 "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2, Iu, Iu);
       
       MAT_TEST_2(ndofu, ndofu,
                  "lambda*((Grad_Test2_u@Grad_Test_u):Id(meshdim))"

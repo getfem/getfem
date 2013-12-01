@@ -297,7 +297,7 @@ namespace getfem {
       const mesh_fem *mf = associated_mf(name);
       size_type n = gmm::vect_size(value(name));
       size_type ndof = mf ? mf->nb_dof() : 0;
-      return mf ? associated_mf(name)->get_qdim() * (ndof / n) : n;
+      return mf ? associated_mf(name)->get_qdim() * (n / ndof) : n;
     }
 
     const model_real_plain_vector &value(const std::string &name) const {

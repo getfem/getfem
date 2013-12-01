@@ -368,6 +368,17 @@ namespace getfem {
     */
     base_small_vector normal_of_face_of_convex(size_type ic, short_type f,
 					       size_type n=0) const;
+
+
+    /* Return the mean outward unit normal vector of the given convex
+       face computed on the vertices of the face.
+
+       @param ic the convex number.
+       @param f the face number.
+       @return the face normal.
+    */
+    base_small_vector mean_normal_of_face_of_convex(size_type ic,
+                                                    short_type f) const;
     /** Return a local basis for the convex face.
        @param ic the convex number.
        @param f the face number.
@@ -633,6 +644,16 @@ namespace getfem {
 
   inline void  outer_faces_of_mesh(const mesh &m, mesh_region &flist)
   { outer_faces_of_mesh(m,m.convex_index(),flist); }
+
+
+  inline mesh_region outer_faces_of_mesh(const mesh &m)
+  { mesh_region fl; outer_faces_of_mesh(m,m.convex_index(),fl); return fl; }
+
+  mesh_region select_faces_of_normal(const mesh &m, const mesh_region &mr,
+                                     const base_small_vector &V,
+                                     scalar_type angle);
+
+
   ///@}
 }  /* end of namespace getfem.                                             */
 

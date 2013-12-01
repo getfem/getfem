@@ -242,6 +242,7 @@ namespace getfem {
     GA_NODE_CONSTANT,
     GA_NODE_NAME,
     GA_NODE_PARAMS,
+    GA_NODE_RESHAPE,
     GA_NODE_ALLINDICES,
     GA_NODE_C_MATRIX,
     GA_NODE_X,
@@ -891,6 +892,11 @@ namespace getfem {
       GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
       break;
 
+    case GA_NODE_RESHAPE:
+      cout << "Reshape";
+      GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
+      break;
+
     case GA_NODE_C_MATRIX:
       GMM_ASSERT1(pnode->children.size(), "Invalid tree");
       cout << "[";
@@ -1393,6 +1399,7 @@ namespace getfem {
 
   struct ga_instruction {
     virtual void exec(void) = 0;
+    virtual ~ga_instruction() {};
   };
 
 
@@ -2643,13 +2650,15 @@ namespace getfem {
                          size_type order);
 
   static void ga_extract_variables(pga_tree_node pnode,
+                                   ga_workspace &workspace, 
                                    std::set<std::string> &vars) {
-    if (pnode->node_type == GA_NODE_VAL ||
-        pnode->node_type == GA_NODE_GRAD ||
-        pnode->node_type == GA_NODE_HESS)
+    if ((pnode->node_type == GA_NODE_VAL ||
+         pnode->node_type == GA_NODE_GRAD ||
+         pnode->node_type == GA_NODE_HESS) &&
+        !(workspace.is_constant(pnode->name)))
       vars.insert(pnode->name);
     for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_extract_variables(pnode->children[i], vars);
+      ga_extract_variables(pnode->children[i], workspace, vars);
   }
 
   ga_workspace::tree_description::tree_description(void)
@@ -2710,7 +2719,7 @@ namespace getfem {
       if (order <= 1) {
         std::set<std::string> expr_variables;
         ga_extract_variables((remain ? tree : *(trees[ind_tree].ptree)).root,
-                             expr_variables);
+                             *this, expr_variables);
         
         for (std::set<std::string>::iterator it = expr_variables.begin();
              it != expr_variables.end(); ++it) {
@@ -2950,6 +2959,7 @@ namespace getfem {
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
     case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_NORMAL:
+    case GA_NODE_RESHAPE:
       pnode->test_function_type = 0; break;
 
     case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
@@ -2969,14 +2979,21 @@ namespace getfem {
         pnode->name_test2 = "";
         pnode->qdim1 = (mf ? workspace.qdim(pnode->name)
                         : gmm::vect_size(workspace.value(pnode->name)));
+        if (!(pnode->qdim1))
+          ga_throw_error(expr, pnode->pos, "Invalid null size of variable");
       } else {
         pnode->name_test1 = "";
         pnode->name_test2 = pnode->name;
         pnode->qdim2 = (mf ? workspace.qdim(pnode->name)
                         : gmm::vect_size(workspace.value(pnode->name)));
+        if (!(pnode->qdim2))
+          ga_throw_error(expr, pnode->pos, "Invalid null size of variable");
+
       }
       if (!mf) {
         size_type n = workspace.qdim(pnode->name);
+        if (!n)
+          ga_throw_error(expr, pnode->pos, "Invalid null size of variable");
         if (n == 1) {
           pnode->init_vector_tensor(1);
           pnode->t[0] = scalar_type(1);
@@ -3197,8 +3214,6 @@ namespace getfem {
             pnode->node_type = GA_NODE_CONSTANT;
             cout << "Print constant term "; ga_print_node(child0);
             cout << ": " << pnode->t << endl;
-            ga_throw_error_msg(expr, child0->pos,
-                               "Generic assembly Print command");
             tree.clear_children(pnode);
           } else if (child0->node_type == GA_NODE_ZERO) {
             pnode->node_type = GA_NODE_ZERO;
@@ -3546,7 +3561,7 @@ namespace getfem {
         } else if (nbc2 == 1 && nbc3 == 1) {
           mi.push_back(nbl); mi.push_back(nbc1); 
           pnode->t.adjust_sizes(mi);
-          if (all_cte)
+          if (all_cte) // TODO: vérifier ordre
             for (size_type i = 0; i < nbl; ++i)
               for (size_type j = 0; j < nbc1; ++j)
                 pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
@@ -3555,7 +3570,7 @@ namespace getfem {
           mi.push_back(nbc2); mi.push_back(nbc1);
           pnode->t.adjust_sizes(mi);
           size_type n = 0;
-          if (all_cte)
+          if (all_cte) // TODO: vérifier ordre
             for (size_type i = 0; i < nbl; ++i)
               for (size_type j = 0; j < nbc3; ++j)
                 for (size_type k = 0; k < nbc2; ++k)
@@ -3579,6 +3594,11 @@ namespace getfem {
         }
         if (!(name.compare("Normal"))) {
           pnode->node_type = GA_NODE_NORMAL;
+          pnode->init_vector_tensor(meshdim);
+          break;
+        }
+        if (!(name.compare("Reshape"))) {
+          pnode->node_type = GA_NODE_RESHAPE;
           pnode->init_vector_tensor(meshdim);
           break;
         }
@@ -3690,6 +3710,8 @@ namespace getfem {
               }
             } else {
               size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
+              if (!q) ga_throw_error(expr, pnode->pos,
+                                     "Invalid null size of variable");
               switch (val_grad_or_hess) {
               case 0: // value
                 pnode->node_type = GA_NODE_VAL;
@@ -3727,11 +3749,17 @@ namespace getfem {
               pnode->qdim1
                 = (mf ? workspace.qdim(name)
                    : gmm::vect_size(workspace.value(name)));
+              if (!(pnode->qdim1))
+                ga_throw_error(expr, pnode->pos,
+                               "Invalid null size of variable");
             } else {
               pnode->name_test2 = name;
               pnode->qdim2
                 = (mf ? workspace.qdim(name)
                    : gmm::vect_size(workspace.value(name)));
+              if (!(pnode->qdim2))
+                ga_throw_error(expr, pnode->pos,
+                               "Invalid null size of variable");
             }
           
             if (!mf) {
@@ -3753,6 +3781,9 @@ namespace getfem {
               }
             } else {
               size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
+              if (!q)
+                ga_throw_error(expr, pnode->pos,
+                               "Invalid null size of variable");
               switch (val_grad_or_hess) {
               case 0: // value
                 pnode->node_type = GA_NODE_TEST;
@@ -3804,6 +3835,46 @@ namespace getfem {
           ga_throw_error(expr, child1->pos, "Index for x not convenient.");
         tree.replace_node_by_child(pnode, 0);
 
+      } else if (child0->node_type == GA_NODE_RESHAPE) {
+        if (pnode->children.size() < 3)
+          ga_throw_error(expr, child1->pos,
+                         "Not enough parameters for Reshape");
+        if (pnode->children.size() > 6)
+          ga_throw_error(expr, child1->pos,
+                         "Too many parameters for Reshape");
+        pnode->t = child1->t;
+        pnode->test_function_type = child1->test_function_type;
+        pnode->name_test1 = child1->name_test1;
+        pnode->name_test2 = child1->name_test2;
+        pnode->qdim1 = child1->qdim1;
+        pnode->qdim2 = child1->qdim2;
+        mi.resize(0);
+        for (size_type i = 0; i < pnode->nb_test_functions(); ++i)
+          mi.push_back(size1[i]);
+
+        for (size_type i = 2; i < pnode->children.size(); ++i) {
+          if (pnode->children[i]->node_type != GA_NODE_CONSTANT)
+            ga_throw_error(expr, pnode->children[i]->pos, "Reshape sizes "
+                           "should be constant positive integers.");
+          mi.push_back(size_type(round(pnode->children[i]->t[0])));
+          if (mi.back() == 0)
+            ga_throw_error(expr, pnode->children[i]->pos, "Wrong zero size "
+                           "for Reshape.");
+        }
+        size_type total_size(1);
+        for (size_type i = 0; i < mi.size(); ++i)
+          total_size *= mi[i];
+        if (total_size != pnode->t.size())
+           ga_throw_error(expr, pnode->pos, "Invalid sizes for reshape.");
+        pnode->t.adjust_sizes(mi);
+
+        if (child1->node_type == GA_NODE_CONSTANT) {
+          pnode->node_type = GA_NODE_CONSTANT;
+          tree.clear_children(pnode);
+        } else if (child1->node_type == GA_NODE_ZERO) {
+          pnode->node_type = GA_NODE_ZERO;
+          tree.clear_children(pnode);
+        }
       } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
         
         // Évaluation of a predefined function
@@ -3875,7 +3946,7 @@ namespace getfem {
         }
       } else if (child0->node_type == GA_NODE_SPEC_FUNC) {
 
-        // Special constant functions: meshdim(u), qdim(u) ...
+        // Special constant functions: meshdim, qdim(u) ...
         
         for (size_type i = 1; i < pnode->children.size(); ++i)
           ga_valid_operand(expr, pnode->children[i]);
@@ -3890,6 +3961,9 @@ namespace getfem {
                            "function can only be a variable name.");
           pnode->node_type = GA_NODE_CONSTANT;
           pnode->init_scalar_tensor(scalar_type(workspace.qdim(child1->name)));
+          if (pnode->t[0] <= 0)
+            ga_throw_error(expr, pnode->pos,
+                           "Invalid null size of variable");
         } else if (!(child0->name.compare("Id"))) {
           bool valid = (child1->node_type == GA_NODE_CONSTANT);
           int n = valid ? int(round(child1->t[0])) : -1;
@@ -4269,7 +4343,10 @@ namespace getfem {
       break;
 
     case GA_NODE_PARAMS:
-      if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+      if (child0->node_type == GA_NODE_RESHAPE) {
+        ga_node_derivation(tree, workspace, pnode->children[1],
+                           varname, order);
+      } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
         const ga_predef_function &F = (it != PREDEF_FUNCTIONS.end()) ?
@@ -4424,7 +4501,7 @@ namespace getfem {
     const bgeot::multi_index &size0 = child0 ? child0->t.sizes() : mi;
     // const bgeot::multi_index &size1 = child1 ? child1->t.sizes() : mi;
     size_type dim0 = child0 ? child0->tensor_order() : 0;
-    // size_type dim1 = child1 ? child1->tensor_order() : 0;
+    size_type dim1 = child1 ? child1->tensor_order() : 0;
 
     pga_instruction pgai = 0;
     if (pnode->test_function_type == 1)
@@ -4446,6 +4523,7 @@ namespace getfem {
 
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC:
     case GA_NODE_CONSTANT: case GA_NODE_ALLINDICES: case GA_NODE_ZERO:
+    case GA_NODE_RESHAPE:
       break;
 
     case GA_NODE_X:
@@ -4648,6 +4726,7 @@ namespace getfem {
            pgai = 0;
            if (pnode->op_type == GA_DOT || pnode->op_type == GA_COLON ||
                (pnode->op_type == GA_MULT && dim0 == 4) ||
+               (pnode->op_type == GA_MULT && dim1 <= 1) ||
                child0->t.size() == 1 || child1->t.size() == 1) {
 
              if (child0->t.size() == 1 && child1->t.size() == 1) {
@@ -4866,22 +4945,58 @@ namespace getfem {
        break;
 
     case GA_NODE_C_MATRIX:
-      if (pnode->test_function_type) {
-        std::vector<base_tensor *> components;
-        for (size_type i = 0; i < pnode->children.size(); ++i)
-          components.push_back(&(pnode->children[i]->t));
-         pgai = new ga_instruction_c_matrix_with_tests(pnode->t, components);
-      } else {
-        std::vector<scalar_type *> components;
-        for (size_type i = 0; i < pnode->children.size(); ++i)
-          components.push_back(&(pnode->children[i]->t[0]));
-         pgai = new ga_instruction_simple_c_matrix(pnode->t, components);
+      {
+        size_type nbc1 = pnode->nbc1, nbc2 = pnode->nbc2, nbc3 = pnode->nbc3;
+        size_type nbl = pnode->children.size() / (nbc1*nbc2*nbc3);
+        if (pnode->test_function_type) {
+          std::vector<base_tensor *> components(pnode->children.size());
+
+          if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
+            for (size_type i = 0; i < pnode->children.size(); ++i)
+              components[i]  = &(pnode->children[i]->t);
+          } else if (nbc2 == 1 && nbc3 == 1) {
+            for (size_type i = 0; i < nbl; ++i)
+              for (size_type j = 0; j < nbc1; ++j)
+                components[i+j*nbl] = &(pnode->children[i*nbc1+j]->t);
+          } else {
+            size_type n = 0;
+            for (size_type i = 0; i < nbl; ++i)
+              for (size_type j = 0; j < nbc3; ++j)
+                for (size_type k = 0; k < nbc2; ++k)
+                  for (size_type l = 0; l < nbc1; ++l)
+                    components[i+j*nbl+k*nbl*nbc3+l*nbc2*nbc3*nbl] 
+                      = &(pnode->children[n++]->t);
+          }
+          pgai = new ga_instruction_c_matrix_with_tests(pnode->t, components);
+        } else {
+          std::vector<scalar_type *> components(pnode->children.size());
+          if (nbc1 == 1 && nbc2 == 1 && nbc3 == 1) {
+            for (size_type i = 0; i < pnode->children.size(); ++i)
+              components[i]  = &(pnode->children[i]->t[0]);
+          } else if (nbc2 == 1 && nbc3 == 1) {
+            for (size_type i = 0; i < nbl; ++i)
+              for (size_type j = 0; j < nbc1; ++j)
+                components[i+j*nbl] = &(pnode->children[i*nbc1+j]->t[0]);
+          } else {
+            size_type n = 0;
+            for (size_type i = 0; i < nbl; ++i)
+              for (size_type j = 0; j < nbc3; ++j)
+                for (size_type k = 0; k < nbc2; ++k)
+                  for (size_type l = 0; l < nbc1; ++l)
+                    components[i+j*nbl+k*nbl*nbc3+l*nbc2*nbc3*nbl] 
+                      = &(pnode->children[n++]->t[0]);
+          }
+          pgai = new ga_instruction_simple_c_matrix(pnode->t, components);
+        }
+        rmi.instructions.push_back(pgai);
       }
-      rmi.instructions.push_back(pgai);
       break;
 
     case GA_NODE_PARAMS:
-      if (child0->node_type == GA_NODE_PREDEF_FUNC) {
+      if (child0->node_type == GA_NODE_RESHAPE) {
+        pgai = new ga_instruction_copy_tensor(pnode->t, child1->t);;
+        rmi.instructions.push_back(pgai);
+      } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
 
         std::string name = child0->name;
         ga_predef_function_tab::iterator it = PREDEF_FUNCTIONS.find(name);
@@ -4994,9 +5109,14 @@ namespace getfem {
             break;
           case 1:
             {
-              GMM_ASSERT1(gis.var_intervals.find(root->name_test1)
-                          != gis.var_intervals.end(), "Internal error");
               const mesh_fem *mf = workspace.associated_mf(root->name_test1);
+              if (gis.var_intervals.find(root->name_test1) ==
+                  gis.var_intervals.end()) {
+                size_type nd = mf->nb_basic_dof();
+                gis.var_intervals[root->name_test1]
+                  = gmm::sub_interval(gis.nb_dof, nd);
+                gis.nb_dof += nd;
+              }
               if (mf->is_reduced()) {
                 pgai = new ga_instruction_vector_assembly
                   (root->t, workspace.unreduced_vector(), gis.ctx,
@@ -5013,6 +5133,20 @@ namespace getfem {
             {
               const mesh_fem *mf1 = workspace.associated_mf(root->name_test1);
               const mesh_fem *mf2 = workspace.associated_mf(root->name_test2);
+              if (gis.var_intervals.find(root->name_test1) ==
+                  gis.var_intervals.end()) {
+                size_type nd = mf1->nb_basic_dof();
+                gis.var_intervals[root->name_test1]
+                  = gmm::sub_interval(gis.nb_dof, nd);
+                gis.nb_dof += nd;
+              }
+              if (gis.var_intervals.find(root->name_test2) ==
+                  gis.var_intervals.end()) {
+                size_type nd = mf2->nb_basic_dof();
+                gis.var_intervals[root->name_test2]
+                  = gmm::sub_interval(gis.nb_dof, nd);
+                gis.nb_dof += nd;
+              }
               if (mf1->is_reduced() || (mf2->is_reduced())) {
                 pgai = new ga_instruction_matrix_assembly
                   <model_real_sparse_matrix>

@@ -314,11 +314,28 @@ namespace getfem {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
       = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()), 0);
-    base_matrix G(dim(),pgt->nb_points());
+    base_matrix G;
     vectors_to_base_matrix(G,points_of_convex(ic));
     bgeot::geotrans_interpolation_context
       c(pgp,pgt->structure()->ind_points_of_face(f)[n], G);
     return bgeot::compute_normal(c, f);
+  }
+
+  base_small_vector mesh::mean_normal_of_face_of_convex(size_type ic,
+                                                        short_type f) const {
+    bgeot::pgeometric_trans pgt = trans_of_convex(ic);
+    bgeot::pgeotrans_precomp pgp
+      = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()), 0);
+    base_matrix G; vectors_to_base_matrix(G,points_of_convex(ic));
+    bgeot::geotrans_interpolation_context c(pgp,0, G);
+    base_small_vector n(dim());
+    size_type nbpt = pgt->structure()->nb_points_of_face(f);
+    for (size_type i = 0; i < nbpt; ++i) {
+      c.set_ii(pgt->structure()->ind_points_of_face(f)[i]);
+      n += bgeot::compute_normal(c, f);
+    }
+    n /= gmm::vect_norm2(n);
+    return n;
   }
 
   base_matrix mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
@@ -737,6 +754,20 @@ namespace getfem {
       }
       else flist.add(i.cv());
     }
+  }
+
+  mesh_region select_faces_of_normal(const mesh &m, const mesh_region &mr,
+                                     const base_small_vector &V,
+                                     scalar_type angle) {
+    mesh_region mrr;
+    scalar_type threshold = gmm::vect_norm2(V)*cos(angle);
+    for (getfem::mr_visitor i(mr); !i.finished(); ++i)
+      if (i.f() != short_type(-1)) {
+        base_node un = m.mean_normal_of_face_of_convex(i.cv(), i.f());
+        if (gmm::vect_sp(V, un) - threshold >= -1E-8)
+          mrr.add(i.cv(), i.f());
+      }
+    return mrr;
   }
 
   void extrude(const mesh& in, mesh& out, unsigned nb_layers) {

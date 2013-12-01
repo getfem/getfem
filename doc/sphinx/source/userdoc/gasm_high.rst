@@ -82,6 +82,8 @@ A specific language has been developped to describe the weak formulation of boun
 
   - Print command : for debugging, print the tensor and pass it unchanged. "Grad_u.Print(Grad_Test_u)" will have the same effect as "Grad_u.Grad_Test_u" but printing the tensor "Grad_Test_u" for each Gauss point of each element. Note that constant terms are printed only once at the begining of the assembly. Note also that the expression could be derived so that the derivative of the term may be printed instead of the term itself.
 
+  - Reshape(t, i, j, ...) : reshape a vector/matrix/tensor. For instance Reshape(Grad_u, 1, meshdim) is equivalent to "Grad_u'" for u a scalar variable. Usefull for data ... Note that all tensor in Getfem are stored in the fortran order, i.e. .. (for compatibility with blas/lapack) + example.
+
   - A certain number of predefined nonlinear operator (tr, Norm, Idmat, det, target_dim(u) ...). Cannot be applied to test functions.
 
 
