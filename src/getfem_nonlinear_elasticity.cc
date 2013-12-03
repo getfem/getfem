@@ -618,6 +618,104 @@ namespace getfem {
 
 
 
+  scalar_type Neo_Hookean_hyperelastic_law::strain_energy
+  (const base_matrix &E, const base_vector &params,
+   scalar_type /* det_trans*/) const {
+// shouldn't negative det_trans be handled here???
+//    if (compressible && det_trans <= scalar_type(0)) return 1e200;
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Neo Hookean hyperelastic law only defined "
+                "on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    scalar_type lambda = params[0];
+    scalar_type mu = params[1];
+    scalar_type logi3 = log(ci.i3());
+    scalar_type W = mu/2 * (ci.i1() - scalar_type(3) - logi3);
+    if (bonet)
+      W += lambda/8 * gmm::sqr(logi3);
+    else // Wriggers
+      W += lambda/4 * (ci.i3() - scalar_type(1) - logi3);
+
+    return W;
+  }
+
+  void Neo_Hookean_hyperelastic_law::sigma
+  (const base_matrix &E, base_matrix &result,
+   const base_vector &params, scalar_type /*det_trans*/) const {
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Neo Hookean hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    scalar_type lambda = params[0];
+    scalar_type mu = params[1];
+    gmm::copy(gmm::scaled(ci.grad_i1(), mu), result);
+    if (bonet)
+       gmm::add(gmm::scaled(ci.grad_i3(),
+                            (lambda/2 * log(ci.i3()) - mu) / ci.i3()), result);
+    else
+       gmm::add(gmm::scaled(ci.grad_i3(),
+                            lambda/4 - lambda/(4*ci.i3()) - mu / ci.i3()), result);
+
+// shouldn't negative det_trans be handled here???
+//      if (det_trans <= scalar_type(0))
+//        gmm::add(gmm::scaled(C, 1e200), result);
+  }
+
+  void Neo_Hookean_hyperelastic_law::grad_sigma
+  (const base_matrix &E, base_tensor &result,
+   const base_vector &params, scalar_type) const {
+    size_type N = gmm::mat_nrows(E);
+    GMM_ASSERT1(N == 3, "Neo Hookean hyperelastic law only defined "
+		"on dimension 3, sorry");
+    base_matrix C = E;
+    gmm::scale(C, scalar_type(2));
+    gmm::add(gmm::identity_matrix(), C);
+    compute_invariants ci(C);
+
+    scalar_type lambda = params[0];
+    scalar_type mu = params[1];
+
+    scalar_type coeff;
+    if (bonet) {
+      scalar_type logi3 = log(ci.i3());
+      gmm::copy(gmm::scaled(ci.sym_grad_grad_i3().as_vector(),
+                            (lambda * logi3 - 2*mu) / ci.i3()),
+                result.as_vector());
+      coeff = (lambda + 2 * mu - lambda * logi3) / gmm::sqr(ci.i3());
+    } else {
+      gmm::copy(gmm::scaled(ci.sym_grad_grad_i3().as_vector(),
+                            lambda / 2  - (lambda / 2 + 2 * mu) / ci.i3()),
+                result.as_vector());
+      coeff = (lambda / 2 + 2 * mu) / gmm::sqr(ci.i3());
+    }
+
+    const base_matrix &di = ci.grad_i3();
+    for (size_type l1 = 0; l1 < N; ++l1)
+      for (size_type l2 = 0; l2 < N; ++l2)
+        for (size_type l3 = 0; l3 < N; ++l3)
+          for (size_type l4 = 0; l4 < N; ++l4)
+            result(l1, l2, l3, l4) += coeff * di(l1, l2) * di(l3, l4);
+
+//     GMM_ASSERT1(check_symmetry(result) == 7,
+// 		"Fourth order tensor not symmetric : " << result);
+  }
+
+  Neo_Hookean_hyperelastic_law::Neo_Hookean_hyperelastic_law(bool bonet_)
+  : bonet(bonet_)
+  {
+    nb_params_ = 2;
+  }
+
+
+
   scalar_type generalized_Blatz_Ko_hyperelastic_law::strain_energy
   (const base_matrix &E, const base_vector &params, scalar_type det_trans) const {
     if (det_trans <= scalar_type(0)) return 1e200;
