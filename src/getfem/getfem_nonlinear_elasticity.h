@@ -160,6 +160,21 @@ namespace getfem {
                                    bool neohookean_=false);
   };
 
+  /** Neo-Hookean hyperelastic law variants
+
+      To be used for compressible problems.
+      For incompressible ones Mooney-Rivlin hyperelastic law can be used.
+  */
+  struct Neo_Hookean_hyperelastic_law : public abstract_hyperelastic_law {
+    const bool bonet;
+    virtual scalar_type strain_energy(const base_matrix &E,
+                                      const base_vector &params, scalar_type det_trans) const;
+    virtual void sigma(const base_matrix &E, base_matrix &result,
+                       const base_vector &params, scalar_type det_trans) const;
+    virtual void grad_sigma(const base_matrix &E, base_tensor &result,
+                            const base_vector &params, scalar_type det_trans) const;
+    Neo_Hookean_hyperelastic_law(bool bonet_=true);
+  };
 
   /** Blatz_Ko hyperelastic law 
       
