@@ -550,6 +550,7 @@ namespace getfem {
     dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
     std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
+    mf_target.extend_vector(VV,V);
     gmm::row_matrix<gmm::rsvector<scalar_type> >
       M(mf_target.nb_basic_dof(), mf_source.nb_dof());
 
