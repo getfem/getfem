@@ -24,18 +24,24 @@
   Provising for special Math functions unavailable on Intel or MSVS C++
   compilers
 */
-#ifdef _WIN32
-#include <limits>
-#include <boost/math/special_functions/acosh.hpp>
-#include <boost/math/special_functions/asinh.hpp>
-#include <boost/math/special_functions/atanh.hpp>
-#include <boost/math/special_functions/erf.hpp>
-#endif
 
 #include "getfem/getfem_generic_assembly.h"
 #include "gmm/gmm_blas.h"
 #include <iomanip>
 #include "getfem/getfem_omp.h"
+
+#ifdef _WIN32
+#include <boost/math/special_functions/acosh.hpp>
+#include <boost/math/special_functions/asinh.hpp>
+#include <boost/math/special_functions/atanh.hpp>
+#include <boost/math/special_functions/erf.hpp>
+BoostMathFunction const acosh = boost::math::acosh<double>;
+BoostMathFunction const asinh = boost::math::asinh<double>;
+BoostMathFunction const atanh = boost::math::atanh<double>;
+BoostMathFunction const erf = boost::math::erf<double>;
+BoostMathFunction const erfc = boost::math::erfc<double>;
+#endif
+
 
 // #define GA_USES_BLAS // not so interesting, at leat for debian blas
 

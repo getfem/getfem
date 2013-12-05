@@ -41,17 +41,19 @@
 
 #include "getfem/getfem_models.h"
 
-namespace getfem {
 
-  #ifdef _WIN32
-  #define INFINITY std::numeric_limits<scalar_type>::infinity()
-  typedef double (*BoostMathFunction)(double);
-  BoostMathFunction const acosh = boost::math::acosh<double>;
-  BoostMathFunction const asinh = boost::math::asinh<double>;
-  BoostMathFunction const atanh = boost::math::atanh<double>;
-  BoostMathFunction const erf = boost::math::erf<double>;
-  BoostMathFunction const erfc = boost::math::erfc<double>;
-  #endif
+#ifdef _WIN32
+#include <limits>
+#define INFINITY std::numeric_limits<scalar_type>::infinity()
+typedef double (*BoostMathFunction)(double);
+extern BoostMathFunction const acosh;
+extern BoostMathFunction const asinh;
+extern BoostMathFunction const atanh;
+extern BoostMathFunction const erf;
+extern BoostMathFunction const erfc;
+#endif
+
+namespace getfem {
 
   class ga_tree;
 
