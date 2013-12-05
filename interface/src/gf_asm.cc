@@ -19,7 +19,8 @@
  
 ===========================================================================*/
 
-
+#include <getfemint.h>
+#include <getfemint_mesh_im.h>
 #include <getfem/getfem_assembling.h>
 #include <getfem/getfem_level_set.h>
 #include <getfemint_misc.h>
@@ -28,6 +29,7 @@
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_fourth_order.h>
 #include <getfem/getfem_Coulomb_friction.h>
+#include <getfem/getfem_generic_assembly.h>
 
 #ifdef GETFEM_HAVE_METIS 
  extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
@@ -393,6 +395,80 @@ do_generic_assembly(mexargs_in& in, mexargs_out& out, bool on_boundary)
   }
 }
 
+// TODO: generalization to complex ...
+static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
+
+  getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+  size_type order = in.pop().to_integer(0, 2);
+  std::string expr = in.pop().to_string();
+  size_type region = in.pop().to_integer();
+  
+  getfem::ga_workspace workspace;
+  size_type nbdof = 0;
+
+  std::map<std::string,  getfem::model_real_plain_vector> vectors;
+
+  if (in.remaining()) {
+    std::string varname = in.pop().to_string();
+    bool is_cte = (in.pop().to_integer() == 0);
+    const getfem::mesh_fem *mf(0);
+    if (in.front().is_mesh_fem()) {
+      mf = in.pop().to_const_mesh_fem();
+    }
+    darray U = in.pop().to_darray();
+    GMM_ASSERT1(vectors.find(varname) == vectors.end(),
+                "The same variable/constant name is repeated twice")
+    gmm::resize(vectors[varname], U.size());
+    gmm::copy(U, vectors[varname]);
+    if (is_cte) {
+      if (!mf)
+        workspace.add_fixed_size_constant(varname, vectors[varname]);
+      else
+        workspace.add_fem_constant(varname, *mf, vectors[varname]);
+    } else {
+      if (!mf) {
+        gmm::sub_interval I(nbdof, U.size());
+        nbdof += U.size();
+        workspace.add_fixed_size_variable(varname, I, vectors[varname]);
+      }  else {
+        gmm::sub_interval I(nbdof, mf->nb_dof());
+        nbdof += mf->nb_dof();
+        workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
+      }
+    }
+  }
+
+  workspace.add_expression(expr, gfi_mim->mesh_im(), region);
+
+  switch (order) {
+  case 0:
+    workspace.assembly(0);
+    out.pop().from_scalar(workspace.assembled_potential());
+    break;
+
+  case 1:
+    {
+      getfem::model_real_plain_vector residual(nbdof);
+      workspace.set_assembled_vector(residual);
+      workspace.assembly(1);
+      out.pop().from_dcvector(residual);
+    }
+    break;
+
+  case 2: 
+    {
+      getfem::model_real_sparse_matrix K(nbdof, nbdof);
+      workspace.set_assembled_matrix(K);
+      workspace.assembly(2);
+      gf_real_sparse_by_col  KK(nbdof, nbdof);
+      gmm::copy(K, KK);
+      out.pop().from_sparse(KK);
+    }
+    break;
+
+  default: GMM_ASSERT1(false, "Invalid order, should be 0, 1 or 2");
+  }
+}
 
 template<typename T> static void
 gf_dirichlet(getfemint::mexargs_out& out,
@@ -892,9 +968,56 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
        );
 
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@str varname, @int is_variable[, @tmf mesh_fem], value], ...)
+      High-level generic assembly procedure for volumic assembly.
+
+      Performs the generic assembly of `expression` with the integration
+      method `mim` on the mesh region of index `region' (-1 means all 
+      the element of the mesh). The smae mesh should be shared by
+      the integration method and all the finite element methods
+      corresponding to the variables.
+
+      `order` indicates either that the (scalar) potential
+      (order = 0) or the (vector) residual (order = 1) or the
+      tangent (matrix) (order = 2) is to be computed. 
+
+      The variables and constant (data) are listed after the
+      region number. For each variable/constant, first the variable/constant
+      name should be given (as it is referred in the assembly string), then
+      1 if it is a variable or 0 for a constant, then the finite element
+      method if it is a fem variable/constant, and the vector representing
+      the value of the variable/constant. It is possible to give an arbitrary
+      number of variable/constant. The difference between a variable and a
+      constant is that automatic differentiation is done with respect to
+      variables only (see Getfem++ user documentation). Test functions are
+      only available for variables, not for constants.
+
+      Note that if several variables are given, the assembly of the
+      tangent matrix/residual vector will be done considering the order
+      in the call of the function (the degrees of freedom of the first
+      variable, then of the second, and so on).
+
+      For example, the L2 norm of a vector field "u" can be computed with::
+
+        ::COMPUTE('L2 norm') or with the square root of:
+
+        ::ASM('generic', 0, mim, "u.u", -1, "u", 1, mf, U);
+
+      The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
+
+        ::ASM('laplacian', mim, mf, mf_data, A) or equivalently with:
+
+        ::ASM('generic', 2, mim, 'A*Grad_Test2_u.Grad_Test_u', -1, "u", 1, mf, U, "A", 0, mf_data, A);
+
+        @*/
+    sub_command
+      ("generic", 4, -1, 0, -1,
+       do_high_level_generic_assembly(in, out);
+       );
+
 
     /*@FUNC @CELL{...} = ('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])
-      Generic assembly procedure for volumic assembly.
+      Low-level generic assembly procedure for volumic assembly.
 
       The expression `expr` is evaluated over the @tmf's listed in the
       arguments (with optional data) and assigned to the output arguments.
@@ -904,15 +1027,15 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
       For example, the L2 norm of a field can be computed with::
 
-        ::COMPUTE('L2 norm') or with:
+        ::COMPUTE('L2 norm') or with the square root of:
 
         ::ASM('volumic','u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)
 
       The Laplacian stiffness matrix can be evaluated with::
 
-        ::ASM('laplacian',mim, mf, A) or equivalently with:
+        ::ASM('laplacian',mim, mf, mf_data, A) or equivalently with:
 
-        ::ASM('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf, A);@*/
+        ::ASM('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf,mf_data,A);@*/
     sub_command
       ("volumic", 2, -1, 0, -1,
        do_generic_assembly(in, out, false);
@@ -920,7 +1043,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
 
     /*@FUNC @CELL{...} = ('boundary', @int bnum, @str expr [, @tmim mim, @tmf mf, data...])
-      Generic boundary assembly.
+      Low-level generic boundary assembly.
 
       See the help for ::ASM('volumic').@*/
     sub_command

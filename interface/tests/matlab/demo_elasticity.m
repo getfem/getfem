@@ -15,15 +15,15 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
+clear all;
 % parameters
 d = 2;                 % dimension (cannot be changed for the moment)
 clambda = 1; cmu = 1;  % Lame coefficients
-dirichlet_version = 2; % 1 = With multipliers, 2 = Nitsche's method
+dirichlet_version = 1; % 1 = With multipliers, 2 = Nitsche's method
 theta = 0;             % Nitsche's method parameter theta
 gamma0 = 0.0001;       % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 incompressible = 1;    % Test with incompressibility or not
-NX = 40;
+NX = 100;
 
 % trace on;
 gf_workspace('clear all');
@@ -74,6 +74,9 @@ md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambda', [clambda]);
+% gf_model_set(md, 'add linear generic assembly brick', mim, ...
+%       '(clambda*Trace(Grad_Test_u)*Id(qdim(u)) +
+%       cmu*(Grad_Test_u''+Grad_Test_u)):Grad_Test2_u');
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
 if (incompressible)
   gf_model_set(md, 'add fem variable', 'p', mfp);
@@ -93,8 +96,10 @@ else
 end
 
 % gf_model_get(md, 'test tangent matrix', 1e-6, 10, 0.1);
+tic;    
 gf_model_get(md, 'solve', 'noisy', 'max iter', 1);
 U = gf_model_get(md, 'variable', 'u');
+toc;
 
 figure(1);
 subplot(1+incompressible, 2, 1);

@@ -24,7 +24,7 @@ draw = true;
 
 % trace on;
 gf_workspace('clear all');
-NX = 20;
+NX = 4;
 m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 %m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
 
@@ -49,7 +49,6 @@ end
 Uexact = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1)+x.^5' });
 % its second derivative
 F      = gf_mesh_fem_get(mf, 'eval', { '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)' });
-
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);

@@ -2594,7 +2594,7 @@ namespace getfem {
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
 
-    typedef std::pair<const mesh_im *, size_type> region_mim;
+    typedef std::pair<const mesh_im *, const mesh_region *> region_mim;
 
     std::map<std::string, const base_vector *> extended_vars;
     std::map<std::string, base_vector> really_extended_vars;
@@ -2640,7 +2640,7 @@ namespace getfem {
   static void ga_semantic_analysis(const std::string &, ga_tree &,
                                    const ga_workspace &, size_type, bool);
   static void ga_split_tree(const std::string &, ga_tree &,
-                            ga_workspace &, pga_tree_node);
+                            ga_workspace &, pga_tree_node, int = 1);
   static void ga_derivation(ga_tree &, const ga_workspace &,
                             const std::string &, size_type);
   static bool ga_node_mark_tree_for_variable(pga_tree_node,
@@ -2649,23 +2649,30 @@ namespace getfem {
   static void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
                          size_type order);
 
-  static void ga_extract_variables(pga_tree_node pnode,
+  static bool ga_extract_variables(pga_tree_node pnode,
                                    ga_workspace &workspace, 
-                                   std::set<std::string> &vars) {
+                                   std::set<std::string> &vars,
+                                   bool ignore_data = true) {
+    bool found_var = false;
     if ((pnode->node_type == GA_NODE_VAL ||
          pnode->node_type == GA_NODE_GRAD ||
-         pnode->node_type == GA_NODE_HESS) &&
-        !(workspace.is_constant(pnode->name)))
-      vars.insert(pnode->name);
+         pnode->node_type == GA_NODE_HESS)) {
+      bool iscte = workspace.is_constant(pnode->name);
+      if (!iscte) found_var = true;
+      if (!ignore_data || !iscte)
+        vars.insert(pnode->name);
+    }
     for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_extract_variables(pnode->children[i], workspace, vars);
+      found_var = found_var ||
+        ga_extract_variables(pnode->children[i], workspace, vars);
+    return found_var;
   }
 
   ga_workspace::tree_description::tree_description(void)
   { ptree = 0; }
 
   void ga_workspace::add_tree(ga_tree &tree, const mesh_im &mim,
-                              size_type region, const std::string expr) {
+                              const mesh_region &rg, const std::string expr) {
     if (tree.root) {
       
       // cout << "adding tree: "; ga_print_tree(tree);
@@ -2707,7 +2714,7 @@ namespace getfem {
       if (!found) {
         ind_tree = trees.size(); remain = false;
         trees.push_back(tree_description());
-        trees.back().mim = &mim; trees.back().region = region;
+        trees.back().mim = &mim; trees.back().rg = rg;
         trees.back().ptree = new ga_tree;
         trees.back().ptree->swap(tree);
         pga_tree_node root = trees.back().ptree->root;
@@ -2732,7 +2739,7 @@ namespace getfem {
             // cout << "result: "; ga_print_tree(dtree);
             ga_semantic_analysis(expr, dtree, *this, mim.linked_mesh().dim(),
                                  false);
-            add_tree(dtree, mim, region, expr);
+            add_tree(dtree, mim, rg, expr);
           }
         }
       }
@@ -2746,8 +2753,10 @@ namespace getfem {
     aux_trees.clear();
   }
 
-  void ga_workspace::add_expression(const std::string expr,
-                                    const mesh_im &mim, size_type region) {
+  size_type ga_workspace::add_expression(const std::string expr,
+                                         const mesh_im &mim,
+                                         const mesh_region &rg) {
+    size_type max_order = 0;
     ga_tree tree;
     ga_read_string(expr, tree);
     ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(), false);
@@ -2755,12 +2764,18 @@ namespace getfem {
       ga_split_tree(expr, tree, *this, tree.root);
       
       for (std::list<ga_tree *>::iterator it = aux_trees.begin();
-           it != aux_trees.end(); ++it)
-        add_tree(*(*it), mim, region, expr);
+           it != aux_trees.end(); ++it) {
+        if ((*it)->root)
+          max_order = std::max((*it)->root->nb_test_functions(), max_order);
+        add_tree(*(*it), mim, rg, expr);
+      }
       
-      add_tree(tree, mim, region, expr);
+      if (tree.root)
+        max_order = std::max(tree.root->nb_test_functions(), max_order);
+      add_tree(tree, mim, rg, expr);
       clear_aux_trees();
     }
+    return max_order;
   }
 
   void ga_workspace::clear_expressions(void) {
@@ -2781,21 +2796,36 @@ namespace getfem {
   
   // TODO: methods to add a function or an operator
   
-  ga_workspace::ga_workspace(const getfem::model &md) : model(&md) {
-    K = new model_real_sparse_matrix(2,2);
-    V = new base_vector(2);
-    K_to_delete = V_to_delete = true;
+  bool ga_workspace::used_variables(model::varnamelist &vl,
+                                    model::varnamelist &dl,
+                                    size_type order) {
+    bool islin = true;
+    std::set<std::string> vll, dll;
+    for (size_type i = 0; i < vl.size(); ++i) vll.insert(vl[i]);
+    for (size_type i = 0; i < dl.size(); ++i) dll.insert(dl[i]);
+    
+    for (size_type i = 0; i < trees.size(); ++i) {
+      ga_workspace::tree_description &td = trees[i];
+      if (td.order == order) {
+        bool fv = ga_extract_variables(td.ptree->root, *this, dll, false);
+        switch (td.order) {
+        case 0: break;
+        case 1: vll.insert(td.name_test1); break;
+        case 2: vll.insert(td.name_test1);  vll.insert(td.name_test2);
+          if (fv) islin = false;
+          break;
+        }
+      }
+    }
+    vl.clear();
+    for (std::set<std::string>::iterator it=vll.begin(); it!=vll.end(); ++it)
+      vl.push_back(*it);
+    dl.clear();
+    for (std::set<std::string>::iterator it=dll.begin(); it!=dll.end(); ++it)
+      dl.push_back(*it);
+    return islin;
   }
-  ga_workspace::ga_workspace(void) : model(0) {
-    K = new model_real_sparse_matrix(2,2);
-    V = new base_vector(2);
-    K_to_delete = V_to_delete = true;
-  }
-  ga_workspace::~ga_workspace() {
-    if (K_to_delete) delete K;
-    if (V_to_delete) delete V;
-    clear_expressions();
-  }
+  
 
   void ga_workspace::assembly(size_type order) {
     ga_instruction_set gis;
@@ -2824,7 +2854,7 @@ namespace getfem {
             std::string &name = it->root->name_test1;
             const mesh_fem *mf = associated_mf(name);
             if (mf->is_reduced() &&
-                vars_vec_done.find(&name) != vars_vec_done.end()) {
+                vars_vec_done.find(&name) == vars_vec_done.end()) {
               gmm::mult(gmm::transposed(mf->extension_matrix()),
                         gmm::sub_vector(unreduced_V, gis.var_intervals[name]),
                         gmm::sub_vector(*V, interval_of_variable(name)));
@@ -2838,7 +2868,7 @@ namespace getfem {
             const mesh_fem *mf1 = associated_mf(name1);
             const mesh_fem *mf2 = associated_mf(name2);
             if ((mf1->is_reduced() || mf2->is_reduced()) &&
-                vars_mat_done.find(p) != vars_mat_done.end()) {
+                vars_mat_done.find(p) == vars_mat_done.end()) {
               gmm::sub_interval uI1 = gis.var_intervals[name1];
               gmm::sub_interval uI2 = gis.var_intervals[name2];
               gmm::sub_interval I1 = interval_of_variable(name1);
@@ -2866,7 +2896,21 @@ namespace getfem {
     }
   }
 
-
+  ga_workspace::ga_workspace(const getfem::model &md) : model(&md) {
+    K = new model_real_sparse_matrix(2,2);
+    V = new base_vector(2);
+    K_to_delete = V_to_delete = true;
+  }
+  ga_workspace::ga_workspace(void) : model(0) {
+    K = new model_real_sparse_matrix(2,2);
+    V = new base_vector(2);
+    K_to_delete = V_to_delete = true;
+  }
+  ga_workspace::~ga_workspace() {
+    if (K_to_delete) delete K;
+    if (V_to_delete) delete V;
+    clear_expressions();
+  }
 
   //=========================================================================
   // Some hash code functions for node identification
@@ -3561,7 +3605,7 @@ namespace getfem {
         } else if (nbc2 == 1 && nbc3 == 1) {
           mi.push_back(nbl); mi.push_back(nbc1); 
           pnode->t.adjust_sizes(mi);
-          if (all_cte) // TODO: vérifier ordre
+          if (all_cte) // TODO: verify order
             for (size_type i = 0; i < nbl; ++i)
               for (size_type j = 0; j < nbc1; ++j)
                 pnode->t(i,j) = pnode->children[i*nbc1+j]->t[0];
@@ -3570,7 +3614,7 @@ namespace getfem {
           mi.push_back(nbc2); mi.push_back(nbc1);
           pnode->t.adjust_sizes(mi);
           size_type n = 0;
-          if (all_cte) // TODO: vérifier ordre
+          if (all_cte) // TODO: verify order
             for (size_type i = 0; i < nbl; ++i)
               for (size_type j = 0; j < nbc3; ++j)
                 for (size_type k = 0; k < nbc2; ++k)
@@ -4134,10 +4178,10 @@ namespace getfem {
 
   static void ga_split_tree(const std::string &expr, ga_tree &tree,
                             ga_workspace &workspace,
-                            pga_tree_node pnode) {
+                            pga_tree_node pnode, int sign) {
     
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_split_tree(expr, tree, workspace, pnode->children[i]);
+//     for (size_type i = 0; i < pnode->children.size(); ++i)
+//       ga_split_tree(expr, tree, workspace, pnode->children[i]);
     
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
@@ -4150,6 +4194,11 @@ namespace getfem {
 
       case GA_PLUS: case GA_MINUS:
         {
+          int mult = (pnode->op_type == GA_MINUS) ? -1 : 1;
+          int sign0 = sign, sign1 = sign * mult;
+          ga_split_tree(expr, tree, workspace, child0, sign0);
+          ga_split_tree(expr, tree, workspace, child1, sign1);
+
           bool compatible = true;
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
@@ -4162,6 +4211,11 @@ namespace getfem {
             ga_tree aux_tree;
             aux_tree.root = child1;
             child1->parent = 0;
+            if (sign1 < 0) {
+              aux_tree.insert_node(child1);
+              child1->parent->node_type = GA_NODE_OP;
+              child1->parent->op_type = GA_UNARY_MINUS;
+            }
             
             pnode->children.pop_back();
             tree.replace_node_by_child(pnode, 0);
@@ -5096,7 +5150,7 @@ namespace getfem {
         if (root) {
           // cout << "compiling tree: "; ga_print_tree(gis.trees.back());
           // Compiling tree
-          ga_instruction_set::region_mim rm(td.mim, td.region);
+          ga_instruction_set::region_mim rm(td.mim, &(td.rg));
           ga_compile_node(root, workspace, gis,
                           gis.whole_instructions[rm], td.mim);
          
@@ -5190,7 +5244,7 @@ namespace getfem {
       const getfem::mesh &mesh = mim.linked_mesh();
       size_type P = mesh.dim();
       ga_instruction_list &gil = it->second.instructions;
-      mesh_region region(it->first.second);
+      mesh_region region(*(it->first.second));
       
       // iteration on elements (or faces of elements)
       for (getfem::mr_visitor v(region, mesh); !v.finished(); ++v) {

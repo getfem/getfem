@@ -371,7 +371,7 @@ namespace getfem {
 
 
     /* Return the mean outward unit normal vector of the given convex
-       face computed on the vertices of the face.
+       face computed on the geometrical nodes of the face.
 
        @param ic the convex number.
        @param f the face number.
@@ -649,6 +649,9 @@ namespace getfem {
   inline mesh_region outer_faces_of_mesh(const mesh &m)
   { mesh_region fl; outer_faces_of_mesh(m,m.convex_index(),fl); return fl; }
 
+  /** Select in the region mr the faces of the mesh m with their unit
+      outward vector having a maximal angle "angle" with the vector V.
+   */ 
   mesh_region select_faces_of_normal(const mesh &m, const mesh_region &mr,
                                      const base_small_vector &V,
                                      scalar_type angle);

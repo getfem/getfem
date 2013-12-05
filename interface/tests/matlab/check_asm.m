@@ -23,10 +23,12 @@ function check_asm(iverbose,idebug)
     if (nargin == 2),
       gdebug = idebug;
     else 
-      gdebug = 0; end;
+      gdebug = 0;
+    end;
   else 
-    gverbose = 0;
+    gverbose = 0; gdebug = 0;
   end;
+
   gf_workspace('clear all');
   p=[0 1 0 1.5; 0 0 1 1];
   t=[1 2 3 0; 2 3 4 0]';
@@ -38,16 +40,15 @@ function check_asm(iverbose,idebug)
   zzz=rand(200,22);
   zz=zz+zz;
   
-  mf=gf_mesh_fem(m,1);
-  mim=gf_mesh_im(m,gf_integ('IM_EXACT_SIMPLEX(2)'));
-  asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf)');
-  mf3=gf_mesh_fem(m,3);
-  gf_mesh_fem_set(mf,'fem',gf_fem('FEM_PK(2,1)'));
-  gf_mesh_fem_set(mf3,'fem',gf_fem('FEM_PK(2,2)'));
-  gf_mesh_im_set(mim,'integ',gf_integ('IM_TRIANGLE(3)'));
-  v=gf_asm('volumic','V(#1)+=comp(Base(#1).Base(#1)(i))',mim,mf)
-  asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#2))'',mf)');
   
+  mf=gf_mesh_fem(m,1);
+  mim=gf_mesh_im(m);
+  mf3=gf_mesh_fem(m,3);
+  gf_mesh_fem_set(mf,'fem', gf_fem('FEM_PK(2,1)'));
+  gf_mesh_fem_set(mf3,'fem', gf_fem('FEM_PK(2,2)'));
+  gf_mesh_im_set(mim,'integ',gf_integ('IM_TRIANGLE(3)'));
+  v=gf_asm('volumic','V(#1)+=comp(Base(#1).Base(#1)(i))',mim,mf);
+  asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#2))'',mf)');
   a = gf_compute(mf,v','l2 norm',mim);
   b = gf_compute(mf,1i*v','l2 norm',mim);
   gfassert('a==b');
@@ -60,7 +61,6 @@ function check_asm(iverbose,idebug)
   X=gf_asm('volumic','V(#1,#1,#1,#1)+=comp(Base(#1).Base(#1).Base(#1).Base(#1))',mim,mf);
   gfassert('size(X)==[4 4 4 4]');
   X=gf_asm('volumic','M(#1,#2)+=comp(Grad(#1).vBase(#2))(:,z,:,i)',mim,mf,mf3);
-
   gfassert('size(X)==[4 27]');
   gfassert('abs(sum(sum(abs(X)))-10.5) < 8e-15');
   asserterr('gf_asm(''volumic'',''V(#1)+=comp(Base(#1))'',mim,mf3)');
@@ -96,3 +96,14 @@ function check_asm(iverbose,idebug)
   gfassert('max(max(abs(full(HH)-[0 -sqrt(2)/2; 0 sqrt(2)/2; 1 0; 0 0]))) < 1e-15');
 
   gfassert('max(abs(RR-[20 20 0 1]))<1e-14');
+  
+  % Test on high level generic assembly
+  V = ones(1, gf_mesh_fem_get(mf, 'nbdof'));
+  K = gf_asm('generic', mim, 2, 'Grad_u.Grad_u/2', -1, 'u', 1, mf, V);
+  K2 = gf_asm('laplacian', mim, mf, mf, V);
+  gfassert('norm(K-K2, inf) < 1E-12');
+  
+  
+  
+  
+  

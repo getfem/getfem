@@ -161,7 +161,7 @@ namespace getfem {
       size_type order; // 0: potential, 1: weak form, 2: tangent operator
       std::string name_test1, name_test2;
       const mesh_im *mim;
-      size_type region;
+      mesh_region rg;
       ga_tree *ptree;
       base_vector elem;
       tree_description(void);
@@ -177,7 +177,7 @@ namespace getfem {
     std::vector<tree_description> trees;
     std::list<ga_tree *> aux_trees;
 
-    void add_tree(ga_tree &tree, const mesh_im &mim, size_type region,
+    void add_tree(ga_tree &tree, const mesh_im &mim, const mesh_region &rg,
                   const std::string expr);
     void clear_aux_trees(void);
 
@@ -203,9 +203,12 @@ namespace getfem {
     { return unreduced_K; }
     base_vector &unreduced_vector(void) { return unreduced_V; }
     
-
-    void add_expression(const std::string expr, const mesh_im &mim,
-                        size_type region = size_type(-1));
+    /** Add an expression, perform the semantic analysis, split into
+     *  terms in separated test functions, derive if necessary to obtain
+     *  the tangent terms. Return the maximal order found in the expression.
+     */
+    size_type add_expression(const std::string expr, const mesh_im &mim,
+                            const mesh_region &rg=mesh_region::all_convexes());
     void clear_expressions(void);
     
 
@@ -254,6 +257,9 @@ namespace getfem {
       variables[name] = var_description(false, false, 0,
                                         gmm::sub_interval(), &VV);
     }
+
+    bool used_variables(model::varnamelist &vl, model::varnamelist &dl,
+                        size_type order);
 
     bool variable_exists(const std::string &name) const {
       if (model)

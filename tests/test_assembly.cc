@@ -23,6 +23,7 @@
 #include "getfem/getfem_generic_assembly.h"
 #include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
+#include "getfem/getfem_partial_mesh_fem.h"
 #include "getfem/getfem_mat_elem.h"
 #include "gmm/gmm.h"
 #ifdef GETFEM_HAVE_SYS_TIMES
@@ -886,7 +887,7 @@ static void test_new_assembly(void) {
     // std::string expr = "(3*(1*Grad_u)).Grad_Test_u*2 + 0*[1;2].Grad_Test_u + c*Grad_Test_u(1) + [u;1](1)*Test_u";
     // std::string expr = "-(4+(2*3)+2*(1+2))/-(-3+5)"; // should give 8
     // std::string expr="[1,2;3,4]@[1,2;1,2]*(Grad_u@Grad_u)/4 + [1,2;3,1]*[1;1](1)";
-    std::string expr = "Test_u.Test2_u";
+    // std::string expr = "Test_u.Test2_u";
 
     getfem::ga_workspace workspace;
 
@@ -899,9 +900,9 @@ static void test_new_assembly(void) {
     
     getfem::mesh m;
 
-    size_type N = 3;
-    size_type NX = 10;
-    size_type pK = 2;
+    int N = 2;
+    int NX = 15;
+    int pK = 2;
 
     char Ns[5]; sprintf(Ns, "%d", N);
     char Ks[5]; sprintf(Ks, "%d", pK);
@@ -915,7 +916,7 @@ static void test_new_assembly(void) {
     const size_type NEUMANN_BOUNDARY_NUM = 1;
     const size_type DIRICHLET_BOUNDARY_NUM = 2;
 
-    base_small_vector Dir(0.0, 0.0, 1.0);
+    base_small_vector Dir(N); Dir[N-1] = 1.0;
     getfem::mesh_region border_faces = getfem::outer_faces_of_mesh(m);
     getfem::mesh_region Neumann_faces
       = getfem::select_faces_of_normal(m, border_faces, Dir, 0.1);
@@ -946,7 +947,7 @@ static void test_new_assembly(void) {
     gmm::fill_random(U);
     std::vector<scalar_type> A(mf_u.nb_dof()*N);
     gmm::fill_random(A);
-    std::vector<scalar_type> P(mf_p.nb_dof(), 1.);
+    std::vector<scalar_type> P(mf_p.nb_dof());
     gmm::fill_random(P);
     size_type ndofu = mf_u.nb_dof(), ndofp = mf_p.nb_dof();
     cout << "ndofu = " << ndofu << " ndofp = " << ndofp << endl;
@@ -957,13 +958,28 @@ static void test_new_assembly(void) {
     workspace.add_fem_variable("u", mf_u, Iu, U);
     workspace.add_fem_constant("A", mf_u, A);
     workspace.add_fem_variable("p", mf_p, Ip, P);
+
+    getfem::partial_mesh_fem mf_chi(mf_p);
+    dal::bit_vector kept_dof
+      = mf_p.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM);
+    mf_chi.adapt(kept_dof);
+
+    size_type ndofchi = mf_chi.nb_dof();
+    cout << "ndofchi = " << ndofchi << endl;
+    std::vector<scalar_type> chi(ndofchi);
+    gmm::fill_random(chi);
+    gmm::sub_interval Ichi(ndofu+ndofp, ndofchi);
+    workspace.add_fem_variable("chi", mf_chi, Ichi, chi);
+    
+
     
     chrono ch;
 
     cout << "\n\nTests in dimension " << N << endl << endl;
 
+    bool all = true;
 
-    if (1) {
+    if (all) {
       SCAL_TEST_0("Test on function integration 1",
                   "1", mim, 1);
       SCAL_TEST_0("Test on function integration 1",
@@ -974,7 +990,7 @@ static void test_new_assembly(void) {
                   "cos(pi*x).Id(meshdim)(:,1)", mim,0);
     }
 
-    if (1) {
+    if (all) {
       SCAL_TEST_1("Test on L2 norm", "u.u", mim,
                   gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
 
@@ -992,7 +1008,7 @@ static void test_new_assembly(void) {
       }
     }
 
-    if (1) {
+    if (all) {
       SCAL_TEST_1("Test on H1 semi-norm", "Grad_u:Grad_u", mim2,
                   gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
 
@@ -1020,7 +1036,7 @@ static void test_new_assembly(void) {
     }
 
 
-    if (1) {
+    if (all) {
       VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
                  Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
 
@@ -1028,19 +1044,12 @@ static void test_new_assembly(void) {
 
     }
 
-    if (1) {
+    if (all) {
 
       {VEC_TEST_1("Test for Neumann term", ndofu, "u.Test_u",
                   mim, NEUMANN_BOUNDARY_NUM,
                   Iu, getfem::asm_source_term(V, mim, mf_u, mf_u,
                                               U, NEUMANN_BOUNDARY_NUM));}
-
-//       {VEC_TEST_1("Test for Neumann term", ndofu,
-//                   "(Print(Print((Reshape(Print(A),meshdim,meshdim))')*Normal)+Print(Print([A(1), A(4), A(7); A(2), A(5), A(8); A(3), A(6), A(9)])*Normal)).Test_u/2",
-//                   mim, NEUMANN_BOUNDARY_NUM,
-//                   Iu, getfem::asm_source_term(V, mim, mf_u, mf_u,
-//                                               U, NEUMANN_BOUNDARY_NUM));}
-
 
       {VEC_TEST_1("Test for Neumann term", ndofu,
                   "(((Reshape(A,meshdim,meshdim))')*Normal).Test_u",
@@ -1060,23 +1069,25 @@ static void test_new_assembly(void) {
                   "*Normal).Test_u", mim, NEUMANN_BOUNDARY_NUM,
                   Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
                                                  A, NEUMANN_BOUNDARY_NUM));}
-      
-      
+    }
 
-
-
+    if (all) {
+      {VEC_TEST_1("Test for Neumann term with reduced fem", ndofchi,
+                  "p*Test_chi", mim, DIRICHLET_BOUNDARY_NUM,
+                  Ichi, getfem::asm_source_term(V, mim, mf_chi, mf_p,
+                                                P, DIRICHLET_BOUNDARY_NUM));}
     }
 
 
 
 
 
-    if (1) {
+    if (all) {
       MAT_TEST_1("Test for Mass matrix", ndofu, ndofu, "Test_u.Test2_u", mim,
                  Iu, Iu,  getfem::asm_mass_matrix(K, mim, mf_u));
     }
 
-    if (1) {
+    if (all) {
       MAT_TEST_1("Test for Laplacian stiffness matrix", ndofp, ndofp,
              "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
              getfem::asm_stiffness_matrix_for_homogeneous_laplacian
@@ -1095,12 +1106,13 @@ static void test_new_assembly(void) {
                    "(Grad_p(1)*Grad_p(1) + Grad_p(2)*Grad_p(2)"
                    "+ Grad_p(3)*Grad_p(3))/2", mim2, Ip, Ip);
         MAT_TEST_2(ndofp, ndofp,
-                   "([Grad_p(1); Grad_p(3); Grad_p(2)].[Grad_p(1); Grad_p(3); Grad_p(2)])/2",
+                   "([Grad_p(1); Grad_p(3); Grad_p(2)]."
+                   "[Grad_p(1); Grad_p(3); Grad_p(2)])/2",
                    mim2, Ip, Ip);
       }
     }
 
-    if (1) {
+    if (all) {
       base_vector lambda(1); lambda[0] = 3.0;
       workspace.add_fixed_size_constant("lambda", lambda);
       base_vector mu(1); mu[0] = 2.0;
@@ -1133,7 +1145,7 @@ static void test_new_assembly(void) {
                  mim2, Iu, Iu);
     }
 
-    if (1) {
+    if (all) {
       base_vector lambda2(ndofp, 3.0);
       workspace.add_fem_constant("lambda2", mf_p, lambda2);
       base_vector mu2(ndofp, 2.0);
@@ -1146,10 +1158,6 @@ static void test_new_assembly(void) {
                  getfem::asm_stiffness_matrix_for_linear_elasticity
                  (K, mim2, mf_u, mf_p, lambda2, mu2));
     }
-
-
-
-    // + faire un test sur un bord avec un fem réduit ...
 
 }
 

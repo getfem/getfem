@@ -28,6 +28,7 @@
 #include "getfem/getfem_assembling.h"
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_interpolation.h"
+#include "getfem/getfem_generic_assembly.h"
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H
 #include <muParser/muParser.h>
 #elif GETFEM_HAVE_MUPARSER_H
@@ -1131,9 +1132,11 @@ namespace getfem {
       || !(brick.pbr->is_linear());
 
     // check variable list to test if a mesh_fem as changed.
-    for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
-      var_description &vd = variables[brick.vlist[i]];
-      if (vd.v_num > brick.v_num) tobecomputed = true;
+    if (!tobecomputed ) {
+      for (size_type i = 0; i < brick.vlist.size() && !tobecomputed; ++i) {
+        var_description &vd = variables[brick.vlist[i]];
+        if (vd.v_num > brick.v_num) tobecomputed = true;
+      }
     }
 
     // check data list to test if a vector value of a data has changed.
@@ -1286,6 +1289,7 @@ namespace getfem {
       if (version & BUILD_PSEUDO_POTENTIAL) pseudo_potential_ = scalar_type(0);
     }
     clear_dof_constraints();
+    generic_expressions.clear();
 
     if (version & BUILD_RHS) approx_external_load_ = scalar_type(0);
 
@@ -1511,6 +1515,51 @@ namespace getfem {
       if (is_complex()) MPI_SUM_VECTOR(crhs); else MPI_SUM_VECTOR(rrhs);
     }
 
+    if (version & BUILD_PSEUDO_POTENTIAL) {
+      pseudo_potential_ = MPI_SUM_SCALAR(pseudo_potential_);
+    }
+
+    // Generic expressions
+    if (generic_expressions.size()) {
+      ga_workspace workspace(*this);
+
+      std::map<std::pair<const mesh *, size_type>,  mesh_region> mpi_reg;
+      
+      for (std::list<gen_expr>::iterator it = generic_expressions.begin();
+             it != generic_expressions.end(); ++it) {
+
+        std::pair<const mesh *, size_type>
+          pms(&(it->mim.linked_mesh()), it->region);
+        if (mpi_reg.find(pms) == mpi_reg.end()) {
+          mesh_region rg(it->region);
+          it->mim.linked_mesh().intersect_with_mpi_region(rg);
+          mpi_reg[pms] = rg;
+        }
+
+        workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
+      }
+
+      if (version & BUILD_RHS) {
+        if (is_complex()) {
+          GMM_ASSERT1(false, "to be done");
+        } else {
+          model_real_plain_vector residual(gmm::vect_size(rrhs));
+          workspace.set_assembled_vector(residual);
+          workspace.assembly(1);
+          gmm::add(gmm::scaled(residual, scalar_type(-1)), rrhs);
+        }
+      }
+
+      if (version & BUILD_MATRIX) {
+        if (is_complex()) {
+          GMM_ASSERT1(false, "to be done");
+        } else {
+          workspace.set_assembled_matrix(rTM);
+          workspace.assembly(2);
+        }
+      }
+
+    }
 
     // Post simplification for dof constraints
     if ((version & BUILD_RHS) || (version & BUILD_MATRIX)) {
@@ -1874,6 +1923,275 @@ namespace getfem {
           << std::endl;
       }
     }
+  }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Linear generic assembly brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct gen_linear_assembly_brick : public virtual_brick {
+
+    bool has_pot;
+    std::string expr;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const {
+      GMM_ASSERT1(matl.size() == 1,
+                  "Generic linear assembly brick has one and only one term");
+      GMM_ASSERT1(mims.size() == 1,
+                  "Generic linear assembly brick needs one and only one "
+                  "mesh_im");
+
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0);
+      for (size_type i = 0; i < dl.size(); ++i)
+        recompute_matrix = recompute_matrix ||
+          md.is_var_newer_than_brick(dl[i], ib);
+
+      if (recompute_matrix) {
+        ga_workspace workspace(md);
+        mesh_region rg(region);
+        mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+        workspace.add_expression(expr, *(mims[0]), rg);
+        gmm::clear(matl[0]);
+        workspace.set_assembled_matrix(matl[0]);
+        workspace.assembly(2);
+      }
+    }
+
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+                                                  const model::varnamelist &,
+                                                  const model::varnamelist &,
+                                                  const model::mimlist &mims,
+                                                  model::real_matlist &,
+                                                  model::real_veclist &,
+                                                  model::real_veclist &,
+                                                  size_type region) const {
+      // TODO: It could be possible to simplify by not invocating the assembly
+      if (!has_pot)
+        GMM_WARNING1("Brick " << name << " has a priori no contribution to "
+                     << "the pseudo potential !");
+      GMM_TRACE2("Generic linear term assembly");
+      ga_workspace workspace(md);
+      mesh_region rg(region);
+      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      workspace.add_expression(expr, *(mims[0]), rg);
+      workspace.assembly(0);
+      return workspace.assembled_potential();
+
+      // const model_real_plain_vector &u = md.real_variable(vl[0]);
+      // return gmm::vect_sp(matl[0], u, u) / scalar_type(2);
+    }
+
+
+    gen_linear_assembly_brick(const std::string &expr_, bool is_sym,
+                              bool is_coer, bool has_pot_,
+                              std::string brickname = "") {
+      if (brickname.size() == 0) brickname = "Generic linear assembly brick";
+      expr = expr_;
+      has_pot = has_pot_;
+      set_flags(brickname, true /* is linear*/,
+                is_sym /* is symmetric */, is_coer /* is coercive */,
+                true /* is real */, false /* is complex */);
+    }
+
+  };
+
+  size_type add_linear_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   bool is_sym, bool is_coercive, std::string brickname) {
+
+    ga_workspace workspace(md);
+    size_type order = workspace.add_expression(expr, mim, region);
+    model::varnamelist vl, dl;
+    workspace.used_variables(vl, dl, 2);
+    if (order == 0) { is_coercive = is_sym = true; }
+    pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
+                                               (order == 0), brickname);
+    model::termlist tl; // A unique global term
+    tl.push_back(model::term_description(true, is_sym));
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Nonlinear generic assembly brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct gen_nonlinear_assembly_brick : public virtual_brick {
+
+    bool has_pot;
+    std::string expr;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version) const {
+      GMM_ASSERT1(mims.size() == 1,
+                  "Generic linear assembly brick needs one and only one "
+                  "mesh_im");
+      md.add_generic_expression(expr, *(mims[0]), region);
+    }
+
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+                                                  const model::varnamelist &,
+                                                  const model::varnamelist &,
+                                                  const model::mimlist &mims,
+                                                  model::real_matlist &,
+                                                  model::real_veclist &,
+                                                  model::real_veclist &,
+                                                  size_type region) const {
+      if (!has_pot)
+        GMM_WARNING1("Brick " << name << " has a priori no contribution to "
+                     << "the pseudo potential !");
+      ga_workspace workspace(md);
+      mesh_region rg(region);
+      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      workspace.add_expression(expr, *(mims[0]), rg);
+      workspace.assembly(0);
+      return workspace.assembled_potential();
+    }
+
+
+    gen_nonlinear_assembly_brick(const std::string &expr_, bool is_sym,
+                                 bool is_coer, bool has_pot_,
+                                 std::string brickname = "") {
+      if (brickname.size() == 0) brickname = "Generic linear assembly brick";
+      expr = expr_;
+      has_pot = has_pot_;
+      set_flags(brickname, false /* is linear*/,
+                is_sym /* is symmetric */, is_coer /* is coercive */,
+                true /* is real */, false /* is complex */);
+    }
+
+  };
+
+  size_type add_nonlinear_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   bool is_sym, bool is_coercive, std::string brickname) {
+
+    ga_workspace workspace(md);
+    size_type order = workspace.add_expression(expr, mim, region);
+    GMM_ASSERT1(order < 2, "Order two test functions (Test2) are not allowed"
+                " in assembly string for nonlinear terms");
+    model::varnamelist vl, dl;
+    workspace.used_variables(vl, dl, 2);
+    if (order == 0) { is_coercive = is_sym = true; }
+    pbrick pbr = new gen_nonlinear_assembly_brick(expr, is_sym, is_coercive,
+                                                  (order == 0), brickname);
+    model::termlist tl; // No term
+    // tl.push_back(model::term_description(true, is_sym));
+    // TODO to be changed.
+
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
+  }
+
+  // ----------------------------------------------------------------------
+  //
+  // Generic assembly source term brick
+  //
+  // ----------------------------------------------------------------------
+
+  struct gen_source_term_assembly_brick : public virtual_brick {
+
+    bool has_pot;
+    std::string expr;
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &,
+                                        model::real_veclist &vecl,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version) const {
+      GMM_ASSERT1(vecl.size() == 1,
+                  "Generic source term assembly brick has one and only "
+                  "one term");
+      GMM_ASSERT1(mims.size() == 1,
+                  "Generic source term assembly brick needs one and only one "
+                  "mesh_im");
+      GMM_TRACE2("Generic source term assembly");
+
+      ga_workspace workspace(md);
+      mesh_region rg(region);
+      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      workspace.add_expression(expr, *(mims[0]), rg);
+      gmm::clear(vecl[0]);
+      workspace.set_assembled_vector(vecl[0]);
+      workspace.assembly(1);
+
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
+    }
+
+    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
+                                                  const model::varnamelist &,
+                                                  const model::varnamelist &,
+                                                  const model::mimlist &mims,
+                                                  model::real_matlist &,
+                                                  model::real_veclist &,
+                                                  model::real_veclist &,
+                                                  size_type region) const {
+      // TODO: It could be possible to simplify by not invocating the assembly
+      if (!has_pot)
+        GMM_WARNING1("Brick " << name << " has a priori no contribution to "
+                     << "the pseudo potential !");
+      ga_workspace workspace(md);
+      mesh_region rg(region);
+      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      workspace.add_expression(expr, *(mims[0]), rg);
+      workspace.assembly(0);
+      return  workspace.assembled_potential();
+
+      // const model_real_plain_vector &u = md.real_variable(vl[0]);
+      // return gmm::vect_sp(matl[0], u, u) / scalar_type(2);
+    }
+
+    gen_source_term_assembly_brick(const std::string &expr_,  bool has_pot_,
+                                   std::string brickname = "") {
+      if (brickname.size() == 0)
+        brickname = "Generic source term assembly brick";
+      expr = expr_;
+      has_pot = has_pot_;
+      set_flags(brickname, true /* is linear*/,
+                true /* is symmetric */, true /* is coercive */,
+                true /* is real */, false /* is complex */);
+    }
+
+  };
+
+  size_type add_source_term_generic_assembly_brick
+  (model &md, const mesh_im &mim, const std::string &expr, size_type region,
+   std::string brickname) {
+
+    ga_workspace workspace(md);
+    size_type order = workspace.add_expression(expr, mim, region);
+    model::varnamelist vl, dl;
+    workspace.used_variables(vl, dl, 2);
+    pbrick pbr = new gen_source_term_assembly_brick(expr, (order == 0),
+                                                    brickname);
+    model::termlist tl; // A unique global vector term
+    tl.push_back(model::term_description(false, true));
+    
+    return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
   
   // ----------------------------------------------------------------------
@@ -2391,7 +2709,7 @@ namespace getfem {
 
       if (dl.size() > 1) gmm::add(md.complex_variable(dl[1]), vecl[0]);
 
-     md. add_external_load(ib, gmm::vect_norm1(vecl[0]));
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
     virtual scalar_type asm_complex_pseudo_potential(const model &md,size_type,
@@ -5101,10 +5419,6 @@ namespace getfem {
     }
 
   };
-
-
-
-
 
   struct iso_lin_elasticity_brick : public virtual_brick {
 
