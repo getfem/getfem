@@ -35,6 +35,7 @@
 #include <boost/math/special_functions/asinh.hpp>
 #include <boost/math/special_functions/atanh.hpp>
 #include <boost/math/special_functions/erf.hpp>
+typedef double (*BoostMathFunction)(double);
 BoostMathFunction const acosh = boost::math::acosh<double>;
 BoostMathFunction const asinh = boost::math::asinh<double>;
 BoostMathFunction const atanh = boost::math::atanh<double>;

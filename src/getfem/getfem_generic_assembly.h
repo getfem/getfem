@@ -45,12 +45,6 @@
 #ifdef _WIN32
 #include <limits>
 #define INFINITY std::numeric_limits<scalar_type>::infinity()
-typedef double (*BoostMathFunction)(double);
-extern BoostMathFunction const acosh;
-extern BoostMathFunction const asinh;
-extern BoostMathFunction const atanh;
-extern BoostMathFunction const erf;
-extern BoostMathFunction const erfc;
 #endif
 
 namespace getfem {
