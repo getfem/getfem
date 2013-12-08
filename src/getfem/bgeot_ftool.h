@@ -38,8 +38,7 @@
 #ifndef BGEOT_FTOOL_H
 #define BGEOT_FTOOL_H
 
-#include <stdio.h>
-#include "dal_basic.h"
+#include <iostream>
 #include <map>
 
 namespace bgeot

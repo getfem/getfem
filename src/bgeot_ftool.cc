@@ -28,7 +28,6 @@
 #  include <unistd.h>
 #endif
 #include <fstream>
-#include "gmm/gmm_def.h"
 
 namespace bgeot {
 
