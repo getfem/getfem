@@ -40,6 +40,7 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 
 namespace bgeot
 {
