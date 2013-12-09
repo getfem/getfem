@@ -317,7 +317,7 @@ namespace getfem {
       if (version == 0) {
         coeff.resize(qqdim);
         for (size_type qq=0; qq < qqdim; ++qq) {
-          coeff[qq].resize(nbd_s*qdim);
+          coeff[qq].resize(cvnbdof);
           itdof = mf_source.ind_basic_dof_of_element(cv).begin();
           for (size_type k = 0; k < cvnbdof; ++k, ++itdof) {
             coeff[qq][k] = U[(*itdof)*qqdim+qq];
@@ -446,11 +446,14 @@ namespace getfem {
                                     size_type(-1));
       if (version == 0) {
         coeff.resize(qqdim);
+        size_type cvnbdof = mf_source.nb_basic_dof_of_element(cv);
+        mesh_fem::ind_dof_ct::const_iterator itdof;
         for (size_type qq=0; qq < qqdim; ++qq) {
-          slice_vector_on_basic_dof_of_element(mf_source, U, cv, coeff[qq]);
-          // coeff[qq].resize(mf_source.nb_basic_dof_of_element(cv));
-          // gmm::sub_index SUBI(mf_source.ind_basic_dof_of_element(cv));
-          // gmm::copy(gmm::sub_vector(U, SUBI), coeff[qq]);
+          coeff[qq].resize(cvnbdof);
+          itdof = mf_source.ind_basic_dof_of_element(cv).begin();
+          for (size_type k = 0; k < cvnbdof; ++k, ++itdof) {
+            coeff[qq][k] = U[(*itdof)*qqdim+qq];
+          }
         }
       }
       if (version != 0) {
