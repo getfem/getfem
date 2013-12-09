@@ -1104,9 +1104,9 @@ static void test_new_assembly(void) {
 
     if (all) {
       MAT_TEST_1("Test for Laplacian stiffness matrix", ndofp, ndofp,
-             "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
-             getfem::asm_stiffness_matrix_for_homogeneous_laplacian
-             (K, mim2, mf_p));
+                 "Grad_Test_p:Grad_Test2_p", mim2, Ip, Ip,
+                 getfem::asm_stiffness_matrix_for_homogeneous_laplacian
+                 (K, mim2, mf_p));
       MAT_TEST_2(ndofp, ndofp, "(Grad_p:Grad_p)/2", mim2, Ip, Ip);
       if (N == 2) {
         MAT_TEST_2(ndofp, ndofp,
@@ -1116,6 +1116,8 @@ static void test_new_assembly(void) {
                    mim2, Ip, Ip);
         MAT_TEST_2(ndofp, ndofp,
                    "([Grad_p(2); Grad_p(1)].[Grad_p(2); Grad_p(1)])/2",
+                   mim2, Ip, Ip);
+        MAT_TEST_2(ndofp, ndofp, "sqr(Norm([Grad_p(2); Grad_p(1)]))/2",
                    mim2, Ip, Ip);
       }
       if (N == 3) {
