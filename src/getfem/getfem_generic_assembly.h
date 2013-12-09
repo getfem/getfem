@@ -29,7 +29,7 @@
  
 ===========================================================================*/
 
-/** @file getfem_generic_assemblt.h
+/** @file getfem_generic_assembly.h
     @author  Yves Renard <Yves.Renard@insa-lyon.fr>
     @date November 18, 2013.
     @brief A langage for generic assembly of pde boundary value problems.
@@ -74,7 +74,7 @@ namespace getfem {
   typedef std::map<std::string, ga_nonlinear_operator*> ga_predef_operator_tab;
 
   //=========================================================================
-  // Structure dealing with predefined scalar functions.
+  // For user predefined scalar functions.
   //=========================================================================
   
   typedef scalar_type (*pscalar_func_onearg)(scalar_type);
@@ -84,50 +84,23 @@ namespace getfem {
     ga_interval(void) { min = -INFINITY; max = +INFINITY; }
     ga_interval(scalar_type a, scalar_type b) { min = a; max = b; }
   };
-  
-  
-  struct ga_predef_function {
-    size_type ftype; // 0 : C++ function with a derivative
-                     // 1 : C++ function with an expression to be derived
-                     // 2 : function defined by an expression
-    size_type nbargs;         // One or two arguments
-    pscalar_func_onearg f1;   // Function pointer for a one argument function
-    pscalar_func_twoargs f2;  // Function pointer for a two arguments function
-    std::string expr;
-    ga_interval support1, support2;
-    ga_interval domain1, domain2;  // Domain of definition of the function
-    std::string derivative1, derivative2;
-    
-    ga_predef_function(void) {}
-    ga_predef_function(pscalar_func_onearg f, const ga_interval &s,
-                       const ga_interval &dom, const std::string &der)
-      : ftype(0), nbargs(1), f1(f), support1(s), domain1(dom),
-        derivative1(der) {}
-    ga_predef_function(pscalar_func_onearg f, const std::string &e,
-                       const ga_interval &s, const ga_interval &dom)
-      : ftype(1), nbargs(1), f1(f), expr(e), support1(s), domain1(dom) {}
-    ga_predef_function(pscalar_func_twoargs f, const ga_interval &s1,
-                       const ga_interval &s2, const ga_interval &dom1,
-                       const ga_interval &dom2, const std::string &der1,
-                       const std::string &der2)
-      : ftype(0), nbargs(2), f2(f), support1(s1), support2(s2), domain1(dom1),
-        domain2(dom2), derivative1(der1), derivative2(der2) {}
-    ga_predef_function(pscalar_func_twoargs f, const std::string &e,
-                       const ga_interval &s1, const ga_interval &s2,
-                       const ga_interval &dom1, const ga_interval &dom2)
-      : ftype(0), nbargs(2), f2(f), expr(e), support1(s1), support2(s2),
-        domain1(dom1), domain2(dom2) {}
-  };
-  
-  typedef std::map<std::string, ga_predef_function> ga_predef_function_tab;
 
+  void ga_define_function(const std::string name, size_type nb_args,
+                          const std::string expr, const std::string der1="",
+                          const std::string der2="");
+  void ga_define_function(const std::string name, pscalar_func_onearg f,
+                          const std::string der1="");
+  void ga_define_function(const std::string name, pscalar_func_twoargs f2,
+                          const std::string &der1="",
+                          const std::string &der2="");
+ 
+  void ga_undefine_function(const std::string name);
+  bool ga_function_exists(const std::string name);
 
   //=========================================================================
   // Structure dealing with user defined environment : constant, variables,
   // functions, operators.
   //=========================================================================
-
-
 
   class ga_workspace {
     
@@ -153,14 +126,18 @@ namespace getfem {
 
   public:
 
-    struct tree_description {
+    struct tree_description { // CAUTION: Specific copy constructor
       size_type order; // 0: potential, 1: weak form, 2: tangent operator
       std::string name_test1, name_test2;
       const mesh_im *mim;
       mesh_region rg;
       ga_tree *ptree;
       base_vector elem;
-      tree_description(void);
+      tree_description(void) : ptree(0) {}
+      void copy(const tree_description& td);
+      tree_description(const tree_description& td) { copy(td); }
+      tree_description &operator =(const tree_description& td);
+      ~tree_description();
     };
 
   private:
@@ -168,32 +145,77 @@ namespace getfem {
     typedef std::map<std::string, var_description> VAR_SET;
 
     VAR_SET variables;
-    ga_predef_operator_tab user_operators;
-    ga_predef_function_tab user_functions;
     std::vector<tree_description> trees;
     std::list<ga_tree *> aux_trees;
 
     void add_tree(ga_tree &tree, const mesh_im &mim, const mesh_region &rg,
-                  const std::string expr);
+                  const std::string expr, bool add_derivative = true);
     void clear_aux_trees(void);
 
-    model_real_sparse_matrix unreduced_K, *K;
-    base_vector unreduced_V, *V;
+    struct sparse_matrix_ptr {
+      bool todelete;
+      model_real_sparse_matrix *ptr;
+      model_real_sparse_matrix &operator()(void) { return *ptr; }
+      const model_real_sparse_matrix &operator()(void) const { return *ptr; }
+      void resize(size_type nb)
+      { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
+      void set_matrix(model_real_sparse_matrix &K)
+      { if (todelete) delete ptr; todelete = false; ptr = &K; }
+      sparse_matrix_ptr(void):
+        todelete(true), ptr(new model_real_sparse_matrix(2,2)) {}
+      sparse_matrix_ptr(const sparse_matrix_ptr &smp):
+        todelete(smp.todelete), ptr(smp.ptr)
+      { if (todelete) ptr = new model_real_sparse_matrix(smp()); }
+      sparse_matrix_ptr &operator =(const sparse_matrix_ptr &smp) {
+        if (todelete) delete ptr;
+        todelete = smp.todelete; ptr = smp.ptr;
+        if (todelete) ptr = new model_real_sparse_matrix(smp());
+        return *this;
+      }
+      ~sparse_matrix_ptr() { if (todelete) delete ptr; }
+    };
+
+    struct base_vector_ptr {
+      bool todelete;
+      base_vector *ptr;
+      base_vector &operator()(void) { return *ptr; }
+      const base_vector &operator()(void) const { return *ptr; }
+      void resize(size_type nb)
+      { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
+      void set_vector(base_vector &V)
+      { if (todelete) delete ptr; todelete = false; ptr = &V; }
+      base_vector_ptr(void):
+        todelete(true), ptr(new base_vector(2)) {}
+      base_vector_ptr(const base_vector_ptr &smp):
+        todelete(smp.todelete), ptr(smp.ptr)
+      { if (todelete) ptr = new base_vector(smp()); }
+      base_vector_ptr &operator =(const base_vector_ptr &smp) {
+        if (todelete) delete ptr;
+        todelete = smp.todelete; ptr = smp.ptr;
+        if (todelete) ptr = new base_vector(smp());
+        return *this;
+      }
+      ~base_vector_ptr() { if (todelete) delete ptr; }
+    };
+
+    sparse_matrix_ptr K;
+    model_real_sparse_matrix unreduced_K;
+    base_vector_ptr V;
+    base_vector unreduced_V;
     scalar_type E;
-    bool K_to_delete, V_to_delete;
 
   public:
 
-    const model_real_sparse_matrix &assembled_matrix(void) const { return *K; }
-    model_real_sparse_matrix &assembled_matrix(void) { return *K; }
+    const model_real_sparse_matrix &assembled_matrix(void) const { return K();}
+    model_real_sparse_matrix &assembled_matrix(void) { return K(); }
     scalar_type &assembled_potential(void) { return E; }
     const scalar_type &assembled_potential(void) const { return E; }
-    const base_vector &assembled_vector(void) const { return *V; }
-    base_vector &assembled_vector(void) { return *V; }
+    const base_vector &assembled_vector(void) const { return V(); }
+    base_vector &assembled_vector(void) { return V(); }
     void set_assembled_matrix(model_real_sparse_matrix &K_)
-    { if (K_to_delete) delete K; K = &K_; K_to_delete = false; }
+    { K.set_matrix(K_); }
     void set_assembled_vector(base_vector &V_)
-    { if (V_to_delete) delete V; V = &V_; V_to_delete = false; }
+    { V.set_vector(V_); }
 
     model_real_sparse_matrix &unreduced_matrix(void)
     { return unreduced_K; }
@@ -205,27 +227,14 @@ namespace getfem {
      */
     size_type add_expression(const std::string expr, const mesh_im &mim,
                             const mesh_region &rg=mesh_region::all_convexes());
+    void add_scalar_expression(const std::string expr);
     void clear_expressions(void);
     
 
     void add_aux_tree(ga_tree &tree);
     size_type nb_trees(void);
     tree_description &tree_info(size_type i);
-
-    bool user_operator_exists(const std::string &name) const
-    { return user_operators.find(name) != user_operators.end(); }
-
-    bool user_function_exists(const std::string &name) const
-    { return user_functions.find(name) != user_functions.end(); }
-
-    const ga_nonlinear_operator &user_operator(const std::string &name) const
-    { return *(user_operators.find(name)->second); }
-
-    const ga_predef_function &user_function(const std::string &name) const
-    { return user_functions.find(name)->second; }
-
-    // TODO: methods to add a function or an operator
-    
+        
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
                           const model_real_plain_vector &VV) {

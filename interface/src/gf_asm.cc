@@ -968,6 +968,42 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        }
        );
 
+    /*@FUNC ('define function', @str name, @int nb_args, @str expression[, @str expression_derivative_t[, @str expression_derivative_u]])
+      Define a new function `name` which can be used in high level
+      generic assembly. The function can have one or two parameters.
+      In `expression` all available predefined function or operation
+      of the generic assembly can be used. However, no reference to
+      some variables or data can be specified. The argument of the
+      function is `t` for a one parameter function and `t` and `u`
+      for a two parameter function. For instance 'sin(pi*t)+2*t*t'
+      is a valid expression for a one parameter function and
+      'sin(max(t,u)*pi)' is a valid expression for a two parameters
+      function. `expression_derivative_t` and `expression_derivative_u`
+      are optional expressions for the derivatives with respect
+      to `t` and `u`. If they are not furnished, a symbolic derivation
+      is used. @*/
+    sub_command
+      ("define function", 3, 5, 0, 0,
+       std::string name = in.pop().to_string();
+       size_type nbargs = in.pop().to_integer();
+       std::string expr = in.pop().to_string();
+       std::string der1;
+       std::string der2;
+       if (in.remaining()) der1 = in.pop().to_string();
+       if (in.remaining()) der2 = in.pop().to_string();
+       getfem::ga_define_function(name, nbargs, expr, der1, der2);
+       );
+
+    /*@FUNC ('undefine function', @str name)
+      Cancel the definition of a previously defined function `name`
+      for the high level generic assembly.  @*/
+    sub_command
+      ("undefine function", 1, 1, 0, 0,
+       std::string name = in.pop().to_string();
+       getfem::ga_undefine_function(name);
+       );
+
+
     /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@str varname, @int is_variable[, @tmf mesh_fem], value], ...)
       High-level generic assembly procedure for volumic assembly.
 

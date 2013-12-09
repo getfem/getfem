@@ -103,6 +103,12 @@ function check_asm(iverbose,idebug)
   K2 = gf_asm('laplacian', mim, mf, mf, V);
   gfassert('norm(K-K2, inf) < 1E-12');
   
+  gf_asm('undefine function', 'myf');
+  gf_asm('define function', 'myf', 1, '6*sin(t)+2*t*t');
+  a = gf_asm('generic', mim, 0, 'myf(x(1))', -1);
+  gfassert('abs(a-5.48) < 2E-4');
+  
+  
   
   
   

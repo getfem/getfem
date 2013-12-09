@@ -2726,7 +2726,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-     /*@SET ind = ('add integral large sliding contact brick raytrace', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @dataname_alpha]])
+     /*@SET ind = ('add integral large sliding contact brick raytrace', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @str dataname_alpha]])
       Adds a large sliding contact with friction brick to the model.
       This brick is able to deal with self-contact, contact between
       several deformable bodies and contact with rigid obstacles.

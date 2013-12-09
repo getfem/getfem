@@ -777,6 +777,7 @@ void testbug() {
   ch.init(); ch.tic(); workspace.assembly(0); ch.toc();                 \
   cout << "Elapsed time for new assembly " << ch.elapsed() << endl;     \
   { scalar_type E1 = workspace.assembled_potential();                   \
+    cout << "Result=" << E1 << endl;                                    \
     scalar_type error = gmm::abs(E1-val);                               \
     cout << "Error : " << error << endl;                                \
     GMM_ASSERT1(error < 1E-10,                                          \
@@ -909,8 +910,7 @@ static void test_new_assembly(void) {
     bgeot::pgeometric_trans pgt =
       bgeot::geometric_trans_descriptor
       ((std::string("GT_PK(") + Ns + ",1)").c_str());
-    std::vector<size_type> nsubdiv(N);
-    std::fill(nsubdiv.begin(),nsubdiv.end(), NX);
+    std::vector<size_type> nsubdiv(N, NX);
     getfem::regular_unit_mesh(m, nsubdiv, pgt);
 
     const size_type NEUMANN_BOUNDARY_NUM = 1;
@@ -979,22 +979,37 @@ static void test_new_assembly(void) {
 
     bool all = true;
 
+
     if (all) {
       SCAL_TEST_0("Test on function integration 1",
                   "1", mim, 1);
       SCAL_TEST_0("Test on function integration 1",
                   "cos(pi*x(1))", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
-                  "cos(pi*x).exp(x*0)", mim,0);
+                  "cos(pi*x).exp(x*0)", mim, 0);
       SCAL_TEST_0("Test on function integration 3",
                   "cos(pi*x).Id(meshdim)(:,1)", mim,0);
     }
+
+    if (all) {
+      getfem::ga_define_function("dummyfunc", 1,
+                                 "sin(pi*t/2)+2*sqr(t)-[t;t].[t;t]");
+      SCAL_TEST_0("Test on user defined functions",
+                  "dummyfunc(5)", mim, 1);
+      getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
+      SCAL_TEST_0("Test on user defined functions",
+                  "dummyfunc2(x(1))", mim, 0);
+    }
+
+
 
     if (all) {
       SCAL_TEST_1("Test on L2 norm", "u.u", mim,
                   gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
 
       if (N == 2) {
+        SCAL_TEST_2("sqr(u(1)) + sqr(u(2))", mim,
+                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
         SCAL_TEST_2("u(1)*u(1) + u(2)*u(2)", mim,
                     gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
         SCAL_TEST_2("[u(2);u(1)].[u(2);u(1)]", mim,
@@ -1095,6 +1110,8 @@ static void test_new_assembly(void) {
       MAT_TEST_2(ndofp, ndofp, "(Grad_p:Grad_p)/2", mim2, Ip, Ip);
       if (N == 2) {
         MAT_TEST_2(ndofp, ndofp,
+                   "(sqr(Grad_p(1)) + sqr(Grad_p(2)))/2", mim2, Ip, Ip);
+        MAT_TEST_2(ndofp, ndofp,
                    "(Grad_p(1)*Grad_p(1) + Grad_p(2)*Grad_p(2))/2",
                    mim2, Ip, Ip);
         MAT_TEST_2(ndofp, ndofp,
@@ -1102,6 +1119,9 @@ static void test_new_assembly(void) {
                    mim2, Ip, Ip);
       }
       if (N == 3) {
+        MAT_TEST_2(ndofp, ndofp,
+                   "(sqr(Grad_p(1)) + sqr(Grad_p(2)) + sqr(Grad_p(3)))/2",
+                   mim2, Ip, Ip);
         MAT_TEST_2(ndofp, ndofp,
                    "(Grad_p(1)*Grad_p(1) + Grad_p(2)*Grad_p(2)"
                    "+ Grad_p(3)*Grad_p(3))/2", mim2, Ip, Ip);
