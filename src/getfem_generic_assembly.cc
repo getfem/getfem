@@ -283,6 +283,7 @@ namespace getfem {
     size_type der1, der2;         // For functions and nonlinear operators,
                                   // optional derivative or second derivative.
     GA_TOKEN_TYPE op_type;
+    bool symmetric_op;
     pga_tree_node parent;         // Parent node
     std::vector<pga_tree_node> children; // Children nodes
     scalar_type hash_value;       // Hash value to identify nodes.
@@ -381,20 +382,22 @@ namespace getfem {
 
     ga_tree_node(void)
       : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
-        der1(0), der2(0), hash_value(0) {}
+        der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(GA_NODE_TYPE ty, size_type p)
       : node_type(ty), test_function_type(-1), qdim1(0), qdim2(0),
-        pos(p), der1(0), der2(0), hash_value(0) {}
+        pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(scalar_type v, size_type p)
       : node_type(GA_NODE_CONSTANT), test_function_type(-1), qdim1(0),
-        qdim2(0), pos(p), der1(0), der2(0), hash_value(0)
+        qdim2(0), pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0)
     { init_scalar_tensor(v); }
     ga_tree_node(const char *n, size_type l, size_type p)
       : node_type(GA_NODE_NAME), test_function_type(-1), qdim1(0), qdim2(0),
-        pos(p), name(n, l), der1(0), der2(0), hash_value(0) {}
+        pos(p), name(n, l), der1(0), der2(0), symmetric_op(false),
+        hash_value(0) {}
     ga_tree_node(GA_TOKEN_TYPE op, size_type p)
       : node_type(GA_NODE_OP), test_function_type(-1), qdim1(0), qdim2(0),
-        pos(p), der1(0), der2(0), op_type(op), hash_value(0) {}
+        pos(p), der1(0), der2(0), op_type(op), symmetric_op(false),
+        hash_value(0) {}
     
   };
 
@@ -644,13 +647,25 @@ namespace getfem {
   };
 
 
-  static bool sub_tree_are_equal(pga_tree_node pnode1, pga_tree_node pnode2) {
-    if (pnode1->node_type != pnode2->node_type) return false; // TODO: Cas des constant nulles
+  // Test equality or equivalence of two sub trees.
+  // version = 0 : strict equality
+  //           1 : give the same result
+  //           2 : give the same result with transposition of test functions
+  static bool sub_tree_are_equal(pga_tree_node pnode1, pga_tree_node pnode2,
+                                 const ga_workspace &workspace,
+                                 int version) {
+    size_type ntype1 = pnode1->node_type;
+    if (ntype1 == GA_NODE_ZERO) ntype1 = GA_NODE_CONSTANT;
+    size_type ntype2 = pnode2->node_type;
+    if (ntype2 == GA_NODE_ZERO) ntype2 = GA_NODE_CONSTANT;
+
+    if (ntype1 != ntype2) return false;
     if (pnode1->children.size() != pnode2->children.size()) return false;
 
-    switch(pnode1->node_type) {
+    switch(ntype1) {
     case GA_NODE_OP:
       if (pnode1->op_type != pnode2->op_type) return false;
+      if (pnode1->symmetric_op != pnode2->symmetric_op)  return false;
       break;
     case GA_NODE_OPERATOR:
       if (pnode1->der1 != pnode2->der1 || pnode1->der2 != pnode2->der2)
@@ -672,8 +687,32 @@ namespace getfem {
           ||   pnode1->nbc3 != pnode2->nbc3)  return false;
       break;
     case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
-      if (pnode2->test_function_type != pnode2->test_function_type)
-        return false;
+      {
+        const mesh_fem *mf1 = workspace.associated_mf(pnode1->name);
+        const mesh_fem *mf2 = workspace.associated_mf(pnode2->name);
+        switch (version) {
+        case 0:
+          if (pnode1->name.compare(pnode2->name)) return false; 
+          if (pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 1:
+          if (mf1 != mf2) return false;
+          if (workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name))
+            return false;
+          if (pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 2:
+          if (mf1 != mf2) return false;
+          if (workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name))
+            return false;
+          if (pnode1->test_function_type == pnode2->test_function_type)
+            return false;
+          break;
+        }
+      }
+      break;
     case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
       if (pnode1->name.compare(pnode2->name)) return false;
       break;
@@ -683,11 +722,26 @@ namespace getfem {
 
     default:break;
     }
-    for (size_type i = 0; i < pnode1->children.size(); ++i)
-      if (!(sub_tree_are_equal(pnode1->children[i], pnode2->children[i])))
-          return false;
-    return true;
 
+    if (version && ntype1 == GA_NODE_OP && pnode1->symmetric_op) {
+      if (sub_tree_are_equal(pnode1->children[0], pnode2->children[0],
+                                 workspace, version) &&
+          sub_tree_are_equal(pnode1->children[1], pnode2->children[1],
+                                 workspace, version))
+        return true;
+      if (sub_tree_are_equal(pnode1->children[1], pnode2->children[0],
+                                 workspace, version) &&
+          sub_tree_are_equal(pnode1->children[0], pnode2->children[1],
+                                 workspace, version) )
+        return true;
+      return false;
+    } else {
+      for (size_type i = 0; i < pnode1->children.size(); ++i)
+        if (!(sub_tree_are_equal(pnode1->children[i], pnode2->children[i],
+                                 workspace, version)))
+          return false;
+    }
+    return true;
   }
 
   static void verify_tree(pga_tree_node pnode, pga_tree_node parent) {
@@ -707,7 +761,6 @@ namespace getfem {
                     pnode->node_type == GA_NODE_ALLINDICES))   \
         ga_throw_error(expr, pnode->pos, "Invalid term");      \
     }
-
   static void ga_print_constant_tensor(pga_tree_node pnode,
                                        std::ostream &str) {
     size_type nt = pnode->nb_test_functions(); // for printing zero tensors
@@ -943,21 +996,6 @@ namespace getfem {
     return str.str();
   }
 
-  static void ga_print_hash_value_node(pga_tree_node pnode) {
-    cout << "node_type = " << pnode->node_type << " hash value = "
-         << pnode->hash_value << endl;
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_print_hash_value_node(pnode->children[i]);
-  }
-
-  static void ga_print_hash_values(const ga_tree &tree) {
-    size_type pr = cout.precision(16); // Not exception safe
-    if (tree.root) ga_print_hash_value_node(tree.root);
-    else cout << "Empty tree";
-    cout << endl;
-    cout.precision(pr);
-  }
-
 
   //=========================================================================
   // Syntax analysis for the generic assembly langage
@@ -1159,7 +1197,6 @@ namespace getfem {
     std::map<std::string, base_vector> really_extended_vars;
     std::map<std::string, gmm::sub_interval> var_intervals;
     size_type nb_dof, max_dof;
-   
 
     struct region_mim_instructions {
 
@@ -1169,6 +1206,7 @@ namespace getfem {
       std::map<const mesh_fem *, base_tensor> grad;
       std::map<const mesh_fem *, base_tensor> hess;
       ga_instruction_list instructions;
+      std::map<scalar_type, std::list<pga_tree_node> > node_list;
 
       ~region_mim_instructions(void) {
         for (size_type i = 0; i < instructions.size(); ++i)
@@ -2127,6 +2165,25 @@ namespace getfem {
         }
     }
     ga_instruction_transpose(base_tensor &t_, base_tensor &tc1_)
+      : t(t_), tc1(tc1_) {}
+  };
+
+  struct ga_instruction_transpose_test : public ga_instruction {
+    base_tensor &t, &tc1;
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: copy tensor and transpose test functions");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+      GA_DEBUG_ASSERT(t.sizes().size() >= 2, "Wrong sizes");
+      
+      size_type s1 = t.sizes()[0], s2 = t.sizes()[1], s3 = s1*s2;
+      size_type s = t.size() / s3;
+      base_tensor::iterator it = t.begin();
+      for (size_type k = 0; k < s; ++k)
+        for (size_type j = 0; j < s2;  ++j) 
+          for (size_type i = 0; i < s1; ++i, ++it)
+            *it = tc1[j+s2*i+k*s3];
+    }
+    ga_instruction_transpose_test(base_tensor &t_, base_tensor &tc1_)
       : t(t_), tc1(tc1_) {}
   };
 
@@ -3203,25 +3260,23 @@ namespace getfem {
   }
 
   static scalar_type ga_hash_code(GA_NODE_TYPE e) {
-    return (e != GA_NODE_ZERO) ? cos(M_E + scalar_type(e))
-      : ga_hash_code(GA_NODE_CONSTANT);
+    return cos(M_E + scalar_type((e == GA_NODE_ZERO) ? GA_NODE_CONSTANT : e));
   }
 
   static scalar_type ga_hash_code(pga_tree_node pnode) {
     scalar_type c = ga_hash_code(pnode->node_type);
+    
     switch (pnode->node_type) {
     case GA_NODE_CONSTANT: case GA_NODE_ZERO:
       c += ga_hash_code(pnode->t); break;
       
-    case GA_NODE_X: c += scalar_type(pnode->nbc1) + M_E*M_PI;
+    case GA_NODE_OP: c += scalar_type(pnode->op_type)*M_E*M_PI*M_PI; break;
+    case GA_NODE_X: c += scalar_type(pnode->nbc1) + M_E*M_PI; break;
     case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
-    case GA_NODE_TEST:
-    case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
+    case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
       c += ga_hash_code(pnode->name); break;
 
-    case GA_NODE_PREDEF_FUNC:
-    case GA_NODE_SPEC_FUNC:
-    case GA_NODE_OPERATOR:
+    case GA_NODE_PREDEF_FUNC: case GA_NODE_SPEC_FUNC: case GA_NODE_OPERATOR:
       c += ga_hash_code(pnode->name)
         + tanh(scalar_type(pnode->der1)/M_PI + scalar_type(pnode->der2)*M_PI);
       break;
@@ -3244,6 +3299,7 @@ namespace getfem {
                                bool eval_fixed_size) {
     
     bool all_cte = true, all_sc = true;
+    pnode->symmetric_op = false;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
                        eval_fixed_size);
@@ -3327,6 +3383,7 @@ namespace getfem {
 
       case GA_PLUS: case GA_MINUS:
         {
+          if (pnode->op_type == GA_PLUS) pnode->symmetric_op = true;
           size_type c_size = std::min(size0.size(), size1.size());
           bool compatible = true;
           for (size_type i = 0; i < c_size; ++i)
@@ -3377,6 +3434,7 @@ namespace getfem {
 
       case GA_DOTMULT: case GA_DOTDIV:
         {
+          if (pnode->op_type == GA_DOTMULT) pnode->symmetric_op = true;
           bool compatible = true;
           if (child0->tensor_proper_size() != child1->tensor_proper_size())
             compatible = false;
@@ -3544,12 +3602,13 @@ namespace getfem {
       case GA_DOT:
         if (dim1 > 1)
           ga_throw_error(expr, pnode->pos, "The second argument of the dot "
-                         "product have to be a vector.")
+                         "product has to be a vector.")
         else {
           size_type s0 = dim0 == 0 ? 1 : size0.back();
           size_type s1 = dim1 == 0 ? 1 : size1.back();
           if (s0 != s1) ga_throw_error(expr, pnode->pos, "Dot product "
                                        "of expressions of different sizes");
+          if (child0->tensor_order() <= 1) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1, expr);
           if (dim0 > 1) {
             mi = pnode->t.sizes();
@@ -3592,6 +3651,7 @@ namespace getfem {
           if (s00 != s10 || s01 != s11)
             ga_throw_error(expr, pnode->pos, "Frobenius product "
                             "of expressions of different sizes");
+          if (child0->tensor_order() <= 2) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1, expr);
           if (dim0 > 2) {
             mi = pnode->t.sizes();
@@ -3738,10 +3798,13 @@ namespace getfem {
 
           if (child0->tensor_proper_size() == 1 &&
               child1->tensor_proper_size() == 1) {
+            pnode->symmetric_op = true;
           } else if (child0->tensor_proper_size() == 1) {
+            pnode->symmetric_op = true;
             for (size_type i = 0; i < dim1; ++i)
                 mi.push_back(child1->tensor_proper_size(i));
           } else if (child1->tensor_proper_size() == 1) {
+            pnode->symmetric_op = true;
             for (size_type i = 0; i < dim0; ++i)
                 mi.push_back(child0->tensor_proper_size(i));
           } else if (child0->tensor_order() == 2 &&
@@ -4420,10 +4483,13 @@ namespace getfem {
                         << " in semantic analysis. Internal error.");
     }
     pnode->hash_value = ga_hash_code(pnode);
+    // cout << "node_type = " << pnode->node_type << " op_type = "
+    //     << pnode->op_type << " proper hash code = " << pnode->hash_value;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       pnode->hash_value += (pnode->children[i]->hash_value)
-        * M_PI * scalar_type(i+1); 
+        * M_PI * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1)); 
     }
+    // cout << " final hash code = " << pnode->hash_value << endl;
   }
 
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
@@ -4583,7 +4649,7 @@ namespace getfem {
       case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
       case GA_DOTMULT:
         if (mark0 && mark1) {
-          if (sub_tree_are_equal(child0, child1) &&
+          if (sub_tree_are_equal(child0, child1, workspace, 0) &&
               (pnode->op_type != GA_MULT || child0->tensor_order() < 2)) {
             ga_node_derivation(tree, workspace, child1, varname, order);
             tree.insert_node(pnode);
@@ -4995,20 +5061,14 @@ namespace getfem {
                               ga_instruction_set &gis,
                               ga_instruction_set::region_mim_instructions &rmi,
                               const mesh_im *mim, bool scalar_case) {
-    
-    for (size_type i = 0; i < pnode->children.size(); ++i)
-      ga_compile_node(pnode->children[i], workspace, gis, rmi, mim,
-                      scalar_case);
 
-    static scalar_type minus = -scalar_type(1);
-    size_type nbch = pnode->children.size();
-    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
-    pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
-    bgeot::multi_index mi;
-    const bgeot::multi_index &size0 = child0 ? child0->t.sizes() : mi;
-    // const bgeot::multi_index &size1 = child1 ? child1->t.sizes() : mi;
-    size_type dim0 = child0 ? child0->tensor_order() : 0;
-    size_type dim1 = child1 ? child1->tensor_order() : 0;
+    if (pnode->node_type == GA_NODE_PREDEF_FUNC ||
+        pnode->node_type == GA_NODE_OPERATOR ||
+        pnode->node_type == GA_NODE_SPEC_FUNC ||
+        pnode->node_type == GA_NODE_CONSTANT ||
+        pnode->node_type == GA_NODE_ALLINDICES ||
+        pnode->node_type == GA_NODE_ZERO ||
+        pnode->node_type == GA_NODE_RESHAPE) return;
 
     pga_instruction pgai = 0;
     if (pnode->test_function_type == 1)
@@ -5025,6 +5085,53 @@ namespace getfem {
          *(workspace.associated_mf(pnode->name_test1)), pnode->qdim2,
          *(workspace.associated_mf(pnode->name_test2)));
     if (pgai) rmi.instructions.push_back(pgai);
+    
+    // Optimization: detect if an equivalent node has already been compiled
+    if (rmi.node_list.find(pnode->hash_value) != rmi.node_list.end()) {
+      std::list<pga_tree_node> &node_list = rmi.node_list[pnode->hash_value];
+      for (std::list<pga_tree_node>::iterator it = node_list.begin();
+           it != node_list.end(); ++it) {
+        // cout << "found potential equivalent nodes ";
+        // ga_print_node(pnode, cout);
+        // cout << " and "; ga_print_node(*it, cout); cout << endl;
+        if (sub_tree_are_equal(pnode, *it, workspace, 1)) {
+          // cout << "confirmed no transpose" << endl;
+          if (pnode->t.size() == 1)
+            pgai = new ga_instruction_copy_scalar(pnode->t[0], (*it)->t[0]);
+          else
+            pgai = new ga_instruction_copy_tensor(pnode->t, (*it)->t);
+          rmi.instructions.push_back(pgai);
+          return;
+        }
+        if (sub_tree_are_equal(pnode, *it, workspace, 2)) {
+          // cout << "confirmed with transpose" << endl;
+          if (pnode->nb_test_functions() == 2) {
+            pgai = new ga_instruction_transpose_test(pnode->t, (*it)->t);
+          } else {
+            pgai = new ga_instruction_copy_tensor(pnode->t, (*it)->t);
+          }
+          rmi.instructions.push_back(pgai);
+          return;
+        }
+        cerr << "WARNING: detected wrong equivalent nodes: ";
+        ga_print_node(pnode, cout);
+        cout << " and "; ga_print_node(*it, cout); cout << endl;
+      }
+    }
+    
+    for (size_type i = 0; i < pnode->children.size(); ++i)
+      ga_compile_node(pnode->children[i], workspace, gis, rmi, mim,
+                      scalar_case);
+
+    static scalar_type minus = -scalar_type(1);
+    size_type nbch = pnode->children.size();
+    pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
+    pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
+    bgeot::multi_index mi;
+    const bgeot::multi_index &size0 = child0 ? child0->t.sizes() : mi;
+    // const bgeot::multi_index &size1 = child1 ? child1->t.sizes() : mi;
+    size_type dim0 = child0 ? child0->tensor_order() : 0;
+    size_type dim1 = child1 ? child1->tensor_order() : 0;
     
     switch (pnode->node_type) {
 
@@ -5621,6 +5728,7 @@ namespace getfem {
     default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                         << " in compilation. Internal error.");
     }
+    rmi.node_list[pnode->hash_value].push_back(pnode);
   }
   
   static void ga_compile_scalar(ga_workspace &workspace,

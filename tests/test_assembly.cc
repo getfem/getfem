@@ -795,7 +795,7 @@ void testbug() {
   cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
   scalar_type error = gmm::abs(E1-E2);                                  \
   cout << "Error : " << error << endl;                                  \
-  GMM_ASSERT1(error < 1E-10,                                            \
+  GMM_ASSERT1(error < 1E-8,                                             \
               "Error in high or low level generic assembly");
 
 #define SCAL_TEST_2(expr, mim_, old_asm)                                \
@@ -805,9 +805,9 @@ void testbug() {
   cout << "Elapsed time for new assembly, alternative expression "      \
        << ch.elapsed() << endl;                                         \
   E1 = workspace.assembled_potential();                                 \
-  error = gmm::abs(E1-E2) / (E1+E2);                        \
+  error = gmm::abs(E1-E2) / (E1+E2);                                    \
   cout << "Error : " << error << endl;                                  \
-  GMM_ASSERT1(error < 1E-10,                                            \
+  GMM_ASSERT1(error < 1E-8,                                             \
               "Error in high or low level generic assembly");
 
 #define VEC_TEST_1(title, ndof, expr, mim_, region, I_, old_asm)        \
@@ -902,7 +902,7 @@ static void test_new_assembly(void) {
     getfem::mesh m;
 
     int N = 2;
-    int NX = 15;
+    int NX = 40;
     int pK = 2;
 
     char Ns[5]; sprintf(Ns, "%d", N);
@@ -1117,8 +1117,8 @@ static void test_new_assembly(void) {
         MAT_TEST_2(ndofp, ndofp,
                    "([Grad_p(2); Grad_p(1)].[Grad_p(2); Grad_p(1)])/2",
                    mim2, Ip, Ip);
-        MAT_TEST_2(ndofp, ndofp, "sqr(Norm([Grad_p(2); Grad_p(1)]))/2",
-                   mim2, Ip, Ip);
+//         MAT_TEST_2(ndofp, ndofp, "sqr(Norm([Grad_p(2); Grad_p(1)]))/2",
+//                    mim2, Ip, Ip);
       }
       if (N == 3) {
         MAT_TEST_2(ndofp, ndofp,
@@ -1139,14 +1139,13 @@ static void test_new_assembly(void) {
       workspace.add_fixed_size_constant("lambda", lambda);
       base_vector mu(1); mu[0] = 2.0;
       workspace.add_fixed_size_constant("mu", mu);
-
+      
       MAT_TEST_1("Test for linear homogeneous elasticity stiffness matrix",
                  ndofu, ndofu, "(lambda*Trace(Grad_Test_u)*Id(qdim(u)) "
                  "+ mu*(Grad_Test_u'+Grad_Test_u)):Grad_Test2_u", mim2,
                  Iu, Iu,
                  getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
                  (K, mim2, mf_u, lambda, mu));
-      
       MAT_TEST_2(ndofu, ndofu, "lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
                  "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2, Iu, Iu);
       
