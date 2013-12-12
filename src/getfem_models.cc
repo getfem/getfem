@@ -6091,9 +6091,8 @@ namespace getfem {
 
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0);
 
-      if (dl.size() > 4)
-        recompute_matrix = recompute_matrix ||
-          md.is_var_newer_than_brick(dl[4], ib);
+      recompute_matrix = recompute_matrix || md.is_var_newer_than_brick(dl[2], ib);
+      if (dl.size() > 4) recompute_matrix || md.is_var_newer_than_brick(dl[4], ib);
 
       const model_real_plain_vector &dt = md.real_variable(dl[2]);
       GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
@@ -6157,9 +6156,10 @@ namespace getfem {
                   "Wrong number of variables for basic d2/dt2 brick");
 
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0);
-      if (dl.size() > 4)
-        recompute_matrix = recompute_matrix ||
-          md.is_var_newer_than_brick(dl[4], ib);
+
+      recompute_matrix = recompute_matrix || md.is_var_newer_than_brick(dl[2], ib);
+      if (dl.size() > 4) recompute_matrix || md.is_var_newer_than_brick(dl[4], ib);
+
 
       const model_complex_plain_vector &dt = md.complex_variable(dl[2]);
       GMM_ASSERT1(gmm::vect_size(dt) == 1, "Bad format for time step");
