@@ -780,7 +780,7 @@ void testbug() {
     cout << "Result=" << E1 << endl;                                    \
     scalar_type error = gmm::abs(E1-val);                               \
     cout << "Error : " << error << endl;                                \
-    GMM_ASSERT1(error < 1E-10,                                          \
+    GMM_ASSERT1(error < 1E-8,                                          \
                 "Error in high or low level generic assembly");         \
   }
 
@@ -795,10 +795,10 @@ void testbug() {
   cout << "Elapsed time for old assembly " << ch.elapsed() << endl;     \
   scalar_type error = gmm::abs(E1-E2);                                  \
   cout << "Error : " << error << endl;                                  \
-  GMM_ASSERT1(error < 1E-8,                                             \
+  GMM_ASSERT1(error < 1E-7,                                             \
               "Error in high or low level generic assembly");
 
-#define SCAL_TEST_2(expr, mim_, old_asm)                                \
+#define SCAL_TEST_2(expr, mim_)                                         \
   workspace.clear_expressions();                                        \
   workspace.add_expression(expr, mim_);                                 \
   ch.init(); ch.tic(); workspace.assembly(0); ch.toc();                 \
@@ -807,7 +807,7 @@ void testbug() {
   E1 = workspace.assembled_potential();                                 \
   error = gmm::abs(E1-E2) / (E1+E2);                                    \
   cout << "Error : " << error << endl;                                  \
-  GMM_ASSERT1(error < 1E-8,                                             \
+  GMM_ASSERT1(error < 1E-7,                                             \
               "Error in high or low level generic assembly");
 
 #define VEC_TEST_1(title, ndof, expr, mim_, region, I_, old_asm)        \
@@ -902,7 +902,7 @@ static void test_new_assembly(void) {
     getfem::mesh m;
 
     int N = 2;
-    int NX = 40;
+    int NX = 400;
     int pK = 2;
 
     char Ns[5]; sprintf(Ns, "%d", N);
@@ -1006,20 +1006,16 @@ static void test_new_assembly(void) {
     if (all) {
       SCAL_TEST_1("Test on L2 norm", "u.u", mim,
                   gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+      SCAL_TEST_2("Norm_sqr(u)", mim);
 
       if (N == 2) {
-        SCAL_TEST_2("sqr(u(1)) + sqr(u(2))", mim,
-                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
-        SCAL_TEST_2("u(1)*u(1) + u(2)*u(2)", mim,
-                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
-        SCAL_TEST_2("[u(2);u(1)].[u(2);u(1)]", mim,
-                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+        SCAL_TEST_2("sqr(u(1)) + sqr(u(2))", mim);
+        SCAL_TEST_2("u(1)*u(1) + u(2)*u(2)", mim);
+        SCAL_TEST_2("[u(2);u(1)].[u(2);u(1)]", mim);
       }
       if (N == 3) {
-        SCAL_TEST_2("u(1)*u(1) + u(2)*u(2) + u(3)*u(3)", mim,
-                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
-        SCAL_TEST_2("[u(2);u(1);u(3)].[u(2);u(1);u(3)]", mim,
-                    gmm::sqr(getfem::asm_L2_norm(mim, mf_u, U)));
+        SCAL_TEST_2("u(1)*u(1) + u(2)*u(2) + u(3)*u(3)", mim);
+        SCAL_TEST_2("[u(2);u(1);u(3)].[u(2);u(1);u(3)]", mim);
       }
     }
 
@@ -1027,26 +1023,21 @@ static void test_new_assembly(void) {
       SCAL_TEST_1("Test on H1 semi-norm", "Grad_u:Grad_u", mim2,
                   gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
 
-      SCAL_TEST_2("Id(meshdim)*Grad_u:Grad_u", mim2,
-                  gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+      SCAL_TEST_2("Id(meshdim)*Grad_u:Grad_u", mim2);
 
       if (N == 2) {
-        SCAL_TEST_2("Grad_u(1,:).Grad_u(1,:) + Grad_u(2,:).Grad_u(2,:)", mim2,
-                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
-        SCAL_TEST_2("Grad_u(:,1).Grad_u(:,1) + Grad_u(:,2).Grad_u(:,2)", mim2,
-                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+        SCAL_TEST_2("Grad_u(1,:).Grad_u(1,:) + Grad_u(2,:).Grad_u(2,:)", mim2);
+        SCAL_TEST_2("Grad_u(:,1).Grad_u(:,1) + Grad_u(:,2).Grad_u(:,2)", mim2);
         SCAL_TEST_2("Grad_u(1,1)*Grad_u(1,1) + Grad_u(1,2)*Grad_u(1,2)"
                     "+ Grad_u(2,1)*Grad_u(2,1) + Grad_u(2,2)*Grad_u(2,2)",
-                    mim2, gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+                    mim2);
       }
       
       if (N == 3) {
         SCAL_TEST_2("Grad_u(1,:).Grad_u(1,:) + Grad_u(2,:).Grad_u(2,:) +"
-                    "Grad_u(3,:).Grad_u(3,:)", mim2,
-                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+                    "Grad_u(3,:).Grad_u(3,:)", mim2);
         SCAL_TEST_2("Grad_u(:,1).Grad_u(:,1) + Grad_u(:,2).Grad_u(:,2) +"
-                    "Grad_u(:,3).Grad_u(:,3)", mim2,
-                    gmm::sqr(getfem::asm_H1_semi_norm(mim2, mf_u, U)));
+                    "Grad_u(:,3).Grad_u(:,3)", mim2);
       }
     }
 
@@ -1108,6 +1099,8 @@ static void test_new_assembly(void) {
                  getfem::asm_stiffness_matrix_for_homogeneous_laplacian
                  (K, mim2, mf_p));
       MAT_TEST_2(ndofp, ndofp, "(Grad_p:Grad_p)/2", mim2, Ip, Ip);
+      MAT_TEST_2(ndofp, ndofp, "sqr(Norm(Grad_p))/2", mim2, Ip, Ip);
+      MAT_TEST_2(ndofp, ndofp, "Norm_sqr(Grad_p)/2", mim2, Ip, Ip);
       if (N == 2) {
         MAT_TEST_2(ndofp, ndofp,
                    "(sqr(Grad_p(1)) + sqr(Grad_p(2)))/2", mim2, Ip, Ip);
@@ -1117,8 +1110,8 @@ static void test_new_assembly(void) {
         MAT_TEST_2(ndofp, ndofp,
                    "([Grad_p(2); Grad_p(1)].[Grad_p(2); Grad_p(1)])/2",
                    mim2, Ip, Ip);
-//         MAT_TEST_2(ndofp, ndofp, "sqr(Norm([Grad_p(2); Grad_p(1)]))/2",
-//                    mim2, Ip, Ip);
+        MAT_TEST_2(ndofp, ndofp, "sqr(Norm([Grad_p(2); Grad_p(1)]))/2",
+                   mim2, Ip, Ip);
       }
       if (N == 3) {
         MAT_TEST_2(ndofp, ndofp,

@@ -71,8 +71,6 @@ namespace getfem {
                                    size_type j, base_tensor &result) const = 0;
   };
 
-  typedef std::map<std::string, ga_nonlinear_operator*> ga_predef_operator_tab;
-
   //=========================================================================
   // For user predefined scalar functions.
   //=========================================================================
