@@ -125,8 +125,8 @@ base_small_vector sol_f(const base_node &x) {
 
 scalar_type cutoff_C2(scalar_type r, scalar_type r1, scalar_type r2) {
   if (r < r1) return 1.0;
-  if (r < r2) return pow(r2 - r, 3) *
-    (r2*r2 - 5*r1*r2 + 3*r*r2 + 10*r1*r1 + 6*r*r - 15*r*r1) / pow(r2 - r1, 5);
+  if (r < r2) return pow(r2 - r, 3.) *
+    (r2*r2 - 5*r1*r2 + 3*r*r2 + 10*r1*r1 + 6*r*r - 15*r*r1) / pow(r2 - r1, 5.);
   return 0.0;
 }
 
