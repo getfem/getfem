@@ -70,13 +70,13 @@ scalar_type bilaplacian_singular_functions::sing_function(scalar_type x, scalar_
       return y * (10. * y * y* y + 1.) ;
     } break;
     case 61: {
-      return pow(x,4) - 6. * nu * x* x* y * y + (2. * nu - 1 ) * pow(y, 4) + 2. ;
+      return pow(x,4.) - 6. * nu * x* x* y * y + (2. * nu - 1 ) * pow(y, 4.) + 2. ;
     } break;
     case 62: {
-      return pow(x, 3) * y + (nu-2) * x * pow(y, 3) + 2. ;
+      return pow(x, 3.) * y + (nu-2) * x * pow(y, 3.) + 2. ;
     } break;
     case 63: {
-      return pow(x,3) - 3. * nu * x * y * y  + 2. ;
+      return pow(x,3.) - 3. * nu * x * y * y  + 2. ;
     } break;
     case 311: {
       return - cos(3.0 * theta/2.) / ( r * sqrt(r) ) ;
@@ -156,12 +156,12 @@ void bilaplacian_singular_functions::sing_function_grad(scalar_type x, scalar_ty
       g[1] = 40. * y * y * y  + 1. ;
     } break;
     case 61: {
-      g[0] =  4. * pow(x,3) - 12. * nu * x * y * y  ;
-      g[1] = - 12. * nu * x * x * y + 4. * (2. * nu - 1) * pow(y,3) ;
+      g[0] =  4. * pow(x,3.) - 12. * nu * x * y * y  ;
+      g[1] = - 12. * nu * x * x * y + 4. * (2. * nu - 1) * pow(y,3.) ;
     } break;
     case 62: {
-      g[0] =  3. * x * x * y + (nu - 2) * pow(y, 3) ; 
-      g[1] =  pow(x, 3) + 3 * (nu - 2 ) * x * y * y ;
+      g[0] =  3. * x * x * y + (nu - 2) * pow(y, 3.) ; 
+      g[1] =  pow(x, 3.) + 3 * (nu - 2 ) * x * y * y ;
     } break;
     case 63: {
       g[0] = 3. * x * x - 3. * nu * y * y;
