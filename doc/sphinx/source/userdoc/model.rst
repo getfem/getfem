@@ -39,6 +39,7 @@ The kernel of the model description is contained in the file
    :maxdepth: 2
   
    model_object.rst
+   model_generic_assembly.rst
    model_generic_elliptic.rst
    model_dirichlet.rst
    model_source_term.rst

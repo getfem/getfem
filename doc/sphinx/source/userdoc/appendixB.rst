@@ -27,6 +27,8 @@ the degree of each integration method.
 Exact Integration methods
 -------------------------
 
+|gf| furnishes a set of exact integration methods. This means that polynomials are integrated exactly. However, their use is (very) limited and not recommended. The use of exact integration methods is limited to the low-level generic assembly for polynomial :math:`\tau`-equivalent elements with linear transformations and for linear terms. It is not possible to use them in the high-level generic assembly. 
+
 The list of available exact integration methods is the following
 
   .. list-table:: Exact Integration Methods
@@ -48,18 +50,18 @@ The list of available exact integration methods is the following
        - Description of the exact integration of polynomials on the prism of
          reference of dimension ``n``
 
-Even though a description of exact integration method exists on parallelepipeds or
-prisms, most of the time the geometric transformations on such elements are
+Even though a description of exact integration method exists on
+parallelepipeds or prisms, most of the time the geometric transformations
+on such elements are
 nonlinear and the exact integration cannot be used.
 
-Beware: In fact a lot of computation cannot be done with exact integration
-methods. So, it is recommended to use cubature formulas instead.
 
 
 Newton cotes Integration methods
 --------------------------------
 
-Newton cotes integration of order ``K`` on simplices, parallelepipeds and prisms
+Newton cotes integration of order ``K`` on simplices, parallelepipeds
+and prisms
 are denoted by ``"IM_NC(N,K)"``, ``"IM_NC_PARALLELEPIPED(N,K)"`` and
 ``"IM_NC_PRISM(N,K)"`` respectively.
 
@@ -67,7 +69,8 @@ are denoted by ``"IM_NC(N,K)"``, ``"IM_NC_PARALLELEPIPED(N,K)"`` and
 Gauss Integration methods on dimension 1
 ----------------------------------------
 
-Gauss-Legendre integration on the segment of order ``K`` (with ``K/2+1`` points)
+Gauss-Legendre integration on the segment of order
+``K`` (with ``K/2+1`` points)
 are denoted by ``"IM_GAUSS1D(K)"``. Gauss-Lobatto-Legendre integration on the
 segment of order ``K`` (with ``K/2+1`` points) are denoted by
 ``"IM_GAUSSLOBATTO1D(K)"``. It is only available for odd values of ``K``. The

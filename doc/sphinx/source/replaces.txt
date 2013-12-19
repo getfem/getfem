@@ -95,3 +95,5 @@
 .. _mathworks-oo: http://www.mathworks.com/products/matlab/object_oriented_programming.htm
 .. |gnufreedoc| replace:: GNU Free Documentation License
 .. _gnufreedoc: http://www.gnu.org/licenses/fdl.html
+.. |Lame| unicode:: Lam U+00E9
+.. |Frobenius| unicode:: Fr U+00F6 benius

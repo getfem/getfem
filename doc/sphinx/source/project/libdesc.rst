@@ -323,10 +323,35 @@ Perspectives
 ^^^^^^^^^^^^
 
 
-The generic assembly module in |gf|
------------------------------------
+The high-level generic assembly module in |gf|
+-----------------------------------------------
 
-Some implementation details of the (high level version of the) generic assembly are descibed in this section. 
+Some implementation details of the high level generic assembly are descibed in this section. 
+
+
+to be continuated ...
+
+
+A few implementation details
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The assembly string is transformed in an assembly tree by a set of function in :file:`src/getfem\_generic\_assembly.cc`. The process has 4 steps:
+
+ - Lexical analysis with the procedure ``ga_get_token``.
+
+ - Syntax analysis and transformation into a syntax tree by ``ga_read_string``.
+
+ - Semantic analysis, simplification (pre-computation) of constant expressions and enrichment of the tree.
+
+ - Symbolic (automatic) differentiation.
+
+ - Compilation in a sequence of instructions with optimization not to evaluate several time the same expression.
+
+ - Execution of the sequence of instructions and assembly.
+
+These steps are performed only once at the beginning of the assembly. The final tree is evaluated on each Gauss point of each element after compilation.
+
+
 
 
 Predefined functions
@@ -339,11 +364,7 @@ Some predefined scalar functions are available in |gf| generic assembly langage 
   - The string corresponding of the derivative in terms of already known
     functions
 
-A new predefined function is easy to add. See init_predefined_functions() in file :file:`src/getfem_generic_assembly.cc`. + describe how to give the dérivative ...
-
-
-
-
+A new predefined function is easy to add. See init_predefined_functions() in file :file:`src/getfem_generic_assembly.cc`. + describe how to give the derivative ...
 
 
 
@@ -355,6 +376,22 @@ Perspectives
 ^^^^^^^^^^^^
 
 to be done
+
+
+The low-level generic assembly module in |gf|
+---------------------------------------------
+
+to be done
+
+Description
+^^^^^^^^^^^
+
+State
+^^^^^
+
+Perspectives
+^^^^^^^^^^^^
+
 
 
 BRICK module
