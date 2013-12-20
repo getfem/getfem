@@ -721,6 +721,13 @@ namespace getfem {
       else return *(it->second);
     }
     
+    ~classical_mesh_fem_pool(){
+      for(mesh_fem_tab::iterator itt = mfs.begin();itt!=mfs.end();++itt){
+        delete itt->second;
+        itt->second = 0;
+      }
+    }
+
   };
 
   const mesh_fem &classical_mesh_fem(const mesh &msh,
