@@ -126,10 +126,10 @@ might be covered by the GNU Lesser General Public License.
 #include <sstream>
 #include <numeric>
 #include <locale.h>
-#include <omp.h>
 
 
 #ifdef _OPENMP	
+#include <omp.h>
 	/**number of OpenMP threads*/
 	inline size_t num_threads(){return omp_get_max_threads();}
 	/**index of the current thread*/

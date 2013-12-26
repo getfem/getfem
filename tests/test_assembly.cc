@@ -902,7 +902,7 @@ static void test_new_assembly(void) {
     getfem::mesh m;
 
     int N = 2;
-    int NX = 400;
+    int NX = 100;
     int pK = 2;
 
     char Ns[5]; sprintf(Ns, "%d", N);
