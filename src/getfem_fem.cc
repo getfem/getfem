@@ -950,23 +950,23 @@ namespace getfem {
   /* ******************************************************************** */
 
   // local dof numeration for 2D:
-  // 6--5--4
+  // 5--6--7
   // |     |
-  // 7     3
+  // 3     4
   // |     |
   // 0--1--2
   //
   // local dof numeration for 3D:
   //
-  //      18---17----16
+  //       17---18---19
   //      /|        /|
-  //     /19       / 15
-  //   11  |      10 |
-  //   /  12---13/---14
+  //     / 10      / 11
+  //   15  |      16 |
+  //   /   5----6/---7
   //  /   /     /   /
-  // 6----5----4   /
-  // |  8      |  9
-  // 7 /       3 /
+  // 12---13---14  /
+  // |  3      |  4
+  // 8 /       9 /
   // |/        |/
   // 0----1----2
 
@@ -992,22 +992,22 @@ namespace getfem {
         ( "1 - 2*x^2*y - 2*x*y^2 + 2*x^2 + 5*x*y + 2*y^2 - 3*x - 3*y;"
           "4*(x^2*y - x^2 - x*y + x);"
           "2*x*y*y - 2*x*x*y + 2*x*x - x*y - x;"
+          "4*(x*y*y - x*y - y*y + y);"
           "4*(x*y - x*y*y);"
-          "2*x*x*y + 2*x*y*y - 3*x*y;"
-          "4*(x*y - x*x*y);"
           "2*x*x*y - 2*x*y*y - x*y + 2*y*y - y;"
-          "4*(x*y*y - x*y - y*y + y);");
+          "4*(x*y - x*x*y);"
+          "2*x*x*y + 2*x*y*y - 3*x*y;");
 
       for (int i = 0; i < 8; ++i) p->base()[i] = bgeot::read_base_poly(2, s);
 
       p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.0));
       p->add_node(lagrange_dof(2), base_small_vector(0.5, 0.0));
       p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.0));
-      p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.5));
-      p->add_node(lagrange_dof(2), base_small_vector(1.0, 1.0));
-      p->add_node(lagrange_dof(2), base_small_vector(0.5, 1.0));
-      p->add_node(lagrange_dof(2), base_small_vector(0.0, 1.0));
       p->add_node(lagrange_dof(2), base_small_vector(0.0, 0.5));
+      p->add_node(lagrange_dof(2), base_small_vector(1.0, 0.5));
+      p->add_node(lagrange_dof(2), base_small_vector(0.0, 1.0));
+      p->add_node(lagrange_dof(2), base_small_vector(0.5, 1.0));
+      p->add_node(lagrange_dof(2), base_small_vector(1.0, 1.0));
     } else {
       std::stringstream s
         ("1 + 2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2"
@@ -1016,50 +1016,50 @@ namespace getfem {
          "4*( - x^2*y*z + x*y*z + x^2*z - x*z + x^2*y - x*y - x^2 + x);"
          "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2"
            " - 2*x^2*y - 2*x^2*z + 2*x*y^2 + 2*x*z^2 + 3*x*y*z + 2*x^2 - x*y - x*z - x;"
+         "4*( - x*y^2*z + x*y^2 + y^2*z + x*y*z - x*y - y^2 - y*z + y);"
          "4*(x*y^2*z - x*y^2 - x*y*z + x*y);"
-         " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2 + 2*x^2*y + 2*x*y^2 + x*y*z - 3*x*y;"
-         "4*(x^2*y*z - x^2*y - x*y*z + x*y);"
          " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2"
            " + 2*x^2*y - 2*x*y^2 - 2*y^2*z + 2*y*z^2 + 3*x*y*z - x*y + 2*y^2 - y*z - y;"
-         "4*( - x*y^2*z + x*y^2 + y^2*z + x*y*z - x*y - y^2 - y*z + y);"
+         "4*(x^2*y*z - x^2*y - x*y*z + x*y);"
+         " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2 + 2*x^2*y + 2*x*y^2 + x*y*z - 3*x*y;"
          "4*( - x*y*z^2 + x*z^2 + y*z^2 + x*y*z - x*z - y*z - z^2 + z);"
          "4*(x*y*z^2 - x*y*z - x*z^2 + x*z);"
-         "4*( - x*y*z^2 + x*y*z);"
          "4*(x*y*z^2 - x*y*z - y*z^2 + y*z);"
+         "4*( - x*y*z^2 + x*y*z);"
          " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2"
            " + 2*x^2*z + 2*y^2*z - 2*x*z^2 - 2*y*z^2 + 3*x*y*z - x*z - y*z + 2*z^2 - z;"
          "4*(x^2*y*z - x^2*z - x*y*z + x*z);"
          " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2 + 2*x^2*z + 2*x*z^2 + x*y*z - 3*x*z;"
+         "4*(x*y^2*z - y^2*z - x*y*z + y*z);"
          "4*( - x*y^2*z + x*y*z);"
-         "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;"
-         "4*( - x^2*y*z + x*y*z);"
          "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2 + 2*y^2*z + 2*y*z^2 + x*y*z - 3*y*z;"
-         "4*(x*y^2*z - y^2*z - x*y*z + y*z);");
+         "4*( - x^2*y*z + x*y*z);"
+         "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;");
 
       for (int i = 0; i < 20; ++i) p->base()[i] = bgeot::read_base_poly(3, s);
 
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 0.0));
       p->add_node(lagrange_dof(3), base_small_vector(0.5, 0.0, 0.0));
       p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.5, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 0.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 0.0));
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.5, 0.0));
+      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.5, 0.0));
+      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 0.0));
+      p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 0.0));
+      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 0.0));
 
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 0.5));
       p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.0, 0.5));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 0.5));
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 0.5));
+      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 0.5));
 
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.0, 1.0));
       p->add_node(lagrange_dof(3), base_small_vector(0.5, 0.0, 1.0));
       p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.5, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 1.0));
-      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 1.0));
       p->add_node(lagrange_dof(3), base_small_vector(0.0, 0.5, 1.0));
+      p->add_node(lagrange_dof(3), base_small_vector(1.0, 0.5, 1.0));
+      p->add_node(lagrange_dof(3), base_small_vector(0.0, 1.0, 1.0));
+      p->add_node(lagrange_dof(3), base_small_vector(0.5, 1.0, 1.0));
+      p->add_node(lagrange_dof(3), base_small_vector(1.0, 1.0, 1.0));
     }
     dependencies.push_back(p->ref_convex(0));
     dependencies.push_back(p->node_tab(0));

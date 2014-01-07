@@ -77,8 +77,9 @@ void gf_fem(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
         classical Lagrange element Qk on quadrangles, hexahedrons etc.
       - FEM_QK_DISCONTINUOUS(n,k[,alpha]) :
         discontinuous Lagrange element Qk on quadrangles, hexahedrons etc.
-      - FEM_Q2_INCOMPLETE :
-        incomplete 2D Q2 element with 8 dof (serendipity Quad 8 element).
+      - FEM_Q2_INCOMPLETE(n) :
+        incomplete Q2 elements with 8 and 20 dof (serendipity Quad 8 and
+        Hexa 20 elements).
       - FEM_PK_PRISM(n,k) :
         classical Lagrange element Pk on a prism of dimension `n`.
       - FEM_PK_PRISM_DISCONTINUOUS(n,k[,alpha]) :

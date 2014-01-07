@@ -53,7 +53,7 @@ geotrans_R = 'GT_QK(2,1)'  # geometric transformation for the ring mesh
 geotrans_B = 'GT_QK(2,1)'  # geometric transformation for the block mesh
 
 fem_disp_order_R = 1  # displacements finite element order for the ring
-fem_disp_order_B = 1  # displacements element order for the block
+fem_disp_order_B = 1  # displacements finite element order for the block
 fem_mult_order_R = 1  # multiplier finite element order for the ring
 fem_mult_order_B = 1  # multiplier finite element order for the block
 

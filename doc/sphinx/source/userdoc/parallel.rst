@@ -100,15 +100,15 @@ Parallelization of getfem is still considered a "work in progress". A certain nu
 
   * The explicit matrix brick: the given matrix is considered to be
     distributed. If it is not, only add it on the master process (otherwize,
-    the contribution will be multiplied by the numberof processes)
+    the contribution will be multiplied by the numberof processes).
 
   * The explicit rhs brick: the given vector is not considered to be
     distributed. Only the given vector on the master process is taken into
-    account. 
+    account.
   
   * Constraint brick: The given mastrix and rhs are not considered to be
     distributed. Only the given matrix and vector on the master process are
-    taken into account.   
+    taken into account.
 
   * Concerning contact bricks, only integral contact bricks are fully
     parallelized for the moment. Nodal contact bricks work in parallel

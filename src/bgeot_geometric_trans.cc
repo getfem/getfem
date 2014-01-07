@@ -486,41 +486,41 @@ namespace bgeot {
           ( "1 - 2*x^2*y - 2*x*y^2 + 2*x^2 + 5*x*y + 2*y^2 - 3*x - 3*y;"
             "4*(x^2*y - x^2 - x*y + x);"
             "2*x*y*y - 2*x*x*y + 2*x*x - x*y - x;"
+            "4*(x*y*y - x*y - y*y + y);"
             "4*(x*y - x*y*y);"
-            "2*x*x*y + 2*x*y*y - 3*x*y;"
-            "4*(x*y - x*x*y);"
             "2*x*x*y - 2*x*y*y - x*y + 2*y*y - y;"
-            "4*(x*y*y - x*y - y*y + y);");
+            "4*(x*y - x*x*y);"
+            "2*x*x*y + 2*x*y*y - 3*x*y;");
         
         for (int i = 0; i < 8; ++i)
           trans[i] = bgeot::read_base_poly(2, s);
       } else {
         std::stringstream s
           ("1 + 2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2"
-           " - 2*x^2*y - 2*x^2*z - 2*x*y^2 - 2*y^2*z - 2*y*z^2 - 2*x*z^2 - 7*x*y*z"
-           " + 2*x^2 + 2*y^2 + 2*z^2 + 5*y*z + 5*x*z + 5*x*y - 3*x - 3*y - 3*z;"
+             " - 2*x^2*y - 2*x^2*z - 2*x*y^2 - 2*y^2*z - 2*y*z^2 - 2*x*z^2 - 7*x*y*z"
+             " + 2*x^2 + 2*y^2 + 2*z^2 + 5*y*z + 5*x*z + 5*x*y - 3*x - 3*y - 3*z;"
            "4*( - x^2*y*z + x*y*z + x^2*z - x*z + x^2*y - x*y - x^2 + x);"
            "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2"
-           " - 2*x^2*y - 2*x^2*z + 2*x*y^2 + 2*x*z^2 + 3*x*y*z + 2*x^2 - x*y - x*z - x;"
-           "4*(x*y^2*z - x*y^2 - x*y*z + x*y);"
-           " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2 + 2*x^2*y + 2*x*y^2 + x*y*z - 3*x*y;"
-           "4*(x^2*y*z - x^2*y - x*y*z + x*y);"
-           " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2"
-           " + 2*x^2*y - 2*x*y^2 - 2*y^2*z + 2*y*z^2 + 3*x*y*z - x*y + 2*y^2 - y*z - y;"
+             " - 2*x^2*y - 2*x^2*z + 2*x*y^2 + 2*x*z^2 + 3*x*y*z + 2*x^2 - x*y - x*z - x;"
            "4*( - x*y^2*z + x*y^2 + y^2*z + x*y*z - x*y - y^2 - y*z + y);"
+           "4*(x*y^2*z - x*y^2 - x*y*z + x*y);"
+           " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2"
+             " + 2*x^2*y - 2*x*y^2 - 2*y^2*z + 2*y*z^2 + 3*x*y*z - x*y + 2*y^2 - y*z - y;"
+           "4*(x^2*y*z - x^2*y - x*y*z + x*y);"
+           " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2 + 2*x^2*y + 2*x*y^2 + x*y*z - 3*x*y;"
            "4*( - x*y*z^2 + x*z^2 + y*z^2 + x*y*z - x*z - y*z - z^2 + z);"
            "4*(x*y*z^2 - x*y*z - x*z^2 + x*z);"
-           "4*( - x*y*z^2 + x*y*z);"
            "4*(x*y*z^2 - x*y*z - y*z^2 + y*z);"
+           "4*( - x*y*z^2 + x*y*z);"
            " - 2*x^2*y*z - 2*x*y^2*z + 2*x*y*z^2"
-           " + 2*x^2*z + 2*y^2*z - 2*x*z^2 - 2*y*z^2 + 3*x*y*z - x*z - y*z + 2*z^2 - z;"
+             " + 2*x^2*z + 2*y^2*z - 2*x*z^2 - 2*y*z^2 + 3*x*y*z - x*z - y*z + 2*z^2 - z;"
            "4*(x^2*y*z - x^2*z - x*y*z + x*z);"
            " - 2*x^2*y*z + 2*x*y^2*z - 2*x*y*z^2 + 2*x^2*z + 2*x*z^2 + x*y*z - 3*x*z;"
+           "4*(x*y^2*z - y^2*z - x*y*z + y*z);"
            "4*( - x*y^2*z + x*y*z);"
-           "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;"
-           "4*( - x^2*y*z + x*y*z);"
            "2*x^2*y*z - 2*x*y^2*z - 2*x*y*z^2 + 2*y^2*z + 2*y*z^2 + x*y*z - 3*y*z;"
-           "4*(x*y^2*z - y^2*z - x*y*z + y*z);");
+           "4*( - x^2*y*z + x*y*z);"
+           "2*x^2*y*z + 2*x*y^2*z + 2*x*y*z^2 - 5*x*y*z;");
         
         for (int i = 0; i < 20; ++i)
           trans[i] = bgeot::read_base_poly(3, s);

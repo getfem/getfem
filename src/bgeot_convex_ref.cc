@@ -250,11 +250,11 @@ namespace bgeot {
         convex<base_node>::points()[0] = base_node(0.0, 0.0);
         convex<base_node>::points()[1] = base_node(0.5, 0.0);
         convex<base_node>::points()[2] = base_node(1.0, 0.0);
-        convex<base_node>::points()[3] = base_node(1.0, 0.5);
-        convex<base_node>::points()[4] = base_node(1.0, 1.0);
-        convex<base_node>::points()[5] = base_node(0.5, 1.0);
-        convex<base_node>::points()[6] = base_node(0.0, 1.0);
-        convex<base_node>::points()[7] = base_node(0.0, 0.5);
+        convex<base_node>::points()[3] = base_node(0.0, 0.5);
+        convex<base_node>::points()[4] = base_node(1.0, 0.5);
+        convex<base_node>::points()[5] = base_node(0.0, 1.0);
+        convex<base_node>::points()[6] = base_node(0.5, 1.0);
+        convex<base_node>::points()[7] = base_node(1.0, 1.0);
         
       } else {
         sc(normals_[0]) =  1, 0, 0;
@@ -267,25 +267,25 @@ namespace bgeot {
         convex<base_node>::points()[0] = base_node(0.0, 0.0, 0.0);
         convex<base_node>::points()[1] = base_node(0.5, 0.0, 0.0);
         convex<base_node>::points()[2] = base_node(1.0, 0.0, 0.0);
-        convex<base_node>::points()[3] = base_node(1.0, 0.5, 0.0);
-        convex<base_node>::points()[4] = base_node(1.0, 1.0, 0.0);
-        convex<base_node>::points()[5] = base_node(0.5, 1.0, 0.0);
-        convex<base_node>::points()[6] = base_node(0.0, 1.0, 0.0);
-        convex<base_node>::points()[7] = base_node(0.0, 0.5, 0.0);
+        convex<base_node>::points()[3] = base_node(0.0, 0.5, 0.0);
+        convex<base_node>::points()[4] = base_node(1.0, 0.5, 0.0);
+        convex<base_node>::points()[5] = base_node(0.0, 1.0, 0.0);
+        convex<base_node>::points()[6] = base_node(0.5, 1.0, 0.0);
+        convex<base_node>::points()[7] = base_node(1.0, 1.0, 0.0);
         
         convex<base_node>::points()[8] = base_node(0.0, 0.0, 0.5);
         convex<base_node>::points()[9] = base_node(1.0, 0.0, 0.5);
-        convex<base_node>::points()[10] = base_node(1.0, 1.0, 0.5);
-        convex<base_node>::points()[11] = base_node(0.0, 1.0, 0.5);
+        convex<base_node>::points()[10] = base_node(0.0, 1.0, 0.5);
+        convex<base_node>::points()[11] = base_node(1.0, 1.0, 0.5);
         
         convex<base_node>::points()[12] = base_node(0.0, 0.0, 1.0);
         convex<base_node>::points()[13] = base_node(0.5, 0.0, 1.0);
         convex<base_node>::points()[14] = base_node(1.0, 0.0, 1.0);
-        convex<base_node>::points()[15] = base_node(1.0, 0.5, 1.0);
-        convex<base_node>::points()[16] = base_node(1.0, 1.0, 1.0);
-        convex<base_node>::points()[17] = base_node(0.5, 1.0, 1.0);
-        convex<base_node>::points()[18] = base_node(0.0, 1.0, 1.0);
-        convex<base_node>::points()[19] = base_node(0.0, 0.5, 1.0);
+        convex<base_node>::points()[15] = base_node(0.0, 0.5, 1.0);
+        convex<base_node>::points()[16] = base_node(1.0, 0.5, 1.0);
+        convex<base_node>::points()[17] = base_node(0.0, 1.0, 1.0);
+        convex<base_node>::points()[18] = base_node(0.5, 1.0, 1.0);
+        convex<base_node>::points()[19] = base_node(1.0, 1.0, 1.0);
       }
       ppoints = store_point_tab(convex<base_node>::points());
     }

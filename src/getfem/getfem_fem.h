@@ -49,8 +49,8 @@
    - "FEM_QK_DISCONTINUOUS(N,K,alpha)" : discontinuous Lagrange
    element QK on a parallelepiped.
 
-   - "FEM_Q2_INCOMPLETE" : incomplete Q2 element with 8 dof (serendipity
-                           Quad 8 element)
+   - "FEM_Q2_INCOMPLETE(N)" : incomplete Q2 elements with 8 and 20 dof
+                              (serendipity Quad 8 and Hexa 20 elements)
 
    - "FEM_PK_PRISM(N,K)" : classical Lagrange element PK on a prism.
 
