@@ -39,6 +39,7 @@
 #ifndef GETFEM_GENERIC_ASSEMBLY_H__ 
 #define GETFEM_GENERIC_ASSEMBLY_H__
 
+#include <map>
 #include "getfem/getfem_models.h"
 
 

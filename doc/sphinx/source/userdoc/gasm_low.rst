@@ -8,8 +8,8 @@
 
 .. _ud-gasm-low:
 
-Compute arbitrary elementary matrices - low-level generic assembly procedures
-=============================================================================
+Compute arbitrary terms - low-level generic assembly procedures
+===============================================================
 
 This section present the first version of generic assembly procedure which has been implemented in |gf|. It is quite a low-level one. It allows to easily make the assembly of arbitrary matrices in the linear case. In the nonlinear case, some special "non_linear_term" object have to be implemented, which could be a bit tricky and obliges to use very low-level internal tools of |gf|. The high-level generic assembly has been developped to circumvent these difficulties (see :ref:`ud-gasm-high`).
 

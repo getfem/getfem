@@ -8,8 +8,8 @@
 
 .. _ud-gasm-high:
 
-Compute arbitrary elementary matrices - high-level generic assembly procedures
-==============================================================================
+Compute arbitrary terms - high-level generic assembly procedures
+================================================================
 
 This is a work in progress for |gf| 5.0. Available, but not fully tested yet.
 
@@ -44,7 +44,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of operators: ``+``, ``-``, ``*``, ``/``, ``:``, ``.``, ``.*``, ``./``, ``@``, ``'``.
 
-  - Some constants : ``pi``, ``meshdim`` (the dimension of the current mesh),``qdim(u)`` the dimension of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for f.e.m. variables), ``Id(n)`` the identity :math:`n\times n` matrix.
+  - Some constants : ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` the dimension of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for f.e.m. variables), ``Id(n)`` the identity :math:`n\times n` matrix.
 
   - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are correct. 
 
@@ -355,7 +355,7 @@ Order four tensors are necessary for instance to express elasticity tensors or i
 The variables
 *************
 
-  A list of variables should be given to the ``ga_worspace`` object. The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace`` ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
+A list of variables should be given to the ``ga_worspace`` object. The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace`` ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
 
 The constants or data
 *********************
