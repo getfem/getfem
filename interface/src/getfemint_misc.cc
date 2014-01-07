@@ -700,6 +700,8 @@ namespace getfemint {
     static getfem::Mooney_Rivlin_hyperelastic_law CMR_AHL(true,false);
     static getfem::Mooney_Rivlin_hyperelastic_law INH_AHL(false,true);
     static getfem::Mooney_Rivlin_hyperelastic_law CNH_AHL(true,true);
+    static getfem::Neo_Hookean_hyperelastic_law NHB_AHL(true);  // Bonet
+    static getfem::Neo_Hookean_hyperelastic_law NHC_AHL(false); // Ciarlet
     static getfem::Ciarlet_Geymonat_hyperelastic_law CG_AHL;
     static getfem::generalized_Blatz_Ko_hyperelastic_law GBK_AHL;
     static getfem::plane_strain_hyperelastic_law PS_SVK_AHL(&SVK_AHL);
@@ -707,6 +709,8 @@ namespace getfemint {
     static getfem::plane_strain_hyperelastic_law PS_CMR_AHL(&CMR_AHL);
     static getfem::plane_strain_hyperelastic_law PS_INH_AHL(&INH_AHL);
     static getfem::plane_strain_hyperelastic_law PS_CNH_AHL(&CNH_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_NHB_AHL(&NHB_AHL);
+    static getfem::plane_strain_hyperelastic_law PS_NHC_AHL(&NHC_AHL);
     static getfem::plane_strain_hyperelastic_law PS_CG_AHL(&CG_AHL);
     static getfem::plane_strain_hyperelastic_law PS_GBK_AHL(&GBK_AHL);
     
@@ -733,6 +737,14 @@ namespace getfemint {
     if (cmd_strmatch(lawname, "incompressible neo Hookean") ||
         cmd_strmatch(lawname, "inh"))
       { if (N == 2) return PS_INH_AHL; else return INH_AHL; }
+
+    if (cmd_strmatch(lawname, "neo Hookean Bonet") ||
+        cmd_strmatch(lawname, "nhb"))
+      { if (N == 2) return PS_NHB_AHL; else return NHB_AHL; }
+
+    if (cmd_strmatch(lawname, "neo Hookean Ciarlet") ||
+        cmd_strmatch(lawname, "nhc"))
+      { if (N == 2) return PS_NHC_AHL; else return NHC_AHL; }
 
     if (cmd_strmatch(lawname, "Ciarlet Geymonat") ||
         cmd_strmatch(lawname, "cg"))
