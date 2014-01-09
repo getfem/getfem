@@ -136,7 +136,7 @@ namespace getfem {
      structure: $Nodes list_of_nodes $EndNodes $Elements list_of_elt
      $EndElements
   */
-  static void import_gmsh_mesh_file(std::ifstream& f, mesh& m, int deprecate=0,
+  static void import_gmsh_mesh_file(std::istream& f, mesh& m, int deprecate=0,
                                     std::map<std::string, size_type> *region_map=NULL)
   {
     gmm::stream_standard_locale sl(f);
@@ -148,11 +148,11 @@ namespace getfem {
       GMM_WARNING4("" << endl
                 << "  deprecate: " << endl
                 << "   static void" << endl
-                << "   import_gmsh_mesh_file(std::ifstream& f,"
+                << "   import_gmsh_mesh_file(std::istream& f,"
                 << " mesh& , int version)" << endl
                 << "  replace with:" << endl
                 << "   static void" << endl
-                << "   import_gmsh_mesh_file(std::ifstream& f,"
+                << "   import_gmsh_mesh_file(std::istream& f,"
                 << " mesh&)");
     }
 
@@ -371,7 +371,7 @@ namespace getfem {
 
   supports linear and quadratic elements (quadrilaterals, use 9(or 27)-noded elements)
   */
-  static void import_gid_mesh_file(std::ifstream& f, mesh& m) {
+  static void import_gid_mesh_file(std::istream& f, mesh& m) {
     gmm::stream_standard_locale sl(f);
     /* read the node list */
     size_type dim;
@@ -524,7 +524,7 @@ namespace getfem {
 
   supports elements SOLID45 and SOLID92 stored with cdwrite in blocked format
   */
-  static void import_cdb_mesh_file(std::ifstream& f, mesh& m) {
+  static void import_cdb_mesh_file(std::istream& f, mesh& m) {
 
     std::map<size_type, size_type> cdb_node_2_getfem_node;
     std::vector<size_type> getfem_cv_nodes;
@@ -663,7 +663,7 @@ namespace getfem {
 
 
   /* mesh file from noboite [http://www.distene.com/fr/corp/newsroom16.html] */
-  static void import_noboite_mesh_file(std::ifstream& f, mesh& m) {
+  static void import_noboite_mesh_file(std::istream& f, mesh& m) {
     
     using namespace std;
     gmm::stream_standard_locale sl(f);
@@ -742,7 +742,7 @@ namespace getfem {
     if(f)  // si l'ouverture a réussi
       {
 	// instructions
-	f.close();  // on referme le fichier
+	//f.close();  // on referme le fichier
       }
     else  // sinon
       cerr << "Erreur à l'ouverture !" << endl;
@@ -759,7 +759,7 @@ namespace getfem {
 
   (only triangular 2D meshes)
   */
-  static void import_am_fmt_mesh_file(std::ifstream& f, mesh& m) {
+  static void import_am_fmt_mesh_file(std::istream& f, mesh& m) {
     gmm::stream_standard_locale sl(f);
     /* read the node list */
     std::vector<size_type> tri;
@@ -784,7 +784,7 @@ namespace getfem {
 
   triangular/quadrangular 2D meshes
   */
-  static void import_emc2_mesh_file(std::ifstream& f, mesh& m) {
+  static void import_emc2_mesh_file(std::istream& f, mesh& m) {
     gmm::stream_standard_locale sl(f);
     /* read the node list */
     std::vector<size_type> tri;
@@ -843,7 +843,7 @@ namespace getfem {
     }
   }
 
-  void import_mesh_gmsh(std::ifstream& f, mesh &m, 
+  void import_mesh_gmsh(std::istream& f, mesh &m, 
                   std::map<std::string, size_type> &region_map) {
     import_gmsh_mesh_file(f,m, 0, &region_map);
   }
@@ -870,7 +870,7 @@ namespace getfem {
     }
   }
                                                      
-  void import_mesh(std::ifstream& f, const std::string& format,
+  void import_mesh(std::istream& f, const std::string& format,
                    mesh& m) {
     if (bgeot::casecmp(format,"gmsh")==0)
       import_gmsh_mesh_file(f,m);

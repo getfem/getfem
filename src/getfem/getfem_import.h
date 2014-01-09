@@ -81,7 +81,7 @@ namespace getfem {
   */
   void import_mesh(const std::string& filename, const std::string& format,
 		   mesh& m);
-  void import_mesh(std::ifstream& f, const std::string& format,
+  void import_mesh(std::istream& f, const std::string& format,
 		   mesh& m);
   void import_mesh(const std::string& filename, mesh& m);
 
@@ -108,7 +108,7 @@ namespace getfem {
   */
   void import_mesh_gmsh(const std::string& filename, mesh& m, 
                    std::map<std::string, bgeot::size_type> &region_map);
-  void import_mesh_gmsh(std::ifstream& f, mesh& m, 
+  void import_mesh_gmsh(std::istream& f, mesh& m, 
                    std::map<std::string, bgeot::size_type> &region_map);
 
 
