@@ -72,6 +72,7 @@ Boost intrusive_ptr are used.
 #include <algorithm>
 #include "dal_singleton.h"
 #include <set>
+#include <list>
 
 
 #include "getfem/getfem_arch_config.h"
@@ -307,6 +308,72 @@ namespace dal {
 
 	/** Return the number of stored objects (for debugging purpose). */
 	size_t nb_stored_objects(void);
+
+	// Pointer to an object with the dependencies
+	struct enr_static_stored_object {
+		pstatic_stored_object p;
+		bool valid;
+		permanence perm;
+		std::set<pstatic_stored_object> dependent_object;
+		std::set<pstatic_stored_object> dependencies;
+		enr_static_stored_object(pstatic_stored_object o, permanence perma)
+			: p(o), valid(true), perm(perma) {}
+		enr_static_stored_object(void)
+			: p(0), valid(true), perm(STANDARD_STATIC_OBJECT) {}
+	};
+
+	// Pointer to a key with a coherent order
+	struct enr_static_stored_object_key {
+		pstatic_stored_object_key p;
+		bool operator < (const enr_static_stored_object_key &o) const
+		{ return (*p) < (*(o.p)); }
+		enr_static_stored_object_key(pstatic_stored_object_key o) : p(o) {}
+	};
+
+	// Storing array types
+	typedef std::map<enr_static_stored_object_key, enr_static_stored_object>
+		stored_object_tab;
+
+  /** Delete a list of objects and their dependencies*/
+  void del_stored_objects_immediate(std::list<pstatic_stored_object> &to_delete,
+		bool ignore_unstored);
+
+  /** delete all the specific type of stored objects*/
+  template<typename OBJECT_TYPE>
+  void delete_specific_type_stored_objects(bool all_thread = false)
+  {
+    std::list<pstatic_stored_object> delete_object_list;
+
+    if(!all_thread){
+      stored_object_tab& stored_objects
+          = dal::singleton<stored_object_tab>::instance();
+      
+      stored_object_tab::iterator itb = stored_objects.begin();
+      stored_object_tab::iterator ite = stored_objects.end();
+
+      for(stored_object_tab::iterator it = itb; it != ite; ++it){
+        const OBJECT_TYPE *p_object =  dal::stored_cast<OBJECT_TYPE>(it->second.p).get();
+        if(p_object != 0) delete_object_list.push_back(it->second.p);
+      }    
+    }
+    else{    
+      for(int thread = 0; thread<int(getfem::num_threads());thread++){
+        stored_object_tab& stored_objects
+          = dal::singleton<stored_object_tab>::instance(thread);
+      
+        stored_object_tab::iterator itb = stored_objects.begin();
+        stored_object_tab::iterator ite = stored_objects.end();
+
+        for(stored_object_tab::iterator it = itb; it != ite; ++it){
+          const OBJECT_TYPE *p_object =  dal::stored_cast<OBJECT_TYPE>(it->second.p).get();
+          if(p_object != 0) delete_object_list.push_back(it->second.p);
+        }
+      }
+    }
+
+    del_stored_objects_immediate(delete_object_list, false);
+
+  }
 }
 
 #endif /* DAL_STATIC_STORED_OBJECTS_H__ */

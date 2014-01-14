@@ -44,30 +44,6 @@ namespace dal {
 		    if ((**it).ref_sum()==0) delete *it;
 		}
 
-	// Pointer to an object with the dependencies
-	struct enr_static_stored_object {
-		pstatic_stored_object p;
-		bool valid;
-		permanence perm;
-		std::set<pstatic_stored_object> dependent_object;
-		std::set<pstatic_stored_object> dependencies;
-		enr_static_stored_object(pstatic_stored_object o, permanence perma)
-			: p(o), valid(true), perm(perma) {}
-		enr_static_stored_object(void)
-			: p(0), valid(true), perm(STANDARD_STATIC_OBJECT) {}
-	};
-
-	// Pointer to a key with a coherent order
-	struct enr_static_stored_object_key {
-		pstatic_stored_object_key p;
-		bool operator < (const enr_static_stored_object_key &o) const
-		{ return (*p) < (*(o.p)); }
-		enr_static_stored_object_key(pstatic_stored_object_key o) : p(o) {}
-	};
-
-	// Storing array types
-	typedef std::map<enr_static_stored_object_key, enr_static_stored_object>
-		stored_object_tab;
 	struct stored_key_tab : public std::map<pstatic_stored_object,
 		pstatic_stored_object_key> {
 			~stored_key_tab() {
