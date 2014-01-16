@@ -235,6 +235,7 @@ namespace dal {
                 getfem::omp_guard local_lock;
                 delete ito->first.p;
                 stored_objects.erase(ito);
+                delete k;
               }
             }
           }
