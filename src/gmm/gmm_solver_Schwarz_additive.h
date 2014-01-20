@@ -645,7 +645,7 @@ namespace gmm {
       if (conv_r < first_res) ++count;
 
       if (r < first_res *  alpha_min_ratio)
-	{ count_pat = 0.; return true; }      
+	{ count_pat = 0; return true; }      
       if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
 	if (conv_r < first_res * 0.99) count_pat = 0;
 	if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)

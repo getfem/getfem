@@ -435,7 +435,8 @@ namespace getfem {
                                dim_type qdim, size_type niter) {
     check_name_valitity(name);
     variables[name] = var_description(false, is_complex(), true, niter,
-                                      VDESCRFILTER_NO, &mf, -1, qdim);
+                                      VDESCRFILTER_NO, &mf, size_type(-1),
+                                      qdim);
     variables[name].set_size(mf.nb_dof()*qdim);
     add_dependency(mf);
   }

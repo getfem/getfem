@@ -59,7 +59,7 @@ The principle of the :math:`\theta`-method is to dispatch the term :math:`F` int
 
 For specific values of :math:`\theta` one obtains some classical schemes: backward 
 Euler for :math:`\theta = 1`, forward Euler for :math:`\theta = 0` and 
-Crank-Nicholson scheme for :math:`\theta = 1/2` (which is an order two scheme).
+Crank-Nicolson scheme for :math:`\theta = 1/2` (which is an order two scheme).
 
 For instance, if the dispatcher is applied to a brick representing a linear 
 elliptic term :math:`KU` where :math:`K` is the stiffness matrix and :math:`U` the 
@@ -201,7 +201,7 @@ Midpoint dispatcher
 The principle of the midpoint scheme is to dispacth a term :math:`F(U)` into 
 :math:`F((U^{n+1}+U^{n})/2),`
 
-It is different from the Crank-Nicholson scheme (:math:`\theta`-method for 
+It is different from the Crank-Nicolson scheme (:math:`\theta`-method for 
 :math:`\theta=1/2`) only for nonlinear terms.
 
 The real unknown remains :math:`U^{n+1}`. the effect will be to multiply by 

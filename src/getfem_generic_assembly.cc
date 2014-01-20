@@ -381,22 +381,23 @@ namespace getfem {
     }
 
     ga_tree_node(void)
-      : node_type(GA_NODE_VOID), test_function_type(-1), qdim1(0), qdim2(0),
-        der1(0), der2(0), symmetric_op(false), hash_value(0) {}
+      : node_type(GA_NODE_VOID), test_function_type(size_type(-1)), qdim1(0),
+        qdim2(0), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(GA_NODE_TYPE ty, size_type p)
-      : node_type(ty), test_function_type(-1), qdim1(0), qdim2(0),
+      : node_type(ty), test_function_type(size_type(-1)), qdim1(0), qdim2(0),
         pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0) {}
     ga_tree_node(scalar_type v, size_type p)
-      : node_type(GA_NODE_CONSTANT), test_function_type(-1), qdim1(0),
-        qdim2(0), pos(p), der1(0), der2(0), symmetric_op(false), hash_value(0)
+      : node_type(GA_NODE_CONSTANT), test_function_type(size_type(-1)),
+        qdim1(0), qdim2(0), pos(p), der1(0), der2(0), symmetric_op(false),
+        hash_value(0)
     { init_scalar_tensor(v); }
     ga_tree_node(const char *n, size_type l, size_type p)
-      : node_type(GA_NODE_NAME), test_function_type(-1), qdim1(0), qdim2(0),
-        pos(p), name(n, l), der1(0), der2(0), symmetric_op(false),
+      : node_type(GA_NODE_NAME), test_function_type(size_type(-1)), qdim1(0),
+        qdim2(0), pos(p), name(n, l), der1(0), der2(0), symmetric_op(false),
         hash_value(0) {}
     ga_tree_node(GA_TOKEN_TYPE op, size_type p)
-      : node_type(GA_NODE_OP), test_function_type(-1), qdim1(0), qdim2(0),
-        pos(p), der1(0), der2(0), op_type(op), symmetric_op(false),
+      : node_type(GA_NODE_OP), test_function_type(size_type(-1)), qdim1(0),
+        qdim2(0), pos(p), der1(0), der2(0), op_type(op), symmetric_op(false),
         hash_value(0) {}
     
   };
@@ -1400,9 +1401,8 @@ namespace getfem {
     typedef std::map<std::string, ga_nonlinear_operator*> T;
     std::map<std::string, ga_nonlinear_operator*> tab;
     
-    template<class T> void add_method(const std::string &name, const T &t) {
-      tab[name] = new T(t); 
-    }
+   void add_method(const std::string &name, ga_nonlinear_operator *pt)
+    { tab[name] = pt; }
     ~ga_predef_operator_tab() {
       for (T::iterator it = tab.begin(); it != tab.end(); ++it)
         delete it->second;
@@ -1936,13 +1936,13 @@ namespace getfem {
 
     // Predefined operators
 
-    PREDEF_OPERATORS.add_method("Norm", norm_operator());
-    PREDEF_OPERATORS.add_method("Norm_sqr", norm_sqr_operator());
-    PREDEF_OPERATORS.add_method("Det", det_operator());
-    PREDEF_OPERATORS.add_method("Matrix_i2", matrix_i2_operator());
-    PREDEF_OPERATORS.add_method("Matrix_j1", matrix_j1_operator());
-    PREDEF_OPERATORS.add_method("Matrix_j2", matrix_j2_operator());
-    PREDEF_OPERATORS.add_method("Inverse", inverse_operator());
+    PREDEF_OPERATORS.add_method("Norm", new norm_operator());
+    PREDEF_OPERATORS.add_method("Norm_sqr", new norm_sqr_operator());
+    PREDEF_OPERATORS.add_method("Det", new det_operator());
+    PREDEF_OPERATORS.add_method("Matrix_i2", new matrix_i2_operator());
+    PREDEF_OPERATORS.add_method("Matrix_j1", new matrix_j1_operator());
+    PREDEF_OPERATORS.add_method("Matrix_j2", new matrix_j2_operator());
+    PREDEF_OPERATORS.add_method("Inverse", new inverse_operator());
 
     return true;
   }
