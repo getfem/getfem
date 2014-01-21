@@ -679,7 +679,7 @@ namespace getfem {
       return false;
     }
     void update_from_context(void) const {}
-    mf__key_(const mf__key_ &mfk) : context_dependencies(mfk) {
+    mf__key_(const mf__key_ &mfk) : context_dependencies( ) {
       pmesh = mfk.pmesh; order = mfk.order; qdim = mfk.qdim;
       add_dependency(*pmesh);
     }
