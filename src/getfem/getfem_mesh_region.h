@@ -88,7 +88,7 @@ namespace getfem {
     mesh_region(size_type id__) : id_(id__), type_(size_type(-1)),
                                   parent_mesh(0) {}
     /** internal constructor. You should used m.region(id) instead. */
-    mesh_region(mesh& m, size_type id__, size_type type = -1) : 
+    mesh_region(mesh& m, size_type id__, size_type type = size_type(-1)) : 
       p(new impl), id_(id__), type_(type), parent_mesh(&m)  {}
     /** build a mesh_region from a convex list stored in a bit_vector. */
     mesh_region(const dal::bit_vector &bv) : 
@@ -110,9 +110,9 @@ namespace getfem {
                                  const mesh_region &b);
     size_type id() const { return id_; }
 
-    size_type get_type() const {return type_;}
+    size_type get_type() const { return type_; }
 
-    void  set_type(size_type type)  { type_ = type;}
+    void  set_type(size_type type)  { type_ = type; }
 
     /**extract the next region number 
     that does not yet exists in the mesh*/

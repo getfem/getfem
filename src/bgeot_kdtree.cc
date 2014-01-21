@@ -269,10 +269,10 @@ namespace bgeot {
     points_in_box_(p, tree, 0);
   }
 
-   scalar_type kdtree::nearest_neighbor(index_node_pair &ipt,
-                                        const base_node &pos) {
-
-    ipt.i = -1;
+  scalar_type kdtree::nearest_neighbor(index_node_pair &ipt,
+                                       const base_node &pos) {
+    
+    ipt.i = size_type(-1);
     if (tree == 0) {
       tree = build_tree_(pts.begin(), pts.end(), 0);
       if (!tree) return scalar_type(-1);

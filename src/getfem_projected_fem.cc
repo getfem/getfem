@@ -258,8 +258,8 @@ namespace getfem {
     //scalar_type dist =
     tree.nearest_neighbor(ipt, pt);
 
-    size_type cv_sel(-1);
-    short_type fc_sel(-1);
+    size_type cv_sel = size_type(-1);
+    short_type fc_sel = short_type(-1);
     scalar_type is_in_sel(1e10);
     base_node proj_ref, proj_ref_sel;
     const getfem::mesh::ind_cv_ct cvs = mf_source.convex_to_basic_dof(ipt.i);
@@ -352,8 +352,8 @@ namespace getfem {
       bgeot::pgeotrans_precomp pgp =
         bgeot::geotrans_precomp(pgt, &(pai->integration_points()), 0);
       dal::bit_vector dofs;
-      size_type last_cv(-1); // refers to the source mesh
-      short_type last_f(-1); // refers to the source mesh
+      size_type last_cv = size_type(-1); // refers to the source mesh
+      short_type last_f = short_type(-1); // refers to the source mesh
       size_type nb_pts = i.is_face() ? pai->nb_points_on_face(f) : pai->nb_points();
       size_type start_pt = i.is_face() ? pai->ind_first_point_on_face(f) : 0;
       elt_projection_data &e = elements[cv];

@@ -145,7 +145,7 @@ namespace getfem {
           base_node node1 = cn1->mf->point_of_basic_dof(cn1->dof);
           bgeot::index_node_pair ipt;
           scalar_type dist2 = tree2.nearest_neighbor(ipt, node1);
-          if (ipt.i >= 0 && dist2 < (*this)[ii1].dist2) {
+          if (ipt.i != size_type(-1) && dist2 < (*this)[ii1].dist2) {
             (*this)[ii1].cn_s = *cn1;
             (*this)[ii1].cn_m = cnl2[ipt.i];
             (*this)[ii1].dist2 = dist2;
@@ -160,7 +160,7 @@ namespace getfem {
           base_node node2 = cn2->mf->point_of_basic_dof(cn2->dof);
           bgeot::index_node_pair ipt;
           scalar_type dist2 = tree1.nearest_neighbor(ipt, node2);
-          if (ipt.i >= 0 && dist2 < (*this)[ii2].dist2) {
+          if (ipt.i != size_type(-1) && dist2 < (*this)[ii2].dist2) {
             (*this)[ii2].cn_s = *cn2;
             (*this)[ii2].cn_m = cnl1[ipt.i];
             (*this)[ii2].dist2 = dist2;

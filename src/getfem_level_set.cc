@@ -46,7 +46,7 @@ namespace getfem {
   }
 
 
-  level_set::level_set(const level_set &ls) {
+  level_set::level_set(const level_set &ls) : context_dependencies(ls) {
     copy_from(ls);
   }
 

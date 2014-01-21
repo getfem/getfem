@@ -106,7 +106,7 @@ namespace getfem {
     v_num_update = v_num = act_counter();
   }
 
-  mesh_im::mesh_im(const mesh_im &mim) {
+  mesh_im::mesh_im(const mesh_im &mim) : context_dependencies(mim) {
     GMM_ASSERT1(mim.linked_mesh_ == 0,
 		"Copy constructor is not allowed for non void mesh_im");
     linked_mesh_ = 0; auto_add_elt_pim = 0;

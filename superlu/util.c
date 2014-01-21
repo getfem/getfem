@@ -27,8 +27,8 @@
 
 void superlu_abort_and_exit(char* msg)
 {
-    fprintf(stderr, msg);
-    exit (-1);
+  fprintf(stderr, "%s",  msg);
+  exit (-1);
 }
 
 /*
