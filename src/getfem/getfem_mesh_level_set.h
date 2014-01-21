@@ -150,7 +150,7 @@ namespace getfem {
     mesh_level_set(mesh &me);
     mesh_level_set(void);
     virtual ~mesh_level_set();
-    mesh_level_set(const mesh_level_set &mls) : context_dependencies(mls) {
+    mesh_level_set(const mesh_level_set &mls) : context_dependencies() {
       GMM_ASSERT1(linked_mesh_ == 0 && mls.linked_mesh_ == 0,
 		  "Copy constructor is not allowed for mesh_level_set");
     }
