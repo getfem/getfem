@@ -178,13 +178,17 @@ namespace dal {
 	base class for reference-counted getfem objects (via
 	boost::intrusive_ptr).
 	The reference-counting is thread safe, but the garbage 
-    is removed after parallel region
+        is removed after parallel region
 	@see dal_static_stored_objects.h
 	*/
 	class static_stored_object {
 		mutable getfem::omp_distribute<long> pointer_ref_count_;
 	public :
+                getfem::omp_distribute<long> get_count(void) { return pointer_ref_count_; }
 		static_stored_object(void) : pointer_ref_count_(0) {}
+                static_stored_object(const static_stored_object &)
+                  : pointer_ref_count_(0) {}
+          static_stored_object &operator =(const static_stored_object &) { return *this; }
 		virtual ~static_stored_object() { }
 		friend void intrusive_ptr_add_ref(const static_stored_object *o);
 		friend void intrusive_ptr_release(const static_stored_object *o);
