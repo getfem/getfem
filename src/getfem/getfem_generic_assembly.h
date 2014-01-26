@@ -70,6 +70,8 @@ namespace getfem {
 
     virtual void second_derivative(const arg_list &args, size_type i,
                                    size_type j, base_tensor &result) const = 0;
+
+    virtual ~ga_nonlinear_operator() {}
   };
 
   //=========================================================================

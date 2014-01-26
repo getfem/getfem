@@ -155,7 +155,8 @@ namespace dal {
 	void add_dependency(pstatic_stored_object o1,
                             pstatic_stored_object o2) {
           stored_object_tab& stored_objects
-          = dal::singleton<stored_object_tab>::instance();    
+          = dal::singleton<stored_object_tab>::instance();
+          GMM_NOPERATION(stored_objects);   
           std::vector<stored_object_tab*> all_stored_objects;
           for(size_t i= 0; i<getfem::num_threads();i++) 
             all_stored_objects.push_back
@@ -166,6 +167,7 @@ namespace dal {
           if (it1 != (*all_stored_objects[thread1]).end() && 
               it2 != (*all_stored_objects[thread2]).end()) {
             getfem::omp_guard local_lock;
+            GMM_NOPERATION(local_lock);
             it2->second.dependent_object.insert(o1);
             it1->second.dependencies.insert(o2);
           }
@@ -192,7 +194,8 @@ namespace dal {
 		stored_object_tab::iterator it1 = iterator_of_object(o1);
 		stored_object_tab::iterator it2 = iterator_of_object(o2);
 		if (it1 != stored_objects.end() && it2 != stored_objects.end()) {
-			getfem::omp_guard local_lock; 
+			getfem::omp_guard local_lock;
+                        GMM_NOPERATION(local_lock);
 			it2->second.dependent_object.erase(o1);
 			it1->second.dependencies.erase(o2);
 			return it2->second.dependent_object.empty();
@@ -230,9 +233,14 @@ namespace dal {
               pstatic_stored_object_key k = key_of_stored_object(*it,thread);
               stored_object_tab::iterator ito = stored_objects.end();
               if (k) ito = stored_objects.find(k);
-              if (k) {getfem::omp_guard local_lock; stored_keys.erase(*it);}
+              if (k) {
+                getfem::omp_guard local_lock;
+                GMM_NOPERATION(local_lock);
+                stored_keys.erase(*it);
+              }
               if (ito != stored_objects.end()) {
                 getfem::omp_guard local_lock;
+                GMM_NOPERATION(local_lock);
                 delete ito->first.p;
                 stored_objects.erase(ito);
               }

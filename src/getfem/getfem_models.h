@@ -274,17 +274,18 @@ namespace getfem {
       mutable std::vector<complex_veclist> cveclist_sym;  // additional rhs
       // for symmetric terms (real version).
 
+      brick_description(void): v_num(0) {}
+
       brick_description(pbrick p, const varnamelist &vl,
                         const varnamelist &dl, const termlist &tl,
                         const mimlist &mms, size_type reg)
         : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
           external_load(0),
-          partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  region),
+          partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  reg),
           rveclist(1), rveclist_sym(1), cveclist(1),
           cveclist_sym(1)  { }
 
-      brick_description(void) {}      
     };
 
     typedef std::map<std::string, var_description> VAR_SET;

@@ -77,7 +77,7 @@ namespace getfem {
       std::map<size_type,gausspt_projection_data> gausspt;
       std::vector<size_type> inddof;
       pintegration_method pim; // for DEBUG
-      elt_projection_data() : f(-1), nb_dof(0), pim(0) {}
+      elt_projection_data() : f(short_type(-1)), nb_dof(0), pim(0) {}
     };
 
     const mesh_fem &mf_source; // mf_source represents the original finite

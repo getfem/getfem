@@ -74,6 +74,7 @@ might be covered by the GNU Lesser General Public License.
 # define SECURE_STRDUP(s) strdup(s)
 #endif
 
+#define GMM_NOPERATION(a) { abs(&(a) != &(a)); }
 
 /* ********************************************************************** */
 /*	Compilers detection.						  */

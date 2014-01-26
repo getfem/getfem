@@ -76,7 +76,7 @@ namespace getfem {
       else if (from.id_ == size_type(-1)) {
         this->clear();
         this->add(this->parent_mesh->convex_index());
-        this->type_ = -1;
+        this->type_ = size_type(-1);
       }
       touch_parent_mesh();
     }
