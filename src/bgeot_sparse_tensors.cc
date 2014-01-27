@@ -66,7 +66,7 @@ namespace bgeot {
     const tensor_ranges& all_ranges() const { return ranges; }
     const index_set& all_indexes() const { return idxnums; }
     /* /!!!!!\ attention les strides ont 1 elt de plus que r et idxs (pour les tensor_masks)
-       (ça intervient aussi dans prepare()) */
+       (ca intervient aussi dans prepare()) */
     void insert(const index_set& idxs, const tensor_ranges& r, const tensor_strides& s, IT it_) {
       assert(idxs.size() == r.size()); assert(s.size() == r.size()+1);
       slst.push_back(&s);
@@ -144,8 +144,8 @@ namespace bgeot {
     idxs = tm1.indexes();
     
     /* ce tableau va permettre de faire une boucle commune sur les
-       deux masques, les dimension inutilisées étant mises à 1 pour
-       ne pas géner */
+       deux masques, les dimension inutilisees etant mises a 1 pour
+       ne pas gener */
     tensor_ranges global_r(std::max(tm1.max_dim(),tm2.max_dim())+1, index_type(1));
  
     for (index_type i = 0; i < tm1.indexes().size(); ++i) 
@@ -165,7 +165,7 @@ namespace bgeot {
     eval_strides();
     assert(size());
     m.assign(size(),false);
-    /* sans doute pas très optimal, mais la fonction n'est pas critique .. */    
+    /* sans doute pas tres optimal, mais la fonction n'est pas critique .. */    
     for (tensor_ranges_loop l(global_r); !l.finished(); l.next()) {
       if (and_op) {
 	if (tm1(l.cnt) && tm2(l.cnt)) m.add(pos(l.cnt));
@@ -236,7 +236,7 @@ namespace bgeot {
   }
 
 
-  /* construit un masque formé du produit cartesien de plusieurs masques (disjoints)
+  /* construit un masque forme du produit cartesien de plusieurs masques (disjoints)
      /!\ aucune verif sur la validite des arguments */
   tensor_mask::tensor_mask(const std::vector<const tensor_mask*>& tm) { 
     assign(tm); 
@@ -335,7 +335,7 @@ namespace bgeot {
     pbase_ = tr.pbase_; base_shift_ = tr.base_shift();
     
     /*    
-    cout << "\n  -> entrée dans set_sub_tensor: " << endl 
+    cout << "\n  -> entree dans set_sub_tensor: " << endl 
 	 << "tr.shape=" << (tensor_shape&)(tr) << endl
 	 << "     sub=" << sub << endl;
     */
@@ -347,7 +347,7 @@ namespace bgeot {
     }
     
     
-    /* on parcours chaque masque (mergé) */
+    /* on parcours chaque masque (merge) */
     for (dim_type im = 0; im < masks().size(); ++im) {
       const tensor_mask& m = masks()[im];
       /* par construction, tous les masques de tr sont inclus (ou egaux)
@@ -357,7 +357,7 @@ namespace bgeot {
       */
       std::vector<dim_type> trmasks; trmasks.reserve(tr.masks().size());
       for (dim_type i=0; i < m.indexes().size(); ++i) {
-	if (tr.index_is_valid(m.indexes()[i])) { 	/* l'index n'est pas forcément valide pour tr !*/
+	if (tr.index_is_valid(m.indexes()[i])) { 	/* l'index n'est pas forcement valide pour tr !*/
 	  dim_type im2 = tr.index_to_mask_num(m.indexes()[i]);
 	  if (std::find(trmasks.begin(), trmasks.end(), im2)==trmasks.end()) trmasks.push_back(im2);
 	}
@@ -374,8 +374,8 @@ namespace bgeot {
 	bool in_trm = true;
 	stride_type tr_s = 0;
 	
-	/* verifie si l'element est bien marqué non nul dans les masques de tr
-	     et met à jour le stride */
+	/* verifie si l'element est bien marque non nul dans les masques de tr
+	     et met a jour le stride */
 	for (dim_type i=0; i < trmasks.size(); ++i) { 
 	  const tensor_mask &mm = tr.mask(trmasks[i]);
 
@@ -398,7 +398,7 @@ namespace bgeot {
       /* verif que yapa bug */
       assert(stcnt == stride_type(m.card()));
       }
-    ensure_0_stride(); /* c'est plus propre comme ça */
+    ensure_0_stride(); /* c'est plus propre comme ca */
   }
 
   /* slices a tensor_ref, at dimension 'dim', position 'islice'
@@ -447,7 +447,7 @@ namespace bgeot {
     bool operator()(dim_type a, dim_type b) {
       if (pri[a].n < pri[b].n) return true;
       else if (pri[a].n > pri[b].n) return false;
-      else { /* c'est la que ça devient interessant */
+      else { /* c'est la que ca devient interessant */
 	if (pri[a].mean_increm > pri[b].mean_increm) return true;
       }
       return false;      
@@ -984,9 +984,9 @@ namespace bgeot {
   }
 
   void tensor_reduction::do_reduction() {
-    /* on s'assure que le tenseur destination a bien été remis à zero
-       avant le calcul (c'est obligatoire malheureusement, conséquence
-       de l'utilisation de masque qui ne s'arrêtent pas forcement sur les 
+    /* on s'assure que le tenseur destination a bien ete remis a zero
+       avant le calcul (c'est obligatoire malheureusement, consequence
+       de l'utilisation de masque qui ne s'arretent pas forcement sur les 
        'frontieres' entre les differents tenseurs reduits) */
     //std::fill(out_data.begin(), out_data.end(), 0.);
     if (out_data.size()) memset(&out_data[0], 0, out_data.size()*sizeof(out_data[0]));

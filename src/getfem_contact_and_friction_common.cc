@@ -677,7 +677,7 @@ namespace getfem {
 
   void multi_contact_frame::compute_potential_contact_pairs_influence_boxes(void) {
     compute_influence_boxes();
-    compute_boundary_points(!self_contact); // vraiment nécessaire ?
+    compute_boundary_points(!self_contact); // vraiment necessaire ?
     normal_cone_simplicication();
     potential_pairs = std::vector<std::vector<face_info> >();
     potential_pairs.resize(boundary_points.size());

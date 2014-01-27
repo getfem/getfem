@@ -4608,7 +4608,7 @@ namespace getfem {
         }
       } else if (child0->node_type == GA_NODE_PREDEF_FUNC) {
         
-        // Évaluation of a predefined function
+        // Evaluation of a predefined function
         
         for (size_type i = 1; i < pnode->children.size(); ++i)
           ga_valid_operand(expr, pnode->children[i]);
@@ -5093,7 +5093,7 @@ namespace getfem {
         const ga_predef_function &F = it->second;
 
         if (F.nbargs == 1) {
-          // TODO: if the function is affine, l'étendre dans l'arbre (notament pour sqr ...)
+          // TODO: if the function is affine, l'etendre dans l'arbre (notament pour sqr ...)
           switch (F.dtype) {
           case 0:
             GMM_ASSERT1(false, "Cannot derive function " << child0->name

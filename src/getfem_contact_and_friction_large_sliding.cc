@@ -1178,7 +1178,7 @@ namespace getfem {
       size_type i = 0;
       for (; i < Us.size(); ++i) if (Us[i] == &U) return i;
       Us.push_back(&U);
-      model_real_plain_vector ext_U(mfu.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
+      model_real_plain_vector ext_U(mfu.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la meme variable ne doit pas etre etendue dans deux vecteurs differents.
       mfu.extend_vector(U, ext_U);
       ext_Us.push_back(ext_U);
       return i;
@@ -1189,7 +1189,7 @@ namespace getfem {
       size_type i = 0;
       for (; i < lambdas.size(); ++i) if (lambdas[i] == &l) return i;
       lambdas.push_back(&l);
-      model_real_plain_vector ext_l(mfl.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la même variable ne doit pas être étendue dans deux vecteurs différents.
+      model_real_plain_vector ext_l(mfl.nb_basic_dof()); // means that the structure has to be build each time ... to be changed. ATTENTION : la meme variable ne doit pas etre etendue dans deux vecteurs differents.
       mfl.extend_vector(l, ext_l);
       ext_lambdas.push_back(ext_l);
       return i;
@@ -1454,7 +1454,7 @@ namespace getfem {
 
     ctxu.pf()->interpolation_grad(ctxu, coeff, gradinv, dim_type(N));
     gmm::add(gmm::identity_matrix(), gradinv);
-    scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une résolution...
+    scalar_type J = gmm::lu_inverse(gradinv); // remplacer par une resolution...
     if (J <= scalar_type(0)) {
       GMM_WARNING1("Inverted element !");
 
@@ -1721,7 +1721,7 @@ namespace getfem {
                 "Large sliding contact assembly procedure has to be adapted "
                 "to intrinsic vectorial elements. To be done.");
 
-    // Éviter les calculs inutiles dans le cas state == 2 ... à voir à la fin
+    // Eviter les calculs inutiles dans le cas state == 2 ... a voir a la fin
     // regarder aussi si on peut factoriser des mat_elem_assembly ...
 
     base_matrix Melem;
@@ -1853,7 +1853,7 @@ namespace getfem {
 
         // (1/r)\int \nabla_n P(zeta) (dn/du)(\delta u) . \mu
         // On peut certainement factoriser d'avantage ce terme avec le
-        // précédent. Attendre la version avec frottement.
+        // precedent. Attendre la version avec frottement.
         for (size_type i = 0, ii = 0; i < cvnbdofl; ++i, ii = i%N)
           for (size_type j = 0, jj = 0; j < cvnbdofu; ++j, jj = j%N) {
             aux1 = aux2 = scalar_type(0);
@@ -1885,7 +1885,7 @@ namespace getfem {
             gmm::add(gmm::identity_matrix(), grad_y0);
 
             gmm::copy(grad_y0, gradinv_y0);
-            gmm::lu_inverse(gradinv_y0); // à proteger contre la non-inversibilité
+            gmm::lu_inverse(gradinv_y0); // a proteger contre la non-inversibilite
             gmm::mult(gmm::transposed(gradinv_y0), n0_y0s[ibound], ntilde_y0); // (not unit) normal vector
           }
 
@@ -2144,8 +2144,8 @@ namespace getfem {
   }
 
 
-  // r ne peut pas être variable pour le moment.
-  // dataname_friction_coeff ne peut pas être variable non plus ...
+  // r ne peut pas etre variable pour le moment.
+  // dataname_friction_coeff ne peut pas etre variable non plus ...
 
   size_type add_integral_large_sliding_contact_brick_field_extension
   (model &md, const mesh_im &mim, const std::string &varname_u,
