@@ -147,7 +147,7 @@ namespace getfem {
       }
     }
     void update_childs_required_shape() {
-      /* pourrait être mieux, cf les commentaires de la fonction 
+      /* pourrait etre mieux, cf les commentaires de la fonction 
 	 tensor_reduction::required_shape */
       for (dim_type n=0; n < nchilds(); ++n) {
 	tensor_shape ts(child(n).ranges());
