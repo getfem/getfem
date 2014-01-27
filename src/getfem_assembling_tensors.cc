@@ -1023,7 +1023,7 @@ namespace getfem {
 
   private:
     void reinit_() {
-      req_shape.set_full(ranges()); // c'est plus simple comme ça
+      req_shape.set_full(ranges()); // c'est plus simple comme ca
       ATN_tensor_w_data::reinit0();
       mti.assign(child(0).tensor(),true);
     }
