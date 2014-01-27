@@ -12,8 +12,9 @@ Standard assembly procedures
 Procedures defined in the file :file:`getfem/getfem_assembling.h` allow the
 assembly of stiffness matrices, mass matrices and boundary conditions for a few
 amount of classical partial differential equation problems. All the procedures
-have vectors and matrices template parameters in order to be used with any matrix
-library.
+have vectors and matrices template parameters in order to be used with any matrix library.
+
+CAUTION: The assembly procedures do not clean the matrix/vector at the begining of the assembly in order to keep the possibility to perform several assembly operations on the same matrix/vector. Consequently, one has to clean the matrix/vector before the first assembly operation.
 
 
 Laplacian (Poisson) problem

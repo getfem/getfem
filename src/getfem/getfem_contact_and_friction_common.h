@@ -600,7 +600,7 @@ namespace getfem {
           master_point_ref(mptr), master_point(mpt), master_n(ny),
           master_ind_boundary(mfi.ind_boundary), master_ind_element(mfi.ind_element),
           master_ind_face(mfi.ind_face),
-          signed_dist(sd), irigid_obstacle(-1) {}
+          signed_dist(sd), irigid_obstacle(size_type(-1)) {}
       contact_pair(const base_node &spt, const base_small_vector &nx,
                    const boundary_point &bp,
                    const base_node &mpt, const base_small_vector &ny,

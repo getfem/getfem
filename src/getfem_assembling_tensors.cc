@@ -1064,7 +1064,7 @@ namespace getfem {
   /* sum AND scalar scaling */
   class ATN_tensors_sum_scaled : public ATN_tensor_w_data {
     std::vector<multi_tensor_iterator> mti;
-    std::vector<scalar_type> scales; /* utile pour des somme "scalées" du genre 0.5*t1 + 0.5*t2 */
+    std::vector<scalar_type> scales; /* utile pour des somme "scaled" du genre 0.5*t1 + 0.5*t2 */
   public:
     ATN_tensors_sum_scaled(ATN_tensor& t1, scalar_type s1) {
       add_child(t1);
@@ -1375,7 +1375,7 @@ namespace getfem {
 
   ATN_tensor* generic_assembly::do_data() {
     //    ATN_tensor *t;
-    size_type datanum = 0; /* par défaut */
+    size_type datanum = 0; /* par defaut */
     if (tok_type() != OPEN_PAR) { /* on peut oublier le numero de dataset */
       if (tok_type() != ARGNUM_SELECTOR)
 	ASM_THROW_PARSE_ERROR("expecting dataset number");

@@ -107,7 +107,7 @@ level_set_contact::master_contact_body::master_contact_body(
 	scalar_type _max_contact_angle): 
 
 		contact_body(_md,_var_name),
-		mult_mim_order(-1),
+		mult_mim_order(size_type(-1)),
 		mult_int_method(_mult_mim_method),
 		mult_mf_order(_mult_order),
 		integration(_integration),
