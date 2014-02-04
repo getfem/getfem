@@ -24,12 +24,12 @@
 
 gf_workspace('clear all');
 clear all;
+gf_util('trace level', 0);
 
-
-NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
+% NX = 20; m=gf_mesh('cartesian', [0:1/NX:1]); % Cas 1D
 
 % Import the mesh : disc
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
@@ -52,17 +52,17 @@ if (d == 1)
   clambda = 1;             % Lame coefficient
   cmu = 1;                 % Lame coefficient
   friction = 0;            % Friction coefficient
-  vertical_force = 1.0;    % Volumic load in the vertical direction
+  vertical_force = 0.0;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
   dt = 0.001;              % Time step
   T = 4;                   % Simulation time
   dt_plot = 0.01;          % Drawing step;
   beta = 0.5;              % Newmark scheme coefficient
   gamma = 1.0;             % Newmark scheme coefficient
-  theta = 1.0;             % Theta-method scheme coefficient
+  theta = 0.5;             % Theta-method scheme coefficient
   dirichlet = 1;           % Dirichlet condition or not
-  dirichlet_val = 0.45;
-  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  dirichlet_val = 0.0;
+  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 1;
   v_degree = 1;
   lambda_degree = 1;
@@ -80,16 +80,16 @@ else
   dt_plot = 0.5;           % Drawing step;
   beta = 0.25;             % Newmark scheme coefficient
   gamma = 0.5;             % Newmark scheme coefficient
-  theta = 1.0;             % Theta-method scheme coefficient
+  theta = 0.5;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 2;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
   Nitsche = 1;             % Use Nitsche's method or not
   gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
-  theta_N =  0.0;          % Parameter theta for Nitsche's method
+  theta_N =  1.0;          % Parameter theta for Nitsche's method
 end
   
 singular_mass = 0;         % 0 = standard method
@@ -238,25 +238,26 @@ if (Nitsche)
       gf_model_set(md, 'add initialized data', 'alpha_f', [0]);
       gf_model_set(md, 'add fem data', 'wt', mfu);
       
+      % Nécessaire ?
       % gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
       %  'obstacle', 'gamma0', GAMMAC, theta_N);
       
       gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
-       'obstacle', 'gamma0', GAMMAC, theta, 'friction_coeff', 'alpha_f', 'wt', 2);
+       'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt', 2);
       gf_model_set(md, 'add Nitsche midpoint contact with rigid obstacle brick', mim_friction, 'u', ...
-       'obstacle', 'gamma0', GAMMAC, theta, 'friction_coeff', 'alpha_f', 'wt', 1);
-  end
-  
-  if (friction == 0)
-    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
-        'obstacle', 'gamma0', GAMMAC, theta_N);
+       'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt', 1);
   else
-    gf_model_set(md, 'add initialized data', 'friction_coeff', [friction]);
-    gf_model_set(md, 'add initialized data', 'alpha_f', [1./dt]);
-    gf_model_set(md, 'add fem data', 'wt', mfu);
-    gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
-        'obstacle', 'gamma0', GAMMAC, theta, 'friction_coeff', 'alpha_f', 'wt');
-  end 
+    if (friction == 0)
+      gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
+                   'obstacle', 'gamma0', GAMMAC, theta_N);
+    else
+      gf_model_set(md, 'add initialized data', 'friction_coeff', [friction]);
+      gf_model_set(md, 'add initialized data', 'alpha_f', [1./dt]);
+      gf_model_set(md, 'add fem data', 'wt', mfu);
+      gf_model_set(md, 'add Nitsche contact with rigid obstacle brick', mim_friction, 'u', ...
+           'obstacle', 'gamma0', GAMMAC, theta_N, 'friction_coeff', 'alpha_f', 'wt');
+    end
+  end
 else
   ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
   mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
@@ -275,7 +276,7 @@ else
 end
 
 if (d == 1)
-    U0 = (gf_mesh_fem_get(mfu, 'eval', { sprintf('%g+0.5-0.5*x', dirichlet_val)}))'
+    U0 = (gf_mesh_fem_get(mfu, 'eval', { sprintf('%g+0.5-0.5*x', dirichlet_val)}))';
 else
     U0 = zeros(nbdofu, 1);
     U0(d:d:nbdofu) = 5;
@@ -291,13 +292,13 @@ V1 = zeros(nbdofu, 1);
 FF = gf_asm('volumic source', mim, mfu, mfd, F);
 K = gf_asm('linear elasticity', mim, mfu, mfd, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu);
 MA0 = FF-K*U0;
-if (singular_mass ==1)
+if (singular_mass == 1)
   if (d == 1)
     MA0(1) = 0;
   else
     error('Take it into account !');
   end
-else if (singular_mass == 2) % to be verified
+elseif (singular_mass == 2) % to be verified
   VV1 = (B') \ MA0; VV2 = C*VV1; A0 = B\VV2; VV1 = B*A0; VV2 = C\VV1; MA0 = (B')*VV2;
 end
 nit = 0; tplot = 0;
@@ -324,7 +325,7 @@ for t = 0:dt:T
   
   if (friction ~= 0 || scheme == 4)
     gf_model_set(md, 'variable', 'wt', U0);
-    disp(gf_model_get(md, 'variable', 'wt'));
+    % disp(gf_model_get(md, 'variable', 'wt'));
   end
   
   if (scheme == 3)
@@ -335,10 +336,9 @@ for t = 0:dt:T
     gf_model_get(md, 'assembly', 'build_rhs');
   else
     gf_model_set(md, 'set private rhs', ind_rhs, LL);
-    gf_model_get(md, 'solve', 'max_res', residual, 'noisy', 'max_iter', niter);
+    gf_model_get(md, 'solve', 'max_res', residual, 'max_iter', niter); % , 'noisy');
     U1 = (gf_model_get(md, 'variable', 'u'))';
   end
-
   
   if (singular_mass == 2)
     MU1 = (B')*(gf_model_get(md, 'variable', 'v'))';
@@ -372,7 +372,7 @@ for t = 0:dt:T
     case 4
       U1_2 = U1;
       U1 = 2*U1_2 - U0;
-      V1_2 = 2*(U1_2 - U0)/dt;
+      V1_2 = (U1 - U0)/dt;
       MV1 = 2*M*V1_2 - MV0;
       MA1 = 0*MV1;
       MU1 = M*U1;
@@ -408,7 +408,7 @@ for t = 0:dt:T
         axis([-0.4 0.4 0.0 1.5]);
       elseif (d == 2)
         gf_plot(mfvm, VM, 'deformed_mesh', 'on', 'deformation', U1', ...
-            'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8);
+            'deformation_mf', mfu, 'deformation_scale', 1, 'refine', 8, 'disp_options', 'off');
         xlabel('x'); ylabel('y');
         % title('Deformed configuration (not really a small deformation of course ...)');
         % gf_colormap('chouette');

@@ -3185,7 +3185,7 @@ namespace getfem {
       md->compute_Neumann_terms(1, *varname, mf_u, WT, ctx, n, tG);
 
       scalar_type Pw = wn - gamma * gmm::vect_sp(tG.as_vector(), no);
-      cout << "Pw = " << Pw << endl;
+      // cout << "Pw = " << Pw << endl;
 
 
       if (option_midpoint == 2)
