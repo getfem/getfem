@@ -52,6 +52,7 @@ namespace getfem
 
     require_update_ = false;
     touch();
+    v_num_ = act_counter();
   }
 
   size_type im_data::nb_index() const{

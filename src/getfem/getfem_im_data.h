@@ -119,6 +119,8 @@ namespace getfem{
 
     void set_tensor_size (const bgeot::multi_index& tensor_size);
 
+    inline gmm::uint64_type version_number(void) const { context_check(); return v_num_; }
+
     /**Extend a vector from filtered size to full size and copy the data to correct index*/
     template <typename VECT>
     void extend_vector(const VECT &V1, VECT &V2) const{
@@ -322,6 +324,7 @@ namespace getfem{
     mutable std::vector<size_type> int_point_index_; 
     mutable dal::bit_vector        filtered_convex_index_;
     mutable bool                   require_update_;
+    mutable gmm::uint64_type       v_num_;
 
     size_type              filtered_region_;
     bgeot::multi_index     tensor_size_;
