@@ -41,6 +41,7 @@
 
 #include "getfem_partial_mesh_fem.h"
 #include "getfem_omp.h"
+#include "getfem_im_data.h"
 
 namespace getfem {
 
@@ -161,18 +162,22 @@ namespace getfem {
       std::vector<gmm::uint64_type> v_num_var_iter;
       std::vector<gmm::uint64_type> v_num_iter;
 
+      //im data description
+      im_data * pim_data;
+
       var_description(bool is_var = false, bool is_com = false,
                       bool is_fem = false, size_type n_it = 1,
                       var_description_filter fil = VDESCRFILTER_NO,
                       const mesh_fem *mmf = 0,
                       size_type m_reg = size_type(-1), dim_type Q = 1,
                       const std::string &filter_v = std::string(""),
-		      const mesh_im *mim_ = 0)
+		      const mesh_im *mim_ = 0, im_data *pimd = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_com),
 	  is_fem_dofs(is_fem), filter(fil),
 	  n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
           default_iter(0), mf(mmf), m_region(m_reg), mim(mim_),
-	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()) {
+	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()),
+    pim_data(pimd){
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = new partial_mesh_fem(*mf);
         // v_num_data = v_num;
@@ -470,6 +475,12 @@ namespace getfem {
       return (!(it->second.is_variable) || it->second.is_disabled);    
     }
 
+    bool is_im_data(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      return (it->second.pim_data != 0);
+    }
+
     /** Enable a variable.  */
     void enable_variable(const std::string &name) {
       variables[name].is_disabled = false;
@@ -632,6 +643,9 @@ namespace getfem {
         integration schemes. */
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           size_type niter = 1);
+
+    /**Add a data that is described by integration points.*/
+    void add_im_data(const std::string &name, im_data &im_data, size_type niter = 1);
 
     /** Adds a variable linked to a fem with the dof filtered with respect 
 	to a mesh region. Only the dof returned by the dof_on_region

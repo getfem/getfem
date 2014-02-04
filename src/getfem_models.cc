@@ -178,6 +178,14 @@ namespace getfem {
         default : break;
         }
       }
+
+      if(it->second.pim_data != 0 
+         && it->second.v_num < it->second.pim_data->version_number()) {
+        im_data *pimd = it->second.pim_data;
+        size_type data_size = pimd->nb_filtered_index() * pimd->nb_tensor_elem();
+        it->second.set_size(data_size);
+        it->second.v_num = act_counter();
+      }
     }
 
     for (std::map<std::string, bool >::iterator itbd = tobedone.begin();
@@ -379,6 +387,8 @@ namespace getfem {
         if (is_complex()) ost << " complex";
         ost << " double" << ((si > 1) ? "s." : ".");
 	if (it->second.is_disabled) ost << "\t (disabled)";
+  else                        ost << "\t          ";
+  if (it->second.pim_data != 0) ost << "\t is im_data";
 	ost << endl;
       }
     }
@@ -396,6 +406,8 @@ namespace getfem {
                                          size_type size) {
     GMM_ASSERT1(!(variables[name].is_fem_dofs), "Cannot explicitely resize "
                 " a fem variable or data");
+    GMM_ASSERT1(variables[name].pim_data == 0, "Cannot explicitely resize "
+                " an im data");
     variables[name].set_size(size);
   }
 
@@ -407,6 +419,14 @@ namespace getfem {
     check_name_valitity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
     variables[name].set_size(size);
+  }
+
+  void model::add_im_data(const std::string &name, im_data &im_data, size_type niter){
+    check_name_valitity(name);
+    variables[name] = var_description(false, is_complex(), false, niter);
+    variables[name].pim_data = &im_data;
+    variables[name].set_size(im_data.nb_filtered_index() * im_data.nb_tensor_elem());
+    add_dependency(im_data);
   }
 
   void model::add_fem_variable(const std::string &name, const mesh_fem &mf,
@@ -542,6 +562,8 @@ namespace getfem {
         if (!found) sup_dependency(*mim);
       }
     }
+
+    if (it->second.pim_data != 0) sup_dependency(*(it->second.pim_data));
     
     Neumann_SET::iterator itn = Neumann_term_list.begin(), itn2 = itn;
     for (; itn != Neumann_term_list.end(); itn = itn2) {
