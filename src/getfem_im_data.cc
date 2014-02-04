@@ -3,26 +3,27 @@
 namespace getfem
 {
 
-  im_data::im_data (const getfem::mesh_im& meshIm, bgeot::multi_index tensorSize,
-    size_type filteredRegion)
-    :im_(meshIm), filtered_region_(filteredRegion), 
-    nb_filtered_index_(0), nb_index_(0), require_update_(true){
+  im_data::im_data(const getfem::mesh_im& meshIm,
+                   bgeot::multi_index tensorSize,
+                   size_type filteredRegion)
+    :im_(meshIm), nb_filtered_index_(0), nb_index_(0), require_update_(true),
+    filtered_region_(filteredRegion) {
     set_tensor_size(tensorSize);
     add_dependency(im_);
     update_index_();
   }
 
-  im_data::im_data (const getfem::mesh_im& meshIm, size_type filteredRegion)
-    :im_(meshIm), filtered_region_(filteredRegion), 
-    nb_filtered_index_(0), nb_index_(0), require_update_(true){
+  im_data::im_data(const getfem::mesh_im& meshIm, size_type filteredRegion)
+    :im_(meshIm), nb_filtered_index_(0), nb_index_(0), require_update_(true),
+    filtered_region_(filteredRegion) {
     tensor_size_.resize(1);
     tensor_size_[0] = 1;
     nb_tensor_elem_ = 1;
     add_dependency(im_);
     update_index_();
   }
-
-  void im_data::update_index_() const{
+    
+  void im_data::update_index_() const {
     nb_index_         = 0;      
     size_type nElement = im_.convex_index().last_true() + 1;
     int_point_index_.clear();
@@ -82,11 +83,11 @@ namespace getfem
     return nb_tensor_elem_;
   }
 
-  void im_data::set_tensor_size (const bgeot::multi_index& tensorSize){
+  void im_data::set_tensor_size(const bgeot::multi_index& tensorSize){
     tensor_size_  = tensorSize;    
     nb_tensor_elem_ = 1;
-    auto it      = tensor_size_.begin();
-    auto itEnd   = tensor_size_.end();
+    bgeot::multi_index::iterator it = tensor_size_.begin();
+    bgeot::multi_index::iterator itEnd = tensor_size_.end();
     for(; it != itEnd; ++it) nb_tensor_elem_ *= *it;
   }
 
