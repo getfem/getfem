@@ -82,7 +82,8 @@ void gf_multi_contact_frame_get(getfemint::mexargs_in& m_in,
 
        size_type nbp = ps->ct_pairs().size();
        size_type N = ps->dim();
-       darray w1 = out.pop().create_darray(unsigned int(N), unsigned int(nbp));
+       darray w1 = out.pop().create_darray((unsigned int)(N),
+                                           (unsigned int)(nbp));
 
        for (size_type i = 0; i < nbp; ++i)
          for (size_type k = 0; k < N; ++k)
@@ -98,7 +99,8 @@ void gf_multi_contact_frame_get(getfemint::mexargs_in& m_in,
 
        size_type nbp = ps->ct_pairs().size();
        size_type N = ps->dim();
-       darray w1 = out.pop().create_darray(unsigned int(N), unsigned int(nbp));
+       darray w1 = out.pop().create_darray((unsigned int)(N),
+                                           (unsigned int)(nbp));
 
        for (size_type i = 0; i < nbp; ++i)
          for (size_type k = 0; k < N; ++k)
