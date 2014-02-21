@@ -186,8 +186,10 @@ namespace getfem{
       if(V1.size() == 0 && V2.size() == 0) return;
       size_type nb_data = V1.size()/nb_filtered_index();
       GMM_ASSERT1(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
-      GMM_ASSERT1((tensor_size_[0] == V2.size() && tensor_size_[1] == 1)
-        || (tensor_size_[1] == V2.size() && tensor_size_[0] == 1)
+      GMM_ASSERT1
+        ((tensor_size_.size() == 2 
+           && ((tensor_size_[0] == V2.size() && tensor_size_[1] == 1)
+                || tensor_size_[1] == V2.size() && tensor_size_[0] == 1))
         || (tensor_size_.size() == 1 && tensor_size_[0] == V2.size())
         , "V2 size is incompatible");
 
@@ -261,8 +263,10 @@ namespace getfem{
       if(V1.size() == 0 && V2.size() == 0) return;
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
       GMM_ASSERT1(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
-      GMM_ASSERT1((tensor_size_[0] == V2.size() && tensor_size_[1] == 1)
-        || (tensor_size_[1] == V2.size() && tensor_size_[0] == 1)
+      GMM_ASSERT1
+        ((tensor_size_.size() == 2 
+           && ((tensor_size_[0] == V2.size() && tensor_size_[1] == 1)
+                || tensor_size_[1] == V2.size() && tensor_size_[0] == 1))
         || (tensor_size_.size() == 1 && tensor_size_[0] == V2.size())
         , "V2 size is incompatible");
 
