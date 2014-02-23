@@ -1,7 +1,7 @@
 if QHULL
 optprogs = test_mesh_generation test_mesh_im_level_set crack
-optpl = $(abs_top_srcdir)/tests/test_mesh_im_level_set.pl \
-        $(abs_top_srcdir)/tests/crack.pl
+optpl = test_mesh_im_level_set.pl \
+        crack.pl
 else
 optprogs =
 optpl = 
@@ -102,49 +102,47 @@ cyl_slicer_SOURCES = cyl_slicer.cc
 test_continuation_SOURCES = test_continuation.cc
 test_large_sliding_contact_SOURCES = test_large_sliding_contact.cc
 
-
-SUPLDFLAGS = @SUPLDFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/libgetfem.la -lm $(SUPLDFLAGS)
+LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = \
-	$(abs_top_srcdir)/tests/dynamic_array.pl              \
-	$(abs_top_srcdir)/tests/dynamic_tas.pl                \
-	$(abs_top_srcdir)/tests/test_int_set.pl               \
-	$(abs_top_srcdir)/tests/test_tree_sorted.pl           \
-	$(abs_top_srcdir)/tests/poly.pl                       \
-	$(abs_top_srcdir)/tests/test_small_vector.pl          \
-	$(abs_top_srcdir)/tests/test_kdtree.pl                \
-	$(abs_top_srcdir)/tests/test_rtree.pl                 \
-	$(abs_top_srcdir)/tests/geo_trans_inv.pl              \
-	$(abs_top_srcdir)/tests/test_norm.pl                  \
-	$(abs_top_srcdir)/tests/test_mesh.pl                  \
-	$(abs_top_srcdir)/tests/test_interpolation.pl         \
-	$(abs_top_srcdir)/tests/test_mat_elem.pl              \
-	$(abs_top_srcdir)/tests/test_slice.pl                 \
-	$(abs_top_srcdir)/tests/integration.pl                \
-	$(abs_top_srcdir)/tests/test_assembly.pl              \
-	$(abs_top_srcdir)/tests/test_interpolated_fem.pl      \
-	$(abs_top_srcdir)/tests/test_range_basis.pl           \
-	$(abs_top_srcdir)/tests/laplacian.pl                  \
-	$(abs_top_srcdir)/tests/laplacian_with_bricks.pl      \
-	$(abs_top_srcdir)/tests/elastostatic.pl               \
-	$(abs_top_srcdir)/tests/stokes.pl                     \
-	$(abs_top_srcdir)/tests/plate.pl                      \
-	$(optpl)                                          \
-	$(abs_top_srcdir)/tests/nonlinear_elastostatic.pl     \
-	$(abs_top_srcdir)/tests/nonlinear_membrane.pl         \
-	$(abs_top_srcdir)/tests/dynamic_friction.pl           \
-	$(abs_top_srcdir)/tests/plasticity.pl                 \
-	$(abs_top_srcdir)/tests/plasticity_old_brick.pl       \
-	$(abs_top_srcdir)/tests/helmholtz.pl                  \
-	$(abs_top_srcdir)/tests/schwarz_additive.pl           \
-	$(abs_top_srcdir)/tests/bilaplacian.pl    	          \
-	$(abs_top_srcdir)/tests/heat_equation.pl              \
-	$(abs_top_srcdir)/tests/wave_equation.pl   	          \
-	$(abs_top_srcdir)/tests/test_large_sliding_contact.pl \
-	$(abs_top_srcdir)/tests/cyl_slicer.pl	          \
-	$(abs_top_srcdir)/tests/make_gmm_test.pl
+	dynamic_array.pl              \
+	dynamic_tas.pl                \
+	test_int_set.pl               \
+	test_tree_sorted.pl           \
+	poly.pl                       \
+	test_small_vector.pl          \
+	test_kdtree.pl                \
+	test_rtree.pl                 \
+	geo_trans_inv.pl              \
+	test_norm.pl                  \
+	test_mesh.pl                  \
+	test_interpolation.pl         \
+	test_mat_elem.pl              \
+	test_slice.pl                 \
+	integration.pl                \
+	test_assembly.pl              \
+	test_interpolated_fem.pl      \
+	test_range_basis.pl           \
+	laplacian.pl                  \
+	laplacian_with_bricks.pl      \
+	elastostatic.pl               \
+	stokes.pl                     \
+	plate.pl                      \
+	$(optpl)                      \
+	nonlinear_elastostatic.pl     \
+	nonlinear_membrane.pl         \
+	dynamic_friction.pl           \
+	plasticity.pl                 \
+	plasticity_old_brick.pl       \
+	helmholtz.pl                  \
+	schwarz_additive.pl           \
+	bilaplacian.pl    	          \
+	heat_equation.pl              \
+	wave_equation.pl   	          \
+	test_large_sliding_contact.pl \
+	cyl_slicer.pl	              \
+	make_gmm_test.pl
 
 EXTRA_DIST =                               			\
 	dynamic_array.pl                   			\
@@ -234,5 +232,4 @@ EXTRA_DIST =                               			\
 	meshes/multi_body.mesh					\
 	meshes/donut_regulier_512_elements.mesh
 
-
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

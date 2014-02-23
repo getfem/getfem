@@ -8,7 +8,7 @@ CLEANFILES =
 test_contact_SOURCES = contact_problem.cpp test_contact.cpp contact_problem.h
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = $(abs_top_srcdir)/contrib/level_set_contact/contact_problem.pl
 
@@ -17,5 +17,4 @@ EXTRA_DIST = \
 	contact_2D.param		\
 	contact_3D.param
 
-
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

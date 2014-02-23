@@ -82,11 +82,11 @@ print F <<""
 \ncheck_PROGRAMS = dummy \n
 dummy_SOURCES = dummy.cc \n
 INCLUDES = -I\$(top_srcdir)/include -I../include\n
-LDADD    = -lm \@SUPLDFLAGS\@\n
+LDADD    = -lm \@SUPLDFLAGS\@ \@BOOST_LIBS\@\n
 TESTS = \$(top_srcdir)/tests/make_gmm_test.pl\n
 EXTRA_DIST=$test_files_bis
 \n\nCLEANFILES = toto.mat ii_files/* auto_gmm* \n
-TESTS_ENVIRONMENT = perl\n
+LOG_COMPILER = perl\n
 
 ;
 close(F);

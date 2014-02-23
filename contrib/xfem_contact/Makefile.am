@@ -14,9 +14,8 @@ xfem_dirichlet_SOURCES = xfem_dirichlet.cc
 endif
 xfem_stokes_SOURCES = xfem_stokes.cc
 
-SUPLDFLAGS = @SUPLDFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = $(abs_top_srcdir)/contrib/xfem_contact/xfem_contact.pl
 
@@ -26,5 +25,4 @@ EXTRA_DIST = \
 	xfem_dirichlet.param             \
 	xfem_stokes.param
 
-
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

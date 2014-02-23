@@ -1,6 +1,6 @@
 if QHULL
 optprogs = test_mesh_im_level_set
-optpl = $(abs_top_srcdir)/tests-2.0/test_mesh_im_level_set.pl
+optpl = test_mesh_im_level_set.pl
 else
 optprogs =
 optpl = 
@@ -77,42 +77,41 @@ endif
 dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
 
-SUPLDFLAGS = @SUPLDFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src
-LDADD    = ../src/libgetfem.la -lm $(SUPLDFLAGS)
+LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 #plasticity_LDADD = ../src/libgetfem.la -lm @SUPLDFLAGS@ $(HOME)/source++/SuperLU/superlu.a -lblas -lg2c
 #plasticity_INCLUDES = $(INCLUDES) -I$(HOME)/source++/SuperLU/
 
 TESTS = \
-	$(abs_top_srcdir)/tests-2.0/dynamic_array.pl           \
-	$(abs_top_srcdir)/tests-2.0/dynamic_tas.pl             \
-	$(abs_top_srcdir)/tests-2.0/test_int_set.pl            \
-	$(abs_top_srcdir)/tests-2.0/test_tree_sorted.pl        \
-	$(abs_top_srcdir)/tests-2.0/poly.pl                    \
-	$(abs_top_srcdir)/tests-2.0/test_small_vector.pl       \
-	$(abs_top_srcdir)/tests-2.0/test_kdtree.pl             \
-	$(abs_top_srcdir)/tests-2.0/test_rtree.pl              \
-	$(abs_top_srcdir)/tests-2.0/geo_trans_inv.pl           \
-	$(abs_top_srcdir)/tests-2.0/test_norm.pl               \
-	$(abs_top_srcdir)/tests-2.0/test_mesh.pl               \
-	$(abs_top_srcdir)/tests-2.0/test_interpolation.pl      \
-	$(abs_top_srcdir)/tests-2.0/test_mat_elem.pl           \
-	$(abs_top_srcdir)/tests-2.0/test_slice.pl              \
-	$(abs_top_srcdir)/tests-2.0/integration.pl             \
-	$(abs_top_srcdir)/tests-2.0/test_assembly.pl           \
-	$(abs_top_srcdir)/tests-2.0/test_interpolated_fem.pl   \
-	$(abs_top_srcdir)/tests-2.0/laplacian.pl               \
-	$(abs_top_srcdir)/tests-2.0/elastostatic.pl            \
-	$(abs_top_srcdir)/tests-2.0/stokes.pl                  \
-	$(abs_top_srcdir)/tests-2.0/plate.pl                   \
-	$(optpl)                                       \
-	$(abs_top_srcdir)/tests-2.0/nonlinear_elastostatic.pl  \
-	$(abs_top_srcdir)/tests-2.0/dynamic_friction.pl        \
-	$(abs_top_srcdir)/tests-2.0/plasticity.pl              \
-	$(abs_top_srcdir)/tests-2.0/helmholtz.pl               \
-	$(abs_top_srcdir)/tests-2.0/schwarz_additive.pl        \
-	$(abs_top_srcdir)/tests-2.0/bilaplacian.pl
+	dynamic_array.pl           \
+	dynamic_tas.pl             \
+	test_int_set.pl            \
+	test_tree_sorted.pl        \
+	poly.pl                    \
+	test_small_vector.pl       \
+	test_kdtree.pl             \
+	test_rtree.pl              \
+	geo_trans_inv.pl           \
+	test_norm.pl               \
+	test_mesh.pl               \
+	test_interpolation.pl      \
+	test_mat_elem.pl           \
+	test_slice.pl              \
+	integration.pl             \
+	test_assembly.pl           \
+	test_interpolated_fem.pl   \
+	laplacian.pl               \
+	elastostatic.pl            \
+	stokes.pl                  \
+	plate.pl                   \
+	$(optpl)                   \
+	nonlinear_elastostatic.pl  \
+	dynamic_friction.pl        \
+	plasticity.pl              \
+	helmholtz.pl               \
+	schwarz_additive.pl        \
+	bilaplacian.pl
 
 EXTRA_DIST = \
 	dynamic_array.pl                  \
@@ -154,4 +153,4 @@ EXTRA_DIST = \
 	test_interpolated_fem.param       \
 	geo_trans_inv.param
 
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

@@ -7,9 +7,9 @@ CLEANFILES =
 contact_SOURCES = contact.cc
 contact_continuation_load_SOURCES = contact_continuation_load.cc
 contact_continuation_time_SOURCES = contact_continuation_time.cc
-SUPLDFLAGS = @SUPLDFLAGS@
+
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = $(abs_top_srcdir)/contrib/contact_grd_trans/contact.pl
 
@@ -19,6 +19,4 @@ EXTRA_DIST = \
 	contact_continuation_load.param 
 	contact_continuation_time.param 
 
-
-
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

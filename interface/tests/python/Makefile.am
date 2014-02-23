@@ -25,9 +25,12 @@ TESTS = 						\
 	$(abs_srcdir)/demo_laplacian.py			\
 	$(abs_srcdir)/check_levelset.py
 
-TESTS_ENVIRONMENT = \
-	PYTHONPATH=$(srcdir):$(srcdir)/../../src/python:.:../../src/python \
-	python
+AM_TESTS_ENVIRONMENT = \
+	PYTHONPATH='$(srcdir):$(srcdir)/../../src/python:.:../../src/python'; \
+	LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(top_builddir)/src/.libs; \
+	export PYTHONPATH; \
+	export LD_LIBRARY_PATH;
+LOG_COMPILER = python
 endif
 
 CLEANFILES = *.vtk *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx

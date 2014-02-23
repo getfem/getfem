@@ -7,11 +7,10 @@ CLEANFILES = icare.data
 
 icare_SOURCES = icare.cc icare.h
 
-SUPLDFLAGS = @SUPLDFLAGS@
 MUMPS_LIBS = @MUMPS_LIBS@
 # MUMPS_CFLAGS = @MUMPS_CFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src # $(MUMPS_CFLAGS)
-LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = $(abs_top_srcdir)/contrib/icare/icare.pl
 
@@ -21,4 +20,4 @@ EXTRA_DIST = \
 	navier_stokes_cylinder1.mesh \
 	navier_stokes_cylinder2.mesh
 
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

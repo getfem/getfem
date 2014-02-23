@@ -14,9 +14,8 @@ mortar_bilaplacian_SOURCES = mortar_bilaplacian.cc mortar_bilaplacian.h
 crack_bilaplacian_SOURCES = crack_bilaplacian.cc crack_bilaplacian_singularities.cc crack_bilaplacian_problem.cc crack_bilaplacian.h crack_bilaplacian_moment.cc crack_bilaplacian_tools.cc crack_bilaplacian_sif.cc
 endif
 
-SUPLDFLAGS = @SUPLDFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 if QHULL
 TESTS = $(abs_top_srcdir)/contrib/crack_plate/crack_mindlin.pl
@@ -35,4 +34,4 @@ EXTRA_DIST =		 		\
 #	serie_bis.param \
 #
 
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

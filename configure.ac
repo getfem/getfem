@@ -777,7 +777,7 @@ dnl switch for using the getfem_boost supplied files, or the real boost
 dnl -----------------------------------------------
 
 AC_ARG_ENABLE(boost,
- [AS_HELP_STRING([--enable-boost],[assume that boost is installed and use it])],
+ [AS_HELP_STRING([--enable-boost],[check if boost is installed and use it])],
  [case "${enableval}" in
   yes) useboost=YES ;;
   no)  useboost=NO ;;
@@ -785,7 +785,11 @@ AC_ARG_ENABLE(boost,
  esac],[useboost=NO])
 
 if test "x$useboost" = "xYES"; then
-        AC_DEFINE_UNQUOTED(HAVE_BOOST,1,[Tell getfem to use the real boost library])
+        AX_BOOST_BASE([1.20.0], [], [AC_MSG_ERROR(
+        [Please install boost >= 1.20.0 (system) or use --enable-boost=no to disable it])])
+        AX_BOOST_SYSTEM
+        BOOST_LIBS=$BOOST_SYSTEM_LIB
+        AC_SUBST(BOOST_LIBS)
 fi;
 
 

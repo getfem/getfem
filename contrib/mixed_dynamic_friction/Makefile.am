@@ -7,9 +7,8 @@ CLEANFILES =
 mixed_dynamic_friction_SOURCES = mixed_dynamic_friction.cc
 mixed_scalar_hyperbolic_SOURCES = mixed_scalar_hyperbolic.cc
 
-SUPLDFLAGS = @SUPLDFLAGS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
-LDADD    = ../../src/libgetfem.la -lm $(SUPLDFLAGS)
+LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = $(abs_top_srcdir)/contrib/mixed_dynamic_friction/mixed_dynamic_friction.pl
 EXTRA_DIST = \
@@ -18,4 +17,4 @@ EXTRA_DIST = \
 	mixed_scalar_hyperbolic.param              \
 	mixed_scalar_hyperbolic.net
 
-TESTS_ENVIRONMENT = perl
+LOG_COMPILER = perl

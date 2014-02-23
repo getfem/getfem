@@ -34,7 +34,7 @@
 #include "getfem/getfem_export.h"
 #include "gmm/gmm.h"
 #ifdef GMM_USES_MPI
-#include <mpi++.h>
+#include <mpi.h>
 #endif
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
