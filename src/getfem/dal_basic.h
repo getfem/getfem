@@ -46,6 +46,7 @@
 
 #include <vector>
 #include "dal_config.h"
+#include "dal_shared_ptr.h"
 
 /// Dynamic Array Library
 namespace dal
@@ -330,9 +331,9 @@ namespace dal
   template<class T, unsigned char pks> 
     typename dynamic_array<T,pks>::const_reference
       dynamic_array<T,pks>::operator [](size_type ii) const { 
-    static T *f = NULL;
-    if (f == NULL) { f = new T(); }
-    return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : *f;
+        static dal::shared_ptr<T> pf(NULL);
+        if (pf.get() == NULL) { pf.reset(new T()); }
+        return (ii<last_ind) ? (array[ii>>pks])[ii&DNAMPKS__] : *pf;
   }
 
   template<class T, unsigned char pks> typename dynamic_array<T,pks>::reference
