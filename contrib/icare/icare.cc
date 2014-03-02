@@ -27,7 +27,7 @@
 #include "icare.h"
 
 #if GETFEM_PARA_LEVEL > 1
-  #include "/usr/include/mpi.h"
+  #include <mpi.h>
 #endif
 
 //#include <iostream>
