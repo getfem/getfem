@@ -1713,7 +1713,9 @@ namespace getfem {
       }
     }
 
-    if (version & BUILD_RHS) { MPI_SUM_SCALAR(approx_external_load_); }
+    if (version & BUILD_RHS) {
+      approx_external_load_ = MPI_SUM_SCALAR(approx_external_load_);
+    }
 
 
     #if GETFEM_PARA_LEVEL > 1
