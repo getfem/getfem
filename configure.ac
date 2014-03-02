@@ -670,19 +670,25 @@ else
                   AC_MSG_ERROR([METIS library required for parallel getfem was not found])
                 fi
                ])
-dnl  AC_CHECK_HEADERS(metis.h,
-dnl                   [usemetis="yes"],
-dnl                   [usemetis="no";
-dnl                    if test $paralevel -ge 2; then
-dnl                      AC_MSG_ERROR([metis.h header required for parallel getfem was not found])
-dnl                    fi
-dnl                   ])
 
   if test "x$usemetis" = "xyes"; then
     METIS_LIBS="-lmetis"
     LIBS="$LIBS $METIS_LIBS"
     AC_DEFINE_UNQUOTED([HAVE_METIS],1,[defined if the Metis library was found and is working])
+    AC_CHECK_LIB(metis, METIS_SetDefaultOptions, [usemetisnew="yes"],
+                 [AC_DEFINE_UNQUOTED([HAVE_METIS_OLD_API],1,
+                                     [defined if the Metis library found is older than version 4])
+                 ])
     echo "Building with METIS (use --enable-metis=no to disable it)"
+    if test "x$usemetisnew" = "xyes"; then
+      AC_CHECK_HEADERS(metis.h,
+                       [usemetis="yes"],
+                       [usemetis="no";
+                        if test $paralevel -ge 2; then
+                          AC_MSG_ERROR([metis.h header required for parallel getfem was not found])
+                        fi
+                       ])
+    fi;
   else
     echo "METIS library could not be found, building without METIS";
   fi;

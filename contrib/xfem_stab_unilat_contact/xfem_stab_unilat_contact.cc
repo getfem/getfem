@@ -42,19 +42,17 @@
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "gmm/gmm_inoutput.h"
 
-#ifdef GETFEM_HAVE_METIS
-
+#if GETFEM_HAVE_METIS_OLD_API
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
-			    int *, int *, int *, int *, int *);
+                                    int *, int *, int *, int *, int *);
 extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
-			    int *, int *, int *, int *, int *);
-
-
+                                         int *, int *, int *, int *, int *);
 extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
-				      int *, int *, float *, int *, int *, int *);
+                                      int *, int *, float *, int *, int *, int *);
 extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
-				      int *, int *, int *, int *, int *);
-
+                                           int *, int *, int *, int *, int *);
+#elif GETFEM_HAVE_METIS
+# include <metis.h>
 #endif
 
 using std::endl; using std::cout; using std::cerr;
@@ -496,39 +494,42 @@ void asm_stabilization_patch_term
   }
   
   xadj[j] = k;
-  std::vector<int> adjwgt(k);
   // cout<<"xadj="<<xadj<<endl;
   //cout<<"adjncy="<<adjncy<<endl;
   //cout<<"vwgt="<<vwgt<<endl;
   
   cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
   
-  int wgtflag = 2, edgecut, nparts=int(size_of_crack/(ratio_size*h)), numflag = 0;
-      // float ubvec[1] = {1.03f};
-  int  options[5] = {0,0,0,0,0};
-
 #ifdef GETFEM_HAVE_METIS
-
+  int nparts = int(size_of_crack/(ratio_size*h));
+# ifdef GETFEM_HAVE_METIS_OLD_API
+  std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
+  int wgtflag = 2, numflag = 0, edgecut;
+  int  options[5] = {0,0,0,0,0};
+  // float ubvec[1] = {1.03f};
   //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
-  // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
   //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //	  &numflag, &nparts, options, &edgecut, &(part[0]));
   METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-			   &numflag, &nparts, options, &edgecut, &(part[0]));
-  
-#else
-
-  GMM_ASSERT1(false, "METIS not linked");
-
-#endif
-
+                           &numflag, &nparts, options, &edgecut, &(part[0]));
+# else
+  int ncon = 1, edgecut;
+  int options[METIS_NOPTIONS] = { 0 };
+  METIS_SetDefaultOptions(options);
+  METIS_PartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), 0, 0,
+                           &nparts, 0, 0, options, &edgecut, &(npart[0]));
+# endif
   //cout<<"size_of_mesh="<<h<<endl;
   cout<<"size_of_crack="<< size_of_crack <<endl;
   cout<<"nb_partition="<<nparts<<endl;
   cout<<"partition="<<part<<endl;
   cout<<"edgecut="<<edgecut<<endl;
+#else
+  GMM_ASSERT1(false, "METIS not linked");
+#endif
   
 
   /**************************************************************/

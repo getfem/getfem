@@ -47,6 +47,11 @@
 
 //#include "gmm/gmm_inoutput.h"
 
+// metis necessary in this header only due to the old bricks system
+#if defined GETFEM_HAVE_METIS && !defined GETFEM_HAVE_METIS_OLD_API
+#  include <metis.h>
+#endif
+
 namespace getfem {
 
   template <typename T> struct sort_abs_val_
@@ -688,7 +693,7 @@ namespace getfem {
   For small problems, a direct solver is used
   (getfem::SuperLU_solve), for larger problems, a conjugate
   gradient gmm::cg (if the problem is coercive) or a gmm::gmres is
-  used (preconditionned with an incomplete factorization).
+  used (preconditioned with an incomplete factorization).
 
   When MPI/METIS is enabled, a partition is done via METIS, and a parallel
   solver can be used.
@@ -793,13 +798,23 @@ namespace getfem {
         }
         xadj[j] = k;
 
-        int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
+        // The mpi region is partitioned into nblocsubdom sub-domains.
         int nbbl = nblocsubdom/size;
-
-        // The mpi region is partitionned into nblocsubdom sub-domains.
+#ifdef GETFEM_HAVE_METIS_OLD_API
+        // define hardcoded metis interface only locally
+        extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
+                                            int *, int *, int *, int *, int *);
+        int wgtflag = 0, numflag = 0, edgecut;
+        int options[5] = {0,0,0,0,0};
         METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
-                            &numflag, &nbbl, options, &edgecut,
-                            &(npart[0]));
+                            &numflag, &nbbl, options, &edgecut, &(npart[0]));
+#else
+        int ncon = 1, edgcut;
+        int options[METIS_NOPTIONS] = { 0 };
+        METIS_SetDefaultOptions(options);
+        METIS_PartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), 0, 0, 0, &nbbl,
+                            0, 0, options, &edgecut, &(npart[0]));
+#endif
 
         eparts[nset].resize(0);
         eparts[nset].resize((*it)->convex_index().last()+1, size_type(-1));
@@ -1059,7 +1074,7 @@ namespace getfem {
   For small problems, a direct solver is used
   (getfem::SuperLU_solve), for larger problems, a conjugate
   gradient gmm::cg (if the problem is coercive) or a gmm::gmres is
-  used (preconditionned with an incomplete factorization).
+  used (preconditioned with an incomplete factorization).
 
   When MPI/METIS is enabled, a partition is done via METIS, and a
   parallel solver can be used.

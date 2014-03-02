@@ -31,16 +31,17 @@
 #include <getfem/getfem_Coulomb_friction.h>
 #include <getfem/getfem_generic_assembly.h>
 
-#ifdef GETFEM_HAVE_METIS 
- extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
- 			    int *, int *, int *, int *, int *);
- extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
-			    int *, int *, int *, int *, int *);
-
- extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
-				      int *, int *, float *, int *, int *, int *);
- extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
-				      int *, int *, int *, int *, int *);
+#if GETFEM_HAVE_METIS_OLD_API
+extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
+                                    int *, int *, int *, int *, int *);
+extern "C" void METIS_PartGraphRecursive(int *, int *, int *, int *, int *, int *,
+                                         int *, int *, int *, int *, int *);
+extern "C" void METIS_mCPartGraphKway(int *, int *, int *, int *, int *, int *, int *,
+                                      int *, int *, float *, int *, int *, int *);
+extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, int *, int *,
+                                           int *, int *, int *, int *, int *);
+#elif GETFEM_HAVE_METIS
+# include <metis.h>
 #endif
 
 /********************************/
@@ -205,36 +206,44 @@ void asm_stabilization_patch_matrix
   }
   
   xadj[j] = k;
-  std::vector<int> adjwgt(k);
   // std::cout<<"xadj="<<xadj<<std::endl;
   //std::cout<<"adjncy="<<adjncy<<std::endl;
   //std::cout<<"vwgt="<<vwgt<<std::endl;
   
   std::cout << "ratio size beween mesh and coarse mesh= " << ratio_size
-	    << std::endl;
+            << std::endl;
   
-  int nparts=int(size_of_crack/(ratio_size*h));
-      // float ubvec[1] = {1.03f};
-  #ifdef GETFEM_HAVE_METIS
-  int wgtflag = 2, edgecut, numflag = 0;
-  int  options[5] = {0,0,0,0,0};
+#ifdef GETFEM_HAVE_METIS
+  int nparts = int(size_of_crack/(ratio_size*h));
+# ifdef GETFEM_HAVE_METIS_OLD_API
+  std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
+  int wgtflag = 2, numflag = 0, edgecut;
+  int options[5] = {0,0,0,0,0};
+  // float ubvec[1] = {1.03f};
   //METIS_mCPartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //		    &numflag, &nparts, &(ubvec[0]),  options, &edgecut, &(part[0]));
-  // METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
+  //METIS_mCPartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //			 &numflag, &nparts,  options, &edgecut, &(part[0]));
   //METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
   //	  &numflag, &nparts, options, &edgecut, &(part[0]));
   METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
-			   &numflag, &nparts, options, &edgecut, &(part[0]));
-  #else
-    GMM_ASSERT1(false, "Metis not present ...");
-  #endif
+                           &numflag, &nparts, options, &edgecut, &(part[0]));
+# else
+  int ncon = 1, edgecut;
+  int options[METIS_NOPTIONS] = { 0 };
+  METIS_SetDefaultOptions(options);
+  METIS_PartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), 0, 0,
+                           &nparts, 0, 0, options, &edgecut, &(part[0]));
+# endif
   //std::cout<<"size_of_mesh="<<h<<std::endl;
   //std::cout<<"size_of_crack="<< size_of_crack <<std::endl;
   std::cout<<"nb_partition="<<nparts<<std::endl;
   // std::cout<<"partition="<<part<<std::endl;
   //std::cout<<"edgecut="<<edgecut<<std::endl;
-  
+#else
+  GMM_ASSERT1(false, "METIS not linked");
+#endif
+
 
   /**************************************************************/
   /*        Assembly matrices                                   */

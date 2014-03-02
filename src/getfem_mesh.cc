@@ -24,6 +24,13 @@
 #include "getfem/getfem_mesh.h"
 #include "getfem/getfem_integration.h"
 
+#if GETFEM_HAVE_METIS_OLD_API
+extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
+                                    int *, int *, int *, int *, int *);
+#elif GETFEM_HAVE_METIS
+#  include <metis.h>
+#endif
+
 namespace getfem {
 
   gmm::uint64_type act_counter(void) {
@@ -157,10 +164,18 @@ namespace getfem {
 	}
 	xadj[j] = k;
 
-	int wgtflag = 0, edgecut, numflag = 0, options[5] = {0,0,0,0,0};
-
-	METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
-			    &numflag, &size, options, &edgecut, &(npart[0]));
+#ifdef GETFEM_HAVE_METIS_OLD_API
+  int wgtflag = 0, numflag = 0, edgecut;
+  int options[5] = {0,0,0,0,0};
+  METIS_PartGraphKway(&ne, &(xadj[0]), &(adjncy[0]), 0, 0, &wgtflag,
+                      &numflag, &size, options, &edgecut, &(npart[0]));
+#else
+  int ncon = 1, edgecut;
+  int options[METIS_NOPTIONS] = { 0 };
+  METIS_SetDefaultOptions(options);
+  METIS_PartGraphKway(&ne, &ncon, &(xadj[0]), &(adjncy[0]), 0, 0, 0, &size,
+                      0, 0, options, &edgecut, &(npart[0]));
+#endif
 
 	for (size_type i = 0; i < size_type(ne); ++i)
 	  if (npart[i] == rank) mpi_region.add(numelt[i]);
