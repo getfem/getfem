@@ -18,7 +18,7 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 if QHULL
-TESTS = $(abs_top_srcdir)/contrib/crack_plate/crack_mindlin.pl
+TESTS = crack_mindlin.pl
 else
 TESTS =
 endif

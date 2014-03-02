@@ -17,7 +17,7 @@ xfem_stokes_SOURCES = xfem_stokes.cc
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
-TESTS = $(abs_top_srcdir)/contrib/xfem_contact/xfem_contact.pl
+TESTS = xfem_contact.pl
 
 EXTRA_DIST = \
 	xfem_contact.pl                  \

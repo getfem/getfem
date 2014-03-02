@@ -13,7 +13,8 @@ vertex_large_strain_SOURCES = vertex_large_strain.cc \
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src $(MUMPS_CFLAGS)
 LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) @SUPLDFLAGS@ @BOOST_LIBS@
 
-TESTS = $(abs_top_srcdir)/contrib/xfem_large_strain/xfem_large_strain.pl
+TESTS = xfem_large_strain.pl
+
 EXTRA_DIST = \
 	xfem_large_strain.pl            \
 	vertex_large_strain.param       \

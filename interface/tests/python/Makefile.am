@@ -18,12 +18,12 @@ EXTRA_DIST= 				\
 	getfem_tvtk.py
 
 if BUILDPYTHON
-TESTS = 						\
-	$(abs_srcdir)/check_export.py			\
-	$(abs_srcdir)/check_global_functions.py		\
-	$(abs_srcdir)/demo_wave.py				\
-	$(abs_srcdir)/demo_laplacian.py			\
-	$(abs_srcdir)/check_levelset.py
+TESTS = 				\
+	check_export.py			\
+	check_global_functions.py	\
+	demo_wave.py			\
+	demo_laplacian.py		\
+	check_levelset.py
 
 AM_TESTS_ENVIRONMENT = \
 	PYTHONPATH='$(srcdir):$(srcdir)/../../src/python:.:../../src/python'; \

@@ -114,7 +114,7 @@ struct navier_stokes_problem {
 
   void solve(void);
   //void solve_METHOD_SPLITTING(bool);
-  //void solve_FULLY_CONSERVATIVE();
+  //void solve_FULLY_CONSERVATIVE();
   //void solve_PREDICTION_CORRECTION();
   void solve_PREDICTION_CORRECTION2();
   //void solve_PREDICTION_CORRECTION_ORDER2();

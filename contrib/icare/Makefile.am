@@ -12,7 +12,7 @@ MUMPS_LIBS = @MUMPS_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src # $(MUMPS_CFLAGS)
 LDADD    = ../../src/libgetfem.la -lm $(MUMPS_LIBS) @SUPLDFLAGS@ @BOOST_LIBS@
 
-TESTS = $(abs_top_srcdir)/contrib/icare/icare.pl
+TESTS = icare.pl
 
 EXTRA_DIST = \
 	icare.pl                  \

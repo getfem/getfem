@@ -10,8 +10,8 @@ aposteriori_laplacian_SOURCES = aposteriori_laplacian.cc
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
-TESTS = $(abs_top_srcdir)/contrib/aposteriori/aposteriori.pl \
-        $(abs_top_srcdir)/contrib/aposteriori/aposteriori_laplacian.pl 
+TESTS = aposteriori.pl \
+        aposteriori_laplacian.pl 
 
 EXTRA_DIST = \
 	aposteriori_laplacian.pl      	 \

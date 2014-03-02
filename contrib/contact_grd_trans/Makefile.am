@@ -11,7 +11,7 @@ contact_continuation_time_SOURCES = contact_continuation_time.cc
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
-TESTS = $(abs_top_srcdir)/contrib/contact_grd_trans/contact.pl
+TESTS = contact.pl
 
 EXTRA_DIST = \
 	contact.pl                  \
