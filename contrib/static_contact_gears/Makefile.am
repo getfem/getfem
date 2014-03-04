@@ -12,6 +12,21 @@ LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
 TESTS = 
 
-EXTRA_DIST = 
+EXTRA_DIST = \
+	gear1.msh \
+	gear1_2D.msh \
+	gear1_2teeth.msh \
+	gear2.msh \
+	gear2_2D.msh \
+	gear2_2teeth.msh \
+	static_contact_planetary_1.msh \
+	static_contact_planetary_2.msh \
+	static_contact_planetary_3.msh \
+	static_contact_planetary_4.msh \
+	static_contact_planetary_5.msh \
+	static_contact_planetary.py \
+	static_contact_gears.param \
+	static_contact_gears_2D.param \
+	static_contact_gears_2teeth.param
 
 LOG_COMPILER = perl

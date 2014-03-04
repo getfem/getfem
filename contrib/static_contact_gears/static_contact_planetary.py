@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 20010 Konstantinos Poulios.
+# Copyright (C) 2010-2014 Konstantinos Poulios.
 #
 # This file is a part of GetFEM++
 #
@@ -52,7 +52,7 @@ Mu = 0.83e5
 qdim = 2
 degree = 1
 
-contact_algo = 0
+contact_algo = 1
 
 # displacement meshfems
 mfu_1 = MeshFem(m_1, qdim)
@@ -274,15 +274,15 @@ else:
    model.add_initialized_data( 'r', aug_factor * Mu * (3*Lambda + 2*Mu) / (Lambda + Mu) )
    model.add_initialized_data( 'f_coeff', 0.)
 
-   pre_mflambda_1 = MeshFem(m_1, qdim)
-   pre_mflambda_1.set_classical_fem(1)
-   dol_1 = pre_mflambda_1.basic_dof_on_region(RG_CONTACT_TOTAL_1)
-   mflambda_1 = MeshFem('partial', pre_mflambda_1, dol_1)
+#   pre_mflambda_1 = MeshFem(m_1, qdim)
+#   pre_mflambda_1.set_classical_fem(1)
+#   dol_1 = pre_mflambda_1.basic_dof_on_region(RG_CONTACT_TOTAL_1)
+#   mflambda_1 = MeshFem('partial', pre_mflambda_1, dol_1)
 
-   pre_mflambda_2 = MeshFem(m_2, qdim)
-   pre_mflambda_2.set_classical_fem(1)
-   dol_2 = pre_mflambda_2.basic_dof_on_region(RG_CONTACT_TOTAL_2)
-   mflambda_2 = MeshFem('partial', pre_mflambda_2, dol_2)
+#   pre_mflambda_2 = MeshFem(m_2, qdim)
+#   pre_mflambda_2.set_classical_fem(1)
+#   dol_2 = pre_mflambda_2.basic_dof_on_region(RG_CONTACT_TOTAL_2)
+#   mflambda_2 = MeshFem('partial', pre_mflambda_2, dol_2)
 
    pre_mflambda_p1 = MeshFem(m_p1, qdim)
    pre_mflambda_p1.set_classical_fem(1)
@@ -299,20 +299,42 @@ else:
    dol_p3 = pre_mflambda_p3.basic_dof_on_region(RG_CONTACT_TOTAL_p3)
    mflambda_p3 = MeshFem('partial', pre_mflambda_p3, dol_p3)
 
-   model.add_fem_variable('lambda_1', mflambda_1)
-   model.add_fem_variable('lambda_2', mflambda_2)
+#   model.add_fem_variable('lambda_1', mflambda_1)
+#   model.add_fem_variable('lambda_2', mflambda_2)
    model.add_fem_variable('lambda_p1', mflambda_p1)
    model.add_fem_variable('lambda_p2', mflambda_p2)
    model.add_fem_variable('lambda_p3', mflambda_p3)
 
-   ib_lsc = model.add_integral_large_sliding_contact_brick(mim_1, 'u_1', 'lambda_1', 'r', 'f_coeff', RG_CONTACT_TOTAL_1)
-   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_2, 'u_2', 'lambda_2', RG_CONTACT_TOTAL_2)
-   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p1, 'u_p1', 'lambda_p1', RG_CONTACT_TOTAL_p1)
-   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p2, 'u_p2', 'lambda_p2', RG_CONTACT_TOTAL_p2)
-   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p3, 'u_p3', 'lambda_p3', RG_CONTACT_TOTAL_p3)
-   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p1)
-   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p2)
-   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p3)
+#   ib_lsc = model.add_integral_large_sliding_contact_brick_with_field_extension \
+#      (mim_1, 'u_1', 'lambda_1', 'r', 'f_coeff', RG_CONTACT_TOTAL_1)
+#   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_2, 'u_2', 'lambda_2', RG_CONTACT_TOTAL_2)
+#   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p1, 'u_p1', 'lambda_p1', RG_CONTACT_TOTAL_p1)
+#   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p2, 'u_p2', 'lambda_p2', RG_CONTACT_TOTAL_p2)
+#   model.add_boundary_to_large_sliding_contact_brick(ib_lsc, mim_p3, 'u_p3', 'lambda_p3', RG_CONTACT_TOTAL_p3)
+#   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p1)
+#   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p2)
+#   model.add_rigid_obstacle_to_large_sliding_contact_brick(ib_lsc, bearing_p3)
+   release_dist = 5.
+   delaunay = False
+   self_contact = False
+   cut_angle = 0.2
+   use_raytrace = True
+   nodes_mode = 0
+   ref_conf = False
+   mcff = MultiContactFrame(model, 2, release_dist, delaunay, self_contact,
+                            cut_angle, use_raytrace, nodes_mode, ref_conf)
+   mcff.add_slave_boundary(mim_p1, RG_CONTACT_TOTAL_p1, 'u_p1', 'lambda_p1')
+   mcff.add_slave_boundary(mim_p2, RG_CONTACT_TOTAL_p2, 'u_p2', 'lambda_p2')
+   mcff.add_slave_boundary(mim_p3, RG_CONTACT_TOTAL_p3, 'u_p3', 'lambda_p3')
+   mcff.add_master_boundary(mim_1, RG_CONTACT_TOTAL_1, 'u_1')
+   mcff.add_master_boundary(mim_2, RG_CONTACT_TOTAL_2, 'u_2')
+   mcff.add_obstacle(bearing_p1)
+   mcff.add_obstacle(bearing_p2)
+   mcff.add_obstacle(bearing_p3)
+
+   alpha = 1
+   model.add_initialized_data('alpha', alpha)
+   model.add_integral_large_sliding_contact_brick_raytrace(mcff, 'r', 'f_coeff', 'alpha')
 
 print('nbdof_1', mfu_1.nbdof())
 print('nbdof_2', mfu_2.nbdof())

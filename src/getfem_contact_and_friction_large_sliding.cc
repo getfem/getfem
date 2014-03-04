@@ -772,7 +772,7 @@ namespace getfem {
 
     GMM_ASSERT1(vl.size() == mcf.nb_variables() + mcf.nb_multipliers(),
                 "For the moment, it is not allowed to add boundaries to "
-                "the multi contact frame object after the model brics has "
+                "the multi contact frame object after a model brick has "
                 "been added.");
 
     const model_real_plain_vector &vr = md.real_variable(dl[0]);
