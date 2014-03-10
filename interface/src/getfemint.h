@@ -573,6 +573,11 @@ private:
       create_array_h(unsigned(v.size()), T());
       std::copy(v.begin(), v.end(), gfi_get_data(arg, T()));
     }
+    template<class VECT> void from_dlvector(VECT& v) {
+      typedef typename VECT::value_type T;
+      create_array_v(unsigned(v.size()), T());
+      std::copy(v.begin(), v.end(), gfi_get_data(arg, T()));
+    }
     template<class VECT> void from_ivector(VECT& v) {
       create_iarray_h(unsigned(v.size()));
       std::copy(v.begin(), v.end(), gfi_int32_get_data(arg));

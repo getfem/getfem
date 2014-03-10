@@ -6249,6 +6249,7 @@ namespace getfem {
           size_type N = G.nrows();
           bgeot::pgeometric_trans pgt = mesh.trans_of_convex(v.cv());
           pintegration_method pim = mim.int_method_of_element(v.cv());
+          if (pim->type() == IM_NONE) continue;
           GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                       "be used in high level generic assembly");
           gis.pai = pim->approx_method();

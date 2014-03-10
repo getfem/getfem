@@ -228,7 +228,8 @@ EXTRA_DIST =                               			\
 	meshes/donut_regulier_32_elements.mesh			\
 	meshes/sphere_with_quadratic_tetra_8_elts.mesh		\
 	meshes/disc_with_a_hole.mesh				\
-	meshes/punch2D_h2.mesh					\
+	meshes/punch2D_1.mesh					\
+	meshes/punch2D_2.mesh					\
 	meshes/multi_body.mesh					\
 	meshes/donut_regulier_512_elements.mesh
 

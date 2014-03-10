@@ -75,7 +75,7 @@ else
   friction = 0;            % Friction coefficient
   vertical_force = 0.1;    % Volumic load in the vertical direction
   r = 10;                  % Augmentation parameter
-  dt = 0.1;                % Time step
+  dt = 0.001;               % Time step
   T = 40;                  % Simulation time
   dt_plot = 0.5;           % Drawing step;
   beta = 0.25;             % Newmark scheme coefficient
@@ -83,13 +83,13 @@ else
   theta = 0.5;             % Theta-method scheme coefficient
   dirichlet = 0;           % Dirichlet condition or not
   dirichlet_val = 0.45;
-  scheme = 4;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
+  scheme = 3;              % 1 = theta-method, 2 = Newmark, 3 = Newmark with beta = 0, 4 = midpoint modified
   u_degree = 2;
   v_degree = 1;
   lambda_degree = 1;
   Nitsche = 1;             % Use Nitsche's method or not
-  gamma0_N = 0.001;        % Parameter gamma0 for Nitsche's method
-  theta_N =  1.0;          % Parameter theta for Nitsche's method
+  gamma0_N = 0.01;          % Parameter gamma0 for Nitsche's method
+  theta_N =  1;          % Parameter theta for Nitsche's method
 end
   
 singular_mass = 0;         % 0 = standard method

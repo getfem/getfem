@@ -417,7 +417,7 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
   std::map<std::string,  getfem::model_real_plain_vector> vectors;
 
-  if (in.remaining()) {
+  while (in.remaining()) {
     std::string varname = in.pop().to_string();
     bool is_cte = (in.pop().to_integer() == 0);
     const getfem::mesh_fem *mf(0);
@@ -460,7 +460,7 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
       getfem::model_real_plain_vector residual(nbdof);
       workspace.set_assembled_vector(residual);
       workspace.assembly(1);
-      out.pop().from_dcvector(residual);
+      out.pop().from_dlvector(residual);
     }
     break;
 
@@ -1046,13 +1046,13 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
         ::COMPUTE('L2 norm') or with the square root of:
 
-        ::ASM('generic', 0, mim, "u.u", -1, "u", 1, mf, U);
+        ::ASM('generic', mim, 0, 'u.u', -1, 'u', 1, mf, U);
 
       The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
 
         ::ASM('laplacian', mim, mf, mf_data, A) or equivalently with:
 
-        ::ASM('generic', 2, mim, 'A*Grad_Test2_u.Grad_Test_u', -1, "u", 1, mf, U, "A", 0, mf_data, A);
+        ::ASM('generic', mim, 2, 'A*Grad_Test2_u.Grad_Test_u', -1, 'u', 1, mf, U, 'A', 0, mf_data, A);
 
         @*/
     sub_command
