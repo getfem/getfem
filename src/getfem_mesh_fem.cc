@@ -402,8 +402,7 @@ namespace getfem {
     auto_add_elt_pf = 0;
     auto_add_elt_K = dim_type(-1);
     Qdim = Q;
-    QdimM = 1;
-    QdimN = 1;
+    mi.resize(1); mi[0] = Q;
     linked_mesh_ = &me;
     use_reduction = false;
     this->add_dependency(me);

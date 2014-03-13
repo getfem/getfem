@@ -165,9 +165,10 @@ namespace getfem {
                        /* of element option. (-1 = no automatic addition) */
     bool auto_add_elt_disc;
     scalar_type auto_add_elt_alpha;
-    dim_type Qdim; /* this is the "global" target_dim */
-    dim_type QdimM, QdimN; /* for matrix field with QdimM lines and QdimN */
-                           /* columnsQdimM * QdimN = Qdim.                */
+    dim_type Qdim;         /* this is the "total" target_dim. */
+    bgeot::multi_index mi; /* multi dimensions for matrix/tensor field. */ 
+    // dim_type QdimM, QdimN; /* for matrix field with QdimM lines and QdimN */
+    //                       /* columnsQdimM * QdimN = Qdim.                */
     std::vector<size_type> dof_partition;
     mutable gmm::uint64_type v_num_update, v_num;
     bool use_reduction;    /* A reduction matrix is applied or not.       */
@@ -293,27 +294,55 @@ namespace getfem {
 	linked_mesh().dim().
      */
     virtual dim_type get_qdim() const { return Qdim; }
+    virtual const bgeot::multi_index &get_qdims() const { return mi; }
+
     /** Change the Q dimension */
     virtual void set_qdim(dim_type q) {
-      if (q != Qdim || q != QdimM) {
-	QdimM = Qdim = q; QdimN = 1;
+      if (q != Qdim || mi.size() != 1) {
+        mi.resize(1); mi[0] = q; Qdim = q;
+        dof_enumeration_made = false; touch(); v_num = act_counter();
+      }
+    }
+
+    /** Set the dimension for a matrix field. */
+    virtual void set_qdim(dim_type M, dim_type N) {
+      if (mi.size() != 2 || mi[0] != M || mi[1] != N) {
+        mi.resize(2); mi[0] = M; mi[1] = N; Qdim = dim_type(M*N);
 	dof_enumeration_made = false; touch(); v_num = act_counter();
       }
     }
 
-    /** Set the dimension for a matrix field. The Q dimension will
-	always be the product of get_qdim_m and get_qdim_n */
-    virtual void set_qdim_mn(dim_type M, dim_type N) {
-      if (M != QdimM || N != QdimN) {
-	QdimM = M; QdimN = N; Qdim = dim_type(N*M);
+    /** Set the dimension for a fourth order tensor field. */
+    virtual void set_qdim(dim_type M, dim_type N, dim_type O, dim_type P) {
+      if (mi.size() != 4 || mi[0] != M || mi[1] != N || mi[2] != O
+          || mi[3] != P) {
+        mi.resize(4); mi[0] = M; mi[1] = N; mi[2] = O; mi[3] = P;
+        Qdim = dim_type(M*N*O*P);
 	dof_enumeration_made = false; touch(); v_num = act_counter();
       }
     }
 
+    /** Set the dimension for an arbitrary order tensor field. */
+    virtual void set_qdim(const bgeot::multi_index &mii) {
+      GMM_ASSERT1(mii.size() < 7,
+                  "Tensor field are taken into account up to order 6.");
+      if (!(mi.is_equal(mii))) {
+        mi = mii;
+        Qdim = dim_type(1);
+        for (size_type i = 0; i < mi.size(); ++i)
+          Qdim = dim_type(Qdim*mi[i]);
+        dof_enumeration_made = false; touch(); v_num = act_counter();
+      }
+    }
+    
+
+    void set_qdim_mn(dim_type M, dim_type N) IS_DEPRECATED
+    { set_qdim(M,N); }
+    
     /** for matrix fields, return the number of rows. */
-    dim_type get_qdim_m() const { return QdimM; }
+    dim_type get_qdim_m() const IS_DEPRECATED { return dim_type(mi[0]); }
     /** for matrix fields, return the number of columns. */
-    dim_type get_qdim_n() const { return QdimN; }
+    dim_type get_qdim_n() const IS_DEPRECATED { return dim_type(mi[1]); }
      
 
     /** Set the finite element method of a convex.

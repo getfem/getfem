@@ -243,20 +243,26 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
     }
     else bad_cmd(init_cmd);
 
-  } else if (check_cmd("MeshFem", "MeshFem", m_in, m_out, 1, 3, 0, 1)) {
-    /*@INIT MF = ('.mesh', @tmesh m[, @int Qdim_m=1[, @int Qdim_n=1]])
+  } else if (check_cmd("MeshFem", "MeshFem", m_in, m_out, 1, 7, 0, 1)) {
+    /*@INIT MF = ('.mesh', @tmesh m[, @int Qdim1=1[, @int Qdim2=1, ...]])
       Build a new @tmf object.
 
-      `Qdim_m` and `Qdim_n` parameters are optionals. Returns the handle of
-      the created object. @*/
+      The `Qdim` parameters specifies the dimension of the field represented
+      by the finite element method. Qdim1 = 1 for a scalar field,
+      Qdim1 = n for a vector field off size n, Qdim1=m, Qdim2=n for
+      a matrix field of size mxn ...
+      Returns the handle of the created object. @*/
     mm = m_in.pop().to_getfemint_mesh();
-    if (m_in.remaining()) q_dim = m_in.pop().to_integer(1,256);
-    if (m_in.remaining()) {
-      unsigned q_dim2 = m_in.pop().to_integer(1,256);
-      mmf = getfemint_mesh_fem::new_from(mm,q_dim * q_dim2);
-      mmf->mesh_fem().set_qdim_mn(dim_type(q_dim), dim_type(q_dim2));
-    } else
-      mmf = getfemint_mesh_fem::new_from(mm,q_dim);
+    bgeot::multi_index mi;
+    dim_type qdim = 1;
+    while (m_in.remaining()) {
+      dim_type q = dim_type(m_in.pop().to_integer(1,65536));
+      mi.push_back(q);
+      qdim = dim_type(qdim*q);
+    }
+    mmf = getfemint_mesh_fem::new_from(mm,qdim);
+    mmf->mesh_fem().set_qdim(mi);
+
     workspace().set_dependance(mmf, mm);
   }
   m_out.pop().from_object_id(mmf->get_id(), MESHFEM_CLASS_ID);

@@ -42,9 +42,9 @@ namespace getfem {
                                const dal::bit_vector &rejected_elt) {
     mf.context_check();
 
-    if (mf.get_qdim_m() != QdimM || mf.get_qdim_n() != QdimN) {
-      QdimM = mf.get_qdim_m(); QdimN = mf.get_qdim_n();
-      Qdim = dim_type(QdimM*QdimN);
+    if (!(mi.is_equal(mf.get_qdims()))) {
+      mi = mf.get_qdims();
+      Qdim = mf.get_qdim();
       dof_enumeration_made = false; touch(); v_num = act_counter();
     }
 

@@ -479,7 +479,7 @@ void elastostatic_problem::init(void) {
   sol_lambda = lambda; sol_mu = mu;
   mf_u.set_qdim(dim_type(N));
   mf_mult.set_qdim(dim_type(N));
-  mf_sigma.set_qdim_mn(dim_type(N), dim_type(N));
+  mf_sigma.set_qdim(dim_type(N), dim_type(N));
 
   /* set the finite element on the mf_u */
   getfem::pfem pf_u = getfem::fem_descriptor(FEM_TYPE_U);

@@ -84,6 +84,13 @@ namespace bgeot {
     { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; } 
 
     multi_index(void) {}
+
+    bool is_equal(const multi_index &m) const {
+      if (this->size() != m.size()) return false;
+      for (size_type i = 0; i < m.size(); ++i)
+        if (m[i] != (*this)[i]) return false;
+      return true;
+    }
     
     size_type memsize() const {
       return std::vector<size_type>::capacity()*sizeof(size_type) + 

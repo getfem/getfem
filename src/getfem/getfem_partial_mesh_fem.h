@@ -47,9 +47,6 @@
 #include "getfem_mesh_im.h"
 
 
-// a ajuster : mesh, qdim, qdim_mn,
-
-
 namespace getfem {
   /**
      a subclass of mesh_fem which allows to eliminate a number of dof
@@ -74,14 +71,26 @@ namespace getfem {
     pfem fem_of_element(size_type cv) const
     { return  mf.fem_of_element(cv); }
 
-    virtual dim_type get_qdim() const { return  mf.get_qdim(); }
+    virtual dim_type get_qdim() const { return mf.get_qdim(); }
+    virtual const bgeot::multi_index &get_qdims() const
+    { return mf.get_qdims(); }
 
     virtual void set_qdim(dim_type) {
       GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
                   "the original fem");
     }
 
-    virtual void set_qdim_mn(dim_type, dim_type) {
+    virtual void set_qdim(dim_type, dim_type) {
+      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
+                  "the original fem");
+    }
+
+    virtual void set_qdim(dim_type, dim_type, dim_type, dim_type) {
+      GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
+                  "the original fem");
+    }
+
+    virtual void set_qdim(const bgeot::multi_index &) {
       GMM_ASSERT1(false, "The Qdim of a partial_mesh_fem is the same as "
                   "the original fem");
     }

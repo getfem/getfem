@@ -20,3 +20,5 @@ EXTRA_DIST = \
 	contact_continuation_time.param 
 
 LOG_COMPILER = perl
+
+TESTS_ENVIRONMENT = perl

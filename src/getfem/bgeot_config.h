@@ -74,8 +74,7 @@ namespace bgeot {
   
 
   static const size_t ST_NIL = size_t(-1);
-  /// Dimension type (<255)
-  typedef gmm::uint8_type dim_type;
+  typedef gmm::uint16_type dim_type;
   typedef gmm::uint16_type short_type;
   typedef size_t size_type;
   typedef double scalar_type;

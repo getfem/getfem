@@ -18,3 +18,5 @@ EXTRA_DIST = \
 	mixed_scalar_hyperbolic.net
 
 LOG_COMPILER = perl
+
+TESTS_ENVIRONMENT = perl

@@ -484,9 +484,12 @@ namespace getfem {
 	  ++d;
 	}
 	if (vshape == mf_comp::MATRIXIZED_SHAPE) {
-	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim_m());
+	  if (!only_reduced || !reduced(d)) {
+            GMM_ASSERT1(pmf->get_qdims().size() == 2, "Non matrix field");
+            rng.push_back(dim_type(pmf->get_qdims()[0]));
+          }
 	  ++d;
-	  if (!only_reduced || !reduced(d)) rng.push_back(pmf->get_qdim_n());
+	  if (!only_reduced || !reduced(d)) rng.push_back(dim_type(pmf->get_qdims()[1]));
 	  ++d;	  
 	}
         

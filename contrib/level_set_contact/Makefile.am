@@ -18,3 +18,5 @@ EXTRA_DIST = \
 	contact_3D.param
 
 LOG_COMPILER = perl
+
+TESTS_ENVIRONMENT = perl

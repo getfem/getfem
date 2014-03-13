@@ -17,3 +17,5 @@ EXTRA_DIST = \
 	bimaterial_crack_test.param
 
 LOG_COMPILER = perl
+
+TESTS_ENVIRONMENT = perl
