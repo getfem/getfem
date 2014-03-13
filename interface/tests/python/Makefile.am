@@ -31,6 +31,8 @@ AM_TESTS_ENVIRONMENT = \
 	export PYTHONPATH; \
 	export LD_LIBRARY_PATH;
 LOG_COMPILER = python
+
+TESTS_ENVIRONMENT = python
 endif
 
 CLEANFILES = *.vtk *.dx *.pyc tank_3D* tripod* plate* *.pos *.dx
