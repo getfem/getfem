@@ -100,7 +100,11 @@ namespace getfem {
   }
 
   void mesh_region::add(const dal::bit_vector &bv) {
-    for (dal::bv_visitor i(bv); !i.finished(); ++i) add(i);
+    for (dal::bv_visitor i(bv); !i.finished(); ++i)
+    {
+      wp().m[i].set(size_type(-1)+1,1);
+    }
+    touch_parent_mesh();
   }
 
   void mesh_region::add(size_type cv, size_type f) {

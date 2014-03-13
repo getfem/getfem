@@ -38,7 +38,7 @@
 #ifndef GETFEM_MESH_REGION
 #define GETFEM_MESH_REGION
 
-#include <map>
+#include <unordered_map>
 #include <bitset>
 #include <iostream>
 #include "dal_bit_vector.h"
@@ -57,7 +57,7 @@ namespace getfem {
   class mesh_region {
   public:
     typedef std::bitset<MAX_FACES_PER_CV+1> face_bitset;
-    typedef std::map<size_type,face_bitset> map_t;
+    typedef std::unordered_map<size_type,face_bitset> map_t;
   private:
     struct impl {
       mutable dal::bit_vector index_;

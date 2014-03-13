@@ -73,6 +73,7 @@ namespace getfem{
 		pparent_mesh(pm),original_region(0),
 		partitions(num_threads())
 	{
+    scalar_type time = gmm::uclock_sec();
 		// in case of serial Getfem nothing to partition
 		if (num_threads()==1) {partitions[0]=id; return;}
 
@@ -94,19 +95,19 @@ namespace getfem{
 		size_type psize = std::ceil(static_cast<scalar_type >(Nelems)/
             static_cast<scalar_type >(num_threads()));
 		mr_visitor mr(*original_region);
-        size_type dummy_=0;
 		for(size_type thread = 0; thread<num_threads();thread++)
 		{
 			partitions[thread] = 
         getfem::mesh_region::free_region_id(*(original_region->get_parent_mesh()));
-			mesh_region& partition = pparent_mesh->region(partitions[thread]);
+      mesh_region partition;
 			for(size_type i=thread*psize;i<(thread+1)*psize && !mr.finished();i++,++mr)
 			{
-                if(mr.is_face()) partition.add(mr.cv(),mr.f());
-                else partition.add(mr.cv());
-                dummy_=partition.size();
+        if (mr.is_face()) partition.add(mr.cv(),mr.f());
+        else partition.add(mr.cv());
 			}
+      pparent_mesh->region(partitions[thread]) = partition;
 		}
+    GMM_TRACE2("Partitioning time: "<<gmm::uclock_sec()-time<<" s.");
 	}
 
 	size_type region_partition::

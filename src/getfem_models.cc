@@ -868,11 +868,12 @@ namespace getfem {
         for individual threads. This is done every time assembly is performed,
         hence, not effective. Will try to include this distribution into the
         brick description, to avoid their re-allocation (Andriy)*/
+      scalar_type time = gmm::uclock_sec();
 	    list_distro<real_matlist> rmatlist(brick.rmatlist);
 	    list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
 	    list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-
-
+      GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
+      time = gmm::uclock_sec();
         /*running the assembly in parallel*/
 	    gmm::standard_locale locale;
 	    open_mp_is_running_properly check; 
@@ -892,6 +893,8 @@ namespace getfem {
         //the memory, allocated dynamically with boost::intrusive_pointer
         //is realised only after this call. I hope this doesn't blow memory with some bricks
 	     dal::collect_static_stored_objects_garbage();
+       double assembly_time = gmm::uclock_sec()-time;
+       GMM_TRACE2("Assembly time "<< assembly_time<<" s.");
          }
 
  }
