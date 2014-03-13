@@ -500,8 +500,9 @@ void asm_stabilization_patch_term
   
   cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
   
+  int nparts = 1;
 #ifdef GETFEM_HAVE_METIS
-  int nparts = int(size_of_crack/(ratio_size*h));
+  nparts = int(size_of_crack/(ratio_size*h));
 # ifdef GETFEM_HAVE_METIS_OLD_API
   std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
   int wgtflag = 2, numflag = 0, edgecut;

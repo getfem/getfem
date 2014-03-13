@@ -17,3 +17,5 @@ EXTRA_DIST = \
 	delaminated_crack.param
 
 LOG_COMPILER = perl
+
+TESTS_ENVIRONMENT = perl
