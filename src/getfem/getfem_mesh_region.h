@@ -38,7 +38,11 @@
 #ifndef GETFEM_MESH_REGION
 #define GETFEM_MESH_REGION
 
+#if __cplusplus <= 199711L
+#include <map>
+#else
 #include <unordered_map>
+#endif
 #include <bitset>
 #include <iostream>
 #include "dal_bit_vector.h"
@@ -57,7 +61,11 @@ namespace getfem {
   class mesh_region {
   public:
     typedef std::bitset<MAX_FACES_PER_CV+1> face_bitset;
+#if __cplusplus <= 199711L
+    typedef std::map<size_type,face_bitset> map_t;
+#else
     typedef std::unordered_map<size_type,face_bitset> map_t;
+#endif
   private:
     struct impl {
       mutable dal::bit_vector index_;
