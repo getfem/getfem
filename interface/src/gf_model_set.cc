@@ -270,7 +270,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
          if (in.remaining())
            niter = in.pop().to_integer(0,10) - config::base_index();
          GMM_ASSERT1(st.size()==md->model().real_variable(name, niter).size(),
-                     "Bad size in assigment");
+                     "Bad size in assignment");
          md->model().set_real_variable(name, niter).assign(st.begin(), st.end());
        } else {
          carray st = in.pop().to_carray();
@@ -279,7 +279,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
            niter = in.pop().to_integer(0,10) - config::base_index();
          GMM_ASSERT1(st.size() == md->model().complex_variable(name,
                                                                niter).size(),
-                     "Bad size in assigment");
+                     "Bad size in assignment");
          md->model().set_complex_variable(name, niter).assign(st.begin(),
                                                               st.end());
        }
