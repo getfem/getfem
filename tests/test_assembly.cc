@@ -1046,8 +1046,6 @@ static void test_new_assembly(void) {
       VEC_TEST_1("Test for source term", ndofu, "u.Test_u", mim, size_type(-1),
                  Iu, getfem::asm_source_term(V, mim, mf_u, mf_u, U));
 
-
-
     }
 
     if (all) {
@@ -1065,14 +1063,13 @@ static void test_new_assembly(void) {
       
       if (N == 2)
       {VEC_TEST_1("Test for Neumann term", ndofu,
-                  "([A(1), A(3); A(2), A(4)]'*Normal).Test_u", mim,
+                  "(A'*Normal).Test_u", mim,
                   NEUMANN_BOUNDARY_NUM,
                   Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
                                                  A, NEUMANN_BOUNDARY_NUM));}
       if (N == 3)
       {VEC_TEST_1("Test for Neumann term", ndofu,
-                  "([A(1), A(4), A(7); A(2), A(5), A(8); A(3), A(6), A(9)]'"
-                  "*Normal).Test_u", mim, NEUMANN_BOUNDARY_NUM,
+                  "(A'*Normal).Test_u", mim, NEUMANN_BOUNDARY_NUM,
                   Iu, getfem::asm_normal_source_term(V, mim, mf_u, mf_u,
                                                  A, NEUMANN_BOUNDARY_NUM));}
     }

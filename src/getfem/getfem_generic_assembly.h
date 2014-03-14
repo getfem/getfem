@@ -312,6 +312,21 @@ namespace getfem {
       return mf ? associated_mf(name)->get_qdim() * (n / ndof) : n;
     }
 
+    bgeot::multi_index qdims(const std::string &name) const {
+      const mesh_fem *mf = associated_mf(name);
+      size_type n = gmm::vect_size(value(name));
+      if (mf) {
+        bgeot::multi_index mi = mf->get_qdims();
+        size_type qmult = n / mf->nb_dof();
+        if (qmult > 1) {
+          if (mi.back() == 1) mi.back() *= qmult; else mi.push_back(qmult);
+        }
+        return mi;
+      } else {
+        bgeot::multi_index mi(1); mi[0] = n; return mi;
+      }
+    }
+
     const model_real_plain_vector &value(const std::string &name) const {
       if (model)
         return model->real_variable(name);

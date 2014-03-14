@@ -769,6 +769,7 @@ namespace getfem {
     case 0:
       str << (nt ? scalar_type(0) : pnode->t[0]);
       break;
+
     case 1:
       str << "[";
       for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
@@ -777,6 +778,7 @@ namespace getfem {
       }
       str << "]";
       break;
+
     case 2:
       str << "[";
       for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
@@ -788,6 +790,7 @@ namespace getfem {
       }
       str << "]";
       break;
+
     case 3:
       str << "[";
       for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
@@ -802,6 +805,7 @@ namespace getfem {
       }
       str << "]";
       break;
+
     case 4:
       str << "[";
       for (size_type i = 0; i < pnode->tensor_proper_size(0); ++i) {
@@ -819,6 +823,21 @@ namespace getfem {
       }
       str << "]";
       break;
+
+    case 5: case 6:
+      str << "Reshape([";
+      for (size_type i = 0; i < pnode->tensor_proper_size(); ++i) {
+        if (i != 0) str << "; ";
+        str << (nt ? scalar_type(0) : pnode->t[i]);
+      }
+      str << "]";
+      for (size_type i = 0; i < pnode->tensor_order(); ++i) {
+        if (i != 0) str << ", ";
+        str << pnode->tensor_proper_size(i);
+      }
+      str << ")";
+      break;
+      
     default: GMM_ASSERT1(false, "Invalid tensor dimension");
     }
     GMM_ASSERT1(pnode->children.size() == 0, "Invalid tree");
@@ -918,9 +937,8 @@ namespace getfem {
         if (pnode->qdim1 == 1)
           str << "*Test_" << pnode->name_test1;
         else {
-          str << "*([ 0";
-          for (size_type i = 1; i < pnode->qdim1; ++i) str << ", 0";
-          str << "].Test_" << pnode->name_test1 << ")";
+          str << "*(Reshape(Test_" << pnode->name_test1 << ","
+              << pnode->qdim1<< ")(1))";
         }
       }
       if (pnode->name_test2.size()) {
@@ -928,9 +946,8 @@ namespace getfem {
         if (pnode->qdim2 == 1)
           str << "*Test2_" << pnode->name_test2;
         else {
-          str << "*([ 0";
-          for (size_type i = 1; i < pnode->qdim2; ++i) str << ", 0";
-          str << "].Test2_" << pnode->name_test2 << ")";
+          str << "*(Reshape(Test2_" << pnode->name_test2 << ","
+              << pnode->qdim2<< ")(1))";
         }
       }
       if (pnode->test_function_type) str << ")";
@@ -1932,6 +1949,7 @@ namespace getfem {
     SPEC_FUNCTIONS.insert("pi");
     SPEC_FUNCTIONS.insert("meshdim");
     SPEC_FUNCTIONS.insert("qdim");
+    SPEC_FUNCTIONS.insert("qdims");
     SPEC_FUNCTIONS.insert("Id");
 
     // Predefined operators
@@ -4048,7 +4066,7 @@ namespace getfem {
             pnode->t = child0->t;
             gmm::scale(pnode->t.as_vector(), scalar_type(child1->t[0]));
           } else {
-            if (dim0+dim1 > 4)
+            if (dim0+dim1 > 6)
               ga_throw_error(expr, pnode->pos, "Unauthorized "
                               "tensor multiplication.");
             for (size_type i = 0; i < dim0; ++i)
@@ -4075,7 +4093,7 @@ namespace getfem {
               for (size_type i = 0; i < dim0; ++i)
                 mi.push_back(child0->tensor_proper_size(i));
             } else {
-              if (dim0+dim1 > 4)
+              if (dim0+dim1 > 6)
                 ga_throw_error(expr, pnode->pos, "Unauthorized "
                                 "tensor multiplication.");
               for (size_type i = 0; i < dim0; ++i)
@@ -4441,35 +4459,30 @@ namespace getfem {
               }
             } else {
               size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
+              bgeot::multi_index mii = workspace.qdims(name);
               if (!q) ga_throw_error(expr, pnode->pos,
                                      "Invalid null size of variable");
               switch (val_grad_or_hess) {
               case 0: // value
                 pnode->node_type = GA_NODE_VAL;
-                if (q == 1)
-                  pnode->init_scalar_tensor(scalar_type(0));
-                else
-                  pnode->init_vector_tensor(q);
                 break;
               case 1: // grad
                 pnode->node_type = GA_NODE_GRAD;
-                if (q == 1 && n == 1)
-                  pnode->init_scalar_tensor(scalar_type(0));
-                else if (q == 1)
-                  pnode->init_vector_tensor(n);
-                else
-                  pnode->init_matrix_tensor(q, n);
+                if (n > 1) {
+                  if (q == 1 && mii.size() <= 1) mii[0] = n;
+                  else mii.push_back(n);
+                }
                 break;
               case 2: // Hessian
                 pnode->node_type = GA_NODE_HESS;
-                if (q == 1 && n == 1)
-                  pnode->init_scalar_tensor(scalar_type(0));
-                else if (q == 1)
-                  pnode->init_matrix_tensor(n,n);
-                else
-                  pnode->init_third_order_tensor(q, n, n);
+                if (n > 1) {
+                  if (q == 1 && mii.size() <= 1) { mii[0] = n;  mii.push_back(n); }
+                  else { mii.push_back(n); mii.push_back(n); }
+                }
                 break;
               }
+              pnode->t.adjust_sizes(mii);
+              pnode->test_function_type = 0;
             }
           } else {
             if (workspace.is_constant(name))
@@ -4512,36 +4525,48 @@ namespace getfem {
               }
             } else {
               size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
+              bgeot::multi_index mii =  workspace.qdims(name);
+              if (mii.size() > 6)
+                ga_throw_error(expr, pnode->pos,
+                               "Tensor with too much dimensions. Limited to 6");
               if (!q)
                 ga_throw_error(expr, pnode->pos,
                                "Invalid null size of variable");
               switch (val_grad_or_hess) {
               case 0: // value
                 pnode->node_type = GA_NODE_TEST;
-                if (q == 1)
+                if (q == 1 && mii.size() <= 1)
                   pnode->init_vector_tensor(2);
-                else
-                  pnode->init_matrix_tensor(2,q);
+                else {
+                  mii.insert(mii.begin(), 2);
+                  pnode->t.adjust_sizes(mii);
+                }
                 pnode->test_function_type = test;
                 break;
               case 1: // grad
                 pnode->node_type = GA_NODE_GRAD_TEST;
-                if (q == 1 && n == 1)
+                if (q == 1 && mii.size() <= 1 && n == 1)
                   pnode->init_vector_tensor(2);
-                else if (q == 1)
-                  pnode->init_matrix_tensor(2,n);
-                else
-                  pnode->init_third_order_tensor(2,q,n);
+                else if (q == 1 && mii.size() <= 1)
+                  pnode->init_matrix_tensor(2, n);
+                else {
+                  mii.insert(mii.begin(), 2);
+                  if (n > 1) mii.push_back(n);
+                  pnode->t.adjust_sizes(mii);
+                }
                 pnode->test_function_type = test;
                 break;
               case 2: // hessian
                 pnode->node_type = GA_NODE_HESS_TEST;
-                if (q == 1 && n == 1)
+                if (q == 1 && mii.size() <= 1 && n == 1)
                   pnode->init_vector_tensor(2);
-                else if (q == 1)
+                else if (q == 1 && mii.size() <= 1)
                   pnode->init_third_order_tensor(2,n,n);
-                else
-                  pnode->init_fourth_order_tensor(2,q,n,n);
+                else {
+                  mii.insert(mii.begin(), 2);
+                  if (n > 1) { mii.push_back(n); mii.push_back(n); }
+                  pnode->t.adjust_sizes(mii);
+                }
                 pnode->test_function_type = test;
                 break;
               }
@@ -4570,7 +4595,7 @@ namespace getfem {
         if (pnode->children.size() < 3)
           ga_throw_error(expr, child1->pos,
                          "Not enough parameters for Reshape");
-        if (pnode->children.size() > 6)
+        if (pnode->children.size() > 8)
           ga_throw_error(expr, child1->pos,
                          "Too many parameters for Reshape");
         pnode->t = child1->t;
@@ -4693,6 +4718,25 @@ namespace getfem {
           if (pnode->t[0] <= 0)
             ga_throw_error(expr, pnode->pos,
                            "Invalid null size of variable");
+        } else if (!(child0->name.compare("qdims"))) {
+          if (child1->node_type != GA_NODE_VAL)
+            ga_throw_error(expr, pnode->pos, "The argument of qdim "
+                           "function can only be a variable name.");
+          pnode->node_type = GA_NODE_CONSTANT;
+          bgeot::multi_index mii = workspace.qdims(child1->name);
+          if (mii.size() > 6)
+            ga_throw_error(expr, pnode->pos,
+                           "Tensor with too much dimensions. Limited to 6");
+          if (mii.size() == 0 || scalar_type(mii[0]) <= 0)
+            ga_throw_error(expr, pnode->pos,
+                           "Invalid null size of variable");
+          if (mii.size() == 1)
+            pnode->init_scalar_tensor(scalar_type(mii[0]));
+          if (mii.size() >= 1) {
+            pnode->init_vector_tensor(mii.size());
+            for (size_type i = 0; i < mii.size(); ++i)
+              pnode->t[i] = scalar_type(mii[i]);
+          }
         } else if (!(child0->name.compare("Id"))) {
           bool valid = (child1->node_type == GA_NODE_CONSTANT);
           int n = valid ? int(round(child1->t[0])) : -1;

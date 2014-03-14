@@ -159,6 +159,8 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -ansiW "
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-40],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-std=c++11],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wpointer-arith],CXXFLAGS)

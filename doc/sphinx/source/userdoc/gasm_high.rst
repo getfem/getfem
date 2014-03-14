@@ -44,7 +44,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of operators: ``+``, ``-``, ``*``, ``/``, ``:``, ``.``, ``.*``, ``./``, ``@``, ``'``.
 
-  - Some constants : ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` the dimension of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for f.e.m. variables), ``Id(n)`` the identity :math:`n\times n` matrix.
+  - Some constants : ``pi``, ``meshdim`` (the dimension of the current mesh), ``qdim(u)`` and ``qdims(u)`` the dimensions of the variable ``u`` (the size for fixed size variables and the dimension of the vector field for f.e.m. variables), ``Id(n)`` the identity :math:`n\times n` matrix.
 
   - Parentheses can be used to change the operations order in a standard way. For instance ``(1+2)*4`` or ``(u+v)*Test_u`` are correct. 
 
@@ -347,7 +347,7 @@ The detailed syntax of the assembly language
 The tensors
 ***********
 
-Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``x.x`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order four. The language could be easily extended to support tensors of order greater than four but it may lead to inefficient computations. When an expression contains tests functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
+Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``x.x`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains tests functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
 
 Order four tensors are necessary for instance to express elasticity tensors or in general to obtain the tangent term for vector valued unknowns.
 
@@ -487,7 +487,12 @@ Similarly to explicit vectors, it is possible to manipulate explicit matrices (i
 Explicit order four tensors
 ***************************
 
-Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices. Note also that constant third order tensors are not supported.
+Explicit order four tensors are also allowed. To this aim, the two supplementary dimensions compared to matrices are separated by  ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor. Note that constant fourth order tensors can also be obtained by the tensor product of two constant matrices. 
+
+Explicit order five or six tensors
+**********************************
+
+Explicit order five or six tensors are not directly supported by the assembly language. However, they can be easily obtained via the Reshape instruction.
 
 
 Access to tensor components
@@ -501,7 +506,8 @@ Constant expressions
   - ``pi``: the constant Pi. 
   - ``meshdim``: the dimension of the current mesh (i.e. size of geometrical nodes)
   - ``Id(n)``: the identity matrix of size :math:`n\times n`. `n` should be an integer expression. For instance ``Id(meshdim)`` is allowed.
-  - ``qdim(u)``: the dimension of the variable ``u`` (i.e. the  size for fixed size variables and the dimension of the vector field for f.e.m. variables)
+  - ``qdim(u)``: the total dimension of the variable ``u`` (i.e. the  size for fixed size variables and the total dimension of the vector/tensor field for f.e.m. variables)
+  - ``qdims(u)``: the dimensions of the variable ``u`` (i.e. the size for fixed size variables and the vector of dimensions of the vector/tensor field for f.e.m. variables)
 
 Special expressions linked to the current position 
 **************************************************
