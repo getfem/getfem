@@ -333,10 +333,16 @@ namespace getfem {
       l = &(md->real_variable(mmultname));
     }
     const model_real_plain_vector *w(0);
-    if (wname.size()) {
+    if (wname.compare(vvarname) == 0) {
+      GMM_ASSERT1(md->n_iter_of_variable(vvarname) > 1, "More than one "
+                 "versions of the displacement variable were expected here");
+      w = &(md->real_variable(vvarname,1));
+    }
+    else if (wname.size()) {
       GMM_ASSERT1(&(md->mesh_fem_of_variable(wname))
-                 == &(md->mesh_fem_of_variable(vvarname)), "The velocity "
-                 "should be defined on the same mesh_fem as the displacement");
+                 == &(md->mesh_fem_of_variable(vvarname)), "The previous "
+                 "displacement should be defined on the same mesh_fem as the "
+                 "current one");
       w = &(md->real_variable(wname));
     }
     return add_master_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
@@ -356,10 +362,16 @@ namespace getfem {
       l = &(md->real_variable(mmultname));
     }
     const model_real_plain_vector *w(0);
-    if (wname.size()) {
+    if (wname.compare(vvarname) == 0) {
+      GMM_ASSERT1(md->n_iter_of_variable(vvarname) > 1, "More than one "
+                 "versions of the displacement variable were expected here");
+      w = &(md->real_variable(vvarname,1));
+    }
+    else if (wname.size()) {
       GMM_ASSERT1(&(md->mesh_fem_of_variable(wname))
-                 == &(md->mesh_fem_of_variable(vvarname)), "The velocity "
-                 "should be defined on the same mesh_fem as the displacement");
+                 == &(md->mesh_fem_of_variable(vvarname)), "The previous "
+                 "displacement should be defined on the same mesh_fem as the "
+                 "current one");
       w = &(md->real_variable(wname));
     }
     return add_slave_boundary(mim, &(md->mesh_fem_of_variable(vvarname)),
