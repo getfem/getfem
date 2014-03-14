@@ -17,5 +17,3 @@ EXTRA_DIST = \
 	mixed_elastostatic.param
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

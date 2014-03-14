@@ -22,5 +22,3 @@ EXTRA_DIST = \
 	crack.param 
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

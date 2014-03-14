@@ -35,7 +35,7 @@ dnl   init automake
 dnl ------------------------------------------------------------------------
 
 dnl AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
-AM_INIT_AUTOMAKE(1.10.1) 
+AM_INIT_AUTOMAKE([1.11 parallel-tests]) 
 WARNING_MSG=""
 
 dnl --------------------------

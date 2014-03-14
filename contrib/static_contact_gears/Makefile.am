@@ -30,5 +30,3 @@ EXTRA_DIST = \
 	static_contact_gears_2teeth.param
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

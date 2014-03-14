@@ -154,5 +154,3 @@ EXTRA_DIST = \
 	geo_trans_inv.param
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

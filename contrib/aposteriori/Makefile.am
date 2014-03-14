@@ -20,5 +20,3 @@ EXTRA_DIST = \
 	aposteriori.param
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

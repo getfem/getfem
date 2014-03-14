@@ -23,5 +23,3 @@ EXTRA_DIST = \
 	vertex_large_strain.param
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

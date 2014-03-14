@@ -234,5 +234,3 @@ EXTRA_DIST =                               			\
 	meshes/donut_regulier_512_elements.mesh
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

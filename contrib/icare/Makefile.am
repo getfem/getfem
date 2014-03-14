@@ -21,5 +21,3 @@ EXTRA_DIST = \
 	navier_stokes_cylinder2.mesh
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

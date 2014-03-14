@@ -26,5 +26,3 @@ EXTRA_DIST = \
 	xfem_stokes.param
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

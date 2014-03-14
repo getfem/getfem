@@ -14,5 +14,3 @@ TESTS = inter_element.pl
 EXTRA_DIST = inter_element.pl
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl

@@ -16,5 +16,3 @@ EXTRA_DIST = 				\
 	xfem_stab_unilat_contact.pl               
 
 LOG_COMPILER = perl
-
-TESTS_ENVIRONMENT = perl
