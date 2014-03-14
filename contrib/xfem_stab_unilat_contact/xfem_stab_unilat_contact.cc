@@ -521,7 +521,7 @@ void asm_stabilization_patch_term
   int options[METIS_NOPTIONS] = { 0 };
   METIS_SetDefaultOptions(options);
   METIS_PartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), 0, 0,
-                           &nparts, 0, 0, options, &edgecut, &(npart[0]));
+                           &nparts, 0, 0, options, &edgecut, &(part[0]));
 # endif
   //cout<<"size_of_mesh="<<h<<endl;
   cout<<"size_of_crack="<< size_of_crack <<endl;

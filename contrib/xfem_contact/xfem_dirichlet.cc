@@ -467,8 +467,9 @@ void asm_stabilization_patch_term
   
   cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
 
+  int nparts = 1;
 #if GETFEM_HAVE_METIS
-  int nparts = int(size_of_crack/(ratio_size*h));
+  nparts = int(size_of_crack/(ratio_size*h));
 # ifdef GETFEM_HAVE_METIS_OLD_API
   std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
   int wgtflag = 2, numflag = 0, edgecut;
@@ -487,7 +488,7 @@ void asm_stabilization_patch_term
   int options[METIS_NOPTIONS] = { 0 };
   METIS_SetDefaultOptions(options);
   METIS_PartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), 0, 0,
-                           &nparts, 0, 0, options, &edgecut, &(npart[0]));
+                           &nparts, 0, 0, options, &edgecut, &(part[0]));
 # endif
   //cout<<"size_of_mesh="<<h<<endl;
   //cout<<"size_of_crack="<< size_of_crack <<endl;
@@ -880,8 +881,9 @@ int main(int argc, char *argv[]) {
       scalar_type ratio_size = PARAM.real_value("RATIO_GR_MESH", "ratio size between mesh and patches");
       cout<<"ratio size beween mesh and coarse mesh= "<< ratio_size <<endl;
 
+      int nparts = 1;
 #if GETFEM_HAVE_METIS
-      int nparts=int(size_of_crack/(ratio_size*h));
+      nparts = int(size_of_crack/(ratio_size*h));
 # ifdef GETFEM_HAVE_METIS_OLD_API
       std::vector<int> adjwgt(k); // actually Metis would also accept NULL instead of an empty array
       int wgtflag = 2, numflag = 0, edgecut;
@@ -896,11 +898,11 @@ int main(int argc, char *argv[]) {
       METIS_PartGraphRecursive(&ne, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), &(adjwgt[0]), &wgtflag,
                                &numflag, &nparts, options, &edgecut, &(part[0]));
 # else
-      int ncon = 1, edgcut;
+      int ncon = 1, edgecut;
       int options[METIS_NOPTIONS] = { 0 };
       METIS_SetDefaultOptions(options);
       METIS_PartGraphRecursive(&ne, &ncon, &(xadj[0]), &(adjncy[0]), &(vwgt[0]), 0, 0,
-                               &nparts, 0, 0, options, &edgecut, &(npart[0]));
+                               &nparts, 0, 0, options, &edgecut, &(part[0]));
 # endif
       //cout<<"size_of_mesh="<<h<<endl;
       //cout<<"size_of_crack="<< size_of_crack <<endl;
