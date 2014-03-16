@@ -56,6 +56,10 @@ namespace getfem {
     return face_num_; 
   }
 
+  bool fem_interpolation_context::is_on_face() const {
+    return (face_num_ != size_type(-1));
+  }
+
   void fem_interpolation_context::base_value(base_tensor& t,
 					     bool withM) const {
     if (pf()->is_on_real_element())

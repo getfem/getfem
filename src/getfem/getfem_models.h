@@ -162,8 +162,8 @@ namespace getfem {
       std::vector<gmm::uint64_type> v_num_var_iter;
       std::vector<gmm::uint64_type> v_num_iter;
 
-      //im data description
-      im_data * pim_data;
+      // im data description
+      im_data *pim_data;
 
       var_description(bool is_var = false, bool is_com = false,
                       bool is_fem = false, size_type n_it = 1,
@@ -177,7 +177,7 @@ namespace getfem {
 	  n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
           default_iter(0), mf(mmf), m_region(m_reg), mim(mim_),
 	  filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()),
-    pim_data(pimd){
+          pim_data(pimd) {
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = new partial_mesh_fem(*mf);
         // v_num_data = v_num;
@@ -479,6 +479,12 @@ namespace getfem {
       VAR_SET::const_iterator it = variables.find(name);
       GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
       return (it->second.pim_data != 0);
+    }
+
+    const im_data *pim_data_of_variable(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      return it->second.pim_data;
     }
 
     /** Enable a variable.  */

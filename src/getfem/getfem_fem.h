@@ -694,6 +694,8 @@ namespace getfem {
     size_type convex_num() const;
     /** get the current face number */
     size_type face_num() const;
+    /** On a face ? */
+    bool is_on_face() const;
     /** get the current fem_precomp_ */
     pfem_precomp pfp() const { return pfp_; }
     void set_pfp(pfem_precomp newpfp);

@@ -114,15 +114,17 @@ namespace getfem {
       const mesh_fem *mf;
       gmm::sub_interval I;
       const model_real_plain_vector *V;
+      const im_data *imd;
 
       var_description(bool is_var,
                       bool is_fem, 
                       const mesh_fem *mmf,
                       gmm::sub_interval I_,
-                      const model_real_plain_vector *v)
-        : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v) {}
+                      const model_real_plain_vector *v, const im_data *imd_)
+        : is_variable(is_var), is_fem_dofs(is_fem), mf(mmf), I(I_), V(v),
+          imd(imd_) {}
       var_description() : is_variable(false), is_fem_dofs(false),
-                          mf(0), V(0) {}
+                          mf(0), V(0), imd(0) {}
     };
 
   public:
@@ -240,29 +242,37 @@ namespace getfem {
                           const gmm::sub_interval &I,
                           const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(true, true, &mf, I, &VV);
+      variables[name] = var_description(true, true, &mf, I, &VV, 0);
     }
     
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
                                  const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(true, false, 0, I, &VV);
+      variables[name] = var_description(true, false, 0, I, &VV, 0);
     }
 
     void add_fem_constant(const std::string &name, const mesh_fem &mf,
                           const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
       variables[name] = var_description(false, true, &mf,
-                                        gmm::sub_interval(), &VV);
+                                        gmm::sub_interval(), &VV, 0);
     }
     
     void add_fixed_size_constant(const std::string &name,
                                  const model_real_plain_vector &VV) {
       GMM_ASSERT1(!model, "Invalid use");
       variables[name] = var_description(false, false, 0,
-                                        gmm::sub_interval(), &VV);
+                                        gmm::sub_interval(), &VV, 0);
     }
+
+    void add_im_data(const std::string &name, const im_data &imd,
+                     const model_real_plain_vector &VV) {
+      GMM_ASSERT1(!model, "Invalid use");
+      variables[name] = var_description(false, false, 0,
+                                        gmm::sub_interval(), &VV, &imd);
+    }
+
 
     bool used_variables(model::varnamelist &vl, model::varnamelist &dl,
                         size_type order);
@@ -305,15 +315,35 @@ namespace getfem {
       }
     }
 
+    const im_data *associated_im_data(const std::string &name) const {
+      if (model)
+        return model->pim_data_of_variable(name);
+      else {
+        VAR_SET::const_iterator it = variables.find(name);
+        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+        return it->second.imd;
+      }
+    }
+
     size_type qdim(const std::string &name) const {
       const mesh_fem *mf = associated_mf(name);
+      const im_data *imd = associated_im_data(name);
       size_type n = gmm::vect_size(value(name));
-      size_type ndof = mf ? mf->nb_dof() : 0;
-      return mf ? associated_mf(name)->get_qdim() * (n / ndof) : n;
+      if (mf) {
+        size_type ndof = mf->nb_dof();
+        return mf->get_qdim() * (n / ndof);
+      } else if (imd) {
+        size_type q = n / imd->nb_filtered_index();
+        GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
+                    "Invalid mesh im data vector");
+        return q;
+      }
+      return n;
     }
 
     bgeot::multi_index qdims(const std::string &name) const {
       const mesh_fem *mf = associated_mf(name);
+      const im_data *imd = associated_im_data(name);
       size_type n = gmm::vect_size(value(name));
       if (mf) {
         bgeot::multi_index mi = mf->get_qdims();
@@ -322,9 +352,18 @@ namespace getfem {
           if (mi.back() == 1) mi.back() *= qmult; else mi.push_back(qmult);
         }
         return mi;
-      } else {
-        bgeot::multi_index mi(1); mi[0] = n; return mi;
+      } else if (imd) {
+        bgeot::multi_index mi = imd->tensor_size();
+        size_type q = n / imd->nb_filtered_index();
+        GMM_ASSERT1(q % imd->nb_tensor_elem() == 0,
+                    "Invalid mesh im data vector");
+        size_type qmult = q / imd->nb_tensor_elem();
+        if (qmult > 1) {
+          if (mi.back() == 1) mi.back() *= qmult; else mi.push_back(qmult);
+        }
+        return mi;
       }
+      bgeot::multi_index mi(1); mi[0] = n; return mi;
     }
 
     const model_real_plain_vector &value(const std::string &name) const {

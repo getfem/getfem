@@ -56,7 +56,7 @@ namespace getfem{
   matrix, vector and scalar) from a vector data (generally a
   fixed-size variable from the model.)
   */
-  class im_data : public context_dependencies{
+  class im_data : public context_dependencies {
   public:
     /**
     * Constructor

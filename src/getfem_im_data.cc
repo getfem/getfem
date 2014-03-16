@@ -75,7 +75,7 @@ namespace getfem
   size_type im_data::index_of_point(size_type cv, size_type i) const{
     context_check();
     if (require_update_) update_index_();
-    if(cv < int_point_index_.size()) return int_point_index_[cv] + i;
+    if (cv < int_point_index_.size()) return int_point_index_[cv] + i;
     else return size_type(-1);
   }
 

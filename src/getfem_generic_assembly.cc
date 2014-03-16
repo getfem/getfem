@@ -2042,13 +2042,47 @@ namespace getfem {
   // Instructions for compilation: basic optimized operations on tensors
   //=========================================================================
 
+
+
+  struct ga_instruction_extract_local_im_data : public ga_instruction {
+    base_tensor &t;
+    const im_data &imd;
+    papprox_integration &pai;
+    const base_vector &U;
+    fem_interpolation_context &ctx;
+    size_type qdim, cv_old;
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: extract local im data");
+      size_type cv = ctx.convex_num();
+      if (cv != cv_old) {
+        cv_old = cv;
+        GMM_ASSERT1(imd.get_mesh_im().int_method_of_element(cv)
+                    ->approx_method() == pai, "Im data have to be used only "
+                    "on their original integration method.");
+        GMM_ASSERT1(!(ctx.is_on_face()),
+                    "Im data cannot be used of boundaries");
+      }
+      size_type ind = imd.filtered_index_of_point(cv, ctx.ii());
+      GMM_ASSERT1(ind != size_type(-1),
+                  "Im data with no data on the current integration point");
+      gmm::copy(gmm::sub_vector(U, gmm::sub_interval(ind*qdim, qdim)),
+                t.as_vector());     
+    }
+    ga_instruction_extract_local_im_data
+    (base_tensor &t_, const im_data &imd_, const base_vector &U_,
+     papprox_integration &pai_, fem_interpolation_context &ctx_,
+     size_type qdim_)
+      : t(t_), imd(imd_), pai(pai_), U(U_), ctx(ctx_), qdim(qdim_),
+        cv_old(-1) {}
+  };
+
   struct ga_instruction_slice_local_dofs : public ga_instruction {
     const mesh_fem &mf;
     const base_vector &U;
     fem_interpolation_context &ctx;
     base_vector &coeff;
     virtual void exec(void) {
-      GA_DEBUG_INFO("Instruction: Slice");
+      GA_DEBUG_INFO("Instruction: Slice local dofs");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
     }
     ga_instruction_slice_local_dofs(const mesh_fem &mf_, const base_vector &U_,
@@ -3709,7 +3743,8 @@ namespace getfem {
 
     case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
     case GA_NODE_VAL:
-      if (eval_fixed_size && !(workspace.associated_mf(pnode->name))) {
+      if (eval_fixed_size && !(workspace.associated_mf(pnode->name))
+          && !(workspace.associated_im_data(pnode->name))) {
         gmm::copy(workspace.value(pnode->name), pnode->t.as_vector());
         pnode->node_type = GA_NODE_CONSTANT;
       }
@@ -4441,8 +4476,9 @@ namespace getfem {
           pnode->name = name;
           
           const mesh_fem *mf = workspace.associated_mf(name);
+          const im_data *imd = workspace.associated_im_data(name);
           if (!test) {
-            if (!mf) {
+            if (!mf && !imd) {
               if (val_grad_or_hess)
                 ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
                                 "be evaluated for fixed size data.");
@@ -4457,6 +4493,13 @@ namespace getfem {
                 pnode->init_vector_tensor(n);
                 gmm::copy(workspace.value(name), pnode->t.as_vector());
               }
+            } else if (imd) {
+              if (val_grad_or_hess)
+                ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
+                                "be evaluated for im data.");
+              pnode->node_type = GA_NODE_VAL;
+              pnode->t.adjust_sizes(workspace.qdims(name));
+              pnode->test_function_type = 0;
             } else {
               size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
               bgeot::multi_index mii = workspace.qdims(name);
@@ -5584,69 +5627,79 @@ namespace getfem {
         rmi.instructions.push_back(pgai);
       } else {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
-        GMM_ASSERT1(mf, "Internal error");
-
-        // An instruction for extracting local dofs of the variable.
-        if (rmi.local_dofs.find(pnode->name) == rmi.local_dofs.end()) {
-          rmi.local_dofs[pnode->name] = base_vector(1);
-          
-          if (gis.extended_vars.find(pnode->name) == gis.extended_vars.end()) {
-            if (mf->is_reduced()) {
-              base_vector U(mf->nb_basic_dof());
-              mf->extend_vector(workspace.value(pnode->name), U);
-              gis.really_extended_vars[pnode->name] = U;
-              gis.extended_vars[pnode->name]
-                = &(gis.really_extended_vars[pnode->name]);
-            } else {
-              gis.extended_vars[pnode->name]
-                = &(workspace.value(pnode->name));
-            }
-          }
-          pgai = new ga_instruction_slice_local_dofs
-            (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
-             rmi.local_dofs[pnode->name]);
+        const im_data *imd = workspace.associated_im_data(pnode->name);
+        
+        if (imd) {
+          pgai = new ga_instruction_extract_local_im_data
+            (pnode->t, *imd, workspace.value(pnode->name), gis.pai, gis.ctx,
+             workspace.qdim(pnode->name));
           rmi.instructions.push_back(pgai);
-        }
-
-        // An instruction for pfp update
-        if (rmi.pfps.find(mf) == rmi.pfps.end()) {
-          rmi.pfps[mf] = 0;
-          pgai = new ga_instruction_update_pfp
-            (*mf,  rmi.pfps[mf], gis.ctx, gis.pai, gis.fp_pool);
-          rmi.instructions.push_back(pgai);
-        }
-
-        // An instruction for the base value
-        pgai = 0;
-        if (pnode->node_type == GA_NODE_VAL) {
-          if (rmi.base.find(mf) == rmi.base.end())
-            pgai = new ga_instruction_base
-              (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
-        } else if (pnode->node_type == GA_NODE_GRAD) {
-          if (rmi.grad.find(mf) == rmi.grad.end())
-            pgai = new ga_instruction_grad_base
-              (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
         } else {
-          if (rmi.hess.find(mf) == rmi.hess.end())
-            pgai = new ga_instruction_hess_base
-              (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
+          
+          GMM_ASSERT1(mf, "Internal error");
+          
+          // An instruction for extracting local dofs of the variable.
+          if (rmi.local_dofs.find(pnode->name) == rmi.local_dofs.end()) {
+            rmi.local_dofs[pnode->name] = base_vector(1);
+            
+            if (gis.extended_vars.find(pnode->name)==gis.extended_vars.end()) {
+              if (mf->is_reduced()) {
+                base_vector U(mf->nb_basic_dof());
+                mf->extend_vector(workspace.value(pnode->name), U);
+                gis.really_extended_vars[pnode->name] = U;
+                gis.extended_vars[pnode->name]
+                  = &(gis.really_extended_vars[pnode->name]);
+              } else {
+                gis.extended_vars[pnode->name]
+                  = &(workspace.value(pnode->name));
+              }
+            }
+            pgai = new ga_instruction_slice_local_dofs
+              (*mf, *(gis.extended_vars[pnode->name]), gis.ctx,
+               rmi.local_dofs[pnode->name]);
+            rmi.instructions.push_back(pgai);
+          }
+          
+          // An instruction for pfp update
+          if (rmi.pfps.find(mf) == rmi.pfps.end()) {
+            rmi.pfps[mf] = 0;
+            pgai = new ga_instruction_update_pfp
+              (*mf,  rmi.pfps[mf], gis.ctx, gis.pai, gis.fp_pool);
+            rmi.instructions.push_back(pgai);
+          }
+          
+          // An instruction for the base value
+          pgai = 0;
+          if (pnode->node_type == GA_NODE_VAL) {
+            if (rmi.base.find(mf) == rmi.base.end())
+              pgai = new ga_instruction_base
+                (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
+          } else if (pnode->node_type == GA_NODE_GRAD) {
+            if (rmi.grad.find(mf) == rmi.grad.end())
+              pgai = new ga_instruction_grad_base
+                (rmi.grad[mf], gis.ctx, *mf, rmi.pfps[mf]);
+          } else {
+            if (rmi.hess.find(mf) == rmi.hess.end())
+              pgai = new ga_instruction_hess_base
+                (rmi.hess[mf], gis.ctx, *mf, rmi.pfps[mf]);
+          }
+          if (pgai) rmi.instructions.push_back(pgai);
+          
+          // The eval instruction
+          if (pnode->node_type == GA_NODE_VAL)
+            pgai = new ga_instruction_val
+              (pnode->t, rmi.base[mf],
+               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+          else if (pnode->node_type == GA_NODE_GRAD)
+            pgai = new ga_instruction_grad
+              (pnode->t, rmi.grad[mf],
+               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+          else
+            pgai = new ga_instruction_hess
+              (pnode->t, rmi.hess[mf],
+               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+          rmi.instructions.push_back(pgai);
         }
-        if (pgai) rmi.instructions.push_back(pgai);
-                          
-        // The eval instruction
-        if (pnode->node_type == GA_NODE_VAL)
-          pgai = new ga_instruction_val
-            (pnode->t, rmi.base[mf],
-             rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-        else if (pnode->node_type == GA_NODE_GRAD)
-          pgai = new ga_instruction_grad
-            (pnode->t, rmi.grad[mf],
-             rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-        else
-          pgai = new ga_instruction_hess
-            (pnode->t, rmi.hess[mf],
-             rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
-        rmi.instructions.push_back(pgai);
       }
       break;
 
