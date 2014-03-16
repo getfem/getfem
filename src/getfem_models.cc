@@ -1326,8 +1326,8 @@ namespace getfem {
       // Disables the brick if all its variables are disabled.
       bool auto_disabled_brick = true;
       for (size_type j = 0; j < brick.vlist.size(); ++j) {
-	if (!(variables[brick.vlist[j]].is_disabled))
-	  auto_disabled_brick = false;
+        if (!(variables[brick.vlist[j]].is_disabled))
+          auto_disabled_brick = false;
       }
       if (auto_disabled_brick) continue;
 
@@ -2041,7 +2041,7 @@ namespace getfem {
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region);
     model::varnamelist vl, dl;
-    workspace.used_variables(vl, dl, 2);
+    workspace.used_variables(vl, dl, order);
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                (order == 0), brickname);
@@ -2120,7 +2120,7 @@ namespace getfem {
     GMM_ASSERT1(order < 2, "Order two test functions (Test2) are not allowed"
                 " in assembly string for nonlinear terms");
     model::varnamelist vl, dl;
-    workspace.used_variables(vl, dl, 2);
+    workspace.used_variables(vl, dl, order);
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_nonlinear_assembly_brick(expr, is_sym, is_coercive,
                                                   (order == 0), brickname);
@@ -2213,7 +2213,7 @@ namespace getfem {
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region);
     model::varnamelist vl, dl;
-    workspace.used_variables(vl, dl, 2);
+    workspace.used_variables(vl, dl, order);
     pbrick pbr = new gen_source_term_assembly_brick(expr, (order == 0),
                                                     brickname);
     model::termlist tl; // A unique global vector term
