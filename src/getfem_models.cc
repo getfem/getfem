@@ -979,6 +979,12 @@ namespace getfem {
     return (vd.v_num > brick.v_num);
   }
 
+  bool model::is_mim_newer_than_brick(const mesh_im &im,
+                                      size_type ib) const {
+    const brick_description &brick = bricks[ib];
+    return (im.version_number() > brick.v_num);
+  }
+
   void model::auxilliary_variables_of_Neumann_terms
   (const std::string &varname, std::vector<std::string> &aux_vars) const {
     std::map<std::string, std::vector<std::string> >::const_iterator
