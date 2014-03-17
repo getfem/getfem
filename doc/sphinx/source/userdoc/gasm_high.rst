@@ -15,7 +15,7 @@ This is a work in progress for |gf| 5.0. Available, but not fully tested yet.
 
 
 
-This section presents the second version of generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms are quite difficult to take into account. Conversely, an automatic differentiation algorithm is used with this version to simplify the writing of new nonlinear terms. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a rather optimal computational cost.
+This section presents the second version of generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms are quite difficult to take into account. Conversely, a symbolic differentiation algorithm is used with this version to simplify the writing of new nonlinear terms. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a rather optimal computational cost.
 
 The header file to be included to use the high-level generic assembly procedures in C++ is :file:`getfem/generic\_assembly.h`.
 
@@ -130,12 +130,12 @@ where ``theta`` is the temperature which can be the solution to a Poisson equati
 and ``my_f1`` and ``my_f2`` are some given functions. Note that in that case, the problem is nonlinear due to the coupling, even if the two functions  ``my_f1`` and ``my_f2`` are linear.
 
 
-Derivation order and automatic differentiation
+Derivation order and symbolic differentiation
 ----------------------------------------------
 
 The derivation order of the assembly string is automatically detected. This means that if no tests function are found, the order will be considered to be 0 (potential energy), if first order tests functions are found, the order will be considered to be 1 (weak formulation) and if both first and second order tests functions are found, the order will be considered to be 2 (tangent system).
 
-In order to perform an assembly (see next section), one should specify the order (0, 1 or 2). If an order 1 string is furnished and an order 2 assembly is required, an automatic differentiation of the expression is performed. The same if an order 0 string is furnished and if an order 1 or 2 assembly is required. Of course, the converse is not true. If an order 1 expression is given and an order 0 assembly is expected, no integration is performed. This should not be generally not possible since an arbitrary weak formulation do not necessary derive from a potential energy.
+In order to perform an assembly (see next section), one should specify the order (0, 1 or 2). If an order 1 string is furnished and an order 2 assembly is required, a symbolic differentiation of the expression is performed. The same if an order 0 string is furnished and if an order 1 or 2 assembly is required. Of course, the converse is not true. If an order 1 expression is given and an order 0 assembly is expected, no integration is performed. This should not be generally not possible since an arbitrary weak formulation do not necessary derive from a potential energy.
 
 The standard way to use the generic assembly is to furnish order 1 expressions (i.e. a weak formulation). If a potential energy exists, one may furnish it. However, it will be derived twice to obtain the tangent system which could result in complicated expressions. For nonlinear problems, it is not allowed to furnish order 2 expressions directly. The reason is that the weak formulation is necessary to obtain the residual. So nothing could be done with a tangent term without having the corresponding order 1 term.
 
@@ -162,8 +162,10 @@ In that case, the variable and constant have to be added to the workspace. This 
   workspace.add_fem_constant(name, mf, V);
   
   workspace.add_fixed_size_constant(name, V);
+
+  workspace.add_im_data(name, imd, V);
   
-where ``name`` is the variable/constant name (see in the next sections the restriction on possible names), ``mf`` is the ``getfem::mesh_fem`` object describing the finite element method, ``I`` is an object of class ``gmm::sub_interval`` indicating the interval of the variable on the assembled vector/matrix and ``V`` is a ``getfem::base_vector`` being the value of the variable/constant.
+where ``name`` is the variable/constant name (see in the next sections the restriction on possible names), ``mf`` is the ``getfem::mesh_fem`` object describing the finite element method, ``I`` is an object of class ``gmm::sub_interval`` indicating the interval of the variable on the assembled vector/matrix and ``V`` is a ``getfem::base_vector`` being the value of the variable/constant. The last method add a constant defined on an ``im_data`` object ``imd`` which allows to store scalar/vector/tensor field informations on the integration points of an ``mesh_im`` object.
 
 
 Once it is declared and once the variables and constant are declared, it is possible to add assembly string to the workspace with::
@@ -172,7 +174,7 @@ Once it is declared and once the variables and constant are declared, it is poss
 
 where ``"my expression"`` is the assembly string, ``mim`` is a ``getfem::mesh_im`` object and ``rg`` if an optional valid region of the mesh corresponding to ``mim``.
 
-As it is explained in the previous section, the order of the string will be automatically detected and an automatic differentiation will be performed to obtain the corresponding tangent term.
+As it is explained in the previous section, the order of the string will be automatically detected and a symbolic differentiation will be performed to obtain the corresponding tangent term.
 
 Once assembly strings are added to the workspace, is is possible to call::
 
@@ -355,12 +357,12 @@ Order four tensors are necessary for instance to express elasticity tensors or i
 The variables
 *************
 
-A list of variables should be given to the ``ga_worspace`` object. The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace`` ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
+A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace`` ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
 
 The constants or data
 *********************
 
-A list of constants could also be given to the ``ga_worspace`` object. The rule are the same as for the variables but no test function can be associated to constants and there is no automatic differentiation with respect to constants. Scalar constants are often defined to represent the coefficients which intervene in constitutive laws.
+A list of constants could also be given to the ``ga_worspace`` object. The rule are the same as for the variables but no test function can be associated to constants and there is no symbolic differentiation with respect to constants. Scalar constants are often defined to represent the coefficients which intervene in constitutive laws. Additionally, constants can be some scalar/vector/tensor fields defined on integration points via a ``im_data` object (for instance for some implementation of the approximation of consttutive laws such as plasticity).
 
 
 Test functions
@@ -414,7 +416,7 @@ It is possible to add a scalar function to the already predefined ones. Note tha
 
   ga_define_function(name, getfem::pscalar_func_twoargs f2, der1="", der2="");
 
-where ``name`` is the name of the function to be defined, ``nb_args`` is equal to 1 or 2. In the first call, ``expr`` is a string describing the function in the generic assembly language and using ``t`` as the first variable and ``u`` as the second one (if ``nb_args`` is equal to 2). For instance, ``sin(2*t)+sqr(t)`` is a valid expression. Note that it is not possible to refer to constant or data defined in a ``ga_workspace`` object. ``der1`` and ``der2`` are the expression of the derivatives with respect to ``t`` and ``u``. They are optional. If they are not furnished, an automatic differentiation is used if the derivative is needed. If ``der1`` and ``der2`` are defined to be only a function name, it will be understand that the derivative is the corresponding function. In the second call, ``f1`` should be a C pointer on a scalar C function having one scalar parameter and in the third call, ``f2``  should be a C pointer on a scalar C function having two scalar parameters.
+where ``name`` is the name of the function to be defined, ``nb_args`` is equal to 1 or 2. In the first call, ``expr`` is a string describing the function in the generic assembly language and using ``t`` as the first variable and ``u`` as the second one (if ``nb_args`` is equal to 2). For instance, ``sin(2*t)+sqr(t)`` is a valid expression. Note that it is not possible to refer to constant or data defined in a ``ga_workspace`` object. ``der1`` and ``der2`` are the expression of the derivatives with respect to ``t`` and ``u``. They are optional. If they are not furnished, a symbolic differentiation is used if the derivative is needed. If ``der1`` and ``der2`` are defined to be only a function name, it will be understand that the derivative is the corresponding function. In the second call, ``f1`` should be a C pointer on a scalar C function having one scalar parameter and in the third call, ``f2``  should be a C pointer on a scalar C function having two scalar parameters.
 
 
 Additionally,::

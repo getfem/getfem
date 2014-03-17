@@ -41,11 +41,13 @@ There are three levels in the |gf_mf| object:
 * The element level: one finite element method per element. It is possible to mix
   the dimensions of the elements and the property to be vectorial or scalar.
 
-* The optional vectorization (the qdim in getfem jargon, see `vocabulary`_). For
-  instance to represent a displacement field in continuum mechanics. Scalar
-  elements are used componentwise. Note that you can mix some intrinsic vectorial
-  elements (Raviart-Thomas element for instance) which will not be vectorized and
-  some scalar element which will be.
+* The optional vectorization/tensorization (the qdim in getfem jargon,
+  see `vocabulary`_). For instance to represent a displacement or a
+  tensor field in continuum mechanics. Scalar
+  elements are used componentwise. Note that you can mix some
+  intrinsic vectorial elements (Raviart-Thomas element for instance)
+  which will not be vectorized and
+  scalar elements which will be.
 
 * (|gf| version 4.0) The optional additional linear transformation (reduction) of
   the degrees of freedom. It will consist in giving two matrices, the reduction
@@ -171,11 +173,10 @@ particular method directly on a set of element, passing to
 selects the method on all the elements of the mesh.
 
 
-Second level: the optional "vectorization"
-------------------------------------------
+Second level: the optional "vectorization/tensorization"
+--------------------------------------------------------
 
-If the finite element represents an unknown which is a vector field, one should
-use ``mf.set_qdim(Q)`` to set the target dimension for the definition of the
+If the finite element represents an unknown which is a vector field, the method ``mf.set_qdim(Q)`` allows set the target dimension for the definition of the
 target dimension :math:`Q`.
 
 If the target dimension :math:`Q` is set to a value different of :math:`1`, the
@@ -194,6 +195,16 @@ the one of the |mf| object have to match. To sum it up,
 * if the fem has a ``target_dim`` equal to :math:`1`, then::
 
     mf.nb_dof_of_element(i) == mf.get_qdim()*mf.fem_of_element(i).nb_dof()
+
+Additionally, if the field to be represented is a tensor field instead of a vector field (for instance the stress or strian tensor field in elasticity), it is possible to specify the tensor dimensions with the methods::
+
+  mf.set_qdim(dim_type M, dim_type N)
+  mf.set_qdim(dim_type M, dim_type N, dim_type O, dim_type P)  
+  mf.set_qdim(const bgeot::multi_index &mii)
+
+respectively for a tensor field of order two, four and arbitrary (but limited to 6). For most of the operations, this is equivalent to declare a vector field of the size the product of the dimensions. However, the declared tensor dimensions are taken into account into the high level generic assembly. Remember that the components inside a tensor are stored in Fortran order.
+
+
 
 At this level are defined the basic degrees of freedom. Some methods of the
 |gf_mf| allows to obtain information on the basic dofs:
