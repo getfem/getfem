@@ -69,6 +69,7 @@ namespace getfem
   }
 
   size_type im_data::nb_points_of_element(size_type cv) const{
+    if (!im_.convex_index().is_in(cv)) return 0;
     return im_.int_method_of_element(cv)->approx_method()->nb_points_on_convex();
   }
 
