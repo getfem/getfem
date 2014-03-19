@@ -47,7 +47,7 @@
 #include <vector>
 #include "dal_config.h"
 #include "dal_shared_ptr.h"
-#include <getfem\getfem_omp.h>
+#include "getfem_omp.h"
 
 /// Dynamic Array Library
 namespace dal
