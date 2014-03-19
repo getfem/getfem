@@ -22,15 +22,39 @@ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "getfem/dal_singleton.h"
 #include <algorithm>
 #include "gmm/gmm.h"
-namespace dal {
-	shared_ptr<singletons_manager> singletons_manager::m(0);
+#include "getfem/getfem_omp.h"
 
-	void singletons_manager::register_new_singleton(singleton_instance_base *p) {  	
-		manager_pointer()->lst.thrd_cast().push_back(p);
+
+namespace dal {
+
+  shared_ptr<singletons_manager> singletons_manager::m(0);
+  atomic_bool singletons_manager::manager_exists(false);
+
+  singletons_manager::singletons_manager() : lst() {}
+
+  singletons_manager& singletons_manager::manager()
+  {
+    if (!manager_exists)
+    {
+      getfem::omp_guard local_lock;
+      if (!manager_exists)
+      {
+        m.reset(new singletons_manager());
+        manager_exists = true;
+      }
+    }
+    return *m;
+  }
+
+
+	void singletons_manager::register_new_singleton(singleton_instance_base *p) 
+  {  	
+    manager().lst.thrd_cast().push_back(p);
 	}
 
-	void singletons_manager::register_new_singleton(singleton_instance_base *p, int ithread) {  	
-		manager_pointer()->lst(ithread).push_back(p);
+	void singletons_manager::register_new_singleton(singleton_instance_base *p, int ithread) 
+  {  	
+    manager().lst(ithread).push_back(p);
 	}
 
 
@@ -45,15 +69,15 @@ namespace dal {
 			"singletons_manager destructor should" 
 			"not be running in parallel !!");
 		//arrange distruction per thread
-		for(size_t i=0;i<getfem::num_threads();i++){
-
+		for(size_t i=0;i<getfem::num_threads();i++)
+    {
 			/* sort singletons in increasing levels,
 			lowest levels will be destroyed first */
-			std::sort(m->lst(i).begin(),m->lst(i).end(), level_compare);
-			std::vector<singleton_instance_base *>::const_iterator 
-				it = m->lst(i).begin(), 
-                ite = m->lst(i).end();
-			for ( ; it != ite; ++it) { delete *it; }
+		  std::sort(manager().lst(i).begin(),manager().lst(i).end(), level_compare);
+			std::vector<singleton_instance_base *>::const_iterator it = manager().lst(i).begin();
+      std::vector<singleton_instance_base *>::const_iterator ite = manager().lst(i).end();			
+      for ( ; it != ite; ++it) { delete *it; }
 		}
+    manager_exists = false;
 	}
 }

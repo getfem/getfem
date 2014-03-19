@@ -27,6 +27,7 @@
 #include "getfem/bgeot_geotrans_inv.h"
 #include "getfem/getfem_im_list.h"
 #include "getfem/dal_naming_system.h"
+#include "getfem/getfem_omp.h"
 
 namespace getfem {
 
@@ -1066,8 +1067,8 @@ namespace getfem {
   /* Fonctions pour la ref. directe.                                     */
   
   pintegration_method exact_simplex_im(size_type n) {
-    static pintegration_method pim = 0;
-    static size_type d = size_type(-2);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method, pim, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, -2);
     if (d != n) {
       std::stringstream name;
       name << "IM_EXACT_SIMPLEX(" << n << ")";
@@ -1078,8 +1079,8 @@ namespace getfem {
   }
 
   pintegration_method exact_parallelepiped_im(size_type n) {
-    static pintegration_method pim = 0;
-    static size_type d = size_type(-2);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method, pim, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, -2);
     if (d != n) {
       std::stringstream name;
       name << "IM_EXACT_PARALLELEPIPED(" << n << ")";
@@ -1090,8 +1091,8 @@ namespace getfem {
   }
 
   pintegration_method exact_prism_im(size_type n) {
-    static pintegration_method pim = 0;
-    static size_type d = size_type(-2);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method, pim, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(size_type, d, -2);
     if (d != n) {
       std::stringstream name;
       name << "IM_EXACT_PRISM(" << n << ")";
@@ -1107,8 +1108,8 @@ namespace getfem {
 
   static pintegration_method classical_exact_im(bgeot::pconvex_structure cvs) {
     cvs = cvs->basic_structure();
-    static bgeot::pconvex_structure cvs_last = 0;
-    static pintegration_method im_last = 0;
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pconvex_structure,cvs_last, 0);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method, im_last, 0);
     bool found = false;
 
     if (cvs_last == cvs)
@@ -1189,9 +1190,9 @@ namespace getfem {
 
   pintegration_method classical_approx_im(bgeot::pgeometric_trans pgt,
 					  dim_type degree) {
-    static bgeot::pgeometric_trans pgt_last = 0;
-    static dim_type degree_last;
-    static pintegration_method im_last = 0;
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_last, 0);
+    DEFINE_STATIC_THREAD_LOCAL(dim_type, degree_last);
+    DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method, im_last, 0);
     if (pgt_last == pgt && degree == degree_last)
       return im_last;
     im_last = classical_approx_im_(pgt->structure(),degree);
@@ -1201,7 +1202,7 @@ namespace getfem {
   }
 
   pintegration_method im_none(void) { 
-     static pintegration_method im_last = 0;
+     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pintegration_method,im_last,0);
      if (!im_last) im_last = int_method_descriptor("IM_NONE");
      return im_last;
   }

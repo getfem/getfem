@@ -890,9 +890,6 @@ namespace getfem {
                                                 version);
                 }
 	     }
-        //the memory, allocated dynamically with boost::intrusive_pointer
-        //is realised only after this call. I hope this doesn't blow memory with some bricks
-	     dal::collect_static_stored_objects_garbage();
        double assembly_time = gmm::uclock_sec()-time;
        GMM_TRACE2("Assembly time "<< assembly_time<<" s.");
          }

@@ -34,11 +34,11 @@ might be covered by the GNU Lesser General Public License.
 @date May 2004.
 @brief A simple singleton implementation
 
-Not thread safe, of course.
-Correction:  (from Andriy Andreykiv)
 Singleton was made thread safe for OpenMP
 However, now there is a singleton instance for every 
-thread (singleton is thread local)
+thread (singleton is thread local). This replicates
+the behaviour of singletons in distirbuted MPI-like 
+environment;
 */
 #ifndef DAL_SINGLETON
 #define DAL_SINGLETON
@@ -48,113 +48,118 @@ thread (singleton is thread local)
 #include "getfem_omp.h"
 #include "dal_shared_ptr.h"
 
+#ifdef GETFEM_HAVE_BOOST
+#include <boost/atomic/atomic.hpp>
+typedef  boost::atomic_bool atomic_bool;
+#else
+typedef  bool  atomic_bool;
+#endif
+
+
 namespace dal {
 
-	class singleton_instance_base {
-	public:
-		virtual ~singleton_instance_base() {}
-		virtual int level() = 0;
-	};
+  class singleton_instance_base {
+  public:
+    virtual ~singleton_instance_base() {}
+    virtual int level() = 0;
+  };
 
 
-	class singletons_manager {
-	protected:
-		getfem::omp_distribute<std::vector<singleton_instance_base *> > lst;
-		static shared_ptr<singletons_manager> m;
+  class singletons_manager {
+  protected:
+    getfem::omp_distribute<std::vector<singleton_instance_base *> > lst;
+    static shared_ptr<singletons_manager> m;
+    static atomic_bool manager_exists;
 
-	public:
-        static shared_ptr<singletons_manager> manager_pointer()
-        {
-            if (!m.get()) m.reset(new singletons_manager());
-            return m;
-        }
-		static void register_new_singleton(singleton_instance_base *p);
-		static void register_new_singleton(singleton_instance_base *p, int ithread);
-		~singletons_manager();
-	private:
-		singletons_manager() {}
-	};
+  public:
+    static singletons_manager& manager();
+    static void register_new_singleton(singleton_instance_base *p);
+    static void register_new_singleton(singleton_instance_base *p, int ithread);
+    ~singletons_manager();
+  private:
+    singletons_manager();
+  };
 
-	template <typename T, int LEV> class singleton_instance : public singleton_instance_base {
-	public:
-		static getfem::omp_distribute<T*>* instance_;
+  template <typename T, int LEV> class singleton_instance : public singleton_instance_base {
+  public:
+    static getfem::omp_distribute<T*>* instance_;
 
-        static getfem::omp_distribute<T*>* instance_pointer()
-        {
-            if (!instance_) instance_ = new getfem::omp_distribute<T*>(0);
-            return instance_;
-        }
+    static T*& instance_pointer() { return instance_->thrd_cast(); }
 
-		/** Instance from the current thread*/
-		inline static T& instance() { 
-			T*& tinstance_ = instance_pointer()->thrd_cast();
-			if (!tinstance_) {
-				tinstance_ = new T();
-				singletons_manager::register_new_singleton(new singleton_instance<T,LEV>());
-			}
-			return *tinstance_; 
-		}
+    static T*& instance_pointer(int ithread) { return (*instance_)(ithread);}
 
-		/**Instance from thread ithread*/
-		inline static T& instance(int ithread) { 
-			T*& tinstance_ = instance_pointer()->operator()(ithread);
-			if (!tinstance_) {
-				tinstance_ = new T();
-				singletons_manager::register_new_singleton(new singleton_instance<T,LEV>(),ithread);
-			}
-			return *tinstance_; 
-		}
+    /** Instance from the current thread*/
+    inline static T& instance() 
+    { 
+      T*& tinstance_ = instance_pointer();
+      if (!tinstance_) {
+        tinstance_ = new T();
+        singletons_manager::register_new_singleton(new singleton_instance<T,LEV>());
+      }
+      return *tinstance_; 
+    }
 
+    /**Instance from thread ithread*/
+    inline static T& instance(int ithread) { 
+      T*& tinstance_ = instance_pointer(ithread);
+      if (!tinstance_) {
+        tinstance_ = new T();
+        singletons_manager::register_new_singleton(new singleton_instance<T,LEV>(),ithread);
+      }
+      return *tinstance_; 
+    }
 
-		int level() { return LEV; }
-		singleton_instance() {}
-		~singleton_instance() 
-		{
-			if (instance_) {
-				for(size_t i=0;i<getfem::num_threads();i++){
-					if((*instance_)(i)){delete (*instance_)(i); (*instance_)(i) = 0;}
-				} 
-			}
-			delete instance_; instance_=0;
-		}
-	};
+    int level() { return LEV; }
 
-	/** singleton class. 
+    singleton_instance() {}
 
-	usage: 
-	@code
-	foo &f = singleton<foo>::instance();
-	const foo &f = singleton<foo>::const_instance();
-	@endcode
-	the LEV template arguments allows one to choose the order of destruction
-	of the singletons:
-	lowest LEV will be destroyed first.
-	*/
-	template <typename T, int LEV=1> class singleton {
-	public:
+    ~singleton_instance() 
+    {
+      if (instance_) {
+        for(size_t i=0;i<getfem::num_threads();i++){
+          if((*instance_)(i)){delete (*instance_)(i); (*instance_)(i) = 0;}
+        } 
+      }
+      delete instance_; instance_=0;
+    }
+  };
 
-		/** Instance from the current thread*/
-		inline static T& instance() { 
-			return singleton_instance<T,LEV>::instance();
-		}
-		inline static const T& const_instance() { return instance(); }
+  /** singleton class. 
 
-		inline static T& instance(int ithread) { 
-			return singleton_instance<T,LEV>::instance(ithread);
-		}
-		inline static const T& const_instance(int ithread) { return instance(ithread); }
+  usage: 
+  @code
+  foo &f = singleton<foo>::instance();
+  const foo &f = singleton<foo>::const_instance();
+  @endcode
+  the LEV template arguments allows one to choose the order of destruction
+  of the singletons:
+  lowest LEV will be destroyed first.
+  */
+  template <typename T, int LEV=1> class singleton {
+  public:
+
+    /** Instance from the current thread*/
+    inline static T& instance() { 
+      return singleton_instance<T,LEV>::instance();
+    }
+    inline static const T& const_instance() { return instance(); }
+
+    inline static T& instance(int ithread) { 
+      return singleton_instance<T,LEV>::instance(ithread);
+    }
+    inline static const T& const_instance(int ithread) { return instance(ithread); }
 
 
-	protected:
-		singleton() {}
-		~singleton() {}
-	private:
-		singleton(const singleton&);            
-		singleton& operator=(const singleton&);
-	};
+  protected:
+    singleton() {}
+    ~singleton() {}
+  private:
+    singleton(const singleton&);            
+    singleton& operator=(const singleton&);
+  };
 
-	template <typename T, int LEV> getfem::omp_distribute<T*>* 
-		singleton_instance<T,LEV>::instance_ = 0;
+  template <typename T, int LEV> 
+  getfem::omp_distribute<T*>* singleton_instance<T,LEV>::instance_= new getfem::omp_distribute<T*>;
 }
 
 #endif
