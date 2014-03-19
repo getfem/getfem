@@ -80,13 +80,23 @@ namespace dal {
     singletons_manager();
   };
 
-  template <typename T, int LEV> class singleton_instance : public singleton_instance_base {
-  public:
+
+
+
+  template <typename T, int LEV> class singleton_instance : public singleton_instance_base 
+  {
     static getfem::omp_distribute<T*>* instance_;
+    static getfem::omp_distribute<T*>* omp_distro_pointer()
+    {
+      static getfem::omp_distribute<T*>* pointer = new getfem::omp_distribute<T*>( );
+      return pointer;
+    }
+    static T*& instance_pointer() { return omp_distro_pointer( )->thrd_cast(); }
+    static T*& instance_pointer(int ithread) { return (*omp_distro_pointer( ))(ithread);}
 
-    static T*& instance_pointer() { return instance_->thrd_cast(); }
+  public:
 
-    static T*& instance_pointer(int ithread) { return (*instance_)(ithread);}
+    singleton_instance() {}
 
     /** Instance from the current thread*/
     inline static T& instance() 
@@ -100,7 +110,8 @@ namespace dal {
     }
 
     /**Instance from thread ithread*/
-    inline static T& instance(int ithread) { 
+    inline static T& instance(int ithread) 
+    { 
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
         tinstance_ = new T();
@@ -111,13 +122,17 @@ namespace dal {
 
     int level() { return LEV; }
 
-    singleton_instance() {}
-
     ~singleton_instance() 
     {
-      if (instance_) {
-        for(size_t i=0;i<getfem::num_threads();i++){
-          if((*instance_)(i)){delete (*instance_)(i); (*instance_)(i) = 0;}
+      if (instance_) 
+      {
+        for(size_t i=0;i<getfem::num_threads();i++)
+        {
+          if((*instance_)(i)) 
+          { 
+            delete (*instance_)(i); 
+            (*instance_)(i) = 0; 
+          }
         } 
       }
       delete instance_; instance_=0;
@@ -159,7 +174,8 @@ namespace dal {
   };
 
   template <typename T, int LEV> 
-  getfem::omp_distribute<T*>* singleton_instance<T,LEV>::instance_= new getfem::omp_distribute<T*>;
+  getfem::omp_distribute<T*>* singleton_instance<T,LEV>::instance_
+                        = singleton_instance<T,LEV>::omp_distro_pointer();
 }
 
 #endif
