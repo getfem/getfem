@@ -27,23 +27,15 @@ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace dal {
 
-  shared_ptr<singletons_manager> singletons_manager::m(0);
-  atomic_bool singletons_manager::manager_exists(false);
-
+ 
   singletons_manager::singletons_manager() : lst() {}
+  
+  singletons_manager& singletons_manager::m = manager();
 
   singletons_manager& singletons_manager::manager()
   {
-    if (!manager_exists)
-    {
-      getfem::omp_guard local_lock;
-      if (!manager_exists)
-      {
-        m.reset(new singletons_manager());
-        manager_exists = true;
-      }
-    }
-    return *m;
+    static singletons_manager x;
+    return x;
   }
 
 
@@ -73,11 +65,10 @@ namespace dal {
     {
 			/* sort singletons in increasing levels,
 			lowest levels will be destroyed first */
-		  std::sort(manager().lst(i).begin(),manager().lst(i).end(), level_compare);
-			std::vector<singleton_instance_base *>::const_iterator it = manager().lst(i).begin();
-      std::vector<singleton_instance_base *>::const_iterator ite = manager().lst(i).end();			
+		  std::sort(lst(i).begin(),lst(i).end(), level_compare);
+			std::vector<singleton_instance_base *>::const_iterator it  = lst(i).begin();
+      std::vector<singleton_instance_base *>::const_iterator ite = lst(i).end();			
       for ( ; it != ite; ++it) { delete *it; }
 		}
-    manager_exists = false;
 	}
 }

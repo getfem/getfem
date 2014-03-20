@@ -68,11 +68,10 @@ namespace dal {
   class singletons_manager {
   protected:
     getfem::omp_distribute<std::vector<singleton_instance_base *> > lst;
-    static shared_ptr<singletons_manager> m;
-    static atomic_bool manager_exists;
+    static singletons_manager& manager();
+    static singletons_manager& m;
 
   public:
-    static singletons_manager& manager();
     static void register_new_singleton(singleton_instance_base *p);
     static void register_new_singleton(singleton_instance_base *p, int ithread);
     ~singletons_manager();
