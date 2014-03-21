@@ -68,8 +68,12 @@ md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add data', 'lambda', 1);
-gf_model_set(md, 'add basic nonlinear brick', mim, 'u', ...
-             'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
+% gf_model_set(md, 'add basic nonlinear brick', mim, 'u', ...
+%              'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
+
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+             '(u-lambda*exp(u))*Test_u');
+
 if (with_dirichlet)
   gf_model_set(md, 'add Dirichlet condition with multipliers', ...
                mim, 'u', mf, 1);
@@ -146,7 +150,7 @@ for step = 1:nbstep
   if (with_dirichlet) axis([0 1 0 15]); else axis([0 1 0 15]); end
   xlabel('x'); ylabel('u');
   pause(0.25);
-  disp(sprintf('end of step n° %d / %d', step, nbstep));
+  disp(sprintf('end of step %d / %d', step, nbstep));
 end
 
 nsing = size(sing_out, 1);
