@@ -987,6 +987,12 @@ static void test_new_assembly(void) {
                   "cos(pi*x(1))", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
                   "cos(pi*x).exp(x*0)", mim, 0);
+      SCAL_TEST_0("Test on function integration 2",
+                  "-Derivative_sin(pi*x).exp(x*0)", mim, 0);
+      SCAL_TEST_0("Test on function integration 2",
+                  "sin(pi*x).exp(x*0)", mim, 2.0*N/M_PI);
+      SCAL_TEST_0("Test on function integration 2",
+                  "Derivative_cos(pi*x).exp(x*0)", mim, -2.0*N/M_PI);
       SCAL_TEST_0("Test on function integration 3",
                   "cos(pi*x).Id(meshdim)(:,1)", mim,0);
     }
@@ -1181,7 +1187,7 @@ int main(int argc, char *argv[]) {
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
   test_new_assembly();
-  return 0;
+  return 0; // a supprimer a terme, l'ancien assemblage doit toujours être testé ou alors faire deux tests.
   
 
 
