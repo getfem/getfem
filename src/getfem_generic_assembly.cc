@@ -2227,6 +2227,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: compute value of base functions");
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       ctx.pf()->real_base_value(ctx, t);
     }
     ga_instruction_base(base_tensor &tt, fem_interpolation_context &ct,
@@ -2243,6 +2244,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: compute gradient of base functions");
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       ctx.pf()->real_grad_base_value(ctx, t);
     }
     ga_instruction_grad_base(base_tensor &tt,
@@ -2260,6 +2262,7 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: compute Hessian of base functions");
       if (pfp) ctx.set_pfp(pfp);
       else ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
+      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       ctx.pf()->real_hess_base_value(ctx, t);
     }
     ga_instruction_hess_base(base_tensor &tt,
@@ -5637,7 +5640,12 @@ namespace getfem {
         } else {
           
           GMM_ASSERT1(mf, "Internal error");
-          
+
+          GMM_ASSERT1(&(mf->linked_mesh()) == &(mim->linked_mesh()), 
+                      "The finite element of variable " << pnode->name <<
+                      " has to be defined on the same mesh than the "
+                      "integration method used");
+
           // An instruction for extracting local dofs of the variable.
           if (rmi.local_dofs.find(pnode->name) == rmi.local_dofs.end()) {
             rmi.local_dofs[pnode->name] = base_vector(1);
