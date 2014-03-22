@@ -72,8 +72,8 @@ gf_model_set(md, 'add data', 'lambda', 1);
 %              'u-lambda*exp(u)', '1-lambda*exp(u)', 'lambda');
 
 gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-             '(u-lambda*exp(u))*Test_u');
-
+            '(u-lambda*exp(u))*Test_u');
+        
 if (with_dirichlet)
   gf_model_set(md, 'add Dirichlet condition with multipliers', ...
                mim, 'u', mf, 1);
@@ -123,6 +123,8 @@ for step = 1:nbstep
   [U, lambda, T_U, T_lambda, h, sing_label] = ...
     gf_cont_struct_get(S, 'Moore-Penrose continuation', ...
                        U, lambda, T_U, T_lambda, h);
+                   
+  % gf_model_get(md, 'test tangent matrix', 1E-8, 20, 0.0001);
                        
   if (h ==0) return
   elseif (strcmp(sing_label, 'smooth bifurcation point'))
