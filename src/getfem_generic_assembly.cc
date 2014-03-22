@@ -1287,8 +1287,6 @@ namespace getfem {
     pscalar_func_onearg f1;   // Function pointer for a one argument function
     pscalar_func_twoargs f2;  // Function pointer for a two arguments function
     std::string expr;
-    ga_interval support1, support2;
-    ga_interval domain1, domain2;  // Domain of definition of the function
     std::string derivative1, derivative2;
     mutable base_vector t,u;
     mutable ga_workspace workspace;
@@ -1324,28 +1322,14 @@ namespace getfem {
     }
     
     ga_predef_function(void) : gis(0) {}
-    ga_predef_function(pscalar_func_onearg f, const ga_interval &s,
-                       const ga_interval &dom, const std::string &der)
-      : ftype(0), dtype(1), nbargs(1), f1(f), support1(s), domain1(dom),
-        derivative1(der), gis(0) {}
-    ga_predef_function(pscalar_func_onearg f, const std::string &der,
-                       const ga_interval &s, const ga_interval &dom)
-      : ftype(0), dtype(2), nbargs(1), f1(f), support1(s),
-        domain1(dom), derivative1(der), gis(0) {}
-    ga_predef_function(pscalar_func_twoargs f, const ga_interval &s1,
-                       const ga_interval &s2, const ga_interval &dom1,
-                       const ga_interval &dom2, const std::string &der1,
-                       const std::string &der2)
-      : ftype(0), dtype(1), nbargs(2), f2(f), support1(s1), support2(s2),
-        domain1(dom1), domain2(dom2), derivative1(der1), derivative2(der2),
-        gis(0) {}
-    ga_predef_function(pscalar_func_twoargs f, const std::string &der1,
-                       const std::string &der2,
-                       const ga_interval &s1, const ga_interval &s2,
-                       const ga_interval &dom1, const ga_interval &dom2)
-      : ftype(0), dtype(2), nbargs(2), f2(f), support1(s1),
-        support2(s2), domain1(dom1), domain2(dom2), derivative1(der1),
-        derivative2(der2), gis(0) {}
+    ga_predef_function(pscalar_func_onearg f, size_type dtype_ = 0,
+                       const std::string &der = "")
+      : ftype(0), dtype(dtype_), nbargs(1), f1(f), derivative1(der), gis(0) {}
+    ga_predef_function(pscalar_func_twoargs f, size_type dtype_ = 0,
+                       const std::string &der1 = "",
+                       const std::string &der2 = "")
+      : ftype(0), dtype(dtype_), nbargs(2), f2(f),
+        derivative1(der1), derivative2(der2), gis(0) {}
     ga_predef_function(const std::string &expr_)
       : ftype(1), dtype(3), nbargs(1), expr(expr_), t(1), u(1), gis(0) {
     }
@@ -1357,7 +1341,12 @@ namespace getfem {
 
   static scalar_type ga_Heaveside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
   static scalar_type ga_pos_part(scalar_type t) { return (t >= 0.) ? t : 0.; }
+  static scalar_type ga_half_sqr_pos_part(scalar_type t)
+  { return (t >= 0.) ? 0.5*t*t : 0.; }
   static scalar_type ga_neg_part(scalar_type t) { return (t >= 0.) ? 0. : -t; }
+  static scalar_type ga_half_sqr_neg_part(scalar_type t)
+  { return (t >= 0.) ? 0. : 0.5*t*t; }
+  
   static scalar_type ga_sqr(scalar_type t) { return t*t; }
   static scalar_type ga_max(scalar_type t, scalar_type u)
   { return std::max(t,u); }
@@ -1397,8 +1386,6 @@ namespace getfem {
   { return exp(-t*t)*2./sqrt(M_PI); }
   static scalar_type ga_der_erfc(scalar_type t)
   { return -exp(-t*t)*2./sqrt(M_PI); }
-  static scalar_type ga_der_heaviside(scalar_type t)
-  { return (t == 0) ? INFINITY : 0.; }
   static scalar_type ga_der_neg_part(scalar_type t)
   { return (t >= 0) ? 0. : -1.; }
   static scalar_type ga_der_max1(scalar_type t, scalar_type u)
@@ -1816,132 +1803,106 @@ namespace getfem {
 
     ga_interval R;
     // Power functions and their derivatives
-    PREDEF_FUNCTIONS["sqrt"] =
-      ga_predef_function(sqrt, R, ga_interval(0, INFINITY),
-                         "DER_PDFUNC_SQRT");
-    PREDEF_FUNCTIONS["sqr"] =
-      ga_predef_function(ga_sqr, "2*t", R, R);
-    PREDEF_FUNCTIONS["pow"] =
-      ga_predef_function(pow, R, R, R, R, "DER_PDFUNC1_POW",
-                         "DER_PDFUNC2_POW");
-
+    PREDEF_FUNCTIONS["sqrt"] = ga_predef_function(sqrt, 1, "DER_PDFUNC_SQRT");
+    PREDEF_FUNCTIONS["sqr"] = ga_predef_function(ga_sqr, 2, "2*t");
+    PREDEF_FUNCTIONS["pow"] = ga_predef_function(pow, 1, "DER_PDFUNC1_POW",
+                                                 "DER_PDFUNC2_POW");
     PREDEF_FUNCTIONS["DER_PDFUNC_SQRT"] =
-      ga_predef_function(ga_der_sqrt, "-0.25/(t*sqrt(t))", R,
-                         ga_interval(0, INFINITY));
+      ga_predef_function(ga_der_sqrt, 2, "-0.25/(t*sqrt(t))");
     PREDEF_FUNCTIONS["DER_PDFUNC1_POW"] =
-      ga_predef_function(ga_der_pow1, "u*(u-1)*pow(t,u-2)",
-                         "pow(t,u-1)*(u*log(t)+1)", R, R, R, R);
+      ga_predef_function(ga_der_pow1, 2, "u*(u-1)*pow(t,u-2)",
+                         "pow(t,u-1)*(u*log(t)+1)");
     PREDEF_FUNCTIONS["DER_PDFUNC2_POW"] =
-      ga_predef_function(ga_der_pow2, "pow(t,u-1)*(u*log(t)+1)",
-                         "pow(t,u)*sqr(log(t))", R, R,
-                         ga_interval(0, INFINITY), R);
+      ga_predef_function(ga_der_pow2, 2, "pow(t,u-1)*(u*log(t)+1)",
+                         "pow(t,u)*sqr(log(t))");
 
     // Hyperbolic functions
-    PREDEF_FUNCTIONS["exp"] = ga_predef_function(exp, R, R, "exp");
-    PREDEF_FUNCTIONS["log"] =
-      ga_predef_function(log, R, ga_interval(0, INFINITY), "DER_PDFUNC_LOG");
+    PREDEF_FUNCTIONS["exp"] = ga_predef_function(exp, 1, "exp");
+    PREDEF_FUNCTIONS["log"] = ga_predef_function(log, 1, "DER_PDFUNC_LOG");
     PREDEF_FUNCTIONS["log10"] =
-      ga_predef_function(log10, R, ga_interval(0, INFINITY),
-                         "DER_PDFUNC_LOG10");
-    PREDEF_FUNCTIONS["sinh"] = ga_predef_function(sinh, R, R, "cosh");
-    PREDEF_FUNCTIONS["cosh"] = ga_predef_function(cosh, R, R, "sinh");
-    PREDEF_FUNCTIONS["tanh"] =
-      ga_predef_function(tanh, R, R, "DER_PDFUNC_TANH");
-    PREDEF_FUNCTIONS["asinh"]
-      = ga_predef_function(asinh, R, R, "DER_PDFUNC_ASINH");
+      ga_predef_function(log10, 1, "DER_PDFUNC_LOG10");
+    PREDEF_FUNCTIONS["sinh"] = ga_predef_function(sinh, 1, "cosh");
+    PREDEF_FUNCTIONS["cosh"] = ga_predef_function(cosh, 1, "sinh");
+    PREDEF_FUNCTIONS["tanh"] = ga_predef_function(tanh, 1, "DER_PDFUNC_TANH");
+    PREDEF_FUNCTIONS["asinh"] =
+      ga_predef_function(asinh, 1, "DER_PDFUNC_ASINH");
     PREDEF_FUNCTIONS["acosh"] =
-      ga_predef_function(acosh, R, ga_interval(1, INFINITY),
-                         "DER_PDFUNC_ACOSH");
-    PREDEF_FUNCTIONS["atanh"]
-      = ga_predef_function(atanh, R, R,"DER_PDFUNC_ATANH");
+      ga_predef_function(acosh, 1, "DER_PDFUNC_ACOSH");
+    PREDEF_FUNCTIONS["atanh"] =
+      ga_predef_function(atanh, 1, "DER_PDFUNC_ATANH");
 
 
     PREDEF_FUNCTIONS["DER_PDFUNC_LOG"] =
-      ga_predef_function(ga_der_log, "-1/sqr(t)", R, ga_interval(0, INFINITY));
+      ga_predef_function(ga_der_log, 2, "-1/sqr(t)");
     PREDEF_FUNCTIONS["DER_PDFUNC_LOG10"] =
-      ga_predef_function(ga_der_log10, "-1/(sqr(t)*log(10))", R,
-                         ga_interval(0, INFINITY));
+      ga_predef_function(ga_der_log10, 2, "-1/(sqr(t)*log(10))");
     PREDEF_FUNCTIONS["DER_PDFUNC_TANH"] =
-      ga_predef_function(ga_der_tanh, "2*tanh(t)*(sqr(tanh(t))-1)", R, R);
+      ga_predef_function(ga_der_tanh, 2, "2*tanh(t)*(sqr(tanh(t))-1)");
     PREDEF_FUNCTIONS["DER_PDFUNC_ASINH"] =
-      ga_predef_function(ga_der_asinh, "-t/(pow(t*t+1,1.5))", R, R);
+      ga_predef_function(ga_der_asinh, 2, "-t/(pow(t*t+1,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ACOSH"] =
-      ga_predef_function(ga_der_acosh, "-t/(pow(t*t-1,1.5))", R,
-                         ga_interval(1, INFINITY));
+      ga_predef_function(ga_der_acosh, 2, "-t/(pow(t*t-1,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ATANH"] =
-      ga_predef_function(ga_der_atanh, "-2*t/sqr(1+t*t)", R, R);
+      ga_predef_function(ga_der_atanh, 2, "-2*t/sqr(1+t*t)");
 
 
     // Trigonometric functions
-    PREDEF_FUNCTIONS["sin"] = ga_predef_function(sin, R, R, "cos");
-    PREDEF_FUNCTIONS["cos"] = ga_predef_function(cos, R, R, "DER_PDFUNC_COS");
-    PREDEF_FUNCTIONS["tan"] = ga_predef_function(tan, R, R, "DER_PDFUNC_TAN");
-    PREDEF_FUNCTIONS["asin"]
-      = ga_predef_function(asin, R, ga_interval(-1., 1.), "DER_PDFUNC_ASIN");
-    PREDEF_FUNCTIONS["acos"]
-      = ga_predef_function(acos, R, ga_interval(-1., 1.), "DER_PDFUNC_ACOS");
-    PREDEF_FUNCTIONS["atan"]
-      = ga_predef_function(atan, R, R, "DER_PDFUNC_ATAN");
+    PREDEF_FUNCTIONS["sin"] = ga_predef_function(sin, 1, "cos");
+    PREDEF_FUNCTIONS["cos"] = ga_predef_function(cos, 1, "DER_PDFUNC_COS");
+    PREDEF_FUNCTIONS["tan"] = ga_predef_function(tan, 1, "DER_PDFUNC_TAN");
+    PREDEF_FUNCTIONS["asin"] = ga_predef_function(asin, 1, "DER_PDFUNC_ASIN");
+    PREDEF_FUNCTIONS["acos"] = ga_predef_function(acos, 1, "DER_PDFUNC_ACOS");
+    PREDEF_FUNCTIONS["atan"] = ga_predef_function(atan, 1, "DER_PDFUNC_ATAN");
     
     PREDEF_FUNCTIONS["DER_PDFUNC_COS"] =
-      ga_predef_function(ga_der_cos, "-cos(t)", R, R);
+      ga_predef_function(ga_der_cos, 2, "-cos(t)");
     PREDEF_FUNCTIONS["DER_PDFUNC_TAN"] =
-      ga_predef_function(ga_der_tan, "2*tan(t)/sqr(cos(t))", R, R);
+      ga_predef_function(ga_der_tan, 2, "2*tan(t)/sqr(cos(t))");
+    // PREDEF_FUNCTIONS["DER_PDFUNC_TAN"] =
+    //  ga_predef_function(ga_der_tan, 2, "2*tan(t)*(1+sqr(tan(t)))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ASIN"] =
-      ga_predef_function(ga_der_asin, "t/(pow(1-t*t,1.5))", R,
-                         ga_interval(-1., 1.));
+      ga_predef_function(ga_der_asin, 2, "t/(pow(1-t*t,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ACOS"] =
-      ga_predef_function(ga_der_acos, "-t/(pow(1-t*t,1.5))", R,
-                         ga_interval(-1., 1.));
+      ga_predef_function(ga_der_acos, 2, "-t/(pow(1-t*t,1.5))");
     PREDEF_FUNCTIONS["DER_PDFUNC_ATAN"] =
-      ga_predef_function(ga_der_atan, "2*t/sqr(1-t*t)", R, R);
+      ga_predef_function(ga_der_atan, 2, "2*t/sqr(1-t*t)");
 
 
     // Error functions
     PREDEF_FUNCTIONS["erf"]
-      = ga_predef_function(erf, R, R, "DER_PDFUNC_ERF");
+      = ga_predef_function(erf, 1, "DER_PDFUNC_ERF");
     PREDEF_FUNCTIONS["erfc"]
-      = ga_predef_function(erfc, R, R, "DER_PDFUNC_ERFC");
+      = ga_predef_function(erfc, 1, "DER_PDFUNC_ERFC");
 
     PREDEF_FUNCTIONS["DER_PDFUNC_ERF"] =
-      ga_predef_function(ga_der_erf, "exp(-t*t)*2/sqrt(pi)", R, R);
+      ga_predef_function(ga_der_erf, 2, "exp(-t*t)*2/sqrt(pi)");
     PREDEF_FUNCTIONS["DER_PDFUNC_ERFC"] =
-      ga_predef_function(ga_der_erfc, "-exp(-t*t)*2/sqrt(pi)", R, R);
+      ga_predef_function(ga_der_erfc, 2, "-exp(-t*t)*2/sqrt(pi)");
 
     
 
     // Miscellaneous functions
-    PREDEF_FUNCTIONS["Heaveside"]
-      = ga_predef_function(ga_Heaveside, ga_interval(0., INFINITY), R,
-                           "DER_PDFUNC_HEAVISIDE");
-    PREDEF_FUNCTIONS["sign"]
-      = ga_predef_function(ga_sign, R, R, "DER_PDFUNC_SIGN");
-    PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, R, R, "sign");    
+    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaveside);
+    PREDEF_FUNCTIONS["sign"] = ga_predef_function(ga_sign);
+    PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, 1, "sign");    
     PREDEF_FUNCTIONS["pos_part"]
-      = ga_predef_function(ga_pos_part, ga_interval(0., INFINITY), R,
-                           "Heaveside");
+      = ga_predef_function(ga_pos_part, 1, "Heaveside");
+    PREDEF_FUNCTIONS["half_sqr_pos_part"]
+      = ga_predef_function(ga_half_sqr_pos_part, 1, "pos_part");
     PREDEF_FUNCTIONS["neg_part"]
-      = ga_predef_function(ga_neg_part, ga_interval(-INFINITY, 0.), R,
-                           "DER_PDFUNC_NEG_PART");
-    PREDEF_FUNCTIONS["max"] // TODO: the intervals could be precised
-      = ga_predef_function(ga_max, R, R, R, R,
-                           "DER_PDFUNC1_MAX", "DER_PDFUNC2_MAX");
-    PREDEF_FUNCTIONS["min"] // TODO: the intervals could be precised
-      = ga_predef_function(ga_min, R, R, R, R,
-                           "DER_PDFUNC2_MAX", "DER_PDFUNC1_MAX");
+      = ga_predef_function(ga_neg_part, 1, "DER_PDFUNC_NEG_PART");
+    PREDEF_FUNCTIONS["half_sqr_neg_part"]
+      = ga_predef_function(ga_half_sqr_neg_part, 2, "-neg_part(t)");
+    
+    PREDEF_FUNCTIONS["max"] 
+      = ga_predef_function(ga_max, 1, "DER_PDFUNC1_MAX", "DER_PDFUNC2_MAX");
+    PREDEF_FUNCTIONS["min"]
+      = ga_predef_function(ga_min, 1, "DER_PDFUNC2_MAX", "DER_PDFUNC1_MAX");
 
-    PREDEF_FUNCTIONS["DER_PDFUNC_HEAVISIDE"] =
-      ga_predef_function(ga_der_heaviside, "Dirac(0)", ga_interval(0., 0.), R);
-    PREDEF_FUNCTIONS["DER_PDFUNC_SIGN"] =
-      ga_predef_function(ga_der_heaviside, "2*Dirac(0)",
-                         ga_interval(0., 0.), R);
     PREDEF_FUNCTIONS["DER_PDFUNC_NEG_PART"] =
-      ga_predef_function(ga_der_neg_part, "-Heaveside(-t)",
-                         ga_interval(-INFINITY, 0.), R);
-    PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] =
-      ga_predef_function(ga_der_max1, "Dirac(t-u)", "Dirac(t-u)", R, R, R, R);
-    PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] =
-      ga_predef_function(ga_der_max2, "Dirac(u-t)", "Dirac(u-t)", R, R, R, R);
+      ga_predef_function(ga_der_neg_part, 2, "-Heaveside(-t)");
+    PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] = ga_predef_function(ga_der_max1);
+    PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] = ga_predef_function(ga_der_max2);
 
 
     // Predefined special functions
@@ -2009,7 +1970,7 @@ namespace getfem {
   void ga_define_function(const std::string name, pscalar_func_onearg f,
                           const std::string &der) {
     ga_interval R;
-    PREDEF_FUNCTIONS[name] = ga_predef_function(f, R, R, der);
+    PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     if (der.size() == 0) F.dtype = 0;
     else if (!(ga_function_exists(der))) F.dtype = 2;
@@ -2018,7 +1979,7 @@ namespace getfem {
   void ga_define_function(const std::string name, pscalar_func_twoargs f,
                           const std::string &der1, const std::string &der2) {
     ga_interval R;
-    PREDEF_FUNCTIONS[name] = ga_predef_function(f, R, R, R, R, der1, der2);
+    PREDEF_FUNCTIONS[name] = ga_predef_function(f, 1, der1, der2);
     ga_predef_function &F = PREDEF_FUNCTIONS[name];
     if (der1.size() == 0 || der2.size()) F.dtype = 0;
     else if (!(ga_function_exists(der1)) || !(ga_function_exists(der2)))
