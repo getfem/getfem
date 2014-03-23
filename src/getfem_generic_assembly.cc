@@ -1768,7 +1768,7 @@ namespace getfem {
       gmm::copy(M.as_vector(), result.as_vector());
     }
 
-    // Derivative : -M^{-1}{ik}M^{-1}{lj}
+    // Derivative : -M^{-1}{ik}M^{-1}{lj}  (comes from H -> M^{-1}HM^{-1})
     void derivative(const arg_list &args, size_type,
                     base_tensor &result) const { // to be verified
       size_type N = args[0]->sizes()[0];
@@ -1784,10 +1784,24 @@ namespace getfem {
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
     
-    // Second derivative : Not implemented, order 6 tensor
-    void second_derivative(const arg_list &, size_type, size_type,
-                           base_tensor &) const {
-      GMM_ASSERT1(false, "Sorry, not implemented");
+    // Second derivative :
+    // M^{-1}{ik}M^{-1}{lm}M^{-1}{nj} + M^{-1}{im}M^{-1}{mk}M^{-1}{lj}
+    // comes from (H,K) -> M^{-1}HM^{-1}KM^{-1} + M^{-1}KM^{-1}HM^{-1}
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // to be verified
+      size_type N = args[0]->sizes()[0];
+      base_matrix M(N, N);
+      gmm::copy(args[0]->as_vector(), M.as_vector());
+      gmm::lu_inverse(M);
+      base_tensor::iterator it = result.begin();
+      for (size_type n = 0; n < N; ++n)
+        for (size_type m = 0; m < N; ++m)
+          for (size_type l = 0; l < N; ++l)
+            for (size_type k = 0; k < N; ++k)
+              for (size_type j = 0; j < N; ++j)
+                for (size_type i = 0; i < N; ++i, ++it)
+                  *it = M(i,k)*M(l,m)*M(n,j)+M(i,m)*M(m,k)*M(l,j);
+      GMM_ASSERT1(it == result.end(), "Internal error");
     }
   };
 
