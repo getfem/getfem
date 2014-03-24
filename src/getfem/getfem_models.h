@@ -40,7 +40,6 @@
 #define GETFEM_MODELS_H__
 
 #include "getfem_partial_mesh_fem.h"
-#include "getfem_omp.h"
 #include "getfem_im_data.h"
 
 namespace getfem {
@@ -261,9 +260,6 @@ namespace getfem {
       size_type region;          // Optional region size_type(-1) for all.
       mutable scalar_type external_load; // External load computed in assembly
 
-      //varibables, dealing with a multithreaded assembly		
-      region_partition partition;// partition of the applied region
-
       mutable model_real_plain_vector coeffs;
       mutable scalar_type matrix_coeff;
       mutable real_matlist rmatlist;    // Matrices the brick have to fill in
@@ -287,10 +283,8 @@ namespace getfem {
         : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
           external_load(0),
-          partition( (mms.size()>0 ? &mms.at(0)->linked_mesh() : 0),  reg),
           rveclist(1), rveclist_sym(1), cveclist(1),
           cveclist_sym(1)  { }
-
     };
 
     typedef std::map<std::string, var_description> VAR_SET;

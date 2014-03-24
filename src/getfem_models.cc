@@ -777,68 +777,66 @@ namespace getfem {
 	the assembled copies into the original. Note: the matrices or 
 	vectors in the list are gmm::cleared, deleting the content 
 	in the constructor*/
-	template <class C> class list_distro{
+  template <class C> class list_distro
+  {
 		C& original_list;
 		omp_distribute<C> th_list;
 		typedef typename C::value_type value_type;
 
-		//template<class L> void build_distro(L);
-
-                void build_distro(gmm::abstract_matrix /* m */)
+    void build_distro(gmm::abstract_matrix )
 		{
-			for(size_type thread = 0; thread<num_threads(); thread++)
+      //intentionally skipping thread 0, as list_distro will
+      //use original_list for it
+			for(size_type thread = 1; thread<num_threads(); thread++)
 			{
 				typename C::iterator it_org=original_list.begin();
 				typename C::iterator it_distro=th_list(thread).begin();
 				for(;it_org!=original_list.end();++it_org,++it_distro)
 				{
-					gmm::resize(*it_distro,gmm::mat_nrows(*it_org),gmm::mat_ncols(*it_org));
-					if (thread==0) {
-						gmm::copy(*it_org,*it_distro);
-						gmm::clear(*it_org);
-					}
+          gmm::resize(*it_distro,gmm::mat_nrows(*it_org),gmm::mat_ncols(*it_org));
 				}
 			}
 		}
 
-                void build_distro(gmm::abstract_vector /*v*/)
+    void build_distro(gmm::abstract_vector)
 		{
-			for(size_type thread = 0; thread<num_threads(); thread++)
+      //.. skipping thread 0 ..
+			for(size_type thread = 1; thread<num_threads(); thread++)
 			{
 				typename C::iterator it_org=original_list.begin();
 				typename C::iterator it_distro=th_list(thread).begin();
-				for(;it_org!=original_list.end();++it_org,++it_distro){
+				for(;it_org!=original_list.end();++it_org,++it_distro)
+        {
 					gmm::resize(*it_distro,gmm::vect_size(*it_org));
-					if (thread==0) {
-						gmm::copy(*it_org,*it_distro);
-						gmm::clear(*it_org);
-					}
 				}
 			}
 		}
 
-        inline bool not_multithreaded() const {return num_threads()==1;}
+   bool not_multithreaded() const { return num_threads() == 1; }
 
 	public:
-		list_distro(C& l) : original_list(l)
-		{
-            if (not_multithreaded()) return;
 
-			for(size_type thread=0;thread<num_threads();thread++) 
-				th_list(thread).resize(original_list.size());
+    list_distro(C& l) : original_list(l)
+		{
+      if (not_multithreaded()) return;
+			for(size_type thread=1;thread<num_threads();thread++) 
+				            th_list(thread).resize(original_list.size());
 			build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
 		}
 
-		operator C&(){
-            if (not_multithreaded()) return original_list;
-            else return th_list(this_thread());
-        }
+		operator C&()
+    {
+      if (not_multithreaded() || this_thread() == 0) return original_list;
+      else return th_list(this_thread());
+    }
 
-		~list_distro(){
-             if (not_multithreaded()) return;
+		~list_distro()
+    {
+      if (not_multithreaded()) return;
 			GMM_ASSERT1(!me_is_multithreaded_now(),
 				"List accumulation should not run in parallel");
-			for(size_type thread = 0; thread<num_threads(); thread++){ 
+			for(size_type thread = 1; thread<num_threads(); thread++)
+      { 
 				typename C::iterator it_org=original_list.begin();
 				typename C::iterator it_distro=th_list(thread).begin();
 				for(;it_org!=original_list.end();++it_org,++it_distro) 
@@ -865,9 +863,7 @@ namespace getfem {
     else{
 
         /*distributing the resulting vectors and matrices
-        for individual threads. This is done every time assembly is performed,
-        hence, not effective. Will try to include this distribution into the
-        brick description, to avoid their re-allocation (Andriy)*/
+        for individual threads.*/
       scalar_type time = gmm::uclock_sec();
 	    list_distro<real_matlist> rmatlist(brick.rmatlist);
 	    list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
@@ -886,7 +882,7 @@ namespace getfem {
                                                 rmatlist,
                                                 rveclist,
                                                 rveclist_sym,
-                                                brick.partition.thread_local_partition(), 
+                                                brick.region,
                                                 version);
                 }
 	     }

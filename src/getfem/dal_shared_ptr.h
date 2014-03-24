@@ -56,7 +56,7 @@ namespace dal {
     shared_ptr() : p(0), refcnt(0) {}
     explicit shared_ptr(T *q, bool refcounted = true) : p(q), refcnt(0) { if (refcounted) refcnt = new unsigned long(1); }
     shared_ptr(const shared_ptr<T> &other) : p(other.p), refcnt(other.refcnt) { if (refcnt) ++(*refcnt); }
-    void reset(T *q, bool refcounted = true) { release(); shared_ptr<T> tmp(q, refcounted); (*this).swap(tmp); }
+    void reset(T *q = NULL, bool refcounted = true) { release(); if (q) {shared_ptr<T> tmp(q, refcounted); (*this).swap(tmp);} }
     void swap(shared_ptr<T> &other) { std::swap(p,other.p); std::swap(refcnt,other.refcnt); }
     void release() { if (refcnt && --(*refcnt) == 0) { if (p) delete p; delete refcnt; } p = 0; refcnt = 0; }
     ~shared_ptr() { release(); }
