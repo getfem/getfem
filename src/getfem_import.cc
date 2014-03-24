@@ -522,129 +522,342 @@ namespace getfem {
 
   /* mesh file from ANSYS
 
-  supports elements SOLID45 and SOLID92 stored with cdwrite in blocked format
+  Supports solid structural elements stored with cdwrite in blocked format.
+  Use the following command in ANSYS for exporting the mesh:
+
+  cdwrite,db,filename,cdb
   */
-  static void import_cdb_mesh_file(std::istream& f, mesh& m) {
+  static void import_cdb_mesh_file(std::istream& f, mesh& m,
+                                   size_type imat_filt=size_type(-1)) {
 
     std::map<size_type, size_type> cdb_node_2_getfem_node;
     std::vector<size_type> getfem_cv_nodes;
+    std::vector<std::string> elt_types;
+    std::vector<size_type> elt_cnt;
+    std::vector<dal::bit_vector> regions;
 
+    size_type pos;
     std::string line;
-    do {
+    while (true) {
       std::getline(f,line);
-    } while (line.compare(0,6,"NBLOCK") != 0 && !f.eof());
-    if (f.eof())
-      return;
+      pos = line.find_first_not_of(" ");
+      if (bgeot::casecmp(line.substr(pos,2),"ET") == 0) {
+        size_type itype;
+        char type_name[32] = "";
+        pos = line.find_first_of(",");
+        sscanf(line.substr(pos+1).c_str(), "%lu,%s", &itype, type_name);
+
+        bool only_digits=true;
+        for (size_type i=strlen(type_name); i != 0; --i)
+          if (!isdigit(type_name[i-1])) {
+            type_name[i-1] = char(toupper(type_name[i-1]));
+            only_digits = false;
+          }
+
+        if (elt_types.size() < itype+1)
+          elt_types.resize(itype+1);
+
+        elt_types[itype] = "";
+        if (only_digits) {
+          size_type type_num;
+          sscanf(type_name, "%lu", &type_num);
+          if (type_num == 45 || type_num == 87 || type_num == 90 ||
+              type_num == 92 || type_num == 95 || type_num == 162 ||
+              type_num == 185 || type_num == 186 || type_num == 187 ||
+              type_num == 191)
+            elt_types[itype] = "SOLID";
+          else if (type_num == 89)
+            elt_types[itype] = "VISCO";
+        }
+        elt_types[itype].append(type_name);
+      }
+      else if (bgeot::casecmp(line.substr(pos,5),"KEYOP") == 0) {
+        size_type itype, knum, keyval;
+        pos = line.find_first_of(",");
+        sscanf(line.substr(pos+1).c_str(), "%lu,%lu,%lu", &itype, &knum, &keyval);
+        if (knum == 1 && itype < elt_types.size() &&
+            elt_types[itype].size() == 7 &&
+            bgeot::casecmp(elt_types[itype].substr(0,7),"MESH200") == 0) {
+          std::stringstream ss("MESH200");
+          ss << "_" << keyval;
+          elt_types[itype] = ss.str();
+        }
+      }
+      else if (bgeot::casecmp(line.substr(pos,6),"NBLOCK") == 0)
+        break;
+      else if (f.eof())
+        return;
+    }
+    elt_cnt.resize(elt_types.size());
 
     // NBLOCK, NUMFIELD, SOLKEY, NDMAX, NDSEL
     //NBLOCK,6,SOLID,     45876,     45876
     size_type nodes2read;
-    {
-      size_t pos = line.find_last_of(",");
-      std::stringstream ss(line.substr(pos+1));
-      ss >> nodes2read;
-    }
-
+    pos = line.find_last_of(",");
+    sscanf(line.substr(pos+1).c_str(), "%lu", &nodes2read);
 
     //(3i8,6e20.13)
-    std::string nodes_format;
-    std::getline(f,nodes_format);
-    
+    size_type fields1, fieldwidth1, fields2, fieldwidth2; // 3,8,6,20
+    std::string node_info_fmt;
+    { // "%8lu%*8u%*8u%20lf%20lf%20lf"
+      std::string fortran_fmt;
+      std::getline(f,fortran_fmt);
+      sscanf(fortran_fmt.c_str(), "(%lu%*[i]%lu,%lu%*[e,E]%lu.%*u)",
+             &fields1, &fieldwidth1, &fields2, &fieldwidth2);
+      GMM_ASSERT1(fields1 >= 1 && fields2 >= 3 ,
+                  "Ansys mesh import routine requires NBLOCK entries with at least "
+                  "1 integer field and 3 float number fields");
+      std::stringstream ss;
+      ss << "%" << fieldwidth1 << "lu";
+      for (size_type i=1; i < fields1; ++i)
+        ss << "%*" << fieldwidth1 << "lu";
+      for (size_type i=0; i < 3; ++i)
+        ss << "%" << fieldwidth2 << "lf";
+      node_info_fmt = ss.str();
+    }
+
     base_node pt(3);
     for (size_type i=0; i < nodes2read; ++i) {
       size_type nodeid;
       std::getline(f,line);
       //       1       0       0-3.0000000000000E+00 2.0000000000000E+00 1.0000000000000E+00
-      sscanf(line.c_str(), "%8lu%*8u%*8u%20lf%20lf%20lf",
-             &nodeid, &pt[0], &pt[1], &pt[2]);
+      sscanf(line.c_str(), node_info_fmt.c_str(), &nodeid, &pt[0], &pt[1], &pt[2]);
       cdb_node_2_getfem_node[nodeid] = m.add_point(pt);
     }
     
-    do {
+    while (bgeot::casecmp(line.substr(0,6),"EBLOCK") != 0) {
+      if (f.eof())
+        return;
       std::getline(f,line);
-    } while (line.compare(0,6,"EBLOCK") != 0 && !f.eof());
-    if (f.eof())
-      return;
+    }
 
     // EBLOCK, NUM_NODES, SOLKEY
     //EBLOCK,19,SOLID,    825431,    110833
     size_type elements2read;
-    {
-      size_t pos = line.find_last_of(",");
-      std::stringstream ss(line.substr(pos+1));
-      ss >> elements2read;
-    }
+    pos = line.find_last_of(",");
+    sscanf(line.substr(pos+1).c_str(), "%lu", &elements2read);
 
     //(19i8)
-    std::string elements_format;
-    std::getline(f,elements_format);
-
-    size_type II,JJ,KK,LL,MM,NN,OO,PP,QQ,RR;
-    for (size_type i=0; i < elements2read; ++i) {
-      size_type matid, eltype, realconst, sectionid, coordsys, deathflag,
-                 modelref, shapeflag, nodesno, notused, elid;
-      std::getline(f,line);
-      sscanf(line.substr(0,88).c_str(),
-             "%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu",
-             &matid, &eltype, &realconst, &sectionid, &coordsys, &deathflag,
-             &modelref, &shapeflag, &nodesno, &notused, &elid);
-      if (nodesno == 4) {
-        // TODO
-      } else if (nodesno == 8) { // assume SOLID45
-        sscanf(line.substr(88).c_str(),
-               "%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu",
-               &II,&JJ,&KK,&LL,&MM,&NN,&OO,&PP);
-        if (KK == LL) {
-          if (MM == NN && NN == OO && OO == PP) { // assume 4-node tetrahedral
-            getfem_cv_nodes.resize(4);
-            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
-            getfem_cv_nodes[1] = cdb_node_2_getfem_node[KK];
-            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
-            getfem_cv_nodes[3] = cdb_node_2_getfem_node[MM];
-            m.add_convex(bgeot::simplex_geotrans(3,1), getfem_cv_nodes.begin());
-          } else if (OO == PP) { // assume 6-node prism
-            getfem_cv_nodes.resize(6);
-            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
-            getfem_cv_nodes[1] = cdb_node_2_getfem_node[KK];
-            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
-            getfem_cv_nodes[3] = cdb_node_2_getfem_node[MM];
-            getfem_cv_nodes[4] = cdb_node_2_getfem_node[OO];
-            getfem_cv_nodes[5] = cdb_node_2_getfem_node[NN];
-            m.add_convex(bgeot::prism_geotrans(3,1), getfem_cv_nodes.begin());
-          }
-        } else { // assume 8-node hexahedral
-          getfem_cv_nodes.resize(8);
-          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
-          getfem_cv_nodes[1] = cdb_node_2_getfem_node[LL];
-          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
-          getfem_cv_nodes[3] = cdb_node_2_getfem_node[KK];
-          getfem_cv_nodes[4] = cdb_node_2_getfem_node[MM];
-          getfem_cv_nodes[5] = cdb_node_2_getfem_node[PP];
-          getfem_cv_nodes[6] = cdb_node_2_getfem_node[NN];
-          getfem_cv_nodes[7] = cdb_node_2_getfem_node[OO];
-          m.add_convex(bgeot::parallelepiped_geotrans(3,1), getfem_cv_nodes.begin());
-        }
-      } else if (nodesno == 10) { //  # assume SOLID92
-        sscanf(line.substr(88).c_str(),
-               "%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu",
-               &II,&JJ,&KK,&LL,&MM,&NN,&OO,&PP);
-        std::getline(f,line);
-        sscanf(line.c_str(), "%8lu%8lu",&QQ,&RR);
-        getfem_cv_nodes.resize(10);
-        getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
-        getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
-        getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
-        getfem_cv_nodes[3] = cdb_node_2_getfem_node[OO];
-        getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
-        getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
-        getfem_cv_nodes[6] = cdb_node_2_getfem_node[PP];
-        getfem_cv_nodes[7] = cdb_node_2_getfem_node[QQ];
-        getfem_cv_nodes[8] = cdb_node_2_getfem_node[RR];
-        getfem_cv_nodes[9] = cdb_node_2_getfem_node[LL];
-        m.add_convex(bgeot::simplex_geotrans(3,2), getfem_cv_nodes.begin());
-      }
-      GMM_ASSERT1(!f.eof(), "File ended before all elements could be read");
+    size_type fieldsno, fieldwidth; // 19,8
+    std::string elt_info_fmt;
+    { // "%8lu%8lu%8lu%8lu%8lu%8lu%8lu%8lu"
+      std::string fortran_fmt;
+      std::getline(f,fortran_fmt);
+      sscanf(fortran_fmt.c_str(),"(%lu%*[i]%lu)", &fieldsno, &fieldwidth);
+      GMM_ASSERT1(fieldsno == 19, "Ansys mesh import routine requires EBLOCK entries "
+                                  "with 19 fields");
+      std::stringstream ss;
+      for (size_type i=0; i < 19; ++i)
+        ss << "%" << fieldwidth << "lu";
+      elt_info_fmt = ss.str();
     }
+
+    size_type II,JJ,KK,LL,MM,NN,OO,PP,QQ,RR,SS,TT,UU,VV,WW,XX,YY,ZZ,AA,BB;
+    for (size_type i=0; i < elements2read; ++i) {
+      GMM_ASSERT1(!f.eof(), "File ended before all elements could be read");
+      size_type imat, itype, realconst, isection, coordsys, deathflag,
+                modelref, shapeflag, nodesno, notused, eltid;
+      std::getline(f,line);
+      sscanf(line.substr(0,11*fieldwidth).c_str(), elt_info_fmt.c_str(),
+             &imat, &itype, &realconst, &isection, &coordsys, &deathflag,
+             &modelref, &shapeflag, &nodesno, &notused, &eltid);
+      line = line.substr(11*fieldwidth);
+
+      if (imat_filt != size_type(-1) && imat != imat_filt) { // skip current element
+        if (nodesno > 8)
+          std::getline(f,line);
+        continue;
+      }
+
+      if (imat+1 > regions.size())
+        regions.resize(imat+1);
+
+      if (nodesno == 3) {
+        // TODO MESH200_2
+      }
+      else if (nodesno == 3) {
+        // TODO MESH200_3, MESH200_4
+      }
+      else if (nodesno == 4) {
+        // TODO MESH200_6, MESH200_8
+      }
+      else if (nodesno == 6) {
+        // TODO MESH200_5
+      }
+      else if (nodesno == 8) {
+
+        sscanf(line.c_str(), elt_info_fmt.c_str(),
+               &II, &JJ, &KK, &LL, &MM, &NN, &OO, &PP);
+
+        // assume MESH200_10
+        std::string eltname("MESH200_10");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+
+        if (eltname.compare("MESH200_7") == 0) {
+          // TODO 8-node quadrilateral
+        }
+        else if (eltname.compare("MESH200_10") == 0 ||
+                 eltname.compare("SOLID45") == 0 ||
+                 eltname.compare("SOLID185") == 0) {
+          if (KK == LL && OO == PP) {
+            if (MM == NN && NN == OO) { // 4-node tetrahedral
+              getfem_cv_nodes.resize(4);
+              getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+              getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+              getfem_cv_nodes[2] = cdb_node_2_getfem_node[KK];
+              getfem_cv_nodes[3] = cdb_node_2_getfem_node[MM];
+              regions[imat].add(m.add_convex(bgeot::simplex_geotrans(3,1),
+                                             getfem_cv_nodes.begin()));
+            }
+            else { // 6-node prism
+              getfem_cv_nodes.resize(6);
+              getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+              getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+              getfem_cv_nodes[2] = cdb_node_2_getfem_node[KK];
+              getfem_cv_nodes[3] = cdb_node_2_getfem_node[MM];
+              getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+              getfem_cv_nodes[5] = cdb_node_2_getfem_node[OO];
+              regions[imat].add(m.add_convex(bgeot::prism_geotrans(3,1),
+                                             getfem_cv_nodes.begin()));
+            }
+          }
+          else { // 8-node hexahedral
+            getfem_cv_nodes.resize(8);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[LL];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[KK];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[6] = cdb_node_2_getfem_node[PP];
+            getfem_cv_nodes[7] = cdb_node_2_getfem_node[OO];
+            regions[imat].add(m.add_convex(bgeot::parallelepiped_geotrans(3,1),
+                                           getfem_cv_nodes.begin()));
+          }
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        }
+      }
+      else if (nodesno == 10) {
+
+        sscanf(line.c_str(), elt_info_fmt.c_str(),
+               &II, &JJ, &KK, &LL, &MM, &NN, &OO, &PP);
+        std::getline(f,line);
+        sscanf(line.c_str(), elt_info_fmt.c_str(), &QQ, &RR);
+
+        // assume MESH200_9 (10-node tetrahedral)
+        std::string eltname("MESH200_9");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+
+        if (eltname.compare("MESH200_9") == 0 ||
+            eltname.compare("SOLID87") == 0 ||
+            eltname.compare("SOLID92") == 0 ||
+            eltname.compare("SOLID162") == 0 ||
+            eltname.compare("SOLID187") == 0) {
+          getfem_cv_nodes.resize(10);
+          getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+          getfem_cv_nodes[1] = cdb_node_2_getfem_node[MM];
+          getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+          getfem_cv_nodes[3] = cdb_node_2_getfem_node[OO];
+          getfem_cv_nodes[4] = cdb_node_2_getfem_node[NN];
+          getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
+          getfem_cv_nodes[6] = cdb_node_2_getfem_node[PP];
+          getfem_cv_nodes[7] = cdb_node_2_getfem_node[QQ];
+          getfem_cv_nodes[8] = cdb_node_2_getfem_node[RR];
+          getfem_cv_nodes[9] = cdb_node_2_getfem_node[LL];
+          regions[imat].add(m.add_convex(bgeot::simplex_geotrans(3,2),
+                                         getfem_cv_nodes.begin()));
+          if (itype < elt_cnt.size())
+            elt_cnt[itype] += 1;
+        }
+      }
+      else if (nodesno == 20) { //  # assume SOLID186/SOLID95
+
+        sscanf(line.c_str(), elt_info_fmt.c_str(),
+               &II, &JJ, &KK, &LL, &MM, &NN, &OO, &PP);
+        std::getline(f,line);
+        sscanf(line.c_str(), elt_info_fmt.c_str(),
+               &QQ, &RR, &SS, &TT, &UU, &VV, &WW, &XX, &YY, &ZZ, &AA, &BB);
+
+        // assume MESH200_11 (20-node hexahedral)
+        std::string eltname("MESH200_11");
+        if (elt_types.size() > itype && elt_types[itype].size() > 0)
+          eltname = elt_types[itype];
+
+        if (eltname.compare("MESH200_11") == 0 ||
+            eltname.compare("VISCO89") == 0 ||
+            eltname.compare("SOLID90") == 0 ||
+            eltname.compare("SOLID95") == 0 ||
+            eltname.compare("SOLID186") == 0 ||
+            eltname.compare("SOLID191") == 0) {
+          if (KK == LL && MM == NN && NN == OO && OO == PP) { // assume 10-node tetrahedral
+            getfem_cv_nodes.resize(10);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[QQ];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[TT];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[RR];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[KK];
+            getfem_cv_nodes[6] = cdb_node_2_getfem_node[YY];
+            getfem_cv_nodes[7] = cdb_node_2_getfem_node[ZZ];
+            getfem_cv_nodes[8] = cdb_node_2_getfem_node[AA];
+            getfem_cv_nodes[9] = cdb_node_2_getfem_node[MM];
+            regions[imat].add(m.add_convex(bgeot::simplex_geotrans(3,2),
+                                           getfem_cv_nodes.begin()));
+            if (itype < elt_cnt.size())
+              elt_cnt[itype] += 1;
+          } else if (MM == NN && NN == OO && OO == PP) { // assume 13-node pyramid
+            GMM_ASSERT1(false, "Ansys 13-node pyramid elements are not supported yet");
+          } else if (KK == LL && OO == PP) { // assume 15-node pyramid
+            GMM_ASSERT1(false, "Ansys 15-node prism elements are not supported yet");
+          } else {
+            getfem_cv_nodes.resize(20);
+            getfem_cv_nodes[0] = cdb_node_2_getfem_node[II];
+            getfem_cv_nodes[1] = cdb_node_2_getfem_node[QQ];
+            getfem_cv_nodes[2] = cdb_node_2_getfem_node[JJ];
+            getfem_cv_nodes[3] = cdb_node_2_getfem_node[TT];
+            getfem_cv_nodes[4] = cdb_node_2_getfem_node[RR];
+            getfem_cv_nodes[5] = cdb_node_2_getfem_node[LL];
+            getfem_cv_nodes[6] = cdb_node_2_getfem_node[SS];
+            getfem_cv_nodes[7] = cdb_node_2_getfem_node[KK];
+            getfem_cv_nodes[8] = cdb_node_2_getfem_node[YY];
+            getfem_cv_nodes[9] = cdb_node_2_getfem_node[ZZ];
+            getfem_cv_nodes[10] = cdb_node_2_getfem_node[BB];
+            getfem_cv_nodes[11] = cdb_node_2_getfem_node[AA];
+            getfem_cv_nodes[12] = cdb_node_2_getfem_node[MM];
+            getfem_cv_nodes[13] = cdb_node_2_getfem_node[UU];
+            getfem_cv_nodes[14] = cdb_node_2_getfem_node[NN];
+            getfem_cv_nodes[15] = cdb_node_2_getfem_node[XX];
+            getfem_cv_nodes[16] = cdb_node_2_getfem_node[VV];
+            getfem_cv_nodes[17] = cdb_node_2_getfem_node[PP];
+            getfem_cv_nodes[18] = cdb_node_2_getfem_node[WW];
+            getfem_cv_nodes[19] = cdb_node_2_getfem_node[OO];
+            regions[imat].add(m.add_convex(bgeot::Q2_incomplete_geotrans(3),
+                                           getfem_cv_nodes.begin()));
+            if (itype < elt_cnt.size())
+              elt_cnt[itype] += 1;
+    	    }
+        }
+      }
+    }
+
+    int nonempty_regions=0;
+    for (size_type i=0; i < regions.size(); ++i)
+      if (regions[i].card() > 0)
+        ++nonempty_regions;
+
+    if (nonempty_regions > 1)
+      for (size_type i=0; i < regions.size(); ++i)
+        if (regions[i].card() > 0)
+          m.region(i).add(regions[i]);
+
+    for (size_type i=1; i < elt_types.size(); ++i)
+      if (elt_cnt[i] > 0)
+        cout << "Imported " << elt_cnt[i] << " " << elt_types[i] << " elements." << endl;
+    cout << "Imported " << m.convex_index().card() << " elements in total." << endl;
+
   }
 
 
@@ -886,28 +1099,23 @@ namespace getfem {
       import_emc2_mesh_file(f,m);
     else if (bgeot::casecmp(format,"cdb")==0)
       import_cdb_mesh_file(f,m);
+    else if (bgeot::casecmp(format.substr(0,4),"cdb:")==0) {
+      size_type imat;
+      if (sscanf(format.substr(4).c_str(), "%lu", &imat))
+        import_cdb_mesh_file(f,m,imat);
+      else GMM_ASSERT1(false, "cannot import "
+                       << format << " mesh type : wrong cdb mesh type input");
+    }
     else GMM_ASSERT1(false, "cannot import "
                      << format << " mesh type : unknown mesh type");
   }
 
   void import_mesh(const std::string& filename, mesh& msh) {
-    if (filename.compare(0,4,"gid:")==0)
-      getfem::import_mesh(filename.substr(4), "gid", msh);
-    else if (filename.compare(0,8,"noboite:") == 0)
-      getfem::import_mesh(filename.substr(8), "noboite", msh);
-    else if (filename.compare(0,5,"gmsh:") == 0)
-      getfem::import_mesh(filename.substr(5), "gmsh", msh);
-    else if (filename.compare(0,7,"gmshv2:") == 0)
-      getfem::import_mesh(filename.substr(7), "gmshv2", msh);
-    else if (filename.compare(0,7,"am_fmt:") == 0)
-      getfem::import_mesh(filename.substr(7), "am_fmt", msh);
-    else if (filename.compare(0,10,"emc2_mesh:") == 0)
-      getfem::import_mesh(filename.substr(10), "emc2_mesh", msh);
-    else if (filename.compare(0,4,"cdb:") == 0)
-      getfem::import_mesh(filename.substr(4), "cdb", msh);
-    else if (filename.compare(0,11,"structured:") == 0)
-      getfem::import_mesh(filename.substr(11), "structured", msh);
-    else msh.read_from_file(filename);
+    size_type pos = filename.find_last_of(":");
+    if (pos != std::string::npos)
+      getfem::import_mesh(filename.substr(pos+1), filename.substr(0,pos-1), msh);
+    else
+      msh.read_from_file(filename);
   }
 
   void maybe_remove_last_dimension(mesh &m) {
