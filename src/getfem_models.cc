@@ -1560,7 +1560,6 @@ namespace getfem {
           it->mim.linked_mesh().intersect_with_mpi_region(rg);
           mpi_reg[pms] = rg;
         }
-
         workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
       }
 
@@ -2118,8 +2117,12 @@ namespace getfem {
     size_type order = workspace.add_expression(expr, mim, region);
     GMM_ASSERT1(order < 2, "Order two test functions (Test2) are not allowed"
                 " in assembly string for nonlinear terms");
-    model::varnamelist vl, dl;
-    workspace.used_variables(vl, dl, order);
+    model::varnamelist vl, ddl, dl;
+    workspace.used_variables(vl, ddl, order);
+
+    for (size_type i = 0; i < ddl.size(); ++i)
+      if (md.is_data(ddl[i])) dl.push_back(ddl[i]); else vl.push_back(ddl[i]);
+
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_nonlinear_assembly_brick(expr, is_sym, is_coercive,
                                                   (order == 0), brickname);

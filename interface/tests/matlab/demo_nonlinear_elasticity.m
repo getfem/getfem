@@ -24,10 +24,12 @@ r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = ma
 new_bricks = true; % new brick system or old one.
 dirichlet_version = 1; % 1 = simplification, 2 = penalisation
 
-incompressible = true;
+incompressible = false;
 
-lawname = 'Ciarlet Geymonat';
-params = [1;1;0.25];
+% lawname = 'Ciarlet Geymonat';
+% params = [1;1;0.25];
+lawname = 'SaintVenant Kirchhoff';
+params = [1;1];
 if (incompressible)
     lawname = 'Mooney Rivlin';
     params = [1;1];
@@ -108,6 +110,14 @@ if (new_bricks)
   gf_model_set(md, 'add fem variable', 'u', mfu);
   gf_model_set(md,'add initialized data','params', params);
   gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  %            'sqr(Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)))/8 + Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)*(Grad_u+Grad_u''+Grad_u''*Grad_u)/4)');
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  %            'sqr(Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)))/8');
+  
+  
+ 
+           
   if (incompressible)
     mfp = gf_Mesh_Fem(m,1); 
     gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
@@ -225,7 +235,7 @@ for step=1:nbstep,
       gf_MdBrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
       % full(gf_MdState_get(mds, 'tangent matrix'))
       U=gf_MdState_get(mds, 'state'); U=U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-      VM = gf_MdBrick_get(b0, 'von mises', mds, mfdu);
+      VM = gf_MdBrick_get(b0demo_nonlinear_elasticity, 'von mises', mds, mfdu);
     end
     UU = [UU;U]; 
     VVM = [VVM;VM];
