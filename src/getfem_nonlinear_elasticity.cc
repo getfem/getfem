@@ -22,6 +22,7 @@
 
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_nonlinear_elasticity.h"
+#include "getfem/getfem_generic_assembly.h"
 
 namespace getfem {
 
@@ -1344,6 +1345,542 @@ namespace getfem {
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
 
+
+
+
+
+  // ----------------------------------------------------------------------
+  //
+  // High-level Generic assembly operators
+  //
+  // ----------------------------------------------------------------------
+
+
+  static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
+  static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
+  { mi.resize(2); mi[0] = mi[1] = N; }
+
+
+  // Matrix_i2 Operator (second invariant of square matrix of size >= 2)
+  //                    (For 2x2 matrices, it is equivalent to det(M))
+  struct matrix_i2_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_scalar(sizes);
+      return true;
+    }
+    
+    // Value : (Trace(M))^2 - Trace(M^2))/2
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      const base_tensor &t = *args[0];
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += t[i*N+i];
+      scalar_type tr2 = scalar_type(0);
+      for (size_type i = 0; i < N; ++i)
+        for (size_type j = 0; j < N; ++j)
+          tr2 += t[i+ j*N] * t[j + i*N];
+      result[0] = (tr*tr - tr2)/2;
+    }
+
+    // Derivative : Trace(M)I - M^T
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const { // to be verified
+      size_type N = args[0]->sizes()[0];
+      const base_tensor &t = *args[0];
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += t[i*N+i];
+      base_tensor::iterator it = result.begin();
+      for (size_type j = 0; j < N; ++j)
+        for (size_type i = 0; i < N; ++i, ++it)
+          *it = ((i == j) ? tr : scalar_type(0)) - t[i*N+j];
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative : I@I - \delta_{il}\delta_{jk}
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // To be verified
+      size_type N = args[0]->sizes()[0];
+      gmm::clear(result.as_vector());
+       for (size_type i = 0; i < N; ++i)
+         for (size_type j = 0; j < N; ++j) {
+           result[(N+1)*(i+N*N*j)] += scalar_type(1);
+           result[(N+1)*N*j + i*(N*N*N + 1)] -= scalar_type(1);
+         }
+    }
+  };
+
+
+  // Matrix_j1 Operator 
+  struct matrix_j1_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_scalar(sizes);
+      return true;
+    }
+    
+    // Value : Trace(M)/(det(M)^1/3)
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix M(N, N);
+      gmm::copy(args[0]->as_vector(), M.as_vector());
+      scalar_type det = gmm::lu_det(M);
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += M(i,i);
+      if (det > 0)
+        result[0] = tr / pow(det, scalar_type(1)/scalar_type(3));
+      else
+        result[0] = 1.E200;
+    }
+
+    // Derivative : (I-Trace(M)*M^{-T}/3)/(det(M)^1/3)
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const { // to be verified
+      size_type N = args[0]->sizes()[0];
+      base_matrix M(N, N);
+      gmm::copy(args[0]->as_vector(), M.as_vector());
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += M(i,i);
+      scalar_type det = gmm::lu_inverse(M);
+      if (det > 0) {
+        base_tensor::iterator it = result.begin();
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it)
+            *it = (((i == j) ? scalar_type(1) : scalar_type(0))
+                   - tr*M(j,i)/scalar_type(3))
+              / pow(det, scalar_type(1)/scalar_type(3));
+        GMM_ASSERT1(it == result.end(), "Internal error");
+      } else
+        std::fill(result.begin(), result.end(), 1.E200);
+    }
+    
+    // Second derivative : (-M^{-T}@I + Trace(M)*M^{-T}_{ik}M^{-T}_{lj}
+    //                      -I@M^{-T} + Trace(M)*M^{-T}@M^{-T}/3)/(3det(M)^1/3)
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // To be verified
+      size_type N = args[0]->sizes()[0];
+      base_matrix M(N, N);
+      gmm::copy(args[0]->as_vector(), M.as_vector());
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += M(i,i);
+      scalar_type det = gmm::lu_inverse(M);
+      if (det > 0) {
+        base_tensor::iterator it = result.begin();
+        for (size_type l = 0; l < N; ++l)
+          for (size_type k = 0; k < N; ++k)
+            for (size_type j = 0; j < N; ++j)
+              for (size_type i = 0; i < N; ++i, ++it)
+                *it = (- ((k == l) ? M(j, i) : scalar_type(0))
+                       + tr*M(i,k)*M(l,j)
+                       - ((i == j) ? M(l, k) : scalar_type(0))
+                       + tr*M(j,i)*M(k,l)/ scalar_type(3))
+                  / (scalar_type(3)*pow(det, scalar_type(1)/scalar_type(3)));
+        GMM_ASSERT1(it == result.end(), "Internal error");
+      } else 
+        std::fill(result.begin(), result.end(), 1.E200);
+    }
+  };
+
+
+  // Matrix_j2 Operator 
+  struct matrix_j2_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_scalar(sizes);
+      return true;
+    }
+    
+    // Value : i2(M)/(det(M)^2/3)
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix M(N, N);
+      gmm::copy(args[0]->as_vector(), M.as_vector());
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += M(i,i);
+      scalar_type tr2 = scalar_type(0);
+      for (size_type i = 0; i < N; ++i)
+        for (size_type j = 0; j < N; ++j)
+          tr2 += M(i,j)*M(j,i);
+      scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
+      scalar_type det = gmm::lu_det(M);
+
+      if (det > 0)
+        result[0] = i2 / pow(det, scalar_type(2)/scalar_type(3));
+      else
+        result[0] = 1.E200;
+    }
+
+    // Derivative : (Trace(M)*I-M^T-2i2(M)M^{-T}/3)/(det(M)^2/3)
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const { // to be verified
+      size_type N = args[0]->sizes()[0];
+      const base_tensor &t = *args[0];
+      base_matrix M(N, N);
+      gmm::copy(t.as_vector(), M.as_vector());
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += M(i,i);
+      scalar_type tr2 = scalar_type(0);
+      for (size_type i = 0; i < N; ++i)
+        for (size_type j = 0; j < N; ++j)
+          tr2 += M(i,j)*M(j,i);
+      scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
+      scalar_type det = gmm::lu_inverse(M);
+      base_tensor::iterator it = result.begin();
+      for (size_type j = 0; j < N; ++j)
+        for (size_type i = 0; i < N; ++i, ++it)
+          *it = (((i == j) ? tr : scalar_type(0)) - t[j+N*i]
+                 - scalar_type(2)*i2*M(j,i)/scalar_type(3))
+            / pow(det, scalar_type(2)/scalar_type(3));
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // To be verified
+      size_type N = args[0]->sizes()[0];
+      const base_tensor &t = *args[0];
+      base_matrix M(N, N);
+      gmm::copy(t.as_vector(), M.as_vector());
+      scalar_type tr = scalar_type(0);
+      for (size_type i = 0; i < N; ++i) tr += M(i,i);
+      scalar_type tr2 = scalar_type(0);
+      for (size_type i = 0; i < N; ++i)
+        for (size_type j = 0; j < N; ++j)
+          tr2 += M(i,j)*M(j,i);
+      scalar_type i2 = (tr*tr-tr2)/scalar_type(2);
+      scalar_type det = gmm::lu_inverse(M);
+      base_tensor::iterator it = result.begin();
+      for (size_type l = 0; l < N; ++l)
+        for (size_type k = 0; k < N; ++k)
+          for (size_type j = 0; j < N; ++j)
+            for (size_type i = 0; i < N; ++i, ++it)
+              *it = ( ((i==j) ? 1. : 0.) * ((k==l) ? 1. : 0.)
+                      - ((i==l) ? 1. : 0.) * ((k==j) ? 1. : 0.)
+                      - 2.*tr*M(j,i)*((k==l) ? 1. : 0.)/3.
+                      + 2.*tr*M(j,i)*M(l,k)/3.
+                      - 2.*i2*M(i,k)*M(l,j)/3.
+                      - 2.*((tr*(i==j) ? 1. : 0.)-t[j+N*i]
+                            - 2.*i2*M(j,i)/3)*M(l,k)/3.)
+                / pow(det, scalar_type(2)/scalar_type(3));
+    }
+  };
+
+  // Right-Cauchy-Green operator (F^{T}F)
+  struct Right_Cauchy_Green_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2) return false;
+      ga_init_square_matrix(sizes, args[0]->sizes()[1]);
+      return true;
+    }
+    
+    // Value : F^{T}F
+    void value(const arg_list &args, base_tensor &result) const {
+      // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type j = 0; j < n; ++j)
+        for (size_type i = 0; i < n; ++i, ++it) {
+          *it = scalar_type(0);
+          for (size_type k = 0; k < m; ++k)
+            *it += (*(args[0]))[i*m+k] *  (*(args[0]))[j*m+k];
+        }
+    }
+
+    // Derivative : F{kj}delta{li}+F{ki}delta{lj}
+    // (comes from H -> H^{T}F + F^{T}H)
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const { // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type l = 0; l < n; ++l)
+        for (size_type k = 0; k < m; ++k)
+          for (size_type j = 0; j < n; ++j)
+            for (size_type i = 0; i < n; ++i, ++it) {
+              *it = scalar_type(0);
+              if (l == i) *it += (*(args[0]))[j*m+k];
+              if (l == j) *it += (*(args[0]))[i*m+k];
+            }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative :
+    // A{ijklop}=delta{ok}delta{li}delta{pj} + delta{ok}delta{pi}delta{lj}
+    // comes from (H,K) -> H^{T}K + K^{T}H
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type p = 0; p < n; ++p)
+        for (size_type o = 0; o < m; ++o)
+          for (size_type l = 0; l < n; ++l)
+            for (size_type k = 0; k < m; ++k)
+              for (size_type j = 0; j < n; ++j)
+                for (size_type i = 0; i < n; ++i, ++it) {
+                  *it = scalar_type(0);
+                  if (o == k) {
+                    if (l == i && p == j) *it +=  scalar_type(1);
+                    if (p == i && l == j) *it +=  scalar_type(1);
+                  }
+                }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+  };
+
+  // Left-Cauchy-Green operator (FF^{T})
+  struct Left_Cauchy_Green_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2) return false;
+      ga_init_square_matrix(sizes, args[0]->sizes()[0]);
+      return true;
+    }
+    
+    // Value : FF^{T}
+    void value(const arg_list &args, base_tensor &result) const {
+      // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type j = 0; j < m; ++j)
+        for (size_type i = 0; i < m; ++i, ++it) {
+          *it = scalar_type(0);
+          for (size_type k = 0; k < n; ++k)
+            *it += (*(args[0]))[k*m+i] *  (*(args[0]))[k*m+j];
+        }
+    }
+
+    // Derivative : F{jl}delta{ik}+F{il}delta{kj}
+    // (comes from H -> HF^{T} + FH^{T})
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const { // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type l = 0; l < n; ++l)
+        for (size_type k = 0; k < m; ++k)
+          for (size_type j = 0; j < m; ++j)
+            for (size_type i = 0; i < m; ++i, ++it) {
+              *it = scalar_type(0);
+              if (k == i) *it += (*(args[0]))[l*m+j];
+              if (k == j) *it += (*(args[0]))[l*m+i];
+            }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative :
+    // A{ijklop}=delta{ki}delta{lp}delta{oj} + delta{oi}delta{pl}delta{kj}
+    // comes from (H,K) -> HK^{T} + KH^{T}
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type p = 0; p < n; ++p)
+        for (size_type o = 0; o < m; ++o)
+          for (size_type l = 0; l < n; ++l)
+            for (size_type k = 0; k < m; ++k)
+              for (size_type j = 0; j < m; ++j)
+                for (size_type i = 0; i < m; ++i, ++it) {
+                  *it = scalar_type(0);
+                  if (p == l) {
+                    if (k == i && o == j) *it +=  scalar_type(1);
+                    if (o == i && k == j) *it +=  scalar_type(1);
+                  }
+                }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+  };
+
+
+  // Green-Lagrangian operator (F^{T}F-I)/2
+  struct Green_Lagrangian_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2) return false;
+      ga_init_square_matrix(sizes, args[0]->sizes()[1]);
+      return true;
+    }
+    
+    // Value : F^{T}F
+    void value(const arg_list &args, base_tensor &result) const {
+      // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type j = 0; j < n; ++j)
+        for (size_type i = 0; i < n; ++i, ++it) {
+          *it = scalar_type(0);
+          for (size_type k = 0; k < m; ++k)
+            *it += (*(args[0]))[i*m+k]*(*(args[0]))[j*m+k]*scalar_type(0.5);
+          if (i == j) *it -= scalar_type(0.5);
+        }
+    }
+
+    // Derivative : (F{kj}delta{li}+F{ki}delta{lj})/2
+    // (comes from H -> (H^{T}F + F^{T}H)/2)
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const { // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type l = 0; l < n; ++l)
+        for (size_type k = 0; k < m; ++k)
+          for (size_type j = 0; j < n; ++j)
+            for (size_type i = 0; i < n; ++i, ++it) {
+              *it = scalar_type(0);
+              if (l == i) *it += (*(args[0]))[j*m+k]*scalar_type(0.5);
+              if (l == j) *it += (*(args[0]))[i*m+k]*scalar_type(0.5);
+            }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative :
+    // A{ijklop}=(delta{ok}delta{li}delta{pj} + delta{ok}delta{pi}delta{lj})/2
+    // comes from (H,K) -> (H^{T}K + K^{T}H)/2
+    void second_derivative(const arg_list &args, size_type, size_type,
+                           base_tensor &result) const { // to be verified
+      size_type m = args[0]->sizes()[0], n = args[0]->sizes()[1];
+      base_tensor::iterator it = result.begin();
+      for (size_type p = 0; p < n; ++p)
+        for (size_type o = 0; o < m; ++o)
+          for (size_type l = 0; l < n; ++l)
+            for (size_type k = 0; k < m; ++k)
+              for (size_type j = 0; j < n; ++j)
+                for (size_type i = 0; i < n; ++i, ++it) {
+                  *it = scalar_type(0);
+                  if (o == k) {
+                    if (l == i && p == j) *it +=  scalar_type(0.5);
+                    if (p == i && l == j) *it +=  scalar_type(0.5);
+                  }
+                }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+  };
+
+
+
+
+  // Saint-Venant Kirchhoff tensor:
+  // lambda Tr(E)Id + 2*mu*E with E = (Grad_u+Grad_u'+Grad_u'Grad_u)/2
+  struct Saint_Venant_Kirchhoff_sigma : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 3 || args[0]->sizes().size() != 2 
+          || args[1]->size() != 1 || args[2]->size() != 1 
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_square_matrix(sizes, args[0]->sizes()[0]);
+      return true;
+    }
+    
+    // Value : Tr(E) + 2*mu*E
+    void value(const arg_list &args, base_tensor &result) const {
+      // to be verified
+      size_type N = args[0]->sizes()[0];
+      scalar_type lambda = (*(args[1]))[0], mu = (*(args[2]))[0];
+      base_matrix Gu(N, N), E(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      gmm::mult(gmm::transposed(Gu), Gu, E);
+      gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+      gmm::scale(E, scalar_type(0.5));
+      scalar_type trE = gmm::mat_trace(E);
+      
+      base_tensor::iterator it = result.begin();
+      for (size_type j = 0; j < N; ++j)
+        for (size_type i = 0; i < N; ++i, ++it) {
+          *it = 2*mu*E(i,j);
+          if (i == j) *it += lambda*trE;
+        }
+    }
+
+    // Experimental ... should be moved
+    // Derivative / u: lambda Tr(H + H'*U) Id + mu(H + H' + H'*U + U*H')
+    //                 with U = Grad_u, H = Grad_Test_u
+    // Implementation: A{ijkl} = lambda(delta{kl}delta{ij} + U{kl}delta{ij})
+    //        + mu(delta{ik}delta{jl} + delta{il}delta{jk} + U{kj}delta{il} +
+    //             U{ki}delta{lj})
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const { // to be verified
+      size_type N = args[0]->sizes()[0];
+      scalar_type lambda = (*(args[1]))[0], mu = (*(args[2]))[0], trE;
+      base_matrix Gu(N, N), E(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      if (nder > 1) {
+        gmm::mult(gmm::transposed(Gu), Gu, E);
+        gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+        gmm::scale(E, scalar_type(0.5));
+      }
+      base_tensor::iterator it = result.begin();
+      switch (nder) {
+      case 1: // Derivative with respect to u
+        for (size_type l = 0; l < N; ++l)
+          for (size_type k = 0; k < N; ++k)
+            for (size_type j = 0; j < N; ++j)
+              for (size_type i = 0; i < N; ++i, ++it) {
+                *it = scalar_type(0);
+                if (i == j && k == l) *it += lambda;
+                if (i == j) *it += lambda*Gu(k,l);
+                if (i == k && j == l) *it += mu;
+                if (i == l && j == k) *it += mu;
+                if (i == l) *it += mu*Gu(k,j);
+                if (l == j) *it += mu*Gu(k,i);
+              }
+        break;
+      case 2: // Derivative with respect to lambda: Tr(E)Id
+        trE = gmm::mat_trace(E);
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it) {
+            *it = scalar_type(0); if (i == j) *it += trE;
+          }
+        break;
+      case 3: // Derivative with respect to mu: 2E
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it) {
+            *it += 2*E(i,j);
+          }
+        break;
+      default: GMM_ASSERT1(false, "Internal error");
+      }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative :
+    // A{ijklop}=delta{ok}delta{li}delta{pj} + delta{ok}delta{pi}delta{lj}
+    // comes from (H,K) -> H^{T}K + K^{T}H
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+  bool init_predef_operators(void) {
+
+    ga_predef_operator_tab &PREDEF_OPERATORS
+      = dal::singleton<ga_predef_operator_tab>::instance();
+    
+    PREDEF_OPERATORS.add_method("Matrix_i2", new matrix_i2_operator());
+    PREDEF_OPERATORS.add_method("Matrix_j1", new matrix_j1_operator());
+    PREDEF_OPERATORS.add_method("Matrix_j2", new matrix_j2_operator());
+    PREDEF_OPERATORS.add_method("Right_Cauchy_Green",
+                                new Right_Cauchy_Green_operator());
+    PREDEF_OPERATORS.add_method("Left_Cauchy_Green",
+                                new Left_Cauchy_Green_operator());
+    PREDEF_OPERATORS.add_method("Green_Lagrangian",
+                                new Green_Lagrangian_operator());
+    PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
+                                new Saint_Venant_Kirchhoff_sigma());
+    
+    return true;
+  }
+
+
+
+
+
+  static bool predef_operators_initialized = init_predef_operators();
 
 
 

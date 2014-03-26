@@ -74,6 +74,18 @@ namespace getfem {
     virtual ~ga_nonlinear_operator() {}
   };
 
+  struct ga_predef_operator_tab {
+    typedef std::map<std::string, ga_nonlinear_operator*> T;
+    std::map<std::string, ga_nonlinear_operator*> tab;
+    
+   void add_method(const std::string &name, ga_nonlinear_operator *pt)
+    { tab[name] = pt; }
+    ~ga_predef_operator_tab() {
+      for (T::iterator it = tab.begin(); it != tab.end(); ++it)
+        delete it->second;
+    }
+  };
+
   //=========================================================================
   // For user predefined scalar functions.
   //=========================================================================
