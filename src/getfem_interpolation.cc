@@ -61,7 +61,7 @@ namespace getfem {
     scalar_type mult = scalar_type(1);
 
     do {
-      for (dal::bv_visitor j(rg_source.index()); !j.finished(); ++j) {
+      for (dal::bv_visitor_c j(rg_source.index()); !j.finished(); ++j) {
         if (mult > scalar_type(1) && !(cv_on_bound.is_in(j))) continue;
         bgeot::pgeometric_trans pgt = msh.trans_of_convex(j);
         bounding_box(min, max, msh.points_of_convex(j), pgt);
