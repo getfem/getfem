@@ -1170,20 +1170,21 @@ namespace getfem {
       case 3: name << "IM_TETRAHEDRON"; break;
       case 4: name << "IM_SIMPLEX4D"; break;
       default: GMM_ASSERT1(false, "no approximate integration method "
-			   "for simplexes of dimension " << n);
+                           "for simplexes of dimension " << n);
       }
       for (size_type k = degree; k < size_type(degree+10); ++k) {
-	pintegration_method im = 0;
-	std::stringstream name2; name2 << name.str() << "(" << k << ")";
-	im = int_method_descriptor(name2.str(), false);
-	if (im) return im;
+        pintegration_method im = 0;
+        std::stringstream name2; name2 << name.str() << "(" << k << ")";
+        im = int_method_descriptor(name2.str(), false);
+        if (im) return im;
       }
       GMM_ASSERT1(false, "could not find an " << name.str()
-		  << " of degree >= " << int(degree));
-    } else if (cvs->is_product(&a,&b)) {
+                  << " of degree >= " << int(degree));
+    } else if (cvs->is_product(&a,&b) ||
+               (cvs->basic_structure() && cvs->basic_structure()->is_product(&a,&b))) {
       name << "IM_PRODUCT(" 
-	   << name_of_int_method(classical_approx_im_(a,degree)) << ","
-	   << name_of_int_method(classical_approx_im_(b,degree)) << ")";
+           << name_of_int_method(classical_approx_im_(a,degree)) << ","
+           << name_of_int_method(classical_approx_im_(b,degree)) << ")";
     } else GMM_ASSERT1(false, "unknown convex structure!");
     return int_method_descriptor(name.str());
   }
