@@ -197,9 +197,10 @@ namespace getfem {
 
 
   /* may be optimized .. */
-  dal::bit_vector  mesh_region::index() const 
+  const dal::bit_vector&  mesh_region::index() const 
   {
-    dal::bit_vector convex_index;
+    dal::bit_vector& convex_index = rp().index_.thrd_cast();
+    convex_index.clear();
     for (const_iterator it = begin(); it != end(); ++it) 
     {
       if (it->second.any()) convex_index.add(it->first);

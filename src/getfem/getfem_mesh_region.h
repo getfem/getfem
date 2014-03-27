@@ -75,6 +75,7 @@ namespace getfem {
 
     struct impl {
       mutable map_t m;
+      mutable omp_distribute<dal::bit_vector> index_;
     };
 
 #ifdef GETFEM_HAVE_BOOST
@@ -189,7 +190,7 @@ namespace getfem {
 
     /**index of the region convexes, or the convexes from the partition on the 
     current thread*/
-    dal::bit_vector index() const;
+    const dal::bit_vector& index() const;
     void add(const dal::bit_vector &bv);
     void add(size_type cv, size_type f = size_type(-1));
     void sup(size_type cv, size_type f = size_type(-1));
