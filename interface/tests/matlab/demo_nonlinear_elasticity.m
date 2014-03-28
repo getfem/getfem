@@ -17,12 +17,17 @@
 
 clear pde;
 gf_workspace('clear all');
+gf_util('trace level', 1);
 
 % set a custom colormap
-r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
+r=[0.7 .7 .7]; l = r(end,:); s=63; s1=20; s2=25; s3=48;s4=55;
+for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r(end+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end;
+colormap(r);
 
 new_bricks = true; % new brick system or old one.
 dirichlet_version = 1; % 1 = simplification, 2 = penalisation
+drawing = true;
+test_tangent_matrix = false;
 
 incompressible = false;
 
@@ -96,12 +101,12 @@ pidbot=find(abs(P(2,:)-0)<1e-6); % find those on the bottom
 
 
 % build the list of faces from the list of points
-ftop=gf_mesh_get(m,'faces from pid',pidtop); 
-fbot=gf_mesh_get(m,'faces from pid',pidbot);
+ftop=gf_mesh_get(m, 'faces from pid', pidtop); 
+fbot=gf_mesh_get(m, 'faces from pid', pidbot);
 % assign boundary numbers
-gf_mesh_set(m,'boundary',1,ftop);
-gf_mesh_set(m,'boundary',2,fbot);
-gf_mesh_set(m,'boundary',3,[ftop fbot]);
+gf_mesh_set(m,'boundary', 1, ftop);
+gf_mesh_set(m,'boundary', 2, fbot);
+gf_mesh_set(m,'boundary', 3, [ftop fbot]);
 
 
 
@@ -111,18 +116,34 @@ if (new_bricks)
   gf_model_set(md,'add initialized data','params', params);
   gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
   % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-  %            'sqr(Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)))/8 + Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)*(Grad_u+Grad_u''+Grad_u''*Grad_u)/4)');
+  %              'sqr(Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)))/8 +
+  %              Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)*(Grad_u+Grad_u''+Grad_u''*Grad_u)/4)');
   % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-  %            'sqr(Trace((Grad_u+Grad_u''+Grad_u''*Grad_u)))/8');
+  %             'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4');
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  %             '((Id(meshdim)+Grad_u)*((2*Trace(Grad_u)+Norm_sqr(Grad_u))*
+  %             Id(meshdim) + 2*(Grad_u+Grad_u''+Grad_u''*Grad_u))):Grad_Test_u');
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  %             '((Id(meshdim)+Grad_u)*(Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u');
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+  %             '((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_sigma(Grad_u,params))):Grad_Test_u');
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim, 'Saint_Venant_Kirchhoff_potential(Grad_u,params)');
+  
   
   
  
            
   if (incompressible)
+      
     mfp = gf_Mesh_Fem(m,1); 
     gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
     gf_model_set(md, 'add fem variable', 'p', mfp);
-    gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p')
+    gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p');
+
+    % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+    %                 'p*(1-Det(Id(meshdim)+Grad_u))');
+    % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+    %                 '-p*Det(Id(meshdim)+Grad_u)*(Inv(Id(meshdim)+Grad_u))'':Grad_Test_u + Test_p*(1-Det(Id(meshdim)+Grad_u))');
   end
  
   if (dirichlet_version == 1)
@@ -225,7 +246,11 @@ for step=1:nbstep,
     if (new_bricks)
       gf_model_set(md, 'variable', 'DirichletData', R);
       gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
-      % full(gf_model_get(md, 'tangent matrix'))
+      
+      if (test_tangent_matrix)
+        gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.0001);
+      end;
+       
       U = gf_model_get(md, 'variable', 'u');
       VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
       % sigma = gf_model_get(md, 'compute second Piola Kirchhoff tensor', 'u', lawname, 'params', mfdu);
@@ -246,17 +271,19 @@ for step=1:nbstep,
   end;
   disp(sprintf('step %d/%d : |U| = %g',step,nbstep,norm(U)));
 
-  gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8); colorbar;
-  axis([-3     6     0    20    -2     2]); caxis([0 .3]);
-  view(30+20*w, 23+30*w);  
-  campos([50 -30 80]);
-  camva(8);
-  camup
-  camlight; 
-  axis off;
-  pause(1); 
-  % save a picture..
-  %print(gcf, '-dpng', '-r150', sprintf('torsion%03d',step));
+  if (drawing)
+    gf_plot(mfdu,VM,'mesh','off', 'cvlst',gf_mesh_get(mfdu,'outer faces'), 'deformation',U,'deformation_mf',mfu,'deformation_scale', 1, 'refine', 8); colorbar;
+    axis([-3     6     0    20    -2     2]); caxis([0 .3]);
+    view(30+20*w, 23+30*w);  
+    campos([50 -30 80]);
+    camva(8);
+    camup
+    camlight; 
+    axis off;
+    pause(1);
+    % save a picture..
+    %print(gcf, '-dpng', '-r150', sprintf('torsion%03d',step));
+  end
 end;
   
 disp('end of computations, you can now replay the animation with')
