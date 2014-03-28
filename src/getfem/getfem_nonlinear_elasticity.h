@@ -125,7 +125,6 @@ namespace getfem {
       caracterized by Ex, Ey, vYX and G, with optional orthotropic prestresses.
       due to Jean-Yves Heddebaut <jyhed@alpino.be>
   */
-
   struct membrane_elastic_law : 
     public abstract_hyperelastic_law {
     virtual scalar_type strain_energy(const base_matrix &E,

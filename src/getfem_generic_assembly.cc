@@ -1720,8 +1720,7 @@ namespace getfem {
     PREDEF_OPERATORS.add_method("Norm", new norm_operator());
     PREDEF_OPERATORS.add_method("Norm_sqr", new norm_sqr_operator());
     PREDEF_OPERATORS.add_method("Det", new det_operator());
-    
-    PREDEF_OPERATORS.add_method("Inverse", new inverse_operator());
+    PREDEF_OPERATORS.add_method("Inv", new inverse_operator());
     return true;
   }
 

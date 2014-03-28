@@ -1756,12 +1756,184 @@ namespace getfem {
 
 
 
+  struct AHL_wrapper_sigma : public ga_nonlinear_operator {
+    abstract_hyperelastic_law *AHL;
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() != 2 
+          || args[1]->size() != AHL->nb_params()
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_square_matrix(sizes, args[0]->sizes()[0]);
+      return true;
+    }
+
+    // Value :
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_vector params(AHL->nb_params());
+      gmm::copy(args[1]->as_vector(), params);
+      base_matrix Gu(N, N), E(N,N), sigma(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      gmm::mult(gmm::transposed(Gu), Gu, E);
+      gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+      gmm::scale(E, scalar_type(0.5));
+      gmm::add(gmm::identity_matrix(), Gu);
+      scalar_type det = gmm::lu_det(Gu);
+
+      AHL->sigma(E, sigma, params, det);
+      gmm::copy(sigma.as_vector(), result.as_vector());
+    }
+
+    // Derivative :
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_vector params(AHL->nb_params());
+      gmm::copy(args[1]->as_vector(), params);
+      base_tensor grad_sigma(N, N, N, N);
+      base_matrix Gu(N, N), E(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      gmm::mult(gmm::transposed(Gu), Gu, E);
+      gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+      gmm::scale(E, scalar_type(0.5));
+      gmm::add(gmm::identity_matrix(), Gu);
+      scalar_type det = gmm::lu_det(Gu);
+
+      GMM_ASSERT1(nder == 1, "Sorry, the derivative of this hyperelastic "
+                  "law with respect to its parameters is not available.");
+
+      AHL->grad_sigma(E, grad_sigma, params, det);
+      
+      base_tensor::iterator it = result.begin();
+      for (size_type l = 0; l < N; ++l)
+        for (size_type k = 0; k < N; ++k)
+          for (size_type j = 0; j < N; ++j)
+            for (size_type i = 0; i < N; ++i, ++it) {
+              *it = scalar_type(0);
+              for (size_type m = 0; m < N; ++m)
+                *it += grad_sigma(i,j,m,l) * Gu(k, m); // to be optimized
+            }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+
+
+    // Second derivative : not implemented (not necessary)
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+
+    AHL_wrapper_sigma(abstract_hyperelastic_law *A) : AHL(A) {}
+
+    virtual ~AHL_wrapper_sigma() { delete AHL; }
+
+  };
+
+
+  struct AHL_wrapper_potential : public ga_nonlinear_operator {
+    abstract_hyperelastic_law *AHL;
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() != 2 
+          || args[1]->size() != AHL->nb_params()
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_scalar(sizes);
+      return true;
+    }
+
+    // Value :
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_vector params(AHL->nb_params());
+      gmm::copy(args[1]->as_vector(), params);
+      base_matrix Gu(N, N), E(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      gmm::mult(gmm::transposed(Gu), Gu, E);
+      gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+      gmm::scale(E, scalar_type(0.5));
+      gmm::add(gmm::identity_matrix(), Gu);
+      scalar_type det = gmm::lu_det(Gu); // not necessary here
+
+      result[0] = AHL->strain_energy(E, params, det);
+    }
+
+    // Derivative :
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_vector params(AHL->nb_params());
+      gmm::copy(args[1]->as_vector(), params);
+      base_matrix Gu(N, N), E(N,N), sigma(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      gmm::mult(gmm::transposed(Gu), Gu, E);
+      gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+      gmm::scale(E, scalar_type(0.5));
+      gmm::add(gmm::identity_matrix(), Gu);
+      scalar_type det = gmm::lu_det(Gu); // not necessary here
+
+      GMM_ASSERT1(nder == 1, "Sorry, Cannot derive the potential with "
+                  "respect to law parameters.");
+
+      AHL->sigma(E, sigma, params, det);
+      gmm::mult(Gu, sigma, E);
+      gmm::copy(E.as_vector(), result.as_vector());
+    }
+
+
+    // Second derivative :
+    void second_derivative(const arg_list &args, size_type nder1,
+                           size_type nder2, base_tensor &result) const {
+      
+      size_type N = args[0]->sizes()[0];
+      base_vector params(AHL->nb_params());
+      gmm::copy(args[1]->as_vector(), params);
+      base_tensor grad_sigma(N, N, N, N);
+      base_matrix Gu(N, N), E(N,N), sigma(N,N);
+      gmm::copy(args[0]->as_vector(), Gu.as_vector());
+      gmm::mult(gmm::transposed(Gu), Gu, E);
+      gmm::add(Gu, E); gmm::add(gmm::transposed(Gu), E);
+      gmm::scale(E, scalar_type(0.5));
+      gmm::add(gmm::identity_matrix(), Gu);
+      scalar_type det = gmm::lu_det(Gu);
+
+      GMM_ASSERT1(nder1 == 1 && nder2 == 1, "Sorry, Cannot derive the "
+                  "potential with respect to law parameters.");
+
+
+      AHL->sigma(E, sigma, params, det);
+      AHL->grad_sigma(E, grad_sigma, params, det);
+      
+      base_tensor::iterator it = result.begin();
+      for (size_type l = 0; l < N; ++l)
+        for (size_type k = 0; k < N; ++k)
+          for (size_type j = 0; j < N; ++j)
+            for (size_type i = 0; i < N; ++i, ++it) {
+              *it = scalar_type(0);
+              if (i == k) *it += sigma(j,l);
+
+              for (size_type m = 0; m < N; ++m) // to be optimized
+                for (size_type n = 0; n < N; ++n)
+                  *it += grad_sigma(n,j,m,l) * Gu(k, m) * Gu(i, n);
+            }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+
+    }
+
+    AHL_wrapper_potential(abstract_hyperelastic_law *A) : AHL(A) {}
+
+    virtual ~AHL_wrapper_potential() { delete AHL; }
+  };
+
+
+
+
+
+
+
   // Saint-Venant Kirchhoff tensor:
   // lambda Tr(E)Id + 2*mu*E with E = (Grad_u+Grad_u'+Grad_u'Grad_u)/2
   struct Saint_Venant_Kirchhoff_sigma : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
-      if (args.size() != 3 || args[0]->sizes().size() != 2 
-          || args[1]->size() != 1 || args[2]->size() != 1 
+      if (args.size() != 2 || args[0]->sizes().size() != 2 
+          || args[1]->size() != 2
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
       ga_init_square_matrix(sizes, args[0]->sizes()[0]);
       return true;
@@ -1769,9 +1941,8 @@ namespace getfem {
     
     // Value : Tr(E) + 2*mu*E
     void value(const arg_list &args, base_tensor &result) const {
-      // to be verified
       size_type N = args[0]->sizes()[0];
-      scalar_type lambda = (*(args[1]))[0], mu = (*(args[2]))[0];
+      scalar_type lambda = (*(args[1]))[0], mu = (*(args[1]))[1];
       base_matrix Gu(N, N), E(N,N);
       gmm::copy(args[0]->as_vector(), Gu.as_vector());
       gmm::mult(gmm::transposed(Gu), Gu, E);
@@ -1787,16 +1958,15 @@ namespace getfem {
         }
     }
 
-    // Experimental ... should be moved
     // Derivative / u: lambda Tr(H + H'*U) Id + mu(H + H' + H'*U + U*H')
     //                 with U = Grad_u, H = Grad_Test_u
     // Implementation: A{ijkl} = lambda(delta{kl}delta{ij} + U{kl}delta{ij})
     //        + mu(delta{ik}delta{jl} + delta{il}delta{jk} + U{kj}delta{il} +
     //             U{ki}delta{lj})
     void derivative(const arg_list &args, size_type nder,
-                    base_tensor &result) const { // to be verified
+                    base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
-      scalar_type lambda = (*(args[1]))[0], mu = (*(args[2]))[0], trE;
+      scalar_type lambda = (*(args[1]))[0], mu = (*(args[1]))[1], trE;
       base_matrix Gu(N, N), E(N,N);
       gmm::copy(args[0]->as_vector(), Gu.as_vector());
       if (nder > 1) {
@@ -1820,14 +1990,14 @@ namespace getfem {
                 if (l == j) *it += mu*Gu(k,i);
               }
         break;
-      case 2: // Derivative with respect to lambda: Tr(E)Id
+      case 2:
+        // Derivative with respect to lambda: Tr(E)Id
         trE = gmm::mat_trace(E);
         for (size_type j = 0; j < N; ++j)
           for (size_type i = 0; i < N; ++i, ++it) {
             *it = scalar_type(0); if (i == j) *it += trE;
           }
-        break;
-      case 3: // Derivative with respect to mu: 2E
+        // Derivative with respect to mu: 2E
         for (size_type j = 0; j < N; ++j)
           for (size_type i = 0; i < N; ++i, ++it) {
             *it += 2*E(i,j);
@@ -1838,9 +2008,7 @@ namespace getfem {
       GMM_ASSERT1(it == result.end(), "Internal error");
     }
     
-    // Second derivative :
-    // A{ijklop}=delta{ok}delta{li}delta{pj} + delta{ok}delta{pi}delta{lj}
-    // comes from (H,K) -> H^{T}K + K^{T}H
+    // Second derivative : not implemented
     void second_derivative(const arg_list &, size_type, size_type,
                            base_tensor &) const {
       GMM_ASSERT1(false, "Sorry, second derivative not implemented");
@@ -1870,9 +2038,42 @@ namespace getfem {
                                 new Left_Cauchy_Green_operator());
     PREDEF_OPERATORS.add_method("Green_Lagrangian",
                                 new Green_Lagrangian_operator());
+
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
                                 new Saint_Venant_Kirchhoff_sigma());
-    
+    PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_potential",
+      new AHL_wrapper_potential(new SaintVenant_Kirchhoff_hyperelastic_law()));
+
+    PREDEF_OPERATORS.add_method("Generalized_Blatz_Ko_sigma",
+      new AHL_wrapper_sigma(new generalized_Blatz_Ko_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method("Generalized_Blatz_Ko_potential",
+      new AHL_wrapper_potential(new generalized_Blatz_Ko_hyperelastic_law()));
+
+    PREDEF_OPERATORS.add_method("Ciarlet_Geymonat_sigma",
+      new AHL_wrapper_sigma(new Ciarlet_Geymonat_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method("Ciarlet_Geymonat_potential",
+      new AHL_wrapper_potential(new Ciarlet_Geymonat_hyperelastic_law()));
+
+    PREDEF_OPERATORS.add_method("Incompressible_Mooney_Rivlin_sigma",
+      new AHL_wrapper_sigma(new Mooney_Rivlin_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method("Incompressible_Mooney_Rivlin_potential",
+      new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law()));
+
+    PREDEF_OPERATORS.add_method("Compressible_Mooney_Rivlin_sigma",
+      new AHL_wrapper_sigma(new Mooney_Rivlin_hyperelastic_law(true)));
+    PREDEF_OPERATORS.add_method("Compressible_Mooney_Rivlin_potential",
+      new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(true)));
+
+    PREDEF_OPERATORS.add_method("Incompressible_Neo_Hookean_sigma",
+      new AHL_wrapper_sigma(new Mooney_Rivlin_hyperelastic_law(false,true)));
+    PREDEF_OPERATORS.add_method("Incompressible_Neo_Hookean_potential",
+    new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(false,true)));
+
+    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_sigma",
+      new AHL_wrapper_sigma(new Neo_Hookean_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_potential",
+      new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law()));
+
     return true;
   }
 
