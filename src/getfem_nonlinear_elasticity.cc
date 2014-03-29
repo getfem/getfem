@@ -408,9 +408,11 @@ namespace getfem {
     size_type N = gmm::mat_nrows(E);
     for (size_type i = 0; i < N; ++i)
       for (size_type l = 0; l < N; ++l) {
-	result(i, i, l, l) = params[0];
-	result(i, l, i, l) += params[1];
-	result(i, l, l, i) += params[1];
+        result(i, i, l, l) += params[0];
+	result(i, l, i, l) += params[1]/scalar_type(2);
+	result(i, l, l, i) += params[1]/scalar_type(2);
+	result(l, i, i, l) += params[1]/scalar_type(2);
+        result(l, i, l, i) += params[1]/scalar_type(2);
       }
   }
 
@@ -1897,7 +1899,6 @@ namespace getfem {
       GMM_ASSERT1(nder1 == 1 && nder2 == 1, "Sorry, Cannot derive the "
                   "potential with respect to law parameters.");
 
-
       AHL->sigma(E, sigma, params, det);
       AHL->grad_sigma(E, grad_sigma, params, det);
       
@@ -1907,7 +1908,7 @@ namespace getfem {
           for (size_type j = 0; j < N; ++j)
             for (size_type i = 0; i < N; ++i, ++it) {
               *it = scalar_type(0);
-              if (i == k) *it += sigma(j,l);
+              if (i == k) *it += sigma(l,j);
 
               for (size_type m = 0; m < N; ++m) // to be optimized
                 for (size_type n = 0; n < N; ++n)
@@ -1921,11 +1922,6 @@ namespace getfem {
 
     virtual ~AHL_wrapper_potential() { delete AHL; }
   };
-
-
-
-
-
 
 
   // Saint-Venant Kirchhoff tensor:
@@ -2020,10 +2016,6 @@ namespace getfem {
 
 
 
-
-
-
-
   bool init_predef_operators(void) {
 
     ga_predef_operator_tab &PREDEF_OPERATORS
@@ -2041,6 +2033,8 @@ namespace getfem {
 
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
                                 new Saint_Venant_Kirchhoff_sigma());
+    // PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
+    //  new AHL_wrapper_sigma(new SaintVenant_Kirchhoff_hyperelastic_law()));
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_potential",
       new AHL_wrapper_potential(new SaintVenant_Kirchhoff_hyperelastic_law()));
 

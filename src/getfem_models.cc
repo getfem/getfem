@@ -1546,6 +1546,7 @@ namespace getfem {
 
     // Generic expressions
     if (generic_expressions.size()) {
+      // cout << "generic assembly " << version << endl;
       ga_workspace workspace(*this);
 
       std::map<std::pair<const mesh *, size_type>,  mesh_region> mpi_reg;
@@ -1562,6 +1563,8 @@ namespace getfem {
         }
         workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
       }
+
+      // cout << "act. assembly" << endl;
 
       if (version & BUILD_RHS) {
         if (is_complex()) {
@@ -1582,7 +1585,7 @@ namespace getfem {
           workspace.assembly(2);
         }
       }
-
+      // cout << "act. assembly done" << endl;
     }
 
     // Post simplification for dof constraints

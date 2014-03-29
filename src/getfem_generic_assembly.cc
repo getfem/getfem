@@ -2981,6 +2981,7 @@ namespace getfem {
     scalar_type &E, &coeff;
      virtual void exec(void) {
       GA_DEBUG_INFO("Instruction: scalar term assembly\n");
+      GMM_ASSERT1(false , "oups");
       E += t[0] * coeff;
      }
     ga_instruction_scalar_assembly(base_tensor &t_, scalar_type &E_,
@@ -3000,7 +3001,8 @@ namespace getfem {
       mesh_fem::ind_dof_ct ct = mf.ind_basic_dof_of_element(ctx.convex_num());
       for (size_type i = 0; i < ct.size(); ++i)
         V[I.first()+ct[i]] += t[i] * coeff;
-        
+      // if (ctx.convex_num() == 1)
+      //         cout << "Vec elem : " << t << endl;
      }
     ga_instruction_vector_assembly(base_tensor &t_, base_vector &V_,
                                    fem_interpolation_context &ctx_,
@@ -3039,6 +3041,8 @@ namespace getfem {
           gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
         }
         if (ipt == nbpt-1) {
+          // if (ctx.convex_num() == 1)
+//             cout << "Mat elem : " << elem << endl;
           mesh_fem::ind_dof_ct ct1
             = mf1.ind_basic_dof_of_element(ctx.convex_num());
           mesh_fem::ind_dof_ct ct2
@@ -3145,8 +3149,8 @@ namespace getfem {
         vars.insert(pnode->name);
     }
     for (size_type i = 0; i < pnode->children.size(); ++i)
-      found_var = found_var ||
-        ga_extract_variables(pnode->children[i], workspace, vars);
+      found_var = ga_extract_variables(pnode->children[i], workspace, vars)
+        || found_var;
     return found_var;
   }
 
@@ -3211,7 +3215,9 @@ namespace getfem {
              it != expr_variables.end(); ++it) {
           if (!(is_constant(*it))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
+            // cout << "Derivation with respect to " << *it << " of " << ga_tree_to_string(dtree) << endl;
             ga_derivation(dtree, *this, *it, 1+order);
+            // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             ga_semantic_analysis(expr, dtree, *this, mim.linked_mesh().dim(),
                                  false);
             add_tree(dtree, mim, rg, expr);
@@ -3259,7 +3265,6 @@ namespace getfem {
     ga_read_string(expr, tree);
     ga_semantic_analysis(expr, tree, *this, 1, false);
     if (tree.root) {
-      
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid scalar expression");
       add_tree(tree, dummy_mim, 0, expr, false);
@@ -3309,9 +3314,14 @@ namespace getfem {
   
 
   void ga_workspace::assembly(size_type order) {
+
+    // scalar_type time = gmm::uclock_sec();
+
     ga_instruction_set gis;
     ga_compile(*this, gis, order);
     size_type ndof = gis.nb_dof, max_dof =  gis.max_dof;
+    // cout << "Compile time " << gmm::uclock_sec()-time << endl;             
+    // time = gmm::uclock_sec();
 
     if (order == 2) {
       K.resize(max_dof);
@@ -3322,7 +3332,13 @@ namespace getfem {
        gmm::clear(unreduced_V); gmm::resize(unreduced_V, ndof);
     }
     E = 0;
+    // cout << "Init time " << gmm::uclock_sec()-time << endl;
+    // time = gmm::uclock_sec();
+    
+    
     ga_exec(gis);
+    // cout << "Exec time " << gmm::uclock_sec()-time << endl;
+    
 
     // Deal with reduced fems.
     if (order) {

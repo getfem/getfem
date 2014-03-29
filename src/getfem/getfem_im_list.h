@@ -2,7 +2,7 @@
 
 /*===========================================================================
 
- Copyright (C) 2002-2013 Yves Renard
+ Copyright (C) 2002-2014 Yves Renard
 
  This file is a part of GETFEM++
 
