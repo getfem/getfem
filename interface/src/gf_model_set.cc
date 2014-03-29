@@ -1554,6 +1554,32 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ind = ('add finite strain incompressibility brick', @tmim mim, @str varname, @str multname_pressure[, @int region])
+    Add an finite strain incompressibility condition on `variable` (for large
+    strain elasticity). `multname_pressure`
+    is a variable which represent the pressure. Be aware that an inf-sup
+    condition between the finite element method describing the pressure and the
+    primal variable has to be satisfied. `region` is an optional mesh region on
+    which the term is added. If it is not specified, it is added on the
+    whole mesh. Return the brick index in the model.
+    This brick is equivalent to the ``nonlinear incompressibility brick`` but
+    uses the high-level generic assembly adding the term
+    ``p*(1-Det(Id(meshdim)+Grad_u))`` if ``p`` is the multiplier and
+    ``u`` the variable which represent the displacement.@*/
+    sub_command
+      ("add finite strain incompressibility brick", 3, 4, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname = in.pop().to_string();
+       std::string multname = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind
+       = getfem::add_finite_strain_incompressibility_brick
+       (md->model(), gfi_mim->mesh_im(), varname, multname, region)
+       + config::base_index();
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
 
     /*@SET ind = ('add bilaplacian brick', @tmim mim, @str varname, @str dataname [, @int region])
       Add a bilaplacian brick on the variable

@@ -633,7 +633,20 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region = size_type(-1));
 
-
+  /** Add a finite strain incompressibility term (for large strain elasticity)
+      to the model with respect to the variable
+      `varname` (the displacement) and `multname` (the pressure).
+      High-level generic assembly version.
+  */
+  inline size_type add_finite_strain_incompressibility_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region = size_type(-1)) {
+    std::string expr = "(" + multname + ")*(1-Det(Id(meshdim)+Grad_"
+      + varname + "))";
+    return add_nonlinear_generic_assembly_brick
+      (md, mim, expr, region, true, false,
+       "Finite strain incompressibility brick");
+  }
 
 
 

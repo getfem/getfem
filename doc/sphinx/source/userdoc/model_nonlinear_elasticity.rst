@@ -339,7 +339,15 @@ A Lagrange multiplier representing the pressure is introduced in a mixed formula
     (md, mim, varname, multname, region = -1)
 
 
-
-
 where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model on which the incompressibility condition is added, ``multanme`` the multiplier variable corresponding to the pressure (be aware that at least a linear Ladyzhenskaja-Babuska-Brezzi inf-sup condition is satisfied between the f.e.m. of the variable and the one of the multiplier). ``region`` is an optional parameter correponding to the mesh region on which the term is considered (by default, all the mesh).
 
+
+High-level generic assembly versions
+++++++++++++++++++++++++++++++++++++
+
+For incompressibility ::
+
+ ind = add_finite_strain_incompressibility_brick
+    (md, mim, varname, multname, region = -1);
+
+In fact this brick just add the term ``p*(1-Det(Id(meshdim)+Grad_u))`` if ``p`` is the multiplier and ``u`` the variable which represent the displacement.
