@@ -1113,7 +1113,7 @@ namespace getfem {
   void import_mesh(const std::string& filename, mesh& msh) {
     size_type pos = filename.find_last_of(":");
     if (pos != std::string::npos)
-      getfem::import_mesh(filename.substr(pos+1), filename.substr(0,pos-1), msh);
+      getfem::import_mesh(filename.substr(pos+1), filename.substr(0,pos), msh);
     else
       msh.read_from_file(filename);
   }
