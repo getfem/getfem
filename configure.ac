@@ -52,7 +52,7 @@ AC_ARG_WITH(optimization,
 dnl ---------------------------PARA LEVEL--------------------------
 paralevel=0
 AC_ARG_ENABLE(paralevel,
-   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version fo Getfem (use MPI and METIS)])],
+   [AS_HELP_STRING([--enable-paralevel[=level]],[enable the parallel version of GetFEM++ (use MPI and METIS)])],
    [ case $enableval in
         yes | "") paralevel=2;;
         no) ;;
@@ -63,7 +63,7 @@ AC_ARG_ENABLE(paralevel,
 if test $paralevel -ge 1; then
   CPPFLAGS="$CPPFLAGS -DGETFEM_PARA_LEVEL=$paralevel"
 fi;
-dnl ---------------------------END OF PARA LEVEL--------------------------
+dnl ---------------------------END OF PARA LEVEL-------------------
 
 
 
@@ -336,6 +336,30 @@ fi
 dnl ACX_BLAS([ echo "OK, You have working BLAS libs !"; HAVE_VENDOR_BLAS=1 ], [echo "YOU DONT HAVE BLAS! Using a cheap replacement" ; HAVE_VENDOR_BLAS=0])
 LIBS="$LIBS $BLAS_LIBS"
 CPPFLAGS="$CPPFLAGS -DGMM_USES_BLAS"
+
+
+dnl ---------------------------OPENMP------------------------------
+useopenmp=0
+AC_ARG_ENABLE(openmp,
+   [AS_HELP_STRING([--enable-openmp],[enable the multihreaded version of GetFEM++])],
+   [ case $enableval in
+        yes | "") useopenmp=YES ;;
+        no) useopenmp=NO ;;
+        *) AC_MSG_ERROR([bad value ${enableval} for --enable-openmp]) ;;
+     esac],
+   [useopenmp=NO]
+)
+
+if test x$useopenmp = xYES; then
+  AC_OPENMP
+  if test "x$ac_cv_prog_cxx_openmp" != "xunsupported" && test "x$ac_cv_prog_cxx_openmp" != "x"; then
+    AC_SUBST(AM_CXXFLAGS,"$OPENMP_CXXFLAGS")
+    CPPFLAGS="$CPPFLAGS -DGETFEM_HAVE_OPENMP"
+  else
+    AC_MSG_ERROR([OpenMP support not found. Use --enable-openmp=no flag to compile GetFEM++ without OpenMP]);
+  fi
+fi;
+dnl ---------------------------END OF OPENMP-----------------------
 
 
 dnl ------------------------------SuperLU config-------------------------
@@ -790,12 +814,24 @@ AC_ARG_ENABLE(boost,
   *) AC_MSG_ERROR([bad value ${enableval} for --enable-boost]) ;;
  esac],[useboost=NO])
 
+if test "x$useboost" = "xNO" -a "x$useopenmp" = "xYES"; then
+  echo "OpenMP version of GetFEM++ requires the boost library, --enable-boost=no will be ignored";
+  useboost=YES
+fi;
+
 if test "x$useboost" = "xYES"; then
-        AX_BOOST_BASE([1.20.0], [], [AC_MSG_ERROR(
-        [Please install boost >= 1.20.0 (system) or use --enable-boost=no to disable it])])
-        AX_BOOST_SYSTEM
-        BOOST_LIBS=$BOOST_SYSTEM_LIB
-        AC_SUBST(BOOST_LIBS)
+  if test "x$useopenmp" = "xYES"; then
+    AX_BOOST_BASE([1.53.0], [], [AC_MSG_ERROR(
+    [Please install boost >= 1.53.0 in order to build GetFEM++ with OpenMP support])])
+    AX_BOOST_SYSTEM
+    AX_BOOST_THREAD
+  else
+    AX_BOOST_BASE([1.20.0], [], [AC_MSG_ERROR(
+    [Please install boost >= 1.20.0 (system) or use --enable-boost=no to disable it])])
+    AX_BOOST_SYSTEM
+  fi;
+  BOOST_LIBS="$BOOST_SYSTEM_LIB $BOOST_THREAD_LIB"
+  AC_SUBST(BOOST_LIBS)
 fi;
 
 
