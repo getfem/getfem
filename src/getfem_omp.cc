@@ -37,7 +37,7 @@ namespace getfem{
   }
 
 
-  region_partition::region_partition(mesh* pm,size_type id) :
+  region_partition::region_partition(mesh* pm, size_type id) :
     pparent_mesh(pm),original_region(0),
     partitions(num_threads())
   {
@@ -48,7 +48,7 @@ namespace getfem{
     //in case mesh is not provided, also don't do anything
     if (!pm) return;
 
-    if (id==-1) {
+    if (id == size_type(-1)) {
       original_region.reset(new mesh_region(pm->convex_index()));
       original_region->set_parent_mesh(pm);
     } else{

@@ -34,17 +34,17 @@ namespace getfem {
 
 
   mesh_region::mesh_region() : p(new impl), id_(size_type(-2)), type_(size_type(-1)),
-    parent_mesh(0), partitioning_allowed(true), index_updated(false)
+    partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();
   }
 
   mesh_region::mesh_region(size_type id__) : id_(id__), type_(size_type(-1)),
-    parent_mesh(0), partitioning_allowed(true), index_updated(false)
+    partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { }
 
   mesh_region::mesh_region(mesh& m, size_type id__, size_type type) : 
-    p(new impl), id_(id__), type_(type), parent_mesh(&m), partitioning_allowed(true),
+    p(new impl), id_(id__), type_(type), partitioning_allowed(true), parent_mesh(&m),
     index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();  
@@ -52,7 +52,7 @@ namespace getfem {
 
   mesh_region::mesh_region(const dal::bit_vector &bv) : 
     p(new impl), id_(size_type(-2)), type_(size_type(-1)),
-    parent_mesh(0), partitioning_allowed(true), index_updated(false)
+    partitioning_allowed(true), parent_mesh(0), index_updated(false)
   { 
     if (me_is_multithreaded_now()) prohibit_partitioning();  
     add(bv); 
@@ -85,7 +85,7 @@ namespace getfem {
 
   mesh_region& mesh_region::operator=(const mesh_region &from) 
   {
-    if (!this->parent_mesh && !from.parent_mesh) 
+    if (!this->parent_mesh && !from.parent_mesh)
     {
       this->id_ = from.id_;
       this->type_ = from.type_;
@@ -150,7 +150,7 @@ namespace getfem {
       = std::ceil(static_cast<scalar_type>(region_size)/
       static_cast<scalar_type >(num_threads()));
     size_type index_begin = partition_size * this_thread();
-    const_iterator it = rp().m.begin(); size_type i;
+    const_iterator it = rp().m.begin();
     for (size_type i=0;i<index_begin;++i) ++it;
     return it;
   }
@@ -164,7 +164,7 @@ namespace getfem {
       = std::ceil(static_cast<scalar_type>(region_size)/
       static_cast<scalar_type >(num_threads()));
     size_type index_end = partition_size * (this_thread() + 1);
-    const_iterator it = rp().m.begin(); size_type i;
+    const_iterator it = rp().m.begin();
     for (size_type i=0;i<index_end && it!=rp().m.end();++i) ++it;
     return it;
   }
@@ -274,7 +274,7 @@ namespace getfem {
   }
 
 
-  void mesh_region::swap_convex(size_type cv1, size_type cv2) 
+  void mesh_region::swap_convex(size_type cv1, size_type cv2)
   {
     map_t::iterator it1 = wp().m.find(cv1), it2 = wp().m.find(cv2),
       ite = wp().m.end();
@@ -348,7 +348,7 @@ namespace getfem {
 
 
   mesh_region mesh_region::intersection(const mesh_region &a, 
-    const mesh_region &b) 
+                                        const mesh_region &b) 
   {
     GMM_TRACE2("intersection of "<<a.id()<<" and "<<b.id());
     mesh_region r;
@@ -390,7 +390,7 @@ namespace getfem {
   }
 
   mesh_region mesh_region::merge(const mesh_region &a, 
-    const mesh_region &b) 
+                                 const mesh_region &b) 
   {
     GMM_TRACE2("Merger of "<<a.id()<<" and "<<b.id());
     mesh_region r;
@@ -404,7 +404,7 @@ namespace getfem {
 
 
   mesh_region mesh_region::substract(const mesh_region &a,
-    const mesh_region &b) 
+                                     const mesh_region &b) 
   {
     GMM_TRACE2("subtraction of "<<a.id()<<" and "<<b.id());
     mesh_region r;
@@ -442,7 +442,7 @@ namespace getfem {
   void mesh_region::error_if_not_homogeneous() const 
   {
     GMM_ASSERT1(is_only_faces() || is_only_convexes(), "Expecting a set "
-      "of convexes or a set of faces, but not a mixed set");
+                "of convexes or a set of faces, but not a mixed set");
   }
 
   mesh_region::visitor::visitor(const mesh_region &s, const mesh &m) : 

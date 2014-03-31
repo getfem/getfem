@@ -356,7 +356,7 @@ namespace getfem {
     bool is_var_mf_newer_than_brick(const std::string &varname,
                                     size_type ib) const;
     bool is_mim_newer_than_brick(const mesh_im &mim,
-                                    size_type ib) const;
+                                 size_type ib) const;
 
     pbrick brick_pointer(size_type ib) const {
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");

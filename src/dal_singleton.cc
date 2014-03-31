@@ -56,19 +56,19 @@ namespace dal {
 		return a->level() < b->level();
 	}
 
-	singletons_manager::~singletons_manager() { 
-		GMM_ASSERT1(!getfem::me_is_multithreaded_now(), 
-			"singletons_manager destructor should" 
-			"not be running in parallel !!");
-		//arrange distruction per thread
-		for(size_t i=0;i<getfem::num_threads();i++)
+  singletons_manager::~singletons_manager() { 
+    GMM_ASSERT1(!getfem::me_is_multithreaded_now(), 
+                "singletons_manager destructor should" 
+                "not be running in parallel !!");
+    //arrange distruction per thread
+    for(size_t i=0;i<getfem::num_threads();i++)
     {
-			/* sort singletons in increasing levels,
-			lowest levels will be destroyed first */
-		  std::sort(lst(i).begin(),lst(i).end(), level_compare);
-			std::vector<singleton_instance_base *>::const_iterator it  = lst(i).begin();
+      /* sort singletons in increasing levels,
+      lowest levels will be destroyed first */
+      std::sort(lst(i).begin(),lst(i).end(), level_compare);
+      std::vector<singleton_instance_base *>::const_iterator it  = lst(i).begin();
       std::vector<singleton_instance_base *>::const_iterator ite = lst(i).end();			
       for ( ; it != ite; ++it) { delete *it; }
-		}
-	}
+    }
+  }
 }

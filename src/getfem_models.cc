@@ -784,19 +784,19 @@ namespace getfem {
 		typedef typename C::value_type value_type;
 
     void build_distro(gmm::abstract_matrix )
-		{
+    {
       //intentionally skipping thread 0, as list_distro will
       //use original_list for it
-			for(size_type thread = 1; thread<num_threads(); thread++)
-			{
-				typename C::iterator it_org=original_list.begin();
-				typename C::iterator it_distro=th_list(thread).begin();
-				for(;it_org!=original_list.end();++it_org,++it_distro)
-				{
+      for(size_type thread = 1; thread<num_threads(); thread++)
+      {
+        typename C::iterator it_org=original_list.begin();
+        typename C::iterator it_distro=th_list(thread).begin();
+        for(;it_org!=original_list.end();++it_org,++it_distro)
+        {
           gmm::resize(*it_distro,gmm::mat_nrows(*it_org),gmm::mat_ncols(*it_org));
-				}
-			}
-		}
+        }
+      }
+   }
 
     void build_distro(gmm::abstract_vector)
 		{
@@ -817,32 +817,32 @@ namespace getfem {
 	public:
 
     list_distro(C& l) : original_list(l)
-		{
+    {
       if (not_multithreaded()) return;
-			for(size_type thread=1;thread<num_threads();thread++) 
-				            th_list(thread).resize(original_list.size());
-			build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
-		}
+      for(size_type thread=1;thread<num_threads();thread++) 
+        th_list(thread).resize(original_list.size());
+      build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
+    }
 
-		operator C&()
+    operator C&()
     {
       if (not_multithreaded() || this_thread() == 0) return original_list;
       else return th_list(this_thread());
     }
 
-		~list_distro()
+    ~list_distro()
     {
       if (not_multithreaded()) return;
-			GMM_ASSERT1(!me_is_multithreaded_now(),
-				"List accumulation should not run in parallel");
-			for(size_type thread = 1; thread<num_threads(); thread++)
+      GMM_ASSERT1(!me_is_multithreaded_now(),
+                  "List accumulation should not run in parallel");
+      for(size_type thread = 1; thread<num_threads(); thread++)
       { 
-				typename C::iterator it_org=original_list.begin();
-				typename C::iterator it_distro=th_list(thread).begin();
-				for(;it_org!=original_list.end();++it_org,++it_distro) 
-							gmm::add(*it_distro,*it_org);
-			}
-		}
+        typename C::iterator it_org=original_list.begin();
+        typename C::iterator it_distro=th_list(thread).begin();
+        for(;it_org!=original_list.end();++it_org,++it_distro) 
+          gmm::add(*it_distro,*it_org);
+        }
+      }
 	};
 
 

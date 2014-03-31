@@ -193,7 +193,7 @@ namespace getfem {
       if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
 
       GMM_ASSERT1(s == mf_u.get_qdim()
-		  || s == mf_u.get_qdim()*gmm::sqr(mf_u.linked_mesh().dim()),
+		  || s == size_type(mf_u.get_qdim()*gmm::sqr(mf_u.linked_mesh().dim())),
 		  dl[0] << ": bad format of normal derivative source term "
 		  "data. Detected dimension is " << s << " should be "
 		  << size_type(mf_u.get_qdim()));

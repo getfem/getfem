@@ -409,9 +409,9 @@ namespace getfem {
     for (size_type i = 0; i < N; ++i)
       for (size_type l = 0; l < N; ++l) {
         result(i, i, l, l) += params[0];
-	result(i, l, i, l) += params[1]/scalar_type(2);
-	result(i, l, l, i) += params[1]/scalar_type(2);
-	result(l, i, i, l) += params[1]/scalar_type(2);
+        result(i, l, i, l) += params[1]/scalar_type(2);
+        result(i, l, l, i) += params[1]/scalar_type(2);
+        result(l, i, i, l) += params[1]/scalar_type(2);
         result(l, i, l, i) += params[1]/scalar_type(2);
       }
   }
