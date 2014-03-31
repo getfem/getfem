@@ -187,8 +187,8 @@ namespace getfem {
       scalar_type d1 = (mesherls0[i])(P);
       scalar_type d2 = (sec ? (mesherls1[i])(P) : -1);
       if (d1 < 0 && d2 < 0) ev.in.add(i);
-      if ((integrate_where & INTEGRATE_OUTSIDE) /*&& !sec*/)
-	ev.in[i].flip();
+      // if ((integrate_where & INTEGRATE_OUTSIDE) /*&& !sec*/)
+      //	ev.in[i].flip();
 
       if (gmm::abs(d1) < 1e-7 && d2 < 1e-7) 
 	ev.bin.add(i);
@@ -196,12 +196,17 @@ namespace getfem {
     
 
     bool2 r;
-    if (ls_csg_description.size()) 
+    if (ls_csg_description.size())
       r = ev.is_in(ls_csg_description.c_str());
     else {
       r.in  = (ev.in.card() == mls->nb_level_sets());
       r.bin = (ev.bin.card() >= 1 && ev.in.card() >= mls->nb_level_sets()-1);
     }
+
+    if (integrate_where & INTEGRATE_OUTSIDE) r.in = !(r.in);
+    
+
+
     /*bool2 r2 = is_point_in_selected_area2(mesherls0,mesherls1,P);
     if (r2.in != r.in || r2.bin != r.bin) {
       cerr << "ev.in = " << ev.in << ", bin=" << ev.bin<<"\n";
