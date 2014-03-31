@@ -324,8 +324,12 @@ namespace dal {
   typedef std::map<enr_static_stored_object_key, enr_static_stored_object>
     stored_object_tab;
 
+  // Test the validity of the whole global storage
+  void test_stored_objects(void);
+
+
   /** Delete a list of objects and their dependencies*/
-  void del_stored_objects_immediate(std::list<pstatic_stored_object> &to_delete,
+  void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
     bool ignore_unstored);
 
   /** delete all the specific type of stored objects*/
@@ -361,7 +365,7 @@ namespace dal {
       }
     }
 
-    del_stored_objects_immediate(delete_object_list, false);
+    del_stored_objects(delete_object_list, false);
 
   }
 }
