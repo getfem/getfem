@@ -4,7 +4,7 @@
 
 namespace getfem{ 
 
-#ifdef GETFEM_HAVE_BOOST
+#ifdef GETFEM_HAVE_OPENMP
   boost::mutex omp_guard::boost_mutex;
   omp_guard::omp_guard() : boost::lock_guard<boost::mutex>(boost_mutex) {}
 #endif

@@ -78,12 +78,17 @@ Boost intrusive_ptr are used.
 #include "getfem/getfem_arch_config.h"
 #ifdef GETFEM_HAVE_BOOST
 #include <boost/intrusive_ptr.hpp>
+#else
+# include <getfem_boost/intrusive_ptr.hpp>
+#endif
+
+#ifdef GETFEM_HAVE_OPENMP
 #include <boost/atomic.hpp>
 typedef boost::atomic<int> atomic_int;
 #else
-# include <getfem_boost/intrusive_ptr.hpp>
 typedef int atomic_int;
 #endif
+
 #include <memory>
 
 
@@ -195,7 +200,7 @@ namespace dal {
   }
 
 
-#ifdef GETFEM_HAVE_BOOST
+#ifdef GETFEM_HAVE_OPENMP
   inline void intrusive_ptr_add_ref(const static_stored_object * x)
   {
     x->pointer_ref_count_.fetch_add(1, boost::memory_order_relaxed);

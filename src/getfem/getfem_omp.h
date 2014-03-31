@@ -39,24 +39,18 @@ This is the kernel of getfem.
 #ifndef GETFEM_OMP
 #define GETFEM_OMP
 
-#ifdef _OPENMP
-#ifndef GETFEM_HAVE_BOOST
-#error OpenMP compilation relies on Boost \
-  threads. Please include Boost libraries with compiled \
-  Boost.thread library and define GETFEM_HAVE_BOOST macro
-#endif
-#endif
 #include <vector>
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 #include <algorithm>
-#ifdef GETFEM_HAVE_BOOST
+
+#ifdef GETFEM_HAVE_OPENMP
+#include <omp.h>
 #include <boost/thread.hpp>
 #endif
+
 #ifdef _WIN32
 #include <mbctype.h>
 #endif
+
 #include <locale.h>
 #include <memory>
 #include "dal_shared_ptr.h"
@@ -74,7 +68,7 @@ namespace getfem
 
   //declaring a thread lock, to protect multi-threaded accesses to
   //asserts, traces and warnings
-#ifdef GETFEM_HAVE_BOOST
+#ifdef GETFEM_HAVE_OPENMP
   class omp_guard: public boost::lock_guard<boost::mutex>
   {
   public:
@@ -88,7 +82,7 @@ namespace getfem
 
 
 
-#ifdef _OPENMP	
+#ifdef GETFEM_HAVE_OPENMP	
   /**number of OpenMP threads*/
   inline size_t num_threads(){return omp_get_max_threads();}
   /**index of the current thread*/
@@ -221,7 +215,7 @@ namespace getfem
   the effect of thread local storage for any type of objects
   and their initialization (it's more general and portable
   then using __declspec(thread))*/
-#ifdef _OPENMP
+#ifdef GETFEM_HAVE_OPENMP
 #define	DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(Type,Var,initial) \
   static boost::thread_specific_ptr<Type> ptr_##Var; \
   if(!ptr_##Var.get()) {ptr_##Var.reset(new Type(initial));} \

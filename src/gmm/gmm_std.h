@@ -129,7 +129,7 @@ might be covered by the GNU Lesser General Public License.
 #include <locale.h>
 
 
-#ifdef _OPENMP	
+#ifdef GETFEM_HAVE_OPENMP	
 #include <omp.h>
 	/**number of OpenMP threads*/
 	inline size_t num_threads(){return omp_get_max_threads();}

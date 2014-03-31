@@ -48,7 +48,7 @@ environment;
 #include "getfem_omp.h"
 #include "dal_shared_ptr.h"
 
-#ifdef GETFEM_HAVE_BOOST
+#ifdef GETFEM_HAVE_OPENMP
 #include <boost/atomic/atomic.hpp>
 typedef  boost::atomic_bool atomic_bool;
 #else

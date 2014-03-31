@@ -38,7 +38,6 @@ might be covered by the GNU Lesser General Public License.
 #ifndef GETFEM_MESH_REGION
 #define GETFEM_MESH_REGION
 
-#include <map>
 #include <bitset>
 #include <iostream>
 #include "dal_bit_vector.h"
@@ -46,9 +45,15 @@ might be covered by the GNU Lesser General Public License.
 #include "bgeot_convex_structure.h"
 #include "getfem_config.h"
 
+#if __cplusplus > 199711L
+#include <unordered_map>
+#elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
+#include <boost/unordered_map.hpp>
+#else
+#include <map>
+#endif
 
 #ifdef GETFEM_HAVE_BOOST
-#include <boost/unordered_map.hpp>
 #include <boost/shared_ptr.hpp>
 #endif
 
@@ -63,7 +68,9 @@ namespace getfem {
   public:
     typedef std::bitset<MAX_FACES_PER_CV+1> face_bitset;
 
-#ifdef GETFEM_HAVE_BOOST
+#if __cplusplus > 199711L
+    typedef std::unordered_map<size_type,face_bitset> map_t;
+#elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
     typedef boost::unordered_map<size_type,face_bitset> map_t;
 #else
     typedef std::map<size_type,face_bitset> map_t;
@@ -150,13 +157,13 @@ namespace getfem {
     }
     /** return the intersection of two mesh regions */
     static mesh_region intersection(const mesh_region& a, 
-      const mesh_region& b); 
+                                    const mesh_region& b); 
     /** return the union of two mesh_regions */
     static mesh_region merge(const mesh_region &a, 
-      const mesh_region &b);
+                             const mesh_region &b);
     /** remove the second region from the first one */
     static mesh_region substract(const mesh_region &a, 
-      const mesh_region &b);
+                                 const mesh_region &b);
     size_type id() const { return id_; }
 
     size_type get_type() const { return type_; }
