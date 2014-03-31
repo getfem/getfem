@@ -141,26 +141,32 @@ namespace getfem {
     mesh_region::partition_begin( ) const
   {
     size_type region_size = rp().m.size();
+    if (region_size < num_threads()) 
+    { //for small regions: put the whole region into zero thread
+      if (this_thread() == 0) return rp().m.begin();
+      else return rp().m.end();
+    }
     size_type partition_size 
       = std::ceil(static_cast<scalar_type>(region_size)/
       static_cast<scalar_type >(num_threads()));
     size_type index_begin = partition_size * this_thread();
-    itbegin = rp().m.begin(); size_type i;
-    for (size_type i=0;i<index_begin;++i) ++itbegin.thrd_cast();
-    return itbegin;
+    const_iterator it = rp().m.begin(); size_type i;
+    for (size_type i=0;i<index_begin;++i) ++it;
+    return it;
   }
 
   mesh_region::const_iterator 
     mesh_region::partition_end( ) const
   {
     size_type region_size = rp().m.size();
+    if (region_size < num_threads()) return rp().m.end(); 
     size_type partition_size 
       = std::ceil(static_cast<scalar_type>(region_size)/
       static_cast<scalar_type >(num_threads()));
     size_type index_end = partition_size * (this_thread() + 1);
-    itend = rp().m.begin(); size_type i;
-    for (size_type i=0;i<index_end && itend.thrd_cast() !=rp().m.end();++i) ++itend.thrd_cast();
-    return itend;
+    const_iterator it = rp().m.begin(); size_type i;
+    for (size_type i=0;i<index_end && it!=rp().m.end();++i) ++it;
+    return it;
   }
 
   mesh_region::const_iterator mesh_region::begin( ) const 
