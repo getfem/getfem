@@ -2070,7 +2070,8 @@ namespace getfem {
       size_type N = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
       GA_DEBUG_ASSERT((qdim == 1 && t.sizes()[0] == N) ||
-                      (t.sizes()[1] == N && t.sizes()[0] == qdim),
+                      (t.sizes()[1] == N && t.sizes()[0] == qdim) ||
+                      (N == 1 && t.sizes()[0] == qdim),
                       "dimensions mismatch");
       GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
                       "Wrong size for coeff vector");
