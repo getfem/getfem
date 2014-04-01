@@ -397,8 +397,14 @@ namespace getfem {
     GMM_ASSERT1(a.id() != all_convexes().id() &&
       b.id() != all_convexes().id(), "the 'all_convexes' regions "
       "are not supported for set operations");
-    for (const_iterator it = a.begin();it != a.end(); ++it) r.wp().m.insert(*it);
-    for (const_iterator it = b.begin();it != b.end(); ++it) r.wp().m.insert(*it);
+    for (const_iterator it = a.begin();it != a.end(); ++it)
+    { 
+      r.wp().m.insert(*it);
+    }
+    for (const_iterator it = b.begin();it != b.end(); ++it)
+    {
+      r.wp().m[it->first] |= it->second;
+    }
     return r;
   }
 
