@@ -2981,7 +2981,6 @@ namespace getfem {
     scalar_type &E, &coeff;
      virtual void exec(void) {
       GA_DEBUG_INFO("Instruction: scalar term assembly\n");
-      GMM_ASSERT1(false , "oups");
       E += t[0] * coeff;
      }
     ga_instruction_scalar_assembly(base_tensor &t_, scalar_type &E_,
