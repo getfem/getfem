@@ -3485,6 +3485,15 @@ namespace getfem {
     
     bool all_cte = true, all_sc = true;
     pnode->symmetric_op = false;
+
+    if (pnode->node_type != GA_NODE_OP ||
+        (pnode->op_type != GA_PLUS && pnode->op_type != GA_MINUS))
+      pnode->marked = false;
+    else {
+      if (pnode->parent) pnode->marked = pnode->parent->marked;
+      else pnode->marked = true;
+    }
+
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
                        eval_fixed_size);
@@ -3495,7 +3504,7 @@ namespace getfem {
       if (pnode->node_type != GA_NODE_PARAMS)
         ga_valid_operand(expr, pnode->children[i]);
     }
-    
+
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
     pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
@@ -3504,14 +3513,6 @@ namespace getfem {
     const bgeot::multi_index &size1 = child1 ? child1->t.sizes() : mi;
     size_type dim0 = child0 ? child0->tensor_order() : 0;
     size_type dim1 = child1 ? child1->tensor_order() : 0;
-
-    if (pnode->node_type != GA_NODE_OP ||
-        (pnode->op_type != GA_PLUS && pnode->op_type != GA_MINUS))
-      pnode->marked = false;
-    else {
-      if (pnode->parent) pnode->marked = pnode->parent->marked;
-      else pnode->marked = true;
-    }
 
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
@@ -3572,12 +3573,17 @@ namespace getfem {
           if (pnode->op_type == GA_PLUS) pnode->symmetric_op = true;
           size_type c_size = std::min(size0.size(), size1.size());
           bool compatible = true;
+          
           for (size_type i = 0; i < c_size; ++i)
             if (size0[i] != size1[i]) compatible = false; 
           for (size_type i = c_size; i < size0.size(); ++i)
             if (size0[i] != 1) compatible = false;
           for (size_type i = c_size; i < size1.size(); ++i)
             if (size1[i] != 1) compatible = false;
+          
+          if (!compatible)
+            ga_throw_error(expr, pnode->pos, "Addition or substraction of "
+                            "expressions of different sizes");
 
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
@@ -3589,7 +3595,7 @@ namespace getfem {
 
           if (!compatible)
             ga_throw_error(expr, pnode->pos, "Addition or substraction of "
-                            "incompatible expressions or of different sizes");
+                            "incompatible test functions");
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
             pnode->test_function_type = 0;
@@ -3610,10 +3616,13 @@ namespace getfem {
             pnode->qdim2 = child0->qdim2;
 
             // simplification if one of the two operands is constant and zero
-            if (child0->tensor_is_zero())
+            if (child0->tensor_is_zero()) {
               tree.replace_node_by_child(pnode, 1);
-            else if (child1->tensor_is_zero())
+              pnode = child1;
+            } else if (child1->tensor_is_zero()) {
               tree.replace_node_by_child(pnode, 0);
+              pnode = child0;
+            }
           }
         }
         break;
@@ -3688,6 +3697,7 @@ namespace getfem {
           tree.clear_children(pnode);
         } else if (child0->node_type == GA_NODE_ZERO) {
           tree.replace_node_by_child(pnode, 0);
+          pnode = child0;
         }
         break;
 
@@ -3697,7 +3707,7 @@ namespace getfem {
                          "vectors or matrices only.");
         mi = size0;
         if (child0->tensor_proper_size() == 1)
-          { tree.replace_node_by_child(pnode, 0); break; }
+          { tree.replace_node_by_child(pnode, 0); pnode = child0; break; }
         else if (dim0 == 2) std::swap(mi.back(), mi[size0.size()-2]);
         else { size_type N = mi.back(); mi.back() = 1; mi.push_back(N); }
 
@@ -4033,9 +4043,11 @@ namespace getfem {
           } else if (child0->node_type == GA_NODE_CONSTANT &&
                      child0->t.size() == 1 && child0->t[0] == scalar_type(1)) {
             tree.replace_node_by_child(pnode, 1);
+            pnode = child1;
           } else if (child1->node_type == GA_NODE_CONSTANT &&
                      child1->t.size() == 1 && child1->t[0] == scalar_type(1)) {
             tree.replace_node_by_child(pnode, 0);
+            pnode = child0;
           }
         }
         break;
@@ -4073,6 +4085,7 @@ namespace getfem {
         } else if (child1->node_type == GA_NODE_CONSTANT &&
                    child1->t.size() == 1 && child1->t[0] == scalar_type(1)) {
           tree.replace_node_by_child(pnode, 0);
+          pnode = child0;
         }
         break;
         
@@ -4400,7 +4413,6 @@ namespace getfem {
       break;
 
     case GA_NODE_PARAMS:
-
       if (child0->node_type == GA_NODE_X) {
         child0->init_scalar_tensor(0);
         if (pnode->children.size() != 2)
@@ -4413,7 +4425,8 @@ namespace getfem {
         if (child0->nbc1 == 0 || child0->nbc1 > meshdim)
           ga_throw_error(expr, child1->pos, "Index for x not convenient.");
         tree.replace_node_by_child(pnode, 0);
-
+        pnode = child0;
+        
       } else if (child0->node_type == GA_NODE_RESHAPE) {
         if (pnode->children.size() < 3)
           ga_throw_error(expr, child1->pos,
@@ -4707,6 +4720,7 @@ namespace getfem {
     default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                         << " in semantic analysis. Internal error.");
     }
+
     pnode->hash_value = ga_hash_code(pnode);
     // cout << "node_type = " << pnode->node_type << " op_type = "
     //     << pnode->op_type << " proper hash code = " << pnode->hash_value;
@@ -4715,6 +4729,8 @@ namespace getfem {
         * M_PI * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1)); 
     }
     // cout << " final hash code = " << pnode->hash_value << endl;
+
+
   }
 
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
@@ -4736,9 +4752,6 @@ namespace getfem {
                             ga_workspace &workspace,
                             pga_tree_node pnode, int sign) {
     
-//     for (size_type i = 0; i < pnode->children.size(); ++i)
-//       ga_split_tree(expr, tree, workspace, pnode->children[i]);
-    
     size_type nbch = pnode->children.size();
     pga_tree_node child0 = (nbch > 0) ? pnode->children[0] : 0;
     pga_tree_node child1 = (nbch > 1) ? pnode->children[1] : 0;
@@ -4755,6 +4768,9 @@ namespace getfem {
           ga_split_tree(expr, tree, workspace, child0, sign0);
           ga_split_tree(expr, tree, workspace, child1, sign1);
 
+          child0 =  pnode->children[0];
+          child1 =  pnode->children[1];
+          
           bool compatible = true;
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
