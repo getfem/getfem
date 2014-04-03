@@ -3246,6 +3246,7 @@ namespace getfem {
       
       for (std::list<ga_tree *>::iterator it = aux_trees.begin();
            it != aux_trees.end(); ++it) {
+        ga_semantic_analysis(expr, *(*it), *this, mim.linked_mesh().dim(), false);
         if ((*it)->root)
           max_order = std::max((*it)->root->nb_test_functions(), max_order);
         add_tree(*(*it), mim, rg, expr);
