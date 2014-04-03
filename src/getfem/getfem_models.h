@@ -588,7 +588,7 @@ namespace getfem {
                     it->second.real_value[0]);
           it->second.v_num_data = act_counter();
         }
-      post_to_variables_step();
+      this->post_to_variables_step();
     }
 
     template<typename VECTOR, typename T>
@@ -600,7 +600,7 @@ namespace getfem {
                     it->second.complex_value[0]);
           it->second.v_num_data = act_counter();
         }
-      post_to_variables_step();
+      this->post_to_variables_step();
     }
 
     template<typename VECTOR> void to_variables(VECTOR &V) {
