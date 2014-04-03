@@ -327,7 +327,6 @@ namespace getfem{
     mutable std::vector<size_type> filtered_int_point_index_; 
     mutable std::vector<size_type> int_point_index_; 
     mutable dal::bit_vector        filtered_convex_index_;
-    mutable bool                   require_update_;
     mutable gmm::uint64_type       v_num_;
 
     size_type              filtered_region_;

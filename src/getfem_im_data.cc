@@ -1,4 +1,5 @@
 #include "getfem/getfem_im_data.h"
+#include "getfem/getfem_omp.h"
 
 namespace getfem
 {
@@ -6,7 +7,7 @@ namespace getfem
   im_data::im_data(const getfem::mesh_im& meshIm,
                    bgeot::multi_index tensorSize,
                    size_type filteredRegion)
-    :im_(meshIm), nb_filtered_index_(0), nb_index_(0), require_update_(true),
+    :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
     filtered_region_(filteredRegion) {
     set_tensor_size(tensorSize);
     add_dependency(im_);
@@ -14,7 +15,7 @@ namespace getfem
   }
 
   im_data::im_data(const getfem::mesh_im& meshIm, size_type filteredRegion)
-    :im_(meshIm), nb_filtered_index_(0), nb_index_(0), require_update_(true),
+    :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
     filtered_region_(filteredRegion) {
     tensor_size_.resize(1);
     tensor_size_[0] = 1;
@@ -24,6 +25,7 @@ namespace getfem
   }
     
   void im_data::update_index_() const {
+    omp_guard lock;
     nb_index_         = 0;      
     size_type nElement = im_.convex_index().last_true() + 1;
     int_point_index_.clear();
@@ -50,32 +52,27 @@ namespace getfem
         nb_filtered_index_            += nPoint;
       }
     }
-
-    require_update_ = false;
-    touch();
     v_num_ = act_counter();
   }
 
   size_type im_data::nb_index() const{
     context_check();
-    if (require_update_) update_index_();
     return nb_index_;
   }
 
   size_type im_data::nb_filtered_index() const{
     context_check();
-    if (require_update_) update_index_();
     return nb_filtered_index_;
   }
 
   size_type im_data::nb_points_of_element(size_type cv) const{
+    context_check();
     if (!im_.convex_index().is_in(cv)) return 0;
     return im_.int_method_of_element(cv)->approx_method()->nb_points_on_convex();
   }
 
   size_type im_data::index_of_point(size_type cv, size_type i) const{
     context_check();
-    if (require_update_) update_index_();
     if (cv < int_point_index_.size()) return int_point_index_[cv] + i;
     else return size_type(-1);
   }
@@ -94,7 +91,6 @@ namespace getfem
 
   size_type im_data::filtered_index_of_point(size_type cv, size_type i) const{
     context_check();
-    if (require_update_) update_index_();
     if(cv < filtered_int_point_index_.size())
     {
       if (filtered_int_point_index_[cv] == size_type(-1)) return size_type(-1);
@@ -105,22 +101,21 @@ namespace getfem
 
   dal::bit_vector im_data::filtered_convex_index() const{
     context_check();
-    if (require_update_) update_index_();
     return filtered_convex_index_;
   }
 
   std::vector<size_type> im_data::filtered_index_of_first_point() const{
     context_check();
-    if (require_update_) update_index_();
     return filtered_int_point_index_;
   }
 
   void im_data::set_region(size_type rg){
     filtered_region_ = rg;
-    update_index_();
+    touch();
   }
 
   void im_data::update_from_context() const{
-    require_update_ = true;
+    update_index_();
+    touch();
   }
 }
