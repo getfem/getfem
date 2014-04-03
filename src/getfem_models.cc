@@ -847,50 +847,108 @@ namespace getfem {
 
 
   void model::brick_call(size_type ib, build_version version,
-                         size_type rhs_ind) const {
+                         size_type rhs_ind) const 
+  {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
 
     brick_init(ib, version, rhs_ind);
 
+    scalar_type time = gmm::uclock_sec();
+
     if (cplx)
-      brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist, brick.dlist,
+    {
+      brick.pbr->complex_pre_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
                                            brick.mims,
                                            brick.cmatlist,
                                            brick.cveclist[rhs_ind],
                                            brick.cveclist_sym[rhs_ind],
                                            brick.region, version);
-    else{
+      /*distributing the resulting vectors and matrices
+      for individual threads.*/
+      {//brackets are needed because list_distro has constructor/destructor
+        //semantics (as in RAII)
+        list_distro<complex_matlist> cmatlist(brick.cmatlist);
+	      list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
+	      list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
+        GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
+        time = gmm::uclock_sec();
+        /*running the assembly in parallel*/
+	      gmm::standard_locale locale;
+	      open_mp_is_running_properly check; 
+        #pragma omp parallel default(shared)  
+        { 
+          #pragma omp for schedule(static) 
+              for(size_type i=0;i<num_threads();i++)
+              {
+                brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist, brick.dlist,
+                                             brick.mims,
+                                             cmatlist,
+                                             cveclist,
+                                             cveclist_sym,
+                                             brick.region, version);
+              }
+        }
+      }
+      brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
+                                           brick.mims,
+                                           brick.cmatlist,
+                                           brick.cveclist[rhs_ind],
+                                           brick.cveclist_sym[rhs_ind],
+                                           brick.region, version);
 
+    }
+
+    else //not cplx
+    
+    {
+      brick.pbr->real_pre_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
+                                           brick.mims,
+                                           brick.rmatlist,
+                                           brick.rveclist[rhs_ind],
+                                           brick.rveclist_sym[rhs_ind],
+                                           brick.region, version);
+      {
         /*distributing the resulting vectors and matrices
         for individual threads.*/
-      scalar_type time = gmm::uclock_sec();
-	    list_distro<real_matlist> rmatlist(brick.rmatlist);
-	    list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
-	    list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-      GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
-      time = gmm::uclock_sec();
+	      list_distro<real_matlist> rmatlist(brick.rmatlist);
+	      list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
+	      list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
+        GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
+        time = gmm::uclock_sec();
         /*running the assembly in parallel*/
-	    gmm::standard_locale locale;
-	    open_mp_is_running_properly check; 
-#pragma omp parallel default(shared)  
-            { 
-#pragma omp for schedule(static) 
-            for(size_type i=0;i<num_threads();i++){
-                 brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
-                                                brick.mims,
-                                                rmatlist,
-                                                rveclist,
-                                                rveclist_sym,
-                                                brick.region,
-                                                version);
-                }
-	     }
-       double assembly_time = gmm::uclock_sec()-time;
-       GMM_TRACE2("Assembly time "<< assembly_time<<" s.");
-         }
+	      gmm::standard_locale locale;
+	      open_mp_is_running_properly check; 
+        #pragma omp parallel default(shared)  
+        { 
+          #pragma omp for schedule(static) 
+              for(size_type i=0;i<num_threads();i++)
+              {
+                   brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
+                                                  brick.mims,
+                                                  rmatlist,
+                                                  rveclist,
+                                                  rveclist_sym,
+                                                  brick.region,
+                                                  version);
+              }
+	       }
+      }
+      brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
+                                           brick.mims,
+                                           brick.rmatlist,
+                                           brick.rveclist[rhs_ind],
+                                           brick.rveclist_sym[rhs_ind],
+                                           brick.region, version);
+     }
+
+     GMM_TRACE2("Assembly time "<< gmm::uclock_sec()-time<<" s.");
 
  }
+
+
+
+
 
   void model::set_dispatch_coeff(void) {
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
@@ -2503,6 +2561,46 @@ namespace getfem {
       } else
         GMM_ASSERT1(false, "Bad format generic elliptic brick coefficient");
 
+    }
+
+    virtual void real_post_assembly_in_serial(const model &md, size_type ib,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version) const
+    {
+      const model_real_plain_vector *A = 0;
+      const mesh_fem *mf_a = 0;
+      if (dl.size() > 0) 
+      {
+        A = &(md.real_variable(dl[0]));
+        mf_a = md.pmesh_fem_of_variable(dl[0]);
+      }
+      pNeumann_elem_term pNt = new generic_elliptic_Neumann_elem_term(mf_a, A);
+      md.add_Neumann_term(pNt, vl[0], ib);
+    }
+
+    virtual void complex_post_assembly_in_serial(const model &md, size_type ib,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                              model::complex_matlist &matl,
+                                              model::complex_veclist &,
+                                              model::complex_veclist &,
+                                        size_type region,
+                                        build_version) const
+    {
+      const model_real_plain_vector *A = 0;
+      const mesh_fem *mf_a = 0;
+      if (dl.size() > 0) 
+      {
+        A = &(md.real_variable(dl[0]));
+        mf_a = md.pmesh_fem_of_variable(dl[0]);
+      }
       pNeumann_elem_term pNt = new generic_elliptic_Neumann_elem_term(mf_a, A);
       md.add_Neumann_term(pNt, vl[0], ib);
     }
@@ -5514,11 +5612,8 @@ namespace getfem {
           asm_stiffness_matrix_for_homogeneous_linear_elasticity
             (matl[0], mim, mf_u, *lambda, *mu, rg);
 
-
-	pNeumann_elem_term pNt = new iso_lin_elasticity_Neumann_elem_term
-	  (mf_lambda, lambda, mf_mu, mu);
-	md.add_Neumann_term(pNt, vl[0], ib);
       }
+
 
       if  (dl.size() == 3) { // Pre-constraints given by an "initial"
         // displacement u0. Means that the computed displacement will be u - u0
@@ -5527,6 +5622,33 @@ namespace getfem {
         gmm::mult(matl[0],
                   gmm::scaled(md.real_variable(dl[2]), scalar_type(-1)),
                   vecl[0]);
+      }
+    }
+
+    virtual void real_post_assembly_in_serial(const model &md, size_type ib,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version version) const
+    {
+      bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
+        || md.is_var_newer_than_brick(dl[0], ib)
+        || md.is_var_newer_than_brick(dl[1], ib);
+
+      if (recompute_matrix)
+      {
+          const mesh_fem *mf_lambda = md.pmesh_fem_of_variable(dl[0]);
+          const model_real_plain_vector *lambda = &(md.real_variable(dl[0]));
+          const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
+          const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
+
+	        pNeumann_elem_term pNt = new iso_lin_elasticity_Neumann_elem_term
+	          (mf_lambda, lambda, mf_mu, mu);
+	        md.add_Neumann_term(pNt, vl[0], ib);
       }
     }
 
@@ -5749,12 +5871,6 @@ namespace getfem {
       gmm::clear(matl[0]);
       asm_stokes_B(matl[0], mim, mf_u, mf_p, rg);
 
-      pNeumann_elem_term pNt = new lin_incomp_Neumann_elem_term
-	(md.version_number_of_data_variable( vl[1]), &mf_p,
-	 &(md.real_variable(vl[1])), vl[1]);
-      md.add_Neumann_term(pNt, vl[0], ib);
-      md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
-
       if (penalized) {
         gmm::clear(matl[1]);
         if (mf_data) {
@@ -5768,6 +5884,26 @@ namespace getfem {
       }
 
     }
+
+
+    virtual void real_post_assembly_in_serial(const model &md, size_type ib,
+                                        const model::varnamelist &vl,
+                                        const model::varnamelist &dl,
+                                        const model::mimlist &mims,
+                                        model::real_matlist &matl,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type region,
+                                        build_version) const
+    {
+        const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
+        pNeumann_elem_term pNt = new lin_incomp_Neumann_elem_term
+	        (md.version_number_of_data_variable( vl[1]), &mf_p,
+	                          &(md.real_variable(vl[1])), vl[1]);
+        md.add_Neumann_term(pNt, vl[0], ib);
+        md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
+    }
+
 
     linear_incompressibility_brick(void) {
       set_flags("Linear incompressibility brick",

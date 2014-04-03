@@ -1043,6 +1043,19 @@ namespace getfem {
     { BRICK_NOT_INIT; return compute_each_time; }
     const std::string &brick_name(void) const { BRICK_NOT_INIT; return name; }
 
+
+    /**Assembly of bricks real tangent terms. 
+    In case of Getfem's compilation with OpenMP option, 
+    this method is executed on multiple threads. 
+    The parallelism is provided by distributing all tangent matrices and 
+    vectors and accumulating them later into the original. Additionally,
+    by default, all mesh_region objects, participating in the assembly, are also
+    partitioned. In order to avoid data race conditions, this method should not 
+    modify any data simultaneously accessible from multiple threads. In case
+    this is unavoidable, the race can be prevented by distributing this data 
+    (of type T) between the threads via getfem::omp_distribute<T> (prefered method) or 
+    protected from concurrent access with mutexes (e.g. getfem::omp_lock) or OpenMP
+    critical section. */
     virtual void asm_real_tangent_terms(const model &, size_type,
                                         const model::varnamelist &,
                                         const model::varnamelist &,
@@ -1053,6 +1066,19 @@ namespace getfem {
                                         size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
 
+
+    /**Assembly of bricks complex tangent terms. 
+    In case of Getfem's compilation with OpenMP option, 
+    this method is executed on multiple threads. 
+    The parallelism is provided by distributing all tangent matrices and 
+    vectors and accumulating them later into the original. Additionally,
+    by default, all mesh_region objects, participating in the assembly, are also
+    partitioned. In order to avoid data race conditions, this method should not 
+    modify any data simultaneously accessible from multiple threads. In case
+    this is unavoidable, the race can be prevented by distributing this data 
+    (of type T) between the threads via getfem::omp_distribute<T> (prefered method) or 
+    protected from concurrent access with mutexes (e.g. getfem::omp_lock) or OpenMP
+    critical section. */
     virtual void asm_complex_tangent_terms(const model &, size_type,
                                            const model::varnamelist &,
                                            const model::varnamelist &,
@@ -1062,6 +1088,59 @@ namespace getfem {
                                            model::complex_veclist &,
                                            size_type, build_version) const
     { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
+
+
+    /**Peform any pre assembly action for real term assembly. The purpose of this method
+    is to do any action that cannot be peformed in the main assembly routines in parallel.
+    Possible action can be modification of the model object, cashing some data that cannot be 
+    distributed etc. */
+    virtual void real_pre_assembly_in_serial(const model &, size_type,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::real_matlist &,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type, build_version) const { }; 
+
+    /**Peform any pre assembly action for comple term assembly. The purpose of this method
+    is to do any action that cannot be peformed in the main assembly routines in parallel.
+    Possible action can be modification of the model object, cashing some data that cannot be 
+    distributed etc. */
+    virtual void complex_pre_assembly_in_serial(const model &, size_type,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::complex_matlist &,
+                                        model::complex_veclist &,
+                                        model::complex_veclist &,
+                                        size_type, build_version) const { }; 
+
+    /**Peform any post assembly action for real terms. The purpose of this method
+    is to do any action that cannot be peformed in the main assembly routines in parallel.
+    Possible action can be modification of the model object, cashing some data that cannot be 
+    distributed etc. */
+    virtual void real_post_assembly_in_serial(const model &, size_type,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::real_matlist &,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type, build_version) const { }; 
+
+    /**Peform any post assembly action for complex terms. The purpose of this method
+    is to do any action that cannot be peformed in the main assembly routines in parallel.
+    Possible action can be modification of the model object, cashing some data that cannot be 
+    distributed etc. */
+    virtual void complex_post_assembly_in_serial(const model &, size_type,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::complex_matlist &,
+                                        model::complex_veclist &,
+                                        model::complex_veclist &,
+                                        size_type, build_version) const { }; 
 
 
     virtual scalar_type asm_real_pseudo_potential(const model &, size_type,
