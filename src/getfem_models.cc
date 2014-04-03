@@ -769,7 +769,7 @@ namespace getfem {
     }
   }
 
-  
+  void model::post_to_variables_step(){}
   
 	/**takes a list (more often it's a std::vector) of matrices 
 	or vectors, creates an empty copy for each thread. When the 

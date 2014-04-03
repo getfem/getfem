@@ -328,6 +328,8 @@ namespace getfem {
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
+    //to be performed after to_variables is called.
+    virtual void post_to_variables_step();
 
     scalar_type approx_external_load_; // Computed by assembly procedure
                                        // with BUILD_RHS option.
@@ -586,6 +588,7 @@ namespace getfem {
                     it->second.real_value[0]);
           it->second.v_num_data = act_counter();
         }
+      post_to_variables_step();
     }
 
     template<typename VECTOR, typename T>
@@ -597,6 +600,7 @@ namespace getfem {
                     it->second.complex_value[0]);
           it->second.v_num_data = act_counter();
         }
+      post_to_variables_step();
     }
 
     template<typename VECTOR> void to_variables(VECTOR &V) {
