@@ -27,7 +27,7 @@ colormap(r);
 dirichlet_version = 2; % 1 = simplification, 2 = penalisation
 drawing = true;
 test_tangent_matrix = false;
-incompressible = true;
+incompressible = false;
 
 % lawname = 'Ciarlet Geymonat';
 % params = [1;1;0.25];
@@ -85,16 +85,11 @@ gf_mesh_set(m,'boundary', 3, [ftop fbot]);
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md,'add initialized data','params', params);
-% gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
 %             'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-%             '((Id(meshdim)+Grad_u)*((2*Trace(Grad_u)+Norm_sqr(Grad_u))*
-%             Id(meshdim) + 2*(Grad_u+Grad_u''+Grad_u''*Grad_u))):Grad_Test_u');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-%            '((Id(meshdim)+Grad_u)*(Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u');
-% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-%                'Grad_u:Grad_Test_u');
+%            '((Id(meshdim)+Grad_u)*(params(1)*Trace(Green_Lagrangian(Id(meshdim)+Grad_u))*Id(meshdim)+2*params(2)*Green_Lagrangian(Id(meshdim)+Grad_u))):Grad_Test_u');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, 'Saint_Venant_Kirchhoff_potential(Grad_u,params)'); 
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
 %           '((Id(meshdim)+Grad_u)*(Ciarlet_Geymonat_sigma(Grad_u,params))):Grad_Test_u');
@@ -102,8 +97,8 @@ gf_model_set(md,'add initialized data','params', params);
 %                'Ciarlet_Geymonat_potential(Grad_u,params)');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
 %         '((Id(meshdim)+Grad_u)*(Incompressible_Mooney_Rivlin_sigma(Grad_u,params))):Grad_Test_u');
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-                 'Incompressible_Mooney_Rivlin_potential(Grad_u,params)');
+% gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
+%                  'Incompressible_Mooney_Rivlin_potential(Grad_u,params)');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
 %      '((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_sigma(Grad_u,params))):Grad_Test_u');
 

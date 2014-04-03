@@ -115,12 +115,12 @@ function check_asm(iverbose,idebug)
   mim=gf_mesh_im(m_1d, 2);
   U = ones(1, gf_mesh_fem_get(mf_1d, 'nbdof'));
   P = ones(1, gf_mesh_fem_get(mf_1d, 'nbdof'));
-  K=gf_asm('generic', mim, 2, 'Grad_u.Test_p + p.Grad_Test_u+ p.Test_u', -1, 'u', 1, mf_1d, U, 'p', 1, mf_1d, P);
+  K=gf_asm('generic', mim, 2, 'Grad_u.Test_p + p.Grad_Test_u - p.Test_u', -1, 'u', 1, mf_1d, U, 'p', 1, mf_1d, P);
   K1=gf_asm('generic', mim, 2, 'Grad_u.Test_p', -1, 'u', 1, mf_1d, U, 'p', 1, mf_1d, P);
   K2=gf_asm('generic', mim, 2, 'p.Grad_Test_u', -1, 'u', 1, mf_1d, U, 'p', 1, mf_1d, P);
   K3=gf_asm('generic', mim, 2, 'p.Test_u', -1, 'u', 1, mf_1d, U, 'p', 1, mf_1d, P);
-  error = norm(full(K-K1-K2-K3));
-  gfassert('error < 1E-10');
+  err = norm(full(K-K1-K2+K3))
+  gfassert('err < 1E-10');
   
   
   
