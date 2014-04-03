@@ -1064,7 +1064,7 @@ namespace getfem {
                                         model::real_veclist &,
                                         model::real_veclist &,
                                         size_type, build_version) const
-    { GMM_ASSERT1(false, "Brick has no real tangent terms !"); }
+    {/**doesn't have to be overriden if serial pre- post- assemblies are defined*/}
 
 
     /**Assembly of bricks complex tangent terms. 
@@ -1087,7 +1087,7 @@ namespace getfem {
                                            model::complex_veclist &,
                                            model::complex_veclist &,
                                            size_type, build_version) const
-    { GMM_ASSERT1(false, "Brick has no complex tangent terms !"); }
+    {/**doesn't have to be overriden if serial pre- post- assemblies are defined*/  }
 
 
     /**Peform any pre assembly action for real term assembly. The purpose of this method

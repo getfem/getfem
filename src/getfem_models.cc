@@ -5134,7 +5134,7 @@ namespace getfem {
 
   struct constraint_brick : public have_private_data_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type,
+    virtual void real_pre_assembly_in_serial(const model &md, size_type,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -5170,7 +5170,7 @@ namespace getfem {
       }
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type,
+    virtual void complex_pre_assembly_in_serial(const model &md, size_type,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,
@@ -5294,7 +5294,7 @@ namespace getfem {
 
   struct explicit_matrix_brick : public have_private_data_brick {
 
-    virtual void asm_real_tangent_terms(const model &, size_type,
+    virtual void real_pre_assembly_in_serial(const model &, size_type,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -5310,7 +5310,7 @@ namespace getfem {
       gmm::copy(rB, matl[0]);
     }
 
-    virtual void asm_complex_tangent_terms(const model &, size_type,
+    virtual void complex_pre_assembly_in_serial(const model &, size_type,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,
@@ -5357,7 +5357,7 @@ namespace getfem {
 
   struct explicit_rhs_brick : public have_private_data_brick {
 
-    virtual void asm_real_tangent_terms(const model &, size_type,
+    virtual void real_pre_assembly_in_serial(const model &, size_type,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -5375,7 +5375,7 @@ namespace getfem {
       }
     }
 
-    virtual void asm_complex_tangent_terms(const model &, size_type,
+    virtual void complex_pre_assembly_in_serial(const model &, size_type,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,
