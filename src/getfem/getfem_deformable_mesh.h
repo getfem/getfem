@@ -164,7 +164,7 @@ namespace getfem {
 
     ~temporary_mesh_deformator()
     {
-      if (m.to_be_restored() && deform_on_construct)
+      if (m.to_be_restored() && deform_on_construct_)
       {
         m.deform_mesh(gmm::scaled(dU,scalar_type(-1.0)),mf); 
       }
