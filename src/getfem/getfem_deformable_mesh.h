@@ -152,6 +152,7 @@ namespace getfem {
     {
       GMM_ASSERT1(!is_deformed_, "trying to deformed an already deformed mesh");
       m.deform_mesh(dU,mf);
+      is_deformed_ = true;
     }
 
     void undeform() 
@@ -160,6 +161,7 @@ namespace getfem {
       GMM_ASSERT1(!deform_on_construct_, 
         "undeformed() should not be called if it was asked to deformed on construct"); 
       m.deform_mesh(gmm::scaled(dU,scalar_type(-1.0)),mf);
+      is_deformed_ = false;
     }
 
     ~temporary_mesh_deformator()
