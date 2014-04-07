@@ -150,7 +150,7 @@ namespace getfem {
       =   std::ceil(static_cast<scalar_type>(region_size)/
           static_cast<scalar_type >(num_threads()));
     size_type index_begin = partition_size * this_thread();
-    if (index_begin >= partition_size ) return  rp().m.end();
+    if (index_begin >= region_size ) return  rp().m.end();
 
     const_iterator it = rp().m.begin();
     for (size_type i=0;i<index_begin;++i) ++it;
@@ -167,7 +167,7 @@ namespace getfem {
       = std::ceil(static_cast<scalar_type>(region_size)/
       static_cast<scalar_type >(num_threads()));
     size_type index_end = partition_size * (this_thread() + 1);
-    if (index_end >= partition_size ) return  rp().m.end();
+    if (index_end >= region_size ) return  rp().m.end();
 
     const_iterator it = rp().m.begin();
     for (size_type i=0;i<index_end && it!=rp().m.end();++i) ++it;
