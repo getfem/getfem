@@ -132,8 +132,6 @@ namespace dal {
   static inline stored_object_tab::iterator 
     iterator_of_object_other_threads(pstatic_stored_object o) 
   {
-    getfem::omp_guard local_lock;
-    GMM_NOPERATION(local_lock);
     pstatic_stored_object_key k = key_of_stored_object(o);
     if (k) 
     {

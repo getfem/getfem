@@ -37,8 +37,8 @@
 #ifndef BGEOT_SMALL_VECTOR_H
 #define BGEOT_SMALL_VECTOR_H
 
-#include "dal_singleton.h"
 #include "bgeot_config.h"
+#include "dal_singleton.h"
 #ifdef DEBUG_SMALL_VECTOR
 # include <cassert>
 # define SVEC_ASSERT(x) assert(x)
@@ -47,6 +47,8 @@
 #endif 
 
 namespace bgeot {
+#if !defined GETFEM_HAVE_OPENMP
+
   class block_allocator {
   public:
     typedef gmm::uint16_type uint16_type;
@@ -273,11 +275,94 @@ namespace bgeot {
     }
   };
 
-  template<class T> inline bool small_vector<T>::operator<(const small_vector<T>& other) const {
+#else
+
+  /**In case of multi-threaded assembly with OpenMP using std::vector derived
+  class for it's thread safety*/
+  template<typename T> class small_vector : public std::vector<T> 
+  {
+  public:
+    typedef typename std::vector<T>::const_iterator const_iterator;
+
+    const_iterator const_begin() const { return std::vector<T>::begin();}
+    const_iterator const_end() const   { return std::vector<T>::end();  }
+
+    small_vector() : std::vector<T>()  {}
+
+    explicit small_vector(size_type n) : std::vector<T>(n) {}
+
+    small_vector(const small_vector<T>& v) : std::vector<T>(v) {}
+
+    small_vector(T v1, T v2) : std::vector<T>(2) 
+    { (*this)[0] = v1; (*this)[1] = v2; }
+
+    small_vector(T v1, T v2, T v3) : std::vector<T>(3) 
+    { (*this)[0] = v1; (*this)[1] = v2; (*this)[2] = v3; }
+
+    template<class UNOP> small_vector(const small_vector<T>& a, UNOP op) 
+      : std::vector<T>(a.size()) 
+    { std::transform(a.begin(), a.end(), begin(), op); }
+
+    template<class BINOP> small_vector(const small_vector<T>& a, const small_vector<T>& b, BINOP op) 
+      : std::vector<T>(a.size()) 
+    { std::transform(a.begin(), a.end(), b.begin(), begin(), op); }
+
+    small_vector<T> operator+(const small_vector<T>& other) const 
+    { return small_vector<T>(*this,other,std::plus<T>()); }
+
+    small_vector<T> operator-(const small_vector<T>& other) const 
+    { return small_vector<T>(*this,other,std::minus<T>()); }
+
+    small_vector<T> operator-() const 
+    { return -1.*(*this); }
+
+    small_vector<T> operator*(T v) const 
+    { return small_vector<T>(*this, std::bind2nd(std::multiplies<T>(),v)); }
+
+    small_vector<T> operator/(T v) const { return (*this)*(T(1)/v); }
+
+    small_vector<T>& operator+=(const small_vector<T>& other) 
+    {
+      const_iterator b = other.begin(); iterator it = begin(); 
+      for (size_type i=0; i < size(); ++i) *it++ += *b++; 
+      return *this;
+    }
+
+    small_vector<T>& addmul(T v, const small_vector<T>& other) IS_DEPRECATED;
+
+    small_vector<T>& operator-=(const small_vector<T>& other) 
+    { 
+      const_iterator b = other.begin(); iterator it = begin();
+      for (size_type i=0; i < size(); ++i) *it++ -= *b++; 
+      return *this;
+    }
+
+    small_vector<T> operator*=(T v) 
+    { 
+      iterator it = begin(), ite=end(); 
+      while(it < ite) *it++ *= v; 
+      return *this; 
+    }
+
+    small_vector<T> operator/=(T v) { return operator*=(T(1)/v); }
+
+    bool operator<(const small_vector<T>& other) const;
+
+    void fill(T v) { for (iterator it=begin(); it != end(); ++it) *it = v; }
+    small_vector<T>& operator<<(T x) { push_back(x); return *this; }
+    size_type memsize() const { return (size()*sizeof(T)) + sizeof(*this); }
+  };
+
+
+#endif // #if !defined GETFEM_HAVE_OPENMP
+
+  template<class T> inline bool small_vector<T>::operator<(const small_vector<T>& other) const 
+  {
     return std::lexicographical_compare(begin(), end(), other.begin(), other.end());
   }
 
-  template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) {
+  template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
+  {
     const_iterator b = other.begin(); iterator it = begin();
     for (size_type i=0; i < size(); ++i) *it++ += v * *b++; 
     return *this;

@@ -878,16 +878,13 @@ namespace getfem {
 	      open_mp_is_running_properly check; 
         #pragma omp parallel default(shared)  
         { 
-          #pragma omp for schedule(static) 
-              for(size_type i=0;i<num_threads();i++)
-              {
                 brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist, brick.dlist,
                                              brick.mims,
                                              cmatlist,
                                              cveclist,
                                              cveclist_sym,
                                              brick.region, version);
-              }
+
         }
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
@@ -921,18 +918,15 @@ namespace getfem {
 	      open_mp_is_running_properly check; 
         #pragma omp parallel default(shared)  
         { 
-          #pragma omp for schedule(static) 
-              for(size_type i=0;i<num_threads();i++)
-              {
-                   brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
-                                                  brick.mims,
-                                                  rmatlist,
-                                                  rveclist,
-                                                  rveclist_sym,
-                                                  brick.region,
-                                                  version);
-              }
-	       }
+            brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
+                                              brick.mims,
+                                              rmatlist,
+                                              rveclist,
+                                              rveclist_sym,
+                                              brick.region,
+                                              version);
+
+	      }
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
                                            brick.mims,

@@ -60,7 +60,6 @@ namespace bgeot {
     std::vector<base_matrix> gtrans;
     std::vector<scalar_type> det;
     std::vector<base_node> orgs;
-    mutable std::vector<bool> elt;
     
     const basic_mesh &linked_mesh(void) const { return *msh; }
     size_type nb_convex(void) const { return gtrans.size(); }
