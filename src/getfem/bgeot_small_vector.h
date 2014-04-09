@@ -325,7 +325,7 @@ namespace bgeot {
     small_vector<T>& operator+=(const small_vector<T>& other) 
     {
       const_iterator b = other.begin(); iterator it = std::vector<T>::begin(); 
-      for (size_type i=0; i < size(); ++i) *it++ += *b++; 
+      for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ += *b++; 
       return *this;
     }
 
@@ -334,7 +334,7 @@ namespace bgeot {
     small_vector<T>& operator-=(const small_vector<T>& other) 
     { 
       const_iterator b = other.begin(); iterator it = std::vector<T>::begin();
-      for (size_type i=0; i < size(); ++i) *it++ -= *b++; 
+      for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ -= *b++; 
       return *this;
     }
 
@@ -351,7 +351,7 @@ namespace bgeot {
 
     void fill(T v) { for (iterator it=std::vector<T>::begin(); it != std::vector<T>::end(); ++it) *it = v; }
     small_vector<T>& operator<<(T x) { push_back(x); return *this; }
-    size_type memsize() const { return (size()*sizeof(T)) + sizeof(*this); }
+    size_type memsize() const { return (std::vector<T>::size()*sizeof(T)) + sizeof(*this); }
   };
 
 
@@ -365,7 +365,7 @@ namespace bgeot {
   template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
   {
     const_iterator b = other.begin(); iterator it = std::vector<T>::begin();
-    for (size_type i=0; i < size(); ++i) *it++ += v * *b++; 
+    for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ += v * *b++; 
     return *this;
   }
 
