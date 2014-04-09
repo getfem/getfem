@@ -19,9 +19,8 @@
  
 ===========================================================================*/
 
-#if !defined GETFEM_HAVE_OPENMP
 #include "getfem/bgeot_small_vector.h"
-namespace bgeot {
+namespace bgeot { 
   block_allocator *static_block_allocator::palloc = 0;
 
   block_allocator::block_allocator() {
@@ -133,4 +132,3 @@ namespace bgeot {
     //cout << "** bloc " << bid << " has been REMOVED in unfilled list, which is now"; show_unfilled(bid);
   }
 }
-#endif //#if !defined GETFEM_HAVE_OPENMP
