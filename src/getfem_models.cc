@@ -4432,7 +4432,7 @@ namespace getfem {
     mutable gmm::row_matrix<model_real_sparse_vector> rB;
     mutable gmm::row_matrix<model_complex_sparse_vector> cB;
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+    virtual void  real_pre_assembly_in_serial(const model &md, size_type ib,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -4526,7 +4526,7 @@ namespace getfem {
       }
     }
 
-    virtual void asm_complex_tangent_terms(const model &md, size_type ib,
+    virtual void complex_pre_assembly_in_serial(const model &md, size_type ib,
                                            const model::varnamelist &vl,
                                            const model::varnamelist &dl,
                                            const model::mimlist &mims,

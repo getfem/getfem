@@ -21,6 +21,7 @@
 
 
 #include "getfem/getfem_fourth_order.h"
+#include "getfem/getfem_omp.h"
 
 
 namespace getfem {
@@ -424,10 +425,10 @@ namespace getfem {
   struct normal_derivative_Dirichlet_condition_brick : public virtual_brick {
 
     bool R_must_be_derivated;
-    mutable model_real_sparse_matrix rB;
-    mutable model_real_plain_vector rV;
-    mutable model_complex_sparse_matrix cB;
-    mutable model_complex_plain_vector cV;
+    mutable getfem::omp_distribute<model_real_sparse_matrix> rB_th;
+    mutable getfem::omp_distribute<model_real_plain_vector> rV_th;
+    mutable getfem::omp_distribute<model_complex_sparse_matrix> cB_th;
+    mutable getfem::omp_distribute<model_complex_plain_vector> cV_th;
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
 					const model::varnamelist &vl,
@@ -447,6 +448,9 @@ namespace getfem {
       GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 2,
 		  "Wrong number of variables for normal derivative Dirichlet "
 		  "condition brick");
+
+      model_real_sparse_matrix& rB = rB_th;
+      model_real_plain_vector&  rV = rV_th;
 
       bool penalized = (vl.size() == 1);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
@@ -554,6 +558,9 @@ namespace getfem {
       GMM_ASSERT1(vl.size() >= 1 && vl.size() <= 2 && dl.size() <= 2,
 		  "Wrong number of variables for normal derivative Dirichlet "
 		  "condition brick");
+
+      model_complex_sparse_matrix& cB = cB_th;
+      model_complex_plain_vector&  cV = cV_th;
 
       bool penalized = (vl.size() == 1);
       const mesh_fem &mf_u = md.mesh_fem_of_variable(vl[0]);
