@@ -37,8 +37,8 @@
 #ifndef BGEOT_SMALL_VECTOR_H
 #define BGEOT_SMALL_VECTOR_H
 
-#include "bgeot_config.h"
 #include "dal_singleton.h"
+#include "bgeot_config.h"
 #ifdef DEBUG_SMALL_VECTOR
 # include <cassert>
 # define SVEC_ASSERT(x) assert(x)
@@ -275,6 +275,19 @@ namespace bgeot {
     }
   };
 
+  template<class T> inline bool small_vector<T>::operator<(const small_vector<T>& other) const 
+  {
+    return std::lexicographical_compare(begin(), end(), other.begin(), other.end());
+  }
+
+  template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
+  {
+    const_iterator b = other.begin(); iterator it = begin();
+    for (size_type i=0; i < size(); ++i) *it++ += v * *b++; 
+    return *this;
+  }
+
+
 #else
 
   /**In case of multi-threaded assembly with OpenMP using std::vector derived
@@ -347,27 +360,25 @@ namespace bgeot {
 
     small_vector<T> operator/=(T v) { return operator*=(T(1)/v); }
 
-    bool operator<(const small_vector<T>& other) const;
-
     void fill(T v) { for (iterator it=std::vector<T>::begin(); it != std::vector<T>::end(); ++it) *it = v; }
     small_vector<T>& operator<<(T x) { push_back(x); return *this; }
     size_type memsize() const { return (std::vector<T>::size()*sizeof(T)) + sizeof(*this); }
+    inline bool operator<(const small_vector<T>& other) const 
+    {
+      return std::lexicographical_compare(std::vector<T>::begin(), std::vector<T>::end(), other.begin(), other.end());
+    }
   };
+
+    template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
+    {
+      const_iterator b = other.begin(); iterator it = std::vector<T>::begin();
+      for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ += v * *b++; 
+      return *this;
+    }
 
 
 #endif // #if !defined GETFEM_HAVE_OPENMP
 
-  template<class T> inline bool small_vector<T>::operator<(const small_vector<T>& other) const 
-  {
-    return std::lexicographical_compare(std::vector<T>::begin(), std::vector<T>::end(), other.begin(), other.end());
-  }
-
-  template<class T> inline small_vector<T>& small_vector<T>::addmul(T v, const small_vector<T>& other) 
-  {
-    const_iterator b = other.begin(); iterator it = std::vector<T>::begin();
-    for (size_type i=0; i < std::vector<T>::size(); ++i) *it++ += v * *b++; 
-    return *this;
-  }
 
   template<class T> std::ostream& operator<<(std::ostream& os, const small_vector<T>& v) {
     os << "["; for (size_type i=0; i < v.size(); ++i) { if (i) os << ", "; os << v[i]; }
