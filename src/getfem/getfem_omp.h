@@ -153,7 +153,7 @@ namespace getfem
   public:
     typedef std::vector<T> VEC;
     omp_distribute() : thread_values(num_threads()) {}
-    omp_distribute(int n, const T& value) : 
+    omp_distribute(size_t n, const T& value) : 
       thread_values(num_threads(), std::vector<T>(n,value)){}
     operator VEC& (){return thread_values[this_thread()];}
     operator const VEC& () const 

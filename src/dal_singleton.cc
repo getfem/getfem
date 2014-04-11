@@ -44,7 +44,7 @@ namespace dal {
     manager().lst.thrd_cast().push_back(p);
 	}
 
-	void singletons_manager::register_new_singleton(singleton_instance_base *p, int ithread) 
+	void singletons_manager::register_new_singleton(singleton_instance_base *p, size_t ithread) 
   {  	
     manager().lst(ithread).push_back(p);
 	}

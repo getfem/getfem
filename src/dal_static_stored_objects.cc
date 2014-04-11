@@ -43,7 +43,7 @@ namespace dal {
   // a specific thread
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o, size_t thread) 
   {
-    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(int(thread));
+    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
     stored_key_tab::iterator it = stored_keys.find(o);
     if (it != stored_keys.end()) return it->second;
     return 0;
@@ -79,7 +79,7 @@ namespace dal {
 
   // Test if an object is stored (in any of the thread's storage).
   bool exists_stored_object_all_threads(pstatic_stored_object o) {
-    for(int thread = 0; thread < int(getfem::num_threads()); thread++){
+    for(size_t thread = 0; thread < getfem::num_threads(); thread++){
       stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
       if (stored_keys.find(o) != stored_keys.end()) return true;
     }
@@ -101,7 +101,7 @@ namespace dal {
   /* Search for an object in the storage of all threads*/
   pstatic_stored_object
     search_stored_object_all_threads(pstatic_stored_object_key k) {
-      for(int thread = 0; thread<int(getfem::num_threads());thread++){
+      for(size_t thread = 0; thread<getfem::num_threads();thread++){
         stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
         stored_object_tab::iterator it
@@ -135,7 +135,7 @@ namespace dal {
     pstatic_stored_object_key k = key_of_stored_object(o);
     if (k) 
     {
-      for(int thread = 0; thread<int(getfem::num_threads());thread++)
+      for(size_t thread = 0; thread<getfem::num_threads();thread++)
       {
         if (thread == this_thread()) continue;
         stored_object_tab& stored_objects
@@ -371,7 +371,7 @@ namespace dal {
 
   // List the stored objects for debugging purpose
   void list_stored_objects(std::ostream &ost) {
-    for(int thread=0; thread<int(getfem::num_threads());thread++)
+    for(size_t thread=0; thread<getfem::num_threads();thread++)
     {
       stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
       if (stored_keys.begin() == stored_keys.end())

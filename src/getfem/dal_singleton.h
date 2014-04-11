@@ -73,7 +73,7 @@ namespace dal {
 
   public:
     static void register_new_singleton(singleton_instance_base *p);
-    static void register_new_singleton(singleton_instance_base *p, int ithread);
+    static void register_new_singleton(singleton_instance_base *p, size_t ithread);
     ~singletons_manager();
   private:
     singletons_manager();
@@ -91,7 +91,7 @@ namespace dal {
       return pointer;
     }
     static T*& instance_pointer() { return omp_distro_pointer( )->thrd_cast(); }
-    static T*& instance_pointer(int ithread) { return (*omp_distro_pointer( ))(ithread);}
+    static T*& instance_pointer(size_t ithread) { return (*omp_distro_pointer( ))(ithread);}
 
   public:
 
@@ -109,7 +109,7 @@ namespace dal {
     }
 
     /**Instance from thread ithread*/
-    inline static T& instance(int ithread) 
+    inline static T& instance(size_t ithread) 
     { 
       T*& tinstance_ = instance_pointer(ithread);
       if (!tinstance_) {
@@ -158,10 +158,10 @@ namespace dal {
     }
     inline static const T& const_instance() { return instance(); }
 
-    inline static T& instance(int ithread) { 
+    inline static T& instance(size_t ithread) { 
       return singleton_instance<T,LEV>::instance(ithread);
     }
-    inline static const T& const_instance(int ithread) { return instance(ithread); }
+    inline static const T& const_instance(size_t ithread) { return instance(ithread); }
 
 
   protected:
