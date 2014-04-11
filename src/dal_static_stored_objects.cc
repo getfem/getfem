@@ -184,15 +184,15 @@ namespace dal {
   /* Add a dependency between o1 and o2 assuming that at least one of them are from 
   the storage of different threads. 
   */
-  void add_dependency_on_different_threads(pstatic_stored_object o1,
+  void add_dependency(pstatic_stored_object o1,
     pstatic_stored_object o2) {
       stored_object_tab& stored_objects = dal::singleton<stored_object_tab>::instance();
+      getfem::omp_guard local_lock;
+      GMM_NOPERATION(local_lock);
       stored_object_tab::iterator it1 = iterator_of_object(o1);
       stored_object_tab::iterator it2 = iterator_of_object(o2);
       if (it1 != stored_objects.end() && it2 != stored_objects.end()) 
       {
-        getfem::omp_guard local_lock;
-        GMM_NOPERATION(local_lock);
         it2->second.dependent_object.insert(o1);
         it1->second.dependencies.insert(o2);
       }
@@ -204,64 +204,26 @@ namespace dal {
           cerr << "First object does not exist.";
         if (it2 == stored_objects.end()) 
           cerr << "Second object does not exist.";
-        cerr<<" thread N = "<<getfem::this_thread();
+        if (me_is_multithreaded_now()) cerr<<" thread N = "<<getfem::this_thread();
         cerr << endl;
         GMM_ASSERT1(false, "Add_dependency : Inexistent object");
       }
   }
 
-  /* Add a dependency between o1 and o2 if both of them are on this thread.
-  return true if they are on this thread, false otherwise
-  lock free execution
-  */
-  bool try_adding_dependency_on_this_thread
-    (pstatic_stored_object o1, pstatic_stored_object o2) 
-  {
-    stored_object_tab& stored_objects = dal::singleton<stored_object_tab>::instance();
-    stored_object_tab::iterator it1 = iterator_of_object_this_thread(o1);
-    stored_object_tab::iterator it2 = iterator_of_object_this_thread(o2);
-    if (it1 != stored_objects.end() && it2 != stored_objects.end()) 
-    {
-      it2->second.dependent_object.insert(o1);
-      it1->second.dependencies.insert(o2);
-      return true;
-    }
-    else return false;
-  }
-
-
-  /* Add a dependency, object o1 will depend on object o2 */
-  void add_dependency(pstatic_stored_object o1,
-    pstatic_stored_object o2)
-  {
-    bool dependency_added = try_adding_dependency_on_this_thread(o1, o2);
-    if (!dependency_added) add_dependency_on_different_threads(o1,o2);
-  }
 
 
   /*remove a dependency (from storages of all threads). 
   Return true if o2 has no more dependent object. */
   bool del_dependency(pstatic_stored_object o1, pstatic_stored_object o2) 
   {
-    //attempt to delete the dependencies from thread-local storage
     stored_object_tab& stored_objects
       = dal::singleton<stored_object_tab>::instance();
-    stored_object_tab::iterator it1 = iterator_of_object_this_thread(o1);
-    stored_object_tab::iterator it2 = iterator_of_object_this_thread(o2);
+    getfem::omp_guard local_lock;
+    GMM_NOPERATION(local_lock);
+    stored_object_tab::iterator it1 = iterator_of_object(o1);
+    stored_object_tab::iterator it2 = iterator_of_object(o2);
     if (it1 != stored_objects.end() && it2 != stored_objects.end()) 
     {
-      it2->second.dependent_object.erase(o1);
-      it1->second.dependencies.erase(o2);
-      return it2->second.dependent_object.empty();
-    }
-
-    //deleting dependencies from the storage of other threads
-    it1 = iterator_of_object(o1);
-    it2 = iterator_of_object(o2);
-    if (it1 != stored_objects.end() && it2 != stored_objects.end()) 
-    {
-      getfem::omp_guard local_lock;
-      GMM_NOPERATION(local_lock);
       it2->second.dependent_object.erase(o1);
       it1->second.dependencies.erase(o2);
       return it2->second.dependent_object.empty();
@@ -275,7 +237,7 @@ namespace dal {
         cerr << "First object does not exist.";
       if (it2 == stored_objects.end()) 
         cerr << "Second object does not exist.";
-      cerr<<" thread N = "<<getfem::this_thread();
+      if (me_is_multithreaded_now()) cerr<<" thread N = "<<getfem::this_thread();
       cerr << endl;
       GMM_ASSERT1(false, "del_dependency : Inexistent object");
     }
@@ -300,41 +262,6 @@ namespace dal {
   }
 
 
-
-  /* Only delete the list of objects but not the dependencies (all but this thread)*/
-  static void basic_delete_from_other_threads(std::list<pstatic_stored_object> &to_delete)
-  {
-    for(int thread=0; thread < int(getfem::num_threads()); thread++) 
-    {
-      if (thread == this_thread()) continue; //already looked in this thread
-
-      stored_object_tab& stored_objects
-        = dal::singleton<stored_object_tab>::instance(thread);
-      stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
-      std::list<pstatic_stored_object>::iterator it;
-      for (it = to_delete.begin(); it != to_delete.end(); ++it) 
-      {
-        pstatic_stored_object_key k = key_of_stored_object(*it,thread);
-        stored_object_tab::iterator ito = stored_objects.end();
-        if (k) ito = stored_objects.find(k);
-        if (k) 
-        {
-          getfem::omp_guard local_lock;
-          GMM_NOPERATION(local_lock);
-          stored_keys.erase(*it);
-        }
-        if (ito != stored_objects.end()) 
-        {
-          getfem::omp_guard local_lock;
-          GMM_NOPERATION(local_lock);
-          delete ito->first.p;
-          stored_objects.erase(ito);
-          it = to_delete.erase(it);
-          --it;
-        }
-      }
-    }
-  }
 
   /* Only delete the list of objects but not the dependencies (located on this thread)*/
   static void basic_delete_from_this_thread(std::list<pstatic_stored_object> &to_delete)
@@ -362,7 +289,6 @@ namespace dal {
   static void basic_delete(std::list<pstatic_stored_object> &to_delete)
   {
     basic_delete_from_this_thread(to_delete);
-    if ( !to_delete.empty() ) basic_delete_from_other_threads(to_delete);
     GMM_ASSERT1(to_delete.empty(), "failed to delete objects");
   }
 
