@@ -1755,7 +1755,7 @@ namespace getfem {
     DEFINE_STATIC_THREAD_LOCAL(bgeot::pgeotrans_precomp, pgp);
     DEFINE_STATIC_THREAD_LOCAL(pfem_precomp, pfp);
     DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bgeot::pgeometric_trans, pgt_stored, 0);
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, (2, 2));
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, K, 2, 2);
     dim_type N = dim_type(G.nrows());
     GMM_ASSERT1(N == 2, "Sorry, this version of argyris "
 		"element works only on dimension two.")
@@ -1794,7 +1794,7 @@ namespace getfem {
       M(5+6*k, 3+6*k) = c*c;     M(5+6*k, 4+6*k) = c*d;       M(5+6*k, 5+6*k) = d*d; 
     }
     
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, (3, 21));
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix, W, 3, 21);
     base_small_vector norient(M_PI, M_PI * M_PI);
     if (pgt->is_linear()) gmm::lu_inverse(K); 
     for (unsigned i = 18; i < 21; ++i) {
@@ -1813,11 +1813,11 @@ namespace getfem {
       for (unsigned j = 0; j < 21; ++j)
 	W(i-18, j) = t(j, 0, 0) * v[0] + t(j, 0, 1) * v[1];
     }
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix,A,(3,3));
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, w, (3));
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, coeff, (3));
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBI, (18,3));
-    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBJ, (0,3));
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(base_matrix,A,3,3);
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, w, 3);
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(bgeot::base_vector, coeff, 3);
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBI, 18,3);
+    DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(gmm::sub_interval, SUBJ, 0,3);
     gmm::copy(gmm::sub_matrix(W, SUBJ, SUBI), A);
     gmm::lu_inverse(A);
     gmm::copy(gmm::transposed(A), gmm::sub_matrix(M, SUBI));

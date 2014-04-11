@@ -226,9 +226,9 @@ namespace getfem
   if(!ptr_##Var.get()) {ptr_##Var.reset(new Type());} \
   Type& Var=*ptr_##Var;
 
-#define DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(Type, Var, arguments) \
+#define DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(Type, Var, ...) \
   static boost::thread_specific_ptr<Type> ptr_##Var; \
-  if(!ptr_##Var.get()) {ptr_##Var.reset(new Type##arguments);} \
+  if(!ptr_##Var.get()) {ptr_##Var.reset(new Type##(__VA_ARGS__));} \
   Type& Var=*ptr_##Var;
 
 #else
@@ -238,8 +238,8 @@ namespace getfem
 #define	DEFINE_STATIC_THREAD_LOCAL(Type,Var) \
   static Type Var;
 
-#define DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(Type, Var, arguments) \
-  static Type Var##arguments;
+#define DEFINE_STATIC_THREAD_LOCAL_CONSTRUCTED(Type, Var, ...) \
+  static Type Var##(__VA_ARGS__);
 
 #endif
 
