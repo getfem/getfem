@@ -307,6 +307,8 @@ namespace bgeot {
 
     small_vector(const small_vector<T>& v) : std::vector<T>(v) {}
 
+    small_vector(const std::vector<T>&  v) : std::vector<T>(v) {}
+
     small_vector(T v1, T v2) : std::vector<T>(2) 
     { (*this)[0] = v1; (*this)[1] = v2; }
 
