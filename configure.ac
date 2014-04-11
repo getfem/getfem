@@ -119,37 +119,6 @@ AC_CANONICAL_HOST
 echo "you are compiling GetFEM++ on a $host"
 
 case $CXX in
- cxx)
-	echo "Using Compaq cxx compiler"
-	echo "WARNING : Control that you have at least Compaq C++ V6.3"
- 	here=`pwd`
- 	cd $srcdir
-dnl     il faut utiliser -tweak au lieu des repositories ...
-	CXXFLAGS="$CXXFLAGS -tweak -std strict_ansi -fast -Wl,-S -nopure_cname"
-dnl 	CXXFLAGS="$CXXFLAGS -ptr `pwd`/cxx_repository -std strict_ansi $with_optimization"
-	CFLAGS="$CFLAGS -fast -Wl,-S"
- 	cd $here
-	;;
- CC)
-	case $host in
-	*irix*)
-		echo "Using MIPSPRO CC on IRIX  (LD is set to CC)"
-		LD=CC   dnl sinon getfem_matlab a des problèmes (unresolved symbol __record_needed_destruction)
-dnl 		CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -OPT:Olimit=0:roundoff=3:div_split=ON:alias=typed -TARG:platform=ip25"
- 		CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization "
-dnl             CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -ansiW "
-		SUPLDFLAGS="-lCio"
-		;;
-	*sun*)
-		echo "Using SUN C++ WorkShop Compiler"
-		CXXFLAGS="$CXXFLAGS +w2 $with_optimization -library=stlport4"
-		;;
-	esac
-	;;
- aCC)
-	echo "Using HP ANSI C++ Compiler aCC"
-	CXXFLAGS="$CXXFLAGS -AA -fast"	
-	;;
 	
  *g++* | c++)
 	GCCVER=`$CXX --version | head -1 | cut -d ' ' -f3`
@@ -157,7 +126,8 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -ansiW "
 	AC_CHECK_CXX_FLAG([$with_optimization],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
-	AC_CHECK_CXX_FLAG([-ftemplate-depth-40],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
+	dnl AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
 	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
@@ -172,20 +142,19 @@ dnl             CXXFLAGS="$CXXFLAGS -LANG:std $with_optimization -ansiW "
 	dnl -rdynamic used for backtraces
 	AC_CHECK_CXX_FLAG([-rdynamic],SUPLDFLAGS)
 
-dnl 	CXXFLAGS="$CXXFLAGS -fmessage-length=0 -ftemplate-depth-40 -pedantic $with_optimization -Wall -W $WSHADOW -Wpointer-arith -Wcast-qual -Wwrite-strings -Wconversion -Wredundant-decls -Wno-long-double"
 dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
         CFLAGS="$CFLAGS $with_optimization"
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
-dnl -tpp6 is for pentiumII and more
-dnl -Xc is for ansi conformance
-	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
+	dnl CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++11"
+        CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
         CFLAGS="$CFLAGS $with_optimization -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
- 	CXXFLAGS="$CXXFLAGS $with_optimization"
+ 	dnl CXXFLAGS="$CXXFLAGS $with_optimization -std=c++11"
+        CXXFLAGS="$CXXFLAGS $with_optimization"
         CFLAGS="$CFLAGS $with_optimization"
 	;;
 esac

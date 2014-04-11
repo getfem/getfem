@@ -9,6 +9,7 @@ if test -z "`${CXX} $1 -o conftest conftest.c 2>&1`"; then
   echo "yes"
 else
   echo "no"
+  $3
 fi
 dnl echo "$2=${$2}"
 rm -f conftest*

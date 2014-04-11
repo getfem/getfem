@@ -21,7 +21,7 @@ The header file to be included to use the high-level generic assembly procedures
 
 Differences in execution time between high and low level generic assembly
 -------------------------------------------------------------------------
-For basic linear assembly terms, the high and low level generic assembly procedures have approximately the same efficiency in term of computational time. Both have been thoroughly optimized. On the one hand, the fact that the high-level generic assembly incorporate a compilation in basic optimized instructions and operates simplifications makes that it can be really faster especially on complex terms. On the other hand, the fact that the low-level generic assembly incorporates a mechanism to pre-compute on the reference element the linear term for elements with a linear transformation makes that it can be faster on simple linear terms. But even in that case, the high level generic assembly is sometime faster. Of course, a possibility would be to incorporate the ability to pre-compute on the reference element the linear term for linear transformations in the high level generic assembly. However, it would be rather complicated due to the high genericity of the language. A consequence also is that exact integration is not allowed in the high level generic assembly.
+For basic linear assembly terms, the high and low level generic assembly procedures have approximately the same efficiency in term of computational time. Both have been thoroughly optimized. On the one hand, the fact that the high-level generic assembly incorporate a compilation in basic optimized instructions and operates simplifications makes (for instance all identical expressions are computed only once) that it can be really faster especially on complex terms. On the other hand, the fact that the low-level generic assembly incorporates a mechanism to pre-compute on the reference element the linear term for elements with a linear transformation makes that it can be faster on simple linear terms. But even in that case, the high level generic assembly is sometime faster. Of course, a possibility would be to incorporate the ability to pre-compute on the reference element the linear term for linear transformations in the high level generic assembly. However, it would be rather complicated due to the high genericity of the language. A consequence also is that exact integration is not allowed in the high level generic assembly.
 
 
 
@@ -131,13 +131,15 @@ and ``my_f1`` and ``my_f2`` are some given functions. Note that in that case, th
 
 
 Derivation order and symbolic differentiation
-----------------------------------------------
+---------------------------------------------
 
 The derivation order of the assembly string is automatically detected. This means that if no tests function are found, the order will be considered to be 0 (potential energy), if first order tests functions are found, the order will be considered to be 1 (weak formulation) and if both first and second order tests functions are found, the order will be considered to be 2 (tangent system).
 
 In order to perform an assembly (see next section), one should specify the order (0, 1 or 2). If an order 1 string is furnished and an order 2 assembly is required, a symbolic differentiation of the expression is performed. The same if an order 0 string is furnished and if an order 1 or 2 assembly is required. Of course, the converse is not true. If an order 1 expression is given and an order 0 assembly is expected, no integration is performed. This should not be generally not possible since an arbitrary weak formulation do not necessary derive from a potential energy.
 
 The standard way to use the generic assembly is to furnish order 1 expressions (i.e. a weak formulation). If a potential energy exists, one may furnish it. However, it will be derived twice to obtain the tangent system which could result in complicated expressions. For nonlinear problems, it is not allowed to furnish order 2 expressions directly. The reason is that the weak formulation is necessary to obtain the residual. So nothing could be done with a tangent term without having the corresponding order 1 term.
+
+IMPORTANT REMARK: Note that for coupled problems, a global potential frequently do not exists. So that the part of problems directly defined with a potential may be difficult to couple. To illustrate this, if you defined a potential with some parameters (elasticity coefficients for instance), and the couplingconsists in a variation of these coefficients with respect to another variable, then the weak formulation do not consist of course in the derivative of the potential with respect to the coefficients which has generally no sense. This is the reason why the definition through a potential should be the exception.
 
 
 C++ Call of the assembly
