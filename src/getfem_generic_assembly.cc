@@ -1347,7 +1347,14 @@ namespace getfem {
   static scalar_type ga_neg_part(scalar_type t) { return (t >= 0.) ? 0. : -t; }
   static scalar_type ga_half_sqr_neg_part(scalar_type t)
   { return (t >= 0.) ? 0. : 0.5*t*t; }
-  
+  static scalar_type ga_sinc(scalar_type t) {// cardinal sine function sin(t)/t
+    if (gmm::abs(t) < 1E-5) {
+      scalar_type t2 = t*t;
+      return 1-t2/6.+ t2*t2/120.;
+    } else {
+      return sin(t)/t;
+    }
+  }
   static scalar_type ga_sqr(scalar_type t) { return t*t; }
   static scalar_type ga_max(scalar_type t, scalar_type u)
   { return std::max(t,u); }
@@ -1357,6 +1364,22 @@ namespace getfem {
   static scalar_type ga_sign(scalar_type t) { return (t >= 0.) ? 1.: -1.; }
   
   // Derivatives of predefined functions
+  static scalar_type ga_der_sinc(scalar_type t) {
+    if (gmm::abs(t) < 1E-5) {
+      scalar_type t2 = t*t;
+      return  -t/3. + t*t2/30. -t*t2*t2/840.;
+    } else {
+      return (t*cos(t) - sin(t))/(t*t);
+    }
+  }
+  static scalar_type ga_der2_sinc(scalar_type t) {
+    if (gmm::abs(t) < 1E-5) {
+      scalar_type t2 = t*t;
+      return  -1./3. + t2/10. -t2*t2/168.;
+    } else {
+      return ((2. - t*t)*sin(t) - 2.*t*cos(t))/(t*t*t);
+    }
+  }
   static scalar_type ga_der_sqrt(scalar_type t) { return 0.5/sqrt(t); }
   // static scalar_type ga_der_sqr(scalar_type t) { return 2*t; }
   static scalar_type ga_der_pow1(scalar_type t, scalar_type u)
@@ -1653,7 +1676,13 @@ namespace getfem {
     PREDEF_FUNCTIONS["asin"] = ga_predef_function(asin, 1, "DER_PDFUNC_ASIN");
     PREDEF_FUNCTIONS["acos"] = ga_predef_function(acos, 1, "DER_PDFUNC_ACOS");
     PREDEF_FUNCTIONS["atan"] = ga_predef_function(atan, 1, "DER_PDFUNC_ATAN");
+    PREDEF_FUNCTIONS["sinc"] = ga_predef_function(ga_sinc, 1,
+                                                  "DER_PDFUNC_SINC");
+    PREDEF_FUNCTIONS["DER_PDFUNC_SINC"] = ga_predef_function(ga_der_sinc,
+                                                       1, "DER2_PDFUNC_SINC");
+    PREDEF_FUNCTIONS["DER2_PDFUNC_SINC"] = ga_predef_function(ga_der2_sinc);
     
+
     PREDEF_FUNCTIONS["DER_PDFUNC_COS"] =
       ga_predef_function(ga_der_cos, 2, "-cos(t)");
     PREDEF_FUNCTIONS["DER_PDFUNC_TAN"] =

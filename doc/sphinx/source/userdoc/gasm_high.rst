@@ -364,7 +364,7 @@ A list of variables should be given to the ``ga_worspace`` object (directly or t
 The constants or data
 *********************
 
-A list of constants could also be given to the ``ga_worspace`` object. The rule are the same as for the variables but no test function can be associated to constants and there is no symbolic differentiation with respect to constants. Scalar constants are often defined to represent the coefficients which intervene in constitutive laws. Additionally, constants can be some scalar/vector/tensor fields defined on integration points via a ``im_data` object (for instance for some implementation of the approximation of consttutive laws such as plasticity).
+A list of constants could also be given to the ``ga_worspace`` object. The rule are the same as for the variables but no test function can be associated to constants and there is no symbolic differentiation with respect to constants. Scalar constants are often defined to represent the coefficients which intervene in constitutive laws. Additionally, constants can be some scalar/vector/tensor fields defined on integration points via a ``im_data`` object (for instance for some implementation of the approximation of constitutive laws such as plasticity).
 
 
 Test functions
@@ -398,6 +398,7 @@ A certain number of predefined scalar functions can be used. The exhaustive list
   - ``sinh(t)``, ``cosh(t)``, ``tanh(t)``, ``asinh(t)``, ``acosh(t)``, ``atanh(t)``
 
   - ``erf(t)``, ``erfc(t)``
+  - ``sinc(t)`` (the cardinal sine function sin(t)/t)
 
   - ``Heaviside(t)`` (:math:`0 \mbox{ for } t < 0, 1 \mbox{ for } t \ge 0`),
     ``sign(t)``, ``abs(t)``, ``pos_part(t)`` (:math:`t*H(t)`),
