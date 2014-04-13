@@ -437,26 +437,6 @@ namespace getfem {
 	}
 
   SaintVenant_Kirchhoff_hyperelastic_law::SaintVenant_Kirchhoff_hyperelastic_law(void) {
-    // an attempt, the first term is missing grad(h)sigma:grad(v)
-//     adapted_tangent_term_assembly_fem_data = "params=data$1(#2,2);"
-//       "t=comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l).Base(#2)(:));"
-//       "u=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k).Base(#2)(:));" 
-//       "v=comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i).Base(#2)(:));"
-//       "M(#1,#1)+= t(:,:,i).params(i,1) + u(:,:,i).params(i,2) + v(:,:,i).params(i,2)";
-
-//     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
-//       "t=sym(comp(NonLin$2(#1)(i,j).vGrad(#1)(:,i,j).NonLin$2(#1)(k,l).vGrad(#1)(:,k,l)));"
-//       "u=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,i).vGrad(#1)(:,l,k)));" 
-//       "v=sym(comp(NonLin$2(#1)(j,i).vGrad(#1)(:,j,k).NonLin$2(#1)(l,k).vGrad(#1)(:,l,i)));"
-//       "M(#1,#1)+= t(:,:).params(1) + u(:,:).params(2) + v(:,:).params(2)";
-
-// not efficient at all
-//     adapted_tangent_term_assembly_cte_data = "params=data$1(2);"
-//       "t=comp(NonLin$2(#1).vGrad(#1).NonLin$2(#1).vGrad(#1));"
-//       "M(#1,#1)+= t(i,j,:,i,j,k,l,:,k,l).params(1);"
-//       "M(#1,#1)+= t(j,i,:,j,k,l,i,:,l,k).params(2);"
-//       "M(#1,#1)+= t(j,i,:,j,k,l,k,:,l,i).params(2);";
-
     nb_params_ = 2;
   }
 
@@ -2033,40 +2013,87 @@ namespace getfem {
 
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
                                 new Saint_Venant_Kirchhoff_sigma());
-    // PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
-    //  new AHL_wrapper_sigma(new SaintVenant_Kirchhoff_hyperelastic_law()));
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_potential",
       new AHL_wrapper_potential(new SaintVenant_Kirchhoff_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method("Plane_Strain_Saint_Venant_Kirchhoff_sigma",
+                                new Saint_Venant_Kirchhoff_sigma());
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Saint_Venant_Kirchhoff_potential",
+      new AHL_wrapper_potential(new SaintVenant_Kirchhoff_hyperelastic_law()));
+    
 
+    abstract_hyperelastic_law *gbklaw
+      = new generalized_Blatz_Ko_hyperelastic_law();
     PREDEF_OPERATORS.add_method("Generalized_Blatz_Ko_sigma",
-      new AHL_wrapper_sigma(new generalized_Blatz_Ko_hyperelastic_law()));
+      new AHL_wrapper_sigma(gbklaw));
     PREDEF_OPERATORS.add_method("Generalized_Blatz_Ko_potential",
       new AHL_wrapper_potential(new generalized_Blatz_Ko_hyperelastic_law()));
-
+    PREDEF_OPERATORS.add_method("Plane_Strain_Generalized_Blatz_Ko_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(gbklaw)));
+    PREDEF_OPERATORS.add_method("Plane_Strain_Generalized_Blatz_Ko_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(gbklaw)));
+    
+    abstract_hyperelastic_law *cigelaw
+      = new Ciarlet_Geymonat_hyperelastic_law();
     PREDEF_OPERATORS.add_method("Ciarlet_Geymonat_sigma",
-      new AHL_wrapper_sigma(new Ciarlet_Geymonat_hyperelastic_law()));
+      new AHL_wrapper_sigma(cigelaw));
     PREDEF_OPERATORS.add_method("Ciarlet_Geymonat_potential",
       new AHL_wrapper_potential(new Ciarlet_Geymonat_hyperelastic_law()));
-
+    PREDEF_OPERATORS.add_method("Plane_Strain_Ciarlet_Geymonat_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cigelaw)));
+    PREDEF_OPERATORS.add_method("Plane_Strain_Ciarlet_Geymonat_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cigelaw)));
+    
+    abstract_hyperelastic_law *morilaw
+      = new Mooney_Rivlin_hyperelastic_law();    
     PREDEF_OPERATORS.add_method("Incompressible_Mooney_Rivlin_sigma",
-      new AHL_wrapper_sigma(new Mooney_Rivlin_hyperelastic_law()));
+      new AHL_wrapper_sigma(morilaw));
     PREDEF_OPERATORS.add_method("Incompressible_Mooney_Rivlin_potential",
       new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Mooney_Rivlin_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(morilaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Mooney_Rivlin_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(morilaw)));
 
+    abstract_hyperelastic_law *cmorilaw
+      = new Mooney_Rivlin_hyperelastic_law(true);
     PREDEF_OPERATORS.add_method("Compressible_Mooney_Rivlin_sigma",
-      new AHL_wrapper_sigma(new Mooney_Rivlin_hyperelastic_law(true)));
+      new AHL_wrapper_sigma(cmorilaw));
     PREDEF_OPERATORS.add_method("Compressible_Mooney_Rivlin_potential",
       new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(true)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Mooney_Rivlin_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cmorilaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Mooney_Rivlin_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cmorilaw)));
 
+    abstract_hyperelastic_law *ineolaw
+      = new Mooney_Rivlin_hyperelastic_law(false, true);
     PREDEF_OPERATORS.add_method("Incompressible_Neo_Hookean_sigma",
-      new AHL_wrapper_sigma(new Mooney_Rivlin_hyperelastic_law(false,true)));
+      new AHL_wrapper_sigma(ineolaw));
     PREDEF_OPERATORS.add_method("Incompressible_Neo_Hookean_potential",
     new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(false,true)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Neo_Hookean_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(ineolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Incompressible_Neo_Hookean_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(ineolaw)));
 
+    abstract_hyperelastic_law *cneolaw
+      = new Neo_Hookean_hyperelastic_law();
     PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_sigma",
-      new AHL_wrapper_sigma(new Neo_Hookean_hyperelastic_law()));
+      new AHL_wrapper_sigma(cneolaw));
     PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_potential",
       new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law()));
+    PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneolaw)));
 
     return true;
   }
@@ -2098,22 +2125,19 @@ namespace getfem {
     } else if (lawname.compare("Saint_Venant_Kirchhoff") == 0) {
 
     } else if (lawname.compare("Generalized_Blatz_Ko") == 0) {
-      if (N == 2) lawname = "plane_strain_" + lawname;
+      if (N == 2) lawname = "Plane_Strain_" + lawname;
     } else if (lawname.compare("Ciarlet_Geymonat") == 0) {
-      if (N == 2) lawname = "plane_strain_" + lawname;
+      if (N == 2) lawname = "Plane_Strain_" + lawname;
     } else if (lawname.compare("Incompressible_Mooney_Rivlin") == 0) {
-      if (N == 2) lawname = "plane_strain_" + lawname;
+      if (N == 2) lawname = "Plane_Strain_" + lawname;
     } else if (lawname.compare("Compressible_Mooney_Rivlin") == 0) {
-      if (N == 2) lawname = "plane_strain_" + lawname;
+      if (N == 2) lawname = "Plane_Strain_" + lawname;
     } else if (lawname.compare("Incompressible_Neo_Hookean") == 0) {
-      if (N == 2) lawname = "plane_strain_" + lawname;
+      if (N == 2) lawname = "Plane_Strain_" + lawname;
     } else if (lawname.compare("Compressible_Neo_Hookean") == 0) {
-      if (N == 2) lawname = "plane_strain_" + lawname;
+      if (N == 2) lawname = "Plane_Strain_" + lawname;
     } else
       GMM_ASSERT1(false, lawname << " is not a known hyperelastic law");
-
-    
-
 
     std::string expr = "((Id(meshdim)+Grad_u)*(" + lawname
       + "_sigma(Grad_"+varname+","+params+"))):Grad_Test_" + varname;

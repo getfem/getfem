@@ -642,7 +642,7 @@ namespace getfem {
   void interpolation_to_im_data(const mesh_fem &mf_source,
     const im_data &im_target,
     const VECT &nodal_data, VECT &int_pt_data, bool use_im_data_filtered = true){
-    typedef typename gmm::linalg_traits<const VECT>::value_type T;
+    // typedef typename gmm::linalg_traits<const VECT>::value_type T;
     
     dim_type qdim = mf_source.get_qdim();
     GMM_ASSERT1(qdim == im_target.nb_tensor_elem(), 
