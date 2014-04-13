@@ -1464,8 +1464,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     depends on the law. It could be a short vector of constant values or a
     vector field described on a finite element method for variable
     coefficients. `region` is an optional mesh region on which the term
-    is added. If it is not specified, it is added on the whole mesh. Return the
-    brick index in the model.@*/
+    is added. If it is not specified, it is added on the whole mesh.
+    This brick use the low-level generic assembly.
+    Returns the brick index in the model.@*/
     sub_command
       ("add nonlinear elasticity brick", 4, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
@@ -1483,6 +1484,44 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
+
+    /*@SET ind = ('add finite strain elasticity brick', @tmim mim, @str varname, @str constitutive_law, @str params[, @int region])
+    Add a nonlinear elasticity term to the model relatively to the
+    variable `varname`. `lawname` is the constitutive law which
+    could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'Neo Hookean',
+    'Ciarlet Geymonat' or 'Generalized Blatz Ko'.
+    'Mooney Rivlin' and 'Neo Hookean' law names have to be preceeded with
+    the word 'Compressible' or 'Incompressible' to force using the
+    corresponding version.
+    The compressible version of these laws requires one additional material
+    coefficient.
+
+    IMPORTANT : if the variable is defined on a 2D mesh, the plane strain
+    approximation is automatically used.
+    `params` is a vector of parameters for the constitutive law. Its length
+    depends on the law. It could be a short vector of constant values or a
+    vector field described on a finite element method for variable
+    coefficients. `region` is an optional mesh region on which the term
+    is added. If it is not specified, it is added on the whole mesh.
+    This brick use the high-level generic assembly.
+    Returns the brick index in the model.@*/
+    sub_command
+      ("add finite strain elasticity brick", 4, 5, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       size_type N = gfi_mim->mesh_im().linked_mesh().dim();
+       std::string varname = in.pop().to_string();
+       std::string lawname = in.pop().to_string();
+       std::string params = in.pop().to_string();
+       size_type region = size_type(-1);
+       if (in.remaining()) region = in.pop().to_integer();
+       size_type ind = config::base_index() +
+       add_finite_strain_elasticity_brick
+       (md->model(), gfi_mim->mesh_im(), varname, lawname, params, region);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+
 
     /*@SET ind = ('add elastoplasticity brick', @tmim mim ,@str projname, @str varname, @str datalambda, @str datamu, @str datathreshold, @str datasigma[, @int region])
       Add a nonlinear elastoplastic term to the model relatively to the

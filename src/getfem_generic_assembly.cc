@@ -1348,7 +1348,7 @@ namespace getfem {
   static scalar_type ga_half_sqr_neg_part(scalar_type t)
   { return (t >= 0.) ? 0. : 0.5*t*t; }
   static scalar_type ga_sinc(scalar_type t) {// cardinal sine function sin(t)/t
-    if (gmm::abs(t) < 1E-5) {
+    if (gmm::abs(t) < 1E-4) {
       scalar_type t2 = t*t;
       return 1-t2/6.+ t2*t2/120.;
     } else {
@@ -1365,7 +1365,7 @@ namespace getfem {
   
   // Derivatives of predefined functions
   static scalar_type ga_der_sinc(scalar_type t) {
-    if (gmm::abs(t) < 1E-5) {
+    if (gmm::abs(t) < 1E-4) {
       scalar_type t2 = t*t;
       return  -t/3. + t*t2/30. -t*t2*t2/840.;
     } else {
@@ -1373,7 +1373,7 @@ namespace getfem {
     }
   }
   static scalar_type ga_der2_sinc(scalar_type t) {
-    if (gmm::abs(t) < 1E-5) {
+    if (gmm::abs(t) < 1E-4) {
       scalar_type t2 = t*t;
       return  -1./3. + t2/10. -t2*t2/168.;
     } else {

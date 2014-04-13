@@ -34,7 +34,7 @@ incompressible = false;
 lawname = 'SaintVenant Kirchhoff';
 params = [1;1];
 if (incompressible)
-    lawname = 'Mooney Rivlin';
+    lawname = 'Incompressible Mooney Rivlin';
     params = [1;1];
 end
 
@@ -85,7 +85,8 @@ gf_mesh_set(m,'boundary', 3, [ftop fbot]);
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md,'add initialized data','params', params);
-gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+% gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname, 'params');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
 %             'sqr(Trace(Green_Lagrangian(Id(meshdim)+Grad_u)))/8 + Norm_sqr(Green_Lagrangian(Id(meshdim)+Grad_u))/4');
 % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...

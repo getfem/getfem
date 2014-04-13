@@ -2071,12 +2071,57 @@ namespace getfem {
     return true;
   }
 
-
-
-
-
   static bool predef_operators_initialized = init_predef_operators();
 
+
+
+  size_type add_finite_strain_elasticity_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   std::string lawname, const std::string &params,
+   size_type region) {
+    size_type N = mim.linked_mesh().dim();
+    GMM_ASSERT1(N >= 2 && N <= 3,
+                "Finite strain elasticity brick works only in 2D or 3D");
+
+    const mesh_fem *mf = md.pmesh_fem_of_variable(varname);
+    GMM_ASSERT1(mf, "Finite strain elasticity brick can only be applied on "
+                "fem variables");
+    size_type Q = mf->get_qdim();
+    GMM_ASSERT1(Q == N, "Finite strain elasticity brick can only be applied "
+                "on a fem variable having the same dimension than the mesh");
+
+    for (size_type i = 0; i < lawname.size(); ++i)
+      if (lawname[i] == ' ') lawname[i] = '_';
+
+    if (lawname.compare("SaintVenant_Kirchhoff") == 0) {
+      lawname = "Saint_Venant_Kirchhoff";
+    } else if (lawname.compare("Saint_Venant_Kirchhoff") == 0) {
+
+    } else if (lawname.compare("Generalized_Blatz_Ko") == 0) {
+      if (N == 2) lawname = "plane_strain_" + lawname;
+    } else if (lawname.compare("Ciarlet_Geymonat") == 0) {
+      if (N == 2) lawname = "plane_strain_" + lawname;
+    } else if (lawname.compare("Incompressible_Mooney_Rivlin") == 0) {
+      if (N == 2) lawname = "plane_strain_" + lawname;
+    } else if (lawname.compare("Compressible_Mooney_Rivlin") == 0) {
+      if (N == 2) lawname = "plane_strain_" + lawname;
+    } else if (lawname.compare("Incompressible_Neo_Hookean") == 0) {
+      if (N == 2) lawname = "plane_strain_" + lawname;
+    } else if (lawname.compare("Compressible_Neo_Hookean") == 0) {
+      if (N == 2) lawname = "plane_strain_" + lawname;
+    } else
+      GMM_ASSERT1(false, lawname << " is not a known hyperelastic law");
+
+    
+
+
+    std::string expr = "((Id(meshdim)+Grad_u)*(" + lawname
+      + "_sigma(Grad_"+varname+","+params+"))):Grad_Test_" + varname;
+
+    return add_nonlinear_generic_assembly_brick
+      (md, mim, expr, region, true, false,
+       "Finite strain elasticity brick for " + lawname + " law");
+  }
 
 
 

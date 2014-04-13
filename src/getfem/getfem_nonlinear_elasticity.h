@@ -625,6 +625,18 @@ namespace getfem {
   }
   
 
+  /** Add a finite strain elasticity brick
+      to the model with respect to the variable
+      `varname` (the displacement).
+      For 2D meshes, switch automatically to plane strain elasticity.
+      High-level generic assembly version.
+  */
+  size_type add_finite_strain_elasticity_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   std::string lawname, const std::string &params,
+   size_type region = size_type(-1));
+
+
   /** Add a nonlinear incompressibility term (for large strain elasticity)
       to the model with respect to the variable
       `varname` (the displacement) and `multname` (the pressure).
