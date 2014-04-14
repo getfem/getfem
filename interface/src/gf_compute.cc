@@ -514,6 +514,33 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 	 getfem::error_estimate(mim, *mf, U.cplx(), err, mim.convex_index());
        );
 
+      
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+            
+    /*@FUNC E = ('error estimate nitsche', @tmim mim, @scalar GAMMAC, @scalar GAMMAN)
+    Compute an a posteriori error estimate in the case of Nitsche method.
+
+    Currently there is only one which is available: for each convex,
+    the jump of the normal derivative is integrated on its faces.@*/
+    sub_command
+      ("error_estimate_nitsche", 3, 3, 0, 1,
+       const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
+       scalar_type GAMMAC = in.pop().to_scalar();
+       scalar_type GAMMAN = in.pop().to_scalar();
+       darray err =
+       out.pop().create_darray_h
+               (unsigned(mim.linked_mesh().convex_index().last_true()+1));
+       if (!U.is_complex())
+	 getfem::error_estimate_nitsche(mim, *mf, U.real(), err, mim.convex_index(), GAMMAC, GAMMAN);
+       else
+	 getfem::error_estimate_nitsche(mim, *mf, U.cplx(), err, mim.convex_index(), GAMMAC, GAMMAN);
+       );   
+      
+#endif
+      
+      
+      
+      
     /*@FUNC E = ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
     Compute a convection of `U` with regards to a steady state velocity
     field `V` with a Characteristic-Galerkin method. This
