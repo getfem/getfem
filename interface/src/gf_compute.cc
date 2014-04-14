@@ -527,13 +527,14 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
        scalar_type GAMMAC = in.pop().to_scalar();
        scalar_type GAMMAN = in.pop().to_scalar();
+       unsigned si = unsigned(mim.linked_mesh().convex_index().last_true()+1);
        darray err =
-       out.pop().create_darray_h
-               (unsigned(mim.linked_mesh().convex_index().last_true()+1));
-       if (!U.is_complex())
-	 getfem::error_estimate_nitsche(mim, *mf, U.real(), err, mim.convex_index(), GAMMAC, GAMMAN);
-       else
-	 getfem::error_estimate_nitsche(mim, *mf, U.cplx(), err, mim.convex_index(), GAMMAC, GAMMAN);
+       out.pop().create_darray_h(si);
+       getfem::base_vector ERR(si);
+       getfem::base_vector UU(U.real().size());
+       gmm::copy(U.real(), UU);
+       getfem::error_estimate_nitsche(mim, *mf, UU, ERR);
+       gmm::copy(ERR, err);
        );   
       
 #endif

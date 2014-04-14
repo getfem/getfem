@@ -3185,7 +3185,7 @@ namespace getfem {
 
   void ga_workspace::add_tree(ga_tree &tree, const mesh_im &mim,
                               const mesh_region &rg, const std::string expr,
-                              bool add_derivative) {
+                              bool add_derivative, bool scalar_expr) {
     if (tree.root) {
       
       // cout << "With tests functions of " <<  tree.root->name_test1
@@ -3199,7 +3199,7 @@ namespace getfem {
       default: GMM_ASSERT1(false, "Inconsistent term");
       }
       
-      if (tree.root->tensor_order() > 0)
+      if (scalar_expr && tree.root->tensor_order() > 0)
         ga_throw_error(expr, tree.root->pos, "Incorrect term. Each term "
                        "should be reduced to a scalar in order to perform "
                        "the assembly.");
@@ -3275,7 +3275,8 @@ namespace getfem {
       
       for (std::list<ga_tree *>::iterator it = aux_trees.begin();
            it != aux_trees.end(); ++it) {
-        ga_semantic_analysis(expr, *(*it), *this, mim.linked_mesh().dim(), false);
+        ga_semantic_analysis(expr, *(*it), *this, mim.linked_mesh().dim(),
+                             false);
         if ((*it)->root)
           max_order = std::max((*it)->root->nb_test_functions(), max_order);
         add_tree(*(*it), mim, rg, expr);
@@ -3300,6 +3301,22 @@ namespace getfem {
       add_tree(tree, dummy_mim, 0, expr, false);
     }
   }
+
+  void ga_workspace::add_interpolation_expression(const std::string expr,
+                                                  const mesh &m,
+                                                  mesh_region rg) {
+    static mesh_im dummy_mim;
+    ga_tree tree;
+    if (!(rg.get_parent_mesh())) rg.from_mesh(m);
+    ga_read_string(expr, tree);
+    ga_semantic_analysis(expr, tree, *this, m.dim(), false);
+    if (tree.root) {
+      GMM_ASSERT1(tree.root->nb_test_functions() == 0,
+                  "Invalid scalar expression");
+      add_tree(tree, dummy_mim, rg, expr, false, false);
+    }
+  }
+
   
   void ga_workspace::add_aux_tree(ga_tree &tree) {
     ga_tree *a_tree = new ga_tree(tree); aux_trees.push_back(a_tree);
@@ -6053,6 +6070,33 @@ namespace getfem {
     }
   }
 
+  static void ga_compile_interpolation(ga_workspace &workspace,
+                                       ga_instruction_set &gis) {
+    for (size_type i = 0; i < workspace.nb_trees(); ++i) {
+      ga_workspace::tree_description &td = workspace.tree_info(i);
+      if (td.order == 0) {
+        gis.trees.push_back(*(td.ptree));
+        
+        // Semantic analysis mainly to evaluate fixed size variables and data
+        ga_semantic_analysis("", gis.trees.back(), workspace,
+                             td.rg.get_parent_mesh()->dim(), true);
+        pga_tree_node root = gis.trees.back().root;
+        if (root) {
+          // Compiling tree
+          ga_instruction_set::region_mim rm(td.mim, &(td.rg));
+          ga_compile_node(root, workspace, gis,
+                          gis.whole_instructions[rm], td.mim, false);
+         
+
+          // TODO:
+          // + ajouter des instructions d'interpolation à chaque point visité !!
+          // Ne pas faire par rapport au mim ...
+
+        }
+      }
+    }
+  }
+
 
   static void ga_compile(ga_workspace &workspace, ga_instruction_set &gis,
                          size_type order) {
@@ -6156,6 +6200,70 @@ namespace getfem {
     for (; it != gis.whole_instructions.end(); ++it) {
       ga_instruction_list &gil = it->second.instructions;
       for (size_type j = 0; j < gil.size(); ++j) gil[j]->exec();
+    }
+  }
+
+  static void ga_interpolation_exec(ga_instruction_set &gis,
+                                    ga_interpolation_context &gic) {
+    base_matrix G;
+    base_small_vector un, up;
+
+    ga_instruction_set::instructions_set::iterator it
+      = gis.whole_instructions.begin();
+    for (; it != gis.whole_instructions.end(); ++it) {
+      
+      mesh_region region(*(it->first.second));
+      const getfem::mesh &mesh = *(region.get_parent_mesh());
+      size_type P = mesh.dim();
+      ga_instruction_list &gil = it->second.instructions;
+
+      // iteration on elements (or faces of elements)
+      for (getfem::mr_visitor v(region, mesh); !v.finished(); ++v) {
+        const bgeot::stored_point_tab &spt = gic.points_for_element(v.cv());
+
+        if (spt.size()) {
+          bgeot::vectors_to_base_matrix(G, mesh.points_of_convex(v.cv()));
+          size_type N = G.nrows();
+          bgeot::pgeometric_trans pgt = mesh.trans_of_convex(v.cv());
+          
+          if (gis.ctx.have_pgp() && gis.ctx.pgt() == pgt) {
+            gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
+                                                v.cv(), v.f());
+          } else {
+            if (gic.use_pgp(v.cv())) {
+              gis.ctx = fem_interpolation_context(pgt, 0, spt[0], G,
+                                                  v.cv(), v.f());
+            } else {
+              bgeot::pgeotrans_precomp pgp = gis.gp_pool(pgt, &spt);
+              gis.ctx = fem_interpolation_context(pgp, 0, 0, G,
+                                                  v.cv(), v.f());
+            }
+          }
+            
+          
+          // Computation of unit normal vector in case of a boundary
+          const base_matrix& B = gis.ctx.B();
+          scalar_type J = gis.ctx.J();
+          if (v.f() != short_type(-1)) {
+            up.resize(N); un.resize(P);
+            gmm::copy(pgt->normals()[v.f()], un);
+            gmm::mult(B, un, up);
+            scalar_type nup = gmm::vect_norm2(up);
+            J *= nup;
+            gmm::scale(up,1.0/nup); // A stocker up sera utile plus tard ...
+            gis.Normal = up;
+          } else gis.Normal.resize(0);
+          
+          // iterations on points
+          gis.nbpt = spt.size();
+          for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
+            if (gis.ctx.have_pgp()) gis.ctx.set_ii(gis.ipt);
+            else gis.ctx.set_xref(spt[gis.ipt]);
+            for (size_type j = 0; j < gil.size(); ++j) gil[j]->exec();
+            // gic.store_result(v.cv(), gis.ipt, ??); // il faut le faire par une instruction ... on ne sais pas quel arbre est concerné (un seul logiquement !)
+          }
+        }
+      }
     }
   }
 

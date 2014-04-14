@@ -164,7 +164,8 @@ namespace getfem {
     std::list<ga_tree *> aux_trees;
 
     void add_tree(ga_tree &tree, const mesh_im &mim, const mesh_region &rg,
-                  const std::string expr, bool add_derivative = true);
+                  const std::string expr, bool add_derivative = true,
+                  bool scalar_expr = true);
     void clear_aux_trees(void);
 
     struct sparse_matrix_ptr {
@@ -242,7 +243,13 @@ namespace getfem {
      */
     size_type add_expression(const std::string expr, const mesh_im &mim,
                             const mesh_region &rg=mesh_region::all_convexes());
+    /* Internal use */
     void add_scalar_expression(const std::string expr);
+    /* Internal use */
+    void add_interpolation_expression(const std::string expr, const mesh &m,
+                                      mesh_region rg);
+
+    /** Delete all previously added expressions. */
     void clear_expressions(void);
     
 
@@ -395,6 +402,33 @@ namespace getfem {
     ~ga_workspace();
 
   };
+
+
+  //=========================================================================
+  // Intermediate structure for interpolation functions
+  //=========================================================================
+
+  struct ga_interpolation_context {
+
+   
+
+    const bgeot::stored_point_tab &points_for_element(size_type i) const;
+    const std::vector<size_type> &ind_points_for_element(size_type i) const;
+    bool use_pgp(size_type i) const;
+    void store_result(size_type i, size_type j, base_tensor &t);
+    
+
+
+
+
+
+
+
+  };
+  
+
+
+
 
 
 
