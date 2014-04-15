@@ -31,7 +31,7 @@
 #include "getfem/getfem_omp.h"
 #include "getfem/dal_singleton.h"
 
-#ifdef _WIN32
+#if defined(_MSC_VER) && _MSC_VER < 1800
 #include <boost/math/special_functions/acosh.hpp>
 #include <boost/math/special_functions/asinh.hpp>
 #include <boost/math/special_functions/atanh.hpp>
