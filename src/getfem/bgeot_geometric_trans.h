@@ -141,6 +141,8 @@ namespace bgeot {
                                   base_matrix &val) const = 0;
     /// Gives the hessian of the functions vector at a certain point.
     virtual void poly_vector_hess(const base_node &pt, base_matrix &val) const = 0;
+    /// compute K matrix from multiplication of G with gradient
+    virtual void compute_K_matrix(const base_matrix &G, const base_matrix &pc, base_matrix &K) const;
     /// Gives the number of vertices.
     size_type nb_vertices(void) const { return vertices_.size(); }
     /// Gives the indices of vertices between the nodes.

@@ -27,6 +27,11 @@
 
 namespace bgeot {
 
+  void geometric_trans::compute_K_matrix
+    (const base_matrix &G, const base_matrix &pc, base_matrix &K) const{
+    gmm::mult(G, pc, K);
+  }
+
   const base_node& geotrans_interpolation_context::xref() const {
     if (!have_xref()) {
       if (pspt_) xref_ = (*pspt_)[ii_];
@@ -68,12 +73,11 @@ namespace bgeot {
         else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
 
         assert(ii_ < pgp_->get_point_tab().size());
-
-        gmm::mult(G(), pgp_->grad(ii_), K_);
+        pgt()->compute_K_matrix(G(), pgp_->grad(ii_), K_);
       } else {
         base_matrix pc(pgt()->nb_points(), P);
         pgt()->poly_vector_grad(xref(), pc);
-        gmm::mult(G(),pc,K_);
+        pgt()->compute_K_matrix(G(), pc, K_);
       }
     }
     return K_;
