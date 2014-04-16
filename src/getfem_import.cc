@@ -64,15 +64,18 @@ namespace getfem {
       case 9: { /* 2ND ORDER TRIANGLE */
         pgt = bgeot::simplex_geotrans(2,2);
       } break;
-	  case 11: { /* 2ND ORDER TETRAEDRON */
-		pgt = bgeot::simplex_geotrans(3,2);
+      case 10: { /* 2ND ORDER QUADRANGLE */
+        pgt = bgeot::parallelepiped_geotrans(2,2);
+      } break;
+      case 11: { /* 2ND ORDER TETRAEDRON */
+        pgt = bgeot::simplex_geotrans(3,2);
       } break;
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
       } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
-        GMM_ASSERT1(false, "the gmsh element type "<< type <<"is unknown..");
+        GMM_ASSERT1(false, "gmsh element type " << type << " is unknown.");
       } break;
       }
     }
@@ -108,8 +111,11 @@ namespace getfem {
       case 9: { /* 2ND ORDER TRIANGLE */
         nodes.resize(6);
       } break;
-	  case 11: { /*2ND ORDER TETRAHEDRON */
-		nodes.resize(10);
+      case 10: { /* 2ND ORDER QUADRANGLE */
+        nodes.resize(9);
+      } break;
+  	  case 11: { /* 2ND ORDER TETRAHEDRON */
+        nodes.resize(10);
       } break;
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
@@ -257,15 +263,16 @@ namespace getfem {
         for (size_type i=0; i < cv_nb_nodes; ++i) {
           size_type j;
           f >> j;
-	  std::map<size_type, size_type>::iterator
-	    it = msh_node_2_getfem_node.find(j);
+          std::map<size_type, size_type>::iterator
+	        it = msh_node_2_getfem_node.find(j);
           GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
 		      "Invalid node ID " << j << " in gmsh convex "
 		      << (ci.id + 1));
-	  ci.nodes[i] = it->second;
+          ci.nodes[i] = it->second;
         }
         ci.set_pgt();
         // Reordering nodes for certain elements (should be completed ?)
+        // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
         switch(ci.type) {
         case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
         case 5 : { /* First order hexaedron */
@@ -294,26 +301,26 @@ namespace getfem {
           ci.nodes[2] = tmp_nodes[2];
         }
           break;
-		 case 11: { /* Second order tetrahedron */
-			std::vector<bgeot::size_type> tmp_nodes(10);
-			tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[4],
-		    tmp_nodes[2] = ci.nodes[1];
-			tmp_nodes[3] = ci.nodes[6], tmp_nodes[4] = ci.nodes[5],
-		    tmp_nodes[5] = ci.nodes[2];
-			tmp_nodes[6] = ci.nodes[7], tmp_nodes[7] = ci.nodes[9],
-		    tmp_nodes[8] = ci.nodes[8],
-		    tmp_nodes[9] = ci.nodes[3];
+        case 11: { /* Second order tetrahedron */
+          std::vector<bgeot::size_type> tmp_nodes(10);
+          tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[4],
+          tmp_nodes[2] = ci.nodes[1];
+          tmp_nodes[3] = ci.nodes[6], tmp_nodes[4] = ci.nodes[5],
+          tmp_nodes[5] = ci.nodes[2];
+          tmp_nodes[6] = ci.nodes[7], tmp_nodes[7] = ci.nodes[9],
+          tmp_nodes[8] = ci.nodes[8],
+          tmp_nodes[9] = ci.nodes[3];
 
-			ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-		    ci.nodes[2] = tmp_nodes[2];
-			ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-		    ci.nodes[5] = tmp_nodes[5];
-			ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7],
-		    ci.nodes[8] = tmp_nodes[8],
-		    ci.nodes[9] = tmp_nodes[9];
-		  }
-		 break;
-        case 9 : /* Second order triangle */
+          ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+          ci.nodes[2] = tmp_nodes[2];
+          ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+          ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7],
+          ci.nodes[8] = tmp_nodes[8],
+          ci.nodes[9] = tmp_nodes[9];
+        }
+          break;
+        case 9 : { /* Second order triangle */
           std::vector<size_type> tmp_nodes(6);
           tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
             tmp_nodes[2] = ci.nodes[1];
@@ -324,8 +331,23 @@ namespace getfem {
             ci.nodes[2] = tmp_nodes[2];
           ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
             ci.nodes[5] = tmp_nodes[5];
+        }
           break;
-		  
+        case 10 : { /* Second order quadrangle */
+          std::vector<size_type> tmp_nodes(9);
+          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[4];
+          tmp_nodes[2] = ci.nodes[1]; tmp_nodes[3] = ci.nodes[7];
+          tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[5];
+          tmp_nodes[6] = ci.nodes[3]; tmp_nodes[7] = ci.nodes[6];
+          tmp_nodes[8] = ci.nodes[2];
+
+          ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+          ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
+          ci.nodes[4] = tmp_nodes[4]; ci.nodes[5] = tmp_nodes[5];
+          ci.nodes[6] = tmp_nodes[6]; ci.nodes[7] = tmp_nodes[7];
+          ci.nodes[8] = tmp_nodes[8];
+        }
+          break;
         }
       }
     }
