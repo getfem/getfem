@@ -691,7 +691,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET V = ('compute plasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
+    /*@GET V = ('compute elastoplasticity Von Mises or Tresca', @str datasigma, @tmf mf_vm[, @str version])
       Compute on `mf_vm` the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       `datasigma` is a vector which contains the stress constraints values supported by the mesh.
       `version` should be  'Von_Mises' or 'Tresca' ('Von_Mises' is the default).@*/
@@ -718,7 +718,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
 
 
-        /*@GET ('compute plasticity constraints', @tmim mim, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
+    /*@GET ('elastoplasticity next iter', @tmim mim, @str varname, @str projname, @str datalambda, @str datamu, @str datathreshold, @str datasigma)
       Compute and save the stress constraints sigma for other hypothetical iterations.
       'mim' is the integration method to use for the computation.
       'varname' is the main variable of the problem.
