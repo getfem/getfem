@@ -417,13 +417,9 @@ namespace getfem {
     bool use_pgp(size_type i) const;
     void store_result(size_type i, size_type j, base_tensor &t);
     
-
-
-
-
-
-
-
+    bgeot::stored_point_tab dummy_point_tab;
+    std::vector<size_type> dummy_ind_points;
+    
   };
   
 

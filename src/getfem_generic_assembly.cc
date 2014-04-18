@@ -6341,6 +6341,16 @@ namespace getfem {
     }
   }
 
+  const bgeot::stored_point_tab 
+    &ga_interpolation_context::points_for_element(size_type i) const{
+      return dummy_point_tab;
+    }
+  const std::vector<size_type> 
+    &ga_interpolation_context::ind_points_for_element(size_type i) const{
+      return dummy_ind_points;
+  }
+  bool ga_interpolation_context::use_pgp(size_type i) const{return false;}
+  void ga_interpolation_context::store_result(size_type i, size_type j, base_tensor &t){} 
 
 
 } /* end of namespace */
