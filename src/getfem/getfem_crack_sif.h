@@ -46,7 +46,7 @@
 
 namespace getfem {
   /* build a "ring" of convexes of given center and radius */
-  dal::bit_vector 
+  inline dal::bit_vector 
   build_sif_ring_from_mesh(const mesh &m, 
                            base_node center, scalar_type r) {
     dal::bit_vector bv;
@@ -70,7 +70,7 @@ namespace getfem {
   /* return the crack tip in P,
      and the outgoing tangent of the crack in T,
      and the normal in N */
-  void get_crack_tip_and_orientation(const level_set &/* ls */,
+  inline void get_crack_tip_and_orientation(const level_set &/* ls */,
                                      base_node &P, 
                                      base_small_vector &T, base_small_vector &N) {
     cerr << __PRETTY_FUNCTION__ << " IS TO BE DONE\n";
