@@ -29,16 +29,15 @@ namespace getfem {
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
 
  
-
   void error_estimate_nitsche(const mesh_im & mim,
                               const mesh_fem &mf_u,
                               const base_vector &U,
-			       scalar_type GAMMAC,
-			       scalar_type GAMMAN,
-			       scalar_type lambda,
-			       scalar_type mu,
-			       scalar_type gamma0,
-			       scalar_type f_coeff,
+                              scalar_type GAMMAC,
+                              scalar_type GAMMAN,
+                              scalar_type lambda,
+                              scalar_type mu,
+                              scalar_type gamma0,
+                              scalar_type f_coeff,
                               base_vector &ERR) {
    
     
@@ -55,10 +54,6 @@ namespace getfem {
     base_node xref2(N);
     base_small_vector up(N), jump(N), Pr(N), sig(N);
     // scalar_type young_modulus = 4*mu*(lambda + mu)/(lambda+2*mu);
-
-    // computation of h for gamma = gamma0*h
-    scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
-    gamma = gamma0 * emax * sqrt(scalar_type(N));
 
     GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
     
@@ -304,12 +299,12 @@ for (getfem::mr_visitor v(region,mesh);  !v.finished(); ++v)  // contrainte
       
     };
  
-#if 0
+#if 1
 
      int bnum = GAMMAC; // terme de nitsche + tangeant
    
     getfem::mesh_region region = m.region(bnum);
-      for (getfem::mr_visitor v(region,mesh);  !v.finished(); ++v) {
+      for (getfem::mr_visitor v(region, m);  !v.finished(); ++v) {
   
 	//    getfem::mesher_level_set mmls = ls.mls_of_convex(v.cv(), 0);
 	bgeot::pgeometric_trans pgt1 = m.trans_of_convex(v.cv());
@@ -325,11 +320,15 @@ for (getfem::mr_visitor v(region,mesh);  !v.finished(); ++v)  // contrainte
       
 	getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, v.cv());
   
-  
-  
-	for (short_type f=0; f<m.structure_of_convex(v.cv())->nb_faces(); ++f)
-	  for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
-      
+        // computation of h for gamma = gamma0*h
+        scalar_type emax, emin, gamma;
+        gmm::condition_number(ctx1.K(),emax,emin);
+        gamma = gamma0 * emax * sqrt(scalar_type(N));
+
+        short_type f = v.f();
+        
+        for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
+          
 	  ctx1.set_xref(pai1->point_on_face(f, ii));
 	  gmm::mult(ctx1.B(), pgt1->normals()[f], up);
 	  scalar_type norm = gmm::vect_norm2(up);
@@ -345,21 +344,21 @@ for (getfem::mr_visitor v(region,mesh);  !v.finished(); ++v)  // contrainte
 	  gmm::mult(S1, up, sig);
 	  	  
 	  gmm::copy(sig,jump);
-	  gmm::scaled(jump, -scalar_type(1)*gamma);
+	  gmm::scaled(jump, -gamma);
 	  gmm::add(U,jump);
-	  coupled_projection(jump, up, f_coeff, Pr); // Nitsche's terms
-	  gmm::scaled(Pr, 1/gamma);
+	  // coupled_projection(jump, up, f_coeff, Pr); // Nitsche's terms
+	  gmm::scaled(Pr, 1./gamma);
 	  gmm::scaled(sig,gamma);
 	  gmm::add(sig,Pr);
 	  
 	  ERR[v.cv()] +=radius * coefficient * gmm::vect_norm2_sqr(Pr);
 	  //    
-	    } 
+        } 
         
         
-         if (ERR[v.cv()] > 100)
-        cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
-      
+        if (ERR[v.cv()] > 100)
+          cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
+        
  
 };
 #endif

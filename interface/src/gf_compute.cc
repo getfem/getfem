@@ -523,7 +523,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     Currently there is only one which is available: for each convex,
     the jump of the normal derivative is integrated on its faces.@*/
     sub_command
-      ("error_estimate_nitsche", 5, 5, 0, 1,
+      ("error_estimate_nitsche", 7, 7, 0, 1,
        const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
        scalar_type GAMMAC = in.pop().to_scalar();
        scalar_type GAMMAN = in.pop().to_scalar();
@@ -537,7 +537,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        getfem::base_vector ERR(si);
        getfem::base_vector UU(U.real().size());
        gmm::copy(U.real(), UU);
-       getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, ERR);
+       getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, gamma0, f_coeff, ERR);
        gmm::copy(ERR, err);
        );   
       

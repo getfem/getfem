@@ -154,12 +154,12 @@ namespace getfem {
   void error_estimate_nitsche(const mesh_im & mim,
                               const mesh_fem &mf_u,
                               const base_vector &U,
-			       scalar_type GAMMAC,
-			       scalar_type GAMMAN,
-			       scalar_type lambda,
-			       scalar_type mu,
-			       scalar_type gamma0,
-			       scalar_type f_coeff,
+                              scalar_type GAMMAC,
+                              scalar_type GAMMAN,
+                              scalar_type lambda,
+                              scalar_type mu,
+                              scalar_type gamma0,
+                              scalar_type f_coeff,
                               base_vector &ERR);
 
 
