@@ -205,9 +205,12 @@ for step=1:nbstep,
     end;
        
     U = gf_model_get(md, 'variable', 'u');
-    VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
+    VM0 = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     % sigma = gf_model_get(md, 'compute second Piola Kirchhoff tensor', 'u', lawname, 'params', mfdu);
-    % sigma
+    
+    % Direct interpolation of the Von Mises stress
+    VM = gf_model_get(md, 'interpolation', '(sqrt(1.5)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
+    norm(VM-VM0)
     
     UU = [UU;U]; 
     VVM = [VVM;VM];

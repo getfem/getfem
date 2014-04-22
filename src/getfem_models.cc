@@ -2478,7 +2478,7 @@ namespace getfem {
 
   struct generic_elliptic_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+    virtual void asm_real_tangent_terms(const model &md, size_type /*ib*/,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -2558,14 +2558,14 @@ namespace getfem {
     }
 
     virtual void real_post_assembly_in_serial(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version) const
+                                              const model::varnamelist &vl,
+                                              const model::varnamelist &dl,
+                                              const model::mimlist &/* mims */,
+                                              model::real_matlist &/*matl*/,
+                                              model::real_veclist &,
+                                              model::real_veclist &,
+                                              size_type /*region*/,
+                                              build_version) const
     {
       const model_real_plain_vector *A = 0;
       const mesh_fem *mf_a = 0;
@@ -2579,14 +2579,14 @@ namespace getfem {
     }
 
     virtual void complex_post_assembly_in_serial(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                              model::complex_matlist &matl,
+                                              const model::varnamelist &vl,
+                                              const model::varnamelist &dl,
+                                              const model::mimlist &/*mims*/,
+                                              model::complex_matlist &/*matl*/,
                                               model::complex_veclist &,
                                               model::complex_veclist &,
-                                        size_type region,
-                                        build_version) const
+                                              size_type /* region */,
+                                              build_version) const
     {
       const model_real_plain_vector *A = 0;
       const mesh_fem *mf_a = 0;
@@ -5620,14 +5620,14 @@ namespace getfem {
     }
 
     virtual void real_post_assembly_in_serial(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version version) const
+                                              const model::varnamelist &vl,
+                                              const model::varnamelist &dl,
+                                              const model::mimlist &/*mims*/,
+                                              model::real_matlist &/*matl*/,
+                                              model::real_veclist &,
+                                              model::real_veclist &,
+                                              size_type /*region*/,
+                                              build_version version) const
     {
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0)
         || md.is_var_newer_than_brick(dl[0], ib)
@@ -5824,7 +5824,7 @@ namespace getfem {
 
   struct linear_incompressibility_brick : public virtual_brick {
 
-    virtual void asm_real_tangent_terms(const model &md, size_type ib,
+    virtual void asm_real_tangent_terms(const model &md, size_type /*ib*/,
                                         const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
@@ -5881,14 +5881,14 @@ namespace getfem {
 
 
     virtual void real_post_assembly_in_serial(const model &md, size_type ib,
-                                        const model::varnamelist &vl,
-                                        const model::varnamelist &dl,
-                                        const model::mimlist &mims,
-                                        model::real_matlist &matl,
-                                        model::real_veclist &,
-                                        model::real_veclist &,
-                                        size_type region,
-                                        build_version) const
+                                              const model::varnamelist &vl,
+                                              const model::varnamelist &/*dl*/,
+                                              const model::mimlist &/*mims*/,
+                                              model::real_matlist &/*matl*/,
+                                              model::real_veclist &,
+                                              model::real_veclist &,
+                                              size_type /*region*/,
+                                              build_version) const
     {
         const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
         pNeumann_elem_term pNt = new lin_incomp_Neumann_elem_term

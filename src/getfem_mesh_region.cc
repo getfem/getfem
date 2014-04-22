@@ -123,6 +123,18 @@ namespace getfem {
     return *this;
   }
 
+  bool mesh_region::compare(const mesh &m1, const mesh_region &mr,
+                            const mesh &m2) {
+    if (&m1 != &m2) return false;
+    this->from_mesh(m1);
+    mr.from_mesh(m2);
+    if (this->p.get() && !(mr.p.get())) return false;
+    if (!(this->p.get()) && (mr.p.get())) return false;
+    if (this->p.get())
+      if (this->p.get()->m != mr.p.get()->m) return false;
+    return true;
+  }
+
   face_bitset mesh_region::operator[](size_t cv) const 
   {
     map_t::const_iterator it = rp().m.find(cv);

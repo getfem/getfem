@@ -148,8 +148,9 @@ namespace bgeot {
     if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
     if (have_B3() && !pgt()->is_linear()) {
       B3_.resize(0,0); B32_.resize(0,0); }
+    if (J_ >= scalar_type(0) && !pgt()->is_linear()) J_ = scalar_type(-1);
     xref_.clear(); xreal_.clear();
-    ii_=ii__;  J_ = scalar_type(-1);
+    ii_=ii__;
   }
 
   void geotrans_interpolation_context::set_xref(const base_node& P) {
@@ -158,7 +159,8 @@ namespace bgeot {
     if (have_B() && !pgt()->is_linear()) { B_.resize(0,0); }
     if (have_B3() && !pgt()->is_linear()) {
       B3_.resize(0,0); B32_.resize(0,0); }
-    xreal_.clear(); ii_ = size_type(-1); J_ = scalar_type(-1); pspt_ = 0;
+    if (J_ >= scalar_type(0) && !pgt()->is_linear()) J_ = scalar_type(-1);
+    xreal_.clear(); ii_ = size_type(-1); pspt_ = 0;
   }
 
   geotrans_interpolation_context::geotrans_interpolation_context() :

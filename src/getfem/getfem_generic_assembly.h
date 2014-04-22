@@ -145,6 +145,7 @@ namespace getfem {
       size_type order; // 0: potential, 1: weak form, 2: tangent operator
       std::string name_test1, name_test2;
       const mesh_im *mim;
+      const mesh *m;
       mesh_region rg;
       ga_tree *ptree;
       base_vector elem;
@@ -163,7 +164,8 @@ namespace getfem {
     std::vector<tree_description> trees;
     std::list<ga_tree *> aux_trees;
 
-    void add_tree(ga_tree &tree, const mesh_im &mim, const mesh_region &rg,
+    void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
+                  const mesh_region &rg,
                   const std::string expr, bool add_derivative = true,
                   bool scalar_expr = true);
     void clear_aux_trees(void);
@@ -219,6 +221,7 @@ namespace getfem {
     base_vector_ptr V;
     base_vector unreduced_V;
     scalar_type E;
+    base_tensor assemb_t;
 
   public:
 
@@ -232,6 +235,9 @@ namespace getfem {
     { K.set_matrix(K_); }
     void set_assembled_vector(base_vector &V_)
     { V.set_vector(V_); }
+    base_tensor &assembled_tensor(void) { return assemb_t; }
+    const base_tensor &assembled_tensor(void) const { return assemb_t; }
+
 
     model_real_sparse_matrix &unreduced_matrix(void)
     { return unreduced_K; }
@@ -410,20 +416,30 @@ namespace getfem {
 
   struct ga_interpolation_context {
 
-   
-
-    const bgeot::stored_point_tab &points_for_element(size_type i) const;
-    const std::vector<size_type> &ind_points_for_element(size_type i) const;
-    bool use_pgp(size_type i) const;
-    void store_result(size_type i, size_type j, base_tensor &t);
-    
-    bgeot::stored_point_tab dummy_point_tab;
-    std::vector<size_type> dummy_ind_points;
-    
+    virtual const bgeot::stored_point_tab &
+    points_for_element(size_type cv, short_type f) const = 0;
+    virtual bool use_pgp(size_type cv) const = 0;
+    virtual void store_result(size_type cv, size_type i, base_tensor &t) = 0;
+    virtual void finalize(void) = 0;
+    virtual const mesh &linked_mesh(void) = 0;
+    virtual ~ga_interpolation_context() {}
   };
   
 
+  //=========================================================================
+  // Interpolation functions
+  //=========================================================================
 
+  
+  void ga_interpolation(ga_workspace &workspace,
+                        ga_interpolation_context &gic);
+
+  void ga_interpolation_Lagrange_fem
+  (ga_workspace &workspace, const mesh_fem &mf, base_vector &result);
+  
+  void ga_interpolation_Lagrange_fem
+  (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
+   base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
 
 

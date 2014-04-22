@@ -45,13 +45,13 @@ might be covered by the GNU Lesser General Public License.
 #include "bgeot_convex_structure.h"
 #include "getfem_config.h"
 
-#if __cplusplus > 199711L
-#include <unordered_map>
-#elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
-#include <boost/unordered_map.hpp>
-#else
+// #if __cplusplus > 199711L
+// #include <unordered_map>
+// #elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
+// #include <boost/unordered_map.hpp>
+// #else
 #include <map>
-#endif
+// #endif
 
 #ifdef GETFEM_HAVE_BOOST
 #include <boost/shared_ptr.hpp>
@@ -68,13 +68,13 @@ namespace getfem {
   public:
     typedef std::bitset<MAX_FACES_PER_CV+1> face_bitset;
 
-#if __cplusplus > 199711L
-    typedef std::unordered_map<size_type,face_bitset> map_t;
-#elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
-    typedef boost::unordered_map<size_type,face_bitset> map_t;
-#else
+    // #if __cplusplus > 199711L
+    //    typedef std::unordered_map<size_type,face_bitset> map_t;
+    // #elif defined(GETFEM_HAVE_BOOST) && BOOST_VERSION >= 103600
+    // typedef boost::unordered_map<size_type,face_bitset> map_t;
+    // #else
     typedef std::map<size_type,face_bitset> map_t;
-#endif
+    // #endif
 
   private:
 
@@ -192,6 +192,8 @@ namespace getfem {
     const mesh_region& from_mesh(const mesh &m) const;
 
     mesh_region& operator=(const mesh_region &mr);
+
+    bool compare(const mesh &m1, const mesh_region &mr, const mesh &m2);
 
     face_bitset operator[](size_t cv) const;
 

@@ -28,6 +28,7 @@
 #include <getfemint_misc.h>
 #include <getfemint_models.h>
 #include <getfem/getfem_model_solvers.h>
+#include <getfem/getfem_generic_assembly.h>
 #include <getfemint_mdbrick.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
@@ -35,17 +36,17 @@
 using namespace getfemint;
 
 
-#define RETURN_SPARSE(realmeth, cplxmeth)                              \
-  if (!md->is_complex()) {                                             \
+#define RETURN_SPARSE(realmeth, cplxmeth)                            \
+  if (!md->is_complex()) {                                           \
     gf_real_sparse_by_col M(gmm::mat_nrows(md->model().realmeth),    \
                             gmm::mat_ncols(md->model().realmeth));   \
     gmm::copy(md->model().realmeth, M);                              \
-    out.pop().from_sparse(M);                                          \
-  } else {                                                             \
+    out.pop().from_sparse(M);                                        \
+  } else {                                                           \
     gf_cplx_sparse_by_col M(gmm::mat_nrows(md->model().cplxmeth),    \
                             gmm::mat_ncols(md->model().cplxmeth));   \
     gmm::copy(md->model().cplxmeth, M);                              \
-    out.pop().from_sparse(M);                                          \
+    out.pop().from_sparse(M);                                        \
   }
 
 #define RETURN_VECTOR(realmeth, cplxmeth)                      \
@@ -195,6 +196,25 @@ void gf_model_get(getfemint::mexargs_in& m_in,
                      complex_variable(name, niter));
        );
 
+
+    /*@GET V = ('interpolation', @str expr, @tmf mf[, @int region])
+      Interpolate a certain expression relatively to the mesh_fem `mf`.
+      The expression have to be a valid expression in the sense of the
+      high-level generic assembly with authorised references to the variables
+      and data of the model. @*/
+    sub_command
+      ("interpolation", 2, 3, 0, 1, // should be extended to complex models ...
+       std::string expr = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       
+       size_type rg = size_type(-1);
+       if (in.remaining()) rg = in.pop().to_integer();
+       getfem::base_vector result;
+       getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
+                                             gfi_mf->mesh_fem(), result, rg);
+       cout << "result = " << result << endl;
+       out.pop().from_dcvector(result);
+       );
     
     /*@GET mf = ('mesh fem of variable', @str name)
       Gives access to the `mesh_fem` of a variable or data.@*/
