@@ -23,6 +23,7 @@ User Documentation
    asm
    gasm_high
    gasm_low
+   interMM
    ifem
    iinteg
    xfem
@@ -30,7 +31,6 @@ User Documentation
    computeL2H1
    computeD
    export
-   interMM
    convect
    model
    examples

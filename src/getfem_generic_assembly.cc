@@ -6320,11 +6320,13 @@ namespace getfem {
       ga_instruction_list &gil = it->second.instructions;
 
       // iteration on elements (or faces of elements)
+      std::vector<size_type> ind;
       for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
+        ind.resize(0);
         const bgeot::stored_point_tab &spt
-          = gic.points_for_element(v.cv(), v.f());
+          = gic.points_for_element(v.cv(), v.f(), ind);
 
-        if (spt.size()) {
+        if (&spt && ind.size() && spt.size()) {
           bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
           size_type N = G.nrows();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(v.cv());
@@ -6333,7 +6335,7 @@ namespace getfem {
             gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
                                                 v.cv(), v.f());
           } else {
-            if (gic.use_pgp(v.cv())) {
+            if (!(gic.use_pgp(v.cv()))) {
               gis.ctx = fem_interpolation_context(pgt, 0, spt[0], G,
                                                   v.cv(), v.f());
             } else {
@@ -6345,11 +6347,12 @@ namespace getfem {
           
           // iterations on interpolation points
           gis.nbpt = spt.size();
-          for (gis.ipt = 0; gis.ipt < gis.nbpt; ++(gis.ipt)) {
+          for (size_type ii = 0; ii < ind.size(); ++ii) {
+            gis.ipt = ind[ii];
             if (gis.ctx.have_pgp()) gis.ctx.set_ii(gis.ipt);
             else gis.ctx.set_xref(spt[gis.ipt]);
 
-            if (gis.ipt == 0 || !(pgt->is_linear())) {
+            if (ii == 0 || !(pgt->is_linear())) {
               // Computation of unit normal vector in case of a boundary
               if (v.f() != short_type(-1)) {
                 const base_matrix& B = gis.ctx.B();
@@ -6453,7 +6456,7 @@ namespace getfem {
   // Interpolation functions
   //=========================================================================
 
-
+  // general Interpolation 
   void ga_interpolation(ga_workspace &workspace,
                         ga_interpolation_context &gic) {
     ga_instruction_set gis;
@@ -6461,7 +6464,7 @@ namespace getfem {
     ga_interpolation_exec(gis, workspace, gic);
   }
 
-  
+  // Interpolation on a Lagrange fem on the same mesh
   struct ga_interpolation_context_fem_same_mesh
     : public ga_interpolation_context {
     base_vector &result;
@@ -6471,15 +6474,24 @@ namespace getfem {
     size_type s;
 
     virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type f) const {
+    points_for_element(size_type cv, short_type f,
+                       std::vector<size_type> &ind) const {
       pfem pf = mf.fem_of_element(cv);
       GMM_ASSERT1(pf->is_lagrange(),
                   "Only Lagrange fems can be used in interpolation");
+      
       if (f != short_type(-1)) {
-        return *(store_point_tab(pf->node_convex(cv).points_of_face(f)));
+        
+        for (size_type i = 0;
+             i < pf->node_convex(cv).structure()->nb_points_of_face(f); ++i)
+          ind.push_back
+            (pf->node_convex(cv).structure()->ind_points_of_face(f)[i]);
       } else {
-        return *(pf->node_tab(cv));
+        for (size_type i = 0; i < pf->node_convex(cv).nb_points(); ++i)
+          ind.push_back(i);
       }
+      
+      return *(pf->node_tab(cv));
     }
 
     virtual bool use_pgp(size_type) const { return true; }
@@ -6540,7 +6552,7 @@ namespace getfem {
     ga_interpolation_Lagrange_fem(workspace, mf, result);
   }
 
-
+  // Interpolation on a cloud of points
   struct ga_interpolation_context_mti
     : public ga_interpolation_context {
     base_vector &result;
@@ -6550,12 +6562,15 @@ namespace getfem {
 
 
     virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type) const {
+    points_for_element(size_type cv, short_type,
+                       std::vector<size_type> &ind) const {
       std::vector<size_type> itab;
       mti.points_on_convex(cv, itab);
       std::vector<base_node> pt_tab(itab.size());
-      for (size_type i = 0; i < itab.size(); ++i)
+      for (size_type i = 0; i < itab.size(); ++i) {
         pt_tab[i] = mti.reference_coords()[itab[i]];
+        ind.push_back(i);
+      }
       return *(store_point_tab(pt_tab));
     }
 
@@ -6606,6 +6621,77 @@ namespace getfem {
     ga_interpolation_context_mti gic(mti, result, extrapolation, rg, nbdof);
     ga_interpolation(workspace, gic);
   }
+
+
+  // Interpolation on a im_data
+  struct ga_interpolation_context_im_data
+    : public ga_interpolation_context {
+    base_vector &result;
+    im_data &imd;
+    bool initialized;
+    size_type s;
+
+    virtual const bgeot::stored_point_tab &
+    points_for_element(size_type cv, short_type /*f*/,
+                       std::vector<size_type> &ind) const {
+      pintegration_method pim =imd.get_mesh_im().int_method_of_element(cv);
+      if (pim->type() == IM_NONE) return *(bgeot::pstored_point_tab(0));
+      GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
+                  "be used in high level generic assembly");
+      for (size_type i = 0;
+           i < pim->approx_method()->nb_points_on_convex(); ++i)
+        ind.push_back(i);
+      return pim->approx_method()->integration_points();
+    }
+
+    virtual bool use_pgp(size_type cv) const {
+      pintegration_method pim =imd.get_mesh_im().int_method_of_element(cv);
+      if (pim->type() == IM_NONE) return false;
+      GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
+                  "be used in high level generic assembly");
+      return !(pim->approx_method()->is_built_on_the_fly());
+    }
+
+    virtual void store_result(size_type cv, size_type i, base_tensor &t) {
+      size_type si = t.size();
+      if (!initialized) {
+        s = si;
+        imd.set_tensor_size(t.sizes());
+        gmm::resize(result, s * imd.nb_filtered_index());
+        gmm::clear(result);
+        initialized = true;
+      }
+      GMM_ASSERT1(s == si, "Internal error");
+      size_type ipt = imd.filtered_index_of_point(cv, i);
+      gmm::add(t.as_vector(),
+               gmm::sub_vector(result, gmm::sub_interval(s*ipt, s)));
+    }
+    
+    virtual void finalize(void)
+    { if (!initialized) gmm::clear(result); }
+
+    virtual const mesh &linked_mesh(void)
+    { return imd.get_mesh_im().linked_mesh(); }
+
+    ga_interpolation_context_im_data(im_data &imd_, base_vector &r)
+      : result(r), imd(imd_), initialized(false) { }
+  };
+
+
+  // To be parallelized ...
+  void ga_interpolation_im_data
+  (const getfem::model &md, const std::string &expr, im_data &imd,
+   base_vector &result, const mesh_region &rg) {
+
+    ga_workspace workspace(md);
+    workspace.add_interpolation_expression
+      (expr, imd.get_mesh_im().linked_mesh(), rg);
+    
+    ga_interpolation_context_im_data gic(imd, result);
+    ga_interpolation(workspace, gic);
+  }
+  
+
 
 
 } /* end of namespace */

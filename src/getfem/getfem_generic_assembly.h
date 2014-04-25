@@ -418,7 +418,8 @@ namespace getfem {
   struct ga_interpolation_context {
 
     virtual const bgeot::stored_point_tab &
-    points_for_element(size_type cv, short_type f) const = 0;
+    points_for_element(size_type cv, short_type f,
+                       std::vector<size_type> &ind) const = 0;
     virtual bool use_pgp(size_type cv) const = 0;
     virtual void store_result(size_type cv, size_type i, base_tensor &t) = 0;
     virtual void finalize(void) = 0;
@@ -442,11 +443,17 @@ namespace getfem {
   (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
+  // untested
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
    base_vector &result, int extrapolation = 0,
    const mesh_region &rg=mesh_region::all_convexes(),
    size_type nbdof_ = size_type(-1));
+
+  // untested
+  void ga_interpolation_im_data
+  (const getfem::model &md, const std::string &expr, im_data &imd,
+   base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
 
 

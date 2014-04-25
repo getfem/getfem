@@ -6,8 +6,13 @@
 
 .. _ud-intermm:
 
-Interpolation on different meshes
-=================================
+Interpolation of arbitary quantities
+====================================
+
+Once a solution has been computed, it is quite easy to extract any quantity of interest on it with the interpolation functions for instance for post-treatment.
+
+Basic interpolation
+*******************
 
 The file :file:`getfem/getfem_interpolation.h` defines the function 
 ``getfem::interpolation(...)`` to interpolate a solution from a given mesh/finite 
@@ -44,3 +49,11 @@ dimensions (i.e. ``mf2.nb_dof()``x``mf1.nb_dof()``). Once this matrix is built,
 the interpolation is done with a simple matrix multiplication::
 
   gmm::mult(M, U, V);
+
+
+Interpolation based on the high-level generic assembly langage
+**************************************************************
+
+It is possible to extract some arbitraries expressions linking several fields thanks to the high-level generic assembly langage and the interpolation functions.
+
+This is specially dedicated to the model object. For instance if ``md`` is a valid object containing some defined variables ``u`` and ``p`` ...
