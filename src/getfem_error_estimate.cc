@@ -22,6 +22,7 @@
 
 
 #include <getfem/getfem_error_estimate.h>
+#include <getfem/getfem_contact_and_friction_common.h>
 #include <getfem/getfem_mesher.h>
 
 namespace getfem {
@@ -52,8 +53,7 @@ namespace getfem {
     base_matrix G1, G2;
     bgeot::geotrans_inv_convex gic;
     base_node xref2(N);
-    base_small_vector up(N),jump(N) ;
-    base_vector   Pr(N),sig(N);
+    base_small_vector up(N), jump(N), U1(N), Pr(N), sig(N);
     // scalar_type young_modulus = 4*mu*(lambda + mu)/(lambda+2*mu);
 
     GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
@@ -179,6 +179,8 @@ namespace getfem {
 
         short_type f = v.f();
         
+        cout << "avant " << endl;
+        
         for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
           
 	  ctx1.set_xref(pai1->point_on_face(f, ii));
@@ -195,9 +197,11 @@ namespace getfem {
 	  gmm::add(gmm::scaled(E, 2*mu), S1);    
 	  gmm::mult(S1, up, sig);
 	  	  
+          
+          pf1->interpolation(ctx1, coeff1, U1, dim_type(qdim));
 	  gmm::copy(sig,jump);
 	  gmm::scaled(jump, -gamma);
-	  gmm::add(coeff1,jump); // pas U coeff 1
+	  gmm::add(U1, jump); // pas U coeff 1
 	  coupled_projection(jump, up, f_coeff, Pr); // Nitsche's terms
 	  gmm::scaled(Pr, 1./gamma);
 	  gmm::scaled(sig,gamma);
@@ -207,7 +211,9 @@ namespace getfem {
 	  //    
         } 
         
+        cout << "après " << endl;
         
+         
         if (ERR[v.cv()] > 100)
           cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
         

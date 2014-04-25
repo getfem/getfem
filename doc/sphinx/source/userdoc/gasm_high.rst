@@ -60,7 +60,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - ``Reshape(t, i, j, ...)`` : reshape a vector/matrix/tensor. Note that all tensor in |gf| are stored in the fortran order.
 
-  - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ...). The nonlinear operators cannot be applied to test functions.
+  - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
 
 Some basic examples
@@ -359,7 +359,7 @@ Order four tensors are necessary for instance to express elasticity tensors or i
 The variables
 *************
 
-A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace`` ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
+A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace``, ``Deviator``, ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
 
 The constants or data
 *********************
@@ -534,7 +534,12 @@ The command ``Reshape(t, i, j, ...)`` reshapes the tensor ``t`` (which could be 
 Trace operator
 **************
 
-The command ``Trace(m)`` gives the trace (sum of diagonal components) of a square matrix ``m``. Since it is a linear operator, it can be applied on test functions. 
+The command ``Trace(m)`` gives the trace (sum of diagonal components) of a square matrix ``m``. Since it is a linear operator, it can be applied on test functions.
+
+Deviator operator
+*****************
+
+The command ``Deviator(m)`` gives the deviator of a square matrix ``m``. It is equivalent to ``m - Trace(m)*Id(meshdim)/meshdim``. Since it is a linear operator, it can be applied on test functions. 
 
 Nonlinear operators
 *******************

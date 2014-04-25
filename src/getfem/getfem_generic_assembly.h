@@ -41,6 +41,7 @@
 
 #include <map>
 #include "getfem/getfem_models.h"
+#include "getfem/getfem_interpolation.h"
 
 
 #ifdef _WIN32
@@ -441,6 +442,11 @@ namespace getfem {
   (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
+  void ga_interpolation_mti
+  (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
+   base_vector &result, int extrapolation = 0,
+   const mesh_region &rg=mesh_region::all_convexes(),
+   size_type nbdof_ = size_type(-1));
 
 
 

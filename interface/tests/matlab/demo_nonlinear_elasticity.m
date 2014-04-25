@@ -209,7 +209,10 @@ for step=1:nbstep,
     % sigma = gf_model_get(md, 'compute second Piola Kirchhoff tensor', 'u', lawname, 'params', mfdu);
     
     % Direct interpolation of the Von Mises stress
-    VM = gf_model_get(md, 'interpolation', '(sqrt(1.5)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
+    % VM = gf_model_get(md, 'interpolation', '(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'') - Id(meshdim)*Trace((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u''))/meshdim)', mfdu);
+    % VM = gf_model_get(md, 'interpolation', '(sqrt(3/2)/Det(Id(meshdim)+Grad_u))*Norm(Deviator((Id(meshdim)+Grad_u)*Saint_Venant_Kirchhoff_sigma(Grad_u,params)*(Id(meshdim)+Grad_u'')))', mfdu);
+    % VM = gf_model_get(md, 'interpolation', 'sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2(Saint_Venant_Kirchhoff_sigma(Grad_u,params),Grad_u)))', mfdu);
+    VM = gf_model_get(md, 'finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
     norm(VM-VM0)
     
     UU = [UU;U]; 

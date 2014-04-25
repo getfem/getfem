@@ -43,6 +43,7 @@
 #include "getfem_assembling_tensors.h"
 #include "getfem_derivatives.h"
 #include "getfem_interpolation.h"
+#include "getfem_generic_assembly.h"
 #include "gmm/gmm_inoutput.h"
 
 namespace getfem {
@@ -624,6 +625,17 @@ namespace getfem {
     gmm::copy(VMM, VM);
   }
   
+  /** Add a nonlinear incompressibility term (for large strain elasticity)
+      to the model with respect to the variable
+      `varname` (the displacement) and `multname` (the pressure).
+  */
+  size_type add_nonlinear_incompressibility_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region = size_type(-1));
+
+  //===========================================================================
+  //  High-level generic assembly bricks
+  //===========================================================================
 
   /** Add a finite strain elasticity brick
       to the model with respect to the variable
@@ -633,17 +645,9 @@ namespace getfem {
   */
   size_type add_finite_strain_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   std::string lawname, const std::string &params,
+   const std::string &lawname, const std::string &params,
    size_type region = size_type(-1));
 
-
-  /** Add a nonlinear incompressibility term (for large strain elasticity)
-      to the model with respect to the variable
-      `varname` (the displacement) and `multname` (the pressure).
-  */
-  size_type add_nonlinear_incompressibility_brick
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &multname, size_type region = size_type(-1));
 
   /** Add a finite strain incompressibility term (for large strain elasticity)
       to the model with respect to the variable
@@ -660,14 +664,16 @@ namespace getfem {
        "Finite strain incompressibility brick");
   }
 
-
-
-
-
-
-
-
-
+  /**
+     Interpolate the Von-Mises stress of a field `varname`
+     with respect to the nonlinear elasticity constitutive law `lawname`
+     with parameters `params` (only valid in 3D).
+  */
+  void finite_strain_elasticity_Von_Mises
+  (model &md, const std::string &varname, const std::string &lawname,
+   const std::string &params, const mesh_fem &mf_vm,
+   model_real_plain_vector &VM,
+   const mesh_region &rg=mesh_region::all_convexes());
 
   //===========================================================================
   //

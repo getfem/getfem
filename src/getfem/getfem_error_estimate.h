@@ -163,30 +163,6 @@ namespace getfem {
                               base_vector &ERR);
 
   
-  
-  
-  //#include "getfem/getfem_contact_and_friction_common.h"
-  
-    template <typename VEC, typename VECR>
-  void coupled_projection(const VEC &x, const VEC &n,
-                          scalar_type f, VECR &g) {
-    scalar_type xn = gmm::vect_sp(x, n);
-    scalar_type xnm = gmm::neg(xn);
-    scalar_type th = f * xnm;
-    scalar_type xtn = gmm::sqrt(gmm::vect_norm2_sqr(x) - xn*xn);
-
-    gmm::copy(gmm::scaled(n, -xnm), g);
-    if (th > scalar_type(0)) {
-      if (xtn <= th) {
-        gmm::add(x, g);
-        gmm::add(gmm::scaled(n, -xn), g);
-      } else {
-        gmm::add(gmm::scaled(x, f*xnm/xtn), g);
-        gmm::add(gmm::scaled(n, -f*xnm*xn/xtn), g);
-      }
-    }
-  }
-  
 
 #endif
 

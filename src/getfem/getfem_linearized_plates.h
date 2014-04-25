@@ -201,7 +201,7 @@ namespace getfem {
    const mesh_im &mim, const mesh_fem &mf_u3, const mesh_fem &mf_theta,
    const mesh_fem &mfdata, const VECT &MU,
    const mesh_region &rg = mesh_region::all_convexes()) {
-    typedef typename gmm::linalg_traits<VECT>::value_type value_type;
+    // typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
     GMM_ASSERT1(mfdata.get_qdim() == 1,
 		"invalid data mesh fem (Qdim=1 required)");

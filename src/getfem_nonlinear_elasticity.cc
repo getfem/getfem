@@ -1735,7 +1735,84 @@ namespace getfem {
     }
   };
 
+  // Cauchy stress tensor from second Piola-Kirchhoff stress tensor
+  // (I+Grad_u)\sigma(I+Grad_u')/det(I+Grad_u)
+  struct Cauchy_stress_from_PK2 : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() != 2
+          || args[1]->sizes().size() != 2
+          || args[0]->sizes()[0] !=  args[0]->sizes()[1]
+          || args[1]->sizes()[0] !=  args[0]->sizes()[1] 
+          || args[1]->sizes()[1] !=  args[0]->sizes()[1]) return false;
+      ga_init_square_matrix(sizes, args[0]->sizes()[1]);
+      return true;
+    }
+    
+    // Value : (I+Grad_u)\sigma(I+Grad_u')/det(I+Grad_u)
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix F(N, N), sigma(N,N), aux(N, N);
+      gmm::copy(args[0]->as_vector(), sigma.as_vector());
+      gmm::copy(args[1]->as_vector(), F.as_vector());
+      gmm::add(gmm::identity_matrix(), F);
+      gmm::mult(F, sigma, aux);
+      gmm::mult(aux, gmm::transposed(F), sigma);
+      scalar_type det = gmm::lu_det(F);
+      gmm::scale(sigma, scalar_type(1)/det);
+      gmm::copy(sigma.as_vector(), result.as_vector());
+    }
 
+    // Derivative :
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const { // to be verified
+      size_type N = args[0]->sizes()[0];
+      base_matrix F(N, N);
+      gmm::copy(args[1]->as_vector(), F.as_vector());
+      gmm::add(gmm::identity_matrix(), F);
+      scalar_type det = gmm::lu_det(F);
+
+      base_tensor::iterator it = result.begin();
+
+      switch (nder) {
+      case 1: // Derivative with respect to sigma : F_ik F_jl / det(F)
+        for (size_type l = 0; l < N; ++l)
+          for (size_type k = 0; k < N; ++k)
+            for (size_type j = 0; j < N; ++j)
+              for (size_type i = 0; i < N; ++i, ++it)
+                *it = F(i,k) * F(j,l) / det;
+        break;
+
+      case 2:
+        {
+          // Derivative with respect to Grad_u :
+          // (delta_ik sigma_lm F_jm + F_im sigma_mk delta_lj
+          //   - F_im sigma_mn F_jn F^{-1}_lk) / det(F)
+          base_matrix sigma(N,N), aux(N,N), aux2(N,N);
+          gmm::copy(args[0]->as_vector(), sigma.as_vector());
+          gmm::mult(sigma, gmm::transposed(F), aux);
+          gmm::mult(F, aux, aux2);
+          gmm::lu_inverse(F);
+          for (size_type l = 0; l < N; ++l)
+            for (size_type k = 0; k < N; ++k)
+              for (size_type j = 0; j < N; ++j)
+                for (size_type i = 0; i < N; ++i, ++it) {
+                  *it = scalar_type(0);
+                  if (i == k) *it += aux(l, j) / det;
+                  if (l == j) *it += aux(k, i) / det;
+                  *it -= aux2(i,j) * F(l,k) / det;
+                }
+        }
+        break;
+      }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative : to be implemented
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, not implemented");
+    }
+  };
 
 
   struct AHL_wrapper_sigma : public ga_nonlinear_operator {
@@ -2011,6 +2088,9 @@ namespace getfem {
     PREDEF_OPERATORS.add_method("Green_Lagrangian",
                                 new Green_Lagrangian_operator());
 
+    PREDEF_OPERATORS.add_method("Cauchy_stress_from_PK2",
+                                new Cauchy_stress_from_PK2());
+
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_sigma",
                                 new Saint_Venant_Kirchhoff_sigma());
     PREDEF_OPERATORS.add_method("Saint_Venant_Kirchhoff_potential",
@@ -2101,10 +2181,38 @@ namespace getfem {
   static bool predef_operators_initialized = init_predef_operators();
 
 
+  std::string adapt_law_name(const std::string &lawname, size_type N) {
+    std::string adapted_lawname = lawname;
+
+    for (size_type i = 0; i < lawname.size(); ++i)
+      if (adapted_lawname[i] == ' ') adapted_lawname[i] = '_';
+
+    if (adapted_lawname.compare("SaintVenant_Kirchhoff") == 0) {
+      adapted_lawname = "Saint_Venant_Kirchhoff";
+    } else if (adapted_lawname.compare("Saint_Venant_Kirchhoff") == 0) {
+
+    } else if (adapted_lawname.compare("Generalized_Blatz_Ko") == 0) {
+      if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
+    } else if (adapted_lawname.compare("Ciarlet_Geymonat") == 0) {
+      if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
+    } else if (adapted_lawname.compare("Incompressible_Mooney_Rivlin") == 0) {
+      if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
+    } else if (adapted_lawname.compare("Compressible_Mooney_Rivlin") == 0) {
+      if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
+    } else if (adapted_lawname.compare("Incompressible_Neo_Hookean") == 0) {
+      if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
+    } else if (adapted_lawname.compare("Compressible_Neo_Hookean") == 0) {
+      if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
+    } else
+      GMM_ASSERT1(false, lawname << " is not a known hyperelastic law");
+
+    return adapted_lawname;
+  }
+
 
   size_type add_finite_strain_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
-   std::string lawname, const std::string &params,
+   const std::string &lawname, const std::string &params,
    size_type region) {
     size_type N = mim.linked_mesh().dim();
     GMM_ASSERT1(N >= 2 && N <= 3,
@@ -2117,34 +2225,29 @@ namespace getfem {
     GMM_ASSERT1(Q == N, "Finite strain elasticity brick can only be applied "
                 "on a fem variable having the same dimension than the mesh");
 
-    for (size_type i = 0; i < lawname.size(); ++i)
-      if (lawname[i] == ' ') lawname[i] = '_';
+    std::string adapted_lawname = adapt_law_name(lawname, N);
 
-    if (lawname.compare("SaintVenant_Kirchhoff") == 0) {
-      lawname = "Saint_Venant_Kirchhoff";
-    } else if (lawname.compare("Saint_Venant_Kirchhoff") == 0) {
-
-    } else if (lawname.compare("Generalized_Blatz_Ko") == 0) {
-      if (N == 2) lawname = "Plane_Strain_" + lawname;
-    } else if (lawname.compare("Ciarlet_Geymonat") == 0) {
-      if (N == 2) lawname = "Plane_Strain_" + lawname;
-    } else if (lawname.compare("Incompressible_Mooney_Rivlin") == 0) {
-      if (N == 2) lawname = "Plane_Strain_" + lawname;
-    } else if (lawname.compare("Compressible_Mooney_Rivlin") == 0) {
-      if (N == 2) lawname = "Plane_Strain_" + lawname;
-    } else if (lawname.compare("Incompressible_Neo_Hookean") == 0) {
-      if (N == 2) lawname = "Plane_Strain_" + lawname;
-    } else if (lawname.compare("Compressible_Neo_Hookean") == 0) {
-      if (N == 2) lawname = "Plane_Strain_" + lawname;
-    } else
-      GMM_ASSERT1(false, lawname << " is not a known hyperelastic law");
-
-    std::string expr = "((Id(meshdim)+Grad_u)*(" + lawname
+    std::string expr = "((Id(meshdim)+Grad_u)*(" + adapted_lawname
       + "_sigma(Grad_"+varname+","+params+"))):Grad_Test_" + varname;
 
     return add_nonlinear_generic_assembly_brick
       (md, mim, expr, region, true, false,
-       "Finite strain elasticity brick for " + lawname + " law");
+       "Finite strain elasticity brick for " + adapted_lawname + " law");
+  }
+
+
+  void finite_strain_elasticity_Von_Mises
+    (model &md, const std::string &varname, const std::string &lawname,
+     const std::string &params, const mesh_fem &mf_vm,
+     model_real_plain_vector &VM, const mesh_region &rg) {
+    size_type N = mf_vm.linked_mesh().dim();
+    
+    std::string adapted_lawname = adapt_law_name(lawname, N);
+
+    std::string expr = "sqrt(3/2)*Norm(Deviator(Cauchy_stress_from_PK2("
+      + adapted_lawname + "_sigma(Grad_" + varname + "," + params + "),Grad_"
+      + varname + ")))";
+    ga_interpolation_Lagrange_fem(md, expr, mf_vm, VM, rg);
   }
 
 

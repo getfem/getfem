@@ -72,7 +72,8 @@ namespace getfem {
     GA_DIV,         // '/'
     GA_COLON,       // ':'
     GA_QUOTE,       // ''' transpose
-    GA_TRACE,       // 'Trace' Trace operator
+    GA_TRACE,       // 'Trace' operator
+    GA_DEVIATOR,    // 'Deviator' operator
     GA_PRINT,       // 'Print' Print the tensor
     GA_DOT,         // '.'
     GA_DOTMULT,     // '.*' componentwize multiplication
@@ -120,6 +121,7 @@ namespace getfem {
     ga_operator_priorities[GA_TMULT] = 2;
     ga_operator_priorities[GA_QUOTE] = 3;
     ga_operator_priorities[GA_TRACE] = 3;
+    ga_operator_priorities[GA_DEVIATOR] = 3;
     ga_operator_priorities[GA_PRINT] = 3;
     ga_operator_priorities[GA_UNARY_MINUS] = 3;
 
@@ -189,6 +191,8 @@ namespace getfem {
       }
       if (expr.compare(token_pos, token_length, "Trace") == 0)
         return GA_TRACE;
+      if (expr.compare(token_pos, token_length, "Deviator") == 0)
+        return GA_DEVIATOR;
       if (expr.compare(token_pos, token_length, "Print") == 0)
         return GA_PRINT;
       return type;
@@ -871,6 +875,9 @@ namespace getfem {
         } else if (pnode->op_type == GA_TRACE) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Trace("; ga_print_node(pnode->children[0], str); str << ")";
+        } else if (pnode->op_type == GA_DEVIATOR) {
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          str << "Deviator("; ga_print_node(pnode->children[0], str); str<<")";
         } else if (pnode->op_type == GA_PRINT) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Print("; ga_print_node(pnode->children[0], str); str << ")";
@@ -1060,6 +1067,10 @@ namespace getfem {
 
         case GA_TRACE:
           tree.add_op(GA_TRACE, token_pos);
+          state = 1; break;
+
+        case GA_DEVIATOR:
+          tree.add_op(GA_DEVIATOR, token_pos);
           state = 1; break;
 
         case GA_PRINT:
@@ -2343,7 +2354,7 @@ namespace getfem {
     base_tensor &t, &tc1;
     size_type n;
     virtual void exec(void) {
-      GA_DEBUG_INFO("Instruction: trace");
+      GA_DEBUG_INFO("Instruction: Trace");
       GA_DEBUG_ASSERT(t.size()*n*n == tc1.size(), "Wrong sizes");
 
       size_type s = t.size() * (n+1);
@@ -2355,6 +2366,32 @@ namespace getfem {
       }
     }
     ga_instruction_trace(base_tensor &t_, base_tensor &tc1_, size_type n_)
+      : t(t_), tc1(tc1_), n(n_) {}
+  };
+
+  struct ga_instruction_deviator : public ga_instruction {
+    base_tensor &t, &tc1;
+    size_type n;
+    virtual void exec(void) {
+      GA_DEBUG_INFO("Instruction: Deviator");
+      GA_DEBUG_ASSERT(t.size() == tc1.size(), "Wrong sizes");
+
+      gmm::copy(tc1.as_vector(), t.as_vector());
+
+      size_type nb = t.size()/(n*n);
+      size_type s = nb * (n+1), j = 0;
+      for (base_tensor::iterator it = t.begin(), it1 = tc1.begin();
+           j < nb; ++it, ++it1, ++j) {
+        scalar_type tr(0);
+        base_tensor::iterator it2 = it1; 
+        for (size_type i = 0; i < n; ++i, it2 += s) tr += *it2;
+        tr /= scalar_type(n);
+
+        base_tensor::iterator it3 = it;
+        for (size_type i = 0; i < n; ++i, it3 += s) *it3 -= tr;
+      }
+    }
+    ga_instruction_deviator(base_tensor &t_, base_tensor &tc1_, size_type n_)
       : t(t_), tc1(tc1_), n(n_) {}
   };
 
@@ -3830,6 +3867,44 @@ namespace getfem {
         }
         break;
 
+      case GA_DEVIATOR:
+        {
+          mi = size0;
+          size_type N = (child0->tensor_proper_size() == 1) ? 1 : mi.back();
+          
+          if ((dim0 != 2 && child0->tensor_proper_size() != 1) ||
+              (dim0 == 2 && mi[mi.size()-2] != N))
+            ga_throw_error(expr, pnode->pos,
+                           "Deviator operator is for square matrices only.");
+          
+          pnode->t.adjust_sizes(mi);
+          pnode->test_function_type = child0->test_function_type;
+          pnode->name_test1 = child0->name_test1;
+          pnode->name_test2 = child0->name_test2;
+          pnode->qdim1 = child0->qdim1;
+          pnode->qdim2 = child0->qdim2;
+          if (all_cte) {
+            pnode->node_type = GA_NODE_CONSTANT;
+            pnode->test_function_type = 0;
+            if (dim0 == 2) {
+              scalar_type tr(0);
+              gmm::copy(child0->t.as_vector(), pnode->t.as_vector());
+              for (size_type i = 0; i < N; ++i)
+                tr += child0->t(i,i);
+              for (size_type i = 0; i < N; ++i)
+                pnode->t(i,i) -= tr / scalar_type(N);
+            } else {
+              pnode->t[0] = scalar_type(0);
+            }
+            tree.clear_children(pnode);
+          } else if (child0->node_type == GA_NODE_ZERO) {
+            pnode->node_type = GA_NODE_ZERO;
+            gmm::clear(pnode->t.as_vector());
+            tree.clear_children(pnode);
+          }
+        }
+        break;
+
       case GA_PRINT:
         {
           pnode->t = child0->t; 
@@ -4940,7 +5015,8 @@ namespace getfem {
           }
           break;
 
-      case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE: case GA_PRINT:
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE: case GA_DEVIATOR:
+      case GA_PRINT:
         ga_node_derivation(tree, workspace, child0, varname, order);
         break;
 
@@ -5315,7 +5391,8 @@ namespace getfem {
         if (mark0) return ga_node_is_affine(child0);
         return ga_node_is_affine(child1);
         
-      case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE: case GA_PRINT:
+      case GA_UNARY_MINUS: case GA_QUOTE: case GA_TRACE: case GA_DEVIATOR:
+      case GA_PRINT:
         return ga_node_is_affine(child0);
         
       case GA_DOT: case GA_MULT: case GA_COLON: case GA_TMULT:
@@ -5800,6 +5877,14 @@ namespace getfem {
          {
            size_type N = (child0->tensor_proper_size() == 1) ? 1:size0.back();
            pgai = new ga_instruction_trace(pnode->t, child0->t, N);
+           rmi.instructions.push_back(pgai);
+         }
+         break;
+
+       case GA_DEVIATOR:
+         {
+           size_type N = (child0->tensor_proper_size() == 1) ? 1:size0.back();
+           pgai = new ga_instruction_deviator(pnode->t, child0->t, N);
            rmi.instructions.push_back(pgai);
          }
          break;
@@ -6456,6 +6541,71 @@ namespace getfem {
   }
 
 
+  struct ga_interpolation_context_mti
+    : public ga_interpolation_context {
+    base_vector &result;
+    mesh_trans_inv &mti;
+    bool initialized;
+    size_type s, nbdof;
+
+
+    virtual const bgeot::stored_point_tab &
+    points_for_element(size_type cv, short_type) const {
+      std::vector<size_type> itab;
+      mti.points_on_convex(cv, itab);
+      std::vector<base_node> pt_tab(itab.size());
+      for (size_type i = 0; i < itab.size(); ++i)
+        pt_tab[i] = mti.reference_coords()[itab[i]];
+      return *(store_point_tab(pt_tab));
+    }
+
+    virtual bool use_pgp(size_type) const { return false; }
+
+    virtual void store_result(size_type cv, size_type i, base_tensor &t) {
+      size_type si = t.size();
+      if (!initialized) {
+        s = si;
+        gmm::resize(result, s * nbdof);
+        gmm::clear(result);
+        initialized = true;
+      }
+      GMM_ASSERT1(s == si, "Internal error");
+      size_type ipt = mti.point_on_convex(cv, i);
+      size_type dof_t = mti.id_of_point(ipt);
+      gmm::add(t.as_vector(),
+               gmm::sub_vector(result, gmm::sub_interval(s*dof_t, s)));
+    }
+    
+    virtual void finalize(void) {
+      if (!initialized) {
+        gmm::clear(result);
+      }
+    }
+
+    virtual const mesh &linked_mesh(void) { return mti.linked_mesh(); }
+
+    ga_interpolation_context_mti(mesh_trans_inv &mti_, base_vector &r,
+                                 int extrapolation, const mesh_region &rg,
+                                 size_type nbdof_ = size_type(-1))
+      : result(r), mti(mti_), initialized(false), nbdof(nbdof_) {
+      mti.distribute(extrapolation, rg);
+      if (nbdof == size_type(-1)) nbdof = mti.nb_points();
+    }
+  };
+
+
+  // To be parallelized ...
+  void ga_interpolation_mti
+  (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
+   base_vector &result, int extrapolation, const mesh_region &rg,
+   size_type nbdof) {
+
+    ga_workspace workspace(md);
+    workspace.add_interpolation_expression(expr, mti.linked_mesh(), rg);
+    
+    ga_interpolation_context_mti gic(mti, result, extrapolation, rg, nbdof);
+    ga_interpolation(workspace, gic);
+  }
 
 
 } /* end of namespace */

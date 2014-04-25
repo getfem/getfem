@@ -35,11 +35,18 @@ namespace getfem {
     return ipt;
   }
 
-  void mesh_trans_inv::points_on_convex(size_type i,
+  void mesh_trans_inv::points_on_convex(size_type cv,
                                         std::vector<size_type> &itab) const {
-    itab.resize(pts_cvx[i].size()); size_type j = 0;
-    for (set_iterator it = pts_cvx[i].begin(); it != pts_cvx[i].end(); ++it)
+    itab.resize(pts_cvx[cv].size()); size_type j = 0;
+    for (set_iterator it = pts_cvx[cv].begin(); it != pts_cvx[cv].end(); ++it)
       itab[j++] = *it;
+  }
+
+  size_type mesh_trans_inv::point_on_convex(size_type cv, size_type i) const {
+    set_iterator it = pts_cvx[cv].begin();
+    for (size_type j = 0; it != pts_cvx[cv].end() && j < i; ++it, ++j);
+    GMM_ASSERT1(it != pts_cvx[cv].end(), "internal error");    
+    return *it;
   }
 
   void mesh_trans_inv::distribute(int extrapolation, mesh_region rg_source) {

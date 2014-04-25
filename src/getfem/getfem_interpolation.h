@@ -68,11 +68,13 @@ namespace getfem {
     size_type nb_points_on_convex(size_type i) const
     { return pts_cvx[i].size(); }
     void points_on_convex(size_type i, std::vector<size_type> &itab) const;
+    size_type point_on_convex(size_type cv, size_type i) const;
     const std::vector<base_node> &reference_coords(void) { return ref_coords; }
 
     void add_point_with_id(base_node n, size_type id)
     { size_type ipt = add_point(n); ids[ipt] = id; }
     size_type id_of_point(size_type ipt) const;
+    const mesh &linked_mesh(void) { return msh; }
 
     /* extrapolation = 0 : Only the points inside the mesh are distributed.
      * extrapolation = 1 : Try to extrapolate the exterior points near the

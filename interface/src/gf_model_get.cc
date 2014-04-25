@@ -677,6 +677,29 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(VMM);
        );
 
+    /*@GET V = ('finite strain elasticity Von Mises', @str varname, @str lawname, @str params, @tmf mf_vm[, @int region])
+      Compute on `mf_vm` the Von-Mises stress of a field `varname`
+      for nonlinear elasticity in 3D. `lawname` is the constitutive law which
+      should be a valid name. `params` are the parameters law. It could be
+      a short vector of constant values or may depend on data or variables
+      of the model.
+      Uses the high-level generic assembly.
+ @*/
+    sub_command
+      ("finite strain elasticity Von Mises", 4, 5, 0, 1,
+       std::string varname = in.pop().to_string();
+       std::string lawname = in.pop().to_string();
+       std::string params = in.pop().to_string();
+       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+       std::string stresca = "Von Mises";
+       size_type rg = size_type(-1);
+       if (in.remaining()) rg = in.pop().to_integer();
+       getfem::model_real_plain_vector VMM((gfi_mf->mesh_fem()).nb_dof());
+       getfem::finite_strain_elasticity_Von_Mises
+       (md->model(), varname, lawname, params,  gfi_mf->mesh_fem(), VMM, rg);
+       out.pop().from_dcvector(VMM);
+       );
+
     /*@GET V = ('compute second Piola Kirchhoff tensor', @str varname, @str lawname, @str dataname, @tmf mf_sigma)
       Compute on `mf_sigma` the second Piola Kirchhoff stress tensor of a field
       for nonlinear elasticity in 3D. `lawname` is the constitutive law which
