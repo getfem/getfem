@@ -517,7 +517,7 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
             
-    /*@FUNC E = ('error estimate nitsche', @tmim mim, @scalar GAMMAC, @scalar GAMMAN, @scalar lambda, @scalar mu, @scalar gamma0,, @scalar f_coeff)
+    /*@FUNC E = ('error estimate nitsche', @tmim mim, @int GAMMAC, @int GAMMAN, @scalar lambda, @scalar mu, @scalar gamma0, @scalar f_coeff)
     Compute an a posteriori error estimate in the case of Nitsche method.
 
     Currently there is only one which is available: for each convex,
@@ -525,8 +525,8 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("error_estimate_nitsche", 7, 7, 0, 1,
        const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
-       scalar_type GAMMAC = in.pop().to_scalar();
-       scalar_type GAMMAN = in.pop().to_scalar();
+       int GAMMAC = in.pop().to_integer();
+       int GAMMAN = in.pop().to_integer();
        scalar_type lambda = in.pop().to_scalar();
        scalar_type mu = in.pop().to_scalar();
        scalar_type gamma0 = in.pop().to_scalar();
