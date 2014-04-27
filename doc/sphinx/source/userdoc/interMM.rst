@@ -54,6 +54,31 @@ the interpolation is done with a simple matrix multiplication::
 Interpolation based on the high-level generic assembly langage
 **************************************************************
 
-It is possible to extract some arbitraries expressions linking several fields thanks to the high-level generic assembly langage and the interpolation functions.
+It is possible to extract some arbitraries expressions on possibly several fields thanks to the high-level generic assembly langage and the interpolation functions.
 
-This is specially dedicated to the model object. For instance if ``md`` is a valid object containing some defined variables ``u`` and ``p`` ...
+This is specially dedicated to the model object (but it can also be used with a ga_workspace object). For instance if ``md`` is a valid object containing some defined variables ``u`` (vectorial) and ``p`` (scalar), one can interpolate on a Lagrange finite element method an expression such as ``p*Trace(Grad_u)``  ...
+
+The high-level generic interpolation functions are defined in the file :file:`getfem/getfem_generic_assembly.h`.
+
+There are different interpolation functions corresponding to the interpolation on a Lagrange fem on the same mesh, the interpolation on a cloud on points or on a ``getfem::im_data`` object. Interpolation on a Lagrange fem::
+
+  void ga_interpolation_Lagrange_fem(workspace, mf, result);
+
+where ``workspace`` is a ``getfem::ga_workspace`` object which aims to store the different variables and data (see  :ref:`ud-gasm-high`), ``mf`` is the ``getfem::mesh_fem`` object reresenting the Lagrange fem on which the interpolation is to be done and ``result`` is a ``beot::base_vector`` which store the interpolatin. Note that the workspace should contain the epression to be interpolated.::
+
+  void ga_interpolation_Lagrange_fem(md, expr, mf, result, rg=mesh_region::all_convexes());
+
+where ``md`` is a ``getfem::model`` object (containing the variables and data), ``expr`` (std::string object) is the expression to be interpolated, ``mf`` is the ``getfem::mesh_fem`` object reresenting the Lagrange fem on which the interpolation is to be done, ``result`` is the vector in which the interpolation is stored and ``rg`` is the optional mesh region.
+
+Interpolation on a cloud of points::
+
+  void ga_interpolation_mti(md, expr, mti, result, extrapolation = 0, rg=mesh_region::all_convexes(), nbpoints = size_type(-1));
+
+where ``md`` is a ``getfem::model`` object (containing the variables and data), ``expr`` (std::string object) is the expression to be interpolated, ``mti`` is a ``getfem::mesh_trans_inv`` object which stores the cloud of points (see :file:`getfem/getfem_interpolation.h`), ``result`` is the vector in which the interpolation is stored, ``extrapolation`` is an option for extrapolating the field outside the mesh for outside points, ``rg`` is the optional mesh region and ``nbpoints`` is the optional maximal number of points.
+
+Interpolation on an im_data object (on the Gauss points of an integration method)::
+
+  void ga_interpolation_im_data(md, expr, im_data &imd,
+   base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
+
+where ``md`` is a ``getfem::model`` object (containing the variables and data), ``expr`` (std::string object) is the expression to be interpolated, ``imd`` is a ``getfem::im_data`` object which refers to a integration method (see :file:`getfem/getfem_im_data.h`), ``result`` is the vector in which the interpolation is stored and ``rg`` is the optional mesh region.
