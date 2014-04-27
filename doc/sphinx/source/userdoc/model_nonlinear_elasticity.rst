@@ -345,9 +345,82 @@ where ``md`` is the model, ``mim`` the integration method, ``varname`` the varia
 High-level generic assembly versions
 ++++++++++++++++++++++++++++++++++++
 
-For incompressibility ::
+The high-level generic assembly langage give access to the potential and constitutive laws of the hyperelastic constitutive laws implemented in |gf|. This allows to directly use them into the language, for instance using a generic assembly brick in a model or for interpolation of certain quantities (the stress for instance).
 
- ind = add_finite_strain_incompressibility_brick
-    (md, mim, varname, multname, region = -1);
+Here is the list of Langage nonlinear operator which could be usefull for nonlinear elasticity::
 
-In fact this brick just add the term ``p*(1-Det(Id(meshdim)+Grad_u))`` if ``p`` is the multiplier and ``u`` the variable which represent the displacement.
+  Det(M)                                % determinant of the matrix M
+  Trace(M)                              % trace of the matrix M
+  Matrix_i2(M)                          % second invariant of M (in 3D): (sqr(Trace(m)) - Trace(m*m))/2
+  Matrix_j1(M)                          % modified first invariant of M: Trace(m)pow(Det(m),-1/3).
+  Matrix_j2(M)                          % modified second invariant of M: Matrix_I2(m)*pow(Det(m),-2/3).
+  Right_Cauchy_Green(F)                 % F' * F
+  Left_Cauchy_Green(F)                  % F * F'
+  Green_Lagrangian(F)                   % (F'F - Id(meshdim))/2
+  Cauchy_stress_from_PK2(sigma, Grad_u) % (Id+Grad_u)*sigma*(I+Grad_u')/det(I+Grad_u)
+
+The potentials::
+
+  Saint_Venant_Kirchhoff_potential(Grad_u, [lambda; mu])
+  Plane_Strain_Saint_Venant_Kirchhoff_potential(Grad_u, [lambda; mu])
+  Generalized_Blatz_Ko_potential(Grad_u, [a;b;c;d;n])
+  Plane_Strain_Generalized_Blatz_Ko_potential(Grad_u, [a;b;c;d;n])
+  Ciarlet_Geymonat_potential(Grad_u, [lambda;mu;a])
+  Plane_Strain_Ciarlet_Geymonat_potential(Grad_u, [lambda;mu;a])
+  Incompressible_Mooney_Rivlin_potential(Grad_u, [c1;c2])
+  Plane_Strain_Incompressible_Mooney_Rivlin_potential(Grad_u, [c1;c2])
+  Compressible_Mooney_Rivlin_potential(Grad_u, [c1;c2;d1])
+  Plane_Strain_Compressible_Mooney_Rivlin_potential(Grad_u, [c1;c2;d1])
+  Incompressible_Neo_Hookean_potential(Grad_u, [c1])
+  Plane_Strain_Incompressible_Neo_Hookean_potential(Grad_u,  [c1])
+  Compressible_Neo_Hookean_potential(Grad_u,  [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_potential(Grad_u,  [lambda;mu])
+
+
+The second Piola-Kirchoff stress tensors::
+
+  Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
+  Plane_Strain_Saint_Venant_Kirchhoff_sigma(Grad_u, [lambda; mu])
+  Generalized_Blatz_Ko_sigma(Grad_u, [a;b;c;d;n])
+  Plane_Strain_Generalized_Blatz_Ko_sigma(Grad_u, [a;b;c;d;n])
+  Ciarlet_Geymonat_sigma(Grad_u, [lambda;mu;a])
+  Plane_Strain_Ciarlet_Geymonat_sigma(Grad_u, [lambda;mu;a])
+  Incompressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2])
+  Plane_Strain_Incompressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2])
+  Compressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2;d1])
+  Plane_Strain_Compressible_Mooney_Rivlin_sigma(Grad_u, [c1;c2;d1])
+  Incompressible_Neo_Hookean_sigma(Grad_u, [c1])
+  Plane_Strain_Incompressible_Neo_Hookean_sigma(Grad_u, [c1])
+  Compressible_Neo_Hookean_sigma(Grad_u,  [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_sigma(Grad_u,  [lambda;mu])
+
+
+Note that for the derivative with respect to the parameters has not been implemented apart for the Saint Venant Kirchhoff hyperelastic law. So that it is not possible to make the parameter depend on other variables of a model (derivatives are not necessary complicated to implement but for the moment, only a wrapper with old implementations has been written).
+
+Note that the coupling of models it to be done at the weak formulation level. In a general way, it is recommended not to use the potential to define a problem. Two reasons are first that the second order derivative of the potential  (necessary to obtain the tangent system) can be very complicated and non-optimized and main couplings cannot be obtained at the potential level. Thus the use of potential should be restricted to the actual computation of the potential.
+
+An example of use to add a  Saint Venant-Kirchhoff hyperelastic term to a variable ``u`` in a model or a ga_workspace is given by the addition of the following assembly string::
+
+  "((Id(meshdim)+Grad_u)*(Saint_Venant_Kirchhoff_sigma(Grad_u,[lambda;mu]))):Grad_Test_u"
+
+Note that in that case, ``lambda`` and ``mu`` have to be declared data of the model/ga_workspace. It is of course possible to replace them by explicit constants or expressions depending on several data.
+
+Concerning the incompressible Mooney-Rivlin law, it has to be completed by a incompressibility term. For instance by adding the following incompressibility brick::
+
+ ind = add_finite_strain_incompressibility_brick(md, mim, varname, multname, region = -1);
+
+This brick just add the term ``p*(1-Det(Id(meshdim)+Grad_u))`` if ``p`` is the multiplier and ``u`` the variable which represent the displacement.
+
+The addition to an hyperelastic term to a model can also be done thanks to the following function::
+
+  ind = add_finite_strain_elasticity_brick(md, mim, varname, lawname, params,
+                                           region = size_type(-1));
+
+where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name which could be ``Saint_Venant_Kirchhoff``, ``Generalized_Blatz_Ko``, ``Ciarlet_Geymonat``, ``Incompressible_Mooney_Rivlin``, ``Compressible_Mooney_Rivlin``, ``Incompressible_Neo_Hookean_sigma`` or ``Compressible_Neo_Hookean_sigma``, ``params`` is a string representing the parameters of the law. It should represent a small vector or vetor field.
+
+The Von Mises stress can be interpolated with the following function::
+
+  void finite_strain_elasticity_Von_Mises(md, varname, lawname, params, mf_vm, VM,
+                                          rg=mesh_region::all_convexes());
+
+where ``md`` is the model, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name (see previou brick), ``params`` is a string representing the parameters of the law, ``mf_vm`` a (preferably discontinuous) Lagrange  finite element method on which the interpolation will be done and ``VM`` a vector of type ``model_real_plain_vector`` in which the interpolation will be stored.
