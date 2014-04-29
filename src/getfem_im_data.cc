@@ -8,7 +8,9 @@ namespace getfem
                    bgeot::multi_index tensorSize,
                    size_type filteredRegion)
     :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
-    filtered_region_(filteredRegion) {
+    filtered_region_(filteredRegion),
+    locks_()
+  {
     set_tensor_size(tensorSize);
     add_dependency(im_);
     update_index_();
@@ -25,7 +27,7 @@ namespace getfem
   }
     
   void im_data::update_index_() const {
-    omp_guard lock;
+    local_guard lock = locks_.get_lock();
     nb_index_         = 0;      
     size_type nElement = im_.convex_index().last_true() + 1;
     int_point_index_.clear();

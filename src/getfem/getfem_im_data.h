@@ -332,6 +332,7 @@ namespace getfem{
     size_type              filtered_region_;
     bgeot::multi_index     tensor_size_;
     size_type              nb_tensor_elem_;
+    lock_factory           locks_;
   };
 }
 #endif /* GETFEM_IM_DATA_H__  */
