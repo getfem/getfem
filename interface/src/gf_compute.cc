@@ -145,7 +145,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     sl->interpolate(mf, U, V);
   }
   else {
-    size_type N = mf.get_qdim();
+    size_type N = mf.linked_mesh().dim();
     darray st = in.pop().to_darray();
     std::vector<double> PTS(st.begin(), st.end());
     size_type nbpoints = gmm::vect_size(PTS) / N;
@@ -153,6 +153,7 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     getfem::mesh_trans_inv mti(mf.linked_mesh());
     for (size_type i = 0; i < nbpoints; ++i) {
       gmm::copy(gmm::sub_vector(PTS, gmm::sub_interval(i*N, N)), p);
+      cout << "adding point" << p << endl;
       mti.add_point(p);
     }
     
@@ -163,7 +164,9 @@ gf_interpolate(getfemint::mexargs_in& in, getfemint::mexargs_out& out,
     garray<T> V = out.pop().create_array(dims,T());
 
     getfem::base_matrix Maux;
+    cout << "begin interpolation, qmult = " << qmult << endl;
     getfem::interpolation(mf, mti, U, V, Maux, 0);
+    cout << "end interpolation" << endl;
 
   }
   // else THROW_BADARG("expecting a mesh_fem or a mesh_slice for interpolation");

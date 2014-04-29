@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2001-2012 Yves Renard, Julien Pommier
+ Copyright (C) 2001-2014 Yves Renard, Julien Pommier
  
  This file is a part of GETFEM++
  
@@ -435,7 +435,7 @@ namespace getfem {
     std::vector<std::vector<T> > coeff;
     base_tensor Z;
     std::vector<size_type> dof_source;
-
+    
     for (dal::bv_visitor cv(mf_source.convex_index()); !cv.finished(); ++cv) {
       bgeot::pgeometric_trans pgt = msh.trans_of_convex(cv);
       mti.points_on_convex(cv, itab);
@@ -477,15 +477,14 @@ namespace getfem {
               for (size_type k=0; k < qdim_s; ++k)
                 V[(pos + k)*qqdim+qq] = val[k];
             }
-            // Partie à arranger si on veut en option pouvoir interpoler
-            // le gradient.
+            // Part to be improved if one wants in option to be able to
+            // interpolate the gradient.
             //          if (PVGRAD) {
             // base_matrix grad(mdim, qdim);
             // pf_s->interpolation_grad(ctx,coeff,gmm::transposed(grad), qdim);
             // std::copy(grad.begin(), grad.end(), V.begin()+dof_t*qdim*mdim);
             // }
-          }
-          else {
+          } else {
             base_matrix Mloc(qdim_s, mf_source.nb_basic_dof_of_element(cv));
             pf_s->interpolation(ctx, Mloc, qdim_s);
             for (size_type k=0; k < qdim_s; ++k) {
