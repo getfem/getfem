@@ -28,152 +28,296 @@ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 #include <deque>
 
+
 namespace dal {
 
-  struct stored_key_tab : 
-    public std::map<pstatic_stored_object,pstatic_stored_object_key> 
-  {
-    ~stored_key_tab() 
-    {
-      for (iterator it = begin(); it != end(); ++it) delete it->second;
-    }
+
+
+  // Pointer to an object with the dependencies
+  struct enr_static_stored_object {
+    pstatic_stored_object p;
+    atomic_bool valid;
+    const permanence perm;
+    std::set<pstatic_stored_object> dependent_object;
+    std::set<pstatic_stored_object> dependencies;
+    enr_static_stored_object(pstatic_stored_object o, permanence perma)
+      : p(o), perm(perma) {valid = true;}
+    enr_static_stored_object(void)
+      : p(0), perm(STANDARD_STATIC_OBJECT) {valid = true;}
+    enr_static_stored_object(const enr_static_stored_object& enr_o) 
+      : p(enr_o.p), perm(enr_o.perm), dependent_object(enr_o.dependent_object),
+      dependencies(enr_o.dependencies){valid = static_cast<bool>(enr_o.perm);}
   };
 
+
+ 
+  // Pointer to a key with a coherent order
+  struct enr_static_stored_object_key {
+    pstatic_stored_object_key p;
+    bool operator < (const enr_static_stored_object_key &o) const
+    { return (*p) < (*(o.p)); }
+    enr_static_stored_object_key(pstatic_stored_object_key o) : p(o) {}
+  };
+
+
+
+  // Table of stored objects. Thread safe, uses object specific mutexes.
+  struct stored_object_tab : 
+    public std::map<enr_static_stored_object_key, enr_static_stored_object>
+  {
+
+    struct stored_key_tab : 
+      public std::map<pstatic_stored_object,pstatic_stored_object_key> 
+    {
+      ~stored_key_tab() 
+      {
+        for (iterator it = begin(); it != end(); ++it) delete it->second;
+      }
+    };
+
+    stored_object_tab();
+    pstatic_stored_object search_stored_object(pstatic_stored_object_key k) const;
+    bool has_dependent_objects(pstatic_stored_object o) const;
+    bool exists_stored_object(pstatic_stored_object o) const;
+    //adding the object to the storage on the current thread
+    void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+    permanence perm);
+    iterator iterator_of_object_(pstatic_stored_object o);
+    //delete o2 from the dependency list of o1
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool del_dependency_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    //delete o1 from the dependent list of o2
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool del_dependent_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    //add o2 to the dependency list of o1
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool add_dependency_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    //add o1 to the dependent list of o2
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool add_dependent_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    void basic_delete_(std::list<pstatic_stored_object> &to_delete);
+
+    getfem::lock_factory locks_;
+    stored_key_tab stored_keys_;
+  };
+
+
+
+  
   // Gives a pointer to a key of an object from its pointer, while looking in the storage of
   // a specific thread
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o, size_t thread) 
   {
-    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
-    stored_key_tab::iterator it = stored_keys.find(o);
+    stored_object_tab::stored_key_tab& stored_keys 
+      = dal::singleton<stored_object_tab>::instance(thread).stored_keys_;
+    stored_object_tab::stored_key_tab::iterator it = stored_keys.find(o);
     if (it != stored_keys.end()) return it->second;
     return 0;
   }
 
-  // gives a key of the stored object while looking in the storage of all threads
-  pstatic_stored_object_key key_of_stored_object_all_threads(pstatic_stored_object o) 
+  // gives a key of the stored object while looking in the storage of other threads
+  pstatic_stored_object_key key_of_stored_object_other_threads(pstatic_stored_object o) 
   {
     for(size_t thread = 0; thread<getfem::num_threads();thread++)
     {
+      if (thread == this_thread()) continue;
       pstatic_stored_object_key key = key_of_stored_object(o,thread);
       if (key) return key;
     }
     return 0;
   }
 
-
-  /** Gives a pointer to a key of an object from its pointer 
-  (searches in the storage of all threads) */
   pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o) 
   {
     pstatic_stored_object_key key = key_of_stored_object(o,this_thread());
     if (key) return key;
-    else return (num_threads() > 1) ? key_of_stored_object_all_threads(o) : 0;
+    else return (num_threads() > 1) ? key_of_stored_object_other_threads(o) : 0;
   }
 
-  // Test if an object is stored (in current thread storage).
   bool exists_stored_object(pstatic_stored_object o) 
   {
-    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
-    return (stored_keys.find(o) != stored_keys.end());
+    stored_object_tab::stored_key_tab& stored_keys 
+       = dal::singleton<stored_object_tab>::instance().stored_keys_;
+    return  (stored_keys.find(o) != stored_keys.end());
   }
 
-  // Test if an object is stored (in any of the thread's storage).
-  bool exists_stored_object_all_threads(pstatic_stored_object o) {
-    for(size_t thread = 0; thread < getfem::num_threads(); thread++){
-      stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
-      if (stored_keys.find(o) != stored_keys.end()) return true;
+
+
+/**
+  STATIC_STORED_TAB -------------------------------------------------------
+*/
+  stored_object_tab::stored_object_tab() 
+    : std::map<enr_static_stored_object_key, enr_static_stored_object>(),
+    locks_(),
+    stored_keys_()
+  { }
+
+  pstatic_stored_object stored_object_tab::
+    search_stored_object(pstatic_stored_object_key k) const
+  {
+   getfem::local_guard guard = locks_.get_lock();
+   stored_object_tab::const_iterator it = find(enr_static_stored_object_key(k));
+   return (it != end()) ? it->second.p : 0;
+  }
+
+  bool stored_object_tab::add_dependency_(pstatic_stored_object o1,
+    pstatic_stored_object o2)
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    stored_key_tab::const_iterator it = stored_keys_.find(o1);
+    if (it == stored_keys_.end()) return false;
+    iterator ito1 = find(it->second);
+    GMM_ASSERT1(ito1 != end(), "Object has a key, but cannot be found");
+    ito1->second.dependencies.insert(o2);
+    return true;
+  }
+  void stored_object_tab::add_stored_object(pstatic_stored_object_key k, 
+    pstatic_stored_object o,  permanence perm) 
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    GMM_ASSERT1(stored_keys_.find(o) == stored_keys_.end(),
+      "This object has already been stored, possibly with another key");
+    stored_keys_[o] = k;
+    insert(std::make_pair(enr_static_stored_object_key(k),enr_static_stored_object(o, perm)));
+    size_t t = this_thread();
+    GMM_ASSERT2(stored_keys_.size() == size(), 
+      "stored_keys are not consistent with stored_object tab");
+  }
+
+  bool stored_object_tab::add_dependent_(pstatic_stored_object o1,
+    pstatic_stored_object o2)
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    stored_key_tab::const_iterator it = stored_keys_.find(o2);
+    if (it == stored_keys_.end()) return false;
+    iterator ito2 = find(it->second);
+    GMM_ASSERT1(ito2 != end(), "Object has a key, but cannot be found");
+    ito2->second.dependent_object.insert(o1);
+    return true;
+  }
+
+  bool stored_object_tab::del_dependency_(pstatic_stored_object o1,
+    pstatic_stored_object o2)
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    stored_key_tab::const_iterator it1 = stored_keys_.find(o1);
+    if (it1 == stored_keys_.end()) return false;
+    iterator ito1 = find(it1->second);
+    GMM_ASSERT1(ito1 != end(), "Object has a key, but cannot be found");
+    ito1->second.dependencies.erase(o2);
+    return true;
+  }
+
+  stored_object_tab::iterator stored_object_tab::iterator_of_object_(pstatic_stored_object o)
+  {
+    stored_key_tab::const_iterator itk = stored_keys_.find(o);
+    if (itk == stored_keys_.end()) return end();
+    iterator ito = find(itk->second);
+    GMM_ASSERT1(ito != end(), "Object has a key, but is not stored");
+    return ito;
+  }
+
+  bool stored_object_tab::del_dependent_(pstatic_stored_object o1,
+    pstatic_stored_object o2)
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    stored_key_tab::const_iterator it2 = stored_keys_.find(o2);
+    if (it2 == stored_keys_.end()) return false;
+    iterator ito2 = find(it2->second);
+    GMM_ASSERT1(ito2 != end(), "Object has a key, but cannot be found");
+    ito2->second.dependent_object.erase(o1);
+    return true;
+  }
+
+  bool stored_object_tab::exists_stored_object(pstatic_stored_object o) const
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    return (stored_keys_.find(o) != stored_keys_.end());
+  }
+
+  bool stored_object_tab::has_dependent_objects(pstatic_stored_object o) const
+  {
+    getfem::local_guard guard = locks_.get_lock();
+     stored_key_tab::const_iterator it = stored_keys_.find(o);
+    GMM_ASSERT1(it != stored_keys_.end(), "Object is not stored");
+    const_iterator ito = find(it->second);
+    GMM_ASSERT1(ito != end(), "Object has a key, but cannot be found");
+    return ito->second.dependent_object.empty();
+  }
+
+
+
+  void stored_object_tab::basic_delete_(std::list<pstatic_stored_object> &to_delete)
+  {
+    getfem::local_guard guard = locks_.get_lock();
+    std::list<pstatic_stored_object>::iterator it;
+    for (it = to_delete.begin(); it != to_delete.end(); ++it) 
+    {
+      stored_key_tab::iterator itk = stored_keys_.find(*it);
+      stored_object_tab::iterator ito = end();
+      if (itk != stored_keys_.end())
+      {
+          ito = find(itk->second);
+          stored_keys_.erase(itk);
+      }
+      if (ito != end()) 
+      {
+        delete ito->first.p;
+        erase(ito);
+        it = to_delete.erase(it);
+        --it;
+      }
     }
-    return false;
   }
 
 
-  /* Gives a pointer to an object from a key pointer (by looking in the
-  current thread storage)*/
-  pstatic_stored_object search_stored_object(pstatic_stored_object_key k) {
+  pstatic_stored_object search_stored_object(pstatic_stored_object_key k) 
+  {
     stored_object_tab& stored_objects
-      = dal::singleton<stored_object_tab>::instance();
-    stored_object_tab::iterator it
-      = stored_objects.find(enr_static_stored_object_key(k));
-    if (it != stored_objects.end()) return it->second.p;
+        = dal::singleton<stored_object_tab>::instance();
+    pstatic_stored_object p = stored_objects.search_stored_object(k);
+    if (p) return p;
     return 0;
   }
 
-  /* Search for an object in the storage of all threads*/
-  pstatic_stored_object
-    search_stored_object_all_threads(pstatic_stored_object_key k) {
-      for(size_t thread = 0; thread<getfem::num_threads();thread++){
-        stored_object_tab& stored_objects
-          = dal::singleton<stored_object_tab>::instance(thread);
-        stored_object_tab::iterator it
-          = stored_objects.find(enr_static_stored_object_key(k));
-        if (it != stored_objects.end()) return it->second.p;
-      }
-      return 0;
-  }
-
-  /** Gives an iterator on stored object from a pointer object 
-  also indicates in which thread storage the object is found*/
-  static inline stored_object_tab::iterator 
-    iterator_of_object_this_thread(pstatic_stored_object o) 
+  stored_object_tab::iterator iterator_of_object(pstatic_stored_object o)
   {
-    pstatic_stored_object_key k = key_of_stored_object(o,this_thread());
-    if (k) 
+    for(size_t thread=0; thread < num_threads(); ++thread)
     {
-      stored_object_tab& stored_objects = dal::singleton<stored_object_tab>::instance();
-      stored_object_tab::iterator it = stored_objects.find(enr_static_stored_object_key(k));
+      stored_object_tab& stored_objects
+        = dal::singleton<stored_object_tab>::instance(thread);
+      stored_object_tab::iterator it = stored_objects.iterator_of_object_(o);
       if (it != stored_objects.end()) return it;
     }
     return dal::singleton<stored_object_tab>::instance().end();
   }
 
 
-  /** Gives an iterator on stored object from a pointer object 
-  which can be located in the storage of other threads*/
-  static inline stored_object_tab::iterator 
-    iterator_of_object_other_threads(pstatic_stored_object o) 
-  {
-    pstatic_stored_object_key k = key_of_stored_object(o);
-    if (k) 
-    {
-      for(size_t thread = 0; thread<getfem::num_threads();thread++)
-      {
-        if (thread == this_thread()) continue;
-        stored_object_tab& stored_objects
-          = dal::singleton<stored_object_tab>::instance(thread);
-        stored_object_tab::iterator it
-          = stored_objects.find(enr_static_stored_object_key(k));
-        if (it != stored_objects.end()) return it;
-      }
-      GMM_ASSERT1(false,"Object has key but cannot be found");
-    }
-    return dal::singleton<stored_object_tab>::instance().end();
-  }
-
-  /* Gives an iterator on stored object from a pointer object*/
-  static inline stored_object_tab::iterator 
-    iterator_of_object(pstatic_stored_object o) 
-  {
-    stored_object_tab::iterator it = iterator_of_object_this_thread(o);
-    if (it != dal::singleton<stored_object_tab>::instance().end() 
-      || (num_threads() == 1)) return it;
-    else return iterator_of_object_other_threads(o);
-  }
-
-  // Test the validity of arrays
   void test_stored_objects(void) 
   {
     for(size_t thread = 0; thread < num_threads(); ++thread)
     {
-      stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
-      for (stored_key_tab::iterator it = stored_keys.begin();
+      stored_object_tab& stored_objects 
+        = dal::singleton<stored_object_tab>::instance(thread);
+      stored_object_tab::stored_key_tab& stored_keys = stored_objects.stored_keys_;
+
+      GMM_ASSERT1(stored_objects.size() == stored_keys.size(), 
+        "keys and objects tables don't match");
+      for (stored_object_tab::stored_key_tab::iterator it = stored_keys.begin();
         it != stored_keys.end(); ++it)
       {
         stored_object_tab::iterator ito = iterator_of_object(it->first);
         GMM_ASSERT1(ito !=dal::singleton<stored_object_tab>::instance().end(), 
           "Key without object is found");
       }
-      stored_object_tab& stored_objects
-        = dal::singleton<stored_object_tab>::instance(thread);
       for (stored_object_tab::iterator it = stored_objects.begin();
         it != stored_objects.end(); ++it)
         GMM_ASSERT1(iterator_of_object(it->second.p) != stored_objects.end(),
@@ -181,165 +325,166 @@ namespace dal {
     }
   }
 
-  /* Add a dependency between o1 and o2 assuming that at least one of them are from 
-  the storage of different threads. 
-  */
   void add_dependency(pstatic_stored_object o1,
     pstatic_stored_object o2) {
-      stored_object_tab& stored_objects = dal::singleton<stored_object_tab>::instance();
-      getfem::omp_guard local_lock;
-      GMM_NOPERATION(local_lock);
-      stored_object_tab::iterator it1 = iterator_of_object(o1);
-      stored_object_tab::iterator it2 = iterator_of_object(o2);
-      if (it1 != stored_objects.end() && it2 != stored_objects.end()) 
-      {
-        it2->second.dependent_object.insert(o1);
-        it1->second.dependencies.insert(o2);
-      }
-      else {
-        cerr << "Problem adding dependency between " << o1 << " of type "
-          << typeid(*o1).name() << " and " << o2 << " of type "
-          << typeid(*o2).name() << ". ";
-        if (it1 == stored_objects.end()) 
-          cerr << "First object does not exist.";
-        if (it2 == stored_objects.end()) 
-          cerr << "Second object does not exist.";
-        if (me_is_multithreaded_now()) cerr<<" thread N = "<<getfem::this_thread();
-        cerr << endl;
-        GMM_ASSERT1(false, "Add_dependency : Inexistent object");
-      }
+    bool dep_added = false;
+    for(size_t thread=0; thread < num_threads(); ++thread)
+    {
+      stored_object_tab& stored_objects
+          = dal::singleton<stored_object_tab>::instance(thread);
+      if (dep_added = stored_objects.add_dependency_(o1,o2)) break;
+    }
+    GMM_ASSERT1(dep_added, "Failed to add dependency between " << o1 << " of type "
+    << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
+
+    bool dependent_added = false;
+    for(size_t thread=0; thread < num_threads(); ++thread)
+    {
+      stored_object_tab& stored_objects
+          = dal::singleton<stored_object_tab>::instance(thread);
+      if (dependent_added =stored_objects.add_dependent_(o1,o2)) break;
+    }
+    GMM_ASSERT1(dependent_added, "Failed to add dependent between " << o1 << " of type "
+    << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
   }
 
 
 
   /*remove a dependency (from storages of all threads). 
   Return true if o2 has no more dependent object. */
-  bool del_dependency(pstatic_stored_object o1, pstatic_stored_object o2) 
+  bool del_dependency(pstatic_stored_object o1,
+    pstatic_stored_object o2) 
   {
-    stored_object_tab& stored_objects
-      = dal::singleton<stored_object_tab>::instance();
-    getfem::omp_guard local_lock;
-    GMM_NOPERATION(local_lock);
-    stored_object_tab::iterator it1 = iterator_of_object(o1);
-    stored_object_tab::iterator it2 = iterator_of_object(o2);
-    if (it1 != stored_objects.end() && it2 != stored_objects.end()) 
+    bool dep_deleted = false;
+    for(size_t thread=0; thread < num_threads(); ++thread)
     {
-      it2->second.dependent_object.erase(o1);
-      it1->second.dependencies.erase(o2);
-      return it2->second.dependent_object.empty();
+      stored_object_tab& stored_objects
+          = dal::singleton<stored_object_tab>::instance(thread);
+      if (dep_deleted = stored_objects.del_dependency_(o1,o2)) break;
     }
-    else
+    GMM_ASSERT1(dep_deleted, "Failed to delete dependency between " << o1 << " of type "
+    << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
+
+    bool dependent_deleted = false;
+    bool dependent_empty = false;
+    for(size_t thread=0; thread < num_threads(); ++thread)
     {
-      cerr << "Problem deleting dependency between " << o1 << " of type "
-        << typeid(*o1).name() << " and " << o2 << " of type "
-        << typeid(*o2).name() << ". ";
-      if (it1 == stored_objects.end()) 
-        cerr << "First object does not exist.";
-      if (it2 == stored_objects.end()) 
-        cerr << "Second object does not exist.";
-      if (me_is_multithreaded_now()) cerr<<" thread N = "<<getfem::this_thread();
-      cerr << endl;
-      GMM_ASSERT1(false, "del_dependency : Inexistent object");
+      stored_object_tab& stored_objects
+          = dal::singleton<stored_object_tab>::instance(thread);
+      if (dependent_deleted = stored_objects.del_dependent_(o1,o2))
+      {
+        dependent_empty = stored_objects.has_dependent_objects(o2);
+        break;
+      }
     }
-    return true;
+    GMM_ASSERT1(dependent_deleted, "Failed to delete dependent between " << o1 << " of type "
+    << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
+
+    return dependent_empty;
   }
 
 
-
-  // Add an object (local thread storage) with two optional dependencies
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
     permanence perm) 
   {
-    stored_object_tab& stored_objects
-      = dal::singleton<stored_object_tab>::instance();
-    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
-    GMM_ASSERT1(stored_keys.find(o) == stored_keys.end(),
-      "This object has already been stored, "
-      "possibly with another key");
-    stored_keys[o] = k;
-    stored_objects[enr_static_stored_object_key(k)]
-    = enr_static_stored_object(o, perm);
+      dal::singleton<stored_object_tab>::instance().add_stored_object(k,o,perm);
   }
 
-
-
-  /* Only delete the list of objects but not the dependencies (located on this thread)*/
-  static void basic_delete_from_this_thread(std::list<pstatic_stored_object> &to_delete)
+  void basic_delete(std::list<pstatic_stored_object> &to_delete)
   {
-    stored_object_tab& stored_objects = dal::singleton<stored_object_tab>::instance();
-    stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance();
-    std::list<pstatic_stored_object>::iterator it;
-    for (it = to_delete.begin(); it != to_delete.end(); ++it) 
-    {
-      pstatic_stored_object_key k = key_of_stored_object(*it,this_thread());
-      stored_object_tab::iterator ito = stored_objects.end();
-      if (k) ito = stored_objects.find(k);
-      if (k) stored_keys.erase(*it);
-      if (ito != stored_objects.end()) 
+      stored_object_tab& stored_objects_this_thread
+        = dal::singleton<stored_object_tab>::instance();
+      stored_objects_this_thread.basic_delete_(to_delete);
+    
+      if (!to_delete.empty()) //need to delete from other threads
       {
-        delete ito->first.p;
-        stored_objects.erase(ito);
-        it = to_delete.erase(it);
-        --it;
+        for(size_t thread=0; thread < num_threads(); ++thread)
+        { 
+          if (thread == this_thread()) continue;
+          stored_object_tab& stored_objects
+              = dal::singleton<stored_object_tab>::instance(thread);
+          stored_objects.basic_delete_(to_delete);
+          if (to_delete.empty()) break;
+        }
       }
-    }
+      if (me_is_multithreaded_now())
+      {
+        if (!to_delete.empty()) GMM_WARNING1("Not all objects were deleted");
+      }
+      else
+      {
+        GMM_ASSERT1(to_delete.empty(), "Could not delete objects");
+      }
   }
 
-  /* Only delete the list of objects but not the dependencies*/
-  static void basic_delete(std::list<pstatic_stored_object> &to_delete)
-  {
-    basic_delete_from_this_thread(to_delete);
-    GMM_ASSERT1(to_delete.empty(), "failed to delete objects");
-  }
-
-
-  // Delete a list of objects and their dependencies
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
-    bool ignore_unstored) {
+    bool ignore_unstored) 
+  {
       stored_object_tab& stored_objects
         = dal::singleton<stored_object_tab>::instance();
       std::list<pstatic_stored_object>::iterator it, itnext;
-      for (it = to_delete.begin(); it != to_delete.end(); it = itnext) {
+
+      for (it = to_delete.begin(); it != to_delete.end(); it = itnext) 
+      {
         itnext = it; itnext++;
         stored_object_tab::iterator ito = iterator_of_object(*it);
-        if (ito == stored_objects.end()) {
+        if (ito == stored_objects.end()) 
+        {
           if (ignore_unstored)
             to_delete.erase(it);
           else
-            GMM_ASSERT1(false, "This object is not stored : " << it->get()
-            << " typename: " << typeid(*it->get()).name());
+            if (me_is_multithreaded_now())
+            {
+              GMM_WARNING1("This object is (already?) not stored : " << it->get()
+              << " typename: " << typeid(*it->get()).name() 
+              << "(which could happen in multithreaded code and is OK)");
+            }
+            else
+            {
+              GMM_ASSERT1(false, "This object is not stored : " << it->get()
+              << " typename: " << typeid(*it->get()).name());
+            }
         }
         else
-          iterator_of_object(*it)->second.valid = false;
+          ito->second.valid = false;
       }
+
       std::set<pstatic_stored_object>::iterator itd;
-      for (it = to_delete.begin(); it != to_delete.end(); ++it) {
-        if (*it) {
+      for (it = to_delete.begin(); it != to_delete.end(); ++it) 
+      {
+        if (*it) 
+        {
           stored_object_tab::iterator ito = iterator_of_object(*it);
           GMM_ASSERT1(ito != stored_objects.end(), "An object disapeared !");
           ito->second.valid = false;
           std::set<pstatic_stored_object> dep = ito->second.dependencies;
-          for (itd = dep.begin(); itd != dep.end(); ++itd) {
-            if (del_dependency(*it, *itd)) {
+          for (itd = dep.begin(); itd != dep.end(); ++itd) 
+          {
+            if (del_dependency(*it, *itd)) 
+            {
               stored_object_tab::iterator itod=iterator_of_object(*itd);
               if (itod->second.perm == AUTODELETE_STATIC_OBJECT
-                && itod->second.valid) {
+                && itod->second.valid) 
+              {
                   itod->second.valid = false;
                   to_delete.push_back(*itd);
               }
             }
           }
           for (itd = ito->second.dependent_object.begin();
-            itd != ito->second.dependent_object.end(); ++itd) {
-              stored_object_tab::iterator itod=iterator_of_object(*itd);
-              if (itod != stored_objects.end()) {
-                GMM_ASSERT1(itod->second.perm != PERMANENT_STATIC_OBJECT,
-                  "Trying to delete a permanent object " << *itd);
-                if (itod->second.valid) {
-                  itod->second.valid = false;
-                  to_delete.push_back(itod->second.p);
-                }
+                          itd != ito->second.dependent_object.end(); ++itd) 
+          {
+            stored_object_tab::iterator itod=iterator_of_object(*itd);
+            if (itod != stored_objects.end()) 
+            {
+              GMM_ASSERT1(itod->second.perm != PERMANENT_STATIC_OBJECT,
+              "Trying to delete a permanent object " << *itd);
+              if (itod->second.valid) 
+              {
+                itod->second.valid = false;
+                to_delete.push_back(itod->second.p);
               }
+            }
           }
         }
       }
@@ -347,7 +492,6 @@ namespace dal {
   }
 
 
-  // Delete an object and its dependencies
   void del_stored_object(pstatic_stored_object o, bool ignore_unstored) 
   {
     std::list<pstatic_stored_object> to_delete;
@@ -355,43 +499,49 @@ namespace dal {
     del_stored_objects(to_delete, ignore_unstored);
   }
 
-  // Delete all the object whose perm is greater or equal to perm
+
   void del_stored_objects(permanence perm) 
   {
-    stored_object_tab& stored_objects
-      = dal::singleton<stored_object_tab>::instance();
-    if (perm == PERMANENT_STATIC_OBJECT) perm = STRONG_STATIC_OBJECT;
     std::list<pstatic_stored_object> to_delete;
-    stored_object_tab::iterator it;
-    for (it = stored_objects.begin(); it != stored_objects.end(); ++it)
-      if (it->second.perm >= perm)
-        to_delete.push_back(it->second.p);
+    for(size_t thread=0; thread<getfem::num_threads();thread++)
+    {
+      stored_object_tab& stored_objects
+        = dal::singleton<stored_object_tab>::instance(thread);
+      if (perm == PERMANENT_STATIC_OBJECT) perm = STRONG_STATIC_OBJECT;
+      stored_object_tab::iterator it;
+      for (it = stored_objects.begin(); it != stored_objects.end(); ++it)
+        if (it->second.perm >= perm)
+          to_delete.push_back(it->second.p);
+    }
     del_stored_objects(to_delete, false);
   }
 
-  // List the stored objects for debugging purpose
-  void list_stored_objects(std::ostream &ost) {
+  void list_stored_objects(std::ostream &ost) 
+  {
     for(size_t thread=0; thread<getfem::num_threads();thread++)
     {
-      stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
+      stored_object_tab::stored_key_tab& stored_keys 
+      = dal::singleton<stored_object_tab>::instance(thread).stored_keys_;
+
       if (stored_keys.begin() == stored_keys.end())
         ost << "No static stored objects" << endl;
-      else
-        ost << "Static stored objects" << endl;
-      for (stored_key_tab::iterator it = stored_keys.begin();
-        it != stored_keys.end(); ++it) {
+      else ost << "Static stored objects" << endl;
+      for (stored_object_tab::stored_key_tab::iterator it = stored_keys.begin();
+        it != stored_keys.end(); ++it) 
+      {
           ost << "Object: " << it->first << " typename: "
             << typeid(*it->first).name() << endl;
       }
     }
   }
 
-  // Number of stored objects
-  size_t nb_stored_objects(void) {
+  size_t nb_stored_objects(void) 
+  {
     long num_objects=0;
     for(size_t thread=0;thread<getfem::num_threads(); ++thread)
     {
-      stored_key_tab& stored_keys = dal::singleton<stored_key_tab>::instance(thread);
+      stored_object_tab::stored_key_tab& stored_keys 
+      = dal::singleton<stored_object_tab>::instance(thread).stored_keys_;
       num_objects+=stored_keys.size();
     }
     return num_objects;

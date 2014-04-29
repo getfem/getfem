@@ -1,12 +1,30 @@
 #include "getfem/getfem_omp.h"
 #include "getfem/getfem_level_set_contact.h"
 
-
 namespace getfem{ 
 
 #ifdef GETFEM_HAVE_OPENMP
+
   boost::mutex omp_guard::boost_mutex;
-  omp_guard::omp_guard() : boost::lock_guard<boost::mutex>(boost_mutex) {}
+
+  omp_guard::omp_guard() 
+    : boost::lock_guard<boost::mutex>(boost_mutex) 
+  {}
+
+  local_guard::local_guard(boost::mutex& mutex) : 
+    mutex_(mutex), 
+    plock_(boost::make_shared<boost::lock_guard<boost::mutex>>(mutex))
+  { }
+
+  local_guard::local_guard(const local_guard& guard) 
+    : mutex_(guard.mutex_), plock_(guard.plock_)
+  { }
+
+  lock_factory::lock_factory() : mutex_() {}
+  local_guard lock_factory::get_lock() const
+  {
+    return local_guard(mutex_);
+  }
 #endif
 
 

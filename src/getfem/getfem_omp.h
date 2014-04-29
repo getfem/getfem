@@ -56,7 +56,10 @@ This is the kernel of getfem.
 #include "dal_shared_ptr.h"
 #include "gmm/gmm_std.h"
 #include "bgeot_config.h"
-
+#ifdef GETFEM_HAVE_OPENMP
+#include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
+#endif
 
 
 namespace getfem
@@ -66,9 +69,9 @@ namespace getfem
   class mesh_region;
 
 
-  //declaring a thread lock, to protect multi-threaded accesses to
-  //asserts, traces and warnings
 #ifdef GETFEM_HAVE_OPENMP
+  //declaring a thread lock, to protect multi-threaded accesses to
+  //asserts, traces and warnings. Using a global mutex
   class omp_guard: public boost::lock_guard<boost::mutex>
   {
   public:
@@ -76,10 +79,43 @@ namespace getfem
   private:
     static boost::mutex boost_mutex;
   };
-#else 
-  class omp_guard{};
-#endif
 
+  //like boost::lock_guard, but copyable
+  class local_guard 
+  {
+  public:
+    local_guard(boost::mutex&);
+    local_guard(const local_guard&);
+
+  private:
+    boost::mutex& mutex_;
+    boost::shared_ptr<boost::lock_guard<boost::mutex>> plock_;
+  };
+
+  //produces scoped lock on the 
+  //mutex, held in this class
+  class lock_factory
+  {
+  public:
+    lock_factory();
+
+    //get a lock object with RAII acuire/release semantics
+    //on the mutex from this factory
+    local_guard get_lock() const;
+  private:
+    mutable boost::mutex mutex_;
+  };
+
+
+#else 
+
+  class omp_guard{};
+  class local_guard{};
+  struct lock_factory
+  {
+    inline local_guard get_lock() const {return local_guard();}
+  };
+#endif
 
 
 #ifdef GETFEM_HAVE_OPENMP	

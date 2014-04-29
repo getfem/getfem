@@ -83,13 +83,14 @@ Boost intrusive_ptr are used.
 #endif
 
 #ifdef GETFEM_HAVE_OPENMP
-#include <boost/atomic.hpp>
-typedef boost::atomic<int> atomic_int;
+  #include <boost/atomic.hpp>
+  typedef boost::atomic_bool atomic_bool;
+  typedef boost::atomic<int> atomic_int;
 #else
-typedef int atomic_int;
+  typedef int   atomic_int;
+  typedef bool  atomic_bool;
 #endif
 
-#include <memory>
 
 
 namespace dal {
@@ -173,6 +174,7 @@ namespace dal {
 
   typedef const static_stored_object_key* pstatic_stored_object_key;
 
+
   /**
   base class for reference-counted getfem objects (via
   boost::intrusive_ptr).
@@ -226,6 +228,9 @@ namespace dal {
   }
 #endif
 
+
+  pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o);
+
   /** Gives a pointer to an object from a key pointer. */
   pstatic_stored_object search_stored_object(pstatic_stored_object_key k);
 
@@ -234,11 +239,8 @@ namespace dal {
     search_stored_object(const static_stored_object_key &k)
   { return search_stored_object(&k); }
 
-  /** Test if an object is stored in local thread storage. */
+  /** Test if an object is stored*/
   bool exists_stored_object(pstatic_stored_object o);
-
-  /** Test if an object is stored in storage of all threads. */
-  bool exists_stored_object_all_threads(pstatic_stored_object o);
 
   /** Add a dependency, object o1 will depend on object o2. */
   void add_dependency(pstatic_stored_object o1, pstatic_stored_object o2);
@@ -249,6 +251,7 @@ namespace dal {
   /** Add an object with two optional dependencies. */
   void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
     permanence perm = STANDARD_STATIC_OBJECT);
+
   inline void
     add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
     pstatic_stored_object dep1,
@@ -295,47 +298,18 @@ namespace dal {
   /** Delete all the object whose permanence is greater or equal to perm. */
   void del_stored_objects(int perm);
 
-  /** Gives a pointer to a key of an object from its pointer. */
-  pstatic_stored_object_key key_of_stored_object(pstatic_stored_object o);
-
   /** Show a list of stored objects (for debugging purpose). */
   void list_stored_objects(std::ostream &ost);
 
   /** Return the number of stored objects (for debugging purpose). */
   size_t nb_stored_objects(void);
 
-  // Pointer to an object with the dependencies
-  struct enr_static_stored_object {
-    pstatic_stored_object p;
-    bool valid;
-    permanence perm;
-    std::set<pstatic_stored_object> dependent_object;
-    std::set<pstatic_stored_object> dependencies;
-    enr_static_stored_object(pstatic_stored_object o, permanence perma)
-      : p(o), valid(true), perm(perma) {}
-    enr_static_stored_object(void)
-      : p(0), valid(true), perm(STANDARD_STATIC_OBJECT) {}
-  };
-
-  // Pointer to a key with a coherent order
-  struct enr_static_stored_object_key {
-    pstatic_stored_object_key p;
-    bool operator < (const enr_static_stored_object_key &o) const
-    { return (*p) < (*(o.p)); }
-    enr_static_stored_object_key(pstatic_stored_object_key o) : p(o) {}
-  };
-
-  // Storing array types
-  typedef std::map<enr_static_stored_object_key, enr_static_stored_object>
-    stored_object_tab;
-
-  // Test the validity of the whole global storage
-  void test_stored_objects(void);
-
-
   /** Delete a list of objects and their dependencies*/
   void del_stored_objects(std::list<pstatic_stored_object> &to_delete,
     bool ignore_unstored);
+  
+  /** Test the validity of the whole global storage */
+  void test_stored_objects(void);
 
   /** delete all the specific type of stored objects*/
   template<typename OBJECT_TYPE>
@@ -356,7 +330,8 @@ namespace dal {
       }    
     }
     else{    
-      for(int thread = 0; thread<int(getfem::num_threads());thread++){
+      for(size_t thread = 0; thread<getfem::num_threads();thread++)
+      {
         stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
 
@@ -369,9 +344,7 @@ namespace dal {
         }
       }
     }
-
     del_stored_objects(delete_object_list, false);
-
   }
 }
 
