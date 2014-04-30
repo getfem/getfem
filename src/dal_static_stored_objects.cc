@@ -33,7 +33,7 @@ namespace dal {
 
 
 
-  // Pointer to an object with the dependencies
+  /** Pointer to an object with the dependencies */
   struct enr_static_stored_object {
     pstatic_stored_object p;
     atomic_bool valid;
@@ -50,8 +50,8 @@ namespace dal {
   };
 
 
- 
-  // Pointer to a key with a coherent order
+
+  /** Pointer to a key with a coherent order */
   struct enr_static_stored_object_key {
     pstatic_stored_object_key p;
     bool operator < (const enr_static_stored_object_key &o) const
@@ -61,11 +61,11 @@ namespace dal {
 
 
 
-  // Table of stored objects. Thread safe, uses object specific mutexes.
+  /** Table of stored objects. Thread safe, uses thread specific mutexes. */
   struct stored_object_tab : 
     public std::map<enr_static_stored_object_key, enr_static_stored_object>
   {
-
+  
     struct stored_key_tab : 
       public std::map<pstatic_stored_object,pstatic_stored_object_key> 
     {
@@ -82,6 +82,7 @@ namespace dal {
     //adding the object to the storage on the current thread
     void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
     permanence perm);
+
     iterator iterator_of_object_(pstatic_stored_object o);
     //delete o2 from the dependency list of o1
     //true if successfull, false if o1 is not 
@@ -108,7 +109,6 @@ namespace dal {
     getfem::lock_factory locks_;
     stored_key_tab stored_keys_;
   };
-
 
 
   

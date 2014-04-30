@@ -311,20 +311,25 @@ namespace dal {
   /** Test the validity of the whole global storage */
   void test_stored_objects(void);
 
+
+
+  struct stored_object_tab;
+
   /** delete all the specific type of stored objects*/
   template<typename OBJECT_TYPE>
   void delete_specific_type_stored_objects(bool all_thread = false)
   {
+    typedef typename stored_object_tab::iterator iterator;
     std::list<pstatic_stored_object> delete_object_list;
 
     if(!all_thread){
       stored_object_tab& stored_objects
         = dal::singleton<stored_object_tab>::instance();
 
-      stored_object_tab::iterator itb = stored_objects.begin();
-      stored_object_tab::iterator ite = stored_objects.end();
+      iterator itb = stored_objects.begin();
+      iterator ite = stored_objects.end();
 
-      for(stored_object_tab::iterator it = itb; it != ite; ++it){
+      for(iterator it = itb; it != ite; ++it){
         const OBJECT_TYPE *p_object =  dal::stored_cast<OBJECT_TYPE>(it->second.p).get();
         if(p_object != 0) delete_object_list.push_back(it->second.p);
       }    
@@ -335,10 +340,10 @@ namespace dal {
         stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
 
-        stored_object_tab::iterator itb = stored_objects.begin();
-        stored_object_tab::iterator ite = stored_objects.end();
+        iterator itb = stored_objects.begin();
+        iterator ite = stored_objects.end();
 
-        for(stored_object_tab::iterator it = itb; it != ite; ++it){
+        for(iterator it = itb; it != ite; ++it){
           const OBJECT_TYPE *p_object =  dal::stored_cast<OBJECT_TYPE>(it->second.p).get();
           if(p_object != 0) delete_object_list.push_back(it->second.p);
         }
