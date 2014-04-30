@@ -283,13 +283,13 @@ void gf_slice_get(getfemint::mexargs_in& m_in,
       indices of each "edges" which is on the border of the slice.
       This function is useless except for post-processing purposes.@*/
     sub_command
-      ("edges", 0, 0, 0, 3,
+      ("edges", 0, 0, 3, 3,
        getfem::mesh m;
        dal::bit_vector slice_edges;
        getfem::mesh_slicer slicer(sl->linked_mesh());
        getfem::slicer_build_edges_mesh action(m,slice_edges);
        slicer.push_back_action(action); slicer.exec(*sl);
-       
+
        /* return a point list, a connectivity array, and optionnaly a list of edges with are part of the slice */
        double nan = get_NaN();
        dal::bit_vector bv = m.points().index();

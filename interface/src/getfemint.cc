@@ -1550,7 +1550,8 @@ namespace getfemint {
   /* ensure that out[idx] is valid */
   void mexargs_out::check() const {
     if (nb_arg != -1) {
-      if ((idx >= nb_arg) && !(idx==0)) THROW_INTERNAL_ERROR;
+      if ((idx >= nb_arg) && !(idx==0))
+        GMM_ASSERT1(false, "Insufficient number of output arguments");
     }
     if (size_type(idx) >= out.size()) out.resize(idx+1, 0);
   }
