@@ -312,8 +312,84 @@ namespace dal {
   void test_stored_objects(void);
 
 
+  /** Pointer to an object with the dependencies */
+  struct enr_static_stored_object {
+    pstatic_stored_object p;
+    atomic_bool valid;
+    const permanence perm;
+    std::set<pstatic_stored_object> dependent_object;
+    std::set<pstatic_stored_object> dependencies;
+    enr_static_stored_object(pstatic_stored_object o, permanence perma)
+      : p(o), perm(perma) {valid = true;}
+    enr_static_stored_object(void)
+      : p(0), perm(STANDARD_STATIC_OBJECT) {valid = true;}
+    enr_static_stored_object(const enr_static_stored_object& enr_o) 
+      : p(enr_o.p), perm(enr_o.perm), dependent_object(enr_o.dependent_object),
+      dependencies(enr_o.dependencies){valid = static_cast<bool>(enr_o.perm);}
+  };
 
-  struct stored_object_tab;
+
+
+  /** Pointer to a key with a coherent order */
+  struct enr_static_stored_object_key {
+    pstatic_stored_object_key p;
+    bool operator < (const enr_static_stored_object_key &o) const
+    { return (*p) < (*(o.p)); }
+    enr_static_stored_object_key(pstatic_stored_object_key o) : p(o) {}
+  };
+
+
+
+  /** Table of stored objects. Thread safe, uses thread specific mutexes. */
+  struct stored_object_tab : 
+    public std::map<enr_static_stored_object_key, enr_static_stored_object>
+  {
+  
+    struct stored_key_tab : 
+      public std::map<pstatic_stored_object,pstatic_stored_object_key> 
+    {
+      ~stored_key_tab() 
+      {
+        for (iterator it = begin(); it != end(); ++it) delete it->second;
+      }
+    };
+
+    stored_object_tab();
+    pstatic_stored_object search_stored_object(pstatic_stored_object_key k) const;
+    bool has_dependent_objects(pstatic_stored_object o) const;
+    bool exists_stored_object(pstatic_stored_object o) const;
+    //adding the object to the storage on the current thread
+    void add_stored_object(pstatic_stored_object_key k, pstatic_stored_object o,
+    permanence perm);
+
+    iterator iterator_of_object_(pstatic_stored_object o);
+    //delete o2 from the dependency list of o1
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool del_dependency_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    //delete o1 from the dependent list of o2
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool del_dependent_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    //add o2 to the dependency list of o1
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool add_dependency_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    //add o1 to the dependent list of o2
+    //true if successfull, false if o1 is not 
+    //on this thread
+    bool add_dependent_(pstatic_stored_object o1,
+    pstatic_stored_object o2);
+    void basic_delete_(std::list<pstatic_stored_object> &to_delete);
+
+    getfem::lock_factory locks_;
+    stored_key_tab stored_keys_;
+  };
+
+
 
   /** delete all the specific type of stored objects*/
   template<typename OBJECT_TYPE>
