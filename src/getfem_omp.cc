@@ -11,9 +11,9 @@ namespace getfem{
     : boost::lock_guard<boost::mutex>(boost_mutex) 
   {}
 
-  local_guard::local_guard(boost::mutex& mutex) : 
-    mutex_(mutex), 
-    plock_(boost::make_shared<boost::lock_guard<boost::mutex>>(mutex))
+  local_guard::local_guard(boost::mutex& m) : 
+    mutex_(m), 
+    plock_(new boost::lock_guard<boost::mutex>(m))
   { }
 
   local_guard::local_guard(const local_guard& guard) 
