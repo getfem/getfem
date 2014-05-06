@@ -868,10 +868,9 @@ namespace getfem {
       for individual threads.*/
       {//brackets are needed because list_distro has constructor/destructor
         //semantics (as in RAII)
-        list_distro<complex_matlist> cmatlist(brick.cmatlist);
+          list_distro<complex_matlist> cmatlist(brick.cmatlist);
 	      list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
 	      list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
-        GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
         time = gmm::uclock_sec();
         /*running the assembly in parallel*/
 	      gmm::standard_locale locale;
@@ -911,9 +910,8 @@ namespace getfem {
 	      list_distro<real_matlist> rmatlist(brick.rmatlist);
 	      list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
 	      list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-        // GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
-        time = gmm::uclock_sec();
-        /*running the assembly in parallel*/
+		  time = gmm::uclock_sec();
+          /*running the assembly in parallel*/
 	      gmm::standard_locale locale;
 	      open_mp_is_running_properly check; 
         #pragma omp parallel default(shared)  

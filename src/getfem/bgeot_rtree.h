@@ -94,6 +94,7 @@ namespace bgeot {
 
     box_cont boxes;
     rtree_elt_base *root;
+    getfem::lock_factory locks_;
   };
 
 }

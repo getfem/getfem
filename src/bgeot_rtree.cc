@@ -241,6 +241,7 @@ namespace bgeot {
  void rtree::build_tree() {
    //cout << "build tree\n";
    if (boxes.size() == 0) return;
+   getfem::local_guard lock = locks_.get_lock();
    assert(root == 0);
    pbox_cont b(boxes.size());
    pbox_cont::iterator b_it = b.begin();
