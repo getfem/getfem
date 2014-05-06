@@ -178,8 +178,8 @@ namespace getfem {
       const model_real_sparse_matrix &operator()(void) const { return *ptr; }
       void resize(size_type nb)
       { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb, nb); } }
-      void set_matrix(model_real_sparse_matrix &K)
-      { if (todelete) delete ptr; todelete = false; ptr = &K; }
+      void set_matrix(model_real_sparse_matrix &M)
+      { if (todelete) delete ptr; todelete = false; ptr = &M; }
       sparse_matrix_ptr(void):
         todelete(true), ptr(new model_real_sparse_matrix(2,2)) {}
       sparse_matrix_ptr(const sparse_matrix_ptr &smp):
@@ -201,8 +201,8 @@ namespace getfem {
       const base_vector &operator()(void) const { return *ptr; }
       void resize(size_type nb)
       { if (todelete) { gmm::clear(*ptr); gmm::resize(*ptr, nb);} }
-      void set_vector(base_vector &V)
-      { if (todelete) delete ptr; todelete = false; ptr = &V; }
+      void set_vector(base_vector &vector)
+      { if (todelete) delete ptr; todelete = false; ptr = &vector; }
       base_vector_ptr(void):
         todelete(true), ptr(new base_vector(2)) {}
       base_vector_ptr(const base_vector_ptr &smp):
