@@ -63,41 +63,11 @@ gf_model_set(md, 'add Dirichlet condition with multipliers', ...
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-% b0=gfMdBrick('isotropic_linearized_elasticity',mim, mfu);
-% b1=gfMdBrick('dirichlet',b0,1,mfu,'penalized');
-% b2=gfMdBrick('source term',b1,2);
-
-% set(b0, 'param', 'lambda', lambda);
-% set(b0, 'param', 'mu', mu);
-
-% mds=gfMdState(b2)
-
 for step=1:8,
-  dd=get(mf0, 'basic dof from cvid');
-  
-  % set(b2, 'param','source_term', mfd, F);
-
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
-
-  % get(b2, 'solve', mds, 'very noisy'); %, 'lsolver', 'superlu');
-  
-  % U=get(mds, 'state'); U=U(1:get(mfu, 'nbdof'));
   
   VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
-
-  % VM = get(b0, 'von mises', mds, mfdu);
 
   subplot(2,1,1);
   if (N==3) opt = {'cvlst', get(m,'outer_faces')}; 
@@ -108,6 +78,7 @@ for step=1:8,
   caxis([0 1e7]); colorbar; 
   title('Von Mises stress');
   
+  dd=get(mf0, 'basic dof from cvid');
   ERR=gf_compute(mfu,U,'error estimate', mim);
   E=ERR; E(dd)=ERR;
   subplot(2,1,2);

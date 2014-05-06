@@ -150,11 +150,15 @@ namespace getfem {
       //ERR[cv] = sqrt(ERR[cv]);
       
     };
-     int bnum = GAMMAC; 
-   
-    getfem::mesh_region region = m.region(bnum);
+
+
+    {
+
+      int bnum = GAMMAC; 
+      
+      getfem::mesh_region region = m.region(bnum);
       for (getfem::mr_visitor v(region, m);  !v.finished(); ++v) {
-  
+        
 	//    getfem::mesher_level_set mmls = ls.mls_of_convex(v.cv(), 0);
 	bgeot::pgeometric_trans pgt1 = m.trans_of_convex(v.cv());
 	getfem::papprox_integration pai1 = 
@@ -218,21 +222,19 @@ namespace getfem {
         } 
         
         
-         
         if (ERR[v.cv()] > 100)
           cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
         
- 
-};
+        
+      }
+      
+    }
 
- 
+    {
 
-  
-
-
-      bnum = GAMMAN; 
+      int bnum = GAMMAN; 
    
-      region = m.region(bnum);
+      getfem::mesh_region region = m.region(bnum);
       for (getfem::mr_visitor v(region,m);  !v.finished(); ++v) {
   
 	//    getfem::mesher_level_set mmls = ls.mls_of_convex(v.cv(), 0);
@@ -268,14 +270,14 @@ namespace getfem {
 	  ERR[v.cv()] +=radius * coefficient * gmm::vect_norm2_sqr(jump);
        
 	  //    
-	    } 
+        }
+        
+        if (ERR[v.cv()] > 100)
+          cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
         
         
-         if (ERR[v.cv()] > 100)
-        cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
-      
- 
-};
+      }
+    }
 
     
   }
