@@ -52,10 +52,12 @@ static void gf_mesh_im_set_integ_(getfem::mesh_im *mim,
   }
 
   /* all the work done here */
-  if (!all_cv)
+  if (!all_cv) {
     mim->set_integration_method(bv, pim);
-  else
+  }  else {
     mim->set_integration_method(pim);
+  }
+
 }
 
 /* set the classical integ of order IM_DEGREE on the mesh_im, with a classical integration
@@ -64,14 +66,19 @@ static void gf_mesh_im_set_classical_integ(getfem::mesh_im *mim,
 					   getfemint::mexargs_in& in) {
   dim_type IM_DEGREE = dim_type(-1);
   if (in.remaining()) IM_DEGREE = dim_type(in.pop().to_integer(-1,255));
+  bool all_cv = false;
   dal::bit_vector bv;
   if (in.remaining() == 1) {
     bv = in.pop().to_bit_vector(&mim->linked_mesh().convex_index(),
 				-config::base_index());
+  } else
+    all_cv = true;
+  if (!all_cv) {
+    mim->set_integration_method(bv,IM_DEGREE);
   } else {
-    bv = mim->linked_mesh().convex_index();
+    mim->set_integration_method(IM_DEGREE);
   }
-  mim->set_integration_method(bv,IM_DEGREE);
+  
 }
 
 /* WARNING: gf_mesh_im.cc also uses this function! do not change its interface! */

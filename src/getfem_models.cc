@@ -911,7 +911,7 @@ namespace getfem {
 	      list_distro<real_matlist> rmatlist(brick.rmatlist);
 	      list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
 	      list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-        GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
+        // GMM_TRACE2("Matrix distribution took "<< gmm::uclock_sec()-time<<" s.");
         time = gmm::uclock_sec();
         /*running the assembly in parallel*/
 	      gmm::standard_locale locale;

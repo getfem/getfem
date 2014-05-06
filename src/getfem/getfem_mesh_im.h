@@ -94,10 +94,15 @@ namespace getfem {
     */
     void set_integration_method(pintegration_method ppi);
     /** Set an approximate integration method chosen to be exact for
-	polynomials of degree 'im_degree'
+	polynomials of degree 'im_degree'.
     */
     void set_integration_method(const dal::bit_vector &cvs, 
 				dim_type im_degree);
+    
+    /** Set an approximate integration method chosen to be exact for
+	polynomials of degree 'im_degree' on the whole mesh.
+    */
+    void set_integration_method(dim_type im_degree);
     
     /** return the integration method associated with an element (in
 	no integration is associated, the function will crash! use the

@@ -87,6 +87,23 @@ namespace getfem {
     }
   }
 
+  void mesh_im::set_integration_method(dim_type im_degree) {
+    GMM_ASSERT1(im_degree != dim_type(-1), "im_degree==-1");
+    size_type i = 0;
+    for (dal::bv_visitor cv(linked_mesh().convex_index());
+         !cv.finished(); ++cv, ++i) {
+      pintegration_method pim = 
+	getfem::classical_approx_im(linked_mesh().trans_of_convex(cv),
+                                    im_degree);
+      set_integration_method(cv, pim);
+      if (i == 0)
+        set_auto_add(pim);
+      else {
+        if (pim != auto_add_elt_pim) auto_add_elt_pim = 0;
+      }
+    }
+  }
+
   void mesh_im::clear(void) {
     ims.clear(); im_convexes.clear();
     touch(); v_num = act_counter();
