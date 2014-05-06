@@ -73,22 +73,21 @@ namespace getfem {
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff1);
       
       getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, cv);
-      
+       
       // Residual on the element
       
       for (unsigned ii=0; ii < pai1->nb_points_on_convex(); ++ii) {
-        
-        base_small_vector res; // = sol_f(pai1->point(ii));
+        base_small_vector res(N); // = sol_f(pai1->point(ii));
         ctx1.set_xref(pai1->point(ii));
         pf1->interpolation_hess(ctx1, coeff1, hess1, dim_type(qdim));
+
+	
         for (size_type i = 0; i < N; ++i)
           for (size_type j = 0; j < N; ++j)
             res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j);
-        
         // ius*ctx1.J(cout << "adding " << radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res) << endl;
         ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res);
       }
-      
       //    scalar_type ee = ERR[cv];
       if (ERR[cv] > 100)
         cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    
@@ -146,13 +145,11 @@ namespace getfem {
         }
         
       }
-      
       //   if (ERR[cv]-ee > 100)
       //   cout << "Erreur en contrainte inter element sur element " << cv << " : " << ERR[cv]-ee << endl;
       //ERR[cv] = sqrt(ERR[cv]);
       
     };
- 
      int bnum = GAMMAC; 
    
     getfem::mesh_region region = m.region(bnum);
@@ -177,12 +174,13 @@ namespace getfem {
         gmm::condition_number(ctx1.K(),emax,emin);
         gamma = gamma0 * emax * sqrt(scalar_type(N));
 
+	//cout << "gamma= " << gamma  << endl;
+	
         short_type f = v.f();
         
-        cout << "avant " << endl;
         
         for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
-          
+         //cout << "avt -> ERR[v.cv()] = " << ERR[v.cv()] << endl;  
 	  ctx1.set_xref(pai1->point_on_face(f, ii));
 	  gmm::mult(ctx1.B(), pgt1->normals()[f], up);
 	  scalar_type norm = gmm::vect_norm2(up);
@@ -191,27 +189,34 @@ namespace getfem {
 	  pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
 	  gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
 	  gmm::scale(E, 0.5);
+	  //cout << "E = " << E << endl; 
 	  scalar_type trace = gmm::mat_trace(E);
 	  gmm::copy(gmm::identity_matrix(), S1);
 	  gmm::scale(S1, lambda * trace);
-	  gmm::add(gmm::scaled(E, 2*mu), S1);    
+	  //cout << "S1 = " <<  S1 << endl; 
+	  gmm::add(gmm::scaled(E, 2*mu), S1);  
+	  //cout << "S1 = " <<  S1 << endl; 
 	  gmm::mult(S1, up, sig);
-	  	  
-          
+	  //cout << "sig = " << sig << endl; 
           pf1->interpolation(ctx1, coeff1, U1, dim_type(qdim));
 	  gmm::copy(sig,jump);
-	  gmm::scaled(jump, -gamma);
-	  gmm::add(U1, jump); // pas U coeff 1
+	  //cout << "jump = " << jump << endl; 
+	  gmm::scale(jump, -gamma);
+	  //cout << "jump = " << jump << endl; 
+	  //cout << "U1 = " << U1 << endl; 
+	  gmm::add(U1, jump);
 	  coupled_projection(jump, up, f_coeff, Pr); // Nitsche's terms
-	  gmm::scaled(Pr, 1./gamma);
-	  gmm::scaled(sig,gamma);
+	  gmm::scale(Pr, 1./gamma);
+	  gmm::scale(sig,gamma);
 	  gmm::add(sig,Pr);
-	  
+	  //cout << "radius = " <<radius<< endl;
+	  //cout << "coefficient= " << coefficient<< endl;
+	  //cout << "gmm::vect_norm2_sqr(Pr) = " <<  gmm::vect_norm2_sqr(Pr)<< endl;
 	  ERR[v.cv()] +=radius * coefficient * gmm::vect_norm2_sqr(Pr);
-	  //    
+	 // cout << "apres ->ERR[v.cv()] = " << ERR[v.cv()] << endl; 
+	  
         } 
         
-        cout << "après " << endl;
         
          
         if (ERR[v.cv()] > 100)
