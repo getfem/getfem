@@ -84,8 +84,8 @@ namespace bgeot {
     void find_boxes_at_point(const base_node& P, std::vector<size_type>& idvec)
     { pbox_set bs; find_boxes_at_point(P, bs);  pbox_set_to_idvec(bs, idvec); }
     void dump();
-  private:
     void build_tree();
+  private:
     void destroy_tree();
     static void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) {
       idvec.reserve(bs.size()); idvec.resize(0);
