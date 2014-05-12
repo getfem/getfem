@@ -144,25 +144,21 @@ namespace getfem {
       deform_on_construct_(deform_on_construct),
       is_deformed_(false)
     {
-      if (deform_on_construct_)
-      { 
-        m.deform_mesh(dU,mf);
-        is_deformed_ = true;
-      }
+      if (deform_on_construct_) deform();
     }
 
     void deform() 
     {
-      GMM_ASSERT1(!is_deformed_, "trying to deformed an already deformed mesh");
+      omp_guard lock;
+      if (is_deformed_) return;
       m.deform_mesh(dU,mf);
       is_deformed_ = true;
     }
 
     void undeform() 
     {
-      GMM_ASSERT1(is_deformed_, "trying to restored yet undeformed mesh");
-      GMM_ASSERT1(!deform_on_construct_, 
-        "undeformed() should not be called if it was asked to deformed on construct"); 
+      omp_guard lock;
+      if (!is_deformed_) return;
       m.deform_mesh(gmm::scaled(dU,scalar_type(-1.0)),mf);
       is_deformed_ = false;
     }
