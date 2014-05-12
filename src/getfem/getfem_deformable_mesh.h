@@ -79,6 +79,8 @@ namespace getfem {
       //this vector will track if a point can be deformed
       std::vector<bool> deform_pt_flag(ppts.size(), true);
       size_type cv;
+      base_vector dU_basic(mf.nb_basic_dof());
+      mf.extend_vector(dU,dU_basic);
       for(cv << conv_indices; 
         cv!=bgeot::size_type(-1); cv << conv_indices) 
       {
@@ -92,13 +94,14 @@ namespace getfem {
           "mesh_fem should be isoparametric to the mesh, "
           "with nb_points() of convex * dim == size of ind_basic_dof_of_element");
 
+
         for(size_type pt = 0; pt < num_points; ++pt) 
         { 
           /** iterate through each components of point [pt]and deform the component*/
           if(deform_pt_flag[pt_index[pt]])
             for (size_type comp = 0; comp < ddim; ++comp)
               //move pts by dU;
-                ppts[pt_index[pt]][comp] += dU[dof[pt*ddim + comp]];
+                ppts[pt_index[pt]][comp] += dU_basic[dof[pt*ddim + comp]];
 
           //flag current [pt] to deformed
           deform_pt_flag[pt_index[pt]] = false;
