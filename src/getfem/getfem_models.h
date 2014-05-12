@@ -951,6 +951,67 @@ namespace getfem {
 
   };
 
+  // ----------------------------------------------------------------------
+  //
+  // theta-method dispatcher
+  //
+  // ----------------------------------------------------------------------
+
+  class theta_method_dispatcher : public virtual_dispatcher {
+
+  public :
+
+    typedef model::build_version build_version;
+
+    void set_dispatch_coeff(const model &md, size_type ib) const;
+
+    template <typename MATLIST, typename VECTLIST>
+    inline void next_iter(const model &md, size_type ib,
+                          const model::varnamelist &/* vl */,
+                          const model::varnamelist &/* dl */,
+                          MATLIST &/* matl */,
+                          VECTLIST &vectl, VECTLIST &vectl_sym,
+                          bool first_iter) const {
+      if (first_iter) md.update_brick(ib, model::BUILD_RHS);
+
+      // shift the rhs
+      transfert(vectl[0], vectl[1]);
+      transfert(vectl_sym[0], vectl_sym[1]);
+
+      // add the component represented by the linear matrix terms to the
+      // supplementary rhs
+      md.linear_brick_add_to_rhs(ib, 1, 0);
+    }
+
+    void next_real_iter
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl, model::real_matlist &matl,
+     std::vector<model::real_veclist> &vectl,
+     std::vector<model::real_veclist> &vectl_sym, bool first_iter) const;
+
+    void next_complex_iter
+    (const model &md, size_type ib, const model::varnamelist &vl,
+     const model::varnamelist &dl,
+     model::complex_matlist &matl,
+     std::vector<model::complex_veclist> &vectl,
+     std::vector<model::complex_veclist> &vectl_sym,
+     bool first_iter) const;
+
+    void asm_real_tangent_terms
+    (const model &md, size_type ib, model::real_matlist &/* matl */,
+     std::vector<model::real_veclist> &/* vectl */,
+     std::vector<model::real_veclist> &/* vectl_sym */,
+     build_version version) const;
+
+    virtual void asm_complex_tangent_terms
+    (const model &md, size_type ib, model::complex_matlist &/* matl */,
+     std::vector<model::complex_veclist> &/* vectl */,
+     std::vector<model::complex_veclist> &/* vectl_sym */,
+     build_version version) const;
+
+    theta_method_dispatcher(const std::string &THETA);
+  };
+
   //=========================================================================
   //
   //  Functions adding standard time dispatchers.

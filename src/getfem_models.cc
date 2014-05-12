@@ -6412,13 +6412,7 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-  class theta_method_dispatcher : public virtual_dispatcher {
-
-  public :
-
-    typedef model::build_version build_version;
-
-    void set_dispatch_coeff(const model &md, size_type ib) const {
+    void theta_method_dispatcher::set_dispatch_coeff(const model &md, size_type ib) const {
       scalar_type theta;
       if (md.is_complex())
         theta = gmm::real(md.complex_variable(param_names[0])[0]);
@@ -6433,25 +6427,7 @@ namespace getfem {
     }
 
 
-    template <typename MATLIST, typename VECTLIST>
-    inline void next_iter(const model &md, size_type ib,
-                          const model::varnamelist &/* vl */,
-                          const model::varnamelist &/* dl */,
-                          MATLIST &/* matl */,
-                          VECTLIST &vectl, VECTLIST &vectl_sym,
-                          bool first_iter) const {
-      if (first_iter) md.update_brick(ib, model::BUILD_RHS);
-
-      // shift the rhs
-      transfert(vectl[0], vectl[1]);
-      transfert(vectl_sym[0], vectl_sym[1]);
-
-      // add the component represented by the linear matrix terms to the
-      // supplementary rhs
-      md.linear_brick_add_to_rhs(ib, 1, 0);
-    }
-
-    void next_real_iter
+    void theta_method_dispatcher::next_real_iter
     (const model &md, size_type ib, const model::varnamelist &vl,
      const model::varnamelist &dl, model::real_matlist &matl,
      std::vector<model::real_veclist> &vectl,
@@ -6459,7 +6435,7 @@ namespace getfem {
       next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
     }
 
-    void next_complex_iter
+    void theta_method_dispatcher::next_complex_iter
     (const model &md, size_type ib, const model::varnamelist &vl,
      const model::varnamelist &dl,
      model::complex_matlist &matl,
@@ -6469,26 +6445,24 @@ namespace getfem {
       next_iter(md, ib, vl, dl, matl, vectl, vectl_sym, first_iter);
     }
 
-    void asm_real_tangent_terms
+    void theta_method_dispatcher::asm_real_tangent_terms
     (const model &md, size_type ib, model::real_matlist &/* matl */,
      std::vector<model::real_veclist> &/* vectl */,
      std::vector<model::real_veclist> &/* vectl_sym */,
      build_version version) const
     { md.brick_call(ib, version, 0); }
 
-    virtual void asm_complex_tangent_terms
+    void theta_method_dispatcher::asm_complex_tangent_terms
     (const model &md, size_type ib, model::complex_matlist &/* matl */,
      std::vector<model::complex_veclist> &/* vectl */,
      std::vector<model::complex_veclist> &/* vectl_sym */,
      build_version version) const
     { md.brick_call(ib, version, 0); }
 
-    theta_method_dispatcher(const std::string &THETA)
+    theta_method_dispatcher::theta_method_dispatcher(const std::string &THETA)
       : virtual_dispatcher(2) {
       param_names.push_back(THETA);
     }
-
-  };
 
   void add_theta_method_dispatcher
   (model &md, dal::bit_vector ibricks, const std::string &THETA) {
