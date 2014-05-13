@@ -169,9 +169,7 @@ namespace getfem {
     {
       if (m.to_be_restored() && deform_on_construct_)
       {
-        VECTOR dU_inverted(dU);
-        gmm::scale(dU_inverted, scalar_type(-1.0));
-        m.deform_mesh(dU_inverted,mf);
+        undeform();
       }
     }
   };
