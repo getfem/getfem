@@ -159,7 +159,9 @@ namespace getfem {
     {
       omp_guard lock;
       if (!is_deformed_) return;
-      m.deform_mesh(gmm::scaled(dU,scalar_type(-1.0)),mf);
+      VECTOR dU_inverted(dU);
+      gmm::scale(dU_inverted, scalar_type(-1.0));
+      m.deform_mesh(dU_inverted,mf);
       is_deformed_ = false;
     }
 
@@ -167,7 +169,9 @@ namespace getfem {
     {
       if (m.to_be_restored() && deform_on_construct_)
       {
-        m.deform_mesh(gmm::scaled(dU,scalar_type(-1.0)),mf); 
+        VECTOR dU_inverted(dU);
+        gmm::scale(dU_inverted, scalar_type(-1.0));
+        m.deform_mesh(dU_inverted,mf);
       }
     }
   };
