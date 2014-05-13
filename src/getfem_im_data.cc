@@ -12,7 +12,7 @@ namespace getfem
     locks_()
   {
     set_tensor_size(tensorSize);
-    add_dependency(im_);
+    {local_guard lock = locks_.get_lock(); add_dependency(im_);}
     update_index_();
   }
 
@@ -22,7 +22,7 @@ namespace getfem
     tensor_size_.resize(1);
     tensor_size_[0] = 1;
     nb_tensor_elem_ = 1;
-    add_dependency(im_);
+    {local_guard lock = locks_.get_lock(); add_dependency(im_);}
     update_index_();
   }
     
