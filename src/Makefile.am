@@ -148,7 +148,8 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_convect.h                    	\
 	getfem/getfem_deformable_mesh.h                 \
 	getfem/getfem_level_set_contact.h               \
- 	getfem/getfem_im_data.h
+ 	getfem/getfem_im_data.h               \
+	getfem/getfem_torus.h
 
 SRC =                                      		\
 	dal_backtrace.cc                   		\
@@ -218,7 +219,8 @@ SRC =                                      		\
 	getfem_omp.cc                       \
 	getfem_deformable_mesh.cc			\
 	getfem_level_set_contact.cc         \
-	getfem_im_data.cc
+	getfem_im_data.cc                   \
+	getfem_torus.cc
 #	getfem_enumeration_dof_para.cc
 
 lib_LTLIBRARIES = libgetfem.la
