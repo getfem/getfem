@@ -65,6 +65,8 @@ private:
   pgeometric_trans poriginal_trans_;
 };
 
+pconvex_structure torus_structure_descriptor(pconvex_structure ori_structure);
+
 pgeometric_trans torus_geom_trans_descriptor(pgeometric_trans poriginal_trans);
 
 }
