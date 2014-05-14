@@ -43,6 +43,10 @@
 
 
 #pragma once
+
+#ifndef GETFEM_LEVEL_SET_CONTACT_H__
+#define GETFEM_LEVEL_SET_CONTACT_H__
+
 // #include <string>
 // #include <memory>
 // #include <map>
@@ -805,3 +809,5 @@ namespace level_set_contact {
 		bool with_pseudo_potential = false);
 
 } //end of the namespace level_set_contact
+
+#endif //GETFEM_LEVEL_SET_CONTACT_H__
