@@ -267,7 +267,7 @@ namespace bgeot {
     return result;
   }
 
-  static void operator_priority_(int i, char c, int &prior, int &op) {
+  static void operator_priority_ftool(int i, char c, int &prior, int &op) {
     if (i == 5)
       switch (c) {
       case '*' : prior = 1; op = 1; return;
@@ -322,7 +322,7 @@ namespace bgeot {
     value_list.push_back(read_expression(f, skipped));
     std::vector<int> op_list, prior_list;
     int i = get_next_token(f), prior, op;
-    operator_priority_(i, temp_string[0], prior, op);
+    operator_priority_ftool(i, temp_string[0], prior, op);
     while (op) {
       while (!prior_list.empty() && prior_list.back() <= prior)
 	do_bin_op(value_list, op_list, prior_list);
@@ -332,7 +332,7 @@ namespace bgeot {
       prior_list.push_back(prior);
 
       i = get_next_token(f);
-      operator_priority_(i, temp_string[0], prior, op);
+      operator_priority_ftool(i, temp_string[0], prior, op);
     }
     valid_token();
 

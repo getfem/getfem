@@ -1338,8 +1338,8 @@ namespace getfem {
   // ----------------------------------------------------------------------
 
 
-  static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
-  static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
+  static void ga_init_scalar_(bgeot::multi_index &mi) { mi.resize(0); }
+  static void ga_init_square_matrix_(bgeot::multi_index &mi, size_type N)
   { mi.resize(2); mi[0] = mi[1] = N; }
 
 
@@ -1349,7 +1349,7 @@ namespace getfem {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
-      ga_init_scalar(sizes);
+      ga_init_scalar_(sizes);
       return true;
     }
     
@@ -1399,7 +1399,7 @@ namespace getfem {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
-      ga_init_scalar(sizes);
+      ga_init_scalar_(sizes);
       return true;
     }
     
@@ -1471,7 +1471,7 @@ namespace getfem {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
-      ga_init_scalar(sizes);
+      ga_init_scalar_(sizes);
       return true;
     }
     
@@ -1554,7 +1554,7 @@ namespace getfem {
   struct Right_Cauchy_Green_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2) return false;
-      ga_init_square_matrix(sizes, args[0]->sizes()[1]);
+      ga_init_square_matrix_(sizes, args[0]->sizes()[1]);
       return true;
     }
     
@@ -1615,7 +1615,7 @@ namespace getfem {
   struct Left_Cauchy_Green_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2) return false;
-      ga_init_square_matrix(sizes, args[0]->sizes()[0]);
+      ga_init_square_matrix_(sizes, args[0]->sizes()[0]);
       return true;
     }
     
@@ -1677,7 +1677,7 @@ namespace getfem {
   struct Green_Lagrangian_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
       if (args.size() != 1 || args[0]->sizes().size() != 2) return false;
-      ga_init_square_matrix(sizes, args[0]->sizes()[1]);
+      ga_init_square_matrix_(sizes, args[0]->sizes()[1]);
       return true;
     }
     
@@ -1744,7 +1744,7 @@ namespace getfem {
           || args[0]->sizes()[0] !=  args[0]->sizes()[1]
           || args[1]->sizes()[0] !=  args[0]->sizes()[1] 
           || args[1]->sizes()[1] !=  args[0]->sizes()[1]) return false;
-      ga_init_square_matrix(sizes, args[0]->sizes()[1]);
+      ga_init_square_matrix_(sizes, args[0]->sizes()[1]);
       return true;
     }
     
@@ -1821,7 +1821,7 @@ namespace getfem {
       if (args.size() != 2 || args[0]->sizes().size() != 2 
           || args[1]->size() != AHL->nb_params()
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
-      ga_init_square_matrix(sizes, args[0]->sizes()[0]);
+      ga_init_square_matrix_(sizes, args[0]->sizes()[0]);
       return true;
     }
 
@@ -1894,7 +1894,7 @@ namespace getfem {
       if (args.size() != 2 || args[0]->sizes().size() != 2 
           || args[1]->size() != AHL->nb_params()
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
-      ga_init_scalar(sizes);
+      ga_init_scalar_(sizes);
       return true;
     }
 
@@ -1988,7 +1988,7 @@ namespace getfem {
       if (args.size() != 2 || args[0]->sizes().size() != 2 
           || args[1]->size() != 2
           || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
-      ga_init_square_matrix(sizes, args[0]->sizes()[0]);
+      ga_init_square_matrix_(sizes, args[0]->sizes()[0]);
       return true;
     }
     
