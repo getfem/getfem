@@ -275,23 +275,23 @@ namespace getfem
   static bgeot::size_type key_count = 0;
   DAL_SIMPLE_KEY(torus_fem_key, bgeot::size_type);
 
-  getfem::pfem new_torus_fem(getfem::pfem pfem){
+  getfem::pfem new_torus_fem(getfem::pfem pf){
     ++key_count;
-    getfem::pfem pfem_torus= new torus_fem(pfem);
+    getfem::pfem pfem_torus= new torus_fem(pf);
     dal::add_stored_object(new torus_fem_key(key_count), pfem_torus);
     return pfem_torus;
   }
 
   void del_torus_fem(getfem::pfem pfem){    
     const torus_fem *ptorus_fem = dynamic_cast<const torus_fem*>(pfem.get());
-    if(ptorus_fem != nullptr) dal::del_stored_object(pfem);
+    if (ptorus_fem != 0) dal::del_stored_object(pfem);
   }
 
   void torus_mesh_fem::adapt_to_torus(){
 
     for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished(); ++cv){
       pfem poriginal_fem = fem_of_element(cv);
-      if(poriginal_fem == nullptr) continue;
+      if(poriginal_fem == 0) continue;
 
       del_torus_fem(poriginal_fem);
 
