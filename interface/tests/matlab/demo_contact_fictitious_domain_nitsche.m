@@ -1,4 +1,4 @@
-% Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+% Copyright (C) 2006-2012 Yves Renard, Mathieu Fabre.
 %
 % This file is a part of GETFEM++
 %
@@ -24,20 +24,18 @@ disp('with a fictitious domain method and Nitsche s method');
 clear all;
 % gf_workspace('clear all');
 
-
-
-ref_sol = 0;% 0 Reference solution
+ref_sol = 2;% 0 Reference solution
             % 1 Error in L2 and H1 in Omega1 Omega2
             % 2 link between gamma0 and theta
             
-N = 2 ;% 2 ou 3 dimension
+N = 2 ;% 2 ou 3 dimensions
 R=0.25;
 dirichlet_val = 0;
     
 if (ref_sol == 0)
     method = [-1];
     gamma = [1/200]; %1/200
-    nxy = [200]; % 400
+    nxy = [200]; % 2D ->400 and 3D -> 30
     ls_degree = 2;
     penalty_parameter = 10E-8;
     vertical_force = -0.1;
@@ -46,7 +44,7 @@ if (ref_sol == 1)
     method = [-1];
     gamma = [1/100];
     if (N==2)
-        nxy=[15 25 35 50 60 75 90 100];
+        nxy=[15 25 35 50];% 60 75 90 100];
     else
         nxy = [5 10 15 20 25 30];
     end
@@ -144,9 +142,9 @@ GAMMAC = 1; GAMMAD = 2;
 border = gf_mesh_get(m,'outer faces');
 normals = gf_mesh_get(m, 'normal of faces', border);
 if (N==2)
-    contact_boundary=border(:, find(normals(2, :) < -0.01));%normal dans la direction -e2
+    contact_boundary=border(:, find(normals(2, :) < -0.01)); %the normal is -e2
 else
-    contact_boundary=border(:, find(normals(3, :) < -0.01));%normal dans la direction -e3
+    contact_boundary=border(:, find(normals(3, :) < -0.01));%the normal is -e3
 end
 gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 %gf_model_set(md,'add inialized data', 'dirichlet data',[dirichlet_val])
@@ -227,15 +225,13 @@ end
 gf_model_set(md, 'add source term brick', mim1, 'u1', 'Fdata');
 
 if (N==2)
-    Ddata = zeros(1, 2); u1_degree=2; u2_degree=2; %Dimension 2
+    Ddata = zeros(1, 2);
 else
     Ddata = zeros(1, 3);
 end
 
 gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
-% gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u1', u1_degree, GAMMAD, 'Ddata'); %neccessaire?
-% gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u2', u2_degree, GAMMAD, 'Ddata'); %neccessaire?
-gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); %neccessaire?
+gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); 
 
 if (N==2)
     cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
@@ -247,8 +243,6 @@ end
 
 gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
 gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
-% gf_model_set(md, 'add pointwise constraints with multipliers', 'u1', 'cpoints', 'cunitv');
-% gf_model_set(md, 'add pointwise constraints with penalization', 'u1', 100, 'cpoints', 'cunitv');
 gf_model_set(md, 'add initialized data', 'penalty_param1', [penalty_parameter]);
 indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
 gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);
@@ -337,7 +331,6 @@ if (ref_sol == 0)
     save degree_levelset dls;
 else
     meshref = gf_mesh('load', 'sol_ref_mesh_fem');
-    %mfuref = gf_mesh_fem('load', 'sol_ref_mesh_fem',meshref);
   
     % Reconstruction of mfuref, mfu1ref, mfu2ref, min1ref, min2ref
   
@@ -348,7 +341,7 @@ else
     mf_ls2ref=gfObject(gf_levelset_get(ls2ref, 'mf'));
     mfuref=gfMeshFem(meshref,N);
     if(N==2)
-        set(mfuref, 'fem', gf_fem('FEM_PK(2,1)'));
+        set(mfuref, 'fem', gf_fem('FEM_PK(2,2)'));
     else
         set(mfuref, 'fem', gf_fem('FEM_PK(3,2)'));
     end
@@ -492,8 +485,10 @@ N
        
 end
 
-if (ref_sol == 2 )  % Curveof error depending of gamma0
+if (ref_sol == 2 )  % Curve of error depending of gamma0
+    
     % method = [0 1 -1];
+    
     Y11(:,1,:)
     Y12(:,1,:)
     Y21(:,1,:)
@@ -526,9 +521,6 @@ if (ref_sol == 2 )  % Curveof error depending of gamma0
     xlabel('gamma0');
     ylabel('L^2(Omega 1) relative error (in %)');
     % set(gca,'XTickLabel',{'0.01';'0.1';'1';'...'})  
-    
-    
-   
     
     
     figure(2);
