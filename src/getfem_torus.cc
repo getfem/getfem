@@ -24,13 +24,14 @@ namespace bgeot{
       point2D.resize(2);
       return ori_ref_convex_->is_in_face(f, point2D);
     }  
-    torus_reference(bgeot::pconvex_ref originalConvexRef){
-      cvs = torus_structure_descriptor(originalConvexRef->structure());
+    torus_reference(bgeot::pconvex_ref ori_ref_convex){
+      ori_ref_convex_ = ori_ref_convex;
+      cvs = torus_structure_descriptor(ori_ref_convex->structure());
       convex<base_node>::points().resize(cvs->nb_points());
       normals_.resize(6);
 
-      const std::vector<base_small_vector> &ori_normals = originalConvexRef->normals();
-      const stored_point_tab &ori_points = originalConvexRef->points();
+      const std::vector<base_small_vector> &ori_normals = ori_ref_convex->normals();
+      const stored_point_tab &ori_points = ori_ref_convex->points();
       std::copy(ori_normals.begin(), ori_normals.end(), normals_.begin());
       std::copy(ori_points.begin(), ori_points.end(), convex<base_node>::points().begin());
       for(size_type pt = 0; pt < convex<base_node>::points().size(); ++pt){
@@ -105,7 +106,6 @@ namespace bgeot{
   void torus_geom_trans::poly_vector_grad(const base_node &pt, bgeot::base_matrix &pc) const{
     base_node pt2D(pt);
     pt2D.resize(2);
-    std::cout << pt << std::endl;
     bgeot::base_matrix pc2D(nb_points(), 2);
     poriginal_trans_->poly_vector_grad(pt2D, pc2D);
 
@@ -219,15 +219,25 @@ namespace getfem
   void torus_fem::real_base_value(const fem_interpolation_context& c,
     base_tensor &t, bool) const{
 
-      GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
+    GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
 
-      base_tensor u;
-      poriginal_fem_->base_value(c.xref(), t);
-      if (!(poriginal_fem_->is_equivalent()))
-      { 
-        u = t; 
-        t.mat_transp_reduction(u, c.M(), 0); 
+    base_tensor u_orig;
+    poriginal_fem_->base_value(c.xref(), u_orig);
+    if (!(poriginal_fem_->is_equivalent())){ 
+      base_tensor u_temp = u_orig; 
+      u_orig.mat_transp_reduction(u_temp, c.M(), 0); 
+    }
+    //expand original base of [nb_base, 1] 
+    //to vectorial form [nb_base, dim_ + 1]
+    bgeot::multi_index tensor_size(u_orig.sizes());
+    tensor_size[0] *= (dim_ + 1);
+    tensor_size[1] = dim_ + 1;
+    t.adjust_sizes(tensor_size);
+    for(int i = 0; i < u_orig.sizes()[0]; ++i){
+      for(int j = 0; j < dim_; ++j){
+        t(i*(dim_+1) + j, j) = u_orig(i, 0);
       }
+    }
   }
 
   void torus_fem::real_grad_base_value
@@ -235,35 +245,36 @@ namespace getfem
   {
     GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
 
-    base_tensor u2d;
-    base_tensor u3d;
-    base_tensor v;
-    poriginal_fem_->grad_base_value(c.xref(), u2d);
-    GMM_ASSERT1(!u2d.empty(), "Original FEM is unable to provide grad base value!");
+    base_tensor u_origin;
+    base_tensor u;
+    poriginal_fem_->grad_base_value(c.xref(), u_origin);
+    GMM_ASSERT1(!u_origin.empty(), "Original FEM is unable to provide grad base value!");
 
-    base_tensor n2d;
-    poriginal_fem_->base_value(c.xref(), n2d);
-    GMM_ASSERT1(!u2d.empty(), "Original FEM is unable to provide base value!");
+    base_tensor n_origin;
+    poriginal_fem_->base_value(c.xref(), n_origin);
+    GMM_ASSERT1(!n_origin.empty(), "Original FEM is unable to provide base value!");
 
-    bgeot::multi_index tensorSize(u2d.sizes());
-    tensorSize[1] = 1;
-    tensorSize[2] += 1;
-    u3d.adjust_sizes(tensorSize);
-    for(int i = 0; i < u2d.sizes()[0]; ++i)
-    {
-      for(int j = 0; j < tensorSize[1]; ++j)
-      {
-        if(j < 2)
-        {
-          for(int k = 0; k < u2d.sizes()[2]; ++k)
-          {
-            u3d(i,j,k) = u2d(i,0,k);
-          }
+    //expand original grad of [nb_base, 1, dim_] 
+    //to vectorial form [nb_base, dim_ + 1, dim_ + 1]
+    const bgeot::multi_index &origin_size = u_origin.sizes();
+    bgeot::multi_index tensor_size(origin_size);
+    tensor_size[0] *= (dim_ + 1);
+    tensor_size[1] = dim_ + 1;
+    tensor_size[2] += 1;
+    u.adjust_sizes(tensor_size);
+    for(int i = 0; i < origin_size[0]; ++i){ //dof
+      for(int j = 0; j < dim_; ++j){
+        for(int k = 0; k < dim_; ++k){
+          u(i*(dim_+1)+j, j, k) = u_origin(i, 0, k);
         }
-        else u3d(i,j,2) = n2d[i] / c.xref()[0];
       }
     }
-    t.mat_transp_reduction(u3d, c.B(), 2);
+    t = u;
+    t.mat_transp_reduction(u, c.B(), 2);
+
+    for(int i = 0; i < origin_size[0]; ++i){
+      t(i*(dim_+1)+dim_, dim_, dim_) = n_origin[i] /c.xreal()[0];
+    }
   }
 
   void torus_fem::real_hess_base_value
