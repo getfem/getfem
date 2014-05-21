@@ -28,11 +28,15 @@ namespace bgeot{
       ori_ref_convex_ = ori_ref_convex;
       cvs = torus_structure_descriptor(ori_ref_convex->structure());
       convex<base_node>::points().resize(cvs->nb_points());
-      normals_.resize(6);
+      normals_.resize(ori_ref_convex->normals().size());
 
       const std::vector<base_small_vector> &ori_normals = ori_ref_convex->normals();
       const stored_point_tab &ori_points = ori_ref_convex->points();
-      std::copy(ori_normals.begin(), ori_normals.end(), normals_.begin());
+      for(size_type n = 0; n < ori_normals.size(); ++n){
+       normals_[n] = ori_normals[n];
+       normals_[n].resize(3);
+      }            
+
       std::copy(ori_points.begin(), ori_points.end(), convex<base_node>::points().begin());
       for(size_type pt = 0; pt < convex<base_node>::points().size(); ++pt){
         convex<base_node>::points()[pt].resize(3);
@@ -196,7 +200,7 @@ namespace getfem
     for (size_type k = 0; k < nb_dof_origin; ++k)
     {
       for(size_type j = 0; j < 2; ++j){
-        add_node(xfem_dof(poriginal_fem_->dof_types()[k], j + k*2), 
+        add_node(xfem_dof(poriginal_fem_->dof_types()[k], j), 
           poriginal_fem_->node_of_dof(0, k));
       }
     }
