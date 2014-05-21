@@ -195,8 +195,8 @@ namespace getfem
     size_type nb_dof_origin = poriginal_fem_->nb_dof(0);
     for (size_type k = 0; k < nb_dof_origin; ++k)
     {
-      for(size_type j = 0; j < 3; ++j){
-        add_node(xfem_dof(poriginal_fem_->dof_types()[k], j + k*3), 
+      for(size_type j = 0; j < 2; ++j){
+        add_node(xfem_dof(poriginal_fem_->dof_types()[k], j + k*2), 
           poriginal_fem_->node_of_dof(0, k));
       }
     }
@@ -228,14 +228,14 @@ namespace getfem
       u_orig.mat_transp_reduction(u_temp, c.M(), 0); 
     }
     //expand original base of [nb_base, 1] 
-    //to vectorial form [nb_base, dim_ + 1]
+    //to vectorial form [nb_base * dim_, dim_ + 1]
     bgeot::multi_index tensor_size(u_orig.sizes());
-    tensor_size[0] *= (dim_ + 1);
+    tensor_size[0] *= dim_;
     tensor_size[1] = dim_ + 1;
     t.adjust_sizes(tensor_size);
     for(int i = 0; i < u_orig.sizes()[0]; ++i){
       for(int j = 0; j < dim_; ++j){
-        t(i*(dim_+1) + j, j) = u_orig(i, 0);
+        t(i*dim_ + j, j) = u_orig(i, 0);
       }
     }
   }
@@ -255,17 +255,17 @@ namespace getfem
     GMM_ASSERT1(!n_origin.empty(), "Original FEM is unable to provide base value!");
 
     //expand original grad of [nb_base, 1, dim_] 
-    //to vectorial form [nb_base, dim_ + 1, dim_ + 1]
+    //to vectorial form [nb_base * dim_, dim_ + 1, dim_ + 1]
     const bgeot::multi_index &origin_size = u_origin.sizes();
     bgeot::multi_index tensor_size(origin_size);
-    tensor_size[0] *= (dim_ + 1);
+    tensor_size[0] *= dim_;
     tensor_size[1] = dim_ + 1;
     tensor_size[2] += 1;
     u.adjust_sizes(tensor_size);
     for(int i = 0; i < origin_size[0]; ++i){ //dof
       for(int j = 0; j < dim_; ++j){
         for(int k = 0; k < dim_; ++k){
-          u(i*(dim_+1)+j, j, k) = u_origin(i, 0, k);
+          u(i*dim_+j, j, k) = u_origin(i, 0, k);
         }
       }
     }
@@ -273,7 +273,7 @@ namespace getfem
     t.mat_transp_reduction(u, c.B(), 2);
 
     for(int i = 0; i < origin_size[0]; ++i){
-      t(i*(dim_+1)+dim_, dim_, dim_) = n_origin[i] /c.xreal()[0];
+      t(i*dim_, dim_, dim_) = n_origin[i] /c.xreal()[0];
     }
   }
 
@@ -282,11 +282,11 @@ namespace getfem
   {
     GMM_ASSERT1(false, "Hessian not yet implemented in torus fem.");
   }
-
-  static bgeot::size_type key_count = 0;
+    
   DAL_SIMPLE_KEY(torus_fem_key, bgeot::size_type);
 
   getfem::pfem new_torus_fem(getfem::pfem pf){
+    static bgeot::size_type key_count = 0;
     ++key_count;
     getfem::pfem pfem_torus= new torus_fem(pf);
     dal::add_stored_object(new torus_fem_key(key_count), pfem_torus);
