@@ -38,7 +38,16 @@
 #define GETFEM_CONTEXT_H__
 
 #include "getfem_config.h"
+#include "getfem_omp.h"
 #include <list>
+
+#ifdef GETFEM_HAVE_OPENMP
+  #include <boost/atomic.hpp>
+  typedef boost::atomic_bool atomic_bool;
+#else
+  typedef bool  atomic_bool;
+#endif
+
 
 namespace getfem {
   /**Deal with interdependencies of objects.
@@ -80,10 +89,11 @@ namespace getfem {
   protected :
     enum context_state { CONTEXT_NORMAL, CONTEXT_CHANGED, CONTEXT_INVALID };
     mutable context_state state;
-    mutable bool touched;
+    mutable atomic_bool touched;
     mutable std::vector<const context_dependencies *> dependencies;
     mutable std::vector<const context_dependencies *> dependent;
     typedef std::vector<const context_dependencies *>::iterator iterator_list;
+    getfem::lock_factory locks_;
 
     void sup_dependent_(const context_dependencies &cd) const;
     void sup_dependency_(const context_dependencies &cd) const;
@@ -96,17 +106,30 @@ namespace getfem {
     virtual void update_from_context(void) const = 0;
 
     void change_context(void) const
-    { if (state == CONTEXT_NORMAL) { state = CONTEXT_CHANGED; touch(); } }
+    { 
+      if (state == CONTEXT_NORMAL) 
+      { 
+        touch(); 
+        getfem::local_guard lock = locks_.get_lock();
+        state = CONTEXT_CHANGED; 
+      } 
+    }
     void add_dependency(const context_dependencies &cd);
+    
     void sup_dependency(const context_dependencies &cd)
-    { cd.sup_dependent_(*this); sup_dependency_(cd); }
+    { 
+      cd.sup_dependent_(*this); 
+      sup_dependency_(cd); 
+    }
+
     bool is_context_valid(void) const { return (state != CONTEXT_INVALID); }
     bool is_context_changed() const { return (state == CONTEXT_CHANGED); }
     /** return true if update_from_context was called */
     bool context_check(void) const;
     void touch(void) const;
     virtual ~context_dependencies();
-    context_dependencies() : state(CONTEXT_NORMAL), touched(false) {}
+    context_dependencies() : state(CONTEXT_NORMAL), touched( ) {touched = false;}
+    context_dependencies(const context_dependencies& cd);
 
   };
 

@@ -25,8 +25,17 @@
 
 namespace getfem {
 
+  context_dependencies::context_dependencies(const context_dependencies& cd) : 
+    state(cd.state),
+    touched(static_cast<bool>(cd.touched)),
+    dependencies(cd.dependencies),
+    dependent(cd.dependent),
+    locks_( )
+  {}
+
   void context_dependencies::sup_dependent_
   (const context_dependencies &cd) const {
+    getfem::local_guard lock = locks_.get_lock();
     size_type s = dependent.size();
     iterator_list it1 = dependent.begin(), it2 = it1, ite = dependent.end();
     for (; it1 != ite; ++it1)
@@ -36,6 +45,7 @@ namespace getfem {
   
   void context_dependencies::sup_dependency_
   (const context_dependencies &cd) const {
+    getfem::local_guard lock = locks_.get_lock();
     size_type s = dependencies.size();
     iterator_list it1=dependencies.begin(), it2=it1, ite=dependencies.end();
     for (; it1 != ite; ++it1)
@@ -44,27 +54,39 @@ namespace getfem {
   }
 
   void context_dependencies::invalid_context(void) const {
-    if (state != CONTEXT_INVALID) {
-      state = CONTEXT_INVALID;
+    if (state != CONTEXT_INVALID) 
+    {
       iterator_list it = dependent.begin(), ite = dependent.end();
       for (; it != ite; ++it) (*it)->invalid_context();
+      getfem::local_guard lock = locks_.get_lock();
+      state = CONTEXT_INVALID;
     }
   }
 
   void context_dependencies::add_dependency(const context_dependencies &cd) {
     cd.context_check(); cd.touched = false;
-    iterator_list it = dependencies.begin(), ite = dependencies.end();
-    for (; it != ite; ++it) if ((*it) == &cd) return;
-    dependencies.push_back(&cd);
+    {
+      getfem::local_guard lock = locks_.get_lock();
+      iterator_list it = dependencies.begin(), ite = dependencies.end();
+      for (; it != ite; ++it) if ((*it) == &cd) return;
+      dependencies.push_back(&cd);
+    }
+    getfem::local_guard lock = cd.locks_.get_lock();
     cd.dependent.push_back(this);
   }
   
-  bool context_dependencies::context_check(void) const {
-    if (state == CONTEXT_CHANGED) {
-      state = CONTEXT_NORMAL;
+  bool context_dependencies::context_check(void) const 
+  {
+    if (state == CONTEXT_CHANGED) 
+    {
       iterator_list it = dependencies.begin(), ite = dependencies.end();
-      for (; it != ite; ++it)
-	{ (*it)->context_check(); (*it)->touched = false; }
+      for (; it != ite; ++it) 
+      {
+        (*it)->context_check(); 
+        (*it)->touched = false;
+      }
+      getfem::local_guard lock = locks_.get_lock();
+      state = CONTEXT_NORMAL;
       update_from_context();
       return true;
     }
@@ -72,11 +94,13 @@ namespace getfem {
     return false;
   }
   
-  void context_dependencies::touch(void) const {
-    if (!touched) {
-      touched = true;
+  void context_dependencies::touch(void) const 
+  {
+    if (!touched) 
+    {
       iterator_list it = dependent.begin(), ite = dependent.end();
       for (; it != ite; ++it) (*it)->change_context();
+      touched = true;
     }
   }
  
