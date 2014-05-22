@@ -181,8 +181,7 @@ namespace bgeot{
 namespace getfem
 {
 
-  void torus_fem::init()
-  {
+  void torus_fem::init(){
     cvr = poriginal_fem_->ref_convex(0);
     dim_ = cvr->structure()->dim();
     is_equiv = real_element_defined = true;
@@ -231,11 +230,17 @@ namespace getfem
       base_tensor u_temp = u_orig; 
       u_orig.mat_transp_reduction(u_temp, c.M(), 0); 
     }
+
+    if(is_scalar_){
+      t = u_orig;
+      return;
+    }
+
     //expand original base of [nb_base, 1] 
     //to vectorial form [nb_base * dim_, dim_ + 1]
     bgeot::multi_index tensor_size(u_orig.sizes());
     tensor_size[0] *= dim_;
-    tensor_size[1] = dim_ + 1;
+    tensor_size[1] = ntarget_dim;
     t.adjust_sizes(tensor_size);
     for(int i = 0; i < u_orig.sizes()[0]; ++i){
       for(int j = 0; j < dim_; ++j){
@@ -248,36 +253,41 @@ namespace getfem
     (const getfem::fem_interpolation_context& c, base_tensor &t, bool) const 
   {
     GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
-
-    base_tensor u_origin;
+    
     base_tensor u;
-    poriginal_fem_->grad_base_value(c.xref(), u_origin);
+    bgeot::pstored_point_tab ppt = &(c.pgp()->get_point_tab());
+    getfem::pfem_precomp pfp = getfem::fem_precomp(poriginal_fem_, ppt, 0);
+    base_tensor u_origin = pfp->grad(c.ii());
+    //poriginal_fem_->grad_base_value(c.xref(), u_origin);
     GMM_ASSERT1(!u_origin.empty(), "Original FEM is unable to provide grad base value!");
 
-    base_tensor n_origin;
-    poriginal_fem_->base_value(c.xref(), n_origin);
+    base_tensor n_origin = pfp->val(c.ii());
+    //poriginal_fem_->base_value(c.xref(), n_origin);
     GMM_ASSERT1(!n_origin.empty(), "Original FEM is unable to provide base value!");
 
     //expand original grad of [nb_base, 1, dim_] 
     //to vectorial form [nb_base * dim_, dim_ + 1, dim_ + 1]
     const bgeot::multi_index &origin_size = u_origin.sizes();
     bgeot::multi_index tensor_size(origin_size);
-    tensor_size[0] *= dim_;
-    tensor_size[1] = dim_ + 1;
-    tensor_size[2] += 1;
+    bgeot::size_type dim_size = (is_scalar_)? 1 : dim_;
+    tensor_size[0] *= dim_size;
+    tensor_size[1] = ntarget_dim;
+    tensor_size[2] = dim_ + 1;
     u.adjust_sizes(tensor_size);
     for(int i = 0; i < origin_size[0]; ++i){ //dof
-      for(int j = 0; j < dim_; ++j){
+      for(int j = 0; j < dim_size; ++j){
         for(int k = 0; k < dim_; ++k){
-          u(i*dim_+j, j, k) = u_origin(i, 0, k);
+          u(i*dim_size+j, j, k) = u_origin(i, 0, k);
         }
       }
     }
     t = u;
     t.mat_transp_reduction(u, c.B(), 2);
 
+    if(is_scalar_) return;
+
     for(int i = 0; i < origin_size[0]; ++i){
-      t(i*dim_, dim_, dim_) = n_origin[i] /c.xreal()[0];
+      t(i*dim_size, dim_, dim_) = n_origin[i] /c.xreal()[0];
     }
   }
 
@@ -285,6 +295,34 @@ namespace getfem
     (const getfem::fem_interpolation_context &c, base_tensor &t, bool) const 
   {
     GMM_ASSERT1(false, "Hessian not yet implemented in torus fem.");
+  }
+
+  void torus_fem::set_to_scalar(bool is_scalar){
+    if(is_scalar_ == is_scalar) return;
+    
+    is_scalar_ = is_scalar;
+
+    if(is_scalar_){
+      ntarget_dim = 1;
+      dof_types_.clear();
+      init_cvs_node();
+      size_type nb_dof_origin = poriginal_fem_->nb_dof(0);
+      for (size_type k = 0; k < nb_dof_origin; ++k){
+          add_node(poriginal_fem_->dof_types()[k], poriginal_fem_->node_of_dof(0, k));
+      }
+    }else{
+      ntarget_dim = 3;
+      dof_types_.clear();
+      init_cvs_node();
+      size_type nb_dof_origin = poriginal_fem_->nb_dof(0);
+      for (size_type k = 0; k < nb_dof_origin; ++k)
+      {
+        for(size_type j = 0; j < 2; ++j){
+          add_node(xfem_dof(poriginal_fem_->dof_types()[k], j), 
+            poriginal_fem_->node_of_dof(0, k));
+        }
+      }
+    }
   }
     
   DAL_SIMPLE_KEY(torus_fem_key, bgeot::size_type);
@@ -314,6 +352,19 @@ namespace getfem
       set_finite_element(cv, pfem_torus);
     }
     touch();
+  }
+
+  void torus_mesh_fem::enumerate_dof(void) const
+  {
+
+    for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished(); ++cv){
+      pfem pf = fem_of_element(cv);
+      if(pf == 0) continue;
+      torus_fem *pf_torus = dynamic_cast<torus_fem*>(const_cast<virtual_fem*>(pf.get()));
+      if(pf_torus == 0) continue;
+      pf_torus->set_to_scalar((Qdim != 3));
+    }
+    mesh_fem::enumerate_dof();
   }
 
   void torus_mesh::adapt(const getfem::mesh &original_mesh){

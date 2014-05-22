@@ -74,7 +74,9 @@ pgeometric_trans torus_geom_trans_descriptor(pgeometric_trans poriginal_trans);
 namespace getfem
 {
   /**Torus fem, the real grad base value is modified to compute radial grad of F/R.
-     It stores a reference to the original fem object.
+     It stores a reference to the original fem object. By default, torus_fem is vectorial.
+     There is an option to change it to a scalar form through set_to_scalar(bool is_scalar).
+     torus_mesh_fem will automatically check qdim of itself and set the form accordingly.
   */
   class torus_fem : public virtual_fem{
 
@@ -90,16 +92,18 @@ namespace getfem
     void real_hess_base_value(const fem_interpolation_context&,
       base_tensor &, bool = true) const;
 
-    torus_fem(pfem pf) : virtual_fem(*pf), poriginal_fem_(pf)
-    {
+    torus_fem(pfem pf) : virtual_fem(*pf), poriginal_fem_(pf), is_scalar_(false){
       init();
     }
+
+    void set_to_scalar(bool is_scalar);
 
   protected :
     void init();
 
   private :
     pfem poriginal_fem_;
+    bool is_scalar_;
   };
   
   /**Copy an original 2D mesh to become a torus mesh with radial dimension.*/
@@ -119,6 +123,7 @@ namespace getfem
 
     torus_mesh_fem(torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}
     void adapt_to_torus();
+    void enumerate_dof(void) const;
 
   private:
     void del_torus_fem_();

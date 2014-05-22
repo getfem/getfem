@@ -513,7 +513,7 @@ namespace getfem {
     virtual void get_global_dof_index(std::vector<size_type> &ind) const;
     /** Renumber the degrees of freedom. You should not have
      * to call this function, as it is done automatically */
-    void enumerate_dof(void) const;
+    virtual void enumerate_dof(void) const;
 
 #if GETFEM_PARA_LEVEL > 1
     void enumerate_dof_para(void)const;
