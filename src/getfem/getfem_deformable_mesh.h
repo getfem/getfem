@@ -149,7 +149,6 @@ namespace getfem {
 
     void deform() 
     {
-      omp_guard lock;
       if (is_deformed_) return;
       m.deform_mesh(dU,mf);
       is_deformed_ = true;
@@ -157,7 +156,6 @@ namespace getfem {
 
     void undeform() 
     {
-      omp_guard lock;
       if (!is_deformed_) return;
       VECTOR dU_inverted(dU);
       gmm::scale(dU_inverted, scalar_type(-1.0));

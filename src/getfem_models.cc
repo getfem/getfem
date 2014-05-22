@@ -121,7 +121,12 @@ namespace getfem {
   }
 
   void model::actualize_sizes(void) const {
+    bool actualized = false;
+    getfem::local_guard lock = locks_.get_lock();
+    if (actualized) return; //this is if multiple threads are calling the method
+
     act_size_to_be_done = false;
+
     std::map<std::string, std::vector<std::string> > multipliers;
     std::map<std::string, bool > tobedone;
 
@@ -358,6 +363,7 @@ namespace getfem {
       gmm::resize(rrhs, tot_size);
     }
 
+    actualized = true;
 //     #if GETFEM_PARA_LEVEL > 1
 //     cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
     

@@ -116,6 +116,7 @@ namespace getfem {
     mutable scalar_type pseudo_potential_;
     mutable bool act_size_to_be_done;
     dim_type leading_dim;
+    getfem::lock_factory locks_;
 
     // Variables and parameters of the model
 

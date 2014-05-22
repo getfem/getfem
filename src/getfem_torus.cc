@@ -152,7 +152,7 @@ namespace bgeot{
   }
 
   void torus_geom_trans::poly_vector_hess(const base_node &pt, bgeot::base_matrix &pc) const{
-    GMM_ASSERT1(false, "Sorry, Hessian is not supported in sxisymmetric transformation.");
+    GMM_ASSERT1(false, "Sorry, Hessian is not supported in axisymmetric transformation.");
   }
 
   torus_geom_trans::torus_geom_trans(pgeometric_trans poriginal_trans) 
