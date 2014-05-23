@@ -117,13 +117,11 @@ namespace bgeot{
     poriginal_trans_->poly_vector_val(pt2D, base_value);
 
     pc.resize(nb_points(), 3);
-    for (size_type i = 0; i < nb_points(); ++i)
-    {
-      for (bgeot::dim_type n = 0; n < 2; ++n)
-      {
-        pc(i, n) = pc2D(i, n);
-      }
-      pc(i, 2) = base_value[i]; // radial direction, pc = base_x;
+    const bgeot::scalar_type EPS = 1e-15;
+
+    for (size_type i = 0; i < nb_points(); ++i){
+      for (bgeot::dim_type n = 0; n < 2; ++n) pc(i, n) = pc2D(i, n);
+      pc(i, 2) = base_value[i] + EPS; // radial direction, pc = base_x;
     }
   }
 
@@ -134,12 +132,8 @@ namespace bgeot{
       bgeot::base_matrix pc2D(ind_ct.size(), 2);
       poriginal_trans_->poly_vector_grad(pt2D, pc2D);
       pc.resize(ind_ct.size(), dim());
-      for (size_type i = 0; i < ind_ct.size(); ++i)
-      {
-        for (bgeot::dim_type n = 0; n < 2; ++n)
-        {
-          pc(i, n) = pc2D(i, n);
-        }
+      for (size_type i = 0; i < ind_ct.size(); ++i){
+        for (bgeot::dim_type n = 0; n < 2; ++n) pc(i, n) = pc2D(i, n);
       }
   }
 
@@ -254,6 +248,10 @@ namespace getfem
   {
     GMM_ASSERT1(!(poriginal_fem_->is_on_real_element()), "Original FEM must not be real.");
     
+    const bgeot::scalar_type EPS = 1e-15;
+    bgeot::scalar_type radius = c.xreal()[0] + EPS;
+    GMM_ASSERT1(radius > 0, "Negative radius in axisymmetry gradient calculation!");
+
     base_tensor u;
     bgeot::pstored_point_tab ppt = &(c.pgp()->get_point_tab());
     getfem::pfem_precomp pfp = getfem::fem_precomp(poriginal_fem_, ppt, 0);
@@ -287,7 +285,7 @@ namespace getfem
     if(is_scalar_) return;
 
     for(int i = 0; i < origin_size[0]; ++i){
-      t(i*dim_size, dim_, dim_) = n_origin[i] /c.xreal()[0];
+      t(i*dim_size, dim_, dim_) = n_origin[i] / radius;
     }
   }
 
