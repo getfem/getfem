@@ -132,6 +132,7 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-variadic-macros],CXXFLAGS)
+	AC_CHECK_CXX_FLAG([-Wno-unused-but-set-variable],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wpointer-arith],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wcast-qual],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wwrite-strings],CXXFLAGS)
