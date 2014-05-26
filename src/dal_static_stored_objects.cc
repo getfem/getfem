@@ -127,6 +127,7 @@ namespace dal {
   bool stored_object_tab::del_dependency_(pstatic_stored_object o1,
     pstatic_stored_object o2)
   {
+    getfem::local_guard guard = locks_.get_lock();
     stored_key_tab::const_iterator it1 = stored_keys_.find(o1);
     if (it1 == stored_keys_.end()) return false;
     iterator ito1 = find(it1->second);
@@ -147,6 +148,7 @@ namespace dal {
   bool stored_object_tab::del_dependent_(pstatic_stored_object o1,
     pstatic_stored_object o2)
   {
+    getfem::local_guard guard = locks_.get_lock();
     stored_key_tab::const_iterator it2 = stored_keys_.find(o2);
     if (it2 == stored_keys_.end()) return false;
     iterator ito2 = find(it2->second);
@@ -175,6 +177,7 @@ namespace dal {
 
   void stored_object_tab::basic_delete_(std::list<pstatic_stored_object> &to_delete)
   {
+    getfem::local_guard guard = locks_.get_lock();
     std::list<pstatic_stored_object>::iterator it;
     for (it = to_delete.begin(); it != to_delete.end(); ++it) 
     {
