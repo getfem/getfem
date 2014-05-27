@@ -820,12 +820,12 @@ namespace getfem {
     void set_dispatch_coeff(void);
 
     /** For transient problems. Initialisation of iterations. */
-    void first_iter(void);
+    virtual void first_iter(void);
 
     /** For transient problems. Prepare the next iterations. In particular
         shift the version of the variables.
     */
-    void next_iter(void);
+    virtual void next_iter(void);
 
     /** Gives the name of the variable of index `ind_var` of the brick
         of index `ind_brick`. */
