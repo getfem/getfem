@@ -212,7 +212,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfem::base_vector result;
        getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
                                              gfi_mf->mesh_fem(), result, rg);
-       cout << "result = " << result << endl;
        out.pop().from_dcvector(result);
        );
     
