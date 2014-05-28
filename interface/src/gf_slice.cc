@@ -243,7 +243,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
   } else if (check_cmd(cmd, "isovalues", in, 4, 4)) {
     int orient = in.pop().to_integer(-1,2);
     const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
-    darray U = in.pop().to_darray(1, int(mf.nb_dof()));
+    darray U = in.pop().to_darray(int(mf.nb_dof()));
     slicers.push_back(new getfem::slicer_isovalues(getfem::mesh_slice_cv_dof_data<darray>(mf,U),
 						   in.pop().to_scalar(), orient));
   } else if (check_cmd(cmd, "boundary", in, 0, 1)) {

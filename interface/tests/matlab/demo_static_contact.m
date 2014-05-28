@@ -53,7 +53,7 @@ lambda_degree = 2;
 incompressibility = 0;
 p_degree = 1;
 r = 40;                % Augmentation parameter
-gamma0 = 0.001;          % Nitsche's method gamma0 parameter
+gamma0 = 0.001;        % Nitsche's method gamma0 parameter
 theta = 1;             % Nitsche's method theta parameter
 
 condition_type = 1; % 0 = Explicitely kill horizontal rigid displacements
@@ -74,8 +74,8 @@ version = 16; % 1 : frictionless contact and the basic contact brick
               % 2 : contact with 'static' Coulomb friction and basic contact brick
               % 3 : frictionless contact and the contact with a
               %     rigid obstacle brick
-              % 4 : contact with 'static' Coulomb friction and the contact with a
-              %     rigid obstacle brick
+              % 4 : contact with 'static' Coulomb friction and the contact
+              %     with a rigid obstacle brick
               % 5 : frictionless contact and the integral brick
               %     Newton and Alart-Curnier augmented lagrangian,
               %     unsymmetric version
