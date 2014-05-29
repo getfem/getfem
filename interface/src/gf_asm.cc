@@ -502,12 +502,41 @@ gf_dirichlet(getfemint::mexargs_out& out,
 
 void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolate) {
   const getfem::mesh_fem *mf1 = in.pop().to_const_mesh_fem();
-  const getfem::mesh_fem *mf2 = in.pop().to_const_mesh_fem();
-  gmm::row_matrix<getfem::model_real_sparse_vector> Maux(mf2->nb_dof(), mf1->nb_dof());
-  getfem::interpolation(*mf1, *mf2, Maux, extrapolate);
-  gf_real_sparse_by_col M(mf2->nb_dof(), mf1->nb_dof());
-  gmm::copy(Maux, M);
-  out.pop().from_sparse(M);
+  if (in.front().is_mesh_fem()) {
+    const getfem::mesh_fem *mf2 = in.pop().to_const_mesh_fem();
+    gmm::row_matrix<getfem::model_real_sparse_vector>
+      Maux(mf2->nb_dof(), mf1->nb_dof());
+    getfem::interpolation(*mf1, *mf2, Maux, extrapolate);
+    gf_real_sparse_by_col M(mf2->nb_dof(), mf1->nb_dof());
+    gmm::copy(Maux, M);
+    out.pop().from_sparse(M);
+  } else {
+    size_type N = mf1->linked_mesh().dim();
+    darray st = in.pop().to_darray();
+    std::vector<double> PTS(st.begin(), st.end());
+    size_type nbpoints = gmm::vect_size(PTS) / N;
+    getfem::base_node p(N);
+    getfem::mesh_trans_inv mti(mf1->linked_mesh());
+    for (size_type i = 0; i < nbpoints; ++i) {
+      gmm::copy(gmm::sub_vector(PTS, gmm::sub_interval(i*N, N)), p);
+      mti.add_point(p);
+    }
+    
+    size_type qmult = mf1->get_qdim();
+    /* if (qmult != 1) dims.push_back(unsigned(qmult)); */
+/*     dims.push_back(unsigned(nbpoints)); */
+/*     dims.opt_transform_col_vect_into_row_vect(); */
+/*     garray<T> V = out.pop().create_array(dims,T()); */
+
+    gmm::row_matrix<getfem::model_real_sparse_vector>
+      Maux(nbpoints*qmult, mf1->nb_dof());
+
+    getfem::base_vector U, V;
+    getfem::interpolation(*mf1, mti, U, V, Maux, 1, extrapolate);
+    gf_real_sparse_by_col M(nbpoints*qmult, mf1->nb_dof());
+    gmm::copy(Maux, M);
+    out.pop().from_sparse(M);
+  }
 }
 
 static const getfem::mesh_im *get_mim(mexargs_in &in) {
@@ -1018,7 +1047,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       High-level generic assembly procedure for volumic assembly.
 
       Performs the generic assembly of `expression` with the integration
-      method `mim` on the mesh region of index `region' (-1 means all 
+      method `mim` on the mesh region of index `region` (-1 means all 
       the element of the mesh). The smae mesh should be shared by
       the integration method and all the finite element methods
       corresponding to the variables.
@@ -1098,8 +1127,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC Mi = ('interpolation matrix', @tmf mf, @tmf mfi)
-    Build the interpolation matrix from a @tmf onto another @tmf.
+    /*@FUNC Mi = ('interpolation matrix', @tmf mf, {@tmf mfi | @vec pts} )
+    Build the interpolation matrix from a @tmf onto another @tmf or a set of points.
 
     Return a matrix `Mi`, such that `V = Mi.U` is equal to
     ::COMPUTE('interpolate_on',mfi). Useful for repeated interpolations.
@@ -1116,8 +1145,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC Me = ('extrapolation matrix',@tmf mf, @tmf mfe)
-    Build the extrapolation matrix from a @tmf onto another @tmf.
+    /*@FUNC Me = ('extrapolation matrix',@tmf mf,  {@tmf mfe | @vec pts})
+    Build the extrapolation matrix from a @tmf onto another @tmf or a set of points.
 
     Return a matrix `Me`, such that `V = Me.U` is equal to
     ::COMPUTE('extrapolate_on',mfe). Useful for repeated
