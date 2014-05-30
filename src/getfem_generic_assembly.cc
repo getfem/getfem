@@ -6401,10 +6401,9 @@ namespace getfem {
           if (pim->type() == IM_NONE) continue;
           GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                       "be used in high level generic assembly");
-          gis.pai = pim->approx_method();
-          const bgeot::stored_point_tab &spt = gis.pai->integration_points();
+          const bgeot::stored_point_tab &spt =pim->approx_method()->integration_points();
           if (spt.size()) {
-            if (gis.ctx.have_pgp() && gis.ctx.pgt() == pgt) {
+            if (gis.ctx.have_pgp() && gis.pai == pim->approx_method()) {
               gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
                                                   v.cv(), v.f());
             } else {
@@ -6417,6 +6416,8 @@ namespace getfem {
                                                     v.cv(), v.f());
               }
             }
+            gis.pai = pim->approx_method();
+
 
             // iterations on Gauss points
             gis.nbpt = gis.pai->nb_points_on_convex();

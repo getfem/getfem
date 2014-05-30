@@ -68,11 +68,13 @@ namespace bgeot {
       size_type P = pgt_->structure()->dim();
       K_.resize(N(), P);
       if (have_pgp()) {
+        GMM_ASSERT1(ii_ < pgp_->get_point_tab().size(),
+                    "Invalid index " << ii_ << " should be < "
+                    << pgp_->get_point_tab().size());
 
         if (&pgp_->grad(ii_) == 0) { cerr << "OULA!! " << ii_ << "\n"; }
         else if (pgp_->grad(ii_).size() == 0) { cerr << "OUCH\n"; }
 
-        assert(ii_ < pgp_->get_point_tab().size());
         pgt()->compute_K_matrix(G(), pgp_->grad(ii_), K_);
       } else {
         base_matrix pc(pgt()->nb_points(), P);
