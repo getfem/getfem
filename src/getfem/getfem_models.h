@@ -95,6 +95,11 @@ namespace getfem {
   typedef gmm::col_matrix<model_complex_sparse_vector>
   model_complex_sparse_matrix;
 
+  typedef gmm::row_matrix<model_real_sparse_vector>
+  model_real_row_sparse_matrix;
+  typedef gmm::row_matrix<model_complex_sparse_vector>
+  model_complex_row_sparse_matrix;
+
   /** ``Model'' variables store the variables, the data and the
       description of a model. This includes the global tangent matrix, the
       right hand side and the constraints. There are two kinds of models, the

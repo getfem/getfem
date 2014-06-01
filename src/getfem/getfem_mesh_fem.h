@@ -133,7 +133,7 @@ namespace getfem {
     value_type front(void) const { return *begin(); }
     value_type back(void) const { return *(--(end())); }
 
-    tab_scal_to_vect(void) {}
+    tab_scal_to_vect(void) : N(0) {}
     tab_scal_to_vect(const CONT &cc, dim_type n)
       : it(cc.begin()), ite(cc.end()), N(n) {}
     
