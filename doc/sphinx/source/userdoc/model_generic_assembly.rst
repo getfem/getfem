@@ -41,7 +41,7 @@ For instance, if one wants to solve a Poisson problem on a predefined variable `
 where ``F`` is a pre-defined constant of the model representing the right hand side. Of course, doing so, Newton's algorithms will be called. So, the more appropriate manner is to use the linear bricks as follows::
 
   getfem::add_linear_generic_assembly_brick(md, mim, "Grad_u.Grad_Test_u", -1, true, true);
-  getfem::add_dource_term_generic_assembly_brick(md, mim, "F*Test_u");
+  getfem::add_source_term_generic_assembly_brick(md, mim, "F*Test_u");
  
 
  

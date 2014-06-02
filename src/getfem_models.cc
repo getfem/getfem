@@ -1549,11 +1549,11 @@ namespace getfem {
                 from_variables(V);
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(V, -coeff0), rrhs);
-              }
-              gmm::mult_add(brick.rmatlist[j],
-                            gmm::scaled(variables[term.var2].real_value[0],
-                                        -coeff0),
-                            gmm::sub_vector(rrhs, I1));
+              } else
+                gmm::mult_add(brick.rmatlist[j],
+                              gmm::scaled(variables[term.var2].real_value[0],
+                                          -coeff0),
+                              gmm::sub_vector(rrhs, I1));
             }
             if (term.is_symmetric && I1.first() != I2.first()) {
               if (brick.pdispatch) {
@@ -1620,8 +1620,6 @@ namespace getfem {
         workspace.add_expression(it->expr, it->mim, mpi_reg[pms]);
       }
 
-      // cout << "act. assembly" << endl;
-
       if (version & BUILD_RHS) {
         if (is_complex()) {
           GMM_ASSERT1(false, "to be done");
@@ -1641,7 +1639,6 @@ namespace getfem {
           workspace.assembly(2);
         }
       }
-      // cout << "act. assembly done" << endl;
     }
 
     // Post simplification for dof constraints
@@ -2038,9 +2035,10 @@ namespace getfem {
                   "mesh_im");
 
       bool recompute_matrix = !((version & model::BUILD_ON_DATA_CHANGE) != 0);
-      for (size_type i = 0; i < dl.size(); ++i)
+      for (size_type i = 0; i < dl.size(); ++i) {
         recompute_matrix = recompute_matrix ||
           md.is_var_newer_than_brick(dl[i], ib);
+      }
 
       if (recompute_matrix) {
         ga_workspace workspace(md);
@@ -2098,7 +2096,7 @@ namespace getfem {
     ga_workspace workspace(md);
     size_type order = workspace.add_expression(expr, mim, region);
     model::varnamelist vl, dl;
-    workspace.used_variables(vl, dl, order);
+    workspace.used_variables(vl, dl, 2);
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                (order == 0), brickname);
