@@ -2097,7 +2097,7 @@ namespace getfem {
     size_type order = workspace.add_expression(expr, mim, region);
     model::varnamelist vl, dl;
     bool is_lin = workspace.used_variables(vl, dl, 2);
-    GMM_ASSERT1(is_lin, 'Nonlinear term');
+    GMM_ASSERT1(is_lin, "Nonlinear term");
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                (order == 0), brickname);
