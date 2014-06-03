@@ -968,6 +968,43 @@ CAUTION: This brick has to be added in the model
    const std::string &dataname_alpha,
    const std::string &dataname_wt1, const std::string &dataname_wt2);
 
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+
+  /** Adds a contact condition with or without Coulomb friction between
+ two bodies in a fictitious domain. The contact condition is applied on
+ the variable `varname_u1` corresponds with the first
+ and slave body with Nitsche's method and on the variable `varname_u2`
+ corresponds with the second and master body with Nitsche's method.
+ The contact condition is evaluated on the fictitious slave bondary.
+ The first body should be described by the level-set `dataname_d1`
+ and the second body should be described by the level-set
+`dataname_d2`. `gamma0name` is the Nitsche's method parameter.
+ `theta` is a scalar value which can be positive or negative.
+ `theta = 1` corresponds to the standard symmetric method which
+ is conditionnaly coercive for  `gamma0` small.
+ `theta = -1` corresponds to the skew-symmetric method which is
+ inconditionnaly coercive. `theta = 0` is the simplest method for
+ which the second derivative of the Neumann term is not necessary. 
+The optional parameter `dataname_friction_coeff` is the friction 
+coefficient which could be constant or defined on a finite element method. 
+CAUTION: This brick has to be added in the model
+ after all the bricks corresponding to partial differential
+ terms having a Neumann term. Moreover, This brick can only
+ be applied to bricks declaring their Neumann terms. Returns the brick index in the model. 
+
+  */
+  size_type add_Nitsche_fictitious_domain_contact_brick_twopass
+  (model &md, const mesh_im &mim, const std::string &varname_u1,
+   const std::string &varname_u2, const std::string &dataname_d1,
+   const std::string &dataname_d2, const std::string &dataname_gamma0,
+   scalar_type theta,
+   const std::string &dataname_friction_coeff,
+   const std::string &dataname_alpha,
+   const std::string &dataname_wt1, const std::string &dataname_wt2);
+
+
+#endif
+
 
 }  /* end of namespace getfem.                                             */
 

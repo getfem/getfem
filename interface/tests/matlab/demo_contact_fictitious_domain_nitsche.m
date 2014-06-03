@@ -24,7 +24,7 @@ disp('with a fictitious domain method and Nitsche s method');
 clear all;
 % gf_workspace('clear all');
 
-ref_sol = 2;% 0 Reference solution
+ref_sol = 0;% 0 Reference solution
             % 1 Error in L2 and H1 in Omega1 Omega2
             % 2 link between gamma0 and theta
             
@@ -33,9 +33,9 @@ R=0.25;
 dirichlet_val = 0;
     
 if (ref_sol == 0)
-    method = [-1];
+    method = [-1];%théta
     gamma = [1/200]; %1/200
-    nxy = [200]; % 2D ->400 and 3D -> 30
+    nxy = [10]; % 2D ->400 and 3D -> 30
     ls_degree = 2;
     penalty_parameter = 10E-8;
     vertical_force = -0.1;
@@ -126,7 +126,7 @@ else
 end
 gf_levelset_set(ls2, 'values', ULS2); 
 
-% figure
+figure
 
 set(mls1, 'add', ls1);
 set(mls1, 'adapt');
@@ -149,25 +149,25 @@ end
 gf_mesh_set(m, 'region', GAMMAD, contact_boundary);
 %gf_model_set(md,'add inialized data', 'dirichlet data',[dirichlet_val])
 
-% figure 1 : plot figure
+%figure 1 : plot figure
 
 clf;
 
 
-% if (N==2)
-%     gf_plot_mesh(get(mls1,'cut mesh')); % ,'curved', 'on'
-%     hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
-%     hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
-%     title('boundary with Dirichlet condition in red');hold off;
-% else
-%     %Too slow in 3D
-%     gf_plot_mesh(get(mls1,'cut mesh')); % ,'curved', 'on'
-%     hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
-%     hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
-%     title('boundary with Dirichlet condition in red');hold off;
-%     xlabel('x'); ylabel('y'); zlabel('z');
-%     title('Displasment solution'); 
-% end
+if (N==2)
+    gf_plot_mesh(get(mls1,'cut mesh')); % ,'curved', 'on'
+   hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
+   hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
+   title('boundary with Dirichlet condition in red');hold off;
+ else
+   Too slow in 3D
+    gf_plot_mesh(get(mls1,'cut mesh')); % ,'curved', 'on'
+    hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
+   hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
+   title('boundary with Dirichlet condition in red');hold off;
+    xlabel('x'); ylabel('y'); zlabel('z');
+   title('Displasment solution'); 
+end
 
 
 %Finites elements' method on mls1 and mls2
@@ -248,7 +248,7 @@ indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
 gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);
 indmass = gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
 
-gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
+gf_model_set(md,'add Nitsche fictitious domain contact brick twopass', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
 
 disp('solve');
 
@@ -438,7 +438,6 @@ if (ref_sol == 1 ) % Curve of error depending of h
 
    
     figure(1);
-    
     msize= size(X,2);
     loglog(X,Y11(1,:,1),'o-k', 'linewidth', 2, 'MarkerSize', 15 )
     hold on;
@@ -459,8 +458,7 @@ if (ref_sol == 1 ) % Curve of error depending of h
     set(gca,'XTickLabel',{'0.01';'0.1';'1';'...'}) 
     
 
-    figure(2); 
-    
+    figure(2);
  
     loglog(X,Y21(1,:,1),'o-k', 'linewidth', 2, 'MarkerSize', 15 )
     hold on;

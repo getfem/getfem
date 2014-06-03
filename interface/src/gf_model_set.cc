@@ -2489,6 +2489,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 #endif
 
+
+
     /*@SET ind = ('add Nitsche fictitious domain contact brick', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt1,@str dataname_wt2]]])
      Adds a contact condition with or without Coulomb friction between
      two bodies in a fictitious domain. The contact condition is applied on 
@@ -2545,6 +2547,67 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
+
+#ifdef EXPERIMENTAL_PURPOSE_ONLY
+
+    /*@SET ind = ('add Nitsche fictitious domain contact brick twopass', @tmim mim, @str varname1, @str varname2, @str dataname_d1, @str dataname_d2, @str gamma0name [, @scalar theta[, @str dataname_friction_coeff[, @str dataname_alpha, @str dataname_wt1,@str dataname_wt2]]])
+     Adds a contact condition with or without Coulomb friction between
+     two bodies in a fictitious domain. The contact condition is applied on 
+     the variable `varname_u1` corresponds with the first and slave body 
+     with Nitsche's method and on the variable `varname_u2` corresponds 
+     with the second and master body with Nitsche's method. 
+     The contact condition is evaluated on the fictitious slave boundary.
+     The first body should be described by the level-set `dataname_d1` 
+     and the second body should be described by the level-set `dataname_d2`.
+     `gamma0name` is the Nitsche's method parameter. 
+     `theta` is a scalar value which can be positive or negative. 
+     `theta = 1` corresponds to the standard symmetric method which is
+     conditionnaly coercive for  `gamma0` small.
+     `theta = -1` corresponds to the skew-symmetric method which is inconditionnaly coercive.
+     `theta = 0` is the simplest method for which the second derivative of
+     the Neumann term is not necessary. The optional parameter `dataname_friction_coeff`
+     is the friction coefficient which could be constant or defined on a finite element method. 
+     CAUTION: This brick has to be added in the model after all the bricks
+     corresponding to partial differential terms having a Neumann term.
+     Moreover, This brick can only be applied to bricks declaring their
+     Neumann terms. Returns the brick index in the model. 
+    @*/
+    sub_command
+      ("add Nitsche fictitious domain contact brick twopass", 6, 11, 0, 1,
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       std::string varname1 = in.pop().to_string();
+       std::string varname2 = in.pop().to_string();
+       std::string dataname_d1 = in.pop().to_string();
+       std::string dataname_d2 = in.pop().to_string();
+       std::string gamma0name = in.pop().to_string();
+
+       scalar_type theta = scalar_type(1);
+       std::string dataname_fr;
+       if (in.remaining()) {
+	 mexarg_in argin = in.pop();
+	 if (argin.is_string())
+	   dataname_fr = argin.to_string();
+	 else
+	   theta = argin.to_scalar();
+       }
+       if (in.remaining()) dataname_fr = in.pop().to_string();
+       std::string dataname_alpha;
+       if (in.remaining()) dataname_alpha = in.pop().to_string();
+       std::string dataname_wt1;
+       if (in.remaining()) dataname_wt1 = in.pop().to_string();
+       std::string dataname_wt2;
+       if (in.remaining()) dataname_wt2 = in.pop().to_string();
+
+       size_type ind = config::base_index();
+       ind += getfem::add_Nitsche_fictitious_domain_contact_brick_twopass
+       (md->model(), gfi_mim->mesh_im(), varname1, varname2, dataname_d1,
+        dataname_d2, gamma0name, theta,
+	dataname_fr, dataname_alpha, dataname_wt1, dataname_wt2);
+       workspace().set_dependance(md, gfi_mim);
+       out.pop().from_integer(int(ind));
+       );
+
+#endif
 
     // CONTACT BETWEEN NON-MATCHING MESHES
 
