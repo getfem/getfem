@@ -3192,13 +3192,14 @@ namespace getfem {
          pnode->node_type == GA_NODE_GRAD ||
          pnode->node_type == GA_NODE_HESS)) {
       bool iscte = workspace.is_constant(pnode->name);
+
       if (!iscte) found_var = true;
       if (!ignore_data || !iscte)
         vars.insert(pnode->name);
     }
     for (size_type i = 0; i < pnode->children.size(); ++i)
-      found_var = ga_extract_variables(pnode->children[i], workspace, vars)
-        || found_var;
+      found_var = ga_extract_variables(pnode->children[i], workspace, vars,
+                                       ignore_data) || found_var;
     return found_var;
   }
 

@@ -2041,7 +2041,6 @@ namespace getfem {
       }
 
       if (recompute_matrix) {
-        cout << "recompute matrix ..." << endl;
         ga_workspace workspace(md);
         mesh_region rg(region);
         mims[0]->linked_mesh().intersect_with_mpi_region(rg);
@@ -2099,8 +2098,6 @@ namespace getfem {
     model::varnamelist vl, dl;
     bool is_lin = workspace.used_variables(vl, dl, 2);
     GMM_ASSERT1(is_lin, 'Nonlinear term');
-    cout << "linear term vl = " << vl << endl;
-    cout << "linear term dl = " << dl << endl;
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                (order == 0), brickname);
@@ -2222,7 +2219,6 @@ namespace getfem {
                   "mesh_im");
       GMM_TRACE2("Generic source term assembly");
 
-      cout << "recompute source term ..." << endl;
       ga_workspace workspace(md);
       mesh_region rg(region);
       mims[0]->linked_mesh().intersect_with_mpi_region(rg);
@@ -2279,8 +2275,6 @@ namespace getfem {
     GMM_ASSERT1(order <= 1, "Wrong order for a source term");
     model::varnamelist vl, dl;
     workspace.used_variables(vl, dl, 1);
-    cout << "source term vl = " << vl << endl;
-    cout << "source term dl = " << dl << endl;
     pbrick pbr = new gen_source_term_assembly_brick(expr, (order == 0),
                                                     brickname);
     model::termlist tl; // A unique global vector term
