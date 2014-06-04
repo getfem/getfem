@@ -157,6 +157,11 @@ namespace bgeot{
       fill_standard_vertices();
   }
 
+  bool is_torus_structure(pconvex_structure cvs){
+    const torus_structure *cvs_torus = dynamic_cast<const torus_structure *>(cvs.get());
+    return cvs_torus != NULL;
+  }
+
   DAL_SIMPLE_KEY(torus_geom_trans_key, pgeometric_trans);
 
   pgeometric_trans torus_geom_trans_descriptor(pgeometric_trans poriginal_trans){
@@ -169,6 +174,11 @@ namespace bgeot{
     dal::add_stored_object(new torus_geom_trans_key(poriginal_trans), 
       p, dal::PERMANENT_STATIC_OBJECT);
     return p;
+  }
+
+  bool is_torus_geom_trans(pgeometric_trans pgt){
+    const torus_geom_trans *pgt_torus = dynamic_cast<const torus_geom_trans *>(pgt.get());
+    return pgt_torus != NULL;
   }
 }
 
@@ -338,7 +348,7 @@ namespace getfem
     if (ptorus_fem != 0) dal::del_stored_object(pfem);
   }
 
-  void torus_mesh_fem::adapt_to_torus(){
+  void torus_mesh_fem::adapt_to_torus_(){
 
     for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished(); ++cv){
       pfem poriginal_fem = fem_of_element(cv);
@@ -346,14 +356,17 @@ namespace getfem
 
       del_torus_fem(poriginal_fem);
 
-      pfem pfem_torus = new_torus_fem(poriginal_fem);
-      set_finite_element(cv, pfem_torus);
+      pfem pf = new_torus_fem(poriginal_fem);
+      torus_fem *pf_torus = dynamic_cast<torus_fem*>(const_cast<virtual_fem*>(pf.get()));
+      pf_torus->set_to_scalar((Qdim != 3));
+      set_finite_element(cv, pf);
     }
     touch();
   }
 
   void torus_mesh_fem::enumerate_dof(void) const
   {
+    const_cast<torus_mesh_fem*>(this)->adapt_to_torus_();
 
     for (dal::bv_visitor cv(linked_mesh().convex_index()); !cv.finished(); ++cv){
       pfem pf = fem_of_element(cv);
@@ -362,6 +375,7 @@ namespace getfem
       if(pf_torus == 0) continue;
       pf_torus->set_to_scalar((Qdim != 3));
     }
+
     mesh_fem::enumerate_dof();
   }
 

@@ -33,6 +33,7 @@
 #include "getfem/getfem_gauss_lobatto_fem_coef.h" /* for gauss-lobatto points*/
 #include "getfem/getfem_integration.h"
 #include "getfem/getfem_omp.h"
+#include "getfem/getfem_torus.h"
 
 namespace getfem {
 
@@ -2127,6 +2128,9 @@ namespace getfem {
     size_type n = pgt->structure()->dim();
     size_type nbp = pgt->basic_structure()->nb_points();
     std::stringstream name;
+
+    //Identifying is it is a torus structure
+    if(bgeot::is_torus_geom_trans(pgt) && n == 3) n = 2;
 
     /* Identifying P1-simplexes.                                          */
     if (nbp == n+1)

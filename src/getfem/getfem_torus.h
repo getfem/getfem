@@ -67,7 +67,11 @@ private:
 
 pconvex_structure torus_structure_descriptor(pconvex_structure ori_structure);
 
+bool is_torus_structure(pconvex_structure cvs);
+
 pgeometric_trans torus_geom_trans_descriptor(pgeometric_trans poriginal_trans);
+
+bool is_torus_geom_trans(pgeometric_trans pgt);
 
 }
 
@@ -121,11 +125,11 @@ namespace getfem
   class torus_mesh_fem : public mesh_fem{
   public:
 
-    torus_mesh_fem(torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}
-    void adapt_to_torus();
+    torus_mesh_fem(torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}    
     void enumerate_dof(void) const;
 
   private:
+    void adapt_to_torus_();
     void del_torus_fem_();
   };
   

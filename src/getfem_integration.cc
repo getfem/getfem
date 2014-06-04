@@ -28,6 +28,7 @@
 #include "getfem/getfem_im_list.h"
 #include "getfem/dal_naming_system.h"
 #include "getfem/getfem_omp.h"
+#include "getfem/getfem_torus.h"
 
 namespace getfem {
 
@@ -1158,6 +1159,8 @@ namespace getfem {
   classical_approx_im_(bgeot::pconvex_structure cvs, dim_type degree) {
     size_type n = cvs->dim();
     std::stringstream name;
+
+    if(bgeot::is_torus_structure(cvs) && n == 3) n = 2;
 
     degree = std::max<dim_type>(degree, 1);
     bgeot::pconvex_structure a, b;
