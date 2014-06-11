@@ -157,6 +157,10 @@ namespace bgeot{
       fill_standard_vertices();
   }
 
+  pgeometric_trans torus_geom_trans::get_original_transformation() const{
+    return poriginal_trans_;
+  }
+
   bool is_torus_structure(pconvex_structure cvs){
     const torus_structure *cvs_torus = dynamic_cast<const torus_structure *>(cvs.get());
     return cvs_torus != NULL;

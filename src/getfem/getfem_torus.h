@@ -61,6 +61,8 @@ struct torus_geom_trans : public geometric_trans{
 
   torus_geom_trans(bgeot::pgeometric_trans poriginal_trans);
 
+  pgeometric_trans get_original_transformation() const;
+
 private:
   pgeometric_trans poriginal_trans_;
 };
@@ -125,53 +127,14 @@ namespace getfem
   class torus_mesh_fem : public mesh_fem{
   public:
 
-    torus_mesh_fem(torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}    
+    torus_mesh_fem(const torus_mesh &mesh, bgeot::dim_type dim) : mesh_fem(mesh, dim){}    
     void enumerate_dof(void) const;
 
   private:
     void adapt_to_torus_();
     void del_torus_fem_();
   };
-  
-  /**Perform reduction of a matrix from full 3d of torus structure to axisymmetric 2d.*/
-  template <typename MAT1, typename MAT2>
-  void torus_matrix_reduction(const MAT1 &M1, MAT2 &M2){
-    GMM_ASSERT1(gmm::mat_ncols(M1)%3 == 0 && gmm::mat_nrows(M1)%3 == 0, 
-      "Origin matrix must be 3 dimension.");
 
-    bgeot::size_type nb_pts = gmm::mat_ncols(M1)/3;
-
-    GMM_ASSERT1(gmm::mat_ncols(M2) == nb_pts*2 && gmm::mat_nrows(M2) == nb_pts*2, 
-      "Invalid target matrix size.");
-
-    for(int i=0; i <M2.nrows()/2; ++i){
-      for(int row = 0; row < 2; ++row){
-        for(int j=0; j < M2.ncols()/2; ++j){
-          for(int col = 0; col < 2; ++col){
-            M2(i*2 + row, j * 2 + col) = M1(i*3 + row, j * 3 + col);
-            if(row == 0) M2(i*2, j*2 + col) += M1(i*3 + 2, j*3 + col);
-            if(col == 0) M2(i*2 + row, j*2) += M1(i*3 + row, j*3 + 2);
-            if(row == 0 && col == 0) M2(i*2, j*2) += M1(i*3 + 2, j*3 + 2);
-          }
-        }
-      }
-    }
-  }
-
-  /**Perform reduction of a vector from full 3d of torus structure to axisymmetric 2d*/
-  template <typename VECT1, typename VECT2>
-  void torus_vector_reduction(const VECT1 &V1, VECT2 &V2){
-    GMM_ASSERT1(gmm::vect_size(V1)%3 == 0, "Origin vector must be 3 dimension.");
-    bgeot::size_type nb_pts = gmm::vect_size(V1)/3;
-    GMM_ASSERT1(gmm::vect_size(V2) == nb_pts*2, "Invalid target vector size.");
-
-    for(int i=0; i <V2.size()/2; ++i){
-      for(int row = 0; row < 2; ++row){
-        V2[i*2 + row] = V1[i*3 + row];
-        if(row == 0) V2[i*2] += V1[i*3 + 2];
-      }
-    }
-  }
 }
 
 #endif /* GETFEM_TORUS_H__  */
