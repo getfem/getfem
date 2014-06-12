@@ -154,7 +154,7 @@ void asm_patch_vector
 template<class MAT>
 void asm_stabilization_patch_matrix
 (const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_fem &mf_mult, const getfem::mesh_im &mimbounddown,
- bgeot::scalar_type ratio_size, bgeot::scalar_type /* h */ ){
+ bgeot::scalar_type ratio_size, bgeot::scalar_type h) {
   MAT &M1 = const_cast<MAT &>(RM_);
   
   /****************************************************/
