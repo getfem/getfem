@@ -656,7 +656,7 @@ namespace getfem {
     const std::string &multname(size_type i) const { return lambdanames[i]; }
     const model_real_plain_vector &disp_of_boundary(size_type n) const
     { return ext_Us[contact_boundaries[n].ind_U]; }
-    const model_real_plain_vector &w_of_boundary(size_type n) const
+    const model_real_plain_vector &disp0_of_boundary(size_type n) const
     { return ext_Ws[contact_boundaries[n].ind_U]; }
     const model_real_plain_vector &mult_of_boundary(size_type n) const
     { return ext_lambdas[contact_boundaries[n].ind_lambda]; }

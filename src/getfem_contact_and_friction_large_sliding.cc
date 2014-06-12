@@ -544,47 +544,47 @@ namespace getfem {
     }
 
     scalar_type alpha;
-    base_small_vector wx_, wy_, Vs_;
-    bool wx_init, wy_init, Vs_init;
-    base_matrix grad_phi_ny_;
-    bool grad_phi_ny_init;
+    base_small_vector x0_, y0_, Vs_;
+    bool x0_init, y0_init, Vs_init;
+    base_matrix grad_phiy0_;
+    bool grad_phiy0_init;
 
-    const base_small_vector &wx(void) {
-      if (!wx_init) {
-        const model_real_plain_vector &all_wx = mcf.w_of_boundary(ibx);
-        if (all_wx.size()) {
+    const base_small_vector &x0(void) {
+      if (!x0_init) {
+        const model_real_plain_vector &all_x0 = mcf.disp0_of_boundary(ibx);
+        if (all_x0.size()) {
           pfem pf = ctx_ux().pf();
-          slice_vector_on_basic_dof_of_element(*mf_ux_, all_wx, cvx_, coeff);
-          pf->interpolation(ctx_ux(), coeff, wx_, dim_type(N));
-        }  else gmm::clear(wx_);
-        gmm::add(ctx_ux().xreal(), wx_);
-        wx_init = true;
+          slice_vector_on_basic_dof_of_element(*mf_ux_, all_x0, cvx_, coeff);
+          pf->interpolation(ctx_ux(), coeff, x0_, dim_type(N));
+        }  else gmm::clear(x0_);
+        gmm::add(ctx_ux().xreal(), x0_);
+        x0_init = true;
       }
-      return wx_;
+      return x0_;
     }
 
-    const base_small_vector &wy(void) {
-      if (!wy_init) {
+    const base_small_vector &y0(void) {
+      if (!y0_init) {
         if (!isrigid()) {
-          const model_real_plain_vector &all_wy = mcf.w_of_boundary(iby);
-          if (all_wy.size()) {
+          const model_real_plain_vector &all_y0 = mcf.disp0_of_boundary(iby);
+          if (all_y0.size()) {
             pfem pf = ctx_uy().pf();
-            slice_vector_on_basic_dof_of_element(*mf_uy_, all_wy, cvy_, coeff);
-            pf->interpolation(ctx_uy(), coeff, wy_, dim_type(N));
-          }  else gmm::clear(wy_);
-          gmm::add(ctx_uy().xreal(), wy_);
-        } else gmm::copy(y(), wy_);
-        wy_init = true;
+            slice_vector_on_basic_dof_of_element(*mf_uy_, all_y0, cvy_, coeff);
+            pf->interpolation(ctx_uy(), coeff, y0_, dim_type(N));
+          }  else gmm::clear(y0_);
+          gmm::add(ctx_uy().xreal(), y0_);
+        } else gmm::copy(y(), y0_);
+        y0_init = true;
       }
-      return wy_;
+      return y0_;
     }
 
     const base_small_vector &Vs(void) { // relative velocity
       if (!Vs_init) {
         if (alpha != scalar_type(0)) {
           gmm::add(x(), gmm::scaled(y(), scalar_type(-1)), Vs_);
-          gmm::add(gmm::scaled(wx(), scalar_type(-1)), Vs_);
-          gmm::add(wy(), Vs_);
+          gmm::add(gmm::scaled(x0(), scalar_type(-1)), Vs_);
+          gmm::add(y0(), Vs_);
           gmm::scale(Vs_, alpha);
         } else gmm::clear(Vs_);
         Vs_init = true;
@@ -592,19 +592,19 @@ namespace getfem {
       return Vs_;
     }
 
-    const base_matrix &grad_phi_ny(void) { // grad_phiy of previous time step
+    const base_matrix &grad_phiy0(void) { // grad_phiy of previous time step
       // To be verified ...
-      if (!grad_phi_ny_init) {
-        const model_real_plain_vector &all_wy = mcf.w_of_boundary(iby);
-        if (!isrigid() && all_wy.size()) {
+      if (!grad_phiy0_init) {
+        const model_real_plain_vector &all_y0 = mcf.disp0_of_boundary(iby);
+        if (!isrigid() && all_y0.size()) {
           pfem pf = ctx_uy().pf();
-          slice_vector_on_basic_dof_of_element(*mf_uy_, all_wy, cvy_, coeff);
-          pf->interpolation_grad(ctx_uy(), coeff, grad_phi_ny_, dim_type(N));
-          gmm::add(gmm::identity_matrix(), grad_phi_ny_);
-        } else gmm::copy(gmm::identity_matrix(), grad_phi_ny_);
-        grad_phi_ny_init = true;
+          slice_vector_on_basic_dof_of_element(*mf_uy_, all_y0, cvy_, coeff);
+          pf->interpolation_grad(ctx_uy(), coeff, grad_phiy0_, dim_type(N));
+          gmm::add(gmm::identity_matrix(), grad_phiy0_);
+        } else gmm::copy(gmm::identity_matrix(), grad_phiy0_);
+        grad_phiy0_init = true;
       }
-      return grad_phi_ny_;
+      return grad_phiy0_;
     }
 
     base_small_vector un;
@@ -619,7 +619,7 @@ namespace getfem {
       have_lx = have_ly = false;
       grad_phix_init = grad_phiy_init = false;
       grad_phix_inv_init = grad_phiy_inv_init = false;
-      wx_init = wy_init = Vs_init = grad_phi_ny_init = false;
+      x0_init = y0_init = Vs_init = grad_phiy0_init = false;
       nxny = gmm::vect_sp(nx(), ny());
       isrigid_ = (cp->irigid_obstacle != size_type(-1));
 
@@ -680,7 +680,7 @@ namespace getfem {
       lambda_x_(N), lambda_y_(N),
       grad_phix_(N, N), grad_phix_inv_(N, N),
       grad_phiy_(N, N), grad_phiy_inv_(N, N), alpha(alpha_),
-      wx_(N), wy_(N), Vs_(N), grad_phi_ny_(N, N), un(N) {}
+      x0_(N), y0_(N), Vs_(N), grad_phiy0_(N, N), un(N) {}
 
   };
 
@@ -997,15 +997,15 @@ namespace getfem {
           // Term -(1/r) d_Vs F \delta Vs\delta\mu
 
           if (!isrigid) {
-            base_matrix I_gphingphiyinv(N, N);
-            gmm::mult(gmm::scaled(gpp.grad_phi_ny(), scalar_type(-1)),
-                      gpp.grad_phiy_inv(), I_gphingphiyinv);
-            gmm::add(gmm::identity_matrix(), I_gphingphiyinv);
+            base_matrix I_gphiy0gphiyinv(N, N);
+            gmm::mult(gmm::scaled(gpp.grad_phiy0(), scalar_type(-1)),
+                      gpp.grad_phiy_inv(), I_gphiy0gphiyinv);
+            gmm::add(gmm::identity_matrix(), I_gphiy0gphiyinv);
 
             // LXUX term
             // first sub term
             gmm::resize(Melem, ndof_lx, ndof_ux); gmm::clear(Melem);
-            gmm::mult(I_gphingphiyinv, gpp.I_nxny(), auxNN1);
+            gmm::mult(I_gphiy0gphiyinv, gpp.I_nxny(), auxNN1);
             for (size_type j = 0; j < N; ++j) auxNN1(j,j) -= scalar_type(1);
             gmm::mult(dVsF, auxNN1, auxNN2);
             gmm::mult(gpp.vbase_lx(), gmm::transposed(auxNN2), auxLXN2);
@@ -1014,7 +1014,7 @@ namespace getfem {
 
             // second sub term
             base_matrix auxLXUX(ndof_lx, ndof_ux);
-            gmm::mult(dVsF, I_gphingphiyinv, auxNN1);
+            gmm::mult(dVsF, I_gphiy0gphiyinv, auxNN1);
             gmm::mult(auxNN1, gpp.I_nxny(), auxNN2);
             gmm::mult(auxNN2, gmm::transposed(gpp.grad_phix_inv()), auxNN1);
             gmm::mult(gpp.vbase_lx(), gmm::transposed(auxNN1), auxLXN1);
@@ -1027,7 +1027,7 @@ namespace getfem {
             // LXUY term
             // third sub term
             gmm::resize(Melem, ndof_lx, ndof_uy); gmm::clear(Melem);
-//             gmm::mult(I_gphingphiyinv, gpp.I_nxny(), auxNN1);
+//             gmm::mult(I_gphiy0gphiyinv, gpp.I_nxny(), auxNN1);
 //             for (size_type j = 0; j < N; ++j) auxNN1(j,j) -= scalar_type(1);
 //             gmm::mult(dVsF, auxNN1, auxNN2);
 //             gmm::mult(gpp.vbase_lx(), gmm::transposed(auxNN2), auxLXN2);

@@ -2129,7 +2129,7 @@ namespace getfem {
     size_type nbp = pgt->basic_structure()->nb_points();
     std::stringstream name;
 
-    //Identifying is it is a torus structure
+    // Identifying if it is a torus structure
     if(bgeot::is_torus_geom_trans(pgt) && n == 3) n = 2;
 
     /* Identifying P1-simplexes.                                          */
