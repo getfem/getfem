@@ -145,6 +145,8 @@ IMPORTANT REMARK: Note that for coupled problems, a global potential frequently 
 C++ Call of the assembly
 ------------------------
 
+Note that the most natural way to use the generic assembly is by the use of the genric assembly bricks of the model object, see Section :ref:`ud-model-generic-assembly`. It is however also possible to use the high level generic assembly on its own.
+
 The generic assembly is driven by the object ``getfem::ga_workspace`` defined in :file:`getfem/getfem\_generic_assembly.h`.
 
 There is two ways to define a ``getfem::ga_workspace`` object. It can depend on a model (see :ref:`ud-model`) and should be declared as::

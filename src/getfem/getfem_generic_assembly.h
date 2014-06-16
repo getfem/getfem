@@ -145,6 +145,7 @@ namespace getfem {
     struct tree_description { // CAUTION: Specific copy constructor
       size_type order; // 0: potential, 1: weak form, 2: tangent operator
       std::string name_test1, name_test2;
+      std::string interpolate_name_test1, interpolate_name_test2;
       const mesh_im *mim;
       const mesh *m;
       mesh_region rg;
@@ -162,8 +163,11 @@ namespace getfem {
     typedef std::map<std::string, var_description> VAR_SET;
 
     VAR_SET variables;
+    std::map<std::string, pinterpolate_transformation> transformations;
     std::vector<tree_description> trees;
     std::list<ga_tree *> aux_trees;
+
+     std::map<std::string, std::vector<std::string> > variable_groups;
 
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
@@ -310,6 +314,56 @@ namespace getfem {
         return (variables.find(name) != variables.end());
     }
 
+    void define_variable_group(const std::string &group_name,
+                               const std::vector<std::string> &nl);
+    bool variable_group_exists(std::string group_name) const {
+      if (model) return model->variable_group_exists(group_name);
+      else return variable_groups.find(group_name) != variable_groups.end();
+    }
+
+    bool variable_or_group_exists(const std::string &name) const {
+      return variable_exists(name) || variable_group_exists(name);
+    }
+
+    const std::vector<std::string>
+    &variable_group(const std::string &group_name) const {
+      if (model) return model->variable_group(group_name);
+      else {
+        GMM_ASSERT1(variable_group_exists(group_name), 
+                    "Undefined variable group " << group_name);
+        return (variable_groups.find(group_name))->second;
+      }
+    }
+
+    const std::string &first_variable_of_group(const std::string &name) const {
+      const std::vector<std::string> &t = variable_group(name);
+      GMM_ASSERT1(t.size(), "Variable group " << name << " has no variable");
+      return t[0];
+    }
+
+    void add_interpolate_transformation(const std::string &name,
+                                        pinterpolate_transformation ptrans) {
+      GMM_ASSERT1(!model, "Invalid use");
+      transformations[name] = ptrans;
+    }
+
+    pinterpolate_transformation
+    interpolate_transformation(const std::string &name) const {
+      if (model) return model->interpolate_transformation(name);
+      else {
+        std::map<std::string, pinterpolate_transformation>::const_iterator
+          it = transformations.find(name);
+        GMM_ASSERT1(it != transformations.end(),
+                    "Inexistent transformation " << name);
+        return it->second;
+      }
+    }
+
+    bool interpolate_transformation_exists(const std::string &name) const {
+      if (model) return model->interpolate_transformation_exists(name);
+      else return ( transformations.find(name) != transformations.end());
+    }
+
     bool is_constant(const std::string &name) const {
       if (model)
         return model->is_data(name);
@@ -332,13 +386,18 @@ namespace getfem {
     }
 
     const mesh_fem *associated_mf(const std::string &name) const {
-      if (model)
-        return model->pmesh_fem_of_variable(name);
-      else {
-        VAR_SET::const_iterator it = variables.find(name);
-        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-        return it->second.is_fem_dofs ? it->second.mf : 0;
-      }
+      if (variable_exists(name)) {
+        if (model)
+          return model->pmesh_fem_of_variable(name);
+        else {
+          VAR_SET::const_iterator it = variables.find(name);
+          GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+          return it->second.is_fem_dofs ? it->second.mf : 0;
+        }
+      } else if (variable_group_exists(name)) {
+        return associated_mf(first_variable_of_group(name));
+      } else
+        GMM_ASSERT1(false, "Undefined variable or group " << name);
     }
 
     const im_data *associated_im_data(const std::string &name) const {
@@ -393,13 +452,18 @@ namespace getfem {
     }
 
     const model_real_plain_vector &value(const std::string &name) const {
-      if (model)
-        return model->real_variable(name);
-      else {
-        VAR_SET::const_iterator it = variables.find(name);
-        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-        return *(it->second.V);
-      }
+      if (variable_exists(name)) {
+        if (model)
+          return model->real_variable(name);
+        else {
+          VAR_SET::const_iterator it = variables.find(name);
+          GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+          return *(it->second.V);
+        }
+      } else if (variable_group_exists(name)) {
+        return value(first_variable_of_group(name));
+      } else
+        GMM_ASSERT1(false, "Undefined variable or group " << name);
     }
 
     void assembly(size_type order);
@@ -443,20 +507,34 @@ namespace getfem {
   (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
-  // untested
+  // Not tested
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
    base_vector &result, int extrapolation = 0,
    const mesh_region &rg=mesh_region::all_convexes(),
    size_type nbdof_ = size_type(-1));
 
-  // untested
+  // Not tested
   void ga_interpolation_im_data
   (const getfem::model &md, const std::string &expr, im_data &imd,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
+  //=========================================================================
+  // Interpolation transformation
+  //=========================================================================
 
+  void add_interpolate_transformation_expression(model &md,
+                                                 const std::string &name,
+                                                 const mesh &source_m,
+                                                 const mesh &target_m,
+                                                 const std::string &expr);
 
+  void add_interpolate_transformation_expression(ga_workspace &workspace,
+                                                 const std::string &name,
+                                                 const mesh &source_m,
+                                                 const mesh &target_m,
+                                                 const std::string &expr);
+  
 }  /* end of namespace getfem.                                             */
 
 

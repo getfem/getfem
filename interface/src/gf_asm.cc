@@ -168,6 +168,7 @@ void asm_stabilization_patch_matrix
   bgeot::size_type nbe = mf_P0.nb_dof();
   int ne = 0;
   double size_of_crack = 0;
+  size_of_crack *= h;
   getfem::modeling_standard_plain_vector Patch_Vector(nbe);
   asm_patch_vector(Patch_Vector, mimbounddown, mf_P0);
   // cout<<"patch_vectot="<< Patch_Vector<<endl;

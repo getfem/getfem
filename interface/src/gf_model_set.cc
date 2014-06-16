@@ -1508,7 +1508,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     sub_command
       ("add finite strain elasticity brick", 4, 5, 0, 1,
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       size_type N = gfi_mim->mesh_im().linked_mesh().dim();
+       // size_type N = gfi_mim->mesh_im().linked_mesh().dim();
        std::string varname = in.pop().to_string();
        std::string lawname = in.pop().to_string();
        std::string params = in.pop().to_string();

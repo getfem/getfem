@@ -252,7 +252,7 @@ namespace dal {
     {
       stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
-      if (dep_added = stored_objects.add_dependency_(o1,o2)) break;
+      if ((dep_added = stored_objects.add_dependency_(o1,o2))) break;
     }
     GMM_ASSERT1(dep_added, "Failed to add dependency between " << o1 << " of type "
     << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
@@ -262,7 +262,7 @@ namespace dal {
     {
       stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
-      if (dependent_added =stored_objects.add_dependent_(o1,o2)) break;
+      if ((dependent_added =stored_objects.add_dependent_(o1,o2))) break;
     }
     GMM_ASSERT1(dependent_added, "Failed to add dependent between " << o1 << " of type "
     << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");
@@ -280,7 +280,7 @@ namespace dal {
     {
       stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
-      if (dep_deleted = stored_objects.del_dependency_(o1,o2)) break;
+      if ((dep_deleted = stored_objects.del_dependency_(o1,o2))) break;
     }
     GMM_ASSERT1(dep_deleted, "Failed to delete dependency between " << o1 << " of type "
     << typeid(*o1).name() << " and " << o2 << " of type "  << typeid(*o2).name() << ". ");

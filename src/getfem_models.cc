@@ -87,12 +87,15 @@ namespace getfem {
       real_value.resize(n_iter);
   }
 
-  bool model::check_name_valitity(const std::string &name, bool assert) const {
+  bool model::check_name_validity(const std::string &name, bool assert) const {
     VAR_SET::const_iterator it = variables.find(name);
     if (it != variables.end()) {
       GMM_ASSERT1(!assert, "Variable " << name << " already exists");
       return false;
     }
+    GMM_ASSERT1(variable_groups.find(name) == variable_groups.end(),
+                name << " corresponds to an already existing group of "
+                "variables name");
     bool valid = true;
     if (name.size() == 0) valid = false;
     else {
@@ -107,7 +110,7 @@ namespace getfem {
 
   std::string model::new_name(const std::string &name) {
     std::string res_name = name;
-    bool valid = check_name_valitity(res_name, false);
+    bool valid = check_name_validity(res_name, false);
     VAR_SET::const_iterator it = variables.find(res_name);
     GMM_ASSERT1(valid || it != variables.end(),
                 "Illegal variable name : " << name);
@@ -402,7 +405,7 @@ namespace getfem {
 
   void model::add_fixed_size_variable(const std::string &name, size_type size,
                                       size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(true, is_complex(), false, niter);
     act_size_to_be_done = true;
     variables[name].set_size(size);
@@ -422,13 +425,13 @@ namespace getfem {
 
   void model::add_fixed_size_data(const std::string &name, size_type size,
                                       size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
     variables[name].set_size(size);
   }
 
   void model::add_im_data(const std::string &name, im_data &im_data, size_type niter){
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
     variables[name].pim_data = &im_data;
     variables[name].set_size(im_data.nb_filtered_index() * im_data.nb_tensor_elem());
@@ -437,7 +440,7 @@ namespace getfem {
 
   void model::add_fem_variable(const std::string &name, const mesh_fem &mf,
                                size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_NO, &mf);
     variables[name].set_size(mf.nb_dof());
@@ -449,7 +452,7 @@ namespace getfem {
   void model::add_filtered_fem_variable(const std::string &name,
 					const mesh_fem &mf,
 					size_type region, size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_REGION, &mf, region);
     variables[name].set_size(mf.nb_dof());
@@ -459,7 +462,7 @@ namespace getfem {
 
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
                                dim_type qdim, size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(false, is_complex(), true, niter,
                                       VDESCRFILTER_NO, &mf, size_type(-1),
                                       qdim);
@@ -470,7 +473,7 @@ namespace getfem {
   void model::add_multiplier(const std::string &name, const mesh_fem &mf,
                              const std::string &primal_name,
                              size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_CTERM, &mf, 0,
                                       1, primal_name);
@@ -482,7 +485,7 @@ namespace getfem {
   void model::add_multiplier(const std::string &name, const mesh_fem &mf,
                              const std::string &primal_name,const mesh_im &mim,
 			     size_type region, size_type niter) {
-    check_name_valitity(name);
+    check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_INFSUP, &mf, region,
                                       1, primal_name, &mim);
@@ -654,7 +657,6 @@ namespace getfem {
       GMM_ASSERT1(variables.find(vl[i]) != variables.end(),
                   "Undefined model variable " << vl[i]);
   }
-
 
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
     GMM_ASSERT1(valid_bricks[ibrick], "Inexistent brick");
@@ -1033,6 +1035,28 @@ namespace getfem {
     const brick_description &brick = bricks[ib];
     return (im.version_number() > brick.v_num);
   }
+
+  void model::define_variable_group(const std::string &group_name,
+                                    const std::vector<std::string> &nl) {
+    GMM_ASSERT1(!(variable_exists(group_name)), "The name of a group of "
+                "variables cannot be the same as a variable name");
+
+    std::set<const mesh *> ms;
+    for (size_type i = 0; i < nl.size(); ++i) {
+      GMM_ASSERT1(variable_exists(nl[i]),
+                  "All variables in a group have to exist in the model");
+      const mesh_fem *mf = pmesh_fem_of_variable(nl[i]);
+      GMM_ASSERT1(mf, "Variables in a group should be fem variables");
+      GMM_ASSERT1(ms.find(&(mf->linked_mesh())) == ms.end(),
+                  "Two variables in a group cannot share the same mesh");
+      ms.insert(&(mf->linked_mesh()));
+    }
+    variable_groups[group_name] = nl;
+  }
+
+
+
+
 
   void model::auxilliary_variables_of_Neumann_terms
   (const std::string &varname, std::vector<std::string> &aux_vars) const {

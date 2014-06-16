@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard
+ Copyright (C) 2009-2014 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -54,6 +54,12 @@ namespace getfem {
   class Neumann_elem_term;
   typedef boost::intrusive_ptr<const Neumann_elem_term> pNeumann_elem_term;
 
+  class virtual_interpolate_transformation;
+  typedef boost::intrusive_ptr<const virtual_interpolate_transformation>
+  pinterpolate_transformation;
+
+  class ga_workspace;
+
   // Event management : The model has to react when something has changed in
   //    the context and ask for corresponding (linear) bricks to recompute
   //    some terms.
@@ -73,6 +79,9 @@ namespace getfem {
   //    The change on a mesh_im is not taken into account for the moment.
   //    The different versions of the variables is not taken into account
   //    separately.
+
+
+
 
   //=========================================================================
   //
@@ -303,6 +312,7 @@ namespace getfem {
                                            // Nitsche's method)
     mutable std::map<std::string, std::vector<std::string> >
       Neumann_terms_auxilliary_variables;
+    std::map<std::string, pinterpolate_transformation> transformations;
 
     // Structure dealing with simple dof constraints
     typedef std::map<size_type, scalar_type> real_dof_constraints_var;
@@ -325,9 +335,15 @@ namespace getfem {
 
     mutable std::list<gen_expr> generic_expressions;
 
+    // Groups of variables for interpolation on different meshes
+    // generic assembly
+    std::map<std::string, std::vector<std::string> > variable_groups;
+      
+
+
 
     virtual void actualize_sizes(void) const;
-    bool check_name_valitity(const std::string &name,
+    bool check_name_validity(const std::string &name,
                              bool assert = true) const;
     void brick_init(size_type ib, build_version version,
 		    size_type rhs_ind = 0) const;
@@ -369,6 +385,17 @@ namespace getfem {
     pbrick brick_pointer(size_type ib) const {
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
       return bricks[ib].pbr;
+    }
+
+    void define_variable_group(const std::string &group_name,
+                               const std::vector<std::string> &nl);
+    bool variable_group_exists(const std::string &group_name) const
+    { return variable_groups.find(group_name) != variable_groups.end(); }
+    const std::vector<std::string>
+    &variable_group(const std::string &group_name) const {
+      GMM_ASSERT1(variable_group_exists(group_name), 
+                  "Undefined variable group " << group_name);
+      return (variable_groups.find(group_name))->second;
     }
 
     void add_Neumann_term(pNeumann_elem_term p,
@@ -832,6 +859,30 @@ namespace getfem {
     */
     virtual void next_iter(void);
 
+    /** Add a interpolate transformation to the model to be used with the
+        generic assembly.
+    */
+    void add_interpolate_transformation(const std::string &name,
+                                        pinterpolate_transformation ptrans) {
+       transformations[name] = ptrans;
+    }
+
+    /** Get a pointer to the interpolate transformation `name`.
+    */
+    pinterpolate_transformation
+    interpolate_transformation(const std::string &name) const {
+      std::map<std::string, pinterpolate_transformation>::const_iterator
+        it = transformations.find(name);
+      GMM_ASSERT1(it != transformations.end(), "Inexistent transformation " << name);
+      return it->second;
+    }
+    
+    /** Tests if `name` correpsonds to an interpolate transformation.
+    */
+    bool interpolate_transformation_exists(const std::string &name) const {
+      return ( transformations.find(name) != transformations.end());
+    }
+
     /** Gives the name of the variable of index `ind_var` of the brick
         of index `ind_brick`. */
     const std::string &varname_of_brick(size_type ind_brick,
@@ -1247,6 +1298,29 @@ namespace getfem {
                                         model::real_veclist &, size_type rg,
 					const scalar_type delta = 1e-8) const;
 
+  };
+
+  //=========================================================================
+  //
+  //  Virtual interpolate_transformation object.
+  //
+  //=========================================================================
+
+  class virtual_interpolate_transformation
+    : virtual public dal::static_stored_object {
+
+  public:
+    virtual void init(const ga_workspace &workspace) const = 0;
+    virtual int transform(const ga_workspace &workspace,
+                           const mesh &m,
+                           const fem_interpolation_context &ctx_x,
+                           const base_small_vector &Normal,
+                           const mesh **m_t,
+                           size_type &cv, size_type &face_num,
+                           base_node &P_ref) const = 0;
+    virtual void finalize(void) const = 0;
+
+    virtual ~virtual_interpolate_transformation() {}
   };
 
   //=========================================================================

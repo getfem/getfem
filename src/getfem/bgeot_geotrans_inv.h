@@ -68,6 +68,7 @@ namespace bgeot {
 				  -- we should use the matrix a instead... */
     scalar_type EPS;
   public:
+    const base_matrix &get_G() const { return G; }
     geotrans_inv_convex(scalar_type e=10e-12) : N(0), P(0), pgt(0), EPS(e) {};
     template<class TAB> geotrans_inv_convex(const convex<base_node, TAB> &cv,
 					    pgeometric_trans pgt_, 
@@ -235,7 +236,7 @@ namespace bgeot {
     /* and invert the geotrans, and check if the obtained point is 
        inside the reference convex */
     for (size_type l = 0; l < boxpts.size(); ++l) {
-      base_node pt_ref;
+      // base_node pt_ref;
       if (gic.invert(boxpts[l].n, pftab[nbpt], EPS)) {
 	itab[nbpt++] = boxpts[l].i;
       }
