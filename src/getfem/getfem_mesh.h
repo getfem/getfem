@@ -46,6 +46,15 @@
 #include "getfem_context.h"
 #include "getfem_mesh_region.h"
 
+#if defined(__GNUC__) 
+#if __cplusplus > 199711L
+#include <memory>  //on GCC need to check for C++ 11
+#endif
+#else
+#include <memory>  //all the others like Intel and MSVC have it
+#endif
+
+
 namespace getfem {
 
   /* Version counter for convexes. */
@@ -93,7 +102,18 @@ namespace getfem {
 
   class mesh : virtual public dal::static_stored_object,
 		       public bgeot::basic_mesh,
-		       public context_dependencies {
+		       public context_dependencies 
+
+//allowing mesh::shared_from_this() call
+#if defined(__GNUC__) 
+#if __cplusplus > 199711L
+           , public std::enable_shared_from_this<mesh>
+#endif
+#else
+           , public std::enable_shared_from_this<mesh>
+#endif
+  
+  {
   public :
 
     typedef bgeot::basic_mesh::PT_TAB PT_TAB;
