@@ -50,8 +50,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
 // #define GA_USES_BLAS // not so interesting, at leat for debian blas
 
-#define GA_DEBUG_INFO(a) { cout << a << endl; }
-// #define GA_DEBUG_INFO(a)
+// #define GA_DEBUG_INFO(a) { cout << a << endl; }
+#define GA_DEBUG_INFO(a)
 #define GA_DEBUG_ASSERT(a, b) GMM_ASSERT1(a, b)
 // #define GA_DEBUG_ASSERT(a, b)
 
@@ -7125,12 +7125,10 @@ namespace getfem {
    ga_instruction_set::region_mim_instructions &rmi, const mesh &m) {
 
     rmi.transformations.clear();
-    cout << "find trans in "; ga_print_node(pnode, cout); cout << endl;
     bool found = ga_node_used_interpolates(pnode, rmi.transformations);
     gis.transformations.insert(rmi.transformations.begin(),
                                rmi.transformations.end());
-    cout << "rmi.transformations.size() = " << rmi.transformations.size() << endl;
-    cout << "found = " << int(found) << endl;
+
     if (found) {
 
       for (std::set<std::string>::iterator it = rmi.transformations.begin();
@@ -7444,8 +7442,6 @@ namespace getfem {
       = gis.whole_instructions.begin();
     for (; it != gis.whole_instructions.end(); ++it) {
       
-      cout << "begin instruction set" << endl;
-
       const getfem::mesh_im &mim = *(it->first.first);
       const getfem::mesh &m = *(it->second.m);
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
