@@ -11,10 +11,6 @@
 Compute arbitrary terms - high-level generic assembly procedures
 ================================================================
 
-This is a work in progress for |gf| 5.0. Available, but not fully tested yet.
-
-
-
 This section presents the second version of generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms are quite difficult to take into account. Conversely, a symbolic differentiation algorithm is used with this version to simplify the writing of new nonlinear terms. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a rather optimal computational cost.
 
 The header file to be included to use the high-level generic assembly procedures in C++ is :file:`getfem/generic\_assembly.h`.
@@ -58,10 +54,11 @@ A specific language has been developed to describe the weak formulation of bound
 
   - ``x`` is the current coordinate on the real element, ``x(i)`` is its ith component, ``Normal`` ( the outward unit normal vector to a boundary, for boundary integration).
 
-  - ``Reshape(t, i, j, ...)`` : reshape a vector/matrix/tensor. Note that all tensor in |gf| are stored in the fortran order.
+  - ``Reshape(t, i, j, ...)``: reshape a vector/matrix/tensor. Note that all tensor in |gf| are stored in the fortran order.
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
+  - ``Interpolate(variable, transformation)``: powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describe the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element defined on different meshes.
 
 Some basic examples
 -------------------
@@ -563,3 +560,58 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
   - ``Matrix_J2(m)`` gives the modified first invariant of a square matrix defined by ``Matrix_I2(m)*pow(Det(m),-2/3)``.
 
 
+Interpolate transformations
+***************************
+The ``Interpolate`` operation allows to compute integrals between quantities which are either defined on different part of a mesh or even on different meshes. It is a powerful operation which allows to compute mortar matrices or take into account periodic conditions. However, one have to remember that it is based on interpolation which may have a non-negligible computational cost.
+
+In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
+
+For the moment, only one sort of transformation defined by an expression is available. This transformation is added to the workspace thanks to the command::
+ 
+  add_interpolate_transformation_from_expression
+    (workspace, transname, source_mesh, target_mesh, expr);
+
+or::
+
+  add_interpolate_transformation_from_expression
+    (md, transname, source_mesh, target_mesh, expr);
+
+where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` is the name given to the transformation, ``source_mesh`` the mesh on which the integration occurs, ``target_mesh`` the mesh on which the interpolation is performed and ``expr`` is a regular expression of the high-level generic assembly language which may contains reference to the variables of the workspace/model.
+
+For instance, an expression::
+
+  add_interpolate_transformation_from_expression
+    (md, "my_transformation", my_mesh, my_mesh, "x-[1;0]");
+
+will allow to integrate some expressions at the current position with a shift of -1 with respect to the first coordinate. This simple kind of transformation can be used to prescribe a periodic condition.
+
+Of course, one may used more complex expressions such as::
+
+  add_interpolate_transformation_from_expression
+    (md, "my_transformation", my_mesh, my_second_mesh, "[x[1]cos(x[2]); x[1]sin(x[2])]");
+
+  add_interpolate_transformation_from_expression
+    (md, "my_transformation", my_mesh, my_mesh, "x+u");
+
+where ``u`` is a vector variable of the workspace/model.
+
+Once a transformation is define in the workspace/model, one can interpolate a variable or test functions or the unit normal vector to a boundary thanks to one of these expressions::
+
+  Interpolate(Normal, transname)
+  Interpolate(u, transname)
+  Interpolate(Grad_u, transname)
+  Interpolate(Hess_u, transname)
+  Interpolate(Test_u, transname)
+  Interpolate(Grad_Test_u, transname)
+  Interpolate(Hess_Test_u, transname)
+
+where ``u`` is the name of the variable to be interpolated.
+
+For instance, the assembly expression to prescribe the equality of a variable ``u`` with its interpolation (for instance for prescribing a periodic boundary condition) thanks to a multiplier ``lambda`` could be written::
+
+  (Interpolate(u,my_transformation)-u)*lambda
+
+(see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
+
+
+**CAUTION**: For the moment, when some variables are used in the transformation expression, the derivative of the transformation with respect to these variable **is not taken into account** when generic assembly expression are derived to obtain for instance the tangent system. 

@@ -25,6 +25,7 @@ EXTRA_DIST= \
 	check_workspace.m \
 	demo_bilaplacian.m \
 	demo_laplacian.m \
+	demo_periodic_laplacian.m \
 	demo_laplacian1D.m \
 	demo_nonlinear_elasticity.m \
 	demo_nonlinear_elasticity_anim.m \

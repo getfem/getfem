@@ -416,6 +416,8 @@ namespace getfem {
       size_type n = gmm::vect_size(value(name));
       if (mf) {
         size_type ndof = mf->nb_dof();
+        GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
+                    "make a wrong initialization of a mesh_fem object");
         return mf->get_qdim() * (n / ndof);
       } else if (imd) {
         size_type q = n / imd->nb_filtered_index();
@@ -431,8 +433,11 @@ namespace getfem {
       const im_data *imd = associated_im_data(name);
       size_type n = gmm::vect_size(value(name));
       if (mf) {
+        size_type ndof = mf->nb_dof();
+        GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
+                    "make a wrong initialization of a mesh_fem object");
         bgeot::multi_index mi = mf->get_qdims();
-        size_type qmult = n / mf->nb_dof();
+        size_type qmult = n / ndof;
         if (qmult > 1) {
           if (mi.back() == 1) mi.back() *= qmult; else mi.push_back(qmult);
         }
@@ -523,17 +528,20 @@ namespace getfem {
   // Interpolation transformation
   //=========================================================================
 
-  void add_interpolate_transformation_expression(model &md,
-                                                 const std::string &name,
-                                                 const mesh &source_m,
-                                                 const mesh &target_m,
-                                                 const std::string &expr);
+  /** Add a transformation to the model `md` from mesh `source_mesh` to mesh
+      `target_mesh` given by the expression `expr` which corresponds to a
+      high-level generic assembly expression which may contains some
+      variable of the model. CAUTION: For the moment, the derivative of the
+      transformation with respect to the eventual variables used is not
+      taken into account in the model solve. 
+  */
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &transname, const mesh &source_mesh,
+   const mesh &target_mesh, const std::string &expr);
 
-  void add_interpolate_transformation_expression(ga_workspace &workspace,
-                                                 const std::string &name,
-                                                 const mesh &source_m,
-                                                 const mesh &target_m,
-                                                 const std::string &expr);
+  void add_interpolate_transformation_from_expression
+  (ga_workspace &workspace, const std::string &transname,
+   const mesh &source_mesh, const mesh &target_mesh, const std::string &expr);
   
 }  /* end of namespace getfem.                                             */
 

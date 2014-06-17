@@ -313,6 +313,23 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        md->model().delete_brick(ib);
        );
 
+    /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)
+      Add a transformation to the model from mesh `source_mesh` to mesh
+      `target_mesh` given by the expression `expr` which corresponds to a
+      high-level generic assembly expression which may contains some
+      variable of the model. CAUTION: For the moment, the derivative of the
+      transformation is not taken into account in the model solve. @*/
+    sub_command
+      ("add interpolate transformation from expression", 4, 4, 0, 0,
+       std::string transname = in.pop().to_string();
+       getfemint_mesh *sm = in.pop().to_getfemint_mesh();
+       getfemint_mesh *tm = in.pop().to_getfemint_mesh();
+       std::string expr = in.pop().to_string();
+       add_interpolate_transformation_from_expression
+       (md->model(), transname, sm->mesh(), tm->mesh(), expr);
+       );
+
+
     /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a matrix term given by the assembly string `expr` which will
       be assembled in region `region` and with the integration method `mim`.

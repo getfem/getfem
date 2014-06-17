@@ -50,8 +50,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
 // #define GA_USES_BLAS // not so interesting, at leat for debian blas
 
-// #define GA_DEBUG_INFO(a) { cout << a << endl; }
-#define GA_DEBUG_INFO(a)
+#define GA_DEBUG_INFO(a) { cout << a << endl; }
+// #define GA_DEBUG_INFO(a)
 #define GA_DEBUG_ASSERT(a, b) GMM_ASSERT1(a, b)
 // #define GA_DEBUG_ASSERT(a, b)
 
@@ -952,6 +952,9 @@ namespace getfem {
       if (pnode->nbc1) str << "x(" << pnode->nbc1 << ")"; else str << "x";
       break;
     case GA_NODE_NORMAL: str << "Normal"; break;
+    case GA_NODE_INTERPOLATE:
+      str << "Interpolate(" << pnode->name << ","
+          << pnode->interpolate_name << ")"; break;
     case GA_NODE_INTERPOLATE_NORMAL:
       str << "Interpolate(Normal," << pnode->interpolate_name << ")"; break;
     case GA_NODE_VAL: str << pnode->name; break;
@@ -1159,7 +1162,7 @@ namespace getfem {
                                                   token_length);
 
             t_type = ga_get_token(expr, pos, token_pos, token_length);
-            if (t_type != GA_COLON)
+            if (t_type != GA_COMMA)
               ga_throw_error(expr, pos, "Bad format for interpolate "
                              "arguments.");
             t_type = ga_get_token(expr, pos, token_pos, token_length);
@@ -2056,7 +2059,7 @@ namespace getfem {
     
     virtual void exec(void) {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: Adapt first index of tensor");
+      GA_DEBUG_INFO("Instruction: adapt first index of tensor");
       pfem pf = mf.fem_of_element(ctx.convex_num());
       size_type Qmult = qdim / pf->target_dim();
       size_type s = pf->nb_dof(ctx.convex_num()) * Qmult;
@@ -2079,7 +2082,7 @@ namespace getfem {
     
     virtual void exec(void) {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: Adapt second index of tensor");
+      GA_DEBUG_INFO("Instruction: adapt second index of tensor");
       pfem pf = mf.fem_of_element(ctx.convex_num());
       size_type Qmult = qdim / pf->target_dim();
       size_type s = pf->nb_dof(ctx.convex_num()) * Qmult;
@@ -2106,7 +2109,7 @@ namespace getfem {
     virtual void exec(void) {
       const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
       const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
-      GA_DEBUG_INFO("Instruction: Adapt two first indices of tensor");
+      GA_DEBUG_INFO("Instruction: adapt two first indices of tensor");
       pfem pf1 = mf1.fem_of_element(ctx1.convex_num());
       pfem pf2 = mf2.fem_of_element(ctx2.convex_num());
       size_type Qmult1 = qdim1 / pf1->target_dim();
@@ -2393,7 +2396,7 @@ namespace getfem {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       const base_vector &U = *(Ug ? *Ug : Un);
       base_vector coeff;
-      GA_DEBUG_INFO("Instruction: interpolated variable value");
+      GA_DEBUG_INFO("Instruction: interpolated variable grad");
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
         "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
@@ -2423,7 +2426,7 @@ namespace getfem {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       const base_vector &U = *(Ug ? *Ug : Un);
       base_vector coeff;
-      GA_DEBUG_INFO("Instruction: interpolated variable value");
+      GA_DEBUG_INFO("Instruction: interpolated variable hessian");
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
         "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
@@ -2451,7 +2454,7 @@ namespace getfem {
     size_type qdim;
     virtual void exec(void) {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: interpolated variable value");
+      GA_DEBUG_INFO("Instruction: interpolated base value");
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -2497,7 +2500,7 @@ namespace getfem {
     size_type qdim;
     virtual void exec(void) {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: interpolated variable value");
+      GA_DEBUG_INFO("Instruction: interpolated base vgrad");
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -2546,7 +2549,7 @@ namespace getfem {
     size_type qdim;
     virtual void exec(void) {
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: interpolated variable value");
+      GA_DEBUG_INFO("Instruction: interpolated base hessian");
       GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -3635,9 +3638,6 @@ namespace getfem {
   };
 
  
-
-
-
   //=========================================================================
   // Structure dealing with user defined environment : constant, variables,
   // functions, operators.
@@ -3674,9 +3674,9 @@ namespace getfem {
                               bool add_derivative, bool scalar_expr) {
     if (tree.root) {
       
-      // cout << "With tests functions of " <<  tree.root->name_test1
+      // cout << "add tree with tests functions of " <<  tree.root->name_test1
       //     << " and " << tree.root->name_test2 << endl;
-      // ga_print_node(tree.root, cout); cout << endl;
+      //     ga_print_node(tree.root, cout); cout << endl;
       bool remain = true;
       size_type order = 0, ind_tree = 0;
       switch(tree.root->test_function_type) {
@@ -3766,8 +3766,11 @@ namespace getfem {
     // cout << "adding expression " << expr << endl;
     size_type max_order = 0;
     ga_tree tree;
+    // cout << "read string" << endl;
     ga_read_string(expr, tree);
+    // cout << "first semantic analysis" << endl;
     ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(), false);
+    // cout << "first semantic analysis done" << endl;
     if (tree.root) {
       ga_split_tree(expr, tree, *this, tree.root);
       
@@ -4125,7 +4128,8 @@ namespace getfem {
                                const ga_workspace &workspace,
                                pga_tree_node pnode, size_type meshdim,
                                bool eval_fixed_size) {
-    
+    // cout << "begin analysis of node "; ga_print_node(pnode, cout);
+    // cout << endl;
     bool all_cte = true, all_sc = true;
     pnode->symmetric_op = false;
 
@@ -5147,7 +5151,8 @@ namespace getfem {
               pnode->t.adjust_sizes(workspace.qdims(name));
               pnode->test_function_type = 0;
             } else {
-              size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
+              size_type q = workspace.qdim(name);
+              size_type n = mf->linked_mesh().dim();
               bgeot::multi_index mii = workspace.qdims(name);
               if (!q) ga_throw_error(expr, pnode->pos,
                                      "Invalid null size of variable");
@@ -5581,6 +5586,7 @@ namespace getfem {
                         << " in semantic analysis. Internal error.");
     }
 
+    // cout << " begin hash code = " << pnode->hash_value << endl;
     pnode->hash_value = ga_hash_code(pnode);
     // cout << "node_type = " << pnode->node_type << " op_type = "
     //     << pnode->op_type << " proper hash code = " << pnode->hash_value;
@@ -5598,6 +5604,7 @@ namespace getfem {
                                    size_type meshdim, bool eval_fixed_size) {
     GMM_ASSERT1(predef_functions_initialized, "Internal error");
     if (!(tree.root)) return;
+    //  cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
     ga_node_analysis(expr, tree, workspace, tree.root, meshdim,
                      eval_fixed_size);
     ga_valid_operand(expr, tree.root);
@@ -6326,8 +6333,6 @@ namespace getfem {
         }
       }
     }
-    if (pgai) rmi.instructions.push_back(pgai);
-    pgai = 0;
 
     if (pnode->test_function_type == 1) {
       if (mf1 || mfg1)
@@ -6540,14 +6545,15 @@ namespace getfem {
         
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL) {
           pgai = new ga_instruction_interpolate_val
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx,workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug,*pctx,workspace.qdim(pnode->name));
         } else if (pnode->node_type == GA_NODE_GRAD) {
           pgai = new ga_instruction_interpolate_grad
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx,workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug,*pctx,workspace.qdim(pnode->name));
         } else { 
           pgai = new ga_instruction_interpolate_hess
-            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx,workspace.qdim(pnode->name));
+            (pnode->t, m2, mfn, mfg, Un, Ug,*pctx,workspace.qdim(pnode->name));
         }
+        rmi.instructions.push_back(pgai);
       }
       break;
 
@@ -6627,6 +6633,7 @@ namespace getfem {
           pgai = new ga_instruction_interpolate_hess_base
             (pnode->t, m2, mfn, mfg, *pctx,workspace.qdim(pnode->name));
         }
+        rmi.instructions.push_back(pgai);
       }
       break;
       
@@ -7099,6 +7106,9 @@ namespace getfem {
     if (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
         pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+        pnode->node_type == GA_NODE_INTERPOLATE_TEST ||
+        pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
+        pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL) {
       interpolates.insert(pnode->interpolate_name);
       found = true;
@@ -7115,9 +7125,12 @@ namespace getfem {
    ga_instruction_set::region_mim_instructions &rmi, const mesh &m) {
 
     rmi.transformations.clear();
+    cout << "find trans in "; ga_print_node(pnode, cout); cout << endl;
     bool found = ga_node_used_interpolates(pnode, rmi.transformations);
     gis.transformations.insert(rmi.transformations.begin(),
                                rmi.transformations.end());
+    cout << "rmi.transformations.size() = " << rmi.transformations.size() << endl;
+    cout << "found = " << int(found) << endl;
     if (found) {
 
       for (std::set<std::string>::iterator it = rmi.transformations.begin();
@@ -7430,6 +7443,8 @@ namespace getfem {
     ga_instruction_set::instructions_set::iterator it
       = gis.whole_instructions.begin();
     for (; it != gis.whole_instructions.end(); ++it) {
+      
+      cout << "begin instruction set" << endl;
 
       const getfem::mesh_im &mim = *(it->first.first);
       const getfem::mesh &m = *(it->second.m);
@@ -7868,22 +7883,18 @@ namespace getfem {
   };
 
 
-  void add_interpolate_transformation_expression(model &md,
-                                                 const std::string &name,
-                                                 const mesh &sm,
-                                                 const mesh &tm,
-                                                 const std::string &expr) {
+  void add_interpolate_transformation_from_expression
+  (model &md, const std::string &name, const mesh &sm, const mesh &tm,
+   const std::string &expr) {
     pinterpolate_transformation p
       = new interpolate_transformation_expression(sm, tm, expr);
     
     md.add_interpolate_transformation(name, p);
   }
 
-  void add_interpolate_transformation_expression(ga_workspace &workspace,
-                                                 const std::string &name,
-                                                 const mesh &sm,
-                                                 const mesh &tm,
-                                                 const std::string &expr) {
+  void add_interpolate_transformation_from_expression
+  (ga_workspace &workspace, const std::string &name, const mesh &sm,
+   const mesh &tm, const std::string &expr) {
     pinterpolate_transformation p
       = new interpolate_transformation_expression(sm, tm, expr);
     

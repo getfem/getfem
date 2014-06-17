@@ -104,6 +104,25 @@ catch
   errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
 
+t = 'demo_laplacian [model use for solving a Poisson problem]        ';
+try
+  automatic_var654 = 1;
+  demo_laplacian;
+  disp(['== ' t ': SUCCESS']);
+catch
+  errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
+end;
+
+t = 'demo_periodic_laplacian [model use for solving a Poisson problem]        ';
+try
+  automatic_var654 = 1;
+  demo_periodic_laplacian;
+  disp(['== ' t ': SUCCESS']);
+catch
+  errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
+end;
+
+
 if (errcnt),
   disp(sprintf('\n\n== %d/11 tests FAILED\n', errcnt));
 else
