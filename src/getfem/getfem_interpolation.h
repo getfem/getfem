@@ -43,6 +43,7 @@
 #include "bgeot_geotrans_inv.h"
 #include "dal_tree_sorted.h"
 #include "getfem_im_data.h"
+#include "getfem_torus.h"
 
 namespace getfem {
 
@@ -551,6 +552,14 @@ namespace getfem {
                      mesh_region rg_source=mesh_region::all_convexes(),
                      mesh_region rg_target=mesh_region::all_convexes()) {
 
+    //Check if it is a torus mesh_fem
+    const torus_mesh_fem * pmf_torus = dynamic_cast<const torus_mesh_fem *>(&mf_target);
+    if(pmf_torus != 0){
+      interpolation_to_torus_mesh_fem(mf_source, *pmf_torus, 
+                                      U, VV, MM, version, extrapolation, EPS, rg_source, rg_target);
+      return;
+    }
+
     typedef typename gmm::linalg_traits<VECTU>::value_type T;
     dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
     size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
@@ -596,6 +605,75 @@ namespace getfem {
     }
 
   }
+
+  /*
+     interpolation of a solution on another torus mesh.
+     - the solution should be continuous.
+   */
+  template<typename VECTU, typename VECTV, typename MAT>
+  void interpolation_to_torus_mesh_fem(const mesh_fem &mf_source, const torus_mesh_fem &mf_target,
+                                       const VECTU &U, VECTV &VV, MAT &MM,
+                                       int version, int extrapolation,
+                                       double EPS,
+                                       mesh_region rg_source=mesh_region::all_convexes(),
+                                       mesh_region rg_target=mesh_region::all_convexes()) {
+
+    typedef typename gmm::linalg_traits<VECTU>::value_type T;
+    dim_type qqdim = dim_type(gmm::vect_size(U)/mf_source.nb_dof());
+    size_type qqdimt = qqdim * mf_source.get_qdim()/mf_target.get_qdim();
+    std::vector<T> V(mf_target.nb_basic_dof()*qqdimt);
+    mf_target.extend_vector(VV,V);
+    gmm::row_matrix<gmm::rsvector<scalar_type> >
+      M(mf_target.nb_basic_dof(), mf_source.nb_dof());
+
+    const mesh &msh(mf_source.linked_mesh());
+    getfem::mesh_trans_inv mti(msh, EPS);
+    size_type qdim_s = mf_source.get_qdim(), qdim_t = mf_target.get_qdim();
+    GMM_ASSERT1(qdim_s == qdim_t || qdim_t == 1,
+                "Attempt to interpolate a field of dimension "
+                << qdim_s << " on a mesh_fem whose Qdim is " << qdim_t);
+    
+    /* test if the target mesh_fem is convenient for interpolation.         */
+    for (dal::bv_visitor cv(mf_target.convex_index()); !cv.finished();++cv) {
+      pfem pf_t = mf_target.fem_of_element(cv);
+
+      GMM_ASSERT1(pf_t->target_dim() == 1 || 
+                  (mf_target.get_qdim() == mf_target.linked_mesh().dim()),
+                  "Target fem not convenient for interpolation");
+    }
+    /* initialisation of the mesh_trans_inv */
+    if (rg_target.id() == mesh_region::all_convexes().id()) {
+      size_type nbpts = mf_target.nb_basic_dof() / qdim_t;
+      for (size_type i = 0; i < nbpts; ++i)
+      {
+        base_node p(msh.dim());
+        for (size_type k=0; k < msh.dim(); ++k) p[k] = mf_target.point_of_basic_dof(i * qdim_t)[k];
+        mti.add_point(p);
+      }
+      interpolation(mf_source, mti, U, V, M, version, extrapolation);
+    }
+    else {
+      for (dal::bv_visitor_c dof(mf_target.basic_dof_on_region(rg_target)); !dof.finished(); ++dof)
+        if (dof % qdim_t == 0)
+        {
+           base_node p(msh.dim());
+          for (size_type k=0; k < msh.dim(); ++k) p[k] = mf_target.point_of_basic_dof(dof)[k];          
+          mti.add_point_with_id(p, dof/qdim_t);
+        }
+      interpolation(mf_source, mti, U, V, M, version, extrapolation, 0, rg_source);
+    }
+
+    if (version == 0)
+      mf_target.reduce_vector(V, VV);
+    else {
+      if (mf_target.is_reduced())
+        gmm::mult(mf_target.reduction_matrix(), M, MM); 
+      else
+        gmm::copy(M, MM);
+    }
+  }
+
+
 
   template<typename VECTU, typename VECTV>
   void interpolation(const mesh_fem &mf_source, const mesh_fem &mf_target,
