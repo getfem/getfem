@@ -490,7 +490,7 @@ namespace getfem {
             zt = (V - un1 * no) * (r * alpha) - zt;          // = zt1 - zt2 , with zt = r*alpha*u_T
           }
         }
-        un = un1 - un; // = un1 - un2
+        un = un1 - un; // = un1 - unp1
       }
       break;
 
@@ -4005,7 +4005,6 @@ namespace getfem {
               tv2n[k] += n2[l] * tv2(k,l);
 
 
-
           // Matrice tangente 
           if (version & model::BUILD_MATRIX){         
 	    // Matrice en u1,u1
@@ -4245,7 +4244,8 @@ namespace getfem {
                                         size_type /* region */,
                                         build_version version) const {
 					  
-      // cout << "begining assembly" << endl;
+     // cout << "begining assembly" << endl;
+      
 
       // Integration method
       GMM_ASSERT1(mims.size() == 1, "Nitsche fictitious domain contact "
@@ -4283,7 +4283,7 @@ namespace getfem {
       GMM_ASSERT1(GAMMA0.size() == 1, "Gamma0 should be a scalar parameter");
       scalar_type gamma0 = GAMMA0[0];
 
-      scalar_type f_coeff(0), alpha(0);
+      scalar_type f_coeff(0),alpha(0);
       const model_real_plain_vector *WWT1 = 0, *WWT2 = 0;
       model_real_plain_vector WT1(mf_u1.nb_basic_dof()), WT2(mf_u2.nb_basic_dof());
       if (dl.size() > 3) {
@@ -4291,7 +4291,6 @@ namespace getfem {
         GMM_ASSERT1(FRICT.size() == 1, "The friction coefficient should "
                     "be a scalar parameter");
         f_coeff = FRICT[0];
-
         if (dl.size() > 4) {
           const model_real_plain_vector &ALPHA = md.real_variable(dl[4]);
           GMM_ASSERT1(ALPHA.size() == 1, "Alpha should be a scalar parameter");
@@ -4347,14 +4346,8 @@ namespace getfem {
                     mf_d2.linked_mesh().trans_of_convex(cv));
        for (unsigned k=0; k < min.size(); ++k) { min[k]-=EPS; max[k]+=EPS; }
 
- 
- 
- 
- 
- 
+
         tree.add_box(min, max, cv);
-
-
       }
 
       // cout << "Projection computed." << endl;
@@ -4372,13 +4365,13 @@ namespace getfem {
         gmm::clear(vecl[2]);
         gmm::clear(vecl[3]);
       }
-
-      base_matrix G1, G2, GPr(N,N);
+//*******************************
+      base_matrix G1, G2, GPr1(N,N), GPr2(N,N);
       base_vector coeff, Velem, wt1(N), wt2(N), tv1n, tv2n;
       base_matrix Melem, grad_d2(1, N), grad_d1(1, N), tv1, tv2;
-      base_small_vector d2(1), n1(N), n2(N), Pr(N), zeta(N), u1(N), u2(N);
-      base_tensor tG1, tGdu1, tGddu1, tbv1, tbv2;
-      scalar_type gap, u1n, u2n;
+      base_small_vector d2(1), n1(N), n2(N), np1(N), np2(N), Pr1(N), Pr2(N), zeta1(N), zeta2(N), u1(N), u2(N);
+      base_tensor tG1, tGdu1, tGddu1, tG2, tGdu2, tGddu2, tbv1, tbv2;
+      scalar_type gap, u1n, u2n, J1, J2;
       size_type cv2(-1),qdim1,qdim2;
 
       bgeot::multi_index sizes_tGdu1(1), sizes_tGddu1(3);
@@ -4386,19 +4379,21 @@ namespace getfem {
       tG1.adjust_sizes(sizes_tGdu1);
       sizes_tGdu1.push_back(N);
       sizes_tGddu1[2] = N;
-      
+      //*****************************************
+         bgeot::multi_index sizes_tGdu2(1), sizes_tGddu2(3);
+      sizes_tGdu2[0] = N;
+      tG2.adjust_sizes(sizes_tGdu2);
+      sizes_tGdu2.push_back(N);
+      sizes_tGddu2[2] = N;
       // cout << "begining gauss points loop" << endl;
       
       for (dal::bv_visitor cv(mim.convex_index()); !cv.finished(); ++cv) {
 
-        // cout << "element " << cv << endl;
-
+       // cout << "element " << cv << endl;
 
         pintegration_method pim = mim.int_method_of_element(cv);
         if (pim->type() != IM_APPROX) continue; 
 
-
-        // cout << "pim = " << int(pim->type()) << endl;
         // cout << "pim = " << pim->approx_method() << endl;
 
         bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv));
@@ -4450,12 +4445,12 @@ namespace getfem {
           gmm::copy(grad_d1.as_vector(), n1);
           gmm::scale(n1, 1./gmm::vect_norm2(n1));
 	  
-
+	    
           // cout << " Element " << cv << " point " << ipt << " elt ref : " <<
           // pim->approx_method()->integration_points()[ipt] << " elt reel : " << x0 << endl; // Attention cv+1 pour matlab
 
 	    
-           //Definition de la projection et computation of n2
+           //Definition de la projection et computation of np1
 
           pfem pf_d2 = mf_d2.fem_of_element(cv);
 
@@ -4466,8 +4461,8 @@ namespace getfem {
           ctx_d2.pf()->interpolation(ctx_d2, coeff, d2, 1);
 
           ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
-          gmm::copy(grad_d2.as_vector(), n2);
-          gmm::scale(n2, 1./gmm::vect_norm2(n2));
+          gmm::copy(grad_d2.as_vector(), np1);
+          gmm::scale(np1, 1./gmm::vect_norm2(np1));
 
  
           base_node y0 = x0, yref(N);
@@ -4504,17 +4499,28 @@ namespace getfem {
                       "Projection not found ...");
 
         //  cout << "Found element : " << cv2 << " yref = " << yref << "y0 = " << y0 << endl; // Attention cv2+1 pour matlab
-     
-	  
+        // *****************Computation of n2***********************
+          pf_d2 = mf_d2.fem_of_element(cv2);
+	  bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2);
+	  ctx_d2 = fem_interpolation_context(pgty, pf_d2, yref, G2, cv2);
+          slice_vector_on_basic_dof_of_element(mf_d2, D2, cv2, coeff);
+          ctx_d2.pf()->interpolation_grad(ctx_d2, coeff, grad_d2, 1);
+          gmm::copy(grad_d2.as_vector(), n2);
+          gmm::scale(n2, 1./gmm::vect_norm2(n2));
+	     // *****************Computation of np2***********************
+	  np2=-np1;
 	  
 	  // Computation of gap
 	  gap = 0;
           for( size_type i=0; i<N; ++i)
-            gap += (x0[i]-y0[i])*n2[i];	  	  
+            gap += (x0[i]-y0[i])*np1[i];	  	  
 	  
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
           fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
-
+	  //****************************
+ sizes_tGddu2[0] = sizes_tGddu2[1] = sizes_tGdu2[0]= nbdof2;
+        tGdu2.adjust_sizes(sizes_tGdu2);
+        tGddu2.adjust_sizes(sizes_tGddu2);
           // computation of u2
           slice_vector_on_basic_dof_of_element(mf_u2, U2, cv2, coeff);
           ctx_u2.pf()->interpolation(ctx_u2, coeff, u2, bgeot::dim_type(N));
@@ -4523,17 +4529,21 @@ namespace getfem {
             ctx_u2.pf()->interpolation(ctx_u2, coeff, wt2, bgeot::dim_type(N));
           }
 
-          u1n = gmm::vect_sp(u1, n2); u2n = gmm::vect_sp(u2, n2);
+          u1n = gmm::vect_sp(u1, np1); u2n = gmm::vect_sp(u2, np2);
           
           md.compute_Neumann_terms(1, vl[0], mf_u1, U1, ctx_u1, n1, tG1);
           md.compute_Neumann_terms(2, vl[0], mf_u1, U1, ctx_u1, n1, tGdu1);
           md.compute_Neumann_terms(3, vl[0], mf_u1, U1, ctx_u1, n1, tGddu1);
-          // gmm::clear(tG1.as_vector()); gmm::clear(tGdu1.as_vector()); gmm::clear(tGddu1.as_vector()); // A supprimer
 
-          ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
+          // gmm::clear(tG1.as_vector()); gmm::clear(tGdu1.as_vector()); gmm::clear(tGddu1.as_vector()); // A supprimer
+	       //**********************
+	  md.compute_Neumann_terms(1, vl[1], mf_u2, U2, ctx_u2, n2, tG2);
+          md.compute_Neumann_terms(2, vl[1], mf_u2, U2, ctx_u2, n2, tGdu2);
+          md.compute_Neumann_terms(3, vl[1], mf_u2, U2, ctx_u2, n2, tGddu2);
+	  	
+		  ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
           ctx_u2.pf()->real_base_value(ctx_u2, tbv2);
 
-	  
 
 	  qdim1=  ctx_u1.pf()->target_dim();
 	  qdim2=  ctx_u2.pf()->target_dim();
@@ -4541,29 +4551,42 @@ namespace getfem {
 	  
 	  vectorize_base_tensor(tbv1, tv1, nbdof1, qdim1, N);
 	  vectorize_base_tensor(tbv2, tv2, nbdof2, qdim2, N);
-	  
-	  
-	  	  
+	  	  	  
 
           for(size_type i=0; i<N; ++i)
-            zeta[i] = tG1[i] +
-              ( (gap - (alpha-1.)*u1n+(alpha-1.)*u2n)*n2[i]
+            zeta1[i] = tG1[i] +
+              ( (gap - (alpha-1.)*(u1n+u2n))*np1[i]
                 + alpha*(wt1[i]-wt2[i]) + alpha*u1[i] - alpha*u2[i]) / gamma;	  
 
 
-          coupled_projection(zeta, n2, f_coeff, Pr);
-	  coupled_projection_grad(zeta, n2, f_coeff, GPr);
-
+          coupled_projection(zeta1, np1, f_coeff, Pr1);
+	  coupled_projection_grad(zeta1, np1, f_coeff, GPr1);
+	  // cout << "GPR1 = " << GPr1 << endl;
+//********************************************************
+	       for(size_type i=0; i<N; ++i)
+            zeta2[i] = tG2[i] +
+              ( (gap - (alpha-1.)*(u2n+u1n))*np2[i]
+                + alpha*(wt2[i]-wt1[i]) + alpha*u2[i] - alpha*u1[i]) / gamma;	  
+ //**************************
+	
+	 J1=gmm::abs(gmm::vect_sp(n1,n2));
+	  J2=1/J1;
+	  // cout << "J1 = " <<J1 << endl;
+	  // cout << "n1 = " <<n1 << endl;
+	  // cout << "n2 = " <<n2 << endl;
+	  // cout << "pt1 = " <<ctx_u1.xreal() << endl;
+	  // cout << "pt2 = " <<ctx_u2.xreal() << endl;
+	  
+          coupled_projection(zeta2, np2, f_coeff, Pr2);
+	  coupled_projection_grad(zeta2, np2, f_coeff, GPr2);	  
           gmm::resize(tv1n, nbdof1); gmm::clear(tv1n);
           gmm::resize(tv2n, nbdof2); gmm::clear(tv2n);
 	  for (size_type k = 0; k < nbdof1; ++k)
 	    for (size_type l = 0; l < N; ++l)
-	       tv1n[k] += n2[l] * tv1(k,l);
+	       tv1n[k] += np1[l] * tv1(k,l);
 	  for (size_type k = 0; k < nbdof2; ++k)
 	    for (size_type l = 0; l < N; ++l)
-              tv2n[k] += n2[l] * tv2(k,l);
-
-
+              tv2n[k] += np2[l] * tv2(k,l);
 
           // Matrice tangente 
           if (version & model::BUILD_MATRIX){         
@@ -4571,40 +4594,50 @@ namespace getfem {
             gmm::resize(Melem, nbdof1, nbdof1); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type k = 0; k < nbdof1; ++k){
-		scalar_type res(0);
+		scalar_type res1(0);
                 for (size_type i = 0; i < N; ++i) {
                   if (theta != scalar_type(0)) { 
-                    res -= theta*gamma*tGdu1(k, i) * tGdu1(j, i); // l'inverse était écrit
-                    res += theta*gamma*(Pr[i]-tG1[i])*(tGddu1(j,k,i));
+                    res1 -= theta*gamma*tGdu1(k, i) * tGdu1(j, i); // l'inverse était écrit
+                    res1 += theta*gamma*(Pr1[i]-tG1[i])*(tGddu1(j,k,i));
                     for (size_type l =0; l<N; ++l){
-                      res += theta*GPr(i,l)*(gamma*tGdu1(k,l)
-                                             +alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])*tGdu1(j,i);
+                      res1 += theta*GPr1(i,l)*(gamma*tGdu1(k,l)
+                                             +alpha*tv1(k,l)+(scalar_type(1)-alpha)*np1[l]*tv1n[k])*tGdu1(j,i);
 		    }
                   }
 		  for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(tGdu1(k,l)+(alpha*tv1(k,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[k])/(gamma))*tv1(j,i); // bien n2 ou n1 ici   
+                    res1 += GPr1(i,l)*(tGdu1(k,l)+(alpha*tv1(k,l)+(scalar_type(1)-alpha)*np1[l]*tv1n[k])/(gamma))*tv1(j,i); // bien np1 ou n1 ici   ??????????? -tGdu1(k,l)
                 }
-                Melem(j, k)=res;
+                
+		scalar_type res2(0);
+                for (size_type i = 0; i < N; ++i) {
+                  for (size_type l =0; l<N;++l)
+                    res2 += GPr2(i,l)*(alpha*tv1(k,l)-(scalar_type(1)-alpha)*np2[l]*tv1n[k])*tv1(j,i)/(gamma);			
+                } 
+                Melem(j, k)=0.5*res1+0.5*J2*res2;
 	      }
             gmm::scale(Melem,weight);
 	    // cout << "Melem final 1" << Melem << endl;
             mat_elem_assembly(matl[0], Melem, mf_u1, cv, mf_u1, cv);
 
 	    
-            // Matrice en u1,u2
+            // Matrice en u1,u2         
             gmm::resize(Melem, nbdof1, nbdof2); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof2; ++j)
               for (size_type k = 0; k < nbdof1; ++k){
-		scalar_type res(0);
+		scalar_type res1(0);
                 for (size_type i = 0; i < N; ++i) {
                   if (theta != scalar_type(0)) {
                     for (size_type l =0; l<N;++l)
-                      res -= theta*GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tGdu1(k,i);
+                      res1 -= theta*GPr1(i,l)*(alpha*tv2(j,l)-(scalar_type(1)-alpha)*np1[l]*tv2n[j])*tGdu1(k,i);//?????????? - ??
 						}
 		  for (size_type l =0; l<N;++l)
-                    res -= GPr(i,l)*(alpha*tv2(j,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[j])*tv1(k,i)/(gamma);				
+                    res1 -= GPr1(i,l)*(alpha*tv2(j,l)-(scalar_type(1)-alpha)*np1[l]*tv2n[j])*tv1(k,i)/(gamma);				
                 } 
-		Melem(k, j)=res;				   
+                scalar_type res2(0);
+                for (size_type i = 0; i < N; ++i) 
+		  for (size_type l = 0; l < N; ++l)
+                    res2 -= GPr2(i,l)*(tGdu2(j,l)+(alpha*tv2(j,l)+(scalar_type(1)-alpha)*np2[l]*tv2n[j])/(gamma))*tv1(k,i);
+		Melem(k, j)=0.5*res1+0.5*J2*res2;				   
 	      }
             gmm::scale(Melem,weight);
             // cout << "Melem final 2" << Melem << endl;
@@ -4615,11 +4648,20 @@ namespace getfem {
             gmm::resize(Melem, nbdof2, nbdof1); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof1; ++j)
               for (size_type k = 0; k < nbdof2; ++k){
-		scalar_type res(0);
+		scalar_type res1(0);
                 for (size_type i = 0; i < N; ++i) 
 		  for (size_type l = 0; l < N; ++l)
-                    res -= GPr(i,l)*(tGdu1(j,l)+(alpha*tv1(j,l)+(scalar_type(1)-alpha)*n2[l]*tv1n[j])/(gamma))*tv2(k,i);
-		Melem(k, j)=res;
+                    res1 -= GPr1(i,l)*(tGdu1(j,l)+(alpha*tv1(j,l)+(scalar_type(1)-alpha)*np1[l]*tv1n[j])/(gamma))*tv2(k,i);
+		  scalar_type res2(0);
+                for (size_type i = 0; i < N; ++i) {
+                  if (theta != scalar_type(0)) {
+                    for (size_type l =0; l<N;++l)
+                      res2 -= theta*GPr2(i,l)*(alpha*tv1(j,l)-(scalar_type(1)-alpha)*np2[l]*tv1n[j])*tGdu2(k,i);
+						}
+		  for (size_type l =0; l<N;++l)
+                    res2 -= GPr2(i,l)*(alpha*tv1(j,l)-(scalar_type(1)-alpha)*np2[l]*tv1n[j])*tv2(k,i)/(gamma);				
+                } 
+		Melem(k, j)=0.5*res1+0.5*J2*res2;
 	      }
             gmm::scale(Melem,weight);
             // cout << "Melem final 3" << Melem << endl;
@@ -4630,17 +4672,31 @@ namespace getfem {
             gmm::resize(Melem, nbdof2, nbdof2); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof2; ++j)
               for (size_type k = 0; k < nbdof2; ++k){
-		scalar_type res(0);
+		scalar_type res1(0);
                 for (size_type i = 0; i < N; ++i) {
                   for (size_type l =0; l<N;++l)
-                    res += GPr(i,l)*(alpha*tv2(k,l)+(scalar_type(1)-alpha)*n2[l]*tv2n[k])*tv2(j,i)/(gamma);			
+                    res1 += GPr1(i,l)*(alpha*tv2(k,l)-(scalar_type(1)-alpha)*np1[l]*tv2n[k])*tv2(j,i)/(gamma);			
                 } 
-		Melem(j, k)=res;				   
+                scalar_type res2(0);
+                for (size_type i = 0; i < N; ++i) {
+                  if (theta != scalar_type(0)) { 
+                    res2 -= theta*gamma*tGdu2(k, i) * tGdu2(j, i); // l'inverse était écrit
+                    res2 += theta*gamma*(Pr2[i]-tG2[i])*(tGddu2(j,k,i));
+                    for (size_type l =0; l<N; ++l){
+                      res2 += theta*GPr2(i,l)*(gamma*tGdu2(k,l)
+                                             +alpha*tv2(k,l)+(scalar_type(1)-alpha)*np2[l]*tv2n[k])*tGdu2(j,i);
+		    }
+                  }
+		  for (size_type l =0; l<N;++l)
+                    res2 += GPr2(i,l)*(tGdu2(k,l)+(alpha*tv2(k,l)+(scalar_type(1)-alpha)*np2[l]*tv2n[k])/(gamma))*tv2(j,i); // bien np1 ou n1 ici   
+                }
+		Melem(j, k)=0.5*res1+0.5*J2*res2;				   
 	      }
             gmm::scale(Melem,weight);
             // cout << "Melem final 4" << Melem << endl;
             mat_elem_assembly(matl[3], Melem, mf_u2, cv2, mf_u2, cv2);	
           }
+          
 				           
 				           
           // Matrice du second Membre		             
@@ -4648,15 +4704,18 @@ namespace getfem {
 	    // Second membre en u1
 	    gmm::resize(Velem, nbdof1); gmm::clear(Velem);
             for (size_type j = 0; j < nbdof1; ++j){
-	      scalar_type res(0);
+	      scalar_type res1(0);
               for (size_type i = 0; i < N; ++i){
                 if (theta != scalar_type(0)){
-                  res += theta*gamma*tG1[i] * tGdu1(j, i); 
-                  res -= theta*gamma*Pr[i] * tGdu1(j, i);
+                  res1 += theta*gamma*tG1[i] * tGdu1(j, i); 
+                  res1 -= theta*gamma*Pr1[i] * tGdu1(j, i);
                 }
-                res -=Pr[i]*tv1(j,i);
+                res1 -=Pr1[i]*tv1(j,i);
               }
-              Velem[j]=res;
+              scalar_type res2(0);
+              for (size_type i = 0; i < N; ++i)
+                res2 += Pr2[i]*tv1(j,i);
+              Velem[j]=0.5*res1+0.5*J2*res2;
 	    }
             gmm::scale(Velem, weight);
 	    // cout << "Velem final 1" << Velem << endl;
@@ -4666,10 +4725,18 @@ namespace getfem {
 	    // Second membre en u2	    
             gmm::resize(Velem, nbdof2);gmm::clear(Velem);
             for (size_type j = 0; j < nbdof2; ++j){
-	      scalar_type res(0);
+	      scalar_type res1(0);
               for (size_type i = 0; i < N; ++i)
-                res += Pr[i]*tv2(j,i);
-	      Velem[j]=res;
+                res1 += Pr1[i]*tv2(j,i);
+	      scalar_type res2(0);
+              for (size_type i = 0; i < N; ++i){
+                if (theta != scalar_type(0)){
+                  res2 += theta*gamma*tG2[i] * tGdu2(j, i); 
+                  res2 -= theta*gamma*Pr2[i] * tGdu2(j, i);
+                }
+                res2 -=Pr2[i]*tv2(j,i);
+              }
+	      Velem[j]=0.5*res1+0.5*J2*res2;
 	    }	        
 	    gmm::scale(Velem, weight);
 	    // cout << "Velem final 2" << Velem << endl;
@@ -4735,7 +4802,7 @@ namespace getfem {
    const std::string &dataname_wt1, const std::string &dataname_wt2) {
 
     bool nofriction = (dataname_friction_coeff.size() == 0);
-    pbrick pbr = new Nitsche_fictitious_domain_contact_brick(theta,nofriction);
+    pbrick pbr = new Nitsche_fictitious_domain_contact_brick_twopass(theta,nofriction);
 
     model::termlist tl;
     tl.push_back(model::term_description(varname_u1, varname_u1, false));

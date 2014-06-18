@@ -2597,7 +2597,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::string dataname_d1 = in.pop().to_string();
        std::string dataname_d2 = in.pop().to_string();
        std::string gamma0name = in.pop().to_string();
-
        scalar_type theta = scalar_type(1);
        std::string dataname_fr;
        if (in.remaining()) {

@@ -942,7 +942,7 @@ namespace getfem {
                                            brick.region, version);
      }
 
-     GMM_TRACE2("Assembly time "<< gmm::uclock_sec()-time<<" s.");
+     // GMM_TRACE2("Assembly time "<< gmm::uclock_sec()-time<<" s.");
 
  }
 

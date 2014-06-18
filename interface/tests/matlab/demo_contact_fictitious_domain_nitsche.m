@@ -11,11 +11,11 @@
 % WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 % or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
 % License and GCC Runtime Library Exception for more details.
-% You  should  have received a copy of the GNU Lesser General Public License
+% You  should  have received a copy of the G NU Lesser General Public License
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
+ 
 
 disp('Resolution of a contact problem in 2D or 3D with two elastics bodies');
 disp('with a fictitious domain method and Nitsche s method');
@@ -31,20 +31,20 @@ ref_sol = 0;% 0 Reference solution
 N = 2 ;% 2 ou 3 dimensions
 R=0.25;
 dirichlet_val = 0;
-    
+  f_coeff=0.001;  
 if (ref_sol == 0)
     method = [-1];%théta
     gamma = [1/200]; %1/200
-    nxy = [10]; % 2D ->400 and 3D -> 30
+    nxy = [20]; % 2D ->400 and 3D -> 30
     ls_degree = 2;
-    penalty_parameter = 10E-8;
+    penalty_parameter = 10E-5;
     vertical_force = -0.1;
 end
 if (ref_sol == 1)
     method = [-1];
-    gamma = [1/100];
+    gamma = [1/200];
     if (N==2)
-        nxy=[15 25 35 50];% 60 75 90 100];
+        nxy=[5 15 10 15 27 37 51 61 75 90 101 121];
     else
         nxy = [5 10 15 20 25 30];
     end
@@ -55,7 +55,7 @@ end
 if (ref_sol == 2)
     method = [0 1 -1];
     gamma = [400 200 100 50 25 10 1 1/10 1/25 1/50 1/100 1/200 1/400];
-    nxy = [20];
+    nxy = [21];
     ls_degree = 2;
     penalty_parameter = 10E-8;
     vertical_force = -0.1;
@@ -160,7 +160,7 @@ if (N==2)
    hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
    title('boundary with Dirichlet condition in red');hold off;
  else
-   Too slow in 3D
+   
     gf_plot_mesh(get(mls1,'cut mesh')); % ,'curved', 'on'
     hold on; gf_plot_mesh(get(mls2,'cut mesh')); hold off;
    hold on; gf_plot_mesh(m, 'regions', GAMMAD, 'convexes', 'on'); %plot de bord avec condition de type Dirichlet
@@ -209,6 +209,7 @@ gf_model_set(md,'add initialized fem data', 'd2', mf_ls2, ULS2);
 gf_model_set(md,'add initialized data', 'gamma0', gamma0);
 
 
+gf_model_set(md, 'add initialized data', 'friction_coeff',[f_coeff]);
 clambda = 1;           % Lame coefficient
 cmu = 1;               % Lame coefficient
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
@@ -234,27 +235,29 @@ gf_model_set(md, 'add initialized data', 'Ddata', Ddata);
 gf_model_set(md, 'add Dirichlet condition with simplification', 'u2', GAMMAD, 'Ddata'); 
 
 if (N==2)
-    cpoints = [0, 0,   0, 0.1]; % constrained points for 2d
-    cunitv  = [1, 0,   1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+    cpoints = [0, 0,   0.1,0.1,  0.1, 0.1]; % constrained points for 2d
+    cunitv  = [1, 0,  0,1,   1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
 else
-    cpoints = [0, 0, 0,    0, 0, 0,   0, 0, 0.1]; % constrained points for 2d
-    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];   % corresponding constrained directions for 2d, mieux avec [0, 0.1]
+    cpoints = [0, 0, 0,    0, 0, 0,   0, 0, 0.1]; % constrained points for 3d
+    cunitv  = [1, 0, 0,   0, 1, 0,   0, 1, 0];   % corresponding constrained directions for 3d, mieux avec [0, 0.1]
 end
 
 gf_model_set(md, 'add initialized data', 'cpoints', cpoints);
 gf_model_set(md, 'add initialized data', 'cunitv', cunitv);
 gf_model_set(md, 'add initialized data', 'penalty_param1', [penalty_parameter]);
 indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
-gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);
-indmass = gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
+% gf_model_set(md, 'add initialized data', 'penalty_param2', [penalty_parameter]);
+% indmass = gf_model_set(md, 'add mass brick', mim2, 'u2', 'penalty_param2');
 
-gf_model_set(md,'add Nitsche fictitious domain contact brick twopass', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta); 
-
+gf_model_set(md,'add Nitsche fictitious domain contact brick', mim_bound, 'u1', 'u2', 'd1', 'd2', 'gamma0', theta, 'friction_coeff'); 
+%pause;
 disp('solve');
 
-% niter= 20; solve=true;
-% gf_model_get(md, 'test tangent matrix term', 'u1', 'u2', 1e-6, niter, 10.0);
-% gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
+niter= 20; solve=true;
+%gf_model_get(md, 'test tangent matrix term', 'u1', 'u2', 1e-6, niter, 10.0);
+%gf_model_get(md, 'test tangent matrix', 1e-6, niter, 10);
+
+%gf_model_get(md, 'test tangent matrix', 1e-6, 20, 10);
 
 niter= 100;%100 d'habitude
 gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy');
