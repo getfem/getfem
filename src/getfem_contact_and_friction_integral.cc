@@ -3724,7 +3724,7 @@ namespace getfem {
       GMM_ASSERT1(GAMMA0.size() == 1, "Gamma0 should be a scalar parameter");
       scalar_type gamma0 = GAMMA0[0];
 
-      scalar_type f_coeff(0), alpha(0);
+      scalar_type f_coeff(0), alpha(1);
       const model_real_plain_vector *WWT1 = 0, *WWT2 = 0;
       model_real_plain_vector WT1(mf_u1.nb_basic_dof()), WT2(mf_u2.nb_basic_dof());
       if (dl.size() > 3) {
@@ -4283,7 +4283,7 @@ namespace getfem {
       GMM_ASSERT1(GAMMA0.size() == 1, "Gamma0 should be a scalar parameter");
       scalar_type gamma0 = GAMMA0[0];
 
-      scalar_type f_coeff(0),alpha(0);
+      scalar_type f_coeff(0), alpha(1);
       const model_real_plain_vector *WWT1 = 0, *WWT2 = 0;
       model_real_plain_vector WT1(mf_u1.nb_basic_dof()), WT2(mf_u2.nb_basic_dof());
       if (dl.size() > 3) {
@@ -4365,7 +4365,7 @@ namespace getfem {
         gmm::clear(vecl[2]);
         gmm::clear(vecl[3]);
       }
-//*******************************
+      //*******************************
       base_matrix G1, G2, GPr1(N,N), GPr2(N,N);
       base_vector coeff, Velem, wt1(N), wt2(N), tv1n, tv2n;
       base_matrix Melem, grad_d2(1, N), grad_d1(1, N), tv1, tv2;
@@ -4467,7 +4467,7 @@ namespace getfem {
  
           base_node y0 = x0, yref(N);
           gmm::add(gmm::scaled(gmm::mat_row(grad_d2, 0),
-                   -d2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
+                               -d2[0] / gmm::vect_norm2_sqr(gmm::mat_row(grad_d2, 0))),
                    y0);
 	     
 	  
@@ -4480,27 +4480,31 @@ namespace getfem {
 	  
           bool found = false;
           size_type nbdof2(0);
-          
+          cv2 = size_type(-1);
 	  for (; it != pbs.end(); ++it) {
-	    cv2 = (*it)->id;
-            bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2);
-            nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
-            bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
+	    size_type cv2l = (*it)->id;
+            base_node yrefl(N);
+            bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2l);
+            nbdof2 = mf_u2.nb_basic_dof_of_element(cv2l);
 
             bgeot::geotrans_inv_convex gic;
-            gic.init(m.points_of_convex(cv2), pgty);
+            gic.init(m.points_of_convex(cv2l), pgty);
 
-            gic.invert(y0, yref);
-            if (pgty->convex_ref()->is_in(yref) < 1E-10)
-              { found = true; break; }
+            gic.invert(y0, yrefl);
+            if (pgty->convex_ref()->is_in(yrefl) < 1E-10) {
+              found = true;
+              if (cv2 > cv2l) { cv2 = cv2l; yref = yrefl; }
+            }
           }
 
           GMM_ASSERT1(found && (cv2 != size_type(-1)),
                       "Projection not found ...");
 
-        //  cout << "Found element : " << cv2 << " yref = " << yref << "y0 = " << y0 << endl; // Attention cv2+1 pour matlab
+          // cout << "Found element : " << cv2 << " yref = " << yref << "y0 = " << y0 << endl; // Attention cv2+1 pour matlab
         // *****************Computation of n2***********************
           pf_d2 = mf_d2.fem_of_element(cv2);
+          nbdof2 = mf_u2.nb_basic_dof_of_element(cv2);
+          bgeot::vectors_to_base_matrix(G2, m.points_of_convex(cv2));
 	  bgeot::pgeometric_trans pgty =  m.trans_of_convex(cv2);
 	  ctx_d2 = fem_interpolation_context(pgty, pf_d2, yref, G2, cv2);
           slice_vector_on_basic_dof_of_element(mf_d2, D2, cv2, coeff);
@@ -4517,6 +4521,8 @@ namespace getfem {
 	  
           pfem pf_u2 = mf_u2.fem_of_element(cv2);
           fem_interpolation_context ctx_u2(pgt, pf_u2, yref, G2, cv2);
+          // cout << "cv12 = " << cv2 << endl;
+
 	  //****************************
  sizes_tGddu2[0] = sizes_tGddu2[1] = sizes_tGdu2[0]= nbdof2;
         tGdu2.adjust_sizes(sizes_tGdu2);
@@ -4538,10 +4544,15 @@ namespace getfem {
           // gmm::clear(tG1.as_vector()); gmm::clear(tGdu1.as_vector()); gmm::clear(tGddu1.as_vector()); // A supprimer
 	       //**********************
 	  md.compute_Neumann_terms(1, vl[1], mf_u2, U2, ctx_u2, n2, tG2);
+          // cout << "tG2 = " << tG2 << endl;
+          // cout << "u2 = " << u2 << endl;
+          // gmm::fill_random(tGddu2.as_vector());
           md.compute_Neumann_terms(2, vl[1], mf_u2, U2, ctx_u2, n2, tGdu2);
+          // gmm::clear(tGddu2.as_vector());
           md.compute_Neumann_terms(3, vl[1], mf_u2, U2, ctx_u2, n2, tGddu2);
+          // gmm::clear(tGddu2.as_vector());
 	  	
-		  ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
+          ctx_u1.pf()->real_base_value(ctx_u1, tbv1);
           ctx_u2.pf()->real_base_value(ctx_u2, tbv2);
 
 
@@ -4566,7 +4577,8 @@ namespace getfem {
 	       for(size_type i=0; i<N; ++i)
             zeta2[i] = tG2[i] +
               ( (gap - (alpha-1.)*(u2n+u1n))*np2[i]
-                + alpha*(wt2[i]-wt1[i]) + alpha*u2[i] - alpha*u1[i]) / gamma;	  
+                + alpha*(wt2[i]-wt1[i]) + alpha*u2[i] - alpha*u1[i]) / gamma;
+          // cout << "zeta2 = " << zeta2 << endl;
  //**************************
 	
 	 J1=gmm::abs(gmm::vect_sp(n1,n2));
@@ -4578,7 +4590,11 @@ namespace getfem {
 	  // cout << "pt2 = " <<ctx_u2.xreal() << endl;
 	  
           coupled_projection(zeta2, np2, f_coeff, Pr2);
-	  coupled_projection_grad(zeta2, np2, f_coeff, GPr2);	  
+	  coupled_projection_grad(zeta2, np2, f_coeff, GPr2);
+
+          // cout << "Pr2 = " << Pr2 << endl;
+          // cout << "GPr2 = " << GPr2 << endl;
+          
           gmm::resize(tv1n, nbdof1); gmm::clear(tv1n);
           gmm::resize(tv2n, nbdof2); gmm::clear(tv2n);
 	  for (size_type k = 0; k < nbdof1; ++k)
@@ -4666,8 +4682,7 @@ namespace getfem {
             gmm::scale(Melem,weight);
             // cout << "Melem final 3" << Melem << endl;
             mat_elem_assembly(matl[2], Melem, mf_u2, cv2, mf_u1, cv);    
-	    
-	    
+
 	    // Matrice en u2,u2
             gmm::resize(Melem, nbdof2, nbdof2); gmm::clear(Melem);
             for (size_type j = 0; j < nbdof2; ++j)
