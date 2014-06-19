@@ -335,7 +335,7 @@ namespace getfem {
       if (test0 && test1 && (test0 == test1 ||
                              test0 >= 3 || test1 >= 3))
         ga_throw_error(expr, pos, "Incompatibility of test functions "
-                        " in product.");
+                        "in product.");
       GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
                   "internal error");
 

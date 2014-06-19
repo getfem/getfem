@@ -401,6 +401,10 @@ namespace getfem {
                                   size_type ndof, size_type qdim, size_type N);
 
 
+  void compute_normal(const fem_interpolation_context &ctx, size_type face,
+                      bool in_reference_conf, const model_real_plain_vector &coeff,
+                      base_node &n0, base_node &n, base_matrix &grad);
+
   //=========================================================================
   //
   //  Structure which stores the contact boundaries, rigid obstacles and

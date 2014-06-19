@@ -490,7 +490,7 @@ namespace getfem {
             zt = (V - un1 * no) * (r * alpha) - zt;          // = zt1 - zt2 , with zt = r*alpha*u_T
           }
         }
-        un = un1 - un; // = un1 - unp1
+        un = un1 - un; // = un1 - un2
       }
       break;
 

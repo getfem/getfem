@@ -34,8 +34,8 @@ namespace getfem {
 
   void compute_normal(const fem_interpolation_context &ctx,
                       size_type face, bool in_reference_conf,
+                      const model_real_plain_vector &coeff,
                       base_node &n0, base_node &n,
-                      model_real_plain_vector &coeff,
                       base_matrix &grad) {
       n0 = bgeot::compute_normal(ctx, face);
       if (in_reference_conf) {
@@ -457,8 +457,7 @@ namespace getfem {
             }
 
             // unit normal vector computation
-            compute_normal(ctx, v.f(), ref_conf,
-                           n0, n, coeff, grad);
+            compute_normal(ctx, v.f(), ref_conf, coeff, n0, n, grad);
             n /= gmm::vect_norm2(n);
 
             if (on_fem_nodes && dof_already_interpolated[ind]) {
@@ -653,8 +652,7 @@ namespace getfem {
 
             // computation of unit normal vector if the vertex is on the face
             if (points_on_face[ip]) {
-              compute_normal(ctx, v.f(), ref_conf,
-                             n0, n, coeff, grad);
+              compute_normal(ctx, v.f(), ref_conf, coeff, n0, n, grad);
               n /= gmm::vect_norm2(n);
               n_mean += n;
               ++nb_pt_on_face;
@@ -1230,7 +1228,7 @@ namespace getfem {
 
         // compute the unit normal vector at y and the signed distance.
         base_small_vector ny0(N);
-        compute_normal(ctx, iff, ref_conf, ny0, ny, coeff, grad);
+        compute_normal(ctx, iff, ref_conf, coeff, ny0, ny, grad);
         // ny /= gmm::vect_norm2(ny); // Useful only if the unit normal is kept
         signed_dist *= gmm::sgn(gmm::vect_sp(x - y, ny));
 
