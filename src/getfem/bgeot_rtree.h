@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2000-2012 Julien Pommier
+ Copyright (C) 2000-2014 Julien Pommier
  
  This file is a part of GETFEM++
  
@@ -64,32 +64,61 @@ namespace bgeot {
     rtree() : root(0) {}
     ~rtree() { destroy_tree(); }
     void add_box(base_node min, base_node max, size_type id=size_type(-1)) {
-      box_index bi; bi.min = min; bi.max = max; bi.id = (id + 1) ? id : boxes.size();
+      box_index bi; bi.min = min; bi.max = max;
+      bi.id = (id + 1) ? id : boxes.size();
       boxes.push_back(bi);
     }
     size_type nb_boxes() const { return boxes.size(); }
     void clear() { destroy_tree(); boxes.clear(); }
 
-    void find_intersecting_boxes(const base_node& bmin, const base_node& bmax, pbox_set& boxlst);
-    void find_containing_boxes(const base_node& bmin, const base_node& bmax, pbox_set& boxlst);
-    void find_contained_boxes(const base_node& bmin, const base_node& bmax, pbox_set& boxlst);
+    void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
+                                 pbox_set& boxlst);
+    void find_containing_boxes(const base_node& bmin, const base_node& bmax,
+                               pbox_set& boxlst);
+    void find_contained_boxes(const base_node& bmin, const base_node& bmax,
+                              pbox_set& boxlst);
     void find_boxes_at_point(const base_node& P, pbox_set& boxlst);
+    void find_line_intersecting_boxes(const base_node& org,
+                                      const base_small_vector& dirv,
+                                      pbox_set& boxlst);
 
-    void find_intersecting_boxes(const base_node& bmin, const base_node& bmax, std::vector<size_type>& idvec)
-    { pbox_set bs; find_intersecting_boxes(bmin, bmax, bs);  pbox_set_to_idvec(bs, idvec); }
-    void find_containing_boxes(const base_node& bmin, const base_node& bmax, std::vector<size_type>& idvec)
-    { pbox_set bs; find_containing_boxes(bmin, bmax, bs);  pbox_set_to_idvec(bs, idvec); }
-    void find_contained_boxes(const base_node& bmin, const base_node& bmax, std::vector<size_type>& idvec)
-    { pbox_set bs; find_contained_boxes(bmin, bmax, bs);  pbox_set_to_idvec(bs, idvec); }
+    void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
+                                 std::vector<size_type>& idvec) {
+      pbox_set bs;
+      find_intersecting_boxes(bmin, bmax, bs);
+      pbox_set_to_idvec(bs, idvec);
+    }
+    void find_containing_boxes(const base_node& bmin, const base_node& bmax,
+                               std::vector<size_type>& idvec) {
+      pbox_set bs;
+      find_containing_boxes(bmin, bmax, bs);
+      pbox_set_to_idvec(bs, idvec);
+    }
+    void find_contained_boxes(const base_node& bmin,
+                              const base_node& bmax,
+                              std::vector<size_type>& idvec) {
+      pbox_set bs;
+      find_contained_boxes(bmin, bmax, bs);
+      pbox_set_to_idvec(bs, idvec);
+    }
     void find_boxes_at_point(const base_node& P, std::vector<size_type>& idvec)
     { pbox_set bs; find_boxes_at_point(P, bs);  pbox_set_to_idvec(bs, idvec); }
+    void find_line_intersecting_boxes(const base_node& org,
+                                      const base_small_vector& dirv,
+                                      std::vector<size_type>& idvec) {
+      pbox_set bs;
+      find_line_intersecting_boxes(org, dirv, bs);
+      pbox_set_to_idvec(bs, idvec);
+    }
+
     void dump();
     void build_tree();
   private:
     void destroy_tree();
     static void pbox_set_to_idvec(pbox_set bs, std::vector<size_type>& idvec) {
       idvec.reserve(bs.size()); idvec.resize(0);
-      for (pbox_set::const_iterator it=bs.begin(); it != bs.end(); ++it) idvec.push_back((*it)->id);
+      for (pbox_set::const_iterator it=bs.begin(); it != bs.end(); ++it)
+        idvec.push_back((*it)->id);
     }
 
     box_cont boxes;
