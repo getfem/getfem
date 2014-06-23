@@ -118,6 +118,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_inter_element.h           	\
 	getfem/getfem_level_set.h	        	\
 	getfem/getfem_partial_mesh_fem.h		\
+	getfem/getfem_torus.h                   	\
 	getfem/getfem_mesh_level_set.h          	\
 	getfem/getfem_mesh_im_level_set.h         	\
 	getfem/getfem_crack_sif.h        	   	\
@@ -148,8 +149,7 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_convect.h                    	\
 	getfem/getfem_deformable_mesh.h                 \
 	getfem/getfem_level_set_contact.h               \
- 	getfem/getfem_im_data.h               \
-	getfem/getfem_torus.h
+ 	getfem/getfem_im_data.h
 
 SRC =                                      		\
 	dal_backtrace.cc                   		\
@@ -196,6 +196,7 @@ SRC =                                      		\
 	getfem_mesh_fem_sum.cc             		\
 	getfem_fem_level_set.cc            		\
 	getfem_partial_mesh_fem.cc         		\
+	getfem_torus.cc  	         		\
 	getfem_mesh_slicers.cc	           		\
 	getfem_mesh_slice.cc	           		\
 	getfem_regular_meshes.cc           		\
@@ -219,8 +220,7 @@ SRC =                                      		\
 	getfem_omp.cc                       \
 	getfem_deformable_mesh.cc			\
 	getfem_level_set_contact.cc         \
-	getfem_im_data.cc                   \
-	getfem_torus.cc
+	getfem_im_data.cc
 #	getfem_enumeration_dof_para.cc
 
 lib_LTLIBRARIES = libgetfem.la
@@ -231,3 +231,4 @@ AM_CPPFLAGS = -I$(top_srcdir)/src -I../src -I$(top_srcdir)
 
 CLEANFILES = ii_files/* *.o.d
 DISTCLEANFILES = getfem/getfem_im_list.h getfem/getfem_arch_config.h
+
