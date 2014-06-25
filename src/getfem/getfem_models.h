@@ -114,7 +114,7 @@ namespace getfem {
       right hand side and the constraints. There are two kinds of models, the
       ``real'' and the ``complex'' models.
   */
-  class model : public context_dependencies {
+  class APIDECL model : public context_dependencies {
 
   protected:
 
@@ -934,7 +934,7 @@ namespace getfem {
   /** The time dispatcher object modify the result of a brick in order to
       apply a time integration scheme.
   **/
-  class virtual_dispatcher : virtual public dal::static_stored_object {
+  class APIDECL virtual_dispatcher : virtual public dal::static_stored_object {
 
   protected :
 
@@ -1014,7 +1014,7 @@ namespace getfem {
   //
   // ----------------------------------------------------------------------
 
-  class theta_method_dispatcher : public virtual_dispatcher {
+  class APIDECL theta_method_dispatcher : public virtual_dispatcher {
 
   public :
 
@@ -1079,7 +1079,7 @@ namespace getfem {
       a matrix term $K$ will be replaced by
       $\theta K U^{n+1} + (1-\theta) K U^{n}$.
   */
-  void add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
+  void APIDECL add_theta_method_dispatcher(model &md, dal::bit_vector ibricks,
                                    const std::string &THETA);
 
   /** Function which udpate the velocity $v^{n+1}$ after the computation
@@ -1087,7 +1087,7 @@ namespace getfem {
       for theta-method and when the velocity is included in the data
       of the model.
   */
-  void velocity_update_for_order_two_theta_method
+  void APIDECL velocity_update_for_order_two_theta_method
   (model &md, const std::string &U, const std::string &V,
    const std::string &pdt, const std::string &ptheta);
 
@@ -1096,7 +1096,7 @@ namespace getfem {
       a nonlinear term $K(U)$ will be replaced by
       $K((U^{n+1} +  U^{n})/2)$.
   */
-  void add_midpoint_dispatcher(model &md, dal::bit_vector ibricks);
+  void APIDECL add_midpoint_dispatcher(model &md, dal::bit_vector ibricks);
 
   /** Function which udpate the velocity $v^{n+1}$ after the computation
       of the displacement $u^{n+1}$ and before the next iteration. Specific
@@ -1104,7 +1104,7 @@ namespace getfem {
       of the model. This version inverts the mass matrix by a conjugate
       gradient.
   */
-  void velocity_update_for_Newmark_scheme
+  void APIDECL velocity_update_for_Newmark_scheme
   (model &md, size_type id2dt2b, const std::string &U, const std::string &V,
    const std::string &pdt, const std::string &ptwobeta,
    const std::string &pgamma);
@@ -1122,7 +1122,7 @@ namespace getfem {
       The brick should not store data. The data have to be stored in the
       model object.
   **/
-  class virtual_brick : virtual public dal::static_stored_object {
+  class APIDECL virtual_brick : virtual public dal::static_stored_object {
   protected :
     bool islinear;    // The brick add a linear term or not.
     bool issymmetric; // The brick add a symmetric term or not.
@@ -1306,7 +1306,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  class virtual_interpolate_transformation
+  class APIDECL virtual_interpolate_transformation
     : virtual public dal::static_stored_object {
 
   public:
@@ -1340,7 +1340,7 @@ namespace getfem {
      conditions for instance).
   */
 
-  struct Neumann_elem_term : virtual public dal::static_stored_object {
+  struct APIDECL Neumann_elem_term : virtual public dal::static_stored_object {
 
     std::vector<std::string> auxilliary_variables;
 
@@ -1391,7 +1391,7 @@ namespace getfem {
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.
   */
-  size_type add_linear_generic_assembly_brick
+  size_type APIDECL add_linear_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, std::string brickname = "");
@@ -1408,7 +1408,7 @@ namespace getfem {
       are not allowed for non-coercive problems.
       `brickname` is an otpional name for the brick.
   */
-  size_type add_nonlinear_generic_assembly_brick
+  size_type APIDECL add_nonlinear_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1), bool is_sym = false,
    bool is_coercive = false, std::string brickname = "");
@@ -1422,7 +1422,7 @@ namespace getfem {
       derivated with respect to all variables.
       `brickname` is an otpional name for the brick.
   */
-  size_type add_source_term_generic_assembly_brick
+  size_type APIDECL add_source_term_generic_assembly_brick
   (model &md, const mesh_im &mim, const std::string &expr,
    size_type region = size_type(-1),  std::string brickname = "");
 
@@ -1458,7 +1458,7 @@ namespace getfem {
       optional mesh region on which the term is added. Return the brick index
       in the model.
   */
-  size_type add_Laplacian_brick
+  size_type APIDECL add_Laplacian_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    size_type region = size_type(-1));
 
@@ -1479,7 +1479,7 @@ namespace getfem {
       optional mesh region on which the term is added. Return the brick index
       in the model.
   */
-  size_type add_generic_elliptic_brick
+  size_type APIDECL add_generic_elliptic_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region = size_type(-1));
 
@@ -1491,7 +1491,7 @@ namespace getfem {
       corresponding data vector will be directly added to the right hand
       side without assembly. Return the brick index in the model.
   */
-  size_type add_source_term_brick
+  size_type APIDECL add_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region = size_type(-1),
    const std::string &directdataname = std::string());
@@ -1504,7 +1504,7 @@ namespace getfem {
       a Neumann condition with a vector data without performing the
       scalar product with the normal as a pre-processing.
   */
-  size_type add_normal_source_term_brick
+  size_type APIDECL add_normal_source_term_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region);
 
@@ -1527,7 +1527,7 @@ namespace getfem {
       element method as `varname`.
       Returns the brick index in the model.
   */
-  size_type add_Dirichlet_condition_with_simplification
+  size_type APIDECL add_Dirichlet_condition_with_simplification
   (model &md, const std::string &varname, size_type region,
    const std::string &dataname = std::string());
 
@@ -1542,7 +1542,7 @@ namespace getfem {
       on which the Dirichlet condition is prescribed. Return the brick index
       in the model.
   */
-  size_type add_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname = std::string());
@@ -1553,7 +1553,7 @@ namespace getfem {
       the mesh region `region` and eventually some conflicting dofs with some
       other multiplier variables will be suppressed).
   */
-  size_type add_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const mesh_fem &mf_mult, size_type region,
    const std::string &dataname = std::string());
@@ -1562,7 +1562,7 @@ namespace getfem {
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
   */
-  size_type add_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
    const std::string &dataname = std::string());
@@ -1572,7 +1572,7 @@ namespace getfem {
       the model `md`, the function return the name of the multiplier variable.
       Otherwise, it has an undefined behavior.
   */
-    const std::string &mult_varname_Dirichlet(model &md, size_type ind_brick);
+    const APIDECL std::string &mult_varname_Dirichlet(model &md, size_type ind_brick);
 
   /** Adds a Dirichlet condition on the variable `varname` and the mesh
       region `region`. This region should be a boundary. The Dirichlet
@@ -1586,7 +1586,7 @@ namespace getfem {
       Dirichlet condition specifying a multiplier space.
       Returns the brick index in the model.
   */
-  size_type add_Dirichlet_condition_with_penalization
+  size_type APIDECL add_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalization_coeff, size_type region,
    const std::string &dataname = std::string(),
@@ -1610,7 +1610,7 @@ namespace getfem {
       Moreover, This brick can only be applied to bricks declaring their
       Neumann terms.
   */
-  size_type add_Dirichlet_condition_with_Nitsche_method
+  size_type APIDECL add_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region,
    scalar_type theta = scalar_type(1),
@@ -1629,7 +1629,7 @@ namespace getfem {
       is vector valued, vector if the variable is tensor valued).
       Returns the brick index in the model.
   */
-  size_type add_normal_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_normal_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname = std::string());
@@ -1640,7 +1640,7 @@ namespace getfem {
       the mesh region `region` and eventually some conflicting dofs with some
       other multiplier variables will be suppressed).
   */
-  size_type add_normal_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_normal_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const mesh_fem &mf_mult, size_type region,
    const std::string &dataname = std::string());
@@ -1649,7 +1649,7 @@ namespace getfem {
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
   */
-  size_type add_normal_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_normal_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
    const std::string &dataname = std::string());
@@ -1668,7 +1668,7 @@ namespace getfem {
       Dirichlet condition specifying a multiplier space.
       Return the brick index in the model.
   */
-  size_type add_normal_Dirichlet_condition_with_penalization
+  size_type APIDECL add_normal_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalization_coeff, size_type region,
    const std::string &dataname = std::string(),
@@ -1694,7 +1694,7 @@ namespace getfem {
       Neumann terms. 
       (This brick is not fully tested)
   */
-  size_type add_normal_Dirichlet_condition_with_Nitsche_method
+  size_type APIDECL add_normal_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region,
    scalar_type theta = scalar_type(1),
@@ -1717,7 +1717,7 @@ namespace getfem {
       This brick is specifically designed to kill rigid displacement
       in a Neumann problem.
   */
-  size_type add_pointwise_constraints_with_penalization
+  size_type APIDECL add_pointwise_constraints_with_penalization
   (model &md, const std::string &varname,
    scalar_type penalisation_coeff, const std::string &dataname_pt,
    const std::string &dataname_unitv = std::string(),
@@ -1742,7 +1742,7 @@ namespace getfem {
       This brick is specifically designed to kill rigid displacement
       in a Neumann problem.
   */
-  size_type add_pointwise_constraints_with_given_multipliers
+  size_type APIDECL add_pointwise_constraints_with_given_multipliers
   (model &md, const std::string &varname,
    const std::string &multname, const std::string &dataname_pt,
    const std::string &dataname_unitv = std::string(),
@@ -1764,7 +1764,7 @@ namespace getfem {
       This brick is specifically designed to kill rigid displacement
       in a Neumann problem.
   */
-  size_type add_pointwise_constraints_with_multipliers
+  size_type APIDECL add_pointwise_constraints_with_multipliers
   (model &md, const std::string &varname, const std::string &dataname_pt,
    const std::string &dataname_unitv = std::string(),
    const std::string &dataname_val = std::string());
@@ -1774,7 +1774,7 @@ namespace getfem {
       penalization brick. If the brick is not of this kind,
       this function has an undefined behavior.
   */
-  void change_penalization_coeff(model &md, size_type ind_brick,
+  void APIDECL change_penalization_coeff(model &md, size_type ind_brick,
                                  scalar_type penalisation_coeff);
 
   /** Adds a generalized Dirichlet condition on the variable `varname` and
@@ -1790,7 +1790,7 @@ namespace getfem {
       corresponding to the matrix field `H`. It has to be a constant matrix
       or described on a scalar fem. Return the brick index in the model.
   */
-  size_type add_generalized_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region,
    const std::string &dataname, const std::string &Hname);
@@ -1801,7 +1801,7 @@ namespace getfem {
       the mesh region `region` and eventually some conflicting dofs with some
       other multiplier variables will be suppressed).
   */
-  size_type add_generalized_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    const mesh_fem &mf_mult, size_type region,
    const std::string &dataname, const std::string &Hname);
@@ -1810,7 +1810,7 @@ namespace getfem {
       replaced by `degree`. The multiplier will be described on a standard
       finite element method of the corresponding degree.
   */
-  size_type add_generalized_Dirichlet_condition_with_multipliers
+  size_type APIDECL add_generalized_Dirichlet_condition_with_multipliers
   (model &md, const mesh_im &mim, const std::string &varname,
    dim_type degree, size_type region,
    const std::string &dataname, const std::string &Hname);
@@ -1831,7 +1831,7 @@ namespace getfem {
       which allows to weaken the Dirichlet condition specifying a
       multiplier space. Return the brick index in the model.
   */
-  size_type add_generalized_Dirichlet_condition_with_penalization
+  size_type APIDECL add_generalized_Dirichlet_condition_with_penalization
   (model &md, const mesh_im &mim, const std::string &varname,
    scalar_type penalization_coeff, size_type region,
    const std::string &dataname, const std::string &Hname,
@@ -1862,7 +1862,7 @@ namespace getfem {
       Neumann terms.
       (This brick is not fully tested)
   */
-  size_type add_generalized_Dirichlet_condition_with_Nitsche_method
+  size_type APIDECL add_generalized_Dirichlet_condition_with_Nitsche_method
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &gamma0name, size_type region, scalar_type theta,
    const std::string &dataname, const std::string &Hname);
@@ -1875,7 +1875,7 @@ namespace getfem {
       `dataname` should contain the wave number $k$. It can be real or
       complex, fem dependant or not.
   */
-  size_type add_Helmholtz_brick(model &md, const mesh_im &mim,
+  size_type APIDECL add_Helmholtz_brick(model &md, const mesh_im &mim,
                                 const std::string &varname,
                                 const std::string &dataname,
                                 size_type region = size_type(-1));
@@ -1890,7 +1890,7 @@ namespace getfem {
       variable `varname`. Note that an additional right hand
       side can be added with a source term brick.
   */
-  size_type add_Fourier_Robin_brick(model &md, const mesh_im &mim,
+  size_type APIDECL add_Fourier_Robin_brick(model &md, const mesh_im &mim,
                                     const std::string &varname,
                                     const std::string &dataname,
                                     size_type region);
@@ -1907,24 +1907,24 @@ namespace getfem {
       the optional real scalar parameter $\lambda$ in the model. Return the
       brick index in the model.
   */
-  size_type add_basic_nonlinear_brick
+  size_type APIDECL add_basic_nonlinear_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &f, const std::string &dfdu,
    size_type region = size_type(-1),
    const std::string &dataname = std::string());
 
   // Constraint brick.
-  model_real_sparse_matrix &set_private_data_brick_real_matrix
+  model_real_sparse_matrix APIDECL &set_private_data_brick_real_matrix
   (model &md, size_type indbrick);
-  model_real_plain_vector &set_private_data_brick_real_rhs
+  model_real_plain_vector APIDECL &set_private_data_brick_real_rhs
   (model &md, size_type indbrick);
-  model_complex_sparse_matrix &set_private_data_brick_complex_matrix
+  model_complex_sparse_matrix APIDECL &set_private_data_brick_complex_matrix
   (model &md, size_type indbrick);
-  model_complex_plain_vector &set_private_data_brick_complex_rhs
+  model_complex_plain_vector APIDECL &set_private_data_brick_complex_rhs
   (model &md, size_type indbrick);
-  size_type add_constraint_with_penalization
+  size_type APIDECL add_constraint_with_penalization
   (model &md, const std::string &varname, scalar_type penalisation_coeff);
-  size_type add_constraint_with_multipliers
+  size_type APIDECL add_constraint_with_multipliers
   (model &md, const std::string &varname, const std::string &multname);
 
   template <typename VECT, typename T>
@@ -2018,10 +2018,10 @@ namespace getfem {
     return ind;
   }
 
-  size_type add_explicit_matrix(model &md, const std::string &varname1,
+  size_type APIDECL add_explicit_matrix(model &md, const std::string &varname1,
                                 const std::string &varname2,
                                 bool issymmetric, bool iscoercive);
-  size_type add_explicit_rhs(model &md, const std::string &varname);
+  size_type APIDECL add_explicit_rhs(model &md, const std::string &varname);
 
   /** Adds a brick reprenting an explicit matrix to be added to the tangent
       linear system relatively to the variables 'varname1' and 'varname2'.
@@ -2063,14 +2063,14 @@ namespace getfem {
       for isotropic material. Parametrized by the Lamé coefficients
       lambda and mu.
   */
-  size_type add_isotropic_linearized_elasticity_brick
+  size_type APIDECL add_isotropic_linearized_elasticity_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_lambda, const std::string &dataname_mu,
    size_type region = size_type(-1),
    const std::string &dataname_preconstraint = std::string());
 
 
-  void compute_isotropic_linearized_Von_Mises_or_Tresca
+  void APIDECL compute_isotropic_linearized_Von_Mises_or_Tresca
   (model &md, const std::string &varname, const std::string &dataname_lambda,
    const std::string &dataname_mu, const mesh_fem &mf_vm,
    model_real_plain_vector &VM, bool tresca);
@@ -2110,7 +2110,7 @@ namespace getfem {
      @f[ \sigma = 2 \mu \varepsilon(u) -p I @f]
      @see asm_stokes_B
   */
-  size_type add_linear_incompressibility
+  size_type APIDECL add_linear_incompressibility
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname_pressure, size_type region = size_type(-1),
    const std::string &dataname_penal_coeff = std::string());
@@ -2119,7 +2119,7 @@ namespace getfem {
       Adds a mass matix on a variable (eventually with a specified region).
       If the parameter $\rho$ is omitted it is assumed to be equal to 1.
   */
-  size_type add_mass_brick
+  size_type APIDECL add_mass_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_rho = std::string(),
    size_type region = size_type(-1));
@@ -2130,7 +2130,7 @@ namespace getfem {
       is 1). This brick should be used in addition to a time dispatcher for the
       other terms.
   */
-  size_type add_basic_d_on_dt_brick
+  size_type APIDECL add_basic_d_on_dt_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname_dt,
    const std::string &dataname_rho = std::string(),
@@ -2143,7 +2143,7 @@ namespace getfem {
       other terms. The time derivative $v$ of the variable $u$ is preferably
       computed as a post-traitement which depends on each scheme.
   */
-  size_type add_basic_d2_on_dt2_brick
+  size_type APIDECL add_basic_d2_on_dt2_brick
   (model &md, const mesh_im &mim, const std::string &varnameU,
    const std::string &datanameV,
    const std::string &dataname_dt,

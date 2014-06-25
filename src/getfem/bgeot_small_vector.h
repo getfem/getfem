@@ -48,7 +48,7 @@
 
 namespace bgeot {
 
-  class block_allocator {
+  class APIDECL block_allocator {
   public:
     typedef gmm::uint16_type uint16_type;
     typedef gmm::uint32_type node_id;
@@ -147,7 +147,7 @@ namespace bgeot {
   };
   
   /* common class for all mini_vec, provides access to the common static allocator */
-  struct static_block_allocator {
+  struct APIDECL static_block_allocator {
     /* must be a pointer ... sgi CC is not able to order correctly the 
        destructors of static variables */
     static block_allocator *palloc;

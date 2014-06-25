@@ -104,7 +104,7 @@ namespace bgeot {
    *  <h3>Inverse transformation and pseudo-inverse</h3>
    *     to do ...
    */
-  class geometric_trans : virtual public dal::static_stored_object {
+  class APIDECL geometric_trans : virtual public dal::static_stored_object {
   protected :
 
     bool is_lin;
@@ -207,22 +207,22 @@ namespace bgeot {
    */
   //@{
 
-  pgeometric_trans simplex_geotrans(size_type n, short_type k);
-  pgeometric_trans parallelepiped_geotrans(size_type n, short_type k);
-  pgeometric_trans parallelepiped_linear_geotrans(size_type n);
-  pgeometric_trans prism_geotrans(size_type n, short_type k);
-  pgeometric_trans prism_linear_geotrans(size_type n);
-  pgeometric_trans product_geotrans(pgeometric_trans pg1,
+  pgeometric_trans APIDECL simplex_geotrans(size_type n, short_type k);
+  pgeometric_trans APIDECL parallelepiped_geotrans(size_type n, short_type k);
+  pgeometric_trans APIDECL parallelepiped_linear_geotrans(size_type n);
+  pgeometric_trans APIDECL prism_geotrans(size_type n, short_type k);
+  pgeometric_trans APIDECL prism_linear_geotrans(size_type n);
+  pgeometric_trans APIDECL product_geotrans(pgeometric_trans pg1,
                                     pgeometric_trans pg2);
-  pgeometric_trans linear_product_geotrans(pgeometric_trans pg1,
+  pgeometric_trans APIDECL linear_product_geotrans(pgeometric_trans pg1,
                                            pgeometric_trans pg2);
-  pgeometric_trans Q2_incomplete_geotrans(dim_type nc);
+  pgeometric_trans APIDECL Q2_incomplete_geotrans(dim_type nc);
 
   /**
      Get the geometric transformation from its string name.
      @see name_of_geometric_trans
   */
-  pgeometric_trans geometric_trans_descriptor(std::string name);
+  pgeometric_trans APIDECL geometric_trans_descriptor(std::string name);
   /**
      Get the string name of a geometric transformation.
 
@@ -238,7 +238,7 @@ namespace bgeot {
                                                       GT_PK(1,1))
    */
 
-  std::string name_of_geometric_trans(pgeometric_trans p);
+  std::string APIDECL name_of_geometric_trans(pgeometric_trans p);
 
   /** norm of returned vector is the ratio between the face surface on
    *  the real element and the face surface on the reference element
@@ -246,14 +246,14 @@ namespace bgeot {
    *
    *  pt is the position of the evaluation point on the reference element
    */
-  base_small_vector compute_normal(const geotrans_interpolation_context& c,
+  base_small_vector APIDECL compute_normal(const geotrans_interpolation_context& c,
                                    size_type face);
 
   /** return the local basis (i.e. the normal in the first column, and the
    *  tangent vectors in the other columns
    */
   base_matrix
-  compute_local_basis(const geotrans_interpolation_context& c,
+  APIDECL compute_local_basis(const geotrans_interpolation_context& c,
                       size_type face);
     //@}
 
@@ -271,7 +271,7 @@ namespace bgeot {
    *  repetitive evaluation of a geometric transformations on a set of
    *  points "pspt" in the reference convex which do not change.
    */
-  class geotrans_precomp_ : virtual public dal::static_stored_object {
+  class APIDECL geotrans_precomp_ : virtual public dal::static_stored_object {
   protected:
     pgeometric_trans pgt;
     pstored_point_tab pspt;  /* a set of points in the reference elt*/
@@ -352,14 +352,14 @@ namespace bgeot {
     }
   }
 
-  void delete_geotrans_precomp(pgeotrans_precomp pgp);
+  void APIDECL delete_geotrans_precomp(pgeotrans_precomp pgp);
 
   /**
    *  The object geotrans_precomp_pool Allow to allocate a certain number
    *  of geotrans_precomp and automatically delete them when it is
    *  deleted itself.
    */
-  class geotrans_precomp_pool {
+  class APIDECL geotrans_precomp_pool {
     std::set<pgeotrans_precomp> precomps;
 
   public :
@@ -387,7 +387,7 @@ namespace bgeot {
      The name of member data, and the computations done by this structure
      are heavily described in the Getfem++ Kernel Documentation.
   */
-  class geotrans_interpolation_context {
+  class APIDECL geotrans_interpolation_context {
     mutable base_node xref_; /** reference point */
     mutable base_node xreal_; /** transformed point */
     const base_matrix *G_; /** pointer to the matrix of real nodes of the convex */
@@ -449,7 +449,7 @@ namespace bgeot {
   
   typedef dal::naming_system<geometric_trans>::param_list gt_param_list;
 
-  void add_geometric_trans_name
+  void APIDECL add_geometric_trans_name
   (std::string name, dal::naming_system<geometric_trans>::pfunction f);
 
 

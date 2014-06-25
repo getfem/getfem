@@ -61,7 +61,7 @@ namespace dal {
 
   class bit_vector;
 
-  struct bit_reference {
+  struct APIDECL bit_reference {
     typedef size_t  size_type;
 
     bit_support* p;
@@ -83,7 +83,7 @@ namespace dal {
     void flip(void) { if (bool(*this)) *this = false; else *this = true; }
   };
 
-  struct bit_iterator {
+  struct APIDECL bit_iterator {
     typedef bool             value_type;
     typedef bit_reference    reference;
     typedef bit_reference*   pointer;
@@ -126,7 +126,7 @@ namespace dal {
     bool operator<(bit_iterator x) const { return ind < x.ind; }
   };
 
-  struct bit_const_iterator {
+  struct APIDECL bit_const_iterator {
     typedef bool             value_type;
     typedef bool             reference;
     typedef const bool*      pointer;
@@ -171,7 +171,7 @@ namespace dal {
   };
 
   ///Dynamic bit container. 
-  class bit_vector : public bit_container {
+  class APIDECL bit_vector : public bit_container {
   public :
     
     typedef bool         value_type;
@@ -334,7 +334,7 @@ namespace dal {
      need to store a copy of the bit_vector 
      (if the original is destroyed just after the creation...)
   */
-  class bv_visitor {
+  class APIDECL bv_visitor {
     typedef dal::bit_vector::size_type size_type;
     bit_container::const_iterator it;
     size_type ilast,ind;
@@ -353,7 +353,7 @@ namespace dal {
   /**
     bv_visitor with local copy of the bit_vector
   */
-  class bv_visitor_c {
+  class APIDECL bv_visitor_c {
     bit_vector bv;
     bv_visitor v; // no inheritance since v must be init after bv
   public:
@@ -365,17 +365,17 @@ namespace dal {
   };
 
   /// extract index of first entry in the bit_vector
-  inline int &operator << (int &i, bit_vector &s)
+  inline int APIDECL &operator << (int &i, bit_vector &s)
   { i = s.take_first(); return i; }
-  inline const int &operator >> (const int &i, bit_vector &s)
+  inline const int APIDECL &operator >> (const int &i, bit_vector &s)
   { s.add(i); return i; }
 
-  inline size_t &operator << (size_t &i, bit_vector &s)
+  inline size_t APIDECL &operator << (size_t &i, bit_vector &s)
   { i = s.take_first(); return i; }
   inline const size_t &operator >> (const size_t &i, bit_vector &s)
   { s.add(i); return i; }
 
-  std::ostream &operator <<(std::ostream &o, const bit_vector &s);
+  std::ostream APIDECL &operator <<(std::ostream &o, const bit_vector &s);
 
 }
 

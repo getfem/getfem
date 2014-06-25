@@ -44,7 +44,7 @@
 
 namespace bgeot {
 
-  struct mesh_convex_structure {
+  struct APIDECL mesh_convex_structure {
     typedef std::vector<size_type> ind_pt_ct;
 
     pconvex_structure cstruct;       /* type of convexe.                  */
@@ -61,7 +61,7 @@ namespace bgeot {
    *   At this point, the mesh is just a graph: the points have no
    *  associated coordinates
    */
-  class mesh_structure {
+  class APIDECL mesh_structure {
 
   public :
     
@@ -222,7 +222,7 @@ namespace bgeot {
 
 
   /** Return the cuthill_mc_kee ordering on the convexes */
-  void cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms, 
+  void APIDECL cuthill_mckee_on_convexes(const bgeot::mesh_structure &ms, 
 				 std::vector<size_type> &cmk);
 
   template<class ITER>
@@ -288,7 +288,7 @@ namespace bgeot {
   /* ********************************************************************* */
 
   /* maybe this should be remove from the matlab interface and obsoleted */
-  struct edge_list_elt  {
+  struct APIDECL edge_list_elt  {
     size_type i, j;
     size_type cv;
     inline bool operator < (const edge_list_elt &e) const
@@ -305,11 +305,11 @@ namespace bgeot {
   typedef dal::dynamic_tree_sorted<edge_list_elt> edge_list;
   
   /* do not use that */
-  void mesh_edge_list_convex(pconvex_structure cvs, 
+  void APIDECL mesh_edge_list_convex(pconvex_structure cvs, 
                              std::vector<size_type> points_of_convex, 
                              size_type cv_id, edge_list &el, 
                              bool merge_convex);
-  void mesh_edge_list(const mesh_structure &m, edge_list &el, 
+  void APIDECL mesh_edge_list(const mesh_structure &m, edge_list &el, 
                       bool merge_convex = true);
 
 

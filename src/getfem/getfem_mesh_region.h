@@ -64,7 +64,7 @@ namespace getfem {
   /** structure used to hold a set of convexes and/or convex faces.
   @see mesh::region
   */
-  class mesh_region {
+  class APIDECL mesh_region {
   public:
     typedef std::bitset<MAX_FACES_PER_CV+1> face_bitset;
 

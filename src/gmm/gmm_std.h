@@ -334,5 +334,39 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 
 }
 
+  /* ******************************************************************** */
+  /*	Import/export classes and interfaces from a shared library          */
+  /* ******************************************************************** */
+
+#if defined(EXPORTED_TO_SHARED_LIB)
+#  if defined(_MSC_VER) || defined(__INTEL_COMPILER)    
+#     define APIDECL __declspec(dllexport)
+#  elif defined(__GNUC__)
+#     define __attribute__((visibility("default")))
+#  else
+#     define APIDECL
+#  endif
+#   if defined(IMPORTED_FROM_SHARED_LIB)
+#	  error INTENTIONAL COMPILCATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPITABLE
+#   endif
+#endif
+
+#if defined(IMPORTED_FROM_SHARED_LIB)
+#  if defined(_MSC_VER) || defined(__INTEL_COMPILER)    
+#     define APIDECL __declspec(dllimport)
+#  else
+#     define APIDECL
+#  endif
+#   if defined(EXPORTED_TO_SHARED_LIB)
+#	  error INTENTIONAL COMPILCATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPITABLE
+#   endif
+#endif
+
+#ifndef EXPORTED_TO_SHARED_LIB
+#  ifndef EXPORTED_TO_SHARED_LIB
+#    define APIDECL  //empty, used during static linking
+#  endif
+#endif
+
 #endif /* GMM_STD_H__ */
 

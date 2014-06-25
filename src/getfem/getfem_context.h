@@ -84,7 +84,7 @@ namespace getfem {
    because once a dependent object is in the CHANGED state it will not
    be considered by next touch operations.
   */
-  class context_dependencies {
+  class APIDECL context_dependencies {
 
   protected :
     enum context_state { CONTEXT_NORMAL, CONTEXT_CHANGED, CONTEXT_INVALID };

@@ -58,7 +58,7 @@
 namespace getfem {
 
   /* Version counter for convexes. */
-  gmm::uint64_type act_counter(void);
+  gmm::uint64_type APIDECL act_counter(void);
 
   class integration_method;
   typedef boost::intrusive_ptr<const integration_method> pintegration_method;
@@ -100,7 +100,7 @@ namespace getfem {
       (same thing for the convexes, always use convex_index()).
   */
 
-  class mesh : virtual public dal::static_stored_object,
+  class APIDECL mesh : virtual public dal::static_stored_object,
 		       public bgeot::basic_mesh,
 		       public context_dependencies 
 
@@ -567,14 +567,14 @@ namespace getfem {
 
   };
 
-  inline void mesh::add_face_to_set(size_type s, size_type c, short_type f) {
+  inline void APIDECL mesh::add_face_to_set(size_type s, size_type c, short_type f) {
     region(s).add(c,f);
   }
 
   /**
    * build a N+1 dimensions mesh from a N-dimensions mesh by extrusion.
    */
-  void extrude(const mesh& in, mesh& out, unsigned nb_layers);
+  void APIDECL extrude(const mesh& in, mesh& out, unsigned nb_layers);
 
  template<class ITER>
     size_type mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,
@@ -616,24 +616,24 @@ namespace getfem {
       @param pai the approximate integration used for the computation
       of the convex area.
    */
-  scalar_type convex_area_estimate(bgeot::pgeometric_trans pgt,
+  scalar_type APIDECL convex_area_estimate(bgeot::pgeometric_trans pgt,
 				   const base_matrix& pts,
 				   pintegration_method pim);
 
   /** rough estimate of the maximum value of the condition
    * number of the jacobian of the geometric transformation */
-  scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
+  scalar_type APIDECL convex_quality_estimate(bgeot::pgeometric_trans pgt,
 				      const base_matrix& pts);
 
   /** rough estimate of the radius of the convex using the largest eigenvalue
    * of the jacobian of the geometric transformation */
-  scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
+  scalar_type APIDECL convex_radius_estimate(bgeot::pgeometric_trans pgt,
 				     const base_matrix& pts);
 
   /* stores a convex face. if f == -1, it is the whole convex.             */
   struct convex_face;
   typedef std::vector<convex_face> convex_face_ct;
-  struct convex_face  {
+  struct APIDECL convex_face  {
     size_type cv;
     size_type f;
     inline bool operator < (const convex_face &e) const
@@ -651,28 +651,28 @@ namespace getfem {
    * (i.e. faces which are not shared by two convexes)
    * + convexes whose dimension is smaller that m.dim()
    */
-  void  outer_faces_of_mesh(const mesh &m, const dal::bit_vector& cvlst,
+  void  APIDECL outer_faces_of_mesh(const mesh &m, const dal::bit_vector& cvlst,
 			    convex_face_ct& flist);
 
-  inline void outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
+  inline void APIDECL outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
     IS_DEPRECATED;
   inline void outer_faces_of_mesh(const mesh &m, convex_face_ct& flist)
   { outer_faces_of_mesh(m,m.convex_index(),flist); }
 
-  void  outer_faces_of_mesh(const mesh &m, const mesh_region &cvlst,
+  void  APIDECL outer_faces_of_mesh(const mesh &m, const mesh_region &cvlst,
 			    mesh_region &flist);
 
-  inline void  outer_faces_of_mesh(const mesh &m, mesh_region &flist)
+  inline void  APIDECL outer_faces_of_mesh(const mesh &m, mesh_region &flist)
   { outer_faces_of_mesh(m,m.convex_index(),flist); }
 
 
-  inline mesh_region outer_faces_of_mesh(const mesh &m)
+  inline mesh_region APIDECL outer_faces_of_mesh(const mesh &m)
   { mesh_region fl; outer_faces_of_mesh(m,m.convex_index(),fl); return fl; }
 
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.
    */ 
-  mesh_region select_faces_of_normal(const mesh &m, const mesh_region &mr,
+  mesh_region APIDECL select_faces_of_normal(const mesh &m, const mesh_region &mr,
                                      const base_small_vector &V,
                                      scalar_type angle);
 

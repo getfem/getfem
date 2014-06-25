@@ -49,7 +49,7 @@ namespace bgeot {
   /** Store a set of points, identifying points
       that are nearer than a certain very small distance.
   */
-  class node_tab : public dal::dynamic_tas<base_node> {
+  class APIDECL node_tab : public dal::dynamic_tas<base_node> {
 
   protected :
 

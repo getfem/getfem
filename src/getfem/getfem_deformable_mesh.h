@@ -49,7 +49,7 @@ namespace getfem {
   The mesh can only be deformed by instance of class temporary_mesh_deformator, 
   that restores the mesh on it's (deformator) destruction
   */
-  class deformable_mesh : public mesh {
+  class APIDECL deformable_mesh : public mesh {
   public:
     mutable bool must_be_restored;
   private:
@@ -117,7 +117,7 @@ namespace getfem {
   };
 
   /**cast a conventional mesh into deformable one and remove the const*/
-  deformable_mesh& make_deformable_mesh(const mesh&);
+  deformable_mesh APIDECL &make_deformable_mesh(const mesh&);
 
 
   /** An object function that first deformes and then remembers 
