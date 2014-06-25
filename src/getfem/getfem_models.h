@@ -1312,12 +1312,12 @@ namespace getfem {
   public:
     virtual void init(const ga_workspace &workspace) const = 0;
     virtual int transform(const ga_workspace &workspace,
-                           const mesh &m,
-                           const fem_interpolation_context &ctx_x,
-                           const base_small_vector &Normal,
-                           const mesh **m_t,
-                           size_type &cv, size_type &face_num,
-                           base_node &P_ref) const = 0;
+                          const mesh &m,
+                          fem_interpolation_context &ctx_x,
+                          const base_small_vector &Normal,
+                          const mesh **m_t,
+                          size_type &cv, size_type &face_num,
+                          base_node &P_ref, base_small_vector &N_y) const = 0;
     virtual void finalize(void) const = 0;
 
     virtual ~virtual_interpolate_transformation() {}

@@ -692,6 +692,7 @@ namespace getfem {
     const pfem pf() const { return pf_; }
     /** get the current convex number */
     size_type convex_num() const;
+    bool is_convex_num_valid() const;
     /** get the current face number */
     size_type face_num() const;
     /** On a face ? */

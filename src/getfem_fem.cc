@@ -52,6 +52,10 @@ namespace getfem {
     return convex_num_; 
   }
 
+  bool fem_interpolation_context::is_convex_num_valid() const {
+    return convex_num_ != size_type(-1); 
+  }
+
   size_type fem_interpolation_context::face_num() const {
     GMM_ASSERT3(face_num_ != size_type(-1),
 		"Face number is asked but not defined");

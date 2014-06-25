@@ -329,6 +329,57 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        (md->model(), transname, sm->mesh(), tm->mesh(), expr);
        );
 
+    /*@SET ('add raytracing transformation', @str transname, @scalar release_distance)
+      Add a raytracing interpolate transformation called `transname` to a model
+      to be used by the generic assembly bricks.
+      CAUTION: For the moment, the derivative of the
+      transformation is not taken into account in the model solve. @*/
+    sub_command
+      ("add raytracing transformation", 2, 2, 0, 0,
+       std::string transname = in.pop().to_string();
+       scalar_type d = in.pop().to_scalar();
+       add_raytracing_transformation(md->model(), transname, d);
+       );
+
+    /*@SET ('add master contact boundary to raytracing transformation', @str transname, @str dispname, @int region)
+      Add a master contact boundary with corresponding displacement variable
+      `dispname` on a specific boundary `region` to an existing raytracing
+      interpolate transformation called `transname`. @*/
+    sub_command
+      ("add master contact boundary to raytracing transformation", 3, 3, 0, 0,
+       std::string transname = in.pop().to_string();
+       std::string dispname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       add_master_contact_boundary_to_raytracing_transformation
+       (md->model(), transname, dispname, region);
+       );
+
+    /*@SET ('add slave contact boundary to raytracing transformation', @str transname, @str dispname, @int region)
+      Add a slave contact boundary with corresponding displacement variable
+      `dispname` on a specific boundary `region` to an existing raytracing
+      interpolate transformation called `transname`. @*/
+    sub_command
+      ("add slave contact boundary to raytracing transformation", 3, 3, 0, 0,
+       std::string transname = in.pop().to_string();
+       std::string dispname = in.pop().to_string();
+       size_type region = in.pop().to_integer();
+       add_slave_contact_boundary_to_raytracing_transformation
+       (md->model(), transname, dispname, region);
+       );
+
+    /*@SET ('add rigid obstacle to raytracing transformation', @str transname, @str expr, @int N)
+      Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression `expr`
+      to an existing raytracing interpolate transformation called `transname`.
+      @*/
+    sub_command
+      ("add rigid obstacle to raytracing transformation", 3, 3, 0, 0,
+       std::string transname = in.pop().to_string();
+       std::string expr = in.pop().to_string();
+       size_type N = in.pop().to_integer();
+       add_rigid_obstacle_to_raytracing_transformation
+       (md->model(), transname, expr, N);
+       );
 
     /*@SET ind = ('add linear generic assembly brick', @tmim mim, @str expression[, @int region[, @int is_symmetric[, @int is_coercive]]])
       Adds a matrix term given by the assembly string `expr` which will

@@ -81,6 +81,11 @@ namespace bgeot {
     void find_line_intersecting_boxes(const base_node& org,
                                       const base_small_vector& dirv,
                                       pbox_set& boxlst);
+    void find_line_intersecting_boxes(const base_node& org,
+                                      const base_small_vector& dirv,
+                                      const base_node& bmin,
+                                      const base_node& bmax,
+                                      pbox_set& boxlst);
 
     void find_intersecting_boxes(const base_node& bmin, const base_node& bmax,
                                  std::vector<size_type>& idvec) {
@@ -108,6 +113,15 @@ namespace bgeot {
                                       std::vector<size_type>& idvec) {
       pbox_set bs;
       find_line_intersecting_boxes(org, dirv, bs);
+      pbox_set_to_idvec(bs, idvec);
+    }
+    void find_line_intersecting_boxes(const base_node& org,
+                                      const base_small_vector& dirv,
+                                      const base_node& bmin,
+                                      const base_node& bmax,
+                                      std::vector<size_type>& idvec) {
+      pbox_set bs;
+      find_line_intersecting_boxes(org, dirv, bmin, bmax, bs);
       pbox_set_to_idvec(bs, idvec);
     }
 

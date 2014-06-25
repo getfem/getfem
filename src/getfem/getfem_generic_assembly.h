@@ -118,7 +118,8 @@ namespace getfem {
 
   class ga_workspace {
     
-    const getfem::model *model;
+    const model *md;
+    const ga_workspace *parent_workspace;
 
     struct var_description {
 
@@ -255,7 +256,7 @@ namespace getfem {
     size_type add_expression(const std::string expr, const mesh_im &mim,
                             const mesh_region &rg=mesh_region::all_convexes());
     /* Internal use */
-    void add_scalar_expression(const std::string expr);
+    void add_function_expression(const std::string expr);
     /* Internal use */
     void add_interpolation_expression(const std::string expr, const mesh &m,
                                       mesh_region rg);
@@ -270,69 +271,65 @@ namespace getfem {
         
     void add_fem_variable(const std::string &name, const mesh_fem &mf,
                           const gmm::sub_interval &I,
-                          const model_real_plain_vector &VV) {
-      GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(true, true, &mf, I, &VV, 0);
-    }
+                          const model_real_plain_vector &VV)
+    { variables[name] = var_description(true, true, &mf, I, &VV, 0); }
     
     void add_fixed_size_variable(const std::string &name,
                                  const gmm::sub_interval &I,
-                                 const model_real_plain_vector &VV) {
-      GMM_ASSERT1(!model, "Invalid use");
-      variables[name] = var_description(true, false, 0, I, &VV, 0);
-    }
+                                 const model_real_plain_vector &VV)
+    { variables[name] = var_description(true, false, 0, I, &VV, 0); }
 
     void add_fem_constant(const std::string &name, const mesh_fem &mf,
-                          const model_real_plain_vector &VV) {
-      GMM_ASSERT1(!model, "Invalid use");
+                          const model_real_plain_vector &VV) { 
       variables[name] = var_description(false, true, &mf,
                                         gmm::sub_interval(), &VV, 0);
     }
     
     void add_fixed_size_constant(const std::string &name,
                                  const model_real_plain_vector &VV) {
-      GMM_ASSERT1(!model, "Invalid use");
       variables[name] = var_description(false, false, 0,
                                         gmm::sub_interval(), &VV, 0);
     }
 
     void add_im_data(const std::string &name, const im_data &imd,
                      const model_real_plain_vector &VV) {
-      GMM_ASSERT1(!model, "Invalid use");
       variables[name] = var_description(false, false, 0,
                                         gmm::sub_interval(), &VV, &imd);
     }
-
 
     bool used_variables(model::varnamelist &vl, model::varnamelist &dl,
                         size_type order);
 
     bool variable_exists(const std::string &name) const {
-      if (model)
-        return model->variable_exists(name);
-      else
-        return (variables.find(name) != variables.end());
+      return (md && md->variable_exists(name)) ||
+        (parent_workspace && parent_workspace->variable_exists(name)) ||
+        (variables.find(name) != variables.end());
     }
 
     void define_variable_group(const std::string &group_name,
                                const std::vector<std::string> &nl);
-    bool variable_group_exists(std::string group_name) const {
-      if (model) return model->variable_group_exists(group_name);
-      else return variable_groups.find(group_name) != variable_groups.end();
+
+    bool variable_group_exists(std::string name) const {
+      return (md && md->variable_group_exists(name)) ||
+        (parent_workspace && parent_workspace->variable_group_exists(name)) ||
+        (variable_groups.find(name) != variable_groups.end());
     }
 
-    bool variable_or_group_exists(const std::string &name) const {
-      return variable_exists(name) || variable_group_exists(name);
-    }
+    bool variable_or_group_exists(const std::string &name) const
+    { return variable_exists(name) || variable_group_exists(name); }
 
     const std::vector<std::string>
     &variable_group(const std::string &group_name) const {
-      if (model) return model->variable_group(group_name);
-      else {
-        GMM_ASSERT1(variable_group_exists(group_name), 
-                    "Undefined variable group " << group_name);
+      std::map<std::string, std::vector<std::string> >::const_iterator
+        it = variable_groups.find(group_name);
+      if (it != variable_groups.end())
         return (variable_groups.find(group_name))->second;
-      }
+      if (md && md->variable_group_exists(group_name))
+        return md->variable_group(group_name);
+      if (parent_workspace &&
+          parent_workspace->variable_group_exists(group_name))
+        return parent_workspace->variable_group(group_name);
+      GMM_ASSERT1(false, "Undefined variable group " << group_name);
     }
 
     const std::string &first_variable_of_group(const std::string &name) const {
@@ -342,72 +339,71 @@ namespace getfem {
     }
 
     void add_interpolate_transformation(const std::string &name,
-                                        pinterpolate_transformation ptrans) {
-      GMM_ASSERT1(!model, "Invalid use");
-      transformations[name] = ptrans;
+                                        pinterpolate_transformation ptrans)
+    { transformations[name] = ptrans; }
+
+    bool interpolate_transformation_exists(const std::string &name) const {
+      return (md && md->interpolate_transformation_exists(name)) ||
+        (parent_workspace &&
+         parent_workspace->interpolate_transformation_exists(name)) ||
+        (transformations.find(name) != transformations.end());
     }
 
     pinterpolate_transformation
     interpolate_transformation(const std::string &name) const {
-      if (model) return model->interpolate_transformation(name);
-      else {
-        std::map<std::string, pinterpolate_transformation>::const_iterator
-          it = transformations.find(name);
-        GMM_ASSERT1(it != transformations.end(),
-                    "Inexistent transformation " << name);
-        return it->second;
-      }
-    }
-
-    bool interpolate_transformation_exists(const std::string &name) const {
-      if (model) return model->interpolate_transformation_exists(name);
-      else return ( transformations.find(name) != transformations.end());
+      std::map<std::string, pinterpolate_transformation>::const_iterator
+        it = transformations.find(name);
+      if (it != transformations.end()) return it->second;
+      if (md && md->interpolate_transformation_exists(name))
+        return md->interpolate_transformation(name);
+      if (parent_workspace &&
+         parent_workspace->interpolate_transformation_exists(name))
+        return parent_workspace->interpolate_transformation(name);
+      GMM_ASSERT1(false, "Inexistent transformation " << name);
     }
 
     bool is_constant(const std::string &name) const {
-      if (model)
-        return model->is_data(name);
-      else {
-        VAR_SET::const_iterator it = variables.find(name);
-        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-        return !(it->second.is_variable);
-      }
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end()) return !(it->second.is_variable);
+      if (md && md->variable_exists(name))
+        return md->is_data(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->is_constant(name);
+      GMM_ASSERT1(false, "Undefined variable " << name);
     }
 
     const gmm::sub_interval &
     interval_of_variable(const std::string &name) const {
-      if (model)
-        return model->interval_of_variable(name);
-      else {
-        VAR_SET::const_iterator it = variables.find(name);
-        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-        return it->second.I;
-      }
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end()) return it->second.I;
+      if (md && md->variable_exists(name))
+        return md->interval_of_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->interval_of_variable(name);
+      GMM_ASSERT1(false, "Undefined variable " << name);
     }
 
     const mesh_fem *associated_mf(const std::string &name) const {
-      if (variable_exists(name)) {
-        if (model)
-          return model->pmesh_fem_of_variable(name);
-        else {
-          VAR_SET::const_iterator it = variables.find(name);
-          GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-          return it->second.is_fem_dofs ? it->second.mf : 0;
-        }
-      } else if (variable_group_exists(name)) {
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end())
+        return it->second.is_fem_dofs ? it->second.mf : 0;
+      if (md && md->variable_exists(name))
+        return md->pmesh_fem_of_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->associated_mf(name);
+      if (variable_group_exists(name))
         return associated_mf(first_variable_of_group(name));
-      } else
-        GMM_ASSERT1(false, "Undefined variable or group " << name);
+      GMM_ASSERT1(false, "Undefined variable or group " << name);
     }
 
     const im_data *associated_im_data(const std::string &name) const {
-      if (model)
-        return model->pim_data_of_variable(name);
-      else {
-        VAR_SET::const_iterator it = variables.find(name);
-        GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-        return it->second.imd;
-      }
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end())  return it->second.imd;
+      if (md && md->variable_exists(name))
+        return md->pim_data_of_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->associated_im_data(name);      
+      GMM_ASSERT1(false, "Undefined variable " << name);
     }
 
     size_type qdim(const std::string &name) const {
@@ -457,28 +453,55 @@ namespace getfem {
     }
 
     const model_real_plain_vector &value(const std::string &name) const {
-      if (variable_exists(name)) {
-        if (model)
-          return model->real_variable(name);
-        else {
-          VAR_SET::const_iterator it = variables.find(name);
-          GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-          return *(it->second.V);
-        }
-      } else if (variable_group_exists(name)) {
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end())
+        return *(it->second.V);
+      if (md && md->variable_exists(name))
+        return md->real_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->value(name);
+      if (variable_group_exists(name))
         return value(first_variable_of_group(name));
-      } else
-        GMM_ASSERT1(false, "Undefined variable or group " << name);
+      GMM_ASSERT1(false, "Undefined variable or group " << name);
     }
 
     void assembly(size_type order);
 
-    ga_workspace(const getfem::model &md);
-    ga_workspace(void);
-    ~ga_workspace();
+    ga_workspace(const getfem::model &md_) : md(&md_), parent_workspace(0) {}
+    ga_workspace(const ga_workspace &gaw) : md(0), parent_workspace(&gaw) {}
+    ga_workspace(void) : md(0), parent_workspace(0) {}
+    ~ga_workspace() { clear_expressions(); }
 
   };
 
+  //=========================================================================
+  // Intermediate structure for user function manipulation
+  //=========================================================================
+
+  struct ga_instruction_set;
+
+  class ga_function {
+    // gerer les arguments et leur modif éventuelle ..
+    // Il faut pouvoir deriver les fonctions et obtenir leur gradients
+    mutable ga_workspace local_workspace;
+    std::string expr;
+    mutable ga_instruction_set *gis;
+    
+  public:
+    ga_function(void) : gis(0) {}
+    ga_function(const model &md, const std::string &e);
+    ga_function(const ga_workspace &workspace_, const std::string &e);
+    ga_function(const std::string &e);
+    ga_function(const ga_function &gaf);
+    ga_function &operator =(const ga_function &gaf);
+    ~ga_function();
+    const std::string &expression(void) const { return expr; }
+    const base_tensor &eval(void) const;
+    void derivative(const std::string &variable);
+    void compile(void) const;
+    ga_workspace &workspace(void) const { return  local_workspace; }
+
+  };
 
   //=========================================================================
   // Intermediate structure for interpolation functions

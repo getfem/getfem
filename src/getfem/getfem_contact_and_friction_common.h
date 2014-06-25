@@ -744,12 +744,72 @@ namespace getfem {
 
 
 
+  //=========================================================================
+  //
+  //  Raytracing Interpolate transformation
+  //
+  //=========================================================================
 
+  /** Add a raytracing interpolate transformation called 'transname' to a model
+      to be used by the generic assembly bricks.
+  */
+  void add_raytracing_transformation
+  (model &md, const std::string &transname, scalar_type release_distance);
 
+  /** Add a raytracing interpolate transformation called 'transname' to a
+      workspace to be used by the generic assembly bricks.
+  */
+  void add_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   scalar_type release_distance);
 
+  /** Add a master boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing raytracing
+      interpolate transformation called 'transname'.
+  */
+  void add_master_contact_boundary_to_raytracing_transformation
+  (model &md, const std::string &transname,
+   const std::string &dispname, size_type region);
 
+  /** Add a slave boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing raytracing
+      interpolate transformation called 'transname'.
+  */
+  void add_slave_contact_boundary_to_raytracing_transformation
+  (model &md, const std::string &transname,
+   const std::string &dispname, size_type region);
 
+  /** Add a master boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing raytracing
+      interpolate transformation called 'transname'.
+  */
+  void add_master_contact_boundary_to_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &dispname, size_type region);
 
+  /** Add a slave boundary with corresponding displacement variable
+      'dispname' on a specific boundary 'region' to an existing raytracing
+      interpolate transformation called 'transname'.
+  */
+  void add_slave_contact_boundary_to_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &dispname, size_type region);
+
+  /** Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression 'expr'
+      to an existing raytracin interpolate transformation called 'transname'.
+  */
+  void add_rigid_obstacle_to_raytracing_transformation
+  (model &md, const std::string &transname,
+   const std::string &expr, size_type N);
+
+  /** Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression 'expr'
+      to an existing raytracin interpolate transformation called 'transname'.
+  */
+  void add_rigid_obstacle_to_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &expr, size_type N);
 
 }  /* end of namespace getfem.                                             */
 

@@ -55,14 +55,14 @@ namespace bgeot {
     }
   }
 
-  static bool r1_ge_r2(const base_node& min1, const base_node& max1,
+  inline static bool r1_ge_r2(const base_node& min1, const base_node& max1,
 		       const base_node& min2, const base_node& max2) {
     for (size_type i=0; i < min1.size(); ++i)
       if (!(min1[i] <= min2[i] && max1[i] >= max2[i])) return false; 
     return true;
   }
 
-  static bool r1_inter_r2(const base_node& min1, const base_node& max1,
+  inline static bool r1_inter_r2(const base_node& min1, const base_node& max1,
 			  const base_node& min2, const base_node& max2) {
     for (size_type i=0; i < min1.size(); ++i) 
       if (max1[i] < min2[i] || min1[i] > max2[i]) return false; 
@@ -115,7 +115,7 @@ namespace bgeot {
     { return operator()(min2,max2); }
   };
 
-  /* match boxes intersection with the line passing by org and of
+  /* match boxes intersecting the line passing through org and of
      direction vector dirv.*/
   struct intersect_line {
     const base_node org;
@@ -142,6 +142,39 @@ namespace bgeot {
     bool accept(const base_node& min2, const base_node& max2) 
     { return operator()(min2,max2); }
   };
+
+  /* match boxes intersecting the line passing through org and of
+     direction vector dirv.*/
+  struct intersect_line_and_box {
+    const base_node org;
+    const base_small_vector dirv;
+    const base_node min,max;
+    intersect_line_and_box(const base_node& org_,
+                           const base_small_vector &dirv_,
+                           const base_node& min_, const base_node& max_)
+      : org(org_), dirv(dirv_), min(min_), max(max_) {}
+    bool operator()(const base_node& min2, const base_node& max2) {
+      size_type N = org.size();
+      GMM_ASSERT1(N == min2.size(), "Dimensions mismatch");
+      if (!(r1_inter_r2(min,max,min2,max2))) return false;
+      for (size_type i = 0; i < N; ++i)
+        if (dirv[i] != scalar_type(0)) {
+          scalar_type a1=(min2[i]-org[i])/dirv[i], a2=(max2[i]-org[i])/dirv[i];
+          bool interf1 = true, interf2 = true;
+          for (size_type j = 0; j < N; ++j)
+            if (j != i) {
+              scalar_type y1 = org[j] + a1*dirv[j], y2 = org[j] + a2*dirv[j];
+              if (y1 < min2[j] || y1 > max2[j]) interf1 = false;
+              if (y2 < min2[j] || y2 > max2[j]) interf2 = false;
+            }
+          if (interf1 || interf2) return true;
+        }
+      return false;
+    }
+    bool accept(const base_node& min2, const base_node& max2) 
+    { return operator()(min2,max2); }
+  };
+
 
   template <typename Predicate>
   static void find_matching_boxes_(rtree_elt_base *n, rtree::pbox_set& boxlst,
@@ -198,6 +231,17 @@ namespace bgeot {
                                            pbox_set& boxlst) {
     boxlst.clear(); if (!root) build_tree();
     if (root) find_matching_boxes_(root, boxlst, intersect_line(org, dirv));
+  }
+
+  void rtree::find_line_intersecting_boxes(const base_node& org,
+                                           const base_small_vector& dirv,
+                                           const base_node& bmin,
+                                           const base_node& bmax,
+                                           pbox_set& boxlst) {
+    boxlst.clear(); if (!root) build_tree();
+    if (root)
+      find_matching_boxes_(root, boxlst,
+                           intersect_line_and_box(org, dirv, bmin, bmax));
   }
 
   /* 

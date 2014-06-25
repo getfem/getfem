@@ -19,7 +19,7 @@
 clear all;
 gf_workspace('clear all');
 
-test_case = 1; % 0 = 2D punch on a rigid obstacle
+test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -31,10 +31,11 @@ r = 0.1;                    % Augmentation parameter
 alpha = 0;                  % Alpha coefficient for "sliding velocity"
 f_coeff = 0;                % Friction coefficient
 
-test_tangent_matrix = true;
+test_tangent_matrix = false;
 nonlinear_elasticity = false;
 max_iter = 50;
 draw_mesh = false;
+generic_assembly_contact_brick = false;
 
 switch(test_case)
   case {0,1}
@@ -142,7 +143,7 @@ if (draw_mesh)
     gf_plot_mesh(mesh2, 'regions', CONTACT_BOUNDARY2);
     hold off
   end
-  pause;
+  pause(2);
 end
 
 
@@ -218,38 +219,69 @@ end
   
 
 
+if (generic_assembly_contact_brick)
+  gf_model_set(md, 'add raytracing transformation', 'contact_trans', 2.5);
+  if (self_contact)
+    gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u1', CONTACT_BOUNDARY1);
+  else
+    gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', 'u1', CONTACT_BOUNDARY1);
+  end
 
-mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
-if (self_contact)
-  gf_multi_contact_frame_set(mcff, 'add master boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1');
+  switch(test_case)
+    case 0
+      gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '80-sqrt(sqr(x(1))+sqr(x(2)-80))', N);
+    case 1
+      if (self_contact)
+        gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+      else
+        gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+      end
+    case 2
+      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+      gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(2)', CONTACT_BOUNDARY1);
+    case 3
+      gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '2-sqrt(sqr(x(1))+sqr(x(2)-1))', N);
+    case 4
+      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+      gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(3)+5', N);
+  end
+  
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Test_lambda1, 0)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Test_lambda1, 1)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Test_lambda1, 2)', CONTACT_BOUNDARY1);
+    
 else
-  gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1'); 
-end
+  mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
+  if (self_contact)
+    gf_multi_contact_frame_set(mcff, 'add master boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1');
+  else
+    gf_multi_contact_frame_set(mcff, 'add slave boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1'); 
+  end
 
-switch(test_case)
-  case 0
-    gf_multi_contact_frame_set(mcff, 'add obstacle', '80-sqrt(x^2+(y-80)^2)'); 
-  case 1
-    if (self_contact)
+  switch(test_case)
+    case 0
+      gf_multi_contact_frame_set(mcff, 'add obstacle', '80-sqrt(x^2+(y-80)^2)'); 
+    case 1
+      if (self_contact)
+        gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+      else
+        gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2');
+      end
+    case 2
       gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
-    else
-      gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2');
-    end
-   case 2
-    gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
-    gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
-  case 3
-    gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');  
-  case 4
-    gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
-    gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
+      gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
+    case 3
+      gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');  
+    case 4
+      gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
+      gf_multi_contact_frame_set(mcff, 'add obstacle', 'z+5');
+  end
+
+  gf_model_set(md, 'add initialized data', 'r', r);
+  gf_model_set(md, 'add initialized data', 'alpha', alpha);
+  gf_model_set(md, 'add initialized data', 'f', f_coeff);
+  gf_model_set(md, 'add integral large sliding contact brick raytrace', mcff, 'r', 'f', 'alpha');
 end
-
-gf_model_set(md, 'add initialized data', 'r', r);
-gf_model_set(md, 'add initialized data', 'alpha', alpha);
-gf_model_set(md, 'add initialized data', 'f', f_coeff);
-gf_model_set(md, 'add integral large sliding contact brick raytrace', mcff, 'r', 'f', 'alpha');
-
 
 for nit=1:10000
   disp(sprintf('Iteration %d', nit));
@@ -259,7 +291,7 @@ for nit=1:10000
     % errmax = gf_model_get(md, 'test tangent matrix term', 'lambda1', 'u1', 1E-8, 20, 0.0001);
     disp(sprintf('errmax = %g', errmax));
     if (errmax > 1E-3) error('bad tangent matrix'); end;
-    pause;
+    pause(2);
   end
     
   gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', max_res); % , 'lsearch', 'simplest');
@@ -304,17 +336,20 @@ for nit=1:10000
   % tic;
   % gf_multi_contact_frame_get(mcff, 'compute pairs');
   % toc
-  slpt = gf_multi_contact_frame_get(mcff, 'slave points');
-  mapt = gf_multi_contact_frame_get(mcff, 'master points');
-  if (N == 2)
-    line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
-    scatter(slpt(1,:), slpt(2, :), 20, 'red');
-    scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
-  elseif (N == 3)
-    line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
-    scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
-    scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
+  if (~generic_assembly_contact_brick) % à étendre au cas generic assembly ...
+    slpt = gf_multi_contact_frame_get(mcff, 'slave points');
+    mapt = gf_multi_contact_frame_get(mcff, 'master points');
+    if (N == 2)
+      line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
+      scatter(slpt(1,:), slpt(2, :), 20, 'red');
+      scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
+    elseif (N == 3)
+      line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
+      scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
+      scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
+    end
   end
+  
   if (test_case == 0)
    rectangle('position', [-80, 0, 160, 160], 'Curvature', [1 1]);  % draw the obstacle
    axis([-15 15 -3 44]);

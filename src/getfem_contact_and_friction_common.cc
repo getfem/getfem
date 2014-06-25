@@ -21,6 +21,7 @@
 ===========================================================================*/
 
 #include "getfem/getfem_contact_and_friction_common.h"
+#include "getfem/getfem_generic_assembly.h"
 #ifndef _WIN32
 #include <unistd.h>
 #endif
@@ -1234,7 +1235,7 @@ namespace getfem {
 
         // CRITERION 5 : comparison with rigid obstacles
         // CRITERION 7 : smallest signed distance on contact pairs
-        if (first_pair_found && contact_pairs.back().signed_dist > signed_dist)
+        if (first_pair_found && contact_pairs.back().signed_dist < signed_dist)
             continue;
 
         // CRITERION 1 : again on found unit normal vector
@@ -1268,6 +1269,593 @@ namespace getfem {
 
     clear_aux_info();
   }
+
+  //=========================================================================
+  //
+  //  Raytracing interpolate transformation for generic assembly
+  //
+  //=========================================================================
+  
+  class  raytracing_interpolate_transformation
+    : public virtual_interpolate_transformation {
+
+    // Structure describing a contact boundary
+    struct contact_boundary {
+      size_type region;            // Boundary number
+      const getfem::mesh_fem *mfu; // F.e.m. for the displacement.
+      std::string dispname;        // Variable name for the displacement
+      mutable const model_real_plain_vector *U;      // Displacement
+      mutable model_real_plain_vector U_unred; // Unreduced displacement
+      bool slave;
+ 
+      contact_boundary(void) {}
+      contact_boundary(size_type r, const mesh_fem *mf, const std::string dn,
+                       bool sl)
+        : region(r), mfu(mf), dispname(dn), slave(sl) {}
+    };
+
+    struct face_box_info {     // Additional information for a face box
+      size_type ind_boundary;  // Boundary number
+      size_type ind_element;   // Element number
+      short_type ind_face;     // Face number in element
+      base_small_vector mean_normal;   // Mean outward normal unit vector
+      face_box_info(void) {}
+      face_box_info(size_type ib, size_type ie,
+                    short_type iff, const base_small_vector &n)
+        : ind_boundary(ib), ind_element(ie), ind_face(iff), mean_normal(n) {}
+    };
+
+    scalar_type release_distance;  // Limit distance beyond which the contact
+                                   // will not be considered.
+    
+    std::vector<contact_boundary> contact_boundaries;
+    typedef std::map<const mesh *, std::vector<size_type> > mesh_boundary_cor;
+    mesh_boundary_cor boundary_for_mesh;
+    
+    struct obstacle {
+      ga_function f;
+      ga_function der_f;
+      mutable base_vector x;
+    };
+
+    std::vector<obstacle> obstacles;
+        
+    mutable bgeot::rtree face_boxes;
+    mutable std::vector<face_box_info> face_boxes_info;
+
+
+    void compute_face_boxes(void) const { // called by init
+      fem_precomp_pool fppool;
+      base_matrix G;
+      model_real_plain_vector coeff;
+      face_boxes.clear();
+      face_boxes_info.resize(0);
+
+      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
+        const contact_boundary &cb =  contact_boundaries[i];
+        if (! cb.slave) {
+          size_type bnum = cb.region;
+          const mesh_fem &mfu = *(cb.mfu);
+          const model_real_plain_vector &U = *(cb.U);
+          const mesh &m = mfu.linked_mesh();
+          size_type N = m.dim();
+          
+          base_node val(N), bmin(N), bmax(N);
+          base_small_vector n0_x(N), n_x(N), n0_y(N), n_y(N), n_mean(N);
+          base_matrix grad(N,N);
+          mesh_region region = m.region(bnum);
+          GMM_ASSERT1(mfu.get_qdim() == N, "Wrong mesh_fem qdim");
+          
+          dal::bit_vector points_already_interpolated;
+          std::vector<base_node> transformed_points(m.nb_max_points());
+          for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
+            size_type cv = v.cv();
+            bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
+            pfem pf_s = mfu.fem_of_element(cv);
+            pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
+            slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
+            bgeot::vectors_to_base_matrix
+              (G, mfu.linked_mesh().points_of_convex(cv));
+            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
+                                          size_type(-1));
+            
+            bgeot::pconvex_structure cvs = pgt->structure();
+            size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
+            GMM_ASSERT1(nb_pt_on_face < 2, "This element less than two "
+                        "vertices on considered face !");
+            gmm::clear(n_mean);
+            
+            for (size_type k = 0; k < nb_pt_on_face; ++k) {
+              size_type ip = cvs->ind_points_of_face(v.f())[k];
+              size_type ind = m.ind_points_of_convex(cv)[ip];
+              
+              // computation of transformed vertex
+              if (!(points_already_interpolated.is_in(ind))) {
+                ctx.set_ii(ip);
+                pf_s->interpolation(ctx, coeff, val, dim_type(N));
+                val += ctx.xreal();
+                transformed_points[ind] = val;
+                points_already_interpolated.add(ind);
+              } else {
+                val = transformed_points[ind];
+              }
+              
+              if (k == 0) // computation of bounding box
+                bmin = bmax = val;
+              else {
+                for (size_type l = 0; l < N; ++l) {
+                  bmin[l] = std::min(bmin[l], val[l]);
+                  bmax[l] = std::max(bmax[l], val[l]);
+                }
+              }
+              
+              // computation of unit normal vector if the vertex is on the face
+              compute_normal(ctx, v.f(), false, coeff, n0_x, n_x, grad);
+              n_x /= gmm::vect_norm2(n_x);
+              n_mean += n_x;
+            }
+            
+            // Security coefficient of 1.3 (for nonlinear transformations)
+            scalar_type h = bmax[0] - bmin[0];
+            for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
+            for (size_type k = 0; k < N; ++k)
+              { bmin[k] -= h * 0.15; bmax[k] += h * 0.15; }
+            
+            // Store the bounding box and additional information.
+            face_boxes.add_box(bmin, bmax, face_boxes_info.size());
+            n_mean /= gmm::vect_norm2(n_mean);
+            face_boxes_info.push_back(face_box_info(i, cv, v.f(), n_mean));
+          }
+        }
+      }
+      
+    }
+
+  public:
+
+    void add_rigid_obstacle(const model &md, const std::string &expr,
+                            size_type N) {
+      // cout << "adding rigid obstacle " << expr << endl;
+      obstacles.push_back(obstacle());
+      obstacles.back().f = ga_function(md, expr);
+      gmm::resize(obstacles.back().x, N);
+      obstacles.back().f.workspace().add_fixed_size_variable
+        ("x", gmm::sub_interval(0, N), obstacles.back().x);
+      obstacles.back().f.compile();
+      obstacles.back().der_f = obstacles.back().f;
+      obstacles.back().der_f.derivative("x");
+    }
+
+    void add_rigid_obstacle(const ga_workspace &workspace,
+                            const std::string &expr, size_type N) {
+      obstacles.push_back(obstacle());
+      obstacles.back().f = ga_function(workspace, expr);
+      gmm::resize(obstacles.back().x, N);
+      obstacles.back().f.workspace().add_fixed_size_variable
+        ("x", gmm::sub_interval(0, N), obstacles.back().x);
+      obstacles.back().f.compile();
+      obstacles.back().der_f = obstacles.back().f;
+      obstacles.back().der_f.derivative("x");
+    }
+
+    void add_contact_boundary(const model &md,
+                              const std::string dispname,
+                              size_type region, bool slave) {
+      const mesh_fem *mf = md.pmesh_fem_of_variable(dispname);
+      GMM_ASSERT1(mf, "Displacement should be a fem variable");
+      contact_boundary cb(region, mf, dispname, slave);
+      boundary_for_mesh[&(mf->linked_mesh())].push_back(contact_boundaries.size());
+      contact_boundaries.push_back(cb);
+    }
+    
+    void add_contact_boundary(const ga_workspace &workspace,
+                              const std::string dispname,
+                              size_type region, bool slave) {
+      const mesh_fem *mf = workspace.associated_mf(dispname);
+      GMM_ASSERT1(mf, "Displacement should be a fem variable");
+      contact_boundary cb(region, mf, dispname, slave);
+      boundary_for_mesh[&(mf->linked_mesh())].push_back(contact_boundaries.size());
+      contact_boundaries.push_back(cb);
+    }
+
+    void init(const ga_workspace &workspace) const {
+      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
+        const contact_boundary &cb =  contact_boundaries[i];
+        const mesh_fem &mfu = *(cb.mfu);
+        if (mfu.is_reduced()) {
+          gmm::resize(cb.U_unred, mfu.nb_basic_dof());
+          mfu.extend_vector(workspace.value(cb.dispname), cb.U_unred);
+          cb.U = &(cb.U_unred);
+        } else {
+          cb.U = &(workspace.value(cb.dispname));
+        }
+      }
+      compute_face_boxes();
+    };
+
+    void finalize(void) const {
+      face_boxes.clear();
+      face_boxes_info = std::vector<face_box_info>();
+      for (size_type i = 0; i < contact_boundaries.size(); ++i)
+        contact_boundaries[i].U_unred = model_real_plain_vector();
+    }
+
+    int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
+                  fem_interpolation_context &ctx_x,
+                  const base_small_vector &/*Normal*/,
+                  const mesh **m_t,
+                  size_type &cv, size_type &face_num, base_node &P_ref,
+                  base_small_vector &N_y) const {
+      size_type cv_x = ctx_x.convex_num();
+      size_type face_x = ctx_x.face_num();
+      GMM_ASSERT1(face_x != size_type(-1), "The contact transformation can "
+                  "only be applied to a boundary");
+
+      //
+      // Find the right (slave) contact boundary
+      //
+      mesh_boundary_cor::const_iterator it =  boundary_for_mesh.find(&m_x);
+      GMM_ASSERT1(it != boundary_for_mesh.end(),
+                  "Mesh with no declared contact boundary");
+      const std::vector<size_type> &boundaries_ind = it->second;
+      size_type ib_x = size_type(-1);
+      for (size_type i = 0; i < boundaries_ind.size(); ++i) {
+        const contact_boundary &cb =  contact_boundaries[boundaries_ind[i]];
+        if (m_x.region(cb.region).is_in(cv_x, face_x))
+          { ib_x = boundaries_ind[i]; break; }
+      }
+      GMM_ASSERT1(ib_x != size_type(-1),
+                  "No contact region found for this point");
+      const contact_boundary &cb_x =  contact_boundaries[ib_x];
+      const mesh_fem &mfu_x = *(cb_x.mfu); 
+      pfem pfu_x = mfu_x.fem_of_element(cv_x);
+      size_type N = mfu_x.linked_mesh().dim();
+      GMM_ASSERT1(mfu_x.get_qdim() == N,
+                  "Displacment field with wrong dimension");
+      
+      model_real_plain_vector coeff;
+      base_small_vector a(N-1), b(N-1), pt_x(N), pt_y(N), n_x(N);
+      base_small_vector stored_pt_y(N), stored_n_y(N), stored_pt_y_ref(N);
+      base_small_vector n0_x, n_y(N), n0_y, res(N-1), res2(N-1), dir(N-1);
+      base_matrix G_x, G_y, grad(N,N), hessa(N-1, N-1);
+      std::vector<base_small_vector> ti(N-1), Ti(N-1);
+      scalar_type stored_signed_distance(0);
+      scalar_type d0 = 1E300, d1, d2;
+      const mesh *stored_m_y(0);
+      size_type stored_cv_y(-1), stored_face_y(-1);
+
+      //
+      // Computation of the deformed point and unit normal vectors
+      //
+      slice_vector_on_basic_dof_of_element(mfu_x, *(cb_x.U), cv_x, coeff);
+      bgeot::vectors_to_base_matrix(G_x, m_x.points_of_convex(cv_x));
+      ctx_x.set_pf(pfu_x);
+      pfu_x->interpolation(ctx_x, coeff, pt_x, dim_type(N));
+      pt_x += ctx_x.xreal();
+      compute_normal(ctx_x, face_x, false, coeff, n0_x, n_x, grad);
+      n_x /= gmm::vect_norm2(n_x);
+
+      //
+      //  Determine the nearest rigid obstacle, taking into account
+      //  the release distance.
+      //
+
+      bool first_pair_found = false;
+      size_type irigid_obstacle(-1);
+      for (size_type i = 0; i < obstacles.size(); ++i) {
+        const obstacle &obs = obstacles[i];
+        gmm::copy(pt_x, obs.x);
+        const base_tensor &t = obs.f.eval();
+        
+        GMM_ASSERT1(t.size() == 1, "Obstacle level set function as to be "
+                    "a scalar valued one");
+        d1 = t[0];
+        // cout << "d1 = " << d1 << endl;
+        if (gmm::abs(d1) < release_distance && d1 < d0) {
+          const base_tensor &t_der = obs.der_f.eval();
+          // cout << "t_der.as_vector() = " << t_der.as_vector() << endl;
+          if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) 
+            { d0 = d1; irigid_obstacle = i; gmm::copy(t_der.as_vector(),n_y); }
+        }
+      }
+      
+      if (irigid_obstacle != size_type(-1)) {
+        // cout << "Testing obstacle " << irigid_obstacle << endl;
+        const obstacle &obs = obstacles[irigid_obstacle];
+        gmm::copy(pt_x, obs.x);
+        gmm::copy(pt_x, pt_y);
+        size_type nit = 0, nb_fail = 0;
+        scalar_type alpha(0), beta(0);
+        d1 = d0;
+        
+        while (gmm::abs(d1) > 1E-13 && ++nit < 50 && nb_fail < 3) {
+          if (nit != 1) gmm::copy(obs.der_f.eval().as_vector(), n_y);
+
+          for (scalar_type lambda(1); lambda >= 1E-3; lambda/=scalar_type(2)) {
+            alpha = beta - lambda * d1 / gmm::vect_sp(n_y, n_x);
+            gmm::add(pt_x, gmm::scaled(n_x, alpha), obs.x);
+            d2 = obs.f.eval()[0];
+            if (gmm::abs(d2) < gmm::abs(d1)) break;
+          }
+          if (gmm::abs(beta - d1 / gmm::vect_sp(n_y, n_x)) > scalar_type(500))
+            nb_fail++;
+          beta = alpha; d1 = d2;
+        }
+        gmm::copy(obs.x, pt_y);
+
+        if (gmm::abs(d1) > 1E-8) {
+           GMM_WARNING1("Raytrace on rigid obstacle failed");
+        } // CRITERION 4 for rigid bodies : Apply the release distance
+        else if (gmm::vect_dist2(pt_y, pt_x) <= release_distance) {
+          n_y /= gmm::vect_norm2(n_y);
+          d0 = gmm::vect_dist2(pt_y, pt_x) * gmm::sgn(d0);
+          
+          stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y, 
+          stored_signed_distance = d0;
+          first_pair_found = true;
+        }
+      }
+      
+      //
+      // Determine the potential contact pairs with deformable bodies
+      //
+      bgeot::rtree::pbox_set bset;
+      base_node bmin(pt_x), bmax(pt_x);
+      for (size_type i = 0; i < N; ++i)
+        { bmin[i] -= release_distance; bmax[i] += release_distance; }
+
+      face_boxes.find_line_intersecting_boxes(pt_x, n_x, bmin, bmax, bset);
+
+      //
+      // Iteration on potential contact pairs and application
+      // of selection criteria
+      //
+      bgeot::rtree::pbox_set::iterator it_cp = bset.begin();
+      for (; it_cp != bset.end(); ++it_cp) {
+        face_box_info &fbox_y = face_boxes_info[(*it_cp)->id];
+        size_type ib_y = fbox_y.ind_boundary;
+        const contact_boundary &cb_y =  contact_boundaries[ib_y];
+        const mesh_fem &mfu_y = *(cb_y.mfu);
+        const mesh &m_y = mfu_y.linked_mesh();
+        size_type cv_y = fbox_y.ind_element;
+        pfem pfu_y = mfu_y.fem_of_element(cv_y);
+        size_type face_y = fbox_y.ind_face;
+        bgeot::pgeometric_trans pgt_y= m_y.trans_of_convex(cv_y);
+
+        // CRITERION 1 : The unit normal vector are compatible
+        //               and the two points are not in the same element.
+        if (gmm::vect_sp(fbox_y.mean_normal, n_x) >= scalar_type(0) ||
+            (cv_x == cv_y && &m_x == &m_y))
+          continue;
+
+        //
+        // Raytrace search for y by Newton's algorithm
+        //
+
+        bgeot::vectors_to_base_matrix(G_y, m_y.points_of_convex(cv_y));
+        const base_node &Y0
+          = pfu_y->ref_convex(cv_y)->points_of_face(short_type(face_y))[0];
+        fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
+        
+        const base_small_vector &NY0
+          = pfu_y->ref_convex(cv_y)->normals()[face_y];
+        for (size_type k = 0; k < N-1; ++k) { // A basis for the face
+          gmm::resize(ti[k], N);
+          scalar_type norm(0);
+          while(norm < 1E-5) {
+            gmm::fill_random(ti[k]);
+            ti[k] -= gmm::vect_sp(ti[k], NY0) * NY0;
+            for (size_type l = 0; l < k; ++l)
+              ti[k] -= gmm::vect_sp(ti[k], ti[l]) * ti[l];
+            norm = gmm::vect_norm2(ti[k]);
+          }
+          ti[k] /= norm;
+        }
+
+        gmm::clear(a);
+        
+        for (size_type k = 0; k < N-1; ++k) {
+          gmm::resize(Ti[k], N);
+          scalar_type norm(0);
+          while (norm < 1E-5) {
+            gmm::fill_random(Ti[k]);
+            Ti[k] -= gmm::vect_sp(Ti[k], n_x) * n_x;
+            for (size_type l = 0; l < k; ++l)
+              Ti[k] -= gmm::vect_sp(Ti[k], Ti[l]) * Ti[l];
+            norm = gmm::vect_norm2(Ti[k]);
+          }
+          Ti[k] /= norm;
+        }
+
+        slice_vector_on_basic_dof_of_element(mfu_y, *(cb_y.U), cv_y, coeff);
+
+        raytrace_pt_surf_cost_function_object pps(Y0, pt_x, ctx_y, coeff,
+                                                  ti, Ti, false);
+        pps(a, res);
+        scalar_type residual = gmm::vect_norm2(res);
+        scalar_type residual2(0), det(0);
+        bool exited = false;
+        size_type nbfail = 0, niter = 0;
+        for (;residual > 2E-12 && niter <= 30; ++niter) {
+          
+          for (size_type subiter(0);;) {
+            pps(a, hessa);
+            det = gmm::abs(gmm::lu_inverse(hessa, false));
+            if (det > 1E-15) break;
+            for (size_type i = 0; i < N-1; ++i)
+              a[i] += gmm::random() * 1E-7;
+            if (++subiter > 4) break;
+          }
+          if (det <= 1E-15) break;
+          // Computation of the descent direction
+          gmm::mult(hessa, gmm::scaled(res, scalar_type(-1)), dir);
+          
+          if (gmm::vect_norm2(dir) > scalar_type(10)) nbfail++;
+          if (nbfail >= 4) break;
+          
+          // Line search
+          scalar_type lambda(1);
+          for (size_type j = 0; j < 5; ++j) {
+            gmm::add(a, gmm::scaled(dir, lambda), b);
+            pps(b, res2);
+            residual2 = gmm::vect_norm2(res2);
+            if (residual2 < residual) break;
+            lambda /= ((j < 3) ? scalar_type(2) : scalar_type(5));
+          }
+          
+          residual = residual2;
+          gmm::copy(res2, res);
+          gmm::copy(b, a);
+          scalar_type dist_ref = gmm::vect_norm2(a);
+          
+          if (niter > 1 && dist_ref > 15) break;
+          if (niter > 5 && dist_ref > 8) break;
+          if ((niter > 1 && dist_ref > 7) || nbfail == 3) exited = true;
+        }
+        bool converged = (gmm::vect_norm2(res) < 2E-6);
+        bool is_in = (pfu_y->ref_convex(cv_y)->is_in(ctx_y.xref()) < 1E-6);
+        GMM_ASSERT1(!(exited && converged && is_in),
+                    "A non conformal case !! " << gmm::vect_norm2(res)
+                    << " : " << nbfail << " : " << niter);
+        
+        if (is_in) {
+          ctx_y.pf()->interpolation(ctx_y, coeff, pt_y, dim_type(N));
+          pt_y += ctx_y.xreal();
+        }
+
+        // CRITERION 2 : The contact pair is eliminated when
+        //               raytrace do not converge.
+        if (!converged) continue;
+        
+        // CRITERION 3 : The raytraced point is inside the element
+        if (!is_in) continue;
+
+        // CRITERION 4 : Apply the release distance
+        scalar_type signed_dist = gmm::vect_dist2(pt_y, pt_x);
+        if (signed_dist > release_distance) continue;
+        
+        // compute the unit normal vector at y and the signed distance.
+        compute_normal(ctx_y, face_y, false, coeff, n0_y, n_y, grad);
+        n_y /= gmm::vect_norm2(n_y); // Useful only if the unit normal is kept
+        signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
+
+        // CRITERION 5 : comparison with rigid obstacles
+        // CRITERION 7 : smallest signed distance on contact pairs
+        if (first_pair_found && stored_signed_distance < signed_dist)
+          continue;
+
+        // CRITERION 1 : again on found unit normal vector
+        if (gmm::vect_sp(n_y, n_x) >= scalar_type(0)) continue;
+
+        // CRITERION 6 : for self-contact only : apply a test on
+        //               unit normals in reference configuration.
+        if (&m_x == &m_y) {
+          base_small_vector diff = ctx_x.xreal() - ctx_y.xreal();
+          scalar_type ref_dist = gmm::vect_norm2(diff);
+          if ( (ref_dist < scalar_type(4) * release_distance)
+               && (gmm::vect_sp(diff, n0_y) < - 0.01 * ref_dist) )
+            continue;
+        }
+
+        stored_pt_y = pt_y; stored_pt_y_ref = ctx_y.xref();
+        stored_m_y = &m_y; stored_cv_y = cv_y; stored_face_y = face_y;
+        stored_signed_distance = signed_dist;
+        first_pair_found = true;
+        irigid_obstacle = size_type(-1);
+      }
+
+
+      if (irigid_obstacle != size_type(-1)) {
+        *m_t = 0; cv = face_num = size_type(-1);
+        P_ref = stored_pt_y;
+        // cout << "return 2" << endl;
+        return 2;
+      }
+      if (first_pair_found) {
+        *m_t = stored_m_y; cv = stored_cv_y; face_num = stored_face_y;
+        P_ref = stored_pt_y_ref; N_y = stored_n_y;
+        // cout << "return 1" << endl;
+        return 1;
+      }
+      // cout << "return 0" << endl;
+      return 0;
+    }
+    
+    raytracing_interpolate_transformation(scalar_type d) : release_distance(d) {}
+  };
+
+  void add_raytracing_transformation
+  (model &md, const std::string &transname, scalar_type d) {
+    pinterpolate_transformation p = new raytracing_interpolate_transformation(d);
+    md.add_interpolate_transformation(transname, p);
+  }
+
+  void add_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname, scalar_type d) {
+    pinterpolate_transformation p = new raytracing_interpolate_transformation(d);
+    workspace.add_interpolate_transformation(transname, p);
+  }
+
+  void add_master_contact_boundary_to_raytracing_transformation
+  (model &md, const std::string &transname,
+   const std::string &dispname, size_type region) {
+    raytracing_interpolate_transformation *p
+      = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(md.interpolate_transformation(transname)))));
+    p->add_contact_boundary(md, dispname, region, false);
+  }
+
+  void add_slave_contact_boundary_to_raytracing_transformation
+  (model &md, const std::string &transname,
+   const std::string &dispname, size_type region) {
+    raytracing_interpolate_transformation *p
+      = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(md.interpolate_transformation(transname)))));
+    p->add_contact_boundary(md, dispname, region, true);
+  }
+
+  void add_master_contact_boundary_to_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &dispname, size_type region) {
+    raytracing_interpolate_transformation *p
+      = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(workspace.interpolate_transformation(transname)))));
+    p->add_contact_boundary(workspace, dispname, region, false);
+  }
+
+  void add_slave_contact_boundary_to_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &dispname, size_type region) {
+    raytracing_interpolate_transformation *p
+      = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(workspace.interpolate_transformation(transname)))));
+    p->add_contact_boundary(workspace, dispname, region, true);
+  }
+
+  void add_rigid_obstacle_to_raytracing_transformation
+  (model &md, const std::string &transname,
+   const std::string &expr, size_type N) {
+    raytracing_interpolate_transformation *p
+      = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(md.interpolate_transformation(transname)))));
+    p->add_rigid_obstacle(md, expr, N);
+  }
+
+  void add_rigid_obstacle_to_raytracing_transformation
+  (ga_workspace &workspace, const std::string &transname,
+   const std::string &expr, size_type N) {
+    raytracing_interpolate_transformation *p
+      = dynamic_cast<raytracing_interpolate_transformation *>
+      (const_cast<virtual_interpolate_transformation *>
+       (&(*(workspace.interpolate_transformation(transname)))));
+    p->add_rigid_obstacle(workspace, expr, N);
+  }
+
 
 
 
