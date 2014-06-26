@@ -363,7 +363,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #endif
 
 #ifndef EXPORTED_TO_SHARED_LIB
-#  ifndef EXPORTED_TO_SHARED_LIB
+#  ifndef IMPORTED_FROM_SHARED_LIB
 #    define APIDECL  //empty, used during static linking
 #  endif
 #endif
