@@ -1306,18 +1306,24 @@ namespace getfem {
   //
   //=========================================================================
 
+  typedef std::pair<std::string, std::string> var_trans_pair;
+
   class APIDECL virtual_interpolate_transformation
     : virtual public dal::static_stored_object {
 
   public:
+    virtual void extract_variables
+    (const ga_workspace &workspace, std::set<var_trans_pair> &vars,
+     bool ignore_data, const std::string &name,
+     const std::string &interpolate_name) const = 0;
     virtual void init(const ga_workspace &workspace) const = 0;
-    virtual int transform(const ga_workspace &workspace,
-                          const mesh &m,
-                          fem_interpolation_context &ctx_x,
-                          const base_small_vector &Normal,
-                          const mesh **m_t,
-                          size_type &cv, size_type &face_num,
-                          base_node &P_ref, base_small_vector &N_y) const = 0;
+    virtual int transform
+    (const ga_workspace &workspace, const mesh &m,
+     fem_interpolation_context &ctx_x, const base_small_vector &Normal,
+     const mesh **m_t, size_type &cv, size_type &face_num,
+     base_node &P_ref, base_small_vector &N_y,
+     std::map<var_trans_pair, base_tensor> &derivatives,
+     bool compute_derivatives) const = 0;
     virtual void finalize(void) const = 0;
 
     virtual ~virtual_interpolate_transformation() {}

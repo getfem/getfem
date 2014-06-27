@@ -768,7 +768,7 @@ namespace getfem {
       interpolate transformation called 'transname'.
   */
   void add_master_contact_boundary_to_raytracing_transformation
-  (model &md, const std::string &transname,
+  (model &md, const std::string &transname,const mesh &m, 
    const std::string &dispname, size_type region);
 
   /** Add a slave boundary with corresponding displacement variable
@@ -776,7 +776,7 @@ namespace getfem {
       interpolate transformation called 'transname'.
   */
   void add_slave_contact_boundary_to_raytracing_transformation
-  (model &md, const std::string &transname,
+  (model &md, const std::string &transname, const mesh &m, 
    const std::string &dispname, size_type region);
 
   /** Add a master boundary with corresponding displacement variable
@@ -784,7 +784,7 @@ namespace getfem {
       interpolate transformation called 'transname'.
   */
   void add_master_contact_boundary_to_raytracing_transformation
-  (ga_workspace &workspace, const std::string &transname,
+  (ga_workspace &workspace, const std::string &transname, const mesh &m, 
    const std::string &dispname, size_type region);
 
   /** Add a slave boundary with corresponding displacement variable
@@ -792,7 +792,7 @@ namespace getfem {
       interpolate transformation called 'transname'.
   */
   void add_slave_contact_boundary_to_raytracing_transformation
-  (ga_workspace &workspace, const std::string &transname,
+  (ga_workspace &workspace, const std::string &transname, const mesh &m,
    const std::string &dispname, size_type region);
 
   /** Add a rigid obstacle whose geometry corresponds to the zero level-set

@@ -614,4 +614,4 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 (see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
 
 
-**CAUTION**: For the moment, when some variables are used in the transformation expression, the derivative of the transformation with respect to these variable **is not taken into account** when generic assembly expression are derived to obtain for instance the tangent system. 
+**CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus suach a transformation is not allowed in a potential definition since it cannot be derived twice.

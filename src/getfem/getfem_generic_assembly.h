@@ -244,7 +244,6 @@ namespace getfem {
     base_tensor &assembled_tensor(void) { return assemb_t; }
     const base_tensor &assembled_tensor(void) const { return assemb_t; }
 
-
     model_real_sparse_matrix &unreduced_matrix(void)
     { return unreduced_K; }
     base_vector &unreduced_vector(void) { return unreduced_V; }
@@ -266,7 +265,7 @@ namespace getfem {
     
 
     void add_aux_tree(ga_tree &tree);
-    size_type nb_trees(void);
+    size_type nb_trees(void) const;
     tree_description &tree_info(size_type i);
         
     void add_fem_variable(const std::string &name, const mesh_fem &mf,

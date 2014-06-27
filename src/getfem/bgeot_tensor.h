@@ -58,7 +58,7 @@ namespace bgeot {
       const_iterator itm = m.begin();
       if (it != ite) {
         ++(*it);
-        while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it);}
+        while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it); }
       } else resize(1);
     }
     
@@ -201,12 +201,21 @@ namespace bgeot {
       for ( ; p != pe; ++p, ++it) { *p = d; d *= *it; }
       this->resize(d);
     }
+
+    void init(size_type i, size_type j) {
+      sizes_.resize(2); sizes_[0] = i; sizes_[1] = j;
+      coeff.resize(2); coeff[0] = 1; coeff[1] = i;
+      this->resize(i*j);
+    }
     
     void adjust_sizes(const multi_index &mi) {
       if (!mi.size() || (mi.size() != sizes().size())
           || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
         init(mi);
     }
+
+    void adjust_sizes(size_type i, size_type j)
+    { if (sizes_.size() != 2 || sizes_[0] != i || sizes_[1] != j) init(i, j); }
     
     tensor(const multi_index &c) { init(c); }
     tensor(size_type i, size_type j, size_type k, size_type l)

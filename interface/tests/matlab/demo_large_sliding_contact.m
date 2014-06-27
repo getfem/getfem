@@ -222,9 +222,9 @@ end
 if (generic_assembly_contact_brick)
   gf_model_set(md, 'add raytracing transformation', 'contact_trans', 2.5);
   if (self_contact)
-    gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u1', CONTACT_BOUNDARY1);
+    gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u1', CONTACT_BOUNDARY1);
   else
-    gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', 'u1', CONTACT_BOUNDARY1);
+    gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u1', CONTACT_BOUNDARY1);
   end
 
   switch(test_case)
@@ -232,17 +232,17 @@ if (generic_assembly_contact_brick)
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '80-sqrt(sqr(x(1))+sqr(x(2)-80))', N);
     case 1
       if (self_contact)
-        gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+        gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
       else
-        gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+        gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
       end
     case 2
-      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(2)', CONTACT_BOUNDARY1);
     case 3
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '2-sqrt(sqr(x(1))+sqr(x(2)-1))', N);
     case 4
-      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', 'u2', CONTACT_BOUNDARY2);
+      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(3)+5', N);
   end
   

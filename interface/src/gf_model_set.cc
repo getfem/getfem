@@ -317,8 +317,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       Add a transformation to the model from mesh `source_mesh` to mesh
       `target_mesh` given by the expression `expr` which corresponds to a
       high-level generic assembly expression which may contains some
-      variable of the model. CAUTION: For the moment, the derivative of the
-      transformation is not taken into account in the model solve. @*/
+      variable of the model. CAUTION: the derivative of the
+      transformation with used variable is taken into account in the
+      computation of the tangen system. However, order two derivative is not
+      implemented, so such tranformation is not allowed in the definition
+      of a potential. @*/
     sub_command
       ("add interpolate transformation from expression", 4, 4, 0, 0,
        std::string transname = in.pop().to_string();
@@ -341,30 +344,32 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        add_raytracing_transformation(md->model(), transname, d);
        );
 
-    /*@SET ('add master contact boundary to raytracing transformation', @str transname, @str dispname, @int region)
+    /*@SET ('add master contact boundary to raytracing transformation', @str transname, @tmesh m, @str dispname, @int region)
       Add a master contact boundary with corresponding displacement variable
       `dispname` on a specific boundary `region` to an existing raytracing
       interpolate transformation called `transname`. @*/
     sub_command
-      ("add master contact boundary to raytracing transformation", 3, 3, 0, 0,
+      ("add master contact boundary to raytracing transformation", 4, 4, 0, 0,
        std::string transname = in.pop().to_string();
+       getfemint_mesh *sm = in.pop().to_getfemint_mesh();
        std::string dispname = in.pop().to_string();
        size_type region = in.pop().to_integer();
        add_master_contact_boundary_to_raytracing_transformation
-       (md->model(), transname, dispname, region);
+       (md->model(), transname, sm->mesh(), dispname, region);
        );
 
-    /*@SET ('add slave contact boundary to raytracing transformation', @str transname, @str dispname, @int region)
+    /*@SET ('add slave contact boundary to raytracing transformation', @str transname, @tmesh m, @str dispname, @int region)
       Add a slave contact boundary with corresponding displacement variable
       `dispname` on a specific boundary `region` to an existing raytracing
       interpolate transformation called `transname`. @*/
     sub_command
-      ("add slave contact boundary to raytracing transformation", 3, 3, 0, 0,
+      ("add slave contact boundary to raytracing transformation", 4, 4, 0, 0,
        std::string transname = in.pop().to_string();
+       getfemint_mesh *sm = in.pop().to_getfemint_mesh();
        std::string dispname = in.pop().to_string();
        size_type region = in.pop().to_integer();
        add_slave_contact_boundary_to_raytracing_transformation
-       (md->model(), transname, dispname, region);
+       (md->model(), transname, sm->mesh(), dispname, region);
        );
 
     /*@SET ('add rigid obstacle to raytracing transformation', @str transname, @str expr, @int N)
