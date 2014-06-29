@@ -180,7 +180,7 @@ namespace getfem {
 #endif
 
     /// Constructor.
-    mesh(const std::string name = "");
+    explicit mesh(const std::string name = "");
     mesh(const bgeot::basic_mesh &m, const std::string name = "");
     inline std::string get_name() const {return name_;}
     void update_from_context(void) const {}

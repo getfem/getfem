@@ -1314,7 +1314,7 @@ namespace getfem {
   public:
     virtual void extract_variables
     (const ga_workspace &workspace, std::set<var_trans_pair> &vars,
-     bool ignore_data, const std::string &name,
+     bool ignore_data, const mesh &m,
      const std::string &interpolate_name) const = 0;
     virtual void init(const ga_workspace &workspace) const = 0;
     virtual int transform

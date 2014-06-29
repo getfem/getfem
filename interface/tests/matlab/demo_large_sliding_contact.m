@@ -35,7 +35,7 @@ test_tangent_matrix = false;
 nonlinear_elasticity = false;
 max_iter = 50;
 draw_mesh = false;
-generic_assembly_contact_brick = false;
+generic_assembly_contact_brick = true;
 
 switch(test_case)
   case {0,1}
@@ -247,8 +247,8 @@ if (generic_assembly_contact_brick)
   end
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Test_lambda1, 0)', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Test_lambda1, 1)', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Test_lambda1, 2)', CONTACT_BOUNDARY1);
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, Interpolate(u1,contact_trans).Test_u1, 1)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (lambda1-x+Interpolate(x,contact_trans)).Test_lambda1, 2)', CONTACT_BOUNDARY1);
     
 else
   mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
