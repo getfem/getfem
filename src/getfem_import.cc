@@ -73,6 +73,12 @@ namespace getfem {
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
       } break;
+      case 26: { /* 3RD ORDER LINE */
+        pgt = bgeot::simplex_geotrans(1,3);
+      } break;
+      case 21: { /* 3RD ORDER TRIANGLE */
+        pgt = bgeot::simplex_geotrans(2,3);
+      } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
         GMM_ASSERT1(false, "gmsh element type " << type << " is unknown.");
@@ -120,9 +126,15 @@ namespace getfem {
       case 15: { /* POINT */
         GMM_WARNING2("ignoring point element");
       } break;
+      case 26: { /* 3RD ORDER LINE */
+        nodes.resize(4);
+      } break;
+      case 21: { /* 3RD ORDER TRIANGLE */
+        nodes.resize(10);
+      } break;
       default: { /* UNKNOWN .. */
         /* higher order elements : to be done .. */
-        GMM_ASSERT1(false, "the gmsh element type " << type << "is unknown..");
+        GMM_ASSERT1(false, "the gmsh element type " << type << " is unknown..");
       } break;
       }
     }
@@ -346,6 +358,26 @@ namespace getfem {
           ci.nodes[4] = tmp_nodes[4]; ci.nodes[5] = tmp_nodes[5];
           ci.nodes[6] = tmp_nodes[6]; ci.nodes[7] = tmp_nodes[7];
           ci.nodes[8] = tmp_nodes[8];
+        }
+          break;
+        case 26 : { /* Third order line */
+          std::vector<size_type> tmp_nodes(4);
+          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
+          tmp_nodes[2] = ci.nodes[3]; tmp_nodes[3] = ci.nodes[1];
+
+          ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+          ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
+        }
+          break;
+        case 21 : { /* Third order triangle */
+          std::vector<size_type> tmp_nodes(10);
+          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[3];
+          tmp_nodes[2] = ci.nodes[4]; tmp_nodes[3] = ci.nodes[1];
+          tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[9];
+          tmp_nodes[6] = ci.nodes[5]; tmp_nodes[7] = ci.nodes[7];
+          tmp_nodes[8] = ci.nodes[6]; tmp_nodes[9] = ci.nodes[2];
+
+          gmm::copy(tmp_nodes, ci.nodes);
         }
           break;
         }
