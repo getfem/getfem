@@ -663,7 +663,7 @@ namespace getfem {
 
           // is nb_pt_on_face really necessary, is this possible to occur?
           GMM_ASSERT1(nb_pt_on_face,
-                      "This element has not vertex on considered face !");
+                      "This element has no vertex on considered face !");
 
           // Computation of influence box :
           // offset of the bounding box relatively to the release distance
@@ -1361,7 +1361,7 @@ namespace getfem {
             
             bgeot::pconvex_structure cvs = pgt->structure();
             size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
-            GMM_ASSERT1(nb_pt_on_face < 2, "This element less than two "
+            GMM_ASSERT1(nb_pt_on_face >= 2, "This element has less than two "
                         "vertices on considered face !");
             gmm::clear(n_mean);
             

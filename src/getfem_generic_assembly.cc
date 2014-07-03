@@ -7181,7 +7181,7 @@ namespace getfem {
         if (pnode->node_type == GA_NODE_INTERPOLATE_VAL) {
           pgai = new ga_instruction_interpolate_val
             (pnode->t, m2, mfn, mfg, Un, Ug,*pctx,workspace.qdim(pnode->name));
-        } else if (pnode->node_type == GA_NODE_GRAD) {
+        } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD) {
           pgai = new ga_instruction_interpolate_grad
             (pnode->t, m2, mfn, mfg, Un, Ug,*pctx,workspace.qdim(pnode->name));
         } else { 
@@ -7281,7 +7281,7 @@ namespace getfem {
         if (pnode->node_type == GA_NODE_INTERPOLATE_TEST) {
           pgai = new ga_instruction_interpolate_base
             (pnode->t, m2, mfn, mfg, *pctx,workspace.qdim(pnode->name));
-        } else if (pnode->node_type == GA_NODE_GRAD_TEST) {
+        } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST) {
           pgai = new ga_instruction_interpolate_grad_base
             (pnode->t, m2, mfn, mfg, *pctx,workspace.qdim(pnode->name));
         } else { 
