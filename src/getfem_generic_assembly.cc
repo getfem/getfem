@@ -3761,6 +3761,7 @@ namespace getfem {
       } else {
         inin.ctx = fem_interpolation_context();
         inin.Normal.resize(0);
+        inin.pt_y.resize(0);
         inin.has_ctx = false;
       }
       GA_DEBUG_INFO("Instruction: end of call interpolate transformation");

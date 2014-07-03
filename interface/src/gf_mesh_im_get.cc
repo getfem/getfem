@@ -180,8 +180,8 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
     **WARNING**
 
     Convexes which are not part of the mesh, or convexes which
-    do not have an approximate integration method don't have
-    their correspounding entry (this has no meaning for exact
+    do not have an approximate integration method do not have
+    their corresponding entry (this has no meaning for exact
     integration methods!).@*/
     sub_command
       ("im_nodes", 0, 1, 0, 1,

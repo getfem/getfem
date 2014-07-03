@@ -535,7 +535,7 @@ namespace getfem {
 
     void extend_vectors(void);
 
-    void normal_cone_simplicication(void);
+    void normal_cone_simplification(void);
 
     bool test_normal_cones_compatibility(const normal_cone &nc1,
                                          const normal_cone &nc2);

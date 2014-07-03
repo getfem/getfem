@@ -16,6 +16,8 @@ These bricks present some algorithms for contact and friction in the large slidi
 The multi-contact frame object
 ++++++++++++++++++++++++++++++
 
+(this structure will probably evolve for 5.0 release of |gf|)
+
 A |gf| object is dedicated to the computation of effective contact surfaces which is shared by all the bricks. This object stores the different potential contact surfaces. On most of methods, potential contact surface are classified into two categories: master and slave surface (see  :ref:`figure<ud-fig-masterslave>`).
 
 .. _ud-fig-masterslave:
@@ -229,6 +231,8 @@ Sorry, for the moment the brick is not working.
 Integral contact brick with raytrace
 ++++++++++++++++++++++++++++++++++++
 
+(this is a working brick which will probably evolve for 5.0 release of |gf|)
+
 Add of the brick::
 
   size_type add_integral_large_sliding_contact_brick_raytrace
@@ -239,4 +243,97 @@ Add of the brick::
 
 
 
+Tools of the high-level generic assembly for contact with friction
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+(for 5.0 release of |gf|)
+
+The following nonlinear operators are defined in the high-level generic assembly langage (see :ref:`ud-gasm-high`):
+
+  - ``Transformed_unit_vector(Grad_u, n)`` where ``Grad_u`` is the gradient of a
+    displacement field and ``n`` a unit vector in the reference configuration.
+    This nonlinear operator corresponds to
+
+    .. math::
+
+      n_{trans} = \Frac{(I+ \nabla u)^{-T} n}{\|(I+\nabla u)^{-T} n\|}
+
+    with the following partial derivatives
+
+    .. math::
+
+      \partial_{u} n_{trans}[\delta u] = -(I - n_{trans}\otimes n_{trans})(I+ \nabla u)^{-T}(\nabla \delta u)^T n_{trans}
+  
+      \partial_{n} n_{trans}[\delta n] = \Frac{(I+ \nabla u)^{-T}\delta n - n_{trans}(n_{trans}\cdot \delta n)}{\|(I+\nabla u)^{-T} n\|}
+
+  - ``Coulomb_friction_coupled_projection(lambda, n, Vs, g, f, r)``
+    where ``lambda`` is the contact force, ``n`` is a unit normal vector, ``Vs``
+    is the sliding velocity, ``g`` is the gap, ``f`` the friction coefficient
+    and ``r`` a positive augmentation parameter. The expression of the operator is
+
+    .. math::
+
+      P(\lambda, n, V_s, g, f, r) = -(\lambda\cdot n + rg)_- n + P_{B(n,\tau)}(\lambda - rV_s)
+
+      \mbox{with } \tau = \mbox{min}(f_3 + f_1(\lambda\cdot n + rg)_-, f_2)
+
+    where :math:`(\cdot)_-` is the negative part (:math:`(x)_- = (-x)_+`) and :math:`f_1, f_2, f_3` are the three components of the friction coefficient. Note that the components :math:`f_2, f_3` are optional. If a scalar fiction coefficient is given (only :math:`f_1`) then this corresponds to the classical Coulomb friction law. If a vector of two components is given  (only :math:`f_1, f_2`) then this corresponds to a Coulomb friction with a given threshold. Finally, if a vector of three components is given, the friction law correspongs to the expression of :math:`\tau` given above.
+
+    The expression :math:`P_{B(n,\tau)}(q)` refers to the orthogonal projection (this is link to the return mapping algorithm) on the tangential ball (with respect to :math:`n` of radius :math:`\tau`.
+
+    The derivatives can be expressed as follows with :math:`T_n = (I - n \otimes n)` and :math:`q_{_T} = T_n q`:
+
+    .. math::
+
+      \partial_q P_{B(n,\tau)}(q) =
+      \left\{\begin{array}{cl}
+      0 & \mbox{for } \tau \le 0 \\
+      \mathbf{T}_n & \mbox{for } \|q_{_T}\| \le \tau \\ 
+      \Frac{\tau}{\|q_{_T}\|}
+      \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
+      \right) & \mbox{otherwise }
+      \end{array} \right.
+
+      \partial_{\tau} P_{B(n,\tau)}(q) =
+      \left\{\begin{array}{cl}
+      0 & \mbox{for } \tau \le 0 \mbox{ or } \|q_{_T}\| \le \tau \\
+      \Frac{q_{_T}}{\|q_{_T}\|} & \mbox{otherwise}
+      \end{array} \right.
+
+      \partial_n P_{B(n,\tau)}(q) =
+      \left\{
+      \begin{array}{cl}
+      0 & \mbox{for } \tau \le 0 \\
+      -q \cdot n~\mathbf{T}_n - n \otimes q_{_T}
+      & \mbox{for } \|q_{_T}\| \le \tau \\
+      -\Frac{\tau}{\|q_{_T}\|}
+      \left( q \cdot n
+      \left(\mathbf{T}_n - \Frac{q_{_T}}{\|q_{_T}\|}\otimes \Frac{q_{_T}}{\|q_{_T}\|}
+      \right)
+      + n \otimes q_{_T}
+      \right) & \mbox{otherwise.}
+      \end{array} \right.
+
+      \partial_{\lambda} P(\lambda, n, V_s, g, f, r) = \partial_q P_{B(n,\tau)}
+      +\partial_{\tau}P_{B(n,\tau)} \otimes  \partial_{\lambda} \tau
+      +H(-\lambda\cdot n - r\,g)~n \otimes n,
+
+      \partial_{n} P(\lambda, n, V_s, g, f, r) =
+      \left|\begin{array}{l} \partial_n P_{B(n,\tau)}
+      +\partial_{\tau} P_{B(n,\tau)} \otimes \partial_n \tau \\
+      \hspace*{3em}+H(-\lambda\cdot n - r\,g) ~
+      \left(n \otimes \lambda - 
+      (2~\lambda\cdot n + r\,g)~n \otimes n +
+      (\lambda\cdot n + r\,g)~\mathbf{I}\right),
+      \end{array}\right.
+
+      \partial_{g} P(\lambda, n, V_s, g, f, r) =
+      \partial_{\tau} P_{B(n,\tau)} ~ \partial_g \tau
+      +H(-\lambda\cdot n - r\,g)~r~n
+
+      \partial_{f} P(\lambda, n, V_s, g, f, r) =
+      \partial_{\tau} P_{B(n,\tau)} \partial_{f} \tau
+
+      \partial_{r} P(\lambda, n, V_s, g, f, r) =
+       H(-\lambda\cdot n - r\,g)gn + \partial_q P_{B(n,\tau)}V_s
+       +\partial_{\tau} P_{B(n,\tau)} \partial_r \tau

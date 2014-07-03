@@ -2011,7 +2011,7 @@ namespace getfem {
         }
     }
 
-    // Derivative / u: lambda Tr(H + H'*U) Id + mu(H + H' + H'*U + U*H')
+    // Derivative / u: lambda Tr(H + H'*U) Id + mu(H + H' + H'*U + U'*H)
     //                 with U = Grad_u, H = Grad_Test_u
     // Implementation: A{ijkl} = lambda(delta{kl}delta{ij} + U{kl}delta{ij})
     //        + mu(delta{ik}delta{jl} + delta{il}delta{jk} + U{kj}delta{il} +
@@ -2070,10 +2070,7 @@ namespace getfem {
 
 
 
-
-
-
-  bool init_predef_operators(void) {
+  static bool init_predef_operators(void) {
 
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();

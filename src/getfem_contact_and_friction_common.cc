@@ -142,7 +142,7 @@ namespace getfem {
     }
   }
 
-  void multi_contact_frame::normal_cone_simplicication(void) {
+  void multi_contact_frame::normal_cone_simplification(void) {
     if (nodes_mode) {
       scalar_type threshold = ::cos(cut_angle);
       for (size_type i = 0; i < boundary_points_info.size(); ++i) {
@@ -478,7 +478,7 @@ namespace getfem {
   void multi_contact_frame::compute_potential_contact_pairs_delaunay(void) {
 
     compute_boundary_points();
-    normal_cone_simplicication();
+    normal_cone_simplification();
     potential_pairs = std::vector<std::vector<face_info> >();
     potential_pairs.resize(boundary_points.size());
 
@@ -689,7 +689,7 @@ namespace getfem {
   void multi_contact_frame::compute_potential_contact_pairs_influence_boxes(void) {
     compute_influence_boxes();
     compute_boundary_points(!self_contact); // vraiment necessaire ?
-    normal_cone_simplicication();
+    normal_cone_simplification();
     potential_pairs = std::vector<std::vector<face_info> >();
     potential_pairs.resize(boundary_points.size());
 
@@ -1647,11 +1647,10 @@ namespace getfem {
         else if (gmm::vect_dist2(pt_y, pt_x) <= release_distance) {
           n_y /= gmm::vect_norm2(n_y);
           d0 = gmm::vect_dist2(pt_y, pt_x) * gmm::sgn(d0);
-          
           stored_pt_y = stored_pt_y_ref = pt_y; stored_n_y = n_y, 
           stored_signed_distance = d0;
           first_pair_found = true;
-        }
+        } else irigid_obstacle = size_type(-1);
       }
       
       //
@@ -1794,7 +1793,7 @@ namespace getfem {
         
         // compute the unit normal vector at y and the signed distance.
         compute_normal(ctx_y, face_y, false, coeff_y, n0_y, n_y, grad);
-        n_y /= gmm::vect_norm2(n_y); // Useful only if the unit normal is kept
+        n_y /= gmm::vect_norm2(n_y);
         signed_dist *= gmm::sgn(gmm::vect_sp(pt_x - pt_y, n_y));
 
         // CRITERION 5 : comparison with rigid obstacles
@@ -1817,6 +1816,7 @@ namespace getfem {
 
         stored_pt_y = pt_y; stored_pt_y_ref = ctx_y.xref();
         stored_m_y = &m_y; stored_cv_y = cv_y; stored_face_y = face_y;
+        stored_n_y = n_y;
         stored_ctx_y = ctx_y;
         stored_coeff_y = coeff_y;
         stored_signed_distance = signed_dist;
@@ -1829,11 +1829,11 @@ namespace getfem {
 
       if (irigid_obstacle != size_type(-1)) {
         *m_t = 0; cv = face_num = size_type(-1);
-        P_ref = stored_pt_y;
+        P_ref = stored_pt_y; N_y = stored_n_y;
         ret_type = 2;
       } else if (first_pair_found) {
         *m_t = stored_m_y; cv = stored_cv_y; face_num = stored_face_y;
-        P_ref = stored_pt_y_ref; N_y = stored_n_y;
+        P_ref = stored_pt_y_ref;
         ret_type = 1;
       }
 
@@ -1843,24 +1843,33 @@ namespace getfem {
       // for a transformation F(u) the conputed derivative is F'(u).Test_u
       // including the Test_u.
       if (compute_derivatives) {
-        if (ret_type == 1) {
+        if (ret_type >= 1) {
           fem_interpolation_context &ctx_y = stored_ctx_y;
-          size_type cv_y = ctx_y.convex_num();
+          size_type cv_y = 0;
+          if (ret_type == 1) cv_y = ctx_y.convex_num();
           
           base_matrix I_nxny(N,N); // I - nx@ny/nx.ny
           gmm::copy(gmm::identity_matrix(), I_nxny);
           gmm::rank_one_update(I_nxny, n_x,
-                               gmm::scaled(n_y,scalar_type(-1)
-                                           / gmm::vect_sp(n_x, n_y)));
+                               gmm::scaled(stored_n_y,scalar_type(-1)
+                                           / gmm::vect_sp(n_x, stored_n_y)));
         
+          // cout << "n_y = " << stored_n_y << " pt_x = " << pt_x << " pt_y = " << stored_pt_y << endl;
+
           // Computation of F_y
           base_matrix F_y(N,N), F_y_inv(N,N), M1(N, N), M2(N, N);
-          pfem pfu_y = ctx_y.pf();
-          pfu_y->interpolation_grad(ctx_y, stored_coeff_y, F_y, dim_type(N));
-          gmm::add(gmm::identity_matrix(), F_y);
-          gmm::copy(F_y, F_y_inv);
-          gmm::lu_inverse(F_y_inv);
-        
+          pfem pfu_y = 0;
+          if (ret_type == 1) {
+            pfu_y = ctx_y.pf();
+            pfu_y->interpolation_grad(ctx_y, stored_coeff_y, F_y, dim_type(N));
+            gmm::add(gmm::identity_matrix(), F_y);
+            gmm::copy(F_y, F_y_inv);
+            gmm::lu_inverse(F_y_inv);
+          } else {
+            gmm::copy(gmm::identity_matrix(), F_y);
+            gmm::copy(gmm::identity_matrix(), F_y_inv);
+          }
+
           // Computation of F_x
           base_matrix F_x(N,N), F_x_inv(N,N);
           pfu_x->interpolation_grad(ctx_x, coeff_x, F_x, dim_type(N));
@@ -1878,18 +1887,21 @@ namespace getfem {
           
           base_tensor base_uy;
           base_matrix vbase_uy;
-          ctx_y.base_value(base_uy);
-          size_type qdim_uy = pfu_y->target_dim();
-          size_type ndof_uy = pfu_y->nb_dof(cv_y) * N / qdim_uy;
-          vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
+          size_type ndof_uy = 0;
+          if (ret_type == 1) {
+            ctx_y.base_value(base_uy);
+            size_type qdim_uy = pfu_y->target_dim();
+            ndof_uy = pfu_y->nb_dof(cv_y) * N / qdim_uy;
+            vectorize_base_tensor(base_uy, vbase_uy, ndof_uy, qdim_uy, N);
+          }
           
           base_tensor grad_base_ux, vgrad_base_ux;
           ctx_x.grad_base_value(grad_base_ux);
           vectorize_grad_base_tensor(grad_base_ux, vgrad_base_ux, ndof_ux,
                                      qdim_ux, N);
 
-          // Derivative : F_y^{-1}*I_nxny*(Test_u(X) - Test_u(Y) + gDn_x[Test_u])
-          //         with Dn_x[Test_u] = -(I-nx@nx)*F_x^{-T}*Grad_Test_u^{T}*n_x
+          // Derivative : F_y^{-1}*I_nxny*(Test_u(X)-Test_u(Y)+gDn_x[Test_u])
+          //         with Dn_x[Test_u] =-(I-nx@nx)*F_x^{-T}*Grad_Test_u^{T}*n_x
           //         and I_nxny*(I - nx@nx) = I_nxny
           
           // F_y^{-1}*I_nxny*Test_u(X)
@@ -1904,8 +1916,10 @@ namespace getfem {
 
           // -F_y^{-1}*I_nxny*Test_u(Y)
           base_matrix der_y(ndof_uy, N);
-          gmm::mult(vbase_uy, gmm::transposed(M1), der_x);
-          gmm::scale(der_x, scalar_type(-1));
+          if (ret_type == 1) {
+            gmm::mult(vbase_uy, gmm::transposed(M1), der_y);
+            gmm::scale(der_y, scalar_type(-1));
+          }
           
           //         for (size_type i = 0; i < ndof_uy; ++i)
           //           for (size_type j = 0; j < N; ++j)
@@ -1918,16 +1932,17 @@ namespace getfem {
             for (size_type j = 0; j < N; ++j)
               for (size_type k = 0; k < N; ++k)
                 for (size_type l = 0; l < N; ++l)
-                  der_x(i, j) -= M2(j, k) * vgrad_base_ux(i, k, l)
-                    * n_x[k] * stored_signed_distance;
-          
+                  der_x(i, j) -= M2(j, k) * vgrad_base_ux(i, l, k)
+                    * n_x[l] * stored_signed_distance;
+
           for (std::map<var_trans_pair, base_tensor>::iterator itd
                  = derivatives.begin(); itd != derivatives.end(); ++itd) {
             if (cb_x.dispname.compare(itd->first.first) == 0 &&
                 itd->first.second.size() == 0) {
               itd->second.adjust_sizes(ndof_ux, N);
               gmm::copy(der_x.as_vector(), itd->second.as_vector());
-            } else if (stored_dispname.compare(itd->first.first) == 0 &&
+            } else if (ret_type == 1 &&
+                       stored_dispname.compare(itd->first.first) == 0 &&
                        itd->first.second.size() != 0) {
               itd->second.adjust_sizes(ndof_uy, N);
               gmm::copy(der_y.as_vector(), itd->second.as_vector());
@@ -2020,6 +2035,271 @@ namespace getfem {
   }
 
 
+
+  //=========================================================================
+  //
+  //  Specific nonlinear operator of the high-level generic assembly langage
+  //  dedicated to contact/friction
+  //
+  //=========================================================================
+
+  // static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
+  static void ga_init_vector(bgeot::multi_index &mi, size_type N)
+  { mi.resize(1); mi[0] = N; }
+  // static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
+  // { mi.resize(2); mi[0] = mi[1] = N; }
+  
+
+  // Transformed_unit_vector(Grad_u, n)  = (I+Grad_u)^{-T}n / ||(I+Grad_u)^{-T}n||
+  struct Transformed_unit_vector : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() != 2
+          || args[1]->size() != args[0]->sizes()[0]
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_vector(sizes, args[0]->sizes()[0]);
+      return true;
+    }
+    
+    // Value : (I+Grad_u)^{-T}n / ||(I+Grad_u)^{-T}n||
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix F(N, N);
+      gmm::copy(args[0]->as_vector(), F.as_vector());
+      gmm::add(gmm::identity_matrix(), F);
+      gmm::lu_inverse(F);
+      gmm::mult(gmm::transposed(F), args[1]->as_vector(), result.as_vector());
+      gmm::scale(result.as_vector(),
+                 scalar_type(1)/gmm::vect_norm2(result.as_vector()));
+    }
+
+    // Derivative / Grad_u: -(I - n@n)(I+Grad_u)^{-T}Test_Grad_u n
+    // Implementation: A{ijk} = -G{ik}ndef{j}
+    //                 with G = (I - n@n)(I+Grad_u)^{-T}
+    //                 and ndef the transformed normal         
+    // Derivative / n: ((I+Grad_u)^{-T}Test_n - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
+    // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
+    //                 with F = (I+Grad_u)^{-1}
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix F(N, N), G(N, N);
+      base_small_vector ndef(N), aux(N);
+      gmm::copy(args[0]->as_vector(), F.as_vector());
+      gmm::add(gmm::identity_matrix(), F);
+      gmm::lu_inverse(F);
+      gmm::mult(gmm::transposed(F), args[1]->as_vector(), ndef);
+      scalar_type norm_ndef = gmm::vect_norm2(ndef);
+      gmm::scale(ndef, scalar_type(1)/norm_ndef);
+      gmm::copy(gmm::transposed(F), G);
+      gmm::mult(F, ndef, aux);
+      gmm::rank_one_update(G, gmm::scaled(ndef, scalar_type(-1)), aux);
+      base_tensor::iterator it = result.begin();
+      switch (nder) {
+      case 1:
+        for (size_type k = 0; k < N; ++k)
+          for (size_type j = 0; j < N; ++j)
+            for (size_type i = 0; i < N; ++i, ++it)
+              *it = -G(i, k) * ndef[j];
+        break;
+      case 2:
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it)
+            *it = (F(j,i) - ndef[i]*ndef[j])/norm_ndef;
+        break;
+      default: GMM_ASSERT1(false, "Internal error");
+      }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+
+  // Coulomb_friction_coupled_projection(lambda, n, Vs, g, f, r)
+  struct Coulomb_friction_coupled_projection : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 6 || args[1]->size() != args[0]->size()
+          || args[2]->size() != args[0]->size()
+          || args[3]->size() != 1 || args[4]->size() > 3 || args[4]->size() == 0
+          || args[5]->size() != 1 ) return false;
+      ga_init_vector(sizes, args[0]->sizes()[0]);
+      return true;
+    }
+    
+    // Value : (lambda.n+rg)_- n - P_B(n, f(lambda.n+rg)_-)(lambda-r Vs)
+    void value(const arg_list &args, base_tensor &result) const {
+      const base_vector &lambda = *(args[0]);
+      const base_vector &n = *(args[1]);
+      const base_vector &Vs = *(args[2]);
+      base_vector &F = result;
+      scalar_type g = (*(args[3]))[0];
+      const base_vector &f = *(args[4]);
+      scalar_type r = (*(args[5]))[0];
+      
+
+      scalar_type nn = gmm::vect_norm2(n);
+      scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
+      scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
+      size_type s_f = gmm::vect_size(f);
+      scalar_type tau = ((s_f >= 3) ? f[2] : scalar_type(0)) + f[0]*lambdan_aug;
+      if (s_f >= 2) tau = std::min(tau, f[1]);
+    
+      if (tau > scalar_type(0)) {
+        gmm::add(lambda, gmm::scaled(Vs, -r), F);
+        scalar_type mu = gmm::vect_sp(F, n)/nn;
+        gmm::add(gmm::scaled(n, -mu/nn), F);
+        scalar_type norm = gmm::vect_norm2(F);
+        if (norm > tau) gmm::scale(F, tau / norm);
+      } else { gmm::clear(F); }
+      
+      gmm::add(gmm::scaled(n, -lambdan_aug/nn), F);
+    }
+
+    // Derivative / Grad_u: -(I - n@n)(I+Grad_u)^{-T}Test_Grad_u n
+    // Implementation: A{ijk} = -G{kj}ndef{i}
+    //                 with G = (I - n@n)(I+Grad_u)^{-T}
+    //                 and ndef the transformed normal         
+    // Derivative / n: ((I+Grad_u)^{-T}Test_n - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
+    // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
+    //                 with F = (I+Grad_u)^{-1}
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const { // Can be optimized ?
+      size_type N = args[0]->size();
+      const base_vector &lambda = *(args[0]);
+      const base_vector &n = *(args[1]);
+      const base_vector &Vs = *(args[2]);
+      base_vector F(N), dg(N);
+      base_matrix dVs(N,N), dn(N,N);
+      scalar_type g = (*(args[3]))[0];
+      const base_vector &f = *(args[4]);
+      scalar_type r = (*(args[5]))[0];
+
+      scalar_type nn = gmm::vect_norm2(n);
+      scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
+      scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
+      size_type s_f = gmm::vect_size(f);
+      scalar_type tau = ((s_f >= 3) ? f[2] : scalar_type(0)) + f[0]*lambdan_aug;
+      if (s_f >= 2) tau = std::min(tau, f[1]);
+      scalar_type norm(0);
+      
+      if (tau > scalar_type(0)) {
+        gmm::add(lambda, gmm::scaled(Vs, -r), F);
+        scalar_type mu = gmm::vect_sp(F, n)/nn;
+        gmm::add(gmm::scaled(n, -mu/nn), F);
+        norm = gmm::vect_norm2(F);
+        gmm::copy(gmm::identity_matrix(), dn);
+        gmm::scale(dn, -mu/nn);
+        gmm::rank_one_update(dn, gmm::scaled(n, mu/(nn*nn*nn)), n);
+        gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(-1)/(nn*nn)), F);
+        gmm::copy(gmm::identity_matrix(), dVs);
+        gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(-1)/(nn*nn)));
+        
+        if (norm > tau) {
+          gmm::rank_one_update(dVs, F,
+                               gmm::scaled(F, scalar_type(-1)/(norm*norm)));
+          gmm::scale(dVs, tau / norm);
+          gmm::copy(gmm::scaled(F, scalar_type(1)/norm), dg);
+          gmm::rank_one_update(dn, gmm::scaled(F, mu/(norm*norm*nn)), F);
+          gmm::scale(dn, tau / norm);
+          gmm::scale(F, tau / norm);
+        } // else gmm::clear(dg);
+        
+      } // else { gmm::clear(dg); gmm::clear(dVs); gmm::clear(F); gmm::clear(dn); }
+      // At this stage, F = P_{B_T}, dVs = d_q P_{B_T}, dn = d_n P_{B_T}
+      // and dg = d_tau P_{B_T}.
+
+      
+      base_tensor::iterator it = result.begin();
+      switch (nder) {
+      case 1: // Derivative with respect to lambda
+        if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2]))
+          gmm::rank_one_update(dVs, dg, gmm::scaled(n, -f[0]/nn));
+        if (lambdan_aug > scalar_type(0))
+          gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(1)/(nn*nn)));
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it)
+            *it = dVs(i, j);
+        break;
+      case 2: // Derivative with respect to n
+        if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2])) {
+          gmm::rank_one_update(dn, dg, gmm::scaled(lambda, -f[0]/nn));
+          gmm::rank_one_update(dn, dg, gmm::scaled(n, f[0]*lambdan/(nn*nn)));
+        }
+        if (lambdan_aug > scalar_type(0)) {
+          gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(1)/(nn*nn)), lambda);
+          gmm::rank_one_update(dn,
+                               gmm::scaled(n,(lambdan_aug-lambdan)/(nn*nn*nn)), n);
+          for (size_type j = 0; j < N; ++j) dn(j,j) -= lambdan_aug/nn;
+        }
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it)
+            *it = dn(i, j);
+        break;
+      case 3:
+        gmm::scale(dVs, -r);
+        for (size_type j = 0; j < N; ++j)
+          for (size_type i = 0; i < N; ++i, ++it)
+            *it = dVs(i, j);
+        break;
+      case 4:
+         if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2]))
+           gmm::scale(dg, -f[0]*r);
+         else
+           gmm::clear(dg);
+         if (lambdan_aug > scalar_type(0))
+           gmm::add(gmm::scaled(n, r/nn), dg);
+         for (size_type i = 0; i < N; ++i, ++it)
+           *it = dg[i];
+        break;
+      case 5:
+        if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2]))
+          gmm::scale(dg, -f[0]*g);
+        else
+          gmm::clear(dg);
+        gmm::mult_add(dVs, gmm::scaled(Vs, scalar_type(-1)), dg);
+        if (lambdan_aug > scalar_type(0))
+          gmm::add(gmm::scaled(n, g/nn), dg);
+        for (size_type i = 0; i < N; ++i, ++it)
+          *it = dg[i];
+        break;
+      case 6:
+        base_small_vector dtau_df(s_f);
+        if ((s_f <= 1) || tau < f[1]) dtau_df[0] = lambdan_aug;
+        if (s_f >= 2 && tau == f[1]) dtau_df[1] = 1;
+        if (s_f >= 3 && tau < f[1]) dtau_df[2] = 1;
+        for (size_type j = 0; j < s_f; ++j)
+          for (size_type i = 0; i < N; ++i, ++it)
+            *it = dg[i] * dtau_df[j];
+        break;
+      }
+      GMM_ASSERT1(it == result.end(), "Internal error");
+    }
+    
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+  static bool init_predef_operators(void) {
+
+    ga_predef_operator_tab &PREDEF_OPERATORS
+      = dal::singleton<ga_predef_operator_tab>::instance();
+    
+    PREDEF_OPERATORS.add_method("Transformed_unit_vector",
+                                new Transformed_unit_vector());
+    PREDEF_OPERATORS.add_method("Coulomb_friction_coupled_projection",
+                                new Coulomb_friction_coupled_projection());
+
+    return true;
+   }
+
+  static bool predef_operators_initialized = init_predef_operators();
 
 
 }  /* end of namespace getfem.                                             */
