@@ -149,7 +149,7 @@ namespace getfem {
       std::string interpolate_name_test1, interpolate_name_test2;
       const mesh_im *mim;
       const mesh *m;
-      mesh_region rg;
+      const mesh_region *rg;
       ga_tree *ptree;
       base_vector elem;
       tree_description(void) : ptree(0) {}
@@ -160,6 +160,13 @@ namespace getfem {
     };
 
   private:
+
+    std::map<const mesh *, std::list<mesh_region> > registred_mims;
+    mesh dummy_mesh;
+    mesh dummy_mim;
+    mesh_region dummy_region;
+    
+    mesh_region &register_region(const mesh &m, const mesh_region &region);
 
     typedef std::map<std::string, var_description> VAR_SET;
 

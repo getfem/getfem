@@ -2951,9 +2951,9 @@ namespace getfem {
   struct ga_instruction_copy_tensor_possibly_void : public ga_instruction {
     base_tensor &t, &tc1;
     virtual int exec(void) {
-      // static int count = 0;
       GA_DEBUG_INFO("Instruction: tensor copy possibly void");
       // cout << "copy tensor " << tc1 << endl;
+      // static int count = 0;
       // if (++count > 10) GMM_ASSERT1(false, "stop here");
       if (tc1.size())
         gmm::copy(tc1.as_vector(), t.as_vector());
@@ -3927,6 +3927,20 @@ namespace getfem {
   // functions, operators.
   //=========================================================================
 
+  mesh_region &ga_workspace::register_region(const mesh &m,
+                                             const mesh_region &region) {
+    if (&m == &dummy_mesh) return dummy_region;
+
+    std::list<mesh_region> &lmr = registred_mims[&m];
+    for (std::list<mesh_region>::iterator it = lmr.begin();
+         it != lmr.end(); ++it) {
+      if (it->compare(m, region, m)) return *it;
+    }
+    lmr.push_back(region);
+    return lmr.back();
+  }
+
+
   typedef std::pair<std::string, std::string> var_trans_pair;
   
   static bool ga_extract_variables(pga_tree_node pnode,
@@ -3987,6 +4001,7 @@ namespace getfem {
       //     ga_print_node(tree.root, cout); cout << endl;
       bool remain = true;
       size_type order = 0, ind_tree = 0;
+
       switch(tree.root->test_function_type) {
       case 0: order = 0; break;
       case 1: order = 1; break;
@@ -4010,7 +4025,7 @@ namespace getfem {
             trees[i].name_test2.compare(tree.root->name_test2) == 0 &&
             trees[i].interpolate_name_test2.compare
             (tree.root->interpolate_name_test2) == 0 &&
-            trees[i].rg.compare(*(trees[i].m), rg, m)) {
+            trees[i].rg == &rg) {
           ga_tree &ftree = *(trees[i].ptree);
             
           ftree.insert_node(ftree.root);
@@ -4028,7 +4043,7 @@ namespace getfem {
         ind_tree = trees.size(); remain = false;
         trees.push_back(tree_description());
         trees.back().mim = &mim; trees.back().m = &m;
-        trees.back().rg = rg;
+        trees.back().rg = &rg;
         trees.back().ptree = new ga_tree;
         trees.back().ptree->swap(tree);
         pga_tree_node root = trees.back().ptree->root;
@@ -4071,7 +4086,8 @@ namespace getfem {
 
   size_type ga_workspace::add_expression(const std::string expr,
                                          const mesh_im &mim,
-                                         const mesh_region &rg) {
+                                         const mesh_region &rg_) {
+    const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
     size_type max_order = 0;
     ga_tree tree;
@@ -4102,22 +4118,20 @@ namespace getfem {
   }
 
   void ga_workspace::add_function_expression(const std::string expr) {
-    static mesh_im dummy_mim;
-    static mesh dummy_mesh;
     ga_tree tree;
     ga_read_string(expr, tree);
     ga_semantic_analysis(expr, tree, *this, 1, false, true);
     if (tree.root) {
       // GMM_ASSERT1(tree.root->nb_test_functions() == 0,
       //            "Invalid function expression");
-      add_tree(tree, dummy_mesh, dummy_mim, 0, expr, false);
+      add_tree(tree, dummy_mesh, dummy_mim, dummy_region, expr, false);
     }
   }
 
   void ga_workspace::add_interpolation_expression(const std::string expr,
                                                   const mesh &m,
-                                                  mesh_region rg) {
-    static mesh_im dummy_mim;
+                                                  mesh_region rg_) {
+    const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree);
     ga_semantic_analysis(expr, tree, *this, m.dim(), false, false);
@@ -7742,7 +7756,7 @@ namespace getfem {
       if (root) {
         GMM_ASSERT1(!scalar || (root->t.size() == 1),
                     "The result of the given expression is not a scalar"); 
-        ga_instruction_set::region_mim rm(td.mim, &(td.rg));
+        ga_instruction_set::region_mim rm(td.mim, td.rg);
         gis.whole_instructions[rm].m = td.m;
         ga_if_hierarchy if_hierarchy;
         ga_compile_node(root, workspace, gis,
@@ -7835,7 +7849,7 @@ namespace getfem {
         pga_tree_node root = gis.trees.back().root;
         if (root) {
           // Compile tree
-          ga_instruction_set::region_mim rm(td.mim, &(td.rg));
+          ga_instruction_set::region_mim rm(td.mim, td.rg);
           ga_instruction_set::region_mim_instructions &rmi
             = gis.whole_instructions[rm];
           rmi.m = td.m;
@@ -7872,7 +7886,7 @@ namespace getfem {
           // Compiling tree
           // cout << "compiling "; ga_print_node(root, cout); cout << endl;
 
-          ga_instruction_set::region_mim rm(td.mim, &(td.rg));
+          ga_instruction_set::region_mim rm(td.mim, td.rg);
           ga_instruction_set::region_mim_instructions &rmi
             = gis.whole_instructions[rm];
           rmi.m = td.m;
@@ -8123,6 +8137,7 @@ namespace getfem {
       
       const getfem::mesh_im &mim = *(it->first.first);
       const getfem::mesh &m = *(it->second.m);
+
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
       size_type P = m.dim();
       ga_instruction_list &gil = it->second.instructions;
