@@ -313,6 +313,17 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        md->model().delete_brick(ib);
        );
 
+    /*@SET ('define variable group', @str name[, @str varname, ...])
+      Defines a group of variables for the interpolation (mainly for the
+      raytracing interpolation transformation.@*/
+    sub_command
+      ("define variable group", 1, 1000, 0, 0,
+       std::string name = in.pop().to_string();
+       std::vector<std::string> nl;
+       while (in.remaining()) nl.push_back(in.pop().to_string());
+       md->model().define_variable_group(name, nl);
+       );
+
     /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)
       Add a transformation to the model from mesh `source_mesh` to mesh
       `target_mesh` given by the expression `expr` which corresponds to a
