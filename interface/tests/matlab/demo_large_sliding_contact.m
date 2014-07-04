@@ -29,12 +29,13 @@ clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
 clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
 r = 0.1;                    % Augmentation parameter
 alpha = 1.0;                % Alpha coefficient for "sliding velocity"
-f_coeff = 0.3;              % Friction coefficient
+f_coeff = 0.0;              % Friction coefficient
 
-test_tangent_matrix = false;
+test_tangent_matrix = true;
 nonlinear_elasticity = false;
 max_iter = 50;
 draw_mesh = false;
+do_plot = true;
 generic_assembly_contact_brick = false;
 
 switch(test_case)
@@ -220,7 +221,7 @@ end
 
 
 if (generic_assembly_contact_brick)
-  gf_model_set(md, 'add raytracing transformation', 'contact_trans', 2.5);
+  gf_model_set(md, 'add raytracing transformation', 'contact_trans', release_dist);
   if (self_contact)
     gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u1', CONTACT_BOUNDARY1);
   else
@@ -249,12 +250,11 @@ if (generic_assembly_contact_brick)
   gf_model_set(md, 'add initialized data', 'r', r);
   gf_model_set(md, 'add initialized data', 'f', f_coeff);
   
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-lambda1.Test_u1', CONTACT_BOUNDARY1);
-  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Interpolate(Test_u1,contact_trans), 1)', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-(1/r)*lambda1.Test_lambda1', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(x,contact_trans)-x-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)', CONTACT_BOUNDARY1);
-  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (Interpolate(x,contact_trans)).Test_lambda1, 2)', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u1,contact_trans), (x+u1-Interpolate(x,contact_trans)-Interpolate(u1,contact_trans)).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)', CONTACT_BOUNDARY1);
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-lambda1.Test_u1', CONTACT_BOUNDARY1); 
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-(1/r)*lambda1.Test_lambda1', CONTACT_BOUNDARY1);
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(x,contact_trans)-x-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)', CONTACT_BOUNDARY1);
+  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u1,contact_trans), (x+u1-Interpolate(x,contact_trans)-Interpolate(u1,contact_trans)).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (x-Interpolate(x,contact_trans)).Test_lambda1, 1)', CONTACT_BOUNDARY1);
     
 else
   mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
@@ -293,99 +293,103 @@ for nit=1:15
   disp(sprintf('Iteration %d', nit));
 
   if (test_tangent_matrix) 
-    errmax = gf_model_get(md, 'test tangent matrix', 1E-8, 20, 0.0001);
-    % errmax = gf_model_get(md, 'test tangent matrix term', 'lambda1', 'u1', 1E-8, 20, 0.0001);
+    errmax = gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.00001);
+    % errmax = gf_model_get(md, 'test tangent matrix term', 'lambda1', 'u1', 1E-8, 20, 0.00001);
     disp(sprintf('errmax = %g', errmax));
     if (errmax > 1E-3) error('bad tangent matrix'); end;
+    return;
     pause(2);
   end
     
-  gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', max_res); % , 'lsearch', 'simplest');
-
-  U1 = gf_model_get(md, 'variable', 'u1');
-  if (nonlinear_elasticity)
-    VM1 = gf_model_get(md, 'compute Von Mises or Tresca', 'u1', lawname, 'params1', mfvm1);
-  else
-    VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-	  	  'u1', 'clambda1', 'cmu1', mfvm1);
-  end
-  gf_plot(mfvm1,VM1,'mesh', 'off', 'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
-
-  hold on % quiver plot of the multiplier
-  lambda1 = gf_model_get(md, 'variable', 'lambda1');
-  mf_lambda1 = gf_model_get(md, 'mesh fem of variable', 'lambda1');
-  sl=gf_slice({'boundary'}, mf_lambda1, CONTACT_BOUNDARY1);
-  bound_lambda1=gf_compute(mf_lambda1, lambda1,'interpolate on', sl);
-  bound_u1=gf_compute(mfu1, U1,'interpolate on', sl);
-  pts = gf_slice_get(sl, 'pts');
-  quiver(bound_u1(1,:)+pts(1,:), bound_u1(2,:)+pts(2,:), bound_lambda1(1,:), bound_lambda1(2,:))
-  hold off
   
-  % hold on
-  % gf_plot(mf_lambda1, lambda1,'mesh', 'off', 'deformed_mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8);
-  % hold off
-  
-  if (test_case ~= 3 && test_case ~= 0)
-     hold on
-     U2 = gf_model_get(md, 'variable', 'u2');
-     if (nonlinear_elasticity)
-       VM2 = gf_model_get(md, 'compute Von Mises or Tresca', 'u2', lawname, 'params2', mfvm2);
-     else
-       VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
-		    'u2', 'clambda2', 'cmu2', mfvm2);
-     end
-     gf_plot(mfvm2,VM2,'mesh', 'off', 'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
-     hold off
-  end;
+  if (do_plot)
+    gf_model_get(md, 'solve', 'noisy', 'max_iter', max_iter, 'max_res', max_res); % , 'lsearch', 'simplest');
 
-  hold on
-  % tic;
-  % gf_multi_contact_frame_get(mcff, 'compute pairs');
-  % toc
-  if (generic_assembly_contact_brick)
-    % Should be done on the Gauss points (using a mesh_im_data ?)
-    slpt = gf_model_get(md, 'interpolation', 'x+u1', mfu1, CONTACT_BOUNDARY1);
-    mapt = gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans), 2) + Interpolate_filter(contact_trans, x+u1, 0)', mfu1, CONTACT_BOUNDARY1);
-    % mapt = mapt + gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans)+Interpolate(u1,contact_trans), 1)', mfu1, CONTACT_BOUNDARY1);
-    
-    nbpt = size(slpt,2)/N;
-    mapt = reshape(mapt, N, nbpt);
-    slpt = reshape(slpt, N, nbpt);
-    indx = [];
-    for i = 1:nbpt
-      if (norm(slpt(:,i) - mapt(:,i)) > 1E-10)
-          indx = [indx, i];
-      end
+    U1 = gf_model_get(md, 'variable', 'u1');
+    if (nonlinear_elasticity)
+      VM1 = gf_model_get(md, 'compute Von Mises or Tresca', 'u1', lawname, 'params1', mfvm1);
+    else
+      VM1 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+	    	  'u1', 'clambda1', 'cmu1', mfvm1);
     end
-    mapt = mapt(:, indx);
-    slpt = slpt(:, indx);
-  else    
-    slpt = gf_multi_contact_frame_get(mcff, 'slave points');
-    mapt = gf_multi_contact_frame_get(mcff, 'master points');
-  end
+    gf_plot(mfvm1,VM1,'mesh', 'off', 'deformed_mesh','on', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8); colorbar;
+
+    hold on % quiver plot of the multiplier
+    lambda1 = gf_model_get(md, 'variable', 'lambda1');
+    mf_lambda1 = gf_model_get(md, 'mesh fem of variable', 'lambda1');
+    sl=gf_slice({'boundary'}, mf_lambda1, CONTACT_BOUNDARY1);
+    bound_lambda1=gf_compute(mf_lambda1, lambda1,'interpolate on', sl);
+    bound_u1=gf_compute(mfu1, U1,'interpolate on', sl);
+    pts = gf_slice_get(sl, 'pts');
+    quiver(bound_u1(1,:)+pts(1,:), bound_u1(2,:)+pts(2,:), bound_lambda1(1,:), bound_lambda1(2,:))
+    hold off
   
-  if (N == 2)
-    line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
-    scatter(slpt(1,:), slpt(2, :), 20, 'red');
-    scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
-  elseif (N == 3)
-    line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
-    scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
-    scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
-  end
+    % hold on
+    % gf_plot(mf_lambda1, lambda1,'mesh', 'off', 'deformed_mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8);
+    % hold off
+  
+    if (test_case ~= 3 && test_case ~= 0)
+       hold on
+       U2 = gf_model_get(md, 'variable', 'u2');
+       if (nonlinear_elasticity)
+         VM2 = gf_model_get(md, 'compute Von Mises or Tresca', 'u2', lawname, 'params2', mfvm2);
+       else
+         VM2 = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
+		      'u2', 'clambda2', 'cmu2', mfvm2);
+       end
+       gf_plot(mfvm2,VM2,'mesh', 'off', 'deformed_mesh','on', 'deformation',U2,'deformation_mf',mfu2,'deformation_scale', 1, 'refine', 8); colorbar;
+       hold off
+    end;
+
+    hold on
+    % tic;
+    % gf_multi_contact_frame_get(mcff, 'compute pairs');
+    % toc
+    if (generic_assembly_contact_brick)
+      % Should be done on the Gauss points (using a mesh_im_data ?)
+      slpt = gf_model_get(md, 'interpolation', 'x+u1', mfu1, CONTACT_BOUNDARY1);
+      mapt = gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans), 2) + Interpolate_filter(contact_trans, x+u1, 0)', mfu1, CONTACT_BOUNDARY1);
+      mapt = mapt + gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans)+Interpolate(u1,contact_trans), 1)', mfu1, CONTACT_BOUNDARY1);
+    
+      nbpt = size(slpt,2)/N;
+      mapt = reshape(mapt, N, nbpt);
+      slpt = reshape(slpt, N, nbpt);
+      indx = [];
+      for i = 1:nbpt
+        if (norm(slpt(:,i) - mapt(:,i)) > 1E-10)
+            indx = [indx, i];
+        end
+      end
+      mapt = mapt(:, indx);
+      slpt = slpt(:, indx);
+    else    
+      slpt = gf_multi_contact_frame_get(mcff, 'slave points');
+      mapt = gf_multi_contact_frame_get(mcff, 'master points');
+    end
+  
+    if (N == 2)
+      line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)], 'Color', 'blue');
+      scatter(slpt(1,:), slpt(2, :), 20, 'red');
+      scatter(mapt(1,:), mapt(2, :), 20, 'cyan');
+    elseif (N == 3)
+      line([slpt(1,:); mapt(1,:)], [slpt(2,:); mapt(2,:)],  [slpt(3,:); mapt(3,:)], 'Color', 'blue');
+      scatter3(slpt(1,:), slpt(2, :), slpt(3, :), 20, 'red');
+      scatter3(mapt(1,:), mapt(2, :), mapt(3, :), 20, 'cyan');
+    end
 
   
-  if (test_case == 0)
-   rectangle('position', [-80, 0, 160, 160], 'Curvature', [1 1]);  % draw the obstacle
-   axis([-15 15 -3 44]);
-  end
-  if (test_case == 3)
-   rectangle('position', [-2, -1, 4, 4], 'Curvature', [1 1]);  % draw the obstacle
-   axis([-1.3 1.3 -1.1 0.8]);
-  end
-  hold off
+    if (test_case == 0)
+     rectangle('position', [-80, 0, 160, 160], 'Curvature', [1 1]);  % draw the obstacle
+     axis([-15 15 -3 44]);
+    end
+    if (test_case == 3)
+     rectangle('position', [-2, -1, 4, 4], 'Curvature', [1 1]);  % draw the obstacle
+     axis([-1.3 1.3 -1.1 0.8]);
+    end
+    hold off
 
-  pause(0.1);
+    pause(0.1);
+  end
 
   vf = vf * vf_mult; F(N) = -vf;
   gf_model_set(md, 'variable', 'data1', F);

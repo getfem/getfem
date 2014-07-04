@@ -1854,8 +1854,6 @@ namespace getfem {
                                gmm::scaled(stored_n_y,scalar_type(-1)
                                            / gmm::vect_sp(n_x, stored_n_y)));
         
-          // cout << "n_y = " << stored_n_y << " pt_x = " << pt_x << " pt_y = " << stored_pt_y << endl;
-
           // Computation of F_y
           base_matrix F_y(N,N), F_y_inv(N,N), M1(N, N), M2(N, N);
           pfem pfu_y = 0;
@@ -1909,22 +1907,12 @@ namespace getfem {
           base_matrix der_x(ndof_ux, N);
           gmm::mult(vbase_ux, gmm::transposed(M1), der_x);
           
-          //         for (size_type i = 0; i < ndof_ux; ++i)
-          //           for (size_type j = 0; j < N; ++j)
-          //             for (size_type k = 0; k < N; ++k) 
-          //               der_x(i, j) += M1(j,k) * vbase_ux(i,k);
-
           // -F_y^{-1}*I_nxny*Test_u(Y)
           base_matrix der_y(ndof_uy, N);
           if (ret_type == 1) {
             gmm::mult(vbase_uy, gmm::transposed(M1), der_y);
             gmm::scale(der_y, scalar_type(-1));
           }
-          
-          //         for (size_type i = 0; i < ndof_uy; ++i)
-          //           for (size_type j = 0; j < N; ++j)
-          //             for (size_type k = 0; k < N; ++k) 
-          //               der_y(i, j) -= M1(j,k) * vbase_uy(i,k);
           
           // F_y^{-1}*I_nxny*gDn_x[Test_u]
           gmm::mult(M1, gmm::transposed(F_x_inv), M2);
@@ -1934,6 +1922,9 @@ namespace getfem {
                 for (size_type l = 0; l < N; ++l)
                   der_x(i, j) -= M2(j, k) * vgrad_base_ux(i, l, k)
                     * n_x[l] * stored_signed_distance;
+
+          // cout << "der_x " << der_x << endl;
+          // cout << "der_y " << der_y << endl;
 
           for (std::map<var_trans_pair, base_tensor>::iterator itd
                  = derivatives.begin(); itd != derivatives.end(); ++itd) {
@@ -1964,13 +1955,13 @@ namespace getfem {
 
   void add_raytracing_transformation
   (model &md, const std::string &transname, scalar_type d) {
-    pinterpolate_transformation p = new raytracing_interpolate_transformation(d);
+    pinterpolate_transformation p=new raytracing_interpolate_transformation(d);
     md.add_interpolate_transformation(transname, p);
   }
 
   void add_raytracing_transformation
   (ga_workspace &workspace, const std::string &transname, scalar_type d) {
-    pinterpolate_transformation p = new raytracing_interpolate_transformation(d);
+    pinterpolate_transformation p=new raytracing_interpolate_transformation(d);
     workspace.add_interpolate_transformation(transname, p);
   }
 
@@ -2076,7 +2067,8 @@ namespace getfem {
     // Implementation: A{ijk} = -G{ik}ndef{j}
     //                 with G = (I - n@n)(I+Grad_u)^{-T}
     //                 and ndef the transformed normal         
-    // Derivative / n: ((I+Grad_u)^{-T}Test_n - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
+    // Derivative / n: ((I+Grad_u)^{-T}Test_n
+    //                 - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
     // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
     //                 with F = (I+Grad_u)^{-1}
     void derivative(const arg_list &args, size_type nder,
@@ -2163,7 +2155,8 @@ namespace getfem {
     // Implementation: A{ijk} = -G{kj}ndef{i}
     //                 with G = (I - n@n)(I+Grad_u)^{-T}
     //                 and ndef the transformed normal         
-    // Derivative / n: ((I+Grad_u)^{-T}Test_n - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
+    // Derivative / n: ((I+Grad_u)^{-T}Test_n
+    //                 - ndef(ndef.Test_n))/||(I+Grad_u)^{-T}n||
     // Implementation: A{ij} = (F{ij} - ndef{i}ndef{j})/norm_ndef
     //                 with F = (I+Grad_u)^{-1}
     void derivative(const arg_list &args, size_type nder,
@@ -2182,7 +2175,7 @@ namespace getfem {
       scalar_type lambdan = gmm::vect_sp(lambda, n)/nn;
       scalar_type lambdan_aug = gmm::neg(lambdan + r * g);
       size_type s_f = gmm::vect_size(f);
-      scalar_type tau = ((s_f >= 3) ? f[2] : scalar_type(0)) + f[0]*lambdan_aug;
+      scalar_type tau = ((s_f >= 3) ? f[2] : scalar_type(0))+f[0]*lambdan_aug;
       if (s_f >= 2) tau = std::min(tau, f[1]);
       scalar_type norm(0);
       
@@ -2216,7 +2209,8 @@ namespace getfem {
       base_tensor::iterator it = result.begin();
       switch (nder) {
       case 1: // Derivative with respect to lambda
-        if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2]))
+        if (norm > tau && ((s_f <= 1) || tau < f[1]) &&
+            ((s_f <= 2) || tau > f[2]))
           gmm::rank_one_update(dVs, dg, gmm::scaled(n, -f[0]/nn));
         if (lambdan_aug > scalar_type(0))
           gmm::rank_one_update(dVs, n, gmm::scaled(n, scalar_type(1)/(nn*nn)));
@@ -2225,14 +2219,16 @@ namespace getfem {
             *it = dVs(i, j);
         break;
       case 2: // Derivative with respect to n
-        if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2])) {
+        if (norm > tau && ((s_f <= 1) || tau < f[1])
+            && ((s_f <= 2) || tau > f[2])) {
           gmm::rank_one_update(dn, dg, gmm::scaled(lambda, -f[0]/nn));
           gmm::rank_one_update(dn, dg, gmm::scaled(n, f[0]*lambdan/(nn*nn)));
         }
         if (lambdan_aug > scalar_type(0)) {
-          gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(1)/(nn*nn)), lambda);
+          gmm::rank_one_update(dn, gmm::scaled(n, scalar_type(1)/(nn*nn)),
+                               lambda);
           gmm::rank_one_update(dn,
-                               gmm::scaled(n,(lambdan_aug-lambdan)/(nn*nn*nn)), n);
+                          gmm::scaled(n,(lambdan_aug-lambdan)/(nn*nn*nn)), n);
           for (size_type j = 0; j < N; ++j) dn(j,j) -= lambdan_aug/nn;
         }
         for (size_type j = 0; j < N; ++j)
@@ -2246,7 +2242,8 @@ namespace getfem {
             *it = dVs(i, j);
         break;
       case 4:
-         if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2]))
+         if (norm > tau && ((s_f <= 1) || tau < f[1])
+             && ((s_f <= 2) || tau > f[2]))
            gmm::scale(dg, -f[0]*r);
          else
            gmm::clear(dg);
@@ -2256,7 +2253,8 @@ namespace getfem {
            *it = dg[i];
         break;
       case 5:
-        if (norm > tau && ((s_f <= 1) || tau < f[1]) && ((s_f <= 2) || tau > f[2]))
+        if (norm > tau && ((s_f <= 1) || tau < f[1])
+            && ((s_f <= 2) || tau > f[2]))
           gmm::scale(dg, -f[0]*g);
         else
           gmm::clear(dg);
