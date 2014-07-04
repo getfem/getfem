@@ -50,8 +50,8 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 
 // #define GA_USES_BLAS // not so interesting, at leat for debian blas
 
-#define GA_DEBUG_INFO(a) { cout << a << endl; }
-// #define GA_DEBUG_INFO(a)
+// #define GA_DEBUG_INFO(a) { cout << a << endl; }
+#define GA_DEBUG_INFO(a)
 #define GA_DEBUG_ASSERT(a, b) GMM_ASSERT1(a, b)
 // #define GA_DEBUG_ASSERT(a, b)
 
@@ -4048,13 +4048,13 @@ namespace getfem {
              it != expr_variables.end(); ++it) {
           if (!(is_constant(it->first))) {
             ga_tree dtree = (remain ? tree : *(trees[ind_tree].ptree));
-            cout << "Derivation with respect to " << it->first << " : "
-                 << it->second << " of " << ga_tree_to_string(dtree) << endl;
+            // cout << "Derivation with respect to " << it->first << " : "
+            //     << it->second << " of " << ga_tree_to_string(dtree) << endl;
             ga_derivative(dtree, *this, m,it->first,it->second,1+order);
-            cout << "Result : " << ga_tree_to_string(dtree) << endl;
+            // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
                                  false, function_expr);
-            cout << "after analysis"  << ga_tree_to_string(dtree) << endl;
+            // cout << "after analysis"  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr);
           }
         }
