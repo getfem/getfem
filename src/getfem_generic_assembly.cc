@@ -364,12 +364,10 @@ namespace getfem {
       }
       
       if (n0->name_test1.size()) {
-        name_test1 = n0->name_test1;
-        qdim1 = n0->qdim1;
+        name_test1 = n0->name_test1; qdim1 = n0->qdim1;
         interpolate_name_test1 = n0->interpolate_name_test1;
       } else {
-        name_test1 = n1->name_test1;
-        qdim1 = n1->qdim1;
+        name_test1 = n1->name_test1; qdim1 = n1->qdim1;
         interpolate_name_test1 = n1->interpolate_name_test1;
       }
       
@@ -377,11 +375,9 @@ namespace getfem {
         name_test2 = n0->name_test2; qdim2 = n0->qdim2;
         interpolate_name_test2 = n0->interpolate_name_test2;
       } else {
-        name_test2 = n1->name_test2;
-        qdim2 = n1->qdim2;
+        name_test2 = n1->name_test2; qdim2 = n1->qdim2;
         interpolate_name_test2 = n1->interpolate_name_test2;
       }
-
       t.adjust_sizes(mi);
     }
 
@@ -1386,8 +1382,9 @@ namespace getfem {
     void child_of(const ga_if_hierarchy &gih)
     { *this = gih; push_back(0); }
     bool is_compatible(const std::list<ga_if_hierarchy> &gihl) {
+
       std::list<ga_if_hierarchy>::const_iterator it = gihl.begin();
-      for (; it != gihl.end(); ++it)
+      for (; it != gihl.end(); ++it) {
         if (it->size() <= size()) {
           bool ok = true;
           for (size_type i = 0; i+1 < it->size(); ++i)
@@ -1395,6 +1392,7 @@ namespace getfem {
           if (it->back() > (*this)[it->size()-1]) { ok = false; break; }
           if (ok) return true;
         }
+      }
       return false;
     }
 
@@ -1452,6 +1450,7 @@ namespace getfem {
     struct region_mim_instructions {
 
       const mesh *m;
+      ga_if_hierarchy current_hierarchy;
       std::map<std::string, base_vector> local_dofs;
       std::map<std::string, std::list<ga_if_hierarchy> > local_dofs_hierarchy;
       std::map<const mesh_fem *, pfem_precomp> pfps;
@@ -2163,15 +2162,26 @@ namespace getfem {
     const mesh_fem *mfn, **mfg;
     
     virtual int exec(void) {
-      const mesh_fem &mf = *(mfg ? *mfg : mfn);
       GA_DEBUG_INFO("Instruction: adapt first index of tensor");
+      const mesh_fem &mf = *(mfg ? *mfg : mfn);
+      // cout << "mfg = " << mfg << endl;
+      GA_DEBUG_ASSERT(&mf, "Internal error");
+      // cout << "ctx.is_convex_num_valid() = " << int(ctx.is_convex_num_valid()) << endl;
       size_type cv_1 = ctx.is_convex_num_valid()
         ? ctx.convex_num() : mf.convex_index().first_true();
+      if (!mf.convex_index().is_in(cv_1))
+        cv_1 = mf.convex_index().first_true();
+
+
+      // cout << "cv_1 " << cv_1 << endl;
       pfem pf = mf.fem_of_element(cv_1);
+      GMM_ASSERT1(pf, "An element without finite element methode defined");
+      // cout << "pf = " << pf << endl;
       size_type Qmult = qdim / pf->target_dim();
       size_type s = pf->nb_dof(cv_1) * Qmult;
       if (t.sizes()[0] != s)
         { bgeot::multi_index mi = t.sizes(); mi[0] = s; t.adjust_sizes(mi); }
+      // cout << "here " << endl;
       return 0;
     }
 
@@ -2189,11 +2199,12 @@ namespace getfem {
     const mesh_fem *mfn, **mfg;
     
     virtual int exec(void) {
-      const mesh_fem &mf = *(mfg ? *mfg : mfn);
       GA_DEBUG_INFO("Instruction: adapt second index of tensor");
+      const mesh_fem &mf = *(mfg ? *mfg : mfn);
       size_type cv_1 = ctx.is_convex_num_valid()
         ? ctx.convex_num() : mf.convex_index().first_true();
       pfem pf = mf.fem_of_element(cv_1);
+      GMM_ASSERT1(pf, "An element without finite element methode defined");
       size_type Qmult = qdim / pf->target_dim();
       size_type s = pf->nb_dof(cv_1) * Qmult;
       if (t.sizes()[1] != s)
@@ -2218,15 +2229,17 @@ namespace getfem {
     const mesh_fem *mfn2, **mfg2;
 
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: adapt two first indices of tensor");
       const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
       const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
-      GA_DEBUG_INFO("Instruction: adapt two first indices of tensor");
       size_type cv_1 = ctx1.is_convex_num_valid()
         ? ctx1.convex_num() : mf1.convex_index().first_true();
       size_type cv_2 = ctx2.is_convex_num_valid()
         ? ctx2.convex_num() : mf2.convex_index().first_true();
       pfem pf1 = mf1.fem_of_element(cv_1);
+      GMM_ASSERT1(pf1, "An element without finite element methode defined");
       pfem pf2 = mf2.fem_of_element(cv_2);
+      GMM_ASSERT1(pf2, "An element without finite element methode defined");
       size_type Qmult1 = qdim1 / pf1->target_dim();
       size_type s1 = pf1->nb_dof(cv_1) * Qmult1;
       size_type Qmult2 = qdim2 / pf2->target_dim();
@@ -2451,25 +2464,17 @@ namespace getfem {
   struct ga_instruction_update_group_info : public ga_instruction {
     ga_workspace &workspace;
     ga_instruction_set &gis;
-    ga_instruction_set::interpolate_info &inti;
+    ga_instruction_set::interpolate_info &inin;
     const std::string &gname;
     ga_instruction_set::variable_group_info &vgi;
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: Update group info");
+      GA_DEBUG_INFO("Instruction: Update group info for "+gname);
       if (vgi.varname &&
-          &(workspace.associated_mf(*(vgi.varname))->linked_mesh())==inti.m)
+          &(workspace.associated_mf(*(vgi.varname))->linked_mesh())==inin.m)
         return 0;
-
-      size_type found = size_type(-1);
-      const std::vector<std::string> &vg = workspace.variable_group(gname);
-      for (size_type i = 0; i < vg.size(); ++i) {
-        if (&(workspace.associated_mf(vg[i])->linked_mesh()) == inti.m)
-          { found = i; break; }
-      }
-      GMM_ASSERT1(found != size_type(-1),
-                  "Variable corresponding to the mesh not found in group");
-      const std::string &varname = vg[found];
-
+      const std::string &varname
+        = inin.m ? workspace.variable_in_group(gname, *(inin.m))
+        : workspace.first_variable_of_group(gname);
       vgi.mf = workspace.associated_mf(varname);
       vgi.Ir = gis.var_intervals[varname];
       vgi.In = workspace.interval_of_variable(varname);
@@ -2479,9 +2484,9 @@ namespace getfem {
     }
     ga_instruction_update_group_info
     (ga_workspace &workspace_, ga_instruction_set &gis_,
-     ga_instruction_set::interpolate_info &inti_, const std::string &gname_,
+     ga_instruction_set::interpolate_info &inin_, const std::string &gname_,
      ga_instruction_set::variable_group_info &vgi_) :
-      workspace(workspace_), gis(gis_), inti(inti_), gname(gname_),
+      workspace(workspace_), gis(gis_), inin(inin_), gname(gname_),
       vgi(vgi_) {}
   };
   
@@ -2491,6 +2496,7 @@ namespace getfem {
     size_type pt_type;
     int nb;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated filter");
       if ((pt_type == size_type(-1) && inin.pt_type) ||
           (pt_type != size_type(-1) && inin.pt_type == pt_type)) {
         GA_DEBUG_INFO("Instruction: interpolated filter: pass");
@@ -2518,13 +2524,13 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type qdim;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated variable value");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       const base_vector &U = *(Ug ? *Ug : Un);
       base_vector coeff;
-      GA_DEBUG_INFO("Instruction: interpolated variable value");
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
+      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolation of a variable "
         "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -2549,13 +2555,13 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type qdim;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated variable grad");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       const base_vector &U = *(Ug ? *Ug : Un);
       base_vector coeff;
-      GA_DEBUG_INFO("Instruction: interpolated variable grad");
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
+      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolatation of a variable "
         "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -2582,13 +2588,13 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type qdim;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated variable hessian");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
       const base_vector &U = *(Ug ? *Ug : Un);
       base_vector coeff;
-      GA_DEBUG_INFO("Instruction: interpolated variable hessian");
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
+      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolatation of a variable "
         "on another mesh than the one it is defined on");
       slice_vector_on_basic_dof_of_element(mf, U, ctx.convex_num(), coeff);
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
@@ -2615,11 +2621,11 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type qdim;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated base value");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: interpolated base value");
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
+      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolataion of a variable "
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
@@ -2664,11 +2670,11 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type qdim;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated base vgrad");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: interpolated base vgrad");
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
+      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolatation of a variable "
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
@@ -2716,11 +2722,11 @@ namespace getfem {
     fem_interpolation_context &ctx;
     size_type qdim;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated base hessian");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GA_DEBUG_INFO("Instruction: interpolated base hessian");
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Try to interpolate a variable"
+      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolatation of a variable "
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
@@ -2952,9 +2958,6 @@ namespace getfem {
     base_tensor &t, &tc1;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: tensor copy possibly void");
-      // cout << "copy tensor " << tc1 << endl;
-      // static int count = 0;
-      // if (++count > 10) GMM_ASSERT1(false, "stop here");
       if (tc1.size())
         gmm::copy(tc1.as_vector(), t.as_vector());
       else
@@ -3328,7 +3331,7 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
-  // Performs Amij Bnj -> Cmni
+  // Performs Amij Bnj -> Cnmi
   struct ga_instruction_spec_reduction : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
@@ -3337,7 +3340,7 @@ namespace getfem {
                            << nn);
       size_type s1 = tc1.sizes()[0], s11 = tc1.size() / (s1*nn), s111 = s1*s11;
       size_type s2 = tc2.sizes()[0];
-      
+     
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < s11; ++i)
         for (size_type n = 0; n < s2; ++n)
@@ -3346,6 +3349,14 @@ namespace getfem {
             for (size_type j = 0; j < nn; ++j)
               *it += tc1[m+i*s1+j*s111] * tc2[n+j*s2];
           }
+//       base_tensor::iterator it = t.begin();
+//       for (size_type i = 0; i < s11; ++i)
+//         for (size_type m = 0; m < s1; ++m)
+//           for (size_type n = 0; n < s2; ++n, ++it) {
+//             *it = scalar_type(0);
+//             for (size_type j = 0; j < nn; ++j)
+//               *it += tc1[m+i*s1+j*s111] * tc2[n+j*s2];
+//           }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
@@ -3802,10 +3813,11 @@ namespace getfem {
     const mesh_fem *mfn, **mfg;
     scalar_type &coeff;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: vector term assembly for fem variable\n");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
+      GMM_ASSERT1(&mf, "Internal error");
       const gmm::sub_interval &I = mf.is_reduced() ? Ir : In;
       base_vector &V = mf.is_reduced() ? Vr : Vn;
-      GA_DEBUG_INFO("Instruction: vector term assembly for fem variable\n");
       size_type cv_1 = ctx.is_convex_num_valid()
         ? ctx.convex_num() : mf.convex_index().first_true();
       mesh_fem::ind_dof_ct ct = mf.ind_basic_dof_of_element(cv_1);
@@ -3856,13 +3868,13 @@ namespace getfem {
     base_vector &elem;
     bool interpolate;
     virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: matrix term assembly\n");
       const mesh_fem &mf1 = *(mfg1 ? *mfg1 : mfn1);
       const mesh_fem &mf2 = *(mfg2 ? *mfg2 : mfn2);
       bool reduced = (&mf1 && mf1.is_reduced()) || (&mf2 && mf2.is_reduced());
       const gmm::sub_interval &I1 = reduced ? Ir1 : In1;
       const gmm::sub_interval &I2 = reduced ? Ir2 : In2;
       MAT &K = reduced ? Kr : Kn;
-      GA_DEBUG_INFO("Instruction: matrix term assembly\n");
       if (ipt == 0 || interpolate) {
         gmm::resize(elem, t.size());
         gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
@@ -3870,23 +3882,25 @@ namespace getfem {
         gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
       }
       if (ipt == nbpt-1 || interpolate) {
+        size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
         mesh_fem::ind_dof_ct ct1;
         if (&mf1) {
           if (!ctx1.is_convex_num_valid()) return 0;
-//           size_type cv_1 = ctx1.is_convex_num_valid()
-//             ? ctx1.convex_num() : mf1.convex_index().first_true();
           ct1 = mf1.ind_basic_dof_of_element(ctx1.convex_num());
+          GA_DEBUG_ASSERT(ct1.size() == s1, "Internal error");
         }
         mesh_fem::ind_dof_ct ct2;
         if (&mf2) {
           if (!ctx2.is_convex_num_valid()) return 0;
-//          size_type cv_2 = ctx2.is_convex_num_valid()
-//            ? ctx2.convex_num() : mf2.convex_index().first_true();
           ct2 = mf2.ind_basic_dof_of_element(ctx2.convex_num());
+          GA_DEBUG_ASSERT(ct2.size() == s2, "Internal error");
         }
-        scalar_type threshold = gmm::vect_norminf(elem) * 1E-13;
-        size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
-        // size_type s1 = ct1.size(), s2 = ct2.size();
+
+        GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
+
+        scalar_type ninf = gmm::vect_norminf(elem);
+        if (ninf == scalar_type(0)) return 0;
+        scalar_type threshold = ninf * 1E-14;
         for (size_type i1 = 0; i1 < s1; ++i1)
           for (size_type i2 = 0; i2 < s2; ++i2) {
             scalar_type e = elem[i2*s1+i1];
@@ -3961,7 +3975,7 @@ namespace getfem {
 
       if (!iscte) found_var = true;
       if (!ignore_data || !iscte) {
-        if (group && !expand_groups) {
+        if (group && expand_groups) {
           const std::vector<std::string> &t
             = workspace.variable_group(pnode->name);
           for (size_type i = 0; i < t.size(); ++i)
@@ -4069,7 +4083,7 @@ namespace getfem {
             // cout << "Result : " << ga_tree_to_string(dtree) << endl;
             ga_semantic_analysis(expr, dtree, *this, m.dim(),
                                  false, function_expr);
-            // cout << "after analysis"  << ga_tree_to_string(dtree) << endl;
+            // cout << "after analysis "  << ga_tree_to_string(dtree) << endl;
             add_tree(dtree, m, mim, rg, expr);
           }
         }
@@ -4156,6 +4170,7 @@ namespace getfem {
   bool ga_workspace::used_variables(model::varnamelist &vl,
                                     model::varnamelist &dl,
                                     size_type order) {
+
     bool islin = true;
     std::set<var_trans_pair> vll, dll;
     for (size_type i = 0; i < vl.size(); ++i)
@@ -4202,10 +4217,11 @@ namespace getfem {
     }
     vl.clear();
     for (std::set<var_trans_pair>::iterator it=vll.begin(); it!=vll.end();++it)
-      vl.push_back(it->first);
+      if (vl.size() == 0 || it->first.compare(vl.back())) vl.push_back(it->first);
     dl.clear();
     for (std::set<var_trans_pair>::iterator it=dll.begin(); it!=dll.end();++it)
-      dl.push_back(it->first);
+      if (dl.size() == 0 || it->first.compare(dl.back())) dl.push_back(it->first);
+   
     return islin;
   }
 
@@ -4225,6 +4241,17 @@ namespace getfem {
       ms.insert(&(mf->linked_mesh()));
     }
     variable_groups[group_name] = nl;
+  }
+
+
+  const std::string &ga_workspace::variable_in_group
+  (const std::string &group_name, const mesh &m) const {
+    if (variable_group_exists(group_name)) {
+      const std::vector<std::string> &t=variable_group(group_name);
+      for (size_type j = 0; j < t.size(); ++j)
+        if (&((associated_mf(t[j]))->linked_mesh()) == &m) return t[j];
+      GMM_ASSERT1(false, "No variable in this group for the given mesh");
+    } else return group_name;
   }
   
 
@@ -4264,7 +4291,8 @@ namespace getfem {
           if (order == 1) {
             const std::string &name = it->root->name_test1;
             bool is_group = variable_group_exists(name);
-            const std::vector<std::string> *t = is_group ? &(variable_group(name)) : 0;
+            const std::vector<std::string> *t
+              = is_group ? &(variable_group(name)) : 0;
             const std::string *vname = &(is_group ? (*t)[0] : name);
             
             for (size_type i = 0; (i==0) || (is_group && i < t->size()); ++i) {
@@ -4273,8 +4301,10 @@ namespace getfem {
               if (mf && mf->is_reduced() &&
                   vars_vec_done.find(*vname) == vars_vec_done.end()) {
                 gmm::mult_add(gmm::transposed(mf->extension_matrix()),
-                              gmm::sub_vector(unreduced_V, gis.var_intervals[*vname]),
-                              gmm::sub_vector(V(), interval_of_variable(*vname)));
+                              gmm::sub_vector(unreduced_V,
+                                              gis.var_intervals[*vname]),
+                              gmm::sub_vector(V(),
+                                              interval_of_variable(*vname)));
                 vars_vec_done.insert(*vname);
               }
             }
@@ -4289,20 +4319,24 @@ namespace getfem {
             const std::vector<std::string> *t2
               = is_group2 ? &(variable_group(name2)) : 0;
             const std::string *vname2 = &(is_group2 ? (*t2)[0] : name2);
-            for (size_type i1 = 0; (i1==0) || (is_group1 && i1 < t1->size()); ++i1) {
+            for (size_type i1 = 0; (i1==0) || (is_group1 && i1 < t1->size());
+                 ++i1) {
               if (i1 > 0) vname1 = &((*t1)[i1]);
-              for (size_type i2 = 0; (i2==0) || (is_group2 && i2 < t2->size()); ++i2) {
-                if (i2 > 0) vname1 = &((*t2)[i2]);
+              for (size_type i2 = 0; (i2==0) || (is_group2 && i2 < t2->size());
+                   ++i2) {
+                if (i2 > 0) vname2 = &((*t2)[i2]);
                 const mesh_fem *mf1 = associated_mf(*vname1);
                 const mesh_fem *mf2 = associated_mf(*vname2);
-                if (((mf1 && mf1->is_reduced()) || (mf2 && mf2->is_reduced()))) {
+                if (((mf1 && mf1->is_reduced())
+                     || (mf2 && mf2->is_reduced()))) {
                   std::pair<std::string, std::string> p(*vname1, *vname2);
                   if (vars_mat_done.find(p) == vars_mat_done.end()) {
                     gmm::sub_interval uI1 = gis.var_intervals[*vname1];
                     gmm::sub_interval uI2 = gis.var_intervals[*vname2];
                     gmm::sub_interval I1 = interval_of_variable(*vname1);
                     gmm::sub_interval I2 = interval_of_variable(*vname2);
-                    if ((mf1 && mf1->is_reduced()) && (mf2 && mf2->is_reduced())) {
+                    if ((mf1 && mf1->is_reduced()) &&
+                        (mf2 && mf2->is_reduced())) {
                       model_real_sparse_matrix aux(I1.size(), uI2.size());
                       model_real_row_sparse_matrix M(I1.size(), I2.size());
                       gmm::mult(gmm::transposed(mf1->extension_matrix()),
@@ -4327,7 +4361,7 @@ namespace getfem {
             }
           }
         }
-      }  
+      }
     }
   }
 
@@ -5883,7 +5917,7 @@ namespace getfem {
         }
         mi.resize(0);
         for (size_type i = 0; i < child0->nb_test_functions(); ++i)
-          mi.push_back(2);
+          mi.push_back(child0->t.sizes()[i]);
         for (size_type i = 0; i < mi2.size(); ++i) mi.push_back(mi2[i]);
         pnode->t.adjust_sizes(mi);
         pnode->test_function_type = child0->test_function_type;
@@ -6261,7 +6295,7 @@ namespace getfem {
           if (n > 1) mii.push_back(n);
           pnode->t.adjust_sizes(mii);
         }
-        pnode_trans->test_function_type = order;
+        // pnode_trans->test_function_type = order;
         tree.duplicate_with_addition(pnode_trans);
         if (n > 1)
           pnode_trans->parent->op_type = GA_DOT;
@@ -6297,7 +6331,7 @@ namespace getfem {
           if (n > 1) { mii.push_back(n); mii.push_back(n); }
           pnode_trans->t.adjust_sizes(mii);
         }
-        pnode_trans->test_function_type = order;
+        // pnode_trans->test_function_type = order;
         tree.duplicate_with_addition(pnode_trans);
         if (n > 1)
           pnode_trans->parent->op_type = GA_DOT;
@@ -6902,6 +6936,7 @@ namespace getfem {
     const mesh_fem *mf1 = 0, *mf2 = 0;
     const mesh_fem **mfg1 = 0, **mfg2 = 0;
     fem_interpolation_context *pctx1 = 0, *pctx2 = 0;
+
     if (pnode->test_function_type) {
       if (pnode->name_test1.size())
         mf1 = workspace.associated_mf(pnode->name_test1);
@@ -6909,7 +6944,7 @@ namespace getfem {
         pctx1 = &(gis.ctx);
         const std::string &intn1 = pnode->interpolate_name_test1;
         if (intn1.size()) pctx1 = &(rmi.interpolate_infos[intn1].ctx);
-        if (intn1.size() && workspace.variable_group_exists(intn1)) {
+        if (intn1.size() && workspace.variable_group_exists(pnode->name_test1)) {
           ensure_update_group_info_instruction(workspace, gis, rmi,
                                                intn1, pnode->name_test1);
           ga_instruction_set::variable_group_info &vgi = 
@@ -6923,7 +6958,7 @@ namespace getfem {
         pctx2 = &(gis.ctx);
         const std::string &intn2 = pnode->interpolate_name_test2;
         if (intn2.size()) pctx2 = &(rmi.interpolate_infos[intn2].ctx);
-        if (intn2.size() && workspace.variable_group_exists(intn2)) {
+        if (intn2.size() && workspace.variable_group_exists(pnode->name_test2)) {
           ensure_update_group_info_instruction(workspace, gis, rmi,
                                                intn2, pnode->name_test2);
           ga_instruction_set::variable_group_info &vgi = 
@@ -6985,7 +7020,7 @@ namespace getfem {
         cerr << "Detected wrong equivalent nodes: ";
         ga_print_node(pnode, cerr);
         cerr << " and "; ga_print_node(*it, cout);
-        cerr << " (this causes no problem) " << endl;
+        cerr << " (no problem, but hash code would be adapted) " << endl;
       }
     }
 
@@ -7094,7 +7129,7 @@ namespace getfem {
       } else {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         const im_data *imd = workspace.associated_im_data(pnode->name);
-        
+
         if (imd) {
           pgai = new ga_instruction_extract_local_im_data
             (pnode->t, *imd, workspace.value(pnode->name), gis.pai, gis.ctx,
@@ -7187,7 +7222,7 @@ namespace getfem {
         const base_vector *Un = gis.extended_vars[pnode->name], **Ug = 0;
         fem_interpolation_context *pctx = &(rmi.interpolate_infos[intn].ctx);
         const mesh **m2 = &(rmi.interpolate_infos[intn].m);
-        if (workspace.variable_group_exists(intn)) {
+        if (workspace.variable_group_exists(pnode->name)) {
           ensure_update_group_info_instruction(workspace, gis, rmi,
                                                intn, pnode->name);
           ga_instruction_set::variable_group_info &vgi = 
@@ -7287,7 +7322,7 @@ namespace getfem {
         const std::string &intn = pnode->interpolate_name;
         fem_interpolation_context *pctx = &(rmi.interpolate_infos[intn].ctx);
         const mesh **m2 = &(rmi.interpolate_infos[intn].m);
-        if (workspace.variable_group_exists(intn)) {
+        if (workspace.variable_group_exists(pnode->name)) {
           ensure_update_group_info_instruction(workspace, gis, rmi,
                                                intn, pnode->name);
           ga_instruction_set::variable_group_info &vgi = 
@@ -7402,7 +7437,8 @@ namespace getfem {
                    pgai = new ga_instruction_reduction
                      (pnode->t, child1->t, child0->t, s2);
                } else pgai = new ga_instruction_spec_reduction
-                   (pnode->t, child1->t, child0->t, s2);
+                   (pnode->t, child0->t, child1->t, s2);
+               // (pnode->t, child1->t, child0->t, s2);
              }
 
 
@@ -7855,8 +7891,8 @@ namespace getfem {
           rmi.m = td.m;
           // rmi.interpolate_infos.clear();
           ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
-          ga_if_hierarchy if_hierarchy;
-          ga_compile_node(root, workspace, gis,rmi,*(td.m),false,if_hierarchy);
+          ga_compile_node(root, workspace, gis,rmi, *(td.m), false,
+                          rmi.current_hierarchy);
          
           // After compile tree
           workspace.assembled_tensor() = root->t;
@@ -7892,8 +7928,8 @@ namespace getfem {
           rmi.m = td.m;
           // rmi.interpolate_infos.clear();
           ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
-          ga_if_hierarchy if_hierarchy;
-          ga_compile_node(root, workspace,gis,rmi,*(td.m),false,if_hierarchy);
+          ga_compile_node(root, workspace, gis, rmi, *(td.m), false,
+                          rmi.current_hierarchy);
           // cout << "compilation finished "; ga_print_node(root, cout);
           // cout << endl;
          
@@ -7914,18 +7950,19 @@ namespace getfem {
                 fem_interpolation_context *pctx = &(gis.ctx);
                 const std::string &intn1 = root->interpolate_name_test1;
                 if (intn1.size()) pctx = &(rmi.interpolate_infos[intn1].ctx);
-                const gmm::sub_interval *Ir
-                  = &(gis.var_intervals[root->name_test1]);
-                const gmm::sub_interval *In
-                  = &(workspace.interval_of_variable(root->name_test1));
 
-                if (intn1.size() && workspace.variable_group_exists(intn1)) {
+                const gmm::sub_interval *Ir = 0, *In = 0;
+                if (intn1.size() &&
+                    workspace.variable_group_exists(root->name_test1)) {
                   ensure_update_group_info_instruction(workspace, gis, rmi,
                                                        intn1,root->name_test1);
                   ga_instruction_set::variable_group_info &vgi = 
                     rmi.interpolate_infos[intn1].groups_info[root->name_test1];
                   Ir = &(vgi.Ir); In = &(vgi.In);
                   mfg = &(vgi.mf); mf = 0;
+                } else {
+                  Ir = &(gis.var_intervals[root->name_test1]);
+                  In = &(workspace.interval_of_variable(root->name_test1));
                 }
                 pgai = new ga_instruction_fem_vector_assembly
                   (root->t, workspace.unreduced_vector(),
@@ -7963,32 +8000,35 @@ namespace getfem {
               add_interval_to_gis(workspace, root->name_test1, gis);
               add_interval_to_gis(workspace, root->name_test2, gis);
               
-              const gmm::sub_interval *Ir1
-                = &(gis.var_intervals[root->name_test1]);
-              const gmm::sub_interval *In1
-                = &(workspace.interval_of_variable(root->name_test1));
-              const gmm::sub_interval *Ir2
-                = &(gis.var_intervals[root->name_test2]);
-              const gmm::sub_interval *In2
-                = &(workspace.interval_of_variable(root->name_test2));
+              const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2 = 0;
 
-              if (intn1.size() && workspace.variable_group_exists(intn1)) {
+
+              if (intn1.size() &&
+                  workspace.variable_group_exists(root->name_test1)) {
                 ensure_update_group_info_instruction(workspace, gis, rmi,
                                                      intn1,root->name_test1);
                 ga_instruction_set::variable_group_info &vgi = 
                   rmi.interpolate_infos[intn1].groups_info[root->name_test1];
                 Ir1 = &(vgi.Ir); In1 = &(vgi.In);
                 mfg1 = &(vgi.mf); mf1 = 0;
+              } else {
+                Ir1 = &(gis.var_intervals[root->name_test1]);
+                In1 = &(workspace.interval_of_variable(root->name_test1));
               }
 
-              if (intn2.size() && workspace.variable_group_exists(intn2)) {
+              if (intn2.size() &&
+                  workspace.variable_group_exists(root->name_test2)) {
                 ensure_update_group_info_instruction(workspace, gis, rmi,
                                                      intn2,root->name_test2);
                 ga_instruction_set::variable_group_info &vgi = 
-                  rmi.interpolate_infos[intn1].groups_info[root->name_test2];
+                  rmi.interpolate_infos[intn2].groups_info[root->name_test2];
                 Ir2 = &(vgi.Ir); In2 = &(vgi.In);
                 mfg2 = &(vgi.mf); mf2 = 0;
+              } else {
+                Ir2 = &(gis.var_intervals[root->name_test2]);
+                In2 = &(workspace.interval_of_variable(root->name_test2));
               }
+
 
               pgai = new ga_instruction_matrix_assembly
                 <model_real_sparse_matrix>
@@ -8126,7 +8166,7 @@ namespace getfem {
     base_matrix G;
     base_small_vector un, up;
     scalar_type J(0);
-
+    
     std::set<std::string>::iterator iti = gis.transformations.begin();
     for (; iti != gis.transformations.end(); ++iti)
       (workspace.interpolate_transformation(*iti))->init(workspace);
@@ -8157,7 +8197,8 @@ namespace getfem {
           const bgeot::stored_point_tab &spt
             = pim->approx_method()->integration_points();
           if (spt.size()) {
-            if (gis.ctx.have_pgp() && gis.pai == pim->approx_method()) {
+            if (gis.ctx.have_pgp() && gis.pai == pim->approx_method() &&
+                gis.ctx.pgt() == pgt) {
               gis.ctx = fem_interpolation_context(gis.ctx.pgp(), 0, 0, G,
                                                   v.cv(), v.f());
             } else {
@@ -8171,7 +8212,6 @@ namespace getfem {
               }
             }
             gis.pai = pim->approx_method();
-
 
             // iterations on Gauss points
             gis.nbpt = gis.pai->nb_points_on_convex();
@@ -8203,6 +8243,7 @@ namespace getfem {
           }
         }
       }
+      GA_DEBUG_INFO("-----------------------------");
     }
     iti = gis.transformations.begin();
     for (; iti != gis.transformations.end(); ++iti)
@@ -8264,7 +8305,6 @@ namespace getfem {
         // ga_replace_test_by_cte(tree.root, false);
         // ga_semantic_analysis(expr, tree, local_workspace, 1, false, true);
       }
-      // cout << "derivated function: " <<  ga_tree_to_string(tree) << endl;
       expr = ga_tree_to_string(tree);
     }
     if (gis) delete gis; gis = 0;

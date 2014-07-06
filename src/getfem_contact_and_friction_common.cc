@@ -1415,7 +1415,6 @@ namespace getfem {
 
     void add_rigid_obstacle(const model &md, const std::string &expr,
                             size_type N) {
-      // cout << "adding rigid obstacle " << expr << endl;
       obstacles.push_back(obstacle());
       obstacles.back().f = ga_function(md, expr);
       gmm::resize(obstacles.back().x, N);
@@ -1492,15 +1491,19 @@ namespace getfem {
       const std::vector<size_type> &boundaries_ind = it->second;
       for (size_type i = 0; i < boundaries_ind.size(); ++i) {
         const contact_boundary &cb =  contact_boundaries[boundaries_ind[i]];
-        if (expand_groups && workspace.variable_group_exists(cb.dispname)) {
-          const std::vector<std::string> &t=workspace.variable_group(cb.dispname);
-          for (size_type j = 0; j < t.size(); ++j)
-            vars.insert(var_trans_pair(t[j], ""));
-        } else vars.insert(var_trans_pair(cb.dispname, ""));
+        const std::string &dispname_x
+          =  workspace.variable_in_group(cb.dispname, m_x);
+        vars.insert(var_trans_pair(dispname_x, ""));
+
+        // if (expand_groups && workspace.variable_group_exists(cb.dispname)) {
+//           const std::vector<std::string> &t=workspace.variable_group(cb.dispname);
+//           for (size_type j = 0; j < t.size(); ++j)
+//             vars.insert(var_trans_pair(t[j], ""));
+//         } else vars.insert(var_trans_pair(cb.dispname, ""));
       }
 
-      for (size_type i = 0; i < boundaries_ind.size(); ++i) {
-        const contact_boundary &cb =  contact_boundaries[boundaries_ind[i]];
+      for (size_type i = 0; i < contact_boundaries.size(); ++i) {
+        const contact_boundary &cb =  contact_boundaries[i];
         if (!(cb.slave)) {
           if (expand_groups && workspace.variable_group_exists(cb.dispname)) {
             const std::vector<std::string> &t
@@ -1516,12 +1519,15 @@ namespace getfem {
       for (size_type i = 0; i < contact_boundaries.size(); ++i) {
         const contact_boundary &cb =  contact_boundaries[i];
         const mesh_fem &mfu = *(cb.mfu);
+        const std::string dispname_x
+          =  workspace.variable_in_group(cb.dispname, mfu.linked_mesh());
+
         if (mfu.is_reduced()) {
           gmm::resize(cb.U_unred, mfu.nb_basic_dof());
-          mfu.extend_vector(workspace.value(cb.dispname), cb.U_unred);
+          mfu.extend_vector(workspace.value(dispname_x), cb.U_unred);
           cb.U = &(cb.U_unred);
         } else {
-          cb.U = &(workspace.value(cb.dispname));
+          cb.U = &(workspace.value(dispname_x));
         }
       }
       compute_face_boxes();
@@ -1534,7 +1540,7 @@ namespace getfem {
         contact_boundaries[i].U_unred = model_real_plain_vector();
     }
 
-    int transform(const ga_workspace &/*workspace*/, const mesh &m_x,
+    int transform(const ga_workspace &workspace, const mesh &m_x,
                   fem_interpolation_context &ctx_x,
                   const base_small_vector &/*Normal*/,
                   const mesh **m_t,
@@ -1611,12 +1617,12 @@ namespace getfem {
         // cout << "d1 = " << d1 << endl;
         if (gmm::abs(d1) < release_distance && d1 < d0) {
           const base_tensor &t_der = obs.der_f.eval();
-          // cout << "t_der.as_vector() = " << t_der.as_vector() << endl;
+          GMM_ASSERT1(t_der.size() == n_x.size(), "Bad derivative size");
           if (gmm::vect_sp(t_der.as_vector(), n_x) < scalar_type(0)) 
             { d0 = d1; irigid_obstacle = i; gmm::copy(t_der.as_vector(),n_y); }
         }
       }
-      
+
       if (irigid_obstacle != size_type(-1)) {
         // cout << "Testing obstacle " << irigid_obstacle << endl;
         const obstacle &obs = obstacles[irigid_obstacle];
@@ -1652,7 +1658,7 @@ namespace getfem {
           first_pair_found = true;
         } else irigid_obstacle = size_type(-1);
       }
-      
+
       //
       // Determine the potential contact pairs with deformable bodies
       //
@@ -1826,9 +1832,8 @@ namespace getfem {
       }
 
       int ret_type = 0;
-
+      *m_t = 0; cv = face_num = size_type(-1);
       if (irigid_obstacle != size_type(-1)) {
-        *m_t = 0; cv = face_num = size_type(-1);
         P_ref = stored_pt_y; N_y = stored_n_y;
         ret_type = 2;
       } else if (first_pair_found) {
@@ -1923,12 +1928,13 @@ namespace getfem {
                   der_x(i, j) -= M2(j, k) * vgrad_base_ux(i, l, k)
                     * n_x[l] * stored_signed_distance;
 
-          // cout << "der_x " << der_x << endl;
-          // cout << "der_y " << der_y << endl;
+
+          const std::string &dispname_x
+            = workspace.variable_in_group(cb_x.dispname, m_x);
 
           for (std::map<var_trans_pair, base_tensor>::iterator itd
                  = derivatives.begin(); itd != derivatives.end(); ++itd) {
-            if (cb_x.dispname.compare(itd->first.first) == 0 &&
+            if (dispname_x.compare(itd->first.first) == 0 &&
                 itd->first.second.size() == 0) {
               itd->second.adjust_sizes(ndof_ux, N);
               gmm::copy(der_x.as_vector(), itd->second.as_vector());
@@ -1945,7 +1951,6 @@ namespace getfem {
             itd->second.adjust_sizes(0, 0);
         }
       }
-
       return ret_type;
     }
     

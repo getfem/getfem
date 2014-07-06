@@ -312,13 +312,16 @@ namespace getfem {
         (variables.find(name) != variables.end());
     }
 
+    const std::string &variable_in_group(const std::string &group_name,
+                                         const mesh &m) const;
+
     void define_variable_group(const std::string &group_name,
                                const std::vector<std::string> &nl);
 
     bool variable_group_exists(std::string name) const {
-      return (md && md->variable_group_exists(name)) ||
-        (parent_workspace && parent_workspace->variable_group_exists(name)) ||
-        (variable_groups.find(name) != variable_groups.end());
+      return (variable_groups.find(name) != variable_groups.end()) ||
+        (md && md->variable_group_exists(name)) ||
+        (parent_workspace && parent_workspace->variable_group_exists(name));
     }
 
     bool variable_or_group_exists(const std::string &name) const
@@ -370,9 +373,9 @@ namespace getfem {
 
     bool is_constant(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
-      if (it != variables.end()) return !(it->second.is_variable);
-      if (md && md->variable_exists(name))
-        return md->is_data(name);
+        if (it != variables.end()) return !(it->second.is_variable);
+      if (variable_group_exists(name)) return false;
+      if (md && md->variable_exists(name)) return md->is_data(name);
       if (parent_workspace && parent_workspace->variable_exists(name))
         return parent_workspace->is_constant(name);
       GMM_ASSERT1(false, "Undefined variable " << name);
@@ -408,7 +411,8 @@ namespace getfem {
       if (md && md->variable_exists(name))
         return md->pim_data_of_variable(name);
       if (parent_workspace && parent_workspace->variable_exists(name))
-        return parent_workspace->associated_im_data(name);      
+        return parent_workspace->associated_im_data(name);
+      if (variable_group_exists(name)) return 0;
       GMM_ASSERT1(false, "Undefined variable " << name);
     }
 

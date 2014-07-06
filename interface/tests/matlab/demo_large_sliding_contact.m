@@ -19,7 +19,7 @@
 clear all;
 gf_workspace('clear all');
 
-test_case = 3; % 0 = 2D punch on a rigid obstacle
+test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -32,7 +32,7 @@ alpha = 1.0;                % Alpha coefficient for "sliding velocity"
 f_coeff = 1.0;              % Friction coefficient
 
 test_tangent_matrix = false;
-nonlinear_elasticity = false;
+nonlinear_elasticity = true;
 max_iter = 50;
 draw_mesh = false;
 do_plot = true;
@@ -47,6 +47,11 @@ switch(test_case)
     max_res = 1E-8;
     release_dist = 1.5;
     self_contact = false;
+    if (test_case)
+        two_meshes = true;
+    else
+        two_meshes = false;
+    end
   case 3
     vf = 0.01;              % Vertical force
     vf_mult = 1.05;
@@ -54,17 +59,19 @@ switch(test_case)
     release_dist = 0.05;
     max_res = 1E-8;
     self_contact = true;
+    two_meshes = false;
   case {2,4}
     vf = 0.01;              % Vertical force
     vf_mult = 1.5;
     penalty_parameter = 0.01;
     max_res = 1E-8;
     if (test_case == 2)
-      release_dist = 0.1;
+      release_dist = 0.2;
     else
       release_dist = 5;
     end
     self_contact = true;
+    two_meshes = true;
 end;    
 
 switch (test_case) 
@@ -115,7 +122,7 @@ end
 mim1 = gf_mesh_im(mesh1, 4);
 mim1_contact = gf_mesh_im(mesh1, 4);
 
-if (test_case ~= 3 && test_case ~= 0) 
+if (two_meshes) 
   mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 2);
   pre_mflambda2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(pre_mflambda2, 'classical fem', 1);
   mfvm2 = gf_mesh_fem(mesh2); gf_mesh_fem_set(mfvm2, 'classical discontinuous fem', 1);
@@ -180,7 +187,7 @@ indmass = gf_model_set(md, 'add mass brick', mim1, 'u1', 'penalty_param1');
 gf_model_set(md, 'add initialized data', 'data1', F);
 gf_model_set(md, 'add source term brick', mim1, 'u1', 'data1');
 
-if (test_case ~= 3 && test_case ~= 0)
+if (two_meshes)
   gf_model_set(md, 'add fem variable', 'u2', mfu2);
   if (self_contact)
     gf_model_set(md, 'add filtered fem variable', 'lambda2', pre_mflambda2, CONTACT_BOUNDARY2);
@@ -220,30 +227,32 @@ end
   
 
 
-if (generic_assembly_contact_brick)
+if (generic_assembly_contact_brick) % Direct use of high-level generic assembly
   gf_model_set(md, 'add raytracing transformation', 'contact_trans', release_dist);
-  if (self_contact)
-    gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u1', CONTACT_BOUNDARY1);
+  if (two_meshes) % The definition of a variable group is not mandatory. Just for test.
+    gf_model_set(md, 'define variable group', 'u', 'u1', 'u2');
   else
-    gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u1', CONTACT_BOUNDARY1);
+    gf_model_set(md, 'define variable group', 'u', 'u1');
+  end
+  
+  if (self_contact)
+    gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u', CONTACT_BOUNDARY1);
+  else
+    gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', mesh1, 'u', CONTACT_BOUNDARY1);
   end
 
   switch(test_case)
     case 0
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '80-sqrt(sqr(x(1))+sqr(x(2)-80))', N);
     case 1
-      if (self_contact)
-        gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
-      else
-        gf_model_set(md, 'add slave contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
-      end
+     gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u', CONTACT_BOUNDARY2);
     case 2
-      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
-      gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(2)', CONTACT_BOUNDARY1);
+      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u', CONTACT_BOUNDARY2);
+      gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(2)+1', N);
     case 3
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '2-sqrt(sqr(x(1))+sqr(x(2)-1))', N);
     case 4
-      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u2', CONTACT_BOUNDARY2);
+      gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u', CONTACT_BOUNDARY2);
       gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'x(3)+5', N);
   end
   
@@ -251,12 +260,21 @@ if (generic_assembly_contact_brick)
   gf_model_set(md, 'add initialized data', 'f', f_coeff);
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-lambda1.Test_u1', CONTACT_BOUNDARY1); 
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-lambda1.Test_lambda1', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(x,contact_trans)-x-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)', CONTACT_BOUNDARY1);
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u1,contact_trans), (Interpolate(x,contact_trans)+Interpolate(u1,contact_trans)-x-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)', CONTACT_BOUNDARY1);
-  % gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (Interpolate(x,contact_trans)).Test_lambda1, 1)', CONTACT_BOUNDARY1);
-    
-else
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, lambda1.Interpolate(Test_u,contact_trans), 1)', CONTACT_BOUNDARY1); 
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, '-(1/r)*lambda1.Test_lambda1', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1, (Interpolate(x,contact_trans)-x-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 2)', CONTACT_BOUNDARY1);
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim1_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda1, Transformed_unit_vector(Grad_u1, Normal), u1-Interpolate(u,contact_trans), (Interpolate(x,contact_trans)+Interpolate(u,contact_trans)-x-u1).Transformed_unit_vector(Grad_u1, Normal), f, r).Test_lambda1, 1)', CONTACT_BOUNDARY1);
+  
+  if (two_meshes && self_contact)
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, '-lambda2.Test_u2', CONTACT_BOUNDARY2); 
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, 'Interpolate_filter(contact_trans, lambda2.Interpolate(Test_u,contact_trans), 1)', CONTACT_BOUNDARY2); 
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, '-(1/r)*lambda2.Test_lambda2', CONTACT_BOUNDARY2);
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2, (Interpolate(x,contact_trans)-x-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 2)', CONTACT_BOUNDARY2);
+    gf_model_set(md, 'add nonlinear generic assembly brick', mim2_contact, 'Interpolate_filter(contact_trans, (1/r)*Coulomb_friction_coupled_projection(lambda2, Transformed_unit_vector(Grad_u2, Normal), u2-Interpolate(u,contact_trans), (Interpolate(x,contact_trans)+Interpolate(u,contact_trans)-x-u2).Transformed_unit_vector(Grad_u2, Normal), f, r).Test_lambda2, 1)', CONTACT_BOUNDARY2);  
+  end
+  
+  
+else % Use of multi_contact_frame object
   mcff=gf_multi_contact_frame(md, N, release_dist, false, self_contact, 0.2, true, 0, false);
   if (self_contact)
     gf_multi_contact_frame_set(mcff, 'add master boundary', mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1');
@@ -275,7 +293,7 @@ else
       end
     case 2
       gf_multi_contact_frame_set(mcff, 'add master boundary', mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
-      gf_multi_contact_frame_set(mcff, 'add obstacle', 'y');
+      gf_multi_contact_frame_set(mcff, 'add obstacle', 'y+1');
     case 3
       gf_multi_contact_frame_set(mcff, 'add obstacle', '2-sqrt(x^2+(y-1)^2)');  
     case 4
@@ -289,11 +307,11 @@ else
   gf_model_set(md, 'add integral large sliding contact brick raytrace', mcff, 'r', 'f', 'alpha');
 end
 
-for nit=1:150
+for nit=1:15
   disp(sprintf('Iteration %d', nit));
 
   if (test_tangent_matrix) 
-    errmax = gf_model_get(md, 'test tangent matrix', 1E-10, 10, 0.0001);
+    errmax = gf_model_get(md, 'test tangent matrix', 1E-9, 10, 0.0001);
     % errmax = gf_model_get(md, 'test tangent matrix term', 'lambda1', 'u1', 1E-8, 20, 0.00001);
     disp(sprintf('errmax = %g', errmax));
     if (errmax > 1E-3) error('bad tangent matrix'); end;
@@ -328,7 +346,7 @@ for nit=1:150
     % gf_plot(mf_lambda1, lambda1,'mesh', 'off', 'deformed_mesh','off', 'deformation',U1,'deformation_mf',mfu1,'deformation_scale', 1, 'refine', 8);
     % hold off
   
-    if (test_case ~= 3 && test_case ~= 0)
+    if (two_meshes)
        hold on
        U2 = gf_model_get(md, 'variable', 'u2');
        if (nonlinear_elasticity)
@@ -349,7 +367,7 @@ for nit=1:150
       % Should be done on the Gauss points (using a mesh_im_data ?)
       slpt = gf_model_get(md, 'interpolation', 'x+u1', mfu1, CONTACT_BOUNDARY1);
       mapt = gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans), 2) + Interpolate_filter(contact_trans, x+u1, 0)', mfu1, CONTACT_BOUNDARY1);
-      mapt = mapt + gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans)+Interpolate(u1,contact_trans), 1)', mfu1, CONTACT_BOUNDARY1);
+      mapt = mapt + gf_model_get(md, 'interpolation', 'Interpolate_filter(contact_trans, Interpolate(x,contact_trans)+Interpolate(u,contact_trans), 1)', mfu1, CONTACT_BOUNDARY1);
     
       nbpt = size(slpt,2)/N;
       mapt = reshape(mapt, N, nbpt);
@@ -393,12 +411,12 @@ for nit=1:150
 
   vf = vf * vf_mult; F(N) = -vf;
   gf_model_set(md, 'variable', 'data1', F);
-  if (test_case ~= 3 && test_case ~= 0)
+  if (two_meshes)
     gf_model_set(md, 'variable', 'data2', F);
   end
   
   if (test_case <= 1)
-    Ddata(N) = Ddata(N) - 1;
+    Ddata(N) = Ddata(N) - 0.5;
     gf_model_set(md, 'variable', 'Ddata', Ddata);
   end
   
