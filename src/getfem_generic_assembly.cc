@@ -8464,10 +8464,11 @@ namespace getfem {
     virtual const mesh &linked_mesh(void) { return mti.linked_mesh(); }
 
     ga_interpolation_context_mti(mesh_trans_inv &mti_, base_vector &r,
-                                 int extrapolation, const mesh_region &rg,
+                                 int extrapolation,
+                                 const mesh_region &rg_source,
                                  size_type nbdof_ = size_type(-1))
       : result(r), mti(mti_), initialized(false), nbdof(nbdof_) {
-      mti.distribute(extrapolation, rg);
+      mti.distribute(extrapolation, rg_source);
       if (nbdof == size_type(-1)) nbdof = mti.nb_points();
     }
   };
@@ -8476,13 +8477,13 @@ namespace getfem {
   // To be parallelized ...
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
-   base_vector &result, int extrapolation, const mesh_region &rg,
-   size_type nbdof) {
+   base_vector &result, const mesh_region &rg, int extrapolation,
+   const mesh_region &rg_source, size_type nbdof) {
 
     ga_workspace workspace(md);
     workspace.add_interpolation_expression(expr, mti.linked_mesh(), rg);
     
-    ga_interpolation_context_mti gic(mti, result, extrapolation, rg, nbdof);
+    ga_interpolation_context_mti gic(mti, result, extrapolation, rg_source, nbdof);
     ga_interpolation(workspace, gic);
   }
 

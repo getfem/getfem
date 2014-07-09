@@ -197,21 +197,47 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET V = ('interpolation', @str expr, @tmf mf[, @int region])
-      Interpolate a certain expression relatively to the mesh_fem `mf`.
-      The expression have to be a valid expression in the sense of the
-      high-level generic assembly with authorised references to the variables
-      and data of the model. @*/
+    /*@GET V = ('interpolation', @str expr, {@tmf mf | @vec pts,  @tmesh m}[, @int region[, @int extrapolation[, @int rg_source]]])
+      Interpolate a certain expression with respect to the mesh_fem `mf`
+      or the set of points `pts` on mesh `m`.
+      The expression has to be valid according to the high-level generic
+      assembly language possibly including references to the variables
+      and data of the model.
+  
+      The options `extrapolation` and `rg_source` are specific to
+      interpolations with respect to a set of points `pts`. @*/
     sub_command
-      ("interpolation", 2, 3, 0, 1, // should be extended to complex models ...
+      ("interpolation", 2, 6, 0, 1, // should be extended to complex models ...
        std::string expr = in.pop().to_string();
-       getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
-       
-       size_type rg = size_type(-1);
-       if (in.remaining()) rg = in.pop().to_integer();
        getfem::base_vector result;
-       getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
-                                             gfi_mf->mesh_fem(), result, rg);
+       if (in.front().is_mesh_fem()) {
+         getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
+
+         size_type rg = in.remaining() ? in.pop().to_integer()
+                                       : size_type(-1);
+         getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
+                                               gfi_mf->mesh_fem(), result, rg);
+       } else {
+         darray st = in.pop().to_darray();
+         std::vector<double> PTS(st.begin(), st.end());
+         const getfem::mesh *m = in.pop().to_const_mesh();
+         size_type N = m->dim();
+         size_type nbpoints = gmm::vect_size(PTS) / N;
+         getfem::base_node p(N);
+         getfem::mesh_trans_inv mti(*m);
+         for (size_type i = 0; i < nbpoints; ++i) {
+           gmm::copy(gmm::sub_vector(PTS, gmm::sub_interval(i*N, N)), p);
+           mti.add_point(p);
+         }
+         size_type rg = in.remaining() ? in.pop().to_integer()
+                                       : size_type(-1);
+         int extrapolation = in.remaining() ? in.pop().to_integer()
+                                            : size_type(0);
+         size_type rg_source = in.remaining() ? in.pop().to_integer()
+                                              : size_type(-1);
+         getfem::ga_interpolation_mti(md->model(), expr, mti,
+                                      result, rg, extrapolation, rg_source);
+       }
        out.pop().from_dcvector(result);
        );
     

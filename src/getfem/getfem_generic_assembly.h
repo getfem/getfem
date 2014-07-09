@@ -548,8 +548,8 @@ namespace getfem {
   // Not tested
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
-   base_vector &result, int extrapolation = 0,
-   const mesh_region &rg=mesh_region::all_convexes(),
+   base_vector &result, const mesh_region &rg=mesh_region::all_convexes(),
+   int extrapolation = 0, const mesh_region &rg_source=mesh_region::all_convexes(),
    size_type nbdof_ = size_type(-1));
 
   // Not tested
