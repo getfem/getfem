@@ -23,6 +23,7 @@
 #include "getfem/bgeot_rtree.h"
 #include "getfem/getfem_contact_and_friction_integral.h"
 #include "getfem/getfem_contact_and_friction_common.h"
+#include "getfem/getfem_contact_and_friction_large_sliding.h"
 #include "getfem/getfem_assembling.h"
 #include "gmm/gmm_condition_number.h"
 
@@ -1182,8 +1183,8 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Large sliding brick with field extension principle. To be adapated with
-  //  the new structure for contact pairs.
+  //  Large sliding brick with field extension principle.
+  //  Deprecated. To be adapated to the high-level generic assembly
   //
   //=========================================================================
 
@@ -2273,5 +2274,347 @@ namespace getfem {
     GMM_ASSERT1(p, "Wrong type of brick");
     p->add_obstacle(obs);
   }
+
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Brick for large sliding contact with friction using raytracing contact
+  // detection and the high-level generic assemly
+  //
+  // ----------------------------------------------------------------------
+
+  struct intergral_large_sliding_contact_brick_raytracing
+    : public virtual_brick {
+
+    struct contact_boundary {
+      size_type region;
+      std::string varname_u;
+      std::string varname_lambda;
+      std::string varname_w;
+      bool is_master;
+      bool is_slave;
+      const mesh_im *mim;
+      
+      std::string expr;
+    };
+
+    std::vector<contact_boundary> boundaries;
+    std::string transformation_name;
+    std::string u_group;
+    std::string w_group;
+    std::string friction_coeff;
+    std::string alpha;
+    std::string augmentation_param;
+    model::varnamelist vl, dl;
+    model::mimlist ml;
+
+    void add_contact_boundary(model &md, const mesh_im &mim, size_type region,
+                              bool is_master, bool is_slave,
+                              const std::string &u,
+                              const std::string &lambda,
+                              const std::string &w = "") {
+      GMM_ASSERT1(is_slave || is_master, "The contact boundary should be "
+                  "either master, slave or both");
+      const mesh_fem *mf = md.pmesh_fem_of_variable(u);
+      GMM_ASSERT1(mf, "The displacement variable should be a f.e.m. one");
+      GMM_ASSERT1(&(mf->linked_mesh()) == &(mim.linked_mesh()),
+                  "The displacement variable and the integration method "
+                  "should share the same mesh");
+      if (is_slave) {
+        const mesh_fem *mf_l = md.pmesh_fem_of_variable(lambda);
+        GMM_ASSERT1(mf, "The multiplier variable should be a f.e.m. one");
+        GMM_ASSERT1(&(mf_l->linked_mesh()) == &(mim.linked_mesh()),
+                    "The displacement variable and the multiplier one "
+                    "should share the same mesh");
+      }
+
+      if (w.size()) {
+        const mesh_fem *mf2 =  md.pmesh_fem_of_variable(w);
+        GMM_ASSERT1(!mf2 || &(mf2->linked_mesh()) == &(mf->linked_mesh()),
+                    "The data for the sliding velocity should be defined on "
+                    " the same mesh as the displacement variable");
+      }
+
+      for (size_type i = 0; i < boundaries.size(); ++i) {
+        const contact_boundary &cb = boundaries[i];
+        if (&(md.mesh_fem_of_variable(cb.varname_u).linked_mesh())
+            == &(mf->linked_mesh()) && cb.region == region)
+          GMM_ASSERT1(false, "This contact boundary has already been added");
+      }
+      if (is_master)
+        add_master_contact_boundary_to_raytracing_transformation
+          (md, transformation_name, mf->linked_mesh(), u_group, region);
+      else
+         add_slave_contact_boundary_to_raytracing_transformation
+          (md, transformation_name, mf->linked_mesh(), u_group, region);
+      
+      boundaries.push_back(contact_boundary());
+      contact_boundary &cb = boundaries.back();
+      cb.region = region;
+      cb.varname_u = u;
+      if (is_slave) cb.varname_lambda = lambda;
+      cb.varname_w = w;
+      cb.is_master = is_master;
+      cb.is_slave = is_slave;
+      cb.mim = &mim;
+      if (is_slave) {
+        cb.expr =
+          // -lambda.Test_u
+          "-"+lambda+".Test_"+u
+          // Interpolate_filter(trans, lambda.Interpolate(Test_ug,
+          //                                               contact_trans), 1)
+          + "+ Interpolate_filter("+transformation_name+","+lambda
+          + ".Interpolate(Test_"+u_group+","
+          + transformation_name+"), 1)"
+          // -(1/r)*lambda.Test_lambda
+          + "-(1/"+augmentation_param+")*"+lambda+".Test_"+lambda
+          // Interpolate_filter(trans,
+          //   (1/r)*Coulomb_friction_coupled_projection(lambda,
+          //     Transformed_unit_vector(Grad_u, Normal), (u-w)*alpha,
+          //     (Interpolate(x,trans)-x-u).Transformed_unit_vector(Grad_u,
+          //                                                        Normal),
+          //     f, r).Test_lambda, 2)
+          + "+ Interpolate_filter("+transformation_name+","
+          + "(1/"+augmentation_param+")*Coulomb_friction_coupled_projection("
+          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),"
+          + "("+u+(w.size() ? ("-"+w):"")+")*"+alpha
+          + ",(Interpolate(x,"+transformation_name+")-x-"+u
+          + ").Transformed_unit_vector(Grad_"+u+", Normal),"
+          + friction_coeff+","+augmentation_param+").Test_"+lambda+", 2)"
+          // Interpolate_filter(trans,
+          //   (1/r)*Coulomb_friction_coupled_projection(lambda,
+          //      Transformed_unit_vector(Grad_u, Normal),
+          //      (u-Interpolate(ug,trans)-(w-Interpolate(wg,trans)))*alpha,
+          //      (Interpolate(x,trans)+Interpolate(ug,trans)-x-u).
+          //        Transformed_unit_vector(Grad_u, Normal),
+          //      f, r).Test_lambda, 1)
+          + "+ Interpolate_filter("+transformation_name+","
+          + "(1/"+augmentation_param+")*Coulomb_friction_coupled_projection("
+          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),x+"
+          + "("+u+"-Interpolate("+u_group+","+transformation_name+")"
+          + (w.size() 
+             ? ("-"+w+"+Interpolate("+w_group+","+transformation_name+")")
+             : "")
+          +")*"+alpha+","
+          + "(Interpolate(x,"+transformation_name+")+Interpolate("+u_group+","
+          + transformation_name+")-x-"+u+").Transformed_unit_vector(Grad_"
+          + u+", Normal),"+friction_coeff+","+augmentation_param+").Test_"
+          + lambda+", 1)";
+      }
+    }
+
+
+    
+
+
+    virtual void asm_real_tangent_terms(const model &md, size_type ,
+                                        const model::varnamelist &,
+                                        const model::varnamelist &,
+                                        const model::mimlist &,
+                                        model::real_matlist &,
+                                        model::real_veclist &,
+                                        model::real_veclist &,
+                                        size_type,
+                                        build_version) const {
+      // GMM_ASSERT1(mims.size() == 1,
+      //            "Generic linear assembly brick needs one and only one "
+      //            "mesh_im"); // to be verified ...
+
+      for (size_type i = 0; i < boundaries.size(); ++i) {
+        const contact_boundary &cb = boundaries[i];
+        if (cb.is_slave)
+          md.add_generic_expression(cb.expr, *(cb.mim), cb.region);
+      }
+    }
+
+    virtual scalar_type asm_real_pseudo_potential(const model &, size_type,
+                                                  const model::varnamelist &,
+                                                  const model::varnamelist &,
+                                                  const model::mimlist &,
+                                                  model::real_matlist &,
+                                                  model::real_veclist &,
+                                                  model::real_veclist &,
+                                                  size_type) const {
+      GMM_WARNING1("Brick " << name << " has no contribution to "
+                   << "the pseudo potential !");
+      return 0;
+    }
+
+
+    intergral_large_sliding_contact_brick_raytracing
+    (const std::string &r,
+     const std::string &f_coeff,const std::string &ug,
+     const std::string &wg, const std::string &tr,
+     const std::string &alpha_ = "1") {
+      transformation_name = tr;
+      u_group = ug; w_group = wg;
+      friction_coeff = f_coeff;
+      alpha = alpha_;
+      augmentation_param = r;
+      
+      set_flags("Integral large sliding contact bick raytracing",
+                false /* is linear*/,
+                false /* is symmetric */, false /* is coercive */,
+                true /* is real */, false /* is complex */);
+    }
+
+  };
+
+  
+  const std::string &transformation_name_of_large_sliding_contact_brick
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    intergral_large_sliding_contact_brick_raytracing *p
+      = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->transformation_name;
+  }
+
+  const std::string &displacement_group_name_of_large_sliding_contact_brick
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    intergral_large_sliding_contact_brick_raytracing *p
+      = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->u_group;
+  }
+
+  const std::string &sliding_data_group_name_of_large_sliding_contact_brick
+  (model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    intergral_large_sliding_contact_brick_raytracing *p
+      = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    return p->w_group;
+  }
+
+  void add_rigid_obstacle_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, std::string expr, size_type N) {
+    pbrick pbr = md.brick_pointer(indbrick);
+     intergral_large_sliding_contact_brick_raytracing *p
+       = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+       (const_cast<virtual_brick *>(pbr.get()));
+     GMM_ASSERT1(p, "Wrong type of brick");
+     add_rigid_obstacle_to_raytracing_transformation
+       (md, p->transformation_name, expr, N);
+  }
+  
+  void add_contact_boundary_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, const mesh_im &mim, size_type region,
+   bool is_master, bool is_slave, const std::string &u,
+   const std::string &lambda, const std::string &w) {
+     pbrick pbr = md.brick_pointer(indbrick);
+     intergral_large_sliding_contact_brick_raytracing *p
+       = dynamic_cast<intergral_large_sliding_contact_brick_raytracing *>
+       (const_cast<virtual_brick *>(pbr.get()));
+     GMM_ASSERT1(p, "Wrong type of brick");
+     
+     bool found_u = false, found_lambda = false;
+     for (size_type i = 0; i < p->vl.size(); ++i) {
+       if (p->vl[i].compare(u) == 0) found_u = true;
+       if (p->vl[i].compare(lambda) == 0) found_lambda = true;
+     }
+     if (!found_u) p->vl.push_back(u);
+     GMM_ASSERT1(!is_slave || lambda.size(),
+                 "You should define a multiplier on each slave boundary");
+     if (is_slave && !found_lambda) p->vl.push_back(lambda);
+     if (!found_u || (is_slave && !found_lambda))
+       md.change_variables_of_brick(indbrick, p->vl);
+
+     std::vector<std::string> ug = md.variable_group(p->u_group);
+     found_u = false;
+     for (size_type i = 0; i < ug.size(); ++i)
+         if (ug[i].compare(u) == 0) found_u = true;
+     if (!found_u) {
+       ug.push_back(u);
+       md.define_variable_group(p->u_group, ug);
+     }
+
+     if (w.size()) {
+       bool found_w = false;
+       for (size_type i = 0; i < p->dl.size(); ++i)
+         if (p->dl[i].compare(w) == 0) found_w = true;
+       if (!found_w) { 
+         p->dl.push_back(w);
+         md.change_data_of_brick(indbrick, p->dl);
+       }
+       std::vector<std::string> wg = md.variable_group(p->w_group);
+       found_w = false;
+       for (size_type i = 0; i < wg.size(); ++i)
+         if (wg[i].compare(w) == 0) found_w = true;
+       if (!found_w) {
+         wg.push_back(w);
+         md.define_variable_group(p->w_group, wg);
+       }
+     }
+     
+     bool found_mim = false;
+     for (size_type i = 0; i < p->ml.size(); ++i)
+       if (p->ml[i] == &mim) found_mim = true;
+     if (!found_mim) {
+       p->ml.push_back(&mim);
+       md.change_mims_of_brick(indbrick, p->ml);
+     }
+
+     p->add_contact_boundary(md, mim, region, is_master, is_slave, u,lambda,w);
+  } 
+
+  size_type add_integral_large_sliding_contact_brick_raytracing
+  (model &md, const std::string &augm_param,
+   scalar_type release_distance, const std::string &f_coeff, 
+   const std::string &alpha) {
+
+    char ugroupname[50], wgroupname[50], transname[50];
+    for (int i = 0; i < 10000; ++i) {
+      sprintf(ugroupname, "disp__group_raytracing_%d", i);
+      if (!(md.variable_group_exists(ugroupname))
+          && !(md.variable_exists(ugroupname)))
+        break;
+    }
+    md.define_variable_group(ugroupname, std::vector<std::string>());
+
+    for (int i = 0; i < 10000; ++i) {
+      sprintf(wgroupname, "w__group_raytracing_%d", i);
+      if (!(md.variable_group_exists(wgroupname))
+          && !(md.variable_exists(wgroupname)))
+        break;
+    }
+    md.define_variable_group(wgroupname, std::vector<std::string>());
+
+    for (int i = 0; i < 10000; ++i) {
+      sprintf(transname, "trans__raytracing_%d", i);
+      if (!(md.interpolate_transformation_exists(transname)))
+        break;
+    }
+    add_raytracing_transformation(md, transname, release_distance);
+
+    model::varnamelist vl, dl;
+    if (md.variable_exists(augm_param)) dl.push_back(augm_param);
+    if (md.variable_exists(f_coeff)) dl.push_back(f_coeff);
+    if (md.variable_exists(alpha)) dl.push_back(alpha);
+    
+    intergral_large_sliding_contact_brick_raytracing *p
+      = new intergral_large_sliding_contact_brick_raytracing
+      (augm_param, f_coeff, ugroupname, wgroupname, transname, alpha);
+    pbrick pbr = p;
+    p->dl = dl;
+
+    return md.add_brick(pbr, p->vl, p->dl, model::termlist(),model::mimlist(),
+                        size_type(-1));
+  }
+
+
+
+
+
+
+
+
+
+
 
 }  /* end of namespace getfem.                                             */

@@ -29,6 +29,7 @@
 #include <getfemint_models.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfem/getfem_generic_assembly.h>
+#include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfemint_mdbrick.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
@@ -835,7 +836,40 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_dcvector(plast);
        );
 
+     /*@GET V = ('sliding data group name of large sliding contact brick', @int indbrick)
+      Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.@*/
+      sub_command
+      ("sliding data group name of large sliding contact brick", 1, 1, 0, 1,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string name
+       = sliding_data_group_name_of_large_sliding_contact_brick(md->model(),
+                                                                ind);
+       out.pop().from_string(name.c_str());
+       );
 
+     /*@GET V = ('displacement group name of large sliding contact brick', @int indbrick)
+      Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.@*/
+      sub_command
+      ("displacement group name of large sliding contact brick", 1, 1, 0, 1,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string name
+       = displacement_group_name_of_large_sliding_contact_brick(md->model(),
+                                                                ind);
+       out.pop().from_string(name.c_str());
+       );
+
+     /*@GET V = ('transformation name of large sliding contact brick', @int indbrick)
+      Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.@*/
+      sub_command
+      ("transformation name of large sliding contact brick", 1, 1, 0, 1,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string name
+       = transformation_name_of_large_sliding_contact_brick(md->model(), ind);
+       out.pop().from_string(name.c_str());
+       );
 
     /*@GET M = ('matrix term', @int ind_brick, @int ind_term)
       Gives the matrix term ind_term of the brick ind_brick if it exists

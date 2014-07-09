@@ -845,6 +845,14 @@ namespace getfem {
      */
     void change_variables_of_brick(size_type ib, const varnamelist &vl);
 
+    /** Change the data list of a brick. Used for very special bricks only.
+     */
+    void change_data_of_brick(size_type ib, const varnamelist &vl);
+
+    /** Change the mim list of a brick. Used for very special bricks only.
+     */
+    void change_mims_of_brick(size_type ib, const mimlist &ml);
+
 
     /** Adds a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);

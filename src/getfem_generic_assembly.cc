@@ -2174,7 +2174,7 @@ namespace getfem {
         cv_1 = mf.convex_index().first_true();
 
 
-      // cout << "cv_1 " << cv_1 << endl;
+      //cout << "cv_1 " << cv_1 << endl;
       pfem pf = mf.fem_of_element(cv_1);
       GMM_ASSERT1(pf, "An element without finite element methode defined");
       // cout << "pf = " << pf << endl;
@@ -2238,9 +2238,9 @@ namespace getfem {
       size_type cv_2 = ctx2.is_convex_num_valid()
         ? ctx2.convex_num() : mf2.convex_index().first_true();
       pfem pf1 = mf1.fem_of_element(cv_1);
-      GMM_ASSERT1(pf1, "An element without finite element methode defined");
+      GMM_ASSERT1(pf1, "An element without finite element method defined");
       pfem pf2 = mf2.fem_of_element(cv_2);
-      GMM_ASSERT1(pf2, "An element without finite element methode defined");
+      GMM_ASSERT1(pf2, "An element without finite element method defined");
       size_type Qmult1 = qdim1 / pf1->target_dim();
       size_type s1 = pf1->nb_dof(cv_1) * Qmult1;
       size_type Qmult2 = qdim2 / pf2->target_dim();

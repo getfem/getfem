@@ -658,6 +658,22 @@ namespace getfem {
                   "Undefined model variable " << vl[i]);
   }
 
+  void model::change_data_of_brick(size_type ib, const varnamelist &dl) {
+    GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+    touch_brick(ib);
+    bricks[ib].dlist = dl;
+    for (size_type i=0; i < dl.size(); ++i)
+      GMM_ASSERT1(variables.find(dl[i]) != variables.end(),
+                  "Undefined model variable " << dl[i]);
+  }
+
+  void model::change_mims_of_brick(size_type ib, const mimlist &ml) {
+    GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+    touch_brick(ib);
+    bricks[ib].mims = ml;
+    for (size_type i = 0; i < ml.size(); ++i) add_dependency(*(ml[i]));
+  }
+
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
     GMM_ASSERT1(valid_bricks[ibrick], "Inexistent brick");
     pbrick pbr = bricks[ibrick].pbr;

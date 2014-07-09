@@ -43,6 +43,67 @@
 namespace getfem {
 
 
+  
+  /** Adds a large sliding contact with friction brick to the model.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It uses the high-level generic assembly. It adds to the model
+      a raytracing_interpolate_transformation object.
+      For each slave boundary a multiplier variable should be defined.
+      The release distance should be determined with care
+      (generally a few times a mean element size, and less than the
+      thickness of the body). Initially, the brick is added with no contact
+      boundaries. The contact boundaries and rigid bodies are added with
+      special functions.
+  */
+  size_type add_integral_large_sliding_contact_brick_raytracing
+  (model &md, const std::string &augm_param,
+  scalar_type release_distance, const std::string &f_coeff = "0",
+   const std::string &alpha = "1");
+
+  /** Adds a contact boundary to an existing large sliding contact
+      with friction brick. When a boundary is declared slave, a multiplier
+      `lambda` has to be given which whould be defined on the boundary
+      `region`. The integration of contact terms is performed on each
+      slave boundary. A boundary can be both declare master and slave
+      which allows self-contact detection.
+  */
+  void add_contact_boundary_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, const mesh_im &mim, size_type region,
+   bool is_master, bool is_slave, const std::string &u,
+   const std::string &lambda, const std::string &w = "");
+
+  /** Adds a rigid obstacle to an existing large sliding contact
+      with friction brick. `expr` is an expression using the high-level
+      generic assembly language (where `x` is the current point n the mesh)
+      which should be a signed distance to the obstacle.
+      `N` is the mesh dimension.
+  */
+  void add_rigid_obstacle_to_large_sliding_contact_brick
+  (model &md, size_type indbrick, std::string expr, size_type N);
+
+  /** Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.
+  */
+  const std::string &sliding_data_group_name_of_large_sliding_contact_brick
+  (model &md, size_type indbrick);
+
+  /** Gives the name of the group of variables corresponding to the
+      displacement for an existing large sliding contact brick.
+  */
+  const std::string &displacement_group_name_of_large_sliding_contact_brick
+  (model &md, size_type indbrick);
+
+  /** Gives the name of the raytracing interpolate transformation
+      for an existing large sliding contact brick.
+  */
+  const std::string &transformation_name_of_large_sliding_contact_brick
+  (model &md, size_type indbrick);
+
+   
+
+
+
   /** Adds a large sliding contact with friction brick to the model.
       This brick is able to deal with self-contact, contact between
       several deformable bodies and contact with rigid obstacles.

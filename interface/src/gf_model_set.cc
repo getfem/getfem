@@ -2936,6 +2936,108 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
+     /*@SET ind = ('add integral large sliding contact brick raytracing', @str dataname_r, @scalar release_distance, [, @str dataname_fr[, @str dataname_alpha]])
+      Adds a large sliding contact with friction brick to the model.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It uses the high-level generic assembly. It adds to the model
+      a raytracing_interpolate_transformation object.
+      For each slave boundary a multiplier variable should be defined.
+      The release distance should be determined with care
+      (generally a few times a mean element size, and less than the
+      thickness of the body). Initially, the brick is added with no contact
+      boundaries. The contact boundaries and rigid bodies are added with
+      special functions. @*/
+
+     sub_command
+       ("add integral large sliding contact brick raytracing", 2, 4, 0, 1,
+        
+        std::string dataname_r = in.pop().to_string();
+        scalar_type d = in.pop().to_scalar();
+        std::string dataname_fr = "0";
+        if (in.remaining()) dataname_fr = in.pop().to_string();
+        if (dataname_fr.size() == 0) dataname_fr = "0";
+        std::string dataname_alpha = "1";
+        if (in.remaining()) dataname_alpha = in.pop().to_string();
+        if (dataname_alpha.size() == 0) dataname_alpha = "1";
+
+        size_type  ind
+        = getfem::add_integral_large_sliding_contact_brick_raytracing
+        (md->model(), dataname_r, d, dataname_fr, dataname_alpha);
+        out.pop().from_integer(int(ind + config::base_index()));
+        );
+
+     /*@SET ('add rigid obstacle to large sliding contact brick', @int indbrick, @str expr, @int N)
+      Adds a rigid obstacle to an existing large sliding contact
+      with friction brick. `expr` is an expression using the high-level
+      generic assembly language (where `x` is the current point n the mesh)
+      which should be a signed distance to the obstacle.
+      `N` is the mesh dimension. @*/
+    sub_command
+      ("add rigid obstacle to large sliding contact brick", 3, 3, 0, 0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       std::string expr = in.pop().to_string();
+       size_type N = in.pop().to_integer();
+
+       add_rigid_obstacle_to_large_sliding_contact_brick
+       (md->model(), ind, expr, N);
+       );
+
+     /*@SET ('add master contact boundary to large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname[, @str wname])
+      Adds a master contact boundary to an existing large sliding contact
+      with friction brick. @*/
+    sub_command
+      ("add master contact boundary to large sliding contact brick", 4, 5, 0,0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       size_type region = in.pop().to_integer();
+       std::string dispname = in.pop().to_string();
+       std::string wname;
+       if (in.remaining()) wname = in.pop().to_string();
+
+       add_contact_boundary_to_large_sliding_contact_brick
+       (md->model(), ind, gfi_mim->mesh_im(), region, true, false,
+        dispname, "", wname);
+       );
+
+
+    /*@SET ('add slave contact boundary to large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname, @str lambdaname[, @str wname])
+      Adds a slave contact boundary to an existing large sliding contact
+      with friction brick. @*/
+    sub_command
+      ("add slave contact boundary to large sliding contact brick", 5, 6, 0,0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       size_type region = in.pop().to_integer();
+       std::string dispname = in.pop().to_string();
+       std::string lambda = in.pop().to_string();
+       std::string wname;
+       if (in.remaining()) wname = in.pop().to_string();
+
+       add_contact_boundary_to_large_sliding_contact_brick
+       (md->model(), ind, gfi_mim->mesh_im(), region, false, true,
+        dispname, lambda, wname);
+       );
+
+    /*@SET ('add master slave contact boundary to large sliding contact brick', @int indbrick, @tmim mim, @int region, @str dispname, @str lambdaname[, @str wname])
+      Adds a contact boundary to an existing large sliding contact
+      with friction brick which is both master and slave
+      (allowing the self-contact). @*/
+    sub_command
+      ("add master slave contact boundary to large sliding contact brick",
+       4, 5, 0, 0,
+       size_type ind = in.pop().to_integer() - config::base_index();
+       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+       size_type region = in.pop().to_integer();
+       std::string dispname = in.pop().to_string();
+       std::string lambda = in.pop().to_string();
+       std::string wname;
+       if (in.remaining()) wname = in.pop().to_string();
+
+       add_contact_boundary_to_large_sliding_contact_brick
+       (md->model(), ind, gfi_mim->mesh_im(), region, true, true,
+        dispname, lambda, wname);
+       );
 
      /*@SET ind = ('add integral large sliding contact brick raytrace', @tmcf multi_contact, @str dataname_r[, @str dataname_fr[, @str dataname_alpha]])
       Adds a large sliding contact with friction brick to the model.
@@ -3021,15 +3123,15 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        Add a rigid obstacle to an existing large sliding contact brick.
       `indbrick` is the brick index, `obs` is the expression of a
       function which should be closed to a signed distance to the obstacle. @*/
-     sub_command
-       ("add rigid obstacle to large sliding contact brick", 2, 2, 0, 0,
+/*      sub_command */
+/*        ("add rigid obstacle to large sliding contact brick", 2, 2, 0, 0, */
 	
-        size_type indbrick = in.pop().to_integer() - config::base_index();
-	std::string obs = in.pop().to_string();
+/*         size_type indbrick = in.pop().to_integer() - config::base_index(); */
+/* 	std::string obs = in.pop().to_string(); */
         
-	getfem::add_rigid_obstacle_to_large_sliding_contact_brick
-	(md->model(), indbrick, obs);
-        );
+/* 	getfem::add_rigid_obstacle_to_large_sliding_contact_brick */
+/* 	(md->model(), indbrick, obs); */
+/*         ); */
 
 
   }
