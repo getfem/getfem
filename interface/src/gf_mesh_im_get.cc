@@ -261,7 +261,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
       ("display", 0, 0, 0, 0,
        infomsg() << "gfMeshIm object in dimension "
        << int(mim->linked_mesh().dim())
-       << "with " << mim->linked_mesh().nb_points() << " points and "
+       << " with " << mim->linked_mesh().nb_points() << " points and "
        << mim->linked_mesh().convex_index().card() << " elements\n";
        );
 

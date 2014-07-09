@@ -665,7 +665,7 @@ void gf_mesh_fem_get(getfemint::mexargs_in& m_in,
       ("display", 0, 0, 0, 0,
        infomsg() << "gfMeshFem object in dimension "
        << int(mf->linked_mesh().dim())
-       << "with " << mf->linked_mesh().nb_points() << " points, "
+       << " with " << mf->linked_mesh().nb_points() << " points, "
        << mf->linked_mesh().convex_index().card() << " elements and "
        << mf->nb_dof() << " degrees of freedom\n";
        );

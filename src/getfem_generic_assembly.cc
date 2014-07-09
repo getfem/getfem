@@ -250,7 +250,8 @@ namespace getfem {
   }
 
 #define ga_throw_error(expr, pos, msg)               \
-  { ga_throw_error_msg(expr, pos, msg);              \
+  { std::stringstream ss; ss << msg;                 \
+    ga_throw_error_msg(expr, pos, ss.str());         \
     GMM_ASSERT1(false, "Error in assembly string" ); \
   }
 
@@ -5018,7 +5019,8 @@ namespace getfem {
           size_type s0 = dim0 == 0 ? 1 : size0.back();
           size_type s1 = dim1 == 0 ? 1 : size1.back();
           if (s0 != s1) ga_throw_error(expr, pnode->pos, "Dot product "
-                                       "of expressions of different sizes");
+                                       "of expressions of different sizes ("
+                                       << s0 << " != " << s1 << ").");
           if (child0->tensor_order() <= 1) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1, expr);
           if (dim0 > 1) {
@@ -5061,7 +5063,8 @@ namespace getfem {
           size_type s11 = (dim1 >= 2) ? size1.back() : 1;
           if (s00 != s10 || s01 != s11)
             ga_throw_error(expr, pnode->pos, "Frobenius product "
-                            "of expressions of different sizes");
+                           "of expressions of different sizes ("
+                           << s00 << "," << s01 << " != " << s10 << "," << s11 << ").");
           if (child0->tensor_order() <= 2) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1, expr);
           if (dim0 > 2) {
@@ -5165,8 +5168,8 @@ namespace getfem {
           } else if (dim0 == 2 && dim1 == 1) {
             size_type m = child0->t.size(0), n = child0->t.size(1);
             if (n != child1->t.size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
-                              "matrix-vector multiplication.");
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-vector "
+              "multiplication (" << n << " != " << child1->t.size(0) << ").");
             pnode->init_vector_tensor(m);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
@@ -5177,8 +5180,8 @@ namespace getfem {
             size_type n = child0->t.size(1);
             size_type p = child1->t.size(1);
             if (n != child1->t.size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
-                              "matrix-matrix multiplication.");
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-matrix "
+              "multiplication (" << n << " != " << child1->t.size(0) << ").");
             pnode->init_matrix_tensor(m,p);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
@@ -5190,8 +5193,9 @@ namespace getfem {
             size_type m = child0->t.size(0), n = child0->t.size(1);
             size_type o = child0->t.size(2), p = child0->t.size(3);
             if (o != child1->t.size(0) || p != child1->t.size(1))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
-                              "tensor-matrix multiplication.");
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in tensor-matrix "
+              "multiplication (" << o << "," << p << " != "
+              << child1->t.size(0) << "," << child1->t.size(1) << ").");
             pnode->init_matrix_tensor(m,n);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
@@ -5223,8 +5227,9 @@ namespace getfem {
             size_type n = child0->tensor_proper_size(1);
             mi.push_back(m);
             if (n != child1->tensor_proper_size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
-                              "matrix-vector multiplication.");
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-vector "
+              "multiplication (" << n << " != "
+              << child1->tensor_proper_size(0) << ").");
           } else if (child0->tensor_order() == 2 &&
                      child1->tensor_order() == 2) {
             size_type m = child0->tensor_proper_size(0);
@@ -5232,8 +5237,9 @@ namespace getfem {
             size_type p = child1->tensor_proper_size(1);
             mi.push_back(m); mi.push_back(p);
             if (n != child1->tensor_proper_size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
-                              "matrix-matrix multiplication.");
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-matrix "
+              "multiplication (" << n << " != "
+              << child1->tensor_proper_size(0) << ").");
           }
           else if (pnode->children[0]->tensor_order() == 4 &&
                    pnode->children[1]->tensor_order() == 2) {
@@ -5244,8 +5250,9 @@ namespace getfem {
             mi.push_back(m); mi.push_back(n);
             if (o != child1->tensor_proper_size(0) ||
                 p != child1->tensor_proper_size(1))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in "
-                              "tensor-matrix multiplication.");
+              ga_throw_error(expr, pnode->pos, "Incompatible sizes in tensor-matrix "
+              "multiplication (" << o << "," << p << " != "
+              << child1->tensor_proper_size(0) << "," << child1->tensor_proper_size(1) << ").");
           } else ga_throw_error(expr, pnode->pos,
                                  "Unauthorized multiplication.");
           pnode->t.adjust_sizes(mi);
@@ -5706,11 +5713,9 @@ namespace getfem {
         const ga_predef_function &F = it->second;
         size_type nbargs = F.nbargs;
         if (nbargs+1 != pnode->children.size()) {
-            std::stringstream msg;
-            msg << "Bad number of arguments for predefined function "
-                << name << ". Found " << pnode->children.size()-1
-                << " should be " << nbargs << ".";
-            ga_throw_error(expr, pnode->pos, msg.str());
+            ga_throw_error(expr, pnode->pos, "Bad number of arguments for "
+                "predefined function " << name << ". Found "
+                 << pnode->children.size()-1 << ", should be " << nbargs << ".");
         }
         pnode->test_function_type = 0;
         pga_tree_node child2 = (nbargs == 2) ? pnode->children[2] : child1;

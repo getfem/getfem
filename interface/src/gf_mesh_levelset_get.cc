@@ -150,7 +150,7 @@ void gf_mesh_levelset_get(getfemint::mexargs_in& m_in,
       ("display", 0, 0, 0, 0,
        infomsg() << "gfMeshLevelSet object in dimension "
        << int(mls.linked_mesh().dim())
-       << "with " << mls.linked_mesh().nb_points() << " points and "
+       << " with " << mls.linked_mesh().nb_points() << " points and "
        << mls.linked_mesh().convex_index().card() << " elements\n";
        );
 

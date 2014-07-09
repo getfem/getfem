@@ -1073,7 +1073,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("display", 0, 0, 0, 0,
        infomsg() << "gfMesh object in dimension " << int(pmesh->dim())
-       << "with " << pmesh->nb_points() << " points and "
+       << " with " << pmesh->nb_points() << " points and "
        << pmesh->convex_index().card() << " elements\n";
        );
 
