@@ -59,6 +59,7 @@ CLEANFILES = \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
 	nonlinear_membrane.vtk feminterpolation.vtk circleslice.vtk
+	Q2_incomplete.pos Q2_incomplete.msh
 
 dynamic_array_SOURCES = dynamic_array.cc 
 dynamic_tas_SOURCES = dynamic_tas.cc 

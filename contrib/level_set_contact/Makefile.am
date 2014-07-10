@@ -3,7 +3,10 @@
 check_PROGRAMS =                 \
         test_contact
 
-CLEANFILES = 
+CLEANFILES = \
+	slave_0.vtk slave_1.vtk master_0.vtk master_2.vtk master_1.vtk \
+        slave_2.vtk
+
 
 test_contact_SOURCES = contact_problem.cpp test_contact.cpp contact_problem.h
 

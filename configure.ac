@@ -128,6 +128,7 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
 	dnl AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
+	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wno-unknown-pragmas],CXXFLAGS)
@@ -145,7 +146,7 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([-rdynamic],SUPLDFLAGS)
 
 dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
-        CFLAGS="$CFLAGS $with_optimization"
+        CFLAGS="$CFLAGS $with_optimization -fPIC"
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
