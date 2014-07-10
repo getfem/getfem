@@ -121,6 +121,8 @@ end
 % mflambda1 = gf_mesh_fem('partial',  pre_mflambda1, dol1);
 mim1 = gf_mesh_im(mesh1, 4);
 mim1_contact = gf_mesh_im(mesh1, 4);
+im1_nodes = gf_mesh_im_get(mim1_contact, 'im nodes', gf_mesh_get(mesh1, 'region', CONTACT_BOUNDARY1));
+im1_nodes = im1_nodes(1:N,:);
 
 if (two_meshes) 
   mfu2 = gf_mesh_fem(mesh2, N); gf_mesh_fem_set(mfu2, 'classical fem', 2);
@@ -142,6 +144,8 @@ if (two_meshes)
   end
   mim2 = gf_mesh_im(mesh2, 4);
   mim2_contact = gf_mesh_im(mesh2, 4);
+  im2_nodes = gf_mesh_im_get(mim2_contact, 'im nodes', gf_mesh_get(mesh2, 'region', CONTACT_BOUNDARY2));
+  im2_nodes = im2_nodes(1:N,:);
 end
 
 if (draw_mesh)
@@ -396,16 +400,13 @@ for nit=1:15
     end;
 
     hold on
-    % tic;
-    % gf_multi_contact_frame_get(mcff, 'compute pairs');
-    % toc
+    
     if (generic_assembly_contact_brick)
-      % Should be done on the Gauss points (using a mesh_im_data ?)
-      slpt = gf_model_get(md, 'interpolation', 'x+u1', mfu1, CONTACT_BOUNDARY1);
+      slpt = gf_model_get(md, 'interpolation', 'x+u1', im1_nodes, mesh1, CONTACT_BOUNDARY1);
       expr1 = sprintf('Interpolate_filter(%s, Interpolate(x,%s), 2) + Interpolate_filter(%s, x+u1, 0)', contact_trans, contact_trans, contact_trans);
-      mapt = gf_model_get(md, 'interpolation', expr1, mfu1, CONTACT_BOUNDARY1);
+      mapt = gf_model_get(md, 'interpolation', expr1, im1_nodes, mesh1, CONTACT_BOUNDARY1);
       expr2 = sprintf('Interpolate_filter(%s, Interpolate(x,%s)+Interpolate(%s,%s), 1)', contact_trans, contact_trans, u_group, contact_trans);
-      mapt = mapt + gf_model_get(md, 'interpolation', expr2, mfu1, CONTACT_BOUNDARY1);
+      mapt = mapt + gf_model_get(md, 'interpolation', expr2, im1_nodes, mesh1, CONTACT_BOUNDARY1);
     
       nbpt = size(slpt,2)/N;
       mapt = reshape(mapt, N, nbpt);
