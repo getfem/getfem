@@ -247,7 +247,6 @@ namespace getfem {
   // For the moment, with raytrace detection and integral unsymmetric
   // Alart-Curnier augmented Lagrangian
 
-#undef CONSIDER_FRAME_INDIFFERENCE
 
   struct integral_large_sliding_contact_brick : public virtual_brick {
 
@@ -601,13 +600,16 @@ namespace getfem {
       if (!Vs_init) {
         if (alpha != scalar_type(0)) {
 #ifdef CONSIDER_FRAME_INDIFFERENCE
-          gmm::add(y0(), gmm::scaled(x0(), scalar_type(-1)), Vs_);
-          gmm::add(gmm::scaled(nx0(), -g()), Vs_);
-#else
-          gmm::add(x(), gmm::scaled(y(), scalar_type(-1)), Vs_);
-          gmm::add(gmm::scaled(x0(), scalar_type(-1)), Vs_);
-          gmm::add(y0(), Vs_);
+          if (!isrigid()) {
+            gmm::add(y0(), gmm::scaled(x0(), scalar_type(-1)), Vs_);
+            gmm::add(gmm::scaled(nx0(), -g()), Vs_);
+          } else
 #endif
+          {
+            gmm::add(x(), gmm::scaled(y(), scalar_type(-1)), Vs_);
+            gmm::add(gmm::scaled(x0(), scalar_type(-1)), Vs_);
+            gmm::add(y0(), Vs_);
+          }
           gmm::scale(Vs_, alpha);
         } else gmm::clear(Vs_);
         Vs_init = true;
@@ -1053,6 +1055,7 @@ namespace getfem {
             // Caution: auxLXN1 re-used
             gmm::mult(auxLXN1, gmm::transposed(gpp.vbase_uy()), Melem);
             gmm::scale(Melem, weight*alpha*FMULT/r);
+            mat_elem_assembly(M, I_lx, I_uy, Melem, *mf_lx, cvx, *mf_uy, cvy);
 #else
             base_matrix I_gphiy0gphiyinv(N, N);
             gmm::mult(gmm::scaled(gpp.grad_phiy0(), scalar_type(-1)),
