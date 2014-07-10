@@ -372,9 +372,13 @@ The potentials::
   Compressible_Mooney_Rivlin_potential(Grad_u, [c1;c2;d1])
   Plane_Strain_Compressible_Mooney_Rivlin_potential(Grad_u, [c1;c2;d1])
   Incompressible_Neo_Hookean_potential(Grad_u, [c1])
-  Plane_Strain_Incompressible_Neo_Hookean_potential(Grad_u,  [c1])
-  Compressible_Neo_Hookean_potential(Grad_u,  [lambda;mu])
-  Plane_Strain_Compressible_Neo_Hookean_potential(Grad_u,  [lambda;mu])
+  Plane_Strain_Incompressible_Neo_Hookean_potential(Grad_u, [c1])
+  Compressible_Neo_Hookean_potential(Grad_u, [c1;d1])
+  Plane_Strain_Compressible_Neo_Hookean_potential(Grad_u,  [c1;d1])
+  Compressible_Neo_Hookean_Bonet_potential(Grad_u,  [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_Bonet_potential(Grad_u,  [lambda;mu])
+  Compressible_Neo_Hookean_Ciarlet_potential(Grad_u,  [lambda;mu])
+  Plane_Strain_Compressible_Neo_Hookean_Ciarlet_potential(Grad_u,  [lambda;mu])
 
 
 The second Piola-Kirchoff stress tensors::
@@ -416,7 +420,7 @@ The addition to an hyperelastic term to a model can also be done thanks to the f
   ind = add_finite_strain_elasticity_brick(md, mim, varname, lawname, params,
                                            region = size_type(-1));
 
-where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name which could be ``Saint_Venant_Kirchhoff``, ``Generalized_Blatz_Ko``, ``Ciarlet_Geymonat``, ``Incompressible_Mooney_Rivlin``, ``Compressible_Mooney_Rivlin``, ``Incompressible_Neo_Hookean_sigma`` or ``Compressible_Neo_Hookean_sigma``, ``params`` is a string representing the parameters of the law. It should represent a small vector or vetor field.
+where ``md`` is the model, ``mim`` the integration method, ``varname`` the variable of the model representing the large strain displacement, ``lawname`` is the constitutive law name which could be ``Saint_Venant_Kirchhoff``, ``Generalized_Blatz_Ko``, ``Ciarlet_Geymonat``, ``Incompressible_Mooney_Rivlin``, ``Compressible_Mooney_Rivlin``, ``Incompressible_Neo_Hookean`` or ``Compressible_Neo_Hookean``, ``params`` is a string representing the parameters of the law. It should represent a small vector or vetor field.
 
 The Von Mises stress can be interpolated with the following function::
 

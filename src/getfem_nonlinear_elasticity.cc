@@ -2161,16 +2161,40 @@ namespace getfem {
       new AHL_wrapper_potential(new plane_strain_hyperelastic_law(ineolaw)));
 
     abstract_hyperelastic_law *cneolaw
-      = new Neo_Hookean_hyperelastic_law();
+      = new Mooney_Rivlin_hyperelastic_law(true, true);
     PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_sigma",
       new AHL_wrapper_sigma(cneolaw));
     PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_potential",
-      new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law()));
+      new AHL_wrapper_potential(new Mooney_Rivlin_hyperelastic_law(true,true)));
     PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_sigma",
       new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneolaw)));
     PREDEF_OPERATORS.add_method
       ("Plane_Strain_Compressible_Neo_Hookean_potential",
       new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneolaw)));
+
+    abstract_hyperelastic_law *cneobolaw
+      = new Neo_Hookean_hyperelastic_law(true);
+    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Bonet_sigma",
+      new AHL_wrapper_sigma(cneobolaw));
+    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Bonet_potential",
+      new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law(true)));
+    PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_Bonet_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneobolaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Bonet_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneobolaw)));
+
+    abstract_hyperelastic_law *cneocilaw
+      = new Neo_Hookean_hyperelastic_law(false);
+    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Ciarlet_sigma",
+      new AHL_wrapper_sigma(cneocilaw));
+    PREDEF_OPERATORS.add_method("Compressible_Neo_Hookean_Ciarlet_potential",
+      new AHL_wrapper_potential(new Neo_Hookean_hyperelastic_law(false)));
+    PREDEF_OPERATORS.add_method("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_sigma",
+      new AHL_wrapper_sigma(new plane_strain_hyperelastic_law(cneocilaw)));
+    PREDEF_OPERATORS.add_method
+      ("Plane_Strain_Compressible_Neo_Hookean_Ciarlet_potential",
+      new AHL_wrapper_potential(new plane_strain_hyperelastic_law(cneocilaw)));
 
     return true;
   }
@@ -2198,7 +2222,9 @@ namespace getfem {
       if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
     } else if (adapted_lawname.compare("Incompressible_Neo_Hookean") == 0) {
       if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
-    } else if (adapted_lawname.compare("Compressible_Neo_Hookean") == 0) {
+    } else if (adapted_lawname.compare("Compressible_Neo_Hookean") == 0 ||
+               adapted_lawname.compare("Compressible_Neo_Hookean_Bonet") == 0 ||
+               adapted_lawname.compare("Compressible_Neo_Hookean_Ciarlet") == 0 ) {
       if (N == 2) adapted_lawname = "Plane_Strain_" + adapted_lawname;
     } else
       GMM_ASSERT1(false, lawname << " is not a known hyperelastic law");
