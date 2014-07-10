@@ -1,0 +1,45 @@
+.. include:: ../replaces.txt
+
+****************************
+  What's New in |gf| 4.3
+****************************
+
+This release is a transitional one until next version 5.0. The new high-level generic assembly is working and usable. However, the basic model bricks still use the old generic assembly and the new assembly is for the moment incompatible with a few things (Nitsche bricks and  time dispatcher bricks). 
+
+Released version, 2014/07/14.
+
+The main changes are:
+
+   * The introduction of the new high-level generic assembly, the
+     corresponding model bricks and the associated symbolic differentiation
+     which allows to describe non-linear coupled problems in a very easy way.
+
+   * The introduction of interpolate transformations in the new generic
+     assembly to deal with the assembly of terms on different meshes
+     or part of meshes.
+     Example of applications : mortar methods, periodic boundary conditions,
+     large sliding contact conditions 
+
+   * A large sliding contact with friction brick is now working
+     (work of Konstantinos Poulios and Yves Renard) and will be extended soon.
+
+   * A support for Nitsche type method for Dirichlet and contact conditions.        the corresponding model bricks will certainly evolve to incorporate the
+     use of the high-level generic assembly.
+
+   * A torus_mesh_fem object allowing to easily tranform 3D problems into
+     axi-symmetric ones (work of Lim Liang Jin).
+
+   * New im_data objects to store and interpolate data on Gauss points
+     of an integration method (work of Lim Liang Jin).
+
+   * Multithreaded assembly (Work of Andriy Andreykiv)
+
+   * New hyperelastic laws implemented and necessary tools in the high-level
+     generic assembly to describe new potentials  (matrix invariants ...)
+
+   * Allowing tensor field for mesh_fem objects
+
+   * Many bug fixes.
+
+
+

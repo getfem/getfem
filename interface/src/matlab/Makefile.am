@@ -69,7 +69,6 @@ M_FILES = \
 	gf_plot_1D.m \
 	gf_plot_mesh.m \
 	gf_plot_slice.m \
-	gf_solve.m \
 	gf_colormap.m \
 	gfObject.m
 

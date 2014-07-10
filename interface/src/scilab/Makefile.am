@@ -67,7 +67,6 @@ EXTRA_DIST=builddoc.sce \
         tests/unit_tests/check_oo.sce \
         tests/unit_tests/check_plot.sce \
         tests/unit_tests/check_slices.sce \
-        tests/unit_tests/check_solve.sce \
         tests/unit_tests/check_spmat.sce \
         tests/unit_tests/check_workspace.sce \
         demos/demo_bilaplacian.sce \
@@ -89,10 +88,6 @@ EXTRA_DIST=builddoc.sce \
         demos/demo_refine.sce \
         demos/demo_static_contact.sce \
         demos/demo_step_by_step.sce \
-        demos/demo_stokes_2D_poiseuille_arc.sce \
-        demos/demo_stokes_2D_poiseuille.sce \
-        demos/demo_stokes_2D_tube.sce \
-        demos/demo_stokes_3D_tank_alt.sce \
         demos/demo_stokes_3D_tank_draw.sce \
         demos/demo_stokes_3D_tank.sce \
         demos/demo_structural_optimization.sce \

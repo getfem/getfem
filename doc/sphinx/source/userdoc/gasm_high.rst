@@ -559,6 +559,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 
   - ``Matrix_J2(m)`` gives the modified first invariant of a square matrix defined by ``Matrix_I2(m)*pow(Det(m),-2/3)``.
 
+.. _ud-gasm-high_interpolate_trans:
 
 Interpolate transformations
 ***************************
@@ -566,7 +567,9 @@ The ``Interpolate`` operation allows to compute integrals between quantities whi
 
 In order to use this functionality, the user have first to declare to the workspace or to the model object an interpolate transformation which described the map between the current integration point and the point lying on the same mesh or on another mesh.
 
-For the moment, only one sort of transformation defined by an expression is available. This transformation is added to the workspace thanks to the command::
+Different kind of transformations can be described. For the moment, two kinds of transformations has been implemented. The first one, described here is a transformation described by an expression. The second one corresponds to the raytracing contact detection (see :ref:`ud-model-contact-friction_raytrace_inter_trans`)
+
+The transformation defined by an expression can be added to the workspace or the model thanks to the command::
  
   add_interpolate_transformation_from_expression
     (workspace, transname, source_mesh, target_mesh, expr);
@@ -614,5 +617,18 @@ For instance, the assembly expression to prescribe the equality of a variable ``
 
 (see :file:`demo\_periodic\_laplacian.m` in :file:`interface/tests/matlab` directory).
 
+In some situations, the interpolation of a point may fail if the transformed point is outside the target mesh. Both in order to treat this case and to allow the transformation to differentiate some other cases (see :ref:`ud-model-contact-friction_raytrace_inter_trans` for the differentiation between rigid bodies and deformable ones in the Raytracing_interpolate_transformation) the tranformation returns an integer identifiant to the assembly language. A value 0 of this identifiant means that no corresponding location on the target mesh has been found. A value of 1 means that a corresponding point has been found. This identifiant can be used thanks to the following special command of the assembly language::
 
-**CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus suach a transformation is not allowed in a potential definition since it cannot be derived twice.
+  Interpolate_filter(transname, expr, i)
+
+where ``transname`` is the name of the transformation, ``expr`` is the expression to be evaluated and ``i`` value of the returned integer identifiant for which the expression have to be computed. Note that ``i`` can be ommited, in that case, the expression is evaluated for a nonzero identifiant (i.e. when a corresponding point has been found). For instance, the previous assembly expression to prescribe the equality of a variable ``u`` with its interpolation could be writtne::
+
+  Interpolate_filter(transmane, Interpolate(u,my_transformation)-u)*lambda)
+  + Interpolate_filter(transmane, lambda*lambda, 0)
+
+In that case, the equality will only be prescribed in the part of the domain where the transformation succeed and in the other part, the mulitplier is enforced to vanish.
+
+
+
+
+**CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus, such a transformation is not allowed in the definition of a potential since it cannot be derived twice.

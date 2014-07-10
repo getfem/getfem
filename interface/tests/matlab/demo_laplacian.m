@@ -73,16 +73,6 @@ end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
-% Version with old bricks
-% b0=gf_mdbrick('generic elliptic',mim,mf);
-% b1=gf_mdbrick('dirichlet', b0, 1, mf, 'penalized');
-% gf_mdbrick_set(b1, 'param', 'R', mf, Uexact); 
-% b2=gf_mdbrick('source term',b1);
-% gf_mdbrick_set(b2, 'param', 'source_term', mf, F);
-% mds=gf_mdstate(b1);
-% gf_mdbrick_get(b2, 'solve', mds)
-% U=gf_mdstate_get(mds, 'state');
-
 if (draw)
   subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
   colorbar; title('computed solution');

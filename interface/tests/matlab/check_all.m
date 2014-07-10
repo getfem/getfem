@@ -64,14 +64,6 @@ catch
   errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
 
-t = 'check_solve                                  ';
-try
-  check_solve;
-  disp(['== ' t ': SUCCESS']);
-catch
-  errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
-end;
-
 t = 'check_oo [pseudo object oriented interface]  ';
 try
   check_oo;

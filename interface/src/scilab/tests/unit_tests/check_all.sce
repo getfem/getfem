@@ -41,13 +41,6 @@ disp(['== ' t ': SUCCESS']);
 catch
 errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
-t = 'check_solve                                  ';
-try
-exec('check_solve.sce');
-disp(['== ' t ': SUCCESS']);
-catch
-errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
-end;
 t = 'check_slices [mesh slicing functions]        ';
 try
 exec('check_slices.sce');

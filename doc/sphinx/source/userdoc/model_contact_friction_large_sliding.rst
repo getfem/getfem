@@ -47,7 +47,7 @@ A multi-contact frame object is initialized as follows::
                           int nodes_mode = 0, bool ref_conf = false);
 
   
-where `md` is a Getfem model. In this case, the multi contact frame object is linked to a model. `N` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. if `use_delaunay` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If `ref_conf` is true, the contact detection is made on the reference configuration (without taking into account a displacement). The parameter `cut_angle` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than `cut_angle` it is reduced to a mean unit normal to simplify the contact detection. If `raytrace` is true, raytracing is used instead of projection. If `nodes_mode=0` (default value), then contact is considered on Gauss points, `nodes_mode=1` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and `nodes_mode=2` then contact is considered on f.e.m. nodes for both slave and master surfaces. If `self_contact` is true, the contact detection is also made between master surfaces and for a master surface with itself. 
+where ``md`` is a Getfem model. In this case, the multi contact frame object is linked to a model. ``N`` is the space dimension (typically, 2 or 3), `release_distance` is the limit distance beyond which two points are not considered in potential contact (should be typically comparable to element sizes). There is several optional parameters. if ``use_delaunay`` is true (default value), then contact detection is done calling `Qhull <http://www.qhull.org>`_ package to perform a Delaunay triangulation on potential contact points. Otherwise, contact detection is performed by conputing some influences boxes of the element of master surfaces. If ``ref_conf`` is true, the contact detection is made on the reference configuration (without taking into account a displacement). The parameter ``cut_angle`` is an angle in radian which is used for the simplification of unit normal cones in the case of f.e.m. node contact : if a contact cone has an angle less than ``cut_angle`` it is reduced to a mean unit normal to simplify the contact detection. If ``raytrace`` is true, raytracing is used instead of projection. If ``nodes_mode=0`` (default value), then contact is considered on Gauss points, ``nodes_mode=1`` then contact is considered on Gauss points for slave surfaces and on f.e.m. nodes for master surfaces (in that case, the f.e.m. should be of Lagrange type) and ``nodes_mode=2`` then contact is considered on f.e.m. nodes for both slave and master surfaces. If ``self_contact`` is true, the contact detection is also made between master surfaces and for a master surface with itself. 
 
 Once a multi-contact frame is build, one adds slave or master surfaces, or rigid obstacles. Note that rigid obstacles are defined by a level-set expression which is evaluated by the `MuParser <http://muparser.beltoforion.de/>`_ package. The methods of multi-contact frame object adding a contact boundary are::
 
@@ -77,7 +77,7 @@ Once a multi-contact frame is build, one adds slave or master surfaces, or rigid
                                const std::string &wname = "");
                                
 
-where `obs` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (`x`, `y`) in 2D, (`x`, `y`, `z`) in 3D and , (`x`, `y`, `z`, `w`) in 4D). `region` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model. `multname` is the optional name of a multiplier variable to represent the contact stress. `wname` is the optional name of a variable representing the displacement at previous time step to compute the sliding velocity.
+where ``obs`` is a string containing the expression of the level-set function which should be a signed distance to the obstacle (the coordinates are (``x``, ``y``) in 2D, (``x``, ``y``, ``z``) in 3D and , (``x``, ``y``, ``z``, ``w``) in 4D). ``region`` is the boundary number. The two last function can be called when the multi contact frame object is linked to a Getfem model. ``multname`` is the optional name of a multiplier variable to represent the contact stress. ``wname`` is the optional name of a variable representing the displacement at previous time step to compute the sliding velocity.
 
 
 The contact pair detection algorithm
@@ -129,7 +129,7 @@ Some details on the algorithm:
     the element face, which means that the element face is prolongated
     analytically. The projection is performed by minimizing the distance
     between the slave point and the projected one using the parametrization
-    and Newton's and/or BFGS algorithms. If `raytrace` is set to true, then
+    and Newton's and/or BFGS algorithms. If ``raytrace`` is set to true, then
     no projection is computed. Instead a ray tracing from the point x in
     the direction of the unit normal vector at x to find y. This means
     the reverse of the usual situation (x will be the projection of y).
@@ -145,7 +145,7 @@ The list of criteria:
     at least one pair of unit normal vector have their scalar product
     non-positive. In order to simplify the computation, a normal cone is
     reduced to a mean normal vector if the solid angle of the normal cone is
-    less than `cut_angle` a parameter of the multi-contact frame object.
+    less than ``cut_angle`` a parameter of the multi-contact frame object.
     This criterion allows to treat cases (B) and (K1).
 
   - **Criterion 2: the contact pair is eliminated when the search of the
@@ -246,8 +246,6 @@ Add of the brick::
 Tools of the high-level generic assembly for contact with friction
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-(for 5.0 release of |gf|)
-
 The following nonlinear operators are defined in the high-level generic assembly langage (see :ref:`ud-gasm-high`):
 
   - ``Transformed_unit_vector(Grad_u, n)`` where ``Grad_u`` is the gradient of a
@@ -337,3 +335,93 @@ The following nonlinear operators are defined in the high-level generic assembly
       \partial_{r} P(\lambda, n, V_s, g, f, r) =
        H(-\lambda\cdot n - r\,g)gn + \partial_q P_{B(n,\tau)}V_s
        +\partial_{\tau} P_{B(n,\tau)} \partial_r \tau
+
+
+.. _ud-model-contact-friction_raytrace_inter_trans:
+
+Raytracing interpolate transformation
+*************************************
+
+In order to incorporate the contact detection in the high-level generic assembly, a specific interpolate transformation has been defined (see :ref:`ud-gasm-high_interpolate_trans` for more explanations on interpolate tranformations). It is based on a raytracing contact detection has described in [KO-RE2014]_ and uses the criteria described above.
+
+The addition of a raytracing transformation to a model::
+
+  void add_raytracing_transformation(model &md, const std::string &transname,
+                                      scalar_type d)
+
+where ``transname`` is a name given to the transformation which allows to refer to it in the high-level generic assembly language and ``d`` is the release distance (see above).
+
+The raytracing transformation is added without any slave or master contact boundary. The following functions allows to add some boundaries to the transformation::
+
+  add_master_contact_boundary_to_raytracing_transformation(model &md,
+             const std::string &transname, const mesh &m,
+             const std::string &dispname, size_type region)
+
+  add_slave_contact_boundary_to_raytracing_transformation(model &md,
+             const std::string &transname, const mesh &m,
+             const std::string &dispname, size_type region)
+
+where ``dispname`` is the variable name which represent the displacement on that contact
+boundary. The difference between master and slave contact boundary is that the contact detection is to be performed starting from a slave or master boundary toward a master boundary. The contact detection is not performed toward a slave boundary. Consequently, only the influence boxes of the elements of the master surfaces are computed and stored.
+
+It is also possible to add a rigid obstacle (considered as a master surface) thanks to the function:: 
+
+  add_rigid_obstacle_to_raytracing_transformation(model &md,
+             const std::string &transname,
+             const std::string &expr, size_type N)
+
+where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the high-level generic assembly language (``x`` being the current position, ``x(0)``, ``x(1)`` ... the corresponding components). For instance an expression ``x(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
+
+In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifiant which can be used by the `Interpolate_filter` command of the high-level generic assembly language (see :ref:`ud-gasm-high_interpolate_trans`). The different values:
+
+* 0 : no contact found on this Gauss point
+
+* 1 : contact occurs on this Gauss point with a deformable body
+
+* 2 : contact occurs on this Gauss point with a rigid obstacle.
+
+such that it is possible to differentiate the treatment of these three cases using::
+
+  Interpolate_filter(transname, expr1, 0)
+  Interpolate_filter(transname, expr2, 1)
+  Interpolate_filter(transname, expr3, 2)
+
+in the assembly language, where ``expr1``, ``expr2`` and ``expr3`` correspond to the different terms to be computed. The matlab interface demo program :file:`/interface/tests/matlab/demo_large_sliding_contact.m` presents an example of use.
+
+Note that the transformation could also be directly used with a `ga_workspace` object if model object are not used. See :file:`getfem/getfem_contact_and_friction_common.h` for more details. Note also that in the framework of the model object, a interfaced use of this transformation is allowed by the model bricks described below.
+
+
+Integral contact brick with raytrace, high-level generic assembly version
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+Add of the brick::
+
+  indbrick = add_integral_large_sliding_contact_brick_raytracing
+    (model &md, const std::string &dataname_r,
+     scalar_type release_distance, 
+     const std::string &dataname_friction_coeff = "0",
+     const std::string &dataname_alpha = "1");
+
+This brick allows to deal with a multi-contact situation. It adds to the model a raytracing interpolate transformation as described in the previous section whose name can be obtained by the command::
+
+  const std::string &transformation_name_of_large_sliding_contact_brick(model &md,
+                         size_type indbrick);
+
+Once the brick is added to the model, the master and slave contact boundaries have to be added with the following function::
+
+  add_contact_boundary_to_large_sliding_contact_brick(model &md,
+      size_type indbrick, const mesh_im &mim, size_type region,
+      bool is_master, bool is_slave, const std::string &u,
+      const std::string &lambda = "", const std::string &w = "")
+
+where ``region`` should be a valid mesh region number representing a boundary, ``is_master`` should be set to ``true`` if the contact detection is to be done on that contact boundary, ``is_slave`` should be set to ``true`` if the integration of contact terms is to be done on that boundary. Note that a contact boundary is allowed to be both master and slave, in particular to allow self-contact detection. ``u`` is the displacement variable. If ``is_slave`` is set to true, ``lambda`` should describe a multiplier variable with degrees of freedom on the contact boundary (typically added to the model with the ``md.add_filtered_fem_variable(...) method). Pure master contact boundary do not need the definition of a multiplier. Additionally, ``w`` is for the evolutionnary case and represents the displacement at the previous time step.
+
+A rigid obstacle can be added to the brick with::
+
+  add_rigid_obstacle_to_large_sliding_contact_brick(model &md,
+      size_type indbrick, std::string expr, size_type N)
+
+where `expr` is an expression using the high-level
+generic assembly language (whith `x` is the current position) which should
+be a signed distance to the obstacle. `N` is the mesh dimension.

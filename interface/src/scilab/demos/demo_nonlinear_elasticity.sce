@@ -3,8 +3,6 @@ stacksize('max');
 
 printf('demo nonlinear_elasticity started\n');
 
-clear pde;
-
 path = get_absolute_file_path('demo_nonlinear_elasticity.sce');
 
 // Load the axrot_matrix macro

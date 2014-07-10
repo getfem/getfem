@@ -71,11 +71,11 @@ namespace getfem {
   void add_contact_boundary_to_large_sliding_contact_brick
   (model &md, size_type indbrick, const mesh_im &mim, size_type region,
    bool is_master, bool is_slave, const std::string &u,
-   const std::string &lambda, const std::string &w = "");
+   const std::string &lambda = "", const std::string &w = "");
 
   /** Adds a rigid obstacle to an existing large sliding contact
       with friction brick. `expr` is an expression using the high-level
-      generic assembly language (where `x` is the current point n the mesh)
+      generic assembly language (where `x` is the current position)
       which should be a signed distance to the obstacle.
       `N` is the mesh dimension.
   */

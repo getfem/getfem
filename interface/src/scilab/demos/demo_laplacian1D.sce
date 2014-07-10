@@ -14,7 +14,6 @@ gf_util('warning level',3);
 // clears every getfem object 
 
 gf_workspace('clear all');
-clear pde;
 
 disp('getfem scilab basic example -- 1D laplacian with high order FEM');
 disp(['this demo illustrates some current drawbacks of this getfem ' ...
@@ -100,10 +99,6 @@ for j=1:3
     gf_mdbrick_get(b2, 'solve', mds);
     Uu = gf_mdstate_get(mds, 'state'); Uu=Uu(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
-    //drawlater;
-    //gf_plot(pde.mf_u, U,'mesh','regions'); 
-    //colorbar(min(U),max(U));
-    //drawnow;
     U = gf_compute(mfu, Uu, 'interpolate on', mferr);
     clf();
     drawlater;

@@ -17,7 +17,6 @@
 
 % clears every getfem object 
 gf_workspace('clear all');
-clear pde;
 disp('getfem_matlab basic example -- 1D laplacian with high order FEM');
 disp(['this demo illustrates some current drawbacks of this getfem ' ...
       'release. Hopefully, these numerical problems with high order elements ' ...
@@ -95,7 +94,6 @@ for j=1:3
     gf_mdbrick_get(b2, 'solve', mds);
     Uu=gf_mdstate_get(mds, 'state'); Uu=Uu(1:get(mfu, 'nbdof'));
 
-    %gf_plot(pde.mf_u, U,'mesh','regions'); colorbar;
     U = gf_compute(mfu, Uu, 'interpolate on', mferr);
     plot(x,U,'r+-',x,eU,'bx:'); legend('approx','exact');
     [mx,pos]=max(abs(eU-U));

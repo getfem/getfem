@@ -20,7 +20,6 @@ EXTRA_DIST= \
 	check_oo.m \
 	check_plot.m \
 	check_slices.m \
-	check_solve.m \
 	check_spmat.m \
 	check_workspace.m \
 	demo_bilaplacian.m \
@@ -37,11 +36,7 @@ EXTRA_DIST= \
 	demo_topological_optimization.m \
 	demo_structural_optimization.m \
 	demo_refine.m \
-	demo_stokes_2D_poiseuille.m \
-	demo_stokes_2D_poiseuille_arc.m \
-	demo_stokes_2D_tube.m \
 	demo_stokes_3D_tank.m \
-	demo_stokes_3D_tank_alt.m \
 	demo_stokes_3D_tank_draw.m \
 	demo_tripod.m \
 	demo_Navier_Stokes.m \
