@@ -2936,7 +2936,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
-     /*@SET ind = ('add integral large sliding contact brick raytracing', @str dataname_r, @scalar release_distance, [, @str dataname_fr[, @str dataname_alpha]])
+     /*@SET ind = ('add integral large sliding contact brick raytracing', @str dataname_r, @scalar release_distance, [, @str dataname_fr[, @str dataname_alpha[, @int version]]])
       Adds a large sliding contact with friction brick to the model.
       This brick is able to deal with self-contact, contact between
       several deformable bodies and contact with rigid obstacles.
@@ -2947,10 +2947,11 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       (generally a few times a mean element size, and less than the
       thickness of the body). Initially, the brick is added with no contact
       boundaries. The contact boundaries and rigid bodies are added with
-      special functions. @*/
+      special functions. `version` is 0 for the non-symmetric version
+      and 1 for the symmetric one (0 by default). @*/
 
      sub_command
-       ("add integral large sliding contact brick raytracing", 2, 4, 0, 1,
+       ("add integral large sliding contact brick raytracing", 2, 5, 0, 1,
         
         std::string dataname_r = in.pop().to_string();
         scalar_type d = in.pop().to_scalar();
@@ -2960,10 +2961,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         std::string dataname_alpha = "1";
         if (in.remaining()) dataname_alpha = in.pop().to_string();
         if (dataname_alpha.size() == 0) dataname_alpha = "1";
+        bool sym_v = false;
+        if (in.remaining()) sym_v = (in.pop().to_integer() != 0);
 
         size_type  ind
         = getfem::add_integral_large_sliding_contact_brick_raytracing
-        (md->model(), dataname_r, d, dataname_fr, dataname_alpha);
+        (md->model(), dataname_r, d, dataname_fr, dataname_alpha, sym_v);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 

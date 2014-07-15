@@ -19,7 +19,7 @@
 clear all;
 gf_workspace('clear all');
 
-test_case = 0; % 0 = 2D punch on a rigid obstacle
+test_case = 1; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -32,7 +32,7 @@ alpha = 1.0;                % Alpha coefficient for "sliding velocity"
 f_coeff = 0.5;              % Friction coefficient
 
 test_tangent_matrix = false;
-nonlinear_elasticity = true;
+nonlinear_elasticity = false;
 max_iter = 50;
 draw_mesh = false;
 do_plot = true;
@@ -347,7 +347,7 @@ else % Use of multi_contact_frame object
   gf_model_set(md, 'add integral large sliding contact brick raytrace', mcff, 'r', 'f', 'alpha');
 end
 
-for nit=1:15
+for nit=1:20
   disp(sprintf('Iteration %d', nit));
 
   if (test_tangent_matrix) 

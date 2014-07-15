@@ -59,7 +59,7 @@ namespace getfem {
   size_type add_integral_large_sliding_contact_brick_raytracing
   (model &md, const std::string &augm_param,
   scalar_type release_distance, const std::string &f_coeff = "0",
-   const std::string &alpha = "1");
+   const std::string &alpha = "1", bool sym_v = false);
 
   /** Adds a contact boundary to an existing large sliding contact
       with friction brick. When a boundary is declared slave, a multiplier
