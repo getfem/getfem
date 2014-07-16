@@ -105,7 +105,7 @@ function check_asm(iverbose,idebug)
   
   gf_asm('undefine function', 'myf');
   gf_asm('define function', 'myf', 1, '6*sin(t)+2*t*t');
-  a = gf_asm('generic', mim, 0, 'myf(x(1))', -1);
+  a = gf_asm('generic', mim, 0, 'myf(X(1))', -1);
   gfassert('abs(a-5.48) < 2E-4');
   
   

@@ -48,7 +48,7 @@ References
 .. [KI-OD1988] Kikuchi N., Oden J.T.,
    *Contact problems in elasticity*, SIAM, 1988.
 
-.. [KO-RE2014] Konstantinos P., Renard Y.,
+.. [KO-RE2014] Poulios K., Renard Y.,
    *An unconstrained integral approximation of large sliding frictional contact between deformable solids* Submitted (2014)., [`hal-00937569 - version 1 <http:hal.archives-ouvertes.fr/hal-00937569/>`_].
 
 .. [LA-RE2006] P. Laborde, Y. Renard.

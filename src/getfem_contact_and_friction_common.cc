@@ -1315,7 +1315,7 @@ namespace getfem {
     struct obstacle {
       ga_function f;
       ga_function der_f;
-      mutable base_vector x;
+      mutable base_vector X;
     };
 
     std::vector<obstacle> obstacles;
@@ -1417,24 +1417,33 @@ namespace getfem {
                             size_type N) {
       obstacles.push_back(obstacle());
       obstacles.back().f = ga_function(md, expr);
-      gmm::resize(obstacles.back().x, N);
+      gmm::resize(obstacles.back().X, N);
       obstacles.back().f.workspace().add_fixed_size_variable
-        ("x", gmm::sub_interval(0, N), obstacles.back().x);
+        ("X", gmm::sub_interval(0, N), obstacles.back().X);
+      // to be reimplemented when sub expressions will be available
+//       if (N >= 1) obstacles.back().f.workspace().add_fixed_size_variable
+//         ("x", gmm::sub_interval(0, 1), obstacles.back().x);
+//       if (N >= 2) obstacles.back().f.workspace().add_fixed_size_variable
+//         ("y", gmm::sub_interval(1, 1), obstacles.back().y);
+//       if (N >= 3) obstacles.back().f.workspace().add_fixed_size_variable
+//         ("z", gmm::sub_interval(2, 1), obstacles.back().z);
+//       if (N >= 4) obstacles.back().f.workspace().add_fixed_size_variable
+//         ("w", gmm::sub_interval(3, 1), obstacles.back().w);
       obstacles.back().f.compile();
       obstacles.back().der_f = obstacles.back().f;
-      obstacles.back().der_f.derivative("x");
+      obstacles.back().der_f.derivative("X");
     }
 
     void add_rigid_obstacle(const ga_workspace &workspace,
                             const std::string &expr, size_type N) {
       obstacles.push_back(obstacle());
       obstacles.back().f = ga_function(workspace, expr);
-      gmm::resize(obstacles.back().x, N);
+      gmm::resize(obstacles.back().X, N);
       obstacles.back().f.workspace().add_fixed_size_variable
-        ("x", gmm::sub_interval(0, N), obstacles.back().x);
+        ("X", gmm::sub_interval(0, N), obstacles.back().X);
       obstacles.back().f.compile();
       obstacles.back().der_f = obstacles.back().f;
-      obstacles.back().der_f.derivative("x");
+      obstacles.back().der_f.derivative("X");
     }
 
     void add_contact_boundary(const model &md, const mesh &m,
@@ -1608,7 +1617,7 @@ namespace getfem {
       size_type irigid_obstacle(-1);
       for (size_type i = 0; i < obstacles.size(); ++i) {
         const obstacle &obs = obstacles[i];
-        gmm::copy(pt_x, obs.x);
+        gmm::copy(pt_x, obs.X);
         const base_tensor &t = obs.f.eval();
         
         GMM_ASSERT1(t.size() == 1, "Obstacle level set function as to be "
@@ -1626,7 +1635,7 @@ namespace getfem {
       if (irigid_obstacle != size_type(-1)) {
         // cout << "Testing obstacle " << irigid_obstacle << endl;
         const obstacle &obs = obstacles[irigid_obstacle];
-        gmm::copy(pt_x, obs.x);
+        gmm::copy(pt_x, obs.X);
         gmm::copy(pt_x, pt_y);
         size_type nit = 0, nb_fail = 0;
         scalar_type alpha(0), beta(0);
@@ -1637,7 +1646,7 @@ namespace getfem {
 
           for (scalar_type lambda(1); lambda >= 1E-3; lambda/=scalar_type(2)) {
             alpha = beta - lambda * d1 / gmm::vect_sp(n_y, n_x);
-            gmm::add(pt_x, gmm::scaled(n_x, alpha), obs.x);
+            gmm::add(pt_x, gmm::scaled(n_x, alpha), obs.X);
             d2 = obs.f.eval()[0];
             if (gmm::abs(d2) < gmm::abs(d1)) break;
           }
@@ -1645,7 +1654,7 @@ namespace getfem {
             nb_fail++;
           beta = alpha; d1 = d2;
         }
-        gmm::copy(obs.x, pt_y);
+        gmm::copy(obs.X, pt_y);
 
         if (gmm::abs(d1) > 1E-8) {
            GMM_WARNING1("Raytrace on rigid obstacle failed");

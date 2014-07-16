@@ -2367,29 +2367,29 @@ namespace getfem {
         // Coulomb_friction_coupled_projection(lambda,
         //    Transformed_unit_vector(Grad_u, Normal),
         //    (u-Interpolate(ug,trans)-(w-Interpolate(wg,trans)))*alpha,
-        //    (Interpolate(x,trans)+Interpolate(ug,trans)-x-u).
+        //    (Interpolate(X,trans)+Interpolate(ug,trans)-X-u).
         //      Transformed_unit_vector(Grad_u, Normal), f, r)
         std::string coupled_projection_def =
           "Coulomb_friction_coupled_projection("
-          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),x+"
+          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),X+"
           + "("+u+"-Interpolate("+u_group+","+transformation_name+")"
           + (w.size() 
              ? ("-"+w+"+Interpolate("+w_group+","+transformation_name+")")
              : "")
           +")*"+alpha+","
-          + "(Interpolate(x,"+transformation_name+")+Interpolate("+u_group+","
-          + transformation_name+")-x-"+u+").Transformed_unit_vector(Grad_"
+          + "(Interpolate(X,"+transformation_name+")+Interpolate("+u_group+","
+          + transformation_name+")-X-"+u+").Transformed_unit_vector(Grad_"
           + u+", Normal),"+friction_coeff+","+augmentation_param+")";
 
         // Coulomb_friction_coupled_projection(lambda,
         //   Transformed_unit_vector(Grad_u, Normal), (u-w)*alpha,
-        //   (Interpolate(x,trans)-x-u).Transformed_unit_vector(Grad_u,
+        //   (Interpolate(X,trans)-X-u).Transformed_unit_vector(Grad_u,
         //                                                      Normal), f, r)
         std::string coupled_projection_rig =
           "Coulomb_friction_coupled_projection("
           + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),"
           + "("+u+(w.size() ? ("-"+w):"")+")*"+alpha
-          + ",(Interpolate(x,"+transformation_name+")-x-"+u
+          + ",(Interpolate(X,"+transformation_name+")-X-"+u
           + ").Transformed_unit_vector(Grad_"+u+", Normal),"
           + friction_coeff+","+augmentation_param+")";
 

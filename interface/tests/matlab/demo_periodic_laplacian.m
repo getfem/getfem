@@ -89,7 +89,7 @@ switch (dirichlet_version)
 end
 % periodic condition
 gf_model_set(md, 'add filtered fem variable', 'lambda', mf_lambda, GAMMAP); % multiplier for the periodic condition
-gf_model_set(md, 'add interpolate transformation from expression', 'transform', m, m, 'x-[1;0]');
+gf_model_set(md, 'add interpolate transformation from expression', 'transform', m, m, 'X-[1;0]');
 gf_model_set(md, 'add linear generic assembly brick', mim, '(Interpolate(u,transform)-u)*lambda', GAMMAP);
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');

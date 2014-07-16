@@ -966,7 +966,7 @@ namespace getfem {
       break;
       
     case GA_NODE_X:
-      if (pnode->nbc1) str << "x(" << pnode->nbc1 << ")"; else str << "x";
+      if (pnode->nbc1) str << "X(" << pnode->nbc1 << ")"; else str << "X";
       break;
     case GA_NODE_NORMAL: str << "Normal"; break;
     case GA_NODE_INTERPOLATE:
@@ -983,7 +983,7 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_NORMAL:
       str << "Interpolate(Normal," << pnode->interpolate_name << ")"; break;
     case GA_NODE_INTERPOLATE_X:
-      str << "Interpolate(x," << pnode->interpolate_name << ")"; break;
+      str << "Interpolate(X," << pnode->interpolate_name << ")"; break;
     case GA_NODE_VAL: str << pnode->name; break;
     case GA_NODE_INTERPOLATE_VAL:
       str << "Interpolate(" << pnode->name << "," << pnode->interpolate_name
@@ -1189,7 +1189,7 @@ namespace getfem {
             if (t_type != GA_NAME)
               ga_throw_error(expr, pos,
                              "First argument of Interpolate should be a "
-                             "variable, test function, x or Normal.");
+                             "variable, test function, X or Normal.");
             tree.current_node->name = std::string(&(expr[token_pos]),
                                                   token_length);
 
@@ -2263,32 +2263,32 @@ namespace getfem {
   };
 
 
-  struct ga_instruction_x_component : public ga_instruction {
+  struct ga_instruction_X_component : public ga_instruction {
     scalar_type &t;
     fem_interpolation_context &ctx;
     size_type n;
    
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: x component");
+      GA_DEBUG_INFO("Instruction: X component");
       t = ctx.xreal()[n];
       return 0;
     }
-    ga_instruction_x_component(scalar_type &t_, 
+    ga_instruction_X_component(scalar_type &t_, 
                                fem_interpolation_context &ctx_, size_type n_)
       : t(t_),  ctx(ctx_), n(n_) {}
   };
 
-  struct ga_instruction_x : public ga_instruction {
+  struct ga_instruction_X : public ga_instruction {
     base_tensor &t;
     fem_interpolation_context &ctx;
    
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: x");
+      GA_DEBUG_INFO("Instruction: X");
       GA_DEBUG_ASSERT(t.size() == ctx.xreal().size(), "dimensions mismatch");
       gmm::copy(ctx.xreal(), t.as_vector());
       return 0;
     }
-    ga_instruction_x(base_tensor &t_, fem_interpolation_context &ctx_)
+    ga_instruction_X(base_tensor &t_, fem_interpolation_context &ctx_)
       : t(t_),  ctx(ctx_) {}
   };
 
@@ -4462,7 +4462,7 @@ namespace getfem {
   static void ga_node_analysis(const std::string &expr, ga_tree &tree,
                                const ga_workspace &workspace,
                                pga_tree_node pnode, size_type meshdim,
-                               bool eval_fixed_size, bool ignore_x) {
+                               bool eval_fixed_size, bool ignore_X) {
     // cout << "begin analysis of node "; ga_print_node(pnode, cout);
     // cout << endl;
     bool all_cte = true, all_sc = true;
@@ -4478,7 +4478,7 @@ namespace getfem {
 
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
-                       eval_fixed_size, ignore_x);
+                       eval_fixed_size, ignore_X);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
       all_sc = all_sc && pnode->children[i]->tensor_proper_size() == 1;
       GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
@@ -4566,7 +4566,7 @@ namespace getfem {
           pnode->init_vector_tensor(meshdim);
           break;
         }
-        if (!(name.compare("x"))) {
+        if (!(name.compare("X"))) {
           pnode->node_type = GA_NODE_INTERPOLATE_X;
           pnode->init_vector_tensor(meshdim);
           break;
@@ -5393,7 +5393,7 @@ namespace getfem {
       {
         std::string name = pnode->name;
 
-        if (!ignore_x && !(name.compare("x"))) {
+        if (!ignore_X && !(name.compare("X"))) {
           pnode->node_type = GA_NODE_X;
           pnode->nbc1 = 0;
           pnode->init_vector_tensor(meshdim);
@@ -5649,14 +5649,14 @@ namespace getfem {
       if (child0->node_type == GA_NODE_X) {
         child0->init_scalar_tensor(0);
         if (pnode->children.size() != 2)
-          ga_throw_error(expr, child1->pos, "x stands for the coordinates on "
+          ga_throw_error(expr, child1->pos, "X stands for the coordinates on "
                          "the real elements. It accepts only one index.");
         if (!(child1->node_type == GA_NODE_CONSTANT) || child1->t.size() != 1)
-          ga_throw_error(expr, child1->pos, "Index for x has to be constant "
+          ga_throw_error(expr, child1->pos, "Index for X has to be constant "
                          "and of size 1.");
         child0->nbc1 = size_type(round(child1->t[0]));
         if (child0->nbc1 == 0 || child0->nbc1 > meshdim)
-          ga_throw_error(expr, child1->pos, "Index for x not convenient.");
+          ga_throw_error(expr, child1->pos, "Index for X not convenient.");
         tree.replace_node_by_child(pnode, 0);
         pnode = child0;
         
@@ -7073,17 +7073,17 @@ namespace getfem {
 
     case GA_NODE_X:
       GMM_ASSERT1(!function_case,
-                  "No use of x is allowed in scalar functions");
+                  "No use of X is allowed in scalar functions");
       if (pnode->nbc1) {
         GA_DEBUG_ASSERT(pnode->t.size() == 1, "dimensions mismatch");
         GMM_ASSERT1(pnode->nbc1 <= m.dim(),
-                    "Bad index for x in expression");
-        pgai = new ga_instruction_x_component
+                    "Bad index for X in expression");
+        pgai = new ga_instruction_X_component
             (pnode->t[0], gis.ctx, pnode->nbc1-1);
       } else {
         if (pnode->t.size() != m.dim())
           pnode->init_vector_tensor(m.dim());
-        pgai = new ga_instruction_x(pnode->t, gis.ctx);
+        pgai = new ga_instruction_X(pnode->t, gis.ctx);
       }
       rmi.instructions.push_back(pgai);
       break;

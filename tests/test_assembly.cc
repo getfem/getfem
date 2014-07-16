@@ -984,17 +984,17 @@ static void test_new_assembly(void) {
       SCAL_TEST_0("Test on function integration 1",
                   "1", mim, 1);
       SCAL_TEST_0("Test on function integration 1",
-                  "cos(pi*x(1))", mim, 0);
+                  "cos(pi*X(1))", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
-                  "cos(pi*x).exp(x*0)", mim, 0);
+                  "cos(pi*X).exp(X*0)", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
-                  "-Derivative_sin(pi*x).exp(x*0)", mim, 0);
+                  "-Derivative_sin(pi*X).exp(X*0)", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
-                  "sin(pi*x).exp(x*0)", mim, 2.0*N/M_PI);
+                  "sin(pi*X).exp(X*0)", mim, 2.0*N/M_PI);
       SCAL_TEST_0("Test on function integration 2",
-                  "Derivative_cos(pi*x).exp(x*0)", mim, -2.0*N/M_PI);
+                  "Derivative_cos(pi*X).exp(X*0)", mim, -2.0*N/M_PI);
       SCAL_TEST_0("Test on function integration 3",
-                  "cos(pi*x).Id(meshdim)(:,1)", mim,0);
+                  "cos(pi*X).Id(meshdim)(:,1)", mim,0);
     }
 
     if (all) {
@@ -1004,7 +1004,7 @@ static void test_new_assembly(void) {
                   "dummyfunc(5)", mim, 1);
       getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
       SCAL_TEST_0("Test on user defined functions",
-                  "dummyfunc2(x(1))", mim, 0);
+                  "dummyfunc2(X(1))", mim, 0);
     }
 
 

@@ -52,7 +52,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - Explicit fourth order tensors. Supplementary dimensions are separated with ``,,`` and ``;;``. For instance ``[1,1;1,2,,1,1;1,2;;1,1;1,2,,1,1;1,2]`` is a 2x2x2x2 valid tensor.
 
-  - ``x`` is the current coordinate on the real element, ``x(i)`` is its ith component, ``Normal`` ( the outward unit normal vector to a boundary, for boundary integration).
+  - ``X`` is the current coordinate on the real element, ``X(i)`` is its ith component, ``Normal`` ( the outward unit normal vector to a boundary, for boundary integration).
 
   - ``Reshape(t, i, j, ...)``: reshape a vector/matrix/tensor. Note that all tensor in |gf| are stored in the fortran order.
 
@@ -99,7 +99,7 @@ where ``a`` has to be declared as a scalar constant or a scalar field. Not that 
 
 where :math:`x_1, x_2` are the coordinates on the mesh, can be expressed::
 
-  sin(x(1)+x(2))*Grad_u.Grad_Test_u - my_f*Test_u
+  sin(X(1)+X(2))*Grad_u.Grad_Test_u - my_f*Test_u
 
 Another classical equation is linear elasticity:
 
@@ -287,14 +287,14 @@ if the source term is describe on a finite element ``mf_data`` and the correspon
   getfem::size_type nbdofu = mf_u.nb_dof();
   getfem::base_vector U(nbdofu);
   workspace.add_fem_variable("u", mf_u, gmm::sub_interval(0, nbdofu), U);
-  workspace.add_expression("sin(x(1)+x(2))*Test_u", mim);
+  workspace.add_expression("sin(X(1)+X(2))*Test_u", mim);
   getfem::base_vector L(nbdofu);
   workspace.set_assembled_vector(V);
   workspace.assembly(1);
 
 is also valid. If the source term is a boundary term (in case of a Neumann condition) the only difference is that the mesh region corresponding to the boundary have to be given as follows::
 
-  workspace.add_expression("sin(x(1)+x(2))*Test_u", mim, region);
+  workspace.add_expression("sin(X(1)+X(2))*Test_u", mim, region);
 
 where ``region`` is the mesh region number.
 
@@ -350,7 +350,7 @@ The detailed syntax of the assembly language
 The tensors
 ***********
 
-Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``x.x`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains tests functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
+Basically, what is manipulated in the generic assembly language are tensors. This can be order 0 tensors in scalar expressions (for instance in ``3+sin(pi/2)``), order 1 tensors in vector expressions (such as ``X.X`` or ``Grad_u`` if u is a scalar variable), order 2 tensors for matrix expressions and so on. For efficiency reasons, the language manipulates tensors up to order six. The language could be easily extended to support tensors of order greater than six but it may lead to inefficient computations. When an expression contains tests functions (as in ``Trace(Grad_Test_u)`` for a vector field ``u``), the computation is done for each test functions, which means that the tensor implicitly have a supplementary component. This means that, implicitly, the maximal order of manipulated tensors are in fact six (in ``Grad_Test_u:Grad_Test2_u`` there are two components implicitly added for first and second order test functions).
 
 Order four tensors are necessary for instance to express elasticity tensors or in general to obtain the tangent term for vector valued unknowns.
 
@@ -358,7 +358,7 @@ Order four tensors are necessary for instance to express elasticity tensors or i
 The variables
 *************
 
-A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace``, ``Deviator``, ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``x``, ``Id`` ...).
+A list of variables should be given to the ``ga_worspace`` object (directly or through a model object). The variables are described on a finite element method or can be a simple vector of unknowns. This means that it is possible also to couple algebraic equations to pde ones on a model. A variable name should begin by a letter (case sensitive) or an underscore followed by a letter, a number or an underscore. Some name are reserved, this is the case of operators names (``Det``, ``Norm``, ``Trace``, ``Deviator``, ...) and thus cannot be used as variable names. The name should not begin by ``Test_``, ``Test2_``, ``Grad_`` or ``Hess_``. The variable name should not correspond to a predefined function (``sin``, ``cos``, ``acos`` ...) and to constants (``pi``, ``Normal``, ``X``, ``Id`` ...).
 
 The constants or data
 *********************
@@ -516,7 +516,7 @@ Constant expressions
 Special expressions linked to the current position 
 **************************************************
 
-  - ``x`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``x(i)`` is its ith component. For instance ``sin(x(1)+x(2))`` is a valid expression on a mesh of dimension greater or equal to two. 
+  - ``X`` is the current coordinate on the real element (i.e. the position on the mesh of the current Gauss point on which the expression is evaluated), ``X(i)`` is its ith component. For instance ``sin(X(1)+X(2))`` is a valid expression on a mesh of dimension greater or equal to two. 
 
   - ``Normal`` the outward unit normal vector to a boundary when integration on a boundary is performed.
 
@@ -584,24 +584,24 @@ where ``workspace`` is a workspace object, ``md`` a model object, ``transname`` 
 For instance, an expression::
 
   add_interpolate_transformation_from_expression
-    (md, "my_transformation", my_mesh, my_mesh, "x-[1;0]");
+    (md, "my_transformation", my_mesh, my_mesh, "X-[1;0]");
 
 will allow to integrate some expressions at the current position with a shift of -1 with respect to the first coordinate. This simple kind of transformation can be used to prescribe a periodic condition.
 
 Of course, one may used more complex expressions such as::
 
   add_interpolate_transformation_from_expression
-    (md, "my_transformation", my_mesh, my_second_mesh, "[x[1]cos(x[2]); x[1]sin(x[2])]");
+    (md, "my_transformation", my_mesh, my_second_mesh, "[X[1]cos(X[2]); X[1]sin(X[2])]");
 
   add_interpolate_transformation_from_expression
-    (md, "my_transformation", my_mesh, my_mesh, "x+u");
+    (md, "my_transformation", my_mesh, my_mesh, "X+u");
 
 where ``u`` is a vector variable of the workspace/model.
 
 Once a transformation is define in the workspace/model, one can interpolate a variable or test functions, the position or the unit normal vector to a boundary thanks to one of these expressions::
 
   Interpolate(Normal, transname)
-  Interpolate(x, transname)
+  Interpolate(X, transname)
   Interpolate(u, transname)
   Interpolate(Grad_u, transname)
   Interpolate(Hess_u, transname)
