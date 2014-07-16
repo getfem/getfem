@@ -370,7 +370,7 @@ It is also possible to add a rigid obstacle (considered as a master surface) tha
              const std::string &transname,
              const std::string &expr, size_type N)
 
-where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the high-level generic assembly language (``x`` being the current position, ``x(0)``, ``x(1)`` ... the corresponding components). For instance an expression ``x(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
+where ``expr`` is the expression of a signed distance to the obstacle using the syntax of the high-level generic assembly language (``X`` being the current position, ``X(0)``, ``X(1)`` ... the corresponding components). For instance an expression ``X(0) + 5`` will correspond to a flat obstacle lying on the right of the position ``-5`` of the first coordinate. Be aware that the expression have to be close to a signed distance, which in particular means that the gradient norm have to be close to 1. 
 
 In order to distinguish between non-contact situations and the occurence of a contact with another deformable body or with a rigid obstacle, the transformation returns an integer identifiant which can be used by the `Interpolate_filter` command of the high-level generic assembly language (see :ref:`ud-gasm-high_interpolate_trans`). The different values:
 
@@ -423,5 +423,5 @@ A rigid obstacle can be added to the brick with::
       size_type indbrick, std::string expr, size_type N)
 
 where `expr` is an expression using the high-level
-generic assembly language (whith `x` is the current position) which should
+generic assembly language (whith `X` is the current position) which should
 be a signed distance to the obstacle. `N` is the mesh dimension.

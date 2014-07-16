@@ -797,7 +797,7 @@ namespace getfem {
 
   /** Add a rigid obstacle whose geometry corresponds to the zero level-set
       of the high-level generic assembly expression 'expr'
-      to an existing raytracin interpolate transformation called 'transname'.
+      to an existing raytracing interpolate transformation called 'transname'.
   */
   void add_rigid_obstacle_to_raytracing_transformation
   (model &md, const std::string &transname,
@@ -805,7 +805,7 @@ namespace getfem {
 
   /** Add a rigid obstacle whose geometry corresponds to the zero level-set
       of the high-level generic assembly expression 'expr'
-      to an existing raytracin interpolate transformation called 'transname'.
+      to an existing raytracing interpolate transformation called 'transname'.
   */
   void add_rigid_obstacle_to_raytracing_transformation
   (ga_workspace &workspace, const std::string &transname,
