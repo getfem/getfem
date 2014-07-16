@@ -3122,10 +3122,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
 
-     /*@SET ind = ('add rigid obstacle to large sliding contact brick',  @int indbrick, @str obs)
-       Add a rigid obstacle to an existing large sliding contact brick.
-      `indbrick` is the brick index, `obs` is the expression of a
-      function which should be closed to a signed distance to the obstacle. @*/
+//     /*@SET ind = ('add rigid obstacle to large sliding contact brick',  @int indbrick, @str obs)
+//       Add a rigid obstacle to an existing large sliding contact brick.
+//      `indbrick` is the brick index, `obs` is the expression of a
+//      function which should be closed to a signed distance to the obstacle. @*/
 /*      sub_command */
 /*        ("add rigid obstacle to large sliding contact brick", 2, 2, 0, 0, */
 	
