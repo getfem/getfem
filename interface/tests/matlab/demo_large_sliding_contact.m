@@ -27,7 +27,7 @@ test_case = 1; % 0 = 2D punch on a rigid obstacle
 
 clambda1 = 1.; cmu1 = 1.;   % Elasticity parameters
 clambda2 = 1.; cmu2 = 1.;   % Elasticity parameters
-r = 0.1;                    % Augmentation parameter
+r = 1;                    % Augmentation parameter
 alpha = 1.0;                % Alpha coefficient for "sliding velocity"
 f_coeff = 0.5;              % Friction coefficient
 
@@ -286,7 +286,7 @@ if (generic_assembly_contact_brick)
     gf_model_set(md, 'add initialized data', 'r', r);
     gf_model_set(md, 'add initialized data', 'f', f_coeff);
     
-    ind = gf_model_set(md, 'add integral large sliding contact brick raytracing', 'r', release_dist, 'f');
+    ind = gf_model_set(md, 'add integral large sliding contact brick raytracing', 'r', release_dist, 'f', '1', 0);
     
     if (self_contact)
       gf_model_set(md, 'add master slave contact boundary to large sliding contact brick', ind,  mim1_contact, CONTACT_BOUNDARY1, 'u1', 'lambda1');

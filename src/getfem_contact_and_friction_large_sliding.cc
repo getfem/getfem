@@ -2409,8 +2409,7 @@ namespace getfem {
           //       coupled_projection_def.Interpolate(Test_ug, contact_trans), 1)
           + "+ Interpolate_filter("+transformation_name+","
           + (sym_version ? coupled_projection_def : lambda)
-          + ".Interpolate(Test_"+u_group+","
-          + transformation_name+"), 1)"
+          + ".Interpolate(Test_"+u_group+"," + transformation_name+"), 1)"
           // -(1/r)*lambda.Test_lambda
           + "-(1/"+augmentation_param+")*"+lambda+".Test_"+lambda
           // Interpolate_filter(trans, (1/r)*coupled_projection_rig.Test_lambda, 2)

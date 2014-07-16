@@ -2947,8 +2947,9 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       (generally a few times a mean element size, and less than the
       thickness of the body). Initially, the brick is added with no contact
       boundaries. The contact boundaries and rigid bodies are added with
-      special functions. `version` is 0 for the non-symmetric version
-      and 1 for the symmetric one (0 by default). @*/
+      special functions. `version` is 0 (the default value) for the
+      non-symmetric version and 1 for the more symmetric one
+      (symmetric only without friction). @*/
 
      sub_command
        ("add integral large sliding contact brick raytracing", 2, 5, 0, 1,
