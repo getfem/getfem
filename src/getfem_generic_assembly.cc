@@ -4238,7 +4238,14 @@ namespace getfem {
                 "variables cannot be the same as a variable name");
     
     std::set<const mesh *> ms;
+    bool is_data_ = false;
     for (size_type i = 0; i < nl.size(); ++i) {
+      if (i == 0)
+        is_data_ = is_constant(nl[i]);
+      else {
+        GMM_ASSERT1(is_data_ == is_constant(nl[i]),
+                    "It is not possible to mix variables and data in a group");
+      }
       GMM_ASSERT1(variable_exists(nl[i]),
                   "All variables in a group have to exist in the model");
       const mesh_fem *mf = associated_mf(nl[i]);
@@ -6908,7 +6915,6 @@ namespace getfem {
   (ga_workspace &workspace, ga_instruction_set &gis,
    ga_instruction_set::region_mim_instructions &rmi,
    const std::string &transname, const std::string &gname) {
-    
     if (rmi.interpolate_infos[transname].groups_info.find(gname)
         == rmi.interpolate_infos[transname].groups_info.end()) {
       pga_instruction pgai = new ga_instruction_update_group_info
@@ -6960,7 +6966,8 @@ namespace getfem {
         pctx1 = &(gis.ctx);
         const std::string &intn1 = pnode->interpolate_name_test1;
         if (intn1.size()) pctx1 = &(rmi.interpolate_infos[intn1].ctx);
-        if (intn1.size() && workspace.variable_group_exists(pnode->name_test1)) {
+        if (intn1.size()
+            && workspace.variable_group_exists(pnode->name_test1)) {
           ensure_update_group_info_instruction(workspace, gis, rmi,
                                                intn1, pnode->name_test1);
           ga_instruction_set::variable_group_info &vgi = 
@@ -6974,7 +6981,8 @@ namespace getfem {
         pctx2 = &(gis.ctx);
         const std::string &intn2 = pnode->interpolate_name_test2;
         if (intn2.size()) pctx2 = &(rmi.interpolate_infos[intn2].ctx);
-        if (intn2.size() && workspace.variable_group_exists(pnode->name_test2)) {
+        if (intn2.size()
+            && workspace.variable_group_exists(pnode->name_test2)) {
           ensure_update_group_info_instruction(workspace, gis, rmi,
                                                intn2, pnode->name_test2);
           ga_instruction_set::variable_group_info &vgi = 
@@ -7864,6 +7872,7 @@ namespace getfem {
 
     std::set<std::string> interpolates_der;
     std::set<std::string> transformations;
+    // std::map<std::string, std::set<std::string> > transformations;
     ga_node_used_interpolates(pnode, transformations, interpolates_der);
     
     for (std::set<std::string>::iterator it = transformations.begin();

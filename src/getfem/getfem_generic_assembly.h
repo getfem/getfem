@@ -373,8 +373,9 @@ namespace getfem {
 
     bool is_constant(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
-        if (it != variables.end()) return !(it->second.is_variable);
-      if (variable_group_exists(name)) return false;
+      if (it != variables.end()) return !(it->second.is_variable);
+      if (variable_group_exists(name))
+        return is_constant(first_variable_of_group(name));
       if (md && md->variable_exists(name)) return md->is_data(name);
       if (parent_workspace && parent_workspace->variable_exists(name))
         return parent_workspace->is_constant(name);

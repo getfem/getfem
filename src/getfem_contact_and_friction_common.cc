@@ -1502,24 +1502,23 @@ namespace getfem {
         const contact_boundary &cb =  contact_boundaries[boundaries_ind[i]];
         const std::string &dispname_x
           =  workspace.variable_in_group(cb.dispname, m_x);
-        vars.insert(var_trans_pair(dispname_x, ""));
-
-        // if (expand_groups && workspace.variable_group_exists(cb.dispname)) {
-//           const std::vector<std::string> &t=workspace.variable_group(cb.dispname);
-//           for (size_type j = 0; j < t.size(); ++j)
-//             vars.insert(var_trans_pair(t[j], ""));
-//         } else vars.insert(var_trans_pair(cb.dispname, ""));
+        if (!ignore_data || !(workspace.is_constant(dispname_x)))
+          vars.insert(var_trans_pair(dispname_x, ""));
       }
 
       for (size_type i = 0; i < contact_boundaries.size(); ++i) {
         const contact_boundary &cb =  contact_boundaries[i];
         if (!(cb.slave)) {
-          if (expand_groups && workspace.variable_group_exists(cb.dispname)) {
+          if (expand_groups && workspace.variable_group_exists(cb.dispname)
+              && (!ignore_data || !(workspace.is_constant(cb.dispname)))) {
             const std::vector<std::string> &t
               = workspace.variable_group(cb.dispname);
           for (size_type j = 0; j < t.size(); ++j)
             vars.insert(var_trans_pair(t[j], interpolate_name));
-          } else vars.insert(var_trans_pair(cb.dispname, interpolate_name));
+          } else {
+            if (!ignore_data || !(workspace.is_constant(cb.dispname)))
+              vars.insert(var_trans_pair(cb.dispname, interpolate_name));
+          }
         }
       }
     }

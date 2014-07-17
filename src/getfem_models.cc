@@ -1058,7 +1058,14 @@ namespace getfem {
                 "variables cannot be the same as a variable name");
 
     std::set<const mesh *> ms;
+    bool is_data_ = false;
     for (size_type i = 0; i < nl.size(); ++i) {
+      if (i == 0)
+        is_data_ = is_data(nl[i]);
+      else {
+        GMM_ASSERT1(is_data_ == is_data(nl[i]),
+                    "It is not possible to mix variables and data in a group");
+      }
       GMM_ASSERT1(variable_exists(nl[i]),
                   "All variables in a group have to exist in the model");
       const mesh_fem *mf = pmesh_fem_of_variable(nl[i]);
