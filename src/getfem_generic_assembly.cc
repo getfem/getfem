@@ -555,7 +555,7 @@ namespace getfem {
       pga_tree_node new_node = new ga_tree_node(op_type, pos);
       if (current_node) {
         if (op_type == GA_UNARY_MINUS || op_type == GA_TRACE
-            || op_type == GA_PRINT) {
+            || op_type == GA_DEVIATOR || op_type == GA_PRINT) {
           current_node->children.push_back(new_node);
           new_node->parent = current_node;
         } else {
@@ -933,15 +933,17 @@ namespace getfem {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Trace("; ga_print_node(pnode->children[0], str); str << ")";
         } else if (pnode->op_type == GA_DEVIATOR) {
-          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
+          GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree with "
+                      << pnode->children.size() << " children instead of 1");
           str << "Deviator("; ga_print_node(pnode->children[0], str); str<<")";
         } else if (pnode->op_type == GA_PRINT) {
           GMM_ASSERT1(pnode->children.size() == 1, "Invalid tree");
           str << "Print("; ga_print_node(pnode->children[0], str); str << ")";
         } else {
-          GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
+          // GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
           if (pnode->op_type == GA_MULT &&
-              (pnode->test_function_type == size_type(-1) ||
+              (pnode->children.size() == 1 ||
+               pnode->test_function_type == size_type(-1) ||
                (pnode->children[0]->tensor_order() == 4 &&
                 pnode->children[1]->tensor_order() == 2)))
             { par = true; str << "("; }
@@ -959,7 +961,10 @@ namespace getfem {
           default: GMM_ASSERT1(false, "Invalid or not taken into account "
                                "operation");
           }
-          ga_print_node(pnode->children[1], str);
+          if (pnode->children.size() >= 2)
+            ga_print_node(pnode->children[1], str);
+          else
+            str << "(unknow second argument)";
         }
         if (par) str << ")";
       }
@@ -4108,7 +4113,8 @@ namespace getfem {
     ga_tree tree;
     // cout << "read string" << endl;
     ga_read_string(expr, tree);
-    // cout << "first semantic analysis" << endl;
+    // cout << "string read" << endl << "result : " << ga_tree_to_string(tree)
+    //     << endl << "first semantic analysis" << endl;
     ga_semantic_analysis(expr, tree, *this, mim.linked_mesh().dim(),
                          false, false);
     // cout << "first semantic analysis done" << endl;
@@ -4463,8 +4469,6 @@ namespace getfem {
                                const ga_workspace &workspace,
                                pga_tree_node pnode, size_type meshdim,
                                bool eval_fixed_size, bool ignore_X) {
-    // cout << "begin analysis of node "; ga_print_node(pnode, cout);
-    // cout << endl;
     bool all_cte = true, all_sc = true;
     pnode->symmetric_op = false;
 
@@ -4495,6 +4499,13 @@ namespace getfem {
     const bgeot::multi_index &size1 = child1 ? child1->t.sizes() : mi;
     size_type dim0 = child0 ? child0->tensor_order() : 0;
     size_type dim1 = child1 ? child1->tensor_order() : 0;
+
+    // cout << "child1 = " << child1 << endl;
+    // cout << "child0 = " << child0 << endl;
+    // cout << "nbch = " << nbch << endl;
+    // cout << "begin analysis of node "; ga_print_node(pnode, cout);
+    // cout << endl;
+    
 
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
