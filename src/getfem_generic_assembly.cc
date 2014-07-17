@@ -2471,7 +2471,7 @@ namespace getfem {
     ga_workspace &workspace;
     ga_instruction_set &gis;
     ga_instruction_set::interpolate_info &inin;
-    const std::string &gname;
+    const std::string gname;
     ga_instruction_set::variable_group_info &vgi;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Update group info for "+gname);
@@ -6911,19 +6911,6 @@ namespace getfem {
     }
   }
 
-  static void ensure_update_group_info_instruction
-  (ga_workspace &workspace, ga_instruction_set &gis,
-   ga_instruction_set::region_mim_instructions &rmi,
-   const std::string &transname, const std::string &gname) {
-    if (rmi.interpolate_infos[transname].groups_info.find(gname)
-        == rmi.interpolate_infos[transname].groups_info.end()) {
-      pga_instruction pgai = new ga_instruction_update_group_info
-        (workspace, gis, rmi.interpolate_infos[transname],
-         gname, rmi.interpolate_infos[transname].groups_info[gname]);
-      rmi.instructions.push_back(pgai);
-    }
-  }
-
   static void ga_clear_node_list
   (pga_tree_node pnode, std::map<scalar_type,
    std::list<pga_tree_node> > &node_list) {
@@ -6968,8 +6955,6 @@ namespace getfem {
         if (intn1.size()) pctx1 = &(rmi.interpolate_infos[intn1].ctx);
         if (intn1.size()
             && workspace.variable_group_exists(pnode->name_test1)) {
-          ensure_update_group_info_instruction(workspace, gis, rmi,
-                                               intn1, pnode->name_test1);
           ga_instruction_set::variable_group_info &vgi = 
             rmi.interpolate_infos[intn1].groups_info[pnode->name_test1];
           mfg1 = &(vgi.mf); mf1 = 0;
@@ -6983,8 +6968,6 @@ namespace getfem {
         if (intn2.size()) pctx2 = &(rmi.interpolate_infos[intn2].ctx);
         if (intn2.size()
             && workspace.variable_group_exists(pnode->name_test2)) {
-          ensure_update_group_info_instruction(workspace, gis, rmi,
-                                               intn2, pnode->name_test2);
           ga_instruction_set::variable_group_info &vgi = 
             rmi.interpolate_infos[intn2].groups_info[pnode->name_test2];
           mfg2 = &(vgi.mf); mf2 = 0;
@@ -7247,8 +7230,6 @@ namespace getfem {
         fem_interpolation_context *pctx = &(rmi.interpolate_infos[intn].ctx);
         const mesh **m2 = &(rmi.interpolate_infos[intn].m);
         if (workspace.variable_group_exists(pnode->name)) {
-          ensure_update_group_info_instruction(workspace, gis, rmi,
-                                               intn, pnode->name);
           ga_instruction_set::variable_group_info &vgi = 
             rmi.interpolate_infos[intn].groups_info[pnode->name];
           mfg = &(vgi.mf); mfn = 0; Ug = &(vgi.U); Un = 0;
@@ -7347,8 +7328,6 @@ namespace getfem {
         fem_interpolation_context *pctx = &(rmi.interpolate_infos[intn].ctx);
         const mesh **m2 = &(rmi.interpolate_infos[intn].m);
         if (workspace.variable_group_exists(pnode->name)) {
-          ensure_update_group_info_instruction(workspace, gis, rmi,
-                                               intn, pnode->name);
           ga_instruction_set::variable_group_info &vgi = 
             rmi.interpolate_infos[intn].groups_info[pnode->name];
           mfg = &(vgi.mf); mfn = 0;
@@ -7839,7 +7818,8 @@ namespace getfem {
   }
 
   static bool ga_node_used_interpolates
-  (pga_tree_node pnode, std::set<std::string> &interpolates,
+  (pga_tree_node pnode, ga_workspace &workspace,
+   std::map<std::string, std::set<std::string> > &interpolates,
    std::set<std::string> &interpolates_der) {
     bool found = false;
     if (pnode->node_type == GA_NODE_INTERPOLATE_FILTER ||
@@ -7851,15 +7831,27 @@ namespace getfem {
         pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_X) {
-      interpolates.insert(pnode->interpolate_name);
+      interpolates[pnode->interpolate_name].size();
+      if (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
+          pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
+          pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+          pnode->node_type == GA_NODE_INTERPOLATE_TEST ||
+          pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
+          pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST) {
+        if (workspace.variable_group_exists(pnode->name))
+          interpolates[pnode->interpolate_name].insert(pnode->name);
+      }
+
       found = true;
     }
     if (pnode->node_type == GA_NODE_INTERPOLATE_DERIVATIVE) {
       interpolates_der.insert(pnode->interpolate_name_der);
-      interpolates.insert(pnode->interpolate_name_der);
+      interpolates[pnode->interpolate_name_der].size();
+      if (workspace.variable_group_exists(pnode->name))
+          interpolates[pnode->interpolate_name_der].insert(pnode->name);
     }
     for (size_type i = 0; i < pnode->children.size(); ++i)
-      found = ga_node_used_interpolates(pnode->children[i],
+      found = ga_node_used_interpolates(pnode->children[i], workspace,
                                         interpolates, interpolates_der)
         || found;
     return found;
@@ -7871,24 +7863,31 @@ namespace getfem {
    ga_instruction_set::region_mim_instructions &rmi, const mesh &m) {
 
     std::set<std::string> interpolates_der;
-    std::set<std::string> transformations;
-    // std::map<std::string, std::set<std::string> > transformations;
-    ga_node_used_interpolates(pnode, transformations, interpolates_der);
+    std::map<std::string, std::set<std::string> > transformations;
+    ga_node_used_interpolates(pnode, workspace, transformations, interpolates_der);
     
-    for (std::set<std::string>::iterator it = transformations.begin();
-         it != transformations.end(); ++it) {
-      bool compute_der = (interpolates_der.find(*it)!=interpolates_der.end());
-      if (rmi.transformations.find(*it) == rmi.transformations.end() ||
-          (compute_der && rmi.transformations_der.find(*it)
+    for (std::map<std::string, std::set<std::string> >::iterator
+           it = transformations.begin(); it != transformations.end(); ++it) {
+      bool compute_der = (interpolates_der.find(it->first)!=interpolates_der.end());
+      if (rmi.transformations.find(it->first) == rmi.transformations.end() ||
+          (compute_der && rmi.transformations_der.find(it->first)
            == rmi.transformations_der.end())) {
-        rmi.transformations.insert(*it);
-        gis.transformations.insert(*it);
-        if (compute_der) rmi.transformations_der.insert(*it);
+        rmi.transformations.insert(it->first);
+        gis.transformations.insert(it->first);
+        if (compute_der) rmi.transformations_der.insert(it->first);
         pga_instruction pgai = new ga_instruction_transformation_call
-          (workspace, rmi.interpolate_infos[*it],
-           workspace.interpolate_transformation(*it), gis.ctx, gis.Normal, m,
+          (workspace, rmi.interpolate_infos[it->first],
+           workspace.interpolate_transformation(it->first), gis.ctx, gis.Normal, m,
            compute_der);
         rmi.instructions.push_back(pgai);
+
+        for (std::set<std::string>::iterator itt = it->second.begin();
+             itt != it->second.end(); ++itt) {
+          pgai = new ga_instruction_update_group_info
+            (workspace, gis, rmi.interpolate_infos[it->first],
+             *itt, rmi.interpolate_infos[it->first].groups_info[*itt]);
+          rmi.instructions.push_back(pgai);
+        }
       }
     }
   }
@@ -7979,8 +7978,6 @@ namespace getfem {
                 const gmm::sub_interval *Ir = 0, *In = 0;
                 if (intn1.size() &&
                     workspace.variable_group_exists(root->name_test1)) {
-                  ensure_update_group_info_instruction(workspace, gis, rmi,
-                                                       intn1,root->name_test1);
                   ga_instruction_set::variable_group_info &vgi = 
                     rmi.interpolate_infos[intn1].groups_info[root->name_test1];
                   Ir = &(vgi.Ir); In = &(vgi.In);
@@ -8030,8 +8027,6 @@ namespace getfem {
 
               if (intn1.size() &&
                   workspace.variable_group_exists(root->name_test1)) {
-                ensure_update_group_info_instruction(workspace, gis, rmi,
-                                                     intn1,root->name_test1);
                 ga_instruction_set::variable_group_info &vgi = 
                   rmi.interpolate_infos[intn1].groups_info[root->name_test1];
                 Ir1 = &(vgi.Ir); In1 = &(vgi.In);
@@ -8043,8 +8038,6 @@ namespace getfem {
 
               if (intn2.size() &&
                   workspace.variable_group_exists(root->name_test2)) {
-                ensure_update_group_info_instruction(workspace, gis, rmi,
-                                                     intn2,root->name_test2);
                 ga_instruction_set::variable_group_info &vgi = 
                   rmi.interpolate_infos[intn2].groups_info[root->name_test2];
                 Ir2 = &(vgi.Ir); In2 = &(vgi.In);
