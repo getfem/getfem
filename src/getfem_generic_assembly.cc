@@ -1467,7 +1467,7 @@ namespace getfem {
       std::map<const mesh_fem *, std::list<ga_if_hierarchy> > grad_hierarchy;
       std::map<const mesh_fem *, base_tensor> hess;
       std::map<const mesh_fem *, std::list<ga_if_hierarchy> > hess_hierarchy;
-      std::set<std::string> transformations;
+      std::map<std::string, std::set<std::string> > transformations;
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
 
@@ -7864,29 +7864,35 @@ namespace getfem {
 
     std::set<std::string> interpolates_der;
     std::map<std::string, std::set<std::string> > transformations;
-    ga_node_used_interpolates(pnode, workspace, transformations, interpolates_der);
+    ga_node_used_interpolates(pnode, workspace, transformations,
+                              interpolates_der);
     
     for (std::map<std::string, std::set<std::string> >::iterator
            it = transformations.begin(); it != transformations.end(); ++it) {
-      bool compute_der = (interpolates_der.find(it->first)!=interpolates_der.end());
+      bool compute_der = (interpolates_der.find(it->first)
+                          != interpolates_der.end());
       if (rmi.transformations.find(it->first) == rmi.transformations.end() ||
           (compute_der && rmi.transformations_der.find(it->first)
            == rmi.transformations_der.end())) {
-        rmi.transformations.insert(it->first);
+        rmi.transformations[it->first].size();
         gis.transformations.insert(it->first);
         if (compute_der) rmi.transformations_der.insert(it->first);
         pga_instruction pgai = new ga_instruction_transformation_call
           (workspace, rmi.interpolate_infos[it->first],
-           workspace.interpolate_transformation(it->first), gis.ctx, gis.Normal, m,
-           compute_der);
+           workspace.interpolate_transformation(it->first), gis.ctx,
+           gis.Normal, m, compute_der);
         rmi.instructions.push_back(pgai);
+      }
 
-        for (std::set<std::string>::iterator itt = it->second.begin();
-             itt != it->second.end(); ++itt) {
-          pgai = new ga_instruction_update_group_info
+      for (std::set<std::string>::iterator itt = it->second.begin();
+           itt != it->second.end(); ++itt) {
+        if (rmi.transformations[it->first].find(*itt)
+            == rmi.transformations[it->first].end()) {
+          pga_instruction pgai = new ga_instruction_update_group_info
             (workspace, gis, rmi.interpolate_infos[it->first],
              *itt, rmi.interpolate_infos[it->first].groups_info[*itt]);
           rmi.instructions.push_back(pgai);
+          rmi.transformations[it->first].insert(*itt);
         }
       }
     }
