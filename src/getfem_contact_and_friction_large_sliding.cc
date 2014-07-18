@@ -2371,7 +2371,7 @@ namespace getfem {
         //      Transformed_unit_vector(Grad_u, Normal), f, r)
         std::string coupled_projection_def =
           "Coulomb_friction_coupled_projection("
-          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),X+"
+          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),"
           + "("+u+"-Interpolate("+u_group+","+transformation_name+")"
           + (w.size() 
              ? ("-"+w+"+Interpolate("+w_group+","+transformation_name+")")

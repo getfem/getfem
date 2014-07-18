@@ -2542,6 +2542,7 @@ namespace getfem {
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
       ctx.pf()->interpolation(ctx, coeff, t.as_vector(), dim_type(qdim));
+      // cout << "interpolate " << &U << " result : " << t.as_vector() << endl;
       return 0;
     }
     ga_instruction_interpolate_val
