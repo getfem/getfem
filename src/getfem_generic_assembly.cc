@@ -4013,7 +4013,7 @@ namespace getfem {
 
   void ga_workspace::add_tree(ga_tree &tree, const mesh &m,
                               const mesh_im &mim, const mesh_region &rg,
-                              const std::string expr,
+                              const std::string &expr,
                               bool add_derivative, bool function_expr) {
     if (tree.root) {
       
@@ -4103,6 +4103,39 @@ namespace getfem {
          it != aux_trees.end(); ++it)
       delete(*it);
     aux_trees.clear();
+  }
+
+  ga_workspace::m_tree::~m_tree(void) { if (ptree) delete ptree; }
+
+  ga_tree &ga_workspace::macro_tree(const std::string &name,
+                                    size_type meshdim, bool ignore_X) const {
+    GMM_ASSERT1(macro_exists(name), "Undefined macro");
+    std::map<std::string, m_tree>::iterator it = macro_trees.find(name);
+    bool to_be_analyzed = false;
+    m_tree *mt = 0;
+
+    if (it == macro_trees.end()) {
+      mt = &(macro_trees[name]);
+      to_be_analyzed = true;
+    } else {
+      mt = &(it->second); 
+      GMM_ASSERT1(mt->ptree, "Recursive definition of macro " << name);
+      if (mt->meshdim != meshdim || mt->ignore_X != ignore_X) {
+        to_be_analyzed = true;
+        delete mt->ptree; mt->ptree = 0;
+      }
+    }
+    if (to_be_analyzed) {
+      ga_tree tree;
+      ga_read_string(get_macro(name), tree);
+      ga_semantic_analysis(get_macro(name), tree, *this, meshdim,
+                           false, ignore_X);
+      GMM_ASSERT1(tree.root, "Invalid macro");
+      mt->ptree = new ga_tree(tree);
+      mt->meshdim = meshdim;
+      mt->ignore_X = ignore_X;
+    }
+    return *(mt->ptree);
   }
 
   size_type ga_workspace::add_expression(const std::string expr,
@@ -4383,6 +4416,7 @@ namespace getfem {
   void ga_workspace::clear_expressions(void) {
     clear_aux_trees();
     trees.clear();
+    macro_trees.clear();
   }
 
   void ga_workspace::tree_description::copy(const tree_description& td) {
@@ -5492,6 +5526,22 @@ namespace getfem {
           pnode->node_type = GA_NODE_OPERATOR;
           pnode->name = name;
           pnode->test_function_type = 0;
+        } else if (workspace.macro_exists(name)) {
+          GMM_ASSERT1(pnode->der1 == 0 && pnode->der2 == 0,
+                      "Derivativation of a macro is not allowed");
+          pga_tree_node parent = pnode->parent;
+          size_type ind_in_parent = size_type(-1);
+          if (parent) {
+            for (size_type i = 0; i < parent->children.size(); ++i)
+              if (parent->children[i] == pnode)
+                ind_in_parent = i;
+            GMM_ASSERT1(ind_in_parent != size_type(-1), "Internal error");
+          }
+          ga_tree &ma_tree = workspace.macro_tree(name, meshdim, ignore_X);
+          delete pnode;
+          tree.copy_node(ma_tree.root, pnode->parent,
+                         (ind_in_parent == size_type(-1)) ? tree.root
+                         : pnode->parent->children[ind_in_parent]);
         } else {
           // Search for a variable name with optional gradient, Hessian 
           // or test functions
@@ -5675,7 +5725,9 @@ namespace getfem {
                          "and of size 1.");
         child0->nbc1 = size_type(round(child1->t[0]));
         if (child0->nbc1 == 0 || child0->nbc1 > meshdim)
-          ga_throw_error(expr, child1->pos, "Index for X not convenient.");
+          ga_throw_error(expr, child1->pos, "Index for X not convenient. "
+                         "Found " << child0->nbc1 << " with meshdim = "
+                         << meshdim);
         tree.replace_node_by_child(pnode, 0);
         pnode = child0;
         
@@ -5992,12 +6044,12 @@ namespace getfem {
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
                                    const ga_workspace &workspace,
                                    size_type meshdim, bool eval_fixed_size,
-                                   bool ignore_x) {
+                                   bool ignore_X) {
     GMM_ASSERT1(predef_functions_initialized, "Internal error");
     if (!(tree.root)) return;
     //  cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
     ga_node_analysis(expr, tree, workspace, tree.root, meshdim,
-                     eval_fixed_size, ignore_x);
+                     eval_fixed_size, ignore_X);
     ga_valid_operand(expr, tree.root);
   }
 

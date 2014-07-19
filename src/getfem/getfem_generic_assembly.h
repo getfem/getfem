@@ -175,11 +175,23 @@ namespace getfem {
     std::vector<tree_description> trees;
     std::list<ga_tree *> aux_trees;
 
-     std::map<std::string, std::vector<std::string> > variable_groups;
+    std::map<std::string, std::vector<std::string> > variable_groups;
+    std::map<std::string, std::string> macros;
+
+    struct m_tree {
+      ga_tree *ptree;
+      size_type meshdim;
+      bool ignore_X;
+      m_tree(void) : ptree(0) {}
+      ~m_tree(void);
+    };
+    
+    mutable std::map<std::string, m_tree> macro_trees;
+
 
     void add_tree(ga_tree &tree, const mesh &m, const mesh_im &mim,
                   const mesh_region &rg,
-                  const std::string expr, bool add_derivative = true,
+                  const std::string &expr, bool add_derivative = true,
                   bool scalar_expr = true);
     void clear_aux_trees(void);
 
@@ -346,6 +358,30 @@ namespace getfem {
       GMM_ASSERT1(t.size(), "Variable group " << name << " has no variable");
       return t[0];
     }
+    
+    bool macro_exists(const std::string &name) const {
+      if (macros.find(name) != macros.end()) return true;
+      if (md && md->macro_exists(name)) return true;
+      if (parent_workspace &&
+          parent_workspace->macro_exists(name)) return true;
+      return false;
+    }
+
+    void add_macro(const std::string &name, const std::string &expr)
+    { macros[name] = expr; }
+   
+    const std::string& get_macro(const std::string &name) const {
+      std::map<std::string, std::string>::const_iterator it=macros.find(name);
+      if (it != macros.end()) return it->second;
+      if (md && md->macro_exists(name)) return md->get_macro(name);
+      if (parent_workspace &&
+          parent_workspace->macro_exists(name))
+        return parent_workspace->get_macro(name);
+      GMM_ASSERT1(false, "Undefined macro");
+    }
+
+    ga_tree &macro_tree(const std::string &name, size_type meshdim,
+                        bool ignore_X) const;
 
     void add_interpolate_transformation(const std::string &name,
                                         pinterpolate_transformation ptrans)

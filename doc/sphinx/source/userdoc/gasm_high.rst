@@ -58,7 +58,11 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
+  - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semanic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
+
   - ``Interpolate(variable, transformation)``: powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describe the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element defined on different meshes.
+
+
 
 Some basic examples
 -------------------
@@ -560,6 +564,25 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
   - ``Matrix_J2(m)`` gives the modified first invariant of a square matrix defined by ``Matrix_I2(m)*pow(Det(m),-2/3)``.
 
 .. _ud-gasm-high_interpolate_trans:
+
+Macro definition
+****************
+
+A macro definition can be added to the assembly language by declaring it to the ga_workspace or model object by::
+
+  workspace.add_macro(name, expr)
+
+or::
+
+  model.add_macro(name, expr)
+
+where ``name`` is he macro name which then can be used in the assembly language and ``expr`` is a valid expression of the assembly language (which may itself contain some macro definitions). For instance, a valid macro is::
+
+  model.add_macro("my_transformation", "[cos(alpha)*X(1);sin(alpha)*X(2)]");
+
+where ``alpha`` should be a valid declared variable or data.
+
+The macros are expanded inline at the semantic analysis phase. At the compilation phase, if severla call of the same macro is performed, the computation is automatically factorized.
 
 Interpolate transformations
 ***************************

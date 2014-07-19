@@ -339,7 +339,7 @@ namespace getfem {
     // generic assembly
     std::map<std::string, std::vector<std::string> > variable_groups;
       
-
+    std::map<std::string, std::string> macros;
 
 
     virtual void actualize_sizes(void) const;
@@ -731,6 +731,18 @@ namespace getfem {
     void add_multiplier(const std::string &name, const mesh_fem &mf,
                         const std::string &primal_name, const mesh_im &mim,
 			size_type region, size_type niter = 1);
+
+
+    /** Adds a macro definition for the high generic assembly langage.
+        This macro can be used for the definition of generic assembly bricks.
+        The name of a macro cannot coincide with a variable name. */
+    void add_macro(const std::string &name, const std::string &expr);
+
+    /** Says if a macro of that name has been defined. */
+    bool macro_exists(const std::string &name) const;
+
+    /** Gives the exression string of a macro. */
+    const std::string& get_macro(const std::string &name) const;
 
     /** Delete a variable or data of the model. */
     void delete_variable(const std::string &varnamename);

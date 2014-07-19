@@ -1420,15 +1420,10 @@ namespace getfem {
       gmm::resize(obstacles.back().X, N);
       obstacles.back().f.workspace().add_fixed_size_variable
         ("X", gmm::sub_interval(0, N), obstacles.back().X);
-      // to be reimplemented when sub expressions will be available
-//       if (N >= 1) obstacles.back().f.workspace().add_fixed_size_variable
-//         ("x", gmm::sub_interval(0, 1), obstacles.back().x);
-//       if (N >= 2) obstacles.back().f.workspace().add_fixed_size_variable
-//         ("y", gmm::sub_interval(1, 1), obstacles.back().y);
-//       if (N >= 3) obstacles.back().f.workspace().add_fixed_size_variable
-//         ("z", gmm::sub_interval(2, 1), obstacles.back().z);
-//       if (N >= 4) obstacles.back().f.workspace().add_fixed_size_variable
-//         ("w", gmm::sub_interval(3, 1), obstacles.back().w);
+      if (N >= 1) obstacles.back().f.workspace().add_macro("x", "X(1)");
+      if (N >= 2) obstacles.back().f.workspace().add_macro("y", "X(2)");
+      if (N >= 3) obstacles.back().f.workspace().add_macro("z", "X(3)");
+      if (N >= 4) obstacles.back().f.workspace().add_macro("w", "X(4)");
       obstacles.back().f.compile();
       obstacles.back().der_f = obstacles.back().f;
       obstacles.back().der_f.derivative("X");
@@ -1441,6 +1436,10 @@ namespace getfem {
       gmm::resize(obstacles.back().X, N);
       obstacles.back().f.workspace().add_fixed_size_variable
         ("X", gmm::sub_interval(0, N), obstacles.back().X);
+      if (N >= 1) obstacles.back().f.workspace().add_macro("x", "X(1)");
+      if (N >= 2) obstacles.back().f.workspace().add_macro("y", "X(2)");
+      if (N >= 3) obstacles.back().f.workspace().add_macro("z", "X(3)");
+      if (N >= 4) obstacles.back().f.workspace().add_macro("w", "X(4)");
       obstacles.back().f.compile();
       obstacles.back().der_f = obstacles.back().f;
       obstacles.back().der_f.derivative("X");

@@ -796,8 +796,11 @@ namespace getfem {
    const std::string &dispname, size_type region);
 
   /** Add a rigid obstacle whose geometry corresponds to the zero level-set
-      of the high-level generic assembly expression 'expr'
+      of the high-level generic assembly expression `expr`
       to an existing raytracing interpolate transformation called 'transname'.
+      In `expr`, the current position is denoted `X` whith components
+      `X(1), X(2), ...`. It is also allowed to use `x` instead of `X(1)`,
+      `y` instead of `X(2)`, `z` instead of `X(3)` and `w` instead of `X(4)`. 
   */
   void add_rigid_obstacle_to_raytracing_transformation
   (model &md, const std::string &transname,

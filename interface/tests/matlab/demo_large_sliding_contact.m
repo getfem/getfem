@@ -19,7 +19,7 @@
 clear all;
 gf_workspace('clear all');
 
-test_case = 1; % 0 = 2D punch on a rigid obstacle
+test_case = 0; % 0 = 2D punch on a rigid obstacle
                % 1 = 2D punch on a deformable obstacle (one slave, one master)
                % 2 = 2D with two different meshes
                % 3 = 2D with multi-body and only one mesh
@@ -249,17 +249,17 @@ if (generic_assembly_contact_brick)
 
     switch(test_case)
       case 0
-        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '80-sqrt(sqr(X(1))+sqr(X(2)-80))', N);
+        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '80-sqrt(sqr(x)+sqr(y-80))', N);
       case 1
        gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u', CONTACT_BOUNDARY2);
       case 2
         gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u', CONTACT_BOUNDARY2);
-        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'X(2)+1', N);
+        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'y+1', N);
       case 3
-        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '2-sqrt(sqr(X(1))+sqr(X(2)-1))', N);
+        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', '2-sqrt(sqr(x)+sqr(y-1))', N);
       case 4
         gf_model_set(md, 'add master contact boundary to raytracing transformation', 'contact_trans', mesh2, 'u', CONTACT_BOUNDARY2);
-        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'X(3)+5', N);
+        gf_model_set(md, 'add rigid obstacle to raytracing transformation', 'contact_trans', 'z+5', N);
     end
   
     gf_model_set(md, 'add initialized data', 'r', r);
@@ -296,17 +296,17 @@ if (generic_assembly_contact_brick)
 
     switch(test_case)
       case 0
-        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, '80-sqrt(sqr(X(1))+sqr(X(2)-80))', N);
+        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, '80-sqrt(sqr(x)+sqr(y-80))', N);
       case 1
         gf_model_set(md, 'add master contact boundary to large sliding contact brick', ind,  mim2_contact, CONTACT_BOUNDARY2, 'u2');
       case 2
         gf_model_set(md, 'add master slave contact boundary to large sliding contact brick', ind,  mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
-        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, 'X(2)+1', N);
+        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, 'y+1', N);
       case 3
-        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, '2-sqrt(sqr(X(1))+sqr(X(2)-1))', N);
+        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, '2-sqrt(sqr(x)+sqr(y-1))', N);
       case 4
         gf_model_set(md, 'add master slave contact boundary to large sliding contact brick', ind,  mim2_contact, CONTACT_BOUNDARY2, 'u2', 'lambda2');
-        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, 'X(3)+5', N);
+        gf_model_set(md, 'add rigid obstacle to large sliding contact brick', ind, 'z+5', N);
     end
     
     u_group = gf_model_get(md, 'displacement group name of large sliding contact brick', ind);
