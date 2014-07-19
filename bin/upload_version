@@ -30,6 +30,10 @@ do_mrproper=0
 
 where=""
 
+if [ "$srcdir" == "" ]; then
+  srcdir=".."
+fi
+
 me=$((cd $srcdir && svn info) | grep "svn+ssh" | sed "1,1d" | awk -F"//" '{print $2}' | awk -F"@" '{print $1}')
 echo "gna login : $me"
 if [ "$me" == "" ]; then

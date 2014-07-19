@@ -2406,13 +2406,14 @@ namespace getfem {
           //                   lambda.Interpolate(Test_ug, contact_trans), 1)
           // or
           // Interpolate_filter(trans,
-          //       coupled_projection_def.Interpolate(Test_ug, contact_trans), 1)
+          //     coupled_projection_def.Interpolate(Test_ug, contact_trans), 1)
           + "+ Interpolate_filter("+transformation_name+","
           + (sym_version ? coupled_projection_def : lambda)
           + ".Interpolate(Test_"+u_group+"," + transformation_name+"), 1)"
           // -(1/r)*lambda.Test_lambda
           + "-(1/"+augmentation_param+")*"+lambda+".Test_"+lambda
-          // Interpolate_filter(trans, (1/r)*coupled_projection_rig.Test_lambda, 2)
+          // Interpolate_filter(trans,
+          //   (1/r)*coupled_projection_rig.Test_lambda, 2)
           + "+ Interpolate_filter("+transformation_name+","
           + "(1/"+augmentation_param+")*"+ coupled_projection_rig
           + ".Test_"+lambda+", 2)"
@@ -2423,10 +2424,6 @@ namespace getfem {
           + lambda+", 1)";
       }
     }
-
-
-    
-
 
     virtual void asm_real_tangent_terms(const model &md, size_type ,
                                         const model::varnamelist &,
