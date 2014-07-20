@@ -93,7 +93,7 @@ struct navier_stokes_problem {
   int export_to_opendx;
   int non_reflective_bc;
 
-  std::auto_ptr<getfem::dx_export> exp;
+  std::unique_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
   bool first_export;
   scalar_type t_export;
@@ -101,7 +101,7 @@ struct navier_stokes_problem {
 
   int option, time_order;
 
-  std::auto_ptr<problem_definition> pdef;
+  std::unique_ptr<problem_definition> pdef;
 
   std::string datafilename;
   ftool::md_param PARAM;
@@ -659,7 +659,7 @@ void navier_stokes_problem::solve() {
 //   previous = &velocity;
 
   
-//   std::auto_ptr<getfem::mdbrick_NS_uuT<> > velocity_nonlin;
+//   std::unique_ptr<getfem::mdbrick_NS_uuT<> > velocity_nonlin;
 //   if (!stokes_only) {
 //     velocity_nonlin.reset(new getfem::mdbrick_NS_uuT<>(velocity));
 //     previous = velocity_nonlin.get();

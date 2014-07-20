@@ -64,12 +64,12 @@ namespace getfemint
 
   template <typename T> struct gprecond : public gprecond_base {
     typedef gmm::csc_matrix_ref<const T*, const unsigned int *, const unsigned int *> cscmat;
-    std::auto_ptr<gmm::diagonal_precond<cscmat> > diagonal;
-    std::auto_ptr<gmm::ildlt_precond<cscmat> > ildlt;
-    std::auto_ptr<gmm::ildltt_precond<cscmat> > ildltt;
-    std::auto_ptr<gmm::ilu_precond<cscmat> > ilu;
-    std::auto_ptr<gmm::ilut_precond<cscmat> > ilut;
-    std::auto_ptr<gmm::SuperLU_factor<T> > superlu;
+    std::unique_ptr<gmm::diagonal_precond<cscmat> > diagonal;
+    std::unique_ptr<gmm::ildlt_precond<cscmat> > ildlt;
+    std::unique_ptr<gmm::ildltt_precond<cscmat> > ildltt;
+    std::unique_ptr<gmm::ilu_precond<cscmat> > ilu;
+    std::unique_ptr<gmm::ilut_precond<cscmat> > ilut;
+    std::unique_ptr<gmm::SuperLU_factor<T> > superlu;
 
     virtual size_type memsize() const; 
   };
@@ -108,7 +108,7 @@ namespace getfemint
       return (p.get() ? p.get()->memsize() : 0);
       }*/
   private:
-    std::auto_ptr<gprecond_base> p;
+    std::unique_ptr<gprecond_base> p;
   };
 
   inline bool object_is_precond(getfem_object *o) {

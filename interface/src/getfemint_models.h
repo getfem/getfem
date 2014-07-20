@@ -41,7 +41,7 @@ namespace getfemint {
 
   class getfemint_model : public getfemint::getfem_object {
   private:
-    std::auto_ptr<getfem::model> md;
+    std::unique_ptr<getfem::model> md;
   public:
     ~getfemint_model() {}
     id_type class_id() const { return MODEL_CLASS_ID; }

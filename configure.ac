@@ -127,7 +127,7 @@ case $CXX in
 	AC_CHECK_CXX_FLAG([-Wall -W],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-fmessage-length=0],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-ftemplate-depth-100],CXXFLAGS)
-	dnl AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
+	AC_CHECK_CXX_FLAG([-std=c++11], CXXFLAGS,[AC_CHECK_CXX_FLAG([-std=c++0x],CXXFLAGS,[AC_MSG_ERROR([g++ do not support option -std=c++11. Update g++ to at least release 4.8.1.])] )])
 	AC_CHECK_CXX_FLAG([-fPIC],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-pedantic],CXXFLAGS)
 	AC_CHECK_CXX_FLAG([-Wshadow],CXXFLAGS)
@@ -150,14 +150,14 @@ dnl	SUPLDFLAGS="-rdynamic" # -rdynamic for backtraces
 	;;
  icc | icpc)
 	echo "Using INTEL icc"
-	dnl CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++11"
-        CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
+	CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi -std=c++11"
+        dnl CXXFLAGS="$CXXFLAGS $with_optimization -Xc -ansi"
         CFLAGS="$CFLAGS $with_optimization -Xc -ansi"
 	;;
  *)
 	echo "Using a unknown compiler"
- 	dnl CXXFLAGS="$CXXFLAGS $with_optimization -std=c++11"
-        CXXFLAGS="$CXXFLAGS $with_optimization"
+ 	CXXFLAGS="$CXXFLAGS $with_optimization -std=c++11"
+        dnl CXXFLAGS="$CXXFLAGS $with_optimization"
         CFLAGS="$CFLAGS $with_optimization"
 	;;
 esac
@@ -1071,50 +1071,49 @@ AC_SUBST(IM_METHODS)
 AC_SUBST(IM_METHODS_LOC)
 
 
-AC_CONFIG_FILES(\
-	Makefile\
-	m4/Makefile\
-	cubature/Makefile\
-	$SUPERLU_MAKEFILE\
-	doc/Makefile\
-	doc/sphinx/Makefile\
-	src/Makefile\
-	tests/Makefile\
-	tests-2.0/Makefile\
-	contrib/Makefile\
-	contrib/icare/Makefile\
-	contrib/delaminated_crack/Makefile\
-	contrib/static_friction/Makefile\
-	contrib/bimaterial_crack_test/Makefile\
-	contrib/bimat_contact_crack_test/Makefile\
-	contrib/xfem_stab_unilat_contact/Makefile\
-	contrib/mixed_elastostatic/Makefile\
-	contrib/contact_grd_trans/Makefile\
-	contrib/mixed_dynamic_friction/Makefile\
-	contrib/xfem_large_strain/Makefile\
-	contrib/xfem_contact/Makefile\
-	contrib/crack_plate/Makefile\
-	contrib/inter_element_test/Makefile\
-	contrib/aposteriori/Makefile\
-	contrib/level_set_contact/Makefile\
-	contrib/static_contact_gears/Makefile\
-	bin/Makefile\
-	interface/Makefile\
-	interface/src/Makefile\
-	interface/src/matlab/Makefile\
-	interface/src/matlab/private/Makefile\
-	interface/src/python/Makefile\
-	interface/src/python/setup.py\
-	interface/src/scilab/Makefile\
-	interface/src/scilab/sci_gateway/c/builder_gateway_c.sce\
-	interface/tests/Makefile\
-	interface/tests/meshes/Makefile\
-	interface/tests/matlab/Makefile\
-	interface/tests/matlab/private/Makefile\
-	interface/tests/python/Makefile\
-	getfem-config\
-	getfem-config-notinstalled\
-	gmm-config)
+AC_CONFIG_FILES(                                                        \
+Makefile                                                                \
+m4/Makefile                                                             \
+cubature/Makefile                                                       \
+$SUPERLU_MAKEFILE                                                       \
+doc/Makefile                                                            \
+doc/sphinx/Makefile                                                     \
+src/Makefile                                                            \
+tests/Makefile                                                          \
+contrib/Makefile                                                        \
+contrib/icare/Makefile                                                  \
+contrib/delaminated_crack/Makefile                                      \
+contrib/static_friction/Makefile                                        \
+contrib/bimaterial_crack_test/Makefile                                  \
+contrib/bimat_contact_crack_test/Makefile                               \
+contrib/xfem_stab_unilat_contact/Makefile                               \
+contrib/mixed_elastostatic/Makefile                                     \
+contrib/contact_grd_trans/Makefile                                      \
+contrib/mixed_dynamic_friction/Makefile                                 \
+contrib/xfem_large_strain/Makefile                                      \
+contrib/xfem_contact/Makefile                                           \
+contrib/crack_plate/Makefile                                            \
+contrib/inter_element_test/Makefile                                     \
+contrib/aposteriori/Makefile                                            \
+contrib/level_set_contact/Makefile                                      \
+contrib/static_contact_gears/Makefile                                   \
+bin/Makefile                                                            \
+interface/Makefile                                                      \
+interface/src/Makefile                                                  \
+interface/src/matlab/Makefile                                           \
+interface/src/matlab/private/Makefile                                   \
+interface/src/python/Makefile                                           \
+interface/src/python/setup.py                                           \
+interface/src/scilab/Makefile                                           \
+interface/src/scilab/sci_gateway/c/builder_gateway_c.sce                \
+interface/tests/Makefile                                                \
+interface/tests/meshes/Makefile                                         \
+interface/tests/matlab/Makefile                                         \
+interface/tests/matlab/private/Makefile                                 \
+interface/tests/python/Makefile                                         \
+getfem-config                                                           \
+getfem-config-notinstalled                                              \
+gmm-config)
 AC_OUTPUT
 chmod a+x getfem-config-notinstalled
 chmod a+x getfem-config

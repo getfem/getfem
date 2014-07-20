@@ -1,7 +1,0 @@
-			BUGS AND REMARKS
-
-Bad accuracy of loads in
-Newton-Cotes integration formulaes for hight degrees.
-
-getfem_slices have some missing triangles with complex slices.
-

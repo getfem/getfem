@@ -445,7 +445,7 @@ namespace getfem {
      Extract an isosurface.
   */
   class slicer_isovalues : public slicer_volume {
-    std::auto_ptr<const mesh_slice_cv_dof_data_base> mfU;
+    std::unique_ptr<const mesh_slice_cv_dof_data_base> mfU;
     scalar_type val;
     scalar_type val_scaling; /* = max(abs(U)) */
     std::vector<scalar_type> Uval;

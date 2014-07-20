@@ -25,7 +25,7 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_slice.h>
 #include <getfemint_mesh_levelset.h>
-#include <memory> // auto_ptr for g++ 2.95
+#include <memory>
 
 
 using namespace getfemint;
@@ -386,7 +386,7 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
 
   getfemint_mesh *mm = 0;
   getfem::mesh_level_set *pmls = 0;
-  std::auto_ptr<getfem::stored_mesh_slice> pstored;
+  std::unique_ptr<getfem::stored_mesh_slice> pstored;
 
   /* "normal" slices */
   if (in.front().is_cell()) {
@@ -395,8 +395,8 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     const gfi_array *arg = in.pop().arg;
 
     /* check the source argument (mesh/mesh_fem or slice) */
-    std::auto_ptr<getfem::mesh_slice_cv_dof_data<darray> > mfdef;
-    std::auto_ptr<getfem::slicer_action> slicer_def;
+    std::unique_ptr<getfem::mesh_slice_cv_dof_data<darray> > mfdef;
+    std::unique_ptr<getfem::slicer_action> slicer_def;
     getfemint_mesh_slice *source_slice = 0;
     if (in.front().is_mesh_fem() && in.remaining()  >=  3) {
       mm = object_to_mesh(workspace().object(in.front().to_getfemint_mesh_fem()->linked_mesh_id()));

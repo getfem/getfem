@@ -426,7 +426,7 @@ void hyperbolic_problem::solve(void) {
   gmm::iteration iter(residual, 0, 40000);
   iter.set_noisy(int(noisy));
 
-  std::auto_ptr<getfem::dx_export> exp;
+  std::unique_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
   if (dxexport) {
     exp.reset(new getfem::dx_export(datafilename + ".dx", false));

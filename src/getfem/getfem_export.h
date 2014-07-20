@@ -70,7 +70,7 @@ namespace getfem {
     char header[256]; // hard limit in vtk
     bool ascii;
     const stored_mesh_slice *psl;
-    std::auto_ptr<mesh_fem> pmf;
+    std::unique_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
     std::vector<unsigned> pmf_cell_type;
     std::ofstream real_os;
@@ -293,7 +293,7 @@ namespace getfem {
     const stored_mesh_slice *psl;
     bool psl_use_merged; /* flag enabled if we merge the points of
                             psl before export */
-    std::auto_ptr<mesh_fem> pmf;
+    std::unique_ptr<mesh_fem> pmf;
     dal::bit_vector pmf_dof_used;
     std::vector<unsigned> pmf_cell_type;
     std::fstream real_os;
@@ -549,7 +549,7 @@ namespace getfem {
     std::vector<unsigned> pos_cell_type;
     std::vector<std::vector<unsigned> > pos_cell_dof;
 
-    std::auto_ptr<mesh_fem> pmf;
+    std::unique_ptr<mesh_fem> pmf;
     const stored_mesh_slice *psl;
 
     size_type view;

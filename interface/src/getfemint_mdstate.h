@@ -45,8 +45,8 @@ namespace getfemint
 
   class getfemint_mdstate : public getfemint::getfem_object {
   private:
-    std::auto_ptr<real_model_state> r_mds;
-    std::auto_ptr<cplx_model_state> c_mds;
+    std::unique_ptr<real_model_state> r_mds;
+    std::unique_ptr<cplx_model_state> c_mds;
   public:
     ~getfemint_mdstate() {}
     id_type class_id() const { return MDSTATE_CLASS_ID; }

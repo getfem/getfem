@@ -385,7 +385,7 @@ struct Chrono {
     cut_cv[cv].pmsh = pmesh(new mesh);
     if (noisy) cout << "cutting element " << cv << endl;
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-    std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
+    std::unique_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
     std::vector<mesher_level_set> mesher_level_sets;
     
     size_type n = pgt->structure()->dim();
@@ -970,7 +970,7 @@ struct Chrono {
     if (gmm::vect_norm2(G)*2.5 < gmm::abs(d)) return p;
 
     bgeot::pgeometric_trans pgt = linked_mesh().trans_of_convex(cv);
-    std::auto_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
+    std::unique_ptr<mesher_signed_distance> ref_element(new_ref_element(pgt));
     
     gmm::fill_random(X); X *= 1E-2;
     mesher_intersection mi1(*ref_element, mls1);

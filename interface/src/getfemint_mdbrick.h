@@ -58,14 +58,14 @@ namespace getfemint
 
   class getfemint_mdbrick : public getfemint::getfem_object {
   private:
-    std::auto_ptr<getfem::mdbrick_abstract_common_base> b;
+    std::unique_ptr<getfem::mdbrick_abstract_common_base> b;
     bool is_complex_;
     std::string subclass;
 
   public:
     /* used only by the nonlinear elasticity brick to avoid a memory leak*/
-    std::auto_ptr<getfem::abstract_hyperelastic_law> hyperelastic_law;
-    std::auto_ptr<getfem::abstract_constraints_projection>  plasticity_stress_projection;
+    std::unique_ptr<getfem::abstract_hyperelastic_law> hyperelastic_law;
+    std::unique_ptr<getfem::abstract_constraints_projection>  plasticity_stress_projection;
 
   public:
     ~getfemint_mdbrick() {}

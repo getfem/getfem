@@ -173,10 +173,10 @@ typedef gmm::col_matrix<gmm::wsvector<scalar_type> > wsc_matrix;
 typedef gmm::row_matrix<gmm::wsvector<scalar_type> > wsr_matrix;
 
 scalar_type interpolate_check(const mesh_fem &mf1, const mesh_fem& mf2, int i, int mat_version) {  
-  static std::auto_ptr<rsc_matrix> rsc12, rsc21;
-  static std::auto_ptr<rsr_matrix> rsr12, rsr21;
-  static std::auto_ptr<wsr_matrix> wsr12, wsr21;
-  static std::auto_ptr<wsc_matrix> wsc12, wsc21;
+  static std::unique_ptr<rsc_matrix> rsc12, rsc21;
+  static std::unique_ptr<rsr_matrix> rsr12, rsr21;
+  static std::unique_ptr<wsr_matrix> wsr12, wsr21;
+  static std::unique_ptr<wsc_matrix> wsc12, wsc21;
 
   if (i == 0) {
     switch (mat_version) {

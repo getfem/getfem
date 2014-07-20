@@ -488,7 +488,7 @@ void friction_problem::solve(void) {
     + 0.5 * gmm::vect_sp(DYNAMIC.get_C(), V0, V0)
     - gmm::vect_sp(VOL_F.get_F(), U0);
 
-  std::auto_ptr<getfem::dx_export> exp;
+  std::unique_ptr<getfem::dx_export> exp;
   getfem::stored_mesh_slice sl;
   if (dxexport) {
     exp.reset(new getfem::dx_export(datafilename + ".dx", false));
