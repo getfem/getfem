@@ -63,10 +63,10 @@ namespace getfemint
     const getfem::mesh& linked_mesh() const { return mf->linked_mesh(); }
     id_type linked_mesh_id() const { return linked_mesh_id_;}
 
-    static getfemint_mesh_fem* get_from(getfem::mesh_fem *mf,
-					int flags=0);
+    static getfemint_mesh_fem* get_from(getfem::mesh_fem *mf_,
+                                        int flags=0);
     static getfemint_mesh_fem* new_from(getfemint_mesh *mm,
-					size_type qdim);
+                                        size_type qdim);
   };
 
   inline bool object_is_mesh_fem(getfem_object *o) {

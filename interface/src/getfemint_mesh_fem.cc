@@ -24,7 +24,7 @@
 namespace getfemint {
 
   getfemint_mesh_fem::getfemint_mesh_fem(getfem::mesh_fem *mf_,
-					 id_type idmesh) {
+                                         id_type idmesh) {
     linked_mesh_id_ = idmesh;
     mf = mf_;
     ikey = getfem_object::internal_key_type(mf);
@@ -36,16 +36,16 @@ namespace getfemint {
   }
 
   getfemint_mesh_fem *
-  getfemint_mesh_fem::get_from(getfem::mesh_fem *mf,
-			       int flags) {
+  getfemint_mesh_fem::get_from(getfem::mesh_fem *mf_,
+                               int flags) {
     getfem_object *o =
-      getfemint::workspace().object(getfem_object::internal_key_type(mf));
+      getfemint::workspace().object(getfem_object::internal_key_type(mf_));
     getfemint_mesh_fem *gmf = 0;
     if (!o) {
       getfemint_mesh *gm =
-	getfemint_mesh::get_from(const_cast<getfem::mesh*>(&mf->linked_mesh()),
-				 flags);
-      gmf = new getfemint_mesh_fem(mf, gm->get_id());
+        getfemint_mesh::get_from(const_cast<getfem::mesh*>(&mf_->linked_mesh()),
+                                 flags);
+      gmf = new getfemint_mesh_fem(mf_, gm->get_id());
       gmf->set_flags(flags);
       getfemint::workspace().push_object(gmf);
       getfemint::workspace().set_dependance(gmf, gm);
@@ -57,11 +57,11 @@ namespace getfemint {
 
   getfemint_mesh_fem *
   getfemint_mesh_fem::new_from(getfemint_mesh *m,
-			       size_type q_dim) {
+                               size_type q_dim) {
     //assert(::workspace == 0);
-    getfem::mesh_fem *mf = new getfem::mesh_fem(m->mesh());
-    mf->set_qdim(dim_type(q_dim));
-    getfemint_mesh_fem *gmf = get_from(mf);
+    getfem::mesh_fem *mf_ = new getfem::mesh_fem(m->mesh());
+    mf_->set_qdim(dim_type(q_dim));
+    getfemint_mesh_fem *gmf = get_from(mf_);
     assert(gmf->linked_mesh_id() == m->get_id());
     return gmf;
   }
