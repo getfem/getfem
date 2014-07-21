@@ -423,8 +423,11 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     std::string varname = in.pop().to_string();
     bool is_cte = (in.pop().to_integer() == 0);
     const getfem::mesh_fem *mf(0);
+    const getfem::im_data *mimd(0);
     if (in.front().is_mesh_fem()) {
       mf = in.pop().to_const_mesh_fem();
+    } else if (in.front().is_mesh_im_data()) {
+      mimd = in.pop().to_const_mesh_im_data();
     }
     darray U = in.pop().to_darray();
     GMM_ASSERT1(vectors.find(varname) == vectors.end(),
@@ -432,19 +435,23 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     gmm::resize(vectors[varname], U.size());
     gmm::copy(U, vectors[varname]);
     if (is_cte) {
-      if (!mf)
-        workspace.add_fixed_size_constant(varname, vectors[varname]);
-      else
+      if (mf)
         workspace.add_fem_constant(varname, *mf, vectors[varname]);
+      else if (mimd)
+        workspace.add_im_data(varname, *mimd, vectors[varname]);
+      else
+        workspace.add_fixed_size_constant(varname, vectors[varname]);
     } else {
-      if (!mf) {
-        gmm::sub_interval I(nbdof, U.size());
-        nbdof += U.size();
-        workspace.add_fixed_size_variable(varname, I, vectors[varname]);
-      }  else {
+      if (mf) {
         gmm::sub_interval I(nbdof, mf->nb_dof());
         nbdof += mf->nb_dof();
         workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
+      }  else if (mimd) {
+        THROW_BADARG("Data defined on integration points can not be a variable");
+      }  else {
+        gmm::sub_interval I(nbdof, U.size());
+        nbdof += U.size();
+        workspace.add_fixed_size_variable(varname, I, vectors[varname]);
       }
     }
   }
@@ -1044,14 +1051,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@str varname, @int is_variable[, @tmf mesh_fem], value], ...)
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
       High-level generic assembly procedure for volumic assembly.
 
       Performs the generic assembly of `expression` with the integration
       method `mim` on the mesh region of index `region` (-1 means all 
-      the element of the mesh). The smae mesh should be shared by
-      the integration method and all the finite element methods
-      corresponding to the variables.
+      the element of the mesh). The same mesh should be shared by
+      the integration method and all the finite element methods or
+      mesh_im_data corresponding to the variables.
 
       `order` indicates either that the (scalar) potential
       (order = 0) or the (vector) residual (order = 1) or the
@@ -1061,7 +1068,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       region number. For each variable/constant, first the variable/constant
       name should be given (as it is referred in the assembly string), then
       1 if it is a variable or 0 for a constant, then the finite element
-      method if it is a fem variable/constant, and the vector representing
+      method if it is a fem variable/constant or the mesh_im_data if it is
+      data defined on integration points, and the vector representing
       the value of the variable/constant. It is possible to give an arbitrary
       number of variable/constant. The difference between a variable and a
       constant is that automatic differentiation is done with respect to

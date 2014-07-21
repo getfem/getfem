@@ -90,11 +90,21 @@ void gf_mesh_im_data_get(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(mimd->nb_filtered_index()));
        );
 
-    /*@GET ('tensor_size')
+    /*@GET ('nb tensor elements')
       Output the size of the stored data (per integration point).
     @*/
     sub_command
-      ("tensor_size", 0, 0, 0, 1,
+      ("nb tensor elements", 0, 0, 0, 1,
+       if (mimd->tensor_size().size()) {
+         out.pop().from_integer(int(mimd->nb_tensor_elem()));
+       }
+       );
+
+    /*@GET ('tensor size')
+      Output the size of the stored data (per integration point).
+    @*/
+    sub_command
+      ("tensor size", 0, 0, 0, 1,
        if (mimd->tensor_size().size()) {
          iarray oidx = out.pop().create_iarray_h(unsigned(mimd->tensor_size().size()));
          std::copy(mimd->tensor_size().begin(),

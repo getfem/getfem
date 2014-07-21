@@ -42,8 +42,8 @@ void gf_mesh_im_data_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     @*/
     size_type rnum = size_type(in.pop().to_integer());
     mimd->set_region(rnum);
-  } else if (check_cmd(cmd, "tensor_size", in, out, 1, 1, 0, 0)) {
-    /*@SET ('tensor_size', )
+  } else if (check_cmd(cmd, "tensor size", in, out, 1, 1, 0, 0)) {
+    /*@SET ('tensor size', )
     Set the size of the data per integration point.
     @*/
     iarray v = in.pop().to_iarray(-1);
