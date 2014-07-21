@@ -39,6 +39,7 @@
 #include <getfemint_std.h>
 #include <set>
 #include <getfem/getfem_mesh_fem.h>
+#include <getfem/getfem_im_data.h>
 #include <gfi_array.h>
 #include <getfem/dal_shared_ptr.h>
 
@@ -90,6 +91,7 @@ namespace getfemint
   class getfemint_mesh;
   class getfemint_mesh_fem;
   class getfemint_mesh_im;
+  class getfemint_mesh_im_data;
   class getfemint_mdbrick;
   class getfemint_mdstate;
   class getfemint_model;
@@ -396,6 +398,7 @@ namespace getfemint {
     bool                                 is_mesh();
     bool                                 is_mesh_fem();
     bool                                 is_mesh_im();
+    bool                                 is_mesh_im_data();
     bool                                 is_mdbrick();
     bool                                 is_mdstate();
     bool                                 is_model();
@@ -424,11 +427,14 @@ namespace getfemint {
     getfem::mesh_fem *                   to_mesh_fem();
     const getfem::mesh_im *              to_const_mesh_im();
     getfem::mesh_im *                    to_mesh_im();
+    const getfem::im_data *              to_const_mesh_im_data();
+    getfem::im_data *                    to_mesh_im_data();
     const getfem::mesh *                 to_const_mesh();
     const getfem::mesh *                 to_const_mesh(id_type& id);
     getfemint_mesh *                     to_getfemint_mesh(bool writeable=false);
     getfemint_mesh_fem *                 to_getfemint_mesh_fem(bool writeable=false);
     getfemint_mesh_im *                  to_getfemint_mesh_im(bool writeable=false);
+    getfemint_mesh_im_data *             to_getfemint_mesh_im_data(bool writeable=false);
     getfemint_mdbrick *                  to_getfemint_mdbrick(bool writeable=false);
     getfemint_mdstate *                  to_getfemint_mdstate(bool writeable=false);
     getfemint_model *                    to_getfemint_model(bool writeable=false);

@@ -727,7 +727,7 @@ namespace getfem {
     GMM_ASSERT1(qdim == im_target.nb_tensor_elem(), 
                 "Incompatible size of qdim for mesh_fem " << qdim
                 << " and im_data " << im_target.nb_tensor_elem());
-    GMM_ASSERT1(&mf_source.linked_mesh() == &im_target.get_mesh_im().linked_mesh(),
+    GMM_ASSERT1(&mf_source.linked_mesh() == &im_target.linked_mesh_im().linked_mesh(),
                 "mf_source and im_data do not share the same mesh.");
 
     base_matrix G;
@@ -755,7 +755,7 @@ namespace getfem {
     
     dal::bit_vector im_data_convex_index;
     if(use_im_data_filtered) im_data_convex_index = im_target.filtered_convex_index();
-    else im_data_convex_index = im_target.get_mesh_im().convex_index();
+    else im_data_convex_index = im_target.linked_mesh_im().convex_index();
 
     for (dal::bv_visitor cv(im_data_convex_index); !cv.finished(); ++cv) {
 
@@ -769,7 +769,7 @@ namespace getfem {
       coeff.resize(cv_nb_dof);      
       getfem::slice_vector_on_basic_dof_of_element(mf_source, extended_nodal_data, cv, coeff);
 
-      getfem::pintegration_method pim = im_target.get_mesh_im().int_method_of_element(cv);
+      getfem::pintegration_method pim = im_target.linked_mesh_im().int_method_of_element(cv);
       if (pf_source->need_G()) 
         bgeot::vectors_to_base_matrix(G, pim->approx_method()->integration_points());
 

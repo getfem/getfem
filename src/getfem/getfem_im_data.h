@@ -109,8 +109,8 @@ namespace getfem{
     /**called automatically when there is a change in dependencies*/
     void update_from_context () const;
 
-    /**get mesh im*/
-    inline const mesh_im &get_mesh_im() const {return im_;}
+    /**linked mesh im*/
+    inline const mesh_im &linked_mesh_im() const {return im_;}
 
     /**implicit conversion to mesh im*/
     inline operator const mesh_im &() const {return im_;}

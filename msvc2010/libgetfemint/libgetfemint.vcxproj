@@ -150,6 +150,7 @@
     <ClCompile Include="..\..\interface\src\getfemint_mesh.cc" />
     <ClCompile Include="..\..\interface\src\getfemint_mesh_fem.cc" />
     <ClCompile Include="..\..\interface\src\getfemint_mesh_im.cc" />
+    <ClCompile Include="..\..\interface\src\getfemint_mesh_im_data.cc" />
     <ClCompile Include="..\..\interface\src\getfemint_mesh_levelset.cc" />
     <ClCompile Include="..\..\interface\src\getfemint_misc.cc" />
     <ClCompile Include="..\..\interface\src\getfemint_pfem.cc" />
@@ -189,6 +190,9 @@
     <ClCompile Include="..\..\interface\src\gf_mesh_im.cc" />
     <ClCompile Include="..\..\interface\src\gf_mesh_im_get.cc" />
     <ClCompile Include="..\..\interface\src\gf_mesh_im_set.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_im_data.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_im_data_get.cc" />
+    <ClCompile Include="..\..\interface\src\gf_mesh_im_data_set.cc" />
     <ClCompile Include="..\..\interface\src\gf_mesh_levelset.cc" />
     <ClCompile Include="..\..\interface\src\gf_mesh_levelset_get.cc" />
     <ClCompile Include="..\..\interface\src\gf_mesh_levelset_set.cc" />
@@ -224,6 +228,7 @@
     <ClInclude Include="..\..\interface\src\getfemint_mesh.h" />
     <ClInclude Include="..\..\interface\src\getfemint_mesh_fem.h" />
     <ClInclude Include="..\..\interface\src\getfemint_mesh_im.h" />
+    <ClInclude Include="..\..\interface\src\getfemint_mesh_im_data.h" />
     <ClInclude Include="..\..\interface\src\getfemint_mesh_levelset.h" />
     <ClInclude Include="..\..\interface\src\getfemint_mesh_slice.h" />
     <ClInclude Include="..\..\interface\src\getfemint_misc.h" />

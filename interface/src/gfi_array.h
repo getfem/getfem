@@ -46,27 +46,28 @@
    Do not forget to modify also 'name_of_getfemint_class_id' in getfemint.cc
 */
 typedef enum { CONT_STRUCT_CLASS_ID,
-	       CVSTRUCT_CLASS_ID,
-	       ELTM_CLASS_ID,
-	       FEM_CLASS_ID,
-	       GEOTRANS_CLASS_ID,
-	       GLOBAL_FUNCTION_CLASS_ID,
-	       INTEG_CLASS_ID,
-	       LEVELSET_CLASS_ID,
-	       MDBRICK_CLASS_ID,
-	       MDSTATE_CLASS_ID,
-	       MESH_CLASS_ID,
-	       MESHFEM_CLASS_ID,
+               CVSTRUCT_CLASS_ID,
+               ELTM_CLASS_ID,
+               FEM_CLASS_ID,
+               GEOTRANS_CLASS_ID,
+               GLOBAL_FUNCTION_CLASS_ID,
+               INTEG_CLASS_ID,
+               LEVELSET_CLASS_ID,
+               MDBRICK_CLASS_ID,
+               MDSTATE_CLASS_ID,
+               MESH_CLASS_ID,
+               MESHFEM_CLASS_ID,
                MESHIM_CLASS_ID,
+               MESHIMDATA_CLASS_ID,
                MESH_LEVELSET_CLASS_ID,
                MESHER_OBJECT_CLASS_ID,
                MODEL_CLASS_ID,
                MULTI_CONTACT_FRAME_CLASS_ID,
                PRECOND_CLASS_ID,
-	       SLICE_CLASS_ID,
-	       GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order */
+               SLICE_CLASS_ID,
+               GSPARSE_CLASS_ID, /* Considered as Spmat for alphabetic order */
                POLY_CLASS_ID,    /* Not fully interfaced. Remain at the end */
-	       GETFEMINT_NB_CLASS } getfemint_class_id;
+               GETFEMINT_NB_CLASS } getfemint_class_id;
 
 #ifdef __cplusplus
 extern "C" {

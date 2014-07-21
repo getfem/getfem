@@ -2094,11 +2094,11 @@ namespace getfem {
       size_type cv = ctx.convex_num();
       if (cv != cv_old) {
         cv_old = cv;
-        GMM_ASSERT1(imd.get_mesh_im().int_method_of_element(cv)
+        GMM_ASSERT1(imd.linked_mesh_im().int_method_of_element(cv)
                     ->approx_method() == pai, "Im data have to be used only "
                     "on their original integration method.");
         GMM_ASSERT1(!(ctx.is_on_face()),
-                    "Im data cannot be used of boundaries");
+                    "Im data cannot be used on boundaries");
       }
       size_type ind = imd.filtered_index_of_point(cv, ctx.ii());
       GMM_ASSERT1(ind != size_type(-1),
@@ -8571,7 +8571,7 @@ namespace getfem {
     virtual const bgeot::stored_point_tab &
     points_for_element(size_type cv, short_type /*f*/,
                        std::vector<size_type> &ind) const {
-      pintegration_method pim =imd.get_mesh_im().int_method_of_element(cv);
+      pintegration_method pim =imd.linked_mesh_im().int_method_of_element(cv);
       if (pim->type() == IM_NONE) return *(bgeot::pstored_point_tab(0));
       GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                   "be used in high level generic assembly");
@@ -8582,7 +8582,7 @@ namespace getfem {
     }
 
     virtual bool use_pgp(size_type cv) const {
-      pintegration_method pim =imd.get_mesh_im().int_method_of_element(cv);
+      pintegration_method pim =imd.linked_mesh_im().int_method_of_element(cv);
       if (pim->type() == IM_NONE) return false;
       GMM_ASSERT1(pim->type() == IM_APPROX, "Sorry, exact methods cannot "
                   "be used in high level generic assembly");
@@ -8608,7 +8608,7 @@ namespace getfem {
     { if (!initialized) gmm::clear(result); }
 
     virtual const mesh &linked_mesh(void)
-    { return imd.get_mesh_im().linked_mesh(); }
+    { return imd.linked_mesh_im().linked_mesh(); }
 
     ga_interpolation_context_im_data(im_data &imd_, base_vector &r)
       : result(r), imd(imd_), initialized(false) { }
@@ -8622,7 +8622,7 @@ namespace getfem {
 
     ga_workspace workspace(md);
     workspace.add_interpolation_expression
-      (expr, imd.get_mesh_im().linked_mesh(), rg);
+      (expr, imd.linked_mesh_im().linked_mesh(), rg);
     
     ga_interpolation_context_im_data gic(imd, result);
     ga_interpolation(workspace, gic);

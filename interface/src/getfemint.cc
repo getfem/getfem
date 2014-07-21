@@ -28,6 +28,7 @@
 #include <getfemint_mesh_slice.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
+#include <getfemint_mesh_im_data.h>
 #include <getfemint_mdbrick.h>
 #include <getfemint_mdstate.h>
 #include <getfemint_models.h>
@@ -82,6 +83,7 @@ namespace getfemint {
       "gfMesh",
       "gfMeshFem",
       "gfMeshIm",
+      "gfMeshImData",
       "gfMeshLevelSet",
       "gfMesherObject",
       "gfModel",
@@ -342,6 +344,15 @@ namespace getfemint {
   }
 
   bool
+  mexarg_in::is_mesh_im_data() {
+    id_type id, cid;
+    if (is_object_id(&id, &cid) && cid == MESHIMDATA_CLASS_ID) {
+      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
+      return (object_is_mesh_im_data(o));
+    } else return false;
+  }
+
+  bool
   mexarg_in::is_mdbrick() {
     id_type id, cid;
     if (is_object_id(&id, &cid) && cid == MDBRICK_CLASS_ID) {
@@ -557,6 +568,33 @@ namespace getfemint {
   }
 
   /*
+    checks if the argument is a valid handle to an mesh_im_data
+    and returns it
+  */
+  getfemint_mesh_im_data *
+  mexarg_in::to_getfemint_mesh_im_data(bool writeable) {
+    id_type id, cid;
+    to_object_id(&id,&cid);
+    if (cid != MESHIMDATA_CLASS_ID) {
+      THROW_BADARG("argument " << argnum << " should be a mesh_im_data descriptor, "
+                   "its class is " << name_of_getfemint_class_id(cid));
+    }
+    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
+    error_if_nonwritable(o,writeable);
+    return object_to_mesh_im_data(o);
+  }
+
+  getfem::im_data *
+  mexarg_in::to_mesh_im_data() {
+    return &to_getfemint_mesh_im_data(true)->mesh_im_data();
+  }
+
+  const getfem::im_data *
+  mexarg_in::to_const_mesh_im_data() {
+    return &to_getfemint_mesh_im_data(false)->mesh_im_data();
+  }
+
+  /*
     check if the argument is a valid mesh handle
     if a mesh_fem handle is given, its associated
     mesh is used
@@ -568,9 +606,11 @@ namespace getfemint {
   mexarg_in::to_const_mesh(id_type& mid) {
     id_type id, cid;
     to_object_id(&id,&cid);
-    if (cid != MESHFEM_CLASS_ID && cid != MESH_CLASS_ID && cid != MESHIM_CLASS_ID) {
+    if (cid != MESHFEM_CLASS_ID && cid != MESH_CLASS_ID && cid != MESHIM_CLASS_ID
+        && cid != MESHIMDATA_CLASS_ID) {
       THROW_BADARG("argument " << argnum << " should be a mesh or mesh_fem "
-                   "or mesh_im descriptor, its class is " << name_of_getfemint_class_id(cid));
+                   "or mesh_im or mesh_im_data descriptor, its class is "
+                   << name_of_getfemint_class_id(cid));
     }
     const getfem::mesh *mesh = NULL;
     getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
@@ -583,6 +623,9 @@ namespace getfemint {
     } else if (object_is_mesh_im(o)) {
       mid = object_to_mesh_im(o)->linked_mesh_id();
       mesh = &object_to_mesh_im(o)->mesh_im().linked_mesh();
+    } else if (object_is_mesh_im_data(o)) {
+      mid = object_to_mesh_im_data(o)->linked_mesh_id();
+      mesh = &object_to_mesh_im_data(o)->mesh_im_data().linked_mesh_im().linked_mesh();
     } else THROW_INTERNAL_ERROR;
     return mesh;
   }

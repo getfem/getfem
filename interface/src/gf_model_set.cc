@@ -29,6 +29,7 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_workspace.h>
 #include <getfemint_mesh_im.h>
+#include <getfemint_mesh_im_data.h>
 #include <getfemint_gsparse.h>
 #include <getfemint_multi_contact_frame.h>
 #include <getfem/getfem_Coulomb_friction.h>
@@ -183,6 +184,21 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        else
 	 md->model().add_multiplier(name, gfi_mf->mesh_fem(),primalname,niter);
        workspace().set_dependance(md, gfi_mf);
+       );
+
+
+    /*@SET ('add im data', @str name, @tmimd mesh_im_data[, @int niter]])
+      Add a data set to the model linked to a @tmimd. `name` is the data
+      name and `niter` is the optional number of version of the data stored,
+      for time integration schemes. @*/
+    sub_command
+      ("add im data", 2, 3, 0, 0,
+       std::string name = in.pop().to_string();
+       getfemint_mesh_im_data *gfi_mimd = in.pop().to_getfemint_mesh_im_data();
+       size_type niter = 1;
+       if (in.remaining()) niter = in.pop().to_integer(1,10);
+       md->model().add_im_data(name, gfi_mimd->mesh_im_data(), niter);
+       workspace().set_dependance(md, gfi_mimd);
        );
 
 
