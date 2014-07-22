@@ -310,9 +310,8 @@ namespace getfem {
   bool mesh_region::is_in(size_type cv, short_type f) const 
   {
     map_t::const_iterator it = rp().m.find(cv);
-    short_type f_number = (f == short_type(-1)) ? 0 : f + 1;
-    if (it == rp().m.end() || f_number >= MAX_FACES_PER_CV) return false;
-    return ((*it).second)[f_number];
+    if (it == rp().m.end() || short_type(f+1) >= MAX_FACES_PER_CV) return false;
+    return ((*it).second)[short_type(f + 1)];
   }
 
   bool mesh_region::is_empty() const 
