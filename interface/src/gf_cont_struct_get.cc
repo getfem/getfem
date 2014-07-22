@@ -74,26 +74,6 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        out.pop().from_scalar(ps->h_init());
        );
   
-    
-    /*@FUNC t = ('init test function', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par)
-      Save the value of a test function for the point given by `solution` and
-      `parameter` and the tangent given by `tangent_sol` and `tangent_par`
-      into the @tcs object and return it.@*/
-    sub_command
-      ("init test function", 4, 4, 0, 1,
-       
-       size_type nbdof = ps->linked_model().nb_dof();
-       darray x = in.pop().to_darray();
-       std::vector<double> xx(nbdof); gmm::copy(x, xx);
-       scalar_type gamma = in.pop().to_scalar();
-       darray t_x = in.pop().to_darray();
-       std::vector<double> tt_x(nbdof); gmm::copy(t_x, tt_x);
-       scalar_type t_gamma = in.pop().to_scalar();
-
-       getfem::init_test_function(*ps, xx, gamma, tt_x, t_gamma);
-       out.pop().from_scalar(ps->get_tau2());
-       );
-  
 
     /*@FUNC E = ('init Moore-Penrose continuation', @vec solution, @scalar parameter, @scalar init_dir)
       Initialise the Moore-Penrose continuation: Return a unit tangent to
@@ -126,7 +106,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       and `tangent_par`, and the step size `h`. Return a new point on the
       solution curve, the corresponding tangent and a step size for the next
       step. If the returned step size equals zero, the continuation has
-      failed. Optionally, return the type of any detected bifurcation point.
+      failed. Optionally, return the type of any detected singular point.
       NOTE: The new point need not to be saved in the model in the end!@*/
     sub_command
       ("Moore-Penrose continuation", 5, 5, 0, 6,
@@ -151,15 +131,15 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET t = ('test function')
-      Return the last value of the test function and eventaully the whole
-      calculated graph when passing between subdomains of different smooth
-      pieces.@*/
+    /*@GET t = ('bifurcation test function')
+      Return the last value of the bifurcation test function and eventaully
+      the whole calculated graph when passing between different sub-domains
+      of differentiability.@*/
     sub_command
-      ("test function", 0, 0, 0, 3,
-       out.pop().from_scalar(ps->get_tau2());
+      ("bifurcation test function", 0, 0, 0, 3,
+       out.pop().from_scalar(ps->get_tau_bp_2());
        if (out.remaining()) out.pop().from_dcvector(ps->get_alpha_hist());
-       if (out.remaining()) out.pop().from_dcvector(ps->get_tau_hist());
+       if (out.remaining()) out.pop().from_dcvector(ps->get_tau_bp_hist());
        );
 
 

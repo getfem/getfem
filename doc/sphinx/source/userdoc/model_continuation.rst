@@ -33,9 +33,9 @@ Methods of numerical continuation serve for tracing solutions of the system
    F(U, \lambda) = 0, \quad F\colon \mathbb{R}^{N} \times \mathbb{R} \to \mathbb{R}^{N}.
 
 In |gf|, a continuation technique for piecewise :math:`C^{1}` (:math:`PC^{1}`)
-solution curves is implemented (see [li-re]_ for more details). Since it does
-not make an explicit difference between the state variable :math:`U` and the
-parameter :math:`\lambda`, we shall denote :math:`Y := (U, \lambda)` for
+solution curves is implemented (see [li-re2014]_ for more details). Since it
+does not make an explicit difference between the state variable :math:`U` and
+the parameter :math:`\lambda`, we shall denote :math:`Y := (U, \lambda)` for
 brevity. Nevertheless, to avoid bad scaling when calculating tangents, for
 example, we shall use the following weighted scalar product and norm:
 
@@ -190,6 +190,30 @@ model:
 
       F(U, P(\lambda)) = 0.
 
+Detection of limit points
++++++++++++++++++++++++++
+
+When tracing solutions of a system :math:`F(U,\lambda) = 0`, one may be
+interested in *limit points* (also called fold or turning points), where number
+of solutions with the same value of :math:`\lambda` changes. These points can be
+detected by a sign change of a test function :math:`\tau_{\mathrm{LP}}`:
+
+   .. math::
+
+      \tau_{\mathrm{LP}}(T_{j}) \tau_{\mathrm{LP}}(T_{j+1}) < 0,
+
+where
+
+   .. math::
+
+      \tau_{\mathrm{LP}}(T) := T_{\lambda},\quad T = (T_{U},T_{\lambda}) \in \mathbb{R}^{N} \times \mathbb{R}.
+
+.. _ud_fig_limitpoint:
+.. figure:: images/getfemuserlimitpoint.png
+   :align: center
+
+   Limit point.
+
 Numerical bifurcation
 +++++++++++++++++++++
 
@@ -208,32 +232,33 @@ Let :math:`s \mapsto Y(s)` be a parametrisation of a solution branch and
 
       J(Y) := \begin{pmatrix}\nabla F(Y)\\ T^{\top}\end{pmatrix}.
 
-Define :math:`\tau(Y)` via
+Define :math:`\tau_{\mathrm{BP}}(Y)` via
 
    .. math::
 
-      \begin{pmatrix}J(Y)& B\\ C^{\top}& 0\end{pmatrix} \begin{pmatrix}V(Y)\\ \tau(Y)\end{pmatrix} = \begin{pmatrix}0\\ 1\end{pmatrix}.
+      \begin{pmatrix}J(Y)& B\\ C^{\top}& 0\end{pmatrix} \begin{pmatrix}V(Y)\\ \tau_{\mathrm{BP}}(Y)\end{pmatrix} = \begin{pmatrix}0\\ 1\end{pmatrix}.
 
-Then :math:`\tau(Y(s))` changes sign at :math:`s = \bar{s}`.
+Then :math:`\tau_{\mathrm{BP}}(Y(s))` changes sign at :math:`s = \bar{s}`.
 
 Obviously, if one takes the vectors :math:`B` and :math:`C` randomly, it is
 highly possible that they satisfy the two conditions above. Consequently, by
 taking the vectors :math:`Y` and :math:`T` supplied by the correction at each 
-continuation step and monitoring the sign of :math:`\tau`, a numerical
-continuation method is able to detect bifurcation points.
+continuation step and monitoring the sign of :math:`\tau_{\mathrm{BP}}`, a
+numerical continuation method is able to detect bifurcation points.
 
 Once a bifurcation point :math:`\bar{Y}` is detected by the sign change in the
-test function :math:`\tau`, i.e., :math:`\tau(Y_{j}) \tau(Y_{j+1}) < 0`, it can
+test function :math:`\tau_{\mathrm{BP}}`, i.e.,
+:math:`\tau_{\mathrm{BP}}(Y_{j}) \tau_{\mathrm{BP}}(Y_{j+1}) < 0`, it can
 be approximated more precisely by the predictor-corrector steps described above
 with a special step-length adaptation (see Sect. 8.1 in [all-ge1997]_). In
 particular, one can take the subsequent step lengths as 
 
    .. math::
 
-      h_{j+1} := -\frac{\tau(Y_{j+1})}{\tau(Y_{j+1}) - \tau(Y_{j})}h_{j}
+      h_{j+1} := -\frac{\tau_{\mathrm{BP}}(Y_{j+1})}{\tau_{\mathrm{BP}}(Y_{j+1}) - \tau_{\mathrm{BP}}(Y_{j})}h_{j}
 
 until :math:`\lvert h_{j+1} \rvert < h_{\mathrm{min}}`, which corresponds to the
-secant method for finding a zero of :math:`s \mapsto \tau(Y(s))`.
+secant method for finding a zero of :math:`s \mapsto \tau_{\mathrm{BP}}(Y(s))`.
 
 Finally, it would be desirable to switch solution branches. To this end, we
 shall consider the case of the so-called *simple bifurcation point*, where only
@@ -241,11 +266,11 @@ two distinct solution branches intersect.
 
 Let :math:`\tilde{Y}` be an approximation of :math:`\bar{Y}` that we are given
 and :math:`V(\tilde{Y})` be the first part of the solution of the augmented
-system for computing the test function :math:`\tau(\tilde{Y})`. As proposed in
-[georg2001]_, to obtain a point on the bifurcating (new) branch, one can take
-:math:`V(\tilde{Y})` as a predictor direction and do one continuation step
-starting with :math:`(\tilde{Y}, V(\tilde{Y}))`. After this continuation step
-has been performed successfully and a point on the new branch has been
+system for computing the test function :math:`\tau_{\mathrm{BP}}(\tilde{Y})`. As
+proposed in [georg2001]_, to obtain a point on the bifurcating (new) branch, one
+can take :math:`V(\tilde{Y})` as a predictor direction and do one continuation
+step starting with :math:`(\tilde{Y}, V(\tilde{Y}))`. After this continuation
+step has been performed successfully and a point on the new branch has been
 recovered, one can proceed with the usual predictor-corrector steps to trace
 this branch.
 
@@ -256,17 +281,15 @@ The numerical continuation is defined in ``getfem/getfem_continuation.h``. In
 order to use it, one has to do the following initialisation first::
 
   getfem::cont_struct_getfem_model S(model, parameter_name[, initdata_name, finaldata_name, currentdata_name],
-                           	     sfac, ls, bifurcations, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit,
-				     maxres, maxdiff, mincos, maxres_solve, noisy, non-smooth);
+                           	     sfac, ls, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres,
+				     maxdiff, mincos, maxres_solve, noisy, singularities, non-smooth);
   getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
 
 where ``parameter_name`` is the name of the model datum representing
-:math:`\lambda`, ``sfac`` represents the scale factor :math:`\kappa`, ``ls`` is
-the name of the solver to be used for the linear systems incorporated in the
-process (e.g., ``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``), and the boolean value of
-``bifurcations`` determines whether the tools for detection and treatment of
-bifurcation points have to be used. The real numbers ``h_init``, ``h_max``,
-``h_min``, ``h_inc``, ``h_dec`` denote :math:`h_{\mathrm{init}}`,
+:math:`\lambda`, ``sfac`` represents the scale factor :math:`\kappa`, and ``ls``
+is the name of the solver to be used for the linear systems incorporated in the
+process (e.g., ``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``) The real numbers ``h_init``,
+``h_max``, ``h_min``, ``h_inc``, ``h_dec`` denote :math:`h_{\mathrm{init}}`,
 :math:`h_{\mathrm{max}}`, :math:`h_{\mathrm{min}}`, :math:`h_{\mathrm{inc}}`,
 and :math:`h_{\mathrm{dec}}`, the integer ``maxit`` is the maximum number of
 iterations allowed in the correction and ``thrit``, ``maxres``, ``maxdiff``,
@@ -275,15 +298,18 @@ iterations allowed in the correction and ``thrit``, ``maxres``, ``maxdiff``,
 target residual value for the linear systems to be solved, respectively. The
 non-negative integer ``noisy`` determines how detailed information has to be
 displayed in the course of the continuation process (the larger value the more
-details) and the boolean value of ``non-smooth`` determines whether only the
-predictor-corrector for smooth curves has to be used or the technique for
-searching for other smooth pieces of solution curves has to be employed as well.
-Under the optional data names ``initdata_name`` and ``finaldata_name``,
-:math:`P^{0}` and :math:`P^{1}` should be stored, respectively, in the case of
-the parametrisation by a vector datum. Under ``currentdata_name``, the values of
-:math:`P(\lambda)` are stored then, that is, actual values of the datum the
-model depends on. Further, ``U`` should be a solution for the value of parameter
-:math:`\lambda` equal to ``lambda`` so that
+details), the integer ``singularities`` determines whether the tools for
+detection and treatment of singular points have to be used (0 for ignoring them
+completely, 1 for detecting limit points, and 2 for detecting and treating
+bifurcation points, as well), and the boolean value of ``non-smooth`` determines
+whether only the predictor-corrector for smooth curves has to be used or the
+technique for searching for other smooth pieces of solution curves has to be
+employed too. Under the optional data names ``initdata_name`` and
+``finaldata_name``, :math:`P^{0}` and :math:`P^{1}` should be stored,
+respectively, in the case of the parametrisation by a vector datum. Under
+``currentdata_name``, the values of :math:`P(\lambda)` are stored then, that is,
+actual values of the datum the model depends on. Further, ``U`` should be a
+solution for the value of parameter :math:`\lambda` equal to ``lambda`` so that
 :math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). In accordance with the sign of the
 initial value ``T_lambda``, an initial unit tangent :math:`T_{0}` corresponding
 to :math:`Y_{0}` is computed and returned in ``T_U``, ``T_lambda``. Moreover,
@@ -295,14 +321,14 @@ Consequently, one step of the continuation can be called by ::
 
 After each call, a new point on a solution curve and the corresponding tangent
 are returned in the variables ``U``, ``lambda`` and ``T_U``, ``T_lambda``. The
-step size for the next prediction is returned in ``h``. If the option
-``bifurcations`` has been chosen, the test function for bifurcations is
-evaluated at the end of each continuation step. Furthermore, if a bifurcation
-point is detected, the procedure for numerical bifurcation is performed and an
-approximation of the branching point as well as tangents to both bifurcating
-branches are saved in the continuation structure ``S``. From there, they can
-easily be recovered with member functions of ``S`` so that one can initialise
-the continuation to trace either of the branches next time.
+step size for the next prediction is returned in ``h``. According to the chosen
+value of ``singularities``, the test functions for limit and bifurcation points 
+are evaluated at the end of each continuation step .Furthermore, if a
+bifurcation point is detected, the procedure for numerical bifurcation is
+performed and an approximation of the branching point as well as tangents to
+both bifurcating branches are saved in the continuation structure ``S``. From
+there, they can easily be recovered with member functions of ``S`` so that one
+can initialise the continuation to trace either of the branches next time.
 
 Complete examples of use are shown in the test programs
 ``tests/test_continuation.cc``, ``interface/tests/matlab/demo_continuation.m``

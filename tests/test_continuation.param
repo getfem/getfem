@@ -18,7 +18,9 @@ DIRECTION = 1.;		% direction of the initial tangent
 LAMBDA0 = 0.;		% initial value of parameter
 NBSTEP = 80;		% number of continuation steps
 
-BIFURCATIONS = 1;	% deal with bifurcations?
+SINGULARITIES = 2;	% 0: ignoring singular points
+			% 1: automatic detection of limit points
+			% 2: even detection and treatment of bifurcation pts 
 H_INIT = 2E-2;		% initial step length
 H_MAX = 2E-1;		% maximal step length
 H_MIN = 2E-5;		% minimal step length

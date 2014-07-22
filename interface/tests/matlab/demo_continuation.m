@@ -1,4 +1,4 @@
-% Copyright (C) 2011-2012 Tomas Ligursky, Yves Renard.
+% Copyright (C) 2011-2014 Tomas Ligursky, Yves Renard.
 %
 % This file is a part of GETFEM++
 %
@@ -81,8 +81,9 @@ end;
 
 % initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
-S = gf_cont_struct(md, 'lambda', scfac, 'bifurcations', 'h_init', h_init, ...
-                   'h_max', h_max, 'h_min', h_min, 'min_cos', mincos, noisy);
+S = gf_cont_struct(md, 'lambda', scfac, 'h_init', h_init, 'h_max', h_max,...
+                   'h_min', h_min, 'min_cos', mincos, noisy,...
+                   'singularities', 2);
 
 if (bp_char)
   load([datapath bp_char]);
@@ -127,14 +128,18 @@ for step = 1:nbstep
   % gf_model_get(md, 'test tangent matrix', 1E-8, 20, 0.0001);
                        
   if (h ==0) return
-  elseif (strcmp(sing_label, 'smooth bifurcation point'))
+  elseif (sing_label)
+    if (strcmp(sing_label, 'limit point'))
+      s = ['step ' sprintf('%d', step) ': limit point' ];
+    elseif (strcmp(sing_label, 'smooth bifurcation point'))
      [U_bp, lambda_bp, T_U_bp, T_lambda_bp]...
        = gf_cont_struct_get(S, 'sing_data');
      save([datapath 'continuation_step_' sprintf('%d', step) '_bp.mat'], ...
           'U_bp', 'lambda_bp', 'T_U_bp', 'T_lambda_bp');
-     s = ['step ' sprintf('%d', step) ': ' sprintf('%d', size(T_U_bp, 2)) ...
-          ' branch(es) located'];
-     sing_out = [sing_out; s];
+     s = ['step ' sprintf('%d', step) ': smooth bifurcation point, '...
+          sprintf('%d', size(T_U_bp, 2)) ' branch(es) located'];
+    end
+    sing_out = [sing_out; s];
   end
   
   U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
@@ -157,9 +162,9 @@ end
 
 nsing = size(sing_out, 1);
 if (nsing)
-  disp(sprintf('\n----------------------------------------------------------'))
-  disp('   detected bifurcation points on the continuation curve')
-  disp('----------------------------------------------------------')
+  disp(sprintf('\n-------------------------------------------------------'))
+  disp('   detected singular points on the continuation curve')
+  disp('-------------------------------------------------------')
   for i = 1:nsing
     disp(sing_out(i,:))
   end

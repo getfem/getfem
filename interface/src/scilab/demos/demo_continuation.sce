@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2011-2013 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2011-2014 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //
@@ -38,9 +38,9 @@ gf_util('warning level', 3);
 datapath = get_absolute_file_path('demo_continuation.sce') + 'data/';
 // If the file name bp_char is non-empty, the continuation will be started
 // from the bifurcation point and the tangent with the index ind_tangent
-// saved there, direction of this tangent will be determined by direction.
-// Otherwise, the continuation will be initialised according to direction and
-// lambda0.
+// saved there. Direction of the initial tangent will be determined by
+// direction. Otherwise, the continuation will be initialised according to
+// direction and lambda0.
 bp_char = '';
 //bp_char = 'continuation_step_62_bp.mat';
 ind_tangent = 2;
@@ -75,8 +75,9 @@ gf_model_set(md, 'add basic nonlinear brick', mim, 'u', ...
 
 // initialise the continuation
 scfac = 1 / gf_mesh_fem_get(mf, 'nbdof');
-S = gf_cont_struct(md, 'lambda', scfac, 'bifurcations', 'h_init', h_init, ...
-                   'h_max', h_max, 'h_min', h_min, 'min_cos', mincos, noisy);
+S = gf_cont_struct(md, 'lambda', scfac, 'h_init', h_init, 'h_max', h_max, ...
+                   'h_min', h_min, 'min_cos', mincos, noisy, ...
+                   'singularities', 2);
 
 if (~isempty(bp_char)) then
   load(datapath + bp_char);
@@ -100,7 +101,7 @@ end
 
 U_hist = zeros(1, nbstep + 1); lambda_hist = zeros(1, nbstep + 1);
 U_hist(1) = U(1); lambda_hist(1) = lambda;
-//tau = gf_cont_struct_get(S, 'test function');
+//tau = gf_cont_struct_get(S, 'bifurcation test function');
 
 scf(0); drawlater; clf();
 subplot(2,1,1);
@@ -113,7 +114,7 @@ drawnow;
 
 //scf(1); drawlater; clf();
 //plot(0, tau, 'k.');
-//xtitle('', 'iteration', 'test function');
+//xtitle('', 'iteration', 'bifurcation test function');
 //drawnow;
 
 sing_out = [];
@@ -126,18 +127,22 @@ for step = 1:nbstep
                        U, lambda, T_U, T_lambda, h);
   if (h == 0) then
     return
-  elseif (sing_label == 'smooth bifurcation point') then
-     [U_bp, lambda_bp, T_U_bp, T_lambda_bp]...
-       = gf_cont_struct_get(S, 'sing_data');
-     save(datapath + 'continuation_step_' + sci2exp(step) + '_bp.mat',...
-       U_bp, lambda_bp, T_U_bp, T_lambda_bp);
-     s = 'step ' + sci2exp(step) + ': '...
+  elseif (~isempty(sing_label)) then
+    if (sing_label == 'limit point') then
+      s = 'Step ' + sci2exp(step) + ': ' + sing_label;
+    elseif (sing_label == 'smooth bifurcation point') then
+      [U_bp, lambda_bp, T_U_bp, T_lambda_bp]...
+        = gf_cont_struct_get(S, 'sing_data');
+      s = 'Step ' + sci2exp(step) + ': ' + sing_label + ', '...
          + sci2exp(size(T_U_bp, 2)) + ' branch(es) located';
-     sing_out = [sing_out; s];
+      save(datapath + 'continuation_step_' + sci2exp(step) + '_bp.mat',...
+       'U_bp', 'lambda_bp', 'T_U_bp', 'T_lambda_bp');
+    end
+    sing_out = [sing_out; s];
   end
   
   U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
-//  tau = gf_cont_struct_get(S, 'test function');
+//  tau = gf_cont_struct_get(S, 'bifurcation test function');
 
   scf(0); drawlater; clf();
   subplot(2,1,1);
@@ -159,9 +164,9 @@ end
 
 nsing = size(sing_out, 1);
 if (nsing > 0) then
-  printf('\n----------------------------------------------------------\n')
-  printf('   detected bifurcation points on the continuation curve\n')
-  printf('----------------------------------------------------------\n')
+  printf('\n--------------------------------------------------------\n')
+  printf('   Detected singular points on the continuation curve\n')
+  printf('--------------------------------------------------------\n')
   for i = 1:nsing
     printf(sing_out(i) + '\n')
   end

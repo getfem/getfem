@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2012-2012 Tomas Ligursky, Yves Renard.
+ Copyright (C) 2012-2014 Tomas Ligursky, Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -54,9 +54,9 @@ namespace getfemint {
     size_type memsize() const {
       size_type szd = sizeof(double);
       return sizeof(getfem::cont_struct_getfem_model) 
-	+ ((int) s->bifurcations())
+	+ ((int) (s->singularities() > 1))
 	  * (2 * gmm::vect_size(s->b_x()) * szd
-	     + 4 * gmm::vect_size(s->get_tau_hist()) * szd
+	     + 4 * gmm::vect_size(s->get_tau_bp_hist()) * szd
 	     + (1 + s->nb_tangent_sing()) * gmm::vect_size(s-> get_x_sing())
 	       * szd);
     }

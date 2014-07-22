@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2013-2013 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2013-2014 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //
@@ -31,6 +31,8 @@ if getos()=='Windows' then
 end
 gf_util('trace level', 1);
 gf_util('warning level', 3);
+
+datapath = get_absolute_file_path('demo_continuation_vee.sce') + 'data/';
 
 // parameters
 plot_mesh = %f;
@@ -64,7 +66,7 @@ noisy = 'very_noisy';
 
 // import a mesh (size in m) and refine it eventually
 m = gf_mesh('load', datapath + 'vee_h_0.03.mesh');
-for i = 1:1
+for i = 1:0
   gf_mesh_set(m, 'refine');
 end
 
@@ -158,7 +160,7 @@ S = gf_cont_struct(md, 'gamma', 'force_init', 'force_final',...
   'force_current', scfac, 'h_init', h_init, 'h_max', h_max, ...
   'h_min', h_min, 'max_iter', maxit, 'thr_iter', thrit, 'max_res', maxres,...
   'max_diff', maxdiff, 'min_cos', mincos, 'max_res_solve', maxres_solve, ...
-  'non-smooth', noisy);
+  'singularities', 1, 'non-smooth', noisy);
 
 if (~isempty(X0_char)) then
   load(datapath + X0_char, 'X');
@@ -253,14 +255,18 @@ plot(gm_hist(1), lambda_tP_hist(1), 'k.');
 xtitle('', 'gamma', 'lambda_t(P)');
 drawnow;
 
+sing_out = [];
 // continue from the initial point
 for step = 1:nbstep
   printf('\nbeginning of step %d\n', step);
-  [X, gm, T_X, T_gm, h] = gf_cont_struct_get(S, ...
+  [X, gm, T_X, T_gm, h, sing_label] = gf_cont_struct_get(S, ...
     'Moore-Penrose continuation', X, gm, T_X, T_gm, h);
   if (h == 0) then
     printf('Continuation has failed.\n')
     break
+  elseif (sing_label == 'limit point') then
+    s = 'Step ' + sci2exp(step) + ': ' + sing_label;
+    sing_out = [sing_out; s];
   end
   
   gf_model_set(md, 'to variables', X);
@@ -346,6 +352,16 @@ for step = 1:nbstep
     break
   end
   //sleep(100);
+end
+
+nsing = size(sing_out, 1);
+if (nsing > 0) then
+  printf('\n--------------------------------------------------------\n')
+  printf('   Detected singular points on the continuation curve\n')
+  printf('--------------------------------------------------------\n')
+  for i = 1:nsing
+    printf(sing_out(i) + '\n')
+  end
 end
 
 //X = gf_model_get(md, 'from variables');

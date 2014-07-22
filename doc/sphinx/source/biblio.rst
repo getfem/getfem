@@ -54,8 +54,8 @@ References
 .. [LA-RE2006] P. Laborde, Y. Renard.
    *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
-.. [li-re] T. |ligursky|  and Y. Renard,
-   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems. Part I -- Abstract Frame.* Submitted (2013). [`hal-00877716 - version 1 <http://hal.archives-ouvertes.fr/hal-00877716>`_]
+.. [li-re2014] T. |ligursky|  and Y. Renard,
+   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction.* Comput. Methods Appl. Mech. Engrg. (2014).
 
 .. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
    *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.

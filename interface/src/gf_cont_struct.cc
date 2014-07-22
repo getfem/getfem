@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2012-2012 Tomas Ligursky, Yves Renard.
+ Copyright (C) 2012-2014 Tomas Ligursky, Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -81,8 +81,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     - 'max_res_solve', @scalar RES_SOLVE
        target residual value for the linear systems to be solved (the
        default value is 1e-8);
-    - 'bifurcations'
-       activates tools for detection and treatment of bifurcation points;
+    - 'singularities', @int SING
+       activates tools for detection and treatment of singular points (1 for
+       limit points, 2 for bifurcation points);
     - 'non-smooth'
        determines that some special methods for non-smooth problems can be
        used;
@@ -108,7 +109,6 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        continuation process (residual values etc.).@*/
     
        getfemint_model *md = in.pop().to_getfemint_model();
-       bool bifurcations = false; bool nonsmooth = false;
        std::string dataname_parameter = in.pop().to_string();
        bool with_parametrised_data = false;
        std::string dataname_init; std::string dataname_final;
@@ -129,15 +129,14 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        scalar_type maxres_solve = 1.e-8; scalar_type delta_max = 0.005;
        scalar_type delta_min = 0.00012;
        scalar_type thrvar = 0.02; size_type nbdir = 40; size_type nbcomb = 1;
-       int noisy = 0;
+       int noisy = 0; int singularities = 0; bool nonsmooth = false;
 
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();
          if (cmd_strmatch(opt, "lsolver"))  {
            if (in.remaining()) lsolver = in.pop().to_string();
            else THROW_BADARG("missing name for " << opt);
-         } else if (cmd_strmatch(opt, "bifurcations")) bifurcations = true;
-         else if (cmd_strmatch(opt, "h_init")) {
+         } else if (cmd_strmatch(opt, "h_init")) {
            if (in.remaining()) h_init = in.pop().to_scalar();
            else THROW_BADARG("missing value for " << opt);
          } else if (cmd_strmatch(opt, "h_max")) {
@@ -185,7 +184,10 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
          } else if (cmd_strmatch(opt, "nb_comb")) {
            if (in.remaining()) nbcomb = in.pop().to_integer();
            else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
+         } else if (cmd_strmatch(opt, "singularities")) {
+	   if (in.remaining()) singularities = in.pop().to_integer();
+	   else THROW_BADARG("missing value for " << opt);
+	 } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
          else if (cmd_strmatch(opt, "noisy")) noisy = 1;
          else if (cmd_strmatch(opt, "very noisy") ||
                   cmd_strmatch(opt, "very_noisy")) noisy = 2;
@@ -197,9 +199,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 	 getfem::cont_struct_getfem_model *ps1 =
 	   new getfem::cont_struct_getfem_model
            (md->model(), dataname_parameter, scfac,
-	    getfem::rselect_linear_solver(md->model(), lsolver),
-	    bifurcations, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit,
-	    maxres, maxdiff, mincos, maxres_solve, noisy, nonsmooth,
+	    getfem::rselect_linear_solver(md->model(), lsolver), h_init,
+	    h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
+	    mincos, maxres_solve, noisy, singularities, nonsmooth,
 	    delta_max, delta_min, thrvar, nbdir, nbcomb);
 	 ps = ps1;
        }
@@ -208,9 +210,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 	   new getfem::cont_struct_getfem_model
 	   (md->model(), dataname_parameter, dataname_init, dataname_final,
 	    dataname_current, scfac,
-	    getfem::rselect_linear_solver(md->model(), lsolver),
-	    bifurcations, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit,
-	    maxres, maxdiff, mincos, maxres_solve, noisy, nonsmooth,
+	    getfem::rselect_linear_solver(md->model(), lsolver), h_init,
+	    h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
+	    mincos, maxres_solve, noisy, singularities, nonsmooth,
 	    delta_max, delta_min, thrvar, nbdir, nbcomb);
 	 ps = ps1;
        }

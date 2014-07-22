@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2011-2012 Tomas Ligursky, Yves Renard
+ Copyright (C) 2011-2014 Tomas Ligursky, Yves Renard
  
  This file is a part of GETFEM++
  
@@ -47,7 +47,7 @@ namespace getfem {
   // Abstract Moore-Penrose continuation method
   //=========================================================================
 
-  const double tau_init = 1.e6;
+  const double tau_bp_init = 1.e6;
   enum build_data { BUILD_F = 1, BUILD_F_x = 2, BUILD_ALL = 3 };
 
   /* Compute a unit tangent at (x, gamma) that is accute to the incoming
@@ -152,14 +152,22 @@ namespace getfem {
     return accepted;
   }
 
+  /* Test for limit points (also called folds or turning points). */
+  template <typename CONT_S>
+  bool test_limit_point(CONT_S &S, double t_gamma) {
+    double tau1 = S.get_tau_lp(), tau2 = t_gamma;
+    S.set_tau_lp(tau2);
+    return (tau2 * tau1 < 0);
+  }
+
 
   /* Test function for bifurcation points for a given matrix. The first part
      of the solution of the augmented system is passed in
      (v_x, v_gamma). */
   template <typename CONT_S, typename MAT, typename VECT>
-  double test_function(CONT_S &S, const MAT &A, const VECT &g,
-		       const VECT &t_x, double t_gamma,
-		       VECT &v_x, double &v_gamma) {
+  double test_function_bp(CONT_S &S, const MAT &A, const VECT &g,
+			  const VECT &t_x, double t_gamma,
+			  VECT &v_x, double &v_gamma) {
     double q, r, tau;
     VECT y(g), z(g);
 
@@ -183,37 +191,37 @@ namespace getfem {
   }
 
   template <typename CONT_S, typename MAT, typename VECT>
-  double test_function(CONT_S &S, const MAT &A, const VECT &g,
-		       const VECT &t_x, double t_gamma) {
+  double test_function_bp(CONT_S &S, const MAT &A, const VECT &g,
+			  const VECT &t_x, double t_gamma) {
     VECT v_x(g); double v_gamma;
-    return test_function(S, A, g, t_x, t_gamma, v_x, v_gamma);
+    return test_function_bp(S, A, g, t_x, t_gamma, v_x, v_gamma);
   }
 
   /* Test function for bifurcation points for the gradient computed at
      (x, gamma). */
   template <typename CONT_S, typename VECT>
-  double test_function(CONT_S &S, const VECT &x, double gamma,
-		       const VECT &t_x, double t_gamma,
-		       VECT &v_x, double &v_gamma) {
+  double test_function_bp(CONT_S &S, const VECT &x, double gamma,
+			  const VECT &t_x, double t_gamma,
+			  VECT &v_x, double &v_gamma) {
     typename CONT_S::MAT A; S.F_x(x, gamma, A);
     VECT g(x); S.F_gamma(x, gamma, g);
-    return test_function(S, A, g, t_x, t_gamma, v_x, v_gamma);
+    return test_function_bp(S, A, g, t_x, t_gamma, v_x, v_gamma);
   }
 
   template <typename CONT_S, typename VECT>
-  double test_function(CONT_S &S, const VECT &x, double gamma,
-		       const VECT &t_x, double t_gamma) {
+  double test_function_bp(CONT_S &S, const VECT &x, double gamma,
+			  const VECT &t_x, double t_gamma) {
     VECT v_x(x); double v_gamma;
-    return test_function(S, x, gamma, t_x, t_gamma, v_x, v_gamma);
+    return test_function_bp(S, x, gamma, t_x, t_gamma, v_x, v_gamma);
   }
 
   /* Test for smooth bifurcation points. */
   template <typename CONT_S, typename VECT>
   bool test_smooth_bifurcation(CONT_S &S, const VECT &x, double gamma,
 			       const VECT &t_x, double t_gamma) {
-    double tau0 = S.get_tau1(), tau1 = S.get_tau2(),
-      tau2 = test_function(S, x, gamma, t_x, t_gamma);
-    S.set_tau1(tau1); S.set_tau2(tau2);
+    double tau0 = S.get_tau_bp_1(), tau1 = S.get_tau_bp_2(),
+      tau2 = test_function_bp(S, x, gamma, t_x, t_gamma);
+    S.set_tau_bp_1(tau1); S.set_tau_bp_2(tau2);
     return (tau2 * tau1 < 0) && (S.abs(tau1) < S.abs(tau0));
   }
 
@@ -225,15 +233,15 @@ namespace getfem {
 				   const VECT &t_x2, double t_gamma2) {
     unsigned long nb_changes = 0;
     double alpha = 0., delta = S.delta_min(),
-      tau0 = tau_init, tau1= S.get_tau2(),tau2, tau_var_ref, t_gamma;
+      tau0 = tau_bp_init, tau1= S.get_tau_bp_2(), tau2, tau_var_ref, t_gamma;
     VECT g1(x1), g2(x1), g(x1), t_x(x1);
 
     // compute gradients at the two given points
     typename CONT_S::MAT A1, A2, A;
     S.F_x(x2, gamma2, A2); S.F_x(x2, gamma2, A); S.F_gamma(x2, gamma2, g2);
     S.F_x(x1, gamma1, A1); S.F_gamma(x1, gamma1, g1);
-    S.init_tau_graph();
-    tau2 = test_function(S, A2, g2, t_x2, t_gamma2);
+    S.init_tau_bp_graph();
+    tau2 = test_function_bp(S, A2, g2, t_x2, t_gamma2);
     tau_var_ref = std::max(S.abs(tau2 - tau1),
 			   (S.abs(tau1) + S.abs(tau2)) / 200);
 
@@ -245,9 +253,9 @@ namespace getfem {
       S.scaled_add(t_x1, 1. - alpha, t_x2, alpha, t_x);
       t_gamma = (1. - alpha) * t_gamma1 + alpha * t_gamma2;
       
-      tau2 = test_function(S, A, g, t_x, t_gamma);
+      tau2 = test_function_bp(S, A, g, t_x, t_gamma);
       if ((tau2 * tau1 < 0) && (S.abs(tau1) < S.abs(tau0))) ++nb_changes;
-      S.insert_tau_graph(alpha, tau2);
+      S.insert_tau_bp_graph(alpha, tau2);
 
       if (S.abs(tau2 - tau1) < 0.5 * S.thrvar() * tau_var_ref)
 	delta = std::min(2 * delta, S.delta_max());
@@ -256,7 +264,7 @@ namespace getfem {
       tau0 = tau1; tau1 = tau2; 
     } while (alpha < 1.);
     
-    S.set_tau1(tau_init); S.set_tau2(tau2);
+    S.set_tau_bp_1(tau_bp_init); S.set_tau_bp_2(tau2);
     return nb_changes % 2;
   }
   
@@ -358,7 +366,7 @@ namespace getfem {
   void treat_smooth_bif_point(CONT_S &S, const VECT &x, double gamma,
 			      const VECT &t_x, double t_gamma, double h) {
     unsigned long i = 0;
-    double tau0 = S.get_tau1(), tau1 = S.get_tau2(),
+    double tau0 = S.get_tau_bp_1(), tau1 = S.get_tau_bp_2(),
       gamma0 = gamma, Gamma, t_gamma0 = t_gamma, T_gamma = t_gamma, v_gamma;
     VECT x0(x), X(x), t_x0(t_x), T_x(t_x), v_x(t_x);
     
@@ -376,11 +384,11 @@ namespace getfem {
 	if (S.cosang(T_x, t_x0, T_gamma, t_gamma0) >= S.mincos())
 	  { S.copy(T_x, t_x0); t_gamma0 = T_gamma; }
 	tau0 = tau1;
-	tau1 = test_function(S, X, Gamma, t_x0, t_gamma0, v_x, v_gamma);
+	tau1 = test_function_bp(S, X, Gamma, t_x0, t_gamma0, v_x, v_gamma);
 	h *= tau1 / (tau0 - tau1);
       }	else {
 	S.scaled_add(x0, t_x0, h, x0); gamma0 += h * t_gamma0;
-	test_function(S, x0, gamma0, t_x0, t_gamma0, v_x, v_gamma);
+	test_function_bp(S, x0, gamma0, t_x0, t_gamma0, v_x, v_gamma);
 	break;
       }
       ++i;
@@ -521,12 +529,16 @@ namespace getfem {
 
 
   template <typename CONT_S, typename VECT>
-  void init_test_function(CONT_S &S, const VECT &x, double gamma,
-			  const VECT &t_x, double t_gamma) {
-    if (S.noisy() > 0) cout << "starting computing an initial value of a "
-			    << "test function for bifurcations" << endl;
-    S.set_build(BUILD_ALL);
-    double tau = test_function(S, x, gamma, t_x, t_gamma); S.set_tau2(tau);
+  void init_test_functions(CONT_S &S, const VECT &x, double gamma,
+			   const VECT &t_x, double t_gamma) {
+    S.set_tau_lp(t_gamma);
+    if (S.singularities() > 1) {
+      if (S.noisy() > 0) cout << "starting computing an initial value of a "
+			      << "test function for bifurcations" << endl;
+      S.set_build(BUILD_ALL);
+      double tau = test_function_bp(S, x, gamma, t_x, t_gamma);
+      S.set_tau_bp_2(tau);
+    }
   }
 
   template <typename CONT_S, typename VECT>
@@ -539,7 +551,8 @@ namespace getfem {
       cout << "starting computing an initial tangent" << endl;
     compute_tangent(S, x, gamma, t_x, t_gamma);
     h = S.h_init();
-    if (S.bifurcations()) init_test_function(S, x, gamma, t_x, t_gamma);
+    if (S.singularities() > 0)
+      init_test_functions(S, x, gamma, t_x, t_gamma);
   }
 
   
@@ -553,7 +566,7 @@ namespace getfem {
     double t_gamma0 = t_gamma, Gamma, T_gamma;
     VECT t_x0(t_x), X(x), T_x(x);
 
-    S.clear_tau_currentstep(); S.clear_sing_data();
+    S.clear_tau_bp_currentstep(); S.clear_sing_data();
 
     do {
       // prediction
@@ -568,23 +581,30 @@ namespace getfem {
       if (converged
 	  && (S.cosang(T_x, t_x, T_gamma, t_gamma) >= S.mincos())) {
 	new_point = true;
-	if (S.bifurcations()) {
-	  if (S.noisy() > 0)
-	    cout << "new point found, starting computing a test function "
-		 << "for bifurcations" << endl;
-	  if (!tangent_switched) {
-	    if(test_smooth_bifurcation(S, X, Gamma, T_x, T_gamma)) {
-	      S.set_sing_label("smooth bifurcation point");
-	      if (S.noisy() > 0)
-		cout << "Smooth bifurcation point detected!" << endl;
-	      treat_smooth_bif_point(S, X, Gamma, T_x, T_gamma, h);
-	    }
-	  } else if (test_nonsmooth_bifurcation(S, x, gamma, t_x0, t_gamma0,
-						X, Gamma, T_x, T_gamma)) {
-	    S.set_sing_label("non-smooth bifurcation point");
+	if (S.singularities() > 0) {
+	  if (test_limit_point(S, T_gamma)) {
+	    S.set_sing_label("limit point");
+	    if (S.noisy() > 0) cout << "Limit point detected!" << endl;
+	  }
+	  if (S.singularities() > 1) {
 	    if (S.noisy() > 0)
-	      cout << "Non-smooth bifurcation point detected!" << endl;
-	    treat_nonsmooth_point(S, x, gamma, t_x0, t_gamma0, 0);
+	      cout << "new point found, starting computing a test function "
+		   << "for bifurcations" << endl;
+	    if (!tangent_switched) {
+	      if(test_smooth_bifurcation(S, X, Gamma, T_x, T_gamma)) {
+		S.set_sing_label("smooth bifurcation point");
+		if (S.noisy() > 0)
+		  cout << "Smooth bifurcation point detected!" << endl;
+		treat_smooth_bif_point(S, X, Gamma, T_x, T_gamma, h);
+	      }
+	    } else if (test_nonsmooth_bifurcation(S, x, gamma, t_x0,
+						  t_gamma0, X, Gamma, T_x,
+						  T_gamma)) {
+	      S.set_sing_label("non-smooth bifurcation point");
+	      if (S.noisy() > 0)
+		cout << "Non-smooth bifurcation point detected!" << endl;
+	      treat_nonsmooth_point(S, x, gamma, t_x0, t_gamma0, 0);
+	    }
 	  }
 	}
 	
@@ -611,29 +631,36 @@ namespace getfem {
     } else if (S.non_smooth()) {
       treat_nonsmooth_point(S, x, gamma, t_x0, t_gamma0, 1);
       if (S.next_point()) {
-	if (S.bifurcations()) {
-	  if (S.noisy() > 0)
-	    cout << "starting computing a test function for bifurcations"
-		 << endl;
-	  S.set_build(BUILD_ALL);
-	  bool bifurcation_detected = (S.nb_tangent_sing() > 2);
-	  if (bifurcation_detected) {
-	    // update the stored values of the test function only
-	    S.set_tau1(tau_init);
-	    S.set_tau2(test_function(S, S.get_x_next(), S.get_gamma_next(),
-				     S.get_t_x_sing(1),
-				     S.get_t_gamma_sing(1)));
-	  } else
-	    bifurcation_detected
-	      = test_nonsmooth_bifurcation(S, x, gamma, t_x, t_gamma,
-					   S.get_x_next(),
-					   S.get_gamma_next(),
-					   S.get_t_x_sing(1),
-					   S.get_t_gamma_sing(1));
-	  if (bifurcation_detected) {
-	    S.set_sing_label("non-smooth bifurcation point");
+	if (S.singularities() > 0) {
+	  if (test_limit_point(S, T_gamma)) {
+	    S.set_sing_label("limit point");
+	    if (S.noisy() > 0) cout << "Limit point detected!" << endl;
+	  }
+	  if (S.singularities() > 1) {
 	    if (S.noisy() > 0)
-	      cout << "Non-smooth bifurcation point detected!" << endl;
+	      cout << "starting computing a test function for bifurcations"
+		   << endl;
+	    S.set_build(BUILD_ALL);
+	    bool bifurcation_detected = (S.nb_tangent_sing() > 2);
+	    if (bifurcation_detected) {
+	      // update the stored values of the test function only
+	      S.set_tau_bp_1(tau_bp_init);
+	      S.set_tau_bp_2(test_function_bp(S, S.get_x_next(),
+					      S.get_gamma_next(),
+					      S.get_t_x_sing(1),
+					      S.get_t_gamma_sing(1)));
+	    } else
+	      bifurcation_detected
+		= test_nonsmooth_bifurcation(S, x, gamma, t_x, t_gamma,
+					     S.get_x_next(),
+					     S.get_gamma_next(),
+					     S.get_t_x_sing(1),
+					     S.get_t_gamma_sing(1));
+	    if (bifurcation_detected) {
+	      S.set_sing_label("non-smooth bifurcation point");
+	      if (S.noisy() > 0)
+		cout << "Non-smooth bifurcation point detected!" << endl;
+	    }
 	  }
 	}
 	
@@ -665,7 +692,8 @@ namespace getfem {
     
   private:
     model *md;
-    bool bifurcations_, nonsmooth;
+    int singularities_;
+    bool nonsmooth;
     std::string parameter_name_;
     bool with_parametrised_data;
     std::string initdata_name_, finaldata_name_, currentdata_name_;
@@ -679,9 +707,9 @@ namespace getfem {
     int noisy_;
     VECT b_x_, c_x_;
     double b_gamma_, c_gamma_, d_;
-    double tau1, tau2;
-    VECT alpha_hist, tau_hist;
-    std::map<double, double> tau_graph;
+    double tau_lp, tau_bp_1, tau_bp_2;
+    VECT alpha_hist, tau_bp_hist;
+    std::map<double, double> tau_bp_graph;
     std::string sing_label;
     VECT x_sing, x_next;
     double gamma_sing, gamma_next;
@@ -701,47 +729,48 @@ namespace getfem {
 
     cont_struct_getfem_model
     (model &m, const std::string &pn, double sfac, rmodel_plsolver_type ls,
-     bool bif = false, double hin = 1.e-2, double hmax = 1.e-1,
-     double hmin = 1.e-5, double hinc = 1.3, double hdec = 0.5,
-     unsigned long mit = 10, unsigned long tit = 4, double mres = 1.e-6,
-     double mdiff = 1.e-6, double mcos = 0.9, double mress = 1.e-8,
-     int noi = 0, bool nonsm = false, double dmax = 0.005,
-     double dmin = 0.00012, double tvar = 0.02, unsigned long ndir = 40,
-     unsigned long ncomb = 1)
-      : md(&m), bifurcations_(bif), nonsmooth(nonsm), parameter_name_(pn),
+     double hin = 1.e-2, double hmax = 1.e-1, double hmin = 1.e-5,
+     double hinc = 1.3, double hdec = 0.5, unsigned long mit = 10,
+     unsigned long tit = 4, double mres = 1.e-6, double mdiff = 1.e-6,
+     double mcos = 0.9, double mress = 1.e-8, int noi = 0, int sing = 0,
+     bool nonsm = false, double dmax = 0.005, double dmin = 0.00012,
+     double tvar = 0.02, unsigned long ndir = 40, unsigned long ncomb = 1)
+      : md(&m), singularities_(sing), nonsmooth(nonsm), parameter_name_(pn),
 	with_parametrised_data(false), scfac_(sfac), lsolver(ls),
 	h_init_(hin), h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
 	maxit_(mit), thrit_(tit), maxres_(mres), maxdiff_(mdiff),
 	mincos_(mcos), maxres_solve_(mress), delta_max_(dmax),
 	delta_min_(dmin), thrvar_(tvar), nbdir_(ndir), nbcomb_(ncomb),
-	noisy_(noi), tau1(tau_init), tau2(tau_init), gamma_sing(0.),
-	gamma_next(0.), build(BUILD_ALL)
+	noisy_(noi), tau_lp(0.), tau_bp_1(tau_bp_init),
+	tau_bp_2(tau_bp_init), gamma_sing(0.), gamma_next(0.),
+	build(BUILD_ALL)
     { GMM_ASSERT1(!md->is_complex(),
 		  "Continuation has only a real version, sorry.");
-      if (bifurcations_) init_border(); }
+      if (singularities_ > 1) init_border(); }
     
     cont_struct_getfem_model
     (model &m, const std::string &pn, const std::string &in,
      const std::string &fn, const std::string &cn, double sfac,
-     rmodel_plsolver_type ls, bool bif = false, double hin = 1.e-2,
-     double hmax = 1.e-1, double hmin = 1.e-5, double hinc = 1.3,
-     double hdec = 0.5, unsigned long mit = 10, unsigned long tit = 4,
-     double mres = 1.e-6, double mdiff = 1.e-6, double mcos = 0.9,
-     double mress = 1.e-8, int noi = 0, bool nonsm = false,
-     double dmax = 0.005, double dmin = 0.00012, double tvar = 0.02,
-     unsigned long ndir = 40, unsigned long ncomb = 1)
-      : md(&m), bifurcations_(bif), nonsmooth(nonsm), parameter_name_(pn),
+     rmodel_plsolver_type ls, double hin = 1.e-2, double hmax = 1.e-1,
+     double hmin = 1.e-5, double hinc = 1.3, double hdec = 0.5,
+     unsigned long mit = 10, unsigned long tit = 4, double mres = 1.e-6,
+     double mdiff = 1.e-6, double mcos = 0.9, double mress = 1.e-8,
+     int noi = 0, int sing = 0, bool nonsm = false, double dmax = 0.005,
+     double dmin = 0.00012, double tvar = 0.02, unsigned long ndir = 40,
+     unsigned long ncomb = 1)
+      : md(&m), singularities_(sing), nonsmooth(nonsm), parameter_name_(pn),
 	with_parametrised_data(true), initdata_name_(in),
 	finaldata_name_(fn), currentdata_name_(cn), scfac_(sfac),
 	lsolver(ls), h_init_(hin), h_max_(hmax), h_min_(hmin), h_inc_(hinc),
 	h_dec_(hdec), maxit_(mit), thrit_(tit), maxres_(mres),
 	maxdiff_(mdiff), mincos_(mcos), maxres_solve_(mress),
 	delta_max_(dmax), delta_min_(dmin), thrvar_(tvar), nbdir_(ndir),
-	nbcomb_(ncomb), noisy_(noi), tau1(tau_init), tau2(tau_init),
-	gamma_sing(0.), gamma_next(0.), build(BUILD_ALL)
+	nbcomb_(ncomb), noisy_(noi), tau_lp(0.), tau_bp_1(tau_bp_init),
+	tau_bp_2(tau_bp_init), gamma_sing(0.), gamma_next(0.),
+	build(BUILD_ALL)
     { GMM_ASSERT1(!md->is_complex(),
 		  "Continuation has only a real version, sorry.");
-      if (bifurcations_) init_border(); }
+      if (singularities_ > 1) init_border(); }
 
     cont_struct_getfem_model(void) {}
     
@@ -870,7 +899,7 @@ namespace getfem {
     
     // Misc. for accessing private data
     model &linked_model(void) { return *md; }
-    bool bifurcations(void) { return bifurcations_; }
+    int singularities(void) { return singularities_; }
     bool non_smooth(void) { return nonsmooth; }
     std::string parameter_name(void) { return parameter_name_; }
     double scfac(void) { return scfac_; }
@@ -896,35 +925,37 @@ namespace getfem {
     double c_gamma(void) { return c_gamma_; }
     double d(void) { return d_; }
 
-    void set_tau1(double tau) { tau1 = tau; }
-    double get_tau1(void) { return tau1; }
-    void set_tau2(double tau) { tau2 = tau; }
-    double get_tau2(void) { return tau2; }
-    void clear_tau_currentstep(void) {
-      tau_graph.clear();
-      gmm::resize(alpha_hist, 0); gmm::resize(tau_hist, 0);
+    void set_tau_lp(double tau) { tau_lp = tau; }
+    double get_tau_lp(void) { return tau_lp; }
+    void set_tau_bp_1(double tau) { tau_bp_1 = tau; }
+    double get_tau_bp_1(void) { return tau_bp_1; }
+    void set_tau_bp_2(double tau) { tau_bp_2 = tau; }
+    double get_tau_bp_2(void) { return tau_bp_2; }
+    void clear_tau_bp_currentstep(void) {
+      tau_bp_graph.clear();
+      gmm::resize(alpha_hist, 0); gmm::resize(tau_bp_hist, 0);
     }
-    void init_tau_graph(void) { tau_graph[0.] = tau2; }
-    void insert_tau_graph(double alpha, double tau) {
-      tau_graph[alpha] = tau;
+    void init_tau_bp_graph(void) { tau_bp_graph[0.] = tau_bp_2; }
+    void insert_tau_bp_graph(double alpha, double tau) {
+      tau_bp_graph[alpha] = tau;
     }
     VECT &get_alpha_hist(void) {
       unsigned long i = 0;
-      gmm::resize(alpha_hist, tau_graph.size());
-      for (std::map<double, double>::iterator it = tau_graph.begin();
-	   it != tau_graph.end(); it++) {
+      gmm::resize(alpha_hist, tau_bp_graph.size());
+      for (std::map<double, double>::iterator it = tau_bp_graph.begin();
+	   it != tau_bp_graph.end(); it++) {
 	alpha_hist[i] = (*it).first; i++;
       }	
       return alpha_hist;
     }
-    VECT &get_tau_hist(void) {
+    VECT &get_tau_bp_hist(void) {
       unsigned long i = 0;
-      gmm::resize(tau_hist, tau_graph.size());
-      for (std::map<double, double>::iterator it = tau_graph.begin();
-	   it != tau_graph.end(); it++) {
-	tau_hist[i] = (*it).second; i++; 
+      gmm::resize(tau_bp_hist, tau_bp_graph.size());
+      for (std::map<double, double>::iterator it = tau_bp_graph.begin();
+	   it != tau_bp_graph.end(); it++) {
+	tau_bp_hist[i] = (*it).second; i++; 
       }	
-      return tau_hist;
+      return tau_bp_hist;
     }
 
     void clear_sing_data(void) {

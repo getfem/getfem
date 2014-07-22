@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2011-2012 Yves Renard, Tomas Ligursky.
+ Copyright (C) 2011-2014 Yves Renard, Tomas Ligursky.
  
  This file is a part of GETFEM++
  
@@ -113,8 +113,8 @@ bool state_problem::cont(plain_vector &U) {
   scalar_type scfac = 1./ nb_dof;
   size_type nb_step = int(PARAM.int_value("NBSTEP",
 					  "Number of continuation steps"));
-  bool bifurcations = PARAM.int_value("BIFURCATIONS", 
-				      "Deal with bifurcations?");
+  int singularities = PARAM.int_value("SINGULARITIES", 
+				      "Deal with singularities?");
   scalar_type  h_init = PARAM.real_value("H_INIT", "h_init"),
     h_max = PARAM.real_value("H_MAX", "h_max"),
     h_min = PARAM.real_value("H_MIN", "h_min"),
@@ -131,8 +131,8 @@ bool state_problem::cont(plain_vector &U) {
 					    "Directory of data files");
   gmm::set_traces_level(noisy - 1);
   getfem::cont_struct_getfem_model
-    S(model, "lambda", scfac, ls, bifurcations, h_init, h_max, h_min, h_inc,
-      h_dec, maxit, thrit, maxres, maxdiff, mincos, maxres_solve, noisy);
+    S(model, "lambda", scfac, ls, h_init, h_max, h_min, h_inc, h_dec, maxit,
+      thrit, maxres, maxdiff, mincos, maxres_solve, noisy, singularities);
 
   std::string bp_rootfilename = PARAM.string_value("BP_ROOTFILENAME").size()
     ? PARAM.string_value("BP_ROOTFILENAME") : "";
@@ -164,8 +164,8 @@ bool state_problem::cont(plain_vector &U) {
     getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
   }
 
-  cout << "U = " << U << endl;
-  cout << "lambda - u * exp(-u) = " << lambda - U[0] * exp(-U[0]) << endl;
+//   cout << "U = " << U << endl;
+//   cout << "lambda - u * exp(-u) = " << lambda - U[0] * exp(-U[0]) << endl;
 
   // Continuation
   std::string sing_label;
@@ -177,29 +177,31 @@ bool state_problem::cont(plain_vector &U) {
     getfem::Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
     if (h == 0) break;
 
-    cout << "U = " << U << endl;
-    cout << "lambda = " << lambda << endl;
+//     cout << "U = " << U << endl;
+//     cout << "lambda = " << lambda << endl;
 //     cout << "lambda - U[0] * exp(-U[0]) = "
 // 	 << lambda - U[0] * exp(-U[0]) << endl;
 
     sing_label = S.get_sing_label();
-    if (sing_label == "smooth bifurcation point") {
-      gmm::copy(S.get_x_sing(),
-		gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
-      Y[nb_dof] = S.get_gamma_sing();
-      sprintf(s1, "continuation_step_%d", step + 1);
-      gmm::vecsave(datapath + s1 + "_bp.Y", Y);
-
-      for (size_type i = 0; i < S.nb_tangent_sing(); i++) {
-	gmm::copy(S.get_t_x_sing(i),
+    if (sing_label.size() > 0) {
+      if (sing_label == "limit point")
+	sprintf(s1, "Step %d: %s", step + 1, sing_label.c_str());
+      else if (sing_label == "smooth bifurcation point") {
+	gmm::copy(S.get_x_sing(),
 		  gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
-	Y[nb_dof] = S.get_t_gamma_sing(i);
-	sprintf(s2, "_bp.T_Y%d", i + 1);
-	gmm::vecsave(datapath + s1 + s2, Y);
+	Y[nb_dof] = S.get_gamma_sing();
+	sprintf(s1, "continuation_step_%d", step + 1);
+	gmm::vecsave(datapath + s1 + "_bp.Y", Y);
+	for (size_type i = 0; i < S.nb_tangent_sing(); i++) {
+	  gmm::copy(S.get_t_x_sing(i),
+		    gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
+	  Y[nb_dof] = S.get_t_gamma_sing(i);
+	  sprintf(s2, "_bp.T_Y%d", i + 1);
+	  gmm::vecsave(datapath + s1 + s2, Y);
+	}
+	sprintf(s1, "Step %d: %s, %u branch(es) located", step + 1,
+		sing_label.c_str(), (unsigned int) S.nb_tangent_sing());
       }
-
-      sprintf(s1, "Step %d: %u branch(es) located",
-	      step + 1, (unsigned int) S.nb_tangent_sing());
       sing_out.push_back(s1);
     }
     cout << "end of Step nº " << step + 1 << " / " << nb_step << endl;
@@ -207,14 +209,15 @@ bool state_problem::cont(plain_vector &U) {
 
   if (sing_out.size() > 0) {
     cout << endl
-	 << "----------------------------------------------------------" 
+	 << "--------------------------------------------------------" 
 	 << endl
-	 << "   Detected bifurcation points on the continuation curve"
+	 << "   Detected singular points on the continuation curve"
 	 << endl
-	 << "----------------------------------------------------------"
+	 << "--------------------------------------------------------"
 	 << endl;
     for (size_type i = 0; i < sing_out.size(); i++)
-      cout << sing_out[i] << endl << endl;
+      cout << sing_out[i] << endl;
+    cout << endl;
   }
 
   return (h > 0);
