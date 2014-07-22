@@ -94,10 +94,10 @@ namespace getfem {
     };
     virtual ~stored_mesh_slice() {}
     /** return the number of convexes of the original mesh referenced
-	in the slice */
+        in the slice */
     size_type nb_convex() const { return cvlst.size(); }
     /** return the original convex number of the 'ic'th convex
-	referenced in the slice */
+        referenced in the slice */
     size_type convex_num(size_type ic) const { return cvlst[ic].cv_num; }
     /** change the slice dimension (append zeros or truncate node coordinates..) */
     void set_dim(size_type newdim);
@@ -106,7 +106,7 @@ namespace getfem {
     /** return a pointer to the original mesh */
     const mesh& linked_mesh() const { return *poriginal_mesh; }
     /** return the simplex count, in an array.
-	@param c contains the number of simplexes of dimension 0, 1, ... dim().
+        @param c contains the number of simplexes of dimension 0, 1, ... dim().
     */
     void nb_simplexes(std::vector<size_type>& c) const { c = simplex_cnt; }
     /** Return the number of simplexes of dimension sdim */
@@ -140,7 +140,7 @@ namespace getfem {
       { return merged_nodes_idx.size() - 1; }
 
     /** @brief Return the physical position of the merged node.
-     	@param i_merged should be 0 <= i_merged < nb_merged_nodes()
+        @param i_merged should be 0 <= i_merged < nb_merged_nodes()
      */
     const base_node merged_point(size_type i_merged) const 
       { return merged_nodes[merged_nodes_idx[i_merged]].P->pt; }
@@ -166,7 +166,7 @@ namespace getfem {
     void clear_merged_nodes() const;
 
     /** @brief Extract the list of mesh edges.
-	
+
          extract the list of mesh edges into 'edges' (size = 2* number
          of edges). 'slice_edges' indicates which one were created
          after slicing.  The from_merged_nodes flag may be used if you
@@ -174,33 +174,33 @@ namespace getfem {
          points 
     */
     void get_edges(std::vector<size_type> &edges,
-		   dal::bit_vector &slice_edges,
-		   bool from_merged_nodes) const;
+                   dal::bit_vector &slice_edges,
+                   bool from_merged_nodes) const;
 
     void set_convex(size_type cv, bgeot::pconvex_ref cvr, 
-		    mesh_slicer::cs_nodes_ct cv_nodes, 
-		    mesh_slicer::cs_simplexes_ct cv_simplexes, 
-		    dim_type fcnt, const dal::bit_vector& splx_in,
-		    bool discont);
+                    mesh_slicer::cs_nodes_ct cv_nodes, 
+                    mesh_slicer::cs_simplexes_ct cv_simplexes, 
+                    dim_type fcnt, const dal::bit_vector& splx_in,
+                    bool discont);
 
     /** Build the slice, by applying a slicer_action operation. */
     void build(const getfem::mesh& m, const slicer_action &a, 
-	       size_type nrefine = 1) { build(m,&a,0,0,nrefine); }
+               size_type nrefine = 1) { build(m,&a,0,0,nrefine); }
     /** Build the slice, by applying two slicer_action operations. */
     void build(const getfem::mesh& m, const slicer_action &a,
-	       const slicer_action &b, 
-	       size_type nrefine = 1) { build(m,&a,&b,0,nrefine); }
+               const slicer_action &b, 
+               size_type nrefine = 1) { build(m,&a,&b,0,nrefine); }
     /** Build the slice, by applying three slicer_action operations. */
     void build(const getfem::mesh& m, const slicer_action &a,
-	       const slicer_action &b, const slicer_action &c, 
-	       size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
+               const slicer_action &b, const slicer_action &c, 
+               size_type nrefine = 1) { build(m,&a,&b,&c,nrefine); }
     void build(const getfem::mesh& m, const slicer_action *a,
-	       const slicer_action *b, const slicer_action *c, 
-	       size_type nrefine);
+               const slicer_action *b, const slicer_action *c, 
+               size_type nrefine);
       
     /** @brief Apply the listed slicer_action(s) to the slice object.
-	the stored_mesh_slice is not modified. This can be used to build a
-	new stored_mesh_slice from a stored_mesh_slice.
+        the stored_mesh_slice is not modified. This can be used to build a
+        new stored_mesh_slice from a stored_mesh_slice.
     */
     void replay(slicer_action &a) const { replay(&a,0,0); }
     void replay(slicer_action &a, slicer_action &b) const
@@ -223,13 +223,13 @@ namespace getfem {
 
         The mesh_fem and the slice must share the same mesh, of course.
 
-	@param mf the mesh_fem
+        @param mf the mesh_fem
 
-	@param U a vector whose dimension is a multiple of
-	mf.nb_dof(), the field to be interpolated.
+        @param U a vector whose dimension is a multiple of
+        mf.nb_dof(), the field to be interpolated.
 
-	@param V on output, a vector corresponding to the interpolated
-	field on the slice (values given on each node of the slice).
+        @param V on output, a vector corresponding to the interpolated
+        field on the slice (values given on each node of the slice).
     */
     template<typename V1, typename V2> void 
     interpolate(const getfem::mesh_fem &mf, const V1& UU, V2& V) const {
@@ -243,32 +243,32 @@ namespace getfem {
       coeff.resize(qqdim);
       std::vector<T> U(mf.nb_basic_dof()*qqdim);
       if (mf.is_reduced()) {
-	for (size_type k = 0; k < qqdim; ++k)
-	  gmm::mult(mf.extension_matrix(),
-		    gmm::sub_vector(UU, gmm::sub_slice(k, mf.nb_dof(),
-						       qqdim)),
-		    gmm::sub_vector(U,gmm::sub_slice(k, mf.nb_basic_dof(),
-						     qqdim)));
+        for (size_type k = 0; k < qqdim; ++k)
+          gmm::mult(mf.extension_matrix(),
+                    gmm::sub_vector(UU, gmm::sub_slice(k, mf.nb_dof(),
+                                                       qqdim)),
+                    gmm::sub_vector(U,gmm::sub_slice(k, mf.nb_basic_dof(),
+                                                     qqdim)));
       }
       else
-	gmm::copy(UU, U);
+        gmm::copy(UU, U);
 
       gmm::clear(V);
       for (size_type i=0; i < nb_convex(); ++i) {
         size_type cv = convex_num(i);
         refpts.resize(nodes(i).size());
         for (size_type j=0; j < refpts.size(); ++j)
-	  refpts[j] = nodes(i)[j].pt_ref;
-	if (!mf.convex_index().is_in(cv)) {
-	  pos += refpts.size() * qdim * qqdim;
-	  continue;
-	}
-	
+          refpts[j] = nodes(i)[j].pt_ref;
+        if (!mf.convex_index().is_in(cv)) {
+          pos += refpts.size() * qdim * qqdim;
+          continue;
+        }
+        
         pfem pf = mf.fem_of_element(cv);
-	if (pf->need_G()) 
-	  bgeot::vectors_to_base_matrix(G,
-					mf.linked_mesh().points_of_convex(cv));
-	fem_precomp_pool fppool;
+        if (pf->need_G()) 
+          bgeot::vectors_to_base_matrix(G,
+                                        mf.linked_mesh().points_of_convex(cv));
+        fem_precomp_pool fppool;
         pfem_precomp pfp = fppool(pf, store_point_tab(refpts));
         
         mesh_fem::ind_dof_ct dof = mf.ind_basic_dof_of_element(cv);
@@ -276,16 +276,16 @@ namespace getfem {
           coeff[qq].resize(mf.nb_basic_dof_of_element(cv));
           typename std::vector<T>::iterator cit = coeff[qq].begin();
           for (mesh_fem::ind_dof_ct::const_iterator it=dof.begin();
-	       it != dof.end(); ++it, ++cit)
+               it != dof.end(); ++it, ++cit)
             *cit = U[(*it)*qqdim+qq];
         }
-	fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),
-				      pfp,0,G,cv, size_type(-1));
+        fem_interpolation_context ctx(mf.linked_mesh().trans_of_convex(cv),
+                                      pfp, 0, G, cv, short_type(-1));
         for (size_type j=0; j < refpts.size(); ++j) {
-	  ctx.set_ii(j);
+          ctx.set_ii(j);
           for (size_type qq = 0; qq < qqdim; ++qq) {
             typename gmm::sub_vector_type<V2*,
-	      gmm::sub_interval>::vector_type dest = 
+              gmm::sub_interval>::vector_type dest = 
               gmm::sub_vector(V,gmm::sub_interval(pos,qdim));
             pf->interpolation(ctx,coeff[qq],dest,dim_type(qdim));
             pos += qdim;
@@ -304,7 +304,7 @@ namespace getfem {
   public:
     slicer_build_stored_mesh_slice(stored_mesh_slice& sl_) : sl(sl_) {
       GMM_ASSERT1(sl.cvlst.size() == 0, 
-		  "the stored_mesh_slice already contains data");
+                  "the stored_mesh_slice already contains data");
     }
     void exec(mesh_slicer& ms);
   };

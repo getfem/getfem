@@ -157,7 +157,7 @@ void elastostatic_contact_problem::init(void) {
           mesh.add_convex_by_points(tmpmesh.trans_of_convex(cv),
                                     tmpmesh.points_of_convex(cv).begin());
       }
-      for (size_type f = 0; f < tmpmesh.structure_of_convex(cv)->nb_faces(); f++) {
+      for (short_type f = 0; f < tmpmesh.structure_of_convex(cv)->nb_faces(); f++) {
         for (size_type i = 0; i < dfs.size(); ++i)
           if (tmpmesh.region(dfs[i]).is_in(cv,f)) {
             dirichlet_boundary.add(newcv,f);

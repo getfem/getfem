@@ -3758,7 +3758,8 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: call interpolate transformation");
       base_node P_ref;
-      size_type cv, face_num;
+      size_type cv;
+      short_type face_num;
       gmm::clear(inin.Normal);
       inin.pt_type = trans->transform(workspace, m, ctx, Normal, &(inin.m), cv,
                                       face_num, P_ref, inin.Normal,
@@ -3769,7 +3770,7 @@ namespace getfem {
           inin.ctx = fem_interpolation_context((inin.m)->trans_of_convex(cv),
                                                0, P_ref, G, cv, face_num);
           inin.has_ctx = true;
-          if (face_num != size_type(-1))
+          if (face_num != short_type(-1))
             inin.Normal = bgeot::compute_normal(inin.ctx, face_num);
           else
             inin.Normal.resize(0);
@@ -7847,7 +7848,7 @@ namespace getfem {
       pga_tree_node root = gis.trees.back().root;
       if (root) {
         GMM_ASSERT1(!scalar || (root->t.size() == 1),
-                    "The result of the given expression is not a scalar"); 
+                    "The result of the given expression is not a scalar");
         ga_instruction_set::region_mim rm(td.mim, td.rg);
         gis.whole_instructions[rm].m = td.m;
         ga_if_hierarchy if_hierarchy;
@@ -8770,7 +8771,7 @@ namespace getfem {
                   fem_interpolation_context &ctx_x,
                   const base_small_vector &Normal,
                   const mesh **m_t,
-                  size_type &cv, size_type &face_num, base_node &P_ref,
+                  size_type &cv, short_type &face_num, base_node &P_ref,
                   base_small_vector &/*N_y*/,
                   std::map<var_trans_pair, base_tensor> &derivatives,
                   bool compute_derivatives) const {
@@ -8795,7 +8796,7 @@ namespace getfem {
                  target_mesh.trans_of_convex(cv));
 
         if (gic.invert(P, P_ref)) {
-          face_num = size_type(-1); // Should detect potential faces ?
+          face_num = short_type(-1); // Should detect potential faces ?
           ret_type = 1;
           break;
         }

@@ -39,8 +39,8 @@ using namespace getfemint;
 struct sub_gf_cvstruct_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   bgeot::pconvex_structure cs) = 0;
+                   getfemint::mexargs_out& out,
+                   bgeot::pconvex_structure cs) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_cvstruct_get> psub_command;
@@ -49,16 +49,16 @@ typedef boost::intrusive_ptr<sub_gf_cvstruct_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_cvstruct_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       bgeot::pconvex_structure cs)			\
-      { dummy_func(in); dummy_func(out); dummy_func(cs); code }		\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_cvstruct_get {                              \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       bgeot::pconvex_structure cs)                         \
+      { dummy_func(in); dummy_func(out); dummy_func(cs); code }             \
+    };                                                                      \
+    psub_command psubc = new subc;                                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }
 
 
@@ -66,7 +66,7 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 void gf_cvstruct_get(getfemint::mexargs_in& m_in,
-		     getfemint::mexargs_out& m_out) {
+                     getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -97,7 +97,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
       ("basic_structure", 0, 0, 0, 1,
        out.pop().from_object_id
        (getfemint::ind_convex_structure(cs->basic_structure()),
-	CVSTRUCT_CLASS_ID);
+        CVSTRUCT_CLASS_ID);
        );
 
 
@@ -105,10 +105,10 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
       Return the convex structure of the face `F`.@*/
     sub_command
       ("face", 1, 1, 0, 1,
-       size_type f = in.pop().to_face_number(cs->nb_faces());
+       short_type f = in.pop().to_face_number(cs->nb_faces());
        out.pop().from_object_id
        (getfemint::ind_convex_structure(cs->faces_structure()[f]),
-	CVSTRUCT_CLASS_ID);
+        CVSTRUCT_CLASS_ID);
        );
 
 
@@ -119,7 +119,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
        short_type f = short_type(in.pop().to_face_number(cs->nb_faces()));
        iarray w = out.pop().create_iarray_h(cs->nb_points_of_face(f));
        for (size_type i=0; i < w.size(); ++i)
-	 w[i] = cs->ind_points_of_face(f)[i]+config::base_index();
+         w[i] = cs->ind_points_of_face(f)[i]+config::base_index();
        );
 
     /*@GET s = ('char')
@@ -127,7 +127,7 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
     sub_command
       ("char", 0, 0, 0, 1,
        GMM_ASSERT1(false,
-		   "No output format for a convex structure. To be done");
+                   "No output format for a convex structure. To be done");
        );
 
     /*@GET ('display')
@@ -151,8 +151,8 @@ void gf_cvstruct_get(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, cs);
   }
   else bad_cmd(init_cmd);

@@ -297,12 +297,12 @@ namespace getfemint {
     return cv;
   }
 
-  size_type
-  mexarg_in::to_face_number(size_type nbf) {
-    size_type f = to_integer(config::base_index(),
-                             int(config::base_index()+nbf-1));
+  short_type
+  mexarg_in::to_face_number(short_type nbf) {
+    int f = to_integer(config::base_index(),
+                       int(config::base_index()+nbf-1));
     f -= config::base_index();
-    return f;
+    return short_type(f);
   }
 
   bool

@@ -44,16 +44,16 @@ static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in) {
   for (size_type j=0; j < v.getn(); j++) {
     size_type cv = size_type(v(0,j))-config::base_index();
 
-    size_type f  = v.getm() == 2 ? (size_type(v(1,j))-config::base_index())
-                                 : size_type(-1);
+    short_type f  = v.getm() == 2 ? short_type(v(1,j)-config::base_index())
+                                  : short_type(-1);
     if (!mesh.convex_index().is_in(cv)) {
       THROW_BADARG( "Invalid convex number '" << cv+config::base_index() << "' at column " << j+config::base_index());
     }
-    if (int(f) >= mesh.structure_of_convex(cv)->nb_faces()) {
+    if (f != short_type(-1) && f >= mesh.structure_of_convex(cv)->nb_faces()) {
       THROW_BADARG( "Invalid face number '" << f+config::base_index() << "' at column " << j+config::base_index());
     }
-    if (f == size_type(-1)) rg.add(cv);
-    else                    rg.add(cv, f);
+    if (f == short_type(-1)) rg.add(cv);
+    else                     rg.add(cv, f);
   }
 }
 

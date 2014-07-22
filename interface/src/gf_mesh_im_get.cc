@@ -56,9 +56,9 @@ get_integ_of_convexes(const getfem::mesh_im& mim, mexargs_in& in, mexargs_out& o
 struct sub_gf_mim_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfemint_mesh_im *mi_mim,
-		   getfem::mesh_im *mim) = 0;
+                   getfemint::mexargs_out& out,
+                   getfemint_mesh_im *mi_mim,
+                   getfem::mesh_im *mim) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_mim_get> psub_command;
@@ -67,17 +67,17 @@ typedef boost::intrusive_ptr<sub_gf_mim_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_mim_get {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfemint_mesh_im *mi_mim, getfem::mesh_im *mim)	\
-      { dummy_func(in); dummy_func(out);  dummy_func(mi_mim);		\
-	dummy_func(mim); code }						\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_mim_get {                                   \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfemint_mesh_im *mi_mim, getfem::mesh_im *mim)     \
+      { dummy_func(in); dummy_func(out);  dummy_func(mi_mim);               \
+        dummy_func(mim); code }                                             \
+    };                                                                      \
+    psub_command psubc = new subc;                                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }                           
 
 
@@ -85,7 +85,7 @@ template <typename T> static inline void dummy_func(T &) {}
 
 
 void gf_mesh_im_get(getfemint::mexargs_in& m_in,
-		    getfemint::mexargs_out& m_out) {
+                    getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
@@ -128,8 +128,8 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
       ("convex_index", 0, 0, 0, 1,
        dal::bit_vector bv = mim->convex_index();
        for (dal::bv_visitor ic(mim->convex_index()); !ic.finished(); ++ic) {
-	 if (mim->int_method_of_element(ic)->type() == getfem::IM_NONE)
-	   bv.sup(ic);
+         if (mim->int_method_of_element(ic)->type() == getfem::IM_NONE)
+           bv.sup(ic);
        }
        out.pop().from_bit_vector(bv);
        );
@@ -149,23 +149,23 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
        getfem::pmat_elem_type pmet = in.pop().to_mat_elem_type();
        size_type cv = in.pop().to_convex_number(mim->linked_mesh());
        /* one should check that the fem given to the MET is
-	  compatible with the fem of the element (not easy ..) */
+          compatible with the fem of the element (not easy ..) */
        getfem::base_tensor t;
        /* if the convex has a IM, then it has been added to the convex index
-	  of the mesh_fem
+          of the mesh_fem
        */
        check_cv_im(*mim, cv);
        getfem::pmat_elem_computation pmec =
        getfem::mat_elem(pmet,
-			mim->int_method_of_element(cv) ,
-			mim->linked_mesh().trans_of_convex(cv));
+                        mim->int_method_of_element(cv) ,
+                        mim->linked_mesh().trans_of_convex(cv));
        if (!in.remaining()) {
-	 pmec->gen_compute(t, mim->linked_mesh().points_of_convex(cv), cv);
+         pmec->gen_compute(t, mim->linked_mesh().points_of_convex(cv), cv);
        } else {
-	 unsigned nbf =
-	   mim->linked_mesh().structure_of_convex(cv)->nb_faces();
-	 size_type f = in.pop().to_face_number(nbf);
-	 pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), short_type(f), cv);
+         short_type nbf =
+           mim->linked_mesh().structure_of_convex(cv)->nb_faces();
+         short_type f = in.pop().to_face_number(nbf);
+         pmec->gen_compute_on_face(t, mim->linked_mesh().points_of_convex(cv), f, cv);
        }
        out.pop().from_tensor(t);
        );
@@ -191,28 +191,28 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
        if (in.remaining()) mr = in.pop().to_mesh_region();
        else mr = getfem::mesh_region(mim->linked_mesh().convex_index());
        for (getfem::mr_visitor ir(mr); !ir.finished(); ++ir) {
-	 size_type cv = ir.cv();
-	 if (!mim->convex_index().is_in(cv)) continue;
-	 getfem::pintegration_method pim = mim->int_method_of_element(cv);
-	 if (pim->type() != getfem::IM_APPROX) continue;
-	 getfem::papprox_integration pai = pim->approx_method();
-	 bgeot::pgeometric_trans pgt = mim->linked_mesh().trans_of_convex(cv);
-	 size_type nbpt =
-	   (ir.is_face() ? pai->nb_points_on_face(ir.f()) : pai->nb_points_on_convex());
-	 for (unsigned ii=0; ii < nbpt; ++ii) {
-	   getfem::base_node Pref;
-	   scalar_type w;
-	   if (ir.is_face()) {
-	     Pref = pai->point_on_face(ir.f(), ii);
-	     w = pai->coeff_on_face(ir.f(), ii);
-	   } else {
-	     Pref = pai->point(ii);
-	     w = pai->coeff(ii);
-	   }
-	   getfem::base_node P = pgt->transform(Pref, mim->linked_mesh().points_of_convex(cv));
-	   for (unsigned j=0; j < N; ++j) tmp.push_back(P[j]);
-	   tmp.push_back(w);
-	 }
+         size_type cv = ir.cv();
+         if (!mim->convex_index().is_in(cv)) continue;
+         getfem::pintegration_method pim = mim->int_method_of_element(cv);
+         if (pim->type() != getfem::IM_APPROX) continue;
+         getfem::papprox_integration pai = pim->approx_method();
+         bgeot::pgeometric_trans pgt = mim->linked_mesh().trans_of_convex(cv);
+         size_type nbpt =
+           (ir.is_face() ? pai->nb_points_on_face(ir.f()) : pai->nb_points_on_convex());
+         for (unsigned ii=0; ii < nbpt; ++ii) {
+           getfem::base_node Pref;
+           scalar_type w;
+           if (ir.is_face()) {
+             Pref = pai->point_on_face(ir.f(), ii);
+             w = pai->coeff_on_face(ir.f(), ii);
+           } else {
+             Pref = pai->point(ii);
+             w = pai->coeff(ii);
+           }
+           getfem::base_node P = pgt->transform(Pref, mim->linked_mesh().points_of_convex(cv));
+           for (unsigned j=0; j < N; ++j) tmp.push_back(P[j]);
+           tmp.push_back(w);
+         }
        }
        darray ww = out.pop().create_darray(N+1, unsigned(tmp.size() / (N+1)));
        if (tmp.size()) std::copy(tmp.begin(), tmp.end(), &ww[0]);
@@ -226,9 +226,9 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
        std::string s = in.pop().to_string();
        bool with_mesh = false;
        if (in.remaining()) {
-	 if (cmd_strmatch(in.pop().to_string(), "with mesh")) {
-	   with_mesh = true;
-	 } else THROW_BADARG("expecting string 'with mesh'");
+         if (cmd_strmatch(in.pop().to_string(), "with mesh")) {
+           with_mesh = true;
+         } else THROW_BADARG("expecting string 'with mesh'");
        }
        std::ofstream o(s.c_str());
        if (!o) THROW_ERROR("impossible to write in file '" << s << "'");
@@ -249,7 +249,7 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
       ("char", 0, 0, 0, 1,
        std::stringstream s;
        if (in.remaining() && cmd_strmatch(in.pop().to_string(),"with mesh"))
-	 mim->linked_mesh().write_to_file(s);
+         mim->linked_mesh().write_to_file(s);
        mim->write_to_file(s);
        out.pop().from_string(s.str().c_str());
        );
@@ -297,8 +297,8 @@ void gf_mesh_im_get(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, mi_mim, mim);
   }
   else bad_cmd(init_cmd);

@@ -158,9 +158,9 @@ namespace getfem {
       if (this_thread() == 0) return rp().m.begin();
       else return rp().m.end();
     }
-    size_type partition_size 
-      =   std::ceil(static_cast<scalar_type>(region_size)/
-          static_cast<scalar_type >(num_threads()));
+    size_type partition_size = static_cast<size_type>
+      (std::ceil(static_cast<scalar_type>(region_size)/
+       static_cast<scalar_type >(num_threads())));
     size_type index_begin = partition_size * this_thread();
     if (index_begin >= region_size ) return  rp().m.end();
 
@@ -175,9 +175,9 @@ namespace getfem {
     size_type region_size = rp().m.size();
     if (region_size < num_threads()) return rp().m.end(); 
 
-    size_type partition_size 
-      = std::ceil(static_cast<scalar_type>(region_size)/
-      static_cast<scalar_type >(num_threads()));
+    size_type partition_size = static_cast<size_type>
+      (std::ceil(static_cast<scalar_type>(region_size)/
+       static_cast<scalar_type >(num_threads())));
     size_type index_end = partition_size * (this_thread() + 1);
     if (index_end >= region_size ) return  rp().m.end();
 
@@ -241,9 +241,9 @@ namespace getfem {
     index_updated = false;
   }
 
-  void mesh_region::add(size_type cv, size_type f) 
+  void mesh_region::add(size_type cv, short_type f) 
   {
-    wp().m[cv].set(f+1,1); 
+    wp().m[cv].set(short_type(f+1),1); 
     touch_parent_mesh();
     index_updated = false;
   }
@@ -259,7 +259,7 @@ namespace getfem {
     index_updated = false;
   }
 
-  void mesh_region::sup(size_type cv, size_type f) 
+  void mesh_region::sup(size_type cv, short_type f) 
   { 
     map_t::iterator it = wp().m.find(cv);
     if (it != wp().m.end()) 
@@ -307,7 +307,7 @@ namespace getfem {
     index_updated = false;
   }
 
-  bool mesh_region::is_in(size_type cv, size_type f) const 
+  bool mesh_region::is_in(size_type cv, short_type f) const 
   {
     map_t::const_iterator it = rp().m.find(cv);
     if (it == rp().m.end() || f+1 >= MAX_FACES_PER_CV) return false;

@@ -417,7 +417,7 @@ namespace getfemint {
     bool                                 to_bool();
     int                                  to_integer(int min_val=INT_MIN, int max_val=INT_MAX);
     size_type                            to_convex_number(const getfem::mesh &m);
-    size_type                            to_face_number(size_type nbf);
+    short_type                           to_face_number(short_type nbf);
     double                               to_scalar(double min_val=-1e300, double max_val=1e300);
     complex_type                         to_scalar(complex_type);
     std::string                          to_string();

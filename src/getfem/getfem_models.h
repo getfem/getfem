@@ -1340,7 +1340,7 @@ namespace getfem {
     virtual int transform
     (const ga_workspace &workspace, const mesh &m,
      fem_interpolation_context &ctx_x, const base_small_vector &Normal,
-     const mesh **m_t, size_type &cv, size_type &face_num,
+     const mesh **m_t, size_type &cv, short_type &face_num,
      base_node &P_ref, base_small_vector &N_y,
      std::map<var_trans_pair, base_tensor> &derivatives,
      bool compute_derivatives) const = 0;

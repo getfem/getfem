@@ -344,7 +344,8 @@ namespace getfem {
     gmm::sub_interval I_ux_, I_uy_, I_lx_, I_ly_;
     pfem pf_ux, pf_uy, pf_lx, pf_ly;
     size_type ndof_ux_, qdim_ux, ndof_uy_, qdim_uy, ndof_lx_, qdim_lx;
-    size_type ndof_ly_, qdim_ly, cvx_, cvy_, fx, fy, ibx, iby;
+    size_type ndof_ly_, qdim_ly, cvx_, cvy_, ibx, iby;
+    short_type fx, fy;
     bgeot::pgeometric_trans pgtx, pgty;
     const mesh_im *mim;
     pintegration_method pim;
@@ -1410,8 +1411,8 @@ namespace getfem {
           (G, mfu.linked_mesh().points_of_convex(cv));
 
         pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
-        fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                      size_type(-1));
+        fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv,
+                                      short_type(-1));
 
         size_type nb_pt_on_face = 0;
         gmm::clear(n_mean);
@@ -1600,7 +1601,7 @@ namespace getfem {
       bgeot::vectors_to_base_matrix(G, m_y0.points_of_convex(cv_y0));
 
       fem_interpolation_context ctx_y0(pgt_y0, pf_s_y0, y0_ref, G, cv_y0,
-                                       size_type(-1));
+                                       short_type(-1));
 
       size_type newton_iter = 0;
       for(;;) { // Newton algorithm to invert geometric transformation
@@ -2183,8 +2184,8 @@ namespace getfem {
           = fppool(pf_s,&(pim->approx_method()->integration_points()));
         pfem_precomp pfpl
           = fppool(pf_sl,&(pim->approx_method()->integration_points()));
-        fem_interpolation_context ctxu(pgt,pfpu,size_type(-1), G, cv, v.f());
-        fem_interpolation_context ctxl(pgt,pfpl,size_type(-1), G, cv, v.f());
+        fem_interpolation_context ctxu(pgt, pfpu, size_type(-1), G, cv, v.f());
+        fem_interpolation_context ctxl(pgt, pfpl, size_type(-1), G, cv, v.f());
 
         for (size_type k = 0;
              k < pim->approx_method()->nb_points_on_face(v.f()); ++k) {

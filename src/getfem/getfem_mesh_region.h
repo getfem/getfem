@@ -201,12 +201,12 @@ namespace getfem {
     current thread*/
     const dal::bit_vector& index() const;
     void add(const dal::bit_vector &bv);
-    void add(size_type cv, size_type f = size_type(-1));
-    void sup(size_type cv, size_type f = size_type(-1));
+    void add(size_type cv, short_type f = short_type(-1));
+    void sup(size_type cv, short_type f = short_type(-1));
     void sup_all(size_type cv);
     void clear();
     void swap_convex(size_type cv1, size_type cv2);
-    bool is_in(size_type cv, size_type f = size_type(-1)) const;
+    bool is_in(size_type cv, short_type f = short_type(-1)) const;
 
     /**region size, or the size of the region partition on the current
     thread if the region is partitioned*/

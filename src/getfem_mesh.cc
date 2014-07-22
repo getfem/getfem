@@ -51,8 +51,8 @@ namespace getfem {
   }
 
   void mesh::handle_region_refinement(size_type ic,
-				      const std::vector<size_type> &icv,
-				      bool refine) {
+                                      const std::vector<size_type> &icv,
+                                      bool refine) {
 
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     ind_set s;
@@ -62,63 +62,63 @@ namespace getfem {
 
 
       if (refine && r[ic].any()) {
-	if (r[ic][0])
-	  for (size_type jc = 0; jc < icv.size(); ++jc)
-	    r.add(icv[jc]);
-	
-	bgeot::geotrans_inv_convex giv;
-	for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
-	  if (r[ic][f+1]) {
+        if (r[ic][0])
+          for (size_type jc = 0; jc < icv.size(); ++jc)
+            r.add(icv[jc]);
+        
+        bgeot::geotrans_inv_convex giv;
+        for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f) {
+          if (r[ic][f+1]) {
 
-	    for (size_type jc = 0; jc < icv.size(); ++jc) {
-	      bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
-	      for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
-		   ++fsub) {
-		neighbours_of_convex(icv[jc], fsub, s);
-		ind_set::const_iterator it = s.begin(), ite = s.end();
-		bool found = false;
-		for (; it != ite; ++it)
-		  if (std::find(icv.begin(), icv.end(), *it) != icv.end())
-		    { found = true; break; }
-		if (found) continue;
+            for (size_type jc = 0; jc < icv.size(); ++jc) {
+              bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
+              for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
+                   ++fsub) {
+                neighbours_of_convex(icv[jc], fsub, s);
+                ind_set::const_iterator it = s.begin(), ite = s.end();
+                bool found = false;
+                for (; it != ite; ++it)
+                  if (std::find(icv.begin(), icv.end(), *it) != icv.end())
+                    { found = true; break; }
+                if (found) continue;
 
-		base_node pt, barycentre
-		  =gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
-		pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
-	
-		giv.init(points_of_convex(ic), pgt);
-		giv.invert(pt, barycentre);
+                base_node pt, barycentre
+                  =gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
+                pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
+        
+                giv.init(points_of_convex(ic), pgt);
+                giv.invert(pt, barycentre);
 
-	
-		if (gmm::abs(pgt->convex_ref()->is_in_face(f, barycentre)) < 0.1)
-		  r.add(icv[jc], fsub);
-	      }
-	    }
-	  }
-	}	
+        
+                if (gmm::abs(pgt->convex_ref()->is_in_face(f, barycentre)) < 0.1)
+                  r.add(icv[jc], fsub);
+              }
+            }
+          }
+        }        
       }
 
       for (size_type jc = 0; jc < icv.size(); ++jc)
-	if (!refine && r[icv[jc]].any()) {
-	  if (r[icv[jc]][0])
-	    r.add(ic);
-	  bgeot::geotrans_inv_convex giv;
-	  bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
-	  for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
-	       ++fsub)
-	    if (r[icv[jc]][fsub+1]) {
-	      base_node pt, barycentre
-		= gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
-	      pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
-	
-	      giv.init(points_of_convex(ic), pgt);
-	      giv.invert(pt, barycentre);
-	
-	      for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f)
-		if (gmm::abs(pgt->convex_ref()->is_in_face(f, barycentre)) < 0.1)
-		  { r.add(ic, f); break; }
-	  }
-	}
+        if (!refine && r[icv[jc]].any()) {
+          if (r[icv[jc]][0])
+            r.add(ic);
+          bgeot::geotrans_inv_convex giv;
+          bgeot::pgeometric_trans pgtsub = trans_of_convex(icv[jc]);
+          for (short_type fsub = 0; fsub < pgtsub->structure()->nb_faces();
+               ++fsub)
+            if (r[icv[jc]][fsub+1]) {
+              base_node pt, barycentre
+                = gmm::mean_value(pgtsub->convex_ref()->points_of_face(fsub));
+              pt = pgtsub->transform(barycentre, points_of_convex(icv[jc]));
+        
+              giv.init(points_of_convex(ic), pgt);
+              giv.invert(pt, barycentre);
+        
+              for (short_type f = 0; f < pgt->structure()->nb_faces(); ++f)
+                if (gmm::abs(pgt->convex_ref()->is_in_face(f, barycentre)) < 0.1)
+                  { r.add(ic, f); break; }
+          }
+        }
     }
   }
 
@@ -143,26 +143,26 @@ namespace getfem {
 
       if (size < 2) { mpi_region = mesh_region::all_convexes(); }
       else {
-	int ne = int(nb_convex());
-	std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
-	std::vector<int> indelt(convex_index().last_true()+1);
-	
-	double t_ref = MPI_Wtime();
+        int ne = int(nb_convex());
+        std::vector<int> xadj(ne+1), adjncy, numelt(ne), npart(ne);
+        std::vector<int> indelt(convex_index().last_true()+1);
+        
+        double t_ref = MPI_Wtime();
 
-	int j = 0, k = 0;
-	ind_set s;
-	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
-	  numelt[j] = ic;
-	  indelt[ic] = j;
-	}
-	j = 0;
-	for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
-	  xadj[j] = k;
-	  neighbours_of_convex(ic, s);
-	  for (ind_set::iterator it = s.begin();
-	       it != s.end(); ++it) { adjncy.push_back(indelt[*it]); ++k; }
-	}
-	xadj[j] = k;
+        int j = 0, k = 0;
+        ind_set s;
+        for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
+          numelt[j] = ic;
+          indelt[ic] = j;
+        }
+        j = 0;
+        for (dal::bv_visitor ic(convex_index()); !ic.finished(); ++ic, ++j) {
+          xadj[j] = k;
+          neighbours_of_convex(ic, s);
+          for (ind_set::iterator it = s.begin();
+               it != s.end(); ++it) { adjncy.push_back(indelt[*it]); ++k; }
+        }
+        xadj[j] = k;
 
 #ifdef GETFEM_HAVE_METIS_OLD_API
   int wgtflag = 0, numflag = 0, edgecut;
@@ -177,10 +177,10 @@ namespace getfem {
                       0, 0, options, &edgecut, &(npart[0]));
 #endif
 
-	for (size_type i = 0; i < size_type(ne); ++i)
-	  if (npart[i] == rank) mpi_region.add(numelt[i]);
+        for (size_type i = 0; i < size_type(ne); ++i)
+          if (npart[i] == rank) mpi_region.add(numelt[i]);
 
-	if (MPI_IS_MASTER())
+        if (MPI_IS_MASTER())
           cout << "Partition time "<< MPI_Wtime()-t_ref << endl;
       }
       modified = false;
@@ -211,13 +211,13 @@ namespace getfem {
     j = nb_convex();
     for (i = 0; i < j; i++)
       if (!convex_tab.index_valid(i))
-	swap_convex(i, convex_tab.ind_last());
+        swap_convex(i, convex_tab.ind_last());
     if (pts.size())
       for (i = 0, j = pts.size()-1;
-	   i < j && j != ST_NIL; ++i, --j) {
-	while (i < j && j != ST_NIL && pts.index()[i]) ++i;
-	while (i < j && j != ST_NIL && !(pts.index()[j])) --j;
-	if (i < j && j != ST_NIL ) swap_points(i, j);
+           i < j && j != ST_NIL; ++i, --j) {
+        while (i < j && j != ST_NIL && pts.index()[i]) ++i;
+        while (i < j && j != ST_NIL && !(pts.index()[j])) --j;
+        if (i < j && j != ST_NIL ) swap_points(i, j);
       }
   }
 
@@ -244,8 +244,8 @@ namespace getfem {
     for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
       if (is_first) { Pmin = Pmax = pts[i]; is_first = false; }
       else for (unsigned j=0; j < dim(); ++j) {
-	Pmin[j] = std::min(Pmin[j], pts[i][j]);
-	Pmax[j] = std::max(Pmax[j], pts[i][j]);
+        Pmin[j] = std::min(Pmin[j], pts[i][j]);
+        Pmax[j] = std::max(Pmax[j], pts[i][j]);
       }
     }
   }
@@ -266,7 +266,7 @@ namespace getfem {
   }
 
   size_type mesh::add_triangle(size_type a,
-			       size_type b, size_type c) {
+                               size_type b, size_type c) {
     size_type ipt[3]; ipt[0] = a; ipt[1] = b; ipt[2] = c;
     return add_simplex(2, &(ipt[0]));
   }
@@ -276,7 +276,7 @@ namespace getfem {
   { return add_triangle(add_point(p1), add_point(p2), add_point(p3)); }
 
   size_type mesh::add_tetrahedron(size_type a, size_type b,
-				  size_type c, size_type d) {
+                                  size_type c, size_type d) {
     size_type ipt[4]; ipt[0] = a; ipt[1] = b; ipt[2] = c; ipt[3] = d;
     return add_simplex(3, &(ipt[0]));
   }
@@ -285,7 +285,7 @@ namespace getfem {
   (const base_node &p1, const base_node &p2,
    const base_node &p3, const base_node &p4) {
     return add_tetrahedron(add_point(p1), add_point(p2),
-			   add_point(p3), add_point(p4));
+                           add_point(p3), add_point(p4));
   }
 
   void mesh::sup_convex(size_type ic, bool sup_points) {
@@ -315,7 +315,7 @@ namespace getfem {
   }
 
   base_small_vector mesh::normal_of_face_of_convex(size_type ic, short_type f,
-						   const base_node &pt) const {
+                                                   const base_node &pt) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_matrix G(dim(),pgt->nb_points());
     vectors_to_base_matrix(G,points_of_convex(ic));
@@ -325,7 +325,7 @@ namespace getfem {
 
 
   base_small_vector mesh::normal_of_face_of_convex(size_type ic, short_type f,
-						   size_type n) const {
+                                                   size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
       = bgeot::geotrans_precomp(pgt, &(pgt->geometric_nodes()), 0);
@@ -354,7 +354,7 @@ namespace getfem {
   }
 
   base_matrix mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
-						  const base_node &pt) const {
+                                                  const base_node &pt) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     base_matrix G(dim(),pgt->nb_points());
     vectors_to_base_matrix(G,points_of_convex(ic));
@@ -363,7 +363,7 @@ namespace getfem {
   }
 
   base_matrix mesh::local_basis_of_face_of_convex(size_type ic, short_type f,
-							 size_type n) const {
+                                                         size_type n) const {
     bgeot::pgeometric_trans pgt = trans_of_convex(ic);
     bgeot::pgeotrans_precomp pgp
       = bgeot::geotrans_precomp(pgt, &pgt->geometric_nodes(), 0);
@@ -379,7 +379,7 @@ namespace getfem {
     bgeot::vectors_to_base_matrix(G, points_of_convex(ic));
     return getfem::convex_area_estimate
       (trans_of_convex(ic), G, classical_approx_im(trans_of_convex(ic),
-						   dim_type(deg)));
+                                                   dim_type(deg)));
   }
 
   scalar_type  mesh::convex_quality_estimate(size_type ic) const {
@@ -421,7 +421,7 @@ namespace getfem {
     cvf_sets = m.cvf_sets;
     valid_cvf_sets = m.valid_cvf_sets;
     for (std::map<size_type, mesh_region>::iterator it = cvf_sets.begin();
-	 it != cvf_sets.end(); ++it)
+         it != cvf_sets.end(); ++it)
       if (it->second.get_parent_mesh() != 0) it->second.set_parent_mesh(this);
     cvs_v_num.clear();
     gmm::uint64_type d = act_counter();
@@ -457,30 +457,30 @@ namespace getfem {
       if (!bgeot::casecmp(tmp, "END"))
       { te = true; }
       else if (!bgeot::casecmp(tmp, "POINT")) {
-	bgeot::get_token(ist, tmp);
+        bgeot::get_token(ist, tmp);
         size_type ip = atoi(tmp.c_str());
         dim_type d = 0;
-	GMM_ASSERT1(!npt.is_in(ip),
-		    "Two points with the same index. loading aborted.");
-	npt.add(ip);
-	bgeot::get_token(ist, tmp);
-	while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
-	                       || tmp[0] == '.')
-	  { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
-	please_get = false;
-	base_node v(d);
-	for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
-	size_type ipl = add_point(v);
-	if (ip != ipl) {
-	  GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #" << ipl
-		      << "] with the same coords "<< v <<". loading aborted.");
-	  swap_points(ip, ipl);
-	}
+        GMM_ASSERT1(!npt.is_in(ip),
+                    "Two points with the same index. loading aborted.");
+        npt.add(ip);
+        bgeot::get_token(ist, tmp);
+        while (isdigit(tmp[0]) || tmp[0] == '-' || tmp[0] == '+'
+                               || tmp[0] == '.')
+          { tmpv[d++] = atof(tmp.c_str()); bgeot::get_token(ist, tmp); }
+        please_get = false;
+        base_node v(d);
+        for (size_type i = 0; i < d; i++) v[i] = tmpv[i];
+        size_type ipl = add_point(v);
+        if (ip != ipl) {
+          GMM_ASSERT1(!npt.is_in(ipl), "Two points [#" << ip << " and #" << ipl
+                      << "] with the same coords "<< v <<". loading aborted.");
+          swap_points(ip, ipl);
+        }
       } else if (tmp.size()) {
-	GMM_ASSERT1(false, "Syntax error in file, at token '" << tmp
-		    << "', pos=" << std::streamoff(ist.tellg()));
+        GMM_ASSERT1(false, "Syntax error in file, at token '" << tmp
+                    << "', pos=" << std::streamoff(ist.tellg()));
       } else if (ist.eof()) {
-	GMM_ASSERT1(false, "Unexpected end of stream while reading mesh");
+        GMM_ASSERT1(false, "Unexpected end of stream while reading mesh");
       }
     }
 
@@ -498,35 +498,35 @@ namespace getfem {
       { tend = true; }
       else if (!bgeot::casecmp(tmp, "CONVEX")) {
         size_type ic;
-	bgeot::get_token(ist, tmp);
+        bgeot::get_token(ist, tmp);
         ic = gmm::abs(atoi(tmp.c_str()));
-	GMM_ASSERT1(!ncv.is_in(ic),
-		    "Negative or repeated index, loading aborted.");
-	ncv.add(ic);
+        GMM_ASSERT1(!ncv.is_in(ic),
+                    "Negative or repeated index, loading aborted.");
+        ncv.add(ic);
 
-	int rgt = bgeot::get_token(ist, tmp);
-	if (rgt != 3) { // for backward compatibility with version 1.7
-	  char c; ist.get(c);
-	  while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
-	}
-	
-	bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
-	size_type nb = pgt->nb_points();
+        int rgt = bgeot::get_token(ist, tmp);
+        if (rgt != 3) { // for backward compatibility with version 1.7
+          char c; ist.get(c);
+          while (!isspace(c)) { tmp.push_back(c); ist.get(c); }
+        }
+        
+        bgeot::pgeometric_trans pgt = bgeot::geometric_trans_descriptor(tmp);
+        size_type nb = pgt->nb_points();
 
-	cv[ic].cstruct = pgt;
-	cv[ic].pts.resize(nb);
-	for (size_type i = 0; i < nb; i++) {
-	  bgeot::get_token(ist, tmp);	
-	  cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
-	}
+        cv[ic].cstruct = pgt;
+        cv[ic].pts.resize(nb);
+        for (size_type i = 0; i < nb; i++) {
+          bgeot::get_token(ist, tmp);        
+          cv[ic].pts[i] = gmm::abs(atoi(tmp.c_str()));
+        }
       }
       else if (tmp.size()) {
-	GMM_ASSERT1(false, "Syntax error reading a mesh file "
-		    " at pos " << std::streamoff(ist.tellg())
-		    << "(expecting 'CONVEX' or 'END', found '"<< tmp << "')");
+        GMM_ASSERT1(false, "Syntax error reading a mesh file "
+                    " at pos " << std::streamoff(ist.tellg())
+                    << "(expecting 'CONVEX' or 'END', found '"<< tmp << "')");
       } else if (ist.eof()) {
-	GMM_ASSERT1(false, "Unexpected end of stream "
-		    << "(missing BEGIN MESH/END MESH ?)");
+        GMM_ASSERT1(false, "Unexpected end of stream "
+                    << "(missing BEGIN MESH/END MESH ?)");
       }
     }
     ist >> bgeot::skip("MESH STRUCTURE DESCRIPTION");
@@ -541,35 +541,35 @@ namespace getfem {
       tend = !bgeot::get_token(ist, tmp);
       // bool error = false;
       if (bgeot::casecmp(tmp, "BEGIN")==0) {
-	bgeot::get_token(ist, tmp);
-	if (bgeot::casecmp(tmp, "BOUNDARY")==0 ||
-	    bgeot::casecmp(tmp, "REGION")==0) {
-	  bgeot::get_token(ist, tmp);
-	  size_type bnum = atoi(tmp.c_str());
-	  bgeot::get_token(ist, tmp);
-	  while (true) {
-	    if (bgeot::casecmp(tmp, "END")!=0) {
-	      size_type ic = atoi(tmp.c_str());
-	      bgeot::get_token(ist, tmp);
-	      if (tmp[0] == '/') {
-		bgeot::get_token(ist, tmp);
-		if (!bgeot::casecmp(tmp, "END")) break;
-		size_type f = atoi(tmp.c_str());
-		region(bnum).add(ic, f);
-		bgeot::get_token(ist, tmp);
-	      }
-	      else {
-		region(bnum).add(ic);
-		if (!bgeot::casecmp(tmp, "END")) break;
-	      }
-	    } else break;
-	  }
-	  bgeot::get_token(ist, tmp);
-	  bgeot::get_token(ist, tmp);
-	} else tend = true;
-	/*else GMM_ASSERT1(false, "Syntax error in file at token '"
-	  << tmp << "' [pos=" << std::streamoff(ist.tellg())
-	  << "]");*/
+        bgeot::get_token(ist, tmp);
+        if (bgeot::casecmp(tmp, "BOUNDARY")==0 ||
+            bgeot::casecmp(tmp, "REGION")==0) {
+          bgeot::get_token(ist, tmp);
+          size_type bnum = atoi(tmp.c_str());
+          bgeot::get_token(ist, tmp);
+          while (true) {
+            if (bgeot::casecmp(tmp, "END")!=0) {
+              size_type ic = atoi(tmp.c_str());
+              bgeot::get_token(ist, tmp);
+              if (tmp[0] == '/') {
+                bgeot::get_token(ist, tmp);
+                if (!bgeot::casecmp(tmp, "END")) break;
+                int f = atoi(tmp.c_str());
+                region(bnum).add(ic, short_type(f));
+                bgeot::get_token(ist, tmp);
+              }
+              else {
+                region(bnum).add(ic);
+                if (!bgeot::casecmp(tmp, "END")) break;
+              }
+            } else break;
+          }
+          bgeot::get_token(ist, tmp);
+          bgeot::get_token(ist, tmp);
+        } else tend = true;
+        /*else GMM_ASSERT1(false, "Syntax error in file at token '"
+          << tmp << "' [pos=" << std::streamoff(ist.tellg())
+          << "]");*/
       } else tend=true;
     }
   }
@@ -587,21 +587,21 @@ namespace getfem {
 
   template<class ITER>
     static void write_convex_to_file_(const mesh &ms,
-				      std::ostream &ost,
-				      ITER b, ITER e) {
+                                      std::ostream &ost,
+                                      ITER b, ITER e) {
     for ( ; b != e; ++b) {
       size_type i = b.index();
       ost << "CONVEX " << i << "    \'"
-	  << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str()
-	  << "\'    ";
+          << bgeot::name_of_geometric_trans(ms.trans_of_convex(i)).c_str()
+          << "\'    ";
       write_tab_to_file_(ost, ms.ind_points_of_convex(i).begin(),
-			 ms.ind_points_of_convex(i).end()  );
+                         ms.ind_points_of_convex(i).end()  );
       ost << '\n';
     }
   }
 
   template<class ITER> static void write_point_to_file_(std::ostream &ost,
-						  ITER b, ITER e)
+                                                  ITER b, ITER e)
   { for ( ; b != e; ++b) ost << "  " << *b; ost << '\n'; }
 
   void mesh::write_to_file(std::ostream &ost) const {
@@ -610,19 +610,19 @@ namespace getfem {
     ost << '\n' << "BEGIN POINTS LIST" << '\n' << '\n';
     for (size_type i = 0; i < points_tab.size(); ++i)
       if (is_point_valid(i) ) {
-	ost << "  POINT  " << i;
-	write_point_to_file_(ost, pts[i].begin(), pts[i].end());
+        ost << "  POINT  " << i;
+        write_point_to_file_(ost, pts[i].begin(), pts[i].end());
       }
     ost << '\n' << "END POINTS LIST" << '\n' << '\n' << '\n';
 
     ost << '\n' << "BEGIN MESH STRUCTURE DESCRIPTION" << '\n' << '\n';
     write_convex_to_file_(*this, ost, convex_tab.tas_begin(),
-			              convex_tab.tas_end());
+                                      convex_tab.tas_end());
     ost << '\n' << "END MESH STRUCTURE DESCRIPTION" << '\n';
 
     for (dal::bv_visitor bnum(valid_cvf_sets); !bnum.finished(); ++bnum) {
       ost << "BEGIN REGION " << bnum << "\n" << region(bnum) << "\n"
-	  << "END REGION " << bnum << "\n";
+          << "END REGION " << bnum << "\n";
     }
   }
 
@@ -652,9 +652,9 @@ namespace getfem {
       base_matrix Gr(N,N);
       base_matrix G(N,N+1);
       vectors_to_base_matrix
-	(G, bgeot::equilateral_simplex_of_reference(N)->points());
+        (G, bgeot::equilateral_simplex_of_reference(N)->points());
       gmm::mult(G, bgeot::geotrans_precomp
-		(pgt, &pgt->convex_ref()->points(), 0)->grad(0), Gr);
+                (pgt, &pgt->convex_ref()->points(), 0)->grad(0), Gr);
       gmm::lu_inverse(Gr);
       pbm[N-1].swap(Gr);
     }
@@ -663,8 +663,8 @@ namespace getfem {
 
 
   scalar_type convex_area_estimate(bgeot::pgeometric_trans pgt,
-				   const base_matrix& G,
-				   pintegration_method pi) {
+                                   const base_matrix& G,
+                                   pintegration_method pi) {
     double area(0);
     static bgeot::pgeometric_trans pgt_old = 0;
     static bgeot::pgeotrans_precomp pgp = 0;
@@ -674,7 +674,7 @@ namespace getfem {
       pgt_old = pgt;
       pim_old = pi;
       pgp = bgeot::geotrans_precomp
-	(pgt,&pai->integration_points(), pi);
+        (pgt,&pai->integration_points(), pi);
     }
     bgeot::geotrans_interpolation_context gic(pgp, 0, G);
     for (size_type i = 0; i < pai->nb_points_on_convex(); ++i) {
@@ -690,7 +690,7 @@ namespace getfem {
      (=> very very bad quality of the convex)
   */
   scalar_type convex_quality_estimate(bgeot::pgeometric_trans pgt,
-				      const base_matrix& G) {
+                                      const base_matrix& G) {
     static bgeot::pgeometric_trans pgt_old = 0;
     static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
@@ -705,8 +705,8 @@ namespace getfem {
     for (size_type ip=0; ip < n; ++ip) {
       gmm::mult(G, pgp->grad(ip), K);
       /* TODO : this is an ugly fix for simplexes only.. there should be
-	 a transformation of any pgt to the equivalent equilateral pgt
-	 (for prisms etc) */
+         a transformation of any pgt to the equivalent equilateral pgt
+         (for prisms etc) */
       if (pgt->structure()->basic_structure() == bgeot::simplex_structure(P))
         gmm::mult(base_matrix(K),equilateral_to_GT_PK_grad(P),K);
       q = std::max(q, gmm::condition_number(K));
@@ -715,7 +715,7 @@ namespace getfem {
   }
 
   scalar_type convex_radius_estimate(bgeot::pgeometric_trans pgt,
-				     const base_matrix& G) {
+                                     const base_matrix& G) {
     static bgeot::pgeometric_trans pgt_old = 0;
     static bgeot::pgeotrans_precomp pgp = 0;
     if (pgt_old != pgt) {
@@ -739,33 +739,33 @@ namespace getfem {
   */
   void
   outer_faces_of_mesh(const getfem::mesh &m, const dal::bit_vector& cvlst,
-		      convex_face_ct& flist) {
+                      convex_face_ct& flist) {
     for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
       if (m.structure_of_convex(ic)->dim() == m.dim()) {
-	for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
-	  if (m.neighbour_of_convex(ic,f) == size_type(-1)) {
-	    flist.push_back(convex_face(ic,f));
-	  }
-	}
+        for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
+          if (m.neighbour_of_convex(ic,f) == size_type(-1)) {
+            flist.push_back(convex_face(ic,f));
+          }
+        }
       } else {
-	flist.push_back(convex_face(ic,size_type(-1)));
+        flist.push_back(convex_face(ic, short_type(-1)));
       }
     }
   }
 
   void  outer_faces_of_mesh(const mesh &m,
-			    const mesh_region &cvlst,
-			    mesh_region &flist) {
+                            const mesh_region &cvlst,
+                            mesh_region &flist) {
     cvlst.error_if_not_convexes();
     for (mr_visitor i(cvlst); !i.finished(); ++i) {
       if (m.structure_of_convex(i.cv())->dim() == m.dim()) {
-	for (short_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
-	     f++) {
-	  size_type cv2 = m.neighbour_of_convex(i.cv(), f);
-	  if (cv2 == size_type(-1) || !cvlst.is_in(cv2)) {
-	    flist.add(i.cv(),f);
-	  }
-	}
+        for (short_type f = 0; f < m.structure_of_convex(i.cv())->nb_faces();
+             f++) {
+          size_type cv2 = m.neighbour_of_convex(i.cv(), f);
+          if (cv2 == size_type(-1) || !cvlst.is_in(cv2)) {
+            flist.add(i.cv(),f);
+          }
+        }
       }
       else flist.add(i.cv());
     }
@@ -791,13 +791,13 @@ namespace getfem {
     out.clear();
     size_type nbpt = in.points().index().last()+1;
     GMM_ASSERT1(nbpt == in.points().index().card(),
-		"please optimize the mesh before using "
-		"it as a base for prismatic mesh");
+                "please optimize the mesh before using "
+                "it as a base for prismatic mesh");
     for (size_type i = 0; i < nbpt; ++i) {
       std::copy(in.points()[i].begin(), in.points()[i].end(),pt.begin());
       pt[dim] = 0.0;
       for (size_type j = 0; j <= nb_layers; ++j, pt[dim] += 1.0 / nb_layers)
-	out.add_point(pt);
+        out.add_point(pt);
     }
 
     std::vector<size_type> tab;
@@ -805,14 +805,14 @@ namespace getfem {
       size_type nbp = in.nb_points_of_convex(cv);
       tab.resize(2*nbp);
       for (size_type j = 0; j < nb_layers; ++j) {
-	for (size_type k = 0; k < nbp; ++k)
-	  tab[k] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j;
-	for (size_type k = 0; k < nbp; ++k)
-	  tab[k+nbp] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j + 1;
-	bgeot::pgeometric_trans pgt =
-	  bgeot::product_geotrans(in.trans_of_convex(cv),
-				  bgeot::simplex_geotrans(1,1));
-	out.add_convex(pgt, tab.begin());
+        for (size_type k = 0; k < nbp; ++k)
+          tab[k] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j;
+        for (size_type k = 0; k < nbp; ++k)
+          tab[k+nbp] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j + 1;
+        bgeot::pgeometric_trans pgt =
+          bgeot::product_geotrans(in.trans_of_convex(cv),
+                                  bgeot::simplex_geotrans(1,1));
+        out.add_convex(pgt, tab.begin());
       }
     }
   }
@@ -841,8 +841,8 @@ namespace getfem {
       size_type igs = Bank_info->num_green_simplex[i];
       green_simplex &gs = Bank_info->green_simplices[igs];
       for (size_type j = 0; j < gs.sub_simplices.size(); ++j) {
-	Bank_info->num_green_simplex.erase(gs.sub_simplices[j]);
-	Bank_info->is_green_simplex.sup(gs.sub_simplices[j]);
+        Bank_info->num_green_simplex.erase(gs.sub_simplices[j]);
+        Bank_info->is_green_simplex.sup(gs.sub_simplices[j]);
       }
       Bank_info->green_simplices.sup(igs);
     }
@@ -852,31 +852,31 @@ namespace getfem {
     if (Bank_info) {
       Bank_info->is_green_simplex.swap(i, j);
       std::map<size_type, size_type>::iterator
-	iti = Bank_info->num_green_simplex.find(i);
+        iti = Bank_info->num_green_simplex.find(i);
       std::map<size_type, size_type>::iterator
-	ite = Bank_info->num_green_simplex.end();
+        ite = Bank_info->num_green_simplex.end();
       std::map<size_type, size_type>::iterator
-	itj = Bank_info->num_green_simplex.find(j);
+        itj = Bank_info->num_green_simplex.find(j);
       size_type numi(0), numj(0);
       if (iti != ite)
-	{ numi = iti->second; Bank_info->num_green_simplex.erase(i); }
+        { numi = iti->second; Bank_info->num_green_simplex.erase(i); }
       if (itj != ite)
-	{ numj = itj->second; Bank_info->num_green_simplex.erase(j); }
+        { numj = itj->second; Bank_info->num_green_simplex.erase(j); }
       if (iti != ite) {
-	Bank_info->num_green_simplex[j] = numi;
-	green_simplex &gs = Bank_info->green_simplices[numi];
-	for (size_type k = 0; k < gs.sub_simplices.size(); ++k)
-	  if (gs.sub_simplices[k] == i) gs.sub_simplices[k] = j;
-	  else if (gs.sub_simplices[k] == j) gs.sub_simplices[k] = i;
+        Bank_info->num_green_simplex[j] = numi;
+        green_simplex &gs = Bank_info->green_simplices[numi];
+        for (size_type k = 0; k < gs.sub_simplices.size(); ++k)
+          if (gs.sub_simplices[k] == i) gs.sub_simplices[k] = j;
+          else if (gs.sub_simplices[k] == j) gs.sub_simplices[k] = i;
       }
       if (itj != ite) {
-	Bank_info->num_green_simplex[i] = numj;
-	if (iti == ite || numi != numj) {
-	  green_simplex &gs = Bank_info->green_simplices[numj];
-	  for (size_type k = 0; k < gs.sub_simplices.size(); ++k)
-	    if (gs.sub_simplices[k] == i) gs.sub_simplices[k] = j;
-	    else if (gs.sub_simplices[k] == j) gs.sub_simplices[k] = i;
-	}
+        Bank_info->num_green_simplex[i] = numj;
+        if (iti == ite || numi != numj) {
+          green_simplex &gs = Bank_info->green_simplices[numj];
+          for (size_type k = 0; k < gs.sub_simplices.size(); ++k)
+            if (gs.sub_simplices[k] == i) gs.sub_simplices[k] = j;
+            else if (gs.sub_simplices[k] == j) gs.sub_simplices[k] = i;
+        }
       }
     }
   }
@@ -914,13 +914,13 @@ namespace getfem {
       mesh2.clear();
       ipt.resize(pgt->nb_points());
       for (size_type ic = 0; ic < mesh1.nb_convex(); ++ic) {
-	assert(mesh1.convex_index().is_in(ic));
-	bgeot::pgeometric_trans pgt2 = mesh1.trans_of_convex(ic);
-	for (size_type ip = 0; ip < pgt->nb_points(); ++ip)
-	  ipt[ip] =
-	    mesh2.add_point(pgt2->transform(pgt->geometric_nodes()[ip],
-					    mesh1.points_of_convex(ic)));
-	mesh2.add_convex(pgt, &ipt[0]);
+        assert(mesh1.convex_index().is_in(ic));
+        bgeot::pgeometric_trans pgt2 = mesh1.trans_of_convex(ic);
+        for (size_type ip = 0; ip < pgt->nb_points(); ++ip)
+          ipt[ip] =
+            mesh2.add_point(pgt2->transform(pgt->geometric_nodes()[ip],
+                                            mesh1.points_of_convex(ic)));
+        mesh2.add_convex(pgt, &ipt[0]);
       }
 
       // if (pspt) dal::del_stored_object(pspt);
@@ -938,7 +938,7 @@ namespace getfem {
     ipt2.resize(pgt->nb_points()); icl.resize(0);
     for (size_type ic = 0; ic < mesh2.nb_convex(); ++ic) {
       for (size_type j = 0; j < pgt->nb_points(); ++j)
-	ipt2[j] = ipt[mesh2.ind_points_of_convex(ic)[j]];
+        ipt2[j] = ipt[mesh2.ind_points_of_convex(ic)[j]];
       icl.push_back(add_convex(pgt, ipt2.begin()));
     }
     handle_region_refinement(i, icl, true);
@@ -946,15 +946,15 @@ namespace getfem {
   }
 
   void mesh::Bank_convex_with_edge(size_type i1, size_type i2,
-				   std::vector<size_type> &ipt) {
+                                   std::vector<size_type> &ipt) {
     ipt.resize(0);
     for (size_type k = 0; k < points_tab[i1].size(); ++k) {
       size_type cv = points_tab[i1][k], found = 0;
       const std::vector<size_type> &loc_ind = trans_of_convex(cv)->vertices();
       for (size_type i = 0; i < loc_ind.size(); ++i) {
-	size_type ipp = convex_tab[cv].pts[loc_ind[i]];
-	if (ipp == i1) ++found;
-	if (ipp == i2) ++found;
+        size_type ipp = convex_tab[cv].pts[loc_ind[i]];
+        if (ipp == i1) ++found;
+        if (ipp == i2) ++found;
       }
       GMM_ASSERT1(found <= 2, "Invalid convex with repeated nodes ");
       if (found == 2) ipt.push_back(cv);
@@ -962,30 +962,30 @@ namespace getfem {
   }
 
   bool mesh::Bank_is_convex_having_points(size_type cv,
-					  const std::vector<size_type> &ipt) {
+                                          const std::vector<size_type> &ipt) {
     size_type found = 0;
     const std::vector<size_type> &loc_ind = trans_of_convex(cv)->vertices();
     for (size_type i = 0; i < loc_ind.size(); ++i)
       if (std::find(ipt.begin(), ipt.end(),
-		    convex_tab[cv].pts[loc_ind[i]]) != ipt.end()) ++found;
+                    convex_tab[cv].pts[loc_ind[i]]) != ipt.end()) ++found;
     return (found >= ipt.size());
   }
 
   void mesh::Bank_refine_normal_convex(size_type i) {
     bgeot::pgeometric_trans pgt = trans_of_convex(i);
     GMM_ASSERT1(pgt->basic_structure() == bgeot::simplex_structure(pgt->dim()),
-		"Sorry, refinement is only working with simplices.");
+                "Sorry, refinement is only working with simplices.");
 
     const std::vector<size_type> &loc_ind = pgt->vertices();
     for (size_type ip1 = 0; ip1 < loc_ind.size(); ++ip1)
       for (size_type ip2 = ip1+1; ip2 < loc_ind.size(); ++ip2)
-	Bank_info->edges.insert(edge(ind_points_of_convex(i)[loc_ind[ip1]],
-				     ind_points_of_convex(i)[loc_ind[ip2]]));
+        Bank_info->edges.insert(edge(ind_points_of_convex(i)[loc_ind[ip1]],
+                                     ind_points_of_convex(i)[loc_ind[ip2]]));
     Bank_basic_refine_convex(i);
   }
 
   size_type mesh::Bank_test_and_refine_convex(size_type i,
-					 dal::bit_vector &b, bool ref) {
+                                         dal::bit_vector &b, bool ref) {
     if (Bank_info->is_green_simplex[i]) {
       size_type igs = Bank_info->num_green_simplex[i];
       green_simplex &gs = Bank_info->green_simplices[igs];
@@ -993,15 +993,15 @@ namespace getfem {
       size_type icc = add_convex_by_points(gs.pgt, gs.cv.points().begin());
       handle_region_refinement(icc, gs.sub_simplices, false);
       for (size_type ic = 0; ic < gs.sub_simplices.size(); ++ic) {
-	sup_convex(gs.sub_simplices[ic], true);
-	b.sup(gs.sub_simplices[ic]);
+        sup_convex(gs.sub_simplices[ic], true);
+        b.sup(gs.sub_simplices[ic]);
       }
       if (!ref)
-	for (size_type ip = 0; ip < gs.ipt_loc.size(); ++ip)
-	  for (size_type jp = ip+1; jp < gs.ipt_loc.size(); ++jp)
-	    Bank_info->edges.insert
-	      (edge(ind_points_of_convex(icc)[gs.ipt_loc[ip]],
-		    ind_points_of_convex(icc)[gs.ipt_loc[jp]]));
+        for (size_type ip = 0; ip < gs.ipt_loc.size(); ++ip)
+          for (size_type jp = ip+1; jp < gs.ipt_loc.size(); ++jp)
+            Bank_info->edges.insert
+              (edge(ind_points_of_convex(icc)[gs.ipt_loc[ip]],
+                    ind_points_of_convex(icc)[gs.ipt_loc[jp]]));
       Bank_sup_convex_from_green(i);
       if (ref) { Bank_refine_normal_convex(icc); return size_type(-1); }
       else return icc;
@@ -1013,7 +1013,7 @@ namespace getfem {
   struct mesh_cache_for_Bank_build_green_simplexes : public mesh {};
 
   void mesh::Bank_build_green_simplexes(size_type ic,
-					std::vector<size_type> &ipt) {
+                                        std::vector<size_type> &ipt) {
     GMM_ASSERT1(convex_index().is_in(ic), "Internal error");
     size_type igs = Bank_info->green_simplices.add(green_simplex());
     green_simplex &gs(Bank_info->green_simplices[igs]);
@@ -1044,8 +1044,8 @@ namespace getfem {
     for (size_type ip = 0; ip < loc_ind.size(); ++ip) {
       bool found = false;
       for (size_type i = 0; i < ipt.size(); ++i)
-	if (ct[loc_ind[ip]] == ipt[i])
-	  { gs.ipt_loc[i] = ip; found = true; ++nb_found; break; }
+        if (ct[loc_ind[ip]] == ipt[i])
+          { gs.ipt_loc[i] = ip; found = true; ++nb_found; break; }
       if (!found) ipt_other.push_back(ip);
     }
     assert(nb_found == ipt.size());
@@ -1071,9 +1071,9 @@ namespace getfem {
     std::vector<size_type> ipt2(n+1);
     for (size_type i = 0; i < mesh1.nb_convex(); ++i) {
       for (size_type j = 0; j <= d; ++j)
-	ipt2[j] = ipt1[mesh1.ind_points_of_convex(i)[j]];
+        ipt2[j] = ipt1[mesh1.ind_points_of_convex(i)[j]];
       for (size_type j = d+1; j <= n; ++j)
-	ipt2[j] = ipt_other[j-d-1];
+        ipt2[j] = ipt_other[j-d-1];
       mesh2.add_simplex(dim_type(n), ipt2.begin());
     }
 
@@ -1082,9 +1082,9 @@ namespace getfem {
     for (dal::bv_visitor i(mesh2.convex_index()); !i.finished(); ++i) {
       bgeot::pgeometric_trans pgt2 = mesh2.trans_of_convex(i);
       for (size_type ip = 0; ip < pgt->nb_points(); ++ip)
-	ipt1[ip] =
-	  mesh3.add_point(pgt2->transform(pgt->geometric_nodes()[ip],
-					  mesh2.points_of_convex(i)));
+        ipt1[ip] =
+          mesh3.add_point(pgt2->transform(pgt->geometric_nodes()[ip],
+                                          mesh2.points_of_convex(i)));
       mesh3.add_convex(pgt, ipt1.begin());
     }
 
@@ -1102,7 +1102,7 @@ namespace getfem {
     ipt2.resize(pgt->nb_points());
     for (size_type icc = 0; icc < mesh3.nb_convex(); ++icc) {
       for (size_type j = 0; j < pgt->nb_points(); ++j)
-	ipt2[j] = ipt1[mesh3.ind_points_of_convex(icc)[j]];
+        ipt2[j] = ipt1[mesh3.ind_points_of_convex(icc)[j]];
       size_type i = add_convex(pgt, ipt2.begin());
       gs.sub_simplices.push_back(i);
       Bank_info->is_green_simplex.add(i);
@@ -1111,7 +1111,7 @@ namespace getfem {
 
     for (size_type ip1 = 0; ip1 < ipt.size(); ++ip1)
       for (size_type ip2 = ip1+1; ip2 < ipt.size(); ++ip2)
-	Bank_info->edges.insert(edge(ipt[ip1], ipt[ip2]));
+        Bank_info->edges.insert(edge(ipt[ip1], ipt[ip2]));
 
     handle_region_refinement(ic, gs.sub_simplices, true);
     sup_convex(ic, true);
@@ -1136,40 +1136,40 @@ namespace getfem {
       edge_set::const_iterator ite = Bank_info->edges.end(), it2=it;
       assert(!Bank_info->edges.empty());
       for (; it != ite; it = it2) {
-	if (it2 != ite) ++it2;
-	Bank_convex_with_edge(it->i1, it->i2, ipt);
-	if (ipt.size() == 0) ; // Bank_info->edges.erase(it);
-	else for (size_type ic = 0; ic < ipt.size(); ++ic)
-	  marked_convexes.insert(edge(ipt[ic], it->i1, it->i2));
+        if (it2 != ite) ++it2;
+        Bank_convex_with_edge(it->i1, it->i2, ipt);
+        if (ipt.size() == 0) ; // Bank_info->edges.erase(it);
+        else for (size_type ic = 0; ic < ipt.size(); ++ic)
+          marked_convexes.insert(edge(ipt[ic], it->i1, it->i2));
       }
 
       it = marked_convexes.begin(); ite = marked_convexes.end();
       if (it == ite) break;
 
       while (it != ite) {
-	size_type ic = it->i0;
-	ipt.resize(0);
-	while (it != ite && it->i0 == ic) {
-	  bool found1 = false, found2 = false;
-	  for (size_type j = 0; j < ipt.size(); ++j) {
-	    if (ipt[j] == it->i1) found1 = true;
-	    if (ipt[j] == it->i2) found2 = true;
-	  }
-	  if (!found1) ipt.push_back(it->i1);
-	  if (!found2) ipt.push_back(it->i2);
-	  ++it;
-	}
-	if (b.is_in(ic)) {
-	  if (ipt.size() > structure_of_convex(ic)->dim())
-	    Bank_test_and_refine_convex(ic, b);
-	  else if (Bank_info->is_green_simplex[ic]) {
-	    size_type icc = Bank_test_and_refine_convex(ic, b, false);
-	    if (!Bank_is_convex_having_points(icc, ipt)) {
-	      Bank_test_and_refine_convex(icc, b);
-	    }
-	  }
-	  else Bank_build_green_simplexes(ic, ipt);
-	}
+        size_type ic = it->i0;
+        ipt.resize(0);
+        while (it != ite && it->i0 == ic) {
+          bool found1 = false, found2 = false;
+          for (size_type j = 0; j < ipt.size(); ++j) {
+            if (ipt[j] == it->i1) found1 = true;
+            if (ipt[j] == it->i2) found2 = true;
+          }
+          if (!found1) ipt.push_back(it->i1);
+          if (!found2) ipt.push_back(it->i2);
+          ++it;
+        }
+        if (b.is_in(ic)) {
+          if (ipt.size() > structure_of_convex(ic)->dim())
+            Bank_test_and_refine_convex(ic, b);
+          else if (Bank_info->is_green_simplex[ic]) {
+            size_type icc = Bank_test_and_refine_convex(ic, b, false);
+            if (!Bank_is_convex_having_points(icc, ipt)) {
+              Bank_test_and_refine_convex(icc, b);
+            }
+          }
+          else Bank_build_green_simplexes(ic, ipt);
+        }
       }
     }
     Bank_info->edges.clear();

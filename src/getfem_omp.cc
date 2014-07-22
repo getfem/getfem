@@ -78,8 +78,9 @@ namespace getfem{
 
     omp_guard scoped_lock;
     size_type Nelems = original_region->size();
-    size_type psize = std::ceil(static_cast<scalar_type >(Nelems)/
-      static_cast<scalar_type >(num_threads()));
+    size_type psize = static_cast<size_type>
+      (std::ceil(static_cast<scalar_type >(Nelems)/
+       static_cast<scalar_type >(num_threads())));
     mr_visitor mr(*original_region);
     for(size_type thread = 0; thread<num_threads();thread++)
     {

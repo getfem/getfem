@@ -336,7 +336,7 @@ namespace getfem {
                   "won't interpolate on a vector FEM... ");
       pfem_precomp pfp = fppool(pf_s, pf_t->node_tab(cv));
       fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                    size_type(-1));
+                                    short_type(-1));
       itdof = mf_target.ind_basic_dof_of_element(cv).begin();
       if (version != 0) {
         const mesh_fem::ind_dof_ct &idct
@@ -447,7 +447,7 @@ namespace getfem {
         bgeot::vectors_to_base_matrix(G, msh.points_of_convex(cv));
 
       fem_interpolation_context ctx(pgt, pf_s, base_node(), G, cv,
-                                    size_type(-1));
+                                    short_type(-1));
       if (version == 0) {
         coeff.resize(qqdim);
         size_type cvnbdof = mf_source.nb_basic_dof_of_element(cv);
@@ -774,7 +774,7 @@ namespace getfem {
         bgeot::vectors_to_base_matrix(G, pim->approx_method()->integration_points());
 
       pfem_precomp pfp = fppool(pf_source, &pim->approx_method()->integration_points());
-      fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv, size_type(-1));
+      fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv, short_type(-1));
       size_type index_int_pt(-1);
       
       if(use_im_data_filtered) index_int_pt = im_target.filtered_index_of_point(cv, 0);

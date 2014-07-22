@@ -105,7 +105,7 @@ namespace getfem {
 
         pfem_precomp pfp_data = fppool(pf_data, pf_sigma->node_tab(cv));
         ctx_data = fem_interpolation_context
-          (pgt, pfp_data, size_type(-1), G, cv, size_type(-1));
+          (pgt, pfp_data, size_type(-1), G, cv, short_type(-1));
       }
 
       // Definition of the coeff for du = u_n-u_np1 and optionally for u_np1
@@ -122,7 +122,7 @@ namespace getfem {
       pfem pf_u = mf_u.fem_of_element(cv);
       pfem_precomp pfp_u = fppool(pf_u, pf_sigma->node_tab(cv));
       fem_interpolation_context
-        ctx_u(pgt, pfp_u, size_type(-1), G, cv, size_type(-1));
+        ctx_u(pgt, pfp_u, size_type(-1), G, cv, short_type(-1));
 
       size_type qdim = mf_u.get_qdim();
       base_matrix G_du(qdim, qdim), G_u_np1(qdim, qdim); // G_du = G_u_np1 - G_u_n

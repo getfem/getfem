@@ -128,7 +128,7 @@ void gf_integ_get(getfemint::mexargs_in& m_in,
     sub_command
       ("face_pts", 1, 1, 0, 1,
        check_not_exact(im);
-       size_type nbf = pai->structure()->nb_faces();
+       short_type nbf = pai->structure()->nb_faces();
        short_type f = short_type(in.pop().to_face_number(nbf));
        darray w = out.pop().create_darray(unsigned(imdim),
 					  unsigned(pai->nb_points_on_face(f)));

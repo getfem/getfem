@@ -457,7 +457,7 @@ The following is an example of how to load a mesh and extract information on it:
         bgeot::pconvex_structure cvs = mymesh.structure_of_convex(i);
         cout << "Number of vertices: " << cvs->nb_points() << endl;
         cout << "Number of faces: " << cvs->nb_faces() << endl;
-        for (bgeot::size_type f = 0; f < cvs->nb_faces(); ++f) {
+        for (bgeot::short_type f = 0; f < cvs->nb_faces(); ++f) {
           cout << "face " << f << " has " << cvs->nb_points_of_face(f);
           cout << " vertices with local indexes: ";
           for (bgeot::size_type k = 0; k < cvs->nb_points_of_face(f); ++k)

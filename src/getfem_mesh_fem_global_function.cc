@@ -887,7 +887,7 @@ namespace getfem {
         mf.linked_mesh().trans_of_convex(cv);
       base_matrix G;
       vectors_to_base_matrix(G, mf.linked_mesh().points_of_convex(cv));
-      fem_interpolation_context fic(pgt, pf, ptref, G, cv, size_type(-1));
+      fem_interpolation_context fic(pgt, pf, ptref, G, cv, short_type(-1));
       slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
       // coeff.resize(mf.nb_basic_dof_of_element(cv));
       // gmm::copy(gmm::sub_vector

@@ -35,8 +35,8 @@ namespace getfem {
     scalar_type EPS;
   public:
     mesh_slice_streamline(mesh_slice_cv_dof_data_base *mfU,
-			  std::vector<base_node>& seeds,
-			  bool forward, bool backward) : EPS(1e-10) {
+                          std::vector<base_node>& seeds,
+                          bool forward, bool backward) : EPS(1e-10) {
 
       poriginal_mesh = &mfU->pmf->linked_mesh();
       const mesh &ml = mfU->pmf->linked_mesh();
@@ -66,9 +66,9 @@ namespace getfem {
     */
     int do_runge_kutta(bgeot::geotrans_inv_convex& gti, size_type cv,
                        const base_matrix& G, pfem pf, bgeot::pgeometric_trans pgt,
-		       const base_vector& coeff, const base_node& P0,
-		       const base_node& refP0, scalar_type h,
-		       base_node& P1, base_node& refP1) {
+                       const base_vector& coeff, const base_node& P0,
+                       const base_node& refP0, scalar_type h,
+                       base_node& P1, base_node& refP1) {
       fem_interpolation_context ctx(pgt,pf,refP0,G,cv);
       base_node k1(P0.size());
       pf->interpolation(ctx,coeff,k1,refP0.size());
@@ -81,8 +81,8 @@ namespace getfem {
       if (gmm::abs(in1) < EPS) return 0;
       else if (in1 > 0) return +1;
       else {
-	base_node k2(P0.size()); ctx.set_xref(refP1);
-	pf->interpolation(ctx,coeff,k2,k2.size());
+        base_node k2(P0.size()); ctx.set_xref(refP1);
+        pf->interpolation(ctx,coeff,k2,k2.size());
         P1 = P0+k2*h;
         gti.invert(P1, refP1);
         in1 = pgt->convex_ref()->is_in(refP1);
@@ -137,7 +137,7 @@ namespace getfem {
       bgeot::geotrans_inv_convex gti(mfU->pmf->linked_mesh().convex(cv), mfU->pmf->linked_mesh().trans_of_convex(cv));
       bool store_convex_and_stop = false;
       GMM_ASSERT1(sdim == mfU->pmf->get_qdim(), "won't compute streamline "
-		  "of a field whose dimension is not equal to mesh dimension");
+                  "of a field whose dimension is not equal to mesh dimension");
       size_type cnt = 0;
       do {
         if (change_convex) {
@@ -198,10 +198,10 @@ namespace getfem {
 
         /* add the segment */
         snodes.push_back(slice_node(P1,refP1));
-	snodes.back().faces.reset();
+        snodes.back().faces.reset();
         ssimplexes.push_back(slice_simplex(2));
-	ssimplexes.back().inodes[0] = snodes.size()-2;
-	ssimplexes.back().inodes[1] = snodes.size()-1;
+        ssimplexes.back().inodes[0] = snodes.size()-2;
+        ssimplexes.back().inodes[1] = snodes.size()-1;
 
         if (++cnt > 3000) { infomsg() << "too much iterations for streamline extraction\n"; store_convex_and_stop = true; }
 
@@ -209,8 +209,8 @@ namespace getfem {
           /* store streamline of previous convex */
           dal::bit_vector splx_in; splx_in.add(0, ssimplexes.size());
           set_convex(cv, pgt->convex_ref(), snodes, ssimplexes,
-		     dim_type(pgt->convex_ref()->structure()->nb_faces()),
-		     splx_in, false);
+                     dim_type(pgt->convex_ref()->structure()->nb_faces()),
+                     splx_in, false);
         }
         P0 = P1; refP0 = refP1;
       } while (!store_convex_and_stop);
@@ -222,7 +222,7 @@ static getfem::slicer_action*
 build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> & slicers,
               const gfi_array *arg) {
   GMM_ASSERT1(gfi_array_get_class(arg) == GFI_CELL, "slices must be "
-	      "described as imbricated cell arrays");
+              "described as imbricated cell arrays");
   mexargs_in in(1, &arg, true);
   std::string cmd = in.pop().to_string();
   if (check_cmd(cmd, "none", in, 0, 0)) {
@@ -245,7 +245,7 @@ build_slicers(const getfem::mesh& m, dal::ptr_collection<getfem::slicer_action> 
     const getfem::mesh_fem &mf = *in.pop().to_const_mesh_fem();
     darray U = in.pop().to_darray(int(mf.nb_dof()));
     slicers.push_back(new getfem::slicer_isovalues(getfem::mesh_slice_cv_dof_data<darray>(mf,U),
-						   in.pop().to_scalar(), orient));
+                                                   in.pop().to_scalar(), orient));
   } else if (check_cmd(cmd, "boundary", in, 0, 1)) {
     getfem::slicer_action *s1 = 0;
     if (in.remaining()) {
@@ -403,9 +403,9 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       const getfem::mesh_fem& mf = *in.pop().to_const_mesh_fem();
       darray Udef = in.pop().to_darray(-2, int(mf.nb_dof()));
       if (!(mf.get_qdim() == mm->mesh().dim() && Udef.getm() == 1) &&
-	  !(mf.get_qdim() == 1 && Udef.getm() == mm->mesh().dim())) {
-	THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->mesh().dim()) <<
-		     ", either the data must have " << int(mm->mesh().dim()) << " rows");
+          !(mf.get_qdim() == 1 && Udef.getm() == mm->mesh().dim())) {
+        THROW_BADARG("either the mesh_fem must have a Qdim=" << int(mm->mesh().dim()) <<
+                     ", either the data must have " << int(mm->mesh().dim()) << " rows");
       }
       mfdef.reset(new getfem::mesh_slice_cv_dof_data<darray>(mf,Udef));
       slicer_def.reset(new getfem::slicer_apply_deformation(*mfdef.get()));
@@ -439,9 +439,9 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       size_type nrefine = in.pop().to_integer(1,1000);
       /*std::vector<convex_face> cvf;
       if (in.remaining()) {
-	iarray v = in.pop().to_iarray(-2, -1);
-	build_convex_face_lst(mm->mesh(), cvf, &v);
-	} else build_convex_face_lst(mm->mesh(), cvf, 0);*/
+        iarray v = in.pop().to_iarray(-2, -1);
+        build_convex_face_lst(mm->mesh(), cvf, &v);
+        } else build_convex_face_lst(mm->mesh(), cvf, 0);*/
       getfem::mesh_region rg = to_mesh_region(mm->mesh(), in);
       slicer.exec(nrefine, rg);
     } else {
@@ -487,15 +487,15 @@ void gf_slice(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
       std::string fname = in.pop().to_string();
       if (in.remaining()) mm = in.pop().to_getfemint_mesh();
       else {
-	getfem::mesh *m = new getfem::mesh();
-	m->read_from_file(fname);
-	mm = getfemint_mesh::get_from(m);
+        getfem::mesh *m = new getfem::mesh();
+        m->read_from_file(fname);
+        mm = getfemint_mesh::get_from(m);
       }
       pstored.reset(new getfem::stored_mesh_slice());
       pstored->read_from_file(fname, mm->mesh());
     } else bad_cmd(cmd);
   } else THROW_BADARG("a slicer specification (i.e. cell array) or a string "
-		      "was expected as the first argument");
+                      "was expected as the first argument");
   if (mm == 0 || pstored.get() == 0) THROW_INTERNAL_ERROR;
   getfemint_mesh_slice *mms = new getfemint_mesh_slice(*mm, pstored.release());
   out.pop().from_object_id(workspace().push_object(mms), SLICE_CLASS_ID);

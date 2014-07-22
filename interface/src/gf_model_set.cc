@@ -187,7 +187,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('add im data', @str name, @tmimd mesh_im_data[, @int niter]])
+    /*@SET ('add im data', @str name, @tmimd mimd[, @int niter]])
       Add a data set to the model linked to a @tmimd. `name` is the data
       name and `niter` is the optional number of version of the data stored,
       for time integration schemes. @*/

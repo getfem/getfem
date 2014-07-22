@@ -42,7 +42,7 @@
 namespace getfem {
 
   /* ******************************************************************** */
-  /*		Linear plate specific assembly procedures.                */
+  /*            Linear plate specific assembly procedures.                */
   /* ******************************************************************** */
 
   /**@ingroup asm*/
@@ -68,18 +68,18 @@ namespace getfem {
    const mesh_fem &mfdata, const VECT &MU,
    const mesh_region &rg = mesh_region::all_convexes()) {
     GMM_ASSERT1(mfdata.get_qdim() == 1,
-		"invalid data mesh fem (Qdim=1 required)");
+                "invalid data mesh fem (Qdim=1 required)");
     
     GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
     generic_assembly assem("mu=data$1(#3);"
-			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
-			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
-			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
-			   "M$4(#2,#2)+=sym(t2(:,i,:,i,j).mu(j));"
-			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
-			   "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
-			   "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);");
+                           "t1=comp(Grad(#1).Grad(#1).Base(#3));"
+                           "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
+                           "t2=comp(vBase(#2).vBase(#2).Base(#3));"
+                           "M$4(#2,#2)+=sym(t2(:,i,:,i,j).mu(j));"
+                           "t3=comp(Grad(#1).vBase(#2).Base(#3));"
+                           "M$2(#1,#2)+=t3(:,i,:,i,j).mu(j);"
+                           "M$3(#1,#2)+=t3(:,i,:,i,j).mu(j);");
     assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
@@ -119,76 +119,76 @@ namespace getfem {
      mitc4_projection_term(void) : sizes_(8,8)  { }
      const bgeot::multi_index &sizes(size_type) const {  return sizes_; }
      virtual void compute(getfem::fem_interpolation_context & ctx,
-			  bgeot::base_tensor &t) {
+                          bgeot::base_tensor &t) {
        
        //     ctx.G()  --> coordonées des noeuds
        //     ctx.B()  --> (grad tau) ^{-T}
 
        for (size_type i = 0; i < 8; ++i)
-	  for (size_type j = 0; j < 8; ++j) 
-	      t(i, j) = 0 ;  // Initialisation
+          for (size_type j = 0; j < 8; ++j) 
+              t(i, j) = 0 ;  // Initialisation
        
 //        // Remplissage des termes non nuls
-	// lignes 0 et 1
-	t(0,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
-	t(0,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
-	t(0,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) ; 
-	t(0,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) ;
-	t(0,4) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
-	t(0,5) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
-	
-	t(1,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
-	t(1,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
-	t(1,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) ; 
-	t(1,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) ;
-	t(1,4) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
-	t(1,5) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
-	// lignes 2 et 3
-	t(2,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) ; 
-	t(2,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) ;
-	t(2,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ;
-	t(2,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
-	t(2,6) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ;
-	t(2,7) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
-	
-	t(3,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) ; 
-	t(3,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) ;
-	t(3,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
-	t(3,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
-	t(3,6) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
-	t(3,7) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
-	// lignes 4 et 5
-	t(4,0) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ; 
-	t(4,1) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
-	t(4,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
-	t(4,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
-	t(4,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) ;
-	t(4,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) ;
-	
-	t(5,0) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ; 
-	t(5,1) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
-	t(5,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
-	t(5,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
-	t(5,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) ;
-	t(5,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) ;
-	// lignes 6 et 7
-	t(6,2) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ; 
-	t(6,3) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
-	t(6,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) ;
-	t(6,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) ;
-	t(6,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ; 
-	t(6,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
-	
-	t(7,2) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
-	t(7,3) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
-	t(7,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) ;
-	t(7,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) ;
-	t(7,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
-	t(7,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
-	
+        // lignes 0 et 1
+        t(0,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
+        t(0,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+        t(0,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) ; 
+        t(0,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) ;
+        t(0,4) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
+        t(0,5) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+        
+        t(1,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
+        t(1,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+        t(1,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) ; 
+        t(1,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) ;
+        t(1,4) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
+        t(1,5) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+        // lignes 2 et 3
+        t(2,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) ; 
+        t(2,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) ;
+        t(2,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(0,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ;
+        t(2,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(0,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+        t(2,6) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ;
+        t(2,7) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+        
+        t(3,0) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) ; 
+        t(3,1) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) ;
+        t(3,2) = ( ctx.G()(0,1) - ctx.G()(0,0) ) * ctx.B()(1,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+        t(3,3) = ( ctx.G()(1,1) - ctx.G()(1,0) ) * ctx.B()(1,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+        t(3,6) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+        t(3,7) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+        // lignes 4 et 5
+        t(4,0) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ; 
+        t(4,1) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+        t(4,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(0,1) ;
+        t(4,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(0,1) ;
+        t(4,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) ;
+        t(4,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) ;
+        
+        t(5,0) = ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ; 
+        t(5,1) = ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+        t(5,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) + ( ctx.G()(0,2) - ctx.G()(0,0) ) * ctx.B()(1,1) ;
+        t(5,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) + ( ctx.G()(1,2) - ctx.G()(1,0) ) * ctx.B()(1,1) ;
+        t(5,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) ;
+        t(5,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) ;
+        // lignes 6 et 7
+        t(6,2) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ; 
+        t(6,3) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+        t(6,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) ;
+        t(6,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) ;
+        t(6,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(0,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(0,1) ; 
+        t(6,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(0,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(0,1) ;
+        
+        t(7,2) = ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+        t(7,3) = ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+        t(7,4) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) ;
+        t(7,5) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) ;
+        t(7,6) = ( ctx.G()(0,3) - ctx.G()(0,2) ) * ctx.B()(1,0) + ( ctx.G()(0,3) - ctx.G()(0,1) ) * ctx.B()(1,1) ;
+        t(7,7) = ( ctx.G()(1,3) - ctx.G()(1,2) ) * ctx.B()(1,0) + ( ctx.G()(1,3) - ctx.G()(1,1) ) * ctx.B()(1,1) ;
+        
         t *= 0.5 ;
 
-	    }
+     }
       
     
   };
@@ -204,20 +204,20 @@ namespace getfem {
     // typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
     GMM_ASSERT1(mfdata.get_qdim() == 1,
-		"invalid data mesh fem (Qdim=1 required)");
+                "invalid data mesh fem (Qdim=1 required)");
     
     GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     mitc4_projection_term mitc4;
 
     generic_assembly assem("mu=data$1(#3);"
-			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
-			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
-			   "M$4(#2,#2)+=sym(comp(NonLin(#2)(k,:).vBase(#2)(k,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j));"
-			   "M$2(#1,#2)+=comp(Grad(#1)(:,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j);"   
-			   "M$3(#1,#2)+=comp(Grad(#1)(:,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j);"
-			   );
+                           "t1=comp(Grad(#1).Grad(#1).Base(#3));"
+                           "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
+                           "M$4(#2,#2)+=sym(comp(NonLin(#2)(k,:).vBase(#2)(k,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j));"
+                           "M$2(#1,#2)+=comp(Grad(#1)(:,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j);"   
+                           "M$3(#1,#2)+=comp(Grad(#1)(:,i).vBase(#2)(l,i).Base(#3)(:).NonLin(#2)(l,:))(:,j,:).mu(j);"
+                           );
 
     assem.push_mi(mim);
     assem.push_mf(mf_u3);
@@ -243,21 +243,21 @@ namespace getfem {
     typedef typename gmm::linalg_traits<VECT>::value_type value_type;
 
     GMM_ASSERT1(mfdata.get_qdim() == 1,
-		"invalid data mesh fem (Qdim=1 required)");
+                "invalid data mesh fem (Qdim=1 required)");
     
     GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
 
     generic_assembly assem("mu=data$1(#3);"
-			   "A=data$2(8,8);"
-			   "t1=comp(Grad(#1).Grad(#1).Base(#3));"
-			   "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
-			   "t2=comp(vBase(#2).vBase(#2).Base(#3));"
-			   "M$4(#2,#2)+=sym(A(k,:).t2(k,i,l,i,j).mu(j).A(l,:));"
-			   "t3=comp(Grad(#1).vBase(#2).Base(#3));"
-			   "M$2(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
-			   "M$3(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
-			   );
+                           "A=data$2(8,8);"
+                           "t1=comp(Grad(#1).Grad(#1).Base(#3));"
+                           "M$1(#1,#1)+=sym(t1(:,i,:,i,j).mu(j));"
+                           "t2=comp(vBase(#2).vBase(#2).Base(#3));"
+                           "M$4(#2,#2)+=sym(A(k,:).t2(k,i,l,i,j).mu(j).A(l,:));"
+                           "t3=comp(Grad(#1).vBase(#2).Base(#3));"
+                           "M$2(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
+                           "M$3(#1,#2)+=t3(:,i,l,i,j).mu(j).A(l,:);"
+                           );
 
     std::vector<value_type> A(64);
     // remplissage de A :
@@ -283,7 +283,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Linear plate model brick.                                 */
+  /*            Linear plate model brick.                                 */
   /* ******************************************************************** */
 
 # define MDBRICK_LINEAR_PLATE 897523
@@ -320,36 +320,36 @@ namespace getfem {
     const T_MATRIX &get_K(void) {
       this->context_check(); 
       if (!K_uptodate || this->parameters_is_any_modified()) {
-	GMM_ASSERT1(&lambda_.mf() == &mu_.mf(),
-		    "lambda and mu should share the same mesh_fem");
-	gmm::resize(K, nbdof, nbdof);
-	gmm::clear(K);
-	gmm::sub_interval I1(0, mf_ut.nb_dof());
-	gmm::sub_interval I2(mf_ut.nb_dof(), mf_u3.nb_dof()+mf_theta.nb_dof());
-	gmm::sub_interval I3(mf_ut.nb_dof()+mf_u3.nb_dof(),mf_theta.nb_dof());
-	VECTOR vlambda(lambda_.get()), vmu(mu_.get());
-	gmm::scale(vlambda, value_type(2) * epsilon);
-	gmm::scale(vmu, value_type(2) * epsilon);
-	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(), vlambda, vmu,
-	   mf_ut.linked_mesh().get_mpi_region());
-	// gmm::scale(mu, value_type(1) / value_type(2));
-	if (mitc) 
-	  asm_stiffness_matrix_for_plate_transverse_shear_mitc
-	    (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
-	     vmu, mf_ut.linked_mesh().get_mpi_region());
-	else
-	  asm_stiffness_matrix_for_plate_transverse_shear
-	    (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
-	     vmu, mf_ut.linked_mesh().get_mpi_region());
-	gmm::scale(vlambda, epsilon * epsilon / value_type(3));
-	// gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
-	gmm::scale(vmu, epsilon * epsilon / value_type(3));
-	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), vlambda, vmu,
-	   mf_ut.linked_mesh().get_mpi_region());
-	K_uptodate = true;
-	this->parameters_set_uptodate();
+        GMM_ASSERT1(&lambda_.mf() == &mu_.mf(),
+                    "lambda and mu should share the same mesh_fem");
+        gmm::resize(K, nbdof, nbdof);
+        gmm::clear(K);
+        gmm::sub_interval I1(0, mf_ut.nb_dof());
+        gmm::sub_interval I2(mf_ut.nb_dof(), mf_u3.nb_dof()+mf_theta.nb_dof());
+        gmm::sub_interval I3(mf_ut.nb_dof()+mf_u3.nb_dof(),mf_theta.nb_dof());
+        VECTOR vlambda(lambda_.get()), vmu(mu_.get());
+        gmm::scale(vlambda, value_type(2) * epsilon);
+        gmm::scale(vmu, value_type(2) * epsilon);
+        asm_stiffness_matrix_for_linear_elasticity
+          (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(), vlambda, vmu,
+           mf_ut.linked_mesh().get_mpi_region());
+        // gmm::scale(mu, value_type(1) / value_type(2));
+        if (mitc) 
+          asm_stiffness_matrix_for_plate_transverse_shear_mitc
+            (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
+             vmu, mf_ut.linked_mesh().get_mpi_region());
+        else
+          asm_stiffness_matrix_for_plate_transverse_shear
+            (gmm::sub_matrix(K, I2), mim_subint, mf_u3, mf_theta, lambda_.mf(),
+             vmu, mf_ut.linked_mesh().get_mpi_region());
+        gmm::scale(vlambda, epsilon * epsilon / value_type(3));
+        // gmm::scale(mu, value_type(2) * epsilon * epsilon / value_type(3));
+        gmm::scale(vmu, epsilon * epsilon / value_type(3));
+        asm_stiffness_matrix_for_linear_elasticity
+          (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), vlambda, vmu,
+           mf_ut.linked_mesh().get_mpi_region());
+        K_uptodate = true;
+        this->parameters_set_uptodate();
       }
       return K;
     }
@@ -361,15 +361,15 @@ namespace getfem {
 
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					   size_type) {
+                                           size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				size_type) {
+                                size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residual(), SUBI));
+                gmm::sub_vector(MS.residual(), SUBI));
     }
 
     void set_elastic_coeff(value_type E, value_type nu) {
@@ -379,8 +379,8 @@ namespace getfem {
 
     void set_mitc(void) {
       if (!mitc) {
-	mitc = true;  K_uptodate = false;
-	this->change_context();
+        mitc = true;  K_uptodate = false;
+        this->change_context();
       }
     }
 
@@ -394,12 +394,12 @@ namespace getfem {
     }
     SUBVECTOR get_u3(MODEL_STATE &MS) {
       gmm::sub_interval SUBU(this->first_index() + mf_ut.nb_dof(),
-			     mf_u3.nb_dof());
+                             mf_u3.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
     SUBVECTOR get_theta(MODEL_STATE &MS) {
       gmm::sub_interval SUBU(this->first_index() + mf_ut.nb_dof()
-			     + mf_u3.nb_dof(), mf_theta.nb_dof());
+                             + mf_u3.nb_dof(), mf_theta.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
 
@@ -417,62 +417,62 @@ namespace getfem {
     }
 
     /** 
-	Constructor for a homogeneous material (constant lambda and
-	mu). In order to avoid locking phenomena it is preferable for
-	mf_theta to be of lower order compared to mf_u3. Another
-	possibility is to use a sub-integration of the transverse
-	shear term (with mim_subint).
+        Constructor for a homogeneous material (constant lambda and
+        mu). In order to avoid locking phenomena it is preferable for
+        mf_theta to be of lower order compared to mf_u3. Another
+        possibility is to use a sub-integration of the transverse
+        shear term (with mim_subint).
 
-	@param mf_ut the finite element method for the membrane displacement
-	@param mf_u3 the finite element method for the transverse displacement.
-	@param mf_theta the finite element method for the rotation of the normal (section rotations).
-	@param epsilon the thickness of the plate.
+        @param mf_ut the finite element method for the membrane displacement
+        @param mf_u3 the finite element method for the transverse displacement.
+        @param mf_theta the finite element method for the rotation of the normal (section rotations).
+        @param epsilon the thickness of the plate.
     */
     mdbrick_isotropic_linearized_plate
     (const mesh_im &mim_, const mesh_fem &mf_ut_, const mesh_fem &mf_u3_,
      const mesh_fem &mf_theta_,
      value_type lambdai, value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
-	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
+        mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
+        mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
     { lambda_.set(lambdai); mu_.set(mui); init_(); }
 
     /** Constructor for a homogeneous material (constant lambda and
-	mu) with sub integration for the transverse shear term.
+        mu) with sub integration for the transverse shear term.
 
-	@param mf_ut the finite element method for the membrane displacement
-	@param mf_u3 the finite element method for the transverse displacement.
-	@param mf_theta the finite element method for the rotation of the normal (section rotations).
-	@param epsilon the thickness of the plate.
+        @param mf_ut the finite element method for the membrane displacement
+        @param mf_u3 the finite element method for the transverse displacement.
+        @param mf_theta the finite element method for the rotation of the normal (section rotations).
+        @param epsilon the thickness of the plate.
      */
     mdbrick_isotropic_linearized_plate
     (const mesh_im &mim_, const mesh_im &mim_subint_, const mesh_fem &mf_ut_,
      const mesh_fem &mf_u3_, const mesh_fem &mf_theta_, value_type lambdai,
      value_type mui, double epsilon_)
       : mim(mim_), mim_subint(mim_subint_), mf_ut(mf_ut_), mf_u3(mf_u3_),
-	mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
-	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
+        mf_theta(mf_theta_), lambda_("lambda", mf_ut_.linked_mesh(), this),
+        mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_)
     {  lambda_.set(lambdai); mu_.set(mui); init_(); }
  
   };
 
 
   /* ******************************************************************** */
-  /*		Mixed linear plate specific assembly procedures.          */
+  /*            Mixed linear plate specific assembly procedures.          */
   /* ******************************************************************** */
 
   /**@ingroup asm*/
   template<class MAT>
   void asm_coupling_u3theta(const MAT &RM, const mesh_im &mim,
-			    const mesh_fem &mf_u3,
-			    const mesh_fem &mf_theta,
-			    const mesh_region &rg
-			    = mesh_region::all_convexes()) {
+                            const mesh_fem &mf_u3,
+                            const mesh_fem &mf_theta,
+                            const mesh_region &rg
+                            = mesh_region::all_convexes()) {
     
     GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
     generic_assembly assem("t1=comp(Grad(#1).vBase(#2));"
-			   "M$1(#1,#2)+=t1(:,i,:,i);");
+                           "M$1(#1,#2)+=t1(:,i,:,i);");
     assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
@@ -483,15 +483,15 @@ namespace getfem {
   /**@ingroup asm*/
   template<class MAT>
   void asm_coupling_psitheta(const MAT &RM,  const mesh_im &mim,
-			     const mesh_fem &mf_u3,
-			     const mesh_fem &mf_theta,
-			     const mesh_region &rg
-			     = mesh_region::all_convexes()) {
+                             const mesh_fem &mf_u3,
+                             const mesh_fem &mf_theta,
+                             const mesh_region &rg
+                             = mesh_region::all_convexes()) {
     
     GMM_ASSERT1(mf_u3.get_qdim() == 1 && mf_theta.get_qdim() == 2,
-		"wrong qdim for the mesh_fem");
+                "wrong qdim for the mesh_fem");
     generic_assembly assem("t1=comp(Base(#1).vGrad(#2));"
-			   "M$1(#1,#2)+=t1(:,:,2,1)-t1(:,:,1,2);");
+                           "M$1(#1,#2)+=t1(:,:,2,1)-t1(:,:,1,2);");
     assem.push_mi(mim);
     assem.push_mf(mf_u3);
     assem.push_mf(mf_theta);
@@ -500,7 +500,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*		Mixed linear plate model brick.                           */
+  /*            Mixed linear plate model brick.                           */
   /* ******************************************************************** */
 
 # define MDBRICK_MIXED_LINEAR_PLATE 213456
@@ -535,96 +535,96 @@ namespace getfem {
     const T_MATRIX &get_K(void) {
       this->context_check(); 
       if (!K_uptodate || this->parameters_is_any_modified()) {
-	gmm::clear(K);
-	gmm::resize(K, nbdof, nbdof);
-	size_type nd1=mf_ut.nb_dof(), nd2=mf_u3.nb_dof(),nd3=mf_theta.nb_dof();
-	gmm::sub_interval I1(0, nd1), I2(nd1, nd2), I3(nd1 + nd2, nd3);
-	gmm::sub_interval I4(nd1 + nd2 + nd3, nd2), I5(nd1 + 2*nd2 + nd3, nd2);
-	
-	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(),
-	   lambda_.get(), mu_.get());
-	gmm::scale(gmm::sub_matrix(K, I1), value_type(2) * epsilon);
-	
-	
-	asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I2),
-						       mim, mf_u3);
-	gmm::scale(gmm::sub_matrix(K, I2),
-		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
-	
-	asm_stiffness_matrix_for_linear_elasticity
-	  (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda_.get(),
-	   mu_.get());
-	//   gmm::scale(gmm::sub_matrix(K, I3),
-	//  	 value_type(2) * epsilon * epsilon * epsilon / value_type(3));
-	
-	
-	asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mim, mf_u3, mf_theta);
-	gmm::scale(gmm::sub_matrix(K, I2, I3),
-		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
-	
-	//       cout << "\n\nval p de I2 I3 ";
-	//       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
-	
-	
-	asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3),mim, mf_u3, mf_theta);
-	gmm::scale(gmm::sub_matrix(K, I4, I3), epsilon*epsilon/value_type(3));
-	
-	//       cout << "\n\nval p de I4 I3 ";
-	//       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
-	
-	
-	asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)), mim,
-			      mf_u3, mf_theta);
-	gmm::scale(gmm::sub_matrix(K, I3, I4), epsilon*epsilon/value_type(3));
-	
-	
-	asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I5)), mim,
-			     mf_u3, mf_theta);
-	gmm::scale(gmm::sub_matrix(K, I3, I5), epsilon*epsilon/value_type(3));
-	
-	if (!symmetrized)
-	  asm_stiffness_matrix_for_homogeneous_laplacian
-	    (gmm::sub_matrix(K, I5), mim, mf_u3);
-	if (symmetrized) {
-	  asm_mass_matrix(gmm::sub_matrix(K, I3), mim, mf_theta);
-	  asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)),
-			       mim, mf_u3, mf_theta);
-	  gmm::scale(gmm::sub_matrix(K, I3, I2),
-		     value_type(2)*epsilon*epsilon*epsilon / value_type(3));
-	  
-	  asm_stiffness_matrix_for_homogeneous_laplacian
-	    (gmm::sub_matrix(K, I2, I5), mim, mf_u3);
-	  gmm::scale(gmm::sub_matrix(K, I2, I5),epsilon*epsilon/value_type(3));
-	  asm_stiffness_matrix_for_homogeneous_laplacian
-	    (gmm::sub_matrix(K, I5, I2), mim, mf_u3);
-	  gmm::scale(gmm::sub_matrix(K, I5, I2),epsilon*epsilon/value_type(3));
-	  asm_coupling_u3theta(gmm::sub_matrix(K, I5, I3),mim,mf_u3, mf_theta);
-	  gmm::scale(gmm::sub_matrix(K, I5, I3),epsilon*epsilon/value_type(3));
-	}
-	gmm::scale(gmm::sub_matrix(K, I3),
-		   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
-	
-	this->proper_mixed_variables.clear();
-	this->proper_mixed_variables.add(nbdof - mf_u3.nb_dof()*2,
-					 mf_u3.nb_dof()*2);
-	K_uptodate = true;
-	this->parameters_set_uptodate();
+        gmm::clear(K);
+        gmm::resize(K, nbdof, nbdof);
+        size_type nd1=mf_ut.nb_dof(), nd2=mf_u3.nb_dof(),nd3=mf_theta.nb_dof();
+        gmm::sub_interval I1(0, nd1), I2(nd1, nd2), I3(nd1 + nd2, nd3);
+        gmm::sub_interval I4(nd1 + nd2 + nd3, nd2), I5(nd1 + 2*nd2 + nd3, nd2);
+        
+        asm_stiffness_matrix_for_linear_elasticity
+          (gmm::sub_matrix(K, I1), mim, mf_ut, lambda_.mf(),
+           lambda_.get(), mu_.get());
+        gmm::scale(gmm::sub_matrix(K, I1), value_type(2) * epsilon);
+        
+        
+        asm_stiffness_matrix_for_homogeneous_laplacian(gmm::sub_matrix(K, I2),
+                                                       mim, mf_u3);
+        gmm::scale(gmm::sub_matrix(K, I2),
+                   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
+        
+        asm_stiffness_matrix_for_linear_elasticity
+          (gmm::sub_matrix(K, I3), mim, mf_theta, lambda_.mf(), lambda_.get(),
+           mu_.get());
+        //   gmm::scale(gmm::sub_matrix(K, I3),
+        //           value_type(2) * epsilon * epsilon * epsilon / value_type(3));
+        
+        
+        asm_coupling_u3theta(gmm::sub_matrix(K, I2, I3), mim, mf_u3, mf_theta);
+        gmm::scale(gmm::sub_matrix(K, I2, I3),
+                   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
+        
+        //       cout << "\n\nval p de I2 I3 ";
+        //       affiche_moi_valp(gmm::sub_matrix(K, I2, I3));
+        
+        
+        asm_coupling_psitheta(gmm::sub_matrix(K, I4, I3),mim, mf_u3, mf_theta);
+        gmm::scale(gmm::sub_matrix(K, I4, I3), epsilon*epsilon/value_type(3));
+        
+        //       cout << "\n\nval p de I4 I3 ";
+        //       affiche_moi_valp(gmm::sub_matrix(K, I4, I3));
+        
+        
+        asm_coupling_psitheta(gmm::transposed(gmm::sub_matrix(K, I3, I4)), mim,
+                              mf_u3, mf_theta);
+        gmm::scale(gmm::sub_matrix(K, I3, I4), epsilon*epsilon/value_type(3));
+        
+        
+        asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I5)), mim,
+                             mf_u3, mf_theta);
+        gmm::scale(gmm::sub_matrix(K, I3, I5), epsilon*epsilon/value_type(3));
+        
+        if (!symmetrized)
+          asm_stiffness_matrix_for_homogeneous_laplacian
+            (gmm::sub_matrix(K, I5), mim, mf_u3);
+        if (symmetrized) {
+          asm_mass_matrix(gmm::sub_matrix(K, I3), mim, mf_theta);
+          asm_coupling_u3theta(gmm::transposed(gmm::sub_matrix(K, I3, I2)),
+                               mim, mf_u3, mf_theta);
+          gmm::scale(gmm::sub_matrix(K, I3, I2),
+                     value_type(2)*epsilon*epsilon*epsilon / value_type(3));
+          
+          asm_stiffness_matrix_for_homogeneous_laplacian
+            (gmm::sub_matrix(K, I2, I5), mim, mf_u3);
+          gmm::scale(gmm::sub_matrix(K, I2, I5),epsilon*epsilon/value_type(3));
+          asm_stiffness_matrix_for_homogeneous_laplacian
+            (gmm::sub_matrix(K, I5, I2), mim, mf_u3);
+          gmm::scale(gmm::sub_matrix(K, I5, I2),epsilon*epsilon/value_type(3));
+          asm_coupling_u3theta(gmm::sub_matrix(K, I5, I3),mim,mf_u3, mf_theta);
+          gmm::scale(gmm::sub_matrix(K, I5, I3),epsilon*epsilon/value_type(3));
+        }
+        gmm::scale(gmm::sub_matrix(K, I3),
+                   value_type(2)* epsilon * epsilon * epsilon / value_type(3));
+        
+        this->proper_mixed_variables.clear();
+        this->proper_mixed_variables.add(nbdof - mf_u3.nb_dof()*2,
+                                         mf_u3.nb_dof()*2);
+        K_uptodate = true;
+        this->parameters_set_uptodate();
       }
       return K;
     }
     
   public :
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					size_type) {
+                                           size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::copy(get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
     }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				size_type) {
+                                     size_type) {
       gmm::sub_interval SUBI(i0, nbdof);
       gmm::mult(get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residual(), SUBI));
+                gmm::sub_vector(MS.residual(), SUBI));
     }
 
     void set_elastic_coeff(value_type E, value_type nu) {
@@ -642,12 +642,12 @@ namespace getfem {
     }
     SUBVECTOR get_u3(MODEL_STATE &MS) {
       gmm::sub_interval SUBU(this->first_index() + mf_ut.nb_dof(),
-			     mf_u3.nb_dof());
+                             mf_u3.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
     SUBVECTOR get_theta(MODEL_STATE &MS) {
       gmm::sub_interval SUBU(this->first_index() + mf_ut.nb_dof()
-			     + mf_u3.nb_dof(), mf_theta.nb_dof());
+                             + mf_u3.nb_dof(), mf_theta.nb_dof());
       return gmm::sub_vector(MS.state(), SUBU);
     }
 
@@ -669,21 +669,21 @@ namespace getfem {
 
 
     /** constructor for a homogeneous material (constant lambda and
-	mu). An inf-sup condition between mf_u3 and mf_theta has to be
-	satisfied (mf_u3 should be of lower order than mf_theta).
+        mu). An inf-sup condition between mf_u3 and mf_theta has to be
+        satisfied (mf_u3 should be of lower order than mf_theta).
      
-	@param mf_ut the finite element method for the membrane displacement
-	@param mf_u3 the finite element method for the transverse displacement.
-	@param mf_theta the finite element method for the rotation of the normal (section rotations).
-	@param epsilon the thickness of the plate.
+        @param mf_ut the finite element method for the membrane displacement
+        @param mf_u3 the finite element method for the transverse displacement.
+        @param mf_theta the finite element method for the rotation of the normal (section rotations).
+        @param epsilon the thickness of the plate.
     */
     mdbrick_mixed_isotropic_linearized_plate
     (const mesh_im &mim_, const mesh_fem &mf_ut_, const mesh_fem &mf_u3_,
      const mesh_fem &mf_theta_,
      value_type lambdai, value_type mui, double epsilon_, bool sym = false)
       : mim(mim_), mf_ut(mf_ut_), mf_u3(mf_u3_), mf_theta(mf_theta_),
-	lambda_("lambda", mf_ut_.linked_mesh(), this),
-	mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_), symmetrized(sym)
+        lambda_("lambda", mf_ut_.linked_mesh(), this),
+        mu_("mu", mf_ut_.linked_mesh(), this), epsilon(epsilon_), symmetrized(sym)
     { lambda_.set(lambdai); mu_.set(mui); init_(); }
  
   };
@@ -708,19 +708,19 @@ namespace getfem {
       VECTOR Bt(2*n);
 
       gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(0, n, 3)),
-		gmm::sub_vector(Bt, gmm::sub_slice(0, n, 2)));
+                gmm::sub_vector(Bt, gmm::sub_slice(0, n, 2)));
       gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(1, n, 3)),
-		gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
+                gmm::sub_vector(Bt, gmm::sub_slice(1, n, 2)));
      
       ut_part->source_term().set(B_.mf(), Bt);
       
       VECTOR Bn(n);
       gmm::copy(gmm::sub_vector(B_.get(), gmm::sub_slice(2, n, 3)), Bn);
       if (!mixed || symmetrized)
-	u3_part->source_term().set(B_.mf(), Bn);
+        u3_part->source_term().set(B_.mf(), Bn);
       
       if (mixed && !symmetrized)
-	phi_part->source_term().set(B_.mf(), Bn);
+        phi_part->source_term().set(B_.mf(), Bn);
     }
 
   public :
@@ -729,7 +729,7 @@ namespace getfem {
     mdbrick_parameter<VECTOR> &B(void) { return B_; }
     const mdbrick_parameter<VECTOR> &B(void) const { return B_; }
     /** moment source term (i.e. the source term on the rotation of
-	the normal). */
+        the normal). */
     mdbrick_parameter<VECTOR> &M(void) { return theta_part->source_term(); }
     const mdbrick_parameter<VECTOR> &M(void) const
     { return  theta_part->source_term(); }
@@ -737,54 +737,54 @@ namespace getfem {
 
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					   size_type) { }
+                                           size_type) { }
     virtual void do_compute_residual(MODEL_STATE &, size_type, size_type) { }
 
     mdbrick_plate_source_term(mdbrick_abstract<MODEL_STATE> &problem,
-			      const mesh_fem &mf_data, const VECTOR &B__,
-			      const VECTOR &M__,
-			      size_type bound = size_type(-1),
-			      size_type num_fem = 0)
+                              const mesh_fem &mf_data, const VECTOR &B__,
+                              const VECTOR &M__,
+                              size_type bound = size_type(-1),
+                              size_type num_fem = 0)
       :  B_("B", mf_data, this, 3) {
       B_.set(B__);
       ut_part = phi_part = u3_part = theta_part = 0;
       mixed = false; symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
-	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; symmetrized = false; } 
+          == MDBRICK_LINEAR_PLATE)
+        { mixed = false; symmetrized = false; } 
       else if (problem.get_mesh_fem_info(num_fem).brick_ident 
-	       == MDBRICK_MIXED_LINEAR_PLATE) {
-	mixed=true;
-	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+               == MDBRICK_MIXED_LINEAR_PLATE) {
+        mixed=true;
+        symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
       else GMM_ASSERT1(false, "This brick should only be applied to a "
-		       "plate problem");
+                       "plate problem");
       GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
-		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
-		  "The mesh_fem number is not correct");
+                  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+                  "The mesh_fem number is not correct");
 
       theta_part = new mdbrick_source_term<MODEL_STATE>
-	(problem, mf_data, M__, bound, num_fem+2);
+        (problem, mf_data, M__, bound, num_fem+2);
 
       // alias the source_term param of the theta_part brick into this brick
       this->parameters["M"] = &M();
 
       ut_part = sub_problem = new mdbrick_source_term<MODEL_STATE>
-	(*theta_part, mf_data, VECTOR(), bound, num_fem);
+        (*theta_part, mf_data, VECTOR(), bound, num_fem);
     
       if (!mixed || symmetrized)
-	sub_problem = u3_part = new mdbrick_source_term<MODEL_STATE>
-	  (*ut_part, mf_data, VECTOR(), bound, num_fem+1);
+        sub_problem = u3_part = new mdbrick_source_term<MODEL_STATE>
+          (*ut_part, mf_data, VECTOR(), bound, num_fem+1);
       
       if (mixed && !symmetrized)
-	sub_problem = phi_part = new mdbrick_source_term<MODEL_STATE>
-	  (*sub_problem, mf_data, VECTOR(), bound, num_fem+4);
+        sub_problem = phi_part = new mdbrick_source_term<MODEL_STATE>
+          (*sub_problem, mf_data, VECTOR(), bound, num_fem+4);
 
       this->add_sub_brick(*sub_problem);
 
       if (bound != size_type(-1)) {
-	this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
-	this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_NEUMANN);
+        this->add_proper_boundary_info(num_fem, bound, MDBRICK_NEUMANN);
+        this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_NEUMANN);
       }
 
       this->force_update();
@@ -819,40 +819,40 @@ namespace getfem {
   public :
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					size_type) { }
+                                        size_type) { }
     virtual void do_compute_residual(MODEL_STATE &, size_type ,size_type) {}
 
     mdbrick_plate_simple_support(mdbrick_abstract<MODEL_STATE> &problem,
-				 size_type bound,
-				 size_type num_fem = 0,
-				 constraints_type cot = AUGMENTED_CONSTRAINTS)
+                                 size_type bound,
+                                 size_type num_fem = 0,
+                                 constraints_type cot = AUGMENTED_CONSTRAINTS)
       : phi_part(0) {
       ut_part = new mdbrick_Dirichlet<MODEL_STATE>(problem, bound,
-						   dummy_mesh_fem(), num_fem);
+                                                   dummy_mesh_fem(), num_fem);
       ut_part->set_constraints_type(cot);
 
       u3_part = new mdbrick_Dirichlet<MODEL_STATE>
-	(*ut_part, bound, dummy_mesh_fem(), num_fem+1);
+        (*ut_part, bound, dummy_mesh_fem(), num_fem+1);
       u3_part->set_constraints_type(cot);
 
       bool mixed = false; // , symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
-	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; /* symmetrized = false; */ } 
+          == MDBRICK_LINEAR_PLATE)
+        { mixed = false; /* symmetrized = false; */ } 
       else if (problem.get_mesh_fem_info(num_fem).brick_ident 
-	       == MDBRICK_MIXED_LINEAR_PLATE) {
-	mixed=true;
-	// symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+               == MDBRICK_MIXED_LINEAR_PLATE) {
+        mixed=true;
+        // symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
       else GMM_ASSERT1(false, "This brick should only be applied to "
-		       "a plate problem");
+                       "a plate problem");
       GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
-		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
-		  "The mesh_fem number is not correct");
+                  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+                  "The mesh_fem number is not correct");
 
       if (mixed) {
-	sub_problem = phi_part = new mdbrick_Dirichlet<MODEL_STATE>(*u3_part, bound, dummy_mesh_fem(), num_fem+4);
-	sub_problem->set_constraints_type(cot);
+        sub_problem = phi_part = new mdbrick_Dirichlet<MODEL_STATE>(*u3_part, bound, dummy_mesh_fem(), num_fem+4);
+        sub_problem->set_constraints_type(cot);
       }
       else sub_problem = u3_part;
       this->add_sub_brick(*sub_problem);
@@ -888,15 +888,15 @@ namespace getfem {
   public :
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					   size_type) {}
+                                           size_type) {}
     virtual void do_compute_residual(MODEL_STATE &, size_type, size_type) {}
 
     mdbrick_plate_clamped_support(mdbrick_abstract<MODEL_STATE> &problem,
-				  size_type bound, size_type num_fem = 0,
-				  constraints_type cot = AUGMENTED_CONSTRAINTS)
+                                  size_type bound, size_type num_fem = 0,
+                                  constraints_type cot = AUGMENTED_CONSTRAINTS)
       : ut_part(problem, bound, dummy_mesh_fem(), num_fem),
-	u3_part(ut_part, bound, dummy_mesh_fem(), num_fem+1),
-	theta_part(u3_part, bound, dummy_mesh_fem(), num_fem+2), phi_part(0) {
+        u3_part(ut_part, bound, dummy_mesh_fem(), num_fem+1),
+        theta_part(u3_part, bound, dummy_mesh_fem(), num_fem+2), phi_part(0) {
 
       ut_part.set_constraints_type(cot);
       u3_part.set_constraints_type(cot);
@@ -904,28 +904,28 @@ namespace getfem {
 
       bool mixed = false; // , symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
-	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; /* symmetrized = false; */ } 
+          == MDBRICK_LINEAR_PLATE)
+        { mixed = false; /* symmetrized = false; */ } 
       else if (problem.get_mesh_fem_info(num_fem).brick_ident 
-	       == MDBRICK_MIXED_LINEAR_PLATE) {
-	mixed=true;
-	// symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+               == MDBRICK_MIXED_LINEAR_PLATE) {
+        mixed=true;
+        // symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
       else GMM_ASSERT1(false, "This brick should only be applied to "
-		       "a plate problem");
+                       "a plate problem");
       GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
-		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
-		  "The mesh_fem number is not correct");
+                  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+                  "The mesh_fem number is not correct");
 
       if (mixed) {
-	sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
-	  (theta_part, bound, dummy_mesh_fem(), num_fem+4);
-	sub_problem->set_constraints_type(cot);
-	this->add_sub_brick(*phi_part);
+        sub_problem = phi_part = new  mdbrick_Dirichlet<MODEL_STATE>
+          (theta_part, bound, dummy_mesh_fem(), num_fem+4);
+        sub_problem->set_constraints_type(cot);
+        this->add_sub_brick(*phi_part);
       }
       else { 
-	this->add_sub_brick(theta_part);
-	sub_problem = &theta_part;
+        this->add_sub_brick(theta_part);
+        sub_problem = &theta_part;
       }
       this->add_proper_boundary_info(num_fem, bound, MDBRICK_CLAMPED_SUPPORT);
       this->add_proper_boundary_info(num_fem+1, bound, MDBRICK_CLAMPED_SUPPORT);
@@ -940,15 +940,15 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Free edges condition for mixed plate model brick.         */
+  /*            Free edges condition for mixed plate model brick.         */
   /* ******************************************************************** */
 
   /**@ingroup asm*/
   template<class VEC>
   void asm_constraint_on_theta(const VEC &V, const mesh_im &mim, 
-			       const mesh_fem &mf_theta, const mesh_region &boundary) {
+                               const mesh_fem &mf_theta, const mesh_region &boundary) {
     generic_assembly assem("t=comp(vBase(#1).Normal());"
-			   "V(#1)+= t(:,2,1) - t(:,1,2);");
+                           "V(#1)+= t(:,2,1) - t(:,1,2);");
     assem.push_mi(mim);
     assem.push_mf(mf_theta);
     assem.push_vec(const_cast<VEC &>(V));
@@ -990,24 +990,24 @@ namespace getfem {
       dal::bit_vector vb = msh->regions_index();
       
       for (getfem::mr_visitor it(border_faces); !it.finished(); ++it) {
-	bool add = true;
-	// cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
-	for (dal::bv_visitor i(vb); !i.finished(); ++i) {
-	  if (msh->region(i).is_in(it.cv(),it.f())) {
-	    // cout << i << endl;
-	    bound_cond_type bct = this->boundary_type(num_fem, i);
-	    if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
-	    if (bct != MDBRICK_CLAMPED_SUPPORT) allclamped = false;
-	  }
-	}
-	
-	if (add) {
-	  cv_nums.push_back(it.cv()); 
-	  face_nums.push_back(it.f()); 
-	  allclamped = false;
-	  // cout << " adding";
-	}
-	// cout << endl;
+        bool add = true;
+        // cout << "face " << it->f << " of cv " << it->cv << "boundaries : ";
+        for (dal::bv_visitor i(vb); !i.finished(); ++i) {
+          if (msh->region(i).is_in(it.cv(),it.f())) {
+            // cout << i << endl;
+            bound_cond_type bct = this->boundary_type(num_fem, i);
+            if (bct != MDBRICK_UNDEFINED && bct != MDBRICK_NEUMANN) add = false;
+            if (bct != MDBRICK_CLAMPED_SUPPORT) allclamped = false;
+          }
+        }
+        
+        if (add) {
+          cv_nums.push_back(it.cv()); 
+          face_nums.push_back(it.f()); 
+          allclamped = false;
+          // cout << " adding";
+        }
+        // cout << endl;
       }
       //cout << "allclamped = " << allclamped << endl;
 
@@ -1015,58 +1015,58 @@ namespace getfem {
       size_type nbmax = msh->points().ind_last() + 1, p1, p2;
       std::vector<size_type> E1(nbmax, size_type(-1)), E2(nbmax, size_type(-1));
       for (size_type j = 0; j < cv_nums.size(); ++j) {
-	p1 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
-	p2 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
-	if (E1[p1] == size_type(-1)) E1[p1] = j; else E2[p1] = j;
-	if (E1[p2] == size_type(-1)) E1[p2] = j; else E2[p2] = j;	
+        p1 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
+        p2 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
+        if (E1[p1] == size_type(-1)) E1[p1] = j; else E2[p1] = j;
+        if (E1[p2] == size_type(-1)) E1[p2] = j; else E2[p2] = j;
       }
 
       size_type comp_conn = 0;
       for (size_type i = 0; i < comp_conns.size(); ++i) {
-	if (comp_conns[i] == size_type(-1)) {
-	  
-	  comp_conns[i] = comp_conn;
-	  p1 = msh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[0];
-	  p2 = msh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[1];
-	  size_type j1 = (E1[p1] == i) ? E2[p1] :  E1[p1];
-	  size_type j2 = (E1[p2] == i) ? E2[p2] :  E1[p2];
-	  
-	  for (unsigned k = 0; k < 2; ++k) {
-	    size_type j = (k == 0) ? j1 : j2;
-	    
-	    while (j != size_type(-1) && comp_conns[j] == size_type(-1)) {
-	      comp_conns[j] = comp_conn;
-	      p1 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
-	      p2 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
-	      size_type i1 = (E1[p1] == j) ? E2[p1] :  E1[p1];
-	      size_type i2 = (E1[p2] == j) ? E2[p2] :  E1[p2];
-	      if (i1 == size_type(-1) || comp_conns[i1] != size_type(-1))
-		j = i2; else j = i1;
-	    }
-	  }
-	  
-	  ++comp_conn;
-	}
+        if (comp_conns[i] == size_type(-1)) {
+          
+          comp_conns[i] = comp_conn;
+          p1 = msh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[0];
+          p2 = msh->ind_points_of_face_of_convex(cv_nums[i],face_nums[i])[1];
+          size_type j1 = (E1[p1] == i) ? E2[p1] :  E1[p1];
+          size_type j2 = (E1[p2] == i) ? E2[p2] :  E1[p2];
+          
+          for (unsigned k = 0; k < 2; ++k) {
+            size_type j = (k == 0) ? j1 : j2;
+            
+            while (j != size_type(-1) && comp_conns[j] == size_type(-1)) {
+              comp_conns[j] = comp_conn;
+              p1 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[0];
+              p2 = msh->ind_points_of_face_of_convex(cv_nums[j],face_nums[j])[1];
+              size_type i1 = (E1[p1] == j) ? E2[p1] :  E1[p1];
+              size_type i2 = (E1[p2] == j) ? E2[p2] :  E1[p2];
+              if (i1 == size_type(-1) || comp_conns[i1] != size_type(-1))
+                j = i2; else j = i1;
+            }
+          }
+          
+          ++comp_conn;
+        }
       }
 
       //cout << "Number of comp conn : " << comp_conn << endl;
       if (comp_conn < 2) {
-	gmm::resize(CO, 0, 0);
+        gmm::resize(CO, 0, 0);
       }
       else {
-	mesh_region boundary;
-	gmm::resize(CO, comp_conn, mf_theta->nb_dof());
-	for (size_type k = 0; k < comp_conn; ++k) {
-	  for (size_type i = 0; i < comp_conns.size(); ++i)
-	    if (comp_conns[i] == k) {
-	      boundary.add(cv_nums[i], face_nums[i]);
-	    }
-	  std::vector<value_type> V(mf_theta->nb_dof());
-	  asm_constraint_on_theta(V, *(this->mesh_ims[0]), *mf_theta,
-				  boundary);
-	  gmm::copy(V, gmm::mat_row(CO, k));
-	}
-	// cout << "CO = " << CO << endl;
+        mesh_region boundary;
+        gmm::resize(CO, comp_conn, mf_theta->nb_dof());
+        for (size_type k = 0; k < comp_conn; ++k) {
+          for (size_type i = 0; i < comp_conns.size(); ++i)
+            if (comp_conns[i] == k) {
+              boundary.add(cv_nums[i], face_nums[i]);
+            }
+          std::vector<value_type> V(mf_theta->nb_dof());
+          asm_constraint_on_theta(V, *(this->mesh_ims[0]), *mf_theta,
+                                  boundary);
+          gmm::copy(V, gmm::mat_row(CO, k));
+        }
+        // cout << "CO = " << CO << endl;
       }
 
       size_type nb_const = gmm::mat_nrows(CO) + (allclamped ? 1:0);
@@ -1074,99 +1074,99 @@ namespace getfem {
       this->proper_additional_dof = with_multipliers ? nb_const : 0;
       this->proper_nb_constraints = with_multipliers ? 0 : nb_const;
       if (with_multipliers)
-	this->proper_mixed_variables.add(sub_problem->nb_dof(), nb_const);
+        this->proper_mixed_variables.add(sub_problem->nb_dof(), nb_const);
     }
 
   public :
 
     virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					   size_type j0) {
+                                           size_type j0) {
       gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem+2],
-			     mf_theta->nb_dof());
+                             mf_theta->nb_dof());
       size_type nbd = sub_problem->nb_dof();
       if (with_multipliers) {
-	if (gmm::mat_nrows(CO) > 0) {
-	  gmm::sub_interval SUBI(i0+nbd, gmm::mat_nrows(CO));
-	  gmm::copy(CO, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
-	  gmm::copy(gmm::transposed(CO),
-		    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
-	}
-	if (allclamped) {
-	  size_type i = i0 + nbd + gmm::mat_nrows(CO);
-	  size_type j = i0 + this->mesh_fem_positions[num_fem+3];
-	  MS.tangent_matrix()(i, j) = value_type(1);
-	  MS.tangent_matrix()(j, i) = value_type(1);
-	}
+        if (gmm::mat_nrows(CO) > 0) {
+          gmm::sub_interval SUBI(i0+nbd, gmm::mat_nrows(CO));
+          gmm::copy(CO, gmm::sub_matrix(MS.tangent_matrix(), SUBI, SUBJ));
+          gmm::copy(gmm::transposed(CO),
+                    gmm::sub_matrix(MS.tangent_matrix(), SUBJ, SUBI));
+        }
+        if (allclamped) {
+          size_type i = i0 + nbd + gmm::mat_nrows(CO);
+          size_type j = i0 + this->mesh_fem_positions[num_fem+3];
+          MS.tangent_matrix()(i, j) = value_type(1);
+          MS.tangent_matrix()(j, i) = value_type(1);
+        }
       }
       else {
-	size_type ncs = sub_problem->nb_constraints();
-	if (gmm::mat_nrows(CO) > 0) {
-	  gmm::sub_interval SUBI(j0 + ncs, gmm::mat_nrows(CO));
-	  gmm::copy(CO,gmm::sub_matrix(MS.constraints_matrix(),SUBI,SUBJ));
-	}
-	if (allclamped) {
-	  MS.constraints_matrix()(j0+ncs+gmm::mat_nrows(CO),
-				  i0 + this->mesh_fem_positions[num_fem+3])
-	    = value_type(1);
-	}
+        size_type ncs = sub_problem->nb_constraints();
+        if (gmm::mat_nrows(CO) > 0) {
+          gmm::sub_interval SUBI(j0 + ncs, gmm::mat_nrows(CO));
+          gmm::copy(CO,gmm::sub_matrix(MS.constraints_matrix(),SUBI,SUBJ));
+        }
+        if (allclamped) {
+          MS.constraints_matrix()(j0+ncs+gmm::mat_nrows(CO),
+                                  i0 + this->mesh_fem_positions[num_fem+3])
+            = value_type(1);
+        }
       } 
     }
     virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				   size_type j0) {
+                                   size_type j0) {
       gmm::sub_interval SUBJ(i0+this->mesh_fem_positions[num_fem+2],
-			     mf_theta->nb_dof());
+                             mf_theta->nb_dof());
       if (with_multipliers) {
-	size_type nbd = sub_problem->nb_dof();
-	if (gmm::mat_nrows(CO) > 0) {
-	  gmm::sub_interval SUBI(i0 + nbd, gmm::mat_nrows(CO));
-	  gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
-		    gmm::sub_vector(MS.residual(), SUBI));
-	  gmm::mult_add(gmm::transposed(CO), gmm::sub_vector(MS.state(), SUBI),
-			gmm::sub_vector(MS.residual(), SUBJ));
-	}
-	if (allclamped) {
-	  size_type i = i0 + nbd + gmm::mat_nrows(CO);
-	  size_type j = i0 + this->mesh_fem_positions[num_fem+3];
-	  MS.residual()[i] = MS.state()[j];
-	  MS.residual()[j] += MS.state()[i];
-	}
+        size_type nbd = sub_problem->nb_dof();
+        if (gmm::mat_nrows(CO) > 0) {
+          gmm::sub_interval SUBI(i0 + nbd, gmm::mat_nrows(CO));
+          gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
+                    gmm::sub_vector(MS.residual(), SUBI));
+          gmm::mult_add(gmm::transposed(CO), gmm::sub_vector(MS.state(), SUBI),
+                        gmm::sub_vector(MS.residual(), SUBJ));
+        }
+        if (allclamped) {
+          size_type i = i0 + nbd + gmm::mat_nrows(CO);
+          size_type j = i0 + this->mesh_fem_positions[num_fem+3];
+          MS.residual()[i] = MS.state()[j];
+          MS.residual()[j] += MS.state()[i];
+        }
       }
       else {
-	size_type ncs = sub_problem->nb_constraints();
-	if (gmm::mat_nrows(CO) > 0) {
-	  gmm::sub_interval SUBI(j0+ncs,gmm::mat_nrows(CO));
-	  gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
-		    gmm::sub_vector(MS.constraints_rhs(), SUBI));
-	}
-	if (allclamped) {
-	  (MS.constraints_rhs())[j0+ncs+gmm::mat_nrows(CO)] =
-	    (MS.state())[i0 + this->mesh_fem_positions[num_fem+3]];
-	}
+        size_type ncs = sub_problem->nb_constraints();
+        if (gmm::mat_nrows(CO) > 0) {
+          gmm::sub_interval SUBI(j0+ncs,gmm::mat_nrows(CO));
+          gmm::mult(CO, gmm::sub_vector(MS.state(), SUBJ),
+                    gmm::sub_vector(MS.constraints_rhs(), SUBI));
+        }
+        if (allclamped) {
+          (MS.constraints_rhs())[j0+ncs+gmm::mat_nrows(CO)] =
+            (MS.state())[i0 + this->mesh_fem_positions[num_fem+3]];
+        }
       }
     }
 
     mdbrick_plate_closing(mdbrick_abstract<MODEL_STATE> &problem,
-			  size_type num_fem_ = 0, int with_mult = -1)
+                          size_type num_fem_ = 0, int with_mult = -1)
       : sub_problem(&problem), num_fem(num_fem_),
-	with_multipliers(with_mult!=0) {
+        with_multipliers(with_mult!=0) {
 
       if (with_mult == -1)
-	with_multipliers = (sub_problem->nb_constraints() == 0);
+        with_multipliers = (sub_problem->nb_constraints() == 0);
 
       mixed = false; symmetrized = false;
       if (problem.get_mesh_fem_info(num_fem).brick_ident
-	  == MDBRICK_LINEAR_PLATE)
-	{ mixed = false; symmetrized = false; } 
+          == MDBRICK_LINEAR_PLATE)
+        { mixed = false; symmetrized = false; } 
       else if (problem.get_mesh_fem_info(num_fem).brick_ident 
-	       == MDBRICK_MIXED_LINEAR_PLATE) {
-	mixed=true;
-	symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
+               == MDBRICK_MIXED_LINEAR_PLATE) {
+        mixed=true;
+        symmetrized = ((problem.get_mesh_fem_info(num_fem).info) & 2);
       }
       else GMM_ASSERT1(false, "This brick should only be applied to "
-		       "a plate problem");
+                       "a plate problem");
       GMM_ASSERT1((problem.get_mesh_fem_info(num_fem).info & 1)
-		  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
-		  "The mesh_fem number is not correct");
+                  && (num_fem + (mixed ? 4 : 2) < problem.nb_mesh_fems()),
+                  "The mesh_fem number is not correct");
 
       this->add_sub_brick(problem);
       this->force_update();

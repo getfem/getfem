@@ -108,7 +108,7 @@ namespace getfem
       pf_old = pf;
 
       gmm::dense_matrix<T> grad(N,qdim), gradt(qdim,N);
-      fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
+      fem_interpolation_context ctx(pgp, pfp, 0, G, cv, short_type(-1));
       slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);
       // gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
       // gmm::copy(gmm::sub_vector
@@ -187,7 +187,7 @@ namespace getfem
       pf_old = pf;
 
       gmm::dense_matrix<T> hess(N*N,qdim), hesst(qdim,N*N);
-      fem_interpolation_context ctx(pgp,pfp,0,G,cv, size_type(-1));
+      fem_interpolation_context ctx(pgp, pfp, 0, G, cv, short_type(-1));
       slice_vector_on_basic_dof_of_element(mf, U, cv, coeff);      
       // gmm::resize(coeff, mf.nb_basic_dof_of_element(cv));
       // gmm::copy(gmm::sub_vector

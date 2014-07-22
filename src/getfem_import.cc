@@ -400,7 +400,7 @@ namespace getfem {
             m.convex_to_point(ci.nodes[0]);
           for (bgeot::mesh_structure::ind_cv_ct::const_iterator
                  it = ct.begin(); it != ct.end(); ++it) {
-            for (unsigned face=0;
+            for (short_type face=0;
                  face < m.structure_of_convex(*it)->nb_faces(); ++face) {
               if (m.is_convex_face_having_points(*it,face,
                                                  short_type(ci.nodes.size()),

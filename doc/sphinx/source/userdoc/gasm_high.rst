@@ -58,7 +58,7 @@ A specific language has been developed to describe the weak formulation of bound
 
   - A certain number of linear and nonlinear operators (``Trace``, ``Norm``, ``Det``, ``Deviator``, ...). The nonlinear operators cannot be applied to test functions.
 
-  - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semanic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
+  - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semantic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
   - ``Interpolate(variable, transformation)``: powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describe the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element defined on different meshes.
 

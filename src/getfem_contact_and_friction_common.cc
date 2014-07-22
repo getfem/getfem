@@ -614,7 +614,7 @@ namespace getfem {
           bgeot::vectors_to_base_matrix
             (G, mfu.linked_mesh().points_of_convex(cv));
           fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                        size_type(-1));
+                                        short_type(-1));
 
           size_type nb_pt_on_face = 0;
           dal::bit_vector points_on_face;
@@ -1357,7 +1357,7 @@ namespace getfem {
             bgeot::vectors_to_base_matrix
               (G, mfu.linked_mesh().points_of_convex(cv));
             fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                          size_type(-1));
+                                          short_type(-1));
             
             bgeot::pconvex_structure cvs = pgt->structure();
             size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
@@ -1551,13 +1551,13 @@ namespace getfem {
                   fem_interpolation_context &ctx_x,
                   const base_small_vector &/*Normal*/,
                   const mesh **m_t,
-                  size_type &cv, size_type &face_num, base_node &P_ref,
+                  size_type &cv, short_type &face_num, base_node &P_ref,
                   base_small_vector &N_y,
                   std::map<var_trans_pair, base_tensor> &derivatives,
                   bool compute_derivatives) const {
       size_type cv_x = ctx_x.convex_num();
-      size_type face_x = ctx_x.face_num();
-      GMM_ASSERT1(face_x != size_type(-1), "The contact transformation can "
+      short_type face_x = ctx_x.face_num();
+      GMM_ASSERT1(face_x != short_type(-1), "The contact transformation can "
                   "only be applied to a boundary");
 
       //
@@ -1592,7 +1592,8 @@ namespace getfem {
       std::string stored_dispname;
       scalar_type d0 = 1E300, d1, d2;
       const mesh *stored_m_y(0);
-      size_type stored_cv_y(-1), stored_face_y(-1);
+      size_type stored_cv_y(-1);
+      short_type stored_face_y(-1);
       fem_interpolation_context stored_ctx_y;
 
       //
@@ -1689,7 +1690,7 @@ namespace getfem {
         const mesh &m_y = mfu_y.linked_mesh();
         size_type cv_y = fbox_y.ind_element;
         pfem pfu_y = mfu_y.fem_of_element(cv_y);
-        size_type face_y = fbox_y.ind_face;
+        short_type face_y = fbox_y.ind_face;
         bgeot::pgeometric_trans pgt_y= m_y.trans_of_convex(cv_y);
 
         // CRITERION 1 : The unit normal vector are compatible
@@ -1704,7 +1705,7 @@ namespace getfem {
 
         bgeot::vectors_to_base_matrix(G_y, m_y.points_of_convex(cv_y));
         const base_node &Y0
-          = pfu_y->ref_convex(cv_y)->points_of_face(short_type(face_y))[0];
+          = pfu_y->ref_convex(cv_y)->points_of_face(face_y)[0];
         fem_interpolation_context ctx_y(pgt_y, pfu_y, Y0, G_y, cv_y, face_y);
         
         const base_small_vector &NY0
@@ -1839,7 +1840,7 @@ namespace getfem {
       }
 
       int ret_type = 0;
-      *m_t = 0; cv = face_num = size_type(-1);
+      *m_t = 0; cv = size_type(-1); face_num = short_type(-1);
       if (irigid_obstacle != size_type(-1)) {
         P_ref = stored_pt_y; N_y = stored_n_y;
         ret_type = 2;
