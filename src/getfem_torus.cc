@@ -56,14 +56,14 @@ namespace bgeot{
     if (o) return dal::stored_cast<convex_structure>(o);
 
     torus_structure *p = new torus_structure;
-    p->Nc = ori_structure->dim() + 1;
+    p->Nc = dim_type(ori_structure->dim() + 1);
     p->nbpt = ori_structure->nb_points();
     p->nbf = ori_structure->nb_faces();
 
     p->faces_struct.resize(p->nbf);
     p->faces.resize(p->nbf);
 
-    for (size_type j = 0; j < p->nbf; ++j){
+    for (short_type j = 0; j < p->nbf; ++j){
       p->faces_struct[j] = ori_structure->faces_structure()[j];
       short_type nbIndex = ori_structure->nb_points_of_face(j);
       p->faces[j].resize(nbIndex);
@@ -141,11 +141,12 @@ namespace bgeot{
     (const bgeot::base_matrix &G, const bgeot::base_matrix &pc, bgeot::base_matrix &K) const{
       bgeot::geometric_trans::compute_K_matrix(G, pc, K);
       K(2, 2) = 0.0;
-      for(int j = 0; j < nb_points(); ++ j) K(2, 2) += G(0, j) * pc(j, 2);
-      for(int i = 0; i < 2; ++i) K(2, i) = K(i, 2) = 0;
+      for (short_type j = 0; j < nb_points(); ++ j) K(2, 2) += G(0, j) * pc(j, 2);
+      for (short_type i = 0; i < 2; ++i) K(2, i) = K(i, 2) = 0;
   }
 
-  void torus_geom_trans::poly_vector_hess(const base_node &pt, bgeot::base_matrix &pc) const{
+  void torus_geom_trans::poly_vector_hess(const base_node & /*pt*/,
+                                          bgeot::base_matrix & /*pc*/) const{
     GMM_ASSERT1(false, "Sorry, Hessian is not supported in axisymmetric transformation.");
   }
 
@@ -250,8 +251,8 @@ namespace getfem
     tensor_size[0] *= dim_;
     tensor_size[1] = ntarget_dim;
     t.adjust_sizes(tensor_size);
-    for(int i = 0; i < u_orig.sizes()[0]; ++i){
-      for(int j = 0; j < dim_; ++j){
+    for (size_type i = 0; i < u_orig.sizes()[0]; ++i) {
+      for (dim_type j = 0; j < dim_; ++j) {
         t(i*dim_ + j, j) = u_orig(i, 0);
       }
     }
@@ -281,14 +282,14 @@ namespace getfem
     //to vectorial form [nb_base * dim_, dim_ + 1, dim_ + 1]
     const bgeot::multi_index &origin_size = u_origin.sizes();
     bgeot::multi_index tensor_size(origin_size);
-    bgeot::size_type dim_size = (is_scalar_)? 1 : dim_;
+    dim_type dim_size = is_scalar_ ? 1 : dim_;
     tensor_size[0] *= dim_size;
     tensor_size[1] = ntarget_dim;
     tensor_size[2] = dim_ + 1;
     u.adjust_sizes(tensor_size);
-    for(int i = 0; i < origin_size[0]; ++i){ //dof
-      for(int j = 0; j < dim_size; ++j){
-        for(int k = 0; k < dim_; ++k){
+    for (size_type i = 0; i < origin_size[0]; ++i) { //dof
+      for (dim_type j = 0; j < dim_size; ++j) {
+        for (dim_type k = 0; k < dim_; ++k) {
           u(i*dim_size+j, j, k) = u_origin(i, 0, k);
         }
       }
@@ -298,13 +299,13 @@ namespace getfem
 
     if(is_scalar_) return;
 
-    for(int i = 0; i < origin_size[0]; ++i){
+    for (size_type i = 0; i < origin_size[0]; ++i) {
       t(i*dim_size, dim_, dim_) = n_origin[i] / radius;
     }
   }
 
   void torus_fem::real_hess_base_value
-    (const getfem::fem_interpolation_context &c, base_tensor &t, bool) const 
+    (const getfem::fem_interpolation_context & /*c*/, base_tensor & /*t*/, bool) const 
   {
     GMM_ASSERT1(false, "Hessian not yet implemented in torus fem.");
   }
@@ -347,9 +348,9 @@ namespace getfem
     return pfem_torus;
   }
 
-  void del_torus_fem(getfem::pfem pfem){    
-    const torus_fem *ptorus_fem = dynamic_cast<const torus_fem*>(pfem.get());
-    if (ptorus_fem != 0) dal::del_stored_object(pfem);
+  void del_torus_fem(getfem::pfem pf){
+    const torus_fem *ptorus_fem = dynamic_cast<const torus_fem*>(pf.get());
+    if (ptorus_fem != 0) dal::del_stored_object(pf);
   }
 
   void torus_mesh_fem::adapt_to_torus_(){

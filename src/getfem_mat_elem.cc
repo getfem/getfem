@@ -359,10 +359,10 @@ namespace getfem {
     void expand_product_daxpy(base_tensor &t, scalar_type J, bool first)const {
       size_type k;
       base_tensor::iterator pt = t.begin();
-	  DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,pts);
-	  DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_beg);
-	  DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_end);
-	  DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>,Vtab);
+      DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,pts);
+      DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_beg);
+      DEFINE_STATIC_THREAD_LOCAL(std::vector<base_tensor::const_iterator>,es_end);
+      DEFINE_STATIC_THREAD_LOCAL(std::vector<scalar_type>,Vtab);
       pts.resize(pme->size()); es_beg.resize(pme->size());
       es_end.resize(pme->size()); Vtab.resize(pme->size());
       size_type nm = 0;
@@ -513,11 +513,11 @@ namespace getfem {
     }
 
 
-    void compute(base_tensor &t, const base_matrix &G, size_type ir,
+    void compute(base_tensor &t, const base_matrix &G, short_type ir,
                  size_type elt, mat_elem_integration_callback *icb = 0) const {
       dim_type P = dim_type(dim), N = dim_type(G.nrows());
       short_type NP = short_type(pgt->nb_points());
-      fem_interpolation_context ctx(pgp,0,0,G,elt, ir-1);
+      fem_interpolation_context ctx(pgp, 0, 0, G, elt, short_type(ir-1));
 
       GMM_ASSERT1(G.ncols() == NP, "dimensions mismatch");
       if (ir > 0) {
@@ -535,8 +535,8 @@ namespace getfem {
         if (ir > 0) {
           gmm::mult(B, un, up);
           scalar_type nup = gmm::vect_norm2(up);
-	  J *= nup; //up /= nup;
-	  gmm::scale(up,1.0/nup);
+          J *= nup; //up /= nup;
+          gmm::scale(up,1.0/nup);
         }
 
         t = mref[ir]; gmm::scale(t.as_vector(), J);
@@ -581,7 +581,7 @@ namespace getfem {
           if (ir > 0) {
             gmm::mult(B, un, up);
             scalar_type nup = gmm::vect_norm2(up);
-	    J *= nup; /*up /= nup;*/gmm::scale(up,1.0/nup);
+            J *= nup; /*up /= nup;*/gmm::scale(up,1.0/nup);
           }
           add_elem(t, ctx, J, first, true, icb, sizes);
         }
@@ -616,7 +616,7 @@ namespace getfem {
     void compute_on_face(base_tensor &t, const base_matrix &G,
                          short_type f, size_type elt,
                          mat_elem_integration_callback *icb) const
-    { compute(t, G, f+1, elt, icb); }
+    { compute(t, G, short_type(f+1), elt, icb); }
   };
 
   pmat_elem_computation mat_elem(pmat_elem_type pm, pintegration_method pi,

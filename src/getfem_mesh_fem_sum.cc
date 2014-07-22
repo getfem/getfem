@@ -45,15 +45,15 @@ namespace getfem {
       GMM_ASSERT1(pfems[i]->target_dim() == 1, "Vectorial fems not supported");
 
       for (size_type k = 0; k < pfems[i]->nb_dof(cv); ++k) {
-	add_node(pfems[i]->dof_types()[k], pfems[i]->node_of_dof(cv,k));
+        add_node(pfems[i]->dof_types()[k], pfems[i]->node_of_dof(cv,k));
       }
     }
   }
 
   /* used only when smart_global_dof_linking_ is on */
   void fem_sum::mat_trans(base_matrix &M,
-			  const base_matrix &G,
-			  bgeot::pgeometric_trans pgt) const {
+                          const base_matrix &G,
+                          bgeot::pgeometric_trans pgt) const {
 
     // cerr << "fem_sum::mat_trans " << debug_name_ 
     //      << " / smart_global_dof_linking_ = " << smart_global_dof_linking_
@@ -72,55 +72,53 @@ namespace getfem {
       pfem pf1 = pfems[ifem1];
       /* find global dofs */
       for (size_type idof1 = 0; idof1 < pf1->nb_dof(cv); ++idof1, ++i) {
-	if (pf1->dof_types()[idof1] == gdof) {
-	  base_vector coeff(pfems[ifem1]->nb_dof(cv));
-	  coeff[idof1] = 1.0;
-	  fem_interpolation_context fic(pgt, pf1, base_node(dim()), G, cv,
-					size_type(-1));
-	  for (size_type ifem2 = 0, j=0; ifem2 < pfems.size(); ++ifem2) {
-	    pfem pf2 = pfems[ifem2];
-	    fem_interpolation_context fic2(pgt, pf2, base_node(dim()), G, cv,
-					   size_type(-1));
-	    for (size_type idof2 = 0; idof2 < pf2->nb_dof(cv); ++idof2, ++j) {
-	      pdof_description pdd = pf2->dof_types()[idof2];
-	      bool found = false;
+        if (pf1->dof_types()[idof1] == gdof) {
+          base_vector coeff(pfems[ifem1]->nb_dof(cv));
+          coeff[idof1] = 1.0;
+          fem_interpolation_context fic(pgt, pf1, base_node(dim()), G, cv);
+          for (size_type ifem2 = 0, j=0; ifem2 < pfems.size(); ++ifem2) {
+            pfem pf2 = pfems[ifem2];
+            fem_interpolation_context fic2(pgt, pf2, base_node(dim()), G, cv);
+            for (size_type idof2 = 0; idof2 < pf2->nb_dof(cv); ++idof2, ++j) {
+              pdof_description pdd = pf2->dof_types()[idof2];
+              bool found = false;
 
-	      base_vector coeff2(pfems[ifem2]->nb_dof(cv));
-	      coeff2[idof2] = 1.0;
+              base_vector coeff2(pfems[ifem2]->nb_dof(cv));
+              coeff2[idof2] = 1.0;
 
-	      if (pdd != gdof) {
-		fic.set_xref(pf2->node_of_dof(cv, idof2));
-		fic2.set_xref(pf2->node_of_dof(cv, idof2));
-		if (dof_weak_compatibility(pdd, lagdof) == 0) {
-		  pfems[ifem1]->interpolation(fic, coeff, val, 1);
+              if (pdd != gdof) {
+                fic.set_xref(pf2->node_of_dof(cv, idof2));
+                fic2.set_xref(pf2->node_of_dof(cv, idof2));
+                if (dof_weak_compatibility(pdd, lagdof) == 0) {
+                  pfems[ifem1]->interpolation(fic, coeff, val, 1);
 
-		  pfems[ifem2]->interpolation(fic2, coeff2, val2, 1);
+                  pfems[ifem2]->interpolation(fic2, coeff2, val2, 1);
 
-		  M(i, j) = -val[0]*val2[0];
-		  /*if (pf2->nb_dof(cv) > 4) 
-		    cout << "dof " << idof2 << " (" 
-			 << pf2->node_of_dof(cv,idof2) 
-			 << ") " << (void*)&(*pdd) 
-			 << " compatible with lagrange\n";*/
-		  found = true;
-		}
-		else for (size_type id = 0; id < dim(); ++id) {
-		  if (dof_weak_compatibility(pdd, hermdof[id]) == 0) {
-		    pfems[ifem1]->interpolation_grad(fic, coeff, grad, 1);
-		    M(i, j) = -grad(0, id);
-		    cout << "dof " << idof2 << "compatible with hermite "
-			 << id << "\n";
-		    found = true;
-		  }
-		}
-		GMM_ASSERT1(found,
-			    "Sorry, smart_global_dof_linking not "
-			    "compatible with this kind of dof");
-	      }
-	    }
-	    //if (pf2->nb_dof(cv) > 4) cout << " M=" << M << "\n";
-	  }
-	}
+                  M(i, j) = -val[0]*val2[0];
+                  /*if (pf2->nb_dof(cv) > 4) 
+                    cout << "dof " << idof2 << " (" 
+                         << pf2->node_of_dof(cv,idof2) 
+                         << ") " << (void*)&(*pdd) 
+                         << " compatible with lagrange\n";*/
+                  found = true;
+                }
+                else for (size_type id = 0; id < dim(); ++id) {
+                  if (dof_weak_compatibility(pdd, hermdof[id]) == 0) {
+                    pfems[ifem1]->interpolation_grad(fic, coeff, grad, 1);
+                    M(i, j) = -grad(0, id);
+                    cout << "dof " << idof2 << "compatible with hermite "
+                         << id << "\n";
+                    found = true;
+                  }
+                }
+                GMM_ASSERT1(found,
+                            "Sorry, smart_global_dof_linking not "
+                            "compatible with this kind of dof");
+              }
+            }
+            //if (pf2->nb_dof(cv) > 4) cout << " M=" << M << "\n";
+          }
+        }
       }
     }
     
@@ -138,18 +136,18 @@ namespace getfem {
   }
 
   void fem_sum::base_value(const base_node &, 
-				 base_tensor &) const
+                                 base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_sum::grad_base_value(const base_node &, 
-				      base_tensor &) const
+                                      base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element."); }
   void fem_sum::hess_base_value(const base_node &, 
-			     base_tensor &) const
+                             base_tensor &) const
   { GMM_ASSERT1(false, "No base values, real only element."); }
 
   void fem_sum::real_base_value(const fem_interpolation_context &c,
-				base_tensor &t, 
-				bool withM) const {
+                                base_tensor &t, 
+                                bool withM) const {
     bgeot::multi_index mi(2);
     mi[1] = target_dim(); mi[0] = short_type(nb_dof(0));
     t.adjust_sizes(mi);
@@ -159,17 +157,17 @@ namespace getfem {
     std::vector<base_tensor> val_e(pfems.size());
     for (size_type k = 0; k < pfems.size(); ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
-			       c0.pfp()));
+        c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+                               c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.base_value(val_e[k]);
     }
     
     for (dim_type q = 0; q < target_dim(); ++q) {
       for (size_type k = 0; k < pfems.size(); ++k) {
-	itf = val_e[k].begin() + q * pfems[k]->nb_dof(cv);
-	for (size_type i = 0; i <  pfems[k]->nb_dof(cv); ++i)
-	  *it++ = *itf++;
+        itf = val_e[k].begin() + q * pfems[k]->nb_dof(cv);
+        for (size_type i = 0; i <  pfems[k]->nb_dof(cv); ++i)
+          *it++ = *itf++;
       }
     }
     assert(it == t.end());
@@ -181,7 +179,7 @@ namespace getfem {
   }
 
   void fem_sum::real_grad_base_value(const fem_interpolation_context &c,
-				     base_tensor &t, bool withM) const {
+                                     base_tensor &t, bool withM) const {
     bgeot::multi_index mi(3);
     mi[2] = short_type(c.N()); mi[1] = target_dim();
     mi[0] = short_type(nb_dof(0));
@@ -192,20 +190,20 @@ namespace getfem {
     std::vector<base_tensor> grad_e(pfems.size());
     for (size_type k = 0; k < pfems.size(); ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
-			       c0.pfp()));
+        c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+                               c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.grad_base_value(grad_e[k]);
     }
 
     for (dim_type k = 0; k < c.N() ; ++k) {
       for (dim_type q = 0; q < target_dim(); ++q) {
-	for (size_type f = 0; f < pfems.size(); ++f) {
-	  itf = grad_e[f].begin()
-	    + (k * target_dim() + q) * pfems[f]->nb_dof(cv); 
-	  for (size_type i = 0; i < pfems[f]->nb_dof(cv); ++i)
-	    *it++ = *itf++;
-	}
+        for (size_type f = 0; f < pfems.size(); ++f) {
+          itf = grad_e[f].begin()
+            + (k * target_dim() + q) * pfems[f]->nb_dof(cv); 
+          for (size_type i = 0; i < pfems[f]->nb_dof(cv); ++i)
+            *it++ = *itf++;
+        }
       }
     }
     assert(it == t.end());
@@ -216,7 +214,7 @@ namespace getfem {
   }
   
   void fem_sum::real_hess_base_value(const fem_interpolation_context &c,
-				     base_tensor &t, bool withM) const {
+                                     base_tensor &t, bool withM) const {
     bgeot::multi_index mi(4);
     mi[3] = mi[2] = short_type(c.N()); mi[1] = target_dim();
     mi[0] = short_type(nb_dof(0));
@@ -227,22 +225,22 @@ namespace getfem {
     std::vector<base_tensor> hess_e(pfems.size());
     for (size_type k = 0; k < pfems.size(); ++k) {
       if (c0.have_pfp()) {
-	c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
-			       c0.pfp()));
+        c0.set_pfp(fem_precomp(pfems[k], &c0.pfp()->get_point_tab(),
+                               c0.pfp()));
       } else { c0.set_pf(pfems[k]); }
       c0.hess_base_value(hess_e[k]);
     }
 
     for (dim_type j = 0; j < c.N() ; ++j) {
       for (dim_type k = 0; k < c.N() ; ++k) {
-	for (dim_type q = 0; q < target_dim(); ++q) {
-	  for (size_type f = 0; f < pfems.size(); ++f) {
-	    itf = hess_e[f].begin()
-	      + ((j * c.N() + k) * target_dim() + q) * pfems[f]->nb_dof(cv); 
-	    for (size_type i = 0; i < pfems[f]->nb_dof(cv); ++i)
-	      *it++ = *itf++;
-	  }
-	}
+        for (dim_type q = 0; q < target_dim(); ++q) {
+          for (size_type f = 0; f < pfems.size(); ++f) {
+            itf = hess_e[f].begin()
+              + ((j * c.N() + k) * target_dim() + q) * pfems[f]->nb_dof(cv); 
+            for (size_type i = 0; i < pfems[f]->nb_dof(cv); ++i)
+              *it++ = *itf++;
+          }
+        }
       }
     }
     assert(it == t.end());
@@ -272,33 +270,33 @@ namespace getfem {
 
     for (size_type i = 0; i < mfs.size(); ++i)
       GMM_ASSERT1(!(mfs[i]->is_reduced()),
-		  "Sorry fem_sum for reduced mesh_fem is not implemented");
+                  "Sorry fem_sum for reduced mesh_fem is not implemented");
 
     for (dal::bv_visitor i(linked_mesh().convex_index()); !i.finished(); ++i) {
       std::vector<pfem> pfems;
       bool is_cv_dep = false;
       for (size_type j = 0; j < mfs.size(); ++j) {
-	if (mfs[j]->convex_index().is_in(i)) {
-	  pfem pf = mfs[j]->fem_of_element(i);
-	  if (pf->nb_dof(i)) {
-	    pfems.push_back(pf);
-	    if (pf->is_on_real_element()) is_cv_dep = true;
-	  }
-	}
+        if (mfs[j]->convex_index().is_in(i)) {
+          pfem pf = mfs[j]->fem_of_element(i);
+          if (pf->nb_dof(i)) {
+            pfems.push_back(pf);
+            if (pf->is_on_real_element()) is_cv_dep = true;
+          }
+        }
       }
       if (pfems.size() == 1) {
-	set_finite_element(i, pfems[0]);
+        set_finite_element(i, pfems[0]);
       }
       else if (pfems.size() > 0) {
-	if (situations.find(pfems) == situations.end() || is_cv_dep) {
-	  pfem pf = new fem_sum(pfems, i, smart_global_dof_linking_);
-	  dal::add_stored_object(new special_mflsum_key(pf), pf,
-				 pf->ref_convex(0),
-				 pf->node_tab(0));
-	  build_methods.push_back(pf);
-	  situations[pfems] = pf;
-	}
-	set_finite_element(i, situations[pfems]);
+        if (situations.find(pfems) == situations.end() || is_cv_dep) {
+          pfem pf = new fem_sum(pfems, i, smart_global_dof_linking_);
+          dal::add_stored_object(new special_mflsum_key(pf), pf,
+                                 pf->ref_convex(0),
+                                 pf->node_tab(0));
+          build_methods.push_back(pf);
+          situations[pfems] = pf;
+        }
+        set_finite_element(i, situations[pfems]);
       }
     }
     is_adapted = true; touch();
