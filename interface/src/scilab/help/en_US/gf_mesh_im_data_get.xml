@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_im_data_get" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_mesh_im_data_get</refname>
+    <refpurpose>  General function extracting information from mesh_im_data objects.
+  </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>gf_mesh_im_data_get(mesh_im_data MID, 'region')</synopsis>
+    <synopsis>gf_mesh_im_data_get(mesh_im_data MID, 'nbpts')</synopsis>
+    <synopsis>gf_mesh_im_data_get(mesh_im_data MID, 'nb tensor elements')</synopsis>
+    <synopsis>gf_mesh_im_data_get(mesh_im_data MID, 'tensor size')</synopsis>
+    <synopsis>gf_mesh_im_data_get(mesh_im_data MID, 'display')</synopsis>
+    <synopsis>m = gf_mesh_im_data_get(mesh_im_data MID, 'linked mesh')</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>  General function extracting information from mesh_im_data objects.
+  </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>gf_mesh_im_data_get(mesh_im_data MID, 'region')</literal></para>
+
+    <para>         Output the region that the mesh_imd is restricted to.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_data_get(mesh_im_data MID, 'nbpts')</literal></para>
+
+    <para>         Output the number of integration points (filtered in the considered region).
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_data_get(mesh_im_data MID, 'nb tensor elements')</literal></para>
+
+    <para>         Output the size of the stored data (per integration point).
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_data_get(mesh_im_data MID, 'tensor size')</literal></para>
+
+    <para>         Output the size of the stored data (per integration point).
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_data_get(mesh_im_data MID, 'display')</literal></para>
+
+    <para>         displays a short summary for a mesh_imd object.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>m = gf_mesh_im_data_get(mesh_im_data MID, 'linked mesh')</literal></para>
+
+    <para>       Returns a reference to the mesh object linked to <literal>mim</literal>.
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>

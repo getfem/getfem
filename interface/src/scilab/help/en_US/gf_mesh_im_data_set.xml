@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_mesh_im_data_set" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_mesh_im_data_set</refname>
+    <refpurpose>  General function for modifying mesh_im objects
+  </refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>gf_mesh_im_data_set(mesh_im_data MID, 'region', int rnum)</synopsis>
+    <synopsis>gf_mesh_im_data_set(mesh_im_data MID, 'tensor size',)</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>  General function for modifying mesh_im objects
+  </para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>gf_mesh_im_data_set(mesh_im_data MID, 'region', int rnum)</literal></para>
+
+    <para>       Set the considered region to <literal>rnum</literal>.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_mesh_im_data_set(mesh_im_data MID, 'tensor size',)</literal></para>
+
+    <para>       Set the size of the data per integration point.
+    
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>

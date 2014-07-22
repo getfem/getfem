@@ -23,7 +23,7 @@
     <synopsis>MF = gf_mesh_fem('levelset', mesh_levelset mls, mesh_fem mf)</synopsis>
     <synopsis>MF = gf_mesh_fem('global function', mesh m, levelset ls, {global_function GF1,...}[, int Qdim_m])</synopsis>
     <synopsis>MF = gf_mesh_fem('partial', mesh_fem mf, ivec DOFs[, ivec RCVs])</synopsis>
-    <synopsis>MF = gf_mesh_fem(mesh m[, int Qdim_m=1[, int Qdim_n=1]])</synopsis>
+    <synopsis>MF = gf_mesh_fem(mesh m[, int Qdim1=1[, int Qdim2=1, ...]])</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -106,12 +106,15 @@
     </listitem>
 
     <listitem>
-    <para><literal>MF = gf_mesh_fem(mesh m[, int Qdim_m=1[, int Qdim_n=1]])</literal></para>
+    <para><literal>MF = gf_mesh_fem(mesh m[, int Qdim1=1[, int Qdim2=1, ...]])</literal></para>
 
     <para>         Build a new mesh_fem object.
 
-      <literal>Qdim_m</literal> and <literal>Qdim_n</literal> parameters are optionals. Returns the handle of
-      the created object. 
+      The <literal>Qdim</literal> parameters specifies the dimension of the field represented
+      by the finite element method. Qdim1 = 1 for a scalar field,
+      Qdim1 = n for a vector field off size n, Qdim1=m, Qdim2=n for
+      a matrix field of size mxn ...
+      Returns the handle of the created object. 
     </para>
     </listitem>
 

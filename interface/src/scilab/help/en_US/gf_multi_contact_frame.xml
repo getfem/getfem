@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_multi_contact_frame" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_multi_contact_frame</refname>
+    <refpurpose>  This object serves for describing a multi-contact situation between
+  potentially several deformable bodies and eventually some rigid obstacles.
+  (for more details see the Getfem++ user documentation).
+</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>S = gf_multi_contact_frame(model md, int N, scalar release_distance[, bool delaunay[, bool self_contact[, scalar cut_angle[, bool use_raytrace[, int nodes_mode[, bool ref_conf]]]]]])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>General constructor for multi_contact_frame objects.</para>
+
+    <para>  This object serves for describing a multi-contact situation between
+  potentially several deformable bodies and eventually some rigid obstacles.
+  (for more details see the Getfem++ user documentation).
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>S = gf_multi_contact_frame(model md, int N, scalar release_distance[, bool delaunay[, bool self_contact[, scalar cut_angle[, bool use_raytrace[, int nodes_mode[, bool ref_conf]]]]]])</literal></para>
+
+    <para>       Build a new multi contact frame object linked to the model <literal>md</literal>.
+    with <literal>N</literal> the space dimension (typically, 2 or 3), <literal>release_distance</literal> is
+    the limit distance beyond which two points are not considered in
+    potential contact (should be typically comparable to element sizes).
+    There is several optional parameters.
+    If <literal>nodes_mode=0</literal> (default value), then contact is considered
+    on Gauss points, <literal>nodes_mode=1</literal> then contact is considered on
+    Gauss points for slave surfaces and on f.e.m. nodes for master surfaces
+    (in that case, the f.e.m. should be of Lagrange type) and
+    <literal>nodes_mode=2</literal> then contact is considered on f.e.m. nodes for
+    both slave and master surfaces. if <literal>use_delaunay</literal> is true (default value),
+    then contact detection is done calling
+    <literal>Qhull &lt;http://www.qhull.org></literal> package to perform a Delaunay
+    triangulation on potential contact points. Otherwise, contact
+    detection is performed by conputing some influences boxes of the element
+    of master surfaces. If <literal>ref_conf</literal> is true (default value : false),
+    the contact detection
+    is made on the reference configuration (without taking into account a
+    displacement) CAUTION: not fully implemented for the moment.
+    If <literal>self_contact</literal> is true (default value), the contact detection is
+    also made
+    between master surfaces and for a master surface with itself.
+    The parameter <literal>cut_angle</literal> (default value: 0.3) is an angle in radian
+    which is used
+    for the simplification of unit normal cones in the case of f.e.m.
+    node contact : if a contact cone has an angle less than <literal>cut_angle</literal>
+    it is reduced to a mean unit normal to simplify the contact detection.
+    if <literal>use_raytrace</literal> is set to true (default is false) raytracing is used
+    insted of projection.
+    
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>

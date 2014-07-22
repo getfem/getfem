@@ -18,10 +18,9 @@
     <title>Calling Sequence</title>
 
     <synopsis>h = gf_cont_struct_get(cont_struct CS, 'init step size')</synopsis>
-    <synopsis>t = gf_cont_struct_get(cont_struct CS, 'init test function', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par)</synopsis>
     <synopsis>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', vec solution, scalar parameter, scalar init_dir)</synopsis>
     <synopsis>E = gf_cont_struct_get(cont_struct CS, 'Moore-Penrose continuation', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par, scalar h)</synopsis>
-    <synopsis>t = gf_cont_struct_get(cont_struct CS, 'test function')</synopsis>
+    <synopsis>t = gf_cont_struct_get(cont_struct CS, 'bifurcation test function')</synopsis>
     <synopsis>{X, gamma, T_X, T_gamma} = gf_cont_struct_get(cont_struct CS, 'sing_data')</synopsis>
     <synopsis>s = gf_cont_struct_get(cont_struct CS, 'char')</synopsis>
     <synopsis>gf_cont_struct_get(cont_struct CS, 'display')</synopsis>
@@ -46,16 +45,6 @@
     </listitem>
 
     <listitem>
-    <para><literal>t = gf_cont_struct_get(cont_struct CS, 'init test function', vec solution, scalar parameter, vec tangent_sol, scalar tangent_par)</literal></para>
-
-    <para>         Initialise the border of the bordered system that serves for
-      calculating the test function for bifurcations. Return the value of the
-      test function for the point given by <literal>solution</literal> and <literal>parameter</literal> and the
-      tangent given by <literal>tangent_sol</literal> and <literal>tangent_par</literal>.
-    </para>
-    </listitem>
-
-    <listitem>
     <para><literal>E = gf_cont_struct_get(cont_struct CS, 'init Moore-Penrose continuation', vec solution, scalar parameter, scalar init_dir)</literal></para>
 
     <para>         Initialise the Moore-Penrose continuation: Return a unit tangent to
@@ -74,17 +63,17 @@
       and <literal>tangent_par</literal>, and the step size <literal>h</literal>. Return a new point on the
       solution curve, the corresponding tangent and a step size for the next
       step. If the returned step size equals zero, the continuation has
-      failed. Optionally, return the type of any detected bifurcation point.
+      failed. Optionally, return the type of any detected singular point.
       NOTE: The new point need not to be saved in the model in the end!
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>t = gf_cont_struct_get(cont_struct CS, 'test function')</literal></para>
+    <para><literal>t = gf_cont_struct_get(cont_struct CS, 'bifurcation test function')</literal></para>
 
-    <para>         Return the last value of the test function and eventaully the whole
-      calculated graph when passing between subdomains of different smooth
-      pieces.
+    <para>         Return the last value of the bifurcation test function and eventaully
+      the whole calculated graph when passing between different sub-domains
+      of differentiability.
     </para>
     </listitem>
 

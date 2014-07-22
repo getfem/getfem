@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_multi_contact_frame_set" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_multi_contact_frame_set</refname>
+    <refpurpose>  General function for modification of multi_contact_frame objects.
+</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>gf_multi_contact_frame_set(multi_contact_frame MCF, 'add obstacle', string obs)</synopsis>
+    <synopsis>gf_multi_contact_frame_set(multi_contact_frame MCF, 'add slave boundary', mesh_im mim, int region, string varname [, string multname [, string wname]])</synopsis>
+    <synopsis>gf_multi_contact_frame_set(multi_contact_frame MCF, 'add master boundary', mesh_im mim, int region, string varname [, string multname [, string wname]])</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>  General function for modification of multi_contact_frame objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>gf_multi_contact_frame_set(multi_contact_frame MCF, 'add obstacle', string obs)</literal></para>
+
+    <para>       Add a rigid obstacle. The string <literal>obs</literal> is the expression of a
+    function which should be closed to a signed distance to the obstacle.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_multi_contact_frame_set(multi_contact_frame MCF, 'add slave boundary', mesh_im mim, int region, string varname [, string multname [, string wname]])</literal></para>
+
+    <para>       Add a slave contact bounary.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_multi_contact_frame_set(multi_contact_frame MCF, 'add master boundary', mesh_im mim, int region, string varname [, string multname [, string wname]])</literal></para>
+
+    <para>       Add a master contact bounary.
+    
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>

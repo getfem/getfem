@@ -39,13 +39,15 @@
     <synopsis>B = gf_asm('boundary source', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, vec G)</synopsis>
     <synopsis>{HH, RR} = gf_asm('dirichlet', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat H, vec R [, threshold])</synopsis>
     <synopsis>Q = gf_asm('boundary qu term',int boundary_num, mesh_im mim, mesh_fem mf_u, mesh_fem mf_d, mat q)</synopsis>
+    <synopsis>gf_asm('define function', string name, int nb_args, string expression[, string expression_derivative_t[, string expression_derivative_u]])</synopsis>
+    <synopsis>gf_asm('undefine function', string name)</synopsis>
+    <synopsis>{...} = gf_asm('generic', mesh_im mim, int order, string expression, int region, [string varname, int is_variable[, {mesh_fem mf, mesh_imd mimd}], value], ...)</synopsis>
     <synopsis>{...} = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])</synopsis>
     <synopsis>{...} = gf_asm('boundary', int bnum, string expr [, mesh_im mim, mesh_fem mf, data...])</synopsis>
-    <synopsis>Mi = gf_asm('interpolation matrix', mesh_fem mf, mesh_fem mfi)</synopsis>
-    <synopsis>Me = gf_asm('extrapolation matrix',mesh_fem mf, mesh_fem mfe)</synopsis>
+    <synopsis>Mi = gf_asm('interpolation matrix', mesh_fem mf, {mesh_fem mfi | vec pts})</synopsis>
+    <synopsis>Me = gf_asm('extrapolation matrix',mesh_fem mf,  {mesh_fem mfe | vec pts})</synopsis>
     <synopsis>B = gf_asm('integral contact Uzawa projection', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_obstacle, vec obstacle, scalar r [, {scalar coeff | mesh_fem mf_coeff, vec coeff} [, int option[, scalar alpha, vec W]]])</synopsis>
     <synopsis>B = gf_asm('level set normal source term', int bnum, mesh_im mim, mesh_fem mf_u, mesh_fem mf_lambda, vec vec_lambda, mesh_fem mf_levelset, vec levelset)</synopsis>
-    <synopsis>B = gf_asm('Nitsche contact rigid obstacle rhs', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_obs, vec obs, scalar fcoeff, scalar r, scalar theta, scalar clambda, scalar cmu)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -140,19 +142,19 @@
       may be choosen among:
       
       - 'SaintVenant Kirchhoff':
-      Linearized law, should be avoided). This law has the two usual
-      Lame coefficients as parameters, called lambda and mu.
+        Linearized law, should be avoided). This law has the two usual
+        Lame coefficients as parameters, called lambda and mu.
       - 'Mooney Rivlin':
-      This law has three parameters, called C1, C2 and D1.
-      Can be preceded with the words 'compressible' or 'incompressible' to force
-      a specific version. By default, the incompressible version is considered
-      which requires only the first two material coefficients.
+        This law has three parameters, called C1, C2 and D1.
+        Can be preceded with the words 'compressible' or 'incompressible' to force
+        a specific version. By default, the incompressible version is considered
+        which requires only the first two material coefficients.
       - 'neo Hookean':
-      A special case of the 'Mooney Rivlin' law that requires one material
-      coefficient less (C2 = 0). By default, its compressible version is used.
+        A special case of the 'Mooney Rivlin' law that requires one material
+        coefficient less (C2 = 0). By default, its compressible version is used.
       - 'Ciarlet Geymonat':
-      This law has 3 parameters, called lambda, mu and gamma, with
-      gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
+        This law has 3 parameters, called lambda, mu and gamma, with
+        gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
       
     The parameters of the material law are described on the mesh_fem <literal>mf_d</literal>.
     The matrix <literal>params</literal> should have <literal>nbdof(mf_d)</literal> columns, each row
@@ -296,9 +298,84 @@
     </listitem>
 
     <listitem>
+    <para><literal>gf_asm('define function', string name, int nb_args, string expression[, string expression_derivative_t[, string expression_derivative_u]])</literal></para>
+
+    <para>         Define a new function <literal>name</literal> which can be used in high level
+      generic assembly. The function can have one or two parameters.
+      In <literal>expression</literal> all available predefined function or operation
+      of the generic assembly can be used. However, no reference to
+      some variables or data can be specified. The argument of the
+      function is <literal>t</literal> for a one parameter function and <literal>t</literal> and <literal>u</literal>
+      for a two parameter function. For instance 'sin(pi*t)+2*t*t'
+      is a valid expression for a one parameter function and
+      'sin(max(t,u)*pi)' is a valid expression for a two parameters
+      function. <literal>expression_derivative_t</literal> and <literal>expression_derivative_u</literal>
+      are optional expressions for the derivatives with respect
+      to <literal>t</literal> and <literal>u</literal>. If they are not furnished, a symbolic derivation
+      is used. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_asm('undefine function', string name)</literal></para>
+
+    <para>         Cancel the definition of a previously defined function <literal>name</literal>
+      for the high level generic assembly.  
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>{...} = gf_asm('generic', mesh_im mim, int order, string expression, int region, [string varname, int is_variable[, {mesh_fem mf, mesh_imd mimd}], value], ...)</literal></para>
+
+    <para>         High-level generic assembly procedure for volumic assembly.
+
+      Performs the generic assembly of <literal>expression</literal> with the integration
+      method <literal>mim</literal> on the mesh region of index <literal>region</literal> (-1 means all 
+      the element of the mesh). The same mesh should be shared by
+      the integration method and all the finite element methods or
+      mesh_im_data corresponding to the variables.
+
+      <literal>order</literal> indicates either that the (scalar) potential
+      (order = 0) or the (vector) residual (order = 1) or the
+      tangent (matrix) (order = 2) is to be computed. 
+
+      The variables and constant (data) are listed after the
+      region number. For each variable/constant, first the variable/constant
+      name should be given (as it is referred in the assembly string), then
+      1 if it is a variable or 0 for a constant, then the finite element
+      method if it is a fem variable/constant or the mesh_im_data if it is
+      data defined on integration points, and the vector representing
+      the value of the variable/constant. It is possible to give an arbitrary
+      number of variable/constant. The difference between a variable and a
+      constant is that automatic differentiation is done with respect to
+      variables only (see Getfem++ user documentation). Test functions are
+      only available for variables, not for constants.
+
+      Note that if several variables are given, the assembly of the
+      tangent matrix/residual vector will be done considering the order
+      in the call of the function (the degrees of freedom of the first
+      variable, then of the second, and so on).
+
+      For example, the L2 norm of a vector field "u" can be computed with::
+
+        gf_compute('L2 norm') or with the square root of:
+
+        gf_asm('generic', mim, 0, 'u.u', -1, 'u', 1, mf, U);
+
+      The nonhomogeneous Laplacian stiffness matrix of a scalar field can be evaluated with::
+
+        gf_asm('laplacian', mim, mf, mf_data, A) or equivalently with:
+
+        gf_asm('generic', mim, 2, 'A*Grad_Test2_u.Grad_Test_u', -1, 'u', 1, mf, U, 'A', 0, mf_data, A);
+
+        
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>{...} = gf_asm('volumic' [,CVLST], expr [, mesh_ims, mesh_fems, data...])</literal></para>
 
-    <para>         Generic assembly procedure for volumic assembly.
+    <para>         Low-level generic assembly procedure for volumic assembly.
 
       The expression <literal>expr</literal> is evaluated over the mesh_fem's listed in the
       arguments (with optional data) and assigned to the output arguments.
@@ -308,31 +385,31 @@
 
       For example, the L2 norm of a field can be computed with::
 
-        gf_compute('L2 norm') or with:
+        gf_compute('L2 norm') or with the square root of:
 
         gf_asm('volumic','u=data(#1); V()+=u(i).u(j).comp(Base(#1).Base(#1))(i,j)',mim,mf,U)
 
       The Laplacian stiffness matrix can be evaluated with::
 
-        gf_asm('laplacian',mim, mf, A) or equivalently with:
+        gf_asm('laplacian',mim, mf, mf_data, A) or equivalently with:
 
-        gf_asm('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf, A);
+        gf_asm('volumic','a=data(#2);M(#1,#1)+=sym(comp(Grad(#1).Grad(#1).Base(#2))(:,i,:,i,j).a(j))', mim,mf,mf_data,A);
     </para>
     </listitem>
 
     <listitem>
     <para><literal>{...} = gf_asm('boundary', int bnum, string expr [, mesh_im mim, mesh_fem mf, data...])</literal></para>
 
-    <para>         Generic boundary assembly.
+    <para>         Low-level generic boundary assembly.
 
       See the help for gf_asm('volumic').
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>Mi = gf_asm('interpolation matrix', mesh_fem mf, mesh_fem mfi)</literal></para>
+    <para><literal>Mi = gf_asm('interpolation matrix', mesh_fem mf, {mesh_fem mfi | vec pts})</literal></para>
 
-    <para>       Build the interpolation matrix from a mesh_fem onto another mesh_fem.
+    <para>       Build the interpolation matrix from a mesh_fem onto another mesh_fem or a set of points.
 
     Return a matrix <literal>Mi</literal>, such that <literal>V = Mi.U</literal> is equal to
     gf_compute('interpolate_on',mfi). Useful for repeated interpolations.
@@ -347,9 +424,9 @@
     </listitem>
 
     <listitem>
-    <para><literal>Me = gf_asm('extrapolation matrix',mesh_fem mf, mesh_fem mfe)</literal></para>
+    <para><literal>Me = gf_asm('extrapolation matrix',mesh_fem mf,  {mesh_fem mfe | vec pts})</literal></para>
 
-    <para>       Build the extrapolation matrix from a mesh_fem onto another mesh_fem.
+    <para>       Build the extrapolation matrix from a mesh_fem onto another mesh_fem or a set of points.
 
     Return a matrix <literal>Me</literal>, such that <literal>V = Me.U</literal> is equal to
     gf_compute('extrapolate_on',mfe). Useful for repeated
@@ -379,17 +456,6 @@
     on <literal>mf_lambda</literal> considered to be a component in the direction of the
     gradient of a levelset function (normal to the levelset) of a vector
     field defined on <literal>mf_u</literal> on the boundary <literal>bnum</literal>.
-
-    Return a vec object.
-    
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>B = gf_asm('Nitsche contact rigid obstacle rhs', int bnum, mesh_im mim, mesh_fem mf_u, vec U, mesh_fem mf_obs, vec obs, scalar fcoeff, scalar r, scalar theta, scalar clambda, scalar cmu)</literal></para>
-
-    <para>       Compute the right hand side (residual) of the Nitsche term for contact
-    with friction on a rigid obstacle of a linearly elastic body. Experimental.
 
     Return a vec object.
     

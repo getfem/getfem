@@ -20,24 +20,40 @@
     <synopsis>gf_model_set(model M, 'add fem variable', string name, mesh_fem mf[, int niter])</synopsis>
     <synopsis>gf_model_set(model M, 'add filtered fem variable', string name, mesh_fem mf, int region[, int niter])</synopsis>
     <synopsis>gf_model_set(model M, 'add variable', string name, int size[, int niter])</synopsis>
+    <synopsis>gf_model_set(model M, 'delete variable', string name)</synopsis>
     <synopsis>gf_model_set(model M, 'resize variable', string name, int size)</synopsis>
     <synopsis>gf_model_set(model M, 'add multiplier', string name, mesh_fem mf, string primalname[, mesh_im mim, int region][, int niter])</synopsis>
+    <synopsis>gf_model_set(model M, 'add im data', string name, mesh_imd mimd[, int niter]])</synopsis>
     <synopsis>gf_model_set(model M, 'add fem data', string name, mesh_fem mf[, int qdim[, int niter]])</synopsis>
     <synopsis>gf_model_set(model M, 'add initialized fem data', string name, mesh_fem mf, vec V)</synopsis>
     <synopsis>gf_model_set(model M, 'add data', string name, int size[, int niter])</synopsis>
     <synopsis>gf_model_set(model M, 'add initialized data', string name, vec V)</synopsis>
     <synopsis>gf_model_set(model M, 'variable', string name, vec V[, int niter])</synopsis>
     <synopsis>gf_model_set(model M, 'to variables', vec V)</synopsis>
+    <synopsis>gf_model_set(model M, 'delete brick', int ind_brick)</synopsis>
+    <synopsis>gf_model_set(model M, 'define variable group', string name[, string varname, ...])</synopsis>
+    <synopsis>gf_model_set(model M, 'add interpolate transformation from expression', string transname, mesh source_mesh, mesh target_mesh, string expr)</synopsis>
+    <synopsis>gf_model_set(model M, 'add raytracing transformation', string transname, scalar release_distance)</synopsis>
+    <synopsis>gf_model_set(model M, 'add master contact boundary to raytracing transformation', string transname, mesh m, string dispname, int region)</synopsis>
+    <synopsis>gf_model_set(model M, 'add slave contact boundary to raytracing transformation', string transname, mesh m, string dispname, int region)</synopsis>
+    <synopsis>gf_model_set(model M, 'add rigid obstacle to raytracing transformation', string transname, string expr, int N)</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add linear generic assembly brick', mesh_im mim, string expression[, int region[, int is_symmetric[, int is_coercive]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add nonlinear generic assembly brick', mesh_im mim, string expression[, int region[, int is_symmetric[, int is_coercive]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add source term generic assembly brick', mesh_im mim, string expression[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add Laplacian brick', mesh_im mim, string varname[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add generic elliptic brick', mesh_im mim, string varname, string dataname[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add source term brick', mesh_im mim, string varname, string dataname[, int region[, string directdataname]])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add normal source term brick', mesh_im mim, string varname, string dataname, int region)</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Dirichlet condition with simplification', string varname, int region[, string dataname])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add Dirichlet condition with multipliers', mesh_im mim, string varname, mult_description, int region[, string dataname])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Dirichlet condition with Nitsche method', mesh_im mim, string varname, string gamma0name, int region[, scalar theta][, string dataname])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add Dirichlet condition with penalization', mesh_im mim, string varname, scalar coeff, int region[, string dataname, mesh_fem mf_mult])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add normal Dirichlet condition with multipliers', mesh_im mim, string varname, mult_description, int region[, string dataname])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add normal Dirichlet condition with penalization', mesh_im mim, string varname, scalar coeff, int region[, string dataname, mesh_fem mf_mult])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add normal Dirichlet condition with Nitsche method', mesh_im mim, string varname, string gamma0name, int region[, scalar theta][, string dataname])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add generalized Dirichlet condition with multipliers', mesh_im mim, string varname, mult_description, int region, string dataname, string Hname)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add generalized Dirichlet condition with penalization', mesh_im mim, string varname, scalar coeff, int region, string dataname, string Hname[, mesh_fem mf_mult])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add generalized Dirichlet condition with Nitsche method', mesh_im mim, string varname, string gamma0name, int region[, scalar theta], string dataname, string Hname)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add pointwise constraints with multipliers', string varname, string dataname_pt[, string dataname_unitv] [, string dataname_val])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add pointwise constraints with given multipliers', string varname, string multname, string dataname_pt[, string dataname_unitv] [, string dataname_val])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add pointwise constraints with penalization', string varname, scalar coeff, string dataname_pt[, string dataname_unitv] [, string dataname_val])</synopsis>
@@ -54,8 +70,10 @@
     <synopsis>ind = gf_model_set(model M, 'add isotropic linearized elasticity brick', mesh_im mim, string varname, string dataname_lambda, string dataname_mu[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add linear incompressibility brick', mesh_im mim, string varname, string multname_pressure[, int region[, string dataname_coeff]])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nonlinear elasticity brick', mesh_im mim, string varname, string constitutive_law, string dataname[, int region])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add finite strain elasticity brick', mesh_im mim, string varname, string constitutive_law, string params[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add elastoplasticity brick', mesh_im mim ,string projname, string varname, string datalambda, string datamu, string datathreshold, string datasigma[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nonlinear incompressibility brick', mesh_im mim, string varname, string multname_pressure[, int region])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add finite strain incompressibility brick', mesh_im mim, string varname, string multname_pressure[, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add bilaplacian brick', mesh_im mim, string varname, string dataname [, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add Kirchhoff-Love plate brick', mesh_im mim, string varname, string dataname_D, string dataname_nu [, int region])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add normal derivative source term brick', mesh_im mim, string varname, string dataname, int region)</synopsis>
@@ -75,21 +93,29 @@
     <synopsis>gf_model_set(model M, 'enable variable', string varname)</synopsis>
     <synopsis>gf_model_set(model M, 'first iter')</synopsis>
     <synopsis>gf_model_set(model M, 'next iter')</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add basic contact brick', string varname_u, string multname_n[, string multname_t], string dataname_r, spmat BN[, spmat BT, string dataname_friction_coeff][, string dataname_gap[, string dataname_alpha[, int augmented_version]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add basic contact brick', string varname_u, string multname_n[, string multname_t], string dataname_r, spmat BN[, spmat BT, string dataname_friction_coeff][, string dataname_gap[, string dataname_alpha[, int augmented_version[, string dataname_gamma, string dataname_wt]]])</synopsis>
     <synopsis>gf_model_set(model M, 'contact brick set BN', int indbrick, spmat BN)</synopsis>
     <synopsis>gf_model_set(model M, 'contact brick set BT', int indbrick, spmat BT)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nodal contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add integral contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname, string dataname_obstacle, string dataname_r [, string dataname_friction_coeff], int region [, int option [, string dataname_alpha [, string dataname_wt [, string dataname_gamma [, string dataname_vt]]]]])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add penalized contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r [, string dataname_coeff], int region [, int option, string dataname_lambda, [, string dataname_alpha [, string dataname_wt]]])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add Nitsche contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_theta, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Nitsche contact with rigid obstacle brick', mesh_im mim, string varname, string dataname_obstacle, string gamma0name,  int region[, scalar theta[, string dataname_friction_coeff[, string dataname_alpha, string dataname_wt]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Nitsche midpoint contact with rigid obstacle brick', mesh_im mim, string varname, string dataname_obstacle, string gamma0name,  int region, scalar theta, string dataname_friction_coeff, string dataname_alpha, string dataname_wt, int option)</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Nitsche fictitious domain contact brick', mesh_im mim, string varname1, string varname2, string dataname_d1, string dataname_d2, string gamma0name [, scalar theta[, string dataname_friction_coeff[, string dataname_alpha, string dataname_wt1,string dataname_wt2]]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add Nitsche fictitious domain contact brick twopass', mesh_im mim, string varname1, string varname2, string dataname_d1, string dataname_d2, string gamma0name [, scalar theta[, string dataname_friction_coeff[, string dataname_alpha, string dataname_wt1,string dataname_wt2]]])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nodal contact between nonmatching meshes brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add nonmatching meshes contact brick',  mesh_im mim1[, mesh_im mim2], string varname_u1[, string varname_u2], string multname_n[, string multname_t], string dataname_r[, string dataname_fr], int rg1, int rg2[, int slave1, int slave2,  int augmented_version])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add integral contact between nonmatching meshes brick',  mesh_im mim, string varname_u1, string varname_u2, string multname, string dataname_r [, string dataname_friction_coeff], int region1, int region2 [, int option [, string dataname_alpha [, string dataname_wt1 , string dataname_wt2]]])</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add penalized contact between nonmatching meshes brick',  mesh_im mim, string varname_u1, string varname_u2, string dataname_r [, string dataname_coeff], int region1, int region2 [, int option [, string dataname_lambda, [, string dataname_alpha [, string dataname_wt1, string dataname_wt2]]]])</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add integral large sliding contact brick',  mesh_im mim, string varname_u, string multname, string dataname_r, string dataname_fr, int rg)</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add integral large sliding contact brick raytracing', string dataname_r, scalar release_distance, [, string dataname_fr[, string dataname_alpha[, int version]]])</synopsis>
+    <synopsis>gf_model_set(model M, 'add rigid obstacle to large sliding contact brick', int indbrick, string expr, int N)</synopsis>
+    <synopsis>gf_model_set(model M, 'add master contact boundary to large sliding contact brick', int indbrick, mesh_im mim, int region, string dispname[, string wname])</synopsis>
+    <synopsis>gf_model_set(model M, 'add slave contact boundary to large sliding contact brick', int indbrick, mesh_im mim, int region, string dispname, string lambdaname[, string wname])</synopsis>
+    <synopsis>gf_model_set(model M, 'add master slave contact boundary to large sliding contact brick', int indbrick, mesh_im mim, int region, string dispname, string lambdaname[, string wname])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add integral large sliding contact brick raytrace', multi_contact_frame multi_contact, string dataname_r[, string dataname_fr[, string dataname_alpha]])</synopsis>
+    <synopsis>ind = gf_model_set(model M, 'add integral large sliding contact brick with field extension',  mesh_im mim, string varname_u, string multname, string dataname_r, string dataname_fr, int rg)</synopsis>
     <synopsis>ind = gf_model_set(model M, 'add boundary to large sliding contact brick',  int indbrick, mesh_im mim, string varname_u, string multname, int rg)</synopsis>
-    <synopsis>ind = gf_model_set(model M, 'add rigid obstacle to large sliding contact brick',  int indbrick, string obs)</synopsis>
   </refsynopsisdiv>
 
   <refsection>
@@ -138,6 +164,13 @@
     </listitem>
 
     <listitem>
+    <para><literal>gf_model_set(model M, 'delete variable', string name)</literal></para>
+
+    <para>         Delete a variable or a data from the model. 
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>gf_model_set(model M, 'resize variable', string name, int size)</literal></para>
 
     <para>         Resize a  constant size variable of the model. <literal>name</literal> is the variable
@@ -155,6 +188,15 @@
     retain only linearly independant constraints on the primal variable.
     Optimized for boundary multipliers. <literal>niter</literal> is the optional number
     of version of the data stored, for time integration schemes. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add im data', string name, mesh_imd mimd[, int niter]])</literal></para>
+
+    <para>         Add a data set to the model linked to a mesh_imd. <literal>name</literal> is the data
+      name and <literal>niter</literal> is the optional number of version of the data stored,
+      for time integration schemes. 
     </para>
     </listitem>
 
@@ -213,6 +255,124 @@
     </listitem>
 
     <listitem>
+    <para><literal>gf_model_set(model M, 'delete brick', int ind_brick)</literal></para>
+
+    <para>         Delete a variable or a data from the model. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'define variable group', string name[, string varname, ...])</literal></para>
+
+    <para>         Defines a group of variables for the interpolation (mainly for the
+      raytracing interpolation transformation.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add interpolate transformation from expression', string transname, mesh source_mesh, mesh target_mesh, string expr)</literal></para>
+
+    <para>         Add a transformation to the model from mesh <literal>source_mesh</literal> to mesh
+      <literal>target_mesh</literal> given by the expression <literal>expr</literal> which corresponds to a
+      high-level generic assembly expression which may contains some
+      variable of the model. CAUTION: the derivative of the
+      transformation with used variable is taken into account in the
+      computation of the tangen system. However, order two derivative is not
+      implemented, so such tranformation is not allowed in the definition
+      of a potential. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add raytracing transformation', string transname, scalar release_distance)</literal></para>
+
+    <para>         Add a raytracing interpolate transformation called <literal>transname</literal> to a model
+      to be used by the generic assembly bricks.
+      CAUTION: For the moment, the derivative of the
+      transformation is not taken into account in the model solve. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add master contact boundary to raytracing transformation', string transname, mesh m, string dispname, int region)</literal></para>
+
+    <para>         Add a master contact boundary with corresponding displacement variable
+      <literal>dispname</literal> on a specific boundary <literal>region</literal> to an existing raytracing
+      interpolate transformation called <literal>transname</literal>. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add slave contact boundary to raytracing transformation', string transname, mesh m, string dispname, int region)</literal></para>
+
+    <para>         Add a slave contact boundary with corresponding displacement variable
+      <literal>dispname</literal> on a specific boundary <literal>region</literal> to an existing raytracing
+      interpolate transformation called <literal>transname</literal>. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add rigid obstacle to raytracing transformation', string transname, string expr, int N)</literal></para>
+
+    <para>         Add a rigid obstacle whose geometry corresponds to the zero level-set
+      of the high-level generic assembly expression <literal>expr</literal>
+      to an existing raytracing interpolate transformation called <literal>transname</literal>.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add linear generic assembly brick', mesh_im mim, string expression[, int region[, int is_symmetric[, int is_coercive]]])</literal></para>
+
+    <para>         Adds a matrix term given by the assembly string <literal>expr</literal> which will
+      be assembled in region <literal>region</literal> and with the integration method <literal>mim</literal>.
+      Only the matrix term will be taken into account, assuming that it is
+      linear.
+      The advantage of declaring a term linear instead of nonlinear is that
+      it will be assembled only once and no assembly is necessary for the
+      residual.
+      Take care that if the expression contains some variables and if the
+      expression is a potential or of first order (i.e. describe the weak
+      form, not the derivative of the weak form), the expression will be
+      derivated with respect to all variables.
+      You can specify if the term is symmetric, coercive or not.
+      If you are not sure, the better is to declare the term not symmetric
+      and not coercive. But some solvers (conjugate gradient for instance)
+      are not allowed for non-coercive problems.
+      <literal>brickname</literal> is an otpional name for the brick.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add nonlinear generic assembly brick', mesh_im mim, string expression[, int region[, int is_symmetric[, int is_coercive]]])</literal></para>
+
+    <para>         Adds a nonlinear term given by the assembly string <literal>expr</literal> which will
+      be assembled in region <literal>region</literal> and with the integration method <literal>mim</literal>.
+      The expression can describe a potential or a weak form. Second order
+      terms (i.e. containing second order test functions, Test2) are not
+      allowed.
+      You can specify if the term is symmetric, coercive or not.
+      If you are not sure, the better is to declare the term not symmetric
+      and not coercive. But some solvers (conjugate gradient for instance)
+      are not allowed for non-coercive problems.
+      <literal>brickname</literal> is an otpional name for the brick.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add source term generic assembly brick', mesh_im mim, string expression[, int region])</literal></para>
+
+    <para>         Adds a source term given by the assembly string <literal>expr</literal> which will
+      be assembled in region <literal>region</literal> and with the integration method <literal>mim</literal>.
+      Only the residual term will be taken into account.
+      Take care that if the expression contains some variables and if the
+      expression is a potential, the expression will be
+      derivated with respect to all variables.
+      <literal>brickname</literal> is an otpional name for the brick.
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>ind = gf_model_set(model M, 'add Laplacian brick', mesh_im mim, string varname[, int region])</literal></para>
 
     <para>       Add a Laplacian term to the model relatively to the variable <literal>varname</literal>
@@ -256,8 +416,9 @@
     constant or described on a fem. <literal>region</literal> is an optional mesh region
     on which the term is added. An additional optional data <literal>directdataname</literal>
     can be provided. The corresponding data vector will be directly added
-    to the right hand side without assembly. Return the brick index in the
-    model.
+    to the right hand side without assembly. Note that when region is a
+    boundary, this brick allows to prescribe a nonzero Neumann boundary
+    condition. Return the brick index in the model.
     </para>
     </listitem>
 
@@ -271,6 +432,30 @@
       The main aim of this brick is to represent a Neumann condition with a
       vector data without performing the scalar product with the normal as a
       pre-processing. Return the brick index in the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add Dirichlet condition with simplification', string varname, int region[, string dataname])</literal></para>
+
+    <para>         Adds a (simple) Dirichlet condition on the variable <literal>varname</literal> and
+      the mesh region <literal>region</literal>. The Dirichlet condition is prescribed by
+      a simple post-treatment of the final linear system (tangent system
+      for nonlinear problems) consisting of modifying the lines corresponding
+      to the degree of freedom of the variable on <literal>region</literal> (0 outside the
+      diagonal, 1 on the diagonal of the matrix and the expected value on
+      the right hand side).
+      The symmetry of the linear system is kept if all other bricks are
+      symmetric.
+      This brick is to be reserved for simple Dirichlet conditions (only dof
+      declared on the correspodning boundary are prescribed). The application
+      of this brick on reduced dof may be problematic. Intrinsic vectorial
+      finite element method are not supported. 
+      <literal>dataname</literal> is the optional right hand side of  the Dirichlet condition.
+      It could be constant (but in that case, it can only be applied to
+      Lagrange f.e.m.) or (important) described on the same finite
+      element method as <literal>varname</literal>.
+      Returns the brick index in the model. 
     </para>
     </listitem>
 
@@ -293,6 +478,29 @@
       Dirichlet condition. It could be constant or described on a fem; scalar
       or vector valued, depending on the variable on which the Dirichlet
       condition is prescribed. Return the brick index in the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add Dirichlet condition with Nitsche method', mesh_im mim, string varname, string gamma0name, int region[, scalar theta][, string dataname])</literal></para>
+
+    <para>         Add a Dirichlet condition on the variable <literal>varname</literal> and the mesh
+      region <literal>region</literal>. This region should be a boundary. The Dirichlet
+      condition is prescribed with Nitsche's method. <literal>dataname</literal> is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem; scalar or vector valued, depending on the variable
+      on which the Dirichlet condition is prescribed. <literal>gamma0name</literal> is the
+      Nitsche's method parameter. <literal>theta</literal> is a scalar value which can be
+      positive or negative. <literal>theta = 1</literal> corresponds to the standard symmetric
+      method which is conditionnaly coercive for  <literal>gamma0</literal> small.
+      <literal>theta = -1</literal> corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. <literal>theta = 0</literal> is the simplest method
+      for which the second derivative of the Neumann term is not necessary. 
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+    
     </para>
     </listitem>
 
@@ -357,6 +565,31 @@
     </listitem>
 
     <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add normal Dirichlet condition with Nitsche method', mesh_im mim, string varname, string gamma0name, int region[, scalar theta][, string dataname])</literal></para>
+
+    <para>         Add a Dirichlet condition to the normal component of the vector
+      (or tensor) valued variable <literal>varname</literal> and the mesh region <literal>region</literal>.
+      This region should be a boundary. The Dirichlet
+      condition is prescribed with Nitsche's method. <literal>dataname</literal> is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem. <literal>gamma0name</literal> is the
+      Nitsche's method parameter. <literal>theta</literal> is a scalar value which can be
+      positive or negative. <literal>theta = 1</literal> corresponds to the standard symmetric
+      method which is conditionnaly coercive for  <literal>gamma0</literal> small.
+      <literal>theta = -1</literal> corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. <literal>theta = 0</literal> is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. 
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+      (This brick is not fully tested)
+    
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>ind = gf_model_set(model M, 'add generalized Dirichlet condition with multipliers', mesh_im mim, string varname, mult_description, int region, string dataname, string Hname)</literal></para>
 
     <para>       Add a Dirichlet condition on the variable <literal>varname</literal> and the mesh
@@ -401,6 +634,37 @@
       <literal>mf_mult</literal> is an optional parameter which allows to weaken the
       Dirichlet condition specifying a multiplier space.
       Return the brick index in the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add generalized Dirichlet condition with Nitsche method', mesh_im mim, string varname, string gamma0name, int region[, scalar theta], string dataname, string Hname)</literal></para>
+
+    <para>         Add a Dirichlet condition on the variable <literal>varname</literal> and the mesh
+      region <literal>region</literal>.
+      This version is for vector field. It prescribes a condition
+      @f$ Hu = r @f$ where <literal>H</literal> is a matrix field.
+      CAUTION : the matrix H should have all eigenvalues equal to 1 or 0.
+      The region should be a
+      boundary. This region should be a boundary.  The Dirichlet
+      condition is prescribed with Nitsche's method. <literal>dataname</literal> is the optional
+      right hand side of the Dirichlet condition. It could be constant or
+      described on a fem. <literal>gamma0name</literal> is the
+      Nitsche's method parameter. <literal>theta</literal> is a scalar value which can be
+      positive or negative. <literal>theta = 1</literal> corresponds to the standard symmetric
+      method which is conditionnaly coercive for  <literal>gamma0</literal> small.
+      <literal>theta = -1</literal> corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. <literal>theta = 0</literal> is the simplest method
+      for which the second derivative of the Neumann term is not necessary
+      even for nonlinear problems. <literal>Hname</literal> is the data
+      corresponding to the matrix field <literal>H</literal>. It has to be a constant matrix
+      or described on a scalar fem.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+      (This brick is not fully tested)
+    
     </para>
     </listitem>
 
@@ -636,8 +900,34 @@
     depends on the law. It could be a short vector of constant values or a
     vector field described on a finite element method for variable
     coefficients. <literal>region</literal> is an optional mesh region on which the term
-    is added. If it is not specified, it is added on the whole mesh. Return the
-    brick index in the model.
+    is added. If it is not specified, it is added on the whole mesh.
+    This brick use the low-level generic assembly.
+    Returns the brick index in the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add finite strain elasticity brick', mesh_im mim, string varname, string constitutive_law, string params[, int region])</literal></para>
+
+    <para>       Add a nonlinear elasticity term to the model relatively to the
+    variable <literal>varname</literal>. <literal>lawname</literal> is the constitutive law which
+    could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'Neo Hookean',
+    'Ciarlet Geymonat' or 'Generalized Blatz Ko'.
+    'Mooney Rivlin' and 'Neo Hookean' law names have to be preceeded with
+    the word 'Compressible' or 'Incompressible' to force using the
+    corresponding version.
+    The compressible version of these laws requires one additional material
+    coefficient.
+
+    IMPORTANT : if the variable is defined on a 2D mesh, the plane strain
+    approximation is automatically used.
+    <literal>params</literal> is a vector of parameters for the constitutive law. Its length
+    depends on the law. It could be a short vector of constant values or a
+    vector field described on a finite element method for variable
+    coefficients. <literal>region</literal> is an optional mesh region on which the term
+    is added. If it is not specified, it is added on the whole mesh.
+    This brick use the high-level generic assembly.
+    Returns the brick index in the model.
     </para>
     </listitem>
 
@@ -676,6 +966,23 @@
     primal variable has to be satisfied. <literal>region</literal> is an optional mesh region on
     which the term is added. If it is not specified, it is added on the
     whole mesh. Return the brick index in the model.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add finite strain incompressibility brick', mesh_im mim, string varname, string multname_pressure[, int region])</literal></para>
+
+    <para>       Add an finite strain incompressibility condition on <literal>variable</literal> (for large
+    strain elasticity). <literal>multname_pressure</literal>
+    is a variable which represent the pressure. Be aware that an inf-sup
+    condition between the finite element method describing the pressure and the
+    primal variable has to be satisfied. <literal>region</literal> is an optional mesh region on
+    which the term is added. If it is not specified, it is added on the
+    whole mesh. Return the brick index in the model.
+    This brick is equivalent to the <literal></literal>nonlinear incompressibility brick<literal></literal> but
+    uses the high-level generic assembly adding the term
+    <literal></literal>p*(1-Det(Id(meshdim)+Grad_u))<literal></literal> if <literal></literal>p<literal></literal> is the multiplier and
+    <literal></literal>u<literal></literal> the variable which represent the displacement.
     </para>
     </listitem>
 
@@ -908,10 +1215,10 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add basic contact brick', string varname_u, string multname_n[, string multname_t], string dataname_r, spmat BN[, spmat BT, string dataname_friction_coeff][, string dataname_gap[, string dataname_alpha[, int augmented_version]])</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add basic contact brick', string varname_u, string multname_n[, string multname_t], string dataname_r, spmat BN[, spmat BT, string dataname_friction_coeff][, string dataname_gap[, string dataname_alpha[, int augmented_version[, string dataname_gamma, string dataname_wt]]])</literal></para>
 
     <para>          
-     Add a contact with  or without friction brick to the model.
+     Add a contact with or without friction brick to the model.
      If U is the vector
      of degrees of freedom on which the unilateral constraint is applied,
      the matrix <literal>BN</literal> have to be such that this constraint is defined by
@@ -1053,24 +1360,108 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add Nitsche contact with rigid obstacle brick',  mesh_im mim, string varname_u, string dataname_obstacle, string dataname_r, string dataname_theta, string dataname_friction_coeff, string dataname_lambda, string dataname_mu, int region)</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add Nitsche contact with rigid obstacle brick', mesh_im mim, string varname, string dataname_obstacle, string gamma0name,  int region[, scalar theta[, string dataname_friction_coeff[, string dataname_alpha, string dataname_wt]]])</literal></para>
 
-    <para>   
-      Add a contact with friction condition with a rigid obstacle
-      to the model with  Nitsche strategy (no multiplier) in an integral way.
-      This is an experimental brick, which works only for linear homogeneous
-      isotropic elasticity.
-      The condition is applied on the variable <literal>varname_u</literal>
-      on the boundary corresponding to <literal>region</literal>. The rigid obstacle should
-      be described with the data <literal>dataname_obstacle</literal> being a signed distance
-      to the obstacle (interpolated on a finite element method).
-      The Nitsche parameter <literal>dataname_r</literal> should be chosen in a
-      range of acceptable values. <literal>dataname_theta</literal> corresponds to the real
-      parameter (1 for the classical symmetric version, 0 for the simplest
-      non symmetric one, -1 for the classical unconditionally coercive
-      non-symmetric one). <literal>dataname_friction_coeff</literal> is the friction
+    <para>         Adds a contact condition with or without Coulomb friction on the variable
+      <literal>varname</literal> and the mesh boundary <literal>region</literal>. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data <literal>dataname_obstacle</literal> being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      <literal>gamma0name</literal> is the Nitsche's method parameter.
+      <literal>theta</literal> is a scalar value which can be
+      positive or negative. <literal>theta = 1</literal> corresponds to the standard symmetric
+      method which is conditionnaly coercive for  <literal>gamma0</literal> small.
+      <literal>theta = -1</literal> corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. <literal>theta = 0</literal> is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter <literal>dataname_friction_coeff</literal> is the friction
       coefficient which could be constant or defined on a finite element
-      method. <literal>dataname_lambda</literal> and <literal>dataname_mu</literal> are the Lame coefficients.
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add Nitsche midpoint contact with rigid obstacle brick', mesh_im mim, string varname, string dataname_obstacle, string gamma0name,  int region, scalar theta, string dataname_friction_coeff, string dataname_alpha, string dataname_wt, int option)</literal></para>
+
+    <para>         EXPERIMENTAL BRICK: for midpoint scheme only !!
+      Adds a contact condition with or without Coulomb friction on the variable
+      <literal>varname</literal> and the mesh boundary <literal>region</literal>. The contact condition
+      is prescribed with Nitsche's method. The rigid obstacle should
+      be described with the data <literal>dataname_obstacle</literal> being a signed distance to
+      the obstacle (interpolated on a finite element method).
+      <literal>gamma0name</literal> is the Nitsche's method parameter.
+      <literal>theta</literal> is a scalar value which can be
+      positive or negative. <literal>theta = 1</literal> corresponds to the standard symmetric
+      method which is conditionnaly coercive for  <literal>gamma0</literal> small.
+      <literal>theta = -1</literal> corresponds to the skew-symmetric method which is
+      inconditionnaly coercive. <literal>theta = 0</literal> is the simplest method
+      for which the second derivative of the Neumann term is not necessary.
+      The optional parameter <literal>dataname_friction_coeff</literal> is the friction
+      coefficient which could be constant or defined on a finite element
+      method.
+      CAUTION: This brick has to be added in the model after all the bricks
+      corresponding to partial differential terms having a Neumann term.
+      Moreover, This brick can only be applied to bricks declaring their
+      Neumann terms. Returns the brick index in the model.
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add Nitsche fictitious domain contact brick', mesh_im mim, string varname1, string varname2, string dataname_d1, string dataname_d2, string gamma0name [, scalar theta[, string dataname_friction_coeff[, string dataname_alpha, string dataname_wt1,string dataname_wt2]]])</literal></para>
+
+    <para>        Adds a contact condition with or without Coulomb friction between
+     two bodies in a fictitious domain. The contact condition is applied on 
+     the variable <literal>varname_u1</literal> corresponds with the first and slave body 
+     with Nitsche's method and on the variable <literal>varname_u2</literal> corresponds 
+     with the second and master body with Nitsche's method. 
+     The contact condition is evaluated on the fictitious slave boundary.
+     The first body should be described by the level-set <literal>dataname_d1</literal> 
+     and the second body should be described by the level-set <literal>dataname_d2</literal>.
+     <literal>gamma0name</literal> is the Nitsche's method parameter. 
+     <literal>theta</literal> is a scalar value which can be positive or negative. 
+     <literal>theta = 1</literal> corresponds to the standard symmetric method which is
+     conditionnaly coercive for  <literal>gamma0</literal> small.
+     <literal>theta = -1</literal> corresponds to the skew-symmetric method which is inconditionnaly coercive.
+     <literal>theta = 0</literal> is the simplest method for which the second derivative of
+     the Neumann term is not necessary. The optional parameter <literal>dataname_friction_coeff</literal>
+     is the friction coefficient which could be constant or defined on a finite element method. 
+     CAUTION: This brick has to be added in the model after all the bricks
+     corresponding to partial differential terms having a Neumann term.
+     Moreover, This brick can only be applied to bricks declaring their
+     Neumann terms. Returns the brick index in the model. 
+    
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add Nitsche fictitious domain contact brick twopass', mesh_im mim, string varname1, string varname2, string dataname_d1, string dataname_d2, string gamma0name [, scalar theta[, string dataname_friction_coeff[, string dataname_alpha, string dataname_wt1,string dataname_wt2]]])</literal></para>
+
+    <para>        Adds a contact condition with or without Coulomb friction between
+     two bodies in a fictitious domain. The contact condition is applied on 
+     the variable <literal>varname_u1</literal> corresponds with the first and slave body 
+     with Nitsche's method and on the variable <literal>varname_u2</literal> corresponds 
+     with the second and master body with Nitsche's method. 
+     The contact condition is evaluated on the fictitious slave boundary.
+     The first body should be described by the level-set <literal>dataname_d1</literal> 
+     and the second body should be described by the level-set <literal>dataname_d2</literal>.
+     <literal>gamma0name</literal> is the Nitsche's method parameter. 
+     <literal>theta</literal> is a scalar value which can be positive or negative. 
+     <literal>theta = 1</literal> corresponds to the standard symmetric method which is
+     conditionnaly coercive for  <literal>gamma0</literal> small.
+     <literal>theta = -1</literal> corresponds to the skew-symmetric method which is inconditionnaly coercive.
+     <literal>theta = 0</literal> is the simplest method for which the second derivative of
+     the Neumann term is not necessary. The optional parameter <literal>dataname_friction_coeff</literal>
+     is the friction coefficient which could be constant or defined on a finite element method. 
+     CAUTION: This brick has to be added in the model after all the bricks
+     corresponding to partial differential terms having a Neumann term.
+     Moreover, This brick can only be applied to bricks declaring their
+     Neumann terms. Returns the brick index in the model. 
     
     </para>
     </listitem>
@@ -1179,7 +1570,76 @@
     </listitem>
 
     <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add integral large sliding contact brick',  mesh_im mim, string varname_u, string multname, string dataname_r, string dataname_fr, int rg)</literal></para>
+    <para><literal>ind = gf_model_set(model M, 'add integral large sliding contact brick raytracing', string dataname_r, scalar release_distance, [, string dataname_fr[, string dataname_alpha[, int version]]])</literal></para>
+
+    <para>         Adds a large sliding contact with friction brick to the model.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It uses the high-level generic assembly. It adds to the model
+      a raytracing_interpolate_transformation object.
+      For each slave boundary a multiplier variable should be defined.
+      The release distance should be determined with care
+      (generally a few times a mean element size, and less than the
+      thickness of the body). Initially, the brick is added with no contact
+      boundaries. The contact boundaries and rigid bodies are added with
+      special functions. <literal>version</literal> is 0 (the default value) for the
+      non-symmetric version and 1 for the more symmetric one
+      (not fully symmetric even without friction). 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add rigid obstacle to large sliding contact brick', int indbrick, string expr, int N)</literal></para>
+
+    <para>         Adds a rigid obstacle to an existing large sliding contact
+      with friction brick. <literal>expr</literal> is an expression using the high-level
+      generic assembly language (where <literal>x</literal> is the current point n the mesh)
+      which should be a signed distance to the obstacle.
+      <literal>N</literal> is the mesh dimension. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add master contact boundary to large sliding contact brick', int indbrick, mesh_im mim, int region, string dispname[, string wname])</literal></para>
+
+    <para>         Adds a master contact boundary to an existing large sliding contact
+      with friction brick. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add slave contact boundary to large sliding contact brick', int indbrick, mesh_im mim, int region, string dispname, string lambdaname[, string wname])</literal></para>
+
+    <para>         Adds a slave contact boundary to an existing large sliding contact
+      with friction brick. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_set(model M, 'add master slave contact boundary to large sliding contact brick', int indbrick, mesh_im mim, int region, string dispname, string lambdaname[, string wname])</literal></para>
+
+    <para>         Adds a contact boundary to an existing large sliding contact
+      with friction brick which is both master and slave
+      (allowing the self-contact). 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add integral large sliding contact brick raytrace', multi_contact_frame multi_contact, string dataname_r[, string dataname_fr[, string dataname_alpha]])</literal></para>
+
+    <para>         Adds a large sliding contact with friction brick to the model.
+      This brick is able to deal with self-contact, contact between
+      several deformable bodies and contact with rigid obstacles.
+      It takes a variable of type multi_contact_frame wich describe
+      the contact situation (master and slave contact boundaries,
+      self-contact detection or not, and a few parameter).
+      For each slave boundary (and also master boundaries if self-contact
+      is asked) a multiplier variable should be defined. 
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>ind = gf_model_set(model M, 'add integral large sliding contact brick with field extension',  mesh_im mim, string varname_u, string multname, string dataname_r, string dataname_fr, int rg)</literal></para>
 
     <para>          (still experimental brick)
        Add a large sliding contact with friction brick to the model.
@@ -1205,15 +1665,6 @@
 
     <para>          Add a contact boundary to an existing large sliding contact brick.
       <literal>indbrick</literal> is the brick index. 
-    </para>
-    </listitem>
-
-    <listitem>
-    <para><literal>ind = gf_model_set(model M, 'add rigid obstacle to large sliding contact brick',  int indbrick, string obs)</literal></para>
-
-    <para>          Add a rigid obstacle to an existing large sliding contact brick.
-      <literal>indbrick</literal> is the brick index, <literal>obs</literal> is the expression of a
-      function which should be closed to a signed distance to the obstacle. 
     </para>
     </listitem>
 

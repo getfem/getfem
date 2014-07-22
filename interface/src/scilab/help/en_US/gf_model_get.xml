@@ -22,9 +22,10 @@
     <synopsis>gf_model_get(model M, 'rhs')</synopsis>
     <synopsis>gf_model_get(model M, 'brick term rhs', int ind_brick[, int ind_term, int sym, int ind_iter])</synopsis>
     <synopsis>z = gf_model_get(model M, 'memsize')</synopsis>
-    <synopsis>gf_model_get(model M, 'listvar')</synopsis>
-    <synopsis>gf_model_get(model M, 'listbricks')</synopsis>
+    <synopsis>gf_model_get(model M, 'variable list')</synopsis>
+    <synopsis>gf_model_get(model M, 'brick list')</synopsis>
     <synopsis>V = gf_model_get(model M, 'variable', string name[, int niter])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'interpolation', string expr, {mesh_fem mf | vec pts,  mesh m}[, int region[, int extrapolation[, int rg_source]]])</synopsis>
     <synopsis>mf = gf_model_get(model M, 'mesh fem of variable', string name)</synopsis>
     <synopsis>name = gf_model_get(model M, 'mult varname Dirichlet', int ind_brick)</synopsis>
     <synopsis>I = gf_model_get(model M, 'interval of variable', string varname)</synopsis>
@@ -32,12 +33,17 @@
     <synopsis>gf_model_get(model M, 'assembly'[, string option])</synopsis>
     <synopsis>{nbit, converged} = gf_model_get(model M, 'solve'[, ...])</synopsis>
     <synopsis>gf_model_get(model M, 'test tangent matrix'[, scalar EPS[, int NB[, scalar scale]]])</synopsis>
+    <synopsis>gf_model_get(model M, 'test tangent matrix term', string varname1, string varname2[, scalar EPS[, int NB[, scalar scale]]])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute isotropic linearized Von Mises or Tresca', string varname, string dataname_lambda, string dataname_mu, mesh_fem mf_vm[, string version])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute Von Mises or Tresca', string varname, string lawname, string dataname, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>V = gf_model_get(model M, 'finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute second Piola Kirchhoff tensor', string varname, string lawname, string dataname, mesh_fem mf_sigma)</synopsis>
-    <synopsis>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
-    <synopsis>gf_model_get(model M, 'compute plasticity constraints', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'compute elastoplasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</synopsis>
+    <synopsis>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
     <synopsis>V = gf_model_get(model M, 'compute plastic part', mesh_im mim, mesh_fem mf_pl, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'sliding data group name of large sliding contact brick', int indbrick)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'displacement group name of large sliding contact brick', int indbrick)</synopsis>
+    <synopsis>V = gf_model_get(model M, 'transformation name of large sliding contact brick', int indbrick)</synopsis>
     <synopsis>M = gf_model_get(model M, 'matrix term', int ind_brick, int ind_term)</synopsis>
     <synopsis>s = gf_model_get(model M, 'char')</synopsis>
     <synopsis>gf_model_get(model M, 'display')</synopsis>
@@ -106,14 +112,14 @@
     </listitem>
 
     <listitem>
-    <para><literal>gf_model_get(model M, 'listvar')</literal></para>
+    <para><literal>gf_model_get(model M, 'variable list')</literal></para>
 
     <para>         print to the output the list of variables and constants of the model.
     </para>
     </listitem>
 
     <listitem>
-    <para><literal>gf_model_get(model M, 'listbricks')</literal></para>
+    <para><literal>gf_model_get(model M, 'brick list')</literal></para>
 
     <para>         print to the output the list of bricks of the model.
     </para>
@@ -123,6 +129,20 @@
     <para><literal>V = gf_model_get(model M, 'variable', string name[, int niter])</literal></para>
 
     <para>         Gives the value of a variable or data.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'interpolation', string expr, {mesh_fem mf | vec pts,  mesh m}[, int region[, int extrapolation[, int rg_source]]])</literal></para>
+
+    <para>         Interpolate a certain expression with respect to the mesh_fem <literal>mf</literal>
+      or the set of points <literal>pts</literal> on mesh <literal>m</literal>.
+      The expression has to be valid according to the high-level generic
+      assembly language possibly including references to the variables
+      and data of the model.
+  
+      The options <literal>extrapolation</literal> and <literal>rg_source</literal> are specific to
+      interpolations with respect to a set of points <literal>pts</literal>. 
     </para>
     </listitem>
 
@@ -207,7 +227,7 @@
       be a pseudo potential instead of the residual. Still experimental since
       not all bricks define a pseudo potential.
 
-      Return the number of iterations, if a iterative method is used.
+      Return the number of iterations, if an iterative method is used.
       
       Note that it is possible to disable some variables
       (see gf_model_set(model M, 'disable variable') ) in order to
@@ -227,8 +247,30 @@
       <literal>EPS</literal> is the value of the small parameter for the finite difference
       computation of the derivative is the random direction (default is 1E-6).
       <literal>NN</literal> is the number of tests (default is 100). <literal>scale</literal> is a parameter
-      for the random position (default is 1). Each dof od the random
-      position is chosen in the range [-scale, scale].
+      for the random position (default is 1, 0 is an acceptable value) around
+      the current position.
+      Each dof of the random position is chosen in the range
+      [current-scale, current+scale].
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_model_get(model M, 'test tangent matrix term', string varname1, string varname2[, scalar EPS[, int NB[, scalar scale]]])</literal></para>
+
+    <para>         Test the consistency of a part of the tangent matrix in some
+      random positions and random directions
+      (useful to test newly created bricks).
+      The increment is only made on variable <literal>varname2</literal> and tested on the
+      part of the residual corresponding to <literal>varname1</literal>. This means that
+      only the term (<literal>varname1</literal>, <literal>varname2</literal>) of the tangent matrix is tested.
+      <literal>EPS</literal> is the value of the small parameter for the finite difference
+      computation of the derivative is the random direction (default is 1E-6).
+      <literal>NN</literal> is the number of tests (default is 100). <literal>scale</literal> is a parameter
+      for the random position (default is 1, 0 is an acceptable value)
+      around the current position.
+      Each dof of the random position is chosen in the range
+      [current-scale, current+scale].
       
     </para>
     </listitem>
@@ -247,7 +289,8 @@
 
     <para>         Compute on <literal>mf_vm</literal> the Von-Mises stress or the Tresca stress of a field
       for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
-      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or 'Ciarlet Geymonat'.
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or
+      'Ciarlet Geymonat'.
       <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable coefficients.
@@ -256,11 +299,25 @@
     </listitem>
 
     <listitem>
+    <para><literal>V = gf_model_get(model M, 'finite strain elasticity Von Mises', string varname, string lawname, string params, mesh_fem mf_vm[, int region])</literal></para>
+
+    <para>         Compute on <literal>mf_vm</literal> the Von-Mises stress of a field <literal>varname</literal>
+      for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
+      should be a valid name. <literal>params</literal> are the parameters law. It could be
+      a short vector of constant values or may depend on data or variables
+      of the model.
+      Uses the high-level generic assembly.
+ 
+    </para>
+    </listitem>
+
+    <listitem>
     <para><literal>V = gf_model_get(model M, 'compute second Piola Kirchhoff tensor', string varname, string lawname, string dataname, mesh_fem mf_sigma)</literal></para>
 
     <para>         Compute on <literal>mf_sigma</literal> the second Piola Kirchhoff stress tensor of a field
       for nonlinear elasticity in 3D. <literal>lawname</literal> is the constitutive law which
-      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or 'Ciarlet Geymonat'.
+      could be 'SaintVenant Kirchhoff', 'Mooney Rivlin', 'neo Hookean' or
+      'Ciarlet Geymonat'.
       <literal>dataname</literal> is a vector of parameters for the constitutive law. Its length
       depends on the law. It could be a short vector of constant values or a
       vector field described on a finite element method for variable
@@ -270,7 +327,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>V = gf_model_get(model M, 'compute plasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</literal></para>
+    <para><literal>V = gf_model_get(model M, 'compute elastoplasticity Von Mises or Tresca', string datasigma, mesh_fem mf_vm[, string version])</literal></para>
 
     <para>         Compute on <literal>mf_vm</literal> the Von-Mises or the Tresca stress of a field for plasticity and return it into the vector V.
       <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
@@ -279,7 +336,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>gf_model_get(model M, 'compute plasticity constraints', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
+    <para><literal>gf_model_get(model M, 'elastoplasticity next iter', mesh_im mim, string varname, string projname, string datalambda, string datamu, string datathreshold, string datasigma)</literal></para>
 
     <para>         Compute and save the stress constraints sigma for other hypothetical iterations.
       'mim' is the integration method to use for the computation.
@@ -295,6 +352,30 @@
 
     <para>         Compute on <literal>mf_pl</literal> the plastic part and return it into the vector V.
       <literal>datasigma</literal> is a vector which contains the stress constraints values supported by the mesh.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'sliding data group name of large sliding contact brick', int indbrick)</literal></para>
+
+    <para>         Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'displacement group name of large sliding contact brick', int indbrick)</literal></para>
+
+    <para>         Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>V = gf_model_get(model M, 'transformation name of large sliding contact brick', int indbrick)</literal></para>
+
+    <para>         Gives the name of the group of variables corresponding to the
+      sliding data for an existing large sliding contact brick.
     </para>
     </listitem>
 

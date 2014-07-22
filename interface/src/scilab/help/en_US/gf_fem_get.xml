@@ -17,6 +17,7 @@
     <title>Calling Sequence</title>
 
     <synopsis>n = gf_fem_get(fem F, 'nbdof'[, int cv])</synopsis>
+    <synopsis>n = gf_fem_get(fem F, 'index of global dof', cv)</synopsis>
     <synopsis>d = gf_fem_get(fem F, 'dim')</synopsis>
     <synopsis>td = gf_fem_get(fem F, 'target_dim')</synopsis>
     <synopsis>P = gf_fem_get(fem F, 'pts'[, int cv])</synopsis>
@@ -50,6 +51,14 @@
     Some specific fem (for example 'interpolated_fem') may require a
     convex number <literal>cv</literal> to give their result. In most of the case, you
     can omit this convex number.
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>n = gf_fem_get(fem F, 'index of global dof', cv)</literal></para>
+
+    <para>       Return the index of global dof for special fems such as interpolated fem.
+    
     </para>
     </listitem>
 

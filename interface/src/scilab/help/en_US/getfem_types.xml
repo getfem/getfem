@@ -102,7 +102,14 @@
       <varlistentry>
         <term>mesh_im</term>
         <listitem>
-          <para>mesh im object descriptor( or gfMeshIm object)</para>
+          <para>mesh im object descriptor (or gfMeshIm object)</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>mesh_im_data</term>
+        <listitem>
+          <para>mesh im data object descriptor (or gfMeshImData object)</para>
         </listitem>
       </varlistentry>
 
@@ -173,6 +180,13 @@
         <term>cont_struct</term>
         <listitem>
           <para>continuation-structure descriptor</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>multi_contact_frame</term>
+        <listitem>
+          <para>multi-contact descriptor</para>
         </listitem>
       </varlistentry>
 

@@ -1026,7 +1026,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       `theta = -1` corresponds to the skew-symmetric method which is
       inconditionnaly coercive. `theta = 0` is the simplest method
       for which the second derivative of the Neumann term is not necessary
-      even for nonlinear problems. `Hname' is the data
+      even for nonlinear problems. `Hname` is the data
       corresponding to the matrix field `H`. It has to be a constant matrix
       or described on a scalar fem.
       CAUTION: This brick has to be added in the model after all the bricks

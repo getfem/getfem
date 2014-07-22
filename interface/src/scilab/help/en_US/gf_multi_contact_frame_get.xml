@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<refentry version="5.0-subset Scilab" xml:id="gf_multi_contact_frame_get" xml:lang="en"
+          xmlns="http://docbook.org/ns/docbook"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          xmlns:xi="http://www.w3.org/2001/XInclude"
+          xmlns:svg="http://www.w3.org/2000/svg"
+          xmlns:mml="http://www.w3.org/1998/Math/MathML"
+          xmlns:html="http://www.w3.org/1999/xhtml"
+          xmlns:db="http://docbook.org/ns/docbook">
+  <refnamediv>
+    <refname>gf_multi_contact_frame_get</refname>
+    <refpurpose>  General function for querying information about multi contact frame objects.
+</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <title>Calling Sequence</title>
+
+    <synopsis>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'compute pairs')</synopsis>
+    <synopsis>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'slave points')</synopsis>
+    <synopsis>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'master points')</synopsis>
+    <synopsis>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'char')</synopsis>
+    <synopsis>gf_multi_contact_frame_get(multi_contact_frame MCF, 'display')</synopsis>
+  </refsynopsisdiv>
+
+  <refsection>
+    <title>Description</title>
+    <para>  General function for querying information about multi contact frame objects.
+</para>
+  </refsection>
+
+  <refsection>
+    <title>Command list</title>
+
+    <itemizedlist>
+    <listitem>
+    <para><literal>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'compute pairs')</literal></para>
+
+    <para>         Compute the contact pairs
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'slave points')</literal></para>
+
+    <para>         Get the slave points computed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'master points')</literal></para>
+
+    <para>         Get the master points computed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>s = gf_multi_contact_frame_get(multi_contact_frame MCF, 'char')</literal></para>
+
+    <para>         Output a (unique) string representation of the multi_contact_frame.
+      
+      This can be used for performing comparisons between two
+      different multi_contact_frame objects.
+      This function is to be completed.
+      
+    </para>
+    </listitem>
+
+    <listitem>
+    <para><literal>gf_multi_contact_frame_get(multi_contact_frame MCF, 'display')</literal></para>
+
+    <para>         Display a short summary for a multi_contact_frame object.
+    </para>
+    </listitem>
+
+    </itemizedlist>
+  </refsection>
+
+  <refsection>
+    <title>See Also</title>
+    <simplelist type="inline">
+      <member><link linkend="getfem_types">getfem types</link></member>
+    </simplelist>
+  </refsection>
+
+  <refsection>
+    <title>Authors</title>
+    <para>Y. Collette</para>
+  </refsection>
+
+</refentry>
