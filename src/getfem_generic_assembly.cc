@@ -1519,7 +1519,7 @@ namespace getfem {
   static void ga_compile_function(ga_workspace &workspace,
                                   ga_instruction_set &gis, bool scalar);
   static std::string ga_derivative_scalar_function(const std::string expr,
-                                            const std::string &var);
+                                                   const std::string &var);
   static bool ga_is_affine(ga_tree &tree, const ga_workspace &workspace,
                            const std::string &varname,
                            const std::string &interpolatename);
@@ -1590,7 +1590,7 @@ namespace getfem {
   
 
 
-  static scalar_type ga_Heaveside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
+  static scalar_type ga_Heaviside(scalar_type t) { return (t >= 0.) ? 1.: 0.; }
   static scalar_type ga_pos_part(scalar_type t) { return (t >= 0.) ? t : 0.; }
   static scalar_type ga_half_sqr_pos_part(scalar_type t)
   { return (t >= 0.) ? 0.5*t*t : 0.; }
@@ -1961,11 +1961,11 @@ namespace getfem {
     
 
     // Miscellaneous functions
-    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaveside);
+    PREDEF_FUNCTIONS["Heaviside"] = ga_predef_function(ga_Heaviside);
     PREDEF_FUNCTIONS["sign"] = ga_predef_function(ga_sign);
     PREDEF_FUNCTIONS["abs"] = ga_predef_function(ga_abs, 1, "sign");    
     PREDEF_FUNCTIONS["pos_part"]
-      = ga_predef_function(ga_pos_part, 1, "Heaveside");
+      = ga_predef_function(ga_pos_part, 1, "Heaviside");
     PREDEF_FUNCTIONS["half_sqr_pos_part"]
       = ga_predef_function(ga_half_sqr_pos_part, 1, "pos_part");
     PREDEF_FUNCTIONS["neg_part"]
@@ -1979,7 +1979,7 @@ namespace getfem {
       = ga_predef_function(ga_min, 1, "DER_PDFUNC2_MAX", "DER_PDFUNC1_MAX");
 
     PREDEF_FUNCTIONS["DER_PDFUNC_NEG_PART"] =
-      ga_predef_function(ga_der_neg_part, 2, "-Heaveside(-t)");
+      ga_predef_function(ga_der_neg_part, 2, "-Heaviside(-t)");
     PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] = ga_predef_function(ga_der_max1);
     PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] = ga_predef_function(ga_der_max2);
 
