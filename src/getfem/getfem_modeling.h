@@ -40,6 +40,10 @@
 
 //==============================================
 //
+// DEPRECATED MODEL DESCRIPTION. Use the new one in getfem_model.h
+//
+//==============================================
+//
 // Brick idents :
 // MDBRICK_GENERIC_ELLIPTIC      174397
 // MDBRICK_LIN_ISO_ELASTICITY    852327
@@ -429,8 +433,8 @@ namespace getfem {
 
     PARAM_MAP &get_parameters() { return parameters; }
 
-    mdbrick_abstract_common_base(void)
-      : proper_additional_dof(0), proper_nb_constraints(0), MS_i0(0) { 
+    IS_DEPRECATED mdbrick_abstract_common_base(void)
+      : proper_additional_dof(0), proper_nb_constraints(0), MS_i0(0)  { 
       proper_is_linear_ = proper_is_symmetric_ = proper_is_coercive_ = true; 
       nb_total_constraints = nb_total_dof = 1000000000L;
       proper_additional_dof = proper_nb_constraints = 0;

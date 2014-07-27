@@ -582,7 +582,7 @@ where ``name`` is he macro name which then can be used in the assembly language 
 
 where ``alpha`` should be a valid declared variable or data.
 
-The macros are expanded inline at the semantic analysis phase. At the compilation phase, if severla call of the same macro is performed, the computation is automatically factorized.
+The macros are expanded inline at the semantic analysis phase. At the compilation phase, if several call of the same macro is performed, the computation is automatically factorized.
 
 Interpolate transformations
 ***************************

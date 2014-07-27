@@ -123,7 +123,7 @@ faces_from_pid(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
   iarray w = out.pop().create_iarray(2,unsigned(lst.size()));
   for (size_type j=0; j < lst.size(); j++) {
     w(0,j) = int(lst[j].cv+config::base_index());
-    w(1,j) = int(lst[j].f+config::base_index());
+    w(1,j) = int(short_type(lst[j].f+config::base_index()));
   }
 }
 
@@ -192,8 +192,8 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
   fcnt = 0;
   for (size_type j=0; j < lst.size(); j++) {
     if (lst[j].cnt == 1) {
-      w(0,fcnt) = int(lst[j].cv)+config::base_index();
-      w(1,fcnt) = int(lst[j].f)+config::base_index();
+      w(0,fcnt) = int(lst[j].cv+config::base_index());
+      w(1,fcnt) = int(short_type(lst[j].f+config::base_index()));
       fcnt++;
     }
   }
@@ -928,7 +928,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
        for (size_type j=0; j < cvlst.size(); j++) {
          w(0,j) = cvlst[j]+config::base_index();
-         w(1,j) = facelst[j]+config::base_index();
+         w(1,j) = short_type(facelst[j]+config::base_index());
        }
        );
 
@@ -963,7 +963,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
        iarray w = out.pop().create_iarray(2, unsigned(cvlst.size()));
        for (size_type j=0; j < cvlst.size(); j++) {
          w(0,j) = cvlst[j]+config::base_index();
-         w(1,j) = facelst[j]+config::base_index();
+         w(1,j) = short_type(facelst[j]+config::base_index());
        }
        );
 

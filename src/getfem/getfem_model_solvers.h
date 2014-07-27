@@ -1064,7 +1064,7 @@ namespace getfem {
   /*     Standard solve.                                               */
   /* ***************************************************************** */
 
-  /** A default solver for the old model brick system.
+  /** A default solver for the old and deprecated model brick system.
 
   Of course it could be not very well suited for a particular
   problem, so it could be copied and adapted to change solvers,
@@ -1119,11 +1119,19 @@ namespace getfem {
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
                  gmm::iteration &iter,
-                 typename useful_types<MODEL_STATE>::plsolver_type lsolver) {
+                 typename useful_types<MODEL_STATE>::plsolver_type lsolver) IS_DEPRECATED;
+
+  template <typename MODEL_STATE> void
+  standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
+                 gmm::iteration &iter,
+                 typename useful_types<MODEL_STATE>::plsolver_type lsolver)  {
     default_newton_line_search ls;
     standard_solve(MS, problem, iter, lsolver, ls);
   }
 
+  template <typename MODEL_STATE> void
+  standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,
+                 gmm::iteration &iter) IS_DEPRECATED;
 
   template <typename MODEL_STATE> void
   standard_solve(MODEL_STATE &MS, mdbrick_abstract<MODEL_STATE> &problem,

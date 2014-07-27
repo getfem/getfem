@@ -154,7 +154,7 @@ The main useful methods on a |mo| object are
 The |br| object
 ---------------
 
-A model brick is an object which is supposed to represent a part of a model. It
+A model brick is an object that is supposed to represent a part of a model. It
 aims to represent some integral terms in a weak formulation of a PDE model. The
 model object will contain a list of bricks. All the terms described by the brick
 will be finally assembled to build the linear system to be solved (the tangent
@@ -178,6 +178,11 @@ it is a real term or an intrinsic complex term.
 
 How to build a new brick
 ------------------------
+
+Note first that the design of a new brick is only necessary for special terms
+not covered by existing bricks and not covered by the wide range of accessible
+terms (including complex coupling terms) of the generic assembly brick
+(see :ref:`ud-model-generic-assembly`).
 
 According to the spirit in which the brick has been designed, a brick should avoid
 as much as possible to store additional data. The parameters of a brick should be

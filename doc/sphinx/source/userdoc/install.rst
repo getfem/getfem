@@ -42,20 +42,20 @@ Download sources
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
-The latest stable release of |gf| is `getfem-4.0.0.tar.gz
-<http://download.gna.org/getfem/stable/getfem-4.0.0.tar.gz>`_.
+The latest stable release of |gf| is `getfem-4.3.tar.gz
+<http://download.gna.org/getfem/stable/getfem-4.3.tar.gz>`_.
 
  * download package::
 
-     $ wget http://download.gna.org/getfem/stable/getfem-4.0.0.tar.gz
+     $ wget http://download.gna.org/getfem/stable/getfem-4.3.tar.gz
 
  * unpack::
 
-     $ tar xzf getfem-4.0.0.tar.gz
+     $ tar xzf getfem-4.3.tar.gz
 
  * and go to the root directory of |gf|::
 
-     $ cd getfem-4.0.0/
+     $ cd getfem-4.3/
 
 The latest unstable releases is:
 
