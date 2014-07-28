@@ -20,7 +20,6 @@ struct contact_problem{
 	scalar_type mu_master, lambda_master, mu_slave, lambda_slave;
 	std::string LM_INT_TYPE; 
 	contact_problem(int argc, char *argv[]);
-	
 };
 
 void mark_boundary(getfem::mesh& m);

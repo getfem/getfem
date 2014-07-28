@@ -33,6 +33,7 @@ using std::ends; using std::cin;
 /* some Getfem++ types that we will be using */
 using bgeot::dim_type;
 using bgeot::size_type;   /* = unsigned long */
+using bgeot::short_type;
 using bgeot::scalar_type; /* = double */
 using bgeot::base_node;   /* geometrical nodes (derived from base_small_vector)*/
 using bgeot::base_matrix; /* small dense matrix. */

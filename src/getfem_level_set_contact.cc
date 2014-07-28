@@ -283,14 +283,14 @@ dal::shared_ptr<getfem::mesh_im> level_set_contact::master_contact_body::
 
 		pmim_contact.reset(new mesh_im(get_mesh()));
 		if (mult_mim_order!=size_type(-1)){
-			pmim_contact->set_integration_method(
-			get_mesh().region(region_id).index(),contact_mim_order());
+			pmim_contact->set_integration_method
+                          (get_mesh().region(region_id).index(),
+                           bgeot::dim_type(contact_mim_order()));
 		}
 		else
 		{
-			pmim_contact->set_integration_method(
-			get_mesh().region(region_id).index(), 
-			contact_int_method());
+                  pmim_contact->set_integration_method
+                    (get_mesh().region(region_id).index(), contact_int_method());
 		}
 
 	return pmim_contact;
@@ -371,146 +371,143 @@ void level_set_contact::contact_pair_info::clear_contact_history()
 
 bool level_set_contact::contact_pair_info::contact_changed()
 {
-	//deform master and slave meshes
-	contact_pair_update 
-		temp_mesh_deformation(master_cb,slave_cb,DEFORM_MESHES_ONLY);
+  //deform master and slave meshes
+  contact_pair_update 
+    temp_mesh_deformation(master_cb,slave_cb,DEFORM_MESHES_ONLY);
+  
+  // create mf on the boundary of the master (copy from the master)
+  mesh_fem mf_scalar(master_cb.get_mesh());
+  for(size_type i=0;i<mf_scalar.linked_mesh().nb_convex();i++)
+    mf_scalar.set_finite_element(i,master_cb.get_mesh_fem().fem_of_element(i));
+  
+  mf_scalar.set_qdim(1);
+  getfem::partial_mesh_fem mf_boundary(mf_scalar);
+  mf_boundary.adapt(mf_scalar.dof_on_region(GIVEN_CONTACT_REGION));
+  
+  // interpolate level set from the slave to the master
+  modeling_standard_plain_vector LS_on_contour(mf_boundary.nb_dof());
+  getfem::interpolation(slave_cb.get_ls_mesh_fem(), mf_boundary, 
+                        slave_cb.ls_values(), LS_on_contour);
+  modeling_standard_plain_vector LS(mf_scalar.nb_dof());
+  mf_boundary.extend_vector(LS_on_contour,LS);
+  gmm::copy(LS,master_cb.get_model().set_real_variable
+            ("ls_on"+master_cb.get_var_name()+"_from_"+slave_cb.get_var_name()));
+  
+  // interpolate the gradient of the level set onto the master surfaces
+  // (this is to obtain the normal direction of the level set)
+  mesh_fem mf_gradient_ls(slave_cb.get_mesh());
+  mf_gradient_ls.set_classical_discontinuous_finite_element(bgeot::dim_type(master_cb.mult_mf_order));
+  mesh_fem mf_gradient_ls_vect(mf_gradient_ls);
+  mf_gradient_ls_vect.set_qdim(slave_cb.get_mesh().dim());
+  plain_vector GradLS(mf_gradient_ls.nb_dof()*slave_cb.get_mesh().dim());
+  getfem::compute_gradient(slave_cb.get_ls_mesh_fem(), mf_gradient_ls, slave_cb.ls_values(), GradLS);
+  getfem::partial_mesh_fem mf_boundary_vect(master_cb.get_mesh_fem());
+  mf_boundary_vect.adapt(master_cb.get_mesh_fem().dof_on_region(GIVEN_CONTACT_REGION));
+  plain_vector GradLS_boundary(mf_boundary.nb_dof()*slave_cb.get_mesh().dim());
+  getfem::interpolation(mf_gradient_ls_vect,mf_boundary_vect,GradLS,GradLS_boundary);
 
-	// create mf on the boundary of the master (copy from the master)
-	mesh_fem mf_scalar(master_cb.get_mesh());
-	for(size_type i=0;i<mf_scalar.linked_mesh().nb_convex();i++)
-	   mf_scalar.set_finite_element(i,master_cb.get_mesh_fem().fem_of_element(i));
-
-	mf_scalar.set_qdim(1);
-	getfem::partial_mesh_fem mf_boundary(mf_scalar);
-	mf_boundary.adapt(mf_scalar.dof_on_region(GIVEN_CONTACT_REGION));
-
-	// interpolate level set from the slave to the master
-	modeling_standard_plain_vector LS_on_contour(mf_boundary.nb_dof());
-	getfem::interpolation(slave_cb.get_ls_mesh_fem(), mf_boundary, 
-		slave_cb.ls_values(), LS_on_contour);
-	modeling_standard_plain_vector LS(mf_scalar.nb_dof());
-	mf_boundary.extend_vector(LS_on_contour,LS);
-	gmm::copy(LS,master_cb.get_model().set_real_variable(
-	"ls_on"+master_cb.get_var_name()+"_from_"+slave_cb.get_var_name()));
-
-	// interpolate the gradient of the level set onto the master surfaces
-	// (this is to obtain the normal direction of the level set)
-	mesh_fem mf_gradient_ls(slave_cb.get_mesh());
-	mf_gradient_ls.set_classical_discontinuous_finite_element(bgeot::dim_type(master_cb.mult_mf_order));
-    mesh_fem mf_gradient_ls_vect(mf_gradient_ls);
-	mf_gradient_ls_vect.set_qdim(slave_cb.get_mesh().dim());
-	plain_vector GradLS(mf_gradient_ls.nb_dof()*slave_cb.get_mesh().dim());
-	getfem::compute_gradient(slave_cb.get_ls_mesh_fem(), mf_gradient_ls, slave_cb.ls_values(), GradLS);
-	getfem::partial_mesh_fem mf_boundary_vect(master_cb.get_mesh_fem());
-	mf_boundary_vect.adapt(master_cb.get_mesh_fem().dof_on_region(GIVEN_CONTACT_REGION));
-	plain_vector GradLS_boundary(mf_boundary.nb_dof()*slave_cb.get_mesh().dim());
-	getfem::interpolation(mf_gradient_ls_vect,mf_boundary_vect,GradLS,GradLS_boundary);
-	size_type dim = slave_cb.get_mesh().dim();
-	const scalar_type TINY = 1e-15;
-	for(size_type i=0;i<mf_boundary.nb_dof();i++){ //normalizing the projected ls field
-		bgeot::base_node ls_node(dim);
-		for(size_type j=0;j<dim;j++) ls_node[j]=GradLS_boundary[dim*i+j];
-		ls_node/= (gmm::vect_norm2(ls_node)+TINY);
-		for(size_type j=0;j<dim;j++) GradLS_boundary[dim*i+j]=ls_node[j];
-	}
-	plain_vector normLS_master(master_cb.get_mesh_fem().nb_dof());
-	mf_boundary_vect.extend_vector(GradLS_boundary,normLS_master);
-
-
-	// extend Lagrange Multiplier onto the whole boundary of the master
-	const mesh_fem& mf_mult = 
-		master_cb.get_model().mesh_fem_of_variable(mult_name);
-	const modeling_standard_plain_vector& lambda = 
-		master_cb.get_model().real_variable(mult_name);
-	modeling_standard_plain_vector lambda_full(mf_mult.nb_basic_dof());
-	if (lambda.size()>0) mf_mult.extend_vector(lambda,lambda_full);
-
-	// update contact region
-	dal::bit_vector cc = master_cb.get_mesh().
-		region(GIVEN_CONTACT_REGION).index();
-	master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).clear();
-	master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).add(cc);
-	bgeot::size_type o;
-	for (o << cc; o != bgeot::size_type(-1); o << cc) {
-		getfem::mesh_fem::ind_dof_ct dof_ls = 
-			mf_scalar.ind_basic_dof_of_element(o);
-		getfem::mesh_fem::ind_dof_ct dof_lm = 
-			mf_mult.ind_basic_dof_of_element(o);
-
-		//measure the angle between ls countour and the master face
-		face_type face = master_cb.ext_face_of_elem(o);
-		bgeot::base_node unit_face_normal = 
-		  master_cb.get_mesh().normal_of_face_of_convex(face.cv,bgeot::dim_type(face.f));
-		unit_face_normal/=gmm::vect_norm2(unit_face_normal);
-		scalar_type cosine_alpha = 0;
-		for (size_type j = 0; j < dof_ls.size(); j++){ 
-		    bgeot::base_node ls_grad_node(dim);
-		    for(size_type k=0;k<dim;k++) 
-				ls_grad_node[k]=normLS_master[dim*dof_ls[j]+k];
-			cosine_alpha+= gmm::vect_sp(ls_grad_node,unit_face_normal);
-		}
-		cosine_alpha/=scalar_type(dof_ls.size()); 
-		scalar_type alpha = acos(cosine_alpha)*360/(2*M_PI);	//now this is average angle
-		                             // between master surface and ls zero contour
-
-		scalar_type LS_extreeme = LS[dof_ls[0]];
-		if (master_cb.integration==master_contact_body::PER_ELEMENT)
-			for (size_type j = 0; j < dof_ls.size(); j++) 
-				LS_extreeme=std::min(LS[dof_ls[j]],LS_extreeme);
-		else
-			for (size_type j = 0; j < dof_ls.size(); j++) 
-				LS_extreeme=std::max(LS[dof_ls[j]],LS_extreeme);
-
-
-		scalar_type LM_sum = 0;
-		for (size_type j = 0; j < dof_lm.size(); j++) 
-			LM_sum+=lambda_full[dof_lm[j]];
-
-		const scalar_type TINY_2 = 1e-9;
-		if (LS_extreeme+LM_sum < TINY_2 || alpha > master_cb.max_contact_angle) 
-			master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).sup(o);
-	}
-
-
-	// check whether contact areas have changed
-	bool contact_surface_changed;
-	const dal::bit_vector& current_contact_elm_list = 
-		master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).index();
-	GMM_TRACE2("Current contact elements: "<< current_contact_elm_list);
-	GMM_TRACE2("Old contact elements:     "<< old_contact_elm_list);
-	GMM_TRACE2("Pre-old contact elements: "<< pre_old_ct_list);
-
-	if (current_contact_elm_list == old_contact_elm_list && 
-		current_contact_elm_list.card() == old_contact_elm_list.card()) {
-			contact_surface_changed = false;
-			GMM_TRACE2("   the contact area has not changed");
-	} else {
-		if (current_contact_elm_list == pre_old_ct_list &&
-			current_contact_elm_list.card() == pre_old_ct_list.card()) {
-				contact_surface_changed = false;
-				GMM_TRACE2("   the contact area has changed, but cycling, \
+  size_type dim = slave_cb.get_mesh().dim();
+  const scalar_type TINY = 1e-15;
+  for(size_type i=0;i<mf_boundary.nb_dof();i++){ //normalizing the projected ls field
+    bgeot::base_node ls_node(dim);
+    for(size_type j=0;j<dim;j++) ls_node[j]=GradLS_boundary[dim*i+j];
+    ls_node/= (gmm::vect_norm2(ls_node)+TINY);
+    for(size_type j=0;j<dim;j++) GradLS_boundary[dim*i+j]=ls_node[j];
+  }
+  plain_vector normLS_master(master_cb.get_mesh_fem().nb_dof());
+  mf_boundary_vect.extend_vector(GradLS_boundary,normLS_master);
+  
+  
+  // extend Lagrange Multiplier onto the whole boundary of the master
+  const mesh_fem& mf_mult = 
+    master_cb.get_model().mesh_fem_of_variable(mult_name);
+  const modeling_standard_plain_vector& lambda = 
+    master_cb.get_model().real_variable(mult_name);
+  modeling_standard_plain_vector lambda_full(mf_mult.nb_basic_dof());
+  if (lambda.size()>0) mf_mult.extend_vector(lambda,lambda_full);
+  // update contact region
+  dal::bit_vector cc = master_cb.get_mesh().
+    region(GIVEN_CONTACT_REGION).index();
+  master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).clear();
+  master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).add(cc);
+  bgeot::size_type o;
+  for (o << cc; o != bgeot::size_type(-1); o << cc) {
+    getfem::mesh_fem::ind_dof_ct dof_ls = mf_scalar.ind_basic_dof_of_element(o);
+    getfem::mesh_fem::ind_dof_ct dof_lm = mf_mult.ind_basic_dof_of_element(o);
+    
+    //measure the angle between ls countour and the master face
+    face_type face = master_cb.ext_face_of_elem(o);
+    bgeot::base_node unit_face_normal = 
+      master_cb.get_mesh().normal_of_face_of_convex(face.cv,face.f);
+    unit_face_normal/=gmm::vect_norm2(unit_face_normal);
+    scalar_type cosine_alpha = 0;
+    for (size_type j = 0; j < dof_ls.size(); j++){ 
+      bgeot::base_node ls_grad_node(dim);
+      for(size_type k=0; k<dim; k++) 
+        ls_grad_node[k]=normLS_master[dim*dof_ls[j]+k];
+      cosine_alpha += gmm::vect_sp(ls_grad_node,unit_face_normal);
+    }
+    cosine_alpha /= scalar_type(dof_ls.size()); 
+    scalar_type alpha = acos(cosine_alpha)*360/(2*M_PI); // now this is average angle
+    // between master surface and ls zero contour
+    
+    scalar_type LS_extreeme = LS[dof_ls[0]];
+    if (master_cb.integration==master_contact_body::PER_ELEMENT)
+      for (size_type j = 0; j < dof_ls.size(); j++) 
+        LS_extreeme=std::min(LS[dof_ls[j]],LS_extreeme);
+    else
+      for (size_type j = 0; j < dof_ls.size(); j++) 
+        LS_extreeme=std::max(LS[dof_ls[j]],LS_extreeme);
+    
+    scalar_type LM_sum = 0;
+    for (size_type j = 0; j < dof_lm.size(); j++) 
+      LM_sum+=lambda_full[dof_lm[j]];
+    
+    const scalar_type TINY_2 = 1e-9;
+    
+    if (LS_extreeme+LM_sum < TINY_2 || alpha > master_cb.max_contact_angle) 
+      master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).sup(o);
+  }
+  
+  // check whether contact areas have changed
+  bool contact_surface_changed;
+  const dal::bit_vector& current_contact_elm_list = 
+    master_cb.get_mesh().region(ACTIVE_CONTACT_REGION).index();
+  GMM_TRACE2("Current contact elements: "<< current_contact_elm_list);
+  GMM_TRACE2("Old contact elements:     "<< old_contact_elm_list);
+  GMM_TRACE2("Pre-old contact elements: "<< pre_old_ct_list);
+  
+  if (current_contact_elm_list == old_contact_elm_list && 
+      current_contact_elm_list.card() == old_contact_elm_list.card()) {
+    contact_surface_changed = false;
+    GMM_TRACE2("   the contact area has not changed");
+  } else {
+    if (current_contact_elm_list == pre_old_ct_list &&
+        current_contact_elm_list.card() == pre_old_ct_list.card()) {
+      contact_surface_changed = false;
+      GMM_TRACE2("   the contact area has changed, but cycling, \
 						   so exiting active set search");
-		} else {
-			contact_surface_changed = true;
-			GMM_TRACE2("   the contact area has changed");
-			pre_old_ct_list = old_contact_elm_list;
-			old_contact_elm_list = current_contact_elm_list;
-		}
-	}
-
-	init_cont_detect_done = true;
-	force_update();
-
-
-	//building integration method
-	pmim_contact = master_cb.build_mesh_im_on_boundary(ACTIVE_CONTACT_REGION);
-	n_integrated_elems = pmim_contact->convex_index().card();
-	GMM_ASSERT1(n_integrated_elems==current_contact_elm_list.card(),
-		"Failure in integration method: The number of integrated elements does not \
-		correspond to the number of contact elements");
-
-	return contact_surface_changed;  
-
+    } else {
+      contact_surface_changed = true;
+      GMM_TRACE2("   the contact area has changed");
+      pre_old_ct_list = old_contact_elm_list;
+      old_contact_elm_list = current_contact_elm_list;
+    }
+  }
+  
+  init_cont_detect_done = true;
+  force_update();
+  
+  
+  //building integration method
+  pmim_contact = master_cb.build_mesh_im_on_boundary(ACTIVE_CONTACT_REGION);
+  n_integrated_elems = pmim_contact->convex_index().card();
+  GMM_ASSERT1(n_integrated_elems==current_contact_elm_list.card(),
+              "Failure in integration method: The number of integrated elements "
+              "does not correspond to the number of contact elements");
+  
+  return contact_surface_changed;  
+  
 }
 
 
@@ -637,8 +634,7 @@ md(_md),mcb(_mcb),scb(_scb), given_contact_id(rg)
 
 }
 
-void level_set_contact::level_set_contact_brick::
-	asm_real_tangent_terms(
+void level_set_contact::level_set_contact_brick::asm_real_tangent_terms(
 	const model &mdd, size_type /* ib */,
 	const model::varnamelist &vl,
 	const model::varnamelist &/* dl */,
@@ -647,51 +643,56 @@ void level_set_contact::level_set_contact_brick::
 	model::real_veclist &vecl,
 	model::real_veclist &,
 	size_type region,
-	build_version version) const
-
-{
-	//input check
-	GMM_ASSERT1(vl.size() == 3,
-		"Level set contact  brick needs three variables");
-	GMM_ASSERT1(matl.size() == 6,
-		"Level set contact  brick needs six matrices");
-	GMM_ASSERT1(vecl.size() == 6,
-		"Level set contact  brick assembles size RHSs");
-	GMM_ASSERT1(region==given_contact_id,
+	build_version version) const {
+  //input check
+  GMM_ASSERT1(vl.size() == 3,
+              "Level set contact  brick needs three variables");
+  GMM_ASSERT1(matl.size() == 6,
+              "Level set contact  brick needs six matrices");
+  GMM_ASSERT1(vecl.size() == 6,
+              "Level set contact  brick assembles size RHSs");
+  GMM_ASSERT1(region==given_contact_id,
 		"Assumed contact region has changed!!! \
 		This implementation does not handle this \
 		for efficiency reasons!!");
+  
+  if (version & model::BUILD_MATRIX ) 
+    for(size_type i=0;i<matl.size();i++) gmm::clear(matl[i]);
+  if (version & model::BUILD_RHS )
+    for(size_type i=0;i<vecl.size();i++) gmm::clear(vecl[i]);
+  
+  const getfem::mesh_region& active_contact_region = 
+    mcb.get_mesh().region(contact_region_id);
+  if (active_contact_region.index().card()==0) return; //no contact -> no contact assembly
+  
+  //deform the meshes, update contact info
+  contact_pair_update cp_update(mcb,scb,FULL_UPDATE);
+  
+  //extract DOF vectors
+  const plain_vector &LM = mdd.real_variable(vl[2]);
 
-	if (version & model::BUILD_MATRIX ) 
-		for(size_type i=0;i<matl.size();i++) gmm::clear(matl[i]);
-	if (version & model::BUILD_RHS )
-		for(size_type i=0;i<vecl.size();i++) gmm::clear(vecl[i]);
+  //Assemble Tangent Matrix
+  if (version & model::BUILD_MATRIX ) {
+    GMM_TRACE2("Level set contact brick stiffness matrix assembly on "
+               << mcb.get_pair_info(scb.get_var_name()).num_of_integr_elems()
+               << " elements");
+    asm_level_set_contact_tangent_matrix(matl,mcb,scb,LM,active_contact_region);
+  }
+  
+  std::cout << "before asm" <<  std::endl;
 
-	const getfem::mesh_region& active_contact_region = 
-		mcb.get_mesh().region(contact_region_id);
-	if (active_contact_region.index().card()==0) return; //no contact -> no contact assembly
+  //Assemble RHS
+  if (version & model::BUILD_RHS ) {
+    GMM_TRACE2("Level set contact brick RHS assembly on "
+               << mcb.get_pair_info(scb.get_var_name()).num_of_integr_elems()
+               << " elements");
+    asm_level_set_contact_rhs(vecl,mcb,scb,LM,active_contact_region);
+    for(size_type i=0;i<vecl.size();i++)	
+      gmm::scale(vecl[i], scalar_type(-1));
+  }
 
-	//deform the meshes, update contact info
-	contact_pair_update cp_update(mcb,scb,FULL_UPDATE);
+  std::cout << "after asm " <<  std::endl;
 
-	//extract DOF vectors
-	const plain_vector &LM = mdd.real_variable(vl[2]);
-
-	//Assemble Tangent Matrix
-	if (version & model::BUILD_MATRIX ) {
-		GMM_TRACE2("Level set contact brick stiffness matrix assembly on "
-			<<mcb.get_pair_info(scb.get_var_name()).num_of_integr_elems()<<" elements");
-		asm_level_set_contact_tangent_matrix(matl,mcb,scb,LM,active_contact_region);
-	}
-
-	//Assemble RHS
-	if (version & model::BUILD_RHS ) {
-		GMM_TRACE2("Level set contact brick RHS assembly on "
-			<<mcb.get_pair_info(scb.get_var_name()).num_of_integr_elems()<<" elements");
-		asm_level_set_contact_rhs(vecl,mcb,scb,LM,active_contact_region);
-		for(size_type i=0;i<vecl.size();i++)	
-			gmm::scale(vecl[i], scalar_type(-1));
-	}
 }
 
 
@@ -701,7 +702,7 @@ void level_set_contact::NormalTerm::compute(
 {
 	size_type cv = ctx.convex_num();
 	size_type cv_volume = mcb.ext_face_of_elem(cv).cv;
-	size_type f_volume  = mcb.ext_face_of_elem(cv).f;
+        bgeot::short_type f_volume  = mcb.ext_face_of_elem(cv).f;
 	bgeot::base_node un = mcb.get_mesh().normal_of_face_of_convex
 	  (cv_volume, bgeot::short_type(f_volume), ctx.xref());
 	un /= gmm::vect_norm2(un);

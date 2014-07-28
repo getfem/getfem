@@ -251,8 +251,7 @@ namespace getfem {
   void mesh_region::sup_all(size_type cv) 
   { 
     map_t::iterator it = wp().m.find(cv);
-    if (it != wp().m.end()) 
-    {
+    if (it != wp().m.end()) {
       wp().m.erase(it);
       touch_parent_mesh();
     }
@@ -262,9 +261,8 @@ namespace getfem {
   void mesh_region::sup(size_type cv, short_type f) 
   { 
     map_t::iterator it = wp().m.find(cv);
-    if (it != wp().m.end()) 
-    {
-      (*it).second.set(f+1,0); 
+    if (it != wp().m.end()) {
+      (*it).second.set(short_type(f+1),0);
       if ((*it).second.none()) wp().m.erase(it); 
       touch_parent_mesh();
     }
@@ -311,7 +309,7 @@ namespace getfem {
   {
     map_t::const_iterator it = rp().m.find(cv);
     if (it == rp().m.end() || short_type(f+1) >= MAX_FACES_PER_CV) return false;
-    return ((*it).second)[short_type(f + 1)];
+    return ((*it).second)[short_type(f+1)];
   }
 
   bool mesh_region::is_empty() const 

@@ -109,8 +109,8 @@ void mark_boundary(getfem::mesh& mesh)
 	GMM_ASSERT1(mesh.region(SOUTH).index().card()>0,"Region South is empty");
 	GMM_ASSERT1(mesh.region(EAST).index().card()>0, "Region East is empty");
 	GMM_ASSERT1(mesh.region(WEST).index().card()>0, "Region West is empty");
-	if (mesh.dim()==3){
-		GMM_ASSERT1(mesh.region(FRONT).index().card()>0,"Region Front is empty");
-		GMM_ASSERT1(mesh.region(BACK).index().card()>0, "Region Back is empty");
+	if (mesh.dim()==3) {
+          GMM_ASSERT1(mesh.region(FRONT).index().card()>0,"Region Front is empty");
+          GMM_ASSERT1(mesh.region(BACK).index().card()>0, "Region Back is empty");
 	}
 }

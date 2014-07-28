@@ -530,7 +530,7 @@ namespace gmm {
   }
   
   template <typename T> T rsvector<T>::r(size_type c) const {
-    GMM_ASSERT2(c < nbl, "out of range");
+    GMM_ASSERT1(c < nbl, "out of range. Index " << c << " for a length of " << nbl);
     if (nb_stored() != 0) {
       elt_rsvector_<T> ev(c);
       const_iterator it = std::lower_bound(this->begin(), this->end(), ev);
