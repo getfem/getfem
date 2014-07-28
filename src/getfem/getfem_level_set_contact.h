@@ -648,8 +648,6 @@ namespace level_set_contact {
     //assembly
     getfem::generic_assembly assem_boundary;
 
-    std::cout << "assembling" << std::endl;
-
     assem_boundary.set(
                        "F=data$1(#3);"
                        "L=data$2(#1);"
@@ -687,8 +685,6 @@ namespace level_set_contact {
     assem_boundary.push_mat(Ksl_small);                  //   ..     mat 5
     assem_boundary.assembly(contact_region);	
     
-    std::cout << "transfering" << std::endl;
-
     //transfering from interpolated mesh_fem into full slave mesh_fem mat's
     const gmm::sub_interval& Um_dof = gmm::sub_interval(0,mf_U_line.nb_dof());
     const gmm::unsorted_sub_index& Us_dof = 

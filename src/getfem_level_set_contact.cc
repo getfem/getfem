@@ -678,8 +678,6 @@ void level_set_contact::level_set_contact_brick::asm_real_tangent_terms(
                << " elements");
     asm_level_set_contact_tangent_matrix(matl,mcb,scb,LM,active_contact_region);
   }
-  
-  std::cout << "before asm" <<  std::endl;
 
   //Assemble RHS
   if (version & model::BUILD_RHS ) {
@@ -690,9 +688,6 @@ void level_set_contact::level_set_contact_brick::asm_real_tangent_terms(
     for(size_type i=0;i<vecl.size();i++)	
       gmm::scale(vecl[i], scalar_type(-1));
   }
-
-  std::cout << "after asm " <<  std::endl;
-
 }
 
 

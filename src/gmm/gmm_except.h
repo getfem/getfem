@@ -124,15 +124,12 @@ namespace gmm {
 # define GMM_ASSERT3(test, errormsg) {}
 #elif !defined(GMM_FULL_NDEBUG)
 # define GMM_ASSERT2(test, errormsg)				        \
-  { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
-				   GMM_PRETTY_FUNCTION, errormsg); }
+  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 # define GMM_ASSERT3(test, errormsg)				        \
-  { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
-				   GMM_PRETTY_FUNCTION, errormsg); }
+  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 #else
 # define GMM_ASSERT2(test, errormsg)          				\
-  { if (!(test)) gmm::short_error_throw(__FILE__, __LINE__,		\
-				   GMM_PRETTY_FUNCTION, errormsg); }
+  { if (!(test)) GMM_THROW_(gmm::gmm_error, errormsg); }
 # define GMM_ASSERT3(test, errormsg)
 #endif
 
