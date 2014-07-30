@@ -193,7 +193,7 @@ namespace getfem {
 
       if(it->second.pim_data != 0 
          && it->second.v_num < it->second.pim_data->version_number()) {
-        im_data *pimd = it->second.pim_data;
+        const im_data *pimd = it->second.pim_data;
         size_type data_size = pimd->nb_filtered_index() * pimd->nb_tensor_elem();
         it->second.set_size(data_size);
         it->second.v_num = act_counter();
@@ -434,7 +434,7 @@ namespace getfem {
     variables[name].set_size(size);
   }
 
-  void model::add_im_data(const std::string &name, im_data &im_data, size_type niter){
+  void model::add_im_data(const std::string &name, const im_data &im_data, size_type niter){
     check_name_validity(name);
     variables[name] = var_description(false, is_complex(), false, niter);
     variables[name].pim_data = &im_data;

@@ -111,7 +111,7 @@ namespace getfem
     return filtered_int_point_index_;
   }
 
-  void im_data::set_region(size_type rg){
+  void im_data::set_region(size_type rg) const{
     filtered_region_ = rg;
     touch();
   }

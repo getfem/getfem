@@ -77,7 +77,7 @@ namespace getfem{
     im_data(const mesh_im& mesh_im, size_type filtered_region = size_type(-1));
 
     /**set filtered region id*/
-    void set_region(size_type region);
+    void set_region(size_type region) const;
 
     /**return filtered region id*/
     inline size_type filtered_region() const {return filtered_region_;}
@@ -328,8 +328,8 @@ namespace getfem{
     mutable std::vector<size_type> int_point_index_; 
     mutable dal::bit_vector        filtered_convex_index_;
     mutable gmm::uint64_type       v_num_;
+    mutable size_type              filtered_region_;
 
-    size_type              filtered_region_;
     bgeot::multi_index     tensor_size_;
     size_type              nb_tensor_elem_;
     lock_factory           locks_;
