@@ -46,6 +46,9 @@
 
 #ifdef _WIN32
 #include <limits>
+#if defined(INFINITY)
+#undef INFINITY
+#endif
 #define INFINITY std::numeric_limits<scalar_type>::infinity()
 #endif
 
