@@ -1989,18 +1989,22 @@ namespace getfem {
       }
       model_real_plain_vector RHS0(rvc1[rhs_index[tlist[iterm].var1]]);
       
-      //finite difference stiffness		
-      model_real_sparse_matrix fdSM(matl[iterm].nrows(),matl[iterm].ncols());
+      //finite difference stiffness    
+      model_real_sparse_matrix fdSM(matl[iterm].nrows(), matl[iterm].ncols());
       model_real_plain_vector&U = md.set_real_variable(tlist[iterm].var2);
-      model_real_plain_vector& RHS1 =rvc1[rhs_index[tlist[iterm].var1]];
-      for (size_type j=0; j < matl[iterm].ncols(); j++){
-        U[j]+=TINY;
+      model_real_plain_vector& RHS1 = rvc1[rhs_index[tlist[iterm].var1]];
+
+      scalar_type relative_tiny = gmm::vect_norminf(RHS1)*TINY;
+      if (relative_tiny < TINY) relative_tiny = TINY;
+
+      for (size_type j = 0; j < matl[iterm].ncols(); j++){
+        U[j] += relative_tiny;
         gmm::fill(RHS1, 0.0);
         asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
-                               rg, model::BUILD_RHS);
-        for (size_type i=0;i<matl[iterm].nrows();i++)
-          fdSM(i,j) = (RHS0[i]-RHS1[i])/TINY;
-        U[j]-=TINY;
+          rg, model::BUILD_RHS);
+        for (size_type i = 0; i<matl[iterm].nrows(); i++)
+          fdSM(i, j) = (RHS0[i] - RHS1[i]) / relative_tiny;
+        U[j] -= relative_tiny;
       }
       
       model_real_sparse_matrix diffSM(matl[iterm].nrows(),matl[iterm].ncols());
