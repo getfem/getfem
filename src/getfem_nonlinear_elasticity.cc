@@ -473,7 +473,8 @@ namespace getfem {
     // to be optimized!!
     std::fill(result.begin(), result.end(), scalar_type(0));
     scalar_type poisonXY=params[0]*params[1]/params[2];	//Ex*vYX=Ey*vXY
-    scalar_type Ghalf=( params[3] == 0) ? params[0]/(4*(1+params[1])) : params[3]/2;	//if no G entered, compute G=E/(2*(1+v))	to be cfmd!!
+	//if no G entered, compute G=E/(2*(1+v))
+    scalar_type G=( params[3] == 0) ? params[0]/(2*(1+params[1])) : params[3];
     std::fill(result.begin(), result.end(), scalar_type(0));
     result(0,0,0,0) = params[0]/(1-params[1]*poisonXY);
     // result(0,0,0,1) = 0;
@@ -484,12 +485,12 @@ namespace getfem {
     // result(1,1,1,0) = 0;
     result(1,1,1,1) = params[2]/(1-params[1]*poisonXY);
     // result(0,1,0,0) = 0;
-    result(0,1,0,1) = Ghalf;
-    result(0,1,1,0) = Ghalf;
+    result(0,1,0,1) = G;
+    result(0,1,1,0) = G;
     // result(0,1,1,1) = 0;
     // result(1,0,0,0) = 0;
-    result(1,0,0,1) = Ghalf;
-    result(1,0,1,0) = Ghalf;
+    result(1,0,0,1) = G;
+    result(1,0,1,0) = G;
     // result(1,0,1,1) = 0;
   }
 
