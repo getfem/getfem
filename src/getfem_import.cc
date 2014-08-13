@@ -153,9 +153,18 @@ namespace getfem {
 
      structure: $Nodes list_of_nodes $EndNodes $Elements list_of_elt
      $EndElements
+
+     Faces that falls in the range of face_region_range will be imported as
+     an independant convex.
+
+     If add_all_element_type is set to true, convexes with less dimension
+     than highest dimension pgt and are not part of other element's face will
+     be imported as independent convexes.
   */
   static void import_gmsh_mesh_file(std::istream& f, mesh& m, int deprecate=0,
-                                    std::map<std::string, size_type> *region_map=NULL)
+                                    std::map<std::string, size_type> *region_map=NULL,
+                                    std::pair<size_type, size_type> *face_region_range=NULL,
+                                    bool add_all_element_type = false)
   {
     gmm::stream_standard_locale sl(f);
     /* print general warning */
@@ -392,27 +401,60 @@ namespace getfem {
         gmsh_cv_info &ci = cvlst[cv];
         //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
         //     << " region: " << ci.region << "\n";
+        //main convex import
         if (ci.pgt->dim() == N) {
           size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
           m.region(ci.region).add(ic);
+
+        //convexes with lower dimensions
         } else if (ci.pgt->dim() == N-1) {
-          bgeot::mesh_structure::ind_cv_ct ct =
-            m.convex_to_point(ci.nodes[0]);
-          for (bgeot::mesh_structure::ind_cv_ct::const_iterator
-                 it = ct.begin(); it != ct.end(); ++it) {
-            for (short_type face=0;
-                 face < m.structure_of_convex(*it)->nb_faces(); ++face) {
-              if (m.is_convex_face_having_points(*it,face,
-                                                 short_type(ci.nodes.size()),
-                                                 ci.nodes.begin())) {
-                m.region(ci.region).add(*it,face);
+
+          //convex that lies within the range of face_region_range
+          //is imported explicitly as a convex.
+          if (face_region_range != NULL &&
+            ci.region >= face_region_range->first &&
+            ci.region <= face_region_range->second){
+              size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
+              m.region(ci.region).add(ic);
+          }
+          //find if the convex is part of a face of higher dimension convex
+          else{
+            bgeot::mesh_structure::ind_cv_ct ct = m.convex_to_point(ci.nodes[0]);
+            for (bgeot::mesh_structure::ind_cv_ct::const_iterator
+                   it = ct.begin(); it != ct.end(); ++it) {
+              for (short_type face=0;
+                   face < m.structure_of_convex(*it)->nb_faces(); ++face) {
+                if (m.is_convex_face_having_points(*it,face,
+                                                   short_type(ci.nodes.size()),
+                                                   ci.nodes.begin())) {
+                  m.region(ci.region).add(*it,face);
+                  cvok = true;
+                }
+              }
+            }
+            //if the convex is not part of the face of others
+            if (!cvok)
+            {
+              if (add_all_element_type){
+                size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
+                m.region(ci.region).add(ic);
                 cvok = true;
+              }
+              else{
+                GMM_WARNING2("gmsh import ignored a convex of type "
+                  << bgeot::name_of_geometric_trans(ci.pgt) <<
+                  " as it does not belong to the face of another convex");
+                  cvok = true;
               }
             }
           }
-          if (!cvok)
-            GMM_WARNING2("face not found ... " << endl);
         }
+        else if (ci.pgt->dim() == 1 && add_all_element_type){
+          size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
+          m.region(ci.region).add(ic);
+          cvok = true;
+        }
+
         if (!cvok)
           GMM_WARNING2("gmsh import ignored a convex of type "
                        << bgeot::name_of_geometric_trans(ci.pgt));
@@ -1110,20 +1152,29 @@ namespace getfem {
     }
   }
 
-  void import_mesh_gmsh(std::istream& f, mesh &m, 
+  void import_mesh_gmsh(std::istream& f, mesh &m,
                   std::map<std::string, size_type> &region_map) {
     import_gmsh_mesh_file(f,m, 0, &region_map);
   }
 
-  void import_mesh_gmsh(const std::string& filename,
-                   mesh& m, std::map<std::string, size_type> &region_map) {
+  void import_mesh_gmsh(std::istream& f, mesh& m,
+                        bool add_all_element_type,
+                        std::pair<size_type, size_type> *face_region_range,
+                        std::map<std::string, size_type> *region_map) {
+    import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type);
+  }
+
+  void import_mesh_gmsh(const std::string& filename, mesh& m,
+                        bool add_all_element_type,
+                        std::pair<size_type, size_type> *face_region_range,
+                        std::map<std::string, size_type> *region_map){
     m.clear();
     try {
       std::ifstream f(filename.c_str());
       GMM_ASSERT1(f.good(), "can't open file " << filename);
       /* throw exceptions when an error occurs */
       f.exceptions(std::ifstream::badbit | std::ifstream::failbit);
-      import_mesh_gmsh(f,m,region_map);
+      import_gmsh_mesh_file(f, m, 0, region_map, face_region_range, add_all_element_type);
       f.close();
     }
     catch (failure_error& exc) {
@@ -1135,6 +1186,11 @@ namespace getfem {
       GMM_ASSERT1(false, "error while importing " << "gmsh"
                   << " mesh file \"" << filename << "\" : " << exc.what());
     }
+  }
+
+  void import_mesh_gmsh(const std::string& filename,
+    mesh& m, std::map<std::string, size_type> &region_map) {
+    import_mesh_gmsh(filename, m, false, NULL, &region_map);
   }
                                                      
   void import_mesh(std::istream& f, const std::string& format,

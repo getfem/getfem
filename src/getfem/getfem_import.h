@@ -119,11 +119,30 @@ namespace getfem {
         }
       @endcode
 
+      Additionally, optional face_region_range pair will define a range
+      of regions that faces that need to be imported explicitly as convexes.
+      
+      add_all_element_type flag, if set to true, will import all the lower
+      dimension elements defined as independent convexes, only if the elements
+      are not face of another convex. Thus, a 3D model can have a mixture of
+      3D solid, 2D plates and 1D rod elements. This feature is still yet to
+      be tested.
   */
   void import_mesh_gmsh(const std::string& filename, mesh& m, 
                    std::map<std::string, bgeot::size_type> &region_map);
   void import_mesh_gmsh(std::istream& f, mesh& m, 
                    std::map<std::string, bgeot::size_type> &region_map);
+
+  void import_mesh_gmsh(const std::string& filename, mesh& m,
+                        bool add_all_element_type = false,
+                        std::pair<bgeot::size_type, bgeot::size_type> *face_region_range = NULL,
+                        std::map<std::string, bgeot::size_type> *region_map = NULL);
+
+  void import_mesh_gmsh(std::istream& f, mesh& m,
+                        bool add_all_element_type = false,
+                        std::pair<bgeot::size_type, bgeot::size_type> *face_region_range = NULL,
+                        std::map<std::string, bgeot::size_type> *region_map = NULL);
+
 
 
   /** for gmsh and gid meshes, the mesh nodes are always 3D, so for a 2D mesh
