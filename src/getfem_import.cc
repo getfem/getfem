@@ -124,7 +124,7 @@ namespace getfem {
         nodes.resize(10);
       } break;
       case 15: { /* POINT */
-        GMM_WARNING2("ignoring point element");
+        nodes.resize(1);
       } break;
       case 26: { /* 3RD ORDER LINE */
         nodes.resize(4);
@@ -140,7 +140,9 @@ namespace getfem {
     }
 
     bool operator<(const gmsh_cv_info& other) const {
-      return pgt->dim() > other.pgt->dim();
+      unsigned this_dim = (type == 15) ? 0 : pgt->dim();
+      unsigned other_dim = (other.type == 15) ? 0 : other.pgt->dim();      
+      return this_dim > other_dim;
     }
   };
 
@@ -264,156 +266,162 @@ namespace getfem {
         f >> id >> type >> region >> dummy >> cv_nb_nodes;
 
       id--; /* gmsh numbering starts at 1 */
-      if (type == 15) { // just a node
-        // get rid of the rest of the line
-        f >> dummy;
-      } else {
-        cvlst.push_back(gmsh_cv_info());
-        gmsh_cv_info &ci = cvlst.back();
-        ci.id = id; ci.type = type; ci.region = region;
 
-        if (version == 2) { /* For version 2 */
-          ci.set_nb_nodes();
-          cv_nb_nodes = unsigned(ci.nodes.size());
-        }
-        else
-          ci.nodes.resize(cv_nb_nodes);
+      cvlst.push_back(gmsh_cv_info());
+      gmsh_cv_info &ci = cvlst.back();
+      ci.id = id; ci.type = type; ci.region = region;
 
-        // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
 
-        for (size_type i=0; i < cv_nb_nodes; ++i) {
-          size_type j;
-          f >> j;
-          std::map<size_type, size_type>::iterator
-	        it = msh_node_2_getfem_node.find(j);
-          GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
-		      "Invalid node ID " << j << " in gmsh convex "
-		      << (ci.id + 1));
-          ci.nodes[i] = it->second;
-        }
-        ci.set_pgt();
-        // Reordering nodes for certain elements (should be completed ?)
-        // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
-        switch(ci.type) {
-        case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
-        case 5 : { /* First order hexaedron */
-          std::vector<size_type> tmp_nodes(8);
-          tmp_nodes[0] = ci.nodes[0]; 
-          tmp_nodes[1] = ci.nodes[1];
-          tmp_nodes[2] = ci.nodes[3]; 
-          tmp_nodes[3] = ci.nodes[2];
-          tmp_nodes[4] = ci.nodes[4]; 
-          tmp_nodes[5] = ci.nodes[5];
-          tmp_nodes[6] = ci.nodes[7]; 
-          tmp_nodes[7] = ci.nodes[6];
-          ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-            ci.nodes[2] = tmp_nodes[2];
-          ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-            ci.nodes[5] = tmp_nodes[5];
-          ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7];
-        }
-          break;
-        case 8 : { /* Second order line */
-          std::vector<size_type> tmp_nodes(3);
-          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
-          tmp_nodes[2] = ci.nodes[1];
+      if (version == 2) { /* For version 2 */
+        ci.set_nb_nodes();
+        cv_nb_nodes = unsigned(ci.nodes.size());
+      }
+      else
+        ci.nodes.resize(cv_nb_nodes);
 
-          ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+      // cout << "cv_nb_nodes = " << cv_nb_nodes << endl;
+
+      for (size_type i=0; i < cv_nb_nodes; ++i) {
+        size_type j;
+        f >> j;
+        std::map<size_type, size_type>::iterator
+	      it = msh_node_2_getfem_node.find(j);
+        GMM_ASSERT1(it != msh_node_2_getfem_node.end(),
+		    "Invalid node ID " << j << " in gmsh convex "
+		    << (ci.id + 1));
+        ci.nodes[i] = it->second;
+      }
+      if(ci.type != 15) ci.set_pgt();
+      // Reordering nodes for certain elements (should be completed ?)
+      // http://www.geuz.org/gmsh/doc/texinfo/gmsh.html#Node-ordering
+      switch(ci.type) {
+      case 3 : std::swap(ci.nodes[2], ci.nodes[3]); break;
+      case 5 : { /* First order hexaedron */
+        std::vector<size_type> tmp_nodes(8);
+        tmp_nodes[0] = ci.nodes[0]; 
+        tmp_nodes[1] = ci.nodes[1];
+        tmp_nodes[2] = ci.nodes[3]; 
+        tmp_nodes[3] = ci.nodes[2];
+        tmp_nodes[4] = ci.nodes[4]; 
+        tmp_nodes[5] = ci.nodes[5];
+        tmp_nodes[6] = ci.nodes[7]; 
+        tmp_nodes[7] = ci.nodes[6];
+        ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
           ci.nodes[2] = tmp_nodes[2];
-        }
-          break;
-        case 11: { /* Second order tetrahedron */
-          std::vector<bgeot::size_type> tmp_nodes(10);
-          tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[4],
-          tmp_nodes[2] = ci.nodes[1];
-          tmp_nodes[3] = ci.nodes[6], tmp_nodes[4] = ci.nodes[5],
-          tmp_nodes[5] = ci.nodes[2];
-          tmp_nodes[6] = ci.nodes[7], tmp_nodes[7] = ci.nodes[9],
-          tmp_nodes[8] = ci.nodes[8],
-          tmp_nodes[9] = ci.nodes[3];
-
-          ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-          ci.nodes[2] = tmp_nodes[2];
-          ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+        ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
           ci.nodes[5] = tmp_nodes[5];
-          ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7],
-          ci.nodes[8] = tmp_nodes[8],
-          ci.nodes[9] = tmp_nodes[9];
-        }
-          break;
-        case 9 : { /* Second order triangle */
-          std::vector<size_type> tmp_nodes(6);
-          tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
-            tmp_nodes[2] = ci.nodes[1];
-          tmp_nodes[3] = ci.nodes[5], tmp_nodes[4] = ci.nodes[4],
-            tmp_nodes[5] = ci.nodes[2];
+        ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7];
+      }
+        break;
+      case 8 : { /* Second order line */
+        std::vector<size_type> tmp_nodes(3);
+        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
+        tmp_nodes[2] = ci.nodes[1];
 
-          ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
-            ci.nodes[2] = tmp_nodes[2];
-          ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
-            ci.nodes[5] = tmp_nodes[5];
-        }
-          break;
-        case 10 : { /* Second order quadrangle */
-          std::vector<size_type> tmp_nodes(9);
-          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[4];
-          tmp_nodes[2] = ci.nodes[1]; tmp_nodes[3] = ci.nodes[7];
-          tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[5];
-          tmp_nodes[6] = ci.nodes[3]; tmp_nodes[7] = ci.nodes[6];
-          tmp_nodes[8] = ci.nodes[2];
+        ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+        ci.nodes[2] = tmp_nodes[2];
+      }
+        break;
+      case 11: { /* Second order tetrahedron */
+        std::vector<bgeot::size_type> tmp_nodes(10);
+        tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[4],
+        tmp_nodes[2] = ci.nodes[1];
+        tmp_nodes[3] = ci.nodes[6], tmp_nodes[4] = ci.nodes[5],
+        tmp_nodes[5] = ci.nodes[2];
+        tmp_nodes[6] = ci.nodes[7], tmp_nodes[7] = ci.nodes[9],
+        tmp_nodes[8] = ci.nodes[8],
+        tmp_nodes[9] = ci.nodes[3];
 
-          ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
-          ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
-          ci.nodes[4] = tmp_nodes[4]; ci.nodes[5] = tmp_nodes[5];
-          ci.nodes[6] = tmp_nodes[6]; ci.nodes[7] = tmp_nodes[7];
-          ci.nodes[8] = tmp_nodes[8];
-        }
-          break;
-        case 26 : { /* Third order line */
-          std::vector<size_type> tmp_nodes(4);
-          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
-          tmp_nodes[2] = ci.nodes[3]; tmp_nodes[3] = ci.nodes[1];
+        ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+        ci.nodes[2] = tmp_nodes[2];
+        ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+        ci.nodes[5] = tmp_nodes[5];
+        ci.nodes[6] = tmp_nodes[6], ci.nodes[7] = tmp_nodes[7],
+        ci.nodes[8] = tmp_nodes[8],
+        ci.nodes[9] = tmp_nodes[9];
+      }
+        break;
+      case 9 : { /* Second order triangle */
+        std::vector<size_type> tmp_nodes(6);
+        tmp_nodes[0] = ci.nodes[0], tmp_nodes[1] = ci.nodes[3],
+          tmp_nodes[2] = ci.nodes[1];
+        tmp_nodes[3] = ci.nodes[5], tmp_nodes[4] = ci.nodes[4],
+          tmp_nodes[5] = ci.nodes[2];
 
-          ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
-          ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
-        }
-          break;
-        case 21 : { /* Third order triangle */
-          std::vector<size_type> tmp_nodes(10);
-          tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[3];
-          tmp_nodes[2] = ci.nodes[4]; tmp_nodes[3] = ci.nodes[1];
-          tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[9];
-          tmp_nodes[6] = ci.nodes[5]; tmp_nodes[7] = ci.nodes[7];
-          tmp_nodes[8] = ci.nodes[6]; tmp_nodes[9] = ci.nodes[2];
+        ci.nodes[0] = tmp_nodes[0], ci.nodes[1] = tmp_nodes[1],
+          ci.nodes[2] = tmp_nodes[2];
+        ci.nodes[3] = tmp_nodes[3], ci.nodes[4] = tmp_nodes[4],
+          ci.nodes[5] = tmp_nodes[5];
+      }
+        break;
+      case 10 : { /* Second order quadrangle */
+        std::vector<size_type> tmp_nodes(9);
+        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[4];
+        tmp_nodes[2] = ci.nodes[1]; tmp_nodes[3] = ci.nodes[7];
+        tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[5];
+        tmp_nodes[6] = ci.nodes[3]; tmp_nodes[7] = ci.nodes[6];
+        tmp_nodes[8] = ci.nodes[2];
 
-          gmm::copy(tmp_nodes, ci.nodes);
-        }
-          break;
-        }
+        ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+        ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
+        ci.nodes[4] = tmp_nodes[4]; ci.nodes[5] = tmp_nodes[5];
+        ci.nodes[6] = tmp_nodes[6]; ci.nodes[7] = tmp_nodes[7];
+        ci.nodes[8] = tmp_nodes[8];
+      }
+        break;
+      case 26 : { /* Third order line */
+        std::vector<size_type> tmp_nodes(4);
+        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[2];
+        tmp_nodes[2] = ci.nodes[3]; tmp_nodes[3] = ci.nodes[1];
+
+        ci.nodes[0] = tmp_nodes[0]; ci.nodes[1] = tmp_nodes[1];
+        ci.nodes[2] = tmp_nodes[2]; ci.nodes[3] = tmp_nodes[3];
+      }
+        break;
+      case 21 : { /* Third order triangle */
+        std::vector<size_type> tmp_nodes(10);
+        tmp_nodes[0] = ci.nodes[0]; tmp_nodes[1] = ci.nodes[3];
+        tmp_nodes[2] = ci.nodes[4]; tmp_nodes[3] = ci.nodes[1];
+        tmp_nodes[4] = ci.nodes[8]; tmp_nodes[5] = ci.nodes[9];
+        tmp_nodes[6] = ci.nodes[5]; tmp_nodes[7] = ci.nodes[7];
+        tmp_nodes[8] = ci.nodes[6]; tmp_nodes[9] = ci.nodes[2];
+
+        gmm::copy(tmp_nodes, ci.nodes);
+      }
+        break;
       }
     }
     nb_cv = cvlst.size();
     if (cvlst.size()) {
       std::sort(cvlst.begin(), cvlst.end());
+      if (cvlst.front().type == 15){
+        GMM_WARNING2("Only nodes defined in the mesh! No convexes are added.");
+        return;
+      }
+      
       unsigned N = cvlst.front().pgt->dim();
       for (size_type cv=0; cv < nb_cv; ++cv) {
         bool cvok = false;
         gmsh_cv_info &ci = cvlst[cv];
+        bool is_node = (ci.type == 15);
+        unsigned ci_dim = (is_node) ? 0 : ci.pgt->dim();
         //cout << "importing cv dim=" << int(ci.pgt->dim()) << " N=" << N
         //     << " region: " << ci.region << "\n";
+
         //main convex import
-        if (ci.pgt->dim() == N) {
-          size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
+        if (ci_dim == N) {
+          size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); 
+          cvok = true;
           m.region(ci.region).add(ic);
 
         //convexes with lower dimensions
-        } else if (ci.pgt->dim() == N-1) {
-
+        }
+        else {
           //convex that lies within the range of face_region_range
           //is imported explicitly as a convex.
           if (face_region_range != NULL &&
             ci.region >= face_region_range->first &&
-            ci.region <= face_region_range->second){
+            ci.region <= face_region_range->second && !is_node){
               size_type ic = m.add_convex(ci.pgt, ci.nodes.begin()); cvok = true;
               m.region(ci.region).add(ic);
           }
@@ -435,7 +443,13 @@ namespace getfem {
             //if the convex is not part of the face of others
             if (!cvok)
             {
-              if (add_all_element_type){
+              if (is_node)
+              {
+                GMM_WARNING2("gmsh import ignored a node id: "
+                             << ci.id << " region :" << ci.region <<
+                             " point is not added explicitly as a convex.");
+              }
+              else if (add_all_element_type){
                 size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
                 m.region(ci.region).add(ic);
                 cvok = true;
@@ -444,20 +458,10 @@ namespace getfem {
                 GMM_WARNING2("gmsh import ignored a convex of type "
                   << bgeot::name_of_geometric_trans(ci.pgt) <<
                   " as it does not belong to the face of another convex");
-                  cvok = true;
               }
             }
           }
         }
-        else if (ci.pgt->dim() == 1 && add_all_element_type){
-          size_type ic = m.add_convex(ci.pgt, ci.nodes.begin());
-          m.region(ci.region).add(ic);
-          cvok = true;
-        }
-
-        if (!cvok)
-          GMM_WARNING2("gmsh import ignored a convex of type "
-                       << bgeot::name_of_geometric_trans(ci.pgt));
       }
     }
     maybe_remove_last_dimension(m);
