@@ -1989,7 +1989,7 @@ namespace getfem {
       }
       model_real_plain_vector RHS0(rvc1[rhs_index[tlist[iterm].var1]]);
       
-      //finite difference stiffness    
+      //finite difference stiffness
       model_real_sparse_matrix fdSM(matl[iterm].nrows(), matl[iterm].ncols());
       model_real_plain_vector&U = md.set_real_variable(tlist[iterm].var2);
       model_real_plain_vector& RHS1 = rvc1[rhs_index[tlist[iterm].var1]];
