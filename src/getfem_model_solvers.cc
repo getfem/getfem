@@ -84,6 +84,52 @@ namespace getfem {
     return false;
   }
 
+
+  /* ***************************************************************** */
+  /*     Computation of initial values of velocity/acceleration for    */
+  /*     time integration schemes.                                     */
+  /* ***************************************************************** */
+
+  template <typename MATRIX, typename VECTOR, typename PLSOLVER>
+    void compute_init_values(model &md, gmm::iteration &iter,
+                             PLSOLVER lsolver,
+                             abstract_newton_line_search &ls, const MATRIX &K,
+                             const VECTOR &rhs, bool with_pseudo_potential) {
+
+    VECTOR state(md.nb_dof()), state1(md.nb_dof()), state2(md.nb_dof());
+    md.from_variables(state);
+    md.cancel_first_step();
+    md.set_time_integration(2);
+    scalar_type dt = md.get_time_step();
+    scalar_type t = md.get_time();
+    
+    // First solve for dt/20
+    md.set_time_step(dt/scalar_type(20));
+    gmm::iteration iter1 = iter;
+    standard_solve(md, iter1, lsolver, ls, K, rhs, with_pseudo_potential);
+    md.from_variables(state1);
+    
+    // Second solve for dt/10
+    md.set_time_step(dt/scalar_type(10));
+    gmm::iteration iter2 = iter;
+    standard_solve(md, iter2, lsolver, ls, K, rhs, with_pseudo_potential);
+    md.from_variables(state2);
+
+    // Extrapolate initial time derivative
+    md.extrapolate_init_time_derivative(state1, state2);
+
+    // Restore the model state
+    md.set_time_step(dt);
+    md.set_time(t);
+    md.to_variables(state);
+    md.set_time_integration(1);
+  }
+
+
+
+
+
+
   /* ***************************************************************** */
   /*     Standard solve.                                               */
   /* ***************************************************************** */
@@ -96,12 +142,24 @@ namespace getfem {
 
     VECTOR state(md.nb_dof());
     std::vector<size_type> sind;
-    bool is_reduced;
     
     md.from_variables(state); // copy the model variables in the state vector
 
-    is_reduced = md.build_reduced_index(sind);  // sub index of the dof to 
+    bool is_reduced = md.build_reduced_index(sind); // sub index of the dof to 
                               //  be solved in case of disabled variables
+
+    int time_integration = md.is_time_integration();
+    if (time_integration) {
+      if (time_integration == 1 && md.is_first_step()) {
+        compute_init_values(md, iter, lsolver, ls, K, rhs,
+                            with_pseudo_potential);
+        return;
+      }
+      cout << "time step = " << md.get_time_step() << endl;
+      md.set_time(md.get_time() + md.get_time_step());
+      md.call_init_affine_dependent_variables(time_integration);
+    }
+    
 
     if (md.is_linear()) {
       md.assembly(model::BUILD_ALL);
@@ -124,7 +182,6 @@ namespace getfem {
 				    with_pseudo_potential);
       classical_Newton(mdpb, iter, *lsolver);
     }
-
     md.to_variables(state); // copy the state vector into the model variables
   }
 

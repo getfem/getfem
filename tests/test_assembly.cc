@@ -411,7 +411,7 @@ static void gen_mesh(getfem::mesh& mesh) {
     }*/
   for (unsigned cv=0; cv < std::min(mesh.convex_index().card(),
 			   param.NX*param.Ndim*param.Ndim*10); cv += 2) {
-    mesh.region(1).add(cv, (cv/4) % (param.Ndim > 1 ? 3 : 2)); 
+    mesh.region(1).add(cv, bgeot::short_type((cv/4) % (param.Ndim > 1 ? 3 : 2))); 
   }
   mesh.region(1).add(0,0);
 }

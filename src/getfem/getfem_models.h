@@ -51,6 +51,10 @@ namespace getfem {
   class virtual_dispatcher;
   typedef boost::intrusive_ptr<const virtual_dispatcher> pdispatcher;
 
+  class virtual_time_scheme;
+  typedef boost::intrusive_ptr<const virtual_time_scheme> ptime_scheme;
+
+
   class Neumann_elem_term;
   typedef boost::intrusive_ptr<const Neumann_elem_term> pNeumann_elem_term;
 
@@ -151,12 +155,16 @@ namespace getfem {
       bool is_variable;  // This is a variable or a parameter.
       bool is_disabled;  // For a variable, to be solved or not
       bool is_complex;   // The variable is complex numbers
+      bool is_affine_dependent;   // The variable depend in an affine way to another
+                                  // variable. 
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
       size_type n_iter; //  Number of versions of the variable stored for time
       // integration schemes.
       size_type n_temp_iter; // Number of additional temporary versions
       size_type default_iter; // default iteration number.
+
+      ptime_scheme ptsc; // For optional time integration scheme
 
       // fem description of the variable
       const mesh_fem *mf;        // Main fem of the variable.
@@ -169,12 +177,21 @@ namespace getfem {
       // dim per dof for dof data.
       gmm::uint64_type v_num, v_num_data;
 
-      gmm::sub_interval I; // For a variable : indices on the whole system
+      gmm::sub_interval I; // For a variable : indices on the whole system.
+      // For an affine dependent variable, should be the same than the orgininal
+      // variable
 
       std::vector<model_real_plain_vector> real_value;
       std::vector<model_complex_plain_vector> complex_value;
       std::vector<gmm::uint64_type> v_num_var_iter;
       std::vector<gmm::uint64_type> v_num_iter;
+
+      // For affine dependent variables
+      model_real_plain_vector affine_real_value;
+      model_complex_plain_vector affine_complex_value;
+      scalar_type alpha;    // Factor for the affine dependent variables
+      std::string org_name; // Name of the original variable for affine dependent
+                            // variables
 
       // im data description
       const im_data *pim_data;
@@ -187,11 +204,11 @@ namespace getfem {
                       const std::string &filter_v = std::string(""),
                       const mesh_im *mim_ = 0, const im_data *pimd = 0)
         : is_variable(is_var), is_disabled(false), is_complex(is_com),
-          is_fem_dofs(is_fem), filter(fil),
-          n_iter(std::max(size_type(1),n_it)), n_temp_iter(0),
-          default_iter(0), mf(mmf), m_region(m_reg), mim(mim_),
+          is_affine_dependent(false), is_fem_dofs(is_fem), filter(fil),
+          n_iter(std::max(size_type(1), n_it)), n_temp_iter(0),
+          default_iter(0), ptsc(0), mf(mmf), m_region(m_reg), mim(mim_),
           filter_var(filter_v), qdim(Q), v_num(0), v_num_data(act_counter()),
-          pim_data(pimd) {
+          alpha(1), pim_data(pimd) {
         if (filter != VDESCRFILTER_NO && mf != 0)
           partial_mf = new partial_mesh_fem(*mf);
         // v_num_data = v_num;
@@ -314,6 +331,11 @@ namespace getfem {
       Neumann_terms_auxilliary_variables;
     std::map<std::string, pinterpolate_transformation> transformations;
 
+    // Structure dealing with time integration scheme
+    int time_integration; // 0 : no, 1 : time step, 2 : init
+    bool first_step;
+    scalar_type time_step; // Time step (dt) for time integration schemes
+    
     // Structure dealing with simple dof constraints
     typedef std::map<size_type, scalar_type> real_dof_constraints_var;
     typedef std::map<size_type, complex_type> complex_dof_constraints_var;
@@ -343,8 +365,7 @@ namespace getfem {
 
 
     virtual void actualize_sizes(void) const;
-    bool check_name_validity(const std::string &name,
-                             bool assert = true) const;
+    bool check_name_validity(const std::string &name, bool assert=true) const;
     void brick_init(size_type ib, build_version version,
                     size_type rhs_ind = 0) const;
 
@@ -369,6 +390,7 @@ namespace getfem {
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data,
                                  size_type n_iter) const;
     bool build_reduced_index(std::vector<size_type> &ind);
+    void update_affine_dependent_variables(void);
     void brick_call(size_type ib, build_version version,
                     size_type rhs_ind = 0) const;
     model_real_plain_vector &rhs_coeffs_of_brick(size_type ib) const
@@ -492,7 +514,9 @@ namespace getfem {
 
     /** Disable a variable.  */
     void disable_variable(const std::string &name) {
-      variables[name].is_disabled = true;
+      VAR_SET::iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      it->second.is_disabled = true;
     }
 
     /** Says if a name corresponds to a declared variable.  */
@@ -500,11 +524,55 @@ namespace getfem {
       return (variables.find(name) != variables.end());
     }
 
+    bool variable_is_disabled(const std::string &name) const {
+      VAR_SET::iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      GMM_ASSERT1(it->second.is_variable, "Only for variables");
+      if (it->second.is_affine_dependent)
+        it = variables.find(it->second.org_name);
+      return it->second.is_disabled;
+    }
+
     /** Says if a name corresponds to a declared data or disabled variable.  */
     bool is_data(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
       GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      if (it->second.is_affine_dependent)
+        it = variables.find(it->second.org_name);
       return (!(it->second.is_variable) || it->second.is_disabled);
+    }
+
+    /** Says if a name corresponds to a declared data.  */
+    bool is_true_data(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      return (!(it->second.is_variable));
+    }
+
+    bool is_affine_dependent_variable(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      return (it->second.is_affine_dependent);
+    }
+
+    const std::string &org_variable(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(is_affine_dependent_variable(name),
+                  "For affine dependent variables only");
+      return (it->second.org_name);
+    }
+
+    const scalar_type &factor_of_variable(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      return (it->second.alpha);
+    }
+
+    void set_factor_of_variable(const std::string &name, scalar_type a) {
+      VAR_SET::iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      it->second.alpha = a;
+      it->second.v_num_data = act_counter();
     }
 
     bool is_im_data(const std::string &name) const {
@@ -521,7 +589,9 @@ namespace getfem {
 
     /** Enable a variable.  */
     void enable_variable(const std::string &name) {
-      variables[name].is_disabled = false;
+      VAR_SET::iterator it = variables.find(name);
+      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+      it->second.is_disabled = false;
     }
 
     /** Boolean which says if the model deals with real or complex unknowns
@@ -583,11 +653,17 @@ namespace getfem {
     set_complex_variable(const std::string &name,
                          size_type niter = size_type(-1)) const;
 
+    model_real_plain_vector &
+    set_real_constant_part(const std::string &name) const;
+
+    model_complex_plain_vector &
+    set_complex_constant_part(const std::string &name) const;
+
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, T) const {
       for (VAR_SET::iterator it = variables.begin();
-           it != variables.end(); ++it)
-        if (it->second.is_variable)
+        it != variables.end(); ++it)
+        if (it->second.is_variable && !(it->second.is_affine_dependent))
           gmm::copy(it->second.real_value[0],
                     gmm::sub_vector(V, it->second.I));
     }
@@ -595,10 +671,10 @@ namespace getfem {
     template<typename VECTOR, typename T>
     void from_variables(VECTOR &V, std::complex<T>) const {
       for (VAR_SET::iterator it = variables.begin();
-           it != variables.end(); ++it)
-        if (it->second.is_variable)
-          gmm::copy(it->second.complex_value[0],
-                    gmm::sub_vector(V, it->second.I));
+        it != variables.end(); ++it)
+      if (it->second.is_variable && !(it->second.is_affine_dependent))
+        gmm::copy(it->second.complex_value[0],
+                  gmm::sub_vector(V, it->second.I));
     }
 
     template<typename VECTOR> void from_variables(VECTOR &V) const {
@@ -607,36 +683,75 @@ namespace getfem {
       from_variables(V, T());
     }
 
+    template<typename VECTOR, typename T>
+    void spec_from_variables(VECTOR &V, const varnamelist &vl, T) const {
+      for (size_type i = 0; i < vl.size(); ++i) {
+        VAR_SET::iterator it = variables.find(vl[i]);
+        if (it->second.is_variable && it->second.is_affine_dependent)
+          gmm::copy(gmm::scaled(it->second.real_value[0],
+                                T(1)/it->second.alpha),
+                    gmm::sub_vector(V, it->second.I));
+        else if (it->second.is_variable)
+          gmm::copy(it->second.real_value[0],
+                    gmm::sub_vector(V, it->second.I));
+      }
+    }
+
+    template<typename VECTOR, typename T>
+    void spec_from_variables(VECTOR &V, const varnamelist &vl,
+                             std::complex<T>) const {
+      for (size_type i = 0; i < vl.size(); ++i) {
+        VAR_SET::iterator it = variables.find(vl[i]);
+        if (it->second.is_variable && it->second.is_affine_dependent)
+          gmm::copy(gmm::scaled(it->second.complex_value[0],
+                                std::complex<T>(1)/it->second.alpha),
+                    gmm::sub_vector(V, it->second.I));
+        else if (it->second.is_variable)
+          gmm::copy(it->second.complex_value[0],
+                    gmm::sub_vector(V, it->second.I));
+      }
+    }
+
+    template<typename VECTOR>
+    void spec_from_variables(VECTOR &V, const varnamelist &vl) const {
+      typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      spec_from_variables(V, vl, T());
+    }
+
+
     const gmm::uint64_type &version_number_of_data_variable
     (const std::string &varname) const
     { return variables[varname].v_num_data; }
 
 
     template<typename VECTOR, typename T>
-    void to_variables(VECTOR &V, T) {
+    void to_variables(const VECTOR &V, T) {
       for (VAR_SET::iterator it = variables.begin();
-           it != variables.end(); ++it)
-        if (it->second.is_variable) {
-          gmm::copy(gmm::sub_vector(V, it->second.I),
-                    it->second.real_value[0]);
-          it->second.v_num_data = act_counter();
-        }
+        it != variables.end(); ++it)
+      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
+        gmm::copy(gmm::sub_vector(V, it->second.I),
+          it->second.real_value[0]);
+        it->second.v_num_data = act_counter();
+      }
+      update_affine_dependent_variables();
       this->post_to_variables_step();
     }
 
     template<typename VECTOR, typename T>
-    void to_variables(VECTOR &V, std::complex<T>) {
+    void to_variables(const VECTOR &V, std::complex<T>) {
       for (VAR_SET::iterator it = variables.begin();
-           it != variables.end(); ++it)
-        if (it->second.is_variable) {
-          gmm::copy(gmm::sub_vector(V, it->second.I),
-                    it->second.complex_value[0]);
-          it->second.v_num_data = act_counter();
-        }
+        it != variables.end(); ++it)
+      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
+        gmm::copy(gmm::sub_vector(V, it->second.I),
+          it->second.complex_value[0]);
+        it->second.v_num_data = act_counter();
+      }
+      update_affine_dependent_variables();
       this->post_to_variables_step();
     }
 
-    template<typename VECTOR> void to_variables(VECTOR &V) {
+    template<typename VECTOR> void to_variables(const VECTOR &V) {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
       context_check(); if (act_size_to_be_done) actualize_sizes();
       to_variables(V, T());
@@ -693,6 +808,15 @@ namespace getfem {
         of the data stored, for time integration schemes. */
     void add_filtered_fem_variable(const std::string &name, const mesh_fem &mf,
                                    size_type region, size_type niter = 1);
+
+
+    /** Adds a "virtual" variable be an affine depedent variable with respect
+        to another variable. Mainly used for tie integration scheme for
+        instance to represent time derivative of variables.
+        `alpha` is the multiplicative scalar of the dependency. */
+    void add_affine_dependent_variable(const std::string &name,
+                                       const std::string &org_name,
+                                       scalar_type alpha = scalar_type(1));
 
     /** Adds a data being the dofs of a finite element method to the model.
         The data is initialized with V. */
@@ -865,6 +989,54 @@ namespace getfem {
      */
     void change_mims_of_brick(size_type ib, const mimlist &ml);
 
+    void set_time(scalar_type t = scalar_type(0), bool to_init = true) {
+      static const std::string varname("t");
+      VAR_SET::iterator it = variables.find(varname);
+      if (it == variables.end()) {
+        add_fixed_size_data(varname, 1);
+      } else {
+        GMM_ASSERT1(it->second.size() == 1, "Time data should be of size 1");
+      }
+      if (it == variables.end() || to_init) {
+        if (is_complex())
+          set_complex_variable(varname)[0] = complex_type(t);
+        else
+          set_real_variable(varname)[0] = t; 
+      }
+    }
+
+    scalar_type get_time(void) {
+      static const std::string varname("t");
+      set_time(scalar_type(0), false);
+      if (is_complex())
+        return gmm::real(complex_variable(varname)[0]);
+      else
+        return real_variable(varname)[0];
+    }
+
+
+    /** Initialisation of the time integration. */
+    void init_time_integration(scalar_type t = scalar_type(0)) {
+      first_step = true; time_integration = true; set_time(t);
+    }
+
+    void set_time_step(scalar_type dt) { time_step = dt; }
+    scalar_type get_time_step(void) const { return time_step; }
+    int is_time_integration(void) const { return time_integration; }
+    void set_time_integration(int ti) { time_integration = ti; }
+    bool is_first_step(void) const { return first_step; }
+    void cancel_first_step(void) { first_step = false; }
+    void call_init_affine_dependent_variables(int version);
+    void shift_variables_for_time_integration(void);
+    void extrapolate_init_time_derivative
+    (const model_real_plain_vector &state1,
+     const model_real_plain_vector &state2);
+    void extrapolate_init_time_derivative
+    (const model_complex_plain_vector &state1,
+     const model_complex_plain_vector &state2);
+    void add_time_integration_scheme(const std::string &varname,
+                                     ptime_scheme ptsc);
+    
 
     /** Adds a time dispacther to a brick. */
     void add_time_dispatcher(size_type ibrick, pdispatcher pdispatch);
@@ -935,6 +1107,7 @@ namespace getfem {
       init(); complex_version = comp_version;
       is_linear_ = is_symmetric_ = is_coercive_ = true;
       leading_dim = 0;
+      time_integration = false; first_step = true; time_step = scalar_type(1);
     }
 
     /** check consistency of RHS and Stiffness matrix for brick with
@@ -944,6 +1117,42 @@ namespace getfem {
 
 
   };
+
+  //=========================================================================
+  //
+  //  Time integration scheme object.
+  //
+  //=========================================================================
+
+  /** The time integration scheme object furnisheses the necessary methods
+      for the model object to apply a time integration scheme to an
+      evolutionnary problem.
+  **/
+  class APIDECL virtual_time_scheme
+    : virtual public dal::static_stored_object {
+
+  protected:
+
+  public:
+
+    virtual void init_affine_dependent_variables(model &md) const = 0;
+    virtual void init_affine_dependent_variables_precomputation(model &md)
+      const = 0;
+     virtual void time_derivative_to_be_intialized(std::string &name_v,
+                                      std::string &name_previous_v) const = 0;
+    virtual void shift_variables(model &md) const = 0;
+  };
+
+  void add_theta_method_for_first_order(model &md, const std::string &varname,
+                                        scalar_type theta);
+
+  void add_theta_method_for_second_order(model &md, const std::string &varname,
+                                         scalar_type theta);
+  
+  void add_Newmark_scheme(model &md, const std::string &varname,
+                          scalar_type beta, scalar_type gamma);
+
+
 
   //=========================================================================
   //

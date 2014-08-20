@@ -56,6 +56,8 @@ namespace getfem {
 
   class ga_tree;
 
+  int ga_check_name_validity(const std::string &name);
+
   //=========================================================================
   // Structure dealing with predefined operators.
   //=========================================================================
@@ -418,6 +420,18 @@ namespace getfem {
       if (md && md->variable_exists(name)) return md->is_data(name);
       if (parent_workspace && parent_workspace->variable_exists(name))
         return parent_workspace->is_constant(name);
+      GMM_ASSERT1(false, "Undefined variable " << name);
+    }
+
+    const scalar_type &factor_of_variable(const std::string &name) const {
+      static const scalar_type one(1);
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end()) return one;
+      if (variable_group_exists(name))
+        return one;
+      if (md && md->variable_exists(name)) return md->factor_of_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->factor_of_variable(name);
       GMM_ASSERT1(false, "Undefined variable " << name);
     }
 

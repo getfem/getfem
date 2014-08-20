@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard.
+ Copyright (C) 2009-2014 Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -79,6 +79,9 @@ base_small_vector sol_grad(const base_node &x) {
   structure for the Heat_Equation problem
   (not mandatory, just to gather the variables)
 */
+
+bool with_new_time_integration = false;
+
 struct heat_equation_problem {
 
   enum { DIRICHLET_BOUNDARY_NUM = 0, NEUMANN_BOUNDARY_NUM = 1};
@@ -195,7 +198,7 @@ void heat_equation_problem::init(void) {
 
 bool heat_equation_problem::solve(void) {
 
-  dal::bit_vector transient_bricks;
+  dal::bit_vector transient_bricks; // to be deleted
 
   getfem::model model;
 
@@ -219,7 +222,7 @@ bool heat_equation_problem::solve(void) {
   // The two version of the data make only a difference for midpoint scheme
   model.add_fem_data("NeumannData", mf_rhs, bgeot::dim_type(N), 2);
   gmm::copy(F, model.set_real_variable("NeumannData", 0));
-  gmm::copy(F, model.set_real_variable("NeumannData", 1));
+  gmm::copy(F, model.set_real_variable("NeumannData", 1)); // to be deleted
   transient_bricks.add(getfem::add_normal_source_term_brick
 		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
 
@@ -238,46 +241,60 @@ bool heat_equation_problem::solve(void) {
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
 
   // transient part.
-  model.add_initialized_scalar_data("dt", dt);
-  getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
-#if 1
-  model.add_initialized_scalar_data("theta", theta);
-  getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
-#else
-  // You can also test the midpoint scheme (but not really different from
-  // crank-Nicholson scheme for linear problems).
-  getfem::add_midpoint_dispatcher(model, transient_bricks);
-#endif
+  if (with_new_time_integration) {
+    getfem::add_theta_method_for_first_order(model, "u", theta);
+    cout << "here1_0" << endl;
+    getfem::add_mass_brick(model, mim, "Dot_u");
+  } else {
+    model.add_initialized_scalar_data("dt", dt);
+    getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
+    model.add_initialized_scalar_data("theta", theta);
+    getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
+  }
 
   gmm::iteration iter(residual, 0, 40000);
-
-  model.first_iter();
-
-  // Null initial value for the temperature. Can be modified.
+  if (with_new_time_integration) {
+    model.set_time_step(dt);
+    model.init_time_integration();
+  } else {
+    model.first_iter();
+  }
+  
+  // Null initial value for the temperature.
   gmm::resize(U, mf_u.nb_dof());
   gmm::clear(U);
-  gmm::copy(U, model.set_real_variable("u", 1));
+  if (with_new_time_integration)
+    gmm::copy(U, model.set_real_variable("Previous_u"));
+  else
+    gmm::copy(U, model.set_real_variable("u", 1));
 
-  for (scalar_type t = 0; t < T; t += dt) {
+  scalar_type start_t = with_new_time_integration ? -dt : 0.0;
+
+  for (scalar_type t = start_t; t < T; t += dt) {
     sol_t = t+dt;
     
     gmm::resize(F, mf_rhs.nb_dof()*N);
     getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
-    gmm::copy(F, model.set_real_variable("NeumannData"));
+    gmm::copy(F, model.set_real_variable("NeumannData")); // le mettre en assemblage générique qui dépende de "t" ...
 
     gmm::resize(F, mf_rhs.nb_dof());
-    getfem::interpolation_function(mf_rhs, F, sol_u);
+    getfem::interpolation_function(mf_rhs, F, sol_u); // le mettre en assemblage générique qui dépende de "t" ...
     gmm::copy(F, model.set_real_variable("DirichletData"));
 
     cout << "solving for t = " << sol_t << endl;
     iter.init();
     getfem::standard_solve(model, iter);
+    cout << "t = " << model.get_time() << endl;
     gmm::copy(model.real_variable("u"), U);
+    cout << "U = " << gmm::sub_vector(U, gmm::sub_interval(0, 20)) << endl;
     if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
       char s[100]; sprintf(s, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
     }
-    model.next_iter();
+    if (with_new_time_integration)
+      model.shift_variables_for_time_integration();
+    else
+      model.next_iter();
   }
 
   return (iter.converged());
@@ -292,7 +309,8 @@ void heat_equation_problem::compute_error() {
   cout.precision(16);
   cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;     
+       << "Linfty error = " << gmm::vect_norminf(V) << endl;
+  GMM_ASSERT1(gmm::vect_norminf(V) < 0.01, "Error too large");
 }
 
 /**************************************************************************/

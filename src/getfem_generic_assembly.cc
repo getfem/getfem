@@ -1435,6 +1435,7 @@ namespace getfem {
     struct variable_group_info {
       const mesh_fem *mf;
       gmm::sub_interval Ir, In;
+      scalar_type alpha;
       const base_vector *U;
       const std::string *varname;
       variable_group_info(void) : mf(0), U(0), varname(0) {}
@@ -2484,6 +2485,7 @@ namespace getfem {
       vgi.mf = workspace.associated_mf(varname);
       vgi.Ir = gis.var_intervals[varname];
       vgi.In = workspace.interval_of_variable(varname);
+      vgi.alpha = workspace.factor_of_variable(varname);
       vgi.U = gis.extended_vars[varname];
       vgi.varname = &varname;
       return 0;
@@ -3871,7 +3873,7 @@ namespace getfem {
     const gmm::sub_interval &In1, &In2;
     const mesh_fem *mfn1, *mfn2;
     const mesh_fem **mfg1, **mfg2;
-    scalar_type &coeff;
+    const scalar_type &coeff, &alpha1, &alpha2;
     size_type &nbpt, &ipt;
     base_vector &elem;
     bool interpolate;
@@ -3885,9 +3887,9 @@ namespace getfem {
       MAT &K = reduced ? Kr : Kn;
       if (ipt == 0 || interpolate) {
         gmm::resize(elem, t.size());
-        gmm::copy(gmm::scaled(t.as_vector(), coeff), elem);
+        gmm::copy(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       } else {
-        gmm::add(gmm::scaled(t.as_vector(), coeff), elem);
+        gmm::add(gmm::scaled(t.as_vector(), coeff*alpha1*alpha2), elem);
       }
       if (ipt == nbpt-1 || interpolate) {
         size_type s1 = t.sizes()[0], s2 = t.sizes()[1];
@@ -3933,14 +3935,17 @@ namespace getfem {
                                    const mesh_fem **mfg1_,
                                    const mesh_fem *mfn2_,
                                    const mesh_fem **mfg2_,
-                                   scalar_type &coeff_, size_type &nbpt_,
+                                   const scalar_type &coeff_,
+                                   const scalar_type &alpha2_,
+                                   const scalar_type &alpha1_,
+                                   size_type &nbpt_,
                                    size_type &ipt_,  base_vector &elem_,
                                    bool interpolate_)
       : t(t_), Kr(Kr_), Kn(Kn_), ctx1(ctx1_), ctx2(ctx2_),
         Ir1(Ir1_), Ir2(Ir2_), In1(In1_), In2(In2_),
         mfn1(mfn1_), mfn2(mfn2_), mfg1(mfg1_), mfg2(mfg2_),
-        coeff(coeff_), nbpt(nbpt_), ipt(ipt_), elem(elem_),
-        interpolate(interpolate_) {}
+        coeff(coeff_), alpha1(alpha1_), alpha2(alpha2_),
+        nbpt(nbpt_), ipt(ipt_), elem(elem_), interpolate(interpolate_) {}
   };
 
  
@@ -4500,6 +4505,63 @@ namespace getfem {
     return c;
   }
   
+
+
+
+  // 0 : ok
+  // 1 : function or operator name or "X"
+  // 2 : reserved prefix Grad, Hess, Test and Test2
+  // 3 : reserved prefix Dot and Previous
+  int ga_check_name_validity(const std::string &name) {
+
+    if (!(name.compare("X")) ||
+        !(name.compare("Normal")) ||
+        !(name.compare("Reshape")))
+      return 1;
+
+   
+    if (name.compare(0, 11, "Derivative_") == 0)
+      return 2;
+
+    ga_predef_operator_tab &PREDEF_OPERATORS
+      = dal::singleton<ga_predef_operator_tab>::instance();
+    ga_predef_function_tab::const_iterator it=PREDEF_FUNCTIONS.find(name);
+    if (it != PREDEF_FUNCTIONS.end())
+      return 1;
+    
+    if (SPEC_FUNCTIONS.find(name) != SPEC_FUNCTIONS.end())
+      return 1;
+    
+    if (PREDEF_OPERATORS.tab.find(name) != PREDEF_OPERATORS.tab.end())
+      return 1;
+    
+    if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
+      return 2;
+
+    if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
+      return 2;
+
+    if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
+      return 2;
+
+    if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
+      return 2;
+
+//     if (name.size() >= 4 && name.compare(0, 4, "Dot_") == 0)
+//       return 3;
+//     if (name.size() >= 5 && name.compare(0, 5, "Dot2_") == 0)
+//       return 3;
+
+//     if (name.size() >= 9 && name.compare(0, 9, "Previous_") == 0)
+//       return 3;
+//     if (name.size() >= 10 && name.compare(0, 10, "Previous2_") == 0)
+//       return 3;
+//     if (name.size() >= 12 && name.compare(0, 12, "Previous1_2_") == 0)
+//       return 3;
+
+
+    return 0;
+  }
 
   //=========================================================================
   // Semantic analysis, tree simplification and tree enrichment
@@ -8083,7 +8145,7 @@ namespace getfem {
               add_interval_to_gis(workspace, root->name_test2, gis);
               
               const gmm::sub_interval *Ir1 = 0, *In1 = 0, *Ir2 = 0, *In2 = 0;
-
+              const scalar_type *alpha1 = 0, *alpha2 = 0; 
 
               if (intn1.size() &&
                   workspace.variable_group_exists(root->name_test1)) {
@@ -8091,7 +8153,9 @@ namespace getfem {
                   rmi.interpolate_infos[intn1].groups_info[root->name_test1];
                 Ir1 = &(vgi.Ir); In1 = &(vgi.In);
                 mfg1 = &(vgi.mf); mf1 = 0;
+                alpha1 = &(vgi.alpha);
               } else {
+                alpha1 = &(workspace.factor_of_variable(root->name_test1));
                 Ir1 = &(gis.var_intervals[root->name_test1]);
                 In1 = &(workspace.interval_of_variable(root->name_test1));
               }
@@ -8102,7 +8166,9 @@ namespace getfem {
                   rmi.interpolate_infos[intn2].groups_info[root->name_test2];
                 Ir2 = &(vgi.Ir); In2 = &(vgi.In);
                 mfg2 = &(vgi.mf); mf2 = 0;
+                alpha2 = &(vgi.alpha);
               } else {
+                alpha2 = &(workspace.factor_of_variable(root->name_test2));
                 Ir2 = &(gis.var_intervals[root->name_test2]);
                 In2 = &(workspace.interval_of_variable(root->name_test2));
               }
@@ -8113,7 +8179,8 @@ namespace getfem {
                 (root->t, workspace.unreduced_matrix(),
                  workspace.assembled_matrix(), *pctx1, *pctx2,
                  *Ir1, *In1, *Ir2, *In2, mf1, mfg1, mf2, mfg2,
-                 gis.coeff, gis.nbpt, gis.ipt, td.elem, interpolate);
+                 gis.coeff, *alpha1, *alpha2, gis.nbpt, gis.ipt,
+                 td.elem, interpolate);
               break;
             }
           }

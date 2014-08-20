@@ -53,6 +53,12 @@ namespace getfem {
         complex_value[i].resize(s);
       else
         real_value[i].resize(s);
+    if (is_affine_dependent) {
+      if (is_complex)
+        affine_complex_value.resize(s);
+      else
+        affine_real_value.resize(s);
+    }
   }
 
   size_type model::var_description::add_temporary(gmm::uint64_type id_num) {
@@ -98,7 +104,16 @@ namespace getfem {
                 "variables name");
     GMM_ASSERT1(macros.find(name) == macros.end(),
                 name << " corresponds to an already existing macro");
-    GMM_ASSERT1(name.compare("X"), "X is a reserved keyword");
+    GMM_ASSERT1(name.compare("X"), "X is a reserved keyword of the generic "
+                "assembly language");
+
+    int ga_valid = ga_check_name_validity(name);
+    GMM_ASSERT1(ga_valid != 1, "Invalid variable name, corresponds to an "
+                "operator or function name of the generic assembly language");
+    GMM_ASSERT1(ga_valid != 2, "Invalid variable name having a reserved "
+                "prefix used by the generic assembly language");
+//  GMM_ASSERT1(ga_valid != 3 || !check_dot, "Invalid variable name having a "
+//              "reserved prefix used by the generic assembly language");
 
     bool valid = true;
     if (name.size() == 0) valid = false;
@@ -130,7 +145,7 @@ namespace getfem {
   void model::actualize_sizes(void) const {
     bool actualized = false;
     getfem::local_guard lock = locks_.get_lock();
-    if (actualized) return; //this is if multiple threads are calling the method
+    if (actualized) return; // If multiple threads are calling the method
 
     act_size_to_be_done = false;
 
@@ -152,7 +167,7 @@ namespace getfem {
 
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
-      if (it->second.is_fem_dofs
+      if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)
 	  && (it->second.filter == VDESCRFILTER_CTERM
 	      || it->second.filter == VDESCRFILTER_INFSUP)) {
         VAR_SET::iterator it2 = variables.find(it->second.filter_var);
@@ -168,7 +183,7 @@ namespace getfem {
     }
 
     for (VAR_SET::iterator it=variables.begin(); it!=variables.end(); ++it) {
-      if (it->second.is_fem_dofs) {
+      if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)) {
         switch (it->second.filter) {
         case VDESCRFILTER_NO:
           if (it->second.v_num < it->second.mf->version_number()) {
@@ -194,13 +209,13 @@ namespace getfem {
       if(it->second.pim_data != 0 
          && it->second.v_num < it->second.pim_data->version_number()) {
         const im_data *pimd = it->second.pim_data;
-        size_type data_size = pimd->nb_filtered_index() * pimd->nb_tensor_elem();
+        size_type data_size = pimd->nb_filtered_index()*pimd->nb_tensor_elem();
         it->second.set_size(data_size);
         it->second.v_num = act_counter();
       }
     }
 
-    for (std::map<std::string, bool >::iterator itbd = tobedone.begin();
+    for (std::map<std::string, bool>::iterator itbd = tobedone.begin();
          itbd != tobedone.end(); ++itbd) {
 //       #if GETFEM_PARA_LEVEL > 1
 //       double tt_ref = MPI_Wtime();
@@ -355,12 +370,22 @@ namespace getfem {
     size_type tot_size = 0;
 
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it)
-      if (it->second.is_variable) {
+         ++it) {
+      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
         it->second.I = gmm::sub_interval(tot_size, it->second.size());
         tot_size += it->second.size();
       }
+    }
 
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
+         ++it) {
+      if (it->second.is_affine_dependent) {
+        VAR_SET::iterator it2 = variables.find(it->second.org_name);
+        it->second.I = it2->second.I;
+        it->second.set_size(it2->second.size());
+      }
+    }
+    
     if (complex_version) {
       gmm::resize(cTM, tot_size, tot_size);
       gmm::resize(crhs, tot_size);
@@ -369,7 +394,7 @@ namespace getfem {
       gmm::resize(rTM, tot_size, tot_size);
       gmm::resize(rrhs, tot_size);
     }
-
+    
     actualized = true;
 //     #if GETFEM_PARA_LEVEL > 1
 //     cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
@@ -399,9 +424,11 @@ namespace getfem {
         ost << std::setw(8) << std::right << si;
         if (is_complex()) ost << " complex";
         ost << " double" << ((si > 1) ? "s." : ".");
-	if (it->second.is_disabled) ost << "\t (disabled)";
-  else                        ost << "\t          ";
-  if (it->second.pim_data != 0) ost << "\t is im_data";
+	if (it->second.is_variable && 
+            variable_is_disabled(it->first)) ost << "\t (disabled)";
+        else                                 ost << "\t           ";
+        if (it->second.pim_data != 0) ost << "\t (is im_data)";
+	if (it->second.is_affine_dependent) ost << "\t (is affine dependent)";
 	ost << endl;
       }
     }
@@ -462,6 +489,21 @@ namespace getfem {
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;
     add_dependency(mf);
+  }
+
+  void model::add_affine_dependent_variable(const std::string &name,
+                                            const std::string &org_name,
+                                            scalar_type alpha) {
+    check_name_validity(name);
+    VAR_SET::const_iterator it = variables.find(org_name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << org_name);
+    GMM_ASSERT1(it->second.is_variable && !(it->second.is_affine_dependent),
+                "The original variable should be a variable");
+    variables[name] = variables[org_name];
+    variables[name].is_affine_dependent = true;
+    variables[name].org_name = org_name;
+    variables[name].alpha = alpha;
+    variables[name].set_size(variables[org_name].size());
   }
 
   void model::add_fem_data(const std::string &name, const mesh_fem &mf,
@@ -690,6 +732,514 @@ namespace getfem {
     for (size_type i = 0; i < ml.size(); ++i) add_dependency(*(ml[i]));
   }
 
+  void model::call_init_affine_dependent_variables(int version) {
+    for (VAR_SET::iterator it = variables.begin();
+         it != variables.end(); ++it) 
+      if (it->second.is_variable && it->second.ptsc) {
+        if (version == 2)
+          it->second.ptsc->init_affine_dependent_variables_precomputation(*this);
+        else
+          it->second.ptsc->init_affine_dependent_variables(*this);
+      }
+  }
+
+  void model::shift_variables_for_time_integration(void) {
+    for (VAR_SET::iterator it = variables.begin();
+         it != variables.end(); ++it) 
+      if (it->second.is_variable && it->second.ptsc)
+        it->second.ptsc->shift_variables(*this);
+  }
+
+  void model::add_time_integration_scheme(const std::string &varname,
+                                          ptime_scheme ptsc) {
+    VAR_SET::iterator it = variables.find(varname);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << varname);
+    GMM_ASSERT1(it->second.is_variable && !(it->second.is_affine_dependent),
+                "Cannot apply an integration scheme to " << varname);
+    it->second.ptsc = ptsc;
+    if (!first_step)
+      GMM_WARNING2("When you apply a scheme to new variable or change the "
+                   "scheme of a variable after the first time step, "
+                   "the precomputation of time derivative will not be "
+                   "executed. Caution: You have to care by yourself of "
+                   "the compatbility of the operation");
+  }
+
+  void model::extrapolate_init_time_derivative
+  (const model_real_plain_vector &state1,
+   const model_real_plain_vector &state2) {
+
+    model_real_plain_vector stateo(this->nb_dof());
+    this->from_variables(stateo);
+    
+    for (VAR_SET::iterator it = variables.begin();
+         it != variables.end(); ++it) // could be optimized by avoiding
+                                      // repeated call to this->to_variables().
+      if (it->second.is_variable && it->second.ptsc) {
+        
+        std::string name_v, name_previous_v;
+
+        it->second.ptsc->time_derivative_to_be_intialized(name_v,
+                                                          name_previous_v);
+
+        if (name_v.size()) {
+          model_real_plain_vector u = this->real_variable(it->first);
+
+          this->to_variables(state1);
+          model_real_plain_vector u1 = this->real_variable(it->first);
+          model_real_plain_vector v1 = this->real_variable(name_v);
+          this->to_variables(state2);
+          model_real_plain_vector u2 = this->real_variable(it->first);
+          model_real_plain_vector v2 = this->real_variable(name_v);
+          
+          scalar_type a = gmm::vect_sp(u1, u1), b = gmm::vect_sp(u1, u2);
+          scalar_type c = gmm::vect_sp(u2, u2);
+          scalar_type d = gmm::vect_sp(u, u1), e = gmm::vect_sp(u, u2);
+          scalar_type det = a*c - b*b;
+          scalar_type alpha(2), beta(-1);
+          cout << "det = " << det << endl;
+          cout << "u1 = " << gmm::sub_vector(u1, gmm::sub_interval(0, 20)) << endl;
+          cout << "u2 = " << gmm::sub_vector(u1, gmm::sub_interval(0, 20)) << endl;
+          if (gmm::abs(det) > 1E-15*gmm::abs(a*c)) {
+            alpha = (d*c - b*e) / det;
+            beta = (a*e - b*d) / det;
+          }
+          cout << "alpha = " << alpha << " beta = " << beta << endl;
+          gmm::add(gmm::scaled(v1, alpha), gmm::scaled(v2, beta),
+                   this->set_real_variable(name_previous_v));
+          cout << "v0 = " << gmm::sub_vector(real_variable(name_previous_v), gmm::sub_interval(0, 20)) << endl;
+          this->to_variables(stateo);
+        }
+      }
+  }
+
+  void model::extrapolate_init_time_derivative
+  (const model_complex_plain_vector &state1,
+   const model_complex_plain_vector &state2) {
+
+    model_complex_plain_vector stateo(this->nb_dof());
+    this->from_variables(stateo);
+    
+    for (VAR_SET::iterator it = variables.begin();
+         it != variables.end(); ++it) // could be optimized by avoiding
+                                      // repeated call to this->to_variables().
+      if (it->second.is_variable && it->second.ptsc) {
+        
+        std::string name_v, name_previous_v;
+        
+        it->second.ptsc->time_derivative_to_be_intialized(name_v,
+                                                          name_previous_v);
+
+        if (name_v.size()) {
+          model_complex_plain_vector u = this->complex_variable(it->first);
+
+          this->to_variables(state1);
+          model_complex_plain_vector u1 = this->complex_variable(it->first);
+          model_complex_plain_vector v1 = this->complex_variable(name_v);
+          this->to_variables(state2);
+          model_complex_plain_vector u2 = this->complex_variable(it->first);
+          model_complex_plain_vector v2 = this->complex_variable(name_v);
+
+          complex_type a = gmm::vect_sp(u1, u1), b = gmm::vect_sp(u1, u2);
+          complex_type c = gmm::vect_sp(u2, u2);
+          complex_type d = gmm::vect_sp(u, u1), e = gmm::vect_sp(u, u2);
+          complex_type det = a*c - b*b;
+          complex_type alpha(2), beta(-1);
+          if (gmm::abs(det) > 1E-15*gmm::abs(a*c)) {
+            alpha = (d*c - b*e) / det;
+            beta = (a*e - b*d) / det;
+          }
+          gmm::add(gmm::scaled(v1, alpha), gmm::scaled(v2, beta),
+                   this->set_complex_variable(name_previous_v));
+          this->to_variables(stateo);
+        }
+      }
+  }
+
+
+  // ----------------------------------------------------------------------
+  //
+  // Theta-method scheme for first order problems
+  //
+  // ----------------------------------------------------------------------
+
+    class APIDECL first_order_theta_method_scheme
+      : public virtual_time_scheme {
+      
+      std::string U, U0, V, V0;
+      scalar_type theta;
+
+    public:
+      // V = (U-U0)/(theta*dt) - ((1-theta)/theta)*V0
+      virtual void init_affine_dependent_variables(model &md) const {
+        scalar_type dt = md.get_time_step();
+        cout << "1/theta*dt = " << scalar_type(1)/(theta*dt) << endl;
+        scalar_type a = scalar_type(1)/(theta*dt);
+        scalar_type b = (scalar_type(1)-theta)/theta;
+        md.set_factor_of_variable(V, a);
+        if (md.is_complex()) {
+           gmm::add(gmm::scaled(md.complex_variable(U0), -complex_type(a)),
+                    gmm::scaled(md.complex_variable(V0), -complex_type(b)),
+                    md.set_complex_constant_part(V));
+
+        } else {
+          gmm::add(gmm::scaled(md.real_variable(U0), -a),
+                   gmm::scaled(md.real_variable(V0), -b),
+                   md.set_real_constant_part(V));
+        }
+      }
+
+      // V = (U-U0)/dt (backward Euler for precomputation) 
+      virtual void init_affine_dependent_variables_precomputation(model &md)
+        const {
+        scalar_type dt = md.get_time_step();
+        md.set_factor_of_variable(V, scalar_type(1)/dt);
+        if (md.is_complex()) {
+          gmm::copy(gmm::scaled(md.complex_variable(U0), -complex_type(1)/dt),
+                    md.set_complex_constant_part(V));
+          
+        } else {
+          gmm::copy(gmm::scaled(md.real_variable(U0), -scalar_type(1)/dt),
+                    md.set_real_constant_part(V));
+        }
+      }
+
+      virtual void time_derivative_to_be_intialized
+      (std::string &name_v, std::string &name_previous_v) const
+      { name_v = V; name_previous_v = V0; }
+      
+      virtual void shift_variables(model &md) const {
+        if (md.is_complex()) {
+          gmm::copy(md.complex_variable(U), md.set_complex_variable(U0));
+          gmm::copy(md.complex_variable(V), md.set_complex_variable(V0));
+        } else {
+          gmm::copy(md.real_variable(U), md.set_real_variable(U0));
+          gmm::copy(md.real_variable(V), md.set_real_variable(V0));
+        }
+      }
+
+
+      first_order_theta_method_scheme(model &md, std::string varname,
+                                      scalar_type th) {
+        U = varname;
+        U0 = "Previous_" + U;
+        V = "Dot_" + U;
+        V0 = "Previous_Dot_" + U;
+        theta = th;
+        GMM_ASSERT1(theta > scalar_type(0) && theta <=  scalar_type(1),
+                    "Invalid value of theta parameter for the theta-method");
+
+        if (!(md.variable_exists(V)))
+          md.add_affine_dependent_variable(V, U);
+        const mesh_fem *mf =  md.pmesh_fem_of_variable(U);
+        size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
+          : gmm::vect_size(md.real_variable(U));
+          
+        if (mf) {
+          if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
+          if (!(md.variable_exists(V0))) md.add_fem_data(V0, *mf);
+        } else {
+          if (!(md.variable_exists(U0))) md.add_fixed_size_data(U0, s);
+          if (!(md.variable_exists(V0))) md.add_fixed_size_data(V0, s);
+        }
+      }
+      
+
+    };
+
+  void add_theta_method_for_first_order(model &md, const std::string &varname,
+                                        scalar_type theta) {
+    ptime_scheme ptsc = new first_order_theta_method_scheme(md, varname,theta);
+    md.add_time_integration_scheme(varname, ptsc);
+  }
+  
+  // ----------------------------------------------------------------------
+  //
+  // Theta-method for second order problems
+  //
+  // ----------------------------------------------------------------------
+
+  class APIDECL second_order_theta_method_scheme
+    : public virtual_time_scheme {
+    
+    std::string U, U0, V, V0, A, A0;
+    scalar_type theta;
+    
+  public:
+    // V = (U-U0)/(theta*dt) - dt*(1-theta)*V0
+    // A = (U-U0)/(theta^2*dt^2) - V0/(theta^2*dt) - dt*(1-theta)*A0
+    virtual void init_affine_dependent_variables(model &md) const {
+      scalar_type dt = md.get_time_step();
+      md.set_factor_of_variable(V, scalar_type(1)/(theta*dt));
+      md.set_factor_of_variable(A, scalar_type(1)/(theta*theta*dt*dt));
+      if (md.is_complex()) {
+        gmm::add(gmm::scaled(md.complex_variable(U0),
+                             -complex_type(1)/(theta*dt)),
+                 gmm::scaled(md.complex_variable(V0),
+                             -(complex_type(1)-complex_type(theta))/theta),
+                 md.set_complex_constant_part(V));
+        gmm::add(gmm::scaled(md.complex_variable(U0),
+                             -complex_type(1)/(theta*theta*dt*dt)),
+                 gmm::scaled(md.complex_variable(A0),
+                             -(complex_type(1)-complex_type(theta))/theta),
+                 md.set_complex_constant_part(A));
+        gmm::add(gmm::scaled(md.complex_variable(V0),
+                             -complex_type(1)/(theta*theta*dt)),
+                 md.set_complex_constant_part(A));
+        
+        
+      } else {
+        gmm::add(gmm::scaled(md.real_variable(U0),
+                             -scalar_type(1)/(theta*dt)),
+                 gmm::scaled(md.real_variable(V0),
+                             -(scalar_type(1)-theta)/theta),
+                 md.set_real_constant_part(V));
+        gmm::add(gmm::scaled(md.real_variable(U0),
+                             -scalar_type(1)/(theta*theta*dt*dt)),
+                 gmm::scaled(md.real_variable(A0),
+                             -(scalar_type(1)-theta)/theta),
+                 md.set_real_constant_part(A));
+        gmm::add(gmm::scaled(md.real_variable(V0),
+                             -scalar_type(1)/(theta*theta*dt)),
+                 md.set_real_constant_part(A));
+        
+      }
+    }
+    
+    // V = (U-U0)/dt (backward Euler for precomputation)
+    // A = (U-U0)/(dt^2) - V0/dt
+    virtual void init_affine_dependent_variables_precomputation(model &md)
+      const {
+      scalar_type dt = md.get_time_step();
+      md.set_factor_of_variable(V, scalar_type(1)/dt);
+      md.set_factor_of_variable(A, scalar_type(1)/(dt*dt));
+      if (md.is_complex()) {
+        gmm::copy(gmm::scaled(md.complex_variable(U0),
+                              -complex_type(1)/dt),
+                  md.set_complex_constant_part(V));
+        gmm::add(gmm::scaled(md.complex_variable(U0),
+                             -complex_type(1)/(dt*dt)),
+                 gmm::scaled(md.complex_variable(V0),
+                             -complex_type(1)/dt),
+                 md.set_complex_constant_part(A));
+      } else {
+        gmm::copy(gmm::scaled(md.real_variable(U0),
+                              -scalar_type(1)/dt),
+                  md.set_real_constant_part(V));
+        gmm::add(gmm::scaled(md.real_variable(U0),
+                             -scalar_type(1)/(dt*dt)),
+                 gmm::scaled(md.real_variable(V0),
+                             -scalar_type(1)/dt),
+                 md.set_real_constant_part(A));
+      }
+    }
+    
+    virtual void time_derivative_to_be_intialized
+    (std::string &name_v, std::string &name_previous_v) const
+    { name_v = A; name_previous_v = A0; }
+    
+    virtual void shift_variables(model &md) const {
+      if (md.is_complex()) {
+        gmm::copy(md.complex_variable(U), md.set_complex_variable(U0));
+        gmm::copy(md.complex_variable(V), md.set_complex_variable(V0));
+        gmm::copy(md.complex_variable(A), md.set_complex_variable(A0));
+      } else {
+        gmm::copy(md.real_variable(U), md.set_real_variable(U0));
+        gmm::copy(md.real_variable(V), md.set_real_variable(V0));
+        gmm::copy(md.real_variable(A), md.set_real_variable(A0));
+      }
+    }
+    
+    
+    second_order_theta_method_scheme(model &md, std::string varname,
+                                     scalar_type th) {
+      U = varname;
+      U0 = "Previous_" + U;
+      V = "Dot_" + U;
+      V0 = "Previous_Dot_" + U;
+      A = "Dot2_" + U;
+      A0 = "Previous_Dot2_" + U;
+      theta = th;
+      GMM_ASSERT1(theta > scalar_type(0) && theta <=  scalar_type(1),
+                  "Invalid value of theta parameter for the theta-method");
+      
+      if (!(md.variable_exists(V)))
+        md.add_affine_dependent_variable(V, U);
+      if (!(md.variable_exists(A)))
+        md.add_affine_dependent_variable(A, U);
+      
+      const mesh_fem *mf =  md.pmesh_fem_of_variable(U);
+      size_type s = md.is_complex() ? gmm::vect_size(md.real_variable(U))
+        : gmm::vect_size(md.complex_variable(U));
+      
+      if (mf) {
+        if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
+        if (!(md.variable_exists(V0))) md.add_fem_data(V0, *mf);
+        if (!(md.variable_exists(A0))) md.add_fem_data(A0, *mf);
+      } else {
+        if (!(md.variable_exists(U0))) md.add_fixed_size_data(U0, s);
+        if (!(md.variable_exists(V0))) md.add_fixed_size_data(V0, s);
+        if (!(md.variable_exists(A0))) md.add_fixed_size_data(A0, s);
+      }
+    }
+    
+    
+  };
+
+  void add_theta_method_for_second_order(model &md, const std::string &varname,
+                                         scalar_type theta) {
+    ptime_scheme ptsc = new second_order_theta_method_scheme(md,varname,theta);
+    md.add_time_integration_scheme(varname, ptsc);
+  }
+  
+  
+  // ----------------------------------------------------------------------
+  //
+  // Newmark method for second order problems
+  //
+  // ----------------------------------------------------------------------
+
+    class APIDECL Newmark_scheme
+      : public virtual_time_scheme {
+      
+      std::string U, U0, V, V0, A, A0;
+      scalar_type beta, gamma;
+
+    public:
+      // V = (U-U0)/(theta*dt) - dt*(1-theta)*V0
+      // A = (U-U0)/(theta^2*dt^2) - V0/(theta^2*dt) - dt*(1-theta)*A0
+      virtual void init_affine_dependent_variables(model &md) const {
+        scalar_type dt = md.get_time_step();
+        scalar_type a0 = scalar_type(1)/(beta*dt*dt), a1 =  dt*a0;
+        scalar_type a2 = (scalar_type(1) - scalar_type(2)*beta)
+          / (scalar_type(2)*beta);
+        scalar_type b0 = gamma/(beta*dt), b1 = (beta-gamma)/beta;
+        scalar_type b2 = dt*(1-gamma/(scalar_type(2)*beta));
+
+        md.set_factor_of_variable(V, b0);
+        md.set_factor_of_variable(A, a0);
+        if (md.is_complex()) {
+          gmm::add(gmm::scaled(md.complex_variable(U0), -complex_type(b0)),
+                   gmm::scaled(md.complex_variable(V0), complex_type(b1)),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(A0), complex_type(b2)),
+                   md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(U0), -complex_type(a0)),
+                   gmm::scaled(md.complex_variable(V0), -complex_type(a1)),
+                   md.set_complex_constant_part(A));
+          gmm::add(gmm::scaled(md.complex_variable(A0), -complex_type(a2)),
+                   md.set_complex_constant_part(A));
+        } else {
+          gmm::add(gmm::scaled(md.real_variable(U0), -b0),
+                   gmm::scaled(md.real_variable(V0), b1),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(A0), b2),
+                   md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(U0), -a0),
+                   gmm::scaled(md.real_variable(V0), -a1),
+                   md.set_real_constant_part(A));
+          gmm::add(gmm::scaled(md.real_variable(A0), -a2),
+                   md.set_real_constant_part(A));
+          
+        }
+      }
+
+      // V = (U-U0)/dt (backward Euler for precomputation)
+      // A = (U-U0)/(dt^2) - V0/dt
+      virtual void init_affine_dependent_variables_precomputation(model &md)
+        const {
+        scalar_type dt = md.get_time_step();
+        md.set_factor_of_variable(V, scalar_type(1)/dt);
+        md.set_factor_of_variable(A, scalar_type(1)/(dt*dt));
+        if (md.is_complex()) {
+          gmm::copy(gmm::scaled(md.complex_variable(U0),
+                                -complex_type(1)/dt),
+                    md.set_complex_constant_part(V));
+          gmm::add(gmm::scaled(md.complex_variable(U0),
+                               -complex_type(1)/(dt*dt)),
+                   gmm::scaled(md.complex_variable(V0),
+                               -complex_type(1)/dt),
+                   md.set_complex_constant_part(A));
+        } else {
+          gmm::copy(gmm::scaled(md.real_variable(U0),
+                                -scalar_type(1)/dt),
+                    md.set_real_constant_part(V));
+          gmm::add(gmm::scaled(md.real_variable(U0),
+                               -scalar_type(1)/(dt*dt)),
+                   gmm::scaled(md.real_variable(V0),
+                               -scalar_type(1)/dt),
+                   md.set_real_constant_part(A));
+        }
+      }
+
+      virtual void time_derivative_to_be_intialized
+      (std::string &name_v, std::string &name_previous_v) const
+      { name_v = A; name_previous_v = A0; }
+      
+      virtual void shift_variables(model &md) const {
+        if (md.is_complex()) {
+          gmm::copy(md.complex_variable(U), md.set_complex_variable(U0));
+          gmm::copy(md.complex_variable(V), md.set_complex_variable(V0));
+          gmm::copy(md.complex_variable(A), md.set_complex_variable(A0));
+        } else {
+          gmm::copy(md.real_variable(U), md.set_real_variable(U0));
+          gmm::copy(md.real_variable(V), md.set_real_variable(V0));
+          gmm::copy(md.real_variable(A), md.set_real_variable(A0));
+        }
+      }
+
+
+      Newmark_scheme(model &md, std::string varname,
+                     scalar_type be, scalar_type ga) {
+        U = varname;
+        U0 = "Previous_" + U;
+        V = "Dot_" + U;
+        V0 = "Previous_Dot_" + U;
+        A = "Dot2_" + U;
+        A0 = "Previous_Dot2_" + U;
+        beta = be; gamma = ga;
+        GMM_ASSERT1(beta > scalar_type(0) && beta <=  scalar_type(1)
+                    && gamma >= scalar_type(0.5) && gamma <=  scalar_type(1),
+                    "Invalid parameter values for the Newmark scheme");
+
+        if (!(md.variable_exists(V)))
+          md.add_affine_dependent_variable(V, U);
+        if (!(md.variable_exists(A)))
+          md.add_affine_dependent_variable(A, U);
+
+        const mesh_fem *mf =  md.pmesh_fem_of_variable(U);
+        size_type s = md.is_complex() ? gmm::vect_size(md.real_variable(U))
+          : gmm::vect_size(md.complex_variable(U));
+          
+        if (mf) {
+          if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
+          if (!(md.variable_exists(V0))) md.add_fem_data(V0, *mf);
+          if (!(md.variable_exists(A0))) md.add_fem_data(A0, *mf);
+        } else {
+          if (!(md.variable_exists(U0))) md.add_fixed_size_data(U0, s);
+          if (!(md.variable_exists(V0))) md.add_fixed_size_data(V0, s);
+          if (!(md.variable_exists(A0))) md.add_fixed_size_data(A0, s);
+        }
+      }
+      
+
+    };
+  
+  void add_Newmark_scheme(model &md, const std::string &varname,
+                          scalar_type beta, scalar_type gamma) {
+    ptime_scheme ptsc = new Newmark_scheme(md, varname, beta, gamma);
+    md.add_time_integration_scheme(varname, ptsc);
+  }
+
+
+
+
+
+
+
+
+
+
   void model::add_time_dispatcher(size_type ibrick, pdispatcher pdispatch) {
     GMM_ASSERT1(valid_bricks[ibrick], "Inexistent brick");
     pbrick pbr = bricks[ibrick].pbr;
@@ -894,92 +1444,84 @@ namespace getfem {
 
     brick_init(ib, version, rhs_ind);
 
-    scalar_type time = gmm::uclock_sec();
+    // scalar_type timet = gmm::uclock_sec();
 
     if (cplx)
     {
-      brick.pbr->complex_pre_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
-                                           brick.mims,
-                                           brick.cmatlist,
-                                           brick.cveclist[rhs_ind],
-                                           brick.cveclist_sym[rhs_ind],
-                                           brick.region, version);
+      brick.pbr->complex_pre_assembly_in_serial(*this, ib, brick.vlist,
+                                                brick.dlist, brick.mims,
+                                                brick.cmatlist,
+                                                brick.cveclist[rhs_ind],
+                                                brick.cveclist_sym[rhs_ind],
+                                                brick.region, version);
       /*distributing the resulting vectors and matrices
       for individual threads.*/
       {//brackets are needed because list_distro has constructor/destructor
         //semantics (as in RAII)
-          list_distro<complex_matlist> cmatlist(brick.cmatlist);
-	      list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
-	      list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
-        time = gmm::uclock_sec();
+        list_distro<complex_matlist> cmatlist(brick.cmatlist);
+        list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
+        list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
+        // timet = gmm::uclock_sec();
         /*running the assembly in parallel*/
-	      gmm::standard_locale locale;
-	      open_mp_is_running_properly check; 
+        gmm::standard_locale locale;
+        open_mp_is_running_properly check; 
         #pragma omp parallel default(shared)  
         { 
-                brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist, brick.dlist,
-                                             brick.mims,
-                                             cmatlist,
-                                             cveclist,
-                                             cveclist_sym,
-                                             brick.region, version);
-
+          brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
+                                               brick.dlist, brick.mims,
+                                               cmatlist,
+                                               cveclist,
+                                               cveclist_sym,
+                                               brick.region, version);
+          
         }
       }
-      brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
-                                           brick.mims,
-                                           brick.cmatlist,
-                                           brick.cveclist[rhs_ind],
-                                           brick.cveclist_sym[rhs_ind],
-                                           brick.region, version);
+      brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
+                                                 brick.dlist, brick.mims,
+                                                 brick.cmatlist,
+                                                 brick.cveclist[rhs_ind],
+                                                 brick.cveclist_sym[rhs_ind],
+                                                 brick.region, version);
 
     }
-
     else //not cplx
-    
     {
-      brick.pbr->real_pre_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
-                                           brick.mims,
-                                           brick.rmatlist,
-                                           brick.rveclist[rhs_ind],
-                                           brick.rveclist_sym[rhs_ind],
-                                           brick.region, version);
+      brick.pbr->real_pre_assembly_in_serial(*this, ib, brick.vlist,
+                                             brick.dlist, brick.mims,
+                                             brick.rmatlist,
+                                             brick.rveclist[rhs_ind],
+                                             brick.rveclist_sym[rhs_ind],
+                                             brick.region, version);
       {
         /*distributing the resulting vectors and matrices
         for individual threads.*/
-	      list_distro<real_matlist> rmatlist(brick.rmatlist);
-	      list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
-	      list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-		  time = gmm::uclock_sec();
-          /*running the assembly in parallel*/
-	      gmm::standard_locale locale;
-	      open_mp_is_running_properly check; 
+        list_distro<real_matlist> rmatlist(brick.rmatlist);
+        list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
+        list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
+        // timet = gmm::uclock_sec();
+        /*running the assembly in parallel*/
+        gmm::standard_locale locale;
+        open_mp_is_running_properly check; 
         #pragma omp parallel default(shared)  
         { 
-            brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist, brick.dlist,
-                                              brick.mims,
-                                              rmatlist,
-                                              rveclist,
-                                              rveclist_sym,
-                                              brick.region,
-                                              version);
-
-	      }
+          brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
+                                            brick.dlist, brick.mims,
+                                            rmatlist,
+                                            rveclist,
+                                            rveclist_sym,
+                                            brick.region,
+                                            version);
+          
+        }
       }
-      brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist, brick.dlist,
-                                           brick.mims,
-                                           brick.rmatlist,
-                                           brick.rveclist[rhs_ind],
-                                           brick.rveclist_sym[rhs_ind],
-                                           brick.region, version);
-     }
-
-     // GMM_TRACE2("Assembly time "<< gmm::uclock_sec()-time<<" s.");
-
- }
-
-
-
+      brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
+                                              brick.dlist, brick.mims,
+                                              brick.rmatlist,
+                                              brick.rveclist[rhs_ind],
+                                              brick.rveclist_sym[rhs_ind],
+                                              brick.region, version);
+    }
+  }
 
 
   void model::set_dispatch_coeff(void) {
@@ -1077,9 +1619,9 @@ namespace getfem {
     bool is_data_ = false;
     for (size_type i = 0; i < nl.size(); ++i) {
       if (i == 0)
-        is_data_ = is_data(nl[i]);
+        is_data_ = is_true_data(nl[i]);
       else {
-        GMM_ASSERT1(is_data_ == is_data(nl[i]),
+        GMM_ASSERT1(is_data_ == is_true_data(nl[i]),
                     "It is not possible to mix variables and data in a group");
       }
       GMM_ASSERT1(variable_exists(nl[i]),
@@ -1111,7 +1653,8 @@ namespace getfem {
      and brick. Not well managed at brick deletion. 
   */
   void model::add_auxilliary_variables_of_Neumann_terms
-  (const std::string &varname, const std::vector<std::string> &aux_vars) const {
+  (const std::string &varname,
+   const std::vector<std::string> &aux_vars) const {
 
     for (size_type i = 0; i < aux_vars.size(); ++i) {
       bool found = false;
@@ -1313,7 +1856,8 @@ namespace getfem {
     if (brick.pbr->is_linear()) brick.terms_to_be_computed = false;
   }
 
-
+  // OBSOLETE (linked to time dispatchers) or to be corrected to take
+  // into account global matrices
   void model::linear_brick_add_to_rhs(size_type ib, size_type ind_data,
                                       size_type n_iter) const {
     const brick_description &brick = bricks[ib];
@@ -1398,12 +1942,11 @@ namespace getfem {
     }
   }
 
-
   bool model::build_reduced_index(std::vector<size_type> &ind) {
     ind.resize(0);
     bool reduced = false;
     for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
-      if (it->second.is_variable) {
+      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
 	if  (it->second.is_disabled)
 	  reduced = true;
 	else {
@@ -1414,6 +1957,26 @@ namespace getfem {
     return reduced;
   }
 
+  void model::update_affine_dependent_variables(void) {
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
+      if (it->second.is_affine_dependent) {
+        VAR_SET::iterator it2 = variables.find(it->second.org_name);
+        if (it->second.size() != it2->second.size())
+          it->second.set_size(it2->second.size());
+         if (it->second.is_complex) {
+           gmm::add(gmm::scaled(it2->second.complex_value[0],
+                                std::complex<scalar_type>(it->second.alpha)),
+                    it->second.affine_complex_value,
+                    it->second.complex_value[0]);
+         } else {
+           gmm::add(gmm::scaled(it2->second.real_value[0], it->second.alpha),
+                    it->second.affine_real_value, it->second.real_value[0]);
+         }
+        it->second.v_num = std::max(it->second.v_num, it2->second.v_num);
+        it->second.v_num_data = std::max(it->second.v_num_data,
+                                         it2->second.v_num_data);
+      }
+  }
 
   void model::assembly(build_version version) {
 
@@ -1434,6 +1997,7 @@ namespace getfem {
     }
     clear_dof_constraints();
     generic_expressions.clear();
+    update_affine_dependent_variables();
 
     if (version & BUILD_RHS) approx_external_load_ = scalar_type(0);
 
@@ -1444,7 +2008,7 @@ namespace getfem {
       // Disables the brick if all its variables are disabled.
       bool auto_disabled_brick = true;
       for (size_type j = 0; j < brick.vlist.size(); ++j) {
-        if (!(variables[brick.vlist[j]].is_disabled))
+        if (!(variable_is_disabled(brick.vlist[j])))
           auto_disabled_brick = false;
       }
       if (auto_disabled_brick) continue;
@@ -1481,16 +2045,24 @@ namespace getfem {
         term_description &term = brick.tlist[j];
         bool isg = term.is_global;
         size_type nbgdof = nb_dof();
+        scalar_type alpha = coeff0, alpha1 = coeff0, alpha2 = coeff0;
         gmm::sub_interval I1(0,nbgdof), I2(0,nbgdof);
-        if (!isg) I1 = variables[term.var1].I;
-        if (term.is_matrix_term && !isg) I2 = variables[term.var2].I;
+        VAR_SET::iterator it1, it2;
+        if (!isg) { it1 = variables.find(term.var1); I1 = it1->second.I; }
+        if (term.is_matrix_term && !isg) {
+          it2 = variables.find(term.var2);
+          I2 = it2->second.I;
+          alpha *= it1->second.alpha * it2->second.alpha;
+          alpha1 *= it1->second.alpha;
+          alpha2 *= it2->second.alpha;
+        }
 
         if (cplx) {
           if (term.is_matrix_term && (version & BUILD_MATRIX)) {
-            gmm::add(gmm::scaled(brick.cmatlist[j], coeff0),
+            gmm::add(gmm::scaled(brick.cmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
-              gmm::add(gmm::scaled(gmm::transposed(brick.cmatlist[j]), coeff0),
+              gmm::add(gmm::scaled(gmm::transposed(brick.cmatlist[j]), alpha),
                        gmm::sub_matrix(cTM, I2, I1));
             }
           }
@@ -1507,16 +2079,16 @@ namespace getfem {
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
               if (isg) {
                 model_complex_plain_vector V(nbgdof);
-                from_variables(V);
+                spec_from_variables(V, brick.vlist);
                 gmm::mult_add(brick.cmatlist[j],
                             gmm::scaled(V, std::complex<scalar_type>(-coeff0)),
                             crhs);
-              }
-              else
+              } else {
                 gmm::mult_add(brick.cmatlist[j],
                             gmm::scaled(variables[term.var2].complex_value[0],
-                                        std::complex<scalar_type>(-coeff0)),
+                                        std::complex<scalar_type>(-alpha1)),
                             gmm::sub_vector(crhs, I1));
+              }
             }
             if (term.is_symmetric && I1.first() != I2.first()) {
               if (brick.pdispatch) {
@@ -1531,17 +2103,17 @@ namespace getfem {
                    && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
                             gmm::scaled(variables[term.var1].complex_value[0],
-                                        std::complex<scalar_type>(-coeff0)),
+                                        std::complex<scalar_type>(-alpha2)),
                             gmm::sub_vector(crhs, I2));
                }
             }
           }
         } else if (is_complex()) {
           if (term.is_matrix_term && (version & BUILD_MATRIX)) {
-            gmm::add(gmm::scaled(brick.rmatlist[j], coeff0),
+            gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
-              gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), coeff0),
+              gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
                        gmm::sub_matrix(cTM, I2, I1));
             }
           }
@@ -1558,7 +2130,7 @@ namespace getfem {
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
               if (isg) {
                 model_complex_plain_vector V(nbgdof);
-                from_variables(V);
+                spec_from_variables(V, brick.vlist);
                 gmm::mult_add(brick.rmatlist[j],
                             gmm::scaled(V, std::complex<scalar_type>(-coeff0)),
                             crhs);
@@ -1566,7 +2138,7 @@ namespace getfem {
               else
                 gmm::mult_add(brick.rmatlist[j],
                             gmm::scaled(variables[term.var2].complex_value[0],
-                                        std::complex<scalar_type>(-coeff0)),
+                                        std::complex<scalar_type>(-alpha1)),
                             gmm::sub_vector(crhs, I1));
             }
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -1582,17 +2154,17 @@ namespace getfem {
                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                              gmm::scaled(variables[term.var1].complex_value[0],
-                                          std::complex<scalar_type>(-coeff0)),
+                                          std::complex<scalar_type>(-alpha2)),
                               gmm::sub_vector(crhs, I2));
               }
             }
           }
         } else {
           if (term.is_matrix_term && (version & BUILD_MATRIX)) {
-            gmm::add(gmm::scaled(brick.rmatlist[j], coeff0),
+            gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
-              gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), coeff0),
+              gmm::add(gmm::scaled(gmm::transposed(brick.rmatlist[j]), alpha),
                        gmm::sub_matrix(rTM, I2, I1));
             }
           }
@@ -1609,13 +2181,13 @@ namespace getfem {
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
               if (isg) {
                 model_real_plain_vector V(nbgdof);
-                from_variables(V);
+                spec_from_variables(V, brick.vlist);
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(V, -coeff0), rrhs);
               } else
                 gmm::mult_add(brick.rmatlist[j],
                               gmm::scaled(variables[term.var2].real_value[0],
-                                          -coeff0),
+                                          -alpha1),
                               gmm::sub_vector(rrhs, I1));
             }
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -1631,7 +2203,7 @@ namespace getfem {
                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
                               gmm::scaled(variables[term.var1].real_value[0],
-                                          -coeff0),
+                                          -alpha2),
                               gmm::sub_vector(rrhs, I2));
               }
             }
@@ -1641,16 +2213,17 @@ namespace getfem {
 
       if (brick.pbr->is_linear())
         brick.terms_to_be_computed = false;
-// Commented to allow to get this information. Should be optional ?
-//       else
-//         if (cplx) {
-//           brick.cmatlist = complex_matlist(brick.tlist.size());
-//           brick.cveclist[0] = complex_veclist(brick.tlist.size());
-//         } else {
-//           brick.rmatlist = real_matlist(brick.tlist.size());
-//           brick.rveclist[0] = real_veclist(brick.tlist.size());
-//         }
-
+      // The following should be commented to allow to get the information
+      // after assembly. Should be optional ?
+      else
+        if (cplx) {
+          brick.cmatlist = complex_matlist(brick.tlist.size());
+          brick.cveclist[0] = complex_veclist(brick.tlist.size());
+        } else {
+          brick.rmatlist = real_matlist(brick.tlist.size());
+          brick.rveclist[0] = real_veclist(brick.tlist.size());
+        }
+      
       
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
     }
@@ -1918,6 +2491,32 @@ namespace getfem {
                 << niter << " for " << name);
     return it->second.complex_value[niter];
   }
+
+  model_real_plain_vector &
+  model::set_real_constant_part(const std::string &name) const {
+    GMM_ASSERT1(!complex_version, "This model is a complex one");
+    context_check();
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+    GMM_ASSERT1(it->second.is_affine_dependent,
+                "Only for affine dependent variables");
+    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
+      actualize_sizes();
+    it->second.v_num_data = act_counter();
+    return it->second.affine_real_value;
+  }
+
+  model_complex_plain_vector &
+  model::set_complex_constant_part(const std::string &name) const {
+    GMM_ASSERT1(complex_version, "This model is a real one");
+    context_check();
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it!=variables.end(), "Undefined variable " << name);
+    if (act_size_to_be_done && it->second.is_fem_dofs) //it->second.filter != VDESCRFILTER_NO
+      actualize_sizes();
+    it->second.v_num_data = act_counter();
+    return it->second.affine_complex_value;
+  }
   
   void model::check_brick_stiffness_rhs(size_type ind_brick) const {
     
@@ -2170,6 +2769,24 @@ namespace getfem {
                                                (order == 0), brickname);
     model::termlist tl; // A unique global term
     tl.push_back(model::term_description(true, is_sym));
+
+
+    // Test when an affine dependent variable is used if its original variable
+    // is also used. Bot allowed because of the treatment of the rhs in
+    // model::assembly. Can be weakened to test functions of the same kind,
+    // with an adaptation of model::assembly.
+    model::varnamelist orgs;
+    for (size_type i = 0; i < vl.size(); ++i) {
+      if (md.is_affine_dependent_variable(vl[i]))
+        orgs.push_back(md.org_variable(vl[i]));
+    }
+    
+    for (size_type i = 0; i < vl.size(); ++i) {
+      for (size_type j = 0; j < orgs.size(); ++j) 
+        GMM_ASSERT1(vl[i].compare(orgs[j]), "Linear generic brick linkink an "
+                    "affine dependent variable and its original variable is "
+                    "not allowed. Split the brick");
+    }
     
     return md.add_brick(pbr, vl, dl, tl, model::mimlist(1, &mim), region);
   }
@@ -2246,7 +2863,8 @@ namespace getfem {
     workspace.used_variables(vl, ddl, order);
 
     for (size_type i = 0; i < ddl.size(); ++i)
-      if (md.is_data(ddl[i])) dl.push_back(ddl[i]); else vl.push_back(ddl[i]);
+      if (md.is_true_data(ddl[i])) dl.push_back(ddl[i]);
+      else vl.push_back(ddl[i]);
 
     if (order == 0) { is_coercive = is_sym = true; }
     pbrick pbr = new gen_nonlinear_assembly_brick(expr, is_sym, is_coercive,
