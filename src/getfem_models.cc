@@ -2213,16 +2213,16 @@ namespace getfem {
 
       if (brick.pbr->is_linear())
         brick.terms_to_be_computed = false;
-      // The following should be commented to allow to get the information
-      // after assembly. Should be optional ?
-      else
-        if (cplx) {
-          brick.cmatlist = complex_matlist(brick.tlist.size());
-          brick.cveclist[0] = complex_veclist(brick.tlist.size());
-        } else {
-          brick.rmatlist = real_matlist(brick.tlist.size());
-          brick.rveclist[0] = real_veclist(brick.tlist.size());
-        }
+      // Commented to allow to get the information after assembly. Used in
+      // some aplications. Should be optional ?
+//       else
+//         if (cplx) {
+//           brick.cmatlist = complex_matlist(brick.tlist.size());
+//           brick.cveclist[0] = complex_veclist(brick.tlist.size());
+//         } else {
+//           brick.rmatlist = real_matlist(brick.tlist.size());
+//           brick.rveclist[0] = real_veclist(brick.tlist.size());
+//         }
       
       
       if (version & BUILD_RHS) approx_external_load_ += brick.external_load;
