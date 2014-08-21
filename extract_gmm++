@@ -53,11 +53,18 @@ close(F);
 
 open(F, ">$root/autogen.sh") or die "Open file impossible : $!\n";
 print F <<""
-#!/bin/sh
-aclocal -I m4
-autoheader
-autoconf
-automake --gnu -a `find . -name Makefile.am | sed -e 's@\\./\\(.*\\)\\.am@\\1\@g'`
+#!/bin/bash
+function die {
+      echo "ERROR: $1";
+          exit 1
+}
+aclocal -I ./m4 || die "aclocal failed";
+libtoolize -f || glibtoolize -f || die "libtoolize failed";
+autoheader || die "autoheader failed";
+autoreconf
+autoconf || die "autoconf failed";
+#pas de ./ devant les noms des makefiles !!!
+automake -a --gnu `find . -name Makefile.am | sed -e 's@\./\(.*\)\.am@\1@g'` || die "automake failed";
 
 ;
 close(F);
@@ -82,8 +89,8 @@ print F <<""
 \ncheck_PROGRAMS = dummy \n
 dummy_SOURCES = dummy.cc \n
 INCLUDES = -I\$(top_srcdir)/include -I../include\n
-LDADD    = -lm \@SUPLDFLAGS\@ \@BOOST_LIBS\@\n
-TESTS = \$(top_srcdir)/tests/make_gmm_test.pl\n
+LDADD    = -lm \@SUPLDFLAGS\@\n
+TESTS = make_gmm_test.pl\n
 EXTRA_DIST=$test_files_bis
 \n\nCLEANFILES = toto.mat ii_files/* auto_gmm* \n
 LOG_COMPILER = perl\n
@@ -102,7 +109,7 @@ CLEANFILES = so_locations\n
 ;
 close(F);
 
-open(F, ">$root/configure.in") or die "Open file impossible : $!\n";
+open(F, ">$root/configure.ac") or die "Open file impossible : $!\n";
 print F <<""
 dnl Process this file with autoconf to produce a configure script.
 dnl ------------------------------------------------------------------------
@@ -112,7 +119,7 @@ dnl ./configure: sh internal 2K buffer overflow on HP-UX 9.xx
 dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl\n
-AC_INIT
+AC_INIT(gmm, $MAJOR_VERSION.$MINOR_VERSION)
 AC_CONFIG_HEADERS(config.h)
 AC_PREREQ(2.56)
 AC_ARG_PROGRAM\n
@@ -125,7 +132,7 @@ echo "configuring \$PACKAGE \$VERSION..."\n
 dnl ------------------------------------------------------------------------
 dnl   init automake
 dnl ------------------------------------------------------------------------\n
-AM_INIT_AUTOMAKE(\$PACKAGE,\$VERSION)\n
+AM_INIT_AUTOMAKE([1.11 parallel-tests])\n
 dnl -----------------------------------------------
 dnl test du c++
 dnl -----------------------------------------------\n
