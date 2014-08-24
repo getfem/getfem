@@ -10,10 +10,13 @@
 //  See http://www.boost.org/libs/utility for documentation.
 //
 
+#if !defined(BOOST_NONCOPYABLE_HPP_INCLUDED) && !defined(BOOST_NONCOPYABLE_HPP) && !defined(BOOST_CORE_NONCOPYABLE_HPP)
 
-
-#ifndef BOOST_NONCOPYABLE_HPP_INCLUDED
 #define BOOST_NONCOPYABLE_HPP_INCLUDED
+#define BOOST_NONCOPYABLE_HPP
+#define BOOST_CORE_NONCOPYABLE_HPP
+
+
 
 namespace boost {
 
@@ -39,4 +42,4 @@ typedef noncopyable_::noncopyable noncopyable;
 
 } // namespace boost
 
-#endif  // BOOST_NONCOPYABLE_HPP_INCLUDED
+#endif

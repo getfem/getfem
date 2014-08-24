@@ -1893,13 +1893,13 @@ namespace getfem {
                 }
               gmm::mult_add
                 (brick.cmatlist[j],
-                 gmm::scaled(V,  std::complex<scalar_type>(-1)),
+                 gmm::scaled(V,  complex_type(-1)),
                  brick.cveclist[ind_data][j]);
             } else
               gmm::mult_add
                 (brick.cmatlist[j],
                  gmm::scaled(variables[term.var2].complex_value[n_iter_2],
-                             std::complex<scalar_type>(-1)),
+                             complex_type(-1)),
                  brick.cveclist[ind_data][j]);
           }
           else {
@@ -1928,7 +1928,7 @@ namespace getfem {
               gmm::mult_add
                 (gmm::conjugated(brick.cmatlist[j]),
                  gmm::scaled(variables[term.var1].complex_value[n_iter_1],
-                             std::complex<scalar_type>(-1)),
+                             complex_type(-1)),
                  brick.cveclist_sym[ind_data][j]);
             else
               gmm::mult_add
@@ -1965,7 +1965,7 @@ namespace getfem {
           it->second.set_size(it2->second.size());
          if (it->second.is_complex) {
            gmm::add(gmm::scaled(it2->second.complex_value[0],
-                                std::complex<scalar_type>(it->second.alpha)),
+                                complex_type(it->second.alpha)),
                     it->second.affine_complex_value,
                     it->second.complex_value[0]);
          } else {
@@ -2043,22 +2043,34 @@ namespace getfem {
 
       for (size_type j = 0; j < brick.tlist.size(); ++j) {
         term_description &term = brick.tlist[j];
-        bool isg = term.is_global;
+        bool isg = term.is_global, isprevious = false;
         size_type nbgdof = nb_dof();
         scalar_type alpha = coeff0, alpha1 = coeff0, alpha2 = coeff0;
         gmm::sub_interval I1(0,nbgdof), I2(0,nbgdof);
         VAR_SET::iterator it1, it2;
-        if (!isg) { it1 = variables.find(term.var1); I1 = it1->second.I; }
+        if (!isg) {
+          it1 = variables.find(term.var1);
+          GMM_ASSERT1(it1->second.is_variable, "Assembly of data not allowed");
+          I1 = it1->second.I;
+        }
         if (term.is_matrix_term && !isg) {
           it2 = variables.find(term.var2);
           I2 = it2->second.I;
+          if (!(it2->second.is_variable)) {
+            std::string vorgname = sup_previous_to_varname(term.var2);
+            VAR_SET::iterator it3 = variables.find(vorgname);
+            GMM_ASSERT1(it3->second.is_variable,
+                        "Assembly of data not allowed");
+            I2 = it3->second.I;
+            isprevious = true;
+          }
           alpha *= it1->second.alpha * it2->second.alpha;
           alpha1 *= it1->second.alpha;
           alpha2 *= it2->second.alpha;
         }
 
         if (cplx) {
-          if (term.is_matrix_term && (version & BUILD_MATRIX)) {
+          if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious) {
             gmm::add(gmm::scaled(brick.cmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -2073,20 +2085,44 @@ namespace getfem {
                                      brick.coeffs[k]),
                          gmm::sub_vector(crhs, I1));
             }
-            else
-              gmm::add(brick.cveclist[0][j], gmm::sub_vector(crhs, I1));
+            else {
+              gmm::add(gmm::scaled(brick.cveclist[0][j], complex_type(alpha1)),
+                       gmm::sub_vector(crhs, I1));
+            }
+            if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
+              if (isg) {
+                model_complex_plain_vector V(nbgdof);
+                spec2_from_variables(V, brick.vlist);
+                gmm::mult_add(brick.cmatlist[j],
+                            gmm::scaled(V, complex_type(-coeff0)),
+                            crhs);
+              } else {
+                if (it2->second.is_affine_dependent)
+                  gmm::mult_add(brick.cmatlist[j],
+                                gmm::scaled(it2->second.affine_complex_value,
+                                          complex_type(-alpha1)),
+                                gmm::sub_vector(crhs, I1));
+                if (term.is_symmetric && I1.first() != I2.first()
+                    && it1->second.is_affine_dependent) {
+                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
+                                gmm::scaled(it1->second.affine_complex_value,
+                                           complex_type(-alpha2)),
+                                gmm::sub_vector(crhs, I2));
+                }
+              }
+            }
             if (term.is_matrix_term && brick.pbr->is_linear()
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
               if (isg) {
                 model_complex_plain_vector V(nbgdof);
                 spec_from_variables(V, brick.vlist);
                 gmm::mult_add(brick.cmatlist[j],
-                            gmm::scaled(V, std::complex<scalar_type>(-coeff0)),
+                            gmm::scaled(V, complex_type(-coeff0)),
                             crhs);
               } else {
                 gmm::mult_add(brick.cmatlist[j],
-                            gmm::scaled(variables[term.var2].complex_value[0],
-                                        std::complex<scalar_type>(-alpha1)),
+                            gmm::scaled(it2->second.complex_value[0],
+                                        complex_type(-alpha1)),
                             gmm::sub_vector(crhs, I1));
               }
             }
@@ -2097,19 +2133,22 @@ namespace getfem {
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
               }
-              else
-                gmm::add(brick.cveclist_sym[0][j], gmm::sub_vector(crhs, I2));
+              else {
+                gmm::add(gmm::scaled(brick.cveclist_sym[0][j],
+                                     complex_type(alpha2)),
+                         gmm::sub_vector(crhs, I2));
+              }
                if (brick.pbr->is_linear()
                    && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                  gmm::mult_add(gmm::conjugated(brick.cmatlist[j]),
-                            gmm::scaled(variables[term.var1].complex_value[0],
-                                        std::complex<scalar_type>(-alpha2)),
+                            gmm::scaled(it1->second.complex_value[0],
+                                        complex_type(-alpha2)),
                             gmm::sub_vector(crhs, I2));
                }
             }
           }
         } else if (is_complex()) {
-          if (term.is_matrix_term && (version & BUILD_MATRIX)) {
+          if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious) {
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(cTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -2124,21 +2163,45 @@ namespace getfem {
                                      brick.coeffs[k]),
                          gmm::sub_vector(crhs, I1));
             }
-            else
-              gmm::add(brick.rveclist[0][j], gmm::sub_vector(crhs, I1));
+            else {
+              gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
+                       gmm::sub_vector(crhs, I1));
+            }
+            if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
+              if (isg) {
+                model_complex_plain_vector V(nbgdof);
+                spec2_from_variables(V, brick.vlist);
+                gmm::mult_add(brick.rmatlist[j],
+                            gmm::scaled(V, complex_type(-coeff0)),
+                            crhs);
+              } else {
+                if (it2->second.is_affine_dependent)
+                  gmm::mult_add(brick.rmatlist[j],
+                                gmm::scaled(it2->second.affine_complex_value,
+                                          complex_type(-alpha1)),
+                                gmm::sub_vector(crhs, I1));
+                if (term.is_symmetric && I1.first() != I2.first()
+                    && it1->second.is_affine_dependent) {
+                  gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+                                gmm::scaled(it1->second.affine_complex_value,
+                                          complex_type(-alpha2)),
+                                gmm::sub_vector(crhs, I2));
+                }
+              }
+            }
             if (term.is_matrix_term && brick.pbr->is_linear()
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
               if (isg) {
                 model_complex_plain_vector V(nbgdof);
                 spec_from_variables(V, brick.vlist);
                 gmm::mult_add(brick.rmatlist[j],
-                            gmm::scaled(V, std::complex<scalar_type>(-coeff0)),
+                            gmm::scaled(V, complex_type(-coeff0)),
                             crhs);
               }
               else
                 gmm::mult_add(brick.rmatlist[j],
-                            gmm::scaled(variables[term.var2].complex_value[0],
-                                        std::complex<scalar_type>(-alpha1)),
+                            gmm::scaled(it2->second.complex_value[0],
+                                        complex_type(-alpha1)),
                             gmm::sub_vector(crhs, I1));
             }
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -2148,19 +2211,21 @@ namespace getfem {
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
               }
-              else
-                gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(crhs, I2));
+              else {
+                gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
+                         gmm::sub_vector(crhs, I2));
+              }
               if (brick.pbr->is_linear()
                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                             gmm::scaled(variables[term.var1].complex_value[0],
-                                          std::complex<scalar_type>(-alpha2)),
+                             gmm::scaled(it1->second.complex_value[0],
+                                          complex_type(-alpha2)),
                               gmm::sub_vector(crhs, I2));
               }
             }
           }
         } else {
-          if (term.is_matrix_term && (version & BUILD_MATRIX)) {
+          if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious) {
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -2175,8 +2240,31 @@ namespace getfem {
                                      brick.coeffs[k]),
                          gmm::sub_vector(rrhs, I1));
             }
-            else
-              gmm::add(brick.rveclist[0][j], gmm::sub_vector(rrhs, I1));
+            else {
+              gmm::add(gmm::scaled(brick.rveclist[0][j], alpha1),
+                       gmm::sub_vector(rrhs, I1));
+            }
+            if (term.is_matrix_term && brick.pbr->is_linear() && is_linear()) {
+              if (isg) {
+                model_real_plain_vector V(nbgdof);
+                spec2_from_variables(V, brick.vlist);
+                gmm::mult_add(brick.rmatlist[j],
+                              gmm::scaled(V, -coeff0), rrhs);
+              } else {
+                if (it2->second.is_affine_dependent)
+                  gmm::mult_add(brick.rmatlist[j],
+                                gmm::scaled(it2->second.affine_real_value,
+                                            -alpha1),
+                                gmm::sub_vector(rrhs, I1));
+                if (term.is_symmetric && I1.first() != I2.first()
+                    && it1->second.is_affine_dependent) {
+                  gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
+                                gmm::scaled(it1->second.affine_real_value,
+                                            -alpha2),
+                                gmm::sub_vector(rrhs, I2));
+                }
+              }
+            }
             if (term.is_matrix_term && brick.pbr->is_linear()
                 && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
               if (isg) {
@@ -2186,7 +2274,7 @@ namespace getfem {
                               gmm::scaled(V, -coeff0), rrhs);
               } else
                 gmm::mult_add(brick.rmatlist[j],
-                              gmm::scaled(variables[term.var2].real_value[0],
+                              gmm::scaled(it2->second.real_value[0],
                                           -alpha1),
                               gmm::sub_vector(rrhs, I1));
             }
@@ -2197,13 +2285,14 @@ namespace getfem {
                                        brick.coeffs[k]),
                            gmm::sub_vector(rrhs, I2));
               }
-              else
-                gmm::add(brick.rveclist_sym[0][j], gmm::sub_vector(rrhs, I2));
+              else {
+                gmm::add(gmm::scaled(brick.rveclist_sym[0][j], alpha2),
+                         gmm::sub_vector(rrhs, I2));
+              }
               if (brick.pbr->is_linear()
                   && (!is_linear() || (version & BUILD_WITH_COMPLETE_RHS))) {
                 gmm::mult_add(gmm::transposed(brick.rmatlist[j]),
-                              gmm::scaled(variables[term.var1].real_value[0],
-                                          -alpha2),
+                              gmm::scaled(it1->second.real_value[0], -alpha2),
                               gmm::sub_vector(rrhs, I2));
               }
             }
@@ -2686,11 +2775,11 @@ namespace getfem {
     std::string expr;
 
     virtual void asm_real_tangent_terms(const model &md, size_type ib,
-                                        const model::varnamelist &,
+                                        const model::varnamelist &vl,
                                         const model::varnamelist &dl,
                                         const model::mimlist &mims,
                                         model::real_matlist &matl,
-                                        model::real_veclist &,
+                                        model::real_veclist &vecl,
                                         model::real_veclist &,
                                         size_type region,
                                         build_version version) const {
@@ -2706,15 +2795,28 @@ namespace getfem {
           md.is_var_newer_than_brick(dl[i], ib);
       }
 
-      if (recompute_matrix) {
-        ga_workspace workspace(md);
-        mesh_region rg(region);
-        mims[0]->linked_mesh().intersect_with_mpi_region(rg);
-        workspace.add_expression(expr, *(mims[0]), rg);
+      ga_workspace workspace(md);
+      mesh_region rg(region);
+      mims[0]->linked_mesh().intersect_with_mpi_region(rg);
+      workspace.add_expression(expr, *(mims[0]), rg);
+
+      if (recompute_matrix) { 
         gmm::clear(matl[0]);
         workspace.set_assembled_matrix(matl[0]);
         workspace.assembly(2);
       }
+
+      gmm::clear(vecl[0]);
+      workspace.set_assembled_vector(vecl[0]);
+      workspace.assembly(1);
+      gmm::scale(vecl[0], scalar_type(-1));
+
+
+      model_real_plain_vector V(md.nb_dof());
+      md.spec_from_variables(V, vl);
+      gmm::mult_add(matl[0], V, vecl[0]);
+
+      md.add_external_load(ib, gmm::vect_norm1(vecl[0]));
     }
 
     virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
@@ -2765,6 +2867,7 @@ namespace getfem {
     bool is_lin = workspace.used_variables(vl, dl, 2);
     GMM_ASSERT1(is_lin, "Nonlinear term");
     if (order == 0) { is_coercive = is_sym = true; }
+    GMM_ASSERT1(order <= 1, "This brick do not support an order two term");
     pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                (order == 0), brickname);
     model::termlist tl; // A unique global term
@@ -7215,8 +7318,6 @@ namespace getfem {
     md.disable_brick(id2dt2b);
 
     if (md.is_complex()) {
-      //      typedef std::complex<scalar_type> complex_type;
-
       complex_type twobeta = md.complex_variable(ptwobeta)[0];
       complex_type gamma = md.complex_variable(pgamma)[0];
       complex_type dt = md.complex_variable(pdt)[0];

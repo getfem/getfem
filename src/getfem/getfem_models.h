@@ -113,6 +113,12 @@ namespace getfem {
   typedef gmm::row_matrix<model_complex_sparse_vector>
   model_complex_row_sparse_matrix;
 
+  inline std::string sup_previous_to_varname(const std::string &v) {
+    if (!(v.compare(0, 8, "Previous")) && (v[8] == '_' || v[9] == '_')) {
+      return v.substr((v[8] == '_') ? 9 : 10);
+    } else return v;
+  }
+
   /** ``Model'' variables store the variables, the data and the
       description of a model. This includes the global tangent matrix, the
       right hand side and the constraints. There are two kinds of models, the
@@ -253,13 +259,14 @@ namespace getfem {
       bool is_symmetric;   // Term have to be symmetrized.
       bool is_global;      // Specific global term for highly coupling bricks
       std::string var1, var2;
+      
       term_description(const std::string &v)
         : is_matrix_term(false), is_symmetric(false),
-          is_global(false), var1(v) {}
+          is_global(false), var1(sup_previous_to_varname(v)) {}
       term_description(const std::string &v1, const std::string &v2,
                        bool issym)
         : is_matrix_term(true), is_symmetric(issym), is_global(false),
-          var1(v1), var2(v2) {}
+          var1(sup_previous_to_varname(v1)), var2(v2) {}
       term_description(bool ism, bool issym)
         : is_matrix_term(ism), is_symmetric(issym), is_global(true) {}
     };
@@ -716,7 +723,39 @@ namespace getfem {
     void spec_from_variables(VECTOR &V, const varnamelist &vl) const {
       typedef typename gmm::linalg_traits<VECTOR>::value_type T;
       context_check(); if (act_size_to_be_done) actualize_sizes();
+      gmm::clear(V);
       spec_from_variables(V, vl, T());
+    }
+
+    template<typename VECTOR, typename T>
+    void spec2_from_variables(VECTOR &V, const varnamelist &vl, T) const {
+      for (size_type i = 0; i < vl.size(); ++i) {
+        VAR_SET::iterator it = variables.find(vl[i]);
+        if (it->second.is_variable && it->second.is_affine_dependent)
+          gmm::copy(gmm::scaled(it->second.affine_real_value,
+                                T(1)/it->second.alpha),
+                    gmm::sub_vector(V, it->second.I));
+      }
+    }
+
+    template<typename VECTOR, typename T>
+    void spec2_from_variables(VECTOR &V, const varnamelist &vl,
+                              std::complex<T>) const {
+      for (size_type i = 0; i < vl.size(); ++i) {
+        VAR_SET::iterator it = variables.find(vl[i]);
+        if (it->second.is_variable && it->second.is_affine_dependent)
+          gmm::copy(gmm::scaled(it->second.affine_complex_value,
+                                std::complex<T>(1)/it->second.alpha),
+                    gmm::sub_vector(V, it->second.I));
+      }
+    }
+
+    template<typename VECTOR>
+    void spec2_from_variables(VECTOR &V, const varnamelist &vl) const {
+      typedef typename gmm::linalg_traits<VECTOR>::value_type T;
+      context_check(); if (act_size_to_be_done) actualize_sizes();
+      gmm::clear(V);
+      spec2_from_variables(V, vl, T());
     }
 
 

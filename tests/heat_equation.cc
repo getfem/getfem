@@ -243,7 +243,6 @@ bool heat_equation_problem::solve(void) {
   // transient part.
   if (with_new_time_integration) {
     getfem::add_theta_method_for_first_order(model, "u", theta);
-    cout << "here1_0" << endl;
     getfem::add_mass_brick(model, mim, "Dot_u");
   } else {
     model.add_initialized_scalar_data("dt", dt);

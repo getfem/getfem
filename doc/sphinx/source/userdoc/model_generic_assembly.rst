@@ -25,8 +25,7 @@ However, this brick consider that the expression is nonlinear. This brick is esp
   size_type getfem::add_linear_generic_assembly_brick(md, mim, expr,
                          region = -1, is_sym = false, is_coercive = false);
 
-with the same arguments. Conversly, this brick alway assume that the term corresponding to ``expr`` is linear and the assembly will be performed only once if the constants used do not change. Thus, you have to care that your expression is indeed linear with respect to each variable. Otherwise, the result is of course not guaranted. Take care also that source term are simply ignored (it is eliminated by the symbolic derivation). Still for linear problem, it is possible to perform the assembly of source terms thanks to::
-
+with the same arguments. Conversely, this brick alway assume that the term corresponding to ``expr`` is linear and the assembly will be performed only once if the data used do not change. Thus, you have to care that your expression is indeed linear (affine in fact) with respect to each variable. Otherwise, the result is of course not guaranted. Source terms in the expression are taken into account. Still for linear problem, it is possible to perform the assembly of a sole source term thanks to::
 
   size_type getfem::add_dource_term_generic_assembly_brick(md, mim, expr,
                          region = -1);

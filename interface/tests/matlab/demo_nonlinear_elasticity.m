@@ -26,7 +26,7 @@ colormap(r);
 dirichlet_version = 2; % 1 = simplification, 2 = penalisation
 drawing = true;
 test_tangent_matrix = false;
-incompressible = false;
+incompressible = true;
 
 % lawname = 'Ciarlet Geymonat';
 % params = [1;1;0.25];
@@ -110,7 +110,7 @@ if (incompressible || true)
   % gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p');
   gf_model_set(md, 'add finite strain incompressibility brick',  mim, 'u', 'p');
   % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-  %                 'p*(1-Det(Id(meshdim)+Grad_u))');
+  %                'p*(1-Det(Id(meshdim)+Grad_u))');
   % gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
   %                 '-p*Det(Id(meshdim)+Grad_u)*(Inv(Id(meshdim)+Grad_u))'':Grad_Test_u + Test_p*(1-Det(Id(meshdim)+Grad_u))');
 end

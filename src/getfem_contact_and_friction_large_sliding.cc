@@ -2320,6 +2320,9 @@ namespace getfem {
                               const std::string &u,
                               const std::string &lambda,
                               const std::string &w = "") {
+      std::string test_u = "Test_" + sup_previous_to_varname(u);
+      std::string test_u_group = "Test_" + sup_previous_to_varname(u_group);
+      std::string test_lambda = "Test_" + sup_previous_to_varname(lambda);
       GMM_ASSERT1(is_slave || is_master, "The contact boundary should be "
                   "either master, slave or both");
       const mesh_fem *mf = md.pmesh_fem_of_variable(u);
@@ -2396,13 +2399,13 @@ namespace getfem {
 
         cb.expr =
           // -lambda.Test_u for non-symmetric version
-          (sym_version ? "" : ("-"+lambda+".Test_"+u))
+          (sym_version ? "" : ("-"+lambda+"." + test_u))
           // -coupled_projection_def.Test_u and -coupled_projection_rig.Test_u
           // for symmetric version
           + (sym_version ? ("+ Interpolate_filter("+transformation_name+",-"
-                            +coupled_projection_def+".Test_"+u+",1)") : "")
+                            +coupled_projection_def+"."+test_u+",1)") : "")
           + (sym_version ? ("+ Interpolate_filter("+transformation_name+",-"
-                            +coupled_projection_rig+".Test_"+u+",2)") : "")
+                            +coupled_projection_rig+"."+test_u+",2)") : "")
           // Interpolate_filter(trans,
           //                   lambda.Interpolate(Test_ug, contact_trans), 1)
           // or
@@ -2410,19 +2413,19 @@ namespace getfem {
           //     coupled_projection_def.Interpolate(Test_ug, contact_trans), 1)
           + "+ Interpolate_filter("+transformation_name+","
           + (sym_version ? coupled_projection_def : lambda)
-          + ".Interpolate(Test_"+u_group+"," + transformation_name+"), 1)"
+          + ".Interpolate("+test_u_group+"," + transformation_name+"), 1)"
           // -(1/r)*lambda.Test_lambda
-          + "-(1/"+augmentation_param+")*"+lambda+".Test_"+lambda
+          + "-(1/"+augmentation_param+")*"+lambda+"."+test_lambda
           // Interpolate_filter(trans,
           //   (1/r)*coupled_projection_rig.Test_lambda, 2)
           + "+ Interpolate_filter("+transformation_name+","
           + "(1/"+augmentation_param+")*"+ coupled_projection_rig
-          + ".Test_"+lambda+", 2)"
+          + "."+test_lambda+", 2)"
           // Interpolate_filter(trans,
           //   (1/r)*coupled_projection_def.Test_lambda, 1)
           + "+ Interpolate_filter("+transformation_name+","
-          + "(1/"+augmentation_param+")*" + coupled_projection_def + ".Test_"
-          + lambda+", 1)";
+          + "(1/"+augmentation_param+")*" + coupled_projection_def + "."
+          + test_lambda+", 1)";
       }
     }
 

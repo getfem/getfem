@@ -2238,6 +2238,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &lawname, const std::string &params,
    size_type region) {
+    std::string test_varname = "Test_" + sup_previous_to_varname(varname);
     size_type N = mim.linked_mesh().dim();
     GMM_ASSERT1(N >= 2 && N <= 3,
                 "Finite strain elasticity brick works only in 2D or 3D");
@@ -2251,14 +2252,29 @@ namespace getfem {
 
     std::string adapted_lawname = adapt_law_name(lawname, N);
 
-    std::string expr = "((Id(meshdim)+Grad_u)*(" + adapted_lawname
-      + "_sigma(Grad_"+varname+","+params+"))):Grad_Test_" + varname;
+    std::string expr = "((Id(meshdim)+Grad_"+varname+")*(" + adapted_lawname
+      + "_sigma(Grad_"+varname+","+params+"))):Grad_" + test_varname;
 
     return add_nonlinear_generic_assembly_brick
       (md, mim, expr, region, true, false,
        "Finite strain elasticity brick for " + adapted_lawname + " law");
   }
 
+  size_type add_finite_strain_incompressibility_brick
+  (model &md, const mesh_im &mim, const std::string &varname,
+   const std::string &multname, size_type region) {
+    std::string test_varname = "Test_" + sup_previous_to_varname(varname);
+    std::string test_multname = "Test_" + sup_previous_to_varname(multname);
+
+    std::string expr
+      = "(" + test_multname+ ")*(1-Det(Id(meshdim)+Grad_" + varname + "))"
+      + "-(" + multname + ")*(Det(Id(meshdim)+Grad_" + varname + ")"
+      + "*((Inv(Id(meshdim)+Grad_" + varname + "))':Grad_"
+      + test_varname + "))" ;
+    return add_nonlinear_generic_assembly_brick
+      (md, mim, expr, region, true, false,
+       "Finite strain incompressibility brick");
+  }
 
   void finite_strain_elasticity_Von_Mises
     (model &md, const std::string &varname, const std::string &lawname,
