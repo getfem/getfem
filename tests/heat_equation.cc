@@ -80,7 +80,7 @@ base_small_vector sol_grad(const base_node &x) {
   (not mandatory, just to gather the variables)
 */
 
-bool with_new_time_integration = false;
+bool with_new_time_integration = true;
 
 struct heat_equation_problem {
 
@@ -244,6 +244,7 @@ bool heat_equation_problem::solve(void) {
   if (with_new_time_integration) {
     getfem::add_theta_method_for_first_order(model, "u", theta);
     getfem::add_mass_brick(model, mim, "Dot_u");
+    // getfem::add_nonlinear_generic_assembly_brick(model, mim, "Dot_u*Test_u");
   } else {
     model.add_initialized_scalar_data("dt", dt);
     getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
@@ -309,7 +310,7 @@ void heat_equation_problem::compute_error() {
   cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
        << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
        << "Linfty error = " << gmm::vect_norminf(V) << endl;
-  GMM_ASSERT1(gmm::vect_norminf(V) < 0.01, "Error too large");
+  GMM_ASSERT1(gmm::vect_norminf(V) < 0.02, "Error too large");
 }
 
 /**************************************************************************/

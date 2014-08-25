@@ -113,10 +113,14 @@ namespace getfem {
   typedef gmm::row_matrix<model_complex_sparse_vector>
   model_complex_row_sparse_matrix;
 
-  inline std::string sup_previous_to_varname(const std::string &v) {
+  inline std::string sup_previous_and_dot_to_varname(std::string v) {
     if (!(v.compare(0, 8, "Previous")) && (v[8] == '_' || v[9] == '_')) {
-      return v.substr((v[8] == '_') ? 9 : 10);
-    } else return v;
+      v = v.substr((v[8] == '_') ? 9 : 10);
+    }
+    if (!(v.compare(0, 3, "Dot")) && (v[3] == '_' || v[4] == '_')) {
+      v = v.substr((v[3] == '_') ? 4 : 5);
+    }
+    return v;
   }
 
   /** ``Model'' variables store the variables, the data and the
@@ -262,11 +266,11 @@ namespace getfem {
       
       term_description(const std::string &v)
         : is_matrix_term(false), is_symmetric(false),
-          is_global(false), var1(sup_previous_to_varname(v)) {}
+          is_global(false), var1(sup_previous_and_dot_to_varname(v)) {}
       term_description(const std::string &v1, const std::string &v2,
                        bool issym)
         : is_matrix_term(true), is_symmetric(issym), is_global(false),
-          var1(sup_previous_to_varname(v1)), var2(v2) {}
+          var1(sup_previous_and_dot_to_varname(v1)), var2(v2) {}
       term_description(bool ism, bool issym)
         : is_matrix_term(ism), is_symmetric(issym), is_global(true) {}
     };

@@ -2238,7 +2238,7 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &lawname, const std::string &params,
    size_type region) {
-    std::string test_varname = "Test_" + sup_previous_to_varname(varname);
+    std::string test_varname = "Test_" + sup_previous_and_dot_to_varname(varname);
     size_type N = mim.linked_mesh().dim();
     GMM_ASSERT1(N >= 2 && N <= 3,
                 "Finite strain elasticity brick works only in 2D or 3D");
@@ -2263,8 +2263,8 @@ namespace getfem {
   size_type add_finite_strain_incompressibility_brick
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &multname, size_type region) {
-    std::string test_varname = "Test_" + sup_previous_to_varname(varname);
-    std::string test_multname = "Test_" + sup_previous_to_varname(multname);
+    std::string test_varname = "Test_" + sup_previous_and_dot_to_varname(varname);
+    std::string test_multname = "Test_" + sup_previous_and_dot_to_varname(multname);
 
     std::string expr
       = "(" + test_multname+ ")*(1-Det(Id(meshdim)+Grad_" + varname + "))"

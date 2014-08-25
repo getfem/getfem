@@ -2319,9 +2319,9 @@ namespace getfem {
                               const std::string &u,
                               const std::string &lambda,
                               const std::string &w = "") {
-      std::string test_u = "Test_" + sup_previous_to_varname(u);
-      std::string test_u_group = "Test_" + sup_previous_to_varname(u_group);
-      std::string test_lambda = "Test_" + sup_previous_to_varname(lambda);
+      std::string test_u = "Test_" + sup_previous_and_dot_to_varname(u);
+      std::string test_u_group = "Test_" + sup_previous_and_dot_to_varname(u_group);
+      std::string test_lambda = "Test_" + sup_previous_and_dot_to_varname(lambda);
       GMM_ASSERT1(is_slave || is_master, "The contact boundary should be "
                   "either master, slave or both");
       const mesh_fem *mf = md.pmesh_fem_of_variable(u);

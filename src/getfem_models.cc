@@ -2057,7 +2057,7 @@ namespace getfem {
           it2 = variables.find(term.var2);
           I2 = it2->second.I;
           if (!(it2->second.is_variable)) {
-            std::string vorgname = sup_previous_to_varname(term.var2);
+            std::string vorgname = sup_previous_and_dot_to_varname(term.var2);
             VAR_SET::iterator it3 = variables.find(vorgname);
             GMM_ASSERT1(it3->second.is_variable,
                         "Assembly of data not allowed");
@@ -2225,6 +2225,7 @@ namespace getfem {
           }
         } else {
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious) {
+            cout << "adding a matrix term with alpha = " << alpha << endl;
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {
@@ -2885,7 +2886,7 @@ namespace getfem {
     
     for (size_type i = 0; i < vl.size(); ++i) {
       for (size_type j = 0; j < orgs.size(); ++j) 
-        GMM_ASSERT1(vl[i].compare(orgs[j]), "Linear generic brick linkink an "
+        GMM_ASSERT1(vl[i].compare(orgs[j]), "Linear generic brick linking an "
                     "affine dependent variable and its original variable is "
                     "not allowed. Split the brick");
     }

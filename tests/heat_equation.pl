@@ -63,7 +63,7 @@ sub start_program { # (N, K, NX, OPTION, SOLVER)
   #    print $_;
       ($a, $b) = split('=', $_);
       # print "La norme en question :", $b;
-      if ($b > 0.0006) {
+      if ($b > 0.002) {
 	print "\nError too large: $b\n";
 	print "./heat_equation $tmp $def 2>&1 failed\n";
 	$er = 1; 
