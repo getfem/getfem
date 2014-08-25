@@ -36,8 +36,12 @@ void gf_mesh_im_data(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out)
   getfemint_mesh_im *mim = NULL;
   getfemint_mesh_im_data *mimd = NULL;
 
-  /*@INIT MIMD = ('.mesh_im', @tmim mim)
-    Build a new @tmimd object linked to a @tmim object.
+  /*@INIT MIMD = ('.mesh_im', @tmim mim, @int region, @ivec size)
+    Build a new @tmimd object linked to a @tmim object. If `region` is
+    provided, considered integration points are filtered in this region.
+    `size` is a vector of integers that specifies the dimensions of the
+    stored data per integration point. If not given, the scalar stored
+    data are considered.
   @*/
   mim = m_in.pop().to_getfemint_mesh_im();
   size_type rnum = size_type(-1);

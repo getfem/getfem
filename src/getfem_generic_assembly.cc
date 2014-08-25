@@ -1708,7 +1708,7 @@ namespace getfem {
       const base_tensor &t = *args[0];
       size_type N = t.size();
       scalar_type no = gmm::vect_norm2(t.as_vector());
-      scalar_type no2 = no*no, no3 = no*no2;
+      scalar_type no3 = no*no*no;
 
       if (no < 1E-25) no = 1E-25; // In order to avoid infinite values
       
@@ -7872,7 +7872,7 @@ namespace getfem {
         }
         rmi.instructions.push_back(pgai);
 
-      } else { // Acces to a component of the tensor
+      } else { // Access to a component of the tensor
         bgeot::multi_index mi1(size0.size()), indices;
         if (pnode->t.size() == 1) {
           for (size_type i = 0; i < child0->tensor_order(); ++i)

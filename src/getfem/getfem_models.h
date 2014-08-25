@@ -161,7 +161,7 @@ namespace getfem {
       bool is_variable;  // This is a variable or a parameter.
       bool is_disabled;  // For a variable, to be solved or not
       bool is_complex;   // The variable is complex numbers
-      bool is_affine_dependent;   // The variable depend in an affine way to another
+      bool is_affine_dependent;   // The variable depends in an affine way to another
                                   // variable. 
       bool is_fem_dofs;  // The variable is the dofs of a fem
       var_description_filter filter; // A filter on the dofs is applied or not.
@@ -850,7 +850,7 @@ namespace getfem {
 
 
     /** Adds a "virtual" variable be an affine depedent variable with respect
-        to another variable. Mainly used for tie integration scheme for
+        to another variable. Mainly used for time integration scheme for
         instance to represent time derivative of variables.
         `alpha` is the multiplicative scalar of the dependency. */
     void add_affine_dependent_variable(const std::string &name,
@@ -1163,7 +1163,7 @@ namespace getfem {
   //
   //=========================================================================
 
-  /** The time integration scheme object furnisheses the necessary methods
+  /** The time integration scheme object provides the necessary methods
       for the model object to apply a time integration scheme to an
       evolutionnary problem.
   **/

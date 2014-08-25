@@ -1600,8 +1600,7 @@ namespace getfem {
       // if (pf_s_y0->need_G())
       bgeot::vectors_to_base_matrix(G, m_y0.points_of_convex(cv_y0));
 
-      fem_interpolation_context ctx_y0(pgt_y0, pf_s_y0, y0_ref, G, cv_y0,
-                                       short_type(-1));
+      fem_interpolation_context ctx_y0(pgt_y0, pf_s_y0, y0_ref, G, cv_y0);
 
       size_type newton_iter = 0;
       for(;;) { // Newton algorithm to invert geometric transformation
@@ -2399,7 +2398,7 @@ namespace getfem {
 
         cb.expr =
           // -lambda.Test_u for non-symmetric version
-          (sym_version ? "" : ("-"+lambda+"." + test_u))
+          (sym_version ? "" : ("-"+lambda+"."+test_u))
           // -coupled_projection_def.Test_u and -coupled_projection_rig.Test_u
           // for symmetric version
           + (sym_version ? ("+ Interpolate_filter("+transformation_name+",-"
@@ -2582,7 +2581,8 @@ namespace getfem {
        md.change_mims_of_brick(indbrick, p->ml);
      }
 
-     p->add_contact_boundary(md, mim, region, is_master, is_slave, u,lambda,w);
+     p->add_contact_boundary(md, mim, region, is_master, is_slave,
+                             u, lambda, w);
   } 
 
   size_type add_integral_large_sliding_contact_brick_raytracing

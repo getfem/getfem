@@ -27,7 +27,7 @@ However, this brick consider that the expression is nonlinear. This brick is esp
 
 with the same arguments. Conversely, this brick alway assume that the term corresponding to ``expr`` is linear and the assembly will be performed only once if the data used do not change. Thus, you have to care that your expression is indeed linear (affine in fact) with respect to each variable. Otherwise, the result is of course not guaranted. Source terms in the expression are taken into account. Still for linear problem, it is possible to perform the assembly of a sole source term thanks to::
 
-  size_type getfem::add_dource_term_generic_assembly_brick(md, mim, expr,
+  size_type getfem::add_source_term_generic_assembly_brick(md, mim, expr,
                          region = -1);
 
 with again the same arguments except the symmetry and coercivness. This brick performs the assembly of the corresponding order 1 term (residual vector) and add it as a right hand side to the problem. The assembly will be performed only once, so the term should not depend on the variables of the model (but could depend of course on the constants).

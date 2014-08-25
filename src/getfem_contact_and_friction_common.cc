@@ -613,8 +613,7 @@ namespace getfem {
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
           bgeot::vectors_to_base_matrix
             (G, mfu.linked_mesh().points_of_convex(cv));
-          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                        short_type(-1));
+          fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
 
           size_type nb_pt_on_face = 0;
           dal::bit_vector points_on_face;
@@ -1356,8 +1355,7 @@ namespace getfem {
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
             bgeot::vectors_to_base_matrix
               (G, mfu.linked_mesh().points_of_convex(cv));
-            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv,
-                                          short_type(-1));
+            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
             
             bgeot::pconvex_structure cvs = pgt->structure();
             size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
@@ -2042,7 +2040,7 @@ namespace getfem {
 
   //=========================================================================
   //
-  //  Specific nonlinear operator of the high-level generic assembly langage
+  //  Specific nonlinear operator of the high-level generic assembly language
   //  dedicated to contact/friction
   //
   //=========================================================================

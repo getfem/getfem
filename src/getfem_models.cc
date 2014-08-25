@@ -394,7 +394,7 @@ namespace getfem {
       gmm::resize(rTM, tot_size, tot_size);
       gmm::resize(rrhs, tot_size);
     }
-    
+
     actualized = true;
 //     #if GETFEM_PARA_LEVEL > 1
 //     cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
@@ -424,12 +424,12 @@ namespace getfem {
         ost << std::setw(8) << std::right << si;
         if (is_complex()) ost << " complex";
         ost << " double" << ((si > 1) ? "s." : ".");
-	if (it->second.is_variable && 
+        if (it->second.is_variable && 
             variable_is_disabled(it->first)) ost << "\t (disabled)";
         else                                 ost << "\t           ";
         if (it->second.pim_data != 0) ost << "\t (is im_data)";
-	if (it->second.is_affine_dependent) ost << "\t (is affine dependent)";
-	ost << endl;
+        if (it->second.is_affine_dependent) ost << "\t (is affine dependent)";
+        ost << endl;
       }
     }
   }
@@ -2132,8 +2132,7 @@ namespace getfem {
                   gmm::add(gmm::scaled(brick.cveclist_sym[k][j],
                                        brick.coeffs[k]),
                            gmm::sub_vector(crhs, I2));
-              }
-              else {
+              } else {
                 gmm::add(gmm::scaled(brick.cveclist_sym[0][j],
                                      complex_type(alpha2)),
                          gmm::sub_vector(crhs, I2));
@@ -2867,7 +2866,7 @@ namespace getfem {
     bool is_lin = workspace.used_variables(vl, dl, 2);
     GMM_ASSERT1(is_lin, "Nonlinear term");
     if (order == 0) { is_coercive = is_sym = true; }
-    GMM_ASSERT1(order <= 1, "This brick do not support an order two term");
+    GMM_ASSERT1(order <= 1, "This brick does not support a second order term");
     pbrick pbr = new gen_linear_assembly_brick(expr, is_sym, is_coercive,
                                                (order == 0), brickname);
     model::termlist tl; // A unique global term
@@ -2875,7 +2874,7 @@ namespace getfem {
 
 
     // Test when an affine dependent variable is used if its original variable
-    // is also used. Bot allowed because of the treatment of the rhs in
+    // is also used. Not allowed because of the treatment of the rhs in
     // model::assembly. Can be weakened to test functions of the same kind,
     // with an adaptation of model::assembly.
     model::varnamelist orgs;

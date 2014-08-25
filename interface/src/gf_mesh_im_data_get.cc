@@ -101,7 +101,7 @@ void gf_mesh_im_data_get(getfemint::mexargs_in& m_in,
        );
 
     /*@GET ('tensor size')
-      Output the size of the stored data (per integration point).
+      Output the dimensions of the stored data (per integration point).
     @*/
     sub_command
       ("tensor size", 0, 0, 0, 1,
