@@ -2225,7 +2225,6 @@ namespace getfem {
           }
         } else {
           if (term.is_matrix_term && (version & BUILD_MATRIX) && !isprevious) {
-            cout << "adding a matrix term with alpha = " << alpha << endl;
             gmm::add(gmm::scaled(brick.rmatlist[j], alpha),
                      gmm::sub_matrix(rTM, I1, I2));
             if (term.is_symmetric && I1.first() != I2.first()) {

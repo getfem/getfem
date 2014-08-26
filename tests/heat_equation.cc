@@ -286,7 +286,6 @@ bool heat_equation_problem::solve(void) {
     getfem::standard_solve(model, iter);
     cout << "t = " << model.get_time() << endl;
     gmm::copy(model.real_variable("u"), U);
-    cout << "U = " << gmm::sub_vector(U, gmm::sub_interval(0, 20)) << endl;
     if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
       char s[100]; sprintf(s, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
