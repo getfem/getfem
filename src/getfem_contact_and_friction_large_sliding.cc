@@ -1411,8 +1411,7 @@ namespace getfem {
           (G, mfu.linked_mesh().points_of_convex(cv));
 
         pfem_precomp pfp = fppool(pf_s, &(pgt->geometric_nodes()));
-        fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv,
-                                      short_type(-1));
+        fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
 
         size_type nb_pt_on_face = 0;
         gmm::clear(n_mean);
@@ -2312,7 +2311,7 @@ namespace getfem {
     model::varnamelist vl, dl;
     model::mimlist ml;
 
-    bool sym_version;
+    bool sym_version, frame_indifferent;
 
     void add_contact_boundary(model &md, const mesh_im &mim, size_type region,
                               bool is_master, bool is_slave,
@@ -2367,34 +2366,44 @@ namespace getfem {
       cb.is_slave = is_slave;
       cb.mim = &mim;
       if (is_slave) {
+        std::string n, n0, Vs, g, Y;
+        n = "Transformed_unit_vector(Grad_"+u+", Normal)";
+        n0 = "Transformed_unit_vector(Grad_"+w+", Normal)";
+
         // Coulomb_friction_coupled_projection(lambda,
         //    Transformed_unit_vector(Grad_u, Normal),
         //    (u-Interpolate(ug,trans)-(w-Interpolate(wg,trans)))*alpha,
         //    (Interpolate(X,trans)+Interpolate(ug,trans)-X-u).
         //      Transformed_unit_vector(Grad_u, Normal), f, r)
+        Y = "Interpolate(X,"+transformation_name+")";
+        g = "("+Y+"+Interpolate("+u_group+","+transformation_name+")-X-"+u+")."+n;
+        Vs = "("+u+"-Interpolate("+u_group+","+transformation_name+")";
+        if (w.size()) {
+          Vs += "-"+w+"+Interpolate("+w_group+","+transformation_name+")";
+          if (frame_indifferent)
+            Vs += "+("+g+")*("+n+"-"+n0+")";
+        }
+        Vs  += ")*"+alpha;
+
         std::string coupled_projection_def =
           "Coulomb_friction_coupled_projection("
-          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),"
-          + "("+u+"-Interpolate("+u_group+","+transformation_name+")"
-          + (w.size() 
-             ? ("-"+w+"+Interpolate("+w_group+","+transformation_name+")")
-             : "")
-          +")*"+alpha+","
-          + "(Interpolate(X,"+transformation_name+")+Interpolate("+u_group+","
-          + transformation_name+")-X-"+u+").Transformed_unit_vector(Grad_"
-          + u+", Normal),"+friction_coeff+","+augmentation_param+")";
+          + lambda+","+n+","+Vs+","+g+","+friction_coeff+","
+          + augmentation_param+")";
 
         // Coulomb_friction_coupled_projection(lambda,
         //   Transformed_unit_vector(Grad_u, Normal), (u-w)*alpha,
         //   (Interpolate(X,trans)-X-u).Transformed_unit_vector(Grad_u,
         //                                                      Normal), f, r)
+        g = "(Interpolate(X,"+transformation_name+")-X-"+u+")."+n;
+        if (frame_indifferent && w.size())
+          Vs = "("+u+"-"+w+"+"+g+"*("+n+"-"+n0+"))*"+alpha;
+        else
+          Vs = "("+u+(w.size() ? ("-"+w):"")+")*"+alpha;
+
         std::string coupled_projection_rig =
           "Coulomb_friction_coupled_projection("
-          + lambda+", Transformed_unit_vector(Grad_"+u+", Normal),"
-          + "("+u+(w.size() ? ("-"+w):"")+")*"+alpha
-          + ",(Interpolate(X,"+transformation_name+")-X-"+u
-          + ").Transformed_unit_vector(Grad_"+u+", Normal),"
-          + friction_coeff+","+augmentation_param+")";
+          + lambda+","+n+","+Vs+","+g+","+ friction_coeff+","
+          + augmentation_param+")";
 
         cb.expr =
           // -lambda.Test_u for non-symmetric version
@@ -2466,13 +2475,15 @@ namespace getfem {
     (const std::string &r,
      const std::string &f_coeff,const std::string &ug,
      const std::string &wg, const std::string &tr,
-     const std::string &alpha_ = "1", bool sym_v = false) {
-      sym_version = sym_v;
+     const std::string &alpha_ = "1", bool sym_v = false,
+     bool frame_indiff = false) {
       transformation_name = tr;
       u_group = ug; w_group = wg;
       friction_coeff = f_coeff;
       alpha = alpha_;
       augmentation_param = r;
+      sym_version = sym_v;
+      frame_indifferent = frame_indiff;
       
       set_flags("Integral large sliding contact bick raytracing",
                 false /* is linear*/,
@@ -2588,7 +2599,7 @@ namespace getfem {
   size_type add_integral_large_sliding_contact_brick_raytracing
   (model &md, const std::string &augm_param,
    scalar_type release_distance, const std::string &f_coeff, 
-   const std::string &alpha, bool sym_v) {
+   const std::string &alpha, bool sym_v, bool frame_indifferent) {
 
     char ugroupname[50], wgroupname[50], transname[50];
     for (int i = 0; i < 10000; ++i) {
@@ -2621,7 +2632,8 @@ namespace getfem {
     
     intergral_large_sliding_contact_brick_raytracing *p
       = new intergral_large_sliding_contact_brick_raytracing
-      (augm_param, f_coeff, ugroupname, wgroupname, transname, alpha, sym_v);
+      (augm_param, f_coeff, ugroupname, wgroupname, transname, alpha,
+       sym_v, frame_indifferent);
     pbrick pbr = p;
     p->dl = dl;
 

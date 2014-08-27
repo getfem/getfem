@@ -2968,7 +2968,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       (not fully symmetric even without friction). @*/
 
      sub_command
-       ("add integral large sliding contact brick raytracing", 2, 5, 0, 1,
+       ("add integral large sliding contact brick raytracing", 2, 6, 0, 1,
         
         std::string dataname_r = in.pop().to_string();
         scalar_type d = in.pop().to_scalar();
@@ -2980,10 +2980,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         if (dataname_alpha.size() == 0) dataname_alpha = "1";
         bool sym_v = false;
         if (in.remaining()) sym_v = (in.pop().to_integer() != 0);
+        bool frame_indifferent = false;
+        if (in.remaining()) frame_indifferent = (in.pop().to_integer() != 0);
 
         size_type  ind
         = getfem::add_integral_large_sliding_contact_brick_raytracing
-        (md->model(), dataname_r, d, dataname_fr, dataname_alpha, sym_v);
+        (md->model(), dataname_r, d, dataname_fr, dataname_alpha, sym_v,
+         frame_indifferent);
         out.pop().from_integer(int(ind + config::base_index()));
         );
 
@@ -3045,7 +3048,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
       (allowing the self-contact). @*/
     sub_command
       ("add master slave contact boundary to large sliding contact brick",
-       4, 5, 0, 0,
+       5, 6, 0, 0,
        size_type ind = in.pop().to_integer() - config::base_index();
        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
        size_type region = in.pop().to_integer();
