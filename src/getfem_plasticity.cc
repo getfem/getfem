@@ -23,6 +23,7 @@
 #include "getfem/getfem_models.h"
 #include "getfem/getfem_plasticity.h"
 #include "getfem/getfem_interpolation.h"
+#include "getfem/getfem_generic_assembly.h"
 
 
 namespace getfem {
@@ -677,6 +678,149 @@ namespace getfem {
 
   }
 
+
+
+
+
+  //=========================================================================
+  //
+  //  Specific nonlinear operators of the high-level generic assembly
+  //  language, useful for plasticity modeling
+  //
+  //=========================================================================
+
+  // static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
+  static void ga_init_vector(bgeot::multi_index &mi, size_type N)
+  { mi.resize(1); mi[0] = N; }
+  static void ga_init_matrix(bgeot::multi_index &mi, size_type M, size_type N)
+  { mi.resize(2); mi[0] = M; mi[1] = N; }
+  static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
+  { mi.resize(2); mi[0] = mi[1] = N; }
+
+
+  bool expm(const base_matrix &a, base_matrix &aexp, scalar_type tol=1e-15) {
+
+    base_matrix atmp(a), an(a);
+    gmm::copy(a, aexp);
+    gmm::add(gmm::identity_matrix(), aexp);
+    scalar_type factn(1);
+    for (size_type n=2; n < 20; ++n) {
+      factn /= scalar_type(n);
+      gmm::mult(an, a, atmp);
+      gmm::copy(atmp, an);
+      gmm::scale(atmp, factn);
+      gmm::add(atmp, aexp);
+      if (gmm::mat_euclidean_norm(atmp) < tol) return true;
+    }
+    return false;
+  }
+
+  bool expm_deriv(const base_matrix &a, base_tensor &daexp, scalar_type tol=1e-15) {
+
+    size_type N = gmm::mat_nrows(a);
+    size_type N2 = N*N;
+    base_vector factnn(20);
+    base_matrix atmp(N,N), an(a), aexp(a);
+    base_tensor ann(bgeot::multi_index(N,N,20));
+    gmm::add(gmm::identity_matrix(), aexp);
+    gmm::copy(gmm::identity_matrix(), atmp);
+    std::copy(atmp.begin(), atmp.end(), ann.begin());
+    factnn[1] = 1;
+    std::copy(a.begin(), a.end(), ann.begin()+N2);
+    size_type n;
+    for (n=2; n < 20; ++n) {
+      factnn[n] = factnn[n-1]/scalar_type(n);
+      gmm::mult(an, a, atmp);
+      gmm::copy(atmp, an);
+      std::copy(an.begin(), an.end(), ann.begin()+n*N2);
+      gmm::scale(atmp, factnn[n]);
+      gmm::add(atmp, aexp);
+      if (gmm::mat_euclidean_norm(atmp) < tol) break;
+      else if (n == 19) return false;
+    }
+
+    gmm::clear(daexp.as_vector());
+    for (--n; n >= 1; --n) {
+	   scalar_type factn = factnn[n];
+      for (size_type m=1; m <= n; ++m)
+        for (size_type l=0; l < N; ++l)
+          for (size_type k=0; k < N; ++k)
+            for (size_type j=0; j < N; ++j)
+              for (size_type i=0; i < N; ++i)
+                daexp(i,j,k,l) += factn*ann(i,k,m-1)*ann(l,j,n-m);
+	}
+    return true;
+  }
+
+  // not tested
+  bool logm(const base_matrix &a, base_matrix &alog, scalar_type tol=1e-15) {
+
+    base_matrix atmp(a), b(a), bn(a);
+    gmm::copy(gmm::scaled(a, scalar_type(-1)), b);
+    gmm::add(gmm::identity_matrix(), b); // b = I-a
+    gmm::copy(b, alog);
+    gmm::copy(b, bn);
+    for (size_type n=2; n < 30; ++n) {
+      gmm::mult(bn, b, atmp);
+      gmm::copy(atmp, bn);
+      gmm::scale(atmp, scalar_type(1)/scalar_type(n));
+      gmm::add(atmp, alog);
+      if (gmm::mat_euclidean_norm(atmp) < tol) {
+        gmm::scale(alog, scalar_type(-1));
+        return true;
+      }
+    }
+    gmm::scale(alog, scalar_type(-1));
+    return false;
+  }
+
+
+  // Matrix exponential
+  struct matrix_exponential_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
+      return true;
+    }
+
+    // Value:
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix inpmat(N,N), outmat(N,N);
+      gmm::copy(args[0]->as_vector(), inpmat.as_vector());
+      expm(inpmat, outmat);
+      gmm::copy(outmat.as_vector(), result.as_vector());
+    }
+
+    // Derivative:
+    void derivative(const arg_list &args, size_type /*nder*/,
+                    base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix inpmat(N,N), outmat(N,N);
+      gmm::copy(args[0]->as_vector(), inpmat.as_vector());
+      expm_deriv(inpmat, result);
+    }
+
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+
+  static bool init_predef_operators(void) {
+
+    ga_predef_operator_tab &PREDEF_OPERATORS
+      = dal::singleton<ga_predef_operator_tab>::instance();
+    
+    PREDEF_OPERATORS.add_method("expm",
+                                new matrix_exponential_operator());
+    return true;
+   }
+
+  static bool predef_operators_initialized = init_predef_operators();
 
 }  /* end of namespace getfem.  */
 
