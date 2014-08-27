@@ -1,10 +1,10 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
- 
+
  Copyright (C) 2000-2013 Yves Renard
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -17,7 +17,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
  instantiate  templates  or  use macros or inline functions from this file,
@@ -26,7 +26,7 @@
  to be covered  by the GNU Lesser General Public License.  This   exception
  does not  however  invalidate  any  other  reasons why the executable file
  might be covered by the GNU Lesser General Public License.
- 
+
 ===========================================================================*/
 
 /**@file bgeot_tensor.h
@@ -44,7 +44,7 @@
 namespace bgeot {
 
   /* ********************************************************************* */
-  /*		Class tensor<T>.     		                           */
+  /*                Class tensor<T>.                                       */
   /* ********************************************************************* */
 
   typedef size_t size_type;
@@ -52,7 +52,7 @@ namespace bgeot {
 
   class multi_index : public std::vector<size_type> {
   public :
-    
+
     void incrementation(const multi_index &m) {
       iterator it = begin(), ite = end();
       const_iterator itm = m.begin();
@@ -61,16 +61,16 @@ namespace bgeot {
         while (*it >= *itm && it != (ite-1)) { *it = 0; ++it; ++itm; ++(*it); }
       } else resize(1);
     }
-    
+
     void reset(void) { std::fill(begin(), end(), 0); }
-    
+
     inline bool finished(const multi_index &m) {
       if (m.size() == 0)
         return  (size() == 1);
       else
         return ((*this)[size()-1] >= m[size()-1]);
     }
-    
+
     multi_index(size_t n) : std::vector<size_type>(n)
     { std::fill(begin(), end(), size_type(0)); }
     multi_index(size_type i, size_type j)
@@ -81,7 +81,7 @@ namespace bgeot {
     { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; }
     multi_index(size_type i, size_type j, size_type k, size_type l)
       : std::vector<size_type>(4)
-    { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; } 
+    { (*this)[0] = i; (*this)[1] = j; (*this)[2] = k; (*this)[3] = l; }
 
     multi_index(void) {}
 
@@ -91,19 +91,19 @@ namespace bgeot {
         if (m[i] != (*this)[i]) return false;
       return true;
     }
-    
+
     size_type memsize() const {
-      return std::vector<size_type>::capacity()*sizeof(size_type) + 
-	sizeof(multi_index);
+      return std::vector<size_type>::capacity()*sizeof(size_type) +
+        sizeof(multi_index);
     }
   };
 
   inline std::ostream &operator <<(std::ostream &o,
-				   const multi_index& mi) { /* a compiler ...*/
+                                   const multi_index& mi) { /* a compiler ...*/
     multi_index::const_iterator it = mi.begin(), ite = mi.end();
     bool f = true;
     o << "(";
-    for ( ; it != ite; ++it) 
+    for ( ; it != ite; ++it)
       { if (!f) o << ", "; o << *it; f = false; }
     o << ")";
     return o;
@@ -113,7 +113,7 @@ namespace bgeot {
     protected:
 
     multi_index sizes_, coeff;
-      
+
     public:
 
     typedef typename std::vector<T>::size_type size_type;
@@ -127,13 +127,13 @@ namespace bgeot {
       multi_index::const_iterator qv = sizes_.begin();
 #endif
       size_type d = 0;
-      for ( ; q != e; ++q, ++it) { 
+      for ( ; q != e; ++q, ++it) {
         d += (*q) * (*it);
         GMM_ASSERT2(*it < *qv++, "Index out of range.");
       }
       return *(this->begin() + d);
     }
-    
+
     inline T& operator ()(size_type i, size_type j, size_type k,
                           size_type l) {
       GMM_ASSERT2(order() == 4, "Bad tensor order.");
@@ -141,21 +141,21 @@ namespace bgeot {
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
-    
+
     inline T& operator ()(size_type i, size_type j, size_type k) {
       GMM_ASSERT2(order() == 3, "Bad tensor order.");
       size_type d = coeff[0]*i + coeff[1]*j + coeff[2]*k;
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
-    
+
     inline T& operator ()(size_type i, size_type j) {
       GMM_ASSERT2(order() == 2, "Bad tensor order");
-	size_type d = coeff[0]*i + coeff[1]*j;
-	GMM_ASSERT2(d < size(), "Index out of range.");
-	return *(this->begin() + d);
+        size_type d = coeff[0]*i + coeff[1]*j;
+        GMM_ASSERT2(d < size(), "Index out of range.");
+        return *(this->begin() + d);
     }
-    
+
     inline const T& operator ()(size_type i, size_type j, size_type k,
                                 size_type l) const {
       GMM_ASSERT2(order() == 4, "Bad tensor order.");
@@ -163,7 +163,7 @@ namespace bgeot {
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
-    
+
     inline const T& operator ()(size_type i, size_type j,
                                 size_type k) const {
       GMM_ASSERT2(order() == 3, "Bad tensor order.");
@@ -171,7 +171,7 @@ namespace bgeot {
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
-    
+
     inline const T& operator ()(size_type i, size_type j) const {
       GMM_ASSERT2(order() == 2, "Bad tensor order.");
       size_type d = coeff[0]*i + coeff[1]*j;
@@ -187,12 +187,12 @@ namespace bgeot {
       GMM_ASSERT2(d < size(), "Index out of range.");
       return *(this->begin() + d);
     }
-    
+
     inline size_type size(void) const { return std::vector<T>::size(); }
     inline size_type size(size_type i) const { return sizes_[i]; }
     inline const multi_index &sizes(void) const { return sizes_; }
     inline size_type order(void) const { return sizes_.size(); }
-    
+
     void init(const multi_index &c) {
       multi_index::const_iterator it = c.begin();
       size_type d = 1;
@@ -207,7 +207,7 @@ namespace bgeot {
       coeff.resize(2); coeff[0] = 1; coeff[1] = i;
       this->resize(i*j);
     }
-    
+
     void adjust_sizes(const multi_index &mi) {
       if (!mi.size() || (mi.size() != sizes().size())
           || !(std::equal(mi.begin(), mi.end(), sizes().begin())))
@@ -216,7 +216,7 @@ namespace bgeot {
 
     void adjust_sizes(size_type i, size_type j)
     { if (sizes_.size() != 2 || sizes_[0] != i || sizes_[1] != j) init(i, j); }
-    
+
     tensor(const multi_index &c) { init(c); }
     tensor(size_type i, size_type j, size_type k, size_type l)
     { init(multi_index(i, j, k, l)); }
@@ -227,28 +227,36 @@ namespace bgeot {
      */
     void mat_reduction(const tensor &t, const gmm::dense_matrix<T> &m, int ni);
     void mat_transp_reduction(const tensor &t, const gmm::dense_matrix<T> &m,
-			      int ni);
+                              int ni);
     /** mm(i,j) = t(i,j,k,l) * m(k,l); For order four tensor. */
     void mat_mult(const gmm::dense_matrix<T> &m, gmm::dense_matrix<T> &mm);
-    
+
+    /** tt = t(...) * t2(...)  */
+    void product(const tensor &t2, tensor &tt);
+    /** tt = t(...,k) * t2(k,...)  */
+    void dot_product(const tensor &t2, tensor &tt);
+    void dot_product(const gmm::dense_matrix<T> &m, tensor &tt);
+    /** tt = t(...,k,l) * t2(k,l,...)  */
+    void double_dot_product(const tensor &t2, tensor &tt);
+    void double_dot_product(const gmm::dense_matrix<T> &m, tensor &tt);
 
     size_type memsize() const {
       return sizeof(T) * this->size()
-	+ sizeof(*this) + sizes_.memsize() + coeff.memsize();
+        + sizeof(*this) + sizes_.memsize() + coeff.memsize();
     }
 
     std::vector<T> &as_vector(void) { return *this; }
     const std::vector<T> &as_vector(void) const { return *this; }
-    
+
 
     tensor<T>& operator +=(const tensor<T>& w)
     { gmm::add(w.as_vector(), this->as_vector()); return *this; }
-    
+
     tensor<T>& operator -=(const tensor<T>& w) {
       gmm::add(gmm::scaled(w.as_vector(), T(-1)), this->as_vector());
       return *this;
     }
-    
+
     tensor<T>& operator *=(const scalar_type w)
     { gmm::scale(this->as_vector(), w); return *this; }
 
@@ -257,21 +265,21 @@ namespace bgeot {
   };
 
   template<class T> void tensor<T>::mat_transp_reduction
-  (const tensor &t, const gmm::dense_matrix<T> &m, int ni) { 
+  (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice          */
     /* transposee de m.                                                */
-    
-	DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
-	DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
-	DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
+
+        DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
+        DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
+        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
 
     if (!isinit) {
       tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
     }
-    
+
     *mi = t.sizes();
     size_type dimt = (*mi)[ni], dim = m.nrows();
-    
+
     GMM_ASSERT2(dimt == m.ncols(), "Dimensions mismatch.");
     GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
 
@@ -284,21 +292,21 @@ namespace bgeot {
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
-      if ((*mi)[ni] != 0) { 
-	for (size_type k = 0; k <= size_type(ni); ++k)
-	  (*mi)[k] = size_type(sizes()[k] - 1);
-	pf += dd; pft += ddt;
+      if ((*mi)[ni] != 0) {
+        for (size_type k = 0; k <= size_type(ni); ++k)
+          (*mi)[k] = size_type(sizes()[k] - 1);
+        pf += dd; pft += ddt;
       }
       else {
-	const_iterator pl = pft; iterator pt = tmp->begin();
-	for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
-	
-	iterator pff = pf;
-	for (size_type k = 0; k < dim; ++k, pff += co) {
-	  *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
-	  for (size_type l = 0; l < dimt; ++l, ++pt, pl += dim)
-	    *pff += (*pl) * (*pt);
-	}
+        const_iterator pl = pft; iterator pt = tmp->begin();
+        for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
+
+        iterator pff = pf;
+        for (size_type k = 0; k < dim; ++k, pff += co) {
+          *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
+          for (size_type l = 0; l < dimt; ++l, ++pt, pl += dim)
+            *pff += (*pl) * (*pt);
+        }
       }
   }
 
@@ -322,13 +330,13 @@ namespace bgeot {
         ++pm;
       }
   }
-  
+
   template<class T> void tensor<T>::mat_reduction
   (const tensor &t, const gmm::dense_matrix<T> &m, int ni) {
     /* reduction du tenseur t par son indice ni et la matrice m.       */
-	DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
-	DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
-	DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
+        DEFINE_STATIC_THREAD_LOCAL(std::vector<T>*,tmp);
+        DEFINE_STATIC_THREAD_LOCAL(multi_index*,mi);
+        DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(bool,isinit,false);
     if (!isinit) {
       tmp = new std::vector<T>(3); mi = new multi_index(); isinit = true;
     }
@@ -336,7 +344,7 @@ namespace bgeot {
     size_type dimt = (*mi)[ni], dim = m.ncols();
     GMM_ASSERT2(dimt == m.nrows(), "Dimensions mismatch.");
     GMM_ASSERT2(&t != this, "Does not work when t and *this are the same.");
-    
+
     (*mi)[ni] = dim;
     if (tmp->size() < dimt) tmp->resize(dimt);
     adjust_sizes(*mi);
@@ -346,24 +354,128 @@ namespace bgeot {
     size_type ddt = t.coeff[ni]*(t.sizes()[ni]-1)-1, cot = t.coeff[ni];
     std::fill(mi->begin(), mi->end(), 0);
     for (;!mi->finished(sizes()); mi->incrementation(sizes()), ++pf, ++pft)
-      if ((*mi)[ni] != 0) { 
-	for (size_type k = 0; k <= size_type(ni); ++k)
-	  (*mi)[k] = size_type(sizes()[k] - 1);
-	pf += dd; pft += ddt;
+      if ((*mi)[ni] != 0) {
+        for (size_type k = 0; k <= size_type(ni); ++k)
+          (*mi)[k] = size_type(sizes()[k] - 1);
+        pf += dd; pft += ddt;
       }
       else {
-	const_iterator pl = pft; iterator pt = tmp->begin();
-	for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
-	
-	iterator pff = pf; pl = m.begin();
-	for (size_type k = 0; k < dim; ++k, pff += co) {
-	  *pff = T(0); pt = tmp->begin();
-	  for (size_type l = 0; l < dimt; ++l, ++pt, ++pl)
-	    *pff += (*pl) * (*pt);
-	}
+        const_iterator pl = pft; iterator pt = tmp->begin();
+        for(size_type k = 0; k < dimt; ++k, pl += cot, ++pt) *pt = *pl;
+
+        iterator pff = pf; pl = m.begin();
+        for (size_type k = 0; k < dim; ++k, pff += co) {
+          *pff = T(0); pt = tmp->begin();
+          for (size_type l = 0; l < dimt; ++l, ++pt, ++pl)
+            *pff += (*pl) * (*pt);
+        }
       }
   }
-  
+
+
+  template<class T> void tensor<T>::product(const tensor<T> &t2,
+                                            tensor<T> &tt) {
+    size_type res_order = order() + t2.order();
+    multi_index res_size(res_order);
+    for (size_type i = 0 ; i < this->order(); ++i) res_size[i] = this->size(i);
+    for (size_type i = 0 ; i < t2.order(); ++i) res_size[order() + i] = t2.size(i);
+    tt.adjust_sizes(res_size);
+    gmm::clear(tt.as_vector());
+
+    size_type size1 = this->size();
+    size_type size2 = t2.size();
+    const_iterator pt2 = t2.begin();
+    iterator ptt = tt.begin();
+    for (size_type j = 0; j < size2; ++j, ++pt2) {
+      const_iterator pt1 = this->begin();
+      for (size_type i = 0; i < size1; ++i, ++pt1, ++ptt)
+        *ptt += *pt1 * (*pt2);
+    }
+  }
+
+
+  template<class T> void tensor<T>::dot_product(const tensor<T> &t2,
+                                                tensor<T> &tt) {
+    GMM_ASSERT2(size(order()-1) == t2.size(0),
+                "Dimensions mismatch between last dimension of first tensor "
+                "and first dimension of second tensor.");
+    size_type res_order = order() + t2.order() - 2;
+    multi_index res_size(res_order);
+    for (size_type i = 0 ; i < this->order() - 1; ++i) res_size[i] = this->size(i);
+    for (size_type i = 0 ; i < t2.order() - 1; ++i) res_size[order() - 1 + i] = t2.size(i);
+    tt.adjust_sizes(res_size);
+    gmm::clear(tt.as_vector());
+
+    size_type size0 = t2.size(0);
+    size_type size1 = this->size()/size0;
+    size_type size2 = t2.size()/size0;
+    const_iterator pt2 = t2.begin();
+    iterator ptt = tt.begin();
+    for (size_type j = 0; j < size2; ++j) {
+      const_iterator pt1 = this->begin();
+      iterator ptt0 = ptt;
+      for (size_type q = 0; q < size0; ++q, ++pt2) {
+        ptt = ptt0;
+        for (size_type i = 0; i < size1; ++i, ++pt1, ++ptt)
+          *ptt += *pt1 * (*pt2);
+      }
+    }
+  }
+
+  template<class T> void tensor<T>::dot_product(const gmm::dense_matrix<T> &m,
+                                                tensor<T> &tt) {
+    GMM_ASSERT2(size(order()-1) == gmm::mat_nrows(m),
+                "Dimensions mismatch between last dimensions of tensor "
+                "and rows of the matrix.");
+    tensor<T> t2(multi_index(gmm::mat_nrows(m),gmm::mat_ncols(m)));
+    gmm::copy(m.as_vector(), t2.as_vector());
+    dot_product(t2, tt);
+  }
+
+
+  template<class T> void tensor<T>::double_dot_product(const tensor<T> &t2,
+                                                       tensor<T> &tt) {
+    GMM_ASSERT2(order() >= 2 && t2.order() >= 2,
+                "Tensors of wrong size. Tensors of order two or higher are required.");
+    GMM_ASSERT2(size(order()-2) == t2.size(0) && size(order()-1) == t2.size(1),
+                "Dimensions mismatch between last two dimensions of first tensor "
+                "and first two dimensions of second tensor.");
+    size_type res_order = order() + t2.order() - 4;
+    multi_index res_size(res_order);
+    for (size_type i = 0 ; i < this->order() - 2; ++i) res_size[i] = this->size(i);
+    for (size_type i = 0 ; i < t2.order() - 2; ++i) res_size[order() - 2 + i] = t2.size(i);
+    tt.adjust_sizes(res_size);
+    gmm::clear(tt.as_vector());
+
+    size_type size0 = t2.size(0)*t2.size(1);
+    size_type size1 = this->size()/size0;
+    size_type size2 = t2.size()/size0;
+    const_iterator pt2 = t2.begin();
+    iterator ptt = tt.begin();
+    for (size_type j = 0; j < size2; ++j) {
+      const_iterator pt1 = this->begin();
+      iterator ptt0 = ptt;
+      for (size_type q = 0; q < size0; ++q, ++pt2) {
+        ptt = ptt0;
+        for (size_type i = 0; i < size1; ++i, ++pt1, ++ptt)
+          *ptt += *pt1 * (*pt2);
+      }
+    }
+  }
+
+  template<class T> void tensor<T>::double_dot_product(const gmm::dense_matrix<T> &m,
+                                                       tensor<T> &tt) {
+    GMM_ASSERT2(order() >= 2,
+                "Tensor of wrong size. Tensor of order two or higher is required.");
+    GMM_ASSERT2(size(order()-2) == gmm::mat_nrows(m) &&
+                size(order()-1) == gmm::mat_ncols(m),
+                "Dimensions mismatch between last two dimensions of tensor "
+                "and dimensions of the matrix.");
+    tensor<T> t2(multi_index(gmm::mat_nrows(m),gmm::mat_ncols(m)));
+    gmm::copy(m.as_vector(), t2.as_vector());
+    double_dot_product(t2, tt);
+  }
+
 
   template<class T> std::ostream &operator <<
     (std::ostream &o, const tensor<T>& t) {
