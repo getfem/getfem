@@ -282,7 +282,9 @@ namespace getfem {
     void add_function_expression(const std::string expr);
     /* Internal use */
     void add_interpolation_expression(const std::string expr, const mesh &m,
-                                      mesh_region rg);
+                                      const mesh_region &rg=mesh_region::all_convexes());
+    void add_interpolation_expression(const std::string expr, const mesh_im &mim,
+                                      const mesh_region &rg=mesh_region::all_convexes());
 
     /** Delete all previously added expressions. */
     void clear_expressions(void);
@@ -577,6 +579,7 @@ namespace getfem {
     points_for_element(size_type cv, short_type f,
                        std::vector<size_type> &ind) const = 0;
     virtual bool use_pgp(size_type cv) const = 0;
+    virtual bool use_mim(void) const = 0;
     virtual void store_result(size_type cv, size_type i, base_tensor &t) = 0;
     virtual void finalize(void) = 0;
     virtual const mesh &linked_mesh(void) = 0;
@@ -599,16 +602,14 @@ namespace getfem {
   (const getfem::model &md, const std::string &expr, const mesh_fem &mf,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
-  // Not tested
   void ga_interpolation_mti
   (const getfem::model &md, const std::string &expr, mesh_trans_inv &mti,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes(),
    int extrapolation = 0, const mesh_region &rg_source=mesh_region::all_convexes(),
    size_type nbdof_ = size_type(-1));
 
-  // Not tested
   void ga_interpolation_im_data
-  (const getfem::model &md, const std::string &expr, im_data &imd,
+  (const getfem::model &md, const std::string &expr, const im_data &imd,
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
   //=========================================================================

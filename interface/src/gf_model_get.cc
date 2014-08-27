@@ -198,13 +198,13 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@GET V = ('interpolation', @str expr, {@tmf mf | @vec pts,  @tmesh m}[, @int region[, @int extrapolation[, @int rg_source]]])
+    /*@GET V = ('interpolation', @str expr, {@tmf mf | @tmimd mimd | @vec pts,  @tmesh m}[, @int region[, @int extrapolation[, @int rg_source]]])
       Interpolate a certain expression with respect to the mesh_fem `mf`
-      or the set of points `pts` on mesh `m`.
+      or the mesh_im_data `mimd` or the set of points `pts` on mesh `m`.
       The expression has to be valid according to the high-level generic
       assembly language possibly including references to the variables
       and data of the model.
-  
+
       The options `extrapolation` and `rg_source` are specific to
       interpolations with respect to a set of points `pts`. @*/
     sub_command
@@ -212,12 +212,17 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        std::string expr = in.pop().to_string();
        getfem::base_vector result;
        if (in.front().is_mesh_fem()) {
-         getfemint_mesh_fem *gfi_mf = in.pop().to_getfemint_mesh_fem();
-
+         const getfem::mesh_fem *mf = in.pop().to_const_mesh_fem();
          size_type rg = in.remaining() ? in.pop().to_integer()
                                        : size_type(-1);
          getfem::ga_interpolation_Lagrange_fem(md->model(), expr,
-                                               gfi_mf->mesh_fem(), result, rg);
+                                               *mf, result, rg);
+       } else if (in.front().is_mesh_im_data()) {
+         getfem::im_data *mimd = in.pop().to_mesh_im_data();
+         size_type rg = in.remaining() ? in.pop().to_integer()
+                                       : size_type(-1);
+         getfem::ga_interpolation_im_data(md->model(), expr,
+                                          *mimd, result, rg);
        } else {
          darray st = in.pop().to_darray();
          std::vector<double> PTS(st.begin(), st.end());

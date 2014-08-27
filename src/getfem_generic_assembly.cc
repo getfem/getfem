@@ -59,7 +59,7 @@ BoostMathFunction const erfc = boost::math::erfc<double>;
 namespace getfem {
   
   //=========================================================================
-  // Lexical analysis for the generic assembly langage
+  // Lexical analysis for the generic assembly language
   //=========================================================================
 
   // Basic token types
@@ -1425,7 +1425,12 @@ namespace getfem {
     bgeot::geotrans_precomp_pool gp_pool;
     fem_precomp_pool fp_pool;
 
-    typedef std::pair<const mesh_im *, const mesh_region *> region_mim;
+    struct region_mim : std::pair<const mesh_im *, const mesh_region *> {
+      const mesh_im* mim(void) const { return this->first; }
+      const mesh_region* region(void) const { return this->second; }
+      region_mim(const mesh_im *mim_, const mesh_region *region_) :
+        std::pair<const mesh_im *, const mesh_region *>(mim_, region_) {}
+    };
 
     std::map<std::string, const base_vector *> extended_vars;
     std::map<std::string, base_vector> really_extended_vars;
@@ -4191,7 +4196,7 @@ namespace getfem {
 
   void ga_workspace::add_interpolation_expression(const std::string expr,
                                                   const mesh &m,
-                                                  mesh_region rg_) {
+                                                  const mesh_region &rg_) {
     const mesh_region &rg = register_region(m, rg_);
     ga_tree tree;
     ga_read_string(expr, tree);
@@ -4200,6 +4205,21 @@ namespace getfem {
       GMM_ASSERT1(tree.root->nb_test_functions() == 0,
                   "Invalid expression containing test functions");
       add_tree(tree, m, dummy_mim, rg, expr, false, false);
+    }
+  }
+
+  void ga_workspace::add_interpolation_expression(const std::string expr,
+                                                  const mesh_im &mim,
+                                                  const mesh_region &rg_) {
+    const mesh &m = mim.linked_mesh();
+    const mesh_region &rg = register_region(m, rg_);
+    ga_tree tree;
+    ga_read_string(expr, tree);
+    ga_semantic_analysis(expr, tree, *this, m.dim(), false, false);
+    if (tree.root) {
+      GMM_ASSERT1(tree.root->nb_test_functions() == 0,
+                  "Invalid expression containing test functions");
+      add_tree(tree, m, mim, rg, expr, false, false);
     }
   }
 
@@ -4325,7 +4345,7 @@ namespace getfem {
     }
     if (order == 1) {
       V.resize(max_dof);
-       gmm::clear(unreduced_V); gmm::resize(unreduced_V, ndof);
+      gmm::clear(unreduced_V); gmm::resize(unreduced_V, ndof);
     }
     E = 0;
     // cout << "Init time " << gmm::uclock_sec()-time << endl;
@@ -8220,7 +8240,8 @@ namespace getfem {
       = gis.whole_instructions.begin();
     for (; it != gis.whole_instructions.end(); ++it) {
       
-      mesh_region region(*(it->first.second));
+      const getfem::mesh_im &mim = *(it->first.mim());
+      const mesh_region &region = *(it->first.region());
       const getfem::mesh &m = *(it->second.m);
       GMM_ASSERT1(&m == &(gic.linked_mesh()),
                   "Incompatibility of meshes in interpolation");
@@ -8230,6 +8251,11 @@ namespace getfem {
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
       for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
+        if (gic.use_mim()) {
+          if (!mim.convex_index().is_in(v.cv())) continue;
+          gis.pai = mim.int_method_of_element(v.cv())->approx_method();
+        }
+
         ind.resize(0);
         const bgeot::stored_point_tab &spt
           = gic.points_for_element(v.cv(), v.f(), ind);
@@ -8319,15 +8345,15 @@ namespace getfem {
     ga_instruction_set::instructions_set::iterator it
       = gis.whole_instructions.begin();
     for (; it != gis.whole_instructions.end(); ++it) {
-      
-      const getfem::mesh_im &mim = *(it->first.first);
+
+      const getfem::mesh_im &mim = *(it->first.mim());
       const getfem::mesh &m = *(it->second.m);
 
       GMM_ASSERT1(&m == &(mim.linked_mesh()), "Incompatibility of meshes");
       size_type P = m.dim();
       ga_instruction_list &gil = it->second.instructions;
-      mesh_region region(*(it->first.second));
-      
+      const mesh_region &region = *(it->first.region());
+
       // iteration on elements (or faces of elements)
       for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
@@ -8499,6 +8525,7 @@ namespace getfem {
     }
 
     virtual bool use_pgp(size_type) const { return true; }
+    virtual bool use_mim(void) const { return false; }
 
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
       size_type si = t.size();
@@ -8560,7 +8587,7 @@ namespace getfem {
   struct ga_interpolation_context_mti
     : public ga_interpolation_context {
     base_vector &result;
-    mesh_trans_inv &mti;
+    const mesh_trans_inv &mti;
     bool initialized;
     size_type s, nbdof;
 
@@ -8579,6 +8606,7 @@ namespace getfem {
     }
 
     virtual bool use_pgp(size_type) const { return false; }
+    virtual bool use_mim(void) const { return false; }
 
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
       size_type si = t.size();
@@ -8603,12 +8631,9 @@ namespace getfem {
 
     virtual const mesh &linked_mesh(void) { return mti.linked_mesh(); }
 
-    ga_interpolation_context_mti(mesh_trans_inv &mti_, base_vector &r,
-                                 int extrapolation,
-                                 const mesh_region &rg_source,
+    ga_interpolation_context_mti(const mesh_trans_inv &mti_, base_vector &r,
                                  size_type nbdof_ = size_type(-1))
       : result(r), mti(mti_), initialized(false), nbdof(nbdof_) {
-      mti.distribute(extrapolation, rg_source);
       if (nbdof == size_type(-1)) nbdof = mti.nb_points();
     }
   };
@@ -8623,7 +8648,8 @@ namespace getfem {
     ga_workspace workspace(md);
     workspace.add_interpolation_expression(expr, mti.linked_mesh(), rg);
     
-    ga_interpolation_context_mti gic(mti, result, extrapolation, rg_source, nbdof);
+    mti.distribute(extrapolation, rg_source);
+    ga_interpolation_context_mti gic(mti, result, nbdof);
     ga_interpolation(workspace, gic);
   }
 
@@ -8632,7 +8658,7 @@ namespace getfem {
   struct ga_interpolation_context_im_data
     : public ga_interpolation_context {
     base_vector &result;
-    im_data &imd;
+    const im_data &imd;
     bool initialized;
     size_type s;
 
@@ -8656,12 +8682,15 @@ namespace getfem {
                   "be used in high level generic assembly");
       return !(pim->approx_method()->is_built_on_the_fly());
     }
+    virtual bool use_mim(void) const { return true; }
 
     virtual void store_result(size_type cv, size_type i, base_tensor &t) {
       size_type si = t.size();
       if (!initialized) {
         s = si;
-        imd.set_tensor_size(t.sizes());
+        GMM_ASSERT1(imd.tensor_size() == t.sizes(),
+                    "Im_data tensor size does not match the size of "
+                    "the interpolated expression.");
         gmm::resize(result, s * imd.nb_filtered_index());
         gmm::clear(result);
         initialized = true;
@@ -8678,20 +8707,20 @@ namespace getfem {
     virtual const mesh &linked_mesh(void)
     { return imd.linked_mesh_im().linked_mesh(); }
 
-    ga_interpolation_context_im_data(im_data &imd_, base_vector &r)
+    ga_interpolation_context_im_data(const im_data &imd_, base_vector &r)
       : result(r), imd(imd_), initialized(false) { }
   };
 
 
   // To be parallelized ...
   void ga_interpolation_im_data
-  (const getfem::model &md, const std::string &expr, im_data &imd,
+  (const getfem::model &md, const std::string &expr, const im_data &imd,
    base_vector &result, const mesh_region &rg) {
 
     ga_workspace workspace(md);
     workspace.add_interpolation_expression
-      (expr, imd.linked_mesh_im().linked_mesh(), rg);
-    
+      (expr, imd.linked_mesh_im(), rg);
+
     ga_interpolation_context_im_data gic(imd, result);
     ga_interpolation(workspace, gic);
   }
@@ -8735,8 +8764,7 @@ namespace getfem {
         used_vars.clear();
         local_workspace = ga_workspace(workspace);
         local_workspace.clear_expressions();
-        local_workspace.add_interpolation_expression(expr, source_mesh,
-                                                     size_type(-1) /*region*/);
+        local_workspace.add_interpolation_expression(expr, source_mesh);
         for (size_type i = 0; i < local_workspace.nb_trees(); ++i)
           ga_extract_variables(local_workspace.tree_info(i).ptree
                                ->root, local_workspace, source_mesh,
@@ -8760,8 +8788,7 @@ namespace getfem {
       local_workspace = ga_workspace(workspace);
       local_workspace.clear_expressions();
 
-      local_workspace.add_interpolation_expression(expr, source_mesh,
-                                                   size_type(-1) /*region*/);
+      local_workspace.add_interpolation_expression(expr, source_mesh);
       local_gis = ga_instruction_set();
       ga_compile_interpolation(local_workspace, local_gis);
 
