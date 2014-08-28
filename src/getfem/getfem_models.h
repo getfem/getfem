@@ -344,8 +344,9 @@ namespace getfem {
 
     // Structure dealing with time integration scheme
     int time_integration; // 0 : no, 1 : time step, 2 : init
-    bool first_step;
+    bool init_step;
     scalar_type time_step; // Time step (dt) for time integration schemes
+    scalar_type init_time_step; // Time step for initiaisation of derivatives
     
     // Structure dealing with simple dof constraints
     typedef std::map<size_type, scalar_type> real_dof_constraints_var;
@@ -1060,25 +1061,23 @@ namespace getfem {
 
     /** Initialisation of the time integration. */
     void init_time_integration(scalar_type t = scalar_type(0)) {
-      first_step = true; time_integration = true; set_time(t);
+      /* init_step = false; */ time_integration = true; set_time(t);
     }
 
     void set_time_step(scalar_type dt) { time_step = dt; }
     scalar_type get_time_step(void) const { return time_step; }
+    scalar_type get_init_time_step(void) const { return init_time_step; }
     int is_time_integration(void) const { return time_integration; }
     void set_time_integration(int ti) { time_integration = ti; }
-    bool is_first_step(void) const { return first_step; }
-    void cancel_first_step(void) { first_step = false; }
+    bool is_init_step(void) const { return init_step; }
+    void cancel_init_step(void) { init_step = false; }
     void call_init_affine_dependent_variables(int version);
     void shift_variables_for_time_integration(void);
-    void extrapolate_init_time_derivative
-    (const model_real_plain_vector &state1,
-     const model_real_plain_vector &state2);
-    void extrapolate_init_time_derivative
-    (const model_complex_plain_vector &state1,
-     const model_complex_plain_vector &state2);
+    void copy_init_time_derivative(void);
     void add_time_integration_scheme(const std::string &varname,
                                      ptime_scheme ptsc);
+    void perform_init_time_derivative(scalar_type ddt)
+    { init_step = true; init_time_step = ddt; }
     
 
     /** Adds a time dispacther to a brick. */
@@ -1150,7 +1149,7 @@ namespace getfem {
       init(); complex_version = comp_version;
       is_linear_ = is_symmetric_ = is_coercive_ = true;
       leading_dim = 0;
-      time_integration = false; first_step = true; time_step = scalar_type(1);
+      time_integration = false; init_step = false; time_step = scalar_type(1);
     }
 
     /** check consistency of RHS and Stiffness matrix for brick with

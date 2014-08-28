@@ -96,27 +96,19 @@ namespace getfem {
                              abstract_newton_line_search &ls, const MATRIX &K,
                              const VECTOR &rhs, bool with_pseudo_potential) {
 
-    VECTOR state(md.nb_dof()), state1(md.nb_dof()), state2(md.nb_dof());
+    VECTOR state(md.nb_dof());
     md.from_variables(state);
-    md.cancel_first_step();
+    md.cancel_init_step();
     md.set_time_integration(2);
     scalar_type dt = md.get_time_step();
+    scalar_type ddt = md.get_init_time_step();
     scalar_type t = md.get_time();
     
-    // First solve for dt/20
-    md.set_time_step(dt/scalar_type(20));
+    // Solve for ddt
+    md.set_time_step(ddt);
     gmm::iteration iter1 = iter;
     standard_solve(md, iter1, lsolver, ls, K, rhs, with_pseudo_potential);
-    md.from_variables(state1);
-    
-    // Second solve for dt/10
-    md.set_time_step(dt/scalar_type(10));
-    gmm::iteration iter2 = iter;
-    standard_solve(md, iter2, lsolver, ls, K, rhs, with_pseudo_potential);
-    md.from_variables(state2);
-
-    // Extrapolate initial time derivative
-    md.extrapolate_init_time_derivative(state1, state2);
+    md.copy_init_time_derivative();
 
     // Restore the model state
     md.set_time_step(dt);
@@ -124,10 +116,6 @@ namespace getfem {
     md.to_variables(state);
     md.set_time_integration(1);
   }
-
-
-
-
 
 
   /* ***************************************************************** */
@@ -150,12 +138,11 @@ namespace getfem {
 
     int time_integration = md.is_time_integration();
     if (time_integration) {
-      if (time_integration == 1 && md.is_first_step()) {
+      if (time_integration == 1 && md.is_init_step()) {
         compute_init_values(md, iter, lsolver, ls, K, rhs,
                             with_pseudo_potential);
         return;
       }
-      cout << "time step = " << md.get_time_step() << endl;
       md.set_time(md.get_time() + md.get_time_step());
       md.call_init_affine_dependent_variables(time_integration);
     }

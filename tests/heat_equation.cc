@@ -64,6 +64,11 @@ scalar_type sol_u(const base_node &x) {
   scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
   return (1. - exp(-sol_c*sol_t*k2))*sin(gmm::vect_sp(sol_K, x));
 }
+/* time derivative */
+scalar_type sol_dot(const base_node &x) {
+  scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
+  return sol_c*k2*exp(-sol_c*sol_t*k2)*sin(gmm::vect_sp(sol_K, x));
+}
 /* righ hand side */
 scalar_type sol_f(const base_node &x) {
   scalar_type k2 = gmm::vect_sp(sol_K, sol_K);
@@ -80,7 +85,7 @@ base_small_vector sol_grad(const base_node &x) {
   (not mandatory, just to gather the variables)
 */
 
-bool with_new_time_integration = true;
+bool with_automatic_init = true;
 
 struct heat_equation_problem {
 
@@ -94,7 +99,7 @@ struct heat_equation_problem {
   scalar_type residual;        /* max residual for the iterative solvers     */
   size_type N, dirichlet_version;
   scalar_type dirichlet_coefficient; /* Penalization parameter.              */
-  plain_vector U;
+  plain_vector U, V;
 
   scalar_type dt, T, theta;
 
@@ -198,8 +203,6 @@ void heat_equation_problem::init(void) {
 
 bool heat_equation_problem::solve(void) {
 
-  dal::bit_vector transient_bricks; // to be deleted
-
   getfem::model model;
 
   // Main unknown of the problem
@@ -207,8 +210,7 @@ bool heat_equation_problem::solve(void) {
 
   // Laplacian term on u.
   model.add_initialized_scalar_data("c", sol_c);
-  transient_bricks.add(getfem::add_generic_elliptic_brick(model, mim,
-							  "u", "c"));
+  getfem::add_generic_elliptic_brick(model, mim, "u", "c");
 
   // Volumic source term.
   std::vector<scalar_type> F(mf_rhs.nb_dof());
@@ -223,8 +225,8 @@ bool heat_equation_problem::solve(void) {
   model.add_fem_data("NeumannData", mf_rhs, bgeot::dim_type(N), 2);
   gmm::copy(F, model.set_real_variable("NeumannData", 0));
   gmm::copy(F, model.set_real_variable("NeumannData", 1)); // to be deleted
-  transient_bricks.add(getfem::add_normal_source_term_brick
-		       (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM));
+  getfem::add_normal_source_term_brick
+    (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM);
 
   // Dirichlet condition.
   gmm::resize(F, mf_rhs.nb_dof());
@@ -233,67 +235,75 @@ bool heat_equation_problem::solve(void) {
 
   if (dirichlet_version == DIRICHLET_WITH_MULTIPLIERS)
     getfem::add_Dirichlet_condition_with_multipliers
-      (model, mim, "u", mf_u,
-       DIRICHLET_BOUNDARY_NUM, "DirichletData");
+      (model, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
   else
     getfem::add_Dirichlet_condition_with_penalization
       (model, mim, "u", dirichlet_coefficient,
        DIRICHLET_BOUNDARY_NUM, "DirichletData");
 
   // transient part.
-  if (with_new_time_integration) {
-    getfem::add_theta_method_for_first_order(model, "u", theta);
-    getfem::add_mass_brick(model, mim, "Dot_u");
-    // getfem::add_nonlinear_generic_assembly_brick(model, mim, "Dot_u*Test_u");
-  } else {
-    model.add_initialized_scalar_data("dt", dt);
-    getfem::add_basic_d_on_dt_brick(model, mim, "u", "dt");
-    model.add_initialized_scalar_data("theta", theta);
-    getfem::add_theta_method_dispatcher(model, transient_bricks, "theta");
-  }
-
+  getfem::add_theta_method_for_first_order(model, "u", theta);
+  getfem::add_mass_brick(model, mim, "Dot_u");
+  
   gmm::iteration iter(residual, 0, 40000);
-  if (with_new_time_integration) {
-    model.set_time_step(dt);
-    model.init_time_integration();
-  } else {
-    model.first_iter();
-  }
+  
+  model.init_time_integration(0.);
+  model.set_time_step(dt);
   
   // Null initial value for the temperature.
   gmm::resize(U, mf_u.nb_dof());
   gmm::clear(U);
-  if (with_new_time_integration)
-    gmm::copy(U, model.set_real_variable("Previous_u"));
-  else
-    gmm::copy(U, model.set_real_variable("u", 1));
+  
+  // Initial value for the velocity
+  if (!with_automatic_init) {
+    gmm::resize(V, mf_u.nb_dof());
+    getfem::interpolation_function(mf_u, V, sol_dot);
+  }
 
-  scalar_type start_t = with_new_time_integration ? -dt : 0.0;
+  gmm::copy(U, model.set_real_variable("Previous_u"));
+  if (!with_automatic_init)
+    gmm::copy(V, model.set_real_variable("Previous_Dot_u"));
+  
 
-  for (scalar_type t = start_t; t < T; t += dt) {
+  if (with_automatic_init) {
+    
+    scalar_type ddt = dt/20.;
+    model.perform_init_time_derivative(ddt);
+
+    sol_t = ddt;
+    gmm::resize(F, mf_rhs.nb_dof()*N);
+    getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
+    gmm::copy(F, model.set_real_variable("NeumannData")); 
+    gmm::resize(F, mf_rhs.nb_dof());
+    getfem::interpolation_function(mf_rhs, F, sol_u);
+    gmm::copy(F, model.set_real_variable("DirichletData"));
+
+    iter.init();
+    standard_solve(model, iter);
+  }
+
+  for (scalar_type t = 0.; t < T; t += dt) {
     sol_t = t+dt;
     
     gmm::resize(F, mf_rhs.nb_dof()*N);
     getfem::interpolation_function(mf_rhs, F, sol_grad, NEUMANN_BOUNDARY_NUM);
-    gmm::copy(F, model.set_real_variable("NeumannData")); // le mettre en assemblage générique qui dépende de "t" ...
+    gmm::copy(F, model.set_real_variable("NeumannData")); // To be replaced by a rhs depend in the data "t"
 
     gmm::resize(F, mf_rhs.nb_dof());
-    getfem::interpolation_function(mf_rhs, F, sol_u); // le mettre en assemblage générique qui dépende de "t" ...
+    getfem::interpolation_function(mf_rhs, F, sol_u); // To be replaced by a rhs depend in the data "t"
     gmm::copy(F, model.set_real_variable("DirichletData"));
 
     cout << "solving for t = " << sol_t << endl;
     iter.init();
     getfem::standard_solve(model, iter);
-    cout << "t = " << model.get_time() << endl;
+    // cout << "t = " << model.get_time() << endl;
     gmm::copy(model.real_variable("u"), U);
     if (PARAM.int_value("EXPORT_SOLUTION") != 0) {
       char s[100]; sprintf(s, "step%d", int(t/dt)+1);
       gmm::vecsave(datafilename + s + ".U", U);
     }
-    if (with_new_time_integration)
-      model.shift_variables_for_time_integration();
-    else
-      model.next_iter();
+    
+    model.shift_variables_for_time_integration();
   }
 
   return (iter.converged());
@@ -301,15 +311,15 @@ bool heat_equation_problem::solve(void) {
 
 /* compute the error with respect to the exact solution */
 void heat_equation_problem::compute_error() {
-  plain_vector V(mf_rhs.nb_basic_dof());
-  getfem::interpolation(mf_u, mf_rhs, U, V);
+  plain_vector W(mf_rhs.nb_basic_dof());
+  getfem::interpolation(mf_u, mf_rhs, U, W);
   for (size_type i = 0; i < mf_rhs.nb_basic_dof(); ++i)
-    V[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
+    W[i] -= sol_u(mf_rhs.point_of_basic_dof(i));
   cout.precision(16);
-  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, V) << endl
-       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, V) << endl
-       << "Linfty error = " << gmm::vect_norminf(V) << endl;
-  GMM_ASSERT1(gmm::vect_norminf(V) < 0.02, "Error too large");
+  cout << "L2 error = " << getfem::asm_L2_norm(mim, mf_rhs, W) << endl
+       << "H1 error = " << getfem::asm_H1_norm(mim, mf_rhs, W) << endl
+       << "Linfty error = " << gmm::vect_norminf(W) << endl;
+  GMM_ASSERT1(gmm::vect_norminf(W) < 0.02, "Error too large");
 }
 
 /**************************************************************************/

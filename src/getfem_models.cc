@@ -757,105 +757,35 @@ namespace getfem {
     GMM_ASSERT1(it->second.is_variable && !(it->second.is_affine_dependent),
                 "Cannot apply an integration scheme to " << varname);
     it->second.ptsc = ptsc;
-    if (!first_step)
-      GMM_WARNING2("When you apply a scheme to new variable or change the "
-                   "scheme of a variable after the first time step, "
-                   "the precomputation of time derivative will not be "
-                   "executed. Caution: You have to care by yourself of "
-                   "the compatbility of the operation");
+//     if (!first_step)
+//       GMM_WARNING2("When you apply a scheme to new variable or change the "
+//                    "scheme of a variable after the first time step, "
+//                    "the precomputation of time derivative will not be "
+//                    "executed. Caution: You have to care by yourself of "
+//                    "the compatbility of the operation");
   }
 
-  void model::extrapolate_init_time_derivative
-  (const model_real_plain_vector &state1,
-   const model_real_plain_vector &state2) {
+  void model::copy_init_time_derivative(void) {
 
-    model_real_plain_vector stateo(this->nb_dof());
-    this->from_variables(stateo);
-    
     for (VAR_SET::iterator it = variables.begin();
-         it != variables.end(); ++it) // could be optimized by avoiding
-                                      // repeated call to this->to_variables().
+         it != variables.end(); ++it)
       if (it->second.is_variable && it->second.ptsc) {
         
         std::string name_v, name_previous_v;
-
         it->second.ptsc->time_derivative_to_be_intialized(name_v,
                                                           name_previous_v);
 
         if (name_v.size()) {
-          model_real_plain_vector u = this->real_variable(it->first);
-
-          this->to_variables(state1);
-          model_real_plain_vector u1 = this->real_variable(it->first);
-          model_real_plain_vector v1 = this->real_variable(name_v);
-          this->to_variables(state2);
-          model_real_plain_vector u2 = this->real_variable(it->first);
-          model_real_plain_vector v2 = this->real_variable(name_v);
-          
-          scalar_type a = gmm::vect_sp(u1, u1), b = gmm::vect_sp(u1, u2);
-          scalar_type c = gmm::vect_sp(u2, u2);
-          scalar_type d = gmm::vect_sp(u, u1), e = gmm::vect_sp(u, u2);
-          scalar_type det = a*c - b*b;
-          scalar_type alpha(2), beta(-1);
-          cout << "det = " << det << endl;
-          cout << "u1 = " << gmm::sub_vector(u1, gmm::sub_interval(0, 20)) << endl;
-          cout << "u2 = " << gmm::sub_vector(u1, gmm::sub_interval(0, 20)) << endl;
-          if (gmm::abs(det) > 1E-15*gmm::abs(a*c)) {
-            alpha = (d*c - b*e) / det;
-            beta = (a*e - b*d) / det;
+          if (is_complex()) {
+            model_complex_plain_vector v0 = this->complex_variable(name_v);
+            gmm::copy(v0, this->set_complex_variable(name_previous_v));
+          } else {
+            const model_real_plain_vector &v0 = this->real_variable(name_v);
+            gmm::copy(v0, this->set_real_variable(name_previous_v));
           }
-          cout << "alpha = " << alpha << " beta = " << beta << endl;
-          gmm::add(gmm::scaled(v1, alpha), gmm::scaled(v2, beta),
-                   this->set_real_variable(name_previous_v));
-          cout << "v0 = " << gmm::sub_vector(real_variable(name_previous_v), gmm::sub_interval(0, 20)) << endl;
-          this->to_variables(stateo);
         }
       }
   }
-
-  void model::extrapolate_init_time_derivative
-  (const model_complex_plain_vector &state1,
-   const model_complex_plain_vector &state2) {
-
-    model_complex_plain_vector stateo(this->nb_dof());
-    this->from_variables(stateo);
-    
-    for (VAR_SET::iterator it = variables.begin();
-         it != variables.end(); ++it) // could be optimized by avoiding
-                                      // repeated call to this->to_variables().
-      if (it->second.is_variable && it->second.ptsc) {
-        
-        std::string name_v, name_previous_v;
-        
-        it->second.ptsc->time_derivative_to_be_intialized(name_v,
-                                                          name_previous_v);
-
-        if (name_v.size()) {
-          model_complex_plain_vector u = this->complex_variable(it->first);
-
-          this->to_variables(state1);
-          model_complex_plain_vector u1 = this->complex_variable(it->first);
-          model_complex_plain_vector v1 = this->complex_variable(name_v);
-          this->to_variables(state2);
-          model_complex_plain_vector u2 = this->complex_variable(it->first);
-          model_complex_plain_vector v2 = this->complex_variable(name_v);
-
-          complex_type a = gmm::vect_sp(u1, u1), b = gmm::vect_sp(u1, u2);
-          complex_type c = gmm::vect_sp(u2, u2);
-          complex_type d = gmm::vect_sp(u, u1), e = gmm::vect_sp(u, u2);
-          complex_type det = a*c - b*b;
-          complex_type alpha(2), beta(-1);
-          if (gmm::abs(det) > 1E-15*gmm::abs(a*c)) {
-            alpha = (d*c - b*e) / det;
-            beta = (a*e - b*d) / det;
-          }
-          gmm::add(gmm::scaled(v1, alpha), gmm::scaled(v2, beta),
-                   this->set_complex_variable(name_previous_v));
-          this->to_variables(stateo);
-        }
-      }
-  }
-
 
   // ----------------------------------------------------------------------
   //
@@ -873,7 +803,6 @@ namespace getfem {
       // V = (U-U0)/(theta*dt) - ((1-theta)/theta)*V0
       virtual void init_affine_dependent_variables(model &md) const {
         scalar_type dt = md.get_time_step();
-        cout << "1/theta*dt = " << scalar_type(1)/(theta*dt) << endl;
         scalar_type a = scalar_type(1)/(theta*dt);
         scalar_type b = (scalar_type(1)-theta)/theta;
         md.set_factor_of_variable(V, a);
@@ -906,7 +835,7 @@ namespace getfem {
 
       virtual void time_derivative_to_be_intialized
       (std::string &name_v, std::string &name_previous_v) const
-      { name_v = V; name_previous_v = V0; }
+      { if (theta != scalar_type(1)) { name_v = V; name_previous_v = V0; } }
       
       virtual void shift_variables(model &md) const {
         if (md.is_complex()) {
@@ -1036,7 +965,7 @@ namespace getfem {
     
     virtual void time_derivative_to_be_intialized
     (std::string &name_v, std::string &name_previous_v) const
-    { name_v = A; name_previous_v = A0; }
+    { if (theta != scalar_type(1)) { name_v = A; name_previous_v = A0; } }
     
     virtual void shift_variables(model &md) const {
       if (md.is_complex()) {
@@ -1069,8 +998,8 @@ namespace getfem {
         md.add_affine_dependent_variable(A, U);
       
       const mesh_fem *mf =  md.pmesh_fem_of_variable(U);
-      size_type s = md.is_complex() ? gmm::vect_size(md.real_variable(U))
-        : gmm::vect_size(md.complex_variable(U));
+      size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
+        : gmm::vect_size(md.real_variable(U));
       
       if (mf) {
         if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
@@ -1173,8 +1102,10 @@ namespace getfem {
       }
 
       virtual void time_derivative_to_be_intialized
-      (std::string &name_v, std::string &name_previous_v) const
-      { name_v = A; name_previous_v = A0; }
+      (std::string &name_v, std::string &name_previous_v) const {
+        if (beta != scalar_type(0.5) || gamma != scalar_type(1))
+          { name_v = A; name_previous_v = A0; }
+      }
       
       virtual void shift_variables(model &md) const {
         if (md.is_complex()) {
@@ -1208,8 +1139,8 @@ namespace getfem {
           md.add_affine_dependent_variable(A, U);
 
         const mesh_fem *mf =  md.pmesh_fem_of_variable(U);
-        size_type s = md.is_complex() ? gmm::vect_size(md.real_variable(U))
-          : gmm::vect_size(md.complex_variable(U));
+        size_type s = md.is_complex() ? gmm::vect_size(md.complex_variable(U))
+          : gmm::vect_size(md.real_variable(U));
           
         if (mf) {
           if (!(md.variable_exists(U0))) md.add_fem_data(U0, *mf);
