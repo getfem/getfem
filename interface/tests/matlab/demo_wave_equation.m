@@ -16,8 +16,9 @@
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-% Simple demo of a wave equation solved with transient bricks
-% trace on;
+% Simple demo of a wave equation solved with a Newmark scheme with the
+% Getfem tool for time integration schemes
+
 gf_workspace('clear all');
 m = gf_mesh('cartesian',[0:.2:1],[0:.2:1]);
 % m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
@@ -37,34 +38,37 @@ gf_mesh_set(m, 'boundary', 1, border);
 
 % interpolate the initial data
 U0 = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1).*x.*x' });
+V0 = 0*U0;
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf, 2);
-transient_bricks = [gf_model_set(md, 'add Laplacian brick', mim, 'u')];
+gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
 
 % transient part.
 T = 15.0;
 dt = 0.025;
-theta = 0.5;
-gf_model_set(md, 'add fem data', 'v', mf, 1, 2);
-gf_model_set(md, 'add initialized data', 'dt', [dt]);
-gf_model_set(md, 'add initialized data', 'theta', [theta]);
-gf_model_set(md, 'add basic d2 on dt2 brick', mim, 'u', 'v', 'dt', 'theta');
-gf_model_set(md, 'add theta method dispatcher', transient_bricks, 'theta');
+beta = 0.25;
+gamma = 0.5;
+
+gf_model_set(md, 'add Newmark scheme', 'u', beta, gamma);
+gf_model_set(md, 'add mass brick', mim, 'Dot2_u');
+gf_model_set(md, 'set time step', dt);
 
 % Initial data.
-gf_model_set(md, 'variable', 'u',  U0, 2);
-gf_model_set(md, 'first iter');
+gf_model_set(md, 'variable', 'Previous_u',  U0);
+gf_model_set(md, 'variable', 'Previous_Dot_u',  V0);
 
-gf_model_get(md, 'listbricks');
+% Initialisation of the acceleration 'Previous_Dot2_u'
+gf_model_set(md, 'perform init time derivative', dt/20.);
+gf_model_get(md, 'solve');
 
 % Iterations
 for t = 0:dt:T
+
   gf_model_get(md, 'solve');
-  gf_model_set(md, 'velocity update for order two theta method', 'u', 'v', 'dt', 'theta');
   U = gf_model_get(md, 'variable', 'u');
-  V = gf_model_get(md, 'variable', 'v');
+  V = gf_model_get(md, 'variable', 'Dot_u');
 
   subplot(2,1,1); gf_plot(mf, U, 'mesh', 'on', 'contour', .01:.01:.1); 
   colorbar; title(sprintf('computed solution u for t=%g', t));
@@ -73,11 +77,7 @@ for t = 0:dt:T
   colorbar; title(sprintf('computed solution du/dt for t=%g', t));
   pause(0.1);
 
-  gf_model_set(md, 'next iter');
+  gf_model_set(md, 'shift variables for time integration');
 end;
-
-
-
-
 
 

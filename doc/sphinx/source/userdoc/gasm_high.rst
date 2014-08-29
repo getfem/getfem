@@ -11,7 +11,7 @@
 Compute arbitrary terms - high-level generic assembly procedures
 ================================================================
 
-This section presents the second version of generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms are quite difficult to take into account. Conversely, a symbolic differentiation algorithm is used with this version to simplify the writing of new nonlinear terms. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a rather optimal computational cost.
+This section presents what is now the main generic assembly of |gf|. It is a high-level generic assembly in the sense that the language used to describe the assembly is quite close to the weak formulation of boundary value problems of partial differential equations. It mainly has been developed to circumvent the difficulties with the previous low-level generic assembly (see  :ref:`ud-gasm-low`) for which nonlinear terms were quite difficult to describe. Conversely, a symbolic differentiation algorithm is used with this version to simplify the writing of new nonlinear terms. Moreover, the assembly language is compiled into optimized instructions before the evaluation on each integration point in order to obtain a rather optimal computational cost.
 
 The header file to be included to use the high-level generic assembly procedures in C++ is :file:`getfem/generic\_assembly.h`.
 

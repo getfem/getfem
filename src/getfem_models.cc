@@ -763,6 +763,7 @@ namespace getfem {
 //                    "the precomputation of time derivative will not be "
 //                    "executed. Caution: You have to care by yourself of "
 //                    "the compatbility of the operation");
+    time_integration = 1;
   }
 
   void model::copy_init_time_derivative(void) {

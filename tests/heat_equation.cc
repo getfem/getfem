@@ -247,7 +247,7 @@ bool heat_equation_problem::solve(void) {
   
   gmm::iteration iter(residual, 0, 40000);
   
-  model.init_time_integration(0.);
+  model.set_time(0.);
   model.set_time_step(dt);
   
   // Null initial value for the temperature.

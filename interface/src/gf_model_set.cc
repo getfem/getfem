@@ -1937,6 +1937,89 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@SET ('shift variables for time integration')
+      Function used to shift the variables of a model to the data
+      corresponding of ther value on the previous time step for time
+      integration schemes. For each variable for which a time integration
+      scheme has been declared, the scheme is called to perform the shift.
+      This function has to be called between two time steps. @*/
+    sub_command
+      ("shift variables for time integration", 0, 0, 0, 0,
+       md->model().shift_variables_for_time_integration();
+       );
+
+    /*@SET ('perform init time derivative', @scalar ddt)
+      By calling this function, indicates that the next solve will compute
+      the solution for a (very) small time step `ddt` in order to initalize
+      the data corresponding to the derivatives needed by time integration
+      schemes (mainly the initial time derivative for order one in time
+      problems  and the second order time derivative for second order in time
+      problems). The next solve will not change the value of the variables. @*/
+    sub_command
+      ("perform init time derivative", 1, 1, 0, 0,
+       double ddt = in.pop().to_scalar();
+       md->model().perform_init_time_derivative(ddt);
+       );
+
+    /*@SET ('set time step', @scalar dt)
+      Set the value of the time step to `dt`. This value can be change
+      from a step to another for all one-step schemes (i.e for the moment
+      to all proposed time integration schemes). @*/
+    sub_command
+      ("set time step", 1, 1, 0, 0,
+       double dt = in.pop().to_scalar();
+       md->model().set_time_step(dt);
+       );
+
+    /*@SET ('set time', @scalar t)
+      Set the value of the data `t` corresponding to the current time to `t`.
+      @*/
+    sub_command
+      ("set time", 1, 1, 0, 0,
+       double t = in.pop().to_scalar();
+       md->model().set_time(t);
+       );
+
+
+    /*@SET ('add theta method for first order', @str varname, @scalar theta)
+      Attach a theta method for the time discretization of the variable
+      `varname`. Valid only if there is at most first order time derivative
+      of the variable. @*/
+    sub_command
+      ("add theta method for first order", 2, 2, 0, 0,
+       std::string varname = in.pop().to_string();
+       double theta = in.pop().to_scalar();
+       getfem::add_theta_method_for_first_order(md->model(), varname, theta);
+       );
+
+    /*@SET ('add theta method for second order', @str varname, @scalar theta)
+      Attach a theta method for the time discretization of the variable
+      `varname`. Valid only if there is at most second order time derivative
+      of the variable. @*/
+    sub_command
+      ("add theta method for second order", 2, 2, 0, 0,
+       std::string varname = in.pop().to_string();
+       double theta = in.pop().to_scalar();
+       getfem::add_theta_method_for_second_order(md->model(), varname, theta);
+       );
+
+    /*@SET ('add Newmark scheme', @str varname, @scalar beta, @scalar gamma)
+      Attach a theta method for the time discretization of the variable
+      `varname`. Valid only if there is at most second order time derivative
+      of the variable. @*/
+    sub_command
+      ("add Newmark scheme", 3, 3, 0, 0,
+       std::string varname = in.pop().to_string();
+       double beta = in.pop().to_scalar();
+       double gamma = in.pop().to_scalar();
+       getfem::add_Newmark_scheme(md->model(), varname, beta, gamma);
+       );
+
+
+
+
+    
+
     /*@SET ind = ('add basic d on dt brick', @tmim mim, @str varnameU, @str dataname_dt[, @str dataname_rho[, @int region]])
     Add the standard discretization of a first order time derivative on
     `varnameU`. The parameter `dataname_rho` is the density which could

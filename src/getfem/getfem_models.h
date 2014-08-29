@@ -1058,12 +1058,6 @@ namespace getfem {
         return real_variable(varname)[0];
     }
 
-
-    /** Initialisation of the time integration. */
-    void init_time_integration(scalar_type t = scalar_type(0)) {
-      /* init_step = false; */ time_integration = true; set_time(t);
-    }
-
     void set_time_step(scalar_type dt) { time_step = dt; }
     scalar_type get_time_step(void) const { return time_step; }
     scalar_type get_init_time_step(void) const { return init_time_step; }
@@ -1149,7 +1143,7 @@ namespace getfem {
       init(); complex_version = comp_version;
       is_linear_ = is_symmetric_ = is_coercive_ = true;
       leading_dim = 0;
-      time_integration = false; init_step = false; time_step = scalar_type(1);
+      time_integration = 0; init_step = false; time_step = scalar_type(1);
     }
 
     /** check consistency of RHS and Stiffness matrix for brick with

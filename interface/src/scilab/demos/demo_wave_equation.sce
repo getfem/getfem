@@ -1,5 +1,5 @@
-// Simple demo of a wave equation solved with transient bricks
-// trace on;
+// Simple demo of a wave equation solved with the
+// Getfem tool for time integration schemes
 
 lines(0);
 stacksize('max');
@@ -38,6 +38,7 @@ gf_mesh_set(m, 'boundary', 1, border);
 
 // interpolate the initial data
 U0 = gf_mesh_fem_get_eval(mf, list(list('y.*(y-1).*x.*(x-1).*x.*x')));
+V0 = 0*U0;
 
 md = gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf, 2);
@@ -47,18 +48,22 @@ gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1);
 // transient part.
 T     = 1.0; // For a good animation, choose 15 here (the computation is quite long then)
 dt    = 0.025;
-theta = 0.5;
-gf_model_set(md, 'add fem data', 'v', mf, 1, 2);
-gf_model_set(md, 'add initialized data', 'dt', [dt]);
-gf_model_set(md, 'add initialized data', 'theta', [theta]);
-gf_model_set(md, 'add basic d2 on dt2 brick', mim, 'u', 'v', 'dt', 'theta');
-gf_model_set(md, 'add theta method dispatcher', transient_bricks, 'theta');
+beta = 0.25;
+gamma = 0.5;
+
+gf_model_set(md, 'add Newmark scheme', 'u', beta, gamma);
+gf_model_set(md, 'add mass brick', mim, 'Dot2_u');
+gf_model_set(md, 'set time step', dt);
+
 
 // Initial data.
-gf_model_set(md, 'variable', 'u',  U0, 2);
-gf_model_set(md, 'first iter');
+gf_model_set(md, 'variable', 'Previous_u',  U0);
+gf_model_set(md, 'variable', 'Previous_Dot_u',  V0);
 
-gf_model_get(md, 'listbricks');
+
+// Initialisation of the acceleration 'Previous_Dot2_u'
+gf_model_set(md, 'perform init time derivative', dt/20.);
+gf_model_get(md, 'solve');
 
 // Iterations
 h = scf();
@@ -67,10 +72,10 @@ h.color_map = jetcolormap(255);
 Index = 0;
 
 for t=0:dt:T
+
   gf_model_get(md, 'solve');
-  gf_model_set(md, 'velocity update for order two theta method', 'u', 'v', 'dt', 'theta');
   U = gf_model_get(md, 'variable', 'u');
-  V = gf_model_get(md, 'variable', 'v');
+  V = gf_model_get(md, 'variable', 'Dot_u');
 
   drawlater;
   clf();
@@ -89,7 +94,8 @@ for t=0:dt:T
 
   xs2png(h.figure_id, path + sprintf('/waveeq%03d.png',Index));
   Index = Index + 1;
-  gf_model_set(md, 'next iter');
+
+  gf_model_set(md, 'shift variables for time integration');
 end
 
 printf('demo wave_equation terminated\n');

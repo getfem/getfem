@@ -112,13 +112,27 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(md->model().nb_dof()));
        );
 
+    /*@GET dt = ('get time step')
+      Gives the value of the time step. @*/
+    sub_command
+      ("get time step", 0, 0, 0, 1,
+       out.pop().from_scalar(md->model().get_time_step());
+       );
+
+    /*@GET t = ('get time')
+      Give the value of the data `t` corresponding to the current time.
+      @*/
+    sub_command
+      ("get time", 0, 0, 0, 1,
+       out.pop().from_scalar(md->model().get_time());
+       );
+
     /*@GET T = ('tangent_matrix')
       Return the tangent matrix stored in the model .@*/
     sub_command
       ("tangent_matrix", 0, 0, 0, 1,
        RETURN_SPARSE(real_tangent_matrix(), complex_tangent_matrix());
        );
-
 
     /*@GET ('rhs')
       Return the right hand side of the tangent problem.@*/
