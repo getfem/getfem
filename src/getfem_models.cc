@@ -99,21 +99,49 @@ namespace getfem {
       GMM_ASSERT1(!assert, "Variable " << name << " already exists");
       return false;
     }
-    GMM_ASSERT1(variable_groups.find(name) == variable_groups.end(),
-                name << " corresponds to an already existing group of "
-                "variables name");
-    GMM_ASSERT1(macros.find(name) == macros.end(),
-                name << " corresponds to an already existing macro");
-    GMM_ASSERT1(name.compare("X"), "X is a reserved keyword of the generic "
-                "assembly language");
+    
+    if (variable_groups.find(name) != variable_groups.end()) {
+      GMM_ASSERT1(!assert,
+                  name << " corresponds to an already existing group of "
+                  "variables name");
+      return false;
+    }
+
+    if (macros.find(name) != macros.end()) {
+      GMM_ASSERT1(!assert,
+                  name << " corresponds to an already existing macro");
+      return false;
+    }
+    
+    if (name.compare("X") == 0) {
+      GMM_ASSERT1(!assert, "X is a reserved keyword of the generic "
+                  "assembly language");
+      return false;
+    }
 
     int ga_valid = ga_check_name_validity(name);
-    GMM_ASSERT1(ga_valid != 1, "Invalid variable name, corresponds to an "
+    if (ga_valid == 1) {
+      GMM_ASSERT1(!assert, "Invalid variable name, corresponds to an "
                 "operator or function name of the generic assembly language");
-    GMM_ASSERT1(ga_valid != 2, "Invalid variable name having a reserved "
-                "prefix used by the generic assembly language");
-//  GMM_ASSERT1(ga_valid != 3 || !check_dot, "Invalid variable name having a "
-//              "reserved prefix used by the generic assembly language");
+      return false;
+    }
+
+    if (ga_valid == 2) {
+      GMM_ASSERT1(!assert, "Invalid variable name having a reserved "
+                  "prefix used by the generic assembly language");
+      return false;
+    }
+
+    if (ga_valid == 3) {
+      std::string org_name = sup_previous_and_dot_to_varname(name);
+      if (org_name.size() < name.size() &&
+          variables.find(org_name) != variables.end()) {
+        GMM_ASSERT1(!assert,
+                    "Dot and Previous are reserved prefix used for time "
+                    "integration schemes");
+        return false;
+      }
+    }
 
     bool valid = true;
     if (name.size() == 0) valid = false;
@@ -130,15 +158,19 @@ namespace getfem {
   std::string model::new_name(const std::string &name) {
     std::string res_name = name;
     bool valid = check_name_validity(res_name, false);
-    VAR_SET::const_iterator it = variables.find(res_name);
-    GMM_ASSERT1(valid || it != variables.end(),
-                "Illegal variable name : " << name);
-    for (size_type i = 2; it != variables.end(); ++i) {
+    for (size_type i = 2; !valid && i < 50; ++i) {
       std::stringstream m;
       m << name << '_' << i;
       res_name = m.str();
-      it = variables.find(res_name);
+      valid = check_name_validity(res_name, false);
     }
+    for (size_type i = 2; !valid && i < 1000; ++i) {
+      std::stringstream m;
+      m << "new_" << name << '_' << i;
+      res_name = m.str();
+      valid = check_name_validity(res_name, false);
+    }
+    GMM_ASSERT1(valid, "Illegal variable name: " << name);
     return res_name;
   }
 
