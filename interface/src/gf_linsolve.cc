@@ -25,6 +25,7 @@
 #include <gmm/gmm_iter_solvers.h>
 #include <getfemint_misc.h>
 #include <getfem/getfem_superlu.h>
+#include <gmm/gmm_MUMPS_interface.h>
 
 using namespace getfemint;
 
@@ -32,8 +33,8 @@ typedef enum { GMM_GMRES, GMM_CG, GMM_BICGSTAB /*, GMM_QMR*/ } iterative_gmm_sol
 
 template <typename T> static void
 iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
-		    getfemint::mexargs_in& in,
-		     getfemint::mexargs_out& out, T) {
+                    getfemint::mexargs_in& in,
+                     getfemint::mexargs_out& out, T) {
   garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
   garray<T> x = out.pop().create_array_v(int(gsp.nrows()), T());
 
@@ -74,7 +75,7 @@ iterative_gmm_solver(iterative_gmm_solver_type stype, gsparse &gsp,
 }
 
 void iterative_gmm_solver(iterative_gmm_solver_type stype,
-			 getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
+                         getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
   dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
   gsparse &gsp = *pgsp;
   if (!gsp.is_complex() && in.front().is_complex())
@@ -85,7 +86,7 @@ void iterative_gmm_solver(iterative_gmm_solver_type stype,
 
 template <typename T> static void
 superlu_solver(gsparse &gsp,
-	       getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
+               getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
   garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
   garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
   double rcond;
@@ -93,6 +94,15 @@ superlu_solver(gsparse &gsp,
   gmm::SuperLU_solve(gsp.csc(T()),x,b,rcond,1);
   if (out.remaining())
     out.pop().from_scalar(rcond ? 1./rcond : 0.);
+}
+
+template <typename T> static void
+mumps_solver(gsparse &gsp,
+             getfemint::mexargs_in& in, getfemint::mexargs_out& out, T) {
+  garray<T> b = in.pop().to_garray(int(gsp.nrows()), T());
+  garray<T> x = out.pop().create_array(b.getm(), b.getn(), T());
+  gsp.to_csc();
+  gmm::MUMPS_solve(gsp.csc(T()),x,b);
 }
 
 /*@GFDOC
@@ -105,7 +115,7 @@ superlu_solver(gsparse &gsp,
 struct sub_gf_linsolve : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out) = 0;
+                   getfemint::mexargs_out& out) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_linsolve> psub_command;
@@ -114,15 +124,15 @@ typedef boost::intrusive_ptr<sub_gf_linsolve> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_linsolve {				\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out)			\
-      { dummy_func(in); dummy_func(out); code }				\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
+    struct subc : public sub_gf_linsolve {                                  \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out)                         \
+      { dummy_func(in); dummy_func(out); code }                             \
+    };                                                                      \
+    psub_command psubc = new subc;                                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
   }                           
 
 
@@ -168,11 +178,11 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     /*@FUNC @CELL{U, cond} = ('lu', @tsp M, @vec b)
       Alias for ::LINSOLVE('superlu',...)@*/
     sub_command
-      ("lu", 2, 2, 0, 1,
+      ("lu", 2, 2, 0, 2,
        dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
        gsparse &gsp = *pgsp;
        if (!gsp.is_complex() && in.front().is_complex())
-	 THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+         THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
        if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
        else                  superlu_solver(gsp, in, out, scalar_type());
        );
@@ -183,13 +193,25 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     The condition number estimate `cond` is returned with the solution `U`.@*/
     sub_command
-      ("superlu", 2, 2, 0, 1,
+      ("superlu", 2, 2, 0, 2,
        dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
        gsparse &gsp = *pgsp;
        if (!gsp.is_complex() && in.front().is_complex())
-	 THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+         THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
        if (gsp.is_complex()) superlu_solver(gsp, in, out, complex_type());
        else                  superlu_solver(gsp, in, out, scalar_type());
+       );
+
+    /*@FUNC @CELL{U, cond} = ('mumps', @tsp M, @vec b)
+    Solve `M.U = b` using the MUMPS solver.@*/
+    sub_command
+      ("mumps", 2, 2, 0, 1,
+       dal::shared_ptr<gsparse> pgsp = in.pop().to_sparse();
+       gsparse &gsp = *pgsp;
+       if (!gsp.is_complex() && in.front().is_complex())
+         THROW_BADARG("please use a real right hand side, or convert the sparse matrix to a complex one");
+       if (gsp.is_complex()) mumps_solver(gsp, in, out, complex_type());
+       else                  mumps_solver(gsp, in, out, scalar_type());
        );
 
   }
@@ -205,8 +227,8 @@ void gf_linsolve(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out);
   }
   else bad_cmd(init_cmd);

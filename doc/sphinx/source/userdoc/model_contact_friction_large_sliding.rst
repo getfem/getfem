@@ -413,7 +413,8 @@ Once the brick is added to the model, the master and slave contact boundaries ha
   add_contact_boundary_to_large_sliding_contact_brick(model &md,
       size_type indbrick, const mesh_im &mim, size_type region,
       bool is_master, bool is_slave, const std::string &u,
-      const std::string &lambda = "", const std::string &w = "")
+      const std::string &lambda = "", const std::string &w = "",
+      bool frame_indifferent = false)
 
 where ``region`` should be a valid mesh region number representing a boundary, ``is_master`` should be set to ``true`` if the contact detection is to be done on that contact boundary, ``is_slave`` should be set to ``true`` if the integration of contact terms is to be done on that boundary. Note that a contact boundary is allowed to be both master and slave, in particular to allow self-contact detection. ``u`` is the displacement variable. If ``is_slave`` is set to true, ``lambda`` should describe a multiplier variable with degrees of freedom on the contact boundary (typically added to the model with the ``md.add_filtered_fem_variable(...) method). Pure master contact boundary do not need the definition of a multiplier. Additionally, ``w`` is for the evolutionnary case and represents the displacement at the previous time step.
 
@@ -423,5 +424,5 @@ A rigid obstacle can be added to the brick with::
       size_type indbrick, std::string expr, size_type N)
 
 where `expr` is an expression using the high-level
-generic assembly language (whith `X` is the current position) which should
+generic assembly language (with `X` is the current position) which should
 be a signed distance to the obstacle. `N` is the mesh dimension.
