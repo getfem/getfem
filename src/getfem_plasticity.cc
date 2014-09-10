@@ -698,48 +698,83 @@ namespace getfem {
   { mi.resize(2); mi[0] = mi[1] = N; }
 
 
-  bool expm(const base_matrix &a, base_matrix &aexp, scalar_type tol=1e-15) {
+  bool expm(const base_matrix &a_, base_matrix &aexp, scalar_type tol=1e-15) {
+
+    const size_type itmax = 40;
+    base_matrix a(a_);
+    // scale input matrix a
+    int e;
+    frexp(gmm::mat_norminf(a), &e);
+    e = std::max(0, std::min(1023, e));
+    gmm::scale(a, pow(scalar_type(2),-scalar_type(e)));
 
     base_matrix atmp(a), an(a);
     gmm::copy(a, aexp);
     gmm::add(gmm::identity_matrix(), aexp);
     scalar_type factn(1);
-    for (size_type n=2; n < 20; ++n) {
+    bool success(false);
+    for (size_type n=2; n < itmax; ++n) {
       factn /= scalar_type(n);
       gmm::mult(an, a, atmp);
       gmm::copy(atmp, an);
       gmm::scale(atmp, factn);
       gmm::add(atmp, aexp);
-      if (gmm::mat_euclidean_norm(atmp) < tol) return true;
+      if (gmm::mat_euclidean_norm(atmp) < tol) {
+        success = true;
+        break;
+      }
     }
-    return false;
+    // unscale result
+    for (int i=0; i < e; ++i) {
+      gmm::mult(aexp, aexp, atmp);
+      gmm::copy(atmp, aexp);
+    }
+    return success;
   }
 
-  bool expm_deriv(const base_matrix &a, base_tensor &daexp, scalar_type tol=1e-15) {
+  bool expm_deriv(const base_matrix &a_, base_tensor &daexp,
+                  base_matrix *paexp=NULL, scalar_type tol=1e-15) {
 
-    size_type N = gmm::mat_nrows(a);
+    const size_type itmax = 40;
+    size_type N = gmm::mat_nrows(a_);
     size_type N2 = N*N;
-    base_vector factnn(20);
-    base_matrix atmp(N,N), an(a), aexp(a);
-    base_tensor ann(bgeot::multi_index(N,N,20));
+
+    base_matrix a(a_);
+    // scale input matrix a
+    int e;
+    frexp(gmm::mat_norminf(a), &e);
+    e = std::max(0, std::min(1023, e));
+    scalar_type scale = pow(scalar_type(2),-scalar_type(e));
+    gmm::scale(a, scale);
+
+    base_vector factnn(itmax);
+    base_matrix atmp(a), an(a), aexp(a);
+    base_tensor ann(bgeot::multi_index(N,N,itmax));
     gmm::add(gmm::identity_matrix(), aexp);
     gmm::copy(gmm::identity_matrix(), atmp);
     std::copy(atmp.begin(), atmp.end(), ann.begin());
     factnn[1] = 1;
     std::copy(a.begin(), a.end(), ann.begin()+N2);
     size_type n;
-    for (n=2; n < 20; ++n) {
+    bool success(false);
+    for (n=2; n < itmax; ++n) {
       factnn[n] = factnn[n-1]/scalar_type(n);
       gmm::mult(an, a, atmp);
       gmm::copy(atmp, an);
       std::copy(an.begin(), an.end(), ann.begin()+n*N2);
       gmm::scale(atmp, factnn[n]);
       gmm::add(atmp, aexp);
-      if (gmm::mat_euclidean_norm(atmp) < tol) break;
-      else if (n == 19) return false;
+      if (gmm::mat_euclidean_norm(atmp) < tol) {
+        success = true;
+        break;
+      }
     }
 
+    if (!success)
+      return false;
+
     gmm::clear(daexp.as_vector());
+    gmm::scale(factnn, scale);
     for (--n; n >= 1; --n) {
 	   scalar_type factn = factnn[n];
       for (size_type m=1; m <= n; ++m)
@@ -748,7 +783,24 @@ namespace getfem {
             for (size_type j=0; j < N; ++j)
               for (size_type i=0; i < N; ++i)
                 daexp(i,j,k,l) += factn*ann(i,k,m-1)*ann(l,j,n-m);
-	}
+	 }
+
+    // unscale result
+    base_matrix atmp1(a), atmp2(a);
+    for (int i=0; i < e; ++i) {
+      for (size_type l=0; l < N; ++l)
+        for (size_type k=0; k < N; ++k) {
+          std::copy(&daexp(0,0,k,l), &daexp(0,0,k,l)+N*N, atmp.begin());
+          gmm::mult(atmp, aexp, atmp1);
+          gmm::mult(aexp, atmp, atmp2);
+          gmm::add(atmp1, atmp2, atmp);
+          std::copy(atmp.begin(), atmp.end(), &daexp(0,0,k,l));
+        }
+      gmm::mult(aexp, aexp, atmp);
+      gmm::copy(atmp, aexp);
+    }
+
+    if (paexp) gmm::copy(aexp, *paexp);
     return true;
   }
 
@@ -799,7 +851,9 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       base_matrix inpmat(N,N), outmat(N,N);
       gmm::copy(args[0]->as_vector(), inpmat.as_vector());
-      expm_deriv(inpmat, result);
+      bool info = expm_deriv(inpmat, result);
+      GMM_ASSERT1(info, "Matrix exponential derivative calculation "
+                        "failed to converge");
     }
 
     // Second derivative : not implemented
