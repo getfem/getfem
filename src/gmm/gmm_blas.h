@@ -539,7 +539,7 @@ namespace gmm {
   /*		Euclidean norm                             		  */
   /* ******************************************************************** */
 
-  /** Euclidean norm of a vector. */
+  /** squared Euclidean norm of a vector. */
   template <typename V>
   typename number_traits<typename linalg_traits<V>::value_type>
   ::magnitude_type
@@ -553,7 +553,7 @@ namespace gmm {
     return res;
   }
 
-  /** squared Euclidean norm of a vector. */
+  /** Euclidean norm of a vector. */
   template <typename V> inline
    typename number_traits<typename linalg_traits<V>::value_type>
    ::magnitude_type 
