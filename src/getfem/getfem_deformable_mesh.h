@@ -32,117 +32,41 @@ might be covered by the GNU Lesser General Public License.
 /** @file getfem_deformable_mesh.h
 @author "Andriy Andreykiv" <andriy.andreykiv@gmail.com>
 @date August 7, 2012.
-@brief This is a normal mesh, whith one extra method, allowing to displace points.
+@brief A class adaptor to deform a mesh.
 */
 
 #pragma once
+#ifndef GETFEM_DEFORMABLE_MESH_H__
+#define GETFEM_DEFORMABLE_MESH_H__
+
 #include <getfem/getfem_mesh.h>
 #include <getfem/getfem_mesh_fem.h>
 #include <getfem/getfem_models.h>
 
 namespace getfem {
 
-  template<class VECTOR> class temporary_mesh_deformator;
-
-
-  /** This is a normal mesh, whith one extra method, allowing to displace points.       
-  The mesh can only be deformed by instance of class temporary_mesh_deformator, 
-  that restores the mesh on it's (deformator) destruction
-  */
-  class APIDECL deformable_mesh : public mesh {
-  public:
-    mutable bool must_be_restored;
-  private:
-    template <class VECTOR> friend class temporary_mesh_deformator;
-
-    /** says that if the mesh was deformed, it should be deformed back to the 
-    underformed state, as other bricks don't know they are dealing with a deformed mesh
-    This mesh is used in Updated Lagrane based formulations, but the restore feature
-    allows to use it with Total Lagrange as well*/
-    inline bool to_be_restored() const {return must_be_restored;}
-
-    /**displace the points by a given displacement vector
-    @param U displacement vector as described by mf using dof index (NOT pts index)
-    @param &mf mesh_fem object that corresponds to &U, should be compatible with the mesh
-    */
-    template<typename VEC>
-    void deform_mesh(const VEC &dU, const mesh_fem& mf)
-    {   
-      PT_TAB& ppts = points();
-      size_type ddim = ppts.dim();
-
-      GMM_ASSERT1((&mf.linked_mesh())==this,"in deform_mesh mf should be defined on the same mesh");
-
-      GMM_ASSERT1(mf.get_qdim() == ddim, "input mesh_fem and the mesh dim are not compatible");
-
-      dal::bit_vector conv_indices = mf.convex_index(); 
-      //this vector will track if a point can be deformed
-      std::vector<bool> deform_pt_flag(ppts.size(), true);
-      size_type cv;
-      base_vector dU_basic(mf.nb_basic_dof());
-      mf.extend_vector(dU,dU_basic);
-      for(cv << conv_indices; 
-        cv!=bgeot::size_type(-1); cv << conv_indices) 
-      {
-        getfem::mesh::ind_cv_ct pt_index
-          =  mf.linked_mesh().ind_points_of_convex(cv);
-        getfem::mesh_fem::ind_dof_ct dof=mf.ind_basic_dof_of_element(cv);
-        bgeot::size_type num_points = 
-          mf.linked_mesh().structure_of_convex(cv)->nb_points(); 
-
-        GMM_ASSERT2(dof.size() == num_points*ddim, 
-          "mesh_fem should be isoparametric to the mesh, "
-          "with nb_points() of convex * dim == size of ind_basic_dof_of_element");
-
-
-        for(size_type pt = 0; pt < num_points; ++pt) 
-        { 
-          /** iterate through each components of point [pt]and deform the component*/
-          if(deform_pt_flag[pt_index[pt]])
-            for (size_type comp = 0; comp < ddim; ++comp)
-              //move pts by dU;
-                ppts[pt_index[pt]][comp] += dU_basic[dof[pt*ddim + comp]];
-
-          //flag current [pt] to deformed
-          deform_pt_flag[pt_index[pt]] = false;
-        }
-        ppts.resort();
-      }
-    }
-
-  public:
-
-    deformable_mesh(bool _must_be_restored = true, const std::string &name = std::string());
-    deformable_mesh(const deformable_mesh&);
-  };
-
-  /**cast a conventional mesh into deformable one and remove the const*/
-  deformable_mesh APIDECL &make_deformable_mesh(const mesh&);
-
-
-  /** An object function that first deformes and then remembers 
-  to restore a deformable mesh if it has to be restored 
+  /** An object function that first deforms and then remembers 
+  to restore a mesh if it has to be restored 
   for other bricks. By default the mesh is deformed on 
   construct and undeformed in the destructor (by RAII principle)
   but it's also possible to specify deform_on_construct = false 
-  and then call explicitely deform() and undeform() methods
+  and then call explicitely deform() and undeform() methods.
+  Optional to_be_restored flag will control whether the mesh will be restored
+  when the deformator destructs.
   */
   template<class VECTOR = model_real_plain_vector> 
   class temporary_mesh_deformator
   {
-    VECTOR dU;
-    const mesh_fem& mf;
-    deformable_mesh& m;
-    bool deform_on_construct_;
-    bool is_deformed_;
   public:
-    temporary_mesh_deformator(const mesh& _m, const mesh_fem &_mf, 
-      const VECTOR &_dU, bool deform_on_construct = true) : 
-      dU(_dU),
-      mf(_mf), 
-      m(make_deformable_mesh(_m)),
+    temporary_mesh_deformator(const mesh& m, const mesh_fem &mf, 
+      const VECTOR &dU, bool deform_on_construct = true, 
+      bool to_be_restored = true) : 
+      dU_(dU),
+      mf_(mf), 
+      m_(const_cast<getfem::mesh &>(m)),
       deform_on_construct_(deform_on_construct),
-      is_deformed_(false)
+      is_deformed_(false),
+      to_be_restored_(to_be_restored)
     {
       if (deform_on_construct_) deform();
     }
@@ -150,26 +74,36 @@ namespace getfem {
     void deform() 
     {
       if (is_deformed_) return;
-      m.deform_mesh(dU,mf);
+      m_.deform_mesh(dU_, mf_);
       is_deformed_ = true;
     }
 
     void undeform() 
     {
       if (!is_deformed_) return;
-      VECTOR dU_inverted(dU);
+      VECTOR dU_inverted(dU_);
       gmm::scale(dU_inverted, scalar_type(-1.0));
-      m.deform_mesh(dU_inverted,mf);
+      m_.deform_mesh(dU_inverted, mf_);
       is_deformed_ = false;
     }
 
     ~temporary_mesh_deformator()
     {
-      if (m.to_be_restored() && deform_on_construct_)
+      if (to_be_restored_ && deform_on_construct_)
       {
         undeform();
       }
     }
+
+  private:
+    VECTOR dU_;
+    const mesh_fem &mf_;
+    mesh &m_;
+    bool deform_on_construct_;
+    bool is_deformed_;
+    bool to_be_restored_;
   };
 
 }//end of getfem namespace
+
+#endif //GETFEM_DEFORMABLE_MESH_H__

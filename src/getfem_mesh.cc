@@ -23,6 +23,7 @@
 #include "gmm/gmm_condition_number.h"
 #include "getfem/getfem_mesh.h"
 #include "getfem/getfem_integration.h"
+#include "getfem/getfem_mesh_fem.h"
 
 #if GETFEM_HAVE_METIS_OLD_API
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,
@@ -1174,10 +1175,48 @@ namespace getfem {
     }
     Bank_info->edges.clear();
   }
+  
+  void mesh::deforming_the_mesh_(const base_vector &dU, const mesh_fem &mf)
+  {
+    PT_TAB& ppts = points();
+    size_type ddim = mf.get_qdim();
+
+    GMM_ASSERT1((&mf.linked_mesh()) == this, 
+                 "in deform_mesh mf should be defined on the same mesh");
+
+    dal::bit_vector conv_indices = mf.convex_index();
+    //this vector will track if a point can be deformed
+    std::vector<bool> deform_pt_flag(ppts.size(), true);
+    size_type cv;
+    base_vector dU_basic(mf.nb_basic_dof());
+    mf.extend_vector(dU, dU_basic);
+    for (cv << conv_indices;
+      cv != bgeot::size_type(-1); cv << conv_indices)
+    {
+      getfem::mesh::ind_cv_ct pt_index
+        = mf.linked_mesh().ind_points_of_convex(cv);
+      getfem::mesh_fem::ind_dof_ct dof = mf.ind_basic_dof_of_element(cv);
+      bgeot::size_type num_points =
+        mf.linked_mesh().structure_of_convex(cv)->nb_points();
+
+      GMM_ASSERT2(dof.size() % num_points == 0,
+        "mesh_fem should be isoparametric to the mesh, "
+        "with nb_points() of convex == size of ind_basic_dof_of_element / qdim()");
 
 
+      for (size_type pt = 0; pt < num_points; ++pt)
+      {
+        /** iterate through each components of point [pt]and deform the component*/
+        if (deform_pt_flag[pt_index[pt]])
+        for (size_type comp = 0; comp < ddim; ++comp)
+          //move pts by dU;
+          ppts[pt_index[pt]][comp] += dU_basic[dof[pt*ddim + comp]];
 
-
-
+        //flag current [pt] to deformed
+        deform_pt_flag[pt_index[pt]] = false;
+      }
+      ppts.resort();
+    }
+  }
 
 }  /* end of namespace getfem.                                             */

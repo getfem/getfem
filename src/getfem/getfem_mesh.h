@@ -61,6 +61,8 @@ namespace getfem {
   gmm::uint64_type APIDECL act_counter(void);
 
   class integration_method;
+  class mesh_fem;
+  template <class VECTOR> class temporary_mesh_deformator;
   typedef boost::intrusive_ptr<const integration_method> pintegration_method;
 
   /**@addtogroup mesh*/
@@ -559,6 +561,25 @@ namespace getfem {
     size_type Bank_test_and_refine_convex(size_type, dal::bit_vector &,
                                           bool = true);
     void Bank_build_green_simplexes(size_type, std::vector<size_type> &);
+
+    /**Deforming the mesh. Must use a friend class temporary_mesh_deformator
+    to deform a mesh. See getfem_deformable_mesh.h for more info.*/
+
+    template <class VECTOR> friend class temporary_mesh_deformator;
+
+    /**displace the points by a given displacement vector
+    @param U displacement vector as described by mf using dof index (NOT pts index)
+    @param &mf mesh_fem object that corresponds to &U, should be compatible with the mesh
+    */
+    template<typename VEC, typename MESH_FEM>
+    void deform_mesh(const VEC &dU, const MESH_FEM &mf)
+    {
+      base_vector dU_basic(mf.nb_basic_dof());
+      mf.extend_vector(dU, dU_basic);
+      deforming_the_mesh_(dU_basic, mf);
+    }
+
+    void deforming_the_mesh_(const base_vector &dU, const mesh_fem &mf);
 
   public :
 
