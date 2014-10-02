@@ -2581,13 +2581,22 @@ namespace getfem {
   }
 
 
-  // ----------------------------------------------------------------------
-  //
-  //
-  // Standard bricks
-  //
-  //
-  // ----------------------------------------------------------------------
+  void virtual_brick::full_asm_real_tangent_terms_(const model &md, size_type ind_brick,
+    const model::varnamelist &term_list,
+    const model::varnamelist &var_list,
+    const model::mimlist &mim_list,
+    model::real_matlist &rmatlist,
+    model::real_veclist &rveclist,
+    model::real_veclist &rveclist_sym,
+    size_type region, build_version version) const
+  {
+    real_pre_assembly_in_serial(md, ind_brick, term_list, var_list, mim_list, rmatlist,
+      rveclist, rveclist_sym, region, version);
+    asm_real_tangent_terms(md, ind_brick, term_list, var_list, mim_list, rmatlist,
+      rveclist, rveclist_sym, region, version);
+    real_post_assembly_in_serial(md, ind_brick, term_list, var_list, mim_list, rmatlist,
+      rveclist, rveclist_sym, region, version);
+  }
 
   void virtual_brick::check_stiffness_matrix_and_rhs
   (const model &md, size_type s,
@@ -2599,7 +2608,8 @@ namespace getfem {
    model::real_veclist &rvc1,
    model::real_veclist &rvc2, 
    size_type rg,
-   const scalar_type TINY) const {
+   const scalar_type TINY) const 
+  {
     std::cout<<"******Verifying stiffnesses of *******"<<std::endl;
     std::cout<<"*** "<<brick_name()<<std::endl;
     
@@ -2612,9 +2622,10 @@ namespace getfem {
       GMM_WARNING0("*** cannot verify stiffness for this brick***");
       return;
     }
-    asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+    full_asm_real_tangent_terms_(md, s, vl, dl, mims, matl, rvc1, rvc2,
                            rg, model::BUILD_MATRIX);
-    for(size_type iterm=0;iterm<matl.size();iterm++){
+    for(size_type iterm=0;iterm<matl.size();iterm++)
+    {
       
       std::cout<<std::endl;
       std::cout<<"    Stiffness["<<tlist[iterm].var1
@@ -2632,7 +2643,7 @@ namespace getfem {
       
       model_real_sparse_matrix SM(matl[iterm]);
       gmm::fill(rvc1[rhs_index[tlist[iterm].var1]], 0.0);
-      asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+      full_asm_real_tangent_terms_(md, s, vl, dl, mims, matl, rvc1, rvc2,
                              rg, model::BUILD_RHS);
       if (gmm::mat_euclidean_norm(matl[iterm])<1e-12){
         std::cout<<"    The assembled matrix is nearly zero, skipping."<<std::endl;
@@ -2651,7 +2662,7 @@ namespace getfem {
       for (size_type j = 0; j < matl[iterm].ncols(); j++){
         U[j] += relative_tiny;
         gmm::fill(RHS1, 0.0);
-        asm_real_tangent_terms(md, s, vl, dl, mims, matl, rvc1, rvc2,
+        full_asm_real_tangent_terms_(md, s, vl, dl, mims, matl, rvc1, rvc2,
           rg, model::BUILD_RHS);
         for (size_type i = 0; i<matl[iterm].nrows(); i++)
           fdSM(i, j) = (RHS0[i] - RHS1[i]) / relative_tiny;
@@ -2724,6 +2735,14 @@ namespace getfem {
       }
     }
   }
+
+  // ----------------------------------------------------------------------
+  //
+  //
+  // Standard bricks
+  //
+  //
+  // ----------------------------------------------------------------------
 
 
   // ----------------------------------------------------------------------

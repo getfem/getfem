@@ -1562,7 +1562,16 @@ namespace getfem {
                                         model::real_veclist &,
                                         model::real_veclist &, size_type rg,
                                         const scalar_type delta = 1e-8) const;
-
+    private:
+      /**simultaneous call to real_pre_assembly, real_assembly and real_post_assembly*/
+      void full_asm_real_tangent_terms_(const model &, size_type,
+        const model::varnamelist &,
+        const model::varnamelist &,
+        const model::mimlist &,
+        model::real_matlist &,
+        model::real_veclist &,
+        model::real_veclist &,
+        size_type, build_version) const;
   };
 
   //=========================================================================
