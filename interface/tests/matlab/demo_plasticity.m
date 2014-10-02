@@ -119,7 +119,7 @@ if (new_test)
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
 
-  assline = strcat('(', B_inv, '*(Von_Mises_projection(H*', Epn1, '+', ApH, '*(',Enp1,'+',En,') + ', B, '*sigma) + H*', Enp1, ')):Grad_Test_u');
+  assline = strcat('(', B_inv, '*(Von_Mises_projection(H*', Epn1, '+', ApH, '*(',Enp1,'+',En,') + ', B, '*sigma, von_mises_threshold) + H*', Enp1, ')):Grad_Test_u');
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, assline);
 else
   set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
