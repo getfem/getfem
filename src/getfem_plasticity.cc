@@ -689,13 +689,13 @@ namespace getfem {
   //
   //=========================================================================
 
-  // static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
-  static void ga_init_vector(bgeot::multi_index &mi, size_type N)
-  { mi.resize(1); mi[0] = N; }
+  static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
+  //  static void ga_init_vector(bgeot::multi_index &mi, size_type N)
+  // { mi.resize(1); mi[0] = N; }
   static void ga_init_matrix(bgeot::multi_index &mi, size_type M, size_type N)
   { mi.resize(2); mi[0] = M; mi[1] = N; }
   static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
-  { mi.resize(2); mi[0] = mi[1] = N; }
+    { mi.resize(2); mi[0] = mi[1] = N; }
 
 
   bool expm(const base_matrix &a_, base_matrix &aexp, scalar_type tol=1e-15) {
@@ -863,6 +863,98 @@ namespace getfem {
     }
   };
 
+  //=================================================================
+  // Von Mises projection
+  //=================================================================
+
+
+  struct Von_Mises_projection_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 2 || args[0]->sizes().size() <= 2
+          || args[1]->size() != 1) return false;
+      size_type N = (args[0]->sizes().size() == 2) ?  args[0]->sizes()[0] : 1;
+      if (args[0]->sizes().size() == 2 && args[0]->sizes()[1] != N) return false;
+      if (args[0]->sizes().size() != 2 && args[0]->size() != 1)  return false;
+      if (N > 1) ga_init_square_matrix(sizes, N); else ga_init_scalar(sizes);
+      return true;
+    }
+
+    // Value:
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = (args[0]->sizes().size() == 2) ? args[0]->sizes()[0] : 1;
+      base_matrix tau(N, N), tau_D(N, N);
+      gmm::copy(args[0]->as_vector(), tau.as_vector());
+      scalar_type s = (*(args[1]))[0];
+      
+      
+      scalar_type tau_m = gmm::mat_trace(tau) / scalar_type(N);
+      gmm::copy(tau, tau_D);
+      for (size_type i = 0; i < N; ++i) tau_D(i,i) -= tau_m;
+
+      scalar_type norm_tau_D = gmm::mat_euclidean_norm(tau_D);
+      
+      if (norm_tau_D != scalar_type(0))
+        gmm::scale(tau_D, std::min(norm_tau_D, s) / norm_tau_D);
+
+      for (size_type i = 0; i < N; ++i) tau_D(i,i) += tau_m;
+
+      gmm::copy(tau_D.as_vector(), result.as_vector());
+    }
+
+    // Derivative:
+    void derivative(const arg_list &args, size_type nder,
+                    base_tensor &result) const {
+      size_type N = (args[0]->sizes().size() == 2) ? args[0]->sizes()[0] : 1;
+      base_matrix tau(N, N), tau_D(N, N);
+      gmm::copy(args[0]->as_vector(), tau.as_vector());
+      scalar_type s = (*(args[1]))[0];
+      scalar_type tau_m = gmm::mat_trace(tau) / scalar_type(N);
+      gmm::copy(tau, tau_D);
+      for (size_type i = 0; i < N; ++i) tau_D(i,i) -= tau_m;
+      scalar_type norm_tau_D = gmm::mat_euclidean_norm(tau_D);
+
+      if (norm_tau_D != scalar_type(0))
+        gmm::scale(tau_D, scalar_type(1)/norm_tau_D);
+
+      switch(nder) {
+      case 1: 
+        if (norm_tau_D < s) {
+          gmm::clear(result.as_vector());
+          for (size_type i = 0; i < N; ++i)
+            for (size_type j = 0; j < N; ++j)
+              result(i,j,i,j) = scalar_type(1);
+        } else {
+          if (norm_tau_D != scalar_type(0)) {
+            for (size_type i = 0; i < N; ++i)
+              for (size_type j = 0; j < N; ++j)
+                for (size_type m = 0; m < N; ++m)
+                  for (size_type n = 0; n < N; ++n)
+                    result(i,j,m,n)
+                      = s * (-tau_D(i,j) * tau_D(m,n)
+                             + (i == m && j == n) ? scalar_type(1) : scalar_type(0)
+                             - (i == j && m == n) ? scalar_type(1)/scalar_type(N)
+                                                    : scalar_type(0)) / norm_tau_D;
+          } else gmm::clear(result.as_vector());
+          for (size_type i = 0; i < N; ++i)
+            for (size_type j = 0; j < N; ++j)
+              result(i,i,j,j) += scalar_type(1)/scalar_type(N);
+        }
+        break;
+      case 2:
+        if (norm_tau_D < s)
+          gmm::clear(result.as_vector());
+        else
+          gmm::copy(tau_D.as_vector(), result.as_vector());
+        break;
+      }
+    }
+
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
 
   static bool init_predef_operators(void) {
 
@@ -871,6 +963,8 @@ namespace getfem {
     
     PREDEF_OPERATORS.add_method("expm",
                                 new matrix_exponential_operator());
+    PREDEF_OPERATORS.add_method("Von_Mises_projection",
+                                new Von_Mises_projection_operator());
     return true;
    }
 
