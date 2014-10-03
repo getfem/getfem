@@ -301,6 +301,8 @@ namespace getfem {
       termlist tlist;            // List of terms build by the brick
       mimlist mims;              // List of integration methods.
       size_type region;          // Optional region size_type(-1) for all.
+      bool is_update_brick;      // Flag for declaring special type of brick
+      // with no contributions.
       mutable scalar_type external_load; // External load computed in assembly
 
       mutable model_real_plain_vector coeffs;
@@ -325,7 +327,7 @@ namespace getfem {
                         const mimlist &mms, size_type reg)
         : terms_to_be_computed(true), v_num(0), pbr(p), pdispatch(0), nbrhs(1),
           vlist(vl), dlist(dl), tlist(tl), mims(mms), region(reg),
-          external_load(0),
+          is_update_brick(false), external_load(0),
           rveclist(1), rveclist_sym(1), cveclist(1),
           cveclist_sym(1)  { }
     };
@@ -1033,6 +1035,10 @@ namespace getfem {
      */
     void change_mims_of_brick(size_type ib, const mimlist &ml);
 
+    /** Change the update flag of a brick. Used for very special bricks only.
+      */
+    void change_update_flag_of_brick(size_type ib, bool flag);
+
     void set_time(scalar_type t = scalar_type(0), bool to_init = true) {
       static const std::string varname("t");
       VAR_SET::iterator it = variables.find(varname);
@@ -1399,6 +1405,8 @@ namespace getfem {
     bool compute_each_time; // The brick is linear but needs to be computed
     // each time it is evaluated.
     bool hasNeumannterm; // The brick declares at list a Neumann term.
+    bool isUpdateBrick;  // The brick does not contribute any terms to the
+    // system matrix or right-hand side, but only updates state variables.
     std::string name; // Name of the brick.
 
   public:

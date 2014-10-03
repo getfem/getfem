@@ -764,6 +764,12 @@ namespace getfem {
     for (size_type i = 0; i < ml.size(); ++i) add_dependency(*(ml[i]));
   }
 
+  void model::change_update_flag_of_brick(size_type ib, bool flag) {
+    GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
+    touch_brick(ib);
+    bricks[ib].is_update_brick = flag;
+  }
+
   void model::call_init_affine_dependent_variables(int version) {
     for (VAR_SET::iterator it = variables.begin();
          it != variables.end(); ++it) 
@@ -1410,80 +1416,109 @@ namespace getfem {
 
     // scalar_type timet = gmm::uclock_sec();
 
-    if (cplx)
+    if (!brick.is_update_brick || (brick.is_update_brick && (version & BUILD_RHS)))
     {
-      brick.pbr->complex_pre_assembly_in_serial(*this, ib, brick.vlist,
-                                                brick.dlist, brick.mims,
-                                                brick.cmatlist,
-                                                brick.cveclist[rhs_ind],
-                                                brick.cveclist_sym[rhs_ind],
-                                                brick.region, version);
-      /*distributing the resulting vectors and matrices
-      for individual threads.*/
-      {//brackets are needed because list_distro has constructor/destructor
-        //semantics (as in RAII)
-        list_distro<complex_matlist> cmatlist(brick.cmatlist);
-        list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
-        list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
-        // timet = gmm::uclock_sec();
-        /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check; 
-        #pragma omp parallel default(shared)  
-        { 
-          brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
-                                               brick.dlist, brick.mims,
-                                               cmatlist,
-                                               cveclist,
-                                               cveclist_sym,
-                                               brick.region, version);
-          
-        }
-      }
-      brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
-                                                 brick.dlist, brick.mims,
-                                                 brick.cmatlist,
-                                                 brick.cveclist[rhs_ind],
-                                                 brick.cveclist_sym[rhs_ind],
-                                                 brick.region, version);
-
-    }
-    else //not cplx
-    {
-      brick.pbr->real_pre_assembly_in_serial(*this, ib, brick.vlist,
-                                             brick.dlist, brick.mims,
-                                             brick.rmatlist,
-                                             brick.rveclist[rhs_ind],
-                                             brick.rveclist_sym[rhs_ind],
-                                             brick.region, version);
+      if (cplx)
       {
+        brick.pbr->complex_pre_assembly_in_serial(*this, ib, brick.vlist,
+                                                  brick.dlist, brick.mims,
+                                                  brick.cmatlist,
+                                                  brick.cveclist[rhs_ind],
+                                                  brick.cveclist_sym[rhs_ind],
+                                                  brick.region, version);
         /*distributing the resulting vectors and matrices
         for individual threads.*/
-        list_distro<real_matlist> rmatlist(brick.rmatlist);
-        list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
-        list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-        // timet = gmm::uclock_sec();
-        /*running the assembly in parallel*/
-        gmm::standard_locale locale;
-        open_mp_is_running_properly check; 
-        #pragma omp parallel default(shared)  
-        { 
-          brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
-                                            brick.dlist, brick.mims,
-                                            rmatlist,
-                                            rveclist,
-                                            rveclist_sym,
-                                            brick.region,
-                                            version);
-          
+        {//brackets are needed because list_distro has constructor/destructor
+          //semantics (as in RAII)
+          list_distro<complex_matlist> cmatlist(brick.cmatlist);
+          list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
+          list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
+          // timet = gmm::uclock_sec();
+          /*running the assembly in parallel*/
+          gmm::standard_locale locale;
+          open_mp_is_running_properly check; 
+          #pragma omp parallel default(shared)  
+          { 
+            brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
+                                                 brick.dlist, brick.mims,
+                                                 cmatlist,
+                                                 cveclist,
+                                                 cveclist_sym,
+                                                 brick.region, version);
+            
+          }
+
+          if (brick.is_update_brick)
+          {
+            for (size_type i = 0; i < brick.rveclist.size(); ++i)
+            {
+              gmm::clear(brick.rveclist[i]);
+            }
+            
+            for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
+            {
+              gmm::clear(brick.rveclist_sym[i]);
+            }
+          }
         }
+        brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
+                                                   brick.dlist, brick.mims,
+                                                   brick.cmatlist,
+                                                   brick.cveclist[rhs_ind],
+                                                   brick.cveclist_sym[rhs_ind],
+                                                   brick.region, version);
+
       }
-      brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
+      else //not cplx
+      {
+        brick.pbr->real_pre_assembly_in_serial(*this, ib, brick.vlist,
+                                               brick.dlist, brick.mims,
+                                               brick.rmatlist,
+                                               brick.rveclist[rhs_ind],
+                                               brick.rveclist_sym[rhs_ind],
+                                               brick.region, version);
+        {
+          /*distributing the resulting vectors and matrices
+          for individual threads.*/
+          list_distro<real_matlist> rmatlist(brick.rmatlist);
+          list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
+          list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
+          // timet = gmm::uclock_sec();
+          /*running the assembly in parallel*/
+          gmm::standard_locale locale;
+          open_mp_is_running_properly check; 
+          #pragma omp parallel default(shared)  
+          { 
+            brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
                                               brick.dlist, brick.mims,
-                                              brick.rmatlist,
-                                              brick.rveclist[rhs_ind],
-                                              brick.rveclist_sym[rhs_ind],
-                                              brick.region, version);
+                                              rmatlist,
+                                              rveclist,
+                                              rveclist_sym,
+                                              brick.region,
+                                              version);
+            
+          }
+
+          if (brick.is_update_brick)
+          {
+            for (size_type i = 0; i < brick.rveclist.size(); ++i)
+            {
+              gmm::clear(brick.rveclist[i]);
+            }
+            
+            for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
+            {
+              gmm::clear(brick.rveclist_sym[i]);
+            }
+          }
+        }
+        brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
+                                                brick.dlist, brick.mims,
+                                                brick.rmatlist,
+                                                brick.rveclist[rhs_ind],
+                                                brick.rveclist_sym[rhs_ind],
+                                                brick.region, version);
+      }
     }
   }
 
