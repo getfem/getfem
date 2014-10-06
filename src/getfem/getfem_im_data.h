@@ -132,9 +132,9 @@ namespace getfem{
       if(V1.size() == 0 && V2.size() == 0) return;
 
       size_type nb_data = V1.size()/nb_filtered_index();
-      GMM_ASSERT2(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(V1.size()%nb_filtered_index() == 0, "Invalid size of vector V1");
-      GMM_ASSERT2(V2.size() == nb_data*nb_index(), "Invalid size of vector V2");
+      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(V1.size()%nb_filtered_index() == 0, "Invalid size of vector V1");
+      GMM_ASSERT1(V2.size() == nb_data*nb_index(), "Invalid size of vector V2");
 
       for(dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv)
       {
@@ -154,9 +154,9 @@ namespace getfem{
       if(V1.size() == 0 && V2.size() == 0) return;
 
       size_type nb_data = V1.size()/nb_index_;
-      GMM_ASSERT2(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(V1.size()%nb_index_ == 0, "Invalid size of vector V1");
-      GMM_ASSERT2(V2.size() == nb_data*nb_filtered_index(), 
+      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(V1.size()%nb_index_ == 0, "Invalid size of vector V1");
+      GMM_ASSERT1(V2.size() == nb_data*nb_filtered_index(), 
                                "Invalid size of vector V2");
 
       for(dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv)
@@ -177,8 +177,8 @@ namespace getfem{
     typename VECT::value_type get_value (const VECT &V1, 
       size_type cv, size_type i, bool filter = true) const{
       size_type nb_data = V1.size()/nb_filtered_index();
-      GMM_ASSERT2(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(nb_tensor_elem_ == 1, "ImData is not scalar type");
+      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(nb_tensor_elem_ == 1, "ImData is not scalar type");
       if(!filter) return V1[index_of_point(cv,i)];
       else return V1[filtered_index_of_point(cv,i)];
     }
@@ -190,8 +190,8 @@ namespace getfem{
       VECT2& V2, bool filter = true) const{
       if(V1.size() == 0 && V2.size() == 0) return;
       size_type nb_data = V1.size()/nb_filtered_index();
-      GMM_ASSERT2(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(is_equivalent_with_vector(tensor_size_, V2.size())
+      GMM_ASSERT1(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size())
                   , "V2 size is incompatible");
 
       size_type   iPt = 0;
@@ -211,8 +211,8 @@ namespace getfem{
       MAT& M, bool filter = true) const{
       if(V1.size() == 0 && M.size() == 0) return;
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
-      GMM_ASSERT2(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
+      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
                   "Invalid tensorial size for vector V1");
 
       size_type   iPt = 0;
@@ -231,8 +231,8 @@ namespace getfem{
       TENSOR& T, bool filter = true) const{
       if(V1.size() == 0 && T.size() == 0) return;
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
-      GMM_ASSERT2(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(tensor_size_ == T.sizes(), "ImData tensor is incompatible with T");
+      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(tensor_size_ == T.sizes(), "ImData tensor is incompatible with T");
 
       size_type   iPt = 0;
       if(!filter) iPt = index_of_point(cv,i);
@@ -248,8 +248,8 @@ namespace getfem{
     typename VECT::value_type &set_value (VECT &V1, 
       size_type cv, size_type i, bool filter = true) const{
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
-      GMM_ASSERT2(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(nb_tensor_elem_ == 1, "ImData is not scalar type");
+      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(nb_tensor_elem_ == 1, "ImData is not scalar type");
       if(!filter) return V1[index_of_point(cv,i)];
       else return V1[filtered_index_of_point(cv,i)];
     }
@@ -262,8 +262,8 @@ namespace getfem{
       const VECT2& V2, bool filter = true) const{
       if(V1.size() == 0 && V2.size() == 0) return;
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
-      GMM_ASSERT2(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(is_equivalent_with_vector(tensor_size_, V2.size())
+      GMM_ASSERT1(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(is_equivalent_with_vector(tensor_size_, V2.size())
                   , "V2 size is incompatible");
 
       size_type   iPt = 0;
@@ -282,8 +282,8 @@ namespace getfem{
       const MAT& M, bool filter = true) const{
       if(V1.size() == 0 && M.size() == 0) return;
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
-      GMM_ASSERT2(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
+      GMM_ASSERT1(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(is_equivalent_with_matrix(tensor_size_, M.nrows(), M.ncols()),
                   "Invalid tensorial size for vector V1");
 
       size_type   iPt = 0;
@@ -302,8 +302,8 @@ namespace getfem{
       const TENSOR& T, bool filter = true) const{
       if(V1.size() == 0 && T.size() == 0) return;
       size_type nb_data = V1.size()/((filter)?nb_filtered_index():nb_index());
-      GMM_ASSERT2(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
-      GMM_ASSERT2(tensor_size_ == T.sizes(), "ImData tensor is incompatible with T");
+      GMM_ASSERT1(nb_data == nb_tensor_elem_,    "Invalid tensorial size for vector V1");
+      GMM_ASSERT1(tensor_size_ == T.sizes(), "ImData tensor is incompatible with T");
 
       size_type   iPt = 0;
       if(!filter) iPt = index_of_point(cv,i);
