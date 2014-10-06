@@ -120,4 +120,42 @@ namespace getfem
     update_index_();
     touch();
   }
+
+  bool is_equivalent_with_vector(const bgeot::multi_index &sizes, size_type vector_size){
+    bool checked = false;
+    size_type size = 1;
+    for (size_type i = 0; i < sizes.size(); ++i){
+      if (sizes[i] > 1 && checked) return false;
+      if (sizes[i] > 1){ 
+        checked = true;
+        size = sizes[i];
+        if (size != vector_size) return false;
+      }
+    }
+    return (vector_size == size);
+  }
+
+  bool is_equivalent_with_matrix(const bgeot::multi_index &sizes, size_type nrows, size_type ncols){
+    if (nrows == 1 || ncols == 1){
+      return is_equivalent_with_vector(sizes, nrows + ncols - 1);
+    }    
+    size_type tensor_row = 1;
+    size_type tensor_col = 1;
+    bool first_checked = false;
+    bool second_checked = false;
+    bool equivalent = false;
+    for (size_type i = 0; i < sizes.size(); ++i){
+      if (sizes[i] > 1 && !first_checked){
+        first_checked = true;
+        tensor_row = sizes[i];
+        if (tensor_row != nrows) return false;
+      }else if (sizes[i] > 1 && !second_checked){
+        second_checked = true;
+        tensor_col = sizes[i];
+        if (tensor_col != ncols) return false;
+      }
+      else if (sizes[i] > 1 && first_checked && second_checked) return false;
+    }
+    return (nrows == tensor_row && ncols == tensor_col);
+  }
 }
