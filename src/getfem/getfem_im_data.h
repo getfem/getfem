@@ -60,6 +60,11 @@ namespace getfem{
   This class also provides reading and writing tensor( including
   matrix, vector and scalar) from a vector data (generally a
   fixed-size variable from the model.)
+  
+  im_data can be used to provide integration point index on convex or
+  on faces of convex, but not both. To create an im_data that represents
+  integration points on a face, the filter region provided has to contain
+  only faces.
   */
   class im_data : public context_dependencies {
   public:
@@ -67,8 +72,9 @@ namespace getfem{
     * Constructor
     * @param meshIm Reference mesh_im object
     * @param tensorSize tensor dimension of each integration points
-    * @param filteredRegion index not in the region will be filtered
-    *        out.
+    * @param filtered_region index not in the region will be filtered
+    *        out. If filtered_region contain only faces, im_data on face
+	*        is created.
     */
     im_data(const mesh_im& meshIm, bgeot::multi_index tensor_size,
       size_type filtered_region = size_type(-1));
@@ -76,8 +82,9 @@ namespace getfem{
     /**
     * Constructor. The tensor size by default is a scalar value.
     * @param meshIm Reference mesh_im object
-    * @param filteredRegion index not in the region will be filtered
-    *        out.
+    * @param filtered_region index not in the region will be filtered
+    *        out. If filtered_region contain only faces, im_data on face
+	*        is created.
     */
     im_data(const mesh_im& mesh_im, size_type filtered_region = size_type(-1));
 
@@ -99,8 +106,8 @@ namespace getfem{
     /**Total numbers of filtered index (integration points)*/
     size_type nb_filtered_index() const;
 
-    /**Number of points in element cv*/
-    size_type nb_points_of_element(size_type cv) const;
+    /**Number of points in element cv, optionally on face, f*/
+    size_type nb_points_of_element(size_type cv, size_type f = size_type(-1)) const;
 
     /**sum of tensor elements, M(3,3) will have 3*3=9 elements*/
     size_type nb_tensor_elem() const;
@@ -130,20 +137,38 @@ namespace getfem{
     template <typename VECT>
     void extend_vector(const VECT &V1, VECT &V2) const{
       if(V1.size() == 0 && V2.size() == 0) return;
+      if (nb_filtered_index() == nb_index()){
+       gmm::copy(V1, V2); return;
+      }
 
       size_type nb_data = V1.size()/nb_filtered_index();
       GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
       GMM_ASSERT1(V1.size()%nb_filtered_index() == 0, "Invalid size of vector V1");
       GMM_ASSERT1(V2.size() == nb_data*nb_index(), "Invalid size of vector V2");
 
-      for(dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv)
-      {
-        size_type iPt         = index_of_point(cv,0);
-        size_type iFilteredPt = filtered_index_of_point(cv,0);
-        for(size_type i = 0; i <nb_points_of_element(cv); ++i)
-        {
-          for(size_type i_comp = 0; i_comp < nb_data; ++i_comp)
-            V2[(iPt+i)*nb_data + i_comp] = V1[(iFilteredPt+i)*nb_data + i_comp];
+      if (!is_on_face_){
+        for(dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv){
+          size_type iPt         = index_of_point(cv,0);
+          size_type iFilteredPt = filtered_index_of_point(cv,0);
+          for(size_type i = 0; i <nb_points_of_element(cv); ++i)
+          {
+            for(size_type i_comp = 0; i_comp < nb_data; ++i_comp)
+              V2[(iPt+i)*nb_data + i_comp] = V1[(iFilteredPt+i)*nb_data + i_comp];
+          }
+        }
+      }
+      else{
+        for (dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv){
+          const std::vector<size_type> &point_ind = filtered_face_container_[cv].point_index_;
+          const std::vector<size_type> &all_point_ind = face_container_[cv].point_index_;
+          for (size_type i = 0; i <point_ind.size(); ++i)
+          {
+            if (point_ind[i] == size_type(-1)) continue;
+            size_type iPt = all_point_ind[i];
+            size_type iFilteredPt = point_ind[i];
+            for (size_type i_comp = 0; i_comp < nb_data; ++i_comp)
+              V2[iPt*nb_data + i_comp] = V1[iFilteredPt*nb_data + i_comp];
+          }
         }
       }
     }
@@ -152,21 +177,38 @@ namespace getfem{
     template <typename VECT>
     void reduce_vector(const VECT &V1, VECT &V2) const{
       if(V1.size() == 0 && V2.size() == 0) return;
-
+      if (nb_filtered_index() == nb_index()){
+        gmm::copy(V1, V2); return;
+      }
       size_type nb_data = V1.size()/nb_index_;
       GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
       GMM_ASSERT1(V1.size()%nb_index_ == 0, "Invalid size of vector V1");
       GMM_ASSERT1(V2.size() == nb_data*nb_filtered_index(), 
                                "Invalid size of vector V2");
-
-      for(dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv)
-      {
-        size_type iPt         = index_of_point(cv,0);
-        size_type iFilteredPt = filtered_index_of_point(cv,0);
-        for(size_type i = 0; i <nb_points_of_element(cv); ++i)
+      if (!is_on_face_){
+        for (dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv)
         {
-          for(size_type i_comp = 0; i_comp < nb_data; ++i_comp)
-            V2[(iFilteredPt+i)*nb_data + i_comp] = V1[(iPt+i)*nb_data + i_comp];
+          size_type iPt = index_of_point(cv, 0);
+          size_type iFilteredPt = filtered_index_of_point(cv, 0);
+          for (size_type i = 0; i <nb_points_of_element(cv); ++i)
+          {
+            for (size_type i_comp = 0; i_comp < nb_data; ++i_comp)
+              V2[(iFilteredPt + i)*nb_data + i_comp] = V1[(iPt + i)*nb_data + i_comp];
+          }
+        }
+      }
+      else{
+        for (dal::bv_visitor cv(filtered_convex_index_); !cv.finished(); ++cv){
+          const std::vector<size_type> &point_ind = filtered_face_container_[cv].point_index_;
+          const std::vector<size_type> &all_point_ind = face_container_[cv].point_index_;
+          for (size_type i = 0; i <point_ind.size(); ++i)
+          {
+            if (point_ind[i] == size_type(-1)) continue;
+            size_type iPt = all_point_ind[i];
+            size_type iFilteredPt = point_ind[i];
+            for (size_type i_comp = 0; i_comp < nb_data; ++i_comp)
+              V2[iFilteredPt*nb_data + i_comp] = V1[iPt*nb_data + i_comp];
+          }
         }
       }
     }
@@ -316,14 +358,27 @@ namespace getfem{
   private:
     const mesh_im &im_;
     void  update_index_() const;
+    void  update_index_for_face_() const;
 
-    mutable size_type              nb_filtered_index_;
-    mutable size_type              nb_index_;
-    mutable std::vector<size_type> filtered_int_point_index_; 
-    mutable std::vector<size_type> int_point_index_; 
-    mutable dal::bit_vector        filtered_convex_index_;
-    mutable gmm::uint64_type       v_num_;
-    mutable size_type              filtered_region_;
+    struct convex_faces_index{
+      bool inactive_;
+      size_type start_index_;
+      std::vector<size_type> point_index_;
+      std::vector<dal::bit_vector> index_of_face_;
+      convex_faces_index() :inactive_(true), start_index_(size_type(-1)){}
+    };
+
+    mutable size_type                       nb_filtered_index_;
+    mutable size_type                       nb_index_;
+    mutable std::vector<size_type>          filtered_int_point_index_; 
+    mutable std::vector<size_type>          int_point_index_;
+    mutable dal::bit_vector                 filtered_convex_index_;
+    mutable gmm::uint64_type                v_num_;
+    mutable size_type                       filtered_region_;
+    //for integration points at face
+    mutable std::vector<convex_faces_index> face_container_;
+    mutable std::vector<convex_faces_index> filtered_face_container_;    
+    mutable bool           is_on_face_;
 
     bgeot::multi_index     tensor_size_;
     size_type              nb_tensor_elem_;

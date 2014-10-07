@@ -8,27 +8,40 @@ namespace getfem
                    bgeot::multi_index tensorSize,
                    size_type filteredRegion)
     :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
-    filtered_region_(filteredRegion),
+    is_on_face_(false), filtered_region_(filteredRegion),
     locks_()
   {
     set_tensor_size(tensorSize);
     add_dependency(im_);
-    update_index_();
+    if (filtered_region_!=size_type(-1) && 
+        im_.linked_mesh().region(filtered_region_).is_only_faces()){
+        update_index_for_face_();
+        is_on_face_ = true;
+    }
+    else update_index_();
   }
 
   im_data::im_data(const getfem::mesh_im& meshIm, size_type filteredRegion)
     :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
-    filtered_region_(filteredRegion) {
+    is_on_face_(false), filtered_region_(filteredRegion) {
     tensor_size_.resize(1);
     tensor_size_[0] = 1;
     nb_tensor_elem_ = 1;
     add_dependency(im_);
-    update_index_();
+    if (filtered_region_ != size_type(-1) &&
+      im_.linked_mesh().region(filtered_region_).is_only_faces()){
+      update_index_for_face_();
+      is_on_face_ = true;
+    }
+    else update_index_();
   }
     
   void im_data::update_index_() const {
     local_guard lock = locks_.get_lock();
-    nb_index_         = 0;      
+    nb_index_         = 0;
+    face_container_.clear();
+    filtered_face_container_.clear();
+
     size_type nElement = im_.convex_index().last_true() + 1;
     int_point_index_.clear();
     int_point_index_.resize(nElement, size_type(-1));
@@ -57,6 +70,72 @@ namespace getfem
     v_num_ = act_counter();
   }
 
+  void im_data::update_index_for_face_() const {
+    local_guard lock = locks_.get_lock();
+    nb_index_ = 0;
+    int_point_index_.clear();
+    filtered_int_point_index_.clear();
+
+    size_type nElement = im_.convex_index().last_true() + 1;
+    face_container_.clear();
+    face_container_.resize(nElement);
+
+    nb_filtered_index_ = 0;
+    filtered_face_container_.clear();
+    filtered_face_container_.resize(nElement);
+    filtered_convex_index_.clear();
+
+    const getfem::mesh &linked_mesh = im_.linked_mesh();
+    const getfem::mesh_region &rg = linked_mesh.region(filtered_region_);
+    
+    for (dal::bv_visitor cv(im_.convex_index()); !cv.finished(); ++cv)
+    {
+      size_type nb_faces = linked_mesh.nb_faces_of_convex(cv);      
+      const getfem::papprox_integration pim = im_.int_method_of_element(cv)->approx_method();
+      size_type nb_points = pim->nb_points_on_convex();
+      size_type nb_points_on_faces = pim->nb_points() - nb_points;
+      face_container_[cv].index_of_face_.resize(nb_faces);
+      face_container_[cv].inactive_ = false;
+      face_container_[cv].start_index_ = nb_points;
+      face_container_[cv].point_index_.resize(nb_points_on_faces);
+      size_type nb_index_convex = 0;
+
+      for (size_type i_face = 0; i_face < nb_faces; ++i_face){
+        size_type nb_pt_face = pim->nb_points_on_face(i_face);
+        for (size_type k = 0; k < nb_pt_face; ++k){
+          face_container_[cv].point_index_[nb_index_convex] = nb_index_;
+          face_container_[cv].index_of_face_[i_face].add(nb_index_);
+          ++nb_index_;
+          ++nb_index_convex;
+        }
+      }
+      if (rg.index().is_in(cv)){
+        filtered_convex_index_.add(cv);
+        filtered_face_container_[cv].index_of_face_.resize(nb_faces);
+        filtered_face_container_[cv].inactive_ = false;
+        filtered_face_container_[cv].start_index_ = nb_points - nb_points;
+        filtered_face_container_[cv].point_index_.resize(nb_points_on_faces);
+        size_type nb_index_convex = 0;
+
+        for (size_type i_face = 0; i_face < nb_faces; ++i_face){
+          size_type nb_pt_face = pim->nb_points_on_face(i_face);
+          for (size_type k = 0; k < nb_pt_face; ++k){
+            if (!rg.is_in(cv, i_face)){
+              filtered_face_container_[cv].point_index_[nb_index_convex] = size_type(-1);
+            }
+            else{
+              filtered_face_container_[cv].point_index_[nb_index_convex] = nb_filtered_index_;
+              filtered_face_container_[cv].index_of_face_[i_face].add(nb_filtered_index_);
+              ++nb_filtered_index_;
+            }
+            ++nb_index_convex;
+          }
+        }
+      }
+    }
+    v_num_ = act_counter();
+  }
+
   size_type im_data::nb_index() const{
     context_check();
     return nb_index_;
@@ -67,16 +146,36 @@ namespace getfem
     return nb_filtered_index_;
   }
 
-  size_type im_data::nb_points_of_element(size_type cv) const{
+  size_type im_data::nb_points_of_element(size_type cv, size_type f) const{
     context_check();
     if (!im_.convex_index().is_in(cv)) return 0;
-    return im_.int_method_of_element(cv)->approx_method()->nb_points_on_convex();
+    if (f == size_type(-1)){
+      size_type nb_points = im_.int_method_of_element(cv)
+                              ->approx_method()->nb_points_on_convex();
+      if (!is_on_face_) return nb_points;
+      else return im_.int_method_of_element(cv)->approx_method()->nb_points() - nb_points;
+
+    }
+    GMM_ASSERT1(is_on_face_, "im_data is not defined on face.");
+    return im_.int_method_of_element(cv)->approx_method()->nb_points_on_face(f);
   }
 
   size_type im_data::index_of_point(size_type cv, size_type i) const{
     context_check();
-    if (cv < int_point_index_.size()) return int_point_index_[cv] + i;
-    else return size_type(-1);
+    if (!is_on_face_){
+      if (cv < int_point_index_.size()) return int_point_index_[cv] + i;
+      else return size_type(-1);
+    }
+    if (cv < face_container_.size()){
+      size_type return_index = i - face_container_[cv].start_index_;
+      if (face_container_[cv].inactive_ ||
+          face_container_[cv].start_index_ > i ||
+          face_container_[cv].point_index_.size() < return_index){
+        return size_type(-1);
+      }
+      return face_container_[cv].point_index_[return_index];
+    }
+    return size_type(-1);
   }
 
   size_type im_data::nb_tensor_elem() const{
@@ -93,12 +192,24 @@ namespace getfem
 
   size_type im_data::filtered_index_of_point(size_type cv, size_type i) const{
     context_check();
-    if(cv < filtered_int_point_index_.size())
-    {
-      if (filtered_int_point_index_[cv] == size_type(-1)) return size_type(-1);
-      return filtered_int_point_index_[cv] + i;
+    if (!is_on_face_){
+      if(cv < filtered_int_point_index_.size())
+      {
+        if (filtered_int_point_index_[cv] == size_type(-1)) return size_type(-1);
+        return filtered_int_point_index_[cv] + i;
+      }
+      else return size_type(-1);
     }
-    else return size_type(-1);
+    if (cv < filtered_face_container_.size()){
+      size_type return_index = i - face_container_[cv].start_index_;
+      if (filtered_face_container_[cv].inactive_ ||
+          filtered_face_container_[cv].start_index_ > i ||
+          filtered_face_container_[cv].point_index_.size() < return_index){
+        return size_type(-1);
+      }
+      return filtered_face_container_[cv].point_index_[return_index];
+    }
+    return size_type(-1);
   }
 
   dal::bit_vector im_data::filtered_convex_index() const{
@@ -117,7 +228,13 @@ namespace getfem
   }
 
   void im_data::update_from_context() const{
-    update_index_();
+    is_on_face_ = false;
+    if (filtered_region_ != size_type(-1) && 
+        im_.linked_mesh().region(filtered_region_).is_only_faces()){
+      update_index_for_face_();
+      is_on_face_ = true;
+    }
+    else update_index_();
     touch();
   }
 
