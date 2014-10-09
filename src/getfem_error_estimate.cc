@@ -39,7 +39,10 @@ namespace getfem {
                               scalar_type mu,
                               scalar_type gamma0,
                               scalar_type f_coeff,
+			       scalar_type vertical_force,
                               base_vector &ERR) {
+   
+    
    
     
     // static double lambda, mu;
@@ -53,50 +56,58 @@ namespace getfem {
     base_matrix G1, G2;
     bgeot::geotrans_inv_convex gic;
     base_node xref2(N);
-    base_small_vector up(N), jump(N), U1(N), Pr(N), sig(N);
+    base_small_vector up(N), jump(N), U1(N), sig(N), sigt(N);
     // scalar_type young_modulus = 4*mu*(lambda + mu)/(lambda+2*mu);
+    scalar_type Pr, scal, sign, Un ;
+    scalar_type eta1 = 0, eta2 = 0, eta3 = 0, eta4 = 0;
+    
+    
+    scalar_type force_coeff= f_coeff; // inutile pour l'instant
+    force_coeff =0;
+    
+    //vertical force
+    
+    base_small_vector F(N);
+    for (unsigned ii=0; ii < N-1; ++ii)
+      F[ii]=0;
+      F[N-1]=-vertical_force; 
 
     GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
-    
+     
     for (dal::bv_visitor cv(m.convex_index()); !cv.finished(); ++cv) {
       
-      //    getfem::mesher_level_set mmls = ls.mls_of_convex(cv, 0);
       bgeot::pgeometric_trans pgt1 = m.trans_of_convex(cv);
       getfem::papprox_integration pai1 = 
-        get_approx_im_or_fail(mim.int_method_of_element(cv));
+      get_approx_im_or_fail(mim.int_method_of_element(cv));
       getfem::pfem pf1 = mf_u.fem_of_element(cv);
       scalar_type radius = m.convex_radius_estimate(cv);
-      
       bgeot::vectors_to_base_matrix(G1, m.points_of_convex(cv));
-      
       coeff1.resize(mf_u.nb_basic_dof_of_element(cv));
       gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cv))), coeff1);
-      
       getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, cv);
        
       // Residual on the element
       
       for (unsigned ii=0; ii < pai1->nb_points_on_convex(); ++ii) {
-        base_small_vector res(N); // = sol_f(pai1->point(ii));
+        base_small_vector res(N); 
         ctx1.set_xref(pai1->point(ii));
         pf1->interpolation_hess(ctx1, coeff1, hess1, dim_type(qdim));
 
-	
         for (size_type i = 0; i < N; ++i)
           for (size_type j = 0; j < N; ++j)
-            res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j);
-        // ius*ctx1.J(cout << "adding " << radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res) << endl;
-        ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2(res);
-      }
-      //    scalar_type ee = ERR[cv];
-      if (ERR[cv] > 100)
-        cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    
-      
-      // jump of the stress between the element ant its neighbours.
-      for (short_type f1=0; f1 < m.structure_of_convex(cv)->nb_faces(); ++f1) {
+            res[i] += (lambda + mu) * hess1(j, i*N+j) + mu * hess1(i, j*N+j)+F[i];
+	
+	  ERR[cv] += radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res); //norme carrée
+	  eta1 += (radius*radius*ctx1.J()*pai1->coeff(ii)*gmm::vect_norm2_sqr(res));
+      }    
+        //if (ERR[cv] > 100)
+        //cout << "Erreur en résidu sur element " << cv << " : " << ERR[cv] << endl;    
         
-        // if (gmm::abs(mmls(m.trans_of_convex(cv)->convex_ref()->points_of_face(f1)[0])) < 1E-7 * radius) continue;
         
+       // jump of the stress between the element ant its neighbours.
+	
+	for (short_type f1=0; f1 < m.structure_of_convex(cv)->nb_faces(); ++f1) {
+            
         size_type cvn = m.neighbour_of_convex(cv, f1);
         if (cvn == size_type(-1)) continue;
 	
@@ -107,15 +118,13 @@ namespace getfem {
         gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(cvn))), coeff2);
         getfem::fem_interpolation_context ctx2(pgt2, pf2, base_node(N), G2, cvn);
         gic.init(m.points_of_convex(cvn), pgt2);
-        
-        for (unsigned ii=0; ii < pai1->nb_points_on_face(f1); ++ii) {
+	for (unsigned ii=0; ii < pai1->nb_points_on_face(f1); ++ii) {
           
           ctx1.set_xref(pai1->point_on_face(f1, ii));
           gmm::mult(ctx1.B(), pgt1->normals()[f1], up);
           scalar_type norm = gmm::vect_norm2(up);
           up /= norm;
           scalar_type coefficient = pai1->coeff_on_face(f1, ii) * ctx1.J() * norm; 
-          
           pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
           gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
           gmm::scale(E, 0.5);
@@ -123,11 +132,9 @@ namespace getfem {
           gmm::copy(gmm::identity_matrix(), S1);
           gmm::scale(S1, lambda * trace);
           gmm::add(gmm::scaled(E, 2*mu), S1);
-          
           bool converged;
           gic.invert(ctx1.xreal(), xref2, converged);
           GMM_ASSERT1(converged, "geometric transformation not well inverted ... !");
-          
           ctx2.set_xref(xref2);
           pf2->interpolation_grad(ctx2, coeff2, grad2, dim_type(qdim));
           gmm::copy(grad2, E); gmm::add(gmm::transposed(grad2), E);
@@ -136,108 +143,29 @@ namespace getfem {
           gmm::copy(gmm::identity_matrix(), S2);
           gmm::scale(S2, lambda * trace);
           gmm::add(gmm::scaled(E, 2*mu), S2);
-          
           gmm::mult(S1, up, jump);
           gmm::mult_add(S2, gmm::scaled(up, -1.0), jump);
-          
+	  
           ERR[cv] +=radius * coefficient * gmm::vect_norm2_sqr(jump);
-          
-        }
-        
+	  eta2 += (radius * coefficient * gmm::vect_norm2_sqr(jump));
+	  
+
+	  }
+	  
+      	              
       }
-      //   if (ERR[cv]-ee > 100)
-      //   cout << "Erreur en contrainte inter element sur element " << cv << " : " << ERR[cv]-ee << endl;
-      //ERR[cv] = sqrt(ERR[cv]);
       
+   
     };
 
-
-    {
-
-      int bnum = GAMMAC; 
-      
-      getfem::mesh_region region = m.region(bnum);
-      for (getfem::mr_visitor v(region, m);  !v.finished(); ++v) {
-        
-	//    getfem::mesher_level_set mmls = ls.mls_of_convex(v.cv(), 0);
-	bgeot::pgeometric_trans pgt1 = m.trans_of_convex(v.cv());
-	getfem::papprox_integration pai1 = 
-        get_approx_im_or_fail(mim.int_method_of_element(v.cv()));
-	getfem::pfem pf1 = mf_u.fem_of_element(v.cv());
-	scalar_type radius = m.convex_radius_estimate(v.cv());
-      
-	bgeot::vectors_to_base_matrix(G1, m.points_of_convex(v.cv()));
-      
-	coeff1.resize(mf_u.nb_basic_dof_of_element(v.cv()));
-	gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(v.cv()))), coeff1);
-      
-	getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, v.cv());
-  
-        // computation of h for gamma = gamma0*h
-        scalar_type emax, emin, gamma;
-        gmm::condition_number(ctx1.K(),emax,emin);
-        gamma = gamma0 * emax * sqrt(scalar_type(N));
-
-	//cout << "gamma= " << gamma  << endl;
-	
-        short_type f = v.f();
-        
-        
-        for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
-         //cout << "avt -> ERR[v.cv()] = " << ERR[v.cv()] << endl;  
-	  ctx1.set_xref(pai1->point_on_face(f, ii));
-	  gmm::mult(ctx1.B(), pgt1->normals()[f], up);
-	  scalar_type norm = gmm::vect_norm2(up);
-	  up /= norm;
-	  scalar_type coefficient = pai1->coeff_on_face(f, ii) * ctx1.J() * norm;
-	  pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
-	  gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
-	  gmm::scale(E, 0.5);
-	  //cout << "E = " << E << endl; 
-	  scalar_type trace = gmm::mat_trace(E);
-	  gmm::copy(gmm::identity_matrix(), S1);
-	  gmm::scale(S1, lambda * trace);
-	  //cout << "S1 = " <<  S1 << endl; 
-	  gmm::add(gmm::scaled(E, 2*mu), S1);  
-	  //cout << "S1 = " <<  S1 << endl; 
-	  gmm::mult(S1, up, sig);
-	  //cout << "sig = " << sig << endl; 
-          pf1->interpolation(ctx1, coeff1, U1, dim_type(qdim));
-	  gmm::copy(sig,jump);
-	  //cout << "jump = " << jump << endl; 
-	  gmm::scale(jump, -gamma);
-	  //cout << "jump = " << jump << endl; 
-	  //cout << "U1 = " << U1 << endl; 
-	  gmm::add(U1, jump);
-	  coupled_projection(jump, up, f_coeff, Pr); // Nitsche's terms
-	  gmm::scale(Pr, 1./gamma);
-	  gmm::scale(sig,gamma);
-	  gmm::add(sig,Pr);
-	  //cout << "radius = " <<radius<< endl;
-	  //cout << "coefficient= " << coefficient<< endl;
-	  //cout << "gmm::vect_norm2_sqr(Pr) = " <<  gmm::vect_norm2_sqr(Pr)<< endl;
-	  ERR[v.cv()] +=radius * coefficient * gmm::vect_norm2_sqr(Pr);
-	 // cout << "apres ->ERR[v.cv()] = " << ERR[v.cv()] << endl; 
-	  
-        } 
-        
-        
-        if (ERR[v.cv()] > 100)
-          cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
-        
-        
-      }
-      
-    }
-
-    {
+    
+       {
 
       int bnum = GAMMAN; 
    
       getfem::mesh_region region = m.region(bnum);
       for (getfem::mr_visitor v(region,m);  !v.finished(); ++v) {
   
-	//    getfem::mesher_level_set mmls = ls.mls_of_convex(v.cv(), 0);
 	bgeot::pgeometric_trans pgt1 = m.trans_of_convex(v.cv());
 	getfem::papprox_integration pai1 = 
         get_approx_im_or_fail(mim.int_method_of_element(v.cv()));
@@ -250,9 +178,10 @@ namespace getfem {
 	gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(v.cv()))), coeff1);
       
 	getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, v.cv());
-
-        short_type f = v.f();      
-        for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
+	
+        short_type f = v.f(); 
+	   
+       	for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
       
 	  ctx1.set_xref(pai1->point_on_face(f, ii));
 	  gmm::mult(ctx1.B(), pgt1->normals()[f], up);
@@ -267,20 +196,96 @@ namespace getfem {
 	  gmm::scale(S1, lambda * trace);
 	  gmm::add(gmm::scaled(E, 2*mu), S1);    
 	  gmm::mult(S1, up, jump);
+	  
 	  ERR[v.cv()] +=radius * coefficient * gmm::vect_norm2_sqr(jump);
-       
-	  //    
+	  eta2 += (radius * coefficient * gmm::vect_norm2_sqr(jump));
         }
-        
-        if (ERR[v.cv()] > 100)
-          cout << "Erreur en résidu sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
-        
+        //cout << "Erreur en neumann sur " << v.cv() << " ERR[v.cv()] = " << ERR[v.cv()]-eee << endl; 
+
+        //if (ERR[v.cv()] > 100)
+         // cout << "Erreur en neumann sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
         
       }
+      
+    };
+    
+        
+    {
+      int bnum = GAMMAC; 
+      
+      getfem::mesh_region region = m.region(bnum);
+      for (getfem::mr_visitor v(region, m);  !v.finished(); ++v) {
+        
+	bgeot::pgeometric_trans pgt1 = m.trans_of_convex(v.cv());
+	getfem::papprox_integration pai1 = 
+        get_approx_im_or_fail(mim.int_method_of_element(v.cv()));
+	getfem::pfem pf1 = mf_u.fem_of_element(v.cv());
+	//scalar_type radius = m.convex_radius_estimate(v.cv());//inutile
+      
+	bgeot::vectors_to_base_matrix(G1, m.points_of_convex(v.cv()));
+      
+	coeff1.resize(mf_u.nb_basic_dof_of_element(v.cv()));
+	gmm::copy(gmm::sub_vector(U, gmm::sub_index(mf_u.ind_basic_dof_of_element(v.cv()))), coeff1);
+      
+	getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, v.cv());
+  
+        // computation of h for gamma = gamma0*h
+        scalar_type emax, emin, gamma;
+        gmm::condition_number(ctx1.K(),emax,emin);
+        gamma = gamma0 * emax * sqrt(scalar_type(N));
+	//test:gamma=radius*gamma0;
+	short_type f = v.f();
+        for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
+         
+	  ctx1.set_xref(pai1->point_on_face(f, ii));
+	  gmm::mult(ctx1.B(), pgt1->normals()[f], up);
+	  scalar_type norm = gmm::vect_norm2(up);
+	  up /= norm;
+	  scalar_type coefficient = pai1->coeff_on_face(f, ii) * ctx1.J() * norm;
+	  pf1->interpolation_grad(ctx1, coeff1, grad1, dim_type(qdim));
+	  pf1->interpolation(ctx1, coeff1, U1, dim_type(qdim));
+	  gmm::copy(grad1, E); gmm::add(gmm::transposed(grad1), E);
+	  gmm::scale(E, 0.5);
+	  scalar_type trace = gmm::mat_trace(E);
+	  gmm::copy(gmm::identity_matrix(), S1);
+	  gmm::scale(S1, lambda * trace);
+	  gmm::add(gmm::scaled(E, 2*mu), S1);  
+	  gmm::mult(S1, up, sig); // sig = sigma(u)n
+	  sign = gmm::vect_sp(sig,up);// sign = sigma_n(u)
+	 Un = gmm::vect_sp(U1,up);// un = u_n
+ 	  scal = Un-gamma*sign;
+	  if (scal<0)
+	    Pr = sign;
+	  else
+	    Pr = (scal/gamma + sign);
+	  
+	  ERR[v.cv()] += coefficient*sqrt(gamma) *Pr*Pr; 
+	  eta4 +=  coefficient*sqrt(gamma)* Pr*Pr;
+	  
+	  gmm::copy(up,sigt);
+	  gmm::scale(sigt, - sign);
+	  gmm::add(sig,sigt);
+
+	  ERR[v.cv()] += coefficient *gmm::vect_norm2_sqr(sigt); 
+	  eta3 +=  coefficient *gmm::vect_norm2_sqr(sigt);
+	}	  	  
+      	//  cout << "Erreur en contact sur " << v.cv() << " ERR[v.cv()] = " << ERR[v.cv()]-ee << endl;   
+        
+       // if (ERR[v.cv()] > 100)
+         // cout << "Erreur en contact sur element " << v.cv() << " : " << ERR[v.cv()] << endl;
+        
+      }
+      
     }
 
-    
-  }
+    cout << "eta1, eta2, eta3, eta4 = " << sqrt(eta1) << endl;  
+    cout <<  sqrt(eta1) << endl;  
+    cout <<  sqrt(eta2) << endl;  
+    cout <<  sqrt(eta3) << endl;  
+    cout <<  sqrt(eta4) << endl;
+    cout <<  sqrt(eta1+eta2+eta3+eta4) << endl;
+
+  }  
   
 #endif
  
