@@ -21,13 +21,13 @@ clc
 
 %%
 
-% We try to compute a plasticity problem with a Von Mises crierion
+% We try to compute a plasticity problem with a Von Mises criterion
 % For convenience we consider an homogenous Dirichlet condition on the left
 % of the domain and an easy computed Neumann Condition on the right
 
 %%
 
-
+new_test = 0;
 
 % Initialize used data
 L = 100;
@@ -68,11 +68,11 @@ CVbottom = find(CV <= 250); % Retrieve index of convex located at the bottom
 CVtop = find(CV > 250); % Retrieve index of convex located at the top
 
 % Definition of Lame coeff
-lambda(CVbottom) = 121150; % Stell
-lambda(CVtop) = 84605; % Iron
+lambda(CVbottom,1) = 121150; % Stell
+lambda(CVtop,1) = 84605; % Iron
 %lambda = 121150;
-mu(CVbottom) = 80769; %Stell
-mu(CVtop) = 77839; % Iron
+mu(CVbottom,1) = 80769; %Stell
+mu(CVtop,1) = 77839; % Iron
 %mu = 80769;
 von_mises_threshold(CVbottom) = 7000;
 von_mises_threshold(CVtop) = 8000;
@@ -97,31 +97,32 @@ set(md, 'add initialized fem data', 'mu', mf_data, mu);
 % Declare that von_mises_threshold is a data of the system on mf_data
 set(md, 'add initialized fem data', 'von_mises_threshold', mf_data, von_mises_threshold);
 
-% Declare that sigma is a data of the system on mf_sigma
-% 2 is the number of version of the data stored, for the time integration scheme
-set(md, 'add fem data', 'sigma', mf_sigma);
 
-% Add plasticity brick on u
-% set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
 
-new_test = 0;
-if (new_test) 
-
-  % Remain to define: Previous_u, sigma
+if (new_test)
+  N = gf_mesh_get(m, 'dim');
+  gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
+  mim_data = gf_mesh_im_data(mim, -1, [N, N]);
+  gf_model_set(md, 'add im data', 'sigma', mim_data);
     
-  H = mu(CVtop)/2; 
+  H = mu(1)/2; 
   set(md, 'add initialized data', 'H', [H]);
 
-  coeff_long = 'lambda*H / (..)';
-  B_inv = strcat('(2*mu/(2*mu+H))*Reshape(Id(N*N),N,N,N,N) + (',coeff_long,')*(Id(N)@Id(N))');
-  B = '(1+H/(2*mu))*Reshape(Id(N*N),N,N,N,N) + (-lambda*H/(2*mu*(3*lambda+2*mu)))*(Id(N)@Id(N))';
-  ApH = '(2*mu+H)*Reshape(Id(N*N),N,N,N,N) + (lambda)*(Id(N)@Id(N))';
+  coeff_long = 'lambda*H'; % à completer / (..)';
+  B_inv = sprintf('((2*mu/(2*mu+H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim)))', coeff_long);
+  B = '((1+H/(2*mu))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-lambda*H/(2*mu*(3*lambda+2*mu)))*(Id(meshdim)@Id(meshdim)))';
+  ApH = '((2*mu+H)*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (lambda)*(Id(meshdim)@Id(meshdim)))';
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
 
-  assline = strcat('(', B_inv, '*(Von_Mises_projection(H*', Epn1, '+', ApH, '*(',Enp1,'+',En,') + ', B, '*sigma, von_mises_threshold) + H*', Enp1, ')):Grad_Test_u');
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim, assline);
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((H*', Enp1, ')+(', ApH, '*(',Enp1,'+',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
 else
+    
+  % Declare that sigma is a data of the system on mf_sigma
+  set(md, 'add fem data', 'sigma', mf_sigma);
+  % Add plasticity brick on u
   set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
 end
 
@@ -152,11 +153,25 @@ for step=1:nbstep,
     
     % Compute new plasticity constraints used to compute 
     % the Von Mises or Tresca stress
-    get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
-    plast = get(md, 'compute plastic part', mim, mf_pl, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+    if (new_test)
+      sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+      gf_model_set(md, 'variable', 'sigma', sigma);
+      gf_model_set(md, 'variable', 'Previous_u', U);
       
-    % Compute Von Mises or Tresca stress
-    VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
+      M = gf_asm('mass matrix', mim, mf_vm);
+      L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+      VM = M \ L;
+      % To be corrected, A^{-1}*sigma instead of sigma
+      % L = gf_asm('generic', mim, 1, 'Norm((Grad_u+Grad_u'')/2 - sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+      plast = M \ L;
+    else
+      get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+      plast = get(md, 'compute plastic part', mim, mf_pl, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+      % Compute Von Mises or Tresca stress
+      VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
+    end
+      
+    
     max(abs(VM));
   
     figure(2)

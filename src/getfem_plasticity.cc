@@ -870,7 +870,7 @@ namespace getfem {
 
   struct Von_Mises_projection_operator : public ga_nonlinear_operator {
     bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
-      if (args.size() != 2 || args[0]->sizes().size() <= 2
+      if (args.size() != 2 || args[0]->sizes().size() > 2
           || args[1]->size() != 1) return false;
       size_type N = (args[0]->sizes().size() == 2) ?  args[0]->sizes()[0] : 1;
       if (args[0]->sizes().size() == 2 && args[0]->sizes()[1] != N) return false;
