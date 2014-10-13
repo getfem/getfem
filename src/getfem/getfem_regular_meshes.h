@@ -125,12 +125,32 @@ namespace getfem
      of subdivisions in each coordinate (default value 2), ORG is the origin
      of the mesh (default value [0,0,...]), SIZES is a vector of the sizes
      in each direction (default value [1, 1, ...] and if NOISED=1 the nodes
-     of the interior of the mesh are randomly "shaken"(default value NOISED=0).
+     of the interior of the mesh are randomly "shaken" (default value NOISED=0).
      All the parameters are optional but GT.
 
      @param m the output mesh.    
   */
   void regular_mesh(mesh& m, const std::string &st);
+
+  /**
+     Build a regular mesh on a ball, parametrized by the string st.
+     The format of st is similar to getfem::regular_mesh.
+     @see getfem::import_mesh.
+     All parameters except the geometric transformation GT are optional.
+     Here, parameter NSUBDIV has to be a vector of size 2 that holds the
+     number of subdivisions in the core and the peel sub-regions of the mesh.
+     SIZES is an one element vector that provides the ball radius
+     (default radius is equal to 1).
+     If NOISED=1 the nodes in the interior of the individual sub-regions
+     of the mesh are randomly "shaken" (default value NOISED=0).
+     An additional integer paramater called SYMMETRIES receiving the
+     values 1, 2 or 3 (in three dimensions) permits to respectively request
+     one half, one quarter or one sixteenth of the ball to be meshed
+     (default value SYMMETRIES=0).
+
+     @param m the output mesh.    
+  */
+  void regular_ball_mesh(mesh& m, const std::string &st);
 
 }  /* end of namespace getfem.                                             */
 
