@@ -252,15 +252,15 @@ namespace getfem {
 	  gmm::add(gmm::scaled(E, 2*mu), S1);  
 	  gmm::mult(S1, up, sig); // sig = sigma(u)n
 	  sign = gmm::vect_sp(sig,up);// sign = sigma_n(u)
-	 Un = gmm::vect_sp(U1,up);// un = u_n
+          Un = gmm::vect_sp(U1,up);// un = u_n
  	  scal = Un-gamma*sign;
 	  if (scal<0)
 	    Pr = sign;
 	  else
 	    Pr = (scal/gamma + sign);
 	  
-	  ERR[v.cv()] += coefficient*sqrt(gamma) *Pr*Pr; 
-	  eta4 +=  coefficient*sqrt(gamma)* Pr*Pr;
+	  ERR[v.cv()] += coefficient*gamma *Pr*Pr; 
+	  eta4 +=  coefficient*gamma*Pr*Pr;
 	  
 	  gmm::copy(up,sigt);
 	  gmm::scale(sigt, - sign);
