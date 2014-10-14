@@ -595,7 +595,8 @@ namespace getfem {
   /**
    * build a N+1 dimensions mesh from a N-dimensions mesh by extrusion.
    */
-  void APIDECL extrude(const mesh& in, mesh& out, unsigned nb_layers);
+  void APIDECL extrude(const mesh& in, mesh& out, size_type nb_layers,
+                       short_type degree=short_type(1));
 
  template<class ITER>
     size_type mesh::add_convex_by_points(bgeot::pgeometric_trans pgt,

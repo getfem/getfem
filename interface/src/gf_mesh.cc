@@ -243,8 +243,10 @@ static void
 prismatic_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
 {
   const getfem::mesh *src_mesh = in.pop().to_const_mesh();
-  unsigned nblay = in.pop().to_integer(1,2500000);
-  getfem::extrude(*src_mesh, *dest_mesh, nblay);
+  size_type nblay = in.pop().to_integer(1,2500000);
+  short_type degree(1);
+  if (in.remaining()) degree = in.pop().to_integer(1,2500000);
+  getfem::extrude(*src_mesh, *dest_mesh, nblay, degree);
 }
 
 static void
@@ -400,13 +402,16 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@INIT M = ('prismatic', @tmesh m, @int nl)
+    /*@INIT M = ('prismatic', @tmesh m, @int nl[, @int degree])
       Extrude a prismatic @tmesh `M` from a @tmesh `m`.
 
-      In the additional dimension there are `nl` layers of elements built
-      from ``0`` to ``1``.@*/
+      In the additional dimension there are `nl` layers of elements
+      distributed from ``0`` to ``1``.
+      If the optional parameter `degree` is provided with a value greater
+      than the default value of ``1``, a non-linear transformation of
+      corresponding degree is considered in the extrusion direction.@*/
     sub_command
-      ("prismatic", 2, 2, 0, 1,
+      ("prismatic", 2, 3, 0, 1,
        prismatic_mesh(pmesh, in);
        );
 

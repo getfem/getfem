@@ -244,7 +244,7 @@ namespace getfem {
     Pmin.clear(); Pmax.clear();
     for (dal::bv_visitor i(pts.index()); !i.finished(); ++i) {
       if (is_first) { Pmin = Pmax = pts[i]; is_first = false; }
-      else for (unsigned j=0; j < dim(); ++j) {
+      else for (dim_type j=0; j < dim(); ++j) {
         Pmin[j] = std::min(Pmin[j], pts[i][j]);
         Pmax[j] = std::max(Pmax[j], pts[i][j]);
       }
@@ -786,33 +786,34 @@ namespace getfem {
     return mrr;
   }
 
-  void extrude(const mesh& in, mesh& out, unsigned nb_layers) {
-    unsigned dim = in.dim();
+  void extrude(const mesh& in, mesh& out, size_type nb_layers, short_type degree) {
+    dim_type dim = in.dim();
     base_node pt(dim+1);
     out.clear();
     size_type nbpt = in.points().index().last()+1;
     GMM_ASSERT1(nbpt == in.points().index().card(),
                 "please optimize the mesh before using "
                 "it as a base for prismatic mesh");
+    size_type nb_layers_total = nb_layers * degree;
     for (size_type i = 0; i < nbpt; ++i) {
       std::copy(in.points()[i].begin(), in.points()[i].end(),pt.begin());
       pt[dim] = 0.0;
-      for (size_type j = 0; j <= nb_layers; ++j, pt[dim] += 1.0 / nb_layers)
+      for (size_type j = 0; j <= nb_layers_total;
+           ++j, pt[dim] += scalar_type(1) / scalar_type(nb_layers_total))
         out.add_point(pt);
     }
 
     std::vector<size_type> tab;
     for (dal::bv_visitor cv(in.convex_index()); !cv.finished(); ++cv) {
       size_type nbp = in.nb_points_of_convex(cv);
-      tab.resize(2*nbp);
+      tab.resize((degree+1)*nbp);
       for (size_type j = 0; j < nb_layers; ++j) {
-        for (size_type k = 0; k < nbp; ++k)
-          tab[k] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j;
-        for (size_type k = 0; k < nbp; ++k)
-          tab[k+nbp] = (nb_layers+1)*in.ind_points_of_convex(cv)[k] + j + 1;
+        for (short_type d = 0; d < degree+1; ++d)
+          for (size_type k = 0; k < nbp; ++k)
+            tab[k+nbp*d] = (nb_layers_total+1)*in.ind_points_of_convex(cv)[k] + j*degree + d;
         bgeot::pgeometric_trans pgt =
           bgeot::product_geotrans(in.trans_of_convex(cv),
-                                  bgeot::simplex_geotrans(1,1));
+                                  bgeot::simplex_geotrans(1,degree));
         out.add_convex(pgt, tab.begin());
       }
     }
