@@ -1453,14 +1453,16 @@ namespace getfem {
           }
 
           for (size_type i = 0; i < brick.cveclist.size(); ++i)
-          {
-            gmm::clear(brick.cveclist[i]);
-          }
+            for (size_type j = 0; j < brick.cveclist[i].size(); ++j)
+            {
+              gmm::clear(brick.cveclist[i][j]);
+            }
           
           for (size_type i = 0; i < brick.cveclist_sym.size(); ++i)
-          {
-            gmm::clear(brick.cveclist_sym[i]);
-          }
+            for (size_type j = 0; j < brick.cveclist_sym[i].size(); ++j)
+            {
+              gmm::clear(brick.cveclist_sym[i][j]);
+            }
         }
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
@@ -1507,14 +1509,16 @@ namespace getfem {
           }
 
           for (size_type i = 0; i < brick.rveclist.size(); ++i)
-          {
-            gmm::clear(brick.rveclist[i]);
-          }
+            for (size_type j = 0; j < brick.rveclist[i].size(); ++j)
+            {
+              gmm::clear(brick.rveclist[i][j]);
+            }
           
           for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
-          {
-            gmm::clear(brick.rveclist_sym[i]);
-          }
+            for (size_type j = 0; j < brick.rveclist_sym[i].size(); ++j)
+            {
+              gmm::clear(brick.rveclist_sym[i][j]);
+            }
         }
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
