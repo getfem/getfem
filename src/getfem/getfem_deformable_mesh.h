@@ -61,41 +61,74 @@ namespace getfem {
     temporary_mesh_deformator(const mesh& m, const mesh_fem &mf, 
       const VECTOR &dU, bool deform_on_construct = true, 
       bool to_be_restored = true) : 
-      dU_(dU),
+      dU_(mf.nb_basic_dof()),
       mf_(mf), 
-      m_(const_cast<getfem::mesh &>(m)),
+      m_(const_cast<getfem::mesh &>(mf.linked_mesh())),
       deform_on_construct_(deform_on_construct),
       is_deformed_(false),
-      to_be_restored_(to_be_restored)
-    {
+      to_be_restored_(to_be_restored){
+      mf.extend_vector(dU, dU_);
       if (deform_on_construct_) deform();
     }
 
-    void deform() 
-    {
+    void deform(){
       if (is_deformed_) return;
-      m_.deform_mesh(dU_, mf_);
+      deforming_mesh_(dU_);
       is_deformed_ = true;
     }
 
-    void undeform() 
-    {
+    void undeform(){
       if (!is_deformed_) return;
       VECTOR dU_inverted(dU_);
       gmm::scale(dU_inverted, scalar_type(-1.0));
-      m_.deform_mesh(dU_inverted, mf_);
+      deforming_mesh_(dU_inverted);
       is_deformed_ = false;
     }
 
-    ~temporary_mesh_deformator()
-    {
-      if (to_be_restored_ && deform_on_construct_)
-      {
+    ~temporary_mesh_deformator(){
+      if (to_be_restored_ && deform_on_construct_){
         undeform();
       }
     }
 
   private:
+    void deforming_mesh_(VECTOR &dU){
+      auto &ppts = m_.points();
+      size_type ddim = mf_.get_qdim();
+      auto init_nb_points = ppts.card();
+
+      dal::bit_vector conv_indices = mf_.convex_index();
+      //this vector will track if a point can be deformed
+      std::vector<bool> deform_pt_flag(ppts.size(), true);
+      size_type cv;
+      for (cv << conv_indices; cv != bgeot::size_type(-1); cv << conv_indices)
+      {
+        getfem::mesh::ind_cv_ct pt_index = m_.ind_points_of_convex(cv);
+        getfem::mesh_fem::ind_dof_ct dof = mf_.ind_basic_dof_of_element(cv);
+        bgeot::size_type num_points = m_.structure_of_convex(cv)->nb_points();
+
+        GMM_ASSERT2(dof.size() % num_points == 0,
+          "mesh_fem should be isoparametric to the mesh, "
+          "with nb_points() of convex == size of ind_basic_dof_of_element / qdim()");
+
+
+        for (size_type pt = 0; pt < num_points; ++pt)
+        {
+          /** iterate through each components of point [pt]and deform the component*/
+          if (deform_pt_flag[pt_index[pt]])
+          for (size_type comp = 0; comp < ddim; ++comp)
+            //move pts by dU;
+            ppts[pt_index[pt]][comp] += dU[dof[pt*ddim + comp]];
+
+          //flag current [pt] to deformed
+          deform_pt_flag[pt_index[pt]] = false;
+        }
+        ppts.resort();
+      }
+      GMM_ASSERT1(ppts.card() == init_nb_points, 
+                  "Error, after deforming the mesh, number of nodes are different.");
+    }
+
     VECTOR dU_;
     const mesh_fem &mf_;
     mesh &m_;
