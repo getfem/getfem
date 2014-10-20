@@ -142,7 +142,6 @@ namespace getfem{
       }
 
       size_type nb_data = V1.size()/nb_filtered_index();
-      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
       GMM_ASSERT1(V1.size()%nb_filtered_index() == 0, "Invalid size of vector V1");
       GMM_ASSERT1(V2.size() == nb_data*nb_index(), "Invalid size of vector V2");
 
@@ -181,7 +180,6 @@ namespace getfem{
         gmm::copy(V1, V2); return;
       }
       size_type nb_data = V1.size()/nb_index_;
-      GMM_ASSERT1(nb_data == nb_tensor_elem_, "Invalid tensorial size for vector V1");
       GMM_ASSERT1(V1.size()%nb_index_ == 0, "Invalid size of vector V1");
       GMM_ASSERT1(V2.size() == nb_data*nb_filtered_index(), 
                                "Invalid size of vector V2");
