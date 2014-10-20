@@ -318,6 +318,46 @@ namespace dal {
     inline int take_last(void)
     { int res = last(); if (res >= 0) sup(res); return res; }
   };
+
+  /**
+  Iterator class for bv_visitor and bv_visitor_c.
+  This iterator class enables the use of c++11 range-based loop
+  feature.
+  example:
+  @code
+  for (auto i : bv_visitor(v)) {
+  .... (use i as an unsigned int)
+  }
+  */
+  template<typename VISITOR>
+  class const_visitor_iterator
+  {
+    typedef dal::bit_vector::size_type size_type;
+
+  public:
+    const_visitor_iterator(const VISITOR* p_visitor, size_type pos)
+      : pos_(pos)
+      , p_visitor_(const_cast<VISITOR*>(p_visitor))
+    {}
+
+    bool operator!= (const const_visitor_iterator &other) const{
+      return pos_ < other.pos_;
+    }
+
+    size_type operator *() const{
+      return dal::bit_vector::size_type(*p_visitor_);
+    }
+
+    const const_visitor_iterator &operator++(){
+      ++*p_visitor_;
+      pos_ = *p_visitor_;
+      return *this;
+    }
+
+  private:
+    VISITOR *p_visitor_;
+    size_type pos_;
+  };
   
   /**
      if you are only interested in indexes of true values of a bit_vector
@@ -348,6 +388,16 @@ namespace dal {
     bool finished() const { return ind >= ilast; }
     bool operator++();
     operator size_type() const { return ind; }
+
+    const size_type get_last_index() const{return ilast;}
+
+    const_visitor_iterator<bv_visitor> begin() const{
+      return const_visitor_iterator<bv_visitor>(this, *this);
+    }
+
+    const_visitor_iterator<bv_visitor> end() const{
+      return const_visitor_iterator<bv_visitor>(this, ilast);
+    }
   };
 
   /**
@@ -362,6 +412,13 @@ namespace dal {
     bool operator++() { return ++v; }
     operator dal::bit_vector::size_type() const
     { return dal::bit_vector::size_type(v); }
+
+    const_visitor_iterator<bv_visitor_c> begin() const{
+      return const_visitor_iterator<bv_visitor_c>(this, *this);
+    }
+    const_visitor_iterator<bv_visitor_c> end() const{
+      return const_visitor_iterator<bv_visitor_c>(this, v.get_last_index());
+    }
   };
 
   /// extract index of first entry in the bit_vector
