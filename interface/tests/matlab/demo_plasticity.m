@@ -108,8 +108,8 @@ if (new_test)
   H = mu(1)/2; 
   set(md, 'add initialized data', 'H', [H]);
 
-  coeff_long = 'lambda*H'; % à completer / (..)';
-  B_inv = sprintf('((2*mu/(2*mu+H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim)))', coeff_long);
+  coeff_long = '(2*lambda*H)/((2*mu+H)*(6*lambda+4*mu+2*H))'; % à completer / (..)';
+  B_inv = sprintf('((2*mu/(2*mu+H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (coeff_long)*(Id(meshdim)@Id(meshdim))) ');
   B = '((1+H/(2*mu))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-lambda*H/(2*mu*(3*lambda+2*mu)))*(Id(meshdim)@Id(meshdim)))';
   ApH = '((2*mu+H)*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (lambda)*(Id(meshdim)@Id(meshdim)))';
   Enp1 = '((Grad_u+Grad_u'')/2)';
