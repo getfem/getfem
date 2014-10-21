@@ -160,6 +160,7 @@ namespace getfem {
                               scalar_type mu,
                               scalar_type gamma0,
                               scalar_type f_coeff,
+			       scalar_type vertical_force,
                               base_vector &ERR);
 
   
