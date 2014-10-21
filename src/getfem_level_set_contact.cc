@@ -315,14 +315,14 @@ mcb(_mcb), scb(_scb)
 	// size_type dof_check = Umaster.size();
 	// size_type node_check = mcb.get_mesh().nb_points();
 	def_master.reset(new getfem::temporary_mesh_deformator<>
-		(mcb.get_mesh(),mcb.get_mesh_fem(),Umaster));
+		(mcb.get_mesh_fem(),Umaster));
 	mcb.is_deformed=true;
 	if (&mcb.get_mesh()!=&scb.get_mesh()){ 
 		//  not deforming the slave if the master and the slave are the same
 		const modeling_standard_plain_vector& 
 			Uslave=scb.get_model().real_variable(scb.get_var_name());
 		def_slave.reset(new getfem::temporary_mesh_deformator<>
-			(scb.get_mesh(),scb.get_mesh_fem(),Uslave));
+			(scb.get_mesh_fem(),Uslave));
 		scb.is_deformed=true;
 	}
 	if (ud == FULL_UPDATE) mcb.update_for_slave(scb.get_var_name());
