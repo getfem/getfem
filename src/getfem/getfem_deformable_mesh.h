@@ -58,15 +58,13 @@ namespace getfem {
   class temporary_mesh_deformator
   {
   public:
-    temporary_mesh_deformator(const mesh& m, const mesh_fem &mf, 
-      const VECTOR &dU, bool deform_on_construct = true, 
-      bool to_be_restored = true) : 
-      dU_(mf.nb_basic_dof()),
-      mf_(mf), 
-      m_(const_cast<getfem::mesh &>(mf.linked_mesh())),
-      deform_on_construct_(deform_on_construct),
-      is_deformed_(false),
-      to_be_restored_(to_be_restored){
+    temporary_mesh_deformator(const mesh_fem &mf, const VECTOR &dU,
+      bool deform_on_construct = true, bool to_be_restored = true)
+       : dU_(mf.nb_basic_dof()),
+         mf_(mf), 
+         deform_on_construct_(deform_on_construct),
+         is_deformed_(false),
+         to_be_restored_(to_be_restored){
       mf.extend_vector(dU, dU_);
       if (deform_on_construct_) deform();
     }
@@ -93,6 +91,7 @@ namespace getfem {
 
   private:
     void deforming_mesh_(VECTOR &dU){
+      auto &m_ = const_cast<getfem::mesh &>(mf_.linked_mesh());
       auto &ppts = m_.points();
       size_type ddim = mf_.get_qdim();
       auto init_nb_points = ppts.card();
@@ -131,7 +130,6 @@ namespace getfem {
 
     VECTOR dU_;
     const mesh_fem &mf_;
-    mesh &m_;
     bool deform_on_construct_;
     bool is_deformed_;
     bool to_be_restored_;
