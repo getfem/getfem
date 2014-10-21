@@ -57,11 +57,9 @@ namespace getfem {
     bgeot::geotrans_inv_convex gic;
     base_node xref2(N);
     base_small_vector up(N), jump(N), U1(N), sig(N), sigt(N);
-    // scalar_type young_modulus = 4*mu*(lambda + mu)/(lambda+2*mu);
+    //scalar_type young_modulus = mu*(3*lambda + 2*mu)/(lambda+mu);
     scalar_type Pr, scal, sign, Un ;
     scalar_type eta1 = 0, eta2 = 0, eta3 = 0, eta4 = 0;
-    
-    
     scalar_type force_coeff= f_coeff; // inutile pour l'instant
     force_coeff =0;
     
@@ -220,7 +218,6 @@ namespace getfem {
 	getfem::papprox_integration pai1 = 
         get_approx_im_or_fail(mim.int_method_of_element(v.cv()));
 	getfem::pfem pf1 = mf_u.fem_of_element(v.cv());
-	//scalar_type radius = m.convex_radius_estimate(v.cv());//inutile
       
 	bgeot::vectors_to_base_matrix(G1, m.points_of_convex(v.cv()));
       
@@ -230,10 +227,12 @@ namespace getfem {
 	getfem::fem_interpolation_context ctx1(pgt1, pf1, base_node(N), G1, v.cv());
   
         // computation of h for gamma = gamma0*h
-        scalar_type emax, emin, gamma;
-        gmm::condition_number(ctx1.K(),emax,emin);
-        gamma = gamma0 * emax * sqrt(scalar_type(N));
-	//test:gamma=radius*gamma0;
+        //scalar_type emax, emin, gamma;
+        //gmm::condition_number(ctx1.K(),emax,emin);
+        //gamma = gamma0 * emax * sqrt(scalar_type(N));
+	// Test autre gamma
+	scalar_type radius = m.convex_radius_estimate(v.cv());
+	scalar_type gamma=radius*gamma0;
 	short_type f = v.f();
         for (unsigned ii=0; ii < pai1->nb_points_on_face(f); ++ii) {
          
@@ -252,20 +251,18 @@ namespace getfem {
 	  gmm::add(gmm::scaled(E, 2*mu), S1);  
 	  gmm::mult(S1, up, sig); // sig = sigma(u)n
 	  sign = gmm::vect_sp(sig,up);// sign = sigma_n(u)
-          Un = gmm::vect_sp(U1,up);// un = u_n
+	  Un = gmm::vect_sp(U1,up);// un = u_n
  	  scal = Un-gamma*sign;
 	  if (scal<0)
-	    Pr = sign;
+	  Pr = sign;
 	  else
-	    Pr = (scal/gamma + sign);
-	  
-	  ERR[v.cv()] += coefficient*gamma *Pr*Pr; 
-	  eta4 +=  coefficient*gamma*Pr*Pr;
+	  Pr = (scal/gamma + sign);
+	  ERR[v.cv()] += coefficient*radius*Pr*Pr; 
+	  eta4 +=  coefficient*radius* Pr*Pr;
 	  
 	  gmm::copy(up,sigt);
 	  gmm::scale(sigt, - sign);
 	  gmm::add(sig,sigt);
-
 	  ERR[v.cv()] += coefficient *gmm::vect_norm2_sqr(sigt); 
 	  eta3 +=  coefficient *gmm::vect_norm2_sqr(sigt);
 	}	  	  
@@ -278,7 +275,7 @@ namespace getfem {
       
     }
 
-    cout << "eta1, eta2, eta3, eta4 = " << sqrt(eta1) << endl;  
+    cout << "eta1, eta2, eta3, eta4 = " << endl;  
     cout <<  sqrt(eta1) << endl;  
     cout <<  sqrt(eta2) << endl;  
     cout <<  sqrt(eta3) << endl;  
