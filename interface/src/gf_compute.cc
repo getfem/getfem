@@ -520,13 +520,13 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       
 #ifdef EXPERIMENTAL_PURPOSE_ONLY
             
-    /*@FUNC E = ('error estimate nitsche', @tmim mim, @int GAMMAC, @int GAMMAN, @scalar lambda_, @scalar mu_, @scalar gamma0, @scalar f_coeff)
+    /*@FUNC E = ('error estimate nitsche', @tmim mim, @int GAMMAC, @int GAMMAN, @scalar lambda_, @scalar mu_, @scalar gamma0, @scalar f_coeff, @scalar vertical_force)
     Compute an a posteriori error estimate in the case of Nitsche method.
 
     Currently there is only one which is available: for each convex,
     the jump of the normal derivative is integrated on its faces.@*/
     sub_command
-      ("error_estimate_nitsche", 7, 7, 0, 1,
+      ("error_estimate_nitsche", 8, 8, 0, 1,
        const getfem::mesh_im &mim = *in.pop().to_const_mesh_im();
        int GAMMAC = in.pop().to_integer();
        int GAMMAN = in.pop().to_integer();
@@ -534,13 +534,14 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        scalar_type mu = in.pop().to_scalar();
        scalar_type gamma0 = in.pop().to_scalar();
        scalar_type f_coeff = in.pop().to_scalar();
+       scalar_type vertical_force = in.pop().to_scalar();
        unsigned si = unsigned(mim.linked_mesh().convex_index().last_true()+1);
        darray err =
        out.pop().create_darray_h(si);
        getfem::base_vector ERR(si);
        getfem::base_vector UU(U.real().size());
        gmm::copy(U.real(), UU);
-       getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, gamma0, f_coeff, ERR);
+       getfem::error_estimate_nitsche(mim, *mf, UU, GAMMAC, GAMMAN, lambda, mu, gamma0, f_coeff,vertical_force, ERR);
        gmm::copy(ERR, err);
        );   
       
