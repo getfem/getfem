@@ -999,6 +999,11 @@ namespace getfem {
     /** List the model bricks. */
     void listbricks(std::ostream &ost, size_type base_id = 0) const;
 
+    /** Return the model brick ids. */
+    const dal::bit_vector& get_active_bricks() const {
+      return active_bricks;
+    }
+
     /** Force the re-computation of a brick for the next assembly. */
     void touch_brick(size_type ib) {
       GMM_ASSERT1(valid_bricks[ib], "Inexistent brick");
