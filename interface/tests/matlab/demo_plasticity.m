@@ -28,12 +28,14 @@ clc
 %%
 
 new_test = 0;
+test_tangent_matrix = 1;
 
 % Initialize used data
 L = 100;
 H = 20;
 
-f = [0 -330]';
+% f = [0 -330]';
+f = [10000 0]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
 
 % Create the mesh
@@ -108,9 +110,9 @@ if (new_test)
   H = mu(1)/2; 
   set(md, 'add initialized data', 'H', [H]);
 
-  coeff_long = '(2*lambda*H)/((2*mu+H)*(6*lambda+4*mu+2*H))'; % à completer / (..)';
-  B_inv = sprintf('((2*mu/(2*mu+H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (coeff_long)*(Id(meshdim)@Id(meshdim))) ');
-  B = '((1+H/(2*mu))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-lambda*H/(2*mu*(3*lambda+2*mu)))*(Id(meshdim)@Id(meshdim)))';
+  coeff_long = '(2*lambda*H)/((2*mu+H)*(2*meshdim*lambda+4*mu+2*H))';
+  B_inv = sprintf('((2*mu/(2*mu+H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim)))', coeff_long);
+  B = '((1+H/(2*mu))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-lambda*H/(2*mu*(meshdim*lambda+2*mu)))*(Id(meshdim)@Id(meshdim)))';
   ApH = '((2*mu+H)*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (lambda)*(Id(meshdim)@Id(meshdim)))';
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
@@ -130,7 +132,7 @@ end
 set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
 
 % Add a source term to the system
-set(md,'add initialized fem data', 'VolumicData', mf_data, get(mf_data, 'eval',{f(1,1);f(2,1)*t(1)}));
+set(md,'add initialized fem data', 'VolumicData', mf_data, get(mf_data, 'eval',{f(1,1)*t(1);f(2,1)*t(1)}));
 set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 
 VM=zeros(1,get(mf_vm, 'nbdof'));
@@ -142,9 +144,14 @@ dd = get(mf_err, 'basic dof from cvid');
 
 for step=1:nbstep,
     if step > 1
-        set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1);f(2,1)*t(step)}));
+        set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*t(step);f(2,1)*t(step)}));
     end
 
+    if (test_tangent_matrix)
+      gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.0001);
+    end;
+    
+    
     % Solve the system
     get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest',  'alpha min', 0.8, 'very noisy', 'max_iter', 100, 'max_res', 1e-6);
 
@@ -163,6 +170,7 @@ for step=1:nbstep,
       VM = M \ L;
       % To be corrected, A^{-1}*sigma instead of sigma
       % L = gf_asm('generic', mim, 1, 'Norm((Grad_u+Grad_u'')/2 - sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+      L = gf_asm('generic', mim, 1, 'Norm(sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
       plast = M \ L;
     else
       get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
@@ -176,11 +184,12 @@ for step=1:nbstep,
   
     figure(2)
     subplot(2,1,1);
-    gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); % 'deformed_mesh', 'on')
+    gf_plot(mf_vm,VM', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); % 'deformed_mesh', 'on')
     colorbar;
+    axis([-20 120 -20 40]);
     caxis([0 10000]);
     n = t(step);
-    title(['Von Mises criterion for t = ', num2str(n)]);
+    title(['Von Mises criterion for t = ', num2str(step)]);
   
     %ERR=gf_compute(mf_u,U,'error estimate', mim);
     %E=ERR; E(dd)=ERR;
@@ -190,11 +199,13 @@ for step=1:nbstep,
     %title('Error estimate');
 
     %figure(3)
-    gf_plot(mf_pl,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
+    subplot(2,1,2);
+    gf_plot(mf_pl,plast', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
     colorbar;
+    axis([-20 120 -20 40]);
     caxis([0 10000]);
     n = t(step);
-    title(['Plastification for t = ', num2str(n)]);
+    title(['Plastification for t = ', num2str(step)]);
     
     % pause();
 
