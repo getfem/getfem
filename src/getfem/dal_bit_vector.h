@@ -336,8 +336,7 @@ namespace dal {
 
   public:
     const_visitor_iterator(const VISITOR* p_visitor, size_type pos)
-      : pos_(pos)
-      , p_visitor_(const_cast<VISITOR*>(p_visitor))
+      : p_visitor_(const_cast<VISITOR*>(p_visitor)), pos_(pos)
     {}
 
     bool operator!= (const const_visitor_iterator &other) const{
@@ -389,7 +388,7 @@ namespace dal {
     bool operator++();
     operator size_type() const { return ind; }
 
-    const size_type get_last_index() const{return ilast;}
+    size_type get_last_index() const { return ilast;}
 
     const_visitor_iterator<bv_visitor> begin() const{
       return const_visitor_iterator<bv_visitor>(this, *this);
