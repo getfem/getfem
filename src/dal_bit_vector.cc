@@ -205,6 +205,18 @@ namespace dal {
     }
   }
 
+  const_bv_iterator<bv_iterable> bv_iterable::begin() const{
+    return const_bv_iterator<bv_iterable>(this, v_.first_true());
+  }
+  const_bv_iterator<bv_iterable> bv_iterable::end() const{
+    return const_bv_iterator<bv_iterable>(this, v_.last_true() + 1);
+  }
 
+  const_bv_iterator<bv_iterable_c> bv_iterable_c::begin() const{
+    return const_bv_iterator<bv_iterable_c>(this, v_.first_true());
+  }
+  const_bv_iterator<bv_iterable_c> bv_iterable_c::end() const{
+    return const_bv_iterator<bv_iterable_c>(this, v_.last_true() + 1);
+  }
 }
 

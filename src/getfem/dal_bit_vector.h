@@ -214,6 +214,7 @@ namespace dal {
     const_iterator begin(void) const { return const_iterator(*this, 0); }
     iterator end(void) { return iterator(*this, size()); }
     const_iterator end(void) const { return const_iterator(*this, size()); }
+
     reverse_iterator rbegin(void) { return reverse_iterator(end()); }
     const_reverse_iterator rbegin(void) const
     { return const_reverse_iterator(end()); }
@@ -320,45 +321,6 @@ namespace dal {
   };
 
   /**
-  Iterator class for bv_visitor and bv_visitor_c.
-  This iterator class enables the use of c++11 range-based loop
-  feature.
-  example:
-  @code
-  for (auto i : bv_visitor(v)) {
-  .... (use i as an unsigned int)
-  }
-  */
-  template<typename VISITOR>
-  class const_visitor_iterator
-  {
-    typedef dal::bit_vector::size_type size_type;
-
-  public:
-    const_visitor_iterator(const VISITOR* p_visitor, size_type pos)
-      : p_visitor_(const_cast<VISITOR*>(p_visitor)), pos_(pos)
-    {}
-
-    bool operator!= (const const_visitor_iterator &other) const{
-      return pos_ < other.pos_;
-    }
-
-    size_type operator *() const{
-      return dal::bit_vector::size_type(*p_visitor_);
-    }
-
-    const const_visitor_iterator &operator++(){
-      ++*p_visitor_;
-      pos_ = *p_visitor_;
-      return *this;
-    }
-
-  private:
-    VISITOR *p_visitor_;
-    size_type pos_;
-  };
-  
-  /**
      if you are only interested in indexes of true values of a bit_vector
      (i.e. if you use it as an int set), use bv_visitor instead of
      bit_vector::const_iterator (much faster)
@@ -387,16 +349,6 @@ namespace dal {
     bool finished() const { return ind >= ilast; }
     bool operator++();
     operator size_type() const { return ind; }
-
-    size_type get_last_index() const { return ilast;}
-
-    const_visitor_iterator<bv_visitor> begin() const{
-      return const_visitor_iterator<bv_visitor>(this, *this);
-    }
-
-    const_visitor_iterator<bv_visitor> end() const{
-      return const_visitor_iterator<bv_visitor>(this, ilast);
-    }
   };
 
   /**
@@ -411,13 +363,6 @@ namespace dal {
     bool operator++() { return ++v; }
     operator dal::bit_vector::size_type() const
     { return dal::bit_vector::size_type(v); }
-
-    const_visitor_iterator<bv_visitor_c> begin() const{
-      return const_visitor_iterator<bv_visitor_c>(this, *this);
-    }
-    const_visitor_iterator<bv_visitor_c> end() const{
-      return const_visitor_iterator<bv_visitor_c>(this, v.get_last_index());
-    }
   };
 
   /// extract index of first entry in the bit_vector
@@ -432,6 +377,76 @@ namespace dal {
   { s.add(i); return i; }
 
   std::ostream APIDECL &operator <<(std::ostream &o, const bit_vector &s);
+  
+  /**Iterator class for bv_iterable and bv_iterable_c.*/
+  template<typename ITERABLE_BV>
+  class const_bv_iterator
+  {
+    typedef dal::bit_vector::size_type size_type;
+
+  public:
+    const_bv_iterator(const ITERABLE_BV* p_iterable, size_type pos)
+      : p_iterable_(const_cast<ITERABLE_BV*>(p_iterable)), pos_(pos)
+    {}
+
+    bool operator!= (const const_bv_iterator &other) const{
+      return pos_ < other.pos_;
+    }
+
+    size_type operator *() const{
+      return size_type(*p_iterable_);
+    }
+
+    const const_bv_iterator &operator++(){
+      ++*p_iterable_;
+      pos_ = *p_iterable_;
+      return *this;
+    }
+
+  private:    
+    ITERABLE_BV *p_iterable_;
+    size_type pos_;
+  };
+
+    
+  /**
+  Wrapper class to make bit_vector iterable on true values.
+  It enables the use of c++11 range-based loop feature.
+  example:
+  @code
+  for (auto i : bv_iterable(bit_vector)) {
+  .... //(use i as an unsigned int)
+  }
+  */
+  class bv_iterable
+  {
+  public:
+    bv_iterable(const bit_vector &v) : v_(v), visitor_(v){}
+
+    const_bv_iterator<bv_iterable> begin() const;
+    const_bv_iterator<bv_iterable> end() const;
+    inline bool operator++(){return ++visitor_;};
+    inline operator dal::bit_vector::size_type() const{return visitor_;};
+
+  private:
+    const bit_vector& v_;
+    bv_visitor visitor_;
+  };
+
+  /***Same as bv_iterable class except the bit_vector is copied locally.*/
+  class bv_iterable_c
+  {
+  public:
+    bv_iterable_c(const bit_vector &v) : v_(v), visitor_(v){}
+    const_bv_iterator<bv_iterable_c> begin() const;
+    const_bv_iterator<bv_iterable_c> end() const;
+    inline bool operator++(){return ++visitor_;};
+    inline operator dal::bit_vector::size_type() const{return visitor_;};
+
+  private:
+    bit_vector v_;
+    bv_visitor visitor_;
+  };
 
 }
 
