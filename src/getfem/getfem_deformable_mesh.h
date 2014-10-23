@@ -93,7 +93,6 @@ namespace getfem {
     void deforming_mesh_(VECTOR &dU){
       auto &m_ = const_cast<getfem::mesh &>(mf_.linked_mesh());
       auto &ppts = m_.points();
-      size_type ddim = mf_.get_qdim();
       auto init_nb_points = ppts.card();
 
       dal::bit_vector conv_indices = mf_.convex_index();
@@ -110,6 +109,8 @@ namespace getfem {
           "mesh_fem should be isoparametric to the mesh, "
           "with nb_points() of convex == size of ind_basic_dof_of_element / qdim()");
 
+        size_type ddim = dof.size() / num_points;
+        GMM_ASSERT2(ddim <= 3, "dimension of dof is greater than 3");
 
         for (size_type pt = 0; pt < num_points; ++pt)
         {
