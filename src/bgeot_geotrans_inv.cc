@@ -64,7 +64,7 @@ namespace bgeot
   
   void geotrans_inv_convex::update_B() {
     if (P != N) {
-      gmm::mult(G,pc,K);
+      pgt->compute_K_matrix(G, pc, K);
       gmm::mult(gmm::transposed(K), K, CS);
       gmm::lu_inverse(CS);
       gmm::mult(K, CS, B);
@@ -72,7 +72,9 @@ namespace bgeot
     else {
       // L'inversion peut être optimisée par le non calcul global de B
       // et la resolution d'un système linéaire.
-      gmm::mult(gmm::transposed(pc), gmm::transposed(G), K);
+      base_matrix KT(K.nrows(), K.ncols());
+      pgt->compute_K_matrix(G, pc, KT);
+      gmm::copy(gmm::transposed(KT), K);
       gmm::copy(K,B);
       gmm::lu_inverse(K); B.swap(K); 
     }
