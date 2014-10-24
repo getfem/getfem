@@ -8,7 +8,7 @@ References
 .. [AL-CU1991] P. Alart, A. Curnier.
    *A mixed formulation for frictional contact problems prone to newton like solution methods*, Computer Methods in Applied Mechanics and Engineering 92, 353--375, (1991).
 
-.. [all-ge1997] E.L. Allgower and K. Georg,
+.. [Al-Ge1997] E.L. Allgower and K. Georg,
    *Numerical Path Following*, Handbook of Numerical Analysis, Vol. V (P.G. Ciarlet and J.L. Lions, eds.), Elsevier, 1997, pp. 3-207.
 
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser,
@@ -30,13 +30,13 @@ References
 .. [dh-to1984] G. Dhatt, G. Touzot,
    *The Finite Element Method Displayed*, J. Wiley & Sons, New York, (1984).
 
-.. [dh-go-ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov,
+.. [Dh-Go-Ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov,
    *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*, ACM Trans. Math. Software 31 (2003), 141-164.
 
-.. [fa-pa2003] F. Facchinei and J.-S. Pang,
+.. [Fa-Pa2003] F. Facchinei and J.-S. Pang,
    *Finite-Dimensional Variational Inequalities and Complementarity Problems, Vol. II*, Springer Series in Operations Research, Springer, New York, 2003.
 
-.. [georg2001] K. Georg,
+.. [Georg2001] K. Georg,
    *Matrix-free numerical continuation and bifurcation*, Numer. Funct. Anal. Optimization 22 (2001), 303-320.
 
 .. [HI-RE2010] Hild P., Renard Y.
@@ -54,8 +54,11 @@ References
 .. [LA-RE2006] P. Laborde, Y. Renard.
    *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
-.. [li-re2014] T. |ligursky|  and Y. Renard,
-   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction.* Comput. Methods Appl. Mech. Engrg. (2014).
+.. [Li-Re2014] T. |ligursky|  and Y. Renard,
+   *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction.* Comput. Methods Appl. Mech. Engrg. 280 (2014), 222-262. 
+
+.. [Li-Re] T. |ligursky|  and Y. Renard,
+   *Bifurcations in Piecewise-Smooth Steady-State Problems: Abstract Study and Application to Plane Contact Problems with Friction.* Submitted (2014). [`hal-01077161 - version 1 <https://hal.archives-ouvertes.fr/hal-01077161>`_]
 
 .. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
    *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.

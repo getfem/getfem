@@ -233,17 +233,17 @@ namespace getfem {
 				   const VECT &t_x2, double t_gamma2) {
     unsigned long nb_changes = 0;
     double alpha = 0., delta = S.delta_min(),
-      tau0 = tau_bp_init, tau1= S.get_tau_bp_2(), tau2, tau_var_ref, t_gamma;
+      tau0 = tau_bp_init, tau1, tau2, tau_var_ref, t_gamma;
     VECT g1(x1), g2(x1), g(x1), t_x(x1);
 
     // compute gradients at the two given points
     typename CONT_S::MAT A1, A2, A;
     S.F_x(x2, gamma2, A2); S.F_x(x2, gamma2, A); S.F_gamma(x2, gamma2, g2);
     S.F_x(x1, gamma1, A1); S.F_gamma(x1, gamma1, g1);
-    S.init_tau_bp_graph();
+    tau1 = test_function_bp(S, A1, g1, t_x1, t_gamma1);
     tau2 = test_function_bp(S, A2, g2, t_x2, t_gamma2);
-    tau_var_ref = std::max(S.abs(tau2 - tau1),
-			   (S.abs(tau1) + S.abs(tau2)) / 200);
+    S.set_tau_bp_2(tau1); S.init_tau_bp_graph();
+    tau_var_ref = std::max(S.abs(tau2 - tau1), 1.e-8);
 
     // monitor sign changes of the test function on the convex combination
     do {
@@ -723,8 +723,9 @@ namespace getfem {
       unsigned long nbdof = md->nb_dof();
       gmm::resize(b_x_, nbdof); gmm::fill_random(b_x_);
       gmm::resize(c_x_, nbdof); gmm::fill_random(c_x_);
-      b_gamma_ = gmm::random(1.); c_gamma_ = gmm::random(1.);
-      d_ = gmm::random(1.);
+      b_gamma_ = gmm::random(1.)/nbdof; c_gamma_ = gmm::random(1.)/nbdof;
+      d_ = gmm::random(1.)/nbdof;
+      gmm::scale(b_x_, 1./nbdof); gmm::scale(c_x_, 1./nbdof);
     }
 
     cont_struct_getfem_model

@@ -127,9 +127,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        size_type maxit = 10; size_type thrit = 4; scalar_type maxres = 1.e-6;
        scalar_type maxdiff = 1.e-6; scalar_type mincos = 0.9;
        scalar_type maxres_solve = 1.e-8; scalar_type delta_max = 0.005;
-       scalar_type delta_min = 0.00012;
-       scalar_type thrvar = 0.02; size_type nbdir = 40; size_type nbcomb = 1;
-       int noisy = 0; int singularities = 0; bool nonsmooth = false;
+       scalar_type delta_min = 0.00012; scalar_type thrvar = 0.02;
+       size_type nbdir = 40; size_type nbcomb = 1; int noisy = 0;
+       int singularities = 0; bool nonsmooth = false;
 
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();

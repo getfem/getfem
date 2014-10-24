@@ -344,22 +344,18 @@ for step = 1:nbstep
   drawnow;
   
   printf('end of step n° %d / %d\n', step, nbstep)
-  if (abs(gm) > 1) then
-    printf('|gamma| > 1, stop\n')
+  if (abs(gm) >= 1) then
+    printf('|gamma| >= 1, stop\n')
     break
   end
-  //sleep(100);
 end
 
 nsing = size(sing_out, 1);
 if (nsing > 0) then
-  printf('\n--------------------------------------------------------\n')
-  printf('   Detected singular points on the continuation curve\n')
-  printf('--------------------------------------------------------\n')
+  printf('\n------------------------------\n')
+  printf('   Detected singular points\n')
+  printf('------------------------------\n')
   for i = 1:nsing
     printf(sing_out(i) + '\n')
   end
 end
-
-//X = gf_model_get(md, 'from variables');
-//save(datapath + "block_solution_3.sod", "X");

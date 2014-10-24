@@ -131,6 +131,35 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        );
 
 
+    /*@GET t = ('non-smooth bifurcation test', @vec solution1, @scalar parameter1, @vec tangent_sol1, @scalar tangent_par1, @vec solution2, @scalar parameter2, @vec tangent_sol2, @scalar tangent_par2)
+      Test for a non-smooth bifurcation point between the point given by
+      `solution1` and `parameter1` with the tangent given by `tangent_sol1` 
+      and `tangent_par1` and the point given by `solution2` and `parameter2`
+      with the tangent given by `tangent_sol2` and `tangent_par2`.@*/
+    sub_command
+      ("non-smooth bifurcation test", 8, 8, 0, 1,
+       size_type nbdof = ps->linked_model().nb_dof();
+       darray x1 = in.pop().to_darray();
+       std::vector<double> xx1(nbdof); gmm::copy(x1, xx1);
+       scalar_type gamma1 = in.pop().to_scalar();
+       darray t_x1 = in.pop().to_darray();
+       std::vector<double> tt_x1(nbdof); gmm::copy(t_x1, tt_x1);
+       scalar_type t_gamma1 = in.pop().to_scalar();
+       darray x2 = in.pop().to_darray();
+       std::vector<double> xx2(nbdof); gmm::copy(x2, xx2);
+       scalar_type gamma2 = in.pop().to_scalar();
+       darray t_x2 = in.pop().to_darray();
+       std::vector<double> tt_x2(nbdof); gmm::copy(t_x2, tt_x2);
+       scalar_type t_gamma2 = in.pop().to_scalar();
+       ps->set_build(getfem::BUILD_ALL);
+       ps->init_border();
+       ps->clear_tau_bp_currentstep();
+       out.pop().from_integer(int(getfem::test_nonsmooth_bifurcation
+				  (*ps, xx1, gamma1, tt_x1, t_gamma1,
+				   xx2, gamma2, tt_x2, t_gamma2)));
+       );
+
+
     /*@GET t = ('bifurcation test function')
       Return the last value of the bifurcation test function and eventaully
       the whole calculated graph when passing between different sub-domains

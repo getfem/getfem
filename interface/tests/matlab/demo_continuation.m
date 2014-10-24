@@ -162,9 +162,9 @@ end
 
 nsing = size(sing_out, 1);
 if (nsing)
-  disp(sprintf('\n-------------------------------------------------------'))
-  disp('   detected singular points on the continuation curve')
-  disp('-------------------------------------------------------')
+  disp(sprintf('\n------------------------------'))
+  disp('   detected singular points')
+  disp('------------------------------')
   for i = 1:nsing
     disp(sing_out(i,:))
   end

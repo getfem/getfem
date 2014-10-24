@@ -209,11 +209,11 @@ bool state_problem::cont(plain_vector &U) {
 
   if (sing_out.size() > 0) {
     cout << endl
-	 << "--------------------------------------------------------" 
+	 << "------------------------------" 
 	 << endl
-	 << "   Detected singular points on the continuation curve"
+	 << "   Detected singular points"
 	 << endl
-	 << "--------------------------------------------------------"
+	 << "------------------------------"
 	 << endl;
     for (size_type i = 0; i < sing_out.size(); i++)
       cout << sing_out[i] << endl;
