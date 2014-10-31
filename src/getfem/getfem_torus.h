@@ -118,7 +118,8 @@ namespace getfem
   private:
     bool is_adapted_;
     
-  public:    
+  public:
+    torus_mesh(std::string name = std::string());
     void adapt();
     void adapt(const getfem::mesh &original_mesh);
   };

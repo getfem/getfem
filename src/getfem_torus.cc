@@ -405,6 +405,8 @@ namespace getfem
     mesh_fem::enumerate_dof();
   }
 
+  torus_mesh::torus_mesh(std::string name) : mesh(std::move(name)){}
+
   void torus_mesh::adapt(const getfem::mesh &original_mesh){
     clear();
     GMM_ASSERT1(original_mesh.dim() == 2, "Adapting torus feature must be a 2d mesh");
