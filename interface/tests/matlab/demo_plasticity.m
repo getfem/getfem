@@ -34,9 +34,12 @@ test_tangent_matrix = 0;
 L = 100;
 H = 20;
 
-% f = [0 -330]';
-f = [1 0]';
+f = [0 -330]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
+if (new_test == 1)
+  f = [10000 0]';
+  t = [0 0.0001 0.1 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
+end
 
 % Create the mesh
 m = gfMesh('triangles grid', [0:2:L], [0:1:H]);
@@ -70,19 +73,19 @@ CVbottom = find(CV <= 250); % Retrieve index of convex located at the bottom
 CVtop = find(CV > 250); % Retrieve index of convex located at the top
 
 % Definition of Lame coeff
-lambda(CVbottom,1) = 12.1150; % Steel
-lambda(CVtop,1) = 8.4605; % Iron
+lambda(CVbottom,1) = 121150; % Steel
+lambda(CVtop,1) = 84605; % Iron
 %lambda = 121150;
-mu(CVbottom,1) = 8.0769; %Steel
-mu(CVtop,1) = 7.7839; % Iron
+mu(CVbottom,1) = 80769; %Steel
+mu(CVtop,1) = 77839; % Iron
 %mu = 80769;
-von_mises_threshold(CVbottom) = 0.7000;
-von_mises_threshold(CVtop) = 0.8000;
+von_mises_threshold(CVbottom) = 7000;
+von_mises_threshold(CVtop) = 8000;
 
 if (new_test == 1)
-    lambda(CVtop,1) = 12.1150;
-    mu(CVtop,1) = 8.0769;
-    von_mises_threshold(CVtop) = 0.7000;
+    lambda(CVtop,1) = 121150;
+    mu(CVtop,1) = 80769;
+    von_mises_threshold(CVtop) = 7000;
 end;
 
 % Assign boundary numbers
@@ -156,7 +159,7 @@ for step=1:nbstep,
     end
 
     if (test_tangent_matrix)
-      gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.00000001);
+      gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
     end;
    
     
@@ -175,47 +178,48 @@ for step=1:nbstep,
       
       M = gf_asm('mass matrix', mim, mf_vm);
       L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
-      VM = M \ L;
+      VM = (M \ L)';
       % To be corrected, A^{-1}*sigma instead of sigma
-      % L = gf_asm('generic', mim, 1, 'Norm((Grad_u+Grad_u'')/2 - sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
-      L = gf_asm('generic', mim, 1, 'Norm(sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
-      plast = M \ L;
+      coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
+      coeff2='1/(2*mu)';
+      Ainv=sprintf('(%s)*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim))', coeff2, coeff1);
+      Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv)
+      L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
+      % L = gf_asm('generic', mim, 1, 'Norm(sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+      plast = (M \ L)';
     else
       get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       plast = get(md, 'compute plastic part', mim, mf_pl, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       % Compute Von Mises or Tresca stress
       VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
     end
-      
-    
-    max(abs(VM));
   
     figure(2)
     subplot(2,1,1);
-    gf_plot(mf_vm,VM', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); % 'deformed_mesh', 'on')
+    gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); % 'deformed_mesh', 'on')
     colorbar;
     axis([-20 120 -20 40]);
-    caxis([0 10000]);
+    % caxis([0 10000]);
     n = t(step);
     title(['Von Mises criterion for t = ', num2str(step)]);
   
     %ERR=gf_compute(mf_u,U,'error estimate', mim);
     %E=ERR; E(dd)=ERR;
-    subplot(2,1,2);
+    %subplot(2,1,2);
     %gf_plot(mf_err, E, 'mesh','on', 'refine', 1); 
     %colorbar;
     %title('Error estimate');
 
     %figure(3)
     subplot(2,1,2);
-    gf_plot(mf_pl,plast', 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
+    gf_plot(mf_pl,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
     colorbar;
     axis([-20 120 -20 40]);
-    caxis([0 10000]);
+    % caxis([0 10000]);
     n = t(step);
     title(['Plastification for t = ', num2str(step)]);
     
-    % pause();
+    % pause;
 
 end;
 
