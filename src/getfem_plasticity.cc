@@ -885,16 +885,14 @@ namespace getfem {
       base_matrix tau(N, N), tau_D(N, N);
       gmm::copy(args[0]->as_vector(), tau.as_vector());
       scalar_type s = (*(args[1]))[0];
-      
-      
+
       scalar_type tau_m = gmm::mat_trace(tau) / scalar_type(N);
       gmm::copy(tau, tau_D);
       for (size_type i = 0; i < N; ++i) tau_D(i,i) -= tau_m;
 
       scalar_type norm_tau_D = gmm::mat_euclidean_norm(tau_D);
       
-      if (norm_tau_D != scalar_type(0))
-        gmm::scale(tau_D, std::min(norm_tau_D, s) / norm_tau_D);
+      if (norm_tau_D > s) gmm::scale(tau_D, s / norm_tau_D);
 
       for (size_type i = 0; i < N; ++i) tau_D(i,i) += tau_m;
 
@@ -918,23 +916,21 @@ namespace getfem {
 
       switch(nder) {
       case 1: 
-        if (norm_tau_D < s) {
+        if (norm_tau_D <= s) {
           gmm::clear(result.as_vector());
           for (size_type i = 0; i < N; ++i)
             for (size_type j = 0; j < N; ++j)
               result(i,j,i,j) = scalar_type(1);
         } else {
-          if (norm_tau_D != scalar_type(0)) {
-            for (size_type i = 0; i < N; ++i)
-              for (size_type j = 0; j < N; ++j)
-                for (size_type m = 0; m < N; ++m)
-                  for (size_type n = 0; n < N; ++n)
-                    result(i,j,m,n)
-                      = s * (-tau_D(i,j) * tau_D(m,n)
-                             + (i == m && j == n) ? scalar_type(1) : scalar_type(0)
-                             - (i == j && m == n) ? scalar_type(1)/scalar_type(N)
-                                                    : scalar_type(0)) / norm_tau_D;
-          } else gmm::clear(result.as_vector());
+          for (size_type i = 0; i < N; ++i)
+            for (size_type j = 0; j < N; ++j)
+              for (size_type m = 0; m < N; ++m)
+                for (size_type n = 0; n < N; ++n)
+                  result(i,j,m,n)
+                    = s * (-tau_D(i,j) * tau_D(m,n)
+                           + ((i == m && j == n) ? scalar_type(1) : scalar_type(0))
+                           - ((i == j && m == n) ? scalar_type(1)/scalar_type(N)
+                              : scalar_type(0))) / norm_tau_D;
           for (size_type i = 0; i < N; ++i)
             for (size_type j = 0; j < N; ++j)
               result(i,i,j,j) += scalar_type(1)/scalar_type(N);

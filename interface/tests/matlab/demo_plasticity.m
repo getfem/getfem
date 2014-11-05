@@ -28,14 +28,14 @@ clc
 %%
 
 new_test = 0;
-test_tangent_matrix = 1;
+test_tangent_matrix = 0;
 
 % Initialize used data
 L = 100;
 H = 20;
 
 % f = [0 -330]';
-f = [10000 0]';
+f = [1 0]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
 
 % Create the mesh
@@ -70,14 +70,20 @@ CVbottom = find(CV <= 250); % Retrieve index of convex located at the bottom
 CVtop = find(CV > 250); % Retrieve index of convex located at the top
 
 % Definition of Lame coeff
-lambda(CVbottom,1) = 121150; % Stell
-lambda(CVtop,1) = 84605; % Iron
+lambda(CVbottom,1) = 12.1150; % Steel
+lambda(CVtop,1) = 8.4605; % Iron
 %lambda = 121150;
-mu(CVbottom,1) = 80769; %Stell
-mu(CVtop,1) = 77839; % Iron
+mu(CVbottom,1) = 8.0769; %Steel
+mu(CVtop,1) = 7.7839; % Iron
 %mu = 80769;
-von_mises_threshold(CVbottom) = 7000;
-von_mises_threshold(CVtop) = 8000;
+von_mises_threshold(CVbottom) = 0.7000;
+von_mises_threshold(CVtop) = 0.8000;
+
+if (new_test == 1)
+    lambda(CVtop,1) = 12.1150;
+    mu(CVtop,1) = 8.0769;
+    von_mises_threshold(CVtop) = 0.7000;
+end;
 
 % Assign boundary numbers
 set(m,'boundary',1,fleft); % for Dirichlet condition
@@ -110,16 +116,18 @@ if (new_test)
   H = mu(1)/2; 
   set(md, 'add initialized data', 'H', [H]);
 
-  coeff_long = '(2*lambda*H)/((2*mu+H)*(2*meshdim*lambda+4*mu+2*H))';
-  B_inv = sprintf('((2*mu/(2*mu+H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim)))', coeff_long);
-  B = '((1+H/(2*mu))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-lambda*H/(2*mu*(meshdim*lambda+2*mu)))*(Id(meshdim)@Id(meshdim)))';
-  ApH = '((2*mu+H)*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (lambda)*(Id(meshdim)@Id(meshdim)))';
+  coeff_long = '((lambda)*(H))/((2*(mu)+(H))*(meshdim*(lambda)+2*(mu)+(H)))';
+  B_inv = sprintf('((2*(mu)/(2*(mu)+(H)))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim)))', coeff_long);
+  B = '((1+(H)/(2*(mu)))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-(lambda)*(H)/(2*(mu)*(meshdim*lambda+2*(mu))))*(Id(meshdim)@Id(meshdim)))';
+  ApH = '((2*(mu)+(H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (lambda)*(Id(meshdim)@Id(meshdim)))';
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((H*', Enp1, ')+(', ApH, '*(',Enp1,'+',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection(((H)*', Enp1, ')+(', ApH, '*(',Enp1,'+',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  
+  % expr_sigma2 = 'Von_Mises_projection(Grad_u+Grad_u'', von_mises_threshold)';
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
+  % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
 else
     
   % Declare that sigma is a data of the system on mf_sigma
@@ -148,9 +156,9 @@ for step=1:nbstep,
     end
 
     if (test_tangent_matrix)
-      gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.0001);
+      gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.00000001);
     end;
-    
+   
     
     % Solve the system
     get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest',  'alpha min', 0.8, 'very noisy', 'max_iter', 100, 'max_res', 1e-6);

@@ -21,6 +21,8 @@ theta = 1;       % Nitsche's method parameter theta
 gamma0 = 0.001;  % Nitsche's method parameter gamma0 (gamma = gamma0*h)
 r = 1e8;         % Penalization parameter
 draw = true;
+quadrangles = true;
+K = 2;           % Degree of the finite element method
 
 asize =  size(who('automatic_var654'));
 if (asize(1)) draw = false; end;
@@ -28,17 +30,24 @@ if (asize(1)) draw = false; end;
 % trace on;
 gf_workspace('clear all');
 NX = 20;
-m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
-%m=gf_mesh('import','structured','GT="GT_QK(2,1)";SIZES=[1,1];NOISED=1;NSUBDIV=[1,1];')
+if (quadrangles)
+  m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
+else
+  m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX))
+end
 
 % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)
 mf = gf_mesh_fem(m,1);
-% assign the Q2 fem to all convexes of the mesh_fem,
-gf_mesh_fem_set(mf,'fem',gf_fem('FEM_QK(2,2)'));
+% assign the QK or PK fem to all convexes of the mesh_fem, and define an
+% integration method
+if (quadrangles)
+  gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
+  mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,6)'));
+else
+  gf_mesh_fem_set(mf,'fem',gf_fem(sprintf('FEM_PK(2,%d)', K)));
+  mim = gf_mesh_im(m, gf_integ('IM_TRIANGLE(6)'));
+end
 
-% Integration which will be used
-mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,4)'));
-%mim = gf_mesh_im(m, gf_integ('IM_STRUCTURED_COMPOSITE(IM_GAUSS_PARALLELEPIPED(2,5),4)'));
 % detect the border of the mesh
 border = gf_mesh_get(m,'outer faces');
 % mark it as boundary #1
@@ -49,9 +58,11 @@ if (draw)
 end
 
 % interpolate the exact solution
-Uexact = gf_mesh_fem_get(mf, 'eval', { 'y.*(y-1).*x.*(x-1)+x.^5' });
-% its second derivative
-F      = gf_mesh_fem_get(mf, 'eval', { '-(2*(x.^2+y.^2)-2*x-2*y+20*x.^3)' });
+% Uexact = gf_mesh_fem_get(mf, 'eval', { '10*y.*(y-1).*x.*(x-1)+10*x.^5' });
+Uexact = gf_mesh_fem_get(mf, 'eval', { 'x.*sin(2*pi*x).*sin(2*pi*y)' });
+% Opposite of its laplacian
+% F      = gf_mesh_fem_get(mf, 'eval', { '-(20*(x.^2+y.^2)-20*x-20*y+200*x.^3)' });
+F      = gf_mesh_fem_get(mf, 'eval', { '4*pi*(2*pi*x.*sin(2*pi*x) - cos(2*pi*x)).*sin(2*pi*y)' });
 
 md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mf);
@@ -74,18 +85,18 @@ gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
 if (draw)
-  subplot(2,1,1); gf_plot(mf,U,'mesh','on','contour',.01:.01:.1); 
+  subplot(2,1,1); gf_plot(mf,U,'mesh','off'); 
   colorbar; title('computed solution');
 
-  subplot(2,1,2); gf_plot(mf,U-Uexact,'mesh','on'); 
+  subplot(2,1,2); gf_plot(mf,Uexact-U,'mesh','on'); 
   colorbar;title('difference with exact solution');
 end
 
-err = gf_compute(mf, U-Uexact, 'H1 norm', mim);
+err = gf_compute(mf, Uexact-U, 'H1 norm', mim);
 
 disp(sprintf('H1 norm of error: %g', err));
 
-if (err > 2E-5)
+if (err > 2E-4)
    error('Laplacian test: error to big');
 end
 
