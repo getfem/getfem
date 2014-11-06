@@ -33,7 +33,7 @@ NX = 20;
 if (quadrangles)
   m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 else
-  m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX))
+  m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
 end
 
 % create a mesh_fem of for a field of dimension 1 (i.e. a scalar field)

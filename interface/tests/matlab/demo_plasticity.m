@@ -27,22 +27,25 @@ clc
 
 %%
 
-new_test = 0;
+with_hardening = 1;
 test_tangent_matrix = 0;
 
 % Initialize used data
 L = 100;
 H = 20;
+NX = 50;
+NY = 20;
 
 f = [0 -330]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
-if (new_test == 1)
-  f = [10000 0]';
-  t = [0 0.0001 0.1 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
+if (with_hardening == 1)
+  f = [20000 0]';
+  t = [0 0.5 0.9 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
 end
 
 % Create the mesh
-m = gfMesh('triangles grid', [0:2:L], [0:1:H]);
+% m = gfMesh('triangles grid', [0:(L/NX):L], [0:(H/NY):H]);
+m = gfMesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[%d,%d];NOISED=0;NSUBDIV=[%d,%d];', L, H, NX, NY));
 
 % Plotting
 % gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
@@ -51,14 +54,16 @@ m = gfMesh('triangles grid', [0:2:L], [0:1:H]);
 mim=gfMeshIm(m);  set(mim, 'integ', gfInteg('IM_TRIANGLE(6)')); % Gauss methods on triangles
 
 % Define used MeshFem
-% mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
-mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
+if (with_hardening == 1)
+  mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
+else
+  mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
+end
 mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 % mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_err=gfMeshFem(m); set(mf_err, 'fem',gfFem('FEM_PK(2,0)'));
 mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
-mf_pl = gfMeshFem(m); set(mf_pl, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 
 % Find the border of the domain
 P=get(m, 'pts');
@@ -82,7 +87,7 @@ mu(CVtop,1) = 77839; % Iron
 von_mises_threshold(CVbottom) = 7000;
 von_mises_threshold(CVtop) = 8000;
 
-if (new_test == 1)
+if (with_hardening == 1)
     lambda(CVtop,1) = 121150;
     mu(CVtop,1) = 80769;
     von_mises_threshold(CVtop) = 7000;
@@ -110,22 +115,24 @@ set(md, 'add initialized fem data', 'von_mises_threshold', mf_data, von_mises_th
 
 
 
-if (new_test)
+if (with_hardening)
   N = gf_mesh_get(m, 'dim');
   gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
   mim_data = gf_mesh_im_data(mim, -1, [N, N]);
   gf_model_set(md, 'add im data', 'sigma', mim_data);
-    
+   
   H = mu(1)/2; 
   set(md, 'add initialized data', 'H', [H]);
 
+  Is = 'Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim)';
+  IxI = 'Id(meshdim)@Id(meshdim)';
   coeff_long = '((lambda)*(H))/((2*(mu)+(H))*(meshdim*(lambda)+2*(mu)+(H)))';
-  B_inv = sprintf('((2*(mu)/(2*(mu)+(H)))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim)))', coeff_long);
-  B = '((1+(H)/(2*(mu)))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (-(lambda)*(H)/(2*(mu)*(meshdim*lambda+2*(mu))))*(Id(meshdim)@Id(meshdim)))';
-  ApH = '((2*(mu)+(H))*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (lambda)*(Id(meshdim)@Id(meshdim)))';
+  B_inv = sprintf('((2*(mu)/(2*(mu)+(H)))*(%s) + (%s)*(%s))', Is, coeff_long, IxI);
+  B = sprintf('((1+(H)/(2*(mu)))*(%s) + (-(lambda)*(H)/(2*(mu)*(meshdim*lambda+2*(mu))))*(%s))', Is, IxI);
+  ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection(((H)*', Enp1, ')+(', ApH, '*(',Enp1,'+',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection(((H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
   % expr_sigma2 = 'Von_Mises_projection(Grad_u+Grad_u'', von_mises_threshold)';
   
@@ -162,16 +169,16 @@ for step=1:nbstep,
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
     end;
    
-    
     % Solve the system
-    get(md, 'solve','lsolver', 'superlu', 'lsearch', 'simplest',  'alpha min', 0.8, 'very noisy', 'max_iter', 100, 'max_res', 1e-6);
+    % get(md, 'solve','lsolver', 'superlu', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+    get(md, 'solve', 'noisy', 'max_iter', 80);
 
     % Retrieve the solution U
     U = get(md, 'variable', 'u', 0);
     
     % Compute new plasticity constraints used to compute 
     % the Von Mises or Tresca stress
-    if (new_test)
+    if (with_hardening)
       sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
       gf_model_set(md, 'variable', 'sigma', sigma);
       gf_model_set(md, 'variable', 'Previous_u', U);
@@ -179,24 +186,22 @@ for step=1:nbstep,
       M = gf_asm('mass matrix', mim, mf_vm);
       L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
       VM = (M \ L)';
-      % To be corrected, A^{-1}*sigma instead of sigma
       coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
       coeff2='1/(2*mu)';
-      Ainv=sprintf('(%s)*Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim) + (%s)*(Id(meshdim)@Id(meshdim))', coeff2, coeff1);
-      Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv)
+      Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
+      Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
       L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
-      % L = gf_asm('generic', mim, 1, 'Norm(sigma)*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
       plast = (M \ L)';
     else
       get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
-      plast = get(md, 'compute plastic part', mim, mf_pl, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+      plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       % Compute Von Mises or Tresca stress
       VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
     end
   
     figure(2)
     subplot(2,1,1);
-    gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1); % 'deformed_mesh', 'on')
+    gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0); % 'deformed_mesh', 'on')
     colorbar;
     axis([-20 120 -20 40]);
     % caxis([0 10000]);
@@ -212,14 +217,14 @@ for step=1:nbstep,
 
     %figure(3)
     subplot(2,1,2);
-    gf_plot(mf_pl,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1);  % 'deformed_mesh', 'on')
+    gf_plot(mf_vm,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0);  % 'deformed_mesh', 'on')
     colorbar;
     axis([-20 120 -20 40]);
     % caxis([0 10000]);
     n = t(step);
     title(['Plastification for t = ', num2str(step)]);
     
-    % pause;
+    pause(2);
 
 end;
 
