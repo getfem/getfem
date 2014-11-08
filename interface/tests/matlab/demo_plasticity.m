@@ -27,8 +27,8 @@ clc
 
 %%
 
-with_hardening = 0;
-bi_material = true;
+with_hardening = 1;
+bi_material = false;
 test_tangent_matrix = 0;
 do_plot = true;
 
@@ -125,11 +125,11 @@ if (with_hardening)
   IxI = 'Id(meshdim)@Id(meshdim)';
   coeff_long = '((lambda)*(H))/((2*(mu)+(H))*(meshdim*(lambda)+2*(mu)+(H)))';
   B_inv = sprintf('((2*(mu)/(2*(mu)+(H)))*(%s) + (%s)*(%s))', Is, coeff_long, IxI);
-  B = sprintf('((1+(H)/(2*(mu)))*(%s) + (-(lambda)*(H)/(2*(mu)*(meshdim*(lambda)+2*(mu))))*(%s))', Is, IxI);
+  B = sprintf('((1+(H)/(2*(mu)))*(%s) - (((lambda)*(H))/(2*(mu)*(meshdim*(lambda)+2*(mu))))*(%s))', Is, IxI);
   ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection(((H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
   % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
