@@ -21,14 +21,15 @@ clc
 
 %%
 
-% We try to compute a plasticity problem with a Von Mises criterion
+% We compute a plasticity problem with a Von Mises criterion with or
+% without kinetic hardening
 % For convenience we consider an homogenous Dirichlet condition on the left
 % of the domain and an easy computed Neumann Condition on the right
 
 %%
 
-with_hardening = 1;
-bi_material = false;
+with_hardening = 0;
+bi_material = true;
 test_tangent_matrix = 0;
 do_plot = true;
 
@@ -41,7 +42,7 @@ NY = 20;
 f = [0 -330]';
 t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
 if (with_hardening == 1)
-  f = [0 -330]';
+  f = [10000 0]';
   t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
   % t = [0 0.5 0.9 1.2 1.5 1.8 1.5 1.2 0.9 0.5 0.3 0];
 end
