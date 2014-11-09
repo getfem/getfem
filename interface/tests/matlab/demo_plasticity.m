@@ -22,7 +22,7 @@ clc
 %%
 
 % We compute a plasticity problem with a Von Mises criterion with or
-% without kinetic hardening
+% without kinematic hardening
 % For convenience we consider an homogenous Dirichlet condition on the left
 % of the domain and an easy computed Neumann Condition on the right
 
@@ -95,7 +95,11 @@ mu(CVtop,1) = 77839; % Iron
 von_mises_threshold(CVbottom) = 7000;
 von_mises_threshold(CVtop) = 8000;
 % Definition of hardening parameter
-H = mu(1)/5;
+if (with_hardening)
+  H = mu(1)/5;
+else
+  H = 0;
+end
 
 % Create the model
 md = gfModel('real');
