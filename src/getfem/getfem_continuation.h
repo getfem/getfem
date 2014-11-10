@@ -723,9 +723,11 @@ namespace getfem {
       unsigned long nbdof = md->nb_dof();
       gmm::resize(b_x_, nbdof); gmm::fill_random(b_x_);
       gmm::resize(c_x_, nbdof); gmm::fill_random(c_x_);
-      b_gamma_ = gmm::random(1.)/nbdof; c_gamma_ = gmm::random(1.)/nbdof;
-      d_ = gmm::random(1.)/nbdof;
-      gmm::scale(b_x_, 1./nbdof); gmm::scale(c_x_, 1./nbdof);
+      b_gamma_ = gmm::random(1.)/scalar_type(nbdof);
+      c_gamma_ = gmm::random(1.)/scalar_type(nbdof);
+      d_ = gmm::random(1.)/scalar_type(nbdof);
+      gmm::scale(b_x_, scalar_type(1)/scalar_type(nbdof));
+      gmm::scale(c_x_, scalar_type(1)/scalar_type(nbdof));
     }
 
     cont_struct_getfem_model

@@ -23,7 +23,6 @@
 #include "gmm/gmm_condition_number.h"
 #include "getfem/getfem_mesh.h"
 #include "getfem/getfem_integration.h"
-#include "getfem/getfem_mesh_fem.h"
 
 #if GETFEM_HAVE_METIS_OLD_API
 extern "C" void METIS_PartGraphKway(int *, int *, int *, int *, int *, int *,

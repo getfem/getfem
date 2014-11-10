@@ -107,7 +107,7 @@ namespace getfem{
     size_type nb_filtered_index() const;
 
     /**Number of points in element cv, optionally on face, f*/
-    size_type nb_points_of_element(size_type cv, size_type f = size_type(-1)) const;
+    size_type nb_points_of_element(size_type cv, short_type f = short_type(-1)) const;
 
     /**sum of tensor elements, M(3,3) will have 3*3=9 elements*/
     size_type nb_tensor_elem() const;

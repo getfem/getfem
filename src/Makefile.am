@@ -218,7 +218,6 @@ SRC =                                      		\
 	getfem_contact_and_friction_large_sliding.cc    \
 	getfem_plasticity.cc				\
 	getfem_omp.cc                       		\
-	getfem_deformable_mesh.cc			\
 	getfem_level_set_contact.cc         		\
 	getfem_im_data.cc
 #	getfem_enumeration_dof_para.cc
