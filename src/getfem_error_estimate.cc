@@ -39,7 +39,7 @@ namespace getfem {
                               scalar_type mu,
                               scalar_type gamma0,
                               scalar_type f_coeff,
-                              scalar_type vertical_force,
+			       scalar_type vertical_force,
                               base_vector &ERR) {
    
     
@@ -263,8 +263,8 @@ namespace getfem {
 	  gmm::copy(up,sigt);
 	  gmm::scale(sigt, - sign);
 	  gmm::add(sig,sigt);
-	  ERR[v.cv()] += coefficient *gmm::vect_norm2_sqr(sigt); 
-	  eta3 +=  coefficient *gmm::vect_norm2_sqr(sigt);
+	  ERR[v.cv()] += coefficient *radius*gmm::vect_norm2_sqr(sigt); 
+	  eta3 +=  coefficient *radius*gmm::vect_norm2_sqr(sigt);
 	}	  	  
       	//  cout << "Erreur en contact sur " << v.cv() << " ERR[v.cv()] = " << ERR[v.cv()]-ee << endl;   
         
