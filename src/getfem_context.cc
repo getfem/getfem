@@ -33,6 +33,15 @@ namespace getfem {
     locks_( )
   {}
 
+  context_dependencies& context_dependencies::operator=(const context_dependencies& cd)
+  {
+    state = cd.state;
+    touched = static_cast<bool>(cd.touched);
+    dependencies = cd.dependencies;
+    dependent = cd.dependent;
+    return *this;
+  }
+
   void context_dependencies::sup_dependent_
   (const context_dependencies &cd) const {
     getfem::local_guard lock = locks_.get_lock();

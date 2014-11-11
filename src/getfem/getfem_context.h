@@ -130,7 +130,7 @@ namespace getfem {
     virtual ~context_dependencies();
     context_dependencies() : state(CONTEXT_NORMAL), touched( ) {touched = false;}
     context_dependencies(const context_dependencies& cd);
-
+    context_dependencies& operator=(const context_dependencies& cd);
   };
 
 }  /* end of namespace getfem.                                             */
