@@ -5,15 +5,15 @@ namespace getfem{
 
 #ifdef GETFEM_HAVE_OPENMP
 
-  boost::mutex omp_guard::boost_mutex;
+  boost::recursive_mutex omp_guard::boost_mutex;
 
   omp_guard::omp_guard() 
-    : boost::lock_guard<boost::mutex>(boost_mutex) 
+    : boost::lock_guard<boost::recursive_mutex>(boost_mutex) 
   {}
 
-  local_guard::local_guard(boost::mutex& m) : 
+  local_guard::local_guard(boost::recursive_mutex& m) : 
     mutex_(m), 
-    plock_(new boost::lock_guard<boost::mutex>(m))
+    plock_(new boost::lock_guard<boost::recursive_mutex>(m))
   { }
 
   local_guard::local_guard(const local_guard& guard) 

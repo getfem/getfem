@@ -72,24 +72,24 @@ namespace getfem
 #ifdef GETFEM_HAVE_OPENMP
   //declaring a thread lock, to protect multi-threaded accesses to
   //asserts, traces and warnings. Using a global mutex
-  class omp_guard: public boost::lock_guard<boost::mutex>
+  class omp_guard: public boost::lock_guard<boost::recursive_mutex>
   {
   public:
     omp_guard();
   private:
-    static boost::mutex boost_mutex;
+    static boost::recursive_mutex boost_mutex;
   };
 
   //like boost::lock_guard, but copyable
   class local_guard 
   {
   public:
-    local_guard(boost::mutex&);
+    local_guard(boost::recursive_mutex&);
     local_guard(const local_guard&);
 
   private:
-    boost::mutex& mutex_;
-    boost::shared_ptr<boost::lock_guard<boost::mutex>> plock_;
+    boost::recursive_mutex& mutex_;
+    boost::shared_ptr<boost::lock_guard<boost::recursive_mutex>> plock_;
   };
 
   //produces scoped lock on the 
@@ -103,7 +103,7 @@ namespace getfem
     //on the mutex from this factory
     local_guard get_lock() const;
   private:
-    mutable boost::mutex mutex_;
+    mutable boost::recursive_mutex mutex_;
   };
 
 
