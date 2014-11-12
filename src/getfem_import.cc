@@ -1137,6 +1137,8 @@ namespace getfem {
 
       if (bgeot::casecmp(format,"structured")==0)
         { regular_mesh(m, filename); return; }
+      else if (bgeot::casecmp(format,"structured_ball")==0)
+        { regular_ball_mesh(m, filename); return; }
 
       std::ifstream f(filename.c_str());
       GMM_ASSERT1(f.good(), "can't open file " << filename);

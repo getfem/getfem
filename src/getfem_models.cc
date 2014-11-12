@@ -466,6 +466,25 @@ namespace getfem {
     }
   }
 
+  void model::listresiduals(std::ostream &ost) const {
+    if (variables.size() == 0)
+      ost << "Model with no variable nor data" << endl;
+    else {
+      bool firstvar(true);
+      for (VAR_SET::const_iterator it = variables.begin();
+           it != variables.end(); ++it) {
+        if (it->second.is_variable) {
+          const gmm::sub_interval &II = interval_of_variable(it->first);
+          scalar_type res = gmm::vect_norm2(gmm::sub_vector(rrhs, II));
+          if (!firstvar) cout << ", ";
+          ost << "res_" << it->first << "= " << std::setw(11) << res;
+          firstvar = false;
+        }
+      }
+      ost << endl;
+    }
+  }
+
   void model::add_fixed_size_variable(const std::string &name, size_type size,
                                       size_type niter) {
     check_name_validity(name);

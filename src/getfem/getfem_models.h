@@ -996,6 +996,8 @@ namespace getfem {
     /** List the model variables and constant. */
     void listvar(std::ostream &ost) const;
 
+    void listresiduals(std::ostream &ost) const;
+
     /** List the model bricks. */
     void listbricks(std::ostream &ost, size_type base_id = 0) const;
 
