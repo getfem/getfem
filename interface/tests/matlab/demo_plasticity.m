@@ -28,28 +28,27 @@ clc
 
 %%
 
-with_hardening = 0;
-bi_material = true;
+with_hardening = 1;
+bi_material = false;
 test_tangent_matrix = 0;
 do_plot = true;
 
 % Initialize used data
-L = 100;
-H = 20;
+LX = 100;
+LY = 20;
 NX = 50;
 NY = 20;
 
-f = [0 -330]';
-t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
+f = [0 -600]';
+t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
 if (with_hardening == 1)
-  f = [10000 0]';
-  t = [0 0.9032 1 1.1 1.3 1.5 1.7 1.74 1.7 1.5 1.3 1.1 1 0.9032 0.7 0.5 0.3 0.1 0];
-  % t = [0 0.5 0.9 1.2 1.5 1.8 1.5 1.2 0.9 0.5 0.3 0];
+  f = [15000 0]';
+  t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
 end
 
 % Create the mesh
-% m = gfMesh('triangles grid', [0:(L/NX):L], [0:(H/NY):H]);
-m = gfMesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[%d,%d];NOISED=0;NSUBDIV=[%d,%d];', L, H, NX, NY));
+% m = gfMesh('triangles grid', [0:(LX/NX):LX], [0:(LY/NY):LY]);
+m = gfMesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[%d,%d];NOISED=0;NSUBDIV=[%d,%d];', LX, LY, NX, NY));
 
 % Plotting
 % gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
@@ -71,14 +70,14 @@ mf_vm = gfMeshFem(m); set(mf_vm, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 % Find the border of the domain
 P=get(m, 'pts');
 pidleft=find(abs(P(1,:))<1e-6); % Retrieve index of points which x near to 0
-pidright=find(abs(P(1,:) - L)<1e-6); % Retrieve index of points which x near to L
+pidright=find(abs(P(1,:) - LX)<1e-6); % Retrieve index of points which x near to L
 fleft =get(m,'faces from pid',pidleft); 
 fright=get(m,'faces from pid',pidright);
 set(m,'boundary',1,fleft); % for Dirichlet condition
 set(m,'boundary',2,fright); % for Neumann condition
 
 % Decomposed the mesh into 2 regions with different values of Lamé coeff
-if (bi_material) separation = H/2; else separation = 0; end
+if (bi_material) separation = LY/2; else separation = 0; end
 pidtop    = find(P(2,:)>=separation-1E-6); % Retrieve index of points of the top part
 pidbottom = find(P(2,:)<=separation+1E-6); % Retrieve index of points of the bottom part
 cvidtop   = get(m, 'cvid from pid', pidtop);
