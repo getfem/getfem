@@ -8,7 +8,7 @@ namespace getfem
                    bgeot::multi_index tensorSize,
                    size_type filteredRegion)
     :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
-    is_on_face_(false), filtered_region_(filteredRegion),
+    filtered_region_(filteredRegion), is_on_face_(false),
     locks_()
   {
     set_tensor_size(tensorSize);
@@ -23,7 +23,7 @@ namespace getfem
 
   im_data::im_data(const getfem::mesh_im& meshIm, size_type filteredRegion)
     :im_(meshIm), nb_filtered_index_(0), nb_index_(0),
-    is_on_face_(false), filtered_region_(filteredRegion) {
+    filtered_region_(filteredRegion), is_on_face_(false) {
     tensor_size_.resize(1);
     tensor_size_[0] = 1;
     nb_tensor_elem_ = 1;
@@ -90,7 +90,7 @@ namespace getfem
     
     for (dal::bv_visitor cv(im_.convex_index()); !cv.finished(); ++cv)
     {
-      size_type nb_faces = linked_mesh.nb_faces_of_convex(cv);      
+      short_type nb_faces = linked_mesh.nb_faces_of_convex(cv);      
       const getfem::papprox_integration pim = im_.int_method_of_element(cv)->approx_method();
       size_type nb_points = pim->nb_points_on_convex();
       size_type nb_points_on_faces = pim->nb_points() - nb_points;
@@ -100,7 +100,7 @@ namespace getfem
       face_container_[cv].point_index_.resize(nb_points_on_faces);
       size_type nb_index_convex = 0;
 
-      for (size_type i_face = 0; i_face < nb_faces; ++i_face){
+      for (short_type i_face = 0; i_face < nb_faces; ++i_face){
         size_type nb_pt_face = pim->nb_points_on_face(i_face);
         for (size_type k = 0; k < nb_pt_face; ++k){
           face_container_[cv].point_index_[nb_index_convex] = nb_index_;
@@ -115,9 +115,9 @@ namespace getfem
         filtered_face_container_[cv].inactive_ = false;
         filtered_face_container_[cv].start_index_ = nb_points - nb_points;
         filtered_face_container_[cv].point_index_.resize(nb_points_on_faces);
-        size_type nb_index_convex = 0;
+        nb_index_convex = 0;
 
-        for (size_type i_face = 0; i_face < nb_faces; ++i_face){
+        for (short_type i_face = 0; i_face < nb_faces; ++i_face){
           size_type nb_pt_face = pim->nb_points_on_face(i_face);
           for (size_type k = 0; k < nb_pt_face; ++k){
             if (!rg.is_in(cv, i_face)){
@@ -260,7 +260,6 @@ namespace getfem
     size_type tensor_col = 1;
     bool first_checked = false;
     bool second_checked = false;
-    bool equivalent = false;
     for (size_type i = 0; i < sizes.size(); ++i){
       if (sizes[i] > 1 && !first_checked){
         first_checked = true;

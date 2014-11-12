@@ -291,7 +291,8 @@ namespace dal {
     {
       stored_object_tab& stored_objects
           = dal::singleton<stored_object_tab>::instance(thread);
-      if (dependent_deleted = stored_objects.del_dependent_(o1,o2))
+      dependent_deleted = stored_objects.del_dependent_(o1,o2);
+      if (dependent_deleted)
       {
         dependent_empty = stored_objects.has_dependent_objects(o2);
         break;
