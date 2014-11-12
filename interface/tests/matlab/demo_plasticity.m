@@ -193,10 +193,18 @@ for step=1:size(t,2),
       % Compute Von Mises or Tresca stress
       VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
     end
-  
+    
+    
+        expr_epsilon= '((Grad_u+Grad_u'')/2)';
+       Epsilon_u = gf_model_get(md, 'interpolation', expr_epsilon, mim_data); 
+       
+       sigma_fig(1,step)=sigma(90001);
+       Epsilon_u_fig(1,step)=Epsilon_u(90001);
+       
+       
     if (do_plot)
       figure(2)
-      subplot(2,1,1);
+      subplot(3,1,1);
       gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0); % 'deformed_mesh', 'on')
       colorbar;
       axis([-20 120 -20 40]);
@@ -204,7 +212,7 @@ for step=1:size(t,2),
       n = t(step);
       title(['Von Mises criterion for t = ', num2str(step)]);
 
-      subplot(2,1,2);
+      subplot(3,1,2);
       gf_plot(mf_vm,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0);  % 'deformed_mesh', 'on')
       colorbar;
       axis([-20 120 -20 40]);
@@ -212,9 +220,17 @@ for step=1:size(t,2),
       n = t(step);
       title(['Plastification for t = ', num2str(step)]);
     
+      subplot(3,1,3);
+      
+     
+     plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
+        xlabel('Strain');
+        ylabel('Stress')
+        axis([0 0.35 -8000 16000 ]);
+    hold on;
       pause(0.1);
     end
-
+ 
 end;
 
 
