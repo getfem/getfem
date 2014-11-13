@@ -15,9 +15,9 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-clear all
+clear all;
 gf_workspace('clear all');
-clc
+clc;
 
 %%
 
@@ -43,13 +43,14 @@ f = [0 -600]';
 t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
 if (with_hardening == 1)
   f = [15000 0]';
-  t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
+  t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 -0.1 -0.2 -0.4 -0.6 -0.8 -0.6 -0.4 -0.2 0];
 end
 
 % Create the mesh
 % m = gfMesh('triangles grid', [0:(LX/NX):LX], [0:(LY/NY):LY]);
 m = gfMesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[%d,%d];NOISED=0;NSUBDIV=[%d,%d];', LX, LY, NX, NY));
-
+N = gf_mesh_get(m, 'dim');
+  
 % Plotting
 % gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
 
@@ -187,19 +188,20 @@ for step=1:size(t,2),
       Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
       L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
       plast = (M \ L)';
+      
+      Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
+      ind_gauss_pt = 22500;
+      if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
+        ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
+      end
+      sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
+      Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
     else
       get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       % Compute Von Mises or Tresca stress
       VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
     end
-    
-    
-        expr_epsilon= '((Grad_u+Grad_u'')/2)';
-       Epsilon_u = gf_model_get(md, 'interpolation', expr_epsilon, mim_data); 
-       
-       sigma_fig(1,step)=sigma(90001);
-       Epsilon_u_fig(1,step)=Epsilon_u(90001);
        
        
     if (do_plot)
@@ -220,14 +222,15 @@ for step=1:size(t,2),
       n = t(step);
       title(['Plastification for t = ', num2str(step)]);
     
-      subplot(3,1,3);
-      
-     
-     plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
+      if (with_hardening)
+        subplot(3,1,3);
+        plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
         xlabel('Strain');
         ylabel('Stress')
-        axis([0 0.35 -8000 16000 ]);
-    hold on;
+        axis([-0.1 0.35 -16000 16000 ]);
+        % hold on;
+      end;
+      
       pause(0.1);
     end
  
