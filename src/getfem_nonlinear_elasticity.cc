@@ -451,7 +451,7 @@ namespace getfem {
   (const base_matrix &E, base_matrix &result,const base_vector &params, scalar_type det_trans) const {
     // should be optimized, maybe deriving sigma from strain energy
     base_tensor tt(2,2,2,2);
-    size_type N = gmm::mat_nrows(E);
+    size_type N = (gmm::mat_nrows(E) > 2)? 2 : gmm::mat_nrows(E);
     grad_sigma(E,tt,params, det_trans);
     for (size_type i = 0; i < N; ++i)
       for (size_type j = 0; j < N; ++j) {
