@@ -200,8 +200,8 @@ namespace getfem {
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
       if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)
-	  && (it->second.filter == VDESCRFILTER_CTERM
-	      || it->second.filter == VDESCRFILTER_INFSUP)) {
+    && (it->second.filter == VDESCRFILTER_CTERM
+        || it->second.filter == VDESCRFILTER_INFSUP)) {
         VAR_SET::iterator it2 = variables.find(it->second.filter_var);
         GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
                     "multiplier does not exist");
@@ -287,56 +287,56 @@ namespace getfem {
           MM(it2->second.associated_mf().nb_dof(), it->second.mf->nb_dof());        
         bool termadded = false;
 
-	if (it->second.filter == VDESCRFILTER_CTERM) {
+  if (it->second.filter == VDESCRFILTER_CTERM) {
 
           for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
-	    const brick_description &brick = bricks[ib];
-	    bool bupd = false;
-	    bool cplx = is_complex() && brick.pbr->is_complex();
-	    
-	    for (size_type j = 0; j < brick.tlist.size(); ++j) {
-	      
-	      const term_description &term = brick.tlist[j];
-	      
-	      if (term.is_matrix_term && !mults[k].compare(term.var1) &&
-		  !it2->first.compare(term.var2)) {
-		if (!bupd) {
-		  brick.terms_to_be_computed = true;
-		  update_brick(ib, BUILD_MATRIX);
-		  bupd = true;
-		}
-		if (cplx)
-		  gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
-			   MM);
-		else
-		  gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
-		termadded = true;
-		
-	      } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
-			 !it2->first.compare(term.var1)) {
-		if (!bupd) {
-		  brick.terms_to_be_computed = true;
-		  update_brick(ib, BUILD_MATRIX);
-		  bupd = true;
-		}
-		if (cplx)
-		  gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
-		else
-		  gmm::add(brick.rmatlist[j], MM);
-		termadded = true;
-	      }
-	    }
-	  }
+      const brick_description &brick = bricks[ib];
+      bool bupd = false;
+      bool cplx = is_complex() && brick.pbr->is_complex();
+      
+      for (size_type j = 0; j < brick.tlist.size(); ++j) {
+        
+        const term_description &term = brick.tlist[j];
+        
+        if (term.is_matrix_term && !mults[k].compare(term.var1) &&
+      !it2->first.compare(term.var2)) {
+    if (!bupd) {
+      brick.terms_to_be_computed = true;
+      update_brick(ib, BUILD_MATRIX);
+      bupd = true;
+    }
+    if (cplx)
+      gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
+         MM);
+    else
+      gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
+    termadded = true;
+    
+        } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
+       !it2->first.compare(term.var1)) {
+    if (!bupd) {
+      brick.terms_to_be_computed = true;
+      update_brick(ib, BUILD_MATRIX);
+      bupd = true;
+    }
+    if (cplx)
+      gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
+    else
+      gmm::add(brick.rmatlist[j], MM);
+    termadded = true;
+        }
+      }
+    }
 
-	  if (!termadded)
-	    GMM_WARNING1("No term found to filter multiplier " << it->first
-			 << ". Variable is cancelled");
-	} else if (it->second.filter == VDESCRFILTER_INFSUP) {
+    if (!termadded)
+      GMM_WARNING1("No term found to filter multiplier " << it->first
+       << ". Variable is cancelled");
+  } else if (it->second.filter == VDESCRFILTER_INFSUP) {
           mesh_region rg(it->second.m_region);
           it->second.mim->linked_mesh().intersect_with_mpi_region(rg);
-	  asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
-			  *(it->second.mf), rg);
-	}
+    asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
+        *(it->second.mf), rg);
+  }
 
         MPI_SUM_SPARSE_MATRIX(MM);
 
@@ -532,8 +532,8 @@ namespace getfem {
   }
 
   void model::add_filtered_fem_variable(const std::string &name,
-					const mesh_fem &mf,
-					size_type region, size_type niter) {
+          const mesh_fem &mf,
+          size_type region, size_type niter) {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_REGION, &mf, region);
@@ -581,7 +581,7 @@ namespace getfem {
 
   void model::add_multiplier(const std::string &name, const mesh_fem &mf,
                              const std::string &primal_name,const mesh_im &mim,
-			     size_type region, size_type niter) {
+           size_type region, size_type niter) {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_INFSUP, &mf, region,
@@ -1258,7 +1258,7 @@ namespace getfem {
   }
 
   const std::string &model::varname_of_brick(size_type ind_brick,
-					     size_type ind_var) {
+               size_type ind_var) {
     GMM_ASSERT1(valid_bricks[ind_brick], "Inexistent brick");
     GMM_ASSERT1(ind_var < bricks[ind_brick].vlist.size(),
                "Inexistent brick variable");
@@ -1349,91 +1349,93 @@ namespace getfem {
   }
 
   void model::post_to_variables_step(){}
-  
-	/**takes a list (more often it's a std::vector) of matrices 
-	or vectors, creates an empty copy for each thread. When the 
-	thread computations are done (in the distructor), accumulates 
-	the assembled copies into the original. Note: the matrices or 
-	vectors in the list are gmm::cleared, deleting the content 
-	in the constructor*/
-  template <class C> class list_distro
-  {
-		C& original_list;
-		omp_distribute<C> th_list;
-		typedef typename C::value_type value_type;
 
-    void build_distro(gmm::abstract_matrix )
+  /**takes a list (more often it's a std::vector) of matrices
+  or vectors, creates an empty copy on each thread. When the
+  thread computations are done (in the destructor), accumulates
+  the assembled copies into the original. Note: the matrices or
+  vectors in the list are gmm::cleared, deleting the content
+  in the constructor*/
+  template <class CONTAINER_LIST> class list_distro
+  {
+    CONTAINER_LIST& original_list;
+    omp_distribute<CONTAINER_LIST> distributed_list;
+    typedef typename CONTAINER_LIST::value_type value_type;
+
+    void build_distro(gmm::abstract_matrix)
     {
       //intentionally skipping thread 0, as list_distro will
       //use original_list for it
-      for(size_type thread = 1; thread<num_threads(); thread++)
+      for(size_type thread = 1; thread < num_threads(); thread++)
       {
-        typename C::iterator it_org=original_list.begin();
-        typename C::iterator it_distro=th_list(thread).begin();
-        for(;it_org!=original_list.end();++it_org,++it_distro)
+        auto it_original = original_list.begin();
+        auto it_distributed = distributed_list(thread).begin();
+        for(;it_original != original_list.end(); ++it_original, ++it_distributed)
         {
-          gmm::resize(*it_distro,gmm::mat_nrows(*it_org),gmm::mat_ncols(*it_org));
+          gmm::resize(*it_distributed, gmm::mat_nrows(*it_original),gmm::mat_ncols(*it_original));
         }
       }
    }
 
     void build_distro(gmm::abstract_vector)
-		{
+    {
       //.. skipping thread 0 ..
-			for(size_type thread = 1; thread<num_threads(); thread++)
-			{
-				typename C::iterator it_org=original_list.begin();
-				typename C::iterator it_distro=th_list(thread).begin();
-				for(;it_org!=original_list.end();++it_org,++it_distro)
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        auto it_original = original_list.begin();
+        auto it_distributed = distributed_list(thread).begin();
+        for(;it_original != original_list.end(); ++it_original, ++it_distributed)
         {
-					gmm::resize(*it_distro,gmm::vect_size(*it_org));
-				}
-			}
-		}
+          gmm::resize(*it_distributed, gmm::vect_size(*it_original));
+        }
+      }
+    }
 
    bool not_multithreaded() const { return num_threads() == 1; }
 
-	public:
+  public:
 
-    list_distro(C& l) : original_list(l)
+    list_distro(CONTAINER_LIST& l) : original_list(l)
     {
       if (not_multithreaded()) return;
-      for(size_type thread=1;thread<num_threads();thread++) 
-        th_list(thread).resize(original_list.size());
+
+      for(size_type thread=1; thread<num_threads(); thread++)
+          distributed_list(thread).resize(original_list.size());
+
       build_distro(typename gmm::linalg_traits<value_type>::linalg_type());
     }
 
-    operator C&()
+    operator CONTAINER_LIST&()
     {
       if (not_multithreaded() || this_thread() == 0) return original_list;
-      else return th_list(this_thread());
+      else return distributed_list(this_thread());
     }
 
     ~list_distro()
     {
       if (not_multithreaded()) return;
+
       GMM_ASSERT1(!me_is_multithreaded_now(),
                   "List accumulation should not run in parallel");
-      for(size_type thread = 1; thread<num_threads(); thread++)
-      { 
-        typename C::iterator it_org=original_list.begin();
-        typename C::iterator it_distro=th_list(thread).begin();
-        for(;it_org!=original_list.end();++it_org,++it_distro) 
-          gmm::add(*it_distro,*it_org);
+
+      for(size_type thread = 1; thread < num_threads(); thread++)
+      {
+        auto it_original=original_list.begin();
+        auto it_distributed = distributed_list(thread).begin();
+        for(; it_original != original_list.end(); ++it_original, ++it_distributed)
+                gmm::add(*it_distributed, *it_original);
         }
       }
-	};
+  };
 
 
   void model::brick_call(size_type ib, build_version version,
-                         size_type rhs_ind) const 
+                         size_type rhs_ind) const
   {
     const brick_description &brick = bricks[ib];
     bool cplx = is_complex() && brick.pbr->is_complex();
 
     brick_init(ib, version, rhs_ind);
-
-    // scalar_type timet = gmm::uclock_sec();
 
     if (cplx)
     {
@@ -1443,46 +1445,27 @@ namespace getfem {
                                                 brick.cveclist[rhs_ind],
                                                 brick.cveclist_sym[rhs_ind],
                                                 brick.region, version);
-      /*distributing the resulting vectors and matrices
-      for individual threads.*/
-      {//brackets are needed because list_distro has constructor/destructor
+
+      /*distributing the resulting vectors and matrices for individual threads.*/
+      { //brackets are needed because list_distro has constructor/destructor
         //semantics (as in RAII)
         list_distro<complex_matlist> cmatlist(brick.cmatlist);
         list_distro<complex_veclist> cveclist(brick.cveclist[rhs_ind]);
         list_distro<complex_veclist> cveclist_sym(brick.cveclist_sym[rhs_ind]);
-        // timet = gmm::uclock_sec();
+
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
-        open_mp_is_running_properly check; 
-        #pragma omp parallel default(shared)  
-        { 
+        open_mp_is_running_properly check;
+        #pragma omp parallel default(shared)
+        {
           brick.pbr->asm_complex_tangent_terms(*this, ib, brick.vlist,
                                                brick.dlist, brick.mims,
                                                cmatlist,
                                                cveclist,
                                                cveclist_sym,
                                                brick.region, version);
-       
         }
-         if (brick.is_update_brick)
-        {
-          for (size_type i = 0; i < brick.cmatlist.size(); ++i)
-          {
-            gmm::clear(brick.cmatlist[i]);
-          }
 
-          for (size_type i = 0; i < brick.cveclist.size(); ++i)
-            for (size_type j = 0; j < brick.cveclist[i].size(); ++j)
-            {
-              gmm::clear(brick.cveclist[i][j]);
-            }
-          
-          for (size_type i = 0; i < brick.cveclist_sym.size(); ++i)
-            for (size_type j = 0; j < brick.cveclist_sym[i].size(); ++j)
-            {
-              gmm::clear(brick.cveclist_sym[i][j]);
-            }
-        }
       }
       brick.pbr->complex_post_assembly_in_serial(*this, ib, brick.vlist,
                                                  brick.dlist, brick.mims,
@@ -1490,6 +1473,26 @@ namespace getfem {
                                                  brick.cveclist[rhs_ind],
                                                  brick.cveclist_sym[rhs_ind],
                                                  brick.region, version);
+
+      if (brick.is_update_brick) //contributions of pure update bricks must be deleted
+      {
+        for (size_type i = 0; i < brick.cmatlist.size(); ++i)
+        {
+          gmm::clear(brick.cmatlist[i]);
+        }
+
+        for (size_type i = 0; i < brick.cveclist.size(); ++i)
+          for (size_type j = 0; j < brick.cveclist[i].size(); ++j)
+          {
+            gmm::clear(brick.cveclist[i][j]);
+          }
+
+        for (size_type i = 0; i < brick.cveclist_sym.size(); ++i)
+          for (size_type j = 0; j < brick.cveclist_sym[i].size(); ++j)
+          {
+            gmm::clear(brick.cveclist_sym[i][j]);
+          }
+      }
     }
     else //not cplx
     {
@@ -1500,17 +1503,16 @@ namespace getfem {
                                              brick.rveclist_sym[rhs_ind],
                                              brick.region, version);
       {
-        /*distributing the resulting vectors and matrices
-        for individual threads.*/
+        /*distributing the resulting vectors and matrices for individual threads.*/
         list_distro<real_matlist> rmatlist(brick.rmatlist);
         list_distro<real_veclist> rveclist(brick.rveclist[rhs_ind]);
         list_distro<real_veclist> rveclist_sym(brick.rveclist_sym[rhs_ind]);
-        // timet = gmm::uclock_sec();
+
         /*running the assembly in parallel*/
         gmm::standard_locale locale;
-        open_mp_is_running_properly check; 
-        #pragma omp parallel default(shared)  
-        { 
+        open_mp_is_running_properly check;
+        #pragma omp parallel default(shared)
+        {
           brick.pbr->asm_real_tangent_terms(*this, ib, brick.vlist,
                                             brick.dlist, brick.mims,
                                             rmatlist,
@@ -1518,26 +1520,6 @@ namespace getfem {
                                             rveclist_sym,
                                             brick.region,
                                             version);
-          
-        }
-        if (brick.is_update_brick)
-        {
-          for (size_type i = 0; i < brick.rmatlist.size(); ++i)
-          {
-            gmm::clear(brick.rmatlist[i]);
-          }
-
-          for (size_type i = 0; i < brick.rveclist.size(); ++i)
-            for (size_type j = 0; j < brick.rveclist[i].size(); ++j)
-            {
-              gmm::clear(brick.rveclist[i][j]);
-            }
-          
-          for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
-            for (size_type j = 0; j < brick.rveclist_sym[i].size(); ++j)
-            {
-              gmm::clear(brick.rveclist_sym[i][j]);
-            }
         }
       }
       brick.pbr->real_post_assembly_in_serial(*this, ib, brick.vlist,
@@ -1546,6 +1528,26 @@ namespace getfem {
                                               brick.rveclist[rhs_ind],
                                               brick.rveclist_sym[rhs_ind],
                                               brick.region, version);
+
+      if (brick.is_update_brick) //contributions of pure update bricks must be deleted
+      {
+        for (size_type i = 0; i < brick.rmatlist.size(); ++i)
+        {
+          gmm::clear(brick.rmatlist[i]);
+        }
+
+        for (size_type i = 0; i < brick.rveclist.size(); ++i)
+          for (size_type j = 0; j < brick.rveclist[i].size(); ++j)
+          {
+            gmm::clear(brick.rveclist[i][j]);
+          }
+
+        for (size_type i = 0; i < brick.rveclist_sym.size(); ++i)
+          for (size_type j = 0; j < brick.rveclist_sym[i].size(); ++j)
+          {
+            gmm::clear(brick.rveclist_sym[i][j]);
+          }
+      }
     }
   }
 
@@ -1685,12 +1687,12 @@ namespace getfem {
     for (size_type i = 0; i < aux_vars.size(); ++i) {
       bool found = false;
       for (size_type j = 0;
-	   j < Neumann_terms_auxilliary_variables[varname].size(); ++j) 
-	if (!(Neumann_terms_auxilliary_variables[varname][j].compare
-	      (aux_vars[i])))
-	  found = true;
+     j < Neumann_terms_auxilliary_variables[varname].size(); ++j) 
+  if (!(Neumann_terms_auxilliary_variables[varname][j].compare
+        (aux_vars[i])))
+    found = true;
       if (!found)
-	Neumann_terms_auxilliary_variables[varname].push_back(aux_vars[i]);
+  Neumann_terms_auxilliary_variables[varname].push_back(aux_vars[i]);
     }
   }
 
@@ -1709,8 +1711,8 @@ namespace getfem {
     
     for (dal::bv_visitor ib(active_bricks); !ib.finished(); ++ib) {
       if (bricks[ib].pbr->has_Neumann_term() && !(bnum.is_in(ib))) {
-	for (size_type j = 0; j < bricks[ib].vlist.size(); ++j)
-	  if (!(bricks[ib].vlist[j].compare(varname))) return ib;
+  for (size_type j = 0; j < bricks[ib].vlist.size(); ++j)
+    if (!(bricks[ib].vlist[j].compare(varname))) return ib;
       } 
     }
     return size_type(-1);
@@ -1723,7 +1725,7 @@ namespace getfem {
       = Neumann_term_list.lower_bound(Neumann_pair(varname, 0));
 
     while (it != Neumann_term_list.end()
-	   && !(it->first.first.compare(varname))) {
+     && !(it->first.first.compare(varname))) {
       if (!(bricks[it->first.second].pbr->is_linear())) return false;
     }
     return true;
@@ -1731,11 +1733,11 @@ namespace getfem {
 
 
   void model::compute_Neumann_terms(int version, const std::string &varname,
-				    const mesh_fem &mfvar,
-				    const model_real_plain_vector &var,
-				    fem_interpolation_context &ctx,
-				    base_small_vector &n,
-				    bgeot::base_tensor &t) const {
+            const mesh_fem &mfvar,
+            const model_real_plain_vector &var,
+            fem_interpolation_context &ctx,
+            base_small_vector &n,
+            bgeot::base_tensor &t) const {
     
     // The output tensor has to have the right size. No verification.
     Neumann_SET::const_iterator it
@@ -1743,9 +1745,9 @@ namespace getfem {
     
     gmm::clear(t.as_vector());
     while (it != Neumann_term_list.end()
-	   && !(it->first.first.compare(varname))) {
+     && !(it->first.first.compare(varname))) {
       if (active_bricks.is_in(it->first.second))
-	it->second->compute_Neumann_term(version, mfvar, var, ctx, n, t);
+  it->second->compute_Neumann_term(version, mfvar, var, ctx, n, t);
       ++it;
     }
   }
@@ -1763,14 +1765,14 @@ namespace getfem {
     
     gmm::clear(t.as_vector());
     while (it != Neumann_term_list.end()
-	   && !(it->first.first.compare(varname))) {
+     && !(it->first.first.compare(varname))) {
       if (active_bricks.is_in(it->first.second)) {
-	size_type ind = size_type(-1);
-	for (size_type i = 0; i < it->second->auxilliary_variables.size(); ++i)
-	  if (!(aux_varname.compare(it->second->auxilliary_variables[i])))
-	      ind = i;
-	if (ind != size_type(-1))
-	  it->second->compute_Neumann_term(version,mfvar,var,ctx,n,t,ind+1);
+  size_type ind = size_type(-1);
+  for (size_type i = 0; i < it->second->auxilliary_variables.size(); ++i)
+    if (!(aux_varname.compare(it->second->auxilliary_variables[i])))
+        ind = i;
+  if (ind != size_type(-1))
+    it->second->compute_Neumann_term(version,mfvar,var,ctx,n,t,ind+1);
       }
       ++it;
     }
@@ -1973,12 +1975,12 @@ namespace getfem {
     bool reduced = false;
     for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
       if (it->second.is_variable && !(it->second.is_affine_dependent)) {
-	if  (it->second.is_disabled)
-	  reduced = true;
-	else {
-	  for (size_type i=it->second.I.first(); i < it->second.I.last(); ++i)
-	    ind.push_back(i);
-	}
+  if  (it->second.is_disabled)
+    reduced = true;
+  else {
+    for (size_type i=it->second.I.first(); i < it->second.I.last(); ++i)
+      ind.push_back(i);
+  }
       }
     return reduced;
   }
@@ -3142,94 +3144,94 @@ namespace getfem {
       size_type N = m.dim(), Q = mfvar.get_qdim(), s = 1, cv=ctx.convex_num();
 
       if (A) {
-	s = gmm::vect_size(*A);
+  s = gmm::vect_size(*A);
         if (mf_a) s = s * mf_a->get_qdim() / mf_a->nb_dof();
       }
       gmm::resize(val, s);
 
       if (mf_a) {
-	GMM_ASSERT1(!(mf_a->is_reduced()),
-		    "Sorry, to be adapted for reduced mesh fems");
+  GMM_ASSERT1(!(mf_a->is_reduced()),
+        "Sorry, to be adapted for reduced mesh fems");
 
-	if (!(ctx_a.have_pf()) || ctx_a.convex_num() != cv
-	    || (ctx_a.have_pfp() != ctx.have_pfp())
-	    || (ctx_a.have_pfp()
-		&& (&(ctx.pfp()->get_point_tab())
-		    != &(ctx_a.pfp()->get_point_tab())))) {
+  if (!(ctx_a.have_pf()) || ctx_a.convex_num() != cv
+      || (ctx_a.have_pfp() != ctx.have_pfp())
+      || (ctx_a.have_pfp()
+    && (&(ctx.pfp()->get_point_tab())
+        != &(ctx_a.pfp()->get_point_tab())))) {
 
-	  bgeot::vectors_to_base_matrix
-	    (G, mf_a->linked_mesh().points_of_convex(cv));
-	  
-	  pfem_precomp pfp = fem_precomp(mf_a->fem_of_element(cv),
-					 &(ctx.pfp()->get_point_tab()), 0);
+    bgeot::vectors_to_base_matrix
+      (G, mf_a->linked_mesh().points_of_convex(cv));
+    
+    pfem_precomp pfp = fem_precomp(mf_a->fem_of_element(cv),
+           &(ctx.pfp()->get_point_tab()), 0);
 
-	  if (ctx.have_pfp())
-	    ctx_a = fem_interpolation_context
-	      (mf_a->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-	       G, cv, ctx.face_num());
-	  else
-	    ctx_a = fem_interpolation_context
-	      (mf_a->linked_mesh().trans_of_convex(cv),
-	       mf_a->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
+    if (ctx.have_pfp())
+      ctx_a = fem_interpolation_context
+        (mf_a->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
+         G, cv, ctx.face_num());
+    else
+      ctx_a = fem_interpolation_context
+        (mf_a->linked_mesh().trans_of_convex(cv),
+         mf_a->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
 
-	} else {
-	  if (ctx.have_pfp())  ctx_a.set_ii(ctx.ii());
-	  else ctx_a.set_xref(ctx.xref());
-	}
+  } else {
+    if (ctx.have_pfp())  ctx_a.set_ii(ctx.ii());
+    else ctx_a.set_xref(ctx.xref());
+  }
 
         slice_vector_on_basic_dof_of_element(*mf_a, *A, cv, coeff);
-	// coeff.resize(mf_a->nb_basic_dof_of_element(cv));
-	// gmm::copy(gmm::sub_vector(*A, gmm::sub_index
-	//		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
-	ctx_a.pf()->interpolation(ctx_a, coeff, val, dim_type(s));
+  // coeff.resize(mf_a->nb_basic_dof_of_element(cv));
+  // gmm::copy(gmm::sub_vector(*A, gmm::sub_index
+  //		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+  ctx_a.pf()->interpolation(ctx_a, coeff, val, dim_type(s));
       } else if (A) {
-	gmm::copy(*A, val);
+  gmm::copy(*A, val);
       } else {
-	val[0] = scalar_type(1);
+  val[0] = scalar_type(1);
       }
 
       switch (version) {
       case 1:
-	gmm::resize(grad, Q, N);
+  gmm::resize(grad, Q, N);
         slice_vector_on_basic_dof_of_element(mfvar, var, cv, coeff);
-	// coeff.resize(mfvar.nb_basic_dof_of_element(cv));
-	// gmm::copy(gmm::sub_vector(var, gmm::sub_index
-	//		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
-	ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(Q));
+  // coeff.resize(mfvar.nb_basic_dof_of_element(cv));
+  // gmm::copy(gmm::sub_vector(var, gmm::sub_index
+  //		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+  ctx.pf()->interpolation_grad(ctx, coeff, grad, dim_type(Q));
 
-	if (s == 1)
-	  gmm::mult_add(grad, gmm::scaled(n, val[0]), output.as_vector());
-	else if (s == N*N) {
-	  base_vector::const_iterator it = val.begin();
-	  for (size_type j = 0; j < N; ++j)
-	    for (size_type i = 0; i < N; ++i, ++it)
-	      for (size_type k = 0; k < Q; ++k)
-		output[k] += (*it)*grad(k,j)*n[i];
-	}
-	else if (s == N*N*Q*Q) {
-	  base_vector::const_iterator it = val.begin();
-	  for (size_type l = 0; l < N; ++l)
-	    for (size_type k = 0; k < Q; ++k)
-	      for (size_type j = 0; j < N; ++j)
-		for (size_type i = 0; i < Q; ++i, ++it)
-		  output[i] += (*it) * grad(k, l) * n[j];
-	}
-	break;
+  if (s == 1)
+    gmm::mult_add(grad, gmm::scaled(n, val[0]), output.as_vector());
+  else if (s == N*N) {
+    base_vector::const_iterator it = val.begin();
+    for (size_type j = 0; j < N; ++j)
+      for (size_type i = 0; i < N; ++i, ++it)
+        for (size_type k = 0; k < Q; ++k)
+    output[k] += (*it)*grad(k,j)*n[i];
+  }
+  else if (s == N*N*Q*Q) {
+    base_vector::const_iterator it = val.begin();
+    for (size_type l = 0; l < N; ++l)
+      for (size_type k = 0; k < Q; ++k)
+        for (size_type j = 0; j < N; ++j)
+    for (size_type i = 0; i < Q; ++i, ++it)
+      output[i] += (*it) * grad(k, l) * n[j];
+  }
+  break;
       case 2:
-	{
-	  base_tensor t;
-	  dim_type tdim = ctx.pf()->target_dim(), qmult = dim_type(Q) / tdim;
-	  size_type ndof = ctx.pf()->nb_dof(cv);
-	  // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
-	  // 0<=k<dim. In order to iterate on the tensor values, i should
-	  // increment the faster, then j, then k.
-	  // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
-	  // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
-	  // General case, psi_{i*qmult+l} = phi_i * e_l  and
-	  //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
-	  ctx.pf()->real_grad_base_value(ctx, t);
+  {
+    base_tensor t;
+    dim_type tdim = ctx.pf()->target_dim(), qmult = dim_type(Q) / tdim;
+    size_type ndof = ctx.pf()->nb_dof(cv);
+    // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
+    // 0<=k<dim. In order to iterate on the tensor values, i should
+    // increment the faster, then j, then k.
+    // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
+    // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
+    // General case, psi_{i*qmult+l} = phi_i * e_l  and
+    //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
+    ctx.pf()->real_grad_base_value(ctx, t);
 
-	  if (s == 1) {
+    if (s == 1) {
 // 	    for (size_type l = 0; l < qmult; ++l) {
 // 	      for (size_type p = 0; p < Q; ++p) {
 // 		base_tensor::const_iterator it = t.begin();
@@ -3242,64 +3244,64 @@ namespace getfem {
 // 		GMM_ASSERT1(it ==  t.end(), "Internal error");
 // 	      }
 // 	    }
-	    if (Q == 1) {
-		base_tensor::const_iterator it = t.begin();
-		for (size_type k = 0; k < N; ++k)
-		  for (size_type i = 0; i < ndof; ++i, ++it)
-		    output[i] += val[0]*(*it)*n[k];
-		GMM_ASSERT1(it ==  t.end(), "Internal error");
-	    } else {
-	      for (size_type l = 0; l < qmult; ++l) {
-		base_tensor::const_iterator it = t.begin();
-		for (size_type k = 0; k < N; ++k)
-		  for (size_type j = 0; j < tdim; ++j)
-		    for (size_type i = 0; i < ndof; ++i, ++it) {
-		      size_type jj = j + tdim*l;
-		      output(i*qmult+l, jj) += val[0]*(*it)*n[k];
-		    }
-		GMM_ASSERT1(it ==  t.end(), "Internal error");
-	      }
-	    }
-	  } else if (s == N*N) {
-	    if (Q == 1) {
-	      base_tensor::const_iterator it = t.begin();
-	      for (size_type k = 0; k < N; ++k)
-		for (size_type i = 0; i < ndof; ++i, ++it) {
-		  for (size_type q = 0; q < N; ++q)
-		    output[i] += val[q+k*N]*(*it)*n[q];
-		}
-	      GMM_ASSERT1(it ==  t.end(), "Internal error");
-	    } else {
-	      for (size_type l = 0; l < qmult; ++l) {
-		base_tensor::const_iterator it = t.begin();
-		for (size_type k = 0; k < N; ++k)
-		  for (size_type j = 0; j < tdim; ++j)
-		    for (size_type i = 0; i < ndof; ++i, ++it) {
-		      size_type jj = j + tdim*l;
-		      for (size_type q = 0; q < N; ++q)
-			output(i*qmult+l, jj) += val[q+k*N]*(*it)*n[q];
-		    }
-		GMM_ASSERT1(it ==  t.end(), "Internal error");
-	      } 
-	    }
-	  } else if (s == N*N*Q*Q) {
-	    for (size_type l = 0; l < qmult; ++l) {
-	      for (size_type p = 0; p < Q; ++p) {
-		base_tensor::const_iterator it = t.begin();
-		for (size_type k = 0; k < N; ++k)
-		  for (size_type j = 0; j < tdim; ++j)
-		    for (size_type i = 0; i < ndof; ++i, ++it) {
-		      size_type jj = j + tdim*l; 
-		      for (size_type q = 0; q < N; ++q)
-			output(i*qmult+l, p)
-			  += val[p+q*Q+jj*N*Q+k*N*Q*Q]*(*it)*n[q];
-		    }
-		GMM_ASSERT1(it ==  t.end(), "Internal error");
-	      }
-	    }
-	  } 
-	}
-	break;
+      if (Q == 1) {
+    base_tensor::const_iterator it = t.begin();
+    for (size_type k = 0; k < N; ++k)
+      for (size_type i = 0; i < ndof; ++i, ++it)
+        output[i] += val[0]*(*it)*n[k];
+    GMM_ASSERT1(it ==  t.end(), "Internal error");
+      } else {
+        for (size_type l = 0; l < qmult; ++l) {
+    base_tensor::const_iterator it = t.begin();
+    for (size_type k = 0; k < N; ++k)
+      for (size_type j = 0; j < tdim; ++j)
+        for (size_type i = 0; i < ndof; ++i, ++it) {
+          size_type jj = j + tdim*l;
+          output(i*qmult+l, jj) += val[0]*(*it)*n[k];
+        }
+    GMM_ASSERT1(it ==  t.end(), "Internal error");
+        }
+      }
+    } else if (s == N*N) {
+      if (Q == 1) {
+        base_tensor::const_iterator it = t.begin();
+        for (size_type k = 0; k < N; ++k)
+    for (size_type i = 0; i < ndof; ++i, ++it) {
+      for (size_type q = 0; q < N; ++q)
+        output[i] += val[q+k*N]*(*it)*n[q];
+    }
+        GMM_ASSERT1(it ==  t.end(), "Internal error");
+      } else {
+        for (size_type l = 0; l < qmult; ++l) {
+    base_tensor::const_iterator it = t.begin();
+    for (size_type k = 0; k < N; ++k)
+      for (size_type j = 0; j < tdim; ++j)
+        for (size_type i = 0; i < ndof; ++i, ++it) {
+          size_type jj = j + tdim*l;
+          for (size_type q = 0; q < N; ++q)
+      output(i*qmult+l, jj) += val[q+k*N]*(*it)*n[q];
+        }
+    GMM_ASSERT1(it ==  t.end(), "Internal error");
+        } 
+      }
+    } else if (s == N*N*Q*Q) {
+      for (size_type l = 0; l < qmult; ++l) {
+        for (size_type p = 0; p < Q; ++p) {
+    base_tensor::const_iterator it = t.begin();
+    for (size_type k = 0; k < N; ++k)
+      for (size_type j = 0; j < tdim; ++j)
+        for (size_type i = 0; i < ndof; ++i, ++it) {
+          size_type jj = j + tdim*l; 
+          for (size_type q = 0; q < N; ++q)
+      output(i*qmult+l, p)
+        += val[p+q*Q+jj*N*Q+k*N*Q*Q]*(*it)*n[q];
+        }
+    GMM_ASSERT1(it ==  t.end(), "Internal error");
+        }
+      }
+    } 
+  }
+  break;
       }
     }
 
@@ -3690,7 +3692,7 @@ namespace getfem {
       set_flags("Source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
 
@@ -3810,7 +3812,7 @@ namespace getfem {
       set_flags("Normal source term", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
 
@@ -3890,8 +3892,8 @@ namespace getfem {
         if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
         size_type ss = ((normal_component) ? 1 :  mf_u.get_qdim());
         GMM_ASSERT1(s == ss, dl[ind] << ": bad format of "
-		    "Dirichlet data. Detected dimension is " << s
-		    << " should be " << ss);
+        "Dirichlet data. Detected dimension is " << s
+        << " should be " << ss);
       }
 
       if (dl.size() > ind + 1) {
@@ -4036,7 +4038,7 @@ namespace getfem {
         mf_data = md.pmesh_fem_of_variable(dl[ind]);
         s = gmm::vect_size(*A);
         if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	size_type ss = s * ((normal_component) ? mf_u.linked_mesh().dim() : 1);
+  size_type ss = s * ((normal_component) ? mf_u.linked_mesh().dim() : 1);
         GMM_ASSERT1(mf_u.get_qdim() == ss,
                     dl[ind] << ": bad format of Dirichlet data. "
                     "Detected dimension is " << ss << " should be "
@@ -4151,7 +4153,7 @@ namespace getfem {
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -4493,7 +4495,7 @@ namespace getfem {
                 true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		true /* compute each time */, false /* has a Neumann term */);
+    true /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -4552,24 +4554,24 @@ namespace getfem {
     void adjust_tensor_size(void) {
       switch(option) {
       case 1:
-	if (qdim > 1) { sizes_.resize(2); sizes_[0] = sizes_[1] = qdim; }
-	else { sizes_.resize(1); sizes_[0] = 1; }
-	break;
+  if (qdim > 1) { sizes_.resize(2); sizes_[0] = sizes_[1] = qdim; }
+  else { sizes_.resize(1); sizes_[0] = 1; }
+  break;
       case 2: case 9:
-	if (qdim > 1)
-	  { sizes_.resize(2); sizes_[0] = 0; sizes_[1] = qdim; }
-	else { sizes_.resize(1); sizes_[0] = 0; }
-	break;
+  if (qdim > 1)
+    { sizes_.resize(2); sizes_[0] = 0; sizes_[1] = qdim; }
+  else { sizes_.resize(1); sizes_[0] = 0; }
+  break;
       case 3: case 8:
-	sizes_.resize(3);
-	sizes_[0] = sizes_[1] = 0; sizes_[2] = 1;
-	break;
+  sizes_.resize(3);
+  sizes_[0] = sizes_[1] = 0; sizes_[2] = 1;
+  break;
       case 4: case 5:
-	sizes_.resize(1); sizes_[0] = qdim;
-	break;
+  sizes_.resize(1); sizes_[0] = qdim;
+  break;
       case 6: case 7:
-	sizes_.resize(2); sizes_[0] = 0; sizes_[1] = 1;
-	break;
+  sizes_.resize(2); sizes_[0] = 0; sizes_[1] = 1;
+  break;
       }
 
       gmm::resize(u, qdim);
@@ -4582,24 +4584,24 @@ namespace getfem {
     
     const bgeot::multi_index &sizes(size_type cv) const {
       if (cv != size_type(-1))
-	switch(option) {
-	case 2:
-	  sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
-	  break;
-	case 9:
-	  sizes_[0] = short_type(mf_lambda->nb_basic_dof_of_element(cv));
-	  break;
-	case 3:
-	  sizes_[0] = sizes_[1] = short_type(mf_u->nb_basic_dof_of_element(cv));
-	  break;
-	case 8:
-	  sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
-	  sizes_[1] = short_type(mf_lambda->nb_basic_dof_of_element(cv));
-	  break;
-	case 6: case 7:
-	  sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
-	  break;
-	}
+  switch(option) {
+  case 2:
+    sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
+    break;
+  case 9:
+    sizes_[0] = short_type(mf_lambda->nb_basic_dof_of_element(cv));
+    break;
+  case 3:
+    sizes_[0] = sizes_[1] = short_type(mf_u->nb_basic_dof_of_element(cv));
+    break;
+  case 8:
+    sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
+    sizes_[1] = short_type(mf_lambda->nb_basic_dof_of_element(cv));
+    break;
+  case 6: case 7:
+    sizes_[0] = short_type(mf_u->nb_basic_dof_of_element(cv));
+    break;
+  }
       return sizes_;
     }
 
@@ -4613,23 +4615,23 @@ namespace getfem {
      const std::string *auxvarname_ = 0, const mesh_fem *mf_lambda_ = 0
      )
       : option(option_), md(md_), varname(varname_), auxvarname(auxvarname_),
-	H_version(H_version_), normal_component(normal_component_),
-	theta(theta_), gamma0(gamma0_), mf_u(mfu_), mf_lambda(mf_lambda_),
-	mf_data(mf_data_), mf_H(mf_H_), HH(*H_), G(*G_) {
+  H_version(H_version_), normal_component(normal_component_),
+  theta(theta_), gamma0(gamma0_), mf_u(mfu_), mf_lambda(mf_lambda_),
+  mf_data(mf_data_), mf_H(mf_H_), HH(*H_), G(*G_) {
 
       N = mf_u->linked_mesh().dim();
       qdim = mf_u->get_qdim();
       adjust_tensor_size();
 
       if (U_) {
-	gmm::resize(U, mf_u->nb_basic_dof());
-	mf_u->extend_vector(*U_, U);
+  gmm::resize(U, mf_u->nb_basic_dof());
+  mf_u->extend_vector(*U_, U);
       }
 
       if (mf_data) GMM_ASSERT1(!(mf_data->is_reduced()),
-			       "Reduced fem not allowed for data");
+             "Reduced fem not allowed for data");
       if (mf_H) GMM_ASSERT1(!(mf_H->is_reduced()),
-			    "Reduced fem not allowed for data");
+          "Reduced fem not allowed for data");
     }
     
     void compute(fem_interpolation_context &ctx, bgeot::base_tensor &t) {
@@ -4639,81 +4641,81 @@ namespace getfem {
       
       switch (option) {
       case 1:
-	for (i = 0; i < qdim*qdim; ++i) t[i] = HTH[i]/gamma;
-	break;
+  for (i = 0; i < qdim*qdim; ++i) t[i] = HTH[i]/gamma;
+  break;
       case 2:
-	if (qdim == 1) {
-	  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, t);
-	  t *= -scalar_type(1);
-	} else {
-	  tp.adjust_sizes(sizes_);
-	  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
-	  t.mat_reduction(tp, HTH, 1);
-	  t *= -scalar_type(1);
-	}
-	break;
+  if (qdim == 1) {
+    md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, t);
+    t *= -scalar_type(1);
+  } else {
+    tp.adjust_sizes(sizes_);
+    md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
+    t.mat_reduction(tp, HTH, 1);
+    t *= -scalar_type(1);
+  }
+  break;
       case 9:
-	if (qdim == 1) {
-	  md->compute_auxilliary_Neumann_terms(2, *varname, *mf_u, U,
-					       *auxvarname, ctx, n, t);
-	  t *= -scalar_type(1);
-	} else {
-	  tp.adjust_sizes(sizes_);
-	  md->compute_auxilliary_Neumann_terms(2, *varname, *mf_u, U,
-					       *auxvarname,ctx, n, tp);
-	  t.mat_reduction(tp, HTH, 1);
-	  t *= -scalar_type(1);
-	}
-	break;
+  if (qdim == 1) {
+    md->compute_auxilliary_Neumann_terms(2, *varname, *mf_u, U,
+                 *auxvarname, ctx, n, t);
+    t *= -scalar_type(1);
+  } else {
+    tp.adjust_sizes(sizes_);
+    md->compute_auxilliary_Neumann_terms(2, *varname, *mf_u, U,
+                 *auxvarname,ctx, n, tp);
+    t.mat_reduction(tp, HTH, 1);
+    t *= -scalar_type(1);
+  }
+  break;
       case 3:
-	sizes_[2] = qdim;
-	tp.adjust_sizes(sizes_);
-	sizes_[2] = 1;
-	md->compute_Neumann_terms(3, *varname, *mf_u, U, ctx, n, tp);
-	gmm::mult(H, gmm::scaled(u, -theta), gmm::scaled(g, theta), auxn);
-	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
-	t.mat_reduction(tp, auxH, 2);
-	break;
+  sizes_[2] = qdim;
+  tp.adjust_sizes(sizes_);
+  sizes_[2] = 1;
+  md->compute_Neumann_terms(3, *varname, *mf_u, U, ctx, n, tp);
+  gmm::mult(H, gmm::scaled(u, -theta), gmm::scaled(g, theta), auxn);
+  gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
+  t.mat_reduction(tp, auxH, 2);
+  break;
       case 8:
-	sizes_[2] = qdim;
-	tp.adjust_sizes(sizes_);
-	sizes_[2] = 1;
-	md->compute_auxilliary_Neumann_terms(3, *varname,  *mf_u, U,
-					     *auxvarname, ctx, n, tp);
-	gmm::mult(H, gmm::scaled(u, -theta), gmm::scaled(g, theta), auxn);
-	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
-	t.mat_reduction(tp, auxH, 2);
-	break;
+  sizes_[2] = qdim;
+  tp.adjust_sizes(sizes_);
+  sizes_[2] = 1;
+  md->compute_auxilliary_Neumann_terms(3, *varname,  *mf_u, U,
+               *auxvarname, ctx, n, tp);
+  gmm::mult(H, gmm::scaled(u, -theta), gmm::scaled(g, theta), auxn);
+  gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
+  t.mat_reduction(tp, auxH, 2);
+  break;
       case 4:
-	gmm::mult(gmm::transposed(H), g, t.as_vector());
-	t /= gamma;
-	break;	
+  gmm::mult(gmm::transposed(H), g, t.as_vector());
+  t /= gamma;
+  break;	
       case 5:
         gmm::mult(H, gmm::scaled(u, -scalar_type(1)), g, auxn);
         gmm::scale(auxn, scalar_type(1)/gamma);
-	tp.adjust_sizes(sizes_);
-	md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
-	gmm::mult_add(H, tp.as_vector(), auxn); 
-	gmm::mult(gmm::transposed(H), auxn, t.as_vector());
-	break;
+  tp.adjust_sizes(sizes_);
+  md->compute_Neumann_terms(1, *varname, *mf_u, U, ctx, n, tp);
+  gmm::mult_add(H, tp.as_vector(), auxn); 
+  gmm::mult(gmm::transposed(H), auxn, t.as_vector());
+  break;
       case 6:
-	sizes_[1] = qdim;
-	tp.adjust_sizes(sizes_);
-	sizes_[1] = 1;
-	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
-	gmm::copy(gmm::scaled(g, -theta), auxn);
-	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
-	t.mat_reduction(tp, auxH, 1);
-	break;
+  sizes_[1] = qdim;
+  tp.adjust_sizes(sizes_);
+  sizes_[1] = 1;
+  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
+  gmm::copy(gmm::scaled(g, -theta), auxn);
+  gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
+  t.mat_reduction(tp, auxH, 1);
+  break;
       case 7:
-	sizes_[1] = qdim;
-	tp.adjust_sizes(sizes_);
-	sizes_[1] = 1;
-	md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
-	gmm::mult(H, gmm::scaled(u, theta), gmm::scaled(g, -theta), auxn);
-	gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
-	t.mat_reduction(tp, auxH, 1);
-	break;
+  sizes_[1] = qdim;
+  tp.adjust_sizes(sizes_);
+  sizes_[1] = 1;
+  md->compute_Neumann_terms(2, *varname, *mf_u, U, ctx, n, tp);
+  gmm::mult(H, gmm::scaled(u, theta), gmm::scaled(g, -theta), auxn);
+  gmm::mult(gmm::transposed(H), gmm::col_vector(auxn), auxH);
+  t.mat_reduction(tp, auxH, 1);
+  break;
       }
     }
 
@@ -4722,76 +4724,76 @@ namespace getfem {
 
       switch (nb) { // last is computed first
       case 1 : // mandatory. calculate [u], [n], [gamma], [HTH]
-	n = bgeot::compute_normal(ctx, ctx.face_num());
-	n /= gmm::vect_norm2(n);
-	if (mf_u && gmm::vect_size(U)) {
+  n = bgeot::compute_normal(ctx, ctx.face_num());
+  n /= gmm::vect_norm2(n);
+  if (mf_u && gmm::vect_size(U)) {
           slice_vector_on_basic_dof_of_element(*mf_u, U, cv, coeff);
-	  // coeff.resize(mf_u->nb_basic_dof_of_element(cv));
-	  // gmm::copy(gmm::sub_vector(U, gmm::sub_index
+    // coeff.resize(mf_u->nb_basic_dof_of_element(cv));
+    // gmm::copy(gmm::sub_vector(U, gmm::sub_index
           //           (mf_u->ind_basic_dof_of_element(cv))), coeff);
-	  ctx.pf()->interpolation(ctx, coeff, u, qdim);
-	}
-	if (normal_component) {
-	  GMM_ASSERT1(qdim == N, "dimensions mismatch");
-	  for (size_type i = 0; i < qdim; ++i)
-	    for (size_type j = 0; j < qdim; ++j)
-	      HTH(i,j) = H(i,j) = n[i]*n[j];
-	}
-	else if (!H_version) {
-	  gmm::copy(gmm::identity_matrix(), HTH);
-	  gmm::copy(gmm::identity_matrix(), H);
-	}
-	else {
-	  GMM_ASSERT1(&HH && gmm::vect_size(HH), "Need H in this case !");
-	  if (!mf_H) gmm::copy(HH, H.as_vector());
-	  gmm::clear(HTH);
-	  for (size_type i = 0; i < qdim; ++i)
-	    for (size_type j = 0; j < qdim; ++j)
-	      for (size_type k = 0; k < qdim; ++k)
-		HTH(i,j) += H(k,i) * H(k,j);
-	}
-	if (!mf_data) {
-	  if (&G && gmm::vect_size(G))
-	    if (normal_component) gmm::copy(G, auxg); else gmm::copy(G, g);
-	  else
-	    if (normal_component) gmm::clear(auxg); else gmm::clear(g);
-	}
-	if (normal_component) gmm::copy(gmm::scaled(n, auxg[0]), g);
-	// computation of h for gamma = gamma0*h
-	scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
-	gamma = gamma0 * emax / sqrt(scalar_type(N));
-	break;
-	
+    ctx.pf()->interpolation(ctx, coeff, u, qdim);
+  }
+  if (normal_component) {
+    GMM_ASSERT1(qdim == N, "dimensions mismatch");
+    for (size_type i = 0; i < qdim; ++i)
+      for (size_type j = 0; j < qdim; ++j)
+        HTH(i,j) = H(i,j) = n[i]*n[j];
+  }
+  else if (!H_version) {
+    gmm::copy(gmm::identity_matrix(), HTH);
+    gmm::copy(gmm::identity_matrix(), H);
+  }
+  else {
+    GMM_ASSERT1(&HH && gmm::vect_size(HH), "Need H in this case !");
+    if (!mf_H) gmm::copy(HH, H.as_vector());
+    gmm::clear(HTH);
+    for (size_type i = 0; i < qdim; ++i)
+      for (size_type j = 0; j < qdim; ++j)
+        for (size_type k = 0; k < qdim; ++k)
+    HTH(i,j) += H(k,i) * H(k,j);
+  }
+  if (!mf_data) {
+    if (&G && gmm::vect_size(G))
+      if (normal_component) gmm::copy(G, auxg); else gmm::copy(G, g);
+    else
+      if (normal_component) gmm::clear(auxg); else gmm::clear(g);
+  }
+  if (normal_component) gmm::copy(gmm::scaled(n, auxg[0]), g);
+  // computation of h for gamma = gamma0*h
+  scalar_type emax, emin; gmm::condition_number(ctx.K(),emax,emin);
+  gamma = gamma0 * emax / sqrt(scalar_type(N));
+  break;
+  
       case 2 : // calculate [g]
-	if (&G && gmm::vect_size(G)) {
-	  size_type ndof = mf_data->nb_basic_dof_of_element(cv);
-	  size_type qmult = qdim / mf_data->get_qdim();
-	  coeff.resize(ndof * qmult);
-	  mesh_fem::ind_dof_ct ct = mf_data->ind_basic_dof_of_element(cv);
-	  for (size_type i = 0; i < ndof; ++i)
-	    for (size_type j = 0; j < qmult; ++j)
-	      coeff[i*qmult+j] = G[ct[i]*qmult+j];
-	  if (normal_component)
-	    ctx.pf()->interpolation(ctx, coeff, auxg, 1);
-	  else
-	    ctx.pf()->interpolation(ctx, coeff, g, qdim);
-	}
-	break;
-	
+  if (&G && gmm::vect_size(G)) {
+    size_type ndof = mf_data->nb_basic_dof_of_element(cv);
+    size_type qmult = qdim / mf_data->get_qdim();
+    coeff.resize(ndof * qmult);
+    mesh_fem::ind_dof_ct ct = mf_data->ind_basic_dof_of_element(cv);
+    for (size_type i = 0; i < ndof; ++i)
+      for (size_type j = 0; j < qmult; ++j)
+        coeff[i*qmult+j] = G[ct[i]*qmult+j];
+    if (normal_component)
+      ctx.pf()->interpolation(ctx, coeff, auxg, 1);
+    else
+      ctx.pf()->interpolation(ctx, coeff, g, qdim);
+  }
+  break;
+  
       case 3 :// calculate [H]
-	if (&HH && gmm::vect_size(HH)) {
-	  size_type ndof = mf_H->nb_basic_dof_of_element(cv);
-	  size_type qmult = qdim*qdim / mf_H->get_qdim();
-	  coeff.resize(ndof * qmult);
-	  mesh_fem::ind_dof_ct ct = mf_H->ind_basic_dof_of_element(cv);
-	  for (size_type i = 0; i < ndof; ++i)
-	    for (size_type j = 0; j < qmult; ++j)
-	      coeff[i*qmult+j] = HH[ct[i]*qmult+j];
-	  ctx.pf()->interpolation(ctx, coeff, H.as_vector(),
-				  dim_type(qdim*qdim));
-	}
-	break;
-	
+  if (&HH && gmm::vect_size(HH)) {
+    size_type ndof = mf_H->nb_basic_dof_of_element(cv);
+    size_type qmult = qdim*qdim / mf_H->get_qdim();
+    coeff.resize(ndof * qmult);
+    mesh_fem::ind_dof_ct ct = mf_H->ind_basic_dof_of_element(cv);
+    for (size_type i = 0; i < ndof; ++i)
+      for (size_type j = 0; j < qmult; ++j)
+        coeff[i*qmult+j] = HH[ct[i]*qmult+j];
+    ctx.pf()->interpolation(ctx, coeff, H.as_vector(),
+          dim_type(qdim*qdim));
+  }
+  break;
+  
       default : GMM_ASSERT1(false, "Invalid option");
       }
     }
@@ -4806,8 +4808,8 @@ namespace getfem {
    const model_real_plain_vector *H, const mesh_region &rg) {
     
     dirichlet_nitsche_nonlinear_term nterm(2, &md, &varname, &mfu, U, theta,
-					   gamma0, H_version, normal_component,
-					   0, 0, mf_H, H);
+             gamma0, H_version, normal_component,
+             0, 0, mf_H, H);
 
     getfem::generic_assembly assem;
     
@@ -4833,8 +4835,8 @@ namespace getfem {
     
     
     dirichlet_nitsche_nonlinear_term nterm(1, 0, 0, &mfu, 0, theta, gamma0, 
-					   H_version, normal_component,
-					   0, 0, mf_H, H);
+             H_version, normal_component,
+             0, 0, mf_H, H);
     
     getfem::generic_assembly assem;
     
@@ -4864,8 +4866,8 @@ namespace getfem {
    const mesh_region &rg) {
     
     dirichlet_nitsche_nonlinear_term nterm(3, &md, &varname, &mfu, U, theta,
-					   gamma0, H_version, normal_component,
-					   mf_data, G, mf_H, H);
+             gamma0, H_version, normal_component,
+             mf_data, G, mf_H, H);
     
     getfem::generic_assembly assem;
 
@@ -4898,9 +4900,9 @@ namespace getfem {
    const mesh_region &rg) {
     
     dirichlet_nitsche_nonlinear_term nterm(8, &md, &varname, &mfu, U, theta,
-					   gamma0, H_version, normal_component,
-					   mf_data, G, mf_H, H, &auxvarname,
-					   &mf_lambda);
+             gamma0, H_version, normal_component,
+             mf_data, G, mf_H, H, &auxvarname,
+             &mf_lambda);
     getfem::generic_assembly assem;
 
     std::string Nlinfems = "#1", lambdafem = "#2";
@@ -4930,9 +4932,9 @@ namespace getfem {
    const model_real_plain_vector *H, const mesh_region &rg) {
 
     dirichlet_nitsche_nonlinear_term nterm(9, &md, &varname, &mfu, U, theta,
-					   gamma0, H_version, normal_component,
-					   0, 0, mf_H, H, &auxvarname,
-					   &mf_lambda);
+             gamma0, H_version, normal_component,
+             0, 0, mf_H, H, &auxvarname,
+             &mf_lambda);
     getfem::generic_assembly assem;
     
     std::string Nlinfems = mf_H ? "#1,#1,#2" : "#1";
@@ -4962,9 +4964,9 @@ namespace getfem {
    const mesh_region &rg) {
     
     dirichlet_nitsche_nonlinear_term nterm(is_linear ? 4:5, &md, &varname,
-					   &mfu, U, theta, gamma0, H_version,
-					   normal_component, mf_data,
-					   G, mf_H, H);
+             &mfu, U, theta, gamma0, H_version,
+             normal_component, mf_data,
+             G, mf_H, H);
     
     getfem::generic_assembly assem;
     std::string Nlinfems = "#1";
@@ -4996,9 +4998,9 @@ namespace getfem {
    const mesh_region &rg) {
     
     dirichlet_nitsche_nonlinear_term nterm(is_linear ? 6:7, &md, &varname,
-					   &mfu, U, theta, gamma0, H_version,
-					   normal_component, mf_data,
-					   G, mf_H, H);
+             &mfu, U, theta, gamma0, H_version,
+             normal_component, mf_data,
+             G, mf_H, H);
     
     getfem::generic_assembly assem;
 
@@ -5049,25 +5051,25 @@ namespace getfem {
       const model_real_plain_vector *G = 0, *H = 0;
       const mesh_fem *mf_data = 0, *mf_H = 0;
       bool recompute_matrix = (!is_linear() && (version & model::BUILD_MATRIX))
-	|| (is_linear() && (!((version & model::BUILD_ON_DATA_CHANGE) != 0)
-			    || md.is_var_newer_than_brick(dl[0], ib)
-			    || md.is_var_newer_than_brick(dl[1], ib)));
+  || (is_linear() && (!((version & model::BUILD_ON_DATA_CHANGE) != 0)
+          || md.is_var_newer_than_brick(dl[0], ib)
+          || md.is_var_newer_than_brick(dl[1], ib)));
 
       GMM_ASSERT1(gmm::vect_size(md.real_variable(dl[0])) == 1,
-		  "Parameter gamma0 for Nitsche's method should be a scalar");
+      "Parameter gamma0 for Nitsche's method should be a scalar");
       scalar_type gamma0 = md.real_variable(dl[0])[0];
             
       size_type s = 0, ind = 1;
       if (dl.size() > 1 + (H_version ? 1:0)) {
-	++ind;
+  ++ind;
         G = &(md.real_variable(dl[1]));
         mf_data = md.pmesh_fem_of_variable(dl[1]);
         s = gmm::vect_size(*G);
         if (mf_data) s = s * mf_data->get_qdim() / mf_data->nb_dof();
-	size_type ss = s * ((normal_component) ? mf_u.linked_mesh().dim() : 1);
+  size_type ss = s * ((normal_component) ? mf_u.linked_mesh().dim() : 1);
         GMM_ASSERT1(mf_u.get_qdim() == ss, dl[1] << ": bad format of "
-		    "Dirichlet data. Detected dimension is " << ss
-		    << " should be " << size_type(mf_u.get_qdim()));
+        "Dirichlet data. Detected dimension is " << ss
+        << " should be " << size_type(mf_u.get_qdim()));
       }
       
       if (H_version) {
@@ -5076,11 +5078,11 @@ namespace getfem {
         H = &(md.real_variable(dl[ind]));
         mf_H = md.pmesh_fem_of_variable(dl[ind]);
         s = gmm::vect_size(*H);
-	if (mf_H) {
-	  s = s * mf_H->get_qdim() / mf_H->nb_dof();
-	  // GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
-	  //	      "a scalar finite element method");
-	}
+  if (mf_H) {
+    s = s * mf_H->get_qdim() / mf_H->nb_dof();
+    // GMM_ASSERT1(mf_H->get_qdim() == 1,  "Implemented only for mf_H "
+    //	      "a scalar finite element method");
+  }
         GMM_ASSERT1(s = gmm::sqr(mf_u.get_qdim()),
                     dl[ind] << ": bad format of Dirichlet data. "
                     "Detected dimension is " << s << " should be "
@@ -5092,42 +5094,42 @@ namespace getfem {
 
       // Test Neumann term consistency if some computation are needed
       if (recompute_matrix || (!linear_version && (version & model::BUILD_RHS))
-	  || (linear_version && G)) {
-	size_type ifb = md.check_Neumann_terms_consistency(vl[0]);
-	GMM_ASSERT1(ifb == size_type(-1),
-		    "Impossible to build Nitsche's terms for Dirichlet "
-		    " condition. At least '"
-		    << md.brick_pointer(ifb)->brick_name() << "' is declared "
-		    "after Nitsche's brick or do not declare a Neumann term.");
+    || (linear_version && G)) {
+  size_type ifb = md.check_Neumann_terms_consistency(vl[0]);
+  GMM_ASSERT1(ifb == size_type(-1),
+        "Impossible to build Nitsche's terms for Dirichlet "
+        " condition. At least '"
+        << md.brick_pointer(ifb)->brick_name() << "' is declared "
+        "after Nitsche's brick or do not declare a Neumann term.");
       }
 
       if (recompute_matrix) {
 
-	gmm::clear(matl[0]);
+  gmm::clear(matl[0]);
      
         GMM_TRACE2("Assembly of Nitsche's tangent terms "
-		   "for Dirichlet condition");
-	asm_Dirichlet_Nitsche_first_tangent_term
-	  (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
-	   normal_component, mf_H, H, rg);
+       "for Dirichlet condition");
+  asm_Dirichlet_Nitsche_first_tangent_term
+    (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
+     normal_component, mf_H, H, rg);
 
-	if (theta != scalar_type(0)) {
-	  model_real_sparse_matrix B(matl[0]);
-	  gmm::scale(B, theta);
-	  gmm::add(gmm::transposed(B), matl[0]);
-	}
+  if (theta != scalar_type(0)) {
+    model_real_sparse_matrix B(matl[0]);
+    gmm::scale(B, theta);
+    gmm::add(gmm::transposed(B), matl[0]);
+  }
 
-	asm_Dirichlet_Nitsche_second_tangent_term
-	  (matl[0], mim, mf_u, theta, gamma0, H_version, normal_component,
-	   mf_H, H, rg);
+  asm_Dirichlet_Nitsche_second_tangent_term
+    (matl[0], mim, mf_u, theta, gamma0, H_version, normal_component,
+     mf_H, H, rg);
 
-	if (theta != scalar_type(0) && !linear_version) {
-	  asm_Dirichlet_Nitsche_third_tangent_term
-	    (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
-	     normal_component, mf_H, H, mf_data, G, rg);
-	}
+  if (theta != scalar_type(0) && !linear_version) {
+    asm_Dirichlet_Nitsche_third_tangent_term
+      (matl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
+       normal_component, mf_H, H, mf_data, G, rg);
+  }
 
-	for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
+  for (size_type i = 1; i < vl.size(); ++i) { // Auxilliary variables
           gmm::clear(matl[i]);
           if (theta != scalar_type(0) && !linear_version)
             asm_Dirichlet_Nitsche_fourth_tangent_term
@@ -5142,27 +5144,27 @@ namespace getfem {
       }
 
       if ((!linear_version && (version & model::BUILD_RHS))
-	  || (linear_version && G)) {
+    || (linear_version && G)) {
 
-	GMM_TRACE2("Assembly of Nitsche's source terms "
-		   "for Dirichlet condition");
-	asm_Dirichlet_Nitsche_first_rhs_term
-	  (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
-	   normal_component, mf_H, H, mf_data, G, linear_version, rg);
-	
-	if (theta != scalar_type(0)) {
-	  asm_Dirichlet_Nitsche_second_rhs_term
-	    (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
-	     normal_component, mf_H, H, mf_data, G, linear_version, rg);
-	}
+  GMM_TRACE2("Assembly of Nitsche's source terms "
+       "for Dirichlet condition");
+  asm_Dirichlet_Nitsche_first_rhs_term
+    (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
+     normal_component, mf_H, H, mf_data, G, linear_version, rg);
+  
+  if (theta != scalar_type(0)) {
+    asm_Dirichlet_Nitsche_second_rhs_term
+      (vecl[0], mim, md, vl[0], mf_u, U, theta, gamma0, H_version,
+       normal_component, mf_H, H, mf_data, G, linear_version, rg);
+  }
       }
     }
 
 
     Nitsche_Dirichlet_condition_brick(bool H_version_,
-				      bool normal_component_,
-				      bool is_linear_,
-				      scalar_type theta_) {
+              bool normal_component_,
+              bool is_linear_,
+              scalar_type theta_) {
       H_version = H_version_;
       normal_component = normal_component_;
       // linear_version = false;
@@ -5170,12 +5172,12 @@ namespace getfem {
       theta = theta_;
       GMM_ASSERT1(!(H_version && normal_component), "Bad Dirichlet version");
       set_flags(is_linear_ ? "Dirichlet with Nitsche's method linear brick"
-		: "Dirichlet with Nitsche's method nonlinear brick",
+    : "Dirichlet with Nitsche's method nonlinear brick",
                 linear_version /* is linear*/,
                 (theta==scalar_type(1)) /* is symmetric */,
-		(theta==scalar_type(1)) /* is coercive */,
+    (theta==scalar_type(1)) /* is coercive */,
                 true /* is real */, false /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -5189,7 +5191,7 @@ namespace getfem {
       (false, false, md.check_Neumann_terms_linearity(varname), theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
-					 theta == scalar_type(1)));
+           theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
 
     std::vector<std::string> aux_vars;
@@ -5214,7 +5216,7 @@ namespace getfem {
       (false, true, md.check_Neumann_terms_linearity(varname), theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
-					 theta == scalar_type(1)));
+           theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
 
     std::vector<std::string> aux_vars;
@@ -5238,7 +5240,7 @@ namespace getfem {
       (true, false, md.check_Neumann_terms_linearity(varname), theta);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname,
-					 theta == scalar_type(1)));
+           theta == scalar_type(1)));
     model::varnamelist vl(1, varname);
 
     std::vector<std::string> aux_vars;
@@ -5466,7 +5468,7 @@ namespace getfem {
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
   };
 
@@ -5728,7 +5730,7 @@ namespace getfem {
       set_flags("Fourier Robin condition", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -5773,8 +5775,8 @@ namespace getfem {
      const std::string &varname_, const std::string &paramname_,
      int version_)
       : N(mf_u_.linked_mesh().dim()), mf_u(mf_u_), U(mf_u.nb_basic_dof()),
-	param(param_), f(f_), dfdu(dfdu_), varname(varname_),
-	paramname(paramname_), version(version_) {
+  param(param_), f(f_), dfdu(dfdu_), varname(varname_),
+  paramname(paramname_), version(version_) {
       sizes_.resize(1); sizes_[0] = 1;
       V.resize(1);
       mf_u.extend_vector(U_, U);
@@ -5790,7 +5792,7 @@ namespace getfem {
     const bgeot::multi_index &sizes(size_type) const { return sizes_; }
 
     virtual void compute(fem_interpolation_context &ctx,
-			 bgeot::base_tensor &t) {
+       bgeot::base_tensor &t) {
       size_type cv = ctx.convex_num();
       t.adjust_sizes(sizes_);
       slice_vector_on_basic_dof_of_element(mf_u, U, cv, coeff);
@@ -5801,14 +5803,14 @@ namespace getfem {
       ctx.pf()->interpolation(ctx, coeff, V, 1);
 
       try {
-	t[0] = scalar_type(parser.Eval());
+  t[0] = scalar_type(parser.Eval());
       } catch (mu::Parser::exception_type &e) {
-	std::cerr << "Message  : " << e.GetMsg()   << std::endl;
-	std::cerr << "Formula  : " << e.GetExpr()  << std::endl;
-	std::cerr << "Token    : " << e.GetToken() << std::endl;
-	std::cerr << "Position : " << e.GetPos()   << std::endl;
-	std::cerr << "Errc     : " << e.GetCode()  << std::endl;
-	GMM_ASSERT1(false, "error in the expressions");
+  std::cerr << "Message  : " << e.GetMsg()   << std::endl;
+  std::cerr << "Formula  : " << e.GetExpr()  << std::endl;
+  std::cerr << "Token    : " << e.GetToken() << std::endl;
+  std::cerr << "Position : " << e.GetPos()   << std::endl;
+  std::cerr << "Errc     : " << e.GetCode()  << std::endl;
+  GMM_ASSERT1(false, "error in the expressions");
       }
     }
 
@@ -5822,7 +5824,7 @@ namespace getfem {
    scalar_type param = 0., const std::string &paramname = std::string()) {
 
     basic_nonlinear_term nterm(mf_u, U, param, f, dfdu, 
-			       varname, paramname, 0);
+             varname, paramname, 0);
 
     generic_assembly assem;
     assem.set("M(#1,#1)+=sym(comp(NonLin(#1).Base(#1).Base(#1))(i,:,:))");
@@ -5841,7 +5843,7 @@ namespace getfem {
    scalar_type param = 0., const std::string &paramname = std::string()) {
 
     basic_nonlinear_term nterm(mf_u, U, param, f, dfdu,
-			       varname, paramname, 1);
+             varname, paramname, 1);
 
     generic_assembly assem;
     assem.set("V(#1)+=comp(NonLin(#1).Base(#1))(i,:)");
@@ -5868,26 +5870,26 @@ namespace getfem {
                                         size_type region,
                                         build_version version) const {
       GMM_ASSERT1(mims.size() == 1,
-		  "basic nonlinear brick needs a single mesh_im");
+      "basic nonlinear brick needs a single mesh_im");
       GMM_ASSERT1(vl.size() == 1,
-		  "basic nonlinear brick needs a single variable");
+      "basic nonlinear brick needs a single variable");
       GMM_ASSERT1(dl.size() <= 1,
-		  "wrong number of data for basic nonlinear brick");
+      "wrong number of data for basic nonlinear brick");
       GMM_ASSERT1(matl.size() == 1,  "wrong number of terms for basic "
-		  "nonlinear brick");
+      "nonlinear brick");
 
       const model_real_plain_vector &u = md.real_variable(vl[0]);
       const mesh_fem &mf_u = *(md.pmesh_fem_of_variable(vl[0]));
       size_type Q = mf_u.get_qdim();
       GMM_ASSERT1(Q == 1, "basic nonlinear brick is only for scalar field, "
-		  "sorry");
+      "sorry");
 
       const model_real_plain_vector *vparam = 0;
       if (dl.size()) {
-	vparam = &md.real_variable(dl[0]) ;
-	size_type sl = gmm::vect_size(*vparam);
-	GMM_ASSERT1(sl == 1, "the parameter in basic nonlinear brick "
-		    "has to be scalar");
+  vparam = &md.real_variable(dl[0]) ;
+  size_type sl = gmm::vect_size(*vparam);
+  GMM_ASSERT1(sl == 1, "the parameter in basic nonlinear brick "
+        "has to be scalar");
       }
 
       const mesh_im &mim = *mims[0];
@@ -5897,23 +5899,23 @@ namespace getfem {
 #if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
 
       if (version & model::BUILD_MATRIX) {
-	gmm::clear(matl[0]);
-	GMM_TRACE2("basic nonlinear stiffness matrix assembly");
-	if (dl.size())
-	  asm_basic_nonlinear_tangent_matrix(matl[0], mim, mf_u, u, f, dfdu,
-					     vl[0], rg, (*vparam)[0], dl[0]);
-	else
-	  asm_basic_nonlinear_tangent_matrix(matl[0], mim, mf_u, u,
-					     f, dfdu, vl[0], rg);
+  gmm::clear(matl[0]);
+  GMM_TRACE2("basic nonlinear stiffness matrix assembly");
+  if (dl.size())
+    asm_basic_nonlinear_tangent_matrix(matl[0], mim, mf_u, u, f, dfdu,
+               vl[0], rg, (*vparam)[0], dl[0]);
+  else
+    asm_basic_nonlinear_tangent_matrix(matl[0], mim, mf_u, u,
+               f, dfdu, vl[0], rg);
       }
 
       if (version & model::BUILD_RHS) {
-	if (dl.size())
-	  asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u,
-				  f, dfdu, vl[0], rg, (*vparam)[0], dl[0]);
-	else
-	  asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u, f, dfdu, vl[0], rg);
-	gmm::scale(vecl[0], scalar_type(-1));
+  if (dl.size())
+    asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u,
+          f, dfdu, vl[0], rg, (*vparam)[0], dl[0]);
+  else
+    asm_basic_nonlinear_rhs(vecl[0], mim, mf_u, u, f, dfdu, vl[0], rg);
+  gmm::scale(vecl[0], scalar_type(-1));
       }
       
 #else
@@ -5927,9 +5929,9 @@ namespace getfem {
     basic_nonlinear_brick(const std::string &f_, const std::string &dfdu_)
       : f(f_), dfdu(dfdu_)
     { set_flags("basic nonlinear brick", false /* is linear*/,
-		true /* is symmetric */, false /* is coercive */,
-		true /* is real */, false /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    true /* is symmetric */, false /* is coercive */,
+    true /* is real */, false /* is complex */,
+    false /* compute each time */, false /* has a Neumann term */);
     }
     
   };
@@ -6043,7 +6045,7 @@ namespace getfem {
                 true /* is linear*/,
                 true /* is symmetric */, penalized /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -6163,7 +6165,7 @@ namespace getfem {
                 symmetric_ /* is symmetric */, coercive_ /* is coercive */,
                 true /* is real */, true /* is complex */,
                 true /* is to be computed each time */,
-		false /* has a Neumann term */);
+    false /* has a Neumann term */);
     }
   };
 
@@ -6231,7 +6233,7 @@ namespace getfem {
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
                 true /* is to be computed each time */,
-		false /* has a Neumann term */);
+    false /* has a Neumann term */);
     }
 
   };
@@ -6279,92 +6281,92 @@ namespace getfem {
       scalar_type val_lambda = scalar_type(0), val_mu = scalar_type(0);
 
       if (mf_mu) {
-	GMM_ASSERT1(!(mf_mu->is_reduced()),
-		    "Sorry, to be adapted for reduced mesh fems");
+  GMM_ASSERT1(!(mf_mu->is_reduced()),
+        "Sorry, to be adapted for reduced mesh fems");
 
-	if (!(ctx_mu.have_pf()) || ctx_mu.convex_num() != cv
-	    || (ctx_mu.have_pfp() != ctx.have_pfp())
-	    || (ctx_mu.have_pfp()
-		&& (&(ctx.pfp()->get_point_tab())
-		    != &(ctx_mu.pfp()->get_point_tab())))) {
+  if (!(ctx_mu.have_pf()) || ctx_mu.convex_num() != cv
+      || (ctx_mu.have_pfp() != ctx.have_pfp())
+      || (ctx_mu.have_pfp()
+    && (&(ctx.pfp()->get_point_tab())
+        != &(ctx_mu.pfp()->get_point_tab())))) {
 
-	  bgeot::vectors_to_base_matrix
-	    (G, mf_mu->linked_mesh().points_of_convex(cv));
-	  
-	  pfem_precomp pfp = fem_precomp(mf_mu->fem_of_element(cv),
-					 &(ctx.pfp()->get_point_tab()), 0);
+    bgeot::vectors_to_base_matrix
+      (G, mf_mu->linked_mesh().points_of_convex(cv));
+    
+    pfem_precomp pfp = fem_precomp(mf_mu->fem_of_element(cv),
+           &(ctx.pfp()->get_point_tab()), 0);
 
-	  if (ctx.have_pfp())
-	    ctx_mu = fem_interpolation_context
-	      (mf_mu->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-	       G, cv, ctx.face_num());
-	  else
-	    ctx_mu = fem_interpolation_context
-	      (mf_mu->linked_mesh().trans_of_convex(cv),
-	       mf_mu->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
+    if (ctx.have_pfp())
+      ctx_mu = fem_interpolation_context
+        (mf_mu->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
+         G, cv, ctx.face_num());
+    else
+      ctx_mu = fem_interpolation_context
+        (mf_mu->linked_mesh().trans_of_convex(cv),
+         mf_mu->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
 
-	} else {
-	  if (ctx.have_pfp())  ctx_mu.set_ii(ctx.ii());
-	  else ctx_mu.set_xref(ctx.xref());
-	}
+  } else {
+    if (ctx.have_pfp())  ctx_mu.set_ii(ctx.ii());
+    else ctx_mu.set_xref(ctx.xref());
+  }
         slice_vector_on_basic_dof_of_element(*mf_mu, *mu, cv, coeff);
-	// coeff.resize(mf_mu->nb_basic_dof_of_element(cv));
-	// gmm::copy(gmm::sub_vector(*mu, gmm::sub_index
-	//		      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
-	ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
-	val_mu = val[0];
+  // coeff.resize(mf_mu->nb_basic_dof_of_element(cv));
+  // gmm::copy(gmm::sub_vector(*mu, gmm::sub_index
+  //		      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
+  ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
+  val_mu = val[0];
         slice_vector_on_basic_dof_of_element(*mf_mu, *lambda, cv, coeff);
-	// gmm::copy(gmm::sub_vector(*lambda, gmm::sub_index
-	//		      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
-	ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
-	val_mu = val[0];
+  // gmm::copy(gmm::sub_vector(*lambda, gmm::sub_index
+  //		      (mf_mu->ind_basic_dof_of_element(cv))), coeff);
+  ctx_mu.pf()->interpolation(ctx_mu, coeff, val, 1);
+  val_mu = val[0];
       } else {
-	val_lambda = (*lambda)[0]; val_mu = (*mu)[0];
+  val_lambda = (*lambda)[0]; val_mu = (*mu)[0];
       }
 
       switch (version) {
       case 1:
         slice_vector_on_basic_dof_of_element(mfvar, var, cv, coeff);
-	// coeff.resize(mfvar.nb_basic_dof_of_element(cv));
-	// gmm::copy(gmm::sub_vector(var, gmm::sub_index
-	//		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
-	ctx.pf()->interpolation_grad(ctx, coeff, grad, qdim);
-	gmm::copy(gmm::identity_matrix(), E);
-	gmm::scale(E, val_lambda * gmm::mat_trace(grad));
-	gmm::add(gmm::scaled(grad, val_mu), E);
-	gmm::add(gmm::scaled(gmm::transposed(grad), val_mu), E);
-	gmm::mult_add(E, n, output.as_vector());
-	break;
+  // coeff.resize(mfvar.nb_basic_dof_of_element(cv));
+  // gmm::copy(gmm::sub_vector(var, gmm::sub_index
+  //		      (mfvar.ind_basic_dof_of_element(cv))), coeff);
+  ctx.pf()->interpolation_grad(ctx, coeff, grad, qdim);
+  gmm::copy(gmm::identity_matrix(), E);
+  gmm::scale(E, val_lambda * gmm::mat_trace(grad));
+  gmm::add(gmm::scaled(grad, val_mu), E);
+  gmm::add(gmm::scaled(gmm::transposed(grad), val_mu), E);
+  gmm::mult_add(E, n, output.as_vector());
+  break;
       case 2:
-	{
-	  base_tensor t;
-	  dim_type tdim = ctx.pf()->target_dim(), qmult = qdim / tdim;
-	  size_type ndof = ctx.pf()->nb_dof(cv);
-	  // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
-	  // 0<=k<dim. In order to iterate on the tensor values, i should
-	  // increment the faster, then j, then k.
-	  // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
-	  // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
-	  // General case, psi_{i*qmult+l} = phi_i * e_l  and
-	  //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
-	  ctx.pf()->real_grad_base_value(ctx, t);
+  {
+    base_tensor t;
+    dim_type tdim = ctx.pf()->target_dim(), qmult = qdim / tdim;
+    size_type ndof = ctx.pf()->nb_dof(cv);
+    // The return tensor is t(i,j,k) with 0<=i<ndof, 0<=j<target_dim,
+    // 0<=k<dim. In order to iterate on the tensor values, i should
+    // increment the faster, then j, then k.
+    // If target_dim == qdim, grad(phi_i)(j,k) = t(i,j,k)
+    // If target_dim == 1, grad(phi_i * e_l)(l,k) = t(i,1,k)
+    // General case, psi_{i*qmult+l} = phi_i * e_l  and
+    //    grad(psi_{i*qmult+l})(j+tdim*l,k) = t(i,j,k)
+    ctx.pf()->real_grad_base_value(ctx, t);
 
-	  for (size_type l = 0; l < qmult; ++l) {
-	    for (size_type p = 0; p < qdim; ++p) {
-	      base_tensor::const_iterator it = t.begin();
-	      for (size_type k = 0; k < qdim; ++k)
-		for (size_type j = 0; j < tdim; ++j)
-		  for (size_type i = 0; i < ndof; ++i, ++it) {
-		    size_type jj = j + tdim*l;
-		    if (k == jj) output(i*qmult+l, p) += val_lambda*(*it)*n[p];
-		    if (p == jj) output(i*qmult+l, p) += val_mu*(*it)*n[k];
-		    if (k == p) output(i*qmult+l, p) += val_mu*(*it)*n[jj];
-		  }
-	      GMM_ASSERT1(it ==  t.end(), "Internal error");
-	    }
-	  }
-	}
-	break;
+    for (size_type l = 0; l < qmult; ++l) {
+      for (size_type p = 0; p < qdim; ++p) {
+        base_tensor::const_iterator it = t.begin();
+        for (size_type k = 0; k < qdim; ++k)
+    for (size_type j = 0; j < tdim; ++j)
+      for (size_type i = 0; i < ndof; ++i, ++it) {
+        size_type jj = j + tdim*l;
+        if (k == jj) output(i*qmult+l, p) += val_lambda*(*it)*n[p];
+        if (p == jj) output(i*qmult+l, p) += val_mu*(*it)*n[k];
+        if (k == p) output(i*qmult+l, p) += val_mu*(*it)*n[jj];
+      }
+        GMM_ASSERT1(it ==  t.end(), "Internal error");
+      }
+    }
+  }
+  break;
       }
 
     }
@@ -6375,8 +6377,8 @@ namespace getfem {
      const mesh_fem *mf_mu_, const model_real_plain_vector *mu_) :
       mf_lambda(mf_lambda_), lambda(lambda_), mf_mu(mf_mu_), mu(mu_) {
       GMM_ASSERT1(mf_lambda == mf_mu,
-		  "The two coefficients should be described on the same "
-		  "finite element method.");
+      "The two coefficients should be described on the same "
+      "finite element method.");
     }
 
   };
@@ -6476,9 +6478,9 @@ namespace getfem {
           const mesh_fem *mf_mu = md.pmesh_fem_of_variable(dl[1]);
           const model_real_plain_vector *mu = &(md.real_variable(dl[1]));
 
-	        pNeumann_elem_term pNt = new iso_lin_elasticity_Neumann_elem_term
-	          (mf_lambda, lambda, mf_mu, mu);
-	        md.add_Neumann_term(pNt, vl[0], ib);
+          pNeumann_elem_term pNt = new iso_lin_elasticity_Neumann_elem_term
+            (mf_lambda, lambda, mf_mu, mu);
+          md.add_Neumann_term(pNt, vl[0], ib);
       }
     }
 
@@ -6587,33 +6589,33 @@ namespace getfem {
       size_type cv = ctx.convex_num();
    
       if (vnum != var_vnum || !(ctx_p.have_pf()) || ctx_p.convex_num() != cv
-	  || (ctx_p.have_pfp() != ctx.have_pfp())
-	  || (ctx_p.have_pfp()
-	      && (&(ctx.pfp()->get_point_tab())
-		  != &(ctx_p.pfp()->get_point_tab())))) {
+    || (ctx_p.have_pfp() != ctx.have_pfp())
+    || (ctx_p.have_pfp()
+        && (&(ctx.pfp()->get_point_tab())
+      != &(ctx_p.pfp()->get_point_tab())))) {
 
-	if (vnum != var_vnum) {
-	  gmm::resize(P, mf_p->nb_basic_dof());
+  if (vnum != var_vnum) {
+    gmm::resize(P, mf_p->nb_basic_dof());
           mf_p->extend_vector(*org_P, P);
           vnum = var_vnum;
-	}
-	
-	bgeot::vectors_to_base_matrix
-	  (G, mf_p->linked_mesh().points_of_convex(cv));
-	
-	if (ctx.have_pfp()) {
+  }
+  
+  bgeot::vectors_to_base_matrix
+    (G, mf_p->linked_mesh().points_of_convex(cv));
+  
+  if (ctx.have_pfp()) {
           pfem_precomp pfp = fem_precomp(mf_p->fem_of_element(cv),
                                          &(ctx.pfp()->get_point_tab()), 0);
-	  ctx_p = fem_interpolation_context
-	    (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
-	     G, cv, ctx.face_num());
+    ctx_p = fem_interpolation_context
+      (mf_p->linked_mesh().trans_of_convex(cv), pfp, ctx.ii(),
+       G, cv, ctx.face_num());
         } else
-	  ctx_p = fem_interpolation_context
-	    (mf_p->linked_mesh().trans_of_convex(cv),
-	     mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
+    ctx_p = fem_interpolation_context
+      (mf_p->linked_mesh().trans_of_convex(cv),
+       mf_p->fem_of_element(cv), ctx.xref(), G, cv, ctx.face_num());
       } else {
-	if (ctx_p.have_pfp()) ctx_p.set_ii(ctx.ii());
-	else ctx_p.set_xref(ctx.xref());
+  if (ctx_p.have_pfp()) ctx_p.set_ii(ctx.ii());
+  else ctx_p.set_xref(ctx.xref());
        
       }
 
@@ -6621,23 +6623,23 @@ namespace getfem {
       case 1:
         slice_vector_on_basic_dof_of_element(*mf_p, P, cv, coeff);
         // coeff.resize(mf_p->nb_basic_dof_of_element(cv));
-	// gmm::copy(gmm::sub_vector(P, gmm::sub_index
+  // gmm::copy(gmm::sub_vector(P, gmm::sub_index
         //                      (mf_p->ind_basic_dof_of_element(cv))), coeff);
-	ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
+  ctx_p.pf()->interpolation(ctx_p, coeff, val, 1);
        
         for (size_type k = 0; k < qdim; ++k) output[k] -= val[0] * n[k];
-	break;
+  break;
       case 2:
-	{
-	  base_tensor t;
-	  size_type ndof = ctx_p.pf()->nb_dof(cv);
-	  ctx_p.pf()->real_base_value(ctx_p, t);
+  {
+    base_tensor t;
+    size_type ndof = ctx_p.pf()->nb_dof(cv);
+    ctx_p.pf()->real_base_value(ctx_p, t);
 
           for (size_type i = 0; i < ndof; ++i)
-	    for (size_type k = 0; k < qdim; ++k)
+      for (size_type k = 0; k < qdim; ++k)
               output(i, k) -= t[i]*n[k];
-	}
-	break;
+  }
+  break;
       }
 
     }
@@ -6728,8 +6730,8 @@ namespace getfem {
     {
         const mesh_fem &mf_p = md.mesh_fem_of_variable(vl[1]);
         pNeumann_elem_term pNt = new lin_incomp_Neumann_elem_term
-	        (md.version_number_of_data_variable( vl[1]), &mf_p,
-	                          &(md.real_variable(vl[1])), vl[1]);
+          (md.version_number_of_data_variable( vl[1]), &mf_p,
+                            &(md.real_variable(vl[1])), vl[1]);
         md.add_Neumann_term(pNt, vl[0], ib);
         md.add_auxilliary_variables_of_Neumann_terms(vl[0], vl[1]);
     }
@@ -6886,7 +6888,7 @@ namespace getfem {
       set_flags("Mass brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -7040,7 +7042,7 @@ namespace getfem {
       set_flags("Basic d/dt brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
@@ -7209,7 +7211,7 @@ namespace getfem {
       set_flags("Basic d2/dt2 brick", true /* is linear*/,
                 true /* is symmetric */, true /* is coercive */,
                 true /* is real */, true /* is complex */,
-		false /* compute each time */, false /* has a Neumann term */);
+    false /* compute each time */, false /* has a Neumann term */);
     }
 
   };
