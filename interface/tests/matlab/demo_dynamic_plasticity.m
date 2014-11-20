@@ -41,17 +41,16 @@ LY = 20;
 NX = 50;
 NY = 20;
 
-f = [0 -600]';
+% f = [0 -600]';
 %t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
-if (with_hardening == 1)
-  f = [15000 0]';
-%  t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 -0.1 -0.2 -0.4 -0.6 -0.8 -0.6 -0.4 -0.2 0];
-end
+f = [15000 0]';
+%  t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 -0.1
+%  -0.2 -0.4 -0.6 -0.8 -0.6 -0.4 -0.2 0];
 
 
 % transient part.
 T = pi;
-dt = 0.025;
+dt = 0.001;
 theta= 1;
 
 
@@ -66,16 +65,13 @@ N = gf_mesh_get(m, 'dim');
   
 % Plotting
 % gf_plot_mesh(m, 'vertices', 'on', 'convexes', 'on');
+% return;
 
 % Define used MeshIm
 mim=gfMeshIm(m);  set(mim, 'integ', gfInteg('IM_TRIANGLE(6)')); % Gauss methods on triangles
 
 % Define used MeshFem
-if (with_hardening == 1)
-  mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
-else
-  mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,1)'));
-end
+mf_u=gfMeshFem(m,2); set(mf_u, 'fem',gfFem('FEM_PK(2,2)'));
 mf_data=gfMeshFem(m); set(mf_data, 'fem', gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
 % mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_sigma=gfMeshFem(m,4); set(mf_sigma, 'fem',gfFem('FEM_PK_DISCONTINUOUS(2,0)'));
@@ -107,6 +103,7 @@ mu(CVtop,1) = 77839; % Iron
 % Definition of plastic threshold
 von_mises_threshold(CVbottom) = 7000;
 von_mises_threshold(CVtop) = 8000;
+rho = 0.1;
 % Definition of hardening parameter
 if (with_hardening)
   H = mu(1)/5;
@@ -121,6 +118,14 @@ md = gfModel('real');
 % 2 is the number of version of the data stored, for the time integration scheme 
 set(md, 'add fem variable', 'u', mf_u, 2);
 
+% Time integration scheme and inertia term
+gf_model_set(md, 'add theta method for second order', 'u',theta);
+set(md, 'add initialized data', 'rho', rho);
+gf_model_set(md, 'add mass brick', mim, 'Dot2_u', 'rho');
+gf_model_set(md, 'set time step', dt);
+
+
+
 % Declare that lambda is a data of the system on mf_data
 set(md, 'add initialized fem data', 'lambda', mf_data, lambda);
 
@@ -130,34 +135,26 @@ set(md, 'add initialized fem data', 'mu', mf_data, mu);
 % Declare that von_mises_threshold is a data of the system on mf_data
 set(md, 'add initialized fem data', 'von_mises_threshold', mf_data, von_mises_threshold);
 
-
-if (with_hardening)
-  N = gf_mesh_get(m, 'dim');
-  gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
-  mim_data = gf_mesh_im_data(mim, -1, [N, N]);
-  gf_model_set(md, 'add im data', 'sigma', mim_data);
+N = gf_mesh_get(m, 'dim');
+% gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
+mim_data = gf_mesh_im_data(mim, -1, [N, N]);
+gf_model_set(md, 'add im data', 'sigma', mim_data);
    
-  set(md, 'add initialized data', 'H', [H]);
+set(md, 'add initialized data', 'H', [H]);
 
-  Is = 'Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim)';
-  IxI = 'Id(meshdim)@Id(meshdim)';
-  coeff_long = '((lambda)*(H))/((2*(mu)+(H))*(meshdim*(lambda)+2*(mu)+(H)))';
-  B_inv = sprintf('((2*(mu)/(2*(mu)+(H)))*(%s) + (%s)*(%s))', Is, coeff_long, IxI);
-  B = sprintf('((1+(H)/(2*(mu)))*(%s) - (((lambda)*(H))/(2*(mu)*(meshdim*(lambda)+2*(mu))))*(%s))', Is, IxI);
-  ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
-  Enp1 = '((Grad_u+Grad_u'')/2)';
-  En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+Is = 'Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim)';
+IxI = 'Id(meshdim)@Id(meshdim)';
+coeff_long = '((lambda)*(H))/((2*(mu)+(H))*(meshdim*(lambda)+2*(mu)+(H)))';
+B_inv = sprintf('((2*(mu)/(2*(mu)+(H)))*(%s) + (%s)*(%s))', Is, coeff_long, IxI);
+B = sprintf('((1+(H)/(2*(mu)))*(%s) - (((lambda)*(H))/(2*(mu)*(meshdim*(lambda)+2*(mu))))*(%s))', Is, IxI);
+ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
+Enp1 = '((Grad_u+Grad_u'')/2)';
+En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
+expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
-  % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
-else
-    
-  % Declare that sigma is a data of the system on mf_sigma
-  set(md, 'add fem data', 'sigma', mf_sigma);
-  % Add plasticity brick on u
-  set(md, 'add elastoplasticity brick', mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
-end
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
+% gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
+
 
 % Add homogeneous Dirichlet condition to u on the left hand side of the domain
 set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
@@ -168,15 +165,8 @@ set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 
 
 % interpolate the initial data
-U0 = get(md, 'variable', 'u', 0);
+U0 = get(md, 'variable', 'u');
 V0 = 0*U0;
-
-
-
-gf_model_set(md, 'add theta method for second order', 'u',theta);
-gf_model_set(md, 'add mass brick', mim, 'Dot2_u');
-gf_model_set(md, 'set time step', dt);
-
 
 % Initial data.
 gf_model_set(md, 'variable', 'Previous_u',  U0);
@@ -192,13 +182,15 @@ VM=zeros(1,get(mf_vm, 'nbdof'));
  step=1;
 % Iterations
 for t = 0:dt:T
-   
-   disp(sprintf('step %d, coeff = %g', step , sin(4*t))); 
+  
+  coeff = sin(16*t);
+  disp(sprintf('step %d, coeff = %g', step , coeff)); 
    
  
-  set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*sin(4*t);f(2,1)*sin(4*t)}));  
-   
-  gf_model_get(md, 'solve');
+  set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff}));  
+  
+  get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+  % gf_model_get(md, 'solve', 'noisy');
   U = gf_model_get(md, 'variable', 'u');
   V = gf_model_get(md, 'variable', 'Dot_u'); 
   
@@ -210,34 +202,35 @@ for t = 0:dt:T
     end;
     
     
-    if (with_hardening)
-      sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
-      gf_model_set(md, 'variable', 'sigma', sigma);
-      gf_model_set(md, 'variable', 'Previous_u', U);
+    
+    sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+    gf_model_set(md, 'variable', 'sigma', sigma);
+    gf_model_set(md, 'variable', 'Previous_u', U);
       
-      M = gf_asm('mass matrix', mim, mf_vm);
-      L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
-      VM = (M \ L)';
-      coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
-      coeff2='1/(2*mu)';
-      Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
-      Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
-      L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
-      plast = (M \ L)';
+    M = gf_asm('mass matrix', mim, mf_vm);
+    L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+    VM = (M \ L)';
+    coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
+    coeff2='1/(2*mu)';
+    Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
+    Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
+    L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
+    plast = (M \ L)';
       
-      Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
-      ind_gauss_pt = 22500;
-      if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
-        ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
-      end
-      sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
-      Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
-    else
-      get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
-      plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
-      % Compute Von Mises or Tresca stress
-      VM = get(md, 'compute elastoplasticity Von Mises or Tresca', 'sigma', mf_vm, 'Von Mises');
+    Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
+    nb_gauss_pt_per_element = size(sigma, 2) / (N*N*gf_mesh_get(m, 'nbcvs'));
+    % ind_gauss_pt = 22500;
+    ind_gauss_pt = nb_gauss_pt_per_element * 1100 - 1;
+    ind_elt = floor(ind_gauss_pt / nb_gauss_pt_per_element);
+    P = gf_mesh_get(m, 'pts from cvid', ind_elt);
+    disp(sprintf('Point for the strain/stress graph (approximately): (%f,%f)', P(1,1), P(2,1)));
+
+    if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
+      ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
     end
+    sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
+    Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
+    
     
        
     if (do_plot)
@@ -257,16 +250,13 @@ for t = 0:dt:T
       n = t;
       title(['Plastification for t = ', num2str(t)]);
     
-      if (with_hardening)
-        subplot(3,1,3);
-        plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
-        xlabel('Strain');
-        ylabel('Stress')
-        axis([-0.25 0.25 -16500 16500 ]);
-        title(sprintf('step %d / %d, coeff = %g', step,size([0:dt:T],2) , sin(4*t)));
-        
-        % hold on;
-      end;
+      
+      subplot(3,1,3);
+      plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
+      xlabel('Strain');
+      ylabel('Stress')
+      axis([-0.25 0.25 -16500 16500 ]);
+      title(sprintf('step %d / %d, coeff = %g', step,size([0:dt:T],2) , coeff));
       
       pause(0.1);
     end

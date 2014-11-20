@@ -166,7 +166,7 @@ for step=1:size(t,2),
     end;
    
     % Solve the system
-    get(md, 'solve','lsolver', 'superlu', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+    get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
     % get(md, 'solve', 'noisy', 'max_iter', 80);
 
     % Retrieve the solution U
