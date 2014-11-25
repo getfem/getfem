@@ -1,4 +1,4 @@
-% Copyright (C) 2010-2012 Amandine Cottaz, Yves Renard.
+% Copyright (C) 2010-2012 Amandine Cottaz, Yves Renard, Farshid Dabaghi.
 %
 % This file is a part of GETFEM++
 %
@@ -19,25 +19,35 @@ clear all;
 gf_workspace('clear all');
 clc;
 
-%%
+
 
 % We compute a plasticity problem with a Von Mises criterion with or
 % without kinematic hardening
 % For convenience we consider an homogenous Dirichlet condition on the left
 % of the domain and an easy computed Neumann Condition on the right
 
-%%
 
 with_hardening = 1;
 bi_material = false;
 test_tangent_matrix = 0;
 do_plot = true;
 
+
+
 % Initialize used data
 LX = 100;
 LY = 20;
 NX = 50;
 NY = 20;
+
+% alpha is parametr of the generalized integration algorithms The
+% The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
+% backward Euler integration
+alpha = 1;
+
+
+
+
 
 f = [0 -600]';
 t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
@@ -118,12 +128,19 @@ set(md, 'add initialized fem data', 'mu', mf_data, mu);
 set(md, 'add initialized fem data', 'von_mises_threshold', mf_data, von_mises_threshold);
 
 
+  
+  
 if (with_hardening)
   N = gf_mesh_get(m, 'dim');
   gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
   mim_data = gf_mesh_im_data(mim, -1, [N, N]);
   gf_model_set(md, 'add im data', 'sigma', mim_data);
-   
+  
+ 
+  
+  % Declare that alpha is a data of the system 
+ 
+  set(md, 'add initialized data', 'alpha', [alpha]);
   set(md, 'add initialized data', 'H', [H]);
 
   Is = 'Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim)';
@@ -134,7 +151,13 @@ if (with_hardening)
   ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  
+  %expression de sigma for Implicit Euler method
+  %expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  
+  %expression de sigma for generalized alpha algorithms
+   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
+    B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
   % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
