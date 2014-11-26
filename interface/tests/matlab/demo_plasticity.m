@@ -40,10 +40,10 @@ LY = 20;
 NX = 50;
 NY = 20;
 
-% alpha is parametr of the generalized integration algorithms The
+% alpha is parameter of the generalized integration algorithms.
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
 % backward Euler integration
-alpha = 1;
+alpha = 1/2;
 
 
 
@@ -156,7 +156,7 @@ if (with_hardening)
   %expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
   %expression de sigma for generalized alpha algorithms
-   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
@@ -198,7 +198,11 @@ for step=1:size(t,2),
     % Compute new plasticity constraints used to compute 
     % the Von Mises or Tresca stress
     if (with_hardening)
-      sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+      sigma_0 = gf_model_get(md, 'variable', 'sigma');
+      sigma = (gf_model_get(md, 'interpolation', expr_sigma, mim_data) - (1-alpha)*sigma_0)/alpha;
+      
+      % sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+      
       gf_model_set(md, 'variable', 'sigma', sigma);
       gf_model_set(md, 'variable', 'Previous_u', U);
       
