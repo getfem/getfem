@@ -41,6 +41,13 @@ LY = 20;
 NX = 50;
 NY = 20;
 
+
+% alpha is parametr of the generalized integration algorithms The
+% The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
+% backward Euler integration
+alpha = 1;
+
+
 % f = [0 -600]';
 %t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
 f = [15000 0]';
@@ -139,7 +146,12 @@ N = gf_mesh_get(m, 'dim');
 % gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
 mim_data = gf_mesh_im_data(mim, -1, [N, N]);
 gf_model_set(md, 'add im data', 'sigma', mim_data);
-   
+
+
+ % Declare that alpha is a data of the system 
+ 
+set(md, 'add initialized data', 'alpha', [alpha]);
+
 set(md, 'add initialized data', 'H', [H]);
 
 Is = 'Reshape(Id(meshdim*meshdim),meshdim,meshdim,meshdim,meshdim)';
@@ -150,8 +162,15 @@ B = sprintf('((1+(H)/(2*(mu)))*(%s) - (((lambda)*(H))/(2*(mu)*(meshdim*(lambda)+
 ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
 Enp1 = '((Grad_u+Grad_u'')/2)';
 En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
-expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+ %expression de sigma for Implicit Euler method
+  %expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
+  %expression de sigma for generalized alpha algorithms
+   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
+    B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
+
+
+
 gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
 % gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
 
@@ -162,6 +181,9 @@ set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
 % Add a source term to the system
 set(md,'add initialized fem data', 'VolumicData', mf_data, get(mf_data, 'eval',{f(1,1)*sin(0);f(2,1)*sin(0)}));
 set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
+
+
+
 
 
 % interpolate the initial data
@@ -178,12 +200,43 @@ gf_model_set(md, 'perform init time derivative', dt/20.);
 gf_model_get(md, 'solve');
 
 
+
+if(alpha==0.5)
+    nbdofu = gf_mesh_fem_get(mf_u, 'nbdof');
+    M = gf_asm('mass matrix', mim, mf_u);
+    gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*alpha*alpha));
+    ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nbdofu,1));
+     MV0=M*V0;
+     F=get(mf_data, 'eval',{f(1,1)*sin(0);f(2,1)*sin(0)});
+     FF = gf_asm('volumic source', mim, mf_u, mf_data, F);
+     K = gf_asm('elastoplasticity', mim, mf_u, mf_data, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu); %%%%%% ???????????
+     MA0 = FF-K*U0;
+end
+
+
+
+
+
 VM=zeros(1,get(mf_vm, 'nbdof'));
  step=1;
 % Iterations
 for t = 0:dt:T
   
   coeff = sin(16*t);
+  
+  if(alpha==0.5)
+   F = get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff});
+   FF = gf_asm('volumic source', mim, mf_u, mf_data, F);   
+   D = (M*U0 + dt*MV0)/(dt*dt*alpha*alpha) + (1-alpha)*MA0/alpha;  
+   gf_model_set(md, 'set private rhs', ind_rhs, D);
+  gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter);
+   U = gf_model_get(md, 'variable', 'u');
+   MV = ((M*U1 - M*U0)/dt -(1-alpha)*MV0)/alpha;
+   MA = ((MV1-MV0)/dt - (1-alpha)*MA0)/alpha;
+  else
+  
+  
+  
   disp(sprintf('step %d, coeff = %g', step , coeff)); 
    
  
@@ -194,12 +247,12 @@ for t = 0:dt:T
   U = gf_model_get(md, 'variable', 'u');
   V = gf_model_get(md, 'variable', 'Dot_u'); 
   
-    
+  end
    
   
   if (test_tangent_matrix)
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
-    end;
+  end;
     
     
     
@@ -207,15 +260,15 @@ for t = 0:dt:T
     gf_model_set(md, 'variable', 'sigma', sigma);
     gf_model_set(md, 'variable', 'Previous_u', U);
       
-    M = gf_asm('mass matrix', mim, mf_vm);
+    M_VM = gf_asm('mass matrix', mim, mf_vm);
     L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
-    VM = (M \ L)';
+    VM = (M_VM \ L)';
     coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
     coeff2='1/(2*mu)';
     Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
     Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
     L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
-    plast = (M \ L)';
+    plast = (M_VM \ L)';
       
     Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
     nb_gauss_pt_per_element = size(sigma, 2) / (N*N*gf_mesh_get(m, 'nbcvs'));
@@ -230,6 +283,9 @@ for t = 0:dt:T
     end
     sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
     Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
+    
+    
+    
     
     
        
@@ -255,15 +311,25 @@ for t = 0:dt:T
       plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
       xlabel('Strain');
       ylabel('Stress')
-      axis([-0.25 0.25 -16500 16500 ]);
+      axis([-0.3 0.3 -16500 16500 ]);
       title(sprintf('step %d / %d, coeff = %g', step,size([0:dt:T],2) , coeff));
       
       pause(0.1);
     end
     
-    
      step= step+ 1;
-   gf_model_set(md, 'shift variables for time integration');
+     
+     if(alpha==0.5)
+         
+  U0 = U;
+  MV0 = MV;
+  MA0 = MA;
+     else
+         
+        
+    gf_model_set(md, 'shift variables for time integration');
+    
+     end
 end;
 
 
