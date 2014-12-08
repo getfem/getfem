@@ -63,8 +63,8 @@ namespace getfem {
       it_max_ratio_reached = it; max_ratio_reached = true; 
     }
     if (max_ratio_reached &&
-	r < r_max_ratio_reached * 0.5 &&
-	r > first_res * 1.1 && it <= it_max_ratio_reached+1) {
+        r < r_max_ratio_reached * 0.5 &&
+        r > first_res * 1.1 && it <= it_max_ratio_reached+1) {
       alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
       it_max_ratio_reached = it;
     }
@@ -77,7 +77,7 @@ namespace getfem {
     if (count>=5 || (alpha < alpha_min && max_ratio_reached) || alpha<1e-15) {
       if (conv_r < first_res * 0.99) count_pat = 0;
       if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
-	{ conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
+        { conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
       if (conv_r >= first_res * 0.999) count_pat++;
       return true;
     }
@@ -124,9 +124,9 @@ namespace getfem {
 
   template <typename MATRIX, typename VECTOR, typename PLSOLVER>
   void standard_solve(model &md, gmm::iteration &iter,
-		      PLSOLVER lsolver,
-		      abstract_newton_line_search &ls, const MATRIX &K,
-		      const VECTOR &rhs, bool with_pseudo_potential = false) {
+                      PLSOLVER lsolver,
+                      abstract_newton_line_search &ls, const MATRIX &K,
+                      const VECTOR &rhs, bool with_pseudo_potential = false) {
 
     VECTOR state(md.nb_dof());
     std::vector<size_type> sind;
@@ -152,66 +152,66 @@ namespace getfem {
       md.assembly(model::BUILD_ALL);
       
       if (is_reduced) {
-	gmm::sub_index I(sind);
-	MATRIX Kr(sind.size(), sind.size());
-	VECTOR rhsr(sind.size()), stater(sind.size());
-	gmm::copy(gmm::sub_matrix(K, I, I), Kr);
-	gmm::copy(gmm::sub_vector(state, I), stater);
-	gmm::copy(gmm::sub_vector(rhs, I), rhsr);
-	(*lsolver)(Kr, stater, rhsr, iter);
-	gmm::copy(stater, gmm::sub_vector(state, I));
+        gmm::sub_index I(sind);
+        MATRIX Kr(sind.size(), sind.size());
+        VECTOR rhsr(sind.size()), stater(sind.size());
+        gmm::copy(gmm::sub_matrix(K, I, I), Kr);
+        gmm::copy(gmm::sub_vector(state, I), stater);
+        gmm::copy(gmm::sub_vector(rhs, I), rhsr);
+        (*lsolver)(Kr, stater, rhsr, iter);
+        gmm::copy(stater, gmm::sub_vector(state, I));
       } else {
-	(*lsolver)(K, state, rhs, iter);
+        (*lsolver)(K, state, rhs, iter);
       }
     }
     else {
       model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K, is_reduced, sind,
-				    with_pseudo_potential);
+                                    with_pseudo_potential);
       classical_Newton(mdpb, iter, *lsolver);
     }
     md.to_variables(state); // copy the state vector into the model variables
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      rmodel_plsolver_type lsolver,
-		      abstract_newton_line_search &ls,
-		      bool with_pseudo_potential) {
+                      rmodel_plsolver_type lsolver,
+                      abstract_newton_line_search &ls,
+                      bool with_pseudo_potential) {
     standard_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
-		   md.real_rhs(), with_pseudo_potential);
+                   md.real_rhs(), with_pseudo_potential);
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      cmodel_plsolver_type lsolver,
-		      abstract_newton_line_search &ls,
-		      bool with_pseudo_potential) {
+                      cmodel_plsolver_type lsolver,
+                      abstract_newton_line_search &ls,
+                      bool with_pseudo_potential) {
     standard_solve(md, iter, lsolver, ls, md.complex_tangent_matrix(),
-		   md.complex_rhs(), with_pseudo_potential);
+                   md.complex_rhs(), with_pseudo_potential);
   }
 
 
   void standard_solve(model &md, gmm::iteration &iter,
-			     rmodel_plsolver_type lsolver,
-		      bool with_pseudo_potential) {
+                      rmodel_plsolver_type lsolver,
+                      bool with_pseudo_potential) {
     default_newton_line_search ls;
     standard_solve(md, iter, lsolver, ls, with_pseudo_potential);
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
-			     cmodel_plsolver_type lsolver,
-		      bool with_pseudo_potential) {
+                      cmodel_plsolver_type lsolver,
+                      bool with_pseudo_potential) {
     default_newton_line_search ls;
     standard_solve(md, iter, lsolver, ls, with_pseudo_potential);
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
-		      bool with_pseudo_potential) {
+                      bool with_pseudo_potential) {
     getfem::default_newton_line_search ls;
     if (md.is_complex())
       standard_solve(md, iter, cdefault_linear_solver(md), ls,
-		     with_pseudo_potential);
+                     with_pseudo_potential);
     else
       standard_solve(md, iter, rdefault_linear_solver(md), ls,
-		     with_pseudo_potential);
+                     with_pseudo_potential);
   }
 
 

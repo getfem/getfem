@@ -195,7 +195,7 @@ namespace getfemint {
     } break;
     default: {
       THROW_BADARG("Argument " << argnum << " of class " << gfi_array_get_class_name(arg) <<
-                   " is not an scalar value");
+                   " is not a scalar value");
     } break;
     }
     return dv;
