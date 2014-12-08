@@ -72,6 +72,8 @@ namespace gmm {
   /* geev_interface_right                                                  */
   /* geev_interface_left                                                   */
   /*                                                                       */
+  /* schur(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>)              */
+  /*                                                                       */
   /* svd(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>, std::vector<T>)*/
   /* svd(dense_matrix<T>, dense_matrix<T>, dense_matrix<T>,                */
   /*     std::vector<std::complex<T> >)                                    */
@@ -91,6 +93,7 @@ namespace gmm {
     void sormqr_(...); void dormqr_(...); void cunmqr_(...); void zunmqr_(...);
     void sgees_ (...); void dgees_ (...); void cgees_ (...); void zgees_ (...);
     void sgeev_ (...); void dgeev_ (...); void cgeev_ (...); void zgeev_ (...);
+    void sgeesx_(...); void dgeesx_(...); void cgeesx_(...); void zgeesx_(...);
     void sgesvd_(...); void dgesvd_(...); void cgesvd_(...); void zgesvd_(...);
   }
 
@@ -328,6 +331,67 @@ namespace gmm {
   geev_interface2(zgeev_, BLAS_Z, left) 
     
 
+  /* ********************************************************************* */
+  /* SCHUR algorithm:                                                      */
+  /*  A = Q*S*(Q^T), with Q orthogonal and S upper quasi-triangula         */
+  /* ********************************************************************* */
+
+# define geesx_interface(lapack_name, base_type) inline                 \
+  void schur(dense_matrix<base_type> &A,                                \
+             dense_matrix<base_type> &S,                                \
+             dense_matrix<base_type> &Q) {                              \
+    GMMLAPACK_TRACE("geesx_interface");                                 \
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A));                   \
+    GMM_ASSERT1(m == n, "Schur decomposition requires square matrix");  \
+    char jobvs = 'V', sort = 'N', sense = 'N';                          \
+    bool select = false;                                                \
+    int lwork = 8*n, sdim = 0, liwork = 1;                              \
+    std::vector<base_type> work(lwork), wr(n), wi(n);                   \
+    std::vector<int> iwork(liwork);                                     \
+    std::vector<int> bwork(0);                                          \
+    resize(S, n, n); copy(A, S);                                        \
+    resize(Q, n, n);                                                    \
+    base_type rconde(0), rcondv(0);                                     \
+    int info = -1;                                                      \
+    lapack_name(&jobvs, &sort, &select, &sense, &n, &S(0,0), &n,        \
+                &sdim, &wr[0], &wi[0], &Q(0,0), &n, &rconde, &rcondv,   \
+                &work[0], &lwork, &iwork[0], &liwork, &bwork[0], &info);\
+    GMM_ASSERT1(!info, "SCHUR algorithm failed");                       \
+  }
+
+# define geesx_interface2(lapack_name, base_type) inline                \
+  void schur(dense_matrix<base_type> &A,                                \
+             dense_matrix<base_type> &S,                                \
+             dense_matrix<base_type> &Q) {                              \
+    GMMLAPACK_TRACE("geesx_interface");                                 \
+    int m = int(mat_nrows(A)), n = int(mat_ncols(A));                   \
+    GMM_ASSERT1(m == n, "Schur decomposition requires square matrix");  \
+    char jobvs = 'V', sort = 'N', sense = 'N';                          \
+    bool select = false;                                                \
+    int lwork = 8*n, sdim = 0;                                          \
+    std::vector<base_type::value_type> rwork(lwork);                    \
+    std::vector<base_type> work(lwork), w(n);                           \
+    std::vector<int> bwork(0);                                          \
+    resize(S, n, n); copy(A, S);                                        \
+    resize(Q, n, n);                                                    \
+    base_type rconde(0), rcondv(0);                                     \
+    int info = -1;                                                      \
+    lapack_name(&jobvs, &sort, &select, &sense, &n, &S(0,0), &n,        \
+                &sdim, &w[0], &Q(0,0), &n, &rconde, &rcondv,            \
+                &work[0], &lwork, &rwork[0], &bwork[0], &info);         \
+    GMM_ASSERT1(!info, "SCHUR algorithm failed");                       \
+  }
+
+  geesx_interface(sgeesx_, BLAS_S)
+  geesx_interface(dgeesx_, BLAS_D)
+  geesx_interface2(cgeesx_, BLAS_C)
+  geesx_interface2(zgeesx_, BLAS_Z)
+
+  template <typename MAT>
+  void schur(const MAT &A_, MAT &S, MAT &Q) {
+   MAT A(A_);
+   schur(A, S, Q);
+  }
 
 
   /* ********************************************************************* */
@@ -380,6 +444,11 @@ namespace gmm {
   cgesvd_interface(cgesvd_, BLAS_C, BLAS_S)
   cgesvd_interface(zgesvd_, BLAS_Z, BLAS_D)
 
+  template <typename MAT, typename VEC>
+  void svd(const MAT &X_, MAT &U, MAT &Vtransposed, VEC &sigma) {
+   MAT X(X_);
+   svd(X, U, Vtransposed, sigma);
+  }
     
 
 
