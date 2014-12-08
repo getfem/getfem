@@ -285,6 +285,7 @@
     <ClInclude Include="..\..\src\gmm\gmm_def.h" />
     <ClInclude Include="..\..\src\gmm\gmm_dense_Householder.h" />
     <ClInclude Include="..\..\src\gmm\gmm_dense_lu.h" />
+    <ClInclude Include="..\..\src\gmm\gmm_dense_matrix_functions.h" />
     <ClInclude Include="..\..\src\gmm\gmm_dense_qr.h" />
     <ClInclude Include="..\..\src\gmm\gmm_dense_sylvester.h" />
     <ClInclude Include="..\..\src\gmm\gmm_domain_decomp.h" />

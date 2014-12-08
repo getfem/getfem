@@ -25,6 +25,7 @@ nobase_include_HEADERS =                   		\
 	gmm/gmm_modified_gram_schmidt.h    		\
 	gmm/gmm_dense_Householder.h        		\
 	gmm/gmm_dense_lu.h                 		\
+	gmm/gmm_dense_matrix_functions.h                \
 	gmm/gmm_dense_qr.h                 		\
 	gmm/gmm_dense_sylvester.h         		\
 	gmm/gmm_tri_solve.h                		\

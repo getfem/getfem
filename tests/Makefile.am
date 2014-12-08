@@ -44,7 +44,8 @@ check_PROGRAMS =                   \
 	wave_equation 		   \
 	cyl_slicer		   \
 	test_large_sliding_contact \
-	test_continuation
+	test_continuation          \
+	test_gmm_matrix_functions
 
 CLEANFILES = \
 	laplacian.res laplacian.mesh laplacian.dataelt 			    \
@@ -100,8 +101,9 @@ bilaplacian_SOURCES = bilaplacian.cc
 heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
 cyl_slicer_SOURCES = cyl_slicer.cc
-test_continuation_SOURCES = test_continuation.cc
 test_large_sliding_contact_SOURCES = test_large_sliding_contact.cc
+test_continuation_SOURCES = test_continuation.cc
+test_gmm_matrix_functions_SOURCES = test_gmm_matrix_functions.cc
 
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../src
 LDADD    = ../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
@@ -142,6 +144,7 @@ TESTS = \
 	heat_equation.pl              \
 	wave_equation.pl   	          \
 	test_large_sliding_contact.pl \
+	test_gmm_matrix_functions.pl  \
 	cyl_slicer.pl	              \
 	make_gmm_test.pl
 
@@ -197,6 +200,7 @@ EXTRA_DIST =                               			\
 	test_interpolated_fem.param        			\
 	test_large_sliding_contact.pl                           \
 	test_large_sliding_contact.param                        \
+	test_gmm_matrix_functions.pl              \
 	geo_trans_inv.param                			\
 	heat_equation.pl                   			\
 	heat_equation.param                			\
