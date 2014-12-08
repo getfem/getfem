@@ -121,12 +121,18 @@ namespace getfem
 #ifdef GETFEM_HAVE_OPENMP	
   /**number of OpenMP threads*/
   inline size_t num_threads(){return omp_get_max_threads();}
+
+  /**set maximum number of OpenMP threads*/
+  inline void set_num_threads(int n){omp_set_num_threads(n);}
+
   /**index of the current thread*/
   inline size_type this_thread() {return omp_get_thread_num();}
   /**is the program running in the parallel section*/
   inline bool me_is_multithreaded_now(){return static_cast<bool>(omp_in_parallel());}
+
 #else
   inline size_type num_threads(){return size_type(1);}
+  inline void set_num_threads(int n) { }
   inline size_type this_thread() {return size_type(0);}
   inline bool me_is_multithreaded_now(){return false;}
 #endif
