@@ -138,7 +138,7 @@ namespace gmm {
                 "Matrix logarithm is not defined for non-square matrices");
     for (size_type i=0; i < n-1; ++i)
       if (gmm::abs(S(i+1,i)) > default_tol(T())) {
-        GMM_ASSERT1(false, "An uppper diagonal matrix is expected");
+        GMM_ASSERT1(false, "An upper triangular matrix is expected");
         break;
       }
     for (size_type i=0; i < n-1; ++i)
@@ -266,6 +266,9 @@ namespace gmm {
       gmm::copy(gmm::real_part(S), gmm::real_part(cS));
       gmm::copy(gmm::real_part(Q), gmm::real_part(cQ));
       block2x2_reduction(cS, cQ, default_tol(R())*R(3));
+      for (size_type j=0; j < n-1; ++j)
+        for (size_type i=j+1; i < n; ++i)
+          cS(i,j) = T(0);
       logm_utri_inplace(cS);
       gmm::mult(cQ, cS, auxmat);
       gmm::mult(auxmat, gmm::transposed(cQ), cS);
