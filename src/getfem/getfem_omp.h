@@ -132,7 +132,7 @@ namespace getfem
 
 #else
   inline size_type num_threads(){return size_type(1);}
-  inline void set_num_threads(int n) { }
+  inline void set_num_threads(int /* n */) { }
   inline size_type this_thread() {return size_type(0);}
   inline bool me_is_multithreaded_now(){return false;}
 #endif
