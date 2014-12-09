@@ -43,7 +43,7 @@ NY = 20;
 % alpha is parameter of the generalized integration algorithms.
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
 % backward Euler integration
-alpha = 1/2;
+alpha = 1.0;
 
 
 
@@ -156,7 +156,7 @@ if (with_hardening)
   %expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
   %expression de sigma for generalized alpha algorithms
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*((1-alpha)*sigma))+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
   
   gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
@@ -199,12 +199,9 @@ for step=1:size(t,2),
     % the Von Mises or Tresca stress
     if (with_hardening)
       sigma_0 = gf_model_get(md, 'variable', 'sigma');
-      sigma = (gf_model_get(md, 'interpolation', expr_sigma, mim_data) - (1-alpha)*sigma_0)/alpha;
-      
-      % sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
-      
-      gf_model_set(md, 'variable', 'sigma', sigma);
-      gf_model_set(md, 'variable', 'Previous_u', U);
+      sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+      U_0 = gf_model_get(md, 'variable', 'Previous_u');
+      U_nalpha = alpha*U + (1-alpha)*U_0;
       
       M = gf_asm('mass matrix', mim, mf_vm);
       L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
@@ -216,13 +213,19 @@ for step=1:size(t,2),
       L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
       plast = (M \ L)';
       
+      gf_model_set(md, 'variable', 'u', U_nalpha);
       Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
+      gf_model_set(md, 'variable', 'u', U);
       ind_gauss_pt = 22500;
       if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
         ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
       end
       sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
       Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
+      
+      sigma = (sigma - (1-alpha)*sigma_0)/alpha;
+      gf_model_set(md, 'variable', 'sigma', sigma);
+      gf_model_set(md, 'variable', 'Previous_u', U);
     else
       get(md, 'elastoplasticity next iter', mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
       plast = get(md, 'compute plastic part', mim, mf_vm, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');

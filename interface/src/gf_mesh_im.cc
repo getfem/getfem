@@ -154,6 +154,7 @@ void gf_mesh_im(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
        The first levelset is always referred to with "a", the second
        with "b", and so on.
+
       for intance INSIDE(a*b*c)
 
       CAUTION: this integration method will be defined only on the element
