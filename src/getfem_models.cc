@@ -174,6 +174,37 @@ namespace getfem {
     return res_name;
   }
 
+  void model::resize_global_system() const
+  {
+    size_type tot_size = 0;
+
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
+         ++it) {
+      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
+        it->second.I = gmm::sub_interval(tot_size, it->second.size());
+        tot_size += it->second.size();
+      }
+    }
+
+    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
+         ++it) {
+      if (it->second.is_affine_dependent) {
+        VAR_SET::iterator it2 = variables.find(it->second.org_name);
+        it->second.I = it2->second.I;
+        it->second.set_size(it2->second.size());
+      }
+    }
+    
+    if (complex_version) {
+      gmm::resize(cTM, tot_size, tot_size);
+      gmm::resize(crhs, tot_size);
+    }
+    else {
+      gmm::resize(rTM, tot_size, tot_size);
+      gmm::resize(rrhs, tot_size);
+    }
+  }
+
   void model::actualize_sizes(void) const {
     bool actualized = false;
     getfem::local_guard lock = locks_.get_lock();
@@ -399,34 +430,7 @@ namespace getfem {
 //       #endif
     }
 
-    size_type tot_size = 0;
-
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
-        it->second.I = gmm::sub_interval(tot_size, it->second.size());
-        tot_size += it->second.size();
-      }
-    }
-
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end();
-         ++it) {
-      if (it->second.is_affine_dependent) {
-        VAR_SET::iterator it2 = variables.find(it->second.org_name);
-        it->second.I = it2->second.I;
-        it->second.set_size(it2->second.size());
-      }
-    }
-    
-    if (complex_version) {
-      gmm::resize(cTM, tot_size, tot_size);
-      gmm::resize(crhs, tot_size);
-    }
-    else {
-      gmm::resize(rTM, tot_size, tot_size);
-      gmm::resize(rrhs, tot_size);
-    }
-
+    resize_global_system();
     actualized = true;
 //     #if GETFEM_PARA_LEVEL > 1
 //     cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;

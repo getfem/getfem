@@ -385,6 +385,8 @@ namespace getfem {
 
     void init(void) { complex_version = false; act_size_to_be_done = false; }
 
+    void resize_global_system() const;
+
     //to be performed after to_variables is called.
     virtual void post_to_variables_step();
 
