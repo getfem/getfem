@@ -8688,9 +8688,13 @@ namespace getfem {
       size_type si = t.size();
       if (!initialized) {
         s = si;
-        GMM_ASSERT1(imd.tensor_size() == t.sizes(),
-                    "Im_data tensor size does not match the size of "
-                    "the interpolated expression.");
+        GMM_ASSERT1(imd.tensor_size() == t.sizes() ||
+                    (imd.tensor_size().size() == size_type(1) &&
+                     imd.tensor_size()[0] == size_type(1) &&
+                     si == size_type(1)),
+                    "Im_data tensor size " << imd.tensor_size() <<
+                    " does not match the size of the interpolated "
+                    "expression " << t.sizes() << ".");
         gmm::resize(result, s * imd.nb_filtered_index());
         gmm::clear(result);
         initialized = true;
