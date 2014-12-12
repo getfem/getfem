@@ -84,7 +84,8 @@ namespace getfem {
     for (size_type i = 0; i < full.size(); ++i) full[i] = i;
     base_vector reduced(nb_dof());
 
-    gmm::mult(R_, full, reduced);
+    if (R_.ncols() > 0) gmm::mult(R_, full, reduced);
+    else reduced = full;
 
     dal::bit_vector kept_dofs;
     for (size_type i = 0; i < reduced.size(); ++i) kept_dofs.add(reduced[i]);
