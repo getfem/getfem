@@ -300,12 +300,14 @@ namespace getfem {
 
       size_type s = 0;
       std::set<size_type> glob_columns;
+      std::vector<dal::bit_vector> mult_kept_dofs;
       for (size_type k = 0; k < mults.size(); ++k) {
         VAR_SET::iterator it = variables.find(mults[k]);
 
         // This step forces the recomputation of corresponding bricks.
         // A test to check if a modification is really necessary could
         // be done first ... (difficult to coordinate with other multipliers)
+        mult_kept_dofs.push_back(it->second.partial_mf->retrieve_kept_dofs());
         dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
         it->second.partial_mf->adapt(alldof);
         it->second.set_size(it->second.partial_mf->nb_dof());
@@ -390,6 +392,7 @@ namespace getfem {
           for (std::set<size_type>::iterator itt = columns.begin();
                itt != columns.end(); ++itt)
             kept.add(*itt);
+          kept &= mult_kept_dofs[k];
           it->second.partial_mf->adapt(kept);
           it->second.set_size(it->second.partial_mf->nb_dof());
           it->second.v_num = act_counter();
@@ -418,6 +421,7 @@ namespace getfem {
           for (std::set<size_type>::iterator itt = glob_columns.begin();
                itt != glob_columns.end(); ++itt)
             if (*itt >= s && *itt < s + nbdof) kept.add(*itt-s);
+          kept &= mult_kept_dofs[k];
           it->second.partial_mf->adapt(kept);
           it->second.set_size(it->second.partial_mf->nb_dof());
           it->second.v_num = act_counter();
