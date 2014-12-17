@@ -45,19 +45,17 @@ NY = 20;
 % alpha is parametr of the generalized integration algorithms The
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
 % backward Euler integration
-alpha = 1;
+alpha_method = true;
+alpha = 1.0;
 
 
-% f = [0 -600]';
-%t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0];
 f = [15000 0]';
-%  t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 -0.1
-%  -0.2 -0.4 -0.6 -0.8 -0.6 -0.4 -0.2 0];
+
 
 
 % transient part.
-T = pi;
-dt = 0.001;
+T = pi/4;
+dt = 0.01;
 theta= 1;
 
 
@@ -125,11 +123,28 @@ md = gfModel('real');
 % 2 is the number of version of the data stored, for the time integration scheme 
 set(md, 'add fem variable', 'u', mf_u, 2);
 
+
+
 % Time integration scheme and inertia term
+if(alpha_method) 
+ nbdofu = gf_mesh_fem_get(mf_u, 'nbdof');
+ M = gf_asm('mass matrix', mim, mf_u);
+ gf_model_set(md, 'add fem data', 'Previous_u', mf_u);
+ set(md, 'add initialized data', 'rho', rho);
+% % gf_model_set(md, 'add mass brick', mim, string varname[, string dataname_rho[, int region]]);
+% gf_model_set(md, 'add mass brick', mim,'u' ,'rho');
+ 
+else
+
 gf_model_set(md, 'add theta method for second order', 'u',theta);
+gf_model_set(md, 'set time step', dt);
+
+
 set(md, 'add initialized data', 'rho', rho);
 gf_model_set(md, 'add mass brick', mim, 'Dot2_u', 'rho');
-gf_model_set(md, 'set time step', dt);
+
+end
+
 
 
 
@@ -163,12 +178,14 @@ ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
 Enp1 = '((Grad_u+Grad_u'')/2)';
 En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
  %expression de sigma for Implicit Euler method
-  %expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
-  %expression de sigma for generalized alpha algorithms
-   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
+ 
+if(alpha_method)
+ %expression de sigma for generalized alpha algorithms
+  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
-
+end
 
 
 gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
@@ -190,6 +207,13 @@ set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 U0 = get(md, 'variable', 'u');
 V0 = 0*U0;
 
+if(alpha_method)
+gf_model_set(md, 'add explicit matrix', 'u', 'u',rho* M/(dt*dt*alpha));
+ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nbdofu,1));
+MV0=M*V0';
+else
+    
+    
 % Initial data.
 gf_model_set(md, 'variable', 'Previous_u',  U0);
 gf_model_set(md, 'variable', 'Previous_Dot_u',  V0);
@@ -199,19 +223,9 @@ gf_model_set(md, 'variable', 'Previous_Dot_u',  V0);
 gf_model_set(md, 'perform init time derivative', dt/20.);
 gf_model_get(md, 'solve');
 
-
-
-if(alpha==0.5)
-    nbdofu = gf_mesh_fem_get(mf_u, 'nbdof');
-    M = gf_asm('mass matrix', mim, mf_u);
-    gf_model_set(md, 'add explicit matrix', 'u', 'u', M/(dt*dt*alpha*alpha));
-    ind_rhs = gf_model_set(md, 'add explicit rhs', 'u', zeros(nbdofu,1));
-     MV0=M*V0;
-     F=get(mf_data, 'eval',{f(1,1)*sin(0);f(2,1)*sin(0)});
-     FF = gf_asm('volumic source', mim, mf_u, mf_data, F);
-     K = gf_asm('elastoplasticity', mim, mf_u, mf_data, ones(nbdofd,1)*clambda, ones(nbdofd,1)*cmu); %%%%%% ???????????
-     MA0 = FF-K*U0;
 end
+
+
 
 
 
@@ -222,43 +236,79 @@ VM=zeros(1,get(mf_vm, 'nbdof'));
 % Iterations
 for t = 0:dt:T
   
-  coeff = sin(16*t);
+   coeff = sin(16*t);
+   disp(sprintf('step %d, coeff = %g', step , coeff)); 
+   set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff}));  
   
-  if(alpha==0.5)
-   F = get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff});
-   FF = gf_asm('volumic source', mim, mf_u, mf_data, F);   
-   D = (M*U0 + dt*MV0)/(dt*dt*alpha*alpha) + (1-alpha)*MA0/alpha;  
-   gf_model_set(md, 'set private rhs', ind_rhs, D);
-  gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter);
-   U = gf_model_get(md, 'variable', 'u');
-   MV = ((M*U1 - M*U0)/dt -(1-alpha)*MV0)/alpha;
-   MA = ((MV1-MV0)/dt - (1-alpha)*MA0)/alpha;
-  else
-  
-  
-  
-  disp(sprintf('step %d, coeff = %g', step , coeff)); 
-   
+if(alpha_method)
+    
+   MU0=M*U0';
+     
+   LL = rho*(( 1/(dt*dt*alpha))*MU0+( 1/(dt*alpha))*MV0);
  
-  set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff}));  
+   gf_model_set(md, 'set private rhs', ind_rhs, LL);
+   get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+   U = gf_model_get(md, 'variable', 'u');
+   MV = ((M*U' - MU0)/dt -(1-alpha)*MV0)/alpha;
+
   
-  get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
-  % gf_model_get(md, 'solve', 'noisy');
-  U = gf_model_get(md, 'variable', 'u');
-  V = gf_model_get(md, 'variable', 'Dot_u'); 
-  
-  end
+else
    
+   get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+   U = gf_model_get(md, 'variable', 'u');
+   V = gf_model_get(md, 'variable', 'Dot_u'); 
   
+end
+
+      
   if (test_tangent_matrix)
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
   end;
     
-    
+ if (alpha_method)
+      sigma_0 = gf_model_get(md, 'variable', 'sigma');
+      sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+      U_0 = gf_model_get(md, 'variable', 'Previous_u');
+      U_nalpha = alpha*U + (1-alpha)*U_0;
+       
+       
+       
+      M_vm = gf_asm('mass matrix', mim, mf_vm);
+      L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+      VM = (M_vm \ L)';
+      coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
+      coeff2='1/(2*mu)';
+      Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
+      Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
+      L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
+      plast = (M_vm \ L)';
+      
+      gf_model_set(md, 'variable', 'u', U_nalpha);
+      Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
+ 
+      nb_gauss_pt_per_element = size(sigma, 2) / (N*N*gf_mesh_get(m, 'nbcvs'));
+      % ind_gauss_pt = 22500;
+      ind_gauss_pt = nb_gauss_pt_per_element * 1100 - 1;
+      ind_elt = floor(ind_gauss_pt / nb_gauss_pt_per_element);
+       P = gf_mesh_get(m, 'pts from cvid', ind_elt);
+      disp(sprintf('Point for the strain/stress graph (approximately): (%f,%f)', P(1,1), P(2,1)));
+
+    if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
+      ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
+    end
+      sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
+      Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
+      sigma = (sigma - (1-alpha)*sigma_0)/alpha;
+      gf_model_set(md, 'variable', 'sigma', sigma);
+      gf_model_set(md, 'variable', 'Previous_u', U);
+  else
+   
     
     sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
     gf_model_set(md, 'variable', 'sigma', sigma);
     gf_model_set(md, 'variable', 'Previous_u', U);
+    
+
       
     M_VM = gf_asm('mass matrix', mim, mf_vm);
     L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
@@ -285,7 +335,7 @@ for t = 0:dt:T
     Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
     
     
-    
+ end  
     
     
        
@@ -319,11 +369,11 @@ for t = 0:dt:T
     
      step= step+ 1;
      
-     if(alpha==0.5)
+     if(alpha_method)
          
   U0 = U;
   MV0 = MV;
-  MA0 = MA;
+ 
      else
          
         
