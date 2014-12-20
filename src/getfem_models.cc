@@ -287,7 +287,7 @@ namespace getfem {
 
       std::vector<std::string> &mults = multipliers[itbd->first];
       VAR_SET::iterator it2 = variables.find(itbd->first);
-
+      
       gmm::col_matrix< gmm::rsvector<scalar_type> > MGLOB;
       if (mults.size() > 1) {
         size_type s = 0;
@@ -297,13 +297,13 @@ namespace getfem {
         }
         gmm::resize(MGLOB, it2->second.mf->nb_dof(), s);
       }
-
+      
       size_type s = 0;
       std::set<size_type> glob_columns;
       std::vector<dal::bit_vector> mult_kept_dofs;
       for (size_type k = 0; k < mults.size(); ++k) {
         VAR_SET::iterator it = variables.find(mults[k]);
-
+        
         // This step forces the recomputation of corresponding bricks.
         // A test to check if a modification is really necessary could
         // be done first ... (difficult to coordinate with other multipliers)
@@ -320,64 +320,66 @@ namespace getfem {
           MM(it2->second.associated_mf().nb_dof(), it->second.mf->nb_dof());        
         bool termadded = false;
 
-  if (it->second.filter == VDESCRFILTER_CTERM) {
+        if (it->second.filter == VDESCRFILTER_CTERM) {
 
           for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
-      const brick_description &brick = bricks[ib];
-      bool bupd = false;
-      bool cplx = is_complex() && brick.pbr->is_complex();
-      
-      for (size_type j = 0; j < brick.tlist.size(); ++j) {
-        
-        const term_description &term = brick.tlist[j];
-        
-        if (term.is_matrix_term && !mults[k].compare(term.var1) &&
-      !it2->first.compare(term.var2)) {
-    if (!bupd) {
-      brick.terms_to_be_computed = true;
-      update_brick(ib, BUILD_MATRIX);
-      bupd = true;
-    }
-    if (cplx)
-      gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
-         MM);
-    else
-      gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
-    termadded = true;
-    
-        } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
-       !it2->first.compare(term.var1)) {
-    if (!bupd) {
-      brick.terms_to_be_computed = true;
-      update_brick(ib, BUILD_MATRIX);
-      bupd = true;
-    }
-    if (cplx)
-      gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
-    else
-      gmm::add(brick.rmatlist[j], MM);
-    termadded = true;
-        }
-      }
-    }
-
-    if (!termadded)
-      GMM_WARNING1("No term found to filter multiplier " << it->first
-       << ". Variable is cancelled");
-  } else if (it->second.filter == VDESCRFILTER_INFSUP) {
+            const brick_description &brick = bricks[ib];
+            bool bupd = false;
+            bool cplx = is_complex() && brick.pbr->is_complex();
+            
+            for (size_type j = 0; j < brick.tlist.size(); ++j) {
+              
+              const term_description &term = brick.tlist[j];
+              
+              if (term.is_matrix_term && !mults[k].compare(term.var1) &&
+                  !it2->first.compare(term.var2)) {
+                if (!bupd) {
+                  brick.terms_to_be_computed = true;
+                  update_brick(ib, BUILD_MATRIX);
+                  bupd = true;
+                }
+                if (cplx)
+                  gmm::add(gmm::transposed(gmm::real_part(brick.cmatlist[j])),
+                           MM);
+                else
+                  gmm::add(gmm::transposed(brick.rmatlist[j]), MM);
+                termadded = true;
+                
+              } else if (term.is_matrix_term && !mults[k].compare(term.var2) &&
+                         !it2->first.compare(term.var1)) {
+                if (!bupd) {
+                  brick.terms_to_be_computed = true;
+                  update_brick(ib, BUILD_MATRIX);
+                  bupd = true;
+                }
+                if (cplx)
+                  gmm::add(gmm::real_part(brick.cmatlist[j]), MM);
+                else
+                  gmm::add(brick.rmatlist[j], MM);
+                termadded = true;
+              }
+            }
+          }
+          
+          if (!termadded)
+            GMM_WARNING1("No term found to filter multiplier " << it->first
+                         << ". Variable is cancelled");
+        } else if (it->second.filter == VDESCRFILTER_INFSUP) {
           mesh_region rg(it->second.m_region);
           it->second.mim->linked_mesh().intersect_with_mpi_region(rg);
-    asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
-        *(it->second.mf), rg);
-  }
-
+          asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
+                          *(it->second.mf), rg);
+        }
+        
         MPI_SUM_SPARSE_MATRIX(MM);
-
+        
         //
         // filtering
         //
         std::set<size_type> columns;
         gmm::range_basis(MM, columns);
+        
+
         if (mults.size() > 1) {
           gmm::copy(MM, gmm::sub_matrix
                     (MGLOB, gmm::sub_interval(0,

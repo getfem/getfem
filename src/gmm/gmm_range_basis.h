@@ -437,7 +437,7 @@ namespace gmm {
           c1.clear();
         }
       }
-      if (c1.size() > 10)
+      if (c1.size() > 1)
         range_basis_eff_Gram_Schmidt_dense(B, c1, c_ortho, EPS);
       for (std::set<size_type>::iterator it = c1.begin(); it != c1.end(); ++it)
         cres.insert(*it);
@@ -446,7 +446,6 @@ namespace gmm {
       if (columns.size() == nc_r) break;
       if (sizesm[k] >= 350 && columns.size() > (nc_r*19)/20) break;
     }
-    // cout << "size of columns " << columns.size() << endl;
     if (columns.size() > std::max(size_type(10), actsize))
       range_basis_eff_Lanczos(B, columns, EPS);
     else
