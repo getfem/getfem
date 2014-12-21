@@ -54,14 +54,14 @@ using std::flush;
 
 int fail_cnt = 0;
 
-static void classical_mesh_fem(getfem::mesh_fem& mf, getfem::short_type K) {
-  for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished();
-       ++cv) {
-    bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
-    mf.set_finite_element(cv, getfem::classical_fem(pgt,K));
-  }
-  //mf.set_classical_finite_element(K,2*K);
-}
+// static void classical_mesh_fem(getfem::mesh_fem& mf, getfem::short_type K) {
+//   for (dal::bv_visitor cv(mf.linked_mesh().convex_index()); !cv.finished();
+//        ++cv) {
+//     bgeot::pgeometric_trans pgt = mf.linked_mesh().trans_of_convex(cv);
+//     mf.set_finite_element(cv, getfem::classical_fem(pgt,K));
+//   }
+//   //mf.set_classical_finite_element(K,2*K);
+// }
 
 
 typedef enum {
@@ -876,7 +876,7 @@ void testbug() {
 
 
 
-static void test_new_assembly(void) {
+static void test_new_assembly(int N, int NX, int pK) {
 
     // std::string expr="([1,2;3,4]@[1,2;1,2])(:,2,1,1)(1)+ [1,2;3,4](1,:)(2)"; // should give 4
     // std::string expr="[1,2;3,4]@[1,2;1,2]*[2,3;2,1]/4 + [1,2;3,1]*[1;1](1)"; // should give [4, 8; 12, 13]
@@ -900,10 +900,6 @@ static void test_new_assembly(void) {
     // workspace.add_fixed_size_variable("c", gmm::sub_interval(0, 1), c);
     
     getfem::mesh m;
-
-    int N = 2;
-    int NX = 100;
-    int pK = 2;
 
     char Ns[5]; sprintf(Ns, "%d", N);
     char Ks[5]; sprintf(Ks, "%d", pK);
@@ -990,21 +986,23 @@ static void test_new_assembly(void) {
       SCAL_TEST_0("Test on function integration 2",
                   "-Derivative_sin(pi*X).exp(X*0)", mim, 0);
       SCAL_TEST_0("Test on function integration 2",
-                  "sin(pi*X).exp(X*0)", mim, 2.0*N/M_PI);
+                  "sin(pi*X).exp(X*0)", mim, 2.0*double(N)/M_PI);
       SCAL_TEST_0("Test on function integration 2",
-                  "Derivative_cos(pi*X).exp(X*0)", mim, -2.0*N/M_PI);
+                  "Derivative_cos(pi*X).exp(X*0)", mim, -2.0*double(N)/M_PI);
       SCAL_TEST_0("Test on function integration 3",
                   "cos(pi*X).Id(meshdim)(:,1)", mim,0);
     }
 
     if (all) {
-      getfem::ga_define_function("dummyfunc", 1,
-                                 "sin(pi*t/2)+2*sqr(t)-[t;t].[t;t]");
-      SCAL_TEST_0("Test on user defined functions",
-                  "dummyfunc(5)", mim, 1);
-      getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
-      SCAL_TEST_0("Test on user defined functions",
-                  "dummyfunc2(X(1))", mim, 0);
+      if (N == 2) {
+        getfem::ga_define_function("dummyfunc", 1,
+                                   "sin(pi*t/2)+2*sqr(t)-[t;t].[t;t]");
+        SCAL_TEST_0("Test on user defined functions",
+                    "dummyfunc(5)", mim, 1);
+        getfem::ga_define_function("dummyfunc2", 1, "cos(pi*t)");
+        SCAL_TEST_0("Test on user defined functions",
+                    "dummyfunc2(X(1))", mim, 0);
+      }
     }
 
 
@@ -1160,6 +1158,38 @@ static void test_new_assembly(void) {
                  "*Grad_Test_u:Grad_Test2_u"
                  "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u",
                  mim2, Iu, Iu);
+
+      if (N == 2) {
+        MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+                   "+mu*(Grad_Test_u'(:,1)"
+                   "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
+                   "+mu*(Grad_Test_u'(:,2)"
+                   "+Grad_Test_u(:,2)):Grad_Test2_u(:,2) ", mim2, Iu, Iu);
+        
+        MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+                   "+mu*(Grad_Test_u'(1,:)"
+                   "+Grad_Test_u(1,:)):Grad_Test2_u(1,:)"
+                   "+mu*(Grad_Test_u'(2,:)"
+                   "+Grad_Test_u(2,:)):Grad_Test2_u(2,:) ", mim2, Iu, Iu);
+      }
+      if (N == 3) {
+        MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+                   "+mu*(Grad_Test_u'(:,1)"
+                   "+Grad_Test_u(:,1)):Grad_Test2_u(:,1)"
+                   "+mu*(Grad_Test_u'(:,2)"
+                   "+Grad_Test_u(:,2)):Grad_Test2_u(:,2)"
+                   "+mu*(Grad_Test_u'(:,3)"
+                   "+Grad_Test_u(:,3)):Grad_Test2_u(:,3) ", mim2, Iu, Iu);
+        
+        MAT_TEST_2(ndofu,ndofu,"lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+                   "+ mu*(Grad_Test_u'(1,:)"
+                   "+Grad_Test_u(1,:)):Grad_Test2_u(1,:)"
+                   "+ mu*(Grad_Test_u'(2,:)"
+                   "+Grad_Test_u(2,:)):Grad_Test2_u(2,:)"
+                   "+mu*(Grad_Test_u'(3,:)"
+                   "+Grad_Test_u(3,:)):Grad_Test2_u(3,:) ", mim2, Iu, Iu);
+      }
+      
     }
 
     if (all) {
@@ -1186,9 +1216,8 @@ int main(int argc, char *argv[]) {
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
   
-  test_new_assembly();
-  return 0; // a supprimer a terme, l'ancien assemblage doit toujours être testé ou alors faire deux tests.
-  
+  test_new_assembly(2, 25, 2);
+  test_new_assembly(3, 7, 2);
 
 
   // testbug();
