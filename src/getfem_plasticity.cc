@@ -24,6 +24,7 @@
 #include "getfem/getfem_plasticity.h"
 #include "getfem/getfem_interpolation.h"
 #include "getfem/getfem_generic_assembly.h"
+#include "gmm/gmm_dense_matrix_functions.h"
 
 
 namespace getfem {
@@ -690,10 +691,10 @@ namespace getfem {
   //=========================================================================
 
   static void ga_init_scalar(bgeot::multi_index &mi) { mi.resize(0); }
-  //  static void ga_init_vector(bgeot::multi_index &mi, size_type N)
-  // { mi.resize(1); mi[0] = N; }
+  static void ga_init_vector(bgeot::multi_index &mi, size_type N)
+    { mi.resize(1); mi[0] = N; }
   static void ga_init_matrix(bgeot::multi_index &mi, size_type M, size_type N)
-  { mi.resize(2); mi[0] = M; mi[1] = N; }
+    { mi.resize(2); mi[0] = M; mi[1] = N; }
   static void ga_init_square_matrix(bgeot::multi_index &mi, size_type N)
     { mi.resize(2); mi[0] = mi[1] = N; }
 
@@ -804,26 +805,24 @@ namespace getfem {
     return true;
   }
 
-  // not tested
-  bool logm(const base_matrix &a, base_matrix &alog, scalar_type tol=1e-15) {
+  bool logm_deriv(const base_matrix &a, base_tensor &dalog,
+                  base_matrix *palog=NULL) {
 
-    base_matrix atmp(a), b(a), bn(a);
-    gmm::copy(gmm::scaled(a, scalar_type(-1)), b);
-    gmm::add(gmm::identity_matrix(), b); // b = I-a
-    gmm::copy(b, alog);
-    gmm::copy(b, bn);
-    for (size_type n=2; n < 30; ++n) {
-      gmm::mult(bn, b, atmp);
-      gmm::copy(atmp, bn);
-      gmm::scale(atmp, scalar_type(1)/scalar_type(n));
-      gmm::add(atmp, alog);
-      if (gmm::mat_euclidean_norm(atmp) < tol) {
-        gmm::scale(alog, scalar_type(-1));
-        return true;
+    size_type N = gmm::mat_nrows(a);
+    base_matrix a1(a), alog1(a), alog(a);
+    logm(a, alog);
+    scalar_type eps(1e-8);
+    for (size_type k=0; k < N; ++k)
+      for (size_type l=0; l < N; ++l) {
+        gmm::copy(a, a1);
+        a1(k,l) += eps;
+        gmm::logm(a1, alog1);
+        for (size_type i=0; i < N; ++i)
+          for (size_type j=0; j < N; ++j)
+            dalog(i,j,k,l) = (alog1(i,j) - alog(i,j))/eps;
       }
-    }
-    gmm::scale(alog, scalar_type(-1));
-    return false;
+    if (palog) gmm::copy(alog, *palog);
+    return true;
   }
 
 
@@ -841,7 +840,9 @@ namespace getfem {
       size_type N = args[0]->sizes()[0];
       base_matrix inpmat(N,N), outmat(N,N);
       gmm::copy(args[0]->as_vector(), inpmat.as_vector());
-      expm(inpmat, outmat);
+      bool info = expm(inpmat, outmat);
+      GMM_ASSERT1(info, "Matrix exponential calculation "
+                        "failed to converge");
       gmm::copy(outmat.as_vector(), result.as_vector());
     }
 
@@ -849,7 +850,7 @@ namespace getfem {
     void derivative(const arg_list &args, size_type /*nder*/,
                     base_tensor &result) const {
       size_type N = args[0]->sizes()[0];
-      base_matrix inpmat(N,N), outmat(N,N);
+      base_matrix inpmat(N,N);
       gmm::copy(args[0]->as_vector(), inpmat.as_vector());
       bool info = expm_deriv(inpmat, result);
       GMM_ASSERT1(info, "Matrix exponential derivative calculation "
@@ -862,6 +863,93 @@ namespace getfem {
       GMM_ASSERT1(false, "Sorry, second derivative not implemented");
     }
   };
+
+
+  // Matrix logarithm
+  struct matrix_logarithm_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() != 2
+          || args[0]->sizes()[0] != args[0]->sizes()[1]) return false;
+      ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
+      return true;
+    }
+
+    // Value:
+    void value(const arg_list &args, base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix inpmat(N,N), outmat(N,N);
+      gmm::copy(args[0]->as_vector(), inpmat.as_vector());
+      gmm::logm(inpmat, outmat);
+      gmm::copy(outmat.as_vector(), result.as_vector());
+    }
+
+    // Derivative:
+    void derivative(const arg_list &args, size_type /*nder*/,
+                    base_tensor &result) const {
+      size_type N = args[0]->sizes()[0];
+      base_matrix inpmat(N,N);
+      gmm::copy(args[0]->as_vector(), inpmat.as_vector());
+      bool info = logm_deriv(inpmat, result);
+      GMM_ASSERT1(info, "Matrix logarithm derivative calculation "
+                        "failed to converge");
+    }
+
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &, size_type, size_type,
+                           base_tensor &) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
+
+  // Normalized vector/matrix operator : Vector/matrix divided by its Frobenius norm
+  struct normalized_operator : public ga_nonlinear_operator {
+    bool result_size(const arg_list &args, bgeot::multi_index &sizes) const {
+      if (args.size() != 1 || args[0]->sizes().size() > 2
+          || args[0]->sizes().size() < 1) return false;
+      if (args[0]->sizes().size() == 1)
+        ga_init_vector(sizes, args[0]->sizes()[0]);
+      else
+        ga_init_matrix(sizes, args[0]->sizes()[0], args[0]->sizes()[1]);
+      return true;
+    }
+    
+    // Value : u/|u|
+    void value(const arg_list &args, base_tensor &result) const
+    {
+      scalar_type no = gmm::vect_norm2(args[0]->as_vector());
+      if (no < 1E-15)
+        gmm::clear(result.as_vector());
+      else
+        gmm::copy(gmm::scaled(args[0]->as_vector(), scalar_type(1)/no),
+                  result.as_vector());
+    }
+
+    // Derivative : (|u|^2 Id - u x u)/|u|^3
+    void derivative(const arg_list &args, size_type,
+                    base_tensor &result) const {
+      const base_tensor &t = *args[0];
+      size_type N = t.size();
+      scalar_type no = gmm::vect_norm2(t.as_vector());
+
+      gmm::clear(result.as_vector());
+      if (no >= 1E-15) {
+        scalar_type no3 = no*no*no;
+        for (size_type i = 0; i < N; ++i) {
+          result[i*N+i] += scalar_type(1)/no;
+          for (size_type j = 0; j < N; ++j)
+            result[j*N+i] -= t[i]*t[j] / no3;
+        }
+      }
+    }
+
+    // Second derivative : not implemented
+    void second_derivative(const arg_list &/*args*/, size_type, size_type,
+                           base_tensor &/*result*/) const {
+      GMM_ASSERT1(false, "Sorry, second derivative not implemented");
+    }
+  };
+
 
   //=================================================================
   // Von Mises projection
@@ -956,9 +1044,13 @@ namespace getfem {
 
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();
-    
+
     PREDEF_OPERATORS.add_method("expm",
                                 new matrix_exponential_operator());
+    PREDEF_OPERATORS.add_method("logm",
+                                new matrix_logarithm_operator());
+    PREDEF_OPERATORS.add_method("Normalized",
+                                new normalized_operator());
     PREDEF_OPERATORS.add_method("Von_Mises_projection",
                                 new Von_Mises_projection_operator());
     return true;
