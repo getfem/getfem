@@ -553,7 +553,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 
   - ``Norm_sqr(v)`` for ``v`` a vector or a matrix gives the square of the euclidean norm of a vector or of the |Frobenius| norm of a matrix. For a vector this is equivalent to ``v.v`` and for a matrix to ``m:m``.
 
-  - ``Normalized(v)`` for ``v`` a vector or a matrix gives ``v`` divided by its euclidean (for vectors) or frobenius (for matrices) norm.
+  - ``Normalized(v)`` for ``v`` a vector or a matrix gives ``v`` divided by its euclidean (for vectors) or |Frobenius| (for matrices) norm.
 
   - ``Det(m)`` gives the determinant of a square matrix ``m``.
 
@@ -561,7 +561,7 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 
   - ``expm(m)`` gives the exponential of a square matrix ``m``.
 
-  - ``Logm(m)`` gives the logarithm of a square matrix ``m``.
+  - ``logm(m)`` gives the logarithm of a square matrix ``m``.
 
   - ``Matrix_I2(m)`` gives the second invariants of a square matrix ``m`` which is defined by ``(sqr(Trace(m)) - Trace(m*m))/2``.
 
