@@ -553,9 +553,15 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 
   - ``Norm_sqr(v)`` for ``v`` a vector or a matrix gives the square of the euclidean norm of a vector or of the |Frobenius| norm of a matrix. For a vector this is equivalent to ``v.v`` and for a matrix to ``m:m``.
 
+  - ``Normalized(v)`` for ``v`` a vector or a matrix gives ``v`` divided by its euclidean (for vectors) or frobenius (for matrices) norm.
+
   - ``Det(m)`` gives the determinant of a square matrix ``m``.
 
   - ``Inv(m)`` gives the inverse of a square matrix ``m``. The second derivative is not available since it is an order 6 tensor. This means that ``Inv(m)`` cannot be used in the description of a potential energy.
+
+  - ``expm(m)`` gives the exponential of a square matrix ``m``.
+
+  - ``Logm(m)`` gives the logarithm of a square matrix ``m``.
 
   - ``Matrix_I2(m)`` gives the second invariants of a square matrix ``m`` which is defined by ``(sqr(Trace(m)) - Trace(m*m))/2``.
 
