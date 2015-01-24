@@ -32,14 +32,14 @@ static void check_empty_mesh(const getfem::mesh *pmesh) {
 
 static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in) {
   unsigned boundary_num  = in.pop().to_integer(1);
-  // iarray v               = in.pop().to_iarray(2,-1);
-
   iarray v               = in.pop().to_iarray();
+
+  getfem::mesh_region &rg = mesh.region(boundary_num);
+  rg.clear();
   
   if (v.getm() < 1 || v.getm() > 2 || v.getp() != 1 || v.getq() != 1)
     THROW_BADARG( "Invalid format for the convex or face list");
 
-  getfem::mesh_region &rg = mesh.region(boundary_num);
   /* loop over the edges of mxEdge */
   for (size_type j=0; j < v.getn(); j++) {
     size_type cv = size_type(v(0,j))-config::base_index();
