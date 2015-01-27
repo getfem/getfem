@@ -104,8 +104,8 @@ namespace bgeot {
     short_type nb_points_of_convex(size_type ic) const
     { return convex_tab[ic].cstruct->nb_points(); }
     /// Return the number of faces of convex ic.
-    dim_type nb_faces_of_convex(size_type ic) const 
-    { return dim_type(convex_tab[ic].cstruct->nb_faces()); }
+    short_type nb_faces_of_convex(size_type ic) const 
+    { return short_type(convex_tab[ic].cstruct->nb_faces()); }
     /// Exchange two point IDs
     void swap_points(size_type i, size_type j);
     /// Exchange two convex IDs

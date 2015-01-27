@@ -964,7 +964,7 @@ namespace getfem {
           if (pnode->children.size() >= 2)
             ga_print_node(pnode->children[1], str);
           else
-            str << "(unknow second argument)";
+            str << "(unknown second argument)";
         }
         if (par) str << ")";
       }
@@ -1934,8 +1934,8 @@ namespace getfem {
     PREDEF_FUNCTIONS["atan"] = ga_predef_function(atan, 1, "DER_PDFUNC_ATAN");
     PREDEF_FUNCTIONS["sinc"] = ga_predef_function(ga_sinc, 1,
                                                   "DER_PDFUNC_SINC");
-    PREDEF_FUNCTIONS["DER_PDFUNC_SINC"] = ga_predef_function(ga_der_sinc,
-                                                       1, "DER2_PDFUNC_SINC");
+    PREDEF_FUNCTIONS["DER_PDFUNC_SINC"] = ga_predef_function(ga_der_sinc, 1,
+                                                             "DER2_PDFUNC_SINC");
     PREDEF_FUNCTIONS["DER2_PDFUNC_SINC"] = ga_predef_function(ga_der2_sinc);
     
 
@@ -1984,8 +1984,8 @@ namespace getfem {
     PREDEF_FUNCTIONS["min"]
       = ga_predef_function(ga_min, 1, "DER_PDFUNC2_MAX", "DER_PDFUNC1_MAX");
 
-    PREDEF_FUNCTIONS["DER_PDFUNC_NEG_PART"] =
-      ga_predef_function(ga_der_neg_part, 2, "-Heaviside(-t)");
+    PREDEF_FUNCTIONS["DER_PDFUNC_NEG_PART"]
+      = ga_predef_function(ga_der_neg_part, 2, "-Heaviside(-t)");
     PREDEF_FUNCTIONS["DER_PDFUNC1_MAX"] = ga_predef_function(ga_der_max1);
     PREDEF_FUNCTIONS["DER_PDFUNC2_MAX"] = ga_predef_function(ga_der_max2);
 
@@ -3452,7 +3452,7 @@ namespace getfem {
     std::vector<scalar_type *> components;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: gathering components for explicit "
-                           "matrix");
+                    "matrix");
       GA_DEBUG_ASSERT(t.size() == components.size(), "Wrong sizes");
       for (size_type i = 0; i < components.size(); ++i)
         t[i] = *(components[i]);
@@ -3468,14 +3468,14 @@ namespace getfem {
     std::vector<base_tensor *> components;
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: gathering components for explicit "
-                           "matrix with tests functions");
+                    "matrix with tests functions");
       size_type s = t.size() / components.size();
       GA_DEBUG_ASSERT(s, "Wrong sizes");
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < components.size(); ++i) {
         base_tensor &t1 = *(components[i]);
         if (t1.size() > 1) {
-          GA_DEBUG_ASSERT(t1.size() == s, "Wrong sizes");
+          GA_DEBUG_ASSERT(t1.size() == s, "Wrong sizes, " << t1.size() << " != " << s);
           for (size_type j = 0; j < s; ++j) *it++ = t1[j];
         } else {
           for (size_type j = 0; j < s; ++j) *it++ = t1[0];
@@ -3484,7 +3484,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_c_matrix_with_tests(base_tensor &t_,
-                                     std::vector<base_tensor *>  &components_)
+                                       std::vector<base_tensor *>  &components_)
       : t(t_), components(components_) {}
   };
 
@@ -3908,7 +3908,8 @@ namespace getfem {
         if (&mf2) {
           if (!ctx2.is_convex_num_valid()) return 0;
           ct2 = mf2.ind_basic_dof_of_element(ctx2.convex_num());
-          GA_DEBUG_ASSERT(ct2.size() == s2, "Internal error");
+          GA_DEBUG_ASSERT(ct2.size() == s2,
+                          "Internal error, " << ct2.size() << " != " << s2);
         }
 
         GA_DEBUG_ASSERT(I1.size() && I2.size(), "Internal error");
@@ -4881,7 +4882,8 @@ namespace getfem {
           
           if (!compatible)
             ga_throw_error(expr, pnode->pos, "Addition or substraction of "
-                            "expressions of different sizes");
+                           "expressions of different sizes: "
+                           << size0 << " != " << size1);
 
           if (child0->test_function_type || child1->test_function_type) {
             if (child0->test_function_type != child1->test_function_type ||
@@ -5679,7 +5681,7 @@ namespace getfem {
               size_type n = mf->linked_mesh().dim();
               bgeot::multi_index mii = workspace.qdims(name);
               if (!q) ga_throw_error(expr, pnode->pos,
-                                     "Invalid null size of variable");
+                                     "Invalid null size of variable " << name);
               switch (val_grad_or_hess) {
               case 0: // value
                 pnode->node_type = GA_NODE_VAL;
@@ -6285,7 +6287,7 @@ namespace getfem {
       mi.resize(1); mi[0] = 2;
       for (size_type i = 0; i < pnode->tensor_order(); ++i)
         mi.push_back(pnode->tensor_proper_size(i));
-      pnode->t.adjust_sizes(mi);   
+      pnode->t.adjust_sizes(mi);
       pnode->node_type = GA_NODE_HESS_TEST;
       pnode->test_function_type = order;
       break;
@@ -8079,11 +8081,11 @@ namespace getfem {
       if (td.order == order) {
         gis.trees.push_back(*(td.ptree));
         
-        // cout << "Final analysis of "; ga_print_node(gis.trees.back().root, cout); cout << endl;
+        pga_tree_node root = gis.trees.back().root;
+        // cout << "Final analysis of "; ga_print_node(root, cout); cout << endl;
         // Semantic analysis mainly to evaluate fixed size variables and data
         ga_semantic_analysis("", gis.trees.back(), workspace,
                              td.mim->linked_mesh().dim(), true, false);
-        pga_tree_node root = gis.trees.back().root;
         if (root) {
           // Compiling tree
           // cout << "compiling "; ga_print_node(root, cout); cout << endl;
