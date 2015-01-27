@@ -30,12 +30,13 @@ static void check_empty_mesh(const getfem::mesh *pmesh) {
   }
 }
 
-static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in) {
+static void set_region(getfem::mesh &mesh, getfemint::mexargs_in& in,
+                       bool do_clear=true) {
   unsigned boundary_num  = in.pop().to_integer(1);
   iarray v               = in.pop().to_iarray();
 
   getfem::mesh_region &rg = mesh.region(boundary_num);
-  rg.clear();
+  if (do_clear) rg.clear();
   
   if (v.getm() < 1 || v.getm() > 2 || v.getp() != 1 || v.getq() != 1)
     THROW_BADARG( "Invalid format for the convex or face list");
@@ -284,10 +285,10 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ('region', @int rnum, @dmat CVFIDs)
-    Assigns the region number `rnum` to the convex faces (or convexes)
-    stored in each column of the matrix `CVFIDs`.
+    Assigns the region number `rnum` to the set of convexes or/and convex
+    faces provided in the matrix `CVFIDs`.
 
-    The first row of `CVFIDs` contains a convex #ids, and the second row
+    The first row of `CVFIDs` contains convex #ids, and the second row
     contains a face number in the convex (or @MATLAB{0}@SCILAB{0}@PYTHON{``-1``}
     for the whole convex (regions are usually used to store a list of
     convex faces, but you may also use them to store a list of convexes).
@@ -299,6 +300,14 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        set_region(*pmesh, in);
        );
 
+    /*@SET ('extend region', @int rnum, @dmat CVFIDs)
+    Extends the region identified by the region number `rnum` to include
+    the set of convexes or/and convex faces provided in the matrix
+    `CVFIDs`, see also 'set_region'@.@*/
+    sub_command
+      ("extend region", 2, 2, 0, 0,
+       set_region(*pmesh, in, false);
+       );
 
     /*@SET ('region intersect', @int r1, @int r2)
     Replace the region number `r1` with its intersection with region number `r2`.@*/
