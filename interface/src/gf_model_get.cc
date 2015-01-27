@@ -198,6 +198,14 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        md->model().listbricks(infomsg(), config::base_index());
        );
 
+    /*@GET ('list residuals')
+      print to the output the residuals corresponding to all terms
+      included in the model.@*/
+    sub_command
+      ("list residuals", 0, 0, 0, 0,
+       md->model().listresiduals(cout);
+       );
+
 
     /*@GET V = ('variable', @str name[, @int niter])
       Gives the value of a variable or data.@*/
