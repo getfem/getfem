@@ -23,6 +23,7 @@
 #include <getfemint_workspace.h>
 #include <getfem/getfem_assembling.h>
 #include <gmm/gmm_inoutput.h>
+#include <gmm/gmm_MUMPS_interface.h>
 
 using namespace getfemint;
 
@@ -376,6 +377,28 @@ void gf_spmat_get(getfemint::mexargs_in& m_in,
        << 100.*double(gsp.nnz())/(double(ncc == 0 ? 1 : ncc)) << "%)";
        );
 
+
+#if defined(GMM_USES_MUMPS) || defined(HAVE_DMUMPS_C_H)
+    /*@GET @CELL{mantissa_r, mantissa_i, exponent} = ('determinant')
+      returns the matrix determinant calculated using MUMPS.@*/
+    sub_command
+      ("determinant", 0, 0, 0, 3,
+       gsp.to_csc();
+       int exponent;
+       if (gsp.is_complex()) {
+         complex_type det = gmm::MUMPS_determinant(gsp.csc(complex_type()),
+                                                   exponent);
+         if (out.remaining()) out.pop().from_scalar(gmm::real(det));
+         if (out.remaining()) out.pop().from_scalar(gmm::imag(det));
+       } else {
+         scalar_type det = gmm::MUMPS_determinant(gsp.csc(scalar_type()),
+                                                  exponent);
+         if (out.remaining()) out.pop().from_scalar(det);
+         if (out.remaining()) out.pop().from_scalar(0);
+       }
+       if (out.remaining()) out.pop().from_integer(exponent);
+       );
+#endif
   }
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");
