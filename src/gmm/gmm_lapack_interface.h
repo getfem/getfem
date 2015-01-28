@@ -35,8 +35,6 @@
    @brief gmm interface for LAPACK
 */
 
-#if defined(GMM_USES_LAPACK)
-
 #ifndef GMM_LAPACK_INTERFACE_H
 #define GMM_LAPACK_INTERFACE_H
 
@@ -44,6 +42,8 @@
 #include "gmm_dense_lu.h"
 #include "gmm_dense_qr.h"
 
+
+#if defined(GMM_USES_LAPACK)
 
 namespace gmm {
 
@@ -455,6 +455,19 @@ namespace gmm {
 
 }
 
-#endif // GMM_LAPACK_INTERFACE_H
+#else
 
-#endif // GMM_USES_LAPACK
+namespace gmm
+{
+template <typename MAT>
+void schur(const MAT &A_, MAT &S, MAT &Q)
+{
+  GMM_ASSERT1(false, "Use of function schur(A,S,Q) requires GetFEM++ "
+              "to be built with Lapack");
+}
+
+}// namespace gmm
+
+#endif // GMM_USES_LAPACK\
+
+#endif // GMM_LAPACK_INTERFACE_H
