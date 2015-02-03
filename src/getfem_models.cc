@@ -3941,9 +3941,9 @@ namespace getfem {
             asm_real_or_complex_1_param
               (*B, mim, mf_mult, *mf_H, *H, rg, (mf_u.get_qdim() == 1) ?
                "F=data(#2);"
-               "M(#1,#3)+=comp(Base(#1).Base(#3).Base(#2)(:,:,i).F(i))"
+               "M(#1,#3)+=comp(Base(#1).Base(#3).Base(#2))(:,:,i).F(i)"
                : "F=data(qdim(#1),qdim(#1),#2);"
-               "M(#1,#3)+=comp(vBase(#1).vBase(#3).Base(#2)(:,i,:,j,k).F(i,j,k));", &mf_u);
+               "M(#1,#3)+=comp(vBase(#1).vBase(#3).Base(#2))(:,i,:,j,k).F(i,j,k);", &mf_u);
           else {
             asm_real_or_complex_1_param
               (*B, mim, mf_mult, mf_u, *H, rg, (mf_u.get_qdim() == 1) ?
