@@ -1045,9 +1045,9 @@ namespace getfem {
     ga_predef_operator_tab &PREDEF_OPERATORS
       = dal::singleton<ga_predef_operator_tab>::instance();
 
-    PREDEF_OPERATORS.add_method("expm",
+    PREDEF_OPERATORS.add_method("Expm",
                                 new matrix_exponential_operator());
-    PREDEF_OPERATORS.add_method("logm",
+    PREDEF_OPERATORS.add_method("Logm",
                                 new matrix_logarithm_operator());
     PREDEF_OPERATORS.add_method("Normalized",
                                 new normalized_operator());

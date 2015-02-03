@@ -559,9 +559,9 @@ The assembly language provide some predefined nonlinear operator. Each nonlinear
 
   - ``Inv(m)`` gives the inverse of a square matrix ``m``. The second derivative is not available since it is an order 6 tensor. This means that ``Inv(m)`` cannot be used in the description of a potential energy.
 
-  - ``expm(m)`` gives the exponential of a square matrix ``m``.
+  - ``Expm(m)`` gives the exponential of a square matrix ``m``.
 
-  - ``logm(m)`` gives the logarithm of a square matrix ``m``.
+  - ``Logm(m)`` gives the logarithm of a square matrix ``m``.
 
   - ``Matrix_I2(m)`` gives the second invariants of a square matrix ``m`` which is defined by ``(sqr(Trace(m)) - Trace(m*m))/2``.
 
