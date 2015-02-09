@@ -524,6 +524,8 @@ Special expressions linked to the current position
 
   - ``Normal`` the outward unit normal vector to a boundary when integration on a boundary is performed.
 
+  - ``element_size`` gives an estimate of the current element diameter (using getfem::convex_radius_estimate).
+
 Print command
 *************
 

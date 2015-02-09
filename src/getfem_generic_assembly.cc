@@ -268,6 +268,7 @@ namespace getfem {
     GA_NODE_ALLINDICES,
     GA_NODE_C_MATRIX,
     GA_NODE_X,
+    GA_NODE_ELT_SIZE,
     GA_NODE_NORMAL,
     GA_NODE_VAL,
     GA_NODE_GRAD,
@@ -973,6 +974,7 @@ namespace getfem {
     case GA_NODE_X:
       if (pnode->nbc1) str << "X(" << pnode->nbc1 << ")"; else str << "X";
       break;
+    case GA_NODE_ELT_SIZE: str << "element_size"; break;
     case GA_NODE_NORMAL: str << "Normal"; break;
     case GA_NODE_INTERPOLATE:
       str << "Interpolate(" << pnode->name << ","
@@ -1420,6 +1422,9 @@ namespace getfem {
     fem_interpolation_context ctx; // Current fem interpolation context.
     base_small_vector Normal;      // Outward unit normal vector to the
                                    // boundary in case of boundary integration
+    scalar_type elt_size;          // Estimate of the diameter of the element
+                                   // if needed.
+    bool need_elt_size;
     scalar_type coeff;             // Coefficient for the Gauss point
     size_type nbpt, ipt;           // Number and index of Gauss point
     bgeot::geotrans_precomp_pool gp_pool;
@@ -1494,7 +1499,7 @@ namespace getfem {
     
     instructions_set  whole_instructions;
 
-    ga_instruction_set(void) { max_dof = nb_dof = 0;  }
+    ga_instruction_set(void) { max_dof = nb_dof = 0; need_elt_size = false; }
   };
 
 
@@ -1993,7 +1998,6 @@ namespace getfem {
     // Predefined special functions
 
     SPEC_FUNCTIONS.insert("pi");
-    SPEC_FUNCTIONS.insert("meshdim");
     SPEC_FUNCTIONS.insert("qdim");
     SPEC_FUNCTIONS.insert("qdims");
     SPEC_FUNCTIONS.insert("Id");
@@ -2318,6 +2322,21 @@ namespace getfem {
     ga_instruction_Normal(base_tensor &t_, base_small_vector &Normal_)
       : t(t_), Normal(Normal_)  {}
   };
+
+  struct ga_instruction_element_size : public ga_instruction {
+    base_tensor &t;
+    scalar_type &es;
+   
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: element_size");
+      GMM_ASSERT1(t.size() == 1, "Invalid element size.");
+      t[0] = es;
+      return 0;
+    }
+    ga_instruction_element_size(base_tensor &t_, scalar_type &es_)
+      : t(t_), es(es_)  {}
+  };
+
 
 
   struct ga_instruction_base : public ga_instruction {
@@ -4635,7 +4654,7 @@ namespace getfem {
 
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
-    case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_NORMAL:
+    case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE: case GA_NODE_NORMAL:
     case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
     case GA_NODE_RESHAPE:
       pnode->test_function_type = 0; break;
@@ -5535,6 +5554,11 @@ namespace getfem {
           pnode->node_type = GA_NODE_X;
           pnode->nbc1 = 0;
           pnode->init_vector_tensor(meshdim);
+          break;
+        }
+        if (!(name.compare("element_size"))) {
+          pnode->node_type = GA_NODE_ELT_SIZE;
+          pnode->init_scalar_tensor(0);
           break;
         }
         if (!(name.compare("Normal"))) {
@@ -7228,6 +7252,15 @@ namespace getfem {
       rmi.instructions.push_back(pgai);
       break;
 
+    case GA_NODE_ELT_SIZE:
+      GMM_ASSERT1(!function_case,
+                  "No use of element_size is allowed in functions");
+      if (pnode->t.size() != 1) pnode->init_scalar_tensor(0);
+      pgai = new ga_instruction_element_size(pnode->t, gis.elt_size);
+      gis.need_elt_size = true;
+      rmi.instructions.push_back(pgai);
+      break;
+
     case GA_NODE_NORMAL:
       GMM_ASSERT1(!function_case,
                   "No use of Normal is allowed in functions");
@@ -8280,6 +8313,9 @@ namespace getfem {
                                                   v.cv(), v.f());
             }
           }
+
+          if (gis.need_elt_size)
+            gis.elt_size = m.convex_radius_estimate(v.cv()) * scalar_type(2);
           
           // iterations on interpolation points
           gis.nbpt = spt.size();
@@ -8385,7 +8421,8 @@ namespace getfem {
               }
             }
             gis.pai = pim->approx_method();
-
+            if (gis.need_elt_size)
+              gis.elt_size = m.convex_radius_estimate(v.cv()) * scalar_type(2);
             // iterations on Gauss points
             gis.nbpt = gis.pai->nb_points_on_convex();
             size_type first_ind = 0;

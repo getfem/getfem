@@ -8,10 +8,10 @@ dnl thus, updating cache ./config.cache avoided.
 define([AC_CACHE_LOAD], )dnl
 define([AC_CACHE_SAVE], )dnl
 
-AC_INIT(getfem, 4.3.1)
+AC_INIT(getfem, 4.3.2)
 MAJOR_VERSION="4"
 MINOR_VERSION="3"
-PATCH_VERSION="1"
+PATCH_VERSION="2"
 
 AC_CONFIG_SRCDIR([install-sh])
 AC_CONFIG_MACRO_DIR([m4])

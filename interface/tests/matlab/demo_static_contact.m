@@ -26,10 +26,10 @@ gf_workspace('clear all');
 clear all;
 
 % Import the mesh : disc
-m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
+% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h4.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h2.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h1.mesh');
-% m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
+m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_5.mesh');
 % m=gf_mesh('load', '../../../tests/meshes/disc_P2_h0_3.mesh');
 
 % Import the mesh : sphere

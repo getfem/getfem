@@ -46,7 +46,7 @@ NY = 20;
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
 % backward Euler integration
 alpha_method = true;
-alpha = 1.0;
+alpha = 0.5;
 
 
 f = [15000 0]';

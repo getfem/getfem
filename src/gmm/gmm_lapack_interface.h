@@ -468,6 +468,6 @@ void schur(const MAT &A_, MAT &S, MAT &Q)
 
 }// namespace gmm
 
-#endif // GMM_USES_LAPACK\
+#endif // GMM_USES_LAPACK
 
 #endif // GMM_LAPACK_INTERFACE_H
