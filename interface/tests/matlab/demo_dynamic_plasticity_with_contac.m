@@ -50,12 +50,13 @@ alpha = 1.0;
 
 
 f = [0 15000]';
-dirichlet_val = 20;
+
+dirichlet_val = 5;
 
 
 % transient part.
 T = pi/4;
-dt = 0.01;
+dt = 0.001;
 theta= 1;
 
 
@@ -68,7 +69,7 @@ m = gfMesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[%d,%d];NOISED=0
 N = gf_mesh_get(m, 'dim');
 
 
-r = 10;                  % Augmentation parameter
+r = 100000;                  % Augmentation parameter
 
 % Signed distance representing the obstacle
 if (N == 1) obstacle = 'x'; elseif (N == 2) obstacle = 'y'; else obstacle = 'z'; end;
@@ -121,9 +122,9 @@ if (plot_mesh)
 end
 
 % Decomposed the mesh into 2 regions with different values of Lamé coeff
-if (bi_material) separation = LY/2; else separation = 0; end
-pidtop    = find(P(2,:)>=separation-1E-6); % Retrieve index of points of the top part
-pidbottom = find(P(2,:)<=separation+1E-6); % Retrieve index of points of the bottom part
+if (bi_material) separation = LX/2; else separation = 0; end
+pidtop    = find(P(1,:)>=separation-1E-6); % Retrieve index of points of the top part
+pidbottom = find(P(1,:)<=separation+1E-6); % Retrieve index of points of the bottom part
 cvidtop   = get(m, 'cvid from pid', pidtop);
 cvidbottom= get(m, 'cvid from pid', pidbottom);
 CVtop     = sort(get(mf_data, 'basic dof from cvid', cvidtop));
@@ -238,22 +239,29 @@ set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 % Contact brick 
 
 
-% ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
-% mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
-% gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
-% gf_model_set(md, 'add initialized data', 'r', [r]);
-% OBS = gf_mesh_fem_get(mflambda, 'eval', { obstacle });
-% gf_model_set(md, 'add initialized fem data', 'obstacle',mflambda , OBS);
-% gf_model_set(md, 'add integral contact with rigid obstacle brick', ...
-%       mim, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, 1);
+ldof = gf_mesh_fem_get(mflambda, 'dof on region', GAMMAC);
+mflambda_partial = gf_mesh_fem('partial', mflambda, ldof);
+gf_model_set(md, 'add fem variable', 'lambda_n', mflambda_partial);
+gf_model_set(md, 'add initialized data', 'r', [r]);
+OBS = gf_mesh_fem_get(mflambda, 'eval', { obstacle });
+gf_model_set(md, 'add initialized fem data', 'obstacle',mflambda , OBS);
+gf_model_set(md, 'add integral contact with rigid obstacle brick', ...
+    mim, 'u', 'lambda_n', 'obstacle', 'r', GAMMAC, 1);
 
+%   gf_model_set(md, 'add nodal contact with rigid obstacle brick', ...
+%        mim, 'u', 'lambda_n',  'r', GAMMAC,'y', 1); 
   
-pause
+%   * ind = gf_model_set(model M, 'add nodal contact with rigid obstacle brick',  mesh_im mim, string varname_u, string multname_n[, string multname_t], string dataname_r[, string dataname_friction_coeff], int region, string obstacle[,  int augmented_version])
+
+
+
+
 
 % interpolate the initial data
 %U0 = get(md, 'variable', 'u');
 U0 = (gf_mesh_fem_get(mf_u, 'eval', {0, sprintf('%g +0.0+0.00*y', dirichlet_val)}));
 V0 = 0*U0;
+%V0 = (gf_mesh_fem_get(mf_u, 'eval', { '-0.0','-600' }))';
 
 if(alpha_method)
 gf_model_set(md, 'add explicit matrix', 'u', 'u',rho* M/(dt*dt*alpha));
@@ -284,7 +292,7 @@ VM=zeros(1,get(mf_vm, 'nbdof'));
 % Iterations
 for t = 0:dt:T
   
-  % coeff = sin(16*t);
+  %coeff = -sin(1-t);
   coeff=- 1;
   
    disp(sprintf('step %d, coeff = %g', step , coeff)); 
@@ -297,7 +305,9 @@ if(alpha_method)
    LL = rho*(( 1/(dt*dt*alpha))*MU0+( 1/(dt*alpha))*MV0);
  
    gf_model_set(md, 'set private rhs', ind_rhs, LL);
-   get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+  get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+  % gf_model_get(md, 'solve', 'max_res', 1e-6, 'max_iter', 100);
+   %get(md, 'solve', 'noisy', 'max_iter', 80);
    U = gf_model_get(md, 'variable', 'u');
    MV = ((M*U' - MU0)/dt -(1-alpha)*MV0)/alpha;
 
@@ -342,7 +352,7 @@ end
       ind_elt = floor(ind_gauss_pt / nb_gauss_pt_per_element);
        P = gf_mesh_get(m, 'pts from cvid', ind_elt);
       disp(sprintf('Point for the strain/stress graph (approximately): (%f,%f)', P(1,1), P(2,1)));
-
+     
     if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
       ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
     end
@@ -377,7 +387,7 @@ end
     ind_elt = floor(ind_gauss_pt / nb_gauss_pt_per_element);
     P = gf_mesh_get(m, 'pts from cvid', ind_elt);
     disp(sprintf('Point for the strain/stress graph (approximately): (%f,%f)', P(1,1), P(2,1)));
-
+   
     if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
       ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
     end
@@ -390,24 +400,37 @@ end
     
        
     if (do_plot)
-      figure(2)
-      subplot(2,2,1);
+      figure(1)
+      subplot(1,2,1);
       gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0); % 'deformed_mesh', 'on')
+      hold on
+      X=[-5:1:25];
+      Y=0*[-5:1:25];
+      plot(X,Y ,'k','LineWidth',3 )
+      hold off
+      
       colorbar;
       axis([-10 30 -5 120]);
+      
+      
       % caxis([0 10000]);
       n = t;
        title(['Von Mises criterion for t = ', num2str(t)]);
-      subplot(2,2,2);
+      subplot(1,2,2);
       gf_plot(mf_vm,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0);  % 'deformed_mesh', 'on')
+      hold on
+      X=[-5:1:25];
+      Y=0*[-5:1:25];
+      plot(X,Y ,'k','LineWidth',3 )
+      hold off
       colorbar;
       axis([-10 30 -5 120]);
       % caxis([0 10000]);
       n = t;
       title(['Plastification for t = ', num2str(t)]);
     
-      
-      subplot(2,2,[3 4]);
+      figure(2)
+      %subplot(2,2,[3 4]);
       plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
       xlabel('Strain');
       ylabel('Stress')
