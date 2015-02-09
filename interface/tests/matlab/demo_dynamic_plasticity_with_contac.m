@@ -45,13 +45,13 @@ NY = 50;
 % alpha is parametr of the generalized integration algorithms The
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
 % backward Euler integration
-alpha_method = false;
-alpha = 1.0;
+alpha_method = true;
+alpha = 1;
 
 
 f = [0 15000]';
 
-dirichlet_val = 5;
+dirichlet_val = 7;
 
 
 % transient part.
@@ -292,8 +292,8 @@ VM=zeros(1,get(mf_vm, 'nbdof'));
 % Iterations
 for t = 0:dt:T
   
-  %coeff = -sin(1-t);
-  coeff=- 1;
+  coeff = -sin(1-(4*t));
+ % coeff=- 1;
   
    disp(sprintf('step %d, coeff = %g', step , coeff)); 
    set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff}));  
