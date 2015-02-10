@@ -39,6 +39,7 @@
 #define GMM_ITER_H__
 
 #include "gmm_kernel.h"
+#include <iomanip>
 
 namespace gmm {
 
@@ -129,8 +130,8 @@ namespace gmm {
       if (noise > 0 && !written) {
 	double a = (rhsn == 0) ? 1.0 : rhsn;
 	converged(nr);
-	cout << name << " iter " << nit << " residual "
-	     << gmm::abs(nr) / a;
+	cout << name << " iter " << std::setw(3) << nit << " residual "
+	     << std::setw(12) << gmm::abs(nr) / a;
 // 	if (nit % 100 == 0 && nit > 0) {
 // 	  cout << " (residual min " << resminreach / a << " mean val "
 // 	       << resadd / (100.0 * a) << " )";

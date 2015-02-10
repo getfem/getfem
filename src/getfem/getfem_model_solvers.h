@@ -419,7 +419,7 @@ namespace getfem {
       if (iter.get_noisy() > 1) cout << "linear solver done" << endl;
       R alpha = pb.line_search(dr, iter); //it is assumed that the linesearch
                                           //executes a pb.compute_residual();
-      if (iter.get_noisy()) cout << "alpha = " << alpha << " ";
+      if (iter.get_noisy()) cout << "alpha = " << std::setw(6) << alpha << " ";
       ++iter;
       crit = std::min(pb.residual_norm()
                       / std::max(1E-25, pb.approx_external_load_norm()),
