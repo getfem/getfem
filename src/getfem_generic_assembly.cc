@@ -6637,12 +6637,20 @@ namespace getfem {
           
       case GA_DIV: case GA_DOTDIV:
         if (mark1) {
-          if (mark0) {
-            tree.duplicate_with_addition(pnode);
-            ga_node_derivation(tree, workspace, m, child0, varname,
-                               interpolatename, order);
-            pnode->parent->op_type = GA_MINUS;
-            pnode = pnode->parent->children[1];
+          if (pnode->children[0]->node_type == GA_NODE_CONSTANT)
+            gmm::scale(pnode->children[0]->t.as_vector(), scalar_type(-1));
+          else {
+            if (mark0) {
+              tree.duplicate_with_addition(pnode);
+              ga_node_derivation(tree, workspace, m, child0, varname,
+                                 interpolatename, order);
+              pnode->parent->op_type = GA_MINUS;
+              pnode = pnode->parent->children[1];
+            } else {
+              tree.insert_node(pnode);
+              pnode->parent->node_type = GA_NODE_OP;
+              pnode->parent->op_type = GA_UNARY_MINUS;
+            }
           }
           tree.insert_node(pnode->children[1]);
           pga_tree_node pnode_param = pnode->children[1];
@@ -7097,7 +7105,7 @@ namespace getfem {
         pnode->node_type == GA_NODE_SPEC_FUNC ||
         pnode->node_type == GA_NODE_CONSTANT ||
         pnode->node_type == GA_NODE_ALLINDICES ||
-        pnode->node_type == GA_NODE_ZERO ||
+        //pnode->node_type == GA_NODE_ZERO ||   // zero nodes can still have test functions
         pnode->node_type == GA_NODE_RESHAPE) return;
 
     pga_instruction pgai = 0;
