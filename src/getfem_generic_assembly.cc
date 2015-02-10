@@ -1998,6 +1998,7 @@ namespace getfem {
     // Predefined special functions
 
     SPEC_FUNCTIONS.insert("pi");
+    SPEC_FUNCTIONS.insert("meshdim");
     SPEC_FUNCTIONS.insert("qdim");
     SPEC_FUNCTIONS.insert("qdims");
     SPEC_FUNCTIONS.insert("Id");

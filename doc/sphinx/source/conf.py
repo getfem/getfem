@@ -257,7 +257,7 @@ latex_documents = [
     ('scilab/index', 'scilab_interface.tex',
      'Scilab Interface', 'Yann Colette, ' + _stdauthor, 'manual', False),
     ('userdoc/index', 'getfem_userdoc.tex',
-     'Short User Documentation', _stdauthor, 'manual', False),
+     'User Documentation', _stdauthor, 'manual', False),
     ('project/index', 'getfem_project.tex',
      'Description of the Project', _stdauthor, 'manual', False),
     ('gmm/index', 'gmm_userdoc.tex',
