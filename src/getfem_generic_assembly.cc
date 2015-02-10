@@ -942,7 +942,7 @@ namespace getfem {
           str << "Print("; ga_print_node(pnode->children[0], str); str << ")";
         } else {
           // GMM_ASSERT1(pnode->children.size() == 2, "Invalid tree");
-          if (pnode->op_type == GA_MULT &&
+          if (!par && pnode->op_type == GA_MULT &&
               (pnode->children.size() == 1 ||
                pnode->test_function_type == size_type(-1) ||
                (pnode->children[0]->tensor_order() == 4 &&
