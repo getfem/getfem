@@ -405,7 +405,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
 
       @*/
     sub_command
-      ("solve", 0, 15, 0, 2,
+      ("solve", 0, 17, 0, 2,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
        std::string lsearch = "default";
@@ -413,6 +413,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        scalar_type alpha_max_ratio(-1);
        scalar_type alpha_min(-1);
        scalar_type alpha_mult(-1);
+       scalar_type alpha_threshold_res(1e50);
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();
          if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
@@ -437,13 +438,16 @@ void gf_model_get(getfemint::mexargs_in& m_in,
            else THROW_BADARG("missing line search name for " << opt);
          } else if (cmd_strmatch(opt, "alpha mult")) {
            if (in.remaining()) alpha_mult = in.pop().to_scalar();
-           else THROW_BADARG("missing line search name for " << opt);
+           else THROW_BADARG("missing line search value for " << opt);
          } else if (cmd_strmatch(opt, "alpha min")) {
            if (in.remaining()) alpha_min = in.pop().to_scalar();
-           else THROW_BADARG("missing line search name for " << opt);
+           else THROW_BADARG("missing line search value for " << opt);
          } else if (cmd_strmatch(opt, "alpha max ratio")) {
            if (in.remaining()) alpha_max_ratio = in.pop().to_scalar();
-           else THROW_BADARG("missing line search name for " << opt);
+           else THROW_BADARG("missing line search value for " << opt);
+         } else if (cmd_strmatch(opt, "alpha threshold res")) {
+           if (in.remaining()) alpha_threshold_res = in.pop().to_scalar();
+           else THROW_BADARG("missing line search value for " << opt);
          } else THROW_BADARG("bad option: " << opt);
        }
 
@@ -456,7 +460,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
          alpha_mult = 3.0/5.0;
 
        getfem::default_newton_line_search default_ls;
-       getfem::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
+       getfem::simplest_newton_line_search simplest_ls(size_type(-1), alpha_max_ratio,
+                                                       alpha_min, alpha_mult, alpha_threshold_res);
        getfem::systematic_newton_line_search systematic_ls(size_type(-1), alpha_min, alpha_mult);
        getfem::basic_newton_line_search basic_ls(size_type(-1), alpha_max_ratio, alpha_min, alpha_mult);
        getfem::quadratic_newton_line_search quadratic_ls(size_type(-1));

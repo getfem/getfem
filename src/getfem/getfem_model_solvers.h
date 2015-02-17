@@ -1,10 +1,10 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
- 
+
  Copyright (C) 2004-2012 Yves Renard
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -17,7 +17,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
  As a special exception, you  may use  this file  as it is a part of a free
  software  library  without  restriction.  Specifically,  if   other  files
  instantiate  templates  or  use macros or inline functions from this file,
@@ -26,7 +26,7 @@
  to be covered  by the GNU Lesser General Public License.  This   exception
  does not  however  invalidate  any  other  reasons why the executable file
  might be covered by the GNU Lesser General Public License.
- 
+
 ===========================================================================*/
 
 /**
@@ -251,7 +251,8 @@ namespace getfem {
 
 
   struct simplest_newton_line_search : public abstract_newton_line_search {
-    double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min;
+    double alpha, alpha_mult, first_res, alpha_max_ratio, alpha_min,
+           alpha_threshold_res;
     virtual void init_search(double r, size_t git, double = 0.0) {
       glob_it = git;
       conv_alpha = alpha = double(1); conv_r = first_res = r; it = 0;
@@ -261,14 +262,16 @@ namespace getfem {
     virtual bool is_converged(double r, double = 0.0) {
       conv_r = r;
       return ((it <= 1 && r < first_res)
-	      || (r <= first_res * alpha_max_ratio)
-	      || (conv_alpha <= alpha_min)
-	      || it >= itmax);
+              || (r <= first_res * alpha_max_ratio && r <= alpha_threshold_res)
+              || (conv_alpha <= alpha_min)
+              || it >= itmax);
     }
     simplest_newton_line_search
     (size_t imax = size_t(-1), double a_max_ratio = 6.0/5.0,
-     double a_min = 1.0/1000.0, double a_mult = 3.0/5.0)
-      : alpha_mult(a_mult), alpha_max_ratio(a_max_ratio), alpha_min(a_min)
+     double a_min = 1.0/1000.0, double a_mult = 3.0/5.0,
+     double a_threshold_res = 1e50)
+      : alpha_mult(a_mult), alpha_max_ratio(a_max_ratio), alpha_min(a_min),
+        alpha_threshold_res(a_threshold_res)
       { itmax = imax; }
   };
 
@@ -316,11 +319,11 @@ namespace getfem {
     { conv_alpha = alpha; alpha *= alpha_mult; ++it; return conv_alpha; }
     virtual bool is_converged(double r, double = 0.0) {
       if (glob_it == 0 || (r < first_res / double(2))
-	  || (conv_alpha <= alpha_min && r < first_res * alpha_max_augment)
-	  || it >= itmax)
-	{ conv_r = r; return true; }
+          || (conv_alpha <= alpha_min && r < first_res * alpha_max_augment)
+          || it >= itmax)
+        { conv_r = r; return true; }
       if (it > 1 && r > prev_res && prev_res < alpha_max_ratio * first_res)
-	return true;
+        return true;
       prev_res = conv_r = r;
       return false;
     }
@@ -329,7 +332,7 @@ namespace getfem {
      double a_max_ratio = 5.0/3.0,
      double a_min = 1.0/1000.0, double a_mult = 3.0/5.0, double a_augm = 2.0)
       : alpha_mult(a_mult), alpha_max_ratio(a_max_ratio),
-	alpha_min(a_min), alpha_max_augment(a_augm) { itmax = imax; }
+        alpha_min(a_min), alpha_max_augment(a_augm) { itmax = imax; }
   };
 
 
@@ -347,7 +350,7 @@ namespace getfem {
     virtual bool is_converged(double r, double = 0.0) {
       // cout << "a = " << alpha / alpha_mult << " r = " << r << endl;
       if (r < conv_r || first)
-	{ conv_r = r; conv_alpha = alpha / alpha_mult; first = false; }
+        { conv_r = r; conv_alpha = alpha / alpha_mult; first = false; }
       if ((alpha <= alpha_min*alpha_mult) || it >= itmax) return true;
       return false;
     }
@@ -383,8 +386,6 @@ namespace getfem {
 
     scalar_type crit = pb.residual_norm()
       / std::max(1E-25, pb.approx_external_load_norm());
-    
-
     while (!iter.finished(crit)) {
       gmm::iteration iter_linsolv = iter_linsolv0;
       if (iter.get_noisy() > 1)
@@ -396,7 +397,7 @@ namespace getfem {
         gmm::clear(dr);
         gmm::copy(gmm::scaled(pb.residual(), pb.scale_residual()), b);
         if (iter.get_noisy() > 1) cout << "starting linear solver" << endl;
-	iter_linsolv.init();
+        iter_linsolv.init();
         linear_solver(pb.tangent_matrix(), dr, b, iter_linsolv);
         if (!iter_linsolv.converged()) {
           is_singular++;
@@ -405,7 +406,7 @@ namespace getfem {
               cout << "Singular tangent matrix:"
                 " perturbation of the state vector." << endl;
             pb.perturbation();
-	    pb.compute_residual();
+            pb.compute_residual();
           } else {
             if (iter.get_noisy())
               cout << "Singular tangent matrix: perturbation failed, aborting."
@@ -434,7 +435,7 @@ namespace getfem {
 
   #define TRACE_SOL 0
 
-  template <typename MAT, typename VEC> 
+  template <typename MAT, typename VEC>
   struct model_pb {
 
     typedef MAT MATRIX;
@@ -458,21 +459,21 @@ namespace getfem {
       md.to_variables(state);
       md.assembly(model::BUILD_MATRIX);
       if (is_reduced) {
-	gmm::resize(Kr, sind.size(), sind.size());
-	gmm::copy(gmm::sub_matrix(K, I, I), Kr);
+        gmm::resize(Kr, sind.size(), sind.size());
+        gmm::copy(gmm::sub_matrix(K, I, I), Kr);
       }
     }
 
     const MATRIX &tangent_matrix(void) { return (is_reduced ? Kr : K); }
-    
+
     inline T scale_residual(void) const { return T(1); }
 
     void compute_residual(void) {
       md.to_variables(state);
       md.assembly(model::BUILD_RHS);
       if (is_reduced) {
-	gmm::resize(rhsr, sind.size());
-	gmm::copy(gmm::sub_vector(rhs, I), rhsr);
+        gmm::resize(rhsr, sind.size());
+        gmm::copy(gmm::sub_vector(rhs, I), rhsr);
       }
     }
 
@@ -487,7 +488,7 @@ namespace getfem {
     }
 
     const VECTOR &residual(void) { return (is_reduced ? rhsr : rhs); }
-   
+
     R state_norm(void) const
     { return gmm::vect_norm1(gmm::sub_vector(state, I)); }
 
@@ -501,11 +502,11 @@ namespace getfem {
 
     R compute_res(bool comp = true) {
       if (with_pseudo_potential) {
-	compute_pseudo_potential();
-	return md.pseudo_potential();
+        compute_pseudo_potential();
+        return md.pseudo_potential();
       } else {
-	if (comp) compute_residual();
-	return residual_norm();
+        if (comp) compute_residual();
+        return residual_norm();
       }
     }
 
@@ -515,64 +516,64 @@ namespace getfem {
       gmm::resize(stateinit, md.nb_dof());
       gmm::copy(state, stateinit);
       R alpha(1), res, /* res_init, */ R0;
-	  
-      /* res_init = */ res = compute_res(false);      
+
+      /* res_init = */ res = compute_res(false);
       // cout << "first residual = " << residual() << endl << endl;
       R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
-	               : gmm::real(gmm::vect_sp(dr, rhs)));
-      
-#if TRACE_SOL  
+                       : gmm::real(gmm::vect_sp(dr, rhs)));
+
+#if TRACE_SOL
       static int trace_number = 0;
       int trace_iter = 0;
       {
-	std::stringstream trace_name;
-	trace_name << "line_search_state" << std::setfill('0')
-		   << std::setw(3) << trace_number << "_000_init";
-	gmm::vecsave(trace_name.str(),stateinit);
+        std::stringstream trace_name;
+        trace_name << "line_search_state" << std::setfill('0')
+                   << std::setw(3) << trace_number << "_000_init";
+        gmm::vecsave(trace_name.str(),stateinit);
       }
       trace_number++;
-#endif 
+#endif
 
       ls.init_search(res, iter.get_iteration(), R0);
       do {
-	alpha = ls.next_try();
-	gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
-		 gmm::sub_vector(state, I));
+        alpha = ls.next_try();
+        gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
+                 gmm::sub_vector(state, I));
 #if TRACE_SOL
-	{
-	  trace_iter++;
-	  std::stringstream trace_name;
-	  trace_name  << "line_search_state" << std::setfill('0')
-		      << std::setw(3) << trace_number << "_"
-		      << std::setfill('0') << std::setw(3) << trace_iter;
-	  gmm::vecsave(trace_name.str(), state);
-	}
-#endif 
-	res = compute_res();
-	// cout << "residual = " << residual() << endl << endl;
-	R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
-	                 : gmm::real(gmm::vect_sp(dr, rhs)));
+        {
+          trace_iter++;
+          std::stringstream trace_name;
+          trace_name  << "line_search_state" << std::setfill('0')
+                      << std::setw(3) << trace_number << "_"
+                      << std::setfill('0') << std::setw(3) << trace_iter;
+          gmm::vecsave(trace_name.str(), state);
+        }
+#endif
+        res = compute_res();
+        // cout << "residual = " << residual() << endl << endl;
+        R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
+                         : gmm::real(gmm::vect_sp(dr, rhs)));
 
-	++ nit;
+        ++ nit;
       } while (!ls.is_converged(res, R0));
 
       if (alpha != ls.converged_value() || with_pseudo_potential) {
-	alpha = ls.converged_value();
-	gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
-		 gmm::sub_vector(state, I));
-	res = ls.converged_residual();
-	compute_residual();
+        alpha = ls.converged_value();
+        gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
+                 gmm::sub_vector(state, I));
+        res = ls.converged_residual();
+        compute_residual();
       }
 
       return alpha;
     }
 
     model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
-	     const VECTOR &rhs_, const MATRIX &K_, bool reduced_,
-	     std::vector<size_type> &sind_,
-	     bool with_pseudo_pot = false)
+             const VECTOR &rhs_, const MATRIX &K_, bool reduced_,
+             std::vector<size_type> &sind_,
+             bool with_pseudo_pot = false)
       : md(m), is_reduced(reduced_), sind(sind_), I(sind_), ls(ls_), state(st),
-	rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
+        rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
 
   };
 
@@ -593,7 +594,7 @@ namespace getfem {
   dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> >
   default_linear_solver(const model &md) {
     dal::shared_ptr<abstract_linear_solver<MATRIX, VECTOR> > p;
-    
+
 #if GETFEM_PARA_LEVEL == 1 && GETFEM_PARA_SOLVER == MUMPS_PARA_SOLVER
     if (md.is_symmetric())
       p.reset(new linear_solver_mumps_sym<MATRIX, VECTOR>);
