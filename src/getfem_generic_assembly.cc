@@ -8939,7 +8939,10 @@ namespace getfem {
         gic.init(target_mesh.points_of_convex(cv),
                  target_mesh.trans_of_convex(cv));
 
-        if (gic.invert(P, P_ref)) {
+        bool converged = true;
+        bool is_in = gic.invert(P, P_ref, converged);
+
+        if (is_in && converged) {
           face_num = short_type(-1); // Should detect potential faces ?
           ret_type = 1;
           break;
