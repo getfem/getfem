@@ -8880,7 +8880,14 @@ namespace getfem {
           bgeot::pgeometric_trans pgt = target_mesh.trans_of_convex(cv);
 
           size_type nbd_t = pgt->nb_points();
-          for (short_type ip = 0; ip < nbd_t; ++ip) {
+          if (nbd_t) {
+            gmm::copy(target_mesh.points_of_convex(cv)[0], bmin);
+            gmm::copy(bmin, bmax);
+          } else {
+            gmm::clear(bmin);
+            gmm::clear(bmax);
+          }
+          for (short_type ip = 1; ip < nbd_t; ++ip) {
             // size_type ind = target_mesh.ind_points_of_convex(cv)[ip];
             const base_node &pt = target_mesh.points_of_convex(cv)[ip];
 
@@ -8933,10 +8940,10 @@ namespace getfem {
       *m_t = &target_mesh;
 
       while (bset.size()) {
-
         // Searching the box for which the point is the most in the interior
-        bgeot::rtree::pbox_set::iterator it = bset.begin(), itmax;
-        scalar_type rate_max = scalar_type(0);
+        bgeot::rtree::pbox_set::iterator it = bset.begin(), itmax = it;
+
+        scalar_type rate_max = scalar_type(-1);
         for (; it != bset.end(); ++it) {
           
           scalar_type rate_box = scalar_type(1);
@@ -8948,13 +8955,12 @@ namespace getfem {
               rate_box = std::min(rate, rate_box);                
             }
           }
-          if (rate_box != scalar_type(1) && rate_box > rate_max) {
+          if (rate_box > rate_max) {
             itmax = it;
             rate_max = rate_box;
           }
         }
-        
-   
+
         cv = (*itmax)->id;
         bset.erase(itmax);
 
@@ -8969,8 +8975,6 @@ namespace getfem {
           ret_type = 1;
           break;
         }
-
-
       }
 
       // Note on derivatives of the transformation : for efficiency and
