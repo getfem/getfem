@@ -8932,9 +8932,31 @@ namespace getfem {
       element_boxes.find_boxes_at_point(P, bset);
       *m_t = &target_mesh;
 
-      bgeot::rtree::pbox_set::iterator it = bset.begin();
-      for (; it != bset.end(); ++it) {
-        cv = (*it)->id;
+      while (bset.size()) {
+
+        // Searching the box for which the point is the most in the interior
+        bgeot::rtree::pbox_set::iterator it = bset.begin(), itmax;
+        scalar_type rate_max = scalar_type(0);
+        for (; it != bset.end(); ++it) {
+          
+          scalar_type rate_box = scalar_type(1);
+          for (size_type i = 0; i < m.dim(); ++i) {
+            scalar_type h = (*it)->max[i] - (*it)->min[i];
+            if (h > scalar_type(0)) {
+              scalar_type rate
+                = std::min((*it)->max[i] - P[i], P[i] - (*it)->min[i]) / h;
+              rate_box = std::min(rate, rate_box);                
+            }
+          }
+          if (rate_box != scalar_type(1) && rate_box > rate_max) {
+            itmax = it;
+            rate_max = rate_box;
+          }
+        }
+        
+   
+        cv = (*itmax)->id;
+        bset.erase(itmax);
 
         gic.init(target_mesh.points_of_convex(cv),
                  target_mesh.trans_of_convex(cv));
@@ -8947,12 +8969,14 @@ namespace getfem {
           ret_type = 1;
           break;
         }
+
+
       }
 
       // Note on derivatives of the transformation : for efficiency and
       // simplicity reasons, the derivative should be computed with
       // the value of corresponding test functions. This means that
-      // for a transformation F(u) the conputed derivative is F'(u).Test_u
+      // for a transformation F(u) the computed derivative is F'(u).Test_u
       // including the Test_u.
       if (compute_derivatives) { // To be tested both with the computation
                                  // of derivative. Could be optimized ?
