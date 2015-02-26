@@ -2190,7 +2190,7 @@ namespace getfem {
         cv_1 = mf.convex_index().first_true();
 
 
-      //cout << "cv_1 " << cv_1 << endl;
+      // cout << "cv_1 " << cv_1 << endl;
       pfem pf = mf.fem_of_element(cv_1);
       GMM_ASSERT1(pf, "An element without finite element methode defined");
       // cout << "pf = " << pf << endl;
@@ -4048,8 +4048,8 @@ namespace getfem {
     if (tree.root) {
 
       // cout << "add tree with tests functions of " <<  tree.root->name_test1
-      //     << " and " << tree.root->name_test2 << endl;
-      //     ga_print_node(tree.root, cout); cout << endl;
+      //      << " and " << tree.root->name_test2 << endl;
+      //      ga_print_node(tree.root, cout); cout << endl;
       bool remain = true;
       size_type order = 0, ind_tree = 0;
 
@@ -6145,8 +6145,6 @@ namespace getfem {
         * 1.0101 * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1));
     }
     // cout << " final hash code = " << pnode->hash_value << endl;
-
-
   }
 
   static void ga_semantic_analysis(const std::string &expr, ga_tree &tree,
@@ -7104,8 +7102,10 @@ namespace getfem {
         pnode->node_type == GA_NODE_SPEC_FUNC ||
         pnode->node_type == GA_NODE_CONSTANT ||
         pnode->node_type == GA_NODE_ALLINDICES ||
-        //pnode->node_type == GA_NODE_ZERO ||   // zero nodes can still have test functions
+        // pnode->node_type == GA_NODE_ZERO ||   // zero nodes can still have test functions
         pnode->node_type == GA_NODE_RESHAPE) return;
+
+    // cout << "compiling "; ga_print_node(pnode, cout); cout << endl;
 
     pga_instruction pgai = 0;
     ga_if_hierarchy *pif_hierarchy = &if_hierarchy;
@@ -8121,14 +8121,13 @@ namespace getfem {
       if (td.order == order) {
         gis.trees.push_back(*(td.ptree));
 
-        pga_tree_node root = gis.trees.back().root;
-        // cout << "Final analysis of "; ga_print_node(root, cout); cout << endl;
         // Semantic analysis mainly to evaluate fixed size variables and data
         ga_semantic_analysis("", gis.trees.back(), workspace,
                              td.mim->linked_mesh().dim(), true, false);
+        pga_tree_node root = gis.trees.back().root;
         if (root) {
           // Compiling tree
-          // cout << "compiling "; ga_print_node(root, cout); cout << endl;
+          // cout << "Will compile "; ga_print_node(root, cout); cout << endl;
 
           ga_instruction_set::region_mim rm(td.mim, td.rg);
           ga_instruction_set::region_mim_instructions &rmi
@@ -8940,30 +8939,30 @@ namespace getfem {
       *m_t = &target_mesh;
 
       while (bset.size()) {
-        // Searching the box for which the point is the most in the interior
         bgeot::rtree::pbox_set::iterator it = bset.begin(), itmax = it;
 
-        scalar_type rate_max = scalar_type(-1);
-        for (; it != bset.end(); ++it) {
-          
-          scalar_type rate_box = scalar_type(1);
-          for (size_type i = 0; i < m.dim(); ++i) {
-            scalar_type h = (*it)->max[i] - (*it)->min[i];
-            if (h > scalar_type(0)) {
-              scalar_type rate
-                = std::min((*it)->max[i] - P[i], P[i] - (*it)->min[i]) / h;
-              rate_box = std::min(rate, rate_box);                
+        if (bset.size() > 1) {
+          // Searching the box for which the point is the most in the interior
+          scalar_type rate_max = scalar_type(-1);
+          for (; it != bset.end(); ++it) {
+            
+            scalar_type rate_box = scalar_type(1);
+            for (size_type i = 0; i < m.dim(); ++i) {
+              scalar_type h = (*it)->max[i] - (*it)->min[i];
+              if (h > scalar_type(0)) {
+                scalar_type rate
+                  = std::min((*it)->max[i] - P[i], P[i] - (*it)->min[i]) / h;
+                rate_box = std::min(rate, rate_box);                
+              }
             }
-          }
-          if (rate_box > rate_max) {
-            itmax = it;
-            rate_max = rate_box;
+            if (rate_box > rate_max) {
+              itmax = it;
+              rate_max = rate_box;
+            }
           }
         }
 
         cv = (*itmax)->id;
-        bset.erase(itmax);
-
         gic.init(target_mesh.points_of_convex(cv),
                  target_mesh.trans_of_convex(cv));
 
@@ -8975,6 +8974,9 @@ namespace getfem {
           ret_type = 1;
           break;
         }
+
+        if (bset.size() == 1) break;
+        bset.erase(itmax);
       }
 
       // Note on derivatives of the transformation : for efficiency and
