@@ -345,7 +345,7 @@ namespace getfem {
       if (test0 && test1 && (test0 == test1 ||
                              test0 >= 3 || test1 >= 3))
         ga_throw_error(expr, pos, "Incompatibility of test functions "
-                        "in product.");
+                       "in product.");
       GMM_ASSERT1(test0 != size_type(-1) && test1 != size_type(-1),
                   "internal error");
 
@@ -652,9 +652,10 @@ namespace getfem {
       copy_node(pnode, plus, plus->children[1]);
     }
 
-    void insert_node(pga_tree_node pnode) {
+    void insert_node(pga_tree_node pnode, GA_NODE_TYPE node_type) {
       pga_tree_node newnode = new ga_tree_node;
       newnode->parent = pnode->parent;
+      newnode->node_type = node_type;
       if (pnode->parent) {
         for (size_type j = 0; j < pnode->parent->children.size(); ++j)
           if (pnode->parent->children[j] == pnode)
@@ -4079,8 +4080,7 @@ namespace getfem {
             trees[i].rg == &rg) {
           ga_tree &ftree = *(trees[i].ptree);
 
-          ftree.insert_node(ftree.root);
-          ftree.root->node_type = GA_NODE_OP;
+          ftree.insert_node(ftree.root, GA_NODE_OP);
           ftree.root->op_type = GA_PLUS;
           ftree.add_children(ftree.root);
           ftree.copy_node(tree.root, ftree.root, ftree.root->children[1]);
@@ -6204,8 +6204,7 @@ namespace getfem {
             aux_tree.root = child1;
             child1->parent = 0;
             if (sign1 < 0) {
-              aux_tree.insert_node(child1);
-              child1->parent->node_type = GA_NODE_OP;
+              aux_tree.insert_node(child1, GA_NODE_OP);
               child1->parent->op_type = GA_UNARY_MINUS;
             }
 
@@ -6603,8 +6602,7 @@ namespace getfem {
               (pnode->op_type != GA_MULT || child0->tensor_order() < 2)) {
             ga_node_derivation(tree, workspace, m, child1, varname,
                                interpolatename, order);
-            tree.insert_node(pnode);
-            pnode->parent->node_type = GA_NODE_OP;
+            tree.insert_node(pnode, GA_NODE_OP);
             pnode->parent->op_type = GA_MULT;
             tree.add_children(pnode->parent);
             pga_tree_node pnode_cte = pnode->parent->children[1];
@@ -6644,21 +6642,18 @@ namespace getfem {
               pnode->parent->op_type = GA_MINUS;
               pnode = pnode->parent->children[1];
             } else {
-              tree.insert_node(pnode);
-              pnode->parent->node_type = GA_NODE_OP;
+              tree.insert_node(pnode, GA_NODE_OP);
               pnode->parent->op_type = GA_UNARY_MINUS;
             }
           }
-          tree.insert_node(pnode->children[1]);
+          tree.insert_node(pnode->children[1], GA_NODE_PARAMS);
           pga_tree_node pnode_param = pnode->children[1];
-          pnode_param->node_type = GA_NODE_PARAMS;
           tree.add_children(pnode_param);
           std::swap(pnode_param->children[0], pnode_param->children[1]);
           pnode_param->children[0]->node_type = GA_NODE_PREDEF_FUNC;
           pnode_param->children[0]->name = "sqr";
-          tree.insert_node(pnode);
+          tree.insert_node(pnode, GA_NODE_OP);
           pga_tree_node pnode_mult = pnode->parent;
-          pnode_mult->node_type = GA_NODE_OP;
           if (pnode->op_type == GA_DOTDIV)
             pnode_mult->op_type = GA_DOTMULT;
           else
@@ -6745,8 +6740,7 @@ namespace getfem {
                   pnode->op_type = GA_MULT;
                   child0->init_scalar_tensor(a);
                   child0->node_type = GA_NODE_CONSTANT;
-                  tree.insert_node(pnode);
-                  pnode->parent->node_type = GA_NODE_OP;
+                  tree.insert_node(pnode, GA_NODE_OP);
                   pnode->parent->op_type = GA_PLUS;
                   tree.add_children(pnode->parent);
                   pga_tree_node pnode_cte = pnode->parent->children[1];
@@ -6758,9 +6752,8 @@ namespace getfem {
             }
             break;
           }
-          tree.insert_node(pnode);
+          tree.insert_node(pnode, GA_NODE_OP);
           pga_tree_node pnode_op = pnode->parent;
-          pnode_op->node_type = GA_NODE_OP;
           if (child1->tensor_order() == 0)
             pnode_op->op_type = GA_MULT;
           else
@@ -6796,9 +6789,8 @@ namespace getfem {
               }
               break;
             }
-            tree.insert_node(pnode);
+            tree.insert_node(pnode, GA_NODE_OP);
             pga_tree_node pnode_op = pnode->parent;
-            pnode_op->node_type = GA_NODE_OP;
             if (child1->tensor_order() == 0)
               pnode_op->op_type = GA_MULT;
             else
@@ -6834,9 +6826,8 @@ namespace getfem {
               }
               break;
             }
-            tree.insert_node(pnode);
+            tree.insert_node(pnode, GA_NODE_OP);
             pga_tree_node pnode_op = pnode->parent;
-            pnode_op->node_type = GA_NODE_OP;
             if (child2->tensor_order() == 0)
               pnode_op->op_type = GA_MULT;
             else
@@ -6864,7 +6855,7 @@ namespace getfem {
           if (pnode->children[i]->marked) {
             ++j;
             if (j != nbargs_der) {
-              tree.insert_node(pnode);
+              tree.insert_node(pnode, GA_NODE_OP);
               pga_tree_node pnode_op = pnode->parent;
               pnode_op->node_type = GA_NODE_OP;
               pnode_op->op_type = GA_PLUS;
@@ -6878,9 +6869,8 @@ namespace getfem {
               pnode2->children[0]->der2 = i;
             else
               pnode2->children[0]->der1 = i;
-            tree.insert_node(pnode2);
+            tree.insert_node(pnode2, GA_NODE_OP);
             pga_tree_node pnode_op = pnode2->parent;
-            pnode_op->node_type = GA_NODE_OP;
             // calcul de l'ordre de reduction
             size_type red = pnode->children[i]->tensor_order();
             switch (red) {
