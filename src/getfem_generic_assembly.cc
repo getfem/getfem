@@ -3364,36 +3364,53 @@ namespace getfem {
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
-  // Performs Amij Bnj -> Cnmi
+  // Performs Amij Bnj -> Cmni
   struct ga_instruction_spec_reduction : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     size_type nn;
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: specific reduction operation of size "
-                           << nn);
+      GA_DEBUG_INFO("Instruction: specific reduction operation of "
+                    "size " << nn);
       size_type s1 = tc1.sizes()[0], s11 = tc1.size() / (s1*nn), s111 = s1*s11;
       size_type s2 = tc2.sizes()[0];
-
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < s11; ++i)
-        for (size_type n = 0; n < s2; ++n)
+        for (size_type n = 0; n < s2; ++n) 
           for (size_type m = 0; m < s1; ++m, ++it) {
             *it = scalar_type(0);
             for (size_type j = 0; j < nn; ++j)
               *it += tc1[m+i*s1+j*s111] * tc2[n+j*s2];
           }
-//       base_tensor::iterator it = t.begin();
-//       for (size_type i = 0; i < s11; ++i)
-//         for (size_type m = 0; m < s1; ++m)
-//           for (size_type n = 0; n < s2; ++n, ++it) {
-//             *it = scalar_type(0);
-//             for (size_type j = 0; j < nn; ++j)
-//               *it += tc1[m+i*s1+j*s111] * tc2[n+j*s2];
-//           }
       GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
       return 0;
     }
     ga_instruction_spec_reduction(base_tensor &t_, base_tensor &tc1_,
+                             base_tensor &tc2_, size_type n_)
+      : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
+  };
+
+  // Performs Amik Bnjk -> Cmnij
+  struct ga_instruction_spec2_reduction : public ga_instruction {
+    base_tensor &t, &tc1, &tc2;
+    size_type nn;
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: second specific reduction operation of "
+                    "size " << nn);
+      size_type s1 = tc1.sizes()[0], s11 = tc1.size() / (s1*nn), s111 = s1*s11;
+      size_type s2 = tc2.sizes()[0], s22 = tc2.size() / (s2*nn), s222 = s2*s22;
+      base_tensor::iterator it = t.begin();
+      for (size_type j = 0; j < s22; ++j)
+        for (size_type i = 0; i < s11; ++i)
+          for (size_type m = 0; m < s1; ++m)
+            for (size_type n = 0; n < s2; ++n, ++it) {
+              *it = scalar_type(0);
+              for (size_type k = 0; k < nn; ++k)
+                *it += tc1[m+i*s1+k*s111] * tc2[n+j*s2+k*s222];
+            }
+      GA_DEBUG_ASSERT(it == t.end(), "Wrong sizes");
+      return 0;
+    }
+    ga_instruction_spec2_reduction(base_tensor &t_, base_tensor &tc1_,
                              base_tensor &tc2_, size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
@@ -7591,25 +7608,39 @@ namespace getfem {
                }
              } else {
                if (child1->test_function_type == 1 ||
-                   child1->test_function_type == 3) {
-                 if (s2 == 2) // Unroll loop test ... to be extended
-                   pgai = new ga_instruction_reduction_2
-                     (pnode->t, child0->t, child1->t);
-                 else
-                   pgai = new ga_instruction_reduction
-                     (pnode->t, child0->t, child1->t, s2);
+                    child1->test_function_type == 3) {
+                 if (child1->test_function_type == 3 || 
+                     child1->tensor_proper_size() <= s2) {
+                   if (s2 == 2) // Unroll loop test ... to be extended
+                     pgai = new ga_instruction_reduction_2
+                       (pnode->t, child0->t, child1->t);
+                   else
+                     pgai = new ga_instruction_reduction
+                       (pnode->t, child0->t, child1->t, s2);
+                 } else {
+                   pgai = new ga_instruction_spec_reduction
+                     (pnode->t, child1->t, child0->t, s2);
+                 }
                } else if (child1->test_function_type == 0 ||
-                          child0->tensor_proper_size()
-                          == child1->tensor_proper_size()) {
+                          (child0->tensor_proper_size() == s2 &&
+                           child1->tensor_proper_size() == s2)) {
                  if (s2 == 2) // Unroll loop test ... to be extended
                    pgai = new ga_instruction_reduction_2
                      (pnode->t, child1->t, child0->t);
                  else
                    pgai = new ga_instruction_reduction
                      (pnode->t, child1->t, child0->t, s2);
-               } else pgai = new ga_instruction_spec_reduction
-                   (pnode->t, child0->t, child1->t, s2);
-               // (pnode->t, child1->t, child0->t, s2);
+               } else {
+                 if (child0->tensor_proper_size() == s2)
+                   pgai = new ga_instruction_reduction
+                     (pnode->t, child1->t, child0->t, s2);
+                 else if (child1->tensor_proper_size() == s2)
+                   pgai = new ga_instruction_spec_reduction
+                     (pnode->t, child0->t, child1->t, s2);
+                 else
+                   pgai = new ga_instruction_spec2_reduction
+                     (pnode->t, child0->t, child1->t, s2);
+               }
              }
 
 
