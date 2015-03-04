@@ -45,9 +45,10 @@ NY = 20;
 % alpha is parametr of the generalized integration algorithms The
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
 % backward Euler integration
-alpha_method = true;
-alpha = 0.5;
-
+Imlicit_Euler_method=0;    % set theta = 1
+alpha_method = 0;
+alpha = 1;                  %  alpha = 1/2 yields the mid point method
+general_theta_method =1;    %  theta = 1/2 yields the Crank-Nicolson method
 
 f = [15000 0]';
 
@@ -56,7 +57,7 @@ f = [15000 0]';
 % transient part.
 T = pi/4;
 dt = 0.01;
-theta= 1;
+theta= 0.5;
 
 
 
@@ -178,13 +179,26 @@ ApH = sprintf('((2*(mu)+(H))*(%s) + (lambda)*(%s))', Is, IxI);
 Enp1 = '((Grad_u+Grad_u'')/2)';
 En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
  %expression de sigma for Implicit Euler method
+ if(Imlicit_Euler_method)
   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
   
+ end
  
 if(alpha_method)
  %expression de sigma for generalized alpha algorithms
   expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*(1-alpha)*sigma)+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
     B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
+end
+
+if(general_theta_method)
+    
+ %expression de sigma for generalized theta algorithms
+ set(md, 'add initialized data', 'dt', [dt]);
+ set(md, 'add initialized data', 'theta', [theta]);
+ gf_model_set(md, 'add im data', 'Epn_t', mim_data);
+
+ expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma)-(',ApH,'*dt*(1-theta)*Epn_t), von_mises_threshold) + H*', Enp1, '))');
+
 end
 
 
@@ -206,6 +220,17 @@ set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 % interpolate the initial data
 U0 = get(md, 'variable', 'u');
 V0 = 0*U0;
+
+if(general_theta_method)
+    
+ Ep0_t=  gf_model_get(md, 'variable', 'Epn_t');
+ coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
+ coeff2='1/(2*mu)';
+ Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
+ Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
+ Ep0 = gf_model_get(md, 'interpolation', Ep, mim_data);
+ 
+end
 
 if(alpha_method)
 gf_model_set(md, 'add explicit matrix', 'u', 'u',rho* M/(dt*dt*alpha));
@@ -229,8 +254,6 @@ end
 
 
 
-
-
 VM=zeros(1,get(mf_vm, 'nbdof'));
  step=1;
 % Iterations
@@ -240,32 +263,37 @@ for t = 0:dt:T
    disp(sprintf('step %d, coeff = %g', step , coeff)); 
    set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*coeff;f(2,1)*coeff}));  
   
-if(alpha_method)
+ if(alpha_method)
     
-   MU0=M*U0';
+      MU0=M*U0';
+      LL = rho*(( 1/(dt*dt*alpha))*MU0+( 1/(dt*alpha))*MV0);
+      gf_model_set(md, 'set private rhs', ind_rhs, LL);
+      get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+      U = gf_model_get(md, 'variable', 'u');
+      MV = ((M*U' - MU0)/dt -(1-alpha)*MV0)/alpha;
+
+ end
+
+  if(Imlicit_Euler_method)
+       get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
+       U = gf_model_get(md, 'variable', 'u');
+       V = gf_model_get(md, 'variable', 'Dot_u'); 
+  
+  end
+
+  if(general_theta_method)
+     get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6); 
+       U = gf_model_get(md, 'variable', 'u');
+       V = gf_model_get(md, 'variable', 'Dot_u'); 
      
-   LL = rho*(( 1/(dt*dt*alpha))*MU0+( 1/(dt*alpha))*MV0);
- 
-   gf_model_set(md, 'set private rhs', ind_rhs, LL);
-   get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
-   U = gf_model_get(md, 'variable', 'u');
-   MV = ((M*U' - MU0)/dt -(1-alpha)*MV0)/alpha;
-
+  end
   
-else
-   
-   get(md, 'solve', 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6);
-   U = gf_model_get(md, 'variable', 'u');
-   V = gf_model_get(md, 'variable', 'Dot_u'); 
-  
-end
-
       
   if (test_tangent_matrix)
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
   end;
     
- if (alpha_method)
+  if (alpha_method)
       sigma_0 = gf_model_get(md, 'variable', 'sigma');
       sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
       U_0 = gf_model_get(md, 'variable', 'Previous_u');
@@ -301,8 +329,10 @@ end
       sigma = (sigma - (1-alpha)*sigma_0)/alpha;
       gf_model_set(md, 'variable', 'sigma', sigma);
       gf_model_set(md, 'variable', 'Previous_u', U);
-  else
+   end
    
+  
+  if(Imlicit_Euler_method)
     
     sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
     gf_model_set(md, 'variable', 'sigma', sigma);
@@ -335,9 +365,52 @@ end
     Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
     
     
- end  
+  end  
+    
+  if(general_theta_method) 
+      
+    sigma = gf_model_get(md, 'interpolation', expr_sigma, mim_data);
+    gf_model_set(md, 'variable', 'sigma', sigma);
+    gf_model_set(md, 'variable', 'Previous_u', U);
+    
+   
+    
+    M_VM = gf_asm('mass matrix', mim, mf_vm);
+    L = gf_asm('generic', mim, 1, 'sqrt(3/2)*Norm(Deviator(sigma))*Test_vm', -1, 'sigma', 0, mim_data, sigma, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1));
+    VM = (M_VM \ L)';
+    
+    coeff1='-lambda/(2*mu*(meshdim*lambda+2*mu))';
+    coeff2='1/(2*mu)';
+    Ainv=sprintf('(%s)*(%s) + (%s)*(%s)', coeff1, IxI, coeff2, Is);
+    Ep = sprintf('(Grad_u+Grad_u'')/2 - (%s)*sigma', Ainv);
     
     
+    L = gf_asm('generic', mim, 1, sprintf('Norm(%s)*Test_vm', Ep), -1, 'sigma', 0, mim_data, sigma, 'u', 0, mf_u, U, 'vm', 1, mf_vm, zeros(gf_mesh_fem_get(mf_vm, 'nbdof'),1), 'mu', 0, mf_data, mu, 'lambda', 0, mf_data, lambda);
+    plast = (M_VM \ L)';
+      
+    Epsilon_u = gf_model_get(md, 'interpolation', '((Grad_u+Grad_u'')/2)', mim_data);
+    nb_gauss_pt_per_element = size(sigma, 2) / (N*N*gf_mesh_get(m, 'nbcvs'));
+    % ind_gauss_pt = 22500;
+    ind_gauss_pt = nb_gauss_pt_per_element * 1100 - 1;
+    ind_elt = floor(ind_gauss_pt / nb_gauss_pt_per_element);
+    P = gf_mesh_get(m, 'pts from cvid', ind_elt);
+    disp(sprintf('Point for the strain/stress graph (approximately): (%f,%f)', P(1,1), P(2,1)));
+
+    if (size(sigma, 2) <= N*(ind_gauss_pt + 1))
+      ind_gauss_pt = floor(3*size(sigma, 2) / (4*N*N));
+    end
+    sigma_fig(1,step)=sigma(N*N*ind_gauss_pt + 1);
+    Epsilon_u_fig(1,step)=Epsilon_u(N*N*ind_gauss_pt + 1);
+    
+    
+    Ep1 = gf_model_get(md, 'interpolation', Ep, mim_data);
+    Epn_t= (1/(dt*theta))*(Ep1-Ep0)-(((1-theta)/theta)*Ep0_t);
+    gf_model_set(md, 'variable', 'Epn_t', Epn_t);
+ 
+       
+  end
+  
+  
        
     if (do_plot)
       figure(2)
@@ -367,19 +440,31 @@ end
       pause(0.1);
     end
     
-     step= step+ 1;
+       step= step+ 1;
      
-     if(alpha_method)
+    if(alpha_method)
          
-  U0 = U;
-  MV0 = MV;
+       U0 = U;
+       MV0 = MV;
  
-     else
-         
-        
-    gf_model_set(md, 'shift variables for time integration');
+    end
     
-     end
+    if(Imlicit_Euler_method)   
+        
+        gf_model_set(md, 'shift variables for time integration');
+    
+    end
+     
+    
+      if(general_theta_method) 
+          
+        gf_model_set(md, 'shift variables for time integration');   
+        Ep0_t=Epn_t;
+        Ep0=Ep1;
+          
+      end
+     
+     
 end;
 
 
