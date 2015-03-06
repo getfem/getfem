@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2012-2014 Tomas Ligursky, Yves Renard.
+ Copyright (C) 2012-2015 Tomas Ligursky, Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -83,7 +83,8 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        default value is 1e-8);
     - 'singularities', @int SING
        activates tools for detection and treatment of singular points (1 for
-       limit points, 2 for bifurcation points);
+       limit points, 2 for bifurcation points and points requiring special
+       branching techniques);
     - 'non-smooth'
        determines that some special methods for non-smooth problems can be
        used;

@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2012-2012 Tomas Ligursky, Yves Renard.
+ Copyright (C) 2012-2015 Tomas Ligursky, Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -138,6 +138,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       with the tangent given by `tangent_sol2` and `tangent_par2`.@*/
     sub_command
       ("non-smooth bifurcation test", 8, 8, 0, 1,
+
        size_type nbdof = ps->linked_model().nb_dof();
        darray x1 = in.pop().to_darray();
        std::vector<double> xx1(nbdof); gmm::copy(x1, xx1);
@@ -151,6 +152,7 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
        darray t_x2 = in.pop().to_darray();
        std::vector<double> tt_x2(nbdof); gmm::copy(t_x2, tt_x2);
        scalar_type t_gamma2 = in.pop().to_scalar();
+
        ps->set_build(getfem::BUILD_ALL);
        ps->init_border();
        ps->clear_tau_bp_currentstep();
@@ -166,18 +168,47 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       of differentiability.@*/
     sub_command
       ("bifurcation test function", 0, 0, 0, 3,
+
        out.pop().from_scalar(ps->get_tau_bp_2());
        if (out.remaining()) out.pop().from_dcvector(ps->get_alpha_hist());
        if (out.remaining()) out.pop().from_dcvector(ps->get_tau_bp_hist());
        );
 
 
+    /* @GET ('non-smooth branching', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par)
+       Approximate a non-smooth point close to the point given by `solution`
+       and `parameter` and locate one-sided smooth solution branches
+       emanating from there. Save the approximation of the non-smooth point
+       as a singular point into the @tcs object together with the array of
+       the tangents to the located solution branches that direct away from
+       the non-smooth point. It is supposed that the point given by
+       `solution` and `parameter` is a point on a smooth solution branch
+       within the distance equal to the minimum step size from the end point
+       of this branch, and the corresponding tangent that is directed towards
+       the end point is given by `tangent_sol` and `tangent_par`.@*/
+    sub_command
+      ("non-smooth branching", 4, 4, 0, 0,
+
+       size_type nbdof = ps->linked_model().nb_dof();
+       darray x = in.pop().to_darray();
+       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       scalar_type gamma = in.pop().to_scalar();
+       darray t_x = in.pop().to_darray();
+       std::vector<double> tt_x(nbdof); gmm::copy(t_x, tt_x);
+       scalar_type t_gamma = in.pop().to_scalar();
+
+       ps->clear_sing_data();
+       getfem::treat_nonsmooth_point(*ps, xx, gamma, tt_x, t_gamma, 0);
+       );
+
+
     /*@GET @CELL{X, gamma, T_X, T_gamma} = ('sing_data')
-      Return a singular point (`X`, `gamma`) encountered in the last
-      continuation step (if any) and a couple of arrays (`T_X`, `T_gamma`) of
-      tangents to all located solution branches, which emanate from there.@*/
+      Return a singular point (`X`, `gamma`) stored in the @tcs object and a
+      couple of arrays (`T_X`, `T_gamma`) of tangents to all located solution
+      branches that emanate from there.@*/
     sub_command
       ("sing_data", 0, 0, 0, 4,
+
        out.pop().from_dcvector(ps->get_x_sing());
        out.pop().from_scalar(ps->get_gamma_sing());
        out.pop().from_vector_container(ps->get_t_x_sing());

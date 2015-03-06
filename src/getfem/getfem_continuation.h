@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2011-2014 Tomas Ligursky, Yves Renard
+ Copyright (C) 2011-2015 Tomas Ligursky, Yves Renard
  
  This file is a part of GETFEM++
  
@@ -407,22 +407,24 @@ namespace getfem {
   }
   
   /* A tool for approximating a non-smooth point close to (x, gamma) and
-     locating (preferably) all smooth one-sided solution branches emanating
-     from there. It is supposed that (x, gamma) is a point on the previously
-     traversed smooth solution branch within the distance of S.h_min() from
-     the end point of this branch and (t_x, t_gamma) is the corresponding
-     tangent that is directed towards the end point. */
+     locating one-sided smooth solution branches emanating from there. It is
+     supposed that (x, gamma) is a point on a smooth solution branch within
+     the distance of S.h_min() from the end point of this branch and
+     (t_x, t_gamma) is the corresponding tangent that is directed towards the
+     end point. The value of version indicates whether the first new branch
+     found (if any) is to be chosen for further continuation (version = 1) or
+     not (version = 0). */
   template <typename CONT_S, typename VECT>
   void treat_nonsmooth_point(CONT_S &S, const VECT &x, double gamma,
 			     const VECT &t_x, double t_gamma, int version) {
-    double gamma_end = gamma, Gamma, t_gamma0 = t_gamma, T_gamma = t_gamma,
+    double gamma_0 = gamma, Gamma, t_gamma0 = t_gamma, T_gamma = t_gamma,
       h = S.h_min(), cang, mcos = S.mincos();
-    VECT x_end(x), X(x), t_x0(t_x), T_x(t_x);
+    VECT x_0(x), X(x), t_x0(t_x), T_x(t_x);
 
-    // approximate the non-smooth point by a bisection-like algorithm
+    // approximate the end point more precisely by a bisection-like algorithm
     if (S.noisy() > 0)
       cout  << "starting locating a non-smooth point" << endl;
-    S.scaled_add(x, t_x, h, X); Gamma = gamma + h * t_gamma;
+    S.scaled_add(x_0, t_x0, h, X); Gamma = gamma_0 + h * t_gamma0;
     S.set_build(BUILD_ALL);
     if (newton_corr(S, X, Gamma, T_x, T_gamma, t_x0, t_gamma0)) {
       cang = S.cosang(T_x, t_x0, T_gamma, t_gamma0);
@@ -433,65 +435,66 @@ namespace getfem {
     h /= 2.;
     for (unsigned long i = 0; i < 15; i++) {
       if (S.noisy() > 0) cout << "prediction with h = " << h << endl;
-      S.scaled_add(x_end, t_x0, h, X); Gamma = gamma_end + h * t_gamma0;
+      S.scaled_add(x_0, t_x0, h, X); Gamma = gamma_0 + h * t_gamma0;
       S.set_build(BUILD_ALL);
       if (newton_corr(S, X, Gamma, T_x, T_gamma, t_x0, t_gamma0)
-	  && (S.cosang(T_x, t_x, T_gamma, t_gamma) >= mcos)) {
-	S.copy(X, x_end); gamma_end = Gamma;
+	  && (S.cosang(T_x, t_x0, T_gamma, t_gamma0) >= mcos)) {
+	S.copy(X, x_0); gamma_0 = Gamma;
 	S.copy(T_x, t_x0); t_gamma0 = T_gamma;
       } else {
 	S.copy(t_x0, T_x); T_gamma = t_gamma0;
       }
       h /= 2.;
     }
-    S.scaled_add(x_end, t_x0, h, x_end); gamma_end += h * t_gamma0;
-    S.set_sing_point(x_end, gamma_end);
+    S.set_sing_point(x_0, gamma_0);
 
-    // take two vectors to span a subspace of perturbations for the
-    // non-smooth point
+    // take two vectors to span a subspace of directions emanating from the
+    // end point
     if (S.noisy() > 0)
       cout  << "starting a thorough search for other branches" << endl;
     double t_gamma1 = t_gamma0, t_gamma2 = t_gamma0;
     VECT t_x1(t_x0), t_x2(t_x0);
     S.scale(t_x1, -1.); t_gamma1 *= -1.;
     S.insert_tangent_sing(t_x1, t_gamma1);
-
     h = S.h_min();
-    S.scaled_add(x_end, t_x0, h, X); Gamma = gamma_end + h * t_gamma0;
+    S.scaled_add(x_0, t_x0, h, X); Gamma = gamma_0 + h * t_gamma0;
     S.set_build(BUILD_ALL);
     compute_tangent(S, X, Gamma, t_x2, t_gamma2);
 
-    // perturb the non-smooth point systematically to find new tangent
-    // predictions
+    // try systematically various directions emanating from the end point for
+    // finding new possible tangent predictions
     unsigned long i1 = 0, i2 = 0, ncomb = 0;
     double a, a1, a2, no;
-    S.clear(t_x0); t_gamma0 = 0.;
 
     do {
       for (unsigned long i = 0; i < S.nbdir(); i++) {
 	a = (2 * M_PI * double(i)) / double(S.nbdir());
-	a1 = h * sin(a); a2 = h * cos(a);
-	S.scaled_add(x_end, t_x1, a1, X); Gamma = gamma_end + a1 * t_gamma1;
-	S.scaled_add(X, t_x2, a2, X); Gamma += a2 * t_gamma2;
+	a1 = sin(a); a2 = cos(a);
+	S.scaled_add(t_x1, a1, t_x2, a2, T_x);
+	T_gamma = a1 * t_gamma1 + a2 * t_gamma2;
+	no = S.w_norm(T_x, T_gamma);
+	S.scaled_add(x_0, T_x, h / no, X);
+	Gamma = gamma_0 + h / no * T_gamma;
 	S.set_build(BUILD_ALL);
 	compute_tangent(S, X, Gamma, T_x, T_gamma);
 
-	if (S.abs(S.cosang(T_x, t_x0, T_gamma, t_gamma0)) < S.mincos()) {
+	if (S.abs(S.cosang(T_x, t_x0, T_gamma, t_gamma0)) < S.mincos()
+	    || (i == 0 && ncomb == 0)) {
 	  S.copy(T_x, t_x0); t_gamma0 = T_gamma;
 	  if (S.insert_tangent_predict(T_x, T_gamma)) {
 	    if (S.noisy() > 0)
 	      cout << "new potential tangent vector found, "
 		   << "trying one predictor-corrector step" << endl;
-	    S.copy(x_end, X); Gamma = gamma_end;
-	    
+	    S.copy(x_0, X); Gamma = gamma_0;	    
 	    if (test_predict_dir(S, X, Gamma, T_x, T_gamma)) {
 	      if (S.insert_tangent_sing(T_x, T_gamma)) {
-		if ((a == 0) && (ncomb == 0)
+		if ((i == 0) && (ncomb == 0) 
+		    // => (T_x, T_gamma) = (t_x2, t_gamma2)
 		    && (S.abs(S.cosang(T_x, t_x0, T_gamma, t_gamma0))
-			>= S.mincos())) { i2 = 1; ncomb = 1; }
+			>= S.mincos())) { i2 = 1; }
 		if (version) S.set_next_point(X, Gamma);
 	      }
-	      S.copy(x_end, X); Gamma = gamma_end;
+	      S.copy(x_0, X); Gamma = gamma_0;
 	      S.copy(t_x0, T_x); T_gamma = t_gamma0;
 	    }
 	    
@@ -504,12 +507,12 @@ namespace getfem {
       }
       
       // heuristics for varying the spanning vectors
-      bool index_changed;
-      if (i1 + 1 < i2) { ++i1; index_changed = true; }
+      bool perturb;
+      if (i1 + 1 < i2) { ++i1; perturb = false; }
       else if(i2 + 1 < S.nb_tangent_sing())
-	{ ++i2; i1 = 0; index_changed = true; }
-      else index_changed = false;
-      if (index_changed) {
+	{ ++i2; i1 = 0; perturb = false; }
+      else perturb = true;
+      if (!perturb) {
 	S.copy(S.get_t_x_sing(i1), t_x1); t_gamma1 = S.get_t_gamma_sing(i1);
 	S.copy(S.get_t_x_sing(i2), t_x2); t_gamma2 = S.get_t_gamma_sing(i2);
       } else {
@@ -517,7 +520,7 @@ namespace getfem {
 	no = S.w_norm(T_x, T_gamma);
 	S.scaled_add(t_x2, T_x, 0.1/no, t_x2);
 	t_gamma2 += 0.1/no * T_gamma;
-	S.scaled_add(x_end, t_x2, h, X); Gamma = gamma_end + h * t_gamma2;
+	S.scaled_add(x_0, t_x2, h, X); Gamma = gamma_0 + h * t_gamma2;
 	S.set_build(BUILD_ALL);
 	compute_tangent(S, X, Gamma, t_x2, t_gamma2);
       }
@@ -628,40 +631,36 @@ namespace getfem {
     if (new_point) {
       S.copy(X, x); gamma = Gamma;
       S.copy(T_x, t_x); t_gamma = T_gamma;
-    } else if (S.non_smooth()) {
+    } else if (S.non_smooth() && S.singularities() > 1) {
       treat_nonsmooth_point(S, x, gamma, t_x0, t_gamma0, 1);
       if (S.next_point()) {
-	if (S.singularities() > 0) {
-	  if (test_limit_point(S, T_gamma)) {
-	    S.set_sing_label("limit point");
-	    if (S.noisy() > 0) cout << "Limit point detected!" << endl;
-	  }
-	  if (S.singularities() > 1) {
-	    if (S.noisy() > 0)
-	      cout << "starting computing a test function for bifurcations"
-		   << endl;
-	    S.set_build(BUILD_ALL);
-	    bool bifurcation_detected = (S.nb_tangent_sing() > 2);
-	    if (bifurcation_detected) {
-	      // update the stored values of the test function only
-	      S.set_tau_bp_1(tau_bp_init);
-	      S.set_tau_bp_2(test_function_bp(S, S.get_x_next(),
-					      S.get_gamma_next(),
-					      S.get_t_x_sing(1),
-					      S.get_t_gamma_sing(1)));
-	    } else
-	      bifurcation_detected
-		= test_nonsmooth_bifurcation(S, x, gamma, t_x, t_gamma,
-					     S.get_x_next(),
-					     S.get_gamma_next(),
-					     S.get_t_x_sing(1),
-					     S.get_t_gamma_sing(1));
-	    if (bifurcation_detected) {
-	      S.set_sing_label("non-smooth bifurcation point");
-	      if (S.noisy() > 0)
-		cout << "Non-smooth bifurcation point detected!" << endl;
-	    }
-	  }
+	if (test_limit_point(S, T_gamma)) {
+	  S.set_sing_label("limit point");
+	  if (S.noisy() > 0) cout << "Limit point detected!" << endl;
+	}
+	if (S.noisy() > 0)
+	  cout << "starting computing a test function for bifurcations"
+	       << endl;
+	S.set_build(BUILD_ALL);
+	bool bifurcation_detected = (S.nb_tangent_sing() > 2);
+	if (bifurcation_detected) {
+	  // update the stored values of the test function only
+	  S.set_tau_bp_1(tau_bp_init);
+	  S.set_tau_bp_2(test_function_bp(S, S.get_x_next(),
+					  S.get_gamma_next(),
+					  S.get_t_x_sing(1),
+					  S.get_t_gamma_sing(1)));
+	} else
+	  bifurcation_detected
+	    = test_nonsmooth_bifurcation(S, x, gamma, t_x, t_gamma,
+					 S.get_x_next(),
+					 S.get_gamma_next(),
+					 S.get_t_x_sing(1),
+					 S.get_t_gamma_sing(1));
+	if (bifurcation_detected) {
+	  S.set_sing_label("non-smooth bifurcation point");
+	  if (S.noisy() > 0)
+	    cout << "Non-smooth bifurcation point detected!" << endl;
 	}
 	
 	S.copy(S.get_x_next(), x); gamma = S.get_gamma_next();
