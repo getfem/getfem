@@ -245,7 +245,8 @@ namespace getfem {
     S.set_tau_bp_2(tau1); S.init_tau_bp_graph();
     tau_var_ref = std::max(S.abs(tau2 - tau1), 1.e-8);
 
-    // monitor sign changes of the test function on the convex combination
+    // monitor the sign changes of the test function on the convex
+    // combination
     do {
       alpha = std::min(alpha + delta, 1.);
       S.scaled_add(A1, 1. - alpha, A2, alpha, A);
@@ -448,8 +449,8 @@ namespace getfem {
     }
     S.set_sing_point(x_0, gamma_0);
 
-    // take two vectors to span a subspace of directions emanating from the
-    // end point
+    // take two reference vectors to span a subspace of directions emanating
+    // from the end point
     if (S.noisy() > 0)
       cout  << "starting a thorough search for other branches" << endl;
     double t_gamma1 = t_gamma0, t_gamma2 = t_gamma0;
@@ -461,9 +462,10 @@ namespace getfem {
     S.set_build(BUILD_ALL);
     compute_tangent(S, X, Gamma, t_x2, t_gamma2);
 
-    // try systematically various directions emanating from the end point for
-    // finding new possible tangent predictions
-    unsigned long i1 = 0, i2 = 0, ncomb = 0;
+    // try systematically the directions of linear combinations of the couple
+    // of the reference vectors for finding new possible tangent predictions
+    // emanating from the end point
+    unsigned long i1 = 0, i2 = 0, nspan = 0;
     double a, a1, a2, no;
 
     do {
@@ -479,7 +481,7 @@ namespace getfem {
 	compute_tangent(S, X, Gamma, T_x, T_gamma);
 
 	if (S.abs(S.cosang(T_x, t_x0, T_gamma, t_gamma0)) < S.mincos()
-	    || (i == 0 && ncomb == 0)) {
+	    || (i == 0 && nspan == 0)) {
 	  S.copy(T_x, t_x0); t_gamma0 = T_gamma;
 	  if (S.insert_tangent_predict(T_x, T_gamma)) {
 	    if (S.noisy() > 0)
@@ -488,7 +490,7 @@ namespace getfem {
 	    S.copy(x_0, X); Gamma = gamma_0;	    
 	    if (test_predict_dir(S, X, Gamma, T_x, T_gamma)) {
 	      if (S.insert_tangent_sing(T_x, T_gamma)) {
-		if ((i == 0) && (ncomb == 0) 
+		if ((i == 0) && (nspan == 0) 
 		    // => (T_x, T_gamma) = (t_x2, t_gamma2)
 		    && (S.abs(S.cosang(T_x, t_x0, T_gamma, t_gamma0))
 			>= S.mincos())) { i2 = 1; }
@@ -506,7 +508,7 @@ namespace getfem {
 	}
       }
       
-      // heuristics for varying the spanning vectors
+      // heuristics for varying the reference vectors
       bool perturb;
       if (i1 + 1 < i2) { ++i1; perturb = false; }
       else if(i2 + 1 < S.nb_tangent_sing())
@@ -524,7 +526,7 @@ namespace getfem {
 	S.set_build(BUILD_ALL);
 	compute_tangent(S, X, Gamma, t_x2, t_gamma2);
       }
-    } while (++ncomb < S.nbcomb());
+    } while (++nspan < S.nbspan());
 
     if (S.noisy() > 0)
       cout << "located branches " << S.nb_tangent_sing() << endl;
@@ -702,7 +704,7 @@ namespace getfem {
     unsigned long maxit_, thrit_;
     double maxres_, maxdiff_, mincos_, maxres_solve_, delta_max_, delta_min_,
       thrvar_;
-    unsigned long nbdir_, nbcomb_;
+    unsigned long nbdir_, nbspan_;
     int noisy_;
     VECT b_x_, c_x_;
     double b_gamma_, c_gamma_, d_;
@@ -736,13 +738,13 @@ namespace getfem {
      unsigned long tit = 4, double mres = 1.e-6, double mdiff = 1.e-6,
      double mcos = 0.9, double mress = 1.e-8, int noi = 0, int sing = 0,
      bool nonsm = false, double dmax = 0.005, double dmin = 0.00012,
-     double tvar = 0.02, unsigned long ndir = 40, unsigned long ncomb = 1)
+     double tvar = 0.02, unsigned long ndir = 40, unsigned long nspan = 1)
       : md(&m), singularities_(sing), nonsmooth(nonsm), parameter_name_(pn),
 	with_parametrised_data(false), scfac_(sfac), lsolver(ls),
 	h_init_(hin), h_max_(hmax), h_min_(hmin), h_inc_(hinc), h_dec_(hdec),
 	maxit_(mit), thrit_(tit), maxres_(mres), maxdiff_(mdiff),
 	mincos_(mcos), maxres_solve_(mress), delta_max_(dmax),
-	delta_min_(dmin), thrvar_(tvar), nbdir_(ndir), nbcomb_(ncomb),
+	delta_min_(dmin), thrvar_(tvar), nbdir_(ndir), nbspan_(nspan),
 	noisy_(noi), tau_lp(0.), tau_bp_1(tau_bp_init),
 	tau_bp_2(tau_bp_init), gamma_sing(0.), gamma_next(0.),
 	build(BUILD_ALL)
@@ -759,7 +761,7 @@ namespace getfem {
      double mdiff = 1.e-6, double mcos = 0.9, double mress = 1.e-8,
      int noi = 0, int sing = 0, bool nonsm = false, double dmax = 0.005,
      double dmin = 0.00012, double tvar = 0.02, unsigned long ndir = 40,
-     unsigned long ncomb = 1)
+     unsigned long nspan = 1)
       : md(&m), singularities_(sing), nonsmooth(nonsm), parameter_name_(pn),
 	with_parametrised_data(true), initdata_name_(in),
 	finaldata_name_(fn), currentdata_name_(cn), scfac_(sfac),
@@ -767,7 +769,7 @@ namespace getfem {
 	h_dec_(hdec), maxit_(mit), thrit_(tit), maxres_(mres),
 	maxdiff_(mdiff), mincos_(mcos), maxres_solve_(mress),
 	delta_max_(dmax), delta_min_(dmin), thrvar_(tvar), nbdir_(ndir),
-	nbcomb_(ncomb), noisy_(noi), tau_lp(0.), tau_bp_1(tau_bp_init),
+	nbspan_(nspan), noisy_(noi), tau_lp(0.), tau_bp_1(tau_bp_init),
 	tau_bp_2(tau_bp_init), gamma_sing(0.), gamma_next(0.),
 	build(BUILD_ALL)
     { GMM_ASSERT1(!md->is_complex(),
@@ -919,7 +921,7 @@ namespace getfem {
     double delta_min(void) { return delta_min_; }
     double thrvar(void) { return thrvar_; }
     unsigned long nbdir(void) { return nbdir_; }
-    unsigned long nbcomb(void) { return nbcomb_; }
+    unsigned long nbspan(void) { return nbspan_; }
     int noisy(void) { return noisy_; }
     VECT &b_x(void) { return b_x_; }
     VECT &c_x(void) { return c_x_; }

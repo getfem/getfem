@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2011-2014 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2011-2015 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //
@@ -15,7 +15,7 @@
 // along  with  this program;  if not, write to the Free Software Foundation,
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
-// Simple example of the bifurcation problem:
+// Simple example of a bifurcation problem:
 // -Delta(u) + u = lambda * exp(u).
 //
 // This program is used to check that scilab-getfem is working. This is also
@@ -102,6 +102,7 @@ end
 U_hist = zeros(1, nbstep + 1); lambda_hist = zeros(1, nbstep + 1);
 U_hist(1) = U(1); lambda_hist(1) = lambda;
 //tau = gf_cont_struct_get(S, 'bifurcation test function');
+sing_out = [];
 
 scf(0); drawlater; clf();
 subplot(2,1,1);
@@ -117,7 +118,6 @@ drawnow;
 //xtitle('', 'iteration', 'bifurcation test function');
 //drawnow;
 
-sing_out = [];
 // continue from the initial point
 for step = 1:nbstep
   //sleep(1000);

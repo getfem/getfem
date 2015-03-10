@@ -54,11 +54,14 @@ References
 .. [LA-RE2006] P. Laborde, Y. Renard.
    *Fixed point strategies for elastostatic frictional contact problems*, Math. Meth. Appl. Sci., 31:415-441, (2008). 
 
-.. [Li-Re2014] T. |ligursky|  and Y. Renard,
+.. [Li-Re2014] T. |ligursky| and Y. Renard,
    *A Continuation Problem for Computing Solutions of Discretised Evolution Problems with Application to Plane Quasi-Static Contact Problems with Friction.* Comput. Methods Appl. Mech. Engrg. 280 (2014), 222-262. 
 
-.. [Li-Re] T. |ligursky|  and Y. Renard,
-   *Bifurcations in Piecewise-Smooth Steady-State Problems: Abstract Study and Application to Plane Contact Problems with Friction.* Submitted (2014). [`hal-01077161 - version 1 <https://hal.archives-ouvertes.fr/hal-01077161>`_]
+.. [Li-Re2014hal] T. |ligursky| and Y. Renard,
+   *Bifurcations in Piecewise-Smooth Steady-State Problems: Abstract Study and Application to Plane Contact Problems with Friction.* Submitted (2014). <`hal-01077161 <https://hal.archives-ouvertes.fr/hal-01077161>`_>
+
+.. [Li-Re2015hal] T. |ligursky| and Y. Renard,
+   *A Method of Piecewise-Smooth Numerical Branching.* Submitted (2015). <`hal-01113564 <https://hal.archives-ouvertes.fr/hal-01113564>`_>
 
 .. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
    *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.

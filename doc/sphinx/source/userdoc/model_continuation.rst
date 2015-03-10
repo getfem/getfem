@@ -134,50 +134,50 @@ recover a piece corresponding to another sub-domain of smooth behaviour. Let
 To approximate the tangent to the other smooth piece, we first take a point
 :math:`Y_{j} + h T_{j}` with :math:`h` a bit greater than
 :math:`h_{\mathrm{min}}` so that this point belongs to the interior of the other
-sub-domain of smooth behaviour. Then, we find :math:`\tilde{T}` such that
+sub-domain of smooth behaviour. Then we find :math:`\tilde{T}` such that
 
 .. math::
 
-   \nabla F(Y_{j} + h T_{j}) \tilde{T} = 0,\quad \lVert \tilde{T} \rVert_{w} = 1
+   \nabla F(Y_{j} + h T_{j}) \tilde{T} = 0,\quad \lVert \tilde{T} \rVert_{w} = 1,
 
 and it remains to determine an appropriate direction of this vector. This can be
 done on the basis of the following observations:  First, there exists
 :math:`r \in \{\pm 1\}` such that :math:`Y_{j} - r \tilde{h} \tilde{T}` remains
 in the same sub-domain as :math:`Y_{j}` for any :math:`\tilde{h}` positive.
-This can be characterised by the fact that
+This is characterised by the fact that
 :math:`\frac{\lvert T_{-}^{\top} \tilde{T}\rvert}{\lVert T_{-} \rVert \lVert \tilde{T} \rVert}`
 is significantly smaller than 1 for :math:`T_{-}` with
 :math:`\nabla F(Y_{j} - r \tilde{h} \tilde{T}) T_{-} = 0`. Second,
 :math:`Y_{j} + r \tilde{h} \tilde{T}` appears in the other sub-domain for
-:math:`\tilde{h}` larger than some positive threshold and for such values,
+:math:`\tilde{h}` larger than some positive threshold, and, for such values,
 :math:`\frac{\lvert T_{+}^{\top} \tilde{T}\rvert}{\lVert T_{+} \rVert \lVert \tilde{T} \rVert}`
 is close to 1 for :math:`T_{+}` with
 :math:`\nabla F(Y_{j} + r \tilde{h} \tilde{T}) T_{+} = 0`.
 
 This suggests the following procedure for selecting the desired direction of
 :math:`\tilde{T}`: Increase the values of :math:`\tilde{h}` successively from
-:math:`h_{\mathrm{min}}` and when you arrive at :math:`\tilde{h}` and
+:math:`h_{\mathrm{min}}`, and when you arrive at :math:`\tilde{h}` and
 :math:`r \in \{\pm 1\}` such that
 
 .. math::
 
    \frac{\lvert T^{\top} \tilde{T}\rvert}{\lVert T \rVert \lVert \tilde{T} \rVert} \approx 1\quad \text{if}\ \nabla F(Y_{j} + r \tilde{h} \tilde{T}) T = 0,
 
-take :math:`r \tilde{T}` as an approximation of the tangent to the other smooth
+take :math:`r \tilde{T}` as the approximation of the tangent to the other smooth
 piece.
 
-After finding a new tangent, say :math:`\tilde{T}_{j}`, we restart the
-predictor-corrector with :math:`(Y_{j}, \tilde{T}_{j})`.
+Having this approximation at our disposal, we restart the predictor-corrector
+with :math:`(Y_{j}, r \tilde{T})`.
 
 In |gf|, the continuation is implemented for two ways of parametrisation of the
 model:
 
-1. The parameter :math:`\lambda` is directly a scalar datum that the model
+1. The parameter :math:`\lambda` is directly a scalar datum, which the model
    depends on.
 
 2. The model is parametrised by the scalar parameter :math:`\lambda` *via* a
-   vector datum :math:`P` that the model depends on. In this case, one takes the
-   linear path
+   vector datum :math:`P`, which the model depends on. In this case, one takes
+   the linear path
 
    .. math::
 
@@ -193,16 +193,16 @@ model:
 Detection of limit points
 +++++++++++++++++++++++++
 
-When tracing solutions of a system :math:`F(U,\lambda) = 0`, one may be
+When tracing solutions of the system :math:`F(U,\lambda) = 0`, one may be
 interested in *limit points* (also called fold or turning points), where the
 number of solutions with the same value of :math:`\lambda` changes. These points
 can be detected by a sign change of a test function :math:`\tau_{\mathrm{LP}}`:
 
    .. math::
 
-      \tau_{\mathrm{LP}}(T_{j}) \tau_{\mathrm{LP}}(T_{j+1}) < 0
+      \tau_{\mathrm{LP}}(T_{j}) \tau_{\mathrm{LP}}(T_{j+1}) < 0,
 
-defined by
+where :math:`\tau_{\mathrm{LP}}` is defined by
 
    .. math::
 
@@ -241,10 +241,10 @@ Define :math:`\tau_{\mathrm{BP}}(Y)` via
 Then :math:`\tau_{\mathrm{BP}}(Y(s))` changes its sign at :math:`s = \bar{s}`.
 
 Obviously, if one takes :math:`B`, :math:`C` and :math:`d` randomly, it is
-highly possible that they satisfy the requirements above. Then, by
+highly possible that they satisfy the requirements above. Consequently, the
+numerical continuation method is able to detect bifurcation points by
 taking the vectors :math:`Y` and :math:`T` supplied by the correction at each 
-continuation step and monitoring the signs of :math:`\tau_{\mathrm{BP}}`, a
-numerical continuation method is able to detect bifurcation points.
+continuation step and monitoring the signs of :math:`\tau_{\mathrm{BP}}`.
 
 Once a bifurcation point :math:`\bar{Y}` is detected by a sign change
 :math:`\tau_{\mathrm{BP}}(Y_{j}) \tau_{\mathrm{BP}}(Y_{j+1}) < 0`, it can be
@@ -257,7 +257,8 @@ one can take the subsequent step lengths as
       h_{j+1} := -\frac{\tau_{\mathrm{BP}}(Y_{j+1})}{\tau_{\mathrm{BP}}(Y_{j+1}) - \tau_{\mathrm{BP}}(Y_{j})}h_{j}
 
 until :math:`\lvert h_{j+1} \rvert < h_{\mathrm{min}}`, which corresponds to the
-secant method for finding a zero of :math:`s \mapsto \tau_{\mathrm{BP}}(Y(s))`.
+secant method for finding a zero of the function
+:math:`s \mapsto \tau_{\mathrm{BP}}(Y(s))`.
 
 Finally, it would be desirable to switch solution branches. To this end, we
 shall consider the case of the so-called *simple bifurcation point*, where only
@@ -273,15 +274,15 @@ continuation step has been performed successfully and a point on the new branch
 has been recovered, one can proceed with usual predictor-corrector steps to
 trace this branch.
 
-Recently, a tool for detecting :math:`PC^{1}` bifurcation points has been
-developed in |gf|. Let :math:`J` be a matrix function of a real parameter now
-defined by
+Recently, tools for numerical :math:`PC^{1}`-bifurcation have been developed in
+|gf|. Let :math:`J` be a matrix function of a real parameter now defined by
 
    .. math::
 
       J(\alpha) := (1-\alpha)\begin{pmatrix}\nabla F(Y_{j})\\ T_{j}^{\top}\end{pmatrix} + \alpha\begin{pmatrix}\nabla F(Y_{j+1})\\ T_{j+1}^{\top}\end{pmatrix}.
 
-As proposed in [Li-Re]_, the following test can be used for detection of a :math:`PC^{1}` bifurcation point between :math:`Y_{j}` and :math:`Y_{j+1}`:
+As proposed in [Li-Re2014hal]_, the following test can be used for detection of
+a :math:`PC^{1}` bifurcation point between :math:`Y_{j}` and :math:`Y_{j+1}`:
 
    .. math::
 
@@ -308,18 +309,18 @@ It follows from Cramer's rule that
 provided that :math:`\det M(\alpha)` is non-zero. Hence if :math:`B`, :math:`C`
 and :math:`d` are chosen so that :math:`\det M(\alpha)` is non-zero whenever
 :math:`\det J(\alpha)` is zero, then the sign changes of :math:`\det J(\alpha)`
-are characterised by passing of :math:`\tau_{\mathrm{BP}}(\alpha)` through 0
+are characterised by passings of :math:`\tau_{\mathrm{BP}}(\alpha)` through 0
 whereas the sign changes of :math:`\det M(\alpha)` by sign changes of
-:math:`\tau_{\mathrm{BP}}(\alpha)` caused by a singularity. To conclude, the
-signs of :math:`\det J(0)` and :math:`\det J(1)` are compared by following the
-behaviour of :math:`\tau_{\mathrm{BP}}(\alpha)` when :math:`\alpha` passes
-through :math:`[0,1]` and monitoring the sign changes of :math:`\det J(\alpha)`.
+:math:`\tau_{\mathrm{BP}}(\alpha)` caused by singularities. To conclude, the
+sign of :math:`\det J(0)\det J(1)` is determined by following the
+behaviour of :math:`\tau_{\mathrm{BP}}(\alpha)` and monitoring the sign changes
+of :math:`\det J(\alpha)` when :math:`\alpha` passes through :math:`[0,1]`.
 
-As justified in [Li-Re]_, :math:`B`, :math:`C` and :math:`d` can be chosen
-randomly again. The increments :math:`\delta` of the current values of
+As justified in [Li-Re2014hal]_, :math:`B`, :math:`C` and :math:`d` can be
+chosen randomly again. The increments :math:`\delta` of the current values of
 :math:`\alpha` are changed adaptively so that singularities of
-:math:`\tau_{\mathrm{BP}}` are treated effectively. At the end of each step,
-:math:`\delta` is set as follows:
+:math:`\tau_{\mathrm{BP}}` are treated effectively. After each calculation of
+:math:`\tau_{\mathrm{BP}}(\alpha)`, :math:`\delta` is set as follows:
 
    .. math::
 
@@ -329,8 +330,67 @@ where :math:`\delta_{\mathrm{max}} > \delta_{\mathrm{min}} > 0` and
 :math:`\tau_{\mathrm{fac}} > 0` are given constants and
 :math:`\tau_{\mathrm{ref}} := \max\{\lvert \tau_{\mathrm{BP}}(1) - \tau_{\mathrm{BP}}(0) \rvert, 10^{-8}\}`.
 
+When a :math:`PC^{1}` bifurcation point is detected between :math:`Y_{j}` and
+:math:`Y_{j+1}`, it is approximated more precisely by a bisection-like
+procedure. The obtained approximation lies on the same smooth branch as
+:math:`Y_{j},` and the corresponding unit tangent that points out from the
+corresponding region of smoothness is calculated too.
+
+Contrary to the smooth case, it is not clear how many branches can emanate from
+the :math:`PC^{1}` bifurcation point and in which directions they could be
+sought. For this reason, continuation steps for a whole sequence of predictor
+directions are tried out for finding points on new branches.
+
+Denoting :math:`\tilde{Y}`, :math:`\tilde{T}` the approximation of the
+bifurcation point and the corresponding tangent, respectively, the predictor
+directions are taken as follows: For a couple of reference vectors
+:math:`\tilde{V}_{1}` and :math:`\tilde{V}_{2}`, one takes :math:`\pm V` with
+:math:`V` satisfying
+
+   .. math::
+
+      \nabla F(\tilde{Y}+h_{\mathrm{min}}\tilde{V}) V = 0, \quad \lVert V \rVert_{w} = 1,
+
+where :math:`\tilde{V}` passes through a set of linear combinations of
+:math:`\tilde{V}_{1}` and :math:`\tilde{V}_{2}`. The total number of the linear
+combinations is given by :math:`n_{\mathrm{dir}},` and the reference vectors are
+chosen successively according to the following strategy:
+
+1. One takes :math:`\tilde{V}_{1} := -\tilde{T}` and :math:`\tilde{V}_{2}` such
+   that
+
+   .. math::
+
+      \nabla F(\tilde{Y}+h_{\mathrm{min}}\tilde{T}) \tilde{V}_{2} = 0, \quad \lVert \tilde{V}_{2} \rVert_{w} = 1.
+
+2. Let :math:`\{\tilde{T}_{1},\dotsc\tilde{T}_{n_{\mathrm{br}}}\}` denote the
+   set of unit tangents that correspond to the points from the branches found so
+   far and that are oriented in the directions of branching from the bifurcation
+   point. Then :math:`\tilde{V}_{1}` and :math:`\tilde{V}_{2}` are taken
+   successively as different combinations from
+   :math:`\{\tilde{T}_{1},\dotsc\tilde{T}_{n_{\mathrm{br}}}\}`.
+
+3. If all combinations that are available so far have already been used, let
+   :math:`\tilde{V}_{1}` be unchanged and take
+   :math:`\tilde{V}_{2} := \tilde{V}_{2}^{+}` with :math:`\tilde{V}_{2}^{+}`
+   satisfying
+
+   .. math::
+
+      \nabla F\Bigl(\tilde{Y}+h_{\mathrm{min}}\Bigl(\tilde{V}_{2}^{-} + 0.1\frac{\tilde{V}_{3}}{\lVert \tilde{V}_{3} \rVert_{w}}\Bigr)\Bigr) \tilde{V}_{2}^{+} = 0, \quad \lVert \tilde{V}_{2}^{+} \rVert_{w} = 1.
+
+   Here, :math:`\tilde{V}_{2}^{-}` equals the vector :math:`\tilde{V}_{2}`
+   employed previously and :math:`\tilde{V}_{3}` is chosen randomly.
+
+The total number of selections of :math:`\tilde{V}_{1}` and
+:math:`\tilde{V}_{2}` is given by :math:`n_{\mathrm{span}}`.
+
+
+More details on :math:`PC^1` numerical branching can be found in
+[Li-Re2015hal]_.
+
 Approximation of solution curves of a model
-+++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++
 
 The numerical continuation is defined in ``getfem/getfem_continuation.h``. In
 order to use it, one has to do the following initialisation first::
@@ -338,7 +398,7 @@ order to use it, one has to do the following initialisation first::
   getfem::cont_struct_getfem_model S(model, parameter_name[, initdata_name, finaldata_name, currentdata_name],
                            	     sfac, ls, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres,
 				     maxdiff, mincos, maxres_solve, noisy, singularities, non-smooth,
-				     delta_max, delta_min, thrvar);
+				     delta_max, delta_min, thrvar, ndir, nspan);
   getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
 
 where ``parameter_name`` is the name of the model datum representing
@@ -361,15 +421,16 @@ bifurcation points, as well), and the boolean value of ``non-smooth`` determines
 whether only the tools for smooth continuation and bifurcation have to be used
 or even the tools for non-smooth ones do. The real numbers ``delta_max``,
 ``delta_min`` and ``thrvar`` represent :math:`\delta_{\mathrm{max}}`,
-:math:`\delta_{\mathrm{min}}` and :math:`\tau_{\mathrm{fac}}`, respectively.
-Under the optional data names ``initdata_name`` and ``finaldata_name``,
-:math:`P^{0}` and :math:`P^{1}` should be stored, respectively, in the case of
-parametrisation by a vector datum. Under ``currentdata_name``, the values of
-:math:`P(\lambda)` are stored then, that is, actual values of the datum the
-model depends on. Further, ``U`` should be a solution for the value of the
-parameter :math:`\lambda` equal to ``lambda`` so that
-:math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). During the initialisation, an initial
-unit tangent :math:`T_{0}` corresponding to :math:`Y_{0}` is computed in
+:math:`\delta_{\mathrm{min}}` and :math:`\tau_{\mathrm{fac}}`, and the integers
+``ndir`` and ``nspan`` stand for :math:`n_{\mathrm{dir}}` and
+:math:`n_{\mathrm{span}}`, respectively. Under the optional data names
+``initdata_name`` and ``finaldata_name``, :math:`P^{0}` and :math:`P^{1}` should
+be stored, respectively, in the case of parametrisation by a vector datum. Under
+``currentdata_name``, the values of :math:`P(\lambda)` are stored then, that is,
+actual values of the datum the model depends on. Further, ``U`` should be a
+solution for the value of the parameter :math:`\lambda` equal to ``lambda`` so
+that :math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). During the initialisation, an
+initial unit tangent :math:`T_{0}` corresponding to :math:`Y_{0}` is computed in
 accordance with the sign of the initial value ``T_lambda``, and it is returned
 in ``T_U``, ``T_lambda``. Moreover, ``h`` is set to the initial step size
 ``h_init``.
@@ -392,6 +453,6 @@ can initialise the continuation to trace either of the curves next time.
 Complete examples of use on a smooth problem are shown in the test programs
 ``tests/test_continuation.cc``, ``interface/tests/matlab/demo_continuation.m``
 and ``interface/src/scilab/demos/demo_continuation.sce`` whereas
-``interface/src/scilab/demos/demo_continuation_block.sce`` and
-``interface/src/scilab/demos/demo_continuation_vee.sce`` employ also the
+``interface/src/scilab/demos/demo_continuation_vee.sce`` and
+``interface/src/scilab/demos/demo_continuation_block.sce`` employ also
 non-smooth tools.

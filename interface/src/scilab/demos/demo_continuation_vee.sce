@@ -1,5 +1,5 @@
 // Scilab GetFEM++ interface
-// Copyright (C) 2013-2014 Tomas Ligursky, Yves Renard.
+// Copyright (C) 2013-2015 Tomas Ligursky, Yves Renard.
 //
 // This file is a part of GetFEM++
 //
@@ -52,7 +52,7 @@ X0_char = '';     // initial approximation of the state variable
 gm0 = 0;
 nbstep = 4000;
 
-niter = 200;   // maximum number of iterations for an initial solver
+niter = 200;   // maximum number of iterations for the initial solver
 h_init = 5e-4;
 h_max = 1e-1;
 h_min = 5e-7;
@@ -62,7 +62,7 @@ maxres = 5e-12;
 maxdiff = 5e-12;
 mincos = 1 - 1e-5;
 maxres_solve = 1e-12;
-noisy = 'very_noisy';
+noisy = 'noisy';
 
 // import a mesh (size in m) and refine it eventually
 m = gf_mesh('load', datapath + 'vee_h_0.03.mesh');
@@ -207,6 +207,7 @@ lambda_tP_hist = zeros(1, nbstep + 1); lambda_tP_hist(1) = lambda_tP;
 lambda_tP_min = lambda_tP; lambda_tP_max = lambda_tP;
 gm_hist = zeros(1, nbstep + 1); gm_hist(1) = gm;
 gm_min = gm; gm_max = gm;
+sing_out = [];
 
 fig = scf(1); drawlater; clf();
 fig.color_map = jetcolormap(255);
@@ -255,7 +256,6 @@ plot(gm_hist(1), lambda_tP_hist(1), 'k.');
 xtitle('', 'gamma', 'lambda_t(P)');
 drawnow;
 
-sing_out = [];
 // continue from the initial point
 for step = 1:nbstep
   printf('\nbeginning of step %d\n', step);

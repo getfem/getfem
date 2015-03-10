@@ -99,12 +99,12 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        threshold variation for refining the division (the default value is
        0.02);
     - 'nb_dir', @int NDIR
-       number of linear combinations of vectors in one subspace when
-       searching for new tangent predictions during location of new one-sided
-       branches (the default value is 40);
-    - 'nb_comb', @int NCOMB
-       maximum number of couples of reference vectors forming the linear
-       combinations (the default value is 1);
+       total number of the linear combinations of one couple of reference
+       vectors when searching for new tangent predictions during location of
+       new one-sided branches (the default value is 40);
+    - 'nb_span', @int NSPAN
+       total number of the couples of the reference vectors forming the
+       linear combinations (the default value is 1);
     - 'noisy' or 'very_noisy'
        determines how detailed information has to be displayed during the
        continuation process (residual values etc.).@*/
@@ -129,7 +129,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
        scalar_type maxdiff = 1.e-6; scalar_type mincos = 0.9;
        scalar_type maxres_solve = 1.e-8; scalar_type delta_max = 0.005;
        scalar_type delta_min = 0.00012; scalar_type thrvar = 0.02;
-       size_type nbdir = 40; size_type nbcomb = 1; int noisy = 0;
+       size_type nbdir = 40; size_type nbspan = 1; int noisy = 0;
        int singularities = 0; bool nonsmooth = false;
 
        while (in.remaining() && in.front().is_string()) {
@@ -182,8 +182,8 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
          } else if (cmd_strmatch(opt, "nb_dir")) {
            if (in.remaining()) nbdir = in.pop().to_integer();
            else THROW_BADARG("missing value for " << opt);
-         } else if (cmd_strmatch(opt, "nb_comb")) {
-           if (in.remaining()) nbcomb = in.pop().to_integer();
+         } else if (cmd_strmatch(opt, "nb_span")) {
+           if (in.remaining()) nbspan = in.pop().to_integer();
            else THROW_BADARG("missing value for " << opt);
          } else if (cmd_strmatch(opt, "singularities")) {
 	   if (in.remaining()) singularities = in.pop().to_integer();
@@ -203,7 +203,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 	    getfem::rselect_linear_solver(md->model(), lsolver), h_init,
 	    h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
 	    mincos, maxres_solve, noisy, singularities, nonsmooth,
-	    delta_max, delta_min, thrvar, nbdir, nbcomb);
+	    delta_max, delta_min, thrvar, nbdir, nbspan);
 	 ps = ps1;
        }
        else {
@@ -214,7 +214,7 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 	    getfem::rselect_linear_solver(md->model(), lsolver), h_init,
 	    h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
 	    mincos, maxres_solve, noisy, singularities, nonsmooth,
-	    delta_max, delta_min, thrvar, nbdir, nbcomb);
+	    delta_max, delta_min, thrvar, nbdir, nbspan);
 	 ps = ps1;
        }
 
