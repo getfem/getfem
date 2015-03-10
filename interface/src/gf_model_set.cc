@@ -1,6 +1,7 @@
+/* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard.
+ Copyright (C) 2009-2015 Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -1235,6 +1236,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
     /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str f, @str dfdu[, @str dataname, @int region])
+    DEPRECATED (use `add nonlinear generic assembly brick` instead).
     Add a brick representing a scalar term :math:`f(u)` to the left-hand
     side of the model. In the weak form, one adds :math:`+\int f(u)v`.
     The function :math:`f` may optionally depend on :math:`\lambda`, i.e.,
@@ -1255,6 +1257,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        if (in.remaining()) dataname = in.pop().to_string();
        size_type region = size_type(-1);
        if (in.remaining()) region = in.pop().to_integer();
+       cerr << "Deprecated basic nonlinear brick. "
+            << "Use `add nonlinear generic assembly brick` instead." << endl;
        size_type ind
        = getfem::add_basic_nonlinear_brick(md->model(), gfi_mim->mesh_im(),
                                            varname, f, dfdu,

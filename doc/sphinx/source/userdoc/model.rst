@@ -53,7 +53,6 @@ The kernel of the model description is contained in the file
    model_linear_elasticity.rst
    model_mass.rst
    model_time_integration.rst
-   model_basic_nonlinear.rst
    model_nonlinear_elasticity.rst
    model_contact_friction.rst
    model_contact_friction_large_sliding.rst

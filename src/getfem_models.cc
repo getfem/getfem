@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2009-2013 Yves Renard
+ Copyright (C) 2009-2015 Yves Renard
 
  This file is a part of GETFEM++
 
@@ -5759,7 +5759,7 @@ namespace getfem {
 
   // ----------------------------------------------------------------------
   //
-  // Basic nonlinear brick
+  // Basic nonlinear brick. Deprecated brick
   //
   // ----------------------------------------------------------------------
 
@@ -5950,6 +5950,8 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &f, const std::string &dfdu, size_type region,
    const std::string &dataname) {
+    cerr << "Deprecated basic nonlinear brick. "
+         << "Use nonlinear generic assembly brick instead." << endl;
     pbrick pbr = new basic_nonlinear_brick(f, dfdu);
     model::termlist tl;
     tl.push_back(model::term_description(varname, varname, true));

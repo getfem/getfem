@@ -172,8 +172,9 @@ struct bilaplacian_problem {
 
   bool KL, newbricks;
   size_type NX ;
-  size_type boundary_ref ;        /* boundary_ref = 0 corresponds to clamped edge on the 4 edges   
-                                     boundary_ref = 1 corresponds to :    
+  size_type boundary_ref ;
+  /* boundary_ref = 0 corresponds to clamped edge on the 4 edges   
+     boundary_ref = 1 corresponds to :    
                                     
                                                free edge
                                               __________
@@ -184,7 +185,8 @@ struct bilaplacian_problem {
                                              |__________|
                                     
                                                clamped
-                                               edge          */
+                                               edge
+  */
                                  
   bool solve(plain_vector &U);
   void init(void);
