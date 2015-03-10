@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+# -*- python -*-
+#
+# Copyright (C) 2004-2015 Yves Renard.
+#                                                       
+# This file is a part of GETFEM++                                         
+#                                                                         
+# GetFEM++  is  free software;  you  can  redistribute  it  and/or modify it
+# under  the  terms  of the  GNU  Lesser General Public License as published
+# by  the  Free Software Foundation;  either version 2.1 of the License,  or
+# (at your option) any later version.
+# This program  is  distributed  in  the  hope  that it will be useful,  but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+# License for more details.
+# You  should  have received a copy of the GNU Lesser General Public License
+# along  with  this program;  if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+#
+############################################################################
+"""  Autofunc and autodoc for Python, Matlab and Scilab interfaces.
+
+  This program is used to the command ref documentation produced by the
+  script extract_doc.
+
+  $Id: extract_doc 3304 2009-11-03 13:17:46Z renard $
+"""
+import re
+import string
+import os
+import textwrap
+import sys
+
+class ParseError(Exception):
+    def __init__(self, value):
+      self.value = value
+    def __str__(self):
+      return repr(self.value)
+
+
+
+if (len(sys.argv) != 2):
+    raise SystemExit, 'Format : split_cmdref directory'
+
+directory = sys.argv[1]
+
+os.system('rm -f ' + directory + '/cmdref_*.rst')
+
+fl = open(directory + '/cmdref.rst')
+flw = open(directory + '/cmdref_new.rst', 'w')
+flcom = 0;
+state = 0 # 0 = preambule, 1 = read a command
+old_l = '';
+for l in fl:
+    if (l[0:21] == "---------------------"):
+        command_name = old_l.strip();
+        if (state == 0):
+            flw.write('\n');
+            flw.write('.. toctree::\n');
+            flw.write('   :maxdepth: 2\n\n');
+        flw.write('   cmdref_' + command_name + '\n');    
+        state = 1
+        if (flcom):
+            flcom.close()
+        flcom = open(directory + '/cmdref_' + command_name + '.rst', 'w')
+        flcom.write('.. Automatically generated file, do not edit it.\n')
+        flcom.write('.. If some modification are necessary, please modify\n')
+        flcom.write('.. the corresponding C++ source or the python program extract_doc.\n\n')
+        flcom.write('.. include:: ../replaces.txt\n\n')        
+        flcom.write(command_name+'\n')
+    else:
+        if (state == 0):
+            flw.write(old_l)
+        else:
+            flcom.write(old_l)
+    old_l = l
+
+
+if (state == 0):
+    flw.write(l)
+else:
+    flcom.write(l)
+
+
+flw.close()
+if (flcom):
+    flcom.close()
+
+os.system('mv -f '+directory+'/cmdref.rst '+directory+'/cmdref.rst.org')
+os.system('mv -f '+directory+'/cmdref_new.rst '+directory+'/cmdref.rst')
+

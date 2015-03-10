@@ -117,14 +117,14 @@ clean:
 	-rm -f $(srcdir)/source/scilab/cmdref.rst
 	-rm -f $(srcdir)/source/python/cmdref.rst
 
-$(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
+$(srcdir)/source/matlab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc $(top_srcdir)/bin/split_cmdref
+	($(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src matlab-doc > $(srcdir)/source/matlab/cmdref.rst &&  $(top_srcdir)/bin/split_cmdref $(srcdir)/source/matlab) || (rm -f $(srcdir)/source/matlab/cmdref.rst; /bin/false )
 
-$(srcdir)/source/scilab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc-rst > $(srcdir)/source/scilab/cmdref.rst || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
+$(srcdir)/source/scilab/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc $(top_srcdir)/bin/split_cmdref
+	($(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src scilab-doc-rst > $(srcdir)/source/scilab/cmdref.rst  &&  $(top_srcdir)/bin/split_cmdref $(srcdir)/source/scilab) || (rm -f $(srcdir)/source/scilab/cmdref.rst; /bin/false )
 
-$(srcdir)/source/python/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc
-	$(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/cmdref.rst || (rm -f $(srcdir)/source/python/cmdref.rst; /bin/false )
+$(srcdir)/source/python/cmdref.rst : $(top_srcdir)/interface/src/*.cc $(top_srcdir)/bin/extract_doc $(top_srcdir)/bin/split_cmdref
+	($(top_srcdir)/bin/extract_doc $(top_srcdir)/interface/src python-doc > $(srcdir)/source/python/cmdref.rst  &&  $(top_srcdir)/bin/split_cmdref $(srcdir)/source/python) || (rm -f $(srcdir)/source/python/cmdref.rst; /bin/false )
 
 upload:
 	rm -fr build
