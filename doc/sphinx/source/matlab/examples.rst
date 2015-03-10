@@ -20,10 +20,9 @@ with the Dirichlet condition :math:`u = g(x)` on the domain boundary. You can fi
 the **m-file** of this example under the name **demo_step_by_step.m** in the 
 directory ``interface/tests/matlab/`` of the |gf| distribution.
 
-The first step is to **create a mesh**. Since |gf| does not come with its own 
-mesher, one has to rely on an external mesher (see ``gf_mesh('import', string 
-FORMAT, string FILENAME))``), or use very simple meshes.  For this example, we 
-just consider a regular mesh\index{cartesian mesh} whose nodes are 
+The first step is to **create a mesh**. It is possible to create simple structured meshes or unstructured meshes for simple geometries (see ``gf_mesh('generate', mesher_object mo, scalar h))``) or to rely on an external mesher (see ``gf_mesh('import', string 
+FORMAT, string FILENAME))``).  For this example, we 
+just consider a regular **cartesian mesh** whose nodes are 
 :math:`\{x_{i=0\ldots10,j=0..10}=(i/10,j/10)\}`::
 
   >> % creation of a simple cartesian mesh

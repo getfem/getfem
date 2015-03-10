@@ -31,7 +31,7 @@
 using namespace getfemint;
 
 /*@GFDOC
-  This object represents a geometric object to be meshed by the (very)
+  This object represents a geometric object to be meshed by the
   experimental meshing procedure of Getfem.
 @*/
 

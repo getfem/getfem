@@ -245,7 +245,7 @@ prismatic_mesh(getfem::mesh *dest_mesh, getfemint::mexargs_in &in)
   const getfem::mesh *src_mesh = in.pop().to_const_mesh();
   size_type nblay = in.pop().to_integer(1,2500000);
   short_type degree(1);
-  if (in.remaining()) degree = in.pop().to_integer(1,2500000);
+  if (in.remaining()) degree = short_type(in.pop().to_integer(1,2500000));
   getfem::extrude(*src_mesh, *dest_mesh, nblay, degree);
 }
 
@@ -493,20 +493,21 @@ void gf_mesh(getfemint::mexargs_in& m_in,
        );
 
     /*@INIT M = ('generate', @tmo mo, @scalar h[, @int K = 1[, @mat vertices]])
-      Call the (very) experimental mesher of Getfem on the geometry
+      Call the experimental mesher of Getfem on the geometry
       represented by `mo`. please control the conformity of the produced mesh.
-      You can add the mesher by adding a priori vertices in the array
+      You can help the mesher by adding a priori vertices in the array
       `vertices` which should be of size ``n x m`` where ``n`` n is the
       dimension of the mesh and ``m`` the number of points. `h` is
       approximate diameter of the elements. `K` is the degree of the
       mesh ( > 1 for curved boundaries).  The mesher try to optimize the
       quality of the elements. This operation may be time consuming.
       Note that if the mesh generation fails, because of some random
-      procedure used, it will not give necessarily the same result due
-      to random procedures used.
+      procedure used, it can be run again since it will not give necessarily
+      the same result due to random procedures used.
       The messages send to the console by the mesh generation can be
       desactivated using `gf_util('trace level', 2)`. More information
-      can be obtained by `gf_util('trace level', 4)`.
+      can be obtained by `gf_util('trace level', 4)`. See ``MESHER_OBJECT:INIT``
+      to manipulate geometric primitives in order to desribe the geometry.
       @*/
     sub_command
       ("generate", 2, 4, 0, 1,
