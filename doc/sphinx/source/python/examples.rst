@@ -11,6 +11,8 @@ Examples
 
 .. _py-laplacianexample:
 
+
+
 A step-by-step basic example
 ----------------------------
 
@@ -20,8 +22,7 @@ with the Dirichlet condition :math:`u = g(x)` on the domain boundary. You can fi
 the **py-file** of this example under the name **demo_step_by_step.py** in the 
 directory ``interface/tests/python/`` of the |gf| distribution.
 
-The first step is to **create a Mesh object**. Since |gf| does not come with its 
-own mesher, one has to rely on an external mesher (see ``getfem.Mesh('import', 
+The first step is to **create a Mesh object**. It is possible to create simple structured meshes or unstructured meshes for simple geometries (see ``getfem.Mesh('generate', mesher_object mo, scalar h))``) or to rely on an external mesher (see ``getfem.Mesh('import', 
 string FORMAT, string FILENAME)``), or use very simple meshes. For this example, 
 we just consider a regular mesh\index{cartesian mesh} whose nodes are 
 :math:`\{x_{i=0\ldots10,j=0..10}=(i/10,j/10)\}`

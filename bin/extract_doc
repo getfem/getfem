@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- python -*-
 #
-# Copyright (C) 2004-2014 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
 #                                                       
 # This file is a part of GETFEM++                                         
 #                                                                         
@@ -869,6 +869,11 @@ elif (option == 'matlab-doc'):
   print 'Command reference'
   print '================='
   print ''
+  print 'Please remember that this documentation is not self contained.'
+  print 'You should in particular refer to the `user documentation`_ '
+  print 'to have a more extensive description of the structures algorithms '
+  print 'and concepts used.'
+  print ''
   print 'Types'
   print '-----'
   print ''
@@ -1374,6 +1379,11 @@ elif (option == 'scilab-doc-rst'):
   print ''
   print 'Command reference'
   print '================='
+  print ''
+  print 'Please remember that this documentation is not self contained.'
+  print 'You should in particular refer to the `user documentation`_ '
+  print 'to have a more extensive description of the structures algorithms '
+  print 'and concepts used.'
   print ''
   print 'Types'
   print '-----'
@@ -1911,7 +1921,11 @@ elif (option == 'python-doc'):
   print "API reference"
   print "=============\n"
   print ''
-
+  print 'Please remember that this documentation is not self contained.'
+  print 'You should in particular refer to the `user documentation`_ '
+  print 'to have a more extensive description of the structures algorithms '
+  print 'and concepts used.'
+  print ''
 
   # one pass to find the set methods having identical name with a get method
   # in that case 'set_' is added to the set method.
