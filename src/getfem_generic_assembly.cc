@@ -4958,8 +4958,13 @@ namespace getfem {
 
             // simplification if one of the two operands is constant and zero
             if (child0->tensor_is_zero()) {
-              tree.replace_node_by_child(pnode, 1);
-              pnode = child1;
+              if (pnode->op_type == GA_MINUS) {
+                pnode->op_type = GA_UNARY_MINUS;
+                tree.clear_node(child0);
+              } else {
+                tree.replace_node_by_child(pnode, 1);
+                pnode = child1;
+              }
             } else if (child1->tensor_is_zero()) {
               tree.replace_node_by_child(pnode, 0);
               pnode = child0;
@@ -8158,8 +8163,7 @@ namespace getfem {
           ga_compile_interpolate_trans(root, workspace, gis, rmi, *(td.m));
           ga_compile_node(root, workspace, gis, rmi, *(td.m), false,
                           rmi.current_hierarchy);
-          // cout << "compilation finished "; ga_print_node(root, cout);
-          // cout << endl;
+          // cout << "compilation finished "; ga_print_node(root, cout); cout << endl;
 
           // Addition of an assembly instruction
           pga_instruction pgai = 0;
