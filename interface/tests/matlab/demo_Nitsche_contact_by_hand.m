@@ -12,8 +12,8 @@ approximation_type = 2  % 0 : Augmentend Lagrangian
                         % 1 : Nitsche (biased)
                         % 2 : Unbiased Nitsche method
 
-draw_mesh = false;       
-ref_sol = 1             % 0 : Reference solution (Von Mises)
+draw_mesh = true;       
+ref_sol = 0             % 0 : Reference solution (Von Mises)
                         % 1 : Convergence curves in L2 and H1 norms on Ω1and Ω2.
                         % 2 : Error as fonction of gamma0 for different values of theta 
                         
@@ -25,7 +25,7 @@ ref_sol = 1             % 0 : Reference solution (Von Mises)
 % (0,0.1) which blocks the horizontal translation and the rigid rotation.The projector Π1 is defined from Γ1 to Γ2 in the vertical direction. All remaining parts of the boundaries are
 % considered traction free. The Lame coefficients are λ and μ and we apply a vertical volume density of force on Ω1.
                         
-N = 2                    % 2 or 3 dimensions
+N = 2                   % 2 or 3 dimensions
 
 R=0.25;                 % Radiaus of Ω1.
 dirichlet_val = 0;      % Dirchelet condition.
@@ -39,7 +39,7 @@ elelments_degre = 2            %  degre of elments (1 or 2).
  if (ref_sol == 0)
     Theta = [-1];       %   theta
     Gamma0 = [1/100];   %   Nitsche's parmeter gamma0
-    Nxy =[100];         %   mesh size (=1/nxy) 2D ->250 and 3D -> 25  
+    Nxy =[300];         %   mesh size (=1/nxy) 2D ->250 and 3D -> 25  
  
 
  elseif (ref_sol == 1)  
@@ -67,7 +67,7 @@ NX = Nxy(zz)
 %mesh constuction
     if     (N==2) 
         mo1 =  gf_mesher_object('ball',[0 0],R); % Ω1
-        mesh1 = gf_mesh('generate', mo1, 1/NX ,2) ; 
+        mesh1 = gf_mesh('generate', mo1, 1/NX ,4) ; 
         mo2=gf_mesher_object('rectangle', [-0.5 -0.5], [0.5 -0.25]); %  Ω2
         mesh2 = gf_mesh('generate', mo2, 1/NX ,2) ; 
     elseif (N==3)
@@ -130,11 +130,12 @@ NX = Nxy(zz)
    
 %Drawing the Mesh
     if (draw_mesh)
+        figure(2);
     gf_plot_mesh(mesh2);
     hold on
-    gf_plot_mesh(mesh1,  'regions', CONTACT_BOUNDARY1);
+    gf_plot_mesh(mesh1, 'refine', 8, 'curved', 'on'); % ,  'regions', CONTACT_BOUNDARY1);
     hold off
-     %pause;
+    pause;
     end
     
 %Elastic model 
@@ -201,7 +202,7 @@ NX = Nxy(zz)
       if (approximation_type == 2)
          if N==2 
          gf_model_set(md, 'add initialized data', 'N2', [0;1]);
-         gf_model_set(md,'add_interpolate_transformation_from_expression', 'Proj2', mesh2,mesh1, '[ X(1) ; -sqrt(sqr(R)-sqr(X(1)))]');
+         gf_model_set(md,'add_interpolate_transformation_from_expression', 'Proj2', mesh2,mesh1, '[ X(1) ; 0.0001-sqrt(sqr(R)-sqr(X(1)))]');
         elseif N==3
         gf_model_set(md, 'add initialized data', 'N2', [0;0;1]);
          gf_model_set(md,'add_interpolate_transformation_from_expression', 'Proj2', mesh2,mesh1, '[ X(1) ; X(2) ; 0.01-sqrt(sqr(R)-(sqr(X(1))+sqr(X(2))) )]');
@@ -224,7 +225,7 @@ NX = Nxy(zz)
     max_res = 1E-8;
     max_iter = 100;
 
-    gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8);
+    gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', niter, 'noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'lsolver', 'mumps');
 
     U1 = gf_model_get(md, 'variable', 'u1');
     UU1 = gf_model_get(md, 'variable', 'u1');
