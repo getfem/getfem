@@ -193,6 +193,7 @@ namespace dal {
         delete ito->first.p;
         erase(ito);
         it = to_delete.erase(it);
+        if (it ==  to_delete.end()) break;
         --it;
       }
     }
