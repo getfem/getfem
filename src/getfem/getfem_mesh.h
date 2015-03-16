@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 1999-2012 Yves Renard
+ Copyright (C) 1999-2015 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -66,8 +66,8 @@ namespace getfem {
   /**@addtogroup mesh*/
   /**@{*/
 
-  /** Describe a mesh (collection of convexes and points).  Note that
-      mesh object have no copy constructor, use
+  /** Describe a mesh (collection of convexes (elements) and points).
+      Note that mesh object have no copy constructor, use
       mesh::copy_from instead.  This class inherits from
       bgeot::mesh<base_node> and bgeot::mesh_structure. Compared to
       bgeot::mesh, It provides some additional methods for convenience
@@ -673,9 +673,10 @@ namespace getfem {
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.
    */ 
-  mesh_region APIDECL select_faces_of_normal(const mesh &m, const mesh_region &mr,
-                                     const base_small_vector &V,
-                                     scalar_type angle);
+  mesh_region APIDECL select_faces_of_normal(const mesh &m,
+                                             const mesh_region &mr,
+                                             const base_small_vector &V,
+                                             scalar_type angle);
 
 
   ///@}

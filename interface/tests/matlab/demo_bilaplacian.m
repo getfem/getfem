@@ -1,4 +1,4 @@
-% Copyright (C) 2005-2012 Yves Renard, Julien Pommier.
+% Copyright (C) 2005-2015 Yves Renard, Julien Pommier.
 %
 % This file is a part of GETFEM++
 %
@@ -26,7 +26,7 @@ m=gfMesh('regular simplices',0:0.4/NX:0.4, 0:1.2/NY:1.2);
 useKL=1; % use the Kirchhoff-Love plate model, or just a pure
          % bilaplacian problem
 
-D=1.0;   % Flexion modulus
+D=1.0;       % Flexion modulus
 newbricks=1; % Use new bricks or old ones.
 
 if useKL, NU=0.3; end; % poisson ratio (0 <= NU <= 1)
@@ -42,12 +42,19 @@ set(mfd, 'fem',gfFem('FEM_PK(2,5)'));
 % set(mfu, 'fem', gfFem('FEM_REDUCED_QUADC1_COMPOSITE'));
 % set(mfd, 'fem', gfFem('FEM_QK(2,3)'));
 
-flst = get(m, 'outer_faces');
-n = get(m, 'normal of faces', flst);
-ftop     = flst(:,find(abs(n(1,:)-1) < 1e-5));
-fbottom  = flst(:,find(abs(n(1,:)+1) < 1e-5));
-fleft    = flst(:,find(abs(n(2,:)+1) < 1e-5));
-fright   = flst(:,find(abs(n(2,:)-1) < 1e-5));
+% flst = get(m, 'outer_faces');
+% n = get(m, 'normal of faces', flst);
+% ftop     = flst(:,find(abs(n(1,:)-1) < 1e-5));
+% fbottom  = flst(:,find(abs(n(1,:)+1) < 1e-5));
+% fleft    = flst(:,find(abs(n(2,:)+1) < 1e-5));
+% fright   = flst(:,find(abs(n(2,:)-1) < 1e-5));
+
+ftop    = get(m, 'outer faces with direction', [ 1; 0], 0.1);
+fbottom = get(m, 'outer faces with direction', [-1; 0], 0.1);
+fleft   = get(m, 'outer faces with direction', [0; -1], 0.1);
+fright  = get(m, 'outer faces with direction', [0;  1], 0.1);
+
+
 
 FORCE_BOUNDARY_NUM=1;
 MOMENTUM_BOUNDARY_NUM=2;

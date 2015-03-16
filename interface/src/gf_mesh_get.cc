@@ -1,6 +1,7 @@
+/* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2015 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -156,11 +157,20 @@ typedef dal::dynamic_tree_sorted<mesh_faces_by_pts_list_elt> mesh_faces_by_pts_l
 
 
 static void
-outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
+outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out, bool with_normal)
 {
   mesh_faces_by_pts_list lst;
   dal::bit_vector convex_tested;
   dal::bit_vector cvlst;
+
+  darray normal_vector;
+  bgeot::base_node un;
+  scalar_type threshold(0);
+  if (with_normal) {
+    normal_vector = in.pop().to_darray();
+    scalar_type angle = in.pop().to_scalar();
+    threshold = gmm::vect_norm2(normal_vector)*cos(angle);
+  }
 
   if (in.remaining()) cvlst = in.pop().to_bit_vector(&m.convex_index());
   else cvlst = m.convex_index();
@@ -168,24 +178,35 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
   for (dal::bv_visitor ic(cvlst); !ic.finished(); ++ic) {
     if (m.structure_of_convex(ic)->dim() == m.dim()) {
       for (short_type f = 0; f < m.structure_of_convex(ic)->nb_faces(); f++) {
-        bgeot::mesh_structure::ind_pt_face_ct pt = m.ind_points_of_face_of_convex(ic, f);
+        bgeot::mesh_structure::ind_pt_face_ct pt
+          = m.ind_points_of_face_of_convex(ic, f);
         std::vector<size_type> p(pt.begin(), pt.end());
         size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic,f,p));
-        //       cerr << " <-- idx = " << idx << endl;
         lst[idx].cnt++;
       }
-    } else { /* les objets de dim inferieure sont considérés comme "exterieurs"
-                (c'ets plus pratique pour faire des dessins)
-              */
-      bgeot::mesh_structure::ind_cv_ct pt = m.ind_points_of_convex(ic);
-      std::vector<size_type> p(pt.begin(), pt.end());
-      size_type idx = lst.add_norepeat(mesh_faces_by_pts_list_elt(ic, short_type(-1), p));
-      lst[idx].cnt++;
-    }
+    } 
+//     else { // DEPRECATED
+//       bgeot::mesh_structure::ind_cv_ct pt = m.ind_points_of_convex(ic);
+//       std::vector<size_type> p(pt.begin(), pt.end());
+//       size_type idx =
+//         lst.add_norepeat(mesh_faces_by_pts_list_elt(ic, short_type(-1), p));
+//       lst[idx].cnt++;
+//     }
   }
   size_type fcnt = 0;
   for (size_type i = 0; i < lst.size(); i++) {
-    fcnt += (lst[i].cnt == 1 ? 1 : 0);
+    if (lst[i].cnt == 1) {
+      size_type icv = lst[i].cv;
+      short_type iif = lst[i].f;
+      if (with_normal) un = m.mean_normal_of_face_of_convex(icv, iif);
+      if (!with_normal ||
+          (gmm::vect_sp(normal_vector, un) - threshold >= -1E-8)) {
+        fcnt++;
+      } else {
+        lst[i].cnt = 2;
+      }
+    }
+
   }
 
   iarray w = out.pop().create_iarray(2,unsigned(fcnt));
@@ -197,6 +218,7 @@ outer_faces(const getfem::mesh &m, mexargs_in &in, mexargs_out &out)
       fcnt++;
     }
   }
+
 }
 
 
@@ -699,7 +721,7 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
 
 
     /*@GET CVFIDs = ('outer faces'[, CVIDs])
-    Return the faces which are not shared by two convexes.
+    Return the set of faces not shared by two convexes.
 
     `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
     and the second lists face numbers (local number in the convex).
@@ -710,7 +732,22 @@ void gf_mesh_get(getfemint::mexargs_in& m_in,
     sub_command
       ("outer faces", 0, 1, 0, 1,
        check_empty_mesh(pmesh);
-       outer_faces(*pmesh, in, out);
+       outer_faces(*pmesh, in, out, false);
+       );
+
+    /*@GET CVFIDs = ('outer faces with direction', @vec v, @scalar angle [, CVIDs])
+    Return the set of faces not shared by two convexes and whose mean outward unit vector have at most an angle `angle` with vector `v`.
+
+    `CVFIDs` is a two-rows matrix, the first row lists convex #ids,
+    and the second lists face numbers (local number in the convex).
+    If `CVIDs` is not given, all convexes are considered, and it
+    basically returns the mesh boundary. If `CVIDs` is given, it
+    returns the boundary of the convex set whose #ids are listed
+    in `CVIDs`.@*/
+    sub_command
+      ("outer faces with direction", 2, 3, 0, 1,
+       check_empty_mesh(pmesh);
+       outer_faces(*pmesh, in, out, true);
        );
     
     
