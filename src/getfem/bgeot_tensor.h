@@ -301,14 +301,14 @@ namespace bgeot {
         pf += dd; pft += ddt;
       } else {
         const_iterator pl = pft; iterator pt = tmp->begin();
-        *pt = *pl;
+        *pt++ = *pl;
         for(size_type k = 1; k < dimt; ++k, ++pt) { pl += cot; *pt = *pl;}
 
         iterator pff = pf;
         for (size_type k = 0; k < dim; ++k) {
           if (k) pff += co;
           *pff = T(0); pt = tmp->begin(); pl = m.begin() + k;
-          *pff += (*pl) * (*pt);
+          *pff += (*pl) * (*pt); ++pt;
           for (size_type l = 1; l < dimt; ++l, ++pt) {
             pl += dim;
             *pff += (*pl) * (*pt);
@@ -370,7 +370,7 @@ namespace bgeot {
       }
       else {
         const_iterator pl = pft; iterator pt = tmp->begin();
-        *pt = *pl;
+        *pt++ = *pl;
         for(size_type k = 1; k < dimt; ++k, ++pt) { pl += cot; *pt = *pl; }
 
         iterator pff = pf; pl = m.begin();

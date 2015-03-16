@@ -179,7 +179,7 @@ namespace dal {
   {
     getfem::local_guard guard = locks_.get_lock();
     std::list<pstatic_stored_object>::iterator it;
-    for (it = to_delete.begin(); it != to_delete.end(); ++it) 
+    for (it = to_delete.begin(); it != to_delete.end(); ) 
     {
       stored_key_tab::iterator itk = stored_keys_.find(*it);
       stored_object_tab::iterator ito = end();
@@ -193,8 +193,8 @@ namespace dal {
         delete ito->first.p;
         erase(ito);
         it = to_delete.erase(it);
-        if (it ==  to_delete.end()) break;
-        --it;
+      } else {
+        ++it;
       }
     }
   }

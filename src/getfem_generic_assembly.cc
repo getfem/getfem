@@ -2681,10 +2681,11 @@ namespace getfem {
         // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
         for (size_type k = 0; k < target_dim; ++k) {
           base_tensor::iterator it = t.begin() + (ss * k);
-          for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+          for (size_type i = 0; i < ndof; ++i, ++itZ) {
+            if (i) it += Qmult;
             base_tensor::iterator it2 = it;
-            for (size_type j = 0; j < Qmult; ++j, it2 += sss)
-              *it2 = *itZ;
+            *it2 = *itZ;
+            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
           }
         }
       }
@@ -2733,10 +2734,11 @@ namespace getfem {
         for (size_type l = 0; l < N; ++l)
           for (size_type k = 0; k < target_dim; ++k) {
             base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+            for (size_type i = 0; i < ndof; ++i, ++itZ) {
+              if (i) it += Qmult;
               base_tensor::iterator it2 = it;
-              for (size_type j = 0; j < Qmult; ++j, it2 += sss)
-                *it2 = *itZ;
+              *it2 = *itZ;
+              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
             }
           }
       }
@@ -2786,10 +2788,11 @@ namespace getfem {
         for (size_type l = 0; l < N2; ++l)
           for (size_type k = 0; k < target_dim; ++k) {
             base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+            for (size_type i = 0; i < ndof; ++i, ++itZ) {
+              if (i) it += Qmult;
               base_tensor::iterator it2 = it;
-              for (size_type j = 0; j < Qmult; ++j, it2 += sss)
-                *it2 = *itZ;
+              *it2 = *itZ;
+              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
             }
           }
       }
@@ -2824,10 +2827,11 @@ namespace getfem {
         // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
         for (size_type k = 0; k < target_dim; ++k) {
           base_tensor::iterator it = t.begin() + (ss * k);
-          for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+          for (size_type i = 0; i < ndof; ++i, ++itZ) {
+            if (i) it += Qmult;
             base_tensor::iterator it2 = it;
-            for (size_type j = 0; j < Qmult; ++j, it2 += sss)
-              *it2 = *itZ;
+            *it2 = *itZ;
+            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
           }
         }
       }
@@ -2861,10 +2865,11 @@ namespace getfem {
         for (size_type l = 0; l < N; ++l)
           for (size_type k = 0; k < target_dim; ++k) {
             base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+            for (size_type i = 0; i < ndof; ++i, ++itZ) {
+              if (i)  it += Qmult;
               base_tensor::iterator it2 = it;
-              for (size_type j = 0; j < Qmult; ++j, it2 += sss)
-                *it2 = *itZ;
+              *it2 = *itZ;
+              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
             }
           }
       }
@@ -2899,10 +2904,11 @@ namespace getfem {
         for (size_type l = 0; l < N2; ++l)
           for (size_type k = 0; k < target_dim; ++k) {
             base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ, it += Qmult) {
+            for (size_type i = 0; i < ndof; ++i, ++itZ) {
+              if (i) it += Qmult;
               base_tensor::iterator it2 = it;
-              for (size_type j = 0; j < Qmult; ++j, it2 += sss)
-                *it2 = *itZ;
+              *it2 = *itZ;
+              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
             }
           }
       }
@@ -3038,7 +3044,8 @@ namespace getfem {
            it != t.end(); ++it, ++it1) {
         *it = scalar_type(0);
         base_tensor::iterator it2 = it1;
-        for (size_type i = 0; i < n; ++i, it2 += s) *it += *it2;
+        *it += *it2;
+        for (size_type i = 1; i < n; ++i) { it2 += s; *it += *it2; }
       }
       return 0;
     }
@@ -3061,11 +3068,13 @@ namespace getfem {
            j < nb; ++it, ++it1, ++j) {
         scalar_type tr(0);
         base_tensor::iterator it2 = it1;
-        for (size_type i = 0; i < n; ++i, it2 += s) tr += *it2;
+        tr += *it2;
+        for (size_type i = 1; i < n; ++i) { it2 += s; tr += *it2; }
         tr /= scalar_type(n);
 
         base_tensor::iterator it3 = it;
-        for (size_type i = 0; i < n; ++i, it3 += s) *it3 -= tr;
+        *it3 -= tr;
+        for (size_type i = 1; i < n; ++i) { it3 += s; *it3 -= tr; }
       }
       return 0;
     }
@@ -3349,10 +3358,10 @@ namespace getfem {
 
       base_tensor::iterator it1=tc1.begin(), it2=tc2.begin(), it2end=it2 + s2;
       for (base_tensor::iterator it = t.begin(); it != t.end(); ++it) {
-        scalar_type a(0);
         base_tensor::iterator it11 = it1, it22 = it2;
-        for (size_type i = 0; i < nn; ++i)
-          { a+= (*it11) * (*it22); it11 += s1; it22 += s2; }
+        scalar_type a = (*it11) * (*it22);
+        for (size_type i = 1; i < nn; ++i)
+          { it11 += s1; it22 += s2; a += (*it11) * (*it22); }
         *it = a;
         ++it2; if (it2 == it2end) { it2 = tc2.begin(), ++it1; }
       }
