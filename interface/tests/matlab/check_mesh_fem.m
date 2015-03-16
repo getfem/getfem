@@ -130,10 +130,12 @@ function check_mesh_fem(iverbose,idebug)
     asserterr('gf_mesh_get(m, ''faces from pid'', i)');
   end;
   a=gf_mesh_get(m, 'outer faces');
-  b=[1 0 2 0 3 0 4 0 5 2 5 3 5 4 5 5 6 0 9 1 9 2 9 3 9 4 9 5];
+  b = [5 2 5 3 5 4 5 5 9 1 9 2 9 3 9 4 9 5];
+  % b=[1 0 2 0 3 0 4 0 5 2 5 3 5 4 5 5 6 0 9 1 9 2 9 3 9 4 9 5];
   gfassert('a(:)==b(:)');
   a=gf_mesh_get(m, 'outer faces',[4 5]);
-  gfassert('a(:)==[4 0 5 1 5 2 5 3 5 4 5 5]''');
+  gfassert('a(:)==[5 1 5 2 5 3 5 4 5 5]''');
+  % gfassert('a(:)==[4 0 5 1 5 2 5 3 5 4 5 5]''');
   asserterr('gf_mesh_get(m, ''outer faces'',[4 6 7 8])');
   asserterr('gf_mesh_get(m, ''outer faces'',[0])');
   E=gf_mesh_get(m, 'edges');
@@ -144,7 +146,8 @@ function check_mesh_fem(iverbose,idebug)
   gfassert('abs(sum(sum(sum(E)))-1.872e3) < 2');
   asserterr('gf_mesh_get(m, ''triangulated surface'', 3)');
   Z=gf_mesh_get(m, 'triangulated surface', 4,gf_mesh_get(m, 'outer faces',[4 5]));
-  gfassert('size(Z)==[9 160]');
+  % gfassert('size(Z)==[9 160]');
+  gfassert('size(Z)==[9 128]');
   Z=gf_mesh_get(m, 'curved edges', 4, gf_mesh_get(m, 'outer faces',[4 5]));
   ZZ=gf_mesh_get(m, 'curved edges', 4, [4 5]);
   for i=0:7
@@ -341,7 +344,7 @@ function check_mesh_fem(iverbose,idebug)
   U=rand(3, mf.nbdof());
   %U(1) = 1;
   
-  DU=gf_compute(mf, U, 'gradient', mf)
+  DU=gf_compute(mf, U, 'gradient', mf);
   D2U=gf_compute(mf, DU, 'gradient', mf);
   
   D2U2=gf_compute(mf, U, 'hessian', mf);
