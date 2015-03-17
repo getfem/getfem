@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2014-2014 Konstantinos Poulios
+ Copyright (C) 2014-2015 Konstantinos Poulios
 
  This file is a part of GETFEM++
 
@@ -93,7 +93,12 @@ namespace gmm {
                 "Matrix square root requires a square matrix");
     gmm::resize(SQRTMA, gmm::mat_nrows(A), gmm::mat_ncols(A));
     dense_matrix<std::complex<T> > S(A), Q(A), TMP(A);
+    #if defined(GMM_USES_LAPACK)
     schur(TMP, S, Q);
+    #else
+    GMM_ASSERT1(false, "Please recompile with lapack and blas librairies "
+                "to access to use sqrtm matrix function.");
+    #endif
     sqrtm_utri_inplace(S);
     gmm::mult(Q, S, TMP);
     gmm::mult(TMP, gmm::transposed(Q), SQRTMA);
@@ -251,7 +256,13 @@ namespace gmm {
     GMM_ASSERT1(n == gmm::mat_ncols(A),
                 "Matrix logarithm is not defined for non-square matrices");
     dense_matrix<T> S(A), Q(A);
+    #if defined(GMM_USES_LAPACK)
     schur(A, S, Q); // A = Q * S * Q^T
+    #else
+    GMM_ASSERT1(false, "Please recompile with lapack and blas librairies "
+                "to access to use logm matrix function.");
+    #endif
+
     bool convert_to_complex(false);
     if (!is_complex(T()))
       for (size_type i=0; i < n-1; ++i)

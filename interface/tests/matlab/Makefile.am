@@ -22,18 +22,22 @@ EXTRA_DIST= \
 	check_slices.m \
 	check_spmat.m \
 	check_workspace.m \
+	demo_elasticity.m \
 	demo_bilaplacian.m \
 	demo_laplacian.m \
 	demo_periodic_laplacian.m \
 	demo_laplacian1D.m \
 	demo_nonlinear_elasticity.m \
 	demo_nonlinear_elasticity_anim.m \
-	demo_plasticity.m \
+	demo_plasticity.m
+	demo_dynamic_plasticity.m \
 	demo_continuation.m \
 	demo_crack.m \
 	demo_mortar.m \
 	demo_mesh_generation.m \
 	demo_topological_optimization.m \
+	demo_step_by_step.m \
+	demo_Nitsche_contact_by_hand.m \
 	demo_structural_optimization.m \
 	demo_refine.m \
 	demo_stokes_3D_tank.m \

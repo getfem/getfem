@@ -348,7 +348,7 @@ namespace gmm {
     int lwork = 8*n, sdim = 0, liwork = 1;                              \
     std::vector<base_type> work(lwork), wr(n), wi(n);                   \
     std::vector<int> iwork(liwork);                                     \
-    std::vector<int> bwork(0);                                          \
+    std::vector<int> bwork(1);                                          \
     resize(S, n, n); copy(A, S);                                        \
     resize(Q, n, n);                                                    \
     base_type rconde(0), rcondv(0);                                     \
@@ -371,7 +371,7 @@ namespace gmm {
     int lwork = 8*n, sdim = 0;                                          \
     std::vector<base_type::value_type> rwork(lwork);                    \
     std::vector<base_type> work(lwork), w(n);                           \
-    std::vector<int> bwork(0);                                          \
+    std::vector<int> bwork(1);                                          \
     resize(S, n, n); copy(A, S);                                        \
     resize(Q, n, n);                                                    \
     base_type rconde(0), rcondv(0);                                     \

@@ -97,7 +97,8 @@ namespace getfem {
     size_type s = 0;
     for (size_type i = 0; i < dofzones.size(); ++i)
       if (dofzones[i]) s += dofzones[i]->size();
-    ids.resize(dofzones.size());
+    ids.resize(0); ids.resize(dofzones.size()+1, false);
+    // cout << "dofzones.size() = " << dofzones.size() << endl;
     std::string z(common_ls_zones);
     for (dal::bv_visitor i(ls_index); !i.finished(); ++i) {
       mesher_level_set eval = mls.get_level_set(i)->
@@ -111,6 +112,7 @@ namespace getfem {
       if (!dofzones[d]) continue;
       for (mesh_level_set::zoneset::const_iterator it = dofzones[d]->begin();
 	   it != dofzones[d]->end(); ++it, ++cnt) {
+        // cout << "cnt = " << cnt << endl;
 	ids[cnt] = false;
 	for (mesh_level_set::zone::const_iterator it2 = (*it)->begin();
 	     it2 != (*it)->end(); ++it2) {
