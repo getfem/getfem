@@ -21,6 +21,7 @@
 
 #include <getfemint.h>
 #include <getfemint_mesh_im.h>
+#include <getfemint_models.h>
 #include <getfem/getfem_assembling.h>
 #include <getfem/getfem_level_set.h>
 #include <getfemint_misc.h>
@@ -414,10 +415,21 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   std::string expr = in.pop().to_string();
   size_type region = in.pop().to_integer();
   
-  getfem::ga_workspace workspace;
+  getfem::ga_workspace workspace1;
   size_type nbdof = 0;
 
   std::map<std::string,  getfem::model_real_plain_vector> vectors;
+  getfem::model dummy_md;
+  const getfem::model *md = &dummy_md;
+  bool with_model = false;
+
+  if (in.remaining() && in.front().is_model()) {
+    md = &(in.pop().to_getfemint_model()->model());
+    with_model = true;
+  }
+  getfem::ga_workspace workspace2(*md);
+  getfem::ga_workspace *pworkspace = with_model ? &workspace2 : &workspace1;
+
 
   while (in.remaining()) {
     std::string varname = in.pop().to_string();
@@ -436,39 +448,39 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     gmm::copy(U, vectors[varname]);
     if (is_cte) {
       if (mf)
-        workspace.add_fem_constant(varname, *mf, vectors[varname]);
+        pworkspace->add_fem_constant(varname, *mf, vectors[varname]);
       else if (mimd)
-        workspace.add_im_data(varname, *mimd, vectors[varname]);
+        pworkspace->add_im_data(varname, *mimd, vectors[varname]);
       else
-        workspace.add_fixed_size_constant(varname, vectors[varname]);
+        pworkspace->add_fixed_size_constant(varname, vectors[varname]);
     } else {
       if (mf) {
         gmm::sub_interval I(nbdof, mf->nb_dof());
         nbdof += mf->nb_dof();
-        workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
+        pworkspace->add_fem_variable(varname, *mf, I, vectors[varname]);
       }  else if (mimd) {
         THROW_BADARG("Data defined on integration points can not be a variable");
       }  else {
         gmm::sub_interval I(nbdof, U.size());
         nbdof += U.size();
-        workspace.add_fixed_size_variable(varname, I, vectors[varname]);
+        pworkspace->add_fixed_size_variable(varname, I, vectors[varname]);
       }
     }
   }
 
-  workspace.add_expression(expr, gfi_mim->mesh_im(), region);
+  pworkspace->add_expression(expr, gfi_mim->mesh_im(), region);
 
   switch (order) {
   case 0:
-    workspace.assembly(0);
-    out.pop().from_scalar(workspace.assembled_potential());
+    pworkspace->assembly(0);
+    out.pop().from_scalar(pworkspace->assembled_potential());
     break;
 
   case 1:
     {
       getfem::model_real_plain_vector residual(nbdof);
-      workspace.set_assembled_vector(residual);
-      workspace.assembly(1);
+      pworkspace->set_assembled_vector(residual);
+      pworkspace->assembly(1);
       out.pop().from_dlvector(residual);
     }
     break;
@@ -476,8 +488,8 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   case 2: 
     {
       getfem::model_real_sparse_matrix K(nbdof, nbdof);
-      workspace.set_assembled_matrix(K);
-      workspace.assembly(2);
+      pworkspace->set_assembled_matrix(K);
+      pworkspace->assembly(2);
       gf_real_sparse_by_col  KK(nbdof, nbdof);
       gmm::copy(K, KK);
       out.pop().from_sparse(KK);
@@ -1051,7 +1063,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model], [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
       High-level generic assembly procedure for volumic assembly.
 
       Performs the generic assembly of `expression` with the integration
@@ -1064,8 +1076,12 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       (order = 0) or the (vector) residual (order = 1) or the
       tangent (matrix) (order = 2) is to be computed. 
 
+      `model` is an optional parameter allowing to take into account
+      all the variable and data of a model.
+      
       The variables and constant (data) are listed after the
-      region number. For each variable/constant, first the variable/constant
+      region number (or optionally the model).
+      For each variable/constant, first the variable/constant
       name should be given (as it is referred in the assembly string), then
       1 if it is a variable or 0 for a constant, then the finite element
       method if it is a fem variable/constant or the mesh_im_data if it is

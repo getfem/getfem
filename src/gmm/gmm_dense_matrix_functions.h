@@ -97,7 +97,7 @@ namespace gmm {
     schur(TMP, S, Q);
     #else
     GMM_ASSERT1(false, "Please recompile with lapack and blas librairies "
-                "to access to use sqrtm matrix function.");
+                "to use sqrtm matrix function.");
     #endif
     sqrtm_utri_inplace(S);
     gmm::mult(Q, S, TMP);
@@ -260,7 +260,7 @@ namespace gmm {
     schur(A, S, Q); // A = Q * S * Q^T
     #else
     GMM_ASSERT1(false, "Please recompile with lapack and blas librairies "
-                "to access to use logm matrix function.");
+                "to use logm matrix function.");
     #endif
 
     bool convert_to_complex(false);
