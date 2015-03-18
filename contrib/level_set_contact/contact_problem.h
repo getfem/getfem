@@ -10,7 +10,7 @@ typedef getfem::model_real_plain_vector  plain_vector;
 enum  { NORTH = 1, EAST = 2, WEST = 3, SOUTH = 4, FRONT = 5, BACK = 6};
 
 struct contact_problem{
-	getfem::deformable_mesh mesh_master, mesh_slave;
+	getfem::mesh mesh_master, mesh_slave;
 	bgeot::md_param PARAM;
 	scalar_type tol_newton,applied_disp;
 	size_type model_dim, nstep;
