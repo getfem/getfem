@@ -6,7 +6,7 @@ Copyright
 
 |gf| and this documentation is:
 
-Copyright |copy| |licyears| |authors|.
+Copyright |copy| |licyears| |gf| project.
 
 
 

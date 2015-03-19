@@ -4196,7 +4196,8 @@ namespace getfem {
 
   size_type ga_workspace::add_expression(const std::string expr,
                                          const mesh_im &mim,
-                                         const mesh_region &rg_) {
+                                         const mesh_region &rg_,
+                                         bool add_derivative) {
     const mesh_region &rg = register_region(mim.linked_mesh(), rg_);
     // cout << "adding expression " << expr << endl;
     size_type max_order = 0;
@@ -4217,7 +4218,7 @@ namespace getfem {
                              false, false);
         if ((*it)->root)
           max_order = std::max((*it)->root->nb_test_functions(), max_order);
-        add_tree(*(*it), mim.linked_mesh(), mim, rg, expr);
+        add_tree(*(*it), mim.linked_mesh(), mim, rg, expr, add_derivative);
       }
 
       if (tree.root)

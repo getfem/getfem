@@ -1,6 +1,6 @@
 .. $Id$
 
-Copyright |copy| |licyears| |authors|.
+Copyright |copy| |licyears| |gf| project.
 
 The text of the |gf| website and the documentations are available for modification and reuse under the terms of the |gnufreedoc|_
 

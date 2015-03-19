@@ -57,7 +57,7 @@ for l in fl:
         if (state == 0):
             flw.write('\n');
             flw.write('.. toctree::\n');
-            flw.write('   :maxdepth: 2\n\n');
+            flw.write('   :maxdepth: 3\n\n');
         flw.write('   cmdref_' + command_name + '\n');    
         state = 1
         if (flcom):

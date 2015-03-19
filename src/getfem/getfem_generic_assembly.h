@@ -277,7 +277,8 @@ namespace getfem {
      *  the tangent terms. Return the maximal order found in the expression.
      */
     size_type add_expression(const std::string expr, const mesh_im &mim,
-                            const mesh_region &rg=mesh_region::all_convexes());
+                             const mesh_region &rg=mesh_region::all_convexes(),
+                             bool add_derivative = true);
     /* Internal use */
     void add_function_expression(const std::string expr);
     /* Internal use */

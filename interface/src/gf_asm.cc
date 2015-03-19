@@ -468,7 +468,8 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
     }
   }
 
-  pworkspace->add_expression(expr, gfi_mim->mesh_im(), region);
+  bool add_derivative = (order == 0) ? false : true;
+  pworkspace->add_expression(expr, gfi_mim->mesh_im(), region, add_derivative);
 
   switch (order) {
   case 0:

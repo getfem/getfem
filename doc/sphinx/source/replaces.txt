@@ -1,4 +1,3 @@
-.. |authors| replace:: Yves Renard, Julien Pommier
 .. |copy| unicode:: 0xA9 .. copyright sign
 .. |gnu| replace:: *GNU*
 .. |c++| replace:: *C++*

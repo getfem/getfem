@@ -874,8 +874,8 @@ elif (option == 'matlab-doc'):
   print 'to have a more extensive description of the structures algorithms '
   print 'and concepts used.'
   print ''
-  print 'Types'
-  print '-----'
+  # print 'Types'
+  # print '-----'
   print ''
   print 'The expected type of each function argument is indicated in this '
   print 'reference. Here is a list of these types:'
@@ -1385,8 +1385,8 @@ elif (option == 'scilab-doc-rst'):
   print 'to have a more extensive description of the structures algorithms '
   print 'and concepts used.'
   print ''
-  print 'Types'
-  print '-----'
+  # print 'Types'
+  # print '-----'
   print ''
   print 'The expected type of each function argument is indicated in this '
   print 'reference. Here is a list of these types:'
@@ -1533,7 +1533,7 @@ elif (option == 'python-com' or option == 'python-com-par'):
 #
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2014 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM++
 #
