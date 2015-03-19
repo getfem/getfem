@@ -109,7 +109,7 @@ norms
   gmm::vect_dist2(V1, V2)  // Euclidean distance between V1 and V2.
   gmm::vect_norminf(V)    // infinity norm of vector V.
   gmm::mat_euclidean_norm(M) // Euclidean norm of matrix ``M``
-                             // (called also Fr\"obenius norm).
+                             // (called also Frobenius norm).
   gmm::mat_maxnorm(M) // Max norm (defined as max(|m_ij|; i,j ))
   gmm::mat_norm1(M)   // max(sum(|m_ij|, i), j)
   gmm::mat_norminf(M) // max(sum(|m_ij|, j), i)

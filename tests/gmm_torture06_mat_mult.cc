@@ -51,7 +51,7 @@ bool test_procedure(const MAT1 &m1_, const MAT2 &m2_, const MAT3 &m3_) {
   R error = mat_euclidean_norm(m4)
     - mat_euclidean_norm(m1) * mat_euclidean_norm(m2);
   if (error > prec * R(100))
-    GMM_ASSERT1(false, "Inconsistence of fröbenius norm" << error);
+    GMM_ASSERT1(false, "Inconsistence of Frobenius norm" << error);
 
   error = mat_norm1(m4) - mat_norm1(m1) * mat_norm1(m2);
   if (error > prec * R(100))
