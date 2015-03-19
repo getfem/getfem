@@ -22,6 +22,7 @@ EXTRA_DIST= \
 	check_slices.m \
 	check_spmat.m \
 	check_workspace.m \
+	check_plasticity.m \
 	demo_elasticity.m \
 	demo_bilaplacian.m \
 	demo_laplacian.m \
