@@ -15,9 +15,23 @@
 % along  with  this program;  if not, write to the Free Software Foundation,
 % Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 
-clear all;
-gf_workspace('clear all');
-clc;
+
+function check_asm(iverbose,idebug)
+  global gverbose;
+  global gdebug;  
+  if (nargin >= 1),
+    gverbose = iverbose;
+    if (nargin == 2),
+      gdebug = idebug;
+    else 
+      gdebug = 0;
+    end;
+  else 
+    gverbose = 0; gdebug = 0;
+  end;
+
+  gf_workspace('clear all');
+
 
 
 
@@ -28,7 +42,7 @@ clc;
 
 
 bi_material = false;
-test_tangent_matrix = true;
+test_tangent_matrix = false;
 do_plot = false;
 
 
@@ -36,8 +50,8 @@ do_plot = false;
 % Initialize used data
 LX = 100;
 LY = 20;
-NX = 24;
-NY = 10;
+NX = 20;
+NY = 8;
 
 % alpha is parameter of the generalized integration algorithms.
 % The choice alpha = 1/2 yields the mid point method and alpha = 1 leads to
@@ -49,7 +63,7 @@ alpha = 1.0;
 
 
 f = [15000 0]';
-t = [0 0.5 0.6 0.7 0.8 0.9 1 0.9 0.8 0.7 0.6 0.5 0.4 0.3 0.2 0.1 0 -0.1 -0.2 -0.4 -0.6 -0.8 -0.6 -0.4 -0.2 0];
+t = [0 0.6 0.8 1 0.8 0.6 0.4 0.2 0 -0.2 -0.4 -0.6 -0.8 -0.6 -0.4 -0.2 -0.1 0];
 
 % Create the mesh
 % m = gfMesh('triangles grid', [0:(LX/NX):LX], [0:(LY/NY):LY]);
@@ -239,8 +253,8 @@ for step=1:size(t,2),
  
 end;
 
-
-
+nn = size(sigma_fig,2);
+gfassert('abs((sigma_fig(nn) + 0.092976819406567) < 1E-3)')
 
 
 

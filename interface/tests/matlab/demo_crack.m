@@ -82,11 +82,6 @@ gf_model_set(md,'add_fem_variable', 'u', mf_u);
 gf_model_set(md,'add_initialized_data','lambda', [Lambda]);
 gf_model_set(md,'add_initialized_data','mu', [Mu]);
 gf_model_set(md,'add_isotropic_linearized_elasticity_brick',mim,'u','lambda','mu');
-%  il fault!!!
-%  gf_model_set(md,'add_variable','mult_spec',6);
-%  BB = gf_spmat('empty',6,gf_mesh_fem_get(mf_u,'nbdof'));
-%  gf_model_set(md,'add_constraint_with_multipliers','u','mult_spec',BB,zeros(6,1));
-
 gf_model_set(md,'add_initialized_fem_data','DirichletData', mf_ue, Ue);
 gf_model_set(md,'add_Dirichlet_condition_with_penalization',mim,'u', 1e12, DIRICHLET, 'DirichletData');
 

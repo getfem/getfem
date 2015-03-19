@@ -114,7 +114,7 @@ if (with_dirichlet) axis([0 1 0 15]); else axis([0 1 0 15]); end
 xlabel('x'); ylabel('u');
 pause(1);
 
-sing_out = [];
+sing_out = {};
 % continue from the initial point
 for step = 1:nbstep
   disp(sprintf('\nbeginning of step %d', step));
@@ -136,7 +136,7 @@ for step = 1:nbstep
      s = ['step ' sprintf('%d', step) ': smooth bifurcation point, '...
           sprintf('%d', size(T_U_bp, 2)) ' branch(es) located'];
     end
-    sing_out = [sing_out; s];
+    sing_out(size(sing_out, 1)+1,1) = {s};
   end
   
   U_hist(step+1) = U(1); lambda_hist(step+1) = lambda;
@@ -159,8 +159,9 @@ end
 
 nsing = size(sing_out, 1);
 if (nsing)
-  disp(sprintf('\n------------------------------'))
-  disp('   detected singular points')
+  disp('')
+  disp('------------------------------')
+  disp('   Detected singular points   ')
   disp('------------------------------')
   for i = 1:nsing
     disp(sing_out(i,:))

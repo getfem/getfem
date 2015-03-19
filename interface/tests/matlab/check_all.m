@@ -1,4 +1,4 @@
-% Copyright (C) 2005-2012 Julien Pommier.
+% Copyright (C) 2005-2015 Julien Pommier.
 %
 % This file is a part of GETFEM++
 %
@@ -96,7 +96,15 @@ catch
   errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
 
-t = 'demo_laplacian [model use for solving a Poisson problem]        ';
+t = 'check_plasticity [model brick complex generic assembly] ';
+try
+  check_plasticity;
+  disp(['== ' t ': SUCCESS']);
+catch
+  errcnt=errcnt+1; disp(['== ' t ' : FAILURE']);
+end;
+
+t = 'demo_laplacian [model use for solving a Poisson problem] ';
 try
   automatic_var654 = 1;
   demo_laplacian;
