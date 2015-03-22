@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2009-2014 Yves Renard
+ Copyright (C) 2009-2015 Yves Renard
 
  This file is a part of GETFEM++
 
@@ -61,6 +61,11 @@ namespace getfem {
   class virtual_interpolate_transformation;
   typedef boost::intrusive_ptr<const virtual_interpolate_transformation>
   pinterpolate_transformation;
+
+  class virtual_elementary_transformation;
+  typedef boost::intrusive_ptr<const virtual_elementary_transformation>
+  pelementary_transformation;
+  
 
   class ga_workspace;
 
@@ -343,6 +348,7 @@ namespace getfem {
     mutable std::map<std::string, std::vector<std::string> >
       Neumann_terms_auxilliary_variables;
     std::map<std::string, pinterpolate_transformation> transformations;
+    std::map<std::string, pelementary_transformation> elem_transformations;
 
     // Structure dealing with time integration scheme
     int time_integration; // 0 : no, 1 : time step, 2 : init
@@ -1126,6 +1132,31 @@ namespace getfem {
       return (transformations.find(name) != transformations.end());
     }
 
+    /** Add an elementary transformation to the model to be used with the
+        generic assembly.
+    */
+    void add_elementary_transformation(const std::string &name,
+                                       pelementary_transformation ptrans) {
+       elem_transformations[name] = ptrans;
+    }
+
+    /** Get a pointer to the elementary transformation `name`.
+    */
+    pelementary_transformation
+    elementary_transformation(const std::string &name) const {
+      std::map<std::string, pelementary_transformation>::const_iterator
+        it = elem_transformations.find(name);
+      GMM_ASSERT1(it != elem_transformations.end(),
+                  "Inexistent elementary transformation " << name);
+      return it->second;
+    }
+
+    /** Tests if `name` correpsonds to an elementary transformation.
+    */
+    bool elementary_transformation_exists(const std::string &name) const {
+      return (elem_transformations.find(name) != elem_transformations.end());
+    }
+
     /** Gives the name of the variable of index `ind_var` of the brick
         of index `ind_brick`. */
     const std::string &varname_of_brick(size_type ind_brick,
@@ -1618,6 +1649,24 @@ namespace getfem {
     virtual void finalize(void) const = 0;
 
     virtual ~virtual_interpolate_transformation() {}
+  };
+
+  //=========================================================================
+  //
+  //  Virtual elementary_transformation object.
+  //
+  //=========================================================================
+
+  typedef std::pair<std::string, std::string> var_trans_pair;
+
+  class APIDECL virtual_elementary_transformation
+    : virtual public dal::static_stored_object {
+
+  public:
+    
+    virtual void give_transformation(const mesh_fem &mf, size_type cv,
+                                     base_matrix &M) const = 0;
+    virtual ~virtual_elementary_transformation() {}
   };
 
   //=========================================================================

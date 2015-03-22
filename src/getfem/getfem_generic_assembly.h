@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2013-2014 Yves Renard
+ Copyright (C) 2013-2015 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -177,6 +177,7 @@ namespace getfem {
 
     VAR_SET variables;
     std::map<std::string, pinterpolate_transformation> transformations;
+    std::map<std::string, pelementary_transformation> elem_transformations;
     std::vector<tree_description> trees;
     std::list<ga_tree *> aux_trees;
 
@@ -415,6 +416,30 @@ namespace getfem {
       GMM_ASSERT1(false, "Inexistent transformation " << name);
     }
 
+    void add_elementary_transformation(const std::string &name,
+                                       pelementary_transformation ptrans)
+    { elem_transformations[name] = ptrans; }
+
+    bool elementary_transformation_exists(const std::string &name) const {
+      return (md && md->elementary_transformation_exists(name)) ||
+        (parent_workspace &&
+         parent_workspace->elementary_transformation_exists(name)) ||
+        (elem_transformations.find(name) != elem_transformations.end());
+    }
+
+    pelementary_transformation
+    elementary_transformation(const std::string &name) const {
+      std::map<std::string, pelementary_transformation>::const_iterator
+        it = elem_transformations.find(name);
+      if (it != elem_transformations.end()) return it->second;
+      if (md && md->elementary_transformation_exists(name))
+        return md->elementary_transformation(name);
+      if (parent_workspace &&
+         parent_workspace->elementary_transformation_exists(name))
+        return parent_workspace->elementary_transformation(name);
+      GMM_ASSERT1(false, "Inexistent elementary transformation " << name);
+    }
+
     bool is_constant(const std::string &name) const {
       VAR_SET::const_iterator it = variables.find(name);
       if (it != variables.end()) return !(it->second.is_variable);
@@ -614,7 +639,7 @@ namespace getfem {
    base_vector &result, const mesh_region &rg=mesh_region::all_convexes());
 
   //=========================================================================
-  // Interpolation transformation
+  // Interpolate transformations
   //=========================================================================
 
   /** Add a transformation to the model `md` from mesh `source_mesh` to mesh
