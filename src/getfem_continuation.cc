@@ -138,8 +138,4 @@ namespace getfem {
            + virtual_cont_struct::estimated_memsize();
   }
 
-  void cont_struct_getfem_model::listresiduals(void) const {
-    md->listresiduals(cout);
-  }
-
 }  /* end of namespace getfem.                                            */
