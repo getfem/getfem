@@ -1274,7 +1274,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     a multiplier `multname` peviously added to the model (should be a fixed
     size variable). The constraint is :math:`BU=L`
     with `B` being a rectangular sparse matrix. It is possible to change
-    the constraint at any time whith the methods MODEL:SET('set private matrix')
+    the constraint at any time with the methods MODEL:SET('set private matrix')
     and MODEL:SET('set private rhs'). Return the brick index in the model.@*/
     sub_command
       ("add constraint with multipliers", 4, 4, 0, 1,
@@ -1324,7 +1324,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
     The constraint is :math`BU=L` with `B` being a rectangular sparse matrix.
     Be aware that `B` should not contain a palin row, otherwise the whole
     tangent matrix will be plain. It is possible to change the constraint
-    at any time whith the methods MODEL:SET('set private matrix')
+    at any time with the methods MODEL:SET('set private matrix')
     and MODEL:SET('set private rhs'). The method
     MODEL:SET('change penalization coeff') can be used. Return the brick
     index in the model.@*/

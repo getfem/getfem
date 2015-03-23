@@ -2332,7 +2332,7 @@ namespace getfem {
       sparse matrix.
       Be aware that `B` should not contain a plain row, otherwise the whole
       tangent matrix will be plain. It is possible to change the constraint
-      at any time whith the methods set_private_matrix and set_private_rhs.
+      at any time with the methods set_private_matrix and set_private_rhs.
       The method change_penalization_coeff can also be used.
   */
   template <typename MAT, typename VECT>
@@ -2352,7 +2352,7 @@ namespace getfem {
       size variable).
       The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
       It is possible to change the constraint
-      at any time whith the methods set_private_matrix
+      at any time with the methods set_private_matrix
       and set_private_rhs.
   */
   template <typename MAT, typename VECT>

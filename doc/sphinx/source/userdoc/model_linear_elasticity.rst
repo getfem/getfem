@@ -54,7 +54,7 @@ The program :file:`tests/elastostatic.cc` can be taken as a model of use of this
 brick.
 
 
-linear incompressibility (or nearly incompressibility) brick
+Linear incompressibility (or nearly incompressibility) brick
 ------------------------------------------------------------
 
 This brick adds a linear incompressibility condition (or a nearly incompressible

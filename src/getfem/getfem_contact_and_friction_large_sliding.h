@@ -160,7 +160,7 @@ namespace getfem {
   /** Adds a rigid obstacle to an existing large sliding contact brick.
       `indbrick` is the brick index, `obs` is the expression of a
       function which should be closed to a signed distance to the obstacle.
-      In `obs`, the current position is denoted `X` whith components
+      In `obs`, the current position is denoted `X` with components
       `X(1), X(2), ...`. It is also allowed to use `x` instead of `X(1)`,
       `y` instead of `X(2)`, `z` instead of `X(3)` and `w` instead of `X(4)`. 
   */

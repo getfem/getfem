@@ -76,7 +76,7 @@ Finally, the problem to be solved is:
 Perfect elasto-plasticity problem
 +++++++++++++++++++++++++++++++++
 
-Contrary to the elastic phenomenon, the plasticity of a material is characterised by the onset of permanent deformations whithin the solid, resulted from the action of the constraints to which it is subjected.
+Contrary to the elastic phenomenon, the plasticity of a material is characterised by the onset of permanent deformations within the solid, resulted from the action of the constraints to which it is subjected.
 
 Generally, these deformations appear beyond a certain stress threshold, noted :math:`s`. In fact, under this threshold the behavior of the material is linear and reversible, which means elastic. On the contrary, when :math:`\sigma` > s, permanent deformations appear and the behavior is not linear at all.
 
@@ -245,7 +245,7 @@ Classical linear elasticity: :math:`|\tau^D| < s`
 ##################################################
 
 
-Here, :math:`\sigma` is whithin the convex :math:`K` and so the projection can be written as following:
+Here, :math:`\sigma` is within the convex :math:`K` and so the projection can be written as following:
 
 .. math::
 

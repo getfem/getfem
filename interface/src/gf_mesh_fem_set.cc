@@ -156,7 +156,7 @@ void gf_mesh_fem_set(getfemint::mexargs_in& m_in,
     /*@SET ('classical discontinuous fem', @int K[, @tscalar alpha[, @ivec CVIDX]])
     Assigns a classical (Lagrange polynomial) discontinuous fem or order K.
 
-    Similar to MESH_FEM:SET('classical fem') except that
+    Similar to MESH_FEM:SET('set classical fem') except that
     FEM_PK_DISCONTINUOUS is used. Param `alpha` the node inset,
     :math:`0 \leq alpha < 1`, where 0 implies usual dof nodes, greater values
     move the nodes toward the center of gravity, and 1 means that all

@@ -3041,7 +3041,7 @@ a multiplier `multname` peviously added to the model (should be a fixed
 size variable).
 The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
 It is possible to change the constraint
-at any time whith the methods 'set private matrix'
+at any time with the methods 'set private matrix'
 and 'set private rhs'
 
 \sep{@@ind_brick=gf_model_set(md,'add constraint with penalization',  \tstr varname, \tscal coeff, \tmat B, \tvec L)@@} :
@@ -3049,7 +3049,7 @@ Add an additional explicit penalized constraint on the variable `varname`.
 The constraint is $BU=L$ with `B` being a rectangular sparse matrix.
 Be aware that `B` should not contain a plain row, otherwise the whole
 tangent matrix will be plain. It is possible to change the constraint
-at any time whith the methods 'set private matrix'
+at any time with the methods 'set private matrix'
 and 'set private rhs'. The method 'change penalization coeff' can be used.
 
 \sep{@@ind_brick=gf_model_set(md,'add explicit matrix', \tstr varname1, \tstr varname2, \tmat B[, \tint issymmetric[, \tint iscoercive]])@@} :

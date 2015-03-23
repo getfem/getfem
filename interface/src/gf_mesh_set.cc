@@ -303,7 +303,7 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
     /*@SET ('extend region', @int rnum, @dmat CVFIDs)
     Extends the region identified by the region number `rnum` to include
     the set of convexes or/and convex faces provided in the matrix
-    `CVFIDs`, see also 'set_region'@.@*/
+    `CVFIDs`, see also ``MESH:SET('set region)``.@*/
     sub_command
       ("extend region", 2, 2, 0, 0,
        set_region(*pmesh, in, false);

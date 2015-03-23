@@ -1218,8 +1218,8 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Matrix and vector addition                             	  */
-  /*   algorithms are built in order to avoid some conflicts whith        */
+  /*   Matrix and vector addition                                         */
+  /*   algorithms are built in order to avoid some conflicts with         */
   /*   repeated arguments or with overlapping part of a same object.      */
   /*   In the latter case, conflicts are still possible.                  */
   /* ******************************************************************** */
