@@ -51,7 +51,7 @@ fig.scalar_range((-40,40));
 #print fig.scalar_range()
 
 m.set_region(42, m.outer_faces());
-m.region_substract(42, 3);
+m.region_subtract(42, 3);
 
 sl2=getfem.Slice(('boundary',('planar',+1,[0,0,0],[0,1,0])),m,3, m.region(42))
 fig.show(sl2, faces=False, edges_color=(1,1,1))

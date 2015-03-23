@@ -918,7 +918,7 @@ static void test_new_assembly(int N, int NX, int pK) {
       = getfem::select_faces_of_normal(m, border_faces, Dir, 0.1);
     m.region(NEUMANN_BOUNDARY_NUM) = Neumann_faces;
     m.region(DIRICHLET_BOUNDARY_NUM)
-      = getfem::mesh_region::substract(border_faces, Neumann_faces);
+      = getfem::mesh_region::subtract(border_faces, Neumann_faces);
 
 
     getfem::mesh_fem mf_u(m);

@@ -161,8 +161,8 @@ namespace getfem {
     /** return the union of two mesh_regions */
     static mesh_region merge(const mesh_region &a, 
                              const mesh_region &b);
-    /** remove the second region from the first one */
-    static mesh_region substract(const mesh_region &a, 
+    /** subtract the second region from the first one */
+    static mesh_region subtract(const mesh_region &a, 
                                  const mesh_region &b);
     size_type id() const { return id_; }
 

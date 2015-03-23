@@ -424,8 +424,8 @@ namespace getfem {
   }
 
 
-  mesh_region mesh_region::substract(const mesh_region &a,
-                                     const mesh_region &b) 
+  mesh_region mesh_region::subtract(const mesh_region &a,
+                                    const mesh_region &b) 
   {
     GMM_TRACE2("subtraction of "<<a.id()<<" and "<<b.id());
     mesh_region r;

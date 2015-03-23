@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
     case 11: dist = &D11; break; /* half-balls */
     case 12: dist = &D12; break; /* UFO */
     case 13: dist = &D13; break; /* moon */
-    case 14: dist = &D14; break; /* substraction of two balls */
+    case 14: dist = &D14; break; /* subtraction of two balls */
     case 15: dist = &D15; break; /* torus */
     case 16: dist = &D16; break; /* cube with a hole */
     case 17: dist = &D17; break; /* space station */

@@ -3323,7 +3323,7 @@ namespace getfem {
   struct ga_instruction_sub : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: substraction");
+      GA_DEBUG_INFO("Instruction: subtraction");
       GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
                   "internal error");
       gmm::add(tc1.as_vector(), gmm::scaled(tc2.as_vector(), scalar_type(-1)),
@@ -3761,7 +3761,7 @@ namespace getfem {
       size_type s2 = tc2.sizes()[0];
       base_tensor::iterator it = t.begin();
       for (size_type i = 0; i < s11; ++i)
-        for (size_type n = 0; n < s2; ++n) 
+        for (size_type n = 0; n < s2; ++n)
           for (size_type m = 0; m < s1; ++m, ++it) {
             *it = scalar_type(0);
             for (size_type j = 0; j < nn; ++j)
@@ -3771,7 +3771,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_spec_reduction(base_tensor &t_, base_tensor &tc1_,
-                             base_tensor &tc2_, size_type n_)
+                                  base_tensor &tc2_, size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
@@ -3797,7 +3797,7 @@ namespace getfem {
       return 0;
     }
     ga_instruction_spec2_reduction(base_tensor &t_, base_tensor &tc1_,
-                             base_tensor &tc2_, size_type n_)
+                                   base_tensor &tc2_, size_type n_)
       : t(t_), tc1(tc1_), tc2(tc2_), nn(n_) {}
   };
 
@@ -5442,7 +5442,7 @@ namespace getfem {
             if (size1[i] != 1) compatible = false;
 
           if (!compatible)
-            ga_throw_error(expr, pnode->pos, "Addition or substraction of "
+            ga_throw_error(expr, pnode->pos, "Addition or subtraction of "
                            "expressions of different sizes: "
                            << size0 << " != " << size1);
 
@@ -5459,7 +5459,7 @@ namespace getfem {
           }
 
           if (!compatible)
-            ga_throw_error(expr, pnode->pos, "Addition or substraction of "
+            ga_throw_error(expr, pnode->pos, "Addition or subtraction of "
                            "incompatible test functions");
           if (all_cte) {
             pnode->node_type = GA_NODE_CONSTANT;
@@ -8048,7 +8048,7 @@ namespace getfem {
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         if (mf) {
-          
+
           // An instruction for pfp update
           if (rmi.pfps.find(mf) == rmi.pfps.end() ||
               !(if_hierarchy.is_compatible(rmi.pfps_hierarchy[mf]))) {
@@ -8230,7 +8230,7 @@ namespace getfem {
                }
              } else {
                if (child1->test_function_type == 1 ||
-                    child1->test_function_type == 3) {
+                   child1->test_function_type == 3) {
                  if (child1->test_function_type == 3 || 
                      child1->tensor_proper_size() <= s2) {
                    if (s2 == 2) // Unroll loop test ... to be extended

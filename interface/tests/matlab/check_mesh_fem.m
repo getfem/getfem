@@ -287,7 +287,7 @@ function check_mesh_fem(iverbose,idebug)
   gfassert('rr==RR');
   
   gf_mesh_set(m,'region', 11, R2);
-  gf_mesh_set(m,'region substract', 11, 10);
+  gf_mesh_set(m,'region subtract', 11, 10);
   rr=gf_mesh_get(m,'region',11);
   RR=setdiff(R2',R1','rows')';
   gfassert('rr==RR');

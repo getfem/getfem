@@ -420,7 +420,7 @@ cout << getfem::asm_H1_semi_norm(mim, mf_rhs, V) << " " <<getfem::asm_H2_semi_no
 /* The aim of this function is to provide the errors without 
    assembling the norms, as it is some expensive computations.
    The error is computed after interpolation on a lagrangian 
-   mesh, so the error can be calculated by a single substraction. 
+   mesh, so the error can be calculated by a single subtraction. 
    This method is only useful for plotting the 2D graph of the error, 
    when we don't need the L2 or H1 norm evaluation of the error. */
 void bilaplacian_mortar_problem::compute_error_without_assembling(plain_vector &U, plain_vector &V) {

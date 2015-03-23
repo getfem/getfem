@@ -15281,7 +15281,7 @@ tint
 
 \end_inset
 
- R2) gf_mesh_set(M, 'region substract', 
+ R2) gf_mesh_set(M, 'region subtract', 
 \begin_inset ERT
 status collapsed
 
@@ -15762,7 +15762,7 @@ sep{
 
 \end_inset
 
-@@gf_mesh_set(M, 'region substract', R1, R2)@@
+@@gf_mesh_set(M, 'region subtract', R1, R2)@@
 \begin_inset ERT
 status collapsed
 

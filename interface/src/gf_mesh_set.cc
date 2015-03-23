@@ -74,12 +74,12 @@ static void merge_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
   r1 = getfem::mesh_region::merge(r1, r2);
 }
 
-static void substract_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
+static void subtract_regions(getfem::mesh &mesh, getfemint::mexargs_in& in) {
   unsigned ir1 = in.pop().to_integer(1,100000);
   unsigned ir2 = in.pop().to_integer(1,100000);
   getfem::mesh_region &r1 = mesh.region(ir1);
   getfem::mesh_region &r2 = mesh.region(ir2);
-  r1 = getfem::mesh_region::substract(r1, r2);
+  r1 = getfem::mesh_region::subtract(r1, r2);
 }
 
 
@@ -325,12 +325,12 @@ void gf_mesh_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ('region substract', @int r1, @int r2)
+    /*@SET ('region subtract', @int r1, @int r2)
     Replace the region number `r1` with its difference with region
     number `r2`.@*/
     sub_command
-      ("region substract", 2, 2, 0, 0,
-       substract_regions(*pmesh,in);
+      ("region subtract", 2, 2, 0, 0,
+       subtract_regions(*pmesh,in);
        );
 
 

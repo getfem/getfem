@@ -206,12 +206,12 @@ namespace bgeot
     void add_monomial(const T &coeff, const power_index &power);
     ///  Add Q to P. P contains the result.
     polynomial &operator +=(const polynomial &Q);
-    /// Substract Q to P. P contains the result.
+    /// Subtract Q from P. P contains the result.
     polynomial &operator -=(const polynomial &Q);
     /// Add Q to P.
     polynomial operator +(const polynomial &Q) const
       { polynomial R = *this; R += Q; return R; }
-    /// Substract Q to P.
+    /// Subtract Q from P.
     polynomial operator -(const polynomial &Q) const
       { polynomial R = *this; R -= Q; return R; }
     polynomial operator -(void) const;

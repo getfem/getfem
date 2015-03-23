@@ -28,7 +28,7 @@
     <synopsis>gf_mesh_set(mesh M, 'region', int rnum, mat CVFIDs)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'region intersect', int r1, int r2)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'region merge', int r1, int r2)</synopsis>
-    <synopsis>gf_mesh_set(mesh M, 'region substract', int r1, int r2)</synopsis>
+    <synopsis>gf_mesh_set(mesh M, 'region subtract', int r1, int r2)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'delete boundary', int rnum, mat CVFIDs)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'delete region', ivec RIDs)</synopsis>
     <synopsis>gf_mesh_set(mesh M, 'merge', mesh m2)</synopsis>
@@ -170,7 +170,7 @@
     </listitem>
 
     <listitem>
-    <para><literal>gf_mesh_set(mesh M, 'region substract', int r1, int r2)</literal></para>
+    <para><literal>gf_mesh_set(mesh M, 'region subtract', int r1, int r2)</literal></para>
 
     <para>       Replace the region number <literal>r1</literal> with its difference with region
     number <literal>r2</literal>.

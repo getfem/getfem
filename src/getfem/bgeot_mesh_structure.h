@@ -287,7 +287,7 @@ namespace bgeot {
   /*                                                                       */
   /* ********************************************************************* */
 
-  /* maybe this should be remove from the matlab interface and obsoleted */
+  /* maybe this should be removed from the matlab interface and obsoleted */
   struct APIDECL edge_list_elt  {
     size_type i, j;
     size_type cv;

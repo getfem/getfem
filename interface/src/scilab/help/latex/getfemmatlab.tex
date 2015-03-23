@@ -1516,7 +1516,7 @@ gf\_mesh\_set(M, 'del convex of dim', \tivec\ DIM)
 gf\_mesh\_set(M, 'region', \tint bnum, \timat CVFLST)
 gf\_mesh\_set(M, 'region intersect', \tint R1, \tint R2)
 gf\_mesh\_set(M, 'region merge', \tint R1, \tint R2)
-gf\_mesh\_set(M, 'region substract', \tint R1, \tint R2)
+gf\_mesh\_set(M, 'region subtract', \tint R1, \tint R2)
 gf\_mesh\_set(M, 'delete region', \tivec blst)
 gf\_mesh\_set(M, 'translate', \tvec\ V)
 gf\_mesh\_set(M, 'transform', \tmat\ T)
@@ -1570,7 +1570,7 @@ gf\_mesh\_set(M  'refine' [, \tmat CVLST])
   \sep{@@gf\_mesh\_set(M, 'region merge', R1, R2)@@} : 
   merge region number @@R2@@ into region number @@R1@@.
 
-  \sep{@@gf\_mesh\_set(M, 'region substract', R1, R2)@@} : 
+  \sep{@@gf\_mesh\_set(M, 'region subtract', R1, R2)@@} : 
   replace the region number @@R1@@ with its difference with region number @@R2@@.
 
 

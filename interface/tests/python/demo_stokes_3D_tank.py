@@ -58,9 +58,9 @@ m.set_region(1, INfaces)
 m.set_region(2, OUTfaces)
 m.set_region(3, TOPfaces)
 m.set_region(4, m.outer_faces())
-m.region_substract(4, 1)
-m.region_substract(4, 2)
-m.region_substract(4, 3)
+m.region_subtract(4, 1)
+m.region_subtract(4, 2)
+m.region_subtract(4, 3)
 
 
 
