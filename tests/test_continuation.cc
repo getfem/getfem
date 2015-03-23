@@ -98,11 +98,11 @@ bool state_problem::cont(plain_vector &U) {
   //Define the model
   getfem::model model;
   model.add_fem_variable("u", mf_u);
-  add_Laplacian_brick(model, mim, "u");
+  getfem::add_Laplacian_brick(model, mim, "u");
   std::string f = "u-lambda*exp(u)", dfdu = "1-lambda*exp(u)";
   model.add_fixed_size_data("lambda", 1);
-  add_basic_nonlinear_brick(model, mim, "u", f, dfdu,
-			    size_type(-1), "lambda");
+  getfem::add_nonlinear_generic_assembly_brick(model, mim,
+					       "(u-lambda*exp(u))*Test_u");
 
 
   // Initialise the continuation
@@ -110,10 +110,10 @@ bool state_problem::cont(plain_vector &U) {
     getfem::default_linear_solver<getfem::model_real_sparse_matrix,
                                   getfem::model_real_plain_vector>(model);
   size_type nb_dof = mf_u.nb_dof();
-  scalar_type scfac = 1./ nb_dof;
+  scalar_type scfac = 1./ scalar_type(nb_dof);
   size_type nb_step = int(PARAM.int_value("NBSTEP",
 					  "Number of continuation steps"));
-  int singularities = PARAM.int_value("SINGULARITIES", 
+  int singularities = (int) PARAM.int_value("SINGULARITIES", 
 				      "Deal with singularities?");
   scalar_type  h_init = PARAM.real_value("H_INIT", "h_init"),
     h_max = PARAM.real_value("H_MAX", "h_max"),
@@ -126,7 +126,7 @@ bool state_problem::cont(plain_vector &U) {
     maxdiff = PARAM.real_value("DIFFERENCE", "maxdiff"),
     mincos = PARAM.real_value("COS", "mincos"),
     maxres_solve = PARAM.real_value("RESIDUAL_SOLVE", "maxres_solve");
-  int noisy = PARAM.int_value("NOISY", "noisy");
+  int noisy = (int) PARAM.int_value("NOISY", "noisy");
   std::string datapath = PARAM.string_value("DATAPATH",
 					    "Directory of data files");
   gmm::set_traces_level(noisy - 1);
@@ -145,8 +145,7 @@ bool state_problem::cont(plain_vector &U) {
     gmm::copy(gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)), U);
     lambda = Y[nb_dof];
     char s[100];
-    sprintf(s, ".T_Y%d", (int) PARAM.int_value("IND_TANGENT",
-					       "Number of branches"));
+    sprintf(s, ".T_Y%d", (int) PARAM.int_value("IND_BRANCH", "Branch"));
     gmm::vecload(datapath + bp_rootfilename + s, Y);
     gmm::copy(gmm::scaled(gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)),
 			  direction), T_U);
@@ -155,13 +154,13 @@ bool state_problem::cont(plain_vector &U) {
   } else {
     lambda = PARAM.real_value("LAMBDA0", "lambda0");
     model.set_real_variable("lambda")[0] = lambda;   
-    if (noisy > 0) cout << "computing initial point" << endl;
+    if (noisy > 0) cout << "Starting computing an initial point" << endl;
     gmm::iteration iter(maxres_solve, noisy - 1, 40000);
     getfem::standard_solve(model, iter);
     gmm::copy(model.real_variable("u"), U);
     T_lambda = direction;
 
-    getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
+    S.init_Moore_Penrose_continuation(U, lambda, T_U, T_lambda, h);
   }
 
 //   cout << "U = " << U << endl;
@@ -172,9 +171,9 @@ bool state_problem::cont(plain_vector &U) {
   char s1[100], s2[100];
   std::vector<std::string> sing_out;
   for (size_type step = 0; step < nb_step; ++step) {
-    cout << endl << "beginning of step " << step + 1 << endl;
+    cout << endl << "Beginning of step " << step + 1 << endl;
    
-    getfem::Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
+    S.Moore_Penrose_continuation(U, lambda, T_U, T_lambda, h);
     if (h == 0) break;
 
 //     cout << "U = " << U << endl;
@@ -185,26 +184,26 @@ bool state_problem::cont(plain_vector &U) {
     sing_label = S.get_sing_label();
     if (sing_label.size() > 0) {
       if (sing_label == "limit point")
-	sprintf(s1, "Step %d: %s", step + 1, sing_label.c_str());
+	sprintf(s1, "Step %lu: %s", step + 1, sing_label.c_str());
       else if (sing_label == "smooth bifurcation point") {
 	gmm::copy(S.get_x_sing(),
 		  gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
 	Y[nb_dof] = S.get_gamma_sing();
-	sprintf(s1, "continuation_step_%d", step + 1);
+	sprintf(s1, "continuation_step_%lu", step + 1);
 	gmm::vecsave(datapath + s1 + "_bp.Y", Y);
 	for (size_type i = 0; i < S.nb_tangent_sing(); i++) {
-	  gmm::copy(S.get_t_x_sing(i),
+	  gmm::copy(S.get_tx_sing(i),
 		    gmm::sub_vector(Y, gmm::sub_interval(0, nb_dof)));
-	  Y[nb_dof] = S.get_t_gamma_sing(i);
-	  sprintf(s2, "_bp.T_Y%d", i + 1);
+	  Y[nb_dof] = S.get_tgamma_sing(i);
+	  sprintf(s2, "_bp.T_Y%lu", i + 1);
 	  gmm::vecsave(datapath + s1 + s2, Y);
 	}
-	sprintf(s1, "Step %d: %s, %u branch(es) located", step + 1,
+	sprintf(s1, "Step %lu: %s, %u branch(es) located", step + 1,
 		sing_label.c_str(), (unsigned int) S.nb_tangent_sing());
       }
       sing_out.push_back(s1);
     }
-    cout << "end of Step nº " << step + 1 << " / " << nb_step << endl;
+    cout << "End of Step nº " << step + 1 << " / " << nb_step << endl;
   }
 
   if (sing_out.size() > 0) {

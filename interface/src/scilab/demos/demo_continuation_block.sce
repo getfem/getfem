@@ -52,12 +52,12 @@ p_1_left_final = 2; p_1_right_final = 2;
 p_2_left_final = 2.4; p_2_right_final = -2.4;
 
 // If the file name sing_point_char is non-empty, the continuation will be
-// started from the singular point and the tangent with the index ind_tangent
+// started from the singular point and the tangent with the index ind_branch
 // saved there. Otherwise, the continuation will be initialised according to
 // direction, gm0, and eventually X0_char.
 sing_point_char = '';
 //sing_point_char = 'continuation_step_105_sing.sod';
-ind_tangent = 4;
+ind_branch = 4;
 direction = 1;
 X0_char = '';
 gm0 = 0;
@@ -181,8 +181,8 @@ S = gf_cont_struct(md, 'gamma', 'pdata_init', 'pdata_final', ...
 if (~isempty(sing_point_char)) then
   load(datapath + sing_point_char);
   X = X_sing; gm = gm_sing;
-  T_X = T_X_sing(:, ind_tangent);
-  T_gm = T_gm_sing(ind_tangent);
+  T_X = T_X_sing(:, ind_branch);
+  T_gm = T_gm_sing(ind_branch);
   h = gf_cont_struct_get(S, 'init step size');
   gf_model_set(md, 'to variables', X);
 else

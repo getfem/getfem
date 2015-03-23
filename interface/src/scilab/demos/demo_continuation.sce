@@ -37,13 +37,13 @@ gf_util('warning level', 3);
 // continuation data
 datapath = get_absolute_file_path('demo_continuation.sce') + 'data/';
 // If the file name bp_char is non-empty, the continuation will be started
-// from the bifurcation point and the tangent with the index ind_tangent
+// from the bifurcation point and the tangent with the index ind_branch
 // saved there. Direction of the initial tangent will be determined by
 // direction. Otherwise, the continuation will be initialised according to
 // direction and lambda0.
 bp_char = '';
 //bp_char = 'continuation_step_62_bp.mat';
-ind_tangent = 2;
+ind_branch = 2;
 direction = 1;
 lambda0 = 0;
 nbstep = 80;
@@ -71,7 +71,7 @@ gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 gf_model_set(md, 'add data', 'lambda', 1);
 gf_model_set(md, 'add nonlinear generic assembly brick', mim, ...
-            '(u-lambda*exp(u))*Test_u');
+             '(u-lambda*exp(u))*Test_u');
 
 
 // initialise the continuation
@@ -83,8 +83,8 @@ S = gf_cont_struct(md, 'lambda', scfac, 'h_init', h_init, 'h_max', h_max, ...
 if (~isempty(bp_char)) then
   load(datapath + bp_char);
   U = U_bp; lambda = lambda_bp;
-  T_U = direction * T_U_bp(:, ind_tangent);
-  T_lambda = direction * T_lambda_bp(ind_tangent);
+  T_U = direction * T_U_bp(:, ind_branch);
+  T_lambda = direction * T_lambda_bp(ind_branch);
   h = gf_cont_struct_get(S, 'init step size');
 else
   lambda = lambda0;
@@ -110,6 +110,10 @@ subplot(2,1,1);
 plot(lambda_hist(1), U_hist(1), 'k.');
 xtitle('', 'lambda', 'u(0)');
 subplot(2,1,2)
+  if max(U)-min(U) < 1e-10 then
+    a = gca(); a.tight_limits = "on";
+    a.data_bounds = [0, min(U)-1; 1, max(U)+1];
+  end
 gf_plot_1D(mf, U, 'style', 'k.-');
 xtitle('', 'x', 'u');
 drawnow;
@@ -152,6 +156,10 @@ for step = 1:nbstep
   plot(lambda_hist(step+1), U_hist(step+1), 'k.');
   xtitle('', 'lambda', 'u(0)');
   subplot(2,1,2)
+  if max(U)-min(U) < 1e-10 then
+    a = gca(); a.tight_limits = "on";
+    a.data_bounds = [0, min(U)-1; 1, max(U)+1];
+  end
   gf_plot_1D(mf, U, 'style', 'k.-');
   xtitle('', 'x', 'u');
   drawnow;

@@ -12,7 +12,7 @@ INTEGRATION = 'IM_GAUSS1D(3)'; % Gauss-Legendre integration on the
 DATAPATH = 'data/';
 %BP_ROOTFILENAME = 'continuation_step_62_bp';	% root of the file with 
 					% bifurcation data to be loaded
-IND_TANGENT = 2;	% index of the tangent to be loaded when starting 
+IND_BRANCH = 2;		% index of the branch to be continued when starting 
 			% from a bifurcation point
 DIRECTION = 1.;		% direction of the initial tangent
 LAMBDA0 = 0.;		% initial value of parameter
@@ -37,4 +37,4 @@ COS = 0.997; 		% cosine of the angle between tangents at
 RESIDUAL_SOLVE = 1E-8;	% initial residual
 
 %%%%%   output parameters     		                             %%%%%
-NOISY = 0;
+NOISY = 1;

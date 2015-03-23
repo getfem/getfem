@@ -393,18 +393,16 @@ Approximation of solution curves of a model
 +++++++++++++++++++++++++++++++++++++++++++
 
 The numerical continuation is defined in ``getfem/getfem_continuation.h``. In
-order to use it, one has to do the following initialisation first::
+order to use it, one has to set it up via the corresponding object first::
 
-  getfem::cont_struct_getfem_model S(model, parameter_name[, initdata_name, finaldata_name, currentdata_name],
-                           	     sfac, ls, h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres,
-				     maxdiff, mincos, maxres_solve, noisy, singularities, non-smooth,
-				     delta_max, delta_min, thrvar, ndir, nspan);
-  getfem::init_Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
+  getfem::cont_struct_getfem_model S(model, parameter_name, sfac, ls, h_init, h_max, h_min, h_inc, h_dec,
+				     maxit, thrit, maxres, maxdiff, mincos, maxres_solve, noisy, singularities,
+				     non-smooth, delta_max, delta_min, thrvar, ndir, nspan);
 
 where ``parameter_name`` is the name of the model datum representing
 :math:`\lambda`, ``sfac`` represents the scale factor :math:`\kappa`, and ``ls``
 is the name of the solver to be used for the linear systems incorporated in the
-process (e.g., ``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``) The real numbers ``h_init``,
+process (e.g., ``getfem::default_linear_solver<getfem::model_real_sparse_matrix, getfem::model_real_plain_vector>(model)``). The real numbers ``h_init``,
 ``h_max``, ``h_min``, ``h_inc``, ``h_dec`` denote :math:`h_{\mathrm{init}}`,
 :math:`h_{\mathrm{max}}`, :math:`h_{\mathrm{min}}`, :math:`h_{\mathrm{inc}}`,
 and :math:`h_{\mathrm{dec}}`, the integer ``maxit`` is the maximum number of
@@ -418,26 +416,36 @@ details), the integer ``singularities`` determines whether the tools for
 detection and treatment of singular points have to be used (0 for ignoring them
 completely, 1 for detecting limit points, and 2 for detecting and treating
 bifurcation points, as well), and the boolean value of ``non-smooth`` determines
-whether only the tools for smooth continuation and bifurcation have to be used
-or even the tools for non-smooth ones do. The real numbers ``delta_max``,
+whether only tools for smooth continuation and bifurcation have to be used
+or even tools for non-smooth ones do. The real numbers ``delta_max``,
 ``delta_min`` and ``thrvar`` represent :math:`\delta_{\mathrm{max}}`,
 :math:`\delta_{\mathrm{min}}` and :math:`\tau_{\mathrm{fac}}`, and the integers
 ``ndir`` and ``nspan`` stand for :math:`n_{\mathrm{dir}}` and
-:math:`n_{\mathrm{span}}`, respectively. Under the optional data names
-``initdata_name`` and ``finaldata_name``, :math:`P^{0}` and :math:`P^{1}` should
-be stored, respectively, in the case of parametrisation by a vector datum. Under
-``currentdata_name``, the values of :math:`P(\lambda)` are stored then, that is,
-actual values of the datum the model depends on. Further, ``U`` should be a
-solution for the value of the parameter :math:`\lambda` equal to ``lambda`` so
-that :math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). During the initialisation, an
-initial unit tangent :math:`T_{0}` corresponding to :math:`Y_{0}` is computed in
-accordance with the sign of the initial value ``T_lambda``, and it is returned
-in ``T_U``, ``T_lambda``. Moreover, ``h`` is set to the initial step size
-``h_init``.
+:math:`n_{\mathrm{span}}`, respectively.
 
-Consequently, one step of the continuation is called by ::
+Optionally, parametrisation by a vector datum is then declared by::
 
-  getfem::Moore_Penrose_continuation(S, U, lambda, T_U, T_lambda, h);
+  S.set_parametrised_data_names(initdata_name, finaldata_name, currentdata_name);
+
+Here, the data names ``initdata_name`` and ``finaldata_name`` should represent 
+:math:`P^{0}` and :math:`P^{1}`, respectively. Under ``currentdata_name``, the 
+values of :math:`P(\lambda)` have to be stored, that is, actual values of the
+datum the model depends on.
+
+Next, the continuation is initialised by::
+
+  S.init_Moore_Penrose_continuation(U, lambda, T_U, T_lambda, h);
+
+where ``U`` should be a solution for the value of the parameter :math:`\lambda`
+equal to ``lambda`` so that :math:`Y_{0}=` (\ ``U``\ ,\ ``lambda``\ ). During
+this initialisation, an initial unit tangent :math:`T_{0}` corresponding to
+:math:`Y_{0}` is computed in accordance with the sign of the initial value 
+``T_lambda``, and it is returned in ``T_U``, ``T_lambda``. Moreover, ``h`` is
+set to the initial step size ``h_init``.
+
+Subsequently, one step of the continuation is called by ::
+
+  S.Moore_Penrose_continuation(U, lambda, T_U, T_lambda, h);
 
 After each call, a new point on a solution curve and the corresponding tangent
 are returned in the variables ``U``, ``lambda`` and ``T_U``, ``T_lambda``. The
@@ -446,13 +454,13 @@ value of ``singularities``, the test functions for limit and bifurcation points
 are evaluated at the end of each continuation step. Furthermore, if a smooth
 bifurcation point is detected, the procedure for numerical bifurcation is
 performed and an approximation of the branching point as well as tangents to
-both bifurcating curves are saved in the continuation structure ``S``. From
+both bifurcating curves are saved in the continuation object ``S``. From
 there, they can easily be recovered with member functions of ``S`` so that one
 can initialise the continuation to trace either of the curves next time.
 
 Complete examples of use on a smooth problem are shown in the test programs
 ``tests/test_continuation.cc``, ``interface/tests/matlab/demo_continuation.m``
-and ``interface/src/scilab/demos/demo_continuation.sce`` whereas
+and ``interface/src/scilab/demos/demo_continuation.sce``, whereas
 ``interface/src/scilab/demos/demo_continuation_vee.sce`` and
 ``interface/src/scilab/demos/demo_continuation_block.sce`` employ also
 non-smooth tools.

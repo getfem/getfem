@@ -1,9 +1,9 @@
 /*===========================================================================
- 
- Copyright (C) 2012-2015 Tomas Ligursky, Yves Renard.
- 
+
+ Copyright (C) 2012-2015 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
 ===========================================================================*/
 
 #include <getfemint_misc.h>
@@ -30,8 +30,8 @@ using namespace getfemint;
 struct sub_gf_cont_struct_get : virtual public dal::static_stored_object {
   int arg_in_min, arg_in_max, arg_out_min, arg_out_max;
   virtual void run(getfemint::mexargs_in& in,
-		   getfemint::mexargs_out& out,
-		   getfem::cont_struct_getfem_model *ps) = 0;
+                   getfemint::mexargs_out& out,
+                   getfem::cont_struct_getfem_model *ps) = 0;
 };
 
 typedef boost::intrusive_ptr<sub_gf_cont_struct_get> psub_command;
@@ -40,17 +40,17 @@ typedef boost::intrusive_ptr<sub_gf_cont_struct_get> psub_command;
 template <typename T> static inline void dummy_func(T &) {}
 
 #define sub_command(name, arginmin, arginmax, argoutmin, argoutmax, code) { \
-    struct subc : public sub_gf_cont_struct_get {			\
-      virtual void run(getfemint::mexargs_in& in,			\
-		       getfemint::mexargs_out& out,			\
-		       getfem::cont_struct_getfem_model *ps)		\
-      { dummy_func(in); dummy_func(out); dummy_func(ps); code }		\
-    };									\
-    psub_command psubc = new subc;					\
-    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;		\
-    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;	\
-    subc_tab[cmd_normalize(name)] = psubc;				\
-  }       
+    struct subc : public sub_gf_cont_struct_get {                           \
+      virtual void run(getfemint::mexargs_in& in,                           \
+                       getfemint::mexargs_out& out,                         \
+                       getfem::cont_struct_getfem_model *ps)                \
+      { dummy_func(in); dummy_func(out); dummy_func(ps); code }             \
+    };                                                                      \
+    psub_command psubc = new subc;                                          \
+    psubc->arg_in_min = arginmin; psubc->arg_in_max = arginmax;             \
+    psubc->arg_out_min = argoutmin; psubc->arg_out_max = argoutmax;         \
+    subc_tab[cmd_normalize(name)] = psubc;                                  \
+  }
 
 
 /*@GFDOC
@@ -59,21 +59,38 @@ template <typename T> static inline void dummy_func(T &) {}
 @*/
 
 void gf_cont_struct_get(getfemint::mexargs_in& m_in,
-			getfemint::mexargs_out& m_out) {
+                        getfemint::mexargs_out& m_out) {
   typedef std::map<std::string, psub_command > SUBC_TAB;
   static SUBC_TAB subc_tab;
 
   if (subc_tab.size() == 0) {
-  
-    
+
+
     /*@FUNC h = ('init step size')
       Return an initial step size for continuation.@*/
     sub_command
       ("init step size", 0, 0, 0, 1,
-       
+
        out.pop().from_scalar(ps->h_init());
        );
-  
+
+    /*@FUNC [@vec tangent_sol, @scalar tangent_par] = ('compute tangent', @vec solution, @scalar parameter, @vec tangent_sol, @scalar tangent_par)
+      Compute and return an updated tangent.@*/
+    sub_command
+      ("compute tangent", 4, 4, 0, 2,
+       size_type nbdof = ps->linked_model().nb_dof();
+       darray x0 = in.pop().to_darray();
+       scalar_type gamma = in.pop().to_scalar();
+       darray tx0 = in.pop().to_darray();
+       std::vector<double> x(nbdof); gmm::copy(x0, x);
+       std::vector<double> tx(nbdof); gmm::copy(tx0, tx);
+       scalar_type tgamma = in.pop().to_scalar();
+
+       ps->compute_tangent(x, gamma, tx, tgamma);
+
+       out.pop().from_dcvector(tx);
+       out.pop().from_scalar(tgamma);
+       );
 
     /*@FUNC E = ('init Moore-Penrose continuation', @vec solution, @scalar parameter, @scalar init_dir)
       Initialise the Moore-Penrose continuation: Return a unit tangent to
@@ -85,17 +102,16 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       ("init Moore-Penrose continuation", 3, 3, 0, 3,
 
        size_type nbdof = ps->linked_model().nb_dof();
-       darray x = in.pop().to_darray();
-       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       darray x_ = in.pop().to_darray();
+       std::vector<double> x(nbdof); gmm::copy(x_, x);
        scalar_type gamma = in.pop().to_scalar();
-       std::vector<double> tt_x(nbdof);
-       scalar_type t_gamma = in.pop().to_scalar();
+       std::vector<double> tx(nbdof);
+       scalar_type tgamma = in.pop().to_scalar();
        scalar_type h;
 
-       getfem::init_Moore_Penrose_continuation(*ps, xx, gamma,
-					       tt_x, t_gamma, h);
-       out.pop().from_dcvector(tt_x);
-       out.pop().from_scalar(t_gamma);
+       ps->init_Moore_Penrose_continuation(x, gamma, tx, tgamma, h);
+       out.pop().from_dcvector(tx);
+       out.pop().from_scalar(tgamma);
        out.pop().from_scalar(h);
        );
 
@@ -112,53 +128,51 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       ("Moore-Penrose continuation", 5, 5, 0, 6,
 
        size_type nbdof = ps->linked_model().nb_dof();
-       darray x = in.pop().to_darray();
-       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       darray x_ = in.pop().to_darray();
+       std::vector<double> x(nbdof); gmm::copy(x_, x);
        scalar_type gamma = in.pop().to_scalar();
-       darray t_x = in.pop().to_darray();
-       std::vector<double> tt_x(nbdof); gmm::copy(t_x, tt_x);
-       scalar_type t_gamma = in.pop().to_scalar();
+       darray tx_ = in.pop().to_darray();
+       std::vector<double> tx(nbdof); gmm::copy(tx_, tx);
+       scalar_type tgamma = in.pop().to_scalar();
        scalar_type h = in.pop().to_scalar();
 
-       getfem::Moore_Penrose_continuation(*ps, xx, gamma, tt_x, t_gamma, h);
-       out.pop().from_dcvector(xx);
+       ps->Moore_Penrose_continuation(x, gamma, tx, tgamma, h);
+       out.pop().from_dcvector(x);
        out.pop().from_scalar(gamma);
-       out.pop().from_dcvector(tt_x);
-       out.pop().from_scalar(t_gamma);
+       out.pop().from_dcvector(tx);
+       out.pop().from_scalar(tgamma);
        out.pop().from_scalar(h);
        if (out.remaining())
-	 out.pop().from_string(ps->get_sing_label().c_str());
+         out.pop().from_string(ps->get_sing_label().c_str());
        );
 
 
     /*@GET t = ('non-smooth bifurcation test', @vec solution1, @scalar parameter1, @vec tangent_sol1, @scalar tangent_par1, @vec solution2, @scalar parameter2, @vec tangent_sol2, @scalar tangent_par2)
       Test for a non-smooth bifurcation point between the point given by
-      `solution1` and `parameter1` with the tangent given by `tangent_sol1` 
+      `solution1` and `parameter1` with the tangent given by `tangent_sol1`
       and `tangent_par1` and the point given by `solution2` and `parameter2`
       with the tangent given by `tangent_sol2` and `tangent_par2`.@*/
     sub_command
       ("non-smooth bifurcation test", 8, 8, 0, 1,
 
        size_type nbdof = ps->linked_model().nb_dof();
-       darray x1 = in.pop().to_darray();
-       std::vector<double> xx1(nbdof); gmm::copy(x1, xx1);
+       darray x1_ = in.pop().to_darray();
+       std::vector<double> x1(nbdof); gmm::copy(x1_, x1);
        scalar_type gamma1 = in.pop().to_scalar();
-       darray t_x1 = in.pop().to_darray();
-       std::vector<double> tt_x1(nbdof); gmm::copy(t_x1, tt_x1);
-       scalar_type t_gamma1 = in.pop().to_scalar();
-       darray x2 = in.pop().to_darray();
-       std::vector<double> xx2(nbdof); gmm::copy(x2, xx2);
+       darray tx1_ = in.pop().to_darray();
+       std::vector<double> tx1(nbdof); gmm::copy(tx1_, tx1);
+       scalar_type tgamma1 = in.pop().to_scalar();
+       darray x2_ = in.pop().to_darray();
+       std::vector<double> x2(nbdof); gmm::copy(x2_, x2);
        scalar_type gamma2 = in.pop().to_scalar();
-       darray t_x2 = in.pop().to_darray();
-       std::vector<double> tt_x2(nbdof); gmm::copy(t_x2, tt_x2);
-       scalar_type t_gamma2 = in.pop().to_scalar();
-
-       ps->set_build(getfem::BUILD_ALL);
-       ps->init_border();
+       darray tx2_ = in.pop().to_darray();
+       std::vector<double> tx2(nbdof); gmm::copy(tx2_, tx2);
+       scalar_type tgamma2 = in.pop().to_scalar();
+       ps->init_border(nbdof);
        ps->clear_tau_bp_currentstep();
-       out.pop().from_integer(int(getfem::test_nonsmooth_bifurcation
-				  (*ps, xx1, gamma1, tt_x1, t_gamma1,
-				   xx2, gamma2, tt_x2, t_gamma2)));
+       out.pop().from_integer(int(ps->test_nonsmooth_bifurcation
+                                  (x1, gamma1, tx1, tgamma1,
+                                   x2, gamma2, tx2, tgamma2)));
        );
 
 
@@ -190,15 +204,15 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
       ("non-smooth branching", 4, 4, 0, 0,
 
        size_type nbdof = ps->linked_model().nb_dof();
-       darray x = in.pop().to_darray();
-       std::vector<double> xx(nbdof); gmm::copy(x, xx);
+       darray x_ = in.pop().to_darray();
+       std::vector<double> x(nbdof); gmm::copy(x_, x);
        scalar_type gamma = in.pop().to_scalar();
-       darray t_x = in.pop().to_darray();
-       std::vector<double> tt_x(nbdof); gmm::copy(t_x, tt_x);
-       scalar_type t_gamma = in.pop().to_scalar();
+       darray tx_ = in.pop().to_darray();
+       std::vector<double> tx(nbdof); gmm::copy(tx_, tx);
+       scalar_type tgamma = in.pop().to_scalar();
 
        ps->clear_sing_data();
-       getfem::treat_nonsmooth_point(*ps, xx, gamma, tt_x, t_gamma, 0);
+       ps->treat_nonsmooth_point(x, gamma, tx, tgamma, 0);
        );
 
 
@@ -211,8 +225,8 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
 
        out.pop().from_dcvector(ps->get_x_sing());
        out.pop().from_scalar(ps->get_gamma_sing());
-       out.pop().from_vector_container(ps->get_t_x_sing());
-       out.pop().from_dcvector(ps->get_t_gamma_sing());
+       out.pop().from_vector_container(ps->get_tx_sing());
+       out.pop().from_dcvector(ps->get_tgamma_sing());
        );
 
 
@@ -250,8 +264,8 @@ void gf_cont_struct_get(getfemint::mexargs_in& m_in,
   SUBC_TAB::iterator it = subc_tab.find(cmd);
   if (it != subc_tab.end()) {
     check_cmd(cmd, it->first.c_str(), m_in, m_out, it->second->arg_in_min,
-	      it->second->arg_in_max, it->second->arg_out_min,
-	      it->second->arg_out_max);
+              it->second->arg_in_max, it->second->arg_out_min,
+              it->second->arg_out_max);
     it->second->run(m_in, m_out, ps);
   }
   else bad_cmd(init_cmd);

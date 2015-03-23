@@ -1,9 +1,9 @@
 /*===========================================================================
- 
- Copyright (C) 2012-2015 Tomas Ligursky, Yves Renard.
- 
+
+ Copyright (C) 2012-2015 Tomas Ligursky, Yves Renard, Konstantinos Poulios.
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
 ===========================================================================*/
 
 #include <getfemint.h>
@@ -34,9 +34,9 @@ using namespace getfemint;
 @*/
 
 void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
-  getfemint_cont_struct *pgs = NULL;  
+  getfemint_cont_struct *pgs = NULL;
   if (check_cmd("ContStruct", "ContStruct", in, out, 3, 43, 0, 1)) {
-    
+
     /*@INIT S = ('.init', @tmodel md, @str dataname_parameter[,@str dataname_init, @str dataname_final, @str dataname_current], @scalar sc_fac[, ...])
     The variable `dataname_parameter` should parametrise the model given by
     `md`. If the parametrisation is done via a vector datum, `dataname_init`
@@ -44,9 +44,9 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     determining the parametrisation, and `dataname_current` serves for actual
     values of this datum. `sc_fac` is a scale factor involved in the weighted
     norm used in the continuation.
-    
+
     Additional options:
-    
+
     - 'lsolver', @str SOLVER_NAME
        name of the solver to be used for the incorporated linear systems
        (the default value is 'auto', which lets getfem choose itself);
@@ -108,29 +108,24 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
     - 'noisy' or 'very_noisy'
        determines how detailed information has to be displayed during the
        continuation process (residual values etc.).@*/
-    
+
        getfemint_model *md = in.pop().to_getfemint_model();
-       std::string dataname_parameter = in.pop().to_string();
-       bool with_parametrised_data = false;
-       std::string dataname_init; std::string dataname_final;
-       std::string dataname_current;
+       std::string dataname_parameter = in.pop().to_string(),
+                   dataname_init, dataname_final, dataname_current;
        if (in.front().is_string()) {
-         with_parametrised_data = true;
          dataname_init = in.pop().to_string();
          dataname_final = in.pop().to_string();
          dataname_current = in.pop().to_string();
-       } 
+       }
        scalar_type scfac = in.pop().to_scalar();
 
-       std::string lsolver = "auto"; scalar_type h_init = 1.e-2;
-       scalar_type h_max = 1.e-1; scalar_type h_min = 1.e-5;
-       scalar_type h_inc = 1.3; scalar_type h_dec = 0.5;
-       size_type maxit = 10; size_type thrit = 4; scalar_type maxres = 1.e-6;
-       scalar_type maxdiff = 1.e-6; scalar_type mincos = 0.9;
-       scalar_type maxres_solve = 1.e-8; scalar_type delta_max = 0.005;
-       scalar_type delta_min = 0.00012; scalar_type thrvar = 0.02;
-       size_type nbdir = 40; size_type nbspan = 1; int noisy = 0;
-       int singularities = 0; bool nonsmooth = false;
+       std::string lsolver("auto"), varname("");
+       scalar_type h_init(1e-2), h_max(1e-1), h_min(1e-5), h_inc(1.3), h_dec(0.5),
+                   maxres(1e-6), maxdiff(1e-6), mincos(0.9), maxres_solve(1e-8),
+                   delta_max(0.005), delta_min(0.00012), thrvar(0.02);
+       size_type maxit(10), thrit(4), nbdir(40), nbspan(1);
+       int noisy(0), singularities(0);
+       bool nonsmooth(false);
 
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();
@@ -186,37 +181,31 @@ void gf_cont_struct(getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
            if (in.remaining()) nbspan = in.pop().to_integer();
            else THROW_BADARG("missing value for " << opt);
          } else if (cmd_strmatch(opt, "singularities")) {
-	   if (in.remaining()) singularities = in.pop().to_integer();
-	   else THROW_BADARG("missing value for " << opt);
-	 } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
+           if (in.remaining()) singularities = in.pop().to_integer();
+           else THROW_BADARG("missing value for " << opt);
+         } else if (cmd_strmatch(opt, "variable_name")) {
+           if (in.remaining()) varname = in.pop().to_string();
+           else THROW_BADARG("missing name for " << opt);
+         } else if (cmd_strmatch(opt, "non-smooth")) nonsmooth = true;
          else if (cmd_strmatch(opt, "noisy")) noisy = 1;
          else if (cmd_strmatch(opt, "very noisy") ||
                   cmd_strmatch(opt, "very_noisy")) noisy = 2;
          else THROW_BADARG("bad option: " << opt);
        }
 
-       getfem::cont_struct_getfem_model *ps;
-       if (!with_parametrised_data) {
-	 getfem::cont_struct_getfem_model *ps1 =
-	   new getfem::cont_struct_getfem_model
-           (md->model(), dataname_parameter, scfac,
-	    getfem::rselect_linear_solver(md->model(), lsolver), h_init,
-	    h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
-	    mincos, maxres_solve, noisy, singularities, nonsmooth,
-	    delta_max, delta_min, thrvar, nbdir, nbspan);
-	 ps = ps1;
-       }
-       else {
-	 getfem::cont_struct_getfem_model *ps1 =
-	   new getfem::cont_struct_getfem_model
-	   (md->model(), dataname_parameter, dataname_init, dataname_final,
-	    dataname_current, scfac,
-	    getfem::rselect_linear_solver(md->model(), lsolver), h_init,
-	    h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
-	    mincos, maxres_solve, noisy, singularities, nonsmooth,
-	    delta_max, delta_min, thrvar, nbdir, nbspan);
-	 ps = ps1;
-       }
+       getfem::cont_struct_getfem_model *ps=
+         new getfem::cont_struct_getfem_model
+         (md->model(), dataname_parameter, scfac,
+          getfem::rselect_linear_solver(md->model(), lsolver),
+          h_init, h_max, h_min, h_inc, h_dec, maxit, thrit, maxres, maxdiff,
+          mincos, maxres_solve, noisy, singularities, nonsmooth,
+          delta_max, delta_min, thrvar, nbdir, nbspan);
+
+       if (!dataname_current.empty())
+         ps->set_parametrised_data_names(dataname_init, dataname_final,
+                                         dataname_current);
+       if (!varname.empty())
+         ps->set_interval_from_variable_name(varname);
 
        pgs = getfemint_cont_struct::get_from(ps);
        workspace().set_dependance(pgs, md);

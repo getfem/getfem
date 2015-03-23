@@ -220,7 +220,8 @@ SRC =                                      		\
 	getfem_plasticity.cc				\
 	getfem_omp.cc                       		\
 	getfem_level_set_contact.cc         		\
-	getfem_im_data.cc
+	getfem_im_data.cc                   		\
+	getfem_continuation.cc
 #	getfem_enumeration_dof_para.cc
 
 lib_LTLIBRARIES = libgetfem.la
