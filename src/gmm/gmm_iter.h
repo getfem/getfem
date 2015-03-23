@@ -73,7 +73,7 @@ namespace gmm {
     }
 
     iteration(double r = 1.0E-8, int noi = 0, size_type mit = size_type(-1),
-	      double div_res = 1E200)
+              double div_res = 1E200)
       : rhsn(1.0), maxiter(mit), noise(noi), resmax(r), diverged_res(div_res)
     { init(); }
 
@@ -128,17 +128,17 @@ namespace gmm {
     bool finished(double nr) {
       if (callback) callback(*this);
       if (noise > 0 && !written) {
-	double a = (rhsn == 0) ? 1.0 : rhsn;
-	converged(nr);
-	cout << name << " iter " << std::setw(3) << nit << " residual "
-	     << std::setw(12) << gmm::abs(nr) / a;
-// 	if (nit % 100 == 0 && nit > 0) {
-// 	  cout << " (residual min " << resminreach / a << " mean val "
-// 	       << resadd / (100.0 * a) << " )";
-// 	  resadd = 0.0;
-// 	}
-	cout <<  endl;
-	written = true;
+        double a = (rhsn == 0) ? 1.0 : rhsn;
+        converged(nr);
+        cout << name << " iter " << std::setw(3) << nit << " residual "
+             << std::setw(12) << gmm::abs(nr) / a;
+//         if (nit % 100 == 0 && nit > 0) {
+//           cout << " (residual min " << resminreach / a << " mean val "
+//                << resadd / (100.0 * a) << " )";
+//           resadd = 0.0;
+//         }
+        cout <<  endl;
+        written = true;
       }
       return (converged(nr) || diverged(nr));
     }

@@ -67,7 +67,6 @@ namespace getfem {
     size_type nbdir_, nbspan_;
     int noisy_;
     double tau_lp, tau_bp_1, tau_bp_2;
-    gmm::sub_interval I; // for continuation based on a subset of model variables
 
     // stored singularities info
     std::map<double, double> tau_bp_graph;
@@ -88,7 +87,7 @@ namespace getfem {
     void compute_tangent(const VECT &x, double gamma,
                          VECT &tx, double &tgamma) {
       VECT g(x), y(x);
-      F_gamma(x, gamma, g);                     // g = F_gamma(x, gamma);
+      F_gamma(x, gamma, g);                     // g = F_gamma(x, gamma)
       solve_grad(x, gamma, y, g);               // y = F_x(x, gamma)^-1 * g
       tgamma = 1. / (tgamma - w_sp(tx, y));
       gmm::copy(gmm::scaled(y, -tgamma), tx);   // tx = -tgamma * y
@@ -99,7 +98,7 @@ namespace getfem {
       gmm::add(gmm::scaled(g, tgamma), y);      // y += tgamma * g
       double r = norm(y);
       if (r > 1.e-10)
-        GMM_WARNING1("Tangent computed with the residual " << r)
+        GMM_WARNING1("Tangent computed with the residual " << r);
     }
 
   private:
@@ -423,7 +422,6 @@ namespace getfem {
         cout  << "Starting locating the bifurcation point" << endl;
 
       // predictor-corrector steps with a secant-type step-length adaptation
-//       double hsum(0);
       h *= tau1 / (tau0 - tau1);
       for (size_type i=0; i < 10 && (gmm::abs(h) >= h_min()); ++i) {
         scaled_add(x0, gamma0, tx0, tgamma0, h, X, Gamma); // [X,Gamma] = [x0,gamma0] + h * [tx0,tgamma0]
@@ -436,7 +434,6 @@ namespace getfem {
             copy(tX, tGamma, tx0, tgamma0);
           tau0 = tau1;
           tau1 = test_function_bp(X, Gamma, tx0, tgamma0, v_x, v_gamma);
-//           hsum += h;
           h *= tau1 / (tau0 - tau1);
         } else {
           scaled_add(x0, gamma0, tx0, tgamma0, h, x0, gamma0); // [x0,gamma0] += h*[tx0,tgamma0]
@@ -487,7 +484,6 @@ namespace getfem {
 
       copy(tx0, tgamma0, tX, tGamma);
       h /= 2.;
-//       double hsum(0);
       for (size_type i = 0; i < 15; i++) {
         scaled_add(x0, gamma0, tx0, tgamma0, h, X, Gamma);    // [X,Gamma] = [x0,gamma0] + h*[tx0,tgamma0]
         if (noisy() > 0)
@@ -497,7 +493,6 @@ namespace getfem {
             && (cosang(tX, tx0, tGamma, tgamma0) >= mcos)) {
           copy(X, Gamma, x0, gamma0);
           copy(tX, tGamma, tx0, tgamma0);
-//           hsum += h;
         } else {
           copy(tx0, tgamma0, tX, tGamma);
         }
@@ -943,10 +938,8 @@ namespace getfem {
     virtual void mult_grad(const VECT &x, double gamma,
                            const VECT &w, VECT &y) const = 0;
 
-    virtual void listresiduals(void) const = 0;
-    
   public:
-    
+
     virtual_cont_struct
     (int sing = 0, bool nonsm = false, double sfac=0.,
      double hin = 1.e-2, double hmax = 1.e-1, double hmin = 1.e-5,
@@ -985,7 +978,7 @@ namespace getfem {
     mutable model *md;
     std::string parameter_name;
     std::string initdata_name, finaldata_name, currentdata_name;
-    gmm::sub_interval I;
+    gmm::sub_interval I; // for continuation based on a subset of model variables
     rmodel_plsolver_type lsolver;
     double maxres_solve;
 
@@ -997,7 +990,7 @@ namespace getfem {
     double intrv_sp(const base_vector &v1, const base_vector &v2) const {
       return (I.size() > 0) ? gmm::vect_sp(gmm::sub_vector(v1,I),
                                            gmm::sub_vector(v2,I))
-	                    : gmm::vect_sp(v1, v2);
+                            : gmm::vect_sp(v1, v2);
     }
 
     // solve A * g = L
@@ -1025,8 +1018,6 @@ namespace getfem {
     // F_x(x, gamma) * w --> y
     void mult_grad(const base_vector &x, double gamma,
                    const base_vector &w, base_vector &y) const;
-
-    void listresiduals(void) const;
 
   public:
     size_type estimated_memsize(void);

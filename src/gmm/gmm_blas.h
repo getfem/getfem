@@ -262,7 +262,8 @@ namespace gmm {
   template <typename V1, typename V2> inline
   typename strongest_value_type<V1,V2>::value_type
     vect_sp(const V1 &v1, const V2 &v2) {
-    GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch");
+    GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch, "
+                << vect_size(v1) << " !=" << vect_size(v2));
     return vect_sp(v1, v2,
 		   typename linalg_traits<V1>::storage_type(), 
 		   typename linalg_traits<V2>::storage_type());
@@ -293,7 +294,7 @@ namespace gmm {
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_sparse) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
-		vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
+                vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     size_type nr = mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
       it = vect_const_begin(v2), ite = vect_const_end(v2);
@@ -314,7 +315,7 @@ namespace gmm {
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_dense) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
-		vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
+                vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     typename linalg_traits<V2>::const_iterator
       it = vect_const_begin(v2), ite = vect_const_end(v2);
     typename strongest_value_type3<V1,V2,MATSP>::value_type res(0);
@@ -340,7 +341,7 @@ namespace gmm {
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_sparse) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
-		vect_size(v2) == mat_nrows(ps),"dimensions mismatch");
+                vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     typename linalg_traits<V1>::const_iterator
       it = vect_const_begin(v1), ite = vect_const_end(v1);
     typename strongest_value_type3<V1,V2,MATSP>::value_type res(0);
@@ -360,7 +361,7 @@ namespace gmm {
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
 		      abstract_dense) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
-		vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
+                vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     typename linalg_traits<V1>::const_iterator
       it = vect_const_begin(v1), ite = vect_const_end(v1);
     typename strongest_value_type3<V1,V2,MATSP>::value_type res(0);
@@ -937,7 +938,8 @@ namespace gmm {
 
   template <typename L1, typename L2> inline
   void copy(const L1& l1, L2& l2, abstract_vector, abstract_vector) {
-    GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch");
+    GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch, "
+                << vect_size(l1) << " !=" << vect_size(l2));
     copy_vect(l1, l2, typename linalg_traits<L1>::storage_type(),
 	      typename linalg_traits<L2>::storage_type());
   }
@@ -1237,7 +1239,8 @@ namespace gmm {
 
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_vector) {
-    GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch");
+    GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch, "
+                << vect_size(l1) << " !=" << vect_size(l2));
     add(l1, l2, typename linalg_traits<L1>::storage_type(),
 	typename linalg_traits<L2>::storage_type());
   }
@@ -1245,7 +1248,7 @@ namespace gmm {
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
     GMM_ASSERT2(mat_nrows(l1)==mat_nrows(l2) && mat_ncols(l1)==mat_ncols(l2),
-		"dimensions mismatch");
+                "dimensions mismatch");
     add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
 	typename linalg_traits<L2>::sub_orientation());
   }
@@ -1406,7 +1409,7 @@ namespace gmm {
   template <typename L1, typename L2, typename L3> inline
     void add_spec(const L1& l1, const L2& l2, L3& l3, abstract_vector) {
     GMM_ASSERT2(vect_size(l1) == vect_size(l2) &&
-		vect_size(l1) == vect_size(l3), "dimensions mismatch");
+                vect_size(l1) == vect_size(l3), "dimensions mismatch");
     if ((const void *)(&l1) == (const void *)(&l3))
       add(l2, l3);
     else if ((const void *)(&l2) == (const void *)(&l3))
@@ -1938,7 +1941,7 @@ namespace gmm {
     size_type n = mat_ncols(l1);
     if (n == 0) { gmm::clear(l3); return; }
     GMM_ASSERT2(n == mat_nrows(l2) && mat_nrows(l1) == mat_nrows(l3) &&
-		mat_ncols(l2) == mat_ncols(l3),	"dimensions mismatch");
+                mat_ncols(l2) == mat_ncols(l3),	"dimensions mismatch");
 
     if (same_origin(l2, l3) || same_origin(l1, l3)) {
       GMM_WARNING2("A temporary is used for mult");
