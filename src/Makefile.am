@@ -213,6 +213,7 @@ SRC =                                      		\
 	getfem_model_solvers.cc                		\
 	getfem_fourth_order.cc                		\
 	getfem_nonlinear_elasticity.cc                  \
+	getfem_linearized_plates.cc               	\
 	getfem_contact_and_friction_common.cc		\
 	getfem_contact_and_friction_nodal.cc		\
 	getfem_contact_and_friction_integral.cc	        \

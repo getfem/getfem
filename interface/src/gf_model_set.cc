@@ -37,6 +37,7 @@
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_fourth_order.h>
+#include <getfem/getfem_linearized_plates.h>
 
 using namespace getfemint;
 
@@ -339,6 +340,13 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        std::vector<std::string> nl;
        while (in.remaining()) nl.push_back(in.pop().to_string());
        md->model().define_variable_group(name, nl);
+       );
+
+    /*@SET ('add elementary RT0 projection')
+      Experimental method ... @*/
+    sub_command
+      ("add elementary RT0 projection", 0, 0, 0, 0,
+       add_RT0_projection(md->model());
        );
 
     /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)

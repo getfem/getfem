@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2000-2012 Yves Renard
+ Copyright (C) 2004-2015 Yves Renard, Jeremie Lasry
  
  This file is a part of GETFEM++
  
@@ -31,15 +31,19 @@
 /**@file getfem_linearized_plates.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date November 1, 2004.
-   @brief Define a linear plate model brick.
+   @brief Reissner-Mindlin plate model brick.
 */
 
 #ifndef GETFEM_LINEARIZED_PLATES_H__
 #define GETFEM_LINEARIZED_PLATES_H__
 
 #include "getfem_modeling.h"
+#include "getfem_models.h"
+
 
 namespace getfem {
+
+  void add_RT0_projection(model &m);
 
   /* ******************************************************************** */
   /*            Linear plate specific assembly procedures.                */

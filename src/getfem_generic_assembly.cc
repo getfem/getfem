@@ -203,7 +203,8 @@ namespace getfem {
         return GA_INTERPOLATE;
       if (expr.compare(token_pos, token_length, "Interpolate_filter") == 0)
         return GA_INTERPOLATE_FILTER;
-      if (expr.compare(token_pos, token_length, "Elementary_transformation") == 0)
+      if (expr.compare(token_pos, token_length,
+                       "Elementary_transformation") == 0)
         return GA_ELEMENTARY;
       if (expr.compare(token_pos, token_length, "Print") == 0)
         return GA_PRINT;
@@ -3130,9 +3131,9 @@ namespace getfem {
 
 
   struct ga_instruction_elementary_transformation_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z_;
-    base_tensor Z;
+    base_tensor &t_;
+    base_tensor &Z;
+    base_tensor t;
     base_matrix M;
     size_type qdim;
     pelementary_transformation elemtrans;
@@ -3141,15 +3142,14 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: value of test functions with elementary "
                     "transformation");
-      size_type ndof = Z_.sizes()[0];
-      size_type target_dim = Z_.sizes()[1];
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
       size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z_.size() * Qmult * Qmult,
+      GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
                       "Wrong size for base vector");
 
-      gmm::resize(M, ndof, ndof);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      Z.mat_transp_reduction(Z_, M, 0); 
+
+      t.adjust_sizes(t_.sizes()); 
 
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
@@ -3158,7 +3158,7 @@ namespace getfem {
         base_tensor::iterator itZ = Z.begin();
         size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
 
-        // Performs t(i*Qmult+j, k*Qmult + j) = Z(l,k);
+        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
         for (size_type k = 0; k < target_dim; ++k) {
           base_tensor::iterator it = t.begin() + (ss * k);
           for (size_type i = 0; i < ndof; ++i, ++itZ) {
@@ -3169,19 +3169,24 @@ namespace getfem {
           }
         }
       }
+
+      gmm::resize(M, ndof*Qmult, ndof*Qmult);
+      elemtrans->give_transformation(mf, ctx.convex_num(), M);
+      t.mat_transp_reduction(t_, M, 0);
+
       return 0;
     }
     ga_instruction_elementary_transformation_base
     (base_tensor &tt, base_tensor &Z__, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t(tt), Z_(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : t_(tt), Z(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
   };
 
   struct ga_instruction_elementary_transformation_grad_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z_;
-    base_tensor Z;
+    base_tensor &t_;
+    base_tensor &Z;
+    base_tensor t;
     base_matrix M;
     size_type qdim;
     pelementary_transformation elemtrans;
@@ -3190,16 +3195,12 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: gradient of test functions with elementary "
                     "transformation");
-      size_type ndof = Z_.sizes()[0];
-      size_type target_dim = Z_.sizes()[1];
-      size_type N = Z_.sizes()[2];
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type N = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z_.size() * Qmult * Qmult,
+      GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
                       "Wrong size for gradient vector");
-
-      gmm::resize(M, ndof, ndof);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      Z.mat_transp_reduction(Z_, M, 0); 
 
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
@@ -3221,19 +3222,24 @@ namespace getfem {
             }
           }
       }
+
+      gmm::resize(M, ndof*Qmult, ndof*Qmult);
+      elemtrans->give_transformation(mf, ctx.convex_num(), M);
+      t.mat_transp_reduction(t_, M, 0); 
+
       return 0;
     }
     ga_instruction_elementary_transformation_grad_base
     (base_tensor &tt, base_tensor &Z__, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t(tt), Z_(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : t_(tt), Z(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
   };
 
   struct ga_instruction_elementary_transformation_hess_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z_;
-    base_tensor Z;
+    base_tensor &t_;
+    base_tensor &Z;
+    base_tensor t;
     base_matrix M;
     size_type qdim;
     pelementary_transformation elemtrans;
@@ -3242,16 +3248,12 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Hessian of test functions with elementary "
                     "transformation");
-      size_type ndof = Z_.sizes()[0];
-      size_type target_dim = Z_.sizes()[1];
-      size_type N2 = Z_.sizes()[2];
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type N2 = Z.sizes()[2];
       size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z_.size() * Qmult * Qmult,
+      GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
                       "Wrong size for Hessian vector");
-
-      gmm::resize(M, ndof, ndof);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      Z.mat_transp_reduction(Z_, M, 0); 
 
       if (Qmult == 1) {
         gmm::copy(Z.as_vector(), t.as_vector());
@@ -3274,25 +3276,19 @@ namespace getfem {
             }
           }
       }
+
+      gmm::resize(M, ndof*Qmult, ndof*Qmult);
+      elemtrans->give_transformation(mf, ctx.convex_num(), M);
+      t.mat_transp_reduction(t_, M, 0);
+
       return 0;
     }
     ga_instruction_elementary_transformation_hess_base
     (base_tensor &tt, base_tensor &Z__, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t(tt), Z_(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : t_(tt), Z(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
   };
-
-
-
-
-
-
-
-
-
-
-
 
 
   struct ga_instruction_add : public ga_instruction {
@@ -7931,14 +7927,16 @@ namespace getfem {
 
           // An instruction for the base value
           pgai = 0;
-          if (pnode->node_type == GA_NODE_VAL) {
+          if (pnode->node_type == GA_NODE_VAL || 
+              pnode->node_type == GA_NODE_ELEMENTARY_VAL) {
             if (rmi.base.find(mf) == rmi.base.end() ||
                 !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = new ga_instruction_base
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
-          } else if (pnode->node_type == GA_NODE_GRAD) {
+          } else if (pnode->node_type == GA_NODE_GRAD ||
+                     pnode->node_type == GA_NODE_ELEMENTARY_GRAD) {
             if (rmi.grad.find(mf) == rmi.grad.end() ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
@@ -8061,14 +8059,16 @@ namespace getfem {
 
           // An intruction for the base value
           pgai = 0;
-          if (pnode->node_type == GA_NODE_TEST) {
+          if (pnode->node_type == GA_NODE_TEST ||
+              pnode->node_type == GA_NODE_ELEMENTARY_TEST) {
             if (rmi.base.find(mf) == rmi.base.end() ||
                 !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
               pgai = new ga_instruction_base
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
-          } else if (pnode->node_type == GA_NODE_GRAD_TEST) {
+          } else if (pnode->node_type == GA_NODE_GRAD_TEST ||
+                     pnode->node_type == GA_NODE_ELEMENTARY_GRAD_TEST) {
             if (rmi.grad.find(mf) == rmi.grad.end() ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
