@@ -319,8 +319,10 @@ namespace getfem {
     size_type pos;                // Position of the first character in string
     std::string name;             // variable/constant/function/operator name
     std::string interpolate_name; // For Interpolate : name of transformation
-    std::string interpolate_name_der; // For Interpolate frivative:
+    std::string interpolate_name_der; // For Interpolate derivative:
                                       // name of transformation
+    std::string elementary_name;  // For Elementary_transformation :
+                                  // name of transformation
     size_type der1, der2;         // For functions and nonlinear operators,
                                   // optional derivative or second derivative.
     GA_TOKEN_TYPE op_type;
@@ -754,6 +756,8 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_GRAD_TEST: case GA_NODE_ELEMENTARY_HESS_TEST: 
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
         return false;
+      if (pnode1->elementary_name.compare(pnode2->elementary_name))
+        return false;
       // The test continues with what follows
     case GA_NODE_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
       {
@@ -789,6 +793,8 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_HESS: case GA_NODE_ELEMENTARY_VAL:
     case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_HESS: 
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
+        return false;
+      if (pnode1->elementary_name.compare(pnode2->elementary_name))
         return false;
       if (pnode1->name.compare(pnode2->name)) return false;
       break;
@@ -995,7 +1001,7 @@ namespace getfem {
           << pnode->interpolate_name << ")"; break;
     case GA_NODE_ELEMENTARY:
       str << "Elementary_transformation(" << pnode->name << ","
-          << pnode->interpolate_name << ")"; break;
+          << pnode->elementary_name << ")"; break;
     case GA_NODE_INTERPOLATE_FILTER:
       str << "Interpolate_filter(" << pnode->interpolate_name << ",";
       ga_print_node(pnode->children[0], str);
@@ -1015,7 +1021,7 @@ namespace getfem {
       break;
     case GA_NODE_ELEMENTARY_VAL:
       str << "Elementary_transformation(" << pnode->name << ","
-          << pnode->interpolate_name << ")";
+          << pnode->elementary_name << ")";
       break;
     case GA_NODE_GRAD: str << "Grad_" << pnode->name; break;
     case GA_NODE_INTERPOLATE_GRAD:
@@ -1024,7 +1030,7 @@ namespace getfem {
       break;
     case GA_NODE_ELEMENTARY_GRAD:
       str << "Elementary_transformation(Grad_" << pnode->name << ","
-          << pnode->interpolate_name << ")";
+          << pnode->elementary_name << ")";
       break;
     case GA_NODE_HESS: str << "Hess_" << pnode->name; break;
     case GA_NODE_INTERPOLATE_HESS:
@@ -1033,7 +1039,7 @@ namespace getfem {
       break;
     case GA_NODE_ELEMENTARY_HESS:
       str << "Elementary_transformation(Hess_" << pnode->name << ","
-          << pnode->interpolate_name << ")";
+          << pnode->elementary_name << ")";
       break;
     case GA_NODE_TEST:
       if (pnode->test_function_type == 1) str << "Test_" << pnode->name;
@@ -1052,7 +1058,7 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_TEST:
       str << "Elementary_transformation(";
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->interpolate_name << ")";
+      str << pnode->name << "," << pnode->elementary_name << ")";
       break;
     case GA_NODE_GRAD_TEST:
       if (pnode->test_function_type == 1) str << "Grad_Test_" << pnode->name;
@@ -1066,7 +1072,7 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_GRAD_TEST:
       str << "Elementary_transformation(Grad_";
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->interpolate_name << ")";
+      str << pnode->name << "," << pnode->elementary_name << ")";
       break;
     case GA_NODE_HESS_TEST:
       if (pnode->test_function_type == 1) str << "Hess_Test_" << pnode->name;
@@ -1080,7 +1086,7 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_HESS_TEST:
       str << "Elementary_transformation(Hess_";
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->interpolate_name << ")";
+      str << pnode->name << "," << pnode->elementary_name << ")";
       break;
     case GA_NODE_SPEC_FUNC: str << pnode->name; break;
     case GA_NODE_OPERATOR:
@@ -1288,7 +1294,7 @@ namespace getfem {
               ga_throw_error(expr, pos,
                              "Second argument of Elementary_transformation should "
                              "be a transformation name.");
-            tree.current_node->interpolate_name
+            tree.current_node->elementary_name
               = std::string(&(expr[token_pos]), token_length);
             t_type = ga_get_token(expr, pos, token_pos, token_length);
             if (t_type != GA_RPAR)
@@ -3148,7 +3154,6 @@ namespace getfem {
       GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
                       "Wrong size for base vector");
 
-
       t.adjust_sizes(t_.sizes()); 
 
       if (Qmult == 1) {
@@ -3172,8 +3177,11 @@ namespace getfem {
 
       gmm::resize(M, ndof*Qmult, ndof*Qmult);
       elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      t.mat_transp_reduction(t_, M, 0);
-
+      // cout << "M = " << M << endl;
+      t_.mat_reduction(t, M, 0);
+      // cout << "t_ = " << t_ << endl;
+      // cout << "t = " << t << endl;
+      // gmm::copy(t.as_vector(), t_.as_vector());
       return 0;
     }
     ga_instruction_elementary_transformation_base
@@ -3225,7 +3233,7 @@ namespace getfem {
 
       gmm::resize(M, ndof*Qmult, ndof*Qmult);
       elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      t.mat_transp_reduction(t_, M, 0); 
+      t_.mat_reduction(t, M, 0); 
 
       return 0;
     }
@@ -3279,7 +3287,7 @@ namespace getfem {
 
       gmm::resize(M, ndof*Qmult, ndof*Qmult);
       elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      t.mat_transp_reduction(t_, M, 0);
+      t_.mat_reduction(t, M, 0);
 
       return 0;
     }
@@ -4412,21 +4420,16 @@ namespace getfem {
         pnode->node_type == GA_NODE_ELEMENTARY_HESS) {
       bool group = workspace.variable_group_exists(pnode->name);
       bool iscte = (!group) && workspace.is_constant(pnode->name);
-      const std::string &iname = (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
-                                  pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
-                                  pnode->node_type == GA_NODE_INTERPOLATE_HESS)
-        ? pnode->interpolate_name : std::string("");
-
       if (!iscte) found_var = true;
       if (!ignore_data || !iscte) {
         if (group && expand_groups) {
           const std::vector<std::string> &t
             = workspace.variable_group(pnode->name);
           for (size_type i = 0; i < t.size(); ++i)
-            vars.insert(var_trans_pair(t[i], iname));
+            vars.insert(var_trans_pair(t[i], pnode->interpolate_name));
 
         } else
-          vars.insert(var_trans_pair(pnode->name, iname));
+          vars.insert(var_trans_pair(pnode->name, pnode->interpolate_name));
       }
     }
     if (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
@@ -4940,7 +4943,8 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_TEST:
     case GA_NODE_ELEMENTARY_GRAD_TEST: case GA_NODE_ELEMENTARY_HESS_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name))
-        + 1.66*ga_hash_code(pnode->interpolate_name);
+        + 1.66*ga_hash_code(pnode->interpolate_name)
+        + 2.63*ga_hash_code(pnode->elementary_name);
       break;
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_INTERPOLATE_X:
       c += M_PI*1.33*ga_hash_code(pnode->interpolate_name);
@@ -5382,7 +5386,7 @@ namespace getfem {
         }
 
         if (!(workspace.elementary_transformation_exists
-              (pnode->interpolate_name)))
+              (pnode->elementary_name)))
           ga_throw_error(expr, pnode->pos,
                          "Unknown elementary transformation");
       }
@@ -7974,21 +7978,21 @@ namespace getfem {
             pgai = new ga_instruction_elementary_transformation_val
               (pnode->t, rmi.base[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-               workspace.elementary_transformation(pnode->interpolate_name),
+               workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
             break;
           case GA_NODE_ELEMENTARY_GRAD:
             pgai = new ga_instruction_elementary_transformation_grad
               (pnode->t, rmi.grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-               workspace.elementary_transformation(pnode->interpolate_name),
+               workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
             break;
           case GA_NODE_ELEMENTARY_HESS:
             pgai = new ga_instruction_elementary_transformation_hess
               (pnode->t, rmi.hess[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-               workspace.elementary_transformation(pnode->interpolate_name),
+               workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
             break;
           default: break;
@@ -8102,19 +8106,19 @@ namespace getfem {
           case GA_NODE_ELEMENTARY_TEST:
             pgai = new ga_instruction_elementary_transformation_base
               (pnode->t, rmi.base[mf], mf->get_qdim(),
-               workspace.elementary_transformation(pnode->interpolate_name),
+               workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
             break;
           case GA_NODE_ELEMENTARY_GRAD_TEST:
             pgai = new ga_instruction_elementary_transformation_grad_base
               (pnode->t, rmi.grad[mf], mf->get_qdim(),
-               workspace.elementary_transformation(pnode->interpolate_name),
+               workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
             break;
           case GA_NODE_ELEMENTARY_HESS_TEST:
             pgai = new ga_instruction_elementary_transformation_hess_base
               (pnode->t, rmi.hess[mf], mf->get_qdim(),
-               workspace.elementary_transformation(pnode->interpolate_name),
+               workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
             break;
           default: break;

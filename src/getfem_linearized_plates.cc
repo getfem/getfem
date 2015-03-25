@@ -86,13 +86,21 @@ namespace getfem {
         
       for (size_type i = 0; i < pim->nb_points_on_convex(); ++i) {
 
-        scalar_type coeff = pim->coeff(i); // Mult by ctx.J(), but not useful here
+        scalar_type coeff = pim->coeff(i); // Mult by ctx.J() not useful here
         ctx1.set_xref(pim->point(i));
         ctx2.set_xref(pim->point(i));    
         pf1->real_base_value(ctx1, t1);
         vectorize_base_tensor(t1, tv1, ndof1, pf1->target_dim(), N);
         pf2->real_base_value(ctx2, t2);
         vectorize_base_tensor(t2, tv2, ndof2, pf2->target_dim(), N);
+
+        if (N == 2) { // H curl ... ! and for triangles ?
+          gmm::clear(tv2);
+          tv2(0,0) = scalar_type(1);
+          tv2(1,1) = scalar_type(1);
+          tv2(2,0) = pim->point(i)[1];
+          tv2(3,1) = pim->point(i)[0];
+        }
        
         gmm::mult(tv1, gmm::transposed(tv1), aux0);
         gmm::add(gmm::scaled(aux0, coeff), M1);
@@ -108,7 +116,8 @@ namespace getfem {
       gmm::lu_inverse(M2);
       gmm::mult(M1, B, aux1);
       gmm::mult(aux1, M2, aux2);
-      GMM_ASSERT1(gmm::mat_nrows(M) == ndof1, "Element not convenient for projection");
+      GMM_ASSERT1(gmm::mat_nrows(M) == ndof1,
+                  "Element not convenient for projection");
       gmm::mult(aux2, gmm::transposed(B), M);
       gmm::clean(M, 1E-15);
       // cout << "M = " << M << endl;
