@@ -8163,9 +8163,10 @@ namespace getfem {
 
        case GA_PLUS:
          if (pnode->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0 &&
-                           child0->t.size() == 1 && child1->t.size() == 1,
-                           "Internal error");
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                           "Internal error: non zero number of test functions");
+           GA_DEBUG_ASSERT(child0->t.size() == 1, "Internal error: child0 not scalar");
+           GA_DEBUG_ASSERT(child1->t.size() == 1, "Internal error: child1 not scalar");
            pgai = new ga_instruction_scalar_add
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else {
@@ -8176,9 +8177,10 @@ namespace getfem {
 
        case GA_MINUS:
          if (pnode->t.size() == 1) {
-           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0 &&
-                           child0->t.size() == 1 && child1->t.size() == 1,
-                           "Internal error");
+           GA_DEBUG_ASSERT(pnode->nb_test_functions() == 0,
+                           "Internal error: non zero number of test functions");
+           GA_DEBUG_ASSERT(child0->t.size() == 1, "Internal error: child0 not scalar");
+           GA_DEBUG_ASSERT(child1->t.size() == 1, "Internal error: child1 not scalar");
            pgai = new ga_instruction_scalar_sub
              (pnode->t[0], child0->t[0], child1->t[0]);
          } else {

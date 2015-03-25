@@ -550,13 +550,15 @@ void gf_compute(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       
       
       
-    /*@FUNC E = ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
+    /*@FUNC ('convect', @tmf mf_v, @dvec V, @scalar dt, @int nt[, @str option[, @dvec per_min, @dvec per_max]])
     Compute a convection of `U` with regards to a steady state velocity
-    field `V` with a Characteristic-Galerkin method. This
-    method is restricted to pure Lagrange fems for U. `mf_v` should represent
-    a continuous finite element method. `dt` is the integration time and `nt`
-    is the number of integration step on the caracteristics. `option` is an
-    option for the part of the boundary where there is a re-entrant convection.
+    field `V` with a Characteristic-Galerkin method. The result is returned
+    in-place in `U`.
+    This method is restricted to pure Lagrange fems for U. `mf_v` should
+    represent a continuous finite element method. `dt` is the integration time
+    and `nt` is the number of integration step on the caracteristics. `option`
+    is an option for the part of the boundary where there is a re-entrant
+    convection.
     `option = 'extrapolation'` for an extrapolation on the nearest element,
     `option = 'unchanged'` for a constant value on that boundary or
     `option = 'periodicity'` for a peridiodic boundary. For this latter option
