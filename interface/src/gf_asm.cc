@@ -426,6 +426,7 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   if (in.remaining() && in.front().is_model()) {
     md = &(in.pop().to_getfemint_model()->model());
     with_model = true;
+    nbdof = md->nb_dof();
   }
   getfem::ga_workspace workspace2(*md);
   getfem::ga_workspace *pworkspace = with_model ? &workspace2 : &workspace1;
@@ -442,8 +443,13 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
       mimd = in.pop().to_const_mesh_im_data();
     }
     darray U = in.pop().to_darray();
-    GMM_ASSERT1(vectors.find(varname) == vectors.end(),
-                "The same variable/constant name is repeated twice")
+    GMM_ASSERT1(vectors.find(varname) == vectors.end() &&
+                (md == 0 || !md->variable_exists(varname)),
+                "The same variable/constant name is repeated twice: "
+                 << varname)
+    GMM_ASSERT1(!with_model || !md->variable_exists(varname),
+                "The same variable/constant name is already defined in "
+                "the model: " << varname)
     gmm::resize(vectors[varname], U.size());
     gmm::copy(U, vectors[varname]);
     if (is_cte) {
@@ -1078,7 +1084,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       tangent (matrix) (order = 2) is to be computed. 
 
       `model` is an optional parameter allowing to take into account
-      all the variable and data of a model.
+      all variables and data of a model.
       
       The variables and constant (data) are listed after the
       region number (or optionally the model).
@@ -1096,7 +1102,8 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       Note that if several variables are given, the assembly of the
       tangent matrix/residual vector will be done considering the order
       in the call of the function (the degrees of freedom of the first
-      variable, then of the second, and so on).
+      variable, then of the second, and so on). If a model is provided,
+      all degrees of freedom of the model will be counted first.
 
       For example, the L2 norm of a vector field "u" can be computed with::
 
