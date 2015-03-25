@@ -43,7 +43,11 @@
 
 namespace getfem {
 
-  void add_RT0_projection(model &m);
+  /** Add the elementary transformation corresponding to the projection
+      on rotated RT0 element for two-dimensional elements to the model.
+      The name is the name given to the elementary transformation.
+  */
+  void add_2D_rotated_RT0_projection(model &md, std::string name);
 
   /* ******************************************************************** */
   /*            Linear plate specific assembly procedures.                */

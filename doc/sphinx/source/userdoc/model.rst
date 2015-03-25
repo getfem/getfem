@@ -52,10 +52,10 @@ The kernel of the model description is contained in the file
    model_fourier_robin
    model_linear_elasticity
    model_mass
+   model_bilaplacian
    model_time_integration
    model_nonlinear_elasticity
    model_contact_friction
    model_contact_friction_large_sliding
    model_elastoplasticity
-   model_bilaplacian
    model_continuation

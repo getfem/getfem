@@ -60,8 +60,9 @@ A specific language has been developed to describe the weak formulation of bound
 
   - Possiblility of macro definition (in the model or ga_workspace object). The macros should be some valid expressions that are expanded inline at the semantic analysis phase (if they are used several times, the computation is automatically factorized at the compilation stage).
 
-  - ``Interpolate(variable, transformation)``: powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describe the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element defined on different meshes.
+  - ``Interpolate(variable, transformation)``: powerful operation which allows to interpolate the variables, or test functions either on the same mesh on other elements or on another mesh. ``transformation`` is an object stored by the workspace or model object which describe the map from the current point to the point where to perform the interpolation. This functionality can be used for instance to prescribe periodic conditions or to compute mortar matrices for two finite element defined on different meshes or more generaly for fictitious domain methods such as fluid-structure interaction.
 
+  - ``Elementary_transformation(variable, transformation)``: Allow a linear tranformation defined at the element level (i.e. which is not possible to define at the gauss point level). This add been added mostly to defien reduction for plate elements (projection onto low-level vector element such as rotated RT0). ``transformation`` is an object stored by the workspace or model object which describe the trasformation for a particular element.
 
 
 Some basic examples
@@ -660,6 +661,36 @@ where ``transname`` is the name of the transformation, ``expr`` is the expressio
 In that case, the equality will only be prescribed in the part of the domain where the transformation succeed and in the other part, the mulitplier is enforced to vanish.
 
 
-
-
 **CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus, such a transformation is not allowed in the definition of a potential since it cannot be derived twice.
+
+Elementary transformations
+**************************
+
+An elementary transformation is a linear transformation of the shape
+functions given by a matrix which may depend on the element which is applied
+to the local degrees of freedom at the element level. an example of definition
+of elementary transformation can be found in the file
+:file:`src/linearized_plate.cc`. It aims for instance to define a local
+projection of a finite element on a lower level element to perform a
+reduction such as the one used in MITC elements.
+
+Once a transformation is defined, it can be added to the model/workspace with
+the method::
+
+  model.add_elementary_transformation(transname, pelementary_transformation)
+
+where ``pelementary_transformation`` is a pointer to an object deriving from ``virtual_elementary_transformation``. Once it is added to the model/workspace, it is possible to use the following expressions in the assembly language::
+
+  Elementary_transformation(u, transname)
+  Elementary_transformation(Grad_u, transname)
+  Elementary_transformation(Hess_u, transname)
+  Elementary_transformation(Test_u, transname)
+  Elementary_transformation(Grad_Test_u, transname)
+  Elementary_transformation(Hess_Test_u, transname)
+
+where ``u`` is one of the fem variables of the model/workspace. For the moment, the only available elementary transformation is the the one for the projection on rotated RT0 element for two-dimensional elements which can be added thanks to the function (defined in :file:`getfem/linearized_plate.h`)::
+
+  add_2D_rotated_RT0_projection(model, transname)
+
+
+

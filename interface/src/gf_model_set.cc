@@ -342,11 +342,12 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        md->model().define_variable_group(name, nl);
        );
 
-    /*@SET ('add elementary RT0 projection')
+    /*@SET ('add elementary rotated RT0 projection', @str transname)
       Experimental method ... @*/
     sub_command
-      ("add elementary RT0 projection", 0, 0, 0, 0,
-       add_RT0_projection(md->model());
+      ("add elementary rotated RT0 projection", 1, 1, 0, 0,
+       std::string transname = in.pop().to_string();
+       add_2D_rotated_RT0_projection(md->model(), transname);
        );
 
     /*@SET ('add interpolate transformation from expression', @str transname, @tmesh source_mesh, @tmesh target_mesh, @str expr)
