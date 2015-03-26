@@ -23,6 +23,8 @@
 
 
 namespace getfem {
+
+  mesh mesh_im::dummy_mesh = mesh();
   
   void mesh_im::update_from_context(void) const {
     for (dal::bv_visitor i(im_convexes); !i.finished(); ++i) {
