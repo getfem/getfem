@@ -1,9 +1,9 @@
 /*===========================================================================
- 
+
  Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
- 
+
  This file is a part of GETFEM++
- 
+
  Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
  under  the  terms  of the  GNU  Lesser General Public License as published
  by  the  Free Software Foundation;  either version 3 of the License,  or
@@ -16,7 +16,7 @@
  You  should  have received a copy of the GNU Lesser General Public License
  along  with  this program;  if not, write to the Free Software Foundation,
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
- 
+
 ===========================================================================*/
 
 #include <getfemint.h>
@@ -48,7 +48,7 @@ extern "C" void METIS_mCPartGraphRecursive(int *, int *, int *, int *, int *, in
 /********************************/
 /*compute level set unit normal*/
 
-template<typename VECT1> class level_set_unit_normal 
+template<typename VECT1> class level_set_unit_normal
   : public getfem::nonlinear_elem_term {
   const getfem::mesh_fem &mf;
   std::vector<bgeot::scalar_type> U;
@@ -57,7 +57,7 @@ template<typename VECT1> class level_set_unit_normal
   bgeot::base_vector coeff;
   bgeot::multi_index sizes_;
 public:
-  level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_) 
+  level_set_unit_normal(const getfem::mesh_fem &mf_, const VECT1 &U_)
     : mf(mf_), U(mf_.nb_basic_dof()), N(mf_.linked_mesh().dim()),
       gradU(1, N) {
     sizes_.resize(1); sizes_[0] = bgeot::short_type(N);
@@ -81,7 +81,7 @@ public:
 
  template<class MAT>
 void asm_lsneuman_matrix
-(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf, 
+(const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf,
  const getfem::mesh_fem &mf_mult, getfem::level_set &ls,
  const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
   MAT &RM = const_cast<MAT &>(RM_);
@@ -100,23 +100,23 @@ void asm_lsneuman_matrix
   assem.assembly(rg);
 }
 
- 
-    /** 
+
+    /**
 	generic normal grad level set matrix (on the whole mesh level set or on the specified
-	convex set level set or boundary level set) 
-	
+	convex set level set or boundary level set)
+
     */
-  
+
 
 template<typename MAT>  void asm_nlsgrad_matrix
 (const MAT &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf1,
  const getfem::mesh_fem &mf2,  getfem::level_set &ls,
  const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
   MAT &RM = const_cast<MAT &>(RM_);
-  
+
   level_set_unit_normal<std::vector<bgeot::scalar_type> >
     nterm(ls.get_mesh_fem(), ls.values());
-  
+
   getfem::generic_assembly
     assem("t=comp(Grad(#1).NonLin(#3).Grad(#2).NonLin(#3));"
 	  "M(#1, #2)+= sym(t(:,i,i,:,j,j))");
@@ -135,11 +135,11 @@ template<typename MAT>  void asm_nlsgrad_matrix
 /**************************************************************/
 
 template<class VEC>
-void asm_patch_vector     
+void asm_patch_vector
 (const VEC &RM_, const getfem::mesh_im &mim, const getfem::mesh_fem &mf_mult,
  const getfem::mesh_region &rg = getfem::mesh_region::all_convexes()) {
   VEC &RM = const_cast<VEC &>(RM_);
-    
+
   getfem::generic_assembly assem("t=comp(Base(#1)); V(#1)+= t(:);");
   assem.push_mi(mim);
   assem.push_mf(mf_mult);
@@ -157,13 +157,13 @@ void asm_stabilization_patch_matrix
 (const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_fem &mf_mult, const getfem::mesh_im &mimbounddown,
  bgeot::scalar_type ratio_size, bgeot::scalar_type h) {
   MAT &M1 = const_cast<MAT &>(RM_);
-  
+
   /****************************************************/
   /*        " select patch "                          */
   /****************************************************/
-  
-  
-  
+
+
+
   // assemby patch vector
   const getfem::mesh_fem &mf_P0 = getfem::classical_mesh_fem(mesh, 0);
   bgeot::size_type nbe = mf_P0.nb_dof();
@@ -206,12 +206,12 @@ void asm_stabilization_patch_matrix
       if (Patch_element_list.is_in(*it)) { adjncy.push_back(indelt[*it]); ++k; }
     }
   }
-  
+
   xadj[j] = k;
   // std::cout<<"xadj="<<xadj<<std::endl;
   //std::cout<<"adjncy="<<adjncy<<std::endl;
   //std::cout<<"vwgt="<<vwgt<<std::endl;
-  
+
   std::cout << "ratio size beween mesh and coarse mesh= " << ratio_size
             << std::endl;
 
@@ -251,36 +251,36 @@ void asm_stabilization_patch_matrix
   /**************************************************************/
   /*        Assembly matrices                                   */
   /**************************************************************/
-  
-  
+
+
   std::vector<double> size_patch(nparts);
   bgeot::size_type nb_dof_mult=mf_mult.nb_dof();
   getfem::modeling_standard_sparse_matrix M0(nb_dof_mult, nbe);
   getfem::asm_mass_matrix(M0, mimbounddown, mf_mult, mf_P0);
-  
+
   for (bgeot::size_type i=0; i < bgeot::size_type(ne); i++) {
-    size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];	  
+    size_patch[part[i]]= size_patch[part[i]] + vwgtt[i];
   }
-  
+
   //std::cout<<"size_patch="<<size_patch<<std::endl;
-  
+
   gmm::row_matrix<getfem::modeling_standard_sparse_vector> MAT_aux(nparts, nb_dof_mult);
   for (bgeot::size_type r=0; r < nbe; r++) {
     bgeot::size_type cv = mf_P0.first_convex_of_basic_dof(r);
     gmm::add(gmm::mat_col(M0, r), gmm::mat_row(MAT_aux, part[indelt[cv]]));
   }
-  
+
   gmm::row_matrix<getfem::modeling_standard_sparse_vector> MAT_proj(nbe, nb_dof_mult);
-  
+
   for (bgeot::size_type r=0; r < nbe; r++) {
     bgeot::size_type cv = mf_P0.first_convex_of_basic_dof(r);
     int p=part[indelt[cv]];
     gmm::copy(gmm::scaled(gmm::mat_row(MAT_aux, p), 1./size_patch[p]),
 	      gmm::mat_row(MAT_proj, r));
   }
-  
+
   gmm::mult(M0, MAT_proj, M1);
-  
+
 }
 
 
@@ -414,89 +414,82 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
   size_type order = in.pop().to_integer(0, 2);
   std::string expr = in.pop().to_string();
   size_type region = in.pop().to_integer();
-  
+
   getfem::ga_workspace workspace1;
-  size_type nbdof = 0;
+  getfem::model dummy_md;
+  bool with_model = in.remaining() && in.front().is_model();
+  const getfem::model &md = with_model ? in.pop().to_getfemint_model()->model()
+                                       : dummy_md;
+  getfem::ga_workspace workspace2(md);
+  getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
+
+  size_type nbdof = with_model ? md.nb_dof() : 0;
 
   std::map<std::string,  getfem::model_real_plain_vector> vectors;
-  getfem::model dummy_md;
-  const getfem::model *md = &dummy_md;
-  bool with_model = false;
-
-  if (in.remaining() && in.front().is_model()) {
-    md = &(in.pop().to_getfemint_model()->model());
-    with_model = true;
-    nbdof = md->nb_dof();
-  }
-  getfem::ga_workspace workspace2(*md);
-  getfem::ga_workspace *pworkspace = with_model ? &workspace2 : &workspace1;
-
 
   while (in.remaining()) {
     std::string varname = in.pop().to_string();
     bool is_cte = (in.pop().to_integer() == 0);
     const getfem::mesh_fem *mf(0);
     const getfem::im_data *mimd(0);
-    if (in.front().is_mesh_fem()) {
+    if (in.front().is_mesh_fem())
       mf = in.pop().to_const_mesh_fem();
-    } else if (in.front().is_mesh_im_data()) {
+    else if (in.front().is_mesh_im_data())
       mimd = in.pop().to_const_mesh_im_data();
-    }
     darray U = in.pop().to_darray();
-    GMM_ASSERT1(vectors.find(varname) == vectors.end() &&
-                (md == 0 || !md->variable_exists(varname)),
+    GMM_ASSERT1(vectors.find(varname) == vectors.end(),
                 "The same variable/constant name is repeated twice: "
                  << varname)
-    GMM_ASSERT1(!with_model || !md->variable_exists(varname),
+    GMM_ASSERT1(!with_model || !md.variable_exists(varname),
                 "The same variable/constant name is already defined in "
                 "the model: " << varname)
     gmm::resize(vectors[varname], U.size());
     gmm::copy(U, vectors[varname]);
     if (is_cte) {
       if (mf)
-        pworkspace->add_fem_constant(varname, *mf, vectors[varname]);
+        workspace.add_fem_constant(varname, *mf, vectors[varname]);
       else if (mimd)
-        pworkspace->add_im_data(varname, *mimd, vectors[varname]);
+        workspace.add_im_data(varname, *mimd, vectors[varname]);
       else
-        pworkspace->add_fixed_size_constant(varname, vectors[varname]);
+        workspace.add_fixed_size_constant(varname, vectors[varname]);
     } else {
       if (mf) {
         gmm::sub_interval I(nbdof, mf->nb_dof());
         nbdof += mf->nb_dof();
-        pworkspace->add_fem_variable(varname, *mf, I, vectors[varname]);
+        workspace.add_fem_variable(varname, *mf, I, vectors[varname]);
       }  else if (mimd) {
         THROW_BADARG("Data defined on integration points can not be a variable");
       }  else {
         gmm::sub_interval I(nbdof, U.size());
         nbdof += U.size();
-        pworkspace->add_fixed_size_variable(varname, I, vectors[varname]);
+        workspace.add_fixed_size_variable(varname, I, vectors[varname]);
       }
     }
   }
 
-  bool add_derivative = (order == 0) ? false : true;
-  pworkspace->add_expression(expr, gfi_mim->mesh_im(), region, add_derivative);
+  bool add_derivative(order != 0);
+  workspace.add_expression(expr, gfi_mim->mesh_im(), region, add_derivative);
 
   switch (order) {
   case 0:
-    pworkspace->assembly(0);
-    out.pop().from_scalar(pworkspace->assembled_potential());
+    workspace.assembly(0);
+    out.pop().from_scalar(workspace.assembled_potential());
     break;
 
   case 1:
     {
       getfem::model_real_plain_vector residual(nbdof);
-      pworkspace->set_assembled_vector(residual);
-      pworkspace->assembly(1);
+      workspace.set_assembled_vector(residual);
+      workspace.assembly(1);
       out.pop().from_dlvector(residual);
     }
     break;
 
-  case 2: 
+  case 2:
     {
       getfem::model_real_sparse_matrix K(nbdof, nbdof);
-      pworkspace->set_assembled_matrix(K);
-      pworkspace->assembly(2);
+      workspace.set_assembled_matrix(K);
+      workspace.assembly(2);
       gf_real_sparse_by_col  KK(nbdof, nbdof);
       gmm::copy(K, KK);
       out.pop().from_sparse(KK);
@@ -505,6 +498,59 @@ static void do_high_level_generic_assembly(mexargs_in& in, mexargs_out& out) {
 
   default: GMM_ASSERT1(false, "Invalid order, should be 0, 1 or 2");
   }
+}
+
+static void do_expression_analysis(mexargs_in& in) {
+
+  std::string expr = in.pop().to_string();
+  getfem::ga_workspace workspace1;
+  getfem::model dummy_md;
+  bool with_model = in.remaining() && in.front().is_model();
+  const getfem::model &md = with_model ? in.pop().to_getfemint_model()->model()
+                                       : dummy_md;
+  getfem::ga_workspace workspace2(md);
+  getfem::ga_workspace &workspace = with_model ? workspace2 : workspace1;
+
+  const gmm::sub_interval dummy_I(0,0);
+  const getfem::model_real_plain_vector dummy_V(1);
+
+  std::set<std::string> varnames;
+
+  while (in.remaining()) {
+    std::string varname = in.pop().to_string();
+    bool is_cte(in.pop().to_integer() == 0);
+    const getfem::mesh_fem *mf(0);
+    const getfem::im_data *mimd(0);
+    if (in.front().is_mesh_fem())
+      mf = in.pop().to_const_mesh_fem();
+    else if (in.front().is_mesh_im_data())
+      mimd = in.pop().to_const_mesh_im_data();
+    GMM_ASSERT1(varnames.count(varname) == 0,
+                "The same variable/constant name is repeated twice: "
+                 << varname)
+    GMM_ASSERT1(!with_model || !md.variable_exists(varname),
+                "The same variable/constant name is already defined in "
+                "the model: " << varname)
+    if (is_cte) {
+      if (mf)
+        workspace.add_fem_constant(varname, *mf, dummy_V);
+      else if (mimd)
+        workspace.add_im_data(varname, *mimd, dummy_V);
+      else
+        workspace.add_fixed_size_constant(varname, dummy_V);
+    } else {
+      if (mf)
+        workspace.add_fem_variable(varname, *mf, dummy_I, dummy_V);
+      else if (mimd) {
+        THROW_BADARG("Data defined on integration points can not be a variable");
+      } else
+        workspace.add_fixed_size_variable(varname, dummy_I, dummy_V);
+    }
+  }
+
+  workspace.add_expression(expr, getfem::ga_workspace::dummy_mim,
+                                 getfem::ga_workspace::dummy_region, false);
+  workspace.print(cout);
 }
 
 template<typename T> static void
@@ -548,7 +594,7 @@ void interpolate_or_extrapolate(mexargs_in &in, mexargs_out &out, int extrapolat
       gmm::copy(gmm::sub_vector(PTS, gmm::sub_interval(i*N, N)), p);
       mti.add_point(p);
     }
-    
+
     size_type qmult = mf1->get_qdim();
     /* if (qmult != 1) dims.push_back(unsigned(qmult)); */
 /*     dims.push_back(unsigned(nbpoints)); */
@@ -581,7 +627,7 @@ void assemble_source(size_type boundary_num,
   const getfem::mesh_fem *mf_d = in.pop().to_const_mesh_fem();
   unsigned q_dim = mf_u->get_qdim() / mf_d->get_qdim();
   if (!in.front().is_complex()) {
-    
+
     darray g               = in.pop().to_darray(q_dim, int(mf_d->nb_dof()));
     darray F               = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
@@ -591,9 +637,9 @@ void assemble_source(size_type boundary_num,
     getfem::asm_source_term(F, *mim, *mf_u, *mf_d, g, boundary_num);
   }
 }
- 
- 
-  
+
+
+
 /*@GFDOC
 
   General assembly function.
@@ -647,11 +693,11 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
   static SUBC_TAB subc_tab;
 
   if (subc_tab.size() == 0) {
-    
-    
+
+
     /*@FUNC M = ('mass matrix', @tmim mim, @tmf mf1[, @tmf mf2[, boundary_num]])
     Assembly of a mass matrix.
-    
+
     Return a @tsp object.
     @*/
     sub_command
@@ -664,14 +710,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        getfem::asm_mass_matrix(M, *mim, *mf_u1, *mf_u2, nbound);
        out.pop().from_sparse(M);
        );
-    
+
     /*@FUNC M = ('lsneuman matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls)
       Assembly of a level set Neuman  matrix.
-      
+
       Return a @tsp object.
       @*/
     sub_command
-      ("lsneuman matrix", 3, 4, 0, 1, 
+      ("lsneuman matrix", 3, 4, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
@@ -680,14 +726,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        asm_lsneuman_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
        out.pop().from_sparse(M);
        );
-    
+
     /*@FUNC M = ('nlsgrad matrix', @tmim mim, @tmf mf1, @tmf mf2, @tls ls)
       Assembly of a nlsgrad matrix.
-      
+
       Return a @tsp object.
       @*/
     sub_command
-      ("nlsgrad matrix", 3, 4, 0, 1, 
+      ("nlsgrad matrix", 3, 4, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh_fem *mf_u1 = in.pop().to_const_mesh_fem();
        const getfem::mesh_fem *mf_u2 = in.pop().to_const_mesh_fem();
@@ -696,14 +742,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        asm_nlsgrad_matrix(M, *mim, *mf_u1, *mf_u2, *ls1);
        out.pop().from_sparse(M);
        );
-    
+
     /*@FUNC M = ('stabilization patch matrix', @tm mesh, @tmf mf,  @tmim mim, @real ratio, @real h)
       Assembly of stabilization patch matrix .
-      
+
       Return a @tsp object.
       @*/
     sub_command
-      ("stabilization patch matrix", 5, 5, 0, 1, 
+      ("stabilization patch matrix", 5, 5, 0, 1,
        const getfem::mesh_im *mim = get_mim(in);
        const getfem::mesh *mesh = in.pop().to_const_mesh();
        const getfem::mesh_fem *mf_mult = in.pop().to_const_mesh_fem();
@@ -713,13 +759,13 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        asm_stabilization_patch_matrix(M, *mesh,* mf_mult, *mim, ratio_size, h);
        out.pop().from_sparse(M);
        );
-    
-    
+
+
     /*@FUNC L = ('laplacian', @tmim mim, @tmf mf_u, @tmf mf_d, @dvec a)
       Assembly of the matrix for the Laplacian problem.
-      
+
       :math:`\nabla\cdot(a(x)\nabla u)`  with `a` a scalar.
-      
+
       Return a @tsp object.
       @*/
     sub_command
@@ -738,7 +784,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
 
     :math:`\nabla\cdot(C(x):\nabla u)`
     with :math:`C` defined via `lambda_d` and `mu_d`.
-    
+
     Return a @tsp object.
     @*/
     sub_command
@@ -752,14 +798,14 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        getfem::asm_stiffness_matrix_for_linear_elasticity(M, *mim, *mf_u, *mf_d, lambda, mu);
        out.pop().from_sparse(M);
        );
-    
-    
+
+
     /*@FUNC TRHS = ('nonlinear elasticity', @tmim mim, @tmf mf_u, @dvec U, @str law, @tmf mf_d, @dmat params, {'tangent matrix'|'rhs'|'incompressible tangent matrix', @tmf mf_p, @dvec P|'incompressible rhs', @tmf mf_p, @dvec P})
       Assembles terms (tangent matrix and right hand side) for nonlinear elasticity.
-      
+
       The solution `U` is required at the current time-step. The `law`
       may be choosen among:
-      
+
       - 'SaintVenant Kirchhoff':
         Linearized law, should be avoided). This law has the two usual
         Lame coefficients as parameters, called lambda and mu.
@@ -774,7 +820,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
       - 'Ciarlet Geymonat':
         This law has 3 parameters, called lambda, mu and gamma, with
         gamma chosen such that gamma is in ]-lambda/2-mu, -mu[.
-      
+
     The parameters of the material law are described on the @tmf `mf_d`.
     The matrix `params` should have `nbdof(mf_d)` columns, each row
     correspounds to a parameter.
@@ -1070,22 +1116,22 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        );
 
 
-    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model], [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
+    /*@FUNC @CELL{...} = ('generic', @tmim mim, @int order, @str expression, @int region, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}], value], ...)
       High-level generic assembly procedure for volumic assembly.
 
       Performs the generic assembly of `expression` with the integration
-      method `mim` on the mesh region of index `region` (-1 means all 
+      method `mim` on the mesh region of index `region` (-1 means all
       the element of the mesh). The same mesh should be shared by
       the integration method and all the finite element methods or
       mesh_im_data corresponding to the variables.
 
       `order` indicates either that the (scalar) potential
       (order = 0) or the (vector) residual (order = 1) or the
-      tangent (matrix) (order = 2) is to be computed. 
+      tangent (matrix) (order = 2) is to be computed.
 
       `model` is an optional parameter allowing to take into account
       all variables and data of a model.
-      
+
       The variables and constant (data) are listed after the
       region number (or optionally the model).
       For each variable/constant, first the variable/constant
@@ -1121,6 +1167,15 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
     sub_command
       ("generic", 4, -1, 0, -1,
        do_high_level_generic_assembly(in, out);
+       );
+
+
+    /*@FUNC ('expression analysis', @str expression, [@tmodel model,] [@str varname, @int is_variable[, {@tmf mf, @tmimd mimd}]], ...)
+      Analyse a high-level generic assembly expression and print
+      information about the provided expression.@*/
+    sub_command
+      ("expression analysis", 2, -1, 0, 0,
+       do_expression_analysis(in);
        );
 
 
@@ -1266,7 +1321,7 @@ void gf_asm(getfemint::mexargs_in& m_in, getfemint::mexargs_out& m_out) {
        darray F = out.pop().create_darray_v(unsigned(mf_u->nb_dof()));
        getfem::asm_level_set_normal_source_term
          (F, *mim, *mf_u, *mf_obs, obs, *mf_lambda, vec_lambda, boundary_num);
-       
+
        );
 
   }

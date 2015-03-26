@@ -929,6 +929,56 @@ namespace getfem {
                             std::ostream &str) {
     long prec = str.precision(16);
 
+    bool is_interpolate(false), is_elementary(false);
+    switch(pnode->node_type) {
+    case GA_NODE_INTERPOLATE:
+    case GA_NODE_INTERPOLATE_FILTER:
+    case GA_NODE_INTERPOLATE_NORMAL:
+    case GA_NODE_INTERPOLATE_X:
+    case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+      str << "Interpolate(";
+      is_interpolate = true;
+      break;
+    case GA_NODE_ELEMENTARY:
+    case GA_NODE_ELEMENTARY_VAL:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_TEST:
+    case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST:
+      is_elementary = true;
+      str << "Elementary_transformation(";
+      break;
+    default:
+      break;
+    }
+
+    switch(pnode->node_type) {
+    case GA_NODE_GRAD:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_GRAD_TEST:
+      str << "Grad_";
+      break;
+    case GA_NODE_HESS:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST:
+      str << "Hess_";
+      break;
+    default:
+      break;
+    }
+
     switch(pnode->node_type) {
     case GA_NODE_OP:
       {
@@ -996,12 +1046,6 @@ namespace getfem {
       break;
     case GA_NODE_ELT_SIZE: str << "element_size"; break;
     case GA_NODE_NORMAL: str << "Normal"; break;
-    case GA_NODE_INTERPOLATE:
-      str << "Interpolate(" << pnode->name << ","
-          << pnode->interpolate_name << ")"; break;
-    case GA_NODE_ELEMENTARY:
-      str << "Elementary_transformation(" << pnode->name << ","
-          << pnode->elementary_name << ")"; break;
     case GA_NODE_INTERPOLATE_FILTER:
       str << "Interpolate_filter(" << pnode->interpolate_name << ",";
       ga_print_node(pnode->children[0], str);
@@ -1011,82 +1055,40 @@ namespace getfem {
       str << ")";
       break;
     case GA_NODE_INTERPOLATE_NORMAL:
-      str << "Interpolate(Normal," << pnode->interpolate_name << ")"; break;
+      str << "Normal";
+      break;
     case GA_NODE_INTERPOLATE_X:
-      str << "Interpolate(X," << pnode->interpolate_name << ")"; break;
-    case GA_NODE_VAL: str << pnode->name; break;
-    case GA_NODE_INTERPOLATE_VAL:
-      str << "Interpolate(" << pnode->name << "," << pnode->interpolate_name
-          << ")";
-      break;
-    case GA_NODE_ELEMENTARY_VAL:
-      str << "Elementary_transformation(" << pnode->name << ","
-          << pnode->elementary_name << ")";
-      break;
-    case GA_NODE_GRAD: str << "Grad_" << pnode->name; break;
-    case GA_NODE_INTERPOLATE_GRAD:
-      str << "Interpolate(Grad_" << pnode->name << ","
-          << pnode->interpolate_name << ")";
-      break;
-    case GA_NODE_ELEMENTARY_GRAD:
-      str << "Elementary_transformation(Grad_" << pnode->name << ","
-          << pnode->elementary_name << ")";
-      break;
-    case GA_NODE_HESS: str << "Hess_" << pnode->name; break;
-    case GA_NODE_INTERPOLATE_HESS:
-      str << "Interpolate(Hess_" << pnode->name << ","
-          << pnode->interpolate_name << ")";
-      break;
-    case GA_NODE_ELEMENTARY_HESS:
-      str << "Elementary_transformation(Hess_" << pnode->name << ","
-          << pnode->elementary_name << ")";
-      break;
-    case GA_NODE_TEST:
-      if (pnode->test_function_type == 1) str << "Test_" << pnode->name;
-      else str << "Test2_" << pnode->name;
+      str << "X";
       break;
     case GA_NODE_INTERPOLATE_DERIVATIVE:
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
       str << "Interpolate_derivative(" << pnode->interpolate_name_der << ","
           << pnode->interpolate_name << "," << pnode->name << ")";
       break;
+    case GA_NODE_INTERPOLATE:
+    case GA_NODE_ELEMENTARY:
+    case GA_NODE_VAL:
+    case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_ELEMENTARY_VAL:
+    case GA_NODE_GRAD:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_HESS:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_ELEMENTARY_HESS:
+      str << pnode->name;
+      break;
+    case GA_NODE_TEST:
     case GA_NODE_INTERPOLATE_TEST:
-      str << "Interpolate(";
-      if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->interpolate_name << ")";
-      break;
     case GA_NODE_ELEMENTARY_TEST:
-      str << "Elementary_transformation(";
-      if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->elementary_name << ")";
-      break;
     case GA_NODE_GRAD_TEST:
-      if (pnode->test_function_type == 1) str << "Grad_Test_" << pnode->name;
-      else str << "Grad_Test2_" << pnode->name;
-      break;
     case GA_NODE_INTERPOLATE_GRAD_TEST:
-      str << "Interpolate(Grad_";
-      if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->interpolate_name << ")";
-      break;
     case GA_NODE_ELEMENTARY_GRAD_TEST:
-      str << "Elementary_transformation(Grad_";
-      if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->elementary_name << ")";
-      break;
     case GA_NODE_HESS_TEST:
-      if (pnode->test_function_type == 1) str << "Hess_Test_" << pnode->name;
-      else str << "Hess_Test2_" << pnode->name;
-      break;
     case GA_NODE_INTERPOLATE_HESS_TEST:
-      str << "Interpolate(Hess_";
-      if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->interpolate_name << ")";
-      break;
     case GA_NODE_ELEMENTARY_HESS_TEST:
-      str << "Elementary_transformation(Hess_";
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
-      str << pnode->name << "," << pnode->elementary_name << ")";
+      str << pnode->name;
       break;
     case GA_NODE_SPEC_FUNC: str << pnode->name; break;
     case GA_NODE_OPERATOR:
@@ -1122,7 +1124,9 @@ namespace getfem {
       if (pnode->test_function_type) str << ")";
       break;
 
-    case GA_NODE_CONSTANT: ga_print_constant_tensor(pnode, str); break;
+    case GA_NODE_CONSTANT:
+      ga_print_constant_tensor(pnode, str);
+      break;
 
     case GA_NODE_ALLINDICES:
       str << ":";
@@ -1173,6 +1177,12 @@ namespace getfem {
            << pnode->node_type;
       break;
     }
+
+    if (is_interpolate)
+      str << "," << pnode->interpolate_name << ")";
+    else if (is_elementary)
+      str << "," << pnode->elementary_name << ")";
+
     str.precision(prec);
   }
 
@@ -2294,11 +2304,7 @@ namespace getfem {
       : t(t_),  ctx(ctx_), qdim(qdim_), mfn(mfn_), mfg(mfg_) {}
   };
 
-  struct ga_instruction_second_ind_tensor : public ga_instruction {
-    base_tensor &t;
-    fem_interpolation_context &ctx;
-    size_type qdim;
-    const mesh_fem *mfn, **mfg;
+  struct ga_instruction_second_ind_tensor : public ga_instruction_first_ind_tensor {
 
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: adapt second index of tensor");
@@ -2314,11 +2320,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_second_ind_tensor(base_tensor &t_,
-                                    fem_interpolation_context &ctx_,
-                                     size_type qdim_, const mesh_fem *mfn_,
-                                     const mesh_fem **mfg_)
-      : t(t_),  ctx(ctx_), qdim(qdim_), mfn(mfn_), mfg(mfg_) {}
+    using ga_instruction_first_ind_tensor::ga_instruction_first_ind_tensor;
   };
 
   struct ga_instruction_two_first_ind_tensor : public ga_instruction {
@@ -2374,6 +2376,7 @@ namespace getfem {
       t = ctx.xreal()[n];
       return 0;
     }
+
     ga_instruction_X_component(scalar_type &t_,
                                fem_interpolation_context &ctx_, size_type n_)
       : t(t_),  ctx(ctx_), n(n_) {}
@@ -2389,6 +2392,7 @@ namespace getfem {
       gmm::copy(ctx.xreal(), t.as_vector());
       return 0;
     }
+
     ga_instruction_X(base_tensor &t_, fem_interpolation_context &ctx_)
       : t(t_),  ctx(ctx_) {}
   };
@@ -2425,11 +2429,12 @@ namespace getfem {
 
 
 
-  struct ga_instruction_base : public ga_instruction {
+  struct ga_instruction_val_base : public ga_instruction {
     base_tensor &t;
     fem_interpolation_context &ctx;
     const mesh_fem &mf;
     pfem_precomp &pfp;
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: compute value of base functions");
       if (pfp) ctx.set_pfp(pfp);
@@ -2438,16 +2443,13 @@ namespace getfem {
       ctx.pf()->real_base_value(ctx, t);
       return 0;
     }
-    ga_instruction_base(base_tensor &tt, fem_interpolation_context &ct,
-                        const mesh_fem &mf_, pfem_precomp &pfp_)
+
+    ga_instruction_val_base(base_tensor &tt, fem_interpolation_context &ct,
+                            const mesh_fem &mf_, pfem_precomp &pfp_)
       : t(tt), ctx(ct), mf(mf_), pfp(pfp_) {}
   };
 
-  struct ga_instruction_grad_base : public ga_instruction {
-    base_tensor &t;
-    fem_interpolation_context &ctx;
-    const mesh_fem &mf;
-    pfem_precomp &pfp;
+  struct ga_instruction_grad_base : public ga_instruction_val_base {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: compute gradient of base functions");
       if (pfp) ctx.set_pfp(pfp);
@@ -2456,17 +2458,11 @@ namespace getfem {
       ctx.pf()->real_grad_base_value(ctx, t);
       return 0;
     }
-    ga_instruction_grad_base(base_tensor &tt,
-                             fem_interpolation_context &ct,
-                             const mesh_fem &mf_, pfem_precomp &pfp_)
-      : t(tt), ctx(ct), mf(mf_), pfp(pfp_) {}
+
+    using ga_instruction_val_base::ga_instruction_val_base;
   };
 
-  struct ga_instruction_hess_base : public ga_instruction {
-    base_tensor &t;
-    fem_interpolation_context &ctx;
-    const mesh_fem &mf;
-    pfem_precomp &pfp;
+  struct ga_instruction_hess_base : public ga_instruction_val_base {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: compute Hessian of base functions");
       if (pfp) ctx.set_pfp(pfp);
@@ -2475,10 +2471,8 @@ namespace getfem {
       ctx.pf()->real_hess_base_value(ctx, t);
       return 0;
     }
-    ga_instruction_hess_base(base_tensor &tt,
-                             fem_interpolation_context &ct,
-                             const mesh_fem &mf_, pfem_precomp &pfp_)
-      : t(tt), ctx(ct), mf(mf_), pfp(pfp_) {}
+
+    using ga_instruction_val_base::ga_instruction_val_base;
   };
 
   struct ga_instruction_val : public ga_instruction {
@@ -2486,6 +2480,7 @@ namespace getfem {
     base_tensor &Z;
     const base_vector &coeff;
     size_type qdim;
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: variable value");
       size_type ndof = Z.sizes()[0];
@@ -2506,16 +2501,13 @@ namespace getfem {
       GA_DEBUG_INFO("Instruction: end of variable value");
       return 0;
     }
+
     ga_instruction_val(base_tensor &tt, base_tensor &Z_,
                        const base_vector &co, size_type q)
       : t(tt), Z(Z_), coeff(co), qdim(q) {}
   };
 
-  struct ga_instruction_grad : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    const base_vector &coeff;
-    size_type qdim;
+  struct ga_instruction_grad : public ga_instruction_val {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: gradient");
       size_type ndof = Z.sizes()[0];
@@ -2539,16 +2531,10 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_grad(base_tensor &tt, base_tensor &Z_,
-                        const base_vector &co, size_type q)
-      : t(tt), Z(Z_), coeff(co), qdim(q) {}
+    using ga_instruction_val::ga_instruction_val;
   };
 
-  struct ga_instruction_hess : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    const base_vector &coeff;
-    size_type qdim;
+  struct ga_instruction_hess : public ga_instruction_val {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Hessian");
       size_type ndof = Z.sizes()[0];
@@ -2573,9 +2559,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_hess(base_tensor &tt, base_tensor &Z_,
-                        const base_vector &co, size_type q)
-      : t(tt), Z(Z_), coeff(co), qdim(q) {}
+    using ga_instruction_val::ga_instruction_val;
   };
 
   struct ga_instruction_elementary_transformation_val : public ga_instruction {
@@ -2717,6 +2701,7 @@ namespace getfem {
     ga_instruction_set::interpolate_info &inin;
     const std::string gname;
     ga_instruction_set::variable_group_info &vgi;
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Update group info for "+gname);
       if (vgi.varname &&
@@ -2733,6 +2718,7 @@ namespace getfem {
       vgi.varname = &varname;
       return 0;
     }
+
     ga_instruction_update_group_info
     (ga_workspace &workspace_, ga_instruction_set &gis_,
      ga_instruction_set::interpolate_info &inin_, const std::string &gname_,
@@ -2774,6 +2760,7 @@ namespace getfem {
     const base_vector *Un, **Ug;
     fem_interpolation_context &ctx;
     size_type qdim;
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated variable value");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
@@ -2790,6 +2777,7 @@ namespace getfem {
       // cout << "interpolate " << &U << " result : " << t.as_vector() << endl;
       return 0;
     }
+
     ga_instruction_interpolate_val
     (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_,
@@ -2865,7 +2853,7 @@ namespace getfem {
         ctx(ctx_), qdim(q) {}
   };
 
-  struct ga_instruction_interpolate_base : public ga_instruction {
+  struct ga_instruction_interpolate_val_base : public ga_instruction {
     base_tensor &t;
     base_tensor Z;
     const mesh **m;
@@ -2908,7 +2896,7 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_interpolate_base
+    ga_instruction_interpolate_val_base
     (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_,
      fem_interpolation_context &ctx_, size_type q)
@@ -3023,7 +3011,7 @@ namespace getfem {
   };
 
 
-  struct ga_instruction_copy_base : public ga_instruction {
+  struct ga_instruction_copy_val_base : public ga_instruction {
     base_tensor &t;
     base_tensor &Z;
     size_type qdim;
@@ -3054,11 +3042,11 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_copy_base(base_tensor &tt, base_tensor &Z_, size_type q)
+    ga_instruction_copy_val_base(base_tensor &tt, base_tensor &Z_, size_type q)
       : t(tt), Z(Z_), qdim(q) {}
   };
 
-  struct ga_instruction_copy_grad : public ga_instruction {
+  struct ga_instruction_copy_grad_base : public ga_instruction {
     base_tensor &t;
     base_tensor &Z;
     size_type qdim;
@@ -3092,11 +3080,11 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_copy_grad(base_tensor &tt, base_tensor &Z_, size_type q)
+    ga_instruction_copy_grad_base(base_tensor &tt, base_tensor &Z_, size_type q)
       : t(tt), Z(Z_), qdim(q) {}
   };
 
-  struct ga_instruction_copy_hess : public ga_instruction {
+  struct ga_instruction_copy_hess_base : public ga_instruction {
     base_tensor &t;
     base_tensor &Z;
     size_type qdim;
@@ -3131,12 +3119,12 @@ namespace getfem {
       }
       return 0;
     }
-    ga_instruction_copy_hess(base_tensor &tt, base_tensor &Z_, size_type q)
+    ga_instruction_copy_hess_base(base_tensor &tt, base_tensor &Z_, size_type q)
       : t(tt), Z(Z_), qdim(q) {}
   };
 
 
-  struct ga_instruction_elementary_transformation_base : public ga_instruction {
+  struct ga_instruction_elementary_transformation_val_base : public ga_instruction {
     base_tensor &t_;
     base_tensor &Z;
     base_tensor t;
@@ -3184,7 +3172,8 @@ namespace getfem {
       // gmm::copy(t.as_vector(), t_.as_vector());
       return 0;
     }
-    ga_instruction_elementary_transformation_base
+
+    ga_instruction_elementary_transformation_val_base
     (base_tensor &tt, base_tensor &Z__, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
@@ -4381,13 +4370,17 @@ namespace getfem {
   };
 
 
+  const mesh ga_workspace::dummy_mesh = mesh();
+  const mesh_im ga_workspace::dummy_mim = mesh_im();
+  const mesh_region ga_workspace::dummy_region = mesh_region();
+
   //=========================================================================
   // Structure dealing with user defined environment : constant, variables,
   // functions, operators.
   //=========================================================================
 
-  mesh_region &ga_workspace::register_region(const mesh &m,
-                                             const mesh_region &region) {
+  const mesh_region &ga_workspace::register_region(const mesh &m,
+                                                   const mesh_region &region) {
     if (&m == &dummy_mesh) return dummy_region;
 
     std::list<mesh_region> &lmr = registred_mims[&m];
@@ -4872,6 +4865,16 @@ namespace getfem {
     clear_aux_trees();
     trees.clear();
     macro_trees.clear();
+  }
+
+  void ga_workspace::print(std::ostream &str) {
+    for (size_type i = 0; i < trees.size(); ++i)
+      if (trees[i].ptree->root) {
+        cout << "Expression tree " << i << " of order " <<
+                trees[i].ptree->root->nb_test_functions() << " :" << endl;
+        ga_print_node(trees[i].ptree->root, str);
+        cout << endl;
+      }
   }
 
   void ga_workspace::tree_description::copy(const tree_description& td) {
@@ -7936,7 +7939,7 @@ namespace getfem {
             if (rmi.base.find(mf) == rmi.base.end() ||
                 !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = new ga_instruction_base
+              pgai = new ga_instruction_val_base
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
           } else if (pnode->node_type == GA_NODE_GRAD ||
@@ -8061,14 +8064,14 @@ namespace getfem {
             rmi.instructions.push_back(pgai);
           }
 
-          // An intruction for the base value
+          // An instruction for the base value
           pgai = 0;
           if (pnode->node_type == GA_NODE_TEST ||
               pnode->node_type == GA_NODE_ELEMENTARY_TEST) {
             if (rmi.base.find(mf) == rmi.base.end() ||
                 !(if_hierarchy.is_compatible(rmi.base_hierarchy[mf]))) {
               rmi.base_hierarchy[mf].push_back(if_hierarchy);
-              pgai = new ga_instruction_base
+              pgai = new ga_instruction_val_base
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
           } else if (pnode->node_type == GA_NODE_GRAD_TEST ||
@@ -8092,19 +8095,19 @@ namespace getfem {
           // The copy of the real_base_value
           switch(pnode->node_type) {
           case GA_NODE_TEST:
-            pgai = new ga_instruction_copy_base
+            pgai = new ga_instruction_copy_val_base
               (pnode->t, rmi.base[mf], mf->get_qdim());
             break;
           case GA_NODE_GRAD_TEST:
-            pgai = new ga_instruction_copy_grad
+            pgai = new ga_instruction_copy_grad_base
               (pnode->t, rmi.grad[mf], mf->get_qdim());
             break;
           case GA_NODE_HESS_TEST:
-            pgai = new ga_instruction_copy_hess
+            pgai = new ga_instruction_copy_hess_base
               (pnode->t, rmi.hess[mf], mf->get_qdim());
             break;
           case GA_NODE_ELEMENTARY_TEST:
-            pgai = new ga_instruction_elementary_transformation_base
+            pgai = new ga_instruction_elementary_transformation_val_base
               (pnode->t, rmi.base[mf], mf->get_qdim(),
                workspace.elementary_transformation(pnode->elementary_name),
                *mf, gis.ctx);
@@ -8145,7 +8148,7 @@ namespace getfem {
         }
 
         if (pnode->node_type == GA_NODE_INTERPOLATE_TEST) {
-          pgai = new ga_instruction_interpolate_base
+          pgai = new ga_instruction_interpolate_val_base
             (pnode->t, m2, mfn, mfg, *pctx,workspace.qdim(pnode->name));
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST) {
           pgai = new ga_instruction_interpolate_grad_base

@@ -122,7 +122,7 @@ namespace getfem {
   //=========================================================================
 
   class ga_workspace {
-    
+
     const model *md;
     const ga_workspace *parent_workspace;
 
@@ -164,14 +164,15 @@ namespace getfem {
       ~tree_description();
     };
 
+    static const mesh dummy_mesh;
+    static const mesh_im dummy_mim;
+    static const mesh_region dummy_region;
+
   private:
 
     std::map<const mesh *, std::list<mesh_region> > registred_mims;
-    mesh dummy_mesh;
-    mesh dummy_mim;
-    mesh_region dummy_region;
     
-    mesh_region &register_region(const mesh &m, const mesh_region &region);
+    const mesh_region &register_region(const mesh &m, const mesh_region &region);
 
     typedef std::map<std::string, var_description> VAR_SET;
 
@@ -291,6 +292,8 @@ namespace getfem {
     /** Delete all previously added expressions. */
     void clear_expressions(void);
     
+    /** Print some information about all previously added expressions. */
+    void print(std::ostream &str);
 
     void add_aux_tree(ga_tree &tree);
     size_type nb_trees(void) const;
