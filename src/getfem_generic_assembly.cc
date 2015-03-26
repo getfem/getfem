@@ -2787,6 +2787,7 @@ namespace getfem {
     ga_instruction_set::interpolate_info &inin;
     size_type pt_type;
     int nb;
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated filter");
       if ((pt_type == size_type(-1) && inin.pt_type) ||
@@ -2801,6 +2802,7 @@ namespace getfem {
       }
       return 0;
     }
+
     ga_instruction_interpolate_filter
     (base_tensor &t_, ga_instruction_set::interpolate_info &inin_,
      size_type ind_, int nb_)
@@ -2840,6 +2842,7 @@ namespace getfem {
   };
 
   struct ga_instruction_interpolate_val : public ga_instruction_interpolate {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated variable value");
       ga_instruction_interpolate::exec();
@@ -2852,6 +2855,7 @@ namespace getfem {
   };
 
   struct ga_instruction_interpolate_grad : public ga_instruction_interpolate {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated variable grad");
       ga_instruction_interpolate::exec();
@@ -2865,6 +2869,7 @@ namespace getfem {
   };
 
   struct ga_instruction_interpolate_hess : public ga_instruction_interpolate {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated variable hessian");
       ga_instruction_interpolate::exec();
@@ -2877,15 +2882,13 @@ namespace getfem {
     using ga_instruction_interpolate::ga_instruction_interpolate;
   };
 
-  struct ga_instruction_interpolate_val_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor Z;
+  struct ga_instruction_interpolate_base {
+    base_tensor ZZ;
     const mesh **m;
     const mesh_fem *mfn, **mfg;
     fem_interpolation_context &ctx;
-    size_type qdim;
+
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: interpolated base value");
       GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
                   "transformation. Probably transformation failed");
       const mesh_fem &mf = *(mfg ? *mfg : mfn);
@@ -2893,146 +2896,64 @@ namespace getfem {
         "on another mesh than the one it is defined on");
       ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
       GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.pf()->real_base_value(ctx, Z);
-
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for base vector");
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-        base_tensor::iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-
-        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-        for (size_type k = 0; k < target_dim; ++k) {
-          base_tensor::iterator it = t.begin() + (ss * k);
-          for (size_type i = 0; i < ndof; ++i, ++itZ) {
-            if (i) it += Qmult;
-            base_tensor::iterator it2 = it;
-            *it2 = *itZ;
-            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-          }
-        }
-      }
       return 0;
+    }
+
+    ga_instruction_interpolate_base
+    (const mesh **m_, const mesh_fem *mfn_, const mesh_fem **mfg_,
+     fem_interpolation_context &ctx_)
+      : m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_) {}
+  };
+
+  struct ga_instruction_interpolate_val_base
+    : public ga_instruction_copy_val_base, ga_instruction_interpolate_base {
+
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated base value");
+      ga_instruction_interpolate_base::exec();
+      ctx.pf()->real_base_value(ctx, Z); // remember Z == ZZ
+      return ga_instruction_copy_val_base::exec();
     }
 
     ga_instruction_interpolate_val_base
-    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     fem_interpolation_context &ctx_, size_type q)
-      : t(tt), m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_), qdim(q) {}
+    (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+      : ga_instruction_copy_val_base(t_, ZZ, q),
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
   };
 
-  struct ga_instruction_interpolate_grad_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor Z;
-    const mesh **m;
-    const mesh_fem *mfn, **mfg;
-    fem_interpolation_context &ctx;
-    size_type qdim;
+  struct ga_instruction_interpolate_grad_base
+    : public ga_instruction_copy_grad_base, ga_instruction_interpolate_base {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated base vgrad");
-      GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
-                  "transformation. Probably transformation failed");
-      const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolatation of a variable "
-        "on another mesh than the one it is defined on");
-      ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.pf()->real_grad_base_value(ctx, Z);
-
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for gradient vector");
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
-        for (size_type l = 0; l < N; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i) it += Qmult;
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
-      }
-      return 0;
+      ga_instruction_interpolate_base::exec();
+      ctx.pf()->real_grad_base_value(ctx, Z); // remember Z == ZZ
+      return ga_instruction_copy_grad_base::exec();
     }
+
     ga_instruction_interpolate_grad_base
-    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     fem_interpolation_context &ctx_, size_type q)
-      : t(tt), m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_), qdim(q) {}
+    (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+      : ga_instruction_copy_grad_base(t_, ZZ, q),
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
   };
 
-  struct ga_instruction_interpolate_hess_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor Z;
-    const mesh **m;
-    const mesh_fem *mfn, **mfg;
-    fem_interpolation_context &ctx;
-    size_type qdim;
+  struct ga_instruction_interpolate_hess_base
+    : public ga_instruction_copy_hess_base, ga_instruction_interpolate_base {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated base hessian");
-      GMM_ASSERT1(ctx.is_convex_num_valid(), "No valid element for the "
-                  "transformation. Probably transformation failed");
-      const mesh_fem &mf = *(mfg ? *mfg : mfn);
-      GMM_ASSERT1(&(mf.linked_mesh()) == *m, "Interpolatation of a variable "
-        "on another mesh than the one it is defined on");
-      ctx.set_pf(mf.fem_of_element(ctx.convex_num()));
-      GMM_ASSERT1(ctx.pf(), "Undefined finite element method");
-      ctx.pf()->real_hess_base_value(ctx, Z);
-
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N2 = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for Hessian vector");
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l, m) = Z(i,k,l*N+m);
-        for (size_type l = 0; l < N2; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i) it += Qmult;
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
-      }
-      return 0;
+      ga_instruction_interpolate_base::exec();
+      ctx.pf()->real_hess_base_value(ctx, Z); // remember Z == ZZ
+      return ga_instruction_copy_hess_base::exec();
     }
+
     ga_instruction_interpolate_hess_base
-    (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
-     const mesh_fem **mfg_,
-     fem_interpolation_context &ctx_, size_type q)
-      : t(tt), m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_), qdim(q) {}
+    (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+      : ga_instruction_copy_hess_base(t_, ZZ, q),
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
   };
 
 
