@@ -232,16 +232,16 @@ namespace getfem {
 
   static void ga_throw_error_msg(const std::string &expr, size_type pos,
                                  const std::string &msg) {
-    int lenght_before = 40, lenght_after = 40;
+    int length_before = 40, length_after = 40;
     if (expr.size()) {
-      int first = std::max(0, int(pos)-lenght_before);
-      int last = std::min(int(pos)+lenght_after, int(expr.size()));
-      if (last - first < lenght_before+lenght_after)
-      first = std::max(0, int(pos)-lenght_before
-                       -(lenght_before+lenght_after-last+first));
-      if (last - first < lenght_before+lenght_after)
-        last = std::min(int(pos)+lenght_after
-                        +(lenght_before+lenght_after-last+first),
+      int first = std::max(0, int(pos)-length_before);
+      int last = std::min(int(pos)+length_after, int(expr.size()));
+      if (last - first < length_before+length_after)
+      first = std::max(0, int(pos)-length_before
+                       -(length_before+length_after-last+first));
+      if (last - first < length_before+length_after)
+        last = std::min(int(pos)+length_after
+                        +(length_before+length_after-last+first),
                         int(expr.size()));
       if (first > 0) cerr << "...";
       cerr << expr.substr(first, last-first);
@@ -2675,138 +2675,79 @@ namespace getfem {
     using ga_instruction_copy_val_base::ga_instruction_copy_val_base;
   };
 
-
-  struct ga_instruction_elementary_transformation_val : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    const base_vector &coeff_;
-    base_vector coeff;
+  struct ga_instruction_elementary_transformation {
+    const base_vector &coeff_in;
+    base_vector coeff_out;
     base_matrix M;
-    size_type qdim;
     pelementary_transformation elemtrans;
     const mesh_fem &mf;
     fem_interpolation_context &ctx;
+
+    void do_transformation(void) {
+      size_type nn = gmm::vect_size(coeff_in);
+      coeff_out.resize(nn);
+      gmm::resize(M, nn, nn);
+      elemtrans->give_transformation(mf, ctx.convex_num(), M);
+      gmm::mult(M, coeff_in, coeff_out); // remember: coeff == coeff_out
+    }
+
+    ga_instruction_elementary_transformation
+    (const base_vector &co, pelementary_transformation e,
+     const mesh_fem &mf_, fem_interpolation_context &ctx_)
+      : coeff_in(co), elemtrans(e), mf(mf_), ctx(ctx_) {}
+    ~ga_instruction_elementary_transformation() {};
+  };
+
+  struct ga_instruction_elementary_transformation_val
+    : public ga_instruction_val, ga_instruction_elementary_transformation {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: variable value with elementary "
                     "transformation");
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type Qmult = qdim / target_dim;
-      size_type nn = gmm::vect_size(coeff_);
-      GA_DEBUG_ASSERT(t.size() == qdim, "dimensions mismatch");
-      GA_DEBUG_ASSERT(nn == ndof*Qmult, "Wrong size for coeff vector");
-
-      coeff.resize(nn);
-      gmm::resize(M, nn, nn);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      gmm::mult(M, coeff_, coeff);
-
-      gmm::clear(t.as_vector());
-      for (size_type j = 0; j < ndof; ++j) {
-        for (size_type q = 0; q < Qmult; ++q) {
-          scalar_type co = coeff[j*Qmult+q];
-          for (size_type r = 0; r < target_dim; ++r)
-            t[r + q*target_dim] += co * Z[j + r*ndof];
-        }
-      }
-      return 0;
+      do_transformation();
+      return ga_instruction_val::exec();
     }
+
     ga_instruction_elementary_transformation_val
     (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t(tt), Z(Z_), coeff_(co), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : ga_instruction_val(tt, Z_, coeff_out, q),
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_) {}
   };
 
-  struct ga_instruction_elementary_transformation_grad : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    const base_vector &coeff_;
-    base_vector coeff;
-    base_matrix M;
-    size_type qdim;
-    pelementary_transformation elemtrans;
-    const mesh_fem &mf;
-    fem_interpolation_context &ctx;
+  struct ga_instruction_elementary_transformation_grad
+    : public ga_instruction_grad, ga_instruction_elementary_transformation {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: gradient with elementary transformation");
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      size_type nn = gmm::vect_size(coeff_);
-      GA_DEBUG_ASSERT((qdim == 1 && t.sizes()[0] == N) ||
-                      (t.sizes()[1] == N && t.sizes()[0] == qdim) ||
-                      (N == 1 && t.sizes()[0] == qdim),
-                      "dimensions mismatch");
-      GA_DEBUG_ASSERT(nn == ndof*Qmult, "Wrong size for coeff vector");
-      coeff.resize(nn);
-      gmm::resize(M, nn, nn);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      gmm::mult(M, coeff_, coeff);
-
-      gmm::clear(t.as_vector());
-      for (size_type q = 0; q < Qmult; ++q) {
-        base_tensor::const_iterator it = Z.begin();
-        for (size_type k = 0; k < N; ++k)
-          for (size_type r = 0; r < target_dim; ++r)
-            for (size_type j = 0; j < ndof; ++j, ++it)
-              t[r + q*target_dim + k*qdim] += coeff[j*Qmult+q] * (*it);
-      }
-      return 0;
+      do_transformation();
+      return ga_instruction_grad::exec();
     }
 
     ga_instruction_elementary_transformation_grad
-    (base_tensor &tt, base_tensor &Z_,const base_vector &co, size_type q,
+    (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t(tt), Z(Z_), coeff_(co), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_)  {}
+      : ga_instruction_grad(tt, Z_, coeff_out, q),
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_) {}
   };
 
-  struct ga_instruction_elementary_transformation_hess : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    const base_vector &coeff_;
-    base_vector coeff;
-    base_matrix M;
-    size_type qdim;
-    pelementary_transformation elemtrans;
-    const mesh_fem &mf;
-    fem_interpolation_context &ctx;
+  struct ga_instruction_elementary_transformation_hess
+    : public ga_instruction_hess, ga_instruction_elementary_transformation {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Hessian with elementary transformation");
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N = size_type(round(sqrt(scalar_type(Z.sizes()[2]))));
-      size_type Qmult = qdim / target_dim;
-      size_type nn = gmm::vect_size(coeff_);
-      GA_DEBUG_ASSERT((qdim == 1 && t.sizes()[0] == N && t.sizes()[1] == N) ||
-                      (t.sizes()[1] == N && t.sizes()[2] == N
-                       && t.sizes()[0] == qdim), "dimensions mismatch");
-      GA_DEBUG_ASSERT(nn == ndof*Qmult, "Wrong size for coeff vector");
-      coeff.resize(nn);
-      gmm::resize(M, nn, nn);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      gmm::mult(M, coeff_, coeff);
-
-      gmm::clear(t.as_vector());
-      for (size_type q = 0; q < Qmult; ++q) {
-        base_tensor::const_iterator it = Z.begin();
-        for (size_type k = 0; k < N; ++k)
-          for (size_type l = 0; l < N; ++l)
-            for (size_type r = 0; r < target_dim; ++r)
-              for (size_type j = 0; j < ndof; ++j, ++it)
-                t[r + q*target_dim + k*qdim + l*qdim*N]
-                  += coeff[j*Qmult+q] * (*it);
-      }
-      return 0;
+      do_transformation();
+      return ga_instruction_hess::exec();
     }
 
     ga_instruction_elementary_transformation_hess
     (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t(tt), Z(Z_), coeff_(co), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_)  {}
+      : ga_instruction_hess(tt, Z_, coeff_out, q),
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_) {}
   };
 
   struct ga_instruction_update_group_info : public ga_instruction {
@@ -3010,6 +2951,7 @@ namespace getfem {
       }
       return 0;
     }
+
     ga_instruction_interpolate_val_base
     (base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_,
@@ -3125,167 +3067,92 @@ namespace getfem {
   };
 
 
-  struct ga_instruction_elementary_transformation_val_base : public ga_instruction {
-    base_tensor &t_;
-    base_tensor &Z;
-    base_tensor t;
+  struct ga_instruction_elementary_transformation_base {
+    base_tensor t_in;
+    base_tensor &t_out;
     base_matrix M;
-    size_type qdim;
     pelementary_transformation elemtrans;
     const mesh_fem &mf;
     fem_interpolation_context &ctx;
+
+    void do_transformation(size_type n) {
+      gmm::resize(M, n, n);
+      elemtrans->give_transformation(mf, ctx.convex_num(), M);
+      // cout << "M = " << M << endl;
+      t_out.mat_reduction(t_in, M, 0);
+      // cout << "t_out = " << t_out << endl;
+      // cout << "t_in = " << t_in << endl;
+      // gmm::copy(t_in.as_vector(), t_out.as_vector());
+    }
+
+    ga_instruction_elementary_transformation_base
+    (base_tensor &t_, pelementary_transformation e, const mesh_fem &mf_,
+     fem_interpolation_context &ctx_)
+      : t_out(t_), elemtrans(e), mf(mf_), ctx(ctx_) {}
+  };
+
+  struct ga_instruction_elementary_transformation_val_base
+    : public ga_instruction_copy_val_base,
+             ga_instruction_elementary_transformation_base {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: value of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for base vector");
-
-      t.adjust_sizes(t_.sizes()); 
-
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-        base_tensor::iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-
-        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-        for (size_type k = 0; k < target_dim; ++k) {
-          base_tensor::iterator it = t.begin() + (ss * k);
-          for (size_type i = 0; i < ndof; ++i, ++itZ) {
-            if (i) it += Qmult;
-            base_tensor::iterator it2 = it;
-            *it2 = *itZ;
-            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-          }
-        }
-      }
-
-      gmm::resize(M, ndof*Qmult, ndof*Qmult);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      // cout << "M = " << M << endl;
-      t_.mat_reduction(t, M, 0);
-      // cout << "t_ = " << t_ << endl;
-      // cout << "t = " << t << endl;
-      // gmm::copy(t.as_vector(), t_.as_vector());
+      size_type Qmult = qdim / Z.sizes()[1];
+      ga_instruction_copy_val_base::exec();
+      do_transformation(ndof*Qmult);
       return 0;
     }
 
     ga_instruction_elementary_transformation_val_base
-    (base_tensor &tt, base_tensor &Z__, size_type q,
+    (base_tensor &t_, base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t_(tt), Z(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : ga_instruction_copy_val_base(t_in, Z_, q),
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_) {}
   };
 
-  struct ga_instruction_elementary_transformation_grad_base : public ga_instruction {
-    base_tensor &t_;
-    base_tensor &Z;
-    base_tensor t;
-    base_matrix M;
-    size_type qdim;
-    pelementary_transformation elemtrans;
-    const mesh_fem &mf;
-    fem_interpolation_context &ctx;
+  struct ga_instruction_elementary_transformation_grad_base
+    : public ga_instruction_copy_grad_base,
+             ga_instruction_elementary_transformation_base {
+
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: gradient of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for gradient vector");
-
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
-        for (size_type l = 0; l < N; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i)  it += Qmult;
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
-      }
-
-      gmm::resize(M, ndof*Qmult, ndof*Qmult);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      t_.mat_reduction(t, M, 0); 
-
+      size_type Qmult = qdim / Z.sizes()[1];
+      ga_instruction_copy_grad_base::exec();
+      do_transformation(ndof*Qmult);
       return 0;
     }
+
     ga_instruction_elementary_transformation_grad_base
-    (base_tensor &tt, base_tensor &Z__, size_type q,
+    (base_tensor &t_, base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t_(tt), Z(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : ga_instruction_copy_grad_base(t_in, Z_, q),
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_) {}
   };
 
-  struct ga_instruction_elementary_transformation_hess_base : public ga_instruction {
-    base_tensor &t_;
-    base_tensor &Z;
-    base_tensor t;
-    base_matrix M;
-    size_type qdim;
-    pelementary_transformation elemtrans;
-    const mesh_fem &mf;
-    fem_interpolation_context &ctx;
+  struct ga_instruction_elementary_transformation_hess_base
+    : public ga_instruction_copy_hess_base,
+             ga_instruction_elementary_transformation_base {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Hessian of test functions with elementary "
                     "transformation");
       size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N2 = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t_.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for Hessian vector");
-
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l, m) = Z(i,k,l*N+m);
-        for (size_type l = 0; l < N2; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i) it += Qmult;
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
-      }
-
-      gmm::resize(M, ndof*Qmult, ndof*Qmult);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      t_.mat_reduction(t, M, 0);
-
+      size_type Qmult = qdim / Z.sizes()[1];
+      ga_instruction_copy_hess_base::exec();
+      do_transformation(ndof*Qmult);
       return 0;
     }
     ga_instruction_elementary_transformation_hess_base
-    (base_tensor &tt, base_tensor &Z__, size_type q,
+    (base_tensor &t_, base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_)
-      : t_(tt), Z(Z__), qdim(q), elemtrans(e), mf(mf_), ctx(ctx_) {}
+      : ga_instruction_copy_hess_base(t_in, Z_, q),
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_) {}
   };
 
 
