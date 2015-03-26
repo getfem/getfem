@@ -2562,6 +2562,117 @@ namespace getfem {
     using ga_instruction_val::ga_instruction_val;
   };
 
+  struct ga_instruction_copy_val_base : public ga_instruction {
+    base_tensor &t;
+    base_tensor &Z;
+    size_type qdim;
+
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: value of test functions");
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                      "Wrong size for base vector");
+      if (Qmult == 1) {
+        gmm::copy(Z.as_vector(), t.as_vector());
+      } else {
+        gmm::clear(t.as_vector());
+        base_tensor::iterator itZ = Z.begin();
+        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+
+        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
+        for (size_type k = 0; k < target_dim; ++k) {
+          base_tensor::iterator it = t.begin() + (ss * k);
+          for (size_type i = 0; i < ndof; ++i, ++itZ) {
+            if (i) it += Qmult;
+            base_tensor::iterator it2 = it;
+            *it2 = *itZ;
+            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+          }
+        }
+      }
+      return 0;
+    }
+
+    ga_instruction_copy_val_base(base_tensor &tt, base_tensor &Z_, size_type q)
+      : t(tt), Z(Z_), qdim(q) {}
+  };
+
+  struct ga_instruction_copy_grad_base : public ga_instruction_copy_val_base {
+
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: gradient of test functions");
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type N = Z.sizes()[2];
+      size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                      "Wrong size for gradient vector");
+      if (Qmult == 1) {
+        gmm::copy(Z.as_vector(), t.as_vector());
+      } else {
+        gmm::clear(t.as_vector());
+        base_tensor::const_iterator itZ = Z.begin();
+        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+        size_type ssss=ss*target_dim;
+
+        // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
+        for (size_type l = 0; l < N; ++l)
+          for (size_type k = 0; k < target_dim; ++k) {
+            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
+            for (size_type i = 0; i < ndof; ++i, ++itZ) {
+              if (i) it += Qmult;
+              base_tensor::iterator it2 = it;
+              *it2 = *itZ;
+              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+            }
+          }
+      }
+      return 0;
+    }
+
+    using ga_instruction_copy_val_base::ga_instruction_copy_val_base;
+  };
+
+  struct ga_instruction_copy_hess_base : public ga_instruction_copy_val_base {
+
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: Hessian of test functions");
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type N2 = Z.sizes()[2];
+      size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
+                      "Wrong size for Hessian vector");
+      if (Qmult == 1) {
+        gmm::copy(Z.as_vector(), t.as_vector());
+      } else {
+        gmm::clear(t.as_vector());
+
+        base_tensor::const_iterator itZ = Z.begin();
+        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
+        size_type ssss=ss*target_dim;
+
+        // Performs t(i*Qmult+j, k*Qmult + j, l, m) = Z(i,k,l*N+m);
+        for (size_type l = 0; l < N2; ++l)
+          for (size_type k = 0; k < target_dim; ++k) {
+            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
+            for (size_type i = 0; i < ndof; ++i, ++itZ) {
+              if (i) it += Qmult;
+              base_tensor::iterator it2 = it;
+              *it2 = *itZ;
+              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
+            }
+          }
+      }
+      return 0;
+    }
+
+    using ga_instruction_copy_val_base::ga_instruction_copy_val_base;
+  };
+
+
   struct ga_instruction_elementary_transformation_val : public ga_instruction {
     base_tensor &t;
     base_tensor &Z;
@@ -3008,119 +3119,6 @@ namespace getfem {
      const mesh_fem **mfg_,
      fem_interpolation_context &ctx_, size_type q)
       : t(tt), m(m_), mfn(mfn_), mfg(mfg_), ctx(ctx_), qdim(q) {}
-  };
-
-
-  struct ga_instruction_copy_val_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    size_type qdim;
-    virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: value of test functions");
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for base vector");
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-        base_tensor::iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-
-        // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
-        for (size_type k = 0; k < target_dim; ++k) {
-          base_tensor::iterator it = t.begin() + (ss * k);
-          for (size_type i = 0; i < ndof; ++i, ++itZ) {
-            if (i) it += Qmult;
-            base_tensor::iterator it2 = it;
-            *it2 = *itZ;
-            for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-          }
-        }
-      }
-      return 0;
-    }
-    ga_instruction_copy_val_base(base_tensor &tt, base_tensor &Z_, size_type q)
-      : t(tt), Z(Z_), qdim(q) {}
-  };
-
-  struct ga_instruction_copy_grad_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    size_type qdim;
-    virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: gradient of test functions");
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for gradient vector");
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l) = Z(i,k,l);
-        for (size_type l = 0; l < N; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i)  it += Qmult;
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
-      }
-      return 0;
-    }
-    ga_instruction_copy_grad_base(base_tensor &tt, base_tensor &Z_, size_type q)
-      : t(tt), Z(Z_), qdim(q) {}
-  };
-
-  struct ga_instruction_copy_hess_base : public ga_instruction {
-    base_tensor &t;
-    base_tensor &Z;
-    size_type qdim;
-    virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: Hessian of test functions");
-      size_type ndof = Z.sizes()[0];
-      size_type target_dim = Z.sizes()[1];
-      size_type N2 = Z.sizes()[2];
-      size_type Qmult = qdim / target_dim;
-      GA_DEBUG_ASSERT(t.size() == Z.size() * Qmult * Qmult,
-                      "Wrong size for Hessian vector");
-      if (Qmult == 1) {
-        gmm::copy(Z.as_vector(), t.as_vector());
-      } else {
-        gmm::clear(t.as_vector());
-
-        base_tensor::const_iterator itZ = Z.begin();
-        size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
-        size_type ssss=ss*target_dim;
-
-        // Performs t(i*Qmult+j, k*Qmult + j, l, m) = Z(i,k,l*N+m);
-        for (size_type l = 0; l < N2; ++l)
-          for (size_type k = 0; k < target_dim; ++k) {
-            base_tensor::iterator it = t.begin() + (ss * k + ssss*l);
-            for (size_type i = 0; i < ndof; ++i, ++itZ) {
-              if (i) it += Qmult;
-              base_tensor::iterator it2 = it;
-              *it2 = *itZ;
-              for (size_type j = 1; j < Qmult; ++j) { it2 += sss; *it2 = *itZ; }
-            }
-          }
-      }
-      return 0;
-    }
-    ga_instruction_copy_hess_base(base_tensor &tt, base_tensor &Z_, size_type q)
-      : t(tt), Z(Z_), qdim(q) {}
   };
 
 
