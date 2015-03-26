@@ -1755,9 +1755,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
     
-       
-
-
     /*@SET ind = ('add Kirchhoff-Love plate brick', @tmim mim, @str varname, @str dataname_D, @str dataname_nu [, @int region])
       Add a bilaplacian brick on the variable
       `varname` and on the mesh region `region`.
@@ -1925,6 +1922,55 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        workspace().set_dependance(md, gfi_mim);
        out.pop().from_integer(int(ind));
        );
+
+
+    /*@SET ind = ('add Reisner-Mindlin plate brick', @tmim mim, @tmim mim_reduced, @str varname_U, @str varname_theta , @str param_E, @str param_nu, @str param_epsilon, @str param_kappa [,@int variant [, @int region]])
+      Add a term corresponding to the classical Reissner-Mindlin plate
+      model for which `U` is the transverse displacement,
+      `Theta` the rotation of
+      fibers normal to the midplane, 'param_E' the Young Modulus,
+      `param_nu` the poisson ratio,
+      `param_epsilon` the plate thickness,
+      `param_kappa` the shear correction factor. Note that since this brick
+      uses the high level generic assembly language, the parameter can
+      be regular expression of this language.
+      There are three variants.
+      `variant = 0` corresponds to the an
+      unreduced formulation and in that case only the integration
+      method `mim` is used. Practically this variant is not usable since
+      it is subject to a strong locking phenomenon.
+      `variant = 1` corresponds to a reduced integration where `mim` is
+      used for the rotation term and `mim_reduced` for the transverse
+      shear term. `variant = 2` (default) corresponds to the projection onto
+      a rotated RT0 element of the transverse shear term. For the moment, this
+      is adapted to quadrilateral only (because it is not sufficient to
+      remove the locking phenomenon on triangle elements). Note also that if
+      you use high order elements, the projection on RT0 will reduce the order
+      of the approximation.
+      Returns the brick index in the model.
+      @*/
+     sub_command
+        ("add Mindlin Reissner plate brick", 7, 9, 0, 1,
+         getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
+         getfemint_mesh_im *gfi_mim_reduced = in.pop().to_getfemint_mesh_im();
+         std::string varname_U = in.pop().to_string();
+         std::string varname_theta = in.pop().to_string();
+         std::string param_E = in.pop().to_string();
+         std::string param_nu = in.pop().to_string();
+         std::string param_epsilon = in.pop().to_string();
+         std::string param_kapa = in.pop().to_string();
+	 size_type variant = size_type(2);
+         if (in.remaining()) variant = in.pop().to_integer();
+         size_type region = size_type(-1);
+         if (in.remaining()) region = in.pop().to_integer();
+         size_type ind = add_Mindlin_Reissner_plate_brick
+         (md->model(), gfi_mim->mesh_im(), gfi_mim_reduced->mesh_im(),
+          varname_U, varname_theta, param_E, param_nu, param_epsilon,
+          param_kapa, variant, region);
+         workspace().set_dependance(md, gfi_mim);
+         out.pop().from_integer(int(ind));
+         );
+	
 
 
     /*@SET ind = ('add mass brick', @tmim mim, @str varname[, @str dataname_rho[, @int region]])

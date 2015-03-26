@@ -49,6 +49,45 @@ namespace getfem {
   */
   void add_2D_rotated_RT0_projection(model &md, std::string name);
 
+
+  /** Add a term corresponding to the classical Reissner-Mindlin plate
+      model for which `U` is the transverse displacement,
+      `Theta` the rotation of
+      fibers normal to the midplane, 'param_E' the Young Modulus,
+      `param_nu` the poisson ratio,
+      `param_epsilon` the plate thickness,
+      `param_kappa` the shear correction factor. Note that since this brick
+      uses the high level generic assembly language, the parameter can
+      be regular expression of this language.
+      There are three variants.
+      `variant = 0` corresponds to the an
+      unreduced formulation and in that case only the integration
+      method `mim` is used. Practically this variant is not usable since
+      it is subject to a strong locking phenomenon.
+      `variant = 1` corresponds to a reduced integration where `mim` is
+      used for the rotation term and `mim_reduced` for the transverse
+      shear term. `variant = 2` (default) corresponds to the projection onto
+      a rotated RT0 element of the transverse shear term. For the moment, this
+      is adapted to quadrilateral only (because it is not sufficient to
+      remove the locking phenomenon on triangle elements). Note also that if
+      you use high order elements, the projection on RT0 will reduce the order
+      of the approximation.
+      Returns the brick index in the model.
+   */
+  size_type add_Mindlin_Reissner_plate_brick
+  (model &md, const mesh_im &mim, const mesh_im &mim_reduced,
+   const std::string &U,
+   const std::string &Theta, const std::string &param_E,
+   const std::string &param_nu, const std::string &param_epsilon,
+   const std::string &param_kappa, size_type variant = size_type(2), 
+   size_type region = size_type(-1));
+
+
+
+
+
+
+
   /* ******************************************************************** */
   /*            Linear plate specific assembly procedures.                */
   /* ******************************************************************** */

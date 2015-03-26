@@ -1,7 +1,9 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2004-2015 Yves Renard
+ Copyright (C) 2004-2015 Yves Renard, Jeremie Lasry, Mathieu Fabre
+                         SECK Mamadou, DALLERIT Valentin
+ 
  
  This file is a part of GETFEM++
  
@@ -26,6 +28,75 @@
 
 
 namespace getfem {
+
+  size_type add_Mindlin_Reissner_plate_brick(model &md,
+                                             const mesh_im & mim,
+                                             const mesh_im & mim_red,
+                                             const std::string &U,
+                                             const std::string &Theta,
+                                             const std::string &param_E,
+                                             const std::string &param_nu,
+                                             const std::string &param_epsilon,
+                                             const std::string &param_kappa,
+                                             size_type variant,
+                                             size_type region) {
+    
+    
+    std::string test_U = "Test_" + sup_previous_and_dot_to_varname(U);
+    std::string test_Theta = "Test_" + sup_previous_and_dot_to_varname(Theta);
+    std::string proj_Theta = (variant == 2) ?
+      ("Elementary_transformation("+Theta+",_2D_rotated_RT0_projection__434)")
+      : Theta;
+    std::string proj_test_Theta = (variant == 2) ?
+      ("Elementary_transformation("+test_Theta
+       +",_2D_rotated_RT0_projection__434)") : test_Theta;
+    
+    std::string D = "(("+param_E+")*pow("+param_epsilon+
+      ",3))/(12*(1-sqr("+param_nu+")))";
+    std::string G = "(("+param_E+")*("+param_epsilon+"))*("+param_kappa+
+      ")/(2*(1+("+param_nu+")))";
+    std::string E_theta = "(Grad_" + Theta + "+(Grad_" + Theta + ")')/2";
+    std::string E_test_Theta="(Grad_"+test_Theta+"+(Grad_"+test_Theta+")')/2";
+    
+    std::string expr_left =
+      D+"*(( 1-("+param_nu+"))*("+E_theta+"):("+E_test_Theta+")+("+param_nu+
+      ")*Trace("+E_theta+")*Trace("+E_test_Theta+"))";
+    
+    std::string expr_right = 
+      "("+G+")*(Grad_"+U+"-"+proj_Theta+").Grad_"+test_U+
+      "-("+G+")*(Grad_"+U+"-"+proj_Theta+")."+proj_test_Theta;
+    
+    switch(variant) {
+    case 0: // Without reduction
+      return add_linear_generic_assembly_brick
+        (md, mim, expr_left+"+"+expr_right, region, false, false,
+         "Reissner-Mindlin plate model brick");
+    case 1: // With reduced integration
+      add_linear_generic_assembly_brick
+        (md, mim, expr_left, region, false, false,
+         "Reissner-Mindlin plate model brick, rotation term");
+      return add_linear_generic_assembly_brick
+        (md, mim_red, expr_right, region, false, false,
+         "Reissner-Mindlin plate model brick, transverse shear term");
+    case 2: // Variant with projection on rotated RT0
+      add_2D_rotated_RT0_projection(md, "_2D_rotated_RT0_projection__434");
+      return add_linear_generic_assembly_brick
+        (md, mim, expr_left+"+"+expr_right, region, false, false,
+         "Reissner-Mindlin plate model brick");
+      break;
+    default: GMM_ASSERT1(false, "Invalid variant for Reissner-Mindlin brick.");
+    }
+    return size_type(-1);
+  }
+  
+
+
+
+
+
+
+
+
 
 
   // For the moment, only projection onto rotated RT0 element in dimension 2

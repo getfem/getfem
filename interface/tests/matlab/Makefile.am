@@ -25,6 +25,7 @@ EXTRA_DIST= \
 	check_plasticity.m \
 	demo_elasticity.m \
 	demo_bilaplacian.m \
+	demo_Mindlin_Reissner_plate.m \
 	demo_laplacian.m \
 	demo_periodic_laplacian.m \
 	demo_laplacian1D.m \

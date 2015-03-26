@@ -232,14 +232,17 @@ namespace getfem {
 
   static void ga_throw_error_msg(const std::string &expr, size_type pos,
                                  const std::string &msg) {
+    int lenght_before = 40, lenght_after = 40;
     if (expr.size()) {
-      int first = std::max(0, int(pos)-40);
-      int last = std::min(int(pos)+20, int(expr.size()));
-      if (last - first < 60)
-      first = std::max(0, int(pos)-40-(60-last+first));
-      if (last - first < 60)
-        last = std::min(int(pos)+20+(60-last+first),int(expr.size()));
-
+      int first = std::max(0, int(pos)-lenght_before);
+      int last = std::min(int(pos)+lenght_after, int(expr.size()));
+      if (last - first < lenght_before+lenght_after)
+      first = std::max(0, int(pos)-lenght_before
+                       -(lenght_before+lenght_after-last+first));
+      if (last - first < lenght_before+lenght_after)
+        last = std::min(int(pos)+lenght_after
+                        +(lenght_before+lenght_after-last+first),
+                        int(expr.size()));
       if (first > 0) cerr << "...";
       cerr << expr.substr(first, last-first);
       if (last < int(expr.size())) cerr << "...";
@@ -6215,8 +6218,8 @@ namespace getfem {
             { test = 1; name = name.substr(5); }
 
           if (!(workspace.variable_exists(name)))
-            ga_throw_error(expr, pnode->pos,
-                           "Unknown variable, function, operator or data");
+            ga_throw_error(expr, pnode->pos, "Unknown variable, function, "
+                           "operator or data " + name);
 
           if (pnode->der1)
             ga_throw_error(expr, pnode->pos, "Derivative is for functions or "
