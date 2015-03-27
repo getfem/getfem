@@ -1560,6 +1560,12 @@ namespace getfem {
       std::map<var_trans_pair, base_tensor> derivatives;
     };
 
+    struct elementary_trans_info {
+      base_matrix M;
+      const mesh_fem *mf;
+      size_type icv;
+    };
+
     std::set<std::string> transformations;
 
     struct region_mim_instructions {
@@ -1579,6 +1585,7 @@ namespace getfem {
       std::map<std::string, std::set<std::string> > transformations;
       std::set<std::string> transformations_der;
       std::map<std::string, interpolate_info> interpolate_infos;
+      std::map<std::string, elementary_trans_info> elementary_trans_infos;
 
       ga_instruction_list instructions;
       std::map<scalar_type, std::list<pga_tree_node> > node_list;
@@ -2678,23 +2685,30 @@ namespace getfem {
   struct ga_instruction_elementary_transformation {
     const base_vector &coeff_in;
     base_vector coeff_out;
-    base_matrix M;
     pelementary_transformation elemtrans;
     const mesh_fem &mf;
     fem_interpolation_context &ctx;
+    base_matrix &M;
+    const mesh_fem **mf_M;
+    size_type &icv;
 
     void do_transformation(void) {
       size_type nn = gmm::vect_size(coeff_in);
+      if (M.size() == 0 || icv != ctx.convex_num() || &mf != *mf_M) {
+        gmm::resize(M, nn, nn);
+        *mf_M = &mf; icv = ctx.convex_num();
+        elemtrans->give_transformation(mf, icv, M);
+      }
       coeff_out.resize(nn);
-      gmm::resize(M, nn, nn);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
       gmm::mult(M, coeff_in, coeff_out); // remember: coeff == coeff_out
     }
 
     ga_instruction_elementary_transformation
     (const base_vector &co, pelementary_transformation e,
-     const mesh_fem &mf_, fem_interpolation_context &ctx_)
-      : coeff_in(co), elemtrans(e), mf(mf_), ctx(ctx_) {}
+     const mesh_fem &mf_, fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
+      : coeff_in(co), elemtrans(e), mf(mf_), ctx(ctx_),
+        M(M_), mf_M(mf_M_), icv(icv_) {}
     ~ga_instruction_elementary_transformation() {};
   };
 
@@ -2711,9 +2725,11 @@ namespace getfem {
     ga_instruction_elementary_transformation_val
     (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_val(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_) {}
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
+                                                 mf_M_, icv_) {}
   };
 
   struct ga_instruction_elementary_transformation_grad
@@ -2728,9 +2744,11 @@ namespace getfem {
     ga_instruction_elementary_transformation_grad
     (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_grad(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_) {}
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
+                                                 mf_M_, icv_) {}
   };
 
   struct ga_instruction_elementary_transformation_hess
@@ -2745,9 +2763,11 @@ namespace getfem {
     ga_instruction_elementary_transformation_hess
     (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_hess(tt, Z_, coeff_out, q),
-        ga_instruction_elementary_transformation(co, e, mf_, ctx_) {}
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
+                                                 mf_M_, icv_) {}
   };
 
   struct ga_instruction_update_group_info : public ga_instruction {
@@ -2960,25 +2980,28 @@ namespace getfem {
   struct ga_instruction_elementary_transformation_base {
     base_tensor t_in;
     base_tensor &t_out;
-    base_matrix M;
     pelementary_transformation elemtrans;
     const mesh_fem &mf;
     fem_interpolation_context &ctx;
+    base_matrix &M;
+    const mesh_fem **mf_M;
+    size_type &icv;
 
     void do_transformation(size_type n) {
-      gmm::resize(M, n, n);
-      elemtrans->give_transformation(mf, ctx.convex_num(), M);
-      // cout << "M = " << M << endl;
+      if (M.size() == 0 || icv != ctx.convex_num() || &mf != *mf_M) {
+        gmm::resize(M, n, n);
+        *mf_M = &mf; icv = ctx.convex_num();
+        elemtrans->give_transformation(mf, icv, M);
+      }
       t_out.mat_reduction(t_in, M, 0);
-      // cout << "t_out = " << t_out << endl;
-      // cout << "t_in = " << t_in << endl;
-      // gmm::copy(t_in.as_vector(), t_out.as_vector());
     }
 
     ga_instruction_elementary_transformation_base
     (base_tensor &t_, pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
-      : t_out(t_), elemtrans(e), mf(mf_), ctx(ctx_) {}
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
+      : t_out(t_), elemtrans(e), mf(mf_), ctx(ctx_),
+        M(M_), mf_M(mf_M_), icv(icv_) {}
   };
 
   struct ga_instruction_elementary_transformation_val_base
@@ -2999,9 +3022,11 @@ namespace getfem {
     ga_instruction_elementary_transformation_val_base
     (base_tensor &t_, base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_copy_val_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_) {}
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
+                                                      mf_M_, icv_) {}
   };
 
   struct ga_instruction_elementary_transformation_grad_base
@@ -3022,9 +3047,11 @@ namespace getfem {
     ga_instruction_elementary_transformation_grad_base
     (base_tensor &t_, base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_copy_grad_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_) {}
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
+                                                      mf_M_, icv_) {}
   };
 
   struct ga_instruction_elementary_transformation_hess_base
@@ -3045,9 +3072,11 @@ namespace getfem {
     ga_instruction_elementary_transformation_hess_base
     (base_tensor &t_, base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
-     fem_interpolation_context &ctx_)
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_copy_hess_base(t_in, Z_, q),
-        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_) {}
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
+                                                      mf_M_, icv_) {}
   };
 
 
@@ -7741,25 +7770,37 @@ namespace getfem {
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_ELEMENTARY_VAL:
-            pgai = new ga_instruction_elementary_transformation_val
-              (pnode->t, rmi.base[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-               workspace.elementary_transformation(pnode->elementary_name),
-               *mf, gis.ctx);
+            {
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_val
+                (pnode->t, rmi.base[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
             break;
           case GA_NODE_ELEMENTARY_GRAD:
-            pgai = new ga_instruction_elementary_transformation_grad
-              (pnode->t, rmi.grad[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-               workspace.elementary_transformation(pnode->elementary_name),
-               *mf, gis.ctx);
+            {
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_grad
+                (pnode->t, rmi.grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
             break;
           case GA_NODE_ELEMENTARY_HESS:
-            pgai = new ga_instruction_elementary_transformation_hess
-              (pnode->t, rmi.hess[mf],
-               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
-               workspace.elementary_transformation(pnode->elementary_name),
-               *mf, gis.ctx);
+            {
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_hess
+                (pnode->t, rmi.hess[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
             break;
           default: break;
           }
@@ -7870,22 +7911,34 @@ namespace getfem {
               (pnode->t, rmi.hess[mf], mf->get_qdim());
             break;
           case GA_NODE_ELEMENTARY_TEST:
-            pgai = new ga_instruction_elementary_transformation_val_base
-              (pnode->t, rmi.base[mf], mf->get_qdim(),
-               workspace.elementary_transformation(pnode->elementary_name),
-               *mf, gis.ctx);
+            {
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_val_base
+                (pnode->t, rmi.base[mf], mf->get_qdim(),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
             break;
           case GA_NODE_ELEMENTARY_GRAD_TEST:
-            pgai = new ga_instruction_elementary_transformation_grad_base
-              (pnode->t, rmi.grad[mf], mf->get_qdim(),
-               workspace.elementary_transformation(pnode->elementary_name),
-               *mf, gis.ctx);
+            {
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_grad_base
+                (pnode->t, rmi.grad[mf], mf->get_qdim(),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
             break;
           case GA_NODE_ELEMENTARY_HESS_TEST:
-            pgai = new ga_instruction_elementary_transformation_hess_base
-              (pnode->t, rmi.hess[mf], mf->get_qdim(),
-               workspace.elementary_transformation(pnode->elementary_name),
-               *mf, gis.ctx);
+            {
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_hess_base
+                (pnode->t, rmi.hess[mf], mf->get_qdim(),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
             break;
           default: break;
           }

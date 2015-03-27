@@ -109,13 +109,16 @@ namespace getfem {
     virtual void give_transformation(const mesh_fem &mf, size_type cv,
                                      base_matrix &M) const{
 
+      DEFINE_STATIC_THREAD_LOCAL(base_matrix, M_old);
+      DEFINE_STATIC_THREAD_LOCAL_INITIALIZED(pfem, pf_old, 0);
+        
       // Obtaining the fem descriptors
       pfem pf1 = mf.fem_of_element(cv);
       size_type N = 2;
       GMM_ASSERT1(pf1->dim() == 2, "This projection is only defined "
                   "for two-dimensional elements");
       size_type qmult =  N / pf1->target_dim();
-
+      
       bool simplex = false;
       if (pf1->ref_convex(cv) == bgeot::simplex_of_reference(dim_type(N))) {
         simplex = true;
@@ -126,7 +129,10 @@ namespace getfem {
         GMM_ASSERT1(false, "Cannot adapt the method for such an element.");
       }
 
-      // GMM_ASSERT1(pf1->is_equivalent(), "For tau-equivalent fem only."); // A remplacer par si non tau équivalent faire le calcul à chaque fois
+      if (pf1 == pf_old && pf1->is_equivalent() && M.size() == M_old.size()) {
+        gmm::copy(M_old, M);
+        return;
+      }
 
       std::stringstream fem_desc;
       fem_desc << "FEM_RT0" << (simplex ? "":"Q") << "(" << N << ")";
@@ -183,6 +189,7 @@ namespace getfem {
                   "Element not convenient for projection");
       gmm::mult(aux2, gmm::transposed(B), M);
       gmm::clean(M, 1E-15);
+      M_old = M; pf_old = pf1;
     }
   };
 

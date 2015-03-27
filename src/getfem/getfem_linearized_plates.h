@@ -51,7 +51,7 @@ namespace getfem {
 
 
   /** Add a term corresponding to the classical Reissner-Mindlin plate
-      model for which `U` is the transverse displacement,
+      model for which `u3` is the transverse displacement,
       `Theta` the rotation of
       fibers normal to the midplane, 'param_E' the Young Modulus,
       `param_nu` the poisson ratio,
@@ -76,16 +76,11 @@ namespace getfem {
    */
   size_type add_Mindlin_Reissner_plate_brick
   (model &md, const mesh_im &mim, const mesh_im &mim_reduced,
-   const std::string &U,
+   const std::string &u3,
    const std::string &Theta, const std::string &param_E,
    const std::string &param_nu, const std::string &param_epsilon,
    const std::string &param_kappa, size_type variant = size_type(2), 
    size_type region = size_type(-1));
-
-
-
-
-
 
 
   /* ******************************************************************** */
