@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2009-2012 Yves Renard.
+ Copyright (C) 2009-2015 Yves Renard.
  
  This file is a part of GETFEM++
  
@@ -38,8 +38,6 @@ using namespace getfemint;
   description of a model. This includes the global tangent matrix, the right
   hand side and the constraints. There are two kinds of models, the `real`
   and the `complex` models.
-
-  @tmodel object is the evolution for getfem++ 4.0 of the @tmdstate object.
 @*/
 
 void gf_model(getfemint::mexargs_in& in, getfemint::mexargs_out& out)

@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2001-2012 Y. Renard, J. Pommier.
+ Copyright (C) 2001-2015 Y. Renard, J. Pommier.
  
  This file is a part of GETFEM++
  
@@ -29,8 +29,6 @@
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
 #include <getfemint_mesh_im_data.h>
-#include <getfemint_mdbrick.h>
-#include <getfemint_mdstate.h>
 #include <getfemint_models.h>
 #include <getfemint_matelemtype.h>
 #include <getfemint_matelem.h>
@@ -78,8 +76,6 @@ namespace getfemint {
       "gfGlobalFunction",
       "gfInteg",
       "gfLevelSet",
-      "gfMdBrick",
-      "gfMdState",
       "gfMesh",
       "gfMeshFem",
       "gfMeshIm",
@@ -142,7 +138,6 @@ namespace getfemint {
     else return
       (cid != MESHFEM_CLASS_ID && cid != MESHIM_CLASS_ID &&
        cid != MESH_CLASS_ID &&
-       cid != MDBRICK_CLASS_ID && cid != MDSTATE_CLASS_ID &&
        cid != MODEL_CLASS_ID  &&
        cid != SLICE_CLASS_ID && cid != POLY_CLASS_ID &&
        cid != PRECOND_CLASS_ID && cid != GSPARSE_CLASS_ID &&
@@ -349,24 +344,6 @@ namespace getfemint {
     if (is_object_id(&id, &cid) && cid == MESHIMDATA_CLASS_ID) {
       getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
       return (object_is_mesh_im_data(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_mdbrick() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MDBRICK_CLASS_ID) {
-      getfem_object *o = workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mdbrick(o));
-    } else return false;
-  }
-
-  bool
-  mexarg_in::is_mdstate() {
-    id_type id, cid;
-    if (is_object_id(&id, &cid) && cid == MDSTATE_CLASS_ID) {
-      getfem_object *o=workspace().object(id, name_of_getfemint_class_id(cid));
-      return (object_is_mdstate(o));
     } else return false;
   }
 
@@ -649,30 +626,6 @@ namespace getfemint {
   getfem::mesh *
   mexarg_in::to_mesh() {
     return &to_getfemint_mesh()->mesh();
-  }
-
-  getfemint_mdbrick *
-  mexarg_in::to_getfemint_mdbrick(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MDBRICK_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a md-brick descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mdbrick(o);
-  }
-
-  getfemint_mdstate *
-  mexarg_in::to_getfemint_mdstate(bool writeable) {
-    id_type id, cid;
-    to_object_id(&id,&cid);
-    if (cid != MDSTATE_CLASS_ID) {
-      THROW_BADARG("argument " << argnum << " should be a md-state descriptor, its class is " << name_of_getfemint_class_id(cid));
-    }
-    getfem_object *o = workspace().object(id,name_of_getfemint_class_id(cid));
-    error_if_nonwritable(o,writeable);
-    return object_to_mdstate(o);
   }
 
   getfemint_model *

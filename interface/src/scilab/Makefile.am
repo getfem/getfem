@@ -57,7 +57,6 @@ EXTRA_DIST=builddoc.sce \
         demos/axrot_matrix.sci \
         tests/unit_tests/check_all.sce \
         tests/unit_tests/check_asm.sce \
-        tests/unit_tests/check_bricks.sce \
         tests/unit_tests/check_fem.sce \
         tests/unit_tests/check_geotrans.sce \
         tests/unit_tests/check_integ.sce \
@@ -77,7 +76,6 @@ EXTRA_DIST=builddoc.sce \
         demos/demo_crack.sce \
         demos/demo_fictitious_domains.sce \
         demos/demo_finallaplacian.sce \
-        demos/demo_laplacian1D.sce \
         demos/demo_laplacian.sce \
         demos/demo_mesh_generation.sce \
         demos/demo_mortar.sce \

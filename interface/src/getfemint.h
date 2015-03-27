@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2001-2012 Y. Renard, J. Pommier.
+ Copyright (C) 2001-2015 Y. Renard, J. Pommier.
  
  This file is a part of GETFEM++
  
@@ -92,8 +92,6 @@ namespace getfemint
   class getfemint_mesh_fem;
   class getfemint_mesh_im;
   class getfemint_mesh_im_data;
-  class getfemint_mdbrick;
-  class getfemint_mdstate;
   class getfemint_model;
   class getfemint_mesh_slice;
   class getfemint_precond;
@@ -399,8 +397,6 @@ namespace getfemint {
     bool                                 is_mesh_fem();
     bool                                 is_mesh_im();
     bool                                 is_mesh_im_data();
-    bool                                 is_mdbrick();
-    bool                                 is_mdstate();
     bool                                 is_model();
     bool                                 is_mesh_slice();
     bool                                 is_levelset();
@@ -435,8 +431,6 @@ namespace getfemint {
     getfemint_mesh_fem *                 to_getfemint_mesh_fem(bool writeable=false);
     getfemint_mesh_im *                  to_getfemint_mesh_im(bool writeable=false);
     getfemint_mesh_im_data *             to_getfemint_mesh_im_data(bool writeable=false);
-    getfemint_mdbrick *                  to_getfemint_mdbrick(bool writeable=false);
-    getfemint_mdstate *                  to_getfemint_mdstate(bool writeable=false);
     getfemint_model *                    to_getfemint_model(bool writeable=false);
     getfem::mesh *                       to_mesh();
     getfemint_mesh_slice *               to_getfemint_mesh_slice(bool writeable=false);

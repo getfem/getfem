@@ -673,8 +673,6 @@ To make all the things work automatically, a certain number of rules have to be 
 
         - ``@tcs``  for  ``@tcont_struct``
         - ``@tmf``  for  ``@tmesh_fem``
-        - ``@tbrick``  for  ``@tmdbrick``
-        - ``@tstate``  for  ``@tmdstate``
         - ``@tgt``  for  ``@tgeotrans``
         - ``@tgf``  for  ``@tglobal_function``
 	- ``@tmo``  for  ``@tmesher_object``

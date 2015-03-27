@@ -32,42 +32,36 @@ function varargout = %objid_get(varargin)
     // gfLevelSet
     varargout = gf_levelset_get(gf_obj,other_param(:));
   case 8 then
-    // gfMdBrick
-    varargout = gf_mdbrick_get(gf_obj,other_param(:));
-  case 9 then
-    // gfMdState
-    varargout = gf_mdstate_get(gf_obj,other_param(:));
-  case 10 then
     // gfMesh
     varargout = gf_mesh_get(gf_obj,other_param(:));
-  case 11 then
+  case 9 then
     // gfMeshFem
     varargout = gf_mesh_fem_get(gf_obj,other_param(:));
-  case 12 then
+  case 10 then
     // gfMeshIm
     varargout = gf_mesh_im_get(gf_obj,other_param(:));
-  case 13 then
+  case 11 then
     // gfMeshLevelSet
     varargout = gf_mesh_levelset_get(gf_obj,other_param(:));
-  case 14 then
+  case 12 then
     // gfMesherObject
     varargout = gf_mesher_object_get(gf_obj,other_param(:));
-  case 15 then
+  case 13 then
     // gfModel
     varargout = gf_model_get(gf_obj,other_param(:));
-  case 16 then
+  case 14 then
     // gfMultiContactFrame
     varargout = gf_multi_contact_frame_get(gf_obj,other_param(:));
-  case 17 then
+  case 15 then
     // gfPrecond
     varargout = gf_precond_get(gf_obj,other_param(:));
-  case 18 then
+  case 16 then
     // gfSlice
     varargout = gf_slice_get(gf_obj,other_param(:));
-  case 19 then
+  case 17 then
     // gfSpmat
     varargout = gf_spmat_get(gf_obj,other_param(:));
-  case 20 then
+  case 18 then
     // gfPoly
     // No gf_poly_get function
   else

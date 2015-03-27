@@ -39,12 +39,6 @@ PSEUDO_MFUNCTIONS = \
 	gf_mesh_im_data.cc \
 	gf_mesh_im_data_set.cc \
 	gf_mesh_im_data_get.cc \
-	gf_mdbrick.cc \
-	gf_mdbrick_get.cc \
-	gf_mdbrick_set.cc \
-	gf_mdstate.cc \
-	gf_mdstate_get.cc \
-	gf_mdstate_set.cc \
 	gf_model.cc \
 	gf_model_get.cc \
 	gf_model_set.cc \
@@ -114,9 +108,6 @@ libgetfemint_la_SOURCES = \
 	getfemint_mesh_fem.h \
 	getfemint_mesh_im.h \
 	getfemint_mesh_im_data.h \
-	getfemint_mdbrick.h \
-	getfemint_mdbrick.cc \
-	getfemint_mdstate.h \
 	getfemint_models.h \
 	getfemint_object.h \
 	getfemint_pgt.h \

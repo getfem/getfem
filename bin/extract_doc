@@ -221,8 +221,6 @@ def StandardObjectName(o):
   if   (o == 'cvstruct'): name = 'CvStruct'; initiales = 'CVS'
   elif (o == 'geotrans'): name = 'GeoTrans'; initiales = 'GT'
   elif (o == 'levelset'): name = 'LevelSet'; initiales = 'LS'
-  elif (o == 'mdbrick'):  name = 'MdBrick'; initiales = 'MDB'
-  elif (o == 'mdstate'):  name = 'MdState'; initiales = 'MDS'
   elif (o == 'mesh_levelset'):  name = 'MeshLevelSet'; initiales = 'MLS'
   else:
     # standard names
@@ -303,8 +301,6 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     d = string.replace(d, '@tcs',    'cont_struct')
     d = string.replace(d, '@tmcf',   'multi_contact_frame')
     d = string.replace(d, '@tmf',    'mesh_fem')
-    d = string.replace(d, '@tbrick', 'mdbrick')
-    d = string.replace(d, '@tstate', 'mdstate')
     d = string.replace(d, '@tgt',    'geotrans')
     d = string.replace(d, '@tgf',    'global_function')
     d = string.replace(d, '@tmo',    'mesher_object')
@@ -387,8 +383,6 @@ def FilterDoc(d, langage, objects, commands, set_replace = set()):
     # Authorized abbreviations
     d = string.replace(d, '@tcs',    'ContStruct')
     d = string.replace(d, '@tmf',    'MeshFem')
-    d = string.replace(d, '@tbrick', 'MdBrick')
-    d = string.replace(d, '@tstate', 'MdState')
     d = string.replace(d, '@tgt',    'GeoTrans')
     d = string.replace(d, '@tgf',    'GlobalFunction')
     d = string.replace(d, '@tmo',    'MesherObject')

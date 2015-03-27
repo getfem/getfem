@@ -27,7 +27,6 @@
 #endif
 #include <iomanip>
 #include <getfem/getfem_mat_elem.h>
-#include <getfemint_mdbrick.h>
 
 using namespace getfemint;
 
@@ -57,8 +56,6 @@ do_stat(id_type wid) {
     if (!obj.index()[it.index()]) THROW_INTERNAL_ERROR;
     if (match_workspace(wid)(*it)) {
       std::string subclassname;
-      if ((*it)->class_id() == MDBRICK_CLASS_ID)
-	subclassname = "(" + dynamic_cast<getfemint_mdbrick*>(*it)->sub_class() + ")";
       infomsg() << " ID" << std::setw(4) << (*it)->get_id() << " " 
 		<< std::setw(20) << name_of_getfemint_class_id((*it)->class_id())
 	        << std::setw(10) << subclassname 

@@ -26,30 +26,26 @@ function res = gf_typeof(gf_var)
   case 7 then
     res = 'gfLevelSet';
   case 8 then
-    res = 'gfMdBrick';
-  case 9 then
-    res = 'gfMdState';
-  case 10 then
     res = 'gfMesh';
-  case 11 then
+  case 9 then
     res = 'gfMeshFem';
-  case 12 then
+  case 10 then
     res = 'gfMeshIm';
-  case 13 then
+  case 11 then
     res = 'gfMeshLevelSet';
-  case 14 then
+  case 12 then
     res = 'gfMesherObject';
-  case 15 then
+  case 13 then
     res = 'gfModel';
-  case 16 then
+  case 14 then
     res = 'gfMultiContactFrame';
-  case 17 then
+  case 15 then
     res = 'gfPrecond';
-  case 18 then
+  case 16 then
     res = 'gfSlice';
-  case 19 then
+  case 17 then
     res = 'gfSpmat';
-  case 20 then
+  case 18 then
     res = 'gfPoly';
   else
     error('wrong object ID');

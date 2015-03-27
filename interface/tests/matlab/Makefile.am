@@ -12,7 +12,6 @@ EXTRA_DIST= \
 	check_all.m \
 	check_all.sh \
 	check_asm.m \
-	check_bricks.m \
 	check_fem.m \
 	check_geotrans.m \
 	check_integ.m \
@@ -28,7 +27,6 @@ EXTRA_DIST= \
 	demo_Mindlin_Reissner_plate.m \
 	demo_laplacian.m \
 	demo_periodic_laplacian.m \
-	demo_laplacian1D.m \
 	demo_nonlinear_elasticity.m \
 	demo_nonlinear_elasticity_anim.m \
 	demo_plasticity.m

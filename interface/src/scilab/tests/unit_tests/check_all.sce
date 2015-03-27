@@ -55,13 +55,6 @@ disp(['== ' t ': SUCCESS']);
 catch
 errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
-t = 'check_bricks [model bricks functions]        ';
-try
-exec('check_bricks.sce');
-disp(['== ' t ': SUCCESS']);
-catch
-errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
-end;
 if (errcnt),
   printf('\n\n== %d/11 tests FAILED\n', errcnt);
 else

@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2006-2013 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2015 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -53,8 +53,6 @@ typedef enum { CONT_STRUCT_CLASS_ID,
                GLOBAL_FUNCTION_CLASS_ID,
                INTEG_CLASS_ID,
                LEVELSET_CLASS_ID,
-               MDBRICK_CLASS_ID,
-               MDSTATE_CLASS_ID,
                MESH_CLASS_ID,
                MESHFEM_CLASS_ID,
                MESHIM_CLASS_ID,

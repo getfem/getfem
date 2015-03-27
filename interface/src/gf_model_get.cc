@@ -29,8 +29,9 @@
 #include <getfemint_models.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfem/getfem_generic_assembly.h>
+#include <getfem/getfem_nonlinear_elasticity.h>
+#include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_contact_and_friction_large_sliding.h>
-#include <getfemint_mdbrick.h>
 #include <getfemint_mesh_fem.h>
 #include <getfemint_mesh_im.h>
 

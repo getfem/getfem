@@ -88,14 +88,6 @@ catch
   errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
 
-t = 'check_bricks [model bricks functions]        ';
-try
-  check_bricks;
-  disp(['== ' t ': SUCCESS']);
-catch
-  errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
-end;
-
 t = 'check_plasticity [model brick complex generic assembly] ';
 try
   check_plasticity;
