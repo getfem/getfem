@@ -663,6 +663,8 @@ In that case, the equality will only be prescribed in the part of the domain whe
 
 **CAUTION**: You have to think that when some variables are used in the transformation, the computation of the tangent system takes into account these dependence. However, the second derivative of a transformation with respect to a variable used has not been implemented. Thus, such a transformation is not allowed in the definition of a potential since it cannot be derived twice.
 
+.. _ud-gasm-high-elem-trans:
+
 Elementary transformations
 **************************
 

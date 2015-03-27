@@ -22,20 +22,20 @@ Emodulus = 1;          % Young Modulus
 nu       = 0.5;        % Poisson Coefficient
 epsilon  = 0.001;      % Plate thickness
 kappa     = 5/6;       % Shear correction factor
-f = -10*epsilon^3;     % Prescribed force on the top of the plate
+f = -5*epsilon^3;      % Prescribed force on the top of the plate
 
-dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization
+variant = 2;           % 0 : not reduced, 1 : with reduced integration, 2 : MITC reduction
 quadrangles = true;    % Locking free only on quadrangle for the moment
 K = 1;                 % Degree of the finite element method
-variant = 1;           % 0 : not reduced, 1 : with reduced integration, 2 : MITC reduction
 with_Mindlin_brick = true; % Uses the Reissner-Mindlin predefined brick or not
+dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization
 
 plot_mesh = false;
 draw_solution = true;
 
 % trace on;
 gf_workspace('clear all');
-NX = 20;
+NX = 80;
 if (quadrangles)
   m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 else

@@ -14,6 +14,13 @@ References
 .. [bank1983] R.E. Bank, A.H. Sherman, A. Weiser,
    *Refinement algorithms and data structures for regular local mesh refinement*, in Scientific Computing IMACS, Amsterdam, North-Holland, pp 3-17, (1983).
 
+.. [ba-dv1985] K.J. Bathe, E.N. Dvorkin,
+   *A four-node plate bending element based on Mindlin-Reissner plate theory and a mixed interpolation*, Internat. J. Numer. Methods Engrg., 21 (1985), 367-383.
+
+.. [br-ba-fo1989] F. Brezzi, K.J. Bathe, M. Fortin,
+   *Mixed-interpolated element for Reissner-Mindlin plates*, Internat. J. Numer. Methods Engrg., 28 (1989), 1787-1801.
+
+
 .. [ca-re-so1994] D. Calvetti, L. Reichel and D.C. Sorensen.
    *An implicitely restarted Lanczos method for large symmetric eigenvalue problems*. Electronic Transaction on Numerical Analysis}. 2:1-21, (1994).
 
@@ -31,10 +38,16 @@ References
    *The Finite Element Method Displayed*, J. Wiley & Sons, New York, (1984).
 
 .. [Dh-Go-Ku2003] A. Dhooge, W. Govaerts and Y. A. Kuznetsov,
-   *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*, ACM Trans. Math. Software 31 (2003), 141-164.
+   *MATCONT: A MATLAB Package for Numerical Bifurcation Analysis of ODEs*,
+   ACM Trans. Math. Software 31 (2003), 141-164.
+
+.. [Duan2014] H. Duan,
+   *A finite element method for Reissner-Mindlin plates*,
+   Math. Comp., 83:286 (2014), 701-733.
 
 .. [Fa-Pa2003] F. Facchinei and J.-S. Pang,
-   *Finite-Dimensional Variational Inequalities and Complementarity Problems, Vol. II*, Springer Series in Operations Research, Springer, New York, 2003.
+   *Finite-Dimensional Variational Inequalities and Complementarity Problems, Vol. II*,
+   Springer Series in Operations Research, Springer, New York, 2003.
 
 .. [Georg2001] K. Georg,
    *Matrix-free numerical continuation and bifurcation*, Numer. Funct. Anal. Optimization 22 (2001), 303-320.
@@ -63,8 +76,11 @@ References
 .. [Li-Re2015hal] T. |ligursky| and Y. Renard,
    *A Method of Piecewise-Smooth Numerical Branching.* Submitted (2015). <`hal-01113564 <https://hal.archives-ouvertes.fr/hal-01113564>`_>
 
+.. [Mi-Zh2002] P. Ming and Z. Shi,
+   *Optimal L2 error bounds for MITC3 type element.* Numer. Math. 91 (2002), 77-91.
+
 .. [Xfem] N. Moes, J. Dolbow and T. Belytschko,
-   *A finite element method for crack growth without remeshing*, Int. J. Num. Meth. Engng. 46 (1999), 131-150.
+   *A finite element method for crack growth without remeshing*, Internat. J. Numer. Methods Engrg., 46 (1999), 131-150.
 
 .. [nedelec1991] J.-C. Nedelec.
    *Notions sur les techniques d'elements finis*, Ellipses, SMAI, Mathematiques & Applications no 7, (1991).
@@ -76,7 +92,7 @@ References
    *Domain decomposition algorithms for the p-version finite element method for elliptic problems*, Luca F. Pavarino. PhD thesis, Courant Institute of Mathematical Sciences}. 1992.
 
 .. [remacle2002] J-F. Remacle, M. Shephard,
-   *An algorithm oriented database*,  Int. J. Num. Meth. Engng. 58 (2003), 349-374.
+   *An algorithm oriented database*,  Internat. J. Numer. Methods Engrg., 58 (2003), 349-374.
 
 .. [so-se-do2004] P. |solin|, K. Segeth, I. |dolezel| ,
    *Higher-Order Finite Element Methods*, Chapman and Hall/CRC, Studies in advanced mathematics, 2004.
@@ -93,3 +109,9 @@ References
 .. |ligursky| unicode:: Ligursk U+00FD
 .. |solin| unicode:: U+0160 ol U+00ED n 
    :rtrim:
+
+
+.. For recent sphinx version, see http://sphinxcontrib-bibtex.readthedocs.org/en/latest/usage.html
+   .. bibliography:: biblio.bib
+   :style: unsrt
+   :all:

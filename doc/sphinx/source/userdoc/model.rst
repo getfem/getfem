@@ -53,6 +53,7 @@ The kernel of the model description is contained in the file
    model_linear_elasticity
    model_mass
    model_bilaplacian
+   model_Mindlin_plate
    model_time_integration
    model_nonlinear_elasticity
    model_contact_friction

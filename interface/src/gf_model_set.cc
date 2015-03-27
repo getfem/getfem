@@ -1924,10 +1924,10 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        );
 
 
-    /*@SET ind = ('add Reisner-Mindlin plate brick', @tmim mim, @tmim mim_reduced, @str varname_U, @str varname_theta , @str param_E, @str param_nu, @str param_epsilon, @str param_kappa [,@int variant [, @int region]])
+    /*@SET ind = ('add Reisner-Mindlin plate brick', @tmim mim, @tmim mim_reduced, @str varname_u3, @str varname_theta , @str param_E, @str param_nu, @str param_epsilon, @str param_kappa [,@int variant [, @int region]])
       Add a term corresponding to the classical Reissner-Mindlin plate
-      model for which `U` is the transverse displacement,
-      `Theta` the rotation of
+      model for which `varname_u3` is the transverse displacement,
+      `varname_theta` the rotation of
       fibers normal to the midplane, 'param_E' the Young Modulus,
       `param_nu` the poisson ratio,
       `param_epsilon` the plate thickness,
