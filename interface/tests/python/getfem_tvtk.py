@@ -30,7 +30,7 @@
   $Id$
 """
 try:
-    from enthought.tvtk.api import tvtk
+    from tvtk.api import tvtk
 except:
     print "\n\n** Could not load tvtk. Did you install it ?\n"
     print "   ( https://svn.enthought.com/enthought/wiki/TVTK ) **\n\n"

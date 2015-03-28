@@ -26,7 +26,6 @@ useKL = 1; // use the Kirchhoff-Love plate model, or just a pure
            // bilaplacian problem
 
 D = 1.0;   // Flexion modulus
-newbricks = 1; // Use new bricks or old ones.
 
 if useKL then NU=0.3; end; // poisson ratio (0 <= NU <= 1)
 
@@ -65,97 +64,53 @@ sol_u = gf_mesh_fem_get_eval(mfd,list(list(sprintf('sin(%g*(x+y))',FT))));
 sol_f = sol_u*FT*FT*FT*FT*N*N*D;
 sol_lapl_u = -FT*FT*sol_u*N;
 
-if (newbricks) then // uses new bricks
-  md = gf_model('real');
-  gf_model_set(md, 'add fem variable', 'u', mfu);
+md = gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
 
-  if useKL
-    gf_model_set(md, 'add initialized data', 'D', [D]);
-    gf_model_set(md, 'add initialized data', 'nu', [NU]);
-    gf_model_set(md, 'add Kirchhoff-Love plate brick', mim, 'u', 'D', 'nu');
-    M = zeros(N,N, gf_mesh_fem_get(mfd,'nbdof'));
-  else
-    gf_model_set(md, 'add initialized data', 'D', [D]);
-    gf_model_set(md, 'add bilaplacian brick', mim, 'u', 'D');
-    M = zeros(1, gf_mesh_fem_get(mfd, 'nbdof'));
-  end;
+if useKL
+  gf_model_set(md, 'add initialized data', 'D', [D]);
+  gf_model_set(md, 'add initialized data', 'nu', [NU]);
+  gf_model_set(md, 'add Kirchhoff-Love plate brick', mim, 'u', 'D', 'nu');
+  M = zeros(N,N, gf_mesh_fem_get(mfd,'nbdof'));
+else
+  gf_model_set(md, 'add initialized data', 'D', [D]);
+  gf_model_set(md, 'add bilaplacian brick', mim, 'u', 'D');
+  M = zeros(1, gf_mesh_fem_get(mfd, 'nbdof'));
+end;
 
-  gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, ...
-    	       gf_mesh_fem_get_eval(mfd, list(list('1-(x-y).^2'))));
-  gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_model_set(md, 'add initialized fem data', 'VolumicData', mfd, ...
+  	       gf_mesh_fem_get_eval(mfd, list(list('1-(x-y).^2'))));
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
   
-  gf_model_set(md, 'add initialized fem data', 'M', mfd, M);
-  gf_model_set(md, 'add normal derivative source term brick', mim, 'u', ...
-    	       'M', MOMENTUM_BOUNDARY);
+gf_model_set(md, 'add initialized fem data', 'M', mfd, M);
+gf_model_set(md, 'add normal derivative source term brick', mim, 'u', ...
+  	     'M', MOMENTUM_BOUNDARY);
 
-  if (useKL) then
-    H = zeros(N, N, gf_mesh_fem_get(mfd, 'nbdof'));
-    F = zeros(N, gf_mesh_fem_get(mfd, 'nbdof'));
-    gf_model_set(md, 'add initialized fem data', 'H', mfd, H);
-    gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
-    gf_model_set(md, 'add Kirchhoff-Love Neumann term brick', mim, 'u', ...
-		 'H', 'F', FORCE_BOUNDARY);
-  else
-    F = zeros(1, N, gf_mesh_fem_get(mfd, 'nbdof'));
-    gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
-    gf_model_set(md, 'add normal source term brick', mim, 'u', 'F', ...
-                 FORCE_BOUNDARY);
-  end;
+if (useKL) then
+  H = zeros(N, N, gf_mesh_fem_get(mfd, 'nbdof'));
+  F = zeros(N, gf_mesh_fem_get(mfd, 'nbdof'));
+  gf_model_set(md, 'add initialized fem data', 'H', mfd, H);
+  gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
+  gf_model_set(md, 'add Kirchhoff-Love Neumann term brick', mim, 'u', ...
+               'H', 'F', FORCE_BOUNDARY);
+else
+  F = zeros(1, N, gf_mesh_fem_get(mfd, 'nbdof'));
+  gf_model_set(md, 'add initialized fem data', 'F', mfd, F);
+  gf_model_set(md, 'add normal source term brick', mim, 'u', 'F', ...
+               FORCE_BOUNDARY);
+end;
  
-  gf_model_set(md, ...
- 	     'add normal derivative Dirichlet condition with penalization', ...
- 	       mim, 'u', 1e10, CLAMPED_BOUNDARY);
+gf_model_set(md, ...
+             'add normal derivative Dirichlet condition with penalization', ...
+ 	     mim, 'u', 1e10, CLAMPED_BOUNDARY);
  
-  gf_model_set(md, 'add Dirichlet condition with penalization', ...
-    	       mim, 'u', 1e10, SIMPLE_SUPPORT_BOUNDARY);
+gf_model_set(md, 'add Dirichlet condition with penalization', ...
+    	     mim, 'u', 1e10, SIMPLE_SUPPORT_BOUNDARY);
 
-  t0 = timer(); 
-  gf_model_get(md, 'solve', 'noisy');
-  U = gf_model_get(md, 'variable', 'u');
-  disp(sprintf('solve done in %.2f sec', timer()-t0));
-else // uses old bricks
-  if useKL then
-    b0 = gf_mdbrick('bilaplacian', mim, mfu, 'Kirchhoff-Love')
-    gf_mdbrick_set(b0, 'param','D', D);
-    gf_mdbrick_set(b0, 'param','nu', NU);
-    M = zeros(1, gf_mesh_fem_get(mfd,'nbdof'));
-  else
-    b0 = gf_mdbrick('bilaplacian', mim, mfu);
-    gf_mdbrick_set(b0, 'param','D', D);
-    M = zeros(1, gf_mesh_fem_get(mfd, 'nbdof'));
-  end
-
-  b1 = gf_mdbrick('source term', b0);
-  gf_mdbrick_set(b1, 'param', 'source_term', mfd, gf_mesh_fem_get_eval(mfd, list(list('1-(x-y).^2'))));
-
-  b2 = gf_mdbrick('normal derivative source term',b1,MOMENTUM_BOUNDARY);
-  gf_mdbrick_set(b2, 'param', 'source_term', mfd,M);
-
-  if (useKL) then
-    H = zeros(N*N, gf_mesh_fem_get(mfd, 'nbdof'));
-    F = zeros(N, gf_mesh_fem_get(mfd, 'nbdof'));
-    b3 = gf_mdbrick('neumann Kirchhoff-Love source term',b2,FORCE_BOUNDARY);
-    gf_mdbrick_set(b3, 'param', 'M', mfd, H);
-    gf_mdbrick_set(b3, 'param', 'divM', mfd, F);
-  else
-    F = zeros(1, N, gf_mesh_fem_get(mfd, 'nbdof'));
-    b3 = gf_mdbrick('normal source term', b2, FORCE_BOUNDARY);
-    gf_mdbrick_set(b3, 'param', 'normal_source_term', mfd, F);
-  end
-
-  b4 = gf_mdbrick('dirichlet on normal derivative', b3, mfd, CLAMPED_BOUNDARY, 'penalized');
-
-  b5 = gf_mdbrick('dirichlet', b4, SIMPLE_SUPPORT_BOUNDARY, mfd, 'penalized');
-
-  mds = gf_mdstate(b5);
-  disp('running solve... ');
-  t0  = timer(); 
-
-  gf_mdbrick_get(b5, 'solve', mds, 'noisy');
-  disp(sprintf('solve done in %.2f sec', timer()-t0));
-
-  U = gf_mdstate_get(mds, 'state');
-end
+t0 = timer(); 
+gf_model_get(md, 'solve', 'noisy');
+U = gf_model_get(md, 'variable', 'u');
+disp(sprintf('solve done in %.2f sec', timer()-t0));
 
 h = scf();
 h.color_map = jetcolormap(255);

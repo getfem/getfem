@@ -17,7 +17,7 @@
 
 
 disp('This is the "legacy" getfem-matlab demonstration')
-disp('This demo does not use the model bricks introduced with getfem 2.0')
+disp('This demo does not use the model bricks')
 disp('instead it show how the linear system is built with direct calls')
 disp('to the assembly routines.')
 

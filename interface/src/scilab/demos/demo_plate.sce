@@ -13,81 +13,123 @@ end
 gf_util('trace level',3);
 gf_util('warning level',3);
 
-// Plate problem test.
 
-NX        = 10.0;
-mixed     = %t;
-thickness = 0.01;
+% Simple supported Mindlin-Reissner plate
 
-m    = gf_mesh('regular simplices', 0:1/NX:1.01, 0:1/NX:1.01);
-mfut = gf_mesh_fem(m,2);
-mfu3 = gf_mesh_fem(m,1);
-mfth = gf_mesh_fem(m,2);
-mfd  = gf_mesh_fem(m,1);
 
-gf_mesh_fem_set(mfut,'fem',gf_fem('FEM_PK(2,2)'));
-gf_mesh_fem_set(mfu3,'fem',gf_fem('FEM_PK(2,1)'));
-gf_mesh_fem_set(mfth,'fem',gf_fem('FEM_PK(2,2)'));
-gf_mesh_fem_set(mfd, 'fem',gf_fem('FEM_PK(2,2)'));
-mim = gf_mesh_im(m, gf_integ('IM_TRIANGLE(5)'));
+Emodulus = 1;          % Young Modulus
+nu       = 0.5;        % Poisson Coefficient
+epsilon  = 0.001;      % Plate thickness
+kappa     = 5/6;       % Shear correction factor
+f = -5*epsilon^3;      % Prescribed force on the top of the plate
 
-// get the list of faces whose normal is [-1,0]
-flst = gf_mesh_get(m,'outer_faces');
-fnor = gf_mesh_get(m,'normal_of_faces',flst);
+variant = 2;           % 0 : not reduced, 1 : with reduced integration, 2 : MITC reduction
+quadrangles = true;    % Locking free only on quadrangle for the moment
+K = 1;                 % Degree of the finite element method
+with_Mindlin_brick = true; % Uses the Reissner-Mindlin predefined brick or not
+dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization
 
-fleft = flst(:,find(abs(fnor(1,:)+1) < 1e-14));
-fright= flst(:,find(abs(fnor(1,:)-1) < 1e-14));
-//fleft = compress(abs(fnor[1,:]+1) < 1e-14, flst, axis=1);
-//fright= compress(abs(fnor[1,:]-1) < 1e-14, flst, axis=1);
+plot_mesh = false;
+draw_solution = true;
 
-CLAMPED_BOUNDARY = 1;
-gf_mesh_set(m,'region',CLAMPED_BOUNDARY, fleft);
-SIMPLE_SUPPORT_BOUNDARY = 2
-gf_mesh_set(m,'region',SIMPLE_SUPPORT_BOUNDARY, fright);
-E  = 1e3;
-Nu = 0.3;
-Lambda = E*Nu/((1+Nu)*(1-2*Nu));
-Mu     = E/(2*(1+Nu));
-
-if ~mixed then
-  b0 = gf_mdbrick('isotropic_linearized_plate',mim,mim,mfut,mfu3,mfth,thickness);
+// trace on;
+gf_workspace('clear all');
+NX = 80;
+if (quadrangles)
+  m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 else
-  b0 = gf_mdbrick('mixed_isotropic_linearized_plate',mim,mfut,mfu3,mfth,thickness);
+  m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
 end
 
-b1 = gf_mdbrick('plate_source_term', b0);
-gf_mdbrick_set(b1,'param', 'M', mfd, [ones(1,441); gf_mesh_fem_get_eval(mfd,list(list('x(2)*x(2)/1000')))]); // YC: pb here
-b2 = gf_mdbrick('plate clamped support', b1, CLAMPED_BOUNDARY, 'augmented');
-b3 = gf_mdbrick('plate simple support', b2, SIMPLE_SUPPORT_BOUNDARY, 'augmented');
-b4 = b3;
-
-if mixed then
-  b4 = gf_mdbrick('plate closing', b3);
+// Create a mesh_fem of for a 2 dimension vector field
+mftheta = gf_mesh_fem(m,2);
+mfu = gf_mesh_fem(m,1);
+// Assign the QK or PK fem to all convexes of the mesh_fem, and define an
+// integration method
+if (quadrangles)
+  gf_mesh_fem_set(mftheta,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
+  gf_mesh_fem_set(mfu,'fem',gf_fem(sprintf('FEM_QK(2,%d)', K)));
+  mim = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,6)'));
+  mim_reduced = gf_mesh_im(m, gf_integ('IM_GAUSS_PARALLELEPIPED(2,1)'));
+else
+  gf_mesh_fem_set(mftheta,'fem',gf_fem(sprintf('FEM_PK(2,%d)', K)));
+  gf_mesh_fem_set(mfu,'fem',gf_fem(sprintf('FEM_PK(2,%d)', K)));
+  mim = gf_mesh_im(m, gf_integ('IM_TRIANGLE(6)'));
+  mim_reduced = gf_mesh_im(m, gf_integ('IM_TRIANGLE(1)'));
 end
 
-mds = gf_mdstate(b4);
+// detect the border of the mesh
+border = gf_mesh_get(m,'outer faces');
+// mark it as boundary #1
+gf_mesh_set(m, 'boundary', 1, border);
+if (plot_mesh)
+  gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
+  pause(1);
+end
 
-printf('running solve...\n');
-gf_mdbrick_get(b4,'solve',mds, 'noisy', 'lsolver','superlu');
-printf('solve done!\n');
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
+gf_model_set(md, 'add fem variable', 'theta', mftheta);
+gf_model_set(md, 'add initialized data', 'E', Emodulus);
+gf_model_set(md, 'add initialized data', 'nu', nu);
+gf_model_set(md, 'add initialized data', 'epsilon', epsilon);
+gf_model_set(md, 'add initialized data', 'kappa', kappa);
 
-U   = gf_mdstate_get(mds,'state');
-nut = gf_mesh_fem_get(mfut,'nbdof');
-nu3 = gf_mesh_fem_get(mfu3,'nbdof');
-nth = gf_mesh_fem_get(mfth,'nbdof');
 
-ut = U(1:nut); // YC: nut+1 ?
-u3 = U(nut+1:(nut+nu3));
-th = U((nut+nu3)+1:(nut+nu3+nth));
-sl = gf_slice(list('none'), mfu3, 4);
-gf_slice_get(sl,'export_to_vtk', path + '/plate.vtk', mfu3, u3, 'Displacement');
-gf_slice_get(sl,'export_to_pos', path + '/plate.pos', mfu3, u3,'Displacement');
+if (with_Mindlin_brick)
+  gf_model_set(md, 'add Mindlin Reissner plate brick', mim, mim_reduced, 'u', 'theta', 'E', 'nu', 'epsilon', 'kappa', variant);
+else
+  gf_model_set(md, 'add elementary rotated RT0 projection', 'RT0_projection');
+  gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*(1-nu)/(48 * (1 - nu*nu))) * ((Grad_theta+Grad_theta''):(Grad_Test_theta+Grad_Test_theta''))');
+  gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*nu/(12 * (1 - nu*nu))) * (Trace(Grad_theta)*Trace(Grad_Test_theta))');
+  if (variant == 0)
+    gf_model_set(md, 'add linear generic assembly brick', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
+  elseif (variant == 1)
+    gf_model_set(md, 'add linear generic assembly brick', mim_reduced, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
+  else
+    gf_model_set(md, 'add linear generic assembly brick', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + Elementary_transformation(theta,RT0_projection)).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + Elementary_transformation(theta, RT0_projection)).(Elementary_transformation(Test_theta, RT0_projection)))');  
+  end
+end
 
-printf('You can view the solution with (for example):\n');
-printf('mayavi -d %s/plate.vtk -f WarpScalar -m BandedSurfaceMap\n', path);
-printf('or\n');
-printf('mayavi2 -d %s/plate.vtk -f WarpScalar -m Surface\n', path);
-printf('or\n');
-printf('gmsh %s/plate.pos\n', path);
+gf_model_set(md, 'add initialized data', 'VolumicData', f);
 
-printf('demo plate terminated\n');
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
+gf_model_set(md, 'add initialized data', 'DirichletData', 0);
+switch (dirichlet_version)
+  case 0,
+    gf_model_set(md, 'add Dirichlet condition with simplification', 'u', 1, 'DirichletData');   
+  case 1, 
+    gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1, 'DirichletData');
+  case 2,
+    gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', r, 1, 'DirichletData');
+end
+gf_model_get(md, 'solve');
+U = gf_model_get(md, 'variable', 'u');
+
+if (draw)
+  gf_plot(mfu,U,'mesh','off', 'zplot', 'on'); 
+  colorbar; title('computed solution');
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

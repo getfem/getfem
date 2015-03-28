@@ -69,7 +69,6 @@ if (plot_mesh)
 end
 
 md=gf_model('real');
-gf_model_set(md, 'add elementary rotated RT0 projection', 'RT0_projection');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md, 'add fem variable', 'theta', mftheta);
 gf_model_set(md, 'add initialized data', 'E', Emodulus);
@@ -81,6 +80,7 @@ gf_model_set(md, 'add initialized data', 'kappa', kappa);
 if (with_Mindlin_brick)
   gf_model_set(md, 'add Mindlin Reissner plate brick', mim, mim_reduced, 'u', 'theta', 'E', 'nu', 'epsilon', 'kappa', variant);
 else
+  gf_model_set(md, 'add elementary rotated RT0 projection', 'RT0_projection');
   gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*(1-nu)/(48 * (1 - nu*nu))) * ((Grad_theta+Grad_theta''):(Grad_Test_theta+Grad_Test_theta''))');
   gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*nu/(12 * (1 - nu*nu))) * (Trace(Grad_theta)*Trace(Grad_Test_theta))');
   if (variant == 0)

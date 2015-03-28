@@ -37,30 +37,38 @@ border = gf_mesh_get(m,'outer_faces');
 // mark it as boundary #42
 gf_mesh_set(m,'region',42, border);
 
-// generic elliptic brick
-b0 = gf_mdbrick('generic elliptic', mim, mf);
 
-// list of parameters of the brick
-printf('List of parameters of the brick\n');
-disp(gf_mdbrick_get(b0,'param_list'));
+// empty real model
+md = gf_model('real');
 
-// add a Dirichlet condition on the domain boundary
+// declare that "u" is an unknown of the system
+// on the finite element method `mf`
+gf_model_set(md, 'add fem variable', 'u', mf);
 
-b1 = gf_mdbrick('dirichlet', b0, 42, mf, 'penalized');
+// add generic elliptic brick on "u"
+gf_model_set(md, 'add Laplacian brick', mim, 'u');
 
-// change Dirichlet condition
+// add Dirichlet condition
+Uexact = gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
+gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
-R = gf_mesh_fem_get_eval(mf,list(list('x(1)*(x(1)-1) - x(2)*(x(2)-1)')));
-gf_mdbrick_set(b1,'param','R', mf, R);
+// add source term
+f = gf_mesh_fem_get(mf, 'eval', { '2(x^2+y^2)-2(x+y)+20x^3' });
+gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, f);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
-// created model state
-mds = gf_mdstate('real');
-gf_mdbrick_get(b1,'solve',mds);
+// solve the linear system
+gf_model_get(md, 'solve');
 
 // extracted solution
-sol = gf_mdstate_get(mds,'state');
+u = gf_model_get(md, 'variable', 'u');
+
 
 // export computed solution
-gf_mesh_fem_get(mf,'export_to_pos', path + '/sol.pos',sol,'Computed solution');
+gf_mesh_fem_get(mf,'export_to_pos', path + '/sol.pos',u,'Computed solution');
+
+// display
+gf_plot(mf, u, 'mesh','on');
 
 printf('demo step_by_step terminated\n');

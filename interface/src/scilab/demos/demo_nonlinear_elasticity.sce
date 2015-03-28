@@ -26,8 +26,6 @@ for i=1:s
   r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; 
 end
 
-new_bricks = 1; // new brick system or old one.
-
 incompressible = 1;
 
 lawname = 'Ciarlet Geymonat';
@@ -99,36 +97,20 @@ gf_mesh_set(m,'boundary',1,ftop);
 gf_mesh_set(m,'boundary',2,fbot);
 gf_mesh_set(m,'boundary',3,[ftop fbot]);
 
-if (new_bricks) then
-  md = gf_model('real');
-  gf_model_set(md, 'add fem variable', 'u', mfu);
-  gf_model_set(md, 'add initialized data', 'params', params);
-  gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
-  if (incompressible) then
-    mfp = gf_mesh_fem(m,1); 
-    gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
-    gf_model_set(md, 'add fem variable', 'p', mfp);
-    gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p');
-  end
- 
-  gf_model_set(md, 'add fem data', 'DirichletData', mfd, 3);
-  gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', 1e10, 3, 'DirichletData');
-else
-  if ~incompressible then
-    b0 = gf_md_brick('nonlinear_elasticity', mim, mfu, lawname);
-    b1 = b0;
-    gf_md_brick_set(b1, 'param', 'params', params);
-  else
-    b0  = gf_mdbrick('nonlinear_elasticity', mim, mfu, lawname);
-    mfp = gf_mesh_fem(m,1); 
-    gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
-    b1  = gf_mdbrick('nonlinear_elasticity_incompressibility_term',b0,mfp);
-  end
-  //b2 = gf_mdbrick('dirichlet', b1, 2);
-  b3 = gf_mdbrick('dirichlet', b1, 3, mfu, 'penalized');
 
-  mds = gf_mdstate(b3);
+md = gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
+gf_model_set(md, 'add initialized data', 'params', params);
+gf_model_set(md, 'add nonlinear elasticity brick', mim, 'u', lawname, 'params');
+if (incompressible) then
+  mfp = gf_mesh_fem(m,1); 
+  gf_mesh_fem_set(mfp, 'classical discontinuous fem', 1);
+  gf_model_set(md, 'add fem variable', 'p', mfp);
+  gf_model_set(md, 'add nonlinear incompressibility brick',  mim, 'u', 'p');
 end
+ 
+gf_model_set(md, 'add fem data', 'DirichletData', mfd, 3);
+gf_model_set(md, 'add Dirichlet condition with penalization', mim, 'u', 1e10, 3, 'DirichletData');
 
 VM = zeros(1,gf_mesh_fem_get(mfdu,'nbdof'));
 
@@ -187,20 +169,11 @@ for step=1:nbstep
       R(:, i) = ro(1:3) - P(:,i);
     end
 
-    if (new_bricks) then
-      gf_model_set(md, 'variable', 'DirichletData', R);
-      gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
-      // full(gf_model_get(md, 'tangent matrix'))
-      U  = gf_model_get(md, 'variable', 'u');
-      VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
-    else 
-      gf_mdbrick_set(b3, 'param', 'R', mfd, R);
-      gf_mdbrick_get(b3, 'solve', mds, 'very noisy', 'max_iter', 100, 'max_res', 1e-5);
-      // full(gf_mdstate_get(mds, 'tangent matrix'))
-      U   = gf_mdstate_get(mds, 'state'); 
-      U   = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-      VM  = gf_mdbrick_get(b0, 'von mises', mds, mfdu);
-    end
+    gf_model_set(md, 'variable', 'DirichletData', R);
+    gf_model_get(md, 'solve', 'very noisy', 'max_iter', 100, 'max_res', 1e-5, 'lsearch', 'simplest');
+    // full(gf_model_get(md, 'tangent matrix'))
+    U  = gf_model_get(md, 'variable', 'u');
+    VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     UU  = [UU;U]; 
     VVM = [VVM;VM];
     save(path + '/demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char);

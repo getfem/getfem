@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM++
 #
@@ -27,8 +27,10 @@
 
   $Id$
 """
-from getfem import *
-from numpy import *
+
+import getfem as gf
+import numpy as np
+
 
 with_graphics=True
 try:
@@ -42,26 +44,28 @@ except:
 L=100
 H=20
 
-m=Mesh('triangles grid', arange(0, L + 0.01, 4), arange(0, H + 0.01, 2))
+m=gf.Mesh('triangles grid', np.arange(0, L + 0.01, 4), np.arange(0, H + 0.01, 2))
 
-mim=MeshIm(m, Integ('IM_TRIANGLE(6)'))
-mfu=MeshFem(m,2)
-mfd=MeshFem(m)
-mf0=MeshFem(m)
-mfdu=MeshFem(m)
+mim=gf.MeshIm(m, gf.Integ('IM_TRIANGLE(6)'))
+mfu=gf.MeshFem(m,2)
+mfsigma=gf.MeshFem(m,4)
+mfd=gf.MeshFem(m)
+mf0=gf.MeshFem(m)
+mfdu=gf.MeshFem(m)
 
-mfu.set_fem(Fem('FEM_PK(2,1)'))
-mfd.set_fem(Fem('FEM_PK(2,1)'))
-mf0.set_fem(Fem('FEM_PK(2,0)'))
-mfdu.set_fem(Fem('FEM_PK_DISCONTINUOUS(2,1)'));
+mfu.set_fem(gf.Fem('FEM_PK(2,1)'))
+mfsigma.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(2,1)'))
+mfd.set_fem(gf.Fem('FEM_PK(2,1)'))
+mf0.set_fem(gf.Fem('FEM_PK(2,0)'))
+mfdu.set_fem(gf.Fem('FEM_PK_DISCONTINUOUS(2,1)'))
 
 Lambda=121150
 Mu=80769
-von_mises_threshold=8000
+von_mises_threshold=4000
 
 P=m.pts()
-pidleft=compress((abs(P[0,:])<1e-6), range(0, m.nbpts()))
-pidright=compress((abs(P[0,:] - L)<1e-6), range(0, m.nbpts()))
+pidleft=np.compress((abs(P[0,:])<1e-6), range(0, m.nbpts()))
+pidright=np.compress((abs(P[0,:] - L)<1e-6), range(0, m.nbpts()))
 
 fleft  = m.faces_from_pid(pidleft)
 fright = m.faces_from_pid(pidright)
@@ -70,34 +74,39 @@ fright = m.faces_from_pid(pidright)
 m.set_region(1,fleft)
 m.set_region(2,fright)
 
-b0=MdBrick('small deformations plasticity',mim,mfu, von_mises_threshold)
-b0.set_param('lambda',Lambda)
-b0.set_param('mu',Mu)
-b1=MdBrick('generalized dirichlet',b0,1)
-b2=MdBrick('source term',b1,2)
+md = gf.Model('real')
+md.add_fem_variable('u', mfu, 2)
+md.add_fem_data('sigma', mfsigma)
+md.add_initialized_data('lambda', Lambda)
+md.add_initialized_data('mu', Mu)
+md.add_initialized_data('von_mises_threshold', von_mises_threshold)
+md.add_elastoplasticity_brick(mim, 'VM', 'u', 'lambda', 'mu', 'von_mises_threshold', 'sigma')
+md.add_initialized_data('VolumicData', [0,0])
+md.add_source_term_brick(mim, 'u', 'VolumicData')
+md.add_Dirichlet_condition_with_multipliers(mim, 'u', mfu, 1)
 
-mds=MdState(b2)
 
-F=array([[0,-200],[0, -300], [0, 200], [0, 0]])
+F=np.array([[0,-4.],[0, -6.], [0, 4.], [0, 0]])
 nbstep = F.shape[0]
 
-dd=mf0.dof_from_cvid()
+dd=mf0.basic_dof_from_cvid()
 
 print 'nbstep:', nbstep
 for step in range(0, nbstep):
     print 'step %d' % (step,)
-    b2.set_param('source_term', mfd, [F[step,0],F[step,1]])
-    b2.solve(mds, 'very noisy', 'max_iter', 1000, 'max_res', 1e-6)
-
-    U=mds.state()[0:mfu.nbdof()]
-    VM = b0.von_mises(mds, mfdu)
+    md.set_variable('VolumicData', [F[step,0],F[step,1]])
+    md.solve('noisy', 'lsearch', 'simplest',  'alpha min', 0.8, 'max_iter', 100, 'max_res', 1e-6)
+    U = md.variable('u')
+    md.elastoplasticity_next_iter(mim, 'u', 'VM', 'lambda', 'mu', 'von_mises_threshold', 'sigma');
+    
+    VM = md.compute_elastoplasticity_Von_Mises_or_Tresca('sigma', mfdu, 'Von Mises')
 
     #subplot(2,1,1);
     #gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,'deformation_mf',mfu,'refine', 4, 'deformation_scale',1);
     #colorbar;
     #caxis([0 10000]);
 
-    ERR=compute_error_estimate(mfu,U,mim)
+    ERR=gf.compute_error_estimate(mfu,U,mim)
     #E=ERR; E(dd)=ERR;
     #subplot(2,1,2);
     #gf_plot(mf0, E, 'mesh','on', 'refine', 1); colorbar;

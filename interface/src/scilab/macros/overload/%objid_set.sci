@@ -40,27 +40,30 @@ function %objid_set(varargin)
     // gfMeshIm
     gf_mesh_im_set(gf_obj,other_param(:));
   case 11 then
+    // gfMeshIm
+    gf_mesh_im_data_set(gf_obj,other_param(:));
+  case 12 then
     // gfMeshLevelSet
     gf_mesh_levelset_set(gf_obj,other_param(:));
-  case 12 then
+  case 13 then
     // gfMesherObject
     // No gf_mesher_object_set function
-  case 13 then
+  case 14 then
     // gfModel
     gf_model_set(gf_obj,other_param(:));
-  case 14 then
+  case 15 then
     // gfMultiContactFrame
     gf_multi_contact_frame_set(gf_obj,other_param(:));
-  case 15 then
+  case 16 then
     // gfPrecond
     // No gf_precond_set function
-  case 16 then
+  case 17 then
     // gfSlice
     gf_slice_set(gf_obj,other_param(:));
-  case 17 then
+  case 18 then
     // gfSpmat
     gf_spmat_set(gf_obj,other_param(:));
-  case 18 then
+  case 19 then
     // gfPoly
     // No gf_poly_set function
   else

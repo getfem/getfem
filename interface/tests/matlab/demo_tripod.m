@@ -17,7 +17,7 @@
 
 
 disp('This demo is an adaption of the original tripod demo')
-disp('which uses the old "brick" framework of getfem')
+disp('which uses the "brick" framework of getfem')
 disp('You can easily switch between linear/non linear')
 disp('compressible/incompressible elasticity!')
 
@@ -56,57 +56,61 @@ mu = E/(2*(1+Nu));
 
 % create a meshfem for the pressure field (used if incompressible ~= 0)
 mfp=gfMeshFem(m); set(mfp, 'fem',gfFem('FEM_PK_DISCONTINUOUS(3,0)'));
+
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
 if (linear)
   % the linearized elasticity , for small displacements
-  b0 = gfMdBrick('isotropic_linearized_elasticity',mim,mfu)
-  set(b0, 'param','lambda', lambda);
-  set(b0, 'param','mu', mu);
+  gf_model_set(md, 'add initialized data', 'cmu', [mu]);
+  gf_model_set(md, 'add initialized data', 'clambda', [lambda]);
+  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
+
   if (incompressible)
-    b1 = gfMdBrick('linear incompressibility term', b0, mfp);
-  else
-    b1 = b0;
+    gf_model_set(md, 'add fem variable', 'p', mfp);
+    gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');
   end;
 else
-  % See also demo_nonlinear_elasticity for a better example
+  params = [lambda;mu];
+  gf_model_set(md,'add initialized data','params', params);
   if (incompressible)
-    b0 = gfMdBrick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
-    b1 = gfMdBrick('nonlinear elasticity incompressibility term',b0,mfp);
-    set(b0, 'param','params',[lambda;mu]);
+    lawname = 'Incompressible Mooney Rivlin';
+    gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname,'params');
+    gf_model_set(md, 'add fem variable', 'p', mfp);
+    gf_model_set(md, 'add finite strain incompressibility brick',  mim, 'u', 'p');
   else
-    % large deformation with a linearized material law.. not
-    % a very good choice!
-    b0 = gfMdBrick('nonlinear elasticity',mim, mfu, 'SaintVenant Kirchhoff');
-    set(b0, 'param','params',[lambda;mu]);
-    %b0 = gfMdBrick('nonlinear elasticity',mim, mfu, 'Ciarlet Geymonat');
-    b1 = b0;
+    lawname = 'SaintVenant Kirchhoff';
+    gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname,'params');
   end;
 end
 
 % set a vertical force on the top of the tripod
-b2 = gfMdBrick('source term', b1, 1);
-set(b2, 'param', 'source_term', mfd, get(mfd, 'eval', {0;-10;0}));
+
+gf_model_set(md, 'add initialized data', 'VolumicData', [0;-10;0]);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
 % attach the tripod to the ground
-b3 = gfMdBrick('dirichlet', b2, 2, mfu, 'penalized');
-
-mds=gfMdState(b3)
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 2);
 
 disp('running solve...')
 
 t0=cputime; 
 
-get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
+gf_model_get(md, 'solve', 'noisy', 'max iter', 1);
+U = gf_model_get(md, 'variable', 'u');
+
 disp(sprintf('solve done in %.2f sec', cputime-t0));
 
 mfdu=gf_mesh_fem(m,1);
 % the P2 fem is not derivable across elements, hence we use a discontinuous
 % fem for the derivative of U.
 gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
-VM=get(b0, 'von mises',mds,mfdu);
+if (linear)
+  VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'clambda', 'cmu', mfdu);
+else
+  VM = gf_model_get(md, 'finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
+end
 
-U=get(mds, 'state'); U=U(1:get(mfu, 'nbdof'));
-
-disp('plotting ... can also take some minutes!');
+disp('plotting ... ');
 
 % we plot the von mises on the deformed object, in superposition
 % with the initial mesh.

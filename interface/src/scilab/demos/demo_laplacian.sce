@@ -58,16 +58,6 @@ gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 1, 'D
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
-// Version with old bricks
-// b0 = gf_mdbrick('generic elliptic',mim,mf);
-// b1 = gf_mdbrick('dirichlet', b0, 1, mf, 'penalized');
-// gf_mdbrick_set(b1, 'param', 'R', mf, Uexact); 
-// b2 = gf_mdbrick('source term',b1);
-// gf_mdbrick_set(b2, 'param', 'source_term', mf, F);
-// mds = gf_mdstate(b1);
-// gf_mdbrick_get(b2, 'solve', mds)
-// U = gf_mdstate_get(mds, 'state');
-
 disp(sprintf('H1 norm of error: %g', gf_compute(mf,U-Uexact,'H1 norm',mim)));
 
 h = scf();

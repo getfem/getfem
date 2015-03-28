@@ -140,12 +140,6 @@ EXTRA_DIST=builddoc.sce \
         help/en_US/gf_levelset_set.xml \
         help/en_US/gf_levelset.xml \
         help/en_US/gf_linsolve.xml \
-        help/en_US/gf_mdbrick_get.xml \
-        help/en_US/gf_mdbrick_set.xml \
-        help/en_US/gf_mdbrick.xml \
-        help/en_US/gf_mdstate_get.xml \
-        help/en_US/gf_mdstate_set.xml \
-        help/en_US/gf_mdstate.xml \
         help/en_US/gf_mesh_fem_get_eval.xml \
         help/en_US/gf_mesh_fem_get.xml \
         help/en_US/gf_mesh_fem_set.xml \

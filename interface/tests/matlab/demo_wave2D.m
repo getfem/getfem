@@ -1,4 +1,4 @@
-% Copyright (C) 2005-2012 Julien Pommier.
+% Copyright (C) 2005-2015 Julien Pommier.
 %
 % This file is a part of GETFEM++
 %
@@ -98,11 +98,9 @@ wave_expr=sprintf('cos(%f*y+.2)+1i*sin(%f*y+.2)',k,k);
 Uinc=get(mfd,'eval',{wave_expr});
 
 
-%
-% we present three approaches for the solution of the Helmholtz problem
-% - the first one is to use the new getfem "model bricks"
-% - the second one is to use the old getfem "model bricks"
-% - the third one is to use the "low level" approach, i.e. to assemble
+% we present two approaches for the solution of the Helmholtz problem
+% - the first one is to use the getfem "model bricks"
+% - the second one is to use the "low level" approach, i.e. to assemble
 %   and solve the linear systems.
 if 1,
   t0=cputime;
@@ -119,20 +117,6 @@ if 1,
 
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
-  disp(sprintf('solve done in %.2f sec', cputime-t0));
-elseif 0,
-  t0=cputime;
-  % solution using old model bricks
-  b0=gfMdBrick('helmholtz',mim,mfu);
-  set(b0,'param','wave_number', k);
-  b1=gfMdBrick('dirichlet',b0, 1, mfd, 'augmented');
-  set(b1,'param','R',mfd,Uinc);
-  b2=gfMdBrick('qu term',b1, 2); set(b2, 'param','Q',1i*k);
-  
-  mds=gfMdState(b2);
-  
-  get(b2, 'solve', mds, 'noisy');
-  U=get(mds, 'state'); U=U(1:mfu.nbdof);
   disp(sprintf('solve done in %.2f sec', cputime-t0));
 else
   % solution using the "low level" approach
@@ -185,7 +169,7 @@ for i=2:Nc,
 end;
 
 
-disp('the error won''t be less than ~1e-2 as long as a first order absorbing boundary condition will be used');
+disp('The error won''t be less than ~1e-2 as long as a first order absorbing boundary condition will be used');
 disp(sprintf('rel error ||Uex-U||_inf=%g',max(abs(Ud-Uex))/max(abs(Uex))));
 disp(sprintf('rel error ||Uex-U||_L2=%g',...
              gf_compute(mfd,Uex-Ud,'L2 norm',mim)/gf_compute(mfd,Uex,'L2 norm',mim)));

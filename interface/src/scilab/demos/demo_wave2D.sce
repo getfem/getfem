@@ -110,10 +110,9 @@ wave_expr = sprintf('cos(%f*y+.2)+1*%%i*sin(%f*y+.2)',k,k);
 Uinc      = gf_mesh_fem_get_eval(mfd,list(list(wave_expr)));
 
 //
-// we present three approaches for the solution of the Helmholtz problem
+// we present two approaches for the solution of the Helmholtz problem
 // - the first one is to use the new getfem "model bricks"
-// - the second one is to use the old getfem "model bricks"
-// - the third one is to use the "low level" approach, i.e. to assemble
+// - the second one is to use the "low level" approach, i.e. to assemble
 //   and solve the linear systems.
 if 1 then
   t0 = timer();
@@ -130,22 +129,6 @@ if 1 then
 
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
-  disp(sprintf('solve done in %.2f sec', timer()-t0));
-elseif 0 then
-  t0 = timer();
-  // solution using old model bricks
-  b0 = gf_mdbrick('helmholtz',mim,mfu);
-  gf_mdbrick_set(b0,'param','wave_number', k);
-  b1 = gf_mdbrick('dirichlet',b0, 1, mfd, 'augmented');
-  gf_mdbrick_set(b1,'param','R',mfd,Uinc);
-  b2 = gfmd_brick('qu term',b1, 2); 
-  gf_mdbrick_set(b2, 'param','Q',1i*k);
-  
-  mds = gf_mdstate(b2);
-  
-  gf_mdbrick_get(b2, 'solve', mds, 'noisy'); // BUG ? set or get ?
-  U = gf_mdstate_get(mds, 'state'); 
-  U = U(1:gf_mesh_fem_get(mfu,'nbdof'));
   disp(sprintf('solve done in %.2f sec', timer()-t0));
 else
   // solution using the "low level" approach

@@ -62,61 +62,61 @@ mu     = E/(2*(1+Nu));
 mfp = gf_mesh_fem(m); 
 gf_mesh_fem_set(mfp,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,0)'));
 
-if (linear) then
+
+
+
+md=gf_model('real');
+gf_model_set(md, 'add fem variable', 'u', mfu);
+if (linear)
   // the linearized elasticity , for small displacements
-  b0 = gf_mdbrick('isotropic linearized elasticity',mim,mfu);
-  gf_mdbrick_set(b0, 'param','lambda', lambda);
-  gf_mdbrick_set(b0, 'param','mu', mu);
-  if (incompressible) then
-    b1 = gf_mdbrick('linear incompressibility term', b0, mfp);
-  else
-    b1 = b0;
-  end
+  gf_model_set(md, 'add initialized data', 'cmu', [mu]);
+  gf_model_set(md, 'add initialized data', 'clambda', [lambda]);
+  gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambda', 'cmu');
+
+  if (incompressible)
+    gf_model_set(md, 'add fem variable', 'p', mfp);
+    gf_model_set(md, 'add linear incompressibility brick', mim, 'u', 'p');
+  end;
 else
-  // See also demo_nonlinear_elasticity for a better example
-  if (incompressible) then
-    b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'Mooney Rivlin');
-    b1 = gf_mdbrick('nonlinear elasticity incompressibility term',b0,mfp);
-    gf_mdbrick_set(b0, 'param','params',[lambda;mu]);
+  params = [lambda;mu];
+  gf_model_set(md,'add initialized data','params', params);
+  if (incompressible)
+    lawname = 'Incompressible Mooney Rivlin';
+    gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname,'params');
+    gf_model_set(md, 'add fem variable', 'p', mfp);
+    gf_model_set(md, 'add finite strain incompressibility brick',  mim, 'u', 'p');
   else
-    // large deformation with a linearized material law.. not
-    // a very good choice!
-    b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'SaintVenant Kirchhoff');
-    gf_mdbrick_set(b0, 'param','params',[lambda;mu]);
-    //b0 = gf_mdbrick('nonlinear elasticity',mim, mfu, 'Ciarlet Geymonat');
-    b1 = b0;
-  end
+    lawname = 'SaintVenant Kirchhoff';
+    gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', lawname,'params');
+  end;
 end
 
 // set a vertical force on the top of the tripod
-b2 = gf_mdbrick('source term', b1, 1);
-F = gf_mesh_fem_get_eval(mfd, list(list(0),list(-10),list(0)));
-gf_mdbrick_set(b2, 'param', 'source_term', mfd, F);
+
+gf_model_set(md, 'add initialized data', 'VolumicData', [0;-10;0]);
+gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
 // attach the tripod to the ground
-b3 = gf_mdbrick('dirichlet', b2, 2, mfu, 'penalized');
-
-mds = gf_mdstate(b3);
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 2);
 
 disp('running solve...')
 
-t0 = timer(); 
+gf_model_get(md, 'solve', 'noisy', 'max iter', 1);
+U = gf_model_get(md, 'variable', 'u');
 
-gf_mdbrick_get(b3, 'solve', mds, 'noisy', 'max_iter', 1000, 'max_res', 1e-6, 'lsolver', 'superlu');
-
-disp(sprintf('solve done in %.2f sec', timer() - t0));
-
-mfdu = gf_mesh_fem(m,1);
+mfdu=gf_mesh_fem(m,1);
 // the P2 fem is not derivable across elements, hence we use a discontinuous
 // fem for the derivative of U.
-
 gf_mesh_fem_set(mfdu,'fem',gf_fem('FEM_PK_DISCONTINUOUS(3,1)'));
-VM = gf_mdbrick_get(b0, 'von mises',mds,mfdu);
+if (linear)
+  VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'clambda', 'cmu', mfdu);
+else
+  VM = gf_model_get(md, 'finite strain elasticity Von Mises', 'u', lawname, 'params', mfdu);
+end
 
-U = gf_mdstate_get(mds, 'state'); 
-U = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
 
-disp('plotting ... can also take some minutes!');
+
+disp('plotting ...');
 
 h = scf();
 h.color_map = jetcolormap(255); //gf_colormap('tripod');

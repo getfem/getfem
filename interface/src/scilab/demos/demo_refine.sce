@@ -63,33 +63,16 @@ gf_model_set(md, 'add initialized data', 'VolumicData', F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1);
 
-// b0=gf_md_brick('isotropic_linearized_elasticity',mim, mfu);
-// b1=gf_md_brick('dirichlet',b0,1,mfu,'penalized');
-// b2=gf_md_brick('source term',b1,2);
-
-// gf_md_brick_set(b0, 'param', 'lambda', lambda);
-// gf_md_brick_set(b0, 'param', 'mu', mu);
-
-// mds = gf_md_state(b2)
-
 h = scf();
 h.color_map = jetcolormap(255);
 
 for step=1:8
   dd = gf_mesh_fem_get(mf0, 'basic dof from cvid');
   
-  // gf_md_brick_set(b2, 'param','source_term', mfd, F);
-
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
 
-  // gf_md_brick_get(b2, 'solve', mds, 'very noisy'); //, 'lsolver', 'superlu');
-  
-  // U = gf_md_state_get(mds, 'state'); U = U(1:gf_mesh_fem_get(mfu, 'nbdof'));
-  
   VM = gf_model_get(md, 'compute isotropic linearized Von Mises or Tresca', 'u', 'lambda', 'mu', mfdu);
-
-  // VM = gf_md_brick_get(b0, 'von mises', mds, mfdu);
 
   if (N==3) then 
     opt = list('cvlst', get(m,'outer_faces')); 

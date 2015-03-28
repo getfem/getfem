@@ -2,7 +2,7 @@
 # -*- coding: UTF8 -*-
 # Python GetFEM++ interface
 #
-# Copyright (C) 2004-2009 Yves Renard, Julien Pommier.
+# Copyright (C) 2004-2015 Yves Renard, Julien Pommier.
 #
 # This file is a part of GetFEM++
 #
@@ -26,32 +26,31 @@
 
   $Id$
 """
-from getfem import *
-from numpy import *
+import getfem as gf
+import numpy as np
+
 
 NX=10.0
-mixed = True
 thickness = 0.01;
+f = -5.*pow(thickness,3.);
 
-m=Mesh('regular simplices', arange(0,1.01,1/NX), arange(0,1.01,1/NX))
-mfut = MeshFem(m,2)
-mfu3 = MeshFem(m,1)
-mfth = MeshFem(m,2)
-mfd  = MeshFem(m,1)
+m=gf.Mesh('regular simplices', np.arange(0,1.01,1/NX), np.arange(0,1.01,1/NX))
+mfu3 = gf.MeshFem(m,1)
+mfth = gf.MeshFem(m,2)
+mfd  = gf.MeshFem(m,1)
 
-mfut.set_fem(Fem('FEM_PK(2,2)'))
-mfu3.set_fem(Fem('FEM_PK(2,1)'))
-mfth.set_fem(Fem('FEM_PK(2,2)'))
-mfd.set_fem(Fem('FEM_PK(2,2)'))
+mfu3.set_fem(gf.Fem('FEM_PK(2,1)'))
+mfth.set_fem(gf.Fem('FEM_PK(2,2)'))
+mfd.set_fem(gf.Fem('FEM_PK(2,2)'))
 
-mim = MeshIm(m, Integ('IM_TRIANGLE(5)'))
+mim = gf.MeshIm(m, gf.Integ('IM_TRIANGLE(5)'))
 
 
 #get the list of faces whose normal is [-1,0]
 flst = m.outer_faces();
 fnor = m.normal_of_faces(flst);
-fleft = compress(abs(fnor[1,:]+1) < 1e-14, flst, axis=1);
-fright= compress(abs(fnor[1,:]-1) < 1e-14, flst, axis=1);
+fleft = np.compress(abs(fnor[1,:]+1) < 1e-14, flst, axis=1);
+fright= np.compress(abs(fnor[1,:]-1) < 1e-14, flst, axis=1);
 CLAMPED_BOUNDARY = 1;
 m.set_region(CLAMPED_BOUNDARY, fleft);
 SIMPLE_SUPPORT_BOUNDARY = 2
@@ -59,48 +58,39 @@ m.set_region(SIMPLE_SUPPORT_BOUNDARY, fright);
 
 E=1e3
 Nu=0.3
-Lambda = E*Nu/((1+Nu)*(1-2*Nu))
-Mu =E/(2*(1+Nu))
 
 
-if not mixed:
-    b0 = MdBrick('isotropic_linearized_plate',mim,mim,mfut,mfu3,mfth,thickness)
-else:
-    b0 = MdBrick('mixed_isotropic_linearized_plate',mim,mfut,mfu3,mfth,thickness)
+md = gf.Model('real')
+md.add_fem_variable('u3', mfu3)
+md.add_fem_variable('theta', mfth)
+md.add_initialized_data('E', E)
+md.add_initialized_data('nu', Nu)
+md.add_initialized_data('epsilon', thickness)
+md.add_initialized_data('kappa', 5./6.)
+md.add_Mindlin_Reissner_plate_brick(mim, mim, 'u3', 'theta', 'E', 'nu', 'epsilon', 'kappa', 2)
+md.add_initialized_data('VolumicData', f)
+md.add_source_term_brick(mim, 'u3', 'VolumicData')
 
-b1 = MdBrick('plate_source_term', b0)
-b1.set('param', 'M', mfd, mfd.eval('[0, y*y/1000]'))
+md.add_Dirichlet_condition_with_multipliers(mim, 'u3', mfu3, CLAMPED_BOUNDARY);
+md.add_Dirichlet_condition_with_multipliers(mim, 'theta', mfth, CLAMPED_BOUNDARY);
+md.add_Dirichlet_condition_with_multipliers(mim, 'u3', mfu3, SIMPLE_SUPPORT_BOUNDARY);
+                                              
+                                             
 
-b2 = MdBrick('plate clamped support', b1, CLAMPED_BOUNDARY, 'augmented');
 
-b3 = MdBrick('plate simple support', b2, SIMPLE_SUPPORT_BOUNDARY, 'augmented');
-
-b4 = b3
-if mixed:
-    b4 = MdBrick('plate closing', b3)
-
-mds=MdState(b4)
 print 'running solve...'
-b4.solve(mds, 'noisy', 'lsolver','superlu')
+md.solve()
 print 'solve done!'
 
 
-U=mds.state()
-nut = mfut.nbdof()
-nu3 = mfu3.nbdof()
-nth = mfth.nbdof()
-ut=U[0:nut]
-u3=U[nut:(nut+nu3)]
-th=U[(nut+nu3):(nut+nu3+nth)]
+u3 = md.variable('u3')
 
 
-sl=Slice(('none',), mfu3, 4)
+sl=gf.Slice(('none',), mfu3, 4)
 sl.export_to_vtk('plate.vtk', mfu3, u3, 'Displacement')
-sl.export_to_pos('plate.pos', mfu3, u3,'Displacement')
+sl.export_to_pos('plate.pos', mfu3, u3, 'Displacement')
 
 print 'You can view the solution with (for example):'
-print 'mayavi -d ./plate.vtk -f WarpScalar -m BandedSurfaceMap'
-print 'or'
 print 'mayavi2 -d plate.vtk -f WarpScalar -m Surface'
 print 'or'
 print 'gmsh plate.pos'
