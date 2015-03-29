@@ -55,7 +55,7 @@ using bgeot::short_type;
 using bgeot::dim_type; 
 using bgeot::base_matrix; /* small dense matrix. */
 
-/* definition of some matrix/vector types. These ones are builtmayavi -d crack.vtk -f WarpVector -m BandedSurfaceMap -m Outline
+/* definition of some matrix/vector types. These ones are built
 
  * using the predefined types in Gmm++
  */
@@ -347,7 +347,6 @@ struct crack_problem {
 
   scalar_type residual;       /* max residual for the iterative solvers        */
   size_type conv_max;
-  unsigned dir_with_mult;
   
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -495,8 +494,6 @@ void crack_problem::init(void) {
   mf_mult.set_qdim(dim_type(N));
 
 
-  dir_with_mult = unsigned(PARAM.int_value("DIRICHLET_VERSINO"));
- 
   /* set the finite element on mf_rhs (same as mf_u is DATA_FEM_TYPE is
      not used in the .param file */
   std::string data_fem_name = PARAM.string_value("DATA_FEM_TYPE");
@@ -618,23 +615,29 @@ bool crack_problem::solve(plain_vector &U) {
       U.resize(mf_u().nb_dof());
       
       conv_to_refine.clear();
-      getfem::mdbrick_isotropic_linearized_elasticity<>
-	ELAS(mim, mf_u(), lambda, mu);
+
+      getfem::model model;
+  
+      // Main unknown of the problem.
+      model.add_fem_variable("u", mf_u());
+      plain_vector lambda_(mf_rhs.nb_dof(), lambda);
+      model.add_initialized_fem_data("lambda", mf_rhs, lambda_);
+      plain_vector mu_(mf_rhs.nb_dof(), mu);
+      model.add_initialized_fem_data("mu", mf_rhs, mu_);
+      getfem::add_isotropic_linearized_elasticity_brick
+        (model, mim, "u", "lambda", "mu");
       
       
       if(bimaterial == 1){
-	GMM_ASSERT1(!ELAS.lambda().mf().is_reduced(), "To be adapted");
+	GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
 	cout<<"______________________________________________________________________________"<<endl;
 	cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
 	cout<<"______________________________________________________________________________"<<endl;
-	std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
-	std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
+	plain_vector bi_lambda(mf_rhs.nb_dof());
+	plain_vector bi_mu(mf_rhs.nb_dof());
 	
-	cout << "ELAS.lambda().mf().nb_dof()==="
-	     << ELAS.lambda().mf().nb_dof() << endl;
-	
-	for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-	  if (ELAS.lambda().mf().point_of_basic_dof(ite)[1] > 0){
+	for (size_type ite = 0; ite < mf_rhs.nb_dof(); ite++) {
+	  if (mf_rhs.point_of_basic_dof(ite)[1] > 0){
 	    bi_lambda[ite] = lambda_up;
 	    bi_mu[ite] = mu_up;
 	  }
@@ -643,88 +646,77 @@ bool crack_problem::solve(plain_vector &U) {
 	    bi_mu[ite] = mu_down;
 	  }
 	} 
-	//cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
-	// cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-	
-	ELAS.lambda().set(bi_lambda);
-	ELAS.mu().set(bi_mu);
+
+        gmm::copy(bi_lambda, model.set_real_variable("lambda"));
+	gmm::copy(bi_mu, model.set_real_variable("mu"));
       }
       
       
       // Defining the volumic source term.
-      
-      
       plain_vector F(nb_dof_rhs * N);
       getfem::interpolation_function(mf_rhs, F, sol_f);
-      
-      // Volumic source term brick.
-      getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+      model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+      getfem::add_source_term_brick(model, mim, "u", "VolumicData");
+
       
       // Defining the Neumann condition right hand side.
       
       // Neumann condition brick.
+
+      if (!all_dirichlet) {
       
-      getfem::mdbrick_abstract<> *pNEUMANN;
+        gmm::clear(F);
+        for(size_type i = 0; i<F.size(); i=i+2) {F[i] = F41; F[i+1] = F42;}
+        model.add_initialized_fem_data("NeumannData_down", mf_rhs, F);
+        getfem::add_source_term_brick
+          (model, mim, "u", "NeumannData_down", NEUMANN_BOUNDARY_NUM_down);
       
-      gmm::clear(F);
-      for(size_type i = 0; i<F.size(); i=i+2) 
-	{F[i] = F41; F[i+1] = F42;}
+        gmm::clear(F);
+        for(size_type i = 0; i<F.size(); i=i+2)  {F[i] = F21; F[i+1] = F22;}
+        model.add_initialized_fem_data("NeumannData_right", mf_rhs, F);
+        getfem::add_source_term_brick
+          (model, mim, "u", "NeumannData_right", NEUMANN_BOUNDARY_NUM_right);
       
-      getfem::mdbrick_source_term<> NEUMANN_down(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM_down);
+        gmm::clear(F);
+        for(size_type i = 0; i<F.size(); i=i+2) {F[i] = F31; F[i+1] = F32;}
+        model.add_initialized_fem_data("NeumannData_right_down", mf_rhs, F);
+        getfem::add_source_term_brick
+          (model, mim, "u", "NeumannData_right_down",
+           NEUMANN_BOUNDARY_NUM_right+1);
       
-      gmm::clear(F);
-      for(size_type i = 0; i<F.size(); i=i+2) 
-	{F[i] = F21; F[i+1] = F22;}
-      
-      getfem::mdbrick_source_term<> NEUMANN_right_up(NEUMANN_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right);
-      
-      
-      gmm::clear(F);
-      for(size_type i = 0; i<F.size(); i=i+2) 
-	{F[i] = F31; F[i+1] = F32;}
-      
-      getfem::mdbrick_source_term<> NEUMANN_right_down(NEUMANN_right_up, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right+1);
-      
-      gmm::clear(F);
-      for(size_type i = 0; i<F.size(); i=i+2) 
-	{F[i] = F11; F[i+1] = F12;}
-      
-      getfem::mdbrick_source_term<> NEUMANN_up(NEUMANN_right_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_up);
-      
-      if (all_dirichlet){
-	cout << "Exact -DIRICHLET- Mode I problem..." << endl;
-	pNEUMANN = & VOL_F;
+        gmm::clear(F);
+        for(size_type i = 0; i<F.size(); i=i+2) {F[i] = F11; F[i+1] = F12;}
+        model.add_initialized_fem_data("NeumannData_up", mf_rhs, F);
+        getfem::add_source_term_brick
+          (model, mim, "u", "NeumannData_up", NEUMANN_BOUNDARY_NUM_up);
       }
-      else 
-	pNEUMANN = & NEUMANN_up; 
       
-      //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
-      //assert(toto.mf.nb_dof() == 1);
-      
+
       // Dirichlet condition brick.
-      getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
-					      mf_mult);
-      if(all_dirichlet){
+      if (all_dirichlet) {
 #ifdef VALIDATE_XFEM
-	final_model.rhs().set(exact_sol.mf,exact_sol.U);
+        model.add_initialized_fem_data("DirichletData", exact_sol.mf,
+                                       exact_sol.U);
+        getfem::add_Dirichlet_condition_with_multipliers
+          (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+#else
+        getfem::add_Dirichlet_condition_with_multipliers
+          (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
 #endif
       } else {
-#ifdef VALIDATE_XFEM
-	final_model.rhs().set(exact_sol.mf,0);
-#endif
+        getfem::add_Dirichlet_condition_with_multipliers
+          (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
       }
-      final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
+ 
       
       // Generic solve.
-      cout << "Total number of variables : " << final_model.nb_dof() << endl;
-      getfem::standard_model_state MS(final_model);
+      cout << "Total number of variables : " << model.nb_dof() << endl;
       gmm::iteration iter(residual, 1, 40000);
-      
-      //getfem::standard_solve(MS, final_model, iter);
-      getfem::standard_solve(MS, final_model, iter, getfem::select_linear_solver(final_model, "superlu"));
+      getfem::standard_solve(model, iter);
       
       // Solution extraction
-      gmm::copy(ELAS.get_solution(MS), U);
+      gmm::resize(U, mf_u().nb_dof());
+      gmm::copy(model.real_variable("u"), U);
       iteration = iter.converged();  
       
       // Adapted Refinement (suivant une erreur a posteriori)
@@ -772,7 +764,7 @@ bool crack_problem::solve(plain_vector &U) {
 
   }break;
     
-  case 12:{
+  case 12: {
     int mode_counter = 1;
     plain_vector W12;
     W12.clear();
@@ -814,109 +806,107 @@ bool crack_problem::solve(plain_vector &U) {
 	}
 
 	conv_to_refine.clear();
-	getfem::mdbrick_isotropic_linearized_elasticity<>
-	  ELAS(mim, mf_u(), lambda, mu);
+
+        getfem::model model;
+  
+        // Main unknown of the problem.
+        model.add_fem_variable("u", mf_u());
+        plain_vector lambda_(mf_rhs.nb_dof(), lambda);
+        model.add_initialized_fem_data("lambda", mf_rhs, lambda_);
+        plain_vector mu_(mf_rhs.nb_dof(), mu);
+        model.add_initialized_fem_data("mu", mf_rhs, mu_);
+        getfem::add_isotropic_linearized_elasticity_brick
+          (model, mim, "u", "lambda", "mu");
 	
 	
 	if(bimaterial == 1){
-	  cout<<"______________________________________________________________________________"<<endl;
-	  cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
-	  cout<<"______________________________________________________________________________"<<endl;
-	  std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
-	  std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
-	  
-	  cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-	  
-	  for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-	    if (ELAS.lambda().mf().point_of_basic_dof(ite)[1] > 0){
-	      bi_lambda[ite] = lambda_up;
-	      bi_mu[ite] = mu_up;
-	    }
-	    else{
-	      bi_lambda[ite] = lambda_down;
-	      bi_mu[ite] = mu_down;
-	    }
-	  } 
-	  //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
-	  // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-	  
-	  ELAS.lambda().set(bi_lambda);
-	  ELAS.mu().set(bi_mu);
-	}
+          GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
+          cout<<"______________________________________________________________________________"<<endl;
+          cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
+          cout<<"______________________________________________________________________________"<<endl;
+          plain_vector bi_lambda(mf_rhs.nb_dof());
+          plain_vector bi_mu(mf_rhs.nb_dof());
+          
+          for (size_type ite = 0; ite < mf_rhs.nb_dof(); ite++) {
+            if (mf_rhs.point_of_basic_dof(ite)[1] > 0){
+              bi_lambda[ite] = lambda_up;
+              bi_mu[ite] = mu_up;
+            }
+            else{
+              bi_lambda[ite] = lambda_down;
+              bi_mu[ite] = mu_down;
+            }
+          } 
+          
+          gmm::copy(bi_lambda, model.set_real_variable("lambda"));
+          gmm::copy(bi_mu, model.set_real_variable("mu"));
+        }
 	
 	
 	// Defining the volumic source term.
 	
-	
-	plain_vector F(nb_dof_rhs * N);
-	getfem::interpolation_function(mf_rhs, F, sol_f);
-	
 	// Volumic source term brick.
-	getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+        plain_vector F(nb_dof_rhs * N);
+	getfem::interpolation_function(mf_rhs, F, sol_f);
+        model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+        getfem::add_source_term_brick(model, mim, "u", "VolumicData");
 	
 	// Defining the Neumann condition right hand side.
 	
 	// Neumann condition brick.
 	
-	getfem::mdbrick_abstract<> *pNEUMANN;
-	
-	gmm::clear(F);
-	for(size_type i = 0; i<F.size(); i=i+2) 
-	  {F[i] = F41; F[i+1] = F42;}
-	
-	getfem::mdbrick_source_term<> NEUMANN_down(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM_down);
-	
-	gmm::clear(F);
-	for(size_type i = 0; i<F.size(); i=i+2) 
-	  {F[i] = F21; F[i+1] = F22;}
-	
-	getfem::mdbrick_source_term<> NEUMANN_right_up(NEUMANN_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right);
-	
-	
-	gmm::clear(F);
-	for(size_type i = 0; i<F.size(); i=i+2) 
-	  {F[i] = F31; F[i+1] = F32;}
-	
-	getfem::mdbrick_source_term<> NEUMANN_right_down(NEUMANN_right_up, mf_rhs, F,NEUMANN_BOUNDARY_NUM_right+1);
-	
-	gmm::clear(F);
-	for(size_type i = 0; i<F.size(); i=i+2) 
-	  {F[i] = F11; F[i+1] = F12;}
-	
-	getfem::mdbrick_source_term<> NEUMANN_up(NEUMANN_right_down, mf_rhs, F,NEUMANN_BOUNDARY_NUM_up);
-	
-	if (all_dirichlet)
-	  pNEUMANN = & VOL_F; 
-	else 
-	  pNEUMANN = & NEUMANN_up; 
-	
-	//toto_solution toto(mf_rhs.linked_mesh()); toto.init();
-	//assert(toto.mf.nb_dof() == 1);
-	
-	// Dirichlet condition brick.
-	getfem::mdbrick_Dirichlet<> final_model(*pNEUMANN, DIRICHLET_BOUNDARY_NUM,
-						mf_mult);
-	if(all_dirichlet){
+        if (!all_dirichlet) {
+          
+          gmm::clear(F);
+          for(size_type i = 0; i<F.size(); i=i+2) {F[i] = F41; F[i+1] = F42;}
+          model.add_initialized_fem_data("NeumannData_down", mf_rhs, F);
+          getfem::add_source_term_brick
+            (model, mim, "u", "NeumannData_down", NEUMANN_BOUNDARY_NUM_down);
+          
+          gmm::clear(F);
+          for(size_type i = 0; i<F.size(); i=i+2)  {F[i] = F21; F[i+1] = F22;}
+          model.add_initialized_fem_data("NeumannData_right", mf_rhs, F);
+          getfem::add_source_term_brick
+            (model, mim, "u", "NeumannData_right", NEUMANN_BOUNDARY_NUM_right);
+          
+          gmm::clear(F);
+          for(size_type i = 0; i<F.size(); i=i+2) {F[i] = F31; F[i+1] = F32;}
+          model.add_initialized_fem_data("NeumannData_right_down", mf_rhs, F);
+          getfem::add_source_term_brick
+            (model, mim, "u", "NeumannData_right_down",
+             NEUMANN_BOUNDARY_NUM_right+1);
+          
+          gmm::clear(F);
+          for(size_type i = 0; i<F.size(); i=i+2) {F[i] = F11; F[i+1] = F12;}
+          model.add_initialized_fem_data("NeumannData_up", mf_rhs, F);
+          getfem::add_source_term_brick
+            (model, mim, "u", "NeumannData_up", NEUMANN_BOUNDARY_NUM_up);
+        }
+
+        // Dirichlet condition brick.
+        if (all_dirichlet) {
 #ifdef VALIDATE_XFEM
-	  final_model.rhs().set(exact_sol.mf,exact_sol.U);
+          model.add_initialized_fem_data("DirichletData", exact_sol.mf,
+                                         exact_sol.U);
+          getfem::add_Dirichlet_condition_with_multipliers
+            (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM,"DirichletData");
+#else
+          getfem::add_Dirichlet_condition_with_multipliers
+            (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
 #endif
-	} else {
-#ifdef VALIDATE_XFEM
-	  final_model.rhs().set(exact_sol.mf,0);
-#endif
-	}
-	final_model.set_constraints_type(getfem::constraints_type(dir_with_mult));
+        } else {
+          getfem::add_Dirichlet_condition_with_multipliers
+            (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
+        }
 	
 	// Generic solve.
-	cout << "Total number of variables : " << final_model.nb_dof() << endl;
-	getfem::standard_model_state MS(final_model);
-	gmm::iteration iter(residual, 1, 40000);
-	
-	// getfem::standard_solve(MS, final_model, iter);
-	getfem::standard_solve(MS, final_model, iter, getfem::select_linear_solver(final_model, "superlu"));
+        cout << "Total number of variables : " << model.nb_dof() << endl;
+        gmm::iteration iter(residual, 1, 40000);
+        getfem::standard_solve(model, iter);
 
 	// Solution extraction
-	gmm::copy(ELAS.get_solution(MS), U);
+        gmm::resize(U, mf_u().nb_dof());
+        gmm::copy(model.real_variable("u"), U);
 	iteration = iter.converged();  
 	
 	// Adapted Refinement (suivant une erreur a posteriori)
