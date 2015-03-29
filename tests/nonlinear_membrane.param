@@ -134,7 +134,7 @@ INTEGRATION = 'IM_TRIANGLE(3)'; % quadrature rule for polynomials up	PK fem
 %INTEGRATION = 'IM_STRUCTURED_COMPOSITE(IM_TRIANGLE(7), 3)';
 
 RESIDUAL = 1E-8;     	% residu for iterative solvers.
-MAXITER = 15;
+MAXITER = 100;
 DIRICHLET_VERSION=0;
 NBSTEP =10;
 %%%%%   saving parameters                                             %%%%%

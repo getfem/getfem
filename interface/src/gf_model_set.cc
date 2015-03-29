@@ -33,7 +33,9 @@
 #include <getfemint_mesh_im_data.h>
 #include <getfemint_gsparse.h>
 #include <getfemint_multi_contact_frame.h>
-#include <getfem/getfem_Coulomb_friction.h>
+#include <getfem/getfem_contact_and_friction_nodal.h>
+#include <getfem/getfem_contact_and_friction_integral.h>
+#include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_plasticity.h>
 #include <getfem/getfem_fourth_order.h>

@@ -44,7 +44,7 @@ return global_dof ;
 scalar_type D  = 1.  ;
 scalar_type nu = 0.3 ;
 scalar_type AAA = 0.1 ;    // mode II
-scalar_type BB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;
+scalar_type BBB = AAA * (3. * nu + 5.)/ (3. * (nu - 1.))   ;
 scalar_type DD = 0.0 ;   // mode 1
 scalar_type CC = DD * (nu + 7.)/ (3. * (nu - 1.))   ;
 scalar_type EE = 0.0 ;           // singul 61
@@ -60,7 +60,7 @@ scalar_type sol_u(const base_node &x){
  scalar_type r = sqrt( x[0] * x[0] + x[1] * x[1] ) ;
  //scalar_type theta = 2. * atan( x[1] / ( x[0] + r ) ) ;
  scalar_type theta = atan2(x[1], x[0]);
- return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0)) + EE * x[1] * (10. * x[1] * x[1]* x[1] + 1.) ;
+ return sqrt(r*r*r)*(AAA*sin(theta/2.0)+BBB*sin(3.0/2.0*theta)+CC*cos(3.0/2.0*theta)+DD*cos(theta/2.0)) + EE * x[1] * (10. * x[1] * x[1]* x[1] + 1.) ;
 
 }
 
@@ -83,7 +83,7 @@ void exact_solution_bilap::init(getfem::level_set &ls) {
   mf.set_functions(cfun);
   U.resize(11); assert(mf.nb_dof() == 11);
   U[0] = AAA ;
-  U[1] = BB ;
+  U[1] = BBB ;
   U[2] = CC ;
   U[3] = DD ;
   U[4] = EE ;
@@ -359,10 +359,8 @@ void bilaplacian_crack_problem::init(void) {
   epsilon = PARAM.real_value("EPSILON", "thickness") ;
   nu = PARAM.real_value("NU", "nu") ;
   D = PARAM.real_value("D", "Flexure modulus") ;
-  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version") );
   int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version") );
   int cv = int(PARAM.int_value("CLOSING_VERSION") );  
-  dirichlet_version = getfem::constraints_type(dv);
   mortar_version = getfem::constraints_type(mv);
   closing_version = getfem::constraints_type(cv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
@@ -954,9 +952,19 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
   scalar_type pressure ;
   pressure = PARAM.real_value("PRESSURE") ;
   // Bilaplacian brick.
-  getfem::mdbrick_bilaplacian<> BIL(mim, mf_u());
-  BIL.D().set(D);
-  if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
+
+  getfem::model model;
+  
+  // Main unknown of the problem.
+  model.add_fem_variable("u", mf_u());
+
+  model.add_initialized_scalar_data("D", D);
+  if (KL) {
+    model.add_initialized_scalar_data("nu", nu);
+    getfem::add_bilaplacian_brick_KL(model, mim, "u", "D", "nu");
+  } else {
+    getfem::add_bilaplacian_brick(model, mim, "u", "D");
+  }
 
   // Defining the volumic source term.
   size_type nb_dof_rhs = mf_rhs.nb_dof();
@@ -967,110 +975,38 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
      gmm::scale(F, pressure) ;
      }
   //Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(BIL, mf_rhs, F);
-  
-  // Defining the moment condition (for free edge condition)
-  size_type N ; N = mesh.dim() ;
-  gmm::resize(F, nb_dof_rhs*N*N);
-  gmm::clear(F) ;
-  getfem::mdbrick_normal_derivative_source_term<>
-     MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
-  // Defining the imposed force condtion (also for free edge condition)
-  plain_vector tensor_H(nb_dof_rhs*N*N);
-  gmm::resize(F, nb_dof_rhs*N);
-  
-  getfem::mdbrick_abstract<> *NEUMANN;
-  NEUMANN = new getfem::mdbrick_neumann_KL_term<>
-       (MOMENTUM, mf_rhs, tensor_H, F, FORCE_BOUNDARY_NUM);
-  
-  // Defining the normal derivative Dirichlet condition value.
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
 
-  /* WRONG !! 
-
-    F.resize(nb_dof_rhs*N);
-  getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
-
-  // Normal derivative Dirichlet condition brick. 
-  getfem::mdbrick_normal_derivative_Dirichlet<>                   
-    NDER_DIRICHLET(BIL, CLAMPED_BOUNDARY_NUM, mf_mult);
-
-  NDER_DIRICHLET.set_constraints_type(dirichlet_version);
-  NDER_DIRICHLET.rhs().set(mf_rhs, F);
-  */
-
-  //gmm::resize(U, mf_u().nb_dof());  return true;
-
-
-  // Normal derivative Dirichlet condition brick. 
-  getfem::mdbrick_normal_derivative_Dirichlet<>                   
-    NDER_DIRICHLET(*NEUMANN, CLAMPED_BOUNDARY_NUM, mf_mult_d);
-/*  if (sol_ref == 2) 
-    std::fill(exact_sol.U.begin(), exact_sol.U.end(), 0.) ;*/   
-    
-  NDER_DIRICHLET.set_constraints_type(dirichlet_version);
-  NDER_DIRICHLET.R_must_be_derivated(); // hence we give the exact solution , and its gradient will be taken
-  NDER_DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-    NDER_DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
-  
-
-//   // Defining the normal derivative Dirichlet condition value.
-//   gmm::resize(F, nb_dof_rhs*2);
-//   gmm::clear(F);
-//   getfem::interpolation_function(mf_rhs, F, sol_du, CLAMPED_BOUNDARY_NUM);
-// 
-//   // Normal derivative Dirichlet condition brick
-//   getfem::mdbrick_normal_derivative_Dirichlet<> 
-// 	NDER_DIRICHLET(VOL_F, CLAMPED_BOUNDARY_NUM, mf_mult);
-// 
-//     
-//   NDER_DIRICHLET.set_constraints_type(dirichlet_version);
-//   NDER_DIRICHLET.rhs().set(mf_rhs, F);
-
-  // Defining the Dirichlet condition value.
-  gmm::resize(F, nb_dof_rhs);
-  
-  // Dirichlet condition brick.
-
-  getfem::mdbrick_Dirichlet<>
-    DIRICHLET_0(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); //mfls_mult
-  DIRICHLET_0.rhs().set(exact_sol.mf,exact_sol.U);
-  DIRICHLET_0.set_constraints_type(getfem::constraints_type(dirichlet_version));  
-  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-    DIRICHLET_0.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;  
-  
-  getfem::mdbrick_Dirichlet<>
-    DIRICHLET_2(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult); 
-  //DIRICHLET_2.rhs().set(exact_sol.mf,exact_sol.U);  
-  DIRICHLET_2.set_constraints_type(getfem::constraints_type(dirichlet_version));  
-  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-    DIRICHLET_2.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;  
-  
-  getfem::mdbrick_abstract<> *DIRICHLET = &DIRICHLET_0 ;  
+  // Normal derivative Dirichlet condition brick
+  model.add_initialized_fem_data("DData", exact_sol.mf, exact_sol.U);
   if (sol_ref == 2)
-     DIRICHLET = &DIRICHLET_2 ;   
-
+    add_normal_derivative_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult_d, CLAMPED_BOUNDARY_NUM, "DData", true);
+  else
+    add_normal_derivative_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult_d, CLAMPED_BOUNDARY_NUM);
   
-  //getfem::interpolation_function(mf_rhs, F, sol_u, SIMPLE_SUPPORT_BOUNDARY_NUM);
-  //DIRICHLET.rhs().set(mf_rhs, F) ;  -> wrong (near the crack).
+  if (sol_ref == 2)
+    add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, SIMPLE_SUPPORT_BOUNDARY_NUM);
+  else
+    add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, SIMPLE_SUPPORT_BOUNDARY_NUM, "DData");
+  
 
-  getfem::mdbrick_abstract<> *final_model = DIRICHLET ;
+
+
   
   sparse_matrix H(1, mf_u().nb_dof());
   if (enrichment_option == 3 ) {
      /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
 
-    getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(*DIRICHLET, 0));
-    mortar.set_constraints_type(getfem::constraints_type(mortar_version));
-    if (mortar_version == getfem::PENALIZED_CONSTRAINTS)
-      mortar.set_penalization_parameter(PARAM.real_value("EPS_MORTAR_PENAL")) ;
-
     // calcul des matrices de contraintes
     plain_vector R(1) ;
 //     sparse_matrix H(1, mf_u().nb_dof());
-    (*this).set_matrix_mortar(H) ;
+    this->set_matrix_mortar(H) ;
 
     /* because of the discontinuous partition of mf_u(), some levelset 
        enriched functions do not contribute any more to the
@@ -1092,18 +1028,14 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
       }
     }  
     gmm::resize(R, gmm::mat_nrows(H)); 
-    mortar.set_constraints(H,R);
-    final_model = &mortar;
+    model.add_fixed_size_variable("mult_mo", gmm::mat_nrows(H));
+    getfem::add_constraint_with_multipliers(model, "u", "mult_mo", H, R);
     gmm::Harwell_Boeing_save("H.hb", H);
 
   }
 
   if ( PARAM.real_value("SEUIL_FINAL")!=0 ) { 
   // suppression of nodes with a very small term on the stiffness matrix diag
-    getfem::mdbrick_constraint<> &extra = *(new getfem::mdbrick_constraint<>(*DIRICHLET, 0));
-    extra.set_constraints_type(getfem::constraints_type(dirichlet_version));  
-    if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-      extra.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL"));
 
     sparse_matrix M2(mf_u().nb_dof(), mf_u().nb_dof());
     sparse_matrix H1(0, mf_u().nb_dof());
@@ -1127,36 +1059,31 @@ bool bilaplacian_crack_problem::solve(plain_vector &U) {
 	H1(n, d) = 1;
       }
     }
-    base_vector R(gmm::mat_nrows(H1)); 
-    extra.set_constraints(H1,R);
-    final_model = &extra;
+    base_vector R(gmm::mat_nrows(H1));
+    model.add_fixed_size_variable("mult_fi", gmm::mat_nrows(H1));
+    getfem::add_constraint_with_multipliers(model, "u", "mult_fi", H1, R);
     gmm::Harwell_Boeing_save("M2.hb", M2);
   }
 
   
-  cout << "Total number of variables : " << final_model->nb_dof() << endl;
-  getfem::standard_model_state MS(*final_model);
+  cout << "Total number of variables : " << model.nb_dof() << endl;
   gmm::iteration iter(residual, 1, 40000);
+  getfem::standard_solve(model, iter);
 
-
-  // getfem::useful_types<getfem::standard_model_state>::plsolver_type p;
-  // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
-
-  getfem::standard_solve(MS, *final_model, iter /* , p*/);
   
   // Solution extraction
   gmm::resize(U, mf_u().nb_dof());
-  gmm::copy(BIL.get_solution(MS), U);
+  gmm::copy(model.real_variable("u"), U);
 
   /****************************/
   if (PARAM.int_value("FIC_ORTHO") ) {
 
-	sparse_matrix A = MS.reduced_tangent_matrix() ;
-	plain_vector b = MS.residual() ;
+	sparse_matrix A = model.real_tangent_matrix() ;
+	plain_vector b = model.real_rhs() ;
 	gmm::scale(b, -1.) ;
 	plain_vector X(b) ;
 	scalar_type condest ;
-	SuperLU_solve(A, X, b, condest, 1) ;
+	SuperLU_solve(A, X, gmm::scaled(b, scalar_type(-1)), condest, 1) ;
 	cout << "cond super LU = " << 1./condest << "\n" ;
 	cout << "X = " << gmm::sub_vector(X, gmm::sub_interval(0, 10)) << "\n" ;
 	cout << "U = " << gmm::sub_vector(U, gmm::sub_interval(0, 10)) << "\n" ;

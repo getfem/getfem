@@ -105,6 +105,10 @@ namespace getfem {
    */
   CONTACT_B_MATRIX &contact_brick_set_BN(model &md, size_type indbrick);
 
+  /** Can be used to set the stationary option
+   */
+  void contact_brick_set_stationary(model &md, size_type indbrick);
+
   /** Can be used to change the matrix DN of a basic contact/friction brick
    */
   CONTACT_B_MATRIX &contact_brick_set_DN(model &md, size_type indbrick);

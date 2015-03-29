@@ -234,7 +234,6 @@ bool elastostatic_problem::solve(plain_vector &U) {
   // Volumic source term brick.
   model.add_initialized_fem_data("VolumicData", mf_rhs, F);
   getfem::add_source_term_brick(model, mim, "u", "VolumicData");
-  // getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
 
   // Dirichlet condition
   plain_vector F2(nb_dof_rhs * N);

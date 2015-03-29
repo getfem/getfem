@@ -138,7 +138,6 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_contact_and_friction_large_sliding.h \
 	getfem/getfem_contact_and_friction_nodal.h	\
 	getfem/getfem_contact_and_friction_integral.h	\
-	getfem/getfem_Coulomb_friction.h          	\
 	getfem/getfem_nonlinear_elasticity.h      	\
 	getfem/getfem_fourth_order.h              	\
 	getfem/getfem_Navier_Stokes.h             	\

@@ -22,17 +22,13 @@ SIMPLEX_INTEGRATION = 'IM_TRIANGLE(6)'; % quadrature rule for polynomials up
                                    % to degree 6 on tetra
 				   
 
-NX = 11;                       % space step.
+NX = 21;                       % space step.
 MITC = 0;
 MESH_NOISE = 0;                % Set to one if you want to "shake" the mesh
 SOL_EXACTE = 0 ;               % Set to one if you want to compute de norms of the exact solution
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 DATA_FEM_TYPE = 'FEM_QK(2,1)';
-
-DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
-
-
 
 CUTOFF=0.3;
 ENRICHMENT_OPTION = 2	% 0 = without enrichment

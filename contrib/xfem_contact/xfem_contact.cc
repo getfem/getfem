@@ -32,7 +32,7 @@
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_mesh_im_level_set.h"
 #include "getfem/getfem_partial_mesh_fem.h"
-#include "getfem/getfem_Coulomb_friction.h"
+#include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_import.h"
 #include "gmm/gmm.h"
 
@@ -220,40 +220,41 @@ int main(int argc, char *argv[]) {
 
  
     // Mass matrix on the boundary
-    sparse_matrix B(nb_dof_mult, nb_dof);
+    getfem::CONTACT_B_MATRIX B(nb_dof_mult, nb_dof);
     getfem::asm_mass_matrix(B, mimbound, mf_mult, mf);
 
     // Brick system
-    getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
+    getfem::model model;
+    model.add_fem_variable("u", mf);
+    model.add_initialized_scalar_data("a", 1.);
+    getfem::add_generic_elliptic_brick(model, mim, "u", "a");
 
-    getfem::mdbrick_Dirichlet<>
-      brick_dirichlet(brick_laplacian, dirichlet_boundary, pre_mf_mult);
     plain_vector F(nb_dof_rhs);
     getfem::interpolation_function(mf_rhs, F, u_exact, dirichlet_boundary);
-    brick_dirichlet.rhs().set(mf_rhs, F);
-    brick_dirichlet.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
+    model.add_initialized_fem_data("DData", mf_rhs, F);
+    getfem::add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, dirichlet_boundary, "DData");
     
-    getfem::mdbrick_source_term<> brick_volumic_rhs(brick_dirichlet);
     getfem::interpolation_function(mf_rhs, F, rhs);
-    brick_volumic_rhs.source_term().set(mf_rhs, F);
-
-    getfem::mdbrick_constraint<> brick_constraint(brick_volumic_rhs);
-    brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
-    brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
-
-    getfem::mdbrick_Coulomb_friction<>
-      brick_signorini(brick_volumic_rhs, B, plain_vector(nb_dof_mult));
+    model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+    getfem::add_source_term_brick(model, mim, "u", "VolumicData");
     
-    getfem::mdbrick_abstract<> *final_brick = &brick_constraint;
-    if (signorini) final_brick = &brick_signorini;
-    
+    model.add_fixed_size_variable("mult_n", nb_dof_mult);
+
+    if (signorini) {
+      model.add_initialized_scalar_data("r", 1);
+      getfem::add_basic_contact_brick(model, "u", "mult_n", "r", B);
+    } else {
+      getfem::add_constraint_with_multipliers(model, "u", "mult_n", B,
+                                              plain_vector(nb_dof_mult));
+    }
+
     // Solving the problem
-    cout << "Total number of unknown: " << final_brick->nb_dof() << endl;
-    getfem::standard_model_state MS(*final_brick);
+    cout << "Total number of unknown: " << model.nb_dof() << endl;
     gmm::iteration iter(1e-9, 1, 40000);
-    getfem::standard_solve(MS, *final_brick, iter);
+    getfem::standard_solve(model, iter);
     plain_vector U(nb_dof);
-    gmm::copy(brick_laplacian.get_solution(MS), U);
+    gmm::copy(model.real_variable("u"), U);
 
     // interpolation of the solution on mf_rhs
     plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs);
@@ -279,8 +280,7 @@ int main(int argc, char *argv[]) {
     exp.exporting(mf); 
     exp.write_point_data(mf, U, "solution");
     cout << "export done, you can view the data file with (for example)\n"
-      "mayavi -d xfem_contact.vtk -f WarpScalar -m BandedSurfaceMap "
-      "-m Outline\n";
+      "mayavi2 -d xfem_contact.vtk -f WarpScalar -m Surface -m Outline\n";
   }
   GMM_STANDARD_CATCH_ERROR;
 

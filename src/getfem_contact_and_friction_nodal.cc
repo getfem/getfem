@@ -570,6 +570,8 @@ namespace getfem {
       is_init = true;
     }
 
+    void set_stationary(void) { really_stationary = true; }
+
     void precomp(const model_real_plain_vector &u1,
                  const model_real_plain_vector &u2,
                  const model_real_plain_vector &lambda_n,
@@ -1229,6 +1231,15 @@ namespace getfem {
 
   };
 
+
+  void contact_brick_set_stationary(model &md, size_type indbrick) {
+    pbrick pbr = md.brick_pointer(indbrick);
+    md.touch_brick(indbrick);
+    Coulomb_friction_brick *p = dynamic_cast<Coulomb_friction_brick *>
+      (const_cast<virtual_brick *>(pbr.get()));
+    GMM_ASSERT1(p, "Wrong type of brick");
+    p->set_stationary();
+  }
 
   CONTACT_B_MATRIX &contact_brick_set_BN
   (model &md, size_type indbrick) {

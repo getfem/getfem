@@ -22,8 +22,6 @@
 /**
  * Linear Elastostatic problem with a crack.
  *
- * This program is used to check that getfem++ is working. This is also 
- * a good example of use of Getfem++.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
@@ -37,7 +35,6 @@
 #include "getfem/getfem_mesh_fem_global_function.h"
 #include "getfem/getfem_spider_fem.h"
 #include "getfem/getfem_mesh_fem_sum.h"
-#include "getfem/getfem_Coulomb_friction.h"
 #include "gmm/gmm.h"
 #include "getfem/getfem_error_estimate.h"
 #include "getfem/getfem_interpolated_fem.h"
@@ -565,39 +562,46 @@ bool crack_problem::solve(plain_vector &U) {
     }
     
     U.resize(mf_u().nb_dof());
-
-    getfem::mdbrick_isotropic_linearized_elasticity<>
-      ELAS(mim, mf_u(), lambda, mu);
+    getfem::model model;
+    model.add_fem_variable("u", mf_u());
+    model.add_initialized_scalar_data("lambda", lambda);
+    model.add_initialized_scalar_data("mu", mu);
+    getfem::add_isotropic_linearized_elasticity_brick
+      (model, mim, "u", "lambda", "mu");
  
     // Defining the volumic source term.
     plain_vector F(nb_dof_rhs * N);
     getfem::interpolation_function(mf_rhs, F, sol_f);
-    getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, F);
+    model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+    getfem::add_source_term_brick(model, mim, "u", "VolumicData");
 
     // Defining the Neumann condition right hand side.
     getfem::interpolation_function(mf_rhs, F, sol_F, NEUMANN_BOUNDARY_NUM1);
-    getfem::mdbrick_source_term<> NEUMANN(VOL_F, mf_rhs, F, NEUMANN_BOUNDARY_NUM1);
+    model.add_initialized_fem_data("NeumannData", mf_rhs, F);
+    getfem::add_source_term_brick
+      (model, mim, "u", "NeumannData", NEUMANN_BOUNDARY_NUM1);
+    
   
     // Dirichlet condition brick.
-    getfem::mdbrick_Dirichlet<> DIRICHLET(NEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
-    DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
-
     if (option == 0)
-      DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-     
-    getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
+      model.add_initialized_fem_data("DirichletData", exact_sol.mf,exact_sol.U);
+    
+    if (dir_with_mult)
+      getfem::add_Dirichlet_condition_with_multipliers
+        (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM,
+         (option == 0) ? "DirichletData" : "");
+    else
+      getfem::add_Dirichlet_condition_with_penalization
+        (model, mim, "u", 1E15, DIRICHLET_BOUNDARY_NUM,
+         (option == 0) ? "DirichletData" : "");
 
     // Generic solve.
-    cout << "Total number of variables : " << final_model->nb_dof() << endl;
-    getfem::standard_model_state MS(*final_model);
+    cout << "Total number of variables : " << model.nb_dof() << endl;
     gmm::iteration iter(residual, 1, 40000);
-  
-    getfem::standard_solve(MS, *final_model, iter);
-  
+    getfem::standard_solve(model, iter);
   
     // Solution extraction
-    //gmm::resize(U, mf_u().nb_dof());
-    gmm::copy(ELAS.get_solution(MS), U);
+    gmm::copy(model.real_variable("u"), U);
     iteration = iter.converged();  
 
     conv_to_refine.clear();

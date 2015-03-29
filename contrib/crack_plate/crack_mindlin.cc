@@ -91,7 +91,7 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     
     scalar_type lambda_ = lambda; //2. * epsilon * lambda ;
     scalar_type mu_= mu ; // 2. * epsilon * mu ;
-    scalar_type gamma =  3. * mu_ / ( epsilon * epsilon) ;
+    scalar_type gamma =  3. * mu_ / ( epsilon * epsilon / 4.) ;
     
     switch (l) {
     case 0: {
@@ -145,7 +145,7 @@ struct mindlin_singular_functions : public getfem::global_function, public getfe
     scalar_type theta = atan2(y,x);
     scalar_type lambda_ = lambda; //2. * epsilon * lambda ;
     scalar_type mu_= mu ; // 2. * epsilon * mu ;
-    scalar_type gamma =  3. * mu_ / ( epsilon * epsilon) ;
+    scalar_type gamma =  3. * mu_ / ( epsilon * epsilon / 4.) ;
     
     switch (l) {
     case 0: {
@@ -354,7 +354,6 @@ struct crack_mindlin_problem{
 
   getfem::mesh_fem mf_rhs;   /* mesh_fem for the right hand side (f(x),..)   */
   getfem::mesh_fem mf_mult_ut, mf_mult_u3, mf_mult_theta ;  /* mesh_fem for the md_brick_dirichlet */ 
-  getfem::constraints_type dirichlet_version;
   getfem::level_set ls;      /* The two level sets defining the crack.       */
  
   scalar_type residual;       /* max residual for the iterative solvers        */
@@ -468,8 +467,6 @@ void crack_mindlin_problem::init(void) {
   epsilon = PARAM.real_value("EPSILON", "thickness") ; 
   mitc = (PARAM.int_value("MITC") != 0);
   pressure = PARAM.real_value("PRESSURE") ;
-  int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
-  dirichlet_version = getfem::constraints_type(dv);
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual = PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   enr_area_radius = PARAM.real_value("RADIUS_ENR_AREA",
@@ -678,34 +675,43 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
   
   cout << " Solving ---------------------- \n" ;
   
+  getfem::model md;
+  md.add_fem_variable("ut", mf_ut());
+  md.add_fem_variable("u3", mf_u3());
+  md.add_fem_variable("theta", mf_theta());
   
-  getfem::mdbrick_abstract<> *ELAS, *LAST(0);
-
-  // Linearized plate brick.
-  getfem::mdbrick_isotropic_linearized_plate<>
-    ELAS1(mim, mim, mf_ut(), mf_u3(), mf_theta(), lambda,
-	  mu, epsilon);
-  if (mitc) ELAS1.set_mitc();  
-  
-  ELAS = &ELAS1;
+  scalar_type E = 4.*mu*(mu+lambda) / (2. * mu + lambda);
+  scalar_type nu = lambda / (2. * mu + lambda);
+  scalar_type kappa = 5./6.;
+  md.add_initialized_scalar_data("E", E);
+  md.add_initialized_scalar_data("nu", nu);
+  md.add_initialized_scalar_data("lambda", lambda);
+  md.add_initialized_scalar_data("mu", mu);
+  md.add_initialized_scalar_data("epsilon", epsilon);
+  md.add_initialized_scalar_data("kappa", kappa);
+  getfem::add_Mindlin_Reissner_plate_brick(md, mim, mim, "u3", "theta",
+                                           "E", "nu", "epsilon", "kappa",
+                                           (mitc) ? 2 : 1);
+  getfem::add_isotropic_linearized_elasticity_brick(md, mim, "ut",
+                                                    "lambda", "mu");
 
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   cout << "Defining the surface source term... \n" ;
-  plain_vector F(nb_dof_rhs * 3); 
+  plain_vector F(nb_dof_rhs); 
   plain_vector M(nb_dof_rhs * 2);
-  scalar_type r, theta, E, nu, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
+  scalar_type r, theta, MapleGenVar1, MapleGenVar2, MapleGenVar3, MapleGenVar4, MapleGenVar5, MapleGenVar6, MapleGenVar7 ;
   scalar_type MapleGenVar8, MapleGenVar9, MapleGenVar10, MapleGenVar11, MapleGenVar12, MapleGenVar13 ;
   E =  4.*mu*(mu+lambda) / (2. * mu + lambda) ; 
   nu = lambda / (2. * mu + lambda);
   for (size_type i = 0; i < nb_dof_rhs; ++i){
   if (sol_ref == 0){
     if (mf_rhs.point_of_basic_dof(i)[1] > 0 )
-      F[3*i+2] = pressure;
-    else F[3*i+2] = -pressure;
+      F[i] = pressure;
+    else F[i] = -pressure;
     }
   if (sol_ref == 1) {
     if (mf_rhs.point_of_basic_dof(i)[0] <  1E-7 - 0.5 )
-      M[2*i] =  - 2. * epsilon * epsilon  / (3. * gmm::sqrt(h_crack_length) ) ;
+      M[2*i] =  2. * (epsilon * epsilon / 4.)  / (3. * gmm::sqrt(h_crack_length) ) ;
     }
   
   if (sol_ref == 3) {
@@ -721,11 +727,11 @@ bool crack_mindlin_problem::solve(plain_vector &UT, plain_vector &U3, plain_vect
      scalar_type c2 = exact_sol.THETA[5] ;
      scalar_type d1 = exact_sol.THETA[6] ;
      scalar_type d2 = exact_sol.THETA[7] ;
-     F[3*i+2] = -epsilon * mu * (cos(t) * a1 * cos(3.0/2.0*t) + cos(t) * b1 * sin(3.0/2.0*t) + cos(t) * c1 * cos(t/2.0) + cos(t) * d1 * sin(t/2.0) + 3.0*sin(t) * a1 * sin(3.0/2.0*t) - 3.0*sin(t) * b1 * cos(3.0/2.0*t) + sin(t) * c1 * sin(t/2.0) - sin(t) * d1 * cos(t/2.0) + sin(t) * a2 * cos(3.0/2.0*t) + sin(t) * b2 * sin(3.0/2.0*t) + sin(t) * c2 * cos(t/2.0) + sin(t) * d2 * sin(t/2.0) - 3.0 * cos(t) * a2 * sin(3.0/2.0*t) + 3.0 * cos(t) * b2 * cos(3.0/2.0*t) - cos(t) * c2 * sin(t/2.0) + cos(t) * d2 * cos(t/2.0)) / sqrt(r) ;
+     F[i] = -(epsilon/2.) * mu * (cos(t) * a1 * cos(3.0/2.0*t) + cos(t) * b1 * sin(3.0/2.0*t) + cos(t) * c1 * cos(t/2.0) + cos(t) * d1 * sin(t/2.0) + 3.0*sin(t) * a1 * sin(3.0/2.0*t) - 3.0*sin(t) * b1 * cos(3.0/2.0*t) + sin(t) * c1 * sin(t/2.0) - sin(t) * d1 * cos(t/2.0) + sin(t) * a2 * cos(3.0/2.0*t) + sin(t) * b2 * sin(3.0/2.0*t) + sin(t) * c2 * cos(t/2.0) + sin(t) * d2 * sin(t/2.0) - 3.0 * cos(t) * a2 * sin(3.0/2.0*t) + 3.0 * cos(t) * b2 * cos(3.0/2.0*t) - cos(t) * c2 * sin(t/2.0) + cos(t) * d2 * cos(t/2.0)) / sqrt(r) ;
 /**********************/
-     MapleGenVar1 = -1.0/3.0;      MapleGenVar3 = epsilon*epsilon;
+     MapleGenVar1 = -1.0/3.0;      MapleGenVar3 = (epsilon*epsilon/4.);
       MapleGenVar6 = 2.0;
-      MapleGenVar8 = epsilon;
+      MapleGenVar8 = epsilon/2.;
       MapleGenVar10 = (lambda+2.0*mu)*((-1/sqrt(r*r*r)*(a1*cos(3.0/2.0*t)+b1*
 sin(3.0/2.0*t)+c1*cos(t/2.0)+d1*sin(t/2.0))*cos(t)/4.0+1/sqrt(r*r*r)*(-3.0/2.0*
 a1*sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0/2.0*t)-c1*sin(t/2.0)/2.0+d1*cos(t/2.0)/2.0
@@ -754,18 +760,18 @@ sin(t)+(-1/sqrt(r)*(-3.0/2.0*a1*sin(3.0/2.0*t)+3.0/2.0*b1*cos(3.0/2.0*t)-c1*sin
       MapleGenVar9 = MapleGenVar10+MapleGenVar11;
       MapleGenVar7 = MapleGenVar8*MapleGenVar9;
       MapleGenVar5 = MapleGenVar6*MapleGenVar7;
-      MapleGenVar6 = -6.0*mu/epsilon*(a/sqrt(r)*sin(t/2.0)*cos(t)/2.0-a/sqrt(r)
+      MapleGenVar6 = -6.0*mu/(epsilon/2.)*(a/sqrt(r)*sin(t/2.0)*cos(t)/2.0-a/sqrt(r)
 *cos(t/2.0)*sin(t)/2.0+sqrt(r)*(a1*cos(3.0/2.0*t)+b1*sin(3.0/2.0*t)+c1*cos(t/
 2.0)+d1*sin(t/2.0)));
       MapleGenVar4 = MapleGenVar5+MapleGenVar6;
       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
-      M[2 * i] = MapleGenVar1*MapleGenVar2;
+      M[2 * i] = -MapleGenVar1*MapleGenVar2;
 
       /*****************/
       
-      MapleGenVar1 = -1.0/3.0;      MapleGenVar3 = epsilon*epsilon;
+      MapleGenVar1 = -1.0/3.0;      MapleGenVar3 = (epsilon*epsilon/4.);
       MapleGenVar6 = 2.0;
-      MapleGenVar8 = epsilon;
+      MapleGenVar8 = epsilon/2.;
       MapleGenVar10 = (lambda+2.0*mu)*((-1/sqrt(r*r*r)*(a2*cos(3.0/2.0*t)+b2*
 sin(3.0/2.0*t)+c2*cos(t/2.0)+d2*sin(t/2.0))*sin(t)/4.0-1/sqrt(r*r*r)*(-3.0/2.0*
 a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin(t/2.0)/2.0+d2*cos(t/2.0)/2.0
@@ -794,92 +800,54 @@ cos(t)-(-1/sqrt(r)*(-3.0/2.0*a2*sin(3.0/2.0*t)+3.0/2.0*b2*cos(3.0/2.0*t)-c2*sin
       MapleGenVar9 = MapleGenVar10+MapleGenVar11;
       MapleGenVar7 = MapleGenVar8*MapleGenVar9;
       MapleGenVar5 = MapleGenVar6*MapleGenVar7;
-      MapleGenVar6 = -6.0*mu/epsilon*(a/sqrt(r)*sin(t/2.0)*sin(t)/2.0+a/sqrt(r)
+      MapleGenVar6 = -6.0*mu/(epsilon/2.)*(a/sqrt(r)*sin(t/2.0)*sin(t)/2.0+a/sqrt(r)
 *cos(t/2.0)*cos(t)/2.0+sqrt(r)*(a2*cos(3.0/2.0*t)+b2*sin(3.0/2.0*t)+c2*cos(t/
 2.0)+d2*sin(t/2.0)));
       MapleGenVar4 = MapleGenVar5+MapleGenVar6;
       MapleGenVar2 = MapleGenVar3*MapleGenVar4;
-      M[2*i+1] = MapleGenVar1*MapleGenVar2;
+      M[2*i+1] = -MapleGenVar1*MapleGenVar2;
      } 
   }
   if (sol_ref == 4){
      gmm::clear(F);
      gmm::clear(M);
   }
-  cout << "source term computed. \n" ; 
-  getfem::mdbrick_plate_source_term<> VOL_F(*ELAS, mf_rhs, F, M);
-  
-  getfem::mdbrick_plate_clamped_support<> SIMPLE1
-    (VOL_F, DIRICHLET_BOUNDARY_NUM, 0,getfem::AUGMENTED_CONSTRAINTS);
-       
-  //SIMPLE = &SIMPLE1 ;
+  cout << "source term computed. \n" ;
+
+  md.add_initialized_fem_data("VF", mf_rhs, F);
+  getfem::add_source_term_brick(md, mim, "u3", "VF");
+  md.add_initialized_fem_data("VM", mf_rhs, M);
+  getfem::add_source_term_brick(md, mim, "theta", "VM");
+
+  md.add_initialized_fem_data("DData_u3", exact_sol.mf_u3, exact_sol.U3);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (md, mim, "u3", mf_mult_u3, DIRICHLET_BOUNDARY_NUM, "DData_u3");
 
   
+  md.add_initialized_fem_data("DData_theta", exact_sol.mf_theta,
+                              exact_sol.THETA);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (md, mim, "theta", mf_mult_theta, DIRICHLET_BOUNDARY_NUM, "DData_theta");
 
-  cout << "Setting the Dirichlet condition brick : \n " ;
-  
-  getfem::mdbrick_Dirichlet<> DIRICHLET_U3(VOL_F, DIRICHLET_BOUNDARY_NUM, mf_mult_u3, 1);
-  if (sol_ref == 3 || sol_ref == 4)  {
-     DIRICHLET_U3.rhs().set(exact_sol.mf_u3, exact_sol.U3);
-     cerr << "nbd=" << exact_sol.mf_u3.nb_dof() << " - U3=" << exact_sol.U3 << "\n";
-  }
-// deprecated :
-//   if (sol_ref == 4){ 
-//      plain_vector V3(mf_pre_u3.nb_dof()) ;
-//      for (size_type i = 0; i < mf_pre_u3.nb_dof(); ++i)
-//          V3[i] = u3_exact_yves(mf_pre_u3.point_of_dof(i));
-//      DIRICHLET_U3.rhs().set(mf_pre_u3, V3);
-//   }
-  DIRICHLET_U3.set_constraints_type(getfem::constraints_type(dirichlet_version)); 
-  cout << " md_brick DIRICHLET_U3 done     \n" ;
-  
-  getfem::mdbrick_Dirichlet<> DIRICHLET_THETA(DIRICHLET_U3, DIRICHLET_BOUNDARY_NUM, mf_mult_theta, 2);
-  if (sol_ref == 3 || sol_ref == 4){
-  cerr << "nbd=" << exact_sol.mf_theta.nb_dof() << " - THETA=" << exact_sol.THETA << "\n";
-  DIRICHLET_THETA.rhs().set(exact_sol.mf_theta, exact_sol.THETA);
-  }
-//   // deprecated
-//   if (sol_ref == 4){
-//      plain_vector VTHETA(mf_pre_theta.nb_dof() * 2) ;
-//      cout << "mf_pre_theta.nb_dof() = " << mf_pre_theta.nb_dof() << "\n" ;
-//      for (size_type i = 0; i < mf_pre_theta.nb_dof() ; ++i) {
-//          VTHETA[2 * i    ] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[0];
-// 	 VTHETA[2 * i + 1] = theta_exact_yves(mf_pre_theta.point_of_dof(i))[1];
-// 	 }
-//      DIRICHLET_THETA.rhs().set(mf_pre_theta, VTHETA);
-//   }
-  DIRICHLET_THETA.set_constraints_type(getfem::constraints_type(dirichlet_version));  
-
-  cerr << "hop\n";
-
-  cout << " md_brick DIRICHLET_THETA done     \n" ;
-  
-  getfem::mdbrick_Dirichlet<> DIRICHLET_UT(DIRICHLET_THETA, DIRICHLET_BOUNDARY_NUM, mf_mult_ut, 0);
-
-  if (sol_ref == 0 || sol_ref == 1) LAST = &SIMPLE1 ;
-  if (sol_ref == 3 || sol_ref == 4) LAST = &DIRICHLET_UT ;
-  
-  getfem::mdbrick_plate_closing<> final_model(*LAST, 0, 1);
+  getfem::add_Dirichlet_condition_with_multipliers
+    (md, mim, "ut", mf_mult_ut, DIRICHLET_BOUNDARY_NUM);
   
   
   // Generic solve.
-  cout << "Total number of variables : " << final_model.nb_dof() << endl;
-  getfem::standard_model_state MS(final_model);
+  cout << "Total number of variables : " << md.nb_dof() << endl;
   gmm::iteration iter(residual, 1, 40000);
-  getfem::standard_solve(MS, final_model, iter);
+  getfem::standard_solve(md, iter);
   
   /*affichage de la solution */    
   gmm::resize(U3, mf_u3().nb_dof());
-  gmm::copy(ELAS1.get_u3(MS), U3);  
-
+  gmm::copy(md.real_variable("u3"), U3);
+ 
   gmm::resize(UT, mf_ut().nb_dof());
-  gmm::copy(ELAS1.get_ut(MS), UT);
+  gmm::copy(md.real_variable("ut"), UT);
 
   gmm::resize(THETA, mf_theta().nb_dof());
-  gmm::copy(ELAS1.get_theta(MS), THETA);  
-  //cout << "vecteur solution u3 : \n" << U3 << "\n" ;
-//   gmm::resize(U, mf_ut().nb_dof() + mf_u3().nb_dof() + mf_theta().nb_dof() );
-//   gmm::copy(ELAS1.get_solution(MS), U);
+  gmm::copy(md.real_variable("theta"), THETA);
+ 
   return (iter.converged());
 }
 
@@ -1041,7 +1009,7 @@ int main(int argc, char *argv[]) {
 
     getfem::mesh m3d; getfem::extrude(mcut_triangles_only,m3d,1);
     getfem::base_matrix trans(3,3); 
-    trans(0,0) = trans(1,1) = 1; trans(2,2) = p.epsilon;
+    trans(0,0) = trans(1,1) = 1; trans(2,2) = (p.epsilon / 2.);
     m3d.transformation(trans);
     getfem::mesh_fem mf3d(m3d);
     mf3d.set_classical_discontinuous_finite_element(2, 0.001);

@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2002-2012 Jean-Yves Heddebaut.
+ Copyright (C) 2002-2015 Jean-Yves Heddebaut.
  
  This file is a part of GETFEM++
  
@@ -224,12 +224,13 @@ void membrane_problem::init(void) {
   
   if(bdy_type==0 || bdy_type==1)
     for (unsigned int elm = 0; elm <8; ++elm) 
-      if(bdy_elements [elm][1]>=0) 
-	{
-	  mesh.region(bdy_type).add(bdy_elements [elm][0],bdy_elements [elm][1]);
-	  cout<<"BL "<<  (bdy_type==0 ? "Dirichlet" : "Neumann")<<" on individual element ,convex n="<<bdy_elements [elm][0]
-	      <<"face="<<bdy_elements [elm][1]<<endl;
-	}
+      if(bdy_elements [elm][1]>=0) {
+        mesh.region(bdy_type).add(bdy_elements[elm][0],
+                                  bgeot::short_type(bdy_elements[elm][1]));
+        cout << "BL " << (bdy_type==0 ? "Dirichlet" : "Neumann")
+             << " on individual element ,convex n=" << bdy_elements [elm][0]
+             << "face=" << bdy_elements [elm][1] << endl;
+      }
   
 }
 
@@ -312,10 +313,13 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   
   getfem::abstract_hyperelastic_law *pl = new getfem::membrane_elastic_law();
   
-  cout<<"law=membrane, parameters="<<p<<endl;
-  
-  getfem::mdbrick_nonlinear_elasticity<>  ELAS(*pl, mim, mf_u, p);
-  
+  cout << "law=membrane, parameters=" << p <<endl;
+
+  getfem::model md;
+  md.add_fem_variable("u", mf_u);
+
+  md.add_initialized_fixed_size_data("params", p);
+  add_nonlinear_elasticity_brick(md,  mim, "u", *pl, "params");  
   
   // Defining the volumic source term.
   unsigned int src_type =  unsigned(PARAM.int_value("src_type","type of source term, 0 for volumic, 1 if src term if applied to neumann bdy"));
@@ -323,18 +327,17 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   fsrc[0] = PARAM.real_value("FORCEX","Amplitude of the source term");
   fsrc[1] = PARAM.real_value("FORCEY","Amplitude of the source term");
   fsrc[2] = PARAM.real_value("FORCEZ","Amplitude of the source term");
-  plain_vector Fsrc(nb_dof_rhs * NFem);
-  for (size_type i = 0; i < nb_dof_rhs; ++i) {
-    gmm::copy(fsrc, gmm::sub_vector(Fsrc, gmm::sub_interval(i*NFem, NFem)));
-  }
   
   //src term is applied to neumann limit region if src_type=1,otherwize volumic src term on all convexes
   //	jyh:to set punctual force on individual dof, use getfem_modeling_jyh.h iso getfem_modeling.h (set alias to /Users/oracle/fem/getfem_modeling_jyh.h
   //	in /usr/local/include/getfem)
-  //	getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, Fsrc,((src_type==1)?NEUMANN_BOUNDARY_NUM:-1),0,&punctualForce1,punctualDof1,&punctualForce2,punctualDof2);
-  getfem::mdbrick_source_term<> VOL_F(ELAS, mf_rhs, Fsrc,((src_type==1)?NEUMANN_BOUNDARY_NUM:-1),0);
   
-  //imposing bdy conditions
+  md.add_initialized_fixed_size_data("VolumicData", fsrc);
+
+  if (src_type==1)
+    getfem::add_source_term_brick(md, mim, "u", "VolumicData",NEUMANN_BOUNDARY_NUM);
+  else
+    getfem::add_source_term_brick(md, mim, "u", "VolumicData");
   
   // Dirichlet condition using dirichlet brick
   
@@ -359,62 +362,66 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
     gmm::copy(fdr, gmm::sub_vector(Frhs, gmm::sub_interval(i*NFem, NFem)));
   }
   
-  
-  getfem::mdbrick_Dirichlet<> final_model(VOL_F, DIRICHLET_BOUNDARY_NUM);
-  final_model.rhs().set(mf_rhs, Frhs);
-  final_model.set_constraints_type
-    (getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION")));
+  md.add_initialized_fem_data("DirichletData", mf_rhs, Frhs);
+  if (PARAM.int_value("DIRICHLET_VERSION") == 0)
+    getfem::add_Dirichlet_condition_with_multipliers
+      (md, mim, "u", mf_u, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+  else
+    getfem::add_Dirichlet_condition_with_penalization
+      (md, mim, "u", 1E15, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+
   
   
   // Generic solver.
-  getfem::standard_model_state MS(final_model);
-  size_type maxit = PARAM.int_value("MAXITER"); 
-  gmm::iteration iter;
+  gmm::iteration iter(residual, 1, PARAM.int_value("MAXITER"));
+  
+
+
   
   //set initial value for MS.state to prevent initial null transverse rigidity
   //not needed if prestressed
   GMM_ASSERT1(!mf_u.is_reduced(), "To be adapted");
-  if(INITIAL_DISP==1)
-    setInitialDisp(MS.state(), mf_u.nb_dof(),
+  if(INITIAL_DISP==1) {
+    setInitialDisp(md.set_real_variable("u"), mf_u.nb_dof(),
 		   mf_u.basic_dof_on_region(DIRICHLET_BOUNDARY_NUM),
 		   float(PARAM.real_value("initialDispAmplitude",
     "Amplitude of initial displacement set to avoid 3th dim singularities")));
+  }
   
-  for (int step = 0; step < nb_step; ++step) 
-    {
-      //increment external forces
-      plain_vector DFsrc(Fsrc);
-      gmm::copy(gmm::scaled(Fsrc, (step+1.)/(scalar_type)nb_step), DFsrc);
-      //!!seems that for the src term, the input  has to be the increment and not the cumulated value (to be cfmd!)
-      //seems ok with getfem 3.03
-      //		gmm::copy(gmm::scaled(Fsrc, (1.)/(scalar_type)nb_step), DFsrc);
-      VOL_F.source_term().set(DFsrc);
-      punctualForce1=(totalPunctualForce1)*(float(step+1))/float(nb_step);
-      punctualForce2=(totalPunctualForce2)*(float(step+1))/float(nb_step);
-      
-      /* increment  imposed displacement  */
-      plain_vector DFrhs(Frhs);
-      gmm::copy(gmm::scaled(Frhs, (step+1.)/(scalar_type)nb_step), DFrhs);
-      final_model.rhs().set(DFrhs);
-      
-      cout << "step " << step << endl;
-      iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")),
-			    maxit ? maxit : 40000);
-      cout << "|U0| = " << gmm::vect_norm2(MS.state()) << "\n";
-      
-      /* let the default non-linear solve (Newton) do its job */
-      getfem::standard_solve(MS, final_model, iter);		
-      pl->reset_unvalid_flag();
-      final_model.compute_residual(MS);
-      if (pl->get_unvalid_flag()) 
-	GMM_WARNING1("The solution is not completely valid, the determinant "
-		     "of the transformation is negative on "
-		     << pl->get_unvalid_flag() << " gauss points");
-      gmm::copy(ELAS.get_solution(MS), U);		
-    }
+  for (int step = 0; step < nb_step; ++step)  {
+    //increment external forces
+    plain_vector Dfsrc(fsrc);
+    gmm::copy(gmm::scaled(fsrc, (step+1.)/(scalar_type)nb_step), Dfsrc);
+    gmm::copy(Dfsrc, md.set_real_variable("VolumicData"));
+    
+    punctualForce1=(totalPunctualForce1)*(float(step+1))/float(nb_step);
+    punctualForce2=(totalPunctualForce2)*(float(step+1))/float(nb_step);
+    
+    /* increment  imposed displacement  */
+    plain_vector DFrhs(Frhs);
+    gmm::copy(gmm::scaled(Frhs, (step+1.)/(scalar_type)nb_step), DFrhs);
+    gmm::copy(DFrhs, md.set_real_variable("DirichletData"));
+    
+    cout << "step " << step << endl;
+    iter = gmm::iteration(residual, int(PARAM.int_value("NOISY")),
+                          PARAM.int_value("MAXITER"));
+    
+    /* let the default non-linear solve (Newton) do its job */
+    getfem::standard_solve(md, iter);
+    
+    
+    
+    pl->reset_unvalid_flag();
+    md.assembly(getfem::model::BUILD_RHS);
+    if (pl->get_unvalid_flag()) 
+      GMM_WARNING1("The solution is not completely valid, the determinant "
+                   "of the transformation is negative on "
+                   << pl->get_unvalid_flag() << " gauss points");
+    gmm::resize(U, mf_u.nb_dof());
+    gmm::copy(md.real_variable("u"), U);		
+  }
   
-  // Solution extraction
-  gmm::copy(ELAS.get_solution(MS), U);
+  
   //clean to avoid vtk export error
   gmm::clean(U, 1E-20);
   cout<<"U final="<<U<<endl;
@@ -423,8 +430,8 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   
   //compute von mises stress
   // unsigned int PRINT_STRESSES = unsigned(PARAM.int_value("PRINT_STRESSES","1 to print stresses"));
-  ELAS.compute_Von_Mises_or_Tresca(MS,mf_vm, VM, false);
-  //  ELAS.compute_Cauchy(MS,mf_vm, VM);
+  getfem::compute_Von_Mises_or_Tresca(md, "u", *pl, "params", mf_vm, VM, false);
+  
   //clean to avoid vtk export error
   gmm::clean(VM, 1E-20);
   //transform 2D mesh in a 3D mesh to allow correct export of 3D displacements
@@ -434,14 +441,13 @@ bool membrane_problem::solve  (plain_vector &U,getfem::base_vector &VM) {
   mesh.transformation(Mt);
   
   getfem::vtk_export exp(datafilename + ".vtk",PARAM.int_value("VTK_EXPORT")==1);
-  exp.exporting(mf_vm);
   //  exp.exporting(mesh);
-  exp.write_point_data(mf_vm,VM, "Von Mises stress");
   exp.exporting(mf_u);
   exp.write_point_data(mf_u, U, "displacement");
+  exp.exporting(mf_vm);
+  exp.write_point_data(mf_vm,VM, "Von Mises stress");
   cout << "export done, you can view the data file with (for example)\n"
-    "mayavi -d " << datafilename << ".vtk -f ExtractVectorNorm -f "
-    "WarpVector -m BandedSurfaceMap -m Outline\n";
+    "mayavi2 -d " << datafilename << ".vtk -f WarpVector -m Surface -m Outline\n";
   
   return (iter.converged());
 }

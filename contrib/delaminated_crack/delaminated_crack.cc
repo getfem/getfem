@@ -25,6 +25,9 @@
  * Research program.
  */
 
+#if 0  // Broken program which uses old getfem brick. Should be adapted.
+       // Kept because it is the only example of 3D delamination.
+
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
 #include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
 #include "getfem/getfem_derivatives.h"
@@ -38,6 +41,8 @@
 #include "getfem/getfem_mesh_fem_sum.h"
 #include "getfem/getfem_import.h"
 #include "gmm/gmm.h"
+
+
 
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
@@ -1029,7 +1034,15 @@ void crack_problem::save_U(plain_vector &U) {
 /*  main program.                                                         */
 /**************************************************************************/
 
-int main(int argc, char *argv[]) {
+#endif
+
+
+int main(
+#if 0     
+         int argc, char *argv[]
+#endif
+         ) {
+#if 0
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
@@ -1072,6 +1085,8 @@ int main(int argc, char *argv[]) {
     }
   }
   GMM_STANDARD_CATCH_ERROR;
+
+#endif
 
   return 0; 
 }

@@ -261,11 +261,6 @@ bool elastostatic_contact_problem::solve() {
   getfem::add_isotropic_linearized_elasticity_brick(md, mim1, "u1", "lambda", "mu");
   getfem::add_isotropic_linearized_elasticity_brick(md, mim2, "u2", "lambda", "mu");
 
-  // Nonlinear elasticity brick.
-//  base_vector p(2); p[0] = lambda; p[1] = mu;
-//  getfem::SaintVenant_Kirchhoff_hyperelastic_law pl;
-//  getfem::mdbrick_nonlinear_elasticity<>  ELAS(pl, mim, mf_u, p);
-  
   // Defining the contact condition.
   md.add_initialized_scalar_data
     ("r", mu * (3*lambda + 2*mu) / (lambda + mu) );  // r ~= Young modulus

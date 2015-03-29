@@ -36,7 +36,7 @@
 #include "getfem/getfem_mesh_fem_product.h"
 #include "getfem/getfem_mesh_fem_global_function.h"
 #include "getfem/getfem_partial_mesh_fem.h"
-#include "getfem/getfem_Coulomb_friction.h"
+#include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_inter_element.h"
 #include "getfem/getfem_mesh_fem_sum.h"
@@ -442,7 +442,7 @@ void asm_patch_vector
 template<class MAT>
 void asm_stabilization_patch_term
 (const MAT &RM_, const getfem::mesh &mesh, const getfem::mesh_im &mimbounddown, const getfem::mesh_fem &mf_mult,
- scalar_type ratio_size, scalar_type h ){
+ scalar_type ratio_size, scalar_type /*h*/ ){
   MAT &M1 = const_cast<MAT &>(RM_);
   
   /****************************************************/

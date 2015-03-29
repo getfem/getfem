@@ -21,7 +21,7 @@
 
 #include "crack_bilaplacian.h"
 #include "getfem/getfem_regular_meshes.h"
-#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
+#include "getfem/getfem_assembling.h"
 #include "getfem/getfem_fourth_order.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_superlu.h"
@@ -285,10 +285,19 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
 
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
+  getfem::model model;
+  
+  // Main unknown of the problem.
+  model.add_fem_variable("u", mf_u());
+
   // Bilaplacian brick.
-  getfem::mdbrick_bilaplacian<> BIL(mim, mf_u());
-  BIL.D().set(D);
-  if (KL) { BIL.set_to_KL(); BIL.nu().set(nu); }
+  model.add_initialized_scalar_data("D", D);
+  if (KL) {
+    model.add_initialized_scalar_data("nu", nu);
+    getfem::add_bilaplacian_brick_KL(model, mim, "u", "D", "nu");
+  } else {
+    getfem::add_bilaplacian_brick(model, mim, "u", "D");
+  }
 
   size_type N = mesh.dim();
   plain_vector F(nb_dof_rhs);
@@ -301,44 +310,37 @@ bool bilaplacian_crack_problem::solve_moment(plain_vector &U) {
   if (PARAM.int_value("SOL_REF")==2){
      getfem::interpolation_function(mf_rhs, F, moment_beta, MOMENTUM_BOUNDARY_NUM);
   }
-//   getfem::mdbrick_normal_derivative_source_term<>
-//   MOMENTUM(VOL_F, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
-getfem::mdbrick_normal_derivative_source_term<>
-  MOMENTUM(BIL, mf_rhs, F, MOMENTUM_BOUNDARY_NUM);
+
+  model.add_initialized_fem_data("Momentum", mf_rhs, F);
+  getfem::add_normal_derivative_source_term_brick
+    (model, mim, "u", "Momentum", MOMENTUM_BOUNDARY_NUM);
 
   // Normal derivative Dirichlet condition brick
   gmm::resize(F, nb_dof_rhs*N);
   gmm::clear(F);
-  getfem::mdbrick_normal_derivative_Dirichlet<> 
-	NDER_DIRICHLET(MOMENTUM, CLAMPED_BOUNDARY_NUM, mf_mult_d);
-  NDER_DIRICHLET.set_constraints_type(dirichlet_version);
-  NDER_DIRICHLET.rhs().set(mf_rhs, F);
+  model.add_initialized_fem_data("DerDirdata", mf_rhs, F);
+  if (dirichlet_version == 0)
+    add_normal_derivative_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult_d, CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
+  else
+    add_normal_derivative_Dirichlet_condition_with_penalization
+      (model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
+       CLAMPED_BOUNDARY_NUM, "DerDirdata", false);
 
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<>
-    DIRICHLET(NDER_DIRICHLET, SIMPLE_SUPPORT_BOUNDARY_NUM, mf_mult);
-  DIRICHLET.set_constraints_type(dirichlet_version);
-  if (dirichlet_version == getfem::PENALIZED_CONSTRAINTS)
-    DIRICHLET.set_penalization_parameter(PARAM.real_value("EPS_DIRICHLET_PENAL")) ;
-  gmm::resize(F, nb_dof_rhs);
-  gmm::clear(F) ;
-  DIRICHLET.rhs().set(mf_rhs, F);
-
-//   // model brick constraint for the integral matching
-//   getfem::mdbrick_constraint<> &mortar = 
-//       *(new getfem::mdbrick_constraint<>(NDER_DIRICHLET, 0));
-
-  getfem::mdbrick_abstract<> *final_model = &DIRICHLET ;
+  gmm::resize(F, nb_dof_rhs); gmm::clear(F);
+  model.add_initialized_fem_data("Dirichletdata", mf_rhs, F);
+  if (dirichlet_version == 0)
+    add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata");
+  else
+    add_Dirichlet_condition_with_penalization
+      (model, mim, "u", PARAM.real_value("EPS_DIRICHLET_PENAL"),
+       SIMPLE_SUPPORT_BOUNDARY_NUM, "Dirichletdata", &mf_mult);
 
   if (enrichment_option == 3 ) {
      /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
-
-    getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET, 0));
-    mortar.set_constraints_type(getfem::constraints_type(mortar_version));
-    if (mortar_version == getfem::PENALIZED_CONSTRAINTS)
-      mortar.set_penalization_parameter(PARAM.real_value("EPS_MORTAR_PENAL")) ;
 
     plain_vector R(1) ;
     sparse_matrix H(1, mf_u().nb_dof());
@@ -364,21 +366,21 @@ getfem::mdbrick_normal_derivative_source_term<>
       }
     }  
     gmm::resize(R, gmm::mat_nrows(H)); 
-    mortar.set_constraints(H,R);
-    final_model = &mortar;
+    model.add_fixed_size_variable("mult_mo", gmm::mat_nrows(H));
+    getfem::add_constraint_with_multipliers(model, "u", "mult_mo", H, R);
     gmm::Harwell_Boeing_save("H.hb", H);
 
   }
 
-    cout << "Total number of variables : " << final_model->nb_dof() << endl;
-    getfem::standard_model_state MS(*final_model);
+    cout << "Total number of variables : " << model.nb_dof() << endl;
     gmm::iteration iter(residual, 1, 40000);
-    getfem::standard_solve(MS, *final_model, iter /* , p*/);  
+    getfem::standard_solve(model, iter);
+
     // getfem::useful_types<getfem::standard_model_state>::plsolver_type p;
     // p.reset(new getfem::linear_solver_cg_preconditioned_ildlt<sparse_matrix,plain_vector>);
     // Solution extraction
     gmm::resize(U, mf_u().nb_dof());
-    gmm::copy(BIL.get_solution(MS), U); 
+    gmm::copy(model.real_variable("u"), U);
 
   return true;  
 }

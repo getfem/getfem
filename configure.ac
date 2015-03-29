@@ -1083,14 +1083,9 @@ tests/Makefile                                                          \
 contrib/Makefile                                                        \
 contrib/icare/Makefile                                                  \
 contrib/delaminated_crack/Makefile                                      \
-contrib/static_friction/Makefile                                        \
 contrib/bimaterial_crack_test/Makefile                                  \
-contrib/bimat_contact_crack_test/Makefile                               \
 contrib/xfem_stab_unilat_contact/Makefile                               \
 contrib/mixed_elastostatic/Makefile                                     \
-contrib/contact_grd_trans/Makefile                                      \
-contrib/mixed_dynamic_friction/Makefile                                 \
-contrib/xfem_large_strain/Makefile                                      \
 contrib/xfem_contact/Makefile                                           \
 contrib/crack_plate/Makefile                                            \
 contrib/inter_element_test/Makefile                                     \

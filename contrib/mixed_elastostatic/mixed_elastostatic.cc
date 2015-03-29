@@ -32,6 +32,9 @@
    @see nonlinear_elastostatic.cc
 */
 
+#if 0  // Broken program which uses old getfem brick. Should be adapted.
+       // Kept because it is the only example of mixed elastostatic problem.
+
 #include "getfem/getfem_config.h"
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
 #include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
@@ -610,7 +613,14 @@ bool elastostatic_problem::solve(plain_vector &U) {
 /*  main program.                                                         */
 /**************************************************************************/
 
-int main(int argc, char *argv[]) {
+#endif
+
+int main(
+#if 0
+         int argc, char *argv[]
+#endif
+         ) {
+#if 0
 
   GMM_SET_EXCEPTION_DEBUG; // Exceptions make a memory fault, to debug.
   FE_ENABLE_EXCEPT;        // Enable floating point exception for Nan.
@@ -641,6 +651,8 @@ int main(int argc, char *argv[]) {
 
   }
   GMM_STANDARD_CATCH_ERROR;
+
+#endif
 
   return 0; 
 }

@@ -8,8 +8,8 @@ LX = 1.0; LY = LX; LZ = LX;	% sizes of the domain.
 N = 2;
 QUAD = 0;
 MESH_NOISED = 0;        % Set to one if you want to "shake" the mesh
-NX = 8;                % space step.
-DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization, 2=elimination
+NX = 40;                % space step.
+DIRICHLET_VERSION = 0;  % 0=multipliers, 1=penalization
 EPS_DIRICHLET_PENAL = 1e10; % Parametre de penalisation
 FT = 10.0;              % parameter for the exact solution
 D = 1.0;    % "flexion modulus"

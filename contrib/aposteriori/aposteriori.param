@@ -53,7 +53,7 @@ FEM_DISC =  'FEM_PK_DISCONTINUOUS(2,2, 0.000001)';
 MIXED_PRESSURE=0;       % Mixed version or not.
 % FEM_TYPE_P = 'FEM_PK(3,1)';  % P1 for triangles
 % FEM_TYPE_P = 'FEM_PK_DISCONTINUOUS(2,0)';  % Discontinuous P1 for triangles
-DIRICHLET_VERSION = 0;
+DIRICHLET_VERSION = 1;
 
 % DATA_FEM_TYPE must be defined if your main FEM is not Lagrangian
 

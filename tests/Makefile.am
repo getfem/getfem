@@ -37,8 +37,6 @@ check_PROGRAMS =                   \
 	schwarz_additive           \
 	$(optprogs)                \
 	plasticity                 \
-	plasticity_old_brick       \
-	dynamic_friction           \
 	bilaplacian		   \
 	heat_equation              \
 	wave_equation 		   \
@@ -55,8 +53,8 @@ CLEANFILES = \
 	nonlinear_elastostatic.dx nonlinear_elastostatic.vtk                \
 	plasticity.mesh plasticity.U plasticity.sigmabar plasticity.vtk     \
 	plasticity.meshfem plasticity.coef elasto_static_err.vtk            \
-	ii_files/* auto_gmm* dyn*.txt dynamic_friction.data                 \
-	dynamic_friction.U dynamic_friction.mfu  *.sl time FN0              \
+	ii_files/* auto_gmm* dyn*.txt                                       \
+	*.sl time FN0              \
 	nonlinear_elastostatic.U crack.mesh cut.mesh nonlinear_membrane.mfd \
 	nonlinear_membrane.mesh test_range_basis.mesh nonlinear_membrane.mf \
 	nonlinear_membrane.vtk feminterpolation.vtk circleslice.vtk         \
@@ -90,13 +88,11 @@ test_range_basis_SOURCES = test_range_basis.cc
 test_norm_SOURCES = test_norm.cc
 schwarz_additive_SOURCES = schwarz_additive.cc
 plasticity_SOURCES = plasticity.cc
-plasticity_old_brick_SOURCES = plasticity_old_brick.cc
 if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
 crack_SOURCES = crack.cc
 endif
-dynamic_friction_SOURCES = dynamic_friction.cc
 bilaplacian_SOURCES = bilaplacian.cc
 heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
@@ -135,14 +131,12 @@ TESTS = \
 	$(optpl)                      \
 	nonlinear_elastostatic.pl     \
 	nonlinear_membrane.pl         \
-	dynamic_friction.pl           \
 	plasticity.pl                 \
-	plasticity_old_brick.pl       \
 	helmholtz.pl                  \
 	schwarz_additive.pl           \
-	bilaplacian.pl    	          \
+	bilaplacian.pl    	      \
 	heat_equation.pl              \
-	wave_equation.pl   	          \
+	wave_equation.pl   	      \
 	test_large_sliding_contact.pl \
 	test_gmm_matrix_functions.pl  \
 	cyl_slicer.pl	              \
@@ -189,18 +183,13 @@ EXTRA_DIST =                               			\
 	nonlinear_elastostatic.pl          			\
 	nonlinear_membrane.pl              			\
 	nonlinear_membrane.param           			\
-	dynamic_friction.pl                			\
-	dynamic_friction.param             			\
-	dynamic_friction.net               			\
 	plasticity.pl                      			\
-	plasticity_old_brick.pl                			\
 	plasticity.param                      			\
-	plasticity_old_brick.param             			\
 	nonlinear_elastostatic.param       			\
 	test_interpolated_fem.param        			\
 	test_large_sliding_contact.pl                           \
 	test_large_sliding_contact.param                        \
-	test_gmm_matrix_functions.pl              \
+	test_gmm_matrix_functions.pl              		\
 	geo_trans_inv.param                			\
 	heat_equation.pl                   			\
 	heat_equation.param                			\

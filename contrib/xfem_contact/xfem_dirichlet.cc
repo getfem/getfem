@@ -1104,8 +1104,6 @@ int main(int argc, char *argv[]) {
   test_mim(mim, mf_rhs, false);
   test_mim(mimbounddown, mf_rhs, true);
 
-#if 1
-
   /***************************************************************/ 
   /*          New brick system                                   */
   /***************************************************************/
@@ -1155,61 +1153,6 @@ int main(int argc, char *argv[]) {
   plain_vector LAMBDA(nb_dof_mult);
   gmm::copy(model.real_variable("Lambda"), LAMBDA);
   
-  // cout<<"desplacement="<<U<<endl;
-  
-  // cout<<"Mult="<<LAMBDA<<endl;
-
-#else
-
-  /***************************************************************/ 
-  /*          Old brick system                                   */
-  /***************************************************************/
-
-  getfem::mdbrick_generic_elliptic<> brick_laplacian(mim, mf);
-
-  getfem::mdbrick_source_term<> brick_volumic_rhs(brick_laplacian);
-  plain_vector F(nb_dof_rhs);
-  getfem::interpolation_function(mf_rhs, F, rhs);
-  brick_volumic_rhs.source_term().set(mf_rhs, F);
-
-  // Neumann condition
-  getfem::interpolation_function(mf_rhs, F, g_exact);
-  plain_vector R(nb_dof);
-  gmm::mult(gmm::transposed(B2), F, R);
-  brick_volumic_rhs.set_auxF(R);
-
-  // Dirichlet condition
-  getfem::mdbrick_constraint<> brick_constraint(brick_volumic_rhs);
-  brick_constraint.set_constraints(B, plain_vector(nb_dof_mult));
-  brick_constraint.set_constraints_type(getfem::AUGMENTED_CONSTRAINTS);
-
-  //add stabilized term
-  if (stabilized_dirichlet > 0){
-    if (stabilized_dirichlet == 3) {
-      brick_constraint.set_optional_matrices(KA, MA);
-    }else{
-      brick_constraint.set_optional_matrices(KA, MA);}
-  }
-
-  getfem::mdbrick_abstract<> *final_brick = &brick_constraint;
-    
-  // Solving the problem
-  cout << "Total number of unknown: " << final_brick->nb_dof() << endl;
-  getfem::standard_model_state MS(*final_brick);
-  gmm::iteration iter(1e-9, 1, 40000);
-  getfem::standard_solve(MS, *final_brick, iter);
-  plain_vector U(nb_dof);
-  gmm::copy(brick_laplacian.get_solution(MS), U);
-  plain_vector LAMBDA(nb_dof_mult);
-  gmm::copy(brick_constraint.get_mult(MS), LAMBDA);
-
- 
-
-#endif
-
-
-
-
   // interpolation of the solution on mf_rhs
   GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
   plain_vector Uint(nb_dof_rhs), Vint(nb_dof_rhs), Eint(nb_dof_rhs),lambda_int(nb_dof_rhs);

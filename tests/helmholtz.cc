@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2002-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2002-2015 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -174,11 +174,8 @@ void Helmholtz_problem::init(void) {
 /*  Model.                                                                */
 /**************************************************************************/
 
-typedef getfem::standard_complex_model_state MODELSTATE;
 
 bool Helmholtz_problem::solve(plain_vector &U) {
-
-#if 1 // New model bricks
 
   // Complex model.
   getfem::model Helmholtz_model(true);
@@ -211,42 +208,6 @@ bool Helmholtz_problem::solve(plain_vector &U) {
 
   gmm::resize(U, mf_u.nb_dof());
   gmm::copy(Helmholtz_model.complex_variable("u"), U);
-
-#else // Old model bricks
-
-  // Helmholtz brick. 
-  getfem::mdbrick_Helmholtz<MODELSTATE> WAVE(mim, mf_u, wave_number);
-  
-  // (homogeneous) Robin condition
-  getfem::mdbrick_QU_term<MODELSTATE> 
-    ROBIN(WAVE, wave_number * complex_type(0,1.), ROBIN_BOUNDARY_NUM);
-  
-  // Defining the Dirichlet condition value.
-  size_type nb_dof_rhs = mf_rhs.nb_dof();
-  plain_vector F(nb_dof_rhs);
-  GMM_ASSERT1(!mf_rhs.is_reduced(),
-	      "To be adapted, use interpolation_function");
-  for (size_type i = 0; i < nb_dof_rhs; ++i)
-    F[i] = incoming_field(mf_rhs.point_of_basic_dof(i));
-
-  // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<MODELSTATE> 
-    final_model(ROBIN, DIRICHLET_BOUNDARY_NUM);
-  final_model.set_constraints_type(getfem::constraints_type(with_mult));
-  final_model.rhs().set(mf_rhs, F);
-  
-
-  // Generic solve.
-  cout << "Number of variables : " << final_model.nb_dof() << endl;
-  cout << "Number of constraints : " << final_model.nb_constraints() << endl;
-  MODELSTATE MS;
-  gmm::iteration iter(residual, 1, 400000);
-  getfem::standard_solve(MS, final_model, iter);
-
-  // Solution extraction
-  gmm::copy(WAVE.get_solution(MS), U);
-
-#endif
 
   cout << "U = " << U << endl;
 

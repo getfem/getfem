@@ -29,7 +29,9 @@
 #include <getfem/getfem_interpolation.h>
 #include <getfem/getfem_nonlinear_elasticity.h>
 #include <getfem/getfem_fourth_order.h>
-#include <getfem/getfem_Coulomb_friction.h>
+#include <getfem/getfem_contact_and_friction_nodal.h>
+#include <getfem/getfem_contact_and_friction_integral.h>
+#include <getfem/getfem_contact_and_friction_large_sliding.h>
 #include <getfem/getfem_generic_assembly.h>
 
 #if GETFEM_HAVE_METIS_OLD_API

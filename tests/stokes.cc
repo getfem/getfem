@@ -27,8 +27,8 @@
    a good example of use of Getfem++.
    
    This file is almost identical to @link elastostatic.cc
-   tests/elastostatic.cc@endlink, except than an
-   getfem::mdbrick_linear_incomp brick is inserted.
+   tests/elastostatic.cc@endlink, except than a
+   linear incompressibility brick is inserted.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
