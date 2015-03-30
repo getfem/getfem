@@ -68,7 +68,7 @@ struct elastostatic_contact_problem {
   size_type N;                 /* dimension of the problem                     */
 
   bool frictionless;           /* flag for frictionless model                  */
-  size_type contact_algo;      /* contact algorithm (0:nodal, 1-4: integral
+  int contact_algo;      /* contact algorithm (0:nodal, 1-4: integral
                                   >=5:integral large sliding)                  */
 
   // Vectors holding the ids of mesh region pairs expected to come in contact
@@ -209,7 +209,7 @@ void elastostatic_contact_problem::init(void) {
 
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
 
-  contact_algo = PARAM.int_value("CONTACT_ALGO","Algorithm for imposing the contact condition.");
+  contact_algo = int(PARAM.int_value("CONTACT_ALGO","Algorithm for imposing the contact condition."));
 
   if (contact_algo != 0) { // integral contact
     std::string MULT_FEM_TYPE  = PARAM.string_value("MULT_FEM_TYPE","FEM name for the multipliers");
@@ -292,12 +292,13 @@ bool elastostatic_contact_problem::solve() {
       }
     }
     else { // large sliding is for the moment always frictionless
-      md.add_fem_variable("mult2", mf_mult2);
-      md.add_initialized_scalar_data("f_coeff", frict_coeff);
-      size_type indb = getfem::add_integral_large_sliding_contact_brick_field_extension
-        (md, mim1, "u1", "mult1", "r", "f_coeff", CONTACT_BOUNDARY_1);
-      getfem::add_boundary_to_large_sliding_contact_brick
-        (md, indb, mim2, "u2", "mult2", CONTACT_BOUNDARY_2);
+      GMM_ASSERT1(false, "not supported yet");
+      // md.add_fem_variable("mult2", mf_mult2);
+      // md.add_initialized_scalar_data("f_coeff", frict_coeff);
+      // size_type indb = getfem::add_integral_large_sliding_contact_brick_field_extension
+      //  (md, mim1, "u1", "mult1", "r", "f_coeff", CONTACT_BOUNDARY_1);
+      // getfem::add_boundary_to_large_sliding_contact_brick
+      //  (md, indb, mim2, "u2", "mult2", CONTACT_BOUNDARY_2);
     }
   }
 
