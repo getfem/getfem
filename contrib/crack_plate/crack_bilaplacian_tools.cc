@@ -656,9 +656,9 @@ void bilaplacian_crack_problem::init_mixed_elements(void) {
   int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
   int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version"));
   int cv = int(PARAM.int_value("CLOSING_VERSION"));  
-  dirichlet_version = getfem::constraints_type(dv);
-  mortar_version = getfem::constraints_type(mv);
-  closing_version = getfem::constraints_type(cv);
+  dirichlet_version = size_type(dv);
+  mortar_version = size_type(mv);
+  closing_version = size_type(cv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   KL = PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0;

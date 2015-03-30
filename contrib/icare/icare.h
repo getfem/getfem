@@ -31,10 +31,10 @@
 #ifndef NAVIER_STOKES_H_
 #define NAVIER_STOKES_H_
 
-#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
-#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_derivatives.h"
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
-#include "getfem/getfem_modeling.h"
 #include "gmm/gmm.h"
 
 using std::endl; using std::cout; using std::cerr;

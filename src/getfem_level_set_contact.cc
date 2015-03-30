@@ -22,6 +22,7 @@
 
 #include <getfem/getfem_level_set_contact.h> 
 #include <getfem/getfem_interpolated_fem.h> 
+#include <getfem/getfem_derivatives.h> 
 #include <algorithm>
 #include <getfem/getfem_level_set.h>
 #include <getfem/getfem_mesh_level_set.h>

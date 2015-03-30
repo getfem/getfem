@@ -31,6 +31,7 @@
    a pde directly with the assembly procedures.
 */
 
+#include "getfem/getfem_assembling.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"

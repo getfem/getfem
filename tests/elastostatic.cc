@@ -212,7 +212,7 @@ struct elastostatic_problem {
 
   scalar_type residual;       /* max residual for iterative solvers          */
   bool mixed_pressure, refine;
-  getfem::constraints_type dirichlet_version;
+  size_type dirichlet_version;
 
   std::string datafilename;
   bgeot::md_param PARAM;
@@ -277,7 +277,7 @@ void elastostatic_problem::init(void) {
 #endif
 
   dirichlet_version
-    = getfem::constraints_type(PARAM.int_value("DIRICHLET_VERSION",
+    = size_type(PARAM.int_value("DIRICHLET_VERSION",
 					       "Dirichlet version"));
   datafilename = PARAM.string_value("ROOTFILENAME","Base name of data files.");
   scalar_type FT = PARAM.real_value("FT", "parameter for exact solution");

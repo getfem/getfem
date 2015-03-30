@@ -38,9 +38,8 @@
 #ifndef GETFEM_FOURTH_ORDER_H_
 #define GETFEM_FOURTH_ORDER_H__
 
-#include "getfem_modeling.h"
 #include "getfem_models.h"
-#include "getfem_assembling_tensors.h"
+#include "getfem_assembling.h"
 
 namespace getfem {
   
@@ -121,7 +120,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*		Bilaplacian new bricks.                                    */
+  /*		Bilaplacian bricks.                                       */
   /* ******************************************************************** */
 
   
@@ -147,73 +146,6 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
    size_type region = size_type(-1));
-
-  
-  /* ******************************************************************** */
-  /*		Bilaplacian old brick.                                    */
-  /* ******************************************************************** */
-
-# define MDBRICK_BILAPLACIAN 783465
-  
-  /** Bilaplacian brick @f$ D \Delta \Delta u @f$.
-
-  @see asm_stiffness_matrix_for_bilaplacian
-  @see mdbrick_mixed_isotropic_linearized_plate
-  @ingroup bricks 
-  */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_bilaplacian
-    : public mdbrick_abstract_linear_pde<MODEL_STATE> {
-    
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    bool KL;    /* Pure bilaplacian or Kirchhoff-Love plate model.        */
-    mdbrick_parameter<VECTOR> D_;  /* D_ a scalar field (flexion modulus). */
-    mdbrick_parameter<VECTOR> nu_;  /* nu_ a scalar field (Poisson ratio). */
-
-    void proper_update_K(void) {
-      if (!KL) {
-	GMM_TRACE2("Assembling bilaplacian operator");
-	asm_stiffness_matrix_for_bilaplacian
-	  (this->K, this->mim, this->mf_u, D().mf(),  D().get(),
-	   this->mf_u.linked_mesh().get_mpi_region());
-      }
-      else {
-	GMM_ASSERT1(&(D().mf()) == &(nu().mf()), "mesh fems for the two "
-		    "coefficients must be the same");
-	GMM_TRACE2("Assembling bilaplacian for a Kirchhoff-Love plate");
-	asm_stiffness_matrix_for_bilaplacian_KL
-	  (this->K, this->mim, this->mf_u, D().mf(),  D().get(), nu().get(),
-	   this->mf_u.linked_mesh().get_mpi_region());
-      }
-    }
-  public :
-
-    /** accessor to the coefficient D */
-    mdbrick_parameter<VECTOR> &D() { return D_; }
-    const mdbrick_parameter<VECTOR> &D() const { return D_; }
-    /** accessor to the coefficient nu */
-    mdbrick_parameter<VECTOR> &nu() { return nu_; }
-    const mdbrick_parameter<VECTOR> &nu() const { return nu_; }
-
-    void set_to_KL(void) { KL = true; }
-
-    /** Constructor, the default coeff is a scalar equal to one
-	(i.e. it gives the Laplace operator).
-
-        The coeff can be later changed.
-
-	@param mim the integration method that is used. 
-	@param mf_u the mesh_fem for the unknown u.
-	@param KL_ true for the Kirchhoff-Love plate model.
-    */
-    mdbrick_bilaplacian(const mesh_im &mim_, const mesh_fem &mf_u_, 
-			bool KL_ = false)
-      : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_,
-						 MDBRICK_BILAPLACIAN),
-	KL(KL_), D_("D", mf_u_.linked_mesh(), this),
-	nu_("nu", mf_u_.linked_mesh(), this) { D().set(1.); nu().set(0.3); }
-  };
 
 
   /* ******************************************************************** */
@@ -284,7 +216,7 @@ namespace getfem {
 
 
   /* ******************************************************************** */
-  /*		Normale derivative source term new brick.                 */
+  /*		Normale derivative source term brick.                     */
   /* ******************************************************************** */
 
 
@@ -299,113 +231,6 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname, size_type region);
 
-
-
-  /* ******************************************************************** */
-  /*		Normale derivative source term old brick.                 */
-  /* ******************************************************************** */
-
-
-  /**
-     Normal derivative source term brick ( @f$ F = \int b.\partial_n v @f$ ).
-     
-     Update the right hand side of the linear system.
-
-     @see asm_source_term
-     @ingroup bricks
-  */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_normal_derivative_source_term
-    : public mdbrick_abstract<MODEL_STATE>  {
-
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    mdbrick_parameter<VECTOR> B_;
-    VECTOR F_;
-    bool F_uptodate;
-    size_type boundary, num_fem, i1, nbd;
-
-    const mesh_fem &mf_u(void) const { return this->get_mesh_fem(num_fem); }
-
-    void proper_update(void) {
-      i1 = this->mesh_fem_positions[num_fem];
-      nbd = mf_u().nb_dof();
-      gmm::resize(F_, nbd);
-      gmm::clear(F_);
-      F_uptodate = false;
-    }
-
-  public :
-
-    mdbrick_parameter<VECTOR> &scalar_source_term(void)
-    { B_.reshape(mf_u().get_qdim()); return B_;  }
-
-    mdbrick_parameter<VECTOR> &tensorial_source_term(void) {
-      B_.reshape(mf_u().get_qdim()*gmm::sqr(mf_u().linked_mesh().dim()));
-      return B_;
-    }
-
-    const mdbrick_parameter<VECTOR> &source_term(void) const { return B_; }
-
-    /// gives the right hand side of the linear system.
-    const VECTOR &get_F(void) { 
-      this->context_check();
-      if (!F_uptodate || this->parameters_is_any_modified()) {
-	F_uptodate = true;
-	GMM_TRACE2("Assembling a source term");
-	asm_normal_derivative_source_term
-	  (F_, *(this->mesh_ims[0]), mf_u(), B_.mf(), B_.get(),
-	   mf_u().linked_mesh().get_mpi_sub_region(boundary));
-	this->parameters_set_uptodate();
-      }
-      return F_;
-    }
-
-    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					   size_type) { }
-    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				     size_type) {
-      gmm::add(gmm::scaled(get_F(), value_type(-1)),
-	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
-    }
-
-    /** Constructor defining the rhs
-	@param problem the sub-problem to which this brick applies.
-	@param mf_data_ the mesh_fem on which B_ is defined.
-	@param B_ the value of the source term.
-	@param bound the mesh boundary number on which the source term
-	is applied.
-	@param num_fem_ the mesh_fem number on which this brick is is applied.
-    */
-    mdbrick_normal_derivative_source_term
-    (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
-     const VECTOR &B__, size_type bound,
-     size_type num_fem_=0) : B_("source_term",mf_data_, this), boundary(bound),
-			     num_fem(num_fem_) {
-      this->add_sub_brick(problem);
-      if (bound != size_type(-1))
-	this->add_proper_boundary_info(num_fem, bound,
-				       MDBRICK_NORMAL_DERIVATIVE_NEUMANN);
-      this->force_update();
-      size_type Nb = gmm::vect_size(B__);
-      if (Nb) {
-	if (Nb == mf_data_.nb_dof() * mf_u().get_qdim()) {
-	  B_.reshape(mf_u().get_qdim());
-	   
-	}
-	else if (Nb == mf_data_.nb_dof() * mf_u().get_qdim()
-		 * gmm::sqr(mf_u().linked_mesh().dim())) {
-	  B_.reshape(mf_u().get_qdim()*gmm::sqr(mf_u().linked_mesh().dim()));
-	}
-	else 
-	  GMM_ASSERT1(false, "Rhs vector has a wrong size");
-	B_.set(B__);
-      }
-      else {
-	B_.reshape(this->get_mesh_fem(num_fem).get_qdim());
-      }
-    }
-  };
 
   /* ******************************************************************** */
   /*   	Special boundary condition for Kirchhoff-Love model.              */
@@ -459,7 +284,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*		Kirchoff Love Neumann term new brick.                     */
+  /*		Kirchoff Love Neumann term brick.                         */
   /* ******************************************************************** */
 
 
@@ -472,96 +297,6 @@ namespace getfem {
   (model &md, const mesh_im &mim, const std::string &varname,
    const std::string &dataname1, const std::string &dataname2,
    size_type region);
-
-
-
-  /**
-     Old Brick for Special boundary condition for Kirchhoff-Love model
-
-     @see asm_source_term
-     @ingroup bricks
-  */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_neumann_KL_term : public mdbrick_abstract<MODEL_STATE>  {
-
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    mdbrick_parameter<VECTOR> M_, divM_;
-    VECTOR F_;
-    bool F_uptodate;
-    size_type boundary, num_fem, i1, nbd;
-
-    const mesh_fem &mf_u(void) const { return this->get_mesh_fem(num_fem); }
-
-    void proper_update(void) {
-      i1 = this->mesh_fem_positions[num_fem];
-      nbd = mf_u().nb_dof();
-      gmm::resize(F_, nbd);
-      gmm::clear(F_);
-      F_uptodate = false;
-    }
-
-  public :
-
-    mdbrick_parameter<VECTOR> &M(void) {
-      M_.reshape(gmm::sqr(mf_u().linked_mesh().dim()));
-      return M_;
-    }
-
-    const mdbrick_parameter<VECTOR> &M(void) const { return M_; }
-
-    mdbrick_parameter<VECTOR> &divM(void) {
-      divM_.reshape(mf_u().linked_mesh().dim());
-      return divM_;
-    }
-
-    const mdbrick_parameter<VECTOR> &divM(void) const { return divM_; }
-
-    /// gives the right hand side of the linear system.
-    const VECTOR &get_F(void) { 
-      this->context_check();
-      if (!F_uptodate || this->parameters_is_any_modified()) {
-	F_uptodate = true;
-	GMM_TRACE2("Assembling a source term");
-	asm_neumann_KL_term
-	  (F_, *(this->mesh_ims[0]), mf_u(), M_.mf(), M_.get(), divM_.get(),
-	   mf_u().linked_mesh().get_mpi_sub_region(boundary));
-	this->parameters_set_uptodate();
-      }
-      return F_;
-    }
-
-    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					   size_type) { }
-    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0,
-				     size_type) {
-      gmm::add(gmm::scaled(get_F(), value_type(-1)),
-	       gmm::sub_vector(MS.residual(), gmm::sub_interval(i0+i1, nbd)));
-    }
-
-    mdbrick_neumann_KL_term
-    (mdbrick_abstract<MODEL_STATE> &problem, const mesh_fem &mf_data_,
-     const VECTOR &M__, const VECTOR &divM__, size_type bound,
-     size_type num_fem_=0)
-      : M_("M",mf_data_, this),
-	divM_("divM",mf_data_, this),
-	boundary(bound), num_fem(num_fem_) {
-      this->add_sub_brick(problem);
-      if (bound != size_type(-1))
-	this->add_proper_boundary_info(num_fem, bound,
-				       MDBRICK_NORMAL_DERIVATIVE_NEUMANN);
-      this->force_update();
-      size_type Nb = gmm::vect_size(M__);
-      if (Nb) {
-	M().set(mf_data_, M__);
-	divM().set(mf_data_, divM__);
-      }
-      else {
-	M_.reshape(gmm::sqr(mf_u().linked_mesh().dim()));
-	divM_.reshape(mf_u().linked_mesh().dim());
-      }
-    }
-  };
 
 
   /* ******************************************************************** */
@@ -625,7 +360,7 @@ namespace getfem {
   }
 
   /* ******************************************************************** */
-  /*		Normal derivative Dirichlet condition new bricks.         */
+  /*		Normal derivative Dirichlet condition bricks.             */
   /* ******************************************************************** */
 
   /** Adds a Dirichlet condition on the normal derivative of the variable
@@ -711,129 +446,6 @@ namespace getfem {
    bool R_must_be_derivated = false);
   
 
-  /* ******************************************************************** */
-  /*		Normal derivative Dirichlet condition old brick.          */
-  /* ******************************************************************** */
-
-
-
-  /** Normal derivative Dirichlet condition old brick.
-   *
-   *  This brick represent a Dirichlet condition on the normal derivative
-   *  of the unknow for fourth order pdes.
-   *  The general form is
-   *  :math:`\int \partial_n u(x)v(x) = \int r(x)v(x) \forall v`
-   *  where :math:`r(x)` is
-   *  the right hand side for the Dirichlet condition (0 for
-   *  homogeneous conditions) and :math:`v` is in a space of multipliers
-   *  defined by the trace of mf_mult on the considered part of boundary.
-   *
-   *  @see asm_normal_derivative_dirichlet_constraints
-   *  @see mdbrick_constraint
-   *  @ingroup bricks
-   */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_normal_derivative_Dirichlet
-    : public mdbrick_constraint<MODEL_STATE>  {
-    
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    mdbrick_parameter<VECTOR> R_;
-    
-    size_type boundary;
-    bool mfdata_set, B_to_be_computed;
-    bool R_must_be_derivated_; /* if true, then R(x) is a scalar field, and we will impose 
-				  grad(u).n = grad(R).n on the boundary */
-    gmm::sub_index SUB_CT;
-    const mesh_fem *mf_mult;
-    
-    const mesh_fem &mf_u() { return *(this->mesh_fems[this->num_fem]); }
-    const mesh_im  &mim() { return *(this->mesh_ims[0]); }
-
-    void compute_constraints(unsigned version) {
-      size_type ndu = mf_u().nb_dof(), ndm = mf_mult->nb_dof();
-      gmm::row_matrix<gmm::rsvector<value_type> > M(ndm, ndu);
-      VECTOR V(ndm);
-      GMM_TRACE2("Assembling normal derivative Dirichlet constraints, version "
-		 << version);
-      asm_normal_derivative_dirichlet_constraints
-	(M, V, mim(), mf_u(), *mf_mult, rhs().mf(), R_.get(),
-	 mf_u().linked_mesh().get_mpi_sub_region(boundary), 
-	 R_must_be_derivated_, version);
-      if (version & ASMDIR_BUILDH)
-	gmm::copy(gmm::sub_matrix(M, SUB_CT, gmm::sub_interval(0, ndu)), 
-		  this->B);
-      gmm::copy(gmm::sub_vector(V, SUB_CT), this->CRHS);
-    }
-
-    virtual void recompute_B_sizes(void) {
-      if (!mfdata_set) {
-	rhs().set(classical_mesh_fem(mf_u().linked_mesh(), 0), 0);
- 	mfdata_set = true;
-      }
-      size_type nd = mf_u().nb_dof();
-      dal::bit_vector dof_on_bound;
-      if (mf_mult->is_reduced())
-	dof_on_bound.add(0, mf_mult->nb_dof());
-      else
-	dof_on_bound = mf_mult->basic_dof_on_region(boundary);
-      size_type nb_const = dof_on_bound.card();
-      std::vector<size_type> ind_ct;
-      for (dal::bv_visitor i(dof_on_bound); !i.finished(); ++i)
-	ind_ct.push_back(i);
-      SUB_CT = gmm::sub_index(ind_ct);
-      gmm::resize(this->B, nb_const, nd);
-      gmm::resize(this->CRHS, nb_const);
-      B_to_be_computed = true;
-    }
-
-    virtual void recompute_B(void) {
-      unsigned version = 0;
-      if (R_.is_modified()) { version = ASMDIR_BUILDR; }
-      if (B_to_be_computed) { version = ASMDIR_BUILDR | ASMDIR_BUILDH; }
-      if (version) { 
-	compute_constraints(version);
-	this->parameters_set_uptodate();
-	B_to_be_computed = false;
-      }
-    }
-
-  public :
-
-    /** Change the @f$ r(x) @f$ right hand side.
-     *	@param R a vector of size @c Q*mf_data.nb_dof() .
-     */
-    mdbrick_parameter<VECTOR> &rhs() { 
-      unsigned n = (R_must_be_derivated_ == false ? mf_u().linked_mesh().dim() : 1);
-      R_.reshape(n*mf_u().get_qdim());
-      return R_; 
-    }
-
-    void R_must_be_derivated() {
-      R_must_be_derivated_ = true;
-    }
-    
-    /** Constructor which does not define the rhs (i.e. which sets an
-     *	homogeneous Dirichlet condition)
-     *	@param problem the sub problem to which this brick is applied.
-     *	@param bound the boundary number for the dirichlet condition.
-     *  @param mf_mult_ the mesh_fem for the multipliers.
-     *	@param num_fem_ the mesh_fem number on which this brick is is applied.
-     */
-    mdbrick_normal_derivative_Dirichlet
-    (mdbrick_abstract<MODEL_STATE> &problem, size_type bound,
-     const mesh_fem &mf_mult_ = dummy_mesh_fem(), size_type num_fem_=0)
-      : mdbrick_constraint<MODEL_STATE>(problem, num_fem_), R_("R", this),
-	boundary(bound) {
-      mf_mult = (&mf_mult_ == &dummy_mesh_fem()) ? &(mf_u()) : &mf_mult_;
-      this->add_proper_boundary_info(this->num_fem, boundary, 
-				     MDBRICK_NORMAL_DERIVATIVE_DIRICHLET);
-      this->add_dependency(*mf_mult);
-      mfdata_set = false; B_to_be_computed = true;
-      R_must_be_derivated_ = false;
-      this->force_update();
-    }
-  };
 
 
 

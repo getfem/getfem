@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2006-2015 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -10,7 +10,7 @@
  (at your option) any later version along with the GCC Runtime Library
  Exception either version 3.1 or (at your option) any later version.
  This program  is  distributed  in  the  hope  that it will be useful,  but
- WITHOUT ANY WARRANTY; without even th<e implied warranty of MERCHANTABILITY
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
  License and GCC Runtime Library Exception for more details.
  You  should  have received a copy of the GNU Lesser General Public License
@@ -32,8 +32,8 @@
 */
 
 #include "getfem/getfem_config.h"
-#include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */
-#include "getfem/getfem_export.h"   /* export functions (save solution in a file)  */
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_fourth_order.h"
 #include "getfem/getfem_model_solvers.h"
@@ -52,12 +52,7 @@ using bgeot::scalar_type; /* = double */
 using bgeot::size_type;   /* = unsigned long */
 using bgeot::base_matrix; /* small dense matrix. */
 
-/* definition of some matrix/vector types. 
- * default types of getfem_model_solvers.h
- */
-typedef getfem::modeling_standard_sparse_vector sparse_vector;
-typedef getfem::modeling_standard_sparse_matrix sparse_matrix;
-typedef getfem::modeling_standard_plain_vector  plain_vector;
+typedef getfem::model_real_plain_vector  plain_vector;
 
 /**************************************************************************/
 /*  Exact solution.                                                       */
@@ -165,12 +160,12 @@ struct bilaplacian_problem {
   getfem::mesh_fem mf_rhs;  /* mesh_fem for the right hand side (f(x),..)   */
 
   scalar_type residual;     /* max residual for the iterative solvers       */
-  getfem::constraints_type dirichlet_version;
+  size_type dirichlet_version;
 
   std::string datafilename;
   bgeot::md_param PARAM;
 
-  bool KL, newbricks;
+  bool KL;
   size_type NX ;
   size_type boundary_ref ;
   /* boundary_ref = 0 corresponds to clamped edge on the 4 edges   
@@ -238,13 +233,12 @@ void bilaplacian_problem::init(void) {
   }
 
   int dv = int(PARAM.int_value("DIRICHLET_VERSION", "Dirichlet version"));
-  dirichlet_version = getfem::constraints_type(dv);
+  dirichlet_version = size_type(dv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   FT = PARAM.real_value("FT"); if (FT == 0.0) FT = 1.0;
   pressure = PARAM.real_value("pressure") ; 
   KL = (PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0);
-  newbricks = (PARAM.int_value("NEWBRICKS", "New bricks or old ones") != 0);
   D = PARAM.real_value("D", "Flexion modulus");
   if (KL) nu = PARAM.real_value("NU", "Poisson ratio");
   boundary_ref = PARAM.int_value("BOUNDARY_REF");
@@ -358,10 +352,6 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   
   cout << "Number of dof for u: " << mf_u.nb_dof() << endl;
   
-  
-  /**********************************************************************/
-  /*  Model with new bricks.                                            */
-  /**********************************************************************/
   getfem::model model;
   
   // Main unknown of the problem.
@@ -453,6 +443,7 @@ bool bilaplacian_problem::solve(plain_vector &U) {
   gmm::resize(U, mf_u.nb_dof());
   gmm::copy(model.real_variable("u"), U);
   return (iter.converged());
+ 
 }
   
 /**************************************************************************/
@@ -481,8 +472,8 @@ int main(int argc, char *argv[]) {
       exp.exporting(p.mf_u); 
       exp.write_point_data(p.mf_u, U, "bilaplacian_displacement");
       cout << "export done, you can view the data file with (for example)\n"
-	   << "mayavi -d " << p.datafilename
-	   << ".vtk -m BandedSurfaceMap -m Outline -f WarpScalar\n";
+	   << "mayavi2 -d " << p.datafilename
+	   << ".vtk -f WarpScalar -m Surface -m Outline\n";
     }
   }
   GMM_STANDARD_CATCH_ERROR;

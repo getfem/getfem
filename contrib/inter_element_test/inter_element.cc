@@ -18,9 +18,8 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  
 ===========================================================================*/
-#include "getfem/getfem_modeling.h"
 
-#include "getfem/getfem_modeling.h"
+#include "getfem/getfem_models.h"
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_inter_element.h"
 #include "getfem/getfem_export.h"

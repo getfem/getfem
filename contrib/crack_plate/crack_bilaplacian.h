@@ -32,7 +32,8 @@
 #include "getfem/getfem_config.h"
 #include "gmm/gmm.h"
 #include "gmm/gmm_inoutput.h"
-#include "getfem/getfem_modeling.h"
+#include "getfem/getfem_models.h"
+#include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_mesh_im_level_set.h"
 #include "getfem/getfem_mesh_fem_level_set.h"
 #include "getfem/getfem_mesh_fem_product.h"
@@ -181,7 +182,7 @@ struct bilaplacian_crack_problem {
                               /* the normal derivative.                     */
   
   scalar_type residual;     /* max residual for the iterative solvers       */
-  getfem::constraints_type dirichlet_version, mortar_version, closing_version;
+  size_type dirichlet_version, mortar_version, closing_version;
   
   scalar_type cutoff_radius, enr_area_radius;
   int enrichment_option, mortar_type ;

@@ -39,6 +39,7 @@
 #ifndef GETFEM_MODELS_H__
 #define GETFEM_MODELS_H__
 
+#include "getfem_assembling.h"
 #include "getfem_partial_mesh_fem.h"
 #include "getfem_im_data.h"
 
@@ -117,6 +118,14 @@ namespace getfem {
   model_real_row_sparse_matrix;
   typedef gmm::row_matrix<model_complex_sparse_vector>
   model_complex_row_sparse_matrix;
+  
+  // For backward compatibility
+  typedef model_real_plain_vector modeling_standard_plain_vector;
+  typedef model_real_sparse_vector modeling_standard_sparse_vector;
+  typedef model_real_sparse_matrix modeling_standard_sparse_matrix;
+  typedef model_complex_plain_vector modeling_standard_complex_plain_vector;
+  typedef model_complex_sparse_vector modeling_standard_complex_sparse_vector;
+  typedef model_complex_sparse_matrix modeling_standard_complex_sparse_matrix;
 
   inline std::string sup_previous_and_dot_to_varname(std::string v) {
     if (!(v.compare(0, 8, "Previous")) && (v[8] == '_' || v[9] == '_')) {

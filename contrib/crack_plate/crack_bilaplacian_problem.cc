@@ -361,8 +361,8 @@ void bilaplacian_crack_problem::init(void) {
   D = PARAM.real_value("D", "Flexure modulus") ;
   int mv = int(PARAM.int_value("MORTAR_VERSION", "Mortar version") );
   int cv = int(PARAM.int_value("CLOSING_VERSION") );  
-  mortar_version = getfem::constraints_type(mv);
-  closing_version = getfem::constraints_type(cv);
+  mortar_version = size_type(mv);
+  closing_version = size_type(cv);
   datafilename=PARAM.string_value("ROOTFILENAME","Base name of data files.");
   residual=PARAM.real_value("RESIDUAL"); if (residual == 0.) residual = 1e-10;
   KL = PARAM.int_value("KL", "Kirchhoff-Love model or not") != 0;

@@ -25,14 +25,14 @@
  * Research program.
  */
 
-#include "getfem/getfem_assembling.h" /* import assembly methods      */
-#include "getfem/getfem_export.h"     /* export functions             */
+#include "getfem/getfem_assembling.h"
+#include "getfem/getfem_export.h"
 #include "getfem/getfem_derivatives.h"
 #include "getfem/getfem_regular_meshes.h"
 #include "getfem/getfem_model_solvers.h"
 #include "getfem/getfem_mesh_im_level_set.h"
 #include "getfem/getfem_partial_mesh_fem.h"
-#include "getfem/getfem_Coulomb_friction.h"
+#include "getfem/getfem_contact_and_friction_nodal.h"
 #include "getfem/getfem_import.h"
 #include "getfem/getfem_inter_element.h"
 #include "gmm/gmm.h"

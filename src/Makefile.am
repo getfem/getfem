@@ -130,7 +130,6 @@ nobase_include_HEADERS =                   		\
 	getfem/getfem_mesh_slice.h	           	\
 	getfem/getfem_norm.h         	           	\
 	getfem/getfem_regular_meshes.h            	\
-	getfem/getfem_modeling.h                  	\
 	getfem/getfem_models.h                  	\
 	getfem/getfem_model_solvers.h             	\
 	getfem/getfem_linearized_plates.h         	\
@@ -207,7 +206,6 @@ SRC =                                      		\
 	getfem_assembling_tensors.cc       		\
 	getfem_generic_assembly.cc       		\
 	getfem_mesher.cc		   		\
-	getfem_modeling.cc                 		\
 	getfem_models.cc                 		\
 	getfem_model_solvers.cc                		\
 	getfem_fourth_order.cc                		\

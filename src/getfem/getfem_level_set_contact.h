@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 2012-2012 Andriy Andreykiv
+ Copyright (C) 2012-2015 Andriy Andreykiv
  
  This file is a part of GETFEM++
  
@@ -47,9 +47,7 @@
 #ifndef GETFEM_LEVEL_SET_CONTACT_H__
 #define GETFEM_LEVEL_SET_CONTACT_H__
 
-// #include <string>
-// #include <memory>
-// #include <map>
+#include <getfem/getfem_assembling.h>
 #include <getfem/getfem_models.h>
 #include <getfem/getfem_model_solvers.h>
 #include <getfem/getfem_deformable_mesh.h>
@@ -368,7 +366,8 @@ namespace level_set_contact {
     inline size_type contact_mim_order() const 
     {
       GMM_ASSERT1(mult_mim_order!=size_type(-1),
-                  "master body was not created with "					      "order of integration for contact area");
+                  "master body was not created with "
+                  "order of integration for contact area");
       return mult_mim_order;
     }
     

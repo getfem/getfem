@@ -37,7 +37,7 @@
 #ifndef GETFEM_NAVIER_STOKES_H__
 #define GETFEM_NAVIER_STOKES_H__
 
-#include "getfem_modeling.h"
+
 #include "getfem_assembling_tensors.h"
 
 namespace getfem {
@@ -93,97 +93,6 @@ namespace getfem {
     assem.push_data(U);
     assem.assembly(rg);
   }
-
-
-# define MDBRICK_NAVIER_STOKES 394329
-
-  /** Internal brick for mdbrick_pre_navier_stokes */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_pre_navier_stokes : public mdbrick_abstract_linear_pde<MODEL_STATE> {
-
-    TYPEDEF_MODEL_STATE_TYPES;
-
-    value_type nu;
-
-    virtual void proper_update_K(void) {
-      GMM_TRACE2("Assembling laplacian for mdbrick_pre_navier_stokes");
-      asm_stiffness_matrix_for_homogeneous_laplacian_componentwise(this->K, this->mim, this->mf_u);
-      gmm::scale(this->K, nu);
-    }
-
-  public :
-
-    virtual void do_compute_tangent_matrix(MODEL_STATE &MS, size_type i0,
-					   size_type) {
-      gmm::sub_interval SUBI(i0, this->nb_dof());
-      gmm::copy(this->get_K(), gmm::sub_matrix(MS.tangent_matrix(), SUBI));
-      asm_navier_stokes_tgm(gmm::sub_matrix(MS.tangent_matrix(), SUBI),
-			    this->mim, this->mf_u, gmm::sub_vector(MS.state(), SUBI));
-    }
-    virtual void do_compute_residual(MODEL_STATE &MS, size_type i0, size_type) {
-      gmm::sub_interval SUBI(i0, this->nb_dof());
-      gmm::mult(this->get_K(), gmm::sub_vector(MS.state(), SUBI),
-		gmm::sub_vector(MS.residual(), SUBI));
-      asm_navier_stokes_rhs(gmm::sub_vector(MS.residual(), SUBI), this->mim,
-			    this->mf_u, gmm::sub_vector(MS.state(), SUBI));
-    }
-
-    mdbrick_pre_navier_stokes(const mesh_im &mim_, const mesh_fem &mf_u_,
-			      value_type nu_)
-      : mdbrick_abstract_linear_pde<MODEL_STATE>(mim_, mf_u_, MDBRICK_NAVIER_STOKES),
-	nu(nu_) {
-      this->proper_is_linear_ = false;
-      this->proper_is_coercive_ = this->proper_is_symmetric_ = false;
-      this->force_update();
-    }
-
-  };
-
-
-
-  /**
-     Incompressible Navier-Stokes brick.
-     @ingroup bricks
-  */
-  template<typename MODEL_STATE = standard_model_state>
-  class mdbrick_navier_stokes : public mdbrick_abstract<MODEL_STATE>  {
-    
-    typedef typename MODEL_STATE::vector_type VECTOR;
-    typedef typename MODEL_STATE::tangent_matrix_type T_MATRIX;
-    typedef typename MODEL_STATE::value_type value_type;
-    typedef typename gmm::sub_vector_type<VECTOR *,
-				 gmm::sub_interval>::vector_type SUBVECTOR;
-
-    mdbrick_pre_navier_stokes<MODEL_STATE> velocity_part;
-    mdbrick_linear_incomp<MODEL_STATE> sub_problem;
-
-    virtual void proper_update(void) {}
-
-  public :
-
-    virtual void do_compute_tangent_matrix(MODEL_STATE &, size_type,
-					size_type) {}
-    virtual void do_compute_residual(MODEL_STATE &, size_type, size_type) {}
-
-    SUBVECTOR get_velocity(MODEL_STATE &MS) 
-    { return velocity_part.get_solution(MS); }
-
-    SUBVECTOR get_pressure(MODEL_STATE &MS) 
-    { return sub_problem.get_pressure(MS); }
-
-    mdbrick_navier_stokes(const mesh_im &mim, const mesh_fem &mf_u,
-			  const mesh_fem &mf_p, value_type nu)
-      : velocity_part(mim, mf_u, nu), sub_problem(velocity_part, mf_p) {
-      this->add_sub_brick(sub_problem);
-      this->force_update();
-    }
-    
-  };
-
-
-
-
-
 
  
 
