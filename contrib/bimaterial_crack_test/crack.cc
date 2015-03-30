@@ -665,113 +665,83 @@ bool crack_problem::solve(plain_vector &U) {
   if (mixed_pressure) cout << "Number of dof for P: " << mf_p.nb_dof() << endl;
   cout << "Number of dof for u: " << mf_u().nb_dof() << endl;
 
-  // Linearized elasticity brick.
-  getfem::mdbrick_isotropic_linearized_elasticity<>
-    ELAS(mim, mf_u(), mixed_pressure ? 0.0 : lambda, mu);
+  getfem::model model;
 
-  
+  // Linearized elasticity brick.
+  model.add_fem_variable("u", mf_u());
+  if (mixed_pressure) model.add_fem_variable("p", mf_p);
+  plain_vector lambda_(mf_rhs.nb_dof(), mixed_pressure ? 0. : lambda);
+  model.add_initialized_fem_data("lambda", mf_rhs, lambda_);
+  plain_vector mu_(mf_rhs.nb_dof(), mu);
+  model.add_initialized_fem_data("mu", mf_rhs, mu_);
+  getfem::add_isotropic_linearized_elasticity_brick
+    (model, mim, "u", "lambda", "mu");
+
+
   if(bimaterial == 1){
+    GMM_ASSERT1(!mf_rhs.is_reduced(), "To be adapted");
     cout<<"______________________________________________________________________________"<<endl;
     cout<<"CASE OF BIMATERIAL CRACK  with lambda_up = "<<lambda_up<<" and lambda_down = "<<lambda_down<<endl;
     cout<<"______________________________________________________________________________"<<endl;
-    std::vector<double> bi_lambda(ELAS.lambda().mf().nb_dof());
-    std::vector<double> bi_mu(ELAS.lambda().mf().nb_dof());
+    plain_vector bi_lambda(mf_rhs.nb_dof());
+    plain_vector bi_mu(mf_rhs.nb_dof());
     
-    cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    GMM_ASSERT1(!ELAS.lambda().mf().is_reduced(), "To be adapted");
-
-    for (size_type ite = 0; ite < ELAS.lambda().mf().nb_dof();ite++) {
-      if (ELAS.lambda().mf().point_of_basic_dof(ite)[1] > 0){
-	bi_lambda[ite] = lambda_up;
-	bi_mu[ite] = mu_up;
+    for (size_type ite = 0; ite < mf_rhs.nb_dof(); ite++) {
+      if (mf_rhs.point_of_basic_dof(ite)[1] > 0){
+        bi_lambda[ite] = lambda_up;
+        bi_mu[ite] = mu_up;
       }
-	else{
-	  bi_lambda[ite] = lambda_down;
-	  bi_mu[ite] = mu_down;
-	}
-    }
+      else{
+        bi_lambda[ite] = lambda_down;
+        bi_mu[ite] = mu_down;
+      }
+    } 
     
-    //cout<<"bi_lambda.size() = "<<bi_lambda.size()<<endl;
-    // cout<<"ELAS.lambda().mf().nb_dof()==="<<ELAS.lambda().mf().nb_dof()<<endl;
-    
-    ELAS.lambda().set(bi_lambda);
-    ELAS.mu().set(bi_mu);
+    gmm::copy(bi_lambda, model.set_real_variable("lambda"));
+    gmm::copy(bi_mu, model.set_real_variable("mu"));
   }
   
-
-  getfem::mdbrick_abstract<> *pINCOMP;
-  if (mixed_pressure) {
-    getfem::mdbrick_linear_incomp<> *incomp
-      = new getfem::mdbrick_linear_incomp<>(ELAS, mf_p);
-    incomp->penalization_coeff().set(1.0/lambda);
-    pINCOMP = incomp;
-  } else pINCOMP = &ELAS;
+  if (mixed_pressure)
+    getfem::add_linear_incompressibility(model, mim, "u", "p");
+  
 
   // Defining the volumic source term.
   plain_vector F(nb_dof_rhs * N);
   getfem::interpolation_function(mf_rhs, F, sol_f);
-  
-  // Volumic source term brick.
-  getfem::mdbrick_source_term<> VOL_F(*pINCOMP, mf_rhs, F);
+  model.add_initialized_fem_data("VolumicData", mf_rhs, F);
+  getfem::add_source_term_brick(model, mim, "u", "VolumicData");
 
   // Defining the Neumann condition right hand side.
   gmm::clear(F);
   
   // Neumann condition brick.
-  
-  getfem::mdbrick_abstract<> *pNEUMANN;
-  
-  
-  if(bimaterial ==  1){
-    //down side
-    for(size_type i = 1; i<F.size(); i=i+2) 
-      F[i] = -0.4;
-    for(size_type i = 0; i<F.size(); i=i+2) 
-      F[i] = -0.2;
+  if (bimaterial == 1) {
+    
+    gmm::clear(F);
+    for(size_type i = 1; i<F.size(); i=i+2) F[i] = 0.4;
+    for(size_type i = 0; i<F.size(); i=i+2) F[i] = 0.;
+    model.add_initialized_fem_data("NeumannData_up", mf_rhs, F);
+    getfem::add_source_term_brick
+      (model, mim, "u", "NeumannData_up", NEUMANN_BOUNDARY_NUM1);
   }
-  
-  getfem::mdbrick_source_term<>  NEUMANN(VOL_F, mf_rhs, F,NEUMANN_BOUNDARY_NUM);   
-  //left side (crack opening side)
-  gmm::clear(F);
-  for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i] = 0.;
-  for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = -0.;
-  getfem::mdbrick_source_term<> NEUMANN_HOM(NEUMANN, mf_rhs, F,NEUMANN_HOMOGENE_BOUNDARY_NUM);
-   
-    //upper side
-  gmm::clear(F);
-  for(size_type i = 1; i<F.size(); i=i+2) 
-    F[i] = 0.4;
-  for(size_type i = 0; i<F.size(); i=i+2) 
-    F[i] = 0.;
-  getfem::mdbrick_source_term<> NEUMANN1(NEUMANN_HOM, mf_rhs, F,NEUMANN_BOUNDARY_NUM1);
-  
-  if (bimaterial == 1)
-    pNEUMANN = & NEUMANN1;
-  else
-    pNEUMANN = & NEUMANN;
-  
-  
-  
-  //toto_solution toto(mf_rhs.linked_mesh()); toto.init();
-  //assert(toto.mf.nb_dof() == 1);
   
   // Dirichlet condition brick.
-  getfem::mdbrick_Dirichlet<> DIRICHLET(*pNEUMANN, DIRICHLET_BOUNDARY_NUM, mf_mult);
-  
-  if (bimaterial == 1)
-    DIRICHLET.rhs().set(exact_sol.mf,0);
-  else {
+  if (bimaterial == 1) {
+    getfem::add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
+  } else {
 #ifdef VALIDATE_XFEM
-    DIRICHLET.rhs().set(exact_sol.mf,exact_sol.U);
-#endif
+    model.add_initialized_fem_data("DirichletData", exact_sol.mf,
+                                   exact_sol.U);
+    getfem::add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM, "DirichletData");
+#else
+    getfem::add_Dirichlet_condition_with_multipliers
+      (model, mim, "u", mf_mult, DIRICHLET_BOUNDARY_NUM);
+#endif 
   }
-  DIRICHLET.set_constraints_type(getfem::constraints_type(dir_with_mult));
 
-  getfem::mdbrick_abstract<> *final_model = &DIRICHLET;
-
- if (enrichment_option == GLOBAL_WITH_MORTAR) {
+  if (enrichment_option == GLOBAL_WITH_MORTAR) {
     /* add a constraint brick for the mortar junction between
        the enriched area and the rest of the mesh */
     /* we use mfls_u as the space of lagrange multipliers */
@@ -779,9 +749,7 @@ bool crack_problem::solve(plain_vector &U) {
     /* adjust its qdim.. this is just evil and dangerous
        since mf_u() is built upon mfls_u.. it would be better
        to use a copy. */
-    mf_mortar.set_qdim(2); // EVIL 
-    getfem::mdbrick_constraint<> &mortar = 
-      *(new getfem::mdbrick_constraint<>(DIRICHLET,0));
+    mf_mortar.set_qdim(2);
 
     cout << "Handling mortar junction\n";
 
@@ -838,23 +806,18 @@ bool crack_problem::solve(plain_vector &U) {
       }
     }
 
-    
-    
     getfem::base_vector R(gmm::mat_nrows(H));
-    mortar.set_constraints(H,R);
-
-    final_model = &mortar;
+    model.add_fixed_size_variable("mult_mo", gmm::mat_nrows(H));
+    getfem::add_constraint_with_multipliers(model, "u", "mult_mo", H, R);
   }
 
   // Generic solve.
-  cout << "Total number of variables : " << final_model->nb_dof() << endl;
-  getfem::standard_model_state MS(*final_model);
+  cout << "Total number of variables : " << model.nb_dof() << endl;
   gmm::iteration iter(residual, 1, 40000);
-  cout << "Solving..." << endl;
-  getfem::standard_solve(MS, *final_model, iter);
+  getfem::standard_solve(model, iter);
   cout << "Solving... done" << endl;
   // Solution extraction
-  gmm::copy(ELAS.get_solution(MS), U);
+  gmm::copy(model.real_variable("u"), U);
   
   if(reference_test)
     {
