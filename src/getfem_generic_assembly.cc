@@ -2330,7 +2330,13 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_first_ind_tensor::ga_instruction_first_ind_tensor;
+    ga_instruction_second_ind_tensor(base_tensor &t_, fem_interpolation_context &ctx_,
+                                    size_type qdim_, const mesh_fem *mfn_,
+                                    const mesh_fem **mfg_)
+   : ga_instruction_first_ind_tensor(t_, ctx_, qdim_, mfn_, mfg_)
+   {}
+;
+
   };
 
   struct ga_instruction_two_first_ind_tensor : public ga_instruction {
@@ -2469,7 +2475,10 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_val_base::ga_instruction_val_base;
+    ga_instruction_grad_base(base_tensor &tt, fem_interpolation_context &ct,
+                            const mesh_fem &mf_, pfem_precomp &pfp_)
+    : ga_instruction_val_base(tt, ct, mf_,pfp_)
+    {}
   };
 
   struct ga_instruction_hess_base : public ga_instruction_val_base {
@@ -2482,7 +2491,10 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_val_base::ga_instruction_val_base;
+    ga_instruction_hess_base(base_tensor &tt, fem_interpolation_context &ct,
+                            const mesh_fem &mf_, pfem_precomp &pfp_)
+    : ga_instruction_val_base(tt, ct, mf_, pfp_)
+    {}
   };
 
   struct ga_instruction_val : public ga_instruction {
@@ -2541,7 +2553,11 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_val::ga_instruction_val;
+    ga_instruction_grad(base_tensor &tt, base_tensor &Z_,
+                       const base_vector &co, size_type q)
+    : ga_instruction_val(tt, Z_, co, q)
+    {}
+
   };
 
   struct ga_instruction_hess : public ga_instruction_val {
@@ -2569,7 +2585,10 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_val::ga_instruction_val;
+    ga_instruction_hess(base_tensor &tt, base_tensor &Z_,
+                       const base_vector &co, size_type q)
+    : ga_instruction_val(tt, Z_, co, q)
+    {}
   };
 
   struct ga_instruction_copy_val_base : public ga_instruction {
@@ -2642,7 +2661,9 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_copy_val_base::ga_instruction_copy_val_base;
+     ga_instruction_copy_grad_base(base_tensor &tt, base_tensor &Z_, size_type q)
+     : ga_instruction_copy_val_base(tt,Z_,q)
+     {}
   };
 
   struct ga_instruction_copy_hess_base : public ga_instruction_copy_val_base {
@@ -2679,7 +2700,9 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_copy_val_base::ga_instruction_copy_val_base;
+    ga_instruction_copy_hess_base(base_tensor &tt, base_tensor &Z_, size_type q)
+    : ga_instruction_copy_val_base(tt, Z_, q)
+    {}
   };
 
   struct ga_instruction_elementary_transformation {
@@ -2871,7 +2894,12 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_interpolate::ga_instruction_interpolate;
+    ga_instruction_interpolate_val(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_,
+     const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_,ctx_, q)
+    {}
   };
 
   struct ga_instruction_interpolate_grad : public ga_instruction_interpolate {
@@ -2885,7 +2913,12 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_interpolate::ga_instruction_interpolate;
+    ga_instruction_interpolate_grad(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_,
+     const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q)
+    {}
   };
 
   struct ga_instruction_interpolate_hess : public ga_instruction_interpolate {
@@ -2899,7 +2932,12 @@ namespace getfem {
       return 0;
     }
 
-    using ga_instruction_interpolate::ga_instruction_interpolate;
+    ga_instruction_interpolate_hess(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_,
+     const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q)
+    {}
   };
 
   struct ga_instruction_interpolate_base {
