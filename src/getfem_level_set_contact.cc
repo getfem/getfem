@@ -771,8 +771,7 @@ void level_set_contact::
 	gmm::iteration& it_newton,
 	gmm::iteration& it_staggered,
 	const std::string& lsolver_name,
-	getfem::abstract_newton_line_search &ls,
-	bool with_pseudo_potential)
+	getfem::abstract_newton_line_search &ls)
 {
 	bool active_set_converged = false;
 	it_staggered.set_iteration(0);
@@ -782,7 +781,7 @@ void level_set_contact::
 		active_set_converged = !master_contact_body::any_contact_change();
 		it_newton.set_iteration(0);
 		getfem::rmodel_plsolver_type plsolver=getfem::select_linear_solver<sparse_matrix,plain_vector>(md,lsolver_name);
-		(*sf)(md,it_newton,plsolver,ls,with_pseudo_potential);
+		(*sf)(md,it_newton,plsolver,ls);
 		GMM_TRACE2("Newton converged?  - "<<it_newton.converged());
 		GMM_TRACE2("active set converged?  - "<<active_set_converged);
 		GMM_ASSERT1(it_newton.converged(),"Newton method did not converge");

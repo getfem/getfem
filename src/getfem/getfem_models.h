@@ -155,7 +155,6 @@ namespace getfem {
     mutable model_complex_sparse_matrix cTM; // tangent matrix, complex version
     mutable model_real_plain_vector rrhs;
     mutable model_complex_plain_vector crhs;
-    mutable scalar_type pseudo_potential_;
     mutable bool act_size_to_be_done;
     dim_type leading_dim;
     getfem::lock_factory locks_;
@@ -297,7 +296,6 @@ namespace getfem {
                          BUILD_ON_DATA_CHANGE = 4,
                          BUILD_WITH_COMPLETE_RHS = 8,
                          BUILD_COMPLETE_RHS = 9,
-                         BUILD_PSEUDO_POTENTIAL = 16
     };
 
   protected:
@@ -981,12 +979,6 @@ namespace getfem {
         return bricks[ib].rveclist[ind_iter][ind_term];
     }
 
-    /** Gives the access to the pseudo potential. It has to be computed first
-        by the call of assembly(model::BUILD_PSEUDO_POTENTIAL); */
-    scalar_type pseudo_potential(void) const {
-      return pseudo_potential_;
-    }
-
     /** Gives the access to the right hand side of the tangent linear system.
         For the complex version. */
     const model_complex_plain_vector &complex_rhs(void) const {
@@ -1583,32 +1575,6 @@ namespace getfem {
                                         model::complex_veclist &,
                                         size_type, build_version) const { };
 
-
-    virtual scalar_type asm_real_pseudo_potential(const model &, size_type,
-                                                  const model::varnamelist &,
-                                                  const model::varnamelist &,
-                                                  const model::mimlist &,
-                                                  model::real_matlist &,
-                                                  model::real_veclist &,
-                                                  model::real_veclist &,
-                                                  size_type) const {
-      GMM_WARNING1("Brick " << name << " has no contribution to the "
-                   << "pseudo potential !");
-      return scalar_type(0);
-    }
-
-    virtual scalar_type asm_complex_pseudo_potential(const model &, size_type,
-                                                     const model::varnamelist&,
-                                                     const model::varnamelist&,
-                                                     const model::mimlist &,
-                                                     model::complex_matlist &,
-                                                     model::complex_veclist &,
-                                                     model::complex_veclist &,
-                                                     size_type) const {
-      GMM_WARNING1("Brick " << name << " has no contribution to the "
-                   << "pseudo potential !");
-      return scalar_type(0);
-    }
 
     /**check consistency of stiffness matrix and rhs*/
     void check_stiffness_matrix_and_rhs(const model &, size_type,

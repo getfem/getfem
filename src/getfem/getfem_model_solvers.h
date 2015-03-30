@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2004-2012 Yves Renard
+ Copyright (C) 2004-2015 Yves Renard
 
  This file is a part of GETFEM++
 
@@ -453,7 +453,6 @@ namespace getfem {
     const MATRIX &K;
     MATRIX Kr;
     VECTOR rhsr;
-    bool with_pseudo_potential;
 
     void compute_tangent_matrix(void) {
       md.to_variables(state);
@@ -477,9 +476,6 @@ namespace getfem {
       }
     }
 
-    void compute_pseudo_potential(void)
-    { md.to_variables(state); md.assembly(model::BUILD_PSEUDO_POTENTIAL); }
-
     void perturbation(void) {
       R res = gmm::vect_norm2(state), ampl = std::max(res*R(1E-20), R(1E-50));
       std::vector<R> V(gmm::vect_size(state));
@@ -501,13 +497,8 @@ namespace getfem {
     }
 
     R compute_res(bool comp = true) {
-      if (with_pseudo_potential) {
-        compute_pseudo_potential();
-        return md.pseudo_potential();
-      } else {
-        if (comp) compute_residual();
-        return residual_norm();
-      }
+      if (comp) compute_residual();
+      return residual_norm();
     }
 
 
@@ -557,7 +548,7 @@ namespace getfem {
         ++ nit;
       } while (!ls.is_converged(res, R0));
 
-      if (alpha != ls.converged_value() || with_pseudo_potential) {
+      if (alpha != ls.converged_value()) {
         alpha = ls.converged_value();
         gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
                  gmm::sub_vector(state, I));
@@ -570,10 +561,9 @@ namespace getfem {
 
     model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
              const VECTOR &rhs_, const MATRIX &K_, bool reduced_,
-             std::vector<size_type> &sind_,
-             bool with_pseudo_pot = false)
+             std::vector<size_type> &sind_)
       : md(m), is_reduced(reduced_), sind(sind_), I(sind_), ls(ls_), state(st),
-        rhs(rhs_), K(K_), with_pseudo_potential(with_pseudo_pot) {}
+        rhs(rhs_), K(K_) {}
 
   };
 
@@ -709,25 +699,19 @@ namespace getfem {
   */
   void standard_solve(model &md, gmm::iteration &iter,
                       rmodel_plsolver_type lsolver,
-                      abstract_newton_line_search &ls,
-                      bool with_pseudo_potential = false);
+                      abstract_newton_line_search &ls);
 
   void standard_solve(model &md, gmm::iteration &iter,
                       cmodel_plsolver_type lsolver,
-                      abstract_newton_line_search &ls,
-                      bool with_pseudo_potential = false);
+                      abstract_newton_line_search &ls);
 
   void standard_solve(model &md, gmm::iteration &iter,
-                      rmodel_plsolver_type lsolver,
-                      bool with_pseudo_potential = false);
+                      rmodel_plsolver_type lsolver);
 
   void standard_solve(model &md, gmm::iteration &iter,
-                      cmodel_plsolver_type lsolver,
-                      bool with_pseudo_potential = false);
+                      cmodel_plsolver_type lsolver);
 
-  void standard_solve(model &md, gmm::iteration &iter,
-                      bool with_pseudo_potential = false);
-
+  void standard_solve(model &md, gmm::iteration &iter);
 
 }  /* end of namespace getfem.                                             */
 

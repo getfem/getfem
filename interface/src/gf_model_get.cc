@@ -334,13 +334,12 @@ void gf_model_get(getfemint::mexargs_in& m_in,
     /*@GET ('assembly'[, @str option])
       Assembly of the tangent system taking into account the terms
       from all bricks. `option`, if specified, should be 'build_all',
-      'build_rhs', 'build_matrix' or 'pseudo_potential' (in that case,
-      the pseudo_potential is returned).
+      'build_rhs', 'build_matrix'.
       The default is to build the whole
       tangent linear system (matrix and rhs). This function is useful
       to solve your problem with you own solver. @*/
     sub_command
-      ("assembly", 0, 1, 0, 1,
+      ("assembly", 0, 1, 0, 0,
        std::string option = "build_all";
        if (in.remaining()) option = in.pop().to_string();
        getfem::model::build_version version = getfem::model::BUILD_ALL;
@@ -353,13 +352,8 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        else if (cmd_strmatch(option, "build matrix") ||
                 cmd_strmatch(option, "build_matrix"))
          version = getfem::model::BUILD_MATRIX;
-       else if (cmd_strmatch(option, "pseudo potential") ||
-                cmd_strmatch(option, "pseudo_potential"))
-         version = getfem::model::BUILD_PSEUDO_POTENTIAL;
        else THROW_BADARG("bad option: " << option);
        md->model().assembly(version);
-       if (version == getfem::model::BUILD_PSEUDO_POTENTIAL)
-         out.pop().from_scalar(md->model().pseudo_potential());
        );
 
 
@@ -391,10 +385,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        select explicitely the line search method used for the linear systems (the
        default value is 'default').
        Possible values are 'simplest', 'systematic', 'quadratic' or 'basic'.
-    - 'with pseudo potential'
-      for nonlinear problems, the criterion of the line search will
-      be a pseudo potential instead of the residual. Still experimental since
-      not all bricks define a pseudo potential.
 
       Return the number of iterations, if an iterative method is used.
       
@@ -410,7 +400,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        getfemint::interruptible_iteration iter;
        std::string lsolver = "auto";
        std::string lsearch = "default";
-       bool with_pseudo_pot = false;
        scalar_type alpha_max_ratio(-1);
        scalar_type alpha_min(-1);
        scalar_type alpha_mult(-1);
@@ -418,8 +407,6 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        while (in.remaining() && in.front().is_string()) {
          std::string opt = in.pop().to_string();
          if (cmd_strmatch(opt, "noisy")) iter.set_noisy(1);
-         else if (cmd_strmatch(opt, "with pseudo potential"))
-           with_pseudo_pot = true;
          else if (cmd_strmatch(opt, "very noisy") ||
                   cmd_strmatch(opt, "very_noisy")) iter.set_noisy(3);
          else if (cmd_strmatch(opt, "max_iter")) {
@@ -485,13 +472,11 @@ void gf_model_get(getfemint::mexargs_in& m_in,
        if (!md->model().is_complex()) {
          getfem::standard_solve(md->model(), iter,
                                 getfem::rselect_linear_solver(md->model(),
-                                                              lsolver),
-                                *ls, with_pseudo_pot);
+                                                              lsolver), *ls);
        } else {
          getfem::standard_solve(md->model(), iter,
                                 getfem::cselect_linear_solver(md->model(),
-                                                              lsolver),
-                                *ls, with_pseudo_pot);
+                                                              lsolver), *ls);
        }
        if (out.remaining()) out.pop().from_integer(int(iter.get_iteration()));
        if (out.remaining()) out.pop().from_integer(int(iter.converged()));

@@ -108,19 +108,6 @@ namespace getfem {
       }
     }
 
-    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
-						  const model::varnamelist &vl,
-						  const model::varnamelist &,
-						  const model::mimlist &,
-						  model::real_matlist &matl,
-						  model::real_veclist &,
-						  model::real_veclist &,
-						  size_type) const {
-      const model_real_plain_vector &u = md.real_variable(vl[0]);
-      return gmm::vect_sp(matl[0], u, u) / scalar_type(2);
-    }
-
-
     bilap_brick(void) {
       set_flags("Bilaplacian operator", true /* is linear*/,
 		true /* is symmetric */, true /* is coercive */,
@@ -207,18 +194,6 @@ namespace getfem {
 
     }
 
-    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
-						  const model::varnamelist &vl,
-						  const model::varnamelist &,
-						  const model::mimlist &,
-						  model::real_matlist &,
-						  model::real_veclist &vecl,
-						  model::real_veclist &,
-						  size_type) const {
-      const model_real_plain_vector &u = md.real_variable(vl[0]);
-      return -gmm::vect_sp(vecl[0], u);
-    }
-
     virtual void asm_complex_tangent_terms(const model &md, size_type,
 					   const model::varnamelist &vl,
 					   const model::varnamelist &dl,
@@ -259,18 +234,6 @@ namespace getfem {
       else
 	asm_homogeneous_normal_derivative_source_term(vecl[0], mim, mf_u, A, rg);
 
-    }
-
-    virtual scalar_type asm_complex_pseudo_potential(const model &md,size_type,
-						 const model::varnamelist &vl,
-						 const model::varnamelist &,
-						 const model::mimlist &,
-						 model::complex_matlist &,
-						 model::complex_veclist &vecl,
-						 model::complex_veclist &,
-						 size_type) const {
-      const model_complex_plain_vector &u = md.complex_variable(vl[0]);
-      return -gmm::real(gmm::vect_hp(vecl[0], u)); /* ? */
     }
 
     normal_derivative_source_term_brick(void) {
@@ -354,18 +317,6 @@ namespace getfem {
       else
 	asm_neumann_KL_homogeneous_term(vecl[0], mim, mf_u, A, B, rg);
 
-    }
-
-    virtual scalar_type asm_real_pseudo_potential(const model &md, size_type,
-						  const model::varnamelist &vl,
-						  const model::varnamelist &,
-						  const model::mimlist &,
-						  model::real_matlist &,
-						  model::real_veclist &vecl,
-						  model::real_veclist &,
-						  size_type) const {
-      const model_real_plain_vector &u = md.real_variable(vl[0]);
-      return -gmm::vect_sp(vecl[0], u);
     }
 
     KL_source_term_brick(void) {

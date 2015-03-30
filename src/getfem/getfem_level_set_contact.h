@@ -782,8 +782,7 @@ namespace level_set_contact {
                                 getfem::model &md, 
                                 gmm::iteration &iter,
                                 getfem::rmodel_plsolver_type solver,
-                                getfem::abstract_newton_line_search &ls, 
-                                bool with_pseudo_potential);
+                                getfem::abstract_newton_line_search &ls);
   
   /** Solves a model that has contact in it.
       Function checks wheather the contact area has converged
@@ -794,8 +793,7 @@ namespace level_set_contact {
       between conact detection and newton method (only max
       num. of iterations should be provided)
       @param lsolver - solver for a linear system
-      @param ls      - reference to line search method
-      @param with_pseudo_potential - yes if the bricks have pseude potential*/
+      @param ls      - reference to line search method*/
   
   void solve_with_contact(
                           SOLVE_FUNCTION sf, 
@@ -803,8 +801,7 @@ namespace level_set_contact {
                           gmm::iteration& it_newton,
                           gmm::iteration& it_staggered,
                           const std::string& lsolver,
-                          getfem::abstract_newton_line_search &ls,
-                          bool with_pseudo_potential = false);
+                          getfem::abstract_newton_line_search &ls);
   
 } //end of the namespace level_set_contact
 

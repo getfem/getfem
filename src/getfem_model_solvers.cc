@@ -94,7 +94,7 @@ namespace getfem {
     void compute_init_values(model &md, gmm::iteration &iter,
                              PLSOLVER lsolver,
                              abstract_newton_line_search &ls, const MATRIX &K,
-                             const VECTOR &rhs, bool with_pseudo_potential) {
+                             const VECTOR &rhs) {
 
     VECTOR state(md.nb_dof());
     md.from_variables(state);
@@ -107,7 +107,7 @@ namespace getfem {
     // Solve for ddt
     md.set_time_step(ddt);
     gmm::iteration iter1 = iter;
-    standard_solve(md, iter1, lsolver, ls, K, rhs, with_pseudo_potential);
+    standard_solve(md, iter1, lsolver, ls, K, rhs);
     md.copy_init_time_derivative();
 
     // Restore the model state
@@ -126,7 +126,7 @@ namespace getfem {
   void standard_solve(model &md, gmm::iteration &iter,
                       PLSOLVER lsolver,
                       abstract_newton_line_search &ls, const MATRIX &K,
-                      const VECTOR &rhs, bool with_pseudo_potential = false) {
+                      const VECTOR &rhs) {
 
     VECTOR state(md.nb_dof());
     std::vector<size_type> sind;
@@ -139,8 +139,7 @@ namespace getfem {
     int time_integration = md.is_time_integration();
     if (time_integration) {
       if (time_integration == 1 && md.is_init_step()) {
-        compute_init_values(md, iter, lsolver, ls, K, rhs,
-                            with_pseudo_potential);
+        compute_init_values(md, iter, lsolver, ls, K, rhs);
         return;
       }
       md.set_time(md.get_time() + md.get_time_step());
@@ -165,8 +164,7 @@ namespace getfem {
       }
     }
     else {
-      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K, is_reduced, sind,
-                                    with_pseudo_potential);
+      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K, is_reduced, sind);
       classical_Newton(mdpb, iter, *lsolver);
     }
     md.to_variables(state); // copy the state vector into the model variables
@@ -174,44 +172,37 @@ namespace getfem {
 
   void standard_solve(model &md, gmm::iteration &iter,
                       rmodel_plsolver_type lsolver,
-                      abstract_newton_line_search &ls,
-                      bool with_pseudo_potential) {
+                      abstract_newton_line_search &ls) {
     standard_solve(md, iter, lsolver, ls, md.real_tangent_matrix(),
-                   md.real_rhs(), with_pseudo_potential);
+                   md.real_rhs());
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
                       cmodel_plsolver_type lsolver,
-                      abstract_newton_line_search &ls,
-                      bool with_pseudo_potential) {
+                      abstract_newton_line_search &ls) {
     standard_solve(md, iter, lsolver, ls, md.complex_tangent_matrix(),
-                   md.complex_rhs(), with_pseudo_potential);
+                   md.complex_rhs());
   }
 
 
   void standard_solve(model &md, gmm::iteration &iter,
-                      rmodel_plsolver_type lsolver,
-                      bool with_pseudo_potential) {
+                      rmodel_plsolver_type lsolver) {
     default_newton_line_search ls;
-    standard_solve(md, iter, lsolver, ls, with_pseudo_potential);
+    standard_solve(md, iter, lsolver, ls);
   }
 
   void standard_solve(model &md, gmm::iteration &iter,
-                      cmodel_plsolver_type lsolver,
-                      bool with_pseudo_potential) {
+                      cmodel_plsolver_type lsolver) {
     default_newton_line_search ls;
-    standard_solve(md, iter, lsolver, ls, with_pseudo_potential);
+    standard_solve(md, iter, lsolver, ls);
   }
 
-  void standard_solve(model &md, gmm::iteration &iter,
-                      bool with_pseudo_potential) {
+  void standard_solve(model &md, gmm::iteration &iter) {
     getfem::default_newton_line_search ls;
     if (md.is_complex())
-      standard_solve(md, iter, cdefault_linear_solver(md), ls,
-                     with_pseudo_potential);
+      standard_solve(md, iter, cdefault_linear_solver(md), ls);
     else
-      standard_solve(md, iter, rdefault_linear_solver(md), ls,
-                     with_pseudo_potential);
+      standard_solve(md, iter, rdefault_linear_solver(md), ls);
   }
 
 
