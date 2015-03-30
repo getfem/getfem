@@ -78,7 +78,7 @@ for i=1:1
   ULS2s = min(ULS2s, (abs(y - yc)+abs(x-xc) - R));
 end
 
-gf_levelset_set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, '(y-.2)^2 - 0.04');
+gf_levelset_set(ls2, 'values', ULS2, ULS2s); //'-y-x+.2'); //, 'sqr(y-.2) - 0.04');
 
 mls = gf_mesh_levelset(m);
 gf_mesh_levelset_set(mls, 'add', _ls);

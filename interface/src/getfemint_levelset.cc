@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2007-2012 Julien Pommier.
+ Copyright (C) 2007-2015 Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -19,15 +19,9 @@
  
 ===========================================================================*/
 #include <getfemint_levelset.h>
-#include <getfemint_levelset.h>
 #include <getfemint_workspace.h>
+#include <getfem/getfem_generic_assembly.h>
 #include <getfem/getfem_arch_config.h>
-
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
 
 namespace getfemint {
   getfemint_levelset* getfemint_levelset::get_from(getfem::level_set *ls,
@@ -52,79 +46,31 @@ namespace getfemint {
 
   }
 
-  void getfemint_levelset::values_from_poly(unsigned idx,
-                                            const std::string &s) {
-    const getfem::mesh_fem &mf = levelset().get_mesh_fem();
-    assert(!mf.is_reduced());
-    bgeot::base_poly p = bgeot::read_base_poly(mf.linked_mesh().dim(), s);
-    ls->values(idx).resize(mf.nb_dof());
-    for (unsigned i=0; i < mf.nb_dof(); ++i) {
-      const getfem::base_node x = mf.point_of_basic_dof(i);
-      ls->values(idx)[i] =  bgeot::to_scalar(p.eval(x.begin()));
-    }
-  }
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
   void getfemint_levelset::values_from_func(unsigned idx,
                                             const std::string &s) {
+
     const getfem::mesh_fem &mf = levelset().get_mesh_fem();
-    assert(!mf.is_reduced());
-
-    double* x = (double *)calloc(mf.linked_mesh().dim(), sizeof(double));
-
-    mu::Parser p;
-    try {
-      switch(mf.linked_mesh().dim()) {
-        case 1:
-         p.DefineVar("x",&x[0]); break;
-        case 2:
-         p.DefineVar("x",&x[0]);
-         p.DefineVar("y",&x[1]); break;
-        case 3:
-         p.DefineVar("x",&x[0]);
-         p.DefineVar("y",&x[1]);
-         p.DefineVar("z",&x[2]); break;
-      }
-      p.SetExpr(s);
-    } catch (mu::Parser::exception_type &e) {
-      std::cout << "Message  : " << e.GetMsg() << std::endl;
-      std::cout << "Formula  : " << e.GetExpr() << std::endl;
-      std::cout << "Token    : " << e.GetToken() << std::endl;
-      std::cout << "Position : " << e.GetPos() << std::endl;
-      std::cout << "Errc     : " << e.GetCode() << std::endl;
-    }
-
+    size_type N = mf.linked_mesh().dim();
+    getfem::ga_workspace gw;
+    getfem::model_real_plain_vector pt(N);
+    gw.add_fixed_size_constant("X", pt);
+    if (N >= 1) gw.add_macro("x", "X(1)");
+    if (N >= 2) gw.add_macro("y", "X(2)");
+    if (N >= 3) gw.add_macro("z", "X(3)");
+    if (N >= 4) gw.add_macro("w", "X(4)");
+    getfem::ga_function f(gw, s);
+    
+    f.compile();
     ls->values(idx).resize(mf.nb_dof());
+    
     bool is_set = 0;
     for (unsigned i=0; i < mf.nb_dof(); ++i) {
       is_set = 0;
-      switch(mf.linked_mesh().dim()) {
-        case 1 :
-         x[0] = mf.point_of_basic_dof(i)[0];
-         is_set = 1;
-         break;
-        case 2 :
-         x[0] = mf.point_of_basic_dof(i)[0];
-         x[1] = mf.point_of_basic_dof(i)[1];
-         is_set = 1;
-         break;
-        case 3 :
-         x[0] = mf.point_of_basic_dof(i)[0];
-         x[1] = mf.point_of_basic_dof(i)[1];
-         x[2] = mf.point_of_basic_dof(i)[2];
-         is_set = 1;
-         break;
-      }
-      try {
-        if (is_set) ls->values(idx)[i] = p.Eval();
-      } catch (mu::Parser::exception_type &e) {
-        std::cout << "Message  : " << e.GetMsg() << std::endl;
-        std::cout << "Formula  : " << e.GetExpr() << std::endl;
-        std::cout << "Token    : " << e.GetToken() << std::endl;
-        std::cout << "Position : " << e.GetPos() << std::endl;
-        std::cout << "Errc     : " << e.GetCode() << std::endl;
-      }
+      gmm::copy(mf.point_of_basic_dof(i), pt);
+      const bgeot::base_tensor &t = f.eval();
+      GMM_ASSERT1(t.size() == 1, "Wrong size of expression result " << s);
+      ls->values(idx)[i] = t[0];
     }
-    free(x);
+   
   }
-#endif
 }

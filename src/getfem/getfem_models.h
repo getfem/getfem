@@ -2218,23 +2218,6 @@ namespace getfem {
                                             size_type region);
 
 
-  /** Adds a brick representing a scalar term (@f$f(u)@f$) to the left-hand
-      side of the model. In the weak form, one adds (@f$ +\int f(u)v@f$). The
-      function $f$ may optionally depend on $\lambda$, i.e.,
-      $f(u) = f(u, \lambda)$.
-
-      `f` and `dfdu` should contain the expressions for $f(u)$ and
-      $\frac{df}{du}(u)$, respectively. `region` is an
-      optional mesh region on which the term is added. `dataname` represents
-      the optional real scalar parameter $\lambda$ in the model. Return the
-      brick index in the model.
-  */
-  size_type APIDECL add_basic_nonlinear_brick
-  (model &md, const mesh_im &mim, const std::string &varname,
-   const std::string &f, const std::string &dfdu,
-   size_type region = size_type(-1),
-   const std::string &dataname = std::string());
-
   // Constraint brick.
   model_real_sparse_matrix APIDECL &set_private_data_brick_real_matrix
   (model &md, size_type indbrick);

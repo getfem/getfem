@@ -497,52 +497,6 @@ AC_SUBST([QHULL_LIBS])
 echo "Configuration of qhull done"
 dnl -----------------------------END OF QHULL TEST---------------------------
 
-dnl ------------------------------MUPARSER------------------------------
-MUPARSERSINC=""
-AC_ARG_WITH(muparser-include-dir,
- [AS_HELP_STRING([--with-muparser-include-dir],[directory in which the muParser.h header can be found])],
- [case $withval in
-   -I* ) MUPARSERINC="$withval";;
-   * ) MUPARSERINC="-I$withval";;
-  esac],
- [MUPARSERINC="-I$GFPREFIX/include"]
-)
-CPPFLAGS="$CPPFLAGS $MUPARSERINC"
-dnl ---------------------------END OF MUPARSER--------------------------
-
-dnl ------------------------------MUPARSER TEST------------------------------
-usemuparser="no"
-AC_ARG_ENABLE(muparser,
- [AS_HELP_STRING([--enable-muparser],[enable the use of the muParser library (required for parsing mathematical expressions)])],
- [ if test "x$enableval" = "xyes" ; then usemuparser="yes"; fi], [usemuparser="test"])
-MUPARSER_LIBS=""
-
-if test "x$usemuparser" = "xno"; then
-  echo "Building with muParser explicitly disabled";
-else
-  AC_CHECK_LIB(muparser, _init, [], [AC_CHECK_LIB(muparser, mupEval)])
-   AC_CHECK_HEADERS(muParser/muParser.h, [usemuparser="yes"],
-   [ 
-     AC_CHECK_HEADERS(muParser.h, [usemuparser="yes"],
-     [
-     if test "x$usemuparser" = "xyes"; then
-     	AC_MSG_ERROR([header file muParser.h or muParser/muParser.h not found. Use --enable-muparser=no flag]);
-	usemuparser="no"
-   	fi;
-     ])
-   ])
-
-  if test "x$usemuparser" = "xyes"; then
-    MUPARSER_LIBS="-lmuparser"
-  fi;
-  echo "Building with muParser (use --enable-muparser=no to disable it)"
-fi;
-
-AM_CONDITIONAL(MUPARSER, test x$usemuparser = xyes)
-AC_SUBST([MUPARSER_LIBS])
-echo "Configuration of muParser done"
-dnl ---------------------------END OF MUPARSER TEST--------------------------
-
 dnl ------------------------------MUMPS TEST------------------------------
 MUMPSINC=""
 AC_ARG_WITH(mumps-include-dir,
@@ -1151,12 +1105,6 @@ if test "x$useQHULL" = "xyes"; then
   echo "- Qhull found. Using the Qhull library for delaunay triangulations."
 else
   echo "- Qhull not found. Mesh generation will be disabled."
-fi;
-
-if test "x$usemuparser" = "xyes"; then
-  echo "- MuParser found. Used for parsing mathematical expressions."
-else
-  echo "- MuParser not found. Parsing mathematical expressions will be disabled."
 fi;
 
 if test "x$usemumps" = "xyes"; then

@@ -563,7 +563,8 @@ namespace getfem {
     void assembly(size_type order);
 
     ga_workspace(const getfem::model &md_) : md(&md_), parent_workspace(0) {}
-    ga_workspace(const ga_workspace &gaw) : md(0), parent_workspace(&gaw) {}
+    ga_workspace(bool, const ga_workspace &gaw)
+      : md(0), parent_workspace(&gaw) {}
     ga_workspace(void) : md(0), parent_workspace(0) {}
     ~ga_workspace() { clear_expressions(); }
 

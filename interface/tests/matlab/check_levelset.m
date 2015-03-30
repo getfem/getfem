@@ -20,11 +20,11 @@ gf_workspace('clear all');
 clf;
 m=gf_mesh('regular_simplices', -1:.2:1, -1:.2:1, 'degree', 2, 'noised');
 %m=gf_mesh('cartesian', -1:.33:1, -1:.33:1);
-ls=gfLevelSet(m, 2, 'x^2 + y^2 - 0.7^2', 'x-.4')
+ls=gfLevelSet(m, 2, 'x*x + y*y - 0.7*0.7', 'x-.4')
 %ls=gfLevelSet(m, 2, 'x + y - 0.2'); %, 'x-5')
 %ls=gfLevelSet(m, 2, 'x + y - 0.2', 'x-5')
-ls2=gf_levelset(m, 2, '0.6*x^2 + (y-0.1)^2 - 0.6^2');
-ls3=gf_levelset(m, 4, 'x^2 + (y+.08)^2 - 0.05^2');
+ls2=gf_levelset(m, 2, '0.6*x*x + (y-0.1)*(y-0.1) - 0.6*0.6');
+ls3=gf_levelset(m, 4, 'x*x + (y+.08)*(y+.08) - 0.05*0.05');
 
 mls=gfMeshLevelset(m)
 set(mls, 'add', ls);

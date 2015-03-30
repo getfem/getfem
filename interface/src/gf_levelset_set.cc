@@ -62,22 +62,14 @@ void gf_levelset_set(getfemint::mexargs_in& in, getfemint::mexargs_out& out)
     }
     ls.values(0).resize(ls.get_mesh_fem().nb_dof());
     if (s1.size()) {
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
       gls->values_from_func(0, s1);
-#else
-      gls->values_from_poly(0, s1);
-#endif
     } else {
       ls.values(0).assign(v1.begin(), v1.end());
     }
     if (ls.has_secondary()) {
       ls.values(1).resize(ls.get_mesh_fem().nb_dof());
       if (s2.size()) {
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
         gls->values_from_func(1, s2);
-#else
-        gls->values_from_poly(1, s2);
-#endif
       } else {
 	ls.values(1).assign(v2.begin(), v2.end());
       }

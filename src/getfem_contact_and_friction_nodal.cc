@@ -1472,11 +1472,18 @@ namespace getfem {
           if ((i % (d+1)) == 0) alpha[j++] = MM(id, id) / l;
 
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-
-
-        mu::Parser parser;
-        parser.SetExpr(obstacle);
+        getfem::ga_workspace gw;
+        getfem::ga_function f(gw, obstacle);
+        
+        size_type N = d+1;
+        getfem::model_real_plain_vector pt(N);
+        gw.add_fixed_size_constant("X", pt);
+        if (N >= 1) gw.add_macro("x", "X(1)");
+        if (N >= 2) gw.add_macro("y", "X(2)");
+        if (N >= 3) gw.add_macro("z", "X(3)");
+        if (N >= 4) gw.add_macro("w", "X(4)");
+        
+        f.compile();
 
         gmm::resize(gap, nbc);
         gmm::resize(BN1, nbc, mf_u1.nb_dof());
@@ -1485,53 +1492,39 @@ namespace getfem {
           gmm::resize(BT1, d*nbc, mf_u1.nb_dof());
           gmm::clear(BT1);
         }
-        base_node pt(d+1), grad(d+1), ut[3];
-
-        static std::string varn[4] = {"x", "y", "z", "w"};
-        for (size_type k = 0; k <= d; ++k)
-          parser.DefineVar(varn[k], &pt[k]);
+        base_node grad(d+1), ut[3];
 
         i = 0; j = 0;
         for (dal::bv_visitor id(dofs); !id.finished(); ++id, ++i) {
           if ((i % (d+1)) == 0) {
             gmm::copy(mf_u1.point_of_basic_dof(id), pt);
-            try {
 
-              // Computation of gap
-              gap[j] = scalar_type(parser.Eval());
-
-              // computation of BN
-              size_type cv = mf_u1.first_convex_of_basic_dof(id);
-              scalar_type eps
-                = mf_u1.linked_mesh().convex_radius_estimate(cv) * 1E-3;
-              for (size_type k = 0; k <= d; ++k) {
-                pt[k] += eps;
-                grad[k] = (scalar_type(parser.Eval()) - gap[j]) / eps;
-                pt[k] -= eps;
-              }
-              // unit normal vector
-              base_node un = - grad / gmm::vect_norm2(grad);
-
+            // Computation of gap
+            gap[j] = (f.eval())[0];
+            
+            // computation of BN
+            size_type cv = mf_u1.first_convex_of_basic_dof(id);
+            scalar_type eps
+              = mf_u1.linked_mesh().convex_radius_estimate(cv) * 1E-3;
+            for (size_type k = 0; k <= d; ++k) {
+              pt[k] += eps;
+              grad[k] = ((f.eval())[0] - gap[j]) / eps;
+              pt[k] -= eps;
+            }
+            // unit normal vector
+            base_node un = - grad / gmm::vect_norm2(grad);
+            
+            for (size_type k = 0; k <= d; ++k)
+              BN1(j, id + k) = un[k];
+            
+            // computation of BT
+            if (!contact_only) {
+              
+              orthonormal_basis_to_unit_vec(d, un, ut);
+              
               for (size_type k = 0; k <= d; ++k)
-                BN1(j, id + k) = un[k];
-
-              // computation of BT
-              if (!contact_only) {
-
-                orthonormal_basis_to_unit_vec(d, un, ut);
-
-                for (size_type k = 0; k <= d; ++k)
-                  for (size_type nn = 0; nn < d; ++nn)
-                    BT1(j*d+nn, id + k) = ut[nn][k];
-              }
-
-            } catch (mu::Parser::exception_type &e) {
-              std::cerr << "Message  : " << e.GetMsg()   << std::endl;
-              std::cerr << "Formula  : " << e.GetExpr()  << std::endl;
-              std::cerr << "Token    : " << e.GetToken() << std::endl;
-              std::cerr << "Position : " << e.GetPos()   << std::endl;
-              std::cerr << "Errc     : " << e.GetCode()  << std::endl;
-              GMM_ASSERT1(false, "Error in signed distance expression");
+                for (size_type nn = 0; nn < d; ++nn)
+                  BT1(j*d+nn, id + k) = ut[nn][k];
             }
             ++j;
           }
@@ -1544,13 +1537,6 @@ namespace getfem {
         if (!contact_only)
           GMM_ASSERT1(gmm::vect_size(md.real_variable(vl[2])) == nbc*d,
                       "Wrong size of multiplier for the friction condition");
-
-#else
-
-        GMM_ASSERT1(false, "Muparser is not installed, "
-                    "You cannot use this contact brick");
-
-#endif
 
         is_init = false;
       }

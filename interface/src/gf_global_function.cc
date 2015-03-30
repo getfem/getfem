@@ -105,23 +105,21 @@ void gf_global_function(getfemint::mexargs_in& m_in,
        ggf = getfemint_global_function::get_from(crack);
        );
 
-
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
     /*@INIT GF = ('parser', @str val[, @str grad[, @str hess]])
-      Create a global function from strings `val`, `grad` and `hess`.@*/
+      Create a global function from strings `val`, `grad` and `hess`.
+      This function could be improved by using the derivation of the generic
+      assembly language ... to be done. @*/
     sub_command
       ("parser", 1, 3, 0, 1,
        std::string sval = in.pop().to_string();
-       std::string sgrad = "0;0;";
-       std::string shess = "0;0;0;0;";
+       std::string sgrad = "[0;0]";
+       std::string shess = "[0,0;0,0]";
        if (in.remaining() && in.front().is_string()) sgrad = in.pop().to_string();
        if (in.remaining() && in.front().is_string()) shess = in.pop().to_string();
 
        getfem::abstract_xy_function *parser = new getfem::parser_xy_function(sval,sgrad,shess);
        ggf = getfemint_global_function::get_from(parser);
        );
-#endif
-
 
     /*@INIT GF = ('product', @tgf F, @tgf G)
       Create a product of two global functions.@*/

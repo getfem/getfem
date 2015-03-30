@@ -40,13 +40,7 @@
 #include "getfem_fem.h"
 #include "getfem_mesh_fem.h"
 #include "bgeot_rtree.h"
-
-#include "getfem/getfem_arch_config.h"
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
+#include "getfem_generic_assembly.h"
 
 namespace getfem {
   /// inherit from this class to define new global functions.
@@ -162,12 +156,10 @@ namespace getfem {
     virtual ~abstract_xy_function() {}
   };
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
   struct parser_xy_function : public abstract_xy_function {
-    mu::Parser pval;
-    mu::Parser pXgrad,pYgrad;
-    mu::Parser pXXhess,pXYhess,pYXhess,pYYhess;
-    mutable std::vector<double> var;// x,y,r,theta
+    ga_workspace gw_val, gw_grad, gw_hess;
+    ga_function f_val, f_grad, f_hess;
+    mutable model_real_plain_vector ptx, pty, ptr, ptt;
 
     virtual scalar_type val(scalar_type x, scalar_type y) const;
     virtual base_small_vector grad(scalar_type x, scalar_type y) const;
@@ -177,7 +169,6 @@ namespace getfem {
                        const std::string &sgrad="0;0;",
                        const std::string &shess="0;0;0;0;");
   };
-#endif
 
   struct crack_singular_xy_function : public abstract_xy_function {
     unsigned l; /* 0 <= l <= 6 */

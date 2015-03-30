@@ -41,7 +41,6 @@ check_PROGRAMS =                   \
 	heat_equation              \
 	wave_equation 		   \
 	cyl_slicer		   \
-	test_large_sliding_contact \
 	test_continuation          \
 	test_gmm_matrix_functions
 
@@ -97,7 +96,6 @@ bilaplacian_SOURCES = bilaplacian.cc
 heat_equation_SOURCES = heat_equation.cc
 wave_equation_SOURCES = wave_equation.cc
 cyl_slicer_SOURCES = cyl_slicer.cc
-test_large_sliding_contact_SOURCES = test_large_sliding_contact.cc
 test_continuation_SOURCES = test_continuation.cc
 test_gmm_matrix_functions_SOURCES = test_gmm_matrix_functions.cc
 
@@ -137,7 +135,6 @@ TESTS = \
 	bilaplacian.pl    	      \
 	heat_equation.pl              \
 	wave_equation.pl   	      \
-	test_large_sliding_contact.pl \
 	test_gmm_matrix_functions.pl  \
 	cyl_slicer.pl	              \
 	make_gmm_test.pl
@@ -187,8 +184,6 @@ EXTRA_DIST =                               			\
 	plasticity.param                      			\
 	nonlinear_elastostatic.param       			\
 	test_interpolated_fem.param        			\
-	test_large_sliding_contact.pl                           \
-	test_large_sliding_contact.param                        \
 	test_gmm_matrix_functions.pl              		\
 	geo_trans_inv.param                			\
 	heat_equation.pl                   			\

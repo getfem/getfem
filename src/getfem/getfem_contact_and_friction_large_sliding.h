@@ -123,7 +123,7 @@ namespace getfem {
 
 
 
-  // Old brick, to be adapted ...
+#if 0   // Old brick, to be adapted ...
 
 
 
@@ -167,6 +167,8 @@ namespace getfem {
   void add_rigid_obstacle_to_large_sliding_contact_brick
   (model &md, size_type indbrick, const std::string &obs);
 
+
+#endif
 
 }  /* end of namespace getfem.                                             */
 

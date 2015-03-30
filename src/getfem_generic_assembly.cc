@@ -4294,11 +4294,6 @@ namespace getfem {
                            << tree.root->test_function_type);
       }
 
-      if (function_expr && tree.root->tensor_order() > 0)
-        ga_throw_error(expr, tree.root->pos, "Incorrect term. Each term "
-                       "should be reduced to a scalar in order to perform "
-                       "the assembly.");
-
       bool found = false;
       for (size_type i = 0; i < trees.size(); ++i) {
         if (trees[i].mim == &mim && trees[i].m == &m &&
@@ -8977,7 +8972,7 @@ namespace getfem {
 
   ga_function::ga_function(const ga_workspace &workspace_,
                            const std::string &e)
-    : local_workspace(workspace_), expr(e), gis(0) {}
+    : local_workspace(true, workspace_), expr(e), gis(0) {}
 
   ga_function::ga_function(const model &md, const std::string &e)
     : local_workspace(md), expr(e), gis(0) {}
@@ -8986,7 +8981,7 @@ namespace getfem {
     : local_workspace(), expr(e), gis(0) {}
 
   ga_function::ga_function(const ga_function &gaf)
-    : local_workspace(gaf.local_workspace), expr(gaf.expr), gis(0)
+    : local_workspace(true, gaf.local_workspace), expr(gaf.expr), gis(0)
   { if (gaf.gis) compile(); }
 
   void ga_function::compile(void) const {
@@ -9316,7 +9311,7 @@ namespace getfem {
       if ((ignore_data && !extract_variable_done) ||
           (!ignore_data && !extract_data_done)) {
         used_vars.clear();
-        local_workspace = ga_workspace(workspace);
+        local_workspace = ga_workspace(true, workspace);
         local_workspace.clear_expressions();
         local_workspace.add_interpolation_expression(expr, source_mesh);
         for (size_type i = 0; i < local_workspace.nb_trees(); ++i)
@@ -9339,7 +9334,7 @@ namespace getfem {
       size_type N = target_mesh.dim();
 
       // Expression compilation
-      local_workspace = ga_workspace(workspace);
+      local_workspace = ga_workspace(true, workspace);
       local_workspace.clear_expressions();
 
       local_workspace.add_interpolation_expression(expr, source_mesh);

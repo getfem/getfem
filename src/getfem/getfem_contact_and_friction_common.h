@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
 
- Copyright (C) 2011-2013 Yves Renard, Konstantinos Poulios.
+ Copyright (C) 2011-2015 Yves Renard, Konstantinos Poulios.
 
  This file is a part of GETFEM++
 
@@ -38,18 +38,10 @@
 #ifndef GETFEM_CONTACT_AND_FRICTION_COMMON_H__
 #define GETFEM_CONTACT_AND_FRICTION_COMMON_H__
 
-#include "getfem_models.h"
+#include "getfem_generic_assembly.h"
 #include "getfem_assembling_tensors.h"
 #include "getfem/bgeot_rtree.h"
 #include <getfem/getfem_mesher.h>
-
-
-#include <getfem/getfem_arch_config.h>
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
 
 
 namespace getfem {
@@ -471,10 +463,9 @@ namespace getfem {
     std::vector<contact_boundary> contact_boundaries;
 
     std::vector<std::string> coordinates;
-    base_node pt_eval;
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-    std::vector<mu::Parser> obstacles_parsers;
-#endif
+    model_real_plain_vector pt, ptx, pty, ptz, ptw;
+    std::list<ga_workspace> obstacles_gw;
+    std::vector<ga_function> obstacles_f;
     std::vector<std::string> obstacles;
     std::vector<std::string> obstacles_velocities;
 

@@ -240,7 +240,7 @@ namespace getfem {
                                            bool rayt, int nmode, bool refc)
     : N(NN), self_contact(selfc), ref_conf(refc), use_delaunay(dela),
       nodes_mode(nmode), raytrace(rayt), release_distance(r_dist),
-      cut_angle(cut_a), EPS(1E-8), md(0), coordinates(N), pt_eval(N) {
+      cut_angle(cut_a), EPS(1E-8), md(0), coordinates(N), pt(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -257,7 +257,7 @@ namespace getfem {
     : N(NN), self_contact(selfc), ref_conf(refc),
       use_delaunay(dela), nodes_mode(nmode), raytrace(rayt),
       release_distance(r_dist), cut_angle(cut_a), EPS(1E-8), md(&mdd),
-      coordinates(N), pt_eval(N) {
+      coordinates(N), pt(N) {
     if (N > 0) coordinates[0] = "x";
     if (N > 1) coordinates[1] = "y";
     if (N > 2) coordinates[2] = "z";
@@ -270,17 +270,18 @@ namespace getfem {
     size_type ind = obstacles.size();
     obstacles.push_back(obs);
     obstacles_velocities.push_back("");
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-
-    mu::Parser mu;
-    obstacles_parsers.push_back(mu);
-    obstacles_parsers[ind].SetExpr(obstacles[ind]);
-    for (size_type k = 0; k < N; ++k)
-      obstacles_parsers[ind].DefineVar(coordinates[k], &pt_eval[k]);
-#else
-    GMM_ASSERT1(false, "You have to link muparser with getfem to deal "
-                "with rigid body obstacles");
-#endif
+    obstacles_gw.push_back(ga_workspace());
+    pt.resize(N); ptx.resize(1); pty.resize(1); ptz.resize(1); ptw.resize(1);
+    obstacles_gw.back().add_fixed_size_constant("X", pt);
+    switch(N) {
+    default:
+    case 4: obstacles_gw.back().add_fixed_size_constant("w", ptw);
+    case 3: obstacles_gw.back().add_fixed_size_constant("z", ptz);
+    case 2: obstacles_gw.back().add_fixed_size_constant("y", pty);
+    case 1: obstacles_gw.back().add_fixed_size_constant("x", ptx);
+    }
+    obstacles_f.push_back(ga_function(obstacles_gw.back(), obs));
+    obstacles_f.back().compile();
     return ind;
   }
 
@@ -921,27 +922,54 @@ namespace getfem {
       }
 
       if (self_contact || slx) {
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
         // Detect here the nearest rigid obstacle (taking into account
         // the release distance)
         size_type irigid_obstacle(-1);
-        gmm::copy(x, pt_eval);
+        gmm::copy(x, pt);
+        switch(N) {
+        default:
+        case 4: ptw[0] = pt[3]; 
+        case 3: ptz[0] = pt[2]; 
+        case 2: pty[0] = pt[1]; 
+        case 1: ptx[0] = pt[0];
+        }
         for (size_type i = 0; i < obstacles.size(); ++i) {
-          d1 = scalar_type(obstacles_parsers[i].Eval());
+          d1 = (obstacles_f[i].eval())[0];
           if (gmm::abs(d1) < release_distance && d1 < d0) {
 
             for (size_type j=0; j < bpinfo.normals.size(); ++j) {
-              gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt_eval);
-              d2 =  scalar_type(obstacles_parsers[i].Eval());
+              gmm::add(gmm::scaled(bpinfo.normals[j], EPS), pt);
+              switch(N) {
+              default:
+              case 4: ptw[0] = pt[3]; 
+              case 3: ptz[0] = pt[2]; 
+              case 2: pty[0] = pt[1]; 
+              case 1: ptx[0] = pt[0];
+              }
+              d2 =  (obstacles_f[i].eval())[0];
               if (d2 < d1) { d0 = d1; irigid_obstacle = i; break; }
-              gmm::copy(x, pt_eval);
+              gmm::copy(x, pt);
+              switch(N) {
+              default:
+              case 4: ptw[0] = pt[3]; 
+              case 3: ptz[0] = pt[2]; 
+              case 2: pty[0] = pt[1]; 
+              case 1: ptx[0] = pt[0];
+              }
             }
           }
         }
 
         if (irigid_obstacle != size_type(-1)) {
 
-          gmm::copy(x, pt_eval);
+          gmm::copy(x, pt);
+          switch(N) {
+          default:
+          case 4: ptw[0] = pt[3]; 
+          case 3: ptz[0] = pt[2]; 
+          case 2: pty[0] = pt[1]; 
+          case 1: ptx[0] = pt[0];
+          }
           gmm::copy(x, y);
           size_type nit = 0, nb_fail = 0;
           scalar_type alpha(0), beta(0);
@@ -949,10 +977,22 @@ namespace getfem {
 
           while (++nit < 50 && nb_fail < 3) {
             for (size_type k = 0; k < N; ++k) {
-              pt_eval[k] += EPS;
-              d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+              pt[k] += EPS;
+              switch(N) {
+              case 4: ptw[0] += EPS; break;
+              case 3: ptz[0] += EPS; break;
+              case 2: pty[0] += EPS; break;
+              case 1: ptx[0] += EPS; break;
+              }
+              d2 = (obstacles_f[irigid_obstacle].eval())[0];
               ny[k] = (d2 - d1) / EPS;
-              pt_eval[k] -= EPS;
+              pt[k] -= EPS;
+              switch(N) {
+              case 4: ptw[0] -= EPS; break;
+              case 3: ptz[0] -= EPS; break;
+              case 2: pty[0] -= EPS; break;
+              case 1: ptx[0] -= EPS; break;
+              }
             }
 
             if (gmm::abs(d1) < 1E-13)
@@ -962,11 +1002,18 @@ namespace getfem {
             for (scalar_type lambda(1); lambda >= 1E-3; lambda /= scalar_type(2)) {
               if (raytrace) {
                 alpha = beta - lambda * d1 / gmm::vect_sp(ny, nx);
-                gmm::add(x, gmm::scaled(nx, alpha), pt_eval);
+                gmm::add(x, gmm::scaled(nx, alpha), pt);
               } else {
-                gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt_eval);
+                gmm::add(gmm::scaled(ny, -d1/gmm::vect_norm2_sqr(ny)), y, pt);
               }
-              d2 = scalar_type(obstacles_parsers[irigid_obstacle].Eval());
+              switch(N) {
+              default:
+              case 4: ptw[0] = pt[3]; 
+              case 3: ptz[0] = pt[2]; 
+              case 2: pty[0] = pt[1]; 
+              case 1: ptx[0] = pt[0];
+              }
+              d2 = (obstacles_f[irigid_obstacle].eval())[0];
 //               if (nit > 10)
 //                 cout << "nit = " << nit << " lambda = " << lambda
 //                      << " alpha = " << alpha << " d2 = " << d2
@@ -976,7 +1023,7 @@ namespace getfem {
             if (raytrace &&
                 gmm::abs(beta - d1 / gmm::vect_sp(ny, nx)) > scalar_type(500))
               nb_fail++;
-            gmm::copy(pt_eval, y); beta = alpha; d1 = d2;
+            gmm::copy(pt, y); beta = alpha; d1 = d2;
           }
 
           if (gmm::abs(d1) > 1E-8) {
@@ -988,7 +1035,7 @@ namespace getfem {
           if (gmm::vect_dist2(y, x) > release_distance)
             continue;
 
-          gmm::copy(pt_eval, y);
+          gmm::copy(pt, y);
           ny /= gmm::vect_norm2(ny);
 
           d0 = gmm::vect_dist2(y, x) * gmm::sgn(d0);
@@ -997,11 +1044,6 @@ namespace getfem {
           contact_pairs.push_back(ct);
           first_pair_found = true;
         }
-#else
-        if (obstacles.size() > 0)
-          GMM_WARNING1("Rigid obstacles are ignored. Recompile with "
-                       "muParser to account for rigid obstacles");
-#endif
       }
 
       // if (potential_pairs[ip].size())

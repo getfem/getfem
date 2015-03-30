@@ -53,7 +53,8 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
 
       If `ws` (with secondary) is set; this levelset is represented by a
       primary function and a secondary function. If `f1` is set; the primary
-      function is defined by that expression. If `f2` is set; this levelset
+      function is defined by that expression (with the syntax of the high
+      generic assembly language). If `f2` is set; this levelset
       is represented by a primary function and a secondary function defined
       by these expressions. @*/
     getfemint_mesh *mm = in.pop().to_getfemint_mesh();
@@ -74,13 +75,9 @@ getfemint::mexargs_in& in, getfemint::mexargs_out& out) {
       new getfem::level_set(mm->mesh(),dim_type(degree),with_secondary);
     gls = getfemint_levelset::get_from(ls);
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H  
     if (s1.size()) gls->values_from_func(0, s1);
     if (s2.size()) gls->values_from_func(1, s2);
-#else
-    if (s1.size()) gls->values_from_poly(0, s1);
-    if (s2.size()) gls->values_from_poly(1, s2);
-#endif
+
     workspace().set_dependance(gls, mm);
   }
   out.pop().from_object_id(gls->get_id(), LEVELSET_CLASS_ID);

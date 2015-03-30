@@ -36,11 +36,11 @@ m = gf.Mesh('regular_simplices', np.arange(-1,1+eps,eps), np.arange(-1,1+eps,eps
 #m = gf.Mesh('cartesian', np.arange(-1,1+eps,eps), np.arange(-1,1+eps,eps))
 
 ls1 = gf.LevelSet(m, 2, 'y', 'x')
-#ls1 = gf.LevelSet(m, 2, 'x^2 + y^2 - 0.7^2', 'x-.4')
+#ls1 = gf.LevelSet(m, 2, 'sqr(x) + sqr(y) - sqr(0.7)', 'x-.4')
 #ls1 = gf.LevelSet(m, 2, 'x + y - 0.2') #, 'x-5')
 #ls1 = gf.LevelSet(m, 2, 'x + y - 0.2', 'x-5')
-#ls2 = gf.LevelSet(m, 2, '0.6*x^2 + (y-0.1)^2 - 0.6^2');
-#ls3 = gf.LevelSet(m, 4, 'x^2 + (y+.08)^2 - 0.05^2');
+#ls2 = gf.LevelSet(m, 2, '0.6*sqr(x) + sqr(y-0.1) - sqr(0.6)');
+#ls3 = gf.LevelSet(m, 4, 'sqr(x) + sqr(y+.08) - sqr(0.05)');
 ls2 = gf.LevelSet(m, 2, 'y+0.1', 'x')
 ls3 = gf.LevelSet(m, 2, 'y-0.1', 'x')
 

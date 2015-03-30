@@ -27,13 +27,6 @@
 #include "getfem/getfem_assembling.h"
 #include "gmm/gmm_condition_number.h"
 
-#include <getfem/getfem_arch_config.h>
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
-
 namespace getfem {
 
 
@@ -1192,9 +1185,19 @@ namespace getfem {
   //
   //=========================================================================
 
+#if 0
+
+#include <getfem/getfem_arch_config.h>
+#if GETFEM_HAVE_MUPARSER_MUPARSER_H
+#include <muParser/muParser.h>
+#elif GETFEM_HAVE_MUPARSER_H
+#include <muParser.h>
+#endif
+
   //=========================================================================
   // 1)- Structure which stores the contact boundaries and rigid obstacles
   //=========================================================================
+
 
   struct contact_frame {
     bool frictionless;
@@ -2277,7 +2280,7 @@ namespace getfem {
     p->add_obstacle(obs);
   }
 
-
+#endif
 
   // ----------------------------------------------------------------------
   //
@@ -2455,19 +2458,6 @@ namespace getfem {
         if (cb.is_slave)
           md.add_generic_expression(cb.expr, *(cb.mim), cb.region);
       }
-    }
-
-    virtual scalar_type asm_real_pseudo_potential(const model &, size_type,
-                                                  const model::varnamelist &,
-                                                  const model::varnamelist &,
-                                                  const model::mimlist &,
-                                                  model::real_matlist &,
-                                                  model::real_veclist &,
-                                                  model::real_veclist &,
-                                                  size_type) const {
-      GMM_WARNING1("Brick " << name << " has no contribution to "
-                   << "the pseudo potential !");
-      return 0;
     }
 
 

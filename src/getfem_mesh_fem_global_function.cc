@@ -22,13 +22,6 @@
 #include <getfem/getfem_mesh_fem_global_function.h>
 #include <getfem/getfem_level_set.h>
 
-#include <getfem/getfem_arch_config.h>
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H
-#include <muParser/muParser.h>
-#elif GETFEM_HAVE_MUPARSER_H
-#include <muParser.h>
-#endif
-
 namespace getfem {
 
   void global_function_fem::init(void) {
@@ -146,158 +139,72 @@ namespace getfem {
   }
 
 
-#if GETFEM_HAVE_MUPARSER_MUPARSER_H || GETFEM_HAVE_MUPARSER_H
-
   parser_xy_function::parser_xy_function(const std::string &sval,
 					 const std::string &sgrad,
-					 const std::string &shess) {
-    /* se obtiene el gradiente */
-    std::string auxG(sgrad);
-    unsigned token[4];
-    for (unsigned i=0,j=0; i<auxG.size() && j<4; ++i){
-      if (auxG[i]==';') {
-	token[j++] = i;
-	auxG[i] = '\0';
-      }
-    }
-    std::string sXgrad(auxG.substr(0,token[0]));
-    std::string sYgrad(auxG.substr(token[0]+1,token[1]-token[0]));
-    
-    /* se obtiene el hessiano */
-    std::string auxH(shess);
-    for (unsigned i=0,j=0; i<auxH.size() && j<4; ++i){
-      if (auxH[i]==';') {
-	token[j++] = i;
-	auxH[i] = '\0';
-      }
-    }
-    std::string sXXhess(auxH.substr(0,token[0]));
-    std::string sXYhess(auxH.substr(token[0]+1,token[1]-token[0]));
-    std::string sYXhess(auxH.substr(token[1]+1,token[2]-token[1]));
-    std::string sYYhess(auxH.substr(token[2]+1,token[3]-token[2]));
-    
-    var.resize(4);
+					 const std::string &shess)
+    : f_val(gw_val, sval), f_grad(gw_grad, sgrad), f_hess(gw_hess, shess),
+      ptx(1), pty(1), ptr(1), ptt(1) {
 
-    try {
-      /* pval */
-      pval.DefineVar("x", &var[0]);
-      pval.DefineVar("y", &var[1]);
-      pval.DefineVar("r", &var[2]);
-      pval.DefineVar("theta", &var[3]);
-      pval.SetExpr(sval);
-      /* pXgrad */
-      pXgrad.DefineVar("x", &var[0]);
-      pXgrad.DefineVar("y", &var[1]);
-      pXgrad.DefineVar("r", &var[2]);
-      pXgrad.DefineVar("theta", &var[3]);
-      pXgrad.SetExpr(sXgrad);
-      /* pYgrad */
-      pYgrad.DefineVar("x", &var[0]);
-      pYgrad.DefineVar("y", &var[1]);
-      pYgrad.DefineVar("r", &var[2]);
-      pYgrad.DefineVar("theta", &var[3]);
-      pYgrad.SetExpr(sYgrad);
-      /* pXXhess */
-      pXXhess.DefineVar("x", &var[0]);
-      pXXhess.DefineVar("y", &var[1]);
-      pXXhess.DefineVar("r", &var[2]);
-      pXXhess.DefineVar("theta", &var[3]);
-      pXXhess.SetExpr(sXXhess);
-      /* pXYhess */
-      pXYhess.DefineVar("x", &var[0]);
-      pXYhess.DefineVar("y", &var[1]);
-      pXYhess.DefineVar("r", &var[2]);
-      pXYhess.DefineVar("theta", &var[3]);
-      pXYhess.SetExpr(sXYhess);
-      /* pYXhess */
-      pYXhess.DefineVar("x", &var[0]);
-      pYXhess.DefineVar("y", &var[1]);
-      pYXhess.DefineVar("r", &var[2]);
-      pYXhess.DefineVar("theta", &var[3]);
-      pYXhess.SetExpr(sYXhess);
-      /* pYYhess */
-      pYYhess.DefineVar("x", &var[0]);
-      pYYhess.DefineVar("y", &var[1]);
-      pYYhess.DefineVar("r", &var[2]);
-      pYYhess.DefineVar("theta", &var[3]);
-      pYYhess.SetExpr(sYYhess);
-    } catch (mu::Parser::exception_type &e) {
-      std::cerr << "Message  : " << e.GetMsg() << std::endl;
-      std::cerr << "Formula  : " << e.GetExpr() << std::endl;
-      std::cerr << "Token    : " << e.GetToken() << std::endl;
-      std::cerr << "Position : " << e.GetPos() << std::endl;
-      std::cerr << "Errc     : " << e.GetCode() << std::endl;
-      GMM_ASSERT1(false, "Error in math expression.")
-	}
+    gw_val.add_fixed_size_constant("x", ptx);
+    gw_val.add_fixed_size_constant("y", pty);
+    gw_val.add_fixed_size_constant("r", ptr);
+    gw_val.add_fixed_size_constant("theta", ptt);
+    
+    gw_grad.add_fixed_size_constant("x", ptx);
+    gw_grad.add_fixed_size_constant("y", pty);
+    gw_grad.add_fixed_size_constant("r", ptr);
+    gw_grad.add_fixed_size_constant("theta", ptt);
+
+    gw_hess.add_fixed_size_constant("x", ptx);
+    gw_hess.add_fixed_size_constant("y", pty);
+    gw_hess.add_fixed_size_constant("r", ptr);
+    gw_hess.add_fixed_size_constant("theta", ptt);
+
+    f_val.compile(); f_grad.compile(); f_hess.compile();
   }
   
   scalar_type
   parser_xy_function::val(scalar_type x, scalar_type y) const {
-    var[0] = double(x);                   // x
-    var[1] = double(y);                   // y
-    var[2] = double(sqrt(fabs(x*x+y*y))); // r
-    var[3] = double(atan2(y,x));          // theta
+    ptx[0] = double(x);                   // x
+    pty[0] = double(y);                   // y
+    ptr[0] = double(sqrt(fabs(x*x+y*y))); // r
+    ptt[0] = double(atan2(y,x));          // theta
 
-    scalar_type res = 0;
-    try {
-      res = scalar_type(pval.Eval());
-    } catch (mu::Parser::exception_type &e) {
-      std::cerr << "Message  : " << e.GetMsg() << std::endl;
-      std::cerr << "Formula  : " << e.GetExpr() << std::endl;
-      std::cerr << "Token    : " << e.GetToken() << std::endl;
-      std::cerr << "Position : " << e.GetPos() << std::endl;
-      std::cerr << "Errc     : " << e.GetCode() << std::endl;
-      GMM_ASSERT1(false, "Error in \"val\" expression.")
-    }
-    return res;
+    const bgeot::base_tensor &t = f_val.eval();
+    GMM_ASSERT1(t.size() == 1, "Wrong size of expression result "
+                << f_val.expression());
+    return t[0];
   }
 
   base_small_vector
   parser_xy_function::grad(scalar_type x, scalar_type y) const {
-    var[0] = double(x);                   // x
-    var[1] = double(y);                   // y
-    var[2] = double(sqrt(fabs(x*x+y*y))); // r
-    var[3] = double(atan2(y,x));          // theta
+    ptx[0] = double(x);                   // x
+    pty[0] = double(y);                   // y
+    ptr[0] = double(sqrt(fabs(x*x+y*y))); // r
+    ptt[0] = double(atan2(y,x));          // theta
 
     base_small_vector res(2);
-    try {
-      res[0] = scalar_type(pXgrad.Eval());
-      res[1] = scalar_type(pYgrad.Eval());
-    } catch (mu::Parser::exception_type &e) {
-      std::cerr << "Message  : " << e.GetMsg() << std::endl;
-      std::cerr << "Formula  : " << e.GetExpr() << std::endl;
-      std::cerr << "Token    : " << e.GetToken() << std::endl;
-      std::cerr << "Position : " << e.GetPos() << std::endl;
-      std::cerr << "Errc     : " << e.GetCode() << std::endl;
-      GMM_ASSERT1(false, "Error in \"grad\" expression.")
-    }
+    const bgeot::base_tensor &t = f_grad.eval();
+    GMM_ASSERT1(t.size() == 2, "Wrong size of expression result "
+                << f_grad.expression());
+    gmm::copy(t.as_vector(), res);
     return res;
   }
 
   base_matrix
   parser_xy_function::hess(scalar_type x, scalar_type y) const {
-    var[0] = double(x);                   // x
-    var[1] = double(y);                   // y
-    var[2] = double(sqrt(fabs(x*x+y*y))); // r
-    var[3] = double(atan2(y,x));          // theta
+    ptx[0] = double(x);                   // x
+    pty[0] = double(y);                   // y
+    ptr[0] = double(sqrt(fabs(x*x+y*y))); // r
+    ptt[0] = double(atan2(y,x));          // theta
 
     base_matrix res(2,2);
-    try {
-      res(0,0) = scalar_type(pXXhess.Eval());
-      res(0,1) = scalar_type(pXYhess.Eval());
-      res(1,0) = scalar_type(pYXhess.Eval());
-      res(1,1) = scalar_type(pYYhess.Eval());
-    } catch (mu::Parser::exception_type &e) {
-      std::cerr << "Message  : " << e.GetMsg() << std::endl;
-      std::cerr << "Formula  : " << e.GetExpr() << std::endl;
-      std::cerr << "Token    : " << e.GetToken() << std::endl;
-      std::cerr << "Position : " << e.GetPos() << std::endl;
-      std::cerr << "Errc     : " << e.GetCode() << std::endl;
-      GMM_ASSERT1(false, "Error in \"hess\" expression.")
-    }
+    const bgeot::base_tensor &t = f_hess.eval();
+    GMM_ASSERT1(t.size() == 4, "Wrong size of expression result "
+                << f_hess.expression());
+    gmm::copy(t.as_vector(), res.as_vector());
     return res;
   }
-#endif
 
   /* the basic 4 singular functions for 2D cracks */
   scalar_type
@@ -307,8 +214,8 @@ namespace getfem {
 
     if (r < 1e-10)  return 0;
 
-    /* ci-dessous: la valeur absolue est malheureusement necessaire,
-     * sinon il peut arriver qu'on cherche sqrt(-1e-16) ...
+    /* The absolute value is unfortunately necessary, otherwise, sqrt(-1e-16)
+       can be required ...
      */
     scalar_type sin2 = sqrt(gmm::abs(.5-x/(2*r))) * sgny;
     scalar_type cos2 = sqrt(gmm::abs(.5+x/(2*r)));

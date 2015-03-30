@@ -1245,41 +1245,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
        out.pop().from_integer(int(ind));
        );
 
-
-    /*@SET ind = ('add basic nonlinear brick', @tmim mim, @str varname, @str f, @str dfdu[, @str dataname, @int region])
-    DEPRECATED (use `add nonlinear generic assembly brick` instead).
-    Add a brick representing a scalar term :math:`f(u)` to the left-hand
-    side of the model. In the weak form, one adds :math:`+\int f(u)v`.
-    The function :math:`f` may optionally depend on :math:`\lambda`, i.e.,
-    :math:`f(u)=f(u,\lambda)`.
-    `f` and `dfdu` should contain the expressions for
-    :math:`f(u)` and :math:`\frac{df}{du}(u)`, respectively.
-    `dataname` represents the optional real scalar parameter :math:`\lambda`
-    in the model. `region` is an optional mesh region on which the term is
-    added. If it is not specified, the term is added on the whole mesh.
-    Return the brick index in the model.@*/
-    sub_command
-      ("add basic nonlinear brick", 4, 6, 0, 1,
-       getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-       std::string varname = in.pop().to_string();
-       std::string f = in.pop().to_string();
-       std::string dfdu = in.pop().to_string();
-       std::string dataname;
-       if (in.remaining()) dataname = in.pop().to_string();
-       size_type region = size_type(-1);
-       if (in.remaining()) region = in.pop().to_integer();
-       cerr << "Deprecated basic nonlinear brick. "
-            << "Use `add nonlinear generic assembly brick` instead." << endl;
-       size_type ind
-       = getfem::add_basic_nonlinear_brick(md->model(), gfi_mim->mesh_im(),
-                                           varname, f, dfdu,
-                                           region, dataname)
-       + config::base_index();
-       workspace().set_dependance(md, gfi_mim);
-       out.pop().from_integer(int(ind));
-       );
-
-
     /*@SET ind = ('add constraint with multipliers', @str varname, @str multname, @tspmat B, @vec L)
     Add an additional explicit constraint on the variable `varname` thank to
     a multiplier `multname` peviously added to the model (should be a fixed
@@ -3234,73 +3199,6 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         out.pop().from_integer(int(ind + config::base_index()));
         workspace().set_dependance(md, gfi_mcf);
         );
-
-
-     /*@SET ind = ('add integral large sliding contact brick with field extension',  @tmim mim, @str varname_u, @str multname, @str dataname_r, @str dataname_fr, @int rg)
-       (still experimental brick)
-       Add a large sliding contact with friction brick to the model.
-       This brick is able to deal with auto-contact, contact between
-       several deformable bodies and contact with rigid obstacles.
-       The condition is applied on the variable `varname_u` on the
-       boundary corresponding to `region`. `dataname_r` is the augmentation
-       parameter of the augmented Lagrangian. `dataname_friction_coeff`
-       is the friction coefficient. `mim` is an integration method on the
-       boundary. `varname_u` is the variable on which the contact condition 
-       will be prescribed (should be of displacement type). `multname` is 
-       a multiplier defined on the boundary which will represent the contact
-       force. If no additional boundary or rigid
-       obstacle is added, only auto-contact will be detected. Use
-       `add_boundary_to_large_sliding_contact_brick` and
-       `add_rigid_obstacle_to_large_sliding_contact_brick` to add contact
-       boundaries and rigid obstacles. @*/
-     sub_command
-       ("add integral large sliding contact brick with field extension", 6, 6, 0, 1,
-
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-        std::string varname_u = in.pop().to_string();
-        std::string multname = in.pop().to_string();
-        std::string dataname_r = in.pop().to_string();
-        std::string dataname_fr = in.pop().to_string();
-        size_type region = in.pop().to_integer();
-        
-        size_type  ind = getfem::add_integral_large_sliding_contact_brick_field_extension
-            (md->model(), gfi_mim->mesh_im(), varname_u, multname, dataname_r,
-             dataname_fr, region);
-        out.pop().from_integer(int(ind + config::base_index()));
-        );
-
-     /*@SET ind = ('add boundary to large sliding contact brick',  @int indbrick, @tmim mim, @str varname_u, @str multname, @int rg)
-       Add a contact boundary to an existing large sliding contact brick.
-      `indbrick` is the brick index. @*/
-     sub_command
-       ("add boundary to large sliding contact brick", 5, 5, 0, 0,
-
-        size_type indbrick = in.pop().to_integer() - config::base_index();
-        getfemint_mesh_im *gfi_mim = in.pop().to_getfemint_mesh_im();
-	std::string varname_u = in.pop().to_string();
-        std::string multname = in.pop().to_string();
-        size_type region = in.pop().to_integer();
-        
-	getfem::add_boundary_to_large_sliding_contact_brick
-	(md->model(), indbrick, gfi_mim->mesh_im(), varname_u,multname,region);
-        );
-
-
-//     /*@SET ind = ('add rigid obstacle to large sliding contact brick',  @int indbrick, @str obs)
-//       Add a rigid obstacle to an existing large sliding contact brick.
-//      `indbrick` is the brick index, `obs` is the expression of a
-//      function which should be closed to a signed distance to the obstacle. @*/
-/*      sub_command */
-/*        ("add rigid obstacle to large sliding contact brick", 2, 2, 0, 0, */
-	
-/*         size_type indbrick = in.pop().to_integer() - config::base_index(); */
-/* 	std::string obs = in.pop().to_string(); */
-        
-/* 	getfem::add_rigid_obstacle_to_large_sliding_contact_brick */
-/* 	(md->model(), indbrick, obs); */
-/*         ); */
-
-
   }
 
   if (m_in.narg() < 2)  THROW_BADARG( "Wrong number of input arguments");

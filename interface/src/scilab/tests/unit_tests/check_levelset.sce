@@ -6,9 +6,9 @@ h = scf();
 h.color_map = jetcolormap(255);
 
 m = gf_mesh('regular_simplices', -1:.2:1, -1:.2:1, 'degree', 2, 'noised');
-ls1 = gf_levelset(m, 2, 'x^2 + y^2 - 0.7^2', 'x-.4');
-ls2 = gf_levelset(m, 2, '0.6*x^2 + (y-0.1)^2 - 0.6^2');
-ls3 = gf_levelset(m, 4, 'x^2 + (y+.08)^2 - 0.05^2');
+ls1 = gf_levelset(m, 2, 'sqr(x) + sqr(y) - sqr(0.7)', 'x-.4');
+ls2 = gf_levelset(m, 2, '0.6*sqr(x) + sqr(y-0.1) - sqr(0.6)');
+ls3 = gf_levelset(m, 4, 'sqr(x) + sqr(y+.08) - sqr(0.05)');
 mls = gf_mesh_levelset(m);
 gf_mesh_levelset_set(mls, 'add', ls1);
 if 1 then
