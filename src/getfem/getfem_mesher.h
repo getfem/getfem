@@ -388,7 +388,7 @@ namespace getfem {
   public:
     mesher_union(const std::vector<const mesher_signed_distance *>
 			&dists_) : dists(dists_) 
-    { vd.resize(dists.size()); }
+    { vd.resize(dists.size()); with_min = true; }
 
     mesher_union(const mesher_signed_distance &a_,
 		 const mesher_signed_distance &b_,
@@ -537,7 +537,7 @@ namespace getfem {
 	dists[i]->hess(P, H);
       }
       else {
-	GMM_ASSERT1(false, "Sorry, to e done");
+	GMM_ASSERT1(false, "Sorry, to be done");
       }
     }
   };
