@@ -391,7 +391,7 @@ void gf_model_get(getfemint::mexargs_in& m_in,
       Note that it is possible to disable some variables
       (see MODEL:SET('disable variable') ) in order to
       solve the problem only with respect to a subset of variables (the
-      disabled variables are the considered as data) for instance to
+      disabled variables are then considered as data) for instance to
       replace the global Newton strategy with a fixed point one.
 
       @*/

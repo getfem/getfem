@@ -39,6 +39,7 @@ EXTRA_DIST= \
 	demo_step_by_step.m \
 	demo_Nitsche_contact_by_hand.m \
 	demo_structural_optimization.m \
+	demo_thermo_elasticity_electrical_coupling.m \
 	demo_refine.m \
 	demo_stokes_3D_tank.m \
 	demo_stokes_3D_tank_draw.m \

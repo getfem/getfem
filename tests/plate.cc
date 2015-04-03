@@ -24,7 +24,7 @@
    @brief Linear Elastostatic plate problem.
    
    This program is used to check that getfem++ is working. This is
-   also a good example of use of Getfem++.
+   also a good example of use of GetFEM++.
 */
 
 #include "getfem/getfem_assembling.h" /* import assembly methods (and norms comp.) */

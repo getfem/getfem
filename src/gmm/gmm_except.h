@@ -208,7 +208,7 @@ namespace gmm {
 
   // This allow not too compile some Warnings
 #ifndef GMM_TRACES_LEVEL
-# define GMM_TRACES_LEVEL 3
+# define GMM_TRACES_LEVEL 4
 #endif
 
   // Traces levels : 0 always printed

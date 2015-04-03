@@ -553,11 +553,10 @@ namespace getfem {
       return (variables.find(name) != variables.end());
     }
 
-    bool variable_is_disabled(const std::string &name) const {
+    bool is_disabled_variable(const std::string &name) const {
       VAR_SET::iterator it = variables.find(name);
       GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      GMM_ASSERT1(it->second.is_variable, "Only for variables, "
-                                          << name << " is not a variable");
+      if (!(it->second.is_variable)) return false;
       if (it->second.is_affine_dependent)
         it = variables.find(it->second.org_name);
       return it->second.is_disabled;

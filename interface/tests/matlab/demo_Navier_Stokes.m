@@ -81,7 +81,7 @@ MVo=gf_asm('volumic','t=comp(Base(#1).vGrad(#2));M(#1,#2)+=t(:,:,1,2)-t(:,:,2,1)
 
 
 UBOUND = gf_mesh_fem_get(mf_u, 'dof on region', 1);% fournit le numero des dof sur la frontiere
-UNODES = gf_mesh_fem_get(mf_u, 'dof nodes');
+UNODES = gf_mesh_fem_get(mf_u, 'basic dof nodes');
 Kp(1, :) = 0; % In order to fix the pressure on a node for scheme 1.
 Kp(1, 1) = 1;
 Ndofu = size(D,2);          % Dof number for the velocity

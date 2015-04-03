@@ -31,7 +31,7 @@ if (N == 1)
   fixed_vertices = [0];
   h = 0.5;
 elseif (N == 2)
-  if (1)  
+  if (0)  
     mo = gf_mesher_object('ball', [0 4], 2);
     fixed_vertices = [0; 4];
     h = 0.5;

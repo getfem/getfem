@@ -4280,6 +4280,14 @@ namespace getfem {
                               bool add_derivative, bool function_expr) {
     if (tree.root) {
 
+      // Eliminate the term if it corresponds to disabled variables
+      if ((tree.root->test_function_type >= 1 &&
+           is_disabled_variable(tree.root->name_test1)) ||
+          (tree.root->test_function_type >= 2 &&
+           is_disabled_variable(tree.root->name_test2))) {
+        cout << "disabling term ";  ga_print_node(tree.root, cout); cout << endl;
+        return;
+      }
       // cout << "add tree with tests functions of " <<  tree.root->name_test1
       //      << " and " << tree.root->name_test2 << endl;
       //      ga_print_node(tree.root, cout); cout << endl;
@@ -6105,7 +6113,8 @@ namespace getfem {
               pnode->test_function_type = 0;
             }
           } else {
-            if (workspace.is_constant(name))
+            if (workspace.is_constant(name) &&
+                !(workspace.is_disabled_variable(name)))
               ga_throw_error(expr, pnode->pos, "Test functions of constant "
                               "are not allowed.");
             if (test == 1) {

@@ -110,10 +110,7 @@ if getos()=='Windows' then
   ldflags = ldflags + getfem_path + 'msvc2010\Release\superlu.lib ';
   if (isfile(getfem_path + 'msvc2010\qhull-2011.1\lib\qhullstatic.lib')) then
     ldflags = ldflags + getfem_path + 'msvc2010\qhull-2011.1\lib\qhullstatic.lib ';
-  end  
-  if (isfile(getfem_path + 'msvc2010\muparser_v134\lib\muparser.lib')) then
-    ldflags = ldflags + getfem_path + 'msvc2010\muparser_v134\lib\muparser.lib ';
-  end  
+  end
     
   ldflags = ldflags + ' sparse_f.lib ';
 

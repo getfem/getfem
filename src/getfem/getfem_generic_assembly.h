@@ -454,6 +454,19 @@ namespace getfem {
       GMM_ASSERT1(false, "Undefined variable " << name);
     }
 
+    bool is_disabled_variable(const std::string &name) const {
+      VAR_SET::const_iterator it = variables.find(name);
+      if (it != variables.end()) return false;
+      if (variable_group_exists(name))
+        return is_disabled_variable(first_variable_of_group(name));
+      if (md && md->variable_exists(name))
+        return md->is_disabled_variable(name);
+      if (parent_workspace && parent_workspace->variable_exists(name))
+        return parent_workspace->is_disabled_variable(name);
+      GMM_ASSERT1(false, "Undefined variable " << name);
+    }
+
+
     const scalar_type &factor_of_variable(const std::string &name) const {
       static const scalar_type one(1);
       VAR_SET::const_iterator it = variables.find(name);
