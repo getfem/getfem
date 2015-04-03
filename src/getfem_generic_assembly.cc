@@ -4430,11 +4430,14 @@ namespace getfem {
         add_tree(*(*it), mim.linked_mesh(), mim, rg, expr, add_derivative);
       }
 
-      if (tree.root)
+      if (tree.root) {
+        // cout << "adding tree expression " << endl;
         max_order = std::max(tree.root->nb_test_functions(), max_order);
-      add_tree(tree, mim.linked_mesh(), mim, rg, expr);
+        add_tree(tree, mim.linked_mesh(), mim, rg, expr);
+      }
       clear_aux_trees();
     }
+    // cout << "end adding expression " << endl;
     return max_order;
   }
 
@@ -4903,9 +4906,9 @@ namespace getfem {
 
     switch (pnode->node_type) {
     case GA_NODE_PREDEF_FUNC: case GA_NODE_OPERATOR: case GA_NODE_SPEC_FUNC :
-    case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE: case GA_NODE_NORMAL:
+    case GA_NODE_CONSTANT: case GA_NODE_X: case GA_NODE_ELT_SIZE:
+    case GA_NODE_NORMAL: case GA_NODE_RESHAPE:
     case GA_NODE_INTERPOLATE_X: case GA_NODE_INTERPOLATE_NORMAL:
-    case GA_NODE_RESHAPE:
       pnode->test_function_type = 0; break;
 
     case GA_NODE_ALLINDICES: pnode->test_function_type = 0; break;
@@ -5016,14 +5019,14 @@ namespace getfem {
           case 1: // grad
             pnode->node_type = GA_NODE_INTERPOLATE_GRAD;
             if (n > 1) {
-              if (q == 1 && mii.size() <= 1) mii[0] = n;
+              if (q == 1 && mii.size() == 1) mii[0] = n;
               else mii.push_back(n);
             }
             break;
           case 2: // Hessian
             pnode->node_type = GA_NODE_INTERPOLATE_HESS;
             if (n > 1) {
-              if (q == 1 && mii.size() <= 1) { mii[0] = n;  mii.push_back(n); }
+              if (q == 1 && mii.size() == 1) { mii[0] = n;  mii.push_back(n); }
               else { mii.push_back(n); mii.push_back(n); }
             }
             break;
@@ -5126,8 +5129,8 @@ namespace getfem {
         const mesh_fem *mf = workspace.associated_mf(name);
         if (!mf)
            ga_throw_error(expr, pnode->pos,
-                          "Elementary transformation can only apply to finite element "
-                          "variables/data");
+                          "Elementary transformation can only apply to "
+                          "finite element variables/data");
 
         size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
 
@@ -5604,7 +5607,8 @@ namespace getfem {
           if (s00 != s10 || s01 != s11)
             ga_throw_error(expr, pnode->pos, "Frobenius product "
                            "of expressions of different sizes ("
-                           << s00 << "," << s01 << " != " << s10 << "," << s11 << ").");
+                           << s00 << "," << s01 << " != " << s10 << ","
+                           << s11 << ").");
           if (child0->tensor_order() <= 2) pnode->symmetric_op = true;
           pnode->mult_test(child0, child1, expr);
           if (dim0 > 2) {
@@ -5708,8 +5712,10 @@ namespace getfem {
           } else if (dim0 == 2 && dim1 == 1) {
             size_type m = child0->t.size(0), n = child0->t.size(1);
             if (n != child1->t.size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-vector "
-              "multiplication (" << n << " != " << child1->t.size(0) << ").");
+              ga_throw_error(expr, pnode->pos,
+                             "Incompatible sizes in matrix-vector "
+                             "multiplication (" << n << " != "
+                             << child1->t.size(0) << ").");
             pnode->init_vector_tensor(m);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
@@ -5720,8 +5726,10 @@ namespace getfem {
             size_type n = child0->t.size(1);
             size_type p = child1->t.size(1);
             if (n != child1->t.size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-matrix "
-              "multiplication (" << n << " != " << child1->t.size(0) << ").");
+              ga_throw_error(expr, pnode->pos,
+                             "Incompatible sizes in matrix-matrix "
+                             "multiplication (" << n << " != "
+                             << child1->t.size(0) << ").");
             pnode->init_matrix_tensor(m,p);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
@@ -5733,9 +5741,11 @@ namespace getfem {
             size_type m = child0->t.size(0), n = child0->t.size(1);
             size_type o = child0->t.size(2), p = child0->t.size(3);
             if (o != child1->t.size(0) || p != child1->t.size(1))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in tensor-matrix "
-              "multiplication (" << o << "," << p << " != "
-              << child1->t.size(0) << "," << child1->t.size(1) << ").");
+              ga_throw_error(expr, pnode->pos,
+                             "Incompatible sizes in tensor-matrix "
+                             "multiplication (" << o << "," << p << " != "
+                             << child1->t.size(0) << "," << child1->t.size(1)
+                             << ").");
             pnode->init_matrix_tensor(m,n);
             gmm::clear(pnode->t.as_vector());
             for (size_type i = 0; i < m; ++i)
@@ -5767,7 +5777,8 @@ namespace getfem {
             size_type n = child0->tensor_proper_size(1);
             mi.push_back(m);
             if (n != child1->tensor_proper_size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-vector "
+              ga_throw_error(expr, pnode->pos,
+                             "Incompatible sizes in matrix-vector "
               "multiplication (" << n << " != "
               << child1->tensor_proper_size(0) << ").");
           } else if (child0->tensor_order() == 2 &&
@@ -5777,9 +5788,10 @@ namespace getfem {
             size_type p = child1->tensor_proper_size(1);
             mi.push_back(m); mi.push_back(p);
             if (n != child1->tensor_proper_size(0))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in matrix-matrix "
-              "multiplication (" << n << " != "
-              << child1->tensor_proper_size(0) << ").");
+              ga_throw_error(expr, pnode->pos,
+                             "Incompatible sizes in matrix-matrix "
+                             "multiplication (" << n << " != "
+                             << child1->tensor_proper_size(0) << ").");
           }
           else if (pnode->children[0]->tensor_order() == 4 &&
                    pnode->children[1]->tensor_order() == 2) {
@@ -5790,9 +5802,11 @@ namespace getfem {
             mi.push_back(m); mi.push_back(n);
             if (o != child1->tensor_proper_size(0) ||
                 p != child1->tensor_proper_size(1))
-              ga_throw_error(expr, pnode->pos, "Incompatible sizes in tensor-matrix "
-              "multiplication (" << o << "," << p << " != "
-              << child1->tensor_proper_size(0) << "," << child1->tensor_proper_size(1) << ").");
+              ga_throw_error(expr, pnode->pos,
+                             "Incompatible sizes in tensor-matrix "
+                             "multiplication (" << o << "," << p << " != "
+                             << child1->tensor_proper_size(0) << ","
+                             << child1->tensor_proper_size(1) << ").");
           } else ga_throw_error(expr, pnode->pos,
                                  "Unauthorized multiplication.");
           pnode->t.adjust_sizes(mi);
@@ -6037,7 +6051,6 @@ namespace getfem {
         } else {
           // Search for a variable name with optional gradient, Hessian
           // or test functions
-
           int val_grad_or_hess = 0;
           if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
             { val_grad_or_hess = 1; name = name.substr(5); }
@@ -6279,7 +6292,7 @@ namespace getfem {
         if (nbargs+1 != pnode->children.size()) {
             ga_throw_error(expr, pnode->pos, "Bad number of arguments for "
                 "predefined function " << name << ". Found "
-                 << pnode->children.size()-1 << ", should be " << nbargs << ".");
+                 << pnode->children.size()-1 << ", should be "<<nbargs << ".");
         }
         pnode->test_function_type = 0;
         pga_tree_node child2 = (nbargs == 2) ? pnode->children[2] : child1;
@@ -6524,7 +6537,7 @@ namespace getfem {
     // cout << " begin hash code = " << pnode->hash_value << endl;
     pnode->hash_value = ga_hash_code(pnode);
     // cout << "node_type = " << pnode->node_type << " op_type = "
-    //     << pnode->op_type << " proper hash code = " << pnode->hash_value;
+    //      << pnode->op_type << " proper hash code = " << pnode->hash_value;
     for (size_type i = 0; i < pnode->children.size(); ++i) {
       pnode->hash_value += (pnode->children[i]->hash_value)
         * 1.0101 * (pnode->symmetric_op ? scalar_type(1) : scalar_type(i+1));
@@ -6538,9 +6551,10 @@ namespace getfem {
                                    bool ignore_X) {
     GMM_ASSERT1(predef_functions_initialized, "Internal error");
     if (!(tree.root)) return;
-    //  cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
+    // cout << "semantic analysis of " << ga_tree_to_string(tree) << endl;
     ga_node_analysis(expr, tree, workspace, tree.root, meshdim,
                      eval_fixed_size, ignore_X);
+    // cout << "semantic analysis done " << endl;
     ga_valid_operand(expr, tree.root);
   }
 

@@ -1,7 +1,7 @@
 /* -*- c++ -*- (enables emacs c++ mode) */
 /*===========================================================================
  
- Copyright (C) 1999-2012 Yves Renard
+ Copyright (C) 1999-2015 Yves Renard
  
  This file is a part of GETFEM++
  
@@ -326,11 +326,13 @@ namespace getfem {
     virtual void set_qdim(const bgeot::multi_index &mii) {
       GMM_ASSERT1(mii.size() < 7,
                   "Tensor field are taken into account up to order 6.");
+      GMM_ASSERT1(mi.size(), "Wrong sizes");
       if (!(mi.is_equal(mii))) {
         mi = mii;
         Qdim = dim_type(1);
         for (size_type i = 0; i < mi.size(); ++i)
           Qdim = dim_type(Qdim*mi[i]);
+        GMM_ASSERT1(Qdim, "Wrong sizes");
         dof_enumeration_made = false; touch(); v_num = act_counter();
       }
     }

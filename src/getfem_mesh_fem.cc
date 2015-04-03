@@ -410,10 +410,10 @@ namespace getfem {
   }
 
   mesh_fem::mesh_fem(const mesh &me, dim_type Q)
-  { linked_mesh_ = 0; init_with_mesh(me, Q); }
+    { linked_mesh_ = 0; init_with_mesh(me, Q); }
 
   mesh_fem::mesh_fem(void) 
-  { linked_mesh_ = 0; dof_enumeration_made = false; }
+    { linked_mesh_ = 0; dof_enumeration_made = false; set_qdim(1); }
 
   mesh_fem::~mesh_fem() { }
 

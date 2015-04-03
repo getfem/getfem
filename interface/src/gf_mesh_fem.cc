@@ -1,6 +1,6 @@
 /*===========================================================================
  
- Copyright (C) 2006-2012 Yves Renard, Julien Pommier.
+ Copyright (C) 2006-2015 Yves Renard, Julien Pommier.
  
  This file is a part of GETFEM++
  
@@ -260,6 +260,7 @@ void gf_mesh_fem(getfemint::mexargs_in& m_in,
       mi.push_back(q);
       qdim = dim_type(qdim*q);
     }
+    if (mi.size() == 0) mi.push_back(qdim);
     mmf = getfemint_mesh_fem::new_from(mm,qdim);
     mmf->mesh_fem().set_qdim(mi);
 
