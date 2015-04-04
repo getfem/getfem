@@ -444,36 +444,23 @@ namespace getfem {
     typedef typename gmm::number_traits<T>::magnitude_type R;
 
     model &md;
-    bool is_reduced;
-    std::vector<size_type> &sind;
-    gmm::sub_index I;
     abstract_newton_line_search &ls;
     VECTOR stateinit, &state;
     const VECTOR &rhs;
     const MATRIX &K;
-    MATRIX Kr;
-    VECTOR rhsr;
 
     void compute_tangent_matrix(void) {
       md.to_variables(state);
       md.assembly(model::BUILD_MATRIX);
-      if (is_reduced) {
-        gmm::resize(Kr, sind.size(), sind.size());
-        gmm::copy(gmm::sub_matrix(K, I, I), Kr);
-      }
     }
 
-    const MATRIX &tangent_matrix(void) { return (is_reduced ? Kr : K); }
+    const MATRIX &tangent_matrix(void) { return K; }
 
     inline T scale_residual(void) const { return T(1); }
 
     void compute_residual(void) {
       md.to_variables(state);
       md.assembly(model::BUILD_RHS);
-      if (is_reduced) {
-        gmm::resize(rhsr, sind.size());
-        gmm::copy(gmm::sub_vector(rhs, I), rhsr);
-      }
     }
 
     void perturbation(void) {
@@ -483,17 +470,17 @@ namespace getfem {
       gmm::add(gmm::scaled(V, ampl), state);
     }
 
-    const VECTOR &residual(void) { return (is_reduced ? rhsr : rhs); }
+    const VECTOR &residual(void) { return rhs; }
 
     R state_norm(void) const
-    { return gmm::vect_norm1(gmm::sub_vector(state, I)); }
+    { return gmm::vect_norm1(state); }
 
     R approx_external_load_norm(void)
     { return md.approx_external_load(); }
 
     R residual_norm(void) { // A norm1 seems to be better than a norm2
                             // at least for contact problems.
-      return (is_reduced ? gmm::vect_norm1(rhsr) : gmm::vect_norm1(rhs));
+      return gmm::vect_norm1(rhs);
     }
 
     R compute_res(bool comp = true) {
@@ -510,8 +497,7 @@ namespace getfem {
 
       /* res_init = */ res = compute_res(false);
       // cout << "first residual = " << residual() << endl << endl;
-      R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
-                       : gmm::real(gmm::vect_sp(dr, rhs)));
+      R0 = gmm::real(gmm::vect_sp(dr, rhs));
 
 #if TRACE_SOL
       static int trace_number = 0;
@@ -528,8 +514,7 @@ namespace getfem {
       ls.init_search(res, iter.get_iteration(), R0);
       do {
         alpha = ls.next_try();
-        gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
-                 gmm::sub_vector(state, I));
+        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
 #if TRACE_SOL
         {
           trace_iter++;
@@ -542,16 +527,14 @@ namespace getfem {
 #endif
         res = compute_res();
         // cout << "residual = " << residual() << endl << endl;
-        R0 = (is_reduced ? gmm::real(gmm::vect_sp(dr, rhsr))
-                         : gmm::real(gmm::vect_sp(dr, rhs)));
+        R0 = gmm::real(gmm::vect_sp(dr, rhs));
 
         ++ nit;
       } while (!ls.is_converged(res, R0));
 
       if (alpha != ls.converged_value()) {
         alpha = ls.converged_value();
-        gmm::add(gmm::sub_vector(stateinit, I), gmm::scaled(dr, alpha),
-                 gmm::sub_vector(state, I));
+        gmm::add(stateinit, gmm::scaled(dr, alpha), state);
         res = ls.converged_residual();
         compute_residual();
       }
@@ -560,10 +543,8 @@ namespace getfem {
     }
 
     model_pb(model &m, abstract_newton_line_search &ls_, VECTOR &st,
-             const VECTOR &rhs_, const MATRIX &K_, bool reduced_,
-             std::vector<size_type> &sind_)
-      : md(m), is_reduced(reduced_), sind(sind_), I(sind_), ls(ls_), state(st),
-        rhs(rhs_), K(K_) {}
+             const VECTOR &rhs_, const MATRIX &K_)
+      : md(m), ls(ls_), state(st), rhs(rhs_), K(K_) {}
 
   };
 

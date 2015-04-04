@@ -36,12 +36,12 @@
 % Thermal problem: A thermal insulation condition is prescribed at the
 %   left and hole boudnaries. The remaining boundary and the plate itself
 %   is supposed to be submitted to an heat transfert with respect to the
-%   air at 20°C.
+%   air at 20?C.
 % Coupling terms:
 %   - Joule heating: source term  sigma|Grad_V|^2
 %   - Dependance of the thermal conductivity in temperature :
 %     sigma = 1/(rho_0(1+alpha(theta-T0)))
-%     with T0 = 20°C, rho_0 the resistance temperature coefficient at T0
+%     with T0 = 20?C, rho_0 the resistance temperature coefficient at T0
 %     and alpha the second resistance temperature coefficient.
 %   - Thermal expansion:
 %     stress_tensor = clambdastar div(u) I + 2 cmu epsilon(u) - beta theta I
@@ -58,22 +58,22 @@ clear all;
 epsilon = 1.;       % Thickness of the plate (cm)
 E = 21E6;           % Young Modulus (N/cm^2)
 nu = 0.3;           % Poisson ratio
-clambda = E*nu/((1+nu)*(1-2*nu)); % First Lamé coefficient (N/cm^2)
-cmu = E/(2*(1+nu));               % Second Lamé coefficient (N/cm^2)
-clambdastar = 2*clambda*cmu/(clambda+2*cmu); % Lamé coefficient for Plane stress (N/cm^2)
+clambda = E*nu/((1+nu)*(1-2*nu)); % First Lam?? coefficient (N/cm^2)
+cmu = E/(2*(1+nu));               % Second Lam?? coefficient (N/cm^2)
+clambdastar = 2*clambda*cmu/(clambda+2*cmu); % Lam?? coefficient for Plane stress (N/cm^2)
 F = 100E2;          % Force density at the right boundary (N/cm^2)
 kappa = 4.;         % Thermal conductivity (W/(cm K))
 D = 10;             % Heat transfert coefficient (W/(K cm^2))
-air_temp = 20;      % Temperature of the air in °C.
+air_temp = 20;      % Temperature of the air in ??C.
 alpha_th = 16.6E-6; % Thermal expansion coefficient (/K).
-T0 = 20;            % Reference temperature in °C.
-rho_0 = 1.754E-8;   % Resistance temperature coefficient at T0 = 20°C
+T0 = 20;            % Reference temperature in ??C.
+rho_0 = 1.754E-8;   % Resistance temperature coefficient at T0 = 20??C
 alpha = 0.0039;     % Second resistance temperature coefficient.
 
 %
 % Numerical parameters
 %
-h = 4;                      % Approximate mesh size
+h = 2;                      % Approximate mesh size
 elements_degree = 2;        % Degree of the finite element methods
 draw_mesh = true;           % Draw the mesh after mesh generation or not
 solve_in_two_steps = true;  % Solve the elasticity problem separately or not
@@ -179,27 +179,23 @@ gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigma '*Norm_
 
 % Thermal expansion term
 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-% gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Trace(Grad_Test_u)');
+gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Trace(Grad_Test_u)');
 
 
 %
 % Model solve and solution plot
 %
-if (solve_in_two_steps)
-    
-  disp(['Dof number ', num2str(gf_model_get(md, 'nbdof'))]);
+if (solve_in_two_steps) 
+  gf_model_set(md, 'disable variable', 'u');
+  disp(['First problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
+  gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
+  gf_model_set(md, 'enable variable', 'u');
   gf_model_set(md, 'disable variable', 'theta');
   gf_model_set(md, 'disable variable', 'V');
-  disp(['Dof number ', num2str(gf_model_get(md, 'nbdof'))]);
-  % gf_model_set(md, 'disable variable', 'u');
+  disp(['Second problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
-  gf_model_set(md, 'disable variable', 'V');
-  
-  % gf_model_set(md, 'enable variable', 'u');
-  % gf_model_set(md, 'disable variable', 'theta');
-  % gf_model_set(md, 'disable variable', 'V');
-  % gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 else
+  disp(['Global problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 end
   
@@ -222,7 +218,7 @@ title('Electric potential in Volt (on the deformed configuration, scale factor x
 hold off;
 subplot(3,1,3);
 gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
-title('Temperature in °C (on the deformed configuration, scale factor x100)');
+title('Temperature in ?C (on the deformed configuration, scale factor x100)');
 
 
 

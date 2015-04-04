@@ -4285,7 +4285,7 @@ namespace getfem {
            is_disabled_variable(tree.root->name_test1)) ||
           (tree.root->test_function_type >= 2 &&
            is_disabled_variable(tree.root->name_test2))) {
-        cout << "disabling term ";  ga_print_node(tree.root, cout); cout << endl;
+        // cout << "disabling term ";  ga_print_node(tree.root, cout); cout << endl;
         return;
       }
       // cout << "add tree with tests functions of " <<  tree.root->name_test1

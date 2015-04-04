@@ -418,7 +418,6 @@ namespace getfem {
     void update_brick(size_type ib, build_version version) const;
     void linear_brick_add_to_rhs(size_type ib, size_type ind_data,
                                  size_type n_iter) const;
-    bool build_reduced_index(std::vector<size_type> &ind);
     void update_affine_dependent_variables(void);
     void brick_call(size_type ib, build_version version,
                     size_type rhs_ind = 0) const;
@@ -541,12 +540,11 @@ namespace getfem {
       active_bricks.add(ib);
     }
 
-    /** Disable a variable.  */
-    void disable_variable(const std::string &name) {
-      VAR_SET::iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      it->second.is_disabled = true;
-    }
+    /** Disable a variable (and its attached mutlipliers).  */
+    void disable_variable(const std::string &name);
+
+    /** Enable a variable (and its attached mutlipliers).  */
+    void enable_variable(const std::string &name);
 
     /** Says if a name corresponds to a declared variable.  */
     bool variable_exists(const std::string &name) const {
@@ -614,13 +612,6 @@ namespace getfem {
       VAR_SET::const_iterator it = variables.find(name);
       GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
       return it->second.pim_data;
-    }
-
-    /** Enable a variable.  */
-    void enable_variable(const std::string &name) {
-      VAR_SET::iterator it = variables.find(name);
-      GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
-      it->second.is_disabled = false;
     }
 
     /** Boolean which says if the model deals with real or complex unknowns
@@ -692,7 +683,8 @@ namespace getfem {
     void from_variables(VECTOR &V, T) const {
       for (VAR_SET::iterator it = variables.begin();
         it != variables.end(); ++it)
-        if (it->second.is_variable && !(it->second.is_affine_dependent))
+        if (it->second.is_variable && !(it->second.is_affine_dependent)
+            && !(it->second.is_disabled))
           gmm::copy(it->second.real_value[0],
                     gmm::sub_vector(V, it->second.I));
     }
@@ -701,7 +693,8 @@ namespace getfem {
     void from_variables(VECTOR &V, std::complex<T>) const {
       for (VAR_SET::iterator it = variables.begin();
         it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent))
+      if (it->second.is_variable && !(it->second.is_affine_dependent)
+          && !(it->second.is_disabled))
         gmm::copy(it->second.complex_value[0],
                   gmm::sub_vector(V, it->second.I));
     }
@@ -716,11 +709,12 @@ namespace getfem {
     void spec_from_variables(VECTOR &V, const varnamelist &vl, T) const {
       for (size_type i = 0; i < vl.size(); ++i) {
         VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent)
+        if (it->second.is_variable && it->second.is_affine_dependent
+            && !(it->second.is_disabled))
           gmm::copy(gmm::scaled(it->second.real_value[0],
                                 T(1)/it->second.alpha),
                     gmm::sub_vector(V, it->second.I));
-        else if (it->second.is_variable)
+        else if (it->second.is_variable && !(it->second.is_disabled))
           gmm::copy(it->second.real_value[0],
                     gmm::sub_vector(V, it->second.I));
       }
@@ -731,11 +725,12 @@ namespace getfem {
                              std::complex<T>) const {
       for (size_type i = 0; i < vl.size(); ++i) {
         VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent)
+        if (it->second.is_variable && it->second.is_affine_dependent
+            && !(it->second.is_disabled))
           gmm::copy(gmm::scaled(it->second.complex_value[0],
                                 std::complex<T>(1)/it->second.alpha),
                     gmm::sub_vector(V, it->second.I));
-        else if (it->second.is_variable)
+        else if (it->second.is_variable && !(it->second.is_disabled))
           gmm::copy(it->second.complex_value[0],
                     gmm::sub_vector(V, it->second.I));
       }
@@ -753,7 +748,8 @@ namespace getfem {
     void spec2_from_variables(VECTOR &V, const varnamelist &vl, T) const {
       for (size_type i = 0; i < vl.size(); ++i) {
         VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent)
+        if (it->second.is_variable && it->second.is_affine_dependent
+            && !(it->second.is_disabled))
           gmm::copy(gmm::scaled(it->second.affine_real_value,
                                 T(1)/it->second.alpha),
                     gmm::sub_vector(V, it->second.I));
@@ -765,7 +761,8 @@ namespace getfem {
                               std::complex<T>) const {
       for (size_type i = 0; i < vl.size(); ++i) {
         VAR_SET::iterator it = variables.find(vl[i]);
-        if (it->second.is_variable && it->second.is_affine_dependent)
+        if (it->second.is_variable && it->second.is_affine_dependent
+            && !(it->second.is_disabled))
           gmm::copy(gmm::scaled(it->second.affine_complex_value,
                                 std::complex<T>(1)/it->second.alpha),
                     gmm::sub_vector(V, it->second.I));
@@ -790,7 +787,8 @@ namespace getfem {
     void to_variables(const VECTOR &V, T) {
       for (VAR_SET::iterator it = variables.begin();
         it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
+      if (it->second.is_variable && !(it->second.is_affine_dependent)
+          && !(it->second.is_disabled)) {
         gmm::copy(gmm::sub_vector(V, it->second.I),
           it->second.real_value[0]);
         it->second.v_num_data = act_counter();
@@ -803,7 +801,8 @@ namespace getfem {
     void to_variables(const VECTOR &V, std::complex<T>) {
       for (VAR_SET::iterator it = variables.begin();
         it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
+      if (it->second.is_variable && !(it->second.is_affine_dependent)
+          && !(it->second.is_disabled)) {
         gmm::copy(gmm::sub_vector(V, it->second.I),
           it->second.complex_value[0]);
         it->second.v_num_data = act_counter();

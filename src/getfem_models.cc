@@ -168,13 +168,15 @@ namespace getfem {
     return res_name;
   }
 
-  void model::resize_global_system() const
-  {
+  void model::resize_global_system() const {
     size_type tot_size = 0;
-
+    
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
-      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
+      if (it->second.is_variable && it->second.is_disabled)
+        it->second.I  = gmm::sub_interval(0,0);
+      if (it->second.is_variable && !(it->second.is_affine_dependent)
+          && !(it->second.is_disabled)) {
         it->second.I = gmm::sub_interval(tot_size, it->second.size());
         tot_size += it->second.size();
       }
@@ -196,6 +198,16 @@ namespace getfem {
     else {
       gmm::resize(rTM, tot_size, tot_size);
       gmm::resize(rrhs, tot_size);
+    }
+
+    for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
+      const brick_description &brick = bricks[ib];
+      for (size_type j = 0; j < brick.tlist.size(); ++j) {
+        if (brick.tlist[j].is_global) {
+          brick.terms_to_be_computed = true;
+          break;
+        }
+      }
     }
   }
 
@@ -593,6 +605,36 @@ namespace getfem {
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;
     add_dependency(mf);
+  }
+
+  void model::disable_variable(const std::string &name) {
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+    it->second.is_disabled = true;
+    for (VAR_SET::iterator itv = variables.begin();
+         itv != variables.end(); ++itv) {
+      if ((itv->second.filter == VDESCRFILTER_INFSUP ||
+           itv->second.filter == VDESCRFILTER_CTERM)
+          && (name.compare(itv->second.filter_var) == 0)) {
+        itv->second.is_disabled = true;
+      }
+    }
+    if (!act_size_to_be_done) resize_global_system();
+  }
+
+  void model::enable_variable(const std::string &name) {
+    VAR_SET::iterator it = variables.find(name);
+    GMM_ASSERT1(it != variables.end(), "Undefined variable " << name);
+    it->second.is_disabled = false;
+    for (VAR_SET::iterator itv = variables.begin();
+         itv != variables.end(); ++itv) {
+      if ((itv->second.filter == VDESCRFILTER_INFSUP||
+           itv->second.filter == VDESCRFILTER_CTERM)
+          && (name.compare(itv->second.filter_var) == 0)) {
+        itv->second.is_disabled = false;
+      }
+    }
+    if (!act_size_to_be_done) resize_global_system();
   }
 
   void model::add_macro(const std::string &name, const std::string &expr)
@@ -1972,21 +2014,6 @@ namespace getfem {
         }
       }
     }
-  }
-
-  bool model::build_reduced_index(std::vector<size_type> &ind) {
-    ind.resize(0);
-    bool reduced = false;
-    for (VAR_SET::iterator it = variables.begin(); it != variables.end(); ++it)
-      if (it->second.is_variable && !(it->second.is_affine_dependent)) {
-        if  (it->second.is_disabled)
-          reduced = true;
-        else {
-          for (size_type i=it->second.I.first(); i < it->second.I.last(); ++i)
-            ind.push_back(i);
-        }
-      }
-    return reduced;
   }
 
   void model::update_affine_dependent_variables(void) {

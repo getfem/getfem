@@ -129,12 +129,7 @@ namespace getfem {
                       const VECTOR &rhs) {
 
     VECTOR state(md.nb_dof());
-    std::vector<size_type> sind;
-    
     md.from_variables(state); // copy the model variables in the state vector
-
-    bool is_reduced = md.build_reduced_index(sind); // sub index of the dof to 
-                              //  be solved in case of disabled variables
 
     int time_integration = md.is_time_integration();
     if (time_integration) {
@@ -145,26 +140,13 @@ namespace getfem {
       md.set_time(md.get_time() + md.get_time_step());
       md.call_init_affine_dependent_variables(time_integration);
     }
-    
 
     if (md.is_linear()) {
       md.assembly(model::BUILD_ALL);
-      
-      if (is_reduced) {
-        gmm::sub_index I(sind);
-        MATRIX Kr(sind.size(), sind.size());
-        VECTOR rhsr(sind.size()), stater(sind.size());
-        gmm::copy(gmm::sub_matrix(K, I, I), Kr);
-        gmm::copy(gmm::sub_vector(state, I), stater);
-        gmm::copy(gmm::sub_vector(rhs, I), rhsr);
-        (*lsolver)(Kr, stater, rhsr, iter);
-        gmm::copy(stater, gmm::sub_vector(state, I));
-      } else {
-        (*lsolver)(K, state, rhs, iter);
-      }
+      (*lsolver)(K, state, rhs, iter);
     }
     else {
-      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K, is_reduced, sind);
+      model_pb<MATRIX, VECTOR> mdpb(md, ls, state, rhs, K);
       classical_Newton(mdpb, iter, *lsolver);
     }
     md.to_variables(state); // copy the state vector into the model variables

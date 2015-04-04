@@ -2184,7 +2184,8 @@ void gf_model_set(getfemint::mexargs_in& m_in,
         );
 
      /*@SET ('disable variable', @str varname)
-       Disable a variable for a solve. The next solve will operate only on
+       Disable a variable for a solve (and its attached multipliers).
+       The next solve will operate only on
        the remaining variables. This allows to solve separately different
        parts of a model. If there is a strong coupling of the variables,
        a fixed point strategy can the be used. @*/
@@ -2196,7 +2197,7 @@ void gf_model_set(getfemint::mexargs_in& m_in,
 
 
      /*@SET ('enable variable', @str varname)
-       Enable a disabled variable. @*/
+       Enable a disabled variable (and its attached multipliers). @*/
      sub_command
        ("enable variable", 1, 1, 0, 0,
         std::string varname = in.pop().to_string();
