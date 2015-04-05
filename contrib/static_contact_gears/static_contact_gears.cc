@@ -49,8 +49,7 @@ typedef getfem::model_real_plain_vector  plain_vector;
 struct elastostatic_contact_problem {
 
   enum { DIRICHLET_BOUNDARY_1 = 0, DIRICHLET_BOUNDARY_2 = 1,
-         CONTACT_BOUNDARY_1 = 1001, CONTACT_BOUNDARY_2 = 1002,
-         CONTACT_BOUNDARY = 1003 };
+         CONTACT_BOUNDARY_1 = 1001, CONTACT_BOUNDARY_2 = 1002 };
   getfem::mesh mesh;           /* the mesh */
   getfem::mesh_im mim;         /* the integration methods */
   getfem::mesh_fem mf_u;       /* main mesh_fem, for the elastostatic solution */
@@ -66,7 +65,7 @@ struct elastostatic_contact_problem {
   size_type N;                 /* dimension of the problem                     */
 
   bool frictionless;           /* flag for frictionless model                  */
-  int contact_algo;      /* contact algorithm (0:nodal, 1-4: integral
+  int contact_algo;            /* contact algorithm (0:nodal, 1-4: integral
                                   >=5:integral large sliding)                  */
 
   // Vectors holding the ids of mesh region pairs expected to come in contact
@@ -224,10 +223,6 @@ void elastostatic_contact_problem::init(void) {
       mr2 = getfem::mesh_region::merge(mr2, mesh.region(*rg_it));
 
     dal::bit_vector dol = mf_mult.basic_dof_on_region(CONTACT_BOUNDARY_1);
-    if (contact_algo > 4) {
-      mesh.region(CONTACT_BOUNDARY) = getfem::mesh_region::merge(mr1, mr2);
-      dol.merge_from(mf_mult.basic_dof_on_region(CONTACT_BOUNDARY_2));
-    }
     mf_mult.reduce_to_basic_dof(dol);
   }
 
@@ -278,10 +273,19 @@ bool elastostatic_contact_problem::solve() {
       }
     }
     else { // large sliding is for the moment always frictionless
-      GMM_ASSERT1(false, "not supported yet");
-      // md.add_initialized_scalar_data("f_coeff", frict_coeff);
-      // size_type indb = getfem::add_integral_large_sliding_contact_brick_field_extension
-      //  (md, mim, "u", "mult", "r", "f_coeff", CONTACT_BOUNDARY);
+      std::string u0_str("");
+//      if (frict_coeff > scalar_type(0)) {
+//        u0_str = "u0";
+//        md.add_fem_variable(u0_str, mf_u);
+//      }
+      md.add_initialized_scalar_data("f_coeff", frict_coeff);
+      size_type indb =
+      getfem::add_integral_large_sliding_contact_brick_raytracing
+      (md, "r", 20., "f_coeff", "1", false, false);
+      getfem::add_contact_boundary_to_large_sliding_contact_brick
+      (md, indb, mim, CONTACT_BOUNDARY_1, false, true, "u", "mult", u0_str);
+      getfem::add_contact_boundary_to_large_sliding_contact_brick
+      (md, indb, mim, CONTACT_BOUNDARY_2, true, false, "u", "", u0_str);
     }
   }
 
@@ -307,7 +311,8 @@ bool elastostatic_contact_problem::solve() {
 
   gmm::iteration iter(residual, 1, 40000);
 
-  getfem::default_newton_line_search ls;
+//  getfem::default_newton_line_search ls;
+  getfem::simplest_newton_line_search ls(50, 5., 5., 0.6, 1e-1);
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"mumps"), ls);
 
   if (!iter.converged()) return false; // Solution has not converged

@@ -10,7 +10,7 @@ static_contact_gears_u1_u2_SOURCES = static_contact_gears_u1_u2.cc
 AM_CPPFLAGS = -I$(top_srcdir)/src -I../../src
 LDADD    = ../../src/libgetfem.la -lm @SUPLDFLAGS@ @BOOST_LIBS@
 
-TESTS = 
+TESTS = static_contact_gears.pl
 
 EXTRA_DIST = \
 	gear1.msh \

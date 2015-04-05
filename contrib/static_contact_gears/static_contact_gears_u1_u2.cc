@@ -57,7 +57,6 @@ struct elastostatic_contact_problem {
   getfem::mesh_fem mf_rhs1;    /* 1st mesh_fem for the right hand side         */
   getfem::mesh_fem mf_rhs2;    /* 2nd mesh_fem for the right hand side         */
   getfem::mesh_fem mf_mult1;   /* 1st mesh_fem for the multipliers.            */
-  getfem::mesh_fem mf_mult2;   /* 2nd mesh_fem for the multipliers.            */
   scalar_type lambda, mu;      /* elastic coefficients.                        */
 
   scalar_type residual;        /* max residual for the iterative solvers       */
@@ -68,7 +67,7 @@ struct elastostatic_contact_problem {
   size_type N;                 /* dimension of the problem                     */
 
   bool frictionless;           /* flag for frictionless model                  */
-  int contact_algo;      /* contact algorithm (0:nodal, 1-4: integral
+  int contact_algo;            /* contact algorithm (0:nodal, 1-4: integral
                                   >=5:integral large sliding)                  */
 
   // Vectors holding the ids of mesh region pairs expected to come in contact
@@ -82,7 +81,7 @@ struct elastostatic_contact_problem {
   void init(void);
   elastostatic_contact_problem(void) : mim1(mesh1), mim2(mesh2),
     mf_u1(mesh1), mf_u2(mesh2), mf_rhs1(mesh1), mf_rhs2(mesh2),
-    mf_mult1(mesh1), mf_mult2(mesh2) {}
+    mf_mult1(mesh1) {}
 };
 
 
@@ -213,17 +212,12 @@ void elastostatic_contact_problem::init(void) {
 
   if (contact_algo != 0) { // integral contact
     std::string MULT_FEM_TYPE  = PARAM.string_value("MULT_FEM_TYPE","FEM name for the multipliers");
-    if (frictionless && contact_algo >= 1 && contact_algo <= 4) {
+    if (frictionless && contact_algo >= 1 && contact_algo <= 4)
       mf_mult1.set_qdim(dim_type(1));
-      mf_mult2.set_qdim(dim_type(1));
-    }
-    else {
+    else
       mf_mult1.set_qdim(dim_type(N));
-      mf_mult2.set_qdim(dim_type(N));
-    }
     getfem::pfem pf_mult = getfem::fem_descriptor(MULT_FEM_TYPE);
     mf_mult1.set_finite_element(pf_mult);
-    mf_mult2.set_finite_element(pf_mult);
 
     getfem::mesh_region &mr1 = mesh1.region(CONTACT_BOUNDARY_1);
     getfem::mesh_region &mr2 = mesh2.region(CONTACT_BOUNDARY_2);
@@ -236,8 +230,6 @@ void elastostatic_contact_problem::init(void) {
 
     dal::bit_vector dol1 = mf_mult1.basic_dof_on_region(CONTACT_BOUNDARY_1);
     mf_mult1.reduce_to_basic_dof(dol1);
-    dal::bit_vector dol2 = mf_mult2.basic_dof_on_region(CONTACT_BOUNDARY_2);
-    mf_mult2.reduce_to_basic_dof(dol2);
   }
 
 }
@@ -292,13 +284,21 @@ bool elastostatic_contact_problem::solve() {
       }
     }
     else { // large sliding is for the moment always frictionless
-      GMM_ASSERT1(false, "not supported yet");
-      // md.add_fem_variable("mult2", mf_mult2);
-      // md.add_initialized_scalar_data("f_coeff", frict_coeff);
-      // size_type indb = getfem::add_integral_large_sliding_contact_brick_field_extension
-      //  (md, mim1, "u1", "mult1", "r", "f_coeff", CONTACT_BOUNDARY_1);
-      // getfem::add_boundary_to_large_sliding_contact_brick
-      //  (md, indb, mim2, "u2", "mult2", CONTACT_BOUNDARY_2);
+      std::string u01_str(""), u02_str("");
+//      if (frict_coeff > scalar_type(0)) {
+//        u01_str = "u01";
+//        u02_str = "u02";
+//        md.add_fem_variable(u01_str, mf_u1);
+//        md.add_fem_variable(u02_str, mf_u2);
+//      }
+      md.add_initialized_scalar_data("f_coeff", frict_coeff);
+      size_type indb =
+      getfem::add_integral_large_sliding_contact_brick_raytracing
+      (md, "r", 20., "f_coeff", "1", false, false);
+      getfem::add_contact_boundary_to_large_sliding_contact_brick
+      (md, indb, mim1, CONTACT_BOUNDARY_1, false, true, "u1", "mult1", u01_str);
+      getfem::add_contact_boundary_to_large_sliding_contact_brick
+      (md, indb, mim2, CONTACT_BOUNDARY_2, true, false, "u2", "", u02_str);
     }
   }
 
@@ -325,7 +325,8 @@ bool elastostatic_contact_problem::solve() {
 
   gmm::iteration iter(residual, 1, 40000);
 
-  getfem::default_newton_line_search ls;
+//  getfem::default_newton_line_search ls;
+  getfem::simplest_newton_line_search ls(50, 5., 5., 0.6, 1e-1);
   getfem::standard_solve(md, iter, getfem::rselect_linear_solver(md,"mumps"), ls);
 
   if (!iter.converged()) return false; // Solution has not converged
