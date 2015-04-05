@@ -630,7 +630,7 @@ Of course, one may used more complex expressions such as::
 
 where ``u`` is a vector variable of the workspace/model.
 
-Once a transformation is define in the workspace/model, one can interpolate a variable or test functions, the position or the unit normal vector to a boundary thanks to one of these expressions::
+Once a transformation is defined in the workspace/model, one can interpolate a variable or test functions, the position or the unit normal vector to a boundary thanks to one of these expressions::
 
   Interpolate(Normal, transname)
   Interpolate(X, transname)

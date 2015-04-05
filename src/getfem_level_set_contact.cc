@@ -49,7 +49,7 @@ level_set_contact::slave_contact_body::slave_contact_body(
 
 {
 	ls_mesh_fem.set_qdim(size_type(1));
-	modeling_standard_plain_vector LS(ls_mesh_fem.nb_dof());
+	model_real_plain_vector LS(ls_mesh_fem.nb_dof());
 	boundary_level_set_field(get_mesh(),ls_mesh_fem,
 		*pmim,LS);
 	md.add_initialized_fem_data(ls_name,ls_mesh_fem,LS);
@@ -311,7 +311,7 @@ mcb(_mcb), scb(_scb)
 	GMM_ASSERT1(!scb.is_mesh_deformed(),"Trying to deform \
 										already deformed Slave  Contact Body");
 
-	const modeling_standard_plain_vector& 
+	const model_real_plain_vector& 
 		Umaster=mcb.get_model().real_variable(mcb.get_var_name());
 	// size_type dof_check = Umaster.size();
 	// size_type node_check = mcb.get_mesh().nb_points();
@@ -320,7 +320,7 @@ mcb(_mcb), scb(_scb)
 	mcb.is_deformed=true;
 	if (&mcb.get_mesh()!=&scb.get_mesh()){ 
 		//  not deforming the slave if the master and the slave are the same
-		const modeling_standard_plain_vector& 
+		const model_real_plain_vector& 
 			Uslave=scb.get_model().real_variable(scb.get_var_name());
 		def_slave.reset(new getfem::temporary_mesh_deformator<>
 			(scb.get_mesh_fem(),Uslave));
@@ -386,10 +386,10 @@ bool level_set_contact::contact_pair_info::contact_changed()
   mf_boundary.adapt(mf_scalar.dof_on_region(GIVEN_CONTACT_REGION));
   
   // interpolate level set from the slave to the master
-  modeling_standard_plain_vector LS_on_contour(mf_boundary.nb_dof());
+  model_real_plain_vector LS_on_contour(mf_boundary.nb_dof());
   getfem::interpolation(slave_cb.get_ls_mesh_fem(), mf_boundary, 
                         slave_cb.ls_values(), LS_on_contour);
-  modeling_standard_plain_vector LS(mf_scalar.nb_dof());
+  model_real_plain_vector LS(mf_scalar.nb_dof());
   mf_boundary.extend_vector(LS_on_contour,LS);
   gmm::copy(LS,master_cb.get_model().set_real_variable
             ("ls_on"+master_cb.get_var_name()+"_from_"+slave_cb.get_var_name()));
@@ -422,9 +422,9 @@ bool level_set_contact::contact_pair_info::contact_changed()
   // extend Lagrange Multiplier onto the whole boundary of the master
   const mesh_fem& mf_mult = 
     master_cb.get_model().mesh_fem_of_variable(mult_name);
-  const modeling_standard_plain_vector& lambda = 
+  const model_real_plain_vector& lambda = 
     master_cb.get_model().real_variable(mult_name);
-  modeling_standard_plain_vector lambda_full(mf_mult.nb_basic_dof());
+  model_real_plain_vector lambda_full(mf_mult.nb_basic_dof());
   if (lambda.size()>0) mf_mult.extend_vector(lambda,lambda_full);
   // update contact region
   dal::bit_vector cc = master_cb.get_mesh().

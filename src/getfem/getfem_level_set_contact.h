@@ -61,8 +61,8 @@ namespace level_set_contact {
   using getfem::model;
   using getfem::size_type;
   using getfem::scalar_type;
-  using getfem::modeling_standard_plain_vector;
-  typedef getfem::modeling_standard_plain_vector  plain_vector;
+  using getfem::model_real_plain_vector;
+  typedef getfem::model_real_plain_vector  plain_vector;
   typedef getfem::model_real_sparse_matrix sparse_matrix;
   
   
@@ -79,7 +79,7 @@ namespace level_set_contact {
     //model and vars
     getfem::model md;
     md.add_fem_variable("LS",mf);
-    getfem::modeling_standard_plain_vector RHS(mf.nb_dof());
+    getfem::model_real_plain_vector RHS(mf.nb_dof());
     
     //calculating the size of the LS RHS based on the size of the geometry
     getfem::base_node Pmin(mesh.dim()),Pmax(mesh.dim()),range(mesh.dim());

@@ -196,7 +196,7 @@ the one of the |mf| object have to match. To sum it up,
 
     mf.nb_dof_of_element(i) == mf.get_qdim()*mf.fem_of_element(i).nb_dof()
 
-Additionally, if the field to be represented is a tensor field instead of a vector field (for instance the stress or strian tensor field in elasticity), it is possible to specify the tensor dimensions with the methods::
+Additionally, if the field to be represented is a tensor field instead of a vector field (for instance the stress or strain tensor field in elasticity), it is possible to specify the tensor dimensions with the methods::
 
   mf.set_qdim(dim_type M, dim_type N)
   mf.set_qdim(dim_type M, dim_type N, dim_type O, dim_type P)  

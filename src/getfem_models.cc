@@ -170,7 +170,7 @@ namespace getfem {
 
   void model::resize_global_system() const {
     size_type tot_size = 0;
-    
+
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
       if (it->second.is_variable && it->second.is_disabled)

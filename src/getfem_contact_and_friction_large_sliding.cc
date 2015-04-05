@@ -497,7 +497,7 @@ namespace getfem {
     const base_matrix &grad_phix(void) {
       if (!grad_phix_init) {
         pfem pf = ctx_ux().pf();
-        slice_vector_on_basic_dof_of_element(*mf_ux_,mcf.disp_of_boundary(ibx),
+        slice_vector_on_basic_dof_of_element(*mf_ux_, mcf.disp_of_boundary(ibx),
                                              cvx_, coeff);
         pf->interpolation_grad(ctx_ux(), coeff, grad_phix_, dim_type(N));
         gmm::add(gmm::identity_matrix(), grad_phix_);
@@ -519,7 +519,7 @@ namespace getfem {
     const base_matrix &grad_phiy(void) {
       if (!grad_phiy_init) {
         pfem pf = ctx_uy().pf();
-        slice_vector_on_basic_dof_of_element(*mf_uy_,mcf.disp_of_boundary(iby),
+        slice_vector_on_basic_dof_of_element(*mf_uy_, mcf.disp_of_boundary(iby),
                                              cvy_, coeff);
         pf->interpolation_grad(ctx_uy(), coeff, grad_phiy_, dim_type(N));
         gmm::add(gmm::identity_matrix(), grad_phiy_);

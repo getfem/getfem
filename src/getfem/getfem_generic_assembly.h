@@ -521,7 +521,7 @@ namespace getfem {
       if (mf) {
         size_type ndof = mf->nb_dof();
         GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-                    "make a wrong initialization of a mesh_fem object");
+                    "made a wrong initialization of a mesh_fem object");
         return mf->get_qdim() * (n / ndof);
       } else if (imd) {
         size_type q = n / imd->nb_filtered_index();
@@ -539,7 +539,7 @@ namespace getfem {
       if (mf) {
         size_type ndof = mf->nb_dof();
         GMM_ASSERT1(ndof, "Variable " << name << " with no dof. You probably "
-                    "make a wrong initialization of a mesh_fem object");
+                    "made a wrong initialization of a mesh_fem object");
         bgeot::multi_index mi = mf->get_qdims();
         size_type qmult = n / ndof;
         if (qmult > 1) {

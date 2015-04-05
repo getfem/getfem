@@ -5,21 +5,23 @@ Installation
 
 For the parallel version of the interface, see also :ref:`ud-parallel`.
 
-In a debian/ubuntu system
+In a Debian/Ubuntu system
 -------------------------
 
-If you have a problem installing the packages, please report it as a bug.
+GetFEM++ packages are available in the official repositories of Debian
+and Ubuntu distributions.
 
-Edit ``/etc/apt/sources.list`` and add the following lines::
+Information about the GetFEM++ versions available in different Debian
+releases can be found e.g. at
 
-  deb http://apt.dim.uchile.cl distro main
-  deb-src http://apt.dim.uchile.cl distro main
+https://packages.debian.org/source/sid/getfem++
 
-where
+and with respect to different Ubuntu releases at
 
-distro = `debian` xor `ubuntu`,
+https://launchpad.net/ubuntu/+source/getfem++
 
-then, do a ``aptitude update`` and ``aptitude install python-getfem``.
+GetFEM++ including its python interface cane be installed from a terminal
+by execcuting ``aptitude update`` and ``aptitude install python-getfem++``.
 
 In a general unix/linux based systems
 -------------------------------------
@@ -48,15 +50,15 @@ Download sources
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
-The latest stable release of |gf| is getfem++-|version|\tar.gz
+The latest stable release of |gf| is getfem++-|version|\.tar.gz
 
 * download package:
 
-   wget http://download.gna.org/getfem/stable/getfem++-|version|\tar.gz
+   wget http://download.gna.org/getfem/stable/getfem++-|version|\.tar.gz
 
 * unpack:
 
-   tar xzf getfem++-|version|\tar.gz
+   tar xzf getfem++-|version|\.tar.gz
 
 * and go to the root directory of getfem:
      
