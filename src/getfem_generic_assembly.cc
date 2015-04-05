@@ -782,10 +782,15 @@ namespace getfem {
             return false;
           break;
         case 1:
-        case 2:
           if (mf1 != mf2 ||
               workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
               pnode1->test_function_type != pnode2->test_function_type)
+            return false;
+          break;
+        case 2:
+          if (mf1 != mf2 ||
+              workspace.qdim(pnode1->name) != workspace.qdim(pnode2->name) ||
+              pnode1->test_function_type == pnode2->test_function_type)
             return false;
           break;
         }
@@ -2502,10 +2507,10 @@ namespace getfem {
 
   struct ga_instruction_val : public ga_instruction {
     base_tensor &t;
-    base_tensor &Z;
+    const base_tensor &Z;
     const base_vector &coeff;
     size_type qdim;
-
+    // Z(ndof,target_dim), coeff(Qmult,ndof) --> t(target_dim*Qmult)
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: variable value");
       size_type ndof = Z.sizes()[0];
@@ -2527,7 +2532,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_val(base_tensor &tt, base_tensor &Z_,
+    ga_instruction_val(base_tensor &tt, const base_tensor &Z_,
                        const base_vector &co, size_type q)
       : t(tt), Z(Z_), coeff(co), qdim(q) {}
   };
@@ -2557,7 +2562,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_grad(base_tensor &tt, base_tensor &Z_,
+    ga_instruction_grad(base_tensor &tt, const base_tensor &Z_,
                        const base_vector &co, size_type q)
     : ga_instruction_val(tt, Z_, co, q)
     {}
@@ -2590,7 +2595,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_hess(base_tensor &tt, base_tensor &Z_,
+    ga_instruction_hess(base_tensor &tt, const base_tensor &Z_,
                        const base_vector &co, size_type q)
     : ga_instruction_val(tt, Z_, co, q)
     {}
@@ -2598,7 +2603,7 @@ namespace getfem {
 
   struct ga_instruction_copy_val_base : public ga_instruction {
     base_tensor &t;
-    base_tensor &Z;
+    const base_tensor &Z;
     size_type qdim;
     // Z(ndof,target_dim) --> t(Qmult*ndof,Qmult*target_dim)
     virtual int exec(void) {
@@ -2612,7 +2617,7 @@ namespace getfem {
         gmm::copy(Z.as_vector(), t.as_vector());
       } else {
         gmm::clear(t.as_vector());
-        base_tensor::iterator itZ = Z.begin();
+        base_tensor::const_iterator itZ = Z.begin();
         size_type s = t.sizes()[0], ss = s * Qmult, sss = s+1;
 
         // Performs t(i*Qmult+j, k*Qmult + j) = Z(i,k);
@@ -2629,7 +2634,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_copy_val_base(base_tensor &tt, base_tensor &Z_, size_type q)
+    ga_instruction_copy_val_base(base_tensor &tt, const base_tensor &Z_, size_type q)
       : t(tt), Z(Z_), qdim(q) {}
   };
 
@@ -2666,7 +2671,7 @@ namespace getfem {
       return 0;
     }
 
-     ga_instruction_copy_grad_base(base_tensor &tt, base_tensor &Z_, size_type q)
+     ga_instruction_copy_grad_base(base_tensor &tt, const base_tensor &Z_, size_type q)
      : ga_instruction_copy_val_base(tt,Z_,q)
      {}
   };
@@ -2705,7 +2710,7 @@ namespace getfem {
       return 0;
     }
 
-    ga_instruction_copy_hess_base(base_tensor &tt, base_tensor &Z_, size_type q)
+    ga_instruction_copy_hess_base(base_tensor &tt, const base_tensor &Z_, size_type q)
     : ga_instruction_copy_val_base(tt, Z_, q)
     {}
   };
@@ -2751,7 +2756,7 @@ namespace getfem {
     }
 
     ga_instruction_elementary_transformation_val
-    (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
+    (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
@@ -2770,7 +2775,7 @@ namespace getfem {
     }
 
     ga_instruction_elementary_transformation_grad
-    (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
+    (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
@@ -2789,7 +2794,7 @@ namespace getfem {
     }
 
     ga_instruction_elementary_transformation_hess
-    (base_tensor &tt, base_tensor &Z_, const base_vector &co, size_type q,
+    (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
@@ -2974,7 +2979,7 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated base value");
       ga_instruction_interpolate_base::exec();
-      ctx.pf()->real_base_value(ctx, Z); // remember Z == ZZ
+      ctx.pf()->real_base_value(ctx, ZZ); // remember Z == ZZ
       return ga_instruction_copy_val_base::exec();
     }
 
@@ -2989,9 +2994,9 @@ namespace getfem {
     : public ga_instruction_copy_grad_base, ga_instruction_interpolate_base {
     // ctx --> Z(ndof,target_dim,N) --> t(Qmult*ndof,Qmult*target_dim,N)
     virtual int exec(void) {
-      GA_DEBUG_INFO("Instruction: interpolated base vgrad");
+      GA_DEBUG_INFO("Instruction: interpolated base grad");
       ga_instruction_interpolate_base::exec();
-      ctx.pf()->real_grad_base_value(ctx, Z); // remember Z == ZZ
+      ctx.pf()->real_grad_base_value(ctx, ZZ); // remember Z == ZZ
       return ga_instruction_copy_grad_base::exec();
     }
 
@@ -3008,7 +3013,7 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: interpolated base hessian");
       ga_instruction_interpolate_base::exec();
-      ctx.pf()->real_hess_base_value(ctx, Z); // remember Z == ZZ
+      ctx.pf()->real_hess_base_value(ctx, ZZ); // remember Z == ZZ
       return ga_instruction_copy_hess_base::exec();
     }
 
@@ -3063,7 +3068,7 @@ namespace getfem {
     }
 
     ga_instruction_elementary_transformation_val_base
-    (base_tensor &t_, base_tensor &Z_, size_type q,
+    (base_tensor &t_, const base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
@@ -3088,7 +3093,7 @@ namespace getfem {
     }
 
     ga_instruction_elementary_transformation_grad_base
-    (base_tensor &t_, base_tensor &Z_, size_type q,
+    (base_tensor &t_, const base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
@@ -3113,7 +3118,7 @@ namespace getfem {
     }
 
     ga_instruction_elementary_transformation_hess_base
-    (base_tensor &t_, base_tensor &Z_, size_type q,
+    (base_tensor &t_, const base_tensor &Z_, size_type q,
      pelementary_transformation e, const mesh_fem &mf_,
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
@@ -3238,18 +3243,19 @@ namespace getfem {
   };
 
   struct ga_instruction_trace : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     size_type n;
     // tc1(:,:,...,n,n) --> t(:,:,...)
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: Trace");
       GA_DEBUG_ASSERT(t.size()*n*n == tc1.size(), "Wrong sizes");
-
       size_type s = t.size() * (n+1);
-      for (base_tensor::iterator it = t.begin(), it1 = tc1.begin();
-           it != t.end(); ++it, ++it1) {
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it1 = tc1.begin();
+      for (; it != t.end(); ++it, ++it1) {
         *it = scalar_type(0);
-        base_tensor::iterator it2 = it1;
+        base_tensor::const_iterator it2 = it1;
         *it += *it2;
         for (size_type i = 1; i < n; ++i) { it2 += s; *it += *it2; }
       }
@@ -3261,7 +3267,8 @@ namespace getfem {
   };
 
   struct ga_instruction_deviator : public ga_instruction {
-    base_tensor &t, &tc1;
+    base_tensor &t;
+    const base_tensor &tc1;
     size_type n;
     // tc1(:,:,...,n,n) --> t(:,:,...,n,n)
     virtual int exec(void) {
@@ -3272,10 +3279,11 @@ namespace getfem {
 
       size_type nb = t.size()/(n*n);
       size_type s = nb * (n+1), j = 0;
-      for (base_tensor::iterator it = t.begin(), it1 = tc1.begin();
-           j < nb; ++it, ++it1, ++j) {
+      base_tensor::iterator it = t.begin();
+      base_tensor::const_iterator it1 = tc1.begin();
+      for (; j < nb; ++it, ++it1, ++j) {
         scalar_type tr(0);
-        base_tensor::iterator it2 = it1;
+        base_tensor::const_iterator it2 = it1;
         tr += *it2;
         for (size_type i = 1; i < n; ++i) { it2 += s; tr += *it2; }
         tr /= scalar_type(n);
