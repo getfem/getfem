@@ -605,6 +605,7 @@ namespace getfem {
 
         dal::bit_vector points_already_interpolated;
         std::vector<base_node> transformed_points(m.nb_max_points());
+        std::vector<base_node> normals(m.nb_max_points());
         for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
           size_type cv = v.cv();
           bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -638,8 +639,20 @@ namespace getfem {
                 transformed_points[ind] = ctx.xreal();
               }
               points_already_interpolated.add(ind);
+              // computation of unit normal vector if the vertex is on the face
+              if (points_on_face[ip]) {
+                compute_normal(ctx, v.f(), ref_conf, coeff, n0, n, grad);
+                n /= gmm::vect_norm2(n);
+                normals[ind] = n;
+                n_mean += n;
+                ++nb_pt_on_face;
+              }
             } else {
               val = transformed_points[ind];
+              if (points_on_face[ip]) {
+                n_mean += normals[ind];
+                ++nb_pt_on_face;
+              }
             }
 
             if (ip == 0) // computation of bounding box
@@ -649,14 +662,6 @@ namespace getfem {
                 bmin[k] = std::min(bmin[k], val[k]);
                 bmax[k] = std::max(bmax[k], val[k]);
               }
-            }
-
-            // computation of unit normal vector if the vertex is on the face
-            if (points_on_face[ip]) {
-              compute_normal(ctx, v.f(), ref_conf, coeff, n0, n, grad);
-              n /= gmm::vect_norm2(n);
-              n_mean += n;
-              ++nb_pt_on_face;
             }
 
           }
@@ -1389,6 +1394,7 @@ namespace getfem {
           
           dal::bit_vector points_already_interpolated;
           std::vector<base_node> transformed_points(m.nb_max_points());
+          std::vector<base_node> normals(m.nb_max_points());
           for (getfem::mr_visitor v(region,m); !v.finished(); ++v) {
             size_type cv = v.cv();
             bgeot::pgeometric_trans pgt = m.trans_of_convex(cv);
@@ -1397,7 +1403,7 @@ namespace getfem {
             slice_vector_on_basic_dof_of_element(mfu, U, cv, coeff);
             bgeot::vectors_to_base_matrix
               (G, mfu.linked_mesh().points_of_convex(cv));
-            fem_interpolation_context ctx(pgt,pfp,size_type(-1), G, cv);
+            fem_interpolation_context ctx(pgt, pfp, size_type(-1), G, cv);
             
             bgeot::pconvex_structure cvs = pgt->structure();
             size_type nb_pt_on_face = cvs->nb_points_of_face(v.f());
@@ -1416,8 +1422,14 @@ namespace getfem {
                 val += ctx.xreal();
                 transformed_points[ind] = val;
                 points_already_interpolated.add(ind);
+                // computation of unit normal vector if the vertex is on the face
+                compute_normal(ctx, v.f(), false, coeff, n0_x, n_x, grad);
+                n_x /= gmm::vect_norm2(n_x);
+                normals[ind] = n_x;
+                n_mean += n_x;
               } else {
                 val = transformed_points[ind];
+                n_mean += normals[ind];
               }
               
               if (k == 0) // computation of bounding box
@@ -1428,11 +1440,6 @@ namespace getfem {
                   bmax[l] = std::max(bmax[l], val[l]);
                 }
               }
-              
-              // computation of unit normal vector if the vertex is on the face
-              compute_normal(ctx, v.f(), false, coeff, n0_x, n_x, grad);
-              n_x /= gmm::vect_norm2(n_x);
-              n_mean += n_x;
             }
             
             // Security coefficient of 1.3 (for nonlinear transformations)
