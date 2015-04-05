@@ -1,7 +1,8 @@
 if QHULL
-optprogs = test_mesh_generation test_mesh_im_level_set crack
+optprogs = test_mesh_generation test_mesh_im_level_set crack thermo_elasticity_electrical_coupling
 optpl = test_mesh_im_level_set.pl \
-        crack.pl
+        crack.pl                  \
+	thermo_elasticity_electrical_coupling.pl
 else
 optprogs =
 optpl = 
@@ -91,6 +92,7 @@ if QHULL
 test_mesh_generation_SOURCES = test_mesh_generation.cc 
 test_mesh_im_level_set_SOURCES = test_mesh_im_level_set.cc 
 crack_SOURCES = crack.cc
+thermo_elasticity_electrical_coupling_SOURCES = thermo_elasticity_electrical_coupling.cc
 endif
 bilaplacian_SOURCES = bilaplacian.cc
 heat_equation_SOURCES = heat_equation.cc
@@ -161,6 +163,8 @@ EXTRA_DIST =                               			\
 	test_slice.pl			   			\
 	test_norm.pl			   			\
 	test_mesh_im_level_set.pl          			\
+	thermo_elasticity_electrical_coupling.pl		\
+	thermo_elasticity_electrical_coupling.param		\
 	test_tree_sorted.pl                			\
 	test_mat_elem.pl                   			\
 	crack.pl                           			\

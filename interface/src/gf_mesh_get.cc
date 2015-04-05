@@ -53,7 +53,7 @@ get_structure_or_geotrans_of_convexes(const getfem::mesh& m,
   out.return_packed_obj_ids(ids, class_id);
 }
 
-/* apply geomtric transformation to edge lists */
+/* apply geometric transformation to edge lists */
 static void
 transform_edge_list(const getfem::mesh &m, unsigned N, const bgeot::edge_list &el, darray &w)
 {

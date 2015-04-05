@@ -672,11 +672,18 @@ namespace getfem {
 
   /** Select in the region mr the faces of the mesh m with their unit
       outward vector having a maximal angle "angle" with the vector V.
-   */ 
+   */
   mesh_region APIDECL select_faces_of_normal(const mesh &m,
                                              const mesh_region &mr,
                                              const base_small_vector &V,
                                              scalar_type angle);
+
+  /** Select in the region mr the faces of the mesh m lying entirely in the
+      box delimated by pt1 and pt2.
+   */
+  mesh_region APIDECL select_faces_in_box(const mesh &m, const mesh_region &mr,
+                                          const base_node &pt1,
+                                          const base_node &pt2);
 
 
   ///@}

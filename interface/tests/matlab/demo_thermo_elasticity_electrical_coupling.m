@@ -141,7 +141,7 @@ gf_model_set(md, 'add fem variable', 'u', mfu);       % Displacement of the stru
 gf_model_set(md, 'add fem variable', 'theta', mft);   % Temperature
 gf_model_set(md, 'add fem variable', 'V', mft);       % Electric potential
 
-% Menbrane elastic deformation
+% Membrane elastic deformation
 gf_model_set(md, 'add initialized data', 'cmu', [cmu]);
 gf_model_set(md, 'add initialized data', 'clambdastar', [clambdastar]);
 gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'clambdastar', 'cmu');

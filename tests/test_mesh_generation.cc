@@ -18,9 +18,9 @@
  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
  
 ===========================================================================*/
-#include "getfem/getfem_mesher.h"
 
 #include "getfem/getfem_mesher.h"
+
 using std::endl; using std::cout; using std::cerr;
 using std::ends; using std::cin;
 using getfem::base_node;

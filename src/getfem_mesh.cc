@@ -785,6 +785,29 @@ namespace getfem {
     return mrr;
   }
 
+  mesh_region select_faces_in_box(const mesh &m, const mesh_region &mr,
+                                  const base_node &pt1, const base_node &pt2) {
+    mesh_region mrr;
+    size_type N = m.dim();
+    GMM_ASSERT1(pt1.size() == N && pt2.size() == N, "Wrong dimensions"); 
+    for (getfem::mr_visitor i(mr); !i.finished(); ++i)
+      if (i.f() != short_type(-1)) {
+        bgeot::mesh_structure::ind_pt_face_ct pt
+          = m.ind_points_of_face_of_convex(i.cv(), i.f());
+
+        bool is_in = true;
+        for (bgeot::mesh_structure::ind_pt_face_ct::iterator it = pt.begin();
+             it != pt.end(); ++it) {
+          for (size_type j = 0; j < N; ++j)
+            if (m.points()[*it][j] < pt1[j] || m.points()[*it][j] > pt2[j])
+              { is_in = false; break; }
+          if (!is_in) break;
+        }
+        if (is_in) mrr.add(i.cv(), i.f());
+      }
+    return mrr;
+  }
+
   void extrude(const mesh& in, mesh& out, size_type nb_layers, short_type degree) {
     dim_type dim = in.dim();
     base_node pt(dim+1);

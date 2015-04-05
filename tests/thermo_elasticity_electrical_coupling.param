@@ -1,0 +1,21 @@
+% -*- matlab -*- (enables emacs matlab mode)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% parameters for program thermo_elasticity_electrical_coupling            %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+epsilon = 1.;           % Thickness of the plate (cm)
+E = 21E6;               % Young Modulus (N/cm^2)
+nu = 0.3;               % Poisson ratio
+F = 100E2;              % Force density at the right boundary (N/cm^2)
+kappa = 4.;             % Thermal conductivity (W/(cm K))
+D = 10.;                % Heat transfert coefficient (W/(K cm^2))
+air_temp = 20.;         % Temperature of the air in oC.
+alpha_th = 16.6E-6;     % Thermal expansion coefficient (/K).
+T0 = 20.;               % Reference temperature in oC.
+rho_0 = 1.754E-8;       % Resistance temperature coefficient at T0
+alpha = 0.0039;         % Second resistance temperature coefficient.
+h = 1.;                 % Approximate mesh size
+elements_degree = 2;    % Degree of the finite element methods
+export_mesh = 1;        % Draw the mesh after mesh generation or not
+solve_in_two_steps = 1; % Solve the elasticity pb separately or not

@@ -365,7 +365,7 @@ namespace getfem {
   mesh_region mesh_region::intersection(const mesh_region &a, 
                                         const mesh_region &b) 
   {
-    GMM_TRACE3("intersection of "<<a.id()<<" and "<<b.id());
+    GMM_TRACE4("intersection of "<<a.id()<<" and "<<b.id());
     mesh_region r;
     /* we do not allow the "all_convexes" kind of regions
     for these operations as there are not intended to be manipulated
@@ -407,7 +407,7 @@ namespace getfem {
   mesh_region mesh_region::merge(const mesh_region &a, 
                                  const mesh_region &b) 
   {
-    GMM_TRACE3("Merger of "<<a.id()<<" and "<<b.id());
+    GMM_TRACE4("Merger of "<<a.id()<<" and "<<b.id());
     mesh_region r;
     GMM_ASSERT1(a.id() != all_convexes().id() &&
       b.id() != all_convexes().id(), "the 'all_convexes' regions "
@@ -427,7 +427,7 @@ namespace getfem {
   mesh_region mesh_region::subtract(const mesh_region &a,
                                     const mesh_region &b) 
   {
-    GMM_TRACE3("subtraction of "<<a.id()<<" and "<<b.id());
+    GMM_TRACE4("subtraction of "<<a.id()<<" and "<<b.id());
     mesh_region r;
     GMM_ASSERT1(a.id() != all_convexes().id() &&
       b.id() != all_convexes().id(), "the 'all_convexes' regions "

@@ -163,7 +163,7 @@ namespace getfem {
                              const mesh_region &b);
     /** subtract the second region from the first one */
     static mesh_region subtract(const mesh_region &a, 
-                                 const mesh_region &b);
+                                const mesh_region &b);
     size_type id() const { return id_; }
 
     size_type get_type() const { return type_; }

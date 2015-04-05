@@ -79,6 +79,7 @@ EXTRA_DIST=builddoc.sce \
         demos/demo_laplacian.sce \
         demos/demo_mesh_generation.sce \
         demos/demo_mortar.sce \
+        demos/demo_thermo_elasticity_electrical_coupling.sce \
         demos/demo_nonlinear_elasticity_anim.sce \
         demos/demo_nonlinear_elasticity.sce \
         demos/demo_plasticity.sce \
