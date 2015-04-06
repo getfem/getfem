@@ -5871,8 +5871,7 @@ namespace getfem {
           gmm::scale(pnode->t.as_vector(),
                      scalar_type(1) / pnode->children[1]->t[0]);
           tree.clear_children(pnode);
-        }
-        if (child0->tensor_is_zero()) {
+        } else if (child0->tensor_is_zero()) {
           gmm::clear(pnode->t.as_vector());
           pnode->node_type = GA_NODE_ZERO;
           tree.clear_children(pnode);
