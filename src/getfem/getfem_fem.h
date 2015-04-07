@@ -379,6 +379,14 @@ namespace getfem {
                             const CVEC& coeff, VMAT &val,
                             dim_type Qdim) const;
 
+    /** Interpolation of the divergence. The output is stored in the
+        scalar @c val.
+     */
+    template<typename CVEC>
+    void interpolation_diverg
+      (const fem_interpolation_context& c, const CVEC& coeff,
+       typename gmm::linalg_traits<CVEC>::value_type &val) const;
+
     /** Give the value of all components of the base functions at the
      *  point x of the reference element. Basic function used essentially
      *  by fem_precomp.
@@ -488,6 +496,8 @@ namespace getfem {
     /// Gives the array of basic functions (components).
     const std::vector<FUNC> &base(void) const { return base_; }
     std::vector<FUNC> &base(void) { return base_; }
+    /** Evaluates at point x, all base functions and returns the result in
+        t(nb_base,target_dim) */
     void base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(2);
       mi[1] = target_dim(); mi[0] = short_type(nb_base(0));
@@ -497,6 +507,9 @@ namespace getfem {
       for (size_type  i = 0; i < R; ++i, ++it)
         *it = bgeot::to_scalar(base_[i].eval(x.begin()));
     }
+    /** Evaluates at point x, the gradient of all base functions w.r.t. the
+        reference element directions 0,..,dim-1 and returns the result in
+        t(nb_base,target_dim,dim) */
     void grad_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(3);
       dim_type n = dim();
@@ -508,6 +521,9 @@ namespace getfem {
         for (size_type i = 0; i < R; ++i, ++it)
           { FUNC f = base_[i]; f.derivative(j); *it = bgeot::to_scalar(f.eval(x.begin())); }
     }
+    /** Evaluates at point x, the hessian of all base functions w.r.t. the
+        reference element directions 0,..,dim-1 and returns the result in
+        t(nb_base,target_dim,dim,dim) */
     void hess_base_value(const base_node &x, base_tensor &t) const {
       bgeot::multi_index mi(4);
       dim_type n = dim();
@@ -720,24 +736,27 @@ namespace getfem {
                               short_type face_num__ = short_type(-1));
   };
 
+  // IN : coeff(Qmult,nb_dof)
+  // OUT: val(Qdim), Qdim=target_dim*Qmult
+  // AUX: Z(nb_dof,target_dim)
   template <typename CVEC, typename VVEC>
   void virtual_fem::interpolation(const fem_interpolation_context& c,
                                   const CVEC& coeff, VVEC &val,
                                   dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    size_type R = nb_dof(c.convex_num());
+    size_type nbdof = nb_dof(c.convex_num());
     GMM_ASSERT1(gmm::vect_size(val) == Qdim, "dimensions mismatch");
-    GMM_ASSERT1(gmm::vect_size(coeff) == R*Qmult,
+    GMM_ASSERT1(gmm::vect_size(coeff) == nbdof*Qmult,
 		"Wrong size for coeff vector");
 
     gmm::clear(val);
     base_tensor Z; real_base_value(c, Z);
     
-    for (size_type j = 0; j < R; ++j) {
+    for (size_type j = 0; j < nbdof; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
         typename gmm::linalg_traits<CVEC>::value_type co = coeff[j*Qmult+q];
         for (size_type r = 0; r < target_dim(); ++r)
-          val[r + q*target_dim()] += co * Z[j + r*R];
+          val[r + q*target_dim()] += co * Z[j + r*nbdof];
       }
     }
   }
@@ -746,41 +765,46 @@ namespace getfem {
   void virtual_fem::interpolation(const fem_interpolation_context& c,
                                   MAT &M, dim_type Qdim) const {
     size_type Qmult = size_type(Qdim) / target_dim();
-    size_type R = nb_dof(c.convex_num());
-    GMM_ASSERT1(gmm::mat_nrows(M) == Qdim && gmm::mat_ncols(M) == R*Qmult,
+    size_type nbdof = nb_dof(c.convex_num());
+    GMM_ASSERT1(gmm::mat_nrows(M) == Qdim && gmm::mat_ncols(M) == nbdof*Qmult,
                 "dimensions mismatch");
 
     gmm::clear(M);
     base_tensor Z; real_base_value(c, Z);
-    for (size_type j = 0; j < R; ++j) {
+    for (size_type j = 0; j < nbdof; ++j) {
       for (size_type q = 0; q < Qmult; ++q) {
         for (size_type r = 0; r < target_dim(); ++r)
-          M(r+q*target_dim(), j*Qmult+q) = Z[j + r*R];
+          M(r+q*target_dim(), j*Qmult+q) = Z[j + r*nbdof];
       }
     }
   }
 
 
+  // IN : coeff(Qmult,nb_dof)
+  // OUT: val(Qdim,N), Qdim=target_dim*Qmult
+  // AUX: t(nb_dof,target_dim,N)
   template<typename CVEC, typename VMAT>
   void virtual_fem::interpolation_grad(const fem_interpolation_context& c,
                                        const CVEC& coeff, VMAT &val,
                                        dim_type Qdim) const {
-    // typedef typename gmm::linalg_traits<CVEC>::value_type T;
-    size_type Qmult = size_type(Qdim) / target_dim();
-    dim_type N = dim_type(c.N());
-    GMM_ASSERT1(gmm::mat_ncols(val) == N && gmm::mat_nrows(val) == Qdim,
+    size_type N = c.N();
+    size_type nbdof = nb_dof(c.convex_num());
+    size_type Qmult = gmm::vect_size(coeff) / nbdof;
+    GMM_ASSERT1(gmm::mat_ncols(val) == N &&
+                gmm::mat_nrows(val) == target_dim()*Qmult &&
+                gmm::vect_size(coeff) == nbdof*Qmult,
                 "dimensions mismatch");
-
+    GMM_ASSERT1(Qdim == target_dim()*Qmult, // Qdim seems to be superfluous input, could be removed in the future
+                "dimensions mismatch");
     base_tensor t;
-    size_type R = nb_dof(c.convex_num());
+    real_grad_base_value(c, t); // t(nbdof,target_dim,N)
 
     gmm::clear(val);
-    real_grad_base_value(c, t);
     for (size_type q = 0; q < Qmult; ++q) {
       base_tensor::const_iterator it = t.begin();
       for (size_type k = 0; k < N; ++k)
         for (size_type r = 0; r < target_dim(); ++r)
-          for (size_type j = 0; j < R; ++j, ++it)
+          for (size_type j = 0; j < nbdof; ++j, ++it)
             val(r + q*target_dim(), k) += coeff[j*Qmult+q] * (*it);
     }
   }
@@ -790,28 +814,68 @@ namespace getfem {
   void virtual_fem::interpolation_hess(const fem_interpolation_context& c,
                                        const CVEC& coeff, VMAT &val,
                                        dim_type Qdim) const {
-    //    typedef typename gmm::linalg_traits<CVEC>::value_type T;
     size_type Qmult = size_type(Qdim) / target_dim();
-    dim_type N = dim_type(c.N());
-    GMM_ASSERT1(gmm::mat_ncols(val) == gmm::size_type(N*N)
-                && gmm::mat_nrows(val) == Qdim, "dimensions mismatch");
+    size_type N = c.N();
+    GMM_ASSERT1(gmm::mat_ncols(val) == N*N &&
+                gmm::mat_nrows(val) == Qdim, "dimensions mismatch");
 
     base_tensor t;
-    size_type R = nb_dof(c.convex_num());
+    size_type nbdof = nb_dof(c.convex_num());
 
     gmm::clear(val);
     real_hess_base_value(c, t);
     for (size_type q = 0; q < Qmult; ++q) {
       base_tensor::const_iterator it = t.begin();
-      for (size_type k = 0; k < size_type(N*N); ++k)
+      for (size_type k = 0; k < N*N; ++k)
         for (size_type r = 0; r < target_dim(); ++r)
-          for (size_type j = 0; j < R; ++j, ++it)
+          for (size_type j = 0; j < nbdof; ++j, ++it)
             val(r + q*target_dim(), k) += coeff[j*Qmult+q] * (*it);
     }
   }
 
 
-  /* Functions allowing the add of a finite element method outwards
+  // IN : coeff(Qmult,nb_dof)
+  // OUT: val
+  // AUX: t(nb_dof,target_dim,N), Qmult*target_dim == N
+  template<typename CVEC>
+  void virtual_fem::interpolation_diverg
+    (const fem_interpolation_context& c, const CVEC& coeff,
+     typename gmm::linalg_traits<CVEC>::value_type &val) const {
+    size_type N = c.N();
+    size_type nbdof = nb_dof(c.convex_num());
+    size_type Qmult = gmm::vect_size(coeff) / nbdof;
+    GMM_ASSERT1(gmm::vect_size(coeff) == nbdof*Qmult , "dimensions mismatch");
+    GMM_ASSERT1(target_dim()*Qmult == N &&
+                (Qmult == 1 || target_dim() == 1),
+                "Dimensions mismatch. Divergence operator requires fem qdim equal to dim.");
+    base_tensor t;
+    real_grad_base_value(c, t); // t(nbdof,target_dim,N)
+    // for Qmult == 1 this is sub-optimal since it evaluates all (:,i,j)
+    // gradients instead of only the diagonal ones(:,i,i)
+
+    val = scalar_type(0);
+    base_tensor::const_iterator it = t.begin();
+    if (Qmult == 1)
+      for (size_type k = 0; k < N; ++k) {
+        if (k) it += (N*nbdof + 1);
+        for (size_type j = 0; j < nbdof; ++j) {
+          if (j) ++it;
+          val += coeff[j] * (*it);
+        }
+      }
+    else // if (target_dim() == 1)
+      for (size_type k = 0; k < N; ++k) {
+        if (k) ++it;
+        for (size_type j = 0; j < nbdof; ++j) {
+          if (j) ++it;
+          val += coeff[j*N+k] * (*it);
+        }
+      }
+  }
+
+
+
+  /* Functions allowing the add of a finite element method outside
      of getfem_fem.cc */
 
   typedef dal::naming_system<virtual_fem>::param_list fem_param_list;

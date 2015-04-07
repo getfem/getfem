@@ -280,17 +280,21 @@ namespace getfem {
     GA_NODE_VAL,
     GA_NODE_GRAD,
     GA_NODE_HESS,
+    GA_NODE_DIVERG,
     GA_NODE_VAL_TEST,
     GA_NODE_GRAD_TEST,
     GA_NODE_HESS_TEST,
+    GA_NODE_DIVERG_TEST,
     GA_NODE_INTERPOLATE,
     GA_NODE_INTERPOLATE_FILTER,
     GA_NODE_INTERPOLATE_VAL,
     GA_NODE_INTERPOLATE_GRAD,
     GA_NODE_INTERPOLATE_HESS,
+    GA_NODE_INTERPOLATE_DIVERG,
     GA_NODE_INTERPOLATE_VAL_TEST,
     GA_NODE_INTERPOLATE_GRAD_TEST,
     GA_NODE_INTERPOLATE_HESS_TEST,
+    GA_NODE_INTERPOLATE_DIVERG_TEST,
     GA_NODE_INTERPOLATE_NORMAL,
     GA_NODE_INTERPOLATE_X,
     GA_NODE_INTERPOLATE_DERIVATIVE,
@@ -298,9 +302,11 @@ namespace getfem {
     GA_NODE_ELEMENTARY_VAL,
     GA_NODE_ELEMENTARY_GRAD,
     GA_NODE_ELEMENTARY_HESS,
+    GA_NODE_ELEMENTARY_DIVERG,
     GA_NODE_ELEMENTARY_VAL_TEST,
     GA_NODE_ELEMENTARY_GRAD_TEST,
     GA_NODE_ELEMENTARY_HESS_TEST,
+    GA_NODE_ELEMENTARY_DIVERG_TEST,
     GA_NODE_ZERO};
 
   struct ga_tree_node;
@@ -747,13 +753,14 @@ namespace getfem {
         if (gmm::abs(pnode1->t[i] - pnode2->t[i]) > 1E-25) return false;
       break;
     case GA_NODE_C_MATRIX:
-      if (pnode1->nbc1 != pnode2->nbc1 || pnode1->nbc2 != pnode2->nbc2
-          ||   pnode1->nbc3 != pnode2->nbc3)  return false;
+      if (pnode1->nbc1 != pnode2->nbc1 || pnode1->nbc2 != pnode2->nbc2 ||
+          pnode1->nbc3 != pnode2->nbc3)
+        return false;
       break;
     case GA_NODE_INTERPOLATE_FILTER:
-      if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
+          pnode1->nbc1 != pnode2->nbc1)
         return false;
-      if (pnode1->nbc1 != pnode2->nbc1) return false;
       break;
     case GA_NODE_INTERPOLATE_NORMAL: case GA_NODE_INTERPOLATE_X:
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
@@ -764,14 +771,15 @@ namespace getfem {
         return false;
       // The test continues with what follows
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
-    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_ELEMENTARY_VAL_TEST:
-    case GA_NODE_ELEMENTARY_GRAD_TEST: case GA_NODE_ELEMENTARY_HESS_TEST: 
-      if (pnode1->interpolate_name.compare(pnode2->interpolate_name))
-        return false;
-      if (pnode1->elementary_name.compare(pnode2->elementary_name))
+    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
+      if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
+          pnode1->elementary_name.compare(pnode2->elementary_name))
         return false;
       // The test continues with what follows
-    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
+    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
+    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
       {
         const mesh_fem *mf1 = workspace.associated_mf(pnode1->name);
         const mesh_fem *mf2 = workspace.associated_mf(pnode2->name);
@@ -796,12 +804,14 @@ namespace getfem {
         }
       }
       break;
-    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
+    case GA_NODE_VAL: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
       if (pnode1->name.compare(pnode2->name)) return false;
       break;
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_ELEMENTARY_VAL:
-    case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_HESS: 
+    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
       if (pnode1->interpolate_name.compare(pnode2->interpolate_name) ||
           pnode1->elementary_name.compare(pnode2->elementary_name) ||
           pnode1->name.compare(pnode2->name))
@@ -947,9 +957,11 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_VAL:
     case GA_NODE_INTERPOLATE_GRAD:
     case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL_TEST:
     case GA_NODE_INTERPOLATE_GRAD_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
       str << "Interpolate(";
       is_interpolate = true;
       break;
@@ -957,9 +969,11 @@ namespace getfem {
     case GA_NODE_ELEMENTARY_VAL:
     case GA_NODE_ELEMENTARY_GRAD:
     case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_DIVERG:
     case GA_NODE_ELEMENTARY_VAL_TEST:
     case GA_NODE_ELEMENTARY_GRAD_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_ELEMENTARY_DIVERG_TEST:
       is_elementary = true;
       str << "Elementary_transformation(";
       break;
@@ -983,6 +997,14 @@ namespace getfem {
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST:
       str << "Hess_";
+      break;
+    case GA_NODE_DIVERG:
+    case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_DIVERG_TEST:
+      str << "Div_";
       break;
     default:
       break;
@@ -1085,6 +1107,9 @@ namespace getfem {
     case GA_NODE_HESS:
     case GA_NODE_INTERPOLATE_HESS:
     case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_DIVERG:
+    case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_DIVERG:
       str << pnode->name;
       break;
     case GA_NODE_VAL_TEST:
@@ -1096,6 +1121,9 @@ namespace getfem {
     case GA_NODE_HESS_TEST:
     case GA_NODE_INTERPOLATE_HESS_TEST:
     case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_ELEMENTARY_DIVERG_TEST:
       if (pnode->test_function_type == 1) str << "Test_"; else str << "Test2_";
       str << pnode->name;
       break;
@@ -1201,6 +1229,25 @@ namespace getfem {
     if (tree.root) verify_tree(tree.root, 0);
     if (tree.root) ga_print_node(tree.root, str); else str << "0";
     return str.str();
+  }
+
+
+  size_type ga_parse_prefix_operator(std::string &name) {
+    if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
+      { name = name.substr(5); return 1; }
+    else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
+      { name = name.substr(5); return 2; }
+    else if (name.size() >= 4 && name.compare(0, 4, "Div_") == 0)
+      { name = name.substr(4); return 3; }
+    return 0;
+  }
+
+  size_type ga_parse_prefix_test(std::string &name) {
+    if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
+      { name = name.substr(5); return 1; }
+    else if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
+      { name = name.substr(6); return 2; }
+    return 0;
   }
 
 
@@ -2601,6 +2648,47 @@ namespace getfem {
     {}
   };
 
+  struct ga_instruction_diverg : public ga_instruction_val {
+    // Z(ndof,target_dim,N), coeff(Qmult,ndof) --> t(1)
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: divergence");
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type N = Z.sizes()[2];
+      size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(Qmult*target_dim == N && (Qmult == 1 || target_dim == 1),
+                      "Dimensions mismatch for divergence operator");
+      GA_DEBUG_ASSERT(gmm::vect_size(coeff) == ndof*Qmult,
+                      "Wrong size for coeff vector");
+
+      t[0] = scalar_type(0);
+      base_tensor::const_iterator it = Z.begin();
+      if (Qmult == 1)
+        for (size_type k = 0; k < N; ++k) {
+          if (k) it += (N*ndof + 1);
+          for (size_type j = 0; j < ndof; ++j) {
+            if (j) ++it;
+            t[0] += coeff[j] * (*it);
+          }
+        }
+      else // if (target_dim() == 1)
+        for (size_type k = 0; k < N; ++k) {
+          if (k) ++it;
+          for (size_type j = 0; j < ndof; ++j) {
+            if (j) ++it;
+            t[0] += coeff[j*N+k] * (*it);
+          }
+        }
+      return 0;
+    }
+
+    ga_instruction_diverg(base_tensor &tt, const base_tensor &Z_,
+                          const base_vector &co, size_type q)
+    : ga_instruction_val(tt, Z_, co, q)
+    {}
+  };
+
+
   struct ga_instruction_copy_val_base : public ga_instruction {
     base_tensor &t;
     const base_tensor &Z;
@@ -2715,6 +2803,50 @@ namespace getfem {
     {}
   };
 
+  struct ga_instruction_copy_diverg_base : public ga_instruction_copy_val_base {
+    // Z(ndof,target_dim,N) --> t(Qmult*ndof)
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: divergence of test functions");
+      size_type ndof = Z.sizes()[0];
+      size_type target_dim = Z.sizes()[1];
+      size_type N = Z.sizes()[2];
+      size_type Qmult = qdim / target_dim;
+      GA_DEBUG_ASSERT(Qmult*target_dim == N && (Qmult == 1 || target_dim == 1),
+                      "Dimensions mismatch for divergence operator");
+      GA_DEBUG_ASSERT(t.size() == ndof * Qmult,
+                      "Wrong size for divergence vector");
+      gmm::clear(t.as_vector());
+      base_tensor::const_iterator itZ = Z.begin();
+      if (Qmult == 1) { // target_dim == N
+        // Performs t(i) = Trace(Z(i,:,:))
+        for (size_type l = 0; l < N; ++l) {
+          base_tensor::iterator it = t.begin();
+          if (l) itZ += target_dim*ndof+1;
+          for (size_type i = 0; i < ndof; ++i) {
+            if (i) { ++it; ++itZ; }
+            *it += *itZ;
+          }
+        }
+      } else { // Qmult == N
+        // Performs t(i*Qmult+j) = Z(i,1,j)
+        for (size_type j = 0; j < N; ++j) {
+          base_tensor::iterator it = t.begin() + j;
+          if (j) ++itZ;
+          for (size_type i = 0; i < ndof; ++i) {
+            if (i) { it += Qmult; ++itZ; }
+            *it += *itZ;
+          }
+        }
+      }
+      return 0;
+    }
+
+    ga_instruction_copy_diverg_base(base_tensor &tt, const base_tensor &Z_, size_type q)
+    : ga_instruction_copy_val_base(tt, Z_, q)
+    {}
+  };
+
+
   struct ga_instruction_elementary_transformation {
     const base_vector &coeff_in;
     base_vector coeff_out;
@@ -2799,6 +2931,25 @@ namespace getfem {
      fem_interpolation_context &ctx_, base_matrix &M_,
      const mesh_fem **mf_M_, size_type &icv_)
       : ga_instruction_hess(tt, Z_, coeff_out, q),
+        ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
+                                                 mf_M_, icv_) {}
+  };
+
+  struct ga_instruction_elementary_transformation_diverg
+    : public ga_instruction_diverg, ga_instruction_elementary_transformation {
+    // Z(ndof,target_dim,N), coeff_in(Qmult,ndof) --> coeff_out --> t(1)
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: divergence with elementary transformation");
+      do_transformation();
+      return ga_instruction_diverg::exec();
+    }
+
+    ga_instruction_elementary_transformation_diverg
+    (base_tensor &tt, const base_tensor &Z_, const base_vector &co, size_type q,
+     pelementary_transformation e, const mesh_fem &mf_,
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
+      : ga_instruction_diverg(tt, Z_, coeff_out, q),
         ga_instruction_elementary_transformation(co, e, mf_, ctx_, M_,
                                                  mf_M_, icv_) {}
   };
@@ -2950,6 +3101,23 @@ namespace getfem {
     {}
   };
 
+  struct ga_instruction_interpolate_diverg : public ga_instruction_interpolate {
+    // --> t(1)
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated variable divergence");
+      ga_instruction_interpolate::exec();
+      ctx.pf()->interpolation_diverg(ctx, coeff, t[0]);
+      return 0;
+    }
+
+    ga_instruction_interpolate_diverg(base_tensor &tt, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_,
+     const base_vector *Un_, const base_vector **Ug_,
+     fem_interpolation_context &ctx_, size_type q)
+    : ga_instruction_interpolate(tt, m_, mfn_, mfg_, Un_, Ug_, ctx_, q)
+    {}
+  };
+
   struct ga_instruction_interpolate_base {
     base_tensor ZZ;
     const mesh **m;
@@ -3021,6 +3189,23 @@ namespace getfem {
     (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
      const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
       : ga_instruction_copy_hess_base(t_, ZZ, q),
+        ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
+  };
+
+  struct ga_instruction_interpolate_diverg_base
+    : public ga_instruction_copy_diverg_base, ga_instruction_interpolate_base {
+    // ctx --> Z(ndof,target_dim,N*N) --> t(Qmult*ndof)
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: interpolated base divergence");
+      ga_instruction_interpolate_base::exec();
+      ctx.pf()->real_grad_base_value(ctx, ZZ); // remember Z == ZZ
+      return ga_instruction_copy_diverg_base::exec();
+    }
+
+    ga_instruction_interpolate_diverg_base
+    (base_tensor &t_, const mesh **m_, const mesh_fem *mfn_,
+     const mesh_fem **mfg_, fem_interpolation_context &ctx_, size_type q)
+      : ga_instruction_copy_diverg_base(t_, ZZ, q),
         ga_instruction_interpolate_base(m_, mfn_, mfg_, ctx_) {}
   };
 
@@ -3127,6 +3312,31 @@ namespace getfem {
                                                       mf_M_, icv_) {}
   };
 
+  struct ga_instruction_elementary_transformation_diverg_base
+    : public ga_instruction_copy_diverg_base,
+             ga_instruction_elementary_transformation_base {
+    // Z(ndof,target_dim,N) --> t_in --> t_out(Qmult*ndof)
+    virtual int exec(void) {
+      GA_DEBUG_INFO("Instruction: divergence of test functions with elementary "
+                    "transformation");
+      size_type ndof = Z.sizes()[0];
+      size_type Qmult = qdim / Z.sizes()[1];
+      t_in.adjust_sizes(t_out.sizes());
+      ga_instruction_copy_diverg_base::exec();
+      do_transformation(ndof*Qmult);
+      return 0;
+    }
+
+    ga_instruction_elementary_transformation_diverg_base
+    (base_tensor &t_, const base_tensor &Z_, size_type q,
+     pelementary_transformation e, const mesh_fem &mf_,
+     fem_interpolation_context &ctx_, base_matrix &M_,
+     const mesh_fem **mf_M_, size_type &icv_)
+      : ga_instruction_copy_diverg_base(t_in, Z_, q),
+        ga_instruction_elementary_transformation_base(t_, e, mf_, ctx_, M_,
+                                                      mf_M_, icv_) {}
+  };
+
 
   struct ga_instruction_add : public ga_instruction {
     base_tensor &t, &tc1, &tc2;
@@ -3158,7 +3368,7 @@ namespace getfem {
     virtual int exec(void) {
       GA_DEBUG_INFO("Instruction: subtraction");
       GA_DEBUG_ASSERT(t.size() == tc1.size() && t.size() == tc2.size(),
-                  "internal error");
+                      "internal error");
       gmm::add(tc1.as_vector(), gmm::scaled(tc2.as_vector(), scalar_type(-1)),
                t.as_vector());
       return 0;
@@ -4252,12 +4462,15 @@ namespace getfem {
     if (pnode->node_type == GA_NODE_VAL ||
         pnode->node_type == GA_NODE_GRAD ||
         pnode->node_type == GA_NODE_HESS ||
+        pnode->node_type == GA_NODE_DIVERG ||
         pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
         pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+        pnode->node_type == GA_NODE_INTERPOLATE_DIVERG ||
         pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
-        pnode->node_type == GA_NODE_ELEMENTARY_HESS) {
+        pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
+        pnode->node_type == GA_NODE_ELEMENTARY_DIVERG) {
       bool group = workspace.variable_group_exists(pnode->name);
       bool iscte = (!group) && workspace.is_constant(pnode->name);
       if (!iscte) found_var = true;
@@ -4275,9 +4488,11 @@ namespace getfem {
     if (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
         pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+        pnode->node_type == GA_NODE_INTERPOLATE_DIVERG ||
         pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+        pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_X) {
       workspace.interpolate_transformation(pnode->interpolate_name)
@@ -4781,8 +4996,10 @@ namespace getfem {
 
     case GA_NODE_OP: c += scalar_type(pnode->op_type)*M_E*M_PI*M_PI; break;
     case GA_NODE_X: c += scalar_type(pnode->nbc1) + M_E*M_PI; break;
-    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
-    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
+    case GA_NODE_VAL: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
+    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
+    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
       c += ga_hash_code(pnode->name); break;
 
     case GA_NODE_INTERPOLATE_FILTER:
@@ -4793,11 +5010,13 @@ namespace getfem {
       c += 2.321*ga_hash_code(pnode->interpolate_name_der);
       // No break. The hash code is completed with the next item
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_VAL_TEST:
-    case GA_NODE_INTERPOLATE_GRAD_TEST: case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
-    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_VAL_TEST:
-    case GA_NODE_ELEMENTARY_GRAD_TEST: case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+    case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
       c += 1.33*(1.22+ga_hash_code(pnode->name))
         + 1.66*ga_hash_code(pnode->interpolate_name)
         + 2.63*ga_hash_code(pnode->elementary_name);
@@ -4819,7 +5038,7 @@ namespace getfem {
 
   // 0 : ok
   // 1 : function or operator name or "X"
-  // 2 : reserved prefix Grad, Hess, Test and Test2
+  // 2 : reserved prefix Grad, Hess, Div, Test and Test2
   // 3 : reserved prefix Dot and Previous
   int ga_check_name_validity(const std::string &name) {
 
@@ -4848,6 +5067,9 @@ namespace getfem {
       return 2;
 
     if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
+      return 2;
+
+    if (name.size() >= 4 && name.compare(0, 4, "Div_") == 0)
       return 2;
 
     if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
@@ -4937,16 +5159,21 @@ namespace getfem {
       }
       break;
 
-    case GA_NODE_ZERO: case GA_NODE_GRAD: case GA_NODE_HESS: break;
+    case GA_NODE_ZERO: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL:  case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_ELEMENTARY_VAL:
-    case GA_NODE_ELEMENTARY_GRAD: case GA_NODE_ELEMENTARY_HESS: break;
+    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
+      break;
 
-    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
+    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
+    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
-    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DERIVATIVE:
+    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
+    case GA_NODE_INTERPOLATE_DERIVATIVE:
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
-    case GA_NODE_ELEMENTARY_HESS_TEST: 
+    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
       {
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         size_type t_type = pnode->test_function_type;
@@ -4987,32 +5214,27 @@ namespace getfem {
       break;
 
     case GA_NODE_INTERPOLATE:
+      if (!(pnode->name.compare("Normal"))) {
+        pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
+        pnode->init_vector_tensor(meshdim);
+        break;
+      }
+      if (!(pnode->name.compare("X"))) {
+        pnode->node_type = GA_NODE_INTERPOLATE_X;
+        pnode->init_vector_tensor(meshdim);
+        break;
+      }
+      // else continue with what follows
+    case GA_NODE_ELEMENTARY: // and ... case GA_NODE_INTERPOLATE:
       {
-        std::string name = pnode->name;
-        if (!(name.compare("Normal"))) {
-          pnode->node_type = GA_NODE_INTERPOLATE_NORMAL;
-          pnode->init_vector_tensor(meshdim);
-          break;
-        }
-        if (!(name.compare("X"))) {
-          pnode->node_type = GA_NODE_INTERPOLATE_X;
-          pnode->init_vector_tensor(meshdim);
-          break;
-        }
-        int val_grad_or_hess = 0;
-        if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
-          { val_grad_or_hess = 1; name = name.substr(5); }
-        else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
-          { val_grad_or_hess = 2; name = name.substr(5); }
-        int test = 0;
-        if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
-          { test = 2; name = name.substr(6); }
-        else if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
-          { test = 1; name = name.substr(5); }
+        bool intrpl(pnode->node_type == GA_NODE_INTERPOLATE);
 
+        std::string name = pnode->name;
+        size_type prefix_id = ga_parse_prefix_operator(name);
+        size_type test = ga_parse_prefix_test(name);;
         pnode->name = name;
 
-        //  Group must be tested and it should be a mef variable
+        // Group must be tested and it should be a fem variable
         if (!(workspace.variable_or_group_exists(name)))
             ga_throw_error(expr, pnode->pos,
                            "Unknown variable or group of variables");
@@ -5020,231 +5242,119 @@ namespace getfem {
         const mesh_fem *mf = workspace.associated_mf(name);
         if (!mf)
            ga_throw_error(expr, pnode->pos,
-                          "Interpolation can only apply to finite element "
-                          "variables/data");
+                          (intrpl ? "Interpolation" : "Elementary transformation")
+                          << " can only apply to finite element variables/data");
 
         size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
+        if (!q) ga_throw_error(expr, pnode->pos,
+                               "Invalid null size of variable");
 
-        if (!test) {
-          bgeot::multi_index mii = workspace.qdims(name);
-          if (!q) ga_throw_error(expr, pnode->pos,
-                                 "Invalid null size of variable");
-          switch (val_grad_or_hess) {
-          case 0: // value
-            pnode->node_type = GA_NODE_INTERPOLATE_VAL;
-            break;
-          case 1: // grad
-            pnode->node_type = GA_NODE_INTERPOLATE_GRAD;
+        bgeot::multi_index mii = workspace.qdims(name);
+        if (mii.size() > 6)
+          ga_throw_error(expr, pnode->pos,
+                         "Tensor with too many dimensions. Limited to 6");
+
+        if (test == 1) {
+          pnode->name_test1 = name;
+          pnode->interpolate_name_test1 = pnode->interpolate_name;
+          pnode->qdim1 = workspace.qdim(name);
+          if (!(pnode->qdim1))
+            ga_throw_error(expr, pnode->pos,
+                           "Invalid null size of variable");
+        } else if (test == 2) {
+          pnode->name_test2 = name;
+          pnode->interpolate_name_test2 = pnode->interpolate_name;
+          pnode->qdim2 = workspace.qdim(name);
+          if (!(pnode->qdim2))
+            ga_throw_error(expr, pnode->pos,
+                           "Invalid null size of variable");
+        }
+
+        switch (prefix_id) {
+        case 0: // value
+          if (!test)
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_VAL
+                                      : GA_NODE_ELEMENTARY_VAL;
+          else {
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_VAL_TEST
+                                      : GA_NODE_ELEMENTARY_VAL_TEST;
+            if (q == 1 && mii.size() <= 1) {
+              mii.resize(1);
+              mii[0] = 2;
+            } else
+              mii.insert(mii.begin(), 2);
+          }
+          break;
+        case 1: // grad
+          if (!test) {
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_GRAD
+                                      : GA_NODE_ELEMENTARY_GRAD;
             if (n > 1) {
               if (q == 1 && mii.size() == 1) mii[0] = n;
               else mii.push_back(n);
             }
-            break;
-          case 2: // Hessian
-            pnode->node_type = GA_NODE_INTERPOLATE_HESS;
+          } else {
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_GRAD_TEST
+                                      : GA_NODE_ELEMENTARY_GRAD_TEST;
+            if (q == 1 && mii.size() <= 1) {
+              mii.resize(1);
+              mii[0] = 2;
+            } else
+              mii.insert(mii.begin(), 2);
+            if (n > 1) mii.push_back(n);
+          }
+          break;
+        case 2: // Hessian
+          if (!test) {
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_HESS
+                                      : GA_NODE_ELEMENTARY_HESS;
             if (n > 1) {
               if (q == 1 && mii.size() == 1) { mii[0] = n;  mii.push_back(n); }
               else { mii.push_back(n); mii.push_back(n); }
             }
-            break;
-          }
-          pnode->t.adjust_sizes(mii);
-          pnode->test_function_type = 0;
-        } else {
-
-          if (test == 1) {
-            pnode->name_test1 = name;
-            pnode->interpolate_name_test1 = pnode->interpolate_name;
-            pnode->qdim1 = workspace.qdim(name);
-            if (!(pnode->qdim1))
-              ga_throw_error(expr, pnode->pos,
-                             "Invalid null size of variable");
           } else {
-            pnode->name_test2 = name;
-            pnode->interpolate_name_test2 = pnode->interpolate_name;
-            pnode->qdim2 = workspace.qdim(name);
-            if (!(pnode->qdim2))
-              ga_throw_error(expr, pnode->pos,
-                             "Invalid null size of variable");
-          }
-
-          bgeot::multi_index mii = workspace.qdims(name);
-          if (mii.size() > 6)
-            ga_throw_error(expr, pnode->pos,
-                           "Tensor with too much dimensions. Limited to 6");
-          if (!q)
-            ga_throw_error(expr, pnode->pos,
-                           "Invalid null size of variable");
-          switch (val_grad_or_hess) {
-          case 0: // value
-            pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST;
-            if (q == 1 && mii.size() <= 1)
-              pnode->init_vector_tensor(2);
-            else {
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_HESS_TEST
+                                      : GA_NODE_ELEMENTARY_HESS_TEST;
+            if (q == 1 && mii.size() <= 1) {
+              mii.resize(1);
+              mii[0] = 2;
+            } else
               mii.insert(mii.begin(), 2);
-              pnode->t.adjust_sizes(mii);
-            }
-            pnode->test_function_type = test;
-            break;
-          case 1: // grad
-            pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
-            if (q == 1 && mii.size() <= 1 && n == 1)
-              pnode->init_vector_tensor(2);
-            else if (q == 1 && mii.size() <= 1)
-              pnode->init_matrix_tensor(2, n);
-            else {
-              mii.insert(mii.begin(), 2);
-              if (n > 1) mii.push_back(n);
-              pnode->t.adjust_sizes(mii);
-            }
-            pnode->test_function_type = test;
-            break;
-          case 2: // hessian
-            pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
-            if (q == 1 && mii.size() <= 1 && n == 1)
-              pnode->init_vector_tensor(2);
-            else if (q == 1 && mii.size() <= 1)
-              pnode->init_third_order_tensor(2,n,n);
-            else {
-              mii.insert(mii.begin(), 2);
-              if (n > 1) { mii.push_back(n); mii.push_back(n); }
-              pnode->t.adjust_sizes(mii);
-            }
-            pnode->test_function_type = test;
-            break;
+            if (n > 1) { mii.push_back(n); mii.push_back(n); }
           }
-        }
-
-        if (!(workspace.interpolate_transformation_exists
-              (pnode->interpolate_name)))
-          ga_throw_error(expr, pnode->pos,
-                         "Unknown interpolate transformation");
-      }
-      break;
-
-    case GA_NODE_ELEMENTARY:
-      {
-        std::string name = pnode->name;
-        int val_grad_or_hess = 0;
-        if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
-          { val_grad_or_hess = 1; name = name.substr(5); }
-        else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
-          { val_grad_or_hess = 2; name = name.substr(5); }
-        int test = 0;
-        if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
-          { test = 2; name = name.substr(6); }
-        else if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
-          { test = 1; name = name.substr(5); }
-
-        pnode->name = name;
-
-        // Group must be tested and it should be a mef variable
-        if (!(workspace.variable_or_group_exists(name)))
+          break;
+        case 3: // divergence
+          if (q != n)
             ga_throw_error(expr, pnode->pos,
-                           "Unknown variable or group of variables");
-
-        const mesh_fem *mf = workspace.associated_mf(name);
-        if (!mf)
-           ga_throw_error(expr, pnode->pos,
-                          "Elementary transformation can only apply to "
-                          "finite element variables/data");
-
-        size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
-
-        if (!test) {
-          bgeot::multi_index mii = workspace.qdims(name);
-          if (!q) ga_throw_error(expr, pnode->pos,
-                                 "Invalid null size of variable");
-          switch (val_grad_or_hess) {
-          case 0: // value
-            pnode->node_type = GA_NODE_ELEMENTARY_VAL;
-            break;
-          case 1: // grad
-            pnode->node_type = GA_NODE_ELEMENTARY_GRAD;
-            if (n > 1) {
-              if (q == 1 && mii.size() <= 1) mii[0] = n;
-              else mii.push_back(n);
-            }
-            break;
-          case 2: // Hessian
-            pnode->node_type = GA_NODE_ELEMENTARY_HESS;
-            if (n > 1) {
-              if (q == 1 && mii.size() <= 1) { mii[0] = n;  mii.push_back(n); }
-              else { mii.push_back(n); mii.push_back(n); }
-            }
-            break;
-          }
-          pnode->t.adjust_sizes(mii);
-          pnode->test_function_type = 0;
-        } else {
-
-          if (test == 1) {
-            pnode->name_test1 = name;
-            pnode->interpolate_name_test1 = pnode->interpolate_name;
-            pnode->qdim1 = workspace.qdim(name);
-            if (!(pnode->qdim1))
-              ga_throw_error(expr, pnode->pos,
-                             "Invalid null size of variable");
+                           "Divergence operator requires fem qdim ("
+                           << q << ") to be equal to dim (" << n << ")");
+          if (!test) {
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_DIVERG
+                                      : GA_NODE_ELEMENTARY_DIVERG;
+            mii.resize(1);
+            mii[0] = 1;
           } else {
-            pnode->name_test2 = name;
-            pnode->interpolate_name_test2 = pnode->interpolate_name;
-            pnode->qdim2 = workspace.qdim(name);
-            if (!(pnode->qdim2))
-              ga_throw_error(expr, pnode->pos,
-                             "Invalid null size of variable");
+            pnode->node_type = intrpl ? GA_NODE_INTERPOLATE_DIVERG_TEST
+                                      : GA_NODE_ELEMENTARY_DIVERG_TEST;
+            mii.resize(1);
+            mii[0] = 2;
           }
-
-          bgeot::multi_index mii = workspace.qdims(name);
-          if (mii.size() > 6)
-            ga_throw_error(expr, pnode->pos,
-                           "Tensor with too much dimensions. Limited to 6");
-          if (!q)
-            ga_throw_error(expr, pnode->pos,
-                           "Invalid null size of variable");
-          switch (val_grad_or_hess) {
-          case 0: // value
-            pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST;
-            if (q == 1 && mii.size() <= 1)
-              pnode->init_vector_tensor(2);
-            else {
-              mii.insert(mii.begin(), 2);
-              pnode->t.adjust_sizes(mii);
-            }
-            pnode->test_function_type = test;
-            break;
-          case 1: // grad
-            pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST;
-            if (q == 1 && mii.size() <= 1 && n == 1)
-              pnode->init_vector_tensor(2);
-            else if (q == 1 && mii.size() <= 1)
-              pnode->init_matrix_tensor(2, n);
-            else {
-              mii.insert(mii.begin(), 2);
-              if (n > 1) mii.push_back(n);
-              pnode->t.adjust_sizes(mii);
-            }
-            pnode->test_function_type = test;
-            break;
-          case 2: // hessian
-            pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
-            if (q == 1 && mii.size() <= 1 && n == 1)
-              pnode->init_vector_tensor(2);
-            else if (q == 1 && mii.size() <= 1)
-              pnode->init_third_order_tensor(2,n,n);
-            else {
-              mii.insert(mii.begin(), 2);
-              if (n > 1) { mii.push_back(n); mii.push_back(n); }
-              pnode->t.adjust_sizes(mii);
-            }
-            pnode->test_function_type = test;
-            break;
-          }
+          break;
         }
+        pnode->t.adjust_sizes(mii);
+        pnode->test_function_type = test;
 
-        if (!(workspace.elementary_transformation_exists
-              (pnode->elementary_name)))
+        if (intrpl) {
+          if (!(workspace.interpolate_transformation_exists
+                        (pnode->interpolate_name)))  {
+            ga_throw_error(expr, pnode->pos,
+                           "Unknown interpolate transformation");
+          }
+        } else if (!(workspace.elementary_transformation_exists
+                     (pnode->elementary_name))) {
           ga_throw_error(expr, pnode->pos,
                          "Unknown elementary transformation");
+        }
       }
       break;
 
@@ -6065,18 +6175,11 @@ namespace getfem {
                          (ind_in_parent == size_type(-1)) ? tree.root
                          : pnode->parent->children[ind_in_parent]);
         } else {
-          // Search for a variable name with optional gradient, Hessian
-          // or test functions
-          int val_grad_or_hess = 0;
-          if (name.size() >= 5 && name.compare(0, 5, "Grad_") == 0)
-            { val_grad_or_hess = 1; name = name.substr(5); }
-          else if (name.size() >= 5 && name.compare(0, 5, "Hess_") == 0)
-            { val_grad_or_hess = 2; name = name.substr(5); }
-          int test = 0;
-          if (name.size() >= 6 && name.compare(0, 6, "Test2_") == 0)
-            { test = 2; name = name.substr(6); }
-          else if (name.size() >= 5 && name.compare(0, 5, "Test_") == 0)
-            { test = 1; name = name.substr(5); }
+          // Search for a variable name with optional gradient, Hessian,
+          // divergence or test functions
+
+          size_type prefix_id = ga_parse_prefix_operator(name);
+          size_type test = ga_parse_prefix_test(name);;
 
           if (!(workspace.variable_exists(name)))
             ga_throw_error(expr, pnode->pos, "Unknown variable, function, "
@@ -6089,149 +6192,129 @@ namespace getfem {
 
           const mesh_fem *mf = workspace.associated_mf(name);
           const im_data *imd = workspace.associated_im_data(name);
-          if (!test) {
-            if (!mf && !imd) {
-              if (val_grad_or_hess)
-                ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
-                                "be evaluated for fixed size data.");
-              if (eval_fixed_size)
-                pnode->node_type = GA_NODE_CONSTANT;
-              else
-                pnode->node_type = GA_NODE_VAL;
-              size_type n = gmm::vect_size(workspace.value(name));
-              if (n == 1) {
-                pnode->init_scalar_tensor(workspace.value(name)[0]);
+
+          if (test && workspace.is_constant(name))
+            ga_throw_error(expr, pnode->pos, "Test functions of constants "
+                           "are not allowed.");
+          if (test == 1) {
+            pnode->name_test1 = name;
+            pnode->interpolate_name_test1 = "";
+            pnode->qdim1
+              = (mf ? workspace.qdim(name)
+                 : gmm::vect_size(workspace.value(name)));
+            if (!(pnode->qdim1))
+              ga_throw_error(expr, pnode->pos,
+                             "Invalid null size of variable");
+          } else if (test == 2) {
+            pnode->name_test2 = name;
+            pnode->interpolate_name_test2 = "";
+            pnode->qdim2
+              = (mf ? workspace.qdim(name)
+                    : gmm::vect_size(workspace.value(name)));
+            if (!(pnode->qdim2))
+              ga_throw_error(expr, pnode->pos,
+                             "Invalid null size of variable");
+          }
+
+          if (!mf && (test || !imd)) {
+            if (prefix_id)
+              ga_throw_error(expr, pnode->pos, "Gradient, Hessian or Divergence"
+                             " cannot be evaluated for fixed size data.");
+            if (test)
+              pnode->node_type = GA_NODE_VAL_TEST;
+            else if (eval_fixed_size)
+              pnode->node_type = GA_NODE_CONSTANT;
+            else
+              pnode->node_type = GA_NODE_VAL;
+
+            size_type n = gmm::vect_size(workspace.value(name));
+            if (n == 1) {
+              pnode->init_scalar_tensor(test ? scalar_type(1)
+                                             : workspace.value(name)[0]);
+            } else {
+              if (test) {
+                pnode->init_matrix_tensor(n,n);
+                for (size_type i = 0; i < n; ++i)
+                  for (size_type j = 0; j < n; ++j)
+                    pnode->t(i,j) = (i == j) ? scalar_type(1) : scalar_type(0);
               } else {
                 pnode->init_vector_tensor(n);
                 gmm::copy(workspace.value(name), pnode->t.as_vector());
               }
-            } else if (imd) {
-              if (val_grad_or_hess)
-                ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
-                                "be evaluated for im data.");
-              pnode->node_type = GA_NODE_VAL;
-              pnode->t.adjust_sizes(workspace.qdims(name));
-              pnode->test_function_type = 0;
-            } else {
-              size_type q = workspace.qdim(name);
-              size_type n = mf->linked_mesh().dim();
-              bgeot::multi_index mii = workspace.qdims(name);
-              if (!q) ga_throw_error(expr, pnode->pos,
-                                     "Invalid null size of variable " << name);
-              switch (val_grad_or_hess) {
-              case 0: // value
-                pnode->node_type = GA_NODE_VAL;
-                break;
-              case 1: // grad
-                pnode->node_type = GA_NODE_GRAD;
-                if (n > 1) {
-                  if (q == 1 && mii.size() <= 1) mii[0] = n;
-                  else mii.push_back(n);
-                }
-                break;
-              case 2: // Hessian
-                pnode->node_type = GA_NODE_HESS;
-                if (n > 1) {
-                  if (q == 1 && mii.size() <= 1)
-                    { mii[0] = n;  mii.push_back(n); }
-                  else { mii.push_back(n); mii.push_back(n); }
-                }
-                break;
-              }
-              pnode->t.adjust_sizes(mii);
-              pnode->test_function_type = 0;
             }
+          } else if (!test && imd) {
+            if (prefix_id)
+              ga_throw_error(expr, pnode->pos, "Gradient, Hessian or Divergence"
+                              " cannot be evaluated for im data.");
+            pnode->node_type = GA_NODE_VAL;
+            pnode->t.adjust_sizes(workspace.qdims(name));
           } else {
-            if (workspace.is_constant(name) &&
-                !(workspace.is_disabled_variable(name)))
-              ga_throw_error(expr, pnode->pos, "Test functions of constant "
-                              "are not allowed.");
-            if (test == 1) {
-              pnode->name_test1 = name;
-              pnode->interpolate_name_test1 = "";
-              pnode->qdim1
-                = (mf ? workspace.qdim(name)
-                   : gmm::vect_size(workspace.value(name)));
-              if (!(pnode->qdim1))
-                ga_throw_error(expr, pnode->pos,
-                               "Invalid null size of variable");
-            } else {
-              pnode->name_test2 = name;
-              pnode->interpolate_name_test2 = "";
-              pnode->qdim2
-                = (mf ? workspace.qdim(name)
-                   : gmm::vect_size(workspace.value(name)));
-              if (!(pnode->qdim2))
-                ga_throw_error(expr, pnode->pos,
-                               "Invalid null size of variable");
-            }
+            size_type q = workspace.qdim(name);
+            size_type n = mf->linked_mesh().dim();
+            bgeot::multi_index mii = workspace.qdims(name);
 
-            if (!mf) {
-              if (val_grad_or_hess)
-                ga_throw_error(expr, pnode->pos, "Gradient or Hessian cannot "
-                                "be evaluated for fixed size variables.");
-              pnode->node_type = GA_NODE_VAL_TEST;
-              size_type n = gmm::vect_size(workspace.value(name));
-              if (n == 1) {
-                pnode->init_vector_tensor(1);
-                pnode->t[0] = scalar_type(1);
-                pnode->test_function_type = test;
-              } else {
-                pnode->init_matrix_tensor(n,n);
-                pnode->test_function_type = test;
-                for (size_type i = 0; i < n; ++i)
-                  for (size_type j = 0; j < n; ++j)
-                    pnode->t(i,j) = (i == j) ? scalar_type(1) : scalar_type(0);
+            if (!q) ga_throw_error(expr, pnode->pos,
+                                   "Invalid null size of variable " << name);
+            if (mii.size() > 6)
+              ga_throw_error(expr, pnode->pos,
+                            "Tensor with too much dimensions. Limited to 6");
+
+            switch (prefix_id) {
+            case 0: // value
+              pnode->node_type = test ? GA_NODE_VAL_TEST : GA_NODE_VAL;
+              // For Test nodes a first dimension of size equal to 2 has to be
+              // prepended by convention (to be adapted later)
+              if (test && q == 1 && mii.size() <= 1) {
+                mii.resize(1);
+                mii[0] = 2;
+              } else if (test) {
+                mii.insert(mii.begin(), 2);
+                pnode->t.adjust_sizes(mii);
               }
-            } else {
-              size_type q = workspace.qdim(name), n = mf->linked_mesh().dim();
-              bgeot::multi_index mii =  workspace.qdims(name);
-              if (mii.size() > 6)
-                ga_throw_error(expr, pnode->pos,
-                              "Tensor with too much dimensions. Limited to 6");
-              if (!q)
-                ga_throw_error(expr, pnode->pos,
-                               "Invalid null size of variable");
-              switch (val_grad_or_hess) {
-              case 0: // value
-                pnode->node_type = GA_NODE_VAL_TEST;
-                if (q == 1 && mii.size() <= 1)
-                  pnode->init_vector_tensor(2);
-                else {
+              break;
+            case 1: // grad
+              pnode->node_type = test ? GA_NODE_GRAD_TEST : GA_NODE_GRAD;
+              if (test) {
+                if (q == 1 && mii.size() <= 1) {
+                  mii.resize(1);
+                  mii[0] = 2;
+                } else
                   mii.insert(mii.begin(), 2);
-                  pnode->t.adjust_sizes(mii);
-                }
-                pnode->test_function_type = test;
-                break;
-              case 1: // grad
-                pnode->node_type = GA_NODE_GRAD_TEST;
-                if (q == 1 && mii.size() <= 1 && n == 1)
-                  pnode->init_vector_tensor(2);
-                else if (q == 1 && mii.size() <= 1)
-                  pnode->init_matrix_tensor(2, n);
-                else {
-                  mii.insert(mii.begin(), 2);
-                  if (n > 1) mii.push_back(n);
-                  pnode->t.adjust_sizes(mii);
-                }
-                pnode->test_function_type = test;
-                break;
-              case 2: // hessian
-                pnode->node_type = GA_NODE_HESS_TEST;
-                if (q == 1 && mii.size() <= 1 && n == 1)
-                  pnode->init_vector_tensor(2);
-                else if (q == 1 && mii.size() <= 1)
-                  pnode->init_third_order_tensor(2,n,n);
-                else {
-                  mii.insert(mii.begin(), 2);
-                  if (n > 1) { mii.push_back(n); mii.push_back(n); }
-                  pnode->t.adjust_sizes(mii);
-                }
-                pnode->test_function_type = test;
-                break;
               }
+              if (n > 1) {
+                if (mii.size() == 1 && mii[0] == 1) mii[0] = n;
+                else mii.push_back(n);
+              }
+              break;
+            case 2: // Hessian
+              pnode->node_type = test ? GA_NODE_HESS_TEST : GA_NODE_HESS;
+              if (test) {
+                if (q == 1 && mii.size() <= 1) {
+                  mii.resize(1);
+                  mii[0] = 2;
+                } else
+                  mii.insert(mii.begin(), 2);
+              }
+              if (n > 1) {
+                if (mii.size() == 1 && mii[0] == 1) mii[0] = n;
+                else mii.push_back(n);
+                mii.push_back(n);
+              }
+              break;
+            case 3: // divergence
+              pnode->node_type = test ? GA_NODE_DIVERG_TEST : GA_NODE_DIVERG;
+              if (q != n)
+                ga_throw_error(expr, pnode->pos,
+                               "Divergence operator can only be applied to"
+                               "Fields with qdim (" << q << ") equal to dim ("
+                               << n << ")");
+              mii.resize(1);
+              mii[0] = test ? 2 : 1;
+              break;
             }
+            pnode->t.adjust_sizes(mii);
           }
+          pnode->test_function_type = test;
         }
       }
       break;
@@ -6654,24 +6737,29 @@ namespace getfem {
                                          varname, interpolatename))
         marked = true;
 
-    if ((pnode->node_type == GA_NODE_VAL ||
-         pnode->node_type == GA_NODE_GRAD ||
-         pnode->node_type == GA_NODE_HESS ||
-         pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
-         pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
-         pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
-         pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
-         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
-         pnode->node_type == GA_NODE_ELEMENTARY_HESS) &&
+    bool plain_node(pnode->node_type == GA_NODE_VAL ||
+                    pnode->node_type == GA_NODE_GRAD ||
+                    pnode->node_type == GA_NODE_HESS ||
+                    pnode->node_type == GA_NODE_DIVERG);
+    bool interpolate_node(pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+                          pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+    bool elementary_node(pnode->node_type == GA_NODE_ELEMENTARY_VAL ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_HESS ||
+                         pnode->node_type == GA_NODE_ELEMENTARY_DIVERG);
+    bool interpolate_test_node
+      (pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+       pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
+
+    if ((plain_node || interpolate_node || elementary_node) &&
         (pnode->name.compare(varname) == 0 &&
          pnode->interpolate_name.compare(interpolatename) == 0)) marked = true;
 
-    if (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
-        pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
-        pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
-        pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
-        pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
-        pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+    if (interpolate_node || interpolate_test_node ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_X) {
       std::set<var_trans_pair> vars;
@@ -6703,39 +6791,36 @@ namespace getfem {
     bgeot::multi_index mi;
 
     switch (pnode->node_type) {
-    case GA_NODE_VAL:
+    case GA_NODE_VAL: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
       mi.resize(1); mi[0] = 2;
       for (size_type i = 0; i < pnode->tensor_order(); ++i)
         mi.push_back(pnode->tensor_proper_size(i));
       pnode->t.adjust_sizes(mi);
-      pnode->node_type = GA_NODE_VAL_TEST;
-      pnode->test_function_type = order;
-      break;
-
-    case GA_NODE_GRAD:
-      mi.resize(1); mi[0] = 2;
-      for (size_type i = 0; i < pnode->tensor_order(); ++i)
-        mi.push_back(pnode->tensor_proper_size(i));
-      pnode->t.adjust_sizes(mi);
-      pnode->node_type = GA_NODE_GRAD_TEST;
-      pnode->test_function_type = order;
-      break;
-
-    case GA_NODE_HESS:
-      mi.resize(1); mi[0] = 2;
-      for (size_type i = 0; i < pnode->tensor_order(); ++i)
-        mi.push_back(pnode->tensor_proper_size(i));
-      pnode->t.adjust_sizes(mi);
-      pnode->node_type = GA_NODE_HESS_TEST;
+      if (pnode->node_type == GA_NODE_VAL)
+        pnode->node_type = GA_NODE_VAL_TEST;
+      else if (pnode->node_type == GA_NODE_GRAD)
+        pnode->node_type = GA_NODE_GRAD_TEST;
+      else if (pnode->node_type == GA_NODE_HESS)
+        pnode->node_type = GA_NODE_HESS_TEST;
+      else if (pnode->node_type == GA_NODE_DIVERG)
+        pnode->node_type = GA_NODE_DIVERG_TEST;
       pnode->test_function_type = order;
       break;
 
     case GA_NODE_INTERPOLATE_VAL:
+    case GA_NODE_INTERPOLATE_GRAD:
+    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_DIVERG:
       {
+        bool is_val(pnode->node_type == GA_NODE_INTERPOLATE_VAL);
+        bool is_grad(pnode->node_type == GA_NODE_INTERPOLATE_GRAD);
+        bool is_hess(pnode->node_type == GA_NODE_INTERPOLATE_HESS);
+        bool is_diverg(pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+
         bool ivar = (pnode->name.compare(varname) == 0 &&
                      pnode->interpolate_name.compare(interpolatename) == 0);
         bool itrans = !ivar;
-        pga_tree_node pnode_trans = pnode;
         if (!itrans) {
           std::set<var_trans_pair> vars;
           workspace.interpolate_transformation(pnode->interpolate_name)
@@ -6744,30 +6829,51 @@ namespace getfem {
           for (std::set<var_trans_pair>::iterator it=vars.begin();
                it != vars.end(); ++it) {
             if (it->first.compare(varname) == 0 &&
-                it->second.compare(interpolatename) == 0) itrans = true;
+                it->second.compare(interpolatename) == 0)
+              itrans = true;
           }
         }
-        if (itrans && ivar) {
+
+        pga_tree_node pnode_trans = pnode;
+        if (is_hess) {
+          GMM_ASSERT1(!itrans, "Sorry, cannot derive a hessian once more");
+        } else if (itrans && ivar) {
           tree.duplicate_with_addition(pnode);
           pnode_trans = pnode->parent->children[1];
         }
+
         if (ivar) {
           mi.resize(1); mi[0] = 2;
           for (size_type i = 0; i < pnode->tensor_order(); ++i)
             mi.push_back(pnode->tensor_proper_size(i));
           pnode->t.adjust_sizes(mi);
-          pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST;
+          if (is_val) // --> t(Qmult*ndof,Qmult*target_dim)
+            pnode->node_type = GA_NODE_INTERPOLATE_VAL_TEST;
+          else if (is_grad) // --> t(Qmult*ndof,Qmult*target_dim,N)
+            pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
+          else if (is_hess) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+            pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
+          else if (is_diverg) // --> t(Qmult*ndof)
+            pnode->node_type = GA_NODE_INTERPOLATE_DIVERG_TEST;
           pnode->test_function_type = order;
         }
+
         if (itrans) {
           const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
           size_type q = workspace.qdim(pnode_trans->name);
           size_type n = mf->linked_mesh().dim();
           bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
-          pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD;
+
+          if (is_val)  // --> t(target_dim*Qmult,N)
+            pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD;
+          else if (is_grad || is_diverg)  // --> t(target_dim*Qmult,N,N)
+            pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
+
           if (n > 1) {
-            if (q == 1 && mii.size() <= 1) mii[0] = n;
+            if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = n; }
             else mii.push_back(n);
+
+            if (is_grad || is_diverg) mii.push_back(n);
           }
           pnode_trans->t.adjust_sizes(mii);
           tree.duplicate_with_operation(pnode_trans,
@@ -6780,163 +6886,71 @@ namespace getfem {
             pnode_der->init_matrix_tensor(2, n);
           pnode_der->test_function_type = order;
           pnode_der->name = varname;
-          pnode_der->interpolate_name_der  = pnode_der->interpolate_name;
+          pnode_der->interpolate_name_der = pnode_der->interpolate_name;
           pnode_der->interpolate_name = interpolatename;
-        }
-      }
-      break;
 
-    case GA_NODE_INTERPOLATE_GRAD:
-      {
-        bool ivar = (pnode->name.compare(varname) == 0 &&
-                     pnode->interpolate_name.compare(interpolatename) == 0);
-        bool itrans = !ivar;
-        pga_tree_node pnode_trans = pnode;
-        if (!itrans) {
-          std::set<var_trans_pair> vars;
-          workspace.interpolate_transformation(pnode->interpolate_name)
-            ->extract_variables(workspace, vars, true, m,
-                                pnode->interpolate_name);
-          for (std::set<var_trans_pair>::iterator it=vars.begin();
-               it != vars.end(); ++it) {
-            if (it->first.compare(varname) == 0 &&
-                it->second.compare(interpolatename) == 0) itrans = true;
+          if (is_diverg) { // --> t(Qmult*ndof)
+            tree.insert_node(pnode_trans->parent, GA_NODE_OP);
+            pga_tree_node pnode_tr = pnode_trans->parent->parent;
+            pnode_tr->op_type = GA_TRACE;
+            pnode_tr->init_vector_tensor(2);
+//            pnode_tr->test_function_type = order;
+//            pnode_tr->name_test1 = pnode_trans->name_test1;
+//            pnode_tr->name_test2 = pnode_trans->name_test2;
           }
-        }
-        if (itrans && ivar) {
-          tree.duplicate_with_addition(pnode);
-          pnode_trans = pnode->parent->children[1];
-        }
-        if (ivar) {
-          mi.resize(1); mi[0] = 2;
-          for (size_type i = 0; i < pnode->tensor_order(); ++i)
-            mi.push_back(pnode->tensor_proper_size(i));
-          pnode->t.adjust_sizes(mi);
-          pnode->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
-          pnode->test_function_type = order;
-        }
-        if (itrans) {
-          const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
-          size_type q = workspace.qdim(pnode_trans->name);
-          size_type n = mf->linked_mesh().dim();
-          bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
-          pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS;
-          if (n > 1) {
-            if (q == 1 && mii.size() <= 1) { mii[0] = n;  mii.push_back(n); }
-            else { mii.push_back(n); mii.push_back(n); }
-          }
-          pnode_trans->t.adjust_sizes(mii);
-          tree.duplicate_with_addition(pnode_trans);
-          if (n > 1)
-            pnode_trans->parent->op_type = GA_DOT;
-          else
-            pnode_trans->parent->op_type = GA_MULT;
-          pga_tree_node pnode_der = pnode_trans->parent->children[1];
-          pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
-          if (n == 1)
-            pnode_der->init_vector_tensor(2);
-          else
-            pnode_der->init_matrix_tensor(2, n);
-          pnode_der->test_function_type = order;
-          pnode_der->name = varname;
-          pnode_der->interpolate_name_der  = pnode_der->interpolate_name;
-          pnode_der->interpolate_name = interpolatename;
-        }
-      }
-      break;
-
-    case GA_NODE_INTERPOLATE_HESS:
-      {
-        bool ivar = (pnode->name.compare(varname) == 0 &&
-                     pnode->interpolate_name.compare(interpolatename) == 0);
-        bool itrans = !ivar;
-        if (!itrans) {
-          std::set<var_trans_pair> vars;
-          workspace.interpolate_transformation(pnode->interpolate_name)
-            ->extract_variables(workspace, vars, true, m,
-                                pnode->interpolate_name);
-          for (std::set<var_trans_pair>::iterator it=vars.begin();
-               it != vars.end(); ++it) {
-            if (it->first.compare(varname) == 0 &&
-                it->second.compare(interpolatename) == 0) itrans = true;
-          }
-        }
-        GMM_ASSERT1(!itrans, "Sorry, cannot derive a hessian once more");
-        if (ivar) {
-          mi.resize(1); mi[0] = 2;
-          for (size_type i = 0; i < pnode->tensor_order(); ++i)
-            mi.push_back(pnode->tensor_proper_size(i));
-          pnode->t.adjust_sizes(mi);
-          pnode->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
-          pnode->test_function_type = order;
-          break;
         }
       }
       break;
 
     case GA_NODE_INTERPOLATE_VAL_TEST:
-      {
-        pga_tree_node pnode_trans = pnode;
-        const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
-        size_type q = workspace.qdim(pnode_trans->name);
-        size_type n = mf->linked_mesh().dim();
-        bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
-        pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
-        if (q == 1 && mii.size() <= 1 && n == 1)
-          pnode_trans->init_vector_tensor(2);
-        else if (q == 1 && mii.size() <= 1)
-          pnode_trans->init_matrix_tensor(2, n);
-        else {
-          mii.insert(mii.begin(), 2);
-          if (n > 1) mii.push_back(n);
-          pnode->t.adjust_sizes(mii);
-        }
-        // pnode_trans->test_function_type = order;
-        tree.duplicate_with_operation(pnode_trans,
-                                      (n > 1 ? GA_DOT : GA_MULT));
-        pga_tree_node pnode_der = pnode_trans->parent->children[1];
-        pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
-        if (n == 1)
-          pnode_der->init_vector_tensor(2);
-        else
-          pnode_der->init_matrix_tensor(2, n);
-        pnode_der->test_function_type = order;
-        pnode_der->name = varname;
-        pnode_der->interpolate_name_der  = pnode_der->interpolate_name;
-        pnode_der->interpolate_name = interpolatename;
-      }
-      break;
-
     case GA_NODE_INTERPOLATE_GRAD_TEST:
+    case GA_NODE_INTERPOLATE_DIVERG_TEST:
       {
+        bool is_val(pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST);
+        bool is_grad(pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST);
+        bool is_diverg(pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
+
         pga_tree_node pnode_trans = pnode;
         const mesh_fem *mf = workspace.associated_mf(pnode_trans->name);
         size_type q = workspace.qdim(pnode_trans->name);
         size_type n = mf->linked_mesh().dim();
         bgeot::multi_index mii = workspace.qdims(pnode_trans->name);
-        pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
-        if (q == 1 && mii.size() <= 1 && n == 1)
-          pnode_trans->init_vector_tensor(2);
-        else if (q == 1 && mii.size() <= 1)
-          pnode_trans->init_third_order_tensor(2,n,n);
-        else {
-          mii.insert(mii.begin(), 2);
-          if (n > 1) { mii.push_back(n); mii.push_back(n); }
-          pnode_trans->t.adjust_sizes(mii);
+        if (is_val) // --> t(Qmult*ndof,Qmult*target_dim,N)
+          pnode_trans->node_type = GA_NODE_INTERPOLATE_GRAD_TEST;
+        else if (is_grad || is_diverg) // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+          pnode_trans->node_type = GA_NODE_INTERPOLATE_HESS_TEST;
+
+        if (q == 1 && mii.size() <= 1) { mii.resize(1); mii[0] = 2; }
+        else mii.insert(mii.begin(), 2);
+
+        if (n > 1) {
+          mii.push_back(n);
+          if (is_grad || is_diverg) mii.push_back(n);
         }
+        pnode_trans->t.adjust_sizes(mii);
         // pnode_trans->test_function_type = order;
         tree.duplicate_with_operation(pnode_trans,
                                       (n > 1 ? GA_DOT : GA_MULT));
         pga_tree_node pnode_der = pnode_trans->parent->children[1];
+        pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
         if (n == 1)
           pnode_der->init_vector_tensor(2);
         else
           pnode_der->init_matrix_tensor(2, n);
-        pnode_der->node_type = GA_NODE_INTERPOLATE_DERIVATIVE;
         pnode_der->test_function_type = order;
         pnode_der->name = varname;
-        pnode_der->interpolate_name_der  = pnode_der->interpolate_name;
+        pnode_der->interpolate_name_der = pnode_der->interpolate_name;
         pnode_der->interpolate_name = interpolatename;
+
+        if (is_diverg) { // --> t(Qmult*ndof)
+          tree.insert_node(pnode_trans->parent, GA_NODE_OP);
+          pga_tree_node pnode_tr = pnode_trans->parent->parent;
+          pnode_tr->op_type = GA_TRACE;
+          pnode_tr->init_vector_tensor(2);
+//          pnode_tr->test_function_type = order;
+//          pnode_tr->name_test1 = pnode_trans->name_test1;
+//          pnode_tr->name_test2 = pnode_trans->name_test2;
+        }
       }
       break;
 
@@ -6975,29 +6989,21 @@ namespace getfem {
       break;
 
     case GA_NODE_ELEMENTARY_VAL:
-      mi.resize(1); mi[0] = 2;
-      for (size_type i = 0; i < pnode->tensor_order(); ++i)
-        mi.push_back(pnode->tensor_proper_size(i));
-      pnode->t.adjust_sizes(mi);
-      pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST;
-      pnode->test_function_type = order;
-      break;
-
     case GA_NODE_ELEMENTARY_GRAD:
-      mi.resize(1); mi[0] = 2;
-      for (size_type i = 0; i < pnode->tensor_order(); ++i)
-        mi.push_back(pnode->tensor_proper_size(i));
-      pnode->t.adjust_sizes(mi);
-      pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST;
-      pnode->test_function_type = order;
-      break;
-
     case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_DIVERG:
       mi.resize(1); mi[0] = 2;
       for (size_type i = 0; i < pnode->tensor_order(); ++i)
         mi.push_back(pnode->tensor_proper_size(i));
       pnode->t.adjust_sizes(mi);
-      pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
+      if (pnode->node_type == GA_NODE_ELEMENTARY_VAL)
+        pnode->node_type = GA_NODE_ELEMENTARY_VAL_TEST;
+      else if (pnode->node_type == GA_NODE_ELEMENTARY_GRAD)
+        pnode->node_type = GA_NODE_ELEMENTARY_GRAD_TEST;
+      else if (pnode->node_type == GA_NODE_ELEMENTARY_HESS)
+        pnode->node_type = GA_NODE_ELEMENTARY_HESS_TEST;
+      else if (pnode->node_type == GA_NODE_ELEMENTARY_DIVERG)
+        pnode->node_type = GA_NODE_ELEMENTARY_DIVERG_TEST;
       pnode->test_function_type = order;
       break;
 
@@ -7367,6 +7373,7 @@ namespace getfem {
       ga_replace_test_by_cte(pnode->children[i], full_replace);
     GMM_ASSERT1(pnode->node_type != GA_NODE_GRAD_TEST, "Invalid tree");
     GMM_ASSERT1(pnode->node_type != GA_NODE_HESS_TEST, "Invalid tree");
+    GMM_ASSERT1(pnode->node_type != GA_NODE_DIVERG_TEST, "Invalid tree");
     if (pnode->node_type == GA_NODE_VAL_TEST) {
       pnode->node_type = GA_NODE_CONSTANT;
       if (full_replace) pnode->init_scalar_tensor(scalar_type(1));
@@ -7401,11 +7408,13 @@ namespace getfem {
     bool mark1 = ((nbch > 1) ? child1->marked : false);
 
     switch (pnode->node_type) {
-    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
+    case GA_NODE_VAL: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DERIVATIVE:
+    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
+    case GA_NODE_INTERPOLATE_DERIVATIVE:
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
-    case GA_NODE_ELEMENTARY_HESS: 
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG: 
       return true;
     case GA_NODE_OP:
       switch(pnode->op_type) {
@@ -7584,10 +7593,10 @@ namespace getfem {
         pgai = new ga_instruction_two_first_ind_tensor
           (pnode->t, *pctx1, *pctx2, pnode->qdim1, mf1, mfg1,
            pnode->qdim2, mf2, mfg2);
-      else if (mf1|| mfg1)
+      else if (mf1 || mfg1)
         pgai = new ga_instruction_first_ind_tensor
           (pnode->t, *pctx1, pnode->qdim1, mf1, mfg1);
-      else if (mf2|| mfg2)
+      else if (mf2 || mfg2)
         pgai = new ga_instruction_second_ind_tensor
           (pnode->t, *pctx2, pnode->qdim2, mf2, mfg2);
     }
@@ -7724,13 +7733,15 @@ namespace getfem {
       rmi.instructions.push_back(pgai);
       break;
 
-    case GA_NODE_VAL: case GA_NODE_GRAD: case GA_NODE_HESS:
+    case GA_NODE_VAL: case GA_NODE_GRAD:
+    case GA_NODE_HESS: case GA_NODE_DIVERG:
     case GA_NODE_ELEMENTARY_VAL: case GA_NODE_ELEMENTARY_GRAD:
-    case GA_NODE_ELEMENTARY_HESS:
+    case GA_NODE_ELEMENTARY_HESS: case GA_NODE_ELEMENTARY_DIVERG:
       if (function_case) {
         GMM_ASSERT1(pnode->node_type != GA_NODE_ELEMENTARY_VAL &&
                     pnode->node_type != GA_NODE_ELEMENTARY_GRAD &&
-                    pnode->node_type != GA_NODE_ELEMENTARY_HESS,
+                    pnode->node_type != GA_NODE_ELEMENTARY_HESS &&
+                    pnode->node_type != GA_NODE_ELEMENTARY_DIVERG,
                     "No elementary transformation is allowed in functions");
         const mesh_fem *mf = workspace.associated_mf(pnode->name);
         const im_data *imd = workspace.associated_im_data(pnode->name);
@@ -7797,7 +7808,9 @@ namespace getfem {
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
           } else if (pnode->node_type == GA_NODE_GRAD ||
-                     pnode->node_type == GA_NODE_ELEMENTARY_GRAD) {
+                     pnode->node_type == GA_NODE_DIVERG ||
+                     pnode->node_type == GA_NODE_ELEMENTARY_GRAD ||
+                     pnode->node_type == GA_NODE_ELEMENTARY_DIVERG) {
             if (rmi.grad.find(mf) == rmi.grad.end() ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
@@ -7829,6 +7842,11 @@ namespace getfem {
           case GA_NODE_HESS: // --> t(target_dim*Qmult,N,N)
             pgai = new ga_instruction_hess
               (pnode->t, rmi.hess[mf],
+               rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
+            break;
+          case GA_NODE_DIVERG: // --> t(1)
+            pgai = new ga_instruction_diverg
+              (pnode->t, rmi.grad[mf],
                rmi.local_dofs[pnode->name], workspace.qdim(pnode->name));
             break;
           case GA_NODE_ELEMENTARY_VAL:
@@ -7864,6 +7882,17 @@ namespace getfem {
                  *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
             }
             break;
+          case GA_NODE_ELEMENTARY_DIVERG:
+            { // --> t(1)
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_diverg
+                (pnode->t, rmi.grad[mf],
+                 rmi.local_dofs[pnode->name], workspace.qdim(pnode->name),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
+            break;
           default: break;
           }
           rmi.instructions.push_back(pgai);
@@ -7872,7 +7901,7 @@ namespace getfem {
       break;
 
     case GA_NODE_INTERPOLATE_VAL: case GA_NODE_INTERPOLATE_GRAD:
-    case GA_NODE_INTERPOLATE_HESS:
+    case GA_NODE_INTERPOLATE_HESS: case GA_NODE_INTERPOLATE_DIVERG:
       {
         extend_variable_in_gis(workspace, pnode->name, gis);
 
@@ -7893,8 +7922,11 @@ namespace getfem {
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD) {
           pgai = new ga_instruction_interpolate_grad // --> t(target_dim*Qmult,N)
             (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
-        } else {
+        } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS) {
           pgai = new ga_instruction_interpolate_hess // --> t(target_dim*Qmult,N,N)
+            (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
+        } else { // --> t(1)
+          pgai = new ga_instruction_interpolate_diverg
             (pnode->t, m2, mfn, mfg, Un, Ug, *pctx, workspace.qdim(pnode->name));
         }
         rmi.instructions.push_back(pgai);
@@ -7911,9 +7943,10 @@ namespace getfem {
       rmi.instructions.push_back(pgai);
       break;
 
-    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST: case GA_NODE_HESS_TEST:
+    case GA_NODE_VAL_TEST: case GA_NODE_GRAD_TEST:
+    case GA_NODE_HESS_TEST: case GA_NODE_DIVERG_TEST:
     case GA_NODE_ELEMENTARY_VAL_TEST: case GA_NODE_ELEMENTARY_GRAD_TEST:
-    case GA_NODE_ELEMENTARY_HESS_TEST:
+    case GA_NODE_ELEMENTARY_HESS_TEST: case GA_NODE_ELEMENTARY_DIVERG_TEST:
       // GMM_ASSERT1(!function_case,
       //            "Test functions not allowed in functions");
       {
@@ -7941,7 +7974,9 @@ namespace getfem {
                 (rmi.base[mf], gis.ctx, *mf, rmi.pfps[mf]);
             }
           } else if (pnode->node_type == GA_NODE_GRAD_TEST ||
-                     pnode->node_type == GA_NODE_ELEMENTARY_GRAD_TEST) {
+                     pnode->node_type == GA_NODE_DIVERG_TEST ||
+                     pnode->node_type == GA_NODE_ELEMENTARY_GRAD_TEST ||
+                     pnode->node_type == GA_NODE_ELEMENTARY_DIVERG_TEST) {
             if (rmi.grad.find(mf) == rmi.grad.end() ||
                 !(if_hierarchy.is_compatible(rmi.grad_hierarchy[mf]))) {
               rmi.grad_hierarchy[mf].push_back(if_hierarchy);
@@ -7971,6 +8006,10 @@ namespace getfem {
           case GA_NODE_HESS_TEST: // --> t(Qmult*ndof,Qmult*target_dim,N,N)
             pgai = new ga_instruction_copy_hess_base
               (pnode->t, rmi.hess[mf], mf->get_qdim());
+            break;
+          case GA_NODE_DIVERG_TEST: // --> t(Qmult*ndof)
+            pgai = new ga_instruction_copy_diverg_base
+              (pnode->t, rmi.grad[mf], mf->get_qdim());
             break;
           case GA_NODE_ELEMENTARY_VAL_TEST:
             { // --> t(Qmult*ndof,Qmult*target_dim)
@@ -8002,6 +8041,16 @@ namespace getfem {
                  *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
             }
             break;
+          case GA_NODE_ELEMENTARY_DIVERG_TEST:
+            { // --> t(Qmult*ndof)
+              ga_instruction_set::elementary_trans_info &eti
+                = rmi.elementary_trans_infos[pnode->elementary_name];
+              pgai = new ga_instruction_elementary_transformation_diverg_base
+                (pnode->t, rmi.grad[mf], mf->get_qdim(),
+                 workspace.elementary_transformation(pnode->elementary_name),
+                 *mf, gis.ctx, eti.M, &(eti.mf), eti.icv);
+            }
+            break;
           default: break;
           }
           rmi.instructions.push_back(pgai);
@@ -8013,7 +8062,7 @@ namespace getfem {
       break;
 
     case GA_NODE_INTERPOLATE_VAL_TEST: case GA_NODE_INTERPOLATE_GRAD_TEST:
-    case GA_NODE_INTERPOLATE_HESS_TEST:
+    case GA_NODE_INTERPOLATE_HESS_TEST: case GA_NODE_INTERPOLATE_DIVERG_TEST:
       {
         const mesh_fem *mfn = workspace.associated_mf(pnode->name), **mfg = 0;
         const std::string &intn = pnode->interpolate_name;
@@ -8031,8 +8080,11 @@ namespace getfem {
         } else if (pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST) {
           pgai = new ga_instruction_interpolate_grad_base // --> t(Qmult*ndof,Qmult*target_dim,N)
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
-        } else {
+        } else if (pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST) {
           pgai = new ga_instruction_interpolate_hess_base // --> t(Qmult*ndof,Qmult*target_dim,N,N)
+            (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
+        } else { // if (pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST) {
+          pgai = new ga_instruction_interpolate_diverg_base // --> t(Qmult*ndof)
             (pnode->t, m2, mfn, mfg, *pctx, workspace.qdim(pnode->name));
         }
         rmi.instructions.push_back(pgai);
@@ -8530,26 +8582,24 @@ namespace getfem {
    std::map<std::string, std::set<std::string> > &interpolates,
    std::set<std::string> &interpolates_der) {
     bool found = false;
-    if (pnode->node_type == GA_NODE_INTERPOLATE_FILTER ||
-        pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
-        pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
-        pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
-        pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
-        pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
-        pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+    bool intrpl(pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
+                pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
+                pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
+                pnode->node_type == GA_NODE_INTERPOLATE_DIVERG);
+    bool intrpl_test(pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
+                     pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
+                     pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST ||
+                     pnode->node_type == GA_NODE_INTERPOLATE_DIVERG_TEST);
+
+    if (intrpl || intrpl_test ||
+        pnode->node_type == GA_NODE_INTERPOLATE_FILTER ||
         pnode->node_type == GA_NODE_INTERPOLATE_NORMAL ||
         pnode->node_type == GA_NODE_INTERPOLATE_X) {
       interpolates[pnode->interpolate_name].size();
-      if (pnode->node_type == GA_NODE_INTERPOLATE_VAL ||
-          pnode->node_type == GA_NODE_INTERPOLATE_GRAD ||
-          pnode->node_type == GA_NODE_INTERPOLATE_HESS ||
-          pnode->node_type == GA_NODE_INTERPOLATE_VAL_TEST ||
-          pnode->node_type == GA_NODE_INTERPOLATE_GRAD_TEST ||
-          pnode->node_type == GA_NODE_INTERPOLATE_HESS_TEST) {
+      if (intrpl || intrpl_test) {
         if (workspace.variable_group_exists(pnode->name))
           interpolates[pnode->interpolate_name].insert(pnode->name);
       }
-
       found = true;
     }
     if (pnode->node_type == GA_NODE_INTERPOLATE_DERIVATIVE) {
