@@ -82,7 +82,7 @@ if (with_Mindlin_brick)
 else
   gf_model_set(md, 'add elementary rotated RT0 projection', 'RT0_projection');
   gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*(1-nu)/(48 * (1 - nu*nu))) * ((Grad_theta+Grad_theta''):(Grad_Test_theta+Grad_Test_theta''))');
-  gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*nu/(12 * (1 - nu*nu))) * (Trace(Grad_theta)*Trace(Grad_Test_theta))');
+  gf_model_set(md, 'add linear generic assembly brick', mim, '(E*epsilon*epsilon*epsilon*nu/(12 * (1 - nu*nu))) * (Div_theta*Div_Test_theta)');
   if (variant == 0)
     gf_model_set(md, 'add linear generic assembly brick', mim, '(E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Grad_Test_u) + (E*kappa*epsilon/(1 + nu)) * ((Grad_u + theta).Test_theta)');
   elseif (variant == 1)
@@ -107,7 +107,7 @@ end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
-if (draw)
+if (draw_solution)
   gf_plot(mfu,U,'mesh','off', 'zplot', 'on'); 
   colorbar; title('computed solution');
 end

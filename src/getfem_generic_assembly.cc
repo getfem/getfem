@@ -6193,7 +6193,8 @@ namespace getfem {
           const mesh_fem *mf = workspace.associated_mf(name);
           const im_data *imd = workspace.associated_im_data(name);
 
-          if (test && workspace.is_constant(name))
+          if (test && workspace.is_constant(name) &&
+              !(workspace.is_disabled_variable(name)))
             ga_throw_error(expr, pnode->pos, "Test functions of constants "
                            "are not allowed.");
           if (test == 1) {

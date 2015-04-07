@@ -1140,7 +1140,7 @@ static void test_new_assembly(int N, int NX, int pK) {
                  Iu, Iu,
                  getfem::asm_stiffness_matrix_for_homogeneous_linear_elasticity
                  (K, mim2, mf_u, lambda, mu));
-      MAT_TEST_2(ndofu, ndofu, "lambda*Trace(Grad_Test_u)*Trace(Grad_Test2_u) "
+      MAT_TEST_2(ndofu, ndofu, "lambda*Div_Test_u*Div_Test2_u "
                  "+ mu*(Grad_Test_u'+Grad_Test_u):Grad_Test2_u", mim2, Iu, Iu);
       
       MAT_TEST_2(ndofu, ndofu,

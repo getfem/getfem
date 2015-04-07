@@ -179,7 +179,7 @@ gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigma '*Norm_
 
 % Thermal expansion term
 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Trace(Grad_Test_u)');
+gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Div_Test_u');
 
 
 %
