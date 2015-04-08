@@ -134,7 +134,6 @@ namespace bgeot {
   }
 
   void node_tab::sup_node(size_type i) {
-    resort();
     if (index().is_in(i)) {
       for (size_type is = 0; is < sorters.size(); ++is) {
 	sorters[is].erase(i);
