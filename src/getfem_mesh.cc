@@ -207,6 +207,7 @@ namespace getfem {
 #endif
 
   void mesh::optimize_structure() {
+    pts.resort();
     size_type i, j;
     j = nb_convex();
     for (i = 0; i < j; i++)

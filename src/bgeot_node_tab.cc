@@ -128,15 +128,18 @@ namespace bgeot {
       for (size_type is = 0; is < sorters.size(); ++is) {
 	if (existi) sorters[is].insert(j);
 	if (existj) sorters[is].insert(i);
+        GMM_ASSERT3(sorters[is].size() == card(), "internal error");
       }
     }
   }
 
   void node_tab::sup_node(size_type i) {
+    resort();
     if (index().is_in(i)) {
       for (size_type is = 0; is < sorters.size(); ++is) {
 	sorters[is].erase(i);
-	GMM_ASSERT3(sorters[is].size()+1 == card(), "internal error");
+        GMM_ASSERT3(sorters[is].size()+1 == card(), "Internal error");
+        // if (sorters[is].size()+1 != card()) { resort(); }
       }
       dal::dynamic_tas<base_node>::sup(i);
       
