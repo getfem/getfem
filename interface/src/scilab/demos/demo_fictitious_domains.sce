@@ -5,8 +5,8 @@ path = get_absolute_file_path('demo_fictitious_domains.sce');
 
 printf('demo fictitious domains started\n');
 
-disp('This demo use levelset to impose (weakly) a Dirichlet condition on an');
-disp('implicit boundary defined by the zero of the levelset');
+printf('This demo uses levelset to impose (weakly) a Dirichlet condition on an\n');
+printf('implicit boundary defined by the zero of the levelset\n');
 
 if getos()=='Windows' then
   // Under Windows, all the trace messages are available in the dos console
@@ -134,7 +134,6 @@ drawlater;
 gf_plot(mfdu, VM, 'deformed_mesh', 'on', 'deformation', U, 'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
 //gf_plot(mfu0, U, 'norm', 'on', 'deformed_mesh', 'on', 'deformation', U,	'deformation_mf', mfu0, 'refine', 8, 'cvlst', cv_out); 
 //// gf_mesh_fem_set(mfu0,'qdim',1); Unorm=sqrt(U(1:2:$).^2 + U(2:2:$).^2);
-// drawlater;
 // [h1,h2] = gf_plot(mfu0, Unorm,'contour',0.00001,'pcolor','off');
 [h1,h2]=gf_plot(mf_ls, gf_levelset_get(_ls,'values'), 'contour', 0,'pcolor','off');
 //h.color_map = jetcolormap(255);

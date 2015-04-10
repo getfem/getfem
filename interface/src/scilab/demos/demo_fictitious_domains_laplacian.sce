@@ -1,8 +1,7 @@
-disp('This demo use levelset to impose (weakly) a Dirichlet condition on a part of an ');
-disp('implicit boundary defined by the zero of the levelset and a Neumann condition on ');
-disp('the remaining part of that boundary. A Poisson problem');
+printf('This demo use levelset to impose (weakly) a Dirichlet condition on a part of an \n');
+printf('implicit boundary defined by the zero of the levelset and a Neumann condition on \n');
+printf('the remaining part of that boundary. A Poisson problem\n');
 
-clear;
 gf_workspace('clear all');
 NX=10;
 N = 2;
@@ -10,7 +9,7 @@ ls_degree = 1;
 R = 0.4;
 
 if (N == 3) then
-  m = gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5, -.5:(1/NX):.5);
+  m = gfMesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5, -.5:(1/NX):.5);
   //m = gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5, -.5:(1/NX):.5);
   mfu0 = gfMeshFem(m,1);
   mf_mult = gfMeshFem(m,1);
@@ -18,7 +17,7 @@ if (N == 3) then
   set(mf_mult, 'fem', gf_fem('FEM_QK(3,1)'));
   adapt_im = 'IM_TETRAHEDRON(6)'
 elseif (N == 2) then
-  m = gf_mesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
+  m = gfMesh('cartesian', -.5:(1/NX):.5, -.5:(1/NX):.5);
   //m = gfMesh('triangles grid', -.5:(1/NX):.5, -.5:(1/NX):.5);
   mfu0 = gfMeshFem(m,1);
   mf_mult = gfMeshFem(m,1);
@@ -30,10 +29,10 @@ else
 end
 
 ls  = gf_levelset(m, ls_degree);
-ls2 = gf_LevelSet(m, ls_degree, 'with_secondary');
+ls2 = gf_levelset(m, ls_degree, 'with_secondary');
 
-mf_ls = gfObject(gf_levelset_get(ls, 'mf'));
-P = get(mf_ls, 'basic dof nodes');
+mf_ls = gf_levelset_get(ls, 'mf');
+P = gf_mesh_fem_get(mf_ls, 'basic dof nodes');
 x = P(1,:); y = P(2,:);
 if (N == 3) then
   z = P(3,:);
@@ -106,11 +105,13 @@ U = gf_model_get(md, 'variable', 'u');
 // Comparison with the exaxt solution
 ERRL2 = gf_compute(mfu, U, 'L2 dist',      mim_int, mfu0, Sol_U);
 ERRH1 = gf_compute(mfu, U, 'H1 semi dist', mim_int, mfu0, Sol_U);
-disp(sprintf('L2 error= %g\nsemi H1 error = %g', ERRL2, ERRH1));
+disp(sprintf('L2 error= %g', ERRL2));
+disp(sprintf('semi H1 error = %g', ERRH1));
 
+hh = scf();
+hh.color_map = gf_colormap('chouette');
 if (N == 2) then
   gf_plot(mfu, U, 'mesh','on', 'refine', 2);
 else
   gf_plot(mfu, U, 'mesh','on', 'cvlst', gf_mesh_get(m, 'outer faces'), 'refine', 2);
 end
-gf_colormap('chouette');

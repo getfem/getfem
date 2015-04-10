@@ -156,17 +156,17 @@ gf_mesh_fem_set(mf_g,'fem', gf_fem(sprintf('FEM_PK_DISCONTINUOUS(%d,%d)', N, k-1
 mf_cont = gf_mesh_fem(m, N);
 gf_mesh_fem_set(mf_cont,'fem', gf_fem(sprintf('FEM_PK(%d,%d)', N, ls_degree)));
 
-disp(sprintf('There is %d elasticity dofs', gf_mesh_fem_get(mf_basic, 'nbdof')));
+disp(sprintf('There are %d elasticity dofs', gf_mesh_fem_get(mf_basic, 'nbdof')));
 
 disp('Computation of mass matrices and preconditioners');
-ti = timer();
+timer();
 Mcont = gf_asm('mass matrix', mimls, mf_cont);
 //RMcont = sp_cholinc(Mcont, '0');
 RMcont = sp_cholinc(Mcont);
 Mcontls = gf_asm('mass matrix', mimls, mf_ls);
 //RMcontls = sp_cholinc(Mcontls, '0');
 RMcontls = sp_cholinc(Mcontls);
-disp(sprintf('Computation done in %g seconds', timer()-ti));
+disp(sprintf('Computation done in %g seconds', timer()));
 
 // Definition of the initial level-set
 if (initial_holes) then
@@ -226,7 +226,7 @@ gf_model_set(md, 'add source term brick', mim, 'u', 'Force', GAMMAN);
 
 // Optimization loop
 for niter = 1:nbiter
-  ti = timer();
+  timer();
   gf_workspace('push');
 
   if (niter > 1) then
@@ -459,7 +459,7 @@ for niter = 1:nbiter
   end
 
   gf_workspace('pop');
-  disp(sprintf('this iteration took %g minutes', (timer()-ti)/60));
+  disp(sprintf('this iteration took %g minutes', timer()/60));
 end
 
 printf('demo structural_optimization terminated\n');

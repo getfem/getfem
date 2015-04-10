@@ -1,7 +1,7 @@
-disp('This is the ''legacy'' getfem-scilab demonstration')
-disp('This demo does not use the model bricks introduced with getfem 2.0')
-disp('instead it show how the linear system is built with direct calls')
-disp('to the assembly routines.')
+printf('\nThis is the ''legacy'' getfem-scilab demonstration.\n')
+printf('This demo does not use the model bricks introduced with getfem 2.0.\n')
+printf('Instead it shows how the linear system is built with direct calls\n')
+printf('to the assembly routines.\n')
 
 lines(0);
 stacksize('max');

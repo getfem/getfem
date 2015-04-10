@@ -124,7 +124,7 @@ VM = gf_model_get(md,'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u_cut'
 
 // export to pos
 gf_mesh_fem_get(mfv,'export_to_pos', path + '/crack.pos',V,'V',Ve,'Ve', mfvm, VM,'Von Mises');
-printf('You can view the solution with (for example): gmsh %s/crack.pos\n', path);
+printf('You can view the solution with (for example): gmsh %scrack.pos\n', path);
 
 // drawing the solution
 h = scf();

@@ -38,7 +38,7 @@ R=gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, R);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
-gf_model_get(md, 'listvar');
+gf_model_get(md, 'variable list');
 
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');

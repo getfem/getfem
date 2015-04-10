@@ -81,7 +81,7 @@ while(1)
   ind = find(D > 1E-8);
   mf  = gf_mesh_fem('partial', mf_basic, ind);
   S   = gf_asm('volumic','V()+=comp()',mim);
-  printf('surface restante :'); disp(S);
+  printf('remaining surface:'); disp(S);
 
   // Problem definition (Laplace(u) + u = f)
   md = gf_model('real');
@@ -104,8 +104,8 @@ while(1)
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
 
-  clf();
   drawlater;
+  clf();
   subplot(2,1,1);
   gf_plot(mf, U);
   U_tmp = gf_levelset_get(ls,'values');

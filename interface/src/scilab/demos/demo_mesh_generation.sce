@@ -71,7 +71,9 @@ else
 end
  
 m = gf_mesh('generate', mo, h, K, fixed_vertices);
- 
+
+hh = scf();
+hh.color_map = gf_colormap('chouette');
 if (N <= 2) then
   gf_plot_mesh(m);
 elseif (N == 3) then
@@ -80,5 +82,4 @@ elseif (N == 3) then
   VAL = gf_mesh_fem_get_eval(mf, list('x+y+z'));
   gf_plot(mf, VAL, 'mesh', 'on', 'cvlst', gf_mesh_get(mf,'outer faces'), 'refine', 4);
   // axis on; camlight;
-  gf_colormap('chouette');
 end

@@ -31,7 +31,7 @@ Index = 0;
 
 //for r=[6 14 26]
 for r=6:4:60
-  disp('slicing...'); tic;
+  printf('slicing...\n'); tic;
   //sl = gf_slice(list('cylinder', 0, [0;0;0], [0;1;0], r), m, 4);
   //sl = gf_slice(m,list('boundary',list('cylinder', [0;0;0], [0;1;0], 15)),4);
 
@@ -41,7 +41,7 @@ for r=6:4:60
   //sl = gf_slice(m,list('boundary', list('none')),4);
   //sl = gf_slice(m,list('ballb', [0;0;0], 10),2);
   //sl = gf_slice(m,list('planarb',[0;0;0],[0;0;1]),1);
-  printf('..........done in %3.2f sec',toc());
+  printf('..........done in %3.2f sec\n',toc());
 
   P      = gf_slice_get(sl,'pts'); 
   P(2,:) = P(2,:) - haut;

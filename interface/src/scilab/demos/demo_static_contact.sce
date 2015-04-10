@@ -24,7 +24,6 @@
 //
 
 gf_workspace('clear all');
-clear all;
 path = get_absolute_file_path('demo_static_contact.sce');
 
 if getos()=='Windows' then
@@ -144,7 +143,7 @@ end
 
 // Plot the mesh
 if (plot_mesh) then
-  scf(1);
+  scf(1); clf();
   gf_plot_mesh(m, 'regions', [GAMMAC]);
   title('Mesh and contact boundary (in red)');
   sleep(100);
@@ -357,7 +356,8 @@ VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', ...
 // set a custom colormap
 // r=[0.7 .7 .7]; l = r($,:); s=63; s1=20; s2=25; s3=48;s4=55; for i=1:s, c1 = max(min((i-s1)/(s2-s1),1),0);c2 = max(min((i-s3)/(s4-s3),1),0); r($+1,:)=(1-c2)*((1-c1)*l + c1*[1 0 0]) + c2*[1 .8 .2]; end; colormap(r);
 
-scf(2);
+h = scf(2); clf();
+h.color_map = gf_colormap('chouette');
 
 if (d == 3) then
   c = [0.1;0;20]; 
@@ -377,9 +377,8 @@ if (d == 3) then
   gf_slice_set(sl2, 'pts', P+dP);
   VMsl = gf_compute(mfvm,VM,'interpolate on',sl2);
   //set(gcf,'renderer','zbuffer');
-  h = gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
+  gf_plot_slice(sl2,'mesh','on','mesh_slice_edges','off','data',VMsl);
   //view(-80,-15); axis on; camlight;
-  gf_colormap('chouette');
   // map=[1:-1/10:0]'*[1 1 1]; colormap(map); // for NB
     
   // gf_plot(mfvm, VM, 'mesh', 'off', 'cvlst', ...

@@ -16,16 +16,16 @@ gf_util('warning level',3);
 gf_workspace('clear all');
 
 disp('2D scalar wave equation (helmholtz) demonstration');
-disp(' we present three approaches for the solution of the helmholtz problem')
-disp(' - the first one is to use the new getfem ''model bricks''')
-disp(' - the second one is to use the old getfem ''model bricks''')
-disp(' - the third one is to use the ''low level'' approach, i.e. to assemble')
-disp('   and solve the linear systems.')
+printf(' we present three approaches for the solution of the helmholtz problem\n')
+printf(' - the first one is to use the new getfem ''model bricks''\n')
+printf(' - the second one is to use the old getfem ''model bricks''\n')
+printf(' - the third one is to use the ''low level'' approach, i.e. to assemble\n')
+printf('   and solve the linear systems.\n')
 
-disp('The result is the wave scattered by a disc, the incoming wave beeing a plane wave coming from the top');
-disp(' \delta u + k^2 = 0');
-disp(' u = -uinc              on the interior boundary');
-disp(' \partial_n u + iku = 0 on the exterior boundary');
+printf('The result is the wave scattered by a disc, the incoming wave beeing a plane wave coming from the top\n');
+printf(' \delta u + k^2 = 0\n');
+printf(' u = -uinc              on the interior boundary\n');
+printf(' \partial_n u + iku = 0 on the exterior boundary\n');
 
 //PK = 10; gt_order = 6; k = 7; use_hierarchical = 0; load_the_mesh=0;
 PK       = 3; 
@@ -115,7 +115,7 @@ Uinc      = gf_mesh_fem_get_eval(mfd,list(list(wave_expr)));
 // - the second one is to use the "low level" approach, i.e. to assemble
 //   and solve the linear systems.
 if 1 then
-  t0 = timer();
+  timer();
   // solution using new model bricks
   md = gf_model('complex');
   gf_model_set(md, 'add fem variable', 'u', mfu);
@@ -129,7 +129,7 @@ if 1 then
 
   gf_model_get(md, 'solve');
   U = gf_model_get(md, 'variable', 'u');
-  disp(sprintf('solve done in %.2f sec', timer()-t0));
+  disp(sprintf('solve done in %.2f sec', timer()));
 else
   // solution using the "low level" approach
   [H,R] = gf_asm('dirichlet', 1, mim, mfu, mfd, gf_mesh_fem_get(mfd,'eval',1),Uinc);

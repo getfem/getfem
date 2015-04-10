@@ -17,14 +17,15 @@
 // Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
 //
 //  Transient Navier-Stokes equation on a driven cavity with two numerical
-//  scheme : a projection and a semi-implicite scheme. Without using the
+//  scheme : a projection and a semi-implicit scheme. Without using the
 //  bricks.
 //
 //  This program is used to check that matlab-getfem is working. This is
 //  also a good example of use of GetFEM++.
 //
 
-clear all;
+lines(0);
+stacksize('max');
 
 if getos()=='Windows' then
   // Under Windows, all the trace messages are available in the dos console
@@ -36,7 +37,7 @@ gf_util('warning level',3);
 
 gf_workspace('clear all');
 
-NX = 20;      // Space resoltuion
+NX = 20;      // Space resolution
 Dt = 0.02;    // Time step
 T  = 10;      // Time interval
 nu = 0.005;   // Viscosity
@@ -51,7 +52,9 @@ m = gf_mesh('triangles grid',[0:1/NX:1],[0:1/NX:1]);
 border = gf_mesh_get(m,'outer faces');
 // mark it as boundary #1
 gf_mesh_set(m, 'boundary', 1, border);
+drawlater; clf();
 gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
+drawnow;
 
 // create mesh_fem objects
 mf_u = gfMeshFem(m,2);  // For the velocity.
@@ -90,12 +93,15 @@ Mo  = gf_asm('mass matrix', mim, mf_f);
 MVo = gf_asm('volumic','t=comp(Base(#1).vGrad(#2));M(#1,#2)+=t(:,:,1,2)-t(:,:,2,1)', mim, mf_f, mf_u);
 
 
-UBOUND = gf_mesh_fem_get(mf_u, 'dof on region', 1);// fournit le numero des dof sur la frontiere
-UNODES = gf_mesh_fem_get(mf_u, 'dof nodes');
+UBOUND = gf_mesh_fem_get(mf_u, 'dof on region', 1);// supplies the list of dofs on the boundary
+UNODES = gf_mesh_fem_get(mf_u, 'basic dof nodes');
 Kp(1, :) = 0; // In order to fix the pressure on a node for scheme 1.
 Kp(1, 1) = 1;
 Ndofu = size(D,2);          // Dof number for the velocity
 Ndofp = size(D,1);          // Dof number for the pressure
+
+h = get("current_figure");
+h.color_map = jetcolormap(255);
 
 for t=0:Dt:T
   printf('Time step = %f / %f\n', t, T);
@@ -108,7 +114,7 @@ for t=0:Dt:T
   
     for i=UBOUND     // Boundary conditions
         A(i, :) = 0; A(i,i) = 1; L(i) = 0;
-        if (modulo(i, 2) == 1) then
+        if (modulo(double(i), 2) == 1) then
             node = UNODES(:, i);
             if (abs(node(2)-1) < 1e-10 & abs(node(1)-0.5) < 0.499) then
                L(i) = v * node(1) * (1-node(1));
@@ -133,7 +139,7 @@ for t=0:Dt:T
       
       for i=UBOUND     // Boundary conditions
         A(i, :) = 0; A(i,i) = 1; L(i) = 0;
-        if (modulo(i, 2) == 1) then
+        if (modulo(double(i), 2) == 1) then
             node = UNODES(:, i);
             if (abs(node(2)-1) < 1e-10 & abs(node(1)-0.5) < 0.499) then
                L(i) = v * node(1) * (1-node(1));
@@ -152,14 +158,16 @@ for t=0:Dt:T
 
   Vo = Mo \ (MVo * U); // Vorticity projected on mf_f. 
   
-  gf_plot(mf_u, U','mesh','off', 'quiver_density', 15, 'quiver_scale', 4);
-  //axis([0 1 0 1]);
-  //hold on;
+  drawlater; clf();
   gf_plot(mf_p,P','refine',1);
+  //a = get("current_axes"); a.data_bounds = [0 1 0 1];
+  //hold on;
   gf_plot(mf_f,Vo','refine',1,'contour',[-40,-20,-10,10,20,40,80], 'pcolor', 'off');
+  gf_plot(mf_u, U','mesh','off', 'quiver_density', 15, 'quiver_scale',0.3);
   //hold off;
-  //colorbar; 
+  colorbar(min(P'),max(P'));
   title(sprintf('Quiver plot of U, with color plot of the pressure and vorticity contour lines, t=%g', t));
+  drawnow;
   sleep(1000);
    
 end

@@ -49,12 +49,12 @@ gf_model_set(md, 'add fem variable', 'u', mf);
 gf_model_set(md, 'add Laplacian brick', mim, 'u');
 
 // add Dirichlet condition
-Uexact = gf_mesh_fem_get(mf, 'eval', {'(x-.5).^2 + (y-.5).^2 + x/5 - y/3'});
+Uexact = gf_mesh_fem_get_eval(mf, list('(x-.5).^2 + (y-.5).^2 + x/5 - y/3'));
 gf_model_set(md, 'add initialized fem data', 'DirichletData', mf, Uexact);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf, 42, 'DirichletData');
 
 // add source term
-f = gf_mesh_fem_get(mf, 'eval', { '2(x^2+y^2)-2(x+y)+20x^3' });
+f = gf_mesh_fem_get_eval(mf, list('2*(x^2+y^2)-2*(x+y)+20*x^3'));
 gf_model_set(md, 'add initialized fem data', 'VolumicData', mf, f);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 
@@ -69,6 +69,8 @@ u = gf_model_get(md, 'variable', 'u');
 gf_mesh_fem_get(mf,'export_to_pos', path + '/sol.pos',u,'Computed solution');
 
 // display
+hh = scf();
+hh.color_map = jetcolormap(255);
 gf_plot(mf, u, 'mesh','on');
 
 printf('demo step_by_step terminated\n');

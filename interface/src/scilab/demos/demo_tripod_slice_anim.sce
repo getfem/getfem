@@ -1,7 +1,7 @@
 lines(0);
 stacksize('max');
 
-path = get_absolute_file_path('demo_tripod_anim.sce');
+path = get_absolute_file_path('demo_tripod_slice_anim.sce');
 
 printf('demo tripod_slice_anim started\n');
 
@@ -35,7 +35,7 @@ h.color_map = c;
 
 cnt = 1;
 for r=-10.3:+.1:12 //46.1:-.1:4,
-  //sl = gf_slice(mfu,U*10,list('boundary',list('cylinder',-1,[0;0;0],[0;1;0],r)),5);
+  //sl = gf_slice(list('boundary',list('cylinder',-1,[0;0;0],[0;1;0],r)),mfu,U*10,5);
   sl  = gf_slice(list('boundary',list('planar',-1,[0;r;0],[0;1;0])),mfu,U*10,5);
   Usl = gf_compute(mfdu,VM,'interpolate on',sl);
   P   = gf_slice_get(sl,'pts'); 
@@ -48,7 +48,7 @@ for r=-10.3:+.1:12 //46.1:-.1:4,
   h.color_map = c;
   drawnow;
 
-  xs2png(path + sprintf('/tripod_slice_p%03d',cnt));
+  xs2png(gcf(), path + sprintf('/tripod_slice_p%03d',cnt));
   
   cnt = cnt+1;
   sleep(1000)

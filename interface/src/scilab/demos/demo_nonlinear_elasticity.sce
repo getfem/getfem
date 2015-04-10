@@ -176,7 +176,7 @@ for step=1:nbstep
     VM = gf_model_get(md, 'compute Von Mises or Tresca', 'u', lawname, 'params', mfdu);
     UU  = [UU;U]; 
     VVM = [VVM;VM];
-    save(path + '/demo_nonlinear_elasticity_U.mat', UU, VVM, m_char, mfu_char, mfdu_char);
+    save(path + '/demo_nonlinear_elasticity_U.mat', 'UU', 'VVM', 'm_char', 'mfu_char', 'mfdu_char');
   else
     U  = UU(step,:);
     VM = VVM(step,:);
@@ -196,7 +196,7 @@ for step=1:nbstep
   xs2png(h_graph.figure_id, path + sprintf('/torsion%03d.png',step));
 end
   
-disp('end of computations, you can now replay the animation with');
-disp('exec demo_nonlinear_elasticity_anim.sce;');
+printf('end of computations, you can now replay the animation with\n');
+printf('exec demo_nonlinear_elasticity_anim.sce;\n');
 
 printf('demo nonlinear_elasticity terminated\n');

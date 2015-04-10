@@ -1,6 +1,9 @@
 lines(0);
 stacksize('max');
 
+gf_workspace('clear all');
+
+
 path = get_absolute_file_path('demo_plasticity.sce');
 
 if getos()=='Windows' then
@@ -20,9 +23,9 @@ gf_util('warning level',3);
 
 
 with_hardening = 1;
-bi_material = false;
-test_tangent_matrix = false;
-do_plot = true;
+bi_material = %f;
+test_tangent_matrix = %f;
+do_plot = %t;
 
 
 
@@ -50,7 +53,7 @@ end
 
 // Create the mesh
 // m = gf_mesh('triangles grid', [0:(LX/NX):LX], [0:(LY/NY):LY]);
-m = gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[%d,%d];NOISED=0;NSUBDIV=[%d,%d];', LX, LY, NX, NY));
+m = gf_mesh('import','structured',sprintf('GT=""GT_PK(2,1)"";SIZES=[%d,%d];NOISED=0;NSUBDIV=[%d,%d];', LX, LY, NX, NY));
 N = gf_mesh_get(m, 'dim');
   
 // Plotting
@@ -67,6 +70,7 @@ else
   mf_u=gf_mesh_fem(m,2); gf_mesh_fem_set(mf_u, 'fem',gf_fem('FEM_PK(2,1)'));
 end
 mf_data=gf_mesh_fem(m); gf_mesh_fem_set(mf_data, 'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,0)'));
+mf_data2=gf_mesh_fem(m,2); gf_mesh_fem_set(mf_data2, 'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,0)'));
 // mf_sigma=gf_mesh_fem(m,4); gf_mesh_fem_set(mf_sigma, 'fem',gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
 mf_sigma=gf_mesh_fem(m,4); gf_mesh_fem_set(mf_sigma, 'fem',gf_fem('FEM_PK_DISCONTINUOUS(2,0)'));
 mf_vm = gf_mesh_fem(m); set(mf_vm, 'fem', gf_fem('FEM_PK_DISCONTINUOUS(2,1)'));
@@ -86,8 +90,8 @@ pidtop    = find(P(2,:)>=separation-1E-6); // Retrieve index of points of the to
 pidbottom = find(P(2,:)<=separation+1E-6); // Retrieve index of points of the bottom part
 cvidtop   = gf_mesh_get(m, 'cvid from pid', pidtop);
 cvidbottom= gf_mesh_get(m, 'cvid from pid', pidbottom);
-CVtop     = sort(gf_mesh_fem_get(mf_data, 'basic dof from cvid', cvidtop));
-CVbottom  = sort(gf_mesh_fem_get(mf_data, 'basic dof from cvid', cvidbottom));
+CVtop     = gsort(gf_mesh_fem_get(mf_data, 'basic dof from cvid', cvidtop));
+CVbottom  = gsort(gf_mesh_fem_get(mf_data, 'basic dof from cvid', cvidbottom));
 
 // Definition of Lame coeff
 lambda(CVbottom,1) = 121150; // Steel
@@ -143,14 +147,14 @@ if (with_hardening)
   Enp1 = '((Grad_u+Grad_u'')/2)';
   En = '((Grad_Previous_u+Grad_Previous_u'')/2)';
   
-  //expression de sigma for Implicit Euler method
-  //expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))');
+  //expression of sigma for Implicit Euler method
+  //expr_sigma = strcat(['(', B_inv, '*(Von_Mises_projection((-(H)*', Enp1, ')+(', ApH, '*(',Enp1,'-',En,')) + (', B, '*sigma), von_mises_threshold) + H*', Enp1, '))']);
   
-  //expression de sigma for generalized alpha algorithms
-  expr_sigma = strcat('(', B_inv, '*(Von_Mises_projection((',B,'*((1-alpha)*sigma))+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
-    B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))');
+  //expression of sigma for generalized alpha algorithms
+  expr_sigma = strcat(['(', B_inv, '*(Von_Mises_projection((',B,'*((1-alpha)*sigma))+(-(H)*(((1-alpha)*',En,')+(alpha*', Enp1, ')))+(alpha*', ApH, '*(',Enp1,'-',En,')) + (alpha*', ...
+    B, '*sigma), von_mises_threshold) + (H)*(((1-alpha)*',En,')+(alpha*', Enp1, '))))']);
   
-  gf_model_set(md, 'add nonlinear generic assembly brick', mim, strcat(expr_sigma, ':Grad_Test_u'));
+  gf_model_set(md, 'add nonlinear generic assembly brick', mim, expr_sigma + ':Grad_Test_u');
   // gf_model_set(md, 'add finite strain elasticity brick', mim, 'u', 'SaintVenant Kirchhoff', '[lambda; mu]');
 else
     
@@ -164,17 +168,20 @@ end
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mf_u, 1);
 
 // Add a source term to the system
-gf_model_set(md,'add initialized fem data', 'VolumicData', mf_data, get(mf_data, 'eval',{f(1,1)*t(1);f(2,1)*t(1)}));
+gf_model_set(md,'add initialized fem data', 'VolumicData', mf_data2, gf_mesh_fem_get_eval(mf_data2, list(['f(1,1)*t(1)','f(2,1)*t(1)'])));
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData', 2);
 
 VM=zeros(1,gf_mesh_fem_get(mf_vm, 'nbdof'));
 
-
+if (do_plot)
+      h = scf();
+      h.color_map = jetcolormap(255);
+end
 
 for step=1:size(t,2),
     disp(sprintf('step %d / %d, coeff = %g', step, size(t,2), t(step)));
-    gf_model_set(md, 'variable', 'VolumicData', get(mf_data, 'eval',{f(1,1)*t(step);f(2,1)*t(step)}));
-
+    gf_model_set(md, 'variable', 'VolumicData', gf_mesh_fem_get_eval(mf_data2, list(['f(1,1)*t(step)','f(2,1)*t(step)'])));
+    
     if (test_tangent_matrix)
       gf_model_get(md, 'test tangent matrix', 1E-8, 10, 0.000001);
     end;
@@ -231,37 +238,31 @@ for step=1:size(t,2),
       subplot(3,1,1);
       gf_plot(mf_vm,VM, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0); // 'deformed_mesh', 'on')
       colorbar(min(U),max(U));
-      axis([-20 120 -20 40]);
+      a = get("current_axes"); a.data_bounds = [-20 120 -20 40];
       // caxis([0 10000]);
       n = t(step);
-      title(['Von Mises criterion for t = ', num2str(step)]);
+      title(sprintf('Von Mises criterion for t = %d', step));
       
       subplot(3,1,2);
       gf_plot(mf_vm,plast, 'deformation',U,'deformation_mf',mf_u,'refine', 4, 'deformation_scale',1, 'disp_options', 0);  // 'deformed_mesh', 'on')
-      colorbar;
-      axis([-20 120 -20 40]);
+      colorbar(min(plast),max(plast));
+      a = get("current_axes"); a.data_bounds = [-20 120 -20 40];
       // caxis([0 10000]);
       n = t(step);
-      title(['Plastification for t = ', num2str(step)]);
+      title(sprintf('Plastification for t = %d', step));
     
       if (with_hardening)
         subplot(3,1,3);
         plot(Epsilon_u_fig, sigma_fig,'r','LineWidth',2)
         xlabel('Strain');
         ylabel('Stress')
-        axis([-0.1 0.35 -16000 16000 ]);
+        a = get("current_axes"); a.data_bounds = [-0.1 0.35 -16000 16000];
       end;
-      
-
-      
-  h.color_map = jetcolormap(255);
-  drawnow;
-  sleep(1000);
-
+      drawnow;
+      sleep(1000);
+    end
  
 end;
-
-
 
 
 

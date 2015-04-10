@@ -16,14 +16,14 @@ gf_util('warning level',3);
 gf_workspace('clear all');
 
 disp('2D scalar wave equation (helmholtz) demonstration');
-disp('Helmholtz is not handled (for the moment) by gf_solve');
-disp('hence this file contains explicit call to the various');
-disp('assembly routines needed by the helmholtz equation');
+printf('Helmholtz is not handled (for the moment) by gf_solve\n');
+printf('hence this file contains explicit call to the various\n');
+printf('assembly routines needed by the helmholtz equation.\n');
 
-disp('The result is the wave scattered by a disc, the incoming wave beeing a plane wave coming from the top');
-disp(' \delta u + k^2 = 0');
-disp(' u = -uinc              on the interior boundary');
-disp(' \partial_n u + iku = 0 on the exterior boundary');
+printf('The result is the wave scattered by a disc, the incoming wave beeing a plane wave coming from the top\n');
+printf(' \delta u + k^2 = 0\n');
+printf(' u = -uinc              on the interior boundary\n');
+printf(' \partial_n u + iku = 0 on the exterior boundary\n');
 
 //PK = 10; gt_order = 6; k = 7; use_hierarchical = 0; load_the_mesh=0;
 PK               = 4;

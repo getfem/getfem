@@ -3,11 +3,11 @@ stacksize('max');
 
 path = get_absolute_file_path('demo_tripod.sce');
 
-disp('This demo is an adaption of the original tripod demo')
-disp('which uses the new ''brick'' framework of getfem')
-disp('The code is shorter, faster and much more powerful')
-disp('You can easily switch between linear/non linear')
-disp('compressible/incompressible elasticity!')
+printf('\nThis demo is an adaption of the original tripod demo\n')
+printf('which uses the new ''brick'' framework of getfem.\n')
+printf('The code is shorter, faster and much more powerful.\n')
+printf('You can easily switch between linear/non linear\n')
+printf('compressible/incompressible elasticity!\n\n')
 
 linear = 1;
 incompressible = 0;
@@ -142,7 +142,7 @@ drawnow;
 
 printf('the von mises stress is exported into a VTK file\n');
 printf('(which can be viewed with ''mayavi -d tripod.vtk -m BandedSurfaceMap'')\n');
-printf('see http://mayavi.sourceforge.net/');
+printf('see http://mayavi.sourceforge.net/\n');
 
 gf_mesh_fem_get(mfdu,'export to vtk', path + '/tripod.vtk','ascii',VM,'vm')
 

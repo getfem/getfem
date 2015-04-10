@@ -14,23 +14,23 @@ gf_util('trace level',3);
 gf_util('warning level',3);
 
 
-% Simple supported Mindlin-Reissner plate
+// Simple supported Mindlin-Reissner plate
 
 
-Emodulus = 1;          % Young Modulus
-nu       = 0.5;        % Poisson Coefficient
-epsilon  = 0.001;      % Plate thickness
-kappa     = 5/6;       % Shear correction factor
-f = -5*epsilon^3;      % Prescribed force on the top of the plate
+Emodulus = 1;          // Young Modulus
+nu       = 0.5;        // Poisson Coefficient
+epsilon  = 0.001;      // Plate thickness
+kappa     = 5/6;       // Shear correction factor
+f = -5*epsilon^3;      // Prescribed force on the top of the plate
 
-variant = 2;           % 0 : not reduced, 1 : with reduced integration, 2 : MITC reduction
-quadrangles = true;    % Locking free only on quadrangle for the moment
-K = 1;                 % Degree of the finite element method
-with_Mindlin_brick = true; % Uses the Reissner-Mindlin predefined brick or not
-dirichlet_version = 1; % 0 = simplification, 1 = with multipliers, 2 = penalization
+variant = 2;           // 0 : not reduced, 1 : with reduced integration, 2 : MITC reduction
+quadrangles = %t;      // Locking free only on quadrangle for the moment
+K = 1;                 // Degree of the finite element method
+with_Mindlin_brick = %t; // Uses the Reissner-Mindlin predefined brick or not
+dirichlet_version = 1; // 0 = simplification, 1 = with multipliers, 2 = penalization
 
-plot_mesh = false;
-draw_solution = true;
+plot_mesh = %f;
+draw_solution = %t;
 
 // trace on;
 gf_workspace('clear all');
@@ -38,7 +38,7 @@ NX = 80;
 if (quadrangles)
   m = gf_mesh('cartesian',[0:1/NX:1],[0:1/NX:1]);
 else
-  m=gf_mesh('import','structured',sprintf('GT="GT_PK(2,1)";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
+  m=gf_mesh('import','structured',sprintf('GT=""GT_PK(2,1)"";SIZES=[1,1];NOISED=0;NSUBDIV=[%d,%d];', NX, NX));
 end
 
 // Create a mesh_fem of for a 2 dimension vector field
@@ -64,7 +64,7 @@ border = gf_mesh_get(m,'outer faces');
 gf_mesh_set(m, 'boundary', 1, border);
 if (plot_mesh)
   gf_plot_mesh(m, 'regions', [1]); // the boundary edges appears in red
-  pause(1);
+  sleep(1000);
 end
 
 md=gf_model('real');
@@ -95,7 +95,7 @@ gf_model_set(md, 'add initialized data', 'VolumicData', f);
 
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
 gf_model_set(md, 'add initialized data', 'DirichletData', 0);
-switch (dirichlet_version)
+select (dirichlet_version)
   case 0,
     gf_model_set(md, 'add Dirichlet condition with simplification', 'u', 1, 'DirichletData');   
   case 1, 
@@ -106,9 +106,11 @@ end
 gf_model_get(md, 'solve');
 U = gf_model_get(md, 'variable', 'u');
 
-if (draw)
+if (draw_solution)
+  hh = scf();
+  hh.color_map = jetcolormap(255);
   gf_plot(mfu,U,'mesh','off', 'zplot', 'on'); 
-  colorbar; title('computed solution');
+  colorbar(min(U),max(U)); title('computed solution');
 end
 
 

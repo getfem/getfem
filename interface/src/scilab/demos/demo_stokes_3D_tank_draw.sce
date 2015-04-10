@@ -65,7 +65,7 @@ Utsl = gf_compute(mfu,U,'interpolate on', tsl);
 // render them with "tube plot"
 drawlater;
 [a,h] = gf_plot_slice(tsl,'mesh','off','tube_radius',.2,'tube_color','red');
-title('Demo Stockes Tank 3D');
+title('Demo Stokes Tank 3D');
 drawnow;
 
 h.color_map = c;
