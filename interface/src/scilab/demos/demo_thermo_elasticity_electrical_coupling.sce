@@ -17,12 +17,12 @@
 // Thermal problem: A thermal insulation condition is prescribed at the
 //   left and hole boudnaries. The remaining boundary and the plate itself
 //   is supposed to be submitted to an heat transfert with respect to the
-//   air at 20°C.
+//   air at 20Â°C.
 // Coupling terms:
 //   - Joule heating: source term  sigma|Grad_V|^2
 //   - Dependance of the thermal conductivity in temperature :
 //     sigma = 1/(rho_0(1+alpha(theta-T0)))
-//     with T0 = 20°C, rho_0 the resistance temperature coefficient at T0
+//     with T0 = 20Â°C, rho_0 the resistance temperature coefficient at T0
 //     and alpha the second resistance temperature coefficient.
 //   - Thermal expansion:
 //     stress_tensor = clambdastar div(u) I + 2 cmu epsilon(u) - beta theta I
@@ -34,7 +34,7 @@
 lines(0);
 stacksize('max');
 
-path = get_absolute_file_path('demo_laplacian.sce');
+path = get_absolute_file_path('demo_thermo_elasticity_electrical_coupling.sce');
 
 printf('demo thermo elasticity electrical coupling  started\n');
 
@@ -47,7 +47,6 @@ if getos()=='Windows' then
 end
 
 gf_workspace('clear all');
-clear all;
 
 //
 // Physical parameters
@@ -72,8 +71,8 @@ alpha = 0.0039;     // Second resistance temperature coefficient.
 //
 h = 2;                      // Approximate mesh size
 elements_degree = 2;        // Degree of the finite element methods
-draw_mesh = true;           // Draw the mesh after mesh generation or not
-solve_in_two_steps = true;  // Solve the elasticity problem separately or not
+draw_mesh = %t;             // Draw the mesh after mesh generation or not
+solve_in_two_steps = %t;    // Solve the elasticity problem separately or not
 
 //
 // Mesh generation. Meshes can also been imported from several formats.
@@ -110,10 +109,10 @@ gf_mesh_set(mesh, 'region subtract',    TOP_BOUND, HOLE_BOUND);
 gf_mesh_set(mesh, 'region subtract', BOTTOM_BOUND, HOLE_BOUND);
 
 if (draw_mesh)
-  figure(1);
+  scf(1);
   gf_plot_mesh(mesh, 'refine', 8, 'curved', 'on', 'regions', [RIGHT_BOUND LEFT_BOUND TOP_BOUND BOTTOM_BOUND]);
   title('Mesh');
-  pause(1);
+  sleep(1000);
 end
 
 //
@@ -152,7 +151,7 @@ sigma = '(1/(rho_0*(1+alpha*(theta-T0))))';
 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
 gf_model_set(md, 'add initialized data', 'T0', [T0]);
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, [sigma '*(Grad_V.Grad_Test_V)']);
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, sigma+'*(Grad_V.Grad_Test_V)');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
@@ -172,7 +171,7 @@ gf_model_set(md, 'add Fourier Robin brick', mim, 'theta', 'Deps', BOTTOM_BOUND);
 gf_model_set(md, 'add source term brick', mim, 'theta', 'Depsairt', BOTTOM_BOUND);
 
 // Joule heating term
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigma '*Norm_sqr(Grad_V)*Test_theta']);
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, '-'+sigma+'*Norm_sqr(Grad_V)*Test_theta');
 
 // Thermal expansion term
 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
@@ -184,15 +183,15 @@ gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Trace(Gra
 //
 if (solve_in_two_steps) 
   gf_model_set(md, 'disable variable', 'u');
-  disp(['First problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
+  disp(sprintf('First problem with %d dofs', gf_model_get(md, 'nbdof')));
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
   gf_model_set(md, 'enable variable', 'u');
   gf_model_set(md, 'disable variable', 'theta');
   gf_model_set(md, 'disable variable', 'V');
-  disp(['Second problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
+  disp(sprintf('Second problem with %d dofs', gf_model_get(md, 'nbdof')));
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 else
-  disp(['Global problem with ', num2str(gf_model_get(md, 'nbdof')), ' dofs']);
+  disp(sprintf('Second problem with %d dofs', gf_model_get(md, 'nbdof')));
   gf_model_get(md, 'solve', 'max_res', 1E-9, 'max_iter', 100, 'noisy');
 end
   
@@ -201,21 +200,22 @@ U = gf_model_get(md, 'variable', 'u');
 V = gf_model_get(md, 'variable', 'V');
 THETA = gf_model_get(md, 'variable', 'theta');
 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
-CO = reshape(gf_model_get(md, 'interpolation', ['-' sigma '*Grad_V'], mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
+CO = matrix(gf_model_get(md, 'interpolation', '-'+sigma+'*Grad_V', mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
     
-figure(2);
+hh = scf(2);
+hh.color_map = jetcolormap(255);
 subplot(3,1,1);
-gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
+gf_plot(mfvm, VM, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar(min(VM),max(VM));
 title('Von Mises stress in N/cm^2 (on the deformed configuration, scale factor x100)');
 subplot(3,1,2);
 drawlater;
-gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
-gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
+gf_plot(mft, V, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar(min(V),max(V));
+// gf_plot(mfvm, CO, 'quiver', 'on', 'quiver_density', 0.1, 'mesh', 'off', 'deformed_mesh','off', 'deformation_mf', mfu, 'deformation', U, 'deformation_scale', 100, 'refine', 8);
 title('Electric potential in Volt (on the deformed configuration, scale factor x100)');
 drawnow;
 subplot(3,1,3);
-gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
-title('Temperature in °C (on the deformed configuration, scale factor x100)');
+gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar(min(THETA),max(THETA));
+title('Temperature in Â°C (on the deformed configuration, scale factor x100)');
 
 
 printf('demo thermo elasticity electrical coupling terminated\n');
