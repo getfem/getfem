@@ -1255,7 +1255,7 @@ namespace getfem {
   // Syntax analysis for the generic assembly langage
   //=========================================================================
 
-  // Read a term with an (implicit) pushdown automation.
+  // Read a term with an (implicit) pushdown automaton.
   static GA_TOKEN_TYPE ga_read_term(const std::string &expr, size_type &pos,
                                     ga_tree &tree) {
     size_type token_pos, token_length;

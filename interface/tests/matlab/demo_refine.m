@@ -54,12 +54,10 @@ md=gf_model('real');
 gf_model_set(md, 'add fem variable', 'u', mfu);
 gf_model_set(md, 'add initialized data', 'lambda', [lambda]);
 gf_model_set(md, 'add initialized data', 'mu', [mu]);
-gf_model_set(md, 'add isotropic linearized elasticity brick', ...
-	     mim, 'u', 'lambda', 'mu');
+gf_model_set(md, 'add isotropic linearized elasticity brick', mim, 'u', 'lambda', 'mu');
 gf_model_set(md, 'add initialized data', 'VolumicData', F);
 gf_model_set(md, 'add source term brick', mim, 'u', 'VolumicData');
-gf_model_set(md, 'add Dirichlet condition with multipliers', ...
-	     mim, 'u', mfu, 1);
+gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'u', mfu, 1);
 
 
 

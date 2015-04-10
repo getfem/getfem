@@ -6,8 +6,9 @@
    :maxdepth: 3
 
 
-   project/index.rst
    userdoc/index.rst
+   tutorial/index.rst
+   project/index.rst
    gmm/index.rst
 
    matlab/index.rst

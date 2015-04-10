@@ -1368,7 +1368,6 @@ namespace getfem {
       m.clear();
       adapt_mesh(m,K);
       // m.write_to_file("toto.mesh");
-      
       m.optimize_structure();
 
 

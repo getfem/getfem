@@ -1,5 +1,7 @@
 .. include:: ../replaces.txt
 
+.. _ud-install-python:
+
 Installation
 ============
 
@@ -20,8 +22,8 @@ and with respect to different Ubuntu releases at
 
 https://launchpad.net/ubuntu/+source/getfem++
 
-GetFEM++ including its python interface cane be installed from a terminal
-by execcuting ``aptitude update`` and ``aptitude install python-getfem++``.
+GetFEM++ including its python interface can be installed from a terminal
+by executing ``aptitude update`` and ``aptitude install python-getfem++``.
 
 In a general unix/linux based systems
 -------------------------------------
@@ -35,7 +37,7 @@ Requirements
 It requires the python developpement files (python.h etc.) to be available
 (package `python-all-dev` in debian distribution), and also the numpy and scipy
 packages to be installed (package `python-numpy` and `python-scipy` in debian distribution).
-In case of troubles with a non-GNU compiler, gcc/g++ (>= 4.1) should be a
+In case of troubles with a non-GNU compiler, gcc/g++ (>= 4.8) should be a
 safe solution (package `build-essential` in debian distribution).
 
 If you want mesh generation, it requires the package qhull installed on
@@ -43,7 +45,9 @@ your system (package `libqhull-dev` in debian distribution).
 
 If you want to build binaries from svn to get the latest changes,
 improvements, bugfixes, new bugs, etc. It requires an svn client,
-automake, and libtool.
+automake, autoconf and libtool.
+
+If you want to use MUMPS linear sparse solver instead of SUPERLU, you need to install the sequential version of MUMPS (or the parallel one if you intend to use the parallel version of |gf|).
 
 Download sources
 ^^^^^^^^^^^^^^^^

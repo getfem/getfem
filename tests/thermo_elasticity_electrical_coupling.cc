@@ -128,7 +128,10 @@ int main(int argc, char *argv[]) {
   std::vector<getfem::base_node> fixed;
   getfem::build_mesh(mesh, mo, h, fixed, 2, -2);
 
-
+  //
+  // Boundary selection.
+  //
+  
   getfem::mesh_region border_faces;
   getfem::outer_faces_of_mesh(mesh, border_faces);
   getfem::mesh_region fb1

@@ -32,9 +32,9 @@ Requirements
   installed on your system (package ``libqhull-dev`` in debian
   distribution).
 
-* If you want use mathematical parser capabilities, it requieres
-  the package muParser installed on your system (package
-  ``libmuparser-dev`` in debian distribution).
+* If you want to use MUMPS linear sparse solver instead of SUPERLU, you
+  need to  install the sequential version of MUMPS on your system
+  (or the parallel one if you intend to use the parallel version of |gf|).
 
 Download sources
 ----------------
@@ -42,20 +42,20 @@ Download sources
 There are two ways to get |gf|, either as a compressed package (stable
 release) or via anonymous svn access (unstable releases).
 
-The latest stable release of |gf| is `getfem-4.3.tar.gz
+The latest stable release of |gf| is getfem-|version|.tar.gz you can download `here
 <http://download.gna.org/getfem/stable/getfem-4.3.tar.gz>`_.
 
- * download package::
+ * download package:
 
-     $ wget http://download.gna.org/getfem/stable/getfem-4.3.tar.gz
+     $ wget http://download.gna.org/getfem/stable/getfem-|version|.tar.gz
 
- * unpack::
+ * unpack:
 
-     $ tar xzf getfem-4.3.tar.gz
+     $ tar xzf getfem-|version|.tar.gz
 
- * and go to the root directory of |gf|::
+ * and go to the root directory of |gf|:
 
-     $ cd getfem-4.3/
+     $ cd getfem-|version|/
 
 The latest unstable releases is:
 
@@ -133,5 +133,4 @@ Note that there are other options to the configure script. A
 ``--enable-matlab``, ``--enable-python`` and ``--enable-scilab``
 to build the |gfi|.
 
-More specific instructions can be found in the README\* files of the
-distribution.
+

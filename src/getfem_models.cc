@@ -303,7 +303,6 @@ namespace getfem {
         }
         gmm::resize(MGLOB, it2->second.mf->nb_dof(), s);
       }
-
       size_type s = 0;
       std::set<size_type> glob_columns;
       std::vector<dal::bit_vector> mult_kept_dofs;
@@ -447,6 +446,7 @@ namespace getfem {
 //     cout << "Actualize sizes time from thread " << rk << " : " << MPI_Wtime()-t_ref << endl;
 
 //     #endif
+
   }
 
 
@@ -2561,6 +2561,7 @@ namespace getfem {
     // int rk; MPI_Comm_rank(MPI_COMM_WORLD, &rk);
     if (MPI_IS_MASTER()) cout << "Assembly time " << MPI_Wtime()-t_ref << endl;
     #endif
+
   }
 
 

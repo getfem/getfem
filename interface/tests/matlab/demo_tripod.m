@@ -21,8 +21,8 @@ disp('which uses the "brick" framework of getfem')
 disp('You can easily switch between linear/non linear')
 disp('compressible/incompressible elasticity!')
 
-linear = 1
-incompressible = 0
+linear = true;
+incompressible = false;
 
 
 gf_workspace('clear all');
