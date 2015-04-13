@@ -435,6 +435,7 @@ namespace getfem
     j = size_type(0);
     for (dal::bv_visitor pt(m.points().index()); !pt.finished(); ++pt, ++j)
       m.points()[pt] = pts[j];
+    m.points().resort();
 
     size_type symmetries(PARAM.int_value("SYMMETRIES"));
     symmetries = std::min(symmetries,N);
