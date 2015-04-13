@@ -391,6 +391,8 @@ in the assembly language, where ``expr1``, ``expr2`` and ``expr3`` correspond to
 Note that the transformation could also be directly used with a `ga_workspace` object if model object are not used. See :file:`getfem/getfem_contact_and_friction_common.h` for more details. Note also that in the framework of the model object, a interfaced use of this transformation is allowed by the model bricks described below.
 
 
+.. _ud-model-contact-friction-large-hlgav:
+
 Integral contact brick with raytrace, high-level generic assembly version
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

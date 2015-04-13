@@ -155,11 +155,12 @@ md.add_initialized_data('Fdata', [F*epsilon, 0])
 md.add_source_term_brick(mim, 'u', 'Fdata', RIGHT_BOUND)
 
 # Electrical field
-sigma = '(1/(rho_0*(1+alpha*(theta-T0))))'
+sigmaeps = '(eps/(rho_0*(1+alpha*(theta-T0))))'
+md.add_initialized_data('eps', [epsilon])
 md.add_initialized_data('rho_0', [rho_0])
 md.add_initialized_data('alpha', [alpha])
 md.add_initialized_data('T0', [T0])
-md.add_nonlinear_generic_assembly_brick(mim, sigma+'*(Grad_V.Grad_Test_V)')
+md.add_nonlinear_generic_assembly_brick(mim, sigmaeps+'*(Grad_V.Grad_Test_V)')
 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, RIGHT_BOUND)
 md.add_initialized_data('DdataV', [0.1])
 md.add_Dirichlet_condition_with_multipliers(mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV')
@@ -179,7 +180,7 @@ md.add_Fourier_Robin_brick(mim, 'theta', 'Deps', BOTTOM_BOUND)
 md.add_source_term_brick(mim, 'theta', 'Depsairt', BOTTOM_BOUND)
 
 # Joule heating term
-md.add_nonlinear_generic_assembly_brick(mim, '-'+sigma+'*Norm_sqr(Grad_V)*Test_theta')
+md.add_nonlinear_generic_assembly_brick(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta')
 
 # Thermal expansion term
 md.add_initialized_data('beta', [alpha_th*E/(1-2*nu)])
@@ -210,7 +211,7 @@ U = md.variable('u')
 V = md.variable('V')
 THETA = md.variable('theta')
 VM = md.compute_isotropic_linearized_Von_Mises_or_Tresca('u', 'clambdastar', 'cmu', mfvm)
-CO = np.reshape(md.interpolation('-'+sigma+'*Grad_V', mfvm), (2, mfvm.nbdof()), 'F')
+CO = np.reshape(md.interpolation('-'+sigmaeps+'*Grad_V', mfvm), (2, mfvm.nbdof()), 'F')
 
 mfvm.export_to_vtk('displacement_with_von_mises.vtk', mfvm,  VM, 'Von Mises Stresses', mfu, U, 'Displacements')
 print ('You can view solutions with for instance:\nmayavi2 -d displacement_with_von_mises.vtk -f WarpVector -m Surface')

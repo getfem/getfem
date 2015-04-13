@@ -414,7 +414,8 @@ namespace getfem {
     }
 
     void init_scalar_tensor(scalar_type v) {
-      t.adjust_sizes(bgeot::multi_index());
+      bgeot::multi_index mi(1); mi[0]=1;
+      t.adjust_sizes(mi);
       t[0] = v;
       test_function_type = 0;
     }
@@ -5120,7 +5121,7 @@ namespace getfem {
       ga_node_analysis(expr, tree, workspace, pnode->children[i], meshdim,
                        eval_fixed_size, ignore_X);
       all_cte = all_cte && (pnode->children[i]->node_type == GA_NODE_CONSTANT);
-      all_sc = all_sc && pnode->children[i]->tensor_proper_size() == 1;
+      all_sc = all_sc && (pnode->children[i]->tensor_proper_size() == 1);
       GMM_ASSERT1(pnode->children[i]->test_function_type != size_type(-1),
                   "internal error on child " << i);
       if (pnode->node_type != GA_NODE_PARAMS)
@@ -5139,8 +5140,7 @@ namespace getfem {
     // cout << "child1 = " << child1 << endl;
     // cout << "child0 = " << child0 << endl;
     // cout << "nbch = " << nbch << endl;
-    // cout << "begin analysis of node "; ga_print_node(pnode, cout);
-    // cout << endl;
+    // cout<<"begin analysis of node "; ga_print_node(pnode, cout); cout<<endl;
 
 
     switch (pnode->node_type) {
@@ -6633,7 +6633,6 @@ namespace getfem {
     default:GMM_ASSERT1(false, "Unexpected node type " << pnode->node_type
                         << " in semantic analysis. Internal error.");
     }
-
     // cout << " begin hash code = " << pnode->hash_value << endl;
     pnode->hash_value = ga_hash_code(pnode);
     // cout << "node_type = " << pnode->node_type << " op_type = "
@@ -9476,12 +9475,11 @@ namespace getfem {
             }
           }
 
-          if (!(pgt->is_linear())) {
-            scalar_type h = bmax[0] - bmin[0];
-            for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
-            for (size_type k = 0; k < N; ++k)
-              { bmin[k] -= h*0.2; bmax[k] += h*0.2; }
-          }
+          scalar_type h = bmax[0] - bmin[0];
+          for (size_type k = 1; k < N; ++k) h = std::max(h, bmax[k]-bmin[k]);
+          if (pgt->is_linear()) h *= 1E-8;
+          for (size_type k = 0; k < N; ++k)
+            { bmin[k] -= h*0.2; bmax[k] += h*0.2; }
 
           element_boxes.add_box(bmin, bmax, cv);
         }

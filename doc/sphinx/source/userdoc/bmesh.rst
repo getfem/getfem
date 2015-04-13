@@ -184,6 +184,8 @@ For instance, to build a mesh with tetrahedrons for a unit cube with
    describe geometrical points, and geometrical vectors. Their memory footprint
    is lower than a ``std::vector``.
 
+..  _ud-mesh_regions:
+
 Mesh regions
 ------------
 
@@ -420,6 +422,8 @@ Note that, while the convexes and the points are globally numbered in a |gf_m|
 object, there is no global numbering of the faces, so the only way to refer to
 a given face, is to give the convex number, and the local face number in the
 convex.
+
+..  _ud-load_save_mesh:
 
 Save and load meshes
 --------------------

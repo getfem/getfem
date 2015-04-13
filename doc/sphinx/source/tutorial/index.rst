@@ -13,10 +13,4 @@
    intro
    install
    thermo_coupling
-
-   
-.. Roue en contact + variables de taille fixe
-
-.. Domaine fictif & transformations
-
-.. Bifurcations
+   wheel

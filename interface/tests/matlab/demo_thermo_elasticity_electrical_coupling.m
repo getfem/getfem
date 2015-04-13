@@ -58,16 +58,16 @@ clear all;
 epsilon = 1.;       % Thickness of the plate (cm)
 E = 21E6;           % Young Modulus (N/cm^2)
 nu = 0.3;           % Poisson ratio
-clambda = E*nu/((1+nu)*(1-2*nu)); % First Lam?? coefficient (N/cm^2)
-cmu = E/(2*(1+nu));               % Second Lam?? coefficient (N/cm^2)
+clambda = E*nu/((1+nu)*(1-2*nu)); % First Lame coefficient (N/cm^2)
+cmu = E/(2*(1+nu));               % Second Lame coefficient (N/cm^2)
 clambdastar = 2*clambda*cmu/(clambda+2*cmu); % Lam?? coefficient for Plane stress (N/cm^2)
 F = 100E2;          % Force density at the right boundary (N/cm^2)
 kappa = 4.;         % Thermal conductivity (W/(cm K))
 D = 10;             % Heat transfert coefficient (W/(K cm^2))
-air_temp = 20;      % Temperature of the air in ??C.
+air_temp = 20;      % Temperature of the air in oC.
 alpha_th = 16.6E-6; % Thermal expansion coefficient (/K).
-T0 = 20;            % Reference temperature in ??C.
-rho_0 = 1.754E-8;   % Resistance temperature coefficient at T0 = 20??C
+T0 = 20;            % Reference temperature in oC.
+rho_0 = 1.754E-8;   % Resistance temperature coefficient at T0 = 20oC
 alpha = 0.0039;     % Second resistance temperature coefficient.
 
 %
@@ -120,7 +120,7 @@ if (draw_mesh)
 end
 
 %
-% Definition of finite elements methods and integration method
+% Definition of finite element methods and integration method
 %
 
 mfu = gf_mesh_fem(mesh, 2); % Finite element for the elastic displacement
@@ -151,11 +151,12 @@ gf_model_set(md, 'add initialized data', 'Fdata', [F*epsilon, 0]);
 gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
 
 % Electrical field
-sigma = '(1/(rho_0*(1+alpha*(theta-T0))))';
+sigmaeps = '(eps/(rho_0*(1+alpha*(theta-T0))))';
+gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
 gf_model_set(md, 'add initialized data', 'T0', [T0]);
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, [sigma '*(Grad_V.Grad_Test_V)']);
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, [sigmaeps '*(Grad_V.Grad_Test_V)']);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
@@ -175,7 +176,7 @@ gf_model_set(md, 'add Fourier Robin brick', mim, 'theta', 'Deps', BOTTOM_BOUND);
 gf_model_set(md, 'add source term brick', mim, 'theta', 'Depsairt', BOTTOM_BOUND);
 
 % Joule heating term
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigma '*Norm_sqr(Grad_V)*Test_theta']);
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, ['-' sigmaeps '*Norm_sqr(Grad_V)*Test_theta']);
 
 % Thermal expansion term
 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
@@ -204,7 +205,7 @@ U = gf_model_get(md, 'variable', 'u');
 V = gf_model_get(md, 'variable', 'V');
 THETA = gf_model_get(md, 'variable', 'theta');
 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
-CO = reshape(gf_model_get(md, 'interpolation', ['-' sigma '*Grad_V'], mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
+CO = reshape(gf_model_get(md, 'interpolation', ['-' sigmaeps '*Grad_V'], mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
     
 figure(2);
 subplot(3,1,1);
@@ -218,7 +219,7 @@ title('Electric potential in Volt (on the deformed configuration, scale factor x
 hold off;
 subplot(3,1,3);
 gf_plot(mft, THETA, 'mesh', 'off', 'deformed_mesh','off', 'deformation', U, 'deformation_mf', mfu, 'deformation_scale', 100, 'refine', 8); colorbar;
-title('Temperature in ?C (on the deformed configuration, scale factor x100)');
+title('Temperature in ^oC (on the deformed configuration, scale factor x100)');
 
 
 

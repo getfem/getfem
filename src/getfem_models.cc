@@ -212,6 +212,7 @@ namespace getfem {
   }
 
   void model::actualize_sizes(void) const {
+    // cout << "begin act size" << endl;
     bool actualized = false;
     getfem::local_guard lock = locks_.get_lock();
     if (actualized) return; // If multiple threads are calling the method
@@ -447,6 +448,7 @@ namespace getfem {
 
 //     #endif
 
+    // cout << "end act size" << endl;
   }
 
 

@@ -116,7 +116,7 @@ if (draw_mesh)
 end
 
 //
-// Definition of finite elements methods and integration method
+// Definition of finite element methods and integration method
 //
 
 mfu = gf_mesh_fem(mesh, 2); // Finite element for the elastic displacement
@@ -147,11 +147,12 @@ gf_model_set(md, 'add initialized data', 'Fdata', [F*epsilon, 0]);
 gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
 
 // Electrical field
-sigma = '(1/(rho_0*(1+alpha*(theta-T0))))';
+sigmaps = '(eps/(rho_0*(1+alpha*(theta-T0))))';
+gf_model_set(md, 'add initialized data', 'eps', [epsilon]);
 gf_model_set(md, 'add initialized data', 'rho_0', [rho_0]);
 gf_model_set(md, 'add initialized data', 'alpha', [alpha]);
 gf_model_set(md, 'add initialized data', 'T0', [T0]);
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, sigma+'*(Grad_V.Grad_Test_V)');
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, sigmaeps+'*(Grad_V.Grad_Test_V)');
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, RIGHT_BOUND);
 gf_model_set(md, 'add initialized data', 'DdataV', [0.1]);
 gf_model_set(md, 'add Dirichlet condition with multipliers', mim, 'V', elements_degree-1, LEFT_BOUND, 'DdataV');
@@ -171,7 +172,7 @@ gf_model_set(md, 'add Fourier Robin brick', mim, 'theta', 'Deps', BOTTOM_BOUND);
 gf_model_set(md, 'add source term brick', mim, 'theta', 'Depsairt', BOTTOM_BOUND);
 
 // Joule heating term
-gf_model_set(md, 'add nonlinear generic assembly brick', mim, '-'+sigma+'*Norm_sqr(Grad_V)*Test_theta');
+gf_model_set(md, 'add nonlinear generic assembly brick', mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Test_theta');
 
 // Thermal expansion term
 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
@@ -200,7 +201,7 @@ U = gf_model_get(md, 'variable', 'u');
 V = gf_model_get(md, 'variable', 'V');
 THETA = gf_model_get(md, 'variable', 'theta');
 VM = gf_model_get(md, 'compute_isotropic_linearized_Von_Mises_or_Tresca', 'u', 'clambdastar', 'cmu', mfvm);
-CO = matrix(gf_model_get(md, 'interpolation', '-'+sigma+'*Grad_V', mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
+CO = matrix(gf_model_get(md, 'interpolation', '-'+sigmaeps+'*Grad_V', mfvm), [2 gf_mesh_fem_get(mfvm, 'nbdof')]);
     
 hh = scf(2);
 hh.color_map = jetcolormap(255);

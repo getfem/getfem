@@ -75,7 +75,7 @@ for l in fl:
             flcom.write(old_l)
     old_l = l
 
-
+ 
 if (state == 0):
     flw.write(l)
 else:

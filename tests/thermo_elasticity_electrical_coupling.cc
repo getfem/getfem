@@ -201,12 +201,13 @@ int main(int argc, char *argv[]) {
   getfem::add_source_term_brick(md, mim, "u", "Fdata", RIGHT_BOUND);
 
   // Electrical field
-  std::string sigma = "(1/(rho_0*(1+alpha*(theta-T0))))";
+  std::string sigmaeps = "(eps/(rho_0*(1+alpha*(theta-T0))))";
+  md.add_initialized_scalar_data("eps", epsilon);
   md.add_initialized_scalar_data("rho_0", rho_0);
   md.add_initialized_scalar_data("alpha", alpha);
   md.add_initialized_scalar_data("T0", T0);
   getfem::add_nonlinear_generic_assembly_brick
-    (md, mim, sigma+"*(Grad_V.Grad_Test_V)");
+    (md, mim, sigmaeps+"*(Grad_V.Grad_Test_V)");
   getfem::add_Dirichlet_condition_with_multipliers
     (md, mim, "V", bgeot::dim_type(elements_degree-1), RIGHT_BOUND);
   md.add_initialized_scalar_data("DdataV", 0.1);
@@ -231,7 +232,7 @@ int main(int argc, char *argv[]) {
 
   // Joule heating term
   getfem::add_nonlinear_generic_assembly_brick
-     (md, mim, "-"+sigma+"*Norm_sqr(Grad_V)*Test_theta");
+     (md, mim, "-"+sigmaeps+"*Norm_sqr(Grad_V)*Test_theta");
 
   // Thermal expansion term
   md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
@@ -270,7 +271,7 @@ int main(int argc, char *argv[]) {
   getfem::compute_isotropic_linearized_Von_Mises_or_Tresca
     (md, "u", "clambdastar", "cmu", mfvm, VM, false);
   plain_vector CO(mfvm.nb_dof() * 2);
-  getfem::ga_interpolation_Lagrange_fem(md, "-"+sigma+"*Grad_V",  mfvm, CO);
+  getfem::ga_interpolation_Lagrange_fem(md, "-"+sigmaeps+"*Grad_V",  mfvm, CO);
   
   getfem::vtk_export exp("displacement_with_von_mises.vtk", false);
   exp.exporting(mfu);
