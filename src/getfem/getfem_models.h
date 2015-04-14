@@ -162,16 +162,17 @@ namespace getfem {
     // Variables and parameters of the model
 
     enum  var_description_filter {
-      VDESCRFILTER_NO,     // Variable being directly the dofs of a given fem
-      VDESCRFILTER_REGION, /* Variable being the dofs of a fem on a mesh region
-                            * (uses mf.dof_on_region). */
-      VDESCRFILTER_INFSUP, /* Variable being the dofs of a fem on a mesh region
-                            * with an additional filter on a mass matrix with
-                            * respect to another fem. */
-      VDESCRFILTER_CTERM   /* Variable being the dofs of a fem on a mesh region
-                            * with an additional filter with the coupling
-                            * term with respect to another variable. */
-    };
+      VDESCRFILTER_NO = 0, // Variable being directly the dofs of a given fem
+      VDESCRFILTER_REGION = 1, /* Variable being the dofs of a fem on a mesh
+                            *  region (uses mf.dof_on_region). */
+      VDESCRFILTER_INFSUP = 2, /* Variable being the dofs of a fem on a mesh
+                            * region with an additional filter on a mass
+                            * matrix with respect to another fem. */
+      VDESCRFILTER_CTERM = 4, /* Variable being the dofs of a fem on a mesh
+                            * region with an additional filter with the
+                            * coupling term with respect to another variable.*/
+      VDESCRFILTER_REGION_CTERM = 5,  /* both region and cterm. */
+    }; // INFSUP and CTERM are incompatible
 
     struct var_description {
 
@@ -904,6 +905,17 @@ namespace getfem {
         for time integration schemes. */
     void add_multiplier(const std::string &name, const mesh_fem &mf,
                         const std::string &primal_name,
+                        size_type niter = 1);
+
+    /** Adds a particular variable linked to a fem being a multiplier with
+        respect to a primal variable and a region. The dof will be filtered
+        both with the gmm::range_basis function applied on the terms of
+        the model which link the multiplier and the primal variable and on
+        the dof on the given region. Optimized for boundary
+        multipliers. niter is the number of version of the data stored,
+        for time integration schemes. */
+    void add_multiplier(const std::string &name, const mesh_fem &mf,
+                        size_type region, const std::string &primal_name,
                         size_type niter = 1);
 
     /** Adds a particular variable linked to a fem being a multiplier with

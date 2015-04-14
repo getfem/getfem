@@ -238,8 +238,8 @@ namespace getfem {
     for (VAR_SET::iterator it = variables.begin(); it != variables.end();
          ++it) {
       if (it->second.is_fem_dofs && !(it->second.is_affine_dependent)
-          && (it->second.filter == VDESCRFILTER_CTERM
-              || it->second.filter == VDESCRFILTER_INFSUP)) {
+          && ((it->second.filter & VDESCRFILTER_CTERM)
+              || (it->second.filter & VDESCRFILTER_INFSUP))) {
         VAR_SET::iterator it2 = variables.find(it->second.filter_var);
         GMM_ASSERT1(it2 != variables.end(), "The primal variable of the "
                     "multiplier does not exist");
@@ -306,14 +306,15 @@ namespace getfem {
       }
       size_type s = 0;
       std::set<size_type> glob_columns;
-      std::vector<dal::bit_vector> mult_kept_dofs;
+      // std::vector<dal::bit_vector> mult_kept_dofs;
       for (size_type k = 0; k < mults.size(); ++k) {
         VAR_SET::iterator it = variables.find(mults[k]);
 
         // This step forces the recomputation of corresponding bricks.
         // A test to check if a modification is really necessary could
         // be done first ... (difficult to coordinate with other multipliers)
-        mult_kept_dofs.push_back(it->second.partial_mf->retrieve_kept_dofs());
+        
+        // mult_kept_dofs.push_back(it->second.partial_mf->retrieve_kept_dofs());
         dal::bit_vector alldof; alldof.add(0, it->second.mf->nb_dof());
         it->second.partial_mf->adapt(alldof);
         it->second.set_size(it->second.partial_mf->nb_dof());
@@ -326,7 +327,7 @@ namespace getfem {
           MM(it2->second.associated_mf().nb_dof(), it->second.mf->nb_dof());
         bool termadded = false;
 
-        if (it->second.filter == VDESCRFILTER_CTERM) {
+        if (it->second.filter & VDESCRFILTER_CTERM) {
 
           for (dal::bv_visitor ib(valid_bricks); !ib.finished(); ++ib) {
             const brick_description &brick = bricks[ib];
@@ -370,7 +371,7 @@ namespace getfem {
           if (!termadded)
             GMM_WARNING1("No term found to filter multiplier " << it->first
                          << ". Variable is cancelled");
-        } else if (it->second.filter == VDESCRFILTER_INFSUP) {
+        } else if (it->second.filter & VDESCRFILTER_INFSUP) {
           mesh_region rg(it->second.m_region);
           it->second.mim->linked_mesh().intersect_with_mpi_region(rg);
           asm_mass_matrix(MM, *(it->second.mim), it2->second.associated_mf(),
@@ -399,7 +400,9 @@ namespace getfem {
           for (std::set<size_type>::iterator itt = columns.begin();
                itt != columns.end(); ++itt)
             kept.add(*itt);
-          kept &= mult_kept_dofs[k];
+          if (it->second.filter & VDESCRFILTER_REGION)
+            kept &= it->second.mf->dof_on_region(it->second.m_region);
+          // kept &= mult_kept_dofs[k];
           it->second.partial_mf->adapt(kept);
           it->second.set_size(it->second.partial_mf->nb_dof());
           it->second.v_num = act_counter();
@@ -428,7 +431,9 @@ namespace getfem {
           for (std::set<size_type>::iterator itt = glob_columns.begin();
                itt != glob_columns.end(); ++itt)
             if (*itt >= s && *itt < s + nbdof) kept.add(*itt-s);
-          kept &= mult_kept_dofs[k];
+          if (it->second.filter & VDESCRFILTER_REGION)
+            kept &= it->second.mf->dof_on_region(it->second.m_region);
+          // kept &= mult_kept_dofs[k];
           it->second.partial_mf->adapt(kept);
           it->second.set_size(it->second.partial_mf->nb_dof());
           it->second.v_num = act_counter();
@@ -591,6 +596,18 @@ namespace getfem {
     check_name_validity(name);
     variables[name] = var_description(true, is_complex(), true, niter,
                                       VDESCRFILTER_CTERM, &mf, 0,
+                                      1, primal_name);
+    variables[name].set_size(mf.nb_dof());
+    act_size_to_be_done = true;
+    add_dependency(mf);
+  }
+
+  void model::add_multiplier(const std::string &name, const mesh_fem &mf,
+                             size_type region, const std::string &primal_name,
+                             size_type niter) {
+    check_name_validity(name);
+    variables[name] = var_description(true, is_complex(), true, niter,
+                                      VDESCRFILTER_REGION_CTERM, &mf, region,
                                       1, primal_name);
     variables[name].set_size(mf.nb_dof());
     act_size_to_be_done = true;

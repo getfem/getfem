@@ -134,7 +134,8 @@ namespace getfem {
     dal::bit_vector basic_dof_on_region(const mesh_region &b) const
     { return mf.basic_dof_on_region(b); }
 
-    dal::bit_vector retrieve_kept_dofs() const;
+    // invalid function for a mesh change.
+    // dal::bit_vector retrieve_kept_dofs() const;
 
     void read_from_file(std::istream &)
     { GMM_ASSERT1(false, "You cannot directly read this kind of mesh_fem"); }

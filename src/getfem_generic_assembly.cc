@@ -414,8 +414,7 @@ namespace getfem {
     }
 
     void init_scalar_tensor(scalar_type v) {
-      bgeot::multi_index mi(1); mi[0]=1;
-      t.adjust_sizes(mi);
+      t.adjust_sizes(bgeot::multi_index());
       t[0] = v;
       test_function_type = 0;
     }
@@ -6230,8 +6229,11 @@ namespace getfem {
 
             size_type n = gmm::vect_size(workspace.value(name));
             if (n == 1) {
-              pnode->init_scalar_tensor(test ? scalar_type(1)
-                                             : workspace.value(name)[0]);
+              if (test) {
+                pnode->init_vector_tensor(1);
+                pnode->t[0]=scalar_type(1);
+              }
+              else pnode->init_scalar_tensor(workspace.value(name)[0]);
             } else {
               if (test) {
                 pnode->init_matrix_tensor(n,n);

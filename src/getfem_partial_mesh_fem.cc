@@ -78,20 +78,21 @@ namespace getfem {
     is_adapted = true; touch(); v_num = act_counter();
   }
 
-  dal::bit_vector partial_mesh_fem::retrieve_kept_dofs() const
-  {
-    base_vector full(nb_basic_dof());
-    for (size_type i = 0; i < full.size(); ++i) full[i] = i;
-    base_vector reduced(nb_dof());
-
-    if (R_.ncols() > 0) gmm::mult(R_, full, reduced);
-    else reduced = full;
-
-    dal::bit_vector kept_dofs;
-    for (size_type i = 0; i < reduced.size(); ++i) kept_dofs.add(reduced[i]);
-
-    return kept_dofs;
-  }
+  // invalid function for a mesh change.
+  // dal::bit_vector partial_mesh_fem::retrieve_kept_dofs() const
+  // {
+  //   base_vector full(nb_basic_dof());
+  //   for (size_type i = 0; i < full.size(); ++i) full[i] = i;
+  //   base_vector reduced(nb_dof());
+  // 
+  //   if (R_.ncols() > 0) gmm::mult(R_, full, reduced);
+  //   else reduced = full;
+  // 
+  //   dal::bit_vector kept_dofs;
+  //   for (size_type i=0; i < reduced.size(); ++i) kept_dofs.add(reduced[i]); 
+  // 
+  //   return kept_dofs;
+  // }
 
   void partial_mesh_fem::write_to_file(std::ostream &ost) const
   { context_check(); mf.context_check();
