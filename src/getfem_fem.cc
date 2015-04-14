@@ -666,7 +666,7 @@ namespace getfem {
     pfem pf1 = params[0].method();
     pfem pf2 = params[1].method();
     GMM_ASSERT1(pf1->is_polynomial() && pf2->is_polynomial(),
-		"Bad parameters");
+		"Both arguments to FEM_PRODUCT must be polynomial FEM");
     virtual_fem *p = new tproduct_femi(ppolyfem(pf1.get()),
 				       ppolyfem(pf2.get()));
     dependencies.push_back(p->ref_convex(0));
