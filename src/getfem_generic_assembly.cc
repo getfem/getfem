@@ -4846,11 +4846,6 @@ namespace getfem {
     ga_exec(gis, *this);
     // cout << "Exec time " << gmm::uclock_sec()-time << endl;
 
-    if (order == 1) {
-       MPI_SUM_VECTOR(assembled_vector());
-       MPI_SUM_VECTOR(unreduced_V);
-    }
-
     // Deal with reduced fems.
     if (order) {
       std::list<ga_tree>::iterator it = gis.trees.begin();
@@ -8875,9 +8870,7 @@ namespace getfem {
 
       // iteration on elements (or faces of elements)
       std::vector<size_type> ind;
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
-      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
+      for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
         if (gic.use_mim()) {
           if (!mim.convex_index().is_in(v.cv())) continue;
           gis.pai = mim.int_method_of_element(v.cv())->approx_method();
@@ -8985,9 +8978,7 @@ namespace getfem {
       const mesh_region &region = *(it->first.region());
 
       // iteration on elements (or faces of elements)
-      mesh_region rg(region);
-      m.intersect_with_mpi_region(rg);
-      for (getfem::mr_visitor v(rg, m); !v.finished(); ++v) {
+      for (getfem::mr_visitor v(region, m); !v.finished(); ++v) {
         if (mim.convex_index().is_in(v.cv())) {
           // cout << "proceed with element " << v.cv() << endl;
           bgeot::vectors_to_base_matrix(G, m.points_of_convex(v.cv()));
