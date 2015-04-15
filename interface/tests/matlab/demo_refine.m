@@ -22,6 +22,12 @@ gf_workspace('clear all');
 %clear all; clf;
 L=100; H=22;
 N=2;
+draw = true;
+
+asize =  size(who('automatic_var654'));
+if (asize(1)) draw = false; end;
+
+
 if (N == 2), % 2D beam
   m=gfMesh('regular simplices',0:10:L, 0:11:H);
   mim=gfMeshIm(m);    set(mim, 'integ',gfInteg('IM_TRIANGLE(6)'));
@@ -70,19 +76,30 @@ for step=1:8,
   subplot(2,1,1);
   if (N==3) opt = {'cvlst', get(m,'outer_faces')}; 
   else opt = {}; end;
-  gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,...
-	  'deformation_mf',mfu,'refine', 4, 'deformation_scale',1, opt{:}); 
-  gf_colormap('chouette');
-  caxis([0 1e7]); colorbar; 
-  title('Von Mises stress');
+  
+  if (draw)
+    gf_plot(mfdu,VM,'deformed_mesh','on', 'deformation',U,...
+	    'deformation_mf',mfu,'refine', 4, 'deformation_scale',1, opt{:}); 
+    gf_colormap('chouette');
+    caxis([0 1e7]); colorbar; 
+    title('Von Mises stress');
+  end
   
   dd=get(mf0, 'basic dof from cvid');
   ERR=gf_compute(mfu,U,'error estimate', mim);
   E=ERR; E(dd)=ERR;
-  subplot(2,1,2);
-  gf_plot(mf0, E, 'mesh','on', 'refine', 1, opt{:}); colorbar;
-  title('Error estimate')
-  disp('press a key..'); pause;
-  set(m, 'refine', find(ERR > 1e-3));
+  
+  if (draw)
+    subplot(2,1,2);
+    gf_plot(mf0, E, 'mesh','on', 'refine', 1, opt{:}); colorbar;
+    title('Error estimate')
+    pause(1.5);
+  end
+  set(m, 'refine', find(ERR > 0.1e-4));
   set(m, 'optimize structure');
+  norm(E)
 end;
+
+if (norm(E) > 0.005)
+   error('Refine test: final error to big');
+end

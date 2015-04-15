@@ -124,11 +124,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
       unsigned i;
       if (nlhs == 0 && outl->arg.arg_len > 0) { /* not very nice */
 	mxArray *mx = gfi_array_to_mxarray(&outl->arg.arg_val[0]);
-#if MATLAB_RELEASE == 12
-	mexPutArray(mx, "caller"); mxSetName(mx,"ans");
-#else
 	mexPutVariable("caller", "ans", mx);
-#endif
       }
       for (i=0; i < outl->arg.arg_len; ++i) {
         plhs[i] = gfi_array_to_mxarray(&outl->arg.arg_val[i]);

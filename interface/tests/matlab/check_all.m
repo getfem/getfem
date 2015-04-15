@@ -114,6 +114,15 @@ catch
   errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
 end;
 
+t = 'demo_refine [adaptative refinement for an elastostatic problem] ';
+try
+  automatic_var654 = 1;
+  demo_refine;
+  disp(['== ' t ': SUCCESS']);
+catch
+  errcnt=errcnt+1; disp(['== ' t ': FAILURE']);
+end;
+
 
 if (errcnt),
   disp(sprintf('\n\n== %d/11 tests FAILED\n', errcnt));

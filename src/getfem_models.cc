@@ -632,8 +632,8 @@ namespace getfem {
     it->second.is_disabled = true;
     for (VAR_SET::iterator itv = variables.begin();
          itv != variables.end(); ++itv) {
-      if ((itv->second.filter == VDESCRFILTER_INFSUP ||
-           itv->second.filter == VDESCRFILTER_CTERM)
+      if (((itv->second.filter & VDESCRFILTER_INFSUP) ||
+           (itv->second.filter & VDESCRFILTER_CTERM))
           && (name.compare(itv->second.filter_var) == 0)) {
         itv->second.is_disabled = true;
       }
@@ -647,8 +647,8 @@ namespace getfem {
     it->second.is_disabled = false;
     for (VAR_SET::iterator itv = variables.begin();
          itv != variables.end(); ++itv) {
-      if ((itv->second.filter == VDESCRFILTER_INFSUP||
-           itv->second.filter == VDESCRFILTER_CTERM)
+      if (((itv->second.filter & VDESCRFILTER_INFSUP) ||
+           (itv->second.filter & VDESCRFILTER_CTERM))
           && (name.compare(itv->second.filter_var) == 0)) {
         itv->second.is_disabled = false;
       }
@@ -684,7 +684,7 @@ namespace getfem {
        for(VAR_SET::iterator it2 = variables.begin();
            it2 != variables.end(); ++it2) {
          if (it2->second.is_fem_dofs &&
-             it2->second.filter == VDESCRFILTER_INFSUP &&
+             (it2->second.filter & VDESCRFILTER_INFSUP) &&
              mim == it2->second.mim) found = true;
         }
        if (!found) sup_dependency(*mim);
@@ -729,7 +729,7 @@ namespace getfem {
       }
       if (!found) sup_dependency(*mf);
 
-      if (it->second.filter == VDESCRFILTER_INFSUP) {
+      if (it->second.filter & VDESCRFILTER_INFSUP) {
         const mesh_im *mim = it->second.mim;
         found = false;
         for (dal::bv_visitor ibb(valid_bricks); !ibb.finished(); ++ibb) {
@@ -739,7 +739,7 @@ namespace getfem {
         for(VAR_SET::iterator it2 = variables.begin();
             it2 != variables.end(); ++it2) {
           if (it != it2 && it2->second.is_fem_dofs &&
-              it2->second.filter == VDESCRFILTER_INFSUP &&
+              (it2->second.filter & VDESCRFILTER_INFSUP) &&
               mim == it2->second.mim) found = true;
         }
         if (!found) sup_dependency(*mim);
