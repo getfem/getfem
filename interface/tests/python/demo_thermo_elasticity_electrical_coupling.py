@@ -184,7 +184,7 @@ md.add_nonlinear_generic_assembly_brick(mim, '-'+sigmaeps+'*Norm_sqr(Grad_V)*Tes
 
 # Thermal expansion term
 md.add_initialized_data('beta', [alpha_th*E/(1-2*nu)])
-md.add_linear_generic_assembly_brick(mim, 'beta*theta*Trace(Grad_Test_u)')
+md.add_linear_generic_assembly_brick(mim, 'beta*(T0-theta)*Trace(Grad_Test_u)')
 
 
 #

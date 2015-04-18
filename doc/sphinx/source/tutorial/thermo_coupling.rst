@@ -75,7 +75,7 @@ where :math:`F` is the force density applied on the right lateral boundary and :
 
 .. math::
  
-  \bar{\sigma}(u) = \lambda^* \mbox{div}(u) I + 2\mu \bar{\varepsilon}(u) + \beta\theta I,
+  \bar{\sigma}(u) = \lambda^* \mbox{div}(u) I + 2\mu \bar{\varepsilon}(u) + \beta(T_0-\theta) I,
 
 :math:`\bar{\varepsilon}(u) = (\nabla u + (\nabla u)^T)/2` being the linearized strain tensor, :math:`I` the identity second order tensor and :math:`\lambda^*, \mu` being the |Lame| coefficients defined  by
 
@@ -87,7 +87,7 @@ where :math:`F` is the force density applied on the right lateral boundary and :
 
 from :math:`E` the Young modulus and :math:`\nu` the Poisson ratio of the material.
 
-The term :math:`\beta\theta I` correspond to the thermal expansion term, where :math:`\beta = \alpha_{th} E/(1-2\nu)`, :math:`\alpha_{th}` being the thermal expansion coefficient.
+The term :math:`\beta(T_0-\theta) I` corresponds to the thermal expansion term, where :math:`\beta = \alpha_{th} E/(1-2\nu)`, :math:`\alpha_{th}` being the thermal expansion coefficient.
 
 
 The weak formulation
@@ -537,7 +537,7 @@ The following program allows to take into account the whole elastic deformation 
 
                 md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
                 getfem::add_linear_generic_assembly_brick
-                  (md, mim, "beta*theta*Div_Test_u");
+                  (md, mim, "beta*(T0-theta)*Div_Test_u");
 ---------- ----------------------------------------------------------------------------------------------------------------
 **Python** .. code-block:: python                                     
 
@@ -550,7 +550,7 @@ The following program allows to take into account the whole elastic deformation 
                 md.add_source_term_brick(mim, 'u', 'Fdata', RIGHT_BOUND)
 
                 md.add_initialized_data('beta', [alpha_th*E/(1-2*nu)])
-                md.add_linear_generic_assembly_brick(mim, 'beta*theta*Div_Test_u')
+                md.add_linear_generic_assembly_brick(mim, 'beta*(T0-theta)*Div_Test_u')
 ---------- ----------------------------------------------------------------------------------------------------------------
 **Scilab** .. code-block:: matlab
 
@@ -563,7 +563,7 @@ The following program allows to take into account the whole elastic deformation 
                 gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
 
                 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-                gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Div_Test_u');
+                gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*(T0-theta)*Div_Test_u');
 ---------- ----------------------------------------------------------------------------------------------------------------
 **Matlab** .. code-block:: matlab
 
@@ -576,7 +576,7 @@ The following program allows to take into account the whole elastic deformation 
                 gf_model_set(md, 'add source term brick', mim, 'u', 'Fdata', RIGHT_BOUND);
 
                 gf_model_set(md, 'add initialized data', 'beta', [alpha_th*E/(1-2*nu)]);
-                gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*theta*Div_Test_u');
+                gf_model_set(md, 'add linear generic assembly brick', mim, 'beta*(T0-theta)*Div_Test_u');
 ========== ================================================================================================================
 
 Electric potential problem

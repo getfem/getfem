@@ -237,7 +237,7 @@ int main(int argc, char *argv[]) {
   // Thermal expansion term
   md.add_initialized_scalar_data("beta", alpha_th*E/(1-2*nu));
   getfem::add_linear_generic_assembly_brick
-    (md, mim, "beta*theta*Trace(Grad_Test_u)");
+    (md, mim, "beta*(T0-theta)*Trace(Grad_Test_u)");
 
 
   //
